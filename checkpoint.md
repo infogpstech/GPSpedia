@@ -1228,3 +1228,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Validación GitHub Actions sobre el commit de código `d7c209f85d3b790626ff56e7813c942ca46ca5aa`: sintaxis de módulos modificados SUCCESS; regresión de servicios SUCCESS, **277 suites / 3,226 pruebas / 0 fallos**; health de servicios read-only SUCCESS. Pages build/deployment seguía en ejecución al momento del cierre documental; no se marca aquí como aprobado.
 - Estado P0.2: **COMPLETADA CON VALIDACIÓN DIFERIDA**. La ejecución de línea base real por flujo requiere navegador y entorno Beta aislado; operaciones Sheets/Drive, latencia interna Apps Script, CORS y recursos multimedia no se miden con este contador de cuerpos HTTP.
 - Siguiente tarea inmediata: completar matriz de consumidores AUTH/USERS y revisar acciones/leases conforme a §15, sin cambiar permisos ni el hash actual.
+
+
+## Cierre — mapa de consumidores AUTH/USERS (2026-11-21)
+
+- HEAD de inspección: `8683e157f641853fa9c5523cbd3f25a8937bdec5`; rama base `GPSpedia2.2.5` permanece intacta.
+- Nuevo documento: `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`. Registra rutas frontend, servicios, dispatchers, acciones sin consumidor y dependencias de Coordinator/locks.
+- Consumidores confirmados: login desde main.js; validateSession desde fallback de cambio de rol (y función exportada validateActiveSession sin consumidor encontrado); acceptTerms desde showApp y evento online con single-flight; logout desde menú principal y fallback de users.html; recuperación desde formularios; alta/listado/perfil de usuario desde users.html; actualización, eliminación, cambio/reset de contraseña y cierre remoto desde users.html.
+- touchSession no tiene consumidor frontend activo. La prueba TermsAcceptance ya impide que acceptTerms dispare un touchSession adicional.
+- AUTH aplica lease acquire/release a login, touchSession, acceptTerms, recuperación, cambios/reset de contraseña, reset de sesiones, deleteUser, updateUser, logout y migración. USERS solo aplica lease a createUser; getUsers/updateProfile usan actor cacheado (cache miss consulta Coordinator).
+- Dependencia crítica: USERS createUser y AUTH deleteUser comparten recurso lógico USERS en Coordinator; el lock local de USERS no protege frente a AUTH. No retirar esta exclusión hasta diseñar una autoridad común equivalente.
+- updateUser cambia roles y usa marcador, revocación e invalidación de cachés; no reducirlo como si fuera un cambio de nombre. logout/resetUserSessions/deleteUser conservan efectos de revocación.
+- Mapa estático completado. Siguiente tarea: clasificar y simplificar leases conforme a §15, comenzando por touchSession sin consumidor y acceptTerms; luego recuperación/actualizaciones ordinarias. Conservar excepciones expresas y validar RBAC, revocación y carrera alta/eliminación.
