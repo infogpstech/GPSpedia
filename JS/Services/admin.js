@@ -943,6 +943,11 @@ function doPost(e) {
         return ContentService.createTextOutput(JSON.stringify(invalidation))
             .setMimeType(ContentService.MimeType.JSON);
     }
+    if (action === "__primeSessionActorCache") {
+        const priming = handleSharedSessionActorCachePriming_(payload);
+        return ContentService.createTextOutput(JSON.stringify(priming))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     if (["checkOperation", "addOrUpdateCut", "addSupplementaryInfo"].includes(action)) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error", code: "ACTION_MOVED_TO_WRITE",
