@@ -13,7 +13,8 @@ assert.ok(reportPreflight>=0&&reportPreflight<reportUpload&&reportUpload<reportA
 assert.ok(reportRecheck>reportAcquire,"El reporte debe revalidarse bajo lock antes de escribir.");
 assert.ok(report.indexOf("ensureReportMetadataColumn(sheet)")>reportAcquire,"La modificación de esquema queda dentro de la sección crítica.");
 assert.ok(report.includes("if(lockAcquired) lock.releaseLock()"),"El lock de reporte solo se libera si fue adquirido.");
-assert.ok(report.includes("La imagen del reporte se conserva porque no se pudo confirmar la reversión"),"No borrar la imagen si la referencia pudo quedar persistida.");
+assert.ok(report.includes("La imagen del reporte se conserva porque la escritura pudo quedar persistida"),"No borrar la imagen si la referencia pudo quedar persistida.");
+assert.ok(report.includes("const uploadMayBeReferenced = appendAttempted"),"La imagen se conserva si appendRow pudo persistir.");
 assert.ok(suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage")<suggestion.indexOf("acquireFeedbackScriptLock_(lock)"),"La imagen de sugerencia debe cargarse antes del lock.");
 const suggestionPreflight=suggestion.indexOf("findExistingCutSuggestionForRequest_(feedbackSheet, replayRequest)");
 const suggestionDrive=suggestion.indexOf("saveSuggestionImageAttachment_(normalizedImage");
