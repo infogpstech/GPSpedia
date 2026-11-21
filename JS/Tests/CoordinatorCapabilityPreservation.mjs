@@ -27,7 +27,9 @@ check("Las restricciones de cuenta y cambios de rol permanecen en AUTH con RBAC 
     assert.match(update, /const canUpdate =/);
     assert.match(update, /const allowedRoles =/);
     assert.match(update, /countActiveDevelopers_\(users\) <= 1/);
-    assert.match(update, /revokeSharedUserSessionContexts_\(userId/);
+    assert.match(update, /reconcileRoleRevocationUnderLock_\(usersSheet, sessionsSheet, userId, targetRows\[0\]\.rowIndex\)/);
+    const reconcile = extract(auth, "reconcileRoleRevocationUnderLock_");
+    assert.match(reconcile, /revokeAllUserSessionsUnderLock_\(sessionsSheet,userId,[\s\S]*?tokens=>revokeSharedUserSessionContexts_\(userId,tokens\)/);
     assert.match(auth, /"updateUser"/);
 });
 check("El cierre de cuenta exige permisos, impide autoeliminación y protege al último Desarrollador", () => {
@@ -57,7 +59,7 @@ check("Solo eliminación de cuenta conserva lease; otras revocaciones mantienen 
     assert.match(actionSet, /return \["deleteUser"\]/);
     assert.doesNotMatch(actionSet, /updateUser|resetUserSessions|logout|changePassword|resetUserPassword/);
     assert.match(policy, /deleteUser: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
-    assert.match(update, /revokeSharedUserSessionContexts_\(userId/);
+    assert.match(update, /reconcileRoleRevocationUnderLock_\(usersSheet, sessionsSheet, userId, targetRows\[0\]\.rowIndex\)/);
     assert.match(reset, /revokeSharedUserSessionContexts_\(targetUserId/);
     assert.match(logout, /revokeSharedSessionContext_\(requestedUserId, sessionToken\)/);
     assert.match(update, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor"\]/);
