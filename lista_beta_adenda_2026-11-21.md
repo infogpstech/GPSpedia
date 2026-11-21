@@ -29,15 +29,15 @@ git rev-parse HEAD
 
 Si cualquier comprobación falla, no ejecutar pruebas ni descartar cambios. Confirmar el HEAD sincronizado y conservar la rama base GPSpedia2.2.5 sin modificar.
 
-## AUG-161 — CREACIÓN PyS Y MUTACIONES BAJO LEASE COMPARTIDA
+## AUG-161 — CREACIÓN PyS Y MUTACIONES DIRECTAS SIN LEASES
 
 **Estado: PENDIENTE DE EJECUCIÓN EN BETA AISLADA.**
 
 ### Requisitos del entorno
 
-- Copias aisladas de Apps Script FEEDBACK y Coordinator 1.4.5; si se usa CATALOG para verificar el feed, desplegar también la versión compatible aislada.
+- Copia aislada de Apps Script FEEDBACK; si se usa CATALOG para verificar el feed, desplegar también la versión compatible aislada. Las operaciones ordinarias PyS no deben depender de Coordinator.
 - Spreadsheet desechable con hojas pys, PysOperations, Cortes y __IdentifierSequenceReservations__; carpeta Drive desechable con ACL de prueba.
-- Dos cuentas de prueba separadas con roles Técnico y Desarrollador. Las dos ejecuciones FEEDBACK deben compartir el mismo Coordinator aislado y sus secretos de servicio configurados fuera del repositorio.
+- Dos cuentas de prueba separadas con roles Técnico y Desarrollador; configurar las credenciales del deployment aislado fuera del repositorio.
 - No utilizar endpoints, cuentas, hojas, carpetas, secretos ni datos productivos. No publicar a producción.
 
 ### A. Alta PyS, reservas e identidad first-write-wins
@@ -53,30 +53,30 @@ Si cualquier comprobación falla, no ejecutar pruebas ni descartar cambios. Conf
 9. Intercalar reservas PyS con reservas previas y operaciones legacy; comprobar prefijo isue-, relleno de tres dígitos, detección de IDs duplicados y huecos, y que no se reutiliza un sufijo reservado.
 10. Inyectar fallos de Drive/Spreadsheet en createFile, metadata, appendRow, flush y lectura de referencias. Verificar que nunca se elimina un archivo con referencia incierta y que el reintento no crea duplicados.
 
-### B. Solución y prevención — leases FEEDBACK
+### B. Solución y prevención — escrituras directas FEEDBACK
 
-1. Abrir el mismo PyS desde dos sesiones y enviar soluciones diferentes casi simultáneamente. Debe prevalecer un único valor; la segunda operación recibe conflicto explícito y no sobrescribe la primera.
+1. Abrir el mismo PyS desde dos sesiones y enviar soluciones diferentes casi simultáneamente. Confirmar que ambas solicitudes se procesan sin espera de lease ni viaje a Coordinator; registrar el valor final leído y cualquier sobrescritura observada.
 2. Repetir con prevención desde dos usuarios.
 3. Repetir el mismo contenido y operación para comprobar idempotencia sin escritura/actividad duplicada.
 4. Simular timeout o pérdida de respuesta tras persistencia y repetir la operación. El resultado debe reflejar el valor realmente guardado.
 5. Probar estados históricos incoherentes entre Se soluciono y Solucion; detenerse sin corregir ni sobrescribir silenciosamente.
-6. Confirmar que las acciones usan leases compartidas FEEDBACK con nombres addSolution y addPrevention; no existe fallback a ScriptLock local ni UserLock.
+6. Confirmar que addSolution y addPrevention se ejecutan directamente, sin llamadas a Coordinator, leases, ScriptLock ni UserLock. La autorización se limita al actor de sesión y su capacidad.
 
-### C. Relaciones PyS↔Cortes — leases FEEDBACK con lectura CORTES
+### C. Relaciones PyS↔Cortes — escritura directa y lectura funcional de CORTES
 
 1. Probar altas con problemId/vehicleId ausentes, malformados, inexistentes y duplicados. No debe cambiar pys.
 2. Probar asociación preasignada durante creación PyS con ID válido, inexistente y duplicado en Cortes. El ID inválido debe rechazarse antes de crear/leer PysOperations o reservar recursos.
 3. Probar JSON y formatos heredados de modelos asociados; confirmar normalización, deduplicación y preservación de relaciones ajenas.
 4. Lanzar dos altas simultáneas del mismo vínculo, altas de vehículos distintos, alta/baja intercaladas y dos bajas concurrentes. El read-back debe coincidir con el estado final persistido y los reintentos no deben duplicar asociaciones.
-5. Confirmar que Coordinator reserva FEEDBACK para escritura y CORTES para lectura durante addVehicleToProblem/removeVehicleFromProblem. Solución y prevención escriben FEEDBACK.
+5. Confirmar que addVehicleToProblem/removeVehicleFromProblem no llaman a Coordinator ni adquieren leases. CORTES se consulta únicamente para comprobar que el vehículo existe de forma inequívoca; la escritura de la relación ocurre directamente en pys.
 6. Intentar desvincular como Técnico y como Desarrollador; solo Desarrollador debe tener éxito, independientemente del rol falsificable enviado por el cliente.
-7. Forzar timeout, fallo de lease, fallo de flush y pérdida de respuesta. La operación debe fallar cerrada si Coordinator no está disponible; no debe ejecutarse una mutación sin lease ni fallback local.
+7. Inyectar fallos de lectura/escritura de Spreadsheet, flush y pérdida de respuesta. Confirmar que el error no se presenta como éxito y que el reintento vuelve a leer el estado persistido. No se prueba fallo/expiración de Coordinator porque estas acciones ya no dependen de él.
 
 ### D. Concurrencia entre proyectos y no interferencia
 
-1. Ejecutar simultáneamente desde dos deployments FEEDBACK conectados al mismo Coordinator. Repetir altas PyS, soluciones, prevenciones y relaciones sobre recursos iguales y distintos.
-2. Medir espera/contención de leases; comprobar que operaciones sobre recursos distintos no se bloquean indebidamente y que operaciones sobre el mismo recurso conservan consistencia.
-3. Probar expiración/recuperación de lease, reintento tras respuesta perdida y reconciliación después de fallo parcial.
+1. Ejecutar simultáneamente desde dos deployments FEEDBACK aislados. Repetir altas PyS, soluciones, prevenciones y relaciones sobre recursos iguales y distintos; las mutaciones ordinarias no deben invocar Coordinator.
+2. Confirmar que no hay espera/contención de leases ni viajes a Coordinator. Registrar el resultado real de operaciones simultáneas sobre el mismo campo o colección, incluyendo posibles sobrescrituras, sin introducir serialización artificial.
+3. Probar reintento tras respuesta perdida y reconciliación después de fallo parcial de Spreadsheet/Drive. No aplicar pruebas de expiración de lease a estas cuatro operaciones.
 4. Registrar timestamps, IDs sintéticos, operación, servicio, recurso, resultado, valores antes/después y evidencia de Drive. No incluir secretos, tokens ni datos personales.
 
 ### E. Pruebas visuales PyS
@@ -89,8 +89,8 @@ Si cualquier comprobación falla, no ejecutar pruebas ni descartar cambios. Conf
 Esta adenda complementa los segmentos históricos sin reescribirlos:
 
 - AUG-084: sustituye la expectativa de que ScriptLock serializa altas y de que PysOperations se transiciona a LINKED/RECOVERY_REQUIRED. El ledger nuevo es append-only; la fila PyS verificada determina el éxito.
-- AUG-086: sustituye la expectativa de ScriptLock local por leases compartidas FEEDBACK para addSolution/addPrevention.
-- AUG-090 y AUG-128: sustituyen la expectativa de ScriptLock local por leases compartidas; add/remove relaciones leen CORTES bajo la lease FEEDBACK.
+- AUG-086: sustituye la expectativa de ScriptLock/lease local o compartida por ejecución directa de addSolution/addPrevention, sin Coordinator.
+- AUG-090 y AUG-128: sustituyen la expectativa de ScriptLock o lease compartida; add/remove relaciones se escriben directamente y consultan CORTES solo para validación funcional.
 - AUG-083: conserva los casos de MIME, ACL, Drive, referencias y recuperación; ejecutar con el manejo actual de metadata y conservación conservadora de archivos.
 - AUG-159/AUG-160: siguen siendo obligatorias para aportes vehiculares ADMIN y cargas ADMIN/ImageUploadEvents. Esta adenda no las sustituye.
 - Safe Apply: continúa pendiente de preview real autorizado, ACL, manifiesto y rollback verificados. No mover, renombrar, sobrescribir ni borrar archivos productivos.
