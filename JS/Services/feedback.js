@@ -523,6 +523,11 @@ function buildFeedbackCortesCatalogChange_(reference) {
         snapshot.Video = normalizeFeedbackCatalogYouTubeUrl_(snapshot.videoGuiaDesarmeUrl);
         delete snapshot.videoGuiaDesarmeUrl;
     }
+    const likeEventLedger = getSpreadsheet().getSheetByName("FeedbackLikes");
+    for (let index = 1; index <= 3; index++) {
+        snapshot["utilCorte" + index] = (parseInt(snapshot["utilCorte" + index], 10) || 0) +
+            getFeedbackLikeEventCount_(likeEventLedger, wanted, index);
+    }
     const cuts = [
         { index: 1, util: parseInt(snapshot.utilCorte1, 10) || 0 },
         { index: 2, util: parseInt(snapshot.utilCorte2, 10) || 0 },
@@ -2108,7 +2113,7 @@ function findCompletedLikeReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteI
         const currentCount = rawCount === "" || rawCount === null || rawCount === undefined ? 0 : Number(rawCount);
         if (!Number.isSafeInteger(currentCount) || currentCount < 0) return null;
         return {
-            status: "success", alreadyLiked: true, likeCount: currentCount,
+            status: "success", alreadyLiked: true, likeCount: currentCount + getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex),
             message: "Este usuario ya había registrado su like."
         };
     } catch (error) {
@@ -2179,7 +2184,7 @@ function handleRecordLike(payload) {
         if (!Number.isSafeInteger(currentCount) || currentCount < 0) throw new Error("El contador de likes del corte no es un entero válido; requiere revisión.");
         if (found.length === 1) {
             const existing = found[0], status = String(existing.row[5] || "");
-            if (status === "completed") return { status: "success", alreadyLiked: true, likeCount: currentCount, message: "Este usuario ya había registrado su like." };
+            if (status === "completed") return { status: "success", alreadyLiked: true, likeCount: currentCount + getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex), message: "Este usuario ya había registrado su like." };
             if (status !== "pending") throw new Error("El registro previo del like tiene un estado desconocido.");
             const previous = Number(existing.row[3]), target = Number(existing.row[4]);
             if (!Number.isSafeInteger(previous) || previous < 0 || !Number.isSafeInteger(target) || target !== previous + 1) throw new Error("El registro pendiente del like tiene contadores inválidos.");
