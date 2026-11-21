@@ -14,6 +14,10 @@ assert.doesNotMatch(extract(feedback,"findLikeEventReplayNoop_"),/LockService|se
 assert.match(extract(catalog,"handleGetCatalogData"),/readFeedbackLikeEventCounts_/,"CATALOG debe proyectar los likes nuevos");
 assert.match(extract(feedback,"buildFeedbackCortesCatalogChange_"),/getFeedbackLikeEventCount_/,"El feed incremental debe incluir eventos de likes");
 assert.match(extract(feedback,"findCompletedLikeReplayNoop_"),/getFeedbackLikeEventCount_/,"El replay legacy debe devolver el contador efectivo");
+const router=extract(feedback,"doPostInternal_");
+const likePublication=router.slice(router.indexOf('if (action === "recordLike"'),router.indexOf('else if (action === "suggestYear"'));
+assert.match(likePublication,/publishSharedCatalogChange_\("FEEDBACK", "recordLike", \{ operation: "reset" \}\)/);
+assert.doesNotMatch(likePublication,/publishFeedbackCortesCatalogChange_/,"La invalidación de likes no debe reservar versión con ScriptLock");
 const helper=extract(catalog,"readFeedbackLikeEventCounts_");
 const code=helper+"\nreturn readFeedbackLikeEventCounts_;";
 const readCounts=new Function("getSpreadsheet",code)(()=>{throw new Error("No debe resolver spreadsheet global si se pasa argumento");});
