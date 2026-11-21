@@ -2518,8 +2518,13 @@ function handleReportProblem(payload) {
             appendAttempted=true;
             sheet.appendRow(reportRow);
             SpreadsheetApp.flush();
-            const idVal=sheet.getRange(newRowNumber,COLS_FEEDBACKS.ID).getValue();
-            if(String(idVal||"").trim()!==reservedId) {
+            const savedRow=sheet.getRange(newRowNumber,1,1,lastCol).getValues()[0];
+            const rowConfirmed=String(savedRow[COLS_FEEDBACKS.ID-1]||"").trim()===reservedId &&
+                String(savedRow[COLS_FEEDBACKS.Usuario-1]||"")===String(userName) &&
+                String(savedRow[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId) &&
+                String(savedRow[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText &&
+                (!reportContext || String(savedRow[metadataColumn-1]||"")===String(reportRow[metadataColumn-1]||""));
+            if(!rowConfirmed) {
                 const pending=new Error("No se pudo confirmar la fila completa del reporte; se conserva para reconciliación.");
                 pending.code="FEEDBACK_REPORT_APPEND_UNCONFIRMED";
                 throw pending;
