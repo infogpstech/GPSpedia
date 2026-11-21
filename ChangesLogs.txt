@@ -227,3 +227,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se agregó `findFeedbackRowById_` para localizar la fila realmente persistida mediante el ID físico reservado.
 - Reportes y sugerencias ya no confirman mediante el índice anticipado `getLastRow()+1`; esa posición solo se usa para copiar formato.
 - Se añadió `FeedbackAppendRowIdentity.mjs` y se actualizaron regresiones de reportes/sugerencias.
+
+
+2026-11-21 — FEEDBACK P0 reportProblem/suggestCutChange sin ScriptLock
+- Se retiró ScriptLock de ambos handlers; se conserva appendRow de filas completas y confirmación por ID reservado.
+- Se agregó proyección first-write-wins con rechazo de payload contradictorio para reportId y suggestionOperationId, y deduplicación lógica en Inbox/reportes propios.
+- Se añadió FeedbackReportImageEvents append-only para adjuntos tardíos; metadata se proyecta desde el ledger y la limpieza valida referencias.
+- CI: 258 suites, 3089 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
