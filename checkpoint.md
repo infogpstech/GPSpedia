@@ -438,3 +438,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Regresión agregada a PysCreationIntegrity.js. CI 44873477741 SUCCESS: 258 suites, 3092 pruebas aprobadas, 0 fallos; health read-only 44873477634 SUCCESS. Pages 44873477531 seguía en ejecución al actualizar este checkpoint.
 - handleAddProblem todavía conserva ScriptLock. La migración lock-free sigue bloqueada hasta definir y probar la propiedad canónica del opId y del archivo frente a reintentos concurrentes; no retirar el lock con la arquitectura actual de estados mutables.
 - Sin despliegue Apps Script ni cambios en Spreadsheet/Drive productivos.
+
+
+### PyS — fase 2b: propiedad de archivo sin ambigüedad (2026-11-21)
+
+- Se endureció readPysOperations_: duplicados físicos del mismo opId/hash/problemId también deben apuntar al mismo imageFileId/imageUrl. Diferencias de propiedad de archivo se rechazan para reconciliación.
+- Nueva regresión en PysCreationIntegrity. CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages 44873650240 queued al momento del registro.
+- No se retiró ScriptLock de handleAddProblem. El siguiente trabajo sigue siendo diseñar/probar el ledger de reserva canónica y propiedad de imagen antes de migrar el handler.
+- Sin despliegue ni cambios productivos.
