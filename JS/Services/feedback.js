@@ -3857,7 +3857,7 @@ function writePysOperation_(sheet, rowNumber, record) {
     if (!matches.length) throw new Error("No se pudo confirmar la reserva append-only de la operación PyS.");
     return Object.assign({}, record, { rowNumber: matches[0], duplicateReservationCount: matches.length - 1 });
 }
-function findPysRowsById_(sheet, id) {
+function findCanonicalPysRowsById_(sheet, id) {
     const last = sheet ? sheet.getLastRow() : 0, target = String(id || "").trim().toLowerCase();
     if (!target || last < 2) return [];
     const idRange = sheet.getRange(2, 1, last - 1, 1);
@@ -3887,6 +3887,28 @@ function findPysRowsById_(sheet, id) {
     }
     return matches;
 }
+function findPysRowsById_(sheet, id) {
+    const last = sheet ? sheet.getLastRow() : 0, target = String(id || "").trim().toLowerCase();
+    if (!target || last < 2) return [];
+    const range = sheet.getRange(2, 1, last - 1, 1), candidates = [];
+    if (range && typeof range.createTextFinder === "function") {
+        candidates.push(...range.createTextFinder(target).matchCase(false).findAll());
+    } else {
+        range.getValues().forEach((value, index) => {
+            if (String(value[0] || "").trim().toLowerCase() === target) candidates.push({ getRow: () => index + 2 });
+        });
+    }
+    const matches = [];
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const storedId = String(sheet.getRange(rowNumber, 1, 1, 1).getValues()[0][0] || "").trim().toLowerCase();
+        if (storedId !== target) return;
+        matches.push({ rowNumber, row: sheet.getRange(rowNumber, 1, 1, 10).getValues()[0] });
+    });
+    return matches;
+}
+
+
 function getPysNextId_(sheet,ops){let max=validatePysRecords_(sheet).maxSuffix;ops.forEach(o=>{const m=o.problemId.match(/^isue-(\d+)$/i),n=m?Number(m[1]):NaN;if(!Number.isSafeInteger(n)||n<1)throw new Error("La hoja PysOperations contiene un problemId inválido.");max=Math.max(max,n);});if(max>=Number.MAX_SAFE_INTEGER)throw new Error("Se agotó la secuencia segura de identificadores PyS.");return getNextFormulaBasedId_(sheet,1,max);}
 function getPysSha256_(v){return Array.from(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,v)).map(b=>(b&255).toString(16).padStart(2,"0")).join("");}
 function buildPysPayloadHash_(p,image,models){return getPysSha256_(JSON.stringify({titulo:p.titulo,descripcion:p.descripcion,sinSolucion:Boolean(p.sinSolucion),solucion:p.solucion,prevenir:p.prevenir,userId:String(p.userId).trim(),userName:String(p.userName).trim(),alcance:p.alcance==="especifico"?"especifico":"general",modelosAsociados:models,imageMimeType:image.mimeType,imageSha256:getPysSha256_(image.bytes)}));}
