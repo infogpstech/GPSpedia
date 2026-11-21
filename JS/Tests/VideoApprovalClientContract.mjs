@@ -46,16 +46,14 @@ test("FEEDBACK autentica init, recuperación y envío con matriz servidor",()=>{
  assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
  assert.match(feedback,/userRole: actor\.role/);
 });
-test("submit comparte lease coordinada con approve/reject",()=>{
- const start=feedback.indexOf("function handleSubmitVideoForApproval(payload)");
- const end=feedback.indexOf("\nfunction ",start+20);
- const body=feedback.slice(start,end);
- assert.match(body,/withVideoApprovalMutationLock_/);
- assert.match(body,/submitVideoForApproval/);
- const lockStart=feedback.indexOf("function withVideoApprovalMutationLock_");
- const lockEnd=feedback.indexOf("\nfunction ",lockStart+20);
- assert.match(feedback.slice(lockStart,lockEnd),/withSharedMutationLease_/);
- assert.doesNotMatch(feedback.slice(lockStart,lockEnd),/LockService\.getScriptLock/);
+test("envío, aprobación y rechazo de vídeo se ejecutan sin leases Coordinator",()=>{
+ const submitStart=feedback.indexOf("function handleSubmitVideoForApproval(payload)");
+ const submitEnd=feedback.indexOf("\nfunction ",submitStart+20);
+ const submit=feedback.slice(submitStart,submitEnd);
+ assert.match(submit,/return \(\(\) => \{/);
+ assert.doesNotMatch(feedback,/withVideoApprovalMutationLock_|return withSharedMutationLease_\("FEEDBACK"/);
+ assert.match(feedback,/function handleApproveVideo\(payload\) \{\s*return handleApproveVideoUnlocked_\(payload\);/);
+ assert.match(feedback,/function handleRejectVideo\(payload\) \{\s*return handleRejectVideoUnlocked_\(payload\);/);
 });
 test("Feedbacks confirma aprobación antes de publicar el destino",()=>{
  const start=feedback.indexOf("function handleApproveVideoUnlocked_(payload)");
