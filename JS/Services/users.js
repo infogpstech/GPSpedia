@@ -309,7 +309,7 @@ function readUsersDirectTraffic_(suppliedSecret) {
 }
 
 function isSharedMutationAction_(action) {
-    return ["createUser","updateProfile"].includes(action);
+    return ["createUser"].includes(action);
 }
 
 function doPost(e) {
@@ -329,7 +329,7 @@ function doPost(e) {
     if (action === "getUsers") recordUsersDirectTraffic_();
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
-        if (action !== "getUsers") return doPostInternal_(withSharedSessionActor_(e, null));
+        if (!["getUsers", "updateProfile"].includes(action)) return doPostInternal_(withSharedSessionActor_(e, null));
         try {
             // getUsers es una lectura: reutiliza el actor local y no adquiere una lease
             // de actividad en Coordinator en cada apertura de la pantalla.
