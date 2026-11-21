@@ -1,0 +1,94 @@
+# Auditoría visual de modales y cascada CSS — 2026-11-21
+
+## Alcance y evidencia
+
+- Rama revisada: `GPSpedia2.2.5_work`.
+- Archivos principales: `style.css`, `JS/Frontend/ui.js`, `index.html`, `HTML/users.html`, `HTML/add_cortes.html`.
+- Comparación histórica: rama `GPSpedia-2.1.7` frente al código actual de la rama de trabajo (README y módulo frontend identifican la línea actual como 2.2.5).
+- Prueba focalizada existente: `JS/Tests/CutDetailModalLayout.mjs`.
+- Método: inspección de markup dinámico, reglas CSS y orden de cascada; recuento estático de selectores repetidos. No se ejecutó navegador real ni se midieron estilos computados en viewport físico; la aceptación visual real sigue siendo Beta.
+
+## 1. Modal de detalle de corte
+
+### Diferencias de estructura
+
+En 2.1.7, `mostrarDetalleModal` crea el encabezado mediante flex inline: acciones en una fila, cierre como último control y logo/modelo en un contenedor posterior. El CSS histórico fijaba el logo genérico en 48 px en escritorio y 38 px en móvil; el modal tenía 90% de ancho, máximo 800 px y padding 15 px.
+
+En la rama actual, el encabezado se construye con nodos independientes y clases:
+- `.detail-modal-toolbar`: contenedor de cuadrícula.
+- `.detail-modal-title`: contenedor del logo.
+- `.detail-modal-title-text` o `.detail-modal-title-input`: nombre o campo de edición.
+- `.detail-modal-header-actions`: compartir, imprimir, editar/guardar/descartar y cierre.
+- `.detail-modal-divider` y `.detail-modal-saving-indicator`.
+
+La cuadrícula es una evolución funcional respecto al flex histórico, no debe revertirse sin perder la distribución explícita del título y las acciones. El código inserta el cierre dentro de `.detail-modal-header-actions`; la regla exclusiva de corte lo mantiene en flujo estático, alineado al extremo derecho.
+
+### Hallazgo de proporción y corrección aplicada
+
+Las reglas heredadas de la base compartida asignaban al logo hasta 120 px y la versión previa del encabezado de corte repetía esa dimensión en escritorio y 60 px en móvil. Esto hacía que el elemento visual dominante fuera mucho mayor que los botones de acción (40 px) y que el área útil del encabezado.
+
+Se normalizó el logo del modal de corte a:
+- 64 px en escritorio.
+- 48 px en móvil.
+- `object-fit: contain`, ancho natural, sin estirar ni recortar el logo.
+- Contenedor del logo con la misma altura y alineación superior izquierda.
+- Botones de acción y cierre conservan sus objetivos de 40 px; el cierre sigue dentro de la fila de acciones y no vuelve a posicionamiento absoluto.
+
+Las reglas específicas de corte se mantienen juntas en el bloque identificado como `GP-UX-MODAL-HEADER-TIGHTEN-03`. Las reglas genéricas anteriores constituyen la base compartida de otros modales; la sección específica de corte debe prevalecer sobre ellas por especificidad y posición en la cascada. No se debe eliminar la base compartida como si fuera una duplicación exclusiva de corte.
+
+### Riesgo de cascada identificado
+
+Antes del bloque específico de corte hay reglas genéricas de `.detail-modal-toolbar`, `.detail-modal-title`, `.detail-modal-title-text`, `.detail-modal-title-input`, `.detail-modal-header-actions`, `.detail-modal-divider` y `.detail-modal-saving-indicator` en varios sectores del archivo. Algunas se comparten con encabezados de tutoriales, PyS o Relay. La regla final scoped a `#modalDetalle[data-modal-type="corte"]` gana para el corte; las reglas genéricas siguen aplicando a los demás modales.
+
+No deben fusionarse indiscriminadamente: hay que separar explícitamente la base compartida de las variantes por tipo de modal y conservar el último valor efectivo de cada propiedad. La siguiente iteración de la auditoría debe consolidar los bloques compartidos y las variantes de cada modal sin alterar contratos de tutoriales, PyS, Relay, Inbox o Developer Tools.
+
+## 2. Inventario estático de selectores repetidos
+
+El escaneo de `style.css` encontró, entre otros, los siguientes selectores exactos repetidos en múltiples reglas:
+
+| Selector | Apariciones |
+|---|---:|
+| `.detail-modal-header-actions` | 6 |
+| `.detail-modal-title-text` | 5 |
+| `.detail-modal-title-input` | 5 |
+| `.detail-modal-toolbar` | 4 |
+| `.detail-modal-title` | 4 |
+| `.detail-modal-title .brand-logo-modal` | 4 |
+| `.detail-modal-header-actions .share-modal-btn` | 4 |
+| `.detail-modal-toolbar > .info-close-btn` | 4 |
+| `.detail-modal-divider` | 4 |
+| `.info-modal-content` | 4 |
+| `#modalDetalle` | 3 |
+| `#inbox-modal-content .inbox-modal-header` | 4 |
+| `#dev-tools-modal .dev-tools-title` | 7 |
+
+El recuento incluye reglas base y media queries. No significa que cada repetición sea un conflicto: una regla móvil o una variante scoped puede ser intencional. Sí identifica áreas donde hay que documentar y ordenar la cascada para evitar sobrescrituras accidentales.
+
+## 3. Criterios de consolidación
+
+1. Un único bloque de estilos base por componente/modal.
+2. Un bloque de variantes responsive contiguo al componente correspondiente.
+3. Variantes por tipo de modal con selector explícito y sin afectar a los demás.
+4. Cuando haya dos declaraciones del mismo selector, conservar el valor que realmente gana hoy en la cascada, salvo que la auditoría demuestre que ese valor es el defecto.
+5. Revisar `!important`, estilos inline y especificidad antes de mover reglas.
+6. Mantener dimensiones accesibles de controles, orden de tabulación, etiquetas ARIA, foco y comportamiento de cierre.
+7. No modificar RBAC, handlers ni comportamiento de negocio como solución a un defecto visual.
+8. Actualizar contratos CSS/DOM y ejecutar la regresión integral después de cada bloque consolidado.
+
+## 4. Estado de pruebas
+
+- `CutDetailModalLayout.mjs` actualizado para reflejar 64 px escritorio y 48 px móvil en el encabezado de corte.
+- Las pruebas estáticas comprueban la cuadrícula, la ubicación del cierre, el logo, el nombre del modelo, la edición y la variante móvil.
+- La ejecución local de la suite completa y la inspección visual en escritorio/Android quedan pendientes de evidencia de CI/Beta. No se declara aprobación visual por una inspección de CSS.
+
+## 5. Pendientes derivados y prioridad
+
+1. Completar consolidación de reglas repetidas de encabezados de detalle, separando base compartida y variantes por modal.
+2. Auditar `info-modal-content` y `.info-close-btn` (modales informativos) para evitar que el cierre absoluto interfiera con títulos largos.
+3. Consolidar por separado los bloques de Inbox y Developer Tools; tienen múltiples reglas responsive y deben validarse con sus contratos actuales.
+4. Revisar reglas de modo oscuro y contraste de botones/logos en cada familia de modal.
+5. Ejecutar regresión automatizada y aceptación visual en escritorio, Android/PWA y viewport estrecho. Esta última parte permanece en Beta.
+
+## 6. Límite de la auditoría
+
+Este documento registra el resultado estático de la primera pasada y la corrección acotada del encabezado de corte. No declara terminada la auditoría visual integral de toda la plataforma. No se desplegaron proyectos Apps Script ni se modificaron datos de Spreadsheet/Drive.
