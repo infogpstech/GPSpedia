@@ -761,6 +761,54 @@ function projectTutorialCatalogRows_(records, editEventRows) {
     return canonicalRows;
 }
 
+function projectTutorialCatalogTitles_(records, renameEventRows) {
+    const events = new Map(), operations = new Map();
+    (renameEventRows || []).forEach(event => {
+        const operationId = String(event[0] || "").trim(), payloadHash = String(event[1] || "").trim().toLowerCase();
+        const tutorialId = String(event[2] || "").trim(), expectedTitleKey = String(event[3] || "").trim();
+        const title = String(event[4] || "").trim();
+        if (!/^tutorial-rename-[a-f0-9]{64}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+            !/^(?:tut-[A-Za-z0-9_-]{1,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) ||
+            !expectedTitleKey || !title || title.length > 30 ||
+            tutorialRenamePayloadHash_(tutorialId, expectedTitleKey, title) !== payloadHash ||
+            operationId !== "tutorial-rename-" + payloadHash) {
+            throw new Error("TutorialRenameEvents contiene una fila incompatible o un hash alterado; no se pudo proyectar el catálogo.");
+        }
+        if (operations.has(operationId) && operations.get(operationId) !== payloadHash) {
+            throw new Error("TutorialRenameEvents contiene un operationId contradictorio; requiere revisión.");
+        }
+        if (operations.has(operationId)) return;
+        operations.set(operationId, payloadHash);
+        if (!events.has(tutorialId)) events.set(tutorialId, []);
+        events.get(tutorialId).push({ expectedTitleKey, title });
+    });
+    return (records || []).map(sourceRow => {
+        const row = sourceRow.slice(), id = String(row[0] || "").trim();
+        const identity = id || tutorialLegacyIdentity_(row[1]);
+        let currentTitle = String(row[1] || "");
+        (events.get(identity) || []).forEach(event => {
+            if (event.expectedTitleKey === normalizeTutorialCatalogTitle_(currentTitle)) currentTitle = event.title;
+        });
+        row[1] = currentTitle;
+        return row;
+    });
+}
+function tutorialRenamePayloadHash_(tutorialId, expectedTitleKey, title) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify([tutorialId, expectedTitleKey, title]));
+    return digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+}
+function normalizeTutorialCatalogTitle_(value) {
+    const normalized = Array.from(String(value || "").normalize("NFD"))
+        .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
+    return normalized.trim().replace(/\s+/g, " ").toLowerCase();
+}
+function tutorialLegacyIdentity_(title) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizeTutorialCatalogTitle_(title));
+    const hash = digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+    return "legacy-" + hash;
+}
+
+
 function dedupeTutorialCatalogRows_(records) {
     const byId = new Map(), output = [];
     (records || []).forEach(record => {
@@ -900,7 +948,8 @@ function handleGetCatalogData(payload = {}) {
     if (tutorialesSheet) {
         const data = tutorialesSheet.getDataRange().getValues();
         const editEventsSheet = getSpreadsheet().getSheetByName("TutorialEditEvents");
-        let editEventRows = [];
+        const renameEventsSheet = getSpreadsheet().getSheetByName("TutorialRenameEvents");
+        let editEventRows = [], renameEventRows = [];
         if (editEventsSheet) {
             const editData = editEventsSheet.getDataRange().getValues();
             const expectedHeaders = ["operationId", "payloadHash", "tutorialId", "expectedHash", "snapshotJson", "createdAt"];
@@ -909,7 +958,16 @@ function handleGetCatalogData(payload = {}) {
             }
             editEventRows = editData.slice(1);
         }
-        tutorialesData = dedupeTutorialCatalogRows_(projectTutorialCatalogRows_(data.slice(1), editEventRows)
+        if (renameEventsSheet) {
+            const renameData = renameEventsSheet.getDataRange().getValues();
+            const expectedRenameHeaders = ["operationId", "payloadHash", "tutorialId", "expectedTitleKey", "title", "createdAt"];
+            if (!renameData.length || expectedRenameHeaders.some((header, index) => String(renameData[0][index] || "").trim() !== header)) {
+                throw new Error("El esquema de TutorialRenameEvents no coincide; no se pudo proyectar el catálogo.");
+            }
+            renameEventRows = renameData.slice(1);
+        }
+        const projectedTitleRows = projectTutorialCatalogTitles_(data.slice(1), renameEventRows);
+        tutorialesData = dedupeTutorialCatalogRows_(projectTutorialCatalogRows_(projectedTitleRows, editEventRows)
             .map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean));
     }
     allData.tutoriales = tutorialesData;

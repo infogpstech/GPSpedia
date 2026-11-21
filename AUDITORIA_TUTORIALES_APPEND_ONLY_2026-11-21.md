@@ -111,3 +111,14 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - Regresión: TutorialIntegrity cubre conflicto de operationId y hash manipulado.
 - CI HEAD ea04e631692b0adeb29918ffdecfe4f95b929848: 258 suites, 3103 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Pages estaba en ejecución al cerrar esta adenda.
 - Esto endurece la fase actual, pero no migra renombrados: handleUpdateTutorialItem todavía mantiene ScriptLock para cambios de título y filas legacy sin ID.
+
+
+## Implementación fase 3 — renombrados append-only (2026-11-21)
+
+- `handleUpdateTutorialItem` ahora resuelve renombrados de tutoriales con ID estable sin ScriptLock. Registra la reserva/liberación first-write-wins en `TutorialTitleEvents` y el título visible en `TutorialRenameEvents`; la fila física B no se reescribe.
+- El evento RENAME exige que el tutorial siga siendo propietario del título anterior. Dos renombrados concurrentes basados en la misma versión no pueden ganar ambos.
+- `findTutorialRow_`, búsqueda por tema, unicidad de títulos, feed FEEDBACK y CATALOG consumen el título proyectado; Imagen, Video y Colaborador quedan fuera del snapshot de renombrado.
+- Las filas históricas sin ID mantienen su ruta previa bajo lock; su migración queda pendiente de una identidad compatible y pruebas específicas. No se inventa ni persiste un ID legacy.
+- La aprobación de vídeo pendiente continúa impidiendo renombrar. Concurrencia real multihoja y fallos entre journals quedan pendientes de Beta aislada.
+- Regresiones añadidas: renombrado lock-free, compare-and-swap de título anterior y proyección CATALOG conservando campos no relacionados.
+- No se desplegó Apps Script ni se modificaron recursos productivos.

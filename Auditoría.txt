@@ -1064,3 +1064,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Regresión: TutorialIntegrity incluye ambos escenarios; CI 44901700375 SUCCESS, 258 suites, 3103 pruebas, 0 fallos; health read-only SUCCESS.
 - Se mantiene pendiente migrar renombrados a eventos versionados sin lock. Sin despliegue ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — AUDITORÍA / CORRECCIÓN TUTORIALES: RENOMBRADOS
+- Hallazgo: renombrar mantenía escritura B:F in-place bajo ScriptLock y el ledger no conservaba el título visible como fuente append-only.
+- Corrección: `TutorialRenameEvents` conserva título visible, identidad, expectedTitleKey y hash; `TutorialTitleEvents` exige propiedad vigente del título anterior.
+- Consumidores adaptados: `findTutorialRow_`, búsqueda por tema, unicidad de títulos, feed y CATALOG. Se preservan campos Imagen/Video/Colaborador.
+- La ruta de filas históricas sin ID sigue sin migrarse; Beta debe verificar concurrencia y fallos multihoja.

@@ -501,3 +501,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Hubo un primer fallo de prueba por invocar el lector sin pasarle la hoja; se corrigió el harness y la ejecución final aprobó. No quedó fallo de código pendiente.
 - Pendiente siguiente: migrar renombrados de tutoriales a eventos append-only sin lock, con proyección de título visible y unicidad compatible con CATALOG/feed. Después auditar aprobaciones de vídeo.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — renombrados de tutoriales append-only (2026-11-21)
+
+- HEAD de partida: `f5bb4bdf6844d38fae3b0a30a8706b8e04692268`.
+- `handleUpdateTutorialItem` registra renombrados de tutoriales con ID estable en `TutorialTitleEvents` y `TutorialRenameEvents`; no reescribe B ni adquiere ScriptLock para esta ruta.
+- La proyección conserva título, D:F, Imagen, Video y Colaborador. `findTutorialRow_`, lookup por tema, feed y CATALOG utilizan la misma versión visible.
+- Regresiones añadidas para renombrado lock-free, un único ganador desde el mismo título anterior y lectura CATALOG.
+- Validación local/CI pendiente de ejecución; no se desplegó Apps Script ni se modificaron datos productivos.
+- Pendientes: aprobación/rechazo de vídeos, edición descriptiva legacy y validación Beta aislada.

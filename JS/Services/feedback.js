@@ -4285,6 +4285,10 @@ const TUTORIAL_EDIT_EVENTS_HEADERS = Object.freeze([
     "operationId", "payloadHash", "tutorialId", "expectedHash", "snapshotJson", "createdAt"
 ]);
 
+const TUTORIAL_RENAME_EVENTS_HEADERS = Object.freeze([
+    "operationId", "payloadHash", "tutorialId", "expectedTitleKey", "title", "createdAt"
+]);
+
 function getTutorialSheet_(createIfMissing) {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("Tutorial");
@@ -4375,6 +4379,97 @@ function getTutorialEditEventsSheet_(createIfMissing) {
     return sheet;
 }
 
+function getTutorialRenameEventsSheet_(createIfMissing) {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("TutorialRenameEvents");
+    if (!sheet && createIfMissing) {
+        try { sheet = ss.insertSheet("TutorialRenameEvents"); }
+        catch (insertError) { sheet = ss.getSheetByName("TutorialRenameEvents"); if (!sheet) throw insertError; }
+    }
+    if (!sheet) return null;
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, TUTORIAL_RENAME_EVENTS_HEADERS.length).setValues([TUTORIAL_RENAME_EVENTS_HEADERS.slice()]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+    const width = Math.max(TUTORIAL_RENAME_EVENTS_HEADERS.length, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(value => String(value || "").trim());
+    if (width !== TUTORIAL_RENAME_EVENTS_HEADERS.length ||
+        TUTORIAL_RENAME_EVENTS_HEADERS.some((header, index) => headers[index] !== header)) {
+        throw new Error("El esquema de TutorialRenameEvents no coincide; no se modificó la hoja.");
+    }
+    return sheet;
+}
+function readTutorialRenameEvents_(sheet) {
+    const last = sheet ? sheet.getLastRow() : 0, operations = new Map();
+    if (last < 2) return [];
+    const rows = sheet.getRange(2, 1, last - 1, TUTORIAL_RENAME_EVENTS_HEADERS.length).getValues();
+    rows.forEach((row, index) => {
+        if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
+        const operationId = String(row[0] || "").trim(), payloadHash = String(row[1] || "").trim().toLowerCase();
+        const tutorialId = String(row[2] || "").trim(), expectedTitleKey = String(row[3] || "").trim();
+        const title = String(row[4] || "").trim();
+        if (!/^tutorial-rename-[a-f0-9]{64}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+            !/^(?:tut-[A-Za-z0-9_-]{1,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) ||
+            !expectedTitleKey || !title || title.length > 30 ||
+            buildTutorialContentHash_([tutorialId, expectedTitleKey, title]) !== payloadHash ||
+            operationId !== "tutorial-rename-" + payloadHash) {
+            throw new Error("TutorialRenameEvents contiene una fila incompatible o un hash alterado; requiere revisión.");
+        }
+        const item = { rowNumber: index + 2, operationId, payloadHash, tutorialId, expectedTitleKey, title };
+        if (operations.has(operationId) && operations.get(operationId).payloadHash !== payloadHash) {
+            throw new Error("TutorialRenameEvents contiene un operationId contradictorio; requiere reconciliación.");
+        }
+        if (!operations.has(operationId)) operations.set(operationId, item);
+    });
+    return Array.from(operations.values());
+}
+function projectTutorialTitle_(tutorialId, baseTitle) {
+    const id = String(tutorialId || "").trim(), rowTitle = String(baseTitle || "");
+    if (!id || !rowTitle) return rowTitle;
+    const sheet = getTutorialRenameEventsSheet_(false);
+    if (!sheet) return rowTitle;
+    let current = rowTitle;
+    readTutorialRenameEvents_(sheet).filter(event => event.tutorialId === id).forEach(event => {
+        if (event.expectedTitleKey === normalizeTutorialTitle_(current)) current = event.title;
+    });
+    return current;
+}
+function ensureTutorialTitleClaim_(tutorialId, title) {
+    const id = String(tutorialId || "").trim(), titleKey = normalizeTutorialTitle_(title);
+    if (!id || !titleKey) throw new Error("No se pudo identificar el tema actual del tutorial.");
+    const owner = getTutorialTitleOwner_(title);
+    if (owner && owner !== id) throw new Error("El tema actual está reservado por otro tutorial; requiere revisión.");
+    if (owner === id) return;
+    const payloadHash = buildTutorialContentHash_([id, titleKey, "baseline"]);
+    appendTutorialTitleEvent_({
+        operationId: "tutorial-title-claim-" + payloadHash,
+        tutorialId: id, action: "CLAIM", titleKey, previousTitleKey: "", payloadHash
+    });
+}
+function appendTutorialRenameEvent_(tutorialId, previousTitle, nextTitle) {
+    const id = String(tutorialId || "").trim(), expectedTitleKey = normalizeTutorialTitle_(previousTitle);
+    const title = String(nextTitle || "").trim(), payloadHash = buildTutorialContentHash_([id, expectedTitleKey, title]);
+    const operationId = "tutorial-rename-" + payloadHash, sheet = getTutorialRenameEventsSheet_(true);
+    let existing = readTutorialRenameEvents_(sheet).find(event => event.operationId === operationId);
+    if (existing && (existing.payloadHash !== payloadHash || existing.tutorialId !== id ||
+        existing.expectedTitleKey !== expectedTitleKey || existing.title !== title)) {
+        throw new Error("El identificador de renombrado ya pertenece a otro contenido.");
+    }
+    if (!existing) {
+        sheet.appendRow([operationId, payloadHash, id, expectedTitleKey, title, new Date().toISOString()]);
+        try { SpreadsheetApp.flush(); }
+        catch (flushError) {
+            existing = readTutorialRenameEvents_(sheet).find(event => event.operationId === operationId);
+            if (!existing || existing.payloadHash !== payloadHash) throw flushError;
+        }
+    }
+    if (normalizeTutorialTitle_(projectTutorialTitle_(id, previousTitle)) !== normalizeTutorialTitle_(title)) {
+        throw new Error("Otra edición modificó el tema del tutorial; actualiza los datos y vuelve a intentarlo.");
+    }
+    return { operationId, tutorialId: id, title };
+}
+
 function normalizeTutorialTitle_(value) {
     const normalized = Array.from(String(value || "").normalize("NFD"))
         .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
@@ -4438,6 +4533,8 @@ function findTutorialRow_(sheet, reference, preferId) {
     }
     if (byId) {
         const projected = projectTutorialEditFields_(byId.row[0], byId.row);
+        const identity = String(byId.row[0] || "").trim() || makeLegacyTutorialIdentity_(byId.row[1]);
+        projected.row[1] = projectTutorialTitle_(identity, projected.row[1]);
         return Object.assign({}, byId, { row: projected.row, appliedEditOperations: projected.appliedOperations });
     }
     if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) throw new Error("Tutorial no encontrado.");
@@ -4446,9 +4543,12 @@ function findTutorialRow_(sheet, reference, preferId) {
         const titleValues = lastRow > 1 ? sheet.getRange(2, 2, lastRow - 1, 1).getValues() : [];
         const byTitle = [];
         titleValues.forEach((value, index) => {
-            if (String(value[0] || "").trim() !== key) return;
             const rowIndex = index + 2;
             const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+            const identity = String(row[0] || "").trim() || makeLegacyTutorialIdentity_(row[1]);
+            const projectedTitle = projectTutorialTitle_(identity, row[1]);
+            if (normalizeTutorialTitle_(projectedTitle) !== normalizeTutorialTitle_(key)) return;
+            row[1] = projectedTitle;
             byTitle.push({ rowIndex, row });
         });
         if (byTitle.length > 1) {
@@ -4504,7 +4604,8 @@ function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId
     return rows.some((row, index) => {
         const rowIndex = index + 2, rowId = String(row[0] || "").trim();
         if (rowIndex === excluded || (excludedTutorialId && rowId.toLowerCase() === String(excludedTutorialId).toLowerCase())) return false;
-        return normalizeTutorialTitle_(row[1]) === titleKey;
+        const identity = rowId || makeLegacyTutorialIdentity_(row[1]);
+        return normalizeTutorialTitle_(projectTutorialTitle_(identity, row[1])) === titleKey;
     });
 }
 
@@ -4553,8 +4654,8 @@ function readTutorialTitleEvents_(sheet) {
         if (action === "CLAIM") {
             if (!currentOwner || currentOwner === tutorialId) { owners.set(titleKey, tutorialId); applied.set(operationId, true); }
             else applied.set(operationId, false);
-        } else if ((!currentOwner || currentOwner === tutorialId) &&
-            (!owners.has(previousTitleKey) || owners.get(previousTitleKey) === tutorialId)) {
+        } else if (owners.get(previousTitleKey) === tutorialId &&
+            (!currentOwner || currentOwner === tutorialId)) {
             if (owners.get(previousTitleKey) === tutorialId) owners.delete(previousTitleKey);
             owners.set(titleKey, tutorialId); applied.set(operationId, true);
         } else applied.set(operationId, false);
@@ -5573,6 +5674,57 @@ function handleUpdateTutorialItem(payload) {
     }
 
     const preflightId = preflightTarget ? String(preflightTarget.row[0] || "").trim() : "";
+    if (preflightTarget && /^tut-[A-Za-z0-9_-]{20,80}$/i.test(preflightId)) {
+        const currentTitle = String(preflightTarget.row[1] || "").trim();
+        const nextTitle = updates.tema !== undefined ? updates.tema : currentTitle;
+        const titleChanged = normalizeTutorialTitle_(nextTitle) !== normalizeTutorialTitle_(currentTitle);
+        const nextSnapshot = [
+            updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(preflightTarget.row[3] || ""),
+            updates.dondeEncontrarlo !== undefined ? updates.dondeEncontrarlo : String(preflightTarget.row[4] || ""),
+            updates.detalles !== undefined ? updates.detalles : String(preflightTarget.row[5] || "")
+        ];
+        const currentSnapshot = [preflightTarget.row[3], preflightTarget.row[4], preflightTarget.row[5]].map(value => String(value || ""));
+        if (titleChanged) {
+            const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+            const hasPendingVideo = feedbackSheet && (
+                findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", reference) ||
+                (currentTitle && currentTitle !== reference && findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", currentTitle))
+            );
+            if (hasPendingVideo) throw new Error("No se puede cambiar el tema mientras exista una solicitud de vídeo pendiente para este tutorial.");
+            if (tutorialTitleExists_(preflightSheet, nextTitle, preflightTarget.rowIndex, preflightId)) {
+                throw new Error("Ya existe otro tutorial con ese tema; no se modificó el registro.");
+            }
+            const titlePayloadHash = buildTutorialContentHash_([preflightId,
+                normalizeTutorialTitle_(currentTitle), normalizeTutorialTitle_(nextTitle)]);
+            const titleOperationId = "tutorial-title-rename-" + titlePayloadHash;
+            const titleLedger = getTutorialTitleEventsSheet_(false);
+            const prior = titleLedger ? readTutorialTitleEvents_(titleLedger) : { operations: [], owners: new Map(), applied: new Map() };
+            const priorEvent = prior.operations.find(event => event.operationId === titleOperationId);
+            if (!(priorEvent && prior.applied.get(titleOperationId) === true && prior.owners.get(normalizeTutorialTitle_(nextTitle)) === preflightId)) {
+                ensureTutorialTitleClaim_(preflightId, currentTitle);
+                appendTutorialTitleEvent_({
+                    operationId: titleOperationId, tutorialId: preflightId, action: "RENAME",
+                    titleKey: normalizeTutorialTitle_(nextTitle), previousTitleKey: normalizeTutorialTitle_(currentTitle),
+                    payloadHash: titlePayloadHash
+                });
+            }
+            appendTutorialRenameEvent_(preflightId, currentTitle, nextTitle);
+        }
+        if (!nextSnapshot.every((value, index) => value === currentSnapshot[index])) {
+            appendTutorialEditEvent_(preflightId, preflightTarget.row, nextSnapshot);
+        }
+        const saved = findTutorialRow_(preflightSheet, preflightId, true);
+        if (normalizeTutorialTitle_(saved.row[1]) !== normalizeTutorialTitle_(nextTitle) ||
+            !nextSnapshot.every((value, index) => value === String(saved.row[index + 3] || ""))) {
+            throw new Error("La proyección append-only del tutorial no coincide con los cambios solicitados.");
+        }
+        return {
+            status: "success",
+            message: "Tutorial actualizado exitosamente.",
+            updated: { tutorialId: preflightId, tema: String(saved.row[1] || ""),
+                comoIdentificarlo: nextSnapshot[0], dondeEncontrarlo: nextSnapshot[1], detalles: nextSnapshot[2] }
+        };
+    }
     const titleUnchanged = preflightTarget &&
         (updates.tema === undefined || String(updates.tema) === String(preflightTarget.row[1] || ""));
     if (preflightTarget && /^tut-[A-Za-z0-9_-]{20,80}$/i.test(preflightId) && titleUnchanged) {

@@ -416,3 +416,17 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [ ] Migrar renombrados a eventos append-only sin ScriptLock y proyectar el título actual en findTutorialRow_, CATALOG y feed.
 - [ ] Auditar aprobaciones de vídeo después de cerrar renombrados.
 - La edición de filas históricas sin ID sigue bajo lock hasta diseñar transición segura.
+
+
+## Tutoriales — fase 3: renombrados append-only
+
+- [x] Registrar el título visible en `TutorialRenameEvents` y coordinar unicidad/liberación con `TutorialTitleEvents`.
+- [x] Exigir propiedad del título anterior como condición de versión; dos renombrados desde el mismo estado no pueden aplicarse ambos.
+- [x] Proyectar título en `findTutorialRow_`, lookup por tema, feed y CATALOG sin reescribir la fila física.
+- [x] Mantener protección frente a solicitudes de vídeo pendientes y conservar Imagen, Video y Colaborador.
+- [ ] Ejecutar regresión `TutorialIntegrity` y suite completa de servicios en CI.
+- [ ] Adaptar aprobaciones de vídeo para el modelo completo de tutoriales.
+- [ ] Migrar filas históricas sin ID sin inventar identidades persistentes.
+- [ ] Beta aislada: concurrencia real de `appendRow`, fallos entre ambos journals, flush incierto y reconciliación de reservas.
+
+Estado: **EN PROGRESO** hasta confirmar pruebas y publicación.

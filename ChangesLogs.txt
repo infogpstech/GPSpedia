@@ -291,3 +291,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se agregaron regresiones para hash alterado y reserva contradictoria; duplicados idénticos siguen aceptándose.
 - CI 44901700375 SUCCESS: 258 suites, 3103 pruebas aprobadas, 0 fallos; health read-only 44901700446 SUCCESS; Pages 44901699997 en ejecución al registrar.
 - Siguiente cambio: migración append-only/lock-free de renombrados y proyección del título actual. Sin despliegue Apps Script ni cambios productivos.
+
+
+2026-11-21 — TUTORIALES: RENOMBRADOS APPEND-ONLY
+- `handleUpdateTutorialItem` registra el título visible en `TutorialRenameEvents` y reserva/libera el nombre mediante `TutorialTitleEvents` con compare-and-swap del título anterior.
+- `findTutorialRow_`, lookup por tema, feed FEEDBACK y CATALOG proyectan el título sin modificar la fila física B.
+- Se preservan Imagen, Video y Colaborador; la aprobación pendiente sigue bloqueando renombrados. No se desplegó Apps Script ni se modificaron datos productivos.

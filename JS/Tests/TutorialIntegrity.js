@@ -48,10 +48,12 @@ function makeSheet_(rows, options = {}) {
 function buildHarness_(feedback, options = {}) {
     const initial = options.rows || [];
     const sheet = makeSheet_(initial, options);
-    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false, insertedEditEvents: false, titleEventsSheet: null };
+    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false, insertedEditEvents: false, insertedRenameEvents: false, titleEventsSheet: null, renameEventsSheet: null };
     const titleEventsSheet = makeSheet_(options.titleEvents || [], options);
     state.titleEventsSheet = titleEventsSheet;
     const editEventsSheet = makeSheet_(options.editEvents || [], options);
+    const renameEventsSheet = makeSheet_(options.renameEvents || [], options);
+    state.renameEventsSheet = renameEventsSheet;
     const context = {
         LockService: { getScriptLock: () => ({
             waitLock() { state.lockWaits++; },
@@ -66,11 +68,13 @@ function buildHarness_(feedback, options = {}) {
             getSheetByName: name => name === "Tutorial"
                 ? (options.missingSheet !== true ? sheet : null)
                 : name === "TutorialTitleEvents" ? (state.insertedTitleEvents || options.titleEvents ? titleEventsSheet : null)
-                : name === "TutorialEditEvents" ? (state.insertedEditEvents || options.editEvents ? editEventsSheet : null) : null,
+                : name === "TutorialEditEvents" ? (state.insertedEditEvents || options.editEvents ? editEventsSheet : null)
+                : name === "TutorialRenameEvents" ? (state.insertedRenameEvents || options.renameEvents ? renameEventsSheet : null) : null,
             insertSheet: name => {
                 if (name === "Tutorial") { state.inserted = true; return sheet; }
                 if (name === "TutorialTitleEvents") { state.insertedTitleEvents = true; return titleEventsSheet; }
                 if (name === "TutorialEditEvents") { state.insertedEditEvents = true; return editEventsSheet; }
+                if (name === "TutorialRenameEvents") { state.insertedRenameEvents = true; return renameEventsSheet; }
                 throw new Error("wrong sheet");
             }
         }),
@@ -83,20 +87,23 @@ function buildHarness_(feedback, options = {}) {
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
-    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, titleEventsSheet: state.titleEventsSheet };", context);
+    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, projectTitle: projectTutorialTitle_, titleEventsSheet: state.titleEventsSheet, renameEventsSheet: state.renameEventsSheet };", context);
     return { api: context.api, sheet, state, editEventsSheet };
 }
 
-function readCatalogTutorials_(catalog, tutorialRows, editEvents = []) {
+function readCatalogTutorials_(catalog, tutorialRows, editEvents = [], renameEvents = []) {
     const tutorialColumns = extract_(catalog, "const COLS_TUTORIALES", "const COLS_RELAY");
     const relayColumns = extract_(catalog, "const COLS_RELAY", "// ============================================================================");
     const mapper = extract_(catalog, "function mapRowToObject", "function handleGetCatalogData");
-    const project = extract_(catalog, "function tutorialEditFieldsHash_", "function dedupeTutorialCatalogRows_");
+    const project = extract_(catalog, "function tutorialEditFieldsHash_", "function projectTutorialCatalogTitles_");
+    const titleProject = extract_(catalog, "function projectTutorialCatalogTitles_", "function dedupeTutorialCatalogRows_");
     const dedupe = extract_(catalog, "function dedupeTutorialCatalogRows_", "function handleGetCatalogData");
-    const reader = project + "\n" + dedupe + "\n" + extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
+    const reader = project + "\n" + titleProject + "\n" + dedupe + "\n" + extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
     const editHeaders = ["operationId", "payloadHash", "tutorialId", "expectedHash", "snapshotJson", "createdAt"];
+    const renameHeaders = ["operationId", "payloadHash", "tutorialId", "expectedTitleKey", "title", "createdAt"];
     const rows = { Cortes: [["id"]], LogosMarca: [["id"]], Tutorial: tutorialRows.map(row => row.slice()),
-        TutorialEditEvents: [editHeaders, ...editEvents.map(row => row.slice())], Relay: [["ID"]] };
+        TutorialEditEvents: [editHeaders, ...editEvents.map(row => row.slice())],
+        TutorialRenameEvents: [renameHeaders, ...renameEvents.map(row => row.slice())], Relay: [["ID"]] };
     const context = {
         SHEET_NAMES: { CORTES: "Cortes", LOGOS_MARCA: "LogosMarca", TUTORIALES: "Tutorial", RELAY: "Relay" },
         COLS_CORTES: {}, COLS_LOGOS_MARCA: { id: 1, nombreMarca: 2, urlLogo: 3 },
@@ -429,6 +436,50 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.api.titleOwner("tema anterior"), "");
         assert.equal(h.api.titleOwner("tema nuevo"), tutorialId);
     });
+
+    test("el renombrado de tutorial con ID estable usa journals append-only sin ScriptLock", () => {
+        const id = "tut-77777777777777777777777777777777";
+        const row = [id, "Tema anterior", "imagen", "Cómo", "Dónde", "Detalle", "video", "Autora"];
+        const h = buildHarness_(feedback, { rows: [headers, row] });
+        const result = h.api.update({ tutorialId: id, tema: "Tema nuevo" });
+        assert.equal(result.status, "success");
+        assert.equal(result.updated.tema, "Tema nuevo");
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.sheet.data[1][1], "Tema anterior");
+        assert.equal(h.api.projectTitle(id, "Tema anterior"), "Tema nuevo");
+        assert.equal(h.api.titleOwner("tema anterior"), "");
+        assert.equal(h.api.titleOwner("tema nuevo"), id);
+        assert.equal(h.renameEventsSheet.data.length, 2);
+    });
+
+    test("el ledger impide dos renombrados desde el mismo título anterior", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        const id = "tut-88888888888888888888888888888888";
+        h.api.appendTitleEvent({ operationId: "tutorial-title-claim-" + "a".repeat(64),
+            tutorialId: id, action: "CLAIM", titleKey: "tema base", previousTitleKey: "", payloadHash: "b".repeat(64) });
+        h.api.appendTitleEvent({ operationId: "tutorial-title-rename-" + "c".repeat(64),
+            tutorialId: id, action: "RENAME", titleKey: "tema uno", previousTitleKey: "tema base", payloadHash: "d".repeat(64) });
+        assert.throws(() => h.api.appendTitleEvent({ operationId: "tutorial-title-rename-" + "e".repeat(64),
+            tutorialId: id, action: "RENAME", titleKey: "tema dos", previousTitleKey: "tema base", payloadHash: "f".repeat(64) }),
+            /tema del tutorial ya está reservado|Ya existe un tutorial/);
+        assert.equal(h.api.titleOwner("tema uno"), id);
+        assert.equal(h.api.titleOwner("tema dos"), "");
+    });
+
+    test("CATALOG proyecta el título renombrado y conserva imagen, vídeo y colaborador", () => {
+        const id = "tut-99999999999999999999999999999999";
+        const row = [id, "Tema anterior", "imagen", "Cómo", "Dónde", "Detalle", "video", "Autora"];
+        const expectedTitleKey = "tema anterior", title = "Tema nuevo";
+        const payloadHash = crypto.createHash("sha256").update(JSON.stringify([id, expectedTitleKey, title])).digest("hex");
+        const event = ["tutorial-rename-" + payloadHash, payloadHash, id, expectedTitleKey, title, "now"];
+        const result = readCatalogTutorials_(catalog, [headers, row], [], [event]);
+        assert.equal(result.data.tutoriales[0].Tema, "Tema nuevo");
+        assert.equal(result.data.tutoriales[0].Imagen, "imagen");
+        assert.equal(result.data.tutoriales[0].Video, "video");
+        assert.equal(result.data.tutoriales[0].Colaborador, "Autora");
+        assert.equal(row[1], "Tema anterior");
+    });
+
 
     test("CATALOG proyecta eventos append-only D:F sin revertir título, imagen, vídeo o autor", () => {
         const id = "tut-0123456789abcdef0123456789abcdef";
