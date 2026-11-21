@@ -51,6 +51,18 @@ test("excluye respuestas negativas y votos de otro vehículo o año",()=>{
   row("VEH-1",2024,"user:U6","Confirmación de funcionamiento para año 2024","La información funciona para el año 2024.")];
  assert.equal(countVotes(rows,"VEH-1",2025,10),3);
 });
+test("la primera respuesta física de un actor prevalece ante votos contradictorios",()=>{
+ const negativeFirst=[
+  row("VEH-1",2025,"user:U4","Reporte de información no funcional","La información no funciona para el año 2025."),
+  row("VEH-1",2025,"user:U4","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.")
+ ];
+ assert.equal(countVotes(negativeFirst,"VEH-1",2025,10),0);
+ const positiveFirst=[
+  row("VEH-1",2025,"user:U5","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025."),
+  row("VEH-1",2025,"user:U5","Reporte de información no funcional","La información no funciona para el año 2025.")
+ ];
+ assert.equal(countVotes(positiveFirst,"VEH-1",2025,10),1);
+});
 test("dos votos verificados no alcanzan el umbral aunque exista una sugerencia anónima",()=>{
  const rows=[positive[0],positive[1],row("VEH-1",2025,"anon:unverified","Sugerencia de ampliar rango al año 2025","La información funciona para el año 2025.")];
  const count=countVotes(rows,"VEH-1",2025,10);
