@@ -3697,7 +3697,6 @@ function handleCheckOperation(payload) {
 
     const contributionSheet = spreadsheet.getSheetByName("AportesVehiculo");
     if (contributionSheet) {
-        const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionSheet);
         const events = findVehicleContributionEventsByOpId_(contributionSheet, opId)
             .sort((a, b) => a.rowIndex - b.rowIndex);
         if (events.length) {
@@ -3722,6 +3721,7 @@ function handleCheckOperation(payload) {
                 throw new Error("El opId no corresponde a la huella del aporte recuperado.");
             }
 
+            const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionSheet);
             const createdAt = String(values[8] || "");
             const timestamp = createdAt && !Number.isNaN(Date.parse(createdAt))
                 ? Utilities.formatDate(new Date(createdAt), "GMT-6", "dd/MM/yyyy")
