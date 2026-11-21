@@ -771,3 +771,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commits: 877b4c3df196da42bf6fd723752aea3c210de47d (servicio), 1b8edc62646a0aa82eee06f01978400d347de850 (prueba). La rama base no se modificó.
 - Estado: COMPLETADA CON VALIDACIÓN LOCAL AISLADA; pendiente CI/checkout completo. Sin deployment Apps Script ni cambios productivos.
 - Siguiente paso: completar matriz de locks/leases ADMIN y comenzar la revisión de la transacción física de alta nueva en WRITE, conservando el lock hasta demostrar una sustitución segura para fila física, Idempotencia, compensación y reintentos.
+
+
+## Checkpoint — WRITE: reserva de ID moderna fuera del lock físico (2026-11-21)
+
+- Inicio de revisión física WRITE en HEAD 1acb132b19f0a2877e55447246301a0900a7feb7; la rama de trabajo estaba 6,362 commits ahead / 0 behind respecto a GPSpedia2.2.5. La rama base no se modifica.
+- Hallazgo: las altas nuevas con opId estable ya usaban el ledger append-only CortesIdReservations, pero reserveCortesVehicleIdForOperation_ y su lectura/verificación del ledger se ejecutaban dentro del ScriptLock físico de WRITE.
+- Corrección: para solicitudes modernas con opId se reserva el ID antes de adquirir el lock. El ID se transporta en preparedRequest.preallocatedVehicleId hasta handleAddOrUpdateCutLockedUnsafe_. La ruta física consume el ID ya reservado y no vuelve a consultar el ledger bajo lock. Las solicitudes legacy sin opId estable conservan el fallback de reserva dentro del lock para no alterar su compatibilidad.
+- Se conserva ScriptLock.tryLock(0) para asignación de fila física, Idempotencia y compensación. El lock sigue liberándose durante Drive y se readquiere fail-fast; si no se readquiere, el estado pending se conserva para retry con el mismo opId. No se debilitó la transacción física.
+- Se agregó WriteVehicleIdReservationOutsidePhysicalLock: 5/5 PASS en harness Node.js v22.16.0 aislado. Incluye orden reserva→lock, transporte del ID, fallback legacy, conservación del lock físico y escenario dinámico WRITE_BUSY seguido de retry con el mismo opId/ID.
+- Commits: 9b86c3ef893044af665ce96f21a50dd17e429760 (write.js), 8cb742bacef2d527c7acdf42bdd8990cec85ffcd (prueba inicial), 3e27d61a0e5efdc761c6f1568e8eb072099f41c3 (prueba dinámica de retry). HEAD de código/prueba: 3e27d61a0e5efdc761c6f1568e8eb072099f41c3.
+- Estado: subactividad validada en harness local; pendiente ejecución en checkout completo/CI. No se desplegó Apps Script ni se modificaron hojas productivas.
+- Revisión física aún abierta: confirmar límites de concurrencia de Idempotencia, append de fila física, compensación pre/post Drive y recuperación por opId. No retirar el lock hasta que esos contratos tengan alternativa probada.
