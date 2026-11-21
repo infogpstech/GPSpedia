@@ -2377,6 +2377,104 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
     return matches[0] || null;
 }
 
+const FEEDBACK_REPORT_IMAGE_EVENTS_SHEET = "FeedbackReportImageEvents";
+const FEEDBACK_REPORT_IMAGE_EVENT_HEADERS = [
+    "eventId", "reportId", "userId", "imageFileId", "imageUrl",
+    "imageName", "imageMimeType", "imageSize", "imageSha256", "createdAt"
+];
+
+function ensureFeedbackReportImageEventsSheet_() {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET);
+    if (!sheet) {
+        try { sheet = ss.insertSheet(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET); }
+        catch (error) {
+            sheet = ss.getSheetByName(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET);
+            if (!sheet) throw error;
+        }
+    }
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, FEEDBACK_REPORT_IMAGE_EVENT_HEADERS.length)
+            .setValues([FEEDBACK_REPORT_IMAGE_EVENT_HEADERS]);
+        SpreadsheetApp.flush();
+    }
+    const headers = sheet.getRange(1, 1, 1, FEEDBACK_REPORT_IMAGE_EVENT_HEADERS.length)
+        .getValues()[0].map(value => String(value || "").trim());
+    if (FEEDBACK_REPORT_IMAGE_EVENT_HEADERS.some((value, index) => headers[index] !== value)) {
+        throw new Error("El esquema de FeedbackReportImageEvents no coincide con el contrato esperado.");
+    }
+    return sheet;
+}
+
+function findFeedbackReportImageEventByReportId_(reportId) {
+    const id = String(reportId || "").trim();
+    const sheet = getSpreadsheet().getSheetByName(FEEDBACK_REPORT_IMAGE_EVENTS_SHEET);
+    if (!id || !sheet || sheet.getLastRow() < 2) return null;
+    const candidates = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1)
+        .createTextFinder(id).matchCase(true).matchEntireCell(true).findAll();
+    const matches = [];
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const row = sheet.getRange(rowNumber, 1, 1, FEEDBACK_REPORT_IMAGE_EVENT_HEADERS.length).getValues()[0];
+        if (String(row[1] || "").trim() !== id) return;
+        matches.push({
+            rowNumber,
+            eventId: String(row[0] || "").trim(),
+            metadata: {
+                imageFileId: String(row[3] || "").trim(), imageUrl: String(row[4] || "").trim(),
+                imageName: String(row[5] || "").trim(), imageMimeType: String(row[6] || "").trim(),
+                imageSize: Number(row[7]), imageSha256: String(row[8] || "").trim().toLowerCase()
+            }
+        });
+    });
+    if (!matches.length) return null;
+    const canonical = matches[0];
+    if (matches.some(item => item.metadata.imageSha256 !== canonical.metadata.imageSha256)) {
+        throw new Error("El reporte tiene eventos de imagen contradictorios; requiere reconciliación.");
+    }
+    canonical.duplicateCount = matches.length - 1;
+    return canonical;
+}
+
+function getFeedbackReportImageMetadata_(reportId, baseMetadata) {
+    const legacy = normalizeReportImageMetadata_(baseMetadata);
+    if (legacy) return legacy;
+    const event = findFeedbackReportImageEventByReportId_(reportId);
+    return event ? event.metadata : null;
+}
+
+function appendFeedbackReportImageEvent_(reportId, userId, upload) {
+    const id = String(reportId || "").trim();
+    if (!id || !upload || !upload.metadata) throw new Error("Faltan datos para asociar la imagen al reporte.");
+    const image = upload.metadata;
+    const existing = findFeedbackReportImageEventByReportId_(id);
+    if (existing) {
+        if (existing.metadata.imageSha256 !== image.imageSha256) {
+            throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
+        }
+        if (existing.metadata.imageFileId !== image.imageFileId) trashReportImageUpload_(upload);
+        return existing;
+    }
+    const eventId = "RIMG-" + buildCutSuggestionRequestFingerprint_({
+        reportId: id, imageSha256: image.imageSha256
+    }).slice(0, 48);
+    const sheet = ensureFeedbackReportImageEventsSheet_();
+    const row = [eventId, id, String(userId || ""), image.imageFileId, image.imageUrl,
+        image.imageName, image.imageMimeType, image.imageSize, image.imageSha256, new Date().toISOString()];
+    sheet.appendRow(row);
+    SpreadsheetApp.flush();
+    const candidates = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1)
+        .createTextFinder(eventId).matchCase(true).matchEntireCell(true).findAll();
+    if (!candidates.length) throw new Error("No se pudo confirmar el evento de imagen del reporte.");
+    const canonical = findFeedbackReportImageEventByReportId_(id);
+    if (!canonical) throw new Error("No se pudo recuperar el evento de imagen del reporte.");
+    if (canonical.metadata.imageSha256 !== image.imageSha256) {
+        throw new Error("El reporte recibió imágenes concurrentes distintas; se requiere reconciliación.");
+    }
+    if (canonical.metadata.imageFileId !== image.imageFileId) trashReportImageUpload_(upload);
+    return canonical;
+}
+
 const REPORT_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
 function validateReportImageAttachment_(source) {
     if (source == null) return null;
