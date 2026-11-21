@@ -41,6 +41,13 @@ assert.equal(started, 1, "solicitudes concurrentes de la misma variante comparte
 assert.deepEqual(first, second);
 assert.equal(inFlight.size, 0, "el registro single-flight se limpia al terminar");
 
+assert.match(source, /const THUMBNAIL_FAILURE_BACKOFF_MS = 5 \* 60 \* 1000/);
+assert.match(compress[0], /if \(retryAfter > Date\.now\(\)\) return null/);
+assert.match(compress[0], /thumbnailCompressionFailures_\.set\(cacheKey,Date\.now\(\)\+THUMBNAIL_FAILURE_BACKOFF_MS\)/);
+assert.match(compress[0], /const queuedCached=await readFreshThumbnail\(cacheKey\)/);
+assert.match(wrapper[0], /thumbnailCompressionInFlight_\.set\(cacheKey, operation\)/);
+assert.match(wrapper[0], /thumbnailCompressionInFlight_\.delete\(cacheKey\)/);
+
 const lru = source.match(/async function evictLeastRecentlyUsedThumbnails\(\) \{[\s\S]*?\n\}/);
 assert.ok(lru, "debe existir la evicción LRU");
 const removed = [];
@@ -61,4 +68,4 @@ const lruFn = new Function(
 const evicted = await lruFn();
 assert.deepEqual(removed, ["expired::w300", "old::w300"]);
 assert.equal(evicted, 1);
-console.log("ThumbnailCacheDeduplication: 3/3 PASS — single-flight, lookup acotado y limpieza LRU");
+console.log("ThumbnailCacheDeduplication: 20/20 PASS — single-flight, backoff, lookup acotado y limpieza LRU");
