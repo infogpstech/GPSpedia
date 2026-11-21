@@ -644,3 +644,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Invalidación remota ampliada a USERS/WRITE/FEEDBACK/ADMIN; USERS agrega endpoints internos de precarga e invalidación.
 - createUser y deleteUser conservan exclusión mutua sobre USERS; prueba Coordinator añadida.
 - 278 suites / 3,236 pruebas / 0 fallos; build y health read-only aprobados.
+
+
+[2026-11-21] WRITE — snapshot compartido del ledger post-append
+- Aportes de corte: una lectura de AportesVehiculo alimenta el cálculo de slot y la detección de colisión VIN posterior al append.
+- checkOperation realiza la lectura solo si recupera un evento cut válido; no añade lecturas para opId inexistente ni opening/feed.
+- Se mantienen TextFinder, read-back, idempotencia y detección de conflictos concurrentes.
+- Prueba WriteContributionPostAppendSnapshot: 12/12 PASS; regresión: 280 suites / 3,257 pruebas / 0 fallos; build y health read-only SUCCESS.
