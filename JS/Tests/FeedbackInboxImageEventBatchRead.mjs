@@ -82,6 +82,16 @@ test("la metadata usa el índice sin consultar el evento individual", () => {
     assert.equal(resolve("REP-1", null, map), metadata);
 });
 
+test("la bandeja administrativa comparte el índice con canonicalización y mapeo", () => {
+    const handler = block("handleGetFeedbackItems");
+    assert.equal((handler.match(/readFeedbackReportImageEventsIndex_\(/g) || []).length, 1);
+    assert.match(handler, /isCanonicalFeedbackInboxRow_\(feedbackSheet,row,offset\+2\+index,reportMetadataColumn,imageEventsIndex\)/);
+    assert.match(handler, /mapInboxFeedbackRow_\(row,reportMetadataColumn,imageEventsIndex\)/);
+    const canonical = block("isCanonicalFeedbackInboxRow_");
+    assert.match(canonical, /findReportByReportId_\(sheet, metadata\.reportId, reportMetadataColumn, imageEventsIndex\)/);
+    const lookup = block("findReportByReportId_");
+    assert.match(lookup, /getFeedbackReportImageMetadata_\(id, metadata, imageEventsIndex\)/);
+});
 test("la bandeja de reportes propios agrupa eventos antes de mapear las filas", () => {
     const handler = block("handleGetMyProblemReports");
     assert.match(handler, /const imageEventsIndex = needsImageEventIndex \? readFeedbackReportImageEventsIndex_\(\) : null/);
