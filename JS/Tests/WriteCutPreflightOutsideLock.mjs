@@ -49,12 +49,13 @@ assert.equal(prepared.validatedPayload.validated,true);
 assert.equal(prepared.sheet.name,"Cortes");
 const wrapper=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
 const events=[];
-let nextRequest={ready:true,sheet:{name:"Cortes"},validatedPayload:{vehicleId:null,opId:"OP-NEW",operationHash:"hash"}};
+const operationHash="a".repeat(64);
+let nextRequest={ready:true,sheet:{name:"Cortes"},validatedPayload:{vehicleId:null,opId:"OP-NEW",operationHash}};
 const lock={tryLock(ms){assert.equal(ms,0);events.push("script-lock");return true;},hasLock:()=>true,releaseLock(){events.push("release");}};
 const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","handleAppendExistingVehicleCut_","reserveCortesVehicleIdForOperation_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogSourceVersion_","Logger",wrapper+"\nreturn handleAddOrUpdateCut;")(
  ()=>{events.push("preflight");return nextRequest;},
  preparedRequest=>{events.push("append-existing");return{status:"success",vehicleId:preparedRequest.validatedPayload.vehicleId};},
- (sheet,reservation)=>{assert.equal(sheet.name,"Cortes");assert.equal(reservation.opId,"OP-NEW");assert.equal(reservation.operationHash,"hash");events.push("reserve-id");return 22;},
+ (sheet,reservation)=>{assert.equal(sheet.name,"Cortes");assert.equal(reservation.opId,"OP-NEW");assert.match(reservation.operationHash,/^[a-f0-9]{64}$/);events.push("reserve-id");return 22;},
  {getScriptLock(){events.push("get-script-lock");return lock;}},
  preparedRequest=>{assert.equal(preparedRequest.ready,true);events.push("persist-new");return{status:"success",vehicleId:"22"};},
  vehicleId=>{assert.equal(vehicleId,"22");events.push("catalog-version");return 7;},
