@@ -761,3 +761,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commits: 8b880d33b4298323d201074766517f9e58b7f96b (eliminación inicial), d00b6c569c1e3d88d3ccc6280fea44254b0df140 (prueba), 7b8e4b90baabbb52f9fdda42a89e2eebd19d45ad (retirada de referencias residuales detectadas al revisar el diff) y d118ac8e15751461939afcd405be07617d7af3ec (precisión del comentario). HEAD: d118ac8e15751461939afcd405be07617d7af3ec.
 - Estado: COMPLETADA CON VALIDACIÓN LOCAL AISLADA; pendiente ejecución en checkout completo/CI. No se desplegó Apps Script ni se tocaron datos productivos.
 - Siguiente paso de auditoría: revisar el registro de actividad de imágenes y las leases de inventario/carpeta. No retirar la coordinación del ledger Safe Apply, de migraciones, de reconciliación ni de acciones destructivas sin una sustitución de integridad.
+
+
+## Checkpoint — ADMIN: alta de logotipos fail-fast (2026-11-21)
+
+- handleAddLogo mantenía ScriptLock.waitLock(30000) después de completar la carga Drive. La sección crítica protege la secuencia única de LogosMarca, la fila y la verificación/compensación del vínculo; esa garantía se conserva.
+- Se sustituyó la espera de hasta 30 segundos por tryLock(0). Si hay contención, el archivo aún no vinculado se intenta retirar; si la limpieza falla se marca RECOVERY_REQUIRED. La operación devuelve ADMIN_BUSY para reintento y el finally libera únicamente si el lock fue adquirido.
+- Se agregó AdminLogoWriteLockNonBlocking: 4/4 PASS en harness Node.js v22.16.0 aislado, verificando orden de carga/lock, adquisición fail-fast, compensación al estar ocupado y liberación condicional. El test comprometido requiere ejecución en checkout completo/CI.
+- Commits: 877b4c3df196da42bf6fd723752aea3c210de47d (servicio), 1b8edc62646a0aa82eee06f01978400d347de850 (prueba). La rama base no se modificó.
+- Estado: COMPLETADA CON VALIDACIÓN LOCAL AISLADA; pendiente CI/checkout completo. Sin deployment Apps Script ni cambios productivos.
+- Siguiente paso: completar matriz de locks/leases ADMIN y comenzar la revisión de la transacción física de alta nueva en WRITE, conservando el lock hasta demostrar una sustitución segura para fila física, Idempotencia, compensación y reintentos.
