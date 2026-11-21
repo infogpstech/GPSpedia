@@ -4523,50 +4523,6 @@ td, th {
     white-space: normal;
     overflow-wrap: anywhere;
 }
-
-
-/* BETA-026: jerarquía y distribución del modal de detalle de corte. */
-.detail-modal-toolbar {
-    position: relative;
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    align-items: stretch;
-    column-gap: 10px;
-    row-gap: 0;
-    padding-right: 42px;
-    margin-bottom: 0;
-}
-.detail-modal-saving-indicator {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    margin-right: 0;
-    min-width: 0;
-    font-size: .85rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: opacity .3s;
-    opacity: 0;
-    color: var(--gp-color-accent, #007bff);
-}
-.detail-modal-title {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: nowrap;
-    min-width: 0;
-    max-width: 180px;
-    height: 122px;
-    overflow: hidden;
-    padding: 0;
-    margin: 0;
-    border-bottom: 2px solid var(--gp-color-accent, #007bff);
-}
-.detail-modal-title:empty { display: none; }
 .activity-dashboard-tabs {
     display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px;
     border-bottom: 1px solid var(--border-color, #ccc);
@@ -4577,66 +4533,6 @@ td, th {
 }
 .activity-dashboard-tabs button.active {
     border-bottom-color: var(--accent-color, #007bff); font-weight: 700;
-}
-.detail-modal-title .brand-logo-modal {
-    display: block;
-    flex: 0 0 auto;
-    width: auto !important;
-    height: 120px !important;
-    max-height: 120px !important;
-    min-width: 0;
-    max-width: 180px;
-    object-fit: contain;
-}
-.detail-modal-title-text {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: end;
-    min-width: 0;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0 0 7px;
-    transform: translateY(-4px);
-    color: var(--gp-color-accent, var(--accent-color, #007bff));
-    font-size: clamp(1.05rem, 2.5vw, 1.8rem);
-    line-height: 1.15;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    overflow-wrap: normal;
-}
-.detail-modal-title-input {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: end;
-    width: 100%;
-    min-width: 0;
-    margin: 0 0 6px;
-}
-.detail-modal-title-input {
-    flex: 1 1 260px;
-    width: 100%;
-    min-width: min(260px, 100%);
-    padding: 8px 10px;
-    border: 1px solid var(--gp-color-focus, #007bff);
-    border-radius: 8px;
-    background: var(--gp-color-surface, var(--bg-color, #fff));
-    color: var(--gp-color-text, var(--text-color, #222));
-}
-.detail-modal-meta {
-    min-width: 0;
-    margin: 0 0 4px;
-}
-.detail-modal-meta-text {
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    color: var(--gp-color-text-muted, var(--text-medium, #666));
-    font-size: .95rem;
-    line-height: 1.45;
-    overflow-wrap: anywhere;
 }
 .detail-edit-grid {
     display: grid;
@@ -4737,9 +4633,6 @@ td, th {
         grid-template-columns: minmax(0, 1fr);
         gap: 9px;
     }
-    .detail-modal-title-input {
-        flex-basis: 100%;
-    }
 }
 @media (prefers-reduced-motion: reduce) {
     #modalDetalle,
@@ -4820,30 +4713,6 @@ td, th {
     #audit-drive-modal .audit-drive-action-label {
         transition: none !important;
     }
-}
-
-
-/* Alineación de acciones y cierre en las cabeceras de los modales de detalle. */
-.detail-modal-header-actions {
-    grid-column: 2;
-    grid-row: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    flex-wrap: nowrap;
-    gap: 6px;
-    width: 100%;
-    min-width: 0;
-    align-self: start;
-}
-.detail-modal-header-actions .share-modal-btn {
-    flex: 0 0 34px;
-    width: 34px;
-    min-width: 34px;
-    height: 34px;
-    min-height: 34px;
-    padding: 3px;
-    font-size: 1rem;
 }
 
 /* La ayuda acompaña al título de consola y copiar permanece al extremo derecho. */
@@ -4961,68 +4830,6 @@ body.dark-mode #login-modal #login-error.login-session-ended {
     #inbox-modal-content .inbox-menu-toggle,
     #inbox-modal-content .inbox-icon-action { flex-basis:36px; width:36px; min-width:36px; height:36px; min-height:36px; }
     #inbox-modal-content .inbox-section-nav button { font-size:.62rem; }
-}
-/* GP-UX-CUT-MODAL-01 — conservar la cuadrícula del encabezado; las acciones no cambian de fila. */
-.detail-modal-toolbar > .info-close-btn {
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    margin: 0 !important;
-    width: 38px;
-    min-width: 38px;
-    height: 38px;
-    min-height: 38px;
-}
-@media (max-width: 560px) {
-    .detail-modal-toolbar {
-        grid-template-columns: minmax(0, 36vw) minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, 1fr) auto;
-        column-gap: 6px;
-        row-gap: 0;
-        padding-right: 38px;
-    }
-    .detail-modal-title {
-        grid-column: 1;
-        grid-row: 1 / span 2;
-        width: 100%;
-        max-width: 36vw;
-        height: 106px;
-        min-width: 0;
-    }
-    .detail-modal-title .brand-logo-modal {
-        height: 104px !important;
-        max-height: 104px !important;
-        max-width: 36vw;
-    }
-    .detail-modal-title-text {
-        grid-column: 2;
-        grid-row: 2;
-        font-size: clamp(1rem, 4vw, 1.35rem);
-        padding-bottom: 6px;
-    }
-    .detail-modal-title-input {
-        grid-column: 2;
-        grid-row: 2;
-        min-width: 0;
-        padding: 7px 6px;
-        font-size: .9rem;
-    }
-    .detail-modal-header-actions { gap: 4px; margin-left: 0; }
-    .detail-modal-header-actions .share-modal-btn {
-        flex: 0 0 28px;
-        width: 28px;
-        min-width: 28px;
-        height: 28px;
-        min-height: 28px;
-        padding: 2px;
-        font-size: .85rem;
-    }
-    .detail-modal-toolbar > .info-close-btn {
-        width: 34px;
-        min-width: 34px;
-        height: 34px;
-        min-height: 34px;
-    }
 }
 
 /* GP-UX-INBOX-02 — aprovechar la altura del modal y unificar la navegación. */
@@ -5278,110 +5085,9 @@ body.dark-mode #login-modal #login-error.login-session-ended {
 @media (max-width:760px) {
     #inbox-modal-content .inbox-new-conversation-form { flex:1 1 0; }
 }
-
-
-/* GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — jerarquía y espaciado de encabezados. */
-.detail-modal-toolbar {
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    column-gap: 8px;
-    row-gap: 0;
-    margin-bottom: 14px;
-}
-.detail-modal-title {
-    height: 138px;
-    max-width: 180px;
-    overflow: visible !important;
-    box-sizing: border-box;
-    padding: 8px;
-    border: 0;
-    align-items: center;
-    justify-content: center;
-}
-.detail-modal-title .brand-logo-modal {
-    height: 120px !important;
-    max-height: 120px !important;
-    max-width: 180px;
-    object-fit: contain;
-}
-.detail-modal-title-text {
-    font-size: 2rem;
-    line-height: 1.15;
-    padding: 0 0 8px;
-    text-shadow:0 2px 4px rgba(0,0,0,.22);
-}
-.detail-modal-title-input { font-size: 1.5rem; }
-.detail-modal-divider {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    display: block;
-    width: auto;
-    height: 2px;
-    min-height: 2px;
-    margin: 10px 12px 0;
-    background: var(--gp-color-accent, #007bff);
-    border-radius: 2px;
-}
-.detail-modal-saving-indicator {
-    grid-column: 1 / -1;
-    grid-row: 4;
-}
-.detail-modal-header-actions { gap: 6px; }
-.detail-modal-header-actions .share-modal-btn {
-    flex: 0 0 40px;
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    min-height: 40px;
-    padding: 4px;
-    font-size: 1.1rem;
-}
-.detail-modal-toolbar > .info-close-btn {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    min-height: 40px;
-}
 .relay-detail-toolbar .relay-detail-title {
     font-size: 2rem;
     line-height: 1.15;
-}
-@media (max-width: 560px) {
-    .detail-modal-toolbar {
-        grid-template-rows: 40px minmax(76px, 1fr) auto auto;
-        column-gap: 6px;
-        padding-right: 46px;
-        margin-bottom: 12px;
-    }
-    .detail-modal-title {
-        height: 118px;
-        max-width: 36vw;
-        padding: 6px;
-    }
-    .detail-modal-title .brand-logo-modal {
-        height: 104px !important;
-        max-height: 104px !important;
-        max-width: 36vw;
-    }
-    .detail-modal-title-text {
-        font-size: 2rem;
-        padding-bottom: 6px;
-    }
-    .detail-modal-header-actions { gap: 4px; }
-    .detail-modal-header-actions .share-modal-btn {
-        flex: 0 0 36px;
-        width: 36px;
-        min-width: 36px;
-        height: 36px;
-        min-height: 36px;
-        padding: 3px;
-        font-size: 1rem;
-    }
-    .detail-modal-toolbar > .info-close-btn {
-        width: 40px;
-        min-width: 40px;
-        height: 40px;
-        min-height: 40px;
-    }
 }
 .tutorial-detail-toolbar {
     display: flex;
@@ -5521,13 +5227,6 @@ body.dark-mode #inbox-modal-content .inbox-editor-shell { background:#2b3036; }
 #inbox-modal-content .inbox-editor-shell .inbox-message-input:focus-visible {
     outline:2px solid var(--gp-color-focus,#005fcc); outline-offset:-3px;
 }
-
-/* GP-UX-CUT-MODAL-05 — línea azul centrada respecto al ancho real del modal. */
-.detail-modal-divider {
-    width:calc(100% + 18px); height:2px; min-height:2px; justify-self:start;
-    margin:2px 0 4px 12px;
-}
-@media (max-width:560px) { .detail-modal-divider { width:calc(100% + 22px); } }
 
 
 /* GP-UX-INBOX-RICH-EDITOR-01 — controles compactos y edición visual. */
@@ -6114,12 +5813,6 @@ textarea.rich-text-source[hidden] { display:none !important; }
     text-align: left;
     padding-right: 48px;
 }
-.detail-modal-header-actions { padding-right: 48px; }
-@media (max-width: 560px) {
-    .detail-modal-title-text { transform: translateY(-3px); }
-    .detail-modal-divider { margin-top: 2px; }
-    .detail-modal-header-actions { padding-right: 42px; }
-}
 
 
 /* GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 — selector táctil accesible para destinatarios independientes. */
@@ -6163,6 +5856,361 @@ textarea.rich-text-source[hidden] { display:none !important; }
     max-width:100%;
     overflow-x:hidden;
 }
+
+/* GP-UX-PYS-MODAL-HEADER-01 — PyS comparte jerarquía, color y cierre de tutoriales. */
+.pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }
+.pys-detail-title-container { display:flex; flex:1 1 auto; align-items:center; min-width:0; }
+
+
+
+/* Consola principal del modal de auditoría de Cortes. */
+#audit-drive-modal .audit-drive-console {
+    width: 100%; min-width: 0; margin: 0 0 12px; overflow: hidden;
+    border: 1px solid var(--gp-color-border, var(--border-color, #4b5563));
+    border-radius: 9px; background: #111827; color: #e5e7eb;
+}
+#audit-drive-modal .audit-drive-console-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    min-width: 0; padding: 9px 12px; border-bottom: 1px solid #374151;
+    background: #1f2937; color: #f9fafb;
+}
+#audit-drive-modal .audit-drive-console-header strong { font-size: .9rem; letter-spacing: .02em; }
+#audit-drive-modal .audit-drive-console-header span {
+    min-width: 0; color: #cbd5e1; font-size: .75rem; text-align: right;
+}
+#audit-drive-modal .audit-drive-console-output {
+    min-width: 0; max-height: min(52vh, 560px); min-height: 220px; overflow: auto;
+    padding: 9px 11px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere; scrollbar-gutter: stable;
+}
+#audit-drive-modal .audit-drive-console-line {
+    display: grid; grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: start; gap: 8px; padding: 2px 0; color: #e5e7eb;
+}
+#audit-drive-modal .audit-drive-console-line time { color: #9ca3af; white-space: nowrap; }
+#audit-drive-modal .audit-drive-console-level { min-width: 62px; color: #93c5fd; font-weight: 700; }
+#audit-drive-modal .audit-drive-console-line.is-progress .audit-drive-console-level { color: #93c5fd; }
+#audit-drive-modal .audit-drive-console-line.is-success .audit-drive-console-level { color: #86efac; }
+#audit-drive-modal .audit-drive-console-line.is-warning .audit-drive-console-level { color: #fcd34d; }
+#audit-drive-modal .audit-drive-console-line.is-error .audit-drive-console-level { color: #fca5a5; }
+#audit-drive-modal .audit-drive-console-message { min-width: 0; white-space: pre-wrap; }
+#audit-drive-modal #audit-drive-results-container[hidden] { display: none !important; }
+@media (max-width: 600px) {
+    #audit-drive-modal .audit-drive-console-output { min-height: 180px; max-height: 52vh; padding: 8px; }
+    #audit-drive-modal .audit-drive-console-line { grid-template-columns: auto minmax(0, 1fr); gap: 5px 8px; }
+    #audit-drive-modal .audit-drive-console-line time { grid-column: 1; }
+    #audit-drive-modal .audit-drive-console-level { grid-column: 2; min-width: 0; }
+    #audit-drive-modal .audit-drive-console-message { grid-column: 1 / -1; padding-left: 0; }
+}
+
+/* ========================================================================
+   BLOQUE CONSOLIDADO — encabezados de detalle
+   Incluye la base compartida, variantes responsive y la variante scoped de corte.
+   El orden interno conserva la cascada previa: las reglas posteriores prevalecen.
+   ======================================================================== */
+/* BETA-026: jerarquía y distribución del modal de detalle de corte. */
+.detail-modal-toolbar {
+    position: relative;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+    column-gap: 10px;
+    row-gap: 0;
+    padding-right: 42px;
+    margin-bottom: 0;
+}
+.detail-modal-saving-indicator {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin-right: 0;
+    min-width: 0;
+    font-size: .85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity .3s;
+    opacity: 0;
+    color: var(--gp-color-accent, #007bff);
+}
+.detail-modal-title {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: 180px;
+    height: 122px;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border-bottom: 2px solid var(--gp-color-accent, #007bff);
+}
+.detail-modal-title:empty { display: none; }
+.detail-modal-title .brand-logo-modal {
+    display: block;
+    flex: 0 0 auto;
+    width: auto !important;
+    height: 120px !important;
+    max-height: 120px !important;
+    min-width: 0;
+    max-width: 180px;
+    object-fit: contain;
+}
+.detail-modal-title-text {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 0 7px;
+    transform: translateY(-4px);
+    color: var(--gp-color-accent, var(--accent-color, #007bff));
+    font-size: clamp(1.05rem, 2.5vw, 1.8rem);
+    line-height: 1.15;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+}
+.detail-modal-title-input {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 6px;
+}
+.detail-modal-title-input {
+    flex: 1 1 260px;
+    width: 100%;
+    min-width: min(260px, 100%);
+    padding: 8px 10px;
+    border: 1px solid var(--gp-color-focus, #007bff);
+    border-radius: 8px;
+    background: var(--gp-color-surface, var(--bg-color, #fff));
+    color: var(--gp-color-text, var(--text-color, #222));
+}
+.detail-modal-meta {
+    min-width: 0;
+    margin: 0 0 4px;
+}
+.detail-modal-meta-text {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    color: var(--gp-color-text-muted, var(--text-medium, #666));
+    font-size: .95rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+    .detail-modal-title-input {
+        flex-basis: 100%;
+    }}
+
+
+/* Alineación de acciones y cierre en las cabeceras de los modales de detalle. */
+.detail-modal-header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    align-self: start;
+}
+.detail-modal-header-actions .share-modal-btn {
+    flex: 0 0 34px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 3px;
+    font-size: 1rem;
+}
+/* GP-UX-CUT-MODAL-01 — conservar la cuadrícula del encabezado; las acciones no cambian de fila. */
+.detail-modal-toolbar > .info-close-btn {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+}
+@media (max-width: 560px) {
+    .detail-modal-toolbar {
+        grid-template-columns: minmax(0, 36vw) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        column-gap: 6px;
+        row-gap: 0;
+        padding-right: 38px;
+    }
+    .detail-modal-title {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        width: 100%;
+        max-width: 36vw;
+        height: 106px;
+        min-width: 0;
+    }
+    .detail-modal-title .brand-logo-modal {
+        height: 104px !important;
+        max-height: 104px !important;
+        max-width: 36vw;
+    }
+    .detail-modal-title-text {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: clamp(1rem, 4vw, 1.35rem);
+        padding-bottom: 6px;
+    }
+    .detail-modal-title-input {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        padding: 7px 6px;
+        font-size: .9rem;
+    }
+    .detail-modal-header-actions { gap: 4px; margin-left: 0; }
+    .detail-modal-header-actions .share-modal-btn {
+        flex: 0 0 28px;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        min-height: 28px;
+        padding: 2px;
+        font-size: .85rem;
+    }
+    .detail-modal-toolbar > .info-close-btn {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        min-height: 34px;
+    }}
+
+
+/* GP-UX-CUT-MODAL-04 / GP-UX-TUTORIAL-MODAL-01 — jerarquía y espaciado de encabezados. */
+.detail-modal-toolbar {
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: 8px;
+    row-gap: 0;
+    margin-bottom: 14px;
+}
+.detail-modal-title {
+    height: 138px;
+    max-width: 180px;
+    overflow: visible !important;
+    box-sizing: border-box;
+    padding: 8px;
+    border: 0;
+    align-items: center;
+    justify-content: center;
+}
+.detail-modal-title .brand-logo-modal {
+    height: 120px !important;
+    max-height: 120px !important;
+    max-width: 180px;
+    object-fit: contain;
+}
+.detail-modal-title-text {
+    font-size: 2rem;
+    line-height: 1.15;
+    padding: 0 0 8px;
+    text-shadow:0 2px 4px rgba(0,0,0,.22);
+}
+.detail-modal-title-input { font-size: 1.5rem; }
+.detail-modal-divider {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: block;
+    width: auto;
+    height: 2px;
+    min-height: 2px;
+    margin: 10px 12px 0;
+    background: var(--gp-color-accent, #007bff);
+    border-radius: 2px;
+}
+.detail-modal-saving-indicator {
+    grid-column: 1 / -1;
+    grid-row: 4;
+}
+.detail-modal-header-actions { gap: 6px; }
+.detail-modal-header-actions .share-modal-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 4px;
+    font-size: 1.1rem;
+}
+.detail-modal-toolbar > .info-close-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+}
+@media (max-width: 560px) {
+    .detail-modal-toolbar {
+        grid-template-rows: 40px minmax(76px, 1fr) auto auto;
+        column-gap: 6px;
+        padding-right: 46px;
+        margin-bottom: 12px;
+    }
+    .detail-modal-title {
+        height: 118px;
+        max-width: 36vw;
+        padding: 6px;
+    }
+    .detail-modal-title .brand-logo-modal {
+        height: 104px !important;
+        max-height: 104px !important;
+        max-width: 36vw;
+    }
+    .detail-modal-title-text {
+        font-size: 2rem;
+        padding-bottom: 6px;
+    }
+    .detail-modal-header-actions { gap: 4px; }
+    .detail-modal-header-actions .share-modal-btn {
+        flex: 0 0 36px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        min-height: 36px;
+        padding: 3px;
+        font-size: 1rem;
+    }
+    .detail-modal-toolbar > .info-close-btn {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        min-height: 40px;
+    }}
+
+/* GP-UX-CUT-MODAL-05 — línea azul centrada respecto al ancho real del modal. */
+.detail-modal-divider {
+    width:calc(100% + 18px); height:2px; min-height:2px; justify-self:start;
+    margin:2px 0 4px 12px;
+}
+@media (max-width:560px) { .detail-modal-divider { width:calc(100% + 22px); }}
+.detail-modal-header-actions { padding-right: 48px; }
+@media (max-width: 560px) {
+    .detail-modal-title-text { transform: translateY(-3px); }
+    .detail-modal-divider { margin-top: 2px; }
+    .detail-modal-header-actions { padding-right: 42px; }}
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
     box-sizing:border-box;
     width:100%;
@@ -6262,10 +6310,6 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar { margin-bottom:7px; }
 #modalDetalle[data-modal-type="corte"] .detail-modal-meta { margin-top:-6px; }
 
-/* GP-UX-PYS-MODAL-HEADER-01 — PyS comparte jerarquía, color y cierre de tutoriales. */
-.pys-detail-toolbar { margin:0 0 7px; padding-bottom:0; }
-.pys-detail-title-container { display:flex; flex:1 1 auto; align-items:center; min-width:0; }
-
 /* GP-UX-DETAIL-LOGO-MOBILE-02 — primera columna max-content; logo a tamaño fijo y sin scroll horizontal. */
 @media (max-width:560px) {
     #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
@@ -6352,8 +6396,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         min-width:40px;
         height:40px;
         min-height:40px;
-    }
-}
+    }}
 
 
 /* GP-UX-CUT-MODEL-TITLE-FIT-01 — el nombre completo pasa debajo del logo solo si no cabe a su lado. */
@@ -6380,46 +6423,4 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-saving-indicator {
     grid-row:5;
-}
-
-
-
-/* Consola principal del modal de auditoría de Cortes. */
-#audit-drive-modal .audit-drive-console {
-    width: 100%; min-width: 0; margin: 0 0 12px; overflow: hidden;
-    border: 1px solid var(--gp-color-border, var(--border-color, #4b5563));
-    border-radius: 9px; background: #111827; color: #e5e7eb;
-}
-#audit-drive-modal .audit-drive-console-header {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    min-width: 0; padding: 9px 12px; border-bottom: 1px solid #374151;
-    background: #1f2937; color: #f9fafb;
-}
-#audit-drive-modal .audit-drive-console-header strong { font-size: .9rem; letter-spacing: .02em; }
-#audit-drive-modal .audit-drive-console-header span {
-    min-width: 0; color: #cbd5e1; font-size: .75rem; text-align: right;
-}
-#audit-drive-modal .audit-drive-console-output {
-    min-width: 0; max-height: min(52vh, 560px); min-height: 220px; overflow: auto;
-    padding: 9px 11px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    overflow-wrap: anywhere; scrollbar-gutter: stable;
-}
-#audit-drive-modal .audit-drive-console-line {
-    display: grid; grid-template-columns: auto auto minmax(0, 1fr);
-    align-items: start; gap: 8px; padding: 2px 0; color: #e5e7eb;
-}
-#audit-drive-modal .audit-drive-console-line time { color: #9ca3af; white-space: nowrap; }
-#audit-drive-modal .audit-drive-console-level { min-width: 62px; color: #93c5fd; font-weight: 700; }
-#audit-drive-modal .audit-drive-console-line.is-progress .audit-drive-console-level { color: #93c5fd; }
-#audit-drive-modal .audit-drive-console-line.is-success .audit-drive-console-level { color: #86efac; }
-#audit-drive-modal .audit-drive-console-line.is-warning .audit-drive-console-level { color: #fcd34d; }
-#audit-drive-modal .audit-drive-console-line.is-error .audit-drive-console-level { color: #fca5a5; }
-#audit-drive-modal .audit-drive-console-message { min-width: 0; white-space: pre-wrap; }
-#audit-drive-modal #audit-drive-results-container[hidden] { display: none !important; }
-@media (max-width: 600px) {
-    #audit-drive-modal .audit-drive-console-output { min-height: 180px; max-height: 52vh; padding: 8px; }
-    #audit-drive-modal .audit-drive-console-line { grid-template-columns: auto minmax(0, 1fr); gap: 5px 8px; }
-    #audit-drive-modal .audit-drive-console-line time { grid-column: 1; }
-    #audit-drive-modal .audit-drive-console-level { grid-column: 2; min-width: 0; }
-    #audit-drive-modal .audit-drive-console-message { grid-column: 1 / -1; padding-left: 0; }
 }
