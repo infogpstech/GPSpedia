@@ -31,6 +31,17 @@ function trimExpiredBuckets_(now) {
     }
 }
 
+function percentile_(values, percentile) {
+    const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const position = (sorted.length - 1) * Math.min(1, Math.max(0, percentile));
+    const lowerIndex = Math.floor(position);
+    const upperIndex = Math.ceil(position);
+    if (lowerIndex === upperIndex) return sorted[lowerIndex];
+    const weight = position - lowerIndex;
+    return sorted[lowerIndex] + (sorted[upperIndex] - sorted[lowerIndex]) * weight;
+}
+
 export function recordBrowserServiceTraffic(input = {}) {
     const source = input && typeof input === "object" ? input : {};
     const service = normalizeService_(source.service);
@@ -92,7 +103,14 @@ export function getBrowserServiceTrafficSnapshot(serviceValue, options = {}) {
         totals.last24Hours += count;
         if (bucket) matchingBuckets.push(bucket);
     }
-    const events = eventHistory.filter(event => event.service === service && event.timestamp >= firstBucket);
+    // Los percentiles usan el historial efímero acotado (máximo 200 eventos por pestaña),
+    // no se presentan como percentiles poblacionales de 24 h.
+    const events = eventHistory.filter(event =>
+        event.service === service && event.timestamp >= firstBucket && event.timestamp <= capturedAt
+    );
+    const durations = events.map(event => event.durationMs);
+    const requestSizes = events.map(event => event.requestBytes).filter(Number.isFinite);
+    const responseSizes = events.map(event => event.responseBytes).filter(Number.isFinite);
     const requestCount = matchingBuckets.reduce((sum, bucket) => sum + bucket.count, 0);
     const successCount = matchingBuckets.reduce((sum, bucket) => sum + bucket.successes, 0);
     const errorCount = matchingBuckets.reduce((sum, bucket) => sum + bucket.errors, 0);
@@ -118,6 +136,13 @@ export function getBrowserServiceTrafficSnapshot(serviceValue, options = {}) {
             successes: successCount,
             errors: errorCount,
             averageDurationMs: requestCount ? durationTotalMs / requestCount : null,
+            percentileSampleCount: durations.length,
+            durationP50Ms: percentile_(durations, 0.50),
+            durationP95Ms: percentile_(durations, 0.95),
+            requestBytesP50: percentile_(requestSizes, 0.50),
+            requestBytesP95: percentile_(requestSizes, 0.95),
+            responseBytesP50: percentile_(responseSizes, 0.50),
+            responseBytesP95: percentile_(responseSizes, 0.95),
             requestBytesTotal,
             responseBytesTotal,
             averageRequestBytes: requestBytesSamples ? requestBytesTotal / requestBytesSamples : null,
