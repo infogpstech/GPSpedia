@@ -394,3 +394,15 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Prueba nueva `AuthSessionReadOptimization.mjs`: 9/9 PASS. CI de HEAD `3ae0786b0158d7e45f2599bc1a6ab28550b84ac8`: **284 suites / 3,309 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; deploy workflow SUCCESS.
 - Alcance: optimización estática y pruebas automatizadas. No se ejecutaron pruebas de concurrencia con Spreadsheet productivo ni se modificaron datos productivos. La validación operativa queda para Beta aislada.
 - Siguiente tarea: continuar con lecturas y operaciones duplicadas en USERS; después completar auditoría extremo a extremo de WRITE/FEEDBACK/ADMIN y mediciones P1 de imágenes/vídeos.
+
+
+### P0 USERS — reducción de lecturas de lista, perfil y alta de cuentas (2026-11-21)
+
+- `handleCreateUser`: antes consultaba usernames, buscaba la primera fila vacía (valores y fórmulas) y generaba el siguiente ID con nuevos rangos sobre Users. Ahora toma un único snapshot de filas/columnas necesarias y lo reutiliza para comprobar username, encontrar fila libre y validar/generar el ID. Conserva la relectura dirigida de la fila destino antes de escribir y el read-back/rollback de la escritura contigua ID:H.
+- `getUserIdSequencePattern_`, `generateNextUserId_` y `findNextUserRow_` aceptan el snapshot opcional; sus consumidores existentes sin snapshot mantienen el camino anterior.
+- `handleGetUsers` lee solo A:G, que contiene los campos que devuelve; ya no transfiere SessionToken ni TermsAcceptance.
+- `getVerifiedSession(requireUserRow=true)` busca el ID y confirma únicamente las celdas ID coincidentes; no lee la fila completa porque el consumidor solo necesita rowIndex.
+- No se cambió la política RBAC, la exclusión fail-fast de createUser, la unicidad de username/ID, el formato histórico de IDs, la copia de formato/validaciones, ni la atomicidad/read-back/rollback.
+- Tests: `UsersMutationSnapshot` 10/10, `UsersReadMinimization` 8/8 y `USERS mutaciones/RBAC/rollback/coordinación` 16/16 PASS. CI HEAD `fb80ebfa4a296d23faec032be46650d85ec51ba9`: **287 suites / 3,359 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. GitHub Pages deploy workflow aún no confirmado y no se considera despliegue de Apps Script.
+- Rama base comprobada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Siguiente: auditoría de extremo a extremo WRITE/FEEDBACK/ADMIN, iniciando por rutas de aportes e idempotencia de WRITE; no retirar lecturas/read-back ni operaciones Drive sin demostrar equivalencia.
