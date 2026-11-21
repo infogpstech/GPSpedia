@@ -57,7 +57,7 @@ function makeSheet(rows,name,state,options){
 }
 
 function buildHarness(feedback,ui,options={}){
-    const state={pysRows:(options.pysRows||[]).map(r=>r.slice()),opsRows:(options.opsRows||[]).map(r=>r.slice()),pysSheet:null,opsSheet:null,files:{},createdFiles:0,fileCreated:false,fileCreatedWhileLocked:false,lockHeld:Boolean(options.lockAlreadyHeld),flushCount:0,lockWaits:0,lockReleases:0,trashed:0,folder:null};
+    const state={pysRows:(options.pysRows||[]).map(r=>r.slice()),opsRows:(options.opsRows||[]).map(r=>r.slice()),pysSheet:null,opsSheet:null,files:{},createdFiles:0,fileCreated:false,fileCreatedWhileLocked:false,lockHeld:Boolean(options.lockAlreadyHeld),flushCount:0,lockWaits:0,lockReleases:0,leaseCalls:[],leaseReleases:0,trashed:0,folder:null};
     if(options.pysRows)state.pysSheet=makeSheet(state.pysRows,"pys",state,options);
     if(options.opsRows)state.opsSheet=makeSheet(state.opsRows,"PysOperations",state,options);
     const driveRoot={getId:()=>"drive-root"};
@@ -89,6 +89,7 @@ function buildHarness(feedback,ui,options={}){
         },
         DriveApp:{getFileById:id=>state.files[id]||null},
         LockService:{getScriptLock:()=>({hasLock:()=>Boolean(options.lockAlreadyHeld),waitLock:()=>{state.lockWaits++;state.lockHeld=true;},releaseLock:()=>{state.lockReleases++;state.lockHeld=false;}})},
+        withSharedMutationLease_:(service,operation,callback)=>{state.leaseCalls.push([service,operation]);try{return callback("test-lease");}finally{state.leaseReleases++;}},
         SpreadsheetApp:{flush:()=>{state.flushCount++;if(options.failFlushAt===state.flushCount)throw new Error("Spreadsheet flush failed");}},
         getSafeSheet:name=>name==="pys"?state.pysSheet:name==="PysOperations"?state.opsSheet:null,
         getSpreadsheet:()=>({insertSheet:name=>{
@@ -109,8 +110,9 @@ function buildHarness(feedback,ui,options={}){
         logUserActivity:()=>{}
     };
     const lockHelper=extract(feedback,"function acquireFeedbackScriptLock_(lock) {","const DIRECT_SERVICE_TRAFFIC_CONFIG_");
+    const mutationLeaseHelper=extract(feedback,"function withPysMutationLease_","function findPysMutationRow_");
     const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleClearActivityLogs(payload) {");
-    vm.runInNewContext(lockHelper+"\n"+parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
+    vm.runInNewContext(lockHelper+"\n"+mutationLeaseHelper+"\n"+parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
     const validPayload=(opId=OP_A,overrides={})=>Object.assign({
         opId,titulo:"Falla eléctrica",descripcion:"Detalle del problema",sinSolucion:true,solucion:"",
         prevenir:"Revisar conexiones",videoUrl:"",userId:"user-1",userName:"Técnico",
@@ -395,7 +397,8 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.equal(first.status,"success");assert.equal(retry.status,"success");assert.equal(retry.recovered,true);
         assert.equal(conflict.status,"conflict");assert.equal(conflict.code,"PYS_CONFLICT");
         assert.equal(h.state.pysRows[1][3],"x");assert.equal(h.state.pysRows[1][4],"Revisar fusible");
-        assert.equal(h.state.lockWaits,3);assert.equal(h.state.lockReleases,3);
+        assert.equal(h.state.leaseCalls.length,3);assert.ok(h.state.leaseCalls.every(item=>item[0]==="FEEDBACK"&&item[1]==="addSolution"));
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
     test("reintento idéntico de prevención es idempotente y contenido distinto no sobrescribe",()=>{
         const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
@@ -405,26 +408,30 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const conflict=h.api.addPrevention({problemId:"isue-001",prevenir:"Usar otro cable",userId:"u3",userName:"T3"});
         assert.equal(first.status,"success");assert.equal(retry.recovered,true);assert.equal(conflict.status,"conflict");
         assert.equal(h.state.pysRows[1][5],"Asegurar conexión");
-        assert.equal(h.state.lockWaits,3);assert.equal(h.state.lockReleases,3);
+        assert.equal(h.state.leaseCalls.length,3);assert.ok(h.state.leaseCalls.every(item=>item[0]==="FEEDBACK"&&item[1]==="addPrevention"));
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
     test("rechaza estado incoherente entre indicador y solución sin mutar",()=>{
         const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","x","","","","","Técnico",""]];
         const h=buildHarness(feedback,ui,{pysRows:rows});
         assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:"Solución nueva",userId:"u",userName:"T"}),/estado inconsistente/);
         assert.equal(h.state.pysRows[1][3],"x");assert.equal(h.state.pysRows[1][4],"");
-        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+        assert.equal(h.state.leaseCalls.length,1);assert.equal(h.state.leaseCalls[0][1],"addSolution");
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
-    test("no vuelve a adquirir ni libera un ScriptLock que ya posee la envoltura externa",()=>{
+    test("usa lease compartida sin adquirir ni liberar ScriptLock local",()=>{
         const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
         const h=buildHarness(feedback,ui,{pysRows:rows,lockAlreadyHeld:true});
         const result=h.api.addPrevention({problemId:"isue-001",prevenir:"Revisar",userId:"u",userName:"T"});
         assert.equal(result.status,"success");assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
+        assert.deepEqual(h.state.leaseCalls,[["FEEDBACK","addPrevention"]]);
     });
     test("libera el lock si falla la confirmación de escritura de solución",()=>{
         const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
         const h=buildHarness(feedback,ui,{pysRows:rows,failFlushAt:1});
         assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:"Reparar",userId:"u",userName:"T"}),/Spreadsheet flush failed/);
-        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+        assert.equal(h.state.leaseCalls.length,1);assert.equal(h.state.leaseReleases,1);
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
     test("el formulario genera una clave aleatoria estable y la adjunta al payload",()=>{
         assert.match(ui,/pendingPysOperationId/);assert.match(ui,/pendingPysOperationSignature !== operationSignature/);

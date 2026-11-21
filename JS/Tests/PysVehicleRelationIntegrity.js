@@ -67,6 +67,8 @@ function buildHarness(feedback, options = {}) {
         locked: Boolean(options.lockAlreadyHeld),
         lockWaits: 0,
         lockReleases: 0,
+        leaseCalls: [],
+        leaseReleases: 0,
         writes: 0,
         flushes: 0,
         reads: []
@@ -106,12 +108,18 @@ function buildHarness(feedback, options = {}) {
             if (name === "Cortes") return cortesSheet;
             return null;
         },
+        withSharedMutationLease_(service,operation,callback) {
+            state.leaseCalls.push([service,operation]);
+            const previous=state.locked;state.locked=true;
+            try{return callback("test-lease");}finally{state.locked=previous;state.leaseReleases++;}
+        },
         getSpreadsheet: () => ({})
     };
     const roleHelper = extract(feedback, "function normalizeFeedbackRole(role) {", "function getSessionExpirationStatus_");
+    const mutationLeaseHelper = extract(feedback, "function withPysMutationLease_", "function findPysMutationRow_");
     const relationHelpers = extract(feedback, "function parseModelosAsociados(rawVal) {", "function handleClearActivityLogs(payload) {");
     vm.runInNewContext(
-        roleHelper + "\n" + relationHelpers +
+        roleHelper + "\n" + mutationLeaseHelper + "\n" + relationHelpers +
         "\nthis.api = { add: handleAddVehicleToProblem, remove: handleRemoveVehicleFromProblem, create: handleAddProblem, parse: parseModelosAsociados };",
         context
     );
@@ -179,8 +187,10 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.deepEqual(list(first.modelosAsociados), ["V-1"]);
         assert.deepEqual(list(retry.modelosAsociados), ["V-1"]);
         assert.equal(h.state.writes, 0);
-        assert.equal(h.state.lockWaits, 2);
-        assert.equal(h.state.lockReleases, 2);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseCalls.length, 2);
+        assert.ok(h.state.leaseCalls.every(item => item[1] === "addVehicleToProblem"));
     });
 
     test("baja elimina todas las apariciones y devuelve la colección final persistida", () => {
@@ -230,21 +240,26 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.throws(() => wrongHeader.api.add({ problemId: "isue-001", vehicleId: "V-1" }), /encabezado ID/);
     });
 
-    test("serializa todas las lecturas y escrituras bajo ScriptLock y libera en finally", () => {
+    test("coordina lecturas y escrituras mediante lease compartida sin ScriptLock local", () => {
         const h = buildHarness(feedback);
         h.api.add({ problemId: "isue-001", vehicleId: "V-3" });
-        assert.equal(h.state.lockWaits, 1);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseCalls.length, 1);
+        assert.equal(h.state.leaseCalls[0][1], "addVehicleToProblem");
+        assert.equal(h.state.leaseReleases, 1);
         assert.equal(h.state.locked, false);
         assert.ok(h.state.reads.length > 0);
         assert.ok(h.state.reads.every(access => access.locked), "Se detectó una lectura/escritura fuera del lock.");
     });
 
-    test("libera el lock cuando la validación de Cortes falla", () => {
+    test("libera la lease cuando la validación de Cortes falla", () => {
         const h = buildHarness(feedback);
         assert.throws(() => h.api.add({ problemId: "isue-001", vehicleId: "V-404" }), /exactamente un registro/);
-        assert.equal(h.state.lockWaits, 1);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseCalls.length, 1);
+        assert.equal(h.state.leaseReleases, 1);
         assert.equal(h.state.locked, false);
     });
 
@@ -254,24 +269,30 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.equal(h.state.lockWaits, 0);
         const allowed = h.api.remove({ problemId: "isue-001", vehicleId: "V-1", userRole: "DESARROLLADOR" });
         assert.equal(allowed.status, "success");
+        assert.deepEqual(h.state.leaseCalls,[["FEEDBACK","removeVehicleFromProblem"]]);
         assert.deepEqual(list(allowed.modelosAsociados), []);
     });
 
     test("verifica el valor de retorno contra el valor realmente persistido", () => {
         const h = buildHarness(feedback, { ignoreWrites: true });
         assert.throws(() => h.api.add({ problemId: "isue-001", vehicleId: "V-3" }), /No se pudo confirmar/);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseCalls.length, 1);
+        assert.equal(h.state.leaseReleases, 1);
         assert.equal(h.state.locked, false);
     });
 
     test("reintenta de forma segura si falla flush después de escribir", () => {
         const h = buildHarness(feedback, { failFlushAt: 1 });
         assert.throws(() => h.api.add({ problemId: "isue-001", vehicleId: "V-3" }), /flush failed/);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseReleases, 1);
         const retry = h.api.add({ problemId: "isue-001", vehicleId: "V-3" });
         assert.deepEqual(list(retry.modelosAsociados), ["V-3"]);
         assert.equal(h.state.writes, 1);
-        assert.equal(h.state.lockReleases, 2);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseCalls.length, 2);
+        assert.equal(h.state.leaseReleases, 2);
     });
 
     test("alta y baja intercaladas conservan el conjunto final sin duplicados", () => {
@@ -279,8 +300,11 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         h.api.add({ problemId: "isue-001", vehicleId: "V-3" });
         h.api.remove({ problemId: "isue-001", vehicleId: "V-3", userRole: "Desarrollador" });
         assert.equal(h.state.pysRows[1][9], "");
-        assert.equal(h.state.lockWaits, 2);
-        assert.equal(h.state.lockReleases, 2);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
+        assert.equal(h.state.leaseCalls.length, 2);
+        assert.equal(h.state.leaseCalls[0][1], "addVehicleToProblem");
+        assert.equal(h.state.leaseCalls[1][1], "removeVehicleFromProblem");
     });
 
     test("la tarjeta Agregar Modelo se estira a la altura de las tarjetas relacionadas", () => {
