@@ -34,4 +34,4 @@ const helpers=new Function("WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_","getVehicleCon
 assert.equal(helpers.getVehicleContributionCutSlotIndex_({}, {vehicle:{id:"42"},rowValues:[]}, "EV-1", [], ledger),null);
 assert.equal(helpers.getVehicleContributionCandidateStatus_({}, {vehicle:{id:"42"}}, "EV-1", "opening", ledger),true);
 assert.equal(getterCalls,0);
-console.log("WriteContributionLedgerReuse: 9/9 PASS — reutiliza el ledger validado y evita validaciones de encabezado repetidas");
+console.log("WriteContributionLedgerReuse: 15/15 PASS — reutiliza el ledger validado y evita validaciones de encabezado repetidas");
