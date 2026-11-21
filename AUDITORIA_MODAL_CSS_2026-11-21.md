@@ -34,13 +34,13 @@ Se normalizó el logo del modal de corte a:
 - Contenedor del logo con la misma altura y alineación superior izquierda.
 - Botones de acción y cierre conservan sus objetivos de 40 px; el cierre sigue dentro de la fila de acciones y no vuelve a posicionamiento absoluto.
 
-Las reglas específicas de corte se mantienen juntas en el bloque identificado como `GP-UX-MODAL-HEADER-TIGHTEN-03`. Las reglas genéricas anteriores constituyen la base compartida de otros modales; la sección específica de corte debe prevalecer sobre ellas por especificidad y posición en la cascada. No se debe eliminar la base compartida como si fuera una duplicación exclusiva de corte.
+Las reglas de encabezados de detalle (base compartida, variantes responsive y reglas scoped de corte) se movieron a un único bloque final `BLOQUE CONSOLIDADO — encabezados de detalle`. Se preservó el orden original entre reglas y media queries, de modo que el último valor de la cascada sigue prevaleciendo. La base compartida continúa aplicando a tutoriales/PyS/Relay; las reglas con `#modalDetalle[data-modal-type="corte"]` prevalecen para corte.
 
 ### Riesgo de cascada identificado
 
 Antes del bloque específico de corte hay reglas genéricas de `.detail-modal-toolbar`, `.detail-modal-title`, `.detail-modal-title-text`, `.detail-modal-title-input`, `.detail-modal-header-actions`, `.detail-modal-divider` y `.detail-modal-saving-indicator` en varios sectores del archivo. Algunas se comparten con encabezados de tutoriales, PyS o Relay. La regla final scoped a `#modalDetalle[data-modal-type="corte"]` gana para el corte; las reglas genéricas siguen aplicando a los demás modales.
 
-No deben fusionarse indiscriminadamente: hay que separar explícitamente la base compartida de las variantes por tipo de modal y conservar el último valor efectivo de cada propiedad. La siguiente iteración de la auditoría debe consolidar los bloques compartidos y las variantes de cada modal sin alterar contratos de tutoriales, PyS, Relay, Inbox o Developer Tools.
+El bloque consolidado mantiene juntas las reglas base y las variantes sin cambiar su orden de cascada. La auditoría pendiente debe continuar con modales informativos, Inbox y Developer Tools; no mezclar sus contratos con el encabezado de detalle.
 
 ## 2. Inventario estático de selectores repetidos
 
@@ -78,16 +78,16 @@ El recuento incluye reglas base y media queries. No significa que cada repetici�
 ## 4. Estado de pruebas
 
 - `CutDetailModalLayout.mjs` actualizado para reflejar 64 px escritorio y 48 px móvil en el encabezado de corte.
-- Las pruebas estáticas comprueban la cuadrícula, la ubicación del cierre, el logo, el nombre del modelo, la edición y la variante móvil.
-- La ejecución local de la suite completa y la inspección visual en escritorio/Android quedan pendientes de evidencia de CI/Beta. No se declara aprobación visual por una inspección de CSS.
+- Se añadió un contrato que exige que los selectores `.detail-modal-*` estén dentro de un único bloque CSS consolidado.
+- CI del commit anterior a la consolidación: `CutDetailModalLayout` 28/28 PASS; regresión integral 259 suites / 3,137 pruebas PASS. La consolidación posterior está en ejecución de CI y debe confirmarse antes del cierre.
+- La aceptación visual en escritorio/Android sigue pendiente de Beta. No se declara aprobación visual por una inspección de CSS.
 
 ## 5. Pendientes derivados y prioridad
 
-1. Completar consolidación de reglas repetidas de encabezados de detalle, separando base compartida y variantes por modal.
-2. Auditar `info-modal-content` y `.info-close-btn` (modales informativos) para evitar que el cierre absoluto interfiera con títulos largos.
-3. Consolidar por separado los bloques de Inbox y Developer Tools; tienen múltiples reglas responsive y deben validarse con sus contratos actuales.
-4. Revisar reglas de modo oscuro y contraste de botones/logos en cada familia de modal.
-5. Ejecutar regresión automatizada y aceptación visual en escritorio, Android/PWA y viewport estrecho. Esta última parte permanece en Beta.
+1. Auditar `info-modal-content` y `.info-close-btn` (modales informativos) para evitar que el cierre absoluto interfiera con títulos largos.
+2. Consolidar por separado los bloques de Inbox y Developer Tools; tienen múltiples reglas responsive y deben validarse con sus contratos actuales.
+3. Revisar reglas de modo oscuro y contraste de botones/logos en cada familia de modal.
+4. Ejecutar regresión automatizada tras cada consolidación y aceptación visual en escritorio, Android/PWA y viewport estrecho. Esta última parte permanece en Beta.
 
 ## 6. Límite de la auditoría
 
