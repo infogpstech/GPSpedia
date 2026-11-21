@@ -662,3 +662,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se mantienen identidad de sesión verificada, RBAC, validación de participantes, límites, claves idempotentes y auditoría. InboxConversations 66/66 PASS.
 - CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - No se desplegó Apps Script ni se modificaron recursos productivos. Pendiente Beta: concurrencia real de Inbox en entorno aislado, además de las demás validaciones de campo ya registradas.
+
+
+## Checkpoint — cierre local de vídeos e Inbox sin leases (2026-11-21)
+
+- HEAD de código validado: 194ec14271c630c20d7997ffcba55903b98474da. La rama base GPSpedia2.2.5 permanece protegida.
+- Se retiró withVideoApprovalMutationLock_: submitVideoForApproval, approveVideo y rejectVideo ejecutan directamente. Se eliminaron sus políticas de lease Coordinator, junto con las políticas obsoletas de addTutorial/updateTutorialItem y operaciones Inbox.
+- Se mantienen VideoApprovalEvents append-only, validación de sesión/rol, RBAC de aprobación, idempotencia por opVideoId, materialización y publicación/retirada del destino.
+- InboxConversations ya ejecuta lecturas y mutaciones sin ScriptLock global ni políticas Coordinator. Se conservan sesión, participantes, RBAC, idempotencia y auditoría.
+- Pruebas focalizadas: VideoApprovalClientContract 10/10; aprobación/rechazo/publicación 30/30; YouTube idempotencia 16/16; VideoApprovalState 13/13; TutorialIntegrity 42/42; InboxConversations 66/66; SharedMutationCoordinator 86/86.
+- CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas aprobadas, 0 fallos; build, health read-only y Pages SUCCESS.
+- La adenda Beta ahora excluye leases para vídeos, tutoriales e Inbox y conserva pruebas de append/read-back, RBAC, idempotencia y fallos parciales.
+- No se desplegó Apps Script ni se modificaron recursos productivos. Continúa la auditoría de locks ordinarios restantes contra §15.
