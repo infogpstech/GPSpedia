@@ -142,6 +142,7 @@ runGroup('32','ADMIN',()=>{
   runCli('Drive alertas privadas por umbral de cuota y monitor GDrive','JS/Tests/DriveStorageAlerts.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
  runCli('P0 AUTH/USERS leases mínimos para términos y actividad huérfana','JS/Tests/SessionActivityLeaseMinimization.mjs');
+ runCli('P0 AUTH elimina lecturas completas y revocaciones duplicadas','JS/Tests/AuthSessionReadOptimization.mjs');
  runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
  runCli('GP-IMG-DATA-01 planner exacto de conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');
   runCli('GP-IMG-DATA-01 aplicación aprobada, read-back y rollback','JS/Tests/CortesImageReconciliationApply.mjs');
