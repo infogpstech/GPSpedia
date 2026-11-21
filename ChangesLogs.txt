@@ -368,3 +368,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se conserva la autenticación de sesión, autorización por rol/participante, validación de datos, idempotencia y auditoría.
 - InboxConversations 66/66 PASS. CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - La prueba de rendimiento verifica que ninguna lectura o mutación solicita ScriptLock. La concurrencia real de Sheets queda pendiente de Beta aislada.
+
+
+2026-11-21 — VÍDEOS/TUTORIALES/INBOX: RETIRO DE LEASES ORDINARIAS
+- submitVideoForApproval, approveVideo y rejectVideo ya no usan withVideoApprovalMutationLock_ ni Coordinator; mantienen el journal VideoApprovalEvents, RBAC e idempotencia.
+- Coordinator dejó de declarar políticas de lease para vídeos, altas/ediciones de tutoriales y mutaciones Inbox. Inbox también opera sin ScriptLock global.
+- Pruebas: VideoApprovalClientContract 10/10; aprobación/rechazo/publicación 30/30; YouTube idempotencia 16/16; VideoApprovalState 13/13; TutorialIntegrity 42/42; InboxConversations 66/66; SharedMutationCoordinator 86/86.
+- CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health y Pages SUCCESS.
+- La adenda Beta sustituye expectativas históricas de leases para estas acciones. Sin despliegue ni cambios productivos.
