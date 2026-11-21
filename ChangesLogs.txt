@@ -651,3 +651,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - checkOperation realiza la lectura solo si recupera un evento cut válido; no añade lecturas para opId inexistente ni opening/feed.
 - Se mantienen TextFinder, read-back, idempotencia y detección de conflictos concurrentes.
 - Prueba WriteContributionPostAppendSnapshot: 12/12 PASS; regresión: 280 suites / 3,257 pruebas / 0 fallos; build y health read-only SUCCESS.
+
+
+[2026-11-21] FEEDBACK — sugerencias de año
+- Los reintentos de una sugerencia ya registrada reutilizan la lectura existente de Feedbacks; solo se relee después de appendRow para incluir votos concurrentes.
+- Se mantienen el conteo de tres usuarios verificados, first-write-wins y la verificación de aplicaciones pendientes.
+- SuggestYearVoteThreshold ampliada; regresión: 280 suites / 3,258 pruebas / 0 fallos; build, health read-only y Pages deploy SUCCESS.
