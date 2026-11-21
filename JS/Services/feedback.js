@@ -4461,6 +4461,11 @@ function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId
     });
 }
 
+function buildTutorialContentHash_(value) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, JSON.stringify(value));
+    return digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+}
+
 function buildTutorialTitleEventHash_(record) {
     const payload = JSON.stringify([record.operationId, record.tutorialId, record.action, record.titleKey,
         record.previousTitleKey || "", record.payloadHash || ""]);
@@ -4510,7 +4515,7 @@ function appendTutorialTitleEvent_(record) {
     let projection = readTutorialTitleEvents_(sheet);
     let existing = projection.operations.find(item => item.operationId === record.operationId);
     if (existing) {
-        if (existing.payloadHash !== payloadHash) throw new Error("El identificador de operación ya pertenece a otra reserva de título.");
+        if (existing.eventHash !== payloadHash) throw new Error("El identificador de operación ya pertenece a otra reserva de título.");
         if (projection.applied.get(record.operationId) !== true || projection.owners.get(record.titleKey) !== record.tutorialId) {
             throw new Error("El tema del tutorial ya está reservado por otro registro.");
         }
@@ -4522,7 +4527,7 @@ function appendTutorialTitleEvent_(record) {
     catch (flushError) {
         projection = readTutorialTitleEvents_(sheet);
         existing = projection.operations.find(item => item.operationId === record.operationId);
-        if (!existing || existing.payloadHash !== payloadHash || projection.applied.get(record.operationId) !== true ||
+        if (!existing || existing.eventHash !== payloadHash || projection.applied.get(record.operationId) !== true ||
             projection.owners.get(record.titleKey) !== record.tutorialId) throw flushError;
         return existing;
     }
@@ -4584,7 +4589,8 @@ function handleAddTutorial(payload) {
 
     appendTutorialTitleEvent_({
         operationId: "tutorial-create-" + operationId,
-        tutorialId, action: "CLAIM", titleKey: normalizeTutorialTitle_(title), previousTitleKey: ""
+        tutorialId, action: "CLAIM", titleKey: normalizeTutorialTitle_(title), previousTitleKey: "",
+        payloadHash: buildTutorialContentHash_([tutorialId, submission])
     });
     if (getTutorialTitleOwner_(title) !== tutorialId) {
         throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
@@ -5438,13 +5444,14 @@ function handleUpdateTutorialItem(payload) {
             }
             const oldTitleKey = normalizeTutorialTitle_(target.row[1]);
             const newTitleKey = normalizeTutorialTitle_(updates.tema);
-            const renameDigest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
-                JSON.stringify([tutorialId, oldTitleKey, newTitleKey]));
-            const renameOperationId = "tutorial-rename-" + renameDigest.map(byte =>
-                (byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0")).join("");
+            const renamePayloadHash = buildTutorialContentHash_([tutorialId, target.row.slice(1, 6),
+                [updates.tema, target.row[2], updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : target.row[3],
+                    updates.dondeEncontrarlo !== undefined ? updates.dondeEncontrarlo : target.row[4],
+                    updates.detalles !== undefined ? updates.detalles : target.row[5]]]);
+            const renameOperationId = "tutorial-rename-" + renamePayloadHash;
             appendTutorialTitleEvent_({
                 operationId: renameOperationId, tutorialId, action: "RENAME",
-                titleKey: newTitleKey, previousTitleKey: oldTitleKey
+                titleKey: newTitleKey, previousTitleKey: oldTitleKey, payloadHash: renamePayloadHash
             });
         }
 
