@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import vm from "node:vm";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const extract = (source, start, end) => {
     const i = source.indexOf(start), j = source.indexOf(end, i + start.length);
@@ -314,3 +317,14 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
 
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
+
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const feedback = readFileSync(resolve(ROOT, "JS/Services/feedback.js"), "utf8");
+const ui = readFileSync(resolve(ROOT, "JS/Frontend/ui.js"), "utf8");
+const result = runPysVehicleRelationIntegrityTests({ feedback, ui });
+console.log("PysVehicleRelationIntegrity: " + result.passed + "/" + (result.passed + result.failed) + " PASS");
+for (const item of result.results) {
+    if (item.status !== "PASS") console.error(item.name + ": " + item.message);
+}
+if (result.failed) process.exitCode = 1;
