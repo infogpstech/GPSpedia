@@ -112,7 +112,7 @@ function runVideoApprovalPublishingTests() {
             assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
         }));
         run_("no aprueba si el destino es ambiguo",()=>withEnv_("pys",{duplicateTarget:true},e=>{
-            expect_(()=>handleApproveVideo(actor_("vid-1")),"IDs duplicados");
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"aparece más de una vez");
             assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
         }));
         run_("fallo de Feedbacks no publica URL y permite reintentar la aprobación",()=>withEnv_("corte",{failFeedbackWrite:true},e=>{
