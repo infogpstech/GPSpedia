@@ -430,3 +430,14 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [ ] Beta aislada: concurrencia real de `appendRow`, fallos entre ambos journals, flush incierto y reconciliación de reservas.
 
 Estado: **EN PROGRESO** hasta confirmar pruebas y publicación.
+
+
+## Tutoriales — fase 4: compatibilidad de renombrados históricos
+
+- [x] Permitir renombrar filas sin ID mediante identidad determinista derivada del título normalizado, sin persistir ni inventar un ID.
+- [x] Mantener el bloqueo de edición descriptiva legacy separado; el camino lock-free histórico solo acepta renombrado de título.
+- [ ] Ejecutar regresiones y suite completa de servicios en CI.
+- [ ] Auditar aprobaciones de vídeo y completar compatibilidad de la proyección.
+- [ ] Beta aislada: concurrencia real, respuesta perdida y fallos parciales entre journals.
+
+Estado: **EN PROGRESO**.

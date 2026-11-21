@@ -122,3 +122,10 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - La aprobación de vídeo pendiente continúa impidiendo renombrar. Concurrencia real multihoja y fallos entre journals quedan pendientes de Beta aislada.
 - Regresiones añadidas: renombrado lock-free, compare-and-swap de título anterior y proyección CATALOG conservando campos no relacionados.
 - No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Implementación fase 4 — renombrado de filas históricas (2026-11-21)
+
+- Las filas sin ID persistente también pueden renombrarse sin ScriptLock cuando la operación se limita al título. Se usa una identidad derivada del SHA-256 del título normalizado únicamente para correlacionar eventos; no se escribe un ID en la hoja ni se expone como ID del tutorial.
+- Las ediciones descriptivas D:F de filas históricas sin ID permanecen en su ruta anterior; una operación combinada de renombrado y edición descriptiva no se acepta en el camino lock-free.
+- Se añadió regresión para verificar que el título histórico se proyecta, la fila física/ID se conservan y no se adquiere ScriptLock.

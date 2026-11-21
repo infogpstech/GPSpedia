@@ -511,3 +511,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Regresiones añadidas para renombrado lock-free, un único ganador desde el mismo título anterior y lectura CATALOG.
 - Validación local/CI pendiente de ejecución; no se desplegó Apps Script ni se modificaron datos productivos.
 - Pendientes: aprobación/rechazo de vídeos, edición descriptiva legacy y validación Beta aislada.
+
+
+## Checkpoint — compatibilidad de renombrado histórico (2026-11-21)
+
+- Se amplió el renombrado append-only a filas históricas sin ID cuando solo cambia el título. La identidad legacy es determinista a partir del título normalizado y solo vive en los eventos; no se escribe un ID en la fila.
+- Las ediciones descriptivas legacy siguen bajo la ruta anterior; no se combinan con el renombrado lock-free hasta contar con un journal compatible.
+- Regresión nueva: renombrado histórico, conservación de ID vacío y fila física, ausencia de ScriptLock.
+- CI pendiente para este cambio. No se desplegó Apps Script ni se modificaron recursos productivos.

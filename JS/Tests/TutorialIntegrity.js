@@ -452,6 +452,20 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.renameEventsSheet.data.length, 2);
     });
 
+    test("un tutorial histórico sin ID puede renombrarse append-only sin crear un ID físico ni usar ScriptLock", () => {
+        const row = ["", "Tema histórico", "imagen", "Cómo", "Dónde", "Detalle", "video", "Autora"];
+        const h = buildHarness_(feedback, { rows: [headers, row] });
+        const result = h.api.update({ tutorialId: "Tema histórico", tema: "Tema histórico actualizado" });
+        assert.equal(result.status, "success");
+        assert.equal(result.updated.tema, "Tema histórico actualizado");
+        assert.equal(result.updated.tutorialId, "");
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.sheet.data[1][0], "");
+        assert.equal(h.sheet.data[1][1], "Tema histórico");
+        const legacyId = "legacy-" + crypto.createHash("sha256").update("tema historico").digest("hex");
+        assert.equal(h.api.projectTitle(legacyId, "Tema histórico"), "Tema histórico actualizado");
+    });
+
     test("el ledger impide dos renombrados desde el mismo título anterior", () => {
         const h = buildHarness_(feedback, { missingSheet: true });
         const id = "tut-88888888888888888888888888888888";

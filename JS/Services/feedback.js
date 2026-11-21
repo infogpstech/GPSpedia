@@ -5680,9 +5680,15 @@ function handleUpdateTutorialItem(payload) {
     }
 
     const preflightId = preflightTarget ? String(preflightTarget.row[0] || "").trim() : "";
-    if (preflightTarget && /^tut-[A-Za-z0-9_-]{20,80}$/i.test(preflightId)) {
+    const stableTutorialId = /^tut-[A-Za-z0-9_-]{20,80}$/i.test(preflightId);
+    const legacyRenameOnly = Boolean(preflightTarget && !preflightId && updates.tema !== undefined &&
+        normalizeTutorialTitle_(updates.tema) !== normalizeTutorialTitle_(preflightTarget.row[1]) &&
+        preflightNext && preflightNext.slice(2).every((value, index) =>
+            value === String(preflightTarget.row[index + 3] || "")));
+    if (preflightTarget && (stableTutorialId || legacyRenameOnly)) {
         const currentTitle = String(preflightTarget.row[1] || "").trim();
         const nextTitle = updates.tema !== undefined ? updates.tema : currentTitle;
+        const tutorialIdentity = preflightId || makeLegacyTutorialIdentity_(currentTitle);
         const titleChanged = normalizeTutorialTitle_(nextTitle) !== normalizeTutorialTitle_(currentTitle);
         const nextSnapshot = [
             updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(preflightTarget.row[3] || ""),
@@ -5700,26 +5706,27 @@ function handleUpdateTutorialItem(payload) {
             if (tutorialTitleExists_(preflightSheet, nextTitle, preflightTarget.rowIndex, preflightId)) {
                 throw new Error("Ya existe otro tutorial con ese tema; no se modificó el registro.");
             }
-            const titlePayloadHash = buildTutorialContentHash_([preflightId,
+            const titlePayloadHash = buildTutorialContentHash_([tutorialIdentity,
                 normalizeTutorialTitle_(currentTitle), normalizeTutorialTitle_(nextTitle)]);
             const titleOperationId = "tutorial-title-rename-" + titlePayloadHash;
             const titleLedger = getTutorialTitleEventsSheet_(false);
             const prior = titleLedger ? readTutorialTitleEvents_(titleLedger) : { operations: [], owners: new Map(), applied: new Map() };
             const priorEvent = prior.operations.find(event => event.operationId === titleOperationId);
-            if (!(priorEvent && prior.applied.get(titleOperationId) === true && prior.owners.get(normalizeTutorialTitle_(nextTitle)) === preflightId)) {
-                ensureTutorialTitleClaim_(preflightId, currentTitle);
+            if (!(priorEvent && prior.applied.get(titleOperationId) === true && prior.owners.get(normalizeTutorialTitle_(nextTitle)) === tutorialIdentity)) {
+                ensureTutorialTitleClaim_(tutorialIdentity, currentTitle);
                 appendTutorialTitleEvent_({
-                    operationId: titleOperationId, tutorialId: preflightId, action: "RENAME",
+                    operationId: titleOperationId, tutorialId: tutorialIdentity, action: "RENAME",
                     titleKey: normalizeTutorialTitle_(nextTitle), previousTitleKey: normalizeTutorialTitle_(currentTitle),
                     payloadHash: titlePayloadHash
                 });
             }
-            appendTutorialRenameEvent_(preflightId, currentTitle, nextTitle);
+            appendTutorialRenameEvent_(tutorialIdentity, currentTitle, nextTitle);
         }
         if (!nextSnapshot.every((value, index) => value === currentSnapshot[index])) {
+            if (!stableTutorialId) throw new Error("Las ediciones descriptivas de registros históricos sin ID requieren una operación separada.");
             appendTutorialEditEvent_(preflightId, preflightTarget.row, nextSnapshot);
         }
-        const saved = findTutorialRow_(preflightSheet, preflightId, true);
+        const saved = findTutorialRow_(preflightSheet, preflightId || nextTitle, true);
         if (normalizeTutorialTitle_(saved.row[1]) !== normalizeTutorialTitle_(nextTitle) ||
             !nextSnapshot.every((value, index) => value === String(saved.row[index + 3] || ""))) {
             throw new Error("La proyección append-only del tutorial no coincide con los cambios solicitados.");
