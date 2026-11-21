@@ -553,16 +553,13 @@ function runSharedMutationCoordinatorTests() {
         assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), "La migración debe serializar actividad con logout y revocaciones.");
     });
 
-    test_("AUTH serializa actividad de sesiones en todas las mutaciones autenticadas", function() {
-        ["changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].forEach(action => {
-            const policy = coordinatorPolicy_("AUTH", action);
-            assert_(policy.writeResources.includes("ACTIVE_SESSIONS"),
-                "AUTH/" + action + " debe sincronizar actividad ocasional en ActiveSessions.");
-            if (["changePassword","resetUserPassword","resetUserSessions","deleteUser","updateUser","logout"].includes(action)) {
-                assert_(policy.writeResources.includes("SESSION_CONTEXTS"),
-                    "AUTH/" + action + " debe bloquear el contexto compartido durante la revocación.");
-            }
-        });
+    test_("AUTH conserva lease compartida solo para eliminación de cuenta", function() {
+        const deletion = coordinatorPolicy_("AUTH", "deleteUser");
+        assert_(deletion.writeResources.includes("ACTIVE_SESSIONS") &&
+            deletion.writeResources.includes("SESSION_CONTEXTS") && deletion.writeResources.includes("USERS"),
+            "deleteUser debe reservar identidad y sesiones mientras desactiva la cuenta.");
+        expectThrow_(() => coordinatorPolicy_("AUTH", "updateUser"), "no está habilitada");
+        expectThrow_(() => coordinatorPolicy_("AUTH", "resetUserSessions"), "no está habilitada");
     });
 
     test_("UTILITIES usa contexto central y conserva exclusión sobre identidad, Cortes y Drive", function() {
