@@ -1016,6 +1016,9 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
         }
     }
     if (matches.length !== 1) throw new Error('No se pudo confirmar una única fila para la sesión.');
+    if (normalizeUserId(matches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
+        throw new Error('El token de recuperación pertenece a otra cuenta.');
+    }
 
     let currentTokenRowIndex = matches[0].rowIndex;
     if (!record.pointerSet) {
