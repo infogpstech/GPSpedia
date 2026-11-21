@@ -663,9 +663,11 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
         }
     });
 
-    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId);
+    // Un solo snapshot post-append alimenta la proyección de slots y la detección de VIN concurrente.
+    const postAppendLedgerRows = readVehicleContributionLedgerRows_(getVehicleContributionLedgerSheet_(spreadsheet));
+    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId, postAppendLedgerRows);
     const vinConflictAfterAppend = acceptedVinPrefix
-        ? findVehicleContributionVinConflict_(spreadsheet, acceptedVinPrefix, vehicleId)
+        ? findVehicleContributionVinConflict_(spreadsheet, acceptedVinPrefix, vehicleId, postAppendLedgerRows)
         : null;
     const candidateReviewPending = slotIndex === null || Boolean(vinConflictAfterAppend);
     let message = slotIndex
@@ -2605,7 +2607,13 @@ const WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
     "actorId", "actorName", "createdAt", "status", "supersedesEventId"
 ]);
 
-function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId) {
+function readVehicleContributionLedgerRows_(sheet) {
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (lastRow < 2) return [];
+    return sheet.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+}
+
+function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId, rowsSnapshot) {
     const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
     const lastRow = ledger.getLastRow();
     if (lastRow < 2) return null;
@@ -2617,7 +2625,7 @@ function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targe
         COLS_CORTES["ubicacionCorte" + slot],
         COLS_CORTES["imgCorte" + slot]
     ].some(column => String(baseRow[column - 1] || "").trim()));
-    const rows = ledger.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(ledger);
     const byOpId = new Map();
     const conflicts = new Set();
     rows.forEach((row, offset) => {
@@ -2756,13 +2764,12 @@ function computeVehicleContributionHash_(vehicleId, kind, payload) {
     return digest.map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
 }
 
-function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentVehicleId) {
+function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentVehicleId, rowsSnapshot) {
     const prefix = String(vinPrefix || "").trim().toUpperCase();
     if (!prefix) return null;
     const sheet = getVehicleContributionLedgerSheet_(spreadsheetRef);
     if (sheet.getLastRow() < 2) return null;
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1,
-        WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(sheet);
     for (let index = 0; index < rows.length; index++) {
         const row = rows[index];
         const vehicleId = String(row[2] || "").trim();
@@ -3691,6 +3698,7 @@ function handleCheckOperation(payload) {
 
     const contributionSheet = spreadsheet.getSheetByName("AportesVehiculo");
     if (contributionSheet) {
+        const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionSheet);
         const events = findVehicleContributionEventsByOpId_(contributionSheet, opId)
             .sort((a, b) => a.rowIndex - b.rowIndex);
         if (events.length) {
@@ -3726,13 +3734,13 @@ function handleCheckOperation(payload) {
             if (status === "accepted" && ["cut", "opening", "feed"].includes(eventKind)) {
                 const snapshot = readSupplementaryVehicleSnapshot_(sheet, eventVehicleId);
                 if (eventKind === "cut") {
-                    slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, String(values[0] || ""));
+                    slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, String(values[0] || ""), postAppendLedgerRows);
                     let eventPayload = {};
                     try { eventPayload = JSON.parse(eventPayloadJson || "{}"); } catch (parseError) { eventPayload = {}; }
                     const vinPrefix = String(eventPayload.vinPrefix || "").trim().toUpperCase();
                     if (vinPrefix) {
                         const existingVinDuplicate = checkVinDuplicateInSheet(sheet, vinPrefix, eventVehicleId);
-                        const concurrentVinDuplicate = findVehicleContributionVinConflict_(spreadsheet, vinPrefix, eventVehicleId);
+                        const concurrentVinDuplicate = findVehicleContributionVinConflict_(spreadsheet, vinPrefix, eventVehicleId, postAppendLedgerRows);
                         vinConflictPending = Boolean(existingVinDuplicate || concurrentVinDuplicate);
                     }
                     candidateReviewPending = slotIndex === null || vinConflictPending;
