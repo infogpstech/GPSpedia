@@ -138,14 +138,14 @@ function addLogoHarness(options={}){
   normalizeOrganizerSegment_:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/[\\/\s]+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""),
   normalizeOrganizerFilePart_:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/[\\/,]/g,"_").replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""),
   COLS_CORTES:{categoria:2,marca:3},
-  Utilities:{base64Decode:()=>[1,2,3],newBlob:(data,mime,name)=>{createdFilename=name;return {};}},
+  Utilities:{base64Decode:()=>[137,80,78,71,13,10,26,10],base64Encode:()=>"iVBORw0KGgo=",newBlob:(data,mime,name)=>{createdFilename=name;return {}; }},
   LockService:{getScriptLock:()=>lock},
   SpreadsheetApp:{flush,CopyPasteType:{PASTE_FORMAT:"PASTE_FORMAT",PASTE_DATA_VALIDATION:"PASTE_DATA_VALIDATION"}},
   PropertiesService:{getScriptProperties:()=>properties},
   LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER"
  };
- const fn=new Function(...Object.keys(deps),extract("getLogoCategoryCandidatesFromCortesRows_")+"\n"+extract("buildCanonicalLogoDestination_")+"\n"+extract("copyAdminRowPresentationOnly_")+"\n"+extract("getNextLogoIdLocked_")+"\n"+extract("handleAddLogo")+"\nreturn handleAddLogo;")(...Object.values(deps));
- return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"AQID",filename:"logo.png",mimeType:"image/png"},()=>{}),
+ const fn=new Function(...Object.keys(deps),extract("getLogoCategoryCandidatesFromCortesRows_")+String.fromCharCode(10)+extract("buildCanonicalLogoDestination_")+String.fromCharCode(10)+extract("copyAdminRowPresentationOnly_")+String.fromCharCode(10)+extract("getNextLogoIdLocked_")+String.fromCharCode(10)+extract("validateLogoImagePayload_")+String.fromCharCode(10)+extract("handleAddLogo")+String.fromCharCode(10)+"return handleAddLogo;")(...Object.values(deps));
+ return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"iVBORw0KGgo=",filename:"logo.png",mimeType:"image/png"},()=>{}),
   rows,file,folderCalls,get createdFilename(){return createdFilename;},get trashed(){return trashed;},get description(){return description;}};
 }
 test("Guarda el logotipo con nombre canónico en categoría/marca",()=>{
