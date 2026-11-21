@@ -2006,7 +2006,7 @@ function ensureFeedbackLikesSheet_() {
     const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("FeedbackLikes");
-    if (!sheet) sheet = ss.insertSheet("FeedbackLikes");
+    if (!sheet) { try { sheet = ss.insertSheet("FeedbackLikes"); } catch (createError) { sheet = ss.getSheetByName("FeedbackLikes"); if (!sheet) throw createError; } }
     if (sheet.getLastRow() === 0) {
         sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
         SpreadsheetApp.flush();
@@ -2016,6 +2016,54 @@ function ensureFeedbackLikesSheet_() {
 
     return sheet;
 }
+function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex) {
+    if (!ledger || ledger.getLastRow() < 2) return [];
+    const matches = ledger.getRange(2, 1, ledger.getLastRow() - 1, 1).createTextFinder(String(actorKey)).matchCase(true).findAll();
+    const rows = [];
+    matches.forEach(match => {
+        const rowIndex = match.getRow(), row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
+        if (String(row[0] || "").trim() === String(actorKey) && String(row[1] || "").trim() === String(vehicleId) && Number(row[2]) === Number(corteIndex)) rows.push({ row, rowIndex });
+    });
+    return rows;
+}
+function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
+    if (!ledger || ledger.getLastRow() < 2) return 0;
+    const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1).createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll();
+    const actors = new Set();
+    matches.forEach(match => {
+        const row = ledger.getRange(match.getRow(), 1, 1, 7).getValues()[0];
+        if (String(row[1] || "").trim() !== String(vehicleId) || Number(row[2]) !== Number(corteIndex) || String(row[5] || "") !== "event") return;
+        const actorKey = String(row[0] || "").trim();
+        if (!/^user:[A-Za-z0-9._@-]{1,200}$/.test(actorKey)) throw new Error("FeedbackLikes contiene un evento con actorKey inválido.");
+        actors.add(actorKey);
+    });
+    return actors.size;
+}
+function getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol) {
+    const raw = cuts.getRange(vehicle.rowIndex, utilCol).getValue();
+    const base = raw === "" || raw === null || raw === undefined ? 0 : Number(raw);
+    if (!Number.isSafeInteger(base) || base < 0) throw new Error("El contador de likes del corte no es un entero válido; requiere revisión.");
+    return base + getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex);
+}
+function findLikeEventReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol) {
+    try {
+        const ledger = getSpreadsheet().getSheetByName("FeedbackLikes");
+        if (!ledger || ledger.getLastRow() < 2 || ledger.getLastColumn() < 7) return null;
+        const headers = ledger.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
+        const expected = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+        if (expected.some((header, index) => headers[index] !== header)) return null;
+        const rows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex);
+        if (!rows.some(item => String(item.row[5] || "") === "event")) return null;
+        return { status: "success", alreadyLiked: true,
+            likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol),
+            message: "Este usuario ya había registrado su like." };
+    } catch (error) { return null; }
+}
+function logLikeActivityAfterAppend_(userId, userName, vehicleId, corteIndex, likeCount) {
+    try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + likeCount); }
+    catch (logError) { console.error(logError); }
+}
+
 function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
     const id = String(vehicleId || "").trim();
     if (!sheet || !id) throw new Error("No se pudo localizar el vehículo para registrar el like.");
@@ -2085,6 +2133,18 @@ function handleRecordLike(payload) {
     }
     const completedReplay = findCompletedLikeReplayNoop_(cuts, preflightVehicle, actorKey, vehicleId, corteIndex, utilCol);
     if (completedReplay) return completedReplay;
+    const eventReplay = findLikeEventReplayNoop_(cuts, preflightVehicle, actorKey, vehicleId, corteIndex, utilCol);
+    if (eventReplay) return eventReplay;
+    const eventLedger = ensureFeedbackLikesSheet_();
+    const existingActorRows = findFeedbackLikeRowsForActor_(eventLedger, actorKey, vehicleId, corteIndex);
+    if (!existingActorRows.length) {
+        eventLedger.appendRow([actorKey, vehicleId, corteIndex, 0, 0, "event", new Date().toISOString()]);
+        SpreadsheetApp.flush();
+        const committedReplay = findLikeEventReplayNoop_(cuts, preflightVehicle, actorKey, vehicleId, corteIndex, utilCol);
+        if (!committedReplay) throw new Error("No se pudo confirmar el evento append-only del like.");
+        logLikeActivityAfterAppend_(userId, userName, vehicleId, corteIndex, committedReplay.likeCount);
+        return { status: "success", alreadyLiked: false, likeCount: committedReplay.likeCount, message: "Like registrado correctamente." };
+    }
     let activityLogRequest = null;
     const result = (() => {
         const lock = LockService.getScriptLock();
@@ -2107,6 +2167,11 @@ function handleRecordLike(payload) {
                 found.push({ row, rowIndex });
             }
         });
+        if (found.some(item => String(item.row[5] || "") === "event")) {
+            return { status: "success", alreadyLiked: true,
+                likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol),
+                message: "Este usuario ya había registrado su like." };
+        }
         if (found.length > 1) throw new Error("El like tiene registros duplicados en FeedbackLikes; requiere revisión.");
         const counterCell = cuts.getRange(vehicle.rowIndex, utilCol);
         const rawCountValue = counterCell.getValue();
