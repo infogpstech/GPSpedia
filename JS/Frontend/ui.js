@@ -13448,6 +13448,44 @@ async function syncApprovedVehicleVideoDetail_(videoMeta, dependencies = {}) {
  }
 }
 
+async function readSupplementaryImageDataUrl_(file) {
+    if (!file) return "";
+    if (Number.isFinite(file.size) && file.size === 0) {
+        const error = new Error("La imagen seleccionada está vacía.");
+        error.name = "ImageReadError";
+        throw error;
+    }
+    if (Number.isFinite(file.size) && file.size > 10 * 1024 * 1024) {
+        const error = new Error("Cada imagen debe pesar como máximo 10 MB.");
+        error.name = "ImageSizeError";
+        throw error;
+    }
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === "string" && reader.result.startsWith("data:image/")) {
+                resolve(reader.result);
+            } else {
+                const error = new Error("La lectura no devolvió una imagen válida.");
+                error.name = "ImageReadError";
+                reject(error);
+            }
+        };
+        reader.onerror = () => {
+            const error = new Error("No se pudo leer la imagen seleccionada.");
+            error.name = "ImageReadError";
+            reject(error);
+        };
+        reader.onabort = () => {
+            const error = new Error("La lectura de la imagen fue cancelada.");
+            error.name = "ImageReadError";
+            reject(error);
+        };
+        try { reader.readAsDataURL(file); }
+        catch (error) { reject(error); }
+    });
+}
+
 /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
     const operationId = createSuggestionOperationId_();
@@ -13498,17 +13536,9 @@ export function openAddAperturaModal(item) {
         submitBtn.disabled = true;
         submitBtn.innerText = "Guardando...";
 
-        const fileInput = content.querySelector("#add-apertura-img-file");
-        let imgBase64 = "";
-        if (fileInput.files && fileInput.files[0]) {
-            imgBase64 = await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = (re) => res(re.target.result);
-                r.readAsDataURL(fileInput.files[0]);
-            });
-        }
-
         try {
+            const fileInput = content.querySelector("#add-apertura-img-file");
+            const imgBase64 = await readSupplementaryImageDataUrl_(fileInput.files && fileInput.files[0]);
             const writeResult = await routeAction("addSupplementaryInfo", {
                 ...getDeveloperSessionPayload(),
                 opId: operationId,
@@ -13519,7 +13549,11 @@ export function openAddAperturaModal(item) {
             await completeVehicleExpansionSave_(writeResult, item.id, writeResult.candidateReviewPending === true ? "La apertura se conservó como candidato para revisión; el dato existente no fue sobrescrito." : "Apertura agregada con éxito.", modal);
         } catch (err) {
             console.error(err);
-            showGlobalError("Error: " + err.message);
+            showGlobalError(err && err.name === "ImageSizeError"
+                ? "La imagen debe pesar como máximo 10 MB. Reduce su tamaño y vuelve a seleccionarla."
+                : err && err.name === "ImageReadError"
+                    ? "No se pudo leer la imagen seleccionada. Vuelve a seleccionarla e inténtalo nuevamente."
+                    : "Error: " + String(err && err.message || err));
             submitBtn.disabled = false;
             submitBtn.innerText = "Agregar Apertura";
         }
@@ -13576,25 +13610,20 @@ export function openAddFeedModal(item) {
         submitBtn.disabled = true;
         submitBtn.innerText = "Guardando...";
 
-        const fileInput = content.querySelector("#add-feed-img-file");
-        let imgBase64 = "";
-        if (fileInput.files && fileInput.files[0]) {
-            imgBase64 = await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = (re) => res(re.target.result);
-                r.readAsDataURL(fileInput.files[0]);
-            });
-        }
-
-        // El servidor asigna el primer par texto/imagen libre usando el registro vigente.
-        const payload = { opId: operationId, vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
-
         try {
+            const fileInput = content.querySelector("#add-feed-img-file");
+            const imgBase64 = await readSupplementaryImageDataUrl_(fileInput.files && fileInput.files[0]);
+            // El servidor asigna el primer par texto/imagen libre usando el registro vigente.
+            const payload = { opId: operationId, vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
             const writeResult = await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
             await completeVehicleExpansionSave_(writeResult, item.id, writeResult.candidateReviewPending === true ? "La alimentación se conservó como candidato para revisión; no se sobrescribieron los datos existentes." : "Cable de alimentación agregado con éxito.", modal);
         } catch (err) {
             console.error(err);
-            showGlobalError("Error: " + err.message);
+            showGlobalError(err && err.name === "ImageSizeError"
+                ? "La imagen debe pesar como máximo 10 MB. Reduce su tamaño y vuelve a seleccionarla."
+                : err && err.name === "ImageReadError"
+                    ? "No se pudo leer la imagen seleccionada. Vuelve a seleccionarla e inténtalo nuevamente."
+                    : "Error: " + String(err && err.message || err));
             submitBtn.disabled = false;
             submitBtn.innerText = "Agregar Alimentación";
         }
