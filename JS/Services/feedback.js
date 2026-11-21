@@ -4278,7 +4278,7 @@ const TUTORIAL_HEADERS = Object.freeze([
 ]);
 
 const TUTORIAL_TITLE_EVENTS_HEADERS = Object.freeze([
-    "operationId", "payloadHash", "tutorialId", "action", "titleKey", "previousTitleKey", "createdAt"
+    "operationId", "eventHash", "tutorialId", "action", "titleKey", "previousTitleKey", "payloadHash", "createdAt"
 ]);
 
 function getTutorialSheet_(createIfMissing) {
@@ -4462,7 +4462,8 @@ function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId
 }
 
 function buildTutorialTitleEventHash_(record) {
-    const payload = JSON.stringify([record.operationId, record.tutorialId, record.action, record.titleKey, record.previousTitleKey || ""]);
+    const payload = JSON.stringify([record.operationId, record.tutorialId, record.action, record.titleKey,
+        record.previousTitleKey || "", record.payloadHash || ""]);
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload);
     return digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
 }
@@ -4473,18 +4474,20 @@ function readTutorialTitleEvents_(sheet) {
     const rows = sheet.getRange(2, 1, last - 1, TUTORIAL_TITLE_EVENTS_HEADERS.length).getValues();
     rows.forEach((row, index) => {
         if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
-        const operationId = String(row[0] || "").trim(), payloadHash = String(row[1] || "").trim().toLowerCase();
+        const operationId = String(row[0] || "").trim(), eventHash = String(row[1] || "").trim().toLowerCase();
         const tutorialId = String(row[2] || "").trim(), action = String(row[3] || "").trim();
         const titleKey = String(row[4] || "").trim(), previousTitleKey = String(row[5] || "").trim();
-        if (!/^[a-z0-9_-]{20,120}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+        const payloadHash = String(row[6] || "").trim().toLowerCase();
+        if (!/^[a-z0-9_-]{20,120}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(eventHash) ||
+            !/^[a-f0-9]{64}$/.test(payloadHash) ||
             !/^(?:tut-[A-Za-z0-9_-]{20,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) ||
             !["CLAIM", "RENAME"].includes(action) || !titleKey || (action === "RENAME" && !previousTitleKey)) {
             throw new Error("TutorialTitleEvents contiene una fila incompatible; requiere revisión.");
         }
-        const item = { rowNumber: index + 2, operationId, payloadHash, tutorialId, action, titleKey, previousTitleKey };
+        const item = { rowNumber: index + 2, operationId, eventHash, payloadHash, tutorialId, action, titleKey, previousTitleKey };
         if (operations.has(operationId)) {
             const canonical = operations.get(operationId);
-            if (canonical.payloadHash !== payloadHash) canonical.conflictingPayloadCount = (canonical.conflictingPayloadCount || 0) + 1;
+            if (canonical.eventHash !== eventHash) canonical.conflictingPayloadCount = (canonical.conflictingPayloadCount || 0) + 1;
             else canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
             return;
         }
@@ -4514,7 +4517,7 @@ function appendTutorialTitleEvent_(record) {
         return existing;
     }
     sheet.appendRow([record.operationId, payloadHash, record.tutorialId, record.action,
-        record.titleKey, record.previousTitleKey || "", new Date().toISOString()]);
+        record.titleKey, record.previousTitleKey || "", record.payloadHash, new Date().toISOString()]);
     try { SpreadsheetApp.flush(); }
     catch (flushError) {
         projection = readTutorialTitleEvents_(sheet);
@@ -4525,7 +4528,7 @@ function appendTutorialTitleEvent_(record) {
     }
     projection = readTutorialTitleEvents_(sheet);
     existing = projection.operations.find(item => item.operationId === record.operationId);
-    if (!existing || existing.payloadHash !== payloadHash) throw new Error("No se pudo confirmar la reserva append-only del tema del tutorial.");
+    if (!existing || existing.eventHash !== payloadHash) throw new Error("No se pudo confirmar la reserva append-only del tema del tutorial.");
     if (projection.applied.get(record.operationId) !== true || projection.owners.get(record.titleKey) !== record.tutorialId) {
         throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
     }
