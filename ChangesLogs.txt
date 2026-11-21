@@ -257,3 +257,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - PysCreationIntegrity incorpora regresión que verifica el rechazo antes de crear archivos adicionales.
 - CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages pendiente al registrar.
 - handleAddProblem mantiene ScriptLock. La retirada se difiere hasta disponer de ledger concurrente de propiedad y transiciones.
+
+2026-11-21 — PyS: alta append-only sin ScriptLock
+- `handleAddProblem` deja de adquirir ScriptLock. Las altas nuevas anexan una fila completa de `PysOperations` en estado inicial `UPLOAD_PENDING`, incluyendo identidad, hash, ID PyS y archivo canónico.
+- `writePysOperation_` rechaza actualizaciones in-place; el éxito se proyecta desde la fila PyS verificada. Los reintentos recuperan con la misma imagen, sin crear otra.
+- `readPysOperations_` conserva first-write-wins por `opId`; los payloads contradictorios se rechazan por operación y los archivos perdedores solo se eliminan tras verificar ausencia de referencias.
+- Los fallos ambiguos conservan y marcan el recurso para reconciliación; las imágenes ya vinculadas a otro problema no se reutilizan.
+- Pruebas focalizadas incluidas en CI `44875140437`: 258 suites, 3094 pruebas, 0 fallos. Health read-only `44875140445` y Pages `44875140584` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
