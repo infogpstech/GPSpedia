@@ -319,6 +319,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-023 contrato y validación de acciones ADMIN createSheet/addColumn','JS/Tests/AdminSheetActionsContract.mjs');
  runCli('AUG-156 coordinación de inventario, escáner y migración de historial','JS/Tests/AdminImageScanCoordinatorContract.mjs');
  runCli('ADMIN telemetría solo en panel visible y restringido a Desarrollador','JS/Tests/AdminTrafficSurfaceContract.mjs');
+ runCli('ADMIN inventario de lecturas y contratos de backup/restore/upload','JS/Tests/AdminOperationReadInventory.mjs');
  runCli('Organizador Cortes: rutas, nombres, códigos y bloqueos del constructor','JS/Tests/CortesImageOrganizerTargets.mjs');
  runCli('Organizador Cortes: manifiesto Safe Apply, idempotencia y plan de rollback','JS/Tests/CortesImageOrganizerApplyPlan.mjs');
  runCli('Organizador Cortes: ejecutor durable, ACL y rollback ejecutable','JS/Tests/CortesImageOrganizerExecutor.mjs');
