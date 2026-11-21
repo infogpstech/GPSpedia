@@ -54,13 +54,18 @@ test("USERS getUsers/updateProfile reutilizan actor cacheado; solo createUser co
     assert.doesNotMatch(usersDoPost, /withSharedMutationLease_\("USERS",\s*["']updateProfile/);
 });
 
-test("AUTH benchmark usa actor cacheado; las mutaciones de sesión conservan coordinación", () => {
+test("AUTH reutiliza actor cacheado para acceptTerms y elimina leases de touchSession/acceptTerms", () => {
     const benchmark = authDoPost.indexOf('if (action === "benchmarkPasswordKdf")');
+    const terms = authDoPost.indexOf('if (action === "acceptTerms")');
     const lease = authDoPost.indexOf('withSharedMutationLease_("AUTH", action');
     assert.ok(benchmark >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", benchmark) > benchmark);
+    assert.ok(terms >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", terms) > terms);
     assert.ok(lease > benchmark);
+    assert.doesNotMatch(authDoPost, /withSharedMutationLease_\("AUTH",\s*"acceptTerms"/);
     assert.doesNotMatch(authDoPost, /isSharedReadAction_/);
-    assert.match(authMutationPolicy, /login.*touchSession.*deleteUser.*updateUser.*logout/);
+    assert.doesNotMatch(authMutationPolicy, /touchSession|acceptTerms/);
+    assert.match(authMutationPolicy, /login.*deleteUser.*updateUser.*logout/);
+    assert.match(auth, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
 });
 
 test("ADMIN usa actor cacheado para todas las acciones y no adquiere leases", () => {
