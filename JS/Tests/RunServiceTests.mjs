@@ -371,6 +371,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('SEC arquitectura: preservación de RBAC, cierre de cuentas, revocación y caché remota','JS/Tests/CoordinatorCapabilityPreservation.mjs');
  runCli('AUG-138 logger seguro y recuperación offline/reintentos/cuota/respuesta perdida','JS/Tests/AddCortesDiagnostics.mjs');
  recordResult('YouTube solicitudes pending sin snapshot redundante',loadFunction('JS/Tests/YouTubePendingRefreshContract.js','runYouTubePendingRefreshContractTests')(read('JS/Frontend/ui.js')));
+ runCli('WRITE alta de corte: tamaño y MIME antes de Base64','JS/Tests/AddCutImageSizePreflight.mjs');
  runCli('WRITE imágenes suplementarias: tamaño y lectura antes de Base64','JS/Tests/AddSupplementaryImagePreflight.mjs');
  recordResult('Limpieza UI y contratos públicos',loadFunction('JS/Tests/UiOrphanCleanup.js','runUiOrphanCleanupTests')({
   index:read('index.html'),ui:read('JS/Frontend/ui.js'),main:read('JS/Frontend/main.js')

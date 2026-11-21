@@ -1608,16 +1608,31 @@
                     reject(sizeError);
                     return;
                 }
+                const declaredMime = String(file.type || '').trim().toLowerCase();
+                const supportedMimeTypes = new Set([
+                    'image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/x-png',
+                    'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/x-ms-bmp',
+                    'image/tiff', 'image/heic', 'image/heif', 'image/avif', 'image/x-icon',
+                    'image/vnd.microsoft.icon'
+                ]);
+                if (!supportedMimeTypes.has(declaredMime)) {
+                    const mimeError = new Error('IMAGE_MIME_UNSUPPORTED');
+                    mimeError.name = 'ImageMimeError';
+                    reject(mimeError);
+                    return;
+                }
                 try {
                     const reader = new FileReader();
                     reader.onload = () => {
-                        if (typeof reader.result !== 'string' || !reader.result.startsWith('data:')) {
-                            const invalidResultError = new Error('FILE_READ_INVALID_RESULT');
-                            invalidResultError.name = 'FileReadError';
+                        const result = typeof reader.result === 'string' ? reader.result : '';
+                        const match = result.match(/^data:(image\\/[a-zA-Z0-9.+-]+);base64,/i);
+                        if (!match || match[1].toLowerCase() !== declaredMime) {
+                            const invalidResultError = new Error('FILE_READ_MIME_MISMATCH');
+                            invalidResultError.name = 'ImageMimeError';
                             reject(invalidResultError);
                             return;
                         }
-                        resolve(reader.result);
+                        resolve(result);
                     };
                     reader.onerror = () => {
                         const readError = new Error('FILE_READ_FAILED');
