@@ -6484,11 +6484,14 @@ function handleAddLogo(payload, logMessage) {
     };
 
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) {
+    let lockAcquired = false;
+    try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
+    if (!lockAcquired) {
         try { trashUnlinkedFile(); }
         catch (cleanupError) { markRecovery(cleanupError.message); }
-        throw new Error("No se pudo bloquear la asignación de IDs de LogosMarca. Intente nuevamente.");
+        const busyError = new Error("ADMIN está ocupado con otra asignación breve. Conserva el mismo intento y vuelve a intentarlo.");
+        busyError.code = "ADMIN_BUSY";
+        throw busyError;
     }
     let newRow = null, newId = null, lastColumn = 4, rowPrepared = false;
     try {
@@ -6571,7 +6574,7 @@ function handleAddLogo(payload, logMessage) {
         }
         throw error;
     } finally {
-        lock.releaseLock();
+        if (lockAcquired && lock.hasLock()) lock.releaseLock();
     }
 }
 
