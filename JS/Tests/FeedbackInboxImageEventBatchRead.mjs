@@ -44,12 +44,21 @@ test("construye índice por reportId con primer evento y cuenta duplicados equiv
     assert.equal(h.calls.length, 1, "El ledger se lee una sola vez.");
 });
 
-test("rechaza eventos contradictorios con el mismo reportId", () => {
+test("marca conflictos por reportId sin bloquear reportes no relacionados", () => {
     const rows = [
-        ["EV-1", "REP-1", "U1", "FILE-1", "url-1", "a.png", "image/png", 100, "sha-1", "t1"],
-        ["EV-2", "REP-1", "U1", "FILE-2", "url-2", "b.png", "image/png", 200, "sha-2", "t2"]
+        ["EV-1", "REP-BAD", "U1", "FILE-1", "url-1", "a.png", "image/png", 100, "sha-1", "t1"],
+        ["EV-2", "REP-BAD", "U1", "FILE-2", "url-2", "b.png", "image/png", 200, "sha-2", "t2"],
+        ["EV-3", "REP-GOOD", "U2", "FILE-3", "url-3", "c.png", "image/png", 300, "sha-3", "t3"]
     ];
-    assert.throws(() => makeIndex(rows), /contradictorios/);
+    const h = makeIndex(rows);
+    assert.equal(h.index.get("REP-BAD").conflict, true);
+    assert.equal(h.index.get("REP-GOOD").conflict, false);
+    const resolve = new Function("normalizeReportImageMetadata_", "findFeedbackReportImageEventByReportId_",
+        metadataCode + "\nreturn getFeedbackReportImageMetadata_;")(
+        () => null, () => { throw new Error("No debe buscar un evento individual con índice disponible"); }
+    );
+    assert.throws(() => resolve("REP-BAD", null, h.index), /contradictorios/);
+    assert.equal(resolve("REP-GOOD", null, h.index).imageFileId, "FILE-3");
 });
 
 test("el índice vacío evita búsquedas repetidas cuando no existe ledger de eventos", () => {
