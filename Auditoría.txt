@@ -1050,3 +1050,10 @@ Adenda — FEEDBACK confirmación de sugerencias
 - La edición real continúa bajo lock; los renombrados anexan evento para coordinarse con las altas lock-free. CATALOG deduplica IDs por primera fila física.
 - CI `44876830826` SUCCESS: 258 suites, 3097 pruebas, 0 fallos; health read-only SUCCESS. Validación real pendiente en Beta aislada. Sin despliegue.
 ================================================================================
+
+
+2026-11-21 — Tutoriales: versión append-only para ediciones D:F
+- Hallazgo: `handleUpdateTutorialItem` mutaba B:F in-place bajo ScriptLock; quitarlo sin expectedHash permitiría pérdida de actualizaciones concurrentes.
+- Corrección fase 2: `TutorialEditEvents` registra snapshots D:F con expectedHash; alta/edición descriptiva estable es lock-free, el catálogo proyecta los eventos y no revierte columna G de aprobación de vídeo.
+- Renombrados y filas sin ID continúan protegidos por lock. Validación CI: 258 suites, 3101 pruebas, 0 fallos; health y Pages SUCCESS. Sin despliegue.
+================================================================================
