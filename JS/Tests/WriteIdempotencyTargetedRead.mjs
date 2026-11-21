@@ -34,7 +34,7 @@ test("la lectura focalizada valida esquema y detecta duplicados del opId consult
 });
 
 test("recordOpId revalida la fila actual mediante búsqueda focalizada", () => {
-    assert.match(record, /readIdempotenciaEntryByOpId_\\(sheet,\\s*cleanOpId\\)/);
+    assert.match(record, /readIdempotenciaEntryByOpId_\(sheet,\s*cleanOpId\)/);
     assert.match(record, /!!existing !== !!current/);
     assert.match(record, /existing\.rowIndex !== current\.rowIndex/);
     assert.match(record, /updateIdempotenciaEntriesSnapshot_\(entriesSnapshot, verified\)/);
