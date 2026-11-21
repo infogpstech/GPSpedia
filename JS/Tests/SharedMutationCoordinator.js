@@ -820,7 +820,14 @@ function runSharedMutationCoordinatorTests() {
 
     test_("Login precarga actores en USERS/WRITE/FEEDBACK/ADMIN en lotes y fuera del lock", function() {
         const batches = [];
+        const coordinatorLock = {
+            held: false,
+            tryLock() { this.held = true; return true; },
+            releaseLock() { this.held = false; }
+        };
+        const lockService = { getScriptLock: () => coordinatorLock };
         const fetchAll = requests => {
+            assert_(!coordinatorLock.held, "La precarga remota debe ocurrir después de liberar el lock de Coordinator.");
             batches.push(requests);
             return requests.map(request => {
                 const body = JSON.parse(request.payload);
@@ -830,7 +837,7 @@ function runSharedMutationCoordinatorTests() {
                 };
             });
         };
-        const r = createRuntime_(null, null, fetchAll);
+        const r = createRuntime_(null, lockService, fetchAll);
         ["USERS", "WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
             r.properties.setProperty("GPSpedia_SERVICE_URL_" + service,
                 "https://script.google.com/macros/s/" + service + "/exec");
