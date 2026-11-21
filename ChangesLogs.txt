@@ -441,3 +441,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Las altas nuevas con opId estable reservan el vehicleId append-only antes de adquirir ScriptLock. El ID se pasa a la transacción física mediante preparedRequest.preallocatedVehicleId y no se vuelve a consultar el ledger dentro del lock.
 - Las solicitudes legacy sin opId estable mantienen el fallback bajo lock. La sección crítica de fila física/Idempotencia, rollback, liberación durante Drive y retry pending permanecen intactos.
 - WriteVehicleIdReservationOutsidePhysicalLock: 5/5 PASS en harness Node.js aislado, incluido contención y retry idempotente. Pendiente CI/checkout completo. Sin cambios productivos.
+
+
+2026-11-21 — WRITE: LECTURA DE IDEMPOTENCIA POR OPID
+- handleAddOrUpdateCutLocked dejó de leer todas las filas de Idempotencia para una operación individual. Ahora construye un snapshot mínimo con readIdempotenciaEntryByOpId_, que valida el esquema y detecta duplicados del opId activo.
+- recordOpId conserva la relectura focalizada y los checks de concurrencia antes de cambiar el estado. El lock físico se mantiene.
+- WriteIdempotencyTargetedRead: 4/4 PASS en harness Node.js aislado; pendiente CI/checkout completo. Sin cambios productivos.
