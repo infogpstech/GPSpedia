@@ -1355,10 +1355,17 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
     }
     const opId = validatedPayload.opId || "";
     const idempotencySheetBefore = opId ? getIdempotenciaSheet() : ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+    // La operación solo necesita el estado de su opId; no recorrer todo el historial bajo lock.
     const idempotencyEntriesSnapshot = opId && idempotencySheetBefore
-        ? readIdempotenciaEntries_(idempotencySheetBefore, false)
+        ? { entries: [], byOpId: new Map(), sheet: idempotencySheetBefore }
         : null;
-    if (idempotencyEntriesSnapshot) idempotencyEntriesSnapshot.sheet = idempotencySheetBefore;
+    if (idempotencyEntriesSnapshot) {
+        const currentEntry = readIdempotenciaEntryByOpId_(idempotencySheetBefore, opId);
+        if (currentEntry) {
+            idempotencyEntriesSnapshot.entries.push(currentEntry);
+            idempotencyEntriesSnapshot.byOpId.set(opId, currentEntry);
+        }
+    }
     let opRowIndex = null, opRowValues = null, opLastRowBefore = idempotencySheetBefore ? idempotencySheetBefore.getLastRow() : 0;
     const opEntryBefore = idempotencyEntriesSnapshot && idempotencyEntriesSnapshot.byOpId.get(opId);
     if (opEntryBefore) {
