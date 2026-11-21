@@ -29,8 +29,11 @@ assert.match(visible, /getComputedStyle/);
 assert.match(ui, /if \(!isAdminPanelCurrent_\(\) \|\| !isGlobalServiceTrafficVisible_\(\)\) return/);
 assert.match(ui, /Date\.now\(\) - lastGlobalServiceTrafficFetchAt >= 60000\) loadGlobalServiceTraffic_/);
 assert.doesNotMatch(main, /getServiceTraffic|getReplacedImages|getDriveStorage|getCortesImageFolders|auditDriveImagesInCortes/);
-assert.match(getTraffic, /assertDeveloperSession\(payload\)/);
-assert.match(getTraffic, /getServiceTraffic/);
+assert.match(getTraffic, /developerContext\.role[\s\S]*?desarrollador/);
+assert.match(getTraffic, /getSharedServiceTraffic_\(\)/);
+const internal = admin.slice(admin.indexOf("function doPostInternal_(e)"));
+assert.match(internal, /assertDeveloperSession\(payload\)/);
+assert.match(internal, /case 'getServiceTraffic':[\s\S]*?handleGetServiceTraffic_/);
 assert.doesNotMatch(mutation, /getServiceTraffic/);
 assert.match(policy, /getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
 
