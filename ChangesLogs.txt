@@ -501,3 +501,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se trazó el ciclo de miniaturas: persistir catálogo precarga imágenes de los últimos 15 vehículos; guardar un vehículo visto también precarga sus imágenes; la cola limita compresión a dos tareas. Se identificó una posible doble solicitud fría entre el `img.src` inmediato y el `fetch` de compresión, pendiente de medir con caché HTTP controlada.
 - Se confirmó que los aportes de corte/información suplementaria refrescan el detalle mediante snapshot completo CATALOG tras la escritura. Se añadió tarea para evaluar lectura dirigida sin perder integridad.
 - No se modificó código ni se retiró ninguna llamada. No hay benchmark ni prueba de red con caché fría/caliente todavía.
+
+
+2026-11-21 — CONFIRMACIÓN ESTÁTICA DE REINTENTOS SAFE APPLY
+- Se verificó que apply/rollback del organizador usan IDs estables y ledger durable; los reintentos reconocen operaciones ya aplicadas/revertidas solo cuando Drive coincide con el estado esperado.
+- El contrato existente `CortesImageOrganizerExecutor.mjs` incluye pruebas de replay idempotente y recuperación de fallos parciales. No se ejecutó la suite en esta sesión; no se afirma PASS.
+- Se mantiene `maxAttempts: 1` en backupDatabase y applyCortesImageReconciliation. No se cambió código.
