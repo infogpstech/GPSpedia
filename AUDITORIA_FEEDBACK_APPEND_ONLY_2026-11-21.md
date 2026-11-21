@@ -38,3 +38,19 @@ La auditoría de código es estática. La validación CI se ejecutará al public
 - Commit validado: `b3ee926872b8dfbed90b584d755a09c1ceff53ca`.
 - CI `44865504667` SUCCESS: 256 suites, 3079 pruebas aprobadas, 0 fallos; `FeedbackAppendRowIdentity` 3/3 PASS. Health read-only `44865504762` SUCCESS.
 - Pages `44865504161` seguía en cola al emitir esta adenda. La ejecución real de Apps Script/Sheets/Drive y concurrencia de campo sigue pendiente de Beta.
+
+
+## Cierre de migración de reportes y sugerencias de corte — 2026-11-21
+
+- `handleReportProblem` y `handleSuggestCutChange` ya no adquieren `ScriptLock`. Ambos anexan filas completas y confirman la fila por ID reservado, sin depender de `getLastRow()+1` como ubicación física.
+- Los reintentos usan identidad lógica (`reportId` y `suggestionOperationId`). Los localizadores proyectan la primera fila física si las copias son equivalentes y rechazan IDs reutilizados con payload contradictorio.
+- Inbox filtra filas duplicadas por identidad lógica; los reportes propios deduplican antes de invertir el orden visual. Las respuestas siguen ligadas al ID físico canónico expuesto.
+- Las imágenes de reportes se registran en `FeedbackReportImageEvents` mediante eventos append-only. La lectura proyecta el primer evento válido; hashes contradictorios generan error de reconciliación. La limpieza solo elimina un archivo cuando se confirma que su ID no quedó referenciado.
+- Regresiones añadidas: `FeedbackAppendRowIdentity` 3/3, `FeedbackLogicalProjection` 4/4, `FeedbackReportImageEvents` 3/3; lookup reportes 5/5, lookup sugerencias 8/8; preflight y limpieza de ambos handlers; `P2FeedbackImageUploadLocks` 1/1 y `FeedbackLockFastFail`.
+- CI `44866461350` SUCCESS sobre `d77a59bca8d92a531832219d1a6918906f401735`: 258 suites, 3089 pruebas aprobadas, 0 fallos. Health read-only `44866461297` SUCCESS y Pages `44866461264` SUCCESS.
+- **Implementación local P0 de reportes/sugerencias: COMPLETADA.** La concurrencia real de Apps Script/Sheets/Drive y la inicialización/lectura del nuevo ledger deben verificarse en Beta aislada. No se desplegó Apps Script ni se modificaron hojas o datos productivos.
+
+## Siguiente tarea — PyS
+
+- Continuar con la migración de `handleAddProblem` para retirar el lock global de la escritura ordinaria, después de auditar el ledger actual, asociación de imágenes, IDs, deduplicación y consumidores de PyS.
+- Mantener la carga Drive fuera del lock y evitar introducir una nueva capa transaccional; preservar autor/fecha, permisos, asociación de imágenes, reintentos y recuperación existentes.
