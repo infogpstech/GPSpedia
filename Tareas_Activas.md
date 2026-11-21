@@ -615,3 +615,12 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - Las pruebas Beta se actualizaron: verificar journals, append/read-back, idempotencia y fallos parciales sin exigir leases ni serialización artificial.
 - CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Cierre local — edición legacy de Tutoriales sin ScriptLock (2026-11-21)
+
+- Se retiró acquireFeedbackScriptLock_ de la ruta fallback de handleUpdateTutorialItem para filas históricas/IDs no canónicos. La edición se procesa directamente y conserva preflight, búsqueda dirigida, validación de unicidad, read-back y preservación de campos no editados.
+- Se actualizaron las pruebas de no-op, edición real, título dirigido y fallos de persistencia para confirmar que no se adquiere ni libera ScriptLock.
+- FeedbackTutorialUpdateNoopPreflight 6/6; FeedbackTutorialUpdateTitleLookupBoundedRead 5/5; TutorialIntegrity 42/42; CI 8f310ade240a5b53cdcc0962a6f1f1da0adc482b SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- Siguiente tarea local: retirar el lock global de publishFeedbackCatalogChange_ para el contador sourceVersion sin degradar el feed incremental; después continuar el inventario de locks de WRITE/ADMIN/USERS y confirmar excepciones de sesión.
+- No se desplegó Apps Script ni se modificaron recursos productivos.
