@@ -791,7 +791,7 @@ function ensureTestigoColumns(sheet) {
             if (!current && lastRow > 1) missingHeaderIndexes.push(index);
         }
         // Las columnas AT:AV son contiguas. Validar todas las columnas sin encabezado
-        // desde un único rango evita hasta tres lecturas remotas durante la preparación del alta.
+        // desde un único rango evita hasta tres lecturas remotas bajo el ScriptLock del alta.
         if (missingHeaderIndexes.length) {
             const firstMissingIndex = Math.min.apply(null, missingHeaderIndexes);
             const lastMissingIndex = Math.max.apply(null, missingHeaderIndexes);
