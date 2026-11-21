@@ -919,15 +919,19 @@ function revokeLoginRequestForTokenUnderLock_(token, expectedUserId = null) {
     return { pending: false, matched: matchingRecords.length > 0 };
 }
 
-function findSessionRowsByTokenUnderLock_(sheet, token) {
-    const data = sheet.getDataRange().getValues();
+function findSessionRowsByTokenInData_(data, token) {
     const matches = [];
+    if (!Array.isArray(data)) return matches;
     for (let i = 1; i < data.length; i++) {
         if (data[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token) {
             matches.push({ rowIndex: i + 1, row: data[i] });
         }
     }
     return matches;
+}
+
+function findSessionRowsByTokenUnderLock_(sheet, token) {
+    return findSessionRowsByTokenInData_(sheet.getDataRange().getValues(), token);
 }
 
 function getOldestSessionsToRevoke_(activeRows, currentToken, sessionLimit) {
@@ -964,7 +968,9 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     const isNewRequest = !record;
     const token = record ? record.token : Utilities.getUuid();
     let createdAt = record && record.createdAt ? record.createdAt : new Date().toISOString();
-    let matches = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
+    // Una sola lectura completa sirve para localizar el token, validar el puntero y aplicar el límite.
+    let sessionData = sessionsSheet.getDataRange().getValues();
+    let matches = findSessionRowsByTokenInData_(sessionData, token);
     if (matches.length > 1) throw new Error('El token de recuperación aparece duplicado; no se creó otra sesión.');
     if (record && record.status === 'committed' && matches.length === 0) {
         throw new Error('LOGIN_REQUEST_ALREADY_REVOKED: La sesión de esa solicitud ya fue cerrada. Inicia un nuevo intento de login.');
@@ -992,19 +998,35 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
         try {
             sessionsSheet.appendRow(newSessionRow);
         } catch (appendError) {
-            matches = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
+            // Solo el camino de error vuelve a leer la hoja para reconciliar un append ambiguo.
+            sessionData = sessionsSheet.getDataRange().getValues();
+            matches = findSessionRowsByTokenInData_(sessionData, token);
             if (matches.length !== 1) throw appendError;
         }
-        matches = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
-        if (matches.length !== 1) throw new Error('No se pudo confirmar la creación de la sesión; el mismo intento puede reintentarse.');
+        if (matches.length === 0) {
+            const appendedRowIndex = sessionsSheet.getLastRow();
+            const readWidth = Math.max(COLS_ACTIVE_SESSIONS.LastActivityAt, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance);
+            const appendedRow = sessionsSheet.getRange(appendedRowIndex, 1, 1, readWidth).getValues()[0];
+            if (appendedRow[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] !== token ||
+                normalizeUserId(appendedRow[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
+                throw new Error('No se pudo confirmar la creación de la sesión; el mismo intento puede reintentarse.');
+            }
+            sessionData.push(appendedRow);
+            matches = [{ rowIndex: appendedRowIndex, row: appendedRow }];
+        }
+    }
+    if (matches.length !== 1) throw new Error('No se pudo confirmar una única fila para la sesión.');
+    if (normalizeUserId(matches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
+        throw new Error('El token de recuperación pertenece a otra cuenta.');
     }
 
+    let currentTokenRowIndex = matches[0].rowIndex;
     if (!record.pointerSet) {
         const pointerRange = userSheet.getRange(userRowIndex, COLS_USERS.SessionToken);
         const currentPointer = pointerRange.getValue();
         let pointerAlreadyReferencesActiveSession = false;
         if (currentPointer && currentPointer !== token) {
-            const pointerRows = findSessionRowsByTokenUnderLock_(sessionsSheet, currentPointer);
+            const pointerRows = findSessionRowsByTokenInData_(sessionData, currentPointer);
             pointerAlreadyReferencesActiveSession = !isNewRequest && pointerRows.length === 1 &&
                 normalizeUserId(pointerRows[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizeUserId(userId);
         }
@@ -1023,7 +1045,6 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
         properties.setProperty(key, JSON.stringify(record));
     }
 
-    const sessionData = sessionsSheet.getDataRange().getValues();
     const activeRows = [];
     const expiredRows = [];
     const tokenCounts = new Map();
@@ -1050,9 +1071,9 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     candidates.forEach(row => {
         if (tokenCounts.get(row.token) > 1) throw new Error('Existe un token de sesión duplicado; no se modificó la sesión antigua.');
     });
-    // Primero se invalidan las cachés de los dispositivos anteriores y su contexto central.
-    // Solo después se retiran sus tokens de ActiveSessions; así no pueden revalidarse desde una caché obsoleta.
+    // Invalidar cachés/contexto antes de retirar tokens de dispositivos anteriores.
     candidates.forEach(row => revokeSharedSessionContext_(userId, row.token));
+    const readWidth = Math.max(COLS_ACTIVE_SESSIONS.LastActivityAt, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance);
     for (const row of candidates.sort((a, b) => b.rowIndex - a.rowIndex)) {
         try {
             sessionsSheet.getRange(row.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
@@ -1064,27 +1085,28 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
         if (!oldestSession || row.rowIndex < oldestSession.rowIndex) oldestSession = row;
         try {
             sessionsSheet.deleteRow(row.rowIndex);
+            if (row.rowIndex < currentTokenRowIndex) currentTokenRowIndex--;
         } catch (deleteError) {
             cleanupPending = true;
+            const currentMatches = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
+            if (currentMatches.length !== 1) throw new Error('No se pudo localizar la sesión actual después de una limpieza parcial.');
+            currentTokenRowIndex = currentMatches[0].rowIndex;
         }
     }
 
     record = { ...record, userId: normalizeUserId(userId), token, createdAt, createdAtMs: record && record.createdAtMs ? record.createdAtMs : now, status: 'committed', pointerSet: true, committedAt: Date.now() };
     properties.setProperty(key, JSON.stringify(record));
-    const confirmedRows = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
-    if (confirmedRows.length !== 1) throw new Error('No se pudo confirmar la sesión después de aplicar el límite de sesiones.');
-    const termsAcceptance = parseTermsAcceptance_(confirmedRows[0].row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1]);
+    let confirmedRow = sessionsSheet.getRange(currentTokenRowIndex, 1, 1, readWidth).getValues()[0];
+    if (confirmedRow[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] !== token ||
+        normalizeUserId(confirmedRow[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
+        const confirmedRows = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
+        if (confirmedRows.length !== 1) throw new Error('No se pudo confirmar la sesión después de aplicar el límite de sesiones.');
+        currentTokenRowIndex = confirmedRows[0].rowIndex;
+        confirmedRow = confirmedRows[0].row;
+    }
+    const termsAcceptance = parseTermsAcceptance_(confirmedRow[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1]);
     SpreadsheetApp.flush();
     return { token, createdAt, sessionCount, oldestSession, cleanupPending, termsAcceptance };
-}
-
-
-function sharedSessionTimestamp_(value) {
-    const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
-    if (!Number.isFinite(timestamp) || timestamp <= 0) {
-        throw new Error("No se pudo establecer la vigencia del contexto compartido de sesión.");
-    }
-    return timestamp;
 }
 
 function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessionToken) {
