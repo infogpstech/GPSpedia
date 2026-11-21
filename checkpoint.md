@@ -1336,3 +1336,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La lectura del índice se omite si no hay reportes propios que necesiten metadata de evento; los videos de aprobación no provocan esa lectura.
 - Prueba `FeedbackInboxImageEventBatchRead.mjs`: 5/5 PASS. CI HEAD `7c1e15d837148b2588cd7cef1bb40e39c3d4a841`: **281 suites / 3,264 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. Pages deploy quedó en cola; no se desplegó Apps Script.
 - Siguiente: revisar búsquedas repetidas por fila en `handleGetFeedbackItems`, manteniendo canonicalización first-write-wins y detección de duplicados contradictorios.
+
+
+## Cierre — FEEDBACK Inbox administrativo comparte índice de eventos de imagen (2026-11-21)
+
+- `handleGetFeedbackItems` detecta si la página contiene reportes cuya metadata requiere fallback de imagen y carga `FeedbackReportImageEvents` una sola vez. El mismo índice se pasa a `isCanonicalFeedbackInboxRow_`, `findReportByReportId_` y `mapInboxFeedbackRow_`.
+- Se elimina la búsqueda individual del evento de imagen durante la canonicalización y el mapeo de cada reporte. Si la metadata legacy ya contiene imagen, el índice no se carga.
+- Los conflictos de hash se almacenan por reportId y solo provocan error cuando se consulta el reporte afectado; no bloquean otros reportes de la página. First-event-wins y comparación de duplicados se conservan.
+- Prueba `FeedbackInboxImageEventBatchRead.mjs`: 6/6 PASS. CI HEAD `d0a79b3e2bf92ff4d7d7571b758332dddecce2e4`: **281 suites / 3,265 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. Pages deploy quedó en espera; no se desplegó Apps Script.
+- Siguiente: reducir búsquedas repetidas de canonicalización de sugerencias/reportes en `handleGetFeedbackItems` sin alterar first-write-wins ni errores de conflicto.
