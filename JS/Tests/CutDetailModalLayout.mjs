@@ -324,12 +324,12 @@ testCase("todos los estilos del encabezado de detalle están agrupados en un ún
     assert.ok(markerIndex > 0, "Debe existir el bloque consolidado");
     const previousCss = css.slice(0, markerIndex);
     assert.doesNotMatch(previousCss,
-        /(?:^|\\n)\\s*[^{}\\n]*\\.detail-modal-(?:toolbar|title|title-text|title-input|header-actions|divider|saving-indicator|meta)[^{}\\n]*\\{/,
+        /(?:^|\n)\s*[^{}\n]*\.detail-modal-(?:toolbar|title|title-text|title-input|header-actions|divider|saving-indicator|meta)[^{}\n]*\{/,
         "No deben quedar reglas de encabezado dispersas antes del bloque consolidado");
     const consolidatedCss = css.slice(markerIndex);
-    assert.match(consolidatedCss, /\\.detail-modal-toolbar \\{/);
-    assert.match(consolidatedCss, /#modalDetalle\\[data-modal-type="corte"\\] \\.detail-modal-toolbar \\{/);
-    assert.match(consolidatedCss, /@media \\(max-width:560px\\)[\\s\\S]*?\\.detail-modal-title \\{/);
+    assert.match(consolidatedCss, /\.detail-modal-toolbar \{/);
+    assert.match(consolidatedCss, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-toolbar \{/);
+    assert.match(consolidatedCss, /@media \(max-width:560px\)[\s\S]*?\.detail-modal-title \{/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
