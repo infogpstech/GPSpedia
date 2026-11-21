@@ -13,6 +13,6 @@ for(const [name,result] of [["PysCreationIntegrity",a],["PysImageStorageRecovery
 assert.equal(a.failed,0,"PysCreationIntegrity tiene fallos");
 assert.equal(b.failed,0,"PysImageStorageRecovery tiene fallos");
 const handler=feedback.slice(feedback.indexOf("function handleAddProblem(source)"),feedback.indexOf("\nfunction withPysMutationLock_"));
-assert.ok(handler.indexOf("folder.createFile")<handler.indexOf("acquireFeedbackScriptLock_(lock)"),"PyS debe cargar la imagen antes del lock");
-assert.ok(handler.includes("if (lockAcquired) lock.releaseLock()"));
+assert.doesNotMatch(handler,/LockService\\.getScriptLock\\(\\)|acquireFeedbackScriptLock_\\(/,"PyS debe completar el alta sin ScriptLock.");
+assert.match(handler,/writePysOperation_\\(opsSheet, 0,/,"La reserva de operación debe ser append-only.");
 console.log("P2PysImageUploadOutsideLock: PASS — Drive fuera del lock y recuperación preservada");
