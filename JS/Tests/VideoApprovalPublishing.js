@@ -5,9 +5,10 @@ const VIDEO_TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "do
 function runVideoApprovalPublishingTests() {
     const results=[];let passed=0,failed=0;
     const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldUuid=Utilities.getUuid,oldFormat=Utilities.formatDate,oldTimezone=Session.getScriptTimeZone,oldFlush=SpreadsheetApp.flush;
-    const oldLockService=LockService;
-    let lockAcquired=0,lockReleased=0;
+    const oldLockService=LockService,oldSharedLease=globalThis.withSharedMutationLease_;
+    let lockAcquired=0,lockReleased=0,leaseCalls=[];
     LockService={getScriptLock:()=>({waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
+    globalThis.withSharedMutationLease_=(service,operation,callback)=>{leaseCalls.push([service,operation]);return callback("test-lease");};
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
@@ -27,7 +28,7 @@ function runVideoApprovalPublishingTests() {
                 }
             };
         }
-        return{data,getLastRow:()=>data.length,getLastColumn:()=>Math.max(0,...data.map(r=>r.length)),getRange:range_,getDataRange:()=>range_(1,1,data.length,Math.max(1,Math.max(0,...data.map(r=>r.length))))};
+        return{data,getLastRow:()=>data.length,getLastColumn:()=>Math.max(0,...data.map(r=>r.length)),getRange:range_,getDataRange:()=>range_(1,1,data.length,Math.max(1,Math.max(0,...data.map(r=>r.length)))),appendRow(row){data.push(row.slice());}};
     }
     const videoId="abcdefghijk",videoUrl="https://www.youtube.com/watch?v="+videoId,opVideoId="v".repeat(32);
     function approval_(type,ref){return{subType:"video_approval",opVideoId,createdByUserId:"owner-1",title:"Video",description:"",videoId,videoUrl,contentType:type,referenceId:ref,status:"pending",metadata:{}};}
@@ -56,7 +57,7 @@ function runVideoApprovalPublishingTests() {
             target.data.push(target.data[1].slice());
         }
         getSafeSheet=name=>map[name]||null;
-        getSpreadsheet=()=>({getSheetByName:name=>map[name]||null});
+        getSpreadsheet=()=>({getSheetByName:name=>map[name]||null,insertSheet:name=>{const created=makeSheet_([]);map[name]=created;return created;}});
         return{feedback,cuts,pys,tutorial,approval,restore:()=>{getSafeSheet=oldGetSafe;getSpreadsheet=oldGetSpreadsheet;}};
     }
     function withEnv_(type,options,fn){const e=env_(type,options);try{fn(e);}finally{e.restore();}}
@@ -220,12 +221,28 @@ function runVideoApprovalPublishingTests() {
             expect_(()=>handleApproveVideo(actor_("vid-1")),"más de una vez");
             assert_(e.cuts.data[1][9]==="");
         }));
-        run_("serializa aprobación y rechazo con el mismo ScriptLock y libera ante éxito",()=> {
-            const beforeAcquire=lockAcquired,beforeRelease=lockReleased;
+        run_("el journal terminal conserva el título proyectado del Tutorial al aprobar el vídeo",()=>withEnv_("tutorial",{},e=>{
+            const id="tut-1",oldTitle="Tutorial demo",newTitle="Tutorial renombrado",titleKey="tutorial demo";
+            const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify([id,titleKey,newTitle]));
+            const hash=digest.map(byte=>((byte<0?byte+256:byte).toString(16).padStart(2,"0"))).join("");
+            const titleEvents=makeSheet_([["operationId","payloadHash","tutorialId","expectedTitleKey","title","createdAt"],
+                ["tutorial-rename-"+hash,hash,id,titleKey,newTitle,"now"]]);
+            const originalGetSpreadsheet=getSpreadsheet;
+            getSpreadsheet=()=>({getSheetByName:name=>name==="TutorialRenameEvents"?titleEvents:(name==="VideoApprovalEvents"?e.videoEvents||null:null),
+                insertSheet:name=>{const created=makeSheet_([]);if(name==="VideoApprovalEvents")e.videoEvents=created;return created;}});
+            try{
+                const result=handleApproveVideo(actor_("vid-1"));
+                assert_(result.status==="success"&&e.tutorial.data[1][1]===oldTitle&&e.tutorial.data[1][6]===videoUrl);
+                assert_(JSON.parse(e.feedback.data[1][3]).status==="approved"&&e.videoEvents.data.length===2);
+            }finally{getSpreadsheet=originalGetSpreadsheet;}
+        }));
+        run_("usa leases compartidas por operación y no adquiere ScriptLock local",()=> {
+            const before=leaseCalls.length,beforeLocks=lockAcquired;
             withEnv_("corte",{},e=>{handleApproveVideo(actor_("vid-1"));});
-            assert_(lockAcquired===beforeAcquire+1&&lockReleased===beforeRelease+1,"La aprobación debe adquirir/liberar un lock.");
             withEnv_("pys",{},e=>{handleRejectVideo(actor_("vid-1"));});
-            assert_(lockAcquired===beforeAcquire+2&&lockReleased===beforeRelease+2,"El rechazo debe compartir y liberar el lock.");
+            assert_(leaseCalls.length===before+2&&leaseCalls[before][0]==="FEEDBACK"&&leaseCalls[before][1]==="approveVideo"&&
+                leaseCalls[before+1][0]==="FEEDBACK"&&leaseCalls[before+1][1]==="rejectVideo","Cada transición debe reservar la operación compartida correcta.");
+            assert_(lockAcquired===beforeLocks,"Aprobación/rechazo no debe adquirir ScriptLock local.");
         });
     }finally{
         getSafeSheet=oldGetSafe;
@@ -235,6 +252,7 @@ function runVideoApprovalPublishingTests() {
         Session.getScriptTimeZone=oldTimezone;
         SpreadsheetApp.flush=oldFlush;
         LockService=oldLockService;
+        if(oldSharedLease===undefined)delete globalThis.withSharedMutationLease_;else globalThis.withSharedMutationLease_=oldSharedLease;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }

@@ -5290,76 +5290,183 @@ function handleSubmitVideoForApproval(payload) {
  const saved=findVideoApprovalByOperation_(sheet,operationId);
  if(!saved||String(saved.row[COLS_FEEDBACKS.ID-1]||"")!==newId)throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
  return{status:"success",id:newId,opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:"pending",message:"Vídeo enviado para aprobación interna."};
-    });
+    }, "submitVideoForApproval");
 }
 
 /**
  * Aprueba una solicitud de vídeo y lo asocia al elemento correspondiente en GPSpedia
  */
+const VIDEO_APPROVAL_EVENTS_HEADERS_ = Object.freeze([
+    "eventId", "payloadHash", "itemId", "decision", "snapshotJson", "createdAt"
+]);
+function getVideoApprovalEventsSheet_(createIfMissing) {
+    if (typeof getSpreadsheet !== "function") return null;
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("VideoApprovalEvents");
+    if (!sheet && createIfMissing) {
+        try { sheet = ss.insertSheet("VideoApprovalEvents"); }
+        catch (error) { sheet = ss.getSheetByName("VideoApprovalEvents"); if (!sheet) throw error; }
+    }
+    if (!sheet) return null;
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, VIDEO_APPROVAL_EVENTS_HEADERS_.length).setValues([VIDEO_APPROVAL_EVENTS_HEADERS_.slice()]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+    const width = Math.max(VIDEO_APPROVAL_EVENTS_HEADERS_.length, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(value => String(value || "").trim());
+    if (width !== VIDEO_APPROVAL_EVENTS_HEADERS_.length ||
+        VIDEO_APPROVAL_EVENTS_HEADERS_.some((header, index) => headers[index] !== header)) {
+        throw new Error("El esquema de VideoApprovalEvents no coincide; no se modificó la hoja.");
+    }
+    return sheet;
+}
+function parseVideoApprovalEventRow_(row, rowNumber) {
+    const eventId = String(row[0] || "").trim(), payloadHash = String(row[1] || "").trim().toLowerCase();
+    const itemId = String(row[2] || "").trim(), decision = String(row[3] || "").trim();
+    let snapshot = null;
+    try { snapshot = JSON.parse(String(row[4] || "")); } catch (error) {}
+    if (!/^video-approval-[a-f0-9]{64}$/.test(eventId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+        !/^[A-Za-z0-9_-]{1,100}$/.test(itemId) || !["approved", "rejected"].includes(decision) ||
+        !snapshot || typeof snapshot !== "object" || Array.isArray(snapshot) ||
+        !snapshot.videoData || snapshot.videoData.status !== decision ||
+        snapshot.resolved !== true || !String(snapshot.responder || "").trim() ||
+        String(snapshot.response || "") !== (decision === "approved" ? "approved" : "rejected: " + String(snapshot.videoData.rejectReason || ""))) {
+        throw new Error("VideoApprovalEvents contiene una fila incompatible; requiere revisión.");
+    }
+    const expectedHash = buildTutorialContentHash_([itemId, decision, snapshot]);
+    if (payloadHash !== expectedHash || eventId !== "video-approval-" + expectedHash) {
+        throw new Error("VideoApprovalEvents contiene un hash alterado; requiere reconciliación.");
+    }
+    return { rowNumber, eventId, payloadHash, itemId, decision, snapshot };
+}
+function getVideoApprovalEventForItem_(itemId) {
+    const id = String(itemId || "").trim();
+    if (!id || typeof getSpreadsheet !== "function") return null;
+    const sheet = getVideoApprovalEventsSheet_(false);
+    if (!sheet || sheet.getLastRow() < 2) return null;
+    const last = sheet.getLastRow(), matches = [], column = sheet.getRange(2, 3, last - 1, 1);
+    if (typeof column.createTextFinder === "function") {
+        let finder = column.createTextFinder(id);
+        if (finder.matchCase) finder = finder.matchCase(true);
+        if (finder.matchEntireCell) finder = finder.matchEntireCell(true);
+        matches.push(...finder.findAll().map(match => match.getRow()));
+    } else {
+        column.getValues().forEach((row, index) => { if (String(row[0] || "").trim() === id) matches.push(index + 2); });
+    }
+    if (!matches.length) return null;
+    const events = matches.map(rowNumber =>
+        parseVideoApprovalEventRow_(sheet.getRange(rowNumber, 1, 1, VIDEO_APPROVAL_EVENTS_HEADERS_.length).getValues()[0], rowNumber));
+    const first = events[0];
+    if (events.some(event => event.eventId !== first.eventId || event.payloadHash !== first.payloadHash || event.decision !== first.decision)) {
+        throw new Error("La solicitud tiene transiciones de vídeo contradictorias; requiere reconciliación.");
+    }
+    return first;
+}
+function appendVideoApprovalEvent_(itemId, decision, snapshot) {
+    const id = String(itemId || "").trim(), action = String(decision || "").trim();
+    if (!id || !["approved", "rejected"].includes(action)) throw new Error("Transición de vídeo no válida.");
+    const payloadHash = buildTutorialContentHash_([id, action, snapshot]), eventId = "video-approval-" + payloadHash;
+    const existing = getVideoApprovalEventForItem_(id);
+    if (existing) {
+        if (existing.eventId !== eventId || existing.payloadHash !== payloadHash || existing.decision !== action) {
+            throw new Error("La solicitud ya tiene una transición terminal diferente; no se sobrescribió.");
+        }
+        return existing;
+    }
+    const sheet = getVideoApprovalEventsSheet_(true);
+    sheet.appendRow([eventId, payloadHash, id, action, JSON.stringify(snapshot), new Date().toISOString()]);
+    try { SpreadsheetApp.flush(); }
+    catch (flushError) {
+        const recovered = getVideoApprovalEventForItem_(id);
+        if (!recovered || recovered.eventId !== eventId) throw flushError;
+        return recovered;
+    }
+    const saved = getVideoApprovalEventForItem_(id);
+    if (!saved || saved.eventId !== eventId || saved.payloadHash !== payloadHash) {
+        throw new Error("No se pudo confirmar el evento append-only de aprobación; reintenta la misma operación.");
+    }
+    return saved;
+}
+function materializeVideoApprovalEvent_(sheet, event) {
+    if (!event) return null;
+    const snapshot = event.snapshot, rowIndex = event.rowNumberFeedback;
+    if (!snapshot || !snapshot.videoData || !Number.isInteger(rowIndex) || rowIndex < 2) {
+        throw new Error("El evento de aprobación no contiene una fila de Feedbacks válida.");
+    }
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 4).setValues([[
+        JSON.stringify(snapshot.videoData), snapshot.response, true, snapshot.responder
+    ]]);
+    SpreadsheetApp.flush();
+    const saved = sheet.getRange(rowIndex, 1, 1, COLS_FEEDBACKS.Responde).getValues()[0];
+    let savedPayload = null;
+    try { savedPayload = JSON.parse(String(saved[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+    if (!savedPayload || savedPayload.status !== event.decision ||
+        String(saved[COLS_FEEDBACKS.Respuesta - 1] || "") !== snapshot.response ||
+        saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true ||
+        String(saved[COLS_FEEDBACKS.Responde - 1] || "").trim() !== snapshot.responder) {
+        throw new Error("El evento de vídeo existe, pero no se pudo materializar su estado en Feedbacks; reintenta.");
+    }
+    return savedPayload;
+}
+
+
 function findPendingVideoApproval_(sheet, itemId, options) {
     const requestId = String(itemId || "").trim();
     if (!requestId) throw new Error("ID de la solicitud requerido.");
-    const rows = sheet.getDataRange().getValues();
-    const matches = [];
+    const rows = sheet.getDataRange().getValues(), matches = [];
     for (let index = 1; index < rows.length; index++) {
-        if (String(rows[index][COLS_FEEDBACKS.ID - 1] || "").trim() === requestId) {
-            matches.push({ rowIndex: index + 1, row: rows[index] });
-        }
+        if (String(rows[index][COLS_FEEDBACKS.ID - 1] || "").trim() === requestId) matches.push({ rowIndex: index + 1, row: rows[index].slice() });
     }
-    if (matches.length !== 1) {
-        throw new Error(matches.length > 1
-            ? "El ID de solicitud aparece más de una vez; requiere revisión."
-            : "Solicitud de vídeo no encontrada.");
-    }
+    if (matches.length !== 1) throw new Error(matches.length > 1
+        ? "El ID de solicitud aparece más de una vez; requiere revisión." : "Solicitud de vídeo no encontrada.");
     let videoData = null;
     try { videoData = JSON.parse(String(matches[0].row[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
-    if (!videoData || typeof videoData !== "object" || Array.isArray(videoData)) {
-        throw new Error("El contenido de la solicitud no es un JSON de vídeo válido.");
-    }
-    if (videoData.subType !== "video_approval") {
-        throw new Error("El registro no corresponde a una solicitud de aprobación de vídeo.");
+    if (!videoData || typeof videoData !== "object" || Array.isArray(videoData)) throw new Error("El contenido de la solicitud no es un JSON de vídeo válido.");
+    if (videoData.subType !== "video_approval") throw new Error("El registro no corresponde a una solicitud de aprobación de vídeo.");
+    const event = getVideoApprovalEventForItem_(requestId);
+    if (event) {
+        const original = videoData, projected = event.snapshot.videoData;
+        ["videoId", "videoUrl", "contentType", "referenceId", "opVideoId", "createdByUserId"].forEach(key => {
+            if (String(original[key] || "") !== String(projected[key] || "")) throw new Error("El evento de vídeo no coincide con la solicitud original; requiere revisión.");
+        });
+        videoData = projected;
+        matches[0].row[COLS_FEEDBACKS.Problema - 1] = JSON.stringify(videoData);
+        matches[0].row[COLS_FEEDBACKS.Respuesta - 1] = event.snapshot.response;
+        matches[0].row[COLS_FEEDBACKS["Se resolvio"] - 1] = true;
+        matches[0].row[COLS_FEEDBACKS.Responde - 1] = event.snapshot.responder;
+        event.rowNumberFeedback = matches[0].rowIndex;
     }
     const allowApprovedRetry = options && options.allowApprovedRetry === true;
+    const allowRejectedRetry = options && options.allowRejectedRetry === true;
     const isPending = videoData.status === "pending";
     const isApprovedRetry = allowApprovedRetry && videoData.status === "approved";
-    if (!isPending && !isApprovedRetry) {
-        throw new Error("La solicitud ya no está pendiente; no se permiten transiciones repetidas.");
-    }
+    const isRejectedRetry = allowRejectedRetry && event && event.decision === "rejected" && videoData.status === "rejected";
+    if (!isPending && !isApprovedRetry && !isRejectedRetry) throw new Error("La solicitud ya no está pendiente; no se permiten transiciones repetidas.");
     const videoId = String(videoData.videoId || "").trim();
-    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(videoId)
-        ? "https://www.youtube.com/watch?v=" + videoId : "";
-    if (!canonicalUrl || String(videoData.videoUrl || "").trim() !== canonicalUrl) {
-        throw new Error("La solicitud contiene un ID o enlace de YouTube inconsistente.");
-    }
-    if (!["corte", "pys", "tutorial"].includes(String(videoData.contentType || ""))) {
-        throw new Error("La solicitud contiene un tipo de contenido desconocido.");
-    }
+    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(videoId) ? "https://www.youtube.com/watch?v=" + videoId : "";
+    if (!canonicalUrl || String(videoData.videoUrl || "").trim() !== canonicalUrl) throw new Error("La solicitud contiene un ID o enlace de YouTube inconsistente.");
+    if (!["corte", "pys", "tutorial"].includes(String(videoData.contentType || ""))) throw new Error("La solicitud contiene un tipo de contenido desconocido.");
     const referenceId = String(videoData.referenceId || "").trim();
     if (!referenceId) throw new Error("La solicitud no tiene un destino guardado para asociar el vídeo.");
-    if (String(matches[0].row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() !== referenceId) {
-        throw new Error("El destino de la fila no coincide con el destino declarado en la solicitud de vídeo.");
-    }
+    if (String(matches[0].row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() !== referenceId) throw new Error("El destino de la fila no coincide con el destino declarado en la solicitud de vídeo.");
     if (!String(videoData.title || "").trim()) throw new Error("La solicitud no contiene un título válido.");
     if (!String(videoData.createdByUserId || "").trim()) throw new Error("La solicitud no identifica al usuario que envió el vídeo.");
-    if (videoData.opVideoId && !/^[A-Za-z0-9_-]{20,80}$/.test(String(videoData.opVideoId))) {
-        throw new Error("La solicitud contiene un identificador de operación inválido.");
-    }
-
-    const row = matches[0].row;
-    const rowStatus = String(row[COLS_FEEDBACKS.Respuesta - 1] || "").trim();
+    if (videoData.opVideoId && !/^[A-Za-z0-9_-]{20,80}$/.test(String(videoData.opVideoId))) throw new Error("La solicitud contiene un identificador de operación inválido.");
+    const row = matches[0].row, rowStatus = String(row[COLS_FEEDBACKS.Respuesta - 1] || "").trim();
     const rawResolved = row[COLS_FEEDBACKS["Se resolvio"] - 1];
     const rowResolved = rawResolved === true || String(rawResolved || "").trim().toLowerCase() === "true";
-    if (isPending && (rowStatus !== "pending" || rowResolved)) {
-        throw new Error("El estado de la fila no coincide con una solicitud de vídeo pendiente.");
-    }
+    if (isPending && (rowStatus !== "pending" || rowResolved)) throw new Error("El estado de la fila no coincide con una solicitud de vídeo pendiente.");
     if (isApprovedRetry && (rowStatus !== "approved" || !rowResolved ||
         String(row[COLS_FEEDBACKS.Responde - 1] || "").trim() !== String(videoData.approvedBy || "").trim())) {
         throw new Error("El estado de la fila no coincide con una aprobación de vídeo confirmada.");
     }
-    return { rowIndex: matches[0].rowIndex, row: row, videoData: videoData };
+    if (isRejectedRetry && (rowStatus !== "rejected: " + String(videoData.rejectReason || "") || !rowResolved ||
+        String(row[COLS_FEEDBACKS.Responde - 1] || "").trim() !== String(videoData.rejectedBy || "").trim())) {
+        throw new Error("El estado de la fila no coincide con un rechazo de vídeo confirmado.");
+    }
+    return { rowIndex: matches[0].rowIndex, row, videoData, event };
 }
-
-
 function findUniqueVideoTargetRow_(sheet, id, idColumn, label) {
     if (!sheet) throw new Error("No se encontró el destino " + label + " de la solicitud.");
     const data = sheet.getDataRange().getValues();
@@ -5464,6 +5571,7 @@ function handleApproveVideoUnlocked_(payload) {
     const videoData = approvalRecord.videoData;
 
     if (videoData.status === "approved") {
+        if (approvalRecord.event) materializeVideoApprovalEvent_(sheet, approvalRecord.event);
         const responseState = String(approvalRecord.row[COLS_FEEDBACKS.Respuesta - 1] || "").trim();
         const responder = String(approvalRecord.row[COLS_FEEDBACKS.Responde - 1] || "").trim();
         const resolved = approvalRecord.row[COLS_FEEDBACKS["Se resolvio"] - 1] === true;
@@ -5501,10 +5609,10 @@ function handleApproveVideoUnlocked_(payload) {
     videoData.status = "approved";
     videoData.approvedBy = actorName;
     videoData.approvalDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 4).setValues([[
-        JSON.stringify(videoData), "approved", true, actorName
-    ]]);
-    SpreadsheetApp.flush();
+    const approvalEvent = appendVideoApprovalEvent_(itemId, "approved", {
+        videoData: JSON.parse(JSON.stringify(videoData)), response: "approved", resolved: true, responder: actorName
+    });
+    materializeVideoApprovalEvent_(sheet, Object.assign({}, approvalEvent, { rowNumberFeedback: rowIndex }));
 
     const saved = sheet.getRange(rowIndex, 1, 1, COLS_FEEDBACKS.Responde).getValues()[0];
     let savedPayload = null;
@@ -5545,31 +5653,28 @@ function handleRejectVideoUnlocked_(payload) {
     if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para rechazar vídeos.");
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
-    const approvalRecord = findPendingVideoApproval_(sheet, itemId);
-    const rowIndex = approvalRecord.rowIndex;
-    const videoData = approvalRecord.videoData;
-
-    const targetResult = removeRejectedVideoFromDestination_(videoData);
-    const actorName = String(userName || "Supervisor");
+    const approvalRecord = findPendingVideoApproval_(sheet, itemId, { allowRejectedRetry: true });
+    const rowIndex = approvalRecord.rowIndex, videoData = approvalRecord.videoData;
+    if (videoData.status === "rejected") {
+        if (!approvalRecord.event || approvalRecord.event.decision !== "rejected") throw new Error("La solicitud ya no está pendiente; no se permiten transiciones repetidas.");
+        materializeVideoApprovalEvent_(sheet, approvalRecord.event);
+        const targetResult = removeRejectedVideoFromDestination_(videoData);
+        return { status: "success", alreadyRejected: true, message: "El rechazo ya estaba registrado; se verificó la retirada del vídeo.",
+            statusState: "rejected", targetType: targetResult.targetType, contentType: videoData.contentType, referenceId: videoData.referenceId };
+    }
+    const actorName = String(userName || "Supervisor").trim() || "Supervisor";
     const rejectionReason = String(reason || "Rechazado por el supervisor").trim().slice(0, 500);
     videoData.status = "rejected";
     videoData.rejectedBy = actorName;
     videoData.rejectReason = rejectionReason;
     videoData.rejectionDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 4).setValues([[
-        JSON.stringify(videoData), "rejected: " + rejectionReason, true, actorName
-    ]]);
-    SpreadsheetApp.flush();
-
-    const saved = sheet.getRange(rowIndex, 1, 1, COLS_FEEDBACKS.Responde).getValues()[0];
-    let savedPayload = null;
-    try { savedPayload = JSON.parse(String(saved[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
-    if (!savedPayload || savedPayload.status !== "rejected" ||
-        !String(saved[COLS_FEEDBACKS.Respuesta - 1] || "").startsWith("rejected:") ||
-        saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true) {
-        throw new Error("El enlace pendiente se retiró del destino, pero no se pudo confirmar el rechazo. Reintenta la misma solicitud.");
-    }
-    return { status: "success", message: "Vídeo rechazado.", statusState: "rejected", targetType: targetResult.targetType, contentType: videoData.contentType, referenceId: videoData.referenceId };
+    const event = appendVideoApprovalEvent_(itemId, "rejected", {
+        videoData: JSON.parse(JSON.stringify(videoData)), response: "rejected: " + rejectionReason, resolved: true, responder: actorName
+    });
+    const targetResult = removeRejectedVideoFromDestination_(videoData);
+    materializeVideoApprovalEvent_(sheet, Object.assign({}, event, { rowNumberFeedback: rowIndex }));
+    return { status: "success", message: "Vídeo rechazado.", statusState: "rejected",
+        targetType: targetResult.targetType, contentType: videoData.contentType, referenceId: videoData.referenceId };
 }
 
 /**
@@ -5577,24 +5682,19 @@ function handleRejectVideoUnlocked_(payload) {
  * coordina los recursos entre proyectos; este ScriptLock protege además las
  * ejecuciones concurrentes del mismo proyecto durante la transición completa.
  */
-function withVideoApprovalMutationLock_(callback) {
-    const lock = LockService.getScriptLock();
-    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
-    let acquired = false;
-    try {
-        if (!alreadyHeld) { acquireFeedbackScriptLock_(lock); acquired = true; }
-        return callback();
-    } finally {
-        if (acquired) lock.releaseLock();
-    }
+function withVideoApprovalMutationLock_(callback, operation) {
+    const action = String(operation || "").trim();
+    if (!["submitVideoForApproval", "approveVideo", "rejectVideo"].includes(action)) throw new Error("Operación de vídeo no habilitada para coordinación compartida.");
+    if (typeof withSharedMutationLease_ !== "function") throw new Error("La coordinación compartida no está disponible; no se ejecutó la operación de vídeo.");
+    return withSharedMutationLease_("FEEDBACK", action, callback);
 }
 
 function handleApproveVideo(payload) {
-    return withVideoApprovalMutationLock_(() => handleApproveVideoUnlocked_(payload));
+    return withVideoApprovalMutationLock_(() => handleApproveVideoUnlocked_(payload), "approveVideo");
 }
 
 function handleRejectVideo(payload) {
-    return withVideoApprovalMutationLock_(() => handleRejectVideoUnlocked_(payload));
+    return withVideoApprovalMutationLock_(() => handleRejectVideoUnlocked_(payload), "rejectVideo");
 }
 
 /* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */

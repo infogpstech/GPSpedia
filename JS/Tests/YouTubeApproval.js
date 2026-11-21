@@ -7,12 +7,12 @@ function runYouTubeApprovalTests() {
     const originalUuid = Utilities.getUuid;
     const originalFlush = SpreadsheetApp.flush;
     const originalTimezone = Session.getScriptTimeZone;
-    const originalLockService = LockService;
-    let lockAcquired = 0, lockReleased = 0, lockFailure = false;
-    LockService = { getScriptLock: () => ({
-        waitLock() { if (lockFailure) throw new Error("lock unavailable"); lockAcquired++; },
-        releaseLock() { lockReleased++; }
-    }) };
+    const originalLockService = LockService, originalSharedLease = globalThis.withSharedMutationLease_;
+    let lockAcquired = 0, lockReleased = 0, leaseAcquired = 0, leaseFailure = false;
+    LockService = { getScriptLock: () => ({ waitLock() { lockAcquired++; }, releaseLock() { lockReleased++; } }) };
+    globalThis.withSharedMutationLease_ = (service, operation, callback) => {
+        if (leaseFailure) throw new Error("lease unavailable"); leaseAcquired++; return callback("test-lease");
+    };
     function assert_(condition, message) { if (!condition) throw new Error(message || "Aserción fallida."); }
     function expectThrow_(callback, text) {
         let error = null; try { callback(); } catch (caught) { error = caught; }
@@ -88,18 +88,18 @@ function runYouTubeApprovalTests() {
             assert_(stored.videoId === "abcdefghijk" && stored.opVideoId === opVideoId && stored.createdByUserId === "user-1");
             assert_(stored.videoUrl === payload.videoUrl && stored.status === "pending");
         });
-        run_("reintento idéntico devuelve la misma solicitud bajo bloqueo", () => {
-            const beforeAcquire = lockAcquired, beforeRelease = lockReleased;
+        run_("reintento idéntico devuelve la misma solicitud bajo lease compartida", () => {
+            const beforeAcquire = leaseAcquired;
             const first = handleSubmitVideoForApproval(payload);
             const second = handleSubmitVideoForApproval(payload);
             assert_(first.id === second.id && sheet.rows.length === 2);
-            assert_(lockAcquired === beforeAcquire + 2 && lockReleased === beforeRelease + 2,
-                "Cada envío debe adquirir y liberar el mismo ScriptLock.");
+            assert_(leaseAcquired === beforeAcquire + 2 && lockAcquired === 0,
+                "Cada envío debe usar lease compartida sin ScriptLock local.");
         });
-        run_("no escribe si no puede adquirir el bloqueo de envío", () => {
-            lockFailure = true;
-            expectThrow_(() => handleSubmitVideoForApproval(payload), "lock unavailable");
-            lockFailure = false;
+        run_("no escribe si no puede adquirir la lease compartida de envío", () => {
+            leaseFailure = true;
+            expectThrow_(() => handleSubmitVideoForApproval(payload), "lease unavailable");
+            leaseFailure = false;
             assert_(sheet.rows.length === 1, "No debe crear una solicitud sin obtener el bloqueo.");
         });
         run_("mismo opVideoId con otro vídeo se rechaza", () => {
@@ -157,6 +157,7 @@ function runYouTubeApprovalTests() {
         SpreadsheetApp.flush = originalFlush;
         Session.getScriptTimeZone = originalTimezone;
         LockService = originalLockService;
+        if(originalSharedLease===undefined)delete globalThis.withSharedMutationLease_;else globalThis.withSharedMutationLease_=originalSharedLease;
     }
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
