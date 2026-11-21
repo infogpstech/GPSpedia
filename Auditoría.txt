@@ -1336,3 +1336,13 @@ Validación exact-source local:
 - Corrección inicial: logo de corte 64 px escritorio / 48 px móvil; acciones/cierre conservan 40 px. Se actualizó CutDetailModalLayout.mjs. No se afirma aprobación hasta ejecutar CI y prueba visual.
 - Informe: AUDITORIA_MODAL_CSS_2026-11-21.md. Guía Apps Script: Services/DEPLOYMENT_GUIDE.md.
 - Pendiente: consolidación integral de reglas compartidas/variantes y regresión visual en Beta. No hubo deployment Apps Script ni cambios en Spreadsheet/Drive.
+
+
+================================================================================
+2026-11-21 — CIERRE DE CONSOLIDACIÓN CSS Y REGRESIÓN
+- Encabezados de detalle: reglas base/variantes reunidas en BLOQUE CONSOLIDADO, orden de cascada preservado, logo corte 64 px escritorio / 48 px móvil y cierre/acciones 40 px.
+- Modales informativos: una regla base .info-modal-content; una regla base .info-close-btn; variantes dark-mode, Dashboard, Términos y About se mantienen scoped.
+- Inbox: reglas de encabezado y sus breakpoints reunidas. Developer Tools: base de .dev-tools-title unificada; responsive y reduced-motion se conservan como overrides.
+- Pruebas: CutDetailModalLayout 29/29; InfoModalStyleCascade 3/3; ModalHeaderCascade 2/2; CI 261 suites / 3,143 pruebas PASS; 0 fallos. Health read-only SUCCESS.
+- Se detectó y corrigió una regresión de expectativas al mover temporalmente reglas de Developer Tools fuera de su media query; la versión final conserva el orden original y pasó la suite integral.
+- Pendiente exclusivamente aceptación visual Beta de navegadores/dispositivos reales. No hubo deployment Apps Script ni acceso de escritura a Spreadsheet/Drive.
