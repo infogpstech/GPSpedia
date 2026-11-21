@@ -5796,6 +5796,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 
 /* ========================================================================
+   BLOQUE CONSOLIDADO — encabezados de detalle
    BLOQUE ÚNICO — encabezados de detalle
    Base compartida por Corte, Tutorial y Relay; variante de Corte aislada por data-modal-type.
    Los overrides responsive están junto a su componente para evitar cascadas dispersas.
@@ -6010,205 +6011,205 @@ textarea.rich-text-source[hidden] { display:none !important; }
     }
 }
 
-/* Variante exclusiva del detalle de corte. */
+/* GP-UX-MODAL-HEADER-TIGHTEN-03 — variante exclusiva del modal de corte. */
 #modalDetalle[data-modal-type="corte"] {
-    overflow-x: hidden;
-    overscroll-behavior-x: none;
+    overflow-x:hidden;
+    overscroll-behavior-x:none;
 }
 #modalDetalle[data-modal-type="corte"] #detalleCompleto {
-    min-width: 0;
-    max-width: 100%;
-    overflow-x: hidden;
+    min-width:0;
+    max-width:100%;
+    overflow-x:hidden;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    padding-right: 0 !important;
-    grid-template-columns: max-content minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
-    column-gap: 10px;
-    row-gap: 0;
-    margin-bottom: 7px;
+    box-sizing:border-box;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    padding-right:0 !important;
+    grid-template-columns:max-content minmax(0,1fr);
+    grid-template-rows:auto auto auto auto;
+    column-gap:10px;
+    row-gap:0;
+    margin-bottom:7px;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    width: max-content;
-    max-width: 180px;
-    min-width: 0;
-    height: 64px;
-    min-height: 64px;
-    padding: 0 !important;
-    margin: 0 !important;
-    align-self: end;
-    align-items: flex-start;
-    justify-content: flex-start;
-    overflow: visible !important;
-    border: 0;
+    grid-column:1;
+    grid-row:1 / span 2;
+    width:max-content;
+    max-width:180px;
+    min-width:0;
+    height:64px;
+    min-height:64px;
+    padding:0 !important;
+    margin:0 !important;
+    align-self:end;
+    align-items:flex-start;
+    justify-content:flex-start;
+    overflow:visible !important;
+    border:0;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
-    width: auto !important;
-    height: 64px !important;
-    max-height: 64px !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    object-fit: contain;
-    object-position: left top;
+    width:auto !important;
+    height:64px !important;
+    max-height:64px !important;
+    max-width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    object-fit:contain;
+    object-position:left top;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
-    grid-column: 2;
-    grid-row: 1;
-    width: 100%;
-    min-width: 0;
-    padding-right: 0 !important;
-    margin-left: 0;
-    justify-content: flex-end;
+    grid-column:2;
+    grid-row:1;
+    width:100%;
+    min-width:0;
+    padding-right:0 !important;
+    margin-left:0;
+    justify-content:flex-end;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions .share-modal-btn {
-    padding: 3px 2px;
+    padding:3px 2px;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title-text {
-    grid-column: 2;
-    grid-row: 2;
-    min-width: 0;
-    max-width: 100%;
-    align-self: flex-start;
-    margin-top: 6px;
-    justify-self: stretch;
-    text-align: left;
-    transform: none;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    overflow-wrap: normal;
-    word-break: normal;
+    grid-column:2;
+    grid-row:2;
+    min-width:0;
+    max-width:100%;
+    align-self:flex-start;
+    margin-top:6px;
+    justify-self:stretch;
+    text-align:left;
+    transform:none;
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip;
+    overflow-wrap:normal;
+    word-break:normal;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title-input {
-    grid-column: 2;
-    grid-row: 2;
-    min-width: 0;
-    max-width: 100%;
-    align-self: flex-start;
-    margin-top: 6px;
-    margin-bottom: 0;
+    grid-column:2;
+    grid-row:2;
+    min-width:0;
+    max-width:100%;
+    align-self:flex-start;
+    margin-top:6px;
+    margin-bottom:0;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-divider {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    width: auto !important;
-    box-sizing: border-box;
-    justify-self: stretch;
-    margin: 1px 6px 2px !important;
+    grid-column:1 / -1;
+    grid-row:3;
+    width:auto !important;
+    box-sizing:border-box;
+    justify-self:stretch;
+    margin:1px 6px 2px !important;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-saving-indicator {
-    grid-column: 1 / -1;
-    grid-row: 4;
+    grid-column:1 / -1;
+    grid-row:4;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions > .info-close-btn {
-    position: static !important;
-    flex: 0 0 40px;
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
-    min-height: 40px;
-    margin: 0 !important;
-    padding: 0 2px;
+    position:static !important;
+    flex:0 0 40px;
+    width:40px;
+    min-width:40px;
+    height:40px;
+    min-height:40px;
+    margin:0 !important;
+    padding:0 2px;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-meta {
-    margin-top: -6px;
+    margin-top:-6px;
 }
 
-/* Ajuste móvil del corte: el logo no puede ensanchar la primera columna. */
-@media (max-width: 560px) {
+/* GP-UX-DETAIL-LOGO-MOBILE-02 — limita el logo y conserva espacio para acciones. */
+@media (max-width:560px) {
     #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
-        grid-template-columns: max-content minmax(0, 1fr);
-        grid-template-rows: auto auto auto auto;
-        column-gap: 6px;
-        padding-right: 0 !important;
-        margin-bottom: 6px;
+        grid-template-columns:max-content minmax(0,1fr);
+        grid-template-rows:auto auto auto auto;
+        column-gap:6px;
+        padding-right:0 !important;
+        margin-bottom:6px;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-title {
-        grid-column: 1;
-        grid-row: 1 / span 2;
-        width: max-content;
-        max-width: min(30vw, 120px);
-        height: 48px;
-        min-height: 48px;
-        padding: 0 !important;
-        margin: 0 !important;
-        align-self: end;
-        align-items: flex-start;
-        justify-content: flex-start;
-        overflow: visible !important;
+        grid-column:1;
+        grid-row:1 / span 2;
+        width:max-content;
+        max-width:min(30vw,120px);
+        height:48px;
+        min-height:48px;
+        padding:0 !important;
+        margin:0 !important;
+        align-self:end;
+        align-items:flex-start;
+        justify-content:flex-start;
+        overflow:visible !important;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
-        display: block;
-        width: auto !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        max-height: 48px !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        object-fit: contain;
-        object-position: left top;
-        flex: 0 0 auto;
+        display:block;
+        width:auto !important;
+        height:48px !important;
+        min-height:48px !important;
+        max-height:48px !important;
+        max-width:100% !important;
+        margin:0 !important;
+        padding:0 !important;
+        object-fit:contain;
+        object-position:left top;
+        flex:0 0 auto;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
-        grid-column: 2;
-        grid-row: 1;
-        min-width: 0;
-        width: 100%;
-        gap: 4px;
-        padding-right: 0 !important;
-        justify-content: flex-end;
-        flex-wrap: nowrap;
+        grid-column:2;
+        grid-row:1;
+        min-width:0;
+        width:100%;
+        gap:4px;
+        padding-right:0 !important;
+        justify-content:flex-end;
+        flex-wrap:nowrap;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-title-text {
-        grid-column: 2;
-        grid-row: 2;
-        height: auto;
-        min-height: 0;
-        min-width: 0;
-        max-width: 100%;
-        display: flex;
-        align-items: flex-start;
-        align-self: flex-start;
-        box-sizing: border-box;
-        padding: 0 !important;
-        margin: 6px 0 0 !important;
-        transform: none !important;
-        text-align: left;
-        font-size: clamp(1rem, 4vw, 1.35rem);
+        grid-column:2;
+        grid-row:2;
+        height:auto;
+        min-height:0;
+        min-width:0;
+        max-width:100%;
+        display:flex;
+        align-items:flex-start;
+        align-self:flex-start;
+        box-sizing:border-box;
+        padding:0 !important;
+        margin:6px 0 0 !important;
+        transform:none !important;
+        text-align:left;
+        font-size:clamp(1rem,4vw,1.35rem);
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-title-input {
-        grid-column: 2;
-        grid-row: 2;
-        min-width: 0;
-        max-width: 100%;
-        align-self: flex-start;
-        margin-top: 6px;
-        margin-bottom: 0;
-        font-size: clamp(.95rem, 3.8vw, 1.2rem);
+        grid-column:2;
+        grid-row:2;
+        min-width:0;
+        max-width:100%;
+        align-self:flex-start;
+        margin-top:6px;
+        margin-bottom:0;
+        font-size:clamp(.95rem,3.8vw,1.2rem);
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions .share-modal-btn {
-        padding: 2px 1px;
+        padding:2px 1px;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-divider {
-        grid-column: 1 / -1;
-        grid-row: 3;
-        margin-top: 1px;
-        margin-bottom: 2px;
+        grid-column:1 / -1;
+        grid-row:3;
+        margin-top:1px;
+        margin-bottom:2px;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions > .info-close-btn {
-        flex-basis: 40px;
-        width: 40px;
-        min-width: 40px;
-        height: 40px;
-        min-height: 40px;
+        flex-basis:40px;
+        width:40px;
+        min-width:40px;
+        height:40px;
+        min-height:40px;
     }
 }
 
