@@ -900,3 +900,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI en el HEAD `230cda216bb83be158dbe70b343036de951eb044`: SUCCESS; 261 suites, 3,143 pruebas aprobadas, 0 fallos. CutDetailModalLayout 29/29; InfoModalStyleCascade 3/3; ModalHeaderCascade 2/2. Health read-only SUCCESS.
 - Pages workflow para ese HEAD se encontraba PENDING al registrar este checkpoint; no se afirma despliegue completado mientras no cambie a SUCCESS.
 - La aceptación visual de los modales en navegador de escritorio, Android/PWA y viewports reales permanece en Beta. No se desplegaron proyectos Apps Script ni se modificaron propiedades, Spreadsheet o Drive remotos.
+
+
+## Checkpoint — inicio de auditoría integral de latencia, llamadas y aportes (2026-11-21)
+
+- Rama de trabajo confirmada: `GPSpedia2.2.5_work`. HEAD inicial de esta auditoría: `dba61b0f6cba0a152d58d314b52eac5120576d86`. La rama base protegida `GPSpedia2.2.5` no se modificó.
+- Por solicitud del usuario, toda condición que deba resolverse antes de retirar locks/leases o llamadas se registra como tarea pendiente, con prioridad, dependencias y pruebas requeridas.
+- Se creó `AUDITORIA_INTEGRAL_LATENCIA_LLAMADAS_APORTES_2026-11-21.md` y se amplió `Tareas_Activas.md` con un nuevo bloque P0/P1/P2. Ambos cambios quedaron en commits separados de documentación.
+- Hallazgos preliminares, aún no conclusiones: AUTH incluye `touchSession` y otras acciones en `withSharedMutationLease_`; USERS conserva lease para `createUser`; varios servicios publican cambios de catálogo por Coordinator; ADMIN realiza llamadas a WRITE/CATALOG; FEEDBACK/WRITE/ADMIN incluyen rutas de transferencia de imágenes/vídeos. Se exige mapa de consumidores y dependencias antes de modificar.
+- Prioridad inmediata: (1) mapa de llamadas navegador→servicios y línea base de latencia/bytes/lecturas/escrituras; (2) AUTH/USERS y excepciones de sesión conforme a §15; (3) flujos de aportes y dependencias WRITE/FEEDBACK/ADMIN/CATALOG; (4) cargas de imágenes/vídeos; (5) navegación, cachés y regresión.
+- No se retiró ningún lock, lease, endpoint ni llamada de producción en esta fase. No se desplegó Apps Script ni se modificaron secretos, ScriptProperties, Spreadsheet o Drive productivos. La auditoría actual es estática; aún no certifica una mejora de rendimiento medida.
+- Siguiente paso: continuar el inventario de consumidores frontend y backend, revisar las rutas de carga/catálogo y completar el mapa antes de proponer cambios. Toda dependencia que impida simplificar permanece como tarea pendiente explícita.
