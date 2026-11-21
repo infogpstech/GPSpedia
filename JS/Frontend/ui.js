@@ -29,7 +29,7 @@ import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
 
-async function readLogoFileBase64_(file) {
+function readLogoFileBase64_(file) {
     return new Promise((resolve, reject) => {
         if (!file) {
             const error = new Error("No se seleccionó un archivo.");
@@ -65,7 +65,7 @@ async function readLogoFileBase64_(file) {
     });
 }
 
-function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
+async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
     if (!windowRef || !windowRef.navigator || !windowRef.navigator.serviceWorker) {
         return { status: "unavailable", message: "No hay un Service Worker disponible para limpiar las respuestas temporales." };
     }
