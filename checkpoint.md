@@ -653,3 +653,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La adenda Beta AUG-161 fue corregida para probar operaciones directas sin Coordinator/leases; las expectativas históricas de contención/expiración de lease ya no aplican a estas cuatro acciones.
 - Comparación contra GPSpedia2.2.5: 6,235 commits ahead / 0 behind. La rama base permanece intacta.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos. Pendientes: Beta aislada de PyS/WRITE/ADMIN/tutoriales/vídeos/UX, validaciones reales de concurrencia y Safe Apply con preview/ACL/rollback autorizados.
+
+
+## Checkpoint — cierre local de Inbox sin lock global (2026-11-21)
+
+- HEAD de código validado: 15e7ab84d9a4530cb1097334a3e907f798c9d0ca. Comparación con GPSpedia2.2.5: 6,245 commits ahead / 0 behind; rama base intacta.
+- Se retiró withInboxConversationLock_ de InboxConversations.js. Lecturas y mutaciones ahora ejecutan directamente sin ScriptLock, tryLock, waitLock ni liberación de locks.
+- Se mantienen identidad de sesión verificada, RBAC, validación de participantes, límites, claves idempotentes y auditoría. InboxConversations 66/66 PASS.
+- CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- No se desplegó Apps Script ni se modificaron recursos productivos. Pendiente Beta: concurrencia real de Inbox en entorno aislado, además de las demás validaciones de campo ya registradas.
