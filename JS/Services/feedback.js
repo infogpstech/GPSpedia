@@ -4281,6 +4281,10 @@ const TUTORIAL_TITLE_EVENTS_HEADERS = Object.freeze([
     "operationId", "eventHash", "tutorialId", "action", "titleKey", "previousTitleKey", "payloadHash", "createdAt"
 ]);
 
+const TUTORIAL_EDIT_EVENTS_HEADERS = Object.freeze([
+    "operationId", "payloadHash", "tutorialId", "expectedHash", "snapshotJson", "createdAt"
+]);
+
 function getTutorialSheet_(createIfMissing) {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("Tutorial");
@@ -4342,6 +4346,31 @@ function getTutorialTitleEventsSheet_(createIfMissing) {
     if (width !== TUTORIAL_TITLE_EVENTS_HEADERS.length ||
         TUTORIAL_TITLE_EVENTS_HEADERS.some((header, index) => headers[index] !== header)) {
         throw new Error("El esquema de TutorialTitleEvents no coincide; no se modificó la hoja.");
+    }
+    return sheet;
+}
+
+function getTutorialEditEventsSheet_(createIfMissing) {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("TutorialEditEvents");
+    if (!sheet && createIfMissing) {
+        try { sheet = ss.insertSheet("TutorialEditEvents"); }
+        catch (insertError) {
+            sheet = ss.getSheetByName("TutorialEditEvents");
+            if (!sheet) throw insertError;
+        }
+    }
+    if (!sheet) return null;
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, TUTORIAL_EDIT_EVENTS_HEADERS.length).setValues([TUTORIAL_EDIT_EVENTS_HEADERS.slice()]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+    const width = Math.max(TUTORIAL_EDIT_EVENTS_HEADERS.length, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(value => String(value || "").trim());
+    if (width !== TUTORIAL_EDIT_EVENTS_HEADERS.length ||
+        TUTORIAL_EDIT_EVENTS_HEADERS.some((header, index) => headers[index] !== header)) {
+        throw new Error("El esquema de TutorialEditEvents no coincide; no se modificó la hoja.");
     }
     return sheet;
 }
@@ -4560,6 +4589,87 @@ function makeLegacyTutorialIdentity_(title) {
     const hash = digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
     return "legacy-" + hash;
 }
+function buildTutorialEditFieldsHash_(values) {
+    return buildTutorialContentHash_((values || []).map(value => String(value || "")));
+}
+
+function readTutorialEditEvents_(sheet) {
+    const last = sheet ? sheet.getLastRow() : 0, operations = new Map();
+    if (last < 2) return [];
+    const rows = sheet.getRange(2, 1, last - 1, TUTORIAL_EDIT_EVENTS_HEADERS.length).getValues();
+    rows.forEach((row, index) => {
+        if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
+        const operationId = String(row[0] || "").trim(), payloadHash = String(row[1] || "").trim().toLowerCase();
+        const tutorialId = String(row[2] || "").trim(), expectedHash = String(row[3] || "").trim().toLowerCase();
+        let snapshot = null;
+        try { snapshot = JSON.parse(String(row[4] || "")); } catch (error) {}
+        if (!/^tutorial-edit-[a-f0-9]{64}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+            !/^tut-[A-Za-z0-9_-]{20,80}$/i.test(tutorialId) || !/^[a-f0-9]{64}$/.test(expectedHash) ||
+            !Array.isArray(snapshot) || snapshot.length !== 3 || snapshot.some(value => typeof value !== "string")) {
+            throw new Error("TutorialEditEvents contiene una fila incompatible; requiere revisión.");
+        }
+        const item = { rowNumber: index + 2, operationId, payloadHash, tutorialId, expectedHash, snapshot };
+        if (!operations.has(operationId)) operations.set(operationId, item);
+        else if (operations.get(operationId).payloadHash !== payloadHash) {
+            operations.get(operationId).conflictingPayloadCount = (operations.get(operationId).conflictingPayloadCount || 0) + 1;
+        } else {
+            operations.get(operationId).duplicateCount = (operations.get(operationId).duplicateCount || 0) + 1;
+        }
+    });
+    return Array.from(operations.values());
+}
+
+function projectTutorialEditFields_(tutorialId, baseRow) {
+    const row = baseRow.slice();
+    const eventsSheet = getTutorialEditEventsSheet_(false);
+    if (!eventsSheet) return { row, appliedOperations: new Map() };
+    const events = readTutorialEditEvents_(eventsSheet).filter(event => event.tutorialId === String(tutorialId || "").trim());
+    let current = [row[3], row[4], row[5]].map(value => String(value || ""));
+    const appliedOperations = new Map();
+    events.forEach(event => {
+        const currentHash = buildTutorialEditFieldsHash_(current);
+        if (event.expectedHash === currentHash) {
+            current = event.snapshot.slice();
+            appliedOperations.set(event.operationId, true);
+        } else if (event.snapshot.every((value, index) => value === current[index])) {
+            appliedOperations.set(event.operationId, true);
+        } else {
+            appliedOperations.set(event.operationId, false);
+        }
+    });
+    row[3] = current[0]; row[4] = current[1]; row[5] = current[2];
+    return { row, appliedOperations };
+}
+
+function appendTutorialEditEvent_(tutorialId, baseRow, snapshot) {
+    const id = String(tutorialId || "").trim();
+    if (!/^tut-[A-Za-z0-9_-]{20,80}$/i.test(id)) throw new Error("La edición append-only requiere un ID persistente de tutorial.");
+    const expectedHash = buildTutorialEditFieldsHash_([baseRow[3], baseRow[4], baseRow[5]]);
+    const normalizedSnapshot = snapshot.map(value => String(value || ""));
+    const payloadHash = buildTutorialContentHash_([id, expectedHash, normalizedSnapshot]);
+    const operationId = "tutorial-edit-" + payloadHash;
+    const sheet = getTutorialEditEventsSheet_(true);
+    let existing = readTutorialEditEvents_(sheet).find(event => event.operationId === operationId);
+    if (existing && existing.payloadHash !== payloadHash) throw new Error("El identificador de edición ya pertenece a otro contenido.");
+    if (!existing) {
+        sheet.appendRow([operationId, payloadHash, id, expectedHash, JSON.stringify(normalizedSnapshot), new Date().toISOString()]);
+        try { SpreadsheetApp.flush(); }
+        catch (flushError) {
+            existing = readTutorialEditEvents_(sheet).find(event => event.operationId === operationId);
+            if (!existing || existing.payloadHash !== payloadHash) throw flushError;
+        }
+    }
+    const tutorialSheet = getTutorialSheet_(false);
+    const raw = tutorialSheet ? findTutorialById_(tutorialSheet, id) : null;
+    if (!raw) throw new Error("Tutorial no encontrado después de registrar la edición.");
+    const projected = projectTutorialEditFields_(id, raw.row);
+    if (projected.appliedOperations.get(operationId) !== true ||
+        !normalizedSnapshot.every((value, index) => value === projected.row[index + 3])) {
+        throw new Error("Otra edición modificó esta versión del tutorial; actualiza los datos y vuelve a intentarlo.");
+    }
+    return { operationId, tutorialId: id, snapshot: normalizedSnapshot };
+}
+
 function tutorialRowMatchesSubmission_(row, fields) {
     return String(row[1] || "").trim() === fields.title &&
         String(row[3] || "").trim() === fields.comoIdentificarlo &&
