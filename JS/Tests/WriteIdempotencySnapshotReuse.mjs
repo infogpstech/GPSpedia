@@ -143,8 +143,9 @@ test("snapshot detecta cambio de asociación antes de actualizar",()=>{
 test("handler lee solo el opId activo y comparte su snapshot con todos los pasos",()=>{
  const lockedStart=source.indexOf("function handleAddOrUpdateCutLocked("),lockedEnd=source.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",lockedStart);
  const locked=source.slice(lockedStart,lockedEnd);
- assert.equal((locked.match(/readIdempotenciaEntries_\(/g)||[]).length,1);
- assert.match(locked,/idempotencyEntriesSnapshot\.sheet = idempotencySheetBefore/);
+ assert.equal((locked.match(/readIdempotenciaEntries_\(/g)||[]).length,0);
+ assert.equal((locked.match(/readIdempotenciaEntryByOpId_\(/g)||[]).length,1);
+ assert.match(locked,/new Map\(\),\s*sheet:\s*idempotencySheetBefore/);
  assert.match(locked,/handleAddOrUpdateCutLockedUnsafe_\(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, \{/);
  assert.match(locked,/const idempotencySheet = idempotencySheetBefore/);
  const unsafeStart=source.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),unsafeEnd=source.indexOf("\nfunction ",unsafeStart+10);
