@@ -1364,3 +1364,16 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `AdminTrafficSurfaceContract.mjs`: 12/12 PASS. CI HEAD `b5d71059b3007bb3a89667fc0d8ff73dd11e0258`: **282 suites / 3,278 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. Pages deploy en cola; no se desplegó Apps Script.
 - El código ADMIN también se revisó estáticamente para backup/restore: DB usa manifiesto/fingerprint y staging/rollback; Drive usa manifiesto por lotes, staging, verificación antes del intercambio y carpeta de rollback. No se modificó ese flujo por su carácter destructivo.
 - Siguiente: completar auditoría ADMIN de respaldos/restauración, escáneres, upload/recovery e imágenes; optimizar solo donde pruebas de idempotencia y rollback puedan conservarse.
+
+
+## Cierre — ADMIN respaldos, restauración, escáneres y uploads (2026-11-21)
+
+- Revisión de backup DB: valida manifiesto/fingerprint del origen y de la copia, confirma estado complete, privacidad y read-back del manifiesto; las copias incompletas se marcan y retiran.
+- Revisión de backup Drive: manifiesto verificable, estado copying reanudable, índices de lotes y verificación final antes de marcar complete.
+- Revisión de restore DB: valida manifiesto del backup, crea rollback recuperable, copia hojas a staging, compara fingerprints y hace swap; los fallos limpian staging o preservan el backup de recuperación.
+- Revisión de restore Drive: copia a staging, compara manifiestos, mueve estado original a carpeta rollback y verifica el contenido restaurado; conserva rutas de recuperación ante fallos.
+- Escáneres/normalización: una lectura completa de Cortes por operación; las escrituras por fila y operaciones Drive son parte del procesamiento, no lecturas duplicadas demostradas. `getReplacedImages` conserva una sola lectura del inventario y proyección interna CATALOG.
+- Upload ADMIN: compare-and-set con expectedCurrentValue/sourceEventId, append de evento linked o requires_review y read-back de metadata Drive; status consulta CATALOG solo si encuentra eventos de la operación.
+- No se encontró una lectura redundante segura que justificara modificar operaciones destructivas. Se conserva el contrato de rollback y no se tocó Drive/Spreadsheet productivo.
+- `AdminOperationReadInventory.mjs`: 8/8 PASS. CI HEAD `9ef42ae5b69a35ec25a659290c961a53127f27b1`: **283 suites / 3,286 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. GitHub Pages deploy en ejecución; no se desplegó Apps Script.
+- Siguiente: auditoría CATALOG/Coordinator de deltas, cursores, snapshots, resets e invalidaciones.
