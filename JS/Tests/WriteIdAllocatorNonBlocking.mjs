@@ -33,7 +33,7 @@ const testigo = section("function ensureTestigoColumns(sheet)", "\nfunction ");
 assert.doesNotMatch(testigo, /LockService|tryLock|waitLock|releaseLock/,
     "La inicialización de columnas Testigo no debe adquirir un lock anidado");
 
-const createHandler = section("function handleAddOrUpdateCutLockedUnsafe_(", "\nfunction buildCutSlotCoreValues_");
+const createHandler = section("function handleAddOrUpdateCutLockedUnsafe_(", "\nfunction handleCheckVehicle");
 assert.match(createHandler, /reserveCortesVehicleIdForOperation_\(/,
     "Las altas nuevas de WRITE deben reservar el ID mediante el mismo ledger");
 assert.doesNotMatch(createHandler, /getNextCortesVehicleIdLocked\(/,
