@@ -173,7 +173,7 @@ test("dos altas simultáneas con huellas distintas conservan first-write-wins", 
     const h = harness({ onFirstCounterRead: () => {
         winningResult = h.allocate({ opId: "OP-CONFLICT", operationHash: HASH_B });
     }});
-    assert.throws(() => h.allocate({ opId: "OP-CONFLICT", operationHash: HASH_A }), /otra huella/);
+    assert.throws(() => h.allocate({ opId: "OP-CONFLICT", operationHash: HASH_A }), /otro contenido/);
     assert.equal(winningResult.vehicleId, 4);
     assert.equal(h.ledger.rows.length, 3);
     assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
