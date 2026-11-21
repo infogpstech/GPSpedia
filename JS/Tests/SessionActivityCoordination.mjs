@@ -24,9 +24,11 @@ testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para muta
  assert.doesNotMatch(write.slice(write.indexOf("function handleCheckOperation"),write.indexOf("\nfunction ",write.indexOf("function handleCheckOperation")+10)),/getAuthenticatedCollaborator\(/);
 });
 
-testCase("USERS coordina lecturas y mutaciones y consume el actor central",()=>{
- assert.match(users,/if \(action !== "getUsers"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
- assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser","updateProfile"\]/);
+testCase("USERS usa actor cacheado para perfil y conserva lease solo para createUser",()=>{
+ assert.match(users,/if \(!\["getUsers", "updateProfile"\]\.includes\(action\)\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
+ assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser"\]/);
+ assert.match(users,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "USERS" \}\)/);
+ assert.match(users,/withSharedMutationLease_\("USERS", action/);
  assert.doesNotMatch(users,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  ["handleGetUsers","handleCreateUser","handleUpdateProfile"].forEach(name=>{
   const i=users.indexOf("function "+name);assert.ok(i>=0,name);
