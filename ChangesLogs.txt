@@ -242,3 +242,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se separó findPysRowsById_ (físico) de findCanonicalPysRowsById_ (proyección). Validación y lectores PyS permiten duplicados físicos idénticos, rechazan contradicciones y deduplican la lectura/feed.
 - CI ce1d7a1: 258 suites, 3091 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
 - handleAddProblem todavía conserva ScriptLock; pendiente resolver propiedad canónica, archivos duplicados y reintentos simultáneos antes de retirarlo.
+
+
+2026-11-21 — PyS: rechazo de reservas contradictorias
+- readPysOperations_ rechaza el mismo opId y payloadHash asociado a distintos problemId; se evita tratar dos identidades como un replay idéntico.
+- Se añadió regresión PysCreationIntegrity.js para verificar que la operación se detiene antes de crear archivos Drive.
+- CI 44873477741 SUCCESS: 258 suites, 3092 pruebas, 0 fallos; health read-only 44873477634 SUCCESS; Pages 44873477531 pendiente al registrar.
+- El lock de handleAddProblem se conserva. La migración sin lock requiere un ledger de propiedad canónica de operación/imagen y transiciones concurrentes verificables.
+- No se desplegó Apps Script ni se tocaron datos productivos.
