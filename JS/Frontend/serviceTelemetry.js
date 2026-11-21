@@ -43,17 +43,24 @@ export function recordBrowserServiceTraffic(input = {}) {
         ? source.deviceType : getBrowserDeviceType();
     const httpStatus = Number.isInteger(source.httpStatus) && source.httpStatus >= 100 && source.httpStatus <= 599
         ? source.httpStatus : null;
-    const event = { service, action, timestamp, durationMs, outcome, httpStatus, deviceType };
+    const requestBytes = Number.isFinite(source.requestBytes) ? Math.max(0, source.requestBytes) : null;
+    const responseBytes = Number.isFinite(source.responseBytes) ? Math.max(0, source.responseBytes) : null;
+    const event = { service, action, timestamp, durationMs, outcome, httpStatus, deviceType, requestBytes, responseBytes };
     eventHistory.push(event);
     if (eventHistory.length > MAX_EVENTS) eventHistory.splice(0, eventHistory.length - MAX_EVENTS);
 
     const startAt = Math.floor(timestamp / BUCKET_MS) * BUCKET_MS;
     const key = service + ":" + startAt;
-    const bucket = hourlyBuckets.get(key) || { service, startAt, count: 0, successes: 0, errors: 0, durationTotalMs: 0 };
+    const bucket = hourlyBuckets.get(key) || {
+        service, startAt, count: 0, successes: 0, errors: 0, durationTotalMs: 0,
+        requestBytesTotal: 0, responseBytesTotal: 0, requestBytesSamples: 0, responseBytesSamples: 0
+    };
     bucket.count += 1;
     if (outcome === "success") bucket.successes += 1;
     else bucket.errors += 1;
     bucket.durationTotalMs += durationMs;
+    if (requestBytes !== null) { bucket.requestBytesTotal += requestBytes; bucket.requestBytesSamples += 1; }
+    if (responseBytes !== null) { bucket.responseBytesTotal += responseBytes; bucket.responseBytesSamples += 1; }
     hourlyBuckets.set(key, bucket);
     trimExpiredBuckets_(timestamp);
 
@@ -90,6 +97,10 @@ export function getBrowserServiceTrafficSnapshot(serviceValue, options = {}) {
     const successCount = matchingBuckets.reduce((sum, bucket) => sum + bucket.successes, 0);
     const errorCount = matchingBuckets.reduce((sum, bucket) => sum + bucket.errors, 0);
     const durationTotalMs = matchingBuckets.reduce((sum, bucket) => sum + bucket.durationTotalMs, 0);
+    const requestBytesTotal = matchingBuckets.reduce((sum, bucket) => sum + bucket.requestBytesTotal, 0);
+    const responseBytesTotal = matchingBuckets.reduce((sum, bucket) => sum + bucket.responseBytesTotal, 0);
+    const requestBytesSamples = matchingBuckets.reduce((sum, bucket) => sum + bucket.requestBytesSamples, 0);
+    const responseBytesSamples = matchingBuckets.reduce((sum, bucket) => sum + bucket.responseBytesSamples, 0);
     const lastEvent = events.length ? events[events.length - 1] : null;
     return {
         status: "success",
@@ -106,7 +117,11 @@ export function getBrowserServiceTrafficSnapshot(serviceValue, options = {}) {
             requests: requestCount,
             successes: successCount,
             errors: errorCount,
-            averageDurationMs: requestCount ? durationTotalMs / requestCount : null
+            averageDurationMs: requestCount ? durationTotalMs / requestCount : null,
+            requestBytesTotal,
+            responseBytesTotal,
+            averageRequestBytes: requestBytesSamples ? requestBytesTotal / requestBytesSamples : null,
+            averageResponseBytes: responseBytesSamples ? responseBytesTotal / responseBytesSamples : null
         },
         events: events.slice(-MAX_EVENTS),
         lastEvent
