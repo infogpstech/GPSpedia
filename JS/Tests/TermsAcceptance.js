@@ -112,7 +112,7 @@ test('USERS mantiene la columna privada fuera de la escritura de perfil', () => 
 });
 test('API dirige acceptTerms a AUTH sin enviar una llamada touchSession adicional', () => {
     assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/);
-    assert.match(apiConfigSource, /body: JSON\.stringify\(\{ action, payload \}\)/);
+    assert.match(apiConfigSource, /const requestBody = JSON\.stringify\(\{ action, payload \}\)/); assert.match(apiConfigSource, /body: requestBody/);
     assert.match(uiSource, /routeAction\('acceptTerms',[\s\S]*?deviceId/);
     assert.doesNotMatch(uiSource, /routeAction\('touchSession'/);
 });
