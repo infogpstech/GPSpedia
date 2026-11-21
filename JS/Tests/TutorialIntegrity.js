@@ -48,8 +48,9 @@ function makeSheet_(rows, options = {}) {
 function buildHarness_(feedback, options = {}) {
     const initial = options.rows || [];
     const sheet = makeSheet_(initial, options);
-    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false, insertedEditEvents: false };
+    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false, insertedEditEvents: false, titleEventsSheet: null };
     const titleEventsSheet = makeSheet_(options.titleEvents || [], options);
+    state.titleEventsSheet = titleEventsSheet;
     const editEventsSheet = makeSheet_(options.editEvents || [], options);
     const context = {
         LockService: { getScriptLock: () => ({
@@ -82,7 +83,7 @@ function buildHarness_(feedback, options = {}) {
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
-    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, titleEventsSheet };", context);
+    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, titleEventsSheet: state.titleEventsSheet };", context);
     return { api: context.api, sheet, state, editEventsSheet };
 }
 
