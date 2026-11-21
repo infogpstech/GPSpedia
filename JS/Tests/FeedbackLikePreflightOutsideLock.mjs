@@ -61,17 +61,17 @@ test("el handler de likes usa append-only sin lock global", () => {
     const handler = extract("handleRecordLike", "findReportByReportId_");
     assert.match(handler, /findFeedbackVehicleRowForLike_\(cuts, vehicleId\)/);
     assert.match(handler, /findLikeEventReplayNoop_/);
-    assert.match(handler, /eventLedger\.appendRow\(/);
+    assert.match(handler, /ledger\.appendRow\(/);
     assert.doesNotMatch(handler, /LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\(/);
     assert.doesNotMatch(handler, /getDataRange\(/, "El handler no debe descargar toda la hoja Cortes ni FeedbackLikes");
 });
 
-test("el ledger consulta solo likes del actor y la actividad queda fuera del lock", () => {
+test("el ledger consulta solo likes del actor y registra actividad después del append", () => {
     const handler = extract("handleRecordLike", "findReportByReportId_");
-    assert.match(handler, /createTextFinder\(actorKey\)/);
-    assert.match(handler, /getRange\(rowIndex, 1, 1, 7\)\.getValues\(\)/);
-    const release = handler.indexOf("lock.releaseLock()");
-    const activity = handler.indexOf('logUserActivity(userId, userName, "like"');
-    assert.ok(release >= 0 && activity > release);
+    assert.match(handler, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, corteIndex\)/);
+    assert.match(handler, /logLikeActivityAfterAppend_\(userId, userName, vehicleId, corteIndex/);
+    const activity = extract("logLikeActivityAfterAppend_", "findFeedbackVehicleRowForLike_");
+    assert.match(activity, /logUserActivity\(/);
+    assert.doesNotMatch(activity, /LockService|getScriptLock/);
 });
-console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — lectura dirigida y revalidación bajo lock");
+console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — lectura dirigida y append-only sin lock");
