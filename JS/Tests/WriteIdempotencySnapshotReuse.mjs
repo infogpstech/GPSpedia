@@ -140,7 +140,7 @@ test("snapshot detecta cambio de asociación antes de actualizar",()=>{
  assert.throws(()=>h.record("OP-5","42",1,"fecha","completed",hash),/asociación.*cambió/);
  assert.equal(h.counts.statusWrites,0);
 });
-test("handler toma una lectura integral y la comparte con todos los pasos",()=>{
+test("handler lee solo el opId activo y comparte su snapshot con todos los pasos",()=>{
  const lockedStart=source.indexOf("function handleAddOrUpdateCutLocked("),lockedEnd=source.indexOf("\nfunction handleAddOrUpdateCutLockedUnsafe_",lockedStart);
  const locked=source.slice(lockedStart,lockedEnd);
  assert.equal((locked.match(/readIdempotenciaEntries_\(/g)||[]).length,1);
