@@ -216,3 +216,13 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 7/7 PASS. CI commit `8d80bac41d4c29e9b90d598e89eca818e03bff79`: 255 suites, 3066 pruebas aprobadas, 0 fallos; health read-only en ejecución al registrar; build en ejecución al registrar.
 - **P0 permanece abierto.** `handleSuggestYear` aún usa ScriptLock; el operationId de aplicación sigue siendo UUID no determinista; el ledger cambia status/actividad y la recuperación todavía modifica claves de votos históricos. Pendiente: identidad determinista y deduplicación segura de aplicaciones, recuperación reconstruible desde eventos sin mutar Feedbacks, revisión de conflictos de generaciones y pruebas de concurrencia. No retirar lock todavía.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+
+## Continuación — identidad determinista y recuperación de duplicados (2026-11-21)
+
+- `handleSuggestYearLocked` ahora calcula `operationId` como SHA-256 de la identidad de propuesta: vehículo, año, rango anterior/propuesto, valores crudos y eventos fuente. Reintentos de la misma propuesta y versión fuente producen el mismo ID; cambios en destino o fuente producen otro ID.
+- `findPendingFeedbackYearApplication_` agrupa filas pendientes por `operationId`, acepta duplicados solo si describen la misma propuesta y devuelve todas sus filas para reconciliación. Propuestas distintas para un vehículo siguen bloqueadas para revisión manual.
+- La finalización actualiza el estado y la marca de actividad en todas las filas duplicadas reconocidas y confirma el cierre de cada una.
+- Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 9/9 PASS. Commit `953e9347c7d34696b8a1646c516e73ba758eee7d`: 255 suites, 3068 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- **P0 sigue abierto:** el wrapper conserva ScriptLock; la recuperación todavía modifica claves de votos históricos y el ledger usa cambios de estado. No retirar el lock hasta migrar esas mutaciones y validar concurrencia real. No desplegar Apps Script ni tocar producción.
