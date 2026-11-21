@@ -804,3 +804,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commits: 93290af58dd4b665c452be85320f43dde7a1ccf3 (write.js), 3112d22449ddd7792df110f4be1c75bd5c3a6bd8 (prueba), c05a26460f439d9c25850c2a32044f211d03e813 (acotar extracción del test). HEAD de esta fase: c05a26460f439d9c25850c2a32044f211d03e813.
 - Estado: subactividad validada en harness local; pendiente checkout completo/CI. El lock físico sigue siendo necesario para fila e Idempotencia.
 - Siguiente paso: completar revisión de rollback/recuperación física y documentar el límite de la sección crítica; después avanzar a la siguiente tarea local sin esperar a Beta.
+
+
+## Checkpoint — ADMIN: actividad de imágenes append-only sin lease (2026-11-21)
+
+- recordImageAdministrationActivity dejó de adquirir withSharedMutationLease_("ADMIN","recordAdminImageActivity"). La policy ACTIVITY independiente se retiró de Coordinator.
+- Se reemplazó getNextAdminFormulaBasedId_ (lectura completa + PropertiesService counter) y la secuencia lastRow+setValue por getAdminFormulaBasedIdPattern_ + appendRow de una fila completa con fórmula ID configurada. Se conserva actor, timestamp, tipo, associatedId y detalles; el registro sigue siendo best-effort y se ejecuta después de liberar los locks físicos de eliminación/restauración.
+- Se preservaron las leases de auditDriveImagesInCortes (IMAGE_AUDIT_STATE), saveUnusedImagesInventory (IMAGE_INVENTORY) y createCortesImageFolder (CORTES_IMAGE_FOLDER), porque coordinan cursor/inventario y unicidad de carpeta. No se retiraron locks de acciones destructivas, migraciones, reconciliación ni Safe Apply.
+- Pruebas exact-source: AdminImageActivityAppendAtomic 5/5 PASS; AdminImageScanCoordinatorContract 1/1 PASS; contratos de actividad posterior a ScriptLock para permanent delete/restore PASS. Se comprobó que Coordinator ya no habilita recordAdminImageActivity.
+- Commits: bffe801eea4c6603ccd0e8c5dc86a3a93ef3e50d (admin.js), d9bca497b1564ae1468c3f93ed7a99527ac6f7bd (Coordinator), c51dd0ad1b0c6c3568f838b51a2ddb90fe00d4a3 (scan contract), 5d3ffcc12a988fc1649d864dd01359cb0b26884c (prueba), ad242863f07acb6791a0b07d304f647f7aa0aae6 y d0ba7b0a4560a8281f0d672821d563063bf295fd (ajustes de tests). HEAD de esta fase: d0ba7b0a4560a8281f0d672821d563063bf295fd.
+- Estado: validación exact-source aislada completada; pendiente CI integral/checkout completo. No se desplegó Apps Script ni se modificó Spreadsheet/Drive productivo.
+- Siguiente paso: completar matriz de ADMIN y revisión física WRITE; después continuar con tareas locales restantes hasta que solo queden las pruebas Beta autorizadas.
