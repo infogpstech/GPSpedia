@@ -674,3 +674,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas aprobadas, 0 fallos; build, health read-only y Pages SUCCESS.
 - La adenda Beta ahora excluye leases para vídeos, tutoriales e Inbox y conserva pruebas de append/read-back, RBAC, idempotencia y fallos parciales.
 - No se desplegó Apps Script ni se modificaron recursos productivos. Continúa la auditoría de locks ordinarios restantes contra §15.
+
+
+## Checkpoint — edición legacy de Tutoriales sin ScriptLock (2026-11-21)
+
+- HEAD de código validado: 8f310ade240a5b53cdcc0962a6f1f1da0adc482b.
+- Se eliminó el ScriptLock de la ruta fallback de handleUpdateTutorialItem para IDs históricos/no canónicos. Las rutas de alta, edición descriptiva y renombrado siguen usando sus journals append-only cuando aplican; la ruta legacy restante ejecuta directamente sin lock.
+- Se preservan validación de sesión/rol, campos editables, búsqueda dirigida, unicidad de título, read-back y campos no editados.
+- FeedbackTutorialUpdateNoopPreflight 6/6; FeedbackTutorialUpdateTitleLookupBoundedRead 5/5; TutorialIntegrity 42/42. CI: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- La siguiente tarea local es eliminar el lock de versionado en publishFeedbackCatalogChange_ sin degradar la publicación incremental; después continúa la auditoría de locks de WRITE/ADMIN/USERS.
+- No se desplegó Apps Script ni se modificaron recursos productivos.
