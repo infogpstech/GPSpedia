@@ -1136,3 +1136,14 @@ Adenda — FEEDBACK confirmación de sugerencias
 - InboxConversations 66/66 PASS; CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. Build, health read-only y Pages SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — CORRECCIÓN NORMATIVA: VÍDEOS, TUTORIALES E INBOX SIN LEASES
+- Se retiró withVideoApprovalMutationLock_; submitVideoForApproval, approveVideo y rejectVideo ejecutan directamente en FEEDBACK sin Coordinator ni ScriptLock local.
+- Se retiraron las políticas Coordinator de alta/edición de Tutoriales, aprobaciones de vídeo y operaciones Inbox. Los journals append-only y la autenticación/RBAC se mantienen.
+- InboxConversations ya había eliminado el lock global de lecturas y mutaciones; las políticas Coordinator obsoletas se retiraron para impedir expectativas de coordinación no utilizada.
+- VideoApprovalClientContract 10/10; aprobación/rechazo/publicación 30/30; YouTube idempotencia 16/16; VideoApprovalState 13/13; TutorialIntegrity 42/42; InboxConversations 66/66; SharedMutationCoordinator 86/86.
+- CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- Adenda Beta ampliada para verificar operaciones directas sin leases y fallos reales aislados. Sin despliegue Apps Script ni cambios productivos.
+================================================================================
