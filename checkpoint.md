@@ -491,3 +491,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI `44877806419` SUCCESS: 258 suites, 3101 pruebas, 0 fallos; health `44877806406` SUCCESS; Pages `44877806381` SUCCESS.
 - Siguiente cambio: migrar renombrados de título a eventos versionados sin lock, incluyendo cancelación/reconciliación de reservas si el expectedHash queda obsoleto. Después auditar aprobaciones de vídeo.
 - Sin despliegue Apps Script ni cambios productivos.
+
+## Checkpoint — integridad del ledger de títulos de tutoriales (2026-11-21)
+
+- HEAD de código/pruebas: ea04e631692b0adeb29918ffdecfe4f95b929848.
+- readTutorialTitleEvents_ ahora verifica criptográficamente cada eventHash y rechaza el mismo operationId con eventos contradictorios. Los reintentos físicos idénticos continúan siendo válidos.
+- Se añadieron dos regresiones a TutorialIntegrity: operationId duplicado con título distinto y eventHash alterado.
+- CI 44901700375 SUCCESS: 258 suites, 3103 pruebas aprobadas, 0 fallos; health read-only 44901700446 SUCCESS. Pages 44901699997 estaba en ejecución al registrar.
+- Hubo un primer fallo de prueba por invocar el lector sin pasarle la hoja; se corrigió el harness y la ejecución final aprobó. No quedó fallo de código pendiente.
+- Pendiente siguiente: migrar renombrados de tutoriales a eventos append-only sin lock, con proyección de título visible y unicidad compatible con CATALOG/feed. Después auditar aprobaciones de vídeo.
+- No se desplegó Apps Script ni se modificaron datos productivos.
