@@ -596,3 +596,12 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - Regresión integral CI 3255f44f0f10cfbb7b5b3f6b8342c98d55008f0a SUCCESS: 259 suites, 3,130 pruebas, 0 fallos. PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; CatalogChangeFeed 35/35; SharedMutationCoordinator 86/86.
 - La adenda AUG-161 se actualizó: no probar contención/expiración de leases para estas cuatro acciones; probar operación directa, no interferencia, errores reales de Spreadsheet/Drive y reintentos en recursos aislados.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos. Solo quedan las pruebas Beta aisladas y Safe Apply sujeto a autorización.
+
+
+## Cierre local — Inbox sin lock global (2026-11-21)
+
+- Se retiró withInboxConversationLock_ y las llamadas de bloqueo que envolvían tanto lecturas como mutaciones de Inbox. Las operaciones usan ahora runInboxConversationAction_ como invocación directa; no adquieren ScriptLock, no esperan y no fallan por contención de otra solicitud.
+- Se mantienen las validaciones de sesión/actor, participantes, RBAC, visibilidad, límites de texto, idempotencia por clave, auditoría y verificación funcional de estado.
+- InboxConversations 66/66 PASS. La prueba ahora usa un LockService que falla si se invoca y confirma que las lecturas/mutaciones no adquieren locks.
+- CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas aprobadas, 0 fallos; build SUCCESS; health read-only SUCCESS; Pages/deploy SUCCESS.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos. La concurrencia real multi-ejecución de Inbox queda para Beta aislada.
