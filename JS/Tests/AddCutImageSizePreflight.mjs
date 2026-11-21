@@ -7,9 +7,10 @@ const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const html = readFileSync(resolve(root, 'HTML/add_cortes.html'), 'utf8');
 const start = html.indexOf("function fileToBase64(file) {");
 const marker = html.indexOf("// Ayudas contextuales:", start);
-const end = marker > start ? html.lastIndexOf("\\n        }", marker) : -1;
+const closing = String.fromCharCode(10) + "        }";
+const end = marker > start ? html.lastIndexOf(closing, marker) : -1;
 assert.ok(start >= 0 && end > start, 'No se encontró fileToBase64.');
-const source = html.slice(start, end + "\\n        }".length);
+const source = html.slice(start, end + closing.length);
 let reads = 0, nextResult = 'data:image/jpeg;base64,AA==';
 class FakeFileReader {
     readAsDataURL(file) {
