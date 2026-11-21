@@ -375,3 +375,11 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Diseñar proyección first-write-wins/append-only compatible con los registros actuales.
 - Retirar ScriptLock solo después de que altas, reintentos y ediciones concurrentes tengan identidad canónica y regresiones locales.
 - No cambiar el contrato frontend ni desplegar Apps Script.
+
+
+## Inicio de migración de tutoriales — auditoría y diseño (2026-11-21)
+
+- Auditoría: `AUDITORIA_TUTORIALES_APPEND_ONLY_2026-11-21.md`.
+- `handleAddTutorial` mantiene ScriptLock para unicidad de título y append; `handleUpdateTutorialItem` conserva no-op preflight, pero las ediciones reales actualizan B:F in-place bajo lock.
+- CATALOG lee filas físicas de Tutorial A:H; el feed y las aprobaciones de vídeo usan `findTutorialRow_` y la columna G. No retirar locks hasta tener una proyección común que preserve título, expected hash, vídeo y compatibilidad histórica.
+- Próximo paso: implementar journal/proyector append-only y regresiones de altas/ediciones concurrentes. No se ha modificado código de tutoriales todavía.
