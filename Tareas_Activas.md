@@ -3315,3 +3315,14 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Se elimina preloadImageSilently, que descargaba la misma URL y luego volvía a solicitarla desde la tarjeta.
 - [x] La actualización/insertación delega la carga a setOptimizedImage, que mantiene el render directo y la persistencia desde la imagen cargada cuando CORS lo permite.
 - [ ] Confirmar CI y validar visualmente actualización de tarjetas y nuevos vehículos.
+
+ 
+## CATALOG — aislar la consulta de candidatos ADMIN (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] Se extrajo mapCatalogVehicleRowForProjection_ para compartir exactamente la normalización de fila, likes, YouTube y orden de cortes entre el catálogo completo y la proyección dirigida.
+- [x] getContributionCandidates ahora lee únicamente Cortes, FeedbackLikes y AportesVehiculo, y ejecuta el mismo proyector global de VIN/opId/resoluciones.
+- [x] Se evitan lecturas de LogosMarca, Tutoriales, TutorialEditEvents, TutorialRenameEvents y Relay en la consulta de candidatos.
+- [x] No se filtran eventos por vehículo ni se reduce el universo de VIN: se mantiene la validación global y el mismo orden de candidatos.
+- [ ] Confirmar CI y equivalencia en runner.

@@ -832,6 +832,65 @@ function dedupeTutorialCatalogRows_(records) {
     return output;
 }
 
+
+function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCounts, categoryCounts) {
+    const vehicle = mapRowToObject(row, columnMap, IMAGE_FIELDS_CORTES);
+    if (!vehicle) return null;
+    for (let index = 1; index <= 3; index++) {
+        const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
+        if (eventCount) vehicle["utilCorte" + index] = (parseInt(vehicle["utilCorte" + index], 10) || 0) + eventCount;
+    }
+    if (vehicle.categoria) categoryCounts[vehicle.categoria] = (categoryCounts[vehicle.categoria] || 0) + 1;
+    if (vehicle.videoGuiaDesarmeUrl) {
+        vehicle.Video = normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl);
+        delete vehicle.videoGuiaDesarmeUrl;
+    }
+    const cortes = [
+        { index: 1, util: parseInt(vehicle.utilCorte1, 10) || 0 },
+        { index: 2, util: parseInt(vehicle.utilCorte2, 10) || 0 },
+        { index: 3, util: parseInt(vehicle.utilCorte3, 10) || 0 }
+    ].sort((a, b) => b.util - a.util);
+    const orderedVehicle = { ...vehicle };
+    const tempCortes = {};
+    for (let i = 1; i <= 3; i++) {
+        tempCortes[i] = {
+            tipo: vehicle["tipoCorte" + i], ubicacion: vehicle["ubicacionCorte" + i],
+            color: vehicle["colorCableCorte" + i], config: vehicle["configRelay" + i],
+            img: vehicle["imgCorte" + i], util: vehicle["utilCorte" + i],
+            activaTestigo: vehicle["activaTestigo" + i], colaborador: vehicle["colaboradorCorte" + i]
+        };
+    }
+    cortes.forEach((corte, i) => {
+        const newIndex = i + 1, oldIndex = corte.index;
+        orderedVehicle["tipoCorte" + newIndex] = tempCortes[oldIndex].tipo;
+        orderedVehicle["ubicacionCorte" + newIndex] = tempCortes[oldIndex].ubicacion;
+        orderedVehicle["colorCableCorte" + newIndex] = tempCortes[oldIndex].color;
+        orderedVehicle["configRelay" + newIndex] = tempCortes[oldIndex].config;
+        orderedVehicle["imgCorte" + newIndex] = tempCortes[oldIndex].img;
+        orderedVehicle["utilCorte" + newIndex] = tempCortes[oldIndex].util;
+        orderedVehicle["activaTestigo" + newIndex] = tempCortes[oldIndex].activaTestigo;
+        orderedVehicle["colaboradorCorte" + newIndex] = tempCortes[oldIndex].colaborador;
+    });
+    return orderedVehicle;
+}
+
+function readCatalogContributionProjectionVehicles_(spreadsheetRef) {
+    const spreadsheet = spreadsheetRef || getSpreadsheet();
+    const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    const categoryCounts = {};
+    const feedbackLikeEventCounts = readFeedbackLikeEventCounts_(spreadsheet);
+    let vehicles = [];
+    if (cortesSheet) {
+        const columnMap = getCortesColumnMap(cortesSheet);
+        const data = cortesSheet.getDataRange().getValues();
+        data.shift();
+        vehicles = data.filter(row => row && row[0])
+            .map(row => mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCounts, categoryCounts))
+            .filter(Boolean);
+    }
+    return projectVehicleContributionEvents_(vehicles, readVehicleContributionEvents_(spreadsheet));
+}
+
 function handleGetCatalogData(payload = {}) {
     const cache = CacheService.getScriptCache();
     const cacheKey = 'catalog_data_v2';
@@ -872,62 +931,8 @@ function handleGetCatalogData(payload = {}) {
         data.shift();
         cortesData = data
           .filter(row => row && row[0])
-          .map(row => {
-            const vehicle = mapRowToObject(row, cortesColumnMap, IMAGE_FIELDS_CORTES);
-            if (!vehicle) return null;
-            for (let index = 1; index <= 3; index++) {
-                const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
-                if (eventCount) vehicle["utilCorte" + index] = (parseInt(vehicle["utilCorte" + index], 10) || 0) + eventCount;
-            }
-
-            // Contar vehículos por categoría
-            if (vehicle.categoria) {
-                categoryCounts[vehicle.categoria] = (categoryCounts[vehicle.categoria] || 0) + 1;
-            }
-
-            // Normalización robusta de URL de YouTube
-            if (vehicle.videoGuiaDesarmeUrl) {
-                vehicle.Video = normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl);
-                delete vehicle.videoGuiaDesarmeUrl;
-            }
-
-            const cortes = [
-                { index: 1, util: parseInt(vehicle.utilCorte1, 10) || 0 },
-                { index: 2, util: parseInt(vehicle.utilCorte2, 10) || 0 },
-                { index: 3, util: parseInt(vehicle.utilCorte3, 10) || 0 }
-            ].sort((a, b) => b.util - a.util);
-
-            const orderedVehicle = { ...vehicle };
-            const tempCortes = {};
-
-            for (let i = 1; i <= 3; i++) {
-                tempCortes[i] = {
-                    tipo: vehicle[`tipoCorte${i}`],
-                    ubicacion: vehicle[`ubicacionCorte${i}`],
-                    color: vehicle[`colorCableCorte${i}`],
-                    config: vehicle[`configRelay${i}`],
-                    img: vehicle[`imgCorte${i}`],
-                    util: vehicle[`utilCorte${i}`],
-                    activaTestigo: vehicle[`activaTestigo${i}`],
-                    colaborador: vehicle[`colaboradorCorte${i}`]
-                };
-            }
-
-            cortes.forEach((corte, i) => {
-                const newIndex = i + 1;
-                const oldIndex = corte.index;
-                orderedVehicle[`tipoCorte${newIndex}`] = tempCortes[oldIndex].tipo;
-                orderedVehicle[`ubicacionCorte${newIndex}`] = tempCortes[oldIndex].ubicacion;
-                orderedVehicle[`colorCableCorte${newIndex}`] = tempCortes[oldIndex].color;
-                orderedVehicle[`configRelay${newIndex}`] = tempCortes[oldIndex].config;
-                orderedVehicle[`imgCorte${newIndex}`] = tempCortes[oldIndex].img;
-                orderedVehicle[`utilCorte${newIndex}`] = tempCortes[oldIndex].util;
-                orderedVehicle[`activaTestigo${newIndex}`] = tempCortes[oldIndex].activaTestigo;
-                orderedVehicle[`colaboradorCorte${newIndex}`] = tempCortes[oldIndex].colaborador;
-            });
-
-            return orderedVehicle;
-        }).filter(Boolean);
+          .map(row => mapCatalogVehicleRowForProjection_(row, cortesColumnMap, feedbackLikeEventCounts, categoryCounts))
+          .filter(Boolean);
     }
     // Los aportes append-only se proyectan sobre el contrato heredado de la ficha.
     // La hoja ausente es compatible durante la migración gradual; un esquema presente pero inválido falla de forma segura.
@@ -1084,12 +1089,12 @@ function handleGetVehicleProjection_(payload = {}) {
 function handleGetContributionCandidates_(payload = {}) {
     const requestedLimit = Number(payload && payload.limit);
     const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
-    const snapshot = handleGetCatalogData({ forceRefresh: true });
-    if (!snapshot || snapshot.status !== "success" || !snapshot.data || !Array.isArray(snapshot.data.cortes)) {
+    const projectedVehicles = readCatalogContributionProjectionVehicles_();
+    if (!Array.isArray(projectedVehicles)) {
         throw new Error("CATALOG no pudo construir la proyección vigente de candidatos.");
     }
     const candidates = [];
-    snapshot.data.cortes.forEach(vehicle => {
+    projectedVehicles.forEach(vehicle => {
         if (!vehicle || !Array.isArray(vehicle.contributionCandidates)) return;
         vehicle.contributionCandidates.forEach(candidate => {
             if (!candidate || !String(candidate.eventId || "").trim()) return;

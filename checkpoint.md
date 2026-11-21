@@ -1120,3 +1120,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se retiraron ambas precargas y el helper preloadImageSilently, eliminando ese duplicado comprobado en actualización e inserción de vehículos.
 - Se añadió contrato de regresión para impedir que vuelva a aparecer el helper de precarga en este módulo.
 - CI pendiente.
+
+ 
+## Continuidad — CATALOG candidatos ADMIN con lectura aislada (2026-11-21)
+
+- HEAD anterior: e7c02f70910ae4a987402b7c4cb5e8339985d6ce.
+- Se factoriza la transformación exacta de filas Cortes para evitar divergencia entre catálogo completo y consulta dirigida.
+- getContributionCandidates construye la proyección usando Cortes + FeedbackLikes + AportesVehiculo; omite LogosMarca, Tutoriales y sus ledgers de edición/renombre, y Relay.
+- Se conserva lectura global de Cortes y AportesVehiculo, conteo de likes, orden de cortes y proyección completa de conflictos VIN/opId/resoluciones.
+- No se modifican datos productivos. CI pendiente.

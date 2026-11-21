@@ -36,8 +36,8 @@ const duplicateHandler = new Function("handleGetCatalogData", vehicleHandler + "
 );
 assert.throws(() => duplicateHandler({ vehicleId: "3" }), /duplicado/);
 
-const getCandidates = new Function("handleGetCatalogData", candidatesHandler + "\nreturn handleGetContributionCandidates_;")(
-    payload => { calls++; assert.equal(payload.forceRefresh, true); return snapshot; }
+const getCandidates = new Function("readCatalogContributionProjectionVehicles_", candidatesHandler + "\nreturn handleGetContributionCandidates_;")(
+    () => { calls++; return snapshot.data.cortes; }
 );
 const limited = getCandidates({ limit: 1 });
 assert.equal(limited.total, 2);
@@ -54,6 +54,9 @@ const clamped = getCandidates({ limit: 0 });
 assert.equal(clamped.limit, 1);
 assert.equal(clamped.candidates.length, 1);
 assert.equal(clamped.truncated, true);
+assert.ok(candidatesHandler.includes("readCatalogContributionProjectionVehicles_()"));
+assert.ok(!candidatesHandler.includes("handleGetCatalogData"), "la lista de candidatos no debe cargar logos, tutoriales ni relay");
+assert.ok(catalog.includes("function readCatalogContributionProjectionVehicles_(spreadsheetRef)"));
 assert.ok(catalog.includes('"getVehicleProjection", "getContributionCandidates"'));
 assert.match(catalog, /case 'getVehicleProjection'/);
 assert.match(catalog, /case 'getContributionCandidates'/);
