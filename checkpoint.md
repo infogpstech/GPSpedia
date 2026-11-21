@@ -560,7 +560,7 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 
 ## Checkpoint — coordinación de mutaciones PyS (2026-11-21)
 
-- HEAD validado: e9699b5d27693f184deceb3e9c460b5a0a3b56e5.
+- HEAD de código validado: d9bb6f62244b1bf2b9474ee83fa89661874b0063. Rama de trabajo 6,207 commits por delante de GPSpedia2.2.5; 0 por detrás.
 - handleAddSolution, handleAddPrevention, handleAddVehicleToProblem y handleRemoveVehicleFromProblem ya no adquieren ScriptLock. Cada operación exige una lease compartida FEEDBACK con nombre explícito y falla cerrada si Coordinator no está disponible.
 - Se conserva la mutación existente de primera escritura/read-back dentro de la lease: solución/prevención no sobrescriben valores ya establecidos; asociaciones validan problemId, vehicleId único y deduplicación; desvincular mantiene RBAC de Desarrollador.
 - Coordinator ya autoriza recursos FEEDBACK para PyS y lectura CORTES para validar relaciones. No se sustituyó ScriptLock por UserLock.
@@ -568,3 +568,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; Health read-only 44906612467 SUCCESS. Pages 44906611719 estaba queued al registrar.
 - Siguiente: solo validaciones Beta aisladas de concurrencia real, fallos Coordinator/Spreadsheet y recuperación.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — preparación de Beta pendiente (2026-11-21)
+
+- HEAD de código: d9bb6f62244b1bf2b9474ee83fa89661874b0063. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; comparación 6,207 ahead / 0 behind.
+- CI en ese HEAD: 259 suites, 3,129 pruebas aprobadas, 0 fallos; Health read-only SUCCESS; GitHub Pages SUCCESS.
+- El registro operativo solo conserva tareas Beta pendientes. AUG-159/AUG-160 requieren deployments de prueba WRITE/CATALOG/ADMIN, Spreadsheet/Drive desechables y cuentas de prueba separadas. No se ejecutan con endpoints ni datos productivos.
+- Safe Apply permanece bloqueado hasta preview real autorizado, ACL, manifiesto y rollback verificados. No mover, renombrar, sobrescribir ni borrar recursos productivos.
+- Todas las migraciones locales del alcance activo están cerradas. No se desplegó Apps Script ni se modificaron recursos productivos.

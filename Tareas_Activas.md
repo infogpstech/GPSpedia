@@ -44,7 +44,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Retirar el lock global prolongado de `handleSendContactForm`: el asignador `getNextFormulaBasedId_` usa reservas append-only en `__IdentifierSequenceReservations__`; el formulario anexa la fila completa con `appendRow` sin sección crítica global. La secuencia se calcula por orden físico de reservas y conserva prefijo/relleno, detección de duplicados y validación de filas huérfanas. Prueba `FeedbackContactWriteNoGlobalLock` 2/2 y `FeedbackLockFastFail` PASS; CI 44835908125 SUCCESS: 239 suites, 2968 pruebas, 0 fallos.
 - [x] Migrar `reportProblem` y `suggestCutChange` a proyección first-write-wins, adjuntos append-only y escritura sin ScriptLock; validado previamente en CI.
 - [x] Migrar `handleAddProblem` a reserva completa append-only y first-write-wins sin ScriptLock. `PysOperations` conserva la primera reserva por `opId`; el hash contradictorio se rechaza por solicitud, los archivos perdedores se limpian solo con referencias comprobadas y los fallos ambiguos conservan el recurso para replay. CI `44875140437`: 258 suites, 3094 pruebas, 0 fallos; health y Pages SUCCESS. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
-- [x] Migrar altas/ediciones de tutoriales con ID estable a escritura append-only y proyección idempotente sin ScriptLock, preservando unicidad de título, imágenes, autoría y compatibilidad de reintentos. Ediciones descriptivas D:F de filas históricas sin ID quedan como tarea local separada.
+- [x] Migrar altas/ediciones de tutoriales con ID estable y filas históricas sin ID a escritura append-only y proyección idempotente sin ScriptLock, preservando unicidad de título, imágenes, autoría y compatibilidad de reintentos.
 - [x] Migrar aprobaciones de vídeo a eventos append-only/proyección idempotente sin ScriptLock, preservando unicidad de operación/destino y transiciones pending/approved/rejected. CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos.
 - No sustituir ScriptLock por UserLock. Auditoría separada de mutaciones PyS completada: solución, prevención y relaciones ahora usan leases compartidas FEEDBACK de Coordinator; conservan validación/read-back e idempotencia, sin ScriptLock local. Concurrencia real multi-proyecto queda diferida a Beta.
 - [x] Retirar el ScriptLock interno de `getNextFormulaBasedId_`: las reservas append-only usan `appendRow` atómico y fórmula de secuencia por hoja/columna; los reintentos/operaciones concurrentes reservan sufijos distintos y los huecos por respuesta perdida no se reutilizan. `FeedbackFormulaIdAllocator` 5/5 y `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos. Health read-only `44847431590` SUCCESS. La fórmula/appendRow real queda diferida a Beta aislada.
@@ -477,7 +477,7 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - [ ] Beta aislada: concurrencia real entre proyectos, appendRow simultáneo, respuesta perdida, fallo parcial Coordinator/Sheets y reintentos de publicación/rechazo con destinos aislados.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 
-## Siguiente tarea local — ediciones descriptivas de tutoriales históricos sin ID
+## Cierre local — ediciones descriptivas de tutoriales históricos sin ID
 
 - [x] Permitir edición D:F de filas históricas sin ID mediante identidad/versión derivada segura, sin escribir IDs inventados ni perder cambios concurrentes.
 - [x] Mantener edición por ID como ruta preferida y preservar B/C/G/H, autoría y compatibilidad de reintentos.
@@ -516,3 +516,10 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - [x] CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; node --check PASS. Health read-only 44906612467 SUCCESS.
 - [ ] Beta aislada: concurrencia real entre proyectos, leases Coordinator, fallo de lease, pérdida de respuesta y read-back en Spreadsheet aislada.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Condiciones de ejecución Beta pendientes
+
+- AUG-159 requiere deployments aislados WRITE/CATALOG/ADMIN, Spreadsheet y Drive desechables, y dos cuentas de prueba con permisos distintos.
+- AUG-160 requiere proyecto/deployment ADMIN de prueba y Spreadsheet/Drive aislados para inyectar fallos, pérdida de respuesta, file_missing y metadatos alterados.
+- No ejecutar endpoints, cuentas, hojas ni carpetas productivas. La CI local no sustituye estas pruebas reales; Safe Apply sigue bloqueado hasta preview, ACL y rollback autorizados.
