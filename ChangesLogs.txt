@@ -675,3 +675,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - La bandeja de reportes propios carga FeedbackReportImageEvents una vez y resuelve metadata por reportId desde un índice, solo si hay reportes que necesitan fallback.
 - Mantiene metadata legacy prioritaria, primer evento equivalente y conflictos aislados al reportId afectado.
 - FeedbackInboxImageEventBatchRead: 5/5 PASS; regresión: 281 suites / 3,264 pruebas / 0 fallos; build y health read-only SUCCESS.
+
+
+[2026-11-21] FEEDBACK — índice de imágenes compartido en Inbox administrativo
+- handleGetFeedbackItems carga FeedbackReportImageEvents una sola vez cuando la página necesita fallback y comparte el índice con canonicalización y mapeo.
+- Se conservan first-event-wins y conflictos aislados por reportId.
+- FeedbackInboxImageEventBatchRead: 6/6 PASS; regresión: 281 suites / 3,265 pruebas / 0 fallos; build y health read-only SUCCESS.
