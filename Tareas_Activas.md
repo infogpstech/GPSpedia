@@ -784,3 +784,10 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] Medir en caché fría/caliente si `setOptimizedImage` y `compressAndStoreThumbnail` descargan dos veces la misma URL al faltar miniatura. Si se confirma, compartir una única respuesta/blob sin retrasar la primera imagen ni romper CORS/PNG/transparencia.
 - [ ] Reemplazar o reducir el snapshot completo de `refreshVehicleDetailAfterExpansion_` después de aportes de corte/información suplementaria solo cuando exista una actualización dirigida verificable que preserve candidatos, fuentes, cursores y concurrencia.
 
+
+
+### P1 — reducir saltos y lecturas completas de catálogo
+- [ ] Evaluar el acceso directo navegador → Coordinator para `getCatalogChanges`, sustituyendo el proxy FEEDBACK solo si se conserva el feed público, CORS, redirecciones, telemetría y compatibilidad de despliegue.
+- [ ] Diseñar una estrategia de caché granular o consultas dirigidas para CATALOG; el snapshot completo no se escribe en CacheService por superar 100 KB y por ello las lecturas sin caché reconstruyen múltiples colecciones desde Spreadsheet.
+- [ ] Mantener snapshot completo para inicio/reset/recuperación; evitarlo en refrescos de un único vehículo tras aportes cuando un endpoint dirigido o delta confirmado cubra el mismo contrato.
+
