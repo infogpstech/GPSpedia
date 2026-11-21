@@ -1026,3 +1026,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se añadió tarea pendiente para carrera, errores, límite y MIME/firma. No se cambió el upload de logotipos; no se impuso límite arbitrario.
 - Próximo: corregir este flujo administrativo con contrato/test aislado; después continuar snapshots dirigidos y mediciones de red.
 
+
+
+## Continuidad — carrera de selección de logotipos corregida (2026-11-21)
+
+- HEAD previo a documentación: `7131a50682bc97b6a730051f206fda2a9abb6eed`; base protegida intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- `ui.js`: helper `readLogoFileBase64_` maneja éxito/error/abort/Data URL inválida. La selección invalida Base64/nombre anteriores, usa generación para descartar lecturas antiguas y deshabilita Registrar hasta lectura válida.
+- `AdminLogoFileRead.mjs` integrado en `RunServiceTests.mjs`; pruebas aisladas 4/4 PASS.
+- Pendiente definir máximo de bytes y validar MIME/firma en backend antes de crear Drive; no se fijó límite arbitrario.
