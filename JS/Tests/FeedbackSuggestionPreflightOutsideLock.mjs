@@ -48,8 +48,8 @@ test("una sugerencia nueva se anexa como fila completa", () => {
     assert.match(writeBlock, /suggestionRow\[COLS_FEEDBACKS\.Problema - 1\] = problemDesc/);
     assert.match(writeBlock, /sheet\.appendRow\(suggestionRow\)/);
     assert.match(writeBlock, /savedRow = sheet\.getRange/);
-    assert.match(writeBlock, /String\\(savedRow\\[COLS_FEEDBACKS\\.Problema - 1\\] \\|\\| \\"\\"\\) !== problemDesc/);
-    assert.doesNotMatch(writeBlock, /savedRow\\[COLS_FEEDBACKS\\.Problema\\]/);
+    assert.ok(writeBlock.includes('String(savedRow[COLS_FEEDBACKS.Problema - 1] || "") !== problemDesc'));
+    assert.ok(!writeBlock.includes("savedRow[COLS_FEEDBACKS.Problema]"), "No debe leer la columna Problema con índice desplazado.");
     assert.doesNotMatch(writeBlock, /getRange\([^)]*\)\.setValue|\.setValues\(/);
     const catchBlock = handler.slice(handler.indexOf("} catch (error) {"));
     assert.match(catchBlock, /appendAttempted/);
