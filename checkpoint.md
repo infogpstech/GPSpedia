@@ -949,3 +949,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se confirmó que el snapshot completo de CATALOG no se guarda en CacheService por exceder 100 KB. Las lecturas sin caché vuelven a consultar varias hojas y eventos; por ello los snapshots completos post-aporte son candidatos de alto coste.
 - Se registraron tareas P1 de feed directo, caché granular y consulta dirigida. No se modificaron endpoints ni servicios.
 - Próximo paso: completar inventario de llamadas y dependencias, priorizar reducción del salto FEEDBACK y de snapshots post-aporte, y preparar medición comparativa. No se afirma mejora hasta medirla.
+
+
+## Continuidad — refresco redundante después de vídeo pendiente (2026-11-21)
+
+- HEAD previo: `24570bb4a449fd645b1610183a06bc97dd94b567`; rama base intacta `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se confirmó que `submitVideoForApproval` crea una fila pending en FEEDBACK y no publica CATALOG; el Coordinator no incluye esta acción en los escritores autorizados del feed.
+- Los formularios de corte y tutorial ejecutan, pese a ello, un snapshot completo `getCatalogData` desde `onSuccess`. La retirada de esos dos refrescos queda como tarea P1 con prueba de contrato; conservar opVideoId, estado pending y prevención de duplicados.
+- No se modificó código ni se ejecutaron pruebas en este paso.
