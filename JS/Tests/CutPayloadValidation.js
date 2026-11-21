@@ -46,6 +46,17 @@ function runCutPayloadValidationTests(writeSource) {
  run("rechaza opId y hash no emparejados de forma explícita",()=>{let rejected=false;try{validate({...base,opId:"OP-123",operationHash:"z".repeat(64)},options);}catch(_){rejected=true;}if(!rejected)throw Error("Hash inválido aceptado.");});
  rejects("rechaza imagen superior a 10 MB",{...base,cutData:{...base.cutData,imgCorte1:"data:image/png;base64,"+"A".repeat(14*1024*1024+4)}});
  run("autenticación y validación ocurren antes de adquirir el ScriptLock",()=>{const preflightStart=text.indexOf("function prepareAddOrUpdateCutRequest_("),preflightEnd=text.indexOf("\nfunction handleAddOrUpdateCut(payload)",preflightStart),preflight=text.slice(preflightStart,preflightEnd);const wrapperStart=text.indexOf("function handleAddOrUpdateCut(payload)"),wrapperEnd=text.indexOf("\nfunction ",wrapperStart+10),wrapper=text.slice(wrapperStart,wrapperEnd);if(preflightStart<0||preflightEnd<0||!preflight.includes("getAuthenticatedCollaborator")||!preflight.includes("validateAddOrUpdateCutPayload_"))throw Error("Falta preflight autenticado/validado.");if(wrapper.indexOf("prepareAddOrUpdateCutRequest_(payload)")<0||wrapper.indexOf("prepareAddOrUpdateCutRequest_(payload)")>wrapper.indexOf("lock.tryLock(0)"))throw Error("El preflight debe terminar antes de intentar el lock.");});
- run("compensación cubre fila, Idempotencia y contador",()=>{const start=text.indexOf("function handleAddOrUpdateCutLocked(");const h=text.slice(start,text.indexOf("function handleAddOrUpdateCutLockedUnsafe_",start));["setValues([existingRowValues])","deleteRow(lastRowBefore + 1)","deleteRow(last)","deleteProperty(CORTES_ID_COUNTER_PROPERTY)"].forEach(token=>{if(!h.includes(token))throw Error("Falta compensación: "+token);});});
+  run("compensación cubre fila e Idempotencia y conserva reservas append-only",()=>{
+   const start=text.indexOf("function handleAddOrUpdateCutLocked(");
+   const unsafeStart=text.indexOf("function handleAddOrUpdateCutLockedUnsafe_",start);
+   const h=text.slice(start,unsafeStart);
+   ["setValues([existingRowValues])","deleteRow(lastRowBefore + 1)","deleteRow(last)"].forEach(token=>{if(!h.includes(token))throw Error("Falta compensación: "+token);});
+   if(h.includes("CORTES_ID_COUNTER_PROPERTY")||h.includes("deleteProperty("))throw Error("El rollback no debe revertir el high-water mark ni borrar reservas persistentes.");
+   const unsafeEnd=text.indexOf("\nfunction handleCheckVehicle",unsafeStart);
+   const unsafe=text.slice(unsafeStart,unsafeEnd);
+   const reservation=unsafe.indexOf("reserveCortesVehicleIdForOperation_(");
+   const rowCreation=unsafe.indexOf("const lastRow = sheet.getLastRow()",reservation);
+   if(reservation<0||rowCreation<reservation)throw Error("El ID debe reservarse antes de crear la fila física.");
+  });
  return {passed,failed,results};
 }
