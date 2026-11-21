@@ -419,3 +419,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - publishAdminCatalogChange_ y publishAdminCatalogChanges_ dejaron de adquirir ScriptLock y reservar versiones con PropertiesService. Los snapshots se construyen sin exclusión global y usan sourceVersion temporal; los lotes conservan versiones consecutivas y chunks de máximo 50.
 - Se conserva el reset de recuperación cuando el snapshot es inválido o falla la publicación de un lote. Coordinator convierte sourceVersion repetida/obsoleta en reset.
 - AdminCatalogPublicationIsolation: 6/6 escenarios aprobados en harness Node.js aislado; queda pendiente ejecutar el archivo comprometido en el checkout completo/CI. Sin deployment Apps Script ni cambios productivos.
+
+
+2026-11-21 — ADMIN: INFORMACIÓN SUPLEMENTARIA SIN LOCK GLOBAL
+- handleAddSupplementaryInfo dejó de usar ScriptLock y de revalidar el plan mediante una segunda lectura transaccional. Después de Drive localiza nuevamente el vehículo por ID, lee los valores actuales, aplica únicamente los campos solicitados y guarda el rango con flush/read-back.
+- persistSupplementaryInfoValues_ ya no revierte un snapshot anterior si falla la confirmación; se evita que el rollback sobrescriba una edición concurrente posterior. Se conserva la confirmación de vínculo de imágenes tras persistir.
+- AdminSupplementaryUploadOutsideLock: 5/5 PASS en harness Node.js aislado; pendiente CI/checkout completo y validación Apps Script Beta. Sin cambios productivos.
