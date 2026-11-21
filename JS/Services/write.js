@@ -645,9 +645,10 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
         vehicleData: metadata,
         vinPrefix: acceptedVinPrefix
     };
+    const appendLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
     const event = appendVehicleContributionEvent_({
         spreadsheet,
-        ledgerSheet: contributionLedgerSheet,
+        ledgerSheet: appendLedgerSheet,
         vehicleId,
         opId,
         kind: "cut",
@@ -669,8 +670,8 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
     });
 
     // Un solo snapshot post-append alimenta la proyección de slots y la detección de VIN concurrente.
-    const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionLedgerSheet);
-    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId, postAppendLedgerRows, contributionLedgerSheet);
+    const postAppendLedgerRows = readVehicleContributionLedgerRows_(appendLedgerSheet);
+    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId, postAppendLedgerRows, appendLedgerSheet);
     const vinConflictAfterAppend = acceptedVinPrefix
         ? findVehicleContributionVinConflict_(spreadsheet, acceptedVinPrefix, vehicleId, postAppendLedgerRows)
         : null;
@@ -1983,9 +1984,10 @@ function handleAddSupplementaryInfo(payload) {
         const contributionPayload = isOpening
             ? { text: String(normalizedPlan.updates.apertura || ""), image: String(preparedPayload.imgApertura || "") }
             : { text: String(preparedPayload.cableAlimen || ""), image: String(preparedPayload.imgCableAlimen || "") };
+        const appendLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
         const event = appendVehicleContributionEvent_({
             spreadsheet,
-            ledgerSheet: contributionLedgerSheet,
+            ledgerSheet: appendLedgerSheet,
             vehicleId: payload.vehicleId,
             opId: payload.opId,
             kind,
@@ -2013,7 +2015,7 @@ function handleAddSupplementaryInfo(payload) {
             operationHash: event.operationHash,
             duplicate: event.duplicate === true,
             catalogResetRequired: true,
-            candidateReviewPending: getVehicleContributionCandidateStatus_(spreadsheet, snapshot, event.eventId, kind, contributionLedgerSheet)
+            candidateReviewPending: getVehicleContributionCandidateStatus_(spreadsheet, snapshot, event.eventId, kind, appendLedgerSheet)
         };
     }
 
