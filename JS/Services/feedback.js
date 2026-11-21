@@ -4277,6 +4277,10 @@ const TUTORIAL_HEADERS = Object.freeze([
     "ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEncontrarlo", "Detalles", "Video", "Colaborador"
 ]);
 
+const TUTORIAL_TITLE_EVENTS_HEADERS = Object.freeze([
+    "operationId", "payloadHash", "tutorialId", "action", "titleKey", "previousTitleKey", "createdAt"
+]);
+
 function getTutorialSheet_(createIfMissing) {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName("Tutorial");
@@ -4307,6 +4311,25 @@ function getTutorialSheet_(createIfMissing) {
         SpreadsheetApp.flush();
     } else if (headers[7] !== "Colaborador") {
         throw new Error("La columna H de Tutorial debe estar vacía o llamarse Colaborador; no se modificó la hoja.");
+    }
+    return sheet;
+}
+
+function getTutorialTitleEventsSheet_(createIfMissing) {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("TutorialTitleEvents");
+    if (!sheet && createIfMissing) sheet = ss.insertSheet("TutorialTitleEvents");
+    if (!sheet) return null;
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, TUTORIAL_TITLE_EVENTS_HEADERS.length).setValues([TUTORIAL_TITLE_EVENTS_HEADERS.slice()]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+    const width = Math.max(TUTORIAL_TITLE_EVENTS_HEADERS.length, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(value => String(value || "").trim());
+    if (width !== TUTORIAL_TITLE_EVENTS_HEADERS.length ||
+        TUTORIAL_TITLE_EVENTS_HEADERS.some((header, index) => headers[index] !== header)) {
+        throw new Error("El esquema de TutorialTitleEvents no coincide; no se modificó la hoja.");
     }
     return sheet;
 }
@@ -4403,12 +4426,8 @@ function findTutorialById_(sheet, tutorialId) {
     if (idRange && typeof idRange.createTextFinder === "function") {
         candidates = idRange.createTextFinder(id).matchCase(false).findAll();
     } else {
-        // Compatibilidad con adaptadores/mocks antiguos: fallback limitado a la columna ID.
-        const idValues = idRange.getValues();
-        idValues.forEach((value, index) => {
-            if (String(value[0] || "").toLowerCase().includes(id.toLowerCase())) {
-                candidates.push({ getRow: () => index + 2 });
-            }
+        idRange.getValues().forEach((value, index) => {
+            if (String(value[0] || "").toLowerCase().includes(id.toLowerCase())) candidates.push({ getRow: () => index + 2 });
         });
     }
     const matches = [];
@@ -4416,24 +4435,110 @@ function findTutorialById_(sheet, tutorialId) {
         const rowIndex = candidate.getRow();
         const storedId = String(sheet.getRange(rowIndex, 1).getValue() || "").trim();
         if (storedId.toLowerCase() !== id.toLowerCase()) return;
-        const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
-        matches.push({ rowIndex, row });
+        matches.push({ rowIndex, row: sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0] });
     });
-    if (matches.length > 1) throw new Error("El ID del tutorial aparece más de una vez; requiere revisión.");
+    if (matches.length > 1) {
+        const canonical = matches[0].row;
+        const identical = matches.every(match => TUTORIAL_HEADERS.every((header, index) =>
+            String(match.row[index] || "").trim() === String(canonical[index] || "").trim()));
+        if (!identical) throw new Error("El ID del tutorial aparece más de una vez con contenido contradictorio; requiere revisión.");
+    }
     return matches[0] || null;
 }
-
-function tutorialTitleExists_(sheet, title, excludedRowIndex) {
+function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId) {
     const lastRow = sheet ? sheet.getLastRow() : 0;
     if (lastRow < 2) return false;
     const titleKey = normalizeTutorialTitle_(title);
     const excluded = Number(excludedRowIndex) || 0;
-    const titles = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
-    return titles.some((row, index) =>
-        index + 2 !== excluded && normalizeTutorialTitle_(row[0]) === titleKey
-    );
+    const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    return rows.some((row, index) => {
+        const rowIndex = index + 2, rowId = String(row[0] || "").trim();
+        if (rowIndex === excluded || (excludedTutorialId && rowId.toLowerCase() === String(excludedTutorialId).toLowerCase())) return false;
+        return normalizeTutorialTitle_(row[1]) === titleKey;
+    });
 }
 
+function buildTutorialTitleEventHash_(record) {
+    const payload = JSON.stringify([record.operationId, record.tutorialId, record.action, record.titleKey, record.previousTitleKey || ""]);
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, payload);
+    return digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+}
+
+function readTutorialTitleEvents_(sheet) {
+    const last = sheet ? sheet.getLastRow() : 0, operations = new Map(), owners = new Map(), applied = new Map();
+    if (last < 2) return { operations: [], owners, applied };
+    const rows = sheet.getRange(2, 1, last - 1, TUTORIAL_TITLE_EVENTS_HEADERS.length).getValues();
+    rows.forEach((row, index) => {
+        if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
+        const operationId = String(row[0] || "").trim(), payloadHash = String(row[1] || "").trim().toLowerCase();
+        const tutorialId = String(row[2] || "").trim(), action = String(row[3] || "").trim();
+        const titleKey = String(row[4] || "").trim(), previousTitleKey = String(row[5] || "").trim();
+        if (!/^[a-z0-9_-]{20,120}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(payloadHash) ||
+            !/^(?:tut-[A-Za-z0-9_-]{20,80}|legacy-[a-f0-9]{64})$/i.test(tutorialId) ||
+            !["CLAIM", "RENAME"].includes(action) || !titleKey || (action === "RENAME" && !previousTitleKey)) {
+            throw new Error("TutorialTitleEvents contiene una fila incompatible; requiere revisión.");
+        }
+        const item = { rowNumber: index + 2, operationId, payloadHash, tutorialId, action, titleKey, previousTitleKey };
+        if (operations.has(operationId)) {
+            const canonical = operations.get(operationId);
+            if (canonical.payloadHash !== payloadHash) canonical.conflictingPayloadCount = (canonical.conflictingPayloadCount || 0) + 1;
+            else canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
+            return;
+        }
+        operations.set(operationId, item);
+        const currentOwner = owners.get(titleKey);
+        if (action === "CLAIM") {
+            if (!currentOwner || currentOwner === tutorialId) { owners.set(titleKey, tutorialId); applied.set(operationId, true); }
+            else applied.set(operationId, false);
+        } else if ((!currentOwner || currentOwner === tutorialId) &&
+            (!owners.has(previousTitleKey) || owners.get(previousTitleKey) === tutorialId)) {
+            if (owners.get(previousTitleKey) === tutorialId) owners.delete(previousTitleKey);
+            owners.set(titleKey, tutorialId); applied.set(operationId, true);
+        } else applied.set(operationId, false);
+    });
+    return { operations: Array.from(operations.values()), owners, applied };
+}
+
+function appendTutorialTitleEvent_(record) {
+    const sheet = getTutorialTitleEventsSheet_(true), payloadHash = buildTutorialTitleEventHash_(record);
+    let projection = readTutorialTitleEvents_(sheet);
+    let existing = projection.operations.find(item => item.operationId === record.operationId);
+    if (existing) {
+        if (existing.payloadHash !== payloadHash) throw new Error("El identificador de operación ya pertenece a otra reserva de título.");
+        if (projection.applied.get(record.operationId) !== true || projection.owners.get(record.titleKey) !== record.tutorialId) {
+            throw new Error("El tema del tutorial ya está reservado por otro registro.");
+        }
+        return existing;
+    }
+    sheet.appendRow([record.operationId, payloadHash, record.tutorialId, record.action,
+        record.titleKey, record.previousTitleKey || "", new Date().toISOString()]);
+    try { SpreadsheetApp.flush(); }
+    catch (flushError) {
+        projection = readTutorialTitleEvents_(sheet);
+        existing = projection.operations.find(item => item.operationId === record.operationId);
+        if (!existing || existing.payloadHash !== payloadHash || projection.applied.get(record.operationId) !== true ||
+            projection.owners.get(record.titleKey) !== record.tutorialId) throw flushError;
+        return existing;
+    }
+    projection = readTutorialTitleEvents_(sheet);
+    existing = projection.operations.find(item => item.operationId === record.operationId);
+    if (!existing || existing.payloadHash !== payloadHash) throw new Error("No se pudo confirmar la reserva append-only del tema del tutorial.");
+    if (projection.applied.get(record.operationId) !== true || projection.owners.get(record.titleKey) !== record.tutorialId) {
+        throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
+    }
+    return existing;
+}
+
+function getTutorialTitleOwner_(title) {
+    const sheet = getTutorialTitleEventsSheet_(false);
+    return sheet ? (readTutorialTitleEvents_(sheet).owners.get(normalizeTutorialTitle_(title)) || "") : "";
+}
+
+function makeLegacyTutorialIdentity_(title) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizeTutorialTitle_(title));
+    const hash = digest.map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+    return "legacy-" + hash;
+}
 function tutorialRowMatchesSubmission_(row, fields) {
     return String(row[1] || "").trim() === fields.title &&
         String(row[3] || "").trim() === fields.comoIdentificarlo &&
