@@ -776,3 +776,11 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] Revisar el refresh completo `getCatalogData` al cerrar el modal de edición y sustituirlo solo si el estado local/delta garantiza consistencia con ediciones concurrentes.
 - [ ] Medir el coste de la telemetría agregada ADMIN y confirmar que no se dispara en navegación/aportes ordinarios.
 
+
+
+### P1 — caché de miniaturas y navegación
+- [ ] Medir el prefetch de miniaturas de los últimos 15 vehículos en `saveCatalog` y `saveCatalogWithCursor`; cuantificar descargas, bytes, cola pendiente y competencia con imágenes visibles y cargas de aportes.
+- [ ] Evaluar si `cacheItemImages` debe precargar solo imágenes visibles/próximas o ejecutarse en tiempo ocioso, con prioridad para contenido en pantalla y cancelación de trabajos obsoletos.
+- [ ] Medir en caché fría/caliente si `setOptimizedImage` y `compressAndStoreThumbnail` descargan dos veces la misma URL al faltar miniatura. Si se confirma, compartir una única respuesta/blob sin retrasar la primera imagen ni romper CORS/PNG/transparencia.
+- [ ] Reemplazar o reducir el snapshot completo de `refreshVehicleDetailAfterExpansion_` después de aportes de corte/información suplementaria solo cuando exista una actualización dirigida verificable que preserve candidatos, fuentes, cursores y concurrencia.
+
