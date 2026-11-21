@@ -457,3 +457,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Beta pendiente: concurrencia real appendRow, carrera de archivos Drive, respuesta perdida, referencias preexistentes y recuperación en Spreadsheet/Drive aislados. No se desplegó Apps Script ni se modificó producción.
 - **PyS creación: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Las mutaciones de solución, prevención y relaciones permanecen fuera del alcance y conservan sus locks.
 - Siguiente tarea del backlog: migración append-only/lock-free de tutoriales (`handleAddTutorial` y edición asociada); después, aprobaciones de vídeo; finalmente, regresión integral y Beta.
+
+
+## Inicio de tarea — migración append-only de tutoriales (2026-11-21)
+
+- Auditoría creada: `AUDITORIA_TUTORIALES_APPEND_ONLY_2026-11-21.md`.
+- Alta actual `handleAddTutorial`: ID determinista y replay preflight, pero ScriptLock protege unicidad de título, append y confirmación.
+- Edición actual `handleUpdateTutorialItem`: no-op preflight sin lock; cambios reales mutan B:F in-place bajo ScriptLock, con validación de título y protección ante aprobaciones de vídeo pendientes.
+- CATALOG lee directamente filas físicas A:H; el feed incremental toma snapshot mediante `findTutorialRow_`. Aprobaciones de vídeo actualizan columna G. Una migración requiere proyección compartida para lectura completa, feed, edición y vídeo.
+- Riesgos principales: alta concurrente con mismo título, ediciones simultáneas con pérdida de campos, IDs repetidos que hoy se rechazan y convivencia con aprobaciones.
+- Siguiente implementación: diseñar journal de eventos con operación/hash/expected hash y proyección común antes de retirar locks. No se modificó aún el código de tutoriales ni se desplegó Apps Script.
