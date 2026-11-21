@@ -1302,7 +1302,7 @@ function runSharedMutationCoordinatorTests() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
-            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
+            const target = url.includes("USERS") ? "USERS" : url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             calls.push(target);
             const invalidated = request.payload.sessionTokens.length;
             if (target === "FEEDBACK" && failFeedback) {
