@@ -181,3 +181,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `YouTubePendingRefreshContract.js` amplió su cobertura a cinco escenarios; resultado aislado 5/5 PASS. La suite backend `YouTubeApproval.js` permanece 16/16 PASS.
 - Resultado: cinco viajes de red posteriores a solicitudes pending eliminados de estos flujos (tres recargas PyS/tutorial y dos snapshots completos). Es una reducción de llamadas confirmada por código/contrato; el ahorro temporal real aún requiere medición de navegador/red.
 
+
+
+### Confirmación de ubicación de cargas Drive respecto a bloqueos
+- WRITE alta de corte: `handleAddOrUpdateCutLockedUnsafe_` delega las cargas Drive a `runWriteDriveWorkOutsideScriptLock_`; el helper libera el ScriptLock principal durante la operación externa y reintenta adquirirlo sin espera (`tryLock(0)`). Si otra mutación ocupa WRITE, devuelve estado recuperable y exige conservar el mismo `opId`; no mantiene el lock mientras transfiere la imagen.
+- WRITE información suplementaria append-only: `prepareSupplementaryImageUploads_` ejecuta la carga antes de anexar el evento de contribución, sin adquirir un ScriptLock global en esa ruta.
+- FEEDBACK reportes y sugerencias: `saveReportImageAttachment_` / `saveSuggestionImageAttachment_` crean el archivo en Drive fuera de ScriptLock; los replays de sugerencias se resuelven antes de Drive y las fallas tienen limpieza/reconciliación del archivo.
+- FEEDBACK PyS: `handleAddProblem` crea/verifica el archivo y reserva la operación con estados `UPLOAD_PENDING`/`LINKED`; no se observó ScriptLock en ese flujo. La integridad depende del opId, payloadHash, ledger de operaciones y verificación del archivo, por lo que no se simplifica.
+- Resultado: en los flujos de imagen inspeccionados no se encontró una transferencia Drive mantenida bajo un lock global. La carga WRITE sí hace una pausa/reacquisición no bloqueante para proteger el tramo de escritura posterior. Queda pendiente completar ADMIN y medir duración de Drive/transferencia.
+
