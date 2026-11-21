@@ -114,7 +114,7 @@ function buildHarness(feedback, options = {}) {
             getFileById: id => id === FILE_ID ? file : null
         },
         LockService: { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) },
-        SpreadsheetApp: { flush: () => { state.flushCount++; if (options.failFlush && state.flushCount === 5) throw new Error("Spreadsheet flush failed"); } },
+        SpreadsheetApp: { flush: () => { state.flushCount++; if (options.failFlush && state.flushCount === 4) throw new Error("Spreadsheet flush failed"); } },
         getSafeSheet: name => name === "PysOperations" ? state.operationsSheet : sheet,
         getSpreadsheet: () => ({ insertSheet: name => { if (name === "PysOperations") { state.operationsSheet = operationsSheet; return operationsSheet; } return sheet; } }),
         getNextFormulaBasedId_: (targetSheet, column, minimumSuffix) => {
