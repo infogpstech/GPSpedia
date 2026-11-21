@@ -160,6 +160,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK contacto reserva ID y anexa sin lock global prolongado','JS/Tests/FeedbackContactWriteNoGlobalLock.mjs');
   runCli('FEEDBACK sincronización de carpeta por sugerencia de año fuera del ScriptLock','JS/Tests/FeedbackYearFolderSyncOutsideLock.mjs');
   runCli('FEEDBACK actividad de like fuera del ScriptLock','JS/Tests/FeedbackLikeActivityOutsideLock.mjs');
+  runCli('FEEDBACK registro de actividad appendRow sin lock','JS/Tests/ActivityLogAppendAtomic.mjs');
   runCli('FEEDBACK preflight dirigido de likes fuera del ScriptLock','JS/Tests/FeedbackLikePreflightOutsideLock.mjs');
   runCli('FEEDBACK búsqueda dirigida de reportId','JS/Tests/FeedbackReportLookupBoundedRead.mjs');
   runCli('FEEDBACK replay de reportes antes de Drive y lock','JS/Tests/FeedbackReportPreflightOutsideLock.mjs');
