@@ -67,4 +67,4 @@ const readRuntime = new Function("getVehicleContributionLedgerSheet_", "WRITE_VE
 assert.deepEqual(readRuntime(sourceSheet), rows);
 assert.equal(rangeReads, 1);
 
-console.log("WriteContributionPostAppendSnapshot: 10/10 PASS — slot y conflicto VIN comparten una lectura del ledger");
+console.log("WriteContributionPostAppendSnapshot: 12/12 PASS — slot y conflicto VIN comparten una lectura del ledger");
