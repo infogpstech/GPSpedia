@@ -222,11 +222,14 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const h=buildHarness(feedback,ui,{opsRows:[["opId","incorrecto"]]});
         assert.throws(()=>h.api.add(h.validPayload()),/PysOperations/);assert.equal(h.state.createdFiles,0);
     });
-    test("rechaza opId duplicados en PysOperations",()=>{
+    test("first-write-wins conserva la reserva original ante un reintento con payload contradictorio",()=>{
         const hash="a".repeat(64),row=[OP_A,hash,"isue-001","PENDING","","","now","now"];
-        const conflict=[OP_A,"b".repeat(64),"isue-002","PENDING","","","now","now"];
+        const conflict=[OP_A,"b".repeat(64),"isue-002","PENDING","","","later","later"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,conflict]});
-        assert.throws(()=>h.api.add(h.validPayload()),/payload contradictorio/);assert.equal(h.state.createdFiles,0);
+        const operations=h.api.readOps(h.state.opsSheet);
+        assert.equal(operations.length,1);assert.equal(operations[0].problemId,"isue-001");
+        assert.equal(operations[0].payloadHash,hash);assert.equal(operations[0].conflictingPayloadCount,1);
+        assert.throws(()=>h.api.add(h.validPayload()),/otro contenido/);assert.equal(h.state.createdFiles,0);
     });
     test("rechaza un opId repetido con el mismo payload pero problemId distintos",()=>{
         const hash="a".repeat(64),row=[OP_A,hash,"isue-001","PENDING","","","now","now"];
