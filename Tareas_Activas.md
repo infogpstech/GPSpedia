@@ -759,3 +759,20 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] Documentar llamadas retiradas, llamadas conservadas y su justificación; ejecutar Beta solo en proyectos, cuentas, Spreadsheet y Drive aislados.
 
 **Hallazgos preliminares que motivan el alcance:** AUTH conserva leases para múltiples acciones incluida `touchSession`; USERS conserva lease para `createUser`; varios servicios publican cambios de catálogo por Coordinator; ADMIN consulta WRITE/CATALOG; FEEDBACK/WRITE/ADMIN tienen rutas de transferencia de archivos y YouTube. Son puntos de auditoría, no conclusiones de redundancia. La inspección estática no demuestra por sí sola mejora de latencia ni justifica retirar protecciones.
+
+
+## Ampliación de tareas — hallazgos primera pasada de latencia (2026-11-21)
+
+### P0 — confirmar consumidores y reintentos antes de simplificar
+- [ ] Completar búsqueda de consumidores de `touchSession` y `validateActiveSession` en todos los módulos, plantillas, clientes externos y despliegues; comparar con la actualización de sesión cada cinco minutos en Coordinator y el espejo ActiveSessions.
+- [ ] Determinar si `touchSession` es legacy y, si procede, preparar retirada completa (mapa, pruebas de contrato, compatibilidad y plan de despliegue) sin afectar expiración, revocación ni cierre remoto.
+- [ ] Auditar cada uso de `routeActionWithRetry` sobre mutaciones ADMIN, especialmente `applyCortesImageOrganizer` y `rollbackCortesImageOrganizer`; demostrar idempotencia ante respuesta perdida/replay o limitar reintentos automáticos y exigir el mismo identificador estable.
+- [ ] Completar matriz de llamadas del flujo de catálogo: snapshot inicial/reset, feed incremental, refresh al cerrar edición, caché local y sincronización PyS; medir bytes y frecuencia antes de eliminar consultas.
+
+### P1 — optimización de imágenes y consultas ADMIN
+- [ ] Diseñar y probar compresión/redimensionado en cliente para reportes, sugerencias, alta de cortes e información suplementaria. Comparar calidad, dimensiones, bytes y memoria; conservar MIME/firma real, metadatos, SHA-256 e idempotencia.
+- [ ] Definir límites coherentes por tipo de aporte; el alta de corte debe validar tamaño/MIME antes de convertir a Base64. No reducir límites ni degradar calidad sin prueba visual y compatibilidad.
+- [ ] Evaluar una API CATALOG dirigida por vehículo/campo/candidatos para ADMIN. Evitar descargar el snapshot completo en `getAdminProjectedVehicleFieldSnapshot_` y en `getReplacedImages` si una proyección parcial conserva fuentes, candidatos y versión.
+- [ ] Revisar el refresh completo `getCatalogData` al cerrar el modal de edición y sustituirlo solo si el estado local/delta garantiza consistencia con ediciones concurrentes.
+- [ ] Medir el coste de la telemetría agregada ADMIN y confirmar que no se dispara en navegación/aportes ordinarios.
+
