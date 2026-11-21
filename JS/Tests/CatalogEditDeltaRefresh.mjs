@@ -49,4 +49,4 @@ assert.match(main, /window\.auth = auth/);
 assert.match(offline, /export async function saveCatalogWithCursor/);
 assert.match(offline, /export function applyCatalogChangesToSnapshot/);
 
-console.log("CatalogEditDeltaRefresh: 16/16 PASS — edición normal usa deltas; descarte mantiene verificación completa");
+console.log("CatalogEditDeltaRefresh: 22/22 PASS — edición normal usa deltas; descarte mantiene verificación completa");
