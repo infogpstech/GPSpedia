@@ -978,3 +978,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - No hay compresión/redimensionado todavía; MIME explícito y coherencia en formularios de FEEDBACK/PyS siguen pendientes. No se ejecutó runner Node completo ni CI; no hubo despliegue Apps Script.
 - Siguiente: extender mapa de validación de imagen a FEEDBACK/PyS e información suplementaria, después diseñar compresión preservando MIME, transparencia/orientación, hashes e idempotencia; no cambiar el contrato backend sin pruebas.
 
+
+
+## Continuidad — preflight de imágenes suplementarias (2026-11-21)
+
+- HEAD previo a documentación: `687b7ac9a8d6a2e9d2e842e3b74e619e6ffba2f3`; base protegida sin cambios `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- `ui.js`: `readSupplementaryImageDataUrl_` valida archivo vacío y límite WRITE de 10 MiB antes de FileReader; gestiona onload/error/abort/resultado inválido. Los formularios de apertura/alimentación capturan fallos de lectura dentro del try/catch y restauran el botón.
+- `AddSupplementaryImagePreflight.mjs` integrado en runner; 4/4 PASS en V8 aislado.
+- No se cambió MIME permitido, hash, idempotencia, endpoint, ni contrato backend. No se implementó compresión; no se ejecutó Node runner completo ni CI.
+- Siguiente: seguir trazando uploads FEEDBACK/PyS y flujo completo a Drive; definir compresión solo después de validar formato, orientación, transparencia, dimensiones y hashes.
+
