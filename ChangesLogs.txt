@@ -663,3 +663,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Reintentos ya reportados reutilizan la lectura inicial de Feedbacks; solo se relee después de appendRow para incluir votos concurrentes.
 - Se conserva el umbral de tres aportantes verificados y la recuperación de aplicaciones pendientes.
 - CI: 280 suites / 3,258 pruebas / 0 fallos; build, health read-only y Pages deploy SUCCESS.
+
+
+[2026-11-21] FEEDBACK — snapshot único para replay de likes
+- El preflight valida esquema y busca una sola vez las filas del actor/vehículo/corte; el snapshot se reutiliza para replay completed/event y ruta normal.
+- La confirmación posterior al append permanece fresca; append-only, pending/completed y proyección CATALOG sin cambios.
+- FeedbackLikeCompletedReplayPreflight: 7/7 PASS; regresión: 280 suites / 3,259 pruebas / 0 fallos; health read-only SUCCESS.
