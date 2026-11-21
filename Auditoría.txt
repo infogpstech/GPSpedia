@@ -1157,3 +1157,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - CI 8f310ade240a5b53cdcc0962a6f1f1da0adc482b SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
 - Siguiente hallazgo local: publishFeedbackCatalogChange_ aún protege sourceVersion con ScriptLock; se audita para retirarlo sin perder el feed incremental. Sin despliegue ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — FEEDBACK: RETIRO DEL SCRIPTLOCK GLOBAL
+- Se eliminó acquireFeedbackScriptLock_ y el ScriptLock de publishFeedbackCatalogChange_. El snapshot se construye directamente; sourceVersion usa Date.now(). Coordinator convierte versiones repetidas/obsoletas en reset, evitando descartar la actualización.
+- FEEDBACK ya no contiene LockService, tryLock, waitLock ni releaseLock para acciones ordinarias. Se preservan actor/rol, journals append-only, idempotencia, read-back y auditoría.
+- FeedbackCatalogPublicationIsolation 5/5; CatalogChangeFeed 35/35; TutorialIntegrity 42/42; PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22.
+- CI 56a849eac4d7ad40f1cf6906402bcbb56fcf9f19 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; health read-only SUCCESS.
+- Próxima auditoría: WRITE reserva de ID numérico y ensureTestigoColumns; después ADMIN. Sin despliegue ni cambios productivos.
+================================================================================
