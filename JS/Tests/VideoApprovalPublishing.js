@@ -14,7 +14,7 @@ function runVideoApprovalPublishingTests() {
     const oldLockService=LockService,oldSharedLease=globalThis.withSharedMutationLease_;
     let lockAcquired=0,lockReleased=0,leaseCalls=[];
     LockService={getScriptLock:()=>({waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
-    globalThis.withSharedMutationLease_=(service,operation,callback)=>{leaseCalls.push([service,operation]);return callback("test-lease");};
+    globalThis.withSharedMutationLease_=()=>{coordinatorCalls++;throw new Error("La aprobación de vídeo no debe invocar Coordinator.");};
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
@@ -242,12 +242,11 @@ function runVideoApprovalPublishingTests() {
                 assert_(JSON.parse(e.feedback.data[1][3]).status==="approved"&&e.videoEvents.data.length===2);
             }finally{getSpreadsheet=originalGetSpreadsheet;}
         }));
-        run_("usa leases compartidas por operación y no adquiere ScriptLock local",()=> {
-            const before=leaseCalls.length,beforeLocks=lockAcquired;
+        run_("aprueba y rechaza directamente sin Coordinator ni ScriptLock",()=> {
+            const beforeLocks=lockAcquired;
             withEnv_("corte",{},e=>{handleApproveVideo(actor_("vid-1"));});
             withEnv_("pys",{},e=>{handleRejectVideo(actor_("vid-1"));});
-            assert_(leaseCalls.length===before+2&&leaseCalls[before][0]==="FEEDBACK"&&leaseCalls[before][1]==="approveVideo"&&
-                leaseCalls[before+1][0]==="FEEDBACK"&&leaseCalls[before+1][1]==="rejectVideo","Cada transición debe reservar la operación compartida correcta.");
+            assert_(coordinatorCalls===0,"Aprobación/rechazo no debe invocar Coordinator.");
             assert_(lockAcquired===beforeLocks,"Aprobación/rechazo no debe adquirir ScriptLock local.");
         });
     }finally{
