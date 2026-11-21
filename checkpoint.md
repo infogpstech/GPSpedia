@@ -313,3 +313,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Las filas pendientes se agrupan por ID; duplicados con la misma propuesta se recuperan juntos y se actualizan en todas sus filas. Distintas propuestas pendientes para el mismo vehículo se envían a revisión manual.
 - Validación CI: 255 suites, 3068 pruebas aprobadas, 0 fallos; `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 9/9, health read-only SUCCESS.
 - **No se retiró ScriptLock.** Queda pendiente eliminar la mutación de claves de votos históricos y convertir recuperación/estado en un flujo append-only antes de quitar bloqueo. No desplegar Apps Script ni modificar datos productivos.
+
+
+
+## Checkpoint — votos históricos sin mutaciones (2026-11-21)
+
+- Commit `54fb8600d0767de7c1bd7207b8f73027fff2ae64`: eliminación de la reescritura de claves de aportantes en `completeFeedbackYearApplication_`. Commit de prueba `99d25f8a040c54e47a0618a19751e4fcc7e815ac`.
+- La finalización ya no muta `Feedbacks`; conserva cada fila y actor tal como fueron registrados. El estado de aplicación se consulta por el ID determinista y los eventos de actualización. Las claves históricas `applied:user:...` se reconocen solo por compatibilidad; no se crean nuevas.
+- Validación: `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 10/10; 255 suites, 3069 pruebas, 0 fallos; health read-only SUCCESS.
+- ScriptLock no se ha retirado. Sigue pendiente migrar el estado de ledger a eventos append-only y resolver coordinación concurrente antes de quitar bloqueo. No desplegar Apps Script ni modificar producción.
