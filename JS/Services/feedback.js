@@ -4534,7 +4534,8 @@ function findTutorialRow_(sheet, reference, preferId) {
     if (byId) {
         const projected = projectTutorialEditFields_(byId.row[0], byId.row);
         const identity = String(byId.row[0] || "").trim() || makeLegacyTutorialIdentity_(byId.row[1]);
-        projected.row[1] = projectTutorialTitle_(identity, projected.row[1]);
+        projected.row[1] = typeof projectTutorialTitle_ === "function"
+            ? projectTutorialTitle_(identity, projected.row[1]) : projected.row[1];
         return Object.assign({}, byId, { row: projected.row, appliedEditOperations: projected.appliedOperations });
     }
     if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) throw new Error("Tutorial no encontrado.");
@@ -4546,7 +4547,8 @@ function findTutorialRow_(sheet, reference, preferId) {
             const rowIndex = index + 2;
             const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
             const identity = String(row[0] || "").trim() || makeLegacyTutorialIdentity_(row[1]);
-            const projectedTitle = projectTutorialTitle_(identity, row[1]);
+            const projectedTitle = typeof projectTutorialTitle_ === "function"
+                ? projectTutorialTitle_(identity, row[1]) : row[1];
             if (normalizeTutorialTitle_(projectedTitle) !== normalizeTutorialTitle_(key)) return;
             row[1] = projectedTitle;
             byTitle.push({ rowIndex, row });
@@ -4605,7 +4607,9 @@ function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId
         const rowIndex = index + 2, rowId = String(row[0] || "").trim();
         if (rowIndex === excluded || (excludedTutorialId && rowId.toLowerCase() === String(excludedTutorialId).toLowerCase())) return false;
         const identity = rowId || makeLegacyTutorialIdentity_(row[1]);
-        return normalizeTutorialTitle_(projectTutorialTitle_(identity, row[1])) === titleKey;
+        const projectedTitle = typeof projectTutorialTitle_ === "function"
+            ? projectTutorialTitle_(identity, row[1]) : row[1];
+        return normalizeTutorialTitle_(projectedTitle) === titleKey;
     });
 }
 
