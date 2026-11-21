@@ -1019,3 +1019,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - CI 44873477741 SUCCESS: 258 suites, 3092 pruebas, 0 fallos; health read-only 44873477634 SUCCESS; Pages 44873477531 pendiente al momento del registro.
 - PyS sigue en progreso. handleAddProblem conserva ScriptLock hasta resolver con ledger append-only la propiedad de la operación y de la imagen. Sin despliegue ni cambios productivos.
 ================================================================================
+
+
+2026-11-21 — PyS: colisión de propiedad de imagen
+- Hallazgo: reservas físicas duplicadas de una misma operación podían compartir opId/hash/problemId y ocultar imageFileId/imageUrl diferentes.
+- Corrección: fail-closed ante referencias de archivo distintas; prueba PysCreationIntegrity confirma que el conflicto se detecta antes de crear un archivo nuevo.
+- CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages pendiente al momento del registro.
+- PyS continúa EN PROGRESO. handleAddProblem conserva ScriptLock hasta sustituir el estado mutable de propiedad por un protocolo concurrente validado. Sin despliegue ni cambios productivos.
+================================================================================
