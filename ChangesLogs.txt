@@ -221,3 +221,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 
 2026-11-21 — Validación de operationId determinista de sugerencias
 - CI `44862604331` SUCCESS: 255 suites, 3076 pruebas, 0 fallos; health read-only `44862604227` SUCCESS; Pages `44862603548` SUCCESS. No se desplegó Apps Script.
+
+
+2026-11-21 — FEEDBACK: confirmación de append por ID reservado
+- Se agregó `findFeedbackRowById_` para localizar la fila realmente persistida mediante el ID físico reservado.
+- Reportes y sugerencias ya no confirman mediante el índice anticipado `getLastRow()+1`; esa posición solo se usa para copiar formato.
+- Se añadió `FeedbackAppendRowIdentity.mjs` y se actualizaron regresiones de reportes/sugerencias.
