@@ -80,6 +80,7 @@ runGroup('32','ADMIN',()=>{
  runCli('P4 política de roles para compartir, imprimir y editar ficha','JS/Tests/VehicleModalRolePolicy.mjs');
  runCli('Modal de corte: colaborador comunitario cuando falta','JS/Tests/CutDetailContributorFallback.mjs');
   runCli('WRITE cargas Drive fuera del ScriptLock y reserva de slots','JS/Tests/WriteDriveOutsideLock.mjs');
+  runCli('WRITE contrato de transacción física, idempotencia y rollback','JS/Tests/WritePhysicalTransactionContract.mjs');
   runCli('WRITE prepara validación de cortes fuera del ScriptLock con lecturas acotadas','JS/Tests/WriteCutPreflightOutsideLock.mjs');
   runCli('WRITE reutiliza la fila de vehículo localizada durante el registro de cortes','JS/Tests/WriteCutExistingVehicleSnapshotReuse.mjs');
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
