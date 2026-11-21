@@ -42,6 +42,13 @@ check("Las solicitudes se agrupan por servicio y hora sin mezclar servicios", ()
     assert.equal(auth.metrics.successes, 2);
     assert.equal(auth.metrics.errors, 0);
     assert.equal(auth.metrics.averageDurationMs, 80);
+    assert.equal(auth.metrics.percentileSampleCount, 2);
+    assert.equal(auth.metrics.durationP50Ms, 80);
+    assert.equal(auth.metrics.durationP95Ms, 116);
+    assert.equal(auth.metrics.requestBytesP50, 100);
+    assert.equal(auth.metrics.requestBytesP95, 118);
+    assert.equal(auth.metrics.responseBytesP50, 200);
+    assert.equal(auth.metrics.responseBytesP95, 236);
     assert.equal(auth.metrics.requestBytesTotal, 200);
     assert.equal(auth.metrics.responseBytesTotal, 400);
     assert.equal(auth.metrics.averageRequestBytes, 100);
@@ -51,6 +58,14 @@ check("Las solicitudes se agrupan por servicio y hora sin mezclar servicios", ()
     assert.equal(auth.clientType, "mobile");
     assert.equal(auth.scope, "browser_local_service_traffic");
     assert.equal(auth.events.at(-1).action, "validateSession");
+});
+check("Los percentiles ignoran muestras de otros servicios y devuelven null sin datos", () => {
+    const empty = getBrowserServiceTrafficSnapshot("ADMIN", { now: base + 3000 });
+    assert.equal(empty.metrics.percentileSampleCount, 0);
+    assert.equal(empty.metrics.durationP50Ms, null);
+    assert.equal(empty.metrics.durationP95Ms, null);
+    assert.equal(empty.metrics.requestBytesP95, null);
+    assert.equal(empty.metrics.responseBytesP95, null);
 });
 check("El snapshot local contiene buckets de 24 horas y totales por periodo", () => {
     const snapshot = getBrowserServiceTrafficSnapshot("AUTH", { now: base + 3000, deviceType: "mobile" });
