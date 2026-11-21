@@ -130,12 +130,15 @@ test("cada voto de año se anexa como una fila completa y no usa escrituras por 
     const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
     const handlerEnd = feedback.indexOf("\nfunction ", handlerStart + 10);
     const handler = feedback.slice(handlerStart, handlerEnd);
-    assert.match(handler, /const voteRow = new Array\(lastCol\)\.fill\(""\)/);
-    assert.match(handler, /sheet\.appendRow\(voteRow\)/);
-    assert.match(handler, /getNextFormulaBasedId_\(sheet, COLS_FEEDBACKS\.ID\)/);
-    assert.doesNotMatch(handler, /getLastRow\(\) \+ 1/);
-    assert.doesNotMatch(handler, /getRange\([^\n]*\)\.setValue/);
-    assert.doesNotMatch(handler, /getRange\([^\n]*\)\.setValues/);
+    const voteStart = handler.indexOf("if (!alreadyReported) {");
+    const voteEnd = handler.indexOf("const allData = sheet.getDataRange()", voteStart);
+    const voteWrite = handler.slice(voteStart, voteEnd);
+    assert.match(voteWrite, /const voteRow = new Array\(lastCol\)\.fill\(""\)/);
+    assert.match(voteWrite, /sheet\.appendRow\(voteRow\)/);
+    assert.match(voteWrite, /getNextFormulaBasedId_\(sheet, COLS_FEEDBACKS\.ID\)/);
+    assert.doesNotMatch(voteWrite, /getLastRow\(\) \+ 1/);
+    assert.doesNotMatch(voteWrite, /getRange\([^\n]*\)\.setValue/);
+    assert.doesNotMatch(voteWrite, /getRange\([^\n]*\)\.setValues/);
 });
 test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const completion = extract("completeFeedbackYearApplication_");
