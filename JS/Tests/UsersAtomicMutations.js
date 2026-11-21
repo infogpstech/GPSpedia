@@ -36,6 +36,11 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             "La búsqueda de Users solo se permite para localizar el registro destino de updateProfile.");
         assert(profileHandler.includes("userRowIndex") && !profileHandler.includes("findUniqueUserRow_"),
             "La actualización de perfil debe reutilizar la fila destino ya localizada.");
+        assert(!profileHandler.includes("withUsersMutationLock_") && profileHandler.includes("writeUserProfileNameNonBlocking_"),
+            "La actualización de una sola celda no debe adquirir el ScriptLock global ni restaurar snapshots antiguos.");
+        const userLock = extract(source, "withUsersMutationLock_");
+        assert(userLock.includes("tryLock(0)") && !userLock.includes("waitLock("),
+            "La creación de cuentas conserva exclusión fail-fast para username e ID únicos, sin espera global.");
         assert(dispatcher.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "USERS" })'),
             "getUsers debe reutilizar el actor cacheado.");
         assert(!dispatcher.includes('withSharedMutationLease_("USERS", "sessionActivity"'),
@@ -128,7 +133,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             {getScriptLock:()=>lock},
             {CopyPasteType:{PASTE_FORMAT:"FORMAT",PASTE_DATA_VALIDATION:"VALIDATION"},flush(){if(failFlush){failFlush=false;throw new Error("flush simulado");}}},
             options.getVerifiedSession || (()=>({userId:"USR-0001",role:"Desarrollador",userRowIndex:2})),
-            ()=>({getSheetByName:()=>sheet}),
+            ()=>({getSheetByName:name=>name==="Users"?sheet:null}),
             password=>"HASH:"+password
         );
         return {api,sheet,stats};
