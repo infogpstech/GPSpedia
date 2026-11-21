@@ -865,3 +865,16 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Tareas locales de esta continuidad: cerradas. Tareas_Activas.md mantiene 16 marcadores abiertos correspondientes a validaciones Beta reales, no a trabajo local pendiente. Siguen pendientes AUG-159, AUG-160, AUG-161, AUG-162, AUG-163 y pruebas Beta de concurrencia, navegador/PWA, journals, Drive/Spreadsheet y coordinación entre proyectos.
 - No ejecutar esas validaciones contra producción ni simular su aprobación. Se requiere Apps Script desplegado en entorno Beta, Spreadsheet/Drive desechables y cuentas de prueba. El conector Google Drive continúa registrado como DISABLED_BY_ADMIN / NOT_AVAILABLE; no se dispone de conexión Apps Script.
 - Siguiente paso: preparar y ejecutar la primera validación Beta (AUG-159/AUG-160 según disponibilidad del entorno aislado); antes de eso, solo queda trabajo documental/local adicional si aparece una tarea activa nueva.
+
+
+## Checkpoint — auditoría visual y guía de despliegue (2026-11-21)
+
+- Rama autorizada: `GPSpedia2.2.5_work`; base protegida: `GPSpedia2.2.5`.
+- HEAD de partida confirmado por Git ref: `48511de8ccfb6af56ccf4be97d73a1fc75c3b0ab`. La rama base consultada permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Comparación histórica: `GPSpedia-2.1.7` usa cabecera flex, logo CSS genérico 48 px escritorio / 38 px móvil, botones en fila y cierre absoluto. La rama actual 2.2.5 usa toolbar grid con logo, modelo y acciones separados; el cierre se inserta dentro de `.detail-modal-header-actions`.
+- Se ajustó el logo scoped del modal de corte de 120 px/60 px a 64 px/48 px; se conservan los botones y cierre de 40 px, título en columna derecha y alternativa de título debajo del logo. Se mantuvo la base compartida para otros modales y se documentó la cascada en `AUDITORIA_MODAL_CSS_2026-11-21.md`.
+- Commits de esta tanda: `44470dea13b9ed18588be78182d59f78ade18fa4` (CSS), `2d112b38ff41e92b6b667ac7a06b38aaea70a015` y `68cfd6e877a4ac808d722f4ef82e5f5dad574873` (contrato de prueba), `5109d313b6c9791e15397aa4b14af34ab949f00e` (guía de despliegue), `cf6762ece052035a6bf90c6ce16afc505b16ecbd` (auditoría visual).
+- `Services/DEPLOYMENT_GUIDE.md` documenta los proyectos COORDINATOR, CATALOG, AUTH, USERS, WRITE, FEEDBACK, UTILITIES y ADMIN; identifica `SharedMutationClient.js` y `InboxConversations.js`, propiedades URL/secretos y secuencia de despliegue. Se añadió referencia desde README y corrección a COORDINATOR_SETUP para la URL ADMIN.
+- Validación pendiente: ejecutar `CutDetailModalLayout.mjs`, revisar los cambios de CSS/test, CI y comprobación visual Beta. No se afirma que la prueba haya pasado todavía.
+- Pendiente local: completar la auditoría y consolidación de estilos repetidos de modales (incluidos Inbox, Developer Tools e informativos); revisar guía contra código completo y corregir cualquier discrepancia.
+- Validaciones Beta preexistentes siguen abiertas (15 checks no marcados en Tareas_Activas.md): concurrencia real, Drive/Spreadsheet aislados, journals, recuperación y navegador/PWA. No se ejecutaron deployments ni se modificaron ScriptProperties, Spreadsheet o Drive remotos.
