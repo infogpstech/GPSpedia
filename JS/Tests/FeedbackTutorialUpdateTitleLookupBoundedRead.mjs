@@ -55,7 +55,8 @@ test("lee únicamente las columnas A:B para excluir todas las copias físicas de
 test("la edición ejecuta la comprobación dirigida sin lock", () => {
     const handler = extract("handleUpdateTutorialItem");
     const check = handler.indexOf("tutorialTitleExists_(sheet, updates.tema, target.rowIndex, target.row[0])");
-    assert.ok(check >= 0);\n    assert.doesNotMatch(handler, /acquireFeedbackScriptLock_|LockService\\.getScriptLock/);
+    assert.ok(check >= 0);
+    assert.doesNotMatch(handler, /acquireFeedbackScriptLock_|LockService\\.getScriptLock/);
     assert.doesNotMatch(handler, /getDataRange\(/);
 });
 console.log("FeedbackTutorialUpdateTitleLookupBoundedRead: " + passed + "/" + passed + " PASS — unicidad de título por columna B");
