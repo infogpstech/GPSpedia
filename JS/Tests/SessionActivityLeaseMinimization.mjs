@@ -54,20 +54,23 @@ test("USERS getUsers/updateProfile reutilizan actor cacheado; solo createUser co
     assert.doesNotMatch(usersDoPost, /withSharedMutationLease_\("USERS",\s*["']updateProfile/);
 });
 
-test("AUTH reutiliza actor cacheado para acceptTerms y elimina leases de touchSession/acceptTerms", () => {
+test("AUTH conserva solo lease de eliminación; login y acciones ordinarias usan lock/caché local", () => {
     const benchmark = authDoPost.indexOf('if (action === "benchmarkPasswordKdf")');
-    const terms = authDoPost.indexOf('if (action === "acceptTerms")');
+    const cachedActions = authDoPost.indexOf('["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords"].includes(action)');
     const lease = authDoPost.indexOf('withSharedMutationLease_("AUTH", action');
     assert.ok(benchmark >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", benchmark) > benchmark);
-    assert.ok(terms >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", terms) > terms);
-    assert.ok(lease > benchmark);
-    assert.doesNotMatch(authDoPost, /withSharedMutationLease_\("AUTH",\s*"acceptTerms"/);
-    assert.doesNotMatch(authDoPost, /isSharedReadAction_/);
-    assert.doesNotMatch(authMutationPolicy, /touchSession|acceptTerms/);
-    assert.match(authMutationPolicy, /login.*deleteUser.*updateUser.*logout/);
-    assert.match(auth, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
+    assert.ok(cachedActions >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", cachedActions) > cachedActions);
+    assert.ok(lease > cachedActions);
+    assert.match(authMutationPolicy, /return \["deleteUser"\]/);
+    assert.doesNotMatch(authMutationPolicy, /login|touchSession|acceptTerms|requestPasswordRecovery|completePasswordRecovery|changePassword|resetUserPassword|resetUserSessions|updateUser|logout|migrateLegacyPasswords/);
+    assert.match(auth, /function beginLoginAttempt\(/);
+    assert.match(auth, /registerFailedLoginAttempt\(/);
+    assert.match(auth, /syncSharedSessionContextsForUser_\(/);
+    assert.match(auth, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
+    assert.match(auth, /function handleCompletePasswordRecovery[\s\S]*?revokeSharedUserSessionContexts_/);
+    assert.match(auth, /function handleChangePassword[\s\S]*?revokeSharedUserSessionContexts_/);
+    assert.match(auth, /function handleResetUserSessions[\s\S]*?revokeSharedUserSessionContexts_/);
 });
-
 test("ADMIN usa actor cacheado para todas las acciones y no adquiere leases", () => {
     assert.match(adminDoPost, /if \(action === "ping"\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
     assert.match(adminDoPost, /if \(action === "getServiceTraffic"\)[\s\S]*?getCachedSharedSessionActor_/);
