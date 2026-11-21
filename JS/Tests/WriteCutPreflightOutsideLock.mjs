@@ -51,7 +51,7 @@ const wrapper=extract("handleAddOrUpdateCut","handleAddOrUpdateCutLocked");
 const events=[];
 let nextRequest={ready:true,sheet:{name:"Cortes"},validatedPayload:{vehicleId:null,opId:"OP-NEW",operationHash:"hash"}};
 const lock={tryLock(ms){assert.equal(ms,0);events.push("script-lock");return true;},hasLock:()=>true,releaseLock(){events.push("release");}};
-const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","handleAppendExistingVehicleCut_","reserveCortesVehicleIdForOperation_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogSourceVersion_","Logger",wrapper+"\\nreturn handleAddOrUpdateCut;")(
+const wrapperFn=new Function("prepareAddOrUpdateCutRequest_","handleAppendExistingVehicleCut_","reserveCortesVehicleIdForOperation_","LockService","handleAddOrUpdateCutLocked","nextWriteCatalogSourceVersion_","Logger",wrapper+"\nreturn handleAddOrUpdateCut;")(
  ()=>{events.push("preflight");return nextRequest;},
  preparedRequest=>{events.push("append-existing");return{status:"success",vehicleId:preparedRequest.validatedPayload.vehicleId};},
  (sheet,reservation)=>{assert.equal(sheet.name,"Cortes");assert.equal(reservation.opId,"OP-NEW");assert.equal(reservation.operationHash,"hash");events.push("reserve-id");return 22;},
