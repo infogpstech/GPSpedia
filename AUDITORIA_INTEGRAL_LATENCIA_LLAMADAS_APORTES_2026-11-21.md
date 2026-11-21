@@ -417,3 +417,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se conserva la doble verificación del append (read-back del evento y búsqueda de conflictos concurrentes por opId), el snapshot post-append único para slot/VIN, la idempotencia y la política de no descartar eventos en conflicto.
 - Tests: `WriteEntityCatalogDemand` 8/8; `WriteContributionLedgerReuse` 15/15; `WriteContributionPostAppendSnapshot` 12/12 PASS. CI HEAD `698bd0518c4223ba6db36e1ce0fbd68492289b5a`: **289 suites / 3,382 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
 - Alcance: subtask WRITE completada en código/CI. Continúa pendiente la auditoría integral de los otros flujos WRITE (alta de vehículo nuevo, recuperación de opId legacy, VIN update, información suplementaria legacy, imágenes/journal) y la validación Beta aislada de concurrencia/Drive.
+
+
+### P1 WRITE — VIN: reutilización de snapshot en validación de duplicados (2026-11-21)
+
+- `handleAddVinToVehicleLocked` ya obtiene una lectura de Cortes para localizar el vehículo y comprobar su colección VIN. Antes, `checkVinDuplicateInSheet` volvía a leer toda la hoja para detectar el mismo prefijo en otros vehículos.
+- `checkVinDuplicateInSheet` acepta ahora un snapshot opcional. La ruta dedicada de registro VIN pasa la misma matriz ya leída y evita la segunda transferencia; los demás consumidores conservan su lectura independiente cuando no tienen un snapshot global válido.
+- Se mantiene la exclusión del vehículo actual, la detección de VIN en otros vehículos y la composición de modelo/años en el mensaje de conflicto.
+- Test `WriteVinSnapshotReuse`: 8/8 PASS. CI HEAD `ad0db3ea9676e4aa56caf3e8a157f633087dcb8f`: **290 suites / 3,390 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- Continúa pendiente la auditoría WRITE de alta nueva, recuperación opId legacy, suplementaria legacy, journal de imágenes y publicación CATALOG, además de validación Beta aislada.
