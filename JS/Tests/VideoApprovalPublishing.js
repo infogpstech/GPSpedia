@@ -12,7 +12,7 @@ function runVideoApprovalPublishingTests() {
         return Array.from({length:32},(_,index)=>((seed+index*37)%256)-128);
     };
     const oldLockService=LockService,oldSharedLease=globalThis.withSharedMutationLease_;
-    let lockAcquired=0,lockReleased=0,leaseCalls=[];
+    let lockAcquired=0,lockReleased=0,coordinatorCalls=0;
     LockService={getScriptLock:()=>({waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
     globalThis.withSharedMutationLease_=()=>{coordinatorCalls++;throw new Error("La aprobación de vídeo no debe invocar Coordinator.");};
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
