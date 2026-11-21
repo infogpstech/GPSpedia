@@ -146,3 +146,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `logUserActivity` usa appendRow con fórmula de fila; el asignador `getNextFormulaBasedId_` usa reservas append-only.
 - Pruebas `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848965971` SUCCESS: 255 suites, 3063 pruebas, 0 fallos; Health read-only `44848965894` SUCCESS. Pages `44848965693` pendiente.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-21 — FEEDBACK: orden determinista de votos de sugerencia de año
+- `countVerifiedPositiveYearSuggestionVotes_` ahora conserva el primer voto físico por actor/vehículo/año; respuestas posteriores contradictorias no alteran el resultado ni suman votos duplicados.
+- `SuggestYearVoteThreshold.mjs` añade regresiones negativo→positivo y positivo→negativo.
+- Commit `8c8a7dac2ce2743642bebfdfcfcccdb387cdbe56`: servicio de regresión SUCCESS, 255 suites, 3064 pruebas, 0 fallos; health read-only SUCCESS; build SUCCESS. Deploy/Pages pendiente al registrar.
+- El flujo mantiene ScriptLock. Append atómico de votos, aplicaciones idempotentes y recuperación append-only siguen pendientes; no se desplegó Apps Script ni se modificaron datos productivos.
