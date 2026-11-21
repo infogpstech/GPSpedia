@@ -44,5 +44,5 @@ test("rechaza eventos con actor o vehículo inválido",()=>{
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
  assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/evento de like inválido/);
 });
-test("el contrato de likes nuevos es append-only y sin lock",()=>{assert.ok(eventPath.includes('"event"'));assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/);});
+test("el contrato de likes nuevos es append-only y sin lock",()=>{assert.ok(handler.includes('"event"'));assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");
