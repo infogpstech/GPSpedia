@@ -3819,6 +3819,9 @@ function readPysOperations_(sheet) {
             if (canonical.payloadHash !== hash) {
                 throw new Error("PysOperations contiene el mismo opId con payload contradictorio; requiere revisión.");
             }
+            if (canonical.problemId !== problemId) {
+                throw new Error("PysOperations contiene el mismo opId reservado para problemId distintos; requiere reconciliación.");
+            }
             canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
             return;
         }
