@@ -20,4 +20,4 @@ const router = admin.slice(admin.indexOf("function doPostInternal_(e)"));
 assert.match(router, /case 'saveUnusedImagesInventory':[\s\S]*?withSharedMutationLease_\("ADMIN", "saveUnusedImagesInventory"/);
 assert.match(coordinator, /saveUnusedImagesInventory: \{ write: \["IMAGE_INVENTORY"\] \}/);
 assert.doesNotMatch(coordinator, /recordAdminImageActivity:\s*\{/);
-console.log("AdminInventoryLockIsolation: PASS — inventario con lease puntual y actividad appendRow sin lease");
+console.log("AdminInventoryLockIsolation: 1/1 PASS — inventario con lease puntual y actividad appendRow sin lease");
