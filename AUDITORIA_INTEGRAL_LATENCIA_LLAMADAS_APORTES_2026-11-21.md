@@ -126,3 +126,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `JS/Tests/CortesImageOrganizerExecutor.mjs` contiene pruebas explícitas de reintento idempotente de aplicación y rollback, además de contención/fallo parcial. Por ello, los dos intentos configurados en frontend tienen soporte de diseño y contrato; no se recomienda quitarlos por defecto. La ejecución de estas pruebas no se realizó en esta sesión.
 - `backupDatabase` y `applyCortesImageReconciliation` se invocan con `maxAttempts: 1`, evitando replay automático de esas operaciones.
 
+
+
+### Catálogo incremental y snapshot completo
+- El cliente obtiene `getCatalogChanges` mediante GET a FEEDBACK. El `doGet` de FEEDBACK llama a `getSharedCatalogChanges_`, que realiza un segundo GET servidor-a-servidor al Coordinator. El Coordinator ya expone `doGet?catalogFeed=1` como feed público, con solo eventos publicados de catálogo y sin credenciales; existe por tanto un salto de red FEEDBACK que puede ser prescindible.
+- El feed público del Coordinator toma el lock interno para leer revisiones y registra el tráfico como CATALOG. La ruta FEEDBACK registra el tráfico como FEEDBACK. Si se evalúa la consulta directa desde navegador, hay que conservar la semántica de telemetría, confirmar CORS/redirect de Apps Script, validar que el feed solo expone snapshots públicos y comprobar despliegue/compatibilidad antes de cambiar el endpoint.
+- `handleGetCatalogData` consulta CacheService, pero la escritura del snapshot está deshabilitada porque `allData` excede el límite de 100 KB. En una caché fría o sin entrada heredada, cada solicitud reconstruye el snapshot leyendo Cortes, Likes, AportesVehiculo, Logos, Tutoriales/eventos y Relay. `forceRefresh:true` omite la lectura de caché heredada y fuerza esa reconstrucción; no es una caché efectiva para los snapshots actuales.
+- El snapshot completo es necesario para inicio, recuperación/reset y ciertos procesos de verificación; para refrescar un solo vehículo tras un aporte conviene estudiar un endpoint CATALOG dirigido o aplicar el delta confirmado al estado local, sin debilitar la verificación de fuente/candidato.
+
