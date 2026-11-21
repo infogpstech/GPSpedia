@@ -1278,3 +1278,16 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Regresión sobre `3a1faf032f5a38ac7c1d7118628d0e856701fdd8`: **278 suites / 3,236 pruebas / 0 fallos**; build SUCCESS y health read-only SUCCESS. Los últimos cambios posteriores fueron de etiqueta/documentación y continuidad.
 - Limitación operativa documentada: CacheService TTL máximo 6 h, renovado en cada hit. Si se evapora por inactividad/evicción, la acción falla cerrado y el usuario debe iniciar sesión para volver a precargar. La precarga real depende de las propiedades/URLs desplegadas, no verificadas desde este entorno.
 - Siguiente tarea: revisar lecturas duplicadas de Users/ActiveSessions y revocaciones dentro de una operación AUTH/USERS; después continuar con WRITE/FEEDBACK/ADMIN y CATALOG. La medición real p50/p95 y lecturas Sheets/Drive queda pendiente de Beta aislada.
+
+
+## Cierre — P0.4 reducción de lecturas y revocaciones duplicadas AUTH (2026-11-21)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Login reutiliza un único snapshot de `ActiveSessions` para localizar el token, validar el puntero y calcular el límite de sesiones. Solo vuelve a escanear la hoja para reconciliar errores ambiguos de append/limpieza; la confirmación normal lee la fila objetivo.
+- Recuperación de contraseña hace la búsqueda preliminar fuera del lock y verifica bajo lock únicamente la fila candidata. Reconciliación de cambio de rol recibe el índice de fila ya validado y evita repetir la lectura completa de Users.
+- Cambio/reset de contraseña y reset de sesiones ya no leen ActiveSessions para extraer tokens y luego vuelven a leerla para revocar: `revokeAllUserSessionsUnderLock_` captura los tokens una vez e invoca la invalidación remota antes de limpiar los valores locales.
+- Eliminación de cuenta reutiliza un snapshot de ActiveSessions limitado a ID/token, valida duplicados en memoria, invalida contextos con los tokens del snapshot y comprueba residuos leyendo solo la columna ID_Usuario.
+- Se añadieron `JS/Tests/AuthSessionReadOptimization.mjs` (9/9) y ajustes de `PasswordRecovery.mjs`, `LastDeveloperProtection.js` y `CoordinatorCapabilityPreservation.mjs` para reflejar los contratos reales y los rangos dirigidos.
+- CI sobre HEAD documental `14eeb59ae4e3a3a534dae9f87824656d235bb17f`: **279 suites / 3,245 pruebas aprobadas / 0 fallos**; build SUCCESS; health de servicios read-only SUCCESS. Pages deploy seguía en curso y no es condición de aprobación de servicios.
+- No se modificaron deployments Apps Script, endpoints, propiedades, secretos, Spreadsheet ni Drive productivos.
+- Siguiente tarea: auditar WRITE/FEEDBACK/ADMIN de extremo a extremo; iniciar por aportes WRITE, donde se observan lecturas de Cortes y del ledger en fases distintas. No combinar lecturas si afecta idempotencia, detección de conflictos, append verification o recuperación concurrente.
