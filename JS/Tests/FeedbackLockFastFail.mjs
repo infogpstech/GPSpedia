@@ -21,7 +21,7 @@ assert.doesNotMatch(feedback,/waitLock\((?:10000|15000)\)/);
 assert.doesNotMatch(inbox,/waitLock\(10000\)/);
 assert.match(inbox,/lock\.tryLock\(0\)/);
 const suggestYear = extract(feedback,"handleSuggestYear");
-assert.doesNotMatch(suggestYear,/LockService\\.getScriptLock\\(\\)|acquireFeedbackScriptLock_\\(/,
+assert.doesNotMatch(suggestYear,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
  "suggestYear coordina sus mutaciones con ledger append-only e identidades idempotentes, sin lock global.");
 for(const name of ["handleReportProblem","handleSuggestCutChange","handleAddProblem","handleAddTutorial","handleUpdateTutorialItem"]){
  const body=extract(feedback,name);
