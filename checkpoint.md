@@ -1398,3 +1398,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Fallback completo no adelanta ni empareja un cursor distinto; actualiza estado en memoria y deja que el siguiente poll reprocese desde el cursor persistido o active reset si venció.
 - Prueba nueva `CatalogEditDeltaRefresh.mjs`: 23/23 PASS. CI HEAD `ea1c3ca196105b20115f9c56c27bdf6e4e6df2e5`: **284 suites / 3,309 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS.
 - Siguiente: Beta aislada para concurrencia entre pestañas, pérdida de feed y reset; continuar P1 de imágenes/vídeos/archivos.
+
+
+## Checkpoint P0 AUTH — lecturas de sesión y revocaciones cerradas (2026-11-21)
+
+- Código: `JS/Services/Auth.js`; test: `JS/Tests/AuthSessionReadOptimization.mjs`, registrado en `JS/Tests/RunServiceTests.mjs`.
+- Login ahora reutiliza un snapshot de ActiveSessions para resolver token, puntero y límite; la lectura integral extra queda solo para reconciliar append ambiguo o errores parciales. Confirmación normal por fila dirigida.
+- Recuperación de contraseña conserva preflight fuera de ScriptLock y verifica bajo lock la fila objetivo. Reconciliación de rol recibe el índice ya conocido y valida ID/estado sin volver a escanear Users.
+- DeleteUser reutiliza el snapshot para tokenCounts y revocación; verifica residuos por columna ID. Reset/cambio de contraseña y otras revocaciones invalidan contextos remotos una vez, antes de limpiar tokens.
+- CI confirmado en HEAD `3ae0786b0158d7e45f2599bc1a6ab28550b84ac8`: **284 suites / 3,309 pruebas / 0 fallos**; build SUCCESS; health SUCCESS; deploy workflow SUCCESS. Test específico `AuthSessionReadOptimization`: 9/9 PASS.
+- Este checkpoint es de código y CI; no acredita validación Beta real. No se modificó la rama base ni se realizaron operaciones manuales sobre Spreadsheet/Drive/ScriptProperties productivos.
+- Siguiente tarea inmediata: optimizar lecturas/operaciones duplicadas en `JS/Services/users.js`, empezando por getUsers/createUser/updateUser y comprobando la relación con Auth/deleteUser. Luego actualizar pruebas, ejecutar regresión, y crear checkpoint+commit antes de pasar a WRITE/FEEDBACK/ADMIN.
