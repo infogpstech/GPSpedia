@@ -68,6 +68,7 @@ runGroup('31','WRITE',()=>{
 runGroup('32','ADMIN',()=>{
  const a=read('JS/Services/admin.js');
  runCli('ADMIN consulta candidatos append-only de aportes en modo solo lectura','JS/Tests/AdminVehicleContributionCandidates.mjs');
+ runCli('ADMIN carga de imagen valida tamaño y MIME antes de Base64','JS/Tests/AdminImageUploadPreflight.mjs');
  runCli('ADMIN inventario de imágenes reutiliza ledger filtrado de CATALOG','JS/Tests/AdminCandidateImageInventoryCatalogSource.mjs');
  runCli('ADMIN consulta dirigida de proyección de vehículo/campo','JS/Tests/AdminVehicleTargetedCatalogRead.mjs');
  runCli('ADMIN lectura segura y secuenciada de logotipos','JS/Tests/AdminLogoFileRead.mjs');

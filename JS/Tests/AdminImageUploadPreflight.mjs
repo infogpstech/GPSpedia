@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
+const start=ui.indexOf("function readAdminImageAsDataUrl(file)");
+const marker=ui.indexOf("async function submitAdminImageUploadOperation",start);
+const block=ui.slice(start,marker);
+const end=block.lastIndexOf("\\n}");
+assert.ok(start>=0&&marker>start&&end>0,"debe existir lector de imagen ADMIN");
+const source=block.slice(0,end+2);
+let reads=0,nextResult="data:image/jpeg;base64,AA==";
+class FakeFileReader{readAsDataURL(){reads++;this.result=nextResult;this.onload();}}
+const read=new Function("FileReader",source+";return readAdminImageAsDataUrl;")(FakeFileReader);
+await assert.rejects(read({size:0,type:"image/jpeg"}),error=>error.name==="ImageReadError");
+await assert.rejects(read({size:10*1024*1024+1,type:"image/jpeg"}),error=>error.name==="ImageSizeError");
+const before=reads;
+await assert.rejects(read({size:10,type:"application/pdf"}),error=>error.name==="ImageReadError");
+assert.equal(reads,before,"MIME no admitido debe rechazarse antes de FileReader");
+assert.equal(await read({size:10*1024*1024,type:"image/jpeg"}),nextResult);
+const afterValid=reads;
+nextResult="data:image/png;base64,AA==";
+await assert.rejects(read({size:100,type:"image/jpeg"}),error=>error.name==="ImageReadError");
+assert.equal(reads,afterValid+1);
+const server=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const handlerStart=server.indexOf("function handleUploadAdminImageLegacy_");
+const handlerEnd=server.indexOf("function ",handlerStart+40);
+const handler=server.slice(handlerStart,handlerEnd);
+assert.ok(handler.includes("actualMimeType !== declaredMimeType"),"el backend debe comparar MIME declarado y Data URL");
+assert.ok(handler.includes("decodedData.length > IMAGE_UPLOAD_MAX_BYTES"),"el backend debe imponer el límite de 10 MB");
+console.log("AdminImageUploadPreflight: 6/6 PASS — tamaño, MIME, Data URL y límites servidor");

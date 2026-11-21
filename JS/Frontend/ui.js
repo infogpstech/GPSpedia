@@ -718,11 +718,52 @@ function createAdminImageUploadOperationId() {
 }
 
 function readAdminImageAsDataUrl(file) {
+    if (!file) return Promise.reject(new Error("No se seleccionó una imagen."));
+    if (Number.isFinite(file.size) && file.size < 1) {
+        const error = new Error("La imagen seleccionada está vacía.");
+        error.name = "ImageReadError";
+        return Promise.reject(error);
+    }
+    if (Number.isFinite(file.size) && file.size > 10 * 1024 * 1024) {
+        const error = new Error("La imagen debe pesar como máximo 10 MB.");
+        error.name = "ImageSizeError";
+        return Promise.reject(error);
+    }
+    const declaredMime = String(file.type || "").trim().toLowerCase();
+    const supportedMimeTypes = new Set([
+        "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/x-png",
+        "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/x-ms-bmp",
+        "image/tiff", "image/heic", "image/heif", "image/avif", "image/x-icon",
+        "image/vnd.microsoft.icon"
+    ]);
+    if (!supportedMimeTypes.has(declaredMime)) {
+        const error = new Error("El formato de imagen no es compatible.");
+        error.name = "ImageReadError";
+        return Promise.reject(error);
+    }
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onload = () => {
+            const result = typeof reader.result === "string" ? reader.result : "";
+            const comma = result.indexOf(",");
+            const mimeEnd = result.indexOf(";");
+            const dataUrlMime = result.startsWith("data:") && mimeEnd > 5 && comma > mimeEnd
+                ? result.slice(5, mimeEnd).trim().toLowerCase() : "";
+            if (dataUrlMime === declaredMime && result.slice(comma + 1).trim()) resolve(result);
+            else {
+                const error = new Error("El MIME de la imagen leída no coincide con el archivo seleccionado.");
+                error.name = "ImageReadError";
+                reject(error);
+            }
+        };
         reader.onerror = () => reject(reader.error || new Error("No se pudo leer el archivo seleccionado."));
-        reader.readAsDataURL(file);
+        reader.onabort = () => {
+            const error = new Error("La lectura de la imagen fue cancelada.");
+            error.name = "ImageReadError";
+            reject(error);
+        };
+        try { reader.readAsDataURL(file); }
+        catch (error) { reject(error); }
     });
 }
 

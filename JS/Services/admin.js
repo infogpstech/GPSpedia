@@ -7132,20 +7132,30 @@ function handleUploadAdminImageLegacy_(payload, logMessage, modalContext) {
         activeCell = sheet.getRange(actualRow, colIndex);
 
         let cleanBase64 = fileData;
-        let actualMimeType = mimeType;
+        const declaredMimeType = String(mimeType || "").trim().toLowerCase();
+        let actualMimeType = declaredMimeType;
         if (fileData.indexOf(",") !== -1) {
             const parts = fileData.split(",");
             if (parts.length < 2 || !parts[1]) throw new Error("Los datos Base64 de la imagen tienen un formato inválido.");
-            const mimeMatch = parts[0].match(/:(.*?);/);
-            if (mimeMatch) actualMimeType = mimeMatch[1];
+            const mimeMatch = parts[0].match(/^data:(image\/[a-zA-Z0-9.+-]+);base64$/i);
+            if (!mimeMatch) throw new Error("La Data URL de la imagen no tiene un MIME válido.");
+            actualMimeType = String(mimeMatch[1] || "").toLowerCase();
+            if (actualMimeType !== declaredMimeType) throw new Error("El MIME de la Data URL no coincide con el MIME declarado.");
             cleanBase64 = parts.slice(1).join(",");
         }
-        if (!/^image\/[a-zA-Z0-9.+-]+$/i.test(String(actualMimeType))) {
-            throw new Error("El archivo seleccionado no tiene un tipo MIME de imagen válido.");
+        const supportedMimeTypes = new Set([
+            "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/x-png",
+            "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/x-ms-bmp",
+            "image/tiff", "image/heic", "image/heif", "image/avif", "image/x-icon",
+            "image/vnd.microsoft.icon"
+        ]);
+        if (!supportedMimeTypes.has(String(actualMimeType).toLowerCase())) {
+            throw new Error("El archivo seleccionado no tiene un tipo MIME de imagen admitido.");
         }
 
         const decodedData = Utilities.base64Decode(cleanBase64);
         if (!decodedData || !decodedData.length) throw new Error("La imagen recibida está vacía.");
+        if (decodedData.length > IMAGE_UPLOAD_MAX_BYTES) throw new Error("La imagen supera el límite de 10 MB por archivo.");
         const contentHash = calculateAdminImageUploadHash(decodedData);
         operationContentHash = contentHash;
         const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => actualMimeType });
