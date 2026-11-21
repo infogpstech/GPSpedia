@@ -729,3 +729,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - getUsers limita la lectura a A:G; updateProfile confirma ID leyendo solo las celdas coincidentes, no filas completas.
 - UsersMutationSnapshot 10/10; UsersReadMinimization 8/8; UsersAtomicMutations 16/16; regresión 287 suites / 3,359 pruebas / 0 fallos; build y health SUCCESS.
 - Siguiente: auditoría end-to-end de WRITE; luego FEEDBACK y ADMIN.
+
+
+[2026-11-21] WRITE — catálogo condicional y reutilización del ledger validado
+- Append de corte en vehículo existente omite getExistingEntities si el payload no contiene marca/modelo/versiones.
+- Aportes cut/opening/feed revalidan AportesVehiculo después de Drive y reutilizan la hoja validada en append, snapshot post-append y proyección de slot/candidato.
+- WriteEntityCatalogDemand 8/8; WriteContributionLedgerReuse 15/15; WriteContributionPostAppendSnapshot 12/12; regresión 289 suites / 3,382 pruebas / 0 fallos; build y health SUCCESS.
+- WRITE restante: alta nueva, recuperación legacy, VIN update, suplementaria legacy, journal imágenes y publicación CATALOG.
