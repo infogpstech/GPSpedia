@@ -104,6 +104,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE limita lectura de entidades existentes a marca/modelo/versiones','JS/Tests/WriteEntityLookupBoundedRead.mjs');
   runCli('WRITE consulta entidades solo cuando se aportan campos de entidad','JS/Tests/WriteEntityCatalogDemand.mjs');
   runCli('WRITE reutiliza el ledger AportesVehiculo validado durante la operación','JS/Tests/WriteContributionLedgerReuse.mjs');
+  runCli('WRITE reutiliza snapshot Cortes al comprobar VIN duplicado','JS/Tests/WriteVinSnapshotReuse.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
   runCli('WRITE carpetas suplementarias sin lease ni espera','JS/Tests/WriteSupplementaryFolderNoLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
