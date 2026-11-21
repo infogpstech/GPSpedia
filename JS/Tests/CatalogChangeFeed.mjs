@@ -260,15 +260,15 @@ test("suggestYear publica Cortes solo cuando se aplica o recupera una ampliació
     assert.ok(!feedbackSource.includes('["suggestYear", "addProblem", "addSolution"'));
     assert.ok(coordinatorSource.includes('"suggestYear"'));
 });
-test("mutaciones PyS publican upsert exacto tras verificar ID y fila bajo lease compartida", () => {
+test("mutaciones PyS publican upsert exacto sin leases por acción", () => {
     assert.ok(coordinatorSource.includes('const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys"'));
     assert.ok(feedbackSource.includes("function buildPysCatalogChange_(reference)"));
     assert.ok(feedbackSource.includes('collection: "pys", recordId: id, operation: "upsert"'));
     assert.ok(feedbackSource.includes("function publishPysCatalogChange_(action, reference)"));
     assert.ok(feedbackSource.includes('publishPysCatalogChange_(action, problemId)'));
-    assert.ok(feedbackSource.includes("function withPysMutationLease_(callback, operation)"));
+    assert.ok(!feedbackSource.includes("function withPysMutationLease_"));
     for (const action of ["addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem"]) {
-        assert.ok(feedbackSource.includes('withPysMutationLease_(() =>'));
+        assert.ok(!feedbackSource.includes('withPysMutationLease_(() =>'));
         assert.ok(coordinatorSource.includes(action));
     }
 });
