@@ -308,3 +308,10 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `handleSuggestYearLocked` usa una lectura inicial completa de Feedbacks para decidir si el actor ya reportó, si el voto ya fue aplicado y si existe una aplicación pendiente. En el camino `alreadyReported`, no se escribe una nueva fila; la lectura posterior era redundante.
 - `allData` ahora reutiliza `existingData` en ese camino. Si se ejecuta `appendRow`, conserva una segunda lectura después de flush para contar los votos concurrentes y evaluar correctamente el umbral de tres usuarios verificados.
 - Prueba ampliada `SuggestYearVoteThreshold.mjs`; CI: 280 suites, 3,258 pruebas, 0 fallos; build, health read-only y GitHub Pages deploy SUCCESS. Sin despliegues Apps Script ni cambios en datos productivos.
+
+
+### P1.2 — FEEDBACK: reutilización de snapshot en sugerencias de año
+
+- En reintentos donde el actor ya había reportado, la ruta no agrega fila; se reutiliza `existingData` para conteo/validación, eliminando una lectura completa redundante de Feedbacks.
+- Cuando se agrega una fila nueva, la lectura posterior a flush permanece para incluir aportes concurrentes antes de calcular el umbral. Se conservan first-write-wins, identidad verificada, control de aplicaciones pendientes y el umbral de tres votos.
+- Prueba `SuggestYearVoteThreshold.mjs`; CI: 280 suites, 3,258 pruebas, 0 fallos; build, health read-only y Pages deploy SUCCESS. Sin cambios en deployments Apps Script ni datos productivos.
