@@ -3817,7 +3817,8 @@ function readPysOperations_(sheet) {
         if (byOperation.has(opId)) {
             const canonical = byOperation.get(opId);
             if (canonical.payloadHash !== hash) {
-                throw new Error("PysOperations contiene el mismo opId con payload contradictorio; requiere revisión.");
+                canonical.conflictingPayloadCount = (canonical.conflictingPayloadCount || 0) + 1;
+                return;
             }
             canonical.duplicateCount = (canonical.duplicateCount || 0) + 1;
             return;
@@ -4120,8 +4121,18 @@ function handleAddProblem(source) {
             }
             ops = readPysOperations_(opsSheet);
             const canonical = ops.find(item => item.opId === opId);
-            if (!canonical || canonical.payloadHash !== hash) {
-                throw new Error("No se pudo confirmar la reserva canónica de la operación PyS.");
+            if (!canonical) throw new Error("No se pudo confirmar la reserva canónica de la operación PyS.");
+            if (canonical.payloadHash !== hash) {
+                const losingFile = file;
+                file = null;
+                if (!isPysOperationImageReferenced_(opsSheet, fileId) &&
+                    findPysImageReferences_(sheet, fileId, url).length === 0) {
+                    losingFile.setTrashed(true);
+                } else {
+                    markPysImageForRecovery_(losingFile, problemId, fileId,
+                        "El opId ya pertenece a otro contenido y no se pudo demostrar que el archivo estuviera libre.");
+                }
+                throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");
             }
             op = canonical;
             if (canonical.imageFileId !== fileId || canonical.problemId !== problemId) {
