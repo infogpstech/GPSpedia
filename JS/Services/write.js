@@ -3721,7 +3721,6 @@ function handleCheckOperation(payload) {
                 throw new Error("El opId no corresponde a la huella del aporte recuperado.");
             }
 
-            const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionSheet);
             const createdAt = String(values[8] || "");
             const timestamp = createdAt && !Number.isNaN(Date.parse(createdAt))
                 ? Utilities.formatDate(new Date(createdAt), "GMT-6", "dd/MM/yyyy")
@@ -3733,6 +3732,7 @@ function handleCheckOperation(payload) {
             if (status === "accepted" && ["cut", "opening", "feed"].includes(eventKind)) {
                 const snapshot = readSupplementaryVehicleSnapshot_(sheet, eventVehicleId);
                 if (eventKind === "cut") {
+                    const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionSheet);
                     slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, String(values[0] || ""), postAppendLedgerRows);
                     let eventPayload = {};
                     try { eventPayload = JSON.parse(eventPayloadJson || "{}"); } catch (parseError) { eventPayload = {}; }
