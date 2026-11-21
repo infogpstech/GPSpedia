@@ -1112,3 +1112,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - setOptimizedImage solicita CORS antes de asignar src; en cache miss, la miniatura se deriva del HTMLImageElement ya cargado usando compressAndStoreThumbnailFromImage/createImageBitmap. Se elimina el segundo fetch desde el flujo visible.
 - Si CORS falla, el elemento reintenta una vez sin crossorigin para mantener la imagen visible; en ese modo se omite persistencia local por seguridad.
 - Se mantienen TTL/LRU/single-flight y protecciones ObjectURL. CI y pruebas de navegador pendientes.
+
+
+## Continuidad — retirar precargas duplicadas de tarjetas (2026-11-21)
+
+- updateCardInPlace e insertNewVehicleFluently descargaban previamente la imagen en un objeto Image y después volvían a cargar la misma imagen en el elemento final mediante setOptimizedImage.
+- Se retiraron ambas precargas y el helper preloadImageSilently, eliminando ese duplicado comprobado en actualización e inserción de vehículos.
+- Se añadió contrato de regresión para impedir que vuelva a aparecer el helper de precarga en este módulo.
+- CI pendiente.

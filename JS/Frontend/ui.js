@@ -3277,11 +3277,6 @@ async function updateCardInPlace(newItem) {
     const cards = document.querySelectorAll(`.card[data-vehicle-id="${newItem.id}"]`);
     if (cards.length === 0) return;
 
-    // Pre-cargar la imagen en segundo plano para evitar parpadeos
-    if (newItem.imagenVehiculo) {
-        await preloadImageSilently(newItem.imagenVehiculo);
-    }
-
     cards.forEach(card => {
         // Encontrar la imagen
         const img = card.querySelector('img');
@@ -3321,19 +3316,6 @@ function updateOpenModalIfActive(newItem) {
 }
 
 /**
- * Pre-carga una imagen en segundo plano y resuelve la promesa cuando está completamente disponible.
- */
-function preloadImageSilently(fileId) {
-    return new Promise((resolve) => {
-        if (!fileId) return resolve();
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        img.src = getImageUrl(fileId, IMG_SIZE_MEDIUM);
-    });
-}
-
-/**
  * Remueve un vehículo del DOM de forma silenciosa.
  */
 function removeVehicleSilently(id) {
@@ -3352,11 +3334,6 @@ function removeVehicleSilently(id) {
 async function insertNewVehicleFluently(item) {
     const cont = document.getElementById("contenido");
     if (!cont) return;
-
-    // Pre-cargar imagen de vehículo nuevo
-    if (item.imagenVehiculo) {
-        await preloadImageSilently(item.imagenVehiculo);
-    }
 
     const currentNav = getState().navigationState || {};
     const prefersReducedMotion = typeof window !== 'undefined' &&

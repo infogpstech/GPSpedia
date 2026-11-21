@@ -3305,3 +3305,13 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Si el servidor no admite CORS, se reintenta una sola vez sin CORS para conservar la visualización; se omite la persistencia local por seguridad.
 - [x] Se conserva render remoto inmediato, consulta IndexedDB, single-flight, TTL, LRU, PNG y presupuesto de ObjectURL.
 - [ ] Confirmar CI y validar en navegador real los casos CORS permitido/no permitido y PNG transparente.
+
+
+## Ciclo de imágenes — retirar precargas duplicadas de actualización (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] updateCardInPlace e insertNewVehicleFluently ya no descargan previamente la imagen en un objeto Image separado antes de llamar setOptimizedImage.
+- [x] Se elimina preloadImageSilently, que descargaba la misma URL y luego volvía a solicitarla desde la tarjeta.
+- [x] La actualización/insertación delega la carga a setOptimizedImage, que mantiene el render directo y la persistencia desde la imagen cargada cuando CORS lo permite.
+- [ ] Confirmar CI y validar visualmente actualización de tarjetas y nuevos vehículos.
