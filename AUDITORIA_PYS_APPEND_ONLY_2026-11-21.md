@@ -65,3 +65,11 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Se añadió regresión en JS/Tests/PysCreationIntegrity.js que construye dos reservas con el mismo opId/hash y distintos problemId; confirma que el alta se detiene antes de crear archivos Drive.
 - CI del HEAD 9baf0467cf11e4038c9e6312dc769f0b6af4c060: regresión SUCCESS, 258 suites, 3092 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Pages estaba en ejecución al registrar esta nota.
 - PyS continúa EN PROGRESO. handleAddProblem conserva ScriptLock. La retirada segura requiere separar la reserva canónica de opId, el propietario del archivo y las transiciones de estado en un ledger/eventos cuya selección first-write-wins sea inequívoca; no se considera suficiente cambiar solo el lock o el append. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### Adenda fase 2 — propiedad de imagen en reservas duplicadas (2026-11-21)
+
+- Se amplió el fail-closed: además de exigir el mismo problemId, las filas físicas repetidas de un opId deben conservar el mismo imageFileId/imageUrl. Si una misma operación apunta a archivos distintos (incluido un archivo ausente frente a uno presente), readPysOperations_ detiene la lectura para reconciliación.
+- Regresión añadida: PysCreationIntegrity comprueba que dos reservas del mismo opId/hash/problemId con fileId diferentes se rechazan antes de crear otro archivo.
+- CI 44873650200 SUCCESS: 258 suites, 3093 pruebas aprobadas, 0 fallos. Health read-only 44873650247 SUCCESS. Pages 44873650240 estaba queued al registrar.
+- La protección no retira el lock: handleAddProblem sigue EN PROGRESO y ScriptLock permanece hasta sustituir el estado mutable de propiedad por un protocolo concurrente probado.
