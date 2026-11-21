@@ -179,6 +179,17 @@ test("el registro de aplicación de año se anexa como una fila completa", () =>
     assert.doesNotMatch(applicationWrite, /getLastRow\(\) \+ 1/);
     assert.doesNotMatch(applicationWrite, /getRange\([^\n]*\)\.setValues/);
 });
+test("completar una aplicación no modifica las claves ni las filas históricas de votos", () => {
+    const completion = extract("completeFeedbackYearApplication_");
+    assert.doesNotMatch(completion, /feedbackSheet\\.getRange/);
+    assert.doesNotMatch(completion, /feedbackSheet\\.appendRow/);
+    assert.doesNotMatch(completion, /getAppliedSuggestionActorKey_/);
+    assert.match(completion, /votos son registros históricos inmutables/);
+    const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
+    const handlerEnd = feedback.indexOf("\\nfunction ", handlerStart + 10);
+    const handler = feedback.slice(handlerStart, handlerEnd);
+    assert.match(handler, /getAppliedSuggestionActorKey_\\(actorKey\\)/);
+});
 test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const completion = extract("completeFeedbackYearApplication_");
     assert.match(completion, /appendFeedbackYearVehicleUpdateEvent_/);
