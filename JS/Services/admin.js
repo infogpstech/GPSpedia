@@ -10965,8 +10965,7 @@ function handleGetVehicleContributionCandidates_(payload) {
     if (requestedImageInventoryEvents) {
         try {
             const properties = PropertiesService.getScriptProperties();
-            catalogSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
-                properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
+            catalogSecret = String(properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
         } catch (error) { catalogSecret = ""; }
     }
     const includeImageInventoryEvents = requestedImageInventoryEvents && catalogSecret.length >= 32;

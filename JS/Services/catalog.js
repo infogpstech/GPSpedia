@@ -1148,8 +1148,7 @@ function handleGetContributionCandidates_(payload = {}) {
     let includeImageInventoryEvents = false;
     if (requestedImageInventoryEvents) {
         const properties = PropertiesService.getScriptProperties();
-        const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
-            properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
+        const expectedSecret = String(properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
         if (!catalogTrafficSecretEquals_(expectedSecret, payload.secret)) {
             throw new Error("Acceso denegado a los metadatos internos del inventario de imágenes.");
         }
