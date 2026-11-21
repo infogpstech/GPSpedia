@@ -1372,17 +1372,21 @@ function getAppliedSuggestionActorKey_(actorKey) {
 const YEAR_SUGGESTION_VOTE_THRESHOLD_ = 3;
 
 function countVerifiedPositiveYearSuggestionVotes_(rows, vehicleId, year, actorColumn) {
-    const voteActors = new Set();
+    // La primera respuesta física de cada actor es la única que define su voto.
+    // Así, una escritura concurrente contradictoria no puede convertir después
+    // un voto negativo en positivo ni sumar dos veces al mismo aportante.
+    const firstVoteByActor = new Map();
     (Array.isArray(rows) ? rows : []).forEach(row => {
         const rowVehicleId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
         const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
         const actorKey = String(row[actorColumn - 1] || "").trim();
-        if (rowVehicleId === String(vehicleId || "").trim() && rowYear === Number(year) &&
-            isVerifiedSuggestionActorKey_(actorKey) && isPositiveYearSuggestionRow(row)) {
-            voteActors.add(actorKey);
-        }
+        if (rowVehicleId !== String(vehicleId || "").trim() || rowYear !== Number(year) ||
+            !isVerifiedSuggestionActorKey_(actorKey) || firstVoteByActor.has(actorKey)) return;
+        firstVoteByActor.set(actorKey, isPositiveYearSuggestionRow(row));
     });
-    return voteActors.size;
+    let positiveVotes = 0;
+    firstVoteByActor.forEach(isPositive => { if (isPositive) positiveVotes++; });
+    return positiveVotes;
 }
 
 function getFeedbackYearApplicationsSheet_(createIfMissing) {
