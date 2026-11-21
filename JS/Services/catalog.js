@@ -692,6 +692,29 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
     });
 }
 
+function readFeedbackLikeEventCounts_(spreadsheetRef) {
+    const spreadsheet = spreadsheetRef || getSpreadsheet();
+    const sheet = spreadsheet.getSheetByName("FeedbackLikes");
+    const counts = new Map();
+    if (!sheet || sheet.getLastRow() < 2) return counts;
+    const expected = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+    const headers = sheet.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
+    if (expected.some((header, index) => headers[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+    rows.forEach(row => {
+        if (String(row[5] || "") !== "event") return;
+        const actorKey = String(row[0] || "").trim(), vehicleId = String(row[1] || "").trim(), corteIndex = Number(row[2]);
+        if (!/^user:[A-Za-z0-9._@-]{1,200}$/.test(actorKey) || !/^[1-9]\d{0,14}$/.test(vehicleId) ||
+            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("FeedbackLikes contiene un evento de like inválido.");
+        const key = vehicleId + "|" + corteIndex;
+        if (!counts.has(key)) counts.set(key, new Set());
+        counts.get(key).add(actorKey);
+    });
+    const result = new Map();
+    counts.forEach((actors, key) => result.set(key, actors.size));
+    return result;
+}
+
 function handleGetCatalogData(payload = {}) {
     const cache = CacheService.getScriptCache();
     const cacheKey = 'catalog_data_v2';
@@ -724,6 +747,7 @@ function handleGetCatalogData(payload = {}) {
     const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     let cortesData = [];
     const categoryCounts = {};
+    const feedbackLikeEventCounts = readFeedbackLikeEventCounts_(getSpreadsheet());
 
     if (cortesSheet) {
         const cortesColumnMap = getCortesColumnMap(cortesSheet);
@@ -734,6 +758,10 @@ function handleGetCatalogData(payload = {}) {
           .map(row => {
             const vehicle = mapRowToObject(row, cortesColumnMap, IMAGE_FIELDS_CORTES);
             if (!vehicle) return null;
+            for (let index = 1; index <= 3; index++) {
+                const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
+                if (eventCount) vehicle["utilCorte" + index] = (parseInt(vehicle["utilCorte" + index], 10) || 0) + eventCount;
+            }
 
             // Contar vehículos por categoría
             if (vehicle.categoria) {
