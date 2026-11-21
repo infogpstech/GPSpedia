@@ -312,8 +312,8 @@ testCase("el modelo conserva su posición superior junto al logo y los botones r
     const mobileHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileHeader, /\.detail-modal-title-text \{[\s\S]*?margin:6px 0 0 !important/);
     assert.match(mobileHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:2px 1px;/);
-    assert.match(cutHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:120px !important/);
-    assert.match(mobileHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:60px !important/);
+    assert.match(cutHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:64px !important/);
+    assert.match(mobileHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:48px !important/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
