@@ -467,3 +467,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CATALOG lee directamente filas físicas A:H; el feed incremental toma snapshot mediante `findTutorialRow_`. Aprobaciones de vídeo actualizan columna G. Una migración requiere proyección compartida para lectura completa, feed, edición y vídeo.
 - Riesgos principales: alta concurrente con mismo título, ediciones simultáneas con pérdida de campos, IDs repetidos que hoy se rechazan y convivencia con aprobaciones.
 - Siguiente implementación: diseñar journal de eventos con operación/hash/expected hash y proyección común antes de retirar locks. No se modificó aún el código de tutoriales ni se desplegó Apps Script.
+
+
+## Checkpoint — tutoriales fase 1 (2026-11-21)
+
+- HEAD de código/pruebas validado: `ee194847f525cc55248826fda832a9f33bc81215`.
+- Alta `handleAddTutorial` sin ScriptLock. Nueva hoja append-only `TutorialTitleEvents` con claims/renames por título, eventHash y payloadHash. First-write-wins por operationId y título normalizado; dos altas simultáneas con mismo título tienen un solo propietario.
+- El alta anexa la fila A:H solo después de confirmar el claim. Replay por ID devuelve la fila original; si el append queda ambiguo, el mismo operationId puede recuperar. Inicialización concurrente de hojas tolerada.
+- Renombrados en `handleUpdateTutorialItem` siguen bajo lock y reservan nuevo título/liberan anterior mediante evento antes de mutar B:F. Las demás ediciones siguen in-place y bajo lock.
+- `findTutorialById_` y CATALOG usan la primera fila física por ID; duplicados posteriores se proyectan fuera del catálogo.
+- CI `44876830826` SUCCESS: 258 suites, 3097 pruebas, 0 fallos; health read-only `44876830897` SUCCESS; Pages `44876830484` queued al momento del checkpoint.
+- No se ha migrado la edición de campos ni la proyección de versiones. Siguiente cambio: journal/versiones con expected hash para `handleUpdateTutorialItem`, CATALOG y compatibilidad con aprobación de vídeo en columna G.
+- Sin despliegue Apps Script ni cambios productivos.
