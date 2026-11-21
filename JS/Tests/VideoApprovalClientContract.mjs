@@ -46,18 +46,25 @@ test("FEEDBACK autentica init, recuperación y envío con matriz servidor",()=>{
  assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
  assert.match(feedback,/userRole: actor\.role/);
 });
-test("submit comparte ScriptLock con approve/reject",()=>{
+test("submit comparte lease coordinada con approve/reject",()=>{
  const start=feedback.indexOf("function handleSubmitVideoForApproval(payload)");
  const end=feedback.indexOf("\nfunction ",start+20);
- assert.match(feedback.slice(start,end),/withVideoApprovalMutationLock_/);
+ const body=feedback.slice(start,end);
+ assert.match(body,/withVideoApprovalMutationLock_/);
+ assert.match(body,/submitVideoForApproval/);
+ const lockStart=feedback.indexOf("function withVideoApprovalMutationLock_");
+ const lockEnd=feedback.indexOf("\nfunction ",lockStart+20);
+ assert.match(feedback.slice(lockStart,lockEnd),/withSharedMutationLease_/);
+ assert.doesNotMatch(feedback.slice(lockStart,lockEnd),/LockService\.getScriptLock/);
 });
 test("Feedbacks confirma aprobación antes de publicar el destino",()=>{
  const start=feedback.indexOf("function handleApproveVideoUnlocked_(payload)");
  const end=feedback.indexOf("\n\n/**\n * Rechaza",start);
  const body=feedback.slice(start,end);
- const write=body.indexOf('JSON.stringify(videoData), "approved"');
+ const journal=body.indexOf("appendVideoApprovalEvent_(itemId, \"approved\"");
+ const materialize=body.indexOf("materializeVideoApprovalEvent_",journal);
  const publish=body.indexOf("publishApprovedVideo_(savedPayload)");
- assert.ok(write>=0&&publish>write&&body.indexOf("SpreadsheetApp.flush()",write)<publish);
+ assert.ok(journal>=0&&materialize>journal&&publish>materialize);
 });
 test("openAddVideoModal no ofrece enlace manual ni campos arbitrarios",()=>{
  const start=ui.indexOf("export function openAddVideoModal(item)");
