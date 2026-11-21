@@ -2046,9 +2046,15 @@ function handleSuggestYearLocked(payload) {
         ];
         ledger.appendRow(applicationValues);
         SpreadsheetApp.flush();
-        const savedApplications = ledger.getDataRange().getValues()
-            .map((row, index) => ({ row, rowIndex: index + 1 }))
-            .filter(entry => String(entry.row[0] || "").trim() === operationId);
+        const applicationLastRow = ledger.getLastRow();
+        const applicationMatches = applicationLastRow > 1
+            ? ledger.getRange(2, 1, applicationLastRow - 1, 1)
+                .createTextFinder(operationId).matchCase(true).matchEntireCell(true).findAll()
+            : [];
+        const savedApplications = applicationMatches.map(match => ({
+            rowIndex: match.getRow(),
+            row: ledger.getRange(match.getRow(), 1, 1, 16).getValues()[0]
+        }));
         if (savedApplications.length !== 1 ||
             String(savedApplications[0].row[8] || "") !== "pending") {
             throw new Error("No se pudo confirmar un registro único de recuperación de la ampliación; el catálogo no fue modificado.");
