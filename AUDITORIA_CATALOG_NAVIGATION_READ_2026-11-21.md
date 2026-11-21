@@ -23,3 +23,10 @@ Optimizar la proyección CATALOG dirigida por vehículo/campo sin perder el cont
 - getContributionCandidates evita cargar hojas no relacionadas y usa la misma normalización de filas + proyector global.
 - getVehicleProjection usa lectura ID/VIN global + una fila completa; no reduce el universo de conflictos.
 - CI b8d425748e483fcd6535fdc83c7c982d603b6161: SUCCESS, 273 suites / 3,191 pruebas / 0 fallos.
+
+
+## Adenda 2026-11-21 — validación CI y siguiente optimización
+- getContributionCandidates: Cortes + FeedbackLikes + AportesVehiculo; omite LogosMarca, Tutoriales, ledgers de tutoriales y Relay.
+- getVehicleProjection: columnas ID/VIN globales + una fila completa; conserva el ledger y la proyección global de conflictos.
+- CI b4c794dd582981dd3e3bda7cb2bd583bd080e12b: CatalogTargetedResponses 3/3, CatalogVehicleProjectionRead 1/1, CatalogContributionReadIsolation 1/1; regresión global 274 suites / 3,205 pruebas / 0 fallos.
+- Siguiente análisis: columnas mínimas requeridas por getContributionCandidates y costes de getReplacedImages; no limitar ledger global ni escaneo de referencias Drive sin prueba de equivalencia.

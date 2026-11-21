@@ -30,3 +30,10 @@
 - updateCardInPlace/insertNewVehicleFluently ya no hacen preload en un objeto Image separado.
 - CI b8d425748e483fcd6535fdc83c7c982d603b6161: SUCCESS, 273 suites / 3,191 pruebas / 0 fallos.
 - Pendiente navegador: CORS, PNG alfa, cache hit/miss y medición de bytes/primera pintura.
+
+
+## Adenda 2026-11-21 — validación CI
+- El flujo de cache miss reutiliza la imagen visible para crear la miniatura mediante createImageBitmap cuando CORS lo permite; fallback sin CORS mantiene la visualización y omite persistencia insegura.
+- Precargas redundantes de actualización/inserción retiradas.
+- CI b4c794dd582981dd3e3bda7cb2bd583bd080e12b: 274 suites / 3,205 pruebas / 0 fallos.
+- Pendiente Beta: CORS, PNG alfa, cache hit/miss, primera pintura, bytes y cancelación.

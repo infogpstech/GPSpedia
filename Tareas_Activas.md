@@ -3396,3 +3396,26 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Se declara explícitamente la quinta fila del estado below-logo.
 - [x] Se añadió ModalHeaderCssCascade.mjs al runner.
 - [ ] Confirmar CI y validar visualmente en navegador real/Beta, incluidos tutorial y Relay.
+
+
+## Adenda de cierre — auditoría y consolidación CSS de modales (2026-11-21)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+- [x] Encabezados de detalle consolidados en un bloque contiguo único: base compartida, variante scoped de corte y reglas responsive.
+- [x] Se preservaron los estilos compartidos de Tutorial/Relay y el cierre directo de Relay; el cierre de corte permanece dentro de .detail-modal-header-actions.
+- [x] Se corrigieron proporciones responsive del logo (máximo min(30vw,120px)), título e input móviles y la cuadrícula below-logo de cinco filas.
+- [x] Contratos ajustados para tolerar espacios de formato CSS sin relajar las propiedades verificadas.
+- [x] CI HEAD b4c794dd582981dd3e3bda7cb2bd583bd080e12b: 274 suites, 3,205 pruebas aprobadas, 0 fallos; ModalHeaderCssCascade 14/14 y CutDetailModalLayout 29/29.
+- [x] Health read-only SUCCESS y Pages build/deployment SUCCESS.
+- [ ] Beta visual: escritorio, Android/PWA, tutorial y Relay; confirmar proporciones, foco, cierre, modo oscuro y ausencia de desbordamiento.
+- No se desplegó Apps Script ni se modificaron datos productivos.
+
+## Adenda — estado de CATALOG e imágenes tras CI (2026-11-21)
+
+- [x] getContributionCandidates y getVehicleProjection: lectura aislada y dirigida con pruebas incluidas en CI; el segundo lee ID/VIN globales y una sola fila completa.
+- [x] Cache miss visible de imagen: reutiliza la imagen cargada para miniatura si CORS lo permite; fallback no-CORS conserva visualización y omite persistencia no segura.
+- [x] Precargas duplicadas de actualización/inserción retiradas.
+- [ ] Pendiente local: formalizar proyección mínima de columnas para candidatos solo si cubre todas las dependencias; mantener ledger global y orden/conflictos.
+- [ ] Pendiente local: revisar coste de getReplacedImages/inventario, sin reducir el escaneo global de referencias Drive que protege operaciones destructivas.
+- [ ] Pendiente Beta: CORS, PNG alfa, cache hit/miss, primera pintura, bytes transferidos, cancelación y comportamiento de navegador real.

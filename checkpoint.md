@@ -1176,3 +1176,16 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se corrigieron los valores móviles que eran sobrescritos (título e input), se limitó el logo móvil a min(30vw,120px), y se mantuvo el cierre de corte anidado y 40×40.
 - El estado below-logo declara cinco filas.
 - Se agregó JS/Tests/ModalHeaderCssCascade.mjs al runner; CI pendiente.
+
+
+## Checkpoint — cierre CSS y continuidad CATALOG/imágenes (2026-11-21)
+
+- HEAD previo a este checkpoint: b4c794dd582981dd3e3bda7cb2bd583bd080e12b en GPSpedia2.2.5_work.
+- CI: 274 suites / 3,205 pruebas / 0 fallos. ModalHeaderCssCascade 14/14; CutDetailModalLayout 29/29. Health read-only SUCCESS; Pages build/deployment SUCCESS.
+- Auditoría y consolidación CSS de encabezados cerradas localmente. Un bloque contiguo agrupa base compartida, variante corte y responsive. Tutorial/Relay conservan base y cierre directo; el cierre de corte sigue anidado en acciones.
+- La corrección posterior a la primera CI solo ajustó contratos regex sensibles a espacios/formato; no modificó reglas CSS.
+- Pendiente Beta visual: desktop, Android/PWA, tutorial, Relay, foco/cierre, modo oscuro y overflow.
+- CATALOG: getContributionCandidates omite hojas no relacionadas; getVehicleProjection lee IDs/VIN globales y una fila completa. Pruebas incluidas en CI.
+- Imágenes: miniatura desde elemento ya cargado con CORS, fallback sin persistencia no segura, precargas duplicadas retiradas. FIFO concurrencia 2, sin prefetch de 15 elementos.
+- Siguiente trabajo local: analizar dependencias del proyector de candidatos para una proyección de columnas mínima; auditar getReplacedImages e inventario sin reducir comprobación global de referencias Drive. Medir antes de retirar protecciones.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.

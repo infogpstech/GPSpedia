@@ -72,3 +72,10 @@ La auditoría encontró 128 selectores repetidos entre las reglas de modales de 
 - Se conserva el cierre anidado del corte (40×40) y el cierre directo de Relay.
 - Se declara la quinta fila de la variante below-logo.
 - Prueba CSS añadida al runner; CI y visual Beta pendientes.
+
+
+## Adenda de cierre 2026-11-21
+- Consolidación CSS ejecutada en style.css: base compartida + variante scoped de corte + responsive contiguos.
+- El cierre de corte se mantiene dentro de .detail-modal-header-actions y el selector directo del toolbar permanece para Relay.
+- CI b4c794dd582981dd3e3bda7cb2bd583bd080e12b: CutDetailModalLayout 29/29 y ModalHeaderCssCascade 14/14; regresión global 274 suites / 3,205 pruebas / 0 fallos.
+- Health read-only y Pages SUCCESS. Validación visual real reservada para Beta.
