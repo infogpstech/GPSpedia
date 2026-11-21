@@ -332,3 +332,12 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Implementado: ID PyS `isue-###` mediante `IdentifierSequenceReservations` con sufijo mínimo legacy; nuevas reservas `PysOperations` con `appendRow`; first-write-wins por `opId`/hash; separación entre lookup físico y canónico; lectores de PyS y feed deduplican filas idénticas y rechazan contradicciones.
 - CI `44867570021` SUCCESS: 258 suites, 3091 pruebas, 0 fallos; health read-only `44867570032` SUCCESS; Pages `44867569879` SUCCESS.
 - Pendiente: retirar ScriptLock de `handleAddProblem` tras implementar la selección del propietario canónico en carreras, limpieza de archivos duplicados y reintentos simultáneos. Las mutaciones de solución, prevención y relaciones siguen fuera de alcance y conservan sus locks.
+
+
+## PyS — fase 2: reservas contradictorias
+
+- readPysOperations_ ahora rechaza el mismo opId/payloadHash asociado a distintos problemId; el caso se marca para reconciliación en vez de ignorar la segunda fila.
+- PysCreationIntegrity.js incorpora regresión que confirma el rechazo antes de crear archivos.
+- CI 44873477741 SUCCESS: 258 suites, 3092 pruebas, 0 fallos; health read-only 44873477634 SUCCESS; Pages 44873477531 pendiente al momento de esta actualización.
+- PyS no está cerrada: handleAddProblem mantiene ScriptLock hasta completar un ledger de reservas/propiedad de imagen apto para concurrencia real.
+- No se desplegó Apps Script ni se tocaron datos productivos.
