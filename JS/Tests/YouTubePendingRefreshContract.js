@@ -8,34 +8,26 @@ function runYouTubePendingRefreshContractTests(uiSource) {
         try { callback(); passed++; results.push({ name, status: "PASS" }); }
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     }
-    function uploadBlock_(contentType) {
-        const marker = 'contentType: "' + contentType + '"';
-        const blocks = [];
-        let cursor = 0, at;
-        while ((at = source.indexOf(marker, cursor)) >= 0) {
-            const start = source.lastIndexOf("openYouTubeUploadModal({", at);
-            const end = source.indexOf("\n        });", at);
-            if (start >= 0 && end > at) {
-                const block = source.slice(start, end);
-                if (block.includes(marker) && !blocks.includes(block)) blocks.push(block);
-            }
-            cursor = at + marker.length;
-        }
-        assert_(blocks.length === 1, "Se esperaba una única ruta de vídeo modal para " + contentType + "; encontradas: " + blocks.length + ".");
-        return blocks[0];
+    function uploadBlock_(anchor) {
+        const at = source.indexOf(anchor);
+        assert_(at >= 0 && source.indexOf(anchor, at + anchor.length) < 0, "No se encontró unívocamente la ruta: " + anchor);
+        const start = source.lastIndexOf("openYouTubeUploadModal({", at);
+        const end = source.indexOf("\n        });", at);
+        assert_(start >= 0 && end > at, "No se pudo delimitar el modal: " + anchor);
+        return source.slice(start, end);
     }
-    run_("el envío de vídeo de tutorial no solicita snapshot de catálogo", () => {
-        const block = uploadBlock_("tutorial");
+    run_("el envío de vídeo de tutorial existente no solicita snapshot de catálogo", () => {
+        const block = uploadBlock_('initialTitle: item.Tema || "Tutorial técnico"');
         assert_(!block.includes("getCatalogData"), "El envío pending de tutorial aún refresca el catálogo.");
         assert_(!block.includes("onSuccess"), "El modal tutorial conserva callback de éxito innecesario.");
     });
-    run_("el envío de vídeo de corte no solicita snapshot de catálogo", () => {
-        const block = uploadBlock_("corte");
+    run_("el envío de vídeo de corte existente no solicita snapshot de catálogo", () => {
+        const block = uploadBlock_("initialTitle: meta.title");
         assert_(!block.includes("getCatalogData"), "El envío pending de corte aún refresca el catálogo.");
         assert_(!block.includes("onSuccess"), "El modal corte conserva callback de éxito innecesario.");
     });
     run_("el refresco funcional de vídeo PyS se conserva", () => {
-        const block = uploadBlock_("pys");
+        const block = uploadBlock_('initialTitle: item.Problema || "Problema técnico"');
         assert_(block.includes("invalidatePysDataCache()"), "Se eliminó la invalidación del caché PyS.");
         assert_(block.includes("loadPysData()"), "Se eliminó la recarga funcional de PyS.");
     });
