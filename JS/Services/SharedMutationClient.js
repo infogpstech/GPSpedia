@@ -156,7 +156,7 @@ function createSharedMutationClient_(dependencies) {
             throw new Error("La invalidación de caché requiere un usuario y tokens de sesión válidos.");
         }
         if (!tokens.length) return { status: "success", invalidated: 0 };
-        // Coordinator mantiene las URLs y secretos de WRITE/FEEDBACK/ADMIN. El cliente
+        // Coordinator mantiene las URLs y secretos de USERS/WRITE/FEEDBACK/ADMIN.
         // AUTH solo envía tokens al canal interno autenticado; no conoce credenciales ajenas.
         for (let offset = 0; offset < tokens.length; offset += 25) {
             const batch = tokens.slice(offset, offset + 25);
@@ -165,7 +165,7 @@ function createSharedMutationClient_(dependencies) {
                 sessionTokens: batch
             });
             if (!result || result.status !== "success" || result.invalidated !== batch.length ||
-                !Array.isArray(result.services) || !["WRITE", "FEEDBACK", "ADMIN"].every(service => result.services.includes(service))) {
+                !Array.isArray(result.services) || !["USERS", "WRITE", "FEEDBACK", "ADMIN"].every(service => result.services.includes(service))) {
                 throw new Error("Coordinator no confirmó la invalidación remota completa de caché.");
             }
         }
