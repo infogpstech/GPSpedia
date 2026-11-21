@@ -5,10 +5,17 @@ const source = readFileSync(new URL("../Services/feedback.js", import.meta.url),
 const start = source.indexOf("function findCompletedLikeReplayNoop_(");
 const end = source.indexOf("\nfunction ", start + 10);
 assert.ok(start >= 0 && end > start, "No se encontró findCompletedLikeReplayNoop_");
+const rowsStart = source.indexOf("function findFeedbackLikeRowsForActor_(");
+const rowsEnd = source.indexOf("\nfunction ", rowsStart + 10);
+assert.ok(rowsStart >= 0 && rowsEnd > rowsStart, "No se encontró findFeedbackLikeRowsForActor_");
+const snapshotStart = source.indexOf("function readLikeActorReplaySnapshot_(");
+const snapshotEnd = source.indexOf("\nfunction ", snapshotStart + 10);
+assert.ok(snapshotStart >= 0 && snapshotEnd > snapshotStart, "No se encontró readLikeActorReplaySnapshot_");
 const countStart = source.indexOf("function getFeedbackLikeEventCount_(");
 const countEnd = source.indexOf("\nfunction ", countStart + 10);
 assert.ok(countStart >= 0 && countEnd > countStart, "No se encontró getFeedbackLikeEventCount_");
-const code = source.slice(countStart, countEnd) + "\n" + source.slice(start, end);
+const code = source.slice(rowsStart, rowsEnd) + "\n" + source.slice(snapshotStart, snapshotEnd) +
+    "\n" + source.slice(countStart, countEnd) + "\n" + source.slice(start, end);
 const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
 function makeHarness({ rows = [["user:7", "10", 2, 4, 5, "completed", "now"]], schema = headers, counter = 8, ledgerExists = true } = {}) {
     const calls = [];
@@ -70,6 +77,12 @@ const handlerEnd = source.indexOf("\nfunction ", handlerStart + 10);
 const handler = source.slice(handlerStart, handlerEnd);
 assert.ok(handler.indexOf("findCompletedLikeReplayNoop_") < handler.indexOf("const ledger = ensureFeedbackLikesSheet_"),
     "El replay completado debe resolverse antes de crear/leer el ledger para mutación.");
+assert.match(handler,/const replaySnapshot = readLikeActorReplaySnapshot_\(/);
+assert.match(handler,/findCompletedLikeReplayNoop_\([\s\S]*?utilCol, replaySnapshot\)/);
+assert.match(handler,/findLikeEventReplayNoop_\([\s\S]*?utilCol, replaySnapshot\)/);
+assert.match(handler,/const existingRows = replaySnapshot\s*\?\s*replaySnapshot\.rows/);
+assert.equal((handler.match(/findFeedbackLikeRowsForActor_\(/g)||[]).length,1,
+    "El handler debe conservar una sola consulta de respaldo cuando el preflight no puede obtener snapshot.");
 assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/,
     "La ruta de likes no debe adquirir lock global.");
 console.log("FeedbackLikeCompletedReplayPreflight: " + passed + "/" + passed + " PASS — replays completados y pendientes fuera del lock");
