@@ -15,7 +15,7 @@ let passed = 0;
 function test(name, run) { run(); passed++; console.log("PASS " + name); }
 
 test("la carga Drive y la escritura ordinaria no adquieren ScriptLock ni lease", () => {
-    assert.ok(handler.indexOf("uploadImageToDrive(") < handler.indexOf("range.setValues([updated])"),
+    assert.ok(handler.indexOf("uploadImageToDrive(") < handler.indexOf("persistSupplementaryInfoValues_("),
         "La carga Drive debe completarse antes de escribir la fila");
     assert.doesNotMatch(handler, /LockService|tryLock|waitLock|withSharedMutationLease_/);
     assert.doesNotMatch(handler, /getSupplementaryInfoPlanSignature_|SUPPLEMENTARY_LOCK_FAILED/);
