@@ -160,7 +160,7 @@ function makeHandlerHarness(options = {}) {
         (...args)=>{lockEvents.push("log");logs.push(args);}, value=>String(value||"").trim(),
         password=>"pbkdf2-sha256$12000$"+"a".repeat(32)+"$"+hash(password),
         userId=>revocations.push(userId), ()=>["old-session"],
-        ()=>({rows:[{rowIndex:2,token:"old-session"}],revokedSessions:1,pendingRows:[],pendingLoginRequests:false}),
+        (sheet,userId,beforeClear)=>{beforeClear(["old-session"]);return{rows:[{rowIndex:2,token:"old-session"}],tokens:["old-session"],revokedSessions:1,pendingRows:[],pendingLoginRequests:false};},
         (sheet,rowIndex,passwordHash)=>{users[rowIndex-1][2]=passwordHash;},
         (sheet,rowIndex)=>{users[rowIndex-1][7]="";return{pending:false,error:null};},
         ()=>({cleanupPending:false,cleanupError:null}),()=>false,
