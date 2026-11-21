@@ -161,3 +161,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Las aplicaciones se anexan como fila completa de 16 campos en `FeedbackYearApplications` y se verifica una única fila para el operationId UUID.
 - `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 7/7 PASS. CI `8d80bac41d4c29e9b90d598e89eca818e03bff79`: 255 suites, 3066 pruebas, 0 fallos; health read-only y build en ejecución al registrar.
 - ScriptLock sigue activo. UUID de aplicación, mutaciones de estado y recuperación que renombra votos históricos siguen pendientes; no se ha completado la migración ni se ha desplegado Apps Script.
+
+
+
+2026-11-21 — FEEDBACK: identidad determinista y reconciliación de aplicaciones
+- Se sustituye UUID aleatorio de aplicaciones de año por SHA-256 derivado de vehículo, rango, año y fuentes versionadas.
+- La recuperación agrupa duplicados idénticos por operationId, rechaza propuestas distintas y sincroniza estado de todas las filas duplicadas reconocidas.
+- Pruebas: `SuggestYearVoteThreshold` 8/8; `FeedbackYearApplicationAppendOnly` 9/9; CI 255 suites, 3068 pruebas, 0 fallos; health read-only SUCCESS.
+- ScriptLock permanece activo; todavía hay mutaciones del ledger y de claves de votos históricos. No se ha completado la migración ni desplegado Apps Script.
