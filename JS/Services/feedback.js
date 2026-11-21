@@ -4549,7 +4549,9 @@ function findTutorialRow_(sheet, reference, preferId) {
             const identity = String(row[0] || "").trim() || makeLegacyTutorialIdentity_(row[1]);
             const projectedTitle = typeof projectTutorialTitle_ === "function"
                 ? projectTutorialTitle_(identity, row[1]) : row[1];
-            if (normalizeTutorialTitle_(projectedTitle) !== normalizeTutorialTitle_(key)) return;
+            const normalizeLookupTitle = value => typeof normalizeTutorialTitle_ === "function"
+                ? normalizeTutorialTitle_(value) : String(value || "").trim().toLowerCase();
+            if (normalizeLookupTitle(projectedTitle) !== normalizeLookupTitle(key)) return;
             row[1] = projectedTitle;
             byTitle.push({ rowIndex, row });
         });
