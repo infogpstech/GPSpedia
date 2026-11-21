@@ -43,10 +43,10 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Actualizar el contrato `JS/Tests/CutDetailModalLayout.mjs` para las dimensiones nuevas y la cascada del encabezado.
 - [x] Registrar hallazgos estáticos y selectores repetidos en `AUDITORIA_MODAL_CSS_2026-11-21.md`.
 - [ ] Ejecutar `CutDetailModalLayout.mjs` y regresión CI; corregir cualquier expectativa obsoleta sin debilitar el código.
-- [ ] Completar la consolidación de estilos compartidos y variantes de corte/tutorial/PyS/Relay; conservar el último valor efectivo de la cascada y evitar bloques dispersos para el mismo componente.
+- [x] Consolidar en un único bloque CSS final los estilos base y variantes responsive/scoped de encabezados de detalle; preservar orden de cascada y media queries.
 - [ ] Auditar y consolidar estilos de modales informativos, Inbox y Developer Tools; revisar modo oscuro, botones de cierre, títulos largos y responsive.
 - [x] Crear `Services/DEPLOYMENT_GUIDE.md` con secuencia y archivos exactos por proyecto Apps Script, URLs, ScriptProperties, secretos, dependencias, pruebas de humo y rollback.
-- [ ] Revisar la guía contra cada servicio y confirmar que las URLs de ADMIN y los secretos/propiedades del Coordinator están completos. No desplegar ni tocar propiedades remotas como parte de la documentación.
+- [x] Revisar la guía contra cada servicio: archivos exactos, `SharedMutationClient.js`, `InboxConversations.js`, URL ADMIN y secretos/propiedades Coordinator verificados contra los fuentes y COORDINATOR_SETUP. No desplegar ni tocar propiedades remotas.
 - [ ] Aceptación visual Beta en escritorio, Android/PWA y viewports estrechos; requiere deployments y dispositivos/entornos aislados.
 
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
