@@ -640,3 +640,16 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commit de prueba: 6523413028eed4ddc2d745e272f535b58514382c.
 - SharedMutationCoordinator 86/86; PysVehicleRelationIntegrity 20/20; SearchModelGrouping 21/21; PysCreationIntegrity 56/56; PysModalNavigation 10/10. CI 44909269963 SUCCESS: 259 suites, 3,131 pruebas, 0 fallos; syntax PASS. Health read-only 44909269950 SUCCESS; Pages 44909269739 SUCCESS.
 - No quedan gaps locales conocidos en la coordinación PyS; contención/expiración real entre proyectos y read-back de Spreadsheet continúan en Beta aislada.
+
+
+## Checkpoint — corrección de leases PyS contra §15 (2026-11-21)
+
+- HEAD previo a la corrección: 666ba0da5b9676f12f9501b49efef8cda3b8d27b. HEAD posterior validado: 3255f44f0f10cfbb7b5b3f6b8342c98d55008f0a.
+- Hallazgo: la sección 15 de NORMAS_DESAROLLO.md prohíbe leases, esperas y coordinación por acción en operaciones ordinarias; la fase anterior había migrado addSolution, addPrevention, addVehicleToProblem y removeVehicleFromProblem a leases FEEDBACK compartidas.
+- Corrección: se retiró withPysMutationLease_ y las cuatro políticas de lease de Coordinator. Las cuatro acciones leen/escriben directamente en FEEDBACK. Se preservan RBAC de Desarrollador para desvincular, validaciones funcionales, read-back y actividad post-escritura.
+- CATALOG_CHANGE_ALLOWED_WRITERS_ conserva las cuatro acciones porque es una allowlist de publicación de deltas y no una reserva/lease de mutación.
+- Pruebas: PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; PysImageStorageRecovery 22/22; CatalogChangeFeed 35/35; SharedMutationCoordinator 86/86; FeedbackPysPendingImageVerificationOutsideLock 5/5; FeedbackPysPostCommitOutsideLock 4/4; FeedbackPysRollbackOutsideLock 6/6.
+- CI de GitHub Actions para HEAD 3255f44f0f10cfbb7b5b3f6b8342c98d55008f0a: 259 suites, 3,130 pruebas aprobadas, 0 fallos; build SUCCESS; health read-only SUCCESS; Pages SUCCESS.
+- La adenda Beta AUG-161 fue corregida para probar operaciones directas sin Coordinator/leases; las expectativas históricas de contención/expiración de lease ya no aplican a estas cuatro acciones.
+- Comparación contra GPSpedia2.2.5: 6,235 commits ahead / 0 behind. La rama base permanece intacta.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos. Pendientes: Beta aislada de PyS/WRITE/ADMIN/tutoriales/vídeos/UX, validaciones reales de concurrencia y Safe Apply con preview/ACL/rollback autorizados.
