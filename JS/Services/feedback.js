@@ -4436,7 +4436,10 @@ function findTutorialRow_(sheet, reference, preferId) {
         }
         throw error;
     }
-    if (byId) return byId;
+    if (byId) {
+        const projected = projectTutorialEditFields_(byId.row[0], byId.row);
+        return Object.assign({}, byId, { row: projected.row, appliedEditOperations: projected.appliedOperations });
+    }
     if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) throw new Error("Tutorial no encontrado.");
     if (preferId) {
         const lastRow = sheet.getLastRow();
@@ -4452,9 +4455,14 @@ function findTutorialRow_(sheet, reference, preferId) {
             const first = byTitle[0], firstId = String(first.row[0] || "").trim();
             const sameIdentity = byTitle.every(item => String(item.row[0] || "").trim() === firstId);
             if (!sameIdentity) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
-            return first;
+            const projected = firstId ? projectTutorialEditFields_(firstId, first.row) : { row: first.row };
+            return Object.assign({}, first, { row: projected.row });
         }
-        if (byTitle.length === 1) return byTitle[0];
+        if (byTitle.length === 1) {
+            const first = byTitle[0], id = String(first.row[0] || "").trim();
+            const projected = id ? projectTutorialEditFields_(id, first.row) : { row: first.row };
+            return Object.assign({}, first, { row: projected.row });
+        }
     }
     throw new Error("Tutorial no encontrado.");
 }
