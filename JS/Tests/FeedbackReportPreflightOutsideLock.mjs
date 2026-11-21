@@ -33,7 +33,7 @@ test("el reporte se anexa completo y la confirmación busca el ID reservado", ()
 });
 test("los adjuntos se registran en un ledger append-only separado", () => {
     const rowAppend = handler.indexOf("feedbackSheet.appendRow(reportRow)");
-    const imageEvent = handler.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)");
+    const imageEvent = handler.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)", rowAppend);
     assert.ok(rowAppend >= 0 && imageEvent > rowAppend);
     assert.match(handler, /isFeedbackReportImageFileReferenced_\(uploadedImage\.metadata\.imageFileId\)/);
     assert.doesNotMatch(handler, /reportMetadata\)\.setValue|pendingExistingMetadata/);
