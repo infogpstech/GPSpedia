@@ -45,3 +45,12 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Recuperación de UPLOAD_PENDING, LINKED y RECOVERY_REQUIRED; limpieza de archivos solo con referencia comprobada.
 - Lectura de PyS sin duplicados lógicos y feed incremental con el registro canónico.
 - Validación Beta de concurrencia real Apps Script/Sheets/Drive pendiente; no desplegar ni tocar producción.
+
+
+## Progreso de implementación — fase 1 (2026-11-21)
+
+- `getPysNextId_` ahora delega en `getNextFormulaBasedId_`, reutilizando `IdentifierSequenceReservations` y el patrón histórico `isue-###`. Se añadió soporte de sufijo mínimo para considerar reservas legacy de `PysOperations`.
+- Las nuevas filas de `PysOperations` se escriben con `appendRow`; la lectura proyecta la primera fila por `opId` cuando el `payloadHash` coincide y rechaza el mismo `opId` con hash distinto o un `problemId` reservado por operaciones diferentes.
+- Se separó la búsqueda física (`findPysRowsById_`) de la proyección canónica (`findCanonicalPysRowsById_`). La validación PyS permite filas físicas idénticas y rechaza contenido contradictorio; `handleGetPysData` y el feed de catálogo proyectan la primera fila. Las rutas de aprobación de vídeo y mutación siguen usando lookup físico para rechazar destinos ambiguos.
+- Se actualizaron regresiones de allocator, integridad, recuperación y lookup. CI `44867570021` SUCCESS sobre `ce1d7a11b0f011046fb43878bb6c3a391f776002`: 258 suites, 3091 pruebas aprobadas, 0 fallos. Health read-only `44867570032` SUCCESS y Pages `44867569879` SUCCESS.
+- **Pendiente en esta tarea:** `handleAddProblem` todavía adquiere ScriptLock para reservar/vincular operación y ejecutar recuperación. No declarar PyS migrado ni retirar el lock hasta resolver el propietario canónico tras reservas concurrentes, el archivo perdedor y los reintentos simultáneos. No se desplegó Apps Script ni se modificaron datos productivos.
