@@ -46,7 +46,8 @@ check("La cuenta se desactiva solo después de invalidar sesiones y login pendie
     const tombstone = deletion.indexOf("const tombstone = '__deleted__:'");
     const sessionRows = deletion.indexOf("sessionsSheet.deleteRow");
     assert.ok(pending >= 0 && remote > pending && tombstone > remote && sessionRows > tombstone);
-    assert.match(deletion, /remainingSessions\.length/);
+    assert.match(deletion, /hasRemainingSessions/);
+    assert.match(deletion, /remainingIds = remainingLastRow >= 2/);
     assert.match(deletion, /status: 'error'/);
     assert.match(deletion, /disabled: true/);
 });
