@@ -301,7 +301,7 @@ testCase("el nombre completo pasa debajo del logo solo cuando no cabe junto a é
     assert.match(fallbackCss, /grid-column:\s*1\s*\/\s*-1;[\s\S]*?grid-row:\s*3;/);
     assert.match(fallbackCss, /detail-modal-divider \{[\s\S]*?grid-row:\s*4;/);
     assert.match(fallbackCss, /detail-modal-saving-indicator \{[\s\S]*?grid-row:\s*5;/);
-    assert.match(fallbackCss, /white-space:normal;[\s\S]*?overflow-wrap:normal;[\s\S]*?word-break:normal;/);
+    assert.match(fallbackCss, /white-space:\s*normal;[\s\S]*?overflow-wrap:\s*normal;[\s\S]*?word-break:\s*normal;/);
     assert.match(fallbackCss, /detail-modal-divider \{[\s\S]*?grid-row:\s*4;/);
     assert.match(fallbackCss, /detail-modal-saving-indicator \{[\s\S]*?grid-row:\s*5;/);
     const normalTitleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
