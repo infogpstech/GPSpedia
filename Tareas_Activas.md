@@ -297,3 +297,11 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Se añadió `findFeedbackRowById_`; reportes y sugerencias confirman la fila persistida por su ID reservado después de `appendRow`. La posición anticipada queda solo para formato.
 - Se incorporó `FeedbackAppendRowIdentity.mjs` y se actualizaron las pruebas preflight de ambos handlers. ScriptLock permanece hasta completar proyección lógica, deduplicación de Inbox y ciclo append-only de adjuntos.
 - CI pendiente para este commit; no se desplegó Apps Script ni se modificaron datos productivos.
+
+
+### Adenda de validación — confirmación FEEDBACK por ID (2026-11-21)
+
+- Commit de código/pruebas: `b3ee926872b8dfbed90b584d755a09c1ceff53ca`.
+- CI `44865504667` SUCCESS: 256 suites, 3079 pruebas aprobadas, 0 fallos; `FeedbackAppendRowIdentity` 3/3 PASS. Health read-only `44865504762` SUCCESS.
+- El primer CI encontró una aserción de prueba sensible a espacios; se corrigió la prueba y el siguiente CI pasó. No se detectó fallo de sintaxis ni de lógica del servicio.
+- La tarea P0 sigue EN PROGRESO: aún no se han migrado los locks ni la proyección de duplicados/Inbox/adjuntos.
