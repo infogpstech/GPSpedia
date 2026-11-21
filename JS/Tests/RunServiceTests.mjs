@@ -287,6 +287,7 @@ runGroup('37','USERS',()=>{
   runCli('USERS tabla responsive y acciones iconográficas móviles','JS/Tests/ResponsiveFormsUsers.js');
  const users=read('JS/Services/users.js'),testUsers=read('JS/Tests/users.js');
  runCli('P2 generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
+ runCli('USERS creación reutiliza un único snapshot para username, fila e ID','JS/Tests/UsersMutationSnapshot.mjs');
  recordResult('USERS mutaciones/RBAC/rollback/coordinación',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(users,read('JS/Services/Auth.js'),read('JS/Services/Coordinator.js')));
  if(normalizedCopy(users)!==normalizedCopy(testUsers)) throw new Error('La copia USERS difiere fuera del ID aislado.');
  recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
