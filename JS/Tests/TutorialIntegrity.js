@@ -293,14 +293,14 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.throws(() => h.api.update({ tutorialId: "tut-1", tema: "Dos" }), /Ya existe otro tutorial/);
     });
 
-    test("libera ScriptLock después de fallos de validación o persistencia", () => {
+    test("los fallos de validación o persistencia no requieren ScriptLock", () => {
         const h = buildHarness_(feedback, { missingSheet: true, failAppend: true });
         assert.throws(() => h.api.add(base), /simulated append failure/);
         assert.equal(h.state.lockWaits, 0);
         assert.equal(h.state.lockReleases, 0);
         const u = buildHarness_(feedback, { rows: [headers, ["tut-1", "Tema", "", "", "", "", "", "Autor"]], failSetValues: true });
         assert.throws(() => u.api.update({ tutorialId: "tut-1", detalles: "fallo" }), /simulated range write failure/);
-        assert.equal(u.state.lockReleases, 1);
+        assert.equal(u.state.lockReleases, 0);
     });
 
     test("UI limita el alta a Desarrollador, envía todos los campos y conserva ID para aprobación", () => {
