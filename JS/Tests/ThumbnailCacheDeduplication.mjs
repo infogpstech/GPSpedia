@@ -6,6 +6,10 @@ import { dirname, resolve } from "node:path";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = readFileSync(resolve(root, "JS/Frontend/offline.js"), "utf8");
 assert.ok(!source.includes("purgeExpiredThumbnailEntries"), "la purga global por imagen debe retirarse");
+const thumbnailTransaction = source.match(/async function runThumbnailStoreTransaction\([\s\S]*?\n\}/);
+assert.ok(thumbnailTransaction, "debe existir la transacción de miniaturas");
+assert.match(thumbnailTransaction[0], /initDB\(\{\s*silent:\s*true\s*\}\)/,
+    "el fallo del almacén opcional de miniaturas no debe emitir avisos globales");
 
 const getThumbnail = source.match(/export async function getThumbnail\([\s\S]*?\n\}/);
 const compress = source.match(/async function compressAndStoreThumbnailOnce_\([\s\S]*?\n\}/);
