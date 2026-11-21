@@ -3971,7 +3971,7 @@ function extractVinPrefix(vinStr) {
     return cleaned.substring(0, cleaned.length - 5);
 }
 
-function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
+function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId, rowsSnapshot) {
   if (!vinPrefix) return null;
   const vinColumnIndex = getVinColumnIndex(sheet);
   if (!vinColumnIndex) {
@@ -3980,7 +3980,9 @@ function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
 
-  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  const data = Array.isArray(rowsSnapshot)
+    ? rowsSnapshot
+    : sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     const rowId = row[COLS_CORTES.id - 1];
@@ -4118,7 +4120,7 @@ function handleAddVinToVehicleLocked(payload, collaboratorName) {
         return { status: "duplicate", message: "El VIN ya está registrado en otra versión de este mismo vehículo.",
             vehicleId, modelName, vinPrefix: prefix, vinCollection: existingCollection };
     }
-    const duplicate = checkVinDuplicateInSheet(sheet, prefix, vehicleId);
+    const duplicate = checkVinDuplicateInSheet(sheet, prefix, vehicleId, data);
     if (duplicate) return { status: "duplicate", message: "El VIN ya está registrado para: " + duplicate.modelName,
         vehicleId: duplicate.vehicleId, modelName: duplicate.modelName, vinPrefix: prefix };
     const update = addVinToAvailableSlot(existingCollection, prefix, maxAllowed, targetIndex);
