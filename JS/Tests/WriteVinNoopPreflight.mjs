@@ -69,7 +69,7 @@ test("una versión nueva nunca se resuelve fuera del lock", () => {
     assert.equal(h.stats().lockCalls, 1);
 });
 test("un ID ambiguo no permite responder desde preflight", () => {
-    const h = makeHarness({ duplicateIds: true, row: ["10", "", "", "", "Base", "", "", "", "", "[\\"ABC\\"]"] });
+    const h = makeHarness({ duplicateIds: true, row: ["10", "", "", "", "Base", "", "", "", "", '["ABC"]'] });
     assert.equal(h.helper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" }), null);
     h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" });
     assert.equal(h.stats().lockCalls, 1);
