@@ -694,3 +694,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - No hay consumidores en main.js para telemetría, inventario/almacenamiento ni escáner de Drive.
 - Backup/restore DB y Drive revisados estáticamente: manifiestos, fingerprint, staging y rollback; sin cambios destructivos.
 - AdminTrafficSurfaceContract: 12/12 PASS; regresión: 282 suites / 3,278 pruebas / 0 fallos; build y health read-only SUCCESS.
+
+
+[2026-11-21] ADMIN — auditoría backup/restore, escáneres y uploads
+- DB y Drive backup/restore conservan manifiestos, fingerprint, staging y rollback verificable.
+- Normalización/organización de imágenes usan un snapshot de Cortes por operación; inventario de reemplazos conserva una lectura y proyección CATALOG.
+- Upload ADMIN mantiene compare-and-set, journal append-only, linked/requires_review y read-back de Drive.
+- AdminOperationReadInventory: 8/8 PASS; regresión: 283 suites / 3,286 pruebas / 0 fallos; build y health read-only SUCCESS.
