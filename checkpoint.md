@@ -342,3 +342,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `FeedbackYearApplications` y `Feedbacks` dejan de mutarse durante recuperación/finalización; el estado se proyecta desde eventos. Se mantienen compatibilidades de lectura legacy.
 - CI commit `86e6cbcb9fac561830b842eef2e4f4977bb46308`: 255 suites, 3073 pruebas, 0 fallos; `FeedbackYearApplicationAppendOnly` 14/14, `FeedbackYearFolderSyncOutsideLock` 5/5, `SuggestYearVoteThreshold` 8/8; build SUCCESS y health read-only SUCCESS.
 - **Alcance:** lock retirado solo para `handleSuggestYear`; otros flujos P0 (reportProblem/suggestCutChange, PyS, tutoriales y aprobaciones de vídeo) siguen pendientes. Beta real Apps Script/Sheets/Drive pendiente. No desplegar Apps Script ni modificar producción.
+
+
+
+## Checkpoint — reportProblem y suggestCutChange: append de fila completa (2026-11-21)
+
+- `handleReportProblem` commit `a5b2332935ecd161a43b0b0c7ff821e538e33c75`, verificación completa `32ace63c0e72139fb6e51a3636b971a2bb8e6c08`; pruebas `fb9120980e717bf8ef1d949ac764db3d92d7a167`.
+- `handleSuggestCutChange` commit `1f2aedbf6a8141e3167ac42fe94d7ad558b20ff1`; pruebas/contratos `55774f0716c97b6adcefd7e231d35cdaf75b478f`.
+- Ambos handlers anexan cada nuevo registro como una fila completa con `appendRow`, en lugar de escribir ID, contenido y estado en varias operaciones. Confirmación lee los campos críticos; si la escritura pudo persistir, se conserva el adjunto y no se ejecuta rollback destructivo.
+- Los dos handlers **mantienen ScriptLock** y revalidación interna; todavía no se han migrado a idempotencia concurrente append-only. No retirar lock hasta implementar proyección/deduplicación de operaciones y probar carreras reales.
+- CI commit `55774f0716c97b6adcefd7e231d35cdaf75b478f`: 255 suites, 3075 pruebas, 0 fallos; build, health read-only y Pages SUCCESS. Pruebas reportes 6/6 + 5/5; sugerencias 7/7 + 5/5; P2 adjuntos 1/1.
+- No desplegar Apps Script ni modificar producción.
