@@ -227,12 +227,10 @@ const USERS_DIRECT_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
 const USERS_DIRECT_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
 
 function recordUsersDirectTraffic_() {
-    let lock = null;
-    let lockAcquired = false;
+    // Métrica best-effort: no es rate limit ni control de acceso. Se acepta
+    // subconteo por escrituras concurrentes en PropertiesService antes que
+    // serializar las lecturas ordinarias de getUsers con el ScriptLock global.
     try {
-        lock = LockService.getScriptLock();
-        lockAcquired = lock.tryLock(0);
-        if (!lockAcquired) return false;
         const properties = PropertiesService.getScriptProperties();
         const capturedAt = Date.now();
         const bucketStart = Math.floor(capturedAt / USERS_DIRECT_TRAFFIC_BUCKET_MS_) * USERS_DIRECT_TRAFFIC_BUCKET_MS_;
@@ -263,10 +261,6 @@ function recordUsersDirectTraffic_() {
         return true;
     } catch (error) {
         return false;
-    } finally {
-        if (lockAcquired && lock) {
-            try { lock.releaseLock(); } catch (error) {}
-        }
     }
 }
 
@@ -593,19 +587,17 @@ function normalizeUsername_(value) {
     return normalized;
 }
 
-// Serializa las mutaciones que pertenecen al proyecto USERS.
-// Este lock solo coordina ejecuciones del mismo proyecto Apps Script.
+// Serializa únicamente la creación de cuentas: username e ID deben ser únicos.
+// Es fail-fast; no mantiene solicitudes ordinarias esperando por el lock global.
 function withUsersMutationLock_(operation) {
     const lock = LockService.getScriptLock();
-    try {
-        lock.waitLock(30000);
-    } catch (error) {
-        throw new Error('El servidor está ocupado. Por favor intenta de nuevo en unos momentos.');
-    }
+    let acquired = false;
+    try { acquired = lock.tryLock(0); } catch (error) { acquired = false; }
+    if (!acquired) throw new Error('El servidor está ocupado. Por favor intenta de nuevo en unos momentos.');
     try {
         return operation();
     } finally {
-        lock.releaseLock();
+        if (acquired) lock.releaseLock();
     }
 }
 
@@ -722,25 +714,50 @@ function writeUserRangeAtomically_(userSheet, rowIndex, columnIndex, values) {
         (rollbackError ? ' Además, la restauración requiere revisión: ' + rollbackError.message : ' Se restauraron los valores anteriores.'));
 }
 
+function writeUserProfileNameNonBlocking_(userSheet, rowIndex, fullName) {
+    const cell = userSheet.getRange(rowIndex, COLS_USERS.Nombre_Completo);
+    let writeError = null;
+    try {
+        cell.setValue(fullName);
+        SpreadsheetApp.flush();
+    } catch (error) {
+        writeError = error;
+    }
+
+    let persisted;
+    try {
+        persisted = String(cell.getValue() === null || cell.getValue() === undefined ? "" : cell.getValue());
+    } catch (readError) {
+        throw new Error((writeError && writeError.message ? writeError.message : "No se pudo confirmar el perfil.") +
+            " No fue posible verificar el valor persistido.");
+    }
+    if (persisted !== fullName) {
+        throw new Error((writeError && writeError.message ? writeError.message + " " : "") +
+            "La actualización no quedó confirmada; consulta el perfil antes de volver a intentarlo.");
+    }
+    // Escritura de una sola celda: no restaurar un snapshot antiguo, porque
+    // podría sobrescribir una edición concurrente posterior (last-write-wins).
+    return true;
+}
+
 function handleCreateUser(payload) {
     const { newUser, sessionToken } = payload || {};
     if (!newUser || typeof sessionToken !== 'string' || !sessionToken.trim()) {
         throw new Error('Datos insuficientes para crear el usuario. Se requiere sessionToken.');
     }
     const normalized = normalizeNewUserInput_(newUser);
+    const { role: creatorRole } = getVerifiedSession(sessionToken, payload);
+    const allowedRoles = {
+        'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
+        'Jefe': ['Supervisor', 'Tecnico'],
+        'Supervisor': ['Tecnico']
+    };
+    if (!allowedRoles[creatorRole] || !allowedRoles[creatorRole].includes(normalized.role)) {
+        throw new Error("El rol '" + creatorRole + "' no tiene permisos para crear usuarios de tipo '" + normalized.role + "'.");
+    }
     const passwordHash = createPasswordHash(normalized.password);
 
     return withUsersMutationLock_(() => {
-        const { role: creatorRole } = getVerifiedSession(sessionToken, payload);
-        const allowedRoles = {
-            'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
-            'Jefe': ['Supervisor', 'Tecnico'],
-            'Supervisor': ['Tecnico']
-        };
-        if (!allowedRoles[creatorRole] || !allowedRoles[creatorRole].includes(normalized.role)) {
-            throw new Error("El rol '" + creatorRole + "' no tiene permisos para crear usuarios de tipo '" + normalized.role + "'.");
-        }
-
         const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
         if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
         const lastRow = userSheet.getLastRow();
@@ -780,18 +797,16 @@ function handleUpdateProfile(payload) {
     const sessionToken = payload && payload.sessionToken;
     if (!userId || typeof sessionToken !== 'string' || !sessionToken.trim()) throw new Error('Datos insuficientes.');
 
-    return withUsersMutationLock_(() => {
-        const { userId: authenticatedUserId, userRowIndex } = getVerifiedSession(sessionToken, payload, true);
-        if (String(authenticatedUserId).trim() !== userId) {
-            throw new Error('Acceso no autorizado: Solo puedes editar tu propio perfil.');
-        }
-        const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-        if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
-        const rowIndex = userRowIndex;
-        if (!Number.isInteger(rowIndex) || rowIndex < 2) throw new Error('No se pudo confirmar la fila del perfil autenticado.');
-        writeUserRangeAtomically_(userSheet, rowIndex, COLS_USERS.Nombre_Completo, [[updates.Nombre_Completo]]);
-        return { status: 'success', message: 'Perfil actualizado correctamente.' };
-    });
+    const { userId: authenticatedUserId, userRowIndex } = getVerifiedSession(sessionToken, payload, true);
+    if (String(authenticatedUserId).trim() !== userId) {
+        throw new Error('Acceso no autorizado: Solo puedes editar tu propio perfil.');
+    }
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+    if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
+    const rowIndex = userRowIndex;
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) throw new Error('No se pudo confirmar la fila del perfil autenticado.');
+    writeUserProfileNameNonBlocking_(userSheet, rowIndex, updates.Nombre_Completo);
+    return { status: 'success', message: 'Perfil actualizado correctamente.' };
 }
 
 
