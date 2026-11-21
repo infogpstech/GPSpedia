@@ -2318,6 +2318,24 @@ function handleRecordLike(payload) {
     return { status: "success", alreadyLiked: false, likeCount: committed.likeCount, message: "Like registrado correctamente." };
 }
 
+function findFeedbackRowById_(sheet, feedbackId, lastColumn) {
+    const id = String(feedbackId || "").trim();
+    const lastRow = sheet ? sheet.getLastRow() : 0;
+    if (!id || lastRow < 2) return null;
+    const matches = sheet.getRange(2, COLS_FEEDBACKS.ID, lastRow - 1, 1)
+        .createTextFinder(id).matchCase(true).matchEntireCell(true).findAll();
+    const exact = [];
+    matches.forEach(match => {
+        const rowIndex = match.getRow();
+        const storedId = String(sheet.getRange(rowIndex, COLS_FEEDBACKS.ID).getValue() || "").trim();
+        if (storedId !== id) return;
+        exact.push({ rowIndex, row: sheet.getRange(rowIndex, 1, 1,
+            Math.max(1, Number(lastColumn) || sheet.getLastColumn())).getValues()[0] });
+    });
+    if (exact.length > 1) throw new Error("El ID físico reservado aparece duplicado en Feedbacks; requiere revisión.");
+    return exact[0] || null;
+}
+
 function findReportByReportId_(sheet, reportId, metadataColumn) {
     const id = String(reportId || "").trim();
     const lastRow = sheet ? sheet.getLastRow() : 0;
@@ -2495,9 +2513,10 @@ function handleReportProblem(payload) {
             }
         }
         if(!duplicateReport) {
-            const lastRow=sheet.getLastRow(),newRowNumber=lastRow+1;
+            const lastRow=sheet.getLastRow();
             const FORMULA_ROW=2,lastCol=reportContext?Math.max(sheet.getLastColumn(),metadataColumn,8):(sheet.getLastColumn()||8);
-            if(lastRow>=FORMULA_ROW) copyRowPresentationOnly_(sheet,FORMULA_ROW,newRowNumber,lastCol);
+            // El índice previo solo se usa para formato; la fila persistida se localiza por ID.
+            if(lastRow>=FORMULA_ROW) copyRowPresentationOnly_(sheet,FORMULA_ROW,lastRow+1,lastCol);
             if(imageAttachment && !uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
             const reservedId=getNextFormulaBasedId_(sheet,COLS_FEEDBACKS.ID);
             const reportRow=new Array(lastCol).fill("");
@@ -2518,8 +2537,9 @@ function handleReportProblem(payload) {
             appendAttempted=true;
             sheet.appendRow(reportRow);
             SpreadsheetApp.flush();
-            const savedRow=sheet.getRange(newRowNumber,1,1,lastCol).getValues()[0];
-            const rowConfirmed=String(savedRow[COLS_FEEDBACKS.ID-1]||"").trim()===reservedId &&
+            const persistedRow=findFeedbackRowById_(sheet,reservedId,lastCol);
+            const savedRow=persistedRow ? persistedRow.row : [];
+            const rowConfirmed=Boolean(persistedRow) && String(savedRow[COLS_FEEDBACKS.ID-1]||"").trim()===reservedId &&
                 String(savedRow[COLS_FEEDBACKS.Usuario-1]||"")===String(userName) &&
                 String(savedRow[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId) &&
                 String(savedRow[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText &&
@@ -3336,9 +3356,10 @@ function handleSuggestCutChange(payload) {
             return buildCutSuggestionReplayResponse_(existing, normalizedReportId);
         }
         const createdAt = new Date().toISOString();
-        const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1;
+        const lastRow = sheet.getLastRow();
         const FORMULA_ROW = 2, lastCol = Math.max(sheet.getLastColumn() || 8, COLS_FEEDBACKS["Se resolvio"] || 0);
-        if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, newRowNumber, lastCol);
+        // La fila se localiza después del append mediante el ID reservado.
+        if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, lastRow + 1, lastCol);
         const reservedId = getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID);
         const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
@@ -3362,8 +3383,9 @@ function handleSuggestCutChange(payload) {
         appendAttempted = true;
         sheet.appendRow(suggestionRow);
         SpreadsheetApp.flush();
-        const savedRow = sheet.getRange(newRowNumber, 1, 1, lastCol).getValues()[0];
-        if (String(savedRow[COLS_FEEDBACKS.ID - 1] || "").trim() !== reservedId ||
+        const persistedRow = findFeedbackRowById_(sheet, reservedId, lastCol);
+        const savedRow = persistedRow ? persistedRow.row : [];
+        if (!persistedRow || String(savedRow[COLS_FEEDBACKS.ID - 1] || "").trim() !== reservedId ||
             String(savedRow[COLS_FEEDBACKS.Usuario - 1] || "") !== String(userName) ||
             String(savedRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "") !== normalizedVehicleId ||
             String(savedRow[COLS_FEEDBACKS.Problema - 1] || "") !== problemDesc ||
