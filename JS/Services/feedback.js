@@ -4556,68 +4556,56 @@ function handleAddTutorial(payload) {
         "Los detalles", 700, false);
     const collaborator = normalizeTutorialField_(source.userName, "El colaborador verificado", 120, true);
     const operationId = String(source.operationId || "").trim().toLowerCase();
-    if (!/^[a-z0-9_-]{20,80}$/.test(operationId)) {
-        throw new Error("Identificador de operación de tutorial inválido.");
-    }
+    if (!/^[a-z0-9_-]{20,80}$/.test(operationId)) throw new Error("Identificador de operación de tutorial inválido.");
     if (String(source.videoUrl || "").trim()) {
         throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
     }
 
     const tutorialId = "tut-" + operationId;
     const submission = { title, comoIdentificarlo, dondeEncontrarlo, detalles, collaborator };
-    const preflightSheet = getTutorialSheet_(false);
-    if (preflightSheet) {
-        const preflightExisting = findTutorialById_(preflightSheet, tutorialId);
-        if (preflightExisting) {
-            if (!tutorialRowMatchesSubmission_(preflightExisting.row, submission)) {
-                throw new Error("El identificador de operación ya pertenece a otro tutorial.");
-            }
-            return { status: "success", referenceId: String(preflightExisting.row[0] || tutorialId).trim(), alreadyCreated: true,
-                message: "El tutorial ya existía; se devolvió el registro original." };
+    const sheet = getTutorialSheet_(true);
+    const existing = findTutorialById_(sheet, tutorialId);
+    if (existing) {
+        if (!tutorialRowMatchesSubmission_(existing.row, submission)) {
+            throw new Error("El identificador de operación ya pertenece a otro tutorial.");
         }
+        return { status: "success", referenceId: String(existing.row[0] || tutorialId).trim(), alreadyCreated: true,
+            message: "El tutorial ya existía; se devolvió el registro original." };
     }
-    const lock = LockService.getScriptLock();
-    acquireFeedbackScriptLock_(lock);
+    if (tutorialTitleExists_(sheet, title)) {
+        throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
+    }
+
+    appendTutorialTitleEvent_({
+        operationId: "tutorial-create-" + operationId,
+        tutorialId, action: "CLAIM", titleKey: normalizeTutorialTitle_(title), previousTitleKey: ""
+    });
+    if (getTutorialTitleOwner_(title) !== tutorialId) {
+        throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
+    }
+
+    const newRow = [tutorialId, title, "", comoIdentificarlo, dondeEncontrarlo, detalles, "", collaborator];
+    sheet.appendRow(newRow);
     try {
-        const sheet = getTutorialSheet_(true);
-        const existingId = findTutorialById_(sheet, tutorialId);
-        if (existingId) {
-            if (!tutorialRowMatchesSubmission_(existingId.row, submission)) {
-                throw new Error("El identificador de operación ya pertenece a otro tutorial.");
-            }
-            return { status: "success", referenceId: String(existingId.row[0] || tutorialId).trim(), alreadyCreated: true,
-                message: "El tutorial ya existía; se devolvió el registro original." };
+        SpreadsheetApp.flush();
+    } catch (flushError) {
+        const recovered = findTutorialById_(sheet, tutorialId);
+        if (recovered && TUTORIAL_HEADERS.every((header, index) =>
+            String(recovered.row[index] || "").trim() === String(newRow[index] || "").trim())) {
+            return { status: "success", referenceId: tutorialId, recovered: true,
+                message: "Tutorial registrado y verificado después de una respuesta de guardado incierta." };
         }
-
-        const duplicate = tutorialTitleExists_(sheet, title);
-        if (duplicate) throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
-
-        const newRow = [tutorialId, title, "", comoIdentificarlo, dondeEncontrarlo, detalles, "", collaborator];
-        sheet.appendRow(newRow);
-        try {
-            SpreadsheetApp.flush();
-        } catch (flushError) {
-            const recovered = findTutorialRow_(sheet, tutorialId, false);
-            if (recovered && TUTORIAL_HEADERS.every((header, index) =>
-                String(recovered.row[index] || "").trim() === String(newRow[index] || "").trim())) {
-                return { status: "success", referenceId: tutorialId, recovered: true,
-                    message: "Tutorial registrado y verificado después de una respuesta de guardado incierta." };
-            }
-            throw flushError;
-        }
-
-        const saved = findTutorialRow_(sheet, tutorialId, false);
-        if (TUTORIAL_HEADERS.some((header, index) =>
-            String(saved.row[index] || "").trim() !== String(newRow[index] || "").trim())) {
-            throw new Error("La fila guardada del tutorial no coincide con los datos enviados.");
-        }
-        return { status: "success", referenceId: tutorialId,
-            message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
-    } finally {
-        lock.releaseLock();
+        throw flushError;
     }
-}
 
+    const saved = findTutorialById_(sheet, tutorialId);
+    if (!saved || TUTORIAL_HEADERS.some((header, index) =>
+        String(saved.row[index] || "").trim() !== String(newRow[index] || "").trim())) {
+        throw new Error("La fila guardada del tutorial no coincide con los datos enviados.");
+    }
+    return { status: "success", referenceId: tutorialId,
+        message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
+}
 function extractYouTubeId(url) { return getPysYouTubeVideoId_(url); }
 
 
