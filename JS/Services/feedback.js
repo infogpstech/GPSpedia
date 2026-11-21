@@ -1403,7 +1403,7 @@ function buildFeedbackYearApplicationId_(details) {
         previousRawTo: input.previousRawTo == null ? "" : String(input.previousRawTo),
         previousSourceToEventId: String(input.previousSourceToEventId || "").trim()
     });
-    if (!/^[1-9]\\d{0,14}$/.test(input.vehicleId == null ? "" : String(input.vehicleId).trim()) ||
+    if (!/^[1-9]\d{0,14}$/.test(input.vehicleId == null ? "" : String(input.vehicleId).trim()) ||
         ![input.year, input.previousFrom, input.previousTo, input.targetFrom, input.targetTo].every(value => Number.isFinite(Number(value)))) {
         throw new Error("No se puede construir una identidad estable para la aplicación de año.");
     }
