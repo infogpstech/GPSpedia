@@ -271,3 +271,14 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - USERS/createUser mantiene lease solo para exclusión con AUTH/deleteUser. Su política de recursos se reduce a USERS; se retiran las políticas Coordinator de AUTH/updateUser y AUTH/resetUserSessions.
 - Pruebas: 278 suites / 3,232 pruebas / 0 fallos; build SUCCESS; health read-only SUCCESS.
 - Siguiente: eliminar revalidaciones de actor en cache miss por acción y precalentar cachés de USERS/WRITE/FEEDBACK/ADMIN durante login; la validación de campo permanece pendiente de Beta aislada.
+
+
+### P0.3 — actor cache-only, precarga al login e invalidación en cuatro servicios (2026-11-21)
+
+- Se retiró la validación remota de `getCachedSharedSessionActor_` en cache miss. Un actor cacheado se usa localmente y renueva TTL; un miss falla cerrado con `SESSION_ACTOR_CACHE_MISS`. No hay request a Coordinator por acción.
+- Después de sincronizar sesiones, Coordinator precarga los actores de USERS/WRITE/FEEDBACK/ADMIN por endpoint interno autenticado, en lotes de 25 tokens con `fetchAll`, después de liberar el lock global. AUTH precalienta su caché local. Un servicio que no confirme precarga queda reportado y no acepta acciones protegidas hasta nuevo login/precarga.
+- Se añadieron endpoints internos de precarga a USERS/WRITE/FEEDBACK/ADMIN y USERS a la invalidación remota. Logout, cambio de rol, reset/cambio de contraseña, eliminación y otras revocaciones invalidan las cachés de los cuatro servicios antes de completar la revocación.
+- Se redujo la política USERS/createUser a recurso USERS y se añadió prueba de conflicto real de Coordinator contra AUTH/deleteUser. Se probó también precarga de 60 tokens (12 requests, 3 lotes × 4 servicios) fuera del lock, y fallo parcial de un destino sin revertir login.
+- Pruebas: 278 suites / 3,236 pruebas / 0 fallos; build SUCCESS; health read-only SUCCESS.
+- Requisito de Beta: comprobar `GPSpedia_SERVICE_URL_USERS`, `GPSpedia_COORDINATOR_SECRET_USERS` y los secretos/URLs de los cuatro servicios; validar precarga, invalidación, cache miss y re-login en deployments aislados. No se modificaron deployments ni ScriptProperties.
+- Próximo foco estático: lecturas duplicadas Users/ActiveSessions y revocaciones redundantes dentro de operaciones AUTH/USERS.
