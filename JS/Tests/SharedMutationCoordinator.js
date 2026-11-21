@@ -866,6 +866,35 @@ function runSharedMutationCoordinatorTests() {
         });
     });
 
+    test_("Un fallo de precarga en un servicio no revierte el login y queda reportado", function() {
+        const r = createRuntime_(null, null, requests => requests.map(request => {
+            const service = request.url.includes("/FEEDBACK/") ? "FEEDBACK" :
+                request.url.includes("/USERS/") ? "USERS" :
+                request.url.includes("/WRITE/") ? "WRITE" : "ADMIN";
+            return {
+                getResponseCode: () => service === "FEEDBACK" ? 503 : 200,
+                getContentText: () => JSON.stringify(service === "FEEDBACK"
+                    ? { status: "error" }
+                    : { status: "success", primed: JSON.parse(request.payload).payload.sessionTokens.length })
+            };
+        }));
+        ["USERS", "WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
+            r.properties.setProperty("GPSpedia_SERVICE_URL_" + service,
+                "https://script.google.com/macros/s/" + service + "/exec");
+            r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, (service + "-secret-").padEnd(40, "x"));
+        });
+        const createdAt = 1700000000000;
+        const result = r.request("syncUserSessions", "AUTH", "syncUserSessions", {
+            userId: "USR-PRIME-PARTIAL", role: "tecnico", fullName: "Técnico",
+            sessions: [{ token: "session-token-prime-partial", createdAt, lastActivityAt: createdAt }]
+        });
+        assert_(result.status === "success", "La sincronización de sesión no debe revertirse por un servicio opcional no disponible.");
+        assert_(result.cachePriming.failedServices.includes("FEEDBACK"), "El servicio fallido debe quedar reportado.");
+        assert_(result.cachePriming.primedServices.includes("USERS") &&
+            result.cachePriming.primedServices.includes("WRITE") &&
+            result.cachePriming.primedServices.includes("ADMIN"), "Los demás servicios deben quedar precargados.");
+    });
+
     test_("El epoch de revocación impide volver a registrar tokens anteriores al reset", function() {
         const r = createRuntime_();
         const userId = "USR-1007", oldToken = "session-token-0000000000000009";
