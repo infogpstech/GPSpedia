@@ -115,9 +115,10 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
             _rows:rows,
             _formulas:formulas
         };
-        const stats = { waits:0,releases:0 };
+        const stats = { tries:0,waits:0,releases:0,timeout:null };
         const lock = {
-            waitLock() { stats.waits++; if(options.lockTimeout) throw new Error("timeout"); },
+            tryLock(timeout) { stats.tries++; stats.timeout=timeout; return !options.lockTimeout; },
+            waitLock() { stats.waits++; throw new Error("waitLock no debe usarse en USERS."); },
             releaseLock() { stats.releases++; }
         };
         const api = new Function(
