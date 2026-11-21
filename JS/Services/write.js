@@ -906,10 +906,6 @@ function findCortesIdReservation_(sheet, opId) {
         return { opId, operationHash, vehicleId, rowIndex };
     }).sort((a, b) => a.rowIndex - b.rowIndex);
 
-    const canonicalHash = entries[0].operationHash;
-    if (entries.some(entry => entry.operationHash !== canonicalHash)) {
-        throw new Error("El opId " + opId + " ya tiene una reserva canónica con otra huella; no se asignó otro ID.");
-    }
     const ids = new Set();
     entries.forEach(entry => {
         if (ids.has(entry.vehicleId)) {
@@ -927,7 +923,7 @@ function getLastCortesIdReservation_(sheet) {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return 0;
     const rows = sheet.getRange(2, 1, lastRow - 1, CORTES_ID_RESERVATIONS_HEADERS.length).getValues();
-    const seenIds = new Set(), opIdHashes = new Map();
+    const seenIds = new Set();
     let previousId = 0;
     rows.forEach((row, offset) => {
         const opId = String(row[0] || "").trim();
@@ -940,11 +936,7 @@ function getLastCortesIdReservation_(sheet) {
         if (vehicleId <= previousId || seenIds.has(vehicleId)) {
             throw new Error("El ledger de reservas de IDs no conserva una secuencia estrictamente creciente y única.");
         }
-        if (opIdHashes.has(opId) && opIdHashes.get(opId) !== operationHash) {
-            throw new Error("El opId " + opId + " tiene huellas contradictorias en el ledger de reservas.");
-        }
         seenIds.add(vehicleId);
-        opIdHashes.set(opId, operationHash);
         previousId = vehicleId;
     });
     return previousId;
@@ -987,8 +979,11 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
 
     const verified = findCortesIdReservation_(ledger, request.opId);
     const verifiedHighWater = getLastCortesIdReservation_(ledger);
-    if (!verified || verified.operationHash !== request.operationHash || verifiedHighWater < verified.vehicleId) {
+    if (!verified || verifiedHighWater < verified.vehicleId) {
         throw new Error("No se pudo verificar la reserva persistente del vehicleId para " + request.opId + ".");
+    }
+    if (verified.operationHash !== request.operationHash) {
+        throw new Error("El opId ya reservó un vehicleId con otro contenido; no se asignó un ID nuevo.");
     }
     return verified.vehicleId;
 }
