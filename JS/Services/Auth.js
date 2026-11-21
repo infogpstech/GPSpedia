@@ -1717,7 +1717,7 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId,known
   ? [{row:usersSheet.getRange(knownRowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0],rowIndex:knownRowIndex}]
   : usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
  let rows=readTargetRows();
- if(rows.length!==1||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:0,error:'La cuenta destino dejó de ser única o activa.'};
+ if(rows.length!==1||normalizeUserId(rows[0].row[COLS_USERS.ID-1])!==normalizeUserId(userId)||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:0,error:'La cuenta destino dejó de ser única o activa.'};
  const pointer=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),shared=parseSharedRoleRevocationMarker_(rows[0].row[COLS_USERS.SessionToken-1]);
  if(shared&&shared.invalid)return{pending:true,cleanupPending:true,revokedSessions:0,error:'El marcador compartido de revocación está dañado.'};
  const local=raw?parseRoleRevocationMarker_(raw):null;
@@ -1733,7 +1733,7 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId,known
   tokens=>revokeSharedUserSessionContexts_(userId,tokens));
  if(revocation.pendingRows.length||revocation.pendingLoginRequests)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,pendingTokens:revocation.pendingRows.length,error:revocation.writeError?revocation.writeError.message:''};
  rows=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
- if(rows.length!==1||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'La cuenta destino dejó de ser única o activa.'};
+ if(rows.length!==1||normalizeUserId(rows[0].row[COLS_USERS.ID-1])!==normalizeUserId(userId)||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'La cuenta destino dejó de ser única o activa.'};
  const role=String(rows[0].row[COLS_USERS.Privilegios-1]||'').trim();
  if(role!==marker.newRole&&role!==marker.oldRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El rol cambió fuera de la operación pendiente; se requiere revisión.'};
  if(role!==marker.newRole){let writeError=null;try{usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).setValue(marker.newRole);}catch(error){writeError=error;}
