@@ -110,7 +110,7 @@ function buildHarness(feedback,ui,options={}){
     };
     const lockHelper=extract(feedback,"function acquireFeedbackScriptLock_(lock) {","const DIRECT_SERVICE_TRAFFIC_CONFIG_");
     const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleClearActivityLogs(payload) {");
-    vm.runInNewContext(lockHelper+"\n"+mutationLeaseHelper+"\n"+parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
+    vm.runInNewContext(lockHelper+"\n"+parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
     const validPayload=(opId=OP_A,overrides={})=>Object.assign({
         opId,titulo:"Falla eléctrica",descripcion:"Detalle del problema",sinSolucion:true,solucion:"",
         prevenir:"Revisar conexiones",videoUrl:"",userId:"user-1",userName:"Técnico",
