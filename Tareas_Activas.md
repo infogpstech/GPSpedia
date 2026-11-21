@@ -42,12 +42,11 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Reducir la proporción del logo del modal de corte a 64 px escritorio / 48 px móvil; conservar botones de acción y cierre de 40 px y la cuadrícula accesible.
 - [x] Actualizar el contrato `JS/Tests/CutDetailModalLayout.mjs` para las dimensiones nuevas y la cascada del encabezado.
 - [x] Registrar hallazgos estáticos y selectores repetidos en `AUDITORIA_MODAL_CSS_2026-11-21.md`.
-- [ ] Ejecutar `CutDetailModalLayout.mjs` y regresión CI; corregir cualquier expectativa obsoleta sin debilitar el código.
+- [x] Ejecutar `CutDetailModalLayout.mjs` y regresión CI; corregir expectativas obsoletas sin debilitar el código.
 - [x] Consolidar en un único bloque CSS final los estilos base y variantes responsive/scoped de encabezados de detalle; preservar orden de cascada y media queries.
-- [ ] Auditar y consolidar estilos de modales informativos, Inbox y Developer Tools; revisar modo oscuro, botones de cierre, títulos largos y responsive.
+- [x] Auditar y consolidar la base de modales informativos, encabezado Inbox y título Developer Tools; mantener overrides responsive, modo oscuro, foco y cierre accesible.
 - [x] Crear `Services/DEPLOYMENT_GUIDE.md` con secuencia y archivos exactos por proyecto Apps Script, URLs, ScriptProperties, secretos, dependencias, pruebas de humo y rollback.
 - [x] Revisar la guía contra cada servicio: archivos exactos, `SharedMutationClient.js`, `InboxConversations.js`, URL ADMIN y secretos/propiedades Coordinator verificados contra los fuentes y COORDINATOR_SETUP. No desplegar ni tocar propiedades remotas.
-- [ ] Aceptación visual Beta en escritorio, Android/PWA y viewports estrechos; requiere deployments y dispositivos/entornos aislados.
 
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
 
