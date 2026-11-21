@@ -140,6 +140,18 @@ test("cada voto de año se anexa como una fila completa y no usa escrituras por 
     assert.doesNotMatch(voteWrite, /getRange\([^\n]*\)\.setValue/);
     assert.doesNotMatch(voteWrite, /getRange\([^\n]*\)\.setValues/);
 });
+test("el registro de aplicación de año se anexa como una fila completa", () => {
+    const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
+    const handlerEnd = feedback.indexOf("\nfunction ", handlerStart + 10);
+    const handler = feedback.slice(handlerStart, handlerEnd);
+    const applicationStart = handler.indexOf('const operationId = "YSA-"');
+    const applicationEnd = handler.indexOf("return completeFeedbackYearApplication_", applicationStart);
+    const applicationWrite = handler.slice(applicationStart, applicationEnd);
+    assert.match(applicationWrite, /ledger\.appendRow\(applicationValues\)/);
+    assert.match(applicationWrite, /savedApplications\.length !== 1/);
+    assert.doesNotMatch(applicationWrite, /getLastRow\(\) \+ 1/);
+    assert.doesNotMatch(applicationWrite, /getRange\([^\n]*\)\.setValues/);
+});
 test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const completion = extract("completeFeedbackYearApplication_");
     assert.match(completion, /appendFeedbackYearVehicleUpdateEvent_/);
