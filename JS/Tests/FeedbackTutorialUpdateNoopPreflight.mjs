@@ -63,16 +63,16 @@ test("reintento idéntico devuelve éxito sin adquirir ScriptLock", () => {
     assert.equal(result.alreadyUpdated, true);
     assert.deepEqual(h.stats(), { lockCalls: 0, releaseCalls: 0, reads: 1, writes: 0 });
 });
-test("una actualización real sigue adquiriendo lock y revalidando dentro", () => {
+test("una actualización real se procesa directamente y vuelve a leer", () => {
     const h = makeHarness();
     const result = h.fn({ tutorialId: "tut-1", detalles: "Detalle nuevo" });
     assert.equal(result.status, "success");
     assert.equal(result.updated.detalles, "Detalle nuevo");
-    assert.equal(h.stats().lockCalls, 1);
-    assert.equal(h.stats().releaseCalls, 1);
+    assert.equal(h.stats().lockCalls, 0);
+    assert.equal(h.stats().releaseCalls, 0);
     assert.equal(h.stats().writes, 1);
 });
-test("una mutación real vuelve a leer bajo lock y conserva cambios concurrentes en otros campos", () => {
+test("una mutación real vuelve a leer sin lock y conserva cambios concurrentes en otros campos", () => {
     const h = makeHarness({
         beforeLockedRead(row) { row[3] = "Cambio concurrente conservado"; }
     });
@@ -80,7 +80,7 @@ test("una mutación real vuelve a leer bajo lock y conserva cambios concurrentes
     assert.equal(result.status, "success");
     assert.equal(result.updated.detalles, "Detalle actualizado");
     assert.equal(h.row[3], "Cambio concurrente conservado");
-    assert.equal(h.stats().lockCalls, 1);
+    assert.equal(h.stats().lockCalls, 0);
     assert.equal(h.stats().writes, 1);
 });
 test("un tema idéntico no consulta aprobaciones de vídeo ni duplica título", () => {
@@ -102,12 +102,12 @@ test("si no existe hoja en preflight, no afirma éxito y mantiene el flujo prote
         () => null, () => null, value => String(value || "").trim().toLowerCase(),
         () => false, { flush() {} }, { Problema: 3 });
     assert.throws(() => fn({ tutorialId: "tut-1", detalles: "Detalle" }), /Tutorial no encontrado|Hoja Tutorial no encontrada/);
-    assert.equal(lockCalls, 1);
-    assert.equal(releaseCalls, 1);
+    assert.equal(lockCalls, 0);
+    assert.equal(releaseCalls, 0);
 });
 test("rechaza payload sin campos editables antes de adquirir lock", () => {
     const h = makeHarness();
     assert.throws(() => h.fn({ tutorialId: "tut-1" }), /No se recibieron campos editables/);
     assert.equal(h.stats().lockCalls, 0);
 });
-console.log("FeedbackTutorialUpdateNoopPreflight: " + passed + "/" + passed + " PASS — reintento sin cambios fuera del lock");
+console.log("FeedbackTutorialUpdateNoopPreflight: " + passed + "/" + passed + " PASS — reintento sin cambios sin lock");
