@@ -734,7 +734,7 @@ function projectTutorialCatalogRows_(records, editEventRows) {
             throw new Error("TutorialEditEvents contiene una fila incompatible; no se pudo proyectar el catálogo.");
         }
         if (operations.has(operationId)) {
-            if (operations.get(operationId) !== payloadHash) console.warn("TutorialEditEvents: operationId contradictorio ignorado", operationId);
+            if (operations.get(operationId) !== payloadHash && typeof console !== "undefined" && console.warn) console.warn("TutorialEditEvents: operationId contradictorio ignorado", operationId);
             return;
         }
         operations.set(operationId, payloadHash);
