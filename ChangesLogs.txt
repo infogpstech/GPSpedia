@@ -669,3 +669,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - El preflight valida esquema y busca una sola vez las filas del actor/vehículo/corte; el snapshot se reutiliza para replay completed/event y ruta normal.
 - La confirmación posterior al append permanece fresca; append-only, pending/completed y proyección CATALOG sin cambios.
 - FeedbackLikeCompletedReplayPreflight: 7/7 PASS; regresión: 280 suites / 3,259 pruebas / 0 fallos; health read-only SUCCESS.
+
+
+[2026-11-21] FEEDBACK — batch de eventos de imagen para reportes propios
+- La bandeja de reportes propios carga FeedbackReportImageEvents una vez y resuelve metadata por reportId desde un índice, solo si hay reportes que necesitan fallback.
+- Mantiene metadata legacy prioritaria, primer evento equivalente y conflictos aislados al reportId afectado.
+- FeedbackInboxImageEventBatchRead: 5/5 PASS; regresión: 281 suites / 3,264 pruebas / 0 fallos; build y health read-only SUCCESS.
