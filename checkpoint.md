@@ -1200,3 +1200,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - P0.1 y el inventario estático inicial se marcan completos. No se afirma benchmark: requests reales, bytes, p50/p95, lecturas/escrituras Sheets/Drive, cache hit/miss y esperas siguen sin medir.
 - No se modificó código de servicios ni se invocaron deployments. No se accedió a datos productivos.
 - Siguiente paso: P0.2, instrumentación y pruebas locales reproducibles por flujo; luego completar consumidores AUTH/USERS y mapear cada acción frontend.
+
+
+## Continuidad — P0.2 instrumentación local de bytes (2026-11-21)
+
+- Tras el mapa P0.1, se amplió `routeActionInternal_` para serializar el request body una vez y medir bytes UTF-8 del cuerpo enviado y del cuerpo de respuesta leído. No añade viajes de red ni modifica contratos/payloads.
+- `serviceTelemetry.js` agrega totales y promedios request/response por servicio y mantiene eventos locales efímeros (máximo 200), sin guardar payloads, tokens o datos personales.
+- `ServiceBrowserTrafficContract.mjs` cubre agregación y propagación de tamaños. GitHub Actions del HEAD `b41627adb0766cf59dca8bfa5739b6e4f061fa02` estaba en ejecución al registrar; no declarar PASS hasta consultar resultados para el HEAD final.
+- La medición representa cuerpos HTTP UTF-8, no overhead de transporte, recursos multimedia directos ni lecturas/escrituras internas Sheets/Drive. La latencia registrada sigue siendo total navegador-request.
+- P0.2 sigue pendiente para ejecutar escenarios reproducibles y calcular p50/p95 por flujo en Beta autorizada.
