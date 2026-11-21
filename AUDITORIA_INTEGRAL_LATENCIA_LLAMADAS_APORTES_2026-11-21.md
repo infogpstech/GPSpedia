@@ -315,3 +315,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - En reintentos donde el actor ya había reportado, la ruta no agrega fila; se reutiliza `existingData` para conteo/validación, eliminando una lectura completa redundante de Feedbacks.
 - Cuando se agrega una fila nueva, la lectura posterior a flush permanece para incluir aportes concurrentes antes de calcular el umbral. Se conservan first-write-wins, identidad verificada, control de aplicaciones pendientes y el umbral de tres votos.
 - Prueba `SuggestYearVoteThreshold.mjs`; CI: 280 suites, 3,258 pruebas, 0 fallos; build, health read-only y Pages deploy SUCCESS. Sin cambios en deployments Apps Script ni datos productivos.
+
+
+### P1.3 — FEEDBACK: unificar snapshot de replay de likes
+
+- Antes de mutar, `handleRecordLike` consultaba FeedbackLikes para replay `completed`, volvía a consultar para replay `event` y volvía a buscar las filas del actor para continuar con la recuperación/escritura.
+- Nuevo `readLikeActorReplaySnapshot_`: valida el esquema una vez y localiza las filas del actor/vehículo/corte una vez. Ambos helpers de replay y la ruta normal consumen ese snapshot. Si el ledger no existe o el preflight no puede confirmarlo, se conserva el fallback posterior a `ensureFeedbackLikesSheet_`.
+- El read-back después de append se mantiene fresco y separado; no se reutiliza el snapshot previo para confirmar una escritura concurrente. Se preservan first-write-wins, estados pending/completed/event, append-only y la proyección CATALOG.
+- Prueba `FeedbackLikeCompletedReplayPreflight.mjs`: 7/7 PASS; regresión: 280 suites, 3,259 pruebas, 0 fallos; health read-only SUCCESS.
