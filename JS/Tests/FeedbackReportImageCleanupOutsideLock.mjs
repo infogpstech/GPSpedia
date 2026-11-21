@@ -1,27 +1,19 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-
-const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleReportProblem(payload) {");
-const end = source.indexOf("\nfunction ", start + 10);
-assert.ok(start >= 0 && end > start, "No se encontró handleReportProblem");
-const handler = source.slice(start, end);
-assert.match(handler, /const releaseLockForDriveWork = \(\) => \{ if \(lockAcquired\) \{ lock\.releaseLock\(\); lockAcquired = false; \} \};/);
-
-const duplicateStart = handler.indexOf("if(imageAttachment) {");
-const duplicateEnd = handler.indexOf("if(!duplicateReport)", duplicateStart);
-const duplicateBranch = handler.slice(duplicateStart, duplicateEnd);
-assert.ok(duplicateBranch.indexOf("releaseLockForDriveWork();") < duplicateBranch.indexOf("trashReportImageUpload_(uploadedImage)"),
-    "La imagen duplicada debe enviarse a papelera después de liberar ScriptLock");
-
-const catchStart = handler.indexOf("} catch(error) {");
-const rollback = handler.slice(catchStart);
-const cleanupStart = rollback.indexOf("if(uploadedImage &&");
-assert.ok(cleanupStart >= 0);
-const cleanup = rollback.slice(cleanupStart);
-assert.ok(cleanup.indexOf("releaseLockForDriveWork();") < cleanup.indexOf("trashReportImageUpload_(uploadedImage)"),
-    "El rollback confirmado debe limpiar Drive después de liberar ScriptLock");
-assert.match(cleanup, /else if\(uploadedImage\)\s*\{\s*console\.error/,
-    "Si no se confirma rollback, el archivo debe conservarse y no enviarse a papelera");
-assert.match(handler, /finally \{ if\(lockAcquired\) lock\.releaseLock\(\); \}/);
-console.log("FeedbackReportImageCleanupOutsideLock: 5/5 PASS");
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+const start=source.indexOf("function handleReportProblem(payload) {");
+const end=source.indexOf("\nfunction enforceFeedbackRateLimit_(",start);
+assert.ok(start>=0&&end>start,"No se encontró handleReportProblem");
+const handler=source.slice(start,end);
+assert.doesNotMatch(handler,/LockService\.getScriptLock|acquireFeedbackScriptLock_|releaseLock/);
+const upload=handler.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
+const append=handler.indexOf("feedbackSheet.appendRow(reportRow)");
+const event=handler.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)");
+assert.ok(upload>=0&&append>upload&&event>append,"El adjunto se vincula mediante evento append-only después de anexar el reporte.");
+const catchStart=handler.indexOf("} catch (error) {");
+const cleanup=handler.slice(catchStart);
+assert.match(cleanup,/isFeedbackReportImageFileReferenced_\(uploadedImage\.metadata\.imageFileId\)/);
+assert.match(cleanup,/if \(!referenced\) trashReportImageUpload_\(uploadedImage\)/);
+assert.match(cleanup,/else console\.error\("La imagen del reporte se conserva/);
+assert.doesNotMatch(cleanup,/rollbackConfirmed|pendingExistingMetadata|releaseLock/);
+console.log("FeedbackReportImageCleanupOutsideLock: 5/5 PASS — adjuntos append-only y limpieza por referencia");
