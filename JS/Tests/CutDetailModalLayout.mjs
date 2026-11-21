@@ -322,7 +322,7 @@ testCase("el modelo conserva su posición superior junto al logo y los botones r
 
 
 testCase("todos los estilos del encabezado de detalle están agrupados en un único bloque CSS", () => {
-    const marker = "BLOQUE CONSOLIDADO — encabezados de detalle";
+    const marker = "BLOQUE ÚNICO — encabezados de detalle";
     assert.equal(css.split(marker).length - 1, 1, "Debe existir un único bloque consolidado");
     const markerIndex = css.indexOf(marker);
     assert.ok(markerIndex > 0, "Debe existir el bloque consolidado");
