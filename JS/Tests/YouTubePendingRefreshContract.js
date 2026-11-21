@@ -1,4 +1,4 @@
-// Contrato estático: solicitar aprobación de vídeo no modifica el catálogo.
+// Contrato estático: solicitudes de aprobación pending no mutan catálogo ni PyS.
 function runYouTubePendingRefreshContractTests(uiSource) {
     const source = String(uiSource || "");
     const results = [];
@@ -12,24 +12,33 @@ function runYouTubePendingRefreshContractTests(uiSource) {
         const at = source.indexOf(anchor);
         assert_(at >= 0 && source.indexOf(anchor, at + anchor.length) < 0, "No se encontró unívocamente la ruta: " + anchor);
         const start = source.lastIndexOf("openYouTubeUploadModal({", at);
-        const end = source.indexOf("\n        });", at);
-        assert_(start >= 0 && end > at, "No se pudo delimitar el modal: " + anchor);
-        return source.slice(start, end);
+        const tail = source.slice(at);
+        const close = tail.match(/\n\s+\}\);/);
+        assert_(start >= 0 && close, "No se pudo delimitar el modal: " + anchor);
+        return source.slice(start, at + close.index + close[0].length);
     }
-    run_("el envío de vídeo de tutorial existente no solicita snapshot de catálogo", () => {
+    run_("tutorial existente no refresca catálogo al enviar vídeo pending", () => {
         const block = uploadBlock_('initialTitle: item.Tema || "Tutorial técnico"');
-        assert_(!block.includes("getCatalogData"), "El envío pending de tutorial aún refresca el catálogo.");
-        assert_(!block.includes("onSuccess"), "El modal tutorial conserva callback de éxito innecesario.");
+        assert_(!block.includes("onSuccess") && !block.includes("getCatalogData"), "El tutorial existente conserva un refresh pending.");
     });
-    run_("el envío de vídeo de corte existente no solicita snapshot de catálogo", () => {
+    run_("corte existente no refresca catálogo al enviar vídeo pending", () => {
         const block = uploadBlock_("initialTitle: meta.title");
-        assert_(!block.includes("getCatalogData"), "El envío pending de corte aún refresca el catálogo.");
-        assert_(!block.includes("onSuccess"), "El modal corte conserva callback de éxito innecesario.");
+        assert_(!block.includes("onSuccess") && !block.includes("getCatalogData"), "El corte existente conserva un refresh pending.");
     });
-    run_("el refresco funcional de vídeo PyS se conserva", () => {
+    run_("tutorial nuevo conserva el refresh necesario de su alta, no el del vídeo", () => {
+        const block = uploadBlock_("initialTitle: tema,");
+        assert_(!block.includes("onSuccess"), "El upload del tutorial conserva refresh al completar vídeo pending.");
+        assert_(source.includes("await refreshTutorialCatalog();\n                return;"), "Se eliminó el refresh necesario tras crear el tutorial.");
+    });
+    run_("PyS nuevo conserva su refresh inmediato y no repite al completar vídeo", () => {
+        const block = uploadBlock_('initialTitle: content.querySelector("#pys-titulo").value.trim()');
+        assert_(!block.includes("onSuccess"), "El upload PyS conserva refresh al completar vídeo pending.");
+        assert_(source.includes("invalidatePysDataCache();\n                await loadPysData().catch(() => {});"), "Se eliminó la actualización inmediata del nuevo problema PyS.");
+        assert_(!source.includes("refreshPysAfterVideo_"), "Quedó helper de refresh PyS sin consumidor.");
+    });
+    run_("PyS existente no vuelve a cargar una colección que no cambió", () => {
         const block = uploadBlock_('initialTitle: item.Problema || "Problema técnico"');
-        assert_(block.includes("invalidatePysDataCache()"), "Se eliminó la invalidación del caché PyS.");
-        assert_(block.includes("loadPysData()"), "Se eliminó la recarga funcional de PyS.");
+        assert_(!block.includes("onSuccess") && !block.includes("loadPysData"), "El vídeo pending provoca una recarga PyS innecesaria.");
     });
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
