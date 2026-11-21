@@ -361,3 +361,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se corrigió la lectura a `savedRow[COLS_FEEDBACKS.Problema - 1]` y se añadió una aserción en `FeedbackSuggestionPreflightOutsideLock.mjs` que exige el índice correcto y rechaza el desplazado.
 - La validación local no se ejecutó en este entorno; verificar el workflow CI tras publicar.
 - P0 continúa EN PROGRESO: reportes/sugerencias aún usan ScriptLock y requieren proyección append-only/idempotente; después siguen PyS, tutoriales y aprobaciones de vídeo.
+
+
+### Adenda de validación — corrección FEEDBACK (2026-11-20)
+
+- El primer workflow detectó un error en la expresión de la aserción añadida, no en el código de servicio. Se simplificó la regresión a comprobaciones de texto exactas para evitar escapes ambiguos.
+- Commit de ajuste de prueba: `f81b316b595f1675637d84f2e25fd1775083a83d`.
+- CI `44861738724` SUCCESS; health read-only `44861738743` SUCCESS. La validación de sintaxis y la suite integral se ejecutaron en GitHub Actions sobre la rama autorizada.
+- La corrección puntual queda validada localmente por CI. No equivale al cierre de la migración P0 de FEEDBACK.

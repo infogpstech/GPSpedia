@@ -207,3 +207,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se corrigió el índice de lectura de `Problema` después de `appendRow` en `handleSuggestCutChange`, alineándolo con el índice base cero usado al construir la fila.
 - Se añadió una aserción de regresión para impedir que vuelva a utilizarse el índice desplazado.
 - Validación local: no ejecutada en este entorno; el workflow de regresión de la rama se activa con el push y su resultado debe verificarse antes del cierre.
+
+
+2026-11-20 — Validación de corrección FEEDBACK
+- La suite CI detectó y permitió corregir una aserción de regresión mal escapada; la segunda ejecución completó correctamente.
+- CI `44861738724` SUCCESS; health read-only `44861738743` SUCCESS. Commit de código/prueba: `f81b316b595f1675637d84f2e25fd1775083a83d`.

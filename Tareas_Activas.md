@@ -270,5 +270,5 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 
 - [x] Corregir el índice de la columna `Problema` al verificar la fila persistida por `handleSuggestCutChange`; la escritura usa índice base cero y la lectura ahora consulta `COLS_FEEDBACKS.Problema - 1`.
 - [x] Añadir una regresión estática que exige el índice correcto y rechaza la expresión desplazada.
-- [ ] Verificar el workflow CI disparado por el commit antes de considerar cerrada la corrección.
+- [x] CI `44861738724` SUCCESS en commit `f81b316b595f1675637d84f2e25fd1775083a83d`; la suite integral de regresión terminó correctamente.
 - El hallazgo no sustituye la tarea P0: reportes y sugerencias todavía requieren migración segura de idempotencia/concurrencia para retirar ScriptLock.

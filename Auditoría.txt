@@ -985,3 +985,7 @@ Estado: REGRESIÓN LOCAL COMPLETADA. Concurrencia real de appendRow, fallos real
 - Evidencia: la fila se construye en base cero con `suggestionRow[COLS_FEEDBACKS.Problema - 1]`, pero la confirmación consultaba `savedRow[COLS_FEEDBACKS.Problema]` (índice desplazado una columna).
 - Impacto: una sugerencia correctamente anexada podía ser reportada como no confirmada porque se comparaba la columna siguiente; el adjunto quedaba preservado para reconciliación, pero el cliente recibía error pese a la escritura.
 - Severidad: media. Estado: CORREGIDO LOCALMENTE; regresión estática añadida. La suite CI se ejecutará al publicar el commit.
+
+
+Adenda — FEEDBACK confirmación de sugerencias
+- La corrección del índice de `Problema` y su regresión quedaron verificadas en CI `44861738724` SUCCESS (commit `f81b316b595f1675637d84f2e25fd1775083a83d`). Health read-only `44861738743` SUCCESS.
