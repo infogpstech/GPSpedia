@@ -3932,7 +3932,50 @@ function handleCheckVinDuplicate(payload) {
   return { status: 'success', duplicate: false, vinPrefix: prefix };
 }
 
+function findExistingVinRegistrationNoop_(payload) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    if (source.isNewTrim === true) return null;
+    const vehicleId = String(source.vehicleId || "").trim();
+    const prefix = extractVinPrefix(source.vin);
+    const trimLevel = String(source.trimLevel || "").trim();
+    if (!vehicleId || !prefix || !trimLevel) return null;
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet || sheet.getLastRow() < 2) return null;
+    const vinColumnIndex = getVinColumnIndex(sheet);
+    if (!vinColumnIndex) return null;
+    const lastRow = sheet.getLastRow();
+    const ids = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues().flat();
+    const matches = [];
+    ids.forEach((id, index) => {
+        if (String(id == null ? "" : id).trim() === vehicleId) matches.push(index + 2);
+    });
+    // Una fila ambigua debe continuar por la ruta protegida, nunca producir un falso replay.
+    if (matches.length !== 1) return null;
+    const row = sheet.getRange(matches[0], 1, 1, sheet.getLastColumn()).getValues()[0];
+    const versionsText = String(row[COLS_CORTES.versionesAplicables - 1] || "").trim();
+    const versions = parseEquipmentVersions(versionsText);
+    if (versions.length > 3) return null;
+    const targetIndex = versions.findIndex(value => value.toLowerCase() === trimLevel.toLowerCase());
+    if (targetIndex < 0 || targetIndex > 2) return null;
+    const collection = parseVinCollection(row[vinColumnIndex - 1]);
+    if (collection[targetIndex] !== prefix) return null;
+    return {
+        status: "success", alreadyPresent: true, vehicleId,
+        message: "El VIN ya está registrado para esta versión de equipamiento.",
+        vinPrefix: prefix, vinCollection: collection, versionesAplicables: versionsText
+    };
+}
+
 function handleAddVinToVehicle(payload) {
+    // Un replay exacto y comprobable es de solo lectura: no necesita el lock global
+    // ni una nueva versión de catálogo. La ruta de mutación vuelve a validar todo bajo lock.
+    try {
+        getAuthenticatedCollaborator(payload || {});
+        const replay = findExistingVinRegistrationNoop_(payload || {});
+        if (replay) return replay;
+    } catch (preflightError) {
+        // El flujo protegido conserva la validación autoritativa y el contrato de errores.
+    }
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(0)) return { status: "error", code: "WRITE_BUSY", message: "WRITE está ocupado con otra operación. Reintenta el registro del VIN en unos instantes." };
     try {
