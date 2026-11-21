@@ -629,3 +629,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - acceptTerms usa actor cacheado, sin acquire/release de Coordinator; login precalienta el actor y las revocaciones limpian la caché local.
 - Se mantiene el lock local de aceptación para evitar perder cambios concurrentes por dispositivo.
 - Se ampliaron pruebas de términos, vida e invalidación de caché y minimización de leases; 278 suites / 3,232 pruebas / 0 fallos.
+
+
+[2026-11-21] AUTH — reducción integral de leases
+- isSharedMutationAction_ queda limitado a deleteUser; login mantiene bloqueo local y sincronización de contexto sin lease.
+- Recuperación, cambio/reset de contraseña, reset de sesiones, updateUser, logout y migración usan actor cacheado/ruta directa y conservan revocaciones remotas.
+- Coordinator elimina políticas de lease para updateUser/resetUserSessions; USERS/createUser limita sus recursos a USERS y conserva exclusión frente a deleteUser.
+- Regresión: 278 suites / 3,232 pruebas / 0 fallos; build y health read-only aprobados.
