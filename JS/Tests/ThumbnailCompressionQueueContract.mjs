@@ -58,4 +58,4 @@ assert.equal(await resilient.run(async () => "siguiente"), "siguiente",
     "un fallo no debe bloquear las tareas pendientes");
 assert.deepEqual(resilient.getStats(), { limit: 1, active: 0, queued: 0 });
 
-console.log("ThumbnailCompressionQueueContract: 10/10 PASS — FIFO, límite de concurrencia y recuperación tras error");
+console.log("ThumbnailCompressionQueueContract: 15/15 PASS — FIFO, límite de concurrencia y recuperación tras error");
