@@ -28,7 +28,7 @@ assert.ok(cleanupStart > catchStart);
 assert.ok(cleanup.indexOf("releaseLockForDriveWork();") < cleanup.indexOf("trashReportImageUpload_(uploadedImage)"),
     "Si appendRow no se intentó, se libera el lock antes de eliminar la imagen.");
 assert.match(handler, /appendAttempted = true;/);
-assert.match(cleanup, /else if \\(!rowCommitted && uploadedImage\\)\\s*\\{[\\s\\S]*?appendRow pudo persistir/);
-assert.doesNotMatch(cleanup, /clearContent\\(\\)|rollbackConfirmed/);
-assert.match(handler, /finally \\{ if \\(lockAcquired\\) lock\\.releaseLock\\(\\); \\}/);
+assert.match(cleanup, /else if \(!rowCommitted && uploadedImage\)\s*\{[\s\S]*?appendRow pudo persistir/);
+assert.doesNotMatch(cleanup, /clearContent\(\)|rollbackConfirmed/);
+assert.match(handler, /finally \{ if \(lockAcquired\) lock\.releaseLock\(\); \}/);
 console.log("FeedbackSuggestionImageCleanupOutsideLock: 5/5 PASS");
