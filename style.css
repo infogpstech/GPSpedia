@@ -2393,6 +2393,13 @@ body.dark-mode .terms-agreement-logo {
     flex-shrink: 0;
     margin: 0 0 16px;
     padding-right: 34px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: -0.02em;
+    transform-origin: left center;
+    animation: dev-tools-title-expand .28s cubic-bezier(.2,.75,.25,1) both;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 #dev-tools-modal .dev-tools-tabs {
@@ -2812,13 +2819,7 @@ body.dark-mode #dev-tools-modal .dev-tools-modal-content {
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48), 0 2px 8px rgba(0, 0, 0, 0.24);
 }
 
-#dev-tools-modal .dev-tools-title {
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
-    letter-spacing: -0.02em;
-    transform-origin: left center;
-    animation: dev-tools-title-expand .28s cubic-bezier(.2,.75,.25,1) both;
-}
+
 @keyframes dev-tools-title-expand {
     from { opacity: 0; transform: translateY(-4px) scaleX(.94); letter-spacing: -.045em; }
     to { opacity: 1; transform: translateY(0) scaleX(1); letter-spacing: -.02em; }
@@ -4454,10 +4455,7 @@ td, th {
     overflow-wrap: anywhere;
 }
 
-#dev-tools-modal .dev-tools-title {
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
+
 .activity-dashboard-tabs {
     display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px;
     border-bottom: 1px solid var(--border-color, #ccc);
