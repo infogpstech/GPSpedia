@@ -79,7 +79,7 @@ function buildHarness_(feedback, options = {}) {
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
-    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS };", context);
+    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_ };", context);
     return { api: context.api, sheet, state };
 }
 
@@ -340,6 +340,32 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         };
         vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", technicianContext);
         assert.throws(() => technicianContext.authorize("addTutorial", { userId: "USR-TECH", sessionToken: "SESSION-TECH" }), /Rol no autorizado/);
+    });
+
+    test("el ledger de títulos elige una sola reserva y rechaza una operación distinta para el mismo tema", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        const first = { operationId: "tutorial-create-11111111111111111111111111111111",
+            tutorialId: "tut-11111111111111111111111111111111", action: "CLAIM",
+            titleKey: "motor", previousTitleKey: "", payloadHash: "a".repeat(64) };
+        const second = { operationId: "tutorial-create-22222222222222222222222222222222",
+            tutorialId: "tut-22222222222222222222222222222222", action: "CLAIM",
+            titleKey: "motor", previousTitleKey: "", payloadHash: "b".repeat(64) };
+        h.api.appendTitleEvent(first);
+        assert.equal(h.api.titleOwner("motor"), first.tutorialId);
+        assert.throws(() => h.api.appendTitleEvent(second), /tema del tutorial ya está reservado|Ya existe un tutorial/);
+        assert.equal(h.api.titleOwner("motor"), first.tutorialId);
+    });
+
+    test("el rename append-only libera el título anterior y reserva el nuevo", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        const tutorialId = "tut-33333333333333333333333333333333";
+        h.api.appendTitleEvent({ operationId: "tutorial-create-33333333333333333333333333333333",
+            tutorialId, action: "CLAIM", titleKey: "tema anterior", previousTitleKey: "", payloadHash: "c".repeat(64) });
+        h.api.appendTitleEvent({ operationId: "tutorial-rename-" + "d".repeat(64),
+            tutorialId, action: "RENAME", titleKey: "tema nuevo", previousTitleKey: "tema anterior",
+            payloadHash: "e".repeat(64) });
+        assert.equal(h.api.titleOwner("tema anterior"), "");
+        assert.equal(h.api.titleOwner("tema nuevo"), tutorialId);
     });
 
     test("catálogo conserva las siete columnas históricas y expone Colaborador en H", () => {
