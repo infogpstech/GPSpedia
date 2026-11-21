@@ -59,7 +59,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P0 — AUTH/USERS y excepciones de sesión
 - [x] Completar mapa de consumidores de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser` en `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`.
 - [x] Determinar y corregir redundancias de `touchSession`/`acceptTerms`: `touchSession` no tiene consumidor frontend y deja de adquirir lease; `acceptTerms` reutiliza actor cacheado y deja de adquirir lease.
-- [ ] Clasificar leases AUTH y conservar solo excepciones justificadas por §15: cierre remoto, invalidación/limpieza de sesión/caché, eliminación de cuenta y bloqueo temporal por intentos fallidos.
+- [x] Clasificar y reducir leases AUTH conforme a §15: el dispatcher conserva lease únicamente para deleteUser; login mantiene bloqueo temporal y registro inicial de sesión; logout/cambios de contraseña/reset de sesiones conservan revocación remota sin lease; updateUser y acciones ordinarias usan actor cacheado y lock local solo donde la escritura lo requiere. USERS/createUser conserva exclusión únicamente frente a AUTH/deleteUser.
 - [ ] Resolver y probar la carrera USERS `createUser` ↔ AUTH `deleteUser`.
 - [ ] Verificar caché de actor e invalidación por revocación/cambio de rol/logout/eliminación.
 - [ ] Detectar lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación.
@@ -100,4 +100,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS y primera reducción de leases (touchSession/acceptTerms) completados. Continuar con las demás acciones AUTH: retirar leases de recuperación/cambio de contraseña/actualizaciones que no necesiten exclusión entre servicios, usando actor cacheado y conservando las revocaciones remotas. Mantener createUser ↔ deleteUser coordinados hasta disponer de autoridad común. Línea base real de campo queda diferida a Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS y reducción integral de leases AUTH completados. La única lease del dispatcher AUTH es deleteUser; createUser (USERS) comparte exclusivamente el recurso USERS con esa eliminación. Continuar con P0.3: eliminar revalidaciones de identidad en cache miss y precalentar actores de sesión en USERS/WRITE/FEEDBACK/ADMIN desde el login, manteniendo solo revocación remota/invalidación y cierre de sesión. Después medir la línea base real en Beta aislada.
