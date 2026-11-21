@@ -163,6 +163,7 @@ runGroup('33','FEEDBACK',()=>{
   runCli('FEEDBACK registro de actividad appendRow sin lock','JS/Tests/ActivityLogAppendAtomic.mjs');
   runCli('FEEDBACK preflight dirigido de likes fuera del ScriptLock','JS/Tests/FeedbackLikePreflightOutsideLock.mjs');
   runCli('FEEDBACK búsqueda dirigida de reportId','JS/Tests/FeedbackReportLookupBoundedRead.mjs');
+  runCli('FEEDBACK localización de fila append por ID reservado bajo intercalado','JS/Tests/FeedbackAppendRowIdentity.mjs');
   runCli('FEEDBACK replay de reportes antes de Drive y lock','JS/Tests/FeedbackReportPreflightOutsideLock.mjs');
   runCli('FEEDBACK replay de tutorial antes del lock','JS/Tests/FeedbackTutorialPreflightOutsideLock.mjs');
   runCli('FEEDBACK lookup dirigido de tutoriales','JS/Tests/FeedbackTutorialLookupBoundedRead.mjs');
