@@ -458,3 +458,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - recordImageAdministrationActivity ya no usa lease ACTIVITY, getLastRow ni escrituras separadas. Usa getAdminFormulaBasedIdPattern_ y appendRow para anexar fórmula ID + datos en una sola operación.
 - Se retiró recordAdminImageActivity de Coordinator; auditDriveImagesInCortes, saveUnusedImagesInventory y createCortesImageFolder conservan sus leases específicas.
 - AdminImageActivityAppendAtomic 5/5 y AdminImageScanCoordinatorContract 1/1 PASS en harness exact-source; pendiente CI integral. Sin cambios productivos.
+
+
+2026-11-21 — CIERRE DE AUDITORÍA ADMIN/WRITE
+- ADMIN: se eliminaron locks/leases redundantes de publicación de catálogo, información suplementaria, helper Testigo y registro de actividad; la actividad usa appendRow. Alta de logos conserva lock esencial pero fail-fast. Leases de auditoría, inventario y unicidad de carpeta se mantienen.
+- WRITE: ID moderno fuera del lock, lectura focalizada de Idempotencia, sourceVersion temporal después de liberar lock y contrato de recuperación física documentado. El lock físico fail-fast se conserva para fila/Idempotencia/rollback.
+- Contratos exact-source: Admin 22/22 (6+5+1+4+5+1) y WRITE 23/23 (5+4+7+7) PASS. Orden post-lock permanent delete/restore PASS. CI integrado no disponible en el HEAD consultado; no deployment ni cambios productivos.
