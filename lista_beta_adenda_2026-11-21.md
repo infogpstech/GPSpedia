@@ -100,3 +100,28 @@ Esta adenda complementa los segmentos históricos sin reescribirlos:
 Guardar evidencia sintética por operación y archivo, capturas de UI y registros de ejecución. No registrar secretos ni datos personales. Una prueba se marca PASS solo después de verificar respuestas, filas, reservas, referencias, ACL y archivos reales en el entorno aislado.
 
 No desplegar Apps Script a producción ni modificar datos productivos.
+
+
+## Protocolos complementarios — vídeos, tutoriales e Inbox sin leases
+
+### Vídeos — envío, aprobación y rechazo directos
+
+- submitVideoForApproval, approveVideo y rejectVideo se ejecutan directamente en FEEDBACK; no llaman a Coordinator, no adquieren leases y no usan ScriptLock local.
+- La autorización sigue dependiendo del actor de sesión y de los roles permitidos por el backend; el rol declarado por el cliente no es autoridad.
+- La fuente de decisión continúa siendo VideoApprovalEvents append-only. En Beta, comprobar opVideoId, idempotencia, rechazo de decisiones opuestas, materialización en Feedbacks y publicación/retirada exacta del destino.
+- En pruebas concurrentes, no medir contención ni expiración de leases; registrar el resultado real del append/read-back y cualquier respuesta perdida o fallo parcial de Spreadsheet/Drive/YouTube.
+
+### Tutoriales — alta y edición directas
+
+- addTutorial y updateTutorialItem usan journals append-only para claims de título, renombrados y ediciones D:F; no deben reservar TUTORIAL en Coordinator.
+- En Beta, comprobar unicidad de título, identidad estable/legacy, expectedHash, preservación de Imagen/Video/Colaborador y recuperación tras append parcial. No exigir lease ni bloqueo Coordinator.
+
+### Inbox — operaciones directas
+
+- Las lecturas y mutaciones Inbox no adquieren ScriptLock ni llaman a Coordinator. Mantienen autenticación de sesión, participantes, RBAC, idempotencia y auditoría.
+- En Beta, verificar creación, envío, paginación, lectura/no leído, archivo, cierre y ocultación por participante; comprobar historial, contadores y auditoría en Spreadsheet aislado. Registrar resultados de escrituras simultáneas sin exigir serialización artificial.
+
+### Sustitución de expectativas históricas
+
+- AUG-155: las pruebas interproyecto siguen aplicando a servicios/operaciones que aún tengan una coordinación explícita vigente; excluir approveVideo/rejectVideo/submitVideoForApproval, addTutorial/updateTutorialItem y operaciones Inbox de las expectativas de lease Coordinator.
+- Los segmentos históricos que exigen Coordinator para TUTORIAL o Inbox quedan sustituidos por este protocolo. No modificar sus archivos históricos; aplicar esta adenda al ejecutar Beta.
