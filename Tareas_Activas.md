@@ -254,3 +254,13 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - El estado de `FeedbackYearApplications` se proyecta desde `FeedbackYearApplicationEvents`; los votos históricos no se modifican al completar una ampliación. Las claves legacy `applied:user:...` solo se reconocen en lectura.
 - Pruebas actualizadas: `FeedbackYearApplicationAppendOnly` 14/14, `FeedbackYearFolderSyncOutsideLock` 5/5, `SuggestYearVoteThreshold` 8/8. CI commit `86e6cbcb9fac561830b842eef2e4f4977bb46308`: 255 suites, 3073 pruebas aprobadas, 0 fallos; build y health read-only SUCCESS.
 - El retiro del lock aplica únicamente a `handleSuggestYear`; otros handlers FEEDBACK todavía tienen locks y continúan pendientes de migración. La prueba beta real de Apps Script/Sheets/Drive sigue pendiente. No se desplegó Apps Script ni se tocaron datos productivos.
+
+
+
+## En curso — escrituras completas para reportes y sugerencias de corte (2026-11-21)
+
+- `handleReportProblem`: los reportes nuevos se construyen como una fila completa (ID reservado, usuario, vehículo, descripción y metadata opcional) y se anexan con un único `appendRow`. La confirmación verifica ID, usuario, vehículo, descripción y metadata. Si el append pudo persistir pero la confirmación falla, el adjunto se conserva para reconciliación; no se borra una posible referencia.
+- `handleSuggestCutChange`: las sugerencias nuevas se construyen como fila completa (ID, usuario, vehículo, JSON de propuesta y estado inicial) y se anexan con `appendRow`; se verifica la fila completa. Si el append pudo persistir, el adjunto no se envía a papelera ante un error incierto.
+- Los dos handlers conservan temporalmente ScriptLock y revalidación bajo lock para impedir duplicados mientras se diseña la proyección idempotente que permita retirar la serialización. No afirmar que estos flujos estén migrados.
+- Pruebas: `FeedbackReportPreflightOutsideLock` 6/6, `FeedbackReportImageCleanupOutsideLock` 5/5, `FeedbackSuggestionPreflightOutsideLock` 7/7, `FeedbackSuggestionImageCleanupOutsideLock` 5/5, `P2FeedbackImageUploadLocks` 1/1. CI commit `55774f0716c97b6adcefd7e231d35cdaf75b478f`: 255 suites, 3075 pruebas aprobadas, 0 fallos; build, health read-only y Pages SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos. Siguiente: diseñar identidad/proyección append-only de reportes y sugerencias para eliminar locks sin duplicar tickets ni propuestas.
