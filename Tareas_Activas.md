@@ -406,3 +406,13 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - [ ] Auditar y adaptar aprobaciones de vídeo para la proyección completa.
 - [ ] Beta aislada: altas, ediciones simultáneas, renombrados, respuestas perdidas, reservas huérfanas y aprobaciones de vídeo.
 - CI `44877806419`: 258 suites, 3101 pruebas, 0 fallos; health y Pages SUCCESS.
+
+## Tutoriales — endurecimiento del ledger de títulos
+
+- [x] Verificar eventHash de cada fila de TutorialTitleEvents contra el contenido completo del evento.
+- [x] Rechazar operationId repetido con evento contradictorio; conservar replays físicos idénticos.
+- [x] Añadir regresiones en TutorialIntegrity para hash manipulado y operationId contradictorio.
+- CI 44901700375: 258 suites, 3103 pruebas, 0 fallos; health read-only 44901700446 SUCCESS. Pages 44901699997 en ejecución al registrar.
+- [ ] Migrar renombrados a eventos append-only sin ScriptLock y proyectar el título actual en findTutorialRow_, CATALOG y feed.
+- [ ] Auditar aprobaciones de vídeo después de cerrar renombrados.
+- La edición de filas históricas sin ID sigue bajo lock hasta diseñar transición segura.
