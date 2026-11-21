@@ -42,7 +42,9 @@ test("rechaza eventos de imagen distintos para el mismo reporte",()=>{
  assert.throws(()=>lookup(makeSheet(rows))("REP-1"),/eventos de imagen contradictorios/);
 });
 test("la vinculación de imágenes usa appendRow y no modifica reportMetadata in-place",()=>{
- const append=extract("appendFeedbackReportImageEvent_","appendReportImageEventMarker");
+ const a=source.indexOf("function appendFeedbackReportImageEvent_("),b=source.indexOf("\\nconst REPORT_IMAGE_MAX_BYTES",a);
+ assert.ok(a>=0&&b>a);
+ const append=source.slice(a,b);
  assert.match(append,/sheet\.appendRow\(row\)/);
  assert.match(append,/findFeedbackReportImageEventByReportId_\(id\)/);
  assert.match(append,/imageSha256/);
