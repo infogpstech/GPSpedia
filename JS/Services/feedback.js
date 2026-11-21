@@ -1445,6 +1445,75 @@ function getFeedbackYearApplicationsSheet_(createIfMissing) {
     return sheet;
 }
 
+function getFeedbackYearApplicationEventsSheet_(createIfMissing) {
+    const headers = ["eventId", "operationId", "eventType", "createdAt", "payloadJson"];
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("FeedbackYearApplicationEvents");
+    if (!sheet && !createIfMissing) return null;
+    if (!sheet) sheet = ss.insertSheet("FeedbackYearApplicationEvents");
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        SpreadsheetApp.flush();
+    }
+    const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0]
+        .map(value => String(value || "").trim());
+    if (headers.some((header, index) => actual[index] !== header)) {
+        throw new Error("El esquema de FeedbackYearApplicationEvents no coincide.");
+    }
+    return sheet;
+}
+
+function appendFeedbackYearApplicationEvent_(operationId, eventType, payload) {
+    const cleanOperationId = String(operationId || "").trim();
+    const allowedTypes = new Set(["activity_attempted", "requires_review", "completed"]);
+    if (!/^YSA-[A-Za-z0-9_-]{20,80}$/.test(cleanOperationId) || !allowedTypes.has(eventType)) {
+        throw new Error("El evento de aplicación de año no tiene una identidad o tipo válido.");
+    }
+    const payloadJson = JSON.stringify(payload == null ? {} : payload);
+    const sheet = getFeedbackYearApplicationEventsSheet_(true);
+    const rows = sheet.getLastRow() > 1
+        ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues() : [];
+    const existing = rows.filter(row =>
+        String(row[1] || "").trim() === cleanOperationId &&
+        String(row[2] || "").trim() === eventType
+    );
+    if (existing.length) {
+        if (existing.some(row => String(row[4] || "") !== payloadJson)) {
+            throw new Error("El evento de aplicación ya existe con contenido distinto; requiere revisión.");
+        }
+        return { duplicate: true, eventId: String(existing[0][0] || "") };
+    }
+    const canonical = JSON.stringify({ operationId: cleanOperationId, eventType, payload: payload == null ? {} : payload });
+    const digest = Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8
+    );
+    const eventId = "YSE-" + digest.map(value => ("0" + (value & 255).toString(16)).slice(-2)).join("");
+    const createdAt = new Date().toISOString();
+    sheet.appendRow([eventId, cleanOperationId, eventType, createdAt, payloadJson]);
+    SpreadsheetApp.flush();
+    const savedRows = sheet.getLastRow() > 1
+        ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues() : [];
+    const saved = savedRows.find(row => String(row[0] || "").trim() === eventId);
+    if (!saved || String(saved[1] || "").trim() !== cleanOperationId ||
+        String(saved[2] || "").trim() !== eventType || String(saved[4] || "") !== payloadJson) {
+        const pending = new Error("No se pudo confirmar el evento de aplicación de año; reintenta la operación.");
+        pending.code = "FEEDBACK_YEAR_EVENT_APPEND_UNCONFIRMED";
+        throw pending;
+    }
+    return { duplicate: false, eventId };
+}
+
+function getFeedbackYearApplicationEventState_(operationId, eventRows) {
+    const events = Array.isArray(eventRows) ? eventRows : [];
+    const matching = events.filter(row => String(row[1] || "").trim() === String(operationId || "").trim());
+    const types = new Set(matching.map(row => String(row[2] || "").trim()));
+    return {
+        completed: types.has("completed"),
+        requiresReview: types.has("requires_review"),
+        activityAttempted: types.has("activity_attempted")
+    };
+}
+
 function findPendingFeedbackYearApplication_(vehicleId) {
     const sheet = getFeedbackYearApplicationsSheet_(false);
     if (!sheet) return null;
