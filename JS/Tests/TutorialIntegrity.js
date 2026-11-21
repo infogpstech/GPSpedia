@@ -83,7 +83,7 @@ function buildHarness_(feedback, options = {}) {
         findPendingVideoApprovalForTarget_: () => options.pendingApproval === true,
         state
     };
-    const helpers = extract_(feedback, "const TUTORIAL_HEADERS", "function extractYouTubeId(url)") + "\n" + extract_(feedback, "function acquireFeedbackScriptLock_(lock)", "const DIRECT_SERVICE_TRAFFIC_CONFIG_");
+    const helpers = extract_(feedback, "const TUTORIAL_HEADERS", "function extractYouTubeId(url)");
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
