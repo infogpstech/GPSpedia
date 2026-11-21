@@ -1,5 +1,7 @@
 # Coordinador compartido de mutaciones — configuración
 
+Guía operativa paso a paso y matriz de despliegue por archivo: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+
 ## Componentes
 
 - `JS/Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
@@ -28,12 +30,13 @@ Para la telemetría directa de CATALOG se agrega un secreto independiente de sol
 
 Este secreto no incorpora CATALOG a la lista de servicios autorizados para leases, sesiones ni mutaciones; solo autentica la consulta interna `getServiceTraffic`.
 
-Configurar en el proyecto Coordinator las URLs de los cinco endpoints del mismo entorno:
+Configurar en el proyecto Coordinator las URLs de los servicios consultados del mismo entorno:
 - `GPSpedia_SERVICE_URL_CATALOG`
 - `GPSpedia_SERVICE_URL_AUTH`
 - `GPSpedia_SERVICE_URL_USERS`
 - `GPSpedia_SERVICE_URL_WRITE`
 - `GPSpedia_SERVICE_URL_FEEDBACK`
+- `GPSpedia_SERVICE_URL_ADMIN` (también necesaria para invalidación remota de caché de actor desde AUTH; no se usa como fuente de telemetría).
 
 Coordinator consulta estas fuentes en paralelo, usando el secreto individual ya registrado. AUTH, USERS, WRITE y FEEDBACK reutilizan su `GPSpedia_COORDINATOR_SECRET_<SERVICIO>`; CATALOG usa el secreto de telemetría dedicado. Las URLs deben ser endpoints /exec del entorno correspondiente, nunca de producción desde un Coordinator de prueba.
 
