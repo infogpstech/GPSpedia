@@ -146,13 +146,17 @@ function runSupplementaryVideoContractTests(sources) {
     const catalogStart = catalog.indexOf("function handleGetCatalogData(payload = {})");
     const catalogEnd = catalog.indexOf("\nfunction ", catalogStart + 20);
     const catalogBlock = catalog.slice(catalogStart, catalogEnd);
+    const vehicleMapStart = catalog.indexOf("function mapCatalogVehicleRowForProjection_");
+    const vehicleMapEnd = catalog.indexOf("\nfunction readCatalogContributionProjectionVehicles_", vehicleMapStart);
+    const vehicleMapBlock = catalog.slice(vehicleMapStart, vehicleMapEnd);
     run_("CATALOG lee Cortes desde Spreadsheet tras forceRefresh", () => {
         assert_(catalogBlock.includes("payload.forceRefresh === true"));
         assert_(catalogBlock.includes("getDataRange().getValues()"));
+        assert_(catalogBlock.includes("mapCatalogVehicleRowForProjection_"));
     });
     run_("CATALOG expone el campo físico como Video normalizado", () => {
-        assert_(catalogBlock.includes("vehicle.Video = normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl)"));
-        assert_(catalogBlock.includes("delete vehicle.videoGuiaDesarmeUrl"));
+        assert_(vehicleMapBlock.includes("vehicle.Video = normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl)"));
+        assert_(vehicleMapBlock.includes("delete vehicle.videoGuiaDesarmeUrl"));
     });
 
     const openVideoStart = ui.indexOf("export function openAddVideoModal(item)");
