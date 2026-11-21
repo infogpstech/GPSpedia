@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const start=source.indexOf("function handleUploadAdminImage(payload, logMessage, modalContext)");
+const end=source.indexOf("\n// ============================================================================\n// MICROSERVICIO REGISTRO DE CORTES",start);
+assert.ok(start>=0&&end>start,"No se encontró el handler append-only");
+const handler=source.slice(start,end);
+const statusStart=source.indexOf("function handleGetAdminImageUploadStatus");
+const statusEnd=source.indexOf("\nfunction handleUploadAdminImageLegacy_",statusStart);
+const status=source.slice(statusStart,statusEnd);
+assert.ok(handler.includes("uploadImageToDrive(fileData") && handler.includes("operationKey"),"El reintento debe recuperar el mismo token/archivo por operationKey");
+assert.ok(handler.includes("appendAdminVehicleFieldUpdate_"),"El reintento debe recuperar idempotentemente el evento vehicle_update");
+assert.ok(status.includes("findImageUploadEventsByOperationKeyForAdmin_") && status.includes("projectImageUploadEventsForAdmin_"),"La consulta de estado debe proyectar el journal, no leer AdminImageUploads");
+assert.ok(status.includes("getAdminProjectedVehicleFieldSnapshot_") && status.includes("currentSourceEventId"),"La recuperación debe leer el valor/eventId proyectado, no la fila materializada de Cortes.");
+assert.ok(!status.includes("getOrCreateAdminImageUploadsSheet") && !handler.includes("findAdminImageUploadOperation"),"La recuperación no debe depender del ledger mutable");
+console.log("AdminImageUploadLinkedRecoveryIsolation: 6/6 PASS — recuperación por token, operación y versión append-only");

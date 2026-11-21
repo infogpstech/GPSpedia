@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const start=source.indexOf("function findUniqueCortesVehicleRow_("),end=source.indexOf("\nfunction ",start+10);
+assert.ok(start>=0&&end>start,"No se encontró findUniqueCortesVehicleRow_");
+assert.equal((source.match(/function findUniqueCortesVehicleRow_/g)||[]).length,1,"Debe existir una sola implementación efectiva, sin declaraciones que la sobrescriban");
+const code=source.slice(start,end);
+assert.doesNotMatch(code,/getDataRange\(\)/,"No debe cargar toda la tabla Cortes");
+const normalize=(value,context)=>{
+ const text=String(value==null?"":value).trim();
+ if(!/^\d+$/.test(text))throw new Error(context+" ID inválido");
+ return text;
+};
+const blank=value=>value===null||value===undefined||String(value).trim()==="";
+const fn=new Function("COLS_CORTES","normalizeIdempotenciaVehicleId_","isBlankIdempotenciaValue_",code+"\nreturn findUniqueCortesVehicleRow_;")({id:1},normalize,blank);
+const fullRow=Array.from({length:48},(_,i)=>"c"+(i+1));
+let calls=[];
+const sheet={getLastRow:()=>4,getLastColumn:()=>48,getRange:(...args)=>{
+ calls.push(args);
+ if(args.join(",")==="2,1,3,1")return{getValues:()=>[["100"],["200"],["300"]]};
+ if(args.join(",")==="3,1,1,48")return{getValues:()=>[fullRow]};
+ throw new Error("Rango inesperado "+args.join(","));
+}};
+const found=fn(sheet,"200","OP-200");
+assert.equal(found.rowIndex,3);assert.deepEqual(found.rowValues,fullRow);
+assert.deepEqual(calls,[[2,1,3,1],[3,1,1,48]],"Debe leer la columna ID y luego solo la fila coincidente");
+calls=[];
+const duplicate={getLastRow:()=>4,getRange:(...args)=>{calls.push(args);return{getValues:()=>[["200"],["200"],["300"]]};}};
+assert.throws(()=>fn(duplicate,"200","OP-DUP"),/aparece en 2 filas/);
+assert.equal(calls.length,1,"No debe leer una fila si el ID está duplicado");
+const missing={getLastRow:()=>3,getRange:()=>({getValues:()=>[["100"],["300"]]})};
+assert.throws(()=>fn(missing,"200","OP-MISS"),/aparece en 0 filas/);
+const malformed={getLastRow:()=>3,getRange:()=>({getValues:()=>[["bad-id"],["200"]]})};
+assert.throws(()=>fn(malformed,"200","OP-BAD"),/ID inválido/,"Debe conservar la validación de todos los IDs");
+assert.throws(()=>fn(null,"200","OP-NULL"),/No se encontró la hoja/);
+assert.throws(()=>fn({getLastRow:()=>1},"200","OP-EMPTY"),/aparece en 0 filas/);
+assert.ok(!code.includes("getDataRange"),"No debe cargar filas completas para localizar ID");
+console.log("AdminUniqueVehicleRowBoundedRead: 13/13 PASS — columna ID, lectura de fila única y detección de corrupción/duplicados");

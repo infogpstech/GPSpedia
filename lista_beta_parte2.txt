@@ -1,0 +1,10 @@
+GPSpedia — Índice de la continuación de la lista de validación Beta (parte 2)
+
+El contenido íntegro de la antigua lista_beta_parte2.txt se conserva, sin reescritura, en dos segmentos ordenados:
+
+1. lista_beta_parte2_parte_001.txt — desde AUG-098 hasta el registro completo inmediatamente anterior al separador que introduce AUG-042.
+2. lista_beta_parte2_parte_002.txt — desde el separador que introduce AUG-042 hasta el final del documento original.
+
+Orden de reconstrucción: concatenar directamente la parte 001 y después la parte 002, sin añadir separadores ni saltos de línea. La reconstrucción fue verificada contra el blob Git original.
+
+Manifiesto, tamaños, límites, SHA de Git y verificación: ROTACION_DOCUMENTAL_MANIFIESTO_2026-11-19.md.

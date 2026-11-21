@@ -1,0 +1,533 @@
+GPSpedia — Registro de tareas completadas — Parte 1
+Fecha de corte: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
+
+## TAREAS QUE CUMPLEN LA COMPUERTA
+
+### DOC-MIG-2026-001 — Migración y rotación documental
+- Estado: COMPLETADA — DOCUMENTAL.
+- Evidencia: diez registros históricos archivados en Olds/Documentacion_Legacy; partes dentro del límite de 180,000 caracteres; reconstrucción exacta y manifiesto documentados.
+- Sintaxis de código: N/A; no se modificó código.
+- Commit verificado en GPSpedia2.2.5_work: d18e9f1a1a356782322104e5b0425c931fd77a1e; padre 63fbee17260ce850d8dcaeae363288559c49715e. Rama base conservada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+### DOC-REG-2026-002 — Separación de tareas y compuerta de sintaxis
+- Estado: COMPLETADA EN ALCANCE DOCUMENTAL, una vez verificada la publicación del commit de esta tarea.
+- Entregables: Tareas_pendientes_parte1.txt a parte4.txt; tareas_completadas_parte1.txt; lista_beta.txt; adendas a Normas, Plan Maestro, índice AUG y Contexto de trabajo.
+- Sintaxis de código: N/A; no se modificó código.
+- Validaciones documentales: conservación de 151 IDs AUG únicos y 49 registros legacy abiertos/parciales; límites de caracteres; rutas; normas internas; referencias; separación de pendientes, cierres y Beta.
+- SHA exacto de este cierre: consultar checkpoint.md y el historial de GPSpedia2.2.5_work.
+
+## AUDITORÍAS ESTÁTICAS COMPLETADAS (NO EQUIVALEN A IMPLEMENTACIÓN)
+- AUD-T-001 a AUD-T-039: unidades de auditoría E1 estática registradas como completadas según el Plan Maestro y la consolidación histórica.
+- Alcance limitado a E1. No certifican pruebas funcionales, seguridad runtime, accesibilidad, integración ni despliegues. Las matrices VAL correspondientes siguen pendientes cuando así se indica.
+
+## MARCAS HISTÓRICAS [X] NO PROMOVIDAS
+Las siguientes tareas aparecen marcadas [X] en Tareas_legacy, pero no se consideran cierres vigentes porque la fuente revisada no demuestra para cada implementación la revisión sintáctica exigida por la norma nueva. Deben contrastarse con commit/diff y evidencia antes de incorporarse a la sección de completadas:
+- TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL [X]
+- TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL [X]
+- TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML) [X]
+- TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') [X]
+- TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS [X]
+- TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS [X]
+- TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED [X]
+- TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES [X]
+- TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN [X]
+- TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS [X]
+- TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA [X]
+- TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS [X]
+- TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS [X]
+- TAREA 15: ~~BARRA DE FILTROS RÁPIDOS DE CATÁLOGO~~ Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
+- TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA ADAPTATIVO [X]
+- TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉCNICAS [X]
+- TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESEMPEÑO [X]
+- TAREA 19: VALIDACIONES DE INTEGRIDAD EN BACKEND Y BATERÍA EXHAUSTIVA DE PRUEBAS AUTOMATIZADAS [X]
+- TAREA 20: INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) Y COMPATIBILIDAD MULTIPLATAFORMA [X]
+- TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBUGGING Y CIERRE DE AUDITORÍA GLOBAL [X]
+
+Las tareas y requisitos completos permanecen intactos en Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt a parte_004.txt. Esta lista de marcas históricas no modifica ni invalida el archivo legacy; únicamente evita que un estado antiguo se use como cierre actual sin evidencia.
+
+
+
+================================================================================
+DOC-PLAN-2026-003 — Orden único del Plan Maestro y rutas a requisitos
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: adenda 14 de Plan_auditoría/Plan_Maestro_Implementacion.md; matriz de propiedad por fase/olas, rutas exactas a requisitos, bloqueos y flujo por tarea.
+Sintaxis de código: N/A; no se modificó código.
+Validación documental: referencias de rutas e IDs cotejadas contra archivos vigentes; solapamientos aclarados; partes legacy separadas para reconciliación; límites documentales comprobados.
+Commit: consultar el historial de GPSpedia2.2.5_work para el SHA de esta tarea.
+================================================================================
+
+
+
+================================================================================
+DOC-README-2026-001 — RETIRAR AFIRMACIÓN DE FILTROS RÁPIDOS ACTIVOS
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Requisitos: Tareas_pendientes_parte2.txt, sección TAREAS DOCUMENTALES ABIERTAS.
+Evidencia: README.md, sección 5. La afirmación de la barra colapsable, filtros Categoría/Año y botón #btn-toggle-filters fue sustituida por una nota explícita de cancelación.
+Auditoría: H-AUD-048 registrado y resuelto.
+Sintaxis de código: N/A; no se modificó código.
+Validación: búsqueda de referencias en README; diff reconstruido desde respaldo exacto y coincide byte por byte; Code Review documental aprobado.
+No se modificaron legacy, código, Services, endpoints ni deployments.
+Commit: consultar historial de GPSpedia2.2.5_work.
+================================================================================
+
+
+
+================================================================================
+DOC-README-2026-002 — RECONCILIAR DESCRIPCIÓN DE SERVICES Y MICROSERVICIOS
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: README.md, sección 5. Se corrigió la afirmación de que las fuentes ya habían sido retiradas. La documentación indica que Services/ puede contener fuentes temporales durante implementación/corrección y que deben eliminarse al finalizar esa fase. También distingue las fuentes de código de los deployments y endpoints operativos.
+Política confirmada por el usuario: los archivos temporales se eliminan del repositorio al terminar las implementaciones y correcciones.
+Auditoría: H-AUD-049 resuelto documentalmente.
+Alcance: no se modificó ni eliminó ningún archivo de Services/, código, endpoints, deployments o legacy.
+Validación: contraste de README contra árbol de la rama de trabajo, rama base y rama main; diff limitado a la sección 5; Code Review documental aprobado. Sintaxis de código: N/A.
+================================================================================
+
+
+
+================================================================================
+DOC-TRACE-2026-001 — CORRECCIÓN DE TRAZABILIDAD DE DOC-README-2026-002
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: H-AUD-050 documenta que el commit 8b2bec3 omitió Auditoría.txt y el checkpoint inicial; el checkpoint inicial preparado se recuperó desde blob 434759c9f0a3b886ae17f427f8249b513693313c y se incorporó con nota de recuperación tardía. H-AUD-049 quedó registrado y resuelto documentalmente.
+Validación: diff del commit original contrastado; seis documentos de trazabilidad revisados; referencias y estados reconciliados; límites documentales verificados; Code Review documental. Sintaxis de código y pruebas funcionales: N/A.
+No se reescribió el commit original ni se modificaron código, Services, endpoints, deployments o legacy.
+Commit correctivo: consultar historial de GPSpedia2.2.5_work.
+================================================================================
+
+
+================================================================================
+ADENDA DE REVALIDACIÓN — DOC-LEGACY-2026-001 — 2026-11-09
+Las 20 tareas enumeradas en “MARCAS HISTÓRICAS [X] NO PROMOVIDAS” continúan siendo referencias históricas; esta revalidación no las trasladó a “TAREAS QUE CUMPLEN LA COMPUERTA”. No existe evidencia reproducible suficiente de pruebas funcionales y Code Review individual para aceptarlas como completadas vigentes. TAREA 4 sigue parcial [~]. H-AUD-051 y H-AUD-052 quedan abiertos; DOC-LEGACY-2026-001 permanece parcial. No se modificó Olds/Documentacion_Legacy/.
+================================================================================
+
+
+================================================================================
+AUG-005 — REVOCAR SESIONES CUANDO SE ELIMINA UNA CUENTA
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES.
+H-AUD-053 resuelto; H-AUD-054 resuelto por diseño mediante eliminación lógica y conservación de fila/ID.
+Implementación: deleteUser centralizado en AUTH bajo el ScriptLock común con login/logout/resetUserSessions. La cuenta se desactiva con __deleted__:<UUID>, se limpian credenciales/perfil y se revocan todas sus sesiones. AUTH rechaza sesiones residuales y valida usuario único/activo; login revalida bajo lock. USERS filtra desactivados y asigna UUID estático a nuevas cuentas. UI/backend bloquean autodeleción.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, users.html, api-config.js, Services/feedback.js, Services/Test/README.md y Spreadsheet/GPSpedia_DB_columnas.md.
+Verificación: sintaxis PASS en scripts Apps Script, api-config.js (harness ESM) y script inline users.html; copias sincronizadas al normalizar IDs; lógica con dobles locales 20/20 PASS.
+Limitación: deployments aislados no creados; pruebas funcionales reales y de concurrencia se difieren a Beta. No se probaron endpoints operativos ni se modificaron datos.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 20/20 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+
+ADENDA FINAL POST-REVISIÓN — AUG-005 / H-AUD-059
+Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+AUG-006 — CIERRE DE SESIÓN CON REVOCACIÓN BACKEND
+Estado: COMPLETADA (2026-11-09; validación local PASS; Beta diferida).
+AUTH revoca únicamente el token invocante bajo ScriptLock. El cliente limpia currentUser en memoria y la sesión local, solicita logout remoto y reporta revocación pendiente cuando no puede confirmar respuesta. Sintaxis PASS; harness logout 2/2 PASS; prueba de limpieza en memoria PASS. Sin despliegue ni llamadas operativas.
+================================================================================
+
+AUG-153 — CENTRALIZAR MUTACIONES DE ActiveSessions EN AUTH
+Estado: COMPLETADA (2026-11-09; validación local PASS; Beta diferida).
+AUTH es el único escritor de ActiveSessions. resetUserSessions se ejecuta en AUTH, valida solicitante y destino activos, exige Desarrollador, rechaza aut cierre y duplicados, y elimina filas en orden descendente bajo el mismo ScriptLock de login/logout. USERS solo lee sesiones. Sintaxis PASS; ruteo y dispatch PASS; harness remoto 5/5 PASS. Concurrencia real de Apps Script y fallos físicos quedan diferidos a Beta.
+================================================================================
+
+CORRECCIÓN DE IDENTIFICADORES — AUG-005 / Users.ID
+La referencia histórica a UUID estático queda sustituida para las nuevas cuentas por IDs secuenciales permanentes `USR-0001`, `USR-0002`, etc. La asignación se realiza en USERS bajo su ScriptLock, escaneando los IDs de filas con datos y escribiendo el nuevo ID como valor fijo. Las filas nuevas copian únicamente formato y validaciones, no la fórmula de ID. Los IDs existentes y de cuentas desactivadas se conservan y nunca se reutilizan. La corrección no cambia IDs históricos ni elimina filas.
+================================================================================
+
+
+================================================================================
+AUG-007 — Política de expiración y revocación de sesiones
+Fecha: 2026-11-09.
+Estado: COMPLETADA EN FUENTES; validación funcional aislada diferida a Beta.
+Política aprobada: tres meses calendario de expiración absoluta y un mes calendario de inactividad. La actividad se registra en ActiveSessions.lastActivityAt; la fecha de creación permanece inmutable en ActiveSessions.date. AUTH centraliza touchSession, validateSession, cambio de contraseña propio y restablecimiento administrativo. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites. El cambio propio y el restablecimiento administrativo invalidan primero los tokens de todas las sesiones; el restablecimiento de otra cuenta requiere Desarrollador.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, Services/admin.js, Services/feedback.js, Services/write.js, auth.js, api-config.js, users.html, Services/Test/README.md y Spreadsheet/GPSpedia_DB_columnas.md.
+Validaciones locales: sintaxis PASS en 12 archivos; política calendario 8/8 PASS; simulación de revocación selectiva PASS; copias AUTH/USERS de prueba conservan sus IDs aislados.
+Limitaciones: no hay deployments aislados configurados según Services/Test/README.md; no se ejecutaron Apps Script real, endpoints live ni hojas productivas. La validación funcional/concurrente y la migración de columna F quedan en Beta.
+H-AUD-060 y H-AUD-061: RESUELTOS EN FUENTES.
+================================================================================
+
+
+================================================================================
+AUG-008 — Coordinación de validación y sincronización entre pestañas
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; pruebas funcionales multi-pestaña diferidas a Beta.
+Problemas resueltos: lock localStorage no atómico/tempranamente liberado; retorno que podía dejar el splash sin transición; respuesta de validación A capaz de cerrar sesión B; falta de propagación del cierre entre pestañas.
+Implementación: Web Locks API con exclusión por origen, timeout de espera de cinco segundos y cancelación AbortSignal de la petición a los ocho segundos; marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token; comparación de sesión actual antes de mutar/cerrar; logout token-aware; eventos storage para sincronizar index.html, users.html y add_cortes.html.
+Archivos: auth.js, api-config.js, users.html y add_cortes.html.
+Pruebas locales: sintaxis 4/4 PASS; dos contextos y una sola llamada de validación PASS; respuesta tardía A no elimina/revoca B PASS; logout obsoleto no altera B PASS; evento de eliminación limpia estado local PASS.
+Limitaciones: no se ejecutaron pruebas de navegador real, Apps Script real, deployments aislados ni endpoints operativos. En navegadores sin Web Locks puede haber validaciones redundantes, sin confiar en localStorage como lock; el backend mantiene la autorización definitiva.
+H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES.
+================================================================================
+
+
+================================================================================
+AUG-009 — Validar el nombre de usuario en el backend
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; prueba real del endpoint aislado diferida a Beta.
+H-AUD-064 resuelto. La creación de usuarios exige Nombre_Usuario de tipo string, aplica trim(), rechaza vacío y el prefijo reservado __deleted__:; mantiene unicidad normalizada con trim()+toLowerCase(). La regla no añade restricciones de longitud o caracteres que no estén aprobadas.
+Archivos funcionales: Services/users.js y Services/Test/users.js. users.html no requiere cambio; su atributo required no se considera control de seguridad.
+Validación local: sintaxis PASS en ambas copias; doPost/createUser directo con dobles locales 9/9 PASS en producción y 9/9 PASS en copia aislada. Sin Apps Script real, HTTP ni deployment operativo.
+================================================================================
+
+
+
+ADENDA FINAL DE VALIDACIÓN — AUG-009 — 2026-11-09
+La batería final quedó en 11/11 casos directos de doPost PASS por fuente (22/22 funcionales) y sintaxis PASS en ambas. Incluye campo ausente/null, tipos no textuales, vacío/espacios, prefijo reservado, duplicados normalizados y nombres válidos recortados/Unicode. La ejecución real en deployment USERS aislado queda en Beta.
+
+
+================================================================================
+AUG-012 — Hacer consistente el contador de intentos ante autenticaciones concurrentes
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; concurrencia real de Apps Script diferida a Beta.
+H-AUD-068 resuelto. Se añadieron reservas de login por UUID y estado separado de fallos completados/reservas pendientes. Cada resultado finaliza solo su propia reserva: éxito reinicia fallos previos sin borrar otras reservas; credenciales inválidas suman un fallo; errores de infraestructura revierten únicamente la reserva propia. Se conserva compatibilidad de lectura del estado cacheado anterior y se limpian reservas obsoletas después de 900 segundos.
+Archivos funcionales: Services/Auth.js y Services/Test/Auth.js. La copia de prueba conserva su Spreadsheet ID independiente.
+Validación: sintaxis 2/2 PASS; helpers 18/18 PASS (9 por fuente); handleLogin 4/4 PASS; total funcional local 22/22 PASS. Diffs contra los originales limitados a los helpers y callsites directos del contador.
+Limitación: CacheService puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo. Concurrencia real y deployment AUTH aislado registrados en lista_beta.txt. Sin llamadas HTTP, deployments ni acceso a hojas reales.
+No se modificó hashing SHA-256, formato de contraseña, credenciales, sesiones, roles ni configuración de rutas.
+================================================================================
+
+
+================================================================================
+AUG-013 — Coordinar purga de Logs con inserciones AUTH
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; validación real aislada diferida a Beta.
+H-AUD-069 resuelto. AUTH centraliza inserciones y purga de Logs bajo su ScriptLock local. clearSensitiveLogs valida sesión, identidad, expiración, cuenta activa y rol Desarrollador; conserva los patrones históricos de detección y elimina filas sensibles en orden descendente. FEEDBACK ya no realiza deleteRow sobre Logs; api-config.js enruta la acción a AUTH.
+Archivos funcionales: Services/Auth.js, Services/Test/Auth.js, Services/feedback.js y api-config.js. Documentación de prueba: Services/Test/README.md. Se preservó el Spreadsheet ID de prueba.
+Validación: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS (fixtures, autorización, despacho y fallo parcial en ambas fuentes). Diffs limitados al alcance. No se ejecutaron Apps Script real, deployments, HTTP ni Spreadsheet real.
+Límite: concurrencia real y timeout del logger durante purgas prolongadas quedan en lista_beta.txt. La coordinación general de mantenimiento/restore entre proyectos permanece en AUG-034.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
+Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+
+================================================================================
+AUG-014 — Alinear validación de contraseña en UI y corregir texto
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES.
+Hallazgo H-AUD-070 resuelto. Archivo funcional: users.html. La longitud mínima se valida mediante newPassword.trim().length; el valor original continúa enviándose a AUTH. Se corrigió «reincie sesión» por «reinicie sesión».
+No se modificaron Services/Auth.js, Services/Test/Auth.js ni api-config.js. Se conservaron la validación backend, SHA-256 y el prefijo sha256$.
+Validación: sintaxis del módulo inline 1/1 PASS; pruebas funcionales locales 10/10 PASS; reconstrucción inversa exacta contra el respaldo PASS; solo dos líneas modificadas (642 y 653). No se ejecutaron navegador real, deployment, HTTP ni Sheets.
+================================================================================
+
+
+================================================================================
+AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión
+Fecha: 2026-11-09. Estado: IMPLEMENTADA LOCALMENTE; validación Beta pendiente.
+Aprobación del usuario: cualquier cambio de Privilegios revoca todas las sesiones del usuario afectado y exige un nuevo inicio de sesión.
+H-AUD-071–074 resueltos en fuentes. AUTH centraliza updateUser y aplica el nuevo rol solo después de confirmar que todos los tokens y requestId previos fueron invalidados. Se mantiene marcador durable y reintento si la revocación es parcial. Auto-cambio de rol elimina sesión local.
+Login usa requestId idempotente en ScriptProperties con retención 24 h; api-config.js conserva el ID por pestaña hasta persistir sesión. Los reintentos recuperan el mismo token; logout/reset/rol/password/delete tombstonean solicitudes previas y no permiten recrear sesiones revocadas. Tokens vacíos/expirados no cuentan para SESSION_LIMITS.
+resetUserSessions, changePassword, resetUserPassword y logout invalidan tokens y verifican por lectura posterior; no borran filas con tokens no confirmados vacíos. El hash se verifica tras setValue y no se cambia si la revocación completa no está confirmada.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, api-config.js, auth.js y users.html. Documentación: Auditoría.txt, Tareas_pendientes_parte1.txt, Tareas.txt, ChangesLogs.txt, lista_beta.txt, Services/Test/README.md y checkpoint.md.
+Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia de AUTH prod/test y USERS prod/test PASS.
+No se ejecutaron deployments aislados, navegador real, HTTP real, Spreadsheet real ni pruebas reales de concurrencia. Beta sigue pendiente. AUG-034/AUD-T-033 no fue modificada; AUG-011 sigue omitida; SHA-256/sha256$ se conserva.
+================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-016 — 2026-11-09
+Estado: COMPLETADA — validación local aprobada. VALIDACIÓN DIFERIDA A BETA es una etapa posterior de integración y no una condición pendiente para esta tarea.
+Evidencia: sintaxis 7/7 PASS; harness AUTH 15/15 PASS; integraciones 4/4 PASS; equivalencia producción/prueba PASS; pruebas locales adicionales de expiración y revocación 6/6 PASS y contratos/ruteo 8/8 PASS. Revisión del commit 9bb6d87e sin hallazgos nuevos bloqueantes en el alcance. AUG-154/H-AUD-066 permanece independiente.
+================================================================================
+
+
+================================================================================
+AUG-017 — Restablecer controles de navegación al cambiar de cuenta/rol — 2026-11-09
+Estado: COMPLETADA por validación local aprobada.
+Hallazgos resueltos: H-AUD-024-007, H-AUD-075 y H-AUD-076.
+ui.js asigna explícitamente visibilidad de Inbox/Dashboard por rol; incluye Jefe solo en Inbox; toma el rol desde Privilegios; cierra y limpia las vistas/caché al cambiar identidad/token/rol; descarta respuestas asíncronas de una sesión anterior; protege el listener replyBtn para elementos video_approval.
+Validación local: sintaxis 1/1 PASS; harness funcional 32/32 PASS; matriz backend FEEDBACK 7/7 PASS; total 33/33 PASS. No se modificó la matriz backend ni otros archivos funcionales. Pruebas integradas quedan diferidas a Beta.
+================================================================================
+
+
+================================================================================
+AUG-001 — Configurar protección técnica de la rama base — 2026-11-09
+Estado: COMPLETADA por confirmación expresa del propietario del repositorio.
+Evidencia: el propietario confirma que la protección técnica de la rama base ya fue configurada y que la tarea está resuelta bajo su responsabilidad.
+Límite de verificación: el agente no realizó la configuración ni pudo consultar/verificar independientemente las reglas actuales con los permisos disponibles. La observación anterior de protected=false corresponde a un corte previo a la confirmación.
+No se modificaron reglas de GitHub, rama base, código, endpoints ni deployments desde esta sesión.
+Siguiente tarea: AUG-004 — Matriz de cancelación, sustitución y continuidad de requisitos.
+================================================================================
+
+
+================================================================================
+AUG-004 — Matriz de cancelación, sustitución y continuidad de requisitos — 2026-11-09
+Estado: COMPLETADA — DOCUMENTAL.
+Entregable: Plan_auditoría/Matriz_Continuidad_Requisitos.md.
+Se clasificaron tareas históricas por continuidad, cancelación, retirada, parcialidad, sustitución y absorción. Tarea 1.6 y los filtros de Tarea 15 están cancelados; la estandarización universal de botones continúa vigente/parcial en AUG-100; los remanentes de filtros permanecen en AUG-099. No se reescribieron partes legacy ni se duplicaron tareas.
+Validación documental y Code Review aprobados. Sintaxis de código: N/A. No se ejecutaron pruebas funcionales de aplicación ni Beta por ser un entregable documental.
+================================================================================
+
+
+================================================================================
+AUG-003 — Auditar el contrato y alcance real de Services/Utilities.js — 2026-11-09
+Estado: COMPLETADA COMO ENTREGABLE DE AUDITORÍA ESTÁTICA E1, CON LIMITACIONES EXPLÍCITAS.
+Evidencia: AUD-T-033/AUD-20261107-S014/AUD-CP-0014 identifica el contrato actual de Utilities, la ausencia de lock/protocolo compartido, la acción migrateYearRanges ausente, los callsites encontrados y la limitación de deployment. Utilities.js no cambió en los 205 commits posteriores hasta el HEAD auditado.
+No equivale a implementar un coordinador interproyectos ni a aprobar pruebas funcionales. AUG-034 conserva la implementación, recuperación y pruebas locales/aisladas del coordinador como pendiente.
+Validación: continuidad Git y revisión documental PASS. Sin cambios de código ni pruebas Beta.
+================================================================================
+
+
+================================================================================
+AUG-039 — COMPLETADA — 2026-11-10
+Autorización y minimización de datos en WRITE: sesión y perfil activo/único validados server-side; addSupplementaryInfo protegido antes/después del lock; checkOperation autenticado y con respuesta mínima en WRITE/ADMIN; allocateVehicleId limitado a Developer verificado; consumidores ui.js y add_cortes transmiten credenciales; silentRegister conserva ADMIN.
+Verificaciones locales: 34/34 PASS. Code Review/Safety & Side Effects PASS; cambios funcionales limitados a Services/write.js, Services/admin.js, ui.js y add_cortes.html. Pruebas funcionales Beta pendientes y no ejecutadas.
+Decisión opId/actor: no migrar esquema legacy en esta tarea; riesgo residual documentado en Auditoría.txt.
+Siguiente tarea del orden maestro: AUG-042, previa auditoría post-commit de AUG-039.
+================================================================================
+
+
+================================================================================
+AUG-042 — COMPLETADA — 2026-11-10
+Sincronización de sesión/rol y limpieza del estado privilegiado del cliente.
+Archivos: ui.js, offline.js, auth.js, main.js y users.html.
+Criterios locales: guardas por rol y validación remota; invalidación de modales/cachés/generaciones; revalidación por foco/visibilidad/online/intervalo; normalización de Privilegios; auto-cambio de rol fail-closed; descarte de respuestas de logout obsoletas; estado Drive aislado por cuenta con marcador persistente y control de concurrencia.
+Validación local: sintaxis 5/5 PASS; matriz de roles PASS; AUTH 6/6 PASS con dobles; pruebas de logout obsoleto, guardas, single-flight, Inbox/Admin y persistencia/limpieza Drive simulada PASS.
+Code Review/Safety & Side Effects PASS. Pruebas reales de navegador, IndexedDB, endpoints, Apps Script y deployments diferidas a Beta.
+Commit único de cierre identificable en el historial de GPSpedia2.2.5_work: "fix(auth): synchronize client role and privileged session state".
+================================================================================
+
+================================================================================
+CORR-AUG042-001 — COMPLETADA — 2026-11-10
+Corrección de operaciones administrativas asíncronas tras cambio de sesión.
+Archivo funcional: ui.js.
+Criterios: persistencia de auditoría abortada ante contexto obsoleto; clearSelectedLogs abortado en catch obsoletos; ninguna acción secundaria ni notificación global se ejecuta para la sesión anterior.
+Validación local: parsing V8 PASS; cuatro guardas verificadas; harness aislado PASS para cambio de sesión y continuidad de sesión vigente; comparación contra respaldo exacto PASS.
+Code Review/Safety & Side Effects PASS. Validación de navegador, endpoints y Apps Script real no ejecutada.
+Commit: consultar historial de GPSpedia2.2.5_work.
+================================================================================
+
+================================================================================
+DOC-TRACE-042-001 — COMPLETADA — 2026-11-10
+Se añadió adenda append-only que corrige la ubicación de saveUnusedInventory a ui.js:5561 y confirma las referencias ui.js:4841, 4858 y 4864. Sin cambios funcionales.
+================================================================================
+
+
+================================================================================
+AUG-155 — COMPLETADA — 2026-11-10
+Coordinador compartido de mutaciones entre AUTH, USERS, WRITE, ADMIN y FEEDBACK.
+Sintaxis 10/10 PASS; suite lógica 17/17 PASS; wrappers 7/7 PASS; políticas 61/61 cubiertas; paridad AUTH/USERS producción-prueba PASS; Code Review/Safety & Side Effects PASS.
+No se ejecutaron deployments, HTTP, Apps Script real, Spreadsheet/Drive reales ni concurrencia real. La configuración y validación integrada quedan diferidas a Beta. UTILITIES excluido por estar retirado del flujo activo. AUG-034 permanece como tarea independiente.
+Commit único: consultar historial de GPSpedia2.2.5_work.
+================================================================================
+
+
+================================================================================
+AUG-043 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-10
+Alineados los contratos de sesión/rol y el flujo de aprobación YouTube. Se retiró la entrada manual de videoGuiaUrl en add_cortes.html y se evitó copiar al formulario la URL aún pendiente. El backend ya exigía sesión, obtenía el rol desde Users, conservaba opVideoId, validaba el ID real de YouTube y publicaba únicamente al aprobar.
+Validación local: FeedbackWriteSecurity 47/47; VideoApprovalState 13/13; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalContracts 8/8; VideoApprovalSessions 10/10; VideoApprovalPublishing 18/18; YouTubeUploadClient 12/12; YouTubeAddCortesContract 4/4. Total 135/135 PASS; parsing 4/4 PASS.
+Pendiente Beta: navegador/IndexedDB/XHR reales, OAuth/YouTube API, Apps Script y Spreadsheet aislados, concurrencia física y flujo integrado de aprobación/rechazo. Sin endpoints, deployments ni datos productivos.
+Commit: consultar historial de GPSpedia2.2.5_work.
+================================================================================
+
+
+================================================================================
+AUG-044 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-10
+Se reconciliaron ACTION_TO_SERVICE_MAP y los dispatchers AUTH, USERS, CATALOG, WRITE, FEEDBACK, ADMIN y UTILITIES. addCorte y getHeaders fueron retirados; migrateYearRanges y assignCollaborator ya estaban retirados. Se documentaron cuatro rutas de compatibilidad directa y la dependencia externa logFrontend/LEGACY. routeAction falla cerrado ante servicios sin endpoint.
+Validación local: ActionDispatchContract 11/11 PASS; parsing 5/5 PASS; servicio desconocido rechazado antes de fetch. LEGACY queda pendiente de verificación en Beta.
+================================================================================
+
+
+================================================================================
+AUG-050 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-11
+Motor diferencial VIN integrado en motor, persistencia, navegación y UI. Resolución por classKey/identidad completa; alternativas ambiguas presentadas sin autoapertura; versiones y generaciones conservadas; extractSharedChars compara posición y valor; búsqueda combinatoria perezosa con presupuesto y métricas. VIN completo/prefijos, umbral, competidores y rangos cubiertos por suites de regresión.
+Pruebas locales sintéticas: 52/52 PASS en harness V8 aislado; parsing de VinDifferentialEngine.js, navigation.js, ui.js y suite de cierre: 4/4 PASS. No se ejecutó Node CLI.
+Validación Beta pendiente: medición sobre catálogo operativo y navegación visual real multi-versión/generación. No se modificaron endpoints, deployments ni datos productivos.
+Commit único de cierre: consultar historial de GPSpedia2.2.5_work.
+================================================================================
+
+================================================================================
+AUG-133 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-12
+Se implementó el runner Services/Test/RunServiceTests.mjs para pruebas reproducibles 31–38 por servicio y el workflow .github/workflows/service-tests.yml (Node.js 22). Se corrigió CutPayloadValidation.js para incluir la dependencia real extractVinPrefix al compilar el validador de payload. Se documentaron comandos completos/parciales, fixtures, paridad de copias AUTH/USERS y procedimiento Beta.
+Validación local: WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 24/24; USERS 14/14; integración 43/43. Total 238/238 PASS. Paridad de copias AUTH/USERS PASS. No se ejecutaron Apps Script desplegados, Spreadsheet real, endpoints ni datos productivos.
+Beta pendiente: deployments y Spreadsheet aislados, concurrencia real interproyectos, fallos físicos de escritura/flush y lectura posterior entre servicios. Sin acceso a producción.
+================================================================================
+
+================================================================================
+ADENDA DE VALIDACIÓN — AUG-133 — 2026-11-12
+La primera ejecución CI detectó que CatalogSnapshotSync no esperaba las pruebas asíncronas y que el fixture IndexedDB no notificaba transaction.oncomplete. Se corrigió el fixture y se convirtió el arranque de la suite a top-level await. Verificación final GitHub Actions run 43363601506: Node.js 22, 16 suites, 238/238 PASS, 0 fallos. HEAD probado: 092db7917391f48e80cd8670e6793aff61182636.
+================================================================================
+
+
+================================================================================
+AUG-134 — PARIDAD DE ACTION_TO_SERVICE_MAP, ROUTERS Y CONSUMIDORES — 2026-11-13
+Se reforzó Services/Test/ActionDispatchContract.js para validar el handler real de cada acción mapeada, la cobertura inversa de todos los handlers públicos, las rutas de compatibilidad y las acciones literales de los consumidores UI. Se incorporó el registro explícito de servicios/consumidores/origen de acciones externas. El runner INTEGRATION ahora carga las fuentes de consumidores versionados.
+La inspección confirmó 81 acciones canónicas alineadas; no fue necesario alterar rutas, handlers, endpoints ni consumidores funcionales. La validación de ejecución Node.js 22/CI se registra al cierre tras su comprobación.
+================================================================================
+
+
+================================================================================
+AUG-134 — COMPLETADA Y VALIDADA — 2026-11-13
+Se sincronizó de forma verificable ACTION_TO_SERVICE_MAP con API_ENDPOINTS, los routers AUTH/USERS/CATALOG/WRITE/FEEDBACK/ADMIN/UTILITIES y los consumidores literales de interfaz. La matriz funcional de 81 acciones ya estaba alineada; no fue necesario alterar rutas ni endpoints. La prueba automática detecta handlers inexistentes, divergencias mapa/router, consumidores UI sin mapa, compatibilidades inválidas y metadata incompleta de acciones externas.
+Validación GitHub Actions 43366270381 sobre commit a9ecfd6c6180b5037261b1d26f224527f7b9e7e5: Node.js 22.23.4; 16 suites; 239/239 PASS; 0 fallos. La suite nueva de contrato obtuvo 12/12 PASS.
+================================================================================
+
+
+### AUG-135 — Reconciliar política de publicación de microservicios y README
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (documentación y revisión estática).
+- Se confirmó que el repositorio GitHub es público y se documentó que las fuentes Services versionadas son accesibles. No se cambió la visibilidad ni se retiraron fuentes o reescribió historial.
+- Se conservaron en su ubicación actual los IDs de Spreadsheet y carpeta Drive de prueba de GPSpedia, conforme a la instrucción del usuario.
+- Se documentó el flujo YouTube OAuth server-side y URL Resumable temporal en cliente; no se encontró API key permanente en youtubeUpload.js. La URL se conserva en IndexedDB para reanudación y se elimina al completar o descartar.
+- ACL reales de Google y deployments Apps Script quedan pendientes de verificación en Beta; no se accedió a recursos externos ni se modificaron datos.
+
+
+================================================================================
+
+AUG-137 — RETIRAR MARKUP DE DEPURACIÓN OBSOLETO Y PRESERVAR CONTRATOS UI — 2026-11-13
+Se retiró de index.html el contenedor #debug-console y sus controles sin consumidores. ui.js ya no intenta ocultarlo ni limpiar #debug-log. El panel administrativo #dev-console-log se conserva.
+La revisión de referencias confirmó que clearModalNavStack sigue siendo invocada por main.js y que loadAndRenderInbox mantiene llamadas internas activas. Como main.js expone el módulo mediante window.ui, no se eliminaron exports por ausencia de llamadas internas.
+Se añadió Services/Test/UiOrphanCleanup.js al grupo INTEGRATION para prevenir la reintroducción del markup legacy y verificar los contratos públicos y el panel activo.
+Validación V8: UiOrphanCleanup.js 6/6 PASS; parsing de ui.js, main.js y la suite PASS. El runner completo Node.js 22/GitHub Actions no se ejecutó porque la conexión no expone dispatch y no se generó un run asociado al SHA. No se afirma que CI haya aprobado.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. La interacción de navegador real (navegación, Inbox, consola administrativa y Drive) queda para Beta.
+================================================================================
+
+
+================================================================================
+
+AUG-138 — SANITIZACIÓN DE DIAGNÓSTICOS EN ADD_CORTES — 2026-11-13
+Se incorporó diagnosticLogger.js con niveles debug/info/warn/error, activación explícita mediante ?gpDebug=1 y lista permitida estricta. En producción solo se emiten warn/error con evento, etapa, opId validado, estado resumido y códigos de error conocidos. Se retiraron todas las llamadas directas a console de add_cortes.html, incluido el marcador PING-PONG y el registro del objeto de error completo de la verificación de catálogo. La inspección confirmó que pendingOp no se imprimía directamente en la versión inicial de esta rama; se añadió una regresión para impedir exposición de snapshots, Base64, imágenes, tokens, payloads y respuestas.
+Se añadieron Services/Test/AddCortesDiagnostics.mjs y pruebas de recuperación offline y QuotaExceededError a AddCutOperationRecoveryFlow.js. El harness ahora incluye performPendingOperationRecovery junto con su wrapper, para ejecutar el worker real en las simulaciones. Los escenarios existentes de reintento y respuesta perdida antes/después del commit se conservaron.
+Validación local en runtime V8: logger/lista permitida aprobados, parsing del módulo inline aprobado y flujo de recuperación 5/5 PASS. GitHub Actions run 43376949865: success sobre commit c38178df93bca97f2756f3fd053951ff03252a69, Node.js 22.23.4; 18 suites, 257 pruebas PASS, 0 fallos. La suite AUG-138 obtuvo 12/12 PASS.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: inspección en navegador/IndexedDB aislado y pruebas con servicios externos, incluida la interrupción controlada de respuesta. No se modificaron datos, endpoints ni deployments.
+================================================================================
+
+
+================================================================================
+AUG-146 — CORRECCIÓN DE REFERENCIAS HISTÓRICAS DE AUD-T-021 — 2026-11-13
+- Se contrastó la referencia incorrecta 6d7fbb9c962ffb5622a209fa160b79ca0020c494 con su diff: corresponde al panel de desarrollador y al formulario PyS, no a la ficha imprimible.
+- Se verificaron como fuentes de impresión 199ee4bee2f958dda47952ca12a72f4ae825379d, cbbcb0cbd00fb78a4f6438baabaa13e0ab69ef18 y 04c86ce64f98b9e65d2dd0d82ed2d3ee3a2be51b.
+- La corrección se registró mediante adenda activa en Plan_auditoría/Plan_Maestro_Implementacion.md; el documento histórico legacy se conservó sin modificaciones.
+- Validación documental y revisión de diffs: PASS. Sintaxis/pruebas de código: N/A por tratarse de un cambio documental.
+Estado: COMPLETADA.
+================================================================================
+
+================================================================================
+AUG-003 — AUDITORÍA Y COORDINACIÓN DEL SERVICIO UTILITIES — 2026-11-13
+- Acción única: migrateTimestamps; ruta api-config.js -> UTILITIES; sin consumidor frontend versionado.
+- Recursos: lectura USERS/ACTIVE_SESSIONS/CORTES/DRIVE; escritura UTILITIES (Hoja 1 y staging/backup).
+- Se agregó lease compartida antes del ScriptLock local y política deny-by-default en Coordinator v1.1.2.
+- Se documentaron el orden de locks, los conflictos con AUTH/USERS/WRITE/ADMIN/FEEDBACK, el mantenimiento integral y los límites de la coordinación.
+- Pruebas: UtilitiesSecurity 17/17; SharedMutationCoordinator 33/33; ActionDispatchContract 12/12; parsing V8 PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Configuración real de proyectos Apps Script y concurrencia entre deployments quedan para Beta.
+================================================================================
+
+
+================================================================================
+AUG-018 — RESTAURACIONES RECUPERABLES Y RESPALDOS DB/DRIVE — 2026-11-13
+- Se completó la extensión del respaldo Drive con manifiesto v2, inventario de identidad y estructura, copia por lotes, cursores persistidos y reanudación idempotente mediante el mismo ID.
+- Los contenedores incompletos o con manifiestos alterados no se aceptan para restauración. DB/Drive conservan staging y rollback verificables; los escritores se coordinan mediante la lease compartida ADMIN de AUG-003.
+- Se corrigió la interfaz para propagar estados in_progress y errores reanudables. Se añadió regresión para archivos legítimos que comparten el nombre del manifiesto.
+- Validación CI: run 43424235639 SUCCESS, Node.js 22.23.4, 26 suites y 342/342 PASS; AdminRestoreRecovery 18/18 y AdminBackupResumeUI 8/8. HEAD final 10413822d6bf4b485aad04a0e7bc95b35a4a279c.
+- Beta pendiente: Apps Script ADMIN y Spreadsheet/Drive aislados, reanudación tras interrupción real, mutación del origen entre lotes y fallos inyectados de staging/promoción/rollback. No se ejecutaron recursos ni deployments productivos.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
+
+
+================================================================================
+AUG-038 — COMPENSACIÓN COHERENTE DE REEMPLAZOS IN-MODAL Y DESCARTE DE EDICIÓN — 2026-11-13
+- Se exige unicidad de vehicleId al reemplazar imágenes.
+- Las operaciones linked con archivos eliminados/ausentes pasan a requires_review; no se reactivan recursos enviados a papelera.
+- La compensación verifica la referencia activa, el historial REP, el ledger y los metadatos/estado Drive por lectura posterior. Si alguna fase falla, no se declara cancelled y se conserva evidencia para revisión.
+- El descarte lee el catálogo actualizado y restaura campos con compare-and-set para evitar pisar cambios concurrentes. Solo elimina la copia local después de verificar la restauración.
+- Pruebas: AdminImageReplacementCompensation 9/9; CI run 43425740603 SUCCESS, 27 suites, 351/351 pruebas, 0 fallos.
+- Beta pendiente: integración real con Apps Script/Spreadsheet/Drive aislados, fallos inyectados y concurrencia real.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
+
+
+### AUG-040 — Asegurar las escrituras de FEEDBACK sobre Cortes
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Criterios 1–6:** política explícita de acciones públicas/protegidas y rechazo por defecto; assignCollaborator retirado; recordLike autenticado e idempotente; suggestYear separa actores anónimos de aportantes verificados; approveVideo coordinado, con destino verificado y recuperación de escrituras Feedbacks/Cortes.
+- **Evidencia:** H-AUD-040-001 a H-AUD-040-018 corregidos; 160/160 pruebas locales y parsing V8 17/17 PASS, según Auditoría.txt (cierre 2026-11-10).
+- **CI actual:** 34 suites/517 PASS en run 43426964327, con VideoApprovalPublishing y coordinación compartida; no incluye la suite histórica FeedbackWriteSecurity.js. Sus fixtures posteriores de PyS/reportMetadata requieren mantenimiento y no se presentan como prueba actual.
+- **Pendiente Beta:** Apps Script, Spreadsheet/Drive reales, OAuth/YouTube, navegador/IndexedDB, HTTP y concurrencia física entre proyectos.
+
+
+### AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Implementación base:** commit ef7bdc926ade691e22fa397a3b68267435d191cf y cierre de H-AUD-042-001 a 011 en Auditoria_Archive/Auditoria_2026-11-10_parte_002.txt.
+- **Corrección de continuidad:** ui.js declara userRole = context.role en renderInboxDetail y entrega el rol canónico a approveVideo/rejectVideo; H-AUD-042-012 resuelto.
+- **Pruebas:** SessionUiRoleInvalidation 13/13; InboxRoleContract 8/8; SessionProfileRefresh 19/19.
+- **CI:** run 43429506713 SUCCESS, 37 suites, 557 pruebas PASS, 0 fallos; Node --check ui.js PASS.
+- **Pendiente Beta:** DOM/IndexedDB real, transiciones de rol, sesiones remotas, multi-cuenta y llamadas globales directas.
+
+
+### AUG-019 — Restringir la terminal Drive al árbol Cortes
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; integración real de Drive diferida a Beta.
+- **Implementación:** Services/admin.js valida la ascendencia de carpetas y archivos; bloquea currentFolderId externo, cd .. fuera de Cortes, nombres ambiguos y movimientos con origen/destino externos. mkdir/move revalidan antes de escribir y comprueban el resultado. La coordinación compartida de ADMIN mantiene el recurso DRIVE.
+- **Pruebas:** DriveTerminalScope 20/20 PASS; GitHub Actions run 43454957238 SUCCESS; 62 suites, 881/881 pruebas PASS; node --check admin.js PASS.
+- **Commits:** d4323697b9fe063cf4f8e26221c33f9386cd028d, 36b025387adc55a6f9189e6c232232ad38bb513d, 2af745fd93422f8477fc7f77e88132a75665955c y 93fd2330976ffb5619ac1544fd51a53a3992413d.
+- **Beta:** validar permisos y movimientos en una copia aislada de Drive, incluyendo cambios externos de ubicación concurrentes. No usar recursos productivos.
+
+
+### AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; Spreadsheet real diferida a Beta.
+- **Lectura:** getActivityLogs lee como máximo 100 filas recientes de ActividadUsuario y de InboxAuditLog; la respuesta fusionada queda limitada a 100. ActivityLogsBoundedRead 7/7 PASS quedó integrada en el runner.
+- **Purga:** solo lee la columna timestamp; elimina fechas válidas con más de siete días en bloques descendentes. Los valores vacíos, inválidos, numéricos sin tipo fecha y Date inválidos se conservan y reportan mediante unclassifiedCount. El vaciado total explícito conserva su alcance y no modifica InboxAuditLog.
+- **Pruebas:** ActivityLogRetention 10/10 PASS; ActivityLogsBoundedRead 7/7 PASS; GitHub Actions run 43455656745 SUCCESS, 64 suites, 898/898 PASS; node --check feedback.js PASS.
+- **Commit:** c035523c855d257ed51cec87f87cd1e41855be82.
+- **Beta:** Spreadsheet aislada, fechas heredadas, historial grande y concurrencia con escrituras de actividad. Sin datos productivos.
+
+
+### AUG-021 — Registro persistente de operaciones administrativas sensibles
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- **Implementación:** las acciones ADMIN sensibles persisten un evento STARTED antes del handler y lo finalizan con actor autenticado, acción, origen/destino, inicio/fin, resultado, etapa categorizada, duración y contadores parciales. Fallos de inicio bloquean la operación; fallos de cierre no reportan éxito.
+- **Protección:** ScriptProperties, sin endpoint de lectura/modificación; acceso limitado a editores del proyecto Apps Script. Retención 180 días y máximo 300 eventos finalizados; hasta 19 pendientes, 20 bloquean nuevas operaciones. Máximo 900 caracteres por evento.
+- **Privacidad:** sin payloads, mensajes, stack traces, tokens, contraseñas, Base64, URLs ni nombres completos.
+- **Pruebas:** AdminAuditTrail 15/15 PASS; GitHub Actions run 43458049648 SUCCESS, 65 suites, 913/913 PASS; node --check admin.js PASS.
+- **Commits:** ca26cf9115fc178a061363daca5b4601db597e0a, 5d8a90d6da9d9bc4c145ec741ddefc4d326a9262 y 60a5c27c8cc7a08424bf0bdd642e528687bfb4fd.
+- **Beta:** verificar ACL real de editores Apps Script, persistencia en deployment aislado, retención y fallos de cuota/timeout. Sin recursos productivos.
+
+
+### AUG-022 — Verificar la eliminación asíncrona de IndexedDB
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- **Implementación:** deleteDatabase('GPSpedia_DB') ahora se espera por onsuccess/onerror/onblocked. Bloqueo, error y API no disponible no se reportan como éxito; localStorage se limpia e informa por clave, de forma independiente. Solo hay notificación de éxito total y recarga tras confirmación de IndexedDB y eliminación de ambas claves.
+- **Pruebas:** AdminClientCacheDeletion 6/6 PASS; GitHub Actions run 43459877682 SUCCESS, 66 suites, 919/919 PASS; node --check ui.js en modo ES module PASS.
+- **Commits:** 7d7b14bec2ee17beedbd6a1048e8c0d58b614f70 y a9f27cd93e7f1ff3fe2f1307eeffd6a68ff08b5d.
+- **Beta:** navegador/IndexedDB reales, otra pestaña con conexión abierta, onblocked y finalización tardía, onerror y recarga. Sin datos productivos.
+
+
+### AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- **Clasificación:** acciones internas/manuales ADMIN; ruta canónica existente y sin consumidor frontend versionado. Se conservan por compatibilidad ante la imposibilidad de inventariar consumidores externos desde el repositorio.
+- **Contrato:** documentado en Services/ADMIN_ACTIONS.md. Se validan nombres, encabezados y fórmula antes de crear; addColumn exige hoja existente y nombre válido.
+- **Seguridad:** sesión Desarrollador validada en servidor; lease compartida y auditoría persistente existentes y comprobadas.
+- **Pruebas:** AdminSheetActionsContract 9/9 PASS; GitHub Actions run 43460720098 SUCCESS, 67 suites, 928/928 PASS; node --check Services/admin.js PASS.
+- **Commit:** d1443c147788e9732d775f7bdc1c276b27ba515c.
+- **Beta:** Spreadsheet/Apps Script aislados, roles, lease, auditoría y errores de escritura. No se retiraron handlers ni rutas.
+
+
+### AUG-024 — Contrato de salud e identidad de microservicios
+- **Estado:** COMPLETADA LOCALMENTE; validación de deployments diferida a Beta.
+- **Implementación:** contratos JSON con identidad y estado para AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN; redacción de IDs/estructura interna en endpoints debug; LEGACY y claves sin identidad verificable permanecen unknown y no se consultan.
+- **Clasificación:** online/slow/unavailable/error/unknown/stale; timeout individual 8 s, umbral slow 2 s, vigencia stale 5 min y ping ADMIN 5 s independiente del escaneo.
+- **Interfaz:** muestra HTTP, latencia, última respuesta válida, código de diagnóstico y explicación segura. Se aclara que el endpoint no demuestra disponibilidad interna de Sheets/Drive.
+- **Pruebas:** ServiceHealthContract 16/16 PASS; GitHub Actions run 43475746110 SUCCESS: 68 suites, 944/944 pruebas aprobadas, 0 fallos. Los módulos modificados pasan node --check.
+- **Beta:** comprobar identidad y versión de deployments reales, MIME/contrato público, redacción y comportamiento de red/timeout en entorno aislado. No se modificaron deployments.
+
+
+### AUG-025 — Corregir vigencia y precisión temporal de la telemetría local
+- **Estado:** COMPLETADA LOCALMENTE; validación visual diferida a Beta.
+- **Implementación:** nuevo serviceMetrics.js con almacén ordenado por timestamp de inicio, ventana móvil exacta de 15 minutos, 15 buckets y detección de truncamiento al superar 600 eventos vigentes.
+- **Interfaz:** gráfico y detalle etiquetan la hora de inicio; se advierte si los conteos son parciales. La actualización por caducidad se ejecuta cada 15 segundos solo cuando el diagnóstico está visible; el temporizador se limpia al resetear la sesión.
+- **Pruebas:** ServiceMetricsTelemetry 10/10 PASS; GitHub Actions run 43476653609 SUCCESS: 69 suites, 954/954 pruebas aprobadas, 0 fallos; módulos modificados pasan node --check.
+- **Commit:** 54997b017de2b72acb86763fc1f9063b644a9ec3.
+- **Beta:** probar inactividad >15 minutos, límites exactos, 600+ eventos, solicitudes largas/concurrentes y modal/diagnóstico oculto/visible. Sin datos productivos.
+
+
+### AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Implementación:** la consulta del historial no crea ni migra la hoja; expone estados históricos y filas inválidas/duplicadas en revisión. La migración de doce columnas es explícita, idempotente, coordinada por lock/lease y verifica encabezados. Las acciones validan unicidad e identidad de Drive, tipo MIME, referencias y estados previos; las compensaciones restauran celda/archivo/estado histórico o dejan requiere_revision cuando no pueden confirmarse.
+- **Interfaz y esquema:** se documentaron los doce campos adicionales, estados y reglas de migración en Spreadsheet/GPSpedia_DB_columnas.md; el panel distingue historial recuperable, estados no accionables y registros para revisión.
+- **Pruebas:** AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions run 43481271693 SUCCESS, Node.js 22, 70 suites, 973/973 pruebas aprobadas, 0 fallos. La primera ejecución detectó que la acción explícita de migración faltaba en ACTION_TO_SERVICE_MAP; se corrigió y la ejecución final aprobó.
+- **Commits:** 2c6ff63f6ebc0111ba92e71789f861d2572dd9ce (mapa ADMIN); cierre documental en el commit siguiente.
+- **Beta:** probar Apps Script/Spreadsheet/Drive aislados, permisos y ACL, estados y transiciones reales, fallos de setValue/flush, archivos en papelera, rollback y filas parciales. No usar recursos productivos.
+
+Siguiente tarea: AUG-027 — definir alcance de referencias y separación entre historial e inventario sin uso. Requiere decisión funcional; no implementar por inferencia.
+================================================================================

@@ -1,0 +1,853 @@
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 12 — CONSERVAR REEMPLAZOS CON RESULTADO REMOTO INCIERTO
+Se corrigió la reconciliación previa al descarte: el estado remoto not_found ya no se interpreta como cancelación. Como la solicitud original podría seguir en curso antes de crear su registro en el ledger, el flujo detiene el descarte y conserva el snapshot local (incluido Data URL/opId). Solo cancelled explícito permite actualizar baseline y retirar directamente el intento; linked conserva la recuperación idempotente con comprobación de integridad. Se añadió helper de clasificación de cancelación y regresiones para el caso incierto.
+Validación local: parsing V8 PASS; AdminImageUploadIsolation 10/10; AdminModalEditRestoreContract 4/4; EditBackupIsolation 12/12; AdminModalEditSecurity 13/13; ActionDispatchContract 10/10 PASS. No se ejecutaron IndexedDB/navegador reales ni Apps Script/Spreadsheet/Drive reales.
+Archivos: ui.js, adminImageUploadIsolation.js, Services/Test/AdminImageUploadIsolation.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 11 — RESTAURACIÓN ACOTADA DEL MODAL
+Se corrigió el descarte de una edición interrumpida: la restauración compara el snapshot con el búfer vigente del vehículo y, si no está disponible, obtiene la ficha actual del catálogo. Solo se envían los campos declarados en la whitelist del editor in-modal; propiedades generales del registro como id, marca, contadores o metadatos quedan fuera del flujo. Se agregó un helper puro de selección de campos y regresiones de aislamiento/contrato.
+Validación local: parsing V8 de ui.js, editBackupStore.js, Services/admin.js y suites nuevas PASS; EditBackupIsolation 12/12 PASS; AdminModalEditRestoreContract 3/3 PASS; AdminModalEditSecurity 13/13 PASS; ActionDispatchContract 10/10 PASS. No se ejecutaron navegador/IndexedDB real ni servicios Apps Script, Spreadsheet o Drive.
+Archivos: ui.js, editBackupStore.js, Services/Test/EditBackupIsolation.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 4 — RETENCIÓN Y LIMPIEZA SEGURA
+Se estableció una política sin expiración automática para snapshots cuyo resultado remoto sea incierto y copias de edición recuperables. La limpieza queda vinculada a confirmación terminal y a la identidad owner/vehículo/opId correspondiente; los registros en cuarentena se conservan. Se añadieron regresiones de permanencia y limpieza explícita para pendingOperationStore, editBackupStore y addCutPending.
+Archivos: Services/Test/PendingOperationIsolation.js, Services/Test/EditBackupIsolation.js, Services/Test/IndexedDBTransactions.js, Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 3 — RECUPERACIÓN TRAS CAMBIO DE SESIÓN
+Al cerrar la interfaz por cambio de sesión se limpia el estado de edición en memoria, pero se conserva el snapshot persistido para que solo el mismo propietario pueda reanudarlo. Al iniciar edición, se reutiliza una copia previa válida del mismo propietario/vehículo en lugar de sobrescribir la línea base de una edición interrumpida.
+Archivos: ui.js, checkpoint.md y Tareas_pendientes_parte1.txt.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 3 — COMPATIBILIDAD DEL BASELINE DE IMAGEN
+Se preservó el comportamiento del reemplazo de imagen fuera del modo de edición: si no existe una copia de edición activa, no hay snapshot que actualizar y el baseline no bloquea la operación confirmada. Durante una edición, la escritura sigue exigiendo coincidencia de sesión, propietario y vehículo.
+Archivos: ui.js y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 3 — AISLAMIENTO DE gpsepedia_edit_backup
+- Se agregó editBackupStore.js con almacenamiento por ownerId/vehicleId, validación de identidad, verificación de escritura, sanitización de credenciales y cuarentena de copias legadas sin propietario.
+- ui.js ahora crea, recupera, actualiza y elimina únicamente la copia vinculada a la cuenta Desarrollador y vehículo de la sesión actual; la restauración se detiene si cambia la sesión durante las solicitudes.
+- Se agregaron siete escenarios en Services/Test/EditBackupIsolation.js.
+Archivos: ui.js, editBackupStore.js, Services/Test/EditBackupIsolation.js, Services/Test/README.md, checkpoint.md, Tareas_pendientes_parte1.txt y ChangesLogs.txt.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — AJUSTE FINAL DE LOGS SENSIBLES
+Se sanitizaron también los errores de validación VIN y sugerencias, y se redujo el registro de addOrUpdateCut a vehicleId; no se imprime el objeto de respuesta.
+Archivos: add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — AJUSTE DE SANITIZACIÓN DE CREDENCIALES
+Se amplió el filtro de campos persistidos para excluir cualquier propiedad que contenga «token» y se redujo el registro de errores de validación VIN al tipo de error, sin imprimir el objeto de excepción.
+Archivos: pendingOperationStore.js, Services/Test/PendingOperationIsolation.js, add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — AJUSTE DE SESIÓN — COMPROBACIONES DESPUÉS DE ESPERAS DE RED
+add_cortes vuelve a verificar el propietario después de la consulta VIN y tras recibir la respuesta de addOrUpdateCut. Si la cuenta cambió durante una petición asíncrona, el flujo no continúa con la sesión anterior ni limpia el snapshot como si perteneciera a la cuenta nueva.
+Archivos: add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — AJUSTE DE SEGURIDAD — LECTURA DEL SNAPSHOT
+Si falla la lectura del snapshot local antes de obtener el opId, add_cortes detiene el envío, informa que no puede verificar la operación previa y restaura los controles de la interfaz. Así no continúa con un identificador nuevo cuando el estado local es incierto.
+Archivos: add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 2 — AISLAMIENTO DE gpsepedia_pending_operation
+- Se agregó pendingOperationStore.js con clave por propietario, verificación de escritura, lectura/eliminación owner-bound y sanitización recursiva de tokens/credenciales.
+- add_cortes.html ahora vincula snapshots a ownerId, verifica la sesión vigente antes de recuperar y reintentar, y evita registrar snapshots, respuestas completas o mensajes de error potencialmente sensibles.
+- Los snapshots legados se migran solo con owner explícito; los registros sin propietario, corruptos o en conflicto se conservan en cuarentena.
+- Se agregó Services/Test/PendingOperationIsolation.js con siete regresiones.
+Archivos: add_cortes.html, pendingOperationStore.js, Services/Test/PendingOperationIsolation.js, Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-051 — ANÁLISIS ITERACIÓN 7 — DEPENDENCIA PARA LÍMITE RAM
+Se inspeccionó la caché de miniaturas en ui.js. memoryUrlCache es un Map sin límite que conserva URLs blob; eliminar entradas del Map sin revocar las URLs no libera los Blob asociados. Se documentó el ciclo de vida seguro de ObjectURL como prerrequisito para implementar un límite RAM real. No hubo cambios funcionales ni pruebas de memoria.
+Archivos: checkpoint.md, Tareas.txt, ChangesLogs.txt.
+================================================================================
+
+# Registro de cambios — GPSpedia
+
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de registrar cambios o modificar el proyecto.
+
+Este archivo conserva el historial factual de modificaciones; no establece procedimientos ni reglas de desarrollo. El historial anterior permanece en `Olds/Documentacion_Legacy/`.
+
+================================================================================
+2026-11-09 — DOC-MIG-2026-001 — MIGRACIÓN DOCUMENTAL
+- Diez registros/bitácoras archivados en Olds/Documentacion_Legacy/ con sufijo _legacy_parte_NNN.
+- Documentos mayores a 180,000 caracteres divididos en partes de máximo 180,000 caracteres Unicode.
+- Concatenación verificada contra cada contenido original.
+- Nombres canónicos conservados como registros nuevos o índices.
+- Manifiesto creado en Olds/Documentacion_Legacy/README.md.
+- Norma creada en Plan_auditoría/Normas_Gestion_Documental.md y vinculada desde Protocolo y Plan Maestro.
+- Sin cambios en código funcional, servicios, endpoints, configuración ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-09 — DOC-REG-2026-002 — SEPARACIÓN DE TAREAS Y COMPUERTA DE SINTAXIS
+- Se crearon cuatro partes de tareas pendientes: backlog AUG completo y registros legacy abiertos/parciales en reconciliación.
+- Se creó tareas_completadas_parte1.txt; solo incluye cierres con evidencia y separa auditorías E1 de implementaciones.
+- Se creó lista_beta.txt con funcionalidades pospuestas y compuerta de entrada.
+- Se incorporó la regla de que ninguna implementación se marca COMPLETADA sin revisión sintáctica registrada y demás validaciones obligatorias.
+- Se sincronizó el Plan Maestro con HEAD real y registros AUG/VAL; se aclaró el contexto de rama.
+- Las partes legacy permanecen intactas; no hubo cambios de código ni pruebas funcionales/deployments.
+- H-AUD-044 resuelto documentalmente; H-AUD-045 y H-AUD-046 quedan abiertos.
+================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-PLAN-2026-003 — ORDEN Y TRAZABILIDAD DEL PLAN MAESTRO
+Archivo principal: Plan_auditoría/Plan_Maestro_Implementacion.md (adenda 14).
+Se agregó orden de ejecución por fases/olas, propiedad única de IDs AUG, mapa de archivos de requisitos, dependencias bloqueantes y referencia al procedimiento obligatorio por tarea.
+Se aclaró que las partes 3–4 de pendientes son registros históricos abiertos/parciales para reconciliación y no tareas listas para ejecución.
+Se actualizaron checkpoint.md, Auditoría.txt, Tareas.txt y tareas_completadas_parte1.txt.
+No se modificó código ni archivos legacy; no se ejecutaron pruebas funcionales ni deployments.
+================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-README-2026-001 — CANCELACIÓN DE FILTROS RÁPIDOS EN README
+Se sustituyó la afirmación de que la barra de filtros rápidos por Categoría/Año estaba activa por una nota explícita de cancelación.
+Archivo modificado: README.md. No se modificó código, funcionalidades, legacy ni Services.
+Validación documental: búsqueda de referencias, comparación byte por byte contra respaldo exacto y Code Review documental.
+Sintaxis de código: N/A. H-AUD-048 resuelto.
+================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-README-2026-002 — ESTADO TEMPORAL DE SERVICES
+README sección 5 actualizada para reflejar que Services/ contiene fuentes temporales durante implementación y corrección, que se eliminarán del repositorio al concluir esa fase. Se separa explícitamente código fuente de deployments y endpoints independientes.
+H-AUD-049 resuelto. No se borraron ni modificaron archivos Services/, endpoints, deployments o legacy. Cambio exclusivamente documental; revisión y diff aprobados.
+================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-TRACE-2026-001 — RECTIFICACIÓN DE TRAZABILIDAD
+Se incorporó a Auditoría.txt el hallazgo H-AUD-049 y el registro H-AUD-050 sobre la omisión de Auditoría.txt y del checkpoint inicial en el commit 8b2bec3.
+Se recuperó checkpoint inicial de DOC-README-2026-002 desde blob 434759c9f0a3b886ae17f427f8249b513693313c y se añadió una nota explícita de incorporación tardía. Se agregó checkpoint inicial y final de la tarea correctiva.
+Se añadieron adendas a Tareas.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt. El commit 8b2bec3 y sus registros originales se conservaron sin reescritura.
+Cambio exclusivamente documental; sintaxis de código y pruebas funcionales N/A.
+================================================================================
+
+
+================================================================================
+2026-11-09 — DOC-LEGACY-2026-001 — REVALIDACIÓN PARCIAL DE CIERRES HISTÓRICOS
+Se registró en Auditoría.txt el inventario de 20 tareas históricas [X], la TAREA 4 parcial, commits/diffs relacionados, estados E1/VAL, evidencia de pruebas y revisiones, y el alcance de las comprobaciones sintácticas limitadas.
+Se añadió H-AUD-051 sobre evidencia insuficiente para promover las marcas históricas y H-AUD-052 sobre formalización tardía del checkpoint inicial y reinicio de la auditoría formal.
+Se actualizó Tareas.txt, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt y checkpoint.md. Las marcas históricas se conservan sin promover; TAREA 4 permanece [~].
+No se modificaron archivos legacy, código, Services, endpoints, deployments ni rama base. No se ejecutaron pruebas funcionales ni Code Review individual de las tareas históricas. La auditoría DOC-LEGACY-2026-001 permanece parcial y abierta.
+================================================================================
+
+
+================================================================================
+AUG-005 — Auditoría y bloqueo preventivo por integridad de Users.ID
+Fecha: 2026-11-09.
+Archivos documentales modificados:
+- Auditoría.txt: añadidos H-AUD-053 y H-AUD-054; el segundo registra el riesgo de reindexación y bloquea el borrado físico hasta verificar el esquema.
+- Tareas.txt: añadida la ficha de estado BLOQUEADA de AUG-005.
+- Tareas_pendientes_parte1.txt: añadida actualización append-only de estado y requisito para reanudar.
+- checkpoint.md: incorporados checkpoint inicial y final del ciclo bloqueado.
+Descripción objetiva: la auditoría identificó que handleDeleteUser no elimina sesiones y que AUTH no verifica la existencia de la cuenta. La revisión posterior detectó que handleCreateUser copia la fórmula de ID; al no poder consultar la fórmula efectiva de Users.ID, se registró el riesgo de reindexación y se detuvo la integración.
+No se modificaron archivos de código, Services, endpoints, deployments, datos productivos, README, archivos legacy ni la rama base. Los blobs preliminares de código no fueron añadidos al árbol ni a la rama.
+Pruebas funcionales de Apps Script: no ejecutadas; Services/Test/README.md indica que los proyectos aislados aún no están creados/desplegados. No se declara implementación ni validación funcional completada.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUG-006 — CIERRE DE SESIÓN CON REVOCACIÓN BACKEND
+Archivos de código modificados:
+- auth.js: la función logout() captura el SessionToken antes de retirar la sesión local; presenta la pantalla de acceso inmediatamente y solicita la acción AUTH logout en segundo plano. Los errores remotos y la limpieza secundaria pendiente se comunican mediante showGlobalError.
+- api-config.js: se asignó la acción logout al servicio AUTH.
+- Services/Auth.js: doPost enruta logout; handleLogout localiza el token exacto bajo ScriptLock, elimina solo su fila, responde idempotentemente si ya no existe y limpia Users.SessionToken solo cuando coincide con el token revocado. Los tokens duplicados se rechazan sin mutaciones.
+- Services/Test/Auth.js: se sincronizó la lógica de AUTH conservando el Spreadsheet ID aislado y su comentario de configuración.
+No se modificaron Services/users.js, main.js, ui.js, endpoints, deployments ni datos productivos.
+Verificación local con dobles: 7 casos backend y 4 casos frontend PASS (revocación individual, sesiones múltiples, token más reciente preservado, idempotencia, duplicados, fallo de limpieza secundaria, token ausente y fallo de red). No equivale a prueba en Apps Script real.
+La revisión de sintaxis se limita a los fragmentos modificados ejecutados con Node.js v22. No se ejecutó un parser integral de todos los módulos/archivos afectados. Estado: implementación incorporada, pendiente de revisión sintáctica integral y validación funcional en deployments aislados AUTH.
+================================================================================
+
+
+================================================================================
+2026-11-09 — REV-AUG-006-001 — REVISIÓN POSTERIOR Y BLOQUEO POR CONCURRENCIA
+- Parser de cuerpo completo: auth.js y api-config.js pasaron tras retirar declaraciones import/export para el harness; Services/Auth.js y Services/Test/Auth.js pasaron como scripts completos. La comprobación no equivale a una validación de ejecución en Apps Script ni a parser nativo ESM.
+- Se confirmó que las copias de AUTH coinciden al normalizar únicamente SPREADSHEET_ID y el comentario de configuración; el ID aislado se conserva.
+- La revisión estática encontró H-AUD-056: AUTH.logout y USERS.resetUserSessions mutan ActiveSessions desde proyectos separados con ScriptLock no compartidos. Un deleteRow concurrente puede invalidar el rowIndex de AUTH y eliminar otra sesión.
+- AUG-006 queda BLOQUEADA hasta centralizar/coordenar todas las mutaciones de ActiveSessions y demostrarlo con pruebas de intercalado. No desplegar la versión actual.
+- Services/Test/README.md confirma que los proyectos de prueba siguen sin crearse/desplegarse. No se llamaron endpoints operativos ni se modificaron datos.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUG-153 — CENTRALIZACIÓN DE MUTACIONES DE ACTIVESESSIONS
+Archivos de código:
+- Services/Auth.js y Services/Test/Auth.js: se incorporó resetUserSessions bajo el ScriptLock AUTH, con autorización derivada del token activo, unicidad de actor/destino, protección contra auto-cierre y duplicados, eliminación descendente de sesiones y reporte de limpieza secundaria pendiente.
+- Services/users.js y Services/Test/users.js: se retiró el router y handler que mutaban ActiveSessions desde el proyecto USERS; las consultas de sesión permanecen de solo lectura.
+- api-config.js: resetUserSessions ahora se enruta a AUTH.
+- Services/Test/README.md: se documentó AUTH como autoridad única de escritura de ActiveSessions y la ruta de prueba.
+Documentación: H-AUD-056 ampliado; H-AUD-057 registra y resuelve la colisión documental de AUG-100; se incorporó AUG-153 en Tareas_pendientes_parte2.txt, Tareas.txt, Aug_Tareas.md y Plan Maestro; se agregó rectificación append-only a Tareas_pendientes_parte1.txt.
+Verificación estática: se inventariaron 21 archivos JS/Apps Script; solo AUTH login/logout y USERS reset escribían ActiveSessions. admin.js, write.js y feedback.js solo consultan esa hoja; los módulos restantes no la referencian. Después del cambio, USERS no conserva handler de escritura de ActiveSessions.
+Pruebas de lógica con dobles locales: 8/8 PASS en simulación (multi-sesión y preservación de cuentas ajenas; rol no autorizado; auto-cierre; token solicitante duplicado; token objetivo duplicado; reintento idempotente; fallo parcial de eliminación; fallo de limpieza secundaria). No equivale a prueba de intercalado real ni a deployment.
+Sintaxis integral: pendiente; no se declara parser completo de los archivos. Code Review estática: revisados autorización, bloqueo compartido, orden descendente, duplicados, logging sin bearer token y limpieza parcial. La limpieza de Users.SessionToken sigue expuesta a los riesgos independientes H-AUD-053/H-AUD-054/AUG-005.
+No se crearon deployments, no se llamaron endpoints productivos, no se modificaron datos ni la rama base. Filtros rápidos cancelados; sin cambios.
+Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; H-AUD-056/AUG-006 siguen pendientes de validación aislada concurrente.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUG-005 — REVOCACIÓN DE SESIONES Y ELIMINACIÓN SEGURA DE CUENTAS
+- Services/Auth.js y Services/Test/Auth.js: deleteUser bajo ScriptLock AUTH; validación de token/actor/destino, RBAC y autodeleción; desactivación lógica antes de revocar sesiones; borrado descendente y reintento ante fallos parciales. validateSession comprueba usuario único/activo. handleLogin revalida cuenta dentro del lock antes de crear sesión.
+- Services/users.js y Services/Test/users.js: retiro de deleteUser del router/handler USERS; getVerifiedSession exige sesión/usuario únicos y activos; getUsers filtra desactivados; createUser asigna UUID estático y reserva __deleted__:.
+- api-config.js: deleteUser se enruta a AUTH.
+- users.html: se oculta Eliminar para la cuenta autenticada.
+- Services/Test/README.md: documentación del flujo y pruebas aisladas pendientes; Spreadsheet ID conservado.
+- Spreadsheet/GPSpedia_DB_columnas.md: política de IDs estáticos y eliminación lógica.
+Verificaciones: sintaxis PASS en scripts Apps Script, api-config.js (harness ESM) y script inline users.html; copias sincronizadas al normalizar Spreadsheet IDs; lógica con dobles locales 13/13 PASS. No se crearon deployments ni se ejecutaron pruebas Apps Script reales. La validación funcional aislada/concurrente se difiere a Beta. Sin cambios a endpoints, datos productivos, rama base ni filtros rápidos.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 13/13 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+- Code Review adicional H-AUD-059: se revisaron los consumidores ActiveSessions de ADMIN, FEEDBACK y WRITE. ADMIN y WRITE ya rechazan el tombstone por rol/nombre completo vacío; Services/feedback.js ahora también exige username no reservado y rol activo conocido incluso cuando allowedRoles es null. Pruebas locales del guard FEEDBACK PASS; sintaxis PASS. Se mantiene la desactivación primero y la revocación posterior porque todos los consumidores de sesión rechazan tombstones.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+2026-11-09 — AUG-007 — POLÍTICA DE EXPIRACIÓN Y REVOCACIÓN
+- Política aprobada: 3 meses calendario absolutos y 1 mes calendario de inactividad.
+- AUTH agrega lastActivityAt en ActiveSessions, valida/toca sesiones bajo ScriptLock y expone touchSession. routeAction actualiza actividad autenticada con throttle de cinco minutos.
+- USERS, ADMIN, FEEDBACK y WRITE aplican la misma política. Las sesiones históricas sin lastActivityAt usan date como referencia inicial; timestamps inválidos se rechazan.
+- changePassword y resetUserPassword se enrutan a AUTH; ambos invalidan tokens antes de limpiar filas. resetUserPassword exige Desarrollador; USERS ya no acepta cambios de contraseña en updateUser.
+- users.html cierra la sesión local tras el cambio propio y reserva el restablecimiento administrativo al Desarrollador.
+- Sintaxis PASS en 12 archivos; pruebas de calendario 8/8 PASS; simulación de revocación selectiva PASS. Pruebas funcionales aisladas diferidas a Beta.
+================================================================================
+
+
+ADENDA AUG-007 — Revocación administrativa resiliente
+handleResetUserSessions() invalida primero todos los tokens de la cuenta destino antes de limpiar filas. Si una eliminación falla, informa invalidatedSessions/cleanupPending y las filas remanentes quedan sin token utilizable.
+
+
+================================================================================
+AUG-008 — Coordinación de validación y sincronización entre pestañas — 2026-11-09
+- Se sustituyó el bloqueo no atómico en localStorage por Web Locks API con exclusión compartida entre pestañas y timeout de espera.
+- La petición validateSession ahora admite AbortSignal; auth.js cancela tras ocho segundos y libera el lock al terminar la operación.
+- Se agregó marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token para evitar validaciones secuenciales redundantes. No es una fuente de autorización.
+- checkSession resuelve la interfaz sin dejar el splash bloqueado y espera la validación coordinada; las respuestas solo afectan la sesión si el userId/token siguen coincidiendo.
+- logout es token-aware y no puede cerrar una sesión posterior por una respuesta obsoleta. handleLoginSuccess evita reescribir una sesión más reciente durante el arranque.
+- Se propagan cambios del almacenamiento compartido: auth.js reconcilia pestañas; users.html y add_cortes.html abandonan la página protegida al desaparecer/cambiar la sesión.
+- Validaciones locales: sintaxis 4/4 PASS; coordinación 2 contextos/1 llamada PASS; respuesta obsoleta A frente a B PASS; logout obsoleto PASS; propagación de cierre PASS.
+- No se ejecutaron pruebas de navegador, Apps Script real, deployments aislados ni endpoints operativos. Pruebas multi-pestaña reales pendientes en Beta.
+================================================================================
+
+
+================================================================================
+AUG-009 — Validación del nombre de usuario en backend — 2026-11-09
+- Se agregó normalizeUsername_() en Services/users.js y Services/Test/users.js; rechaza valores que no sean string antes de convertir/normalizar, recorta espacios externos, rechaza vacío y el prefijo reservado __deleted__:.
+- La comprobación de duplicados continúa comparando trim()+toLowerCase(), compatible con la normalización de login. No se impuso lista blanca de caracteres ni longitud no aprobada.
+- users.html conserva required como control de interfaz; el backend valida independientemente llamadas directas.
+- Sintaxis PASS en ambos servicios. doPost/createUser directo con dobles locales: 9/9 casos PASS en producción y 9/9 en la copia aislada (18/18).
+- No se ejecutaron Apps Script real, deployment aislado ni endpoints operativos. Prueba directa real pendiente en Beta.
+================================================================================
+
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
+Batería ampliada: 10/10 casos directos de doPost PASS en producción y 10/10 en copia aislada (22/22 funcionales); sintaxis PASS en ambas fuentes. Se añadieron pruebas de campo ausente y Unicode válido. No sustituye la prueba real del deployment aislado, que permanece en Beta.
+
+
+================================================================================
+AUG-010 — Serialización local USERS y migración legacy AUTH — 2026-11-09
+- Services/users.js y Services/Test/users.js: helper withUsersMutationLock_() con waitLock(30000)/finally; handleUpdateUser y handleUpdateProfile validan sesión y realizan escrituras dentro del lock local. createUser conserva su sección crítica existente.
+- handleUpdateUser valida el rol destino antes de escribir Nombre_Completo; evita mutación por rechazo RBAC.
+- Services/Auth.js y Services/Test/Auth.js: migración legacy de Password movida al lock AUTH que también serializa cambio/reset de contraseña y creación de sesión; revalida el valor almacenado vigente antes de migrar. Una credencial antigua ya reemplazada no puede crear sesión ni sobrescribir el hash nuevo.
+- Se preservaron los Spreadsheet IDs separados de producción/prueba. users.html y api-config.js no requieren cambios: los actions ya se enrutan a sus servicios propietarios.
+- Sintaxis 4/4 PASS; pruebas locales con dobles: USERS 14/14, createUser fallo/reintento 2/2, AUTH intercalado cambio propio/reset administrativo vs login legacy 4/4, migración normal 2/2. Total funcional 22/22; sintaxis 4/4.
+- H-AUD-006 revalidado; H-AUD-065 resuelto. H-AUD-066 (escritura parcial si falla la segunda columna de updateUser) se registra y deriva a AUG-154.
+- Alcance interproyectos no resuelto: ScriptLock no se comparte entre proyectos; AUG-034 permanece responsable del coordinador común. Sin Apps Script real, deployments, endpoints live ni hojas productivas.
+================================================================================
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
+Recuento final: USERS 14/14; createUser fallo/reintento 2/2; AUTH 8/8 incluyendo migración legacy normal, cambio propio intercalado, reset administrativo intercalado y aplicación del límite según rol revalidado dentro del lock. Total funcional 24/24 PASS; sintaxis 4/4 PASS. H-AUD-067 resuelto. H-AUD-066 se mantiene en AUG-154. Sin pruebas reales de Apps Script/deployments.
+
+
+================================================================================
+2026-11-09 — ADENDA DOCUMENTAL AUG-011 — OMISIÓN EXPRESA
+- Tareas_pendientes_parte1.txt: se agregó a la ficha AUG-011 la decisión expresa del usuario de no ejecutar la sustitución de SHA-256 por KDF.
+- Se conserva SHA-256 y el formato/compatibilidad actuales; no se autoriza seleccionar KDF, modificar hashes, migrar credenciales ni desplegar cambios de hashing.
+- AUG-011 queda OMITIDA POR DECISIÓN DEL USUARIO y no debe reactivarse en sesiones futuras sin nueva autorización explícita.
+- No se modificó código, autenticación, credenciales, datos, hojas ni deployments. Cambio exclusivamente documental.
+================================================================================
+
+
+================================================================================
+AUG-012 — Contador de intentos concurrentes AUTH — 2026-11-09
+- Services/Auth.js (líneas 97–244): helpers de lectura/escritura del estado, migración del formato cacheado anterior, reservas por UUID, limpieza de reservas con más de 900 segundos y finalización diferenciada para éxito, credenciales inválidas y error de infraestructura.
+- Services/Auth.js (handleLogin, desde línea 338): conserva el ID de reserva; éxito reinicia solo fallos previos y elimina la reserva propia; el catch registra credenciales inválidas o revierte únicamente la reserva propia según el resultado.
+- Services/Test/Auth.js: misma lógica; se preservó su Spreadsheet ID independiente.
+- No se modificó el bloque SHA-256, el formato sha256$, credenciales, sesiones, roles, rutas ni configuración de despliegues.
+- Auditoría H-AUD-068 cerrada en fuentes; AUG-012 marcada completada en el alcance local y registrada en tareas_completadas_parte1.txt. Concurrencia real AUTH queda en lista_beta.txt.
+- Verificación: sintaxis 2/2 PASS; pruebas deterministas helpers 18/18 PASS; integración handleLogin 4/4 PASS; total funcional local 22/22 PASS. Revisión de diffs contra blobs originales PASS.
+- CacheService puede desalojar entradas antes del TTL; el bloqueo es de mejor esfuerzo. No se ejecutaron deployments, HTTP, Apps Script real ni hojas productivas.
+================================================================================
+
+
+================================================================================
+AUG-013 — Purga coordinada de Logs — 2026-11-09
+- Services/Auth.js (líneas 273–439): añadió isSensitiveLogRecord_() y handleClearSensitiveLogs(); valida sesión/identidad/expiración/cuenta/rol Desarrollador y ejecuta escaneo/borrado dentro del ScriptLock AUTH compartido con logToSheet(). Reporta fallos parciales después de liberar el lock.
+- Services/Auth.js (línea 448): añadió clearSensitiveLogs al router doPost.
+- Services/Test/Auth.js (líneas 273–439 y 448): sincronizó la lógica y conservó el Spreadsheet ID aislado.
+- Services/feedback.js: retiró SHEET_NAMES.LOGS, el permiso y la ruta clearSensitiveLogs y la función que eliminaba filas por índices precalculados.
+- api-config.js (línea 24): reasignó clearSensitiveLogs de FEEDBACK a AUTH; ui.js y getDeveloperSessionPayload() no requirieron cambios.
+- Services/Test/README.md (líneas 128–135): documentó la prueba aislada y la coordinación de Logs.
+- Verificación local: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS; reconstrucción de diffs contra respaldos PASS. No se ejecutaron deployments, HTTP ni Spreadsheet real.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN AUG-013 — 2026-11-09
+- Se añadieron pruebas locales de reintento tras fallo parcial, timeout de ScriptLock sin borrado y rechazo de autorización por doPost en AUTH producción/copia de prueba.
+- Resultado funcional local ampliado: 24/24 PASS; sintaxis 4/4 PASS. No se ejecutaron deployments ni concurrencia real Apps Script.
+
+================================================================================
+AUG-014 — Validación de contraseña en UI — 2026-11-09
+- users.html, línea 642: cambió la comprobación de newPassword.length a newPassword.trim().length para medir el mínimo de 8 caracteres después de eliminar espacios externos, conforme a normalizePassword() de AUTH.
+- users.html, línea 653: corrigió el texto «reincie sesión» por «reinicie sesión».
+- No se modificaron los servicios AUTH de producción/prueba ni api-config.js; el valor original sigue enviándose a changePassword y el backend mantiene su validación.
+- Verificación local: sintaxis 1/1 PASS; escenarios funcionales 10/10 PASS; diff de dos líneas y reconstrucción contra respaldo PASS. No se ejecutó navegador real ni deployment.
+================================================================================
+
+
+================================================================================
+AUG-016 — Auditoría del ciclo de sesión — 2026-11-09
+- Auditoría.txt: añadió H-AUD-071 a H-AUD-074, evidencia de las mutaciones AUTH/USERS, controles existentes, límites y dependencia de AUG-034.
+- Tareas_pendientes_parte1.txt: añadió adenda de estado BLOQUEADA para AUG-016; conserva la entrada original.
+- Tareas.txt: añadió registro activo de AUG-016 como BLOQUEADA, con hallazgos, dependencia y siguiente acción.
+- lista_beta.txt: añadió la matriz de validación aislada requerida después de resolver el bloqueo y completar la implementación.
+- checkpoint.md: añadió checkpoint inicial y cierre de auditoría de AUG-016.
+- No se modificaron archivos de código, endpoints, deployments ni datos. No se ejecutaron pruebas funcionales ni validaciones en Apps Script real.
+================================================================================
+
+
+================================================================================
+AUG-016 — Implementación de consistencia y recuperación del ciclo de sesión — 2026-11-09
+- Services/Auth.js: añadió requestId idempotente de login en ScriptProperties; reconciliación de appendRow/Users.SessionToken; conteo solo de sesiones no vacías/no expiradas; revocación consolidada de tokens con lectura de verificación; tombstones de solicitudes; recuperación de operaciones pendientes; actualización de rol bajo ScriptLock AUTH; aplicación del rol solo después de revocar sesiones; comprobación de hash después de setValue; logout invalida token antes de eliminar fila; resetUserSessions solo borra filas con token confirmado vacío.
+- Services/Test/Auth.js: replica la lógica de AUTH y conserva su Spreadsheet ID de prueba independiente.
+- Services/users.js y Services/Test/users.js: retiraron el handler updateUser para eliminar la segunda ruta de escritura de Privilegios.
+- api-config.js: enruta updateUser a AUTH; crea/retiene requestId de login en sessionStorage por pestaña.
+- auth.js: limpia el requestId solo después de persistir la sesión local.
+- users.html: cierra la sesión local y redirige a index.html cuando el usuario cambia su propio rol; comprueba validación tras un error de auto-cambio.
+- Services/Test/README.md: documenta autoridad AUTH, requestId, tombstones y pruebas aisladas.
+- Auditoría.txt: resolución H-AUD-071–074, decisión de política y límites de atomicidad.
+- lista_beta.txt: añade matriz Beta de fallo de escritura, reintentos, requestId, rol y multi-dispositivo.
+- Tareas_pendientes_parte1.txt, Tareas.txt y tareas_completadas_parte1.txt: actualizan estado a implementada localmente, Beta pendiente.
+- checkpoint.md: registra checkpoint inicial/reanudación y checkpoint final antes del commit.
+
+Líneas principales (líneas actuales después de los cambios):
+- Services/Auth.js: doPost/updateUser 426; requestId/limpieza/tombstones 477–571; recuperación de login 572–698; handleLogin 699–888; revocación de sesiones 889–980; reconciliación de rol 981–1047; handleUpdateUser 1048–1188; resetUserSessions 1189–1284; deleteUser 1285–1490; changePassword 1491–1571; resetUserPassword 1572–1652; logout 1653–1742.
+- Services/Test/Auth.js: mismos bloques y líneas que AUTH de producción; solo cambia SPREADSHEET_ID.
+- Services/users.js y Services/Test/users.js: doPost 96; updateUser fue retirado; handleUpdateProfile comienza en 328.
+- api-config.js: ACTION_TO_SERVICE_MAP 18; createLoginRequestId_ 138; login 152; completeLoginRequest 171.
+- auth.js: import de completeLoginRequest 8; limpieza del requestId tras handleLoginSuccess 319.
+- users.html: handleUserFormSubmit 539; llamada updateUser 559; auto-revocación y redirección 564.
+Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia producción/prueba PASS. No se ejecutaron deployments, HTTP, navegador, Sheets reales ni concurrencia de Apps Script.
+================================================================================
+
+
+================================================================================
+AUG-016 — Normalización del estado de cierre local — 2026-11-09
+- Tareas.txt: añadió adenda que normaliza AUG-016 a COMPLETADA por validación local aprobada y mantiene la integración real como validación diferida a Beta.
+- Tareas_pendientes_parte1.txt: añadió rectificación append-only del estado; conserva la entrada histórica y la referencia a AUG-154.
+- tareas_completadas_parte1.txt: añadió evidencia de cierre local y separación de las pruebas diferidas a Beta.
+- checkpoint.md: registró la revisión posterior del commit, las verificaciones locales y AUG-017 como siguiente tarea.
+- No se modificó código, endpoints, deployments, hojas ni datos.
+================================================================================
+
+
+================================================================================
+AUG-017 — Controles de navegación y coherencia de Inbox/Dashboard — 2026-11-09
+- ui.js: añadió normalización única de Privilegios y contexto userId/SessionToken/rol; showApp asigna explícitamente display de Inbox y Dashboard, incluye Jefe solo en Inbox y limpia modales/DOM/caché al cambiar de contexto.
+- ui.js: openInbox, openDashboard y loadAndRenderInbox descartan respuestas exitosas o errores si la sesión/rol que originó la petición ya no es vigente.
+- ui.js: renderInboxDetail usa Privilegios para decidir approve/reject y registra el listener de reply solo cuando existe el botón; las acciones de vídeo conservan el listener de borrar.
+- Auditoría.txt: registró H-AUD-024-007 ampliado y H-AUD-075/H-AUD-076; añadió su resolución.
+- Tareas.txt, Tareas_pendientes_parte1.txt y tareas_completadas_parte1.txt: registraron el cierre local de AUG-017.
+- checkpoint.md: registró auditoría, respaldo, pruebas locales y límites de validación.
+- No se modificaron backend FEEDBACK, AUTH, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-001 — CIERRE ADMINISTRATIVO — 2026-11-09
+- Tareas_pendientes_parte1.txt: se agregó adenda de cierre de AUG-001 basada en la confirmación expresa del propietario.
+- Tareas.txt: se agregó el registro activo de cierre de AUG-001 y se indicó la siguiente tarea del orden maestro.
+- tareas_completadas_parte1.txt: se agregó el cierre administrativo de AUG-001.
+- Auditoría.txt: se agregó adenda de estado vinculada a AUD-T-039, sin crear ni repetir hallazgos.
+- checkpoint.md: se registraron checkpoint inicial, evidencia, limitaciones, respaldos, revisión y checkpoint final.
+- No se modificaron código, archivos Services, endpoints, deployments, reglas de GitHub ni rama base. El agente no ejecutó ni verificó la configuración de protección; el cierre se basa en la confirmación del propietario.
+================================================================================
+
+
+================================================================================
+AUG-004 — MATRIZ DE CONTINUIDAD DE REQUISITOS — 2026-11-09
+- Nuevo Plan_auditoría/Matriz_Continuidad_Requisitos.md: clasificación de tareas/subtareas históricas, cancelaciones, requisitos vigentes/parciales, sustituciones, absorciones y referencias AUG/AUD-T.
+- Plan_auditoría/Consolidacion_Auditoria.md: índice y resultado AUG-004.
+- Tareas_pendientes_parte1.txt y Tareas.txt: registros de cierre documental append-only.
+- tareas_completadas_parte1.txt: cierre de AUG-004.
+- Auditoría.txt: resultado, evidencia de commits/código y límites.
+- checkpoint.md: checkpoint inicial/final, respaldos y verificaciones.
+- Sin cambios de código funcional, configuración, endpoints, deployments ni datos productivos. Sin pruebas funcionales de aplicación/Beta.
+================================================================================
+
+
+================================================================================
+AUG-003 — CIERRE DOCUMENTAL DEL ENTREGABLE DE AUDITORÍA — 2026-11-09
+- Tareas_pendientes_parte1.txt y Tareas.txt: adenda de cierre de auditoría E1 con límite explícito; AUG-034 sigue pendiente.
+- Auditoría.txt: evidencia AUD-T-033, continuidad SHA y separación auditoría/implementación.
+- tareas_completadas_parte1.txt: registro del entregable de auditoría completado.
+- checkpoint.md: checkpoint inicial/final y respaldos exactos.
+- No se modificó código ni se ejecutaron pruebas funcionales, endpoints, deployments o Beta.
+================================================================================
+
+
+================================================================================
+AUG-147 — CIERRE DE IMPLEMENTACIÓN Y PRUEBAS LOCALES — 2026-11-10
+- auth.js:330–374: logout envía userId+sessionToken a AUTH y maneja explícitamente el caso sin userId; conserva la protección contra cierres obsoletos y elimina solo gpsepedia_session.
+- Services/Auth.js:539–563: vincula la revocación de login requests a la identidad esperada y evita escrituras si encuentra una identidad cruzada.
+- Services/Auth.js:1195: pasa userId al saneamiento de login request en expiración.
+- Services/Auth.js:1660–1775: exige el par userId+sessionToken, verifica titularidad antes de mutar, rechaza tokens duplicados/cuentas ambiguas y conserva LockService/finally.
+- Services/Test/Auth.js:539–563, 1195, 1660–1775: mantiene paridad de los cambios AUTH en la copia de pruebas.
+- ui.js:3220–3305: añade resetSessionUi_ para cerrar overlays/menú/lightboxes, limpiar datos privilegiados y estado transitorio, y ocultar accesos de rol.
+- ui.js:3412–3416: protege openDevTools frente a invocaciones sin sesión Developer.
+- ui.js:6378–6401: showLoginScreen limpia currentUser, navegación, estado UI y likes transitorios.
+- ui.js:6409–6412: aplica limpieza completa al cambiar de cuenta, token o rol.
+- Auditoría.txt: registra resolución de H-AUD-022-001 y evidencia de pruebas/Code Review.
+- Tareas.txt y Tareas_pendientes_parte2.txt: registran cierre de AUG-147 con Beta diferida.
+- checkpoint.md: checkpoint inicial, auditoría, respaldos, implementación, pruebas locales, Code Review y checkpoint final.
+Resultado local: 32/32 PASS. Sin pruebas funcionales de Beta, endpoints operativos, cambios de deployment ni modificaciones de datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-039 — IMPLEMENTACIÓN Y CIERRE LOCAL — 2026-11-10
+- Services/write.js:96–133: amplía el mapeo Users y endurece getAuthenticatedCollaborator para exigir sesión única/no expirada, perfil único, username activo y rol reconocido por AUTH.
+- Services/write.js:264–294: allocateVehicleId exige Developer antes y después del lock; el perfil/rol se resuelve de forma única desde Users. assertDeveloperForIdMaintenance mantiene finally en el consumidor.
+- Services/write.js:777–788: addSupplementaryInfo valida antes del lock y vuelve a validar en handleAddSupplementaryInfoLocked antes de acceder a Cortes/Drive.
+- Services/write.js:1542–1570: checkOperation exige sesión en WRITE y devuelve metadata mínima, sin rowData, slotIndex ni filesStatus.
+- Services/admin.js:3678–3705: checkOperation ADMIN conserva el guard global Developer y elimina rowData/slotIndex/filesStatus de la respuesta.
+- ui.js:7982–7987, 8074–8076, 8212–8218: las tres llamadas addSupplementaryInfo transmiten userId/sessionToken mediante getDeveloperSessionPayload; no se alteró el contrato de vídeo fuera de AUG-043.
+- add_cortes.html:1313–1321: handleStage3Submit transmite state.userId/sessionToken y conserva serviceOverride ADMIN para silentRegister.
+- Auditoría.txt: cierra H-AUD-039-001 a H-AUD-039-005 y documenta decisión opId/actor, pruebas y Safety & Side Effects.
+- Tareas.txt, Tareas_pendientes_parte1.txt y tareas_completadas_parte1.txt: registran cierre de AUG-039.
+- checkpoint.md: registra ciclo A de AUG-147, checkpoint inicial AUG-039, respaldos, auditoría, implementación, pruebas locales, Code Review y checkpoint final.
+Resultado: 34/34 verificaciones locales PASS. Sin pruebas funcionales Beta, endpoints operativos, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+CORR-AUG039-001 — CORRECCIÓN DE VALIDACIÓN DE SESIONES — 2026-11-10
+- Services/write.js:122–131: getAuthenticatedCollaborator busca sessionToken globalmente en ActiveSessions y exige una única coincidencia cuyo ID corresponda a userId.
+- Services/admin.js:83–91: assertDeveloperSession exige token global único, titularidad coincidente, perfil Users único/activo y rol Developer de ese perfil.
+- Auditoría.txt: registra y cierra H-AUD-039-006 con evidencia, impacto, criterio y verificaciones.
+- Tareas.txt: registra y cierra CORR-AUG039-001 como tarea correctiva independiente.
+- checkpoint.md: incorpora checkpoint inicial/final, respaldos, pruebas, Code Review y siguiente tarea.
+Verificaciones: 13/13 casos aislados PASS; sintaxis de ambos archivos PASS; comparación inversa PASS. No se ejecutaron Apps Script real, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-SESSION-001 — ALINEACIÓN DE GUARD FEEDBACK — 2026-11-10
+- Services/feedback.js:52–63: assertFeedbackSession busca sessionToken globalmente en ActiveSessions, exige una sola fila y titularidad userId coincidente; Users debe contener un único perfil para ese ID.
+- Se mantienen expiración, rechazo de tombstones/roles inválidos, allowedRoles y excepción anónima suggestYear userId="0".
+- Auditoría.txt: H-AUD-042-001 registrado y resuelto.
+- Tareas.txt: CORR-FEEDBACK-SESSION-001 registrado y cerrado como tarea correctiva independiente.
+- checkpoint.md: checkpoint inicial/final, respaldo, pruebas, Code Review y siguiente tarea AUG-042.
+Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparación inversa PASS. No se ejecutaron endpoints, deployments ni datos productivos.
+================================================================================
+
+================================================================================
+2026-11-09 — CICLO A / CORR-FEEDBACK-SESSION-001 — VERIFICACIÓN Y NUEVO HALLAZGO
+- Verificado el commit 400f5531d3f2192098d8d510c47ddead2db28546 en GPSpedia2.2.5_work; coincide con HEAD y tiene como padre 8c1983c8e9fd1441854717a26654a2bd531172a3. Rama base GPSpedia2.2.5 confirmada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Ciclo A: se revisó Services/feedback.js, assertFeedbackSession(), sus consumidores autenticados, el guard previo al switch y la preservación de la ruta anónima. No se detectó regresión introducida por el cambio de unicidad global.
+- Se contrastó la revocación de rol en Services/Auth.js con FEEDBACK y api-config.js. H-AUD-042-002 registra que AUTH mantiene el marcador en ScriptProperties propio mientras puede quedar un token residual en la hoja compartida; FEEDBACK no puede leer ScriptProperties del proyecto AUTH y no consulta una señal compartida.
+- La hipótesis preliminar de leer directamente el marcador de AUTH desde FEEDBACK se descarta por aislamiento entre microservicios; la corrección deberá usar un mecanismo compartido o validar con la autoridad AUTH.
+- Nueva tarea correctiva independiente: CORR-FEEDBACK-ROLE-REVOCATION-001. AUG-042 permanece bloqueada hasta resolverla.
+- No se modificó código funcional ni se ejecutaron Apps Script real, Sheets/Drive productivos, endpoints, navegador, deployments o concurrencia física.
+================================================================================
+
+================================================================================
+2026-11-09 — CORR-FEEDBACK-ROLE-REVOCATION-001 — IMPLEMENTACIÓN
+- Se amplió el alcance tras inventariar todos los guards autenticados: AUTH, FEEDBACK, USERS, ADMIN y WRITE.
+- AUTH: Users.SessionToken ahora puede contener el marcador compartido __role_revocation_pending__: con metadatos JSON. Se escribe y confirma antes de revocar sesiones; se conserva ante fallos y se elimina después de confirmar revocación, rol y marcador local. Se añadió migración aislada de marcadores ScriptProperties legacy.
+- FEEDBACK, USERS, ADMIN y WRITE: los guards backend rechazan el marcador compartido antes de despachar acciones protegidas. No se alteraron las matrices RBAC, expiración, unicidad del token, actionPermissions ni la ruta anónima.
+- Se actualizaron Services/Test/Auth.js y Services/Test/users.js como espejos de prueba, manteniendo su Spreadsheet independiente. Services/Test/README.md documenta la migración requerida.
+- Sin cambios de esquema: se reutiliza la columna Users.SessionToken existente. No se modificaron endpoints, api-config, deployments ni datos.
+- Verificaciones: sintaxis 7/7; paridad de copias PASS; guards FEEDBACK/USERS/ADMIN/WRITE 8 casos PASS; pruebas de AUTH para detección, fail-closed, revocación parcial, retry, marcador corrupto/conflictivo y fallos de limpieza PASS; migración legacy PASS; orden de guardas PASS.
+- No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos. Las solicitudes ya en curso antes de persistir el marcador no se cancelan retroactivamente.
+================================================================================
+
+================================================================================
+2026-11-09 — CICLO A / CORR-FEEDBACK-ROLE-REVOCATION-001 — NUEVO HALLAZGO
+- Verificado commit b201198410ead781281badaee02cff9804b0cbad en GPSpedia2.2.5_work; el padre es dd3e85d746a6233aac01f3f5829cfb764df47547. La rama base continúa en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- La auditoría post-commit confirmó los guards compartidos en FEEDBACK, USERS, ADMIN y WRITE, así como la escritura previa del marcador por AUTH.
+- Se detectó H-AUD-042-003: cuatro handlers privilegiados de AUTH validan manualmente sesión y rol, pero no consultan el estado pendiente del solicitante: purga de Logs, reset de sesiones, eliminación de usuarios y restablecimiento administrativo de contraseñas.
+- Se registra CORR-AUTH-ROLE-REVOCATION-GUARDS-001 como tarea correctiva independiente. No se modificó código durante esta auditoría.
+- Se requiere rotar checkpoint.md por proximidad al límite documental; el contenido completo previo se conserva íntegro como parte legacy 005 y el archivo activo pasa a ser un índice con checkpoint inicial de la nueva tarea.
+================================================================================
+
+================================================================================
+2026-11-09 — CORR-AUTH-ROLE-REVOCATION-GUARDS-001 — IMPLEMENTACIÓN
+- AUTH: helper assertRequesterRoleRevocationClear_() verifica marcador local/compartido del solicitante, intenta reconciliar bajo ScriptLock y rechaza la llamada actual incluso si la reconciliación termina, requiriendo reautenticación.
+- Aplicado antes de operaciones privilegiadas en handleClearSensitiveLogs, handleResetUserSessions, handleDeleteUser y handleResetUserPassword.
+- Services/Test/Auth.js sincronizado, conservando el ID de Spreadsheet de prueba.
+- Se preservan token/identidad/expiración, perfiles activos, roles, restricciones de destino, matriz de permisos y logout.
+- Verificaciones: sintaxis 2/2, paridad Test/Auth PASS, 4/4 handlers sin mutación con solicitante pendiente, helper 3/3, rutas 4/4.
+- No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos.
+================================================================================
+
+================================================================================
+2026-11-09 — VERIFICACIÓN POST-COMMIT Y REANUDACIÓN AUG-042
+- Commit c29dbd553abbdfa31b614e3ab55a1d34340caebf verificado en GPSpedia2.2.5_work; padre 898ff2f2085f891e3de4a62dea5d3674637c0c6d; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- Ciclo A de CORR-AUTH-ROLE-REVOCATION-GUARDS-001: PASS sin nuevos hallazgos; Auth/Test Auth sintaxis y paridad PASS; handlers 4/4 bloqueados antes de mutación; comparación inversa contra respaldos exacta.
+- Se reanuda AUG-042 Ciclo B. Dependencias AUG-006, AUG-016 y AUG-017 completadas localmente. Se conserva la política de cambio de Privilegios = revocación de todas las sesiones y nuevo login; Jefe solo Inbox; Dashboard/activity fuera de Jefe.
+- No se modificó código funcional en esta etapa de reanudación.
+================================================================================
+
+================================================================================
+2026-11-09 — AUDITORÍA INICIAL AUG-042 / CICLO B
+- H-AUD-042-004: openDashboard/openInbox/openReplacedImagesModal no verifican el rol en la propia función; la visibilidad de botones no protege llamadas directas desde window.ui.
+- H-AUD-042-005: resetSessionUi_ limpia contenedores, pero deja listeners/cierres/cachés del panel admin y de imágenes reemplazadas; respuestas asíncronas pueden repoblar UI tras cambio de sesión.
+- H-AUD-042-006: no existe revalidación remota al recuperar foco/visibilidad ni periódica; una sesión revocada remotamente puede conservar UI hasta recarga.
+- H-AUD-042-007: tres consumidores UI aún aceptan Rol como fallback, aunque AUTH entrega Privilegios.
+- H-AUD-042-008: el catch de cambio de rol propio en users.html queda vacío si validateSession falla por red; conserva estado local sin aviso pendiente.
+- H-AUD-042-009: respuesta asíncrona de logout puede mostrar un aviso de una sesión anterior después de login con otra cuenta.
+- Se confirma que AUTH ya revoca todas las sesiones al cambiar Privilegios, showApp ya implementa visibilidad por rol, renderInboxDetail ya usa Privilegios y FEEDBACK conserva la matriz aprobada. Se preservan.
+- Alcance funcional: auth.js, ui.js, main.js, users.html. No se modificó código durante la auditoría.
+================================================================================
+
+================================================================================
+2026-11-09 — AMPLIACIÓN DE AUDITORÍA AUG-042
+- H-AUD-042-010: DriveAuditState se guarda en IndexedDB con clave global driveAudit:last, sin ownerId; otra cuenta Desarrollador puede recuperar resultados anteriores.
+- Se amplía alcance a offline.js para aislar persistencia por userId y limpiar estado anterior en logout/cambio de cuenta/rol.
+- Respaldo previo: offline.js blob c68e8698c74ef45a1c9bb534c6b2be77df817c34.
+================================================================================
+
+
+================================================================================
+2026-11-10 — CHECKPOINT DE AVANCE AUG-042 / CICLO B
+- Registrado estado de implementación: borrador ui.js preparado (blob e86ce5d6c3218aa05002b0d94a87f9a425bb9a48), parsing aislado PASS; pendiente revisión y pruebas funcionales.
+- Ampliación de auditoría H-AUD-042-010 sobre persistencia IndexedDB global de DriveAuditState y alcance a offline.js.
+- Se decidió no integrar código incompleto; commit de checkpoint exclusivamente documental.
+- HEAD padre: c9154bdc37cf37e89551b2347ea628a7d682c92c. No se modificó rama base.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-042 — SINCRONIZACIÓN DE ROL Y ESTADO PRIVILEGIADO DEL CLIENTE
+- ui.js: normalización/contexto/guardas 3181–3227; cola de limpieza Drive 3235–3254; resetSessionUi_ 3313–3419; openers Dashboard/Inbox/DevTools 3450–3530; initAdminPanelListeners 3544–4988; openReplacedImagesModal 5002–5372; openAuditDriveModal 5372–5855; renderInboxList 5855–5930; renderInboxDetail 5930–6159; loadAndRenderInbox 10537–10570. Incluye guardas por sesión/rol/generación, limpieza de vistas y control de respuestas asíncronas.
+- offline.js (145–266): DriveAuditState por userId, validación ownerId, eliminación de clave global, marcador persistente y generación de limpieza por cuenta; fail-closed ante fallos de almacenamiento y verificación de generación tras lecturas/escrituras.
+- auth.js: validateSessionCoordinated 54–92; handleLoginSuccess 111–118; validateActiveSession 227–262; logout 370–426. Validación forzada y descarte de respuestas de logout obsoletas.
+- main.js: ciclo de revalidación 19–62; instalación en initializeApp línea 886. Eventos focus/visibilitychange/online, single-flight, intervalo visible y aviso de red pendiente.
+- users.html (540–718): handleUserFormSubmit; snapshot y revalidación de identidad/token en operaciones asíncronas; limpieza Drive en auto-cambio de rol; cierre local y logout remoto de mejor esfuerzo si no se confirma la revocación.
+- Sin cambios en servicios backend, permisos FEEDBACK, endpoints, configuración de deployments ni rama base.
+================================================================================
+
+================================================================================
+2026-11-10 — CORR-AUG042-001 — ABORTAR OPERACIONES ADMINISTRATIVAS OBSOLETAS
+- ui.js:5032: se añadió una guarda de contexto en el catch de persistState dentro de saveUnusedInventory, para detener el flujo antes de saveUnusedImagesInventory cuando la sesión deja de ser vigente.
+- ui.js:4841: se añadió comprobación isAdminPanelCurrent_() en el catch de clearActivityLogs.
+- ui.js:4858: se añadió comprobación isAdminPanelCurrent_() en el catch de clearSensitiveLogs.
+- ui.js:4864: se añadió una comprobación final de vigencia antes de actualizar el resumen y emitir la notificación global.
+================================================================================
+
+================================================================================
+2026-11-10 — DOC-TRACE-042-001 — CORRECCIÓN DE TRAZABILIDAD
+- Adenda correctiva a CORR-AUG042-001: la referencia de saveUnusedInventory es ui.js:5561 (no ui.js:5032). Se conserva el registro anterior por política append-only.
+- Referencias verificadas del controlador clearSelectedLogs: ui.js:4841, 4858 y 4864.
+- Cambio exclusivamente documental; sin modificaciones funcionales.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-155 — COORDINADOR COMPARTIDO DE MUTACIONES
+- Services/Coordinator.js:1-367: autoridad de leases interproyectos, políticas deny-by-default, recursos compartidos, mantenimiento exclusivo, expiración, liberación, recuperación y autorización de acciones anidadas.
+- Services/SharedMutationClient.js:1-104: cliente servidor-a-servidor autenticado mediante secretos de ScriptProperties. Services/COORDINATOR_SETUP.md:1-45 documenta configuración y despliegue por entorno.
+- Services/Auth.js:429-461 y 934-940; Services/Test/Auth.js:429-461 y 934-940: coordinación de acciones mutadoras/validación de sesión y migración manual de marcadores legacy.
+- Services/users.js:99-131 y Services/Test/users.js:99-131: coordinación de createUser y updateProfile.
+- Services/write.js:159-191; Services/admin.js:579-611, 20-61, 1009 y 2540; Services/feedback.js:284-316: coordinación de mutaciones compartidas y propagación de lease ADMIN→WRITE para allocateVehicleId/freezeCortesIds.
+- Services/Test/SharedMutationCoordinator.js:1-270 contiene la suite aislada; Services/Test/README.md:156-172 documenta su configuración.
+- No se modificaron api-config.js, endpoints existentes, Services/Utilities.js, deployments ni datos productivos. UTILITIES se excluyó por estar retirado del flujo activo.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-034 — VENTANA SEGURA DE MIGRACIÓN VIN/IDEMPOTENCIA
+- Services/Coordinator.js: mantenimiento exclusivo con reserva phase=draining; bloquea nuevas mutaciones, espera el cierre de leases previas, informa operaciones activas al agotar el plazo y recupera reservas abandonadas a los 60 segundos. migrateCortesOperationIds se declara mantenimiento exclusivo para simulación y confirmación.
+- Services/Test/SharedMutationCoordinator.js: suite ampliada a 24 pruebas, con drenaje concurrente WRITE/ADMIN, bloqueo durante la reserva, timeout, expiración y compatibilidad con leases previas.
+- Services/admin.js: documentado el orden de recuperación destino→verificación→limpieza de origen.
+- Services/COORDINATOR_SETUP.md y Services/Test/README.md: documentan el protocolo y sus pruebas.
+- Tareas_pendientes_parte1.txt, Auditoría.txt, lista_beta.txt y checkpoint.md: estado, evidencia, límites y validación diferida.
+- Sin cambios en endpoints, api-config.js, Services/Utilities.js, datos productivos ni deployments.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-035 — INTEGRIDAD ESTRICTA DE IDEMPOTENCIA
+- ADMIN/WRITE: validación de esquema y registros, detección de duplicados, read-back de registro, estado completed terminal y recuperación por vehicleId único.
+- Migración: valida opId, asociación y status; completa/verifica entradas pending existentes; verifica completed antes de limpiar origen; dry-run informa registros a completar.
+- Suite Services/Test/IdempotenciaIntegrity.js: 13 casos lógicos; documentación de reconciliación no destructiva.
+- Sin cambios en endpoints, api-config.js, Utilities.js, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-036 — CONTRATO VIN/TESTIGO Y PARSERS
+- ADMIN/WRITE: AT:AV fijo para activaTestigo1..3; preflight de VIN y testigo; rechazo de encabezados duplicados, fuera de posición, ocupados o datos sin encabezado; preservación de columnas posteriores.
+- VIN: encabezado único; parser y serializer equivalentes en UI/ADMIN/WRITE; JSON canónico con slots vacíos y compatibilidad heredada con coma, /, barra inversa y punto y coma.
+- Suite Services/Test/VinTestigoIntegrity.js: 14 casos lógicos; README y esquema físico actualizados.
+- Sin cambios en endpoints, api-config.js, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-037 — LEDGER Y RECONCILIACIÓN DE CARGAS GENERALES
+- ADMIN/WRITE: ImageUploadLedger con persistencia previa a Drive y verificación posterior; reutilización por token solo tras recalcular SHA-256 y comprobar operación, carpeta, MIME, tamaño y contenido.
+- markImageUploadLinked actualiza ledger durable y deja la descripción Drive como metadata complementaria; un fallo no bloquea el guardado y deja pending recuperable.
+- ADMIN: acción reconcilePendingImageUploads, dry-run por defecto, confirm:true, paginación y clasificación de pendientes/huérfanos/faltantes/alterados. No elimina archivos.
+- Coordinator: IMAGE_UPLOAD_LEDGER reservado por mutaciones WRITE/ADMIN; reconciliación usa mantenimiento exclusivo.
+- Límite: 10 MB por imagen; falla cerrada antes de Drive si no puede persistir el intento.
+- Pruebas: ImageUploadLedger 18/18; SharedMutationCoordinator 25/25. Sin despliegues ni datos productivos.
+================================================================================
+
+2026-11-10 — AUG-037 — AJUSTE DE CIERRE: reconstrucción controlada del ledger desde metadatos Drive v2 tras verificar el archivo; detección de tokens duplicados; dry-run sin crear hoja ni modificar archivos.
+
+
+================================================================================
+2026-11-10 — AUG-043 — AVANCE DE CONTRATOS Y APROBACIÓN DE YOUTUBE
+- Services/feedback.js: autenticación de acciones protegidas; consulta de operación por propietario; validación de ID/URL real; idempotencia; destinos únicos Corte/PyS/Tutorial; prevención de duplicados; publicación y rechazo con verificación de escritura; bloqueo de enlaces directos en altas/ediciones PyS/Tutorial.
+- youtubeUpload.js: operación estable opVideoId, sesión currentUser.ID/SessionToken, persistencia de archivo y estado en IndexedDB, carga por bloques reanudables, consulta 308/Range, recuperación de respuesta perdida y rechazo de respuesta final sin ID real.
+- ui.js: credenciales en los callsites de asociación/desvinculación y edición; flujo de carga para Corte/PyS/Tutorial; retirada de la URL manual de openAddVideoModal; campos de vídeo de edición solo lectura.
+- api-config.js: ruta getVideoApprovalByOperation hacia FEEDBACK.
+- Services/Test: suites de estado, sesión, inicialización, idempotencia, publicación/rechazo, contratos y cliente resumable; README actualizado.
+- Validación local: 82/82 pruebas aisladas PASS; parsing/sintaxis 4/4 PASS; revisión estática de los callsites protegidos PASS.
+- Estado: EN PROGRESO. Pendiente revisión/publicación y validación de integración en navegador y proyecto Apps Script/Spreadsheet aislado.
+- No ejecutados: YouTube OAuth/API real, XHR/IndexedDB de navegador real, Apps Script desplegado, HTTP, Drive/Spreadsheet productivos, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — CHECKPOINT AUG-043 — CONTINUIDAD Y VALIDACIÓN PENDIENTE
+- checkpoint.md: registra estado, evidencia publicada, límites de validación y siguiente acción.
+- Tareas.txt: actualiza AUG-043 a EN PROGRESO con sus validaciones pendientes.
+- Este commit es documental; no modifica código funcional ni la rama base.
+================================================================================
+
+
+PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
+- La implementación, las siete suites de prueba y los registros de avance quedaron publicados en GPSpedia2.2.5_work mediante 15 commits secuenciales de un archivo, cada uno verificado como hijo directo del HEAD previo.
+- HEAD de trabajo verificado tras la publicación: abe3b642f4e41c55c9660c91af5d4c71d820947b.
+- El merge-base con GPSpedia2.2.5 permanece d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó la rama base.
+- Relectura desde la rama remota: 82/82 pruebas aisladas PASS; sintaxis de los cuatro módulos principales PASS; contenido de módulos, suites y registros verificado.
+- AUG-043 continúa EN PROGRESO: falta la prueba de integración en navegador real y la validación con OAuth/YouTube API y proyecto Apps Script/Spreadsheet aislado. No se desplegó ni se modificaron datos productivos.
+
+
+================================================================================
+2026-11-10 — CIERRE AUG-043 — VALIDACIÓN LOCAL COMPLETADA
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Revisión estática del flujo FEEDBACK/YouTube: autorización de sesión y rol desde backend, consulta por opVideoId/propietario, validación de ID/URL real, destino único, publicación/rechazo verificados y preservación de miniaturas existentes; cliente valida sesión, recupera operaciones y no envía aprobación sin ID real.
+- Evidencia local vigente: 82/82 pruebas aisladas PASS según la ejecución registrada en checkpoint; parsing local revalidado en esta sesión: 10/10 archivos (4 módulos principales y 7 suites) PASS.
+- No se encontraron defectos reproducibles durante la revisión del alcance. No se ejecutaron navegador real, IndexedDB/XHR real, OAuth/YouTube API, Apps Script desplegado ni Spreadsheet aislado; quedan reservados para Beta.
+- Sin despliegues, endpoints, datos productivos ni rama base modificados.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING DE ACCIONES FEEDBACK — AVANCE
+- Services/feedback.js: política explícita de autorización por acción, identidad derivada de sesión, rechazo de acciones no declaradas, control de frecuencia para contacto público, separación de aportes anónimos y votos verificados, ledger idempotente para likes y validaciones de persistencia PyS.
+- api-config.js y ui.js: transmisión del payload de sesión en los callsites de escritura FEEDBACK; normalización de wrappers de like y reporte.
+- Services/Coordinator.js: recordLike incluye el recurso FEEDBACK dentro de la coordinación compartida; retiro de la acción obsoleta assignCollaborator.
+- Validación ejecutada: parsing/sintaxis de los cuatro archivos funcionales modificados, 4/4 PASS; verificaciones estáticas limitadas PASS.
+- Pendiente: ejecutar y ampliar Services/Test/FeedbackWriteSecurity.js, revisar todos los llamadores/contratos afectados y completar code review. Estado EN PROGRESO; no se afirma cierre funcional.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDENTIDAD DE COLABORADOR EN TUTORIALES
+- Services/feedback.js: handleAddTutorial ya no persiste el campo colaborador recibido del cliente; exige y guarda userName procedente de la sesión verificada.
+- Services/Test/FeedbackWriteSecurity.js: nueva regresión que falsifica userName/colaborador y comprueba que se conserva el nombre real de la sesión.
+- Validación local: sintaxis 2/2 PASS; suite FeedbackWriteSecurity 17/17 PASS. Se corrigió el fixture de SpreadsheetApp tras un primer fallo de la prueba y se repitió el conjunto completo.
+- Alcance del cierre: únicamente identidad del colaborador al crear tutoriales. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints, ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE REPORTES
+- Services/feedback.js: handleReportProblem consulta reportMetadata por reportId; reintentos idénticos devuelven el resultado existente sin insertar otra fila ni duplicar actividad. Conflictos de contenido o identificadores ya duplicados se rechazan. Nuevos registros guardan userId validado en metadata.
+- Services/Test/FeedbackWriteSecurity.js: cobertura del ciclo creación/reintento, conflicto de datos y duplicados preexistentes.
+- Validación: suite FEEDBACK 20/20 PASS; sintaxis 6/6 archivos PASS; matriz estática de dispatcher, autorización, ACTION_TO_SERVICE_MAP y Coordinator sin discrepancias.
+- Alcance del cierre: idempotencia de reportProblem. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE SUGERENCIAS DE CORTES
+- Services/feedback.js: handleSuggestCutChange identifica reintentos por reportId, vehículo, corte e identidad validada; compara una huella de detalles, valores propuestos e imagen. Los reintentos idénticos reutilizan el registro y no repiten fila ni actividad. Los conflictos de contenido y duplicados preexistentes se rechazan.
+- Services/Test/FeedbackWriteSecurity.js: tres regresiones para reintento idéntico, reutilización con contenido diferente y duplicados históricos.
+- Validación local: suite FeedbackWriteSecurity 23/23 PASS; sintaxis de cinco archivos funcionales/de prueba 5/5 PASS.
+- Alcance del cierre: idempotencia de suggestCutChange. Hardening FEEDBACK global permanece EN PROGRESO.
+- Commits funcional y de pruebas: 43a122d4af3ad388d264fc8650d31daf5b289301 y 37c21be876eb38a2edb6e245861e88a83dfc6a6c.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — VALIDACIÓN DE SOLUCIÓN PyS
+- Services/feedback.js: handleAddSolution normaliza el texto con trim(), rechaza contenido vacío/solo espacios antes de escribir y aplica el límite de 700 caracteres al contenido normalizado.
+- Services/Test/FeedbackWriteSecurity.js: regresión para rechazo sin mutación/actividad y persistencia normalizada de una solución válida.
+- Commits de implementación y prueba: 9b079a8f17403782b9847a1eb8de6a95ee7b9f59 y 23a072f717f5a7ff1f168d02081557a1ea1a3228.
+- Alcance del cierre: validación de handleAddSolution. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — VALIDACIÓN DE PREVENCIÓN PyS
+- Services/feedback.js: handleAddPrevention normaliza prevenir con trim(), rechaza contenido vacío y aplica el límite de 700 caracteres al texto normalizado antes de escribir.
+- Services/Test/FeedbackWriteSecurity.js: regresión para rechazo de espacios/saltos de línea sin mutación ni actividad y persistencia normalizada de una prevención válida.
+- Commits de implementación y pruebas: 11a2e04f045990da404762fab2e07eeff2608789, 555b8fc15657c42621ca2198ff8d0efcce201081 y 1d2892985fe76e43d80a1853d130c43985cfc8c1.
+- Validación local: suite FeedbackWriteSecurity 25/25 PASS; parsing/sintaxis de tres archivos 3/3 PASS.
+- Alcance del cierre: validación de handleAddPrevention. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — VALIDACIÓN DE ALTA DE PROBLEMAS PyS
+- Services/feedback.js: handleAddProblem normaliza título, descripción, solución y prevención antes de validar; rechaza título/descripción vacíos y solución vacía cuando corresponde; persiste los textos normalizados y usa el título normalizado en la actividad.
+- Services/Test/FeedbackWriteSecurity.js: regresiones para campos requeridos/solución con espacios y verificación de normalización en la fila PyS y en la actividad.
+- Commits de implementación y pruebas: b88e8e4125d0b915e25a825a006d7a21736d3360, 1d58e1af647e3798589232559281313c46e17103, 52a55b636319f5fc25a41f547e935e0eebecd79a y 42270e98b1479e853f0f37a19ef991b1f217c406.
+- Alcance del cierre: validación de handleAddProblem. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — INTEGRIDAD DE suggestYear
+- Services/feedback.js: handleSuggestYearLocked exige que el ID del vehículo coincida con una única fila de Cortes; rechaza IDs duplicados antes de consultar Feedbacks o modificar rangos.
+- Services/Test/FeedbackWriteSecurity.js: prueba de regresión para ID duplicado, sin acceso a Feedbacks y sin cambios en los rangos ambiguos.
+- Validación local: runFeedbackWriteSecurityTests() 28/28 PASS; parsing/sintaxis de los dos archivos JavaScript modificados 2/2 PASS.
+- Alcance: resuelto el defecto de selección ambigua de vehículo. La revisión funcional de suggestYear continúa en la siguiente iteración.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — REGRESIÓN DE DEDUPLICACIÓN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: prueba de flujo para reintento del mismo usuario verificado; comprueba ausencia de segunda fila, conteo 1/3 y que el rango no se amplíe.
+- La prueba confirma que la identidad proviene de la sesión y no del nombre enviado por el cliente.
+- Validación local: runFeedbackWriteSecurityTests() 29/29 PASS; sintaxis de los dos archivos JavaScript 2/2 PASS.
+- No se modificó lógica de producción porque la deduplicación existente pasó la prueba.
+- AUG-040 continúa EN PROGRESO; siguiente iteración revisará aportes anónimos y su exclusión del umbral.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — EXCLUSIÓN DE APORTES ANÓNIMOS EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega prueba con dos aportantes verificados y un tercero anónimo para el mismo vehículo/año.
+- Comprueba persistencia de anon:unverified, respuesta de revisión manual, registro de actividad y ausencia de ampliación del rango en Cortes.
+- No se modificó lógica de producción: la implementación ya excluye actores anónimos del conteo y retorna antes de la actualización automática.
+- Validación local: runFeedbackWriteSecurityTests() 30/30 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 continúa EN PROGRESO; siguiente iteración revisará el umbral exacto de tres aportantes verificados distintos.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — UMBRAL DE TRES APORTANTES EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega prueba de flujo para dos aportantes verificados distintos y reintento de uno de ellos (2/3, sin ampliar rango), seguido del aporte de un tercer usuario distinto (3/3, ampliación del rango).
+- No se modificó Services/feedback.js: la lógica existente cuenta actores verificados distintos y aplica la actualización solo al alcanzar tres, después de validar rango y colisiones.
+- Validación local: runFeedbackWriteSecurityTests() 31/31 PASS; parsing/sintaxis de los dos archivos JavaScript 2/2 PASS.
+- Subtarea del umbral completada; AUG-040 permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — INTERSECCIÓN DE RANGOS EN suggestYear
+- Services/feedback.js: la protección de colisiones compara ahora el intervalo completo propuesto con el intervalo de cada generación coincidente, en lugar de comparar únicamente el año solicitado con el límite superior ajeno.
+- La intersección envía la sugerencia a revisión manual sin modificar rangos ni eliminar votos; los intervalos separados pueden ampliarse automáticamente.
+- Services/Test/FeedbackWriteSecurity.js: regresión para una ampliación superior que atraviesa otra generación y una ampliación inferior cuyo intervalo resultante no se superpone con una generación posterior.
+- Validación local: runFeedbackWriteSecurityTests() 32/32 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; esta condición queda completada localmente con integración real diferida a Beta.
+- Sin deployments, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — VALIDACIÓN DE RANGOS DE AÑOS EN suggestYear
+- Services/feedback.js: valida estrictamente los años del rango objetivo (formato de cuatro dígitos, 1980–2099 y orden ascendente) antes de acceder a Feedbacks. Los rangos inválidos de generaciones equivalentes provocan revisión manual y bloquean la ampliación automática.
+- Services/Test/FeedbackWriteSecurity.js: regresión para rango objetivo invertido (rechazo sin acceso/escritura en Feedbacks) y rango invertido de otra generación equivalente (voto conservado, revisión manual y sin mutaciones en Cortes).
+- Validación local: runFeedbackWriteSecurityTests() 33/33 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; esta condición queda completada localmente con integración real diferida a Beta.
+- Sin deployments, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — REGRESIÓN DE «MODELO CONFIRMADO» EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega prueba de flujo para dos votos positivos previos y un tercer aporte «Modelo confirmado».
+- Comprueba que el clasificador suma el tercer aporte, alcanza 3/3, amplía el rango y elimina los tres votos positivos atendidos.
+- No se modificó lógica de producción: la respuesta persistida ya coincide con el criterio de isPositiveYearSuggestionRow.
+- Validación local: runFeedbackWriteSecurityTests() 34/34 PASS; parsing/sintaxis de los dos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — AMPLIACIÓN INFERIOR «ES MÁS ANTIGUO» EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega una regresión de flujo con tres aportantes verificados para la respuesta «Es más antiguo».
+- Comprueba la ampliación del límite inferior y que la limpieza retire solo los votos inferiores atendidos, conservando aportes de otro año, respuestas negativas y otro vehículo.
+- No se modificó Services/feedback.js: el flujo existente supera la prueba dirigida.
+- Validación local: runFeedbackWriteSecurityTests() 35/35 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
+================================================================================
+
+================================================================================
+2026-11-10 — FIX FEEDBACK — LIMPIEZA DE APORTES POSITIVOS EN AMPLIACIONES INFERIORES
+- Services/feedback.js: unifica el criterio de limpieza tras ampliar el rango hacia años inferiores; ahora retira todos los aportes positivos del mismo vehículo y año que participaron en el umbral, independientemente de si se registraron como «Es más antiguo» u «Otro año».
+- Services/Test/FeedbackWriteSecurity.js: añade regresión mixta que verifica la eliminación de ambos tipos de aporte y la conservación de respuestas negativas, otros años y otros vehículos.
+- Auditoría.txt: registra el hallazgo H-AUD-040-004.
+================================================================================
+
+
+[2026-11-10] AUG-040 / suggestYear — Corrección de reintentos posteriores a una ampliación. Se conserva cada aporte positivo atendido con el prefijo applied: en suggestionActorKey, excluyéndolo del umbral y reconociéndolo en reintentos posteriores. Se evita insertar filas y actividad duplicadas. Archivos: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, Auditoría.txt y checkpoint.md.
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — EXCLUSIÓN DE RESPUESTAS NEGATIVAS EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión que comprueba que una respuesta «No funciona» no suma al umbral de tres aportantes verificados y permanece conservada cuando una ampliación posterior sí alcanza el umbral.
+- Se confirma que dos aportes positivos y uno negativo no modifican Cortes; el tercer aporte positivo permite ampliar el rango y solo los aportes positivos atendidos quedan marcados.
+- No se modificó Services/feedback.js: la lógica existente excluye respuestas negativas y supera la prueba dirigida.
+- Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE AVISOS DE COLISIÓN EN suggestYear
+- Services/feedback.js: evita registrar de nuevo suggest_year_collision cuando el mismo aportante reintenta una sugerencia ya registrada.
+- Services/Test/FeedbackWriteSecurity.js: extiende la regresión de superposición para repetir la solicitud y comprobar que el aviso warning persiste sin duplicar el evento de actividad.
+- Auditoría.txt: documenta H-AUD-040-006.
+- Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real diferida a Beta.

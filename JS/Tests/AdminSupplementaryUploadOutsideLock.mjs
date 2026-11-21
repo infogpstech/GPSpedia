@@ -1,0 +1,15 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const start=admin.indexOf("function handleAddSupplementaryInfo(payload");
+const end=admin.indexOf("\n// ============================================================================",start);
+assert.ok(start>=0&&end>start,"No se encontró el handler de información suplementaria");
+const handler=admin.slice(start,end);
+assert.ok(handler.indexOf("uploadImageToDrive(")<handler.indexOf("lock.tryLock(0)"),"Las cargas Drive deben completarse antes de adquirir el lock");
+assert.ok(!handler.includes("waitLock("),"La operación no debe esperar hasta 30 segundos por un lock global");
+assert.ok(handler.indexOf("lock.tryLock(0)")<handler.indexOf("getSupplementaryInfoState_(payload)",handler.indexOf("lock.tryLock(0)")),"La lectura de confirmación debe ocurrir dentro de la sección crítica");
+assert.ok(handler.includes("getSupplementaryInfoPlanSignature_(current)!==signature"),"Debe revalidarse el plan tras la carga para evitar sobrescribir cambios concurrentes");
+assert.ok(handler.includes("persistSupplementaryInfoValues_(current.sheet,current.row,current.original,updated)"),"La escritura verificada y su rollback deben conservarse");
+assert.ok(handler.includes("if(lockAcquired)lock.releaseLock()"),"El lock debe liberarse solo si fue adquirido");
+assert.ok(handler.includes("markImageUploadLinked("),"Debe conservarse la confirmación de vínculo del ledger");
+console.log("AdminSupplementaryUploadOutsideLock: 1/1 PASS — Drive fuera del lock, revalidación concurrente y persistencia verificada");

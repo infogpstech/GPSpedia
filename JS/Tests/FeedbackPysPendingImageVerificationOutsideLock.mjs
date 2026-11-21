@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+const start=source.indexOf("function handleAddProblem(source) {"),end=source.indexOf("\nfunction withPysMutationLease_",start);
+assert.ok(start>=0&&end>start,"No se encontró handleAddProblem");
+const handler=source.slice(start,end);
+assert.ok(!handler.includes("LockService.getScriptLock()")&&!handler.includes("acquireFeedbackScriptLock_("));
+assert.ok(handler.includes("verifyPendingPysImageFile_(op, image, folder)"));
+assert.ok(handler.includes("writePysOperation_(opsSheet, 0,"));
+assert.ok(handler.includes('status: "UPLOAD_PENDING"'));
+const writeStart=source.indexOf("function writePysOperation_(sheet, rowNumber, record) {"),writeEnd=source.indexOf("\nfunction findCanonicalPysRowsById_",writeStart);
+const writer=source.slice(writeStart,writeEnd);
+assert.ok(writer.includes("if (rowNumber) throw new Error"));
+const verifyStart=source.indexOf("function verifyPendingPysImageFile_"),verifyEnd=source.indexOf("\nfunction ",verifyStart+10);
+const helper=source.slice(verifyStart,verifyEnd);
+for(const contract of ["DriveApp.getFileById","getMimeType()","getSize()","getDescription()","getParents()","assertPysImageFolderPermissions_"])assert.ok(helper.includes(contract));
+console.log("FeedbackPysPendingImageVerificationOutsideLock: 5/5 PASS");

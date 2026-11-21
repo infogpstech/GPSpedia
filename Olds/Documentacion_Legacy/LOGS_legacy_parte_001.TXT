@@ -1,0 +1,14 @@
+# Registro de Problemas y Observaciones del Proyecto GPSpedia
+
+## Entrada: 2024-07-25
+
+### 1. Problema de Rendimiento del Catálogo "Cortes"
+*   **Observación:** Se ha identificado un problema de rendimiento significativo al cargar el catálogo de "Cortes". El conjunto de datos completo excede el límite de 100KB por entrada de la `CacheService` de Google Apps Script.
+*   **Impacto:** Esto impide el uso de la caché para acelerar las respuestas del backend. Cada solicitud de búsqueda o carga del catálogo requiere una lectura directa y completa de la hoja de cálculo, lo que puede resultar en tiempos de carga lentos para el usuario final.
+*   **Estado:** Abierto. Se necesita investigar una estrategia de optimización, como la paginación de datos o una caché más granular, para mitigar este cuello de botella.
+
+### 2. Problema del Entorno de Ejecución (Jules)
+*   **Observación:** La herramienta `submit` en el entorno de ejecución actual no está funcionando como se esperaba. Las llamadas a esta herramienta finalizan con éxito aparente, pero no generan nuevos commits ni Pull Requests en el repositorio de código. El enlace "View PR" redirige a commits antiguos.
+*   **Impacto:** Este es un bloqueo crítico que impide el flujo de trabajo de desarrollo y entrega de código estándar. No es posible guardar el progreso de forma versionada y verificable en el repositorio.
+*   **Solución Temporal:** Se ha adoptado un flujo de trabajo alternativo donde el código y la documentación se generan directamente en el chat para que el usuario los copie y aplique manualmente. Esto asegura que el trabajo no se pierda, aunque no es una solución ideal.
+*   **Estado:** Abierto. El problema parece ser a nivel de la plataforma del agente y está fuera del control del código del proyecto.

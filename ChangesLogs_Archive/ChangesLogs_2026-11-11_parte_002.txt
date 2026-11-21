@@ -1,0 +1,949 @@
+
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE AVISOS POR RANGO INVÁLIDO EN suggestYear
+- Services/feedback.js: el evento suggest_year_range_review solo se registra cuando el aportante añade un voto nuevo; los reintentos del mismo actor conservan el warning sin duplicar actividad.
+- Services/Test/FeedbackWriteSecurity.js: regresión que repite la solicitud ante una generación equivalente con rango inválido y comprueba que no aumenta el conteo del evento de revisión.
+- Hallazgo H-AUD-040-007 registrado en Auditoría.txt.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — RECUPERACIÓN DE ESCRITURAS PARCIALES EN suggestYear
+- Services/feedback.js: incorpora el diario FeedbackYearApplications para registrar la ampliación antes de modificar el catálogo; reanuda operaciones pendientes, verifica el rango esperado y completa las marcas applied: sin repetir la actividad de aplicación.
+- Services/Test/FeedbackWriteSecurity.js: agrega una regresión que simula el fallo en la primera marca después de ampliar el rango y comprueba la recuperación en el reintento.
+- Auditoría.txt: registra H-AUD-040-008.
+- Validación local: runFeedbackWriteSecurityTests() 38/38 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; creación de la hoja de diario y recuperación en Apps Script/Spreadsheet reales diferidas a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AJUSTE DE RECUPERACIÓN — RANGO DE UN SOLO AÑO EN suggestYear
+- Services/feedback.js: al ampliar hacia años anteriores cuando anoHasta está vacío, materializa primero el límite superior previo y luego cambia anoDesde; el diario permite recuperar un fallo entre ambas escrituras.
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión para rango de un solo año y fallo simulado entre escrituras.
+- Validación local: runFeedbackWriteSecurityTests() 39/39 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — SERIALIZACIÓN DE APLICACIONES PENDIENTES POR VEHÍCULO
+- Services/feedback.js: detecta aplicaciones pendientes por vehículo, independientemente del año; recupera la operación anterior antes de procesar otra sugerencia y solicita reenviar la nueva solicitud si corresponde a otro año.
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión con fallo de escritura en una ampliación y una nueva sugerencia para otro año; verifica recuperación secuencial y ausencia de operaciones pendientes simultáneas.
+- Auditoría.txt: registra H-AUD-040-009.
+- Validación local: runFeedbackWriteSecurityTests() 40/40 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; validación de Spreadsheet/Apps Script reales diferida a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — RESPUESTA NO REGISTRADA DURANTE RECUPERACIÓN DE suggestYear
+- Services/feedback.js: al recuperar una aplicación pendiente del mismo vehículo/año, distingue los reintentos de aportantes ya registrados de las respuestas nuevas; informa que la respuesta nueva no se registró y debe reenviarse.
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión con un cuarto aportante durante la recuperación; verifica cierre del diario, actualización del rango, ausencia de inserción falsa y mensaje explícito.
+- Auditoría.txt: registra H-AUD-040-010.
+- Validación local: runFeedbackWriteSecurityTests() 41/41 PASS; parsing de ambos archivos JavaScript PASS.
+- AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-10 — CIERRE FUNCIONAL LOCAL DE suggestYear — AUG-040
+- Services/feedback.js: las aplicaciones de año solo marcan como atendidos los aportes autenticados; los anónimos permanecen disponibles para revisión manual.
+- Services/feedback.js: normaliza identidad de marca/modelo/categoría/tipo de encendido antes de comprobar superposición entre generaciones.
+- Services/feedback.js: los reintentos positivos que contradicen una respuesta negativa existente reciben un mensaje explícito; no se altera el historial ni se cuenta el voto.
+- Services/Test/FeedbackWriteSecurity.js: añade regresiones para conservación de aportes anónimos, respuesta contradictoria, validación temprana de identidad/año/respuesta y colisión con espacios laterales.
+- Auditoría.txt: H-AUD-040-011, H-AUD-040-012 y H-AUD-040-013.
+- Validación local: runFeedbackWriteSecurityTests() 44/44 PASS; sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js PASS.
+- Sin cambios de frontend, endpoints, deployments, Spreadsheet/Drive productivos ni rama base.
+- AUG-040 completo en lo referente a suggestYear a nivel local; los demás criterios de FEEDBACK y la coordinación real entre servicios mantienen su propio estado.
+================================================================================
+
+
+================================================================================
+2026-11-10 — CORRECCIÓN CLIENTE — CONFIRMAR suggestYear ANTES DE GUARDAR CACHÉ LOCAL
+- ui.js: espera confirmación backend antes de guardar validationCache; evita envíos simultáneos, permite reintentar y distingue fallos de caché local.
+- ui.js: «Modelo confirmado» espera respuesta backend antes de avanzar.
+- validationSubmission.js: centraliza el contrato de confirmación y evita caché ante respuestas no registradas.
+- Services/feedback.js: agrega recorded:false/true para distinguir respuestas informativas no registradas y aceptadas.
+- Services/Test/FeedbackWriteSecurity.js: refuerza regresiones de respuesta contradictoria y recuperación pendiente.
+- Services/Test/ValidationCacheConfirmation.js y Services/Test/README.md: pruebas cliente.
+- Auditoría.txt: H-AUD-040-014.
+- Validación cliente: 7/7 PASS; suite FEEDBACK integral pendiente.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AJUSTE POST-COMMIT — RESPUESTA ACTUAL DURANTE RECUPERACIÓN PENDIENTE
+- Services/feedback.js: la rama de recuperación con aporte previo del mismo actor también devuelve recorded:false, porque no registra la respuesta enviada en el intento actual.
+- Auditoría.txt y checkpoint.md: adenda de trazabilidad.
+- La suite FEEDBACK integral continúa pendiente; no se declara cerrada la corrección.
+================================================================================
+
+
+================================================================================
+2026-11-10 — VALIDACIÓN Y CIERRE LOCAL — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001
+- runFeedbackWriteSecurityTests(): 44/44 PASS con dobles locales.
+- ValidationCacheConfirmation: 7/7 PASS.
+- Parsing de los cuerpos completos de ui.js, Services/feedback.js, ambas suites y validationSubmission.js: 5/5 PASS.
+- Revisión post-commit: diff limitado a 10 archivos del alcance; rama base intacta.
+- La corrección queda COMPLETADA CON VALIDACIÓN DIFERIDA. Navegador real, IndexedDB real, endpoints y Apps Script desplegado quedan para Beta.
+================================================================================
+
+
+ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
+- Registro/checkpoint de tarea: 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
+- Implementación y pruebas: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+- HEAD de implementación verificado: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+
+
+================================================================================
+2026-11-10 — CORRECCIÓN FEEDBACK — RECUPERAR REINTENTO DE APROBACIÓN YA COMPLETADA
+- Services/feedback.js: handleApproveVideo reconoce una solicitud ya aprobada solo si el estado de Feedbacks y el vídeo del destino coinciden; devuelve alreadyApproved=true sin volver a escribir.
+- Services/Test/VideoApprovalPublishing.js: regresiones para pérdida de respuesta tras éxito completo en Cortes, PyS y Tutoriales, y para destino alterado después de aprobar.
+- Services/Test/README.md: documenta la cobertura añadida.
+- Auditoría.txt: H-AUD-040-016.
+================================================================================
+
+
+================================================================================
+2026-11-10 — PRUEBAS YOUTUBE — ALINEAR FIXTURES DEL CONTRATO DE TUTORIALES
+- Services/Test/VideoApprovalContracts.js: los tres casos de handleAddTutorial ahora envían userName conforme al contrato del handler.
+- Services/Test/README.md: documenta el runner runVideoApprovalCreationContractTests().
+- No se modificó código funcional.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-040 / H-AUD-040-017 — RETIRAR HANDLER OBSOLETO assignCollaborator
+- Services/feedback.js: eliminado handleAssignCollaborator(), sin consumidores ni ruta en dispatcher/política FEEDBACK.
+- Services/Test/FeedbackWriteSecurity.js: la prueba de acción no declarada también comprueba que el handler no exista.
+- Auditoría.txt: documenta evidencia, severidad y corrección en H-AUD-040-017.
+- No se modificaron contratos vigentes, endpoints, deployments ni datos productivos.
+- Parsing completo y suite FEEDBACK integral pendientes de ejecución local.
+================================================================================
+
+
+================================================================================
+2026-11-10 — VALIDACIÓN CORR-FEEDBACK-ASSIGN-COLLABORATOR-RETIRE-001
+- runFeedbackWriteSecurityTests(): 44/44 PASS en runner JavaScript aislado con dobles mínimos de LockService y CacheService.
+- Parsing completo: Services/feedback.js y Services/Test/FeedbackWriteSecurity.js, 2/2 PASS.
+- La prueba confirma que assignCollaborator sigue rechazada por la política y que handleAssignCollaborator no existe.
+- Revisión GitHub del diff: seis archivos dentro del alcance; sin cambios ajenos. No equivale a validación en Apps Script desplegado.
+================================================================================
+
+
+================================================================================
+2026-11-10 — CIERRE AUG-040 — COBERTURA DIRECTA Y VALIDACIÓN LOCAL
+- Services/Test/FeedbackWriteSecurity.js: tres regresiones nuevas que recorren doPost() para identidad falsificada, sesión inválida, rol falsificado en approveVideo, coordinación FEEDBACK y rechazo de assignCollaborator.
+- Services/Test/SharedMutationCoordinator.js: regresión explícita de reservas CORTES/FEEDBACK/ACTIVITY para suggestYear y approveVideo.
+- Services/Test/README.md: documentación de la cobertura directa y de las políticas coordinadas.
+- Auditoría.txt: H-AUD-040-018 y cierre consolidado de AUG-040.
+- Validación: 160/160 pruebas aisladas PASS; parsing V8 17/17 PASS; diff de cierre limitado a pruebas y registros.
+- No se modificó lógica de producción, endpoints, deployments, datos productivos ni la rama base. Apps Script real, navegador, OAuth/YouTube API, Sheets/Drive reales y concurrencia física quedan diferidos a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-041 — ASEGURAR Y ALINEAR UTILITIES
+- Services/Utilities.js: versión 1.4.0; autorización server-side para Desarrollador, serialización local y reemplazo de Hoja 1 mediante staging verificado, backup y rollback.
+- api-config.js: retirado el mapeo migrateYearRanges sin handler ni consumidores; migrateTimestamps permanece enrutada y protegida.
+- Services/Test/UtilitiesSecurity.js: suite aislada para autorización, staging, errores, rollback, lock, origen vacío, destino incompatible y recuperación.
+- Services/Test/README.md: documentado el runner y sus límites.
+- Auditoría.txt, Tareas.txt, Tareas_pendientes_parte1.txt, lista_beta.txt y checkpoint.md: registros de cierre.
+- No se modificaron endpoints, deployments ni datos productivos. La fuente del deployment exacto y la integración real quedan pendientes de Beta.
+================================================================================
+
+
+================================================================================
+AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube — 2026-11-10
+- add_cortes.html: se retiró el campo manual videoGuiaUrl; la confirmación de subida ya no copia la URL pendiente al formulario y muestra el estado de aprobación, deshabilitando el botón tras el envío.
+- Services/Test/YouTubeAddCortesContract.js: nueva regresión estática del formulario de Cortes.
+- Services/Test/README.md: documentación del runner y alcance de la regresión.
+- Auditoría.txt, Tareas.txt, tareas_completadas_parte1.txt, checkpoint.md: registro de H-AUD-043-001 y cierre de AUG-043.
+- No se modificaron los contratos backend, api-config.js, ui.js, youtubeUpload.js, endpoints, deployments ni datos productivos; la auditoría confirmó que las rutas protegidas ya transmiten la sesión y que FEEDBACK obtiene el rol desde Users.
+================================================================================
+
+
+================================================================================
+AUG-044 — Reconciliar mapa central de acciones y dispatchers — 2026-11-10
+- api-config.js: retirada addCorte; compatibilidades directas y dependencia externa logFrontend documentadas; routeAction deja de redirigir servicios desconocidos a LEGACY.
+- Services/write.js: retirado getHeaders del dispatcher por ausencia de consumidor.
+- Services/catalog.js y Services/admin.js: documentadas las rutas directas históricas duplicadas fuera del mapa canónico.
+- Services/Test/ActionDispatchContract.js: nueva prueba estática de correspondencia entre mapa, endpoints, dispatchers, compatibilidades y LEGACY.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, ChangesLogs.txt, Tareas.txt, tareas_completadas_parte1.txt y checkpoint.md: documentación, evidencia y cierre de AUG-044.
+================================================================================
+
+
+================================================================================
+DEPENDENCIA AUG-045 — Autorizar acceptTerms en el coordinador compartido — 2026-11-10
+- Services/Coordinator.js: la política AUTH incorpora acceptTerms con reserva de recursos de identidad Users, ActiveSessions y Logs, coherente con la verificación/reconciliación de sesión y rol.
+- Services/Test/SharedMutationCoordinator.js: nueva regresión para confirmar que acceptTerms obtiene lease y bloquea una mutación USERS concurrente.
+- Services/Test/README.md: documenta los recursos reservados y la prueba.
+- AUG-045 permanece EN PROGRESO; esta modificación resuelve una dependencia necesaria antes de implementar el handler AUTH y el flujo frontend.
+================================================================================
+
+
+================================================================================
+AUG-045 — ACEPTACIÓN VERSIONADA DE TÉRMINOS
+- Services/Auth.js y Services/Test/Auth.js: columna TermsAcceptance (I), lectura segura, versión 2026-07, aceptación autenticada/idempotente, verificación de escritura y sincronización en login/validateSession.
+- Services/users.js y espejo: mapa de columna I sin exponer ni permitir editar la aceptación mediante perfil.
+- api-config.js: acceptTerms dirigido a AUTH.
+- auth.js: revalidación autoritativa al restaurar sesión y sincronización de TermsAcceptance en caché.
+- ui.js e index.html: bloqueo fail-closed, versión de markup, confirmación backend y manejo de errores; se retira gpsepedia_terms_accepted como autorización.
+- Spreadsheet/GPSpedia_DB_columnas.md: estructura objetivo Users!I, sin afirmar migración física.
+- Services/Test/TermsAcceptance.js y README: pruebas de parseo, esquema y contratos.
+================================================================================
+
+
+================================================================================
+AUG-046 — REVISIÓN TÉCNICA PRELIMINAR — 2026-11-10
+- Se creó Legal/AUG-046_revision_preliminar.md con inventario estático de los textos vigentes, categorías de datos observables, brechas y confirmaciones necesarias.
+- Se actualizó el estado de AUG-046 a BLOQUEADA por falta de responsable legal identificado y de confirmaciones de jurisdicción/tratamiento real.
+- No se modificaron el acuerdo, el aviso, la versión 2026-07, el frontend ni servicios. No se emitió aprobación jurídica ni se tocaron datos productivos/deployments.
+================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — ACLARACIÓN DE RESPONSABILIDAD CORPORATIVA — 2026-11-10
+- Se actualizó Legal/AUG-046_revision_preliminar.md para incorporar la aclaración del usuario: GPSpedia es una herramienta interna de la empresa principal y la responsabilidad legal corresponde a esa empresa; no se requiere identificar un asesor legal externo para continuar la revisión técnica.
+- Se actualizó Tareas_pendientes_parte1.txt: AUG-046 pasa de BLOQUEADA a EN PROGRESO, con validación interna y confirmaciones operativas pendientes.
+- Se actualizó checkpoint.md para registrar el alcance, el estado y la continuidad de AUG-046.
+- Hallazgos documentados: uso de la denominación “Motorlink S.A. y GPSpedia” como sujetos separados, descripción incompleta de proveedores Google/YouTube, conservación de registros, almacenamiento local y ausencia de canal específico de privacidad.
+- No se modificaron index.html, el acuerdo de uso, el aviso, fecha/versión 2026-07, código, deployments ni datos productivos. No se emitió aprobación legal.
+================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — CONTRASTE TÉCNICO DE FLUJOS Y DATOS — 2026-11-11
+- Se amplió Legal/AUG-046_revision_preliminar.md con matriz de flujos y 12 confirmaciones operativas para la empresa principal.
+- Se documentaron el formulario público de contacto, permisos ANYONE_WITH_LINK en determinadas imágenes de FEEDBACK, vídeos YouTube unlisted, persistencia IndexedDB tras logout, ausencia de retención automática identificada en los módulos revisados y baja lógica de cuentas con conservación del ID.
+- Se amplió el criterio 3 de AUG-046 en Tareas_pendientes_parte1.txt.
+- No se modificaron el acuerdo de uso, el aviso, index.html, código, endpoints, deployments ni datos productivos.
+- No se ejecutaron pruebas de integración ni se verificó la paridad entre el código versionado y los proyectos Apps Script publicados.
+================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — CONSISTENCIA ENTRE SUPERFICIES INFORMATIVAS — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: se añadió la sección 9 comparando Aviso Importante, acuerdo de uso, «Sobre Nosotros» y FAQ. Se documentaron diferencias de alcance sobre contenido técnico de terceros frente a material interno/organización propia, identidad Motorlink S.A./GPSpedia/TRACKLINK y propósito laboral frente a descripción general de la plataforma.
+- Tareas_pendientes_parte1.txt: se incorporó el nuevo avance documental en AUG-046.
+- checkpoint.md: se registró el resultado, límites y continuidad de la iteración.
+- No se modificó index.html (SHA preservado: 5d6c57956e18e7b504475222ba9fa97ef239c947), acuerdo, Aviso Importante, sección 13, «Sobre Nosotros», FAQ, versión/fecha 2026-07, código, aceptación AUG-045, endpoints, deployments ni datos productivos.
+- No se emitió aprobación jurídica ni se presume validación corporativa. AUG-046 permanece EN PROGRESO; no iniciar AUG-047.
+================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — ACLARACIÓN DEL RESPONSABLE DEL PROYECTO — 2026-11-11
+- Se registró en Legal/AUG-046_revision_preliminar.md, sección 9.4, la definición del responsable: GPSpedia es la plataforma/herramienta; código, diseño, organización y estructura general son desarrollo privado protegido por derechos de autor; imágenes y videos compartidos son conocimiento público que la plataforma organiza, etiqueta y complementa con información útil y precisa sin reclamar autoría original; TRACKLINK es la marca corporativa y Motorlink S.A. es la empresa y su nombre registrado en Honduras.
+- Se corrigió el backlog y el checkpoint: los puntos 1 y 2 de la sección 9.1 sobre supuestas contradicciones de titularidad/identidad quedan sustituidos por la aclaración recibida y dejan de ser pendientes.
+- La revisión AUG-046 se limita a descripción y comprobación técnica. No se emitirán opiniones ni recomendaciones jurídicas.
+- No se modificó el acuerdo de uso, aviso, index.html, versión/fecha, aceptación AUG-045, código ni datos productivos.
+================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — DELIMITACIÓN DEL ALCANCE TÉCNICO — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: sección 10 aclara que la auditoría es exclusivamente técnica/descriptiva; observaciones históricas con lenguaje jurídico se conservan como antecedentes y no como dictámenes ni recomendaciones. Las definiciones institucionales de la sección 9.4 prevalecen.
+- Tareas_pendientes_parte1.txt: AUG-046 precisa que las cláusulas se contrastan descriptivamente con el comportamiento observable y que identidad/marca ya no son contradicciones pendientes.
+- checkpoint.md: registra el avance, las confirmaciones operativas aún no recibidas y la continuidad exclusiva de AUG-046.
+- No se modificaron el acuerdo, aviso, modales, fechas/versiones, aceptación AUG-045, HTML, código, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-046 — REVALIDACIÓN DE PERSISTENCIA AL CERRAR SESIÓN — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: sección 8.5 documenta que auth.js elimina gpsepedia_session, pero no gpsepedia_pys_cache ni los almacenes de GPSpedia_DB declarados en offline.js.
+- checkpoint.md: registra la revalidación, sus límites y la continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, versión/fecha legal, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-046 — REVALIDACIÓN DE CONTACTO PÚBLICO — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 8.6 documenta captura, autorización pública, validaciones, límite de frecuencia, almacenamiento en Contactanos y control de acceso al Inbox.
+- checkpoint.md: registra evidencia, límites de verificación y continuidad exclusiva de AUG-046.
+- No se modificó código de aplicación, acuerdo, aviso, modales, aceptación, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-046 — REVISIÓN DE REGISTROS Y ACTIVIDAD — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: sección 11 documenta la escritura/consulta/purga de Logs y ActividadUsuario, los roles y límites observados en AUTH/FEEDBACK.
+- checkpoint.md: registra el alcance de esta iteración, sus límites y la continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación, endpoints, deployments, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-046 — CICLO DE VIDA DE VÍDEOS DE YOUTUBE — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 12 documenta la visibilidad no listada inicial, los datos de la solicitud, los permisos de sesión/roles y el efecto de aprobar o rechazar sobre el enlace en GPSpedia frente al vídeo alojado en YouTube.
+- checkpoint.md: registra el alcance, los límites de verificación y la continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación, endpoints, deployments, canal de YouTube ni datos productivos.
+================================================================================
+
+
+
+================================================================================
+AUG-046 — CICLO DE VIDA DE IMÁGENES EN SUGERENCIAS DE CORTES — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 13 documenta la carga de imágenes de sugerencias en Drive con permiso ANYONE_WITH_LINK/VIEW, su referencia en Feedbacks y el efecto de deleteFeedbackItem: elimina la fila del Inbox, pero el handler revisado no elimina el archivo ni revoca su compartición.
+- Tareas_pendientes_parte1.txt: se añadió el avance técnico a AUG-046; la tarea permanece EN PROGRESO.
+- checkpoint.md: registra evidencia, límites de la revisión estática y continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments, archivos de Drive ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-046 — ACCESO Y ALMACENAMIENTO DE IMÁGENES PyS — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 14 documenta la lectura pública de PyS, la devolución y visualización de URLs de imágenes, el alta autenticada con compartición ANYONE_WITH_LINK/VIEW y la compensación del archivo cuando falla la persistencia.
+- checkpoint.md: registra evidencia, límites de la revisión estática y continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments, hojas ni archivos/permisos productivos de Drive.
+================================================================================
+
+
+================================================================================
+AUG-046 — DESACTIVACIÓN Y REGISTROS DE CUENTAS — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 15 documenta el flujo deleteUser, sus validaciones y permisos, la desactivación lógica de la cuenta, la conservación de ID y TermsAcceptance, la revocación de sesiones y el tratamiento de fallos parciales.
+- checkpoint.md: registra el alcance de la comprobación, sus límites y la continuidad exclusiva de AUG-046.
+- No se modificaron código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+================================================================================
+
+
+================================================================================
+AUG-046 — MANEJO DE CONTRASEÑAS Y REVOCACIÓN DE SESIONES — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 16 documenta el hash con salt, compatibilidad y migración de credenciales heredadas, cambio propio, restablecimiento administrativo, revocación de sesiones y diferencias entre el estado backend y los avisos de interfaz.
+- checkpoint.md: registra el alcance de la comprobación, sus límites y la continuidad exclusiva de AUG-046.
+- No se modificaron código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+================================================================================
+
+
+================================================================================
+AUG-046 — REPORTES DE PROBLEMAS EN FICHAS DE VEHÍCULOS — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 17 documenta autenticación e identidad del reportante, datos almacenados en Feedbacks, copia del texto en Actividad_Usuario, comportamiento del selector de imagen y efectos de la consulta/eliminación del reporte.
+- checkpoint.md: registra el alcance, límites y continuidad exclusiva de AUG-046.
+- No se modificaron código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+================================================================================
+
+================================================================================
+AUG-046 — REGISTRO COLABORATIVO DE VEHÍCULOS Y CORTES — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 18 documenta autenticación de colaboradores, escritura directa en Cortes, disponibilidad por getCatalogData y tratamiento del indicador Registro Silencioso.
+- Auditoría.txt: se registra H-AUD-046-001 (MEDIA), por ausencia de comprobación de rol en WRITE cuando se recibe silent=true.
+- Tareas.txt y checkpoint.md: se registra continuidad de AUG-046 y se separa la corrección del hallazgo para una tarea posterior.
+- No se modificó código funcional, acuerdo, aviso, versión/fecha, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================
+
+================================================================================
+AUG-046 — ACCESO Y CONSERVACIÓN DE IMÁGENES DE VEHÍCULOS/CORTES — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 19 documenta recepción, validación, almacenamiento, ledger, referencias, disponibilidad por catálogo y dependencia de la ACL de Drive.
+- Tareas.txt y checkpoint.md: registran continuidad de AUG-046 y las confirmaciones operativas pendientes sobre permisos, retención y orígenes HTTP(S).
+- No se modificó código funcional, datos productivos, acuerdo, aviso, aceptación AUG-045, endpoints ni deployments.
+================================================================================
+
+================================================================================
+AUG-046 — PERSISTENCIA LOCAL Y LIMPIEZA DEL CLIENTE — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 20 documenta claves de almacenamiento local, IndexedDB, Cache Storage, logout y limpieza administrativa.
+- Auditoría.txt: se registra H-AUD-046-002 (MEDIA), por limpieza local incompleta y eliminación de la operación pendiente sin comprobación del estado remoto.
+- Tareas.txt y checkpoint.md: se registra continuidad de AUG-046 y se separa la corrección técnica para una tarea independiente.
+- No se modificó código funcional, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================
+
+================================================================================
+AUG-046 — CIERRE TÉCNICO CON VALIDACIÓN DIFERIDA — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 21 consolida el resultado por criterio, las confirmaciones operativas diferidas, los hallazgos separados y los límites del cierre.
+- Tareas_pendientes_parte1.txt: AUG-046 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA; su continuación documental se rota a Tareas_pendientes_parte5.txt en el punto exacto de AUG-058.
+- Tareas_pendientes_MANIFIESTO.md: creado para identificar las partes y documentar la rotación sin pérdida.
+- Tareas.txt y checkpoint.md: registran el cierre técnico, las validaciones diferidas y la aprobación corporativa pendiente como condición de publicación.
+- H-AUD-046-001 y H-AUD-046-002 permanecen abiertos para corrección independiente. No se modificaron código, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-046 — CIERRE ADMINISTRATIVO — 2026-11-10
+- Tareas_pendientes_parte1.txt: AUG-046 pasa a COMPLETADA por instrucción del responsable.
+- Tareas.txt y checkpoint.md: se registra el cierre administrativo y la continuidad técnica.
+- No se modificaron documentos de contenido legal ni código funcional por este cierre.
+================================================================================
+
+================================================================================
+AUG-048 — SNAPSHOT AUTORITATIVO Y SINCRONIZACIÓN DEL CATÁLOGO — 2026-11-10
+- offline.js: saveCatalog sustituye la instantánea completa; se añaden validación de colecciones, indexación por ID persistente y comparación profunda de contenido.
+- auth.js: solo procesa cachés/respuestas que cumplen el contrato completo del catálogo.
+- ui.js: sincroniza cambios de Cortes por ID y detecta modificaciones de Tutoriales, Relay y Logos aunque la cardinalidad no cambie.
+- Services/Test/CatalogSnapshotSync.js: pruebas aisladas de contrato, identidad, comparación y reemplazo de caché.
+- Services/Test/README.md: documenta la ejecución y los límites de la suite.
+- No se modificaron endpoints, deployments ni datos operativos.
+================================================================================
+
+
+================================================================================
+AUG-048 — CIERRE — 2026-11-10
+- offline.js: la caché del catálogo ahora reemplaza la instantánea completa; se rechazan colecciones incompletas e IDs de Corte ausentes/duplicados. Se incorporan comparación profunda de colecciones y diff de Cortes por ID.
+- auth.js: solo procesa y conserva snapshots completos.
+- ui.js: detecta altas, modificaciones y eliminaciones de Cortes; detecta cambios de contenido en Tutoriales, Relay y Logos/metadatos sin depender de cardinalidad; actualiza vistas afectadas.
+- Services/Test/CatalogSnapshotSync.js: suite añadida con 15 casos; harness local Node con IndexedDB simulado: 15/15 PASS.
+- Tareas.txt, backlog y checkpoint actualizados. No se modificaron endpoints, deployments ni datos operativos.
+- Navegador/IndexedDB real y pruebas offline de campo no ejecutados; quedan diferidos a Beta.
+================================================================================
+
+
+================================================================================
+AUG-049 — BÚSQUEDA GLOBAL Y NAVEGACIÓN POR SECCIÓN — 2026-11-10
+- navigation.js: consulta normalizada, motor de búsqueda global por secciones, ranking de resultados y reejecución de la consulta cuando termina la carga compartida de PyS.
+- search-utils.js: normalización HTML/diacríticos/espacios, campos de búsqueda, prioridad exacta/parcial/descriptiva, clasificación exclusiva de Cortes, regla de autoapertura y decodificación de deep links.
+- pys-data.js: centraliza getPysData en una promesa compartida y notifica su finalización a la búsqueda.
+- auth.js y ui.js: reutilizan el cargador compartido; se eliminaron las llamadas independientes getPysData en vistas y callbacks.
+- ui.js: tarjetas de cada sección conservan su destino; solo Corte puede autoabrir el detalle de vehículo; se evita colapsar resultados por nombres/configuraciones repetidos.
+- main.js: decodifica de forma segura el hash #search.
+- Services/Test/GlobalSearch.js: 21 pruebas de lógica; Services/Test/README.md documenta ejecución.
+- No se modificaron endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-050 — AVANCE PARCIAL DE PERSISTENCIA VIN — 2026-11-11
+- VinDifferentialEngine.js: versionado, fingerprint determinista, validación de metadatos y restauración condicional; nuevo ensureVinSignatures.
+- Services/Test/VinSignaturePersistence.js: pruebas de compatibilidad, invalidación, corrupción y recálculo.
+- Services/Test/README.md: instrucciones de la suite.
+================================================================================
+
+
+================================================================================
+AUG-050 — RESOLUCIÓN DE IDENTIDAD VIN — 2026-11-11
+- VinDifferentialEngine.js: queryVehicle filtra por classKey o contexto (marca, modelo normalizado, año/rango y versión), valida coincidencias únicas y evita identidades incompatibles.
+- Services/Test/VinContextResolution.js: seis pruebas sintéticas; Services/Test/README.md: instrucciones de ejecución.
+================================================================================
+
+
+================================================================================
+
+================================================================================
+AUG-050 — UMBRAL DE MUESTRAS Y COMPETIDORES VIN — 2026-11-11
+- VinDifferentialEngine.js: se aplica minSamplesThreshold, se evita generar firmas sin competidores aplicables y se versiona el algoritmo a 1.2.0.
+- Services/Test/VinSampleThreshold.js: nueve pruebas sintéticas de umbral, rangos competidores y exclusión de firmas insuficientes.
+- Services/Test/README.md: instrucciones de ejecución y límites de la suite.
+================================================================================
+
+
+================================================================================
+AUG-050 — SEMÁNTICA DE RANGOS DE AÑOS VIN — 2026-11-11
+- VinDifferentialEngine.js: anoHasta vacío se interpreta como vigente hasta el año actual; anoDesde ausente/inválido y rangos invertidos no se consideran comparables. El filtro contextual de queryVehicle usa la misma regla. Versión del algoritmo 1.3.0.
+- Services/Test/VinYearRangeSemantics.js: once pruebas sintéticas de rangos cerrados, abiertos, años ausentes, datos inválidos y consulta contextual.
+- Services/Test/README.md: instrucciones y semántica definida.
+================================================================================
+
+
+================================================================================
+
+AUG-050 — NORMALIZACIÓN DE VIN COMPLETO Y PREFIJOS — 2026-11-11
+- VinDifferentialEngine.js: las consultas de VIN de 17 caracteres conservan primero la coincidencia exacta completa y, si no existe, consultan el prefijo exacto de 12 caracteres; las consultas que ya son prefijos no se recortan y no se mezclan coincidencias de longitudes distintas.
+- Se incrementa la versión del algoritmo a 1.4.0 para invalidar firmas/cachés calculadas con la lógica de consulta anterior.
+- Services/Test/VinQueryNormalization.js: nueve escenarios sintéticos de VIN completo, prefijo, prioridad exacta, ambigüedad, contexto y longitudes no estándar.
+- Services/Test/README.md: instrucciones de ejecución y límites de la suite.
+================================================================================
+
+
+================================================================================
+AUG-050 — CIERRE DE INTEGRACIÓN DEL MOTOR DIFERENCIAL VIN — 2026-11-11
+- VinDifferentialEngine.js: algoritmo 1.5.0; extractSharedChars compara carácter y posición; mapVinMatchesToRecords resuelve por classKey y conserva versiones/generaciones; búsqueda combinatoria perezosa con límite configurable (20,000 por clase por defecto), métricas de evaluaciones/comparaciones y estado pendiente al agotar presupuesto.
+- navigation.js: restaura firmas compatibles mediante ensureVinSignatures; conserva todas las alternativas ambiguas y las entrega como opciones por identidad/versión.
+- ui.js: restaura firmas compatibles, presenta aviso de ambigüedad, impide autoapertura de la primera opción, representa la versión identificada en tarjetas y renderiza la firma de cada versión aplicable.
+- Services/Test/VinAUG050Completion.js: once pruebas de igualdad posicional, mapeo de versiones/generaciones, límite combinatorio y contratos de integración.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt y checkpoint.md actualizados. Medición de catálogo real y validación visual quedan diferidas a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — ROBUSTEZ DE TRANSACCIONES INDEXEDDB (ITERACIÓN 1)
+- performOp ahora resuelve únicamente después de transaction.oncomplete; request.onsuccess conserva el resultado, pero no confirma persistencia.
+- Los eventos transaction.onerror, transaction.onabort y request.onerror rechazan la operación.
+- initDB cierra la conexión ante onversionchange, permite reabrir y falla explícitamente ante onblocked y timeout; evita conservar promesas de apertura rechazadas.
+- Añadida Services/Test/IndexedDBTransactions.js con escenarios sintéticos de commit, abort, cuota, versionchange y bloqueo de upgrade.
+- Validación de ejecución Node CLI y navegador real pendiente; no se afirma prueba ejecutada.
+- Sin cambio de DB_VERSION, stores, datos locales, endpoints ni servicios productivos. AUG-051 continúa en progreso.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — AISLAMIENTO DE HISTORIAL Y VALIDACIÓN LOCAL POR CUENTA (ITERACIÓN 2)
+- offline.js: searchHistory, viewedItems y validationCache usan claves compuestas por userId e identificador; las operaciones sin propietario fallan cerradas.
+- Las consultas potencialmente correspondientes a VIN no se guardan; los registros heredados sin propietario no se muestran y los términos heredados potencialmente VIN se eliminan al consultar.
+- auth.js: la actividad se rehidrata después de validar la sesión y se limpia al cerrar sesión, perderla o cambiar de cuenta.
+- navigation.js y ui.js: lectores/escritores pasan userId y verifican la cuenta antes de actualizar la interfaz.
+- Services/Test/IndexedDBTransactions.js: tres escenarios nuevos de aislamiento multi-cuenta y privacidad VIN.
+- Sin cambio de DB_VERSION, stores, contratos del catálogo, endpoints, servicios productivos ni datos remotos.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — VARIANTES DE MINIATURAS POR TAMAÑO (ITERACIÓN 3)
+- offline.js guarda y recupera variantes de miniatura con claves independientes por ancho solicitado, normalizado entre 100 y 1600 px; conserva fallback de lectura para entradas antiguas con clave simple.
+- La compresión mantiene la proporción, evita ampliar imágenes pequeñas y libera ImageBitmap mediante finally.
+- cacheItemImages incorpora imgApertura y precarga la variante de 300 px.
+- ui.js consulta, guarda y mantiene en memoria la variante correspondiente al tamaño solicitado.
+- Services/Test/IndexedDBTransactions.js incorpora regresión de variantes 300/800 px y liberación de bitmap.
+- Sin cambio de DB_VERSION, stores, catálogo, endpoints, servicios productivos ni datos remotos.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — ITERACIÓN 4 — CADUCIDAD TTL DE MINIATURAS
+Se añadió expiración de 30 días para miniaturas persistentes. Las lecturas descartan y eliminan variantes vencidas; las operaciones de caché realizan limpieza oportunista de entradas vencidas con metadatos de clave. Los registros heredados sin fecha se consideran caducados al primer acceso.
+Archivos: offline.js; Services/Test/IndexedDBTransactions.js; Services/Test/README.md; checkpoint.md; ChangesLogs.txt; Tareas.txt.
+La suite incorpora un caso de expiración, eliminación y regeneración. No se modificó DB_VERSION ni la estructura de stores. LRU, cuota, memoria RAM, ObjectURL y concurrencia permanecen pendientes.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CORRECCIÓN DE ITERACIÓN 4
+Se corrigió el mock IndexedDB de delete en Services/Test/IndexedDBTransactions.js y se incorporó la limpieza oportunista TTL también al iniciar compresión. Se conserva el TTL de 30 días y el alcance de la iteración.
+Validación: parsing sintáctico V8 de offline.js y de la suite aprobado. La ejecución funcional completa no pudo completarse en el entorno de herramientas disponible; requiere Node CLI local. No se declara la suite como aprobada.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — RECTIFICACIÓN DE VALIDACIÓN DE ITERACIÓN 4
+Se corrigió la separación sintáctica entre los métodos getAll y delete del harness de IndexedDB. Parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado después de la corrección.
+La suite funcional completa no se ejecutó en Node CLI y no se declara aprobada. Se mantiene pendiente su ejecución reproducible en entorno Node.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE DE VALIDACIÓN LOCAL DE TTL (ITERACIÓN 4)
+Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js en el runtime V8 disponible, adaptando únicamente el cargador de módulos, la aserción Node y los globals Node ausentes. Resultado: 10/10 PASS. Se verificaron commit/abort/cuota/versionchange/bloqueo, aislamiento por cuenta, variantes por tamaño, liberación de ImageBitmap y expiración/eliminación/regeneración TTL.
+Parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. No se ejecutó Node CLI literal ni navegador real/multi-pestaña; la validación de navegador y multi-pestaña se reserva a Beta.
+La iteración TTL queda completada con validación diferida. Siguiente iteración: evicción LRU como tarea única.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — ITERACIÓN 5 — POLÍTICA LRU DE MINIATURAS
+- offline.js: se añadió un límite de 200 variantes persistidas, actualización de lastAccessedAt al consultar una variante y evicción de las menos recientes al superar el límite.
+- La lectura/actualización de recencia y la evicción usan transacciones IndexedDB readwrite y esperan su finalización.
+- Services/Test/IndexedDBTransactions.js: se añadió una prueba de recencia y expulsión LRU.
+- Services/Test/README.md: se documentó el alcance del límite y su diferencia frente a la cuota total del navegador.
+- No se modificó DB_VERSION ni la estructura de stores.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CORRECCIÓN DEL HARNESS LRU
+- Services/Test/IndexedDBTransactions.js: el simulador ahora espera a que terminen todas las solicitudes pendientes de una transacción antes de emitir transaction.oncomplete.
+- Se agregó una prueba de regresión que difiere una solicitud delete y comprueba que la promesa LRU no resuelva anticipadamente.
+- La verificación aislada del ciclo de solicitud diferida pasó. La suite completa queda pendiente de ejecución en checkout local.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE ITERACIÓN 5 — LRU DE MINIATURAS
+- Services/Test/IndexedDBTransactions.js: el harness espera a que finalicen todas las solicitudes de una transacción, incluidas las eliminaciones encoladas durante onsuccess.
+- Se añadió una regresión que retiene una solicitud delete y verifica que la operación LRU no resuelva antes de su finalización.
+- Se corrigió el resumen para imprimir el total real de pruebas ejecutadas.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE ITERACIÓN 6 — RECUPERACIÓN DE CUOTA
+- offline.js: ante QuotaExceededError al guardar miniaturas, elimina progresivamente el 25 % más antiguo según LRU y reintenta; si solo quedan registros heredados, libera sus claves por lotes.
+- Si no se recupera cuota después de agotar las miniaturas, omite el almacenamiento en caché y no afecta los demás almacenes.
+- Services/Test/IndexedDBTransactions.js: pruebas de recuperación de cuota, limpieza de claves heredadas, agotamiento persistente y preservación del catálogo.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CICLO DE VIDA SEGURO DE OBJECTURL (ITERACIÓN 8)
+- imageObjectUrlCache.js: registro compartido de URL por clave con referencias por elemento; revoca la URL al quedar sin consumidores y observa nodos retirados del DOM.
+- ui.js: setOptimizedImage libera la URL previa, descarta respuestas asíncronas obsoletas y solo crea URL para miniaturas con un elemento conectado. La compresión en segundo plano persiste el Blob sin crear URL huérfanas.
+- Services/Test/ImageObjectUrlLifecycle.js: siete pruebas de referencias, reemplazo, carreras asíncronas, retirada DOM, elemento desconectado y dispose.
+- Services/Test/README.md: instrucciones y límites de la suite.
+- La validación de MutationObserver/navegador real queda diferida a Beta. El límite RAM cuantitativo no se implementa en esta iteración.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — PRESUPUESTO RAM PARA OBJECTURL (ITERACIÓN 9)
+- imageObjectUrlCache.js: presupuesto configurable de 64 MiB para Blob.size retenido por ObjectURL activos; rechaza nuevas URL si no hay capacidad, contabiliza referencias compartidas una vez y libera bytes al revocar la URL.
+- Services/Test/ImageObjectUrlLifecycle.js: pruebas de exceso, contabilidad compartida y recuperación del presupuesto.
+- Services/Test/README.md: alcance del límite y exclusiones de memoria decodificada/GPU y recursos remotos.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CONCURRENCIA DE COMPRESIÓN DE MINIATURAS (ITERACIÓN 10)
+- thumbnailCompressionQueue.js: cola FIFO con máximo de dos trabajos activos por instancia JavaScript.
+- offline.js: las tareas de compresión pasan por la cola, revalidan la caché al obtener turno y liberan ImageBitmap al finalizar.
+- Services/Test/IndexedDBTransactions.js: regresión con cinco solicitudes concurrentes, límite de dos bitmaps activos y cierre de recursos.
+- Se corrigió la liberación del turno para que active disminuya antes de resolver/rechazar la promesa del trabajo.
+- Validación ejecutada: Node CLI aislado del limitador (3/3) y simulación de cinco trabajos/recursos bitmap (2/2); parsing V8 de offline.js y la suite: PASS. La suite IndexedDB integrada no se ejecutó desde este entorno porque el adaptador disponible no completó el harness; requiere ejecución en checkout local.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE ITERACIÓN 10 Y CIERRE LOCAL DE LA TAREA
+- Services/Test/IndexedDBTransactions.js: suite sintética completa ejecutada en runtime V8 con adaptadores mínimos para módulos, aserciones y globals Node; 16/16 escenarios PASS, incluida concurrencia de cinco miniaturas con máximo de dos ImageBitmap activos y cierre de los cinco recursos.
+- Parsing V8 de offline.js, thumbnailCompressionQueue.js y Services/Test/IndexedDBTransactions.js aprobado. Las pruebas aisladas previas del limitador (3/3) y simulación de cinco trabajos/recursos (2/2) se mantienen aprobadas.
+- Node CLI literal no ejecutado: el entorno carece de checkout local y la clonación falla por resolución DNS de github.com. La suite adaptada no se presenta como ejecución Node.
+- AUG-051 queda COMPLETADA CON VALIDACIÓN DIFERIDA. IndexedDB real, navegador, offline y multi-pestaña quedan reservados a Beta.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 1 — ESPERA TERMINAL DE DEEP LINKS
+- state.js: incorpora estados idle/loading/ready/stale/error para la carga del catálogo y waitForCatalogReadiness(), basado en suscripción y timeout acotado.
+- auth.js: publica estados de carga al resolver desde caché, red o error; distingue catálogo disponible pero posiblemente desactualizado.
+- main.js: elimina el polling recursivo de 100 ms al restaurar búsquedas por hash; espera una transición terminal, conserva el deep link durante la ausencia de sesión y permite aplicar la búsqueda si la carga termina después del timeout.
+- Services/Test/CatalogReadiness.js: cuatro regresiones de estado inmediato, suscripción, error y timeout.
+- No se modifican endpoints, contratos backend, estrategia de fetch, Service Worker ni datos productivos.
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 2 — TIMEOUT, CANCELACIÓN Y REINTENTOS DE CATÁLOGO
+- catalogRequest.js: agrega timeout por intento, aborto de la petición vencida, señal externa, espera cancelable y hasta dos reintentos exponenciales solo ante fallos transitorios.
+- api-config.js: fetchCatalogData usa el helper y conserva routeAction; los errores HTTP incluyen status para clasificar reintentos. No cambia endpoint ni payload.
+- auth.js: la carga de catálogo mantiene AbortController; cancela la carga anterior al cambiar de sesión y al cerrar sesión, e ignora resultados/catch de cargas obsoletas.
+- main.js: ajusta el límite de espera del deep link a 27 s, coherente con el máximo de tres intentos de 8 s y pausas de 400/800 ms.
+- Services/Test/CatalogRequestRetry.js: siete escenarios de éxito, red transitoria, HTTP 503, timeout/abort, HTTP permanente, cancelación externa y cancelación durante backoff.
+- No se modifican Service Worker, cache.put, endpoints ni servicios productivos.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 3 — ESTADO RECUPERABLE DEL CATÁLOGO
+- catalogStatus.js: centraliza la presentación de los estados loading, stale y error; el aviso de error ofrece reintento y el estado stale informa que se conservan datos guardados posiblemente desactualizados.
+- main.js: crea un aviso persistente accesible para el estado del catálogo, con botón de reintento y presentación adaptable.
+- auth.js: expone retryCatalogLoad(), limitado a la sesión vigente y sin iniciar cargas duplicadas.
+- style.css: agrega estilos responsivos para los estados de carga, datos desactualizados y error recuperable.
+- Services/Test/CatalogStatus.js: cuatro escenarios sintéticos de presentación de estados.
+- Services/Test/README.md y Tareas_pendientes_parte1.txt: documentan la suite y el avance del criterio 2. No se modifican endpoints, backend ni Service Worker.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 4 — PRECACHE Y CUOTA DE CACHE STORAGE
+- service-worker.js: incrementa el cache a v15 e incorpora el grafo estático transitivo de módulos de main.js, add_cortes.html y users.html, incluido VinDifferentialEngine.js y sus dependencias.
+- La precarga esencial usa addAll atómico; ante cuota insuficiente o recurso esencial ausente, falla la instalación para conservar activo el Service Worker anterior.
+- Los iconos complementarios se precargan individualmente; cuota agotada se registra y detiene solo los recursos opcionales restantes.
+- Las escrituras runtime cache.put quedan cubiertas por event.waitUntil; errores de cuota/almacenamiento se registran sin descartar la respuesta de red.
+- La activación elimina únicamente versiones anteriores del namespace gpsepedia-cache-* y conserva cachés ajenas.
+- Services/Test/ServiceWorkerCache.js: seis escenarios de precache, cuota, waitUntil, fallback offline y exclusión de POST.
+- Services/Test/README.md y Tareas_pendientes_parte1.txt actualizados.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 5 — EVALUACIÓN DE LECTURA DEL CATÁLOGO
+- Se agregó Catalog_Read_Strategy.md y se enlazó desde README.md.
+- Se documentó el contrato y uso actual de getCatalogData, getNavigationData y getDropdownData.
+- Se verificó que la escritura CacheService del snapshot completo está deshabilitada por el límite de 100 KB por entrada; IndexedDB guarda el snapshot completo, pero el flujo aún realiza reconciliación remota.
+- Se documentó que getNavigationData reduce el tamaño de respuesta, pero todavía recorre getDataRange() y no tiene consumidor frontend detectado.
+- Se documentó por qué la paginación no es compatible como cambio aislado con el contrato actual de snapshot completo y modo offline.
+- No se modificaron endpoints, código backend, contratos ni despliegues.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 6 — ESCENARIOS LOCALES DE INICIO Y PWA
+- Se agregó Services/Test/PWAStartupScenarios.js con diez escenarios de primera instalación, actualización del Service Worker, conservación del caché anterior ante fallo esencial, arranque offline desde deep link, deep link sin sesión/sin catálogo, estados error/stale, API lenta/caída y catálogos representativos hasta 10,000 Cortes.
+- La suite valida el App Shell y el fallback offline mediante Cache Storage/fetch simulados; no accede a endpoints, Apps Script ni datos productivos.
+- Validación ejecutada en runtime V8 adaptado: 10/10 escenarios PASS usando las fuentes vigentes de Service Worker, main, state y catalogRequest, con dobles para APIs de entorno. Node CLI literal y navegador real no ejecutados; las pruebas reales de instalación/actualización/offline, red y servicios externos quedan reservadas a Beta.
+- Services/Test/README.md documenta comando y alcance de la suite. Tareas_pendientes_parte1.txt y checkpoint.md actualizados.
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 1 — AISLAMIENTO DE addCutPending POR CUENTA
+- Las claves IndexedDB de operaciones pendientes del modal «Agregar Corte» incluyen ownerId y vehicleId; cuentas distintas ya no compiten por la misma clave.
+- Las claves legadas se migran al propietario registrado y los registros sin owner o en conflicto se conservan en cuarentena, sin recuperación automática.
+- Lectura, escritura y eliminación verifican ownerId; el envío comprueba nuevamente la cuenta propietaria y usa la sesión vigente sin persistir SessionToken.
+- Se añadieron cinco regresiones a Services/Test/IndexedDBTransactions.js.
+- Validación de iteración: parsing V8 de offline.js, ui.js y suite PASS; cinco escenarios addCutPending ejecutados contra las funciones reales con IndexedDB simulado: 5/5 PASS, incluida ausencia de SessionToken en el snapshot persistido. Node CLI literal y IndexedDB/navegador real no ejecutados; quedan para Beta.
+
+
+================================================================================
+AUG-053 — ITERACIÓN 5 — 2026-11-11 — AISLAMIENTO DE ADMINIMAGEUPLOADPENDING
+Se particionaron los snapshots pendientes por ownerId, vehicleId y fieldName. El ownerId se guarda como identidad estable y se excluyen SessionToken/credenciales mediante whitelist. La recuperación, el reintento y la eliminación comprueban el propietario; la UI limita su mapa y estado de carga al propietario y vehículo activos. Los registros legados sin propietario y los snapshots con propietario incongruente se trasladan a cuarentena sin adjudicación automática. Se conserva la política sin TTL para operaciones de resultado incierto.
+Archivos: adminImageUploadIsolation.js, offline.js, ui.js, Services/Test/AdminImageUploadIsolation.js y Services/Test/README.md. Validación de navegador/IndexedDB real, recarga, cambio de cuenta y dos pestañas queda pendiente de Beta; no se modificaron backend, endpoints ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-053 — ADENDA ITERACIÓN 5 — LIMPIEZA DE ESTADO EN MEMORIA
+La revisión posterior detectó que el mapa en memoria podía conservar Data URLs de un propietario después de cerrar sesión, aunque las claves ya estuvieran particionadas. resetSessionUi_ ahora vacía el mapa y el conjunto de estados cargados sin eliminar los snapshots durables de IndexedDB. También se comprueba la sesión después de leer el archivo, al terminar la carga de pendientes y al regresar la respuesta del servidor; si cambió, no se inicia ni se confirma localmente la operación bajo otra cuenta. Se conserva el snapshot durable para reconciliación por su propietario original.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 10 — AUTORIZACIÓN GEFE Y RECONCILIACIÓN DE IMÁGENES IN-MODAL
+- Services/admin.js: centraliza la revalidación de sesión desde ActiveSessions/Users; Desarrollador conserva acceso ADMIN general y Gefe se admite solo en updateVehicleField, uploadAdminImage y getAdminImageUploadStatus.
+- Services/admin.js: limita updateVehicleField a la whitelist de campos del modal, incluidos los tres índices de cortes y los ocho campos de imagen; VIN resuelve su columna por encabezado único.
+- Services/admin.js: implementa getAdminImageUploadStatus. Verifica opId, vehículo, campo, estado del ledger, referencia actual y, cuando existe archivo, MIME, SHA-256 y metadatos Drive de la operación.
+- api-config.js: registra getAdminImageUploadStatus en ADMIN.
+- ui.js: habilita el modo edición in-modal para roles desarrollador y gefe; los gestores globales y las demás acciones privilegiadas conservan sus verificaciones específicas.
+- Services/Test/AdminModalEditSecurity.js: agrega pruebas locales de roles, sesiones, acciones permitidas, whitelist y asociación del estado de reemplazo.
+- Services/Test/ActionDispatchContract.js y Services/Test/README.md: actualizan contrato de dispatcher e instrucciones de validación.
+
+
+[2026-11-11] AUG-053 iteración 13: se reforzó el ciclo asíncrono de reemplazos ADMIN. La carga IndexedDB revalida el contexto completo de sesión; la consulta del ledger, reconciliación, baseline y limpieza local comprueban que siga vigente la sesión iniciadora antes de continuar o modificar mapas en memoria. Se ampliaron los contratos de restauración/reconciliación. Archivos: ui.js, Services/Test/AdminModalEditRestoreContract.js y Services/Test/README.md.
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 14 — CONTEXTO DE SESIÓN EN EL CICLO DURABLE DE IMÁGENES
+- ui.js: el envío inicial, el reintento y la reconciliación reciben el contexto completo de la sesión que inició la operación; ya no recapturan una sesión posterior del mismo propietario.
+- ui.js: después de persistir el snapshot en IndexedDB se revalida la sesión antes de hidratar mapas, modificar la imagen o enviar la solicitud. Si la sesión cambió, se conserva el snapshot durable y no se envía.
+- ui.js: los callbacks de error tardíos solo restauran la imagen o muestran avisos si sigue vigente la sesión iniciadora. Se mantiene la revalidación posterior a la eliminación IndexedDB antes de tocar mapas en memoria.
+- Services/Test/AdminModalEditRestoreContract.js: tres contratos adicionales para continuidad de sesión, orden de persistencia/envío y protección de callbacks/eliminación.
+- Validación ejecutada en runtime V8: contratos 10/10 PASS y parsing V8 de ui.js PASS. No ejecutados: navegador/IndexedDB real, cambio multi-pestaña ni servicios Apps Script/Drive; permanecen como validaciones Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 15 — CONTRATOS DE PERSISTENCIA INDEXEDDB PARA IMÁGENES ADMIN
+- Services/Test/IndexedDBTransactions.js: cinco escenarios nuevos sobre persistencia/recuperación de adminImageUploadPending, exclusión de credenciales, aislamiento por propietario, conflicto del opId, eliminación exacta y aborto de transacción.
+- Services/Test/README.md: documenta el alcance y comando de ejecución de los escenarios.
+- No se modificó lógica funcional ni datos; la iteración se limita a ampliar cobertura local del ciclo durable.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 16 — REINTENTO CONCURRENTE IDEMPOTENTE DEL SNAPSHOT ADMIN
+- Services/Test/IndexedDBTransactions.js: nuevo escenario con dos llamadas simultáneas para guardar el mismo snapshot; ambas confirman y la lectura conserva el opId y Data URL.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: alcance, resultado y límite del harness documentados.
+- No se modificó lógica funcional. El caso no representa la serialización real de transacciones concurrentes; conflictos simultáneos y multi-pestaña quedan para una futura ampliación del harness y Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 17 — SERIALIZACIÓN DEL HARNESS Y CONFLICTO CONCURRENTE ADMIN
+- Services/Test/IndexedDBTransactions.js: el harness ahora serializa transacciones mediante una cola y procesa sus solicitudes en orden; se añadió prueba de dos escrituras ADMIN conflictivas simultáneas, con una sola confirmación y preservación del snapshot ganador.
+- Services/Test/README.md: documenta el modelo conservador del harness y su límite frente a IndexedDB real.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran resultado 29/29 PASS y continuidad de AUG-053.
+- No se modificó lógica funcional ni offline.js.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 18 — ROLLBACK DEL HARNESS ANTE ABORTO DE ELIMINACIÓN ADMIN
+- Services/Test/IndexedDBTransactions.js: el harness ahora registra y revierte las mutaciones put/delete al abortar una transacción; se añadió un caso ADMIN para comprobar que un request delete exitoso seguido de abort no elimina de forma durable el snapshot.
+- Services/Test/README.md: documenta el escenario y los límites de la simulación de rollback.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran el alcance y dejan explícita la validación pendiente.
+- No se modificó lógica funcional ni offline.js.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 19 — VALIDACIÓN COMPLETA DE INDEXEDDBTRANSACTIONS
+- Services/Test/IndexedDBTransactions.js ejecutada completa en runtime V8 adaptado: 30/30 PASS, cero fallos; incluido el nuevo caso de aborto de eliminación ADMIN y conservación del snapshot.
+- Services/Test/README.md: se actualiza el estado de validación y se aclara que Node CLI, IndexedDB real, navegador y multi-pestaña no fueron ejecutados y permanecen para Beta.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran evidencia, alcance y siguiente acción local.
+- No se modificó código funcional ni el harness en esta iteración.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 20 — FALLO DE CUOTA EN SNAPSHOT ADMIN
+- Services/Test/IndexedDBTransactions.js: nuevo caso de QuotaExceededError al guardar adminImageUploadPending; exige error explícito y ausencia de snapshot parcial.
+- El escenario nuevo pasó de forma aislada contra la función real de offline.js con adaptador IndexedDB. La suite queda en 31 escenarios; la ejecución integral de los 31 está pendiente.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan alcance, resultado y validaciones pendientes.
+- No se modificó lógica funcional ni offline.js.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 21 — VALIDACIÓN INTEGRAL DE INDEXEDDBTRANSACTIONS
+- Services/Test/IndexedDBTransactions.js: suite completa ejecutada en runtime V8 adaptado, 31/31 PASS, cero fallos; incluye el caso QuotaExceededError de persistencia ADMIN.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: actualizan la evidencia y distinguen el runtime adaptado de Node CLI/IndexedDB real.
+- No se modificó lógica funcional ni el harness en esta iteración.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 22 — RECUPERACIÓN ADMIN TRAS RECREAR EL MÓDULO
+- Services/Test/IndexedDBTransactions.js: nuevo escenario que persiste un reemplazo ADMIN, recrea la instancia del módulo sobre el mismo almacén del harness y comprueba recuperación del ownerId, opId y Data URL; una cuenta distinta no puede recuperar la operación.
+- Suite completa: 32/32 PASS en runtime V8 adaptado. La prueba no equivale a recarga real del navegador ni IndexedDB real.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan evidencia, alcance y validaciones diferidas.
+- No se modificó offline.js ni lógica funcional.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 23 — CONTRATO DE CARGA ADMIN COMPLETA
+- Services/Test/AdminModalEditRestoreContract.js: se incorpora un contrato para exigir que las lecturas IndexedDB no disponibles se rechacen antes de poblar el mapa de operaciones pendientes y antes de marcar la carga como completada.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan el nuevo escenario y sus límites.
+- No se modificó ui.js, offline.js ni lógica funcional.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 24 — FALLO DE LECTURA EN RECUPERACIÓN ADMIN
+- Services/Test/IndexedDBTransactions.js: el harness permite simular error de request.get, aborta la transacción y cancela solicitudes pendientes; nuevo escenario comprueba respuesta no disponible y conservación del snapshot ADMIN para una lectura posterior.
+- Validación: parsing V8 de la suite PASS; prueba aislada del getter real de offline.js ante un error de lectura PASS. La suite completa de 33 escenarios y Node CLI no se ejecutaron.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md documentan el caso y los límites.
+- No se modificó lógica funcional ni offline.js.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 25 — VALIDACIÓN INTEGRAL DE INDEXEDDBTRANSACTIONS
+- Services/Test/IndexedDBTransactions.js: suite completa ejecutada en runtime V8 adaptado, 33/33 PASS, cero fallos de aserción; se cargaron offline.js y sus dependencias locales vigentes mediante factoría de módulos sobre el harness IndexedDB.
+- Services/Test/README.md: documenta el resultado, adaptadores y límites de validación.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran la evidencia y la siguiente brecha local pendiente.
+- No se modificó código funcional ni el harness. Node CLI original, IndexedDB/navegador reales y concurrencia multi-pestaña no se ejecutaron; permanecen para Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — CIERRE — ITERACIÓN 26
+- ui.js: se sanitizan los dos registros de error de reemplazo ADMIN; la consola recibe solo el nombre del error o UploadError, no el objeto Error completo.
+- Services/Test/AdminModalEditRestoreContract.js: se añade una regresión para impedir que los manejadores de reemplazo registren objetos Error, snapshots u operaciones completas.
+- Services/Test/README.md: se documenta la cobertura local acumulada y las validaciones diferidas a Beta.
+- Tareas_pendientes_parte1.txt y checkpoint.md: AUG-053 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA; se conserva el historial y se registra el cierre.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-054 — CIERRE — ITERACIÓN 27
+- add_cortes.html: el generador de opId sustituye Math.random por 128 bits de crypto.getRandomValues; conserva OP- y timestamp y falla explícitamente si no existe aleatoriedad criptográfica.
+- Services/Test/CheckOperationSecurity.js: suite de 12 contratos sobre autenticación previa al lookup, rechazo anónimo, sesión válida, acceso colaborativo, estados, minimización y generación criptográfica.
+- Services/Test/README.md: documenta política colaborativa, esquema A:E, ejecución y validaciones diferidas.
+- Tareas_pendientes_parte1.txt y checkpoint.md: AUG-054 marcada COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-055 — CIERRE — ITERACIÓN 28
+- add_cortes.html: sustituye el snapshot de localStorage por IndexedDB durable y aislado por propietario. No envía addOrUpdateCut si el snapshot no se guarda y verifica. Calcula la huella SHA-256 con WebCrypto y valida respuesta/vehículo antes de limpiar y avanzar.
+- offline.js: añade lectura, escritura verificada y eliminación exacta de snapshots addCutOperation. Los snapshots corruptos, ajenos, obsoletos o incompatibles se bloquean; completed queda como estado terminal.
+- Services/write.js y Services/admin.js: amplían idempotencia A:E a A:F con operationHash. Ambos recalculan SHA-256 y rechazan reintentos con otra huella, vehículo o slot. La lectura de hojas A:E existentes no consulta una sexta columna fuera de la cuadrícula.
+- Migración ADMIN: los registros históricos sin huella permanecen no verificables; se bloquea una migración histórica sobre un opId que ya esté asociado a una huella.
+- Services/Test/AddCutOperationIntegrity.js: 27/27 PASS.
+- Services/Test/AddCutOperationRecoveryFlow.js: 3/3 PASS para pérdida de respuesta antes/después del commit y fallo de limpieza posterior a confirmación.
+- Services/Test/IndexedDBTransactions.js: 10 nuevos escenarios 10/10 PASS; suite acumulada 43 escenarios (33 previamente validados en AUG-053).
+- Services/Test/IdempotenciaIntegrity.js: 18/18 PASS. Services/Test/CheckOperationSecurity.js: 12/12 PASS.
+- Auditoría.txt registra resolución en fuentes de H-AUD-003-001; backlog y README de pruebas actualizados.
+- Checkpoint de cierre Iteración 28 agregado.
+- Validación real de navegador/IndexedDB y Apps Script/Spreadsheet/Drive queda diferida a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-056 — DISPONIBILIDAD DINÁMICA DE CORTES Y VÍDEO
+- `add_cortes.html`: se oculta la acción de agregar corte y el acordeón de segundo corte cuando los tres slots están ocupados; la visibilidad del vídeo se determina desde `videoGuiaDesarmeUrl` del registro seleccionado.
+- Se refresca el registro después de guardar/recuperar; si no se confirma el estado de un vehículo existente, la interfaz falla de forma conservadora.
+- `Services/write.js` y `Services/admin.js`: helper de selección del primer slot libre bajo ScriptLock y respuesta con `slotIndex`; se conserva el rechazo de filas completas.
+- Ante colisión concurrente, el formulario y el snapshot durable se conservan.
+- CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; YouTubeAddCortesContract 4/4 PASS.
+- Navegador, Apps Script desplegados y concurrencia real quedan diferidos a Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-057 — RECUPERACIÓN ANTE FALLOS DE LECTURA DE ARCHIVOS
+- `add_cortes.html`: `fileToBase64()` diferencia archivo ausente, vacío, lectura inválida, error, abort y excepción de inicio.
+- Etapa 2 detiene errores de conversión antes de snapshot/envío y conserva el formulario para reintentar.
+- Etapa 3 incorpora protección contra doble envío y try/catch/finally para restaurar overlay, botón y flag.
+- Vistas previas controlan error/abort; «No recomendado» limpia referencias de imagen obsoletas.
+- Nueva suite `Services/Test/FileReadRecovery.js`: 13/13 PASS. CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 PASS.
+- AddCutOperationRecoveryFlow falla 0/3 también con la fuente previa; falla preexistente, no atribuida a este cambio.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-058 — SERIALIZAR RECUPERACIÓN AUTOMÁTICA DE OPERACIONES PENDIENTES
+- `add_cortes.html`: recuperación single-flight compartida por init/online/visibilitychange; no se solapa con envíos de las etapas 1–3 y las solicitudes durante submit se reanudan al terminar.
+- `toggleLoading()` utiliza un contador de operaciones activas para impedir que una finalización oculte el overlay mientras otra operación sigue activa.
+- Nueva suite `Services/Test/AddCutOperationRecoveryConcurrency.js`: 9/9 PASS; parsing V8 del módulo frontend PASS.
+- Navegador, IndexedDB real y eventos del ciclo de vida quedan pendientes para Beta.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-059 — COMPLETAR EDICIÓN Y VALIDACIÓN AUTORITATIVA DE VIN
+- WRITE/ADMIN: rechazo explícito de VIN normalizado <=5 o >18 caracteres; no se descarta silenciosamente un prefijo vacío.
+- ADMIN: edición de colección VIN por encabezado dinámico, JSON canónico, validación de duplicados y slots por versión; bloquea reemplazo/desplazamiento y verifica persistencia con reversión.
+- UI: validación en modal Agregar VIN y add_cortes; el editor restaura el valor anterior si el backend no confirma; add_cortes falla cerrado si falla el chequeo de duplicados.
+- Nueva suite `Services/Test/VinAuthoritativeValidation.js`: 12/12 PASS. Regresiones: AdminModalEditSecurity 13/13; VinTestigoIntegrity 14/14; parsing V8 PASS.
+- AddCutOperationIntegrity: 24/27 en base y modificada; mismos tres fallos previos de recuperación por respuesta perdida, documentados sin atribución a AUG-059.
+================================================================================
+
+================================================================================
+2026-11-11 — AUG-060 — PRESERVAR POSICIONES Y PRESENTAR VIN POR VERSIÓN
+- `ui.js`: parseVinCollection conserva posiciones vacías de colecciones heredadas; mapVersionsWithVins evita recortar nuevamente los cinco caracteres seriales de prefijos ya normalizados y limita ese recorte a VIN completos heredados.
+- `Services/Test/VinVersionPresentation.js`: nueva suite de 10 escenarios que ejecuta los helpers reales extraídos de ui.js.
+- `Services/Test/README.md`: documenta ejecución, cobertura y límite de validación Beta.
+- `Tareas_pendientes_parte4.txt`, `Auditoría.txt` y `checkpoint.md`: registran cierre y continuidad.
+- Validación local: VinVersionPresentation 10/10 PASS.
+- Navegador real y validación visual con datos reales quedan diferidos a Beta.
+================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-061 — 2026-11-11
+- Services/write.js y Services/admin.js: validación autoritativa del payload y registro vigente; apertura protegida contra sobrescritura; asignación del primer par texto/imagen libre en servidor; rechazo de slots completos y payloads vacíos/ambiguos; escritura agrupada con lectura posterior y rollback ante fallo; respuesta con vehicleId, slotIndex y códigos de error.
+- ui.js: el modal de alimentación deja de seleccionar el slot desde el objeto frontend y envía un par genérico para asignación en servidor.
+- Services/Test/AddSupplementaryInfoIntegrity.js y Services/Test/README.md: pruebas de disponibilidad, conflictos, persistencia y rollback.
+================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-062 — 2026-11-11
+- ui.js: unifica la finalización de altas de corte, apertura y alimentación; separa confirmación de escritura y refresco. Tras lectura forzada, actualiza catalogData y reconstruye el detalle por ID sin agregar entradas al historial.
+- ui.js: registra el ID del vehículo del modal y, tras aprobar vídeo de tipo corte, sincroniza el catálogo; solo reconstruye si continúa abierto el mismo vehículo. El fallo de sincronización se informa separado de la aprobación.
+- Services/catalog.js: getCatalogData acepta forceRefresh y omite la caché heredada cuando se solicita; el router reenvía el payload.
+- Services/Test/VehicleExpansionDetailRefresh.js y Services/Test/README.md: pruebas de refresco, slots, confirmación y aprobación de vídeo.
+================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-063 — 2026-11-11
+- Services/catalog.js: getDropdownData reúne tipos de corte de los tres slots de Cortes y obtiene configuraciones relay de la columna configuracion de la hoja Relay; devuelve error si falta alguna hoja.
+- ui.js: el modal de agregar corte elimina listas y fallbacks estáticos, carga y valida opciones oficiales, bloquea envío ante fallo/listas vacías, permite reintentar la carga y valida selección antes de persistir el snapshot.
+- ui.js: No recomendado solo se acepta si aparece en la lista oficial y no exige relay; operaciones pendientes conservan su payload original sin reintroducir opciones retiradas.
+- Services/Test/CutDropdownAuthority.js y Services/Test/README.md: pruebas de slots 1/2/3, listas oficiales, valores inválidos/vacíos y regresiones del modal.
+================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-064 — 2026-11-11
+- Services/write.js y Services/admin.js: sanitizador de servidor con allow-list de etiquetas, atributos, estilos y esquemas URL; elimina scripts/elementos activos, atributos on*, srcdoc, javascript:, data: no autorizadas y CSS peligroso. Se aplica antes de persistir apertura y los tres campos cableAlimen.
+- Services/admin.js: updateVehicleField valida tipo textual y sanitiza esos cuatro campos antes de escribir.
+- rich-text.js: el sanitizador de interfaz elimina elementos activos y desenvuelve etiquetas no permitidas sin interpretar su marcado.
+- ui.js: el carrusel multi-cable y la presentación individual sanitizan antes de asignar a innerHTML. Impresión/exportación conservan sanitización de apertura y los tres cables.
+- Services/Test/RichTextContentSecurity.js: 39/39 PASS; AddSupplementaryInfoIntegrity: 34/34 PASS.
+================================================================================
+
+
+================================================================================
+AUG-065 — 2026-11-11 — IMPLEMENTACIÓN PARCIAL
+- ui.js: variantes 300/800/1600, clave ObjectURL canónica, Blob/Data URL directos y adjunción de Blob PNG solo con token vigente.
+- offline.js: clave por ID normalizado/ancho, lectura estricta y descarte de registros heredados/incompatibles.
+- Pruebas: ImageResolutionVariants.js e IndexedDBTransactions.js ampliada para orden inverso y caché incompatible.
+================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-065 — 2026-11-11 — CIERRE LOCAL
+- ui.js: variantes pequeña/media/grande (300/800/1600 px), clave canónica de ObjectURL por ID/ancho, uso directo de Blob/Data URL y adjunción protegida por token de solicitud.
+- offline.js: claves de miniaturas por ID normalizado/ancho, validación estricta de key/fileId/width/Blob y eliminación de registros heredados o incompatibles; la URL fuente Drive permanece original y las variantes se generan localmente como PNG sin ampliar imágenes.
+- Services/Test/IndexedDBTransactions.js: corrección de fixtures LRU para que fileId coincida con la clave normalizada y ajuste de la secuencia de transacciones del escenario de aborto de eliminación.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-066 — RESTRINGIR EL MODO DE FUSIÓN A RECURSOS EXPLÍCITOS
+- style.css: se elimina mix-blend-mode: lighten de selectores generales de tarjetas, resultados y vista previa; queda limitado a img.gps-transparent-asset en modo oscuro y excluye .img-vehiculo-modal.
+- Services/Test/ImageBlendModeScope.js: contrato estático para verificar el alcance opt-in y prevenir la reintroducción de selectores globales.
+- No se asigna automáticamente la clase a recursos actuales porque no existe metadato fiable de canal alfa en el modelo de imágenes. Fotografías, JPEG, PNG opacos, diagramas y logos permanecen sin mezcla salvo marcación explícita justificada.
+- Validación V8 adaptada del contrato sobre el CSS vigente: 7/7 PASS. Node CLI literal pendiente; no se declara la tarea completada.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-066 — CIERRE LOCAL CON VALIDACIÓN VISUAL DIFERIDA
+- Services/Test/README.md: se sustituye el comando Node incompatible por la ejecución de la suite mediante copia temporal .mjs; el comando elimina el temporal, informa el código de salida y devuelve fallo si la prueba no pasa.
+- Tareas_pendientes_parte5.txt: AUG-066 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Validación local: Node v24.22.2, ImageBlendModeScope.js 7/7 PASS y código de salida 0. La prueba valida el selector opt-in exacto, la única regla mix-blend-mode y la ausencia de los selectores globales anteriores.
+- Pendiente para Beta: validación visual en navegador real con recursos transparentes/opacos, bordes semitransparentes y modos claro/oscuro. No se asignaron clases automáticamente a imágenes sin metadatos fiables.
+================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-067 — DISCRIMINACIÓN DE EJE EN EL CARRUSEL DE CABLES
+- ui.js: los gestos del carrusel registran coordenadas X/Y y solo navegan cuando el desplazamiento horizontal supera 50 px y domina al vertical. Se ignoran inicios multitáctiles y controles interactivos; touchcancel y secuencias incompletas restablecen el estado. Los listeners son pasivos y conservan el scroll vertical nativo.
+- Services/Test/CableCarouselSwipeAxis.js: nueva suite para swipes horizontales, verticales/diagonales, umbral, multitáctil, controles, cancelación, coordenadas inválidas y una sola acción por gesto.
+- Services/Test/README.md: se documenta la ejecución de la suite mediante copia temporal .mjs y limpieza posterior.
+- Validación local: helper extraído de la fuente vigente de ui.js en runtime V8 adaptado: 15/15 PASS; listeners touchstart/touchend/touchcancel confirmados.
+- Pendiente para Beta: interacción táctil real en navegador móvil y PWA standalone, desplazamiento vertical, y actualización de altura del acordeón.
+================================================================================

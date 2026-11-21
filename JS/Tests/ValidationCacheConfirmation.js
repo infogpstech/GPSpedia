@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { confirmValidationBeforeCache } from "../../validationSubmission.js";
+let passed = 0;
+async function test(name, callback) { await callback(); passed++; console.log("PASS " + name); }
+await test("espera la confirmación antes de guardar la caché", async () => { const sequence=[]; const result=await confirmValidationBeforeCache(async()=>{sequence.push("backend");return{status:"success"};},async()=>{sequence.push("cache");}); assert.deepEqual(sequence,["backend","cache"]); assert.equal(result.recorded,true); assert.equal(result.cacheSaved,true); });
+await test("acepta respuestas informativas y warning confirmadas", async () => { for(const response of [{status:"info",recorded:true},{status:"warning"}]){let cached=false;const result=await confirmValidationBeforeCache(async()=>response,async()=>{cached=true;});assert.equal(result.recorded,true);assert.equal(cached,true);} });
+await test("no guarda la caché cuando el backend indica que no registró la respuesta", async () => { let cached=false;const result=await confirmValidationBeforeCache(async()=>({status:"info",recorded:false}),async()=>{cached=true;});assert.equal(result.recorded,false);assert.equal(result.cacheSaved,null);assert.equal(cached,false); });
+await test("un estado info sin confirmación explícita no crea caché", async () => { let cached=false;const result=await confirmValidationBeforeCache(async()=>({status:"info",message:"No se registró."}),async()=>{cached=true;});assert.equal(result.recorded,false);assert.equal(cached,false); });
+await test("no guarda la caché cuando falla la solicitud al backend", async () => { let cached=false;await assert.rejects(confirmValidationBeforeCache(async()=>{throw new Error("network failure");},async()=>{cached=true;}),/network failure/);assert.equal(cached,false); });
+await test("un estado desconocido no se interpreta como confirmación", async () => { let cached=false;await assert.rejects(confirmValidationBeforeCache(async()=>({status:"queued"}),async()=>{cached=true;}),/no confirmó/);assert.equal(cached,false); });
+await test("un fallo de caché no invalida el registro confirmado", async () => { const result=await confirmValidationBeforeCache(async()=>({status:"success"}),async()=>{throw new Error("IndexedDB unavailable");});assert.equal(result.recorded,true);assert.equal(result.cacheSaved,false); });
+console.log(`Validation cache confirmation: ${passed}/7 PASS`);

@@ -1,0 +1,58 @@
+/* Ayudas contextuales compartidas para index y formularios auxiliares. */
+.gp-help-label-row,
+.gp-help-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.gp-help-label-row > label,
+.gp-help-label > label {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+}
+.gp-help-trigger {
+    display: inline-flex;
+    flex: 0 0 24px;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gp-color-text-disabled, var(--text-disabled, #6c757d));
+    cursor: pointer;
+}
+.gp-help-trigger:hover,
+.gp-help-trigger[aria-expanded="true"] {
+    color: var(--gp-color-accent, var(--accent-color, #007bff));
+    background: var(--gp-color-info-bg, var(--hover-bg, rgba(128,128,128,.12)));
+}
+.gp-help-trigger:focus-visible {
+    outline: 2px solid var(--gp-color-focus, var(--accent-color, #005fcc));
+    outline-offset: 2px;
+}
+.gp-help-popover {
+    display: block;
+    max-width: 100%;
+    margin: -2px 0 8px;
+    padding: 9px 11px;
+    border: 1px solid var(--gp-color-border, var(--border-color, #ddd));
+    border-left: 3px solid var(--gp-color-accent, var(--accent-color, #007bff));
+    border-radius: 7px;
+    background: var(--gp-color-info-bg, var(--card-bg, #f3f7fb));
+    color: var(--gp-color-info-text, var(--text-color, #333));
+    font-size: .82rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+.gp-help-popover[hidden] {
+    display: none !important;
+}
+@media (max-width: 520px) {
+    .gp-help-popover { padding: 8px; font-size: .78rem; }
+}

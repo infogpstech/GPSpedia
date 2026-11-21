@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+const start=source.indexOf("function logUserActivity(userId, userName, activityType, associatedId, details) {");
+const end=source.indexOf("\nfunction ",start+10);
+assert.ok(start>=0&&end>start,"No se encontró logUserActivity");
+const fn=source.slice(start,end);
+assert.match(fn,/getFormulaBasedIdPattern_\(sheet, COLS_ACTIVIDAD_USUARIO\.id\)/);
+assert.match(fn,/sheet\.appendRow\(row\)/);
+assert.match(fn,/pattern\.formula/);
+assert.doesNotMatch(fn,/getNextFormulaBasedId_|LockService|tryLock|waitLock|newRowNumber|copyRowPresentationOnly_|setValue\(/);
+assert.ok(fn.indexOf("sheet.appendRow(row)")<fn.indexOf("SpreadsheetApp.flush()"));
+console.log("ActivityLogAppendAtomic: 6/6 PASS — actividad con appendRow y fórmula de fila");

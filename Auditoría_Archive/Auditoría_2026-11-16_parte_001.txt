@@ -1,0 +1,902 @@
+# Auditoría técnica — incidencias Developer y ADMIN
+
+Fecha: 2026-11-14  
+Repositorio: `infogpstech/GPSpedia`  
+Rama revisada: `GPSpedia2.2.5_work`  
+HEAD verificado al iniciar la revisión: `edac7202791223de890ed6d912cc93f7e1fbfa63`  
+Rama base: `GPSpedia2.2.5` (sin modificaciones)
+
+## Alcance y método
+
+Inspección estática de los flujos de apertura del panel Developer, despacho de acciones ADMIN, leases del coordinador compartido y migración del historial de imágenes. No se ejecutaron solicitudes contra deployments ni pruebas en navegador; por tanto, los hallazgos describen causas estructurales observables y distinguen lo que aún requiere reproducción.
+
+## Hallazgos
+
+### AUD-2026-11-14-01 — La migración del historial no está declarada en la política del coordinador
+
+**Severidad:** Alta — bloquea la inicialización solicitada.  
+**Estado:** Causa confirmada por inspección estática.
+
+**Evidencia**
+- `Services/admin.js`, `isSharedMutationAction_`: `migrateReplacedImagesSchema` está incluida entre las acciones que requieren lease específica.
+- `Services/admin.js`, `doPost`: para esa acción se solicita `withSharedMutationLease_("ADMIN", action, ...)`.
+- `Services/admin.js`, `doPostInternal_`: el `switch` despacha la acción a `handleMigrateReplacedImagesSchema`.
+- `Services/admin.js`, `handleMigrateReplacedImagesSchema`: inicializa la hoja y verifica/añade columnas de inventario; la operación está protegida además por ScriptLock.
+- `Services/Coordinator.js`, `coordinatorPolicy_`: existe política para varias acciones ADMIN, pero falta la entrada `migrateReplacedImagesSchema`. La función rechaza cualquier par servicio/operación sin política con el mensaje «La acción no está habilitada en la política del coordinador».
+
+**Conclusión**
+El nombre y el despacho de la acción son consistentes entre frontend y ADMIN. El rechazo ocurre porque el coordinador no tiene declarada su política. No hay evidencia de que sea un problema de rol o de configuración del endpoint.
+
+**Criterio de corrección**
+Declarar una política específica y de mínimo privilegio para la escritura del esquema `IMAGE_INVENTORY`, conservando la validación de sesión Desarrollador y el bloqueo/verificación del esquema. Añadir pruebas de contrato que confirmen autorización de esta operación y rechazo de operaciones no declaradas. No ampliar permisos globales.
+
+### AUD-2026-11-14-02 — El escáner comparte la lease genérica ADMIN/sessionActivity
+
+**Severidad:** Alta — puede impedir la carga del escáner cuando coinciden solicitudes ADMIN.  
+**Estado:** Mecanismo de contención confirmado estáticamente; reproducción en runtime pendiente.
+
+**Evidencia**
+- `Services/admin.js`, `isSharedMutationAction_`: `auditDriveImagesInCortes` no aparece en la lista de acciones coordinadas específicas. Tampoco aparecen consultas como `getReplacedImages`.
+- `Services/admin.js`, `doPost`: toda acción distinta de `ping` que no esté en esa lista se ejecuta bajo `withSharedMutationLease_("ADMIN", "sessionActivity", ...)`.
+- `Services/Coordinator.js`, `coordinatorPolicy_`: `ADMIN/sessionActivity` declara escritura sobre `ACTIVE_SESSIONS`.
+- `Services/Coordinator.js`, `hasConflict_`: dos leases que escriben el mismo recurso son incompatibles. El mensaje observado se construye con las operaciones activas que mantienen el conflicto.
+- `Services/admin.js`, `getAdminSessionContext_`: cada solicitud ADMIN valida la sesión y actualiza `ActiveSessions.LastActivityAt`; por eso la actividad de sesión no puede eliminarse sin sustituir esa protección.
+- `handleGetReplacedImages` realiza además una lectura de referencias activas del Spreadsheet, que puede prolongar la solicitud mientras otra consulta ADMIN intenta adquirir la misma lease.
+
+**Conclusión**
+Las consultas ADMIN no clasificadas como mutaciones específicas se serializan bajo el mismo nombre `ADMIN/sessionActivity`. Si la interfaz solicita inventario, historial u otras consultas de forma concurrente, una solicitud puede mantener la lease mientras otra agota su espera y recibe «recurso ocupado por operaciones activas ADMIN/sessionActivity». Esto coincide con el síntoma informado. La duración real y el orden de las solicitudes aún deben medirse en Beta.
+
+**Criterio de corrección**
+Revisar el ciclo completo de carga del panel y separar la coordinación de las lecturas prolongadas de la actualización de actividad de sesión. Mantener la validación de sesión y su escritura protegida; no desactivar la lease ni permitir escrituras simultáneas sobre `ACTIVE_SESSIONS`. Añadir pruebas de concurrencia que cubran la carga conjunta de escáner e historial, liberación de leases y reintento tras contención.
+
+### AUD-2026-11-14-03 — Acceso al panel Developer sin causa estática concluyente
+
+**Severidad:** Media — funcionalidad de acceso reportada como no disponible.  
+**Estado:** Pendiente de reproducción en navegador.
+
+**Evidencia**
+- `JS/Frontend/ui.js`, `showApp`: muestra el botón Developer cuando el rol normalizado es `desarrollador`.
+- `JS/Frontend/main.js`: el listener del botón llama a `ui.openDevTools` después de cerrar el menú lateral.
+- `JS/Frontend/ui.js`, `openDevTools`: requiere que `ensureUiSessionRole_(['desarrollador'])` devuelva el contexto actual.
+- `JS/Frontend/ui.js`, `getUiSessionContext_`: requiere `currentUser.ID`, `currentUser.SessionToken` y rol Desarrollador.
+- `Services/Auth.js`, `handleLogin`: la respuesta de login construye los campos `ID`, `Privilegios` y `SessionToken`, compatibles con el contrato anterior.
+
+**Conclusión**
+La ruta estática de menú y apertura es coherente y el contrato de login coincide con los campos que espera la UI. La inspección no demuestra por sí sola que el panel abra correctamente en navegador ni descarta un estado de sesión distinto en runtime. No se atribuye aún el fallo a AUTH, al rol o a la navegación.
+
+**Siguiente comprobación**
+Reproducir con una sesión Desarrollador recién iniciada y registrar, sin exponer el token: presencia de `currentUser`, presencia de ID y token, rol normalizado, resultado de `ensureUiSessionRole_`, ejecución del callback del menú y estado final de `#dev-tools-modal`. Comprobar también la misma ruta tras restaurar sesión.
+
+## Estado de validación y cambios
+
+- Revisión estática de los archivos citados: realizada.
+- Reproducción en navegador/Android/escritorio: no ejecutada; no hay entorno de navegador conectado en esta revisión.
+- Solicitudes a Apps Script/Coordinator y pruebas con Spreadsheet/Drive: no ejecutadas.
+- Pruebas automatizadas nuevas: no ejecutadas.
+- Código, políticas, endpoints, deployments y datos productivos: sin cambios.
+
+## Próximas acciones
+
+1. Corregir AUD-2026-11-14-01 con una política explícita y limitada para `IMAGE_INVENTORY`.
+2. Diseñar y probar la coordinación de AUD-2026-11-14-02 sin quitar la validación ni la actualización protegida de sesión.
+3. Reproducir AUD-2026-11-14-03 y corregir únicamente el punto que falle.
+4. Ejecutar pruebas de sintaxis, contratos, concurrencia y regresión antes de marcar cualquier corrección como completada.
+
+## Adenda de resolución — 2026-11-14
+
+### AUD-2026-11-14-01 — RESUELTO A NIVEL DE CÓDIGO Y CI
+- Services/Coordinator.js declara migrateReplacedImagesSchema con lectura de identidad y escritura exclusiva limitada a IMAGE_INVENTORY. No se habilitó mantenimiento global ni se amplió el allowlist genérico.
+- Se conserva la validación Desarrollador del router ADMIN y el ScriptLock del handler.
+- Regresión de política mínima y rechazo deny-by-default incluida en SharedMutationCoordinator.js.
+- CI completo PASS en HEAD ca6bf55564308d13b68d5554f6b62d098a963855: 93 suites / 1,366 pruebas / 0 fallos.
+- Pendiente: ejecutar inicialización en deployment ADMIN Beta y verificar encabezados/read-back en copia aislada. No ejecutar en producción sin autorización independiente.
+
+### AUD-2026-11-14-02 — RESUELTO A NIVEL DE CÓDIGO Y CI
+- ADMIN/sessionActivity ahora separa la actualización cooperativa de ACTIVE_SESSIONS de las escrituras exclusivas. Consultas ADMIN simultáneas que comparten únicamente esa actualización pueden coexistir.
+- La política sigue bloqueando consultas frente a escrituras normales incompatibles y frente a mantenimiento global. Logout y revocaciones AUTH mantienen escritura exclusiva de ACTIVE_SESSIONS y no pueden solaparse con leases ADMIN.
+- Se añadieron pruebas que adquieren dos leases ADMIN, comprueban que AUTH/logout recibe busy, liberan ambas leases y verifican que logout puede continuar después.
+- CI completo PASS en HEAD ca6bf55564308d13b68d5554f6b62d098a963855: 93 suites / 1,366 pruebas / 0 fallos.
+- Pendiente: medir concurrencia real y duración en deployment ADMIN Beta; las pruebas locales no sustituyen Apps Script/Coordinator/Spreadsheet/Drive reales.
+
+### AUD-2026-11-14-03 — PENDIENTE DE REPRODUCCIÓN
+- La revisión estática no demuestra un defecto en la apertura del panel Developer.
+- Se mantiene el plan de instrumentación manual sin exponer SessionToken: identidad presente, rol normalizado, resultado de ensureUiSessionRole_, callback de menú y estado final del modal.
+- No se modificó el control de acceso ni se relajó el requisito de sesión Desarrollador.
+
+Evidencia: commits 0bfb340583062891f3438dc12b8ab814520b7629 y ca6bf55564308d13b68d5554f6b62d098a963855; service-tests run 43624818215 SUCCESS (93 suites / 1,366 pruebas); Pages run 43624817783 SUCCESS. Rama base sin cambios.
+
+### Adenda AUD-2026-11-14-03 — causa de revalidación redundante identificada y corregida a nivel local
+
+**Hallazgo confirmado:** `JS/Frontend/ui.js`, `ensureUiSessionRole_` iniciaba `auth.validateActiveSession(false)` cada vez que se abría una vista privilegiada. La llamada se ejecutaba en segundo plano y no retrasaba explícitamente el renderizado, pero generaba una petición AUTH adicional por apertura y podía actualizar/invalidar estado desde una ruta que solo necesitaba consultar el rol ya autenticado.
+
+**Corrección:** el helper ahora consulta únicamente `currentUser` y el rol de sesión ya establecido; no llama a AUTH ni ejecuta otra petición para abrir el panel. Se retiró también el `await` innecesario en sus consumidores. El control local solo decide la visibilidad/apertura de la interfaz.
+
+**Límite de seguridad preservado:** la validación de sesión al iniciar/restaurar la aplicación se mantiene. Las operaciones protegidas siguen verificando token, identidad, vigencia, estado de cuenta y rol en el backend dentro de la propia petición de negocio. No se ha eliminado autorización del servidor ni se ha convertido el rol local en permiso suficiente para modificar datos.
+
+**Validación:** GitHub Actions run `43626278768` SUCCESS — 93 suites, 1,366 pruebas aprobadas, 0 fallos; `SessionUiRoleInvalidation` 11/11, `SessionStartupNavigation` 13/13, `OverlayMenuModalHistory` 19/19 y `DevToolsModalAccessibility` 19/19; `node --check` PASS. Pages run `43626278368` SUCCESS. La comprobación visual en navegador/Beta sigue pendiente.
+
+
+## AUD-2026-11-14-04 — Aviso obligatorio bloqueado por ADMIN/sessionActivity
+
+**Severidad:** Alta funcional — el usuario no puede completar el inicio de la aplicación.  
+**Estado:** CORREGIDO EN CÓDIGO; validación de deployment y navegador pendiente.
+
+### Evidencia y causa confirmada
+- `Services/admin.js` envuelve las consultas ADMIN no mutables en `ADMIN/sessionActivity`, cuya lease declara `ACTIVE_SESSIONS` como escritura cooperativa.
+- `AUTH/acceptTerms` tenía una política de escritura exclusiva sobre `ACTIVE_SESSIONS`. Además, `touchProtectedAuthRequestSession_` actualiza `LastActivityAt` antes de ejecutar el handler.
+- La combinación provocaba que la aceptación de términos chocara con una operación `ADMIN/sessionActivity` activa y devolviera el mensaje de recurso ocupado.
+- `renderTermsGate_` consultaba la aceptación ligada al token de sesión. Cada login nuevo generaba un token y volvía a mostrar el aviso, aunque el usuario ya lo hubiera aceptado en ese mismo navegador/dispositivo.
+
+### Corrección aplicada
+- La aceptación se guarda en `Users.TermsAcceptance` como registro por usuario y dispositivo. Se preserva la aceptación histórica anterior como `legacyAcceptance`, sin aplicarla automáticamente a dispositivos nuevos.
+- `termsDeviceAcceptance.js` genera y conserva un identificador aleatorio de 128 bits en `localStorage`. La aceptación local queda asociada a usuario, dispositivo y versión del aviso; cerrar sesión no elimina ese registro.
+- `handleAcceptTerms` conserva la validación de token, identidad, vigencia, cuenta y revocación de rol. El handler persiste la aceptación en Users y no modifica la columna de aceptación de ActiveSessions.
+- `AUTH/acceptTerms` ahora coordina la actividad de sesión de forma cooperativa sobre `ACTIVE_SESSIONS` y mantiene la escritura exclusiva sobre `USERS`. Puede coexistir con `ADMIN/sessionActivity`, pero las mutaciones exclusivas de identidad/sesión siguen bloqueándose.
+- El Service Worker pasa a caché v26 e incluye el nuevo módulo entre los recursos esenciales.
+
+### Validación local ejecutada
+- `SharedMutationCoordinator`: 41/41 PASS, incluyendo coexistencia AUTH/ADMIN y bloqueo de login concurrente.
+- `TermsModalAccessibility`: 12/12 PASS, incluyendo persistencia tras logout, separación entre usuarios/dispositivos y cambio de versión.
+- Simulación aislada de `handleAcceptTerms`: primera aceptación confirmada; repetición en el mismo dispositivo devuelve `alreadyAccepted:true`; un segundo dispositivo registra una aceptación independiente; el registro histórico se conserva; el handler no escribe en ActiveSessions.
+- Parsing/sintaxis de los ocho archivos de código y pruebas modificados: PASS. El espejo `JS/Tests/Auth.js` coincide con los bloques funcionales de `Services/Auth.js`.
+
+### Validación pendiente
+- No se ejecutó GitHub Actions completo ni se desplegaron `Services/Auth.js` o `Services/Coordinator.js` en Apps Script.
+- Pendiente probar en Beta: aceptar aviso, cerrar sesión y volver a entrar en el mismo navegador; abrir desde un navegador/perfil nuevo; reabrir la plataforma; probar con ADMIN/sessionActivity concurrente y con sesión revocada.
+- El identificador es persistente por origen y perfil de navegador, no una huella física del hardware. Borrar los datos del sitio o usar otro navegador/perfil se considera un dispositivo nuevo.
+
+La rama base `GPSpedia2.2.5` no fue modificada. No se cambiaron deployments ni datos productivos.
+
+
+### Adenda AUD-2026-11-14-04 — validación previa de aceptación en solo lectura
+
+Una revisión adicional del flujo completo detectó que `touchProtectedAuthRequestSession_` seguía llamando a `validateAndTouchSession_` antes de ejecutar `handleAcceptTerms`, lo que actualizaba `LastActivityAt` en ActiveSessions. Aunque la lease ya era cooperativa, esa escritura podía coincidir con otra actualización de actividad.
+
+- Se añadió una ruta específica para `acceptTerms` que usa `validateSessionReadOnly_(token, userId)`. No actualiza `LastActivityAt` ni reconcilia/revoca sesiones desde el preflight.
+- `handleAcceptTerms` vuelve a validar token, identidad, expiración, cuenta y estado de revocación antes de escribir el registro por dispositivo en Users.
+- Las demás mutaciones autenticadas conservan `validateAndTouchSession_` y su actualización de actividad.
+- La clasificación cooperativa de `ACTIVE_SESSIONS` en el coordinador permite la lectura de validación junto a `ADMIN/sessionActivity`, pero sigue generando conflicto con las escrituras exclusivas de identidad/sesión.
+- Prueba de preflight aislada: acceptTerms usa la validación de solo lectura; logout conserva la ruta de validación/actualización normal. PASS.
+- SharedMutationCoordinator: 41/41 PASS; TermsModalAccessibility: 12/12 PASS; parsing/sintaxis de ocho archivos modificados PASS; espejo AUTH sincronizado.
+
+No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama base permanece intacta.
+
+
+## AUD-2026-11-14-05 — Renderizado incompleto después de aceptar el aviso
+
+**Severidad:** Media — experiencia de inicio y controles de navegación.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual Beta pendiente.
+
+### Evidencia y causa
+- En `JS/Frontend/ui.js`, `showApp(user)` retorna cuando `renderTermsGate_(user)` indica que la aceptación sigue pendiente.
+- El handler del botón aceptaba y persistía la aceptación, ocultaba el modal y mostraba contenedores, pero no reanudaba el resto de `showApp`. El saludo y los controles de navegación por rol quedaban sin renderizar después de la primera aceptación en un perfil nuevo.
+
+### Corrección y validación
+- Tras confirmar la persistencia local, el handler vuelve a ejecutar `showApp(user)`; el gate reconoce la aceptación ya guardada y el flujo termina de renderizar saludo, menú y controles de rol antes de iniciar la carga del catálogo.
+- Prueba `TermsAcceptance`: 19/19 PASS.
+- GitHub Actions run `43629775820`: 94 suites / 1,388 pruebas / 0 fallos; sintaxis PASS.
+- Commit funcional: `75e3400794ef321f9a92b2ddc60982ee3b842515`; regresión: `be6c9d9010227c255ae43a620979c4fe1e95c4cc`.
+
+## AUD-2026-11-14-06 — FEEDBACK/recordLike no reservaba la actividad de sesión
+
+**Severidad:** Media — concurrencia y consistencia de actividad.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación Beta pendiente.
+
+### Evidencia y causa
+- `Services/feedback.js`, `assertFeedbackSession()`, actualiza `ActiveSessions.LastActivityAt` al autenticar el actor.
+- La política `FEEDBACK/recordLike` de `Services/Coordinator.js` reservaba `CORTES`, `FEEDBACK` y `ACTIVITY`, pero omitía `ACTIVE_SESSIONS`. La lease no representaba todos los recursos escritos por la operación y no protegía esa actualización frente a otras operaciones coordinadas.
+
+### Corrección y validación
+- `recordLike` reserva ahora `ACTIVE_SESSIONS`, `CORTES`, `FEEDBACK` y `ACTIVITY`, usando la misma política de actividad protegida que el resto de mutaciones FEEDBACK.
+- La prueba del coordinador comprueba la reserva de los cuatro recursos y que `ADMIN/sessionActivity` espere hasta liberar la lease.
+- GitHub Actions run `43629580642`: 94 suites / 1,388 pruebas / 0 fallos; coordinador 41/41 PASS.
+- Commits: código `99dc4417a83e771a87655d18b6407fb64cfa8f56`; prueba `2bdddb0f9450f36e58c4e07059095d78108e973d`.
+
+## AUD-2026-11-14-07 — Diagnóstico de autorización del coordinador FEEDBACK
+
+**Severidad:** Alta funcional si se confirma en Beta.  
+**Estado:** CAUSA DE CONFIGURACIÓN POSIBLE IDENTIFICADA; NO CONFIRMADA EN DEPLOYMENT.
+
+- `Services/Coordinator.js`, función `authenticate_()`, devuelve exactamente «Servicio no autorizado para el coordinador compartido» cuando el servicio no está permitido o el secreto esperado no existe/no coincide.
+- Las acciones de Inbox admiten los roles técnicos en `Services/feedback.js` y `Services/InboxConversations.js`; el texto del coordinador corresponde a autenticación entre servicios, no al rechazo RBAC del usuario.
+- Acción de diagnóstico: comprobar en el proyecto FEEDBACK Beta `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`, y cotejar el segundo con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del coordinador del mismo entorno. Confirmar que FEEDBACK incluye `SharedMutationClient.js` vigente.
+- No se dispone de acceso a ScriptProperties ni al deployment Apps Script en esta sesión. No se afirma que la configuración externa esté corregida.
+
+## AUD-2026-11-14-08 — Síntoma de aceptación de términos no reproducido en pruebas locales
+
+**Severidad:** Alta funcional — impide iniciar la aplicación si persiste en el deployment.  
+**Estado:** CÓDIGO LOCAL CON POLÍTICA CORRECTA; VALIDACIÓN EXTERNA PENDIENTE.
+
+- La rama contiene `AUTH/acceptTerms` con lectura y escritura cooperativa de `ACTIVE_SESSIONS`, escritura exclusiva de `USERS`, preflight de sesión de solo lectura y validación adicional antes de persistir la aceptación.
+- Las pruebas aisladas confirman que la aceptación puede coexistir con `ADMIN/sessionActivity`; `TermsAcceptance` 19/19 PASS y CI run `43629775820` 94 suites / 1,388 pruebas / 0 fallos.
+- El mensaje reportado de recurso ocupado no se reprodujo localmente. La discrepancia apunta a revisar versiones desplegadas de Coordinator/AUTH y configuración del coordinador; no es evidencia suficiente para afirmar una causa externa concreta.
+- No se modificaron deployments, ScriptProperties ni datos productivos. La prueba de aceptación concurrente queda pendiente en Beta.
+
+
+## AUD-2026-11-14-09 — Inbox histórico apilaba lista y detalle en móvil
+
+**Severidad:** Media — navegación y usabilidad móvil.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual en dispositivos pendiente.
+
+### Evidencia y causa
+- La vista histórica `inbox-requests-view` mantenía lista y detalle en el mismo contenedor flex; el CSS móvil los apilaba verticalmente y reducía el espacio disponible para ambos.
+- Las acciones del detalle estaban agrupadas como controles de texto al final del contenido.
+- Se detectó además que el detalle de aprobaciones de vídeo mostraba un botón de borrado genérico, aunque `handleDeleteFeedbackItem()` solo admite `problem_report` y `contact_form`; intentar borrar `video_approval` siempre era rechazado por backend.
+
+### Corrección y validación
+- En móvil, la vista histórica ahora muestra lista o detalle, con botón de regreso y soporte de teclado en cada elemento.
+- Las acciones de respuesta, resolución y borrado se presentan en una barra contextual accesible, respetando el RBAC existente.
+- Se retiró el borrado genérico de aprobaciones de vídeo; permanecen las acciones Aprobar/Rechazar cuando el estado lo permite.
+- `InboxUi`: 19/19 PASS.
+- GitHub Actions run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
+- Commits principales: UI `723845b2f0b1241a8048c42addedfd5e11c1ade1`; navegación `6333ec78483571fb4c4842737f9e5533937d0f58`; CSS `397fbdb2af90f37ba7f2d999d8d61373ef45391a`; pruebas `753b7784ab113cc694fcf334896062515494c850`.
+
+## AUD-2026-11-14-10 — Falta de acción explícita para recargar la PWA
+
+**Severidad:** Media — recuperación de interfaz y actualización de cliente.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación Android/iOS pendiente.
+
+### Evidencia y causa
+- No se encontró un listener que bloqueara F5/Ctrl+R ni una intercepción global de `beforeunload`.
+- El gesto pull-to-refresh de `main.js` actualizaba el catálogo con `loadInitialData(true)`; no recargaba el documento ni comprobaba explícitamente si había una versión nueva del Service Worker.
+- En una PWA instalada, el usuario puede no disponer de controles de recarga visibles del navegador.
+
+### Corrección y validación
+- Se agregó el enlace «Recargar aplicación» al menú lateral. Su acción consulta `ServiceWorkerRegistration.update()` con espera máxima de 3 segundos y después ejecuta `window.location.reload()`.
+- El gesto pull-to-refresh sigue sincronizando solo el catálogo para evitar recargas involuntarias.
+- El caché de Service Worker se incrementó a `gpsepedia-cache-v27`; los 33 recursos esenciales se verificaron contra el árbol Git y no hay rutas faltantes.
+- `SessionStartupNavigation`: 13/13 PASS; `PWAStartupScenarios`: 13/13 PASS.
+- GitHub Actions run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
+- No se afirma que el navegador/PWA bloquee capturas nativas. La prevención efectiva requiere un contenedor nativo con controles del sistema operativo.
+
+
+## AUD-2026-11-14-11 — Tarjeta de alta PyS tenía estructura distinta a las tarjetas relacionadas
+
+**Severidad:** Baja/Media — consistencia visual en el modal de detalle.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual en navegador pendiente.
+
+### Evidencia y causa
+- `createPysCard()` devolvía un wrapper `.pys-card-wrapper` que contenía la tarjeta real.
+- La tarjeta «Agregar Problema» se agregaba directamente al carrusel, sin el wrapper equivalente. Por tanto, el dimensionamiento flex y la separación del carrusel no se aplicaban sobre la misma estructura.
+- La vista de un solo problema y la de varios problemas construían la tarjeta de alta de forma duplicada.
+
+### Corrección y validación
+- Se creó `createPysAssociationAddCard()`, que usa el mismo wrapper que `createPysCard()`.
+- Las tarjetas comparten 140×120 px; en carrusel, los wrappers reservan 160 px para conservar los 20 px de separación.
+- `PysModalNavigation.js` se corrigió para importar las rutas actuales y se incorporó al runner de regresión; anteriormente no se ejecutaba en CI.
+- `PysModalNavigation`: 9/9 PASS.
+- GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos.
+- Commits: UI `1c87d57d612d6fd8db7be4929012df6e4bf4b0fa`; CSS `5d6020462fb6d96b7be85eab818511646aeb2d27`; test/runner `52b1c05a3609215cb123a0508d20e81ba1167034`, `23d50d79c614dfcc3434deb9c25716ac93dc96d4`.
+
+
+## AUD-2026-11-14-11 — Contexto de rol incompleto para sesiones heredadas
+
+**Severidad:** Media — visibilidad de funciones dependientes del rol.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual Beta pendiente.
+
+### Evidencia y causa
+- `JS/Frontend/auth.js` acepta sesiones almacenadas con identificador `user.ID || user.id` al restaurar la sesión.
+- `JS/Frontend/ui.js`, `getUiSessionContext_()` solo leía `user.ID`. En sesiones heredadas que conservan únicamente `id` en minúscula, el contexto de UI quedaba `null` aunque AUTH aceptara la sesión y conservara el token.
+- La tarjeta «Agregar Tutorial» depende de `getUiSessionContext_()?.role === 'desarrollador'`. Por tanto, la diferencia entre los contratos de ID podía ocultar la tarjeta y otras funciones de UI basadas en el contexto, sin que el backend tuviera un problema de permisos.
+- La operación `openAddTutorialModal()` ya vuelve a comprobar el rol Desarrollador; se conserva esa protección y la autorización backend de `addTutorial`.
+
+### Corrección y validación
+- `getUiSessionContext_()` ahora resuelve el identificador con `user.ID || user.id`, pero sigue exigiendo `SessionToken` y normalizando el rol desde `Privilegios`.
+- `SessionUiRoleInvalidation.js` añade pruebas de contrato y ejecución dinámica para sesiones con `ID` y `id`, normalización de roles con acentos y rechazo de sesiones sin token.
+- Se añadieron comprobaciones de que la tarjeta Tutorial sigue reservada a Desarrollador y el modal vuelve a verificar el rol antes de abrir/guardar.
+- CI run `43630870843` SUCCESS: **95 suites / 1,404 pruebas / 0 fallos**; prueba AUG-042 `SessionUiRoleInvalidation` 14/14 PASS.
+- No se ejecutó un navegador real ni se verificó la sesión concreta del reporte. Falta comprobar visualmente con una cuenta Desarrollador y una sesión heredada en Beta.
+
+No se amplió la matriz de permisos, no se alteró el backend de tutoriales y no se modificó la rama base.
+
+## AUD-2026-11-14-12 — Diagnóstico seguro de configuración FEEDBACK/Coordinator para Inbox Técnico
+
+**Severidad:** Alta funcional si se confirma en Beta; la autenticación de servicio falla antes de evaluar el rol.  
+**Estado:** MEJORA DE DIAGNÓSTICO IMPLEMENTADA; CAUSA EXTERNA DE CONFIGURACIÓN PENDIENTE DE CONFIRMACIÓN.
+
+### Evidencia
+- `Services/Coordinator.js`, `authenticate_()`, rechaza FEEDBACK con «Servicio no autorizado para el coordinador compartido» si el servicio no está permitido o el secreto esperado falta/no coincide.
+- `Services/feedback.js` declara acciones de conversaciones directas y sus operaciones autenticadas; `Services/InboxConversations.js` incluye `tecnico` y `tecnico_exterior` en `INBOX_ACTIVE_ROLES_`.
+- `JS/Frontend/ui.js`, `openInbox()`, permite los roles `desarrollador`, `jefe`, `supervisor`, `tecnico` y `tecnico_exterior`. A técnicos les muestra la opción de consultar al Desarrollador y oculta la pestaña de solicitudes privilegiadas. La API de destinatarios limita su consulta a usuarios Desarrollador.
+- Las lecturas de Inbox obtienen lease `FEEDBACK/sessionActivity`; las escrituras directas usan políticas coordinadas `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation`.
+
+### Corrección de diagnóstico
+- `Services/feedback.js`: `GET ?debug=true` informa `coordinatorConfigured` como booleano calculado con URL de Apps Script válida, secreto local de al menos 32 caracteres y disponibilidad del cliente de coordinación.
+- El endpoint no devuelve URL, secreto, token ni valores de ScriptProperties. `true` solo indica configuración local con formato/longitud válidos; no comprueba que el secreto coincida con el coordinador remoto.
+- `JS/Frontend/api-config.js` conserva el indicador para FEEDBACK; el panel Developer muestra el estado local y advierte si falta configuración. `Services/COORDINATOR_SETUP.md` documenta la diferencia entre presencia local y coincidencia remota.
+- `JS/Tests/InboxRoleContract.js`: pruebas del booleano, URL inválida, configuración ausente, ausencia de exposición de secretos y acceso de Técnico/Técnico exterior al flujo de consulta.
+
+### Validación
+- GitHub Actions run `43631181979`: SUCCESS; 95 suites / 1,407 pruebas / 0 fallos.
+- Contrato Inbox/AUG-115: 16/16 PASS.
+- No se consultaron ScriptProperties ni deployments Apps Script. La coincidencia del secreto FEEDBACK y el endpoint del coordinador siguen pendientes de verificación en Beta.
+- No se amplió RBAC, no se expusieron credenciales y no se modificaron deployments ni datos productivos.
+
+
+## Adenda de rectificación e implementación — panel Developer e inventario de imágenes (2026-11-14)
+
+### Rectificación de AUD-2026-11-14-01
+En la revisión del estado actual de GPSpedia2.2.5_work, migrateReplacedImagesSchema sí está declarada en coordinatorPolicy_. La evidencia anterior describe un estado previo del archivo. La política vigente, sin embargo, no declaraba ACTIVE_SESSIONS como escritura cooperativa, aunque getAdminSessionContext_() actualiza LastActivityAt. Se corrigió la regla para reservar USERS en lectura, ACTIVE_SESSIONS en escritura cooperativa e IMAGE_INVENTORY en escritura exclusiva. La política sigue siendo específica y no usa mantenimiento global.
+
+### AUD-2026-11-14-04 — Consultas ADMIN y escáner comparten la lease genérica de actividad
+**Severidad:** Alta — puede provocar contención entre carga de inventario, consulta de Drive y escaneo.
+
+**Evidencia**
+- getReplacedImages, getDriveStorage y getCortesImageFolders no estaban clasificados como operaciones coordinadas específicas; doPost las envolvía en ADMIN/sessionActivity.
+- auditDriveImagesInCortes tampoco estaba clasificada como operación específica, pese a mantener estado de auditoría reanudable y adquirir ScriptLock.
+- La lease genérica se mantenía durante las lecturas prolongadas y mezclaba la actualización de sesión con la lectura de Spreadsheet/Drive.
+
+**Corrección local**
+- Se creó isSharedReadAction_() para las tres consultas. El router conserva la lease coordinada, pero usa el nombre de operación propio.
+- auditDriveImagesInCortes ahora obtiene una lease específica con lecturas de CORTES, DRIVE e inventario, escritura cooperativa de ACTIVE_SESSIONS y escritura exclusiva del estado lógico IMAGE_AUDIT_STATE.
+- Se conservan assertDeveloperSession, getAdminSessionContext_(), la actualización de actividad y el ScriptLock del escáner.
+- Las consultas de solo lectura no se clasifican como mutaciones ni generan eventos de auditoría de escritura.
+
+**Validación local aislada**
+- SharedMutationCoordinator: 42/42 PASS; consultas simultáneas, convivencia con ADMIN/sessionActivity, exclusión de dos escáneres y bloqueo correcto de escrituras sobre inventario/Drive.
+- AdminImageScanCoordinatorContract: PASS; router, roles y recursos de lease alineados.
+- Node CLI completo, GitHub Actions y runtime Apps Script no se ejecutaron desde este entorno.
+
+### AUD-2026-11-14-05 — Inconsistencia potencial entre visibilidad y apertura del panel Developer
+**Severidad:** Media — el botón podía mostrarse por el texto del rol aunque faltara el contexto completo que exige la apertura.
+
+**Evidencia y alcance**
+- showApp() calculaba la visibilidad a partir de Privilegios.
+- openDevTools() exigía un contexto con identificador, SessionToken y rol Desarrollador.
+- Esta diferencia permite un estado visual en el que el botón aparece pero la apertura se rechaza si el objeto de sesión está incompleto. La inspección no demuestra que sea la única causa del síntoma reportado; falta reproducción en navegador.
+
+**Corrección local**
+- showApp() utiliza el mismo contexto autenticado (ID/id, token y rol) para mostrar el acceso.
+- Si se intenta abrir el panel sin contexto válido, la UI muestra un mensaje que distingue sesión incompleta de rol no autorizado. No se concede acceso ni se omite la autorización.
+
+**Validación**
+- SessionUiRoleInvalidation: 15/15 PASS en ejecución aislada.
+- La prueba en navegador con login y sesión restaurada queda pendiente de Beta.
+
+
+### Adenda de validación — despacho dinámico de leases (2026-11-14)
+- AdminImageScanCoordinatorContract ahora ejecuta doPost con un coordinador simulado y verifica que las tres consultas seleccionadas usen sus nombres de operación, que el escáner y la migración propaguen el token de lease, que las acciones heredadas conserven sessionActivity y que ping no reserve una lease.
+- Resultado de la ejecución aislada: PASS. No se ejecutó Apps Script ni se modificaron datos externos.
+
+================================================================================
+AUD-2026-11-14-09 — GESTO NATIVO PWA INTERCEPTADO Y RECARGA MANUAL INTRODUCIDA
+Severidad: Alta (experiencia/actualización de cliente)
+Estado: Hallazgo confirmado en código; causa completa pendiente de reproducción Beta.
+
+Evidencia:
+- JS/Frontend/main.js: listener touchstart/touchend en .container captura el gesto cuando scrollTop es 0 y, con distancia >150 px, ejecuta auth.loadInitialData(true). El gesto se convierte en sincronización de catálogo y no en navegación/recarga nativa.
+- style.css: .container mantiene overflow-y:auto como scroll principal independiente.
+- index.html: existe #side-menu-refresh-link con texto «Recargar aplicación».
+- JS/Frontend/main.js: el listener del enlace llama registration.update() y window.location.reload().
+Impacto: el gesto nativo no tiene garantizado el control del scroll raíz; la sincronización parcial no fuerza descarga del documento ni asegura actualización del App Shell.
+Criterio de corrección: retirar el control manual y la interceptación; restaurar el comportamiento nativo, revisar scroll raíz y políticas SW/caché, y probar versiones nuevas en navegadores/PWA instaladas.
+
+AUD-2026-11-14-10 — MODELO DE DESTINATARIOS INBOX CONTRADICE JERARQUÍA SOLICITADA
+Severidad: Alta (autorización/comunicación)
+Estado: Hallazgo confirmado en código; cambio requerido.
+
+Evidencia:
+- JS/Frontend/ui.js: openInboxModal_ muestra «Consultar al desarrollador» a todo rol distinto de Desarrollador; openInboxNewConversationForm_ configura mode=consult para cualquier actor no desarrollador.
+- Services/InboxConversations.js: handleGetInboxRecipients filtra destinatarios para que cualquier actor no desarrollador solo vea usuarios Desarrollador; handleCreateInboxConversation rechaza como destinatario a cualquier rol distinto de Desarrollador para esos actores.
+- El usuario requiere Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; contacto al Desarrollador solo por ticket de problema.
+Impacto: el flujo actual no implementa la cadena de comunicación requerida y fuerza contacto directo ordinario al Desarrollador.
+Criterio de corrección: imponer matriz de rangos en backend y UI; crear canal de tickets para Desarrollador; añadir pruebas de autorización para cada rol y destinatario.
+
+AUD-2026-11-14-11 — FALTAN OPERACIONES MASIVAS DE BANDEJA
+Severidad: Media-Alta (funcionalidad Inbox)
+Estado: Hallazgo confirmado en UI/contratos inspeccionados.
+
+Evidencia:
+- index.html ofrece carpetas Recibidos/No leídos/Enviados/Archivados y navegación lista/detalle.
+- JS/Frontend/ui.js no presenta selección múltiple de conversaciones ni acciones masivas de marcar no leído y borrar; las acciones actuales se limitan a marcar leído al abrir y archivar/restaurar.
+Impacto: el Inbox no ofrece la barra de herramientas solicitada para administrar mensajes recibidos.
+Criterio de corrección: implementar selección individual/todos los visibles, marcado persistente no leído y borrado seguro por usuario, con autorización backend, confirmación y pruebas de regresión.
+================================================================================
+
+================================================================================
+AUD-2026-11-14-12 — CATÁLOGO ONLINE NO USA FEED INCREMENTAL Y NO DETECTA CAMBIOS EN VIVO
+Severidad: Alta (rendimiento y frescura de datos)
+Estado: Hallazgo confirmado en el flujo cliente; endpoint/feed incremental y mecanismo de novedades pendientes de inspección/implementación.
+
+Evidencia:
+- JS/Frontend/auth.js: loadInitialData intenta primero offline.getCatalog() y procesa un snapshot completo válido desde IndexedDB.
+- auth.js limita la omisión de una nueva descarga a CATALOG_REFRESH_TTL_MS=60000. Fuera de esa ventana llama fetchCatalogData() y exige una instantánea completa.
+- Cuando ya había caché, el resultado de red se entrega a performSilentSync(), por lo que existe reconciliación silenciosa de snapshots, pero la transferencia sigue siendo completa.
+- JS/Frontend/offline.js: saveCatalog reemplaza la instantánea completa; compareCatalogSnapshots puede detectar altas/modificaciones/bajas, pero no ofrece por sí mismo un cursor de cambios servidor ni detección activa en sesiones abiertas.
+Impacto: el inicio online puede descargar todo el catálogo; una novedad creada por otro usuario no necesariamente aparece mientras una sesión permanece abierta, hasta que se produce otra sincronización.
+Corrección requerida: feed autenticado incremental con revisión/cursor, bootstrap completo solo cuando sea necesario, detección adaptativa de novedades, coordinación entre pestañas, aplicación transaccional y reconciliación animada sin recarga.
+No confundir sincronización de datos con actualización de los recursos PWA/Service Worker.
+================================================================================
+
+
+[2026-11-14] GP-PWA-02 — Causa y corrección del bloqueo del gesto nativo
+- Evidencia: JS/Frontend/main.js interceptaba touchstart/touchend en .container y sustituía el gesto por auth.loadInitialData(true); además el menú ofrecía #side-menu-refresh-link, cuyo listener ejecutaba registration.update() y window.location.reload().
+- Evidencia CSS: style.css fijaba html/body con overflow:hidden y delegaba el desplazamiento a .container mediante overflow-y:auto, evitando que el documento raíz gestionara el overscroll.
+- Impacto: el navegador no podía aplicar consistentemente su comportamiento nativo de pull-to-refresh; la solución manual añadía una acción visible que el usuario no desea.
+- Corrección preparada: retirar interceptor, enlace y listener; restaurar desplazamiento del documento raíz. La prueba automatizada cubre el contrato estático. Validación real del gesto queda pendiente de Beta.
+
+
+[2026-11-14] GP-INBOX-04A — Restricción de destinatarios por jerarquía
+- Evidencia previa: Services/InboxConversations.js devolvía Desarrolladores como únicos destinatarios para todos los roles no Desarrollador y permitía crear conversaciones ordinarias dirigidas a Desarrollador.
+- Impacto: el modelo anterior no representaba la jerarquía solicitada y convertía Inbox en un canal directo de consulta al Desarrollador.
+- Corrección en preparación: matriz backend compartida para filtrar destinatarios y validar la creación; Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; Jefe → Supervisor/Técnico/Técnico exterior; Desarrollador → cualquier cuenta activa distinta del actor.
+- UI: se retira la acción «Consultar al desarrollador» y se reutiliza el control existente «Nuevo mensaje». Los reportes/tickets de problema quedan como canal separado para contactar al Desarrollador.
+- Pruebas ampliadas; ejecución pendiente. No se afirma aún que la tarea esté validada o publicada.
+
+
+[2026-11-14] GP-INBOX-04A — Resultado de validación aislada
+- InboxConversations.mjs ejecutado en harness aislado con datos simulados: 30/30 PASS; 45 adquisiciones de lock y 45 liberaciones.
+- InboxRoleContract.js ejecutado sobre las fuentes actuales: 17/17 PASS.
+- Escenarios cubiertos: destinatarios por rango, Técnico/Técnico exterior → Supervisor, Supervisor → Jefe, Jefe → rangos inferiores, bloqueo de acceso directo a Desarrollador, rechazo de pares/escalamiento, cuentas inactivas, idempotencia, lectura, archivo, auditoría, paginación y coordinación de mutaciones.
+- Limitación: no se ejecutó el proceso Node CLI completo ni se verificó UI en navegador Beta; no se declara CI PASS.
+
+
+[2026-11-14] GP-CAT-01A — Hallazgos de auditoría
+- Catalog Service: getCatalogData construye el snapshot completo desde Sheets. El intento de CacheService está comentado/deshabilitado; cada solicitud recorre Cortes, LogosMarca, Tutorial y Relay.
+- Feedback Service: getPysData lee y transforma la hoja PyS completa. El cliente pys-data.js mantiene caché localStorage de cinco minutos y no implementa polling.
+- Cliente de catálogo: auth.js lee IndexedDB primero, pero la actualización de red sigue usando snapshot completo; offline.js guarda mediante reemplazo completo. No se encontraron señales de sondeo activo ni coordinación multi-pestaña.
+- Writers identificados en WRITE/FEEDBACK/ADMIN; la lista detallada, incluida la clasificación de operaciones de mantenimiento, queda registrada en Tareas_Activas.md.
+- Riesgo de integridad: restoreDatabase intercambia hojas completas; una hoja de feed dentro del Spreadsheet debe preservarse durante la restauración para no retroceder el cursor. Se requiere evento reset posterior.
+- No se modificó código funcional ni se creó la hoja CatalogChanges en este hito; el diseño/feed permanece pendiente de implementación y pruebas.
+
+
+================================================================================
+2026-11-14 — CIERRE DE HALLAZGOS LOCALES Y VALIDACIONES DIFERIDAS
+
+AUD-2026-11-14-10 — GP-INBOX-04A
+Estado: CORREGIDO EN RAMA; VALIDACIÓN VISUAL BETA PENDIENTE.
+- Services/InboxConversations.js y JS/Frontend/ui.js implementan la matriz de destinatarios por rango y retiran el canal ordinario «Consultar al desarrollador».
+- Pruebas CI: InboxConversations 30/30, InboxRoleContract 17/17 e InboxUi 19/19 PASS.
+- No se afirma validación en navegador/dispositivo real.
+
+AUD-2026-11-14-11 — OPERACIONES MASIVAS INBOX
+Estado: DIFERIDO POR RESTRICCIÓN EXPRESA DEL USUARIO.
+- La selección múltiple y nuevas acciones requerirían controles visibles adicionales. El usuario indicó que no autoriza más botones ni paneles; no implementar hasta nueva instrucción.
+- Se mantienen las acciones y contratos existentes.
+
+AUD-2026-11-14-12 — CATÁLOGO ONLINE SIN FEED INCREMENTAL
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA MULTIUSUARIO PENDIENTE.
+- GP-CAT-01B: productores WRITE/FEEDBACK/ADMIN publican upsert/reset después de confirmar persistencia.
+- GP-CAT-01C: snapshot+cursor IndexedDB, delta Cortes y reset seguro en una transacción.
+- GP-CAT-01D: polling autenticado 45 s visible/online, backoff hasta 5 min, timeout de 8 s, coordinación multi-pestaña mediante lease/BroadcastChannel.
+- GP-CAT-01E: reconciliación silenciosa de tarjetas, modal activo y vistas de Tutoriales/Relay/Logos; PyS se refresca ante reset.
+- Sin cambios: no se llama fetchCatalogData ni se descarga snapshot completo. Cambios multi-entidad/colecciones auxiliares todavía usan reset y pueden activar snapshot completo.
+- CI Node.js 22: 98 suites / 1,463 pruebas / 0 fallos; Pages SUCCESS (HEAD 6af6d78e2c68d0175566626177ca41fe2496d2d5).
+
+AUD-2026-11-14-13 — ORDEN DE PUBLICACIÓN EN ESCRITURAS ANIDADAS
+Severidad: Alta (consistencia del snapshot durante mantenimiento).
+Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
+- Se detectó que una acción WRITE anidada bajo mantenimiento ADMIN podía publicar reset antes de que terminara la reorganización, permitiendo que un consumidor leyera un snapshot intermedio.
+- WRITE omite publicación cuando recibe token de mutación compartida; ADMIN publica el reset al cerrar la operación y su evento de auditoría.
+- CatalogChangeFeed verifica el diferimiento de la publicación anidada.
+
+AUD-2026-11-14-14 — CONSISTENCIA SNAPSHOT/CURSOR
+Severidad: Alta (pérdida o salto de cambios).
+Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
+- Snapshot y cursor se leen desde la misma transacción IndexedDB y se persisten en una sola transacción readwrite.
+- El cursor no se adelanta si falla el guardado del snapshot; errores de delta/reset mantienen snapshot anterior y activan recuperación completa.
+- CatalogSnapshotSync 25/25 y CatalogStartupIntegrity 18/18 PASS.
+
+GP-PWA-02 — ACTUALIZACIÓN EN SEGUNDO PLANO
+Estado: CORRECCIÓN LOCAL COMPLETADA; BETA PENDIENTE.
+- main.js registra Service Worker con updateViaCache='none' y comprueba actualizaciones al iniciar, recuperar foco/conexión, volver a primer plano y cada 5 minutos.
+- service-worker.js usa gpsepedia-cache-v28, conserva skipWaiting/clients.claim. No se fuerza reload ni se añaden controles visibles.
+- PWAStartupScenarios 15/15 y SessionStartupNavigation 16/16 PASS.
+- La recarga manual/pull-to-refresh y el ciclo PWA instalado requieren validación real en Beta.
+
+GP-DEV-01 / GP-ADMIN-01 / GP-ADMIN-02
+Estado: CORRECCIONES LOCALES PREPARADAS; BETA PENDIENTE.
+- La visibilidad del panel Developer usa contexto autenticado coherente; operaciones de inventario/escáner y mantenimiento de historial tienen coordinación/leases específicas y pruebas de contrato.
+- La reproducción con sesiones nuevas/restauradas, escáner concurrente e inicialización idempotente debe ejecutarse únicamente en una copia Beta aislada; no tocar producción.
+
+No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos.
+================================================================================
+
+
+AUD-2026-11-14-15 — CURSOR ANTIGUO TRAS SNAPSHOT DE RECUPERACIÓN
+Severidad: Alta (repetición de resets y riesgo de saltos si el cursor no corresponde al snapshot).
+Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
+- Se detectó que una descarga completa de fallback podía reemplazar el snapshot y dejar persistido el cursor anterior, no vinculado a la nueva instantánea.
+- `offline.saveCatalog()` ahora guarda el snapshot y anula el cursor en la misma transacción. Solo `saveCatalogWithCursor()` confirma un cursor conocido junto con su snapshot.
+- `CatalogSnapshotSync` prueba que un snapshot sin revisión invalida el cursor anterior; `CatalogStartupIntegrity` prueba el fallback de feed y la invalidación.
+
+
+AUD-2026-11-14-16 — SINCRONIZACIÓN INCREMENTAL DE PyS
+Severidad: Media (tráfico de red y frescura de la caché independiente).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: las mutaciones PyS publicaban reset global y el cliente dependía de getPysData completo para reconciliar la colección, aunque el feed compartido ya admitía la colección pys.
+- Corrección: las seis acciones FEEDBACK de mutación PyS publican upsert exacto tras confirmar la escritura y verificar ID/fila única bajo ScriptLock. El cliente aplica eventos sobre la caché PyS separada y el consumidor del catálogo principal ignora esa colección sin perder el cursor global.
+- Fallback: reset global, caché ausente/corrupta, IDs duplicados/ausentes, evento malformado o snapshot no verificable provocan recuperación completa; no se inventan IDs ni se elimina contenido.
+- Pruebas: CatalogChangeFeed 17/17, CatalogSnapshotSync 28/28, PysDataCache 15/15 PASS. CI Node.js 22 run 43657720605: 99 suites / 1,484 pruebas / 0 fallos.
+- Pendiente: Apps Script/Spreadsheet reales, concurrencia multiusuario y latencia en Beta aislada.
+
+
+AUD-2026-11-14-17 — AUSENCIA DE ESCRITOR DE REGISTROS RELAY
+Severidad: Baja (limita la publicación incremental por registro; no se identifica una mutación ordinaria que sincronizar).
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; VALIDACIÓN DE DATOS HEREDADOS BETA PENDIENTE.
+- Services/catalog.js lee Relay; WRITE y FEEDBACK solo leen su dominio para validar configuraciones de Cortes.
+- ADMIN no expone alta/edición de registros Relay. El mantenimiento de IDs admite únicamente freeze_formula conservando el ID actual válido y único; rechaza fill_missing para Relay.
+- No se encontró acción de frontend/API que escriba filas Relay. No se debe inventar un escritor ni asignar IDs históricos. Las operaciones ADMIN masivas continúan publicando reset.
+- Pendiente: inspeccionar encabezados, fórmulas, IDs y referencias en copia Beta de solo lectura antes de considerar una ruta de escritura.
+
+
+AUD-2026-11-14-18 — DESCARGA COMPLETA PyS POR EXPIRACIÓN DE TTL
+Severidad: Media (tráfico innecesario y latencia al abrir la sección PyS).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: aunque el feed ya entregaba deltas PyS, loadPysData podía volver a descargar toda la colección al vencer su TTL de cinco minutos, incluso cuando el cursor global ya había confirmado que no existían cambios.
+- Corrección: la caché PyS persiste la revisión global aplicada. El TTL por sí solo no fuerza una descarga cuando hay cursor válido y marca de datos existente; el feed actualiza la frescura sin descargar filas. Invalidación explícita, cursor desalineado, caché ausente y reset continúan usando snapshot completo.
+- Pruebas PysDataCache 18/18 PASS; CI Node.js 22 run 43658124484: 99 suites / 1,487 pruebas / 0 fallos; Pages run 43658124316 SUCCESS.
+- Pendiente: validar el comportamiento de varias sesiones/dispositivos y reconexión en entorno Beta.
+
+
+AUD-2026-11-14-19 — RESET GLOBAL INNECESARIO EN MUTACIONES WRITE DE UNA FILA
+Severidad: Media (reconstrucción completa del catálogo tras operaciones de un solo vehículo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: addOrUpdateCut, addSupplementaryInfo y addVinToVehicle modifican una fila de Cortes, pero el productor WRITE publicaba reset global tras cada éxito.
+- Corrección: se relee la fila por ID único y se publica upsert de Cortes con el contrato de catálogo: imágenes Drive normalizadas, URL YouTube normalizada, columnas dinámicas y slots ordenados por utilidad. La lectura/publicación se serializa bajo ScriptLock.
+- Si no se verifica una única fila o el snapshot/publicación falla, se conserva reset seguro. freezeCortesIds sigue siendo reset por alcance multi-fila; las acciones anidadas bajo ADMIN esperan la publicación del proceso padre.
+- El consumidor recalcula categoryCounts/sortedCategories al aplicar cambios de Cortes.
+- Pruebas: CatalogChangeFeed 18/18, CatalogSnapshotSync 29/29 PASS; CI Node.js 22 run 43658509818: 99 suites / 1,489 pruebas / 0 fallos.
+- Pendiente: pruebas de concurrencia real, read-back en Spreadsheet Beta y latencia multiusuario.
+
+
+AUD-2026-11-14-20 — PUBLICADOR recordLike CON DEPENDENCIA NO DEFINIDA
+Severidad: Alta (el contador de likes se confirmaba sin publicar el delta del catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: el bloque post-mutación de FEEDBACK llamaba mapRowToObject(row, COLS_CORTES), pero la función no estaba definida en feedback.js, Utilities.js, Coordinator.js ni SharedMutationClient.js. El catch solo registraba el error; no se publicaba reset alternativo.
+- Efecto: el like se guardaba, pero el catálogo de otras pestañas/dispositivos podía conservar el contador anterior hasta una reconciliación posterior.
+- Corrección: constructor propio de snapshot alineado con catalog.js, incluyendo VIN y activaTestigo dinámicos, normalización de imágenes/YouTube y orden de cortes. Publicación bajo ScriptLock; fallback reset si falla la verificación/publicación.
+- CI Node.js 22 run 43658821960: SUCCESS; 99 suites / 1,489 pruebas / 0 fallos.
+- Pendiente: comprobar en Beta aislada la reacción simultánea de varios usuarios y la actualización entre pestañas/dispositivos.
+
+
+AUD-2026-11-14-21 — RESET INNECESARIO EN SUGERENCIAS DE AÑO SIN CAMBIO DE CATÁLOGO
+Severidad: Media (reconstrucción completa tras votos que solo modifican Feedbacks).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: suggestYear publicaba reset tras cualquier respuesta exitosa, aunque la mayoría de respuestas solo registran votos en Feedbacks y no modifican la fila Cortes.
+- Corrección: publica upsert por ID de vehículo solo cuando el flujo confirma una ampliación nueva o recupera una aplicación pendiente ya aplicada (recovered false/true). Las demás respuestas no publican evento.
+- La fila se relee y se serializa bajo ScriptLock; ante error se usa reset seguro.
+- CatalogChangeFeed 19/19 PASS; CI Node.js 22 run 43658998921: 99 suites / 1,490 pruebas / 0 fallos.
+- Pendiente: validar umbral de tres usuarios y actualización multiusuario en Beta aislada.
+
+
+AUD-2026-11-14-22 — RESET GLOBAL PARA APROBACIÓN/RECHAZO DE VÍDEOS DE DESTINO ÚNICO
+Severidad: Media (reconstrucción completa tras modificar un único destino).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: approveVideo/rejectVideo publicaban reset global aun cuando la operación actualiza o limpia un único destino identificable de tipo Cortes, PyS o Tutoriales.
+- Corrección: las respuestas incluyen contentType, referenceId y targetType verificados. FEEDBACK valida su coincidencia y publica upsert con el constructor completo de la colección destino; Tutoriales incluye la miniatura modificada.
+- Si el destino no coincide, falta ID o falla la publicación, se conserva reset seguro. No se publican deltas para solicitudes de vídeo pendientes que todavía no modifican el catálogo.
+- CI Node.js 22 run 43659142503: SUCCESS; 99 suites / 1,491 pruebas / 0 fallos.
+- Pendiente: validar aprobación/rechazo concurrente y propagación entre usuarios/dispositivos en Beta aislada.
+
+
+AUD-2026-11-14-23 — RESET GLOBAL EN EDICIÓN IN-MODAL Y REEMPLAZO DE IMAGEN INDIVIDUAL
+Severidad: Media (reconstrucción completa tras editar una fila de Cortes).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: updateVehicleField y uploadAdminImage modifican una sola fila identificada de Cortes, pero ADMIN publicaba reset global tras cada éxito.
+- Corrección: se relee el registro por vehicleId y se publica upsert completo con contrato de catálogo, incluyendo VIN/activaTestigo dinámicos, imágenes Drive, YouTube y orden de slots. Lectura/publicación bajo ScriptLock.
+- Si la fila no es única, el ID falta o el snapshot no se puede verificar, se usa reset. Las respuestas warning y operaciones masivas mantienen reset; getAdminImageUploadStatus no publica porque es lectura.
+- CI Node.js 22 run 43659408356: 99 suites / 1,492 pruebas / 0 fallos.
+- Pendiente: pruebas reales de edición simultánea y reemplazo de imagen en Beta aislada.
+
+
+AUD-2026-11-14-24 — EVENTOS DE CATÁLOGO EN OPERACIONES DRIVE-ONLY
+Severidad: Baja (reset innecesario sin cambio del modelo de catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: deleteReplacedImage, restoreReplacedImageFromTrash y moveReplacedImage publicaban reset aunque solo cambiaban el estado/ubicación de archivos Drive y metadatos del ledger, sin modificar referencias del Spreadsheet.
+- Corrección: se retiran del grupo catalogWriters. recoverReplacedImage se separa: solo publica upsert si cambia la referencia activa de una fila Cortes, con ID y campo explícitos; si ya estaba activa no publica.
+- Las operaciones masivas conservan reset. No se modifican datos ni archivos productivos durante esta auditoría.
+- CI Node.js 22 run 43659554751: 99 suites / 1,493 pruebas / 0 fallos.
+
+
+AUD-2026-11-14-25 — RESET DE CATÁLOGO EN OPERACIONES ADMIN DRIVE/LEDGER-ONLY
+Severidad: Baja (reconciliación completa sin modificación del modelo de catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: organizePrimaryVehicleImages y reconcilePendingImageUploads estaban incluidas en catalogWriters aunque no modifican referencias de Cortes.
+- Evidencia: organizePrimaryVehicleImages solo mueve/renombra el mismo archivo por ID y carpetas; reconcilePendingImageUploads actualiza ImageUploadLedger y metadatos Drive, no celdas Cortes. restoreAllTrashedImages ya no publica eventos.
+- Corrección: se retiran las dos acciones de catalogWriters. normalizeImages y applyCortesImageReconciliation siguen con reset por modificar varias filas/referencias; restauración de base y migraciones también.
+- CI Node.js 22 run 43659723527: 99 suites / 1,494 pruebas / 0 fallos.
+
+
+AUD-2026-11-14-26 — RESET GLOBAL TRAS RECONCILIACIÓN CONFIRMADA DE IMÁGENES
+Severidad: Media (hasta 10 asignaciones confirmadas podían reconstruir el catálogo completo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: applyCortesImageReconciliation ya generaba un manifiesto con vehicleId por propuesta, pero el publicador ADMIN descartaba esos IDs y enviaba reset.
+- Corrección: devuelve IDs únicos aplicados; el publicador relee cada fila bajo un único ScriptLock, prepara todos los snapshots y publica un upsert por vehículo. Si cualquier preparación/publicación falla, emite reset de recuperación.
+- La acción sigue limitada a 10 propuestas por ejecución y verifica el read-back antes de informar éxito.
+- CI Node.js 22 run 43659982658: 99 suites / 1,495 pruebas / 0 fallos.
+- Pendiente: probar aplicación de varios campos del mismo vehículo y de varios vehículos en Beta aislada.
+
+
+AUD-2026-11-14-27 — RESET GLOBAL EN LOTES normalizeImages
+Severidad: Media (un lote podía modificar pocas filas y reconstruir todo el catálogo).
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA PENDIENTE.
+- Hallazgo: normalizeImages puede duplicar archivos compartidos y reescribir celdas de imagen de una o varias filas Cortes; los cambios de nombre/carpeta no modifican el modelo.
+- Corrección: captura vehicleId solo después de setValue; deduplica IDs y publica upsert por vehículo tras verificar snapshots. Si una fila modificada carece de ID, el resultado contiene warning/error o falla un snapshot, se usa reset. Los lotes sin cambios de celdas no publican eventos.
+- CI Node.js 22 run 43660231720: 99 suites / 1,496 pruebas / 0 fallos.
+- Pendiente: validar duplicación de referencias compartidas y sincronización entre pestañas/dispositivos en Beta.
+
+
+AUD-2026-11-14-28 — RESET INNECESARIO EN freezeCortesIds
+Severidad: Baja (reconciliación global después de una operación que no cambia datos del catálogo).
+Estado: CORREGIDO EN RAMA.
+- Hallazgo: freezeCortesIds publicaba reset después de convertir fórmulas de ID a valores estáticos.
+- Evidencia: buildCortesIdFreezePlan obtiene los valores actuales; después de setValues el handler relee cada celda y verifica que el valor sea idéntico al esperado y que no queden fórmulas. No cambia IDs ni otros campos del snapshot.
+- Corrección: se retira freezeCortesIds de catalogWriters. allocateVehicleId tampoco publica evento por ser solo reserva del contador.
+- Los restablecimientos de base, reorganización y migración/rollback de identificadores conservan reset por alcance multi-fila/colección.
+- CI Node.js 22 run 43660486963: 99 suites / 1,497 pruebas / 0 fallos; GitHub Pages SUCCESS.
+
+
+[2026-11-15] Hallazgo de consistencia estructural — rutas de servicios JavaScript
+
+- **Ubicación/evidencia:** `PLAN_REORGANIZACION_REPOSITORIO.md` (registro de ejecución, sección 12) declaraba que las fuentes Apps Script estaban en `JS/Services/`, pero el árbol de `GPSpedia2.2.5_work` en HEAD `05f4674067b36be995599f4b9b15ae2dad1decaa` conservaba diez `.js` en `Services/`. `JS/Tests/RunServiceTests.mjs`, suites `.mjs` y `.github/workflows/service-tests.yml` todavía consumían la ruta anterior; README y `Services/COORDINATOR_SETUP.md` presentaban rutas contradictorias.
+- **Impacto:** la estructura real no coincidía con la documentación ni con el objetivo de centralización; mover fuentes sin actualizar todos los consumidores habría roto el runner y las validaciones.
+- **Severidad:** baja (consistencia/mantenibilidad; no se observó cambio de comportamiento productivo).
+- **Corrección preparada:** trasladar las diez fuentes a `JS/Services/` sin alterar su contenido y actualizar las referencias activas identificadas. `service-worker.js` se mantiene en raíz y `Services/` conserva documentos/auxiliares no-JS.
+- **Cierre:** pendiente de publicación y aprobación de CI en el commit de esta iteración.
+
+
+[2026-11-15] Cierre del hallazgo de rutas de servicios JavaScript
+
+- **Corrección publicada:** commit `a878415f2ea0f1d0c3116e09e9a872292d0bb57e` y corrección de referencias residuales `34ae0fb64e28ec88da7da406b81e732842207158`.
+- **Evidencia:** diez fuentes ahora están en `JS/Services/`; no quedan archivos `.js` en `Services/`. Se actualizaron el runner, las suites Node.js, workflow y documentación activa.
+- **Validación:** GitHub Actions run `43664165206` SUCCESS; 99 suites / 1,497 pruebas / 0 fallos; sintaxis PASS. GitHub Pages run `43664164792` SUCCESS.
+- **Estado:** HALLAZGO CERRADO. Las validaciones de copia manual en Apps Script y de navegador/PWA real permanecen diferidas a Beta y no forman parte del cierre local.
+
+
+AUD-2026-11-15-29 — CURSORES DE PAGINACIÓN INESTABLES EN INBOX
+Severidad: Media (puede repetir u omitir conversaciones/mensajes al paginar durante actividad concurrente).
+Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
+- Evidencia: `JS/Services/InboxConversations.js` usaba offsets numéricos sobre colecciones ordenadas por actividad. Si llegaba un mensaje o cambiaba el orden entre páginas, el offset pasaba a apuntar a otra fila. En el historial, insertar un mensaje al final desplazaba el límite y podía repetir el mensaje más reciente de la página anterior. En la bandeja, archivar la fila que servía de ancla también desplazaba el offset.
+- Corrección: cursor de conversaciones basado en timestamp de orden e ID estable, independiente de que la fila ancla desaparezca o cambie su actividad; cursor de mensajes basado en el ID del mensaje más antiguo de la página. La UI deja de convertir cursores a Number.
+- Pruebas añadidas: nueva conversación/actividad y archivo del elemento de la página anterior; mensaje nuevo entre páginas; contrato UI de cursor opaco.
+- Riesgo residual: la ordenación y consistencia de datos externos requiere validación en Spreadsheet Beta; no se ha ejecutado contra recursos reales.
+
+
+[2026-11-15] Cierre AUD-2026-11-15-29 — cursores de paginación Inbox
+- **Corrección publicada:** `27239def189f8eee818b359f2c95fcfbfe313db5`.
+- **Validación local:** CI Node.js 22 run `43665177415` SUCCESS; 99 suites / 1,500 pruebas / 0 fallos; InboxConversations 32/32, InboxUi 20/20; sintaxis PASS.
+- **Pages:** run `43665176707` SUCCESS.
+- **Estado:** HALLAZGO CORREGIDO EN RAMA. La prueba de campo con Spreadsheet/Coordinator Beta reales queda diferida; no se simuló.
+
+
+AUD-2026-11-15-30 — REINTENTOS IDEMPOTENTES PUEDEN RETROCEDER EL ÚLTIMO MENSAJE
+Severidad: Media (el resumen y contador de una conversación podían dejar de representar el historial más reciente).
+Estado: CORRECCIÓN LOCAL PREPARADA; CI PENDIENTE.
+- Evidencia: `inboxUpdateConversationForMessage_` comparaba únicamente marcas de tiempo y usaba `>=`. Dos mensajes creados dentro del mismo milisegundo pueden compartir timestamp; al reintentar una creación/envío anterior, el helper podía sustituir el último mensaje por uno previo e incrementar de nuevo `messageCount`.
+- Corrección: comparar la posición de los mensajes de esa conversación en el orden de inserción serializado por ScriptLock; reconstruir `messageCount` desde las filas reales y no incrementar durante un replay. Si el ID guardado del último mensaje no existe, reconstruir el resumen desde el mensaje final persistido.
+- Prueba añadida: tres mensajes con timestamp igual y replay de la creación inicial y de una respuesta intermedia; el último mensaje, preview y contador deben permanecer correctos.
+- No se añaden controles ni endpoints, no se cambian roles y no se modifican servicios externos.
+
+
+[2026-11-15] Adenda AUD-2026-11-15-30 — el primer CI detectó un error de integración de la corrección: la llamada de handleSendInboxMessage recibió el identificador de variable messageRows, que no existe en ese handler (usa messages). node --check pasó, pero InboxConversations falló con ReferenceError. Se corrigió el argumento en la llamada; la regresión específica aún no se ejecutó en un CI aprobado. Estado permanece CORRECCIÓN EN VALIDACIÓN.
+
+
+[2026-11-15] Cierre AUD-2026-11-15-30 — reintentos idempotentes de Inbox
+- Corrección final publicada en `826725f9bf93aba171357950849ec4ed6d73fc81`; la llamada de envío pasa el arreglo `messages` correcto.
+- CI Node.js 22 run `43672378358`: SUCCESS; 99 suites / 1,501 pruebas / 0 fallos; `InboxConversations` 33/33 PASS; sintaxis PASS.
+- La regresión fuerza timestamps iguales en tres mensajes y repite dos operaciones anteriores; confirma que el último ID, preview y contador no retroceden ni se duplican.
+- Estado: HALLAZGO CORREGIDO EN RAMA; integración real con Spreadsheet/Coordinator queda diferida a Beta.
+
+
+[2026-11-15] Evidencia final AUD-2026-11-15-30 — GitHub Pages run `43672478619`: build, reporte y deploy SUCCESS para el commit `7fb110c6979ac0d0d16fd526734872eb41414da8`. La rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1` y no fue modificada. Hallazgo cerrado localmente; validación externa diferida a Beta.
+
+
+[2026-11-15] AUD-2026-11-15-31 — cobertura de caché/paginación Inbox desconectada del CI
+- Evidencia: JS/Tests/InboxCachePagination.js conservaba imports y rutas previas a la reorganización (../../inboxPageCache.js, /Services/feedback.js, /ui.js) y no aparecía en JS/Tests/RunServiceTests.mjs.
+- Impacto: cinco pruebas de caché, cuatro de paginación y cinco contratos UI no se ejecutaban en la regresión integral; la suite tampoco resolvía su raíz desde la ubicación del archivo.
+- Corrección: rutas actualizadas a JS/Frontend/ y JS/Services/, raíz calculada con import.meta.url, y suite agregada al grupo INTEGRATION.
+- Evidencia de cierre local: CI Node.js 22 run 43673118833, 100 suites / 1,515 pruebas / 0 fallos; AUG-116 14/14; Pages run 43673118102 SUCCESS.
+- Estado: CORREGIDO Y VALIDADO EN CI. Pruebas externas de Inbox permanecen reservadas a Beta.
+
+
+AUD-2026-11-15-32 — AISLAMIENTO INSUFICIENTE EN NUEVA PRUEBA DE PAGINACIÓN INBOX
+Severidad: Baja (la suite de pruebas no era reproducible por interferencia del límite de frecuencia del fixture).
+Estado: CORREGIDO Y VALIDADO EN CI.
+- Evidencia: la prueba que creaba dos conversaciones para validar el desempate por ID heredaba mensajes recientes de los casos anteriores y superaba el límite de creación de ocho mensajes por minuto.
+- Primer ajuste: se envejecieron filas del fixture, pero se incluyó accidentalmente la fila de encabezados; la validación de esquema detectó el error antes de continuar.
+- Corrección final: se preservó la cabecera y se ajustó únicamente el timestamp de filas de datos existentes antes de crear las dos conversaciones de prueba.
+- CI Node.js 22 run 43674775675: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run 43674775262 SUCCESS.
+- El hallazgo afecta exclusivamente al aislamiento del test; no se modificó el limitador ni la lógica de producción.
+
+
+[2026-11-15] Adenda AUD-2026-11-15-32 — cobertura del historial con timestamps iguales
+- La prueba de mensajes con timestamp idéntico ahora recorre todas las páginas con pageSize=1 y verifica orden más reciente/antiguo, cursor siguiente, ausencia de duplicados y terminación.
+- CI Node.js 22 run 43675102668: SUCCESS; 100 suites / 1,518 pruebas / 0 fallos; InboxConversations 36/36 PASS. Pages run 43675101929 SUCCESS.
+- Se amplió la cobertura de la prueba; no se modificó la lógica de producción.
+
+
+AUD-2026-11-15-33 — ORDEN TEMPORAL INCONSISTENTE EN HISTORIAL INBOX
+Severidad: Media (inconsistencia de presentación y lectura por divergencia entre orden cronológico y secuencia persistida).
+Estado: CORREGIDO Y VALIDADO EN CI.
+- Ubicación: `JS/Services/InboxConversations.js`, `handleGetInboxMessages`.
+- Evidencia: el historial ordenaba mensajes por `createdAt`, pero `handleMarkInboxRead`, el cálculo de no leídos y el resumen de conversación seguían el orden de inserción de las filas, serializado bajo ScriptLock. Con timestamps iguales o una reversa del reloj, la secuencia visible podía diferir de la secuencia que gobierna la lectura.
+- Corrección: mantener el orden de inserción persistido como secuencia canónica del historial. El cursor por ID permanece estable.
+- Regresión: tres mensajes con timestamps deliberadamente descendentes; paginación pageSize=1 verifica orden por inserción, cursores y lectura hasta el último mensaje.
+- CI Node.js 22 run 43676078785: SUCCESS; 100 suites / 1,519 pruebas / 0 fallos; InboxConversations 37/37 PASS. Pages run 43676078270 SUCCESS.
+- No hubo cambios de esquema, UI, permisos, endpoints ni datos productivos. Integración real diferida a Beta.
+
+
+AUD-2026-11-15-34 — COMENTARIOS Y CIERRE DE CASOS INBOX
+Severidad: Control funcional y de autorización.
+Estado: IMPLEMENTADO Y VALIDADO EN CI/PAGES; Beta pendiente.
+- Solo el creador de la conversación puede agregar comentarios mientras el caso esté abierto.
+- Supervisor, Jefe o Desarrollador participante puede cerrar. El backend verifica rol y participación, serializa el cambio, confirma estado closed y registra auditoría.
+- El cierre repetido es idempotente y los comentarios posteriores se rechazan en backend. Archivar/restaurar no cierra el caso.
+- CI Node.js 22 run 43678752084: SUCCESS; 100 suites / 1,523 pruebas / 0 fallos; InboxConversations 40/40; InboxUi 20/20. Pages run 43678751430 SUCCESS.
+- No se modificaron deployments, ScriptProperties ni datos productivos.
+
+AUD-2026-11-15-35 — VALIDACIÓN DE SESIÓN DUPLICADA EN FEEDBACK/INBOX
+Severidad: Baja (lectura y touch de sesión repetidos dentro de una misma petición).
+Estado: CORREGIDO EN FEEDBACK/INBOX; optimización global pendiente.
+- Hallazgo: el dispatcher FEEDBACK ya autenticaba y autorizaba al actor; los handlers Inbox volvían a ejecutar assertFeedbackSession, duplicando lectura de ActiveSessions/Users y actualización de LastActivityAt.
+- Corrección: el dispatcher adjunta el actor verificado en __feedbackActor después de expandir el payload; inboxConversationActor_ reutiliza ese objeto y conserva fallback para invocaciones internas aisladas. El campo aportado por el navegador se sobrescribe en el servidor.
+- CI Node.js 22 run 43678752084 SUCCESS; 100 suites / 1,523 pruebas / 0 fallos. Pages run 43678751430 SUCCESS.
+- Persisten lecturas completas de sesión en los helpers de otros servicios. No se retira la comprobación de token por solicitud ni la revocación inmediata; continuar la optimización sin introducir caché no invalidable.
+
+
+AUD-2026-11-15-36 — ELIMINACIÓN DE PREFLIGHT DUPLICADO EN AUTH
+Severidad: Rendimiento / validación redundante.
+Estado: IMPLEMENTADO Y VALIDADO.
+- El dispatcher AUTH ejecutaba `touchProtectedAuthRequestSession_` y volvía a leer ActiveSessions/Users antes de llamar a handlers que realizaban la misma comprobación dentro de su bloqueo.
+- Se eliminó el preflight. `handleAcceptTerms`, `handleChangePassword`, `handleResetUserPassword`, `handleResetUserSessions`, `handleClearSensitiveLogs`, `handleDeleteUser` y `handleUpdateUser` mantienen validación de sesión/identidad/vigencia y los controles de rol/estado que corresponden. `handleLogout` conserva la verificación del token y del usuario, sin exigir que la sesión siga activa para completar su limpieza.
+- Se añadió una regresión en `SessionActivityCoordination.mjs` para comprobar que el dispatcher no revalida y que los ocho handlers verifican la sesión dentro del bloqueo.
+- No se debilita la autorización backend ni se confía en el rol enviado por el cliente. CI pendiente; sin despliegues ni cambios en datos productivos.
+
+
+AUD-2026-11-15-38 — OPTIMIZACIÓN DE AUTORIZACIÓN EN WRITE
+Severidad: Rendimiento / controles de acceso.
+Estado: IMPLEMENTADO Y VALIDADO POR CI.
+- handleAddSupplementaryInfo dejó de autenticar antes de esperar el ScriptLock; la única autenticación se realiza en handleAddSupplementaryInfoLocked, ya dentro del bloqueo y antes de leer o modificar Cortes.
+- handleAllocateVehicleId dejó de autenticar antes del ScriptLock; su única comprobación se realiza dentro del bloqueo, antes de consultar/asignar el siguiente ID.
+- assertDeveloperForIdMaintenance ahora usa getAuthenticatedCollaborator(payload, ["desarrollador"]), que verifica token, sesión, perfil y rol real con la misma lectura acotada. Se eliminó el segundo escaneo completo de Users.
+- Las leases del Coordinator para estas acciones declaran lectura de USERS y ACTIVE_SESSIONS; las operaciones que cambian identidad/rol escriben esos recursos, evitando intercalación durante la operación protegida.
+- Pruebas actualizadas: información suplementaria 56/56; asignación de IDs/consumidores 10/10; minimización WRITE 13/13. CI integral 100 suites / 1,525 pruebas PASS; Pages SUCCESS.
+- No se acepta rol enviado por cliente, no se quitó la autorización backend y no hubo despliegue ni cambios en datos productivos.
+
+
+AUD-2026-11-15-38 — REUTILIZACIÓN DE FILA AUTENTICADA EN USERS
+Severidad: Rendimiento / lectura redundante.
+Estado: IMPLEMENTADO; CI PENDIENTE.
+- `getVerifiedSession` localiza la fila del usuario por ID único para validar estado y rol. `handleUpdateProfile` repetía la búsqueda por ID para escribir en esa misma fila.
+- Se devuelve el índice de fila desde el verificador backend y se reutiliza en el handler, dentro del mismo bloqueo. El navegador no puede fijar ese índice.
+- Se añadió una aserción de contrato en UsersAtomicMutations y se sincronizó el espejo de servicio.
+- No se debilitó la autenticación ni la autorización, y no se tocaron datos ni despliegues productivos.
+
+- CI Node.js 22 run `43684916807`: SUCCESS; 100 suites / 1,525 pruebas / 0 fallos. GitHub Pages run `43684916573`: SUCCESS.
+
+
+AUD-2026-11-15-39 — CONTEXTO CENTRAL DE SESIÓN E INVALIDACIÓN POR EPOCH
+Severidad: Seguridad / rendimiento / coordinación de autenticación.
+Estado: IMPLEMENTADO EN RAMA; VALIDACIÓN AUTOMATIZADA Y BETA PENDIENTES.
+- Se reemplazó la validación repetida contra Users/ActiveSessions en los servicios protegidos por un contexto central mantenido en ScriptProperties del Coordinator. El actor se entrega junto con la lease; el cliente no puede inyectar `__sharedSessionActor` ni `__feedbackActor`.
+- Se incorporó `syncUserSessions` para reconciliar sesiones vigentes, limpiar índices obsoletos y preservar las sesiones activas de otros dispositivos. `revokedBefore` y el epoch impiden reactivar tokens anteriores a una revocación global aunque queden filas residuales en ActiveSessions.
+- Logout revoca el token individual. Cambio de rol, cambio/restablecimiento de contraseña, eliminación y reset global revocan todas las sesiones. Las operaciones protegidas reservan el recurso lógico SESSION_CONTEXTS; las operaciones de revocación lo reservan en escritura para impedir intercalación.
+- USERS, WRITE, ADMIN, FEEDBACK y UTILITIES reutilizan el actor central y dejan de reservar/escribir ActiveSessions en cada acción. AUTH conserva la sincronización de actividad en login, restauración y operaciones sensibles.
+- Se agregó cobertura para sincronización, tokens sin userId, revocación, actor confiable, sanitización y concurrencia en SharedMutationCoordinator y SessionActivityCoordination. El espejo JS/Tests/Auth.js se sincronizó.
+- Se actualizó Services/COORDINATOR_SETUP.md y README.md. El código no se ha desplegado y no se han tocado datos productivos.
+- Node.js/CLI y CI integral no se ejecutaron/verificaron en esta sesión. No afirmar PASS hasta ejecutar la suite completa y revisar GitHub Actions. La integración Beta debe comprobar login, múltiples dispositivos, logout individual, revocación global, cambio de rol, expiración y recuperación de sesiones.
+
+AUD-2026-11-15-40 — INCOMPATIBILIDAD DE TIPO EN HMAC-SHA256 DE PBKDF2
+Severidad: Alta / autenticación — Estado: CORREGIDO Y VALIDADO LOCALMENTE; RUNTIME APPS SCRIPT PENDIENTE DE BETA.
+- Evidencia: AUTH y USERS construían el bloque PBKDF2 como arreglo JavaScript number[] y lo enviaban a Utilities.computeHmacSha256Signature. El runtime reportó que los parámetros (number[], String, Utilities.Charset) no coincidían con la firma del método. El mismo problema podía repetirse con los bloques HMAC intermedios devueltos como arreglos.
+- Impacto: la creación o verificación de hashes PBKDF2 podía fallar en ejecución en Apps Script, afectando el inicio de sesión y la creación de usuarios cuando el flujo necesitaba calcular/verificar el hash.
+- Corrección: implementación de SHA-256 y HMAC-SHA256 sobre bytes en JS/Services/Auth.js y JS/Services/users.js; la contraseña se convierte a bytes UTF-8 y el salt/contador/bloques intermedios permanecen binarios. No se convierte el mensaje a texto ni se cambia PBKDF2.
+- Se preservaron 12,000 iteraciones, salt aleatorio, formato pbkdf2-sha256$ y flujo de login. Se sincronizaron los espejos de prueba y se añadió una comprobación estricta del tipo en PasswordHashMigration.mjs.
+- Validación: CI Node.js 22 run 43763589080 SUCCESS; 102 suites / 1,558 pruebas / 0 fallos; PasswordHashMigration 18/18 PASS, incluido vector PBKDF2 de Node.js y verificación cruzada AUTH/USERS.
+- La primera ejecución CI detectó un espejo AUTH desactualizado; se sincronizó y la repetición integral aprobó. No se desplegó Apps Script ni se tocaron credenciales/datos reales.
+- Pendiente Beta: ejecutar login/creación de usuario contra deployment Apps Script autorizado y medir latencia real; no inferir esos resultados de CI local.
+
+
+AUD-2026-11-15-41 — FALLA DE AUTORIZACIÓN DEL COORDINADOR DESDE FEEDBACK
+Severidad: Media / sincronización incremental — Estado: DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN REMOTA PENDIENTE DE BETA.
+- Evidencia: getCatalogChanges → getSharedCatalogChanges_ → SharedMutationClient.send_; Coordinator.js/authenticate_ rechaza el servicio o secreto con «Servicio no autorizado para el coordinador compartido».
+- FEEDBACK envía service=FEEDBACK y GPSpedia_COORDINATOR_SECRET; el coordinador compara con GPSpedia_COORDINATOR_SECRET_FEEDBACK. coordinatorConfigured solo valida presencia/formato local, no igualdad remota.
+- Impacto: no se obtiene cursor/delta inicial. El frontend captura el fallo y solicita snapshot completo; puede cargar catálogo sin sincronización incremental.
+- No se modificaron endpoints, secretos, deployments ni propiedades. Acción Beta: cotejar URL/secret FEEDBACK y deployment del mismo entorno sin exponer valores.
+
+AUD-2026-11-15-42 — TIMEOUT/REINTENTOS DE INDEXEDDB EN CACHÉ DE MINIATURAS
+Severidad: Baja / almacenamiento local opcional — Estado: CORREGIDO LOCALMENTE; CI PENDIENTE.
+- Evidencia: cada compresión invoca purgeExpiredThumbnailEntries; performOp registraba como error de base principal el fallo del almacén opcional thumbnails. Muchas miniaturas en paralelo repetían la misma apertura fallida.
+- Corrección: backoff compartido de 15 s tras error/bloqueo; limpieza opcional silenciosa; compresión omitida durante backoff; getThumbnail devuelve null cuando IndexedDB no está disponible. La imagen remota sigue disponible. Sin cambios de esquema ni borrado de datos.
+
+
+ADENDA AUD-2026-11-15-42 — VALIDACIÓN DE CORRECCIÓN INDEXEDDB
+- CI Node.js 22 run 43765191870: SUCCESS; 103 suites / 1,604 pruebas / 0 fallos. IndexedDBTransactions 45/45 PASS y SessionStartupNavigation 17/17 PASS; sintaxis PASS.
+- La prueba integrada detectó que la promesa dbPromise se limpiaba también al abrir correctamente la base. Se corrigió para conservar la conexión hasta versionchange y evitar aperturas repetidas. El timeout pasó de 5 a 10 segundos y el backoff de 15 segundos se activa tras error/bloqueo.
+- La suite IndexedDB fue integrada al runner. Se corrigieron fallos iniciales de su harness y se repitió CI hasta resultado satisfactorio.
+- Estado: COMPLETADA localmente con validación CI. No se cambió el esquema ni se borraron datos.
+
+
+================================================================================
+2026-11-15 — HALLAZGO: FALLO DE PERSISTENCIA PODÍA INVALIDAR CATÁLOGO EN MEMORIA
+- Ubicación: JS/Frontend/auth.js, loadInitialData(), persistencia final de snapshot/cursor.
+- Evidencia: la rama de catálogo inicial procesaba la instantánea remota en memoria, pero un rechazo de offline.saveCatalog()/saveCatalogWithCursor() se propagaba al catch general. Como catalogLoaded aún era false, el fallback local podía fallar por la misma indisponibilidad de IndexedDB y terminar vaciando catalogData.
+- Impacto: un fallo de almacenamiento local impedía utilizar datos válidos ya recibidos por red.
+- Severidad: media; afecta disponibilidad del catálogo cuando IndexedDB no abre, sin evidencia de corrupción o pérdida de datos remotos.
+- Corrección: persistencia best-effort; conservar la instantánea válida en memoria y registrar el fallo de caché sin convertirlo en fallo de carga remota.
+- Regresión: CatalogStartupIntegrity.mjs simula timeout de persistencia y comprueba conservación de datos y estado ready.
+- Límite: esta corrección no repara la causa raíz del timeout de apertura IndexedDB ni la autorización del Coordinator; ambos requieren diagnóstico Beta separado.
+================================================================================
+
+
+================================================================================
+2026-11-15 — ADENDA DE HALLAZGOS REPORTADOS EN PRUEBAS BETA (GP-BETA-01..09)
+Fuente: observaciones del usuario durante pruebas reales en navegador Beta y trazas de consola aportadas en esta conversación.
+
+- Inbox: no se visualizan mensajes; el frontend solicita FEEDBACK y el servicio depende de lease compartida/actor central. La consola anterior ya mostró «Servicio no autorizado para el coordinador compartido» en FEEDBACK. Hipótesis prioritaria: configuración de FEEDBACK/Coordinator en el deployment Beta; debe confirmarse cotejando URL y secreto del servicio, sin exponerlos. No atribuir aún todo el fallo de Inbox a UI.
+- Modal de detalle: demora para habilitar edición. Pendiente medir las llamadas de apertura/guardado, identificar esperas de servicio y validar si hay solicitudes redundantes.
+- Logs: no se pueden borrar. FEEDBACK declara clearActivityLogs para Desarrollador; AUTH clearSensitiveLogs también requiere su política. Confirmar rol usado y respuesta del endpoint antes de modificar permisos.
+- Auditoría de carpeta: el handler de auditoría exige Desarrollador y mantiene propietario del cursor por usuario; la interfaz debe alinearse con el rol autorizado sin abrir operaciones destructivas.
+- Imágenes históricas: openReplacedImagesModal actualmente limita la apertura al rol Desarrollador. El backend ADMIN también usa assertDeveloperSession para la lectura del inventario. Requiere separar lectura de historial de mutaciones, sujeto a matriz RBAC.
+- Autorización: Coordinator valida token/estado/epoch desde SESSION_CONTEXTS al adquirir lease y entrega actor confiable. FEEDBACK/ADMIN/WRITE consumen ese actor; hay que evitar duplicación/consultas de Users y ActiveSessions, pero no confiar en rol enviado por el navegador ni desactivar revocación.
+- Catálogo: loadInitialData marca status loading antes de intentar leer IndexedDB; eso puede producir parpadeo aunque la caché local termine siendo válida. Corrección local prevista: diferir el estado visible de carga hasta comprobar que no hay snapshot utilizable y mantener los datos actuales durante sincronización silenciosa.
+- IndexedDB: los timeouts de apertura hacen fallar catálogo, historial, vistos y miniaturas. La causa exacta en navegador Beta no se puede inferir de los logs actuales; se necesita medir eventos open/blocked/error, estado de otras pestañas y disponibilidad de indexedDB.
+- Coordinator: rechazo FEEDBACK es dependencia de configuración remota, no debe “corregirse” quitando autenticación compartida.
+
+================================================================================
+
+
+================================================================================
+2026-11-15 — ADENDA DE IMPLEMENTACIÓN GP-BETA-01/02/06/07/08
+- auth.js: el estado loading ya no se activa antes de comprobar la caché. Si existe snapshot completo, el catálogo se marca ready y continúa el delta silencioso. Si el primer intento de lectura vence por el timeout local, no se encadena otra apertura IndexedDB inmediata sobre la misma promesa.
+- ui.js: la lista Inbox no se reemplaza por un placeholder durante refresh. Los mensajes recientes se conservan en una caché de memoria por conversación, aislada por sesión, TTL 60 s y máximo 40 conversaciones; se limpia al cambiar de sesión. La lectura remota sigue ejecutándose para refrescar.
+- ui.js: la activación de edición ya no espera a consultar las ocho claves de operaciones pendientes de imagen en IndexedDB. La lectura continúa en segundo plano; el guard de convertImageToEditable mantiene bloqueado el reemplazo hasta confirmar todas las claves.
+- ui.js: dropdownOptions se precarga al abrir el modal y las llamadas concurrentes comparten una promesa.
+- admin.js: getDropdownData pasa a ADMIN_MODAL_EDIT_ACTIONS, por lo que Desarrollador/Jefe/Supervisor pueden consultar opciones de edición. No concede permisos adicionales de escritura.
+- CI run 43768407672: SUCCESS; 103 suites / 1,610 pruebas / 0 fallos. CatalogStartupIntegrity 20/20, InboxUi 24/24, VehicleModalRolePolicy 12/12.
+- La primera ejecución posterior a mover el estado loading falló solo porque SessionStartupNavigation esperaba el código anterior; se actualizó la expectativa para exigir que el estado loading se establezca después de consultar la caché. La siguiente ejecución integral aprobó.
+- Pendientes no resueltos: causa raíz del timeout IndexedDB en navegador Beta; autenticación FEEDBACK/Coordinator; permisos efectivos para borrado de logs, auditoría Drive e imágenes históricas según el rol concreto utilizado en Beta. No se cambió la matriz destructiva sin confirmar el rol requerido.
+================================================================================
+
+
+================================================================================
+2026-11-15 — ADENDA: INDEXEDDB NO DISPONIBLE, RESPALDO LOCAL EN CACHESTORAGE
+- Hallazgo: el timeout de apertura IndexedDB podía impedir leer la caché y forzar una descarga completa del catálogo en cada arranque. La corrección previa no resolvía la disponibilidad de la caché cuando el almacén principal no abría.
+- Corrección: offline.js mantiene una segunda copia del snapshot público y cursor en CacheStorage, independiente de IndexedDB. auth.js consulta ambas fuentes y utiliza cualquier snapshot completo válido; el cursor permite seguir usando deltas.
+- La instantánea se presenta en memoria y el estado ready se establece antes de esperar las escrituras locales. IndexedDB y CacheStorage se actualizan en paralelo; un fallo de una no invalida el catálogo visible.
+- Alcance de la copia: solo catálogo público (Cortes, Tutoriales, Relay, Logos); no contiene tokens, identidad de sesión, historial, vistos, datos administrativos ni operaciones pendientes.
+- Regresión: fallback cuando IndexedDB falla, recuperación de cursor, persistencia alternativa y ready antes de completar escritura local.
+- CI Node.js 22 run 43768956946: SUCCESS; 103 suites / 1,616 pruebas / 0 fallos; CatalogStartupIntegrity 23/23; IndexedDBTransactions 45/45.
+- Riesgo residual: la causa exacta del timeout IndexedDB en Beta sigue sin identificar; CacheStorage reduce el impacto y mantiene datos locales, pero no sustituye la investigación de navegador.
+================================================================================
+================================================================================
+2026-11-15 — ADENDA: CAUSAS DE FEED, SESIÓN, INDEXEDDB Y SERVICIO HEREDADO
+HEAD validado: e7958f57af9d1a92f85ba8bdd164c65157059561
+CI Node.js 22: 105 suites / 1,645 pruebas / 0 fallos. Pages build/deploy: SUCCESS.
+
+1. FEED INCREMENTAL — severidad P1
+- Evidencia: JS/Services/SharedMutationClient.js consultaba getCatalogChanges mediante el POST interno FEEDBACK; JS/Services/feedback.js volvía a exigir actor/lease para una lectura del journal público; JS/Services/Coordinator.js restringía el feed al origen FEEDBACK.
+- Impacto: un desacuerdo de secretos/deployment FEEDBACK/Coordinator podía rechazar deltas aunque el catálogo fuera público y el usuario ya hubiese iniciado sesión.
+- Corrección local: endpoint GET público con cursor/límite, separado del POST autenticado. No expone credenciales y solo devuelve eventos del journal público. FEEDBACK privado y mutaciones siguen protegidos.
+- Validación: regresiones CatalogChangeFeed y SessionActivityCoordination incluidas en CI aprobado. Lectura real del deployment Beta pendiente.
+
+2. RESTAURACIÓN DE SESIÓN — severidad P1
+- Evidencia: JS/Frontend/auth.js, checkSession(), hacía una segunda llamada de validación AUTH después de recuperar una sesión ya autenticada y persistida.
+- Impacto: viajes de red repetidos, demora de inicio y cierre falso de interfaz cuando AUTH no respondía temporalmente.
+- Corrección local: restaurar el perfil y rol de la sesión verificados en login, comprobando formato/rol permitido sin repetir el viaje AUTH. Las acciones protegidas siguen utilizando el actor confiable de Coordinator; no se acepta el rol del navegador.
+- Alcance pendiente: auditar todos los servicios para confirmar que no se consulten Users/ActiveSessions innecesariamente por acción y preservar epoch, expiración y revocación.
+
+3. INDEXEDDB OPCIONAL — severidad P1
+- Evidencia: JS/Frontend/offline.js, initDB() y operaciones de catálogo, historial, vistos y miniaturas. indexedDB.open puede fallar o quedar bloqueado/expirado; las operaciones de persistencia opcional generaban advertencias/error visibles.
+- Impacto: ruido en consola y riesgo de que una caché no disponible afecte módulos que pueden funcionar con memoria/CacheStorage.
+- Corrección local: clasificar fallo de apertura como IDB_UNAVAILABLE, hacer silenciosas y recuperables las operaciones opcionales y devolver estado explícito de caché no guardada. Fallos genuinos de commit, abort y cuota no se ocultan.
+- Validación: IndexedDBTransactions y regresiones de arranque incluidas en CI aprobado.
+- Riesgo residual: CI no puede determinar por qué el navegador Beta bloquea/expira su apertura. Se requiere diagnóstico del navegador real. No borrar la base ni el almacenamiento del sitio.
+
+4. SERVICIO LEGACY — severidad P2
+- Evidencia: HTML/users.html enviaba logs a un SCRIPT_URL externo asociado a logFrontend; el servicio y dispatcher no tenían fuente operativa verificable en este repositorio.
+- Impacto: solicitudes hacia un deployment heredado fuera de control de versión y error remoto que no podía auditarse localmente.
+- Corrección local: retirar LEGACY, logFrontend, SCRIPT_URL y remoteLog; mantener errores de la página en consola local.
+- Validación: contratos de rutas/salud y CI aprobados.
+
+5. TRÁFICO DEL PANEL — severidad informativa
+- Evidencia: JS/Frontend/serviceMetrics.js mantiene eventos en memoria de la sesión; renderServiceTrafficChart() usa getServiceMetricsSnapshot() local y la etiqueta aclara que son solicitudes iniciadas en este navegador.
+- Impacto: no se puede interpretar como telemetría agregada de toda la plataforma.
+- Acción: conservar la etiqueta y no presentarlo como tráfico global. Una métrica global necesitará agregación desde servidor; no añadir esa infraestructura fuera del backlog actual.
+
+6. PERMISOS DE ADMINISTRACIÓN — hallazgos abiertos P0
+- Requisitos afectados: borrado de logs, ejecución de auditoría de carpeta Cortes y consulta de imágenes históricas.
+- Estado: todavía no corregidos en esta iteración. Se debe trazar cada ruta frontend → dispatcher → servicio → Coordinator, documentar el permiso real y separar consulta/lectura de acciones destructivas.
+- No conceder roles por inferencia ni retirar guardas destructivas sin definir la matriz funcional del requisito.
+

@@ -1,0 +1,51 @@
+# COMPARATIVA TÉCNICA Y FUNCIONAL: GPSpedia 2.0 vs GPSpedia 1.5 (Olds)
+
+Este documento detalla las mejoras, nuevas funcionalidades y cambios estructurales que diferencian la versión 2.0 de la versión 1.5 heredada.
+
+## 1. Arquitectura y Estabilidad
+- **GPSpedia 1.5:** Estructura monolítica con lógica mezclada entre UI y servicios. Gestión de API dispersa.
+- **GPSpedia 2.0:** Arquitectura modular basada en microservicios (Auth, Catalog, Feedback, Users, Write, Utilities). Ruteo centralizado en `api-config.js` con manejo robusto de errores y tokens de sesión.
+
+## 2. Gestión de Usuarios y Seguridad (RBAC)
+- **GPSpedia 1.5:** Control de acceso básico o inexistente.
+- **GPSpedia 2.0:** Implementación completa de Role-Based Access Control (RBAC).
+  - Jerarquía de roles: Jefe (Gefe) > Supervisor > Tecnico.
+  - Los usuarios pueden editar su propio nombre y contraseña.
+  - Bloqueo estricto de cambio de username.
+  - Filtrado de visibilidad de usuarios según el rol del solicitante.
+  - Sistema Anti-Debugging global para proteger el código fuente y prevenir inspecciones no autorizadas.
+
+## 3. Experiencia de Usuario (UI/UX)
+- **GPSpedia 1.5:** Layout rígido, navegación lineal simple.
+- **GPSpedia 2.0:**
+  - **Navegación Inteligente:** Flujo jerárquico guiado por Marca -> Modelo -> Versión.
+  - **Buscador con Iconos:** Búsqueda en tiempo real con identificación visual de fabricantes.
+  - **Modo Oscuro Nativo:** Soporte completo con persistencia y cambio dinámico de branding.
+  - **Sección FAQ:** Acordeón interactivo para resolución de dudas comunes.
+  - **Sección Sobre Nosotros:** Información corporativa con terminología técnica estandarizada.
+
+## 4. Catálogo y Datos Técnicos
+- **GPSpedia 1.5:** Carga lenta de imágenes, datos técnicos básicos.
+- **GPSpedia 2.0:**
+  - **Optimización de Imágenes:** Uso de resoluciones adaptativas (300px, 800px, 1600px) y Lazy Load. El Lightbox carga alta resolución solo on-demand.
+  - **Información de Relay:** Vinculación directa con diagramas de configuración de relay.
+  - **Gestión de Versiones:** Diferenciación clara entre versiones de equipamiento y años de generación.
+  - **Sistema Anti-duplicado:** Asistente inteligente al agregar cortes para evitar redundancia de datos.
+
+## 5. Feedback y Administración
+- **GPSpedia 1.5:** Sistema de likes genérico.
+- **GPSpedia 2.0:**
+  - **Sistema de Inbox:** Bandeja de entrada centralizada para reportes de problemas y sugerencias.
+  - **Likes y Reportes por Corte:** Feedback granular a nivel de punto de instalación.
+  - **Dashboard de Actividad:** Visualización en tiempo real de logs para supervisión y auditoría.
+
+## 6. PWA y Rendimiento
+- **GPSpedia 1.5:** Soporte PWA básico.
+- **GPSpedia 2.0:**
+  - Service Worker optimizado con estrategia Network-first y fallback a caché.
+  - Manifest actualizado para mejor integración en Android, iOS y HarmonyOS.
+  - Ajuste dinámico de UI para teclados virtuales en móviles (VisualViewport API).
+  - Bloqueo de zoom manual para mantener la integridad del diseño PWA (excepto en Lightbox).
+
+---
+*Documento generado por Jules - 05/02/2026*

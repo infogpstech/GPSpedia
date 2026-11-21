@@ -1,0 +1,34 @@
+name: GPSpedia deployed service health (read-only)
+on:
+  push:
+    branches:
+      - GPSpedia2.2.5_work
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gpsepedia-deployed-health
+  cancel-in-progress: false
+jobs:
+  deployed-service-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      TARGET_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: GPSpedia2.2.5_work
+          fetch-depth: 1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch exact source from this workflow run
+        run: |
+          git fetch --no-tags --depth=1 origin "$TARGET_COMMIT"
+          git cat-file -e "$TARGET_COMMIT^{commit}"
+          test "$(git show "$TARGET_COMMIT:JS/Frontend/api-config.js" | grep -c 'GPSpedia-')" -eq 7
+      - name: Probe all seven deployed services (GET only)
+        run: node JS/Tests/RemoteServiceHealth.mjs

@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+const start=source.indexOf("function handleAddProblem(source) {"),end=source.indexOf("\nfunction withPysMutationLease_",start);
+const handler=source.slice(start,end);
+assert.ok(!handler.includes("LockService.getScriptLock()")&&!handler.includes("acquireFeedbackScriptLock_(")&&!handler.includes("releaseLockForPostWork"));
+const reserve=handler.indexOf("writePysOperation_(opsSheet, 0"),append=handler.indexOf("sheet.appendRow(expected)");
+const metadata=handler.indexOf('file.setDescription(["GPSpedia PyS — LINKED"'),activity=handler.indexOf('logUserActivity(userId, userName, "add_problem"');
+assert.ok(reserve>=0&&append>reserve&&metadata>append&&activity>metadata);
+assert.ok(!handler.includes('status: "LINKED"')&&!handler.includes('status: "RECOVERY_REQUIRED"'));
+assert.ok(handler.includes("losingFile.setTrashed(true)"));
+assert.ok(source.includes("if (rowNumber) throw new Error"));
+console.log("FeedbackPysPostCommitOutsideLock: 4/4 PASS");

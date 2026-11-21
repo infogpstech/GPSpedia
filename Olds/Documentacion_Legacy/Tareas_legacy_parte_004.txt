@@ -1,0 +1,313 @@
+Impacto: en teléfonos estrechos el formulario conserva dos columnas y puede comprimir campos; la tabla requiere desplazamiento horizontal y el modal no dispone de una regla específica para ajustar su ancho/espaciado. La severidad visual real debe confirmarse en dispositivos.
+Criterios:
+1. Adaptar .form-grid a una columna en anchos reducidos y revisar campos, etiquetas, imágenes y botones.
+2. Definir el comportamiento del modal de usuarios en móviles y mantener el acceso a todos sus controles.
+3. Mantener la tabla desplazable sin recortar acciones ni provocar scroll horizontal de toda la página.
+4. Probar 320, 360, 390, 600, 768, 1024 y 1440 px, además de orientación horizontal.
+Tarea derivada: AUG-105.
+
+5. OBSERVACIONES Y NO DUPLICACIÓN
+- El footer dinámico se mantiene estructuralmente según el commit 28f4ace5; no se crea un hallazgo por el mero uso de position:fixed.
+- El cambio de logos por tema y la persistencia en localStorage están implementados; el hallazgo se limita a reglas/tokens que no coinciden con el mecanismo de tema.
+- El encabezado del modal de detalle sí aplica flex-wrap en ui.js; no se registra como defecto.
+- Los estilos de botones fragmentados ya están registrados en H-AUD-015-003/AUG-100. AUG-103 aborda tokens de color/tema, no duplica el sistema de botones.
+- No se afirma incumplimiento WCAG medido: no se ejecutaron cálculos completos ni herramientas de contraste en navegador.
+
+6. MATRIZ DE VALIDACIÓN — VAL-25
+Estado: PLANIFICADA; no ejecutada.
+1. Cambiar tema claro/oscuro en index.html y verificar persistencia tras recarga.
+2. Verificar sincronía de logos en encabezado, splash, login, términos y modales.
+3. Verificar banner de validación, texto, botones y bordes en ambos temas; comprobar selector y tokens.
+4. Revisar visualmente todos los componentes con colores fijos en index.html, users.html y add_cortes.html.
+5. Medir contraste WCAG para texto normal, texto pequeño, enlaces, controles, iconos y estados en ambos temas.
+6. Probar perfil, tabla y modales de users.html en escritorio y móvil.
+7. Probar formulario add_cortes.html en 320/360/390/600/768/1024/1440 px, vertical y horizontal.
+8. Confirmar zoom del navegador al 200 % y 400 %, reflujo y acceso a todos los controles.
+9. Verificar tabla horizontal sin desbordar la página y sin ocultar acciones.
+10. Probar footer con scroll al final/mitad, búsqueda activa, login, términos, modales, contenido vacío y PWA standalone.
+11. Verificar que el footer no tape el último control ni quede visible antes de alcanzar el sentinel.
+12. Revisar teclado, foco visible, objetivos táctiles y movimiento reducido.
+No se ejecutaron casos de VAL-25.
+
+7. LÍMITES
+E1 estática. No se ejecutaron navegador, capturas, mediciones de contraste, zoom real, lectores de pantalla, Android/iOS, PWA standalone, rotación, resoluciones reales ni pruebas E2/E3. No se verificó deployment. No se modificaron código, HTML, CSS, assets, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 COMPLETADA; H-AUD-016-001 a H-AUD-016-004 abiertos; VAL-25 pendiente.
+================================================================================
+
+================================================================================
+REGISTRO DE TAREAS DERIVADAS — AUD-T-016
+- AUG-102: alinear selector del tema oscuro y tokens del banner.
+- AUG-103: consolidar tokens de color/tema entre páginas.
+- AUG-104: permitir zoom del navegador en add_cortes.html.
+- AUG-105: completar responsive de formulario y gestión de usuarios.
+
+## VAL-25 — Diseño visual, temas, contraste, footer y responsive
+- Alcance: index.html, style.css, main.js, ui.js, users.html y add_cortes.html.
+- Casos: persistencia de tema; logos; banner; colores fijos; contraste WCAG; zoom 200/400 %; layout de formularios; modal/tabla de usuarios; footer/sentinel; búsqueda/login/términos; PWA; teclado/foco/targets táctiles.
+- Viewports: 320, 360, 390, 600, 768, 1024 y 1440 px; vertical y horizontal.
+- Estado: PLANIFICADA; no ejecutada.
+
+================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-017
+Fecha: 2026-11-08 | Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 planificada.
+- Tarea 17 permanece históricamente COMPLETADA; esta auditoría estática no certifica validación funcional.
+- Controles confirmados: banner, elegibilidad, validación cliente, ScriptLock, deduplicación técnica, umbral de tres actores y actualización del rango con intento de sincronización de imagen.
+- Hallazgos: colisión backend demasiado amplia; cache local antes de confirmación; cache no individual por usuario; identidad anónima regenerable; banner acoplado a onload; esquema Feedbacks incompleto; registro AUD-T-016 ausente de Auditoría.txt.
+- Nuevas tareas: AUG-106 a AUG-112. VAL-26 planificada, no ejecutada.
+- Solo auditoría estática; no se modificaron archivos de aplicación ni datos productivos.
+- Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-018
+Fecha: 2026-11-08 | Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; VAL-27 planificada.
+- Tarea 18 conserva su estado histórico COMPLETADA; la auditoría estática no certifica validación funcional.
+- Controles confirmados: RBAC en backend para usuarios e Inbox, hash de contraseñas, verificación de contraseña actual, actualización de perfil propio y permisos de limpieza de logs.
+- Hallazgos: XSS almacenado en dashboard e Inbox; property Rol/Privilegios inconsistente; caché Inbox no integrada; riesgo de eliminar/degradar último Desarrollador; perfil local desactualizado; falta de auditoría de mutaciones Inbox; lectura completa de logs; éxito falso para itemType no soportado.
+- Nuevas tareas: AUG-113 a AUG-121. VAL-27 planificada, no ejecutada.
+- No se modificaron archivos de aplicación, servicios, endpoints ni datos productivos.
+- Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
+================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-019
+Fecha: 2026-11-08 | Sesión AUD-20261108-S037 | Checkpoint AUD-CP-0037
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; VAL-28 planificada.
+- Tarea 19 conserva su estado histórico COMPLETADA; la auditoría no certifica ejecución funcional de pruebas 31–38.
+- Controles confirmados: autenticación WRITE para corte/VIN; lock e idempotencia en operaciones centrales; hash y bloqueo de intentos AUTH; RBAC USERS/ADMIN/FEEDBACK; validaciones básicas de PYS.
+- Hallazgos: escritura sin sesión en addSupplementaryInfo; migración UTILITIES sin sesión/lock; alta de Tutoriales desconectada de CATALOG y edición fallback con columnas incompatibles; restauraciones no transaccionales; payload de corte validado después de reservar fila/ID; falso éxito al agregar vídeo suplementario; asociaciones PyS huérfanas; edición administrativa de ID/campos sin validación; updateUser parcial y sin lock; aprobación de vídeo sin comprobar destino; VIN sin validación de longitud/formato; ausencia de suite automatizada; acciones API desincronizadas; README contradice fuentes presentes en el árbol.
+- Nuevas tareas: AUG-122 a AUG-135. VAL-28 planificada, no ejecutada.
+- No se modificaron archivos de aplicación, servicios, endpoints, configuración, assets ni datos productivos.
+- Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-020
+Fecha: 2026-11-08 | Sesión AUD-20261108-S038 | Checkpoint AUD-CP-0038
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; VAL-29 planificada.
+- Controles positivos: hoist de createDetailParagraph conservado; funciones retiradas históricamente continúan ausentes; sin archivos temporales en el árbol; renombrado automático de carpeta equivalente con protección ante duplicados ambiguos.
+- Hallazgos: bloqueos anti-inspección eludibles y zoom restringido; logs de recuperación imprimen pendingOp con imágenes Base64; parsers VIN/versiones y helpers Drive duplicados con diferencias; funciones huérfanas y markup de depuración sin referencias.
+- Adendas: AUG-036 para parsers VIN/versiones; AUG-104 para zoom global y add_cortes.
+- Nuevas tareas: AUG-136 a AUG-139. VAL-29 planificada, no ejecutada.
+- La Tarea 21 conserva su estado histórico COMPLETADA; E1 no certifica pruebas funcionales.
+- Se corrigió la tabla vigente de cobertura de Consolidacion_Auditoria.md.
+- No se modificaron archivos funcionales, endpoints, configuración, assets ni datos productivos; no hubo ejecución de Apps Script, navegador, Drive, Spreadsheet, YouTube, concurrencia ni despliegues.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-021
+Fecha: 2026-11-08 | Sesión AUD-20261108-S039 | Checkpoint AUD-CP-0039
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 planificada, no ejecutada.
+- Alcance: ficha imprimible exportVehiclePrintSheet(), paginación, distribución adaptativa, imágenes, QR, metadatos, testigo de motor, sanitización y recursos de impresión.
+- Controles confirmados: botón conectado; cortes, cables, apertura, metadatos, nota y QR condicional; proporciones de imagen conservadas; encabezado/pie por página; campos descriptivos parcialmente sanitizados; colaboradores, utilidad y reportes de error no se imprimen.
+- Hallazgos: margen 5 mm frente a 10 mm especificados; falta imagen Check Engine y aviso antes de imagen; espera de carga incompleta; riesgo de desbordamiento por paginación no basada en altura real; tarjetas sin imagen trasladadas a última página; QR transmite URL de vídeo no listado a tercero; modo vertical sin diferencia efectiva; interpolación HTML sin escape en metadatos/títulos/URL de imagen; referencia histórica errónea en Plan_Auditoria.
+- Nuevas tareas: AUG-140 a AUG-146. AUG-096 ampliada con sinks concretos de impresión.
+- VAL-30 planificada para pruebas de Carta/márgenes, 0–7 imágenes, carga/error/offline, orden/prioridad, Check Engine, QR, selector y XSS. No ejecutada.
+- La tarea histórica Bloque 7 conserva estado COMPLETADA; E1 no certifica impresión real ni PDF.
+- No se modificaron código, CSS, assets, servicios, endpoints, contratos, configuración ni datos productivos; no hubo navegador, PDF, Apps Script, Drive, Spreadsheet ni despliegue.
+- Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+================================================================================
+
+TAREAS DERIVADAS DE AUD-T-021 — DISEÑO/IMPLEMENTACIÓN/PRUEBAS PENDIENTES
+- AUG-140: alinear márgenes físicos y contrato de una/múltiples páginas; reconciliar Tarea 2.2, Bloque 7 y README.
+- AUG-141: completar imagen Check Engine y ubicar el aviso debajo de la imagen.
+- AUG-142: esperar y validar todos los recursos de impresión; manejar imágenes lentas/rotas y fallback.
+- AUG-143: paginación basada en altura real, detección de overflow y preservación de prioridad/orden de tarjetas.
+- AUG-144: proteger URLs de vídeos no listados durante la generación del QR y validar calidad/escaneo/offline.
+- AUG-145: hacer efectivos y diferenciados los modos Automática, Horizontal, Vertical e Imagen ampliada.
+- AUG-146: corregir la referencia de commits históricos de AUD-T-021 en Plan_Auditoria.md.
+- Adenda AUG-096: escapar/sanitizar título, metadatos, tipo de corte, VIN, versiones y URLs de imagen en la ventana de impresión.
+================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-022
+Fecha: 2026-11-08 | Sesión AUD-20261108-S040 | Checkpoint AUD-CP-0040
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 planificada, no ejecutada.
+- Alcance: menú y visibilidad por rol; modal; cinco secciones; consola/terminal; listeners; acciones administrativas; ruteo API; autorización ADMIN; logout/estado/sesión; accesibilidad.
+- Controles confirmados: acceso de menú por Privilegios normalizado; cinco secciones únicas; consola única global; listeners protegidos contra duplicación; IDs HTML sin duplicados; acciones ADMIN del frontend presentes en el mapa y switch backend; assertDeveloperSession protege todas las acciones excepto ping y consulta sesión/rol en servidor.
+- Hallazgos: logout elimina solo localStorage y no limpia currentUser ni revoca ActiveSessions; el modal administrativo no se cierra al mostrar login; falta semántica/foco de diálogo; tabs mezclan radio y tablist sin ARIA coherente; errores se registran siempre como HTTP 500.
+- Tareas nuevas: AUG-147 a AUG-150.
+- VAL-31 planificada para roles/autorización, logout/revocación, expiración, cambio de cuenta, teclado/lector de pantalla, foco/History API, listeners, acciones, errores HTTP/red y responsive. No ejecutada.
+- No se modificaron archivos funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, configuración, assets ni datos productivos. Sin navegador, HTTP, Apps Script, Drive, Spreadsheet, Node/lint ni despliegue.
+- Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+================================================================================
+
+TAREAS DERIVADAS DE AUD-T-022 — DISEÑO/IMPLEMENTACIÓN/PRUEBAS PENDIENTES
+- AUG-147: revocar sesión en servidor y limpiar estado/overlays al cerrar sesión.
+- AUG-148: dotar al modal de desarrollador de semántica de diálogo y gestión accesible del foco/teclado.
+- AUG-149: unificar el patrón accesible de las cinco pestañas y sus paneles.
+- AUG-150: conservar el status HTTP real y distinguir errores de red, HTTP y aplicación en la consola.
+================================================================================
+
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-001
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S041 | Checkpoint: AUD-CP-0041
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-001-001 y H-AUD-001-002 abiertos; VAL-32 planificada, no ejecutada.
+- Alcance: Tarea 1, requisitos 1.1–1.8; App Shell, arranque, inicialización, sesión, catálogo/cache, deep links, API/ADMIN y regresiones.
+- Controles confirmados: inicialización compatible con DOMContentLoaded/documento ya cargado; viewport con requestAnimationFrame; carga cache-first y red; endpoint GET ADMIN y ping presentes; módulos principales separados.
+- Hallazgos nuevos: polling indefinido de deep link cuando catálogo vacío/no listo; procesamiento de catálogo absorbe excepciones y callers marcan carga como completada sin confirmar actualización.
+- Revalidaciones: H-AUD-015-002 se mantiene en AUG-099; H-AUD-024-001/002 se mantiene en AUG-008. No se duplican.
+- Tareas derivadas: AUG-151 nueva; adendas a AUG-008 y AUG-049. VAL-32 planificada, no ejecutada.
+- La Tarea 1 conserva su estado histórico COMPLETADA; la E1 identifica deuda residual y no certifica funcionamiento real.
+- No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, multi-pestaña, accesibilidad ni despliegues. Sin cambios funcionales ni datos productivos.
+- Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).
+================================================================================
+
+VALIDACIÓN VAL-32 — ARRANQUE, SESIÓN, CATÁLOGO, DEEP LINKS Y ADMIN
+Estado: PLANIFICADA; NO EJECUTADA.
+1. Arranque DOM loading/already-ready, listeners únicos y recuperación de error.
+2. Sesión ausente/válida/corrupta/expirada, localStorage bloqueado y transición visual terminal.
+3. Dos o más pestañas iniciando simultáneamente; bloqueo, respuesta obsoleta y pantalla splash/login/app.
+4. Catálogo válido/vacío/malformado, caché corrupta, red caída, fallback y recuperación.
+5. Deep links con catálogo lento/vacío/fallido, cancelación, límite de espera y hash mal codificado.
+6. Blur/limpieza de búsqueda, modal, back y ausencia de referencias residuales a filtros retirados (AUG-099).
+7. GET debug, ping y operaciones ADMIN reales de lectura/escritura en entorno aislado, con permisos y dependencias verificadas.
+8. Regresión coordinada con VAL-27 y VAL-31 sin duplicar sus pruebas.
+================================================================================
+
+
+================================================================================
+ADENDA DE CONTINUIDAD — AUD-T-025
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S070 | Checkpoint: AUD-CP-0069
+E1: 941dfb166ae5af4631d0711d50ab3d45cf7225c1 | HEAD: 650e566945aa4238f241d1c86736b24e3d396733 | Base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- H-AUD-025-001 a 008 permanecen confirmados y abiertos por continuidad de código.
+- H-AUD-025-009 se corrige en alcance: api-config.js sí mapea createSheet y addColumn a ADMIN; los handlers también existen en doPost. No se hallaron llamadas en ui.js ni controles en index.html. AUG-023 queda enfocada en identificar/documentar un consumidor frontend o el uso externo/manual y decidir su soporte; no en agregar un mapeo inexistente.
+- H-AUD-023-005/AUG-013 sigue vigente por la carrera entre la purga FEEDBACK y las inserciones AUTH; no duplicar.
+- AUG-018 a AUG-022 permanecen pendientes; AUG-023 se conserva con alcance precisado. Sin tareas nuevas.
+- Seis de siete archivos del alcance conservan SHA E1. Services/admin.js cambió, pero las funciones auditadas de backup, restore, Drive terminal, sheet handlers y doPost son idénticas byte por byte. Services/write.js cambió fuera del alcance.
+- No se ejecutaron Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purgas ni concurrencia real. Sin cambios funcionales ni operaciones productivas.
+Siguiente: AUD-T-026.
+================================================================================
+
+
+================================================================================
+ADENDA DE REVALIDACIÓN AMPLIADA — AUD-T-016
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S097 | Checkpoint: AUD-CP-0096
+HEAD inicial: 8ee33a4694813152b8c5809b1576afde4049a657 | Base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 63 commits posteriores; solo ocho archivos documentales en el diff.
+- Comparación continuidad S056→HEAD: 42 commits posteriores; solo ocho archivos documentales en el diff.
+- Los seis archivos funcionales del alcance mantienen SHA E1: index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; users.html e41f402675677a4d2783493614737021ec2eade5; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- H-AUD-016-001 a 004 continúan abiertos. Se incorpora H-AUD-016-005 (Media): contraste insuficiente en botones primarios y texto descriptivo. Evidencia y criterios completos en Auditoría.txt.
+- Contraste calculado: blanco/#007bff 3.98:1; blanco/#58a6ff 2.53:1; #888/#fff 3.54:1. Cálculos estáticos; no son mediciones de estilos computados del navegador.
+- H-AUD-016-005 se vincula a AUG-103 mediante adenda; no se crea nuevo ID AUG. AUG-102 a AUG-105 siguen pendientes; AUG-112 conserva la conciliación histórica pendiente.
+- VAL-25 se amplía para comprobar explícitamente los pares de contraste, estados y colores fijos; sigue PLANIFICADA, no ejecutada.
+- Matriz ampliada: cumplimiento parcial; calidad/mantenibilidad condicionadas por tokens fragmentados y estilos hardcodeados; no se identifica nueva vulnerabilidad de datos ni regresión estática de rendimiento; seguridad de bloqueos frontend no se presume.
+- La rama base conserva SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1. GitHub informa protected=false; no se modifica la configuración.
+- No se ejecutaron pruebas dinámicas, navegador, lector de pantalla, zoom real, PWA, benchmarks, E2/E3 ni operaciones productivas. Sin cambios funcionales, merge o despliegue.
+Siguiente unidad: AUD-T-017 — revalidación de continuidad E1, sin duplicar su registro previo.
+================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA ESTÁTICA/CONFIGURACIÓN — AUD-T-039: PROTECCIÓN TÉCNICA DE LA RAMA BASE
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S111 | Checkpoint: AUD-CP-0110
+Rama auditada: GPSpedia2.2.5_work | HEAD: 5d4d68a72f663df5d1e25d5396c1f868021d8b70
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: E1 ESTÁTICA/CONFIGURACIÓN COMPLETADA; CONFIGURACIÓN ADMINISTRATIVA PENDIENTE.
+
+- GitHub API informa protected=false y protection.enabled=false para GPSpedia2.2.5; los checks están desactivados y sin contexts.
+- GET /rulesets?includes_parents=true devuelve []; no se observan rulesets propios ni heredados.
+- GPSpedia2.2.5_work también aparece sin protección. GPSpedia2.2.5 no es la rama predeterminada (main), por lo que la regla debe apuntar a su nombre exacto.
+- No existe .github/workflows en el árbol auditado; no hay checks CI verificables. El repositorio permite merge commit, squash y rebase.
+- El endpoint detallado de branch protection devuelve 403 para esta integración. No se ejecutaron PRs, push, force-push, borrado ni cambios administrativos.
+- Hallazgos H-AUD-039-001 a 004 registrados en Auditoría.txt y Plan_auditoría/Plan_Auditoria.md.
+- AUG-001 ya existía; se amplía sin crear otra tarea. VAL-33 queda planificada, no ejecutada.
+- La tarea «CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE» permanece PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA. No se modificó la configuración ni la rama base.
+================================================================================
+
+
+
+================================================================================
+NUEVA TAREA CORRECTIVA — AUG-152
+Título: Rediseñar Inbox como centro de conversaciones bidireccionales y notificaciones
+Origen: solicitud de producto del 2026-11-09, complementaria a AUD-T-010/AUD-T-018 y hallazgos ya registrados.
+Prioridad: ALTA.
+Estado: NUEVA; análisis de diseño, implementación y validación pendientes.
+
+Problema y objetivo:
+El Inbox actual permite consultar elementos FEEDBACK, responder a algunos tipos, resolver determinados reportes, eliminar y aprobar/rechazar vídeos. La interfaz tiene lista y detalle, pero no una experiencia completa de conversación. No existe una acción API específica para que el Desarrollador inicie un mensaje nuevo dirigido a un usuario. replyToFeedback está ligada a un elemento de feedback y no sustituye un sistema de mensajes directos.
+
+Alcance:
+- Rediseñar el modal y su desplazamiento interno.
+- Permitir al Desarrollador iniciar mensajes individuales, incluidos mensajes de bienvenida mediante plantillas.
+- Permitir a usuarios iniciar consultas al Desarrollador y continuar el hilo desde la aplicación.
+- Modelar conversaciones con múltiples mensajes, participantes, estados de lectura y trazabilidad.
+- Incorporar notificaciones internas, paginación, búsqueda y vistas de bandeja.
+- Reutilizar controles de seguridad, integridad, caché y auditoría existentes sin duplicar tareas AUG.
+
+Criterios de aceptación:
+1. Modal/scroll: altura máxima ligada al viewport dinámico; encabezado estable; scroll independiente de lista y detalle en escritorio; navegación lista/detalle de una columna en móvil; sin scroll del fondo ni desbordamiento horizontal; preservar selección y posición tras refresco/envío; soporte táctil, ratón, teclado y zoom.
+2. Nuevo mensaje: acción visible «Nuevo mensaje» en Inbox del Desarrollador; destinatario seleccionado desde datos autoritativos de USERS; asunto, categoría, cuerpo y plantillas editables de bienvenida; envío individual; validación; confirmación solo tras persistencia; conservar borrador ante errores recuperables; evitar doble envío. No incluir broadcast por defecto.
+3. Consultas: acceso «Consultar al desarrollador» desde la aplicación; usuario autenticado inicia consulta, ve y responde solo sus hilos; Desarrollador responde desde Inbox; asunto/cuerpo/categoría; adjuntos sujetos a AUG-077/AUG-079, no asumidos como parte de esta implementación.
+4. Modelo: entidades Conversation y Message con IDs estables, conversationId, messageId, senderId, participantes, subject, body, category, createdAt, updatedAt, readAt, archivedAt, status e idempotencyKey. Múltiples mensajes cronológicos con autor/fecha; no sobrescribir un único campo reply. Separar mensajes directos de reportes, sugerencias y aprobaciones de vídeo. Diseñar migración compatible, respaldo y rollback antes de tocar Spreadsheet.
+5. Bandeja: Recibidos, No leídos, Enviados y Archivados; contadores; orden por actividad reciente; búsqueda por asunto/participante/contenido conforme a permisos; paginación/carga incremental; marca de lectura al abrir; archivar/restaurar sin borrado irreversible. Los filtros propios del Inbox no deben reintroducir los filtros rápidos cancelados de la búsqueda del catálogo.
+6. Notificaciones: contador de no leídos y notificaciones internas; evitar duplicados; sincronización acotada y comportamiento offline. «Enviado» significa persistido por backend; «leído» exige readAt registrado al abrir. No declarar «entregado» o tiempo real sin confirmación verificable. Correo/SMS/push externo quedan fuera sin proveedor, consentimiento y autorización.
+7. Seguridad: validar sesión en backend en cada acción; derivar identidad/rol desde AUTH/USERS; autorización por participante; impedir enumeración/acceso cruzado; validar destinatario, tipos, límites, longitud y frecuencia; idempotencia y serialización; texto con APIs DOM/textContent; allowlist si se admite enriquecido; historial inmutable de envío/respuesta/lectura/archivo; no registrar tokens ni datos sensibles; no confirmar escrituras parciales.
+8. Accesibilidad: diálogo semántico, nombre accesible, foco inicial/contención/restauración, Escape, History API, teclado, lector de pantalla, contraste, tema claro/oscuro y responsive.
+9. Compatibilidad: mantener reportes, sugerencias, vídeos y respuestas históricas; rechazar itemType no soportados; no realizar migraciones destructivas sin respaldo, plan y validación.
+
+Dependencias sin duplicación:
+AUG-075 (sesión/actor FEEDBACK); AUG-076 y AUG-114 (XSS Inbox); AUG-077/AUG-079 (adjuntos); AUG-080/AUG-081 (idempotencia/validación); AUG-113 (XSS dashboard); AUG-115 (Rol/Privilegios); AUG-116 (caché Inbox); AUG-119 (auditoría inmutable); AUG-121 (tipos soportados); AUG-147/AUG-148/AUG-149 (sesión y accesibilidad). Estas tareas conservan identidad y alcance; AUG-152 las integra como dependencias, no las sustituye.
+
+Archivos potenciales: index.html, ui.js, main.js, style.css, api-config.js, auth.js/state.js, users.html, Services/feedback.js, Services/users.js, esquema Spreadsheet y pruebas aisladas. Confirmar alcance real en auditoría inicial de implementación.
+
+Validación asociada: VAL-34 — Inbox y mensajería bidireccional. Probar roles/participantes; destinatario válido/inexistente; bienvenida; consulta; respuesta multi-turno; leído/no leído; archivado/restauración; búsqueda/paginación; doble envío/idempotencia; timeout/escritura parcial; XSS; sesión revocada; dos usuarios; responsive 320/360/390/768/1024/1440; scroll; teclado/foco/lector; offline/recuperación; compatibilidad histórica. Solo datos/deployments aislados.
+
+Definición de terminado: contrato, esquema, compatibilidad, seguridad, E2/E3, revisión de código y VAL-34 aprobados; documentación/checkpoint actualizados. No marcar completada con pruebas obligatorias pendientes.
+================================================================================
+
+
+## VAL-34 — Inbox y mensajería bidireccional
+Estado: PLANIFICADA; NO EJECUTADA.
+- Permisos por rol/participante, sesión ausente/expirada/revocada, cambio de rol y acceso cruzado.
+- Nuevo mensaje, bienvenida por plantilla, consulta de usuario, respuesta multi-turno, orden cronológico y conservación del hilo.
+- Enviado/persistido, leído/no leído, archivado/restaurado y contador por participante.
+- Recibidos, enviados, búsqueda, paginación y orden.
+- Doble clic, clave idempotente, payload distinto con la misma clave, timeout tras persistencia, fallo parcial y reconexión.
+- XSS almacenado, HTML/SVG/event handlers, URLs, límites y enumeración de IDs.
+- Viewports 320/360/390/600/768/1024/1440, scroll interno, paneles independientes, móvil, tema claro/oscuro y zoom 200/400 %.
+- Foco inicial/restauración, Escape, teclado, lector de pantalla, nombres de controles, contraste y foco visible.
+- Compatibilidad con feedback histórico, vídeos, caché, dashboard y logout.
+- Evidencias por caso, rol, commit, entorno, datos antes/después y logs sanitizados; solo entornos aislados.
+
+
+
+================================================================================
+TAREA CORRECTIVA — H-AUD-040
+Título: Corregir el conteo de identificadores H-AUD publicado en el plan maestro.
+Estado: CORREGIDA DOCUMENTALMENTE EN ESTA TAREA.
+Alcance: Plan_auditoría/Plan_Maestro_Implementacion.md, Auditoría.txt, ChangesLogs.txt y checkpoint.md. Los informes de auditoría no se reauditan ni se reescriben.
+Evidencia: Tareas.txt en HEAD deea984c411203cfb06c1d5dfa6b2b7a1b85a138 contiene 248 ocurrencias y 38 IDs H-AUD únicos; H-AUD-002 no aparece.
+Corrección: actualizar el conteo del plan maestro y conservar la trazabilidad de la cifra anterior en los registros históricos.
+Commit: el commit que contiene esta corrección se identifica en el historial de GPSpedia2.2.5_work.
+================================================================================
+
+
+
+================================================================================
+RECTIFICACIÓN DE TAREA — H-AUD-040
+Estado: INVALIDADA por metodología de conteo incorrecta; registro histórico conservado, no borrar.
+Motivo: se contó H-AUD-### en lugar del ID completo H-AUD-###-###. El inventario correcto de hallazgos individuales es 185 IDs completos únicos.
+Hallazgo correctivo: H-AUD-041. La rectificación se publica en un commit independiente antes de iniciar la auditoría de la tarea actual.
+================================================================================
+
+================================================================================
+H-AUD-041 — Corrección del método de conteo de hallazgos H-AUD
+Estado: CORREGIDO DOCUMENTALMENTE EN ESTA TAREA.
+Evidencia: patrón completo H-AUD-###-### produce 185 identificadores individuales únicos en Tareas.txt; el patrón truncado H-AUD-### no permite contar hallazgos individuales.
+Acción: H-AUD-040 se marca inválido sin borrar historial; Plan_Maestro_Implementacion.md recupera el conteo correcto y aclara el formato.
+Commit: el commit de esta rectificación se identifica en el historial de GPSpedia2.2.5_work.
+================================================================================
+
+================================================================================
+H-AUD-042 — Compuerta de continuidad entre tareas
+Estado: REGISTRADO; CORRECCIÓN INCLUIDA EN LA TAREA ACTUAL DE NORMAS DE DESARROLLO.
+Se requiere un ciclo obligatorio que audite la implementación anterior, registre y corrija sus hallazgos con un commit independiente, verifique el commit y solo entonces audite la tarea actual antes de implementarla.
+No auditar informes de auditoría ni repetir auditorías AUD-T completadas.
+================================================================================

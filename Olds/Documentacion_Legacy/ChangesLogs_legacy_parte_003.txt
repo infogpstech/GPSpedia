@@ -1,0 +1,1278 @@
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-020-001 a 004, H-AUD-020-005 corregido, AUG-136 a AUG-139, adendas AUG-036/AUG-104 y VAL-29 ya están documentados; no hay hallazgos ni tareas nuevas. Los 27 archivos del alcance mantienen sus SHA históricos. Sin cambios funcionales, operaciones productivas, E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+- Corrección de trazabilidad AUD-T-020/AUD-CP-0059: se rectificó el SHA del árbol del HEAD previo (2b576931a644b89006bbc12460b1458a28b641b7) en Plan_Auditoria.md y checkpoint.md; no cambia la auditoría ni los archivos funcionales.
+
+
+================================================================================
+2026-11-08 — AUD-T-021 — revalidación de continuidad E1
+Sesión AUD-20261108-S061 | Checkpoint AUD-CP-0060 | E1 histórica 3339694150823f8f8adca6ffbad6211c708a8960 | árbol E1 ebe322745a0458df1dbf749a28517ce97e36eb08 | HEAD previo b10057cbdb0d6e8fa638571034e95d210e0c947a | árbol previo 435cb6f3507bae8cdcd3ab519d15d16cceb7dd91 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- La comparación E1→HEAD actual reporta 22 commits posteriores y únicamente ocho archivos modificados, todos documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. No hay cambios en archivos funcionales, CSS, HTML de aplicación ni assets desde el árbol E1; por ello, los SHA de los artefactos de implementación revisados, incluidos ui.js, rich-text.js y style.css, siguen siendo idénticos.
+- H-AUD-021-001 a 009 sin cambios de estado; AUG-140 a AUG-145 pendientes; AUG-146 pendiente; AUG-096 ampliada; VAL-30 pendiente/no ejecutada.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: no hay hallazgos/tareas nuevos ni correcciones implementadas.
+- No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+Siguiente unidad: AUD-T-022.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-022 — revalidación de continuidad E1
+Sesión AUD-20261108-S062 | Checkpoint AUD-CP-0061 | E1 histórica 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | árbol E1 e0c80e7334378847c24e9ada5020248a539cb168 | HEAD previo e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0 | árbol previo a8759daf9e718625f76a73a9ddebb088faaa54bd.
+- La comparación E1→HEAD muestra 22 commits posteriores y únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance mantienen sus SHA históricos.
+- H-AUD-022-001 a 004 continúan abiertos; AUG-147 a AUG-150 pendientes; VAL-31 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: los hallazgos, tareas y validación ya están registrados.
+- Sin navegador, lector de pantalla, pruebas de logout, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. Sin cambios funcionales, operaciones productivas, merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-001.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-001 — revalidación de continuidad E1
+Sesión AUD-20261108-S063 | Checkpoint AUD-CP-0062 | E1 35446ac7dd3697b4cd318895c9040e3bf239720c | árbol E1 0d9e88098c57b7550334e84bf74feecf6fef83ae | HEAD previo 787df40810778acf35cca65ee52f84d2dcf2a991 | árbol previo c253c8e0672f4f97e9637b66e36592ff8cecc095.
+- 22 commits posteriores; compare_commits muestra exclusivamente ocho documentos modificados. Los nueve archivos funcionales de alcance mantienen SHA idénticos a E1.
+- H-AUD-001-001/002 siguen abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 y revalidación AUG-099 conservadas; VAL-32 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Discrepancia heredada en resumen agregado de Tareas.txt: AUD-T-001 aparece como por auditar pese a su registro individual E1 completada/CP-0041; queda anotada para conciliación documental.
+- Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, multi-pestaña, concurrencia, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-002.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-002 — revalidación de continuidad E1
+Sesión AUD-20261108-S064 | Checkpoint AUD-CP-0063 | E1 histórica 1136f20ee25778cceac857b4a3145aa2f405ba54 | árbol E1 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f | HEAD previo 139c03443c6ab83173c357fbb421decf6a0294cb | árbol previo 256455de848d87adb8f724c5aecce1f5324d51d0.
+- Comparación E1→HEAD: 22 commits posteriores; compare_commits muestra siete archivos modificados, todos documentales. Los cinco archivos funcionales del alcance mantienen SHA idénticos a E1.
+- H-AUD-001 a H-AUD-006 siguen abiertos; AUG-005 a AUG-010 conservadas y revalidadas; sin hallazgos ni tareas duplicados. VAL funcional y de deployments continúa pendiente.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-003.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-003 — revalidación de continuidad E1
+Sesión AUD-20261108-S065 | Checkpoint AUD-CP-0064 | E1 histórica 06f18e42383f5be448c378bc09ab534731cfbd6b | árbol E1 df13476222de951f65c7d31559598d5fe12914a5 | HEAD previo 3e6ee89273e209bfdfea7e7e9517a14efa5a9096 | árbol previo e68f1ee24bcad2faf275f5dd53c9e95d409ad627.
+- Comparación E1→HEAD: 44 commits posteriores; ocho archivos modificados, todos documentales. Los archivos funcionales/auxiliares del alcance conservan sus SHA históricos.
+- H-AUD-003-001 a 004 siguen abiertos; AUG-055 a AUG-058 continúan pendientes; AUG-043 mantiene su adenda. Sin hallazgos/tareas duplicados.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Sin navegador, Node/lint, cuota localStorage, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-004.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-004 — revalidación de continuidad E1
+Sesión AUD-20261108-S066 | Checkpoint AUD-CP-0065 | E1 histórica 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | HEAD previo b8eeeccc0571cb7bb8065cbbb6f7921fbea453bd | árbol f3d2c8efb7d1b475c6788b7819763368bf475f81.
+- Comparación E1→HEAD: 44 commits posteriores; ocho archivos modificados, todos documentales. Los nueve archivos funcionales/auxiliares del alcance conservan sus SHA históricos.
+- H-AUD-004-001 a 003 siguen abiertos; AUG-059/AUG-060 pendientes; AUG-050 mantiene ampliación. Sin hallazgos/tareas duplicados.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- VAL-12 y validación funcional/integración pendientes. Sin navegador, Node/lint, motor VIN, HTTP, Apps Script V8, Spreadsheet/Drive, concurrencia, migración, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-005.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-005 — revalidación de continuidad E1
+Sesión AUD-20261108-S067 | Checkpoint AUD-CP-0066 | E1 histórica c56c6f7e21a668774db726e2f14139588f1bc5c0 | HEAD previo c7ad01b89f7228622f9732c5d38850cd987a207a | árbol f0b42401982a0f6ac35a93be3230a4d31af37b3e.
+- Comparación E1→HEAD: 44 commits posteriores; ocho archivos modificados, todos documentales. Los 11 archivos funcionales del alcance mantienen SHA idénticos a E1.
+- H-AUD-005-001 a 008 siguen abiertos; AUG-061 a AUG-064 pendientes; AUG-043/AUG-050/AUG-057 conservan adendas. H-AUD-005-008 se coordina con AUD-T-007.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Sin navegador, XSS dinámico, FileReader real, concurrencia, HTTP, Apps Script V8, Spreadsheet/Drive, YouTube, móvil/PWA, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-006.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-023 — revalidación de continuidad E1
+Sesión AUD-20261108-S068 | Checkpoint AUD-CP-0067 | E1 87d75c38d72e76ed60132d2507661f4e1017a0e8 | HEAD 843818e9199e0952ca575196e79efa09f5bffb87 | árbol 39ca9cfe52d1aa2d5bf0695f28d874b8c0411a02.
+- Comparación E1→HEAD: 65 commits posteriores; nueve de diez archivos del alcance conservan SHA. Services/admin.js cambió, pero su guardia assertDeveloperSession/doPost permanece idéntica; Services/write.js cambió fuera del alcance.
+- H-AUD-023-001 a 008 continúan abiertos; AUG-010 a AUG-014 conservadas, sin duplicación.
+- ADMIN 0 continúa protegiendo todas las acciones distintas de ping con sesión activa y rol Desarrollador. No se observaron nuevas líneas de log de credenciales/token en los cambios de admin.js.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Sin Apps Script V8, HTTP, login real, acceso a Logs/Sheets, KDF benchmark, migración, concurrencia real, CacheService, deployments, navegador ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-024.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-024 — revalidación de continuidad E1
+Sesión AUD-20261108-S069 | Checkpoint AUD-CP-0068 | E1 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec | HEAD 2f627a9f11a2e0c6282903d515b8ef893cd15b96 | árbol 948c7398f5afa6421f79ea917ca3a2f8efdf1ed4.
+- Comparación E1→HEAD: 65 commits posteriores; 10 archivos en diff global. Services/admin.js y Services/write.js cambiaron fuera del alcance. Los 12 archivos auditados conservan SHA E1.
+- H-AUD-024-001 a 010 permanecen abiertos; se conservan AUG-005 a AUG-008, AUG-010/AUD-T-033/AUG-003, AUG-016 y AUG-017 sin duplicación.
+- Se confirman por continuidad los riesgos de validación obsoleta, coordinación multi-pestaña, concurrencia AUTH/USERS, sesiones huérfanas, escrituras parciales, navegación residual, logout local y falta de política de expiración. Los controles backend positivos de USERS permanecen.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Sin navegador, multi-pestaña, HTTP, Apps Script V8, login real, revocación, expiración, concurrencia, fallos inyectados, pruebas de roles, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-025.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — REVALIDACIÓN AUD-T-025
+Fecha: 2026-11-08 | Sesión AUD-20261108-S070 | Checkpoint AUD-CP-0069
+- Auditoría.txt: adenda de continuidad E1 y corrección factual de H-AUD-025-009.
+- Tareas.txt: estado de continuidad y precisión del alcance AUG-023.
+- Plan_auditoría/Aug_Tareas.md: adenda a AUG-023; createSheet/addColumn sí están mapeadas en ACTION_TO_SERVICE_MAP, pero no tienen consumidor frontend identificado.
+- Plan_auditoría/Plan_Auditoria.md y Consolidacion_Auditoria.md: revalidación de hallazgos, siete archivos y siguiente unidad AUD-T-026.
+- contexto_personal.md y checkpoint.md: continuidad, SHA/HEAD, límites y siguiente acción.
+ALCANCE: documentación solamente. Sin modificaciones de archivos de aplicación, endpoints, configuración, hojas, Drive, datos productivos ni deployments. Sin operaciones externas, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-026 — revalidación de continuidad E1
+Sesión AUD-20261108-S071 | Checkpoint AUD-CP-0070 | E1 eafb425abadc9ccda9964a5abd50d4ac020cf80a | HEAD b66c36f7d8d666eaf979ebdb21b187330b03ad58 | árbol 61b59637ab2b7c11adff329ecee99eb92314423e.
+- Plan_auditoría/Plan_Auditoria.md: se añadió la sección 55 con el alcance, comparación E1→HEAD, SHA de diez archivos, estado de H-AUD-026-001 a 005, límites y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añadió la sección 44 con la continuidad de hallazgos y tareas AUG-024/AUG-025.
+- contexto_personal.md: se añadió el estado de continuidad y las restricciones de validación pendientes.
+- checkpoint.md: se añadió el registro inicial/final de la sesión AUD-20261108-S071 y checkpoint AUD-CP-0070.
+- No se modificaron archivos funcionales, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los hallazgos y tareas ya constaban en esos registros.
+- No se ejecutaron pruebas HTTP/navegador/Apps Script ni se accedió a endpoints, Drive, Spreadsheet o deployments. No hubo merge ni despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-027 — revalidación de continuidad E1
+Sesión AUD-20261108-S072 | Checkpoint AUD-CP-0071 | E1 6932cf19d77c9c020a02e3d766b937f3175b8985 | HEAD 51b7ff7c1cdb1592033c061419a55700edea9e05 | árbol 18fc47073c06527a5a0a14761b557e698242fa48 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 56 con comparación E1→HEAD, SHA de ocho archivos, hallazgos, tareas, límites y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 45 con continuidad de hallazgos H-AUD-027 y tareas AUG-026/AUG-027/AUG-021.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, decisiones pendientes y siguiente unidad.
+- checkpoint.md: registros inicial y final AUD-CP-0071.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas HTTP/navegador/Apps Script/Drive/Spreadsheet ni se accedió a deployments o datos reales. Sin renombrados, merge ni despliegue.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-028 — revalidación de continuidad E1
+Sesión AUD-20261108-S073 | Checkpoint AUD-CP-0072 | E1 a1e66b81eb4ea146dfc76e9e2980f41b64a8c124 | HEAD e1087bfa98a9949d179bd4f61f769e6874b52593 | árbol 252cae25831fd63503aafa0be278091e6328e2e4 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 57 con comparación E1→HEAD, SHA de ocho archivos, hallazgos, tareas, precedencia de normalización y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 46 con continuidad de H-AUD-028-001 a 009 y tareas AUG-028/AUG-029/AUG-030.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, límites de renombrado/movimiento y siguiente unidad.
+- checkpoint.md: registros inicial y final AUD-CP-0072.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas HTTP/navegador/Apps Script/Drive/Spreadsheet ni se accedió a deployments o datos reales. Sin renombrados, movimientos, merge ni despliegue.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-029 — revalidación de continuidad E1
+Sesión AUD-20261108-S074 | Checkpoint AUD-CP-0073 | E1 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9 | HEAD 4745eb60f6d562c92ec2bc69f5d66beee0b8943e | árbol 1a54888e302607f6eed4865413e0a3810fe5a808 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 58 con comparación E1→HEAD, SHA de cinco archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 47 con continuidad de H-AUD-029-001 a 008 y tareas AUG-028/AUG-030/AUG-031/AUG-032/AUG-033.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, validaciones pendientes y siguiente unidad.
+- checkpoint.md: registros inicial y final AUD-CP-0073.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2–E5, HTTP/navegador/Apps Script/Drive/Spreadsheet ni benchmarks; no se accedió a deployments o datos reales.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-030 — revalidación de continuidad E1
+Sesión AUD-20261108-S075 | Checkpoint AUD-CP-0074 | E1 c8c971ed061f08fca212f6879b35c857d9a0192c | HEAD 13e4822280f5991938e8cc6dc03844e4c08394ee | árbol 21490b32317cc91ac7d3cf57f9959bbba7be856b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 59 con comparación E1→HEAD, SHA de seis archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 48 con continuidad de H-AUD-030-001 a 008 y tareas AUG-034/AUG-035/AUG-036.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, alcance de esquema y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0074.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, HTTP/navegador/Apps Script/Spreadsheet/Drive, migración VIN ni concurrencia; no se accedió a datos productivos o deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-031 — revalidación de continuidad E1
+Sesión AUD-20261108-S076 | Checkpoint AUD-CP-0075 | E1 71058f8b1924d59924fa289f66226aeaac41b7bc | HEAD b82069f10233b6feb678ea1679fdc790d9e5d72c | árbol 1c05c80bac8eb53348add897b7e3fd411262734e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 60 con comparación E1→HEAD, SHA de seis archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 49 con continuidad de H-AUD-031-001 a 010 y tareas AUG-034/AUG-035/AUG-037/AUG-038.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, dependencias y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0075.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, HTTP/navegador/Apps Script/Drive/Spreadsheet, fallos inducidos ni concurrencia; no se accedió a datos productivos o deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-032 — revalidación de continuidad E1
+Sesión AUD-20261108-S077 | Checkpoint AUD-CP-0076 | E1 ad13f5340152ff42b552f06184d2a2adb17117c9 | HEAD 80bc51c1bff923ac497b453ecbe33ebf69af5fd8 | árbol bf60e92eba10d8a7be73f0a5fdbf5097c03d5589 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 61 con comparación E1→HEAD, SHA de diez archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 50 con continuidad de H-AUD-032-001 a 003 y dependencias AUG-039/AUG-024/AUG-003/AUG-016.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, hallazgos y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0076.
+- No se modificaron archivos de aplicación, Services/Test, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, HTTP/navegador/Apps Script/Drive/Spreadsheet, sesiones revocadas ni concurrencia; no se accedió a deployments o datos productivos.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-033 — revalidación de continuidad E1
+Sesión AUD-20261108-S078 | Checkpoint AUD-CP-0077 | E1 32b4898e967aea45a9372aa127cb0735aed99fc5 | HEAD 8156ba1c2f5d9ac3c824fd53af9fd5b93b5459b4 | árbol b80cc472e64b833d8ea77c18eb46fd6a28211b25 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 62 con comparación E1→HEAD, SHA de seis archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 51 con continuidad de H-AUD-033-001 a 007 y tareas AUG-034/AUG-040/AUG-041.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, dependencias y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0077.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, HTTP/navegador/Apps Script/Drive/Spreadsheet ni concurrencia interproyectos; no se accedió a deployments o datos productivos.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-034 — revalidación de continuidad E1
+Sesión AUD-20261108-S079 | Checkpoint AUD-CP-0078 | E1 3819d0d73368982a5a463fb89515e13ec452dde3 | HEAD 6c7d83864f4abbb0e631a356ef3b7c63eae72298 | árbol 76de6ee817a6ccf08ef8c7740687a623f0744efb | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 63 con comparación E1→HEAD, SHA de nueve archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 52 con continuidad de H-AUD-034-001 a 004 y tareas AUG-006/AUG-016/AUG-017/AUG-042.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, hallazgos y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0078.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador/HTTP/Apps Script, cambio de rol real, logout/revocación ni despliegues.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-035 — revalidación de continuidad E1
+Sesión AUD-20261108-S080 | Checkpoint AUD-CP-0079 | E1 e13623beb059b33171758545404381fbbf512c16 | HEAD 019979ccc15361a47e1c7a49b42aaf02fb5c4e75 | árbol a265c33a61a2513533ddaeb68557e56e3e7fa454 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 64 con comparación E1→HEAD, SHA de catorce archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 53 con continuidad de H-AUD-035-001 a 006 y tareas AUG-043/AUG-044.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, contratos y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0079.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas navegador/HTTP/Apps Script/YouTube/Drive/Spreadsheet, aprobación/rechazo ni concurrencia; no se accedió a deployments o datos productivos.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-036 — revalidación de continuidad E1
+Sesión AUD-20261108-S081 | Checkpoint AUD-CP-0080 | E1 bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 | HEAD fe0fafb4b799a27108580303fb07caa10c37f0eb | árbol 84fac81b7fa2b5269661e5482d540cd8ce49f36b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 65 con comparación E1→HEAD, SHA de nueve elementos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 54 con continuidad de H-AUD-036-001 a 005 y tareas AUG-045/AUG-046/AUG-047.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, revisión legal y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0080.
+- No se modificaron código, assets, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador/teclado/lector de pantalla/PWA, cambio de cuenta, storage bloqueado, revisión legal externa ni despliegues.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-037 — revalidación de continuidad E1
+Sesión AUD-20261108-S082 | Checkpoint AUD-CP-0081 | E1 513c9982407db2a1c9b357a418d0949786ec4141 | HEAD 2bab8f39e5fa3c3baaffd19681f91ce93a2a8ebf | árbol 036aedb93bb198496d47b612b8781f0c7915b364 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 66 con comparación E1→HEAD, SHA de diez archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 55 con continuidad de H-AUD-037-001 a 012 y tareas AUG-048 a AUG-052.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, catálogo/caché y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0081.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador/IndexedDB/PWA, cuota, búsqueda representativa, VIN, HTTP/Apps Script/Spreadsheet, concurrencia ni benchmarks.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-038 — revalidación de continuidad E1
+Sesión AUD-20261108-S083 | Checkpoint AUD-CP-0082 | E1 bfcdf8e57d4e09c1c920cf904265301c4554b334 | HEAD 8ea95b85ce27a99c278d4419ca96f7d7ae908a10 | árbol bacda66b5aef9533bafc93d48186f6fb95850b4a | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 67 con comparación E1→HEAD, SHA de catorce archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 56 con continuidad de H-AUD-038-001 a 005 y tareas AUG-053/AUG-054/AUG-051/AUG-022.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, aislamiento local y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0082.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador/IndexedDB/cuota/cambio de cuenta/HTTP/Apps Script/Drive/Spreadsheet/concurrencia ni deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-003 — revalidación de continuidad E1
+Sesión AUD-20261108-S084 | Checkpoint AUD-CP-0083 | E1 06f18e42383f5be448c378bc09ab534731cfbd6b | HEAD e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8 | árbol d077c9be4042c80c754a62d6a90deca60abd5dfb | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 68 con comparación E1→HEAD, SHA de cinco archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 57 con continuidad de H-AUD-003-001 a 004 y tareas AUG-055 a AUG-058.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, hallazgos y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0083.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron navegador/FileReader/storage bloqueado/HTTP/Apps Script/Drive/Spreadsheet/concurrencia ni pruebas de dos usuarios.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-004 — revalidación de continuidad E1
+Sesión AUD-20261108-S085 | Checkpoint AUD-CP-0084 | E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | HEAD 7364a4a40dd5754fb7b0f3dfe570209ca685f2fa | árbol c497db9afbba4593f7edf015198fd913bb9e5796 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 69 con comparación E1→HEAD, SHA de nueve archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 58 con continuidad de H-AUD-004-001 a 003, ampliación H-AUD-037-007 y tareas AUG-059/AUG-060.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, migración y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0084.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas VIN, navegador, HTTP/Apps Script/Spreadsheet/Drive, migración ni concurrencia.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-005 — revalidación de continuidad E1
+Sesión AUD-20261108-S086 | Checkpoint AUD-CP-0085 | E1 c56c6f7e21a668774db726e2f14139588f1bc5c0 | HEAD 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292 | árbol d20c785de41dd39f0ecadaff1d33b676180e6c26 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 70 con comparación E1→HEAD, SHA de once archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 59 con continuidad de H-AUD-005-001 a 008 y tareas AUG-061/AUG-062/AUG-063/AUG-064.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, seguridad de contenido, refresco y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0085.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron navegador/XSS/FileReader/concurrencia/HTTP/Apps Script/Spreadsheet/Drive/responsive/gesto atrás ni deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-006 — revalidación de continuidad E1
+Sesión AUD-20261108-S087 | Checkpoint AUD-CP-0086 | E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8 | HEAD 31fdacb038620c7e203b70d3d2e348ee6c15cf3b | árbol 58d790a24ed3ed4aa0d1aa32f1f8ff7978a0476b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 71 con comparación E1→HEAD, SHA de seis archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 60 con continuidad de H-AUD-006-001 a 003, adenda AUG-064 y tareas AUG-065/AUG-066/AUG-067.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, resolución, transparencia y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0086.
+- No se modificaron archivos de aplicación, assets, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron navegador/móvil/PWA/gestos/zoom/IndexedDB/CDN/mediciones ni regresión visual.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-007 — revalidación de continuidad E1
+Sesión AUD-20261108-S088 | Checkpoint AUD-CP-0087 | E1 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e | HEAD e81eae5219427be7ede9c6ac90b67f780902bb8d | árbol 76cd9db57623fb7ec8e54f6ef7c5830acdc52a03 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 72 con comparación E1→HEAD, SHA de diez archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 61 con continuidad de H-AUD-007-001 a 005 y tareas AUG-068/AUG-069/AUG-070/AUG-071.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, overlays y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0087.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador/móvil/PWA/gestos/deep links/lector de pantalla ni medición del historial.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-008 — revalidación de continuidad E1
+Sesión AUD-20261108-S089 | Checkpoint AUD-CP-0088 | E1 f3d7558abeef482957582fea08f2041490b54f34 | HEAD 82dc7f9a2429d30dd57002f9a846ca2b66877325 | árbol 836dc578a99cde074566f9679a9e44440dac352d | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 73 con comparación E1→HEAD, SHA de siete archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 62 con continuidad de H-AUD-008-001 a 004, adendas AUG-049/AUG-052 y tareas AUG-072/AUG-073.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, deep links, compartir y conectividad.
+- checkpoint.md: registros inicial y final AUD-CP-0088.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron navegador/Web Share/Clipboard/móvil/PWA/enlaces malformados/lector de pantalla/red real/health checks/deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-009 — revalidación de continuidad E1
+Sesión AUD-20261108-S090 | Checkpoint AUD-CP-0089 | E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | HEAD 31205e431c84ac917c2971aa7a0a0fa820bc2302 | árbol 0772990f14e1a7203ca959d79c6f729244485a99 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 74 con comparación E1→HEAD, SHA de quince archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 63 con continuidad de H-AUD-009-001 a 003, confirmaciones H-AUD-037/038 y tareas AUG-074/AUG-052.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, PWA/offline y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0089.
+- No se modificaron archivos de aplicación, manifest, assets, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas PWA/offline/CacheStorage/IndexedDB/cuota/iOS/iPadOS/standalone/lector de pantalla/red real/deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-010 — revalidación de continuidad E1
+Sesión AUD-20261108-S091 | Checkpoint AUD-CP-0090 | E1 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | HEAD c194fa122ffd30f0425b82906152108090b9c0d8 | árbol 140f2f3cc8a239841cf609a60652b1761060d775 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 75 con comparación E1→HEAD, SHA de cuatro archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 64 con continuidad de H-AUD-010-001 a 007 y tareas AUG-075 a AUG-081.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, autenticación, XSS, adjuntos e idempotencia.
+- checkpoint.md: registros inicial y final AUD-CP-0090.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron Apps Script/HTTP/navegador/FileReader/Drive/Spreadsheet/concurrencia/XSS/sesión revocada ni deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-011 — revalidación de continuidad E1
+Sesión AUD-20261108-S092 | Checkpoint AUD-CP-0091 | E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193 | HEAD 4a9acfc54850f182817287c1626dd65082891a68 | árbol 72ad854ee609966f8bda0ddc1ba3d8df68c468b4 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 76 con comparación E1→HEAD, SHA de ocho archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 65 con continuidad de H-AUD-011-001 a 007 y tareas AUG-082 a AUG-087.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, seguridad, identidad, imagen y concurrencia.
+- checkpoint.md: registros inicial y final AUD-CP-0091.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron parseo/mocks/navegador/FileReader/HTTP/Apps Script/Drive/Spreadsheet/cargas/concurrencia/XSS/deployments.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-012 — revalidación de continuidad E1
+Sesión AUD-20261108-S093 | Checkpoint AUD-CP-0092 | E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b | HEAD eb49d689dd1dec087db46ca11640942491ec6d9a | árbol f8db12e0bfeb1f9cced1bc083ce09fb353b7e7f9 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 77 con comparación E1→HEAD, SHA de siete archivos, hallazgos, tareas y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 66 con continuidad de H-AUD-012-001 a 008 y tareas AUG-088/AUG-089/AUG-090.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, asociaciones, anti-ciclos y validaciones pendientes.
+- checkpoint.md: registros inicial y final AUD-CP-0092.
+- No se modificaron archivos de aplicación, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron Playwright/navegador/HTTP/Apps Script/Spreadsheet/concurrencia/permisos/deployment/gestos/modales/multiusuario.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, assets, endpoints, configuración, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-013 — revalidación de continuidad E1
+Sesión AUD-20261108-S094 | Checkpoint AUD-CP-0093 | E1 d8a164c2974f4dc472f169442c2b7efb969bf350 | HEAD 35122f7fb8b41de7dd6900d5bd567b66ccc363a6 | árbol 2a9621fa000a53dd4b46a49bcbbb2fdddc23feb0 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia; ocho archivos documentales en el diff global.
+- Los diez archivos funcionales/estudio de AUD-T-013 conservan SHA idénticos a E1.
+- H-AUD-013-001 a 010 permanecen abiertos o vinculados; AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068; coordinación AUG-040; VAL-22 planificada.
+- Sin hallazgos ni tareas nuevas. No se modifican Auditoría.txt, Tareas.txt ni Aug_Tareas.md.
+- Sin YouTube API/OAuth/XHR, navegador, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+ALCANCE: continuidad E1 y documentación solamente. Sin cambios de aplicación, OAuth scopes, Google Cloud, endpoints, configuración, assets, datos productivos, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-014 — revalidación incremental de continuidad E1
+Sesión AUD-20261108-S095 | Checkpoint AUD-CP-0094 | E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837 | continuidad anterior 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11 | HEAD e8a533219006742d30cc7bddf506da777eb83319 | árbol d0b135742067e354db9d8c4e80414738dfb7a189 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 63 commits posteriores; desde la continuidad anterior: 42 commits. E1 es ancestro directo; ambos diffs muestran exclusivamente ocho documentos de auditoría.
+- Los siete archivos de aplicación del alcance conservan SHA E1; no existe deriva funcional.
+- H-AUD-014-001 a H-AUD-014-003 siguen abiertos. AUG-095/AUG-096/AUG-097 pendientes; VAL-23 planificada.
+- Sin hallazgos/tareas nuevos ni duplicación. Sin pruebas dinámicas, navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3.
+- Solo documentación de continuidad. Sin cambios de código, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-015 — revalidación incremental de continuidad E1
+Sesión AUD-20261108-S096 | Checkpoint AUD-CP-0095 | E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | checkpoint previo 503ed0678a718b4c9179b3c28d2373263cb8cc86 | HEAD 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5.
+- Comparación checkpoint→HEAD: 42 commits posteriores, sin divergencia; solo ocho documentos cambiaron.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia; solo los mismos ocho documentos cambiaron.
+- Los nueve archivos funcionales de AUD-T-015 conservan SHA idénticos a E1.
+- H-AUD-015-001 a 004 permanecen abiertos; H-AUD-037-003 a 006 continúan enlazados a AUG-049; AUG-098 a AUG-101 y VAL-24 siguen pendientes.
+- No se crean hallazgos/tareas duplicados. Filtros rápidos continúan cancelados y retirados.
+- Se actualizan Plan_Auditoria, Consolidacion_Auditoria, contexto_personal y checkpoint. Auditoría.txt, Tareas.txt y Aug_Tareas.md no requieren cambios de estado.
+- Sin modificaciones de aplicación, servicios, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge o despliegue. Base intacta.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-016 — revalidación ampliada de continuidad y calidad visual
+Sesión AUD-20261108-S097 | Checkpoint AUD-CP-0096 | E1 2daf88c96d29999cbc734c968ef94355ee5324ca | HEAD inicial 8ee33a4694813152b8c5809b1576afde4049a657 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 63 commits; continuidad S056→HEAD: 42 commits. Ambos diffs muestran solo ocho documentos; los seis archivos funcionales conservan SHA E1.
+- H-AUD-016-001 a 004 permanecen abiertos; se agrega H-AUD-016-005 por contraste insuficiente (blanco/#007bff 3.98:1; blanco/#58a6ff 2.53:1; #888/#fff 3.54:1), vinculado a AUG-103. AUG-102 a 105 pendientes; AUG-112 pendiente; VAL-25 planificada.
+- Matriz ampliada de cumplimiento, calidad, seguridad, rendimiento, mantenibilidad y mejoras registrada en Plan_Auditoria y Consolidacion_Auditoria.
+- Archivos documentales actualizados: Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- No se modificaron archivos de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin navegador, medición de estilos computados, zoom real, lector de pantalla, PWA, benchmarks ni E2/E3. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-018 — revalidación ampliada de continuidad y calidad
+Sesión AUD-20261108-S098 | Checkpoint AUD-CP-0097 | E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7 | continuidad S058 df6a78e1fe29c6f29e864d5542cade12f8c6e7df | HEAD 4e82cb75ec16abff180915efa8d3767099dc8147 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 62 commits; continuidad→HEAD: 41 commits. Ambos diffs contienen solo ocho documentos.
+- Los 13 archivos funcionales conservan SHA E1; sin deriva de implementación.
+- H-AUD-018-001 a 009 permanecen abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada. No se crean hallazgos/tareas duplicados.
+- Matriz ampliada confirma cumplimiento parcial, riesgos XSS almacenado, falta de protección del último Desarrollador, caché desconectada, perfil desactualizado, falta de auditoría uniforme y lecturas no acotadas. B24 carece de criterios verificables para KPIs.
+- Documentos actualizados: Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Sin pruebas navegador/XSS/Apps Script/HTTP/Spreadsheet/Drive/YouTube/concurrencia/E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-019 — revalidación ampliada de continuidad E1 y calidad backend
+- Sesión AUD-20261108-S099/AUD-CP-0098; E1 histórica 6f0f901179c10833cbeedcb2767a25fcdd085b0d; continuidad previa S059/CP-0058 7fc728ab34e55674f1826713a3f868d72b9f8830; HEAD inicial a4246145bace0844e90b65c56d39d980a1c9d61f; árbol 681b94b050aac7345c60bc38b3b0d8f7d01fb33f; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 62 commits; CP-0058→HEAD: 41 commits. Ambos diffs muestran únicamente ocho documentos, sin divergencia funcional.
+- Los 15 archivos funcionales/técnicos del alcance conservan exactamente SHA E1. H-AUD-019-001 a 014 permanecen abiertos; AUG-122 a AUG-135 pendientes; VAL-28 planificada/no ejecutada. Sin hallazgos ni tareas duplicadas.
+- Matriz ampliada: cumplimiento parcial/no certificado por falta de ejecución verificable de pruebas 31–38 y riesgos de autenticación/integridad; calidad afectada por validación tardía, falsos éxitos, esquema Tutoriales/Tutorial divergente y mapa de acciones desincronizado; seguridad positiva parcial en AUTH/USERS/ADMIN/FEEDBACK, pero no cubre WRITE.addSupplementaryInfo ni UTILITIES.migrateTimestamps; rendimiento y concurrencia no certificados; mantenibilidad afectada por contratos divergentes y falta de runner reproducible.
+- Services/Test contiene copias aisladas AUTH/USERS y README de preparación; exige proyectos/deployments Apps Script separados y manuales, y no acredita que existan. El árbol no contiene runner/framework/specs/package.json/workflow CI identificable. README raíz describe microservicios como despliegues separados, mientras el árbol contiene sus fuentes; política de publicación, ACL y deployments quedan sin certificar.
+- No se ejecutaron Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, pruebas automatizadas ni E2/E3. Sin cambios funcionales/productivos, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-020 — revalidación ampliada de continuidad y calidad arquitectural
+- Sesión AUD-20261108-S100; checkpoint AUD-CP-0099; E1 histórica 25d5d548edd79f812ab6b2bf9411d8c77fb30188; continuidad previa S060/CP-0059 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1; HEAD inicial 2945013779d999215e46efcb61e5f1825984185d; árbol 3501fe2a265546472686dcb4d761f675c953867d; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; GitHub informa protected=false).
+- Comparación E1→HEAD: 62 commits; comparación CP-0059→HEAD: 41 commits. En ambas comparaciones el merge-base coincide con la base y únicamente aparecen ocho documentos de auditoría modificados; no hay divergencia funcional.
+- Los 27 archivos funcionales/técnicos del alcance conservan SHA exactos de E1. No existe deriva de implementación en el alcance.
+- H-AUD-020-001 a H-AUD-020-004 continúan abiertos; H-AUD-020-005 permanece corregido documentalmente en la tabla de cobertura. AUG-136 a AUG-139 siguen pendientes; AUG-036 y AUG-104 mantienen sus adendas; VAL-29 continúa planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
+- Evidencia estática revalidada: add_cortes.html bloquea contextmenu, F12 y atajos Ctrl+Shift+I/J/C/Ctrl+U, además de zoom por rueda/teclado/gestos; esos controles son eludibles y no protegen código ni datos. La recuperación registra pendingOp completo, que puede incluir Base64 de imágenes. WRITE, ADMIN y FEEDBACK conservan implementaciones repetidas de helpers Drive con diferencias de normalización Unicode y contrato de entrada (objeto frente a fila); los parsers VIN/versiones también están duplicados entre frontend y backend. Existen funciones/markup de depuración sin consumidores internos localizados, pero los exports y contratos externos deben revisarse antes de retirar código; no se declara huérfano definitivo sin call graph completo.
+- Matriz ampliada: cumplimiento parcial/no certificado respecto a B01/B14/B15/B17/B20/B28/B29/B30; calidad técnica y mantenibilidad afectadas por duplicación y contratos divergentes; seguridad no mejora con bloqueos frontend y los logs pueden exponer payloads; rendimiento no puede cuantificarse sin pruebas, aunque la repetición de búsquedas de carpetas en Drive puede incrementar llamadas; no se certifican accesibilidad/zoom, ejecución real ni comportamiento de despliegues.
+- Controles positivos conservados: createDetailParagraph mantiene su hoist; funciones retiradas históricamente siguen ausentes; no se observan archivos temporales en el árbol; el renombrado automático de carpeta equivalente mantiene protección ante duplicados ambiguos.
+- No se ejecutaron Node/lint, navegador, zoom 200/400%, lector de pantalla, Apps Script, HTTP, Spreadsheet/Drive, YouTube, pruebas de concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+- Documentación actualizada: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los hallazgos, tareas y VAL-29 ya están registrados; no hay novedades ni duplicados.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-021 — revalidación ampliada de continuidad y calidad de impresión
+- Sesión AUD-20261108-S101; checkpoint AUD-CP-0100; E1 histórica 3339694150823f8f8adca6ffbad6211c708a8960 (árbol ebe322745a0458df1dbf749a28517ce97e36eb08); revalidación previa S061/CP-0060 con HEAD b10057cbdb0d6e8fa638571034e95d210e0c947a; HEAD inicial actual 2f9b567ecf68d52665818b1e450e93795a03de58 (árbol a433fd1a69744fa51b49b0bd7058c9ca5a505717); rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios (GitHub informa protected=false).
+- Comparación E1→HEAD: 62 commits, merge-base igual a E1; únicamente ocho archivos documentales modificados (Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md). Comparación CP-0060→HEAD: 40 commits; únicamente los mismos ocho documentos. No hay divergencia funcional.
+- Los artefactos de implementación de impresión permanecen idénticos a E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb, rich-text.js a7180766bb5097be510153edd851f4dfa939912c, style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9, index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a y README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c. La comparación de árboles confirma que ningún HTML/CSS/JS, asset ni archivo funcional cambió desde E1.
+- H-AUD-021-001 a H-AUD-021-009 permanecen abiertos y sin cambios: margen 5 mm frente a 10 mm/contrato de paginación; falta imagen Check Engine y ubicación del aviso; espera incompleta de recursos y tratamiento de naturalWidth=0; paginación no basada en altura real; tarjetas sin imagen movidas al final con posible pérdida de orden/prioridad; envío de URL de vídeo unlisted a api.qrserver.com; modo Vertical sin diferencia efectiva; interpolación HTML no escapada de metadatos/títulos/URL de imagen; referencia histórica incorrecta en fila maestra.
+- AUG-140 a AUG-145 continúan pendientes; AUG-146 continúa pendiente por trazabilidad; AUG-096 conserva adenda con sinks de impresión. VAL-30 sigue planificada y no ejecutada. No se crean hallazgos ni tareas duplicados. La tarea histórica Bloque 7 permanece COMPLETADA; ello no equivale a certificación funcional.
+- Matriz ampliada: cumplimiento parcial/no certificado frente a Tarea 2.2/Bloque 7 y criterios de impresión; calidad técnica afectada por cálculo de layout basado en aspectos/cantidad en lugar de altura real, recursos no esperados y sanitización parcial; seguridad/privacidad afectada por exposición de URL unlisted y sinks HTML; rendimiento no medido, con espera y reflow sin validación empírica; mantenibilidad afectada por contrato de paginación contradictorio, modos de distribución redundantes y trazabilidad documental errónea.
+- Controles positivos revalidados estáticamente: botón de impresión conectado a exportVehiclePrintSheet; incluye cortes, cables, apertura, metadatos, nota y QR condicional; conserva proporción de imagen; encabezado/pie por página; campos descriptivos parcialmente sanitizados; colaboradores/utilidades/reportes de error no se imprimen.
+- No se ejecutaron navegador, impresión física, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+- Documentación actualizada: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios: los nueve hallazgos, AUG-140 a 146, adenda AUG-096 y VAL-30 ya están registrados.
+================================================================================
+
+ 
+2026-11-08 — AUD-T-022 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 52 añadida (líneas 2644–2654).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 37 añadida (líneas 1024–1033).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5041–PENDIENTE).
+- contexto_personal.md: estado de continuidad añadido (líneas 1020–1027).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0101 añadidos (líneas 2398–2427).
+
+ 
+2026-11-08 — AUD-T-001 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 53 añadida (líneas 2655–2665).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 38 añadida (líneas 1034–1043).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5049–PENDIENTE).
+- contexto_personal.md: estado de continuidad añadido (líneas 1028–1035).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0102 añadidos (líneas 2428–2457).
+
+ 
+2026-11-08 — AUD-T-002 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 54 añadida (líneas 2666–2675).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 39 añadida (líneas 1044–1053).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5057–PENDIENTE).
+- contexto_personal.md: estado de continuidad añadido (líneas 1036–1043).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0103 añadidos (líneas 2458–2486).
+
+ 
+2026-11-08 — AUD-T-003 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 55 añadida (líneas 2676–2686).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 40 añadida (líneas 1054–1063).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5065–PENDIENTE).
+- contexto_personal.md: estado de continuidad añadido (líneas 1044–1051).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0104 añadidos (líneas 2487–2516).
+
+ 
+2026-11-08 — AUD-T-004 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 56 añadida (líneas 2687–2696).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 41 añadida (líneas 1064–1073).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5073–PENDIENTE).
+- contexto_personal.md: estado de continuidad añadido (líneas 1052–1059).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0105 añadidos (líneas 2517–2545).
+
+ 
+2026-11-08 — AUD-T-005 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 57 añadida (líneas 2697–2706).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 42 añadida (líneas 1074–1083).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5081–END).
+- contexto_personal.md: estado de continuidad añadido (líneas 1060–1068).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0106 añadidos (líneas 2546–2575).
+
+ 
+2026-11-08 — AUD-T-006 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 58 añadida.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 43 añadida.
+- ChangesLogs.txt: registro de esta continuidad añadido.
+- contexto_personal.md: estado de continuidad añadido.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0107 añadidos.
+
+ 
+2026-11-08 — AUD-T-007 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 59 añadida.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 44 añadida.
+- ChangesLogs.txt: registro de esta continuidad añadido.
+- contexto_personal.md: estado de continuidad añadido.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0108 añadidos.
+
+
+2026-11-08 — AUD-T-008 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 60 añadida.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 45 añadida.
+- ChangesLogs.txt: registro de esta continuidad añadido.
+- contexto_personal.md: estado de continuidad actualizado.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0109 añadidos.
+- Solo documentación de continuidad. No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los cuatro hallazgos, AUG-072/AUG-073 y adendas relacionadas ya estaban registrados.
+- No se modificaron archivos funcionales, endpoints, contratos, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge o despliegue; rama base intacta.
+
+
+2026-11-08 — AUD-T-039 — auditoría de protección técnica de la rama base
+- Plan_auditoría/Plan_Auditoria.md: se incorpora AUD-T-039, su alcance, hallazgos y estado.
+- Plan_auditoría/Consolidacion_Auditoria.md: se incorpora la sección 46 y VAL-33.
+- Plan_auditoría/Aug_Tareas.md: se amplía AUG-001 existente; no se crea una AUG duplicada.
+- Auditoría.txt: se añade E1 de configuración con cuatro hallazgos y límites de acceso.
+- Tareas.txt: se añade el resultado de auditoría; la configuración administrativa continúa pendiente.
+- contexto_personal.md y checkpoint.md: se registra la sesión y su resultado.
+- No se modificaron ramas, protección, rulesets, workflows, código, endpoints, permisos, datos, Drive, Spreadsheet ni deployments. Sin merge o despliegue.
+
+
+2026-11-08 — AUD-T-009 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 62 con la comparación E1→HEAD, los SHA de los quince archivos del alcance y el estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 47 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0111.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, Service Worker, manifest, assets, endpoints, configuración, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-010 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 63 con la comparación E1→HEAD, SHA de los cuatro archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 48 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0112.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-011 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 64 con comparación E1→HEAD, SHA de los ocho archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 49 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0113.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-012 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 65 con comparación E1→HEAD, SHA de los siete archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 50 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0114.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-013 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 66 con comparación E1→HEAD, SHA de los diez archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 51 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0115.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet ni datos productivos. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-014 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 67 con comparación E1→HEAD, SHA de los siete archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 52 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0116.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, servicios, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-015 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 68 con comparación E1→HEAD, SHA de los nueve archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 53 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0117.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- Los filtros rápidos siguen cancelados/retirados; no se reintroducen.
+- No se modifican archivos funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-016 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 69 con comparación E1→HEAD, SHA de los seis archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 54 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0118.
+- H-AUD-016-005, AUG-103 y AUG-112 se conservan sin duplicación; no se crean hallazgos ni tareas nuevas.
+- No se modifican archivos funcionales, CSS/HTML/JS, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-017 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 70 con comparación E1→HEAD, SHA de los objetos del alcance y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 55 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0119.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- H-AUD-017-007 y AUG-112 permanecen pendientes; no se modifica silenciosamente el registro principal Auditoría.txt.
+- No se modifican archivos funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-018 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 71 con comparación E1→HEAD, SHA de los trece archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 56 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0120.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, tests, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-019 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 72 con comparación E1→HEAD, SHA de los quince archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 57 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0121.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, servicios, contratos, endpoints, configuración, assets, pruebas, README, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-020 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 73 con comparación E1→HEAD, SHA de los 27 archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 58 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0122.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, servicios, endpoints, configuración, assets, pruebas, README, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-021 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 74 con comparación E1→HEAD, SHA de los cinco artefactos principales y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 59 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0123.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-022 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 75 con comparación E1→HEAD, SHA de los nueve archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 60 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0124.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-001 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 76 con comparación E1→HEAD, SHA de los nueve archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 61 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0125.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-002 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 77 con comparación E1→HEAD, SHA de los cinco archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 62 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0126.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-003 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 78 con comparación E1→HEAD, SHA de los cinco archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 63 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0127.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-004 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 79 con comparación E1→HEAD, SHA de los nueve archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 64 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0128.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, esquema, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-005 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 80 con comparación E1→HEAD, SHA de los once archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 65 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0129.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- H-AUD-005-008 y VAL-17 continúan transferidos a AUD-T-007.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-006 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 81 con comparación E1→HEAD, SHA de los seis archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 66 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0130.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, CSS, HTML de aplicación, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-007 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 82 con comparación E1→HEAD, SHA de los diez archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 67 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0131.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- H-AUD-005-008 permanece ampliado en AUD-T-007; no se duplica.
+- No se modifican archivos funcionales, HTML/CSS de aplicación, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-008 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 83 con comparación E1→HEAD, SHA de los seis archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 68 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0132.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-023 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 84 con comparación E1→HEAD, los SHA de diez archivos y el estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 69 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0133.
+- Se conserva la excepción de Services/admin.js (guardas de autorización idénticas) y Services/write.js fuera de alcance; no se duplican hallazgos/tareas.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se ejecutan pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-024 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 85 con comparación E1→HEAD, SHA de los doce archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 70 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0134.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
+- No se modifican archivos funcionales del alcance, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-025 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 86 con comparación E1→HEAD, SHA de los siete archivos y verificación byte por byte de funciones críticas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 71 con continuidad y precisión del logging ADMIN.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0135.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-025-001 a 009 y AUG-018 a 023 ya constan. Se conserva la corrección de AUG-023 y la adenda existente de AUG-021.
+- Se aclara que el registro persistente de algunas acciones de administración de imágenes no equivale a logging durable de todas las operaciones ADMIN.
+- No se modifican código funcional, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-026 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 87 con comparación E1→HEAD, SHA de los diez archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 72 con continuidad y límites de telemetría/backend.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0136.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-026-001 a 005 y AUG-024/025 ya están registrados.
+- No se modifican frontend, endpoints, servicios, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-027 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 88 con comparación E1→HEAD, SHA de los ocho archivos y estado de hallazgos/decisiones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 73 con continuidad y límites de validación.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0137.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-027-001 a 008, AUG-026/027 y la adenda AUG-021 ya constan.
+- No se modifican código, esquema, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-028 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 89 con comparación E1→HEAD, SHA de los ocho archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 74 con continuidad y límites de Drive/OAuth/deployment.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0138.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-028-001 a 009, AUG-028/029/030 y las adendas existentes ya constan.
+- No se modifican código, esquema, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-029 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 90 con comparación E1→HEAD, SHA de los cinco archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 75 con continuidad y límites de rendimiento/reanudación.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0139.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-029-001 a 008 y AUG-031/032/033 ya constan.
+- No se modifican código, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2–E5, merge o despliegue.
+
+
+2026-11-08 — AUD-T-030 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 91 con comparación E1→HEAD, SHA de los seis archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 76 con continuidad de esquema e idempotencia.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0140.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-030-001 a 008 y AUG-034/035/036 ya constan.
+- No se modifican código, esquema, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-031 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 92 con comparación E1→HEAD, comparación CP-0140→HEAD, SHA de los seis archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 77 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0141.
+- H-AUD-031-001 a 010, AUG-034/AUG-035 y AUG-037/AUG-038 se conservan sin duplicación; no se crean hallazgos ni tareas nuevas.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos y las tareas relacionadas ya constan.
+- No se modifican archivos funcionales, servicios, esquema, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-032 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 93 con comparación E1→HEAD, CP-0076→HEAD, CP-0141→HEAD, SHA de los diez archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 78 con el resultado de continuidad.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0142.
+- H-AUD-032-001 a 003 y AUG-039 se conservan sin duplicación; no se crean hallazgos ni tareas nuevas.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos y la tarea derivada ya constan.
+- No se modifican código, servicios, contratos, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-09 — AUD-T-033 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade sección 94 con comparación E1→HEAD y CP-0077→HEAD, SHA de seis archivos, hallazgos, tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade sección 79 con continuidad de H-AUD-033-001 a 007 y AUG-003/AUG-034/AUG-040/AUG-041.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza HEAD, estado de coordinación y siguiente unidad.
+- checkpoint.md: se añaden los registros inicial y final AUD-CP-0143.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque hallazgos y tareas ya constan; no hay altas, cierres ni cambios de severidad.
+- No se modifican archivos funcionales, servicios, contratos, endpoints, configuración, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, concurrencia, merge o despliegue.
+
+
+2026-11-09 — AUD-T-034 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 95 con comparación E1→HEAD y CP-0078→HEAD, SHA de nueve archivos, estado de hallazgos/tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 80 con continuidad de H-AUD-034-001 a 004 y AUG-006/AUG-016/AUG-017/AUG-042.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden los checkpoints inicial y final AUD-CP-0144.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: los cuatro hallazgos y las tareas relacionadas ya constan; no hay altas, cierres ni cambios de severidad.
+- No se modifican archivos funcionales, servicios, endpoints, contratos, configuración, sesiones, datos productivos, Drive o Spreadsheet. Sin pruebas funcionales E2/E3, merge o despliegue.
+
+
+2026-11-09 — AUD-T-035 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade sección 96 con comparación E1→HEAD y CP-0079→HEAD, SHA de 14 archivos, estado de hallazgos/tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade sección 81 con continuidad de H-AUD-035-001 a 006 y AUG-043/AUG-044/AUG-040.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden los checkpoints inicial y final AUD-CP-0145.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos y tareas relacionadas ya constan; no hay altas, cierres ni cambios de severidad.
+- No se modifican archivos funcionales, servicios, endpoints, contratos, configuración, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, HTTP, YouTube, concurrencia, merge o despliegue.
+
+
+2026-11-09 — AUD-T-036 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 97 con comparación E1→HEAD y CP-0080→HEAD, SHA de seis archivos funcionales y tres assets, hallazgos, tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 82 con continuidad de H-AUD-036-001 a 005 y AUG-045/AUG-046/AUG-047.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el estado de continuidad y la siguiente unidad.
+- checkpoint.md: se añaden los checkpoints inicial y final AUD-CP-0146.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los cinco hallazgos y las tres tareas relacionadas ya constan; no hay altas, cierres ni cambios de severidad.
+- No se modifican archivos funcionales, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, revisión jurídica externa, merge o despliegue.
+
+
+2026-11-09 — AUD-T-037 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 98 con comparación E1→HEAD y CP-0081→HEAD, árboles, SHA de los diez archivos del alcance, hallazgos, tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 83 con continuidad de H-AUD-037-001 a 012 y AUG-048/AUG-049/AUG-050/AUG-051/AUG-052.
+- ChangesLogs.txt: se registra la actualización documental de AUD-T-037.
+- contexto_personal.md: se actualiza el checkpoint y la siguiente unidad.
+- checkpoint.md: se añade el checkpoint inicial/final AUD-CP-0147.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los hallazgos y tareas ya están registrados; no se crean IDs ni se alteran estados.
+- No se modifican archivos funcionales, assets, endpoints, configuración, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, benchmarks, merge o despliegue.
+
+
+2026-11-09 — AUD-T-038 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 99 con comparación E1→HEAD, árboles, SHA de catorce archivos, hallazgos, tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 84 con continuidad de H-AUD-038-001 a 005 y AUG-053/AUG-054.
+- ChangesLogs.txt: se registra la actualización documental de AUD-T-038.
+- contexto_personal.md: se actualiza el checkpoint y la siguiente unidad.
+- checkpoint.md: se añade el checkpoint inicial/final AUD-CP-0148.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los cinco hallazgos y las tareas relacionadas ya están registrados; no se crean IDs ni se alteran estados.
+- No se modifican archivos funcionales, endpoints, configuración, assets, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-09 — AUD-T-003 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 100 con comparación E1→HEAD, continuidad desde CP-0127, SHA de cinco archivos, hallazgos, tareas y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 85 con continuidad de H-AUD-003-001 a 004 y AUG-055 a AUG-058.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza el checkpoint y el estado de la siguiente unidad.
+- checkpoint.md: se añade el checkpoint inicial/final AUD-CP-0149.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los cuatro hallazgos, AUG-055 a AUG-058 y la adenda AUG-043 ya están registrados; no se crean IDs ni se alteran estados.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, assets, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-09 — AUD-T-004 — revalidación incremental de continuidad E1
+- Se añade la sección 101 a Plan_auditoría/Plan_Auditoria.md con E1→HEAD, CP-0128→HEAD, SHA de los nueve archivos, hallazgos, tareas, validaciones y límites.
+- Se añade la sección 86 a Plan_auditoría/Consolidacion_Auditoria.md.
+- Se actualiza contexto_personal.md con el estado de AUD-T-004 y la siguiente unidad.
+- Se actualiza checkpoint.md con AUD-CP-0150 inicial/final.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios: H-AUD-004-001 a 003, H-AUD-037-007, AUG-059/AUG-060/AUG-050 y VAL-08/12/15 ya están registrados; no hay hallazgos o tareas nuevas.
+- No se modifican archivos funcionales, esquema, endpoints, contratos, configuración, permisos, assets, credenciales ni datos productivos. Sin migración, Drive/Spreadsheet, merge o despliegue.
+
+
+2026-11-09 — AUD-T-005 — revalidación incremental de continuidad E1
+- Se añade la sección 102 a Plan_auditoría/Plan_Auditoria.md con comparación E1→HEAD, continuidad desde CP-0129, SHA de once archivos, estado de hallazgos/tareas/validaciones y límites.
+- Se añade la sección 87 a Plan_auditoría/Consolidacion_Auditoria.md.
+- Se actualiza ChangesLogs.txt con el registro de la revisión.
+- Se actualiza contexto_personal.md con el checkpoint y la siguiente unidad.
+- Se actualiza checkpoint.md con AUD-CP-0151 inicial/final.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios: H-AUD-005-001 a 008, AUG-061 a AUG-064 y adendas AUG-043/AUG-050/AUG-057 ya están registrados; no se crean IDs ni se alteran estados.
+- Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue.
+
+
+2026-11-09 — AUD-T-006 — revalidación incremental de continuidad E1
+- Se añade la sección 103 a Plan_auditoría/Plan_Auditoria.md con comparación E1→HEAD, CP-0130→HEAD, SHA de seis archivos, hallazgos, tareas y límites.
+- Se añade la sección 88 a Plan_auditoría/Consolidacion_Auditoria.md.
+- Se actualiza ChangesLogs.txt con el registro de esta revisión.
+- Se actualiza contexto_personal.md con el checkpoint, la siguiente unidad y la restricción de nomenclatura pendiente de especificación.
+- Se actualiza checkpoint.md con AUD-CP-0152 inicial/final.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios: H-AUD-006-001 a 003, AUG-065 a AUG-067 y la adenda AUG-064 ya están registrados; no se crean IDs ni se alteran estados.
+- No se modifican código, HTML/CSS de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-09 — AUD-T-007 — revalidación incremental de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 104 con la comparación E1→HEAD, comparación CP-0131→HEAD, SHA de los diez archivos funcionales, estado de hallazgos y límites de validación.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 89 con el estado consolidado de H-AUD-007-001 a 005, AUG-068 a AUG-071 y dependencias.
+- ChangesLogs.txt: se añade este registro documental.
+- contexto_personal.md: se añade la continuidad de AUD-T-007 y la siguiente unidad secuencial.
+- checkpoint.md: se añaden los registros inicial y final AUD-CP-0153, con HEAD/base y SHA de respaldo documental.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; los hallazgos y tareas ya estaban registrados.
+- No se modifican archivos de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, merge ni despliegue.
+
+
+================================================================================
+2026-11-09 — AUD-T-008 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S155 | Checkpoint AUD-CP-0154 | E1 f3d7558abeef482957582fea08f2041490b54f34 | HEAD b3c624b541e2720088f48227ce93648b418a9177 | árbol cb153988e16ec4e7832b0db2d95c8c7fc30b9c97 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 105 con comparación E1→HEAD, comparación CP-0132→HEAD, SHA de los seis archivos, hallazgos y validaciones pendientes.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 90 con continuidad de H-AUD-008-001 a 004, AUG-072/AUG-073, adendas y validaciones.
+- ChangesLogs.txt: se registra esta revalidación documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-008 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0154 y los SHA de respaldos exactos.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los cuatro hallazgos, AUG-072/AUG-073 y adendas ya están registrados.
+- No se modifican archivos funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-009 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S156 | Checkpoint AUD-CP-0155 | E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | HEAD ebc54e68747341359f773284da31cea00345a8e3 | árbol 4aa37f34c838ce1bd20e527d4407e2471f17f481 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 106 con comparación E1→HEAD, comparación CP-0111→HEAD, SHA de los quince archivos, hallazgos y validaciones pendientes.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 91 con continuidad H-AUD-009-001 a 003, AUG-074/AUG-052, dependencias y validaciones.
+- ChangesLogs.txt: se registra esta revalidación documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-009 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0155 y SHA de respaldos exactos.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; hallazgos, AUG-074 y adendas ya están registrados.
+- No se modifican archivos funcionales, Service Worker, manifest, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-010 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S157 | Checkpoint AUD-CP-0156 | E1 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | HEAD 956eaf8068b7a713661805ae358a3dfaf538aa0b | árbol 3800683fd64ca9b678b8747cc593089495fb5125 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 107 con comparación E1→HEAD, comparación CP-0112→HEAD, SHA de los cuatro archivos, hallazgos y validaciones pendientes.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 92 con continuidad H-AUD-010-001 a 007, AUG-075 a AUG-081, controles históricos y validaciones.
+- ChangesLogs.txt: se registra esta revalidación documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-010 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0156 y SHA de respaldos exactos.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los siete hallazgos, siete tareas y relaciones ya están registrados.
+- No se modifican archivos funcionales, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-011 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S158 | Checkpoint AUD-CP-0157 | E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193 | HEAD 87aba25883dda8ae615e31cdc0d1fa39a6659328 | árbol 15b905263c8436f5de50d4c6f7a041f8c924af97 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 108 con comparación E1→HEAD, comparación CP-0091→HEAD, SHA de los ocho archivos, hallazgos y validaciones pendientes.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 93 con continuidad H-AUD-011-001 a 007, AUG-082 a AUG-087, adendas y validaciones.
+- ChangesLogs.txt: se registra esta revalidación documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-011 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0157 y SHA de respaldos exactos.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los hallazgos, tareas y relaciones ya están registrados.
+- No se modifican archivos funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-012 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S159 | Checkpoint AUD-CP-0158 | E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b | HEAD inicial 09c76db0e7047ab5a74304a57d635432d306f534 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 109 con comparación E1→HEAD, comparación CP-0114→HEAD, SHA de los siete archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 94 con continuidad de H-AUD-012-001 a 008, AUG-088 a AUG-091 y relaciones.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-012 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0158.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los hallazgos y tareas ya están registrados.
+- No se modifican archivos funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-013 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S160 | Checkpoint AUD-CP-0159 | E1 d8a164c2974f4dc472f169442c2b7efb969bf350 | revalidación previa CP-0052/HEAD f90be001f1c1bf23e67f144bc5a57d36d4cad58a | HEAD 43d1c082a290d473911d82815a3d3dd0419e6fc5 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 110 con comparación E1→HEAD, CP-0052→HEAD, SHA de diez archivos, estado de hallazgos y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 95 con continuidad de H-AUD-013-001 a 010, AUG-092 a AUG-094, adendas y validaciones.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-013 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0159 y SHA de respaldos exactos.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; hallazgos, tareas y adendas ya están registrados.
+- No se modifican código, OAuth scopes, Google Cloud, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-014 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S161 | Checkpoint AUD-CP-0160 | E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837 | revalidación previa CP-0116/HEAD acde0781b7592a73704dab30a58e4208bf29cb31 | HEAD 9df536947f798316c2a33b522cc37e8b01faf3d6 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 111 con comparación E1→HEAD, CP-0116→HEAD, SHA de siete archivos, estado de hallazgos y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 96 con continuidad de H-AUD-014-001 a 003, AUG-095 a AUG-097 y VAL-23.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-014 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0160 y SHA de respaldos exactos.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; los hallazgos, tareas y validación ya están registrados.
+- No se modifican archivos funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-015 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S162 | Checkpoint AUD-CP-0161 | E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | revalidación previa CP-0117/HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1 | HEAD 445a008dea6c15c3325a7becade69e791dcc2827 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 112 con comparación E1→HEAD, CP-0117→HEAD, SHA de nueve archivos y estado de hallazgos.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 97 con H-AUD-015-001 a 004, AUG-098 a 101 y VAL-24.
+- Se reafirma que los filtros rápidos fueron cancelados; no deben reintroducirse. HTML/CSS no conservan controles/reglas identificados, pero main.js mantiene referencias obsoletas toggleFiltersBtn/filtersBar en blur.
+- La limpieza integral de los remanentes queda expresamente pendiente y obligatoria en H-AUD-015-002/AUG-099. No se modifica código en esta revalidación E1.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-015 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0161 y SHA de respaldos exactos.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; hallazgos/tareas existentes se conservan sin duplicación.
+- Sin cambios funcionales, HTML, CSS, JavaScript, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-016 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S163 | Checkpoint AUD-CP-0162 | E1 2daf88c96d29999cbc734c968ef94355ee5324ca | revalidación previa CP-0118/HEAD 9355e181a009b3dce7f3bf1893643896af0cf822 | HEAD 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec | árbol 2bb59eb95dec8bf9984d209d439280a02dba9217 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 113 con E1→HEAD, CP-0118→HEAD, seis SHA, hallazgos y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 98 con continuidad de H-AUD-016-001 a 005, AUG-102 a 105, AUG-112 y VAL-25.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-016 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0162 y SHA de respaldos exactos.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; no se duplican ni cierran hallazgos/tareas. AUG-112 continúa pendiente.
+- Sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-017 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S164 | Checkpoint AUD-CP-0163 | E1 11d617cbf6401748a017fbe69f89ab63fa08800e | revalidación previa CP-0119/HEAD 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52 | HEAD b30b84cc9b38e522085f1c520eef284128109479 | árbol 46667088ee45b0dd5fba43e6655ec84cebf4cbff | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 99 con comparaciones E1→HEAD y CP-0119→HEAD, SHA exactos, hallazgos persistentes y limitaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 99 con continuidad de H-AUD-017-001 a 007, AUG-106 a 112 y VAL-26.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad de AUD-T-017 y la siguiente unidad.
+- checkpoint.md: se añaden los checkpoints inicial/final AUD-CP-0163 y los SHA de respaldo.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; no se crean hallazgos/tareas duplicados. H-AUD-017-007/AUG-112 sigue pendiente.
+- No se modifican archivos funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, ni deployments. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-018 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7 | continuidad previa CP-0057/HEAD df6a78e1fe29c6f29e864d5542cade12f8c6e7df | HEAD 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f | árbol c0b4aad1a658c268c48ceb2208209e1f898d3be3 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Preflight: E1→HEAD 129 commits adelante/0 detrás; CP-0057→HEAD 108 adelante/0 detrás; merge-base idéntico a cada referencia. Ambos diffs limitados a ocho archivos documentales/de registro.
+- Los 13 archivos funcionales/de prueba de AUD-T-018 conservan SHA exactos de E1; se revalidan H-AUD-018-001 a 009 sin evidencia de corrección.
+- AUG-113 a AUG-121 siguen pendientes; VAL-27 planificada/no ejecutada. No se crean tareas ni hallazgos duplicados.
+- Plan_Auditoria y Consolidacion_Auditoria reciben secciones de continuidad; ChangesLogs registra la sesión; contexto_personal y checkpoint se actualizan.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: no hay hallazgos/tareas nuevas y los registros previos se conservan. Auditoría.txt no pudo leerse por tamaño/respuesta vacía del conector.
+- No se modifican archivos funcionales, servicios, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-019 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S166 | Checkpoint AUD-CP-0165 | E1 6f0f901179c10833cbeedcb2767a25fcdd085b0d | continuidad previa CP-0121/HEAD 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54 | HEAD c61e00c2926b2b4ce5480ba755789ce4c0fffa1e | árbol 2df5b97066ef18998c6d1c56032d920787ded20b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 129 commits adelante/0 detrás; CP-0121→HEAD: 44 adelante/0 detrás; ambos merge-base idénticos y diffs solo documentales (ocho y cinco archivos, respectivamente).
+- Los 15 archivos funcionales/técnicos de AUD-T-019 conservan SHA exactos de E1. H-AUD-019-001 a 014 siguen abiertos; AUG-122 a 135 pendientes; VAL-28 planificada/no ejecutada.
+- Revalidación estática confirma defectos previos de autenticación/serialización, esquema Tutoriales, restauraciones, validación/idempotencia, relaciones PyS, mutaciones ADMIN/USERS, aprobación de vídeo, VIN, suite ausente, mapa de acciones y contradicción README/fuentes.
+- Services/Test contiene copias AUTH/USERS para pruebas aisladas, pero no asserts ni runner; no hay proyecto Apps Script desplegado ni copia ADMIN. No se ejecutaron pruebas funcionales.
+- Plan_Auditoria y Consolidacion_Auditoria reciben sección 101; ChangesLogs registra esta sesión; contexto_personal y checkpoint se actualizan. Tareas.txt y Aug_Tareas.md permanecen sin cambios porque los hallazgos y tareas ya existen.
+- Auditoría.txt no pudo leerse por tamaño/respuesta vacía del conector; no se modifica. Sin nuevos hallazgos ni cierres.
+- No se modifican código, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-020 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S167 | Checkpoint AUD-CP-0166 | E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188 (árbol 011980eae1ae02143377faffcf5148c7067bfad7) | revalidación previa CP-0122/HEAD 8b695738d2714d350a5897d0262262a612ff6ac0 | HEAD 668a550c1f16d8848cc118809f0140eaf7cd1b96 (árbol f98a95fc852d7e7900177d7c6af2402e1ad2e766) | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 129 commits posteriores/0 detrás, merge-base idéntico, diff solo de ocho documentos. CP-0122→HEAD: 44 posteriores/0 detrás, merge-base idéntico, diff solo de cinco documentos.
+- Los 27 archivos funcionales/técnicos conservan SHA E1 exactos. H-AUD-020-001 a 004 siguen abiertos; H-AUD-020-005 corregido documentalmente. AUG-136 a 139 pendientes; adendas AUG-036/AUG-104 vigentes; VAL-29 planificada/no ejecutada.
+- Sin nuevos hallazgos ni tareas. Sin cambios funcionales. Se mantienen controles positivos históricos y la cautela de no retirar funciones/exportaciones sin call graph y validación de contratos externos.
+- No se ejecutaron Node/lint, navegador, zoom 200/400%, lector de pantalla, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3.
+- Plan_Auditoria y Consolidacion_Auditoria reciben sección 102; ChangesLogs registra esta sesión; contexto_personal y checkpoint se actualizan. Auditoría.txt, Tareas.txt y Aug_Tareas.md sin cambios por ausencia de novedades.
+- Sin código, CSS/HTML, servicios, endpoints, contratos, configuración, assets, pruebas, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-021 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S168 | Checkpoint AUD-CP-0167 | E1 3339694150823f8f8adca6ffbad6211c708a8960 (árbol ebe322745a0458df1dbf749a28517ce97e36eb08) | revalidación previa CP-0123/HEAD 903a5bc773eab6992c1952b2f1f9b5fa45bba800 | HEAD 8b4fa409b8ed553de2e21da2878b22c8992c0ded (árbol 5ff0b0548f714101bb895199606b34e948cb1372) | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 129 commits posteriores/0 detrás; CP-0123→HEAD: 44 posteriores/0 detrás; merge-base idéntico en ambos casos. Diffs exclusivamente documentales: ocho y cinco archivos, respectivamente.
+- ui.js, rich-text.js, style.css, index.html y README.md conservan SHA exactos de E1. No hay deriva de código, CSS, HTML de aplicación ni assets.
+- H-AUD-021-001 a 009 siguen abiertos; AUG-140 a 146 pendientes; adenda AUG-096 vigente; VAL-30 planificada/no ejecutada. Se verifica que 6d7fbb9c corresponde a tareas del panel de desarrollador y formulario PyS, no a impresión; AUG-146 permanece abierta.
+- No se crean hallazgos/tareas duplicados. Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican; Auditoría.txt devuelve contenido vacío por el conector y no se declara inspeccionado.
+- Plan_Auditoria y Consolidacion_Auditoria reciben sección 103; ChangesLogs registra esta sesión; contexto_personal y checkpoint se actualizan.
+- No se ejecutaron navegador, impresión, PDF, QR, Node/lint, móvil, red, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, migraciones, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-022 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S169 | Checkpoint AUD-CP-0168 | E1 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | revalidación previa CP-0124/HEAD 5118addaae3371837cfe83f9bfcd82456bf62a8b | HEAD inicial 448aeca444870f966b6465c93b4bac44584d02a5 | árbol 50aeb01d62852e428459e3cc84de1dddc452b929 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 104 con comparaciones E1→HEAD y CP-0124→HEAD, SHA de nueve archivos, hallazgos y límites.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 104 con continuidad de H-AUD-022-001 a 004, AUG-147 a 150 y VAL-31.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se añade continuidad AUD-T-022 y siguiente unidad AUD-T-001.
+- checkpoint.md: se añaden los checkpoints inicial/final AUD-CP-0168 y los SHA de respaldos exactos.
+- Auditoría.txt no se modifica: el conector devuelve contenido vacío y no permite comprobar independientemente su registro; no se afirma una lectura nueva. Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque las tareas/validación ya existen.
+- Sin cambios en archivos funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, pruebas, merge o despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-09 — PLAN MAESTRO DE IMPLEMENTACIÓN Y AUG-152
+Sesión PLAN-20261109-S170 | Checkpoint PLAN-CP-0169 | HEAD inicial d747696416c6d0a67edb558e8ec21e04e1e7eadf | Base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Se incorpora Plan_auditoría/Plan_Maestro_Implementacion.md con fases, prioridades, dependencias, inventario y Definition of Done.
+- Tareas.txt y Aug_Tareas.md: nueva AUG-152 para rediseñar Inbox y habilitar mensajería bidireccional.
+- Plan_Auditoria y Consolidacion_Auditoria: hoja de ruta y VAL-34.
+- checkpoint.md: checkpoint inicial/final de la tarea documental.
+- Conteos: 39 AUD-T; 38/38 unidades principales E1 estáticas; 151 AUG únicas; 185 H-AUD únicas referenciadas. No equivalen a pendientes abiertos.
+- Auditoría.txt devuelve contenido vacío; no se afirma lectura íntegra. Sin cambios funcionales/productivos.
+- No se ejecutan pruebas ni se cierran hallazgos. Filtros rápidos del catálogo siguen cancelados.
+================================================================================
+
+
+================================================================================
+2026-11-09 — CORRECCIÓN H-AUD-040
+Tarea correctiva separada del trabajo de protocolo de ciclo.
+- Plan_auditoría/Plan_Maestro_Implementacion.md: se corrige el inventario H-AUD; 248 ocurrencias y 38 IDs únicos en Tareas.txt (001, 003–039).
+- Auditoría.txt: se registra H-AUD-040 con evidencia, impacto y corrección.
+- Tareas.txt: se añade el registro de H-AUD-040 y su tarea correctiva.
+- checkpoint.md: se registra checkpoint inicial/final de esta corrección.
+- No se modifican informes de auditoría, código funcional, servicios, endpoints ni datos productivos.
+================================================================================
+
+================================================================================
+2026-11-09 — RECTIFICACIÓN H-AUD-040 / H-AUD-041
+- La auditoría del commit c3d4452e5cb6b1afaac2d233892be637a139f72c detectó que la extracción H-AUD-### truncaba los IDs individuales H-AUD-###-###.
+- Se invalida H-AUD-040 sin borrar el registro histórico.
+- Se registra H-AUD-041 y se confirma el conteo correcto de 185 IDs individuales completos en Tareas.txt.
+- Se restaura el dato correcto en Plan_auditoría/Plan_Maestro_Implementacion.md y se explica el patrón de extracción.
+- No se modifican informes de auditoría ni archivos funcionales.
+================================================================================
+
+================================================================================
+2026-11-09 — H-AUD-042 / PROTOCOLO DE CONTINUIDAD ENTRE TAREAS
+Auditoría pre-implementación: Proceso de desarollo.md y Plan_auditoría/Plan_Maestro_Implementacion.md.
+- Se detecta ausencia de compuerta obligatoria para auditar la implementación del checkpoint anterior y corregir sus hallazgos antes de auditar la tarea actual.
+- Auditoría.txt: H-AUD-042 registrado antes de implementar.
+- Tareas.txt: H-AUD-042 vinculado al trabajo actual.
+- Se crea Plan_auditoría/Protocolo_Ciclo_Continuo.md como anexo normativo; se agrega referencia y secuencia obligatoria al plan maestro.
+- Proceso de desarollo.md se conserva sin cambios por su instrucción explícita de preservación; el anexo lo complementa sin sustituirlo.
+- Sin cambios en código funcional, servicios, endpoints, contratos, configuración, assets ni datos productivos.
+- No se ejecutan pruebas funcionales porque el alcance es documental; se verifica el diff y el procedimiento de commit.
+================================================================================

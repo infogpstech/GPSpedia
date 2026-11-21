@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+const start=source.indexOf("function handleRecordLike(payload) {");
+const end=source.indexOf("\nfunction ",start+10);
+assert.ok(start>=0&&end>start,"No se encontró handleRecordLike");
+const handler=source.slice(start,end);
+assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/,"La ruta de likes no debe adquirir lock global");
+assert.equal((handler.match(/logLikeActivityAfterAppend_\(/g)||[]).length,2,"Los likes nuevos y recuperados deben registrar actividad tras el append");
+assert.match(handler,/ledger\.appendRow\(/);
+const activityStart=source.indexOf("function logLikeActivityAfterAppend_");
+const activityEnd=source.indexOf("\nfunction ",activityStart+10);
+const activity=source.slice(activityStart,activityEnd);
+assert.match(activity,/logUserActivity\(/);
+assert.doesNotMatch(activity,/LockService|getScriptLock|acquireFeedbackScriptLock_/);
+console.log("FeedbackLikeActivityOutsideLock: 5/5 PASS");

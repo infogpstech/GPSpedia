@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+const start=source.indexOf("function getNextFormulaBasedId_(sheet, idColumn, minimumSuffix) {");
+const end=source.indexOf("\nfunction ",start+10);
+assert.ok(start>=0&&end>start,"No se encontró getNextFormulaBasedId_");
+const helper=source.slice(start,end);
+assert.match(helper,/getRange\(2, idColumn, lastRow - 1, 1\)\.getValues\(\)/,"Debe leer solo la columna ID de origen");
+assert.match(helper,/getRange\(firstRow, 1, lastOffset - firstOffset \+ 1, lastColumn\)\.getValues\(\)/,"Las filas sin ID se validan mediante rangos acotados");
+assert.match(helper,/createTextFinder\(sheet\.getName\(\)\)/,"Las reservas previas se buscan por nombre de hoja");
+assert.match(helper,/createTextFinder\(reservationId\)/,"La reserva nueva se confirma por identificador único");
+assert.match(helper,/COUNTIFS\(/,"El sufijo se asigna por orden de append en el ledger");
+assert.doesNotMatch(helper,/getDataRange\(|LockService|tryLock|waitLock|PropertiesService/);
+console.log("FeedbackFormulaIdAllocatorBoundedRead: 6/6 PASS — lectura dirigida y reservas sin bloqueo global");
