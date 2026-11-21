@@ -198,16 +198,14 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "WRITE", "addOrUpdateCut", write.token);
     });
 
-    test_("validateSession usa contexto central y touchSession no bloquea lecturas de perfil", function() {
+    test_("updateProfile no usa lease y touchSession conserva la protección de logout", function() {
         const r = createRuntime_();
         expectThrow_(() => coordinatorPolicy_("AUTH", "validateSession"), "no está habilitada");
         const touch = acquire_(r, "AUTH", "touchSession");
         assert_(touch.status === "success", "touchSession debe adquirir lease para sincronizar actividad.");
-        const profile = acquire_(r, "USERS", "updateProfile");
-        assert_(profile.status === "success", "El toque de actividad no debe bloquear operaciones que solo leen SESSION_CONTEXTS.");
+        expectThrow_(() => coordinatorPolicy_("USERS", "updateProfile"), "no está habilitada");
         const logout = acquire_(r, "AUTH", "logout");
         assert_(logout.status === "error" && logout.code === "busy", "Logout debe esperar mientras una operación autenticada conserva el contexto.");
-        release_(r, "USERS", "updateProfile", profile.token);
         release_(r, "AUTH", "touchSession", touch.token);
         const retry = acquire_(r, "AUTH", "logout");
         assert_(retry.status === "success", "Logout debe continuar tras finalizar las operaciones protegidas.");
@@ -244,13 +242,13 @@ function runSharedMutationCoordinatorTests() {
         });
     });
 
-    test_("Mutación USERS bloquea lectura de identidad de WRITE", function() {
+    test_("createUser conserva lease para unicidad frente a mutaciones de identidad", function() {
         const r = createRuntime_();
-        const users = acquire_(r, "USERS", "updateProfile");
-        assert_(users.status === "success", "USERS debía obtener lease.");
+        const users = acquire_(r, "USERS", "createUser");
+        assert_(users.status === "success", "USERS/createUser debe obtener lease por unicidad de username.");
         const write = acquire_(r, "WRITE", "addOrUpdateCut");
         assert_(write.status === "error" && write.code === "busy", "WRITE debía esperar por USERS.");
-        release_(r, "USERS", "updateProfile", users.token);
+        release_(r, "USERS", "createUser", users.token);
     });
 
     test_("Mantenimiento exclusivo bloquea operaciones activas y nuevas", function() {
@@ -526,9 +524,7 @@ function runSharedMutationCoordinatorTests() {
         const logout = acquire_(r, "AUTH", "logout");
         assert_(logout.status === "error" && logout.code === "busy",
             "Logout no debe invalidar la sesión mientras una operación autenticada la actualiza.");
-        const profile = acquire_(r, "USERS", "updateProfile");
-        assert_(profile.status === "error" && profile.code === "busy",
-            "Cambios de perfil no deben competir con la actualización de actividad.");
+        expectThrow_(() => coordinatorPolicy_("USERS", "updateProfile"), "no está habilitada");
         release_(r, "FEEDBACK", "sessionActivity", activity.token);
         const retry = acquire_(r, "AUTH", "logout");
         assert_(retry.status === "success", "Logout debe continuar tras terminar la operación protegida.");
@@ -544,8 +540,7 @@ function runSharedMutationCoordinatorTests() {
         assert_(!policy.writeResources.includes("SESSION_CONTEXTS"), "acceptTerms no debe revocar sesiones.");
         const acceptance = acquire_(r, "AUTH", "acceptTerms");
         assert_(acceptance.status === "success", "acceptTerms debe obtener una lease autorizada.");
-        const profile = acquire_(r, "USERS", "updateProfile");
-        assert_(profile.status === "error" && profile.code === "busy", "La aceptación debe serializarse con cambios de Users.");
+        expectThrow_(() => coordinatorPolicy_("USERS", "updateProfile"), "no está habilitada");
         const login = acquire_(r, "AUTH", "login");
         assert_(login.status === "error" && login.code === "busy", "La aceptación debe impedir una mutación concurrente de ActiveSessions.");
         release_(r, "AUTH", "acceptTerms", acceptance.token);
@@ -664,8 +659,7 @@ function runSharedMutationCoordinatorTests() {
         assert_(completion.status === "success", "La recuperación debe adquirir lease sin sesión previa.");
         const login = acquire_(r, "AUTH", "login");
         assert_(login.status === "error" && login.code === "busy", "Login debe serializarse con revocación y cambio de contraseña.");
-        const profile = acquire_(r, "USERS", "updateProfile");
-        assert_(profile.status === "error" && profile.code === "busy", "El perfil no debe competir con la recuperación.");
+        expectThrow_(() => coordinatorPolicy_("USERS", "updateProfile"), "no está habilitada");
         const request = acquire_(r, "AUTH", "requestPasswordRecovery");
         assert_(request.status === "error" && request.code === "busy", "No debe reemplazarse el código durante su consumo.");
         release_(r, "AUTH", "completePasswordRecovery", completion.token);
