@@ -605,3 +605,13 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - InboxConversations 66/66 PASS. La prueba ahora usa un LockService que falla si se invoca y confirma que las lecturas/mutaciones no adquieren locks.
 - CI 15e7ab84d9a4530cb1097334a3e907f798c9d0ca SUCCESS: 259 suites, 3,130 pruebas aprobadas, 0 fallos; build SUCCESS; health read-only SUCCESS; Pages/deploy SUCCESS.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos. La concurrencia real multi-ejecución de Inbox queda para Beta aislada.
+
+
+## Reconciliación normativa — vídeos, tutoriales e Inbox sin leases (2026-11-21)
+
+- submitVideoForApproval, approveVideo y rejectVideo ejecutan directamente en FEEDBACK; se retiró withVideoApprovalMutationLock_ y sus políticas de lease en Coordinator.
+- addTutorial/updateTutorialItem e Inbox tampoco declaran políticas de lease Coordinator; Inbox ya no adquiere ScriptLock global.
+- Se conservan VideoApprovalEvents append-only, RBAC de aprobación, sesión de actor, validación de destino, materialización y publicación/retirada idempotente.
+- Las pruebas Beta se actualizaron: verificar journals, append/read-back, idempotencia y fallos parciales sin exigir leases ni serialización artificial.
+- CI 194ec14271c630c20d7997ffcba55903b98474da SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+- No se desplegó Apps Script ni se modificaron datos productivos.
