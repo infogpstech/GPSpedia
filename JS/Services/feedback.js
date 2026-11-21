@@ -2810,6 +2810,30 @@ function readInboxSheetPage_(sheet, offset, count) {
  const lastColumn=Math.max(1,Number(sheet.getLastColumn())||1);
  return sheet.getRange(offset+2,1,count,lastColumn).getValues();
 }
+function isCanonicalFeedbackInboxRow_(sheet, row, rowIndex, reportMetadataColumn) {
+    if (!sheet || !Array.isArray(row)) return true;
+    const vehicleId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+    const userName = String(row[COLS_FEEDBACKS.Usuario - 1] || "").trim();
+    const rawProblem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+    const suggestion = parseCutSuggestionRecord(rawProblem, vehicleId, userName);
+    if (suggestion) {
+        const operationId = String(suggestion.suggestionOperationId || "").trim();
+        const canonical = operationId
+            ? findCutSuggestionByOperation_(sheet, operationId)
+            : findCutSuggestionByRequest_(sheet, String(suggestion.reportId || ""), vehicleId,
+                Number(suggestion.corteIndex), String(suggestion.userId || ""));
+        return !canonical || Number(canonical.rowNumber) === Number(rowIndex);
+    }
+    if (reportMetadataColumn) {
+        const metadata = parseReportMetadata(row[reportMetadataColumn - 1], vehicleId);
+        if (metadata) {
+            const canonical = findReportByReportId_(sheet, metadata.reportId, reportMetadataColumn);
+            return !canonical || Number(canonical.rowIndex) === Number(rowIndex);
+        }
+    }
+    return true;
+}
+
 function handleGetFeedbackItems(payload) {
  const source=payload&&typeof payload==="object"?payload:{};
  const rawCursor=source.cursor===undefined||source.cursor===null||source.cursor===""?"0":String(source.cursor).trim();
@@ -2836,7 +2860,9 @@ function handleGetFeedbackItems(payload) {
  const reportMetadataColumn=feedbackRows.length?getReportMetadataColumn(feedbackSheet):0;
  const actor=payload&&payload.__feedbackActor?payload.__feedbackActor:null;
  const canSeeVideoApprovals=String(actor&&actor.role||"")==="Desarrollador";
- const mappedFeedback=feedbackRows.map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn));
+ const mappedFeedback=feedbackRows
+  .filter((row,index)=>isCanonicalFeedbackInboxRow_(feedbackSheet,row,offset+2+index,reportMetadataColumn))
+  .map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn));
  const data=mappedFeedback.filter(item=>canSeeVideoApprovals||item.type!=="video_approval")
   .concat(contactRows.map(mapInboxContactRow_));
  const consumedCount=feedbackRows.length+contactRows.length;
@@ -2858,6 +2884,7 @@ function handleGetMyProblemReports(payload) {
     const width = Math.max(metadataColumn || 0,9);
     const rows = sheet.getRange(2,1,sheet.getLastRow()-1,width).getValues().reverse();
     const ownedReports = [];
+    const seenReportIds = new Set();
     rows.forEach(row => {
         const rawContent = String(row[COLS_FEEDBACKS.Problema-1] || "");
         let videoData = null;
@@ -2876,7 +2903,10 @@ function handleGetMyProblemReports(payload) {
         let storedMetadata = null;
         try { storedMetadata = JSON.parse(rawMetadata); } catch (error) {}
         if (!storedMetadata || String(storedMetadata.userId || "").trim() !== actor.userId) return;
-        if (!parseReportMetadata(rawMetadata,vehicleId)) return;
+        const parsedMetadata = parseReportMetadata(rawMetadata,vehicleId);
+        if (!parsedMetadata) return;
+        if (seenReportIds.has(parsedMetadata.reportId)) return;
+        seenReportIds.add(parsedMetadata.reportId);
         const item = mapInboxFeedbackRow_(row,metadataColumn);
         item._cursor = item.reportMetadata && item.reportMetadata.reportId ? item.reportMetadata.reportId : "";
         ownedReports.push(item);
