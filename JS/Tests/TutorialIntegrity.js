@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import crypto from "node:crypto";
 
 function extract_(source, start, end) {
     const i = source.indexOf(start), j = source.indexOf(end, i + start.length);
@@ -47,16 +48,27 @@ function makeSheet_(rows, options = {}) {
 function buildHarness_(feedback, options = {}) {
     const initial = options.rows || [];
     const sheet = makeSheet_(initial, options);
-    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false };
+    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false };
+    const titleEventsSheet = makeSheet_(options.titleEvents || [], options);
     const context = {
         LockService: { getScriptLock: () => ({
             waitLock() { state.lockWaits++; },
             releaseLock() { state.lockReleases++; }
         }) },
-        SpreadsheetApp: { flush() { state.flushes++; if (options.failFlush) throw new Error("simulated flush failure"); } },
+        Utilities: {
+            DigestAlgorithm: { SHA_256: "SHA_256" },
+            computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(String(value)).digest())
+        },
+        SpreadsheetApp: { flush() { state.flushes++; if (options.failFlushAt === state.flushes) throw new Error("simulated flush failure"); } },
         getSpreadsheet: () => ({
-            getSheetByName: name => name === "Tutorial" && options.missingSheet !== true ? sheet : null,
-            insertSheet: name => { if (name !== "Tutorial") throw new Error("wrong sheet"); state.inserted = true; return sheet; }
+            getSheetByName: name => name === "Tutorial"
+                ? (options.missingSheet !== true ? sheet : null)
+                : name === "TutorialTitleEvents" ? (state.insertedTitleEvents || options.titleEvents ? titleEventsSheet : null) : null,
+            insertSheet: name => {
+                if (name === "Tutorial") { state.inserted = true; return sheet; }
+                if (name === "TutorialTitleEvents") { state.insertedTitleEvents = true; return titleEventsSheet; }
+                throw new Error("wrong sheet");
+            }
         }),
         SHEET_NAMES: { FEEDBACKS: "Feedbacks" },
         getSafeSheet: () => options.feedbackSheet || null,
@@ -75,7 +87,8 @@ function readCatalogTutorials_(catalog, tutorialRows) {
     const tutorialColumns = extract_(catalog, "const COLS_TUTORIALES", "const COLS_RELAY");
     const relayColumns = extract_(catalog, "const COLS_RELAY", "// ============================================================================");
     const mapper = extract_(catalog, "function mapRowToObject", "function handleGetCatalogData");
-    const reader = extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
+    const dedupe = extract_(catalog, "function dedupeTutorialCatalogRows_", "function handleGetCatalogData");
+    const reader = dedupe + "\n" + extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
     const rows = { Cortes: [["id"]], LogosMarca: [["id"]], Tutorial: tutorialRows.map(row => row.slice()), Relay: [["ID"]] };
     const context = {
         SHEET_NAMES: { CORTES: "Cortes", LOGOS_MARCA: "LogosMarca", TUTORIALES: "Tutorial", RELAY: "Relay" },
@@ -119,8 +132,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(JSON.stringify(h.sheet.data[0]), JSON.stringify(headers));
         assert.equal(JSON.stringify(h.sheet.data[1]), JSON.stringify(["tut-" + operationId, base.tema, "", base.comoIdentificarlo,
             base.dondeEncontrarlo, base.detalles, "", base.userName]));
-        assert.equal(h.state.lockWaits, 1);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
     });
 
     test("un reintento con el mismo operationId devuelve la fila original sin duplicarla", () => {
@@ -156,7 +169,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     });
 
     test("recupera un alta cuyo flush falla si la fila completa quedó persistida", () => {
-        const h = buildHarness_(feedback, { rows: [headers], failFlush: true });
+        const h = buildHarness_(feedback, { rows: [headers], failFlushAt: 3 });
         const result = h.api.add(base);
         assert.equal(result.status, "success");
         assert.equal(result.recovered, true);
@@ -263,8 +276,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     test("libera ScriptLock después de fallos de validación o persistencia", () => {
         const h = buildHarness_(feedback, { missingSheet: true, failAppend: true });
         assert.throws(() => h.api.add(base), /simulated append failure/);
-        assert.equal(h.state.lockWaits, 1);
-        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.lockWaits, 0);
+        assert.equal(h.state.lockReleases, 0);
         const u = buildHarness_(feedback, { rows: [headers, ["tut-1", "Tema", "", "", "", "", "", "Autor"]], failSetValues: true });
         assert.throws(() => u.api.update({ tutorialId: "tut-1", detalles: "fallo" }), /simulated range write failure/);
         assert.equal(u.state.lockReleases, 1);
@@ -352,6 +365,14 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
             ID: row[0], Tema: row[1], Imagen: row[2], comoIdentificarlo: row[3],
             dondeEncontrarlo: row[4], Detalles: row[5], Video: row[6], Colaborador: row[7]
         }));
+    });
+
+    test("CATALOG deduplica reintentos físicos idénticos por ID y rechaza copias contradictorias", () => {
+        const row = ["tut-0123456789abcdef0123456789abcdef", "Tema", "", "Cómo", "Dónde", "Detalle", "", "Autora"];
+        const result = readCatalogTutorials_(catalog, [headers, row, row.slice()]);
+        assert.equal(result.data.tutoriales.length, 1);
+        const conflict = row.slice(); conflict[1] = "Otro tema";
+        assert.throws(() => readCatalogTutorials_(catalog, [headers, row, conflict]), /mismo ID con filas contradictorias/);
     });
 
     test("CATALOG conserva lectura de registros históricos A:G sin inventar Colaborador", () => {
