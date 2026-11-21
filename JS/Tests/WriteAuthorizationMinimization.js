@@ -108,7 +108,10 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(rejected&&authCalls===1&&roleReads===0&&lockCalls===0&&spreadsheetReads===0&&reservations===0);
  });
  run("WRITE asigna IDs desde el servicio propietario mediante el ledger compartido",()=>{
-  const handler=extract(write,"handleAddOrUpdateCutLockedUnsafe_");
+  const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_");
+  const end=write.indexOf("\nfunction handleCheckVehicle",start);
+  const handler=write.slice(start,end);
+  assert(start>=0&&end>start,"No se encontró la ruta de alta de vehículo nuevo.");
   assert(handler.includes("reserveCortesVehicleIdForOperation_"));
   assert(!handler.includes("getNextCortesVehicleIdLocked"));
   assert(extract(write,"handleAllocateVehicleId").includes("reserveCortesVehicleIdForOperation_"));
