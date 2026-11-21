@@ -145,9 +145,12 @@ function addLogoHarness(options={}){
   LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER"
  };
  const fn=new Function(...Object.keys(deps),extract("getLogoCategoryCandidatesFromCortesRows_")+String.fromCharCode(10)+extract("buildCanonicalLogoDestination_")+String.fromCharCode(10)+extract("copyAdminRowPresentationOnly_")+String.fromCharCode(10)+extract("getNextLogoIdLocked_")+String.fromCharCode(10)+extract("validateLogoImagePayload_")+String.fromCharCode(10)+extract("handleAddLogo")+String.fromCharCode(10)+"return handleAddLogo;")(...Object.values(deps));
- return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"iVBORw0KGgo=",filename:"logo.png",mimeType:"image/png"},()=>{}),
+ return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"iVBORw0KGgo=",filename:options.filename||"logo.png",mimeType:options.mimeType||"image/png"},()=>{}),
   rows,file,folderCalls,get createdFilename(){return createdFilename;},get trashed(){return trashed;},get description(){return description;}};
 }
+test("Rechaza extensión que no coincide con el MIME real",()=>{
+ const h=addLogoHarness({filename:"logo.svg"});assert.throws(()=>h.run(),/extensión del logotipo/);
+});
 test("Guarda el logotipo con nombre canónico en categoría/marca",()=>{
  const h=addLogoHarness();const result=h.run();
  assert.equal(result.status,"success");

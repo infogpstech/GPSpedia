@@ -6470,7 +6470,12 @@ function handleAddLogo(payload, logMessage) {
         throw new Error("No se pudo construir el destino canónico del logotipo.");
     }
     const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => mimeType });
-    if (!extension || !logoDestination.targetBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");
+    const expectedExtensionByMime = { "image/png": ".png", "image/svg+xml": ".svg", "image/webp": ".webp" };
+    const expectedExtension = expectedExtensionByMime[String(mimeType || "").trim().toLowerCase()];
+    if (!extension || !expectedExtension || String(extension).toLowerCase() !== expectedExtension) {
+        throw new Error("La extensión del logotipo no coincide con su MIME real.");
+    }
+    if (!logoDestination.targetBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");
     const canonicalFilename = logoDestination.targetBaseName + extension;
     logMessage("Registro Logo", "Iniciando registro de logotipo para la marca: " + nombreMarca);
     const rootFolder = getCortesRootFolder();
