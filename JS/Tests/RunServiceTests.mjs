@@ -102,6 +102,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE asigna IDs de forma idempotente por opId','JS/Tests/WriteVehicleIdAllocationIdempotency.mjs');
   runCli('WRITE validación de respaldo Drive fuera del ScriptLock en freeze IDs','JS/Tests/WriteFreezeCortesIdsBackupOutsideLock.mjs');
   runCli('WRITE limita lectura de entidades existentes a marca/modelo/versiones','JS/Tests/WriteEntityLookupBoundedRead.mjs');
+  runCli('WRITE consulta entidades solo cuando se aportan campos de entidad','JS/Tests/WriteEntityCatalogDemand.mjs');
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
   runCli('WRITE carpetas suplementarias sin lease ni espera','JS/Tests/WriteSupplementaryFolderNoLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
