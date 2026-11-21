@@ -40,10 +40,12 @@ assert.match(writeEntry, /if \(validated\.vehicleId\)/);
 assert.match(writeEntry, /WRITE_OP_ID_REQUIRED/,
     "Los vehículos existentes deben usar opId estable en la ruta append-only.");
 assert.match(writeEntry, /LockService\.getScriptLock\(\)/,
-    "El ScriptLock queda reservado para la asignación secuencial de IDs nuevos.");
+    "La mutación física de un vehículo nuevo conserva su sección crítica hasta completar su escritura y compensación.");
 assert.doesNotMatch(writeEntry, /waitLock\(/);
-assert.match(writeAllocate, /lock\.tryLock\(0\)/);
-assert.doesNotMatch(writeAllocate, /waitLock\(/);
+assert.doesNotMatch(writeAllocate, /LockService|lock\.tryLock\(|waitLock\(|releaseLock\(/,
+    "La asignación central de IDs se resuelve mediante el ledger append-only sin ScriptLock.");
+assert.match(writeAllocate, /reserveCortesVehicleIdForOperation_\(/,
+    "La asignación central debe verificar el ID reservado por opId.");
 assert.match(writeDrive, /lock\.tryLock\(0\)/);
 assert.match(adminEntry, /lock\.tryLock\(0\)/);
 assert.doesNotMatch(adminEntry, /waitLock\(/);
