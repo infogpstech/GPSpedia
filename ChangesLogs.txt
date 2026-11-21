@@ -278,3 +278,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `findTutorialById_` y CATALOG proyectan la primera fila física por ID; duplicados de reintento quedan fuera del catálogo.
 - CI `44876830826` SUCCESS: 258 suites, 3097 pruebas, 0 fallos; health read-only `44876830897` SUCCESS; Pages queued al registrar.
 - Pendiente: migrar ediciones B:F con expected hash/version y conservar aprobaciones de vídeo G. Sin despliegue ni cambios productivos.
+
+
+2026-11-21 — Tutoriales: ediciones descriptivas append-only
+- Se añadió `TutorialEditEvents` con operationId determinista, expectedHash D:F y snapshots append-only.
+- Ediciones sin cambio de título para IDs estables ya no usan ScriptLock ni setValues in-place; los eventos obsoletos no se proyectan y el primer evento válido gana.
+- `findTutorialRow_` y CATALOG aplican la proyección D:F, preservando Video G, Imagen C y Colaborador H. Renombrados y filas legacy sin ID permanecen bajo lock.
+- CI `44877806419` SUCCESS: 258 suites, 3101 pruebas, 0 fallos; health `44877806406` y Pages `44877806381` SUCCESS.
