@@ -57,8 +57,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Completar matriz del flujo de catálogo: snapshot/reset, feed incremental, refresh post-edición, caché local y sincronización PyS.
 
 ### P0 — AUTH/USERS y excepciones de sesión
-- [ ] Completar mapa de consumidores de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser`.
-- [ ] Determinar si `touchSession`/`acceptTerms` generan llamadas o leases redundantes, contrastando con §15.
+- [x] Completar mapa de consumidores de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser` en `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`.
+- [x] Determinar y corregir redundancias de `touchSession`/`acceptTerms`: `touchSession` no tiene consumidor frontend y deja de adquirir lease; `acceptTerms` reutiliza actor cacheado y deja de adquirir lease.
 - [ ] Clasificar leases AUTH y conservar solo excepciones justificadas por §15: cierre remoto, invalidación/limpieza de sesión/caché, eliminación de cuenta y bloqueo temporal por intentos fallidos.
 - [ ] Resolver y probar la carrera USERS `createUser` ↔ AUTH `deleteUser`.
 - [ ] Verificar caché de actor e invalidación por revocación/cambio de rol/logout/eliminación.
@@ -100,4 +100,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local y mapa de consumidores AUTH/USERS completados y registrados. Continuar clasificando/reduciendo las leases AUTH conforme a §15: empezar por touchSession (sin consumidor) y acceptTerms (una escritura puntual con lease remota redundante candidata a retiro); después recuperación y actualización de perfil sin cambio de rol. No retirar la coordinación necesaria para cierre remoto, reset de sesiones, cambio de rol, eliminación de cuenta ni la exclusión mutua createUser ↔ deleteUser sin alternativa equivalente. Línea base real de campo queda diferida a Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS y primera reducción de leases (touchSession/acceptTerms) completados. Continuar con las demás acciones AUTH: retirar leases de recuperación/cambio de contraseña/actualizaciones que no necesiten exclusión entre servicios, usando actor cacheado y conservando las revocaciones remotas. Mantener createUser ↔ deleteUser coordinados hasta disponer de autoridad común. Línea base real de campo queda diferida a Beta aislada.
