@@ -372,3 +372,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Feed: cursor futuro/vencido, límite 1–50, huecos, eventos corruptos/ausentes activan resetRequired. El cliente API GET tiene retry/abort; el módulo offline valida snapshots completos, aplica deltas por ID estable, recalcula categorías y guarda snapshot+cursor en una transacción IndexedDB.
 - La UI aún no consume getCatalogChanges. exitModalEditMode usa getCatalogData completo para refrescar tras guardar y para comparar/verificar descarte; no se sustituye por un delta sin un cursor asociado al snapshot y recuperación completa ante resets/lag.
 - Decisión conservadora: mantener refresh completo; registrar integración UI del feed como siguiente tarea. Tests: CatalogChangeFeed 35/35, CatalogFeedRetry 9/9, CatalogSnapshotSync 29/29; CI: 283 suites, 3,286 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### Corrección de auditoría P1.9 y P1.10 — consumidor de feed y cierre de edición
+
+- Corrección del hallazgo anterior: `getCatalogChanges` sí tenía consumidor frontend. Está integrado en `auth.js:loadInitialData`, no directamente en `ui.js`; usa cursor local, delta GET, aplicación ordenada, reset seguro y persistencia atómica snapshot+cursor. El polling periódico y el canal entre pestañas también forman parte del flujo.
+- `main.js` expone `window.auth`; el cierre normal de edición ahora invoca `window.auth.loadInitialData(true, {silent: true})`. Si el feed no confirma sincronización, se solicita snapshot completo. Las respuestas tardías no sobrescriben estado actualizado por otra sincronización.
+- El descarte sigue usando dos snapshots completos por diseño: lectura de estado actual para calcular campos a restaurar y read-back completo posterior para verificar que el descarte fue durable. No se cambió esa ruta.
+- El fallback completo no adelanta cursor ni escribe un par snapshot/cursor incoherente; el cursor local permanece en su última posición confirmada para que el siguiente poll reproduzca deltas o fuerce reset si expiró.
+- `CatalogEditDeltaRefresh.mjs`: 23/23 PASS; CI: 284 suites, 3,309 pruebas, 0 fallos; build y health read-only SUCCESS.
