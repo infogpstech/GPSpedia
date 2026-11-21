@@ -132,3 +132,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - `getNextFormulaBasedId_` sustituye el contador `ScriptProperties` protegido por ScriptLock por reservas en `__IdentifierSequenceReservations__`. `appendRow` crea una posición única; la fórmula del sufijo cuenta reservas anteriores por hoja y columna. Se confirma la fila por UUID y se conserva la validación de IDs existentes y filas sin ID.
 - `FeedbackFormulaIdAllocator` 5/5 y `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos; Health read-only `44847431590` SUCCESS. Pages `44847431763` pendiente al registrar.
 - La reserva real con fórmulas/appendRow queda para Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-21 — FEEDBACK: likes append-only y actividad atómica
+- `handleRecordLike` registra likes nuevos como eventos `status=event` en `FeedbackLikes`, sin read-modify-write ni ScriptLock; los duplicados actor/vehículo/corte cuentan una sola vez. CATALOG suma los eventos únicos al contador histórico y el feed de `recordLike` publica reset sin lock de versión.
+- Los replays legacy `completed` incluyen eventos nuevos; `pending` sigue en recuperación protegida. `logUserActivity` usa `appendRow` y fórmula de fila, sin reserva de ID separada ni escrituras por celdas.
+- `FeedbackLikeAppendOnly` 4/4, `ActivityLogAppendAtomic` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848455795` SUCCESS: 255 suites, 3063 pruebas, 0 fallos; Health read-only `44848455802` SUCCESS. Pages `44848455600` pendiente.
+- No se desplegó Apps Script ni se modificaron datos productivos.
