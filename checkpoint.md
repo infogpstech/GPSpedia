@@ -911,3 +911,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Prioridad inmediata: (1) mapa de llamadas navegador→servicios y línea base de latencia/bytes/lecturas/escrituras; (2) AUTH/USERS y excepciones de sesión conforme a §15; (3) flujos de aportes y dependencias WRITE/FEEDBACK/ADMIN/CATALOG; (4) cargas de imágenes/vídeos; (5) navegación, cachés y regresión.
 - No se retiró ningún lock, lease, endpoint ni llamada de producción en esta fase. No se desplegó Apps Script ni se modificaron secretos, ScriptProperties, Spreadsheet o Drive productivos. La auditoría actual es estática; aún no certifica una mejora de rendimiento medida.
 - Siguiente paso: continuar el inventario de consumidores frontend y backend, revisar las rutas de carga/catálogo y completar el mapa antes de proponer cambios. Toda dependencia que impida simplificar permanece como tarea pendiente explícita.
+
+
+## Continuidad — auditoría estática de rutas y aportes (2026-11-21)
+
+- HEAD de partida verificado: `5845088b044d07e6f83cac60e81f9f65727f26d6`; rama `GPSpedia2.2.5_work`. Base protegida verificada: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Primera pasada inspeccionó `api-config.js`, `auth.js`, `main.js`, `ui.js`, `navigation.js`, `catalogRequest.js`, `catalogStatus.js`, `pys-data.js`, `youtubeUpload.js`, `imageObjectUrlCache.js`, `thumbnailCompressionQueue.js`, y servicios AUTH/USERS/WRITE/FEEDBACK/ADMIN/CATALOG/Coordinator/SharedMutationClient.
+- Hallazgos: `touchSession` no aparece invocado en los módulos frontend principales revisados y mantiene handler costoso con ScriptLock/lecturas completas; Coordinator ya actualiza actividad compartida cada cinco minutos. `acceptTerms` sí tiene consumidor y deduplicación local. Reportes/sugerencias y otros aportes de imagen transfieren Base64 sin compresión previa observada; YouTube usa carga directa reanudable de 8 MB con IndexedDB.
+- ADMIN llama a CATALOG con `getCatalogData(forceRefresh:true)` para consultas de proyección completa y candidatos; `getReplacedImages` activa una consulta de candidatos a CATALOG. El refresh de catálogo al cerrar edición y los reintentos de mutaciones ADMIN quedan como candidatos a medir/verificar, no como errores confirmados.
+- Se ampliaron tareas P0/P1 para confirmar consumidores, probar idempotencia de reintentos, optimizar imágenes y estudiar consultas CATALOG dirigidas. Ninguna llamada/lease/lock fue retirada.
+- No se ejecutaron benchmarks, pruebas Beta ni despliegues Apps Script; no se tocaron secretos, ScriptProperties, Spreadsheet o Drive productivos.
+- Siguiente paso: completar mapa exhaustivo de llamadas y consumidores; medir o construir harness local reproducible para tamaños/latencias de aportes; luego priorizar cambios seguros con pruebas. No certificar mejora hasta comparar antes/después.
