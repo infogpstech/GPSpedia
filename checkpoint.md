@@ -1327,3 +1327,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Después de un append nuevo o recuperación de pending, se conserva una consulta fresca para confirmar el evento durable y calcular el contador efectivo. No se modificó el contrato append-only, la deduplicación de actores en CATALOG, el contador físico ni la publicación incremental.
 - `FeedbackLikeCompletedReplayPreflight.mjs`: 7/7 PASS. CI HEAD `51f260338abf6faa307cb646a13554fb8cf5f7dd`: **280 suites / 3,259 pruebas / 0 fallos**; service-tests SUCCESS; health read-only SUCCESS. No se modificaron deployments Apps Script ni datos productivos.
 - Siguiente: revisar reportes e Inbox FEEDBACK; después continuar con ADMIN.
+
+
+## Cierre — FEEDBACK reportes propios, índice de eventos de imagen (2026-11-21)
+
+- `handleGetMyProblemReports` ahora agrupa las filas propias antes de mapearlas y, si alguna metadata no contiene imagen legacy, carga `FeedbackReportImageEvents` una sola vez en un índice por `reportId`. `mapInboxFeedbackRow_` consume el índice y no realiza una búsqueda individual por cada reporte.
+- Se conserva prioridad de metadata legacy. Para eventos duplicados con el mismo SHA se conserva el primer evento; si un reporte tiene hashes contradictorios se marca el conflicto y solo falla cuando ese reportId se consulta, sin bloquear reportes no relacionados.
+- La lectura del índice se omite si no hay reportes propios que necesiten metadata de evento; los videos de aprobación no provocan esa lectura.
+- Prueba `FeedbackInboxImageEventBatchRead.mjs`: 5/5 PASS. CI HEAD `7c1e15d837148b2588cd7cef1bb40e39c3d4a841`: **281 suites / 3,264 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS. Pages deploy quedó en cola; no se desplegó Apps Script.
+- Siguiente: revisar búsquedas repetidas por fila en `handleGetFeedbackItems`, manteniendo canonicalización first-write-wins y detección de duplicados contradictorios.
