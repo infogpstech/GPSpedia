@@ -218,6 +218,13 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,conflict]});
         assert.throws(()=>h.api.add(h.validPayload()),/payload contradictorio/);assert.equal(h.state.createdFiles,0);
     });
+    test("rechaza un opId repetido con el mismo payload pero problemId distintos",()=>{
+        const hash="a".repeat(64),row=[OP_A,hash,"isue-001","PENDING","","","now","now"];
+        const duplicate=[OP_A,hash,"isue-002","PENDING","","","now","now"];
+        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,duplicate]});
+        assert.throws(()=>h.api.add(h.validPayload()),/mismo opId reservado para problemId distintos/);
+        assert.equal(h.state.createdFiles,0);
+    });
     test("rechaza problemId duplicado en PysOperations",()=>{
         const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-1","PENDING","","","now","now"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,a,b]});
