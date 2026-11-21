@@ -39,4 +39,4 @@ assert.match(createHandler, /reserveCortesVehicleIdForOperation_\(/,
 assert.doesNotMatch(createHandler, /getNextCortesVehicleIdLocked\(/,
     "No debe quedar el asignador anterior de lectura+contador");
 
-console.log("WriteIdAllocatorNonBlocking: PASS — reserva append-only sin ScriptLock, autorización, read-back y Testigo sin lock anidado");
+console.log("WriteIdAllocatorNonBlocking: 7/7 PASS — reserva append-only sin ScriptLock, autorización, read-back y Testigo sin lock anidado");
