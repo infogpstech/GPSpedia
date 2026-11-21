@@ -3979,10 +3979,11 @@ function handleAddVinToVehicle(payload) {
 }
 
 function handleAddVinToVehicleLocked(payload, collaboratorName) {
-    const actorId = String(payload && payload.__sharedSessionActor && payload.__sharedSessionActor.userId || "").trim();
-    if (!actorId) return { status: "error", code: "VIN_ACTOR_REQUIRED", message: "No se pudo identificar al colaborador autenticado." };
+    if (collaboratorName === undefined) collaboratorName = getAuthenticatedCollaborator(payload || {});
     const vehicleId = String(payload.vehicleId || "").trim();
     const prefix = extractVinPrefix(payload.vin);
+    const actorId = String(payload && payload.__sharedSessionActor && payload.__sharedSessionActor.userId || "").trim();
+    if (!actorId) return { status: "error", code: "VIN_ACTOR_REQUIRED", message: "No se pudo identificar al colaborador autenticado." };
     if (!vehicleId || !prefix) return { status: "error", message: "ID de vehículo y VIN son requeridos." };
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const vinColumnIndex = getVinColumnIndex(sheet);
