@@ -267,6 +267,9 @@ function getFormulaBasedIdPattern_(sheet, idColumn) {
     if (!/^(?:id|id_[a-z0-9_]+|id_de_[a-z0-9_]+|[a-z0-9_]+_id|identificador|identifier|codigo|codigo_id|code)$/.test(header)) {
         throw new Error("La columna seleccionada no tiene un encabezado ID reconocido en " + sheet.getName() + ".");
     }
+    if (sheet.getName() === "pys" && idColumn === 1 && header === "id_problem") {
+        return { prefix: "isue-", padding: 3, formula: '="isue-"&TEXT(ROW()-1,"000")' };
+    }
     const ss = getSpreadsheet(), configSheet = ss.getSheetByName(IDENTIFIER_SEQUENCE_CONFIG_SHEET);
     if (configSheet && configSheet.getLastRow() > 1) {
         const headers = configSheet.getRange(1, 1, 1, IDENTIFIER_SEQUENCE_CONFIG_HEADERS.length).getValues()[0].map(value => String(value || ""));
@@ -331,7 +334,7 @@ function getIdentifierSequenceReservationsSheet_() {
     return sheet;
 }
 
-function getNextFormulaBasedId_(sheet, idColumn) {
+function getNextFormulaBasedId_(sheet, idColumn, minimumSuffix) {
     if (!sheet || !Number.isInteger(idColumn) || idColumn < 1) throw new Error("Hoja o columna ID inválida.");
     const pattern = getFormulaBasedIdPattern_(sheet, idColumn);
     const lastRow = sheet.getLastRow();
@@ -390,14 +393,16 @@ function getNextFormulaBasedId_(sheet, idColumn) {
             return { rowIndex, column: Number(values[1]), reservedSuffix: Number(values[2]), baseSuffix: Number(values[3]) };
         }).filter(item => item.column === idColumn).sort((a, b) => a.rowIndex - b.rowIndex);
     }
-    let baseSuffix = maxSuffix;
+    const requestedMinimum = Number(minimumSuffix);
+    const minimumBase = Number.isSafeInteger(requestedMinimum) && requestedMinimum > 0 ? requestedMinimum : 0;
+    let baseSuffix = Math.max(maxSuffix, minimumBase);
     if (previousReservations.length) {
         const latest = previousReservations[previousReservations.length - 1];
         if (!Number.isSafeInteger(latest.baseSuffix) || latest.baseSuffix < 0) {
             throw new Error("La última reserva de ID contiene una base de secuencia inválida.");
         }
         const priorCount = previousReservations.length;
-        baseSuffix = Math.max(latest.baseSuffix, maxSuffix - priorCount);
+        baseSuffix = Math.max(latest.baseSuffix, maxSuffix - priorCount, minimumBase);
     }
     if (!Number.isSafeInteger(baseSuffix) || baseSuffix < 0) throw new Error("La base de secuencia ID no es válida.");
 
@@ -3789,7 +3794,7 @@ function findPysRowsById_(sheet,id){
     });
     return matches;
 }
-function getPysNextId_(sheet,ops){let max=validatePysRecords_(sheet).maxSuffix;ops.forEach(o=>{const m=o.problemId.match(/^isue-(\d+)$/i),n=m?Number(m[1]):NaN;if(!Number.isSafeInteger(n)||n<1)throw new Error("La hoja PysOperations contiene un problemId inválido.");max=Math.max(max,n);});if(max>=Number.MAX_SAFE_INTEGER)throw new Error("Se agotó la secuencia segura de identificadores PyS.");return"isue-"+String(max+1).padStart(3,"0");}
+function getPysNextId_(sheet,ops){let max=validatePysRecords_(sheet).maxSuffix;ops.forEach(o=>{const m=o.problemId.match(/^isue-(\d+)$/i),n=m?Number(m[1]):NaN;if(!Number.isSafeInteger(n)||n<1)throw new Error("La hoja PysOperations contiene un problemId inválido.");max=Math.max(max,n);});if(max>=Number.MAX_SAFE_INTEGER)throw new Error("Se agotó la secuencia segura de identificadores PyS.");return getNextFormulaBasedId_(sheet,1,max);}
 function getPysSha256_(v){return Array.from(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,v)).map(b=>(b&255).toString(16).padStart(2,"0")).join("");}
 function buildPysPayloadHash_(p,image,models){return getPysSha256_(JSON.stringify({titulo:p.titulo,descripcion:p.descripcion,sinSolucion:Boolean(p.sinSolucion),solucion:p.solucion,prevenir:p.prevenir,userId:String(p.userId).trim(),userName:String(p.userName).trim(),alcance:p.alcance==="especifico"?"especifico":"general",modelosAsociados:models,imageMimeType:image.mimeType,imageSha256:getPysSha256_(image.bytes)}));}
 function buildPysExpectedRow_(id,p,url,models){return[id,p.titulo,p.descripcion,p.sinSolucion?"":"x",p.sinSolucion?"":p.solucion,p.prevenir,url,"",p.userName,models.length?JSON.stringify(models):""];}
