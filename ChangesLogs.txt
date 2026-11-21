@@ -532,3 +532,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - JS/Tests/AddCutImageSizePreflight.mjs: prueba límite exacto, rechazo de archivos grandes sin invocar FileReader y rechazo de archivos vacíos; 3/3 PASS en V8 aislado.
 - JS/Tests/RunServiceTests.mjs: integra el test en la regresión de servicios.
 - El límite coincide con WRITE; no se redujo el máximo ni se implementó compresión. Runner Node completo, CI y Beta no ejecutados en esta sesión.
+
+
+2026-11-21 — PREFLIGHT DE IMÁGENES SUPLEMENTARIAS
+- JS/Frontend/ui.js: helper compartido para validar tamaño 10 MiB antes de FileReader y manejar carga, error, abort y resultado inválido; apertura y alimentación ahora capturan también fallos de lectura y restauran el botón.
+- JS/Tests/AddSupplementaryImagePreflight.mjs: pruebas de archivo grande sin lectura, límite exacto, archivo vacío y error FileReader; 4/4 PASS en V8 aislado.
+- JS/Tests/RunServiceTests.mjs: integra la prueba en la regresión.
+- Sin cambios al contrato WRITE, MIME, hash, idempotencia o Drive; sin compresión ni despliegue Apps Script.
