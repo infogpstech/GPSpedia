@@ -525,3 +525,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - JS/Tests/YouTubePendingRefreshContract.js: nuevo contrato para impedir que vuelvan esos refrescos y verificar que el refresco funcional PyS se mantiene.
 - JS/Tests/RunServiceTests.mjs: integración del contrato en la suite de regresión.
 - Validación aislada ejecutada: contrato frontend 3/3 PASS y YouTubeApproval.js 16/16 PASS. No se ejecutó el runner Node completo ni GitHub Actions; no hubo despliegue Apps Script.
+
+
+2026-11-21 — PREFLIGHT DE TAMAÑO DE IMAGEN EN ALTA DE CORTES
+- HTML/add_cortes.html: rechaza archivos superiores a 10 MiB antes de leer la previsualización y antes de convertir a Base64; muestra un error específico y conserva el formulario.
+- JS/Tests/AddCutImageSizePreflight.mjs: prueba límite exacto, rechazo de archivos grandes sin invocar FileReader y rechazo de archivos vacíos; 3/3 PASS en V8 aislado.
+- JS/Tests/RunServiceTests.mjs: integra el test en la regresión de servicios.
+- El límite coincide con WRITE; no se redujo el máximo ni se implementó compresión. Runner Node completo, CI y Beta no ejecutados en esta sesión.
