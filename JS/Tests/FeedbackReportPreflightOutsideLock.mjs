@@ -35,7 +35,7 @@ test("un reporte nuevo se anexa como una fila completa y no se limpia tras una e
     assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.ID_vehiculo-1\]=vehicleId/);
     assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.Problema-1\]=normalizedProblemText/);
     assert.match(writeBlock, /sheet\.appendRow\(reportRow\)/);
-    assert.match(writeBlock, /const savedRow=sheet\.getRange\(newRowNumber,1,1,lastCol\)\.getValues\(\)\[0\]/);
+    assert.match(writeBlock, /findFeedbackRowById_\(sheet,reservedId,lastCol\)/);
     assert.match(writeBlock, /String\(savedRow\[COLS_FEEDBACKS\.Problema-1\]/);
     assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValue/);
     assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValues/);
