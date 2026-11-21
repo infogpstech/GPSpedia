@@ -13,8 +13,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código validado para P1 WRITE parcial: `ad0db3ea9676e4aa56caf3e8a157f633087dcb8f`.
-- CI: 290 suites, 3,390 pruebas aprobadas, 0 fallos.
+- HEAD de código validado para cierre WRITE: `4fad6a812598beb0bb04212cac4a3bc3136c9dd5`.
+- CI: 291 suites, 3,397 pruebas aprobadas, 0 fallos.
 - Build: SUCCESS.
 - Health de servicios: SUCCESS.
 - GitHub Pages deploy workflow: pendiente de confirmación; no es despliegue de Apps Script ni sustituye Beta aislada.
@@ -71,10 +71,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P1 — servicios, aportes y catálogo
 - [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
 - [x] ADMIN — auditoría estática de respaldos/restauración DB y Drive, escáneres, reorganización de imágenes, upload/recovery y read-backs; se conserva staging/rollback y no se modifican rutas destructivas sin pruebas de integración.
-- [ ] Auditar WRITE, FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
-- [x] WRITE parcial — catálogo de entidades solo cuando se normalizan marca/modelo/versiones; reutilización de hoja AportesVehiculo validada después de Drive para append y proyección. Tests específicos 8/8, 15/15 y 12/12; regresión 289 suites / 3,382 pruebas / 0 fallos.
-- [x] WRITE — registro dedicado de VIN reutiliza el snapshot de Cortes para verificar duplicados globales, evitando una segunda lectura completa. WriteVinSnapshotReuse 8/8 PASS; regresión 290 suites / 3,390 pruebas / 0 fallos.
-- [ ] WRITE restante — revisar alta nueva, recuperación opId legacy, VIN update, suplementaria legacy, journal de imágenes y publicaciones CATALOG; preservar read-back, rollback e idempotencia.
+- [ ] Auditar FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
+- [x] WRITE — auditoría end-to-end cerrada en revisión estática y contratos: alta nueva, idempotencia moderna/legacy, VIN, aportes suplementarios, journal de imágenes y publicación CATALOG. Se optimizó catálogo condicional, reutilización de ledger validado y snapshot VIN. Contratos específicos aprobados; CI 291 suites / 3,397 pruebas / 0 fallos. Beta real de Drive/concurrencia queda diferida a entorno aislado.
 - [x] WRITE — aportes de corte: combinar la lectura posterior al append del ledger para calcular slot y detectar colisión VIN; checkOperation limita esa lectura a eventos existentes de tipo cut. Se conservan TextFinder, read-back, comprobación de opId y detección de conflictos concurrentes.
 - [x] FEEDBACK — sugerencias de año: en reintentos ya reportados se reutiliza el snapshot existente de Feedbacks; solo se relee después de un append nuevo para incluir votos concurrentes.
 - [x] FEEDBACK — likes: un único snapshot de filas del actor alimenta replay completed, replay event y ruta de recuperación; se mantiene lectura fresca después de append para confirmar el evento.
@@ -117,4 +115,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0 AUTH y USERS cerrados. WRITE parcial validado en CI (290 suites / 3,390 pruebas / 0 fallos). Continuar auditoría WRITE en alta nueva, recuperación legacy, suplementaria legacy, journal de imágenes y publicaciones CATALOG; preservar read-back, rollback e idempotencia. Guardar checkpoint+commit al cerrar WRITE; después FEEDBACK y ADMIN. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. La precarga/invalidation de los cuatro servicios, la carrera createUser/deleteUser, Drive/concurrencia y métricas reales requieren validación en entornos aislados; no ejecutar operaciones productivas.
+P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estática y CI (291 suites / 3,397 pruebas / 0 fallos). Siguiente: auditoría end-to-end FEEDBACK (sugerencias de año, likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicación CATALOG). Después ADMIN. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. Toda validación real de Drive, concurrencia interproyecto, pérdida de respuesta y métricas requiere entorno aislado; no ejecutar contra producción.
