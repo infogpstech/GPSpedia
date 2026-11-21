@@ -1202,3 +1202,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Pruebas: UsersDirectTrafficTelemetry 7/7; UsersAtomicMutations 16/16; Users fixture/paridad 1/1. CI bb91b08bc16070d44e9155e5014c4110894ec546 SUCCESS: 259 suites, 3,141 pruebas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
 - AUG-163 pendiente de prueba real aislada. No se desplegó Apps Script ni se modificaron recursos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — ADMIN: PUBLICACIÓN DE CATÁLOGO SIN LOCK GLOBAL
+- Evidencia: JS/Services/admin.js, publishAdminCatalogChange_ y publishAdminCatalogChanges_ (bloque previamente ubicado alrededor de líneas 1667–1725). Ambas funciones adquirían ScriptLock(tryLock(0)) para construir snapshots y reservar sourceVersion mediante PropertiesService. La contención podía degradar una operación ordinaria a reset aunque la publicación del catálogo no requiere una reserva global independiente.
+- Corrección: se retiraron LockService, PropertiesService y el contador persistente de versiones del publicador. Los snapshots se construyen fuera de locks y usan Date.now(); los elementos del batch reciben versiones consecutivas a partir de la misma base temporal. Coordinator ya detecta versiones repetidas/obsoletas y las convierte en reset para reconstrucción.
+- Se preservaron lotes de hasta 50, publicación fuera de la sección crítica y reset de recuperación ante snapshot inválido o fallo parcial de Coordinator. No se cambió la transacción física de WRITE ni locks de migración, reconciliación o acciones destructivas.
+- Prueba focalizada aislada: AdminCatalogPublicationIsolation 6/6 PASS con Node.js v22.16.0; sintaxis del bloque aislado PASS. El harness ejecutado contiene el bloque de funciones actualizado, no el checkout completo; falta ejecutar la prueba comprometida contra el repositorio completo y obtener CI.
+- Commits: aa113db8d50f8e5f452d20041d93eb70ff1d289e (servicio), f68ff5cd93ffff3c76141d7476a1b090e0e7a6ea (prueba). Sin deployment Apps Script ni cambios productivos.
+================================================================================
