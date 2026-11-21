@@ -539,3 +539,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - JS/Tests/AddSupplementaryImagePreflight.mjs: pruebas de archivo grande sin lectura, límite exacto, archivo vacío y error FileReader; 4/4 PASS en V8 aislado.
 - JS/Tests/RunServiceTests.mjs: integra la prueba en la regresión.
 - Sin cambios al contrato WRITE, MIME, hash, idempotencia o Drive; sin compresión ni despliegue Apps Script.
+
+
+2026-11-21 — AMPLIACIÓN DE RETIRADA DE REFRESHES TRAS VÍDEO PENDING
+- JS/Frontend/ui.js: se retiraron cinco refreshes posteriores a solicitud pending: dos snapshots CATALOG de corte/tutorial existentes, callback posterior a alta de tutorial, callback posterior a alta PyS y recarga posterior a vídeo PyS existente.
+- Se conservan las cargas inmediatas posteriores a crear tutorial/problema PyS y la sincronización que corresponda a una aprobación efectiva.
+- JS/Tests/YouTubePendingRefreshContract.js: cobertura ampliada a cinco escenarios, 5/5 PASS; suite backend YouTubeApproval.js 16/16 PASS.
+- Se conserva opVideoId, estado pending, prevención de duplicados y flujo de aprobación; no se modificó backend.
