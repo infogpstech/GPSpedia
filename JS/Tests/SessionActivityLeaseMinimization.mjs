@@ -79,7 +79,7 @@ test("ADMIN→WRITE conserva autenticación de actor sin token compartido", () =
     assert.match(admin, /function callWriteServiceAction\(action, payload\)/);
     assert.doesNotMatch(admin, /callWriteServiceAction\([\s\S]{0,500}__sharedMutationToken/);
     assert.match(writeDoPost, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
-    assert.match(admin, /requestNextVehicleIdFromWriteService\(payload\)/);
+    assert.match(admin, /requestNextVehicleIdFromWriteService\(payload,/);
     assert.match(admin, /requestCortesIdFreezeFromWriteService\(payload, backupInfo\.backupId\)/);
 });
 
