@@ -13505,13 +13505,30 @@ async function readSupplementaryImageDataUrl_(file) {
         error.name = "ImageSizeError";
         throw error;
     }
+    const declaredMime = String(file.type || "").trim().toLowerCase();
+    const supportedMimeTypes = new Set([
+        "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/x-png",
+        "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/x-ms-bmp",
+        "image/tiff", "image/heic", "image/heif", "image/avif", "image/x-icon",
+        "image/vnd.microsoft.icon"
+    ]);
+    if (!supportedMimeTypes.has(declaredMime)) {
+        const error = new Error("El formato de imagen no es compatible. Selecciona un archivo de imagen admitido.");
+        error.name = "ImageReadError";
+        throw error;
+    }
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-            if (typeof reader.result === "string" && reader.result.startsWith("data:image/")) {
-                resolve(reader.result);
+            const result = typeof reader.result === "string" ? reader.result : "";
+            const comma = result.indexOf(",");
+            const mimeEnd = result.indexOf(";");
+            const dataUrlMime = result.startsWith("data:") && mimeEnd > 5 && comma > mimeEnd
+                ? result.slice(5, mimeEnd).trim().toLowerCase() : "";
+            if (dataUrlMime === declaredMime && result.slice(comma + 1).trim()) {
+                resolve(result);
             } else {
-                const error = new Error("La lectura no devolvió una imagen válida.");
+                const error = new Error("El MIME de la imagen leída no coincide con el archivo seleccionado.");
                 error.name = "ImageReadError";
                 reject(error);
             }

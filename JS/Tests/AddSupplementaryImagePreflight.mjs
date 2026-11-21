@@ -7,12 +7,12 @@ const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const source = readFileSync(resolve(root, 'JS/Frontend/ui.js'), 'utf8');
 const match = source.match(/async function readSupplementaryImageDataUrl_\(file\) \{[\s\S]*?\n\}/);
 assert.ok(match, 'No se encontró readSupplementaryImageDataUrl_.');
-let reads = 0, failRead = false;
+let reads = 0, failRead = false, nextResult = 'data:image/jpeg;base64,AA==';
 class FakeFileReader {
     readAsDataURL() {
         reads++;
         if (failRead) { this.onerror(); return; }
-        this.result = 'data:image/jpeg;base64,AA==';
+        this.result = nextResult;
         this.onload();
     }
 }
@@ -24,20 +24,33 @@ async function run(name, fn) {
 }
 await run('rechaza imagen mayor de 10 MB antes de FileReader', async () => {
     const before = reads;
-    await assert.rejects(readImage({size:10*1024*1024+1}), error => error && error.name === 'ImageSizeError');
+    await assert.rejects(readImage({size:10*1024*1024+1,type:'image/jpeg'}), error => error && error.name === 'ImageSizeError');
     assert.equal(reads, before);
 });
 await run('acepta imagen en el límite exacto', async () => {
-    assert.equal(await readImage({size:10*1024*1024}), 'data:image/jpeg;base64,AA==');
+    assert.equal(await readImage({size:10*1024*1024,type:'image/jpeg'}), 'data:image/jpeg;base64,AA==');
     assert.equal(reads, 1);
 });
 await run('rechaza archivo vacío antes de lectura', async () => {
-    await assert.rejects(readImage({size:0}), error => error && error.name === 'ImageReadError');
+    await assert.rejects(readImage({size:0,type:'image/jpeg'}), error => error && error.name === 'ImageReadError');
     assert.equal(reads, 1);
+});
+await run('rechaza MIME vacío o no admitido antes de FileReader', async () => {
+    const before = reads;
+    await assert.rejects(readImage({size:10,type:''}), error => error && error.name === 'ImageReadError');
+    await assert.rejects(readImage({size:10,type:'application/pdf'}), error => error && error.name === 'ImageReadError');
+    assert.equal(reads, before);
+});
+await run('rechaza discrepancia entre MIME del archivo y Data URL', async () => {
+    const before = reads;
+    nextResult = 'data:image/png;base64,AA==';
+    await assert.rejects(readImage({size:10,type:'image/jpeg'}), error => error && error.name === 'ImageReadError');
+    assert.equal(reads, before + 1);
+    nextResult = 'data:image/jpeg;base64,AA==';
 });
 await run('propaga el fallo de lectura sin dejar promesa pendiente', async () => {
     failRead = true;
-    await assert.rejects(readImage({size:10}), error => error && error.name === 'ImageReadError');
+    await assert.rejects(readImage({size:10,type:'image/jpeg'}), error => error && error.name === 'ImageReadError');
     assert.equal(reads, 2);
 });
 const failed = results.filter(item => item.status !== 'PASS');
