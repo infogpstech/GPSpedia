@@ -381,3 +381,16 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - El descarte sigue usando dos snapshots completos por diseño: lectura de estado actual para calcular campos a restaurar y read-back completo posterior para verificar que el descarte fue durable. No se cambió esa ruta.
 - El fallback completo no adelanta cursor ni escribe un par snapshot/cursor incoherente; el cursor local permanece en su última posición confirmada para que el siguiente poll reproduzca deltas o fuerce reset si expiró.
 - `CatalogEditDeltaRefresh.mjs`: 23/23 PASS; CI: 284 suites, 3,309 pruebas, 0 fallos; build y health read-only SUCCESS.
+
+
+### P0 AUTH — cierre de optimización de lecturas y revocaciones (2026-11-21)
+
+- Login: `createOrRecoverLoginSessionUnderLock_` reutiliza un único snapshot de ActiveSessions para localizar/reconciliar el token, validar el puntero y aplicar el límite de sesiones. Solo repite lectura integral ante append ambiguo o error de borrado; la confirmación normal usa lectura dirigida de la fila creada.
+- Se añadió `findSessionRowsByTokenInData_` para buscar tokens en snapshots existentes sin volver a leer la hoja.
+- Recuperación de contraseña mantiene la búsqueda preliminar fuera del ScriptLock y verifica bajo lock una sola fila objetivo.
+- Reconciliación de cambios de rol reutiliza el índice de fila conocido; evita la segunda lectura integral de Users y vuelve a validar ID y estado activo.
+- Eliminación de usuario construye tokenCounts y tokens objetivo desde el mismo snapshot de ActiveSessions; elimina escaneo duplicado, lee solo columnas necesarias y verifica residuos leyendo únicamente ID_Usuario.
+- Cambio/reset de contraseña y revocación de sesiones invalidan contextos remotos una sola vez, usando los tokens que devuelve la misma operación de revocación antes de limpiar ActiveSessions.
+- Prueba nueva `AuthSessionReadOptimization.mjs`: 9/9 PASS. CI de HEAD `3ae0786b0158d7e45f2599bc1a6ab28550b84ac8`: **284 suites / 3,309 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; deploy workflow SUCCESS.
+- Alcance: optimización estática y pruebas automatizadas. No se ejecutaron pruebas de concurrencia con Spreadsheet productivo ni se modificaron datos productivos. La validación operativa queda para Beta aislada.
+- Siguiente tarea: continuar con lecturas y operaciones duplicadas en USERS; después completar auditoría extremo a extremo de WRITE/FEEDBACK/ADMIN y mediciones P1 de imágenes/vídeos.
