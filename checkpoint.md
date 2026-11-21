@@ -632,3 +632,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La validación local de la integración PyS/Coordinator queda cerrada. La contención/expiración real de leases entre proyectos y el read-back de Spreadsheet siguen pendientes de AUG-161 en Beta aislada.
 
 - Commit de cobertura cruzada: c6e458452e02ad26cf87419ba5f0c10a6ea03a72 (JS/Tests/PysVehicleRelationIntegrity.js); se verifican los contratos de recursos FEEDBACK/CORTES en Coordinator.js.
+
+
+## Checkpoint — leases Coordinator de solución/prevención cubiertas (2026-11-21)
+
+- Se amplió JS/Tests/SharedMutationCoordinator.js para probar contención entre addSolution y addPrevention: ambas escriben FEEDBACK, no reservan CORTES y la segunda espera/reintenta tras liberar la lease.
+- Commit de prueba: 6523413028eed4ddc2d745e272f535b58514382c.
+- SharedMutationCoordinator 86/86; PysVehicleRelationIntegrity 20/20; SearchModelGrouping 21/21; PysCreationIntegrity 56/56; PysModalNavigation 10/10. CI 44909269963 SUCCESS: 259 suites, 3,131 pruebas, 0 fallos; syntax PASS. Health read-only 44909269950 SUCCESS; Pages 44909269739 SUCCESS.
+- No quedan gaps locales conocidos en la coordinación PyS; contención/expiración real entre proyectos y read-back de Spreadsheet continúan en Beta aislada.

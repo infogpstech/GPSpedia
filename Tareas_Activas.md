@@ -512,9 +512,10 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - [x] Conservar first-write-wins, idempotencia, normalización de relaciones, validación de IDs únicos y RBAC de Desarrollador para desvincular.
 - [x] Confirmar que Coordinator ya define los cuatro contratos de recursos: FEEDBACK para PyS y CORTES como lectura al modificar relaciones.
 - [x] Añadir PysVehicleRelationIntegrity al runner CI; suite 20/20 PASS, incluida comprobación de la política real de Coordinator.
+- [x] Ampliar SharedMutationCoordinator para probar contención entre addSolution/addPrevention y sus recursos FEEDBACK; suite 86/86 PASS.
 - [x] PysCreationIntegrity 56/56 PASS; PysImageStorageRecovery 22/22 PASS; P2PysImageUploadOutsideLock PASS.
 - [x] Corregir el orden de prevalidación de modelos asociados en handleAddProblem: validar IDs de Cortes antes de crear/leer PysOperations, evitando efectos laterales de inicialización ante un vehículo inválido.
-- [x] CI actualizado 44907336819 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; PysModalNavigation 10/10, PysCreationIntegrity 56/56, PysVehicleRelationIntegrity 19/19; node --check PASS. Health read-only 44907336832 SUCCESS; Pages 44907336274 SUCCESS.
+- [x] CI actualizado 44909269963 SUCCESS: 259 suites, 3,131 pruebas, 0 fallos; PysModalNavigation 10/10, PysCreationIntegrity 56/56, PysVehicleRelationIntegrity 20/20, SharedMutationCoordinator 86/86; node --check PASS. Health read-only 44909269950 SUCCESS; Pages 44909269739 SUCCESS.
 - [ ] Beta aislada: concurrencia real entre proyectos, leases Coordinator, fallo de lease, pérdida de respuesta y read-back en Spreadsheet aislada.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 
@@ -570,3 +571,10 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - Se amplió la suite para leer Coordinator.js y verificar addSolution/addPrevention con escritura FEEDBACK, y addVehicleToProblem/removeVehicleFromProblem con escritura FEEDBACK más lectura CORTES. También se verifica su registro en la lista de escritores FEEDBACK.
 - PysVehicleRelationIntegrity 20/20 PASS. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; Health read-only 44909033573 SUCCESS; Pages 44909033191 SUCCESS.
 - No se cambió el contrato productivo ni se desplegó Apps Script; se añadió cobertura de integración local para evitar divergencias entre FEEDBACK y Coordinator.
+
+
+## Continuidad — serialización Coordinator de solución y prevención (2026-11-21)
+
+- SharedMutationCoordinator ahora prueba que addSolution y addPrevention comparten el recurso FEEDBACK, no reservan CORTES y se serializan entre sí; después de liberar la lease, el reintento puede adquirirla.
+- Suite SharedMutationCoordinator 86/86 PASS; PysVehicleRelationIntegrity 20/20 PASS. CI 44909269963 SUCCESS: 259 suites, 3,131 pruebas aprobadas, 0 fallos. Health 44909269950 y Pages 44909269739 SUCCESS.
+- Commit de prueba: 6523413028eed4ddc2d745e272f535b58514382c. Las pruebas reales multi-proyecto/Spreadsheet siguen pendientes de AUG-161 Beta aislada.

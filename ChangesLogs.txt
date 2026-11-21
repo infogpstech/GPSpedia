@@ -347,3 +347,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - La suite focalizada pasa 20/20. CI 44909033557 SUCCESS: 259 suites, 3,130 pruebas, 0 fallos; Health 44909033573 SUCCESS; Pages 44909033191 SUCCESS.
 - La concurrencia y expiración real de leases entre proyectos sigue pendiente de Beta aislada.
 - Commit de prueba: c6e458452e02ad26cf87419ba5f0c10a6ea03a72 (JS/Tests/PysVehicleRelationIntegrity.js).
+
+
+2026-11-21 — REGRESIÓN DINÁMICA DE LEASES PyS
+- SharedMutationCoordinator.js ahora comprueba que addSolution y addPrevention comparten FEEDBACK y se serializan entre sí sin reservar CORTES.
+- SharedMutationCoordinator 86/86; PysVehicleRelationIntegrity 20/20. CI 44909269963 SUCCESS: 259 suites, 3,131 pruebas, 0 fallos; Health 44909269950 SUCCESS; Pages 44909269739 SUCCESS.
+- Commit de prueba: 6523413028eed4ddc2d745e272f535b58514382c.

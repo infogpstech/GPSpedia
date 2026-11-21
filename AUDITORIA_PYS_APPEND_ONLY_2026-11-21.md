@@ -119,3 +119,11 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Esta validación es local/estática de contrato; no sustituye las pruebas reales de Coordinator entre proyectos, que permanecen en AUG-161 Beta.
 
 - Commit de prueba: c6e458452e02ad26cf87419ba5f0c10a6ea03a72. La prueba nueva compara la política de Coordinator y los cuatro contratos de operación con el wrapper FEEDBACK.
+
+
+## Adenda — contención de leases para solución y prevención (2026-11-21)
+
+- SharedMutationCoordinator incorpora una prueba dinámica que adquiere addSolution y confirma que addPrevention recibe busy mientras el recurso FEEDBACK está ocupado; tras liberar la lease, prevención puede reintentarse.
+- La política verifica además que ambas acciones no reservan CORTES, mientras las relaciones conservan lectura CORTES y escritura FEEDBACK.
+- SharedMutationCoordinator 86/86 y PysVehicleRelationIntegrity 20/20 PASS. CI 44909269963 SUCCESS: 259 suites, 3,131 pruebas, 0 fallos. Health read-only y Pages SUCCESS.
+- Concurrencia/expiración real entre proyectos sigue diferida a AUG-161 Beta aislada.
