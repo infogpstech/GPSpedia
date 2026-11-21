@@ -341,3 +341,10 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - CI 44873477741 SUCCESS: 258 suites, 3092 pruebas, 0 fallos; health read-only 44873477634 SUCCESS; Pages 44873477531 pendiente al momento de esta actualización.
 - PyS no está cerrada: handleAddProblem mantiene ScriptLock hasta completar un ledger de reservas/propiedad de imagen apto para concurrencia real.
 - No se desplegó Apps Script ni se tocaron datos productivos.
+
+
+### PyS — fase 2b: archivos duplicados en reservas
+
+- readPysOperations_ ahora rechaza reservas duplicadas que, aun compartiendo opId, payloadHash y problemId, apuntan a imageFileId/imageUrl diferentes.
+- Prueba PysCreationIntegrity añadida. CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages pendiente al momento de esta actualización.
+- PyS permanece EN PROGRESO; handleAddProblem conserva ScriptLock hasta resolver la propiedad de operación e imagen con un protocolo concurrente verificable.
