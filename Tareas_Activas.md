@@ -68,6 +68,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Continuar optimización de lecturas/operaciones duplicadas en USERS y otros servicios.
 
 ### P1 — servicios, aportes y catálogo
+- [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
+- [ ] ADMIN — auditar respaldos/restauración DB y Drive, escáneres y reorganización de imágenes, upload/recovery y read-backs; no optimizar operaciones destructivas sin pruebas de rollback.
 - [ ] Auditar WRITE, FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
 - [x] WRITE — aportes de corte: combinar la lectura posterior al append del ledger para calcular slot y detectar colisión VIN; checkOperation limita esa lectura a eventos existentes de tipo cut. Se conservan TextFinder, read-back, comprobación de opId y detección de conflictos concurrentes.
 - [x] FEEDBACK — sugerencias de año: en reintentos ya reportados se reutiliza el snapshot existente de Feedbacks; solo se relee después de un append nuevo para incluir votos concurrentes.
@@ -109,4 +111,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: auditar ADMIN de extremo a extremo: Drive/Spreadsheet, respaldos/restauración, operaciones de imágenes, idempotencia, read-back y publicaciones. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: continuar auditoría ADMIN de respaldos/restauración DB y Drive, escáneres y operaciones de imágenes; validar read-back y rollback antes de tocar rutas destructivas. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
