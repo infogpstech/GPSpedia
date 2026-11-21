@@ -264,3 +264,11 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - Los dos handlers conservan temporalmente ScriptLock y revalidación bajo lock para impedir duplicados mientras se diseña la proyección idempotente que permita retirar la serialización. No afirmar que estos flujos estén migrados.
 - Pruebas: `FeedbackReportPreflightOutsideLock` 6/6, `FeedbackReportImageCleanupOutsideLock` 5/5, `FeedbackSuggestionPreflightOutsideLock` 7/7, `FeedbackSuggestionImageCleanupOutsideLock` 5/5, `P2FeedbackImageUploadLocks` 1/1. CI commit `55774f0716c97b6adcefd7e231d35cdaf75b478f`: 255 suites, 3075 pruebas aprobadas, 0 fallos; build, health read-only y Pages SUCCESS.
 - No se desplegó Apps Script ni se modificaron datos productivos. Siguiente: diseñar identidad/proyección append-only de reportes y sugerencias para eliminar locks sin duplicar tickets ni propuestas.
+
+
+## Corrección puntual — confirmación de sugerencias FEEDBACK (2026-11-20)
+
+- [x] Corregir el índice de la columna `Problema` al verificar la fila persistida por `handleSuggestCutChange`; la escritura usa índice base cero y la lectura ahora consulta `COLS_FEEDBACKS.Problema - 1`.
+- [x] Añadir una regresión estática que exige el índice correcto y rechaza la expresión desplazada.
+- [ ] Verificar el workflow CI disparado por el commit antes de considerar cerrada la corrección.
+- El hallazgo no sustituye la tarea P0: reportes y sugerencias todavía requieren migración segura de idempotencia/concurrencia para retirar ScriptLock.

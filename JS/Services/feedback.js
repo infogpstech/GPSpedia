@@ -3364,7 +3364,7 @@ function handleSuggestCutChange(payload) {
         if (String(savedRow[COLS_FEEDBACKS.ID - 1] || "").trim() !== reservedId ||
             String(savedRow[COLS_FEEDBACKS.Usuario - 1] || "") !== String(userName) ||
             String(savedRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "") !== normalizedVehicleId ||
-            String(savedRow[COLS_FEEDBACKS.Problema] || "") !== problemDesc ||
+            String(savedRow[COLS_FEEDBACKS.Problema - 1] || "") !== problemDesc ||
             (COLS_FEEDBACKS["Se resolvio"] && savedRow[COLS_FEEDBACKS["Se resolvio"] - 1] !== false)) {
             throw new Error("No se pudo confirmar la fila completa de la sugerencia; la imagen se conserva para reconciliación.");
         }

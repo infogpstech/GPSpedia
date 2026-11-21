@@ -353,3 +353,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Los dos handlers **mantienen ScriptLock** y revalidación interna; todavía no se han migrado a idempotencia concurrente append-only. No retirar lock hasta implementar proyección/deduplicación de operaciones y probar carreras reales.
 - CI commit `55774f0716c97b6adcefd7e231d35cdaf75b478f`: 255 suites, 3075 pruebas, 0 fallos; build, health read-only y Pages SUCCESS. Pruebas reportes 6/6 + 5/5; sugerencias 7/7 + 5/5; P2 adjuntos 1/1.
 - No desplegar Apps Script ni modificar producción.
+
+
+## Continuidad — corrección de confirmación de sugerencias FEEDBACK (2026-11-20)
+
+- Se detectó que `handleSuggestCutChange` escribía `Problema` en el índice base cero correcto, pero verificaba `savedRow[COLS_FEEDBACKS.Problema]` sin restar uno. Esto podía devolver error después de que `appendRow` hubiera persistido correctamente.
+- Se corrigió la lectura a `savedRow[COLS_FEEDBACKS.Problema - 1]` y se añadió una aserción en `FeedbackSuggestionPreflightOutsideLock.mjs` que exige el índice correcto y rechaza el desplazado.
+- La validación local no se ejecutó en este entorno; verificar el workflow CI tras publicar.
+- P0 continúa EN PROGRESO: reportes/sugerencias aún usan ScriptLock y requieren proyección append-only/idempotente; después siguen PyS, tutoriales y aprobaciones de vídeo.

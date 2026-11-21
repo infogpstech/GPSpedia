@@ -201,3 +201,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Ante una confirmación incierta después de append, se conserva el adjunto para reconciliación en vez de borrar una referencia potencialmente persistida.
 - Ambos handlers mantienen ScriptLock y revalidación; retiro de lock pendiente hasta contar con idempotencia concurrente y proyección/deduplicación.
 - CI: 255 suites, 3075 pruebas, 0 fallos; build, health read-only y Pages SUCCESS.
+
+
+2026-11-20 — FEEDBACK: corregir confirmación de sugerencias de corte
+- Se corrigió el índice de lectura de `Problema` después de `appendRow` en `handleSuggestCutChange`, alineándolo con el índice base cero usado al construir la fila.
+- Se añadió una aserción de regresión para impedir que vuelva a utilizarse el índice desplazado.
+- Validación local: no ejecutada en este entorno; el workflow de regresión de la rama se activa con el push y su resultado debe verificarse antes del cierre.
