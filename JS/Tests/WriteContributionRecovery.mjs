@@ -17,13 +17,14 @@ function makeHandler(events, options = {}) {
     };
     return new Function(
         "getSpreadsheet", "SHEET_NAMES", "findRowByOpId", "WRITE_VEHICLE_CONTRIBUTIONS_SHEET_NAME_",
-        "findVehicleContributionEventsByOpId_", "readSupplementaryVehicleSnapshot_",
+        "findVehicleContributionEventsByOpId_", "readSupplementaryVehicleSnapshot_", "readVehicleContributionLedgerRows_",
         "getVehicleContributionCutSlotIndex_", "getVehicleContributionCandidateStatus_", "findVehicleContributionVinConflict_", "checkVinDuplicateInSheet", "Utilities",
         handler + "\nreturn handleCheckOperation;"
     )(
         () => spreadsheet, { CORTES: "Cortes" }, () => null, "AportesVehiculo",
         () => events,
         () => ({ vehicle: options.vehicle || { id: "101" }, rowValues: [] }),
+        () => events.map(entry => entry.values),
         () => options.slotIndex === undefined ? 1 : options.slotIndex,
         () => options.candidateStatus === true,
         () => options.vinConflict === true ? { vehicleId: "202" } : null,
