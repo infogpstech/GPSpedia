@@ -1042,3 +1042,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Riesgos: título duplicado en altas concurrentes, pérdida de cambios en ediciones simultáneas, duplicados de ID, y reversión de campos al convivir con aprobación de vídeo.
 - Auditoría técnica: AUDITORIA_TUTORIALES_APPEND_ONLY_2026-11-21.md. Sin cambios funcionales ni despliegue.
 ================================================================================
+
+
+2026-11-21 — Tutoriales: reservas append-only de título
+- Hallazgo: el alta usaba ScriptLock para evitar colisiones de título; el ID determinista por sí solo no protegía altas simultáneas con distintos operationId.
+- Corrección fase 1: nueva hoja TutorialTitleEvents, claims/renames append-only y proyección first-write-wins; handleAddTutorial deja de adquirir ScriptLock.
+- La edición real continúa bajo lock; los renombrados anexan evento para coordinarse con las altas lock-free. CATALOG deduplica IDs por primera fila física.
+- CI `44876830826` SUCCESS: 258 suites, 3097 pruebas, 0 fallos; health read-only SUCCESS. Validación real pendiente en Beta aislada. Sin despliegue.
+================================================================================
