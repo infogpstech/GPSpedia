@@ -303,3 +303,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - El ledger `FeedbackYearApplications` ahora recibe cada aplicación mediante `appendRow` de 16 campos y verifica que el operationId se haya guardado exactamente una vez. Se mantiene UUID como ID de aplicación por ahora.
 - Pruebas `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 7/7. CI para el commit de contratos `8d80bac41d4c29e9b90d598e89eca818e03bff79`: 255 suites, 3066 pruebas, 0 fallos; health read-only y build seguían ejecutándose al registrar.
 - **No se retiró ScriptLock.** Continúan pendientes la deduplicación determinista de aplicaciones concurrentes, eliminación de cambios de estado como fuente de verdad, recuperación append-only que no renombre votos históricos y control de conflictos de generaciones. Mantener bloqueo hasta completar esos contratos. No desplegar Apps Script ni modificar datos productivos.
+
+
+
+## Checkpoint — aplicación determinista y deduplicación (2026-11-21)
+
+- Código de identidad determinista: `a41de8b995705df1af577ab7aa81b41e279501db`; reconciliación de filas duplicadas: `437a0092e34a6a5b684bcfc7005a624166ab47ed`; corrección de regex de vehículo: `f9802e51775112410bf7ececf754e279a38564b2`; pruebas: `953e9347c7d34696b8a1646c516e73ba758eee7d`.
+- El ID de aplicación se deriva de SHA-256 de vehículo/año/rango anterior/rango objetivo/valores crudos y fuentes de eventos. Reintentos idénticos generan el mismo `YSA-...`; propuestas distintas no comparten identidad.
+- Las filas pendientes se agrupan por ID; duplicados con la misma propuesta se recuperan juntos y se actualizan en todas sus filas. Distintas propuestas pendientes para el mismo vehículo se envían a revisión manual.
+- Validación CI: 255 suites, 3068 pruebas aprobadas, 0 fallos; `SuggestYearVoteThreshold` 8/8, `FeedbackYearApplicationAppendOnly` 9/9, health read-only SUCCESS.
+- **No se retiró ScriptLock.** Queda pendiente eliminar la mutación de claves de votos históricos y convertir recuperación/estado en un flujo append-only antes de quitar bloqueo. No desplegar Apps Script ni modificar datos productivos.
