@@ -729,3 +729,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI: 259 suites, 3,141 pruebas, 0 fallos; build SUCCESS, health read-only SUCCESS, Pages/deploy SUCCESS. UsersDirectTrafficTelemetry 7/7, USERS mutaciones/RBAC 16/16, fixture/paridad 1/1.
 - AUG-163 pendiente de Beta aislada. No se desplegó Apps Script ni se tocaron recursos productivos.
 - Próximo trabajo: auditar locks restantes de ADMIN; clasificar por operación ordinaria, unicidad, mantenimiento y acción destructiva. No retirar locks de integridad sin sustituir la garantía.
+
+
+## Checkpoint — ADMIN: publicación de catálogo sin ScriptLock (2026-11-21)
+
+- HEAD de partida confirmado: e0d224b74708e0d6dada6556fe6d7f3b9e5741f9. Rama autorizada: GPSpedia2.2.5_work; la comparación con GPSpedia2.2.5 continúa en 6,341 commits ahead / 0 behind. La base protegida no se modificó.
+- Se retiró ScriptLock y PropertiesService de publishAdminCatalogChange_ y publishAdminCatalogChanges_. Los snapshots se construyen sin exclusión global; sourceVersion usa Date.now() y los elementos de cada lote reciben versiones temporales consecutivas. Coordinator ya convierte versiones repetidas/obsoletas en reset y reconstrucción del snapshot.
+- Se mantuvieron la publicación fuera de cualquier sección crítica, los lotes de máximo 50 y el reset de recuperación ante fallo de snapshot o publicación parcial. No se alteró la transacción física de WRITE ni las operaciones destructivas de ADMIN.
+- AdminCatalogPublicationIsolation se actualizó a 6 escenarios: publicación individual sin lock/PropertiesService, batch de 60 en chunks 50/10, error de snapshot, reset explícito, batch inválido y fallo de chunk con reset de recuperación. Los 6 escenarios se ejecutaron con Node.js v22.16.0 sobre un harness aislado que contiene el bloque de funciones modificado: 6/6 PASS; node --check del bloque aislado PASS. El archivo de prueba comprometido aún requiere ejecución en el checkout completo/CI para confirmar integración con el servicio real.
+- Commits publicados en la rama de trabajo: aa113db8d50f8e5f452d20041d93eb70ff1d289e (admin.js) y f68ff5cd93ffff3c76141d7476a1b090e0e7a6ea (prueba). Cada operación de GitHub generó un commit por archivo. HEAD verificado: f68ff5cd93ffff3c76141d7476a1b090e0e7a6ea.
+- Estado: COMPLETADA CON VALIDACIÓN LOCAL AISLADA; CI/checkout integral pendiente. No se desplegó Apps Script ni se tocaron hojas/Drive productivos.
+- Siguiente paso inmediato: continuar auditoría ADMIN, comenzando por las escrituras ordinarias suplementarias y el registro de actividad de imágenes; clasificar locks/leases de inventario y carpeta. Mantener locks de integridad en migraciones, reconciliaciones y acciones destructivas hasta demostrar sustitución segura.
