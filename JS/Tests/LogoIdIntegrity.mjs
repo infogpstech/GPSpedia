@@ -121,7 +121,7 @@ function addLogoHarness(options={}){
   createFile:()=>file,
   getFilesByName:()=>({hasNext:()=>false,next:()=>null})
  };
- const lock={tryLock:timeout=>{assert.equal(timeout,0);return !options.lockFail;},waitLock:()=>{if(options.lockFail)throw new Error("lock timeout");},releaseLock:()=>{}};
+ let lockHeld=false;const lock={tryLock:timeout=>{assert.equal(timeout,0);lockHeld=!options.lockFail;return lockHeld;},hasLock:()=>lockHeld,releaseLock:()=>{assert.equal(lockHeld,true);lockHeld=false;},waitLock:()=>{if(options.lockFail)throw new Error("lock timeout");}};
  const properties={getProperty:()=>String(counter),setProperty:(key,value)=>{counter=Number(value);}};
  const flush=()=>{
   flushCalls++;
