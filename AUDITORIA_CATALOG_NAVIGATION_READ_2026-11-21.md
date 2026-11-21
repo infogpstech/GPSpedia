@@ -17,3 +17,9 @@ handleGetNavigationData solo necesita el ID, la categoría y la marca de cada fi
 
 ## Próximo paso
 Optimizar la proyección CATALOG dirigida por vehículo/campo sin perder el control global de VIN, los candidatos ni las fuentes de contribución. El proyector actual considera conflictos entre vehículos, por lo que no es seguro filtrar el ledger por vehículo sin conservar un índice global equivalente.
+
+ 
+## Adenda 2026-11-21 — handlers dirigidos CATALOG
+- getContributionCandidates evita cargar hojas no relacionadas y usa la misma normalización de filas + proyector global.
+- getVehicleProjection usa lectura ID/VIN global + una fila completa; no reduce el universo de conflictos.
+- CI b8d425748e483fcd6535fdc83c7c982d603b6161: SUCCESS, 273 suites / 3,191 pruebas / 0 fallos.

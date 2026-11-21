@@ -1143,3 +1143,17 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Mantiene la proyección global de conflictos VIN/opId/resoluciones y el mismo mapper para preservar likes, normalización, orden de cortes, fuentes y candidatos.
 - La lectura dirigida reduce datos de Cortes desde todas las columnas de todas las filas a dos columnas globales + una fila completa.
 - Prueba dedicada verifica rangos, fuentes leídas, preservación de VIN global y rechazo de IDs duplicados. CI pendiente.
+
+ 
+## Checkpoint — CATALOG dirigido e imágenes (2026-11-21)
+
+- HEAD verificado: b8d425748e483fcd6535fdc83c7c982d603b6161 en GPSpedia2.2.5_work.
+- CI: 273 suites / 3,191 pruebas / 0 fallos; health read-only SUCCESS. GitHub Pages build/deployment se verificará por separado al terminar.
+- CATALOG getContributionCandidates usa la proyección de filas compartida y omite hojas no relacionadas (logos, tutoriales, ledgers de tutoriales, relay), conservando Cortes + FeedbackLikes + AportesVehiculo y el proyector global.
+- CATALOG getVehicleProjection lee IDs y VIN de todas las filas, más una fila completa; alimenta al proyector con la base global mínima para conservar detección de VIN/opId y devuelve solo la ficha solicitada.
+- Tests: CatalogTargetedResponses 3/3; CatalogVehicleProjectionRead 1/1; CatalogContributionReadIsolation 1/1; SupplementaryVideoContract 55/55.
+- Imágenes: setOptimizedImage reutiliza bytes del elemento cargado para persistencia cuando CORS permite; fallback no-CORS conserva display y omite caché si no se puede leer el canvas. Precargas redundantes de actualización/inserción retiradas. Variantes 10/10, ObjectURL 10/10.
+- La cola de compresión es FIFO, concurrencia 2; no existe prefetch activo de 15 vehículos. El carrusel actual muestra 6 últimos agregados.
+- Pendiente: validar comportamiento en navegador real (CORS, PNG alfa, cache hit/miss, bytes transferidos y primera pintura). El cache hit todavía inicia el src remoto antes de que IndexedDB responda; medir antes de cambiar.
+- Pendiente: optimizar getContributionCandidates para leer columnas mínimas solo después de documentar todas las dependencias del proyector y demostrar paridad.
+- No se desplegó Apps Script ni se modificaron datos productivos.

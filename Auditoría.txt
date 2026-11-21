@@ -1356,3 +1356,15 @@ Validación exact-source local:
 - Sigue confirmado el doble acceso frío visible (img.src remoto y fetch de compresión); también queda pendiente medir el prefetch de 15 vehículos y la prioridad FIFO.
 - Evidencia de pruebas y contratos: AUDITORIA_CATALOG_NAVIGATION_READ_2026-11-21.md, AUDITORIA_CICLO_IMAGENES_2026-11-21.md. CI 271 suites / 3,189 pruebas PASS / 0 fallos.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+
+ 
+================================================================================
+2026-11-21 — OPTIMIZACIÓN CATALOG DIRIGIDA E IMÁGENES
+- getContributionCandidates omite las hojas de logos, tutoriales, ledgers de tutoriales y relay. Mantiene Cortes, FeedbackLikes y AportesVehiculo.
+- getVehicleProjection lee IDs/VIN globales y una sola fila completa. El proyector recibe el universo global mínimo necesario para preservar colisiones VIN, opId y resoluciones.
+- mapCatalogVehicleRowForProjection_ comparte el mismo tratamiento de likes, YouTube y orden de cortes entre la carga completa y los handlers dirigidos.
+- Ciclo de imagen visible reutiliza el elemento ya descargado para generar la miniatura CORS-clean; no hace fetch secundario en cache miss. Si CORS falla, reintenta sin CORS y omite persistencia no segura.
+- updateCardInPlace/insertNewVehicleFluently ya no precargan con Image para después solicitar de nuevo la misma imagen en el DOM.
+- CI b8d425748e483fcd6535fdc83c7c982d603b6161: 273 suites / 3,191 pruebas / 0 fallos; health read-only SUCCESS.
+- Pendiente: validación navegador real y medir cache hit (el src remoto se inicia antes de la respuesta IndexedDB); no se ha declarado ahorro universal de red.
+- No hay prefetch activo de 15 vehículos: el carrusel usa seis elementos y la precarga redundante se retiró. FIFO concurrencia 2 no compite con jobs de prefetch.

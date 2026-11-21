@@ -22,3 +22,11 @@
 ## Pendientes
 - Resolver la descarga repetida del recurso visible sin retrasar su primer render y sin perder compatibilidad CORS/PNG.
 - Medir el prefetch de 15 vehículos y su competencia con imágenes visibles; definir prioridad y cancelación de trabajos obsoletos.
+
+ 
+## Adenda 2026-11-21 — cache miss sin segundo fetch visible
+- setOptimizedImage solicita CORS antes de src y usa compressAndStoreThumbnailFromImage/createImageBitmap(imageElement) para persistir la variante desde los bytes ya cargados.
+- Si CORS falla, reintenta una vez sin CORS; conserva la imagen visible y no fuerza almacenamiento inseguro.
+- updateCardInPlace/insertNewVehicleFluently ya no hacen preload en un objeto Image separado.
+- CI b8d425748e483fcd6535fdc83c7c982d603b6161: SUCCESS, 273 suites / 3,191 pruebas / 0 fallos.
+- Pendiente navegador: CORS, PNG alfa, cache hit/miss y medición de bytes/primera pintura.

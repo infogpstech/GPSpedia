@@ -579,3 +579,14 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - CI 9ebeecd99869cab11bd8d9501cfd0dc4b31ab89c: 271 suites, 3,189 pruebas, 0 fallos; health read-only SUCCESS.
 - Pendiente: segunda descarga en cache miss visible, prioridad/prefetch de 15 vehículos y consulta CATALOG que reduzca lecturas internas. Sin despliegue Apps Script ni cambios en datos productivos.
 - Tarea P1 registrada: auditoría de cascada CSS de modales y encabezado del detalle de corte, comparación 2.2.5/2.1.7.
+
+ 
+2026-11-21 — OPTIMIZACIÓN CATALOG DIRIGIDA E IMÁGENES
+- CI b8d425748e483fcd6535fdc83c7c982d603b6161: 273 suites / 3,191 pruebas / 0 fallos; health read-only SUCCESS.
+- CATALOG getContributionCandidates ahora usa Cortes, FeedbackLikes y AportesVehiculo; evita leer LogosMarca, Tutoriales, TutorialEditEvents, TutorialRenameEvents y Relay.
+- CATALOG getVehicleProjection escanea ID y VIN globales y lee solo la fila completa solicitada; conserva proyección global VIN/opId/resoluciones.
+- Se comparte mapCatalogVehicleRowForProjection_ para mantener orden de cortes, likes y normalización idénticos.
+- Imágenes: createImageBitmap(imageElement) reutiliza la descarga visible para generar PNG cuando CORS lo permite; fallback sin CORS conserva la visualización y omite persistencia.
+- Se retiran dos precargas redundantes en updateCardInPlace/insertNewVehicleFluently. Tests imagen 10/10 + 10/10.
+- No hay prefetch activo de 15 vehículos; el carrusel actual muestra 6. Cola FIFO de compresión concurrencia 2, sin jobs de precarga en competencia.
+- Pendientes de Beta: CORS permitido/no permitido, transparencia PNG, cache hit/miss, bytes y primera pintura. No se desplegó Apps Script ni se modificaron datos productivos.

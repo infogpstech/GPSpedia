@@ -3351,3 +3351,20 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Mantiene lectura completa del ledger AportesVehiculo para detectar conflictos opId, VIN y resoluciones.
 - [x] Rechaza ID inválido, inexistente o duplicado antes de construir una proyección ambigua.
 - [ ] Confirmar CI y paridad con proyección completa en escenarios reales/Beta.
+
+ 
+## Validación y cierre técnico parcial — imágenes y CATALOG (2026-11-21)
+
+**CI confirmado en b8d425748e483fcd6535fdc83c7c982d603b6161: 273 suites, 3,191 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.**
+
+- [x] Ciclo visible de imágenes: la miniatura se genera desde el elemento ya descargado con createImageBitmap(imageElement), evitando el fetch duplicado de compresión cuando CORS permite leer la imagen.
+- [x] Fallback CORS: si el servidor rechaza CORS, se reintenta una vez sin CORS y se conserva la visualización; no se fuerza la persistencia cuando el canvas no es seguro.
+- [x] Retiradas las precargas redundantes de updateCardInPlace/insertNewVehicleFluently.
+- [x] Contratos ImageResolutionVariants 10/10 y ImageObjectUrlLifecycle 10/10.
+- [x] CATALOG getContributionCandidates aislado a Cortes, FeedbackLikes y AportesVehiculo; no carga LogosMarca, Tutoriales, ledgers de tutoriales ni Relay.
+- [x] CATALOG getVehicleProjection lee ID y VIN globales y solo una fila completa; conserva ledger global y proyector de conflictos.
+- [x] Pruebas CatalogVehicleProjectionRead 1/1 y CatalogContributionReadIsolation 1/1.
+- [ ] Validación Beta pendiente: comprobar en navegador CORS permitido/no permitido, PNG transparente, primera visualización, cache hit/miss y cancelación de solicitudes.
+- [ ] La cola de compresión permanece FIFO con concurrencia 2. No hay prefetch activo de quince vehículos; el carrusel vigente muestra seis últimos agregados y la precarga previa de actualización ya fue eliminada. No crear trabajo anticipado sin un consumidor visible/medido.
+- [ ] El flujo de cache hit sigue iniciando el src remoto antes de completar IndexedDB; revisar mediciones de cancelación/bytes antes de alterar el equilibrio entre primera visualización y ahorro de red.
+- [ ] La consulta getContributionCandidates aún lee todas las columnas de Cortes porque el proyector de candidatos depende de campos distribuidos por toda la fila y del orden de cortes por utilidad. Reducir columnas requiere una proyección mínima formal y pruebas de paridad, no un filtro improvisado.
