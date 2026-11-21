@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
-const start=source.indexOf("function getNextFormulaBasedId_(sheet, idColumn) {");
+const start=source.indexOf("function getNextFormulaBasedId_(sheet, idColumn, minimumSuffix) {");
 const end=source.indexOf("\nfunction ",start+10);
 assert.ok(start>=0&&end>start,"No se encontró getNextFormulaBasedId_");
 const helper=source.slice(start,end);
