@@ -149,9 +149,15 @@ function runWriteAuthorizationMinimizationTests(sources) {
    assert(!handler.includes("getAuthenticatedCollaborator("),"La identidad del colaborador no debe resolverse dos veces.");
    assert(/'addOrUpdateCut':\s*'WRITE'/.test(api));
  });
- run("WRITE asigna IDs desde el servicio propietario",()=>{
-  const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_"),end=write.indexOf("\nfunction ",start+10),handler=write.slice(start,end<0?write.length:end);
-  assert(handler.includes("getNextCortesVehicleIdLocked"));
+ run("WRITE reserva el ID antes de crear la fila física y conserva la clave de operación",()=>{
+  const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_");
+  const end=write.indexOf("\nfunction handleCheckVehicle",start);
+  const handler=write.slice(start,end);
+  const reserveAt=handler.indexOf("reserveCortesVehicleIdForOperation_(");
+  const rowAt=handler.indexOf("const lastRow = sheet.getLastRow()",reserveAt);
+  assert(start>=0&&end>start&&reserveAt>=0&&rowAt>reserveAt,"La reserva persistente debe preceder a la creación de la fila.");
+  assert(handler.includes("opId: opId ||")&&handler.includes("operationHash: operationHash ||"),
+   "Las altas legacy y las operaciones con opId deben conservar una huella de reserva válida.");
  });
  run("Router canónico mantiene acciones sensibles en WRITE",()=>{
   assert(/'addSupplementaryInfo':\s*'WRITE'/.test(api));
