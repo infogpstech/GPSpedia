@@ -6,8 +6,8 @@ function extract(source,name){const start=source.indexOf("function "+name+"(");a
 const handler=extract(feedback,"handleRecordLike");
 assert.match(handler,/findLikeEventReplayNoop_/);
 assert.match(handler,/eventLedger\.appendRow\(\[actorKey, vehicleId, corteIndex, 0, 0, "event"/);
-assert.ok(handler.indexOf('eventLedger.appendRow')<handler.indexOf('LockService.getScriptLock'),"Los likes nuevos deben anexarse antes de cualquier lock heredado");
-const eventPath=handler.slice(handler.indexOf("const eventReplay"),handler.indexOf("let activityLogRequest"));
+assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\//,"Ninguna ruta de like debe usar lock o modificar el contador físico");
+const eventPath=handler.slice(handler.indexOf("const eventReplay"),handler.indexOf("const ledger = ensureFeedbackLikesSheet_"));
 assert.doesNotMatch(eventPath,/LockService|setValue\(/);
 assert.match(extract(feedback,"ensureFeedbackLikesSheet_"),/catch \(createError\)/,"La creación concurrente de la hoja debe recuperarse por relectura");
 assert.doesNotMatch(extract(feedback,"findLikeEventReplayNoop_"),/LockService|setValue\(/);
@@ -44,5 +44,5 @@ test("rechaza eventos con actor o vehículo inválido",()=>{
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
  assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/evento de like inválido/);
 });
-test("el contrato de likes nuevos es append-only y sin lock",()=>{assert.ok(eventPath.includes('"event"'));assert.ok(handler.indexOf("eventLedger.appendRow")<handler.indexOf("LockService.getScriptLock"));});
+test("el contrato de likes nuevos es append-only y sin lock",()=>{assert.ok(eventPath.includes('"event"'));assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");
