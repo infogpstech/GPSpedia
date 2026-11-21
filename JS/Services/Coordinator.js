@@ -127,7 +127,6 @@ function coordinatorPolicy_(service, operation) {
             restoreReplacedImageFromTrash: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             permanentlyDeleteReplacedImage: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             saveUnusedImagesInventory: { write: ["IMAGE_INVENTORY"] },
-            recordAdminImageActivity: { write: ["ACTIVITY"] },
             createCortesImageFolder: { write: ["CORTES_IMAGE_FOLDER"] },
             moveReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] },
