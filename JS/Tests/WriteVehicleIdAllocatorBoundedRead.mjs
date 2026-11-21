@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const source=readFileSync(new URL("../Services/write.js",import.meta.url),"utf8");
-const start=source.indexOf("function getNextCortesVehicleIdLocked(");
+const start=source.indexOf("function getCortesVehicleIdHighWaterMark_");
 const end=source.indexOf("\nfunction ",start+10);
-assert.ok(start>=0&&end>start,"No se encontró getNextCortesVehicleIdLocked");
+assert.ok(start>=0&&end>start,"No se encontró getCortesVehicleIdHighWaterMark_");
 const code=source.slice(start,end);
 assert.doesNotMatch(code,/getDataRange\(/,"El asignador no debe descargar la tabla completa");
 const allocatorCode=code;
@@ -36,14 +36,14 @@ function makeAllocator({ids,formulas=[],rowDataByRow={},lastColumn=4,storedValue
  const fn=new Function("COLS_CORTES","CORTES_ID_COUNTER_PROPERTY","PropertiesService",allocatorCode+"\nreturn getNextCortesVehicleIdLocked;")(
   {id:1},"CORTES_ID_COUNTER", {getScriptProperties:()=>props}
  );
- return{run:()=>fn(sheet),calls,properties,lastColumn};
+ return{run:()=>fn(sheet,{includeReservations:false}),calls,properties,lastColumn};
 }
 let passed=0;function test(name,fn){fn();passed++;}
 test("filas con ID literal solo leen la columna ID",()=>{
  const h=makeAllocator({ids:[1,2,3],formulas:["","",""],lastColumn:49});
- assert.equal(h.run(),4);
+ assert.equal(h.run(),2);
  assert.deepEqual(h.calls,[[1,1,4,1],[2,1,3,1]]);
- assert.deepEqual(h.properties.sets,[["CORTES_ID_COUNTER","4"]]);
+ assert.deepEqual(h.properties.sets,[]);
 });
 test("fila con datos y sin ID se rechaza leyendo solo esa fila",()=>{
  const h=makeAllocator({ids:[1,"",3],formulas:["","",""],lastColumn:4,rowDataByRow:{3:["Toyota","Hilux",""]}});
@@ -74,8 +74,8 @@ test("ID decimal se rechaza",()=>{
 });
 test("contador almacenado mayor que la hoja mantiene monotonicidad",()=>{
  const h=makeAllocator({ids:[1,2,3],formulas:["","",""],lastColumn:1,storedValue:"20"});
- assert.equal(h.run(),21);
- assert.deepEqual(h.properties.sets,[["CORTES_ID_COUNTER","21"]]);
+ assert.equal(h.run(),20);
+ assert.deepEqual(h.properties.sets,[[]]);
 });
 test("contador almacenado inválido se rechaza",()=>{
  const h=makeAllocator({ids:[1],formulas:[""],lastColumn:1,storedValue:"NaN"});
@@ -84,7 +84,7 @@ test("contador almacenado inválido se rechaza",()=>{
 });
 test("candidatos contiguos se leen en un solo bloque",()=>{
  const h=makeAllocator({ids:[1,"","",4],formulas:["","","",""],lastColumn:3,rowDataByRow:{3:["",""],4:["",""]}});
- assert.equal(h.run(),5);
+ assert.equal(h.run(),4);
  assert.ok(h.calls.some(args=>args.join(",")==="3,2,2,2"));
  assert.equal(h.calls.filter(args=>args.length===4&&args[1]===2).length,1);
 });
@@ -93,4 +93,4 @@ test("columnas solo ID no generan rangos de ancho cero",()=>{
  assert.equal(h.run(),3);
  assert.ok(!h.calls.some(args=>args.length===4&&args[1]===2));
 });
-console.log("WriteVehicleIdAllocatorBoundedRead: "+passed+"/"+passed+" PASS — ID column scan, candidate rows, formulas y contador monotónico");
+console.log("WriteVehicleIdAllocatorBoundedRead: "+passed+"/"+passed+" PASS — validación acotada de IDs existentes y máximo histórico sin mutar contador");
