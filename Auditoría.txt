@@ -1222,3 +1222,13 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Prueba focalizada AdminSupplementaryUploadOutsideLock: 5/5 PASS en harness Node.js v22.16.0 aislado. Una primera ejecución detectó un assertion incorrecto en el test, corregido antes de repetir y aprobar 5/5. La ejecución del archivo comprometido en checkout completo/CI sigue pendiente.
 - Commits: ec717df709a1c65aedfdd31bdcd43a10e71a6a71 (servicio), 9e24c49c02d3e4efbc3133570bb6fd53c8d5ec73 (prueba), 5c647bf9d7734bce2418444be30c5720027f3b01 (ajuste de assertion). Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — ADMIN: HELPER ensureTestigoColumns SIN LOCK INTERNO
+- Evidencia: ensureTestigoColumns solo tiene un llamador en handleAddOrUpdateCut, que ya adquiere ScriptLock fail-fast antes de invocarlo. El helper conservaba una ruta opcional lockAlreadyHeld=false con waitLock(30000), innecesaria en el contrato real.
+- Corrección: se eliminó el parámetro heredado y la adquisición/liberación interna. El único callsite ahora invoca ensureTestigoColumns(sheet) dentro de la sección crítica existente del alta.
+- Se preservaron el contrato AT:AV, las verificaciones de encabezados duplicados/desplazados, VIN y datos sin encabezado. La transacción física de alta no se modificó.
+- Prueba AdminTestigoColumnsNoInternalLock: 1/1 PASS en harness Node.js aislado; inspección posterior del bloque remoto confirmó que no quedaron referencias lock/lockAcquired dentro del helper. Pendiente checkout completo/CI.
+- Commits: 8b880d33b4298323d201074766517f9e58b7f96b, d00b6c569c1e3d88d3ccc6280fea44254b0df140, 7b8e4b90baabbb52f9fdda42a89e2eebd19d45ad y d118ac8e15751461939afcd405be07617d7af3ec. Sin deployment ni cambios productivos.
+================================================================================
