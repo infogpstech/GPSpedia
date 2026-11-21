@@ -19,7 +19,7 @@ function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
 testCase("la línea azul conserva márgenes laterales simétricos y no desborda el viewport", () => {
     const cutDivider = css.slice(css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-divider {'));
-    assert.match(cutDivider, /width:\s*auto\s*!important;[\s\S]*?justify-self:\s*stretch;[\s\S]*?margin:\s*1px 6px 2px\s*!important/);
+    assert.ok(cutDivider.includes("width:auto !important;") && cutDivider.includes("justify-self:stretch;") && cutDivider.includes("margin:1px 6px 2px !important;"));
 });
 
 testCase("Problemas y Soluciones comparte el título azul y el cierre accesible de los demás modales", () => {
@@ -270,8 +270,12 @@ testCase("el logo ocupa dos filas y su contenedor se alinea abajo junto al model
     assert.match(cutHeader, /height:48px;[\s\S]*?min-height:48px;[\s\S]*?align-items:flex-start/);
     assert.match(cutHeader, /grid-template-rows:auto auto auto auto;[\s\S]*?margin-bottom:6px/);
     assert.ok(css.includes("#detalleCompleto {") && css.includes("gap: 12px;"));
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-toolbar \{[\s\S]*?margin-bottom:7px/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-meta \{[\s\S]*?margin-top:-6px/);
+    const cutToolbarStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {');
+    const cutToolbarRule = css.slice(cutToolbarStart, css.indexOf("}", cutToolbarStart));
+    assert.ok(cutToolbarRule.includes("margin-bottom:7px;"));
+    const cutMetaStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-meta {');
+    const cutMetaRule = css.slice(cutMetaStart, css.indexOf("}", cutMetaStart));
+    assert.ok(cutMetaRule.includes("margin-top:-6px;"));
 });
 testCase("el detalle de corte no permite desplazamiento horizontal y el logo conserva ancho automático", () => {
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \{[\s\S]*?overflow-x:hidden/);
