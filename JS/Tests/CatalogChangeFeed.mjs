@@ -178,7 +178,12 @@ test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset pa
     assert.ok(writeSource.includes('["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"].includes(action)'));
     assert.ok(writeSource.includes('publishCortesCatalogChange_(action, vehicleId, response.catalogVersion)'));
     assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
-    assert.ok(writeSource.includes("nextWriteCatalogVersionLocked_"));
+    assert.ok(writeSource.includes("function nextWriteCatalogSourceVersion_("));
+    const addStart = writeSource.indexOf("function handleAddOrUpdateCut(payload)");
+    const addEnd = writeSource.indexOf("\nfunction ", addStart + 10);
+    const addHandler = writeSource.slice(addStart, addEnd);
+    assert.ok(addHandler.indexOf("finally") < addHandler.indexOf("nextWriteCatalogSourceVersion_"), "La versión CATALOG se asigna después de liberar el lock físico.");
+    assert.doesNotMatch(writeSource,/nextWriteCatalogVersionLocked_/);
     const publisherStart = writeSource.indexOf("function publishCortesCatalogChange_");
     const publisherEnd = writeSource.indexOf("\nfunction runWriteDriveWorkOutsideScriptLock_", publisherStart);
     const publisher = writeSource.slice(publisherStart, publisherEnd);
