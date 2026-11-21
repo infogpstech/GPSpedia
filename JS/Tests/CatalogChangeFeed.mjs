@@ -144,9 +144,9 @@ test("SharedMutationClient usa GET y funciona sin GPSpedia_COORDINATOR_SECRET", 
     assert.equal(page.changes.length,1);
     assert.equal(page.changes[0].recordId,"PUBLIC-CLIENT-1");
 });
-test("recordLike publica un snapshot completo y ordenado de Cortes sin helpers externos", () => {
+test("recordLike invalida CATALOG desde ledger append-only sin lock de versión", () => {
     assert.match(feedbackSource,/case 'recordLike':\s*response = handleRecordLike\(payload\)/);
-    assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?response\.status === "success"[\s\S]*?publishFeedbackCortesCatalogChange_\("recordLike", changedVehicleId\)/);
+    assert.match(feedbackSource,/if \(action === "recordLike"[\s\S]*?response\.status === "success"[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", "recordLike", \{ operation: "reset" \}\)/);
     assert.ok(feedbackSource.includes("function buildFeedbackCortesCatalogChange_(reference)"));
     assert.ok(feedbackSource.includes("function getFeedbackCortesColumnMap_(sheet)"));
     assert.ok(feedbackSource.includes("normalizeFeedbackCatalogImageId_"));
