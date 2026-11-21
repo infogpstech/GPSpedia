@@ -1295,14 +1295,9 @@ function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleRow) 
 }
 
 function handleSuggestYear(payload) {
-    const lock = LockService.getScriptLock();
-    acquireFeedbackScriptLock_(lock);
-    let result;
-    try {
-        result = handleSuggestYearLocked(payload);
-    } finally {
-        lock.releaseLock();
-    }
+    // El flujo se coordina mediante votos, aplicaciones y eventos append-only
+    // con identidades deterministas; no serializa solicitudes con un lock global.
+    const result = handleSuggestYearLocked(payload);
 
     if (!result || typeof result !== "object") return result;
     const catalogResetRequest = result._catalogResetRequest === true;
