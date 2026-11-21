@@ -2357,7 +2357,22 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
         matches.push({ rowIndex, row, metadata });
     });
     if (matches.length > 1) {
-        throw new Error("El identificador del reporte aparece duplicado en Feedbacks; requiere revisión.");
+        const canonical = matches[0];
+        const canonicalImage = normalizeReportImageMetadata_(canonical.metadata);
+        const sameLogicalReport = matches.every(item => {
+            const image = normalizeReportImageMetadata_(item.metadata);
+            return String(item.row[COLS_FEEDBACKS.Usuario - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Usuario - 1] || "") &&
+                String(item.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(canonical.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") &&
+                String(item.row[COLS_FEEDBACKS.Problema - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Problema - 1] || "") &&
+                String(item.metadata.userId || "") === String(canonical.metadata.userId || "") &&
+                Number(item.metadata.corteIndex) === Number(canonical.metadata.corteIndex) &&
+                item.metadata.activaTestigoMotor === canonical.metadata.activaTestigoMotor &&
+                String(item.metadata.category || "") === String(canonical.metadata.category || "") &&
+                String(item.metadata.subject || "") === String(canonical.metadata.subject || "") &&
+                String(image && image.imageSha256 || "") === String(canonicalImage && canonicalImage.imageSha256 || "");
+        });
+        if (!sameLogicalReport) throw new Error("El identificador del reporte tiene filas duplicadas con contenido contradictorio; requiere revisión.");
+        canonical.duplicateCount = matches.length - 1;
     }
     return matches[0] || null;
 }
@@ -3115,7 +3130,17 @@ function findCutSuggestionByOperation_(sheet, operationId) {
             matches.push({ rowNumber, record });
         }
     });
-    if (matches.length > 1) throw new Error("El identificador de operación aparece duplicado en Feedbacks; requiere revisión.");
+    if (matches.length > 1) {
+        const canonical = matches[0].record;
+        const equivalent = matches.every(item =>
+            String(item.record.requestFingerprint || "") === String(canonical.requestFingerprint || "") &&
+            String(item.record.reportId || "") === String(canonical.reportId || "") &&
+            String(item.record.vehicleId || "") === String(canonical.vehicleId || "") &&
+            Number(item.record.corteIndex) === Number(canonical.corteIndex) &&
+            String(item.record.userId || "") === String(canonical.userId || ""));
+        if (!equivalent) throw new Error("El identificador de operación aparece duplicado con contenido contradictorio; requiere revisión.");
+        matches[0].duplicateCount = matches.length - 1;
+    }
     return matches.length ? matches[0] : null;
 }
 
@@ -3154,7 +3179,17 @@ function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, use
             matches.push({ rowNumber, record });
         }
     });
-    if (matches.length > 1) throw new Error("La sugerencia asociada al reporte ya aparece duplicada; se conserva el estado para revisión.");
+    if (matches.length > 1) {
+        const canonical = matches[0].record;
+        const equivalent = matches.every(item =>
+            String(item.record.requestFingerprint || "") === String(canonical.requestFingerprint || "") &&
+            String(item.record.reportId || "") === String(canonical.reportId || "") &&
+            String(item.record.vehicleId || "") === String(canonical.vehicleId || "") &&
+            Number(item.record.corteIndex) === Number(canonical.corteIndex) &&
+            String(item.record.userId || "") === String(canonical.userId || ""));
+        if (!equivalent) throw new Error("La sugerencia asociada al reporte aparece duplicada con contenido contradictorio; requiere revisión.");
+        matches[0].duplicateCount = matches.length - 1;
+    }
     return matches.length ? matches[0] : null;
 }
 
