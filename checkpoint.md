@@ -275,3 +275,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `logUserActivity` anexa una fila completa con la fórmula de ID calculada por fila; evita la secuencia `getLastRow` + escrituras por celda.
 - Pruebas `FeedbackLikeAppendOnly` 4/4, `ActivityLogAppendAtomic` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848455795` SUCCESS: 255 suites, 3063 pruebas, 0 fallos. Health read-only `44848455802` SUCCESS. Pages `44848455600` pendiente al registrar.
 - P0 continúa abierto: `reportProblem`/`suggestCutChange`, PyS, tutoriales y aprobaciones de vídeo conservan locks por deduplicación, first-write-wins, unicidad y transiciones. Próximo: migrar la ruta de reportes/sugerencias a append-only con deduplicación de lecturas y recuperación de adjuntos; no retirar locks sin cubrir esos contratos. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — likes sin ScriptLock, incluida recuperación legacy (2026-11-21)
+
+- HEAD de código validado: `adbed85e48e99c5b0cda256f713a00d66450b3d7`.
+- `handleRecordLike` ya no adquiere ScriptLock ni modifica el contador físico. Los likes nuevos se anexan en `FeedbackLikes` como eventos `event`; CATALOG proyecta actores únicos sobre el contador histórico y `recordLike` publica reset. Los replays `completed` son no-op. Los registros legacy `pending` se resuelven sin lock: `currentCount===target` significa incremento histórico ya aplicado; `currentCount===previous` se completa anexando evento; otros valores requieren reconciliación manual.
+- `logUserActivity` escribe fila completa con `appendRow` y fórmula por fila. `getNextFormulaBasedId_` reserva sufijos con ledger append-only.
+- Pruebas `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848965971` SUCCESS: 255 suites, 3063 pruebas, 0 fallos. Health read-only `44848965894` SUCCESS. Pages `44848965693` pendiente.
+- P0 sigue abierto: `handleSuggestYear`, `reportProblem`/`suggestCutChange`, PyS, tutoriales y aprobación de vídeos mantienen locks. Próximo objetivo: retirar lock de `handleSuggestYear` mediante su ledger de votos/aplicaciones y preservar umbral de tres votos, actor único y recuperación de generaciones. No se desplegó Apps Script ni se modificaron datos productivos.
