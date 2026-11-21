@@ -70,7 +70,7 @@ test("el ledger consulta solo likes del actor y registra actividad después del 
     const handler = extract("handleRecordLike", "findReportByReportId_");
     assert.match(handler, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, corteIndex\)/);
     assert.match(handler, /logLikeActivityAfterAppend_\(userId, userName, vehicleId, corteIndex/);
-    const activity = extract("logLikeActivityAfterAppend_", "findFeedbackVehicleRowForLike_");
+    const activity = extract("logLikeActivityAfterAppend_");
     assert.match(activity, /logUserActivity\(/);
     assert.doesNotMatch(activity, /LockService|getScriptLock/);
 });
