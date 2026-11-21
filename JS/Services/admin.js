@@ -8448,8 +8448,16 @@ function buildSupplementaryInfoPlan_(payload,current){
 }
 function persistSupplementaryInfoValues_(sheet,row,original,updated){
  const range=sheet.getRange(row,COLS_CORTES.apertura,1,10);
- try{range.setValues([updated]);SpreadsheetApp.flush();const saved=range.getValues()[0];if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");return true;}
- catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
+ try{
+  range.setValues([updated]);
+  SpreadsheetApp.flush();
+  const saved=range.getValues()[0];
+  if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");
+  return true;
+ }catch(e){
+  // No revertir un snapshot anterior: podría sobrescribir una edición concurrente posterior.
+  throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria. Revisa el registro antes de reintentar.");
+ }
 }
 function getSupplementaryInfoState_(payload) {
  if(!payload||typeof payload!=="object"||!String(payload.vehicleId||"").trim())throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
@@ -8475,9 +8483,7 @@ function handleAddSupplementaryInfo(payload, logMessage){
  logMessage("Registro Administrativo","Procesando addSupplementaryInfo administrativo para ID: "+payload.vehicleId+"...");
  let prepared;
  try {
-  // Las lecturas iniciales y las transferencias a Drive no bloquean las escrituras de otros usuarios.
   prepared=getSupplementaryInfoState_(payload);
-  const signature=getSupplementaryInfoPlanSignature_(prepared);
   const uploaded={};
   if(prepared.images.length){
    const folder=findOrCreateVehicleFolder(prepared.vehicle);
@@ -8488,27 +8494,18 @@ function handleAddSupplementaryInfo(payload, logMessage){
    });
   }
 
-  // La sección crítica solo revalida y escribe. La carga de Drive ya terminó.
-  const lock=LockService.getScriptLock();
-  let lockAcquired=false;
-  try {
-   lockAcquired=lock.tryLock(0);
-  } catch(lockError) {
-   lockAcquired=false;
-  }
-  if(!lockAcquired)throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","ADMIN está ocupado con una escritura breve. Conserva el mismo intento y vuelve a intentarlo.");
-  try {
-   const current=getSupplementaryInfoState_(payload);
-   if(getSupplementaryInfoPlanSignature_(current)!==signature)throw createSupplementaryInfoError_("SUPPLEMENTARY_CONFLICT","La información cambió mientras se cargaban los archivos. No se sobrescribieron datos; vuelve a revisar el registro.");
-   const updated=current.updated,index=current.index;
-   Object.keys(uploaded).forEach(field=>{updated[index(field)]=uploaded[field];});
-   const ti=index("timestamp");
-   if(!hasSupplementaryValue_(String(updated[ti]||""))){let date=new Date();date.setDate(date.getDate()-365);updated[ti]=hasSupplementaryValue_(payload.timestamp)?payload.timestamp:Utilities.formatDate(date,"GMT-6","dd/MM/yyyy");}
-   persistSupplementaryInfoValues_(current.sheet,current.row,current.original,updated);
-   prepared={...current,updated};
-  } finally {
-   if(lockAcquired)lock.releaseLock();
-  }
+  // Reubicar la fila por ID después de Drive; escribir un único rango y sin lock global.
+  const row=findUniqueAdminVehicleRow_(prepared.sheet,String(payload.vehicleId||"").trim());
+  const range=prepared.sheet.getRange(row,COLS_CORTES.apertura,1,10);
+  const current=range.getValues()[0];
+  const updated=current.slice(),index=prepared.index;
+  Object.keys(prepared.plan.updates).forEach(field=>{
+   updated[index(field)]=Object.prototype.hasOwnProperty.call(uploaded,field)?uploaded[field]:prepared.plan.updates[field];
+  });
+  const ti=index("timestamp");
+  if(!hasSupplementaryValue_(String(updated[ti]||""))){let date=new Date();date.setDate(date.getDate()-365);updated[ti]=hasSupplementaryValue_(payload.timestamp)?payload.timestamp:Utilities.formatDate(date,"GMT-6","dd/MM/yyyy");}
+  persistSupplementaryInfoValues_(prepared.sheet,row,current,updated);
+  prepared={...prepared,row,updated};
 
   prepared.images.forEach(field=>{try{markImageUploadLinked(prepared.updated[prepared.index(field)]);}catch(e){logMessage("Advertencia","La imagen se guardó, pero no se confirmó su vínculo en el ledger: "+String(e&&e.message||e),0,0,true,false);}});
   logMessage("Registro Administrativo","Información suplementaria administrativa agregada con éxito.");
