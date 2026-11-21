@@ -206,3 +206,13 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - `SuggestYearVoteThreshold.mjs` incorpora pruebas para ambos órdenes de conflicto (negativo→positivo y positivo→negativo).
 - CI del commit `8c8a7dac2ce2743642bebfdfcfcccdb387cdbe56`: servicio de regresión SUCCESS, 255 suites, 3064 pruebas, 0 fallos; health read-only SUCCESS; build SUCCESS. Deploy/Pages seguía en ejecución al registrar.
 - **No se ha retirado ScriptLock ni se considera migrado el flujo.** Pendiente: append atómico de votos, ledger de aplicaciones idempotente, recuperación sin mutar filas históricas y validación de concurrencia. Mantener lock actual hasta completar esos contratos.
+
+
+
+## En curso — escrituras atómicas de sugerencias de año (2026-11-21)
+
+- Los votos nuevos de `handleSuggestYearLocked` se escriben como una fila completa con `Feedbacks.appendRow`; ID reservado, usuario, vehículo, respuesta, año y `suggestionActorKey` quedan en una sola operación. La proyección conserva first-write-wins por actor/vehículo/año.
+- Las aplicaciones nuevas se anexan como una fila completa mediante `FeedbackYearApplications.appendRow` y se confirma que exista exactamente una fila con el operationId generado antes de continuar la recuperación.
+- Pruebas `SuggestYearVoteThreshold` 8/8 y `FeedbackYearApplicationAppendOnly` 7/7 PASS. CI commit `8d80bac41d4c29e9b90d598e89eca818e03bff79`: 255 suites, 3066 pruebas aprobadas, 0 fallos; health read-only en ejecución al registrar; build en ejecución al registrar.
+- **P0 permanece abierto.** `handleSuggestYear` aún usa ScriptLock; el operationId de aplicación sigue siendo UUID no determinista; el ledger cambia status/actividad y la recuperación todavía modifica claves de votos históricos. Pendiente: identidad determinista y deduplicación segura de aplicaciones, recuperación reconstruible desde eventos sin mutar Feedbacks, revisión de conflictos de generaciones y pruebas de concurrencia. No retirar lock todavía.
+- No se desplegó Apps Script ni se modificaron datos productivos.
