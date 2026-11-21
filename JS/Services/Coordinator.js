@@ -39,7 +39,7 @@ const SERVICE_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
 const SERVICE_TRAFFIC_SERVICES_ = Object.freeze(["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"]);
 const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
     WRITE: new Set(["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","freezeCortesIds"]),
-    FEEDBACK: new Set(["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
+    FEEDBACK: new Set(["recordLike","suggestYear","addProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
     ADMIN: new Set(["addLogo","createCortesImageFolder","migrateVehicleContributionsSchema","updateVehicleField","uploadAdminImage","normalizeImages","organizePrimaryVehicleImages","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","moveReplacedImage","applyCortesImageReconciliation","restoreDatabase","reorganizeDatabase","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads"])
 });
 
@@ -144,10 +144,6 @@ function coordinatorPolicy_(service, operation) {
             recordVehicleView: { read: feedbackRead, write: ["ACTIVITY"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
-            addSolution: { read: feedbackRead, write: feedbackWrite },
-            addPrevention: { read: feedbackRead, write: feedbackWrite },
-            addVehicleToProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
-            removeVehicleFromProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
             updatePysItem: { read: feedbackRead, write: feedbackWrite },
             updateTutorialItem: { read: [...feedbackRead, "TUTORIAL"], write: [...feedbackWrite, "TUTORIAL"] },
             suggestCutChange: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
