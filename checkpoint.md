@@ -1387,3 +1387,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Decisión: **mantener el refresh completo**. Sustituirlo por un delta ahora no puede demostrar un cursor consistente con el snapshot ni cubrir cambios concurrentes, resets legacy, eventos vencidos y colecciones sin ID estable. El descarte verificado necesita además una lectura posterior del estado restaurado.
 - Tests existentes: CatalogChangeFeed 35/35, CatalogFeedRetry 9/9 y CatalogSnapshotSync 29/29 PASS. CI HEAD 9ef42ae5b69a35ec25a659290c961a53127f27b1: **283 suites / 3,286 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS.
 - Siguiente: integrar el feed incremental en UI con cursor-before-snapshot, deltas ordenados, persistencia atómica snapshot+cursor y fallback completo en cualquier reset/hueco; validar concurrencia antes de sustituir refreshes completos.
+
+
+## Corrección de auditoría P1.9 y cierre — feed incremental en edición (2026-11-21)
+
+- Corrección: la anotación previa que afirmaba que no existía consumidor de `getCatalogChanges` era incorrecta. El consumidor sí está integrado en `JS/Frontend/auth.js`, dentro de `loadInitialData`: lee snapshot+cursor de IndexedDB, consulta `fetchCatalogDelta_`, aplica `applyCatalogChangesToSnapshot`, trata reset/huecos como snapshot completo y persiste snapshot+cursor con `saveCatalogWithCursor`. El polling y la sincronización entre pestañas también están conectados.
+- La ausencia de llamadas en `ui.js`/ `main.js` se debía a que el consumidor vive en `auth.js`; `main.js` expone ese módulo mediante `window.auth`.
+- Se modificó `exitModalEditMode`: al guardar/cerrar, usa `window.auth.loadInitialData(true, {silent:true})`; si el delta no confirma una actualización, obtiene snapshot completo de respaldo. Se agregaron guardas para no aplicar una respuesta tardía si otra sincronización actualizó el estado mientras el fallback estaba en curso.
+- El descarte verificado conserva sus dos lecturas completas: una para calcular los campos que deben restaurarse y otra para confirmar por read-back que quedaron restaurados. No se reemplazó esa ruta con un delta dirigido.
+- Fallback completo no adelanta ni empareja un cursor distinto; actualiza estado en memoria y deja que el siguiente poll reprocese desde el cursor persistido o active reset si venció.
+- Prueba nueva `CatalogEditDeltaRefresh.mjs`: 23/23 PASS. CI HEAD `ea1c3ca196105b20115f9c56c27bdf6e4e6df2e5`: **284 suites / 3,309 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS.
+- Siguiente: Beta aislada para concurrencia entre pestañas, pérdida de feed y reset; continuar P1 de imágenes/vídeos/archivos.
