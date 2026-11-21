@@ -706,7 +706,15 @@ function handleAddOrUpdateCut(payload) {
         }
         return handleAppendExistingVehicleCut_(preparedRequest);
     }
-    // Solo las altas de vehículos nuevos reservan un ID numérico secuencial.
+    // Las solicitudes modernas reservan su ID append-only antes del lock físico.
+    // Si hay contención, el reintento con el mismo opId recupera la misma reserva.
+    if (validated.opId) {
+        preparedRequest.preallocatedVehicleId = reserveCortesVehicleIdForOperation_(preparedRequest.sheet, {
+            opId: validated.opId,
+            operationHash: validated.operationHash || computeCutOperationFingerprint_(validated)
+        });
+    }
+    // Solo las altas de vehículos nuevos requieren exclusión para fila física e Idempotencia.
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
@@ -1361,7 +1369,7 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
         return handleAddOrUpdateCutLockedUnsafe_(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, {
             rowIndex: existingRowIndex,
             rowValues: existingRowValues
-        });
+        }, preparedRequest.preallocatedVehicleId);
     } catch (error) {
         if ((lockState && lockState.releasedForDrive) || (lock && !lock.hasLock())) {
             // Tras una carga fuera del lock puede haber otras escrituras válidas en la misma fila.
@@ -1425,7 +1433,7 @@ function getPreparedExistingVehicleRow_(sheet, vehicleId, snapshot) {
     return { rowIndex: snapshot.rowIndex, rowValues: rowValues };
 }
 
-function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot) {
+function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot, preallocatedVehicleId) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
     if (!cutData) {
@@ -1653,13 +1661,16 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         vehicleData.modelo = resolveAndNormalizeEntity(vehicleData.modelo, entities.models, false);
         vehicleData.versionesAplicables = resolveAndNormalizeEntity(vehicleData.versionesAplicables, entities.versions, true);
 
-        const reservationRequest = {
-            opId: opId || ("OP-WRITE-LEGACY-" + Utilities.getUuid()),
-            operationHash: operationHash || computeCutOperationFingerprint_(payload)
-        };
-        // La reserva queda persistida antes de crear la fila física; un fallo posterior
-        // consume el ID, pero el reintento con opId recupera siempre la misma reserva.
-        newId = reserveCortesVehicleIdForOperation_(sheet, reservationRequest);
+        if (Number.isSafeInteger(preallocatedVehicleId) && preallocatedVehicleId > 0) {
+            newId = preallocatedVehicleId;
+        } else {
+            const reservationRequest = {
+                opId: opId || ("OP-WRITE-LEGACY-" + Utilities.getUuid()),
+                operationHash: operationHash || computeCutOperationFingerprint_(payload)
+            };
+            // Compatibilidad legacy: reservar bajo el lock porque el cliente no envía opId estable.
+            newId = reserveCortesVehicleIdForOperation_(sheet, reservationRequest);
+        }
 
         const lastRow = sheet.getLastRow();
         rowIndex = lastRow + 1;
