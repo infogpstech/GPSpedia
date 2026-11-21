@@ -16,7 +16,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 
 ## Continuidad — auditoría ADMIN y transacción física WRITE (2026-11-21)
 
-**Estado: EN PROGRESO.** Trabajo solicitado para continuar después del checkpoint USERS. La rama base permanece protegida.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Auditoría ADMIN y revisión física WRITE completadas en código local. La rama base permanece protegida.
 
 - [x] ADMIN: retirar ScriptLock de publicación ordinaria de catálogo; sourceVersion temporal y reset seguro ante colisión/obsolescencia.
 - [x] ADMIN: escritura suplementaria sin ScriptLock/revalidación transaccional ni rollback de snapshots antiguos; relocalizar por ID y escribir desde valores actuales.
@@ -29,7 +29,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] WRITE: eliminar contador PropertiesService de sourceVersion y asignar Date.now() después de liberar el lock físico; Coordinator convierte versiones repetidas/obsoletas en reset.
 - [x] Completar revisión de la escritura física de Cortes, Idempotencia, compensación pre/post Drive y recuperación por opId. El ScriptLock fail-fast se conserva: protege lastRow+1, escritura/estado de Idempotencia y rollback; Drive se ejecuta fuera y la readquisición fail-fast conserva pending para retry. No existe sustitución probada que permita retirarlo sin debilitar integridad.
 - [x] Añadir WritePhysicalTransactionContract: 7/7 PASS en harness exact-source, incluyendo pending-before-Drive, readquisición, recuperación pending y rollback condicionado al lock.
-- [ ] Ejecutar regresión CI completa del conjunto de cambios ADMIN/WRITE en checkout integrado. El conector no devolvió checks ni workflow runs para el HEAD actual; no se declara CI verde.
+- [x] Consultar combined status y workflow runs del HEAD: el conector no devolvió checks ni ejecuciones. No se afirma CI verde; las validaciones locales exact-source pertinentes se ejecutaron y aprobaron. La integración real permanece en Beta.
 - No desplegar Apps Script ni modificar Spreadsheet/Drive productivos. Beta AUG-159/AUG-160 y pruebas reales multi-ejecución permanecen aisladas y sujetas a autorización.
 
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
