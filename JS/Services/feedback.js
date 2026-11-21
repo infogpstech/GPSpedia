@@ -1980,22 +1980,12 @@ function logUserActivity(userId, userName, activityType, associatedId, details) 
     try {
         const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
         if (!sheet) {
-            Logger.log(`CRITICAL: No se encontró la hoja de actividad de usuario: ${SHEET_NAMES.ACTIVIDAD_USUARIO}`);
+            Logger.log("CRITICAL: No se encontró la hoja de actividad de usuario: " + SHEET_NAMES.ACTIVIDAD_USUARIO);
             return;
         }
-        const lastRow = sheet.getLastRow();
-        const newRowNumber = lastRow + 1;
-        const lastCol = Math.max(sheet.getLastColumn(), 7);
-        const FORMULA_ROW = 2;
-
-        // Copiar solo formato/validaciones; el ID lo asigna el backend.
-        if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, newRowNumber, lastCol);
-        sheet.getRange(newRowNumber, COLS_ACTIVIDAD_USUARIO.id).setValue(
-            getNextFormulaBasedId_(sheet, COLS_ACTIVIDAD_USUARIO.id)
-        );
-
-        // Preparar los datos de actividad, excluyendo la columna ID.
-        const dataToWrite = [
+        const pattern = getFormulaBasedIdPattern_(sheet, COLS_ACTIVIDAD_USUARIO.id);
+        const row = [
+            pattern.formula,
             new Date().toISOString(),
             userId,
             userName,
@@ -2003,15 +1993,12 @@ function logUserActivity(userId, userName, activityType, associatedId, details) 
             associatedId,
             details
         ];
-
-        // 3. Obtener el rango SOLO para las celdas de datos y escribirlos.
-        // Esto deja la columna 1 (ID) intacta, conservando la fórmula heredada.
-        const dataRange = sheet.getRange(newRowNumber, COLS_ACTIVIDAD_USUARIO.timestamp, 1, dataToWrite.length);
-        dataRange.setValues([dataToWrite]);
-
+        // appendRow reserva la fila y escribe el ID por fórmula en una sola operación;
+        // no calcula lastRow para después escribir celdas que otra ejecución podría ocupar.
+        sheet.appendRow(row);
+        SpreadsheetApp.flush();
     } catch (e) {
-        // Log error to main log sheet if activity logging fails
-        Logger.log(`CRITICAL: Fallo al registrar actividad de usuario. Error: ${e.message}`);
+        Logger.log("CRITICAL: Fallo al registrar actividad de usuario. Error: " + e.message);
     }
 }
 
