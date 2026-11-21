@@ -555,3 +555,10 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 - [ ] Probar concurrencia entre dos ejecuciones/proyectos FEEDBACK que comparten Coordinator; incluir contención/expiración de lease, fallo de Coordinator, pérdida de respuesta, read-back real y RBAC para desvincular.
 - Esta adenda prevalece sobre las expectativas obsoletas de ScriptLock/estados LINKED o RECOVERY_REQUIRED en PysOperations de AUG-084/AUG-086/AUG-090/AUG-128. PysOperations nuevo es append-only; el éxito se proyecta desde la fila PyS verificada y los archivos ambiguos se conservan para reconciliación.
 - Ejecutar solo después de los comandos de sincronización seguros al inicio de lista_beta_adenda_2026-11-21.md. No usar deployments, cuentas, hojas ni Drive productivos.
+
+
+## Reconciliación de estados históricos — 2026-11-21
+
+Las secciones antiguas tituladas «En curso», «Siguiente tarea — tutoriales» y las fases 3/4 de Tutoriales conservan el estado que tenían al registrarse. Sus pendientes locales quedaron resueltos por los cierres posteriores de handleSuggestYear, reportes/sugerencias, creación/edición/renombrado de tutoriales, aprobación de vídeos y edición de filas históricas sin ID. No son tareas locales abiertas. El estado operativo vigente está en los cierres P0/P1, PyS, Tutoriales y búsqueda agrupada; sus únicas casillas sin marcar son validaciones Beta en entornos aislados.
+
+La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md, que sustituye las expectativas históricas de ScriptLock y estados mutables del ledger.

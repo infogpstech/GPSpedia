@@ -603,3 +603,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se creó lista_beta_adenda_2026-11-21.md con secuencia de sincronización obligatoria al inicio y pruebas actualizadas para appendRow, reservas de ID, propiedad de imagen y leases compartidas Coordinator 1.4.5. La adenda se añadió al índice lista_beta.txt sin reescribir segmentos históricos.
 - Se incorpora AUG-161 para la validación real de alta PyS y mutaciones de solución/prevención/relaciones en proyectos FEEDBACK y Spreadsheet/Drive aislados.
 - Las pruebas Beta siguen pendientes por falta de deployment/recursos aislados autorizados. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint final — verificación integral local y Beta preparada (2026-11-21)
+
+- HEAD de la rama de trabajo: 689830c9ee2dd7e735aeccb0865e845d7c55df97. HEAD base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1. Comparación GitHub: 6,213 commits ahead / 0 behind; base intacta.
+- Verificación integral automatizada: CI 44908506743 SUCCESS, 259 suites, 3,129 pruebas aprobadas, 0 fallos. El paso de sintaxis comprobó los módulos frontend/backend configurados, incluidos los diez archivos de JS/Services. Health read-only 44908506686 SUCCESS; Pages 44908505824 SUCCESS.
+- Suites focalizadas confirmadas: SearchModelGrouping 21/21; PysModalNavigation 10/10; PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; PysImageStorageRecovery 22/22.
+- Diff de código de esta continuidad revisado: únicamente el cambio de orden de validación en handleAddProblem; workflow ampliado para node --check de todos los módulos backend. Los commits documentales afectan solo a registros y lista Beta.
+- GP-CONCURRENCY-CUT-MULTI-ENTRY-01, GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01 y GP-UX-SEARCH-MODEL-GROUPING-01 quedan COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. Las secciones históricas EN CURSO quedan reconciliadas por esta adenda; no hay tareas locales de implementación abiertas en Tareas_Activas.md.
+- Se creó AUG-161 y lista_beta_adenda_2026-11-21.md para actualizar las pruebas reales PyS al protocolo vigente: alta append-only, reservas de ID, propiedad first-write-wins, recuperación y leases compartidas Coordinator 1.4.5. La adenda comienza con comandos seguros de sincronización exigidos por las normas.
+- Pendiente exclusivamente: ejecutar Beta aislada AUG-037/AUG-083/AUG-084/AUG-086/AUG-090/AUG-128/AUG-159/AUG-160/AUG-161, tutoriales/vídeos, recent-viewed/búsqueda visual, concurrencia real y Safe Apply después de preview/ACL/rollback autorizados. No hay autorización para desplegar ni tocar recursos productivos.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
