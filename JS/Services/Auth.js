@@ -942,28 +942,6 @@ function getOldestSessionsToRevoke_(activeRows, currentToken, sessionLimit) {
     return oldestActive;
 }
 
-function getActiveSessionTokensForUserUnderLock_(sheet, userId) {
-    if (!sheet) throw new Error("No se encontró ActiveSessions para invalidar las cachés de sesión.");
-    const normalizedId = normalizeUserId(userId);
-    if (!normalizedId) throw new Error("Se requiere un usuario válido para invalidar las cachés de sesión.");
-    const rows = sheet.getDataRange().getValues();
-    const tokenCounts = new Map();
-    rows.slice(1).forEach(row => {
-        const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-        if (token) tokenCounts.set(token, (tokenCounts.get(token) || 0) + 1);
-    });
-    const tokens = [];
-    rows.slice(1).forEach(row => {
-        if (normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizedId) return;
-        const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-        if (!token) return;
-        if (tokenCounts.get(token) !== 1) {
-            throw new Error("Existe un token de sesión duplicado; no se invalidaron cachés de forma ambigua.");
-        }
-        tokens.push(token);
-    });
-    return tokens;
-}
 
 // La solicitud conserva el mismo token entre reintentos. ScriptProperties se escribe
 // antes de tocar Sheets; la fila y el puntero se verifican por lectura posterior.
