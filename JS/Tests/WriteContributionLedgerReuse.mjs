@@ -21,7 +21,7 @@ assert.ok(existingCut.indexOf("uploadImageToDrive") < existingCut.indexOf("const
 assert.ok(existingCut.indexOf("const appendLedgerSheet") < existingCut.indexOf("appendVehicleContributionEvent_"));
 assert.ok(supplementary.indexOf("prepareSupplementaryImageUploads_") < supplementary.indexOf("const appendLedgerSheet"));
 assert.ok(supplementary.indexOf("const appendLedgerSheet") < supplementary.indexOf("appendVehicleContributionEvent_"));
-assert.match(supplementary,/ledgerSheet: contributionLedgerSheet/);
+assert.match(supplementary,/ledgerSheet: appendLedgerSheet/);
 assert.match(supplementary,/kind, appendLedgerSheet\)/);
 
 let getterCalls=0;
