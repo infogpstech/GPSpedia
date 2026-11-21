@@ -554,7 +554,7 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
     const opId = String(payload.opId || "").trim();
     const spreadsheet = preparedRequest.spreadsheet;
     const sheet = preparedRequest.sheet;
-    getVehicleContributionLedgerSheet_(spreadsheet);
+    const contributionLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
 
     const operationHash = computeCutOperationFingerprint_(payload);
     if (normalizeIdempotenciaOperationHash_(payload.operationHash, "Aporte append-only de corte") !== operationHash) {
@@ -647,6 +647,7 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
     };
     const event = appendVehicleContributionEvent_({
         spreadsheet,
+        ledgerSheet: contributionLedgerSheet,
         vehicleId,
         opId,
         kind: "cut",
@@ -668,8 +669,8 @@ function handleAppendExistingVehicleCut_(preparedRequest) {
     });
 
     // Un solo snapshot post-append alimenta la proyección de slots y la detección de VIN concurrente.
-    const postAppendLedgerRows = readVehicleContributionLedgerRows_(getVehicleContributionLedgerSheet_(spreadsheet));
-    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId, postAppendLedgerRows);
+    const postAppendLedgerRows = readVehicleContributionLedgerRows_(contributionLedgerSheet);
+    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId, postAppendLedgerRows, contributionLedgerSheet);
     const vinConflictAfterAppend = acceptedVinPrefix
         ? findVehicleContributionVinConflict_(spreadsheet, acceptedVinPrefix, vehicleId, postAppendLedgerRows)
         : null;
@@ -1960,7 +1961,7 @@ function handleAddSupplementaryInfo(payload) {
     // Los flujos del modal (+) usan opId y se registran como eventos append-only.
     // Los payloads antiguos de nota sin opId conservan la ruta de compatibilidad.
     if (hasLedgerContribution && String(payload.opId || "").trim()) {
-        getVehicleContributionLedgerSheet_(spreadsheet);
+        const contributionLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
         if (isOpening && hasFeed) {
             throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD", "Apertura y alimentación deben registrarse como operaciones independientes.");
         }
@@ -1984,6 +1985,7 @@ function handleAddSupplementaryInfo(payload) {
             : { text: String(preparedPayload.cableAlimen || ""), image: String(preparedPayload.imgCableAlimen || "") };
         const event = appendVehicleContributionEvent_({
             spreadsheet,
+            ledgerSheet: contributionLedgerSheet,
             vehicleId: payload.vehicleId,
             opId: payload.opId,
             kind,
@@ -2011,7 +2013,7 @@ function handleAddSupplementaryInfo(payload) {
             operationHash: event.operationHash,
             duplicate: event.duplicate === true,
             catalogResetRequired: true,
-            candidateReviewPending: getVehicleContributionCandidateStatus_(spreadsheet, snapshot, event.eventId, kind)
+            candidateReviewPending: getVehicleContributionCandidateStatus_(spreadsheet, snapshot, event.eventId, kind, contributionLedgerSheet)
         };
     }
 
@@ -2617,8 +2619,8 @@ function readVehicleContributionLedgerRows_(sheet) {
     return sheet.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
 }
 
-function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId, rowsSnapshot) {
-    const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
+function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId, rowsSnapshot, validatedLedgerSheet) {
+    const ledger = validatedLedgerSheet || getVehicleContributionLedgerSheet_(spreadsheet);
     const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(ledger);
     if (!rows.length) return null;
     const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
@@ -2665,8 +2667,8 @@ function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targe
     return targetSlot;
 }
 
-function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, targetEventId, kind) {
-    const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
+function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, targetEventId, kind, validatedLedgerSheet) {
+    const ledger = validatedLedgerSheet || getVehicleContributionLedgerSheet_(spreadsheet);
     const lastRow = ledger.getLastRow();
     if (lastRow < 2) return true;
     const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
@@ -2805,7 +2807,7 @@ function appendVehicleContributionEvent_(options) {
     if (!payloadJson || payloadJson.length > 45000) throw new Error("El payload del aporte excede el tamaño permitido.");
     const operationHash = String(options.operationHash || computeVehicleContributionHash_(vehicleId, kind, payload)).trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("La huella del aporte debe ser SHA-256.");
-    const sheet = getVehicleContributionLedgerSheet_(options.spreadsheet);
+    const sheet = options.ledgerSheet || getVehicleContributionLedgerSheet_(options.spreadsheet);
     const existing = findVehicleContributionEventsByOpId_(sheet, opId);
     for (const entry of existing) {
         const values = entry.values;
