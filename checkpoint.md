@@ -878,3 +878,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Validación pendiente: ejecutar `CutDetailModalLayout.mjs`, revisar los cambios de CSS/test, CI y comprobación visual Beta. No se afirma que la prueba haya pasado todavía.
 - Pendiente local: completar la auditoría y consolidación de estilos repetidos de modales (incluidos Inbox, Developer Tools e informativos); revisar guía contra código completo y corregir cualquier discrepancia.
 - Validaciones Beta preexistentes siguen abiertas (15 checks no marcados en Tareas_Activas.md): concurrencia real, Drive/Spreadsheet aislados, journals, recuperación y navegador/PWA. No se ejecutaron deployments ni se modificaron ScriptProperties, Spreadsheet o Drive remotos.
+
+
+## Checkpoint — cierre de auditoría CSS de encabezados y familias de modales (2026-11-21)
+
+- HEAD de validación: `9c4b1556c28d83ef7c2320b99aa55557d2c0e901`, rama `GPSpedia2.2.5_work`. Base protegida consultada: `GPSpedia2.2.5` sin modificaciones.
+- Consolidación CSS completada: encabezados de detalle en un único bloque final, con orden original de cascada y media queries; base de `.info-modal-content` en una sola regla; encabezado Inbox agrupado; declaraciones base de `.dev-tools-title` fusionadas en una regla, conservando media queries y `prefers-reduced-motion`. La base global `.info-close-btn` permanece única y el corte/Relay conserva overrides scoped.
+- Se actualizaron/añadieron contratos: `CutDetailModalLayout.mjs` 29/29 PASS; `InfoModalStyleCascade.mjs` 3/3 PASS; `ModalHeaderCascade.mjs` 2/2 PASS.
+- GitHub Actions `GPSpedia service regression tests`: SUCCESS, 261 suites, 3,143 pruebas aprobadas, 0 fallos. `GPSpedia deployed service health (read-only)`: SUCCESS. No se ejecutó deployment Apps Script.
+- Primera refactorización experimental de reglas de Developer Tools movidas al final alteró expectativas de media queries (reduced-motion y responsive); se revisó el fallo, se restauró el orden de esas media queries y se fusionó solo la base común del título en su ubicación original. La regresión final pasó sin debilitar pruebas.
+- Documentación: `AUDITORIA_MODAL_CSS_2026-11-21.md`, `Services/DEPLOYMENT_GUIDE.md`, README y COORDINATOR_SETUP actualizados. La guía fue contrastada con los archivos fuente de los ocho proyectos Apps Script y las propiedades URL/secretos.
+- Pendiente local: ninguno dentro del alcance de esta tanda. Pendiente visual: aceptación Beta en escritorio/Android/PWA y viewports reales; se mantiene sin ejecutar hasta disponer de deployments y recursos aislados.
+- Las 15 validaciones Beta originales permanecen pendientes; no se ejecutaron contra producción ni se marcaron como aprobadas.
