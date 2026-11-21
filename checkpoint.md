@@ -999,3 +999,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - La suite Node completa y CI de estos commits aún requieren confirmar checks del nuevo HEAD. El despliegue de Apps Script no se realizó.
 - Próximo: continuar el mapa de cargas de imagen y consultas completas CATALOG; medir ahorro de red/tiempo en caché fría/caliente antes de atribuir mejora cuantitativa.
 
+
+
+## Continuidad — ubicación de cargas Drive frente a locks (2026-11-21)
+
+- HEAD previo a documentación: `d635cd031f84fea8523c47ddea78ef6c956a3d44`; base protegida sin cambios `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- WRITE corte: Drive se ejecuta dentro de `runWriteDriveWorkOutsideScriptLock_`, que libera el lock y lo reacquire con `tryLock(0)`; fallo de reacquisición conserva operación recuperable con el mismo opId.
+- WRITE suplementarios, FEEDBACK reportes/sugerencias y PyS: cargas Drive no se realizan bajo ScriptLock global en las rutas inspeccionadas; se conservan opId, payloadHash, estados y limpieza/reconciliación.
+- ADMIN y benchmark real de latencia/Drive no están auditados todavía. No se quitó ningún lock.
