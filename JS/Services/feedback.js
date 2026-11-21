@@ -2456,7 +2456,7 @@ function handleReportProblem(payload) {
     const lock=LockService.getScriptLock();
     let lockAcquired=false;
     let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
-    let pendingSheet=null,pendingRowNumber=0,pendingMetadataColumn=0,pendingExistingMetadata=null;
+    let pendingSheet=null,pendingMetadataColumn=0,pendingExistingMetadata=null,appendAttempted=false;
     const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
     try {
         // La transferencia Drive ocurre antes del bloqueo breve de escritura en Sheets.
@@ -2495,23 +2495,36 @@ function handleReportProblem(payload) {
             }
         }
         if(!duplicateReport) {
-            const lastRow=sheet.getLastRow(),newRowNumber=lastRow+1; pendingRowNumber=newRowNumber;
+            const lastRow=sheet.getLastRow(),newRowNumber=lastRow+1;
             const FORMULA_ROW=2,lastCol=reportContext?Math.max(sheet.getLastColumn(),metadataColumn,8):(sheet.getLastColumn()||8);
             if(lastRow>=FORMULA_ROW) copyRowPresentationOnly_(sheet,FORMULA_ROW,newRowNumber,lastCol);
-            sheet.getRange(newRowNumber,COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet,COLS_FEEDBACKS.ID));
             if(imageAttachment && !uploadedImage) throw new Error("No se pudo preparar la imagen del reporte.");
-            sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,normalizedProblemText]]);
+            const reservedId=getNextFormulaBasedId_(sheet,COLS_FEEDBACKS.ID);
+            const reportRow=new Array(lastCol).fill("");
+            reportRow[COLS_FEEDBACKS.ID-1]=reservedId;
+            reportRow[COLS_FEEDBACKS.Usuario-1]=userName;
+            reportRow[COLS_FEEDBACKS.ID_vehiculo-1]=vehicleId;
+            reportRow[COLS_FEEDBACKS.Problema-1]=normalizedProblemText;
             if(reportContext) {
                 const metadata={reportId:reportContext.reportId,userId:String(userId),vehicleId:String(vehicleId),
                     corteIndex:reportContext.corteIndex,activaTestigoMotor:reportContext.activaTestigoMotor,
                     category:reportContext.category,subject:reportContext.subject};
                 if(uploadedImage) Object.assign(metadata,uploadedImage.metadata);
-                sheet.getRange(newRowNumber,metadataColumn).setValue(JSON.stringify(metadata));
+                reportRow[metadataColumn-1]=JSON.stringify(metadata);
                 if(uploadedImage) resolvedImageUrl=uploadedImage.metadata.imageUrl;
             }
+            // appendRow conserva el registro completo en una sola escritura. Si la
+            // confirmación falla después del intento, se conserva la imagen para reconciliar.
+            appendAttempted=true;
+            sheet.appendRow(reportRow);
             SpreadsheetApp.flush();
             const idVal=sheet.getRange(newRowNumber,COLS_FEEDBACKS.ID).getValue();
-            generatedReportId=reportContext?reportContext.reportId:"REP-"+(idVal||Date.now());
+            if(String(idVal||"").trim()!==reservedId) {
+                const pending=new Error("No se pudo confirmar la fila completa del reporte; se conserva para reconciliación.");
+                pending.code="FEEDBACK_REPORT_APPEND_UNCONFIRMED";
+                throw pending;
+            }
+            generatedReportId=reportContext?reportContext.reportId:"REP-"+reservedId;
             uploadedImage=null;
         }
     } catch(error) {
@@ -2520,18 +2533,12 @@ function handleReportProblem(payload) {
             try { pendingSheet.getRange(pendingExistingMetadata.rowIndex,pendingExistingMetadata.column).setValue(pendingExistingMetadata.value); SpreadsheetApp.flush(); }
             catch(rollbackError) { rollbackConfirmed = false; console.error("No se pudo restaurar metadata previa del reporte:",rollbackError); }
         }
-        if(pendingSheet&&pendingRowNumber) {
-            try {
-                pendingSheet.getRange(pendingRowNumber,COLS_FEEDBACKS.Usuario,1,3).clearContent();
-                if(pendingMetadataColumn) pendingSheet.getRange(pendingRowNumber,pendingMetadataColumn).clearContent();
-                SpreadsheetApp.flush();
-            } catch(rollbackError) { rollbackConfirmed = false; console.error("No se pudo revertir completamente la fila del reporte:",rollbackError); }
-        }
-        if(uploadedImage && (!pendingSheet || (!pendingExistingMetadata && !pendingRowNumber) || rollbackConfirmed)) {
+        const uploadMayBeReferenced = appendAttempted || (Boolean(pendingExistingMetadata) && !rollbackConfirmed);
+        if(uploadedImage && !uploadMayBeReferenced) {
             releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage);
         } else if(uploadedImage) {
-            console.error("La imagen del reporte se conserva porque no se pudo confirmar la reversión de su referencia.");
+            console.error("La imagen del reporte se conserva porque la escritura pudo quedar persistida y requiere reconciliación.");
         }
         throw error;
     } finally { if(lockAcquired) lock.releaseLock(); }
