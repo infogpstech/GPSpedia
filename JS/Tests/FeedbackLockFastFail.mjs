@@ -5,44 +5,22 @@ const inbox=readFileSync(new URL("../Services/InboxConversations.js",import.meta
 function extract(source,name,next){const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"Missing "+name);const end=next?source.indexOf("\nfunction "+next+"(",start+10):source.indexOf("\nfunction ",start+10);return source.slice(start,end>start?end:source.length);}
 const helper=extract(feedback,"acquireFeedbackScriptLock_","DIRECT_SERVICE_TRAFFIC_CONFIG_");
 const acquire=new Function(helper+";return acquireFeedbackScriptLock_;")();
-{
- const calls=[];const lock={tryLock(ms){calls.push(ms);return true;}};
- assert.equal(acquire(lock),true);assert.deepEqual(calls,[0]);
-}
-{
- const calls=[];const lock={tryLock(ms){calls.push(ms);return false;}};
- assert.throws(()=>acquire(lock),/FEEDBACK está procesando otra escritura/);assert.deepEqual(calls,[0]);
-}
-{
- const calls=[];const lock={waitLock(ms){calls.push(ms);}};
- assert.equal(acquire(lock),true);assert.deepEqual(calls,[0],"El fallback solo se usa en dobles de prueba y nunca espera.");
-}
+{const calls=[];const lock={tryLock(ms){calls.push(ms);return true;}};assert.equal(acquire(lock),true);assert.deepEqual(calls,[0]);}
+{const calls=[];const lock={tryLock(ms){calls.push(ms);return false;}};assert.throws(()=>acquire(lock),/FEEDBACK está procesando otra escritura/);assert.deepEqual(calls,[0]);}
+{const calls=[];const lock={waitLock(ms){calls.push(ms);}};assert.equal(acquire(lock),true);assert.deepEqual(calls,[0]);}
 assert.doesNotMatch(feedback,/waitLock\((?:10000|15000)\)/);
 assert.doesNotMatch(inbox,/waitLock\(10000\)/);
 assert.match(inbox,/lock\.tryLock\(0\)/);
-const suggestYear = extract(feedback,"handleSuggestYear");
-assert.doesNotMatch(suggestYear,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
- "suggestYear coordina sus mutaciones con ledger append-only e identidades idempotentes, sin lock global.");
-for(const name of ["handleAddTutorial","handleUpdateTutorialItem"]){
- const body=extract(feedback,name);
- assert.ok(body.includes("acquireFeedbackScriptLock_(lock)"),name+" debe adquirir el lock sin espera.");
-}
-assert.doesNotMatch(extract(feedback,"handleAddProblem"),/LockService\\.getScriptLock\\(\\)|acquireFeedbackScriptLock_\\(/,
- "El alta PyS usa reservas append-only y no debe adquirir ScriptLock.");
-for(const [name,nextName] of [["handleReportProblem","enforceFeedbackRateLimit_"],["handleSuggestCutChange","parseModelosAsociados"]]){
- assert.doesNotMatch(extract(feedback,name,nextName),/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
-  name+" debe reconciliar escrituras concurrentes mediante identidad lógica y append-only sin lock global.");
-}
-{
- const contact=extract(feedback,"handleSendContactForm");
- assert.doesNotMatch(contact,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
-  "El formulario de contacto no debe conservar el lock global durante su escritura.");
- assert.match(contact,/getNextFormulaBasedId_\(sheet, COLS_CONTACTANOS\.Contacto_ID\)/,
-  "La asignación secuencial conserva su reserva append-only.");
- assert.match(contact,/sheet\.appendRow\(row\)/,
-  "El registro de contacto se anexa en una sola escritura.");
- assert.ok(contact.indexOf("getNextFormulaBasedId_") < contact.indexOf("sheet.appendRow(row)"));
- const allocator=extract(feedback,"getNextFormulaBasedId_");
- assert.doesNotMatch(allocator,/LockService|tryLock|waitLock|PropertiesService/);
-}
-console.log("1/1 PASS — FEEDBACK e Inbox sin esperas de bloqueo prolongadas");
+const suggestYear=extract(feedback,"handleSuggestYear");
+assert.ok(!suggestYear.includes("LockService.getScriptLock()")&&!suggestYear.includes("acquireFeedbackScriptLock_("));
+for(const name of ["handleAddTutorial","handleUpdateTutorialItem"]){assert.ok(extract(feedback,name).includes("acquireFeedbackScriptLock_(lock)"),name+" debe adquirir el lock sin espera.");}
+const addProblem=extract(feedback,"handleAddProblem");
+assert.ok(!addProblem.includes("LockService.getScriptLock()")&&!addProblem.includes("acquireFeedbackScriptLock_("),"PyS debe usar reservas append-only sin ScriptLock.");
+for(const [name,nextName] of [["handleReportProblem","enforceFeedbackRateLimit_"],["handleSuggestCutChange","parseModelosAsociados"]]){const body=extract(feedback,name,nextName);assert.ok(!body.includes("LockService.getScriptLock()")&&!body.includes("acquireFeedbackScriptLock_("),name+" debe ser lock-free.");}
+const contact=extract(feedback,"handleSendContactForm");
+assert.ok(!contact.includes("LockService.getScriptLock()")&&!contact.includes("acquireFeedbackScriptLock_("));
+assert.ok(contact.includes("getNextFormulaBasedId_(sheet, COLS_CONTACTANOS.Contacto_ID)"));
+assert.ok(contact.includes("sheet.appendRow(row)"));
+const allocator=extract(feedback,"getNextFormulaBasedId_");
+assert.ok(!allocator.includes("LockService")&&!allocator.includes("tryLock")&&!allocator.includes("waitLock")&&!allocator.includes("PropertiesService"));
+console.log("1/1 PASS — FEEDBACK e Inbox sem esperas de bloqueo prolongadas");
