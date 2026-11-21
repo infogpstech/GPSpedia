@@ -1,81 +1,64 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
-
-const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const source=fs.readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
-function extract(name){
- const start=source.indexOf("function "+name+"(");
- assert.ok(start>=0,"No se encontró "+name);
- const next=source.indexOf("\nfunction ",start+10);
- return source.slice(start,next<0?source.length:next);
+import { readFileSync } from "node:fs";
+const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
+function extract(name){const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"No se encontró "+name);const next=source.indexOf("\nfunction ",start+10);return source.slice(start,next<0?source.length:next);}
+const allocator=extract("getNextFormulaBasedId_");
+const reservations=extract("getIdentifierSequenceReservationsSheet_");
+assert.doesNotMatch(allocator,/LockService|tryLock|waitLock|PropertiesService/,"El asignador no debe depender de locks ni contadores no atómicos.");
+assert.match(allocator,/ledger\.appendRow\(/);
+assert.match(allocator,/COUNTIFS\(/);
+assert.match(allocator,/createTextFinder\(reservationId\)/);
+assert.match(allocator,/blankOffsets/);
+assert.match(reservations,/insertSheet\(IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET\)/);
+assert.match(reservations,/IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS/);
+assert.doesNotMatch(reservations,/LockService|tryLock|waitLock/);
+for(const name of ["handleSuggestYearLocked","logUserActivity","handleSuggestCutChange","handleReportProblem","handleSendContactForm"])assert.match(extract(name),/getNextFormulaBasedId_/,name+" debe reservar el ID desde backend");
+function makeSheet(name,rows,headers=null){
+ const data=rows.map(r=>r.slice());let formulas=[];
+ return {name,data,getName(){return name;},getLastRow(){return data.length;},getLastColumn(){return Math.max(1,...data.map(r=>r.length));},
+ getRange(row,col,height=1,width=1){return{
+  getValue(){return data[row-1]?.[col-1]??"";},
+  getValues(){return Array.from({length:height},(_,i)=>Array.from({length:width},(_,j)=>data[row-1+i]?.[col-1+j]??""));},
+  setValues(values){values.forEach((line,i)=>line.forEach((value,j)=>{data[row-1+i]??=[];data[row-1+i][col-1+j]=value;}));},
+  createTextFinder(query){return{matchCase(){return this;},matchEntireCell(){return this;},findAll(){const found=[];for(let i=row-1;i<Math.min(data.length,row-1+height);i++)if(String(data[i]?.[col-1]??"")===String(query))found.push({getRow:()=>i+1});return found;}};}
+ };},
+ appendRow(row){data.push(row.slice());const current=data.length,prior=data.slice(1,current-1).filter(r=>r[1]===row[1]&&Number(r[2])===Number(row[2])).length;data[current-1][3]=Number(row[4])+prior+1;}
+ };
 }
-function sheet(name,rows,formulas=[]){
- return {name,rows:rows.map(r=>r.slice()),formulas:formulas.map(r=>r.slice()),getName(){return this.name;},
-  getLastRow(){return this.rows.length;},getLastColumn(){return Math.max(1,...this.rows.map(r=>r.length));},
-  getRange(row,col,n=1,w=1){const self=this;return{
-   getValue(){return self.rows[row-1]?.[col-1]??"";},
-   getValues(){return Array.from({length:n},(_,i)=>Array.from({length:w},(_,j)=>self.rows[row-1+i]?.[col-1+j]??""));},
-   getFormulas(){return Array.from({length:n},(_,i)=>Array.from({length:w},(_,j)=>self.formulas[row-1+i]?.[col-1+j]??""));},
-   setValues(values){values.forEach((line,i)=>line.forEach((v,j)=>{self.rows[row-1+i]??=[];self.rows[row-1+i][col-1+j]=v;}));return this;},
-   setValue(value){self.rows[row-1]??=[];self.rows[row-1][col-1]=value;return this;}
-  };}};
-}
-function harness(initial,config=null){
- const props={};let held=false,waits=0,releases=0;
- const ss={sheets:[initial],getSheetByName(name){return this.sheets.find(s=>s.name===name)||null;}};
- if(config)ss.sheets.push(config);
- const lock={hasLock:()=>held,tryLock(ms){assert.equal(ms,0);held=true;waits++;return true;},releaseLock(){held=false;releases++;}};
- const PropertiesService={getScriptProperties:()=>({getProperty:key=>props[key]??null,setProperty:(key,value)=>{props[key]=String(value);}})};
- const code=[
-  'const IDENTIFIER_SEQUENCE_CONFIG_SHEET="__IdentifierSequenceConfig__";',
-  'const IDENTIFIER_SEQUENCE_CONFIG_HEADERS=["sheet","column","header","prefix","padding","formula","updatedAt"];',
-  extract("acquireFeedbackScriptLock_"),extract("parseFeedbackIdFormula_"),extract("getFormulaBasedIdPattern_"),extract("getNextFormulaBasedId_"),
-  "return {parseFeedbackIdFormula_,getFormulaBasedIdPattern_,getNextFormulaBasedId_};"
- ].join("\n");
- const api=new Function("getSpreadsheet","LockService","PropertiesService",code)(()=>ss,{getScriptLock:()=>lock},PropertiesService);
- return {api,ss,props,stats:()=>({waits,releases,held})};
+function harness(initialIds,opts={}){
+ const sourceRows=[["ID"],...initialIds.map(id=>[id])];if(opts.blankRow)sourceRows.push(opts.blankRow);
+ const src=makeSheet("Users",sourceRows),ledger=makeSheet("__IdentifierSequenceReservations__",opts.badHeaders?[["bad"]]:[["reservationId","sheet","column","reservedSuffix","baseSuffix","createdAt"]]);
+ const ss={getSheetByName(name){return name==="Users"?src:name==="__IdentifierSequenceReservations__"?(opts.noLedger?null:ledger):null;},
+ insertSheet(name){if(name!=="__IdentifierSequenceReservations__")throw Error("unexpected sheet");opts.noLedger=false;return ledger;}};
+ let uuid=0;
+ const code=[ 'const IDENTIFIER_SEQUENCE_RESERVATIONS_SHEET="__IdentifierSequenceReservations__";',
+ 'const IDENTIFIER_SEQUENCE_RESERVATIONS_HEADERS=["reservationId","sheet","column","reservedSuffix","baseSuffix","createdAt"];',
+ reservations,allocator,"return {getIdentifierSequenceReservationsSheet_,getNextFormulaBasedId_};"].join("\n");
+ const api=new Function("getSpreadsheet","getFormulaBasedIdPattern_","Utilities","SpreadsheetApp",code)(
+  ()=>ss,()=>({prefix:"U-",padding:3}),{getUuid:()=>"reservation-"+(++uuid)},{flush(){}});
+ return{api,src,ledger,run:()=>api.getNextFormulaBasedId_(src,1)};
 }
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
-const formula='="U-"&TEXTO(FILA()-1,"000")';
-test("Los escritores de actividad, sugerencias y contacto asignan IDs desde backend",()=>{
- for (const name of ["handleSuggestYearLocked","logUserActivity","handleSuggestCutChange","handleReportProblem","handleSendContactForm"]) {
-  assert.match(extract(name),/getNextFormulaBasedId_/,name+" debe asignar el ID desde backend");
- }
- assert.match(source,/copyRowPresentationOnly_\(sheet,\s*sourceRow,\s*targetRow/);
- assert.match(source,/CopyPasteType\.PASTE_FORMAT/);
- assert.match(source,/CopyPasteType\.PASTE_DATA_VALIDATION/);
+test("reservas concurrentes reciben sufijos distintos sin lock",()=>{
+ const h=harness(["U-001","U-002"]);
+ assert.equal(h.run(),"U-003");assert.equal(h.run(),"U-004");assert.equal(h.run(),"U-005");
+ assert.equal(h.ledger.data.length,4);
+ assert.ok(h.ledger.data.slice(1).every(row=>Number.isInteger(Number(row[3]))));
 });
-test("Reconoce fórmula U-001 y conserva prefijo y relleno",()=>{
- const h=harness(sheet("Users",[["ID"],["U-001"],["U-002"]],[["ID"],[formula],[formula]]));
- assert.equal(h.api.getFormulaBasedIdPattern_(h.ss.sheets[0],1).prefix,"U-");
- assert.equal(h.api.getFormulaBasedIdPattern_(h.ss.sheets[0],1).padding,3);
+test("reconcilia IDs existentes más altos sin colisionar con reservas previas",()=>{
+ const h=harness(["U-001","U-002"]);assert.equal(h.run(),"U-003");
+ h.src.data.push(["U-010"]);assert.equal(h.run(),"U-011");
 });
-test("Asigna IDs backend secuenciales y bloqueados sin copiar fórmulas",()=>{
- const h=harness(sheet("Users",[["ID"],["U-001"],["U-002"]],[["ID"],[formula],[formula]]));
- assert.equal(h.api.getNextFormulaBasedId_(h.ss.sheets[0],1),"U-003");
- assert.equal(h.api.getNextFormulaBasedId_(h.ss.sheets[0],1),"U-004");
- assert.equal(h.props.GPSpedia_ID_SEQUENCE_Users_1_U_,"4");
- assert.deepEqual(h.stats(),{waits:2,releases:2,held:false});
+test("rechaza IDs duplicados y sufijos inválidos",()=>{
+ assert.throws(()=>harness(["U-001","U-001"]).run(),/ID duplicado/);
+ assert.throws(()=>harness(["U-X01"]).run(),/sufijo numérico/);
 });
-test("Usa configuración persistida después de congelar las fórmulas",()=>{
- const config=sheet("__IdentifierSequenceConfig__",[
-  ["sheet","column","header","prefix","padding","formula","updatedAt"],
-  ["Users",1,"ID","U-",3,formula,"2026-11-15"]
- ]);
- const users=sheet("Users",[["ID"],["U-009"],["U-010"]],[["ID"],[""],[""]]);
- const h=harness(users,config);
- assert.equal(h.api.getNextFormulaBasedId_(users,1),"U-011");
+test("conserva validación de filas con datos sin ID",()=>{
+ const h=harness(["U-001"],{blankRow:["","dato"]});
+ assert.throws(()=>h.run(),/contiene datos, pero no tiene ID/);
 });
-test("Detiene asignación si el patrón es desconocido, inconsistente o los IDs están duplicados",()=>{
- const unknown=harness(sheet("Relay",[["ID"],["R-001"]],[["ID"],['=CONCAT("R-",ROW())']]));
- assert.throws(()=>unknown.api.getNextFormulaBasedId_(unknown.ss.sheets[0],1),/patrón secuencial compatible/);
- const mixed=harness(sheet("Users",[["ID"],["U-001"],["X-002"]],[["ID"],[formula],['="X-"&TEXTO(FILA()-1,"000")']]));
- assert.throws(()=>mixed.api.getNextFormulaBasedId_(mixed.ss.sheets[0],1),/patrones diferentes/);
- const duplicate=harness(sheet("Users",[["ID"],["U-001"],["U-001"]],[["ID"],[formula],[formula]]));
- assert.throws(()=>duplicate.api.getNextFormulaBasedId_(duplicate.ss.sheets[0],1),/ID duplicado/);
- const missing=harness(sheet("Users",[["ID","Nombre"],["U-001","Ana"],["","Luis"]],[["ID","Nombre"],[formula,""],["",""]]));
- assert.throws(()=>missing.api.getNextFormulaBasedId_(missing.ss.sheets[0],1),/contiene datos, pero no tiene ID/);
+test("rechaza esquema incompatible de reservas",()=>{
+ const h=harness(["U-001"],{badHeaders:true});
+ assert.throws(()=>h.run(),/esquema de reservas.*incompatible/);
 });
-console.log("FeedbackFormulaIdAllocator: "+passed+"/"+passed+" PASS");
+console.log("FeedbackFormulaIdAllocator: "+passed+"/"+passed+" PASS — reservas append-only sin ScriptLock");
