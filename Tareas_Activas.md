@@ -49,8 +49,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ## Trabajo local pendiente — auditoría integral de rendimiento
 
 ### P0 — mapa de llamadas y medición
-- [ ] Mapear navegador → endpoint → handler → dependencias para AUTH, USERS, WRITE, FEEDBACK, ADMIN, CATALOG, UTILITIES y COORDINATOR.
-- [ ] Inventariar `UrlFetchApp.fetch`, wrappers, `routeAction`, reintentos, publicaciones y llamadas entre proyectos.
+- [x] P0.1 — Mapa estático navegador → endpoint → dispatcher → dependencias de los ocho servicios documentado en `MAPA_LLAMADAS_DEPENDENCIAS_P0_2026-11-21.md`.
+- [x] Inventario estático inicial de `UrlFetchApp.fetch`, `fetchAll`, wrappers, `routeAction`, reintentos, publicaciones y llamadas entre proyectos; los conteos de wrappers no se interpretan como requests por interacción.
 - [ ] Establecer línea base de requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos.
 - [ ] Revisar telemetría para evitar viajes de red, locks, escrituras o esperas en acciones ordinarias.
 - [ ] Completar matriz del flujo de catálogo: snapshot/reset, feed incremental, refresh post-edición, caché local y sincronización PyS.
@@ -99,4 +99,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-Continuar el P0 de auditoría integral: mapear navegador → endpoint → handler y establecer línea base de llamadas, bytes, lecturas y latencia.
+P0.1 y el inventario estático inicial están documentados. Continuar con P0.2: instrumentación y medición reproducible local de requests/bytes/latencias por interacción; después completar consumidores AUTH/USERS. Latencia real, lecturas/escrituras Sheets/Drive, cache hit/miss y esperas siguen sin medir y requieren Beta autorizada.
