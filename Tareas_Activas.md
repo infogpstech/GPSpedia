@@ -798,3 +798,5 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Retirar refreshes posteriores a vídeo pending en los flujos de corte, tutorial y PyS: cinco callbacks/snapshots redundantes eliminados. Se conservan refreshes inmediatos de alta real y la actualización tras aprobación efectiva. `YouTubePendingRefreshContract.js` 5/5 PASS; `YouTubeApproval.js` 16/16 PASS. No se alteran opVideoId, respuesta pending ni prevención de duplicados.
 
 - [x] Modales de información suplementaria (apertura/alimentación): prevalidar 10 MiB antes de FileReader y manejar fallos de lectura/abort con promesas resueltas/rechazadas y restauración del botón. `AddSupplementaryImagePreflight.mjs` 4/4 PASS. No implementa compresión.
+
+- [x] Verificar ubicación de cargas Drive en WRITE cortes/suplementarios y FEEDBACK reportes/sugerencias/PyS: no mantienen ScriptLock global durante la transferencia; WRITE libera y reacquire con `tryLock(0)` y mismo `opId`. La auditoría de ADMIN y medición real de Drive siguen pendientes.
