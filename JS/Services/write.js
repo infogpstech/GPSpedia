@@ -1328,8 +1328,6 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
         existingRowValues = sheet.getRange(existingRowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
         existingRowFormulas = sheet.getRange(existingRowIndex, 1, 1, sheet.getLastColumn()).getFormulas()[0];
     }
-    const properties = PropertiesService.getScriptProperties();
-    const counterBefore = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
     const opId = validatedPayload.opId || "";
     const idempotencySheetBefore = opId ? getIdempotenciaSheet() : ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
     const idempotencyEntriesSnapshot = opId && idempotencySheetBefore
@@ -1376,13 +1374,6 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
                 SpreadsheetApp.flush();
             }
         } catch (rollbackError) { rollbackErrors.push("Idempotencia: " + String(rollbackError.message || rollbackError)); }
-        try {
-            const currentCounter = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
-            if (currentCounter !== counterBefore) {
-                if (counterBefore === null) properties.deleteProperty(CORTES_ID_COUNTER_PROPERTY);
-                else properties.setProperty(CORTES_ID_COUNTER_PROPERTY, counterBefore);
-            }
-        } catch (rollbackError) { rollbackErrors.push("Contador de IDs: " + String(rollbackError.message || rollbackError)); }
         if (rollbackErrors.length) {
             throw new Error("La operación falló: " + String(error && error.message || error) +
                 ". La reversión no pudo confirmarse completamente (" + rollbackErrors.join("; ") +
@@ -1645,6 +1636,14 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         vehicleData.modelo = resolveAndNormalizeEntity(vehicleData.modelo, entities.models, false);
         vehicleData.versionesAplicables = resolveAndNormalizeEntity(vehicleData.versionesAplicables, entities.versions, true);
 
+        const reservationRequest = {
+            opId: opId || ("OP-WRITE-LEGACY-" + Utilities.getUuid()),
+            operationHash: operationHash || computeCutOperationFingerprint_(payload)
+        };
+        // La reserva queda persistida antes de crear la fila física; un fallo posterior
+        // consume el ID, pero el reintento con opId recupera siempre la misma reserva.
+        newId = reserveCortesVehicleIdForOperation_(sheet, reservationRequest);
+
         const lastRow = sheet.getLastRow();
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
@@ -1661,8 +1660,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
         SpreadsheetApp.flush();
 
-        // La asignación se realiza bajo el bloqueo exclusivo de WRITE.
-        newId = getNextCortesVehicleIdLocked(sheet);
+        // El ID ya está reservado de forma append-only y no se reutiliza si falla la fila.
         sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
         SpreadsheetApp.flush();
         if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
