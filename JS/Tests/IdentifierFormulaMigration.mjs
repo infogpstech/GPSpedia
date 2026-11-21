@@ -50,6 +50,7 @@ function makeHarness(){
   extract("ensureIdentifierFormulaFreezeManifest_"),extract("findIdentifierFormulaFreezeManifest_"),
   extract("handleFreezeIdentifierFormulas_"),extract("getAdminFormulaBasedIdPattern_"),
   "return {audit:auditAllFormulaIdentifierColumns_,plan:buildIdentifierFormulaFreezePlan_,migrate:handleFreezeIdentifierFormulas_,pattern:getAdminFormulaBasedIdPattern_};",
+ ].join("\n");
  const api=new Function("getSpreadsheet","Utilities","LockService","SpreadsheetApp","PropertiesService","verifyVinMigrationBackup","IDENTIFIER_SEQUENCE_CONFIG_SHEET_","IDENTIFIER_SEQUENCE_CONFIG_HEADERS_",code)(()=>ss,Utilities,LockService,SpreadsheetApp,PropertiesService,()=>({backupId:"verified-test-backup"}),"__IdentifierSequenceConfig__",["sheet","column","header","prefix","padding","formula","updatedAt"]);
  return {ss,users,vehicles,api};
 }
