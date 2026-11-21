@@ -481,3 +481,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se añadió AUDITORIA_MODAL_CSS_2026-11-21.md con comparación frente a GPSpedia-2.1.7, cascada y selectores repetidos.
 - Se creó Services/DEPLOYMENT_GUIDE.md con orden y archivos por proyecto Apps Script, URLs /exec, ScriptProperties, secretos, pruebas de humo y rollback. Se enlazó desde README y COORDINATOR_SETUP.
 - No se desplegaron servicios ni se modificaron ScriptProperties, Spreadsheet o Drive remotos.
+
+
+2026-11-21 — CONSOLIDACIÓN VISUAL DE MODALES Y REGRESIÓN
+- Se agruparon los encabezados de detalle en un único bloque CSS, preservando orden de cascada y breakpoints; logo del modal de corte 64 px escritorio / 48 px móvil.
+- Se unificó la regla base de .info-modal-content; se agrupó el encabezado Inbox; se fusionó la regla base de .dev-tools-title manteniendo overrides responsive/reduced-motion. Cierre global mantiene 40 px, foco visible y variantes scoped.
+- Pruebas nuevas: InfoModalStyleCascade 3/3 y ModalHeaderCascade 2/2; CutDetailModalLayout 29/29. CI 261 suites, 3,143 pruebas aprobadas, 0 fallos. Health read-only SUCCESS.
+- La guía Apps Script fue revisada contra los archivos y configuración actuales. Se mantienen las pruebas visuales reales en Beta como pendientes.
