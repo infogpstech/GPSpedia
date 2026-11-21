@@ -54,3 +54,14 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Se separó la búsqueda física (`findPysRowsById_`) de la proyección canónica (`findCanonicalPysRowsById_`). La validación PyS permite filas físicas idénticas y rechaza contenido contradictorio; `handleGetPysData` y el feed de catálogo proyectan la primera fila. Las rutas de aprobación de vídeo y mutación siguen usando lookup físico para rechazar destinos ambiguos.
 - Se actualizaron regresiones de allocator, integridad, recuperación y lookup. CI `44867570021` SUCCESS sobre `ce1d7a11b0f011046fb43878bb6c3a391f776002`: 258 suites, 3091 pruebas aprobadas, 0 fallos. Health read-only `44867570032` SUCCESS y Pages `44867569879` SUCCESS.
 - **Pendiente en esta tarea:** `handleAddProblem` todavía adquiere ScriptLock para reservar/vincular operación y ejecutar recuperación. No declarar PyS migrado ni retirar el lock hasta resolver el propietario canónico tras reservas concurrentes, el archivo perdedor y los reintentos simultáneos. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+
+
+## Progreso de implementación — fase 2: conflicto de reservas (2026-11-21)
+
+- Se detectó un caso no cubierto por la proyección first-write-wins: dos filas físicas con el mismo opId y payloadHash, pero con problemId distintos. La lectura anterior ignoraba la segunda fila como duplicado idéntico, aunque ambas reservas podían representar problemas distintos.
+- readPysOperations_ ahora rechaza explícitamente ese estado con error de reconciliación. No se elige silenciosamente una reserva ni se continúa con una identidad ambigua.
+- Se añadió regresión en JS/Tests/PysCreationIntegrity.js que construye dos reservas con el mismo opId/hash y distintos problemId; confirma que el alta se detiene antes de crear archivos Drive.
+- CI del HEAD 9baf0467cf11e4038c9e6312dc769f0b6af4c060: regresión SUCCESS, 258 suites, 3092 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Pages estaba en ejecución al registrar esta nota.
+- PyS continúa EN PROGRESO. handleAddProblem conserva ScriptLock. La retirada segura requiere separar la reserva canónica de opId, el propietario del archivo y las transiciones de estado en un ledger/eventos cuya selección first-write-wins sea inequívoca; no se considera suficiente cambiar solo el lock o el append. No se desplegó Apps Script ni se modificaron datos productivos.
