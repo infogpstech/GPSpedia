@@ -1135,3 +1135,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 
  
 - getVehicleProjection también migró a readCatalogContributionProjectionVehicles_: ambas consultas dirigidas ADMIN comparten el mismo pipeline de proyección y omiten hojas de logos/tutoriales/relay. La consulta sigue leyendo el universo completo de VIN y ledger para preservar conflictos globales.
+
+ 
+## Continuidad — CATALOG proyección física dirigida (2026-11-21)
+
+- getVehicleProjection ahora escanea la columna ID y la columna VIN de Cortes, lee completa únicamente la fila del vehículo solicitado y proyecta sobre el universo de IDs/VIN + ledger global.
+- Mantiene la proyección global de conflictos VIN/opId/resoluciones y el mismo mapper para preservar likes, normalización, orden de cortes, fuentes y candidatos.
+- La lectura dirigida reduce datos de Cortes desde todas las columnas de todas las filas a dos columnas globales + una fila completa.
+- Prueba dedicada verifica rangos, fuentes leídas, preservación de VIN global y rechazo de IDs duplicados. CI pendiente.

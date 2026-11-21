@@ -1066,18 +1066,69 @@ function handleGetDropdownData() {
  * completa como fuente de verdad, pero se evita transferir el snapshot entero
  * cuando ADMIN necesita un solo vehículo o solo candidatos.
  */
+
+function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
+    const requestedId = String(vehicleId || "").trim();
+    if (!/^[1-9]\d{0,14}$/.test(requestedId)) {
+        throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
+    }
+    const spreadsheet = spreadsheetRef || getSpreadsheet();
+    const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    const lastRow = cortesSheet ? Number(cortesSheet.getLastRow()) || 0 : 0;
+    const lastColumn = cortesSheet ? Number(cortesSheet.getLastColumn()) || 0 : 0;
+    if (!cortesSheet || lastRow < 2 || lastColumn < 1) {
+        throw new Error("El vehículo solicitado no existe en la proyección vigente de CATALOG.");
+    }
+    const columnMap = getCortesColumnMap(cortesSheet);
+    const idColumn = Number(columnMap.id) || COLS_CORTES.id;
+    const vinColumn = Number(columnMap.vin) || 0;
+    const rowCount = lastRow - 1;
+    const ids = cortesSheet.getRange(2, idColumn, rowCount, 1).getValues();
+    const matches = [];
+    ids.forEach((row, index) => {
+        if (String(row && row[0] || "").trim() === requestedId) matches.push(index);
+    });
+    if (matches.length > 1) {
+        throw new Error("El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua.");
+    }
+    if (matches.length !== 1) {
+        throw new Error("El vehículo solicitado no existe en la proyección vigente de CATALOG.");
+    }
+    const targetIndex = matches[0];
+    const targetRow = targetIndex + 2;
+    const vinRows = vinColumn > 0 && vinColumn <= lastColumn
+        ? cortesSheet.getRange(2, vinColumn, rowCount, 1).getValues()
+        : [];
+    const fullRow = cortesSheet.getRange(targetRow, 1, 1, lastColumn).getValues()[0];
+    const feedbackLikeEventCounts = readFeedbackLikeEventCounts_(spreadsheet);
+    const targetVehicle = mapCatalogVehicleRowForProjection_(fullRow, columnMap, feedbackLikeEventCounts, {});
+    if (!targetVehicle) throw new Error("No se pudo leer la fila vigente del vehículo solicitado.");
+    const vehicles = ids.map((row, index) => {
+        const id = String(row && row[0] || "").trim();
+        if (!id) return null;
+        if (index === targetIndex) return targetVehicle;
+        return { id, vin: vinRows[index] ? vinRows[index][0] : null };
+    }).filter(Boolean);
+    const projected = projectVehicleContributionEvents_(vehicles, readVehicleContributionEvents_(spreadsheet));
+    const targetMatches = projected.filter(vehicle => vehicle && String(vehicle.id || "").trim() === requestedId);
+    if (targetMatches.length !== 1) {
+        throw new Error(targetMatches.length
+            ? "El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua."
+            : "El vehículo solicitado no existe en la proyección vigente de CATALOG.");
+    }
+    return targetMatches[0];
+}
+
 function handleGetVehicleProjection_(payload = {}) {
     const vehicleId = String(payload && payload.vehicleId || "").trim();
     if (!/^[1-9]\d{0,14}$/.test(vehicleId)) {
         throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
     }
-    const projectedVehicles = readCatalogContributionProjectionVehicles_();
-    if (!Array.isArray(projectedVehicles)) {
-        throw new Error("CATALOG no pudo construir una proyección completa para la consulta dirigida.");
+    const vehicle = readCatalogVehicleProjection_(vehicleId);
+    if (!vehicle || String(vehicle.id || "").trim() !== vehicleId) {
+        throw new Error("El vehículo solicitado no existe en la proyección vigente de CATALOG.");
     }
-    const matches = projectedVehicles.filter(vehicle =>
-        vehicle && String(vehicle.id || "").trim() === vehicleId
-    );
+    const matches = [vehicle];
     if (matches.length !== 1) {
         throw new Error(matches.length
             ? "El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua."

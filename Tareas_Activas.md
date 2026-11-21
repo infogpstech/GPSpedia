@@ -3340,3 +3340,14 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Evita cargar LogosMarca, Tutoriales, ledgers de tutoriales y Relay para recuperar un único vehículo.
 - [x] Mantiene rechazo de ID inválido, inexistente o duplicado.
 - [ ] Confirmar CI y equivalencia.
+
+ 
+## CATALOG — lectura física dirigida para proyección individual (2026-11-21)
+
+**Estado: IMPLEMENTADO; CI PENDIENTE.**
+
+- [x] getVehicleProjection localiza el vehículo leyendo únicamente la columna ID y lee la columna VIN de todos los vehículos para conservar detección global de colisiones.
+- [x] Solo lee la fila completa del vehículo solicitado; aplica el mismo mapper, likes, orden de cortes y proyector global de eventos.
+- [x] Mantiene lectura completa del ledger AportesVehiculo para detectar conflictos opId, VIN y resoluciones.
+- [x] Rechaza ID inválido, inexistente o duplicado antes de construir una proyección ambigua.
+- [ ] Confirmar CI y paridad con proyección completa en escenarios reales/Beta.

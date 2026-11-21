@@ -225,6 +225,7 @@ runGroup('33','FEEDBACK',()=>{
 runGroup('34','CATALOG',()=>{
  runCli('CATALOG dropdowns lee solo columnas necesarias para editar cortes','JS/Tests/CatalogDropdownRead.mjs');
  runCli('CATALOG respuestas dirigidas de vehículo y candidatos','JS/Tests/CatalogTargetedResponses.mjs');
+ runCli('CATALOG proyección individual lee una sola fila completa y VIN globales','JS/Tests/CatalogVehicleProjectionRead.mjs');
  runCli('CATALOG candidatos ADMIN evita lecturas de servicios no relacionados','JS/Tests/CatalogContributionReadIsolation.mjs');
  runCli('CATALOG navegación lee solo columnas de contrato','JS/Tests/CatalogNavigationRead.mjs');
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
