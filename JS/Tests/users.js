@@ -726,7 +726,8 @@ function writeUserProfileNameNonBlocking_(userSheet, rowIndex, fullName) {
 
     let persisted;
     try {
-        persisted = String(cell.getValue() === null || cell.getValue() === undefined ? "" : cell.getValue());
+        const rawPersisted = cell.getValue();
+        persisted = String(rawPersisted === null || rawPersisted === undefined ? "" : rawPersisted);
     } catch (readError) {
         throw new Error((writeError && writeError.message ? writeError.message : "No se pudo confirmar el perfil.") +
             " No fue posible verificar el valor persistido.");
