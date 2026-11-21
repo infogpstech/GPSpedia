@@ -17,6 +17,16 @@ assert.match(login, /getRange\(currentUserRowIndex, 1, 1, COLS_USERS\.TermsAccep
 assert.match(login, /reconcileRoleRevocationUnderLock_\(userSheet, activeSessionsSheet, userId, currentUserRowIndex\)/);
 assert.match(login, /getRange\(currentUserRowIndex, 1, 1, COLS_USERS\.TermsAcceptance\)/g);
 
+const loginSession = block("createOrRecoverLoginSessionUnderLock_");
+assert.equal(count(loginSession, /sessionsSheet\.getDataRange\(\)/g), 2,
+    "La creación normal usa un snapshot; la segunda lectura solo reconcilia un append ambiguo.");
+assert.match(loginSession, /let sessionData = sessionsSheet\.getDataRange\(\)\.getValues\(\)/);
+assert.match(loginSession, /findSessionRowsByTokenInData_\(sessionData, token\)/);
+assert.match(loginSession, /sessionData\.push\(appendedRow\)/);
+assert.match(loginSession, /getRange\(currentTokenRowIndex, 1, 1, readWidth\)/);
+assert.equal(count(loginSession, /findSessionRowsByTokenUnderLock_\(/g), 2,
+    "El escaneo completo por token queda reservado a fallos de borrado/verificación.");
+
 const recoveryRequest = block("handleRequestPasswordRecovery");
 assert.equal(count(recoveryRequest, /\.getDataRange\(\)/g), 1);
 assert.equal(count(recoveryRequest, /\.getRange\(/g), 1,
