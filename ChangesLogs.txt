@@ -687,3 +687,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - handleGetFeedbackItems cachea resultados por suggestionOperationId, clave de solicitud y reportId durante la página.
 - Se conservan first-write-wins, conflictos y caché aislada por request.
 - FeedbackInboxImageEventBatchRead: 7/7 PASS; regresión: 281 suites / 3,266 pruebas / 0 fallos; build y health read-only SUCCESS.
+
+
+[2026-11-21] ADMIN — auditoría de superficie de telemetría
+- getServiceTraffic se consulta solo desde el panel de desarrollador visible, con mínimo de 60 s; backend exige rol Desarrollador y política read-only SERVICE_TRAFFIC.
+- No hay consumidores en main.js para telemetría, inventario/almacenamiento ni escáner de Drive.
+- Backup/restore DB y Drive revisados estáticamente: manifiestos, fingerprint, staging y rollback; sin cambios destructivos.
+- AdminTrafficSurfaceContract: 12/12 PASS; regresión: 282 suites / 3,278 pruebas / 0 fallos; build y health read-only SUCCESS.
