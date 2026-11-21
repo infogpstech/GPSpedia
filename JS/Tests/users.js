@@ -491,7 +491,20 @@ function parseUserIdSequenceFormula_(formula) {
     return match ? { prefix: match[1], padding: match[2].length, formula: raw } : null;
 }
 
-function getUserIdSequencePattern_(userSheet) {
+function readUsersMutationSnapshot_(userSheet) {
+    const lastRow = userSheet.getLastRow();
+    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.TermsAcceptance);
+    const rowCount = Math.max(0, lastRow - 1);
+    const range = rowCount ? userSheet.getRange(2, 1, rowCount, lastColumn) : null;
+    return {
+        lastRow,
+        lastColumn,
+        rows: range ? range.getValues() : [],
+        formulas: range ? range.getFormulas() : []
+    };
+}
+
+function getUserIdSequencePattern_(userSheet, snapshot) {
     const configHeaders = ["sheet","column","header","prefix","padding","formula","updatedAt"];
     const configSheet = getSpreadsheet().getSheetByName("__IdentifierSequenceConfig__");
     if (configSheet && configSheet.getLastRow() > 1) {
@@ -508,16 +521,24 @@ function getUserIdSequencePattern_(userSheet) {
                 !pattern.prefix || !pattern.formula || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
                 throw new Error("La configuración backend de IDs no coincide con la columna Users.");
             }
-            const lastRow = userSheet.getLastRow();
-            const formulas = lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat() : [];
+            const formulas = snapshot
+                ? snapshot.formulas.map(row => row[COLS_USERS.ID - 1] || "")
+                : (() => {
+                    const lastRow = userSheet.getLastRow();
+                    return lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat() : [];
+                })();
             if (formulas.some(formula => formula && formula !== pattern.formula)) {
                 throw new Error("La columna Users.ID contiene una fórmula distinta de la configuración backend.");
             }
             return pattern;
         }
     }
-    const lastRow = userSheet.getLastRow();
-    const formulas = lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat().filter(Boolean) : [];
+    const formulas = snapshot
+        ? snapshot.formulas.map(row => row[COLS_USERS.ID - 1] || "").filter(Boolean)
+        : (() => {
+            const lastRow = userSheet.getLastRow();
+            return lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat().filter(Boolean) : [];
+        })();
     if (!formulas.length) return { prefix: "USR-", padding: 4, formula: "" };
     const patterns = formulas.map(parseUserIdSequenceFormula_);
     if (patterns.some(pattern => !pattern)) throw new Error("La fórmula histórica de Users.ID no es compatible con un generador backend seguro.");
@@ -530,11 +551,13 @@ function getUserIdSequencePattern_(userSheet) {
 
 // Genera IDs permanentes secuenciales. La columna ID se escribe como valor,
 // nunca se copia ni se conserva su fórmula en las filas nuevas.
-function generateNextUserId_(userSheet) {
-    const pattern = getUserIdSequencePattern_(userSheet);
-    const lastRow = userSheet.getLastRow();
-    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
-    const rows = lastRow > 1 ? userSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+function generateNextUserId_(userSheet, snapshot) {
+    const pattern = getUserIdSequencePattern_(userSheet, snapshot);
+    const lastRow = snapshot ? snapshot.lastRow : userSheet.getLastRow();
+    const lastColumn = snapshot ? snapshot.lastColumn : Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
+    const rows = snapshot
+        ? snapshot.rows
+        : (lastRow > 1 ? userSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : []);
     const seen = new Set();
     let maxSequence = 0;
 
@@ -566,14 +589,17 @@ function generateNextUserId_(userSheet) {
 
 // Reutiliza la primera fila sin datos de cuenta. Si la hoja tiene fórmulas
 // prellenadas en Users.ID, la escritura del ID fijo sustituye la fórmula de esa fila.
-function findNextUserRow_(userSheet) {
-    const lastRow = userSheet.getLastRow();
+function findNextUserRow_(userSheet, snapshot) {
+    const lastRow = snapshot ? snapshot.lastRow : userSheet.getLastRow();
     if (lastRow < 2) return 2;
 
-    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.TermsAcceptance);
-    const range = userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1);
-    const rows = range.getValues();
-    const formulas = range.getFormulas();
+    const lastColumn = snapshot ? snapshot.lastColumn : Math.max(userSheet.getLastColumn(), COLS_USERS.TermsAcceptance);
+    const rows = snapshot
+        ? snapshot.rows.map(row => row.slice(COLS_USERS.Nombre_Usuario - 1, lastColumn))
+        : userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1).getValues();
+    const formulas = snapshot
+        ? snapshot.formulas.map(row => row.slice(COLS_USERS.Nombre_Usuario - 1, lastColumn))
+        : userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1).getFormulas();
     for (let i = 0; i < rows.length; i++) {
         const valuesEmpty = rows[i].every(value =>
             String(value === null || value === undefined ? '' : value).trim() === ''
@@ -769,22 +795,20 @@ function handleCreateUser(payload) {
     return withUsersMutationLock_(() => {
         const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
         if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
-        const lastRow = userSheet.getLastRow();
-        const existingUsernames = lastRow > 1
-            ? userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, 1).getValues().flat()
-            : [];
+        const snapshot = readUsersMutationSnapshot_(userSheet);
+        const existingUsernames = snapshot.rows.map(row => row[COLS_USERS.Nombre_Usuario - 1]);
         if (existingUsernames.some(username => String(username || '').trim().toLowerCase() === normalized.username.toLowerCase())) {
             return { status: 'error', message: 'Ese nombre de usuario no está disponible' };
         }
 
-        const newRowNumber = findNextUserRow_(userSheet);
+        const newRowNumber = findNextUserRow_(userSheet, snapshot);
         const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
         const newRowRange = userSheet.getRange(newRowNumber, 1, 1, COLS_USERS.SessionToken);
         const currentRow = newRowRange.getValues()[0];
         if (currentRow.slice(1).some(value => String(value === null || value === undefined ? '' : value).trim() !== '')) {
             throw new Error('La fila seleccionada para el nuevo usuario dejó de estar vacía. Intenta nuevamente.');
         }
-        const newUserId = generateNextUserId_(userSheet);
+        const newUserId = generateNextUserId_(userSheet, snapshot);
 
         // Copiar únicamente formato y validaciones al extender la hoja; nunca fórmulas.
         if (lastRow > 0 && newRowNumber > lastRow) {
