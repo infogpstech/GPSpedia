@@ -660,7 +660,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","touchSession","acceptTerms","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
+    return ["login","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
 function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
@@ -710,6 +710,19 @@ function doPost(e) {
         try {
             // La purga de Logs solo requiere capacidad Desarrollador; no modifica
             // sesiones ni necesita una lease o autorización remota por acción.
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+            return doPostInternal_(withSharedSessionActor_(e, actor));
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
+    if (action === "acceptTerms") {
+        try {
+            // La aceptación es puntual: reutiliza el actor cacheado, sin lease acquire/release.
+            // El login prepara esta caché; ante un miss se valida una vez por el canal central.
             const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
@@ -1140,6 +1153,16 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
         });
         if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
             throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
+        }
+        // La identidad/rol ya fueron comprobados en AUTH y registrados en Coordinator.
+        // Precalentar el actor evita una validación remota adicional en la primera acción protegida.
+        try {
+            cacheSharedSessionActor_(normalizedId, currentSessionToken, {
+                userId: normalizedId, role: normalizedRole, fullName: String(fullName || ""),
+                epoch: synchronized.epoch
+            });
+        } catch (cacheError) {
+            console.warn("No se pudo precalentar la caché local del actor:", cacheError && cacheError.message ? cacheError.message : cacheError);
         }
         return { registered: synchronized.synced, epoch: synchronized.epoch };
     } finally {
