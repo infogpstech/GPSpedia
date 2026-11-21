@@ -207,3 +207,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se registra tarea para resolver la carrera de selección, manejo de errores y límite/MIME coherentes en cliente y servidor. No se fija un máximo arbitrario sin decidir el contrato y revisar los tamaños de logos existentes.
 - Es una ruta administrativa, no el flujo ordinario de aportes. No se modificó en esta iteración.
 
+
+
+### ADMIN — corrección de carrera al leer logotipos
+- Se añadió `readLogoFileBase64_` con validación de Data URL, manejo de `onerror`, `onabort`, resultado inválido y excepciones de inicio.
+- Al cambiar el archivo, el cliente invalida inmediatamente el Base64/nombre anterior, deshabilita Registrar, y solo habilita el botón cuando la lectura actual termina correctamente. Un contador de generación ignora resultados tardíos de lecturas anteriores.
+- Se mantiene el contrato de formatos del selector y el payload enviado a `addLogo`; no se fijó límite de bytes ni se añadió validación de firma/MIME en servidor. Esas dos decisiones siguen pendientes.
+- `AdminLogoFileRead.mjs` se integró al runner. Prueba aislada del helper: 4/4 PASS (lectura válida, error, abort y resultado inválido); el contrato estático verifica invalidación/generación/botón.
+- No se modificó el handler Drive, ni el lock no bloqueante de vinculación.
+
