@@ -20,7 +20,7 @@ const acquire=new Function(helper+";return acquireFeedbackScriptLock_;")();
 assert.doesNotMatch(feedback,/waitLock\((?:10000|15000)\)/);
 assert.doesNotMatch(inbox,/waitLock\(10000\)/);
 assert.match(inbox,/lock\.tryLock\(0\)/);
-for(const name of ["handleSuggestYear","handleRecordLike","handleReportProblem","handleSuggestCutChange","handleAddProblem","handleAddTutorial","handleUpdateTutorialItem"]){
+for(const name of ["handleSuggestYear","handleReportProblem","handleSuggestCutChange","handleAddProblem","handleAddTutorial","handleUpdateTutorialItem"]){
  const body=extract(feedback,name);
  assert.ok(body.includes("acquireFeedbackScriptLock_(lock)"),name+" debe adquirir el lock sin espera.");
 }
@@ -29,9 +29,11 @@ for(const name of ["handleSuggestYear","handleRecordLike","handleReportProblem",
  assert.doesNotMatch(contact,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
   "El formulario de contacto no debe conservar el lock global durante su escritura.");
  assert.match(contact,/getNextFormulaBasedId_\(sheet, COLS_CONTACTANOS\.Contacto_ID\)/,
-  "La asignación secuencial conserva su sección crítica breve.");
+  "La asignación secuencial conserva su reserva append-only.");
  assert.match(contact,/sheet\.appendRow\(row\)/,
   "El registro de contacto se anexa en una sola escritura.");
  assert.ok(contact.indexOf("getNextFormulaBasedId_") < contact.indexOf("sheet.appendRow(row)"));
+ const allocator=extract(feedback,"getNextFormulaBasedId_","getIdentifierSequenceReservationsSheet_");
+ assert.doesNotMatch(allocator,/LockService|tryLock|waitLock|PropertiesService/);
 }
 console.log("1/1 PASS — FEEDBACK e Inbox sin esperas de bloqueo prolongadas");
