@@ -957,3 +957,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se confirmó que `submitVideoForApproval` crea una fila pending en FEEDBACK y no publica CATALOG; el Coordinator no incluye esta acción en los escritores autorizados del feed.
 - Los formularios de corte y tutorial ejecutan, pese a ello, un snapshot completo `getCatalogData` desde `onSuccess`. La retirada de esos dos refrescos queda como tarea P1 con prueba de contrato; conservar opVideoId, estado pending y prevención de duplicados.
 - No se modificó código ni se ejecutaron pruebas en este paso.
+
+
+## Continuidad — retirada verificada de snapshots tras vídeo pending (2026-11-21)
+
+- HEAD previo a la documentación: `88ab1a920a95a68c5561ffd017ebe40e01ec00c9`; base protegida intacta: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Cambio: `JS/Frontend/ui.js` ya no solicita `getCatalogData` desde `onSuccess` al enviar vídeos pendientes de aprobación en los formularios de corte y tutorial. No se modifica el flujo YouTube ni el registro FEEDBACK.
+- Se conserva explícitamente el refresco del flujo PyS (`invalidatePysDataCache` y `loadPysData`).
+- Pruebas ejecutadas: `YouTubePendingRefreshContract` 3/3 PASS en V8 aislado; `YouTubeApproval.js` 16/16 PASS con mocks aislados. No se ejecutaron Node runner completo ni GitHub Actions en esta sesión; no se desplegó Apps Script.
+- Archivos de prueba: nuevo `JS/Tests/YouTubePendingRefreshContract.js`; integrado en `JS/Tests/RunServiceTests.mjs`.
+- Siguiente trabajo: revisar otros refresh post-aporte, compresión de imágenes y cache/prefetch de miniaturas; luego mapa completo de llamadas/latencias. No afirmar mejora global sin benchmark.
+
