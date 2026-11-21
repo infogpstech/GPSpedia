@@ -701,3 +701,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Normalización/organización de imágenes usan un snapshot de Cortes por operación; inventario de reemplazos conserva una lectura y proyección CATALOG.
 - Upload ADMIN mantiene compare-and-set, journal append-only, linked/requires_review y read-back de Drive.
 - AdminOperationReadInventory: 8/8 PASS; regresión: 283 suites / 3,286 pruebas / 0 fallos; build y health read-only SUCCESS.
+
+
+[2026-11-21] CATALOG/Coordinator — auditoría de feed incremental
+- Revisados sourceVersion, upsert/delete/reset, requestId, recuperación parcial, retención, cursores vencidos y reset seguro.
+- API GET y helpers IndexedDB existen; UI aún no consume getCatalogChanges.
+- Se conserva getCatalogData completo al cerrar edición hasta integrar cursor consistente con snapshot, persistencia atómica y fallback de reset.
+- CatalogChangeFeed 35/35, CatalogFeedRetry 9/9, CatalogSnapshotSync 29/29 PASS; regresión: 283 suites / 3,286 pruebas / 0 fallos.
