@@ -24,13 +24,11 @@ function makeHarness({ rows = [["user:7", "10", 2, 4, 5, "completed", "now"]], s
             return { getValues: () => [rows[args[0] - 2]] };
         }
     };
-    const fn = new Function("getSpreadsheet", "cuts", "vehicle", "actorKey", "vehicleId", "corteIndex", "utilCol", code +
-        "\nreturn findCompletedLikeReplayNoop_;")(
-        () => ({ getSheetByName: () => ledgerExists ? ledger : null }),
-        { getRange: () => ({ getValue: () => counter }) },
-        { rowIndex: 4 }, "user:7", "10", 2, 17
+    const replay = new Function("getSpreadsheet", code + "\\nreturn findCompletedLikeReplayNoop_;")(
+        () => ({ getSheetByName: () => ledgerExists ? ledger : null })
     );
-    return { run: fn, calls };
+    const cuts = { getRange: () => ({ getValue: () => counter }) };
+    return { run: () => replay(cuts, { rowIndex: 4 }, "user:7", "10", 2, 17), calls };
 }
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
