@@ -163,9 +163,8 @@ test("la recuperación agrupa duplicados idénticos y rechaza propuestas distint
     assert.match(pending, /rowIndexes: duplicateEntries\.map/);
     assert.match(pending, /byOperation\.size > 1/);
     const completion = extract("completeFeedbackYearApplication_");
-    assert.match(completion, /application\.rowIndexes/);
-    assert.match(completion, /updateApplicationRows\(9, "completed"\)/);
-    assert.match(completion, /applicationRowIndexes\.some/);
+    assert.match(completion, /appendFeedbackYearApplicationEvent_\(operationId, "completed"/);
+    assert.match(completion, /getFeedbackYearApplicationEventState_/);
 });
 test("el registro de aplicación de año se anexa como una fila completa", () => {
     const handlerStart = feedback.indexOf("function handleSuggestYearLocked(");
@@ -189,6 +188,59 @@ test("completar una aplicación no modifica las claves ni las filas históricas 
     const handlerEnd = feedback.indexOf("\nfunction ", handlerStart + 10);
     const handler = feedback.slice(handlerStart, handlerEnd);
     assert.match(handler, /getAppliedSuggestionActorKey_\(actorKey\)/);
+});
+test("los eventos de aplicación se anexan una vez y su estado se proyecta sin mutar el ledger", () => {
+    const eventHeaders = ["eventId", "operationId", "eventType", "createdAt", "payloadJson"];
+    const eventSheet = {
+        rows: [eventHeaders],
+        getLastRow() { return this.rows.length; },
+        getRange(row, col, count = 1, width = 1) {
+            const self = this;
+            return {
+                getValues() {
+                    return Array.from({ length: count }, (_, i) =>
+                        Array.from({ length: width }, (_, j) => self.rows[row - 1 + i]?.[col - 1 + j] ?? ""));
+                }
+            };
+        },
+        appendRow(row) { this.rows.push(row.slice()); }
+    };
+    const spreadsheet = { getSheetByName(name) { return name === "FeedbackYearApplicationEvents" ? eventSheet : null; } };
+    const getSheet = new Function("getSpreadsheet", "SpreadsheetApp",
+        extract("getFeedbackYearApplicationEventsSheet_") + "\nreturn getFeedbackYearApplicationEventsSheet_;")(
+        () => spreadsheet, { flush() {} }
+    );
+    const appendEvent = new Function("Utilities", "getFeedbackYearApplicationEventsSheet_", "SpreadsheetApp",
+        extract("appendFeedbackYearApplicationEvent_") + "\nreturn appendFeedbackYearApplicationEvent_;")(
+        makeUtilities(), getSheet, { flush() {} }
+    );
+    const state = new Function(extract("getFeedbackYearApplicationEventState_") +
+        "\nreturn getFeedbackYearApplicationEventState_;")();
+    const operationId = "YSA-" + "a".repeat(64);
+    const payload = { vehicleId: "101", targetFrom: 2018, targetTo: 2024 };
+    const first = appendEvent(operationId, "completed", payload);
+    const duplicate = appendEvent(operationId, "completed", payload);
+    assert.equal(first.duplicate, false);
+    assert.equal(duplicate.duplicate, true);
+    assert.equal(eventSheet.rows.length, 2);
+    assert.equal(state(operationId, eventSheet.rows.slice(1)).completed, true);
+    assert.throws(() => appendEvent(operationId, "completed", { ...payload, targetFrom: 2017 }), /contenido distinto/);
+    assert.throws(() => state(operationId, [
+        eventSheet.rows[1],
+        [eventSheet.rows[1][0] + "-CONFLICT", operationId, "completed", "later", JSON.stringify({ targetFrom: 2017 })]
+    ]), /eventos contradictorios/);
+});
+test("la recuperación consulta eventos append-only en vez de modificar el estado de la aplicación", () => {
+    const pending = extract("findPendingFeedbackYearApplication_");
+    assert.match(pending, /getFeedbackYearApplicationEventsSheet_\(false\)/);
+    assert.match(pending, /getFeedbackYearApplicationEventState_/);
+    assert.match(pending, /eventState\.completed \|\| eventState\.requiresReview/);
+    const completion = extract("completeFeedbackYearApplication_");
+    assert.match(completion, /appendFeedbackYearApplicationEvent_\(operationId, "activity_attempted"/);
+    assert.match(completion, /appendFeedbackYearApplicationEvent_\(operationId, "completed"/);
+    assert.match(completion, /appendFeedbackYearApplicationEvent_\(operationId, "requires_review"/);
+    assert.doesNotMatch(completion, /updateApplicationRows/);
+    assert.doesNotMatch(completion, /ledger\.getRange\([^)]*\)\.setValue/);
 });
 test("la aplicación de año ya no escribe directamente en Cortes", () => {
     const completion = extract("completeFeedbackYearApplication_");
