@@ -708,3 +708,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - API GET y helpers IndexedDB existen; UI aún no consume getCatalogChanges.
 - Se conserva getCatalogData completo al cerrar edición hasta integrar cursor consistente con snapshot, persistencia atómica y fallback de reset.
 - CatalogChangeFeed 35/35, CatalogFeedRetry 9/9, CatalogSnapshotSync 29/29 PASS; regresión: 283 suites / 3,286 pruebas / 0 fallos.
+
+
+[2026-11-21] Corrección CATALOG — consumidor incremental y refresh de edición
+- Se corrigió la auditoría: el consumidor de getCatalogChanges está integrado en auth.js/loadInitialData, con cursor IndexedDB, delta GET, reset seguro, snapshot+cursor atómico y sincronización entre pestañas.
+- Cierre normal de edición usa auth.loadInitialData(true); fallback completo si delta no confirma. Descarte conserva snapshots completos para comparar y verificar restauración.
+- CatalogEditDeltaRefresh: 23/23 PASS; regresión: 284 suites / 3,309 pruebas / 0 fallos; build y health read-only SUCCESS.
