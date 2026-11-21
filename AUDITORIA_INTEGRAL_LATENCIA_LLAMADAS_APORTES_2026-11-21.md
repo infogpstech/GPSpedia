@@ -253,3 +253,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - AUTH aplica lease acquire/release a múltiples acciones de sesión/cuenta; USERS aplica lease a createUser y actor cacheado a getUsers/updateProfile. Cache miss de actor genera validateSessionContext contra Coordinator.
 - USERS createUser y AUTH deleteUser comparten recurso lógico USERS en Coordinator; el lock local de USERS no coordina entre proyectos. Mantener exclusión hasta sustituirla por autoridad común equivalente.
 - Cambio de rol conserva marcador, revocación e invalidación de cachés; logout, reset de sesiones y eliminación conservan revocación. La simplificación debe seguir §15 sin alterar RBAC ni las excepciones explícitas.
+
+
+### Reducción de leases AUTH — touchSession y acceptTerms (2026-11-21)
+
+- touchSession no tiene consumidor cliente; se conserva la acción heredada, pero se excluye de la política de leases AUTH.
+- acceptTerms se ejecuta mediante actor cacheado y ya no adquiere/libera lease. El actor se precalienta tras la sincronización de login y se invalida localmente al revocar una sesión o todas las sesiones del usuario. Ante cache miss, la validación central de respaldo se conserva.
+- Se mantiene el lock local de acceptTerms para evitar pérdida de actualizaciones entre dispositivos sobre el registro JSON compartido en Users.TermsAcceptance.
+- Validación de servicios: 278 suites / 3,232 pruebas / 0 fallos; sintaxis/build y health read-only SUCCESS. Se registró SessionActivityLeaseMinimization en el runner y se actualizaron expectativas obsoletas del contrato ADMIN.
+- No se retiraron todavía leases de recuperación, cambios de contraseña, actualizaciones de usuario, reset de sesiones, logout o migración; son la siguiente clasificación. La coordinación createUser ↔ deleteUser permanece protegida.
