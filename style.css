@@ -6151,7 +6151,9 @@ textarea.rich-text-source[hidden] { display:none !important; }
     opacity:.85; cursor:not-allowed;
 }
 
-/* GP-UX-MODAL-HEADER-TIGHTEN-03 — cuadrícula 2x2: logo a la izquierda, acciones y modelo a la derecha. */
+/* GP-UX-MODAL-HEADER-TIGHTEN-03 — bloque canónico de reglas exclusivas del modal de corte.
+   Las reglas .detail-modal-* anteriores son la base compartida; esta sección define la cascada final.
+   Logo 64 px escritorio / 48 px móvil: mantiene proporción con acciones de 40 px. */
 #modalDetalle[data-modal-type="corte"] {
     overflow-x:hidden;
     overscroll-behavior-x:none;
@@ -6178,8 +6180,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
     width:max-content;
     max-width:none;
     min-width:0;
-    height:120px;
-    min-height:120px;
+    height:64px;
+    min-height:64px;
     padding:0 !important;
     margin:0 !important;
     align-self:end;
@@ -6190,8 +6192,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
     width:auto !important;
-    height:120px !important;
-    max-height:120px !important;
+    height:64px !important;
+    max-height:64px !important;
     max-width:180px;
     margin:0 !important;
     padding:0 !important;
@@ -6278,8 +6280,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
         grid-row:1 / span 2;
         width:max-content;
         max-width:none;
-        height:60px;
-        min-height:60px;
+        height:48px;
+        min-height:48px;
         padding:0 !important;
         margin:0 !important;
         align-self:end;
@@ -6290,9 +6292,9 @@ textarea.rich-text-source[hidden] { display:none !important; }
     #modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
         display:block;
         width:auto !important;
-        height:60px !important;
-        min-height:60px !important;
-        max-height:60px !important;
+        height:48px !important;
+        min-height:48px !important;
+        max-height:48px !important;
         max-width:none !important;
         margin:0 !important;
         padding:0 !important;
