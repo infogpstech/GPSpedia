@@ -42,3 +42,8 @@ assert.equal(projectedInput.vehicles[0].tipoCorte1, "Corte B", "mantiene orden d
 assert.equal(projectedInput.vehicles[0].tipoCorte2, "Corte A");
 assert.equal(projectedInput.vehicles[0].utilCorte2, 3);
 console.log("CatalogContributionReadIsolation: 1/1 PASS — solo Cortes, FeedbackLikes y AportesVehiculo");
+
+const inventoryProjection = read(spreadsheet, true);
+assert.ok(Array.isArray(inventoryProjection.vehicles));
+assert.deepEqual(inventoryProjection.sourceEvents, events);
+console.log("CatalogContributionReadIsolation: source events reuse the parsed contribution ledger");

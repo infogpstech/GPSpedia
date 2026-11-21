@@ -47,6 +47,32 @@ assert.equal(limited.candidates[0].vehicleLabel, "Honda CR-V");
 assert.equal(limited.truncated, true);
 assert.equal(limited.readOnly, true);
 assert.deepEqual(Object.keys(limited).sort(), ["candidates", "limit", "readOnly", "source", "status", "total", "truncated"].sort());
+const inventoryVehicles = [{
+    id: "3", marca: "Nissan", modelo: "Frontier",
+    contributionCandidates: [{ eventId: "EV-IMG", opId: "OP-IMG", kind: "cut", reason: "requires_review",
+        payload: { image: "https://drive.google.com/file/d/FILE1234567890/view" } }]
+}];
+const inventorySourceEvents = [
+    { eventId: "EV-IMG", opId: "OP-IMG", vehicleId: "3", operationHash: "a".repeat(64), kind: "cut",
+      payload: { image: "https://drive.google.com/file/d/FILE1234567890/view" },
+      createdAt: "2026-11-21T00:00:00.000Z", status: "review", supersedesEventId: "" },
+    { eventId: "EV-RES", opId: "OP-RES", vehicleId: "3", operationHash: "b".repeat(64), kind: "cut",
+      payload: { image: "https://drive.google.com/file/d/FILE1234567890/view" },
+      createdAt: "2026-11-21T00:01:00.000Z", status: "accepted", supersedesEventId: "EV-IMG" },
+    { eventId: "EV-NOIMAGE", opId: "OP-NOIMAGE", vehicleId: "3", operationHash: "c".repeat(64), kind: "feed",
+      payload: { text: "12V" }, createdAt: "2026-11-21T00:02:00.000Z", status: "review", supersedesEventId: "" }
+];
+const inventoryResponse = new Function("readCatalogContributionProjectionVehicles_", candidatesHandler + "\\nreturn handleGetContributionCandidates_;")(
+    (spreadsheetRef, includeSourceEvents) => includeSourceEvents
+        ? { vehicles: inventoryVehicles, sourceEvents: inventorySourceEvents }
+        : inventoryVehicles
+);
+const inventoryPayload = inventoryResponse({ limit: 500, includeImageInventoryEvents: true });
+assert.equal(inventoryPayload.imageInventoryCandidates.length, 1);
+assert.equal(inventoryPayload.imageInventoryCandidates[0].eventId, "EV-IMG");
+assert.deepEqual(inventoryPayload.imageInventoryEvents.map(event => event.eventId), ["EV-IMG", "EV-RES"]);
+assert.equal(inventoryPayload.imageInventoryEvents[1].supersedesEventId, "EV-IMG");
+
 const all = getCandidates({ limit: 500 });
 assert.equal(all.total, 2);
 assert.equal(all.candidates.length, 2);
