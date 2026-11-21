@@ -234,7 +234,7 @@ function runVideoApprovalPublishingTests() {
             const titleEvents=makeSheet_([["operationId","payloadHash","tutorialId","expectedTitleKey","title","createdAt"],
                 ["tutorial-rename-"+hash,hash,id,titleKey,newTitle,"now"]]);
             const originalGetSpreadsheet=getSpreadsheet;
-            getSpreadsheet=()=>({getSheetByName:name=>name==="TutorialRenameEvents"?titleEvents:(name==="VideoApprovalEvents"?e.videoEvents||null:null),
+            getSpreadsheet=()=>({getSheetByName:name=>name==="Tutorial"?e.tutorial:(name==="TutorialRenameEvents"?titleEvents:(name==="VideoApprovalEvents"?e.videoEvents||null:null)),
                 insertSheet:name=>{const created=makeSheet_([]);if(name==="VideoApprovalEvents")e.videoEvents=created;return created;}});
             try{
                 const result=handleApproveVideo(actor_("vid-1"));
