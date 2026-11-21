@@ -1057,3 +1057,10 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Corrección fase 2: `TutorialEditEvents` registra snapshots D:F con expectedHash; alta/edición descriptiva estable es lock-free, el catálogo proyecta los eventos y no revierte columna G de aprobación de vídeo.
 - Renombrados y filas sin ID continúan protegidos por lock. Validación CI: 258 suites, 3101 pruebas, 0 fallos; health y Pages SUCCESS. Sin despliegue.
 ================================================================================
+
+2026-11-21 — Tutoriales: validación de eventos de título
+- Hallazgo: el ledger no verificaba eventHash y toleraba operationId con eventos distintos.
+- Corrección: validación hash y rechazo fail-closed ante reservas contradictorias.
+- Regresión: TutorialIntegrity incluye ambos escenarios; CI 44901700375 SUCCESS, 258 suites, 3103 pruebas, 0 fallos; health read-only SUCCESS.
+- Se mantiene pendiente migrar renombrados a eventos versionados sin lock. Sin despliegue ni cambios productivos.
+================================================================================
