@@ -48,8 +48,9 @@ function makeSheet_(rows, options = {}) {
 function buildHarness_(feedback, options = {}) {
     const initial = options.rows || [];
     const sheet = makeSheet_(initial, options);
-    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false };
+    const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false, insertedEditEvents: false };
     const titleEventsSheet = makeSheet_(options.titleEvents || [], options);
+    const editEventsSheet = makeSheet_(options.editEvents || [], options);
     const context = {
         LockService: { getScriptLock: () => ({
             waitLock() { state.lockWaits++; },
@@ -63,10 +64,12 @@ function buildHarness_(feedback, options = {}) {
         getSpreadsheet: () => ({
             getSheetByName: name => name === "Tutorial"
                 ? (options.missingSheet !== true ? sheet : null)
-                : name === "TutorialTitleEvents" ? (state.insertedTitleEvents || options.titleEvents ? titleEventsSheet : null) : null,
+                : name === "TutorialTitleEvents" ? (state.insertedTitleEvents || options.titleEvents ? titleEventsSheet : null)
+                : name === "TutorialEditEvents" ? (state.insertedEditEvents || options.editEvents ? editEventsSheet : null) : null,
             insertSheet: name => {
                 if (name === "Tutorial") { state.inserted = true; return sheet; }
                 if (name === "TutorialTitleEvents") { state.insertedTitleEvents = true; return titleEventsSheet; }
+                if (name === "TutorialEditEvents") { state.insertedEditEvents = true; return editEventsSheet; }
                 throw new Error("wrong sheet");
             }
         }),
@@ -79,17 +82,20 @@ function buildHarness_(feedback, options = {}) {
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
-    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_ };", context);
+    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_ };", context);
     return { api: context.api, sheet, state };
 }
 
-function readCatalogTutorials_(catalog, tutorialRows) {
+function readCatalogTutorials_(catalog, tutorialRows, editEvents = []) {
     const tutorialColumns = extract_(catalog, "const COLS_TUTORIALES", "const COLS_RELAY");
     const relayColumns = extract_(catalog, "const COLS_RELAY", "// ============================================================================");
     const mapper = extract_(catalog, "function mapRowToObject", "function handleGetCatalogData");
+    const project = extract_(catalog, "function tutorialEditFieldsHash_", "function dedupeTutorialCatalogRows_");
     const dedupe = extract_(catalog, "function dedupeTutorialCatalogRows_", "function handleGetCatalogData");
-    const reader = dedupe + "\n" + extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
-    const rows = { Cortes: [["id"]], LogosMarca: [["id"]], Tutorial: tutorialRows.map(row => row.slice()), Relay: [["ID"]] };
+    const reader = project + "\n" + dedupe + "\n" + extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
+    const editHeaders = ["operationId", "payloadHash", "tutorialId", "expectedHash", "snapshotJson", "createdAt"];
+    const rows = { Cortes: [["id"]], LogosMarca: [["id"]], Tutorial: tutorialRows.map(row => row.slice()),
+        TutorialEditEvents: [editHeaders, ...editEvents.map(row => row.slice())], Relay: [["ID"]] };
     const context = {
         SHEET_NAMES: { CORTES: "Cortes", LOGOS_MARCA: "LogosMarca", TUTORIALES: "Tutorial", RELAY: "Relay" },
         COLS_CORTES: {}, COLS_LOGOS_MARCA: { id: 1, nombreMarca: 2, urlLogo: 3 },
@@ -98,6 +104,8 @@ function readCatalogTutorials_(catalog, tutorialRows) {
         CacheService: { getScriptCache: () => ({ get: () => null }) },
         getCortesColumnMap: () => ({}), normalizeAndValidateImageId: value => value,
         normalizeYouTubeUrl: value => value,
+        Utilities: { DigestAlgorithm: { SHA_256: "SHA_256" },
+            computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(String(value)).digest()) },
         getSpreadsheet: () => ({ getSheetByName(name) {
             if (!Object.prototype.hasOwnProperty.call(rows, name)) return null;
             return { getDataRange: () => ({ getValues: () => rows[name].map(row => row.slice()) }) };
@@ -366,6 +374,36 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
             payloadHash: "e".repeat(64) });
         assert.equal(h.api.titleOwner("tema anterior"), "");
         assert.equal(h.api.titleOwner("tema nuevo"), tutorialId);
+    });
+
+    test("CATALOG proyecta eventos append-only D:F sin revertir título, imagen, vídeo o autor", () => {
+        const id = "tut-0123456789abcdef0123456789abcdef";
+        const row = [id, "Tema", "imagen", "Cómo viejo", "Dónde viejo", "Detalle viejo", "video", "Autora"];
+        const expectedHash = crypto.createHash("sha256").update(JSON.stringify(["Cómo viejo", "Dónde viejo", "Detalle viejo"])).digest("hex");
+        const snapshot = ["Cómo nuevo", "Dónde nuevo", "Detalle nuevo"];
+        const payloadHash = crypto.createHash("sha256").update(JSON.stringify([id, expectedHash, snapshot])).digest("hex");
+        const event = ["tutorial-edit-" + payloadHash, payloadHash, id, expectedHash, JSON.stringify(snapshot), "now"];
+        const result = readCatalogTutorials_(catalog, [headers, row], [event]);
+        const projected = result.data.tutoriales[0];
+        assert.equal(projected.comoIdentificarlo, snapshot[0]);
+        assert.equal(projected.dondeEncontrarlo, snapshot[1]);
+        assert.equal(projected.Detalles, snapshot[2]);
+        assert.equal(projected.Tema, row[1]);
+        assert.equal(projected.Imagen, row[2]);
+        assert.equal(projected.Video, row[6]);
+        assert.equal(projected.Colaborador, row[7]);
+    });
+
+    test("CATALOG ignora eventos con expectedHash obsoleto", () => {
+        const id = "tut-0123456789abcdef0123456789abcdef";
+        const row = [id, "Tema", "", "Cómo vigente", "Dónde vigente", "Detalle vigente", "", "Autora"];
+        const stale = ["Cómo obsoleto", "Dónde obsoleto", "Detalle obsoleto"];
+        const eventHash = crypto.createHash("sha256").update(JSON.stringify(["versión anterior"])).digest("hex");
+        const payloadHash = crypto.createHash("sha256").update(JSON.stringify([id, eventHash, stale])).digest("hex");
+        const event = ["tutorial-edit-" + payloadHash, payloadHash, id, eventHash, JSON.stringify(stale), "now"];
+        const result = readCatalogTutorials_(catalog, [headers, row], [event]);
+        assert.equal(result.data.tutoriales[0].comoIdentificarlo, row[3]);
+        assert.equal(result.data.tutoriales[0].Detalles, row[5]);
     });
 
     test("catálogo conserva las siete columnas históricas y expone Colaborador en H", () => {
