@@ -333,6 +333,8 @@ runGroup('38','INTEGRATION',()=>{
  runCli('BETA-023 preferencia global de formato descriptivo','JS/Tests/RichTextGlobalPreference.mjs');
  runCli('BETA-025 presentación de nombres largos','JS/Tests/LongNameLayout.mjs');
  runCli('BETA-026 organización del modal de detalle de corte','JS/Tests/CutDetailModalLayout.mjs');
+ runCli('CSS modales informativos: base única, cierre y variantes de tema','JS/Tests/InfoModalStyleCascade.mjs');
+ runCli('CSS encabezados Inbox y Developer Tools agrupados','JS/Tests/ModalHeaderCascade.mjs');
  runCli('BETA-032 enrutamiento central de mensajes Developer','JS/Tests/DeveloperConsoleRouting.mjs');
  runCli('BETA-033 confirmaciones normalizadas en consola Developer','JS/Tests/DeveloperConsoleConfirmation.mjs');
  runCli('BETA-034 mensajes de operaciones Developer centralizados','JS/Tests/DeveloperOperationMessages.mjs');
