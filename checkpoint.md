@@ -284,3 +284,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `logUserActivity` escribe fila completa con `appendRow` y fórmula por fila. `getNextFormulaBasedId_` reserva sufijos con ledger append-only.
 - Pruebas `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848965971` SUCCESS: 255 suites, 3063 pruebas, 0 fallos. Health read-only `44848965894` SUCCESS. Pages `44848965693` pendiente.
 - P0 sigue abierto: `handleSuggestYear`, `reportProblem`/`suggestCutChange`, PyS, tutoriales y aprobación de vídeos mantienen locks. Próximo objetivo: retirar lock de `handleSuggestYear` mediante su ledger de votos/aplicaciones y preservar umbral de tres votos, actor único y recuperación de generaciones. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — primera respuesta determinista en sugerencias de año (2026-11-21)
+
+- Commit: `8c8a7dac2ce2743642bebfdfcfcccdb387cdbe56`.
+- `countVerifiedPositiveYearSuggestionVotes_` ahora aplica first-write-wins por orden físico de filas: el primer registro de cada actor verificado para vehículo/año determina si su voto cuenta. Las filas siguientes del mismo actor no pueden convertir un voto negativo en positivo ni volver a contarlo.
+- Se añadieron casos de regresión para respuestas contradictorias en ambos órdenes en `SuggestYearVoteThreshold.mjs`.
+- CI: servicio de regresión SUCCESS (255 suites, 3064 pruebas, 0 fallos); health read-only SUCCESS; build SUCCESS. Deploy/Pages estaba en ejecución al registrar.
+- Estado P0: `handleSuggestYear` **sigue usando ScriptLock** y aún modifica el ledger de aplicaciones y las filas históricas de Feedbacks. Este commit es preparación de proyección, no retiro del lock. Próximo: anexar votos completos de forma atómica, deduplicar por actor con primer evento físico, usar aplicación determinista append-only y reconstruir recuperación desde eventos sin mutar votos históricos. No desplegar Apps Script ni tocar datos productivos.
