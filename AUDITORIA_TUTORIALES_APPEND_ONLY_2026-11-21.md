@@ -90,3 +90,15 @@ Migrar el alta y la edición de tutoriales para reducir y retirar el ScriptLock 
 - Se preservan esquema A:H, compatibilidad A:G, filas históricas sin ID, IDs `tut-{operationId}`, autoría verificada, aprobación pendiente de vídeo y publicación del feed.
 - Regresión CI `44876830826` SUCCESS: 258 suites, 3097 pruebas aprobadas, 0 fallos; health read-only `44876830897` SUCCESS. Pages `44876830484` estaba queued al registrar.
 - **Estado parcial:** alta lock-free implementada; edición de campos sigue in-place bajo lock. No retirar el lock de edición hasta introducir expected hash/version y proyección de versiones que no revierta la columna G escrita por aprobaciones de vídeo. Concurrencia real de Sheets/Drive queda diferida a Beta aislada. No se desplegó Apps Script ni se modificó producción.
+
+
+## Implementación fase 2 — ediciones descriptivas append-only (2026-11-21)
+
+- Se añadió `TutorialEditEvents` (A:F: operationId, payloadHash, tutorialId, expectedHash, snapshotJson, createdAt). Cada evento contiene snapshot D:F (`comoIdentificarlo`, `dondeEncontrarlo`, `Detalles`) y el hash de la versión sobre la que se construyó.
+- Para tutoriales con ID persistente (`tut-...`), las ediciones sin cambio de título ya no adquieren ScriptLock ni actualizan B:F in-place: anexan evento con operationId determinista derivado de tutorialId, expectedHash y payload. La proyección acepta solo eventos cuyo expectedHash coincide con la versión vigente; solicitudes concurrentes basadas en la misma versión tienen un único ganador.
+- Los reintentos idénticos reutilizan el mismo operationId. Eventos obsoletos quedan en el ledger pero no sobrescriben la versión vigente. La proyección reconoce cadenas materializadas para que un replay previo siga siendo idempotente.
+- `findTutorialRow_` aplica la proyección D:F. CATALOG aplica el mismo orden de eventos al leer la hoja, sin modificar título, imagen, vídeo ni colaborador. Las aprobaciones de vídeo continúan escribiendo G en la fila base y no se revierten al proyectar eventos D:F.
+- Las ediciones que cambian el título y las filas históricas sin ID todavía usan ScriptLock y escritura in-place. Los renombrados reservan el título en `TutorialTitleEvents` antes de modificar la fila, coordinándose con altas lock-free.
+- Pruebas focalizadas: `TutorialIntegrity` 34/34 PASS; `FeedbackTutorialPreflightOutsideLock` 7/7; `FeedbackTutorialLookupBoundedRead` 6/6; `FeedbackTutorialUpdateTitleLookupBoundedRead` 5/5; `FeedbackTutorialUpdateNoopPreflight` 6/6. PyS se mantiene en 56/56 y 22/22.
+- CI `44877806419` SUCCESS: 258 suites, 3101 pruebas aprobadas, 0 fallos; health read-only `44877806406` SUCCESS; Pages `44877806381` SUCCESS. HEAD: `af2adefbd20ff450449cf8fc78f6e14d1aee733b`.
+- **Estado parcial:** alta y ediciones descriptivas lock-free; renombrados y edición de filas legacy siguen bajo lock. La concurrencia real queda diferida a Beta aislada. No se desplegó Apps Script ni se modificó producción.
