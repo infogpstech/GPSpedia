@@ -435,3 +435,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 2026-11-21 — ADMIN: ALTA DE LOGOTIPOS FAIL-FAST
 - handleAddLogo mantiene el ScriptLock para proteger la secuencia numérica y la escritura de LogosMarca, pero ya no espera 30 segundos: usa tryLock(0), retira el archivo no vinculado si hay contención y devuelve ADMIN_BUSY para reintento. La limpieza fallida conserva metadata RECOVERY_REQUIRED.
 - AdminLogoWriteLockNonBlocking: 4/4 PASS en harness Node.js aislado; pendiente CI/checkout completo. Sin cambios productivos.
+
+
+2026-11-21 — WRITE: RESERVA DE ID MODERNA ANTES DEL LOCK FÍSICO
+- Las altas nuevas con opId estable reservan el vehicleId append-only antes de adquirir ScriptLock. El ID se pasa a la transacción física mediante preparedRequest.preallocatedVehicleId y no se vuelve a consultar el ledger dentro del lock.
+- Las solicitudes legacy sin opId estable mantienen el fallback bajo lock. La sección crítica de fila física/Idempotencia, rollback, liberación durante Drive y retry pending permanecen intactos.
+- WriteVehicleIdReservationOutsidePhysicalLock: 5/5 PASS en harness Node.js aislado, incluido contención y retry idempotente. Pendiente CI/checkout completo. Sin cambios productivos.
