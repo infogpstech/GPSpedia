@@ -71,7 +71,12 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordin
 });
 
 test("CATALOG y rutas directas AUTH/WRITE quedan contabilizadas; consultas internas excluidas", () => {
-    const catalogTrafficActions = catalog.match(/const CATALOG_TRAFFIC_ACTIONS_ = new Set\\(\\[([\\s\\S]*?)\\]\\);/);
+    const trafficStart = catalog.indexOf("const CATALOG_TRAFFIC_ACTIONS_ = new Set([");
+    const trafficEnd = catalog.indexOf("]);", trafficStart);
+    assert.ok(trafficStart >= 0 && trafficEnd > trafficStart, "CATALOG debe declarar el conjunto de acciones contabilizadas");
+    const catalogTrafficActions = catalog.slice(trafficStart, trafficEnd);
+    ["getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData", "getVehicleProjection", "getContributionCandidates"]
+        .forEach(action => assert.ok(catalogTrafficActions.includes('"'+action+'"'), "falta telemetría para "+action));
     assert.ok(catalogTrafficActions, "CATALOG debe declarar el conjunto de acciones contabilizadas");
     ["getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData", "getVehicleProjection", "getContributionCandidates"]
         .forEach(action => assert.ok(catalogTrafficActions[1].includes('"'+action+'"'), "falta telemetría para "+action));
