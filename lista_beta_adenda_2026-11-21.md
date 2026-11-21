@@ -164,3 +164,31 @@ No desplegar Apps Script a producción ni modificar datos productivos.
 4. Registrar IDs, opIds sintéticos, huellas, filas antes/después, fórmulas/valores, timestamps y resultado. No guardar tokens, datos personales ni secretos.
 
 **Criterio PASS:** unicidad real entre ejecuciones/proyectos, convergencia idempotente, ledger íntegro y fórmulas convertidas a valores numéricos verificados. Una simulación local o CI no basta para cerrar AUG-162.
+
+
+## AUG-163 — USERS: PERFIL SIN SCRIPTLOCK, TELEMETRÍA BEST-EFFORT Y ALTA FAIL-FAST
+
+**Estado: PENDIENTE DE EJECUCIÓN EN BETA AISLADA.** No se deben usar cuentas ni datos productivos.
+
+### A. Actualización de perfil
+
+1. En una cuenta de prueba, actualizar únicamente Nombre_Completo y confirmar read-back del valor persistido.
+2. Simular dos ediciones concurrentes del mismo perfil. Debe prevalecer la última escritura; una ejecución cuyo read-back ya fue reemplazado puede informar conflicto, pero nunca debe restaurar un snapshot antiguo sobre la edición posterior.
+3. Simular fallo de flush después de setValue. Si el read-back confirma el valor solicitado, la operación puede considerarse persistida; si no coincide, debe fallar sin rollback destructivo.
+4. Confirmar que updateProfile no adquiere ScriptLock local y que conserva la lease compartida USERS/AUTH para coordinar cambios de rol, revocación o eliminación.
+
+### B. Creación de cuenta
+
+1. Lanzar dos altas con el mismo nombre de usuario desde ejecuciones independientes. Confirmar que nunca se crean dos cuentas con el mismo username ni IDs repetidos.
+2. Mantener ocupado el ScriptLock local y ejecutar createUser. Debe fallar rápido con mensaje de servidor ocupado, sin waitLock, sin escribir filas ni liberar un lock no adquirido.
+3. Liberar el lock y reintentar. Debe crearse una sola cuenta con ID único, contraseña PBKDF2 y rol autorizado.
+4. Confirmar que sesión y jerarquía de rol se validan antes de entrar en la sección crítica y que el hash de contraseña se calcula fuera del lock.
+
+### C. Telemetría directa
+
+1. Ejecutar getUsers concurrentemente y confirmar que recordUsersDirectTraffic_ no invoca LockService ni cambia la respuesta de lectura.
+2. Simular dos incrementos simultáneos sobre el mismo bucket. Se permite subconteo porque la métrica es best-effort; no se permite usarla como rate limit, autorización o control de acceso.
+3. Simular cuota/fallo de PropertiesService. La telemetría puede omitirse, pero getUsers debe seguir respondiendo normalmente.
+4. Verificar secreto Coordinator, fallback legacy, endpoint getServiceTraffic y exactitud declarada accuracy=best_effort_nonblocking / mayUndercount=true.
+
+**Criterio PASS:** sin ScriptLock en perfil ni telemetría, sin pérdida por rollback de ediciones concurrentes, alta de cuentas fail-fast con unicidad conservada y telemetría nunca usada como control de seguridad.

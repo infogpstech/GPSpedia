@@ -657,3 +657,16 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - CI d2167e2180925463202a4dbac0e302751ecb33ca SUCCESS: 259 suites, 3,139 pruebas aprobadas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
 - La validación real de fórmula/concurrencia queda registrada como AUG-162 en la adenda Beta. No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
 - Siguiente tarea local: auditar locks restantes de ADMIN y USERS contra §15; después revisar si la transacción física de alta nueva en WRITE puede migrar a un journal append-only sin perder unicidad de VIN, idempotencia, recuperación ni rollback.
+
+
+## Cierre local — USERS: perfil sin lock y alta de cuenta fail-fast (2026-11-21)
+
+- Código validado en HEAD bb91b08bc16070d44e9155e5014c4110894ec546.
+- recordUsersDirectTraffic_ dejó de adquirir ScriptLock. La métrica se mantiene como best-effort y puede subcontar ante incrementos concurrentes; no es rate limit, autorización ni control de acceso. Los fallos de PropertiesService no interrumpen getUsers.
+- handleUpdateProfile ya no usa el lock local ni writeUserRangeAtomically_ con rollback. Escribe una sola celda, hace flush y read-back; si otra edición posterior reemplaza el valor, informa que no se confirmó y no restaura snapshots antiguos. Se conserva la lease compartida USERS/AUTH.
+- handleCreateUser valida sesión y jerarquía de rol antes de la sección crítica; el hash PBKDF2 se calcula fuera del lock. Se conserva el lock solo para username/ID únicos y escritura de alta, cambiado a tryLock(0) fail-fast sin espera de 30 segundos.
+- La copia aislada JS/Tests/users.js quedó sincronizada con JS/Services/users.js, conservando únicamente SPREADSHEET_ID = __ISOLATED_TEST_SPREADSHEET__.
+- Pruebas: UsersDirectTrafficTelemetry 7/7; USERS mutaciones/RBAC/rollback/coordinación 16/16; USERS fixture/paridad 1/1; el resto de contratos AUTH/USERS también pasó.
+- CI bb91b08bc16070d44e9155e5014c4110894ec546 SUCCESS: 259 suites, 3,141 pruebas aprobadas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
+- AUG-163 queda pendiente de ejecución en Beta aislada para validar concurrencia real, last-write-wins del perfil y alta de cuentas. No se desplegó Apps Script ni se modificaron datos productivos.
+- Siguiente tarea: inventario y clasificación de locks ADMIN; priorizar publicadores de catálogo y mutaciones ordinarias, conservar locks de operaciones destructivas/mantenimiento o de unicidad hasta demostrar alternativa segura.

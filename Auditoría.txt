@@ -1190,3 +1190,15 @@ Adenda — FEEDBACK confirmación de sugerencias
 - CI d2167e2180925463202a4dbac0e302751ecb33ca SUCCESS: 259 suites, 3,139 pruebas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
 - AUG-162 pendiente para validar la fórmula real de Google Sheets y concurrencia entre deployments en entorno aislado. Sin despliegue Apps Script ni cambios en datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — USERS: REDUCCIÓN DE LOCKS SIN DEBILITAR UNICIDAD
+- recordUsersDirectTraffic_ ya no usa ScriptLock. El contador horario es telemetría best-effort, puede subcontar por carreras y no se utiliza como rate limit, autorización ni control de acceso. Si PropertiesService falla, la solicitud getUsers continúa.
+- handleUpdateProfile dejó de adquirir el lock local. La actualización de Nombre_Completo es una escritura de una sola celda con flush/read-back. No hay rollback a un snapshot previo: ante una edición concurrente posterior, la operación informa que no pudo confirmar su valor y conserva la escritura más reciente.
+- La lease compartida USERS/AUTH se mantiene para coordinar updateProfile con cambios de rol/revocación/eliminación.
+- handleCreateUser valida sesión y permisos de jerarquía antes del lock y calcula PBKDF2 fuera de la sección crítica. El lock local se conserva para unicidad de username e ID y la escritura de la cuenta; se cambió waitLock(30000) por tryLock(0) para fallar rápido.
+- La copia de pruebas JS/Tests/users.js se sincronizó con JS/Services/users.js, preservando el ID aislado.
+- Pruebas: UsersDirectTrafficTelemetry 7/7; UsersAtomicMutations 16/16; Users fixture/paridad 1/1. CI bb91b08bc16070d44e9155e5014c4110894ec546 SUCCESS: 259 suites, 3,141 pruebas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
+- AUG-163 pendiente de prueba real aislada. No se desplegó Apps Script ni se modificaron recursos productivos.
+================================================================================

@@ -717,3 +717,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI: 259 suites, 3,139 pruebas, 0 fallos; build SUCCESS; health read-only SUCCESS; Pages/deploy SUCCESS. Pruebas focalizadas: asignador 7/7, bounded read 11/11, idempotencia/concurrencia 12/12, ADMIN→WRITE 4/4, RBAC 15/15 y MutationLockContention 1/1.
 - AUG-162 queda pendiente de ejecución en Spreadsheet/Apps Script aislados para validar la fórmula real y concurrencia entre deployments. No se desplegó Apps Script ni se tocaron recursos productivos.
 - Siguiente tarea: auditoría de ADMIN y USERS; después revisar la transacción de alta nueva WRITE sin quitar el lock hasta demostrar una alternativa segura.
+
+
+## Checkpoint — USERS: perfil sin lock y alta fail-fast (2026-11-21)
+
+- Rama de trabajo GPSpedia2.2.5_work. Código validado en HEAD bb91b08bc16070d44e9155e5014c4110894ec546.
+- recordUsersDirectTraffic_ ya no usa ScriptLock; es telemetría best-effort y puede subcontar ante carreras. No participa en rate limiting, autorización ni control de acceso.
+- handleUpdateProfile realiza escritura de una sola celda con flush/read-back, sin ScriptLock local y sin rollback que pueda sobrescribir una edición concurrente. La lease compartida USERS/AUTH se conserva.
+- handleCreateUser valida sesión/rol antes de la sección crítica y calcula PBKDF2 fuera del lock. El lock local se conserva solo para unicidad de username/ID y escritura, ahora fail-fast con tryLock(0).
+- Copia aislada JS/Tests/users.js sincronizada con el servicio, salvo el ID de Spreadsheet aislado.
+- CI: 259 suites, 3,141 pruebas, 0 fallos; build SUCCESS, health read-only SUCCESS, Pages/deploy SUCCESS. UsersDirectTrafficTelemetry 7/7, USERS mutaciones/RBAC 16/16, fixture/paridad 1/1.
+- AUG-163 pendiente de Beta aislada. No se desplegó Apps Script ni se tocaron recursos productivos.
+- Próximo trabajo: auditar locks restantes de ADMIN; clasificar por operación ordinaria, unicidad, mantenimiento y acción destructiva. No retirar locks de integridad sin sustituir la garantía.
