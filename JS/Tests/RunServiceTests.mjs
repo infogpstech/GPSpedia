@@ -223,6 +223,7 @@ runGroup('33','FEEDBACK',()=>{
 });
 runGroup('34','CATALOG',()=>{
  runCli('CATALOG dropdowns lee solo columnas necesarias para editar cortes','JS/Tests/CatalogDropdownRead.mjs');
+ runCli('CATALOG navegación lee solo columnas de contrato','JS/Tests/CatalogNavigationRead.mjs');
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
  runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');

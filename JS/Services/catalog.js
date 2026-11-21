@@ -1050,41 +1050,41 @@ function handleGetDropdownData() {
  */
 function handleGetNavigationData() {
     const responseData = {};
-    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    const logosSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGOS_MARCA);
+    const spreadsheet = getSpreadsheet();
+    const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    const logosSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGOS_MARCA);
 
-    // 1. Contar vehículos por categoría y obtener lista de marcas únicas
+    // La navegación solo necesita ID, categoría y marca; no leer todas las columnas de Cortes.
     const categoryCounts = {};
     const marcas = new Set();
-    if (cortesSheet) {
-        const data = cortesSheet.getDataRange().getValues();
-        data.shift(); // Quitar encabezados
-        data.forEach(row => {
-            if (row && row[0]) {
-                const categoria = row[COLS_CORTES.categoria - 1];
-                const marca = row[COLS_CORTES.marca - 1];
-                if (categoria) {
-                    categoryCounts[categoria] = (categoryCounts[categoria] || 0) + 1;
-                }
-                if (marca) {
-                    marcas.add(marca);
-                }
-            }
+    const cortesLastRow = cortesSheet ? Number(cortesSheet.getLastRow()) || 0 : 0;
+    if (cortesLastRow >= 2) {
+        const firstColumn = COLS_CORTES.id;
+        const lastColumn = Math.max(COLS_CORTES.categoria, COLS_CORTES.marca);
+        const rows = cortesSheet.getRange(2, firstColumn, cortesLastRow - 1, lastColumn - firstColumn + 1).getValues();
+        rows.forEach(row => {
+            if (!row || !row[0]) return;
+            const categoria = row[COLS_CORTES.categoria - firstColumn];
+            const marca = row[COLS_CORTES.marca - firstColumn];
+            if (categoria) categoryCounts[categoria] = (categoryCounts[categoria] || 0) + 1;
+            if (marca) marcas.add(marca);
         });
     }
     responseData.categoryCounts = categoryCounts;
     responseData.marcas = Array.from(marcas).sort();
 
-    // 2. Crear y añadir la lista de categorías ordenada por popularidad
-    const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
-    responseData.sortedCategories = sortedCategories;
+    // 2. Crear y añadir la lista de categorías ordenada por popularidad.
+    responseData.sortedCategories = Object.keys(categoryCounts)
+        .sort((a, b) => categoryCounts[b] - categoryCounts[a]);
 
-    // 3. Fetch de todos los logos (respetando el contrato de imágenes)
+    // Los logos solo requieren las tres columnas declaradas en COLS_LOGOS_MARCA.
     let logosData = [];
-    if (logosSheet) {
-        const data = logosSheet.getDataRange().getValues();
-        data.shift();
-        logosData = data.map(row => mapRowToObject(row, COLS_LOGOS_MARCA, IMAGE_FIELDS_LOGOS));
+    const logosLastRow = logosSheet ? Number(logosSheet.getLastRow()) || 0 : 0;
+    if (logosLastRow >= 2) {
+        const firstColumn = COLS_LOGOS_MARCA.id;
+        const lastColumn = Math.max(COLS_LOGOS_MARCA.id, COLS_LOGOS_MARCA.nombreMarca, COLS_LOGOS_MARCA.urlLogo);
+        const rows = logosSheet.getRange(2, firstColumn, logosLastRow - 1, lastColumn - firstColumn + 1).getValues();
+        logosData = rows.map(row => mapRowToObject(row, COLS_LOGOS_MARCA, IMAGE_FIELDS_LOGOS));
     }
     responseData.logos = logosData;
 

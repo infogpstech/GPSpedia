@@ -1045,3 +1045,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Rama de trabajo verificada: `GPSpedia2.2.5_work`. Rama base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
 - Próximo trabajo pendiente: definir límite y validación MIME/firma para logos ADMIN; completar benchmark de imágenes/Drive y caché fría/caliente; consultas CATALOG dirigidas; confirmar consumidores externos de touchSession. No afirmar mejora global de tiempos hasta medirla.
 
+
+
+## Continuidad — CATALOG: lectura mínima de navegación (2026-11-21)
+
+- HEAD confirmado antes del cambio: 869f4bb3c2df8f3e2195ba6b0bd71e7cf2d1a45a; rama GPSpedia2.2.5_work. Base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- handleGetNavigationData ahora lee únicamente ID/categoría/marca en Cortes y las tres columnas de LogosMarca; evita getDataRange en ambas hojas y evita rangos vacíos.
+- Se conserva el contrato de respuesta. No hay consumidor frontend activo confirmado para esta acción, por lo que no se afirma ahorro actual de arranque.
+- CatalogNavigationRead.mjs: 2/2 PASS en harness aislado de la función exacta.
+- Pendiente de ejecución: runner Node completo y CI. No se desplegó Apps Script ni se accedió a Spreadsheet/Drive productivos.
+- Siguiente: diseñar consulta CATALOG dirigida para ADMIN/detalle; la proyección de AportesVehiculo calcula conflictos globales de VIN, por lo que no se puede limitar ingenuamente el ledger a un vehículo.

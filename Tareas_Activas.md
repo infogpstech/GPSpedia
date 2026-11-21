@@ -3214,3 +3214,16 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] ADMIN logotipos: definir límite de tamaño con contrato cliente/servidor y validar MIME/firma binaria antes de crear Drive. No fijar un máximo sin revisar el uso y logos existentes.
 
 - [x] ADMIN logotipos: limpiar Base64 anterior al cambiar archivo, ignorar lecturas obsoletas con generación, manejar `onerror`/`onabort`/resultado inválido y bloquear Registrar hasta completar lectura. `AdminLogoFileRead.mjs` 4/4 PASS en V8 aislado. Límite de bytes y validación MIME/firma servidor siguen pendientes.
+
+
+## Optimización CATALOG — navegación con rangos mínimos (2026-11-21)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A CI.**
+
+- [x] handleGetNavigationData deja de leer getDataRange() completo: Cortes lee solo ID/categoría/marca y LogosMarca solo sus tres columnas de contrato.
+- [x] Se conserva el contrato y el resultado para categorías, marcas, orden y logos; hojas vacías no generan rangos inválidos.
+- [x] Prueba exact-source CatalogNavigationRead.mjs: 2/2 PASS en harness aislado.
+- [ ] Ejecutar runner completo y CI del commit.
+- Nota: el endpoint no tiene consumidor frontend activo confirmado; no se atribuye mejora de navegación/arranque hasta demostrar una llamada real.
+
+**Siguiente:** consulta dirigida CATALOG para ADMIN y detalle, preservando proyección global de VIN/candidatos; no filtrar eventos por vehículo sin demostrar equivalencia.
