@@ -1538,7 +1538,6 @@ export async function compressAndStoreThumbnail(url, rawFileId, requestedSize = 
 }
 
 async function compressAndStoreThumbnailOnce_(url,fileId,width){
- if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
 
  const cacheKey=buildThumbnailCacheKey(fileId,width);
  if(Date.now()<dbRetryAfter)return null;

@@ -12,6 +12,7 @@ const compress = source.match(/async function compressAndStoreThumbnailOnce_\([\
 assert.ok(getThumbnail && compress, "deben existir los lectores y compresores esperados");
 assert.ok(!getThumbnail[0].includes("getAll()"), "la lectura individual no debe recorrer toda la caché");
 assert.ok(!compress[0].includes("getAll()"), "la compresión individual no debe recorrer toda la caché");
+assert.ok(!compress[0].includes("rawFileId"), "el helper interno debe recibir el ID ya normalizado");
 
 const wrapper = source.match(/export async function compressAndStoreThumbnail\([\s\S]*?\n\}/);
 assert.ok(wrapper, "debe existir el wrapper público de compresión");
