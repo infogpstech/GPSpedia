@@ -1034,3 +1034,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - `ui.js`: helper `readLogoFileBase64_` maneja éxito/error/abort/Data URL inválida. La selección invalida Base64/nombre anteriores, usa generación para descartar lecturas antiguas y deshabilita Registrar hasta lectura válida.
 - `AdminLogoFileRead.mjs` integrado en `RunServiceTests.mjs`; pruebas aisladas 4/4 PASS.
 - Pendiente definir máximo de bytes y validar MIME/firma en backend antes de crear Drive; no se fijó límite arbitrario.
+
+
+## Verificación CI — correcciones de aportes e imágenes (2026-11-21)
+
+- Código probado en commit `865fb969285ee0e7e55a01a546175c1bc49d1882`.
+- GitHub Actions `GPSpedia service regression tests`: SUCCESS. Pasos de sintaxis de módulos JavaScript modificados y suites de regresión aisladas: SUCCESS.
+- Build: SUCCESS. Deployed-service-health: SUCCESS (solo lectura). GitHub Pages build/deployment: SUCCESS.
+- El deployment ejecutado fue GitHub Pages; no se publicó ningún proyecto Apps Script ni se modificaron datos/secretos productivos.
+- Rama de trabajo verificada: `GPSpedia2.2.5_work`. Rama base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Próximo trabajo pendiente: definir límite y validación MIME/firma para logos ADMIN; completar benchmark de imágenes/Drive y caché fría/caliente; consultas CATALOG dirigidas; confirmar consumidores externos de touchSession. No afirmar mejora global de tiempos hasta medirla.
+
