@@ -217,3 +217,7 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 2026-11-21 — Sugerencias de corte: identidad determinista
 - Se añadió fallback de suggestionOperationId derivado de la huella SHA-256 de la solicitud cuando clientes legacy no envían opId; IDs explícitos permanecen intactos.
 - No se retiró ScriptLock; la deduplicación concurrente append-only continúa pendiente.
+
+
+2026-11-21 — Validación de operationId determinista de sugerencias
+- CI `44862604331` SUCCESS: 255 suites, 3076 pruebas, 0 fallos; health read-only `44862604227` SUCCESS; Pages `44862603548` SUCCESS. No se desplegó Apps Script.

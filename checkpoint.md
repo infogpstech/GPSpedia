@@ -377,3 +377,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Los clientes que ya envían un ID válido conservan su identificador; no cambia el contrato ni se elimina `ScriptLock`.
 - Esta preparación hace que reintentos idénticos de clientes legacy compartan una identidad estable, necesaria para la deduplicación append-only posterior. No resuelve por sí sola la carrera de dos escrituras simultáneas.
 - Pendiente: ledger/proyección de operaciones, consumidores compatibles con duplicados físicos, pruebas de concurrencia y después evaluar retiro seguro del lock.
+
+
+### Validación CI — operationId determinista de sugerencias (2026-11-21)
+
+- Commit probado: `5ddbac743472e3df71149773b5d15c8894fd74cb`.
+- Suite de regresión `44862604331` SUCCESS: 255 suites, 3076 pruebas aprobadas, 0 fallos.
+- Health read-only `44862604227` SUCCESS; build/Pages `44862603548` SUCCESS.
+- `node --check` de los módulos JavaScript modificados completado por el workflow. El cambio local queda validado; no se desplegó Apps Script ni se modificaron hojas o datos productivos.
+- La migración completa de idempotencia/concurrencia de reportes y sugerencias sigue EN PROGRESO; este paso solo cubre identidad estable para sugerencias sin opId.
