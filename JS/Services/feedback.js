@@ -4048,10 +4048,11 @@ function handleAddProblem(source) {
         alcance: source.alcance, modelosAsociados: [] };
     const sheet = getPysSheet_(true);
     validatePysRecords_(sheet);
-    const opsSheet = getPysOperationsSheet_();
-    let ops = readPysOperations_(opsSheet);
+    // Validar todas las asociaciones antes de crear/leer PysOperations o reservar recursos.
     const models = requestedModels.map(findUniqueCortesVehicleForPys_);
     p.modelosAsociados = models;
+    const opsSheet = getPysOperationsSheet_();
+    let ops = readPysOperations_(opsSheet);
     const hash = buildPysPayloadHash_(p, image, models);
     let op = ops.find(item => item.opId === opId) || null;
     if (op && op.payloadHash !== hash) {
