@@ -2387,13 +2387,11 @@ function readFeedbackReportImageEventsIndex_() {
         };
         const previous = index.get(reportId);
         if (previous) {
-            if (previous.metadata.imageSha256 !== metadata.imageSha256) {
-                throw new Error("El reporte tiene eventos de imagen contradictorios; requiere reconciliación.");
-            }
-            previous.duplicateCount++;
+            if (previous.metadata.imageSha256 !== metadata.imageSha256) previous.conflict = true;
+            else previous.duplicateCount++;
             return;
         }
-        index.set(reportId, { rowNumber: offset + 2, eventId: String(row[0] || "").trim(), metadata, duplicateCount: 0 });
+        index.set(reportId, { rowNumber: offset + 2, eventId: String(row[0] || "").trim(), metadata, duplicateCount: 0, conflict: false });
     });
     return index;
 }
@@ -2444,6 +2442,7 @@ function getFeedbackReportImageMetadata_(reportId, baseMetadata, imageEventsInde
     const id = String(reportId || "").trim();
     if (imageEventsIndex instanceof Map) {
         const event = imageEventsIndex.get(id);
+        if (event && event.conflict) throw new Error("El reporte tiene eventos de imagen contradictorios; requiere reconciliación.");
         return event ? event.metadata : null;
     }
     const event = findFeedbackReportImageEventByReportId_(id);
