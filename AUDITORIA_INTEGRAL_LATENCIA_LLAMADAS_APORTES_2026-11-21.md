@@ -199,3 +199,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Los locks de eliminación, restauración e inventario ADMIN son operaciones destructivas o de consistencia y no se retiran en esta auditoría sin revisar el ledger, referencias activas, rollback y recuperación.
 - La telemetría/inventario y consulta de estado de reemplazo siguen siendo llamadas administrativas separadas; no se ejecutan en cada aporte normal. La consulta de estado puede pedir snapshot CATALOG completo y queda como optimización de recuperación, no del upload principal.
 
+
+
+### ADMIN — hallazgo pendiente en carga de logotipos
+- `ui.js` lee el logotipo con FileReader sin `onerror` ni `onabort`. Al seleccionar un archivo nuevo, no limpia `selectedLogoBase64` antes de iniciar la nueva lectura; si se envía antes de terminar, el Base64 anterior puede combinarse con el nombre/MIME del archivo nuevo. Tampoco existe un control de secuencia para ignorar resultados tardíos de una lectura anterior.
+- `handleAddLogo` decodifica Base64 y crea el archivo Drive antes de intentar el lock no bloqueante para vincular la fila. La transferencia está fuera del lock, pero en el handler inspeccionado no se observó límite de bytes ni verificación de firma binaria; el MIME/extension se deriva de valores declarados.
+- Se registra tarea para resolver la carrera de selección, manejo de errores y límite/MIME coherentes en cliente y servidor. No se fija un máximo arbitrario sin decidir el contrato y revisar los tamaños de logos existentes.
+- Es una ruta administrativa, no el flujo ordinario de aportes. No se modificó en esta iteración.
+
