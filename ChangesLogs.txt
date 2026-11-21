@@ -736,3 +736,8 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Aportes cut/opening/feed revalidan AportesVehiculo después de Drive y reutilizan la hoja validada en append, snapshot post-append y proyección de slot/candidato.
 - WriteEntityCatalogDemand 8/8; WriteContributionLedgerReuse 15/15; WriteContributionPostAppendSnapshot 12/12; regresión 289 suites / 3,382 pruebas / 0 fallos; build y health SUCCESS.
 - WRITE restante: alta nueva, recuperación legacy, VIN update, suplementaria legacy, journal imágenes y publicación CATALOG.
+
+
+[2026-11-21] WRITE — validación de VIN reutiliza snapshot Cortes
+- handleAddVinToVehicleLocked pasa su snapshot completo a checkVinDuplicateInSheet, evitando releer la hoja para validar VIN global.
+- WriteVinSnapshotReuse 8/8 PASS; regresión 290 suites / 3,390 pruebas / 0 fallos; build y health SUCCESS.
