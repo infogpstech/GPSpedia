@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
-const start=source.indexOf("function handleAddProblem(source) {"),end=source.indexOf("\nfunction withPysMutationLock_",start);
+const start=source.indexOf("function handleAddProblem(source) {"),end=source.indexOf("\nfunction withPysMutationLease_",start);
 const handler=source.slice(start,end);
 assert.ok(!handler.includes("LockService.getScriptLock()")&&!handler.includes("acquireFeedbackScriptLock_(")&&!handler.includes("releaseLockForPostWork"));
 assert.ok(handler.includes("if (file && reservationConfirmed)"));
