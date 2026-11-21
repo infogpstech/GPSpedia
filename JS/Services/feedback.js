@@ -4441,8 +4441,9 @@ function findTutorialById_(sheet, tutorialId) {
     });
     if (matches.length > 1) {
         const canonical = matches[0].row;
-        const identical = matches.every(match => TUTORIAL_HEADERS.every((header, index) =>
-            String(match.row[index] || "").trim() === String(canonical[index] || "").trim()));
+        const width = Math.max(0, ...matches.map(match => match.row.length));
+        const identical = matches.every(match => Array.from({ length: width }, (_, index) =>
+            String(match.row[index] || "").trim() === String(canonical[index] || "").trim()).every(Boolean));
         if (!identical) throw new Error("El ID del tutorial aparece más de una vez con contenido contradictorio; requiere revisión.");
     }
     return matches[0] || null;
