@@ -464,3 +464,12 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - ADMIN: se eliminaron locks/leases redundantes de publicación de catálogo, información suplementaria, helper Testigo y registro de actividad; la actividad usa appendRow. Alta de logos conserva lock esencial pero fail-fast. Leases de auditoría, inventario y unicidad de carpeta se mantienen.
 - WRITE: ID moderno fuera del lock, lectura focalizada de Idempotencia, sourceVersion temporal después de liberar lock y contrato de recuperación física documentado. El lock físico fail-fast se conserva para fila/Idempotencia/rollback.
 - Contratos exact-source: Admin 22/22 (6+5+1+4+5+1) y WRITE 23/23 (5+4+7+7) PASS. Orden post-lock permanent delete/restore PASS. CI integrado no disponible en el HEAD consultado; no deployment ni cambios productivos.
+
+
+2026-11-21 — CIERRE DE REGRESIÓN INTEGRAL ADMIN/WRITE
+- Se sincronizaron 12 harnesses/contratos con el código vigente tras la reducción de locks/leases y la separación de la reserva de ID WRITE respecto del lock físico.
+- Las pruebas ahora cubren la reserva append-only antes del lock, sourceVersion después de liberar el lock, snapshot dirigido por opId, ausencia de rollback ADMIN con snapshot antiguo, actividad appendRow sin lease, Testigo sin lock interno, y tryLock(0)/cleanup/release de LogosMarca.
+- No se modificó la lógica productiva para aprobar pruebas obsoletas ni se retiraron controles de integridad.
+- CI GitHub Actions en HEAD 4969e4cfa08479927d4284e98312f114e98c3d28: 259 suites, 3,137 pruebas PASS, 0 fallos; sintaxis y health read-only SUCCESS.
+- El workflow externo de GitHub Pages se activó automáticamente por el push y publicó https://infogpstech.github.io/GPSpedia/. No se desplegó Apps Script ni se modificó Spreadsheet/Drive productivo.
+- PR #128 sigue abierto y draft; rama base GPSpedia2.2.5 intacta. Las pruebas Beta AUG-159 a AUG-163 y demás validaciones reales permanecen pendientes de entorno aislado.

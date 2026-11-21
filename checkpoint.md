@@ -853,3 +853,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - HEAD confirmado antes de este registro: 77969c86ca4c817753a1fe581184f498f1ea399b.
 - GPSpedia2.2.5_work está 6,404 commits ahead y 0 behind de GPSpedia2.2.5; merge-base d9acc68d889985c2e2f42fe3a02e502efc86ead1. La base protegida permanece intacta.
 - Combined status y workflow runs no devolvieron checks para este HEAD. No se declara CI aprobado.
+
+
+## Checkpoint — regresión integral y sincronización de contratos (2026-11-21)
+
+- HEAD de código validado: 4969e4cfa08479927d4284e98312f114e98c3d28, rama GPSpedia2.2.5_work. CI GitHub Actions `GPSpedia service regression tests`: SUCCESS, 259 suites, 3,137 pruebas aprobadas, 0 fallos. Sintaxis de módulos modificados: SUCCESS. `GPSpedia deployed service health (read-only)`: SUCCESS.
+- Se corrigieron 12 harnesses/contratos de prueba que conservaban expectativas anteriores a la reducción de locks: WRITE reserva append-only antes del lock, lectura dirigida de Idempotencia y versionado posterior al lock; ADMIN actividad de imágenes appendRow sin lease, Testigo sin lock interno, alta de logos tryLock(0), y persistencia suplementaria sin rollback de snapshot obsoleto. No se debilitó ni eliminó ningún control del código de producción.
+- La ejecución de CI pasó de detectar cuatro suites con expectativas antiguas a 259 suites / 3,137 pruebas aprobadas. Los errores sucesivos fueron de fixtures/harnesses (ventana de búsqueda del lock, stub de Utilities/reserva, snapshot dirigido, lease retirada, lock no bloqueante y helpers retirados); se corrigieron contra el contrato vigente y se volvió a ejecutar la suite completa.
+- GitHub Pages: el push de la rama activó automáticamente el workflow externo `pages build and deployment`; el despliegue terminó SUCCESS para el commit 4969e4cfa08479927d4284e98312f114e98c3d28 y publicó `https://infogpstech.github.io/GPSpedia/`. No se ejecutó un deployment de Apps Script ni se modificaron Spreadsheet/Drive productivos. Registrar este comportamiento: los pushes a la rama activan Pages automáticamente.
+- PR #128 permanece OPEN y DRAFT, sin merge. GPSpedia2.2.5_work está 6,425 commits ahead / 0 behind de GPSpedia2.2.5; merge-base d9acc68d889985c2e2f42fe3a02e502efc86ead1. La rama base protegida permanece intacta.
+- Tareas locales de esta continuidad: cerradas. Tareas_Activas.md mantiene 16 marcadores abiertos correspondientes a validaciones Beta reales, no a trabajo local pendiente. Siguen pendientes AUG-159, AUG-160, AUG-161, AUG-162, AUG-163 y pruebas Beta de concurrencia, navegador/PWA, journals, Drive/Spreadsheet y coordinación entre proyectos.
+- No ejecutar esas validaciones contra producción ni simular su aprobación. Se requiere Apps Script desplegado en entorno Beta, Spreadsheet/Drive desechables y cuentas de prueba. El conector Google Drive continúa registrado como DISABLED_BY_ADMIN / NOT_AVAILABLE; no se dispone de conexión Apps Script.
+- Siguiente paso: preparar y ejecutar la primera validación Beta (AUG-159/AUG-160 según disponibilidad del entorno aislado); antes de eso, solo queda trabajo documental/local adicional si aparece una tarea activa nueva.

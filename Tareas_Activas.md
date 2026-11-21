@@ -689,3 +689,14 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - CI bb91b08bc16070d44e9155e5014c4110894ec546 SUCCESS: 259 suites, 3,141 pruebas aprobadas, 0 fallos; build, health read-only y Pages/deploy SUCCESS.
 - AUG-163 queda pendiente de ejecución en Beta aislada para validar concurrencia real, last-write-wins del perfil y alta de cuentas. No se desplegó Apps Script ni se modificaron datos productivos.
 - Siguiente tarea: inventario y clasificación de locks ADMIN; priorizar publicadores de catálogo y mutaciones ordinarias, conservar locks de operaciones destructivas/mantenimiento o de unicidad hasta demostrar alternativa segura.
+
+
+## Cierre — sincronización de contratos CI posterior a ADMIN/WRITE (2026-11-21)
+
+- Estado: COMPLETADA. Se revisó la regresión integral que inicialmente detectó contratos de prueba desactualizados tras la reducción de locks/leases y la transacción física WRITE.
+- Se actualizaron 12 harnesses/contratos: WriteDriveOutsideLock, CatalogChangeFeed, DirectTrafficRoutingCoverage, AddSupplementaryInfoIntegrity, AdminSheetActionsContract, WriteCutPreflightOutsideLock, WriteIdempotencySnapshotReuse, AdminTestigoHeaderReadReuse, AdminInventoryLockIsolation, IdentifierFormulaMigration, SessionActivityCoordination y LogoIdIntegrity.
+- Las pruebas ahora verifican el comportamiento vigente: reserva moderna de ID antes del lock físico, versionado CATALOG después de liberar lock, snapshot de Idempotencia dirigido al opId, ausencia de rollback ADMIN sobre snapshots antiguos, appendRow de actividad sin lease, helper Testigo sin lock interno y tryLock(0) con cleanup/release verificables para LogosMarca.
+- No se alteró el código de producción para satisfacer pruebas antiguas; tampoco se retiraron controles de integridad.
+- GitHub Actions SUCCESS: 259 suites, 3,137 pruebas aprobadas, 0 fallos. Sintaxis y health read-only SUCCESS.
+- Pages se desplegó automáticamente al hacer push a GPSpedia2.2.5_work: https://infogpstech.github.io/GPSpedia/. No se desplegó Apps Script ni se modificó Spreadsheet/Drive productivo.
+- Continúan abiertos únicamente los marcadores Beta aislados ya documentados; no marcarlos PASS sin ejecuciones reales.

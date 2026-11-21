@@ -1315,3 +1315,15 @@ Validación exact-source local:
 - Comprobaciones de orden post-lock permanent delete/restore PASS.
 - CI integrado no confirmado: no se devolvieron checks/workflow runs para el HEAD consultado. Sin deployment ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-21 — CIERRE CI INTEGRAL: CONTRATOS ADMIN/WRITE SINCRONIZADOS
+- Hallazgo: la primera ejecución integral de GPSpedia service regression tests detectó suites que aún exigían contratos anteriores a los cambios ya implementados. Los fallos se concentraron en fixtures/harnesses de WRITE (reserva append-only antes del lock, Idempotencia dirigida, sourceVersion posterior al lock) y ADMIN (appendRow sin lease, helper Testigo sin lock, alta LogosMarca tryLock(0), persistencia suplementaria sin rollback de snapshot antiguo).
+- Corrección: se actualizaron 12 pruebas/harnesses: WriteDriveOutsideLock, CatalogChangeFeed, DirectTrafficRoutingCoverage, AddSupplementaryInfoIntegrity, AdminSheetActionsContract, WriteCutPreflightOutsideLock, WriteIdempotencySnapshotReuse, AdminTestigoHeaderReadReuse, AdminInventoryLockIsolation, IdentifierFormulaMigration, SessionActivityCoordination y LogoIdIntegrity.
+- Criterio de integridad: los cambios fueron exclusivamente de pruebas/fixtures y resúmenes verificables; no se debilitó el código productivo ni se reintrodujeron locks/leases retirados. Los locks físicos y leases que protegen unicidad, rollback, journals y mantenimiento siguen intactos.
+- Resultado final en HEAD 4969e4cfa08479927d4284e98312f114e98c3d28: GitHub Actions SUCCESS, 259 suites, 3,137 pruebas aprobadas, 0 fallos; sintaxis SUCCESS y health read-only SUCCESS.
+- Pages: el push activó automáticamente pages build and deployment y el deploy concluyó SUCCESS para ese HEAD en https://infogpstech.github.io/GPSpedia/. Es un despliegue de GitHub Pages; no se desplegó Apps Script ni se modificó Spreadsheet/Drive productivo.
+- PR #128 sigue abierto/draft, sin merge. GPSpedia2.2.5_work: 6,425 ahead / 0 behind; GPSpedia2.2.5 protegida e intacta.
+- Pendiente: solo validaciones Beta reales (AUG-159 a AUG-163 y pruebas aisladas de concurrencia, Drive/Spreadsheet, navegador/PWA y coordinación interproyecto). Google Drive connector DISABLED_BY_ADMIN / NOT_AVAILABLE; no ejecutar contra producción ni presentar simulaciones como Beta.
+================================================================================
