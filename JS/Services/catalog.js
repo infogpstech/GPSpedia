@@ -1193,7 +1193,8 @@ function handleGetContributionCandidates_(payload = {}) {
     };
     if (includeImageInventoryEvents) {
         const imageSourceEvents = sourceEvents.filter(event =>
-            event && ["cut", "opening", "feed"].includes(String(event.kind || "")) &&
+            event && !String(event.supersedesEventId || "").trim() &&
+            ["cut", "opening", "feed"].includes(String(event.kind || "")) &&
             event.payload && String(event.payload.image || "").trim()
         );
         const imageSourceIds = new Set(imageSourceEvents.map(event => String(event.eventId || "")));
