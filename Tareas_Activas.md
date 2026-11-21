@@ -32,6 +32,23 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Consultar combined status y workflow runs del HEAD: el conector no devolvió checks ni ejecuciones. No se afirma CI verde; las validaciones locales exact-source pertinentes se ejecutaron y aprobaron. La integración real permanece en Beta.
 - No desplegar Apps Script ni modificar Spreadsheet/Drive productivos. Permanecen las validaciones Beta de AUG-159, AUG-160, AUG-161, AUG-162, AUG-163 y las pruebas reales de concurrencia, navegador/PWA, Spreadsheet/Drive y coordinación interproyecto registradas en `lista_beta_parte1.txt`, `lista_beta_parte2_parte_001.txt`, `lista_beta_parte2_parte_002.txt` y `lista_beta_adenda_2026-11-21.md`.
 
+
+
+## Continuidad añadida — auditoría visual y guía de despliegue (2026-11-21)
+
+**Prioridad inmediata:** cerrar la auditoría de modales y consolidar la cascada CSS antes de considerar completa la tarea visual. La guía de despliegue ya está creada y requiere revisión final de consistencia.
+
+- [x] Comparar la estructura del modal de detalle de corte de la rama actual con `GPSpedia-2.1.7`; identificar cambios de flex a grid, dimensiones del logo, acciones y cierre.
+- [x] Reducir la proporción del logo del modal de corte a 64 px escritorio / 48 px móvil; conservar botones de acción y cierre de 40 px y la cuadrícula accesible.
+- [x] Actualizar el contrato `JS/Tests/CutDetailModalLayout.mjs` para las dimensiones nuevas y la cascada del encabezado.
+- [x] Registrar hallazgos estáticos y selectores repetidos en `AUDITORIA_MODAL_CSS_2026-11-21.md`.
+- [ ] Ejecutar `CutDetailModalLayout.mjs` y regresión CI; corregir cualquier expectativa obsoleta sin debilitar el código.
+- [ ] Completar la consolidación de estilos compartidos y variantes de corte/tutorial/PyS/Relay; conservar el último valor efectivo de la cascada y evitar bloques dispersos para el mismo componente.
+- [ ] Auditar y consolidar estilos de modales informativos, Inbox y Developer Tools; revisar modo oscuro, botones de cierre, títulos largos y responsive.
+- [x] Crear `Services/DEPLOYMENT_GUIDE.md` con secuencia y archivos exactos por proyecto Apps Script, URLs, ScriptProperties, secretos, dependencias, pruebas de humo y rollback.
+- [ ] Revisar la guía contra cada servicio y confirmar que las URLs de ADMIN y los secretos/propiedades del Coordinator están completos. No desplegar ni tocar propiedades remotas como parte de la documentación.
+- [ ] Aceptación visual Beta en escritorio, Android/PWA y viewports estrechos; requiere deployments y dispositivos/entornos aislados.
+
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
