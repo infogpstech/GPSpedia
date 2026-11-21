@@ -57,15 +57,8 @@ function getVinColumnIndex(sheet) {
     return matches.length === 1 ? matches[0] : 0;
 }
 
-function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
+function ensureTestigoColumns(sheet) {
     if (!sheet) throw new Error('No se encontró la hoja «Cortes».');
-    const lock = lockAlreadyHeld ? null : LockService.getScriptLock();
-    let lockAcquired = false;
-    try {
-        if (lock) {
-            lock.waitLock(30000);
-            lockAcquired = true;
-        }
         const targetColumns = [46, 47, 48]; // AT:AV es el contrato físico obligatorio.
         const headerNames = ["activaTestigo1", "activaTestigo2", "activaTestigo3"];
         const lastColumn = sheet.getLastColumn();
@@ -119,9 +112,6 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
             activaTestigo2: 47,
             activaTestigo3: 48
         };
-    } finally {
-        if (lockAcquired) lock.releaseLock();
-    }
 }
 
 
@@ -1394,7 +1384,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
     }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    ensureTestigoColumns(sheet, true);
+    ensureTestigoColumns(sheet);
     const vinColumnIndex = getVinColumnIndex(sheet);
     const vinPrefix = cutData.vin ? extractVinPrefix(cutData.vin) : "";
     if (cutData.vin && !vinColumnIndex) {
