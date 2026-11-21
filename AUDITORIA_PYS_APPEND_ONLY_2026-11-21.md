@@ -85,3 +85,12 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Pruebas focalizadas: `PysCreationIntegrity` 56/56 y `PysImageStorageRecovery` 22/22 PASS dentro de la suite; `FeedbackPysPendingImageVerificationOutsideLock`, `FeedbackPysPostCommitOutsideLock`, `FeedbackPysRollbackOutsideLock`, `P2PysImageUploadOutsideLock` y `FeedbackLockFastFail` aprobadas.
 - CI `44875140437` SUCCESS: 258 suites, 3094 pruebas aprobadas, 0 fallos; health read-only `44875140445` SUCCESS; Pages `44875140584` SUCCESS. HEAD de validación: `18ffcc6a9f7c23b54b9d3ef9fc7bc506a8fe1164`.
 - **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** La concurrencia real de `appendRow`, la recuperación Drive/Sheets y el orden de llegada de reservas deben comprobarse en un proyecto Apps Script/Spreadsheet/Drive aislado. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Auditoría separada — mutaciones PyS de solución, prevención y relaciones (2026-11-21)
+
+- Se confirmó que las cuatro operaciones estaban protegidas por ScriptLock global. El lock serializaba correctamente sus lecturas y escrituras, pero ampliaba la sección crítica a operaciones FEEDBACK no relacionadas.
+- Coordinator ya tenía contratos explícitos addSolution, addPrevention, addVehicleToProblem y removeVehicleFromProblem. Se sustituyó el ScriptLock local por leases compartidas FEEDBACK con esos nombres; no se usa UserLock ni fallback local.
+- Las mutaciones siguen siendo materializaciones in-place protegidas por lease (no se reclasifican como append-only). Se conserva el contrato de first-write-wins, reintento idempotente, validación de IDs, lectura de valor persistido y RBAC de desvinculación.
+- La suite PysVehicleRelationIntegrity, antes fuera del runner principal, ahora forma parte de CI: 19/19 PASS. PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22; CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos.
+- Concurrencia real entre proyectos, expiración/contención de leases y fallos de Spreadsheet quedan diferidos a Beta aislada. No se desplegó ni se modificaron datos productivos.

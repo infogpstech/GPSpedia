@@ -556,3 +556,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - TutorialIntegrity 42/42 PASS. CI 44904942416 SUCCESS: 258 suites, 3,110 pruebas, 0 fallos; node --check PASS. Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
 - Migraciones locales del alcance activo completadas. Pendiente solo validación Beta (concurrencia real, fallos parciales, recuperación, navegadores/dispositivos) y Safe Apply, que sigue bloqueado.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Checkpoint — coordinación de mutaciones PyS (2026-11-21)
+
+- HEAD validado: e9699b5d27693f184deceb3e9c460b5a0a3b56e5.
+- handleAddSolution, handleAddPrevention, handleAddVehicleToProblem y handleRemoveVehicleFromProblem ya no adquieren ScriptLock. Cada operación exige una lease compartida FEEDBACK con nombre explícito y falla cerrada si Coordinator no está disponible.
+- Se conserva la mutación existente de primera escritura/read-back dentro de la lease: solución/prevención no sobrescriben valores ya establecidos; asociaciones validan problemId, vehicleId único y deduplicación; desvincular mantiene RBAC de Desarrollador.
+- Coordinator ya autoriza recursos FEEDBACK para PyS y lectura CORTES para validar relaciones. No se sustituyó ScriptLock por UserLock.
+- Se añadió PysVehicleRelationIntegrity al CI. Resultados: PysCreationIntegrity 56/56, PysImageStorageRecovery 22/22, PysVehicleRelationIntegrity 19/19, P2PysImageUploadOutsideLock PASS.
+- CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; Health read-only 44906612467 SUCCESS. Pages 44906611719 estaba queued al registrar.
+- Siguiente: solo validaciones Beta aisladas de concurrencia real, fallos Coordinator/Spreadsheet y recuperación.
+- No se desplegó Apps Script ni se modificaron datos productivos.

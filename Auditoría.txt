@@ -1098,3 +1098,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Duplicados históricos con la misma identidad se rechazan por ambigüedad. CATALOG aplica D:F antes del título para mantener la identidad derivada.
 - TutorialIntegrity 42/42 PASS; CI 44904942416 SUCCESS: 258 suites, 3110 pruebas, 0 fallos; Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
 - Validación real de concurrencia/recuperación queda diferida a Beta aislada. Sin deployment ni cambios productivos.
+
+
+================================================================================
+2026-11-21 — AUDITORÍA / CIERRE DE MUTACIONES PyS
+- Se auditó la sección crítica de solución, prevención y relaciones PyS. El ScriptLock global fue reemplazado por leases compartidas FEEDBACK con Coordinator: addSolution, addPrevention, addVehicleToProblem y removeVehicleFromProblem.
+- Se conserva el flujo first-write-wins con validación/read-back, idempotencia, IDs únicos, normalización de asociaciones y RBAC de Desarrollador para desvinculación. No se sustituyó por UserLock ni se introdujo fallback local.
+- PysVehicleRelationIntegrity se incorporó al runner y pasa 19/19; PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22; CI 44906612421 SUCCESS: 259 suites, 3129 pruebas, 0 fallos.
+- Beta pendiente: concurrencia real entre proyectos, lease contention/expiry, fallos de Spreadsheet y recuperación de respuestas ambiguas. Sin deployment ni cambios productivos.

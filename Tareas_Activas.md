@@ -46,7 +46,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 - [x] Migrar `handleAddProblem` a reserva completa append-only y first-write-wins sin ScriptLock. `PysOperations` conserva la primera reserva por `opId`; el hash contradictorio se rechaza por solicitud, los archivos perdedores se limpian solo con referencias comprobadas y los fallos ambiguos conservan el recurso para replay. CI `44875140437`: 258 suites, 3094 pruebas, 0 fallos; health y Pages SUCCESS. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 - [x] Migrar altas/ediciones de tutoriales con ID estable a escritura append-only y proyección idempotente sin ScriptLock, preservando unicidad de título, imágenes, autoría y compatibilidad de reintentos. Ediciones descriptivas D:F de filas históricas sin ID quedan como tarea local separada.
 - [x] Migrar aprobaciones de vídeo a eventos append-only/proyección idempotente sin ScriptLock, preservando unicidad de operación/destino y transiciones pending/approved/rejected. CI 44904401718 SUCCESS: 258 suites, 3,108 pruebas, 0 fallos.
-- No sustituir ScriptLock por UserLock. Las mutaciones PyS de solución, prevención y relaciones permanecen fuera de la migración de creación y se auditarán según su propio alcance.
+- No sustituir ScriptLock por UserLock. Auditoría separada de mutaciones PyS completada: solución, prevención y relaciones ahora usan leases compartidas FEEDBACK de Coordinator; conservan validación/read-back e idempotencia, sin ScriptLock local. Concurrencia real multi-proyecto queda diferida a Beta.
 - [x] Retirar el ScriptLock interno de `getNextFormulaBasedId_`: las reservas append-only usan `appendRow` atómico y fórmula de secuencia por hoja/columna; los reintentos/operaciones concurrentes reservan sufijos distintos y los huecos por respuesta perdida no se reutilizan. `FeedbackFormulaIdAllocator` 5/5 y `FeedbackFormulaIdAllocatorBoundedRead` 6/6 PASS. CI `44847431570` SUCCESS: 253 suites, 3053 pruebas, 0 fallos. Health read-only `44847431590` SUCCESS. La fórmula/appendRow real queda diferida a Beta aislada.
 - [x] Migrar `handleRecordLike` completamente a eventos append-only sin ScriptLock: likes nuevos se anexan; replays legacy `completed` se reconocen; los `pending` históricos se recuperan comparando el contador con `previous`/`target` y anexando un evento cuando falta el incremento. No se modifica `Cortes.utilCorteN`; CATALOG suma actores únicos por vehículo/corte en lecturas completas y snapshots. `recordLike` publica reset sin lock de versión. `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5; `CatalogChangeFeed` 35/35.
 - [x] Hacer atómico el registro de actividad: `logUserActivity` usa `appendRow` con la fórmula de ID de la fila, sin `getLastRow` seguido de escrituras separadas ni ScriptLock. `ActivityLogAppendAtomic` 6/6 PASS.
@@ -501,3 +501,18 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 ## Estado de tareas locales
 
 Las migraciones locales de WRITE/FEEDBACK para cortes, aportes, imágenes ADMIN, tutoriales, renombrados, ediciones históricas y aprobación/rechazo de vídeo están implementadas y validadas por CI. Las tareas no marcadas quedan limitadas a integración/aceptación Beta y Safe Apply, que permanece bloqueado hasta su preview/ACL/rollback autorizados.
+
+
+## Cierre local — coordinación de mutaciones PyS (2026-11-21)
+
+Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
+
+- [x] Migrar solución y prevención a leases compartidas FEEDBACK (addSolution/addPrevention), sin ScriptLock local.
+- [x] Migrar asociaciones y desvinculaciones PyS↔Cortes a leases compartidas (addVehicleToProblem/removeVehicleFromProblem), con lectura/validación/read-back dentro de la lease.
+- [x] Conservar first-write-wins, idempotencia, normalización de relaciones, validación de IDs únicos y RBAC de Desarrollador para desvincular.
+- [x] Confirmar que Coordinator ya define los cuatro contratos de recursos: FEEDBACK para PyS y CORTES como lectura al modificar relaciones.
+- [x] Añadir PysVehicleRelationIntegrity al runner CI; suite 19/19 PASS.
+- [x] PysCreationIntegrity 56/56 PASS; PysImageStorageRecovery 22/22 PASS; P2PysImageUploadOutsideLock PASS.
+- [x] CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; node --check PASS. Health read-only 44906612467 SUCCESS.
+- [ ] Beta aislada: concurrencia real entre proyectos, leases Coordinator, fallo de lease, pérdida de respuesta y read-back en Spreadsheet aislada.
+- No se desplegó Apps Script ni se modificaron datos productivos.

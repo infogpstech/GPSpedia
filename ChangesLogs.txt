@@ -320,3 +320,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - La proyección valida expectedHash, conserva idempotencia y rechaza identidades históricas ambiguas. CATALOG aplica ediciones antes de renombrados para mantener la clave derivada y conservar Imagen/Video/Colaborador.
 - TutorialIntegrity 42/42 PASS; CI 44904942416 SUCCESS: 258 suites, 3110 pruebas, 0 fallos; Health 44904942436 SUCCESS; Pages 44904942027 SUCCESS.
 - Solo quedan pendientes validaciones Beta y Safe Apply.
+
+
+2026-11-21 — CIERRE LOCAL: MUTACIONES PyS BAJO LEASE COMPARTIDA
+- Solución, prevención, asociación y desvinculación PyS dejaron de usar ScriptLock local; usan leases compartidas FEEDBACK mediante Coordinator, con operaciones explícitas y fail-closed.
+- Se conserva la escritura materializada/read-back y la semántica first-write-wins; validación de IDs, idempotencia y RBAC de desvinculación.
+- PysCreationIntegrity 56/56, PysImageStorageRecovery 22/22, PysVehicleRelationIntegrity 19/19, P2PysImageUploadOutsideLock PASS.
+- CI 44906612421 SUCCESS: 259 suites, 3129 pruebas, 0 fallos; Health 44906612467 SUCCESS. Concurrencia real Coordinator/Spreadsheet diferida a Beta.
