@@ -12,16 +12,8 @@ const INBOX_CONVERSATION_AUDIT_HEADERS_ = Object.freeze(["eventId","timestamp","
 const INBOX_CATEGORIES_ = new Set(["general","soporte","acceso","contenido","instalacion","otro"]);
 const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"]);
 
-function withInboxConversationLock_(callback) {
-    const lock = LockService.getScriptLock();
-    if (typeof lock.tryLock === "function") {
-        if (!lock.tryLock(0)) throw new Error("Inbox está procesando otra escritura. Vuelve a intentar.");
-    } else if (typeof lock.waitLock === "function") {
-        lock.waitLock(0);
-    } else {
-        throw new Error("No se pudo adquirir el bloqueo breve de Inbox.");
-    }
-    try { return callback(); } finally { lock.releaseLock(); }
+function runInboxConversationAction_(callback) {
+    return callback();
 }
 function findOrCreateInboxSheet_(name) {
     const spreadsheet = getSpreadsheet();
@@ -380,7 +372,7 @@ function handleCreateInboxConversation(payload) {
     if (!recipientId || recipientId === actor.id) throw new Error("Selecciona un destinatario individual válido.");
     const type = "direct";
     const createHash = inboxConversationHash_({subject,body,category,type,recipientId});
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const recipient = inboxFindUser_(recipientId);
         inboxAssertRecipientAllowed_(actor, recipient);
@@ -424,7 +416,7 @@ function handleSendInboxMessage(payload) {
     if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
     const body = inboxConversationText_(payload.body,5000,"El mensaje",true), key = inboxConversationKey_(payload.idempotencyKey,"La clave idempotente");
     const hash = inboxConversationHash_({conversationId,authorId:actor.id,body});
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_(), conversations = inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length);
         const found = inboxFindConversation_(conversations,conversationId), participants = inboxAssertParticipant_(found.row,actor.id);
         inboxAssertVisible_(sheets.flags,conversationId,actor.id);
@@ -461,7 +453,7 @@ function handleGetInboxConversations(payload) {
     }
     const requestedSize = Number(payload.pageSize);
     const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(50,Math.floor(requestedSize))) : 20;
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const conversations = inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length);
         const stateRows = inboxConversationRows_(sheets.states,INBOX_STATE_HEADERS_.length);
@@ -589,7 +581,7 @@ function handleGetInboxMessages(payload) {
     const anchorMessageId = cursorRaw === "0" ? "" : cursorRaw;
     const requestedSize = Number(payload.pageSize);
     const pageSize = Number.isFinite(requestedSize) ? Math.max(1,Math.min(50,Math.floor(requestedSize))) : 50;
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
@@ -634,7 +626,7 @@ function handleGetInboxMessages(payload) {
 function handleMarkInboxRead(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
     if (!conversationId) throw new Error("Se requiere una conversación.");
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
@@ -668,7 +660,7 @@ function handleMarkInboxRead(payload) {
 function handleMarkInboxUnread(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
     if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
@@ -721,7 +713,7 @@ function handleMarkInboxUnread(payload) {
 function handleDeleteInboxConversation(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
     if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
@@ -745,7 +737,7 @@ function handleDeleteInboxConversation(payload) {
 function handleArchiveInboxConversation(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
     if (!conversationId || typeof payload.archived !== "boolean") throw new Error("La conversación y el estado de archivo son obligatorios.");
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
@@ -764,7 +756,7 @@ function handleCloseInboxConversation(payload) {
     if (!["desarrollador","jefe","supervisor"].includes(actor.role)) {
         throw new Error("Solo Supervisor, Jefe o Desarrollador pueden cerrar un caso.");
     }
-    return withInboxConversationLock_(() => {
+    return runInboxConversationAction_(() => {
         const sheets = ensureInboxConversationSheets_();
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
