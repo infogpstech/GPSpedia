@@ -1027,3 +1027,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - CI 44873650200 SUCCESS: 258 suites, 3093 pruebas, 0 fallos; health read-only 44873650247 SUCCESS; Pages pendiente al momento del registro.
 - PyS continúa EN PROGRESO. handleAddProblem conserva ScriptLock hasta sustituir el estado mutable de propiedad por un protocolo concurrente validado. Sin despliegue ni cambios productivos.
 ================================================================================
+
+2026-11-21 — PyS: carrera de reserva e imagen en handleAddProblem
+- Ubicación: `JS/Services/feedback.js`, `handleAddProblem`, `readPysOperations_`, `writePysOperation_`.
+- Evidencia: el flujo anterior mantenía ScriptLock durante la reserva/vinculación y mutaba la fila de operación en varias transiciones. La migración deja una reserva completa append-only y elige la primera fila física por `opId` como propietaria del ID/archivo.
+- Impacto: las solicitudes simultáneas ya no se serializan mediante lock global; los reintentos idénticos comparten la reserva canónica y las diferencias de hash se rechazan. La imagen perdedora se limpia solo tras verificar que no está referenciada; si no se puede demostrar, se conserva.
+- Severidad: alta por concurrencia e integridad de archivos. Estado: CORREGIDO LOCALMENTE; CI `44875140437` SUCCESS (258 suites, 3094 pruebas, 0 fallos), health read-only y Pages SUCCESS.
+- Validación diferida: concurrencia real de Sheets/Drive y recuperación en proyecto Beta aislado. No se desplegó Apps Script ni se modificaron datos productivos.
+================================================================================
