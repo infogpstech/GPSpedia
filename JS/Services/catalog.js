@@ -874,7 +874,7 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
     return orderedVehicle;
 }
 
-function readCatalogContributionProjectionVehicles_(spreadsheetRef) {
+function readCatalogContributionProjectionVehicles_(spreadsheetRef, includeSourceEvents = false) {
     const spreadsheet = spreadsheetRef || getSpreadsheet();
     const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
     const categoryCounts = {};
@@ -888,7 +888,11 @@ function readCatalogContributionProjectionVehicles_(spreadsheetRef) {
             .map(row => mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCounts, categoryCounts))
             .filter(Boolean);
     }
-    return projectVehicleContributionEvents_(vehicles, readVehicleContributionEvents_(spreadsheet));
+    const sourceEvents = readVehicleContributionEvents_(spreadsheet);
+    const projectedVehicles = projectVehicleContributionEvents_(vehicles, sourceEvents);
+    return includeSourceEvents === true
+        ? { vehicles: projectedVehicles, sourceEvents }
+        : projectedVehicles;
 }
 
 function handleGetCatalogData(payload = {}) {
@@ -1140,16 +1144,20 @@ function handleGetVehicleProjection_(payload = {}) {
 function handleGetContributionCandidates_(payload = {}) {
     const requestedLimit = Number(payload && payload.limit);
     const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
-    const projectedVehicles = readCatalogContributionProjectionVehicles_();
-    if (!Array.isArray(projectedVehicles)) {
+    const includeImageInventoryEvents = payload && payload.includeImageInventoryEvents === true;
+    const projection = readCatalogContributionProjectionVehicles_(undefined, includeImageInventoryEvents);
+    const projectedVehicles = includeImageInventoryEvents ? projection && projection.vehicles : projection;
+    const sourceEvents = includeImageInventoryEvents && projection ? projection.sourceEvents : null;
+    if (!Array.isArray(projectedVehicles) || (includeImageInventoryEvents && !Array.isArray(sourceEvents))) {
         throw new Error("CATALOG no pudo construir la proyección vigente de candidatos.");
     }
     const candidates = [];
+    const imageInventoryCandidates = [];
     projectedVehicles.forEach(vehicle => {
         if (!vehicle || !Array.isArray(vehicle.contributionCandidates)) return;
         vehicle.contributionCandidates.forEach(candidate => {
             if (!candidate || !String(candidate.eventId || "").trim()) return;
-            candidates.push({
+            const normalized = {
                 eventId: String(candidate.eventId),
                 opId: String(candidate.opId || ""),
                 vehicleId: String(vehicle.id || ""),
@@ -1159,14 +1167,22 @@ function handleGetContributionCandidates_(payload = {}) {
                 payload: candidate.payload && typeof candidate.payload === "object"
                     ? JSON.parse(JSON.stringify(candidate.payload)) : {},
                 status: "pending_review"
-            });
+            };
+            candidates.push(normalized);
+            if (includeImageInventoryEvents && ["cut", "opening", "feed"].includes(normalized.kind) &&
+                String(normalized.payload.image || "").trim()) {
+                imageInventoryCandidates.push({
+                    eventId: normalized.eventId, vehicleId: normalized.vehicleId,
+                    vehicleLabel: normalized.vehicleLabel
+                });
+            }
         });
     });
     candidates.sort((a, b) =>
         a.vehicleId.localeCompare(b.vehicleId, undefined, { numeric: true }) ||
         a.eventId.localeCompare(b.eventId)
     );
-    return {
+    const response = {
         status: "success",
         candidates: candidates.slice(0, limit),
         total: candidates.length,
@@ -1175,6 +1191,28 @@ function handleGetContributionCandidates_(payload = {}) {
         source: "CATALOG",
         readOnly: true
     };
+    if (includeImageInventoryEvents) {
+        const imageSourceEvents = sourceEvents.filter(event =>
+            event && ["cut", "opening", "feed"].includes(String(event.kind || "")) &&
+            event.payload && String(event.payload.image || "").trim()
+        );
+        const imageSourceIds = new Set(imageSourceEvents.map(event => String(event.eventId || "")));
+        const imageResolutionEvents = sourceEvents.filter(event =>
+            event && imageSourceIds.has(String(event.supersedesEventId || "")) &&
+            ["cut", "opening", "feed"].includes(String(event.kind || "")) &&
+            ["accepted", "retracted"].includes(String(event.status || "").toLowerCase())
+        );
+        response.imageInventoryCandidates = imageInventoryCandidates;
+        response.imageInventoryEvents = imageSourceEvents.concat(imageResolutionEvents).map(event => ({
+            eventId: String(event.eventId || ""), opId: String(event.opId || ""),
+            vehicleId: String(event.vehicleId || ""), operationHash: String(event.operationHash || ""),
+            kind: String(event.kind || ""), payload: event.payload && typeof event.payload === "object"
+                ? JSON.parse(JSON.stringify(event.payload)) : {},
+            createdAt: String(event.createdAt || ""), status: String(event.status || ""),
+            supersedesEventId: String(event.supersedesEventId || "")
+        }));
+    }
+    return response;
 }
 
 function handleGetNavigationData() {

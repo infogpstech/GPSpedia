@@ -10960,10 +10960,11 @@ function handleGetVehicleContributionCandidates_(payload) {
     payload = payload && typeof payload === "object" ? payload : {};
     const requestedLimit = Number(payload.limit);
     const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
+    const includeImageInventoryEvents = payload.includeImageInventoryEvents === true;
     const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
         method: "post",
         contentType: "text/plain",
-        payload: JSON.stringify({ action: "getContributionCandidates", payload: { limit } }),
+        payload: JSON.stringify({ action: "getContributionCandidates", payload: { limit, includeImageInventoryEvents } }),
         muteHttpExceptions: true,
         followRedirects: true
     });
@@ -10973,7 +10974,8 @@ function handleGetVehicleContributionCandidates_(payload) {
     catch (error) { throw new Error("CATALOG no devolvió JSON válido al consultar candidatos ADMIN (HTTP " + httpStatus + ")."); }
     if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
         !Array.isArray(result.candidates) || !Number.isSafeInteger(Number(result.total)) ||
-        Number(result.total) < result.candidates.length) {
+        Number(result.total) < result.candidates.length ||
+        (includeImageInventoryEvents && (!Array.isArray(result.imageInventoryCandidates) || !Array.isArray(result.imageInventoryEvents)))) {
         throw new Error("No se pudo obtener la proyección vigente de aportes desde CATALOG.");
     }
     return {
@@ -10983,7 +10985,9 @@ function handleGetVehicleContributionCandidates_(payload) {
         limit: Number(result.limit) || limit,
         truncated: result.truncated === true,
         source: "CATALOG",
-        readOnly: true
+        readOnly: true,
+        imageInventoryCandidates: Array.isArray(result.imageInventoryCandidates) ? result.imageInventoryCandidates : undefined,
+        imageInventoryEvents: Array.isArray(result.imageInventoryEvents) ? result.imageInventoryEvents : undefined
     };
 }
 
@@ -11573,7 +11577,7 @@ function getContributionCandidateInventoryId_(eventId) {
     return "CAND-" + clean;
 }
 
-function syncContributionCandidateImageInventory_(currentCandidates) {
+function syncContributionCandidateImageInventory_(currentCandidates, inventoryEvents) {
     const spreadsheet = getSpreadsheet();
     const inventory = spreadsheet.getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
     if (!inventory) return { status: "not_initialized", created: 0, updated: 0, skipped: 0 };
@@ -11582,9 +11586,21 @@ function syncContributionCandidateImageInventory_(currentCandidates) {
         return { status: "schema_incomplete", created: 0, updated: 0, skipped: 0, missingHeaders: readSchema.missingHeaders };
     }
 
-    const ledger = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
-    if (!ledger || ledger.getLastRow() < 2) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
-    const ledgerRows = ledger.getRange(2, 1, ledger.getLastRow() - 1, ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    let ledgerRows = null;
+    if (Array.isArray(inventoryEvents)) {
+        ledgerRows = inventoryEvents.map(event => [
+            String(event && event.eventId || ""), String(event && event.opId || ""),
+            String(event && event.vehicleId || ""), String(event && event.operationHash || ""),
+            String(event && event.kind || ""), JSON.stringify(event && event.payload && typeof event.payload === "object" ? event.payload : {}),
+            "", "", String(event && event.createdAt || ""), String(event && event.status || ""),
+            String(event && event.supersedesEventId || "")
+        ]);
+    } else {
+        const ledger = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+        if (!ledger || ledger.getLastRow() < 2) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
+        ledgerRows = ledger.getRange(2, 1, ledger.getLastRow() - 1, ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
+    }
+    if (!ledgerRows.length) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
     const eventsById = new Map(), resolutionsByTarget = new Map();
     ledgerRows.forEach(row => {
         const eventId = String(row[0] || "").trim();
@@ -11738,8 +11754,11 @@ function handleGetReplacedImages(payload, logMessage) {
     let candidateInventorySync = { status: "skipped", created: 0, updated: 0, skipped: 0 };
     if (!schema.missingHeaders.length) {
         try {
-            const candidateResponse = handleGetVehicleContributionCandidates_({ limit: 500 });
-            candidateInventorySync = syncContributionCandidateImageInventory_(candidateResponse.candidates);
+            const candidateResponse = handleGetVehicleContributionCandidates_({ limit: 500, includeImageInventoryEvents: true });
+            candidateInventorySync = syncContributionCandidateImageInventory_(
+                candidateResponse.imageInventoryCandidates || candidateResponse.candidates,
+                candidateResponse.imageInventoryEvents
+            );
         } catch (candidateSyncError) {
             candidateInventorySync = { status: "error", message: String(candidateSyncError && candidateSyncError.message || candidateSyncError) };
         }
