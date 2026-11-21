@@ -660,7 +660,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","requestPasswordRecovery","completePasswordRecovery","changePassword","resetUserPassword","resetUserSessions","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
+    return ["deleteUser"].includes(action);
 }
 
 function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
@@ -719,10 +719,11 @@ function doPost(e) {
             })).setMimeType(ContentService.MimeType.TEXT);
         }
     }
-    if (action === "acceptTerms") {
+    if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords"].includes(action)) {
         try {
-            // La aceptación es puntual: reutiliza el actor cacheado, sin lease acquire/release.
-            // El login prepara esta caché; ante un miss se valida una vez por el canal central.
+            // Las acciones ordinarias consumen el actor preparado al iniciar sesión.
+            // No adquieren lease ni revalidan identidad por acción; la revocación remota
+            // se mantiene únicamente en los handlers de cambio de rol/contraseña/sesión.
             const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
