@@ -5245,7 +5245,7 @@ function handleGetVideoApprovalByOperation(payload) {
 }
 
 function handleSubmitVideoForApproval(payload) {
-    return withVideoApprovalMutationLock_(() => {
+    return (() => {
  const source=payload&&typeof payload==="object"?payload:{}, {title,description,contentType,referenceId,metadata,videoId,userName,userId,opVideoId}=source,videoUrl=source.videoUrl;
  const operationId=String(opVideoId||"").trim(),actualVideoId=String(videoId||"").trim(),canonicalUrl=normalizeInboxVideoUrl_(videoUrl,actualVideoId);
  const normalizedTitle=normalizeInboxText_(title,"El título del vídeo",INBOX_VIDEO_TITLE_MAX_LENGTH,false);
@@ -5274,7 +5274,7 @@ function handleSubmitVideoForApproval(payload) {
  const saved=findVideoApprovalByOperation_(sheet,operationId);
  if(!saved||String(saved.row[COLS_FEEDBACKS.ID-1]||"")!==newId)throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
  return{status:"success",id:newId,opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:"pending",message:"Vídeo enviado para aprobación interna."};
-    }, "submitVideoForApproval");
+    })();
 }
 
 /**
@@ -5666,19 +5666,12 @@ function handleRejectVideoUnlocked_(payload) {
  * coordina los recursos entre proyectos; este ScriptLock protege además las
  * ejecuciones concurrentes del mismo proyecto durante la transición completa.
  */
-function withVideoApprovalMutationLock_(callback, operation) {
-    const action = String(operation || "").trim();
-    if (!["submitVideoForApproval", "approveVideo", "rejectVideo"].includes(action)) throw new Error("Operación de vídeo no habilitada para coordinación compartida.");
-    if (typeof withSharedMutationLease_ !== "function") throw new Error("La coordinación compartida no está disponible; no se ejecutó la operación de vídeo.");
-    return withSharedMutationLease_("FEEDBACK", action, callback);
-}
-
 function handleApproveVideo(payload) {
-    return withVideoApprovalMutationLock_(() => handleApproveVideoUnlocked_(payload), "approveVideo");
+    return handleApproveVideoUnlocked_(payload);
 }
 
 function handleRejectVideo(payload) {
-    return withVideoApprovalMutationLock_(() => handleRejectVideoUnlocked_(payload), "rejectVideo");
+    return handleRejectVideoUnlocked_(payload);
 }
 
 /* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
