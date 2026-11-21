@@ -3946,7 +3946,7 @@ function handleGetPysData() {
 function buildPysCatalogChange_(reference) {
     const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("No se encontró la hoja PyS para publicar el cambio.");
-    const matches = findPysRowsById_(sheet, reference);
+    const matches = findCanonicalPysRowsById_(sheet, reference);
     if (matches.length !== 1) throw new Error(matches.length ? "El ID del problema PyS está duplicado." : "Problema PyS no encontrado.");
     const row = matches[0].row;
     const id = String(row[0] || "").trim();
@@ -4060,7 +4060,7 @@ function handleAddProblem(source) {
     if (preflightOp) {
         if (preflightOp.payloadHash !== hash) throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");
         if (preflightOp.status === "RECOVERY_REQUIRED") throw new Error("La operación PyS requiere recuperación manual; no se creó otro problema.");
-        const rows = findPysRowsById_(preflightSheet, preflightOp.problemId);
+        const rows = findCanonicalPysRowsById_(preflightSheet, preflightOp.problemId);
         if (rows.length > 1) throw new Error("El ID del problema aparece más de una vez; se detuvo la recuperación.");
         if (rows.length === 1) {
             const storedUrl = normalizePysImageReference_(rows[0].row[6]);
@@ -4131,7 +4131,7 @@ function handleAddProblem(source) {
             if (op.payloadHash !== hash) throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");
             if (op.status === "RECOVERY_REQUIRED") throw new Error("La operación PyS requiere recuperación manual; no se creó otro problema.");
             problemId = op.problemId;
-            const existing = findPysRowsById_(sheet, problemId);
+            const existing = findCanonicalPysRowsById_(sheet, problemId);
             if (existing.length > 1) throw new Error("El ID del problema aparece más de una vez; se detuvo la recuperación.");
             if (existing.length === 1) {
                 const storedUrl = normalizePysImageReference_(existing[0].row[6]);
@@ -4242,7 +4242,7 @@ function handleAddProblem(source) {
         const expected = buildPysExpectedRow_(problemId, p, url, models);
         sheet.appendRow(expected);
         SpreadsheetApp.flush();
-        const stored = findPysRowsById_(sheet, problemId);
+        const stored = findCanonicalPysRowsById_(sheet, problemId);
         if (stored.length !== 1 || !pysRowMatchesPayload_(stored[0].row, expected)) {
             throw new Error("No se pudo confirmar una única fila PyS con los datos enviados.");
         }
@@ -4274,7 +4274,7 @@ function handleAddProblem(source) {
                 throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para recuperación manual. Detalle: " +
                     String(error && error.message || error));
             }
-            const own = findPysRowsById_(sheet, problemId);
+            const own = findCanonicalPysRowsById_(sheet, problemId);
             if (own.length === 1 && pysRowMatchesPayload_(own[0].row, buildPysExpectedRow_(problemId, p, url, models))) {
                 try {
                     writePysOperation_(opsSheet, op.rowNumber,
