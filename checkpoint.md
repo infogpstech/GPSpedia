@@ -783,3 +783,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Commits: 9b86c3ef893044af665ce96f21a50dd17e429760 (write.js), 8cb742bacef2d527c7acdf42bdd8990cec85ffcd (prueba inicial), 3e27d61a0e5efdc761c6f1568e8eb072099f41c3 (prueba dinámica de retry). HEAD de código/prueba: 3e27d61a0e5efdc761c6f1568e8eb072099f41c3.
 - Estado: subactividad validada en harness local; pendiente ejecución en checkout completo/CI. No se desplegó Apps Script ni se modificaron hojas productivas.
 - Revisión física aún abierta: confirmar límites de concurrencia de Idempotencia, append de fila física, compensación pre/post Drive y recuperación por opId. No retirar el lock hasta que esos contratos tengan alternativa probada.
+
+
+## Checkpoint — WRITE: lectura focalizada de Idempotencia bajo lock (2026-11-21)
+
+- En la transacción física, handleAddOrUpdateCutLocked recorría todas las filas de Idempotencia mediante readIdempotenciaEntries_ para obtener el estado de un solo opId. Esto hacía crecer el tiempo de la sección crítica con el historial completo.
+- Se sustituyó por un snapshot focalizado: readIdempotenciaEntryByOpId_ busca únicamente el opId activo, valida encabezados, detecta duplicados de ese opId y conserva la fila exacta para recuperación/rollback. recordOpId mantiene su relectura focalizada y compara existencia, fila, vehículo, slot y huella antes de mutar. El snapshot conserva sheet, entries y byOpId para compatibilidad de helpers.
+- No se debilita la unicidad del opId consultado. Los duplicados de otros opIds ya existentes no se recorren en cada alta; quedan fuera de esta ruta y deben detectarse por auditoría global de integridad, no por cada mutación ordinaria.
+- Se agregó WriteIdempotencyTargetedRead: 4/4 PASS en harness Node.js v22.16.0 aislado, verificando lectura focalizada, detección de duplicados del opId, validación de esquema y revalidación antes de escritura. Una ejecución inicial encontró diferencias de formato en el harness sintético; el test se ajustó a whitespace flexible y se repitió 4/4 PASS.
+- Commits: 7a211e681bef315f2c4ef118ffa13e8fb1715ca7 (write.js), 252098b2682d5a6a6517b6d062060bfbabcf9d37 (prueba inicial), 52e6ce664207af275153899ccb2935803274b92d y 235936b21de1736eb0f38d0bf0c89815825ce3f6 (ajustes del test). HEAD de esta fase: 235936b21de1736eb0f38d0bf0c89815825ce3f6.
+- Estado: subactividad validada en harness local; pendiente checkout completo/CI. El ScriptLock de fila física/Idempotencia permanece porque lastRow+1, append de Idempotencia y compensación todavía requieren exclusión.
+- Siguiente paso: revisar si el snapshot completo de Idempotencia puede salir de la sección crítica sin perder la revalidación del opId activo, y completar el análisis de la escritura/rollback física antes de considerar cualquier reducción adicional del lock.
