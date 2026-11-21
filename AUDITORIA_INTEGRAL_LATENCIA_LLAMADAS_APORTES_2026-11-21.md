@@ -142,3 +142,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - A pesar de ello, los formularios de vídeo de corte y tutorial ejecutan `routeAction("getCatalogData")` en `onSuccess`. Son dos puntos de refresco completo que no pueden reflejar el vídeo pendiente y constituyen llamadas redundantes confirmadas por el contrato actual.
 - La retirada debe conservar la confirmación visual del envío y el control de duplicados por `opVideoId`; no debe eliminar la consulta de estado de aprobación ni el refresco que corresponda a la aprobación final.
 
+
+
+### Corrección local aplicada — snapshots redundantes después de vídeo pending
+- Se retiraron los callbacks `onSuccess → getCatalogData` de las dos rutas de subida de vídeo de tutorial y corte existentes. La operación de envío crea únicamente la solicitud pending en FEEDBACK; no hay cambio de catálogo que el snapshot pueda mostrar.
+- Se conserva la confirmación visual y la operación de aprobación; el cambio no altera el modal ni el envío resumable.
+- Se conserva el refresco de PyS (`invalidatePysDataCache` + `loadPysData`), porque su publicación/actualización de datos tiene un contrato distinto.
+- Se añadió `JS/Tests/YouTubePendingRefreshContract.js` y se integró en `RunServiceTests.mjs`.
+- Validación ejecutada en entorno aislado V8: contrato frontend 3/3 PASS; suite backend `YouTubeApproval.js` 16/16 PASS. La evaluación del contrato también verificó parsing del test; no se ejecutó el runner Node completo ni GitHub Actions en esta sesión.
+- La tarea se considera completada localmente para estos dos refrescos. No implica que el resto de la auditoría de latencia esté terminada ni que exista un benchmark global.
+
