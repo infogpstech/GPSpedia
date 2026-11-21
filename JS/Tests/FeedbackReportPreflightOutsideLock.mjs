@@ -3,64 +3,53 @@ import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
 const start = source.indexOf("function handleReportProblem(payload)");
-const end = source.indexOf("\nfunction enforceFeedbackRateLimit_", start);
+const end = source.indexOf("\nfunction enforceFeedbackRateLimit_(", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleReportProblem");
 const handler = source.slice(start, end);
-
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
-test("el reporte se consulta antes de Drive y del ScriptLock", () => {
-    const preflight = handler.indexOf("findReportByReportId_(feedbackSheet,reportContext.reportId,preflightMetadataColumn)");
-    const upload = handler.indexOf("saveReportImageAttachment_(imageAttachment,reportContext.reportId)");
-    const acquire = handler.indexOf("acquireFeedbackScriptLock_(lock)");
-    const recheck = handler.indexOf("findReportByReportId_(sheet,reportContext.reportId,metadataColumn)");
-    assert.ok(preflight >= 0 && preflight < upload && upload < acquire);
-    assert.ok(recheck > acquire, "Debe revalidar dentro del lock si el reporte se creó después del preflight");
+test("el reporte se consulta antes de Drive y las nuevas escrituras no adquieren ScriptLock", () => {
+    const preflight = handler.indexOf("findReportByReportId_(feedbackSheet, reportContext.reportId, existingMetadataColumn)");
+    const upload = handler.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
+    const append = handler.indexOf("feedbackSheet.appendRow(reportRow)");
+    assert.ok(preflight >= 0 && preflight < upload && upload < append);
+    assert.equal(handler.indexOf("LockService.getScriptLock()"), -1);
+    assert.equal(handler.indexOf("acquireFeedbackScriptLock_"), -1);
 });
-test("el preflight solo usa metadata existente y no crea columnas fuera del lock", () => {
-    const readOnlyLookup = handler.indexOf("getReportMetadataColumn(feedbackSheet)");
-    const schemaEnsure = handler.indexOf("ensureReportMetadataColumn(sheet)");
-    const acquire = handler.indexOf("acquireFeedbackScriptLock_(lock)");
-    assert.ok(readOnlyLookup >= 0 && readOnlyLookup < acquire);
-    assert.ok(schemaEnsure > acquire);
+test("el esquema se asegura sin lock y antes de construir la fila append-only", () => {
+    const ensure = handler.indexOf("ensureReportMetadataColumn(feedbackSheet)");
+    const row = handler.indexOf("const reportRow = new Array(lastColumn).fill("")");
+    assert.ok(ensure >= 0 && row > ensure);
+    assert.equal(handler.indexOf("ensureReportMetadataColumn(sheet)"), -1);
 });
-test("un reporte nuevo se anexa como una fila completa y no se limpia tras una escritura incierta", () => {
-    const writeStart = handler.indexOf("if(!duplicateReport) {");
-    const writeEnd = handler.indexOf("} catch(error) {", writeStart);
-    const writeBlock = handler.slice(writeStart, writeEnd);
-    assert.match(writeBlock, /const reportRow=new Array\(lastCol\)\.fill\(""\)/);
-    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.ID-1\]=reservedId/);
-    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.Usuario-1\]=userName/);
-    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.ID_vehiculo-1\]=vehicleId/);
-    assert.match(writeBlock, /reportRow\[COLS_FEEDBACKS\.Problema-1\]=normalizedProblemText/);
-    assert.match(writeBlock, /sheet\.appendRow\(reportRow\)/);
-    assert.match(writeBlock, /findFeedbackRowById_\(sheet,reservedId,lastCol\)/);
-    assert.match(writeBlock, /String\(savedRow\[COLS_FEEDBACKS\.Problema-1\]/);
-    assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValue/);
-    assert.doesNotMatch(writeBlock, /getRange\([^\\n]*\)\.setValues/);
-    const catchBlock = handler.slice(writeEnd);
-    assert.match(catchBlock, /const uploadMayBeReferenced = appendAttempted/);
-    assert.doesNotMatch(catchBlock, /pendingRowNumber|clearContent\(\)/);
+test("el reporte se anexa completo y la confirmación busca el ID reservado", () => {
+    const append = handler.indexOf("feedbackSheet.appendRow(reportRow)");
+    const lookup = handler.indexOf("findFeedbackRowById_(feedbackSheet, reservedId, lastColumn)");
+    assert.ok(append >= 0 && lookup > append);
+    assert.match(handler, /reportRow\[COLS_FEEDBACKS\.ID - 1\] = reservedId/);
+    assert.match(handler, /reportRow\[COLS_FEEDBACKS\.Problema - 1\] = normalizedProblemText/);
+    assert.doesNotMatch(handler, /getRange\([^\n]*\)\.setValue|\.setValues\(/);
+});
+test("los adjuntos se registran en un ledger append-only separado", () => {
+    const rowAppend = handler.indexOf("feedbackSheet.appendRow(reportRow)");
+    const imageEvent = handler.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)");
+    assert.ok(rowAppend >= 0 && imageEvent > rowAppend);
+    assert.match(handler, /isFeedbackReportImageFileReferenced_\(uploadedImage\.metadata\.imageFileId\)/);
+    assert.doesNotMatch(handler, /reportMetadata\)\.setValue|pendingExistingMetadata/);
 });
 test("replay con imagen idéntica evita una nueva carga a Drive", () => {
-    const oldImage = handler.indexOf("const oldImage=normalizeReportImageMetadata_(preflightExisting.metadata)");
-    const hashCheck = handler.indexOf("oldImage.imageSha256!==imageAttachment.sha256", oldImage);
-    const earlyReturn = handler.indexOf("alreadyReported:true", hashCheck);
-    const upload = handler.indexOf("saveReportImageAttachment_(imageAttachment,reportContext.reportId)");
+    const oldImage = handler.indexOf("const oldImage = normalizeReportImageMetadata_(existing.metadata)");
+    const hashCheck = handler.indexOf("oldImage.imageSha256 !== imageAttachment.sha256", oldImage);
+    const earlyReturn = handler.indexOf("alreadyReported: true", hashCheck);
+    const upload = handler.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
     assert.ok(oldImage >= 0 && hashCheck > oldImage && earlyReturn > hashCheck && earlyReturn < upload);
 });
-test("replay sin adjunto devuelve el reporte existente antes del lock", () => {
-    const noImage = handler.indexOf("if(!imageAttachment)", handler.indexOf("preflightExisting"));
-    const response = handler.indexOf("alreadyReported:true", noImage);
-    const lock = handler.indexOf("LockService.getScriptLock()");
-    assert.ok(noImage >= 0 && response > noImage && response < lock);
+test("una carrera posterior al preflight se reconcilia por reportId y first-write-wins", () => {
+    const append = handler.indexOf("feedbackSheet.appendRow(reportRow)");
+    const canonical = handler.indexOf("findReportByReportId_(feedbackSheet, reportContext.reportId, metadataColumn)", append);
+    assert.ok(canonical > append);
+    assert.match(handler, /duplicateReport = Number\(canonicalReport\.rowIndex\) !== Number\(persistedRow\.rowIndex\)/);
+    assert.equal(handler.indexOf("LockService.getScriptLock()"), -1);
 });
-test("una carrera posterior al preflight se revalida bajo lock y conserva limpieza segura", () => {
-    const lock = handler.indexOf("acquireFeedbackScriptLock_(lock)");
-    const recheck = handler.indexOf("findReportByReportId_(sheet,reportContext.reportId,metadataColumn)");
-    const imageCleanup = handler.indexOf("trashReportImageUpload_(uploadedImage)", recheck);
-    assert.ok(lock >= 0 && recheck > lock && imageCleanup > recheck);
-    assert.match(handler, /if\(lockAcquired\) lock\.releaseLock\(\)/);
-});
-console.log("FeedbackReportPreflightOutsideLock: " + passed + "/" + passed + " PASS — replay antes de Drive/lock y revalidación crítica");
+console.log("FeedbackReportPreflightOutsideLock: " + passed + "/" + passed + " PASS — append-only sin lock y adjuntos por eventos");
