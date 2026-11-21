@@ -413,3 +413,9 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - handleCreateUser valida sesión/rol y calcula PBKDF2 fuera del lock; conserva tryLock(0) únicamente para unicidad de username/ID y escritura de cuenta.
 - Se sincroniza JS/Tests/users.js con el servicio, manteniendo SPREADSHEET_ID aislado.
 - CI bb91b08bc16070d44e9155e5014c4110894ec546 SUCCESS: 259 suites, 3,141 pruebas, 0 fallos. AUG-163 pendiente de Beta aislada.
+
+
+2026-11-21 — ADMIN: PUBLICACIÓN DE CATÁLOGO SIN SCRIPTLOCK
+- publishAdminCatalogChange_ y publishAdminCatalogChanges_ dejaron de adquirir ScriptLock y reservar versiones con PropertiesService. Los snapshots se construyen sin exclusión global y usan sourceVersion temporal; los lotes conservan versiones consecutivas y chunks de máximo 50.
+- Se conserva el reset de recuperación cuando el snapshot es inválido o falla la publicación de un lote. Coordinator convierte sourceVersion repetida/obsoleta en reset.
+- AdminCatalogPublicationIsolation: 6/6 escenarios aprobados en harness Node.js aislado; queda pendiente ejecutar el archivo comprometido en el checkout completo/CI. Sin deployment Apps Script ni cambios productivos.
