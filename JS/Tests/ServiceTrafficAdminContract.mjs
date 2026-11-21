@@ -79,7 +79,8 @@ assert.doesNotMatch(shared,/GPSpedia_WRITE_URL|GPSpedia_FEEDBACK_URL/);
 
 assert.match(coordinator,/!\["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"\]\.includes\(service\)/);
 assert.match(shared,/function validateSessionContext\(userId, sessionToken, service\)/);
-assert.match(shared,/deps\.service \|\| "AUTH"/);
+assert.match(shared,/error\.code = "SESSION_ACTOR_CACHE_MISS"/);
+assert.doesNotMatch(shared,/validateSharedSessionContext_\(actorUserId, actorToken, deps\.service \|\| "AUTH"\)/);
 for (const [path, service] of [
     ["JS/Services/Auth.js", "AUTH"], ["JS/Services/admin.js", "ADMIN"],
     ["JS/Services/feedback.js", "FEEDBACK"], ["JS/Services/users.js", "USERS"],
