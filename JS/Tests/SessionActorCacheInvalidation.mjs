@@ -3,6 +3,7 @@ import fs from "node:fs";
 
 const source = fs.readFileSync("JS/Services/SharedMutationClient.js", "utf8");
 const authSource = fs.readFileSync("JS/Services/Auth.js", "utf8");
+const usersSource = fs.readFileSync("JS/Services/users.js", "utf8");
 const writeSource = fs.readFileSync("JS/Services/write.js", "utf8");
 const feedbackSource = fs.readFileSync("JS/Services/feedback.js", "utf8");
 const adminSource = fs.readFileSync("JS/Services/admin.js", "utf8");
@@ -83,7 +84,7 @@ function createClient(events, failAction = "") {
                 };
             }
             const result = request.action === "invalidateSessionActorCaches"
-                ? { status: "success", invalidated: request.payload.sessionTokens.length, services: ["WRITE", "FEEDBACK", "ADMIN"] }
+                ? { status: "success", invalidated: request.payload.sessionTokens.length, services: ["USERS", "WRITE", "FEEDBACK", "ADMIN"] }
                 : { status: "success", revoked: true };
             return { getResponseCode: () => 200, getContentText: () => JSON.stringify(result) };
         }
@@ -129,9 +130,14 @@ assert.deepEqual(batchEvents.slice(0, 2).map(event => event.payload.sessionToken
 assert.equal(authSource.includes("tokens.length > 5"), false,
     "AUTH debe enumerar todas las sesiones activas, incluso las cuentas Developer ilimitadas.");
 assert.match(authSource, /'desarrollador': Infinity/);
+assert.match(usersSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(usersSource, /action === "__primeSessionActorCache"[\s\S]*?handleSharedSessionActorCachePriming_/);
 assert.match(writeSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(writeSource, /action === "__primeSessionActorCache"[\s\S]*?handleSharedSessionActorCachePriming_/);
 assert.match(feedbackSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(feedbackSource, /action === "__primeSessionActorCache"[\s\S]*?handleSharedSessionActorCachePriming_/);
 assert.match(adminSource, /action === "__invalidateSessionActorCache"[\s\S]*?handleSharedSessionActorCacheInvalidation_/);
+assert.match(adminSource, /action === "__primeSessionActorCache"[\s\S]*?handleSharedSessionActorCachePriming_/);
 assert.match(authSource, /function handleLogout[\s\S]*?revokeSharedSessionContext_/);
 assert.match(source, /function revokeSharedSessionContext_\(userId, sessionToken\)\s*\{\s*invalidateLocalSharedSessionActorCaches_/);
 assert.match(source, /function revokeSharedUserSessionContexts_\(userId, sessionTokens\)\s*\{\s*invalidateLocalSharedSessionActorCaches_/);
@@ -144,4 +150,4 @@ assert.doesNotMatch(apiConfigSource, /__invalidateSessionActorCache/);
 assert.match(source, /GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(source, /GPSpedia_SESSION_CACHE_INVALIDATION_SECRET/);
 assert.doesNotMatch(source, /GPSpedia_WRITE_URL|GPSpedia_FEEDBACK_URL|GPSpedia_COORDINATOR_SECRET_WRITE|GPSpedia_COORDINATOR_SECRET_FEEDBACK/);
-console.log("SessionActorCacheInvalidation: 1/1 PASS — claves compatibles, autenticación interna, aislamiento por token, flujos AUTH y fallo parcial");
+console.log("SessionActorCacheInvalidation: 1/1 PASS — invalidación/precarga autenticada en USERS, WRITE, FEEDBACK y ADMIN");
