@@ -8,7 +8,7 @@ const handler=source.slice(start,end);
 assert.doesNotMatch(handler,/LockService\.getScriptLock|acquireFeedbackScriptLock_|releaseLock/);
 const upload=handler.indexOf("saveReportImageAttachment_(imageAttachment, reportContext.reportId)");
 const append=handler.indexOf("feedbackSheet.appendRow(reportRow)");
-const event=handler.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)");
+const event=handler.indexOf("appendFeedbackReportImageEvent_(reportContext.reportId, userId, uploadedImage)",append);
 assert.ok(upload>=0&&append>upload&&event>append,"El adjunto se vincula mediante evento append-only después de anexar el reporte.");
 const catchStart=handler.indexOf("} catch (error) {");
 const cleanup=handler.slice(catchStart);
