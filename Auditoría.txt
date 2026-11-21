@@ -1003,3 +1003,11 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Se retiró ScriptLock de ambos handlers tras incorporar identidad lógica, proyección first-write-wins, detección de payload contradictorio y deduplicación de Inbox.
 - Reportes: adjuntos tardíos se registran en FeedbackReportImageEvents append-only; lectura proyecta el primer evento y conflictos de hash quedan para reconciliación.
 - CI d77a59b: 258 suites, 3089 pruebas, 0 fallos; health read-only y Pages SUCCESS. Beta real Apps Script/Sheets/Drive pendiente; no hubo despliegue Apps Script ni cambios de datos productivos.
+
+
+2026-11-21 — PyS fase 1: IDs y proyección canónica
+- getPysNextId_ delega en getNextFormulaBasedId_ y reutiliza IdentifierSequenceReservations con patrón isue-### y sufijo mínimo legacy.
+- Nuevas filas PysOperations usan appendRow; readPysOperations_ aplica first-write-wins a opId/hash idénticos y rechaza conflictos.
+- Se separó findPysRowsById_ (físico) de findCanonicalPysRowsById_ (proyección). Validación y lectores PyS permiten duplicados físicos idénticos, rechazan contradicciones y deduplican la lectura/feed.
+- CI ce1d7a1: 258 suites, 3091 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
+- handleAddProblem todavía conserva ScriptLock; pendiente resolver propiedad canónica, archivos duplicados y reintentos simultáneos antes de retirarlo.
