@@ -578,3 +578,10 @@ La Beta vigente de PyS se ejecuta con AUG-161 en lista_beta_adenda_2026-11-21.md
 - SharedMutationCoordinator ahora prueba que addSolution y addPrevention comparten el recurso FEEDBACK, no reservan CORTES y se serializan entre sí; después de liberar la lease, el reintento puede adquirirla.
 - Suite SharedMutationCoordinator 86/86 PASS; PysVehicleRelationIntegrity 20/20 PASS. CI 44909269963 SUCCESS: 259 suites, 3,131 pruebas aprobadas, 0 fallos. Health 44909269950 y Pages 44909269739 SUCCESS.
 - Commit de prueba: 6523413028eed4ddc2d745e272f535b58514382c. Las pruebas reales multi-proyecto/Spreadsheet siguen pendientes de AUG-161 Beta aislada.
+
+
+## Aclaración final de estados PyS y alcance de pendientes (2026-11-21)
+
+- La nota histórica del cierre de creación PyS que indicaba que solución, prevención y relaciones conservaban locks describía únicamente la fase 1. Quedó sustituida por «Cierre local — coordinación de mutaciones PyS», que migró addSolution/addPrevention/addVehicleToProblem/removeVehicleFromProblem a leases compartidas y cuenta con cobertura Coordinator 86/86 y PysVehicleRelationIntegrity 20/20.
+- Las notas antiguas «P0 sigue abierto» de las etapas intermedias de votos, reportes y sugerencias son registros históricos; quedaron superadas por los cierres posteriores de handleSuggestYear y reportProblem/suggestCutChange.
+- Revisión de casillas actuales: las 15 casillas sin marcar del registro corresponden a pruebas Beta aisladas, aceptación visual o validación con servicios/datos reales. No queda ninguna casilla de implementación local abierta.
