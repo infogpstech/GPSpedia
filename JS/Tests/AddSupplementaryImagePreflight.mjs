@@ -50,8 +50,9 @@ await run('rechaza discrepancia entre MIME del archivo y Data URL', async () => 
 });
 await run('propaga el fallo de lectura sin dejar promesa pendiente', async () => {
     failRead = true;
+    const before = reads;
     await assert.rejects(readImage({size:10,type:'image/jpeg'}), error => error && error.name === 'ImageReadError');
-    assert.equal(reads, 2);
+    assert.equal(reads, before + 1);
 });
 const failed = results.filter(item => item.status !== 'PASS');
 for (const item of results) console.log(item.status + ' ' + item.name + (item.message ? ': ' + item.message : ''));

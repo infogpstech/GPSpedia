@@ -83,7 +83,7 @@ assert.equal(clamped.truncated, true);
 assert.ok(vehicleHandler.includes("readCatalogVehicleProjection_(vehicleId)"));
 assert.ok(!vehicleHandler.includes("handleGetCatalogData"), "la proyección dirigida no debe cargar hojas ajenas a la proyección vehicular");
 assert.ok(!vehicleHandler.includes("handleGetCatalogData"), "la proyección dirigida no debe cargar hojas ajenas a la proyección vehicular");
-assert.ok(candidatesHandler.includes("readCatalogContributionProjectionVehicles_()"));
+assert.ok(candidatesHandler.includes("readCatalogContributionProjectionVehicles_(undefined, includeImageInventoryEvents)"));
 assert.ok(!candidatesHandler.includes("handleGetCatalogData"), "la lista de candidatos no debe cargar logos, tutoriales ni relay");
 assert.ok(catalog.includes("function readCatalogContributionProjectionVehicles_(spreadsheetRef)"));
 assert.ok(catalog.includes('"getVehicleProjection", "getContributionCandidates"'));
