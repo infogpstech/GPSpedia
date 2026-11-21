@@ -51,13 +51,13 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
     const names = [
         "normalizePassword", "normalizeUsername_", "parseUserIdSequenceFormula_", "getUserIdSequencePattern_", "generateNextUserId_", "findNextUserRow_",
         "withUsersMutationLock_", "normalizeNewUserInput_", "normalizeUserProfileUpdates_",
-        "findUniqueUserRow_", "writeUserRangeAtomically_", "handleCreateUser", "handleUpdateProfile"
+        "findUniqueUserRow_", "writeUserRangeAtomically_", "writeUserProfileNameNonBlocking_", "handleCreateUser", "handleUpdateProfile"
     ];
     const code = "const COLS_USERS={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9};\n" +
         "const SHEET_NAMES={USERS:'Users'};\n" +
         "const USERS_ALLOWED_ROLES_=Object.freeze(['Desarrollador','Jefe','Supervisor','Tecnico','Tecnico_exterior']);\n" +
         names.map(name => extract(source, name)).join("\n") +
-        "\nreturn {normalizeNewUserInput_,normalizeUserProfileUpdates_,findUniqueUserRow_,findNextUserRow_,writeUserRangeAtomically_,handleCreateUser,handleUpdateProfile,withUsersMutationLock_};";
+        "\nreturn {normalizeNewUserInput_,normalizeUserProfileUpdates_,findUniqueUserRow_,findNextUserRow_,writeUserRangeAtomically_,writeUserProfileNameNonBlocking_,handleCreateUser,handleUpdateProfile,withUsersMutationLock_};";
     function fixture(options) {
         options = options || {};
         const rows = (options.rows || [
@@ -105,7 +105,10 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
                         formulas.push({row,col,formula});
                     },
                     getValue() { return getCell(row,col); },
-                    setValue(value) { this.setValues([[value]]); },
+                    setValue(value) {
+                        this.setValues([[value]]);
+                        if(options.onSetValue) options.onSetValue({row,col,value,rows});
+                    },
                     copyTo() {},
                 };
             },
@@ -154,7 +157,7 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const result=f.api.handleCreateUser({newUser:validUser(),sessionToken:"SESSION"});
         equal(result.status,"success");
         equal(f.sheet._rows[1].slice(0,8),["USR-0001","instalador01","HASH:ClaveSegura123","Tecnico","+504 9999-0000","instalador@example.com","Técnico Uno",""]);
-        equal(f.stats.waits,1);equal(f.stats.releases,1);
+        equal(f.stats.tries,1);equal(f.stats.timeout,0);equal(f.stats.waits,0);equal(f.stats.releases,1);
     });
     run("Rechaza nombre de usuario duplicado sin modificar la hoja",()=>{
         const rows=[
@@ -196,7 +199,18 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const f=fixture({rows});
         const result=f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Nombre nuevo"},sessionToken:"SESSION"});
         equal(result.status,"success");equal(f.sheet._rows[1][6],"Nombre nuevo");
-        equal(f.stats.waits,1);equal(f.stats.releases,1);
+        equal(f.stats.tries,0);equal(f.stats.waits,0);equal(f.stats.releases,0);
+    });
+    run("Una edición concurrente posterior no es sobrescrita por rollback de perfil",()=>{
+        const rows=[
+            ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
+            ["USR-0001","usuario","","Tecnico","","","Nombre anterior","",""]
+        ];
+        const f=fixture({rows,onSetValue:({row,col,rows})=>{if(row===2&&col===7)rows[1][6]="Edición concurrente";}});
+        let rejected=false;
+        try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
+        assert(rejected);equal(f.sheet._rows[1][6],"Edición concurrente");
+        equal(f.stats.tries,0);equal(f.stats.releases,0);
     });
     run("Rechaza campos adicionales, vacíos y tipos incorrectos en perfil",()=>{
         const f=fixture();
@@ -217,23 +231,25 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
         assert(rejected);equal(f.sheet._rows[1][6],"Uno");equal(f.sheet._rows[2][6],"Dos");
     });
-    run("Restaura el perfil anterior ante fallo de flush y libera el lock",()=>{
+    run("Confirma por read-back un perfil escrito aunque flush reporte error",()=>{
         const rows=[
             ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
             ["USR-0001","usuario","","Tecnico","","","Nombre anterior","",""]
         ];
         const f=fixture({rows,failFlushOnce:true});
-        let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
-        assert(rejected);equal(f.sheet._rows[1][6],"Nombre anterior");equal(f.stats.releases,1);
+        const result=f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});
+        equal(result.status,"success");equal(f.sheet._rows[1][6],"Cambio");
+        equal(f.stats.tries,0);equal(f.stats.releases,0);
     });
-    run("Rechaza sesión ajena y libera el lock sin modificar datos",()=>{
+    run("Rechaza sesión ajena antes de escribir y sin adquirir lock",()=>{
         const rows=[
             ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
             ["USR-0001","usuario","","Tecnico","","","Nombre anterior","",""]
         ];
         const f=fixture({rows,getVerifiedSession:()=>({userId:"USR-0002",role:"Tecnico"})});
         let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
-        assert(rejected);equal(f.sheet._rows[1][6],"Nombre anterior");equal(f.stats.releases,1);
+        assert(rejected);equal(f.sheet._rows[1][6],"Nombre anterior");
+        equal(f.stats.tries,0);equal(f.stats.releases,0);
     });
     run("No reutiliza una fila que contiene fórmulas prellenadas",()=>{
         const rows=[
@@ -243,14 +259,11 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const f=fixture({rows,formulas:[{row:2,col:2,formula:'=IF(A2="","",A2)'}]});
         equal(f.api.findNextUserRow_(f.sheet),3);
     });
-    run("Un timeout al adquirir el lock no ejecuta escrituras ni libera un lock no adquirido",()=>{
-        const rows=[
-            ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
-            ["USR-0001","usuario","","Tecnico","","","Nombre anterior","",""]
-        ];
-        const f=fixture({rows,lockTimeout:true});
-        let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
-        assert(rejected);equal(f.sheet._rows[1][6],"Nombre anterior");equal(f.stats.waits,1);equal(f.stats.releases,0);
+    run("La creación de cuenta falla rápido si el lock de unicidad está ocupado",()=>{
+        const f=fixture({lockTimeout:true});
+        let rejected=false;try{f.api.handleCreateUser({newUser:validUser(),sessionToken:"SESSION"});}catch(_){rejected=true;}
+        assert(rejected);equal(f.sheet._rows.length,1);equal(f.stats.tries,1);equal(f.stats.timeout,0);
+        equal(f.stats.waits,0);equal(f.stats.releases,0);
     });
     run("La lease compartida serializa USERS con delete/reset de AUTH por recursos comunes",()=>{
         const usersWrapper=extract(source,"isSharedMutationAction_");
