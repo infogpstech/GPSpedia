@@ -169,3 +169,15 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se añadió `JS/Tests/AddSupplementaryImagePreflight.mjs` al runner. Validación aislada del helper: 4/4 PASS (rechazo previo, límite exacto, archivo vacío y error FileReader).
 - Esto evita leer y transmitir imágenes que el backend rechazará y corrige el manejo de fallos de lectura; no comprime archivos válidos ni demuestra menor tiempo de subida.
 
+
+
+### Ampliación — refreshes redundantes en creación y edición PyS/tutorial
+- La inspección de todos los consumidores de `openYouTubeUploadModal` encontró tres callbacks adicionales que refrescaban datos al terminar una solicitud de vídeo pending:
+  1. Alta de tutorial: `refreshTutorialCatalog` ya se ejecuta inmediatamente después de crear el tutorial, antes de terminar la subida; el callback posterior al vídeo no agrega datos.
+  2. Alta PyS: tras crear el problema, el flujo invalida caché y ejecuta `loadPysData` antes de retornar; el callback posterior al vídeo repetía la misma carga, aunque FEEDBACK solo guarda la solicitud pending.
+  3. Edición de problema PyS existente: el callback volvía a invalidar y cargar la colección, pero `handleSubmitVideoForApproval` no modifica la hoja PyS.
+- Se retiraron esos tres callbacks y el helper `refreshPysAfterVideo_`, además de los dos snapshots completos de tutorial/corte registrados previamente.
+- Se conservaron los refreshes inmediatos que sí corresponden a la creación real de un tutorial o problema PyS, y el refresco posterior cuando la aprobación cambia efectivamente el vídeo del catálogo.
+- `YouTubePendingRefreshContract.js` amplió su cobertura a cinco escenarios; resultado aislado 5/5 PASS. La suite backend `YouTubeApproval.js` permanece 16/16 PASS.
+- Resultado: cinco viajes de red posteriores a solicitudes pending eliminados de estos flujos (tres recargas PyS/tutorial y dos snapshots completos). Es una reducción de llamadas confirmada por código/contrato; el ahorro temporal real aún requiere medición de navegador/red.
+
