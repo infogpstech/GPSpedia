@@ -225,6 +225,13 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.throws(()=>h.api.add(h.validPayload()),/mismo opId reservado para problemId distintos/);
         assert.equal(h.state.createdFiles,0);
     });
+    test("rechaza archivos distintos en reservas duplicadas de la misma operación",()=>{
+        const hash="a".repeat(64),row=[OP_A,hash,"isue-001","UPLOAD_PENDING","drive-file-id-0000001","https://drive.google.com/file/d/drive-file-id-0000001/view","now","now"];
+        const duplicate=[OP_A,hash,"isue-001","UPLOAD_PENDING","drive-file-id-0000002","https://drive.google.com/file/d/drive-file-id-0000002/view","now","now"];
+        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,duplicate]});
+        assert.throws(()=>h.api.add(h.validPayload()),/archivos distintos para la misma operación/);
+        assert.equal(h.state.createdFiles,0);
+    });
     test("rechaza problemId duplicado en PysOperations",()=>{
         const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-1","PENDING","","","now","now"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,a,b]});
