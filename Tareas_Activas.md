@@ -74,7 +74,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] FEEDBACK — likes: un único snapshot de filas del actor alimenta replay completed, replay event y ruta de recuperación; se mantiene lectura fresca después de append para confirmar el evento.
 - [x] FEEDBACK — reportes propios: índice de eventos de imagen por reportId en una sola lectura por página; mantiene first-event-wins y limita errores de hash contradictorio al reporte consultado.
 - [x] FEEDBACK — bandeja administrativa: reutilizar el índice de eventos de imagen en canonicalización de reportId y mapeo de página.
-- [ ] FEEDBACK — bandeja administrativa: reducir búsquedas por fila de canonicalización de sugerencias/reportes sin relajar first-write-wins ni conflictos.
+- [x] FEEDBACK — bandeja administrativa: cachear por página la canonicalización de suggestionOperationId, clave de solicitud y reportId; una búsqueda repetida para el mismo identificador se ejecuta una sola vez.
 - [ ] Auditar CATALOG/Coordinator: deltas, cursores, snapshots, resets e invalidaciones; conservar snapshots completos para inicio/reset/recuperación.
 - [ ] Revisar refresh completo `getCatalogData` al cerrar edición y sustituirlo solo si un delta preserva fuentes, cursores y concurrencia.
 - [ ] Medir telemetría ADMIN y confirmar que no se ejecuta en navegación/aportes ordinarios.
@@ -109,4 +109,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: reducir búsquedas por fila de canonicalización de sugerencias/reportes en handleGetFeedbackItems; después ADMIN. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: auditar ADMIN de extremo a extremo: Drive/Spreadsheet, respaldos/restauración, operaciones de imágenes, idempotencia, read-back y publicaciones. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
