@@ -1371,7 +1371,8 @@ const MAX_THUMBNAIL_ENTRIES = 200;
  * El resultado solo se entrega cuando IndexedDB confirma el commit.
  */
 async function runThumbnailStoreTransaction(requestFactory, onSuccess) {
- const database = await initDB();
+ // Las miniaturas son caché opcional: un fallo de apertura no debe emitir avisos globales.
+ const database = await initDB({ silent: true });
  return new Promise((resolve, reject) => {
   let transaction, result = null, settled = false;
   const fail = error => {
