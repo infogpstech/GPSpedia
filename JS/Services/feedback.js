@@ -3321,12 +3321,11 @@ function handleSuggestCutChange(payload) {
     // La imagen se carga a Drive antes de adquirir el bloqueo de la hoja.
     let uploadedImage = normalizedImage ? saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex) : null;
     const lock = LockService.getScriptLock();
-    let lockAcquired = false, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
+    let lockAcquired = false, rowCommitted = false, appendAttempted = false, result = null;
     const releaseLockForDriveWork = () => { if (lockAcquired) { lock.releaseLock(); lockAcquired = false; } };
     try {
         acquireFeedbackScriptLock_(lock); lockAcquired = true;
         const sheet = feedbackSheet;
-        pendingSheet = sheet;
         // Revalidar dentro del lock por si otra solicitud confirmó el mismo opId durante Drive.
         const existing = findExistingCutSuggestionForRequest_(sheet, replayRequest);
         if (existing) {
@@ -3336,10 +3335,9 @@ function handleSuggestCutChange(payload) {
         }
         const createdAt = new Date().toISOString();
         const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1;
-        pendingRowNumber = newRowNumber;
-        const FORMULA_ROW = 2, lastCol = sheet.getLastColumn() || 8;
+        const FORMULA_ROW = 2, lastCol = Math.max(sheet.getLastColumn() || 8, COLS_FEEDBACKS["Se resolvio"] || 0);
         if (lastRow >= FORMULA_ROW) copyRowPresentationOnly_(sheet, FORMULA_ROW, newRowNumber, lastCol);
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID));
+        const reservedId = getNextFormulaBasedId_(sheet, COLS_FEEDBACKS.ID);
         const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
             subType: "suggestion_cut", schemaVersion: 3,
@@ -3353,11 +3351,23 @@ function handleSuggestCutChange(payload) {
             proposedValues: normalizedProposedValues, requestFingerprint, status: "pendiente_revision"
         };
         const problemDesc = JSON.stringify(suggestionRecord);
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, 3).setValues([[String(userName), normalizedVehicleId, problemDesc]]);
-        if (COLS_FEEDBACKS["Se resolvio"]) sheet.getRange(newRowNumber, COLS_FEEDBACKS["Se resolvio"]).setValue(false);
+        const suggestionRow = new Array(lastCol).fill("");
+        suggestionRow[COLS_FEEDBACKS.ID - 1] = reservedId;
+        suggestionRow[COLS_FEEDBACKS.Usuario - 1] = String(userName);
+        suggestionRow[COLS_FEEDBACKS.ID_vehiculo - 1] = normalizedVehicleId;
+        suggestionRow[COLS_FEEDBACKS.Problema - 1] = problemDesc;
+        if (COLS_FEEDBACKS["Se resolvio"]) suggestionRow[COLS_FEEDBACKS["Se resolvio"] - 1] = false;
+        appendAttempted = true;
+        sheet.appendRow(suggestionRow);
         SpreadsheetApp.flush();
-        const storedProblem = sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).getValue();
-        if (String(storedProblem || "") !== problemDesc) throw new Error("No se pudo confirmar la escritura de la sugerencia; la imagen no quedará asociada.");
+        const savedRow = sheet.getRange(newRowNumber, 1, 1, lastCol).getValues()[0];
+        if (String(savedRow[COLS_FEEDBACKS.ID - 1] || "").trim() !== reservedId ||
+            String(savedRow[COLS_FEEDBACKS.Usuario - 1] || "") !== String(userName) ||
+            String(savedRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "") !== normalizedVehicleId ||
+            String(savedRow[COLS_FEEDBACKS.Problema] || "") !== problemDesc ||
+            (COLS_FEEDBACKS["Se resolvio"] && savedRow[COLS_FEEDBACKS["Se resolvio"] - 1] !== false)) {
+            throw new Error("No se pudo confirmar la fila completa de la sugerencia; la imagen se conserva para reconciliación.");
+        }
         rowCommitted = true;
         result = {
             status: "success", message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
@@ -3367,28 +3377,11 @@ function handleSuggestCutChange(payload) {
         };
         uploadedImage = null;
     } catch (error) {
-        let rollbackConfirmed = false;
-        if (!rowCommitted && pendingSheet && pendingRowNumber) {
-            try {
-                const pendingRange = pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS.Usuario, 1, 3);
-                pendingRange.clearContent();
-                if (COLS_FEEDBACKS["Se resolvio"]) pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS["Se resolvio"]).clearContent();
-                SpreadsheetApp.flush();
-                const cleared = pendingRange.getValues()[0].every(value => value === "" || value === null);
-                const statusCleared = !COLS_FEEDBACKS["Se resolvio"] ||
-                    pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS["Se resolvio"]).getValue() === "";
-                rollbackConfirmed = cleared && statusCleared;
-                if (!rollbackConfirmed) console.error("La reversión de la fila de sugerencia no pudo confirmarse; se conserva la imagen para evitar romper una referencia persistida.");
-            } catch (rollbackError) {
-                console.error("No se pudo confirmar la reversión de la fila de sugerencia:", rollbackError);
-            }
-        }
-        if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed)) {
+        if (!rowCommitted && uploadedImage && !appendAttempted) {
             releaseLockForDriveWork();
             trashReportImageUpload_(uploadedImage);
-        }
-        else if (!rowCommitted && uploadedImage && !rollbackConfirmed) {
-            console.error("La imagen de sugerencia se conserva para reconciliación porque el estado de la fila no pudo verificarse.");
+        } else if (!rowCommitted && uploadedImage) {
+            console.error("La imagen de sugerencia se conserva porque appendRow pudo persistir la referencia y requiere reconciliación.");
         }
         throw error;
     } finally { if (lockAcquired) lock.releaseLock(); }
