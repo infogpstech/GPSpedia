@@ -2615,7 +2615,8 @@ function readVehicleContributionLedgerRows_(sheet) {
 
 function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId, rowsSnapshot) {
     const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
-    if (Array.isArray(rowsSnapshot) ? !rowsSnapshot.length : ledger.getLastRow() < 2) return null;
+    const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(ledger);
+    if (!rows.length) return null;
     const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
     if (!vehicleId) return null;
     const baseRow = vehicleSnapshot.rowValues || [];
@@ -2624,7 +2625,6 @@ function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targe
         COLS_CORTES["ubicacionCorte" + slot],
         COLS_CORTES["imgCorte" + slot]
     ].some(column => String(baseRow[column - 1] || "").trim()));
-    const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(ledger);
     const byOpId = new Map();
     const conflicts = new Set();
     rows.forEach((row, offset) => {
@@ -2767,8 +2767,8 @@ function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentV
     const prefix = String(vinPrefix || "").trim().toUpperCase();
     if (!prefix) return null;
     const sheet = getVehicleContributionLedgerSheet_(spreadsheetRef);
-    if (Array.isArray(rowsSnapshot) ? !rowsSnapshot.length : sheet.getLastRow() < 2) return null;
     const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(sheet);
+    if (!rows.length) return null;
     for (let index = 0; index < rows.length; index++) {
         const row = rows[index];
         const vehicleId = String(row[2] || "").trim();
