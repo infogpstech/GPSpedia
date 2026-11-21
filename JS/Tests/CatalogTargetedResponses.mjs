@@ -13,6 +13,9 @@ const candidatesHandler = catalog.slice(candidatesStart, candidatesEnd);
 
 const snapshot = { status: "success", source: "spreadsheet", data: { cortes: [
     { id: "3", marca: "Nissan", modelo: "Frontier", imgCorte1: "IMG", contributionSources: { imgCorte1: { eventId: "EV-3" } }, contributionCandidates: [] },
+    { id: "9", marca: "Honda", modelo: "CR-V", contributionCandidates: [
+        { eventId: "EV-C", opId: "OP-C", kind: "opening", reason: "opening_already_filled", payload: { text: "Apertura" } }
+    ]},
     { id: "22", marca: "Toyota", modelo: "Hilux", contributionCandidates: [
         { eventId: "EV-B", opId: "OP-B", kind: "cut", reason: "vin_conflict", payload: { vinPrefix: "X" } }
     ]}
@@ -27,23 +30,30 @@ assert.equal(one.vehicle.contributionSources.imgCorte1.eventId, "EV-3");
 assert.equal(calls, 1);
 assert.throws(() => getVehicle({ vehicleId: "../3" }), /ID de vehículo válido/);
 assert.throws(() => getVehicle({ vehicleId: "99" }), /no existe/);
-assert.throws(() => getVehicle({ vehicleId: "3", duplicate: true }), /no existe/);
+const duplicateSnapshot = { status: "success", source: "spreadsheet", data: { cortes: [...snapshot.data.cortes, { ...snapshot.data.cortes[0] }] } };
+const duplicateHandler = new Function("handleGetCatalogData", vehicleHandler + "\\nreturn handleGetVehicleProjection_;")(
+    () => duplicateSnapshot
+);
+assert.throws(() => duplicateHandler({ vehicleId: "3" }), /duplicado/);
 
 const getCandidates = new Function("handleGetCatalogData", candidatesHandler + "\nreturn handleGetContributionCandidates_;")(
     payload => { calls++; assert.equal(payload.forceRefresh, true); return snapshot; }
 );
 const limited = getCandidates({ limit: 1 });
-assert.equal(limited.total, 1);
+assert.equal(limited.total, 2);
 assert.equal(limited.candidates.length, 1);
-assert.equal(limited.candidates[0].vehicleId, "22");
-assert.equal(limited.candidates[0].vehicleLabel, "Toyota Hilux");
-assert.equal(limited.truncated, false);
+assert.equal(limited.candidates[0].vehicleId, "9");
+assert.equal(limited.candidates[0].vehicleLabel, "Honda CR-V");
+assert.equal(limited.truncated, true);
 assert.equal(limited.readOnly, true);
 assert.deepEqual(Object.keys(limited).sort(), ["candidates", "limit", "readOnly", "source", "status", "total", "truncated"].sort());
 const all = getCandidates({ limit: 500 });
-assert.equal(all.total, 1);
-assert.equal(all.candidates.length, 1);
-assert.throws(() => getCandidates({ limit: 0 }), /./, "zero is clamped to one and should still be valid");
+assert.equal(all.total, 2);
+assert.equal(all.candidates.length, 2);
+const clamped = getCandidates({ limit: 0 });
+assert.equal(clamped.limit, 1);
+assert.equal(clamped.candidates.length, 1);
+assert.equal(clamped.truncated, true);
 assert.ok(catalog.includes('"getVehicleProjection", "getContributionCandidates"'));
 assert.match(catalog, /case 'getVehicleProjection'/);
 assert.match(catalog, /case 'getContributionCandidates'/);

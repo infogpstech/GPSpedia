@@ -10,14 +10,23 @@ function run(response, payload = {}) {
     const calls = [];
     const fetch = { fetch(url, options) {
         calls.push({ url, options });
-        return { getResponseCode: () => response.http || 200, getContentText: () => JSON.stringify(response.body) };
+        return { getResponseCode: () => response.http || 200, getContentText: () => {
+            const request = JSON.parse(options.payload);
+            const body = JSON.parse(JSON.stringify(response.body));
+            if (request.action === "getContributionCandidates" && Array.isArray(body.candidates)) {
+                body.limit = request.payload.limit;
+                body.candidates = body.candidates.slice(0, body.limit);
+                body.truncated = body.total > body.limit;
+            }
+            return JSON.stringify(body);
+        }};
     }};
     const fn = new Function("UrlFetchApp", "CATALOG_SERVICE_URL", handler + "\nreturn handleGetVehicleContributionCandidates_;")(fetch, "https://catalog.test/exec");
     return { result: fn(payload), calls };
 }
 const catalog = { status: "success", candidates: [
-    { eventId: "EV-B", opId: "OP-B", vehicleId: "22", vehicleLabel: "Toyota Hilux", kind: "cut", reason: "vin_conflict", payload: { tipo: "Ignición", vinPrefix: "X" }, status: "pending_review" },
-    { eventId: "EV-A", opId: "OP-A", vehicleId: "3", vehicleLabel: "Nissan Frontier", kind: "feed", reason: "feed_capacity_full", payload: { text: "12V", image: "FILE_ID" }, status: "pending_review" }
+    { eventId: "EV-A", opId: "OP-A", vehicleId: "3", vehicleLabel: "Nissan Frontier", kind: "feed", reason: "feed_capacity_full", payload: { text: "12V", image: "FILE_ID" }, status: "pending_review" },
+    { eventId: "EV-B", opId: "OP-B", vehicleId: "22", vehicleLabel: "Toyota Hilux", kind: "cut", reason: "vin_conflict", payload: { tipo: "Ignición", vinPrefix: "X" }, status: "pending_review" }
 ], total: 2, limit: 200, truncated: false, source: "CATALOG", readOnly: true };
 {
  const {result,calls}=run({body:catalog});
