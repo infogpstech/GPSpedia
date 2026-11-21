@@ -2615,8 +2615,7 @@ function readVehicleContributionLedgerRows_(sheet) {
 
 function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId, rowsSnapshot) {
     const ledger = getVehicleContributionLedgerSheet_(spreadsheet);
-    const lastRow = ledger.getLastRow();
-    if (lastRow < 2) return null;
+    if (Array.isArray(rowsSnapshot) ? !rowsSnapshot.length : ledger.getLastRow() < 2) return null;
     const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
     if (!vehicleId) return null;
     const baseRow = vehicleSnapshot.rowValues || [];
@@ -2768,7 +2767,7 @@ function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentV
     const prefix = String(vinPrefix || "").trim().toUpperCase();
     if (!prefix) return null;
     const sheet = getVehicleContributionLedgerSheet_(spreadsheetRef);
-    if (sheet.getLastRow() < 2) return null;
+    if (Array.isArray(rowsSnapshot) ? !rowsSnapshot.length : sheet.getLastRow() < 2) return null;
     const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(sheet);
     for (let index = 0; index < rows.length; index++) {
         const row = rows[index];
