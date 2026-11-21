@@ -4439,9 +4439,10 @@ function findTutorialById_(sheet, tutorialId) {
     });
     if (matches.length > 1) {
         matches[0].duplicateRowCount = matches.length - 1;
+        const width = Math.max(0, ...matches.map(match => match.row.length));
         matches[0].conflictingDuplicateCount = matches.slice(1).filter(match =>
-            TUTORIAL_HEADERS.some((header, index) =>
-                String(match.row[index] || "").trim() !== String(matches[0].row[index] || "").trim())).length;
+            Array.from({ length: width }, (_, index) =>
+                String(match.row[index] || "").trim() !== String(matches[0].row[index] || "").trim()).some(Boolean)).length;
     }
     return matches[0] || null;
 }
