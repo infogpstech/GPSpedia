@@ -590,3 +590,11 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se retiran dos precargas redundantes en updateCardInPlace/insertNewVehicleFluently. Tests imagen 10/10 + 10/10.
 - No hay prefetch activo de 15 vehículos; el carrusel actual muestra 6. Cola FIFO de compresión concurrencia 2, sin jobs de precarga en competencia.
 - Pendientes de Beta: CORS permitido/no permitido, transparencia PNG, cache hit/miss, bytes y primera pintura. No se desplegó Apps Script ni se modificaron datos productivos.
+
+ 
+2026-11-21 — AUDITORÍA CSS DE MODALES
+- Se auditaron style.css, button-system.css, contextual-help.css y JS/Frontend/ui.js; el encabezado del corte está definido en style.css.
+- El bloque rotulado “consolidado” contiene duplicaciones y overrides posteriores. Hallazgos de móvil: título 2rem prevalece sobre clamp; input 1.5rem prevalece sobre .9rem; logo sin max-width y columna max-content puede desplazar las acciones; acciones 36px vs cierre40px.
+- El cierre del corte está anidado en .detail-modal-header-actions, no es hijo directo de .detail-modal-toolbar.
+- Comparación histórica: branch GPSpedia-2.1.7 usa cabecera Flex simple y logo 48/38px; el footer de esa rama indica v2.1.6.
+- Se preservará la base compartida por Tutorial/Relay y se consolidará el encabezado de corte en una sección contigua.

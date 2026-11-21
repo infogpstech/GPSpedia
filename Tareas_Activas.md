@@ -3368,3 +3368,17 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [ ] La cola de compresión permanece FIFO con concurrencia 2. No hay prefetch activo de quince vehículos; el carrusel vigente muestra seis últimos agregados y la precarga previa de actualización ya fue eliminada. No crear trabajo anticipado sin un consumidor visible/medido.
 - [ ] El flujo de cache hit sigue iniciando el src remoto antes de completar IndexedDB; revisar mediciones de cancelación/bytes antes de alterar el equilibrio entre primera visualización y ahorro de red.
 - [ ] La consulta getContributionCandidates aún lee todas las columnas de Cortes porque el proyector de candidatos depende de campos distribuidos por toda la fila y del orden de cortes por utilidad. Reducir columnas requiere una proyección mínima formal y pruebas de paridad, no un filtro improvisado.
+
+ 
+## Auditoría CSS de modales — resultados (2026-11-21)
+
+**Estado: AUDITORÍA COMPLETADA; CONSOLIDACIÓN PENDIENTE.**
+
+- [x] Comparación del encabezado de corte con branch histórico GPSpedia-2.1.7; se documenta que su index.html etiqueta la aplicación como v2.1.6.
+- [x] Localizados conflictos móviles de font-size (2rem y 1.5rem prevalecen sobre valores compactos anteriores).
+- [x] Localizado riesgo de desbordamiento: columna max-content + logo mobile max-width:none + overflow-x hidden.
+- [x] Verificado DOM: el cierre del corte está dentro de .detail-modal-header-actions; el selector directo del toolbar no le aplica.
+- [x] Identificadas reglas repetidas del encabezado y compartición de .detail-modal-toolbar con Tutorial/Relay.
+- [ ] Consolidar en una sola sección contigua sin cambiar los contratos de Tutorial/Relay.
+- [ ] Añadir prueba CSS de cascada y responsive.
+- [ ] Validar visualmente en navegador real/Beta.

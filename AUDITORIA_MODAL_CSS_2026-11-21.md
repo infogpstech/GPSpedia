@@ -1,102 +1,65 @@
-# Auditoría visual de modales y cascada CSS — 2026-11-21
+# Auditoría CSS de modales y encabezado de detalle de corte
+**Fecha:** 2026-11-21  
+**Rama auditada:** GPSpedia2.2.5_work  
+**Referencia histórica:** GPSpedia-2.1.7 (el pie de página de ese branch identifica la aplicación como v2.1.6; no se presume equivalencia de versión sin una etiqueta confirmada).
 
-## Alcance y evidencia
+## Alcance y archivos
+- `style.css` actual: reglas generales de modales, detalle, Inbox, Developer, Relay y encabezados compartidos.
+- `button-system.css`: sistema global de botones y controles; no contiene reglas `.detail-modal-*` ni `#modalDetalle`.
+- `contextual-help.css`: estilos de ayuda contextual; no contiene reglas del encabezado del detalle.
+- `JS/Frontend/ui.js`: estructura DOM actual del detalle de corte, tutorial y Relay.
+- `style.css` y `ui.js` del branch `GPSpedia-2.1.7`: referencia histórica.
 
-- Rama revisada: `GPSpedia2.2.5_work`.
-- Archivos principales: `style.css`, `JS/Frontend/ui.js`, `index.html`, `HTML/users.html`, `HTML/add_cortes.html`.
-- Comparación histórica: rama `GPSpedia-2.1.7` frente al código actual de la rama de trabajo (README y módulo frontend identifican la línea actual como 2.2.5).
-- Prueba focalizada existente: `JS/Tests/CutDetailModalLayout.mjs`.
-- Método: inspección de markup dinámico, reglas CSS y orden de cascada; recuento estático de selectores repetidos. No se ejecutó navegador real ni se midieron estilos computados en viewport físico; la aceptación visual real sigue siendo Beta.
+## Hallazgos del encabezado de corte
 
-## 1. Modal de detalle de corte
-
-### Diferencias de estructura
-
-En 2.1.7, `mostrarDetalleModal` crea el encabezado mediante flex inline: acciones en una fila, cierre como último control y logo/modelo en un contenedor posterior. El CSS histórico fijaba el logo genérico en 48 px en escritorio y 38 px en móvil; el modal tenía 90% de ancho, máximo 800 px y padding 15 px.
-
-En la rama actual, el encabezado se construye con nodos independientes y clases:
-- `.detail-modal-toolbar`: contenedor de cuadrícula.
-- `.detail-modal-title`: contenedor del logo.
-- `.detail-modal-title-text` o `.detail-modal-title-input`: nombre o campo de edición.
-- `.detail-modal-header-actions`: compartir, imprimir, editar/guardar/descartar y cierre.
+### Estructura DOM actual
+El modal de corte marca `#modalDetalle[data-modal-type="corte"]`. Su cabecera usa `.detail-modal-toolbar` con:
+- `.detail-modal-title` y `.brand-logo-modal` para el logo.
+- `.detail-modal-title-text` o `.detail-modal-title-input` para el modelo.
+- `.detail-modal-header-actions` para imprimir, editar, compartir y cerrar.
 - `.detail-modal-divider` y `.detail-modal-saving-indicator`.
 
-La cuadrícula es una evolución funcional respecto al flex histórico, no debe revertirse sin perder la distribución explícita del título y las acciones. El código inserta el cierre dentro de `.detail-modal-header-actions`; la regla exclusiva de corte lo mantiene en flujo estático, alineado al extremo derecho.
+El botón de cierre está anidado dentro de `.detail-modal-header-actions`; por tanto, el selector directo `.detail-modal-toolbar > .info-close-btn` no gobierna el cierre del modal de corte. La regla efectiva es la variante anidada y scoped de corte. El cierre global conserva 40×40 px.
 
-### Hallazgo de proporción y corrección aplicada
+### Duplicación y cascada
+El bloque llamado “BLOQUE CONSOLIDADO — encabezados de detalle” no estaba consolidado de forma efectiva:
+- Había reglas scoped `#modalDetalle[data-modal-type="corte"]` antes del bloque.
+- Dentro del bloque había múltiples declaraciones base para `.detail-modal-title`, `.detail-modal-title-text`, `.detail-modal-title-input`, `.detail-modal-header-actions`, `.detail-modal-divider` y `.detail-modal-saving-indicator`.
+- La misma regla se redefinía después en media queries y nuevamente en el segmento scoped de corte.
+- El selector directo del cierre y el cierre anidado estaban mezclados, aunque solo el segundo coincide con el DOM del modal de corte.
 
-Las reglas heredadas de la base compartida asignaban al logo hasta 120 px y la versión previa del encabezado de corte repetía esa dimensión en escritorio y 60 px en móvil. Esto hacía que el elemento visual dominante fuera mucho mayor que los botones de acción (40 px) y que el área útil del encabezado.
+La auditoría encontró 128 selectores repetidos entre las reglas de modales de `style.css`; muchos son overrides responsive intencionales (Inbox/Developer, por ejemplo) y no deben eliminarse automáticamente. El trabajo de consolidación se limita primero al encabezado de detalle, preservando las reglas base compartidas por Tutorial y Relay.
 
-Se normalizó el logo del modal de corte a:
-- 64 px en escritorio.
-- 48 px en móvil.
-- `object-fit: contain`, ancho natural, sin estirar ni recortar el logo.
-- Contenedor del logo con la misma altura y alineación superior izquierda.
-- Botones de acción y cierre conservan sus objetivos de 40 px; el cierre sigue dentro de la fila de acciones y no vuelve a posicionamiento absoluto.
+### Contradicciones concretas que afectan proporciones
+1. El título móvil tuvo una regla compacta `clamp(1rem, 4vw, 1.35rem)`, pero una regla base posterior lo reemplazó por `2rem`. La variante móvil volvió a fijar `2rem`; el valor compacto nunca llegaba a ser efectivo.
+2. El input de edición móvil tuvo `.9rem`, pero una declaración base posterior impuso `1.5rem`.
+3. En móvil, la columna del logo usa `max-content` y el logo tiene `max-width:none !important`. Un logotipo de proporción muy horizontal puede ensanchar la primera columna, reducir el espacio de acciones y ser recortado por `overflow-x:hidden`.
+4. Los botones de acción se reducen a 36×36 px en móvil, mientras el cierre permanece en 40×40 px. No es una ruptura funcional, pero produce una jerarquía de tamaños desigual.
+5. El título puede moverse debajo del logo con `data-model-title-layout="below-logo"`; el bloque original dejaba implícita la quinta fila del indicador de guardado. La consolidación debe declararla expresamente.
 
-Las reglas de encabezados de detalle (base compartida, variantes responsive y reglas scoped de corte) se movieron a un único bloque final `BLOQUE CONSOLIDADO — encabezados de detalle`. Se preservó el orden original entre reglas y media queries, de modo que el último valor de la cascada sigue prevaleciendo. La base compartida continúa aplicando a tutoriales/PyS/Relay; las reglas con `#modalDetalle[data-modal-type="corte"]` prevalecen para corte.
+## Comparación con la referencia GPSpedia-2.1.7
+| Elemento | Referencia GPSpedia-2.1.7 | Código actual GPSpedia 2.2.5 |
+|---|---|---|
+| Distribución | Cabecera sencilla; acciones agregadas directamente al contenedor | Grid con columna de logo, columna de acciones y título adaptable |
+| Logo | 48 px escritorio / 38 px móvil | 64 px escritorio / 48 px móvil para el modal de corte |
+| Modelo | H2 dentro de contenedor Flex con `flex-wrap:wrap` | Texto/input en celda Grid; se mueve debajo del logo si no cabe |
+| Acciones | Compartir, imprimir, editar y cerrar como hijos del header | Botones dentro de `.detail-modal-header-actions` |
+| Cierre | Estilo inline estático, tamaño derivado de fuente | Botón global 40×40 y regla scoped estática 40×40 |
 
-### Riesgo de cascada identificado
+**Discrepancia de referencia:** el branch se llama `GPSpedia-2.1.7`, pero `index.html` muestra `GPSpedia v2.1.6`. Se registra como referencia histórica del branch, no como versión de aplicación confirmada.
 
-Antes del bloque específico de corte hay reglas genéricas de `.detail-modal-toolbar`, `.detail-modal-title`, `.detail-modal-title-text`, `.detail-modal-title-input`, `.detail-modal-header-actions`, `.detail-modal-divider` y `.detail-modal-saving-indicator` en varios sectores del archivo. Algunas se comparten con encabezados de tutoriales, PyS o Relay. La regla final scoped a `#modalDetalle[data-modal-type="corte"]` gana para el corte; las reglas genéricas siguen aplicando a los demás modales.
+## Decisiones de consolidación
+- Mantener una única sección contigua para la base compartida de encabezados y la variante scoped de corte.
+- Mantener el comportamiento base de Tutorial y Relay; el selector `.detail-modal-toolbar` es compartido.
+- Mantener el cierre scoped del corte dentro de `.detail-modal-header-actions`.
+- Recuperar tamaños móviles compactos para título e input.
+- Limitar el ancho del logo móvil y la primera columna para reservar espacio real a acciones.
+- Unificar las dimensiones de los botones de acción y cierre del encabezado de corte.
+- Conservar el mecanismo `below-logo`, declarando todas sus filas explícitamente.
+- No alterar las reglas generales de Inbox, Developer, PyS, Relay o modales informativos en esta primera corrección.
 
-El bloque consolidado mantiene juntas las reglas base y las variantes sin cambiar su orden de cascada. La auditoría pendiente debe continuar con modales informativos, Inbox y Developer Tools; no mezclar sus contratos con el encabezado de detalle.
-
-## 2. Consolidaciones adicionales de familias de modales
-
-- `.info-modal-content`: se fusionaron las dos reglas base dispersas en una única regla; conserva `max-width:650px`, `width:90%`, `padding:25px`, `border-radius:12px`, `box-sizing`, scroll vertical y límite de altura. Se mantienen las variantes de tema oscuro, Acerca de, Términos y Dashboard por su especificidad.
-- `.info-close-btn`: se confirmó una única regla base global con área de 40 px, posicionamiento absoluto para modales informativos, estado hover, foco visible y disabled. El cierre del detalle de corte conserva su override scoped en flujo; Relay mantiene su variante propia.
-- Inbox: se agruparon en un bloque las reglas del encabezado, heading, acciones y paginación, incluidas sus media queries. El padding derecho reserva espacio para el cierre; las reglas de búsqueda y controles internos permanecen en sus grupos funcionales.
-- Developer Tools: las declaraciones base de `.dev-tools-title` se fusionaron en una única regla. Las variantes de ancho móvil y `prefers-reduced-motion` permanecen en sus media queries para conservar el comportamiento accesible.
-- No se movieron indiscriminadamente las reglas internas de navegación, paneles y acciones de Inbox/Developer Tools: sus diferencias corresponden a estados, subcomponentes y breakpoints. Las pruebas de regresión protegen esos contratos.
-
-## 3. Inventario estático de selectores repetidos
-
-El escaneo de `style.css` encontró, entre otros, los siguientes selectores exactos repetidos en múltiples reglas:
-
-| Selector | Apariciones |
-|---|---:|
-| `.detail-modal-header-actions` | 6 |
-| `.detail-modal-title-text` | 5 |
-| `.detail-modal-title-input` | 5 |
-| `.detail-modal-toolbar` | 4 |
-| `.detail-modal-title` | 4 |
-| `.detail-modal-title .brand-logo-modal` | 4 |
-| `.detail-modal-header-actions .share-modal-btn` | 4 |
-| `.detail-modal-toolbar > .info-close-btn` | 4 |
-| `.detail-modal-divider` | 4 |
-| `.info-modal-content` | 4 |
-| `#modalDetalle` | 3 |
-| `#inbox-modal-content .inbox-modal-header` | 4 |
-| `#dev-tools-modal .dev-tools-title` | 7 |
-
-El recuento incluye reglas base y media queries. No significa que cada repetición sea un conflicto: una regla móvil o una variante scoped puede ser intencional. Sí identifica áreas donde hay que documentar y ordenar la cascada para evitar sobrescrituras accidentales.
-
-## 4. Criterios de consolidación
-
-1. Un único bloque de estilos base por componente/modal.
-2. Un bloque de variantes responsive contiguo al componente correspondiente.
-3. Variantes por tipo de modal con selector explícito y sin afectar a los demás.
-4. Cuando haya dos declaraciones del mismo selector, conservar el valor que realmente gana hoy en la cascada, salvo que la auditoría demuestre que ese valor es el defecto.
-5. Revisar `!important`, estilos inline y especificidad antes de mover reglas.
-6. Mantener dimensiones accesibles de controles, orden de tabulación, etiquetas ARIA, foco y comportamiento de cierre.
-7. No modificar RBAC, handlers ni comportamiento de negocio como solución a un defecto visual.
-8. Actualizar contratos CSS/DOM y ejecutar la regresión integral después de cada bloque consolidado.
-
-## 5. Estado de pruebas
-
-- `CutDetailModalLayout.mjs`: 29/29 PASS, incluyendo la comprobación del bloque CSS consolidado.
-- `InfoModalStyleCascade.mjs`: 3/3 PASS.
-- `ModalHeaderCascade.mjs`: 2/2 PASS.
-- Regresión GitHub Actions: 261 suites, 3,143 pruebas aprobadas, 0 fallos. Sintaxis de módulos modificados: PASS.
-- Health check remoto de solo lectura: SUCCESS. No sustituye la aceptación visual Beta.
-- La aceptación visual en escritorio/Android sigue pendiente de Beta. No se declara aprobación visual por una inspección de CSS.
-
-## 6. Pendientes derivados y prioridad
-
-1. Mantener la aceptación visual en escritorio, Android/PWA y viewport estrecho como validación Beta.
-2. Reabrir la auditoría solo si Beta descubre discrepancias de estilos computados, contraste o proporciones no detectables en el análisis estático.
-
-## 7. Límite de la auditoría
-
-Este documento registra el resultado estático de la primera pasada y la corrección acotada del encabezado de corte. No declara terminada la auditoría visual integral de toda la plataforma. No se desplegaron proyectos Apps Script ni se modificaron datos de Spreadsheet/Drive.
+## Validación
+- Auditoría estática de selectores y cascada: completada.
+- Comparación de estructura JS/CSS histórica y actual: completada.
+- Prueba de contrato CSS y revisión responsive automatizada: por implementar.
+- Inspección visual en navegador real/escritorio/móvil: requiere validación Beta; no se declara aprobada en esta auditoría.

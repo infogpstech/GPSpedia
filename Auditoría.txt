@@ -1368,3 +1368,10 @@ Validación exact-source local:
 - CI b8d425748e483fcd6535fdc83c7c982d603b6161: 273 suites / 3,191 pruebas / 0 fallos; health read-only SUCCESS.
 - Pendiente: validación navegador real y medir cache hit (el src remoto se inicia antes de la respuesta IndexedDB); no se ha declarado ahorro universal de red.
 - No hay prefetch activo de 15 vehículos: el carrusel usa seis elementos y la precarga redundante se retiró. FIFO concurrencia 2 no compite con jobs de prefetch.
+
+ 
+2026-11-21 — AUDITORÍA CSS DE MODALES
+- Se documenta la cascada dispersa del encabezado de corte y los conflictos móviles de tipografía, logo y dimensiones de acciones.
+- Se identifica que el selector directo del cierre no coincide con la estructura DOM actual; el cierre del corte es hijo de .detail-modal-header-actions.
+- La comparación con GPSpedia-2.1.7 revela una cabecera Flex simple y logo 48/38px; la rama histórica muestra footer v2.1.6.
+- Se mantendrán los estilos compartidos de Tutorial y Relay; la consolidación se limitará a un bloque único de encabezados.

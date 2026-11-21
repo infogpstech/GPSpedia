@@ -1157,3 +1157,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Pendiente: validar comportamiento en navegador real (CORS, PNG alfa, cache hit/miss, bytes transferidos y primera pintura). El cache hit todavía inicia el src remoto antes de que IndexedDB responda; medir antes de cambiar.
 - Pendiente: optimizar getContributionCandidates para leer columnas mínimas solo después de documentar todas las dependencias del proyector y demostrar paridad.
 - No se desplegó Apps Script ni se modificaron datos productivos.
+
+ 
+## Checkpoint — auditoría CSS de modales (2026-11-21)
+
+- Auditoría estática completada sobre style.css, button-system.css, contextual-help.css y JS/Frontend/ui.js.
+- Branch histórico consultado: GPSpedia-2.1.7 (39f87b6205f8086daec69589e4193d457568dc0a). Su index.html dice GPSpedia v2.1.6; la diferencia queda documentada.
+- Hallazgos clave: título móvil 2rem sobreescribe clamp 1.35rem; input móvil 1.5rem sobreescribe .9rem; logo móvil max-width:none dentro de columna max-content; acciones 36px y cierre 40px.
+- El cierre de corte está anidado dentro de .detail-modal-header-actions, por lo que .detail-modal-toolbar > .info-close-btn no lo posiciona.
+- .detail-modal-toolbar es compartido con Tutorial/Relay; consolidar manteniendo la base compartida y aislando la variante corte.
+- Pendiente: consolidación CSS, prueba de cascada y visual Beta. No se modificó CSS en la fase de auditoría.
