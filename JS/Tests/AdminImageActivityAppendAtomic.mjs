@@ -60,7 +60,7 @@ test("el registro sin actor no escribe", () => {
 });
 
 test("la policy ACTIVITY independiente desaparece de Coordinator", () => {
-    assert.equal(Boolean(policy("ADMIN", "recordAdminImageActivity")), false);
+    assert.throws(() => policy("ADMIN", "recordAdminImageActivity"), /no está habilitada en la política/);
 });
 
 console.log("AdminImageActivityAppendAtomic: " + passed + "/" + passed + " PASS");
