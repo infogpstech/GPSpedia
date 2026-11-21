@@ -9,9 +9,9 @@ const canonicalCode=extract("findCanonicalPysRowsById_","findPysRowsById_");
 const physicalCode=extract("findPysRowsById_","getPysNextId_");
 function makeSheet(rows,withFinder=true){
  return {getLastRow:()=>rows.length+1,getRange(row,col,count=1,width=1){
-  return {getValues:()=>rows.slice(row-2,row-2+count).map(r=>r.slice(col-1,col-1+width)),
-   createTextFinder(query){if(!withFinder)throw new Error("TextFinder disabled");return{matchCase(){return this;},findAll(){return rows.flatMap((r,i)=>String(r[col-1]||"").toLowerCase().includes(String(query).toLowerCase())?[{getRow:()=>i+2}]:[]);}};}
-  };
+  const range={getValues:()=>rows.slice(row-2,row-2+count).map(r=>r.slice(col-1,col-1+width))};
+  if(withFinder)range.createTextFinder=query=>({matchCase(){return this;},findAll(){return rows.flatMap((r,i)=>String(r[col-1]||"").toLowerCase().includes(String(query).toLowerCase())?[{getRow:()=>i+2}]:[]);}});
+  return range;
  }};
 }
 const canonical=new Function("COLS_FEEDBACKS",canonicalCode+"\nreturn findCanonicalPysRowsById_;")({});
