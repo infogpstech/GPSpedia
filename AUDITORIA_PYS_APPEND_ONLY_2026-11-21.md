@@ -94,3 +94,11 @@ Se revisó `handleAddProblem`, `PysOperations`, los helpers de ID/lookup, el alm
 - Las mutaciones siguen siendo materializaciones in-place protegidas por lease (no se reclasifican como append-only). Se conserva el contrato de first-write-wins, reintento idempotente, validación de IDs, lectura de valor persistido y RBAC de desvinculación.
 - La suite PysVehicleRelationIntegrity, antes fuera del runner principal, ahora forma parte de CI: 19/19 PASS. PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22; CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos.
 - Concurrencia real entre proyectos, expiración/contención de leases y fallos de Spreadsheet quedan diferidos a Beta aislada. No se desplegó ni se modificaron datos productivos.
+
+
+## Adenda — corrección de prevalidación y regresión de relaciones (2026-11-21)
+
+- La ejecución CI 44906149739 expuso problemas de cobertura: el test de navegación comprobaba el estilo de tarjeta existente y el harness de relaciones no aislaba correctamente el helper de rol; además, el caso de alta preasociada evidenció que handleAddProblem inicializaba PysOperations antes de rechazar un vehículo inexistente.
+- Se corrigió la extracción del helper en la prueba y se ordenó handleAddProblem para validar primero los IDs de Cortes y después inicializar/leer PysOperations. No se alteró el contrato de escritura ni el flujo de archivos.
+- CI final 44907336819 SUCCESS: 259 suites, 3,129 pruebas aprobadas, 0 fallos. PysModalNavigation 10/10; PysCreationIntegrity 56/56; PysVehicleRelationIntegrity 19/19; PysImageStorageRecovery 22/22. Health read-only 44907336832 y Pages 44907336274 SUCCESS.
+- La corrección es local y no sustituye la Beta aislada de Spreadsheet/Drive/Coordinator. No hubo deployment ni cambios en datos productivos.

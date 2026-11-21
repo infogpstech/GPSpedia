@@ -577,3 +577,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - El registro operativo solo conserva tareas Beta pendientes. AUG-159/AUG-160 requieren deployments de prueba WRITE/CATALOG/ADMIN, Spreadsheet/Drive desechables y cuentas de prueba separadas. No se ejecutan con endpoints ni datos productivos.
 - Safe Apply permanece bloqueado hasta preview real autorizado, ACL, manifiesto y rollback verificados. No mover, renombrar, sobrescribir ni borrar recursos productivos.
 - Todas las migraciones locales del alcance activo están cerradas. No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Checkpoint — cierre local P0/P1 y arranque de verificación integral (2026-11-21)
+
+- HEAD de código validado: 6b2721a97fc26c0f7367ffbf65c0f8ac0de2170d; rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se modificó la base.
+- Se corrigió handleAddProblem para validar todos los modelos de Cortes antes de inicializar/leer PysOperations. La prueba que cubre un vehículo inexistente confirma rechazo antes de reservar recursos.
+- CI 44907336819 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; PysModalNavigation 10/10, PysCreationIntegrity 56/56, PysVehicleRelationIntegrity 19/19 y PysImageStorageRecovery 22/22. Health read-only 44907336832 SUCCESS; Pages 44907336274 SUCCESS.
+- P0 GP-CONCURRENCY-CUT-MULTI-ENTRY-01 y P1 GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01: COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. Solo quedan pruebas de campo/servicios reales en entornos aislados, pruebas visuales Beta y Safe Apply sujeto a preview/ACL/rollback autorizados.
+- Se inicia la fase de verificación técnica integral conforme a §11 de las normas: revisar alcance de CI, sintaxis/referencias, integración entre servicios, concurrencia/idempotencia y diff de la rama de trabajo. No incorporar nuevas mejoras durante esta fase.
+- No se desplegó Apps Script ni se modificaron recursos productivos.

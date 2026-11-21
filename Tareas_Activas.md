@@ -33,7 +33,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 
 ## P0 — GP-CONCURRENCY-CUT-MULTI-ENTRY-01
 
-**Estado: EN PROGRESO.** Las rutas append-only y la regresión local cubren parte importante del alcance; no declarar cerrada la tarea hasta completar los puntos locales restantes y después ejecutar Beta.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Todas las migraciones y regresiones locales del alcance están cerradas; permanecen únicamente pruebas reales en entornos aislados.
 
 - [x] Retirar el `UserLock` del fallback de `handleAddOrUpdateCut`. Los vehículos existentes usan append-only y requieren opId; si falta, se devuelve `WRITE_OP_ID_REQUIRED` antes de adquirir un lock. El `ScriptLock` queda solo para asignar el ID numérico de un vehículo nuevo. CI 44829158327: 237 suites/2942 pruebas PASS.
 - [x] Confirmar consumidores activos de cortes: modal de detalle y `HTML/add_cortes.html` envían/reutilizan opId estable.
@@ -62,7 +62,7 @@ La copia archivada fue verificada carácter por carácter contra el original. Es
 
 ## P1 — GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01
 
-**Estado: COMPLETADA LOCALMENTE; aceptación visual Beta diferida.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 - [x] Verificado: `handleLoginSuccess` inicia `loadUserLocalActivity(user)` antes de `showApp(user)`; las lecturas IndexedDB de búsqueda y vistos se inician de forma independiente, sin `await` ni `Promise.all` que bloquee la aplicación.
 - [x] `loadViewedItems` hidrata el carrusel por ownerId, no espera al historial de búsqueda, reintenta solo la lectura local no disponible y valida sesión/propietario antes de aplicar una respuesta tardía.
@@ -513,7 +513,8 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - [x] Confirmar que Coordinator ya define los cuatro contratos de recursos: FEEDBACK para PyS y CORTES como lectura al modificar relaciones.
 - [x] Añadir PysVehicleRelationIntegrity al runner CI; suite 19/19 PASS.
 - [x] PysCreationIntegrity 56/56 PASS; PysImageStorageRecovery 22/22 PASS; P2PysImageUploadOutsideLock PASS.
-- [x] CI 44906612421 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; node --check PASS. Health read-only 44906612467 SUCCESS.
+- [x] Corregir el orden de prevalidación de modelos asociados en handleAddProblem: validar IDs de Cortes antes de crear/leer PysOperations, evitando efectos laterales de inicialización ante un vehículo inválido.
+- [x] CI actualizado 44907336819 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; PysModalNavigation 10/10, PysCreationIntegrity 56/56, PysVehicleRelationIntegrity 19/19; node --check PASS. Health read-only 44907336832 SUCCESS; Pages 44907336274 SUCCESS.
 - [ ] Beta aislada: concurrencia real entre proyectos, leases Coordinator, fallo de lease, pérdida de respuesta y read-back en Spreadsheet aislada.
 - No se desplegó Apps Script ni se modificaron datos productivos.
 
@@ -523,3 +524,13 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - AUG-159 requiere deployments aislados WRITE/CATALOG/ADMIN, Spreadsheet y Drive desechables, y dos cuentas de prueba con permisos distintos.
 - AUG-160 requiere proyecto/deployment ADMIN de prueba y Spreadsheet/Drive aislados para inyectar fallos, pérdida de respuesta, file_missing y metadatos alterados.
 - No ejecutar endpoints, cuentas, hojas ni carpetas productivas. La CI local no sustituye estas pruebas reales; Safe Apply sigue bloqueado hasta preview, ACL y rollback autorizados.
+
+
+## Continuidad — cierre de regresiones PyS y preparación de verificación integral (2026-11-21)
+
+- Se corrigió el orden de handleAddProblem: la validación de cada modelo asociado contra Cortes ocurre antes de inicializar/leer PysOperations, evitando efectos laterales de inicialización cuando el ID de vehículo no existe.
+- PysVehicleRelationIntegrity se ejecuta en el runner principal y queda en 19/19 PASS; PysCreationIntegrity 56/56, PysModalNavigation 10/10 y PysImageStorageRecovery 22/22 PASS.
+- CI 44907336819 SUCCESS: 259 suites, 3,129 pruebas aprobadas, 0 fallos; comprobación sintáctica PASS. Health read-only 44907336832 SUCCESS; GitHub Pages 44907336274 SUCCESS.
+- P0 GP-CONCURRENCY-CUT-MULTI-ENTRY-01 y P1 GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01: COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. No quedan tareas locales de implementación abiertas en el registro vigente; continúan exclusivamente validaciones Beta reales y Safe Apply, que requiere preview, ACL y rollback autorizados.
+- Siguiente actividad: fase de verificación técnica integral exigida por §11 de NORMAS_DESAROLLO.md, sin incorporar funcionalidades nuevas.
+- No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.

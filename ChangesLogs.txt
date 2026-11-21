@@ -327,3 +327,10 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - Se conserva la escritura materializada/read-back y la semántica first-write-wins; validación de IDs, idempotencia y RBAC de desvinculación.
 - PysCreationIntegrity 56/56, PysImageStorageRecovery 22/22, PysVehicleRelationIntegrity 19/19, P2PysImageUploadOutsideLock PASS.
 - CI 44906612421 SUCCESS: 259 suites, 3129 pruebas, 0 fallos; Health 44906612467 SUCCESS. Concurrencia real Coordinator/Spreadsheet diferida a Beta.
+
+
+2026-11-21 — PREFLIGHT PyS Y CIERRE LOCAL P0/P1
+- handleAddProblem valida los modelos asociados contra Cortes antes de inicializar/leer PysOperations; se evita crear/consultar el ledger ante una asociación inválida.
+- P0 de concurrencia multi-entry y P1 de recent-viewed quedan completadas localmente con validación diferida a Beta.
+- CI 44907336819 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos; Health read-only 44907336832 SUCCESS; Pages 44907336274 SUCCESS.
+- La siguiente actividad es verificación técnica integral §11; permanecen pruebas Beta aisladas y Safe Apply sujeto a autorización de preview/ACL/rollback.

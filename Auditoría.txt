@@ -1106,3 +1106,12 @@ Adenda — FEEDBACK confirmación de sugerencias
 - Se conserva el flujo first-write-wins con validación/read-back, idempotencia, IDs únicos, normalización de asociaciones y RBAC de Desarrollador para desvinculación. No se sustituyó por UserLock ni se introdujo fallback local.
 - PysVehicleRelationIntegrity se incorporó al runner y pasa 19/19; PysCreationIntegrity 56/56; PysImageStorageRecovery 22/22; CI 44906612421 SUCCESS: 259 suites, 3129 pruebas, 0 fallos.
 - Beta pendiente: concurrencia real entre proyectos, lease contention/expiry, fallos de Spreadsheet y recuperación de respuestas ambiguas. Sin deployment ni cambios productivos.
+
+
+================================================================================
+2026-11-21 — HALLAZGO Y CORRECCIÓN EN PREFLIGHT DE ALTA PyS
+- Ubicación: JS/Services/feedback.js, handleAddProblem.
+- Evidencia: la validación de modelos asociados contra Cortes ocurría después de inicializar/leer PysOperations; un ID de vehículo inexistente podía provocar la inicialización de la hoja de operaciones antes de rechazar el payload.
+- Impacto/severidad: efecto lateral innecesario en un intento inválido; severidad baja, sin evidencia de pérdida o corrupción de datos.
+- Corrección: validar todos los IDs de vehículos antes de inicializar/leer PysOperations o reservar la operación. La prueba de alta preasociada verifica que el rechazo ocurre antes de cualquier escritura.
+- Validación: CI 44907336819 SUCCESS, 259 suites/3,129 pruebas/0 fallos; PysVehicleRelationIntegrity 19/19, PysCreationIntegrity 56/56, PysModalNavigation 10/10. Health y Pages SUCCESS.
