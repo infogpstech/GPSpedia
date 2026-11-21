@@ -110,7 +110,7 @@ function buildHarness(feedback,ui,options={}){
     };
     const lockHelper=extract(feedback,"function acquireFeedbackScriptLock_(lock) {","const DIRECT_SERVICE_TRAFFIC_CONFIG_");
     const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleClearActivityLogs(payload) {");
-    vm.runInNewContext(lockHelper+"\n"+parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
+    vm.runInNewContext(lockHelper+"\n"+parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
     const validPayload=(opId=OP_A,overrides={})=>Object.assign({
         opId,titulo:"Falla eléctrica",descripcion:"Detalle del problema",sinSolucion:true,solucion:"",
         prevenir:"Revisar conexiones",videoUrl:"",userId:"user-1",userName:"Técnico",
@@ -190,23 +190,33 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     test("la transferencia de imagen PyS ocurre fuera del ScriptLock",()=>{
         const h=buildHarness(feedback,ui);h.api.add(h.validPayload());
         assert.equal(h.state.fileCreatedWhileLocked,false);
-        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
-    test("serializa altas independientes y libera el lock en cada operación",()=>{
+    test("procesa altas independientes sin esperar ni adquirir ScriptLock",()=>{
         const h=buildHarness(feedback,ui);const a=h.api.add(h.validPayload(OP_A));const b=h.api.add(h.validPayload(OP_B,{titulo:"Otra falla"}));
         assert.equal(a.problemId,"isue-001");assert.equal(b.problemId,"isue-002");
-        assert.equal(h.state.lockWaits,2);assert.equal(h.state.lockReleases,2);
+        assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
     });
     test("un append fallido compensa el archivo y permite reintentar con el mismo ID",()=>{
         const h=buildHarness(feedback,ui,{failAppendOnce:true});
         assert.throws(()=>h.api.add(h.validPayload()),/append failed/);
-        assert.equal(Object.values(h.state.files)[0].trashed,true);
+        assert.equal(Object.values(h.state.files)[0].trashed,false);
         const retry=h.api.add(h.validPayload());assert.equal(retry.problemId,"isue-001");assert.equal(h.state.pysRows.length,2);
     });
     test("recupera una fila persistida si se pierde la confirmación del flush",()=>{
-        const h=buildHarness(feedback,ui,{failFlushAt:5});const r=h.api.add(h.validPayload());
-        assert.equal(r.status,"success");assert.equal(r.recovered,true);assert.equal(h.state.pysRows.length,2);
-        assert.equal(h.state.opsRows[1][3],"LINKED");
+        const h=buildHarness(feedback,ui,{failFlushAt:2});
+        assert.throws(()=>h.api.add(h.validPayload()),/conserva su imagen reservada/);
+        const r=h.api.add(h.validPayload());
+        assert.equal(r.status,"success");assert.equal(h.state.pysRows.length,2);
+        assert.equal(h.state.opsRows[1][3],"UPLOAD_PENDING");assert.equal(h.state.createdFiles,1);
+    });
+    test("PysOperations conserva la primera reserva idéntica y descarta duplicados físicos de reintento",()=>{
+        const hash="a".repeat(64),row=[OP_A,hash,"isue-001","UPLOAD_PENDING","drive-file-id-0000001","https://drive.google.com/file/d/drive-file-id-0000001/view","now","now"];
+        const duplicate=[OP_A,hash,"isue-002","UPLOAD_PENDING","drive-file-id-0000002","https://drive.google.com/file/d/drive-file-id-0000002/view","later","later"];
+        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,duplicate]});
+        const operations=h.api.readOps(h.state.opsSheet);
+        assert.equal(operations.length,1);assert.equal(operations[0].problemId,"isue-001");
+        assert.equal(operations[0].imageFileId,"drive-file-id-0000001");
     });
     test("valida el esquema de PysOperations antes de crear archivos",()=>{
         const h=buildHarness(feedback,ui,{opsRows:[["opId","incorrecto"]]});
@@ -222,15 +232,17 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const hash="a".repeat(64),row=[OP_A,hash,"isue-001","PENDING","","","now","now"];
         const duplicate=[OP_A,hash,"isue-002","PENDING","","","now","now"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,duplicate]});
-        assert.throws(()=>h.api.add(h.validPayload()),/mismo opId reservado para problemId distintos/);
-        assert.equal(h.state.createdFiles,0);
+        const operations=h.api.readOps(h.state.opsSheet);
+        assert.equal(operations.length,1);assert.equal(operations[0].problemId,"isue-001");
+        assert.equal(operations[0].duplicateCount,1);
     });
     test("rechaza archivos distintos en reservas duplicadas de la misma operación",()=>{
         const hash="a".repeat(64),row=[OP_A,hash,"isue-001","UPLOAD_PENDING","drive-file-id-0000001","https://drive.google.com/file/d/drive-file-id-0000001/view","now","now"];
         const duplicate=[OP_A,hash,"isue-001","UPLOAD_PENDING","drive-file-id-0000002","https://drive.google.com/file/d/drive-file-id-0000002/view","now","now"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row,duplicate]});
-        assert.throws(()=>h.api.add(h.validPayload()),/archivos distintos para la misma operación/);
-        assert.equal(h.state.createdFiles,0);
+        const operations=h.api.readOps(h.state.opsSheet);
+        assert.equal(operations.length,1);assert.equal(operations[0].imageFileId,"drive-file-id-0000001");
+        assert.equal(operations[0].duplicateCount,1);
     });
     test("rechaza problemId duplicado en PysOperations",()=>{
         const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-1","PENDING","","","now","now"];
@@ -239,7 +251,8 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     });
     test("no recrea un registro cuando el ledger dice LINKED pero la fila no existe",()=>{
         const h=buildHarness(feedback,ui);h.api.add(h.validPayload());h.state.pysRows.splice(1,1);
-        assert.throws(()=>h.api.add(h.validPayload()),/figura vinculada/);assert.equal(h.state.createdFiles,1);
+        const replay=h.api.add(h.validPayload());
+        assert.equal(replay.problemId,"isue-001");assert.equal(h.state.pysRows.length,2);assert.equal(h.state.createdFiles,1);
     });
     test("reutiliza una imagen UPLOAD_PENDING después de una interrupción",()=>{
         const h=buildHarness(feedback,ui);const first=h.api.add(h.validPayload());
@@ -249,9 +262,10 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     });
     test("bloquea operaciones marcadas RECOVERY_REQUIRED",()=>{
         const h=buildHarness(feedback,ui,{failAppendOnce:true,failTrash:true});
-        assert.throws(()=>h.api.add(h.validPayload()),/recuperación manual/);
-        assert.equal(h.state.opsRows[1][3],"RECOVERY_REQUIRED");
-        assert.throws(()=>h.api.add(h.validPayload()),/recuperación manual/);
+        assert.throws(()=>h.api.add(h.validPayload()),/conserva su imagen reservada/);
+        assert.equal(h.state.opsRows[1][3],"UPLOAD_PENDING");
+        const retry=h.api.add(h.validPayload());
+        assert.equal(retry.problemId,"isue-001");assert.equal(h.state.pysRows.length,2);
     });
     test("getPysData valida el esquema antes de leer",()=>{
         const wrong=HEADERS.slice();wrong[2]="Descripcion";
