@@ -12,7 +12,7 @@ const helperCode = extract("findExistingVinRegistrationNoop_");
 const wrapperCode = extract("handleAddVinToVehicle");
 const lockHandlerCode = extract("handleAddVinToVehicleLocked");
 const columns = { id: 1, versionesAplicables: 5 };
-function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "ABC123456"], lockAvailable = true } = {}) {
+function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "ABC123456"], lockAvailable = true, duplicateIds = false, authFails = false } = {}) {
     let lockCalls = 0, lockedCalls = 0, authCalls = 0, versionCalls = 0, reads = [];
     const sheet = {
         getLastRow: () => 2,
@@ -20,7 +20,7 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
         getRange(...args) {
             reads.push(args);
             return { getValues: () => {
-                if (args[1] === columns.id) return [[row[0]]];
+                if (args[1] === columns.id) return duplicateIds ? [[row[0]], [row[0]]] : [[row[0]]];
                 return [row.slice(args[1] - 1, args[1] - 1 + (args[3] || 1))];
             }};
         }
@@ -33,9 +33,9 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
         getVinColumnIndex: () => 10,
         parseEquipmentVersions: value => String(value || "").split("/").map(v => v.trim()).filter(Boolean),
         parseVinCollection: value => value ? JSON.parse(value) : [],
-        getAuthenticatedCollaborator() { authCalls++; return "Ana"; },
+        getAuthenticatedCollaborator() { authCalls++; if (authFails) throw new Error("unauthorized"); return "Ana"; },
         LockService: { getScriptLock: () => lock },
-        handleAddVinToVehicleLocked() { lockedCalls++; return { status: "success", vehicleId: "10" }; },
+        handleAddVinToVehicleLocked(payload) { lockedCalls++; getAuthenticatedCollaborator(payload); return { status: "success", vehicleId: "10" }; },
         nextWriteCatalogVersionLocked_() { versionCalls++; return 4; },
         Logger: { log() {} }
     };
@@ -69,16 +69,16 @@ test("una versión nueva nunca se resuelve fuera del lock", () => {
     assert.equal(h.stats().lockCalls, 1);
 });
 test("un ID ambiguo no permite responder desde preflight", () => {
-    const h = makeHarness();
-    const originalGetRange = h.helper;
-    // La ambigüedad se cubre mediante una hoja que devuelve dos coincidencias en el test de helper aislado.
-    assert.equal(typeof originalGetRange, "function");
+    const h = makeHarness({ duplicateIds: true, row: ["10", "", "", "", "Base", "", "", "", "", "[\\"ABC\\"]"] });
+    assert.equal(h.helper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" }), null);
+    h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" });
+    assert.equal(h.stats().lockCalls, 1);
 });
 test("si falla la autenticación en preflight, la ruta protegida vuelve a validar", () => {
-    const h = makeHarness();
-    // El wrapper siempre invoca el handler protegido si el preflight no confirma el replay.
-    assert.equal(h.wrapper({ vehicleId: "10", vin: "NEW12345", trimLevel: "Base" }).status, "success");
+    const h = makeHarness({ authFails: true });
+    assert.equal(h.wrapper({ vehicleId: "10", vin: "NEW12345", trimLevel: "Base" }).status, "error");
     assert.equal(h.stats().lockCalls, 1);
     assert.equal(h.stats().lockedCalls, 1);
+    assert.equal(h.stats().authCalls, 2);
 });
 console.log("WriteVinNoopPreflight: " + passed + "/" + passed + " PASS — replay idéntico fuera del lock; mutaciones conservan revalidación protegida");
