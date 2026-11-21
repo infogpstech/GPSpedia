@@ -23,12 +23,14 @@ assert.match(inbox,/lock\.tryLock\(0\)/);
 const suggestYear = extract(feedback,"handleSuggestYear");
 assert.doesNotMatch(suggestYear,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
  "suggestYear coordina sus mutaciones con ledger append-only e identidades idempotentes, sin lock global.");
-for(const name of ["handleReportProblem","handleAddProblem","handleAddTutorial","handleUpdateTutorialItem"]){
+for(const name of ["handleAddProblem","handleAddTutorial","handleUpdateTutorialItem"]){
  const body=extract(feedback,name);
  assert.ok(body.includes("acquireFeedbackScriptLock_(lock)"),name+" debe adquirir el lock sin espera.");
 }
-assert.doesNotMatch(extract(feedback,"handleSuggestCutChange","parseModelosAsociados"),/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
- "suggestCutChange reconcilia duplicados idénticos mediante first-write-wins sin lock global.");
+for(const [name,nextName] of [["handleReportProblem","enforceFeedbackRateLimit_"],["handleSuggestCutChange","parseModelosAsociados"]]){
+ assert.doesNotMatch(extract(feedback,name,nextName),/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
+  name+" debe reconciliar escrituras concurrentes mediante identidad lógica y append-only sin lock global.");
+}
 {
  const contact=extract(feedback,"handleSendContactForm");
  assert.doesNotMatch(contact,/LockService\.getScriptLock\(\)|acquireFeedbackScriptLock_\(/,
