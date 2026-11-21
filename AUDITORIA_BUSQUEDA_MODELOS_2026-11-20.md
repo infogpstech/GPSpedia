@@ -6,7 +6,7 @@
 **Rama:** GPSpedia2.2.5_work  
 **HEAD auditado:** 38b5a02ca951270c2e93001edfa349a46a805f7a  
 **Rama base protegida:** GPSpedia2.2.5 — d9acc68d889985c2e2f42fe3a02e502efc86ead1  
-**Estado:** AUDITORÍA PREIMPLEMENTACIÓN COMPLETADA · IMPLEMENTACIÓN PENDIENTE
+**Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA A BETA
 
 ## 1. Requisito registrado
 
@@ -204,4 +204,11 @@ Se preservan registros de Relay, Tutoriales y PyS sin agrupar. Los VIN ambiguos 
 - No se ejecutó la regresión integral del repositorio ni una prueba de navegador real. El entorno no dispone de checkout local y las herramientas GitHub disponibles no devolvieron estados de CI para los commits recientes.
 - No se desplegó Apps Script ni se consultaron/modificaron datos productivos.
 
-**Estado:** implementación local terminada; cierre de validación pendiente hasta ejecutar la regresión integral y probar la interfaz en navegador.
+**Estado actualizado:** implementación y regresión integral local completadas; aceptación visual real diferida a Beta.
+
+## Adenda — cierre de regresión integral local (2026-11-21)
+
+- La suite SearchModelGrouping se encuentra registrada en el grupo INTEGRATION de RunServiceTests.mjs y ejecutó 21/21 PASS.
+- CI 44907910014 SUCCESS: 259 suites, 3,129 pruebas aprobadas, 0 fallos. La comprobación sintáctica ampliada de módulos backend también aprobó en el mismo workflow.
+- La jerarquía de búsqueda, agrupación y compatibilidad de navegación queda cerrada localmente. Se mantiene como validación Beta la comprobación visual en escritorio, Android/PWA y con catálogo real aislado.
+- No se desplegó Apps Script ni se modificaron datos productivos.

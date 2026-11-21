@@ -587,3 +587,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - P0 GP-CONCURRENCY-CUT-MULTI-ENTRY-01 y P1 GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01: COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. Solo quedan pruebas de campo/servicios reales en entornos aislados, pruebas visuales Beta y Safe Apply sujeto a preview/ACL/rollback autorizados.
 - Se inicia la fase de verificación técnica integral conforme a §11 de las normas: revisar alcance de CI, sintaxis/referencias, integración entre servicios, concurrencia/idempotencia y diff de la rama de trabajo. No incorporar nuevas mejoras durante esta fase.
 - No se desplegó Apps Script ni se modificaron recursos productivos.
+
+
+## Checkpoint — cierre local de búsqueda agrupada por modelo (2026-11-21)
+
+- Se recuperó la auditoría GP-UX-SEARCH-MODEL-GROUPING-01, que permanecía con implementación local terminada pero cierre pendiente de regresión integral.
+- La suite SearchModelGrouping está integrada en RunServiceTests y aprobó 21/21 en CI 44907910014. La ejecución integral aprobó 259 suites, 3,129 pruebas y cero fallos.
+- Se conserva pendiente únicamente la aceptación visual en navegadores/dispositivos reales y el catálogo real aislado de Beta.
+- La tarea queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; no requiere cambios adicionales de código para el cierre local.

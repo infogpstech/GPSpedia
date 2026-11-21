@@ -534,3 +534,16 @@ Estado: COMPLETADA LOCALMENTE; validación Beta diferida.
 - P0 GP-CONCURRENCY-CUT-MULTI-ENTRY-01 y P1 GP-UX-RECENT-VIEWED-CACHE-PARALLEL-01: COMPLETADAS CON VALIDACIÓN DIFERIDA A BETA. No quedan tareas locales de implementación abiertas en el registro vigente; continúan exclusivamente validaciones Beta reales y Safe Apply, que requiere preview, ACL y rollback autorizados.
 - Siguiente actividad: fase de verificación técnica integral exigida por §11 de NORMAS_DESAROLLO.md, sin incorporar funcionalidades nuevas.
 - No se desplegó Apps Script ni se modificaron Spreadsheet/Drive productivos.
+
+
+## Cierre local — GP-UX-SEARCH-MODEL-GROUPING-01 (2026-11-21)
+
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+- [x] Agrupación de búsqueda por categoría + marca + modelo y una tarjeta por modelo.
+- [x] Resolver jerárquico de equipamiento, tipo de encendido y rango de años; omitir niveles con una sola opción y abrir el modal cuando existe un único registro elegible.
+- [x] Mantener separados Relay, Tutoriales, PyS y resultados VIN ambiguos; conservar apertura directa para VIN inequívoco y semántica de rangos abiertos.
+- [x] Preservar navegación Atrás/Adelante y restauración de contexto mediante la suite integrada.
+- [x] SearchModelGrouping 21/21 PASS dentro del runner principal; CI 44907910014 SUCCESS: 259 suites, 3,129 pruebas, 0 fallos.
+- [ ] Beta visual en navegador de escritorio, Android/PWA y validación con catálogo real aislado.
+- No se desplegó Apps Script ni se modificaron datos productivos.
