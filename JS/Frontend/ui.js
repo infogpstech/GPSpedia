@@ -569,13 +569,15 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
 
 async function refreshCatalogAfterEdit_(editSession) {
     if (!isCurrentUiSessionContext_(editSession)) return null;
+    const catalogAtStart = getState().catalogData;
     const authApi = typeof window !== "undefined" && window ? window.auth : null;
     if (authApi && typeof authApi.loadInitialData === "function") {
         try {
             const synced = await authApi.loadInitialData(true, { silent: true });
             if (!isCurrentUiSessionContext_(editSession)) return null;
             const currentCatalog = getState().catalogData;
-            if (synced === true && offline.isCompleteCatalogSnapshot(currentCatalog)) return currentCatalog;
+            if (offline.isCompleteCatalogSnapshot(currentCatalog) &&
+                (synced === true || currentCatalog !== catalogAtStart)) return currentCatalog;
         } catch (error) {
             console.warn("No se pudo aplicar el delta del catálogo después de editar; se intentará una instantánea completa.",
                 error && error.name || "CatalogDeltaError");
@@ -583,12 +585,15 @@ async function refreshCatalogAfterEdit_(editSession) {
     }
 
     if (!isCurrentUiSessionContext_(editSession)) return null;
+    const catalogBeforeFallback = getState().catalogData;
     // El cursor se captura antes del snapshot. Si hay eventos concurrentes durante
     // la lectura, se volverán a aplicar desde este cursor; nunca se adelanta el cursor.
     const localSyncState = await offline.getCatalogSyncState().catch(() => null);
     if (!isCurrentUiSessionContext_(editSession)) return null;
+    if (getState().catalogData !== catalogBeforeFallback) return getState().catalogData;
     const response = await routeAction("getCatalogData");
     if (!isCurrentUiSessionContext_(editSession)) return null;
+    if (getState().catalogData !== catalogBeforeFallback) return getState().catalogData;
     const snapshot = response && response.data;
     if (!offline.isCompleteCatalogSnapshot(snapshot)) {
         throw new Error("No se recibió una instantánea completa del catálogo después de editar.");
