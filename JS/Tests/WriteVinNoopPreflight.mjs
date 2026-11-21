@@ -43,6 +43,8 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
     return { helper, wrapper, stats: () => ({ lockCalls, lockedCalls, authCalls, versionCalls, reads }) };
 }
 assert.match(source, /response && response\.status === "success" && response\.alreadyPresent !== true/, "Un replay sin cambios no debe invalidar CATALOG");
+assert.match(source, /fieldName: "vin_registration"/, "La mutación debe usar un evento VIN compuesto");
+assert.doesNotMatch(source.slice(source.indexOf("function handleAddVinToVehicle(payload) {")), /LockService\.getScriptLock|setValue\(/, "La mutación no debe usar ScriptLock ni escribir Cortes directamente");
 let passed = 0;
 function test(name, fn) { fn(); passed++; }
 
@@ -62,7 +64,7 @@ test("VIN existente en otra versión no se considera replay idéntico", () => {
     assert.equal(h.stats().lockedCalls, 1);
     assert.equal(h.stats().versionCalls, 1);
 });
-test("una versión nueva nunca se resuelve fuera del lock", () => {
+test("una versión nueva se registra sin lock global", () => {
     const h = makeHarness({ row: ["10", "", "", "", "Base", "", "", "", "", "[\"ABC\"]"] });
     assert.equal(h.helper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Sport", isNewTrim: true }), null);
     h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Sport", isNewTrim: true });
@@ -74,11 +76,11 @@ test("un ID ambiguo no permite responder desde preflight", () => {
     h.wrapper({ vehicleId: "10", vin: "ABC12345", trimLevel: "Base" });
     assert.equal(h.stats().lockCalls, 1);
 });
-test("si falla la autenticación en preflight, la ruta protegida vuelve a validar", () => {
+test("si falla la autenticación, no se anexa ningún evento", () => {
     const h = makeHarness({ authFails: true });
     assert.equal(h.wrapper({ vehicleId: "10", vin: "NEW12345", trimLevel: "Base" }).status, "error");
     assert.equal(h.stats().lockCalls, 1);
     assert.equal(h.stats().lockedCalls, 1);
     assert.equal(h.stats().authCalls, 2);
 });
-console.log("WriteVinNoopPreflight: " + passed + "/" + passed + " PASS — replay idéntico fuera del lock; mutaciones conservan revalidación protegida");
+console.log("WriteVinNoopPreflight: " + passed + "/" + passed + " PASS — replay idéntico fuera del lock; mutaciones append-only sin lock global");
