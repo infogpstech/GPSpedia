@@ -14,6 +14,23 @@ El registro acumulado previo a esta rotación se conserva íntegro en:
 
 La copia archivada fue verificada carácter por carácter contra el original. Este archivo es el registro operativo vigente; las tareas históricas y decisiones anteriores no se eliminan.
 
+## Continuidad — auditoría ADMIN y transacción física WRITE (2026-11-21)
+
+**Estado: EN PROGRESO.** Trabajo solicitado para continuar después del checkpoint USERS. La rama base permanece protegida.
+
+- [x] ADMIN: retirar ScriptLock de publicación ordinaria de catálogo; sourceVersion temporal y reset seguro ante colisión/obsolescencia.
+- [x] ADMIN: escritura suplementaria sin ScriptLock/revalidación transaccional ni rollback de snapshots antiguos; relocalizar por ID y escribir desde valores actuales.
+- [x] ADMIN: eliminar lock interno redundante de ensureTestigoColumns; el único caller conserva su lock físico principal.
+- [x] ADMIN: alta de logotipos fail-fast (tryLock(0)); conservar lock breve para secuencia numérica y fila, con limpieza/RECOVERY_REQUIRED si hay contención.
+- [x] ADMIN: registro de actividad de imágenes mediante appendRow con fórmula ID; retirar lease ACTIVITY de Coordinator.
+- [x] Clasificar locks/leases restantes ADMIN: mantener los que protegen migraciones, reconciliación, Safe Apply, operaciones destructivas, cursor de auditoría, inventario, unicidad de carpetas o asignación de IDs. handleUploadAdminImageLegacy_ queda como código legacy sin consumidores dentro de admin.js; no retirarlo sin revisar fixtures.
+- [x] WRITE: reservar ID append-only moderno antes del lock físico y pasar preallocatedVehicleId a la transacción; conservar fallback legacy dentro del lock.
+- [x] WRITE: sustituir lectura completa de Idempotencia por lectura focalizada del opId activo con verificación de duplicados, esquema y relectura antes de mutar.
+- [x] WRITE: eliminar contador PropertiesService de sourceVersion y asignar Date.now() después de liberar el lock físico; Coordinator convierte versiones repetidas/obsoletas en reset.
+- [ ] Completar revisión de la escritura física de Cortes, Idempotencia, compensación pre/post Drive y recuperación por opId; decidir si existe alternativa segura al ScriptLock fail-fast restante. No retirar el lock sin pruebas de integridad equivalentes.
+- [ ] Ejecutar regresión CI completa del conjunto de cambios ADMIN/WRITE en el checkout integrado; no marcar cierre hasta obtener resultado verde.
+- No desplegar Apps Script ni modificar Spreadsheet/Drive productivos. Beta AUG-159/AUG-160 y pruebas reales multi-ejecución permanecen aisladas y sujetas a autorización.
+
 ## Cierre local — reemplazo de imágenes ADMIN (2026-11-20)
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
