@@ -7005,9 +7005,10 @@ function updateAdminImageUploadFileState_(file, operationId, contentHash, state,
  * El ledger AdminImageUploads conserva el estado incluso cuando el campo no tenía URL anterior.
  */
 function getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName) {
+    const cleanVehicleId = String(vehicleId || "").trim();
     const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
         method: "post", contentType: "text/plain",
-        payload: JSON.stringify({ action: "getCatalogData", payload: { forceRefresh: true } }),
+        payload: JSON.stringify({ action: "getVehicleProjection", payload: { vehicleId: cleanVehicleId } }),
         muteHttpExceptions: true, followRedirects: true
     });
     const httpStatus = response.getResponseCode();
@@ -7015,12 +7016,10 @@ function getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName) {
     try { result = JSON.parse(response.getContentText()); }
     catch (error) { throw new Error("CATALOG no devolvió JSON válido al recuperar la versión de imagen (HTTP " + httpStatus + ")."); }
     if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
-        !result.data || !Array.isArray(result.data.cortes)) {
+        !result.vehicle || String(result.vehicle.id || "").trim() !== cleanVehicleId) {
         throw new Error("No se pudo recuperar la proyección vigente del vehículo desde CATALOG.");
     }
-    const matches = result.data.cortes.filter(vehicle => vehicle && String(vehicle.id || "").trim() === String(vehicleId));
-    if (matches.length !== 1) throw new Error("CATALOG no devolvió un vehículo único para recuperar la versión de imagen.");
-    const vehicle = matches[0];
+    const vehicle = result.vehicle;
     const source = vehicle.contributionSources && vehicle.contributionSources[fieldName];
     const rawValue = vehicle[fieldName];
     return {
@@ -10964,7 +10963,7 @@ function handleGetVehicleContributionCandidates_(payload) {
     const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
         method: "post",
         contentType: "text/plain",
-        payload: JSON.stringify({ action: "getCatalogData", payload: { forceRefresh: true } }),
+        payload: JSON.stringify({ action: "getContributionCandidates", payload: { limit } }),
         muteHttpExceptions: true,
         followRedirects: true
     });
@@ -10973,41 +10972,20 @@ function handleGetVehicleContributionCandidates_(payload) {
     try { result = JSON.parse(response.getContentText()); }
     catch (error) { throw new Error("CATALOG no devolvió JSON válido al consultar candidatos ADMIN (HTTP " + httpStatus + ")."); }
     if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
-        !result.data || !Array.isArray(result.data.cortes)) {
+        !Array.isArray(result.candidates) || !Number.isSafeInteger(Number(result.total)) ||
+        Number(result.total) < result.candidates.length) {
         throw new Error("No se pudo obtener la proyección vigente de aportes desde CATALOG.");
     }
-
-    const candidates = [];
-    result.data.cortes.forEach(vehicle => {
-        if (!vehicle || !Array.isArray(vehicle.contributionCandidates)) return;
-        vehicle.contributionCandidates.forEach(candidate => {
-            if (!candidate || !String(candidate.eventId || "").trim()) return;
-            candidates.push({
-                eventId: String(candidate.eventId),
-                opId: String(candidate.opId || ""),
-                vehicleId: String(vehicle.id || ""),
-                vehicleLabel: [vehicle.marca, vehicle.modelo].filter(Boolean).join(" ").trim(),
-                kind: String(candidate.kind || ""),
-                reason: String(candidate.reason || "requires_review"),
-                payload: candidate.payload && typeof candidate.payload === "object"
-                    ? JSON.parse(JSON.stringify(candidate.payload)) : {},
-                status: "pending_review"
-            });
-        });
-    });
-    candidates.sort((a, b) => a.vehicleId.localeCompare(b.vehicleId, undefined, { numeric: true }) ||
-        a.eventId.localeCompare(b.eventId));
     return {
         status: "success",
-        candidates: candidates.slice(0, limit),
-        total: candidates.length,
-        limit,
-        truncated: candidates.length > limit,
+        candidates: result.candidates,
+        total: Number(result.total),
+        limit: Number(result.limit) || limit,
+        truncated: result.truncated === true,
         source: "CATALOG",
         readOnly: true
     };
 }
-
 
 
 function handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage) {

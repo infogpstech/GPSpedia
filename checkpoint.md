@@ -1066,3 +1066,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - ThumbnailCacheDeduplication.mjs: 3/3 PASS en harness exact-source.
 - Pendiente: CI del commit. No se ha resuelto aún la segunda descarga de setOptimizedImage + fetch de compresión; requiere conservar primera visualización inmediata y compatibilidad CORS.
 - Siguiente: revisar estrategia de prefetch de 15 vehículos, prioridad de imágenes visibles y descarga duplicada visible/fetch.
+
+
+## Continuidad — CATALOG respuestas dirigidas ADMIN (2026-11-21)
+
+- HEAD previo: d4ca43b1180db5149d24d3195d21622e12d28d62; base protegida d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Se añaden las acciones CATALOG getVehicleProjection y getContributionCandidates. ADMIN deja de descargar el catálogo completo para verificar un vehículo/campo y para recuperar candidatos del inventario de imágenes.
+- La respuesta de vehículo conserva contributionSources y contributionCandidates; candidatos conserva payload, orden, total y límite.
+- El proyector global y sus controles de VIN/opId no se alteran. Los handlers dirigidos todavía construyen el snapshot completo dentro de CATALOG; el ahorro demostrado por diseño es de bytes de respuesta y parseo/transferencia hacia ADMIN, no de lecturas Spreadsheet.
+- Pruebas nuevas: CatalogTargetedResponses.mjs 3/3; AdminVehicleTargetedCatalogRead.mjs 2/2. CI pendiente.

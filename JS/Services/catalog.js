@@ -88,7 +88,8 @@ const CATALOG_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
 const CATALOG_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
 const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const CATALOG_TRAFFIC_ACTIONS_ = new Set([
-    "getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData"
+    "getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData",
+    "getVehicleProjection", "getContributionCandidates"
 ]);
 
 function recordCatalogTraffic_(capturedAt) {
@@ -251,6 +252,12 @@ function doPost(e) {
         break;
       case 'getNavigationData':
         result = handleGetNavigationData();
+        break;
+      case 'getVehicleProjection':
+        result = handleGetVehicleProjection_(payload);
+        break;
+      case 'getContributionCandidates':
+        result = handleGetContributionCandidates_(payload);
         break;
       default:
         throw new Error(`Acción desconocida: ${action}`);
@@ -1048,6 +1055,72 @@ function handleGetDropdownData() {
  * Devuelve los conteos de categorías, las categorías ordenadas, la lista de marcas y los logos.
  * Esta acción es LIGERA y está diseñada para ser la primera llamada que hace el frontend.
  */
+
+/**
+ * Respuestas dirigidas para consumidores internos. Se conserva la proyección
+ * completa como fuente de verdad, pero se evita transferir el snapshot entero
+ * cuando ADMIN necesita un solo vehículo o solo candidatos.
+ */
+function handleGetVehicleProjection_(payload = {}) {
+    const vehicleId = String(payload && payload.vehicleId || "").trim();
+    if (!/^[1-9]\d{0,14}$/.test(vehicleId)) {
+        throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
+    }
+    const snapshot = handleGetCatalogData({ forceRefresh: true });
+    if (!snapshot || snapshot.status !== "success" || !snapshot.data || !Array.isArray(snapshot.data.cortes)) {
+        throw new Error("CATALOG no pudo construir una proyección completa para la consulta dirigida.");
+    }
+    const matches = snapshot.data.cortes.filter(vehicle =>
+        vehicle && String(vehicle.id || "").trim() === vehicleId
+    );
+    if (matches.length !== 1) {
+        throw new Error(matches.length
+            ? "El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua."
+            : "El vehículo solicitado no existe en la proyección vigente de CATALOG.");
+    }
+    return { status: "success", vehicle: matches[0], source: snapshot.source || "spreadsheet", readOnly: true };
+}
+
+function handleGetContributionCandidates_(payload = {}) {
+    const requestedLimit = Number(payload && payload.limit);
+    const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
+    const snapshot = handleGetCatalogData({ forceRefresh: true });
+    if (!snapshot || snapshot.status !== "success" || !snapshot.data || !Array.isArray(snapshot.data.cortes)) {
+        throw new Error("CATALOG no pudo construir la proyección vigente de candidatos.");
+    }
+    const candidates = [];
+    snapshot.data.cortes.forEach(vehicle => {
+        if (!vehicle || !Array.isArray(vehicle.contributionCandidates)) return;
+        vehicle.contributionCandidates.forEach(candidate => {
+            if (!candidate || !String(candidate.eventId || "").trim()) return;
+            candidates.push({
+                eventId: String(candidate.eventId),
+                opId: String(candidate.opId || ""),
+                vehicleId: String(vehicle.id || ""),
+                vehicleLabel: [vehicle.marca, vehicle.modelo].filter(Boolean).join(" ").trim(),
+                kind: String(candidate.kind || ""),
+                reason: String(candidate.reason || "requires_review"),
+                payload: candidate.payload && typeof candidate.payload === "object"
+                    ? JSON.parse(JSON.stringify(candidate.payload)) : {},
+                status: "pending_review"
+            });
+        });
+    });
+    candidates.sort((a, b) =>
+        a.vehicleId.localeCompare(b.vehicleId, undefined, { numeric: true }) ||
+        a.eventId.localeCompare(b.eventId)
+    );
+    return {
+        status: "success",
+        candidates: candidates.slice(0, limit),
+        total: candidates.length,
+        limit,
+        truncated: candidates.length > limit,
+        source: "CATALOG",
+        readOnly: true
+    };
+}
+
 function handleGetNavigationData() {
     const responseData = {};
     const spreadsheet = getSpreadsheet();

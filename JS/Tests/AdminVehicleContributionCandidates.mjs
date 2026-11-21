@@ -15,21 +15,16 @@ function run(response, payload = {}) {
     const fn = new Function("UrlFetchApp", "CATALOG_SERVICE_URL", handler + "\nreturn handleGetVehicleContributionCandidates_;")(fetch, "https://catalog.test/exec");
     return { result: fn(payload), calls };
 }
-const catalog = { status: "success", data: { cortes: [
-    { id: "22", marca: "Toyota", modelo: "Hilux", contributionCandidates: [
-        { eventId: "EV-B", opId: "OP-B", kind: "cut", reason: "vin_conflict", payload: { tipo: "Ignición", vinPrefix: "X" } }
-    ]},
-    { id: "3", marca: "Nissan", modelo: "Frontier", contributionCandidates: [
-        { eventId: "EV-A", opId: "OP-A", kind: "feed", reason: "feed_capacity_full", payload: { text: "12V", image: "FILE_ID" } }
-    ]},
-    { id: "9", contributionCandidates: [] }
-]}};
+const catalog = { status: "success", candidates: [
+    { eventId: "EV-B", opId: "OP-B", vehicleId: "22", vehicleLabel: "Toyota Hilux", kind: "cut", reason: "vin_conflict", payload: { tipo: "Ignición", vinPrefix: "X" }, status: "pending_review" },
+    { eventId: "EV-A", opId: "OP-A", vehicleId: "3", vehicleLabel: "Nissan Frontier", kind: "feed", reason: "feed_capacity_full", payload: { text: "12V", image: "FILE_ID" }, status: "pending_review" }
+], total: 2, limit: 200, truncated: false, source: "CATALOG", readOnly: true };
 {
  const {result,calls}=run({body:catalog});
  assert.equal(result.status,"success"); assert.equal(result.total,2); assert.equal(result.candidates.length,2);
  assert.equal(result.candidates[0].vehicleId,"3"); assert.equal(result.candidates[0].reason,"feed_capacity_full");
  assert.equal(result.candidates[1].reason,"vin_conflict"); assert.equal(result.readOnly,true);
- assert.equal(calls.length,1); assert.equal(JSON.parse(calls[0].options.payload).payload.forceRefresh,true);
+ assert.equal(calls.length,1); assert.equal(JSON.parse(calls[0].options.payload).action,"getContributionCandidates"); assert.equal(JSON.parse(calls[0].options.payload).payload.limit,200);
 }
 {
  const {result}=run({body:catalog},{limit:1});

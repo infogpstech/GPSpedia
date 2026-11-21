@@ -3223,7 +3223,7 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] handleGetNavigationData deja de leer getDataRange() completo: Cortes lee solo ID/categoría/marca y LogosMarca solo sus tres columnas de contrato.
 - [x] Se conserva el contrato y el resultado para categorías, marcas, orden y logos; hojas vacías no generan rangos inválidos.
 - [x] Prueba exact-source CatalogNavigationRead.mjs: 2/2 PASS en harness aislado.
-- [ ] Ejecutar runner completo y CI del commit.
+- [x] Runner completo y CI: SUCCESS en commit d4ca43b1180db5149d24d3195d21622e12d28d62; 267 suites, 3,164 pruebas, 0 fallos.
 - Nota: el endpoint no tiene consumidor frontend activo confirmado; no se atribuye mejora de navegación/arranque hasta demostrar una llamada real.
 
 **Siguiente:** consulta dirigida CATALOG para ADMIN y detalle, preservando proyección global de VIN/candidatos; no filtrar eventos por vehículo sin demostrar equivalencia.
@@ -3237,6 +3237,20 @@ Documento de alcance, hallazgos y checklist: [AUDITORIA_INTEGRAL_LATENCIA_LLAMAD
 - [x] Limpiar entradas expiradas dentro de la transacción LRU existente, sin una lectura global y múltiples transacciones por imagen.
 - [x] Añadir single-flight por fileId/ancho para que llamadas simultáneas de prefetch/render no repitan compresión y fetch de la misma variante.
 - [x] ThumbnailCacheDeduplication.mjs: 3/3 PASS en harness exact-source.
-- [ ] Ejecutar CI del commit.
+- [x] CI: SUCCESS en commit d4ca43b1180db5149d24d3195d21622e12d28d62; 267 suites, 3,164 pruebas, 0 fallos.
 - Pendiente separado: setOptimizedImage inicia la descarga del elemento visible y, ante cache miss, compressAndStoreThumbnail vuelve a solicitar la misma URL. No se ha resuelto todavía porque la alternativa debe conservar render inmediato y CORS/transparencia.
 - Pendiente medir la cola FIFO de prefetch de los últimos 15 vehículos y definir prioridad/cancelación sin degradar disponibilidad offline.
+
+
+## CATALOG — respuestas dirigidas para ADMIN (2026-11-21)
+
+**Estado: IMPLEMENTACIÓN Y PRUEBAS AISLADAS COMPLETADAS; CI PENDIENTE.**
+
+- [x] Añadir getVehicleProjection: devuelve un único vehículo con contributionSources y contributionCandidates, validando ID único y lectura fresca.
+- [x] Añadir getContributionCandidates: devuelve únicamente la lista de candidatos, con orden y límite de respuesta; evita transferir el snapshot completo a ADMIN.
+- [x] ADMIN usa getVehicleProjection para verificar el campo/fuente y getContributionCandidates para el inventario de imágenes.
+- [x] Se conserva el snapshot completo como fuente de verdad; no se cambia el proyector global ni la detección de conflictos VIN.
+- [ ] Ejecutar runner completo y CI.
+- Limitación documentada: ambas respuestas dirigidas todavía construyen el snapshot completo dentro de CATALOG. La mejora actual reduce bytes de respuesta y parseo/transferencia ADMIN; no se afirma reducción de lecturas Spreadsheet ni de tiempo de construcción del snapshot.
+
+**Siguiente:** medir y refactorizar lectura dirigida de Cortes/AportesVehiculo solo si se conserva la proyección global de VIN, los conflictos opId, candidatos y fuentes.
