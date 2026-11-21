@@ -711,7 +711,7 @@ function handleAddOrUpdateCut(payload) {
     let lockAcquired = false;
     try { lockAcquired = lock.tryLock(0); } catch (lockError) { lockAcquired = false; }
     if (!lockAcquired) {
-        const busyError = new Error("WRITE está ocupado con una reserva breve de ID. Conserva el mismo opId y reintenta.");
+        const busyError = new Error("WRITE está ocupado con una operación breve de alta de vehículo. Conserva el mismo opId y reintenta.");
         busyError.code = "WRITE_BUSY";
         throw busyError;
     }
