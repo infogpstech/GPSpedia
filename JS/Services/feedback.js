@@ -2882,7 +2882,7 @@ function handleGetMyProblemReports(payload) {
     if (!sheet || sheet.getLastRow() < 2) return {status:"success",data:[],nextCursor:null,hasMore:false,pageSize,total:0};
     const metadataColumn = getReportMetadataColumn(sheet);
     const width = Math.max(metadataColumn || 0,9);
-    const rows = sheet.getRange(2,1,sheet.getLastRow()-1,width).getValues().reverse();
+    const rows = sheet.getRange(2,1,sheet.getLastRow()-1,width).getValues();
     const ownedReports = [];
     const seenReportIds = new Set();
     rows.forEach(row => {
@@ -2911,6 +2911,9 @@ function handleGetMyProblemReports(payload) {
         item._cursor = item.reportMetadata && item.reportMetadata.reportId ? item.reportMetadata.reportId : "";
         ownedReports.push(item);
     });
+    // Se deduplica en orden físico ascendente (first-write-wins) y luego se conserva
+    // la presentación más reciente primero para el listado paginado.
+    ownedReports.reverse();
     const itemCursor = item => String(item && item._cursor || item && item.reportMetadata && item.reportMetadata.reportId || "");
     let startIndex = 0;
     if (cursor) {
