@@ -486,66 +486,17 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => missingClient.withLease("WRITE", "addVinToVehicle", () => "no"), "no está configurada");
     });
 
-    test_("FEEDBACK solución y prevención comparten lease sin reservar Cortes", function() {
-        ["addSolution", "addPrevention"].forEach(function(action) {
-            const policy = coordinatorPolicy_("FEEDBACK", action);
-            assert_(policy.writeResources.includes("FEEDBACK"), action + " debe reservar FEEDBACK.");
-            assert_(policy.writeResources.includes("ACTIVITY"), action + " debe conservar actividad.");
-            assert_(!policy.readResources.includes("CORTES"), action + " no debe reservar Cortes.");
+    test_("PyS no declara mutaciones ordinarias en Coordinator", function() {
+        ["addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
-        const runtime = createRuntime_();
-        const solution = acquire_(runtime, "FEEDBACK", "addSolution");
-        const prevention = acquire_(runtime, "FEEDBACK", "addPrevention");
-        assert_(prevention.status === "error" && prevention.code === "busy",
-            "Solución y prevención deben serializarse sobre el recurso FEEDBACK.");
-        release_(runtime, "FEEDBACK", "addSolution", solution.token);
-        const retry = acquire_(runtime, "FEEDBACK", "addPrevention");
-        assert_(retry.status !== "error", "Prevención debe poder reintentarse tras liberar la lease.");
-        release_(runtime, "FEEDBACK", "addPrevention", retry.token);
-    });
+    }););
 
-    test_("FEEDBACK PyS vehicle relations read Cortes and conflict with vehicle writes", function() {
-        ["addProblem", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
-            const policy = coordinatorPolicy_("FEEDBACK", action);
-            assert_(policy.readResources.includes("CORTES"), action + " debe reservar lectura de Cortes.");
-            assert_(policy.writeResources.includes("FEEDBACK"), action + " debe serializar la hoja pys.");
-            assert_(policy.writeResources.includes("ACTIVITY"), action + " debe conservar el recurso de actividad.");
+    test_("PyS no declara mutaciones ordinarias en Coordinator", function() {
+        ["addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
+            expectThrow_(function() { coordinatorPolicy_("FEEDBACK", action); }, "no está habilitada");
         });
-
-        const concurrent = createRuntime_();
-        const firstAdd = acquire_(concurrent, "FEEDBACK", "addVehicleToProblem");
-        const secondAdd = acquire_(concurrent, "FEEDBACK", "addVehicleToProblem");
-        assert_(secondAdd.status === "error" && secondAdd.code === "busy",
-            "Dos altas simultáneas deben compartir el bloqueo de FEEDBACK.");
-        release_(concurrent, "FEEDBACK", "addVehicleToProblem", firstAdd.token);
-        const addRetry = acquire_(concurrent, "FEEDBACK", "addVehicleToProblem");
-        assert_(addRetry.status !== "error", "El reintento debe poder adquirir el recurso tras liberar el lease.");
-        release_(concurrent, "FEEDBACK", "addVehicleToProblem", addRetry.token);
-
-        const mixed = createRuntime_();
-        const addLease = acquire_(mixed, "FEEDBACK", "addVehicleToProblem");
-        const removeLease = acquire_(mixed, "FEEDBACK", "removeVehicleFromProblem");
-        assert_(removeLease.status === "error" && removeLease.code === "busy",
-            "Alta y baja concurrentes deben serializarse sobre FEEDBACK.");
-        release_(mixed, "FEEDBACK", "addVehicleToProblem", addLease.token);
-        const removeRetry = acquire_(mixed, "FEEDBACK", "removeVehicleFromProblem");
-        assert_(removeRetry.status !== "error", "La baja debe poder reintentarse tras liberar el lease.");
-        release_(mixed, "FEEDBACK", "removeVehicleFromProblem", removeRetry.token);
-
-        const first = createRuntime_();
-        const cutWrite = acquire_(first, "WRITE", "addOrUpdateCut");
-        const relationRead = acquire_(first, "FEEDBACK", "addVehicleToProblem");
-        assert_(relationRead.status === "error" && relationRead.code === "busy",
-            "Una relación PyS no debe leer Cortes mientras se modifica un vehículo.");
-        release_(first, "WRITE", "addOrUpdateCut", cutWrite.token);
-
-        const second = createRuntime_();
-        const relationLease = acquire_(second, "FEEDBACK", "removeVehicleFromProblem");
-        const concurrentCutWrite = acquire_(second, "WRITE", "addOrUpdateCut");
-        assert_(concurrentCutWrite.status === "error" && concurrentCutWrite.code === "busy",
-            "Una modificación de Cortes debe esperar mientras se valida/desvincula una relación PyS.");
-        release_(second, "FEEDBACK", "removeVehicleFromProblem", relationLease.token);
-    });
+    }););
 
     test_("FEEDBACK recordLike conserva sus recursos sin depender de actividad ADMIN", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
