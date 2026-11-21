@@ -964,6 +964,7 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
         throw new Error("La reserva de ID requiere opId y operationHash SHA-256 válidos.");
     }
     const ledger = getCortesIdReservationsSheet_();
+    const lastReservedId = getLastCortesIdReservation_(ledger);
     const existing = findCortesIdReservation_(ledger, request.opId);
     if (existing) {
         if (existing.operationHash !== request.operationHash) {
@@ -972,7 +973,10 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
         return existing.vehicleId;
     }
 
-    const highWaterMark = getCortesVehicleIdHighWaterMark_(cortesSheet, { reservationSheet: ledger });
+    const highWaterMark = getCortesVehicleIdHighWaterMark_(cortesSheet, {
+        includeReservations: false,
+        minimumReservedId: lastReservedId
+    });
     ledger.appendRow([
         request.opId,
         request.operationHash,
@@ -982,7 +986,8 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
     SpreadsheetApp.flush();
 
     const verified = findCortesIdReservation_(ledger, request.opId);
-    if (!verified || verified.operationHash !== request.operationHash) {
+    const verifiedHighWater = getLastCortesIdReservation_(ledger);
+    if (!verified || verified.operationHash !== request.operationHash || verifiedHighWater < verified.vehicleId) {
         throw new Error("No se pudo verificar la reserva persistente del vehicleId para " + request.opId + ".");
     }
     return verified.vehicleId;
