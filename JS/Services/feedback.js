@@ -1008,11 +1008,11 @@ function doPostInternal_(e) {
         // Un fallo del feed no revierte ni convierte en error una reacción ya guardada.
         if (action === "recordLike" && response && response.status === "success" && !response.alreadyLiked) {
             try {
-                const changedVehicleId = String(payload.vehicleId || "").trim();
-                if (!changedVehicleId) throw new Error("No se recibió el ID del vehículo actualizado.");
-                publishFeedbackCortesCatalogChange_("recordLike", changedVehicleId);
+                // Los likes nuevos son eventos append-only; un reset obliga a CATALOG a
+                // recomponer el contador desde FeedbackLikes sin reservar versión bajo ScriptLock.
+                publishSharedCatalogChange_("FEEDBACK", "recordLike", { operation: "reset" });
             } catch (catalogPublishError) {
-                console.error("El like se guardó, pero no se pudo publicar su cambio incremental:",
+                console.error("El like se guardó, pero no se pudo invalidar CATALOG:",
                     catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
             }
         } else if (action === "suggestYear" && response &&
