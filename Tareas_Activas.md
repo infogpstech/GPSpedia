@@ -13,11 +13,11 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código validado para P0 AUTH: `3ae0786b0158d7e45f2599bc1a6ab28550b84ac8`.
-- CI: 284 suites, 3,309 pruebas aprobadas, 0 fallos.
+- HEAD de código validado para P0 USERS: `fb80ebfa4a296d23faec032be46650d85ec51ba9`.
+- CI: 287 suites, 3,359 pruebas aprobadas, 0 fallos.
 - Build: SUCCESS.
 - Health de servicios: SUCCESS.
-- Workflow deploy: SUCCESS; esto no sustituye las pruebas operativas en Beta aislada.
+- GitHub Pages deploy workflow: pendiente de confirmación; no es despliegue de Apps Script ni sustituye Beta aislada.
 - Rama base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 
 ## Implementaciones locales completadas
@@ -65,7 +65,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Verificar localmente caché de actor e invalidación por revocación/cambio de rol/logout/eliminación: login precarga USERS/WRITE/FEEDBACK/ADMIN; cache miss no llama Coordinator; invalidación incluye los cuatro servicios.
 - [x] P0.3 — Precarga de actor en login fuera del lock global, por lotes de 25 tokens y `fetchAll`; acciones protegidas usan solo caché local con TTL renovable y fallan cerrado si falta.
 - [x] Detectar y reducir lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación AUTH. Login reutiliza un snapshot de ActiveSessions; recuperación/rol reutilizan la fila objetivo; reset/cambio de contraseña invalidan usando los tokens del mismo snapshot; deleteUser lee solo ID/token de sesiones y verifica residuos por columna ID. La invalidación remota se ejecuta una sola vez antes de limpiar tokens. `AuthSessionReadOptimization.mjs`: 9/9 PASS; regresión: 284 suites / 3,309 pruebas / 0 fallos.
-- [ ] Continuar optimización de lecturas/operaciones duplicadas en USERS y otros servicios. Siguiente: `JS/Services/users.js`, revisar getUsers/createUser/updateUser y su interacción con AUTH/deleteUser.
+- [x] USERS — alta de cuenta reutiliza un único snapshot para username, fila libre e ID; getUsers lee A:G y updateProfile verifica solo las celdas ID necesarias. Tests específicos 10/10 y 8/8; mutaciones/RBAC/rollback 16/16; CI 287 suites / 3,359 pruebas / 0 fallos.
+- [ ] Continuar optimización de lecturas/operaciones duplicadas en otros servicios tras auditar WRITE/FEEDBACK/ADMIN.
 
 ### P1 — servicios, aportes y catálogo
 - [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
@@ -113,4 +114,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0 AUTH queda cerrado en código y CI (284 suites / 3,309 pruebas / 0 fallos). Siguiente tarea de código: revisar y optimizar lecturas/operaciones duplicadas en `JS/Services/users.js`, con pruebas de contrato y regresión. Al cerrar USERS, crear checkpoint y commit y continuar con auditoría extremo a extremo WRITE/FEEDBACK/ADMIN. Después P1 de imágenes/vídeos/archivos y mediciones Beta. La precarga/invalidation de los cuatro servicios, la carrera createUser/deleteUser y las métricas reales requieren validación en deployments/Spreadsheet/Drive aislados; no ejecutar en producción.
+P0 AUTH y USERS quedan cerrados en código y CI (287 suites / 3,359 pruebas / 0 fallos). Siguiente tarea: auditoría de extremo a extremo de WRITE, iniciando por aportes, idempotencia, ledger, VIN, Drive, read-back y publicación CATALOG. Después FEEDBACK y ADMIN, guardando checkpoint+commit al terminar cada bloque. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. La precarga/invalidation de los cuatro servicios, la carrera createUser/deleteUser y las métricas reales requieren validación en deployments/Spreadsheet/Drive aislados; no ejecutar en producción.
