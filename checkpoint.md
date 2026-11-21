@@ -1310,3 +1310,11 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se mantienen el preflight de aplicación pendiente, first-write-wins, control de actores, exclusión de anónimos, conteo de votos y read-back posterior al append. No se sustituye el snapshot después de una escritura concurrente.
 - `SuggestYearVoteThreshold.mjs` amplía el contrato para comprobar reutilización del snapshot y relectura solo tras append. CI en HEAD `6f5b0d8ea7ea5db33411142aff0040282bb27de5`: **280 suites / 3,258 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS; GitHub Pages deploy SUCCESS. No se desplegaron proyectos Apps Script.
 - Siguiente: revisar el flujo FEEDBACK de likes, reportes e Inbox; luego ADMIN.
+
+
+## Cierre — FEEDBACK sugerencias de año, reutilización de snapshot (2026-11-21)
+
+- HEAD de código validado: `6f5b0d8ea7ea5db33411142aff0040282bb27de5`; rama base `GPSpedia2.2.5` permanece intacta.
+- `handleSuggestYearLocked` reutiliza `existingData` como `allData` cuando el actor ya había reportado y no se agrega una fila. Solo vuelve a leer Feedbacks después de un append nuevo, para incluir votos concurrentes y mantener correcto el umbral de tres aportantes verificados.
+- `SuggestYearVoteThreshold.mjs` amplía la cobertura de snapshot reuse; CI: **280 suites / 3,258 pruebas / 0 fallos**; build SUCCESS; health read-only SUCCESS; GitHub Pages deploy SUCCESS. No se desplegó Apps Script.
+- Siguiente: FEEDBACK likes — unificar preflight completado/evento y reutilizar filas ya consultadas, manteniendo append-only y proyección CATALOG.
