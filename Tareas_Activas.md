@@ -13,10 +13,11 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código: `67315cd4d2d049b7363dccd865e884c978a82dad`.
-- CI: 277 suites, 3,225 pruebas aprobadas, 0 fallos.
+- HEAD de código validado: `ac02da63cebb6ef9a99e389794f4246bfc3ed34b`.
+- CI: 278 suites, 3,236 pruebas aprobadas, 0 fallos.
+- Build: SUCCESS.
 - Health de servicios read-only: SUCCESS.
-- GitHub Pages build/deployment: SUCCESS.
+- GitHub Pages deploy: en ejecución/cancelable por commits de continuidad; no forma parte de la validación Apps Script.
 - Rama base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 
 ## Implementaciones locales completadas
@@ -60,8 +61,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Completar mapa de consumidores de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser` en `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`.
 - [x] Determinar y corregir redundancias de `touchSession`/`acceptTerms`: `touchSession` no tiene consumidor frontend y deja de adquirir lease; `acceptTerms` reutiliza actor cacheado y deja de adquirir lease.
 - [x] Clasificar y reducir leases AUTH conforme a §15: el dispatcher conserva lease únicamente para deleteUser; login mantiene bloqueo temporal y registro inicial de sesión; logout/cambios de contraseña/reset de sesiones conservan revocación remota sin lease; updateUser y acciones ordinarias usan actor cacheado y lock local solo donde la escritura lo requiere. USERS/createUser conserva exclusión únicamente frente a AUTH/deleteUser.
-- [ ] Resolver y probar la carrera USERS `createUser` ↔ AUTH `deleteUser`.
-- [ ] Verificar caché de actor e invalidación por revocación/cambio de rol/logout/eliminación.
+- [x] Resolver y probar localmente la carrera USERS `createUser` ↔ AUTH `deleteUser`: lease de `createUser` solo lee/escribe USERS; `deleteUser` comparte el recurso y el test de Coordinator confirma que no se solapan.
+- [x] Verificar localmente caché de actor e invalidación por revocación/cambio de rol/logout/eliminación: login precarga USERS/WRITE/FEEDBACK/ADMIN; cache miss no llama Coordinator; invalidación incluye los cuatro servicios.
+- [x] P0.3 — Precarga de actor en login fuera del lock global, por lotes de 25 tokens y `fetchAll`; acciones protegidas usan solo caché local con TTL renovable y fallan cerrado si falta.
 - [ ] Detectar lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación.
 
 ### P1 — servicios, aportes y catálogo
@@ -100,4 +102,4 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0.1, P0.2 local, mapa AUTH/USERS y reducción integral de leases AUTH completados. La única lease del dispatcher AUTH es deleteUser; createUser (USERS) comparte exclusivamente el recurso USERS con esa eliminación. Continuar con P0.3: eliminar revalidaciones de identidad en cache miss y precalentar actores de sesión en USERS/WRITE/FEEDBACK/ADMIN desde el login, manteniendo solo revocación remota/invalidación y cierre de sesión. Después medir la línea base real en Beta aislada.
+P0.1, P0.2 local, mapa AUTH/USERS, reducción integral de leases AUTH y P0.3 de caché de actor completados localmente. La única lease del dispatcher AUTH es deleteUser; USERS/createUser comparte solo el recurso USERS con esa eliminación. Siguiente: revisar lecturas Users/ActiveSessions y revocaciones duplicadas por operación; luego auditar WRITE/FEEDBACK/ADMIN y el flujo CATALOG/Coordinator. La precarga/invalidation de los cuatro servicios y la carrera createUser/deleteUser requieren además validación de despliegues/propiedades en Beta aislada.
