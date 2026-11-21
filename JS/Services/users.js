@@ -322,6 +322,14 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "__invalidateSessionActorCache") {
+        const result = handleSharedSessionActorCacheInvalidation_(payload);
+        return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === "__primeSessionActorCache") {
+        const result = handleSharedSessionActorCachePriming_(payload);
+        return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "getServiceTraffic") {
         const traffic = readUsersDirectTraffic_(payload.secret);
         return ContentService.createTextOutput(JSON.stringify(traffic)).setMimeType(ContentService.MimeType.TEXT);
