@@ -1239,14 +1239,18 @@ function handleLogin(payload) {
             sessionLock.waitLock(10000);
             sessionLockAcquired = true;
             ensureTermsAcceptanceColumn_(userSheet);
-            const currentUserRows = userSheet.getDataRange().getValues().slice(1)
-                .map((row, index) => ({ row, rowIndex: index + 2 }))
-                .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
-            if (currentUserRows.length !== 1 || !isActiveAuthUserRecord(currentUserRows[0].row)) {
+            const currentUserRowIndex = foundUserIndex + 2;
+            const matchingUserIdCount = data.filter(row =>
+                normalizeUserId(row[COLS_USERS.ID - 1]) === normalizeUserId(userId)
+            ).length;
+            const currentUserRow = userSheet.getRange(currentUserRowIndex, 1, 1, COLS_USERS.TermsAcceptance).getValues()[0];
+            if (matchingUserIdCount !== 1 ||
+                normalizeUserId(currentUserRow[COLS_USERS.ID - 1]) !== normalizeUserId(userId) ||
+                !isActiveAuthUserRecord(currentUserRow)) {
                 throw new Error('La cuenta fue desactivada o su ID dejó de ser único; no se creará una sesión.');
             }
 
-            foundUserRow = currentUserRows[0].row;
+            foundUserRow = currentUserRow;
             const currentPasswordCheck = verifyStoredPassword(
                 foundUserRow[COLS_USERS.Password - 1], normalizedPassword
             );
@@ -1255,28 +1259,27 @@ function handleLogin(payload) {
                 throw new Error('Credenciales inválidas.');
             }
             if (currentPasswordCheck.needsRehash) {
-                userSheet.getRange(currentUserRows[0].rowIndex, COLS_USERS.Password)
+                userSheet.getRange(currentUserRowIndex, COLS_USERS.Password)
                     .setValue(createPasswordHash(normalizedPassword, false));
             }
             const activeSessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
             if (!activeSessionsSheet) throw new Error('Hoja ActiveSessions no encontrada.');
             ensureActiveSessionsActivityColumn_(activeSessionsSheet);
             ensureSessionTermsAcceptanceColumn_(activeSessionsSheet);
-            const roleRevocation = reconcileRoleRevocationUnderLock_(userSheet, activeSessionsSheet, userId);
+            const roleRevocation = reconcileRoleRevocationUnderLock_(userSheet, activeSessionsSheet, userId, foundUserIndex + 2);
             if (roleRevocation.pending) throw new Error('La revocación de sesiones anterior sigue pendiente. Intenta iniciar sesión nuevamente más tarde.');
 
-            const refreshedUserRows = userSheet.getDataRange().getValues().slice(1)
-                .map((row, index) => ({ row, rowIndex: index + 2 }))
-                .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
-            if (refreshedUserRows.length !== 1 || !isActiveAuthUserRecord(refreshedUserRows[0].row)) {
+            const refreshedUserRow = userSheet.getRange(currentUserRowIndex, 1, 1, COLS_USERS.TermsAcceptance).getValues()[0];
+            if (normalizeUserId(refreshedUserRow[COLS_USERS.ID - 1]) !== normalizeUserId(userId) ||
+                !isActiveAuthUserRecord(refreshedUserRow)) {
                 throw new Error('La cuenta cambió durante la recuperación de sesión; no se creará una sesión.');
             }
-            foundUserRow = refreshedUserRows[0].row;
+            foundUserRow = refreshedUserRow;
             const currentUserRole = normalizeRoleName(foundUserRow[COLS_USERS.Privilegios - 1]);
             sessionLimit = SESSION_LIMITS[currentUserRole] ?? 1;
 
             const sessionResult = createOrRecoverLoginSessionUnderLock_(
-                userSheet, activeSessionsSheet, refreshedUserRows[0].rowIndex, userId,
+                userSheet, activeSessionsSheet, currentUserRowIndex, userId,
                 foundUserRow[COLS_USERS.Nombre_Usuario - 1], sessionLimit, loginRequestId
             );
             sessionToken = sessionResult.token;
@@ -1593,7 +1596,7 @@ function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_() {
    const marker=parseRoleRevocationMarker_(all[key]);if(!marker||marker.invalid)throw new Error('Marcador legacy dañado: '+key);
    let userId='';try{userId=decodeURIComponent(key.slice(ROLE_REVOCATION_PROPERTY_PREFIX.length));}catch(error){throw new Error('ID inválido en marcador legacy: '+key);}
    if(normalizeUserId(marker.userId)!==normalizeUserId(userId))throw new Error('El ID del marcador legacy no coincide con su clave.');
-   const rows=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
+   const rows=readTargetRows();
    if(rows.length!==1||!isActiveAuthUserRecord(rows[0].row))throw new Error('El usuario del marcador legacy no es único o no está activo: '+userId);
    const currentRole=normalizeRoleName(rows[0].row[COLS_USERS.Privilegios-1]);
    if(currentRole!==normalizeRoleName(marker.oldRole)&&currentRole!==normalizeRoleName(marker.newRole))throw new Error('El rol actual no coincide con el marcador legacy: '+userId);
@@ -1630,7 +1633,7 @@ function assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requeste
 
 // Invalida primero los tokens con una escritura consolidada y verifica el estado leído.
 // No presupone atomicidad: cualquier token que permanezca se informa como pendiente.
-function revokeAllUserSessionsUnderLock_(sheet, userId) {
+function revokeAllUserSessionsUnderLock_(sheet, userId, beforeClear) {
     const requestRevocation = revokePendingLoginRequestsForUserUnderLock_(userId);
     if (requestRevocation.pending) {
         return {
@@ -1641,7 +1644,10 @@ function revokeAllUserSessionsUnderLock_(sheet, userId) {
     }
 
     const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return { rows: [], revokedSessions: 0, pendingRows: [], pendingLoginRequests: false, writeError: null };
+    if (lastRow < 2) {
+        if (typeof beforeClear === "function") beforeClear([]);
+        return { rows: [], tokens: [], revokedSessions: 0, pendingRows: [], pendingLoginRequests: false, writeError: null };
+    }
     const width = Math.max(COLS_ACTIVE_SESSIONS.LastActivityAt, sheet.getLastColumn());
     const data = sheet.getRange(2, 1, lastRow - 1, width).getValues();
     const tokenCounts = new Map();
@@ -1658,8 +1664,11 @@ function revokeAllUserSessionsUnderLock_(sheet, userId) {
         }
         rows.push({ rowIndex: i + 2, token });
     }
-    if (!rows.some(row => row.token)) {
-        return { rows, revokedSessions: 0, pendingRows: [], pendingLoginRequests: false, writeError: null };
+    const tokens = rows.filter(row => row.token).map(row => row.token);
+    // Invalidar cachés/contexto central antes de borrar tokens de ActiveSessions.
+    if (typeof beforeClear === "function") beforeClear(tokens);
+    if (!tokens.length) {
+        return { rows, tokens, revokedSessions: 0, pendingRows: [], pendingLoginRequests: false, writeError: null };
     }
 
     const tokenRange = sheet.getRange(2, COLS_ACTIVE_SESSIONS.ActiveSessions, lastRow - 1, 1);
@@ -1680,7 +1689,7 @@ function revokeAllUserSessionsUnderLock_(sheet, userId) {
         verified = tokenRange.getValues();
     } catch (readError) {
         return {
-            rows, revokedSessions: 0, pendingRows: rows.filter(row => row.token),
+            rows, tokens, revokedSessions: 0, pendingRows: rows.filter(row => row.token),
             pendingLoginRequests: false, writeError: writeError || readError
         };
     }
@@ -1690,7 +1699,7 @@ function revokeAllUserSessionsUnderLock_(sheet, userId) {
     const revokedSessions = rows.filter(row =>
         row.token && String(verified[row.rowIndex - 2][0] || '') === ''
     ).length;
-    return { rows, revokedSessions, pendingRows, pendingLoginRequests: false, writeError };
+    return { rows, tokens, revokedSessions, pendingRows, pendingLoginRequests: false, writeError };
 }
 
 function deleteRevokedSessionRowsUnderLock_(sheet, rows) {
@@ -1723,10 +1732,13 @@ function deleteRevokedSessionRowsUnderLock_(sheet, rows) {
 }
 
 
-function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId) {
+function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId,knownRowIndex) {
  const properties=PropertiesService.getScriptProperties(),key=roleRevocationPropertyKey_(userId);
  let raw=null,propertyReadError=null;try{raw=properties.getProperty(key);}catch(error){propertyReadError=error;}
- let rows=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
+ const readTargetRows=()=>Number.isInteger(knownRowIndex)&&knownRowIndex>=2
+  ? [{row:usersSheet.getRange(knownRowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0],rowIndex:knownRowIndex}]
+  : usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
+ let rows=readTargetRows();
  if(rows.length!==1||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:0,error:'La cuenta destino dejó de ser única o activa.'};
  const pointer=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),shared=parseSharedRoleRevocationMarker_(rows[0].row[COLS_USERS.SessionToken-1]);
  if(shared&&shared.invalid)return{pending:true,cleanupPending:true,revokedSessions:0,error:'El marcador compartido de revocación está dañado.'};
@@ -1739,7 +1751,8 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId) {
  if(!shared){let writeError=null;try{pointer.setValue(sharedValue);}catch(error){writeError=error;}let persisted='';try{persisted=String(pointer.getValue()||'');}catch(error){return{pending:true,cleanupPending:true,revokedSessions:0,error:error.message};}
   if(persisted!==sharedValue)return{pending:true,cleanupPending:true,revokedSessions:0,error:writeError?writeError.message:'No se confirmó el marcador compartido de revocación.'};}
  if(!raw){try{properties.setProperty(key,JSON.stringify(marker));}catch(error){}}
- const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId);
+ const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId,
+  tokens=>revokeSharedUserSessionContexts_(userId,tokens));
  if(revocation.pendingRows.length||revocation.pendingLoginRequests)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,pendingTokens:revocation.pendingRows.length,error:revocation.writeError?revocation.writeError.message:''};
  rows=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
  if(rows.length!==1||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'La cuenta destino dejó de ser única o activa.'};
@@ -1860,9 +1873,6 @@ function handleUpdateUser(payload) {
         if (hasPending && hasFullNameUpdate && pendingMarker.newFullName !== requestedFullName) {
             throw new Error('El nombre solicitado no coincide con la actualización pendiente. Completa primero esa operación.');
         }
-        if (nextRole !== currentTargetRole || hasPending) {
-            revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId));
-        }
         if (nextRole !== currentTargetRole && !hasPending) {
             const marker = { userId, markedAt: Date.now(), oldRole: currentTargetRole, newRole: nextRole };
             if (hasFullNameUpdate) marker.newFullName = requestedFullName;
@@ -1873,7 +1883,7 @@ function handleUpdateUser(payload) {
             try { properties.setProperty(markerKey, JSON.stringify(marker)); } catch (error) { /* El marcador compartido permite reintentar. */ }
         }
         if (nextRole !== currentTargetRole || hasPending) {
-            const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId);
+            const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId, targetRows[0].rowIndex);
             revokedSessions = reconciliation.revokedSessions || 0;
             cleanupPending = reconciliation.pending || reconciliation.cleanupPending;
             targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
@@ -2006,16 +2016,16 @@ function handleResetUserSessions(payload) {
         }
 
         targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
-        revokeSharedUserSessionContexts_(targetUserId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetUserId));
         if (hasPendingRoleRevocation_(targetUserId)) {
-            const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, targetUserId);
+            const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, targetUserId, targetRows[0].rowIndex);
             revokedSessions = reconciliation.revokedSessions || 0;
             cleanupPending = reconciliation.pending || reconciliation.cleanupPending;
             if (reconciliation.pending) {
                 operationError = new Error('La revocación de rol pendiente no pudo completarse; reintenta la operación.');
             }
         } else {
-            const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetUserId);
+            const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetUserId,
+                tokens => revokeSharedUserSessionContexts_(targetUserId, tokens));
             revokedSessions = revocation.revokedSessions;
             if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
                 operationError = new Error('No se pudo confirmar la revocación de todas las sesiones y solicitudes de login. Reintenta la operación para completar la revocación.');
@@ -2131,21 +2141,24 @@ function handleDeleteUser(payload) {
         }
 
         const targetSessionRows = [];
+        const targetSessionTokens = [];
         const seenTokens = new Set();
+        const tokenCounts = new Map();
+        sessionsData.slice(1).forEach(row => {
+            const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || '');
+            if (token) tokenCounts.set(token, (tokenCounts.get(token) || 0) + 1);
+        });
         for (let i = 1; i < sessionsData.length; i++) {
             const row = sessionsData[i];
             if (normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== userId) continue;
 
-            const token = row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1];
-            if (token !== null && token !== undefined && String(token) !== '') {
-                const tokenKey = String(token);
-                const globalCount = sessionsData.filter(session =>
-                    session[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token
-                ).length;
-                if (seenTokens.has(tokenKey) || globalCount > 1) {
+            const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || '');
+            if (token) {
+                if (seenTokens.has(token) || tokenCounts.get(token) !== 1) {
                     throw new Error('Token de sesión duplicado; no se modificó ninguna fila.');
                 }
-                seenTokens.add(tokenKey);
+                seenTokens.add(token);
+                targetSessionTokens.push(token);
             }
             targetSessionRows.push(i + 1);
         }
@@ -2155,7 +2168,7 @@ function handleDeleteUser(payload) {
             throw new Error('No se pudieron invalidar todos los intentos de login pendientes; la cuenta no fue eliminada.');
         }
 
-        revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId));
+        revokeSharedUserSessionContexts_(userId, targetSessionTokens);
 
         // Congelar los IDs calculados actuales antes de cambiar nombres/roles.
         // Esto conserva referencias históricas aunque alguna fórmula dependa de otros campos.
@@ -2188,10 +2201,12 @@ function handleDeleteUser(payload) {
         SpreadsheetApp.flush();
         // Confirmar la limpieza por identidad; una fila residual mantiene la operación reintentable.
         try {
-            const remainingSessions = sessionsSheet.getDataRange().getValues().slice(1).filter(row =>
-                normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === userId
-            );
-            if (remainingSessions.length) {
+            const remainingLastRow = sessionsSheet.getLastRow();
+            const remainingIds = remainingLastRow >= 2
+                ? sessionsSheet.getRange(2, COLS_ACTIVE_SESSIONS.ID_Usuario, remainingLastRow - 1, 1).getValues()
+                : [];
+            const hasRemainingSessions = remainingIds.some(row => normalizeUserId(row[0]) === userId);
+            if (hasRemainingSessions) {
                 deletionError = deletionError || new Error('Quedaron filas de sesión asociadas a la cuenta desactivada.');
             }
         } catch (verificationError) {
@@ -2335,14 +2350,15 @@ function handleRequestPasswordRecovery(payload){
     if(!username||!email||username.length>80||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return generic;
     const lock=LockService.getScriptLock();let acquired=false,manager=null,delivery=null,userId="";
     try{
+        lock.waitLock(10000);acquired=true;
         const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)return generic;
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
             .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
                 String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
-        lock.waitLock(10000);acquired=true;manager=getPasswordRecoveryManager_();
+        manager=getPasswordRecoveryManager_();
         userId=matches.length===1?normalizeUserId(matches[0].row[COLS_USERS.ID-1]):"";
         if(!manager.reserveRequest(username,email,userId)||matches.length!==1||!userId)return generic;
-        const currentRow=usersSheet.getRange(matches[0].rowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0];
+        const currentRow=matches[0].row;
         if(!isActiveAuthUserRecord(currentRow)||normalizeUserId(currentRow[COLS_USERS.ID-1])!==userId||
             String(currentRow[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()!==username||
             String(currentRow[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()!==email)return generic;
@@ -2381,8 +2397,9 @@ function handleCompletePasswordRecovery(payload){
         const manager=getPasswordRecoveryManager_(),verification=manager.verify(userId,email,code);
         if(!verification.valid)return invalid;
         if(!manager.consume(userId,verification.challengeId))throw new Error("No se pudo consumir el código de recuperación. Solicita uno nuevo.");
-        const newHash=createPasswordHash(newPassword);revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId));
-        const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId);
+        const newHash=createPasswordHash(newPassword);
+        const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId,
+            tokens => revokeSharedUserSessionContexts_(userId, tokens));
         if(revocation.pendingRows.length||revocation.pendingLoginRequests)throw new Error("No se pudo confirmar la revocación de todas las sesiones. Solicita un nuevo código e inténtalo nuevamente.");
         writePasswordHashAndVerifyUnderLock_(usersSheet,matches[0].rowIndex,newHash);
         const pointer=clearUserSessionPointerUnderLock_(usersSheet,matches[0].rowIndex),deletion=deleteRevokedSessionRowsUnderLock_(sessionsSheet,revocation.rows);
@@ -2429,8 +2446,8 @@ function handleChangePassword(payload) {
         }
 
         const newHash = createPasswordHash(newPassword);
-        revokeSharedUserSessionContexts_(userId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, userId));
-        const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, userId);
+        const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, userId,
+            tokens => revokeSharedUserSessionContexts_(userId, tokens));
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
             throw new Error('No se pudo confirmar la revocación de todas las sesiones y solicitudes de login. No se cambió la contraseña; reintenta con la contraseña actual.');
@@ -2490,21 +2507,24 @@ function handleResetUserPassword(payload) {
         if (target.length !== 1 || !isActiveAuthUserRecord(target[0].row)) {
             throw new Error('La cuenta destino no existe, está desactivada o su ID no es único.');
         }
+        let revocation;
         if (hasPendingRoleRevocation_(targetId)) {
-            const pending = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, targetId);
+            const pending = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, targetId, target[0].rowIndex);
             if (pending.pending) throw new Error('La revocación de sesiones por cambio de rol sigue pendiente; reintenta el restablecimiento.');
+            revocation = { rows: [], revokedSessions: pending.revokedSessions || 0, pendingRows: [],
+                pendingLoginRequests: false, cleanupPending: pending.cleanupPending };
+        } else {
+            revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetId,
+                tokens => revokeSharedUserSessionContexts_(targetId, tokens));
         }
-
         const newHash = createPasswordHash(newPassword);
-        revokeSharedUserSessionContexts_(targetId, getActiveSessionTokensForUserUnderLock_(sessionsSheet, targetId));
-        const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, targetId);
         revokedSessions = revocation.revokedSessions;
         if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
             throw new Error('No se pudo confirmar la revocación de todas las sesiones y solicitudes de login destino. No se cambió la contraseña; reintenta el restablecimiento.');
         }
         writePasswordHashAndVerifyUnderLock_(usersSheet, target[0].rowIndex, newHash);
         const pointer = clearUserSessionPointerUnderLock_(usersSheet, target[0].rowIndex);
-        cleanupPending = pointer.pending;
+        cleanupPending = Boolean(revocation.cleanupPending) || pointer.pending;
         cleanupError = pointer.error;
 
         const deletion = deleteRevokedSessionRowsUnderLock_(sessionsSheet, revocation.rows);
