@@ -26,8 +26,9 @@ assert.ok(recoveryRequest.indexOf("lock.waitLock(10000)") < recoveryRequest.inde
 assert.match(recoveryRequest, /const currentRow=usersSheet\.getRange\(matches\[0\]\.rowIndex/);
 
 const deleteUser = block("handleDeleteUser");
-assert.equal(count(deleteUser, /\.getDataRange\(\)/g), 2,
-    "Eliminación debe leer Users y ActiveSessions una sola vez cada una.");
+assert.equal(count(deleteUser, /\.getDataRange\(\)/g), 1,
+    "Eliminación debe leer Users una vez y ActiveSessions solo en las columnas necesarias.");
+assert.match(deleteUser, /getRange\(2, 1, sessionsLastRow - 1, sessionWidth\)/);
 assert.match(deleteUser, /const tokenCounts = new Map\(\)/);
 assert.match(deleteUser, /targetSessionTokens\.push\(token\)/);
 assert.match(deleteUser, /revokeSharedUserSessionContexts_\(userId, targetSessionTokens\)/);
@@ -56,6 +57,8 @@ assert.match(revokeAll, /return \{ rows, tokens, revokedSessions, pendingRows/);
 
 const reconcile = block("reconcileRoleRevocationUnderLock_");
 assert.match(reconcile, /readTargetRows=\(\)=>Number\.isInteger\(knownRowIndex\)/);
+assert.equal(count(reconcile, /\.getDataRange\(\)/g), 1,
+    "La reconciliación con fila conocida debe evitar la segunda lectura completa de Users.");
 assert.match(reconcile, /revokeAllUserSessionsUnderLock_\(sessionsSheet,userId,[\s\S]*?revokeSharedUserSessionContexts_/);
 assert.doesNotMatch(auth, /function getActiveSessionTokensForUserUnderLock_\(/,
     "El helper de escaneo duplicado debe permanecer eliminado.");
