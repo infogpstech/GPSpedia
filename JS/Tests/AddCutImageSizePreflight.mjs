@@ -5,8 +5,10 @@ import assert from 'node:assert/strict';
 
 const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const html = readFileSync(resolve(root, 'HTML/add_cortes.html'), 'utf8');
-const match = html.match(/        function fileToBase64\\(file\\) \\{[\\s\\S]*?\\n        \\}/);
-assert.ok(match, 'No se encontró fileToBase64.');
+const start = html.indexOf("        function fileToBase64(file) {");
+const end = html.indexOf("\n        }", start);
+assert.ok(start >= 0 && end > start, 'No se encontró fileToBase64.');
+const source = html.slice(start, end + "\n        }".length);
 let reads = 0, nextResult = 'data:image/jpeg;base64,AA==';
 class FakeFileReader {
     readAsDataURL(file) {
@@ -15,7 +17,7 @@ class FakeFileReader {
         this.onload();
     }
 }
-const fileToBase64 = new Function('FileReader', match[0] + '; return fileToBase64;')(FakeFileReader);
+const fileToBase64 = new Function('FileReader', source + '; return fileToBase64;')(FakeFileReader);
 const results = [];
 async function run(name, fn) {
     try { await fn(); results.push({name,status:'PASS'}); }
