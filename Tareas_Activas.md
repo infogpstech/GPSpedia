@@ -198,3 +198,11 @@ Antes de cualquier Beta, cumplir la secuencia de sincronización de ramas, árbo
 - `logUserActivity` también usa appendRow atómico con fórmula por fila; `getNextFormulaBasedId_` usa el ledger de reservas append-only.
 - Pruebas `FeedbackLikeAppendOnly` 4/4, `FeedbackLikeCompletedReplayPreflight` 6/6, `FeedbackLikeActivityOutsideLock` 5/5, `FeedbackLikePreflightOutsideLock` 5/5, `CatalogChangeFeed` 35/35. CI `44848965971` SUCCESS: 255 suites, 3063 pruebas, 0 fallos. Health read-only `44848965894` SUCCESS. Pages `44848965693` pendiente al registrar.
 - P0 continúa abierto por `handleSuggestYear`, reportes/sugerencias, PyS, tutoriales y vídeos. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## En curso — preparación de votos append-only en handleSuggestYear (2026-11-21)
+
+- Se modificó `countVerifiedPositiveYearSuggestionVotes_` para que, por vehículo/año, solo cuente el resultado de la primera fila física de cada actor verificado. Una respuesta posterior contradictoria del mismo actor ya no puede transformar su primer voto ni duplicar su aportación.
+- `SuggestYearVoteThreshold.mjs` incorpora pruebas para ambos órdenes de conflicto (negativo→positivo y positivo→negativo).
+- CI del commit `8c8a7dac2ce2743642bebfdfcfcccdb387cdbe56`: servicio de regresión SUCCESS, 255 suites, 3064 pruebas, 0 fallos; health read-only SUCCESS; build SUCCESS. Deploy/Pages seguía en ejecución al registrar.
+- **No se ha retirado ScriptLock ni se considera migrado el flujo.** Pendiente: append atómico de votos, ledger de aplicaciones idempotente, recuperación sin mutar filas históricas y validación de concurrencia. Mantener lock actual hasta completar esos contratos.
