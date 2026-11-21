@@ -30,3 +30,11 @@ Esta fase no retira ScriptLock. Faltan proyección first-write-wins con rechazo 
 ## Validación
 
 La auditoría de código es estática. La validación CI se ejecutará al publicar. La ejecución real de `appendRow`, TextFinder, Drive y carreras Apps Script/Sheets queda diferida a Beta aislada. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+## Adenda de validación CI — 2026-11-21
+
+- El primer intento de CI sobre `660674222f450c70c5ac66690133b7cf47773c48` detectó únicamente una aserción de prueba demasiado estricta respecto a espacios en la llamada; se corrigió usando una expresión regular tolerante a formato. El código de servicio no falló en sintaxis.
+- Commit validado: `b3ee926872b8dfbed90b584d755a09c1ceff53ca`.
+- CI `44865504667` SUCCESS: 256 suites, 3079 pruebas aprobadas, 0 fallos; `FeedbackAppendRowIdentity` 3/3 PASS. Health read-only `44865504762` SUCCESS.
+- Pages `44865504161` seguía en cola al emitir esta adenda. La ejecución real de Apps Script/Sheets/Drive y concurrencia de campo sigue pendiente de Beta.
