@@ -25,6 +25,10 @@ assert.ok(refresh.indexOf("getCatalogSyncState") < refresh.indexOf('routeAction(
     "El cursor conservador debe capturarse antes de solicitar el snapshot fallback.");
 assert.match(refresh, /offline\.saveCatalogWithCursor\(snapshot, localSyncState\.cursor\)/);
 assert.match(refresh, /offline\.saveCatalog\(snapshot\)/);
+assert.match(refresh, /const catalogAtStart = getState\(\)\.catalogData/);
+assert.match(refresh, /currentCatalog !== catalogAtStart/);
+assert.match(refresh, /const catalogBeforeFallback = getState\(\)\.catalogData/);
+assert.match(refresh, /getState\(\)\.catalogData !== catalogBeforeFallback/);
 
 const saveBranchStart = exit.indexOf("\n    } else {", exit.indexOf("if (!saveChanges && originalItemBackup)"));
 assert.ok(saveBranchStart > 0, "No se encontró la rama de cierre normal.");
@@ -49,4 +53,4 @@ assert.match(main, /window\.auth = auth/);
 assert.match(offline, /export async function saveCatalogWithCursor/);
 assert.match(offline, /export function applyCatalogChangesToSnapshot/);
 
-console.log("CatalogEditDeltaRefresh: 22/22 PASS — edición normal usa deltas; descarte mantiene verificación completa");
+console.log("CatalogEditDeltaRefresh: 26/26 PASS — edición normal usa deltas; descarte mantiene verificación completa");
