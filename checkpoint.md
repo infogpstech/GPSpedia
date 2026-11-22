@@ -1522,7 +1522,7 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Se añadió `readActivityDashboardCutsSnapshot_`: obtiene una sola vez A:D de Cortes y tres rangos contiguos tipo→colaborador. Estos rangos incluyen también `utilCorteN`.
 - `handleGetActivityLogs` pasa la misma instantánea a `buildCutContributionSummary_` y `buildActivityDashboardInsights_`. Elimina las lecturas repetidas de IDs y tipos/contadores entre ambos agregados.
 - Conteo estático anterior: 11 rangos de Cortes (4 contribuciones + 7 insights). Nuevo: 4 rangos compartidos. Reducción: **7 lecturas de rango por petición**; no se leen filas completas ni columnas ajenas al dashboard.
-- Pruebas: ActivityDashboardContributions PASS; GP-DASH-INSIGHTS-01 PASS; ActivityLogsBoundedRead/AUG-120 **7/7 PASS**. CI HEAD `eba4b299572fd7cc4afae8b15d009498e04feb5e`: **292 suites / 3,409 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- Pruebas: ActivityDashboardContributions PASS; GP-DASH-INSIGHTS-01 PASS; ActivityLogsBoundedRead/AUG-120 **7/7 PASS**. CI HEAD `eba4b299572fd7cc4afae8b15d009498e04feb5e`: **292 suites / 3,409 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy SUCCESS.
 - Durante la integración se actualizaron los harnesses que extraen `handleGetActivityLogs` para incluir el snapshot compartido y sus constantes; la regresión final quedó verde.
 - Rama base `GPSpedia2.2.5` comprobada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. No se tocaron datos productivos ni deployments Apps Script.
 - Siguiente: auditar lecturas y eventos de PyS, tutoriales y publicación CATALOG; luego cerrar FEEDBACK integral antes de iniciar ADMIN.
