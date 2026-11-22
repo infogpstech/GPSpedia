@@ -688,3 +688,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Pruebas añadidas:** single-flight, cache hit, cambio VIN/vehicleId, retry tras fallo y verificación de ambos callsites.
 - **Estado:** código y pruebas preparados; CI pendiente.
 - **Siguiente:** CI completo. Después continuar el trazado de refresh checkVehicle, uploads y video.
+
+
+## A02-03 — corrección del mock de pruebas — 2026-11-22
+
+- **Hallazgo CI:** la prueba de invalidación por cambio de vehículo falló porque el doble esperaba siempre vehicleId 204, aunque el escenario cambia intencionalmente a 205.
+- **Corrección:** el assert ahora compara el payload con state.selectedVehicleId actual; la implementación transmitió el nuevo ID correctamente.
+- **Estado:** prueba corregida; CI pendiente.
+- **Siguiente:** repetir CI completo.

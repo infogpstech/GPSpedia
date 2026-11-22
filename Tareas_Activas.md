@@ -503,3 +503,6 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-03: compartir checkVinDuplicate entre blur y submit por VIN normalizado + vehicleId; invalidar al editar y permitir retry tras fallo.
 - [x] Añadir pruebas de single-flight/cache hit, invalidación por VIN/vehículo, fallo y callsites.
 - [ ] CI A02-03; confirmar que WRITE conserva la validación autoritativa bajo la operación.
+
+- [x] Corregir el mock VIN: el test de invalidación por cambio de vehículo compara currentVehicleId con el valor actual del estado y no con un ID fijo.
+- [ ] Repetir CI A02-03.

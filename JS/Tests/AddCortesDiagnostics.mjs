@@ -77,7 +77,7 @@ const vinCheck = new Function("state", "routeAction", vinHelperSource + "; retur
     async (action, payload) => {
         vinCalls++;
         assert.equal(action, "checkVinDuplicate");
-        assert.equal(String(payload.currentVehicleId), "204");
+        assert.equal(String(payload.currentVehicleId), String(vinState.selectedVehicleId));
         return { status: "success", duplicate: false, vinPrefix: "1HGCM" };
     }
 );

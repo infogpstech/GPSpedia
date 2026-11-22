@@ -189,3 +189,8 @@ El segundo CI detectó que la nueva prueba focalizada enviaba campos de alimenta
 **Evidencia:** el listener blur y el submit consultaban checkVinDuplicate para el mismo VIN/vehicleId. WRITE vuelve a comprobar la unicidad dentro de la mutación, que es el control autoritativo necesario para concurrencia.  
 **Corrección:** helper checkVinDuplicateOnce_ comparte la promesa concurrente y reutiliza el resultado por VIN normalizado + vehicleId; se invalida al editar el campo o cambiar el vehículo. Si falla, no cachea el error y permite reintentar. WRITE conserva su comprobación final, por lo que no se debilita la protección ante un VIN registrado después del preflight.  
 **Pruebas:** una llamada concurrente/una cache hit; invalidación por VIN/vehículo; retry tras error; blur y submit usan el helper y no consultan directamente. CI pendiente.
+
+
+### Resultado CI inicial A02-03
+
+El CI del SHA e313ff8c57239dd5f981f6b3396aa779f2bd1a4d falló solo en el doble de prueba: el mock exigía vehicleId=204 incluso después de que el caso cambiara intencionalmente a 205 para comprobar invalidación. La implementación envió el nuevo vehicleId correctamente; el assert del mock era incorrecto. Se ajusta para comparar con el estado actual y se repetirá CI.
