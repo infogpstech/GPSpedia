@@ -47,7 +47,12 @@ test("la vinculación de imágenes usa appendRow y no modifica reportMetadata in
  const append=source.slice(a,b);
  assert.match(append,/sheet\.appendRow\(row\)/);
  assert.match(append,/findFeedbackReportImageEventByReportId_\(id\)/);
- assert.match(append,/imageSha256/);
+ assert.match(append,/const canonical = findFeedbackReportImageEventByReportId_\(id\)/);
+ assert.ok(append.indexOf("sheet.appendRow(row)") < append.indexOf("const canonical = findFeedbackReportImageEventByReportId_(id)"),
+  "El read-back por reportId debe confirmar el append después de guardar.");
+ assert.doesNotMatch(append,/createTextFinder\(eventId\)/,
+  "No debe hacer un escaneo adicional por eventId cuando el read-back por reportId ya confirma y detecta concurrencia.");
+ assert.match(append,/canonical\.metadata\.imageSha256 !== image\.imageSha256/);
  assert.doesNotMatch(source.slice(source.indexOf("function handleReportProblem("),source.indexOf("\nfunction enforceFeedbackRateLimit_")),
   /pendingExistingMetadata|reportMetadataColumn\)\.setValue/);
 });
