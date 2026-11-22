@@ -71,7 +71,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P1 — servicios, aportes y catálogo
 - [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
 - [x] ADMIN — auditoría estática de respaldos/restauración DB y Drive, escáneres, reorganización de imágenes, upload/recovery y read-backs; se conserva staging/rollback y no se modifican rutas destructivas sin pruebas de integración.
-- [ ] Auditar FEEDBACK y ADMIN de extremo a extremo: operaciones, idempotencia, Drive/Spreadsheet, read-back y publicaciones.
+- [x] Auditar FEEDBACK y ADMIN de extremo a extremo: dispatcher/RBAC, actor cacheado, escrituras, idempotencia, Drive/Spreadsheet, read-back y publicaciones. Sin duplicación de alta confianza; tres leases administrativas de mantenimiento quedan para medición Beta y revisión de sustituto idempotente.
 - [x] FEEDBACK — aplicación de sugerencia de año: el read-back del append en FeedbackYearApplications localiza operationId exacto en columna A con TextFinder y lee solo las filas coincidentes (16 columnas); conserva detección de IDs duplicados y estado pending. Test FeedbackYearApplicationReadbackBounded; CI 292 suites / 3,405 pruebas / 0 fallos.
 - [x] FEEDBACK — eventos vehicle_update de ampliación de año: preflight de idempotencia busca opId exacto en columna B de AportesVehiculo y lee únicamente filas coincidentes; read-back del append busca eventId exacto en columna A y confirma una única fila de 11 columnas. Se conservan comparación del contenido canónico, detección de opId contradictorio y read-back completo de los datos coincidentes. FeedbackYearApplicationAppendOnly actualizado; CI 292 suites / 3,406 pruebas / 0 fallos.
 - [x] FEEDBACK — likes: cuando el preflight ya validó el esquema y obtuvo el ledger FeedbackLikes, el handler reutiliza esa misma referencia; solo crea/valida el ledger si el preflight no pudo obtener un snapshot. Evita la segunda lectura de encabezados en el camino ordinario, sin cambiar replay ni fallback. FeedbackLikeCompletedReplayPreflight 7/7; CI 292 suites / 3,406 pruebas / 0 fallos.
@@ -228,3 +228,10 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Inventario estático, prioridad de miniaturas, métricas, compatibilidad de contratos, auditoría de cancelación, revisión YouTube, inventario de assets versionados y protocolo Beta.
 - [x] HEAD `dbf8a73b0a0ab972a66a9333f2d5afc07d7121f5`: CI 44975028315 SUCCESS; 293 suites / 3,435 pruebas / 0 fallos; health read-only 44975028307 SUCCESS.
 - [ ] PENDIENTE BETA: corpus técnico autorizado, CORS/primera pintura/bytes/memoria, tamaños históricos de LogosMarca y ejecución YouTube real en canal aislado.
+
+
+### FEEDBACK/ADMIN — cierre de auditoría estática (2026-11-22)
+- [x] FEEDBACK: dispatcher/RBAC/actor, aportes, adjuntos, PyS, Tutoriales, Inbox, vídeos, read-back y publicaciones CATALOG revisados; sin ScriptLock global ni lease en handlers ordinarios.
+- [x] ADMIN: actor cacheado validado localmente, matriz de roles, WRITE/CATALOG, inventario Drive, read-backs y auditoría persistente revisados.
+- [x] No se identificó llamada duplicada de alta confianza para retirar sin medición.
+- [ ] Medir en Beta aislada las tres leases administrativas (saveUnusedImagesInventory, createCortesImageFolder, auditDriveImagesInCortes), su contención/duración y alternativas idempotentes. No retirarlas sin pruebas de duplicados/cursor.

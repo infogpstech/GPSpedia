@@ -257,3 +257,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Beta pendiente: corpus técnico real autorizado; legibilidad/alfa/orientación/MIME/SHA; CORS/primera pintura/bytes/memoria; tamaños históricos de Drive/LogosMarca; YouTube resumable/aprobación en canal aislado.
 - Protocolo: `lista_beta_adenda_2026-11-22_multimedia.md`, indexado en `lista_beta.txt`.
 - Siguiente trabajo local independiente: retomar pendientes de FEEDBACK/ADMIN y optimización de lecturas según `Tareas_Activas.md`; no esperar a la Beta para avanzar en auditorías estáticas y contratos locales.
+
+
+## FEEDBACK/ADMIN — auditoría estática end-to-end (2026-11-22)
+
+- FEEDBACK: dispatcher y matriz RBAC revisados; actor de sesión confiable se resuelve una vez; handlers ordinarios sin ScriptLock global ni lease; reportes, sugerencias, adjuntos, PyS, Tutoriales, Inbox, YouTube, read-backs e invalidación CATALOG cubiertos por contratos integrados.
+- ADMIN: actor cacheado y checks locales de rol; reserva WRITE y proyección CATALOG dirigidas; inventario de imágenes hace una consulta de candidatos y un escaneo de referencias, sin segunda llamada CATALOG en la misma acción; auditoría persistente best-effort al iniciar.
+- Tres leases permanecen en operaciones de mantenimiento explícitas: saveUnusedImagesInventory, createCortesImageFolder, auditDriveImagesInCortes. No se retiran sin medir y demostrar sustituto de idempotencia/consistencia; no se aplican a aportes ordinarios.
+- Sin cambios de código: no se identificó una llamada redundante de alta confianza que pueda retirarse sin evidencia de medición.
+- Evidencia: AUDITORIA_FEEDBACK_ADMIN_END_TO_END_2026-11-22.md.
+- Siguiente: revisar optimizaciones locales pendientes y, cuando haya entorno, medir las leases administrativas y las lecturas Drive/CATALOG en Beta aislada.

@@ -851,3 +851,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - HEAD dbf8a73b0a0ab972a66a9333f2d5afc07d7121f5: CI SUCCESS, 293 suites / 3,435 pruebas / 0 fallos; contrato cola 24/24 PASS; health read-only SUCCESS.
 - Auditorías de imágenes/cola, YouTube y logos; prioridad y métricas implementadas; protocolo Beta aislada creado e indexado.
 - Pendiente únicamente validación Beta externa y autorizada: corpus técnico, CORS/primera pintura/bytes/memoria, tamaños reales Drive y YouTube en canal aislado.
+
+
+2026-11-22 — auditoría estática FEEDBACK/ADMIN end-to-end
+- FEEDBACK: actor/RBAC, escrituras, adjuntos, PyS, Tutoriales, Inbox, YouTube, read-back y publicación CATALOG revisados; handlers ordinarios sin lease/ScriptLock global.
+- ADMIN: actor cacheado, permisos locales, reserva WRITE, proyección CATALOG, inventario Drive y auditoría revisados. Se identifican tres leases de mantenimiento que requieren medición y sustituto idempotente antes de retirarlas.
+- No se modificó código por no encontrar duplicación de alta confianza sin medición. Informe AUDITORIA_FEEDBACK_ADMIN_END_TO_END_2026-11-22.md.
