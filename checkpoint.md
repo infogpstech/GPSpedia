@@ -296,3 +296,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Tests: TutorialCatalogRefreshDeltaFirst 6/6 PASS; CarouselResizeListenerLifecycle 5/5 PASS. CI HEAD 55fa1198 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; health read-only SUCCESS; Pages build en curso al cierre.
 - Evidencia: AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
 - Pendiente: medir primer render, IndexedDB, cache hit/miss, llamadas evitadas y memoria en Beta Android/PWA y escritorio.
+
+
+## P2 — estado de navegación y validación (2026-11-22)
+
+- Revisión de consultas al navegar completada: refresh de Tutorial delta-first con fallback y protección de sesión/respuesta tardía; otras llamadas completas solo por caché ausente, reset o verificación de restauración.
+- IndexedDB/cache-first revisados estáticamente: apertura compartida, carrera IDB/CacheStorage, timeout y transacción confirmada. Métricas reales de primer render y memoria quedan en Beta.
+- Último CI verificado HEAD `4dd0f9f437865e179e6c671bb3927b147a516e34`: 295 suites / 3,446 pruebas / 0 fallos; TutorialCatalogRefreshDeltaFirst 6/6; CarouselResizeListenerLifecycle 5/5; health read-only SUCCESS. Pages build en curso.
+- Siguiente: revisión de inicializaciones/renderizados que puedan duplicar peticiones, observers, nodos o listeners; luego contratos transversales de fallos parciales/no duplicación.

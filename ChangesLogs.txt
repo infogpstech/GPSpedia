@@ -876,3 +876,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Revisados restantes llamados getCatalogData, loadPysData, cache-first e IndexedDB; no se retiraron snapshots necesarios para restauración/validación.
 - TutorialCatalogRefreshDeltaFirst 6/6 PASS; CI HEAD 55fa1198 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos.
 - Informe AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
+
+
+2026-11-22 — actualización de tareas P2
+- Se cierra revisión estática de consultas de navegación y cache-first/IndexedDB; el alta de Tutorial ahora usa delta-first.
+- CI HEAD 4dd0f9f4 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; contratos UI 6/6 y 5/5.
+- Siguiente: revisar inicializaciones/renderizados duplicados y ampliar cobertura transversal sin duplicar pruebas existentes.

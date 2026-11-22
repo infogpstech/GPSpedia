@@ -109,7 +109,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Medir por separado cliente, red, Apps Script, Drive y proyección CATALOG.
 
 ### P2 — optimización y verificación integral
-- [x] Revisar listeners, polling, timers y observers principales: corregida acumulación de listeners resize en carruseles; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup. Falta revisar consultas repetidas al navegar.
+- [x] Revisar listeners, polling, timers y observers principales: corregida acumulación de listeners resize en carruseles; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup.
 - [x] Revisar cache-first/IndexedDB: IDB y CacheStorage en paralelo, carrera 3 s, una apertura IDB compartida, transacción confirmada y PyS single-flight; medir primer render y memoria real queda para Beta.
 - [ ] Añadir pruebas de no duplicación y fallos parciales; ejecutar regresión integral y comparación antes/después.
 - [x] Documentar llamadas retiradas/conservadas y su justificación en AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
@@ -130,7 +130,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estática y CI (291 suites / 3,397 pruebas / 0 fallos). Siguiente: auditoría end-to-end FEEDBACK (sugerencias de año, likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicación CATALOG). Después ADMIN. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. Toda validación real de Drive, concurrencia interproyecto, pérdida de respuesta y métricas requiere entorno aislado; no ejecutar contra producción.
+P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría estática y CI. P1 multimedia local está cerrado con validación Beta pendiente. Siguiente trabajo local: revisar inicializaciones y renderizados duplicados de UI y pruebas transversales de fallos parciales/no duplicación. Toda validación real de Drive, concurrencia interproyecto, pérdida de respuesta y métricas requiere entorno aislado; no ejecutar contra producción.
 
 
 ## Actualización de continuidad — 2026-11-22
@@ -143,16 +143,16 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 
 
 ### P1 — imágenes, vídeos y archivos (actualización 2026-11-21)
-- [x] Inventario técnico estático de presentación/variantes, IndexedDB, compresión PNG, cola, ObjectURL, precarga, cargas ADMIN/FEEDBACK/PyS, logos y cliente YouTube. Evidencia y decisiones en `AUDITORIA_P1_MULTIMEDIA_INVENTARIO_2026-11-21.md`. Sin cambios de código ni pruebas ejecutadas.
-- [ ] Siguiente: validar compresión/redimensionado con corpus técnico; medir legibilidad, alfa PNG, dimensiones, orientación, MIME/firma, metadatos y tamaños. Medir competencia entre precarga de últimos 15 vehículos y recursos visibles antes de cambiar cola/concurrencia.
+- [x] Inventario técnico estático de presentación/variantes, IndexedDB, compresión PNG, cola, ObjectURL, precarga, cargas ADMIN/FEEDBACK/PyS, logos y cliente YouTube. Evidencia y decisiones en `AUDITORIA_P1_MULTIMEDIA_INVENTARIO_2026-11-21.md`.
+- [x] Trazar y corregir prioridad visible/precarga; implementar métricas y contratos. Corpus técnico real, calidad visual y medición de navegador quedan pendientes de Beta aislada.
 - [ ] Inventariar tamaños históricos reales de logos; no fijar límite sin muestra representativa.
-- [ ] Ejecutar suites locales multimedia y reservar CORS, primera pintura, bytes, memoria y cancelación para navegador Beta aislado.
+- [x] Suites multimedia ejecutadas en CI; CORS, primera pintura, bytes, memoria y cancelación en navegador real quedan reservados a Beta aislada.
 
 
 ### P1 — compresión y calidad visual (actualización 2026-11-21)
 - [x] Inspeccionar algoritmo de miniaturas y corpus de imágenes versionado. Conclusión: PNG conserva alfa, no se amplían imágenes pequeñas y la proporción se mantiene; el reescalado puede perder detalle fino. No existe corpus técnico representativo; no se cambian parámetros. Evidencia: `AUDITORIA_P1_CALIDAD_COMPRESION_2026-11-21.md`.
 - [ ] Obtener corpus técnico aislado y autorizado para probar diagramas/cableado, texto fino, alfa PNG, orientación, MIME/firma y tamaños 300/800/1600. No incorporar imágenes de clientes al repositorio.
-- [ ] Siguiente: medir competencia visible/precarga y preparar harness de rendimiento; mantener concurrencia FIFO 2 hasta tener evidencia.
+- [x] Prioridad visible/precarga y métricas implementadas; concurrencia FIFO 2 se mantiene. Medición real y decisión de concurrencia quedan para Beta.
 
 
 ### P1 — competencia visible/precarga (actualización 2026-11-21)
@@ -259,3 +259,9 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] IndexedDB: cache-first, IDB/CacheStorage en paralelo, timeout de 3 s, apertura única y transacción confirmada; persistencia secundaria a render en memoria.
 - [x] TutorialCatalogRefreshDeltaFirst 6/6 PASS; CarouselResizeListenerLifecycle 5/5 PASS; CI 295 suites / 3,446 pruebas / 0 fallos.
 - [ ] Medir primer render, IDB, cache hit/miss, llamadas completas evitadas y memoria en Android/PWA y escritorio Beta.
+
+
+### P2 — inicializaciones y renderizados (2026-11-22)
+- [ ] Revisar funciones de inicialización/render que puedan ejecutarse varias veces y duplicar listeners, peticiones, observers o nodos.
+- [ ] Añadir contratos de no duplicación y fallos parciales donde no exista cobertura; no duplicar suites ya integradas.
+- [x] CI HEAD 4dd0f9f4 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; TutorialCatalogRefreshDeltaFirst 6/6; CarouselResizeListenerLifecycle 5/5; health read-only SUCCESS.
