@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GPSpedia · Banco local de calidad de miniaturas</title>
+<style>
+:root{color-scheme:light dark;font:15px/1.5 system-ui,sans-serif}
+body{max-width:1100px;margin:0 auto;padding:24px}
+h1{font-size:1.55rem}p{max-width:80ch}
+.controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:20px 0}
+label{display:grid;gap:6px}
+button,select,input{font:inherit;padding:8px}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+.notice{padding:12px;border:1px solid currentColor;border-radius:8px}
+#status{min-height:1.5em}
+#summary{white-space:pre-wrap;overflow-wrap:anywhere}
+.samples{display:grid;gap:16px}
+.sample{border:1px solid #8888;border-radius:10px;padding:14px}
+.sample h2{font-size:1.1rem}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.preview{min-width:0;border:1px solid #8886;border-radius:8px;padding:8px}
+.preview img{display:block;width:100%;height:180px;object-fit:contain;background:repeating-conic-gradient(#8882 0 25%,transparent 0 50%) 50%/16px 16px}
+.preview small{display:block;overflow-wrap:anywhere}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:.9rem}
+th,td{text-align:left;padding:6px;border-bottom:1px solid #8885}
+@media(max-width:600px){body{padding:14px}table{font-size:.8rem}}
+</style>
+</head>
+<body>
+<h1>Banco local de calidad de miniaturas</h1>
+<p>Herramienta de medición para Beta. Las imágenes se procesan en este navegador: no se suben, no se envían a servicios externos y no se guardan en IndexedDB. Usa únicamente muestras sintéticas o autorizadas y anonimizadas.</p>
+<div class="notice">
+<strong>Alcance:</strong> compara las variantes PNG de 300, 800 y 1600 px con la misma regla de escala de GPSpedia. Mide decodificación, Canvas, codificación, espera de cola, bytes y transparencia. La revisión de legibilidad sigue siendo visual.
+</div>
+<div class="controls">
+<label>Muestras locales
+<input id="files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+<label>Imagen que pasa a ser visible
+<select id="visible"></select></label>
+<button id="run" disabled>Procesar muestras</button>
+</div>
+<p id="status" role="status" aria-live="polite">Selecciona archivos JPEG, PNG o WebP. Para abrir desde el repositorio: python -m http.server 8000 y visita /JS/Tests/ThumbnailQualityBenchmark.html.</p>
+<div id="summary"></div>
+<div id="results" class="samples"></div>
+<script type="module">
+import { createConcurrencyLimiter } from "../Frontend/thumbnailCompressionQueue.js";
+
+const WIDTHS = [300, 800, 1600];
+const filesInput = document.getElementById("files");
+const visibleSelect = document.getElementById("visible");
+const runButton = document.getElementById("run");
+const statusNode = document.getElementById("status");
+const summaryNode = document.getElementById("summary");
+const resultsNode = document.getElementById("results");
+let objectUrls = [];
+
+function releaseUrls() {
+    objectUrls.forEach(url => URL.revokeObjectURL(url));
+    objectUrls = [];
+}
+function addPreviewUrl(blob) {
+    const url = URL.createObjectURL(blob);
+    objectUrls.push(url);
+    return url;
+}
+function detectSignature(bytes) {
+    const b = Array.from(bytes.slice(0, 12));
+    if (b.length >= 8 && b.slice(0, 8).join(",") === "137,80,78,71,13,10,26,10") return "PNG";
+    if (b[0] === 255 && b[1] === 216 && b[2] === 255) return "JPEG";
+    if (b.length >= 12 && String.fromCharCode(...b.slice(0, 4)) === "RIFF" &&
+        String.fromCharCode(...b.slice(8, 12)) === "WEBP") return "WEBP";
+    return "desconocida";
+}
+async function sha256(file) {
+    if (!crypto.subtle) return "no disponible";
+    const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+    return Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, "0")).join("");
+}
+async function readJpegExifOrientation(file) {
+    if (file.type !== "image/jpeg") return "no JPEG";
+    const bytes = new Uint8Array(await file.slice(0, 262144).arrayBuffer());
+    if (bytes[0] !== 255 || bytes[1] !== 216) return "JPEG inválido";
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let offset = 2;
+    while (offset + 4 < bytes.length) {
+        if (bytes[offset] !== 255) break;
+        const marker = bytes[offset + 1];
+        offset += 2;
+        if (marker === 217 || marker === 218) break;
+        const length = view.getUint16(offset, false);
+        if (length < 2 || offset + length > bytes.length) break;
+        if (marker === 225 && length >= 14 &&
+            String.fromCharCode(...bytes.slice(offset + 2, offset + 8)) === "Exif\0\0") {
+            const tiff = offset + 8;
+            const little = bytes[tiff] === 73 && bytes[tiff + 1] === 73;
+            const big = bytes[tiff] === 77 && bytes[tiff + 1] === 77;
+            if (!little && !big) return "EXIF TIFF inválido";
+            if (view.getUint16(tiff + 2, little) !== 42) return "EXIF TIFF inválido";
+            const ifd = tiff + view.getUint32(tiff + 4, little);
+            if (ifd + 2 > bytes.length) return "EXIF incompleto";
+            const count = view.getUint16(ifd, little);
+            for (let index = 0; index < count; index++) {
+                const entry = ifd + 2 + index * 12;
+                if (entry + 12 > bytes.length) break;
+                if (view.getUint16(entry, little) === 0x0112) {
+                    return String(view.getUint16(entry + 8, little));
+                }
+            }
+            return "sin etiqueta de orientación";
+        }
+        offset += length;
+    }
+    return "no presente";
+}
+async function hasTransparency(canvas) {
+    const sample = document.createElement("canvas");
+    sample.width = Math.min(128, canvas.width);
+    sample.height = Math.min(128, canvas.height);
+    const context = sample.getContext("2d", { willReadFrequently: true });
+    if (!context) return "no comprobable";
+    context.drawImage(canvas, 0, 0, sample.width, sample.height);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    for (let index = 3; index < pixels.length; index += 4) {
+        if (pixels[index] < 255) return "sí (muestreo)";
+    }
+    return "no detectada (muestreo)";
+}
+function addText(parent, tag, value) {
+    const node = document.createElement(tag);
+    node.textContent = String(value);
+    parent.appendChild(node);
+    return node;
+}
+function addPreview(parent, title, blob, details) {
+    const card = document.createElement("div");
+    card.className = "preview";
+    addText(card, "strong", title);
+    const img = document.createElement("img");
+    img.alt = title;
+    img.src = addPreviewUrl(blob);
+    card.appendChild(img);
+    addText(card, "small", details);
+    parent.appendChild(card);
+}
+async function makeVariant(file, width, sampleIndex) {
+    const queuedAt = performance.now();
+    let startedAt = 0;
+    const result = await queue.run(async () => {
+        startedAt = performance.now();
+        activeCompressionTasks++;
+        maxActiveCompressionTasks = Math.max(maxActiveCompressionTasks, activeCompressionTasks);
+        try {
+        const bitmap = await createImageBitmap(file);
+        try {
+            const scale = Math.min(1, width / bitmap.width);
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+            const context = canvas.getContext("2d");
+            if (!context) throw new Error("Canvas 2D no disponible");
+            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            const encodeStart = performance.now();
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+            const encodeMs = performance.now() - encodeStart;
+            if (!blob) throw new Error("Canvas no pudo codificar PNG");
+            const processMs = performance.now() - startedAt;
+            const alpha = await hasTransparency(canvas);
+            return {
+                blob, width: canvas.width, height: canvas.height,
+                queueWaitMs: startedAt - queuedAt, processMs, encodeMs,
+                alpha, estimatedCanvasBytes: canvas.width * canvas.height * 4
+            };
+        } finally {
+            if (typeof bitmap.close === "function") bitmap.close();
+        }
+        } finally { activeCompressionTasks--; }
+    }, { key: "sample-" + sampleIndex + "::w" + width, priority: 0 });
+    return result;
+}
+let queue;
+let activeCompressionTasks = 0;
+let maxActiveCompressionTasks = 0;
+filesInput.addEventListener("change", () => {
+    releaseUrls();
+    resultsNode.replaceChildren();
+    summaryNode.textContent = "";
+    visibleSelect.replaceChildren();
+    Array.from(filesInput.files || []).forEach((file, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = "Muestra " + (index + 1);
+        visibleSelect.appendChild(option);
+    });
+    if (visibleSelect.options.length) visibleSelect.selectedIndex = visibleSelect.options.length - 1;
+    runButton.disabled = !filesInput.files || !filesInput.files.length;
+    statusNode.textContent = runButton.disabled ? "Selecciona al menos una imagen." :
+        filesInput.files.length + " muestra(s) listas. La última será visible durante la simulación.";
+});
+runButton.addEventListener("click", async () => {
+    const files = Array.from(filesInput.files || []);
+    if (!files.length) return;
+    runButton.disabled = true;
+    releaseUrls();
+    resultsNode.replaceChildren();
+    summaryNode.textContent = "";
+    statusNode.textContent = "Procesando localmente…";
+    queue = createConcurrencyLimiter(2);
+    const jobs = [];
+    const bySample = files.map((file, index) => ({ file, index, variants: [] }));
+    for (const sample of bySample) {
+        for (const width of WIDTHS) {
+            const key = sample.file.name + "::w" + width;
+            jobs.push(makeVariant(sample.file, width, sample.index).then(result => {
+                sample.variants.push({ targetWidth: width, ...result });
+            }));
+        }
+    }
+    const visibleIndex = Number(visibleSelect.value);
+    const visibleSample = bySample[visibleIndex];
+    const visibleKey = visibleSample ? "sample-" + visibleIndex + "::w800" : "";
+    const promoted = visibleKey ? queue.promote(visibleKey, 10) : false;
+    try {
+        await Promise.all(jobs);
+        for (const sample of bySample) {
+            const file = sample.file;
+            const signature = detectSignature(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
+            const hash = await sha256(file);
+            const exifOrientation = await readJpegExifOrientation(file);
+            const original = await createImageBitmap(file);
+            const originalDimensions = original.width + " × " + original.height;
+            const originalCanvas = document.createElement("canvas");
+            originalCanvas.width = original.width; originalCanvas.height = original.height;
+            const originalContext = originalCanvas.getContext("2d");
+            originalContext.drawImage(original, 0, 0);
+            const originalAlpha = await hasTransparency(originalCanvas);
+            original.close();
+            const section = document.createElement("section");
+            section.className = "sample";
+            addText(section, "h2", "Muestra " + (sample.index + 1));
+            addText(section, "p", "MIME: " + (file.type || "no declarado") +
+                " · firma: " + signature + " · dimensiones decodificadas: " + originalDimensions +
+                " · EXIF orientación: " + exifOrientation + " · bytes: " + file.size + " · alfa: " + originalAlpha);
+            addText(section, "small", "SHA-256: " + hash);
+            const grid = document.createElement("div");
+            grid.className = "preview-grid";
+            const originalUrl = addPreviewUrl(file);
+            const originalCard = document.createElement("div");
+            originalCard.className = "preview";
+            addText(originalCard, "strong", "Original");
+            const originalImg = document.createElement("img");
+            originalImg.alt = "Muestra original " + (sample.index + 1);
+            originalImg.src = originalUrl;
+            originalCard.appendChild(originalImg);
+            addText(originalCard, "small", originalDimensions + " · " + file.size + " bytes");
+            grid.appendChild(originalCard);
+            sample.variants.sort((a, b) => a.targetWidth - b.targetWidth);
+            for (const variant of sample.variants) {
+                addPreview(grid, variant.targetWidth + " px", variant.blob,
+                    variant.width + " × " + variant.height + " · " + variant.blob.size +
+                    " bytes · alfa: " + variant.alpha + " · espera: " + variant.queueWaitMs.toFixed(1) +
+                    " ms · proceso: " + variant.processMs.toFixed(1) + " ms · encode: " +
+                    variant.encodeMs.toFixed(1) + " ms · Canvas estimado: " + variant.estimatedCanvasBytes + " bytes");
+            }
+            section.appendChild(grid);
+            resultsNode.appendChild(section);
+        }
+        const metrics = queue.getMetrics();
+        summaryNode.textContent = "Concurrencia: " + metrics.limit +
+            " · máximo activo: " + maxActiveCompressionTasks + " · trabajos pendientes: " + metrics.queued +
+            "\nPromoción de la variante 800 px de Muestra " + (visibleIndex + 1) +
+            ": " + (promoted ? "aceptada (si seguía pendiente)" : "no aplicada (ya estaba activa o no estaba pendiente)") +
+            "\nMétricas por prioridad:\n" + JSON.stringify(metrics.priorities, null, 2);
+        statusNode.textContent = "Procesamiento terminado. Revisa visualmente texto fino, colores, símbolos, bordes y transparencia.";
+    } catch (error) {
+        statusNode.textContent = "Error en el procesamiento local: " + (error && error.message ? error.message : String(error));
+    } finally {
+        runButton.disabled = false;
+    }
+});
+window.addEventListener("beforeunload", releaseUrls);
+</script>
+</body>
+</html>
