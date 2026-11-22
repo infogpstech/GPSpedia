@@ -808,7 +808,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-22 — P1 multimedia: métricas de cola de miniaturas
 - JS/Frontend/thumbnailCompressionQueue.js: añade contadores efímeros por prioridad para encolado, inicio, éxito, error, promoción, activos/pendientes, espera y duración.
-- Se conserva el contrato de getStats(); getPriorityStats() amplía su diagnóstico y se agrega getMetrics() con snapshots sin claves, URLs ni identificadores de vehículos.
+- Se conserva el contrato de getStats(); getPriorityStats() conserva su contrato anterior y se agrega getMetrics() con snapshots sin claves, URLs ni identificadores de vehículos.
 - Se incorpora reloj inyectable para pruebas reproducibles; no hay persistencia ni tráfico adicional.
 - JS/Tests/ThumbnailCompressionQueueContract.mjs: cubre espera, duración, promoción y fallos con reloj determinista.
 - Validación CI pendiente al publicar el cambio.

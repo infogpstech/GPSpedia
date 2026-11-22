@@ -183,6 +183,6 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 
 ### P1 — métricas de cola de miniaturas (2026-11-22)
 - [x] Añadir métricas efímeras por prioridad: encolados/iniciados/completados/fallidos/promovidos, activos/pendientes, espera y duración total/máxima.
-- [x] Mantener getStats() intacto y ampliar getPriorityStats(); añadir getMetrics() como snapshot de diagnóstico.
+- [x] Mantener getStats() y getPriorityStats() con sus contratos anteriores; añadir getMetrics() como snapshot de diagnóstico.
 - [x] Inyectar reloj para pruebas deterministas; no registrar URLs, claves ni datos de vehículos.
 - [ ] Validar CI y revisar cancelación segura de precargas por cambio de vista/sesión.
