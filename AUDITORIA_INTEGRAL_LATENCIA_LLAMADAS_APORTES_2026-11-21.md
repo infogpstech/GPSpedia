@@ -469,3 +469,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se mantiene el fallback de búsqueda de filas del actor, la creación de hoja cuando hace falta, el replay completed/event/pending y el append-only sin lock global.
 - `FeedbackLikeCompletedReplayPreflight.mjs`: **7/7 PASS**; CI HEAD `8f448e1bb651bfcd0e3577954bdf94d6ad6dc456`: **292 suites / 3,406 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático permanecía en curso en la última comprobación.
 - No se cambiaron contadores físicos, historial de likes ni publicación de catálogo; no se ejecutaron operaciones sobre Spreadsheet productivo.
+
+
+## P1 FEEDBACK/Inbox — deduplicación dirigida del historial de auditoría (2026-11-22)
+
+- `inboxAppendAudit_` ya no descarga todas las filas de `InboxConversationAudit` para deduplicar eventos asociados a mensajes.
+- Si existe `messageId`, usa TextFinder exacto en la columna G y lee solo las filas coincidentes de 8 columnas; compara actorId, acción y messageId como antes.
+- Si `messageId` está vacío, omite por completo la búsqueda histórica y anexa el evento. Se conserva append/read-back y no se modifica la semántica de auditoría.
+- `InboxConversations.mjs` añade cobertura para deduplicación, columna consultada y ausencia de búsqueda cuando no hay messageId. Suite InboxConversations **67/67 PASS**.
+- CI HEAD `75bf48cb4efd89d81e126e6d518aa82f712c7512`: **292 suites / 3,407 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático estaba waiting/in_progress al actualizar el registro.
+- No se ejecutaron cambios en datos productivos ni despliegues manuales Apps Script.
