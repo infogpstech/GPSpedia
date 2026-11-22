@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.7";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.8";
 const SHARED_MUTATION_PROTOCOL_VERSION = 1;
 // La versión del software Coordinator no obliga a cambiar el protocolo de los clientes.
 // Mantener v1 mientras sea compatible; añadir versiones nuevas sin retirar las anteriores.
@@ -888,58 +888,58 @@ function createSharedMutationCoordinator_(dependencies) {
         if (service !== "ADMIN" || operation !== "getServiceTraffic") {
             throw new Error("Solo ADMIN puede consultar la telemetría global.");
         }
-        const coordinatorResult = withCoordinatorLock_(() => {
-            const capturedAt = now();
-            const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
-            const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
-            const all = properties.getProperties() || {};
-            const stored = new Map();
-            Object.keys(all).forEach(key => {
-                if (!key.startsWith(SERVICE_TRAFFIC_BUCKET_PREFIX_)) return;
-                const startAt = Number(key.slice(SERVICE_TRAFFIC_BUCKET_PREFIX_.length));
-                if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > currentBucket) {
-                    properties.deleteProperty(key);
-                    return;
-                }
-                let parsed;
-                try { parsed = JSON.parse(all[key]); } catch (error) { parsed = null; }
-                if (!parsed || parsed.version !== 1 || parsed.startAt !== startAt ||
-                    !parsed.counts || typeof parsed.counts !== "object" || Array.isArray(parsed.counts)) {
-                    properties.deleteProperty(key);
-                    return;
-                }
-                const counts = {};
-                SERVICE_TRAFFIC_SERVICES_.forEach(keyName => {
-                    const value = Number(parsed.counts[keyName] || 0);
-                    counts[keyName] = Number.isSafeInteger(value) && value >= 0 ? value : 0;
-                });
-                stored.set(startAt, counts);
-            });
-            const zeroCounts = () => Object.fromEntries(SERVICE_TRAFFIC_SERVICES_.map(key => [key, 0]));
-            const totals = { lastHour: zeroCounts(), last6Hours: zeroCounts(), last24Hours: zeroCounts() };
-            const buckets = [];
-            for (let startAt = firstBucket; startAt <= currentBucket; startAt += SERVICE_TRAFFIC_BUCKET_MS_) {
-                const counts = stored.get(startAt) || zeroCounts();
-                buckets.push({ startAt, counts });
-                SERVICE_TRAFFIC_SERVICES_.forEach(key => {
-                    const value = counts[key] || 0;
-                    if (startAt + SERVICE_TRAFFIC_BUCKET_MS_ > capturedAt - 60 * 60 * 1000) totals.lastHour[key] += value;
-                    if (startAt + SERVICE_TRAFFIC_BUCKET_MS_ > capturedAt - 6 * 60 * 60 * 1000) totals.last6Hours[key] += value;
-                    totals.last24Hours[key] += value;
-                });
+        // El escritor de métricas es best-effort y no usa ScriptLock. La lectura tampoco
+        // debe tomar el lock compartido ni retrasar adquisiciones de leases.
+        const capturedAt = now();
+        const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
+        const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
+        const all = properties.getProperties() || {};
+        const stored = new Map();
+        Object.keys(all).forEach(key => {
+            if (!key.startsWith(SERVICE_TRAFFIC_BUCKET_PREFIX_)) return;
+            const startAt = Number(key.slice(SERVICE_TRAFFIC_BUCKET_PREFIX_.length));
+            if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > currentBucket) {
+                properties.deleteProperty(key);
+                return;
             }
-            return {
-                status: "success",
-                scope: "coordinator_protected_operations",
-                capturedAt,
-                windowMs: SERVICE_TRAFFIC_WINDOW_MS_,
-                bucketMs: SERVICE_TRAFFIC_BUCKET_MS_,
-                services: SERVICE_TRAFFIC_SERVICES_.slice(),
-                buckets,
-                totals,
-                excluded: ["lecturas directas no coordinadas", "sondeos de salud"]
-            };
+            let parsed;
+            try { parsed = JSON.parse(all[key]); } catch (error) { parsed = null; }
+            if (!parsed || parsed.version !== 1 || parsed.startAt !== startAt ||
+                !parsed.counts || typeof parsed.counts !== "object" || Array.isArray(parsed.counts)) {
+                properties.deleteProperty(key);
+                return;
+            }
+            const counts = {};
+            SERVICE_TRAFFIC_SERVICES_.forEach(keyName => {
+                const value = Number(parsed.counts[keyName] || 0);
+                counts[keyName] = Number.isSafeInteger(value) && value >= 0 ? value : 0;
+            });
+            stored.set(startAt, counts);
         });
+        const zeroCounts = () => Object.fromEntries(SERVICE_TRAFFIC_SERVICES_.map(key => [key, 0]));
+        const totals = { lastHour: zeroCounts(), last6Hours: zeroCounts(), last24Hours: zeroCounts() };
+        const buckets = [];
+        for (let startAt = firstBucket; startAt <= currentBucket; startAt += SERVICE_TRAFFIC_BUCKET_MS_) {
+            const counts = stored.get(startAt) || zeroCounts();
+            buckets.push({ startAt, counts });
+            SERVICE_TRAFFIC_SERVICES_.forEach(key => {
+                const value = counts[key] || 0;
+                if (startAt + SERVICE_TRAFFIC_BUCKET_MS_ > capturedAt - 60 * 60 * 1000) totals.lastHour[key] += value;
+                if (startAt + SERVICE_TRAFFIC_BUCKET_MS_ > capturedAt - 6 * 60 * 60 * 1000) totals.last6Hours[key] += value;
+                totals.last24Hours[key] += value;
+            });
+        }
+        const coordinatorResult = {
+            status: "success",
+            scope: "coordinator_protected_operations",
+            capturedAt,
+            windowMs: SERVICE_TRAFFIC_WINDOW_MS_,
+            bucketMs: SERVICE_TRAFFIC_BUCKET_MS_,
+            services: SERVICE_TRAFFIC_SERVICES_.slice(),
+            buckets,
+            totals,
+            excluded: ["lecturas directas no coordinadas", "sondeos de salud"]
+        };
         return mergeServiceTrafficSources_(coordinatorResult);
     }
 

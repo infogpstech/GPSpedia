@@ -484,3 +484,8 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** ejecutar contratos nuevos y CI integral; después revisar el write best-effort que Coordinator aún realiza por cada evento registrado fuera del lock y decidir si puede integrarse en escrituras funcionales existentes o retirarse.
 - **Contexto breve:** se elimina el costo por petición de los cinco contadores directos y el fan-out administrativo. El único costo de persistencia de métricas que permanece es el del propio Coordinator para los eventos que registra.
 - **Estado:** implementación preparada en rama; validación CI PENDIENTE.
+## Ajuste P0 — consulta ADMIN de telemetría sin ScriptLock (2026-11-22)
+- `readServiceTraffic_` se ejecuta sin `withCoordinatorLock_`; el contador ya se escribe fuera del lock, por lo que el lock de lectura no aportaba consistencia y podía retrasar adquisiciones de lease.
+- La limpieza solo elimina buckets fuera de la ventana de 24 horas o con esquema inválido; los eventos actuales se leen best-effort. No hay fan-out a otros servicios.
+- **Siguiente:** validar CI de Coordinator 1.4.8 y después medir en Beta aislada la escritura residual de eventos. Solo retirarla si la medición confirma impacto o si se decide que el diagnóstico global no justifica ese costo.
+- **Estado:** cambio local preparado; CI PENDIENTE.

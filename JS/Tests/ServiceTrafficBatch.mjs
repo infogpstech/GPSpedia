@@ -19,6 +19,7 @@ function test(name, run) { run(); passed++; console.log("PASS " + name); }
 test("Coordinator no consulta contadores directos ni hace fan-out desde getServiceTraffic", () => {
     assert.doesNotMatch(coordinator, /function readDirectServiceTrafficBatch_/);
     assert.doesNotMatch(coordinatorReader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
+    assert.doesNotMatch(coordinatorReader, /withCoordinatorLock_/);
     assert.match(coordinatorReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
 });
 

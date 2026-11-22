@@ -168,3 +168,10 @@ Se aplicó el rediseño acordado después de mapear los consumidores del panel A
 - Coordinator 1.4.7; protocolo compartido v1 sin cambios.
 
 **Pendiente de validación:** contratos actualizados y CI integral del nuevo HEAD. Además, Coordinator aún persiste sus propios eventos best-effort después de liberar el lock; se debe evaluar si ese write puede piggyback en una escritura funcional o si conviene retirar algunos eventos para cumplir plenamente §15.
+## 10. Consulta ADMIN de telemetría fuera de ScriptLock (2026-11-22)
+
+El lector `readServiceTraffic_` también adquiría el ScriptLock global para leer buckets y limpiar métricas expiradas. Como los eventos se escriben fuera del lock y cada bucket se reemplaza mediante una escritura atómica de propiedad, ese lock no protegía la lectura frente al escritor; solo podía retrasar operaciones que sí necesitan Coordinator.
+
+En Coordinator 1.4.8 se elimina `withCoordinatorLock_` del lector ADMIN. Se mantiene la validación del servicio/acción, el agregado de siete servicios, la limpieza de buckets expirados/esquema inválido y la lectura best-effort. No se añaden requests ni fan-out. Los buckets actuales pueden leerse mientras otro evento se registra; la métrica es diagnóstica y no transaccional.
+
+**Límite restante:** `recordServiceTrafficEvent_` todavía ejecuta un get/set de PropertiesService fuera del lock para los eventos Coordinator. No afecta a rutas directas ordinarias, pero añade persistencia a adquisiciones de lease, validaciones de contexto y lecturas del feed. Su costo debe medirse en Beta aislada; si degrada acciones, retirar o rediseñar. No declarar costo cero antes de esa medición.

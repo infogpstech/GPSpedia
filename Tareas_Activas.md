@@ -59,7 +59,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Contratos Coordinator: verificar que las métricas no acceden a PropertiesService dentro del lock y que fallos de persistencia no alteran lease/feed; 95/95 PASS en ejecución aislada.
 - [x] CI integral de confirmación HEAD `+"`8feaea6`"+`: 298 suites / 3,463 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment de este HEAD aún en curso al registrar.
 - [x] TEL-01/TEL-03 — retirar contadores directos de AUTH/CATALOG/USERS/WRITE/FEEDBACK, eliminar endpoints internos de telemetría y fan-out de cinco servicios desde ADMIN; `getCatalogChanges` queda contado una sola vez por Coordinator.
-- [ ] Evaluar el write restante de métricas Coordinator (lease, validación y feed): piggyback en escrituras funcionales o retirar eventos sin perder un diagnóstico necesario, cumpliendo §15.
+- [x] ADMIN: la lectura de telemetría global ya no adquiere ScriptLock ni compite con leases; el fan-out a cinco servicios está eliminado.
+- [ ] Medir en Beta aislada el costo residual de la escritura best-effort de eventos Coordinator (lease, validación y feed). Si degrada latencia, retirar o rediseñar; no afirmar que es costo cero sin medición.
 - [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
 
 ### P0 — AUTH/USERS y excepciones de sesión
@@ -360,7 +361,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [ ] Diseñar e implementar reducción del costo síncrono de métricas; no retirar el diagnóstico sin contrato alternativo.
 - [x] Añadir contratos de Coordinator: ausencia de acceso a PropertiesService de telemetría bajo ScriptLock y preservación del resultado ante fallos; 95/95 PASS.
 - [ ] Completar corrección de contadores directos USERS/WRITE/FEEDBACK y su contrato alternativo.
-- **Estado:** TEL-01/TEL-02/TEL-03 implementación local COMPLETADA en esta rama; pruebas aisladas nuevas preparadas; CI integral de confirmación PENDIENTE. La persistencia best-effort de Coordinator sigue siendo un write adicional fuera del lock y requiere evaluación final.
+- **Estado:** TEL-01/TEL-02/TEL-03 implementación local COMPLETADA en esta rama; pruebas aisladas nuevas preparadas; CI integral de confirmación PENDIENTE. La persistencia best-effort de Coordinator sigue siendo un write adicional fuera del lock; medir su impacto real en Beta antes de decidir si se retira.
 
 ### P0 — validación del contrato de telemetría sin contadores directos (2026-11-22)
 - [x] El agregado ADMIN conserva siete servicios y solo muestra eventos que Coordinator registra (adquisiciones nuevas de lease, validaciones de contexto y feed); declara las rutas directas como no recopiladas, no como cero HTTP.
@@ -368,3 +369,8 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Coordinator deja de consultar cinco servicios con fetchAll para construir telemetría; mantiene fetchAll para la precarga de actores, que es una operación funcional distinta.
 - [x] UI Developer separa eventos globales Coordinator de solicitudes locales del navegador y aclara la cobertura.
 - [ ] Ejecutar CI integral actualizado y revisar Pages deployment del HEAD.
+### P0 — lectura ADMIN de telemetría sin bloqueo (2026-11-22)
+- [x] `readServiceTraffic_` ya no toma ScriptLock; lee buckets fuera de la sección crítica, y limpia únicamente buckets expirados que no pueden volver a recibir escrituras.
+- [x] Contratos estáticos verifican ausencia de lock y fan-out de red en la lectura ADMIN.
+- [ ] Medir latencia de la escritura residual `recordServiceTrafficEvent_` en Beta aislada.
+- **Coordinator:** 1.4.8; protocolo v1 sin cambios.
