@@ -3817,8 +3817,8 @@ function validatePysHeaders_(sheet,expected,label){if(sheet.getLastColumn()>expe
 function validatePysRecords_(sheet) {
     const last = sheet.getLastRow(), seen = Object.create(null);
     let max = 0, duplicateRows = 0;
-    if (last < 2) return { maxSuffix: 0, ids: seen, duplicateRows };
-    sheet.getRange(2, 1, last - 1, 10).getValues().forEach((row, index) => {
+    const rows = last >= 2 ? sheet.getRange(2, 1, last - 1, 10).getValues() : [];
+    rows.forEach((row, index) => {
         if (!row.some(value => value !== "" && value !== null && value !== undefined)) return;
         const id = String(row[0] == null ? "" : row[0]).trim(), match = id.match(/^isue-(\d+)$/i);
         if (!match) throw new Error("La fila " + (index + 2) + " de pys contiene un ID vacío o malformado; no se creó el problema.");
@@ -3834,9 +3834,23 @@ function validatePysRecords_(sheet) {
         }
         max = Math.max(max, suffix);
     });
-    return { maxSuffix: max, ids: seen, duplicateRows };
+    return { maxSuffix: max, ids: seen, duplicateRows, rows };
 }
-function getPysSheet_(createIfMissing){let sheet=getSafeSheet("pys");if(!sheet){if(!createIfMissing)return null;sheet=getSpreadsheet().insertSheet("pys");}if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){if(!createIfMissing)return sheet;sheet.getRange(1,1,1,10).setValues([PYS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_HEADERS,"pys");validatePysRecords_(sheet);return sheet;}
+function getPysSheet_(createIfMissing, includeSnapshot) {
+    let sheet = getSafeSheet("pys");
+    if (!sheet) {
+        if (!createIfMissing) return includeSnapshot ? { sheet: null, rows: [] } : null;
+        sheet = getSpreadsheet().insertSheet("pys");
+    }
+    if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) {
+        if (!createIfMissing) return includeSnapshot ? { sheet, rows: [] } : sheet;
+        sheet.getRange(1, 1, 1, 10).setValues([PYS_HEADERS.slice()]);
+        SpreadsheetApp.flush();
+    }
+    validatePysHeaders_(sheet, PYS_HEADERS, "pys");
+    const validation = validatePysRecords_(sheet);
+    return includeSnapshot ? { sheet, rows: validation.rows } : sheet;
+}
 function readPysOperations_(sheet) {
     const last = sheet.getLastRow();
     if (last < 2) return [];
@@ -3976,9 +3990,9 @@ function handleGetCatalogChanges(payload) {
 }
 
 function handleGetPysData() {
-    const sheet = getPysSheet_(false);
-    if (!sheet || sheet.getLastRow() < 2) return { status: "success", data: [] };
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues();
+    const snapshot = getPysSheet_(false, true), sheet = snapshot.sheet;
+    if (!sheet || !snapshot.rows.length) return { status: "success", data: [] };
+    const rows = snapshot.rows;
     const seen = new Set();
     const data = rows.filter(row => {
         if (!row.some(value => value !== "" && value !== null && value !== undefined)) return false;
