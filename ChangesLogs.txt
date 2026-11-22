@@ -1134,3 +1134,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se conserva la separación: agregado Coordinator global y parcial; métricas de solicitudes/bytes/latencia efímeras y locales al navegador actual; health checks independientes excluidos del tráfico de usuario. Los servicios declaran `directRequestsAvailable:false` y `direct_requests_not_collected`; la UI evita presentar la ausencia de contadores directos como cero real.
 - Evidencia: `ServiceTrafficAdminContract` 46/46 PASS; `DirectServiceTrafficTelemetry` 6/6 PASS; `ServiceMetricsTelemetry` PASS; CI del commit `1586c69d08953933c6cc457ea0e6fd511588faab`: 303 suites / 3,554 pruebas / 0 fallos.
 - Revisión futura: reconsiderar solo si Beta demuestra una necesidad concreta de cobertura global completa y se presenta un diseño que no agregue escrituras ni latencia a las acciones ordinarias.
+
+
+2026-11-22 — A02-10 completada: FileReader validado en Android físico
+- Se ejecutó el harness publicado desde Chrome 157 en un teléfono Android 10 real (viewport 423×904, DPR 2.55) con una imagen JPEG local de 708,095 bytes.
+- Resultado JSON: PASS; una sola llamada FileReader; las llamadas concurrentes compartieron la misma Promise; el acceso posterior reutilizó la Promise cacheada; resultado idéntico. Lectura: 141.3 ms; lookup cacheado: 0 ms.
+- La imagen se procesó localmente y no se subió. El perfil de escritorio físico no se midió; la cobertura de escritorio disponible corresponde a Chromium CI.
+- Se actualizan Tareas_Activas.md y checkpoint.md para cerrar la dependencia física pendiente. No se modificó código de producción ni se desplegaron servicios.

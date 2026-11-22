@@ -900,3 +900,16 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Criterio para reabrir:** solo con evidencia de Beta que requiera cobertura global completa y un diseño que no añada escrituras/latencia a las acciones ordinarias.
 - **Siguiente tarea independiente:** A07-04 — diseñar e implementar registro idempotente automático en `Imagenes_Reemplazadas` sin sobrescribir historial, estados manuales ni referencias.
 
+
+
+## A02-10 COMPLETADA — FileReader en Android físico — 2026-11-22
+
+- **Prueba física aportada desde el harness:** JS/Tests/FileReaderBrowserHarness.html, ejecutado en Chrome Android real. JSON devuelto con status PASS.
+- **Entorno:** Android 10; Chrome 157 (user agent reportado Android 10 / Chrome 157); plataforma reportada Linux armv81; viewport 423×904; devicePixelRatio 2.55.
+- **Archivo local:** 1000266696.jpg, MIME image/jpeg, 708,095 bytes; longitud Data URL 944,151 caracteres.
+- **Resultado funcional:** fileReaderCalls: 1; samePromise: true; sameCachedPromise: true; sameResult: true. Dos consumidores concurrentes compartieron la misma lectura y el acceso posterior reutilizó la caché.
+- **Medición:** lectura 141.3 ms; consulta cacheada 0 ms. Timestamp del harness: 2026-11-22T20:40:29.971Z.
+- **Privacidad/alcance:** la imagen fue seleccionada y procesada localmente; el harness no la subió ni modificó datos del proyecto.
+- **Cierre:** la medición física requerida en Android queda aprobada. La prueba de escritorio físico no se aportó; no era requisito para cerrar el punto, ya cubierto en Chromium CI. Se conserva la evidencia de CI del commit d5b1227fb53c4a8346c214b36f228ab3a1b4a549 (browser 2/2 PASS).
+- **Siguiente tarea:** A07-04 — diseñar e implementar registro idempotente automático en Imagenes_Reemplazadas, preservando historial, estados manuales y referencias. Antes de modificar código, revisar el requisito y las auditorías relacionadas.
+- **HEAD verificado antes de esta actualización documental:** 061890e7b16625bc9e8be0c7faf23f2a78b0eab0; rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
