@@ -482,3 +482,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 
 - [x] CI exacto de A02-01: SHA `736224a541c218b934bc0d6710a27f0f35b96aaa`, 302 suites / 3,526 pruebas / 0 fallos; AddCortes diagnostics 14/14 PASS; Health read-only y Pages build/deployment SUCCESS.
 - **Siguiente:** A02-02, sustituir la lectura completa `getCatalogData(forceRefresh)` de la etapa suplementaria de `add_cortes.html` por una verificación dirigida de un vehículo, preservando detección de escritura no reflejada/candidato y pruebas de regresión.
+
+- [x] A02-02: reemplazar lectura completa getCatalogData(forceRefresh) de add_cortes etapa 3 por getVehicleProjection({vehicleId}), manteniendo comprobación de ID y campos suplementarios.
+- [x] Añadir prueba focalizada de consulta dirigida y rechazo de proyección de otro vehículo en AddCortesDiagnostics.mjs.
+- [ ] CI de A02-02 y verificación de que el endpoint CATALOG dirigido cubre todos los campos de apertura/alimentación/imagen/nota.

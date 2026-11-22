@@ -13,6 +13,40 @@ testCase('rechaza identificadores y etapas fuera de formato',()=>{captured.lengt
 testCase('add_cortes no utiliza console directo ni serializa snapshots/respuestas',()=>{assert.equal(/console\.(?:log|warn|error|info|debug)/.test(addCuts),false);assert.match(addCuts,/createDiagnosticLogger\(\{ debugEnabled: new URLSearchParams\(window\.location\.search\)\.get\('gpDebug'\) === '1' \}\)/);assert.doesNotMatch(addCuts,/JSON\.stringify\(pendingOp|console\.[^(]+\([^)]*(?:pendingOp|checkRes|writeResult|payload)/);assert.doesNotMatch(addCuts,/PING-PONG/);});
 const mod=addCuts.match(/<script type="module">([\s\S]*?)<\/script>/);assert.ok(mod);new Function(mod[1].replace(/^\s*import\s+.*?;\s*$/gm,''));
 passed++;
+
+const verifySource = extractFunction(mod[1], "verifySupplementaryCatalogWrite_");
+const projectionCalls = [];
+const verifySupplementary = new Function("routeAction", verifySource + "; return verifySupplementaryCatalogWrite_;")(
+    async (action, payload) => {
+        projectionCalls.push({ action, payload });
+        return { status: "success", source: "spreadsheet", vehicle: {
+            id: "204", apertura: "Apertura", imgApertura: "drive-image",
+            notaImportante: "Nota", cableAlimen: "Alimentación", imgCableAlimen: "drive-feed"
+        } };
+    }
+);
+const verifiedSupplementary = await verifySupplementary(
+    { status: "success", vehicleId: "204" },
+    { vehicleId: "204", apertura: "Apertura", imgApertura: "data:image/png;base64,AAAA",
+      notaImportante: "Nota", cableAlimen: "Alimentación", imgCableAlimen: "data:image/png;base64,BBBB" }
+);
+if (projectionCalls.length !== 1 || projectionCalls[0].action !== "getVehicleProjection" ||
+    projectionCalls[0].payload.vehicleId !== "204" || verifiedSupplementary.item.id !== "204" ||
+    verifiedSupplementary.source !== "spreadsheet") {
+    throw new Error("La verificación suplementaria no utilizó una sola proyección dirigida.");
+}
+passed++;
+process.stdout.write("PASS verificación suplementaria usa getVehicleProjection para un solo vehículo\\n");
+const mismatchVerify = new Function("routeAction", verifySource + "; return verifySupplementaryCatalogWrite_;")(
+    async () => ({ status: "success", vehicle: { id: "205" } })
+);
+let mismatchRejected = false;
+try { await mismatchVerify({ status: "success", vehicleId: "204" }, { vehicleId: "204" }); }
+catch (_) { mismatchRejected = true; }
+if (!mismatchRejected) throw new Error("La verificación aceptó una proyección de otro vehículo.");
+passed++;
+process.stdout.write("PASS verificación suplementaria rechaza ID de vehículo distinto\\n");
+
 const runRecovery=new Function(recoverySource+'\nreturn runAddCutOperationRecoveryFlowTests;')();
 const recovery=await runRecovery({frontend:addCuts});for(const r of recovery.results){if(r.status!=='PASS')throw Error(r.name+': '+r.message);process.stdout.write('PASS '+r.name+'\n');}if(recovery.failed)throw Error('Recovery tests failed');passed+=recovery.passed;
 process.stdout.write('AddCortes diagnostics: '+passed+'/'+passed+' PASS\n');

@@ -1461,20 +1461,21 @@
             showPhase(3);
         }
 
-        async function verifySupplementaryCatalogWrite_(writeResult, payload, fetchCatalog) {
+        async function verifySupplementaryCatalogWrite_(writeResult, payload, fetchProjection) {
             const vehicleId = String(payload && payload.vehicleId != null ? payload.vehicleId : "").trim();
             if (!vehicleId || !writeResult || writeResult.status !== "success" ||
                 String(writeResult.vehicleId == null ? "" : writeResult.vehicleId).trim() !== vehicleId) {
                 throw new Error("WRITE no confirmó el guardado para el vehículo solicitado.");
             }
-            const fetchFreshCatalog = fetchCatalog || (() => routeAction("getCatalogData", { forceRefresh: true }));
-            const response = await fetchFreshCatalog();
-            if (!response || response.status !== "success" || !response.data || !Array.isArray(response.data.cortes)) {
-                throw new Error("El catálogo no devolvió una lectura completa después del guardado.");
+            // La proyección dirigida evita reconstruir Cortes, logos, tutoriales y Relay
+            // para verificar únicamente el vehículo recién actualizado.
+            const fetchFreshVehicle = fetchProjection || (() => routeAction("getVehicleProjection", { vehicleId }));
+            const response = await fetchFreshVehicle();
+            if (!response || response.status !== "success" || !response.vehicle ||
+                String(response.vehicle.id == null ? "" : response.vehicle.id).trim() !== vehicleId) {
+                throw new Error("CATALOG no devolvió la proyección vigente del vehículo después del guardado.");
             }
-            const matches = response.data.cortes.filter(item => String(item && item.id) === vehicleId);
-            if (matches.length !== 1) throw new Error("El vehículo no aparece de forma única en la lectura actualizada del catálogo.");
-            const saved = matches[0], has = value => typeof value === "string" && value.trim() !== "";
+            const saved = response.vehicle, has = value => typeof value === "string" && value.trim() !== "";
             ["apertura", "imgApertura", "notaImportante"].forEach(field => {
                 if (has(payload[field]) && !has(saved[field])) throw new Error("El catálogo no refleja el campo suplementario " + field + ".");
             });

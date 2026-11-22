@@ -640,3 +640,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **CI exacto:** SHA `736224a541c218b934bc0d6710a27f0f35b96aaa`; 302 suites / 3,526 pruebas / 0 fallos. AddCortes diagnostics 14/14 PASS, incluyendo nuevo ID sin consulta, ID Inbox con consulta, pérdida de respuesta antes/después del commit, recuperación y cuota. Health read-only SUCCESS y Pages build/deployment SUCCESS.
 - **Siguiente tarea iniciada:** A02-02, reducir el costo de verificación de información suplementaria: la página add_cortes solicita el catálogo completo con forceRefresh para comprobar un solo vehículo. Evaluar y probar endpoint getVehicleProjection dirigido.
 - **Contexto:** se mantiene la confirmación de WRITE y la idempotencia; el objetivo es evitar reconstruir datos ajenos al vehículo que se acaba de modificar.
+
+
+## A02-02 implementada — verificación dirigida de aporte suplementario — 2026-11-22
+
+- **Tarea realizada:** add_cortes.html deja de solicitar el catálogo completo con getCatalogData(forceRefresh) para verificar una única alta suplementaria. Ahora utiliza getVehicleProjection({vehicleId}) y conserva la comprobación de ID y campos enviados.
+- **Pruebas añadidas:** AddCortesDiagnostics valida una sola consulta dirigida, contenido de la proyección y rechazo de un ID diferente.
+- **Estado:** implementación y prueba preparadas; CI pendiente.
+- **Siguiente tarea:** ejecutar CI. Si pasa, seguir A02 con el preflight duplicado de VIN (blur/submit) y el refresco checkVehicle posterior al alta.
+- **Contexto:** el endpoint dirigido lee la proyección de un vehículo y el ledger de aportes; evita reconstruir logos, tutoriales y Relay para validar una operación suplementaria.

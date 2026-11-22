@@ -120,7 +120,7 @@ Pruebas focalizadas verificadas en los logs de CI del SHA exacto:
 
 ### Hallazgo A02-02 — lectura completa del catálogo tras guardar información suplementaria
 
-**Clasificación:** candidato de latencia alta; no corregido todavía.  
+**Clasificación:** optimización implementada y prueba focalizada añadida; CI pendiente.  
 **Evidencia:** `handleStage3Submit` envía `addSupplementaryInfo` a WRITE y después `verifySupplementaryCatalogWrite_` solicita `getCatalogData({forceRefresh:true})`. `CATALOG.handleGetCatalogData` recorre Cortes, aportes, logos, tutoriales y relay para confirmar solo un vehículo/campo. WRITE ya confirma el evento append-only mediante lectura posterior del ledger y valida el journal de imágenes; el propio flujo redirige a index.html, que volverá a cargar el catálogo.  
 **Impacto potencial:** segunda petición de red y reconstrucción de catálogo completo antes de la redirección.  
 **Acción:** evaluar si una proyección dirigida `getVehicleProjection` (lectura del vehículo y ledger) o la confirmación de WRITE basta, sin perder detección de errores ni coherencia. No retirar la verificación hasta cubrir el caso con test.
@@ -146,3 +146,7 @@ Pruebas focalizadas verificadas en los logs de CI del SHA exacto:
 
 ### Cierre A02-01
 La optimización quedó validada por CI; no se detectaron regresiones en recuperación ni idempotencia. Health read-only y Pages build/deployment también SUCCESS para el SHA exacto. No equivale a prueba manual en navegador o servicio Apps Script.
+
+
+### Implementación A02-02
+La verificación de add_cortes.html ahora consulta getVehicleProjection({vehicleId}) y valida el objeto vehicle retornado, en lugar de pedir getCatalogData({forceRefresh:true}) y recorrer el catálogo completo. Se conserva la verificación de ID y de cada campo suplementario esperado. El endpoint dirigido usa CATALOG y construye la proyección del vehículo desde Cortes + ledger; no consulta logos, tutoriales ni Relay. Pruebas añadidas en AddCortesDiagnostics.mjs para asegurar una sola consulta dirigida y rechazo de ID diferente. CI pendiente.
