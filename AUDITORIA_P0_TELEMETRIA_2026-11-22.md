@@ -167,7 +167,9 @@ Se aplicó el rediseño acordado después de mapear los consumidores del panel A
 - GPSpedia_CATALOG_TRAFFIC_SECRET se conserva solo para autenticar los metadatos internos del inventario de imágenes entre ADMIN y CATALOG; no es secreto de telemetría.
 - Coordinator 1.4.7; protocolo compartido v1 sin cambios.
 
-**Pendiente de validación:** contratos actualizados y CI integral del nuevo HEAD. Además, Coordinator aún persiste sus propios eventos best-effort después de liberar el lock; se debe evaluar si ese write puede piggyback en una escritura funcional o si conviene retirar algunos eventos para cumplir plenamente §15.
+**Validación local:** HEAD 29cc8d142d08611a0226ecd3c2bee09ad4517125 aprobó CI integral: 299 suites / 3,453 pruebas / 0 fallos; sintaxis 430 archivos JS/MJS; referencias relativas 341 archivos; health read-only 7/7; Pages build/deployment SUCCESS. Esta evidencia no equivale a despliegue Apps Script ni pruebas Beta.
+
+**Costo residual:** Coordinator aún persiste sus propios eventos best-effort después de liberar el lock. Son lecturas/escrituras de PropertiesService adicionales en operaciones coordinadas; no se ha medido si degradan la latencia. Mantenerlos provisionalmente conserva el agregado parcial ADMIN; medirlos en Beta aislada antes de decidir su retirada o sustitución. La UI no los presenta como total HTTP.
 ## 10. Consulta ADMIN de telemetría fuera de ScriptLock (2026-11-22)
 
 El lector `readServiceTraffic_` también adquiría el ScriptLock global para leer buckets y limpiar métricas expiradas. Como los eventos se escriben fuera del lock y cada bucket se reemplaza mediante una escritura atómica de propiedad, ese lock no protegía la lectura frente al escritor; solo podía retrasar operaciones que sí necesitan Coordinator.
@@ -180,3 +182,9 @@ En Coordinator 1.4.8 se elimina `withCoordinatorLock_` del lector ADMIN. Se mant
 Se ajustó la limpieza del lector ADMIN: los buckets con timestamp válido dentro de la ventana, pero JSON/esquema inválido, se omiten sin borrarlos. Como el escritor best-effort actualiza la propiedad sin ScriptLock, una lectura concurrente podría observar el valor anterior y eliminar una escritura nueva si ejecutara `deleteProperty` sobre la misma clave.
 
 Solo se eliminan claves con timestamp inválido o fuera de la ventana de 24 horas. La lectura continúa fuera de ScriptLock y el agregado se mantiene diagnóstico/no transaccional.
+
+## 12. Confirmación CI del rediseño TEL-01/TEL-03 (2026-11-22)
+
+El commit 29cc8d142d08611a0226ecd3c2bee09ad4517125 superó la regresión integral: 299 suites, 3,453 pruebas aprobadas y cero fallos. El análisis estático comprobó sintaxis en 430 archivos .js/.mjs y referencias relativas en 341 módulos/runner/tests activos. El diagnóstico remoto de salud realizó únicamente GET y confirmó 7/7 servicios. GitHub Pages build/deployment finalizó correctamente.
+
+Este CI confirma el código y los contratos locales de esa revisión. No despliega los proyectos Apps Script ni sustituye las pruebas Beta. El costo residual de escritura de Coordinator permanece pendiente de medición real.

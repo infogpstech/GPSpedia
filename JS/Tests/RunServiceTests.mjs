@@ -370,7 +370,8 @@ runGroup('38','INTEGRATION',()=>{
   runCli('UI inicialización y limpieza de listeners/observers sin duplicados','JS/Tests/UIInitializationLifecycle.mjs');
   runCli('CATALOG feed incremental con reintentos acotados','JS/Tests/CatalogFeedRetry.mjs');
   runCli('CATALOG cierre de edición consume deltas con fallback completo','JS/Tests/CatalogEditDeltaRefresh.mjs');
-  runCli('IMÁGENES cola de miniaturas FIFO y recuperación tras fallo','JS/Tests/ThumbnailCompressionQueueContract.mjs');
+  runCli('IMÁGENES cola de miniaturas con prioridad y recuperación tras fallo','JS/Tests/ThumbnailCompressionQueueContract.mjs');
+ runCli('IMÁGENES integración de prioridad visible frente a precarga','JS/Tests/ThumbnailPriorityIntegration.mjs');
   runCli('PWA cache-first, App Shell y cuerpos independientes','JS/Tests/ServiceWorkerCache.js');
  runCli('GP-PWA-BRAND-01 logos locales offline y favicon transparente','JS/Tests/OfflineBrandAssets.mjs');
  runCli('CATALOG escenarios de arranque PWA','JS/Tests/PWAStartupScenarios.js');

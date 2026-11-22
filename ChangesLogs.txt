@@ -1004,3 +1004,16 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - initializeApp y banner de estado usan un único punto de entrada/guard; Inbox reemplaza timer y limita listeners globales; ADMIN, ayuda contextual y retry de términos usan guards.
 - Carruseles comparten un listener resize; menús y modales temporales liberan listeners/observers al cerrar.
 - Se añadió UIInitializationLifecycle.mjs al runner. Auditoría estática; DOM real/memoria/CPU/red quedan para Beta. CI de confirmación pendiente.
+
+2026-11-22 — CI integral de confirmación de telemetría (HEAD 29cc8d1)
+- 299 suites / 3,453 pruebas aprobadas; 0 fallos de suite.
+- Sintaxis Node 22: 430 archivos JS/MJS; referencias relativas: 341 archivos activos, todas resueltas.
+- Health read-only: 7/7 servicios disponibles (ADMIN, AUTH, CATALOG, FEEDBACK, USERS, UTILITIES, WRITE); solo GET de diagnóstico, sin escrituras.
+- GitHub Pages build/deployment SUCCESS. Esto no despliega los proyectos Apps Script.
+- La rama base GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+2026-11-22 — P1 miniaturas: prioridad visible frente a precarga
+- La revisión del código actual confirma prioridad 10 para la miniatura desde imagen visible y 0 para precarga; FIFO dentro de prioridad y promoción de la misma variante si aún está pendiente.
+- La ruta visible usa el elemento ya cargado y no añade un segundo fetch; la precarga conserva su descarga CORS independiente.
+- Se corrige el texto desactualizado del inventario P1 y se añade ThumbnailPriorityIntegration.mjs al runner. El nuevo contrato queda pendiente de CI.
+- No se cambian formatos, tamaños, concurrencia ni límites sin corpus técnico y medición Beta.

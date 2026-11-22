@@ -501,3 +501,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite:** no se ejecutó DOM real ni se midieron memoria, CPU o red; esas validaciones siguen reservadas a Beta Android/PWA/escritorio.
 - **Siguiente:** completar diff final/anti-regresión local y preparar el despliegue aislado Beta.
 - **Estado:** auditoría estática COMPLETADA; contrato añadido; CI del HEAD actual PENDIENTE.
+
+## Actualización de continuidad vigente — 2026-11-22
+
+- **Tarea realizada:** cierre local TEL-01/TEL-03. Se retiraron contadores directos y endpoints de telemetría de AUTH, CATALOG, USERS, WRITE y FEEDBACK; se eliminó el fan-out de ADMIN. La lectura ADMIN del agregado Coordinator no usa ScriptLock y no borra buckets vigentes potencialmente concurrentes.
+- **Validación del HEAD anterior:** 29cc8d142d08611a0226ecd3c2bee09ad4517125: 299 suites / 3,453 pruebas / 0 fallos; sintaxis Node 22 en 430 archivos JS/MJS; referencias relativas en 341 archivos; health read-only 7/7 servicios disponibles; GitHub Pages build/deployment SUCCESS. Esta evidencia corresponde exactamente a ese SHA, no al siguiente commit.
+- **Rama base:** GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Decisión sobre costo residual:** Coordinator conserva escritura best-effort posterior al lock para adquisiciones nuevas/reactivaciones, validaciones de contexto y feed. Es el único write de telemetría persistente que queda. No se elimina sin más porque es la fuente del agregado global actual; su costo real debe medirse en Beta aislada. La interfaz lo etiqueta como cobertura parcial, no como total HTTP. La telemetría local de navegador no se transmite ni persiste.
+- **Tarea adicional realizada:** revisión del ciclo de miniaturas detectó que el inventario P1 inicial estaba desactualizado: la cola ya prioriza imágenes visibles (10) sobre precarga (0), mantiene FIFO por prioridad y promueve una precarga pendiente de la misma variante. La ruta visible reutiliza el elemento cargado sin segundo fetch. Se actualizó el informe y se añadió el contrato estático ThumbnailPriorityIntegration.mjs.
+- **Siguiente tarea:** ejecutar CI del commit que añade ThumbnailPriorityIntegration.mjs; si pasa, continuar P1 con corpus técnico representativo y plan de medición de cola/primera pintura. No cambiar parámetros de compresión hasta disponer de corpus y mediciones.
+- **Contexto breve:** se cerró el rediseño local de contadores directos sin perder la distinción entre eventos Coordinator y solicitudes locales del navegador; la siguiente fase evita reabrir mecanismos multimedia ya corregidos y centra el trabajo en calidad visual medible.
+- **Estado:** TEL-01/TEL-03 COMPLETADOS localmente; CI del contrato de prioridad PENDIENTE; validación visual/latencia real PENDIENTE de Beta aislada.

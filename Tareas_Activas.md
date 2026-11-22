@@ -369,7 +369,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] AUTH/CATALOG/USERS/WRITE/FEEDBACK dejan de persistir contadores por petición y dejan de exponer endpoints internos getServiceTraffic. CATALOG conserva GPSpedia_CATALOG_TRAFFIC_SECRET únicamente para metadatos internos del inventario de imágenes.
 - [x] Coordinator deja de consultar cinco servicios con fetchAll para construir telemetría; mantiene fetchAll para la precarga de actores, que es una operación funcional distinta.
 - [x] UI Developer separa eventos globales Coordinator de solicitudes locales del navegador y aclara la cobertura.
-- [ ] Ejecutar CI integral actualizado y revisar Pages deployment del HEAD.
+- [x] CI integral del HEAD 29cc8d142d08611a0226ecd3c2bee09ad4517125: 299 suites / 3,453 pruebas / 0 fallos; sintaxis 430 archivos JS/MJS; referencias relativas 341 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 ### P0 — lectura ADMIN de telemetría sin bloqueo (2026-11-22)
 - [x] `readServiceTraffic_` ya no toma ScriptLock; lee buckets fuera de la sección crítica, y limpia únicamente buckets expirados que no pueden volver a recibir escrituras.
 - [x] Contratos estáticos verifican ausencia de lock y fan-out de red en la lectura ADMIN.
@@ -384,3 +384,13 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Inbox reemplaza el timer anterior y registra conectividad una sola vez; ADMIN refresh, ayuda contextual y retry de términos usan guards.
 - [x] Carruseles usan un listener resize global; menús de imágenes, modales informativos y foco legal liberan listeners/observers al cerrar.
 - [x] Contrato `UIInitializationLifecycle.mjs` añadido al runner. Es auditoría estática; DOM/memoria/CPU/red reales quedan en Beta.
+
+### P1 — prioridad real de miniaturas y competencia visible/precarga (2026-11-22)
+- [x] Revisión del HEAD actual: precarga usa prioridad 0; compresión desde imagen visible usa prioridad 10; la cola conserva FIFO dentro de cada prioridad y promueve la misma variante visible si sigue pendiente.
+- [x] Confirmar que la ruta visible reutiliza el elemento img ya descargado y no inicia un segundo fetch; la precarga mantiene su fetch CORS independiente.
+- [x] Corregir el hallazgo P1-MED-01 del inventario inicial, que describía erróneamente la cola como FIFO simple y sin prioridad.
+- [x] Añadir ThumbnailPriorityIntegration.mjs al runner para proteger la integración de prioridad, single-flight y ausencia de segundo fetch.
+- [ ] Ejecutar CI del nuevo HEAD y confirmar el contrato añadido.
+- [ ] Medir en Beta aislada tiempos de espera por prioridad, primera pintura, CPU, bytes, memoria y tareas que continúan tras cambiar de vista/sesión.
+- [ ] Preparar corpus técnico representativo (diagramas de cableado, conectores, relés, paneles, PNG con alfa y fotografías) y comparar nitidez/dimensiones de variantes 300/800/1600.
+- **Límite:** no cambiar concurrencia 2, PNG, tamaños, TTL, LRU ni límites de archivos sin corpus y medición real.

@@ -26,7 +26,7 @@ Se inspeccionó el árbol completo de la rama (591 archivos), el flujo frontend 
 ### Precarga: riesgo a medir
 - `cacheItemImages` recorre hasta 11 campos de imagen por vehículo y lanza compresiones sin esperar cada una.
 - Se invoca al guardar snapshot/deltas para los últimos 15 vehículos y al registrar vehículos vistos recientemente.
-- La cola limita compresiones activas, pero no define prioridad visible/precarga ni cancelación por cambio de vista/sesión. Las precargas pueden ocupar posiciones FIFO antes de que una imagen pase a ser visible; además, su ruta `compressAndStoreThumbnail` obtiene la imagen con fetch CORS, mientras el consumidor visible usa el elemento `img`. Single-flight reduce duplicación por clave concurrente, pero no demuestra que todas las carreras visible/precarga compartan los mismos bytes.
+- La cola limita compresiones activas y actualmente sí define prioridad: la precarga entra con prioridad 0 y la compresión desde el elemento visible ya cargado entra con prioridad 10. La solicitud visible puede promover una precarga pendiente de la misma variante; las tareas activas no se interrumpen. La ruta visible reutiliza `imgElement` mediante `createImageBitmap(imageElement)` y no hace un segundo fetch; la precarga conserva su fetch CORS propio. No existe cancelación por cambio de vista/sesión, por lo que una tarea ya iniciada puede continuar en segundo plano. Esta prioridad se verificará con un contrato de integración estático; no hay mediciones reales de CPU, red o primera pintura.
 - No hay medición de red, CPU, primera pintura o memoria en navegador para cuantificar el impacto. No cambiar concurrencia ni introducir cancelación hasta medir y definir un contrato que preserve la caché offline.
 
 ## 2. Cargas y validación de imágenes
@@ -62,7 +62,7 @@ La presencia y lectura de las pruebas no equivale a ejecución. No se declara ni
 
 | ID | Hallazgo estático | Decisión |
 |---|---|---|
-| P1-MED-01 | Precarga de hasta 11 campos por cada uno de los últimos 15 vehículos, sin prioridad visible ni cancelación explícita. | Medir competencia visible/precarga y cache hit/miss; diseñar prioridad/cancelación solo si las trazas lo justifican. |
+| P1-MED-01 | Precarga de hasta 11 campos por cada uno de los últimos 15 vehículos. La cola ya prioriza lo visible sobre la precarga, pero no cancela tareas obsoletas. | Verificar el contrato de prioridad y medir competencia visible/precarga, cache hit/miss y trabajo que continúa tras cambiar de vista; no añadir cancelación sin trazas. |
 | P1-MED-02 | No se observa límite de tamaño explícito para logos en la ruta frontend/backend inspeccionada. | Inventariar tamaños históricos reales antes de proponer límite; no cambiar ahora. |
 | P1-MED-03 | La compresión PNG local puede reducir diagramas técnicos a 300/800/1600 px. No hay corpus visual ni prueba de legibilidad técnica en navegador. | Validar dimensiones, nitidez y alfa con corpus representativo antes de cambiar escala/compresión. |
 | P1-MED-04 | La recuperación YouTube recorre el almacén IndexedDB completo. | Medir cantidad y antigüedad de registros locales antes de añadir índices o limpieza; conservar recuperación actual. |
@@ -74,3 +74,12 @@ La presencia y lectura de las pruebas no equivale a ejecución. No se declara ni
 
 ## Estado
 Inventario estático completado. Implementación y mediciones pendientes. No se ejecutaron pruebas ni se desplegó Apps Script; no se accedió ni modificó Drive/Spreadsheet productivos.
+
+
+## 5. Revisión complementaria — prioridad de miniaturas (2026-11-22)
+
+La revisión del HEAD actual corrigió un dato desactualizado del inventario inicial: la cola no es FIFO simple. `thumbnailCompressionQueue.js` ordena prioridad descendente y FIFO dentro de cada nivel; `offline.js` usa prioridad 0 para precarga y 10 para imágenes ya visibles. Si una imagen visible coincide con una precarga pendiente de la misma variante, promueve esa tarea. No interrumpe trabajos activos.
+
+La ruta visible de `ui.js` establece CORS antes de cargar, muestra la imagen original y solo después intenta persistir una miniatura usando el mismo elemento `imgElement`; no dispara un segundo fetch. La precarga sí descarga con fetch CORS independiente. Se añade `ThumbnailPriorityIntegration.mjs` al runner para fijar este contrato de integración.
+
+**Pendiente:** medición real de espera de cola, primera pintura, CPU, bytes, memoria y tareas que continúan tras cambiar de vista/sesión. No modificar concurrencia (2), tamaños (300/800/1600), PNG ni límites de caché sin corpus técnico y mediciones Beta.
