@@ -29,6 +29,37 @@ import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
 
+// Recalcula flechas de todos los carruseles activos con un único listener global.
+// Los carruseles se crean/destruyen durante la navegación; no registrar un listener
+// window.resize por instancia para evitar retener DOM descartado.
+let carouselResizeTimer_ = null;
+function updateCarouselButtonsForContainer_(container) {
+    if (!container || typeof container.querySelector !== "function") return;
+    const track = container.querySelector(".carousel-track");
+    const previous = container.querySelector(".carousel-btn.prev");
+    const next = container.querySelector(".carousel-btn.next");
+    if (!track || !previous || !next) return;
+    const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
+    previous.style.display = track.scrollLeft > 1 ? "flex" : "none";
+    next.style.display = track.scrollLeft < maxScrollLeft - 1 ? "flex" : "none";
+}
+function updateAllCarouselButtons_() {
+    if (typeof document === "undefined" || typeof document.querySelectorAll !== "function") return;
+    document.querySelectorAll(".carousel-container").forEach(updateCarouselButtonsForContainer_);
+}
+function scheduleCarouselButtonsResize_() {
+    if (typeof window === "undefined") return;
+    if (carouselResizeTimer_ !== null) window.clearTimeout(carouselResizeTimer_);
+    carouselResizeTimer_ = window.setTimeout(() => {
+        carouselResizeTimer_ = null;
+        updateAllCarouselButtons_();
+    }, 100);
+}
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    window.addEventListener("resize", scheduleCarouselButtonsResize_, { passive: true });
+}
+
+
 function readLogoFileBase64_(file) {
     return new Promise((resolve, reject) => {
         if (!file) {
@@ -1391,7 +1422,7 @@ function crearCarrusel(titulo, items, cardGenerator, options = {}) {
         });
 
         carouselTrack.addEventListener('scroll', () => setTimeout(updateCarouselButtons, 150));
-        window.addEventListener('resize', () => setTimeout(updateCarouselButtons, 150));
+
         setTimeout(updateCarouselButtons, 150);
     }
 
@@ -3708,7 +3739,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             });
 
             carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
-            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+
             setTimeout(updateCarouselButtons, 200);
 
             contentWrapper.appendChild(carouselContainer);
