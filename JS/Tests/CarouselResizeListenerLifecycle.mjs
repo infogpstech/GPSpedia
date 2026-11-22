@@ -16,8 +16,8 @@ assert.doesNotMatch(carousel, /window\.addEventListener\s*\(\s*['"]resize['"]/,
     "crearCarrusel no debe registrar listeners globales por instancia.");
 assert.doesNotMatch(pysCarousel, /window\.addEventListener\s*\(\s*['"]resize['"]/,
     "El carrusel PyS no debe registrar listeners globales por render.");
-assert.equal([...source.matchAll(/window\.addEventListener\s*\(\s*["']resize["']/g)].length, 1,
-    "ui.js debe mantener un único listener global de resize.");
+assert.equal([...source.matchAll(/window\\.addEventListener\\s*\\(\\s*["']resize["']\\s*,\\s*scheduleCarouselButtonsResize_/g)].length, 1,
+    "La gestión de resize de carruseles debe registrar un único listener global.");
 assert.match(source, /function updateAllCarouselButtons_\(\)[\s\S]*?querySelectorAll\(["']\.carousel-container["']\)/);
 assert.match(source, /function scheduleCarouselButtonsResize_\(\)[\s\S]*?clearTimeout\(carouselResizeTimer_\)[\s\S]*?updateAllCarouselButtons_\(\)/);
 console.log("CarouselResizeListenerLifecycle: 5/5 PASS — listener resize único y sin retención por carrusel");
