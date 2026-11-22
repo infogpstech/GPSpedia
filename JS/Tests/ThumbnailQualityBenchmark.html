@@ -263,9 +263,13 @@ runButton.addEventListener("click", async () => {
             grid.appendChild(originalCard);
             sample.variants.sort((a, b) => a.targetWidth - b.targetWidth);
             for (const variant of sample.variants) {
+                const outputSignature = detectSignature(new Uint8Array(await variant.blob.slice(0, 12).arrayBuffer()));
+                const outputHash = await sha256(variant.blob);
                 addPreview(grid, variant.targetWidth + " px", variant.blob,
                     variant.width + " × " + variant.height + " · " + variant.blob.size +
-                    " bytes · alfa: " + variant.alpha + " · espera: " + variant.queueWaitMs.toFixed(1) +
+                    " bytes · MIME: " + variant.blob.type + " · firma: " + outputSignature +
+                    " · SHA-256: " + outputHash + " · alfa: " + variant.alpha +
+                    " · espera: " + variant.queueWaitMs.toFixed(1) +
                     " ms · proceso: " + variant.processMs.toFixed(1) + " ms · encode: " +
                     variant.encodeMs.toFixed(1) + " ms · Canvas estimado: " + variant.estimatedCanvasBytes + " bytes");
             }

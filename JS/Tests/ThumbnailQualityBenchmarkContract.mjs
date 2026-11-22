@@ -23,6 +23,8 @@ assert.match(html, /URL\.revokeObjectURL\(url\)/);
 assert.match(html, /Math\.min\(128, canvas\.width\)/,
     "la comprobación de alfa usa una muestra acotada y no reserva otro buffer completo");
 assert.match(html, /estimatedCanvasBytes/);
+assert.match(html, /variant\.blob\.type/);
+assert.match(html, /sha256\(variant\.blob\)/);
 assert.match(html, /readJpegExifOrientation\(file\)/);
 assert.match(html, /file\.slice\(0, 262144\)/);
 assert.match(html, /python -m http\.server 8000/);
@@ -57,4 +59,4 @@ const fileFromBytes = bytes => ({ type: "image/jpeg", slice: () => ({ arrayBuffe
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(true, 6))), "6");
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(false, 8))), "8");
 assert.equal(await readExif({ type: "image/png" }), "no JPEG");
-console.log("ThumbnailQualityBenchmarkContract: 25/25 PASS — local, sin red ni persistencia");
+console.log("ThumbnailQualityBenchmarkContract: 30/30 PASS — local, sin red ni persistencia");
