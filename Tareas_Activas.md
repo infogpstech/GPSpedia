@@ -509,3 +509,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 
 - [x] A02-03 validada por CI SHA `f68691cffc630cdb0c1aef2eb316b6732bb3024a`: 302 suites / 3,531 pruebas / 0 fallos; AddCortesDiagnostics 19/19; health read-only y Pages SUCCESS.
 - [ ] A02-04: cambiar refresco post-alta checkVehicle (búsqueda amplia por criterios) por getVehicleProjection dirigido por ID, conservando disponibilidad exacta de cortes y vídeo para etapa 3.
+
+- [x] A02-04: sustituir checkVehicle post-WRITE/recuperación por getVehicleProjection dirigido por ID; actualizar un único match y conservar disponibilidad/campos de vídeo.
+- [x] Añadir pruebas de llamada dirigida, actualización de estado, campos de disponibilidad/vídeo y fallback conservador.
+- [ ] CI A02-04; no cerrar hasta 0 fallos.

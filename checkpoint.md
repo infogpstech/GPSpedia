@@ -704,3 +704,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **CI exacto:** SHA `f68691cffc630cdb0c1aef2eb316b6732bb3024a`; 302 suites / 3,531 pruebas / 0 fallos; AddCortesDiagnostics 19/19; health read-only y Pages SUCCESS.
 - **Siguiente tarea:** A02-04, sustituir el refresco amplio checkVehicle posterior a guardar corte por proyección dirigida getVehicleProjection para el vehículo guardado, manteniendo datos frescos de slots y video.
 - **Contexto:** WRITE sigue comprobando VIN en servidor dentro de la mutación; el caché solo elimina la consulta duplicada de interfaz.
+
+
+## A02-04 implementada — refresco dirigido tras alta/recuperación — 2026-11-22
+
+- **Tarea realizada:** los tres caminos que actualizan el vehículo tras WRITE o recuperación ya no repiten checkVehicle con criterios amplios. refreshSelectedVehicleMatch consulta getVehicleProjection({vehicleId}) y reemplaza solo el elemento correspondiente en state.matches.
+- **Datos conservados:** tipo de corte, disponibilidad y videoGuiaDesarmeUrl provienen de la proyección del vehículo. Si falla la proyección, el fallback mantiene disponibilidad desconocida para un vehículo existente.
+- **Pruebas añadidas:** petición dirigida única, ID exacto, actualización puntual, disponibilidad/vídeo y fallback.
+- **Estado:** implementación preparada; CI pendiente.
+- **Siguiente:** ejecutar regresión completa. Después continuar con el inventario de llamadas/revalidaciones de imágenes y vídeo, y corregir la trazabilidad A05 de aportes suplementarios.

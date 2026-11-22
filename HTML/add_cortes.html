@@ -1048,23 +1048,26 @@
             return match;
         }
         async function refreshSelectedVehicleMatch(vehicleId, fallback) {
-            const criteria = state.vehicleInfo || {};
+            const requestedId = String(vehicleId == null ? '' : vehicleId).trim();
             try {
-                if (criteria.marca && criteria.modelo && criteria.anoDesde && criteria.tipoEncendido) {
-                    const response = await routeAction('checkVehicle', criteria);
-                    if (response && response.status === 'success' && Array.isArray(response.matches)) {
-                        const refreshed = response.matches.find(item => String(item.id) === String(vehicleId));
-                        if (refreshed) {
-                            delete refreshed.cutAvailabilityUnknown;
-                            if (!Array.isArray(state.matches)) state.matches = [];
-                            const index = state.matches.findIndex(item => String(item.id) === String(vehicleId));
-                            if (index >= 0) state.matches[index] = refreshed; else state.matches.push(refreshed);
-                            return refreshed;
-                        }
-                    }
+                if (!requestedId) throw new Error('VehicleIdMissing');
+                // La escritura ya confirmó el ID: refrescar solo su proyección, no repetir checkVehicle
+                // ni reconstruir el conjunto de coincidencias por marca/modelo/año/encendido.
+                const response = await routeAction('getVehicleProjection', { vehicleId: requestedId });
+                const refreshed = response && response.status === 'success' ? response.vehicle : null;
+                if (!refreshed || String(refreshed.id == null ? '' : refreshed.id).trim() !== requestedId) {
+                    throw new Error('VehicleProjectionUnavailable');
                 }
-            } catch (error) { diagnostics.warn('catalog.availability-refresh-failed', { stage: 'catalog-refresh', errorCode: error && error.name || 'CatalogRefreshError' }); }
-            return upsertFallbackVehicleMatch(vehicleId, fallback);
+                delete refreshed.cutAvailabilityUnknown;
+                if (!Array.isArray(state.matches)) state.matches = [];
+                const index = state.matches.findIndex(item => String(item.id) === requestedId);
+                if (index >= 0) state.matches[index] = refreshed;
+                else state.matches.push(refreshed);
+                return refreshed;
+            } catch (error) {
+                diagnostics.warn('catalog.availability-refresh-failed', { stage: 'catalog-refresh', errorCode: error && error.name || 'CatalogRefreshError' });
+            }
+            return upsertFallbackVehicleMatch(requestedId, fallback);
         }
         function displayMatches(matches) {
             const container = document.getElementById('matches-container');

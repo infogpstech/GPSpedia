@@ -199,3 +199,12 @@ El CI del SHA e313ff8c57239dd5f981f6b3396aa779f2bd1a4d falló solo en el doble d
 ### Cierre A02-03
 
 **CI exacto:** SHA f68691cffc630cdb0c1aef2eb316b6732bb3024a — 302 suites / 3,531 pruebas / 0 fallos. AddCortes diagnostics 19/19 PASS, incluidos single-flight/cache hit, cambio de VIN/vehículo y retry tras fallo. Health read-only y Pages build/deployment SUCCESS. A02-03 queda **VALIDADA EN CÓDIGO/CI**; WRITE conserva la comprobación final de VIN dentro de la mutación.
+
+
+### A02-04 — refresco posterior a alta de corte
+
+**Hallazgo:** los tres caminos de confirmación/recuperación llamaban a `refreshSelectedVehicleMatch`, que volvía a ejecutar `checkVehicle` con criterios amplios y descargaba la lista de coincidencias para actualizar un único vehículo cuyo ID ya había confirmado WRITE/checkOperation.
+
+**Corrección:** `refreshSelectedVehicleMatch` consulta ahora `getVehicleProjection({vehicleId})`; actualiza o inserta únicamente el vehículo solicitado en `state.matches`. La proyección conserva campos del vehículo, disponibilidad de cortes y URL de vídeo. Si la lectura falla o devuelve un ID distinto, mantiene el fallback conservador: no inventa disponibilidad para vehículos existentes y marca `cutAvailabilityUnknown`.
+
+**Pruebas añadidas:** una petición dirigida exacta, reemplazo de un único vehículo, preservación de tipo de corte y vídeo, eliminación de flag unknown al recibir proyección válida y fallback ante respuesta no válida. CI pendiente.
