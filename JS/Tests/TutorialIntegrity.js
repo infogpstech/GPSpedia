@@ -10,10 +10,12 @@ function extract_(source, start, end) {
 }
 
 function makeSheet_(rows, options = {}) {
-    const data = rows.map(row => row.slice());
+    const data = rows.map(row => row.slice()), rangeReads = [];
     function range_(row, col, numRows = 1, numCols = 1) {
         return {
+            rangeReads,
             getValues() {
+                rangeReads.push([row, col, numRows, numCols]);
                 return Array.from({ length: numRows }, (_, r) =>
                     Array.from({ length: numCols }, (_, c) => data[row - 1 + r]?.[col - 1 + c] ?? ""));
             },
@@ -37,6 +39,7 @@ function makeSheet_(rows, options = {}) {
     }
     return {
         data,
+        rangeReads,
         getLastRow: () => data.length,
         getLastColumn: () => Math.max(0, ...data.map(row => row.length)),
         getRange: range_,
@@ -87,7 +90,7 @@ function buildHarness_(feedback, options = {}) {
     const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
-    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, projectTitle: projectTutorialTitle_, titleEventsSheet: state.titleEventsSheet, renameEventsSheet: state.renameEventsSheet };", context);
+    vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, ensureTitleClaim: ensureTutorialTitleClaim_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, projectTitle: projectTutorialTitle_, titleEventsSheet: state.titleEventsSheet, renameEventsSheet: state.renameEventsSheet };", context);
     return { api: context.api, sheet, state, editEventsSheet };
 }
 
@@ -429,7 +432,20 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.throws(() => h.api.readTitleEvents(h.api.titleEventsSheet), /eventHash que no coincide/);
     });
 
-    test("el rename append-only libera el título anterior y reserva el nuevo", () => {
+    test("ensureTutorialTitleClaim reutiliza el snapshot de propiedad en el append", () => {
+    const h = buildHarness_(feedback, { titleEvents: [] });
+    const existingHash = "a".repeat(64);
+    h.api.appendTitleEvent({
+        operationId: "tutorial-title-claim-" + existingHash, tutorialId: "tut-existing-000000000000000000",
+        action: "CLAIM", titleKey: "tema existente", previousTitleKey: "", payloadHash: existingHash
+    });
+    h.api.titleEventsSheet.rangeReads.length = 0;
+    h.api.ensureTitleClaim("tut-new-000000000000000000000000", "tema nuevo");
+    const dataReads = h.api.titleEventsSheet.rangeReads.filter(([row]) => row >= 2);
+    assert.equal(dataReads.length, 2,
+        "La propiedad se lee una vez antes del append y una vez después para confirmar; no debe repetirse el preflight.");
+});
+test("el rename append-only libera el título anterior y reserva el nuevo", () => {
         const h = buildHarness_(feedback, { missingSheet: true });
         const tutorialId = "tut-33333333333333333333333333333333";
         h.api.appendTitleEvent({ operationId: "tutorial-create-33333333333333333333333333333333",
