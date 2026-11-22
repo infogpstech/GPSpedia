@@ -1567,3 +1567,12 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - TutorialIntegrity: **43/43 PASS**. CI HEAD `7195622c320ada8b70ad7fd06528abf9d9d785d4`: **292 suites / 3,414 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status in_progress al checkpoint.
 - No se modificaron datos productivos ni deployments Apps Script; rama base intacta.
 - Siguiente: auditar append/read-back de eventos de edición y renombrado; después continuar la revisión final de CATALOG y cerrar la auditoría integral.
+
+
+## Checkpoint P1 CATALOG — una instancia Spreadsheet por lectura de catálogo (2026-11-22)
+
+- Código: `JS/Services/catalog.js`; prueba: `JS/Tests/CatalogSpreadsheetHandleReuse.mjs`, registrada en `RunServiceTests.mjs`.
+- `handleGetCatalogData` ahora llama `getSpreadsheet()` una vez tras la consulta de caché y pasa/reutiliza el mismo handle para todas las hojas y ledgers involucrados. No se alteraron los rangos de datos, el mapeo, la proyección append-only ni la política de caché.
+- CatalogSpreadsheetHandleReuse: **9/9 PASS**. CI HEAD `5ed4a7162907500d7e0719f6db53d37b6c72b5ca`: **293 suites / 3,423 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status/deploy in_progress al checkpoint.
+- No se tocaron datos productivos ni deployments Apps Script; rama base intacta.
+- Siguiente: revisar publicación CATALOG tras mutaciones de Cortes/Tutoriales/FeedbackLikes, verificar que los invalidadores no duplican publicaciones ni leen el feed de forma innecesaria; después consolidar auditoría y pendientes.
