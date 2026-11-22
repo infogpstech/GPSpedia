@@ -1126,3 +1126,11 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se añadieron pruebas que verifican que la consulta individual produce una sola petición al endpoint solicitado, que claves desconocidas no generan consultas y que el handler de selección no invoca el escaneo global.
 - CI del commit `1586c69d08953933c6cc457ea0e6fd511588faab`: 303 suites / 3,554 pruebas aprobadas / 0 fallos; `ServiceHealthContract` 19/19 PASS; sintaxis 435 archivos JS/MJS; referencias relativas 345 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - No se desplegaron servicios Apps Script ni se alteraron datos remotos.
+
+
+2026-11-22 — A06-04 decisión de alcance de telemetría global
+- Decisión: no ampliar la telemetría global para contar todas las solicitudes HTTP en esta etapa. La cobertura global actual se mantiene como best-effort de eventos que Coordinator registra (adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed), no como total de tráfico.
+- Justificación: instrumentar todas las rutas ordinarias exigiría escrituras/contadores en servicios y acciones que hoy no pasan por Coordinator, añadiría operaciones síncronas y latencia a cada solicitud y contradiría NORMAS_DESAROLLO.md §15 (las métricas no deben añadir viajes de red, esperas o escrituras que degraden acciones). No existe una necesidad operativa demostrada que justifique ese costo.
+- Se conserva la separación: agregado Coordinator global y parcial; métricas de solicitudes/bytes/latencia efímeras y locales al navegador actual; health checks independientes excluidos del tráfico de usuario. Los servicios declaran `directRequestsAvailable:false` y `direct_requests_not_collected`; la UI evita presentar la ausencia de contadores directos como cero real.
+- Evidencia: `ServiceTrafficAdminContract` 46/46 PASS; `DirectServiceTrafficTelemetry` 6/6 PASS; `ServiceMetricsTelemetry` PASS; CI del commit `1586c69d08953933c6cc457ea0e6fd511588faab`: 303 suites / 3,554 pruebas / 0 fallos.
+- Revisión futura: reconsiderar solo si Beta demuestra una necesidad concreta de cobertura global completa y se presenta un diseño que no agregue escrituras ni latencia a las acciones ordinarias.

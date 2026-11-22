@@ -889,3 +889,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite:** se valida la respuesta del endpoint y su contrato, no la disponibilidad interna de Spreadsheet/Drive. No se desplegaron Apps Script ni se escribieron datos reales.
 - **Siguiente tarea independiente:** A06-04 — decidir y documentar si la telemetría global debe incluir todas las solicitudes HTTP directas/no coordinadas.
 
+
+
+## A06-04 COMPLETADA — decisión sobre telemetría global de todas las solicitudes — 2026-11-22
+
+- **Decisión:** no instrumentar ahora todas las solicitudes HTTP de forma global. Se mantiene el agregado de Coordinator como best-effort y parcial, limitado a eventos que Coordinator registra. No se debe interpretar como total de solicitudes.
+- **Justificación:** cubrir rutas directas/no coordinadas requeriría instrumentar acciones ordinarias de los servicios y añadir contadores/escrituras síncronas por petición. Ese costo contradice NORMAS_DESAROLLO.md §15, que prohíbe que métricas y telemetría añadan viajes de red, esperas o escrituras que degraden la operación. No existe evidencia Beta de una necesidad que compense el costo.
+- **Cobertura conservada:** (1) agregado global parcial Coordinator; (2) métricas de requests/bytes/latencia locales y efímeras del navegador actual, sin transmisión ni persistencia; (3) health checks separados, excluidos del tráfico de usuario. Los servicios indican `directRequestsAvailable:false` / `direct_requests_not_collected`; la UI no presenta la falta de contadores como cero real.
+- **Pruebas existentes confirmadas en CI:** `ServiceTrafficAdminContract` 46/46, `DirectServiceTrafficTelemetry` 6/6, `ServiceMetricsTelemetry` PASS; regresión total 303 suites / 3,554 pruebas / 0 fallos.
+- **Criterio para reabrir:** solo con evidencia de Beta que requiera cobertura global completa y un diseño que no añada escrituras/latencia a las acciones ordinarias.
+- **Siguiente tarea independiente:** A07-04 — diseñar e implementar registro idempotente automático en `Imagenes_Reemplazadas` sin sobrescribir historial, estados manuales ni referencias.
+

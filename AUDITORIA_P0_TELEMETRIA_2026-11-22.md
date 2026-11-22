@@ -203,3 +203,12 @@ El HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a volvió a aprobar 301 suites / 
 ## 15. CI general posterior — HEAD 7c916e3 (2026-11-22)
 
 El HEAD 7c916e31c311cec0da1086d378e7d287a550ca15 aprobó 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7 y Pages build/deployment SUCCESS. Se añadió una caracterización local del límite de idempotencia de init YouTube; no se modificó el comportamiento productivo de YouTube.
+
+
+## 16. Decisión A06-04 — no ampliar a telemetría global de todas las solicitudes HTTP (2026-11-22)
+
+La cobertura global completa no se considera necesaria en esta etapa. El agregado de Coordinator se conserva como best-effort parcial: adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed que registra. No representa todas las solicitudes HTTP y excluye rutas directas/no coordinadas. Las métricas de solicitudes/bytes/latencia del navegador actual permanecen locales, efímeras y no transmitidas; los health checks son diagnósticos separados y no tráfico de usuario.
+
+La instrumentación de cada ruta ordinaria para conseguir un total global requeriría contadores/escrituras por petición en servicios que no pasan por Coordinator, añadiendo costo a acciones ordinarias. Esto contradice NORMAS_DESAROLLO.md §15, que prioriza fluidez y prohíbe escrituras/esperas/viajes de red adicionales por telemetría. No hay evidencia de Beta que justifique ese costo. Los contratos ya exponen `directRequestsAvailable:false` y `direct_requests_not_collected`; la UI no presenta esos contadores ausentes como cero real.
+
+**Validación:** `ServiceTrafficAdminContract` 46/46 PASS; `DirectServiceTrafficTelemetry` 6/6 PASS; `ServiceMetricsTelemetry` PASS; regresión del commit `1586c69d08953933c6cc457ea0e6fd511588faab`: 303 suites / 3,554 pruebas / 0 fallos. Reconsiderar solo ante una necesidad demostrada en Beta y un diseño sin escrituras/latencia adicional a las acciones ordinarias.
