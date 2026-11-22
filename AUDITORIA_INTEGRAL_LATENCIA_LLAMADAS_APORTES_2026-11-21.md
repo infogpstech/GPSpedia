@@ -440,3 +440,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - CI HEAD `4fad6a812598beb0bb04212cac4a3bc3136c9dd5`: **291 suites / 3,397 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
 - WRITE queda cerrado en revisión estática y contratos automatizados. Pendiente solo validación Beta aislada de concurrencia real entre proyectos, Drive real, pérdida de respuesta y recuperación de append/archivo; no ejecutar estas pruebas contra producción.
 - Siguiente bloque: auditoría end-to-end FEEDBACK (sugerencias de año, likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicación CATALOG).
+
+
+## P1 FEEDBACK — read-back dirigido de aplicaciones de sugerencia de año (2026-11-22)
+
+- En `handleSuggestYearLocked`, después de anexar una fila a `FeedbackYearApplications`, la confirmación ya no descarga todas las columnas y filas del ledger.
+- Se busca el `operationId` exacto en la columna A con TextFinder (`matchCase` y `matchEntireCell`); cada coincidencia se lee en su fila de 16 columnas.
+- Se mantienen las garantías previas: debe existir exactamente una coincidencia y su estado debe seguir siendo `pending`; duplicados o falta de confirmación detienen la aplicación antes de modificar el catálogo.
+- Prueba `FeedbackYearApplicationReadbackBounded.mjs` registrada en `RunServiceTests.mjs`.
+- CI HEAD `c96210f3bd2f77ff3e6e9ea1486719894ba13383`: **292 suites / 3,405 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job de deploy del workflow todavía estaba en curso al cerrar la comprobación; no se considera despliegue Apps Script ni se ejecutaron cambios sobre servicios productivos.
+- Esta es una suboptimización cerrada; la auditoría integral FEEDBACK sigue abierta. No se retiraron eventos append-only, verificaciones de idempotencia ni lecturas globales necesarias para validar el ledger de aportes.
