@@ -37,26 +37,24 @@ test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", (
     assert.match(admin, /"ACTION_MOVED_TO_WRITE"/);
 });
 
-test("FEEDBACK cuenta todas las acciones con telemetría directa y usa actor cacheado", () => {
-    assert.match(feedback, /actions: new Set\(\["recordLike","reportProblem"/);
+test("FEEDBACK mantiene rutas y actor cacheado sin contadores directos", () => {
+    assert.doesNotMatch(feedback, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_/);
     assert.match(feedback, /const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
     const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
     assert.ok(start>=0&&end>start);
-    assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
+    assert.doesNotMatch(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_/);
     assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
     assert.doesNotMatch(router,/withSharedMutationLease_/);
     assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
 });
 
-test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordinator y ADMIN usa actor cacheado", () => {
+test("USERS ya no persiste métricas directas; UTILITIES conserva Coordinator y ADMIN usa actor cacheado", () => {
     assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
     assert.match(users, /withSharedMutationLease_\("USERS", action/);
     assert.match(users, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "USERS" \}\)/);
     assert.doesNotMatch(users, /withSharedMutationLease_\("USERS", "sessionActivity"/);
-    assert.match(users, /USERS_DIRECT_TRAFFIC_PREFIX_/);
-    assert.match(users, /if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
-    assert.match(users, /if \(action === "getServiceTraffic"\)[\s\S]*?readUsersDirectTraffic_/);
+    assert.doesNotMatch(users, /USERS_DIRECT_TRAFFIC_PREFIX_|recordUsersDirectTraffic_|readUsersDirectTraffic_|getServiceTraffic/);
     assert.match(admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
     const auditStart = admin.indexOf("function handleAuditDriveImagesInCortes(");
     const auditEnd = admin.indexOf("\nfunction handleAuditDriveImagesInCortesCore_", auditStart);
@@ -70,16 +68,13 @@ test("USERS contabiliza getUsers sin lease adicional; UTILITIES conserva Coordin
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
 });
 
-test("CATALOG y rutas directas AUTH/WRITE quedan contabilizadas; consultas internas excluidas", () => {
-    const trafficStart = catalog.indexOf("const CATALOG_TRAFFIC_ACTIONS_ = new Set([");
-    const trafficEnd = catalog.indexOf("]);", trafficStart);
-    assert.ok(trafficStart >= 0 && trafficEnd > trafficStart, "CATALOG debe declarar el conjunto de acciones contabilizadas");
-    const catalogTrafficActions = catalog.slice(trafficStart, trafficEnd);
-    ["getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData", "getVehicleProjection", "getContributionCandidates"]
-        .forEach(action => assert.ok(catalogTrafficActions.includes('"'+action+'"'), "falta telemetría para "+action));
-    assert.match(catalog, /if \(action === "getServiceTraffic"\)[\s\S]*?return ContentService/);
-    assert.match(auth, /actions: new Set\(\["validateSession"\]\)/);
-    assert.match(write, /actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
+test("CATALOG, AUTH y WRITE conservan rutas sin contadores directos", () => {
+    assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_ACTIONS_|recordCatalogTraffic_|readCatalogTraffic_|getServiceTraffic/);
+    assert.match(catalog, /const CATALOG_TRAFFIC_SECRET_PROPERTY_/);
+    assert.match(catalog, /case 'getVehicleProjection'/);
+    assert.match(catalog, /case 'getContributionCandidates'/);
+    assert.doesNotMatch(auth, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_|getServiceTraffic/);
+    assert.doesNotMatch(write, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_|getServiceTraffic/);
     assert.match(write, /if \(!isSharedMutationAction_\(action\)\) \{[\s\S]*?doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
     assert.doesNotMatch(write, /if \(action !== "checkOperation"\)/);
 });
