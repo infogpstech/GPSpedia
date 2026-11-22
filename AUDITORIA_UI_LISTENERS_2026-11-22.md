@@ -44,3 +44,15 @@ CI del HEAD `d97f487e49b1b5deef6d5ab89d7099b9d761a217`:
 - Medir en navegador real CPU/memoria y frecuencia de resize con muchas vistas/carruseles.
 - Revisar consultas repetidas al navegar entre secciones y el costo de IndexedDB/cache-first frente al primer render.
 - No cambiar timers globales por hipótesis sin medición.
+
+
+## Adenda — listeners estáticos del panel ADMIN (2026-11-22)
+
+Se confirmó que `openDevToolsModal_` invoca `initAdminPanelListeners()` cada vez que se abre el panel. La función añadía handlers con `addEventListener` a nodos estáticos que permanecen en el DOM entre aperturas:
+- `dev-terminal-input`: acumulaba keydown handlers y podía ejecutar el mismo comando varias veces.
+- `backup-resource-input`: acumulaba dos handlers input independientes (estado de reanudación Drive y reinicio de previews de migración).
+- `btn-admin-refresh-contribution-candidates`: acumulaba click handlers y consultas repetidas a CATALOG.
+
+Corrección: se usan propiedades reemplazables `onkeydown`, `oninput` (combinando ambos efectos) y `onclick`, por lo que cada apertura sustituye el handler anterior y conserva la sesión/closure actual. Los handlers sobre tarjetas/botones creados dinámicamente permanecen ligados a nodos que se destruyen al renderizar de nuevo.
+
+Prueba `AdminPanelListenerLifecycle.mjs`: 8/8 PASS. CI HEAD `d01fb34480bf5a64cf29fca37e033e6c74083fb9`: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.

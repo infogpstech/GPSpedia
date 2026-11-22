@@ -109,7 +109,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Medir por separado cliente, red, Apps Script, Drive y proyección CATALOG.
 
 ### P2 — optimización y verificación integral
-- [x] Revisar listeners, polling, timers y observers principales: corregida acumulación de listeners resize en carruseles; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup.
+- [x] Revisar listeners, polling, timers y observers principales: corregida acumulación resize por carrusel y handlers estáticos del panel ADMIN; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup.
 - [x] Revisar cache-first/IndexedDB: IDB y CacheStorage en paralelo, carrera 3 s, una apertura IDB compartida, transacción confirmada y PyS single-flight; medir primer render y memoria real queda para Beta.
 - [ ] Añadir pruebas de no duplicación y fallos parciales; ejecutar regresión integral y comparación antes/después.
 - [x] Documentar llamadas retiradas/conservadas y su justificación en AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
@@ -262,6 +262,13 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 
 
 ### P2 — inicializaciones y renderizados (2026-11-22)
-- [ ] Revisar funciones de inicialización/render que puedan ejecutarse varias veces y duplicar listeners, peticiones, observers o nodos.
+- [ ] Revisar funciones de inicialización/render que puedan ejecutarse varias veces y duplicar peticiones, observers o nodos; los listeners globales conocidos ya están corregidos.
 - [ ] Añadir contratos de no duplicación y fallos parciales donde no exista cobertura; no duplicar suites ya integradas.
 - [x] CI HEAD 4dd0f9f4 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; TutorialCatalogRefreshDeltaFirst 6/6; CarouselResizeListenerLifecycle 5/5; health read-only SUCCESS.
+
+
+### P2 — cierre de listeners y handlers UI (2026-11-22)
+- [x] Carruseles: un listener global resize con debounce; sin closures reteniendo carruseles retirados. Contrato 5/5.
+- [x] Panel ADMIN: initAdminPanelListeners se ejecuta al abrir; termInput, backupResourceInput y contributionRefreshBtn ahora reemplazan handlers en lugar de acumular addEventListener. El input de respaldo combina la habilitación de reanudación y reinicio de previews. Contrato 8/8.
+- [x] CI HEAD d01fb344 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- [ ] Revisar inicializaciones/renderizados duplicados más allá de listeners; luego cobertura transversal de fallos parciales/no duplicación.

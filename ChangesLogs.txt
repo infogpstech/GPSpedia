@@ -882,3 +882,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se cierra revisión estática de consultas de navegación y cache-first/IndexedDB; el alta de Tutorial ahora usa delta-first.
 - CI HEAD 4dd0f9f4 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; contratos UI 6/6 y 5/5.
 - Siguiente: revisar inicializaciones/renderizados duplicados y ampliar cobertura transversal sin duplicar pruebas existentes.
+
+
+2026-11-22 — UI: evitar acumulación de handlers al reabrir ADMIN
+- initAdminPanelListeners se ejecuta al abrir el panel; termInput, backupResourceInput y contributionRefreshBtn pasaron de addEventListener repetidos a onkeydown/oninput/onclick reemplazables.
+- El input de respaldo combina la activación de reanudación Drive y la invalidación de previews de migración.
+- AdminPanelListenerLifecycle 8/8 PASS; CI HEAD d01fb344 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health y Pages SUCCESS.

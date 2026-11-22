@@ -304,3 +304,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - IndexedDB/cache-first revisados estáticamente: apertura compartida, carrera IDB/CacheStorage, timeout y transacción confirmada. Métricas reales de primer render y memoria quedan en Beta.
 - Último CI verificado HEAD `4dd0f9f437865e179e6c671bb3927b147a516e34`: 295 suites / 3,446 pruebas / 0 fallos; TutorialCatalogRefreshDeltaFirst 6/6; CarouselResizeListenerLifecycle 5/5; health read-only SUCCESS. Pages build en curso.
 - Siguiente: revisión de inicializaciones/renderizados que puedan duplicar peticiones, observers, nodos o listeners; luego contratos transversales de fallos parciales/no duplicación.
+
+
+## P2 — segunda fuga de listeners UI corregida (2026-11-22)
+
+- Además de los carruseles, initAdminPanelListeners se ejecuta cada vez que se abre el panel ADMIN y acumulaba handlers en nodos estáticos: terminal keydown, campo de respaldo input (dos listeners) y botón de refresco de candidatos.
+- Se reemplazaron por onkeydown/oninput/onclick; el handler input combina habilitación de reanudación Drive y reinicio de previews. Los handlers dinámicos permanecen con sus nodos.
+- AdminPanelListenerLifecycle 8/8 PASS. CI HEAD `d01fb34480bf5a64cf29fca37e033e6c74083fb9`: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- La revisión global UI queda cerrada para listeners/timers/observers principales. Siguiente: revisar inicializaciones/renderizados duplicados y cobertura transversal de fallos parciales/no duplicación.
