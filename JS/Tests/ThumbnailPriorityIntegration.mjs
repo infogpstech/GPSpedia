@@ -46,7 +46,7 @@ assert.match(visibleLoader, /imgElement\.crossOrigin = 'anonymous'/,
 
 assert.match(queue, /pending\.sort\(\(a, b\) => b\.priority - a\.priority \|\| a\.sequence - b\.sequence\)/,
     "la cola ordena prioridad descendente y FIFO por prioridad");
-assert.match(queue, /if \(activeKeys\.has\(normalizedKey\)\) return false/,
+assert.match(queue, /activeKeys\.has\(normalizedKey\)\) return false/,
     "la promoción no interrumpe una tarea ya activa");
 assert.match(queue, /job\.priority = nextPriority/);
 console.log("ThumbnailPriorityIntegration: 15/15 PASS — visible sobre precarga, single-flight y sin segundo fetch");
