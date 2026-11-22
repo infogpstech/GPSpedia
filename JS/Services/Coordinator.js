@@ -1441,7 +1441,6 @@ function createSharedMutationCoordinator_(dependencies) {
                     while (recoveredEvents.length > CATALOG_CHANGE_MAX_EVENTS_) {
                         const oldest = recoveredEvents.shift();
                         properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
-                delete propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + oldest];
                         delete propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + oldest];
                     }
                     return { status: "success", count: expectedCount, firstRevision: currentRevision,
@@ -1486,6 +1485,7 @@ function createSharedMutationCoordinator_(dependencies) {
             while (after.length > CATALOG_CHANGE_MAX_EVENTS_) {
                 const oldest = after.shift();
                 properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
+                delete propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + oldest];
             }
             return {
                 status: "success", count: acceptedEvents.length, firstRevision, lastRevision: currentRevision,
