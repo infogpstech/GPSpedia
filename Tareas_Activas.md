@@ -174,3 +174,7 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 
 - [x] Corregir el resumen de salida requerido por `RunServiceTests.mjs` (`N/N PASS`). El primer CI había ejecutado los asserts correctamente pero falló al no detectar resumen numérico.
 - [ ] Revalidar workflow del commit con la corrección; si falla, corregir antes de avanzar.
+
+
+- [x] Adaptar el harness aislado de `ThumbnailCacheDeduplication.mjs` a la nueva dependencia de cola, sin sustituir la prueba de single-flight.
+- [ ] Revalidar CI final; cerrar la implementación solo con workflow verde.

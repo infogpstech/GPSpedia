@@ -801,3 +801,6 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 - CI commit 05e0225: 3,015 pruebas aprobadas; una suite rechazada solo porque el resumen de la CLI no coincidía con el parser N/N PASS. Los asserts de prioridad se ejecutaron sin error.
 - Se corrige el resumen numérico 20/20 PASS; pendiente nueva ejecución CI.
+
+
+- CI 0fac4f5: 3,118 pruebas aprobadas; falla una suite porque el wrapper aislado de single-flight no inyectaba la nueva dependencia thumbnailCompressionQueue. Se añade doble de cola al harness; no es un fallo funcional de prioridad.

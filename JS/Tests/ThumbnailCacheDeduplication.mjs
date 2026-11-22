@@ -24,14 +24,15 @@ let started = 0;
 const inFlight = new Map();
 const run = new Function(
     "normalizeId", "normalizeThumbnailSize", "buildThumbnailCacheKey",
-    "compressAndStoreThumbnailOnce_", "thumbnailCompressionInFlight_",
+    "compressAndStoreThumbnailOnce_", "thumbnailCompressionInFlight_", "thumbnailCompressionQueue",
     wrapper[0].replace("export async function", "async function") + "\nreturn compressAndStoreThumbnail;"
 )(
     value => String(value || "").replace(/^id:/, ""),
     value => Number(value) || 400,
     (id, width) => id + "::w" + width,
     async (url, id, width) => { started += 1; await Promise.resolve(); return { id, width }; },
-    inFlight
+    inFlight,
+    { clearPromotion() {}, promote() {}, run(task) { return task(); } }
 );
 const [first, second] = await Promise.all([
     run("https://image.test/a", "id:vehicle-a", 300),

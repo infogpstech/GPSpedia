@@ -183,3 +183,9 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Se corrigió el resumen de `ThumbnailCompressionQueueContract.mjs` a `20/20 PASS` para conservar el contrato del runner. No fue un fallo de lógica de la cola; sí fue un fallo real de integración del runner.
 - Se añadió limpieza de promociones anticipadas en el commit `e0bbc3e`.
 - **Siguiente:** validar el nuevo workflow del commit actual; no cerrar prioridad hasta que CI pase.
+
+
+### Corrección de dependencia de test single-flight
+- CI del commit `0fac4f5`: la nueva suite de prioridad ya publicó resumen numérico, pero `ThumbnailCacheDeduplication.mjs` falló porque su wrapper aislado de `compressAndStoreThumbnail` no inyectaba la nueva dependencia `thumbnailCompressionQueue` usada en el `finally`.
+- Se actualizó el harness para inyectar un doble de cola mínimo (clearPromotion/promote/run), preservando el aislamiento y el objetivo de probar single-flight.
+- El fallo era de fixture de test, no de la cola productiva. Pendiente ejecutar CI nuevamente.
