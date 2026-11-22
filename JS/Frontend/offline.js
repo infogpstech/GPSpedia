@@ -1426,25 +1426,32 @@ async function readFreshThumbnail(key){
 /** Conserva las variantes más recientes y elimina primero las menos utilizadas. */
 async function evictLeastRecentlyUsedThumbnails() {
  return runThumbnailStoreTransaction(
-  store => store.getAll(),
-  (store, entries) => {
-   const cached = [];
-   (Array.isArray(entries) ? entries : []).forEach(entry => {
-    if (!entry || typeof entry !== "object" || typeof entry.key !== "string") return;
-    if (isThumbnailExpired(entry)) {
-     store.delete(entry.key);
-     return;
-    }
-    if (entry.blob) cached.push(entry);
-   });
-   cached.sort((a, b) =>
-    (Number(a.lastAccessedAt) || Number(a.cachedAt) || 0) -
-    (Number(b.lastAccessedAt) || Number(b.cachedAt) || 0) ||
-    (Number(a.cachedAt) || 0) - (Number(b.cachedAt) || 0) ||
-    a.key.localeCompare(b.key));
-   const excess = cached.length - MAX_THUMBNAIL_ENTRIES;
-   for (let index = 0; index < excess; index += 1) store.delete(cached[index].key);
-   return Math.max(0, excess);
+  store => store.count(),
+  (store, count) => {
+   // Mientras el almacén permanezca bajo el límite, no hace falta descargar todas las miniaturas.
+   if (!Number.isFinite(Number(count)) || Number(count) <= MAX_THUMBNAIL_ENTRIES) return { removed: 0 };
+   const result = { removed: 0 };
+   const request = store.getAll();
+   request.onsuccess = () => {
+    const cached = [];
+    (Array.isArray(request.result) ? request.result : []).forEach(entry => {
+     if (!entry || typeof entry !== "object" || typeof entry.key !== "string") return;
+     if (isThumbnailExpired(entry)) {
+      store.delete(entry.key);
+      return;
+     }
+     if (entry.blob) cached.push(entry);
+    });
+    cached.sort((a, b) =>
+     (Number(a.lastAccessedAt) || Number(a.cachedAt) || 0) -
+     (Number(b.lastAccessedAt) || Number(b.cachedAt) || 0) ||
+     (Number(a.cachedAt) || 0) - (Number(b.cachedAt) || 0) ||
+     a.key.localeCompare(b.key));
+    const excess = cached.length - MAX_THUMBNAIL_ENTRIES;
+    for (let index = 0; index < excess; index += 1) store.delete(cached[index].key);
+    result.removed = Math.max(0, excess);
+   };
+   return result;
   }
  );
 }
