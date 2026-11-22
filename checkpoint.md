@@ -146,3 +146,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** P1 — medir competencia entre precarga y recursos visibles; preparar harness aislado de rendimiento para cola, bytes, tiempos y prioridad sin alterar el contrato FIFO actual.
 - **Contexto breve:** no hay evidencia visual para justificar cambios de compresión. El siguiente riesgo cuantificable es si la precarga ocupa la cola antes de las imágenes visibles.
 - **Estado:** evaluación estática COMPLETADA; prueba visual con corpus PENDIENTE de muestras autorizadas/Beta.
+
+
+## Actividad completada — 2026-11-21: análisis de competencia visible/precarga
+
+- **Tarea realizada:** trazado de `saveCatalog`, `saveCatalogWithCursor`, `saveViewedItem`, `cacheItemImages` y ambas rutas de compresión.
+- **Hallazgo:** snapshot de 15 vehículos × 11 campos puede encolar hasta 165 trabajos teóricos. La cola actual limita a 2 activos y FIFO, pero las imágenes visibles usan la misma cola; una petición visible puede quedar detrás de precargas. Si comparte clave con una precarga pendiente, single-flight comparte la promesa y no permite elevar prioridad.
+- **Decisión:** introducir prioridad alta para visible y baja para precarga, FIFO dentro de cada prioridad, con elevación de prioridad de una entrada single-flight ya encolada. No preemptar trabajos activos ni cambiar concurrencia 2.
+- **Evidencia/diseño:** `AUDITORIA_P1_COLA_VISIBLE_PRECARGA_2026-11-21.md`.
+- **Validación:** trazado estático y máximo teórico; no se ejecutó Node ni medición real de navegador.
+- **Siguiente tarea:** implementar prioridad de cola y deduplicación elevable mediante pruebas contractuales antes de tocar producción.
+- **Contexto breve:** la espera de recursos visibles es un riesgo demostrable por el orden FIFO actual; se requiere resolverlo sin duplicar la descarga/compresión de la misma variante.
+- **Estado:** análisis COMPLETADO; implementación y benchmark Beta PENDIENTES.

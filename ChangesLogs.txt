@@ -772,3 +772,14 @@ P1 MULTIMEDIA — EVALUACIÓN DE COMPRESIÓN Y CORPUS — 2026-11-21
 - Informe: AUDITORIA_P1_CALIDAD_COMPRESION_2026-11-21.md.
 - Siguiente: instrumentar y medir competencia entre precarga de últimos 15 vehículos y recursos visibles; preparar harness de rendimiento aislado.
 ================================================================================
+
+
+================================================================================
+P1 MULTIMEDIA — COMPETENCIA VISIBLE/PRECARGA — 2026-11-21
+- saveCatalog/saveCatalogWithCursor precargan los últimos 15 vehículos; cacheItemImages recorre 11 campos por vehículo y encola sin esperar promesas.
+- La cola limita a 2 activos y mantiene FIFO. La ruta de imagen visible comparte la cola; si la misma clave ya está encolada, single-flight devuelve la promesa de precarga y no eleva prioridad.
+- Máximo teórico: 165 solicitudes de precarga por snapshot, no 165 descargas simultáneas. No se midió espera/CPU/red en navegador.
+- Diseño siguiente: prioridad alta visible, baja precarga, FIFO por prioridad y promoción de una tarea pending single-flight; no preemptar activos ni cambiar concurrencia 2.
+- Informe: AUDITORIA_P1_COLA_VISIBLE_PRECARGA_2026-11-21.md.
+- Siguiente: implementar cola priorizada y contratos automatizados.
+================================================================================

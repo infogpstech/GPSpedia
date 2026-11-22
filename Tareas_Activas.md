@@ -152,3 +152,9 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Inspeccionar algoritmo de miniaturas y corpus de imágenes versionado. Conclusión: PNG conserva alfa, no se amplían imágenes pequeñas y la proporción se mantiene; el reescalado puede perder detalle fino. No existe corpus técnico representativo; no se cambian parámetros. Evidencia: `AUDITORIA_P1_CALIDAD_COMPRESION_2026-11-21.md`.
 - [ ] Obtener corpus técnico aislado y autorizado para probar diagramas/cableado, texto fino, alfa PNG, orientación, MIME/firma y tamaños 300/800/1600. No incorporar imágenes de clientes al repositorio.
 - [ ] Siguiente: medir competencia visible/precarga y preparar harness de rendimiento; mantener concurrencia FIFO 2 hasta tener evidencia.
+
+
+### P1 — competencia visible/precarga (actualización 2026-11-21)
+- [x] Trazar el encolado desde snapshot/deltas y vistos recientes. Máximo teórico 15 × 11 = 165 trabajos de precarga; la cola de dos workers es FIFO y comparte single-flight con la ruta visible. Informe: `AUDITORIA_P1_COLA_VISIBLE_PRECARGA_2026-11-21.md`.
+- [ ] Implementar prioridad alta para imágenes visibles y baja para precarga; FIFO dentro de prioridad, elevar entradas pendientes compartidas por single-flight, sin duplicar trabajo ni preemptar activos. Añadir pruebas contractuales.
+- [ ] Medir en Beta aislada tiempos de espera, bytes, cache hit/miss, CPU, CORS y memoria; no cambiar concurrencia 2 sin resultados.
