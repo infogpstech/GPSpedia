@@ -415,3 +415,17 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Regresión de servicios: 298 suites / 3,459 pruebas / 0 fallos. Health read-only SUCCESS. Pages build del mismo HEAD seguía in_progress al cierre.
 - El chequeo de referencias excluye intencionalmente tests legacy no invocados que conservan rutas históricas; no se alteraron.
 - Siguiente: revisión del diff acumulado de implementaciones y anti-regresión dirigida. Las validaciones reales de navegador, Apps Script, Drive/Spreadsheet, OAuth y YouTube siguen diferidas a Beta aislada.
+
+
+## Verificación técnica integral — cierre local (2026-11-21)
+
+- HEAD validado: `60c67a6fc7dbd99e456ae10f02b2287b9810e963` en `GPSpedia2.2.5_work`.
+- Base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Sintaxis Node 22: 429 archivos `.js/.mjs`, 1/1 PASS.
+- Referencias relativas: 340 archivos activos, 1/1 PASS.
+- Regresión integral: 298 suites / 3,459 pruebas / 0 fallos.
+- Health read-only SUCCESS; Pages build/deployment SUCCESS.
+- Diff desde HEAD inicial `214b39a86b7dc5a3bf7d831865e3e6aa0bd270cb`: 11 commits / 7 archivos; solo tests y registros (incluye los dos nuevos contratos de verificación y dos escenarios Coordinator). No hubo cambios productivos en esta fase.
+- **Estado: verificación local COMPLETADA CON VALIDACIÓN DIFERIDA.** No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, secretos, propiedades o datos productivos.
+- Pendiente Beta: pruebas reales en Android/PWA/escritorio, corpus técnico, CORS/primera pintura/memoria, tamaños históricos Drive, Spreadsheet/Drive aislados, concurrencia interproyecto y YouTube en canal de prueba autorizado.
+- Siguiente: ejecutar el protocolo Beta solo cuando estén disponibles deployments, credenciales y recursos aislados autorizados; no incorporar nuevas mejoras hasta cerrar las validaciones actuales o recibir evidencia nueva.
