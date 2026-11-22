@@ -833,3 +833,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - UI/backend admiten PNG/SVG/WEBP y validan MIME/Base64/firma; no se encontró máximo de bytes específico para logos.
 - No se cambia límite porque el repositorio no contiene una muestra representativa del inventario LogosMarca en Drive. Medición histórica queda para Beta aislada de solo lectura.
 - Informe: AUDITORIA_P1_LOGOS_TAMANO_2026-11-22.md.
+
+
+2026-11-22 — P1 multimedia: métrica de promoción anticipada y decisión de idempotencia YouTube
+- La cola registra también las promociones single-flight anticipadas que se resuelven al entrar a queue.run(). CI 44974885873 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; contrato 24/24 PASS.
+- Se evaluó persistir opVideoId→uploadUrl para recuperar respuesta perdida. NORMAS §15 impide añadir locks/leases/esperas o serializar cargas ordinarias; sin mecanismo atómico lock-free comprobado, no se implementa. Se conserva como riesgo bajo de sesión resumable sin uso, no de vídeo publicado duplicado.
+- Siguiente: protocolo Beta aislado de corpus, rendimiento, logos y YouTube.

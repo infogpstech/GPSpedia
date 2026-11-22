@@ -229,3 +229,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - No se cambia límite: los recursos versionados no representan el inventario real de LogosMarca. Los tamaños históricos residen en Drive/Spreadsheet y no hay conector Drive/Sheets disponible en esta sesión; medir en Beta aislada de solo lectura antes de proponer límite.
 - Evidencia: AUDITORIA_P1_LOGOS_TAMANO_2026-11-22.md.
 - **Siguiente:** diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida, incluyendo renovación 404/410, concurrencia y limpieza; mantener transferencia directa.
+
+
+## P1 multimedia — validación final de métricas y decisión de idempotencia YouTube (2026-11-22)
+
+- Commit `79b7e5c8ee6b47e58b8bd9c875d7eb4e2c9ef035`: la promoción anticipada single-flight ahora también incrementa la métrica de promociones; contrato ampliado.
+- CI `44974885873` SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; `ThumbnailCompressionQueueContract` 24/24 PASS; sintaxis aprobada.
+- CI `44974805324` y health read-only `44974805341` del HEAD previo también SUCCESS; Pages build de `be13e982` SUCCESS.
+- Revisión del hallazgo YouTube: una asociación durable opVideoId→uploadUrl reduciría sesiones huérfanas tras respuesta perdida, pero no se añade ScriptLock, lease ni espera durante cargas. NORMAS §15 exige retirar locks/serialización no indispensables y no bloquear operaciones de archivo. Sin un mecanismo atómico lock-free disponible, se conserva como riesgo bajo documentado: puede quedar una sesión resumable sin uso, pero no se duplica por sí sola la publicación de vídeo.
+- La rama base permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- **Siguiente:** cerrar la revisión local P1 con un inventario de pruebas automatizadas y preparar el protocolo Beta aislado para: corpus técnico de imágenes, medición de cola/primera pintura y tamaños reales de logos; no ejecutar contra Drive/YouTube productivos.

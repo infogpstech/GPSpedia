@@ -52,3 +52,10 @@ El último CI comprobado en HEAD `fd8c9040` fue SUCCESS: 293 suites / 3,435 prue
 **Auditoría estática completada; sin cambios de código.** La cobertura local existente es amplia. Se registra como pendiente de diseño la idempotencia de inicialización ante respuesta perdida, sin bloquear la revisión de los demás elementos multimedia.
 
 Siguiente: inventariar los tamaños históricos de logos y límites actuales; no modificar límites sin una muestra representativa.
+
+
+## Adenda — decisión conforme a NORMAS §15 (2026-11-22)
+
+Se evaluó persistir la asociación `opVideoId → uploadUrl` para que un reintento tras respuesta perdida reutilice la misma sesión. La solución debe evitar duplicaciones también ante dos inicializaciones simultáneas. Añadir ScriptLock, lease, espera o serialización alrededor de la carga contradice el requisito expreso de §15 de no bloquear cargas ni acciones ordinarias. No se encontró en el flujo actual una primitiva compare-and-set lock-free verificada que garantice una única creación concurrente. Por tanto, no se implementa una persistencia parcial que parezca idempotente pero mantenga la carrera.
+
+El riesgo se mantiene acotado: puede quedar una sesión resumable sin uso hasta expirar; no crea por sí sola un vídeo ni una solicitud de aprobación duplicada, ya que el binario no se envía a esa sesión y la aprobación conserva idempotencia por `opVideoId`. Se difiere una solución solo si aparece una primitiva atómica compatible con §15 o si Beta demuestra impacto material.

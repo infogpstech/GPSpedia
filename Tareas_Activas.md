@@ -210,3 +210,10 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Confirmar que los assets versionados no son una muestra representativa de LogosMarca. No cambiar límites por falta de datos.
 - [ ] Medir en Beta aislada y de solo lectura los tamaños históricos reales de Drive/Spreadsheet, MIME/firma, dimensiones y anomalías antes de definir un límite.
 - [ ] Siguiente: diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida y reintentos de renovación.
+
+
+### P1 — métricas adicionales y decisión de init YouTube (2026-11-22)
+- [x] Medir también las promociones anticipadas single-flight que ocurren antes de queue.run(); contrato de métricas actualizado.
+- [x] CI HEAD 79b7e5c8 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; ThumbnailCompressionQueueContract 24/24 PASS.
+- [x] Evaluar idempotencia de initYouTubeUpload ante respuesta perdida frente a NORMAS §15: no introducir ScriptLock/lease/espera ni serializar cargas. Sin primitivas atómicas lock-free verificadas, se documenta el riesgo bajo de sesión resumable huérfana; no implica duplicación de vídeo publicado.
+- [ ] Preparar protocolo Beta aislado para corpus técnico, rendimiento de imágenes, logos históricos y flujo real YouTube. No ejecutar contra recursos productivos.
