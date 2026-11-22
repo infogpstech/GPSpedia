@@ -819,3 +819,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - getStats() y getPriorityStats() mantienen sus contratos. getMetrics() incorpora contadores efímeros por prioridad, espera y duración; sin persistencia, claves, URLs ni datos de vehículos.
 - Se revisó cancelación de precargas: no se implementa porque la caché es compartida y single-flight puede servir a una imagen visible. Sin ownership/ref-count, cancelar por clave arriesga interrumpir ese consumidor; no hay cancelación uniforme de trabajo activo.
 - Siguiente: auditoría estática del flujo resumable y aprobación de YouTube.
+
+
+2026-11-22 — P1 multimedia: auditoría estática de YouTube
+- Confirmada transferencia directa navegador→YouTube en bloques de 8 MiB, checkpoints IndexedDB, consulta de offset remoto, pausa/reanudación y recuperación de transferencia completada.
+- Revisados inicialización OAuth, ID final, idempotencia de aprobación, destino único, RBAC, ledger append-only y publicación/rechazo recuperables.
+- Suites de cliente/servidor incluidas en regresión; CI HEAD fd8c9040 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos.
+- Hallazgo: initYouTubeUpload no persiste opVideoId→uploadUrl; una respuesta de inicialización perdida puede dejar una sesión resumable sin uso. No duplica por sí sola vídeos publicados. Se difiere diseño seguro de almacenamiento/renovación/concurrencia/limpieza; sin cambio de código en esta auditoría.

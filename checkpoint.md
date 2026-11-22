@@ -210,3 +210,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Revisión de cancelación: no se implementa. cacheItemImages se invoca desde snapshots de catálogo y vistos recientes; las imágenes son recursos compartidos que solo calientan la caché global. thumbnailCompressionInFlight_ deduplica por clave y puede compartir la promesa con la ruta visible. Cancelar por clave sin ownership/ref-count podría interrumpir un consumidor visible; además, fetch/bitmap/canvas/IndexedDB no comparten un mecanismo de cancelación uniforme.
 - Rama base protegida verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - **Siguiente:** auditar estáticamente JS/Frontend/youtubeUpload.js y sus contratos de transferencia resumable, checkpoints IndexedDB, pausa/reanudación/cancelación, expiración e idempotencia, así como la aprobación posterior. No cambiar el flujo sin defecto reproducible.
+
+
+## P1 multimedia — auditoría de YouTube (2026-11-22)
+
+- Revisión estática completada de youtubeUpload.js, Services/feedback.js y contratos registrados en RunServiceTests.mjs.
+- Confirmado: transferencia navegador→YouTube directa y resumable en bloques de 8 MiB; checkpoints IndexedDB por offset remoto confirmado; pausa aborta XHR y conserva offset; reanudación consulta Range; ID final validado; aprobación pendiente, idempotente por opVideoId y con ledger append-only/RBAC.
+- Suites YouTube de cliente, persistencia, checkpoint, pausa, recuperación, borradores, modal/XSS, aprobación y estado están integradas en RunServiceTests. Último CI comprobado en HEAD fd8c9040: 293 suites / 3,435 pruebas / 0 fallos.
+- Hallazgo no crítico: handleInitYouTubeUpload no persiste opVideoId→uploadUrl. Si se pierde la respuesta de inicialización, el reintento puede crear una segunda sesión resumable sin uso; no duplica por sí solo vídeos publicados. Requiere diseño de almacenamiento, concurrencia, expiración/renovación y limpieza; no se improvisa en esta auditoría.
+- No se cambió código, tamaño de bloque, transferencia directa, RBAC ni aprobación. Validación real YouTube sigue reservada a Beta aislada.
+- **Siguiente:** inventario de tamaños históricos de logos y revisión de límites; no cambiar límites sin muestra representativa.

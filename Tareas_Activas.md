@@ -195,3 +195,11 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Compatibilidad: getStats() y getPriorityStats() conservan sus contratos; getMetrics() agrega diagnóstico efímero por prioridad.
 - [x] Cancelación revisada: no se añade. Las precargas de catálogo/vistos solo calientan caché global; las claves no son de sesión y la promesa single-flight puede compartirse con una imagen visible. Cancelar por clave sin ownership/ref-count pondría en riesgo al consumidor visible.
 - [ ] Siguiente: auditoría estática de YouTube resumable y contratos de recuperación/aprobación.
+
+
+### P1 — auditoría del flujo YouTube (2026-11-22)
+- [x] Revisar transferencia directa resumable navegador→YouTube, bloques 8 MiB, checkpoints IndexedDB, consulta de offset, pausa/reanudación, cancelación, expiración y recuperación.
+- [x] Revisar idempotencia de aprobación, duplicados por destino, RBAC, ledger append-only y publicación/rechazo recuperables.
+- [x] Confirmar suites de cliente/servidor incluidas en RunServiceTests; CI HEAD fd8c9040 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos.
+- [ ] Diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida: asociar opVideoId con sesión, manejar renovación 404/410, concurrencia y limpieza; riesgo actual de sesiones sin uso, sin duplicación de vídeo publicado.
+- [ ] Siguiente: inventariar tamaños históricos de logos y límites actuales sin modificar parámetros sin corpus representativo.
