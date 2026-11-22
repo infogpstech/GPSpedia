@@ -460,3 +460,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se amplió `FeedbackYearApplicationAppendOnly.mjs` con mock de TextFinder y prueba de ejecución que verifica idempotencia, replay, unicidad y que el read-back no lea el ledger completo.
 - CI HEAD `7be696dbc0903b9019034850c66d6e910246435a`: **292 suites / 3,406 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático seguía en curso al momento de esta anotación.
 - No se ejecutaron operaciones sobre AportesVehiculo productivo ni despliegues manuales de Apps Script. La validación de concurrencia real y pérdida de respuesta permanece pendiente en Beta aislada.
+
+
+## P1 FEEDBACK — reutilización del ledger validado en likes (2026-11-22)
+
+- `handleRecordLike` obtiene primero `replaySnapshot`; cuando existe, `readLikeActorReplaySnapshot_` ya validó los encabezados de `FeedbackLikes` y obtuvo la referencia de la hoja junto con las filas del actor.
+- Antes, incluso con snapshot válido, el handler llamaba nuevamente a `ensureFeedbackLikesSheet_`, repitiendo getSpreadsheet/getSheetByName y la lectura de encabezados. Ahora reutiliza `replaySnapshot.ledger`; solo invoca `ensureFeedbackLikesSheet_` cuando el preflight no pudo obtener snapshot (hoja inexistente, esquema no válido o error de lectura).
+- Se mantiene el fallback de búsqueda de filas del actor, la creación de hoja cuando hace falta, el replay completed/event/pending y el append-only sin lock global.
+- `FeedbackLikeCompletedReplayPreflight.mjs`: **7/7 PASS**; CI HEAD `8f448e1bb651bfcd0e3577954bdf94d6ad6dc456`: **292 suites / 3,406 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático permanecía en curso en la última comprobación.
+- No se cambiaron contadores físicos, historial de likes ni publicación de catálogo; no se ejecutaron operaciones sobre Spreadsheet productivo.
