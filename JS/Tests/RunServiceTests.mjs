@@ -388,6 +388,7 @@ runGroup('38','INTEGRATION',()=>{
   runCli('AUG-140 contrato de márgenes y paginación Carta','JS/Tests/PrintSheetPageContract.mjs');
   runCli('PWA zoom de navegación restringido y excepción Lightbox','JS/Tests/BrowserZoomAccessibility.js');
   runCli('AUG-139 política anti-debugging, zoom y autorización backend','JS/Tests/AntiDebuggingPolicy.mjs');
+ runCli('Verificación sintáctica integral de archivos JavaScript','JS/Tests/RepositoryJavaScriptSyntax.mjs');
  recordResult('Coordinador compartido/concurrencia/leases',new Function(read('JS/Services/Coordinator.js')+'\n'+read('JS/Services/SharedMutationClient.js')+'\n'+read('JS/Tests/SharedMutationCoordinator.js')+'\nreturn runSharedMutationCoordinatorTests();')());
  runCli('SEC arquitectura: preservación de RBAC, cierre de cuentas, revocación y caché remota','JS/Tests/CoordinatorCapabilityPreservation.mjs');
  runCli('AUG-138 logger seguro y recuperación offline/reintentos/cuota/respuesta perdida','JS/Tests/AddCortesDiagnostics.mjs');

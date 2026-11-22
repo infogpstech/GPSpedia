@@ -362,3 +362,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - No se retiran consultas sin medición. No se añade persistencia/lock para `opVideoId → uploadUrl`: no hay primitiva atómica lock-free verificada y §15 prohíbe serializar cargas; riesgo bajo de sesión resumable huérfana, no de vídeo publicado duplicado.
 - Evidencia: `AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md`. Pendiente Beta: medir solicitudes por capa y probar canal aislado.
 - Las tareas locales de P1/P2 quedan cerradas; las mediciones/corpus/Drive/YouTube/browser reales permanecen como validaciones diferidas a Beta. Siguiente fase normativa: verificación técnica integral local (§11), sin incorporar nuevas mejoras.
+
+
+## Fase de verificación técnica integral — inicio (2026-11-21)
+
+- Se inicia la fase exigida por NORMAS §11 después de cerrar tareas locales P1/P2; validaciones de navegador real, corpus, Drive/Spreadsheet, OAuth y YouTube siguen diferidas a Beta aislada.
+- Se añade `JS/Tests/RepositoryJavaScriptSyntax.mjs` e integración en `RunServiceTests.mjs`: recorre el repositorio y ejecuta `node --check` sobre todos los `.js` y `.mjs`, excluyendo solo `.git` y `node_modules`. Árbol actual: 183 `.js` + 244 `.mjs` = 427 archivos.
+- La prueba integral de sintaxis aún está pendiente de CI. Regresión previa HEAD `9cde983e`: 296 suites / 3,457 pruebas / 0 fallos; health SUCCESS.
+- Siguiente: comprobar el resultado de la sintaxis completa; corregir solo fallos reproducibles y continuar con compatibilidad/referencias y revisión de diff.

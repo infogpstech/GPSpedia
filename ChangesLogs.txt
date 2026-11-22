@@ -921,3 +921,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 2026-11-21 — cierre del trazado estático YouTube
 - Se confirma el inventario del flujo resumable y aprobación/rechazo. No se retiraron consultas ni se cambió código sin medición; la inicialización no idempotente ante respuesta perdida queda documentada conforme a NORMAS §15.
 - Evidencia: AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md.
+
+
+2026-11-21 — verificación integral: sintaxis del repositorio
+- Añadido `JS/Tests/RepositoryJavaScriptSyntax.mjs` e integración en `JS/Tests/RunServiceTests.mjs` para analizar con Node todos los archivos `.js` y `.mjs` del árbol, sin ejecutar su contenido.

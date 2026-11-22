@@ -311,3 +311,10 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Revisar flujo cliente/backend, requests de inicialización, transferencia resumable, checkpoints, recuperación y aprobación/rechazo.
 - [x] No retirar consultas ni introducir persistencia/lease adicional sin medición o primitiva atómica lock-free; riesgo de sesión huérfana documentado sin duplicación de vídeo publicado.
 - [ ] Medir en Beta aislada las solicitudes cliente, red, Apps Script, Drive y proyección CATALOG; usar canal YouTube de prueba autorizado.
+
+
+## Fase de verificación técnica integral (§11 NORMAS) — inicio 2026-11-21
+- [ ] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` del repositorio mediante `RepositoryJavaScriptSyntax.mjs`; revisión pendiente de CI.
+- [x] Ejecutar regresión de servicios ya existente: HEAD `9cde983e`, 296 suites / 3,457 pruebas / 0 fallos; repetir sobre HEAD final de esta fase.
+- [ ] Revisar referencias/dependencias, compatibilidad frontend/Apps Script y contratos entre servicios; distinguir pruebas locales de Beta.
+- [ ] Revisar diff de cambios vigentes y regresión/anti-regresión; registrar solo defectos reproducibles.
