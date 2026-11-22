@@ -150,3 +150,12 @@ La optimización quedó validada por CI; no se detectaron regresiones en recuper
 
 ### Implementación A02-02
 La verificación de add_cortes.html ahora consulta getVehicleProjection({vehicleId}) y valida el objeto vehicle retornado, en lugar de pedir getCatalogData({forceRefresh:true}) y recorrer el catálogo completo. Se conserva la verificación de ID y de cada campo suplementario esperado. El endpoint dirigido usa CATALOG y construye la proyección del vehículo desde Cortes + ledger; no consulta logos, tutoriales ni Relay. Pruebas añadidas en AddCortesDiagnostics.mjs para asegurar una sola consulta dirigida y rechazo de ID diferente. CI pendiente.
+
+
+### Resultado CI inicial de A02-02 y corrección del harness
+
+El primer CI del SHA ef13ccb1541d0c6410905bf9c4c2b363315c896a detectó dos fallos de pruebas, no de sintaxis de producción:
+1. AddCortesDiagnostics.mjs invocó extractFunction sin definir el helper del test.
+2. SupplementaryVideoContract.js seguía esperando la respuesta antigua data.cortes[] y el endpoint getCatalogData(forceRefresh), por lo que su contrato quedó desactualizado tras cambiar a getVehicleProjection.
+
+Se actualizan ambos contratos para el nuevo shape {status, vehicle, source}, y se conserva la prueba de rechazo de ID/campos incorrectos. El CI debe repetirse antes de dar A02-02 por validada.

@@ -3,6 +3,27 @@ import {readFile} from 'node:fs/promises';
 import {createDiagnosticLogger} from '../Frontend/diagnosticLogger.js';
 const addCuts=await readFile(new URL('../../HTML/add_cortes.html',import.meta.url),'utf8');
 const recoverySource=await readFile(new URL('./AddCutOperationRecoveryFlow.js',import.meta.url),'utf8');
+
+function extractFunction(source, name) {
+    const marker = "async function " + name + "(";
+    const start = source.indexOf(marker);
+    if (start < 0) throw new Error("No se encontró " + name);
+    const open = source.indexOf("{", start);
+    let depth = 0, quote = "", escaped = false, line = false, block = false;
+    for (let i = open; i < source.length; i++) {
+        const ch = source[i], next = source[i + 1];
+        if (line) { if (ch === "\n") line = false; continue; }
+        if (block) { if (ch === "*" && next === "/") { block = false; i++; } continue; }
+        if (quote) { if (escaped) escaped = false; else if (ch === "\\") escaped = true; else if (ch === quote) quote = ""; continue; }
+        if (ch === "/" && next === "/") { line = true; i++; continue; }
+        if (ch === "/" && next === "*") { block = true; i++; continue; }
+        if (ch === "'" || ch === '"' || ch === "\`") { quote = ch; continue; }
+        if (ch === "{") depth++;
+        else if (ch === "}" && --depth === 0) return source.slice(start, i + 1);
+    }
+    throw new Error("Función incompleta: " + name);
+}
+
 const captured=[],consoleRef=Object.fromEntries(['debug','info','warn','error','log'].map(level=>[level,entry=>captured.push({level,entry})]));
 let passed=0;function testCase(name,fn){fn();passed++;process.stdout.write('PASS '+name+'\n');}
 testCase('producción solo emite warn/error',()=>{captured.length=0;const l=createDiagnosticLogger({consoleRef});l.debug('debug.hidden');l.info('info.hidden');l.warn('operation.failed',{stage:'submit',opId:'OP-100',status:'failed',errorCode:'QuotaExceededError'});assert.equal(captured.length,1);assert.equal(captured[0].level,'warn');});

@@ -191,7 +191,7 @@ function runSupplementaryVideoContractTests(sources) {
         notaImportante: "Nota", cableAlimen2: "Cable", imgCableAlimen2: "https://drive/b" };
     run_("Etapa 3 verifica vehículo, apertura, nota y slot real devuelto por WRITE", async () => {
         const result = await verify({ status: "success", vehicleId: "V-1", slotIndex: 2 }, payload,
-            async () => ({ status: "success", source: "spreadsheet", data: { cortes: [saved] } }));
+            async () => ({ status: "success", source: "spreadsheet", vehicle: saved }));
         assert_(result.vehicleId === "V-1" && result.item === saved);
     });
     run_("Etapa 3 rechaza respuesta WRITE no exitosa", async () => {
@@ -209,21 +209,21 @@ function runSupplementaryVideoContractTests(sources) {
     run_("Etapa 3 rechaza catálogo sin el vehículo", async () => {
         let rejected = false;
         try { await verify({ status: "success", vehicleId: "V-1", slotIndex: 2 }, payload,
-            async () => ({ status: "success", data: { cortes: [] } })); }
+            async () => ({ status: "success" })); }
         catch (_) { rejected = true; }
         assert_(rejected);
     });
-    run_("Etapa 3 rechaza lectura duplicada del vehículo", async () => {
+    run_("Etapa 3 rechaza proyección dirigida con ID diferente", async () => {
         let rejected = false;
         try { await verify({ status: "success", vehicleId: "V-1", slotIndex: 2 }, payload,
-            async () => ({ status: "success", data: { cortes: [saved, saved] } })); }
+            async () => ({ status: "success", vehicle: { ...saved, id: "V-2" } })); }
         catch (_) { rejected = true; }
         assert_(rejected);
     });
     run_("Etapa 3 rechaza campo que no aparece en CATALOG", async () => {
         let rejected = false;
         try { await verify({ status: "success", vehicleId: "V-1", slotIndex: 2 }, payload,
-            async () => ({ status: "success", data: { cortes: [{ id: "V-1", apertura: "", imgApertura: "", notaImportante: "" }] } })); }
+            async () => ({ status: "success", vehicle: { id: "V-1", apertura: "", imgApertura: "", notaImportante: "" } })); }
         catch (_) { rejected = true; }
         assert_(rejected);
     });
@@ -234,8 +234,8 @@ function runSupplementaryVideoContractTests(sources) {
         catch (_) { rejected = true; }
         assert_(rejected);
     });
-    run_("Etapa 3 solicita lectura fresca del catálogo", () => {
-        assert_(helperSource.includes('routeAction("getCatalogData", { forceRefresh: true })'));
+    run_("Etapa 3 solicita proyección dirigida de un vehículo", () => {
+        assert_(helperSource.includes('routeAction("getVehicleProjection", { vehicleId })'));
     });
     run_("Etapa 3 no muestra éxito si WRITE no confirma", () => {
         const start = addCortes.indexOf("const writeResult = await routeAction('addSupplementaryInfo'");

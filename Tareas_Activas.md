@@ -486,3 +486,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-02: reemplazar lectura completa getCatalogData(forceRefresh) de add_cortes etapa 3 por getVehicleProjection({vehicleId}), manteniendo comprobación de ID y campos suplementarios.
 - [x] Añadir prueba focalizada de consulta dirigida y rechazo de proyección de otro vehículo en AddCortesDiagnostics.mjs.
 - [ ] CI de A02-02 y verificación de que el endpoint CATALOG dirigido cubre todos los campos de apertura/alimentación/imagen/nota.
+
+- [x] Registrar fallo inicial de CI A02-02: helper extractFunction faltante en AddCortesDiagnostics y contrato SupplementaryVideoContract desactualizado respecto a getVehicleProjection.
+- [x] Corregir los dos contratos focalizados para respuesta dirigida {status, vehicle, source}.
+- [ ] Repetir CI completo; A02-02 no se cierra hasta 0 fallos.

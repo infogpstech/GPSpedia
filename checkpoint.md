@@ -649,3 +649,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Estado:** implementación y prueba preparadas; CI pendiente.
 - **Siguiente tarea:** ejecutar CI. Si pasa, seguir A02 con el preflight duplicado de VIN (blur/submit) y el refresco checkVehicle posterior al alta.
 - **Contexto:** el endpoint dirigido lee la proyección de un vehículo y el ledger de aportes; evita reconstruir logos, tutoriales y Relay para validar una operación suplementaria.
+
+
+## Corrección de pruebas A02-02 — 2026-11-22
+
+- **Hallazgo CI:** el primer commit de verificación dirigida falló por dos pruebas desactualizadas: AddCortesDiagnostics no definía su extractor de función y SupplementaryVideoContract esperaba data.cortes/getCatalogData.
+- **Corrección:** se agregó el extractor al test y se actualizó SupplementaryVideoContract al contrato getVehicleProjection que devuelve {status, vehicle, source}; se mantiene validación de vehículo y campos.
+- **Estado:** pruebas corregidas, CI pendiente. No se marca A02-02 como completada hasta que la regresión vuelva a 0 fallos.
+- **Siguiente:** CI completo del commit correctivo.
