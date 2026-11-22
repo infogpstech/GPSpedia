@@ -316,7 +316,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 ## Fase de verificación técnica integral (§11 NORMAS) — inicio 2026-11-21
 - [x] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` mediante `RepositoryJavaScriptSyntax.mjs`: 428 archivos verificados, 1/1 PASS.
 - [x] Regresión integral HEAD `2955bb16`: 297 suites / 3,458 pruebas / 0 fallos; health read-only SUCCESS.
-- [ ] Revisar referencias/dependencias y compatibilidad frontend/Apps Script; los contratos de acciones/servicios se ejercitaron en las 297 suites; distinguir pruebas locales de Beta.
+- [ ] Ejecutar verificación automatizada de imports/referencias relativas (`RepositoryModuleReferences.mjs`) y revisar compatibilidad frontend/Apps Script; CI pendiente.
 - [ ] Revisar diff de cambios vigentes y regresión/anti-regresión; registrar solo defectos reproducibles.
 
 
@@ -325,3 +325,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Regresión: CI HEAD `2955bb16ce27bb019f6f0a86f9d902b8ecea8c4d`, 297 suites / 3,458 pruebas / 0 fallos.
 - [x] Health read-only SUCCESS. Pages build del mismo HEAD seguía in_progress al cierre.
 - [ ] Revisar referencias/imports y compatibilidad de rutas/módulos restantes; diff acumulado y regresión anti-regresión.
+
+
+### Verificación integral — referencias y módulos (2026-11-21)
+- [ ] Comprobar imports/re-exports/dynamic imports, `new URL(..., import.meta.url)` y `require()` relativos en los 428 archivos JS/MJS; contrato añadido, CI pendiente.

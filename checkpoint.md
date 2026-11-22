@@ -385,3 +385,9 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - CI HEAD `2955bb16ce27bb019f6f0a86f9d902b8ecea8c4d`: `RepositoryJavaScriptSyntax` 1/1 PASS, 428 archivos `.js/.mjs` comprobados; regresión 297 suites / 3,458 pruebas / 0 fallos; health read-only SUCCESS.
 - Pages build/deployment del mismo HEAD estaba in_progress al cierre. No se ha desplegado Apps Script ni modificado servicios/recursos productivos.
 - Siguiente: completar revisión de referencias/dependencias y diff acumulado, luego anti-regresión. Beta de navegador/Drive/Spreadsheet/YouTube sigue diferida a entornos aislados.
+
+
+## Verificación integral — referencias y dependencias (2026-11-21)
+
+- Añadido `RepositoryModuleReferences.mjs`, que recorre los archivos `.js/.mjs` y verifica resolución en disco de imports, re-exports, imports dinámicos estáticos, `new URL(..., import.meta.url)` y `require()` relativos. Se integra en `RunServiceTests.mjs` después de la verificación de sintaxis.
+- CI pendiente; no se han cambiado módulos productivos ni rutas. Siguiente: revisar cualquier referencia rota que el contrato reproduzca y continuar con compatibilidad/diff.
