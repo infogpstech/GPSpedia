@@ -3042,32 +3042,44 @@ function readActivityDashboardCutsSnapshot_() {
 }
 
 function buildCutContributionSummary_(cutsSnapshot) {
- const snapshot=cutsSnapshot||readActivityDashboardCutsSnapshot_(),{sheet,count,baseRows,slotColumns,slotValues}=snapshot;
- if(!sheet||!count)return[];
- const cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").replace(/\s*\([^)]*\)/g," ").replace(/\s+/g," ").trim();
+ const snapshot=cutsSnapshot||readActivityDashboardCutsSnapshot_(),{sheet,count,baseRows=[],slotColumns=[],slotValues=[]}=snapshot||{};
+ const ss=getSpreadsheet(),cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").replace(/\s*\([^)]*\)/g," ").replace(/\s+/g," ").trim();
  const keyOf=value=>cleanName(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
- const usersSheet=getSpreadsheet().getSheetByName("Users");
- const userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
+ const usersSheet=ss.getSheetByName("Users"),userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
  const idsByName=new Map();
- userRows.forEach(row=>{
-  const id=String(row[0]||"").trim(),username=String(row[1]||"").trim(),fullName=String(row[6]||username).trim();
-  if(!id||!fullName||username.startsWith("__deleted__:"))return;
-  [fullName,username].forEach(name=>{const key=keyOf(name),ids=idsByName.get(key)||[];if(!ids.includes(id))ids.push(id);idsByName.set(key,ids);});
- });
- const stats=new Map();
- for(let rowIndex=0;rowIndex<count;rowIndex++){
-  const vehicleId=String(baseRows[rowIndex][COLS_CORTES.id-1]||"").trim();
-  for(let slot=0;slot<slotColumns.length;slot++){
-   const column=slotColumns[slot],values=slotValues[slot][rowIndex]||[];
-   const type=String(values[0]||"").trim(),name=cleanName(values[column.collaborator-column.type])||"Comunidad de técnicos",key=keyOf(name);
-   if(!type)continue;
-   let entry=stats.get(key);
-   if(!entry){const ids=idsByName.get(key)||[];entry={userId:ids.length===1?ids[0]:"",nombreUsuario:name,cortesAportados:0,_vehicles:new Set()};stats.set(key,entry);}
-   entry.cortesAportados++;if(vehicleId)entry._vehicles.add(vehicleId);
+ userRows.forEach(row=>{const id=String(row[0]||"").trim(),username=String(row[1]||"").trim(),fullName=String(row[6]||username).trim();if(!id||!fullName||username.startsWith("__deleted__:"))return;
+  [fullName,username].forEach(name=>{const key=keyOf(name),ids=idsByName.get(key)||[];if(!ids.includes(id))ids.push(id);idsByName.set(key,ids);});});
+ const stats=new Map(),resolveId=name=>{const ids=idsByName.get(keyOf(name))||[];return ids.length===1?ids[0]:"";};
+ const add=(kind,vehicleId,name,userId)=>{
+  const displayName=cleanName(name)||"Comunidad de técnicos",resolvedId=String(userId||"").trim()||resolveId(displayName),key=resolvedId?"user:"+resolvedId:"name:"+keyOf(displayName);
+  let entry=stats.get(key);if(!entry){entry={userId:resolvedId,nombreUsuario:displayName,cortesAportados:0,aportesApertura:0,aportesAlimentacion:0,_vehicles:new Set()};stats.set(key,entry);}
+  if(kind==="cut")entry.cortesAportados++;else if(kind==="opening")entry.aportesApertura++;else if(kind==="feed")entry.aportesAlimentacion++;
+  const id=String(vehicleId||"").trim();if(id)entry._vehicles.add(id);
+ };
+ if(sheet&&Number(count)>0){for(let rowIndex=0;rowIndex<count;rowIndex++){const vehicleId=String(baseRows[rowIndex]&&baseRows[rowIndex][COLS_CORTES.id-1]||"").trim();
+  for(let slot=0;slot<slotColumns.length;slot++){const column=slotColumns[slot],values=slotValues[slot]&&slotValues[slot][rowIndex]||[],type=String(values[0]||"").trim();if(!type)continue;
+   const name=cleanName(values[column.collaborator-column.type])||"Comunidad de técnicos";add("cut",vehicleId,name,"");}}}
+ try{
+  const ledger=ss.getSheetByName("AportesVehiculo"),lastRow=ledger&&ledger.getLastRow?ledger.getLastRow():0,lastColumn=ledger&&ledger.getLastColumn?ledger.getLastColumn():0;
+  if(lastRow>1&&lastColumn>=10){
+   const headers=ledger.getRange(1,1,1,10).getValues()[0].map(value=>String(value||"").trim());
+   const expected=["eventId","opId","vehicleId","operationHash","kind","payloadJson","actorId","actorName","createdAt","status"];
+   if(expected.every((value,index)=>headers[index]===value)){
+    const rows=ledger.getRange(2,1,lastRow-1,10).getValues(),byOpId=new Map(),conflicts=new Set();
+    rows.forEach((row,index)=>{const opId=String(row[1]||"").trim(),kind=String(row[4]||"").trim().toLowerCase();if(!opId||!["opening","feed"].includes(kind))return;
+     const event={eventId:String(row[0]||"").trim(),opId,vehicleId:String(row[2]||"").trim(),hash:String(row[3]||"").toLowerCase(),kind,payloadJson:String(row[5]||""),actorId:String(row[6]||"").trim(),actorName:String(row[7]||"").trim(),status:String(row[9]||"").trim().toLowerCase(),rowIndex:index};
+     const previous=byOpId.get(opId);if(previous&&(previous.vehicleId!==event.vehicleId||previous.hash!==event.hash||previous.kind!==event.kind||previous.payloadJson!==event.payloadJson))conflicts.add(opId);else if(!previous)byOpId.set(opId,event);
+    });
+    Array.from(byOpId.values()).sort((a,b)=>a.rowIndex-b.rowIndex).forEach(event=>{
+     if(conflicts.has(event.opId)||!event.eventId||!event.vehicleId||event.status!=="accepted")return;
+     add(event.kind,event.vehicleId,event.actorName,event.actorId);
+    });
+   }else if(typeof Logger!=="undefined"&&Logger.log)Logger.log("Activity Dashboard: esquema AportesVehiculo no reconocido; se muestran solo los cortes históricos.");
   }
- }
- return Array.from(stats.values()).map(entry=>({userId:entry.userId,nombreUsuario:entry.nombreUsuario,cortesAportados:entry.cortesAportados,vehiculosConAportes:entry._vehicles.size}))
-  .sort((x,y)=>y.cortesAportados-x.cortesAportados||x.nombreUsuario.localeCompare(y.nombreUsuario,"es"));
+ }catch(error){if(typeof Logger!=="undefined"&&Logger.log)Logger.log("Activity Dashboard: no se pudo leer AportesVehiculo: "+String(error&&error.message||error));}
+ return Array.from(stats.values()).map(entry=>({userId:entry.userId,nombreUsuario:entry.nombreUsuario,cortesAportados:entry.cortesAportados,
+  aportesApertura:entry.aportesApertura,aportesAlimentacion:entry.aportesAlimentacion,aportesRegistrados:entry.cortesAportados+entry.aportesApertura+entry.aportesAlimentacion,
+  vehiculosConAportes:entry._vehicles.size})).sort((x,y)=>y.aportesRegistrados-x.aportesRegistrados||x.nombreUsuario.localeCompare(y.nombreUsuario,"es"));
 }
 
 function buildActivityDashboardInsights_(cutsSnapshot) {

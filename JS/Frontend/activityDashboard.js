@@ -74,11 +74,11 @@ export function normalizeContributionRows(contributions) {
         parseNames(entry.nombreUsuario).forEach(name => {
             const key = normalizeKey(name);
             if (!key) return;
-            const canonicalKey = isCommunityName(key) ? "comunidad de tecnicos" : key;
+            const canonicalKey = String(entry.userId || "").trim() ? "user:" + String(entry.userId).trim() : (isCommunityName(key) ? "comunidad de tecnicos" : key);
             if (!namesByKey.has(canonicalKey)) namesByKey.set(canonicalKey, { key: canonicalKey, name: canonicalName(name) });
         });
         const names = Array.from(namesByKey.values());
-        const cuts = toCount(entry.cortesAportados);
+        const cuts = toCount(entry.aportesRegistrados === undefined ? entry.cortesAportados : entry.aportesRegistrados);
         const vehicles = toCount(entry.vehiculosConAportes);
         names.forEach(({ key, name }) => {
             const current = grouped.get(key);
@@ -114,7 +114,7 @@ export function renderActivityContributions(container, contributions, doc = cont
     });
     if (!entries.length) {
         const row = doc.createElement("tr"), cell = doc.createElement("td");
-        cell.colSpan = 3; cell.textContent = "Todavía no hay cortes atribuidos a usuarios.";
+        cell.colSpan = 3; cell.textContent = "Todavía no hay aportes atribuidos a usuarios.";
         row.appendChild(cell); container.appendChild(row);
     }
     return container;
@@ -160,6 +160,6 @@ export function renderActivityInsights(container,insights,contributions,doc=cont
  dashboardNode(yearCard,"p","Las consultas por modelo no se muestran porque no existe un registro histórico fiable de aperturas.","activity-insight-note",doc);container.appendChild(yearCard);
  const contributorCard=doc.createElement("section");contributorCard.className="activity-insight-card";dashboardNode(contributorCard,"h3","Principales colaboradores","activity-insight-heading",doc);
  const rows=normalizeContributionRows(contributions).slice(0,5);if(!rows.length)dashboardNode(contributorCard,"p","Todavía no hay aportaciones atribuidas.","activity-insight-empty",doc);
- rows.forEach((entry,index)=>{const row=doc.createElement("p");row.className="activity-insight-contributor";dashboardNode(row,"span",(index+1)+". "+entry.nombreUsuario,"",doc);dashboardNode(row,"strong",entry.cortesAportados+" cortes · "+entry.vehiculosConAportes+" vehículos","",doc);contributorCard.appendChild(row);});
+ rows.forEach((entry,index)=>{const row=doc.createElement("p");row.className="activity-insight-contributor";dashboardNode(row,"span",(index+1)+". "+entry.nombreUsuario,"",doc);dashboardNode(row,"strong",entry.cortesAportados+" aportes · "+entry.vehiculosConAportes+" vehículos","",doc);contributorCard.appendChild(row);});
  container.appendChild(contributorCard);return container;
 }
