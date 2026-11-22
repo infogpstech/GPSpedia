@@ -405,9 +405,10 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 ### P1 — harness local de calidad y rendimiento de miniaturas (2026-11-22)
 - [x] Crear JS/Tests/ThumbnailQualityBenchmark.html: procesamiento local de archivos seleccionados; variantes 300/800/1600; dimensiones, bytes, MIME/firma, SHA-256, orientación EXIF JPEG, alfa muestreado, tiempos de espera/decodificación/canvas/codificación y memoria de Canvas estimada.
 - [x] Reutilizar la cola real thumbnailCompressionQueue.js; encolar precargas a prioridad 0 y promover la variante 800 elegida a prioridad 10 cuando aún está pendiente.
+- [x] Añadir generador local de cinco muestras sintéticas: diagrama eléctrico apaisado con etiquetas/cables de color, guía de panel vertical, textura oscura de alto detalle, PNG con alfa parcial e imagen pequeña que no debe ampliarse. Se generan en memoria y no se guardan en el repositorio.
 - [x] El harness no ejecuta fetch/XHR, no usa IndexedDB/localStorage y no sube ni persiste archivos. Requiere servidor local HTTP para importar el módulo de cola.
-- [x] ThumbnailQualityBenchmarkContract: 30/30 PASS; CI HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 archivos JS/MJS; referencias 343 archivos; health 7/7; Pages build/deployment SUCCESS.
-- [ ] Ejecutar el harness con corpus técnico sintético/autorizado en Beta aislada; revisar visualmente texto fino, cableado, alfa y orientación. El repositorio no contiene corpus técnico representativo.
+- [x] ThumbnailQualityBenchmarkContract ampliado para ejecutar el generador con dobles locales y comprobar los cinco archivos, MIME, bytes y nombres. Resultado esperado en CI: 46/46 PASS.
+- [ ] Ejecutar el corpus sintético en navegador real y revisar visualmente texto fino, cableado, alfa y orientación; añadir fotografías y diagramas reales solo desde corpus autorizado/anónimo. El corpus sintético no sustituye imágenes reales ni cubre EXIF real en navegador.
 - [ ] Medir en la aplicación real CORS, cache hit/miss, primera pintura, bytes de red, CPU y memoria; el harness local no sustituye estas pruebas.
 
 

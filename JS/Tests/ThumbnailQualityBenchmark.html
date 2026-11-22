@@ -39,9 +39,10 @@ th,td{text-align:left;padding:6px;border-bottom:1px solid #8885}
 <input id="files" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
 <label>Imagen que pasa a ser visible
 <select id="visible"></select></label>
+<button id="generate" type="button">Generar corpus sintético</button>
 <button id="run" disabled>Procesar muestras</button>
 </div>
-<p id="status" role="status" aria-live="polite">Selecciona archivos JPEG, PNG o WebP. Para abrir desde el repositorio: python -m http.server 8000 y visita /JS/Tests/ThumbnailQualityBenchmark.html.</p>
+<p id="status" role="status" aria-live="polite">Selecciona archivos JPEG, PNG o WebP o genera el corpus sintético integrado. Para abrir desde el repositorio: python -m http.server 8000 y visita /JS/Tests/ThumbnailQualityBenchmark.html.</p>
 <div id="summary"></div>
 <div id="results" class="samples"></div>
 <script type="module">
@@ -51,10 +52,12 @@ const WIDTHS = [300, 800, 1600];
 const filesInput = document.getElementById("files");
 const visibleSelect = document.getElementById("visible");
 const runButton = document.getElementById("run");
+const generateButton = document.getElementById("generate");
 const statusNode = document.getElementById("status");
 const summaryNode = document.getElementById("summary");
 const resultsNode = document.getElementById("results");
 let objectUrls = [];
+let selectedFiles = [];
 
 function releaseUrls() {
     objectUrls.forEach(url => URL.revokeObjectURL(url));
@@ -64,6 +67,80 @@ function addPreviewUrl(blob) {
     const url = URL.createObjectURL(blob);
     objectUrls.push(url);
     return url;
+}
+function canvasToFile(name, width, height, draw) {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const context = canvas.getContext("2d");
+        if (!context) return reject(new Error("Canvas 2D no disponible"));
+        try { draw(context, width, height); }
+        catch (error) { return reject(error); }
+        canvas.toBlob(blob => {
+            if (!blob) return reject(new Error("No se pudo generar " + name));
+            resolve(new File([blob], name, { type: "image/png", lastModified: 0 }));
+        }, "image/png");
+    });
+}
+function drawGrid(context, width, height, step) {
+    context.save(); context.strokeStyle = "#e5eaf0"; context.lineWidth = 1;
+    for (let x = 0; x <= width; x += step) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, height); context.stroke(); }
+    for (let y = 0; y <= height; y += step) { context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke(); }
+    context.restore();
+}
+async function generateSyntheticCorpus() {
+    const diagram = await canvasToFile("sintetico-diagrama-electrico.png", 1600, 1000, (ctx, w, h) => {
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); drawGrid(ctx, w, h, 40);
+        ctx.fillStyle = "#17212b"; ctx.font = "bold 34px sans-serif"; ctx.fillText("DIAGRAMA DE CONEXIÓN · MUESTRA SINTÉTICA", 48, 62);
+        ctx.font = "20px sans-serif"; ctx.fillText("Alimentación, ignición y corte de combustible — no corresponde a un vehículo real", 48, 100);
+        const blocks = [{x:70,y:180,w:300,h:180,t:"BATERÍA 12 V"},{x:650,y:180,w:300,h:180,t:"MÓDULO GPS"},{x:1190,y:180,w:300,h:180,t:"RELÉ DE CORTE"}];
+        for (const b of blocks) { ctx.fillStyle="#f7f9fb";ctx.strokeStyle="#34495e";ctx.lineWidth=3;ctx.fillRect(b.x,b.y,b.w,b.h);ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.fillStyle="#17212b";ctx.font="bold 26px sans-serif";ctx.fillText(b.t,b.x+18,b.y+48); }
+        const wires=[["#d62828","+12 V",360],["#222222","GND",430],["#e6a700","IGN",500],["#2864dc","SEÑAL",570],["#2a9d57","CORTE",640]];
+        for(let i=0;i<wires.length;i++){const [color,label,y]=wires[i];ctx.strokeStyle=color;ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(370,y);ctx.bezierCurveTo(480,y-20,540,y+20,650,y);ctx.lineTo(950,y);ctx.bezierCurveTo(1080,y,1090,y+35,1190,y+35);ctx.stroke();ctx.fillStyle=color;ctx.font="bold 22px sans-serif";ctx.fillText(label,430,y-14);}
+        ctx.fillStyle="#17212b";ctx.font="18px monospace";
+        for(let i=0;i<18;i++)ctx.fillText("J"+String(i+1).padStart(2,"0")+" · "+["0.5 mm²","0.75 mm²","1.0 mm²"][i%3]+" · revisar continuidad",70,760+i*12);
+        ctx.fillStyle="#a11";ctx.font="bold 20px sans-serif";ctx.fillText("PRECAUCIÓN: verificar polaridad y diagrama específico antes de intervenir",70,970);
+    });
+    const panel = await canvasToFile("sintetico-guia-desarme-vertical.png", 900, 1600, (ctx,w,h) => {
+        ctx.fillStyle="#f4f5f6";ctx.fillRect(0,0,w,h);ctx.fillStyle="#18222c";ctx.font="bold 32px sans-serif";ctx.fillText("GUÍA DE DESARME · PANEL",42,58);
+        ctx.font="18px sans-serif";ctx.fillText("Ilustración técnica sintética · orientación vertical",42,92);
+        ctx.fillStyle="#d8dde2";ctx.strokeStyle="#3d4852";ctx.lineWidth=8;ctx.beginPath();ctx.roundRect(190,180,520,1120,70);ctx.fill();ctx.stroke();
+        ctx.fillStyle="#b8c2cc";ctx.beginPath();ctx.roundRect(250,250,400,980,42);ctx.fill();ctx.stroke();
+        for(let i=0;i<8;i++){const x=i%2?640:260,y=340+Math.floor(i/2)*250;ctx.fillStyle="#f3c969";ctx.beginPath();ctx.arc(x,y,18,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#704f14";ctx.lineWidth=4;ctx.stroke();ctx.fillStyle="#17212b";ctx.font="bold 18px sans-serif";ctx.fillText(String(i+1),x+28,y+6);}
+        ctx.strokeStyle="#c33";ctx.lineWidth=5;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(90,360+i*260);ctx.lineTo(240,360+i*260);ctx.stroke();ctx.beginPath();ctx.moveTo(220,345+i*260);ctx.lineTo(240,360+i*260);ctx.lineTo(220,375+i*260);ctx.stroke();}
+        ctx.fillStyle="#17212b";ctx.font="20px sans-serif";ctx.fillText("1. Liberar clips en orden",42,1390);ctx.fillText("2. Evitar palanca sobre zonas frágiles",42,1430);ctx.fillText("3. Comprobar conectores antes de retirar",42,1470);
+        ctx.fillStyle="#a11";ctx.font="bold 20px sans-serif";ctx.fillText("MUESTRA NO OPERATIVA",42,1540);
+    });
+    const texture = await canvasToFile("sintetico-textura-zona-oscura.png", 1600, 1200, (ctx,w,h) => {
+        const gradient=ctx.createLinearGradient(0,0,w,h);gradient.addColorStop(0,"#111a22");gradient.addColorStop(.55,"#39434a");gradient.addColorStop(1,"#0b1016");ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);
+        for(let i=0;i<260;i++){const x=(i*137)%w,y=(i*313)%h;ctx.fillStyle=i%2?"#ffffff18":"#00000030";ctx.fillRect(x,y,18+(i%31),2+(i%8));}
+        const colors=["#d92d2d","#e5b52b","#2f72d6","#36a36b","#202020"];for(let i=0;i<colors.length;i++){ctx.strokeStyle=colors[i];ctx.lineWidth=24;ctx.beginPath();ctx.moveTo(80,180+i*170);ctx.bezierCurveTo(420,80+i*160,820,460+i*90,1500,220+i*170);ctx.stroke();}
+        ctx.strokeStyle="#9da8b0";ctx.lineWidth=8;for(let i=0;i<12;i++){ctx.beginPath();ctx.arc(240+i*95,600+(i%3)*70,42,0,Math.PI*2);ctx.stroke();}
+        ctx.fillStyle="#fff";ctx.font="bold 30px sans-serif";ctx.fillText("TEXTURA SINTÉTICA · CONTRASTE Y DETALLE",50,1140);
+    });
+    const alpha = await canvasToFile("sintetico-transparencia-parcial.png", 1000, 1000, (ctx,w,h) => {
+        ctx.fillStyle="rgba(220,35,45,0.45)";ctx.beginPath();ctx.arc(330,400,240,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle="rgba(30,100,210,0.7)";ctx.fillRect(470,220,360,420);
+        ctx.strokeStyle="rgba(20,40,60,0.3)";ctx.lineWidth=30;ctx.beginPath();ctx.arc(500,500,390,0,Math.PI*2);ctx.stroke();
+        ctx.fillStyle="#18222c";ctx.font="bold 44px sans-serif";ctx.fillText("ALFA 45%",300,850);
+    });
+    const small = await canvasToFile("sintetico-imagen-pequena.png", 180, 120, ctx => {
+        ctx.fillStyle="#fff";ctx.fillRect(0,0,180,120);ctx.strokeStyle="#c22";ctx.lineWidth=5;ctx.strokeRect(8,8,164,104);
+        ctx.fillStyle="#17212b";ctx.font="bold 16px sans-serif";ctx.fillText("180 × 120",22,45);ctx.font="12px sans-serif";ctx.fillText("NO AMPLIAR",32,76);
+    });
+    return [diagram,panel,texture,alpha,small];
+}
+function setSamples(files, sourceLabel) {
+    selectedFiles = Array.from(files || []);
+    releaseUrls(); resultsNode.replaceChildren(); summaryNode.textContent = "";
+    visibleSelect.replaceChildren();
+    selectedFiles.forEach((file,index) => {
+        const option=document.createElement("option");option.value=String(index);
+        option.textContent="Muestra "+(index+1)+" · "+file.name;visibleSelect.appendChild(option);
+    });
+    if(visibleSelect.options.length) visibleSelect.selectedIndex=visibleSelect.options.length-1;
+    runButton.disabled=!selectedFiles.length;
+    statusNode.textContent=selectedFiles.length+" muestra(s) listas ("+sourceLabel+"). La última será visible durante la simulación.";
 }
 function detectSignature(bytes) {
     const b = Array.from(bytes.slice(0, 12));
@@ -182,24 +259,16 @@ async function makeVariant(file, width, sampleIndex) {
 let queue;
 let activeCompressionTasks = 0;
 let maxActiveCompressionTasks = 0;
-filesInput.addEventListener("change", () => {
-    releaseUrls();
-    resultsNode.replaceChildren();
-    summaryNode.textContent = "";
-    visibleSelect.replaceChildren();
-    Array.from(filesInput.files || []).forEach((file, index) => {
-        const option = document.createElement("option");
-        option.value = String(index);
-        option.textContent = "Muestra " + (index + 1);
-        visibleSelect.appendChild(option);
-    });
-    if (visibleSelect.options.length) visibleSelect.selectedIndex = visibleSelect.options.length - 1;
-    runButton.disabled = !filesInput.files || !filesInput.files.length;
-    statusNode.textContent = runButton.disabled ? "Selecciona al menos una imagen." :
-        filesInput.files.length + " muestra(s) listas. La última será visible durante la simulación.";
+filesInput.addEventListener("change", () => setSamples(filesInput.files, "archivos seleccionados"));
+generateButton.addEventListener("click", async () => {
+    generateButton.disabled = true;
+    statusNode.textContent = "Generando corpus sintético local…";
+    try { setSamples(await generateSyntheticCorpus(), "corpus sintético generado en memoria"); }
+    catch (error) { statusNode.textContent = "No se pudo generar el corpus: " + (error && error.message ? error.message : String(error)); }
+    finally { generateButton.disabled = false; }
 });
 runButton.addEventListener("click", async () => {
-    const files = Array.from(filesInput.files || []);
+    const files = selectedFiles.slice();
     if (!files.length) return;
     runButton.disabled = true;
     releaseUrls();
@@ -209,6 +278,7 @@ runButton.addEventListener("click", async () => {
     queue = createConcurrencyLimiter(2);
     const jobs = [];
     const bySample = files.map((file, index) => ({ file, index, variants: [] }));
+    maxActiveCompressionTasks = 0;
     const visibleIndex = Number(visibleSelect.value);
     const visibleSample = bySample[visibleIndex];
     function enqueueVariant(sample, width) {

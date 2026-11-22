@@ -10,6 +10,15 @@ const queue = readFileSync(resolve(root, "JS/Frontend/thumbnailCompressionQueue.
 
 assert.match(html, /createConcurrencyLimiter \} from "\.\.\/Frontend\/thumbnailCompressionQueue\.js"/);
 assert.match(html, /const WIDTHS = \[300, 800, 1600\]/);
+assert.match(html, /async function generateSyntheticCorpus\(\)/);
+assert.match(html, /sintetico-diagrama-electrico\.png/);
+assert.match(html, /sintetico-guia-desarme-vertical\.png/);
+assert.match(html, /sintetico-textura-zona-oscura\.png/);
+assert.match(html, /sintetico-transparencia-parcial\.png/);
+assert.match(html, /sintetico-imagen-pequena\.png/);
+assert.match(html, /new File\(\[blob\], name, \{ type: "image\/png"/);
+assert.match(html, /function setSamples\(files, sourceLabel\)/);
+assert.match(html, /const files = selectedFiles\.slice\(\)/);
 assert.match(html, /Math\.min\(1, width \/ bitmap\.width\)/);
 assert.match(html, /canvas\.toBlob\(resolve, "image\/png"\)/);
 assert.match(html, /createConcurrencyLimiter\(2\)/);
@@ -37,6 +46,43 @@ assert.match(offline, /"image\/png"/);
 assert.match(queue, /export function createConcurrencyLimiter\(limit = 2/);
 const script = html.match(/<script type="module">([\s\S]*?)<\/script>/);
 assert.ok(script, "el harness debe tener un módulo ejecutable");
+const generatorSource = script[1].slice(
+    script[1].indexOf("function canvasToFile"),
+    script[1].indexOf("function detectSignature")
+);
+assert.ok(generatorSource.includes("async function generateSyntheticCorpus"));
+const fakeContext = new Proxy({}, {
+    get(_target, key) {
+        if (key === "createLinearGradient") return () => ({ addColorStop() {} });
+        return () => {};
+    }
+});
+const fakeDocument = {
+    createElement(tag) {
+        assert.equal(tag, "canvas");
+        return {
+            width: 0, height: 0,
+            getContext() { return fakeContext; },
+            toBlob(callback) { callback(new Blob(["synthetic-png"], { type: "image/png" })); }
+        };
+    }
+};
+const generateSyntheticCorpus = new Function("document", "File",
+    generatorSource + "\\nreturn generateSyntheticCorpus;"
+)(fakeDocument, File);
+const syntheticFiles = await generateSyntheticCorpus();
+assert.equal(syntheticFiles.length, 5);
+assert.deepEqual(syntheticFiles.map(file => file.name), [
+    "sintetico-diagrama-electrico.png",
+    "sintetico-guia-desarme-vertical.png",
+    "sintetico-textura-zona-oscura.png",
+    "sintetico-transparencia-parcial.png",
+    "sintetico-imagen-pequena.png"
+]);
+assert.ok(syntheticFiles.every(file => file.type === "image/png"));
+assert.ok(syntheticFiles.every(file => file.size > 0));
+assert.equal(new Set(syntheticFiles.map(file => file.name)).size, 5);
+assert.ok(syntheticFiles.every(file => file.lastModified === 0));
 const exifSource = script[1].match(/async function readJpegExifOrientation\(file\) \{[\s\S]*?\n\}/);
 assert.ok(exifSource, "debe poder inspeccionarse el lector EXIF");
 const readExif = new Function(exifSource[0] + "; return readJpegExifOrientation;")();
@@ -59,4 +105,4 @@ const fileFromBytes = bytes => ({ type: "image/jpeg", slice: () => ({ arrayBuffe
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(true, 6))), "6");
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(false, 8))), "8");
 assert.equal(await readExif({ type: "image/png" }), "no JPEG");
-console.log("ThumbnailQualityBenchmarkContract: 30/30 PASS — local, sin red ni persistencia");
+console.log("ThumbnailQualityBenchmarkContract: 46/46 PASS — corpus sintético local, sin red ni persistencia");

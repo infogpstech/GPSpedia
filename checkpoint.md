@@ -554,3 +554,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Rama base:** GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - **Siguiente tarea:** mantener la mitigación diferida hasta definir reserva atómica compatible con §15. Ejecutar prueba de dos pestañas/dispositivos solo en Beta aislada con destino/canal desechable. Continuar corpus de imágenes y mediciones en el mismo entorno.
 - **Estado:** auditoría y caracterización local COMPLETADAS; riesgo de sesiones huérfanas documentado; corrección y prueba real PENDIENTES de diseño seguro/Beta.
+
+
+## Continuidad vigente — P1 corpus sintético de miniaturas (2026-11-22)
+
+- **Tarea realizada:** el banco local `JS/Tests/ThumbnailQualityBenchmark.html` ahora puede generar cinco PNG sintéticos en el navegador sin seleccionar archivos externos: diagrama eléctrico apaisado con etiquetas/cableado de color, guía vertical de panel, textura oscura de alto detalle, transparencia parcial e imagen pequeña. Las muestras se procesan con la cola real y variantes 300/800/1600.
+- **Privacidad y alcance:** los archivos existen solo en memoria del navegador; no se suben, no se guardan en IndexedDB ni en el repositorio. La textura es ilustrativa, no una fotografía; no se genera EXIF real.
+- **Contrato añadido:** el test ejecuta el generador con dobles locales y valida cinco archivos PNG, nombres únicos, MIME, contenido y timestamp determinista. La validación integral queda pendiente de CI del commit.
+- **Siguiente tarea:** ejecutar el corpus sintético en navegador real y revisar visualmente nitidez de etiquetas/cables, proporción, transparencia y no-ampliación; después incorporar muestras reales autorizadas/anónimas y ejecutar mediciones Beta de CORS, primera pintura, bytes, CPU y memoria. No cambiar parámetros de compresión sin esa evidencia.
+- **Contexto:** se elimina la dependencia de conseguir un corpus antes de probar el harness local, pero no se confunde el corpus sintético con evidencia de calidad sobre fotografías o diagramas reales.
+- **Rama base:** `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

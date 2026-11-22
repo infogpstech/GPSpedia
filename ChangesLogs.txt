@@ -1047,3 +1047,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - El resultado caracteriza un riesgo conocido; no es aprobación de idempotencia y no contacta a YouTube real.
 - CI HEAD 7c916e31c311cec0da1086d378e7d287a550ca15: 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health 7/7; Pages SUCCESS.
 - Mitigación diferida hasta disponer de reserva atómica compatible con §15; Beta debe probar dos pestañas/dispositivos con destino/canal desechable.
+
+
+2026-11-22 — Banco local: generador de corpus sintético de miniaturas
+- Se añadió generación en memoria de cinco muestras PNG (diagrama eléctrico apaisado, guía vertical de panel, textura oscura ilustrativa, alfa parcial e imagen pequeña) para probar variantes 300/800/1600 con la cola real.
+- Se amplió el contrato para ejecutar el generador con dobles locales y comprobar nombres, unicidad, MIME, contenido y timestamp determinista. Las imágenes no se guardan ni se transmiten.
+- La validación visual en navegador, el corpus real autorizado y las mediciones CORS/primera pintura/CPU/memoria permanecen pendientes de Beta.
