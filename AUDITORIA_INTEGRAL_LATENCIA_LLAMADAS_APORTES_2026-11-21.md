@@ -556,3 +556,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se reducen múltiples llamadas a `SpreadsheetApp.openById`/resolución de Spreadsheet en la misma petición; no cambia la cantidad ni el orden de lecturas de datos, los mapeos ni la política de caché.
 - `CatalogSpreadsheetHandleReuse.mjs`: **9/9 PASS**. CI HEAD `5ed4a7162907500d7e0719f6db53d37b6c72b5ca`: **293 suites / 3,423 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status/deploy in_progress al documentar.
 - No se alteraron registros de catálogo, archivos ni despliegues manuales Apps Script.
+
+
+## P1 CATALOG — snapshot único de ScriptProperties para publicar/leer el feed incremental (2026-11-22)
+
+- `catalogChangeRevisions_` acepta ahora un snapshot de propiedades opcional.
+- `publishCatalogChanges_` obtiene un solo `getProperties()` dentro del lock, deriva revisiones, revision actual e idempotencia por requestId desde esa copia y la actualiza en memoria conforme escribe/prunea eventos. Se elimina la lectura de cada evento mediante `getProperty` y el segundo `getProperties()` posterior a la publicación/recuperación.
+- `getCatalogChanges_` usa un snapshot para cursor, revisión actual y eventos de la página; evita `getProperty` por cada revisión.
+- La poda sincroniza la copia en memoria con setProperty/deleteProperty. Se mantienen orden, huecos/corruptos => reset, retención máxima, requestId idempotente, recuperación de lotes parciales y control de sourceVersion.
+- `CatalogChangeFeed.mjs`: **36/36 PASS**, incluyendo reintento idempotente y lectura incremental sin getProperty para eventos. CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy in_progress al documentar.
+- No se cambiaron datos de catálogo ni propiedades de producción; solo se modificó la lógica del Coordinator.
