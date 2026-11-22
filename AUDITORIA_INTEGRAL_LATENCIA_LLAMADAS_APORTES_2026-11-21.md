@@ -450,3 +450,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Prueba `FeedbackYearApplicationReadbackBounded.mjs` registrada en `RunServiceTests.mjs`.
 - CI HEAD `c96210f3bd2f77ff3e6e9ea1486719894ba13383`: **292 suites / 3,405 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job de deploy del workflow todavía estaba en curso al cerrar la comprobación; no se considera despliegue Apps Script ni se ejecutaron cambios sobre servicios productivos.
 - Esta es una suboptimización cerrada; la auditoría integral FEEDBACK sigue abierta. No se retiraron eventos append-only, verificaciones de idempotencia ni lecturas globales necesarias para validar el ledger de aportes.
+
+
+## P1 FEEDBACK — búsquedas dirigidas para eventos vehicle_update de año (2026-11-22)
+
+- `appendFeedbackYearVehicleUpdateEvent_` ya no descarga todas las filas y 11 columnas de `AportesVehiculo` para comprobar si existe el `opId`.
+- El preflight usa TextFinder exacto sobre la columna B; cada coincidencia se lee en su fila completa de 11 columnas para verificar hash, vehículo, kind, payload, actor y supersedesEventId. Se mantienen los conflictos de identidad: si una fila coincidente no es canónica, la operación falla cerrada.
+- Tras `appendRow`, el read-back usa TextFinder exacto sobre eventId en columna A, lee solo las filas coincidentes y exige exactamente una antes de aceptar el evento. Se conserva la verificación de todos los campos canónicos.
+- Se amplió `FeedbackYearApplicationAppendOnly.mjs` con mock de TextFinder y prueba de ejecución que verifica idempotencia, replay, unicidad y que el read-back no lea el ledger completo.
+- CI HEAD `7be696dbc0903b9019034850c66d6e910246435a`: **292 suites / 3,406 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático seguía en curso al momento de esta anotación.
+- No se ejecutaron operaciones sobre AportesVehiculo productivo ni despliegues manuales de Apps Script. La validación de concurrencia real y pérdida de respuesta permanece pendiente en Beta aislada.
