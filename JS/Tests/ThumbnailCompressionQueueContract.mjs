@@ -1,61 +1,61 @@
 import assert from "node:assert/strict";
 import { createConcurrencyLimiter } from "../Frontend/thumbnailCompressionQueue.js";
-
-function deferred() {
-    let resolve;
-    const promise = new Promise(done => { resolve = done; });
-    return { promise, resolve };
-}
-
+function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; }
 const queue = createConcurrencyLimiter(2);
-const started = [];
-let active = 0;
-let maximum = 0;
+const started = []; let active = 0, maximum = 0;
 const gates = Array.from({ length: 5 }, () => deferred());
 const tasks = gates.map((gate, index) => queue.run(async () => {
-    const id = index + 1;
-    started.push(id);
-    active++;
-    maximum = Math.max(maximum, active);
-    await gate.promise;
-    active--;
-    return id;
+ const id = index + 1; started.push(id); active++; maximum = Math.max(maximum, active);
+ await gate.promise; active--; return id;
 }));
-
-await Promise.resolve();
-await Promise.resolve();
-assert.deepEqual(started, [1, 2], "solo las dos primeras tareas deben iniciar");
+await Promise.resolve(); await Promise.resolve();
+assert.deepEqual(started, [1, 2]);
 assert.deepEqual(queue.getStats(), { limit: 2, active: 2, queued: 3 });
-
-gates[1].resolve();
-assert.equal(await tasks[1], 2);
-await Promise.resolve();
-await Promise.resolve();
-assert.deepEqual(started, [1, 2, 3], "la tercera tarea debe entrar primero al liberarse un slot");
-
-gates[0].resolve();
-assert.equal(await tasks[0], 1);
-await Promise.resolve();
-await Promise.resolve();
+gates[1].resolve(); assert.equal(await tasks[1], 2); await Promise.resolve(); await Promise.resolve();
+assert.deepEqual(started, [1, 2, 3]);
+gates[0].resolve(); assert.equal(await tasks[0], 1); await Promise.resolve(); await Promise.resolve();
 assert.deepEqual(started, [1, 2, 3, 4]);
-
-gates[2].resolve();
-await tasks[2];
-await Promise.resolve();
-await Promise.resolve();
+gates[2].resolve(); await tasks[2]; await Promise.resolve(); await Promise.resolve();
 assert.deepEqual(started, [1, 2, 3, 4, 5]);
-
-gates[3].resolve();
-gates[4].resolve();
+gates[3].resolve(); gates[4].resolve();
 assert.deepEqual(await Promise.all([tasks[3], tasks[4]]), [4, 5]);
-assert.equal(maximum, 2, "la concurrencia nunca debe superar el límite");
+assert.equal(maximum, 2);
 assert.deepEqual(queue.getStats(), { limit: 2, active: 0, queued: 0 });
-
 const resilient = createConcurrencyLimiter(1);
 await assert.rejects(() => resilient.run(null), TypeError);
 await assert.rejects(() => resilient.run(async () => { throw new Error("fallo simulado"); }), /fallo simulado/);
-assert.equal(await resilient.run(async () => "siguiente"), "siguiente",
-    "un fallo no debe bloquear las tareas pendientes");
+assert.equal(await resilient.run(async () => "siguiente"), "siguiente");
 assert.deepEqual(resilient.getStats(), { limit: 1, active: 0, queued: 0 });
+const tick = () => Promise.resolve().then(() => Promise.resolve());
 
-console.log("ThumbnailCompressionQueueContract: 15/15 PASS — FIFO, límite de concurrencia y recuperación tras error");
+const prioritized = createConcurrencyLimiter(1), gate = deferred(), order = [];
+const first = prioritized.run(async () => { order.push("active"); await gate.promise; });
+const lowA = prioritized.run(async () => { order.push("low-a"); }, { key: "low-a", priority: 0 });
+const lowB = prioritized.run(async () => { order.push("low-b"); }, { key: "low-b", priority: 0 });
+const visible = prioritized.run(async () => { order.push("visible"); }, { key: "visible", priority: 10 });
+await tick(); assert.deepEqual(order, ["active"]);
+gate.resolve(); await Promise.all([first, lowA, lowB, visible]);
+assert.deepEqual(order, ["active", "visible", "low-a", "low-b"]);
+
+const promoted = createConcurrencyLimiter(1), promotedGate = deferred(), promotedOrder = [];
+const activeJob = promoted.run(async () => { promotedOrder.push("active"); await promotedGate.promise; });
+const sameKeyPrefetch = promoted.run(async () => { promotedOrder.push("same-key-prefetch"); }, { key: "same-key", priority: 0 });
+const otherPrefetch = promoted.run(async () => { promotedOrder.push("other-prefetch"); }, { key: "other", priority: 0 });
+assert.equal(promoted.promote("same-key", 10), true);
+await tick(); promotedGate.resolve();
+await Promise.all([activeJob, sameKeyPrefetch, otherPrefetch]);
+assert.deepEqual(promotedOrder, ["active", "same-key-prefetch", "other-prefetch"]);
+
+const early = createConcurrencyLimiter(1), earlyGate = deferred(), earlyOrder = [];
+const earlyActive = early.run(async () => { earlyOrder.push("active"); await earlyGate.promise; });
+assert.equal(early.promote("late-enqueue", 10), true);
+const late = early.run(async () => { earlyOrder.push("late-visible"); }, { key: "late-enqueue", priority: 0 });
+const ordinary = early.run(async () => { earlyOrder.push("ordinary"); }, { key: "ordinary", priority: 0 });
+earlyGate.resolve(); await Promise.all([earlyActive, late, ordinary]);
+assert.deepEqual(earlyOrder, ["active", "late-visible", "ordinary"]);
+
+const noPreempt = createConcurrencyLimiter(1), activeGate = deferred();
+const activePriority = noPreempt.run(async () => { await activeGate.promise; }, { key: "active", priority: 0 });
+await tick(); assert.equal(noPreempt.promote("active", 99), false);
+activeGate.resolve(); await activePriority;
+console.log("ThumbnailCompressionQueueContract: FIFO, prioridad visible, promoción single-flight, no-preemption y recuperación PASS");

@@ -158,3 +158,11 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Trazar el encolado desde snapshot/deltas y vistos recientes. Máximo teórico 15 × 11 = 165 trabajos de precarga; la cola de dos workers es FIFO y comparte single-flight con la ruta visible. Informe: `AUDITORIA_P1_COLA_VISIBLE_PRECARGA_2026-11-21.md`.
 - [ ] Implementar prioridad alta para imágenes visibles y baja para precarga; FIFO dentro de prioridad, elevar entradas pendientes compartidas por single-flight, sin duplicar trabajo ni preemptar activos. Añadir pruebas contractuales.
 - [ ] Medir en Beta aislada tiempos de espera, bytes, cache hit/miss, CPU, CORS y memoria; no cambiar concurrencia 2 sin resultados.
+
+
+### P1 — prioridad visible/precarga (actualización 2026-11-21)
+- [x] Implementar prioridad 10 visible / 0 precarga, FIFO estable por prioridad y promoción de trabajos pendientes por clave, incluida promoción anticipada. Las tareas activas no se interrumpen; concurrencia se mantiene en 2.
+- [x] Integrar prioridad en las dos rutas de compresión y promoción en single-flight visible.
+- [x] Ampliar `ThumbnailCompressionQueueContract.mjs` con casos de prioridad, promoción, no-preemption y compatibilidad.
+- [ ] Verificar workflow CI tras commit; no marcar pruebas como PASS hasta leer el resultado.
+- [ ] Siguiente: instrumentar métricas de cola/espera por prioridad y estudiar cancelación segura por cambio de sesión/vista.

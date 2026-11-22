@@ -158,3 +158,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** implementar prioridad de cola y deduplicación elevable mediante pruebas contractuales antes de tocar producción.
 - **Contexto breve:** la espera de recursos visibles es un riesgo demostrable por el orden FIFO actual; se requiere resolverlo sin duplicar la descarga/compresión de la misma variante.
 - **Estado:** análisis COMPLETADO; implementación y benchmark Beta PENDIENTES.
+
+
+## Actividad completada — 2026-11-21: prioridad visible en cola de miniaturas
+
+- **Tarea realizada:** implementada prioridad explícita en `thumbnailCompressionQueue`: visible 10, precarga 0; FIFO estable dentro de cada prioridad; promoción de una tarea pendiente por clave; promoción anticipada antes de que single-flight llegue a encolar; las tareas activas no se interrumpen. Se conservan dos workers y `getStats()` compatible.
+- **Integración:** `compressAndStoreThumbnailFromImage` marca solicitudes visibles con prioridad alta y promueve una precarga pendiente de la misma clave; `compressAndStoreThumbnail` usa prioridad baja.
+- **Pruebas añadidas:** extensión de `ThumbnailCompressionQueueContract.mjs` para FIFO, prioridad, promoción single-flight, promoción anticipada, no-preemption, concurrencia y recuperación.
+- **Validación:** pruebas añadidas pero aún no ejecutadas localmente. El push dispara el workflow `service-tests.yml`; verificar su resultado antes de considerar validada la implementación.
+- **Siguiente tarea:** revisar resultados CI y añadir medición de cola/espera por prioridad; luego analizar cancelación segura por cambio de sesión/vista.
+- **Contexto breve:** se evita que la precarga FIFO de catálogo retrase innecesariamente miniaturas visibles, sin duplicar una compresión single-flight ni cancelar operaciones compartidas.
+- **Estado:** implementación registrada; validación CI pendiente.

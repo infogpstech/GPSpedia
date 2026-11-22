@@ -783,3 +783,13 @@ P1 MULTIMEDIA — COMPETENCIA VISIBLE/PRECARGA — 2026-11-21
 - Informe: AUDITORIA_P1_COLA_VISIBLE_PRECARGA_2026-11-21.md.
 - Siguiente: implementar cola priorizada y contratos automatizados.
 ================================================================================
+
+
+================================================================================
+P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
+- thumbnailCompressionQueue admite prioridad descendente y FIFO estable por prioridad; llamadas antiguas sin opciones conservan FIFO.
+- Prioridad visible 10, precarga 0. Las solicitudes visibles elevan una tarea pendiente de la misma clave single-flight; también se admite promoción anticipada antes de queue.run.
+- No se preemptan tareas activas; concurrencia máxima se mantiene en 2; getStats conserva el contrato original y se agrega getPriorityStats.
+- Añadidos casos contractuales para prioridad, promoción, no-preemption, concurrencia y recuperación en ThumbnailCompressionQueueContract.mjs.
+- Pendiente leer el resultado CI tras commit; no se declara PASS hasta entonces.
+================================================================================

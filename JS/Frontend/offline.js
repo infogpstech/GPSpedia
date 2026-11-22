@@ -1521,6 +1521,8 @@ async function storeThumbnailWithQuotaRecovery(entry, key) {
 }
 
 const THUMBNAIL_FAILURE_BACKOFF_MS = 5 * 60 * 1000;
+const THUMBNAIL_QUEUE_PRIORITY_PREFETCH = 0;
+const THUMBNAIL_QUEUE_PRIORITY_VISIBLE = 10;
 const thumbnailCompressionFailures_ = new Map();
 /** Compresión opcional por variante; nunca condiciona la visualización de la imagen original. */
 const thumbnailCompressionInFlight_ = new Map();
@@ -1537,7 +1539,10 @@ export async function compressAndStoreThumbnailFromImage(imageElement, rawFileId
  const width = normalizeThumbnailSize(requestedSize);
  const cacheKey = buildThumbnailCacheKey(fileId, width);
  const pending = thumbnailCompressionInFlight_.get(cacheKey);
- if (pending) return pending;
+ if (pending) {
+  thumbnailCompressionQueue.promote(cacheKey, THUMBNAIL_QUEUE_PRIORITY_VISIBLE);
+  return pending;
+ }
  const operation = Promise.resolve().then(async () => {
   if (Date.now() < dbRetryAfter) return null;
   const retryAfter = thumbnailCompressionFailures_.get(cacheKey) || 0;
@@ -1576,7 +1581,7 @@ export async function compressAndStoreThumbnailFromImage(imageElement, rawFileId
     } finally {
      if (typeof bitmap.close === "function") bitmap.close();
     }
-   });
+   }, { key: cacheKey, priority: THUMBNAIL_QUEUE_PRIORITY_VISIBLE });
   } catch (error) {
    thumbnailCompressionFailures_.set(cacheKey, Date.now() + THUMBNAIL_FAILURE_BACKOFF_MS);
    if (thumbnailCompressionFailures_.size > 300) thumbnailCompressionFailures_.delete(thumbnailCompressionFailures_.keys().next().value);
@@ -1640,7 +1645,7 @@ async function compressAndStoreThumbnailOnce_(url,fileId,width){
       .catch(error=>{console.debug("Se omitió la persistencia de la miniatura opcional:",fileId,error&&error.message?error.message:error&&error.name||"error");resolve(null);});
     },"image/png"));
    }finally{if(typeof bitmap.close==="function")bitmap.close();}
-  });
+  }, { key: cacheKey, priority: THUMBNAIL_QUEUE_PRIORITY_PREFETCH });
  }catch(error){
   thumbnailCompressionFailures_.set(cacheKey,Date.now()+THUMBNAIL_FAILURE_BACKOFF_MS);
   if(thumbnailCompressionFailures_.size>300)thumbnailCompressionFailures_.delete(thumbnailCompressionFailures_.keys().next().value);
