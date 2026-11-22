@@ -130,3 +130,12 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 
 ## Siguiente paso exacto
 P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estática y CI (291 suites / 3,397 pruebas / 0 fallos). Siguiente: auditoría end-to-end FEEDBACK (sugerencias de año, likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicación CATALOG). Después ADMIN. Luego P1 de imágenes/vídeos/archivos y mediciones Beta. Toda validación real de Drive, concurrencia interproyecto, pérdida de respuesta y métricas requiere entorno aislado; no ejecutar contra producción.
+
+
+## Actualización de continuidad — 2026-11-22
+
+- **Tarea anterior completada:** revisión de callers de publicación CATALOG/Coordinator. Se conserva la evidencia de contratos y CI en el checkpoint.
+- **Siguiente tarea activa:** P1 — imágenes, vídeos y archivos. El plan detallado, alcance, secuencia, pruebas, restricciones y criterios de cierre están registrados en `checkpoint.md`.
+- **Primer paso:** inventariar las rutas frontend de imágenes, compresión, caché, ObjectURL, cola y sus consumidores; después revisar logos históricos y flujo resumable/aprobación de YouTube.
+- **Contexto:** las correcciones de miniaturas ya registradas se preservan. P2.2a, P2.2b (`handleAddProblem`) y P2.3 están cerradas localmente; no reabrirlas sin evidencia nueva. La validación real de navegador, Drive y YouTube se reserva a Beta aislada.
+- **Estado:** PENDIENTE de ejecución. No se ha modificado código en esta actualización.
