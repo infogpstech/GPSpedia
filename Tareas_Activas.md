@@ -104,7 +104,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Revisar tamaños históricos de logos antes de decidir límite.
 - [ ] Medir CORS, PNG alfa, cache hit/miss, primera pintura, bytes, memoria y cancelación en navegador real.
 - [x] Revisar prioridad visible/precarga, métricas y cancelación segura: la cola prioriza visibles y expone métricas; no se cancela trabajo compartido por falta de ownership/ref-count y porque la precarga alimenta caché global. CI 293 suites / 3,435 pruebas / 0 fallos.
-- [ ] Continuar con auditoría estática del flujo YouTube: transferencia resumable, checkpoint IndexedDB, pausa/reanudación/cancelación y aprobación.
+- [x] Auditoría estática del flujo YouTube completada; evidencia en AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md.
 - [ ] Trazar vídeos/YouTube y retirar consultas solo con medición.
 - [ ] Medir por separado cliente, red, Apps Script, Drive y proyección CATALOG.
 
@@ -157,7 +157,7 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 
 ### P1 — competencia visible/precarga (actualización 2026-11-21)
 - [x] Trazar el encolado desde snapshot/deltas y vistos recientes. Máximo teórico 15 × 11 = 165 trabajos de precarga; la cola de dos workers es FIFO y comparte single-flight con la ruta visible. Informe: `AUDITORIA_P1_COLA_VISIBLE_PRECARGA_2026-11-21.md`.
-- [ ] Implementar prioridad alta para imágenes visibles y baja para precarga; FIFO dentro de prioridad, elevar entradas pendientes compartidas por single-flight, sin duplicar trabajo ni preemptar activos. Añadir pruebas contractuales.
+- [x] Prioridad visible 10/precarga 0, FIFO estable, promoción single-flight (incluida anticipada), sin duplicar trabajo ni preemptar activos; contratos aprobados.
 - [ ] Medir en Beta aislada tiempos de espera, bytes, cache hit/miss, CPU, CORS y memoria; no cambiar concurrencia 2 sin resultados.
 
 
@@ -165,17 +165,17 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Implementar prioridad 10 visible / 0 precarga, FIFO estable por prioridad y promoción de trabajos pendientes por clave, incluida promoción anticipada. Las tareas activas no se interrumpen; concurrencia se mantiene en 2.
 - [x] Integrar prioridad en las dos rutas de compresión y promoción en single-flight visible.
 - [x] Ampliar `ThumbnailCompressionQueueContract.mjs` con casos de prioridad, promoción, no-preemption y compatibilidad.
-- [ ] Verificar workflow CI tras commit; no marcar pruebas como PASS hasta leer el resultado.
+- [x] Workflow CI verificado: 293 suites / 3,435 pruebas / 0 fallos.
 - [x] Instrumentar métricas efímeras por prioridad: encolados, inicios, finalizados, errores, promociones, activos/pendientes, espera y duración total/máxima. Se conserva getStats(); reloj inyectable para pruebas deterministas.
-- [ ] Siguiente: revisar cancelación segura de precargas por cambio de sesión/vista, sin cancelar compresión compartida ni trabajo activo.
+- [x] Revisar cancelación segura: no se implementa porque la caché es global y single-flight puede compartir con imagen visible; documentado en auditoría.
 
 
 - [x] Limpiar promociones anticipadas en el `finally` de single-flight para evitar overrides obsoletos; prueba contractual añadida.
-- [ ] Verificar CI de la versión final de prioridad antes de cerrar.
+- [x] CI de la versión final de prioridad SUCCESS; contrato 24/24 PASS.
 
 
 - [x] Corregir el resumen de salida requerido por `RunServiceTests.mjs` (`N/N PASS`). El primer CI había ejecutado los asserts correctamente pero falló al no detectar resumen numérico.
-- [ ] Revalidar workflow del commit con la corrección; si falla, corregir antes de avanzar.
+- [x] Revalidación CI SUCCESS en HEAD 79b7e5c8 y commits documentales posteriores.
 
 
 - [x] Adaptar el harness aislado de `ThumbnailCacheDeduplication.mjs` a la nueva dependencia de cola, sin sustituir la prueba de single-flight.
@@ -194,31 +194,37 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Métricas de cola aprobadas en CI `44974498485`: 293 suites / 3,435 pruebas / 0 fallos; contrato focalizado 24/24 PASS; sintaxis aprobada.
 - [x] Compatibilidad: getStats() y getPriorityStats() conservan sus contratos; getMetrics() agrega diagnóstico efímero por prioridad.
 - [x] Cancelación revisada: no se añade. Las precargas de catálogo/vistos solo calientan caché global; las claves no son de sesión y la promesa single-flight puede compartirse con una imagen visible. Cancelar por clave sin ownership/ref-count pondría en riesgo al consumidor visible.
-- [ ] Siguiente: auditoría estática de YouTube resumable y contratos de recuperación/aprobación.
+- [x] Auditoría YouTube resumable/recuperación/aprobación completada; riesgo de sesión init huérfana documentado.
 
 
 ### P1 — auditoría del flujo YouTube (2026-11-22)
 - [x] Revisar transferencia directa resumable navegador→YouTube, bloques 8 MiB, checkpoints IndexedDB, consulta de offset, pausa/reanudación, cancelación, expiración y recuperación.
 - [x] Revisar idempotencia de aprobación, duplicados por destino, RBAC, ledger append-only y publicación/rechazo recuperables.
 - [x] Confirmar suites de cliente/servidor incluidas en RunServiceTests; CI HEAD fd8c9040 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos.
-- [ ] Diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida: asociar opVideoId con sesión, manejar renovación 404/410, concurrencia y limpieza; riesgo actual de sesiones sin uso, sin duplicación de vídeo publicado.
-- [ ] Siguiente: inventariar tamaños históricos de logos y límites actuales sin modificar parámetros sin corpus representativo.
+- [x] Evaluar idempotencia de initYouTubeUpload frente a NORMAS §15: no añadir lock/lease/espera ni serializar cargas; riesgo bajo de sesión huérfana documentado, sin duplicación de vídeo publicado.
+- [x] Inventario de assets versionados y límites actuales completado; tamaños históricos de Drive quedan como Beta pendiente.
 
 
 ### P1 — inventario de logos (2026-11-22)
 - [x] Inventariar assets versionados y revisar validación cliente/backend: PNG/SVG/WEBP, MIME, Base64 canónico y firma real; no hay límite de bytes específico.
 - [x] Confirmar que los assets versionados no son una muestra representativa de LogosMarca. No cambiar límites por falta de datos.
 - [ ] Medir en Beta aislada y de solo lectura los tamaños históricos reales de Drive/Spreadsheet, MIME/firma, dimensiones y anomalías antes de definir un límite.
-- [ ] Siguiente: diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida y reintentos de renovación.
+- [x] Decisión de idempotencia de init documentada conforme a NORMAS §15; no se añade mecanismo transaccional.
 
 
 ### P1 — métricas adicionales y decisión de init YouTube (2026-11-22)
 - [x] Medir también las promociones anticipadas single-flight que ocurren antes de queue.run(); contrato de métricas actualizado.
 - [x] CI HEAD 79b7e5c8 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; ThumbnailCompressionQueueContract 24/24 PASS.
 - [x] Evaluar idempotencia de initYouTubeUpload ante respuesta perdida frente a NORMAS §15: no introducir ScriptLock/lease/espera ni serializar cargas. Sin primitivas atómicas lock-free verificadas, se documenta el riesgo bajo de sesión resumable huérfana; no implica duplicación de vídeo publicado.
-- [ ] Preparar protocolo Beta aislado para corpus técnico, rendimiento de imágenes, logos históricos y flujo real YouTube. No ejecutar contra recursos productivos.
+- [x] Protocolo Beta aislado preparado e indexado en lista_beta.txt; ejecución externa sigue pendiente.
 
 
 ### P1 — protocolo Beta multimedia (2026-11-22)
 - [x] Preparar adenda con sincronización segura obligatoria y escenarios de corpus/calidad, MIME/firma/SHA, cola/precarga/primera pintura, logos históricos y YouTube resumable/aprobación.
 - [ ] Ejecutar solo en entorno Beta aislado con deployments, Spreadsheet, Drive, OAuth y canal de prueba autorizados. No ejecutar contra producción.
+
+
+### Resumen de cierre local P1 multimedia (2026-11-22)
+- [x] Inventario estático, prioridad de miniaturas, métricas, compatibilidad de contratos, auditoría de cancelación, revisión YouTube, inventario de assets versionados y protocolo Beta.
+- [x] HEAD `dbf8a73b0a0ab972a66a9333f2d5afc07d7121f5`: CI 44975028315 SUCCESS; 293 suites / 3,435 pruebas / 0 fallos; health read-only 44975028307 SUCCESS.
+- [ ] PENDIENTE BETA: corpus técnico autorizado, CORS/primera pintura/bytes/memoria, tamaños históricos de LogosMarca y ejecución YouTube real en canal aislado.

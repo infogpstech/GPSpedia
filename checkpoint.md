@@ -247,3 +247,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - La adenda comienza con los comandos obligatorios de árbol limpio, rama/origen verificados y sincronización fast-forward. Incluye corpus técnico, MIME/firma/SHA, variantes, transparencia, medición de cola y primera pintura, inventario Drive de solo lectura y pruebas resumables/aprobación YouTube.
 - No se ejecutó ninguna prueba Beta ni se accedió a recursos productivos. Los deployments, Spreadsheet, Drive y canal YouTube aislados siguen siendo prerrequisitos.
 - Siguiente: cerrar la verificación local P1 multimedia y dejar pendientes Beta explícitas; revisar después el backlog vigente antes de incorporar mejoras nuevas.
+
+
+## P1 multimedia — cierre de revisión local y Beta pendiente (2026-11-22)
+
+- HEAD de trabajo: `dbf8a73b0a0ab972a66a9333f2d5afc07d7121f5`; CI 44975028315 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; contrato de cola 24/24 PASS; health read-only 44975028307 SUCCESS. La base protegida sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- P1 local: inventario estático de multimedia, prioridad visible/precarga, métricas de cola, contratos de caché/cola, revisión de cancelación, auditoría resumable YouTube, inventario de assets de logo versionados y protocolo Beta preparados.
+- No se cambiaron límites de compresión ni tamaño de logo sin corpus representativo. No se añadió cancelación a single-flight compartido. No se añadió lock/lease a initYouTubeUpload; el posible orphan session por respuesta perdida queda como riesgo bajo documentado conforme a NORMAS §15.
+- Beta pendiente: corpus técnico real autorizado; legibilidad/alfa/orientación/MIME/SHA; CORS/primera pintura/bytes/memoria; tamaños históricos de Drive/LogosMarca; YouTube resumable/aprobación en canal aislado.
+- Protocolo: `lista_beta_adenda_2026-11-22_multimedia.md`, indexado en `lista_beta.txt`.
+- Siguiente trabajo local independiente: retomar pendientes de FEEDBACK/ADMIN y optimización de lecturas según `Tareas_Activas.md`; no esperar a la Beta para avanzar en auditorías estáticas y contratos locales.
