@@ -45,3 +45,13 @@ Para reconstruir el checkpoint previo a la nueva entrada de continuidad, concate
 - Verificación: el contenido archivado se releyó desde GitHub y coincidió exactamente con el original en memoria.
 - Continuidad activa: `checkpoint.md`, resumida con HEAD de código `e05be7562135e18178eb9eed8f57e6196af664a3`.
 - Las partes anteriores permanecen intactas.
+
+
+## Rotación del checkpoint — 2026-11-22
+
+- Parte archivada: `Checkpoint_Archive/checkpoint_2026-11-22_parte_005.md`.
+- Caracteres Unicode: 198,145.
+- Blob SHA archivado: `01737733333430a7378a46d85fefd2b2b9117132`.
+- Verificación: el archivo se releyó desde GitHub y coincidió carácter por carácter con el checkpoint previo a la rotación. No se truncó ni alteró el historial.
+- Continuidad activa: `checkpoint.md`, resumida y actualizada con el plan P1 de imágenes, vídeos y archivos.
+- Las partes anteriores permanecen intactas.
