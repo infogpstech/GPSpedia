@@ -1546,3 +1546,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - PysCreationIntegrity: **58/58 PASS**. CI HEAD `b7dcd3bf3c80f128b09777254682c6bddd6fba46`: **292 suites / 3,411 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; deploy automático waiting al checkpoint.
 - No se modificaron datos productivos ni Drive; rama base sin cambios.
 - Siguiente: auditar los ledgers de TutorialTitleEvents, TutorialEditEvents y TutorialRenameEvents para evitar lecturas repetidas, y después completar CATALOG.
+
+
+## Checkpoint P1 Tutoriales — proyección compartida de eventos de renombrado (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; pruebas: `FeedbackTutorialLookupBoundedRead.mjs`, `FeedbackTutorialUpdateTitleLookupBoundedRead.mjs`, `FeedbackTutorialPreflightOutsideLock.mjs`.
+- `projectTutorialTitle_(id, title, renameEventsSnapshot)` reutiliza un snapshot opcional. `tutorialTitleExists_` y la búsqueda por título de `findTutorialRow_` leen TutorialRenameEvents una vez y comparten el arreglo con todas las filas candidatas.
+- El camino sin ledger utiliza `[]` para no repetir getSheetByName por fila; los consumidores que llaman a projectTutorialTitle_ sin snapshot mantienen su fallback.
+- Se conservan reglas de proyección, orden de eventos, first-title ownership y errores por títulos duplicados.
+- Pruebas: FeedbackTutorialPreflightOutsideLock **7/7**; FeedbackTutorialLookupBoundedRead **7/7**; FeedbackTutorialUpdateTitleLookupBoundedRead **6/6**. CI HEAD `4a8d2487a4076e67d45f586edd06cd74305add43`: **292 suites / 3,413 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress al checkpoint.
+- No se modificaron datos productivos ni despliegues manuales Apps Script; rama base sin cambios.
+- Siguiente: revisar si `TutorialEditEvents` y `TutorialTitleEvents` se vuelven a leer después de append para validar y proyectar; después terminar publicación CATALOG.
