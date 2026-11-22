@@ -13,8 +13,15 @@ function extract(name, nextName) {
     return source.slice(start, end);
 }
 const helperCode = extract("tutorialTitleExists_", "tutorialRowMatchesSubmission_");
-const titleExists = new Function("normalizeTutorialTitle_", helperCode + "\nreturn tutorialTitleExists_;")(
-    value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, " ").toLowerCase()
+let renameSheetAvailable = false, renameReads = 0, renameEvents = [];
+const normalizeTitle = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, " ").toLowerCase();
+const titleExists = new Function("normalizeTutorialTitle_", "getTutorialRenameEventsSheet_", "readTutorialRenameEvents_", "projectTutorialTitle_",
+    helperCode + "\nreturn tutorialTitleExists_;")(
+    normalizeTitle,
+    () => renameSheetAvailable ? {} : null,
+    () => { renameReads++; return renameEvents; },
+    (id, title, events) => (events || []).filter(event => event.tutorialId === id)
+        .reduce((current, event) => event.expectedTitleKey === normalizeTitle(current) ? event.title : current, title)
 );
 function makeSheet(titles) {
     const calls = [];
@@ -51,6 +58,20 @@ test("lee únicamente las columnas A:B para excluir todas las copias físicas de
     const sheet = makeSheet(["A", "B"]);
     titleExists(sheet, "B", 2, "tut-1");
     assert.deepEqual(sheet.calls, [[2, 1, 2, 2]]);
+});
+test("proyecta títulos renombrados leyendo el ledger una sola vez para todas las filas", () => {
+    renameSheetAvailable = true;
+    renameReads = 0;
+    renameEvents = [{ tutorialId:"tut-0", expectedTitleKey:"motor antiguo", title:"Motor actualizado" }];
+    try {
+        const sheet = makeSheet(["Motor antiguo","Otro tema","Tercer tema","Cuarto tema"]);
+        assert.equal(titleExists(sheet,"Motor actualizado",0),true);
+        assert.equal(renameReads,1,"La proyección de eventos de renombrado se carga una vez por comprobación, no una vez por tutorial.");
+    } finally {
+        renameSheetAvailable = false;
+        renameEvents = [];
+        renameReads = 0;
+    }
 });
 test("la edición ejecuta la comprobación dirigida sin lock", () => {
     const handler = extract("handleUpdateTutorialItem");
