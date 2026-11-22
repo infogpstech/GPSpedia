@@ -15249,12 +15249,37 @@ export function openAddTutorialModal() {
     let pendingApprovalVideoId = "";
 
     const refreshTutorialCatalog = async () => {
+        const refreshSession = getUiSessionContext_();
+        const isCurrentRefresh = () => isCurrentUiSessionContext_(refreshSession);
+        const catalogAtStart = getState().catalogData;
+        const authApi = typeof window !== "undefined" && window ? window.auth : null;
+        if (!isCurrentRefresh()) return null;
+
+        if (authApi && typeof authApi.loadInitialData === "function") {
+            try {
+                const synced = await authApi.loadInitialData(true, { silent: true });
+                if (!isCurrentRefresh()) return null;
+                const currentCatalog = getState().catalogData;
+                if (offline.isCompleteCatalogSnapshot(currentCatalog) &&
+                    (synced === true || currentCatalog !== catalogAtStart)) return currentCatalog;
+            } catch (deltaError) {
+                console.warn("No se pudo aplicar el delta del catálogo después de registrar el tutorial; se intentará una instantánea completa.",
+                    deltaError && deltaError.name || "TutorialCatalogDeltaError");
+            }
+        }
+
+        if (!isCurrentRefresh()) return null;
         try {
             const fresh = await routeAction("getCatalogData");
-            if (fresh && fresh.data) setState({ catalogData: fresh.data });
+            if (!isCurrentRefresh()) return null;
+            if (fresh && offline.isCompleteCatalogSnapshot(fresh.data)) {
+                setState({ catalogData: fresh.data });
+                return fresh.data;
+            }
         } catch (refreshError) {
             console.warn("El tutorial se registró, pero no se pudo actualizar el catálogo en pantalla:", refreshError);
         }
+        return null;
     };
     const createOperationId = () => {
         if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
