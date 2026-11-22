@@ -2248,7 +2248,7 @@ function handleRecordLike(payload) {
     const eventReplay = findLikeEventReplayNoop_(cuts, vehicle, actorKey, vehicleId, corteIndex, utilCol, replaySnapshot);
     if (eventReplay) return eventReplay;
 
-    const ledger = ensureFeedbackLikesSheet_();
+    const ledger = replaySnapshot ? replaySnapshot.ledger : ensureFeedbackLikesSheet_();
     const existingRows = replaySnapshot
         ? replaySnapshot.rows
         : findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex);
