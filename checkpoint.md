@@ -1588,3 +1588,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CatalogChangeFeed: **36/36 PASS**. CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress al checkpoint.
 - No se modificaron ScriptProperties productivas ni se realizó despliegue manual; rama base intacta.
 - Siguiente: revisar callers de publicación de CATALOG para confirmar batching/requestId y evitar invalidaciones repetidas; luego consolidar auditoría, pruebas Beta y lista final de pendientes.
+
+
+## Checkpoint P1 CATALOG — callers de publicación verificados (2026-11-22)
+
+- Revisión de callers en `JS/Services/write.js`, `JS/Services/feedback.js`, `JS/Services/admin.js`, `JS/Services/SharedMutationClient.js` y `JS/Services/Coordinator.js`.
+- WRITE: publica después de liberar lock; usa versión temporal, snapshot exacto y reset si no se puede obtener.
+- FEEDBACK: likes solo invalidan al crear un like nuevo; sugerencias solo publican tras aplicación confirmada; video verifica tipo/destino; PyS/Tutorial publican una vez desde wrapper tras validar la fila persistida. Los fallos de snapshot/publicación usan reset sin revertir la mutación confirmada.
+- ADMIN: lotes hasta 50, sourceVersion creciente, requestId idempotente y reset ante batch parcial.
+- No se detectaron dobles publicaciones desde handler + wrapper; cada operación confirmada publica un delta/reset una vez.
+- Contratos: WriteCatalogPublicationIsolation **7/7**, FeedbackCatalogPublicationIsolation **5/5**, AdminCatalogPublicationIsolation **6/6**, CatalogChangeFeed **36/36 PASS**. CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress.
+- No se modificaron datos productivos ni deployments Apps Script; rama base intacta.
+- Siguiente: iniciar P1 imágenes/vídeos/archivos con auditoría estática de compresión, tamaños históricos y flujo de aprobación. Las mediciones reales de navegador/Drive y corpus técnico quedan en Beta aislada.
