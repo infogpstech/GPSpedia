@@ -194,3 +194,8 @@ El segundo CI detectó que la nueva prueba focalizada enviaba campos de alimenta
 ### Resultado CI inicial A02-03
 
 El CI del SHA e313ff8c57239dd5f981f6b3396aa779f2bd1a4d falló solo en el doble de prueba: el mock exigía vehicleId=204 incluso después de que el caso cambiara intencionalmente a 205 para comprobar invalidación. La implementación envió el nuevo vehicleId correctamente; el assert del mock era incorrecto. Se ajusta para comparar con el estado actual y se repetirá CI.
+
+
+### Cierre A02-03
+
+**CI exacto:** SHA f68691cffc630cdb0c1aef2eb316b6732bb3024a — 302 suites / 3,531 pruebas / 0 fallos. AddCortes diagnostics 19/19 PASS, incluidos single-flight/cache hit, cambio de VIN/vehículo y retry tras fallo. Health read-only y Pages build/deployment SUCCESS. A02-03 queda **VALIDADA EN CÓDIGO/CI**; WRITE conserva la comprobación final de VIN dentro de la mutación.

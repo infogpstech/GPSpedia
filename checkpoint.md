@@ -696,3 +696,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Corrección:** el assert ahora compara el payload con state.selectedVehicleId actual; la implementación transmitió el nuevo ID correctamente.
 - **Estado:** prueba corregida; CI pendiente.
 - **Siguiente:** repetir CI completo.
+
+
+## A02-03 cerrada y A02-04 iniciada — 2026-11-22
+
+- **Tarea realizada:** deduplicación del preflight VIN entre blur y submit en add_cortes. Se comparte una sola promesa/resultado por VIN normalizado + vehicleId; se invalida al editar/cambiar vehículo y no se cachean errores.
+- **CI exacto:** SHA `f68691cffc630cdb0c1aef2eb316b6732bb3024a`; 302 suites / 3,531 pruebas / 0 fallos; AddCortesDiagnostics 19/19; health read-only y Pages SUCCESS.
+- **Siguiente tarea:** A02-04, sustituir el refresco amplio checkVehicle posterior a guardar corte por proyección dirigida getVehicleProjection para el vehículo guardado, manteniendo datos frescos de slots y video.
+- **Contexto:** WRITE sigue comprobando VIN en servidor dentro de la mutación; el caché solo elimina la consulta duplicada de interfaz.

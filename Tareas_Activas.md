@@ -506,3 +506,6 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 
 - [x] Corregir el mock VIN: el test de invalidación por cambio de vehículo compara currentVehicleId con el valor actual del estado y no con un ID fijo.
 - [ ] Repetir CI A02-03.
+
+- [x] A02-03 validada por CI SHA `f68691cffc630cdb0c1aef2eb316b6732bb3024a`: 302 suites / 3,531 pruebas / 0 fallos; AddCortesDiagnostics 19/19; health read-only y Pages SUCCESS.
+- [ ] A02-04: cambiar refresco post-alta checkVehicle (búsqueda amplia por criterios) por getVehicleProjection dirigido por ID, conservando disponibilidad exacta de cortes y vídeo para etapa 3.
