@@ -863,3 +863,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Revisión de snapshots, búsquedas dirigidas, locks/leases excepcionales, staging/rollback y feed incremental.
 - No se encontró duplicación de alta confianza para retirar sin medición; no se modificó código.
 - Evidencia: AUDITORIA_SERVICIOS_RESTANTES_2026-11-22.md.
+
+
+2026-11-22 — UI: evitar fuga de listeners resize en carruseles
+- crearCarrusel y renderPosiblesProblemasAccordion dejan de registrar un listener global por instancia; un listener único con debounce actualiza los carruseles que siguen conectados al DOM.
+- Añadido CarouselResizeListenerLifecycle 5/5 e integrado en RunServiceTests. CI HEAD d97f487e SUCCESS: 294 suites / 3,440 pruebas / 0 fallos.
+- Auditoría de timers, observers y listeners: AUDITORIA_UI_LISTENERS_2026-11-22.md.

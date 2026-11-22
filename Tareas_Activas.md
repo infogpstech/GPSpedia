@@ -109,7 +109,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Medir por separado cliente, red, Apps Script, Drive y proyección CATALOG.
 
 ### P2 — optimización y verificación integral
-- [ ] Revisar listeners, polling, timers, observers, inicialización/renderizados duplicados y consultas al navegar.
+- [x] Revisar listeners, polling, timers y observers principales: corregida acumulación de listeners resize en carruseles; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup. Falta revisar consultas repetidas al navegar.
 - [ ] Revisar IndexedDB y cachés sin bloquear el primer render.
 - [ ] Añadir pruebas de no duplicación y fallos parciales; ejecutar regresión integral y comparación antes/después.
 - [ ] Documentar llamadas retiradas/conservadas y su justificación.
@@ -244,3 +244,10 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] CATALOG: handle Spreadsheet reutilizado, snapshot de ScriptProperties y feed incremental idempotente.
 - [x] No se detectó otra lectura redundante de alta confianza para retirar sin medición.
 - [ ] Medir tiempos reales y concurrencia en Beta aislada; no modificar recursos productivos.
+
+
+### P2 — listeners y ciclo de vida de UI (2026-11-22)
+- [x] Corregir listeners globales resize por carrusel: un único listener global con debounce, actualización de nodos presentes y sin retener DOM retirado.
+- [x] Revisar timers Inbox/ADMIN, listeners de conectividad, popstate, observers de modal, AbortSignal, navegación, Service Worker e ImageObjectURL; restantes tienen guardas/cleanup o son singleton de app.
+- [x] Contrato CarouselResizeListenerLifecycle 5/5 PASS; CI HEAD d97f487e SUCCESS: 294 suites / 3,440 pruebas / 0 fallos; health y Pages SUCCESS.
+- [ ] Revisar consultas repetidas al navegar y el impacto IndexedDB/cache-first sobre primer render.
