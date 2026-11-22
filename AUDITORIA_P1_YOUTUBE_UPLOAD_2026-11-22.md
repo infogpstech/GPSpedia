@@ -59,3 +59,18 @@ Siguiente: inventariar los tamaños históricos de logos y límites actuales; no
 Se evaluó persistir la asociación `opVideoId → uploadUrl` para que un reintento tras respuesta perdida reutilice la misma sesión. La solución debe evitar duplicaciones también ante dos inicializaciones simultáneas. Añadir ScriptLock, lease, espera o serialización alrededor de la carga contradice el requisito expreso de §15 de no bloquear cargas ni acciones ordinarias. No se encontró en el flujo actual una primitiva compare-and-set lock-free verificada que garantice una única creación concurrente. Por tanto, no se implementa una persistencia parcial que parezca idempotente pero mantenga la carrera.
 
 El riesgo se mantiene acotado: puede quedar una sesión resumable sin uso hasta expirar; no crea por sí sola un vídeo ni una solicitud de aprobación duplicada, ya que el binario no se envía a esa sesión y la aprobación conserva idempotencia por `opVideoId`. Se difiere una solución solo si aparece una primitiva atómica compatible con §15 o si Beta demuestra impacto material.
+
+
+## Revisión adicional — concurrencia entre pestañas/dispositivos (2026-11-22)
+
+Se identificó un segundo escenario distinto de la respuesta perdida con el mismo opVideoId:
+
+1. El cliente inicia recoveryLookupPromise al abrir el modal y consulta una sola vez el almacén IndexedDB de operaciones pendientes.
+2. La búsqueda ocurre antes del envío; dos pestañas/dispositivos que abren el modal antes de que la primera operación guarde su registro pueden observar que no hay una carga pendiente.
+3. El contexto de operación usa sessionStorage, que es independiente por pestaña. Cada pestaña puede generar un opVideoId distinto.
+4. No hay coordinación cross-tab mediante BroadcastChannel, Web Locks ni reserva única por usuario/destino en IndexedDB.
+5. FEEDBACK consulta operaciones de aprobación por opVideoId y handleInitYouTubeUpload comprueba solicitudes ya pendientes y vídeo ya asociado, pero no existe una reserva durable de inicialización en curso. Dos inicios concurrentes pueden crear dos sesiones resumables; si ambas transfieren, pueden quedar vídeos no listados huérfanos aunque la aprobación posterior impida dos solicitudes pendientes para el mismo destino.
+
+Este riesgo es diferente del reintento con el mismo opVideoId tras perder Location. Una reserva única en IndexedDB podría reducir la carrera dentro de un mismo navegador, pero no protege dispositivos distintos ni recupera una URL que nunca llegó al cliente. Una reserva servidor durable requiere exclusión/compare-and-set atómico que no existe en el flujo actual; no se añadirá ScriptLock, lease ni espera que bloquee el inicio de carga conforme a §15.
+
+**Decisión:** no implementar una solución parcial ni declarar idempotencia de inicialización. Mantener la carga resumable y la aprobación existentes; añadir el escenario de concurrencia al protocolo Beta con destino/canal desechable autorizado. Registrar cantidad de sesiones creadas y vídeos no listados residuales; no ejecutar esta prueba contra producción.

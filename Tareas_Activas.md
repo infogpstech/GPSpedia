@@ -1,6 +1,6 @@
 # GPSpedia — Tareas activas
 
-Fecha: 2026-11-21
+Fecha: 2026-11-22
 Repositorio: `infogpstech/GPSpedia`
 Rama de trabajo: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5`
@@ -13,12 +13,11 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de código validado para cierre WRITE: `4fad6a812598beb0bb04212cac4a3bc3136c9dd5`.
-- CI: 291 suites, 3,397 pruebas aprobadas, 0 fallos.
-- Build: SUCCESS.
-- Health de servicios: SUCCESS.
-- GitHub Pages deploy workflow: pendiente de confirmación; no es despliegue de Apps Script ni sustituye Beta aislada.
-- Rama base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- HEAD actual de trabajo: `616b20377252de41c60da58340c1c6f322544ae9`.
+- CI exacto de HEAD actual: 301 suites / 3,498 pruebas aprobadas / 0 fallos; sintaxis 432 archivos JS/MJS; referencias relativas 343 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- La regresión incluye ThumbnailPriorityIntegration 15/15 y ThumbnailQualityBenchmarkContract 30/30.
+- La validación es local/CI; no despliega Apps Script ni sustituye Beta aislada.
+- Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 
 ## Implementaciones locales completadas
 
@@ -137,7 +136,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - No retirar escaneo global Drive ni controles de idempotencia/recuperación sin equivalencia demostrada.
 
 ## Siguiente paso exacto
-P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría estática y CI. P1 multimedia local está cerrado con validación Beta pendiente. Siguiente trabajo local: revisar inicializaciones y renderizados duplicados de UI y pruebas transversales de fallos parciales/no duplicación. Toda validación real de Drive, concurrencia interproyecto, pérdida de respuesta y métricas requiere entorno aislado; no ejecutar contra producción.
+P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados localmente y con CI. P1 de imágenes, logos y YouTube conserva validación real pendiente de Beta. La revisión adicional detectó una carrera de inicialización YouTube entre pestañas/dispositivos; se documentó sin añadir locks ni persistencia no atómica. Siguiente tarea: preparar el escenario controlado de dos inicios simultáneos en el protocolo Beta y continuar las mediciones con corpus técnico autorizado. No ejecutar contra producción.
 
 
 ## Actualización de continuidad — 2026-11-22
@@ -410,3 +409,10 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] ThumbnailQualityBenchmarkContract: 30/30 PASS; CI HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 archivos JS/MJS; referencias 343 archivos; health 7/7; Pages build/deployment SUCCESS.
 - [ ] Ejecutar el harness con corpus técnico sintético/autorizado en Beta aislada; revisar visualmente texto fino, cableado, alfa y orientación. El repositorio no contiene corpus técnico representativo.
 - [ ] Medir en la aplicación real CORS, cache hit/miss, primera pintura, bytes de red, CPU y memoria; el harness local no sustituye estas pruebas.
+
+
+### P1 — YouTube: concurrencia de inicialización (2026-11-22)
+- [x] Revisar la búsqueda de recuperación IndexedDB al abrir modal, el alcance por pestaña de sessionStorage y las comprobaciones server-side por opVideoId/destino.
+- [x] Documentar riesgo de dos sesiones resumables cuando dos pestañas/dispositivos inician el mismo destino antes de que exista una operación pendiente; evidencia en AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md.
+- [x] Decidir no añadir ScriptLock/lease/espera ni persistencia parcial: no hay compare-and-set servidor verificado compatible con §15; una reserva IDB local no protege otros dispositivos ni recupera Location perdido.
+- [ ] Añadir y ejecutar escenario controlado de dos inicios simultáneos con destino/canal Beta desechable autorizado; contar sesiones y vídeos no listados residuales.

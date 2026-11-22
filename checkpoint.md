@@ -535,3 +535,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite:** el harness mide el algoritmo local de escalado/codificación y la cola; no mide CORS, red, IndexedDB, memoria GPU ni primera pintura del producto en condiciones reales.
 - **Contexto breve:** el inventario no encontró corpus técnico en Git. La herramienta prepara una medición reproducible sin copiar imágenes de clientes al repositorio ni transmitir archivos.
 - **Estado:** herramienta y contratos COMPLETADOS localmente; corpus y mediciones Beta PENDIENTES.
+
+
+## Actualización de continuidad vigente — 2026-11-22 (YouTube cross-tab)
+
+- **Tarea realizada:** segunda revisión del ciclo YouTube encontró una carrera distinta a la respuesta perdida: recoveryLookupPromise lee IndexedDB una sola vez al abrir modal; sessionStorage es por pestaña; no hay BroadcastChannel/Web Locks ni reserva única por destino; backend comprueba aprobaciones pendientes, no inicializaciones en curso. Dos pestañas/dispositivos pueden iniciar sesiones resumables separadas antes de que exista un registro de operación o aprobación.
+- **Impacto acotado:** la inicialización doble puede dejar sesiones o vídeos no listados huérfanos; la idempotencia de aprobación evita que ambos creen dos solicitudes pendientes para el mismo destino, pero no elimina el recurso remoto ya creado.
+- **Decisión:** no agregar ScriptLock/lease/espera ni una persistencia no atómica; no se encontró CAS servidor compatible con §15. Una reserva IndexedDB local solo protege el mismo navegador y no resuelve el caso de dispositivos distintos ni la pérdida de Location.
+- **Siguiente tarea:** incorporar escenario controlado de dos inicios simultáneos al protocolo Beta usando destino/canal desechable autorizado; no ejecutar contra producción. Mantener el flujo resumable y aprobación actual hasta disponer de diseño atómico seguro.
+- **Estado:** auditoría estática completada; corrección diferida por ausencia de primitiva atómica segura; Beta de concurrencia PENDIENTE.

@@ -54,3 +54,9 @@
 - Contratos: ThumbnailQualityBenchmarkContract 30/30 PASS; ThumbnailPriorityIntegration 15/15 PASS.
 - HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 archivos; referencias 343; health 7/7; Pages SUCCESS.
 - No se dispone de corpus técnico representativo. Pendiente ejecutar con muestras autorizadas y medir CORS, red, caché, primera pintura, CPU y memoria en Beta aislada.
+
+
+2026-11-22 — YOUTUBE: CARRERA DE INICIALIZACIÓN ENTRE PESTAÑAS
+- Auditoría estática detectó que dos pestañas/dispositivos pueden leer IndexedDB sin operación pendiente y generar opVideoId distintos; backend no reserva inicialización por destino.
+- Riesgo: sesiones resumables y vídeos no listados huérfanos; no se duplican automáticamente las solicitudes pendientes de aprobación, pero puede haber recursos remotos extra.
+- No se implementa lock/lease ni persistencia parcial por §15 y ausencia de CAS servidor verificado. Se añadió escenario de concurrencia al protocolo Beta aislada.

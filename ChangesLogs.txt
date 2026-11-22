@@ -1034,3 +1034,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Contrato ThumbnailQualityBenchmarkContract 30/30 PASS; ThumbnailPriorityIntegration 15/15 PASS.
 - CI HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 JS/MJS; referencias 343; health 7/7; Pages build/deployment SUCCESS.
 - Pendiente corpus técnico y mediciones reales en Beta aislada; el harness no reemplaza las pruebas de CORS/red/IndexedDB/primera pintura del producto.
+
+
+2026-11-22 — YouTube: riesgo de inicialización concurrente cross-tab
+- Se confirmó que recoveryLookupPromise consulta IndexedDB una sola vez al abrir el modal; sessionStorage es por pestaña y no existe BroadcastChannel, Web Locks ni reserva única de contexto.
+- Dos pestañas/dispositivos pueden iniciar sesiones distintas para el mismo destino antes de que exista operación pendiente. La aprobación posterior limita solicitudes pendientes duplicadas, pero no evita sesiones/vídeos no listados huérfanos.
+- No se añade lock/lease ni persistencia parcial: no hay CAS servidor verificado compatible con §15. Riesgo y decisión documentados en AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md; escenario añadido a adenda Beta multimedia.

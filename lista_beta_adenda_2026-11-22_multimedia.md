@@ -102,8 +102,9 @@ Usar un vídeo de prueba de tamaño suficiente para abarcar más de un bloque:
 9. Aprobar con rol autorizado y verificar URL/miniatura en destino; rechazar en otra operación y comprobar retirada exacta.
 10. Repetir la misma operación con el mismo `opVideoId`; debe recuperar el resultado original y no crear una segunda solicitud lógica.
 11. Confirmar que los roles no autorizados no pueden aprobar/rechazar y que los IDs/URLs contradictorios se rechazan.
+12. Escenario de concurrencia controlado: abrir el mismo destino en dos pestañas/dispositivos antes de iniciar cualquiera; enviar ambas inicializaciones solo en el entorno aislado; registrar cuántas sesiones resumables devuelve YouTube y si quedan vídeos no listados huérfanos. Usar destino/canal desechable; no forzar esta carrera en producción. No marcar PASS si no se verifica el estado remoto real.
 
-No forzar expiraciones reales si requieren esperar al TTL de YouTube; los estados 404/410 y reintentos se validan localmente con dobles, y la limitación se registra sin simularla como prueba real.
+No forzar expiraciones reales si requieren esperar al TTL de YouTube; los estados 404/410 y reintentos se validan localmente con dobles, y la limitación se registra sin simularla como prueba real. La carrera de inicialización concurrente solo se ejecuta en Beta aislada con destino/canal desechable.
 
 ## 6. Evidencia y cierre
 
