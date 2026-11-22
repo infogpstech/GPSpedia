@@ -1576,3 +1576,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CatalogSpreadsheetHandleReuse: **9/9 PASS**. CI HEAD `5ed4a7162907500d7e0719f6db53d37b6c72b5ca`: **293 suites / 3,423 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status/deploy in_progress al checkpoint.
 - No se tocaron datos productivos ni deployments Apps Script; rama base intacta.
 - Siguiente: revisar publicación CATALOG tras mutaciones de Cortes/Tutoriales/FeedbackLikes, verificar que los invalidadores no duplican publicaciones ni leen el feed de forma innecesaria; después consolidar auditoría y pendientes.
+
+
+## Checkpoint P1 CATALOG — feed incremental desde snapshot de propiedades (2026-11-22)
+
+- Código: `JS/Services/Coordinator.js`; prueba: `JS/Tests/CatalogChangeFeed.mjs`.
+- `catalogChangeRevisions_(propertySnapshot)` puede derivar revisiones de una copia existente.
+- `publishCatalogChanges_` obtiene una copia única de ScriptProperties bajo lock y reutiliza sus valores para requestId, revision, recuperación parcial y pruning. Actualiza la copia local al guardar/eliminar eventos.
+- `getCatalogChanges_` obtiene una copia única y lee eventos del cursor desde ella; no hace getProperty individual por revisión.
+- Se conservan: validación de origen/operación, sourceVersion monotónica, requestId idempotente, recuperación parcial mediante reset, orden, detección de huecos/corrupción y retención.
+- CatalogChangeFeed: **36/36 PASS**. CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress al checkpoint.
+- No se modificaron ScriptProperties productivas ni se realizó despliegue manual; rama base intacta.
+- Siguiente: revisar callers de publicación de CATALOG para confirmar batching/requestId y evitar invalidaciones repetidas; luego consolidar auditoría, pruebas Beta y lista final de pendientes.
