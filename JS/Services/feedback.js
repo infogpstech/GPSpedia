@@ -4665,8 +4665,9 @@ function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId
     const titleKey = normalizeTutorialTitle_(title);
     const excluded = Number(excludedRowIndex) || 0;
     const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-    const renameSheet = getTutorialRenameEventsSheet_(false);
-    const renameEvents = renameSheet ? readTutorialRenameEvents_(renameSheet) : [];
+    const renameSheet = typeof getTutorialRenameEventsSheet_ === "function" ? getTutorialRenameEventsSheet_(false) : null;
+    const renameEvents = renameSheet && typeof readTutorialRenameEvents_ === "function"
+        ? readTutorialRenameEvents_(renameSheet) : [];
     return rows.some((row, index) => {
         const rowIndex = index + 2, rowId = String(row[0] || "").trim();
         if (rowIndex === excluded || (excludedTutorialId && rowId.toLowerCase() === String(excludedTutorialId).toLowerCase())) return false;
