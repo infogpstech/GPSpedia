@@ -765,3 +765,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Prueba añadida:** verifica que no se relee el ledger inmediatamente después de append pending y que la lectura final linked permanece.
 - **Estado:** CI pendiente.
 - **Siguiente:** repetir regresión; después caracterizar búsquedas Drive en findExistingImageUpload y la trazabilidad de actor/fecha de add_cortes etapa 3.
+
+
+## A02-07 cerrada; comienza A05-01 — 2026-11-22
+
+- **A02-07:** markImageUploadLinked reutiliza el evento pending retornado por append y evita la relectura inmediata; conserva búsqueda de referencias reales y read-back final linked.
+- **CI exacto:** SHA `46e9a1a1f95d1f6b1aed55d5cf16cdc80e3d0c68`; 302 suites / 3,539 pruebas / 0 fallos; health read-only SUCCESS.
+- **A02-08:** revisados modales + apertura/alimentación y preflight FileReader: cada archivo se convierte una vez y cada envío realiza una petición WRITE. Las verificaciones de MIME/tamaño/hash, Drive y journal no son revalidaciones arbitrarias; protegen el archivo y la recuperación. La enumeración de carpeta se deja pendiente de análisis seguro.
+- **Siguiente tarea:** A05-01, corregir trazabilidad de etapa 3 de add_cortes, que actualmente puede enviar opId null después de completar el alta del corte. La ruta heredada no crea evento append-only con actor/fecha individual.
+- **Contexto:** el requisito de auditoría exige que cada aporte conserve el nombre del usuario y fecha de creación para el dashboard; no se deben validar sesiones contra la base en cada acción, pero sí mantener la atribución del actor confiable y los permisos por rol.

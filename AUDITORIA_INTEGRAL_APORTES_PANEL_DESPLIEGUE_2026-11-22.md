@@ -254,3 +254,12 @@ En `markImageUploadLinkedWithShortLedgerLock_`, el camino de recuperación sin e
 **Corrección:** incorpora el evento devuelto al snapshot local y calcula la proyección sin relectura inmediata. Se conserva la lectura final tras append linked para detectar conflictos y escrituras concurrentes. También se conserva la lectura completa de referencias en Cortes/AportesVehiculo antes de vincular, porque evita marcar como linked una imagen que no está realmente referenciada.
 
 **Prueba:** el contrato comprueba reutilización del evento pending y permanencia de la lectura final. CI pendiente.
+
+
+### A02-07 validada en CI
+
+**CI exacto:** SHA `46e9a1a1f95d1f6b1aed55d5cf16cdc80e3d0c68` — 302 suites / 3,539 pruebas / 0 fallos. Se validó la reutilización del evento pending retornado por append y la permanencia de la lectura final linked. Health read-only SUCCESS. La búsqueda de referencias de imagen y el read-back final permanecen por integridad.
+
+### A02-08 — revisión de búsquedas de Drive y conversión de imagen
+
+Los modales + de apertura/alimentación convierten la imagen una vez en el navegador, generan opId al abrir el modal y envían una llamada WRITE. El servidor decodifica, calcula hash, valida MIME/tamaño, reserva journal antes de crear archivo y verifica el archivo/metadata. No se identificó una conversión FileReader duplicada en estos dos callsites. La búsqueda por nombre + enumeración de carpeta en `findExistingImageUpload` se mantiene provisionalmente para recuperación de archivos renombrados/duplicados; requiere caracterizar alternativa sin perder recuperación antes de modificar.

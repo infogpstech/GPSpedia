@@ -538,3 +538,8 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Conservar getImageUploadReferences_ y read-back final del estado linked.
 - [x] Añadir regresión estática para ambos comportamientos.
 - [ ] CI A02-07.
+
+- [x] A02-07 validada por CI SHA `46e9a1a1f95d1f6b1aed55d5cf16cdc80e3d0c68`: 302 suites / 3,539 pruebas / 0 fallos.
+- [x] A02-08: revisar callsites de modales + y pruebas FileReader; una conversión por archivo y una petición WRITE por envío. No eliminar validación hash/Drive por ser necesaria para recuperación/integridad.
+- [ ] A05-01: corregir trazabilidad de aportes suplementarios de add_cortes etapa 3: opId propio por aporte, ledger append-only, actor y fecha; preservar flujo de nota y operaciones independientes.
+- [ ] A02-09: medir alternativas a la enumeración completa de carpeta Drive en recuperación findExistingImageUpload sin perder detección de duplicados/archivos renombrados.
