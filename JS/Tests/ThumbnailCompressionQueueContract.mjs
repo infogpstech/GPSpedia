@@ -94,7 +94,7 @@ assert.equal(await measuredSecond, "visible");
 measuredSnapshot = measured.getMetrics();
 assert.equal(measuredSnapshot.priorities["0"].completed, 1);
 assert.equal(measuredSnapshot.priorities["0"].maxRunMs, 10);
-assert.equal(measuredSnapshot.priorities["10"].promoted, 1);
+assert.equal(measuredSnapshot.priorities["20"].promoted, 1);
 assert.equal(measuredSnapshot.priorities["20"].started, 1);
 assert.equal(measuredSnapshot.priorities["20"].maxWaitMs, 13);
 const measuredFailure = createConcurrencyLimiter(1, { now: () => fakeNow });

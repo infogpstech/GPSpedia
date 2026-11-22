@@ -118,13 +118,9 @@ export function createConcurrencyLimiter(limit = 2, options = {}) {
 
     function getPriorityStats() {
         const priorities = {};
-        metrics.forEach((metric, key) => {
-            priorities[key] = {
-                active: metric.active, queued: metric.queued,
-                enqueued: metric.enqueued, started: metric.started,
-                completed: metric.completed, failed: metric.failed,
-                promoted: metric.promoted
-            };
+        pending.forEach(job => {
+            const key = String(job.priority);
+            priorities[key] = (priorities[key] || 0) + 1;
         });
         return { active, queued: pending.length, priorities };
     }
