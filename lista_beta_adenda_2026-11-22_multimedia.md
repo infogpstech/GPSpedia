@@ -33,6 +33,8 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 
 Para cada imagen del corpus registrar: etiqueta anónima, SHA-256, tamaño en bytes, dimensiones originales, MIME declarado, firma detectada, orientación y si contiene transparencia.
 
+Como preparación, puede usarse el banco local JS/Tests/ThumbnailQualityBenchmark.html. Desde la raíz del repositorio, ejecutar `python -m http.server 8000` y abrir `/JS/Tests/ThumbnailQualityBenchmark.html`. Seleccionar solo muestras sintéticas/autorizadas. El banco no sube archivos ni los guarda; genera previews 300/800/1600, mide cola/proceso/encode y muestra MIME/firma/hash de resultados. La detección de alfa es muestreada y la memoria es estimada. No reemplaza las pruebas Beta de la aplicación real.
+
 Corpus mínimo:
 - Diagramas eléctricos con texto fino, números, colores de cables y símbolos.
 - Fotografías con detalle fino y zonas oscuras/iluminadas.
@@ -106,7 +108,7 @@ No forzar expiraciones reales si requieren esperar al TTL de YouTube; los estado
 ## 6. Evidencia y cierre
 
 - Guardar capturas de pantalla, métricas agregadas, SHA-256, tamaños, timestamps y resultados por escenario en el espacio aislado.
-- Separar pruebas locales ya aprobadas (293 suites / 3,435 pruebas en CI al 2026-11-22) de las pruebas Beta ejecutadas en este protocolo.
+- Separar pruebas locales ya aprobadas (HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; ThumbnailPriorityIntegration 15/15 y ThumbnailQualityBenchmarkContract 30/30) de las pruebas Beta ejecutadas en este protocolo.
 - Marcar cada caso PASS solo si se verificaron respuesta, persistencia, estado real y destino aislado.
 - Si aparece un defecto, conservar evidencia, reproducirlo y corregirlo en la rama de trabajo antes de repetir el escenario afectado.
 - No modificar límites, formatos, endpoints, permisos, deployments ni datos productivos durante la medición.

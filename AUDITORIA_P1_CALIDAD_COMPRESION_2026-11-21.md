@@ -70,3 +70,14 @@ Las muestras deben estar anonimizadas y alojadas en un entorno de prueba; no cop
 
 **P1 — medición de competencia visible/precarga y preparación de harness de rendimiento.** Revisar el disparo y las rutas de `cacheItemImages`, definir instrumentación aislada para tiempos/bytes/cola y comparar la precarga de los últimos 15 vehículos con una imagen que se vuelve visible. No alterar concurrencia 2 ni añadir cancelación hasta tener una prueba reproducible y definir la semántica de cancelación.
 
+
+
+## 6. Harness local para corpus técnico — 2026-11-22
+
+Se creó JS/Tests/ThumbnailQualityBenchmark.html para comparar las variantes 300/800/1600 px con archivos elegidos localmente. La herramienta usa la regla de escalado no ampliador y codificación PNG de la implementación, importa la cola real thumbnailCompressionQueue.js, encola tareas de precarga con prioridad 0 y promueve a prioridad 10 una variante 800 pendiente.
+
+Por muestra presenta dimensiones decodificadas, tamaño original, MIME declarado, firma binaria, SHA-256, orientación EXIF JPEG, alfa muestreado y previews. Por variante registra dimensiones, bytes, MIME/firma, SHA-256, alfa muestreado, espera de cola, tiempo de proceso, codificación y buffer Canvas estimado. No hace fetch/XHR, no usa IndexedDB/localStorage y no sube ni persiste los archivos. Para abrirlo desde la raíz del repositorio: python -m http.server 8000 y navegar a /JS/Tests/ThumbnailQualityBenchmark.html.
+
+**Validación:** ThumbnailQualityBenchmarkContract 30/30 PASS; ThumbnailPriorityIntegration 15/15 PASS. CI HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 archivos JS/MJS; referencias 343 archivos; health 7/7; Pages build/deployment SUCCESS.
+
+**Límites:** el alfa se inspecciona mediante una muestra 128×128; la memoria es una estimación del buffer Canvas. El harness no mide CORS, red, IndexedDB, GPU ni primera pintura de la aplicación real. No hay corpus técnico representativo en el repositorio. Siguiente: ejecutar con muestras sintéticas/autorizadas en Beta aislada y revisar visualmente diagramas, cableado, texto fino, transparencia y orientación antes de modificar compresión.

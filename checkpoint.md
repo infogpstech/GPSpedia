@@ -523,3 +523,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Pendientes relacionados:** medir el costo residual del get/set best-effort de Coordinator en Beta; no confundir Pages deployment con despliegue Apps Script.
 - **Contexto breve:** el inventario inicial de multimedia se corrigió porque la prioridad visible ya estaba implementada; ahora el contrato evita regresiones y la fase siguiente debe centrarse en calidad visual y mediciones reales.
 - **Estado:** prioridad visible/precarga VALIDADA localmente; calidad visual y rendimiento real PENDIENTES de corpus/Beta.
+
+
+## Actualización de continuidad vigente — 2026-11-22 (harness P1)
+
+- **Tarea realizada:** se creó JS/Tests/ThumbnailQualityBenchmark.html, una herramienta local para comparar variantes PNG 300/800/1600 sobre archivos seleccionados, sin subirlos ni persistirlos. Usa la cola real de miniaturas, simula precarga 0 y promoción visible 10, muestra dimensiones, bytes, MIME/firma, SHA-256, EXIF JPEG, alfa muestreado y tiempos.
+- **Contrato:** ThumbnailQualityBenchmarkContract 30/30 PASS; ThumbnailPriorityIntegration 15/15 PASS.
+- **Validación exacta del HEAD:** 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a. Regresión 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 archivos JS/MJS; referencias relativas 343 archivos; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Rama base:** GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Siguiente tarea:** usar el harness con corpus técnico sintético/autorizado en Beta aislada; revisar visualmente diagramas, texto fino, colores de cable, alfa y orientación. Después medir en la aplicación real CORS, cache hit/miss, primera pintura, bytes, CPU y memoria. No cambiar parámetros sin evidencia.
+- **Límite:** el harness mide el algoritmo local de escalado/codificación y la cola; no mide CORS, red, IndexedDB, memoria GPU ni primera pintura del producto en condiciones reales.
+- **Contexto breve:** el inventario no encontró corpus técnico en Git. La herramienta prepara una medición reproducible sin copiar imágenes de clientes al repositorio ni transmitir archivos.
+- **Estado:** herramienta y contratos COMPLETADOS localmente; corpus y mediciones Beta PENDIENTES.

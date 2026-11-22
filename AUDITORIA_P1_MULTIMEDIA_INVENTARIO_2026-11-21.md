@@ -83,3 +83,10 @@ La revisión del HEAD actual corrigió un dato desactualizado del inventario ini
 La ruta visible de `ui.js` establece CORS antes de cargar, muestra la imagen original y solo después intenta persistir una miniatura usando el mismo elemento `imgElement`; no dispara un segundo fetch. La precarga sí descarga con fetch CORS independiente. Se añadió `ThumbnailPriorityIntegration.mjs` al runner para fijar este contrato de integración. El CI del HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63 aprobó el contrato 15/15; la regresión integral aprobó 300 suites / 3,468 pruebas, 0 fallos. Sintaxis: 431 archivos JS/MJS; referencias: 342 archivos; health 7/7; Pages build/deployment SUCCESS.
 
 **Pendiente:** medición real de espera de cola, primera pintura, CPU, bytes, memoria y tareas que continúan tras cambiar de vista/sesión. No modificar concurrencia (2), tamaños (300/800/1600), PNG ni límites de caché sin corpus técnico y mediciones Beta.
+
+
+## 6. Preparación de medición local — 2026-11-22
+
+Se añadió JS/Tests/ThumbnailQualityBenchmark.html como herramienta de apoyo para el corpus Beta. Procesa archivos elegidos por el operador sin transmisión ni persistencia, compara 300/800/1600 px, reutiliza la cola real y muestra métricas de bytes, MIME/firma, SHA-256, EXIF JPEG, alfa muestreado y tiempos. Contrato 30/30 PASS en CI; regresión 301 suites / 3,498 pruebas / 0 fallos.
+
+La herramienta no aporta muestras ni sustituye las mediciones de la aplicación real. El siguiente paso sigue siendo obtener corpus técnico sintético/autorizado y ejecutar las pruebas de CORS, primera pintura, red, caché y memoria en Beta aislada.

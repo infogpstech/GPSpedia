@@ -193,3 +193,8 @@ Este CI confirma el código y los contratos locales de esa revisión. No desplie
 ## 13. CI de confirmación posterior — HEAD 1aa93ed (2026-11-22)
 
 Tras añadir el contrato P1 de prioridad de miniaturas, el HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63 volvió a superar la regresión integral: 300 suites / 3,468 pruebas / 0 fallos. Sintaxis: 431 archivos JS/MJS; referencias relativas: 342 archivos. Health read-only: 7/7 servicios. GitHub Pages build/deployment: SUCCESS. Esta validación no cambia el estado pendiente de medición Beta del costo residual de Coordinator.
+
+
+## 14. Regresión general posterior — HEAD 03b58ab (2026-11-22)
+
+El HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a volvió a aprobar 301 suites / 3,498 pruebas / 0 fallos. Sintaxis 432 archivos JS/MJS; referencias relativas 343 archivos; health read-only 7/7; Pages build/deployment SUCCESS. Se añadieron pruebas de prioridad de miniaturas y un harness local sin red/persistencia; la telemetría residual de Coordinator continúa pendiente de medición Beta.

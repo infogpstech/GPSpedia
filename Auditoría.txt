@@ -46,3 +46,11 @@
 - Sintaxis 431 archivos JS/MJS; referencias relativas 342; health read-only 7/7; Pages build/deployment SUCCESS.
 - Confirmada prioridad visible 10 frente a precarga 0, promoción de trabajo pendiente y reutilización de imagen cargada sin segundo fetch. No hay cancelación de tareas activas; no se añade sin medición.
 - Pendiente: corpus técnico representativo y mediciones reales de nitidez, alfa, primera pintura, CPU, red y memoria en Beta aislada.
+
+
+2026-11-22 — HERRAMIENTA LOCAL P1 PARA CORPUS DE MINIATURAS
+- Se añadió JS/Tests/ThumbnailQualityBenchmark.html: variantes 300/800/1600, preview comparativo, SHA-256, MIME/firma, EXIF JPEG, alfa muestreado, tiempos de cola/proceso/encode y buffer Canvas estimado.
+- La herramienta procesa archivos en el navegador, sin fetch/XHR, IndexedDB, localStorage, carga ni persistencia. Reutiliza la cola real y simula prioridad visible sobre precarga.
+- Contratos: ThumbnailQualityBenchmarkContract 30/30 PASS; ThumbnailPriorityIntegration 15/15 PASS.
+- HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 archivos; referencias 343; health 7/7; Pages SUCCESS.
+- No se dispone de corpus técnico representativo. Pendiente ejecutar con muestras autorizadas y medir CORS, red, caché, primera pintura, CPU y memoria en Beta aislada.

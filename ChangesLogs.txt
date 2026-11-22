@@ -1025,3 +1025,12 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Sintaxis Node 22: 431 archivos JS/MJS; referencias relativas: 342 archivos inspeccionados, todas resueltas.
 - Health read-only: 7/7 servicios SUCCESS; GitHub Pages build/deployment SUCCESS.
 - No se cambiaron parámetros de compresión, tamaños, concurrencia, TTL ni límites. Corpus técnico y mediciones de navegador siguen pendientes de Beta aislada.
+
+
+2026-11-22 — P1 harness local de calidad visual de miniaturas
+- Se añadió JS/Tests/ThumbnailQualityBenchmark.html para procesar localmente archivos seleccionados y comparar PNG 300/800/1600 px con la misma regla de escalado de GPSpedia.
+- Registra dimensiones, bytes, MIME/firma, SHA-256, orientación EXIF JPEG, transparencia muestreada, espera de cola, proceso/codificación y estimación del buffer Canvas.
+- Reutiliza thumbnailCompressionQueue.js y simula promoción de una precarga pendiente de prioridad 0 a visible 10. No usa fetch/XHR, IndexedDB, localStorage ni sube/persiste archivos.
+- Contrato ThumbnailQualityBenchmarkContract 30/30 PASS; ThumbnailPriorityIntegration 15/15 PASS.
+- CI HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; sintaxis 432 JS/MJS; referencias 343; health 7/7; Pages build/deployment SUCCESS.
+- Pendiente corpus técnico y mediciones reales en Beta aislada; el harness no reemplaza las pruebas de CORS/red/IndexedDB/primera pintura del producto.
