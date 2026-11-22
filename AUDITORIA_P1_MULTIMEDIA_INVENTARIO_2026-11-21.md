@@ -73,13 +73,13 @@ La presencia y lectura de las pruebas no equivale a ejecución. No se declara ni
 **P1 — compresión, redimensionado y calidad visual:** definir un corpus técnico representativo; contrastar dimensiones de origen y variantes, alfa PNG, diagramas/cableado, orientación, MIME/firma, metadatos y tamaños resultantes. En paralelo, preparar medición aislada de la cola visible/precarga. No modificar parámetros de compresión ni límites hasta obtener evidencia.
 
 ## Estado
-Inventario estático completado. Implementación y mediciones pendientes. No se ejecutaron pruebas ni se desplegó Apps Script; no se accedió ni modificó Drive/Spreadsheet productivos.
+Inventario estático completado. Implementación y mediciones pendientes. En la auditoría inicial no se ejecutaron pruebas ni se desplegó Apps Script; no se accedió ni modificó Drive/Spreadsheet productivos. La validación posterior del contrato de prioridad fue local/CI y tampoco desplegó Apps Script.
 
 
 ## 5. Revisión complementaria — prioridad de miniaturas (2026-11-22)
 
 La revisión del HEAD actual corrigió un dato desactualizado del inventario inicial: la cola no es FIFO simple. `thumbnailCompressionQueue.js` ordena prioridad descendente y FIFO dentro de cada nivel; `offline.js` usa prioridad 0 para precarga y 10 para imágenes ya visibles. Si una imagen visible coincide con una precarga pendiente de la misma variante, promueve esa tarea. No interrumpe trabajos activos.
 
-La ruta visible de `ui.js` establece CORS antes de cargar, muestra la imagen original y solo después intenta persistir una miniatura usando el mismo elemento `imgElement`; no dispara un segundo fetch. La precarga sí descarga con fetch CORS independiente. Se añade `ThumbnailPriorityIntegration.mjs` al runner para fijar este contrato de integración.
+La ruta visible de `ui.js` establece CORS antes de cargar, muestra la imagen original y solo después intenta persistir una miniatura usando el mismo elemento `imgElement`; no dispara un segundo fetch. La precarga sí descarga con fetch CORS independiente. Se añadió `ThumbnailPriorityIntegration.mjs` al runner para fijar este contrato de integración. El CI del HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63 aprobó el contrato 15/15; la regresión integral aprobó 300 suites / 3,468 pruebas, 0 fallos. Sintaxis: 431 archivos JS/MJS; referencias: 342 archivos; health 7/7; Pages build/deployment SUCCESS.
 
 **Pendiente:** medición real de espera de cola, primera pintura, CPU, bytes, memoria y tareas que continúan tras cambiar de vista/sesión. No modificar concurrencia (2), tamaños (300/800/1600), PNG ni límites de caché sin corpus técnico y mediciones Beta.
