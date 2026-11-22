@@ -14,3 +14,11 @@
 - Se conserva el resultado funcional ante fallo de PropertiesService y los scopes/atribución de eventos.
 - Contrato `SharedMutationCoordinator`: 95/95 PASS; incluye instrumentación para demostrar cero accesos a propiedades de telemetría mientras el lock está retenido.
 - Sin despliegue ni medición real de Apps Script. Pendiente TEL-01/TEL-03: contadores directos de USERS/WRITE/FEEDBACK y su semántica ADMIN.
+
+
+2026-11-22 — AMPLIACIÓN TEL-01/TEL-03: CONTADORES DIRECTOS AUTH/CATALOG/USERS/WRITE/FEEDBACK
+
+- Mapa confirmado: AUTH 1 acción, CATALOG 6 lecturas, USERS 1 acción, WRITE 3 consultas y FEEDBACK 40 acciones.
+- CATALOG adquiere ScriptLock con tryLock(0) y escribe PropertiesService mientras lo mantiene; otros cuatro servicios hacen lecturas/escrituras síncronas por petición.
+- FEEDBACK/getCatalogChanges se cuenta en FEEDBACK y Coordinator; el agregado ADMIN suma ambas fuentes.
+- Siguiente: retirar persistencia directa y el fan-out administrativo de cinco servicios, conservando diagnóstico global Coordinator y métricas locales del navegador.

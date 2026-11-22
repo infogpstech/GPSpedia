@@ -116,3 +116,40 @@ Se aplicó la primera corrección sin cambiar el protocolo compartido:
 **Validación contractual:** `SharedMutationCoordinator.js` ejecutado de forma aislada con dobles de PropertiesService/LockService: 95/95 PASS, 0 fallos. El harness detecta lecturas/escrituras de buckets mientras el lock está retenido y permite inyectar fallos de propiedades. Los contratos verifican cero accesos de telemetría bajo lock en acquire/feed, conservación del conteo y resultado funcional ante fallos.
 
 **Límite:** no se ha desplegado Apps Script ni medido latencia/contención real. La corrección TEL-02 queda COMPLETADA localmente con validación contractual; TEL-01/TEL-03 (persistencia directa por petición y doble conteo entre FEEDBACK/Coordinator) siguen pendientes.
+
+
+## 8. Ampliación de alcance — fuentes directas AUTH y CATALOG (2026-11-22)
+
+La primera revisión documentó USERS, WRITE y FEEDBACK, pero el agregado ADMIN consulta cinco fuentes directas. La inspección de sus routers y contratos amplía el hallazgo TEL-01:
+
+| Servicio | Acciones instrumentadas | Costo en la ruta |
+|---|---:|---|
+| AUTH | 1: `validateSession` | `getProperty` + `setProperty`; al abrir bucket nuevo, también `getProperties` y limpieza |
+| CATALOG | 6 lecturas: `getCatalogData`, `getDropdownData`, `getSuggestion`, `getNavigationData`, `getVehicleProjection`, `getContributionCandidates` | Adquiere `ScriptLock.tryLock(0)`; si lo obtiene, lee/escribe PropertiesService bajo ese lock. Si está ocupado, omite el contador sin esperar |
+| USERS | 1: `getUsers` | `getProperty` + `setProperty`; al abrir bucket nuevo, escaneo/limpieza |
+| WRITE | 3: `checkVehicle`, `getSuggestion`, `checkVinDuplicate` | `getProperty` + `setProperty`; al abrir bucket nuevo, escaneo/limpieza |
+| FEEDBACK | 40 acciones de lectura y mutación | `getProperty` + `setProperty`; al abrir bucket nuevo, escaneo/limpieza |
+
+Los contadores AUTH/USERS/WRITE/FEEDBACK no adquieren ScriptLock, pero sí realizan operaciones síncronas de PropertiesService antes de despachar la acción. CATALOG usa un lock no bloqueante: no espera si está ocupado, pero cuando lo obtiene mantiene el lock compartido durante su lectura/escritura de métrica. Ninguno de estos contadores es un control de seguridad ni un rate limit; son best-effort y pueden subcontar por carreras.
+
+### 8.1 Consumidores y semántica de ADMIN
+
+- `Coordinator.readServiceTraffic_` agrega los siete servicios y después consulta por `fetchAll` las cinco fuentes directas AUTH/CATALOG/USERS/WRITE/FEEDBACK.
+- ADMIN suma los contadores directos a las operaciones registradas por Coordinator y marca cobertura parcial cuando una fuente no está disponible.
+- La UI separa las solicitudes locales del navegador de las operaciones globales; el gráfico global no pretende representar todas las solicitudes HTTP.
+- AUTH/`validateSession` sí tiene consumidor en la validación/restauración de sesión del cliente.
+- FEEDBACK/`getCatalogChanges` está incluido en sus 40 acciones y también se registra en Coordinator como FEEDBACK; el agregado suma ambos contadores, por lo que una lectura puede aparecer dos veces.
+- CATALOG mide seis lecturas directas; el feed público se contabiliza en Coordinator como CATALOG. Son scopes diferentes y actualmente se suman.
+
+### 8.2 Decisión de rediseño
+
+Para cumplir NORMAS §15, la siguiente implementación debe retirar las escrituras y el lock de telemetría de las rutas ordinarias de las cinco fuentes directas. El diagnóstico ADMIN conservará el agregado de Coordinator, con alcance explícito de operaciones que obtuvieron lease, validaciones de contexto y feed que Coordinator registra; no se interpretará como total de requests. La telemetría local del navegador conservará su alcance de pestaña/dispositivo.
+
+El colector ADMIN no necesita consultar cinco servicios adicionales si el nuevo contrato declara que las lecturas directas no se recopilan. Se debe eliminar ese fan-out en el flujo nuevo y actualizar la descripción visual para distinguir:
+- operaciones registradas por Coordinator (global, best-effort);
+- solicitudes/bytes/latencia observados en el navegador actual (local);
+- health checks (diagnóstico independiente, no tráfico de usuario).
+
+No se deben mostrar contadores directos ausentes como ceros reales. El endpoint global seguirá restringido a Desarrollador y el refresco condicionado a visibilidad.
+
+**Estado de esta ampliación:** auditoría de los cinco scopes y consumidores COMPLETADA; cambios de los contadores directos y actualización del contrato ADMIN PENDIENTES.

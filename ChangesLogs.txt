@@ -977,3 +977,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-22 — corrección de contrato estático tras mover telemetría Coordinator
 - `ServiceTrafficAdminContract.mjs` se actualiza para reconocer los eventos de métrica diferidos fuera de `ScriptLock` y la versión Coordinator 1.4.6. El primer CI había fallado únicamente porque la expectativa estática aún exigía la llamada anterior; sintaxis modificada PASS, regresión completa de confirmación pendiente.
+
+
+2026-11-22 — ampliación de auditoría de telemetría: cinco fuentes directas
+- Se amplió TEL-01 a AUTH/validateSession, seis lecturas CATALOG, USERS/getUsers, tres consultas WRITE y 40 acciones FEEDBACK.
+- CATALOG usa ScriptLock.tryLock(0) y PropertiesService dentro del lock cuando lo obtiene; AUTH/USERS/WRITE/FEEDBACK persisten contadores síncronos por petición.
+- Confirmado doble conteo de FEEDBACK/getCatalogChanges entre contador directo y Coordinator; ADMIN fusiona cinco fuentes mediante fetchAll solo al refrescar el panel.
+- Decisión: retirar contadores directos de rutas ordinarias, mantener scopes Coordinator y telemetría local browser, actualizar ADMIN para declarar alcance y ausencia de datos sin inventar ceros. Evidencia en AUDITORIA_P0_TELEMETRIA_2026-11-22.md.

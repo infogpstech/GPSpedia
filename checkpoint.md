@@ -460,3 +460,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - La suite se actualiza para verificar el evento diferido de `acquire_`, las llamadas post-lock de feed/validación de sesión y la versión 1.4.6. No es un fallo funcional del cambio; la suite aislada de Coordinator había aprobado 95/95.
 - **Siguiente:** publicar el contrato corregido y repetir CI completo antes de continuar con el rediseño TEL-01/TEL-03.
 - **Estado:** corrección de test preparada; CI de confirmación PENDIENTE.
+
+
+## Ampliación de auditoría — telemetría directa de cinco servicios (2026-11-22)
+
+- **Tarea realizada:** se completó el mapa de los cinco contadores que alimentan ADMIN: AUTH/validateSession (1), CATALOG (6 lecturas), USERS/getUsers (1), WRITE (3 consultas) y FEEDBACK (40 acciones).
+- **Hallazgo adicional:** CATALOG intenta `ScriptLock.tryLock(0)` y realiza PropertiesService dentro del lock cuando lo obtiene; no espera si está ocupado, pero puede competir con operaciones del mismo proyecto. AUTH/USERS/WRITE/FEEDBACK hacen lecturas/escrituras síncronas de PropertiesService por petición y limpian buckets al abrir hora nueva.
+- **Doble conteo:** FEEDBACK/getCatalogChanges está en el contador directo FEEDBACK y Coordinator también lo registra; ADMIN suma ambas fuentes.
+- **Consumidor:** `Coordinator.readServiceTraffic_` hace `fetchAll` a cinco servicios para fusionar sus métricas; esto ocurre solo al consultar el panel ADMIN, no en cada acción ordinaria. La UI ya distingue tráfico global de solicitudes locales del navegador.
+- **Decisión de diseño:** retirar escrituras/lock de contadores directos de las rutas ordinarias; conservar un agregado global de eventos que Coordinator ya registra, claramente etiquetado como best-effort y no equivalente al total HTTP. Conservar métricas locales del navegador y RBAC/refresh del panel.
+- **Siguiente tarea:** implementar el contrato de telemetría global sin fuentes directas, retirar sus escrituras en AUTH/CATALOG/USERS/WRITE/FEEDBACK, eliminar el fan-out de cinco endpoints en la ruta nueva de ADMIN y actualizar UI/contratos para no presentar ausencia como cero.
+- **Estado:** auditoría de alcance/consumidores COMPLETADA; implementación TEL-01/TEL-03 PENDIENTE.
