@@ -1463,3 +1463,14 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Rama base `GPSpedia2.2.5` sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
 - Alcance: subtask de FEEDBACK cerrada en código y CI. La auditoría integral FEEDBACK sigue abierta.
 - Siguiente: continuar FEEDBACK revisando `appendFeedbackYearVehicleUpdateEvent_` y la recuperación/publicación de aplicaciones de año; después cerrar likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicaciones CATALOG antes de pasar a ADMIN. Validación de Drive/concurrencia real queda reservada a Beta aislada.
+
+
+## Checkpoint P1 FEEDBACK — eventos de ampliación con lecturas dirigidas (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; test actualizado: `JS/Tests/FeedbackYearApplicationAppendOnly.mjs` (ya registrado en `RunServiceTests.mjs`).
+- `appendFeedbackYearVehicleUpdateEvent_`: preflight de idempotencia localiza el `opId` exacto en columna B de `AportesVehiculo` con TextFinder y lee únicamente filas coincidentes de 11 columnas. Mantiene validación canónica de hash, vehicleId, kind, payload, actor y supersedesEventId.
+- Después de append, localiza el `eventId` exacto en columna A y lee únicamente filas coincidentes; exige exactamente una fila y valida sus campos antes de confirmar. El mock de hoja prueba inserción, replay idempotente, no duplicación y lectura dirigida.
+- CI HEAD `7be696dbc0903b9019034850c66d6e910246435a`: **292 suites / 3,406 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático estaba in_progress al momento de esta captura.
+- No se modificó Spreadsheet/Drive productivo, secretos, propiedades ni deployments Apps Script. Concurrencia real y recuperación de respuesta perdida quedan para Beta aislada.
+- Rama base `GPSpedia2.2.5` no modificada.
+- Siguiente: continuar auditoría FEEDBACK con likes, reportes/imágenes e Inbox; después vistas/actividad, PyS/tutoriales y publicaciones CATALOG. Cerrar cada subtask con pruebas, actualización de tareas/auditoría y checkpoint antes de continuar.
