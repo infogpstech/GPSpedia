@@ -105,7 +105,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Medir CORS, PNG alfa, cache hit/miss, primera pintura, bytes, memoria y cancelación en navegador real.
 - [x] Revisar prioridad visible/precarga, métricas y cancelación segura: la cola prioriza visibles y expone métricas; no se cancela trabajo compartido por falta de ownership/ref-count y porque la precarga alimenta caché global. CI 293 suites / 3,435 pruebas / 0 fallos.
 - [x] Auditoría estática del flujo YouTube completada; evidencia en AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md.
-- [ ] Trazar vídeos/YouTube y retirar consultas solo con medición.
+- [x] Trazar estáticamente el flujo de vídeo/YouTube: sesión resumable, bloques, checkpoints, recuperación, aprobación/rechazo y consultas del cliente/backend revisadas en `AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md`. No se retiran consultas sin medición; la idempotencia de init se difiere por riesgo de concurrencia y NORMAS §15.
 - [ ] Medir por separado cliente, red, Apps Script, Drive y proyección CATALOG.
 
 ### P2 — optimización y verificación integral
@@ -305,3 +305,9 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Rechazo explícito de aplicación no se reintenta; lote parcial ya persistido se recupera con reset.
 - [x] Regresión CI HEAD `9cde983eb6e95595519d74806d2ade03d385e126`: 296 suites / 3,457 pruebas / 0 fallos; health read-only SUCCESS.
 - [ ] Pages build/deployment del mismo HEAD: pendiente de finalización; no es deployment Apps Script.
+
+
+### P1 — trazado estático de consultas YouTube (2026-11-21)
+- [x] Revisar flujo cliente/backend, requests de inicialización, transferencia resumable, checkpoints, recuperación y aprobación/rechazo.
+- [x] No retirar consultas ni introducir persistencia/lease adicional sin medición o primitiva atómica lock-free; riesgo de sesión huérfana documentado sin duplicación de vídeo publicado.
+- [ ] Medir en Beta aislada las solicitudes cliente, red, Apps Script, Drive y proyección CATALOG; usar canal YouTube de prueba autorizado.

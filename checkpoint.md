@@ -354,3 +354,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Revisión del diff del commit `9cde983eb6e95595519d74806d2ade03d385e126`: solo `JS/Tests/SharedMutationCoordinator.js`, +48 líneas, 0 eliminaciones; commit padre `9e909c6a4146cf19f8d4a0f1504fb00fef7fac4b`.
 - CI: 296 suites / 3,457 pruebas / 0 fallos; health read-only SUCCESS. Pages build del mismo HEAD seguía en curso; no es requisito para la suite de servicios ni implica deployment Apps Script.
 - Siguiente: cerrar trazado estático de YouTube/consultas ya auditado, mantener sin cambios la inicialización no idempotente que no puede resolverse lock-free bajo NORMAS §15; después revisar pendientes locales multimedia y preparar verificación integral cuando el backlog local esté resuelto.
+
+
+## P1 — cierre del trazado estático de YouTube (2026-11-21)
+
+- Se completó el trazado del flujo de carga/aprobación: `opVideoId`, inicialización resumable, transferencia directa navegador→YouTube en bloques de 8 MiB, offset/checkpoints IndexedDB, pausa/reanudación, recuperación y ledger de aprobación/rechazo.
+- No se retiran consultas sin medición. No se añade persistencia/lock para `opVideoId → uploadUrl`: no hay primitiva atómica lock-free verificada y §15 prohíbe serializar cargas; riesgo bajo de sesión resumable huérfana, no de vídeo publicado duplicado.
+- Evidencia: `AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md`. Pendiente Beta: medir solicitudes por capa y probar canal aislado.
+- Las tareas locales de P1/P2 quedan cerradas; las mediciones/corpus/Drive/YouTube/browser reales permanecen como validaciones diferidas a Beta. Siguiente fase normativa: verificación técnica integral local (§11), sin incorporar nuevas mejoras.
