@@ -16,9 +16,21 @@ export async function runCatalogRequestWithRetry(request, options = {}) {
         const timeoutPromise = new Promise((_, reject) => { rejectTimeout = reject; });
         const externalAbortPromise = new Promise((_, reject) => { rejectExternalAbort = reject; });
         const onExternalAbort = () => { controller.abort(); rejectExternalAbort(createCatalogAbortError()); };
-        if (externalSignal) { externalSignal.addEventListener('abort', onExternalAbort, { once: true }); if (externalSignal.aborted) onExternalAbort(); }
+        if (externalSignal) {
+            externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+            if (externalSignal.aborted) {
+                externalSignal.removeEventListener('abort', onExternalAbort);
+                throw createCatalogAbortError();
+            }
+        }
         timer = setTimeout(() => { timedOut = true; controller.abort(); rejectTimeout(createCatalogTimeoutError(timeoutMs)); }, timeoutMs);
-        try { return await Promise.race([Promise.resolve().then(() => request(controller.signal)), timeoutPromise, externalAbortPromise]); }
+        try {
+            const requestPromise = Promise.resolve().then(() => {
+                if (externalSignal && externalSignal.aborted) throw createCatalogAbortError();
+                return request(controller.signal);
+            });
+            return await Promise.race([requestPromise, timeoutPromise, externalAbortPromise]);
+        }
         catch (caughtError) { if (externalSignal && externalSignal.aborted) throw createCatalogAbortError(); retryError = timedOut ? createCatalogTimeoutError(timeoutMs) : caughtError; if (attempt >= retries || !isRetryableCatalogError(retryError)) throw retryError; }
         finally { if (timer !== null) clearTimeout(timer); if (externalSignal) externalSignal.removeEventListener('abort', onExternalAbort); }
         await waitForCatalogRetry(baseDelayMs * Math.pow(2, attempt), externalSignal);
