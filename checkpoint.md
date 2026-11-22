@@ -1484,3 +1484,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Test específico: FeedbackLikeCompletedReplayPreflight **7/7 PASS**. CI HEAD `8f448e1bb651bfcd0e3577954bdf94d6ad6dc456`: **292 suites / 3,406 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático en curso al momento de checkpoint.
 - No se modificaron datos productivos, endpoints, secretos, propiedades ni deployments Apps Script. La rama base `GPSpedia2.2.5` permanece intacta.
 - Siguiente: revisar rutas FEEDBACK de reportes/imágenes e Inbox; luego vistas/actividad, PyS/tutoriales y publicación CATALOG. Cada subtask debe cerrar con pruebas y checkpoint antes de avanzar.
+
+
+## Checkpoint P1 FEEDBACK/Inbox — deduplicación dirigida de auditoría (2026-11-22)
+
+- Código: `JS/Services/InboxConversations.js`; prueba: `JS/Tests/InboxConversations.mjs`.
+- `inboxAppendAudit_` busca `messageId` exacto en columna G con TextFinder y lee solo filas coincidentes; comprueba actor, acción y messageId. Si messageId no existe, no consulta el historial. La escritura de auditoría conserva append + read-back.
+- Se amplió FakeSheet con TextFinder y se añadió prueba de reintento deduplicado, ubicación en columna G y ausencia de búsqueda para eventos sin messageId.
+- InboxConversations: **67/67 PASS**. CI HEAD `75bf48cb4efd89d81e126e6d518aa82f712c7512`: **292 suites / 3,407 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático estaba waiting/in_progress al momento del checkpoint.
+- Rama base `GPSpedia2.2.5` sin cambios; no se tocaron hojas productivas ni deployments Apps Script.
+- Siguiente: continuar auditoría FEEDBACK de reportes/imágenes; luego vistas/actividad, PyS/tutoriales y publicación CATALOG. Cada subtask se valida y registra antes de pasar a la siguiente.
