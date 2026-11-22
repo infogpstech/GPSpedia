@@ -814,3 +814,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Hallazgo A06-04:** tráfico global es agregado de eventos Coordinator, no todas las solicitudes HTTP. No incluye rutas directas, health checks ni llamadas no instrumentadas. Las métricas locales solo describen el navegador actual.
 - **Límite:** health endpoint no prueba dependencias Sheets/Drive; Beta requiere pruebas funcionales separadas.
 - **Siguiente:** implementar A05-01 (actor/fecha en etapa 3 y ledger), después A05 dashboard, luego A06-03 y A06-04.
+
+
+## A07-01 a A07-03 auditadas — escáner e inventario de imágenes — 2026-11-22
+
+- **Avance:** el backend del escáner sí pagina y devuelve conteos/metricas; el frontend presenta archivos y progreso.
+- **Hallazgo UI:** la salida se crea como "Consola de Cortes" dentro de audit-drive-modal; no está integrada a la consola global del panel Desarrollador.
+- **Hallazgo de inventario:** el registro requiere presionar "Registrar inventario" y confirmar; solo envía archivos "Sin uso detectado". No registra automáticamente todas las imágenes encontradas.
+- **Hallazgo de asociación:** el escáner no asigna modelo/vehículo. El reconciliador usa coincidencia exacta del nombre de archivo con baseName de celda destino; ignora modelo en nombre de carpeta.
+- **Siguiente tarea:** A05-01: implementar actor/fecha/opId para aportes suplementarios de add_cortes etapa 3. Después A05-02 dashboard y A06-03/A06-04 panel; continuar A07-04..06 con diseño de inventario seguro y pruebas.
+- **Contexto de seguridad:** las asociaciones deben ser sugerencias auditables; nunca reasignar ni sobrescribir automáticamente una referencia existente. Mantener sesión actor cacheada y autorización de rol, sin validación remota por cada llamada.

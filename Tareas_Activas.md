@@ -564,3 +564,10 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A06-02: auditar panel de salud y métricas; escaneo general cubre 7 servicios, detalle incluye HTTP/latencia/versión/última respuesta, métricas globales Coordinator y navegador local.
 - [ ] A06-03: al seleccionar servicio, ejecutar ping fresco individual y actualizar detalle sin volver a escanear todos los servicios.
 - [ ] A06-04: decidir si se requiere telemetría global de todas las solicitudes HTTP; la actual solo cuenta eventos Coordinator y excluye rutas directas/no coordinadas.
+
+- [x] A07-01 auditoría del escáner: conteos/progreso paginados existen; la consola vive dentro de audit-drive-modal, no en consola global del desarrollador.
+- [x] A07-02 auditoría de inventario: registro manual, con botón/confirmación, solo para "Sin uso detectado"; no registro automático de cada imagen encontrada.
+- [x] A07-03 auditoría de asociación: no relaciona imágenes con modelos desde carpeta/nombre; reconciliador actual usa nombre canónico exacto de destino y no resuelve modelos.
+- [ ] A07-04 diseñar e implementar registro idempotente automático en Imagenes_Reemplazadas sin sobrescribir historial, estados manuales ni referencias.
+- [ ] A07-05 mover salida/progreso del escáner a consola global del panel desarrollador y conservar conteos detallados, resultados y reanudación.
+- [ ] A07-06 implementar asociación sugerida por modelo basada en nombre/carpeta/alias, con revisión de ambigüedad y sin reasignación automática.

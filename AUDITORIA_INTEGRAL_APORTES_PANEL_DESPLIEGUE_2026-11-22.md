@@ -301,3 +301,18 @@ El primer CI del cambio de caché FileReader falló en dos pruebas del harness, 
 **Limitación funcional confirmada:** seleccionar una tarjeta solo cambia `selectedServiceKey` y renderiza el resultado del último escaneo; no ejecuta una comprobación fresca del servicio seleccionado. El tráfico global tampoco representa todas las solicitudes HTTP: Coordinator registra adquisiciones nuevas de lease, validaciones de contexto y feed; excluye rutas directas no coordinadas, sondeos de salud y solicitudes no instrumentadas. El propio panel/documento lo advierte, pero no debe llamarse contador global completo.
 
 **Salud de dependencias:** el endpoint solo confirma identidad/versión/estado del endpoint; no comprueba Sheets ni Drive. La guía y `SERVICE_HEALTH.md` declaran esta limitación.
+
+
+### A07-01 — escáner de imágenes y registro automático
+
+**Avance/conteos:** el backend pagina Drive con cursor reanudable, conteos de descubiertas/analizadas/carpetas/errores/duplicados y métricas por lote. El frontend los presenta y registra rutas y resultados por archivo. Esto sí existe en código, sujeto a prueba real Beta.
+
+**Ubicación de salida:** el escáner se inicia desde `openAuditDriveModal()` y crea una consola `Consola de Cortes` dentro de `audit-drive-modal`. No usa la consola global del panel Desarrollador. Hallazgo: incumple el requisito de que el avance, conteos y contenido aparezcan en la consola del desarrollador sin un modal separado.
+
+**Registro de imágenes:** no es automático. Al finalizar, la interfaz habilita `btn-audit-drive-save-inventory`; `saveUnusedInventory()` pide confirmación y luego llama a `saveUnusedImagesInventory`. El backend solo recibe archivos clasificados `Sin uso detectado`; los estados `En uso`, `Histórica` y `No verificable` no se registran por esa ruta. Hallazgo: la solicitud de registro automático de cada imagen encontrada en `Imagenes_Reemplazadas` no está implementada. Antes de automatizar debe definirse un upsert idempotente, preservar estados manuales, no sobrescribir registros de reemplazo ni marcar imágenes con referencias no verificables como huérfanas.
+
+### A07-02 — asociación de imágenes con modelos de vehículos
+
+**Hallazgo confirmado:** el recorrido de Drive entrega `fileName` y `folderPath`, pero la clasificación del escáner se basa en referencias activas/protegidas, historial, MIME y verificabilidad de referencias. No genera `vehicleId`, modelo ni relación con vehículo. El reconciliador separado `buildCortesImageReconciliationPlan_` solo hace match por nombre canónico exacto entre el nombre de archivo (sin extensión) y `target.baseName`; no extrae modelos de nombres de carpeta ni resuelve alias de vehículos. Por tanto, la asociación pedida no está implementada.
+
+**Plan de resolución:** construir un índice de vehículos/alias desde catálogo; normalizar nombres de archivo y ruta; asociar solo coincidencias inequívocas; devolver candidatos y score/razón; dejar ambiguos/no reconocidos en revisión; no escribir URLs ni reasignar referencias automáticamente. Añadir pruebas con marcas/modelos/alias, nombres con sufijos y carpetas anidadas, homónimos y falsos positivos.
