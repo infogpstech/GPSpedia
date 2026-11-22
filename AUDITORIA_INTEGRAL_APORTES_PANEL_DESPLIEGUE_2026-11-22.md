@@ -349,3 +349,12 @@ La agregación incorpora aliases desde eventos aceptados `cut`, `opening` y `fee
 **Validación:** CI `83fbc9d64b4354a64b1a0adb7388a9ab5830a949`: 303 suites / 3,552 pruebas / 0 fallos; ActivityDashboardContributions 3/3; health read-only 7/7 y Pages SUCCESS. No hubo deployment de Apps Script ni escrituras reales.
 
 **Siguiente bloque:** A02-10 — FileReader en navegador real Android/escritorio y medición de latencia.
+
+
+### A02-10 — FileReader browser runtime (2026-11-22)
+
+Se añadió un workflow Playwright que ejecuta el helper `fileToBase64` extraído del HTML de producción en Chromium de escritorio y en perfil Android emulado. Para una imagen PNG de 1 MiB: desktop 4.8 ms y Android emulado 5.6 ms; el acceso cacheado midió 0 ms. Dos consumidores concurrentes y un tercer acceso reutilizaron la misma Promise, con una sola llamada real a FileReader por perfil. El viewport móvil se fijó en 412x915.
+
+Se publicó un harness manual que obtiene el helper de `HTML/add_cortes.html`, acepta un archivo local y presenta user agent, tamaño/MIME, número de lecturas y latencia. No envía el archivo. URL: `https://infogpstech.github.io/GPSpedia/JS/Tests/FileReaderBrowserHarness.html`.
+
+**Estado:** EN PROGRESO. CI browser 2/2 PASS; regresión de servicios SUCCESS; health read-only 7/7 y Pages SUCCESS en SHA `d5b1227fb53c4a8346c214b36f228ab3a1b4a549`. Falta la ejecución en un teléfono Android físico; Playwright solo emula el perfil Android en Linux.

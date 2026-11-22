@@ -1110,3 +1110,11 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Límite identificado: las altas iniciales de vehículo escriben el corte directamente en Cortes y no generan evento kind=cut en AportesVehiculo; tras borrar la cuenta, esa fila histórica solo puede atribuirse por nombre. No se alteró ese flujo porque insertar un evento append-only sin adaptar la proyección CATALOG podría duplicar el corte.
 - CI SHA `83fbc9d64b4354a64b1a0adb7388a9ab5830a949`: 303 suites / 3,552 pruebas / 0 fallos; ActivityDashboardContributions 3/3 PASS; syntax PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - No se desplegó Apps Script ni se escribieron datos reales.
+
+
+2026-11-22 — A02-10 avance: FileReader en navegador real y medición
+- Se agregó un workflow Playwright que extrae el helper exacto `fileToBase64` desde `HTML/add_cortes.html` y lo ejecuta en Chromium real de CI, tanto en perfil escritorio como en emulación Android.
+- Resultado CI SHA `d5b1227fb53c4a8346c214b36f228ab3a1b4a549`: desktop 1 MiB PNG = 4.8 ms; móvil emulado 1 MiB PNG = 5.6 ms; lookup cacheado 0 ms en ambos. En cada perfil se observó una sola llamada FileReader para dos consumidores concurrentes y un tercer acceso cacheado; misma Promise y mismo resultado.
+- Se publicó harness manual que carga el código de producción y permite medir una imagen local sin enviarla. URL: `https://infogpstech.github.io/GPSpedia/JS/Tests/FileReaderBrowserHarness.html`.
+- Regresión de servicios SUCCESS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS. La medición CI no representa el rendimiento físico de un Android.
+- **Pendiente para cerrar A02-10:** ejecutar el harness en Chrome Android físico y registrar el JSON; desktop físico puede medirse con la misma página.

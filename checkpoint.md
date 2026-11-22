@@ -868,3 +868,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite pendiente:** los cortes de altas iniciales de vehículo se guardan directamente en `Cortes` sin evento `kind=cut`; al eliminar la cuenta, esa atribución histórica queda por nombre. No se añade un evento sin adaptar CATALOG porque podría duplicar el corte ya proyectado.
 - **Siguiente:** A02-10 — completar prueba de FileReader en navegador real Android/escritorio y medir latencia de carga, no solo CI.
 
+
+
+## A02-10 EN CURSO — prueba FileReader en navegador — 2026-11-22
+
+- **Implementado:** workflow Playwright `.github/workflows/file-reader-browser.yml` y test `JS/Tests/FileReaderBrowserRuntime.mjs`. El test extrae el helper exacto desde `HTML/add_cortes.html`, lo ejecuta en Chromium real de CI y mide una imagen PNG de 1 MiB en perfil escritorio y emulación Android.
+- **Resultados CI:** desktop 4.8 ms; Android Chrome emulado 5.6 ms; acceso cacheado 0 ms. En ambos: una sola instancia FileReader para dos consumidores simultáneos + tercer acceso cacheado, misma Promise y contenido idéntico. Viewport escritorio 1365x768; móvil 412x915.
+- **Harness físico:** `JS/Tests/FileReaderBrowserHarness.html`, publicado en `https://infogpstech.github.io/GPSpedia/JS/Tests/FileReaderBrowserHarness.html`. Carga el helper de producción y mide una imagen local sin subirla.
+- **Validación CI del commit** `d5b1227fb53c4a8346c214b36f228ab3a1b4a549`: browser 2/2 PASS; regresión de servicios SUCCESS; health read-only 7/7; Pages SUCCESS. Rama base `GPSpedia2.2.5` permanece intacta.
+- **Pendiente:** el perfil Android de Playwright es emulación Linux, no un teléfono físico. Para cerrar la tarea se necesita ejecutar el harness desde Chrome Android real y guardar el JSON resultante; el rendimiento medido en CI no debe extrapolarse al teléfono.
+- **Siguiente paso inmediato:** abrir el harness desde el teléfono Android, seleccionar una imagen de prueba y compartir el JSON de resultados.
