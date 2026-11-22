@@ -159,3 +159,8 @@ El primer CI del SHA ef13ccb1541d0c6410905bf9c4c2b363315c896a detectó dos fallo
 2. SupplementaryVideoContract.js seguía esperando la respuesta antigua data.cortes[] y el endpoint getCatalogData(forceRefresh), por lo que su contrato quedó desactualizado tras cambiar a getVehicleProjection.
 
 Se actualizan ambos contratos para el nuevo shape {status, vehicle, source}, y se conserva la prueba de rechazo de ID/campos incorrectos. El CI debe repetirse antes de dar A02-02 por validada.
+
+
+### Ajuste del contrato suplementario de vídeo
+
+Se corrigió el último caso de prueba para que la validación de slot se ejecute con una respuesta de proyección dirigida válida, pero sin slot devuelto por WRITE. Así el test comprueba el contrato de slot y no pasa accidentalmente por falta de objeto vehicle.

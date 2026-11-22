@@ -657,3 +657,9 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Corrección:** se agregó el extractor al test y se actualizó SupplementaryVideoContract al contrato getVehicleProjection que devuelve {status, vehicle, source}; se mantiene validación de vehículo y campos.
 - **Estado:** pruebas corregidas, CI pendiente. No se marca A02-02 como completada hasta que la regresión vuelva a 0 fallos.
 - **Siguiente:** CI completo del commit correctivo.
+
+
+## Ajuste final del contrato A02-02 — 2026-11-22
+
+- **Tarea realizada:** el test SupplementaryVideoContract ahora suministra una proyección válida al probar ausencia de slot, para que falle por la condición correcta y no por respuesta sin vehículo.
+- **Siguiente:** repetir CI de A02-02 y revisar los resultados focalizados.

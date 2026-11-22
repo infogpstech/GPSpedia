@@ -206,7 +206,7 @@ function runSupplementaryVideoContractTests(sources) {
         catch (_) { rejected = true; }
         assert_(rejected);
     });
-    run_("Etapa 3 rechaza catálogo sin el vehículo", async () => {
+    run_("Etapa 3 rechaza respuesta sin proyección del vehículo", async () => {
         let rejected = false;
         try { await verify({ status: "success", vehicleId: "V-1", slotIndex: 2 }, payload,
             async () => ({ status: "success" })); }
@@ -230,7 +230,7 @@ function runSupplementaryVideoContractTests(sources) {
     run_("Etapa 3 requiere slot devuelto por WRITE si envió cable", async () => {
         let rejected = false;
         try { await verify({ status: "success", vehicleId: "V-1" }, payload,
-            async () => ({ status: "success", data: { cortes: [saved] } })); }
+            async () => ({ status: "success", vehicle: saved })); }
         catch (_) { rejected = true; }
         assert_(rejected);
     });

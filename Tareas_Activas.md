@@ -490,3 +490,5 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Registrar fallo inicial de CI A02-02: helper extractFunction faltante en AddCortesDiagnostics y contrato SupplementaryVideoContract desactualizado respecto a getVehicleProjection.
 - [x] Corregir los dos contratos focalizados para respuesta dirigida {status, vehicle, source}.
 - [ ] Repetir CI completo; A02-02 no se cierra hasta 0 fallos.
+
+- [x] Afinar prueba de slot: respuesta dirigida válida con slot ausente debe ser rechazada por el contrato de WRITE.
