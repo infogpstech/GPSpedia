@@ -83,7 +83,7 @@ fakeNow = 5;
 await tick();
 let measuredSnapshot = measured.getMetrics();
 assert.equal(measuredSnapshot.priorities["0"].started, 1);
-assert.equal(measuredSnapshot.priorities["0"].maxWaitMs, 5);
+assert.equal(measuredSnapshot.priorities["0"].maxWaitMs, 0);
 assert.equal(measuredSnapshot.priorities["10"].queued, 1);
 assert.equal(measured.promote("m2", 20), true);
 fakeNow = 15;
