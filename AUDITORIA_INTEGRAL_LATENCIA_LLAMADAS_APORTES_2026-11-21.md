@@ -566,3 +566,14 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - La poda sincroniza la copia en memoria con setProperty/deleteProperty. Se mantienen orden, huecos/corruptos => reset, retención máxima, requestId idempotente, recuperación de lotes parciales y control de sourceVersion.
 - `CatalogChangeFeed.mjs`: **36/36 PASS**, incluyendo reintento idempotente y lectura incremental sin getProperty para eventos. CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy in_progress al documentar.
 - No se cambiaron datos de catálogo ni propiedades de producción; solo se modificó la lógica del Coordinator.
+
+
+## P1 CATALOG — auditoría de callers y frecuencia de publicación (2026-11-22)
+
+- WRITE: publicación de Cortes ocurre después de liberar el lock físico; versión temporal monotónica, snapshot exacto y fallback reset. Contrato `WriteCatalogPublicationIsolation` **7/7 PASS**.
+- FEEDBACK: `recordLike` invalida solo cuando el like nuevo queda confirmado y `alreadyLiked` es falso; sugerencia de año publica solo tras aplicación confirmada; approve/reject valida targetType/contentType y publica una vez, con reset de recuperación si no puede obtener snapshot exacto; PyS/Tutorial publican desde el wrapper después de validar ID y fila persistida. Contrato `FeedbackCatalogPublicationIsolation` **5/5 PASS**.
+- ADMIN: cambios múltiples se publican en chunks de hasta 50, con sourceVersion creciente y requestId para reintentos; fallos parciales terminan en reset de recuperación. Contrato `AdminCatalogPublicationIsolation` **6/6 PASS**.
+- No se encontraron publicaciones duplicadas dentro de los handlers de mutación: los publicadores `publishPysCatalogChange_`, `publishTutorialCatalogChange_` y `publishFeedbackCortesCatalogChange_` son invocados por el wrapper de respuesta, no desde los handlers internos; WRITE y ADMIN publican una vez por operación/lote.
+- Feed: `CatalogChangeFeed` **36/36 PASS**, incluidos requestId idempotente, lotes parciales, cursor, retención, sourceVersion y reset ante corrupción/huecos.
+- CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy in_progress al documentar.
+- Se conserva la separación: snapshots completos solo para carga inicial, reset/cursor vencido y recuperación; navegación normal consume deltas. No se cambió el comportamiento de publicación.
