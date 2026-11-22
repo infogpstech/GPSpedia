@@ -26,6 +26,29 @@ function makeSheet(rows = []) {
                 getValues() {
                     return Array.from({ length: count }, (_, i) =>
                         Array.from({ length: width }, (_, j) => self.rows[row - 1 + i]?.[col - 1 + j] ?? ""));
+                },
+                createTextFinder(needle) {
+                    let matchCase = false, matchEntireCell = false;
+                    const finder = {
+                        matchCase(value) { matchCase = value; return finder; },
+                        matchEntireCell(value) { matchEntireCell = value; return finder; },
+                        findAll() {
+                            const target = String(needle);
+                            const matches = [];
+                            for (let offset = 0; offset < count; offset++) {
+                                for (let column = 0; column < width; column++) {
+                                    const raw = self.rows[row - 1 + offset]?.[col - 1 + column] ?? "";
+                                    const actual = matchCase ? String(raw) : String(raw).toLowerCase();
+                                    const expected = matchCase ? target : target.toLowerCase();
+                                    if (matchEntireCell ? actual === expected : actual.includes(expected)) {
+                                        matches.push({ getRow() { return row + offset; } });
+                                    }
+                                }
+                            }
+                            return matches;
+                        }
+                    };
+                    return finder;
                 }
             };
         },
@@ -104,6 +127,29 @@ test("un ledger malformado o un opId conflictivo no se interpreta como rango vig
         { anoDesde: 1, anoHasta: 2 }, () => ({ getSheetByName: () => conflict })
     );
     assert.equal(readConflict("101", [2018, 2020]).anoDesde, "2018");
+});
+
+test("la búsqueda idempotente y el read-back de vehicle_update leen solo filas coincidentes", () => {
+    const ledger = makeSheet();
+    let fullWidthRangeReads = 0;
+    const originalGetRange = ledger.getRange.bind(ledger);
+    ledger.getRange = (row, col, count = 1, width = 1) => {
+        if (row > 1 && width === headers.length) fullWidthRangeReads++;
+        return originalGetRange(row, col, count, width);
+    };
+    const append = new Function("Utilities", "getSpreadsheet", "SpreadsheetApp",
+        extract("appendFeedbackYearVehicleUpdateEvent_") + "\nreturn appendFeedbackYearVehicleUpdateEvent_;")(
+        makeUtilities(), () => ({ getSheetByName: () => ledger }), { flush() {} }
+    );
+    const application = { row: ["YSA-12345678901234567890123456789012"] };
+    const first = append(application, "101", "anoDesde", 2018, 2020, "");
+    assert.equal(first.duplicate, false);
+    assert.equal(fullWidthRangeReads, 1, "Solo se lee la fila recién anexada para confirmar el eventId.");
+    const replay = append(application, "101", "anoDesde", 2018, 2020, "");
+    assert.equal(replay.duplicate, true);
+    assert.equal(replay.eventId, first.eventId);
+    assert.equal(fullWidthRangeReads, 2, "Replay lee una fila coincidente y no el ledger completo.");
+    assert.equal(ledger.rows.length, 2);
 });
 
 test("append de ampliación es idempotente y rechaza reutilizar opId con otro contenido", () => {
