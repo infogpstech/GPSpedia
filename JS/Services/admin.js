@@ -11625,10 +11625,12 @@ function syncContributionCandidateImageInventory_(currentCandidates, inventoryEv
         const headers = ensureReplacedImagesInventoryColumns(sheet);
         const column = name => headers.indexOf(name);
         const existingRows = sheet.getDataRange().getValues();
-        const rowById = new Map();
+        const rowById = new Map(), duplicateInventoryIds = new Set();
         for (let i = 1; i < existingRows.length; i++) {
             const id = String(existingRows[i][0] || "").trim();
-            if (id && !rowById.has(id)) rowById.set(id, { rowNumber: i + 1, values: existingRows[i] });
+            if (!id) continue;
+            if (rowById.has(id)) duplicateInventoryIds.add(id);
+            else rowById.set(id, { rowNumber: i + 1, values: existingRows[i] });
         }
         const appendRows = [];
         preparedRecords.forEach(prepared => {
@@ -11662,8 +11664,32 @@ function syncContributionCandidateImageInventory_(currentCandidates, inventoryEv
             set("resultado_inventario", "candidato_registrado");
             set("detalle_resultado_inventario", "Imagen asociada a un aporte de corte/apertura/alimentación para revisión ADMIN.");
 
+            if (duplicateInventoryIds.has(inventoryId)) {
+                result.errors.push({ eventId, message: "Hay varias filas con el mismo id_reemplazo; no se modificó ninguna." });
+                result.skipped++;
+                return;
+            }
             const existing = rowById.get(inventoryId);
             if (existing) {
+                const existingValue = name => {
+                    const index = column(name);
+                    return index >= 0 ? String(existing.values[index] || "").trim() : "";
+                };
+                const identityMatches =
+                    String(existing.values[2] || "").trim() === "aporte_candidato" &&
+                    String(existing.values[3] || "").trim() === String(event[2] || "").trim() &&
+                    String(existing.values[4] || "").trim() === String(event[4] || "").trim() &&
+                    String(existing.values[5] || "").trim() === fileId &&
+                    String(existing.values[7] || "").trim() === imageUrl &&
+                    existingValue("origen_registro") === "aporte_vehiculo" &&
+                    existingValue("tipo_registro") === "candidata_aporte" &&
+                    existingValue("ultima_auditoria_id") === eventId &&
+                    existingValue("ultima_operacion_inventario_id") === String(event[1] || eventId).trim();
+                if (!identityMatches) {
+                    result.errors.push({ eventId, message: "El id_reemplazo existente no coincide con la identidad del evento; se conservó sin cambios." });
+                    result.skipped++;
+                    return;
+                }
                 const currentStatus = String(existing.values[10] || "").trim();
                 if (currentStatus === "requiere_revision" && currentStatus !== record.status) {
                     sheet.getRange(existing.rowNumber, 11).setValue(record.status);
@@ -11760,6 +11786,9 @@ function handleGetReplacedImages(payload, logMessage) {
     if (duplicateDriveGroups.length) warnings.push("Se detectaron " + duplicateDriveGroups.length + " IDs de Drive duplicados. Las filas afectadas no habilitan acciones; usa el enlace de reconciliación para revisar la hoja.");
     logMessage && logMessage("Historial e inventario de imágenes", "Se consultaron " + data.length + " registros válidos y se enviaron " + review.length + " filas a revisión; " + duplicateDriveGroups.length + " grupos de Drive duplicados.");
     if (candidateInventorySync.status === "error") warnings.push("No se pudo sincronizar el inventario de imágenes candidatas: " + candidateInventorySync.message);
+    else if (Array.isArray(candidateInventorySync.errors) && candidateInventorySync.errors.length) {
+        warnings.push("Se omitieron " + candidateInventorySync.errors.length + " registros candidatos por conflictos de identidad en el inventario; las filas se conservaron sin cambios.");
+    }
     return { status: "success", data: data.reverse(), review, schemaStatus: schema.missingHeaders.length ? "migration_required" : "ready",
         missingHeaders: schema.missingHeaders, referenceCheckStatus, warnings, duplicateDriveIdCount: duplicateDriveGroups.length,
         candidateInventorySync };
