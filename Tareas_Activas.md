@@ -55,7 +55,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] P0.2 — Instrumentación local del router: bytes UTF-8 de request/response, duración, promedio y p50/p95 de duración/tamaños sobre hasta 200 eventos efímeros por pestaña. Sin persistencia ni requests adicionales. **COMPLETADA CON VALIDACIÓN DIFERIDA**; CI: 277 suites, 3,226 pruebas, 0 fallos.
 - [ ] Línea base Beta por flujo: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. Medición real requiere navegador y entorno aislado.
 - [x] Auditoría estática de telemetría completada: USERS/WRITE/FEEDBACK persisten contadores en PropertiesService por petición y Coordinator los escribe dentro de ScriptLock. Evidencia: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
-- [ ] Rediseñar la persistencia de métricas para que no añada escrituras síncronas por acción ni amplíe secciones críticas; preservar el diagnóstico útil del panel ADMIN y cubrirlo con contratos antes de retirar contadores.
+- [x] TEL-02 — Coordinator: mover la persistencia de métricas de adquisición de leases, validación de contexto y lectura del feed fuera de `ScriptLock`; conservar scopes y conteo de operaciones nuevas.
+- [x] Contratos Coordinator: verificar que las métricas no acceden a PropertiesService dentro del lock y que fallos de persistencia no alteran lease/feed; 95/95 PASS en ejecución aislada.
+- [ ] TEL-01/TEL-03 — rediseñar contadores directos USERS/WRITE/FEEDBACK y resolver el doble conteo de `getCatalogChanges` sin perder diagnóstico ni scopes ADMIN.
 - [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
 
 ### P0 — AUTH/USERS y excepciones de sesión
@@ -354,5 +356,6 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Confirmar scopes y frecuencia del agregado ADMIN; el panel está restringido a Desarrollador y el refresco se condiciona a visibilidad.
 - [x] Registrar hallazgos TEL-01 a TEL-04 en `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
 - [ ] Diseñar e implementar reducción del costo síncrono de métricas; no retirar el diagnóstico sin contrato alternativo.
-- [ ] Añadir pruebas de fallo de telemetría, ausencia de requests/locks adicionales y duración de sección crítica sin persistencia de métricas.
-- **Estado:** auditoría estática COMPLETADA; corrección y contratos PENDIENTES.
+- [x] Añadir contratos de Coordinator: ausencia de acceso a PropertiesService de telemetría bajo ScriptLock y preservación del resultado ante fallos; 95/95 PASS.
+- [ ] Completar corrección de contadores directos USERS/WRITE/FEEDBACK y su contrato alternativo.
+- **Estado:** TEL-02 Coordinator COMPLETADO localmente; TEL-01/TEL-03 PENDIENTES.

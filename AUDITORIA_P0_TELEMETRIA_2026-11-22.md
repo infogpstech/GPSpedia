@@ -101,3 +101,18 @@ No se midió latencia ni contención real. Las severidades describen exposición
 - Sintaxis y regresión: no aplican; no se modificó código.
 - Pruebas de rendimiento/contención: no ejecutadas; requieren harness reproducible y, para métricas reales de Apps Script/PropertiesService, Beta aislada.
 - No se desplegó Apps Script ni se modificaron secretos, propiedades, Spreadsheet, Drive o datos productivos.
+
+
+## 7. Implementación TEL-02 — Coordinator fuera de ScriptLock (2026-11-22)
+
+Se aplicó la primera corrección sin cambiar el protocolo compartido:
+
+- `acquire_` devuelve el evento de métrica como dato interno del resultado protegido y lo persiste después de salir de `withCoordinatorLock_`. Se conserva el conteo de leases nuevas y de reactivación de mantenimiento; una repetición idempotente de una lease activa no genera un conteo adicional.
+- `validateSessionContext_` obtiene el actor bajo el lock y registra la métrica después de liberar el lock.
+- `getCatalogChanges_` obtiene el snapshot/respuesta bajo el lock y registra el evento después. Se conserva PUBLIC→CATALOG y FEEDBACK→FEEDBACK.
+- La escritura continúa siendo best-effort. Un fallo posterior no revierte una lease confirmada ni altera la respuesta del feed.
+- Versión del Coordinator: 1.4.6; `SHARED_MUTATION_PROTOCOL_VERSION` permanece en v1.
+
+**Validación contractual:** `SharedMutationCoordinator.js` ejecutado de forma aislada con dobles de PropertiesService/LockService: 95/95 PASS, 0 fallos. El harness detecta lecturas/escrituras de buckets mientras el lock está retenido y permite inyectar fallos de propiedades. Los contratos verifican cero accesos de telemetría bajo lock en acquire/feed, conservación del conteo y resultado funcional ante fallos.
+
+**Límite:** no se ha desplegado Apps Script ni medido latencia/contención real. La corrección TEL-02 queda COMPLETADA localmente con validación contractual; TEL-01/TEL-03 (persistencia directa por petición y doble conteo entre FEEDBACK/Coordinator) siguen pendientes.

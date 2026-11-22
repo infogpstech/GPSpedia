@@ -23,13 +23,37 @@ function runSharedMutationCoordinatorTests() {
         const store = {};
         let clock = 1700000000000;
         let sequence = 0;
+        let lockHeld = false;
+        let trafficReads = 0;
+        let trafficWrites = 0;
+        let trafficAccessWhileLocked = 0;
+        let failTrafficProperties = false;
+        const isTrafficKey = key => String(key || "").startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_");
         const properties = {
-            getProperty: key => Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null,
-            setProperty: (key, value) => { store[key] = String(value); return properties; },
+            getProperty: key => {
+                if (isTrafficKey(key)) {
+                    trafficReads++;
+                    if (lockHeld) trafficAccessWhileLocked++;
+                    if (failTrafficProperties) throw new Error("traffic properties unavailable");
+                }
+                return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null;
+            },
+            setProperty: (key, value) => {
+                if (isTrafficKey(key)) {
+                    trafficWrites++;
+                    if (lockHeld) trafficAccessWhileLocked++;
+                    if (failTrafficProperties) throw new Error("traffic properties unavailable");
+                }
+                store[key] = String(value);
+                return properties;
+            },
             deleteProperty: key => { delete store[key]; return properties; },
             getProperties: () => Object.assign({}, store)
         };
-        const lock = { tryLock: () => true, releaseLock: () => {} };
+        const lock = {
+            tryLock: () => { lockHeld = true; return true; },
+            releaseLock: () => { lockHeld = false; }
+        };
         const lockService = { getScriptLock: () => lock };
         const uuid = () => {
             sequence++;
@@ -59,6 +83,8 @@ function runSharedMutationCoordinatorTests() {
 
         return {
             properties, secrets, coordinator, request, uuid,
+            trafficMetrics: () => ({ reads: trafficReads, writes: trafficWrites, accessesWhileLocked: trafficAccessWhileLocked }),
+            failTrafficProperties: value => { failTrafficProperties = value === true; },
             advance: milliseconds => { clock += milliseconds; },
             makeClient: function(service) {
                 properties.setProperty("GPSpedia_COORDINATOR_URL", "https://script.google.com/macros/s/TEST_DEPLOYMENT/exec");
@@ -99,6 +125,42 @@ function runSharedMutationCoordinatorTests() {
     function release_(runtime, service, operation, token) {
         return runtime.request("release", service, operation, { token });
     }
+
+    test_("La telemetría de adquisición se persiste después de liberar ScriptLock", function() {
+        const r = createRuntime_();
+        const acquired = acquire_(r, "WRITE", "addOrUpdateCut");
+        assert_(acquired.status === "success", "La lease debe confirmarse.");
+        const metrics = r.trafficMetrics();
+        assert_(metrics.reads === 1 && metrics.writes === 1, "La adquisición debe conservar un evento de telemetría.");
+        assert_(metrics.accessesWhileLocked === 0, "PropertiesService de telemetría no debe tocarse dentro de ScriptLock.");
+        const storedLease = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES") || "[]");
+        assert_(storedLease.some(lease => lease.token === acquired.token), "La lease confirmada debe permanecer persistida.");
+    });
+
+    test_("Un fallo de persistencia de telemetría no revierte ni rechaza una lease", function() {
+        const r = createRuntime_();
+        r.failTrafficProperties(true);
+        const acquired = acquire_(r, "WRITE", "addOrUpdateCut");
+        assert_(acquired.status === "success", "La adquisición funcional debe continuar aunque falle la telemetría.");
+        const storedLease = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES") || "[]");
+        assert_(storedLease.some(lease => lease.token === acquired.token), "La lease debe seguir confirmada.");
+    });
+
+    test_("La lectura del feed registra telemetría después de liberar ScriptLock", function() {
+        const r = createRuntime_();
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 10 });
+        assert_(feed.status === "success", "El feed debe responder normalmente.");
+        const metrics = r.trafficMetrics();
+        assert_(metrics.reads === 1 && metrics.writes === 1, "La lectura del feed debe conservar el conteo.");
+        assert_(metrics.accessesWhileLocked === 0, "La telemetría del feed debe persistirse fuera de ScriptLock.");
+    });
+
+    test_("Un fallo de telemetría no altera el resultado funcional del feed", function() {
+        const r = createRuntime_();
+        r.failTrafficProperties(true);
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 10 });
+        assert_(feed.status === "success" && Array.isArray(feed.changes), "El feed debe responder aunque falle la telemetría.");
+    });
 
     test_("Rechaza secretos incorrectos y servicios no autorizados", function() {
         const r = createRuntime_();
@@ -1193,10 +1255,11 @@ function runSharedMutationCoordinatorTests() {
         assert_(calls === 1, "Un rechazo explícito no debe generar un segundo viaje de red.");
     });
 
-    test_("El feed público del catálogo se cuenta dentro del lock existente y sin lease adicional", function() {
+    test_("El feed público conserva su conteo fuera del lock y sin lease adicional", function() {
         const r = createRuntime_();
         const response = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
         assert_(response.status === "success", "El feed público debe conservar su contrato.");
+        assert_(r.trafficMetrics().accessesWhileLocked === 0, "El feed no debe persistir métricas dentro de ScriptLock.");
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         assert_(traffic.totals.last24Hours.CATALOG === 1,
             "Una consulta pública válida del feed debe contabilizarse como CATALOG.");

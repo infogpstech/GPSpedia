@@ -6,3 +6,11 @@
 - La telemetría del navegador es local, acotada a 200 eventos y no añade requests ni persistencia.
 - El agregado ADMIN está restringido a Desarrollador y no forma parte de cada acción ordinaria.
 - No se midió impacto temporal ni se modificó código; se requiere diseñar el contrato de observabilidad antes de retirar/reubicar contadores.
+
+
+2026-11-22 — CORRECCIÓN TEL-02: TELEMETRÍA COORDINATOR FUERA DE SCRIPTLOCK
+
+- `acquire_`, `validateSessionContext_` y `getCatalogChanges_` ahora persisten sus métricas después de liberar `ScriptLock`.
+- Se conserva el resultado funcional ante fallo de PropertiesService y los scopes/atribución de eventos.
+- Contrato `SharedMutationCoordinator`: 95/95 PASS; incluye instrumentación para demostrar cero accesos a propiedades de telemetría mientras el lock está retenido.
+- Sin despliegue ni medición real de Apps Script. Pendiente TEL-01/TEL-03: contadores directos de USERS/WRITE/FEEDBACK y su semántica ADMIN.

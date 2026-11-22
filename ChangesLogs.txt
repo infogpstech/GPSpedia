@@ -966,3 +966,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se confirmó que la telemetría del navegador es local y que la consulta global está limitada al panel ADMIN de Desarrollador.
 - Rotado `Auditoría.txt` al aproximarse a 180,000 caracteres: contenido anterior preservado exactamente en las partes 003 y 004; manifiesto actualizado. El archivo activo conserva los hallazgos nuevos.
 - Actualizados Tareas_Activas.md y checkpoint.md. No hubo cambios de código ni pruebas funcionales en esta actividad documental.
+
+
+2026-11-22 — Coordinator: telemetría fuera de ScriptLock
+- `JS/Services/Coordinator.js`: la persistencia de métricas de acquire, validateSessionContext y getCatalogChanges se ejecuta después de liberar el bloqueo global; se conserva el conteo de adquisiciones nuevas/reactivaciones y la clasificación del feed.
+- Versión Coordinator 1.4.6; protocolo compartido sin cambios.
+- `JS/Tests/SharedMutationCoordinator.js`: harness instrumentado para detectar accesos a métricas dentro del lock y simular fallos de PropertiesService; cuatro contratos nuevos. Suite aislada 95/95 PASS, 0 fallos.
+- No se desplegó Apps Script ni se midió latencia real. TEL-01/TEL-03 de contadores directos continúan pendientes.

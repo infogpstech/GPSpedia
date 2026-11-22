@@ -441,3 +441,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** diseñar el rediseño de telemetría de bajo costo, empezando por sacar la escritura del Coordinator de la sección crítica cuando el contrato lo permita y definir cómo reducir contadores directos sin perder scopes necesarios. Añadir contratos antes de cambiar el comportamiento.
 - **Contexto breve:** esta es una tarea local de auditoría aún pendiente en el plan integral; no depende de Beta para diseñar ni probar contratos con dobles. Las mediciones reales quedan para Beta aislada.
 - **Estado:** auditoría estática COMPLETADA; implementación local PENDIENTE.
+
+
+## Actividad completada — 2026-11-22: telemetría de Coordinator fuera de ScriptLock
+
+- **Tarea realizada:** `JS/Services/Coordinator.js` mueve la escritura de métricas de `acquire_`, `validateSessionContext_` y `getCatalogChanges_` fuera de `withCoordinatorLock_`. La lease/feed se resuelve y devuelve primero; la persistencia posterior sigue siendo best-effort y no revierte el resultado funcional.
+- **Compatibilidad:** se conserva el conteo de adquisiciones nuevas y reactivaciones de mantenimiento; los reintentos idempotentes de una lease ya activa no se cuentan de nuevo. Se conserva la atribución PUBLIC→CATALOG y FEEDBACK→FEEDBACK en el feed.
+- **Versión Coordinator:** 1.4.6; no cambia el protocolo compartido.
+- **Pruebas:** `SharedMutationCoordinator.js` ejecutado de forma aislada con Coordinator y SharedMutationClient: 95/95 PASS, 0 fallos. Cuatro contratos nuevos comprueban acceso a PropertiesService fuera del lock y que fallos de métricas no afectan lease/feed. El contrato existente del feed público también comprueba que no haya acceso de telemetría bajo lock.
+- **Alcance:** cambio local validado con dobles; no se desplegó Apps Script ni se midió contención/latencia real.
+- **Siguiente tarea:** resolver TEL-01/TEL-03: definir la semántica que necesita ADMIN y reducir la persistencia síncrona por petición de USERS/WRITE/FEEDBACK sin perder scopes ni presentar best-effort como exacto.
+- **Contexto breve:** se eliminó la espera de PropertiesService de la sección crítica global del Coordinator; ahora el trabajo restante es evitar que los contadores de cada servicio sigan añadiendo escrituras a las rutas ordinarias.
+- **Estado:** TEL-02 COMPLETADO localmente con contrato aprobado; rediseño de contadores directos PENDIENTE.

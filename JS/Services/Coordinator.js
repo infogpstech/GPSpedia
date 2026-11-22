@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.5";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.6";
 const SHARED_MUTATION_PROTOCOL_VERSION = 1;
 // La versión del software Coordinator no obliga a cambiar el protocolo de los clientes.
 // Mantener v1 mientras sea compatible; añadir versiones nuevas sin retirar las anteriores.
@@ -785,13 +785,15 @@ function createSharedMutationCoordinator_(dependencies) {
         const userId = String(payload.userId || "").trim();
         const token = String(payload.sessionToken || "");
         if (!userId || !token) throw new Error("La validación requiere userId y sessionToken.");
-        return withCoordinatorLock_(() => {
+        const result = withCoordinatorLock_(() => {
             const currentTime = now();
             const actor = authorizeSession_(userId, token, currentTime);
-            try { recordServiceTrafficEvent_(service, currentTime, "validateSessionContext"); }
-            catch (trafficError) { /* La telemetría nunca debe bloquear la restauración de sesión. */ }
-            return { status: "success", valid: true, actor };
+            return { status: "success", valid: true, actor, trafficCapturedAt: currentTime };
         });
+        try { recordServiceTrafficEvent_(service, result.trafficCapturedAt, "validateSessionContext"); }
+        catch (trafficError) { /* La telemetría best-effort nunca altera la restauración de sesión. */ }
+        delete result.trafficCapturedAt;
+        return result;
     }
 
     function recordServiceTrafficEvent_(service, capturedAt, operation) {
@@ -1133,9 +1135,10 @@ function createSharedMutationCoordinator_(dependencies) {
                                 existing.phase = "active";
                                 existing.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                                 saveLeases_(leases);
-                                try { recordServiceTrafficEvent_(service, currentTime, operation); }
-                                catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
-                                return { kind: "success", token: existing.token, expiresAt: existing.expiresAt, actor: existing.actor || actor };
+                                return {
+                                    kind: "success", token: existing.token, expiresAt: existing.expiresAt,
+                                    actor: existing.actor || actor, trafficEvent: { service, capturedAt: currentTime, operation }
+                                };
                             }
                             if (pruned.changed) saveLeases_(leases);
                             return busyOutcome_(active, null, true);
@@ -1175,9 +1178,10 @@ function createSharedMutationCoordinator_(dependencies) {
                         lease.phase = "active";
                         lease.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
                         saveLeases_(leases);
-                        try { recordServiceTrafficEvent_(service, currentTime); }
-                        catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
-                        return { kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null };
+                        return {
+                            kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null,
+                            trafficEvent: { service, capturedAt: currentTime }
+                        };
                     }
                     saveLeases_(leases);
                     return busyOutcome_(active, null, true);
@@ -1206,11 +1210,21 @@ function createSharedMutationCoordinator_(dependencies) {
                 };
                 leases.push(lease);
                 saveLeases_(leases);
-                try { recordServiceTrafficEvent_(service, currentTime); }
-                catch (trafficError) { /* Métrica best-effort: no afecta la lease. */ }
-                return { kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null };
+                return {
+                    kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null,
+                    trafficEvent: { service, capturedAt: currentTime }
+                };
             });
 
+            if (outcome.trafficEvent) {
+                try {
+                    recordServiceTrafficEvent_(
+                        outcome.trafficEvent.service,
+                        outcome.trafficEvent.capturedAt,
+                        outcome.trafficEvent.operation
+                    );
+                } catch (trafficError) { /* Métrica best-effort: la lease ya está confirmada y no se revierte. */ }
+            }
             if (outcome.kind === "success") {
                 return { status: "success", token: outcome.token, expiresAt: outcome.expiresAt, actor: outcome.actor || null };
             }
@@ -1503,13 +1517,8 @@ function createSharedMutationCoordinator_(dependencies) {
         const requestedLimit = payload.limit === undefined ? 50 : Number(payload.limit);
         if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("El cursor del catálogo no es válido.");
         if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50) throw new Error("El límite de cambios debe estar entre 1 y 50.");
-        return withCoordinatorLock_(() => {
-            // La lectura pública del feed ya está dentro del lock del coordinador:
-            // se contabiliza aquí sin otro viaje de red ni un bloqueo adicional.
-            try {
-                const trafficService = service === "PUBLIC" ? "CATALOG" : service;
-                recordServiceTrafficEvent_(trafficService, now(), operation);
-            } catch (trafficError) { /* Telemetría best-effort: nunca bloquea el feed. */ }
+        const capturedAt = now();
+        const result = withCoordinatorLock_(() => {
             const propertySnapshot = properties.getProperties() || {};
             const revisions = catalogChangeRevisions_(propertySnapshot);
             const storedRevision = Number(propertySnapshot[CATALOG_CHANGE_REVISION_PROPERTY_] || 0);
@@ -1535,6 +1544,11 @@ function createSharedMutationCoordinator_(dependencies) {
             const nextCursor = changes.length ? changes[changes.length - 1].revision : cursor;
             return { status: "success", resetRequired: changes.some(change => change.operation === "reset" || change.resetRequired === true), changes, currentRevision, minRevision, nextCursor, hasMore: nextCursor < currentRevision };
         });
+        try {
+            const trafficService = service === "PUBLIC" ? "CATALOG" : service;
+            recordServiceTrafficEvent_(trafficService, capturedAt, operation);
+        } catch (trafficError) { /* Telemetría best-effort fuera del lock; nunca altera el feed. */ }
+        return result;
     }
 
     function handleRequest(request) {
