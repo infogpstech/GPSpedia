@@ -68,7 +68,7 @@ const fakeDocument = {
     }
 };
 const generateSyntheticCorpus = new Function("document", "File",
-    generatorSource + "\\nreturn generateSyntheticCorpus;"
+    generatorSource + "\nreturn generateSyntheticCorpus;"
 )(fakeDocument, File);
 const syntheticFiles = await generateSyntheticCorpus();
 assert.equal(syntheticFiles.length, 5);
