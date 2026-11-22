@@ -238,10 +238,11 @@ function runSupplementaryVideoContractTests(sources) {
         assert_(helperSource.includes('routeAction("getVehicleProjection", { vehicleId })'));
     });
     run_("Etapa 3 no muestra éxito si WRITE no confirma", () => {
-        const start = addCortes.indexOf("const writeResult = await routeAction('addSupplementaryInfo'");
+        const start = addCortes.indexOf("const result=await routeAction('addSupplementaryInfo',request)");
+        const confirmation = addCortes.indexOf("result.status!=='success'", start);
+        const verification = addCortes.indexOf("verifySupplementaryCatalogWrite_(result,request)", start);
         const alert = addCortes.indexOf('alert("Información guardada y verificada en el catálogo.');
-        assert_(start >= 0 && addCortes.indexOf("writeResult.status !== 'success'", start) > start &&
-            alert > addCortes.indexOf("verifySupplementaryCatalogWrite_(writeResult, payload)", start));
+        assert_(start >= 0 && confirmation > start && verification > confirmation && alert > verification);
     });
 
     return Promise.all(pendingRuns).then(() => ({ status: failed === 0 ? "PASS" : "FAIL", passed, failed, results }));
