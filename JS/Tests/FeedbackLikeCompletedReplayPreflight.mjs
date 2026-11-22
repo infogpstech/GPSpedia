@@ -85,7 +85,7 @@ const handlerEnd = source.indexOf("\nfunction ", handlerStart + 10);
 const handler = source.slice(handlerStart, handlerEnd);
 assert.ok(handler.indexOf("findCompletedLikeReplayNoop_") < handler.indexOf("const ledger = replaySnapshot ? replaySnapshot.ledger : ensureFeedbackLikesSheet_"),
     "El replay completado debe resolverse antes de crear/leer el ledger para mutación.");
-assert.match(handler, /const ledger = replaySnapshot \\? replaySnapshot\\.ledger : ensureFeedbackLikesSheet_\\(\\)/,
+assert.match(handler, /const ledger = replaySnapshot \? replaySnapshot\.ledger : ensureFeedbackLikesSheet_\(\)/,
     "Si el preflight ya validó encabezados y filas, el handler debe reutilizar ese ledger sin leer encabezados por segunda vez.");
 assert.match(handler,/const replaySnapshot = readLikeActorReplaySnapshot_\(/);
 assert.match(handler,/findCompletedLikeReplayNoop_\([\s\S]*?utilCol, replaySnapshot\)/);
