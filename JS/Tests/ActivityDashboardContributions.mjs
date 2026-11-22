@@ -11,7 +11,7 @@ const html=readFileSync(resolve(root,"index.html"),"utf8");
 const helperStart=fb.indexOf("function readActivityDashboardCutsSnapshot_()");
 const helper=fb.slice(helperStart,fb.indexOf("\nfunction handleRecordVehicleView",helperStart));
 assert.match(fb,/contributions:buildCutContributionSummary_\(cutsSnapshot\)/);
-const columns={id:1,tipoCorte1:12,colaboradorCorte1:18,tipoCorte2:19,colaboradorCorte2:25,tipoCorte3:26,colaboradorCorte3:32};
+const columns={id:1,marca:3,modelo:4,tipoCorte1:12,colaboradorCorte1:18,tipoCorte2:19,colaboradorCorte2:25,tipoCorte3:26,colaboradorCorte3:32};
 const makeRow=(id,slots)=>{const row=Array(32).fill("");row[0]=id;slots.forEach(([type,person],slot)=>{row[[12,19,26][slot]-1]=type;row[[18,25,32][slot]-1]=person;});return row;};
 const cortesRows=[Array(32).fill("header"),makeRow("V1",[["Corte","Ana"],["Corte","Luis"]]),makeRow("V2",[["Corte","Ana"],["",""],["Corte","Ana"]]),makeRow("V3",[["Corte",""]])];
 const userRows=[Array(8).fill("header"),["U1","ana","","","","","Ana",""],["U2","luis","","","","","Luis",""]];
