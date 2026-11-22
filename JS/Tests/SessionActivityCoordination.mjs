@@ -60,7 +60,7 @@ testCase("FEEDBACK usa actor cacheado sin leases por acción y conserva sus ruta
  assert.ok(start>=0&&end>start);
  assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));
  assert.doesNotMatch(router,/withSharedMutationLease_/);
- assert.match(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_\.actions\.has\(action\)/);
+ assert.doesNotMatch(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_/);
  assert.doesNotMatch(feedback,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
  assert.match(feedback,/new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
  assert.doesNotMatch(feedback,/getCatalogChanges:\s*null/);

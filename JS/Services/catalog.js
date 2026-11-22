@@ -83,6 +83,8 @@ const COLS_RELAY = {
     observacion: 11
 };
 
+const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
+
 function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {

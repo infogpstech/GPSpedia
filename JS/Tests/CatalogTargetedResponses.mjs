@@ -90,7 +90,7 @@ assert.ok(!vehicleHandler.includes("handleGetCatalogData"), "la proyección diri
 assert.ok(candidatesHandler.includes("readCatalogContributionProjectionVehicles_(undefined, includeImageInventoryEvents)"));
 assert.ok(!candidatesHandler.includes("handleGetCatalogData"), "la lista de candidatos no debe cargar logos, tutoriales ni relay");
 assert.ok(catalog.includes("function readCatalogContributionProjectionVehicles_(spreadsheetRef, includeSourceEvents = false)"));
-assert.ok(catalog.includes('"getVehicleProjection", "getContributionCandidates"'));
+assert.doesNotMatch(catalog,/CATALOG_TRAFFIC_ACTIONS_|recordCatalogTraffic_|readCatalogTraffic_/);
 assert.match(catalog, /case 'getVehicleProjection'/);
 assert.match(catalog, /case 'getContributionCandidates'/);
 

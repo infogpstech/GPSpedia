@@ -63,7 +63,7 @@ const authResult = post(authenticated, {
 });
 assert.equal(authResult.status, "success");
 assert.deepEqual(authenticated.calls.map(call => [call.userId, call.sessionToken]), [["USR-42", "valid-session"]]);
-assert.equal(authenticated.trafficWrites,1,"La solicitud autenticada se cuenta una vez en la telemetría local.");
+assert.equal(authenticated.trafficWrites,0,"La ruta autenticada no debe persistir contadores de telemetría.");
 assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 assert.equal(authenticated.captured.length, 1);
 assert.equal(authenticated.captured[0].userId, "USR-42");
@@ -78,7 +78,7 @@ const anonymousResult = post(anonymous, {
 });
 assert.equal(anonymousResult.status, "success");
 assert.equal(anonymous.calls.length, 0, "La sugerencia anónima no debe exigir sesión ni lease.");
-assert.equal(anonymous.trafficWrites,1,"La solicitud anónima se cuenta una vez en la telemetría local.");
+assert.equal(anonymous.trafficWrites,0,"La ruta anónima no debe persistir contadores de telemetría.");
 assert.equal(anonymous.captured.length, 1);
 assert.equal(anonymous.captured[0].userId, "0");
 assert.equal(anonymous.captured[0].userName, "Anónimo");
