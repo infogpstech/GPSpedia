@@ -59,3 +59,14 @@ const activePriority = noPreempt.run(async () => { await activeGate.promise; }, 
 await tick(); assert.equal(noPreempt.promote("active", 99), false);
 activeGate.resolve(); await activePriority;
 console.log("ThumbnailCompressionQueueContract: FIFO, prioridad visible, promoción single-flight, no-preemption y recuperación PASS");
+
+
+const cleanup = createConcurrencyLimiter(1);
+const cleanupGate = deferred();
+const cleanupActive = cleanup.run(async () => { await cleanupGate.promise; });
+assert.equal(cleanup.promote("never-enqueued", 10), true);
+assert.equal(cleanup.clearPromotion("never-enqueued"), true,
+    "las promociones anticipadas se limpian cuando la operación no llega a la cola");
+assert.equal(cleanup.getPriorityStats().queued, 0);
+cleanupGate.resolve();
+await cleanupActive;

@@ -76,6 +76,12 @@ export function createConcurrencyLimiter(limit = 2) {
         return true;
     }
 
+    function clearPromotion(key) {
+        const normalizedKey = String(key === undefined || key === null ? "" : key);
+        if (!normalizedKey) return false;
+        return pendingPriorityOverrides.delete(normalizedKey);
+    }
+
     function getStats() {
         return { limit: maxConcurrent, active, queued: pending.length };
     }
@@ -89,7 +95,7 @@ export function createConcurrencyLimiter(limit = 2) {
         return { active, queued: pending.length, priorities };
     }
 
-    return { run, promote, getStats, getPriorityStats };
+    return { run, promote, clearPromotion, getStats, getPriorityStats };
 }
 
 export const MAX_CONCURRENT_THUMBNAIL_COMPRESSIONS = 2;

@@ -793,3 +793,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Añadidos casos contractuales para prioridad, promoción, no-preemption, concurrencia y recuperación en ThumbnailCompressionQueueContract.mjs.
 - Pendiente leer el resultado CI tras commit; no se declara PASS hasta entonces.
 ================================================================================
+
+
+- Ajuste: clearPromotion(key) y limpieza desde ambos finally single-flight; evita overrides anticipados obsoletos. Prueba contractual agregada.
+- CI pendiente para el commit final.

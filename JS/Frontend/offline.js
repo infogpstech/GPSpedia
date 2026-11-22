@@ -1592,6 +1592,7 @@ export async function compressAndStoreThumbnailFromImage(imageElement, rawFileId
  thumbnailCompressionInFlight_.set(cacheKey, operation);
  try { return await operation; }
  finally {
+  thumbnailCompressionQueue.clearPromotion(cacheKey);
   if (thumbnailCompressionInFlight_.get(cacheKey) === operation) thumbnailCompressionInFlight_.delete(cacheKey);
  }
 }
@@ -1610,6 +1611,7 @@ export async function compressAndStoreThumbnail(url, rawFileId, requestedSize = 
  try {
   return await operation;
  } finally {
+  thumbnailCompressionQueue.clearPromotion(cacheKey);
   if (thumbnailCompressionInFlight_.get(cacheKey) === operation) {
    thumbnailCompressionInFlight_.delete(cacheKey);
   }

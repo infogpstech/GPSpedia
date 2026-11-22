@@ -166,3 +166,7 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Ampliar `ThumbnailCompressionQueueContract.mjs` con casos de prioridad, promoción, no-preemption y compatibilidad.
 - [ ] Verificar workflow CI tras commit; no marcar pruebas como PASS hasta leer el resultado.
 - [ ] Siguiente: instrumentar métricas de cola/espera por prioridad y estudiar cancelación segura por cambio de sesión/vista.
+
+
+- [x] Limpiar promociones anticipadas en el `finally` de single-flight para evitar overrides obsoletos; prueba contractual añadida.
+- [ ] Verificar CI de la versión final de prioridad antes de cerrar.

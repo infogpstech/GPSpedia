@@ -169,3 +169,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** revisar resultados CI y añadir medición de cola/espera por prioridad; luego analizar cancelación segura por cambio de sesión/vista.
 - **Contexto breve:** se evita que la precarga FIFO de catálogo retrase innecesariamente miniaturas visibles, sin duplicar una compresión single-flight ni cancelar operaciones compartidas.
 - **Estado:** implementación registrada; validación CI pendiente.
+
+
+### Ajuste de robustez — limpieza de promociones anticipadas
+- Se añadió `clearPromotion(key)` a la cola y se invoca desde el `finally` de ambas operaciones single-flight. Evita retener una promoción si la operación termina antes de llegar a `queue.run` (por ejemplo, caché disponible o IndexedDB temporalmente no disponible).
+- Se amplió el contrato con una prueba de limpieza de promoción no consumida.
+- Commit de implementación inicial: `05e0225`; ajuste de limpieza en este commit.
+- CI de la implementación inicial pendiente de verificación; este commit generará una nueva ejecución.
