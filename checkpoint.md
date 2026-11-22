@@ -1451,3 +1451,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - CI HEAD `4fad6a812598beb0bb04212cac4a3bc3136c9dd5`: **291 suites / 3,397 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
 - WRITE queda cerrado en código/auditoría estática/contratos. La prueba real de Drive, concurrencia interproyecto y pérdida de respuesta queda para Beta aislada, nunca producción.
 - Siguiente: auditoría end-to-end FEEDBACK: sugerencias año, likes, reportes e imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicaciones CATALOG.
+
+
+## Checkpoint P1 FEEDBACK — read-back dirigido de aplicación de año (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; prueba: `JS/Tests/FeedbackYearApplicationReadbackBounded.mjs`; registro: `JS/Tests/RunServiceTests.mjs`.
+- Tras anexar `applicationValues` en `FeedbackYearApplications`, el flujo ya no descarga el ledger completo para confirmar la fila. Busca el `operationId` exacto en columna A con TextFinder y lee solo las filas coincidentes (16 columnas).
+- Se conservan las garantías de integridad: coincidencia única, estado `pending`, error ante duplicados/falta de read-back y no continuar la aplicación si la confirmación falla.
+- Test nuevo incluido en regresión. CI HEAD `c96210f3bd2f77ff3e6e9ea1486719894ba13383`: **292 suites / 3,405 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; job deploy SUCCESS.
+- El job deploy corresponde al workflow automático de GitHub; no se ejecutó un despliegue manual de Apps Script ni se modificaron endpoints, Spreadsheet, Drive, secretos o propiedades productivas.
+- Rama base `GPSpedia2.2.5` sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Alcance: subtask de FEEDBACK cerrada en código y CI. La auditoría integral FEEDBACK sigue abierta.
+- Siguiente: continuar FEEDBACK revisando `appendFeedbackYearVehicleUpdateEvent_` y la recuperación/publicación de aplicaciones de año; después cerrar likes, reportes/imágenes, Inbox, vistas/actividad, PyS/tutoriales y publicaciones CATALOG antes de pasar a ADMIN. Validación de Drive/concurrencia real queda reservada a Beta aislada.
