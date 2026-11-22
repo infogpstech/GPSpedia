@@ -582,3 +582,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Se detectó que el tiempo total de proceso no separaba decodificación y dibujo Canvas. El banco ahora registra `decodeMs` (createImageBitmap), `canvasMs` (preparación/dibujo) y `encodeMs` (toBlob), además de espera y duración total.
 - Se amplió el contrato estático para comprobar los tres intervalos. CI de confirmación pendiente.
 - **Siguiente:** validar el nuevo contrato en CI y conservar la lectura visual/Beta como pendiente; no usar los tiempos simulados de dobles como rendimiento real.
+
+
+## Confirmación CI — mediciones separadas del harness P1 (2026-11-22)
+
+- **HEAD validado:** `2e4fea9b143a1df9223d9ef69b1e4ed398fc3181`. `ThumbnailQualityBenchmarkContract: 49/49 PASS`; regresión 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Cambio:** el harness separa espera de cola, decodificación `createImageBitmap`, preparación/dibujo Canvas y codificación `toBlob`, además del tiempo total.
+- **Siguiente:** validación visual en navegador real y ejecución con corpus autorizado/anónimo en Beta aislada. El contrato Node verifica instrumentación y generación, no la calidad visual ni el rendimiento real.
+- **Estado:** implementación local COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.

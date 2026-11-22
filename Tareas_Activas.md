@@ -432,3 +432,10 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Sintaxis Node 22: 433 archivos JS/MJS; referencias relativas: 344 archivos; health read-only: 7/7 servicios; GitHub Pages build/deployment: SUCCESS.
 - [ ] Pendiente navegador real: revisar visualmente las cinco muestras y medir CORS, cache hit/miss, primera pintura, bytes, CPU y memoria en Beta aislada. Añadir fotografías/diagramas reales solo con corpus autorizado/anónimo.
 - **Estado:** generador y contrato local COMPLETADOS; calidad visual y rendimiento real PENDIENTES DE BETA.
+
+
+### Confirmación CI — medición separada de miniaturas (2026-11-22)
+- [x] HEAD `2e4fea9b143a1df9223d9ef69b1e4ed398fc3181`: `ThumbnailQualityBenchmarkContract 49/49 PASS`; regresión integral 302 suites / 3,524 pruebas / 0 fallos.
+- [x] Sintaxis Node 22: 433 archivos JS/MJS; referencias relativas: 344 archivos; health read-only: 7/7 servicios; GitHub Pages build/deployment: SUCCESS.
+- [ ] Pendiente Beta: validar visualmente el corpus sintético en navegador real y medir la aplicación con corpus autorizado/anónimo.
+- **Estado:** harness local, corpus sintético y mediciones separadas COMPLETADOS; validación visual y rendimiento de campo PENDIENTES DE BETA.

@@ -1064,3 +1064,8 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 2026-11-22 — Banco de miniaturas: separación de tiempos
 - Se añadieron métricas independientes de decodificación (createImageBitmap), preparación/dibujo Canvas y codificación PNG, conservando espera de cola y duración total.
 - El contrato estático se amplió para proteger los nuevos campos; resultado esperado en CI: 49/49.
+
+
+2026-11-22 — CI: mediciones separadas del harness de miniaturas
+- HEAD 2e4fea9b143a1df9223d9ef69b1e4ed398fc3181: ThumbnailQualityBenchmarkContract 49/49 PASS; regresión 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health read-only 7/7; Pages build/deployment SUCCESS.
+- El harness muestra por separado espera, decodificación, trabajo de Canvas y codificación PNG; visualización y rendimiento real continúan pendientes de Beta aislada.
