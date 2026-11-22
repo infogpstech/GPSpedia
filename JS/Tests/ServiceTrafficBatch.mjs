@@ -6,10 +6,9 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const coordinator = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "utf8");
 const admin = readFileSync(resolve(root, "JS/Services/admin.js"), "utf8");
-const coordinatorReader = coordinator.slice(
-    coordinator.indexOf("function readServiceTraffic_(service, operation)"),
-    coordinator.indexOf("\n\n    function authorizeSession_", coordinator.indexOf("function readServiceTraffic_(service, operation)")
-);
+const coordinatorReaderStart = coordinator.indexOf("function readServiceTraffic_(service, operation)");
+const coordinatorReaderEnd = coordinator.indexOf("\n\n    function authorizeSession_", coordinatorReaderStart);
+const coordinatorReader = coordinator.slice(coordinatorReaderStart, coordinatorReaderEnd);
 const adminHandler = admin.slice(
     admin.indexOf("function handleGetServiceTraffic_"),
     admin.indexOf("\nfunction handleGetDriveStorage", admin.indexOf("function handleGetServiceTraffic_"))
