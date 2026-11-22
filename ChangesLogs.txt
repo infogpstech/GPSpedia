@@ -959,3 +959,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Sintaxis: 429 archivos 1/1; referencias relativas: 340 archivos 1/1; regresión: 298 suites / 3,459 pruebas / 0 fallos.
 - Health read-only y Pages build/deployment SUCCESS.
 - Validaciones de campo y servicios externos permanecen diferidas a Beta aislada.
+
+
+2026-11-22 — auditoría estática de telemetría
+- Añadido `AUDITORIA_P0_TELEMETRIA_2026-11-22.md` con hallazgos TEL-01 a TEL-04 sobre contadores de PropertiesService en USERS/WRITE/FEEDBACK y escritura de métricas dentro del ScriptLock de Coordinator.
+- Se confirmó que la telemetría del navegador es local y que la consulta global está limitada al panel ADMIN de Desarrollador.
+- Rotado `Auditoría.txt` al aproximarse a 180,000 caracteres: contenido anterior preservado exactamente en las partes 003 y 004; manifiesto actualizado. El archivo activo conserva los hallazgos nuevos.
+- Actualizados Tareas_Activas.md y checkpoint.md. No hubo cambios de código ni pruebas funcionales en esta actividad documental.

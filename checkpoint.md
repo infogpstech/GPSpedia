@@ -429,3 +429,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Estado: verificación local COMPLETADA CON VALIDACIÓN DIFERIDA.** No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, secretos, propiedades o datos productivos.
 - Pendiente Beta: pruebas reales en Android/PWA/escritorio, corpus técnico, CORS/primera pintura/memoria, tamaños históricos Drive, Spreadsheet/Drive aislados, concurrencia interproyecto y YouTube en canal de prueba autorizado.
 - Siguiente: ejecutar el protocolo Beta solo cuando estén disponibles deployments, credenciales y recursos aislados autorizados; no incorporar nuevas mejoras hasta cerrar las validaciones actuales o recibir evidencia nueva.
+
+
+## Actividad completada — 2026-11-22: auditoría de telemetría en rutas ordinarias
+
+- **Tarea realizada:** revisión estática de `serviceTelemetry.js`, `api-config.js`, USERS, WRITE, FEEDBACK, Coordinator y agregado de métricas ADMIN.
+- **Hallazgos:** TEL-01: contadores de USERS/getUsers, tres consultas WRITE y numerosas acciones FEEDBACK ejecutan lecturas/escrituras de PropertiesService dentro de la petición. TEL-02: Coordinator registra contadores dentro del ScriptLock en acquire/feed. TEL-03: getCatalogChanges contabiliza en FEEDBACK y Coordinator. TEL-04: telemetría de navegador permanece local y acotada, sin request adicional.
+- **Panel ADMIN:** consulta agregada restringida a Desarrollador y refresco condicionado a visibilidad; se conserva.
+- **Decisión:** auditoría estática completada; no se modificó código ni se midió latencia real. No retirar contadores sin definir qué diagnóstico debe conservar el panel.
+- **Evidencia:** `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`; hallazgos resumidos en `Auditoría.txt`.
+- **Siguiente tarea:** diseñar el rediseño de telemetría de bajo costo, empezando por sacar la escritura del Coordinator de la sección crítica cuando el contrato lo permita y definir cómo reducir contadores directos sin perder scopes necesarios. Añadir contratos antes de cambiar el comportamiento.
+- **Contexto breve:** esta es una tarea local de auditoría aún pendiente en el plan integral; no depende de Beta para diseñar ni probar contratos con dobles. Las mediciones reales quedan para Beta aislada.
+- **Estado:** auditoría estática COMPLETADA; implementación local PENDIENTE.

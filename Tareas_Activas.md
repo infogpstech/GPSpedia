@@ -54,7 +54,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Inventario estático inicial de `UrlFetchApp.fetch`, `fetchAll`, wrappers, `routeAction`, reintentos, publicaciones y llamadas entre proyectos; los conteos de wrappers no se interpretan como requests por interacción.
 - [x] P0.2 — Instrumentación local del router: bytes UTF-8 de request/response, duración, promedio y p50/p95 de duración/tamaños sobre hasta 200 eventos efímeros por pestaña. Sin persistencia ni requests adicionales. **COMPLETADA CON VALIDACIÓN DIFERIDA**; CI: 277 suites, 3,226 pruebas, 0 fallos.
 - [ ] Línea base Beta por flujo: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. Medición real requiere navegador y entorno aislado.
-- [ ] Revisar telemetría para evitar viajes de red, locks, escrituras o esperas en acciones ordinarias.
+- [x] Auditoría estática de telemetría completada: USERS/WRITE/FEEDBACK persisten contadores en PropertiesService por petición y Coordinator los escribe dentro de ScriptLock. Evidencia: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
+- [ ] Rediseñar la persistencia de métricas para que no añada escrituras síncronas por acción ni amplíe secciones críticas; preservar el diagnóstico útil del panel ADMIN y cubrirlo con contratos antes de retirar contadores.
 - [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
 
 ### P0 — AUTH/USERS y excepciones de sesión
@@ -346,3 +347,12 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Health read-only SUCCESS y Pages build/deployment SUCCESS.
 - [x] Diff acumulado revisado: 11 commits desde `214b39a8`, 7 archivos, solo tests y registros; ningún archivo productivo modificado durante esta fase de verificación.
 - [ ] Validaciones diferidas a Beta: navegador Android/PWA/escritorio, corpus técnico, CORS/memoria/primera pintura, tamaños históricos Drive, Spreadsheet/Drive aislados, concurrencia interproyecto y YouTube real.
+
+
+### P0 — auditoría de telemetría y costo en rutas ordinarias (2026-11-22)
+- [x] Revisar telemetría del navegador y contadores backend de USERS, WRITE, FEEDBACK y Coordinator.
+- [x] Confirmar scopes y frecuencia del agregado ADMIN; el panel está restringido a Desarrollador y el refresco se condiciona a visibilidad.
+- [x] Registrar hallazgos TEL-01 a TEL-04 en `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
+- [ ] Diseñar e implementar reducción del costo síncrono de métricas; no retirar el diagnóstico sin contrato alternativo.
+- [ ] Añadir pruebas de fallo de telemetría, ausencia de requests/locks adicionales y duración de sección crítica sin persistencia de métricas.
+- **Estado:** auditoría estática COMPLETADA; corrección y contratos PENDIENTES.
