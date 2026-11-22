@@ -18,11 +18,18 @@ const fb=[feedbackHeaders,
  ["F3","Luis","V2","Reporte de información no funcional","El usuario indicó que la información no fue útil.","","","",2022,"user:U2"],
  ["F4","Luis","V1","Reporte de información no funcional","La información no funciona para el año 2023.","","","",2023,"user:U2"]];
 const applications=[Array(12).fill("h"),["OP1","V1",2020,2018,2020,2018,2020,3,"completed",true,"",""]];
-const sheet=rows=>({getLastRow:()=>rows.length,getLastColumn:()=>rows[0].length,getRange:(r,c,n,w)=>({getValues:()=>rows.slice(r-1,r-1+n).map(row=>row.slice(c-1,c-1+w))})});
-const ss={getSheetByName:name=>name==="Cortes"?sheet(cuts):name==="Feedbacks"?sheet(fb):name==="FeedbackYearApplications"?sheet(applications):null};
+const sheet=rows=>({reads:[],getLastRow:()=>rows.length,getLastColumn:()=>rows[0].length,getRange(r,c,n,w){this.reads.push([r,c,n,w]);return{getValues:()=>rows.slice(r-1,r-1+n).map(row=>row.slice(c-1,c-1+w))};}});
+const cutSheet=sheet(cuts),feedbackSheet=sheet(fb),applicationSheet=sheet(applications);
+const ss={getSheetByName:name=>name==="Cortes"?cutSheet:name==="Feedbacks"?feedbackSheet:name==="FeedbackYearApplications"?applicationSheet:null};
 const cols={id:1,marca:3,modelo:4,tipoCorte1:12,utilCorte1:17,colaboradorCorte1:18,tipoCorte2:19,utilCorte2:24,colaboradorCorte2:25,tipoCorte3:26,utilCorte3:31,colaboradorCorte3:32,timestamp:37};
 const dashboard=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES","COLS_FEEDBACKS",helper+";return {readActivityDashboardCutsSnapshot_,buildCutContributionSummary_,buildActivityDashboardInsights_};")(()=>ss,{CORTES:"Cortes",FEEDBACKS:"Feedbacks"},cols,{ID:1,Usuario:2,ID_vehiculo:3,Problema:4,Respuesta:5,anoSugerido:9});
 const insights=dashboard.buildActivityDashboardInsights_();
+const sharedSnapshot=dashboard.readActivityDashboardCutsSnapshot_();
+const snapshotReadCount=cutSheet.reads.length;
+assert.equal(snapshotReadCount,4,"El snapshot de Cortes se construye con A:D y tres rangos combinados tipo→colaborador.");
+dashboard.buildCutContributionSummary_(sharedSnapshot);
+dashboard.buildActivityDashboardInsights_(sharedSnapshot);
+assert.equal(cutSheet.reads.length,snapshotReadCount,"Ambos resúmenes deben reutilizar el mismo snapshot sin volver a leer Cortes.");
 assert.deepEqual(insights.summary,{vehicles:2,cuts:2,usefulVotes:9,notUseful:1,notWorking:1});
 assert.equal(insights.topUseful[0].brand,"Toyota");assert.deepEqual(insights.topNegative.map(row=>row.model),["Hilux","L200"]);
 assert.deepEqual(insights.years,{confirmations:1,suggestions:1,verified:3,anonymous:1,applied:1});
