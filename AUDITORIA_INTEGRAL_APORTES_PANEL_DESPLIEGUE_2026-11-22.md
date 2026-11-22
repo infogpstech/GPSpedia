@@ -338,3 +338,14 @@ La agregación de colaboradores ahora lee los primeros diez campos de `AportesVe
 **Validación:** CI `6a0a3675d7b46303ec7a758c0666325a694e1fb4`: 303 suites / 3,551 pruebas / 0 fallos; health read-only 7/7 y Pages SUCCESS. No hubo deployment de Apps Script ni escrituras reales.
 
 **Siguiente auditoría:** A05-03, historia por usuario con eventos mixtos, aliases y usuarios eliminados.
+
+
+### A05-03 — identidad histórica, aliases y usuarios eliminados (2026-11-22)
+
+La agregación incorpora aliases desde eventos aceptados `cut`, `opening` y `feed` del ledger. Los eventos `cut` solo resuelven el actor de la fila física; no se suman como aportes adicionales. Las cuentas eliminadas se conservan por actorId/actorName del ledger aunque AUTH vacíe los campos de Users. Alias de un mismo ID se agrupan; si un nombre aparece vinculado a varios IDs, la fila física queda sin userId y no se asigna arbitrariamente. La prueba incluye un usuario tombstone con aliases “Carlos”/“Carlos M.” y otro caso de dos IDs con el mismo nombre.
+
+**Límite conocido:** las altas iniciales de vehículo escriben su primer corte directamente en `Cortes` y no crean evento `kind=cut`; si la cuenta se elimina, la fila se conserva por nombre pero no se puede reconstruir con certeza su userId. No se agregó un evento append-only porque CATALOG podría proyectarlo otra vez y duplicar el corte; resolverlo requiere un diseño de migración/proyección separado.
+
+**Validación:** CI `83fbc9d64b4354a64b1a0adb7388a9ab5830a949`: 303 suites / 3,552 pruebas / 0 fallos; ActivityDashboardContributions 3/3; health read-only 7/7 y Pages SUCCESS. No hubo deployment de Apps Script ni escrituras reales.
+
+**Siguiente bloque:** A02-10 — FileReader en navegador real Android/escritorio y medición de latencia.

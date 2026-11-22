@@ -857,3 +857,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite:** no se desplegó Apps Script ni se modificó Spreadsheet real. Se mantiene pendiente probar el historial completo de usuarios con eventos mixtos, aliases y usuarios eliminados.
 - **Siguiente:** A05-03 — auditar y probar la continuidad de estadísticas por usuario frente a alias históricos, usuarios eliminados y eventos mixtos.
 
+
+
+## A05-03 COMPLETADA — identidad histórica, aliases y cuentas eliminadas — 2026-11-22
+
+- **Trabajo realizado:** la agregación usa actorId/actorName de eventos aceptados de AportesVehiculo (cut/opening/feed) para construir un índice de aliases antes de contar los cortes físicos. Los eventos cut se usan para resolver identidad, no para sumar otro corte.
+- **Cuentas eliminadas:** AUTH convierte la fila Users en tombstone y elimina username/nombre completo. La atribución de los eventos ledger se conserva porque el ledger mantiene actorId y actorName. Alias distintos del mismo actorId se agrupan; nombres compartidos por distintos IDs no se fusionan. Los cortes ambiguos quedan como nombre sin userId para evitar atribución falsa.
+- **Pruebas:** eventos mixtos, alias de usuario eliminado, mismo actor con alias distintos, dos IDs con el mismo nombre, opId duplicado/conflictivo, eventos rechazados y vehículos únicos.
+- **CI:** SHA `83fbc9d64b4354a64b1a0adb7388a9ab5830a949`; 303 suites / 3,552 pruebas / 0 fallos; ActivityDashboardContributions 3/3 PASS; health read-only 7/7 y Pages SUCCESS.
+- **Límite pendiente:** los cortes de altas iniciales de vehículo se guardan directamente en `Cortes` sin evento `kind=cut`; al eliminar la cuenta, esa atribución histórica queda por nombre. No se añade un evento sin adaptar CATALOG porque podría duplicar el corte ya proyectado.
+- **Siguiente:** A02-10 — completar prueba de FileReader en navegador real Android/escritorio y medir latencia de carga, no solo CI.
+
