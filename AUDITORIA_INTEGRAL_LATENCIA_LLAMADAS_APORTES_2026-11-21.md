@@ -498,3 +498,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `InboxConversations.mjs` incorpora pruebas para estado, preferencias, búsqueda en columna A y duplicados. Se detectó en la primera regresión que los registros sintéticos quedaban en el fixture y afectaban pruebas posteriores; se corrigió con limpieza `finally`. Suite final **69/69 PASS**.
 - CI HEAD `893b29c48926e16997cfaff03a6617cd475ddb35`: **292 suites / 3,409 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático estaba in_progress al documentar.
 - No se modificaron datos productivos ni despliegues Apps Script.
+
+
+## P1 FEEDBACK — snapshot compartido de Cortes en el panel de actividad (2026-11-22)
+
+- `handleGetActivityLogs` ahora crea una sola instantánea de Cortes y la entrega a `buildCutContributionSummary_` y `buildActivityDashboardInsights_`.
+- El snapshot contiene A:D (ID/marca/modelo) y tres rangos contiguos desde tipo de corte hasta colaborador. Esos mismos rangos contienen el contador de utilidad, por lo que Insights obtiene tipo y votos de la matriz compartida sin lecturas adicionales.
+- Antes, contribuciones hacía 4 lecturas de Cortes (IDs + tres slots) e Insights hacía 7 (A:D + tres tipos + tres contadores): 11 en total. Ahora se realizan 4 lecturas compartidas: una A:D y tres rangos de slot. Se reducen 7 lecturas de rango por petición, sin transferir la fila completa de Cortes.
+- Se mantienen la ventana de 500 Feedbacks/aplicaciones, rankings, identificación de usuarios y cálculo de métricas.
+- Pruebas: ActivityDashboardContributions **PASS**; GP-DASH-INSIGHTS-01 **PASS**; ActivityLogsBoundedRead/AUG-120 **7/7 PASS**. CI HEAD `eba4b299572fd7cc4afae8b15d009498e04feb5e`: **292 suites / 3,409 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Jobs automáticos de report/deploy aún en cola al documentar.
+- No se modificaron hojas productivas ni se ejecutaron despliegues manuales Apps Script.
