@@ -1669,9 +1669,14 @@ function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName
         throw new Error("El esquema AportesVehiculo no coincide; no se modificó el rango del catálogo.");
     }
     const lastRow = ledger.getLastRow();
-    const rows = lastRow > 1 ? ledger.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
-    const existing = rows.map((row, index) => ({ row, rowIndex: index + 2 }))
-        .filter(entry => String(entry.row[1] || "").trim() === opId);
+    const existingMatches = lastRow > 1
+        ? ledger.getRange(2, 2, lastRow - 1, 1)
+            .createTextFinder(opId).matchCase(true).matchEntireCell(true).findAll()
+        : [];
+    const existing = existingMatches.map(match => ({
+        rowIndex: match.getRow(),
+        row: ledger.getRange(match.getRow(), 1, 1, headers.length).getValues()[0]
+    }));
     if (existing.length) {
         const canonicalRows = existing.filter(entry => String(entry.row[3] || "").trim().toLowerCase() === operationHash &&
             String(entry.row[2] || "").trim() === cleanVehicleId && String(entry.row[4] || "") === "vehicle_update" &&
@@ -1687,9 +1692,14 @@ function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName
     ledger.appendRow([eventId, opId, cleanVehicleId, operationHash, "vehicle_update", payloadJson,
         actorId, actorName, createdAt, "accepted", sourceEventId]);
     SpreadsheetApp.flush();
-    const savedRows = ledger.getLastRow() > 1
-        ? ledger.getRange(2, 1, ledger.getLastRow() - 1, headers.length).getValues() : [];
-    const saved = savedRows.find(row => String(row[0] || "").trim() === eventId);
+    const savedMatches = ledger.getLastRow() > 1
+        ? ledger.getRange(2, 1, ledger.getLastRow() - 1, 1)
+            .createTextFinder(eventId).matchCase(true).matchEntireCell(true).findAll()
+        : [];
+    const savedRows = savedMatches.map(match =>
+        ledger.getRange(match.getRow(), 1, 1, headers.length).getValues()[0]
+    );
+    const saved = savedRows.length === 1 ? savedRows[0] : null;
     if (!saved || String(saved[1] || "") !== opId || String(saved[2] || "") !== cleanVehicleId ||
         String(saved[3] || "").trim().toLowerCase() !== operationHash || String(saved[4] || "") !== "vehicle_update" ||
         String(saved[5] || "") !== payloadJson || String(saved[6] || "") !== actorId ||
