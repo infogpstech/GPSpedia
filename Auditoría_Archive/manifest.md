@@ -1,16 +1,19 @@
 # Manifiesto de rotación de Auditoría
 
 - Rama: `GPSpedia2.2.5_work`
-- Archivo fuente antes de la rotación: `Auditoría.txt`
-- Blob fuente original: `307ad6db2907c36ddbd949c64ea1d624dea86164`
-- Longitud Unicode original: 179631 caracteres.
-- Criterio: división en un límite de registro, sin alterar, omitir ni duplicar caracteres.
-- Integridad: `parte_001 + parte_002 === contenido original`; igualdad y longitud Unicode comprobadas antes de sustituir el archivo activo.
-- El archivo activo `Auditoría.txt` contiene las auditorías posteriores a la rotación. Para reconstruir el registro acumulado, concatenar las partes en el orden indicado y después el archivo activo.
+- Fuente de la segunda rotación: `Auditoría.txt`
+- Blob fuente antes de la segunda rotación: `c39712c722c30ed375ad9296cc2bbdb2bbddb220`
+- Longitud Unicode de la fuente: 179853 caracteres.
+- Criterio: división en límite de registro, sin alterar, omitir ni duplicar caracteres.
+- Integridad segunda rotación: las partes 003 y 004 concatenadas reproducen exactamente el contenido de `Auditoría.txt` previo a esta rotación.
+- Reconstrucción histórica: concatenar en orden las partes 001, 002, 003 y 004. El archivo activo contiene únicamente registros posteriores a esta segunda rotación.
+- Las partes archivadas son inmutables.
 
 ## Partes archivadas
 
 1. `Auditoría_2026-11-16_parte_001.txt` — 91724 caracteres Unicode; blob `d4dee4a077a1e686dce2902eefbe02e94271277c`.
 2. `Auditoría_2026-11-16_parte_002.txt` — 87907 caracteres Unicode; blob `1baec4ad83d146669e0af05e10f2ad384a8b1e64`.
+3. `Auditoría_2026-11-22_parte_003.txt` — 89929 caracteres Unicode; blob `d32d6408db3930db2e9575ee6b240ee3151f7b8f`.
+4. `Auditoría_2026-11-22_parte_004.txt` — 89924 caracteres Unicode; blob `62e2e155a3d262c4eb72336f75979676ff7950e8`.
 
-Las partes archivadas son inmutables. La reconstrucción de la evidencia previa a la rotación se obtiene concatenando la parte 001 y la parte 002, sin separadores añadidos.
+La evidencia anterior a la segunda rotación se conserva exactamente en las partes 003 y 004; las partes 001 y 002 preservan la rotación previa.
