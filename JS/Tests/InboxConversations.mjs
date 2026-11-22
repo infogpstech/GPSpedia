@@ -563,7 +563,7 @@ run("El estado y las preferencias se localizan por conversationId sin leer sus h
     flagSheet.rows.push([flagId,"U1",true,false,"now"]);
     const state = api.inboxFindState_(stateSheet,stateId,"U2");
     const flag = api.inboxFindFlag_(flagSheet,flagId,"U1");
-    assert.equal(state.rowNumber,stateSheet.getLastRow()-1);
+    assert.equal(state.rowNumber,stateSheet.getLastRow());
     assert.equal(state.row[1],"U2");
     assert.equal(flag.rowNumber,flagSheet.getLastRow());
     assert.equal(flag.row[1],"U1");
