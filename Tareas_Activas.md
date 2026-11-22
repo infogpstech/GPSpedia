@@ -440,3 +440,18 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Sintaxis Node 22: 433 archivos JS/MJS; referencias relativas: 344 archivos; health read-only: 7/7 servicios; GitHub Pages build/deployment: SUCCESS.
 - [ ] Pendiente Beta: validar visualmente el corpus sintético en navegador real y medir la aplicación con corpus autorizado/anónimo.
 - **Estado:** harness local, corpus sintético y mediciones separadas COMPLETADOS; validación visual y rendimiento de campo PENDIENTES DE BETA.
+
+
+## Auditoría integral de aportes, sesión, rendimiento y panel de desarrollador (2026-11-22)
+- [x] Registrar el requisito de auditoría y el plan por bloques A01–A12 en `AUDITORIA_INTEGRAL_APORTES_PANEL_DESPLIEGUE_2026-11-22.md`.
+- [x] Registrar criterio de seguridad: actor de sesión establecido en login; cache hit local sin Coordinator/Users/ActiveSessions; invalidación dirigida solo por cierre remoto, eliminación o revocación de rol; permisos siempre evaluados desde actor confiable.
+- [x] Iniciar A01: inspección estática de SharedMutationClient, Auth, USERS, WRITE, ADMIN y contratos de actividad.
+- [ ] A01: ejecutar contratos focalizados y matriz de roles/privacidad con dos usuarios; verificar historial de aportes y mensajes.
+- [ ] A01: comprobar en Beta logout remoto, eliminación, cambio de rol y eviction de CacheService.
+- [ ] A02: medir secuencia y costo de llamadas/lecturas en altas, edición in-modal, botón +, add_cortes, imágenes y videos.
+- [ ] A03–A06: auditar y probar cada flujo de aporte e imágenes/videos por separado.
+- [ ] A07: validar nombre/fecha del servidor, registros silenciosos con fecha de un año anterior y todos los indicadores del dashboard.
+- [ ] A08: validar health individual/global y métricas de tráfico con cobertura declarada.
+- [ ] A09–A10: auditar consola, progreso, inventario automático de imágenes reemplazadas y asociación por modelo/carpeta.
+- [ ] A11: revisar completitud y vigencia de la guía Apps Script.
+- [ ] A12: regresión integral y cierre de pendientes Beta.

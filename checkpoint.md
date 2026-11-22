@@ -601,3 +601,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **P1 YouTube:** caracterización local del límite de init completada; la prueba real de dos pestañas/dispositivos requiere canal/destino desechable autorizado. No se introdujo lock/lease contrario a §15.
 - **Siguiente tarea:** preparar y ejecutar el primer bloque de validaciones multimedia en Beta aislada cuando estén disponibles deployments, corpus autorizado y canal de prueba. No ejecutar contra producción.
 - **Contexto:** el código y contratos locales están validados; las pruebas que dependen de navegador real, Drive/Spreadsheet, OAuth y YouTube permanecen diferidas explícitamente, no simuladas.
+
+
+## Nueva auditoría integral — continuidad 2026-11-22
+
+- **Tarea realizada:** se registró el requisito integral del usuario y el plan de auditoría A01–A12 en `AUDITORIA_INTEGRAL_APORTES_PANEL_DESPLIEGUE_2026-11-22.md`; se actualizó `Tareas_Activas.md`.
+- **Criterio de seguridad aclarado:** login establece actor/rol; acciones ordinarias usan actor cacheado y verificación local de capacidad, sin revalidación remota por clic. Revocación dirigida solo para logout remoto, eliminación de cuenta o revocación/cambio de rol. Nombre/ID de colaborador se obtienen del actor servidor, no del navegador. No se modifican hashes ni se despliega producción.
+- **A01 — hallazgos preliminares:** cache hit en `getCachedSharedSessionActor_()` solo usa CacheService y no consulta Coordinator; login sincroniza/precarga el actor; revocación invalida cachés de servicios. Hallazgo A01-01: CacheService eviction puede provocar `SESSION_ACTOR_CACHE_MISS` y pedir nuevo login aunque no exista revocación (riesgo UX pendiente de Beta, no defecto confirmado). A01-02: falta ejecutar matriz completa de roles, aislamiento de mensajes/aportes y dashboard entre dos cuentas.
+- **Pruebas ejecutadas en esta tarea:** inspección estática de SharedMutationClient/Auth/USERS/WRITE/ADMIN, SessionActivityLeaseMinimization y ActivityDashboardContributions; no se ejecutaron aún los runners Node ni llamadas remotas. No atribuir aprobación a pruebas no ejecutadas.
+- **HEAD de partida:** `79c01e34ac7502805cf4b4b32fdb44ffa10258ef` en `GPSpedia2.2.5_work`. Rama base no modificada.
+- **Siguiente tarea:** completar A01 con ejecución de pruebas locales de actor/invalidación/atribución y construir matriz de roles; después iniciar A02, latencia y llamadas redundantes de las rutas de aportes.
+- **Contexto:** se prioriza fluidez sin renunciar a la separación de usuarios ni al control de roles. No se considera válida una revalidación remota en cada acción ordinaria.
