@@ -26,9 +26,8 @@ assert.ok(suggestion.includes("uploadedImage && !appendAttempted"),"La imagen so
 assert.ok(suggestion.includes("appendRow pudo persistir la referencia"),"La imagen se conserva ante confirmación incierta.");
 assert.ok(suggestion.includes("canonical.rowNumber"),"La limpieza de cargas perdedoras depende de la fila canónica.");
 const router=extract(feedback,"function doPost(e)","const RICH_TEXT_MODE_PROPERTY_");
-assert.equal((router.match(/recordDirectServiceTraffic_\(\)/g)||[]).length,1,"FEEDBACK debe conservar un único punto de conteo best-effort.");
-const telemetry=extract(feedback,"function recordDirectServiceTraffic_(capturedAt)","function directServiceTrafficSecretEquals_");
-assert.doesNotMatch(telemetry,/LockService\.getScriptLock|\.tryLock\(|\.waitLock\(/,"La telemetría best-effort no debe adquirir el ScriptLock global ni competir con mutaciones.");
+assert.doesNotMatch(router,/recordDirectServiceTraffic_|DIRECT_SERVICE_TRAFFIC_CONFIG_|getServiceTraffic/,
+    "FEEDBACK no debe escribir contadores directos ni exponer un endpoint de telemetría.");
 assert.ok(existsSync(new URL("../../.github/workflows/deployed-service-health.yml",import.meta.url)),"El workflow de salud no debe desaparecer.");
 assert.ok(existsSync(new URL("../Frontend/activityDashboard.js",import.meta.url)),"El dashboard de actividad debe conservarse.");
-console.log("P2FeedbackImageUploadLocks: 1/1 PASS — adjuntos fuera del lock; telemetría y dashboard preservados");
+console.log("P2FeedbackImageUploadLocks: 1/1 PASS — adjuntos fuera del lock; sin contadores directos; dashboard preservado");

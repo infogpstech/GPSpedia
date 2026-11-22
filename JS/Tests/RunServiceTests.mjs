@@ -338,7 +338,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','JS/Tests/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
  runCli('GP-PERF FEEDBACK e Inbox sem esperas prolongadas','JS/Tests/FeedbackLockFastFail.mjs');
- runCli('P2.2a FEEDBACK adjuntos Drive fuera del lock y telemetría preservada','JS/Tests/P2FeedbackImageUploadLocks.mjs');
+ runCli('P2.2a FEEDBACK adjuntos Drive fuera del lock sin contadores directos','JS/Tests/P2FeedbackImageUploadLocks.mjs');
  runCli('P2.2b PyS imagen fuera del lock y recuperación','JS/Tests/P2PysImageUploadOutsideLock.mjs');
  runCli('PyS relaciones y mutaciones bajo lease compartida','JS/Tests/PysVehicleRelationIntegrity.js');
  runCli('GP-PERF ADMIN información suplementaria: cargas Drive fuera del lock','JS/Tests/AdminSupplementaryUploadOutsideLock.mjs');
