@@ -312,3 +312,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Se reemplazaron por onkeydown/oninput/onclick; el handler input combina habilitación de reanudación Drive y reinicio de previews. Los handlers dinámicos permanecen con sus nodos.
 - AdminPanelListenerLifecycle 8/8 PASS. CI HEAD `d01fb34480bf5a64cf29fca37e033e6c74083fb9`: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.
 - La revisión global UI queda cerrada para listeners/timers/observers principales. Siguiente: revisar inicializaciones/renderizados duplicados y cobertura transversal de fallos parciales/no duplicación.
+
+
+## P2 — cierre de revisión estática de inicialización/render UI (2026-11-22)
+
+- Revisión estática completada de inicializadores ADMIN/Inbox, detalle, modales, carruseles, observers y helpers globales. No se encontró otra duplicación global de alta confianza después de corregir los handlers del panel ADMIN y listeners resize de carruseles.
+- Los handlers persistentes se guardan con guardas o propiedades reemplazables; los handlers dinámicos se destruyen con los nodos; el ResizeObserver de detalle se desconecta antes de cada re-render; observers de modal se desconectan al cerrar.
+- Contratos: CarouselResizeListenerLifecycle 5/5; TutorialCatalogRefreshDeltaFirst 6/6; AdminPanelListenerLifecycle 8/8; cola y requests mantienen tests de promoción, recuperación, abort y fallos.
+- CI HEAD `ef50dd98896a0310f86fedc27930369850dc9def`: 296 suites / 3,454 pruebas / 0 fallos; health read-only SUCCESS; Pages build pendiente.
+- Siguiente: validación DOM real, CPU/memoria, red y re-render en Beta Android/PWA/escritorio; después ampliar solo los casos de fallo parcial que la Beta reproduzca.

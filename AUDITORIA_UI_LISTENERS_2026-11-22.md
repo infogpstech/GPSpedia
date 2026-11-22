@@ -56,3 +56,10 @@ Se confirmó que `openDevToolsModal_` invoca `initAdminPanelListeners()` cada ve
 Corrección: se usan propiedades reemplazables `onkeydown`, `oninput` (combinando ambos efectos) y `onclick`, por lo que cada apertura sustituye el handler anterior y conserva la sesión/closure actual. Los handlers sobre tarjetas/botones creados dinámicamente permanecen ligados a nodos que se destruyen al renderizar de nuevo.
 
 Prueba `AdminPanelListenerLifecycle.mjs`: 8/8 PASS. CI HEAD `d01fb34480bf5a64cf29fca37e033e6c74083fb9`: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+
+
+## Cierre de revisión de inicialización/render (2026-11-22)
+
+Se revisaron las rutas de apertura/reapertura de ADMIN, Inbox, modal de detalle, modales dinámicos, carruseles y observers. Los handlers estáticos de ADMIN se reemplazan por propiedades `on*`; Inbox usa guardas singleton; los nodos dinámicos llevan sus listeners con el nodo; el ResizeObserver de detalle se desconecta antes de re-render; los observers/listeners de modales tienen cleanup al cerrar. No se encontró una tercera acumulación global equivalente con evidencia suficiente para modificar.
+
+La prueba DOM real, la frecuencia de re-render, CPU y memoria requieren Beta en navegadores/dispositivos; los contratos actuales son de código/runner y no se presentan como mediciones de campo.

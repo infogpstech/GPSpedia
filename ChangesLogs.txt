@@ -888,3 +888,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - initAdminPanelListeners se ejecuta al abrir el panel; termInput, backupResourceInput y contributionRefreshBtn pasaron de addEventListener repetidos a onkeydown/oninput/onclick reemplazables.
 - El input de respaldo combina la activación de reanudación Drive y la invalidación de previews de migración.
 - AdminPanelListenerLifecycle 8/8 PASS; CI HEAD d01fb344 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health y Pages SUCCESS.
+
+
+2026-11-22 — cierre revisión estática de inicialización/render UI
+- Revisados inicializadores ADMIN/Inbox, detalle, modales, carruseles y observers; no se encontró otra duplicación global de alta confianza.
+- Contratos UI: CarouselResizeListenerLifecycle 5/5, TutorialCatalogRefreshDeltaFirst 6/6, AdminPanelListenerLifecycle 8/8.
+- CI HEAD ef50dd98 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health read-only SUCCESS; Pages build pendiente.
+- Validación DOM/memoria/CPU/red queda para Beta aislada.

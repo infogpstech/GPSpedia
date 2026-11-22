@@ -262,8 +262,8 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 
 
 ### P2 — inicializaciones y renderizados (2026-11-22)
-- [ ] Revisar funciones de inicialización/render que puedan ejecutarse varias veces y duplicar peticiones, observers o nodos; los listeners globales conocidos ya están corregidos.
-- [ ] Añadir contratos de no duplicación y fallos parciales donde no exista cobertura; no duplicar suites ya integradas.
+- [x] Revisar inicializadores/render principales (ADMIN, Inbox, detalle, carruseles, modales, observers y helpers globales): no se encontró otra duplicación global de alta confianza; los nodos dinámicos se recrean y los listeners persistentes usan guardas/handlers reemplazables.
+- [x] Añadir contratos de no duplicación/recuperación para cola, requests, refresco delta, carruseles y reabrir ADMIN; contratos nuevos integrados en CI. La prueba DOM real y fallos de navegador quedan para Beta.
 - [x] CI HEAD 4dd0f9f4 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; TutorialCatalogRefreshDeltaFirst 6/6; CarouselResizeListenerLifecycle 5/5; health read-only SUCCESS.
 
 
@@ -272,3 +272,10 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Panel ADMIN: initAdminPanelListeners se ejecuta al abrir; termInput, backupResourceInput y contributionRefreshBtn ahora reemplazan handlers en lugar de acumular addEventListener. El input de respaldo combina la habilitación de reanudación y reinicio de previews. Contrato 8/8.
 - [x] CI HEAD d01fb344 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.
 - [ ] Revisar inicializaciones/renderizados duplicados más allá de listeners; luego cobertura transversal de fallos parciales/no duplicación.
+
+
+### P2 — cierre de revisión estática UI (2026-11-22)
+- [x] Inicialización/render: ADMIN reabre con handlers reemplazables; Inbox tiene binding singleton; detalle desconecta ResizeObserver previo al re-render; modales eliminan observers/listeners al cerrar; carruseles y elementos dinámicos se destruyen con su DOM.
+- [x] Contratos agregados: CarouselResizeListenerLifecycle 5/5, TutorialCatalogRefreshDeltaFirst 6/6, AdminPanelListenerLifecycle 8/8; cola y requests mantienen pruebas de prioridad, recuperación y abort.
+- [x] CI HEAD ef50dd98 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health read-only SUCCESS; Pages build pendiente al momento del registro.
+- [ ] Validar comportamiento real de DOM, memoria, CPU, red y re-render en Beta Android/PWA/escritorio.
