@@ -1069,3 +1069,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 2026-11-22 — CI: mediciones separadas del harness de miniaturas
 - HEAD 2e4fea9b143a1df9223d9ef69b1e4ed398fc3181: ThumbnailQualityBenchmarkContract 49/49 PASS; regresión 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health read-only 7/7; Pages build/deployment SUCCESS.
 - El harness muestra por separado espera, decodificación, trabajo de Canvas y codificación PNG; visualización y rendimiento real continúan pendientes de Beta aislada.
+
+
+2026-11-22 — Confirmación de estado general tras P0/P1
+- HEAD a2ad72d8d898c57bacb7ea228038ca400f3ba4a6 validado: 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health read-only 7/7; Pages build/deployment SUCCESS.
+- P0 telemetría: contadores directos/fan-out retirados y escritura Coordinator fuera del lock; queda medición Beta del costo persistente residual.
+- P1 miniaturas: corpus sintético local y mediciones separadas integrados; validación visual y rendimiento real pendientes de Beta.

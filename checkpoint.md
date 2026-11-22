@@ -590,3 +590,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Cambio:** el harness separa espera de cola, decodificación `createImageBitmap`, preparación/dibujo Canvas y codificación `toBlob`, además del tiempo total.
 - **Siguiente:** validación visual en navegador real y ejecución con corpus autorizado/anónimo en Beta aislada. El contrato Node verifica instrumentación y generación, no la calidad visual ni el rendimiento real.
 - **Estado:** implementación local COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+
+## Confirmación de continuidad — estado Git y P0/P1 (2026-11-22)
+
+- **HEAD vigente con CI completo:** `a2ad72d8d898c57bacb7ea228038ca400f3ba4a6`. Regresión 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Rama base:** `GPSpedia2.2.5` permanece intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- **P0 telemetría:** rediseño local validado; el único costo persistente restante es el get/set best-effort del Coordinator fuera de ScriptLock. Medición y decisión final pendientes de Beta aislada.
+- **P1 miniaturas:** generador de cinco muestras sintéticas y harness de medición local validados; tiempos separados de cola, decodificación, Canvas y codificación. La inspección visual real, fotos/diagramas autorizados y métricas CORS/primera pintura/bytes/CPU/memoria siguen pendientes de Beta.
+- **P1 YouTube:** caracterización local del límite de init completada; la prueba real de dos pestañas/dispositivos requiere canal/destino desechable autorizado. No se introdujo lock/lease contrario a §15.
+- **Siguiente tarea:** preparar y ejecutar el primer bloque de validaciones multimedia en Beta aislada cuando estén disponibles deployments, corpus autorizado y canal de prueba. No ejecutar contra producción.
+- **Contexto:** el código y contratos locales están validados; las pruebas que dependen de navegador real, Drive/Spreadsheet, OAuth y YouTube permanecen diferidas explícitamente, no simuladas.

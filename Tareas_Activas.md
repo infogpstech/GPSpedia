@@ -13,9 +13,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD actual de trabajo: `7c916e31c311cec0da1086d378e7d287a550ca15`.
-- CI exacto de HEAD actual: 302 suites / 3,505 pruebas aprobadas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
-- La regresión incluye ThumbnailPriorityIntegration 15/15, ThumbnailQualityBenchmarkContract 30/30 y YouTubeInitIdempotencyBoundary 7/7 (caracterización de riesgo, no idempotencia aprobada).
+- HEAD actual de trabajo: `a2ad72d8d898c57bacb7ea228038ca400f3ba4a6`.
+- CI exacto de HEAD actual: 302 suites / 3,524 pruebas aprobadas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- La regresión incluye ThumbnailPriorityIntegration 15/15, ThumbnailQualityBenchmarkContract 49/49 y YouTubeInitIdempotencyBoundary 7/7 (caracterización de riesgo, no idempotencia aprobada).
 - La validación es local/CI; no despliega Apps Script ni sustituye Beta aislada.
 - Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 
@@ -354,14 +354,15 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] Validaciones diferidas a Beta: navegador Android/PWA/escritorio, corpus técnico, CORS/memoria/primera pintura, tamaños históricos Drive, Spreadsheet/Drive aislados, concurrencia interproyecto y YouTube real.
 
 
-### P0 — auditoría de telemetría y costo en rutas ordinarias (2026-11-22)
-- [x] Revisar telemetría del navegador y contadores backend de USERS, WRITE, FEEDBACK y Coordinator.
-- [x] Confirmar scopes y frecuencia del agregado ADMIN; el panel está restringido a Desarrollador y el refresco se condiciona a visibilidad.
-- [x] Registrar hallazgos TEL-01 a TEL-04 en `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
-- [ ] Diseñar e implementar reducción del costo síncrono de métricas; no retirar el diagnóstico sin contrato alternativo.
-- [x] Añadir contratos de Coordinator: ausencia de acceso a PropertiesService de telemetría bajo ScriptLock y preservación del resultado ante fallos; 95/95 PASS.
-- [ ] Completar corrección de contadores directos USERS/WRITE/FEEDBACK y su contrato alternativo.
-- **Estado:** TEL-01/TEL-02/TEL-03 implementación local COMPLETADA; CI de confirmación del HEAD actual PENDIENTE. La persistencia best-effort de Coordinator sigue siendo un write adicional fuera del lock; medir su impacto real en Beta antes de decidir si se retira.
+### P0 — auditoría y rediseño de telemetría en rutas ordinarias (2026-11-22)
+- [x] Revisar telemetría del navegador y contadores backend de AUTH, CATALOG, USERS, WRITE, FEEDBACK y Coordinator.
+- [x] Confirmar scopes y frecuencia del agregado ADMIN; el panel permanece restringido a Desarrollador y el refresco condicionado a visibilidad.
+- [x] Registrar hallazgos TEL-01 a TEL-04 y su ampliación en `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
+- [x] Retirar persistencia síncrona de contadores directos en los cinco servicios y eliminar el fan-out ADMIN de telemetría; el agregado declara explícitamente las fuentes no recopiladas.
+- [x] Mover la escritura de eventos Coordinator fuera de ScriptLock y proteger lease/feed ante fallos de la métrica; contrato aislado 95/95 PASS.
+- [x] Validar los contratos de alcance global/local y ausencia de fan-out; CI exacto HEAD `a2ad72d8d898c57bacb7ea228038ca400f3ba4a6`: 302 suites / 3,524 pruebas / 0 fallos.
+- [ ] Medir en Beta aislada el costo residual de `recordServiceTrafficEvent_`, que sigue siendo un get/set best-effort fuera del lock; decidir con datos si se conserva o se retira.
+- **Estado:** rediseño local TEL-01/TEL-02/TEL-03 COMPLETADO CON VALIDACIÓN DIFERIDA A BETA para el costo residual.
 
 ### P0 — validación del contrato de telemetría sin contadores directos (2026-11-22)
 - [x] El agregado ADMIN conserva siete servicios y solo muestra eventos que Coordinator registra (adquisiciones nuevas de lease, validaciones de contexto y feed); declara las rutas directas como no recopiladas, no como cero HTTP.
@@ -373,11 +374,11 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] `readServiceTraffic_` ya no toma ScriptLock; lee buckets fuera de la sección crítica, y limpia únicamente buckets expirados que no pueden volver a recibir escrituras.
 - [x] Contratos estáticos verifican ausencia de lock y fan-out de red en la lectura ADMIN.
 - [ ] Medir latencia de la escritura residual `recordServiceTrafficEvent_` en Beta aislada.
-- **Coordinator:** 1.4.8; protocolo v1 sin cambios.
+- **Coordinator:** 1.4.9; protocolo v1 sin cambios.
 ### Robustez del snapshot de telemetría (Coordinator 1.4.9)
 - [x] La lectura ADMIN no toma ScriptLock; omite buckets vigentes con JSON/esquema inválido sin eliminarlos, para no competir con el writer concurrente.
 - [x] Solo elimina claves fuera de la ventana de 24 horas o con timestamp inválido.
-- [ ] CI integral de confirmación pendiente.
+- [x] CI integral: HEAD `a2ad72d8d898c57bacb7ea228038ca400f3ba4a6`, 302 suites / 3,524 pruebas / 0 fallos.
 ### P2 — auditoría de inicialización y renderizado (2026-11-22)
 - [x] `initializeApp` se ejecuta una sola vez según DOMContentLoaded; banner de estado protege handler/suscripción con dataset.
 - [x] Inbox reemplaza el timer anterior y registra conectividad una sola vez; ADMIN refresh, ayuda contextual y retry de términos usan guards.
