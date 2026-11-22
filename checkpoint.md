@@ -670,3 +670,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Hallazgo CI:** el segundo CI pasó los contratos de vídeo actualizados, pero AddCortesDiagnostics falló porque el test enviaba campos de cable sin simular slotIndex. El helper de producción rechazó correctamente la respuesta incompleta.
 - **Corrección:** el doble WRITE ahora devuelve slotIndex=1 en la prueba que envía cable; se mantiene el test que verifica que un slot ausente es rechazado.
 - **Siguiente:** repetir CI completo.
+
+
+## A02-02 cerrada en CI y observación A05 registrada — 2026-11-22
+
+- **Tarea realizada:** verificación suplementaria de add_cortes migrada a getVehicleProjection por vehicleId.
+- **CI exacto:** SHA `425a2db327635efe0c6794467ed421ed1d4ed322`; 302 suites / 3,528 pruebas / 0 fallos; AddCortesDiagnostics 16/16; SupplementaryVideoContract 55/55; CatalogVehicleProjectionRead 1/1; CatalogTargetedResponses 3/3; health read-only SUCCESS y Pages SUCCESS.
+- **A05 — defecto confirmado en código:** add_cortes limpia opId después del corte; etapa 3 envía opId null y WRITE usa ruta heredada que no escribe evento de contribución con actorId/actorName/createdAt. La ficha puede quedar actualizada sin historial individual de apertura/alimentación/nota en AportesVehiculo. Se registró corrección pendiente A05; no se cambió en esta tarea.
+- **Siguiente tarea:** A02-03, eliminar la segunda petición checkVinDuplicate cuando el mismo VIN ya fue consultado al perder foco, manteniendo la validación autoritativa de WRITE.
+- **Contexto:** se separan las optimizaciones de latencia de los defectos de trazabilidad; las comprobaciones de persistencia/autoría no se eliminan.

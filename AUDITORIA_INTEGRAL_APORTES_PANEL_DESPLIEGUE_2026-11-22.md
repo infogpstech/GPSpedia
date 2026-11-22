@@ -169,3 +169,15 @@ Se corrigió el último caso de prueba para que la validación de slot se ejecut
 ### Ajuste de prueba A02-02 — slot suplementario
 
 El segundo CI detectó que la nueva prueba focalizada enviaba campos de alimentación pero simulaba una respuesta WRITE sin slotIndex. El helper correctamente rechazó esa respuesta. Se ajusta el doble de WRITE para incluir slotIndex=1, y se conserva la validación estricta de que un cable requiere slot válido.
+
+
+### Cierre A02-02
+
+**CI exacto:** SHA 425a2db327635efe0c6794467ed421ed1d4ed322 — 302 suites / 3,528 pruebas / 0 fallos. AddCortes diagnostics 16/16 PASS; SupplementaryVideoContract 55/55 PASS; CatalogVehicleProjectionRead 1/1 PASS; CatalogTargetedResponses 3/3 PASS. Health read-only SUCCESS y Pages build/deployment SUCCESS. La lectura dirigida conserva la comprobación de campos y el slot retornado por WRITE. A02-02 queda **VALIDADA EN CÓDIGO/CI**; falta únicamente prueba manual del navegador/Apps Script Beta.
+
+### Observación cruzada para A05 — trazabilidad de suplementos en add_cortes
+
+**Clasificación:** DEFECTO DE TRAZABILIDAD CONFIRMADO EN CÓDIGO; corrección pendiente de A05.  
+**Evidencia:** tras confirmar el corte en etapa 2, add_cortes limpia `state.opId`; etapa 3 envía `opId: state.opId` (null). En WRITE, `handleAddSupplementaryInfo` solo usa el ledger append-only cuando recibe opId; sin él entra a la ruta heredada `handleAddSupplementaryInfoLocked`. Esa ruta actualiza columnas de Cortes y escribe el nombre del actor en Logger, pero no agrega evento a AportesVehiculo ni guarda actorId/actorName/createdAt por aporte. El campo timestamp del vehículo solo se completa si estaba vacío.  
+**Impacto:** apertura/alimentación/nota agregadas desde la etapa 3 pueden quedar guardadas en la ficha, pero sin una entrada durable individual en el historial de aportes ni fecha/nombre de esa contribución para el dashboard.  
+**Acción:** A05 debe diseñar IDs de operación separados por cada tipo de aporte (apertura y alimentación independientes si el ledger actual lo exige), preservar los campos múltiples que hoy se pueden enviar juntos, registrar actor y fecha desde el servidor, y validar la proyección y dashboard. No reutilizar el opId de corte ya completado ni degradar a la ruta heredada.

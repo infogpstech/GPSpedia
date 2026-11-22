@@ -495,3 +495,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 
 - [x] Corregir doble de WRITE en AddCortesDiagnostics: incluir slotIndex válido al probar campos de alimentación con proyección dirigida.
 - [ ] Repetir CI y cerrar A02-02 solo con 0 fallos.
+
+- [x] A02-02 validada por CI exacto SHA `425a2db327635efe0c6794467ed421ed1d4ed322`: 302 suites / 3,528 pruebas / 0 fallos; AddCortesDiagnostics 16/16; SupplementaryVideoContract 55/55; health read-only y Pages SUCCESS.
+- [ ] A02-03: evitar duplicar checkVinDuplicate entre blur y submit mediante caché/single-flight por VIN + vehicleId; WRITE conserva la comprobación autoritativa final.
+- [ ] A05: corregir trazabilidad de suplementos en add_cortes etapa 3: opId null conduce a ruta heredada sin evento actorId/actorName/createdAt en AportesVehiculo.
