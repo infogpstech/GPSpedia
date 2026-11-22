@@ -391,3 +391,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 
 - Añadido `RepositoryModuleReferences.mjs`, que recorre los archivos `.js/.mjs` y verifica resolución en disco de imports, re-exports, imports dinámicos estáticos, `new URL(..., import.meta.url)` y `require()` relativos. Se integra en `RunServiceTests.mjs` después de la verificación de sintaxis.
 - CI pendiente; no se han cambiado módulos productivos ni rutas. Siguiente: revisar cualquier referencia rota que el contrato reproduzca y continuar con compatibilidad/diff.
+
+
+## Verificación integral — acotar referencias al código activo (2026-11-21)
+
+- Primera ejecución de `RepositoryModuleReferences` detectó numerosas rutas antiguas en tests históricos no invocados por `RunServiceTests` (p. ej. referencias a `../../ui.js` desde `JS/Tests`). No son imports de producción ni pruebas ejecutadas por el runner; no se modifican archivos legacy por esta observación.
+- Se ajustó el escaneo para revisar `JS/Frontend`, `JS/Services`, `service-worker.js`, el runner y únicamente los tests referenciados por `RunServiceTests.mjs`. Se mantiene validación de imports, re-exports, imports dinámicos literales, `new URL` y `require` relativos.
+- El primer CI de referencias falló por alcance excesivo del validador; la sintaxis integral ya había pasado 428 archivos. Nueva ejecución pendiente.

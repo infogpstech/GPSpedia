@@ -938,3 +938,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-21 — verificación integral: referencias relativas
 - Añadido `JS/Tests/RepositoryModuleReferences.mjs` e integrado en `RunServiceTests.mjs` para comprobar rutas relativas de imports, re-exports, dynamic import, `new URL` y require sin ejecutar módulos.
+
+
+2026-11-21 — verificación integral: alcance de referencias activas
+- `RepositoryModuleReferences.mjs` se acotó a módulos productivos, service-worker, runner y tests integrados; se excluyen referencias de fixtures históricos no ejecutados que conservan rutas antiguas. No se modificó código legacy.

@@ -4,18 +4,25 @@ import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const excluded = new Set([".git", "node_modules"]);
-const files = [];
+const files = new Set();
 function walk(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-        if (entry.isDirectory()) {
-            if (!excluded.has(entry.name)) walk(join(directory, entry.name));
-        } else if (entry.isFile() && [".js", ".mjs"].includes(extname(entry.name).toLowerCase())) {
-            files.push(join(directory, entry.name));
-        }
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (entry.isFile() && [".js", ".mjs"].includes(extname(entry.name).toLowerCase())) files.add(path);
     }
 }
-walk(root);
+walk(join(root, "JS/Frontend"));
+walk(join(root, "JS/Services"));
+const runnerPath = join(root, "JS/Tests/RunServiceTests.mjs");
+files.add(runnerPath);
+const runnerSource = readFileSync(runnerPath, "utf8");
+for (const match of runnerSource.matchAll(/["'](JS\/Tests\/[^"']+\.(?:js|mjs))["']/g)) {
+    const path = resolve(root, match[1]);
+    if (existsSync(path)) files.add(path);
+}
+const serviceWorker = join(root, "service-worker.js");
+if (existsSync(serviceWorker)) files.add(serviceWorker);
 
 const references = [];
 const patterns = [
@@ -25,7 +32,7 @@ const patterns = [
     /\bnew\s+URL\(\s*["'](\.{1,2}\/[^"']+)["']\s*,\s*import\.meta\.url\s*\)/g,
     /\brequire\(\s*["'](\.{1,2}\/[^"']+)["']\s*\)/g
 ];
-for (const file of files) {
+for (const file of [...files].sort()) {
     const source = readFileSync(file, "utf8");
     for (const pattern of patterns) {
         pattern.lastIndex = 0;

@@ -316,7 +316,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 ## Fase de verificación técnica integral (§11 NORMAS) — inicio 2026-11-21
 - [x] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` mediante `RepositoryJavaScriptSyntax.mjs`: 428 archivos verificados, 1/1 PASS.
 - [x] Regresión integral HEAD `2955bb16`: 297 suites / 3,458 pruebas / 0 fallos; health read-only SUCCESS.
-- [ ] Ejecutar verificación automatizada de imports/referencias relativas (`RepositoryModuleReferences.mjs`) y revisar compatibilidad frontend/Apps Script; CI pendiente.
+- [ ] Ejecutar verificación de imports/referencias en fuentes productivas y pruebas realmente integradas (`RepositoryModuleReferences.mjs`); primer alcance demasiado amplio incluyó fixtures históricos no invocados con rutas antiguas. Se acotó el escaneo al frontend, servicios, service-worker y tests llamados por el runner; CI pendiente.
 - [ ] Revisar diff de cambios vigentes y regresión/anti-regresión; registrar solo defectos reproducibles.
 
 
