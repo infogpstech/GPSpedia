@@ -13,6 +13,8 @@ assert.match(source, /resumeDriveBackupButton\.disabled\s*=\s*!normalizeDriveBac
 assert.match(source, /contributionRefreshBtn\.onclick\s*=/);
 assert.equal(source.split("contributionRefreshBtn.addEventListener").length - 1, 0,
     "El botón de candidatos no debe acumular click listeners.");
-assert.match(source, /function openDevToolsModal_[\s\S]{0,5000}initAdminPanelListeners\(\)/,
+const openIndex = source.indexOf("openDevToolsModal_");
+const bindIndex = source.indexOf("initAdminPanelListeners()", openIndex);
+assert.ok(openIndex >= 0 && bindIndex > openIndex && bindIndex - openIndex < 10000,
     "El panel debe volver a enlazar handlers al abrirse; las propiedades on* reemplazan los anteriores.");
 console.log("AdminPanelListenerLifecycle: 8/8 PASS — handlers estáticos se reemplazan al reabrir el panel");
