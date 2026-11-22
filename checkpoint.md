@@ -792,3 +792,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Corrección:** el test restablece Data URL JPEG antes del escenario y FakeFileReader ahora puede emitir onerror cuando failRead está activo.
 - **Estado:** harness corregido; CI pendiente.
 - **Siguiente:** repetir regresión completa.
+
+
+## A02-09 cerrada; hallazgos de actor y dashboard registrados — 2026-11-22
+
+- **A02-09:** add_cortes comparte una sola lectura FileReader entre preview y submit mediante WeakMap por File; fallos limpian caché y permiten retry.
+- **CI exacto:** SHA `f65a955a9646adf64408f05365a7305fd40bb03d`; 302 suites / 3,543 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- **Seguridad de sesión revisada:** SharedMutationClient precarga el actor al login en los servicios. Las mutaciones hacen lookup local en CacheService y renuevan TTL de 6 h; no consultan Coordinator ni hojas Users/ActiveSessions por cada acción. AUTH invalida cachés remotas en logout/revocación antes de revocar contexto. Un cache miss falla cerrado y requiere iniciar sesión nuevamente. Esto no añade una lectura de sesión remota por acción.
+- **Registro silencioso revisado:** etapa 2 envía silent; WRITE permite silent solo para rol Desarrollador y resta 365 días a la fecha del corte. Falta añadir prueba directa de fecha/rol. Etapa 3 lee silentRegister pero no lo utiliza.
+- **A05-01 defecto:** etapa 3 usa opId null tras completar el corte y cae a ruta legacy sin evento individual en AportesVehiculo con actor y fecha.
+- **A05-02 defecto:** resumen del Activity Dashboard atribuye únicamente cortes de las tres columnas físicas; no agrega eventos opening/feed del ledger.
+- **Siguiente:** diseñar/implementar A05-01 sin colisionar IDs, preservar idempotencia y soportar más de un tipo de aporte; después extender dashboard.
+- **Contexto:** el requisito es identidad de autor y fecha de aporte, sin volver a validar la sesión contra el servidor en cada acción ni almacenar contraseñas/tokens en el historial.

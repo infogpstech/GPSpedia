@@ -551,3 +551,11 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Registrar fallo inicial del harness A02-09: MIME heredado del test previo y mock FileReader sin simulación de onerror.
 - [x] Corregir fixture de FileReader para aislar resultado MIME y fallo/reintento.
 - [ ] Repetir CI A02-09.
+
+- [x] A02-09 validada por CI SHA `f65a955a9646adf64408f05365a7305fd40bb03d`: 302 suites / 3,543 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- [x] Auditar sesión compartida: actor precargado al login; cache local 6 h renovable en cada hit; no se consulta Coordinator/Users/ActiveSessions en cada mutación; invalidación remota por AUTH en logout/revocación. Cache miss falla cerrado y solicita nuevo login.
+- [x] Auditar registro silencioso de corte: etapa 2 envía silent, WRITE limita a Desarrollador y fecha a 365 días atrás. Agregar prueba de fecha y rol como parte de A05.
+- [ ] A05-01: implementar ledger para aportes suplementarios de add_cortes etapa 3, con opIds independientes e idempotentes por tipo, actorId/actorName/createdAt y manejo de apertura+alimentación+nota.
+- [ ] A05-02: ampliar Activity Dashboard para incluir aportes opening/feed desde AportesVehiculo además de cortes y conservar los conteos de vehículos y votos útiles.
+- [ ] A05-03: probar el historial por usuario y sus estadísticas con eventos mixtos, aliases y usuarios eliminados.
+- [ ] A02-10: completar prueba de cache FileReader en navegador real Android/escritorio y medir latencia de carga, no solo CI.

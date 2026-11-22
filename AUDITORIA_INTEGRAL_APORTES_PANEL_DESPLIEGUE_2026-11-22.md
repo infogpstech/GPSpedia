@@ -277,3 +277,16 @@ Los modales + de apertura/alimentación convierten la imagen una vez en el naveg
 ### CI inicial A02-09 — corrección de fixtures
 
 El primer CI del cambio de caché FileReader falló en dos pruebas del harness, no en la sintaxis del frontend: el mock mantenía el resultado PNG del caso anterior y no implementaba el modo de error que el test de reintento activaba. Se actualiza el mock para resetear MIME por escenario y simular onerror; la prueba comprueba que el fallo elimina la promesa cacheada y permite una segunda lectura.
+
+
+### A02-09 validada en CI
+
+**CI exacto:** SHA `f65a955a9646adf64408f05365a7305fd40bb03d` — 302 suites / 3,543 pruebas / 0 fallos. Health read-only y Pages SUCCESS. El primer intento tuvo dos fallos de fixtures (MIME heredado y mock sin onerror), corregidos antes de esta ejecución.
+
+### A05-01 — atribución de aportes y dashboard
+
+**Hallazgo confirmado en etapa 3 de add_cortes:** el flujo limpia `state.opId` al completar el corte; la etapa 3 envía `opId: null`. WRITE entra entonces en compatibilidad legacy y no agrega evento `AportesVehiculo` para apertura/alimentación. En esa ruta el nombre aparece en Logger, no como registro durable con `actorId`, `actorName` y `createdAt`. La UI además lee `silentRegister` en etapa 3, pero no envía ese valor; la opción silenciosa sí se envía en etapa 2 al crear el corte.
+
+**Hallazgo confirmado en dashboard:** `buildCutContributionSummary_` lee los colaboradores de las tres columnas de corte en `Cortes`; no consume los eventos `opening/feed` del ledger `AportesVehiculo`. Por tanto, el resumen por usuario no contabiliza esos aportes suplementarios. El historial de logs es otra vista y no sustituye el historial append-only.
+
+**Diseño requerido:** operación suplementaria con IDs idempotentes independientes por tipo; persistencia/reintento ante respuesta perdida; registro servidor de actor y fecha; soporte para aportes simultáneos apertura/alimentación y nota sin colisión de opId; extensión del dashboard para contar y mostrar los tipos de aporte desde el ledger sin duplicar los cortes históricos. No vincular actor a credenciales o contraseñas; usar el actor confiable ya cacheado por sesión.
