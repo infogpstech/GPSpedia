@@ -2485,9 +2485,8 @@ function appendFeedbackReportImageEvent_(reportId, userId, upload) {
         image.imageName, image.imageMimeType, image.imageSize, image.imageSha256, new Date().toISOString()];
     sheet.appendRow(row);
     SpreadsheetApp.flush();
-    const candidates = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1)
-        .createTextFinder(eventId).matchCase(true).matchEntireCell(true).findAll();
-    if (!candidates.length) throw new Error("No se pudo confirmar el evento de imagen del reporte.");
+    // La búsqueda posterior por reportId confirma el append y detecta eventos concurrentes;
+    // no hace falta un segundo escaneo independiente de eventId.
     const canonical = findFeedbackReportImageEventByReportId_(id);
     if (!canonical) throw new Error("No se pudo recuperar el evento de imagen del reporte.");
     if (canonical.metadata.imageSha256 !== image.imageSha256) {
