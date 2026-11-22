@@ -139,3 +139,10 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - **Primer paso:** inventariar las rutas frontend de imágenes, compresión, caché, ObjectURL, cola y sus consumidores; después revisar logos históricos y flujo resumable/aprobación de YouTube.
 - **Contexto:** las correcciones de miniaturas ya registradas se preservan. P2.2a, P2.2b (`handleAddProblem`) y P2.3 están cerradas localmente; no reabrirlas sin evidencia nueva. La validación real de navegador, Drive y YouTube se reserva a Beta aislada.
 - **Estado:** PENDIENTE de ejecución. No se ha modificado código en esta actualización.
+
+
+### P1 — imágenes, vídeos y archivos (actualización 2026-11-21)
+- [x] Inventario técnico estático de presentación/variantes, IndexedDB, compresión PNG, cola, ObjectURL, precarga, cargas ADMIN/FEEDBACK/PyS, logos y cliente YouTube. Evidencia y decisiones en `AUDITORIA_P1_MULTIMEDIA_INVENTARIO_2026-11-21.md`. Sin cambios de código ni pruebas ejecutadas.
+- [ ] Siguiente: validar compresión/redimensionado con corpus técnico; medir legibilidad, alfa PNG, dimensiones, orientación, MIME/firma, metadatos y tamaños. Medir competencia entre precarga de últimos 15 vehículos y recursos visibles antes de cambiar cola/concurrencia.
+- [ ] Inventariar tamaños históricos reales de logos; no fijar límite sin muestra representativa.
+- [ ] Ejecutar suites locales multimedia y reservar CORS, primera pintura, bytes, memoria y cancelación para navegador Beta aislado.

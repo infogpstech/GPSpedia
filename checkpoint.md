@@ -124,3 +124,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** ejecutar el inventario técnico de P1 imágenes/vídeos/archivos, empezando por las rutas frontend de imágenes y sus consumidores; todavía no se ha modificado código.
 - **Contexto breve:** CATALOG/Coordinator quedó revisado en callers. La fase siguiente busca reducir coste y mejorar resiliencia del ciclo multimedia sin degradar la calidad técnica ni duplicar mecanismos ya corregidos.
 - **Estado de la siguiente tarea:** PENDIENTE de ejecución.
+
+
+## Actividad completada — 2026-11-21: inventario técnico multimedia
+
+- **Tarea realizada:** inventario estático de las rutas frontend de imágenes, persistencia IndexedDB, compresión PNG, ObjectURL, cola, cargas ADMIN/FEEDBACK/PyS, logos y cliente resumable YouTube. Informe: `AUDITORIA_P1_MULTIMEDIA_INVENTARIO_2026-11-21.md`.
+- **Hallazgos:** precarga de hasta 11 campos por cada uno de los últimos 15 vehículos sin prioridad visible/cancelación explícita; ruta de logos sin límite de bytes identificable; compresión PNG con variantes 300/800/1600 pendiente de validar con corpus técnico; búsqueda YouTube `getAll()` pendiente de medir por cardinalidad.
+- **Preservado:** la purga global por imagen, el segundo fetch visible, single-flight, TTL 30 días, LRU 200, cola de concurrencia 2, ObjectURL 64 MiB y transferencia YouTube directa de 8 MiB no se modifican.
+- **Validación:** auditoría estática únicamente. No se ejecutaron suites ni pruebas de navegador; CORS, alfa, primera pintura, bytes, memoria, logos históricos, Drive y YouTube real quedan pendientes de Beta aislada.
+- **Siguiente tarea:** P1 — compresión, redimensionado y calidad visual con corpus técnico representativo; medir competencia entre precarga y recursos visibles antes de cambiar cola o parámetros.
+- **Contexto breve:** el inventario confirma mecanismos de protección existentes y delimita riesgos medibles; no hay base para cambiar límites, formatos o concurrencia sin datos reales.
+- **Estado:** inventario COMPLETADO; fase de calidad/medición PENDIENTE.

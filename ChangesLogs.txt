@@ -749,3 +749,15 @@ FEEDBACK → WRITE: conversión explícita de reportes en aportes
 - WritePhysicalTransactionContract 7/7; WriteOpIdLegacyLookup 9/9; WriteCatalogPublicationIsolation 7/7; ImageUploadEventJournal 9/9; SupplementaryImageOperationIdContract 8/8; WriteContributionAppendConcurrency 9/9; WriteContributionRecovery 9/9; WriteIdempotencySnapshotReuse 9/9.
 - Regresión: 291 suites / 3,397 pruebas / 0 fallos; build y health SUCCESS. Beta real de Drive/concurrencia sigue pendiente en entorno aislado.
 - Siguiente: auditoría end-to-end FEEDBACK.
+
+
+================================================================================
+P1 MULTIMEDIA — INVENTARIO TÉCNICO — 2026-11-21
+- Se documentó el ciclo frontend de imágenes: variantes PNG 300/800/1600, lectura IndexedDB paralela a la imagen remota, CORS con fallback, compresión desde imagen ya cargada, TTL 30 días, LRU 200, cola FIFO de concurrencia 2 y presupuesto ObjectURL 64 MiB.
+- Se identificó riesgo por precarga de hasta 11 campos por vehículo en los últimos 15 vehículos sin prioridad/cancelación explícita; requiere medición antes de cambiar la cola.
+- La ruta de logos no muestra límite explícito de bytes; se requiere muestra histórica antes de definirlo. FEEDBACK/PyS validan imágenes hasta 3 MiB; frontend ADMIN limita imágenes a 10 MiB.
+- YouTube conserva transferencia directa resumable en bloques de 8 MiB, checkpoints IndexedDB y aprobación posterior. La búsqueda de recuperación usa getAll(); medir cardinalidad antes de optimizar.
+- No se modificó código ni se ejecutaron pruebas. CORS, PNG alfa, calidad técnica, primera pintura, bytes y memoria quedan pendientes de Beta aislada.
+- Informe: AUDITORIA_P1_MULTIMEDIA_INVENTARIO_2026-11-21.md.
+- Siguiente tarea: compresión/redimensionado/calidad visual con corpus técnico y medición de competencia visible/precarga.
+================================================================================
