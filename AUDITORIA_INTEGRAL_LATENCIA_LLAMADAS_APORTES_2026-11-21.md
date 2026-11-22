@@ -528,3 +528,14 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `PysCreationIntegrity.js` verifica que la lectura de catálogo haga una sola consulta de datos de 10 columnas. PysCreationIntegrity **58/58 PASS**.
 - CI HEAD `b7dcd3bf3c80f128b09777254682c6bddd6fba46`: **292 suites / 3,411 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Deploy automático waiting al documentar.
 - No se modificaron registros PyS/Drive productivos.
+
+
+## P1 Tutoriales — snapshot compartido de eventos de renombrado durante búsquedas por título (2026-11-22)
+
+- `projectTutorialTitle_` acepta ahora un snapshot opcional de eventos; sin snapshot conserva su comportamiento anterior y carga el ledger por sí misma.
+- `tutorialTitleExists_` carga `TutorialRenameEvents` una sola vez antes de recorrer candidatos y pasa el mismo arreglo a cada proyección.
+- La búsqueda por título de `findTutorialRow_` aplica el mismo patrón; si no existe ledger usa un arreglo vacío para no repetir consultas de hoja por cada tutorial.
+- Antes, cada fila candidata llamaba a `projectTutorialTitle_`, que volvía a leer el ledger completo. Ahora se realiza como máximo una lectura completa por búsqueda, independientemente del número de tutoriales.
+- Se conservan los eventos ordenados, las reglas de expectedTitleKey, el primer título proyectado y la detección de títulos duplicados.
+- Pruebas: FeedbackTutorialPreflightOutsideLock **7/7**; FeedbackTutorialLookupBoundedRead **7/7**; FeedbackTutorialUpdateTitleLookupBoundedRead **6/6**. CI HEAD `4a8d2487a4076e67d45f586edd06cd74305add43`: **292 suites / 3,413 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress al documentar.
+- No se modificaron filas ni eventos de Tutorial productivos.
