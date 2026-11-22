@@ -992,7 +992,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - FEEDBACK/getCatalogChanges deja de duplicarse en el agregado; ADMIN declara directRequestsAvailable=false / direct_requests_not_collected, no cero de HTTP.
 - UI conserva el panel Developer y diferencia eventos globales Coordinator de métricas locales del navegador. CATALOG_TRAFFIC_SECRET permanece solo para metadatos internos del inventario de imágenes.
 - Coordinator 1.4.7; protocolo v1 sin cambios. CI integral de esta implementación pendiente.
-2026-11-22 — Coordinator 1.4.8: lectura de telemetría sin lock
+2026-11-22 — Coordinator 1.4.9: lectura de telemetría sin lock
 - `readServiceTraffic_` ya no adquiere ScriptLock para consultar buckets; el writer de métricas opera fuera del lock y la lectura best-effort no necesita bloquear leases.
 - Se conserva la limpieza de buckets expirados y el agregado Coordinator-only. No se añade fetch ni fan-out de red.
 - CI integral del HEAD nuevo pendiente; el costo de escritura residual se medirá en Beta aislada.
+2026-11-22 — Coordinator 1.4.9: lectura concurrente de buckets
+- No se eliminan buckets vigentes con contenido inválido durante la lectura; pueden estar siendo reemplazados por el writer best-effort. Solo se limpian timestamps inválidos o claves expiradas.
+- La consulta ADMIN sigue sin ScriptLock y sin fan-out. CI integral de confirmación pendiente.

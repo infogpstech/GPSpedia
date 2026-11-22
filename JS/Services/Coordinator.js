@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.8";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.4.9";
 const SHARED_MUTATION_PROTOCOL_VERSION = 1;
 // La versión del software Coordinator no obliga a cambiar el protocolo de los clientes.
 // Mantener v1 mientras sea compatible; añadir versiones nuevas sin retirar las anteriores.
@@ -889,7 +889,9 @@ function createSharedMutationCoordinator_(dependencies) {
             throw new Error("Solo ADMIN puede consultar la telemetría global.");
         }
         // El escritor de métricas es best-effort y no usa ScriptLock. La lectura tampoco
-        // debe tomar el lock compartido ni retrasar adquisiciones de leases.
+        // debe tomar el lock compartido ni retrasar adquisiciones de leases. Los buckets
+        // se leen como snapshot no transaccional; una entrada actual inválida se omite,
+        // pero no se elimina para no competir con una escritura concurrente.
         const capturedAt = now();
         const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
         const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
@@ -906,7 +908,8 @@ function createSharedMutationCoordinator_(dependencies) {
             try { parsed = JSON.parse(all[key]); } catch (error) { parsed = null; }
             if (!parsed || parsed.version !== 1 || parsed.startAt !== startAt ||
                 !parsed.counts || typeof parsed.counts !== "object" || Array.isArray(parsed.counts)) {
-                properties.deleteProperty(key);
+                // Solo los buckets fuera de ventana se eliminan. Una entrada vigente
+                // puede estar siendo reemplazada por el escritor best-effort.
                 return;
             }
             const counts = {};

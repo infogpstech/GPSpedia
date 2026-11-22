@@ -31,7 +31,7 @@ const trafficReader = coordinator.slice(coordinator.indexOf("function readServic
 assert.doesNotMatch(trafficReader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
 assert.doesNotMatch(trafficReader, /withCoordinatorLock_/);
 assert.match(trafficReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
-assert.match(coordinator, /SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.8"/);
+assert.match(coordinator, /SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.9"/);
 assert.match(coordinator, /recordServiceTrafficEvent_\(service, result\.trafficCapturedAt, "validateSessionContext"\)/);
 assert.match(coordinator, /recordServiceTrafficEvent_\(trafficService, capturedAt, operation\)/);
 assert.match(shared, /function getServiceTraffic\(\)/);

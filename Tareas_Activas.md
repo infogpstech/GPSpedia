@@ -57,7 +57,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Auditoría estática de telemetría ampliada a AUTH/CATALOG/USERS/WRITE/FEEDBACK: contadores directos por petición; CATALOG usa ScriptLock.tryLock(0). Evidencia: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
 - [x] TEL-02 — Coordinator: mover la persistencia de métricas de adquisición de leases, validación de contexto y lectura del feed fuera de `ScriptLock`; conservar scopes y conteo de operaciones nuevas.
 - [x] Contratos Coordinator: verificar que las métricas no acceden a PropertiesService dentro del lock y que fallos de persistencia no alteran lease/feed; 95/95 PASS en ejecución aislada.
-- [x] CI integral de confirmación HEAD `+"`8feaea6`"+`: 298 suites / 3,463 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment de este HEAD aún en curso al registrar.
+- [x] CI integral de confirmación HEAD `8feaea6`: 298 suites / 3,463 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment de este HEAD aún en curso al registrar.
 - [x] TEL-01/TEL-03 — retirar contadores directos de AUTH/CATALOG/USERS/WRITE/FEEDBACK, eliminar endpoints internos de telemetría y fan-out de cinco servicios desde ADMIN; `getCatalogChanges` queda contado una sola vez por Coordinator.
 - [x] ADMIN: la lectura de telemetría global ya no adquiere ScriptLock ni compite con leases; el fan-out a cinco servicios está eliminado.
 - [ ] Medir en Beta aislada el costo residual de la escritura best-effort de eventos Coordinator (lease, validación y feed). Si degrada latencia, retirar o rediseñar; no afirmar que es costo cero sin medición.
@@ -374,3 +374,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Contratos estáticos verifican ausencia de lock y fan-out de red en la lectura ADMIN.
 - [ ] Medir latencia de la escritura residual `recordServiceTrafficEvent_` en Beta aislada.
 - **Coordinator:** 1.4.8; protocolo v1 sin cambios.
+### Robustez del snapshot de telemetría (Coordinator 1.4.9)
+- [x] La lectura ADMIN no toma ScriptLock; omite buckets vigentes con JSON/esquema inválido sin eliminarlos, para no competir con el writer concurrente.
+- [x] Solo elimina claves fuera de la ventana de 24 horas o con timestamp inválido.
+- [ ] CI integral de confirmación pendiente.

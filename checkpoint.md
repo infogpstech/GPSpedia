@@ -487,5 +487,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 ## Ajuste P0 — consulta ADMIN de telemetría sin ScriptLock (2026-11-22)
 - `readServiceTraffic_` se ejecuta sin `withCoordinatorLock_`; el contador ya se escribe fuera del lock, por lo que el lock de lectura no aportaba consistencia y podía retrasar adquisiciones de lease.
 - La limpieza solo elimina buckets fuera de la ventana de 24 horas o con esquema inválido; los eventos actuales se leen best-effort. No hay fan-out a otros servicios.
-- **Siguiente:** validar CI de Coordinator 1.4.8 y después medir en Beta aislada la escritura residual de eventos. Solo retirarla si la medición confirma impacto o si se decide que el diagnóstico global no justifica ese costo.
+- **Siguiente:** validar CI de Coordinator 1.4.9 y después medir en Beta aislada la escritura residual de eventos. Solo retirarla si la medición confirma impacto o si se decide que el diagnóstico global no justifica ese costo.
+- **Estado:** cambio local preparado; CI PENDIENTE.
+## Ajuste Coordinator 1.4.9 — snapshot de telemetría concurrente
+- `readServiceTraffic_` sigue fuera de ScriptLock. Si un bucket con timestamp vigente tiene JSON/esquema inválido, se omite sin borrarlo: el writer podría estar reemplazándolo concurrentemente.
+- La limpieza conserva solo eliminación de claves con timestamp inválido o fuera de ventana.
+- **Siguiente:** validar CI completo y mantener la medición del costo residual de `recordServiceTrafficEvent_` para Beta aislada.
 - **Estado:** cambio local preparado; CI PENDIENTE.

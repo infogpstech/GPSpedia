@@ -30,4 +30,5 @@
 - FEEDBACK/getCatalogChanges queda contado una sola vez. Las solicitudes locales del navegador siguen disponibles en el panel Developer.
 - GPSpedia_CATALOG_TRAFFIC_SECRET permanece exclusivamente para metadatos internos del inventario de imágenes; no es secreto de tráfico.
 - Coordinator 1.4.7; protocolo v1 sin cambios. CI de confirmación pendiente.
-2026-11-22 — Coordinator 1.4.8: la consulta global de telemetría ya no toma ScriptLock. Lee y limpia buckets expirados fuera de la sección crítica, evitando que un refresco ADMIN retrase adquisiciones de lease. La persistencia de eventos sigue best-effort fuera del lock; medir su costo residual en Beta.
+2026-11-22 — Coordinator 1.4.9: la consulta global de telemetría ya no toma ScriptLock. Lee y limpia buckets expirados fuera de la sección crítica, evitando que un refresco ADMIN retrase adquisiciones de lease. La persistencia de eventos sigue best-effort fuera del lock; medir su costo residual en Beta.
+2026-11-22 — Coordinator 1.4.9: la lectura global omite buckets vigentes corruptos sin eliminarlos, evitando competir con una escritura concurrente. Solo limpia timestamps inválidos y buckets expirados; continúa sin ScriptLock ni fan-out.

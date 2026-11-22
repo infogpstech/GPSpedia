@@ -66,7 +66,7 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
-## Contexto central de sesión (Coordinator 1.4.8)
+## Contexto central de sesión (Coordinator 1.4.9)
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
@@ -98,7 +98,7 @@ Coordinator 1.4.3 y SharedMutationClient declaran `protocolVersion: 1` en cada p
 - Un cambio que requiera una capacidad nueva del cliente solo exige actualizar los consumidores que invoquen esa capacidad; las acciones anteriores permanecen disponibles durante la transición.
 - Las peticiones GET del feed público mantienen su contrato de lectura separado.
 
-## Agregación central de telemetría (Coordinator 1.4.8)
+## Agregación central de telemetría (Coordinator 1.4.9)
 
 La consulta ADMIN `getServiceTraffic` devuelve el agregado de siete servicios activos, pero su alcance es deliberadamente Coordinator-only. Incluye adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed registradas por Coordinator. No representa todas las solicitudes HTTP ni cuenta las rutas directas ordinarias.
 
@@ -108,7 +108,7 @@ La consulta ADMIN `getServiceTraffic` devuelve el agregado de siete servicios ac
 - La respuesta marca las fuentes directas con `directRequestsAvailable:false` y `reason:"direct_requests_not_collected"`. La UI no presenta esa ausencia como cero confirmado.
 - El panel Developer mantiene RBAC y refresco condicionado a visibilidad (mínimo 60 s). La gráfica local del navegador sigue siendo efímera, por pestaña/dispositivo, y no se transmite ni persiste.
 - El endpoint global no devuelve secretos, tokens ni identidades.
-- Coordinator todavía persiste sus propios eventos best-effort en PropertiesService después de liberar el lock; puede subcontar si falla. La consulta ADMIN de esos buckets ya no adquiere ScriptLock ni retrasa leases. El costo de escritura residual se medirá en Beta aislada; si degrada acciones, retirar o rediseñar frente a §15.
+- Coordinator todavía persiste sus propios eventos best-effort en PropertiesService después de liberar el lock; puede subcontar si falla. La consulta ADMIN de esos buckets ya no adquiere ScriptLock ni retrasa leases. Los buckets vigentes inválidos se omiten sin borrarlos para no competir con escrituras concurrentes; solo se limpian claves expiradas o timestamps inválidos. El costo de escritura residual se medirá en Beta aislada; si degrada acciones, retirar o rediseñar frente a §15.
 
 ## Validación de sesión por identidad de servicio (contrato 1.4.2)
 

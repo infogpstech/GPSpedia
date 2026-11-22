@@ -175,3 +175,8 @@ El lector `readServiceTraffic_` también adquiría el ScriptLock global para lee
 En Coordinator 1.4.8 se elimina `withCoordinatorLock_` del lector ADMIN. Se mantiene la validación del servicio/acción, el agregado de siete servicios, la limpieza de buckets expirados/esquema inválido y la lectura best-effort. No se añaden requests ni fan-out. Los buckets actuales pueden leerse mientras otro evento se registra; la métrica es diagnóstica y no transaccional.
 
 **Límite restante:** `recordServiceTrafficEvent_` todavía ejecuta un get/set de PropertiesService fuera del lock para los eventos Coordinator. No afecta a rutas directas ordinarias, pero añade persistencia a adquisiciones de lease, validaciones de contexto y lecturas del feed. Su costo debe medirse en Beta aislada; si degrada acciones, retirar o rediseñar. No declarar costo cero antes de esa medición.
+## 11. Lectura concurrente de buckets — Coordinator 1.4.9 (2026-11-22)
+
+Se ajustó la limpieza del lector ADMIN: los buckets con timestamp válido dentro de la ventana, pero JSON/esquema inválido, se omiten sin borrarlos. Como el escritor best-effort actualiza la propiedad sin ScriptLock, una lectura concurrente podría observar el valor anterior y eliminar una escritura nueva si ejecutara `deleteProperty` sobre la misma clave.
+
+Solo se eliminan claves con timestamp inválido o fuera de la ventana de 24 horas. La lectura continúa fuera de ScriptLock y el agregado se mantiene diagnóstico/no transaccional.
