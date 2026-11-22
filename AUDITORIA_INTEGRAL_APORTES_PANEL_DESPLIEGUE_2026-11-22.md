@@ -329,3 +329,12 @@ La primera implementación de etapa 3 quedó preparada en la rama de trabajo:
 **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. CI SHA `1b6032d09448456ccd0306650ec73c12d64c0973`: 303 suites / 3,550 pruebas / 0 fallos; suite específica 7/7; sintaxis PASS; health read-only 7/7 y Pages SUCCESS. La validación funcional con WRITE/CATALOG y Spreadsheet aislados queda pendiente de Beta; no se ha desplegado Apps Script.
 
 **Siguiente tarea:** A05-02 — integrar eventos opening/feed de AportesVehiculo en Activity Dashboard sin duplicar cortes ni alterar conteos de vehículos/votos útiles.
+
+
+### A05-02 — Activity Dashboard suma apertura y alimentación (2026-11-22)
+
+La agregación de colaboradores ahora lee los primeros diez campos de `AportesVehiculo` tras validar el encabezado. Solo incorpora eventos `opening`/`feed` con estado `accepted`, deduplica por opId y descarta el opId completo si encuentra payloads incompatibles. Los eventos usan actorId/actorName del ledger; los cortes físicos siguen usando el nombre histórico y la resolución unívoca de Users. El total incluye cortes + apertura + alimentación; se conserva el conjunto de vehículos únicos. El resumen de votos útiles y vehículos no se toca. La interfaz renombra el contador a “Aportes registrados”.
+
+**Validación:** CI `6a0a3675d7b46303ec7a758c0666325a694e1fb4`: 303 suites / 3,551 pruebas / 0 fallos; health read-only 7/7 y Pages SUCCESS. No hubo deployment de Apps Script ni escrituras reales.
+
+**Siguiente auditoría:** A05-03, historia por usuario con eventos mixtos, aliases y usuarios eliminados.

@@ -1092,3 +1092,12 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Durante la regresión se actualizaron contratos de pruebas que todavía exigían el antiguo `state.opId` y payload de sesión inline. No se alteró la matriz de permisos ni se añadieron revalidaciones remotas por acción.
 - No se desplegó Apps Script ni se modificaron hojas/datos reales. La prueba funcional con WRITE/CATALOG y Spreadsheet aislados queda pendiente de Beta.
 - Commits de la tarea: `13e7c403382cfdd8ea21db2595e25865e001783d`, `874d1642afc8494c9cfec10c7d24c925c3836d66`, `aecbeee59e3463b327dd0cd1306712ec2aa8a74d`, `1b6032d09448456ccd0306650ec73c12d64c0973`.
+
+
+2026-11-22 — A05-02 cerrada: Activity Dashboard incorpora aportes suplementarios
+- `buildCutContributionSummary_` ahora suma eventos `opening` y `feed` aceptados de `AportesVehiculo` junto a los cortes físicos de `Cortes`. Conserva desglose interno por corte/apertura/alimentación y expone total de aportes y vehículos únicos por usuario.
+- Se valida el encabezado del ledger, se deduplica por opId, se excluyen opIds con payload conflictivo y se omiten eventos rechazados o de otros tipos. La atribución usa actorId del ledger para no fusionar usuarios distintos con el mismo nombre; los cortes históricos mantienen resolución por nombre cuando es unívoca.
+- El panel muestra “Aportes registrados” y el total en el ranking de colaboradores. Los contadores de vehículos y las métricas/votos útiles del resumen permanecen separados y sin cambios.
+- Pruebas agregadas: apertura/feed, replay duplicado, opId conflictivo, estado rechazado, evento cut no duplicado, ledger aunque Cortes esté vacío, identidad por userId y vehículos únicos.
+- CI SHA `6a0a3675d7b46303ec7a758c0666325a694e1fb4`: 303 suites / 3,551 pruebas / 0 fallos; ActivityDashboardContributions PASS; syntax PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- No se ha desplegado Apps Script ni se han escrito datos reales.

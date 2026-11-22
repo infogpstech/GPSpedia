@@ -845,3 +845,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite:** no se desplegó Apps Script ni se escribieron datos reales. La integración funcional con WRITE/CATALOG y Spreadsheet del entorno Beta queda pendiente, sin bloquear el cierre local.
 - **Siguiente tarea:** A05-02 — extender Activity Dashboard para incluir eventos opening/feed de `AportesVehiculo`, sin duplicar cortes históricos ni alterar conteos de vehículos y votos útiles.
 
+
+
+## A05-02 COMPLETADA — Activity Dashboard con aportes suplementarios — 2026-11-22
+
+- **Trabajo realizado:** `buildCutContributionSummary_` combina cortes físicos con eventos `opening` y `feed` aceptados de `AportesVehiculo`. Se conservan los cortes históricos y se suman los nuevos tipos en el total de aportes por colaborador.
+- **Integridad:** valida encabezados; deduplica por opId; excluye operaciones con payload conflictivo, rechazadas o de otros tipos. Usa actorId para agrupar eventos recientes, preservando la identidad incluso si dos usuarios comparten nombre. Los vehículos se cuentan como conjunto único.
+- **Interfaz:** la tabla y el ranking ahora hablan de aportes registrados. Los indicadores de vehículos, cortes físicos y votos útiles no se alteran.
+- **Pruebas:** cubren apertura/feed, replay, conflicto de opId, rechazo, exclusión de eventos cut, ausencia de Cortes, atribución por ID y vehículos únicos.
+- **CI:** SHA `6a0a3675d7b46303ec7a758c0666325a694e1fb4`; 303 suites / 3,551 pruebas / 0 fallos; prueba ActivityDashboardContributions PASS; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Límite:** no se desplegó Apps Script ni se modificó Spreadsheet real. Se mantiene pendiente probar el historial completo de usuarios con eventos mixtos, aliases y usuarios eliminados.
+- **Siguiente:** A05-03 — auditar y probar la continuidad de estadísticas por usuario frente a alias históricos, usuarios eliminados y eventos mixtos.
+

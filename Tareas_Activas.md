@@ -556,7 +556,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Auditar sesión compartida: actor precargado al login; cache local 6 h renovable en cada hit; no se consulta Coordinator/Users/ActiveSessions en cada mutación; invalidación remota por AUTH en logout/revocación. Cache miss falla cerrado y solicita nuevo login.
 - [x] Auditar registro silencioso de corte: etapa 2 envía silent, WRITE limita a Desarrollador y fecha a 365 días atrás. Agregar prueba de fecha y rol como parte de A05.
 - [x] A05-01: etapa 3 de `add_cortes` registra apertura/alimentación con IDs independientes e idempotentes, actor confiable y fecha de servidor; operación durable y recuperación en IndexedDB. CI `1b6032d09448456ccd0306650ec73c12d64c0973`: 303 suites / 3,550 pruebas / 0 fallos; sintaxis, health read-only 7/7 y Pages SUCCESS. Validación funcional Apps Script/Spreadsheet real pendiente de Beta.
-- [ ] A05-02: ampliar Activity Dashboard para incluir aportes opening/feed desde AportesVehiculo además de cortes y conservar los conteos de vehículos y votos útiles.
+- [x] A05-02: Activity Dashboard suma eventos `opening`/`feed` aceptados de `AportesVehiculo` a los cortes físicos; deduplica por opId, excluye conflictos/rechazados y agrupa por actorId. Conserva vehículos únicos y métricas/votos útiles. CI `6a0a3675d7b46303ec7a758c0666325a694e1fb4`: 303 suites / 3,551 pruebas / 0 fallos; health read-only 7/7 y Pages SUCCESS.
 - [ ] A05-03: probar el historial por usuario y sus estadísticas con eventos mixtos, aliases y usuarios eliminados.
 - [ ] A02-10: completar prueba de cache FileReader en navegador real Android/escritorio y medir latencia de carga, no solo CI.
 
