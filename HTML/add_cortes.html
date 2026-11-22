@@ -406,6 +406,7 @@
             opId: null,
             // Solo operaciones recuperadas o con ID determinista necesitan preflight remoto.
             opIdRequiresServerCheck: true,
+            vinDuplicateCheck: null,
             restoredFiles: {
                 imagenVehiculo: null,
                 imgCorte1: null
@@ -427,6 +428,35 @@
             state.userId = userId; state.sessionToken = sessionToken;
             return { userId, sessionToken };
         }
+
+        async function checkVinDuplicateOnce_(vinValue) {
+            const vin = String(vinValue || "").trim();
+            const normalizedVin = vin.toUpperCase().replace(/[^A-Z0-9]/g, "");
+            const currentVehicleId = String(state.selectedVehicleId == null ? "" : state.selectedVehicleId).trim();
+            const key = normalizedVin + "|" + currentVehicleId;
+            const cached = state.vinDuplicateCheck;
+            if (cached && cached.key === key) {
+                if (cached.result) return cached.result;
+                if (cached.promise) return cached.promise;
+            }
+            const entry = { key, result: null, promise: null };
+            state.vinDuplicateCheck = entry;
+            entry.promise = routeAction("checkVinDuplicate", { vin, currentVehicleId: state.selectedVehicleId })
+                .then(result => {
+                    if (!result || !["success", "duplicate"].includes(result.status)) {
+                        throw new Error(result && result.message || "No se pudo validar el VIN.");
+                    }
+                    entry.result = result;
+                    entry.promise = null;
+                    return result;
+                })
+                .catch(error => {
+                    if (state.vinDuplicateCheck === entry) state.vinDuplicateCheck = null;
+                    throw error;
+                });
+            return entry.promise;
+        }
+
         async function getOrGenerateOpId() {
             const pendingResult = await getAddCutOperationPendingOperation(state.userId);
             if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
@@ -825,6 +855,7 @@
             /* TAREA 4 (11.3, 11.5): REGISTRO Y VALIDACIÓN DE DUPLICADOS POR VIN EN FORMULARIO */
             const vinInput = document.getElementById('vinInput');
             if (vinInput) {
+                vinInput.addEventListener('input', () => { state.vinDuplicateCheck = null; });
                 vinInput.addEventListener('blur', async () => {
                     const vinVal = vinInput.value.trim();
                     const warningEl = document.getElementById('vinDuplicateWarning');
@@ -840,7 +871,7 @@
                         return;
                     }
                     try {
-                        const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: state.selectedVehicleId });
+                        const res = await checkVinDuplicateOnce_(vinVal);
                         if (!res || !["success", "duplicate"].includes(res.status)) throw new Error(res && res.message || "No se pudo validar el VIN.");
                         if (res.duplicate) {
                             warningEl.style.display = 'block';
@@ -1164,7 +1195,7 @@
                         alert("El VIN ingresado no cumple con la longitud permitida."); return;
                     }
                     try {
-                        const checkVin = await routeAction('checkVinDuplicate', { vin: vinInput.value.trim(), currentVehicleId: state.selectedVehicleId });
+                        const checkVin = await checkVinDuplicateOnce_(vinInput.value.trim());
                         if (!checkVin || !["success", "duplicate"].includes(checkVin.status)) throw new Error(checkVin && checkVin.message || "No se pudo validar el VIN.");
                         if (checkVin.duplicate) {
                             const warningEl = document.getElementById('vinDuplicateWarning');

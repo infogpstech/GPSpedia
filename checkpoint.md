@@ -679,3 +679,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **A05 — defecto confirmado en código:** add_cortes limpia opId después del corte; etapa 3 envía opId null y WRITE usa ruta heredada que no escribe evento de contribución con actorId/actorName/createdAt. La ficha puede quedar actualizada sin historial individual de apertura/alimentación/nota en AportesVehiculo. Se registró corrección pendiente A05; no se cambió en esta tarea.
 - **Siguiente tarea:** A02-03, eliminar la segunda petición checkVinDuplicate cuando el mismo VIN ya fue consultado al perder foco, manteniendo la validación autoritativa de WRITE.
 - **Contexto:** se separan las optimizaciones de latencia de los defectos de trazabilidad; las comprobaciones de persistencia/autoría no se eliminan.
+
+
+## A02-03 implementada — deduplicación del preflight VIN — 2026-11-22
+
+- **Tarea realizada:** blur y submit de add_cortes ahora comparten checkVinDuplicateOnce_, con clave VIN normalizado + vehicleId. Si el blur ya consultó, el submit reutiliza el resultado; si la petición sigue pendiente, comparte la promesa; al editar el VIN o cambiar vehículo se invalida. Los errores no se cachean.
+- **Seguridad de datos:** WRITE conserva la validación final de duplicados dentro de addOrUpdateCut, por lo que una carrera posterior al preflight sigue siendo rechazada por el servidor.
+- **Pruebas añadidas:** single-flight, cache hit, cambio VIN/vehicleId, retry tras fallo y verificación de ambos callsites.
+- **Estado:** código y pruebas preparados; CI pendiente.
+- **Siguiente:** CI completo. Después continuar el trazado de refresh checkVehicle, uploads y video.

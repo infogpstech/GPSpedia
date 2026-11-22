@@ -68,6 +68,55 @@ if (!mismatchRejected) throw new Error("La verificación aceptó una proyección
 passed++;
 process.stdout.write("PASS verificación suplementaria rechaza ID de vehículo distinto\\n");
 
+
+const vinHelperSource = extractFunction(mod[1], "checkVinDuplicateOnce_");
+let vinCalls = 0;
+const vinState = { selectedVehicleId: "204", vinDuplicateCheck: null };
+const vinCheck = new Function("state", "routeAction", vinHelperSource + "; return checkVinDuplicateOnce_;")(
+    vinState,
+    async (action, payload) => {
+        vinCalls++;
+        assert.equal(action, "checkVinDuplicate");
+        assert.equal(String(payload.currentVehicleId), "204");
+        return { status: "success", duplicate: false, vinPrefix: "1HGCM" };
+    }
+);
+const [vinA, vinB] = await Promise.all([vinCheck("1HGCM82633A004352"), vinCheck("1hgcm82633a004352")]);
+assert.equal(vinCalls, 1, "No compartió la petición VIN concurrente.");
+assert.equal(vinA.duplicate, false);
+assert.equal(vinB.duplicate, false);
+await vinCheck("1HGCM82633A004352");
+assert.equal(vinCalls, 1, "Repitió consulta para VIN y vehículo sin cambios.");
+vinState.selectedVehicleId = "205";
+await vinCheck("1HGCM82633A004352");
+assert.equal(vinCalls, 2, "No invalidó caché al cambiar de vehículo.");
+vinState.selectedVehicleId = "204";
+await vinCheck("1HGCM82633A004353");
+assert.equal(vinCalls, 3, "No consultó cuando cambió el VIN.");
+passed++;
+process.stdout.write("PASS preflight VIN comparte petición y reutiliza resultado por VIN/vehículo\\n");
+let failedVinCalls = 0;
+const retryVin = new Function("state", "routeAction", vinHelperSource + "; return checkVinDuplicateOnce_;")(
+    { selectedVehicleId: "204", vinDuplicateCheck: null },
+    async () => { failedVinCalls++; if (failedVinCalls === 1) throw new Error("offline"); return { status: "success", duplicate: false }; }
+);
+try { await retryVin("1HGCM82633A004352"); } catch (_) {}
+await retryVin("1HGCM82633A004352");
+assert.equal(failedVinCalls, 2, "El fallo anterior quedó cacheado y bloqueó el reintento.");
+passed++;
+process.stdout.write("PASS fallo VIN no se cachea y permite reintento\\n");
+const blurStart = mod[1].indexOf("vinInput.addEventListener('blur'");
+const blurEnd = mod[1].indexOf("// \"No recomendado\" behavior trigger", blurStart);
+const blurSource = mod[1].slice(blurStart, blurEnd);
+const stageStart = mod[1].indexOf("async function handleStage2Submit");
+const stageEnd = mod[1].indexOf("function proceedToStage3", stageStart);
+const stageSource = mod[1].slice(stageStart, stageEnd);
+assert.match(blurSource, /checkVinDuplicateOnce_\(vinVal\)/);
+assert.match(stageSource, /checkVinDuplicateOnce_\(vinInput\.value\.trim\(\)\)/);
+assert.doesNotMatch(blurSource + stageSource, /routeAction\(['"]checkVinDuplicate['"]/);
+passed++;
+process.stdout.write("PASS blur y submit comparten preflight VIN; WRITE mantiene validación final\\n");
+
 const runRecovery=new Function(recoverySource+'\nreturn runAddCutOperationRecoveryFlowTests;')();
 const recovery=await runRecovery({frontend:addCuts});for(const r of recovery.results){if(r.status!=='PASS')throw Error(r.name+': '+r.message);process.stdout.write('PASS '+r.name+'\n');}if(recovery.failed)throw Error('Recovery tests failed');passed+=recovery.passed;
 process.stdout.write('AddCortes diagnostics: '+passed+'/'+passed+' PASS\n');
