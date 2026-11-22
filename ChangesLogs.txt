@@ -761,3 +761,14 @@ P1 MULTIMEDIA — INVENTARIO TÉCNICO — 2026-11-21
 - Informe: AUDITORIA_P1_MULTIMEDIA_INVENTARIO_2026-11-21.md.
 - Siguiente tarea: compresión/redimensionado/calidad visual con corpus técnico y medición de competencia visible/precarga.
 ================================================================================
+
+
+================================================================================
+P1 MULTIMEDIA — EVALUACIÓN DE COMPRESIÓN Y CORPUS — 2026-11-21
+- Inspeccionado offline.js: createImageBitmap, escala máxima 1 (no upscaling), proporción preservada y salida PNG; el reescalado puede perder detalle fino.
+- El árbol activo solo contiene logos, iconos PWA, verificación y capturas UI; no existe corpus de diagramas técnicos/cableado representativo.
+- ImageResolutionVariants.js es una prueba contractual estática; no demuestra legibilidad visual, orientación EXIF, alfa ni rendimiento real.
+- No se cambia formato, tamaño, calidad ni concurrencia sin corpus autorizado y mediciones. No se ejecutaron Node/CI ni navegador.
+- Informe: AUDITORIA_P1_CALIDAD_COMPRESION_2026-11-21.md.
+- Siguiente: instrumentar y medir competencia entre precarga de últimos 15 vehículos y recursos visibles; preparar harness de rendimiento aislado.
+================================================================================

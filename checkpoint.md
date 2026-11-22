@@ -135,3 +135,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** P1 — compresión, redimensionado y calidad visual con corpus técnico representativo; medir competencia entre precarga y recursos visibles antes de cambiar cola o parámetros.
 - **Contexto breve:** el inventario confirma mecanismos de protección existentes y delimita riesgos medibles; no hay base para cambiar límites, formatos o concurrencia sin datos reales.
 - **Estado:** inventario COMPLETADO; fase de calidad/medición PENDIENTE.
+
+
+## Actividad completada — 2026-11-21: evaluación de compresión y corpus visual
+
+- **Tarea realizada:** inspección de la generación de miniaturas y del corpus versionado. Informe: `AUDITORIA_P1_CALIDAD_COMPRESION_2026-11-21.md`.
+- **Resultado:** el código limita el ancho sin ampliar, mantiene proporción y persiste PNG; el redimensionado puede perder detalle fino aunque PNG conserve alfa. El repositorio no contiene un corpus técnico representativo: las imágenes activas son logos, iconos, verificación y capturas de interfaz.
+- **Validación:** inspección estática de funciones, suite contractual y árbol de imágenes/tamaños. No se ejecutó Node/CI ni navegador; no se midieron dimensiones/bytes finales, calidad visual, orientación o CPU.
+- **Decisión:** no cambiar variantes, formato, calidad, límites ni concurrencia sin corpus técnico autorizado y medición reproducible.
+- **Siguiente tarea:** P1 — medir competencia entre precarga y recursos visibles; preparar harness aislado de rendimiento para cola, bytes, tiempos y prioridad sin alterar el contrato FIFO actual.
+- **Contexto breve:** no hay evidencia visual para justificar cambios de compresión. El siguiente riesgo cuantificable es si la precarga ocupa la cola antes de las imágenes visibles.
+- **Estado:** evaluación estática COMPLETADA; prueba visual con corpus PENDIENTE de muestras autorizadas/Beta.

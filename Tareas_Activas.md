@@ -146,3 +146,9 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [ ] Siguiente: validar compresión/redimensionado con corpus técnico; medir legibilidad, alfa PNG, dimensiones, orientación, MIME/firma, metadatos y tamaños. Medir competencia entre precarga de últimos 15 vehículos y recursos visibles antes de cambiar cola/concurrencia.
 - [ ] Inventariar tamaños históricos reales de logos; no fijar límite sin muestra representativa.
 - [ ] Ejecutar suites locales multimedia y reservar CORS, primera pintura, bytes, memoria y cancelación para navegador Beta aislado.
+
+
+### P1 — compresión y calidad visual (actualización 2026-11-21)
+- [x] Inspeccionar algoritmo de miniaturas y corpus de imágenes versionado. Conclusión: PNG conserva alfa, no se amplían imágenes pequeñas y la proporción se mantiene; el reescalado puede perder detalle fino. No existe corpus técnico representativo; no se cambian parámetros. Evidencia: `AUDITORIA_P1_CALIDAD_COMPRESION_2026-11-21.md`.
+- [ ] Obtener corpus técnico aislado y autorizado para probar diagramas/cableado, texto fino, alfa PNG, orientación, MIME/firma y tamaños 300/800/1600. No incorporar imágenes de clientes al repositorio.
+- [ ] Siguiente: medir competencia visible/precarga y preparar harness de rendimiento; mantener concurrencia FIFO 2 hasta tener evidencia.
