@@ -127,6 +127,26 @@ function getAuthenticatedCollaborator(payload, allowedRoles) {
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 
+function doGet(e) {
+    if (e && e.parameter && e.parameter.debug === 'true') {
+        const serviceState = {
+            service: 'GPSpedia-Write',
+            version: '2.3.1',
+            status: 'available'
+        };
+        return ContentService.createTextOutput(JSON.stringify(serviceState))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+    const defaultResponse = { status: 'success', message: 'GPSpedia Write-SERVICE v2.0 is active.' };
+    return ContentService.createTextOutput(JSON.stringify(defaultResponse))
+        .setMimeType(ContentService.MimeType.TEXT);
+}
+
+
+function isSharedMutationAction_(action) {
+    return ["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","allocateVehicleId","freezeCortesIds"].includes(action);
+}
+
 function doPost(e) {
     let request;
     try { request = JSON.parse(e && e.postData && e.postData.contents || "{}"); }

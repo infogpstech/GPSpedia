@@ -531,6 +531,63 @@ function handleClearSensitiveLogs(payload) {
 // ============================================================================
 // ROUTER PRINCIPAL
 // ============================================================================
+function doGet(e) {
+    if (e.parameter.debug === 'true') {
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const coordinatorUrl = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_URL') || '').trim();
+        const coordinatorSecret = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_SECRET') || '');
+        const serviceState = {
+            service: 'GPSpedia-Auth',
+            version: '2.2.5',
+            status: 'available',
+            coordinatorConfigured: coordinatorUrl.startsWith('https://script.google.com/macros/s/') &&
+                coordinatorUrl.endsWith('/exec') && coordinatorSecret.length >= 32
+        };
+        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+    // Comportamiento por defecto si no está en modo de depuración
+    const defaultResponse = {
+        status: 'success',
+        message: 'GPSpedia Auth-SERVICE v2.0 is active.'
+    };
+    return ContentService.createTextOutput(JSON.stringify(defaultResponse))
+        .setMimeType(ContentService.MimeType.TEXT);
+}
+
+
+function isSharedMutationAction_(action) {
+    return ["deleteUser"].includes(action);
+}
+
+function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
+    if (!actor || !actor.userId || actor.userId !== normalizeUserId(userId) ||
+        !sessionToken || !Number.isFinite(Number(actor.lastActivityAt))) {
+        throw new Error("No se pudo confirmar el contexto de sesión para la operación AUTH.");
+    }
+    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar la actividad.");
+    const rows = sessionsSheet.getDataRange().getValues();
+    const matches = [];
+    for (let index = 1; index < rows.length; index++) {
+        if (String(rows[index][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "") === String(sessionToken)) {
+            matches.push({ row: rows[index], rowIndex: index + 1 });
+        }
+    }
+    if (matches.length !== 1 ||
+        normalizeUserId(matches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
+        throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
+    }
+    const currentValue = matches[0].row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] ||
+        matches[0].row[COLS_ACTIVE_SESSIONS.date - 1];
+    const current = currentValue instanceof Date ? currentValue.getTime() : new Date(currentValue).getTime();
+    const central = Number(actor.lastActivityAt);
+    if (!Number.isFinite(current) || central > current) {
+        sessionsSheet.getRange(matches[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date(central));
+    }
+    return true;
+}
+
 function doPost(e) {
     let request;
     try {

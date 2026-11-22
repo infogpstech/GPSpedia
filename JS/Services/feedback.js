@@ -586,6 +586,38 @@ function publishFeedbackCortesCatalogChange_(action, reference) {
 }
 
 
+function doGet(e) {
+    const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
+    if (String(parameters.catalogFeed || "") === "1") {
+        let response;
+        try {
+            const cursor = parameters.cursor === undefined || parameters.cursor === "" ? 0 : Number(parameters.cursor);
+            const limit = parameters.limit === undefined || parameters.limit === "" ? 50 : Number(parameters.limit);
+            response = getSharedCatalogChanges_(cursor, limit);
+        } catch (error) {
+            response = { status: "error", message: error && error.message ? error.message : "No se pudo consultar el feed público del catálogo." };
+        }
+        return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (e && e.parameter && e.parameter.debug === 'true') {
+        const serviceState = {
+            service: 'GPSpedia-Feedback',
+            version: '1.2.2',
+            status: 'available',
+            coordinatorConfigured: isFeedbackCoordinatorConfigured_()
+        };
+        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+    const defaultResponse = {
+        status: 'success',
+        message: 'GPSpedia Feedback-SERVICE v2.0 is active.'
+    };
+    return ContentService.createTextOutput(JSON.stringify(defaultResponse))
+        .setMimeType(ContentService.MimeType.TEXT);
+}
+
+
 function doPost(e) {
     let request;
     try {
