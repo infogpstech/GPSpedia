@@ -236,3 +236,12 @@ El primer CI del refresco dirigido pasó los asserts funcionales de la proyecci�
 **Corrección:** se usa el evento devuelto por el append para construir la proyección local. Se conserva la lectura posterior a la operación Drive y la lectura final de confirmación, que detectan conflictos y archivos concurrentes. La reserva sigue ocurriendo antes de `folder.createFile`; no se elimina recuperación ni validación de unicidad.
 
 **Prueba:** el contrato verifica que el evento reservado se reutiliza y que no hay lectura completa inmediata entre append y búsqueda/creación del archivo. CI pendiente.
+
+
+### A02-05 y A02-06 validadas en CI
+
+**CI exacto:** SHA `0e8110a753b8cb5b00beca0e6d66208b0ec68daf` — 302 suites / 3,537 pruebas / 0 fallos. Se validó la reutilización del handle de AportesVehiculo y el fast path de reserva de imagen. Health read-only SUCCESS. A02-05/A02-06 validadas en código/CI, no en entorno Beta con Drive real.
+
+### A02-07 — lecturas repetidas al vincular imágenes
+
+En `markImageUploadLinkedWithShortLedgerLock_`, el camino de recuperación sin evento pending vuelve a leer todas las filas por token inmediatamente después de `appendImageUploadEventRequired_`, aunque el append ya devuelve la fila confirmada. Revisar si se puede reutilizar el evento devuelto y conservar la lectura final tras append linked para detectar concurrencia/conflictos. No retirar `getImageUploadReferences_`: verifica que el archivo quedó realmente referenciado antes de marcarlo linked.

@@ -747,3 +747,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Prueba añadida:** verifica el uso del evento devuelto y ausencia de relectura entre append reserved y la selección/creación del archivo.
 - **Estado:** CI pendiente.
 - **Siguiente:** ejecutar regresión; continuar auditoría de las lecturas repetidas en markImageUploadLinked y de búsquedas de archivos Drive.
+
+
+## A02-05 y A02-06 cerradas; A02-07 en curso — 2026-11-22
+
+- **A02-05:** WRITE reutiliza el handle de AportesVehiculo ya validado antes de Drive; elimina segunda consulta de hoja y revalidación de encabezados.
+- **A02-06:** el evento reserved confirmado por append se reutiliza como snapshot inicial; se evita releer todo ImageUploadEvents inmediatamente.
+- **CI exacto:** SHA `0e8110a753b8cb5b00beca0e6d66208b0ec68daf`; 302 suites / 3,537 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- **Siguiente tarea:** A02-07, aplicar el mismo principio al evento pending de recuperación en markImageUploadLinked, conservando lectura final linked y controles de referencias.
+- **Contexto:** solo se eliminan lecturas que duplican un append ya confirmado; permanecen las lecturas que detectan vínculos reales, conflictos o carreras concurrentes.

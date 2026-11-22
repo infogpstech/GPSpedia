@@ -529,3 +529,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Mantener lectura posterior a Drive y confirmación final para detectar colisiones/concurrencia.
 - [x] Añadir regresión estática para el fast path de reserva.
 - [ ] CI A02-06.
+
+- [x] A02-05 validada por CI SHA `b8525d110958bb63f2680460da855bc852df1865`: 302 suites / 3,535 pruebas / 0 fallos.
+- [x] A02-06 validada por CI SHA `0e8110a753b8cb5b00beca0e6d66208b0ec68daf`: 302 suites / 3,537 pruebas / 0 fallos.
+- [ ] A02-07: optimizar relectura tras append pending en markImageUploadLinkedWithShortLedgerLock_, manteniendo read-back final y detección de concurrencia.
