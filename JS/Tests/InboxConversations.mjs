@@ -6,7 +6,7 @@ const feedbackSource = readFileSync(new URL("../Services/feedback.js", import.me
 const coordinatorSource = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 
 class FakeSheet {
-    constructor(name) { this.name = name; this.rows = []; }
+    constructor(name) { this.name = name; this.rows = []; this.textFinderCalls = []; }
     getLastRow() { return this.rows.length; }
     getLastColumn() { return this.rows.reduce((max, row) => Math.max(max, row.length), 0); }
     insertColumnBefore(column) { this.rows.forEach(row => row.splice(column - 1, 0, "")); }
@@ -29,7 +29,30 @@ class FakeSheet {
                 });
             },
             getValue() { return this.getValues()[0][0]; },
-            setValue(value) { this.setValues([[value]]); }
+            setValue(value) { this.setValues([[value]]); },
+            createTextFinder(query) {
+                let matchCase = false, matchEntireCell = false;
+                const finder = {
+                    matchCase(value) { matchCase = value; return finder; },
+                    matchEntireCell(value) { matchEntireCell = value; return finder; },
+                    findAll() {
+                        sheet.textFinderCalls.push({ row, column, rowCount, columnCount, query: String(query) });
+                        const expected = matchCase ? String(query) : String(query).toLowerCase();
+                        const found = [];
+                        for (let offset = 0; offset < rowCount; offset++) {
+                            for (let c = 0; c < columnCount; c++) {
+                                const raw = String(sheet.rows[row - 1 + offset]?.[column - 1 + c] ?? "");
+                                const actual = matchCase ? raw : raw.toLowerCase();
+                                if (matchEntireCell ? actual === expected : actual.includes(expected)) {
+                                    found.push({ getRow: () => row + offset });
+                                }
+                            }
+                        }
+                        return found;
+                    }
+                };
+                return finder;
+            }
         };
     }
     getDataRange() { return this.getRange(1, 1, this.getLastRow(), Math.max(1, this.getLastColumn())); }
@@ -529,6 +552,23 @@ run("Las mutaciones Inbox mantienen RBAC y usan actor cacheado sin leases por ac
     for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"]) {
         assert.ok(feedbackSource.includes(action + ":"), action + " debe permanecer declarada en FEEDBACK_ACTION_PERMISSIONS.");
     }
+});
+run("La auditoría evita leer el historial completo para deduplicar un messageId", () => {
+    const audit = spreadsheet.getSheetByName("InboxConversationAudit");
+    const before = audit.getLastRow();
+    const actorInfo = { id:"U1", name:"Ana Desarrolladora" };
+    api.inboxAppendAudit_(audit,actorInfo,"message",first.conversationId,"audit-message-0001","Mensaje agregado.");
+    const afterFirst = audit.getLastRow();
+    api.inboxAppendAudit_(audit,actorInfo,"message",first.conversationId,"audit-message-0001","Reintento.");
+    assert.equal(afterFirst,before+1);
+    assert.equal(audit.getLastRow(),afterFirst,"El reintento del mismo actor/acción/messageId no duplica el evento.");
+    const lookup = audit.textFinderCalls.at(-1);
+    assert.equal(lookup.column,7,"La deduplicación consulta únicamente messageId en columna G.");
+    assert.equal(lookup.columnCount,1);
+    assert.equal(lookup.query,"audit-message-0001");
+    const blankBefore = audit.textFinderCalls.length;
+    api.inboxAppendAudit_(audit,actorInfo,"conversation_closed",first.conversationId,"","Cierre.");
+    assert.equal(audit.textFinderCalls.length,blankBefore,"Acciones sin messageId no escanean el historial para deduplicar.");
 });
 run("Los reintentos idempotentes no retroceden el último mensaje cuando hay marcas de tiempo iguales", () => {
     const created = api.handleCreateInboxConversation({
