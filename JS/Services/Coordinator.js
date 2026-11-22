@@ -1292,8 +1292,8 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
 
-    function catalogChangeRevisions_() {
-        const all = properties.getProperties();
+    function catalogChangeRevisions_(propertySnapshot) {
+        const all = propertySnapshot || properties.getProperties();
         return Object.keys(all || {}).filter(key => key.indexOf(CATALOG_CHANGE_EVENT_PREFIX_) === 0)
             .map(key => Number(key.slice(CATALOG_CHANGE_EVENT_PREFIX_.length)))
             .filter(value => Number.isSafeInteger(value) && value > 0)
@@ -1383,8 +1383,9 @@ function createSharedMutationCoordinator_(dependencies) {
         });
 
         return withCoordinatorLock_(() => {
-            const revisions = catalogChangeRevisions_();
-            const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
+            const propertySnapshot = properties.getProperties() || {};
+            const revisions = catalogChangeRevisions_(propertySnapshot);
+            const storedRevision = Number(propertySnapshot[CATALOG_CHANGE_REVISION_PROPERTY_] || 0);
             let currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0,
                 revisions.length ? revisions[revisions.length - 1] : 0);
 
@@ -1393,7 +1394,7 @@ function createSharedMutationCoordinator_(dependencies) {
             if (requestId) {
                 const existing = [];
                 revisions.forEach(revision => {
-                    const raw = properties.getProperty(CATALOG_CHANGE_EVENT_PREFIX_ + revision);
+                    const raw = propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + revision];
                     if (!raw) return;
                     try {
                         const event = JSON.parse(raw);
@@ -1431,12 +1432,17 @@ function createSharedMutationCoordinator_(dependencies) {
                         sourceRequestId: requestId, batchIndex: -1, batchCount: expectedCount,
                         recoveredPartial: true, resetRequired: true
                     };
-                    properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision, JSON.stringify(resetEvent));
+                    const resetKey = CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision;
+                    propertySnapshot[resetKey] = JSON.stringify(resetEvent);
+                    propertySnapshot[CATALOG_CHANGE_REVISION_PROPERTY_] = String(currentRevision);
+                    properties.setProperty(resetKey, propertySnapshot[resetKey]);
                     properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(currentRevision));
-                    const recoveredEvents = catalogChangeRevisions_();
+                    const recoveredEvents = catalogChangeRevisions_(propertySnapshot);
                     while (recoveredEvents.length > CATALOG_CHANGE_MAX_EVENTS_) {
                         const oldest = recoveredEvents.shift();
                         properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
+                delete propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + oldest];
+                        delete propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + oldest];
                     }
                     return { status: "success", count: expectedCount, firstRevision: currentRevision,
                         lastRevision: currentRevision, resetRequired: true, duplicate: true, recoveredPartial: true };
@@ -1470,10 +1476,13 @@ function createSharedMutationCoordinator_(dependencies) {
             acceptedEvents.forEach((item, index) => {
                 currentRevision++;
                 const storedEvent = Object.assign({}, item.event, { revision: currentRevision, resetRequired: item.resetRequired });
-                properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision, JSON.stringify(storedEvent));
+                const eventKey = CATALOG_CHANGE_EVENT_PREFIX_ + currentRevision;
+                propertySnapshot[eventKey] = JSON.stringify(storedEvent);
+                properties.setProperty(eventKey, propertySnapshot[eventKey]);
             });
+            propertySnapshot[CATALOG_CHANGE_REVISION_PROPERTY_] = String(currentRevision);
             properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(currentRevision));
-            const after = catalogChangeRevisions_();
+            const after = catalogChangeRevisions_(propertySnapshot);
             while (after.length > CATALOG_CHANGE_MAX_EVENTS_) {
                 const oldest = after.shift();
                 properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
@@ -1501,8 +1510,9 @@ function createSharedMutationCoordinator_(dependencies) {
                 const trafficService = service === "PUBLIC" ? "CATALOG" : service;
                 recordServiceTrafficEvent_(trafficService, now(), operation);
             } catch (trafficError) { /* Telemetría best-effort: nunca bloquea el feed. */ }
-            const revisions = catalogChangeRevisions_();
-            const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
+            const propertySnapshot = properties.getProperties() || {};
+            const revisions = catalogChangeRevisions_(propertySnapshot);
+            const storedRevision = Number(propertySnapshot[CATALOG_CHANGE_REVISION_PROPERTY_] || 0);
             const currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0, revisions.length ? revisions[revisions.length - 1] : 0);
             const minRevision = revisions.length ? revisions[0] : currentRevision + 1;
             if (cursor > currentRevision || (revisions.length && cursor < minRevision - 1)) {
@@ -1511,7 +1521,7 @@ function createSharedMutationCoordinator_(dependencies) {
             const changes = [];
             const endRevision = Math.min(currentRevision, cursor + requestedLimit);
             for (let revision = cursor + 1; revision <= endRevision; revision++) {
-                const raw = properties.getProperty(CATALOG_CHANGE_EVENT_PREFIX_ + revision);
+                const raw = propertySnapshot[CATALOG_CHANGE_EVENT_PREFIX_ + revision];
                 if (!raw) return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
                 let event;
                 try { event = JSON.parse(raw); } catch (error) {
