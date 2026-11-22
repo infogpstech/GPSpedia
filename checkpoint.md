@@ -1514,3 +1514,15 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Suite InboxConversations **69/69 PASS**. CI HEAD `893b29c48926e16997cfaff03a6617cd475ddb35`: **292 suites / 3,409 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático en curso al momento del checkpoint.
 - No se tocaron datos productivos, endpoints, secretos, propiedades ni deployments Apps Script; rama base intacta.
 - Siguiente: continuar FEEDBACK con actividad/vistas y PyS/tutoriales; revisar después publicación CATALOG y cerrar la auditoría integral antes de ADMIN.
+
+
+## Checkpoint P1 FEEDBACK — snapshot compartido del panel de actividad (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; pruebas actualizadas: `ActivityDashboardContributions.mjs`, `ActivityDashboardInsights.mjs`, `ActivityLogsBoundedRead.js`, `InboxAuditTrail.js`.
+- Se añadió `readActivityDashboardCutsSnapshot_`: obtiene una sola vez A:D de Cortes y tres rangos contiguos tipo→colaborador. Estos rangos incluyen también `utilCorteN`.
+- `handleGetActivityLogs` pasa la misma instantánea a `buildCutContributionSummary_` y `buildActivityDashboardInsights_`. Elimina las lecturas repetidas de IDs y tipos/contadores entre ambos agregados.
+- Conteo estático anterior: 11 rangos de Cortes (4 contribuciones + 7 insights). Nuevo: 4 rangos compartidos. Reducción: **7 lecturas de rango por petición**; no se leen filas completas ni columnas ajenas al dashboard.
+- Pruebas: ActivityDashboardContributions PASS; GP-DASH-INSIGHTS-01 PASS; ActivityLogsBoundedRead/AUG-120 **7/7 PASS**. CI HEAD `eba4b299572fd7cc4afae8b15d009498e04feb5e`: **292 suites / 3,409 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS.
+- Durante la integración se actualizaron los harnesses que extraen `handleGetActivityLogs` para incluir el snapshot compartido y sus constantes; la regresión final quedó verde.
+- Rama base `GPSpedia2.2.5` comprobada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. No se tocaron datos productivos ni deployments Apps Script.
+- Siguiente: auditar lecturas y eventos de PyS, tutoriales y publicación CATALOG; luego cerrar FEEDBACK integral antes de iniciar ADMIN.
