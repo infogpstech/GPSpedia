@@ -110,7 +110,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_, inboxPlainTextPreview_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_, inboxPlainTextPreview_, inboxAppendAudit_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
