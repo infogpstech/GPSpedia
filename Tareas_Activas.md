@@ -455,3 +455,16 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] A09–A10: auditar consola, progreso, inventario automático de imágenes reemplazadas y asociación por modelo/carpeta.
 - [ ] A11: revisar completitud y vigencia de la guía Apps Script.
 - [ ] A12: regresión integral y cierre de pendientes Beta.
+
+
+### A01 — sesión, identidad, roles y atribución (2026-11-22)
+- [x] Revisar actor cacheado, precarga de login, invalidación remota y política de acciones sin leases.
+- [x] CI exacto del commit `3ee1747d077a972442c1c2a7dde277ef0dddcdcf`: 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 archivos; referencias 344 archivos.
+- [x] Contratos focalizados: SessionActivityLeaseMinimization 5/5; SessionActorCacheLifetime 6/6; SessionActorCacheInvalidation 1/1; SessionInvalidationFlow 15/15; DeveloperPrivilegeRouting 20/20; CoordinatorCapabilityPreservation 6/6; ActivityDashboardContributions 1/1; ActivityDashboardInsights 1/1; RecentlyViewedActivityTelemetry 12/12; InboxUi 87/87; AuthSessionReadOptimization 9/9.
+- [x] Confirmar que Inbox limita mensajes a participantes y que las acciones administrativas están restringidas por rol en backend.
+- [ ] Beta: probar dos cuentas simultáneas, separación de aportes/mensajes, logout remoto, eliminación, cambio de rol y eviction real de CacheService.
+- **Estado:** A01 COMPLETADA EN CÓDIGO/CI; PENDIENTE DE VALIDACIÓN BETA.
+### A02 — latencia y llamadas redundantes en operaciones de aporte (inicio)
+- [ ] Trazar desde UI hasta persistencia los flujos addOrUpdateCut, addSupplementaryInfo, imágenes in-modal y upload de video.
+- [ ] Contabilizar por operación cada request, preflight, lookup, lectura de snapshot, Drive call, confirmación, reintento y refresco posterior.
+- [ ] Determinar si las lecturas de verificación son redundantes o necesarias para idempotencia/recuperación; medir localmente y no eliminarlas por intuición.

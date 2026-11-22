@@ -44,7 +44,7 @@ Cada bloque se audita por separado. Para cada uno se registran rutas y funciones
 
 ## A01 — Sesión, identidad, roles y datos del colaborador
 
-**Estado inicial:** auditoría estática parcial; pruebas de integración remota y de aislamiento entre cuentas pendientes.
+**Estado actualizado:** contratos locales/CI aprobados; pruebas reales de cuentas/servicios Beta pendientes.
 
 ### Evidencia observada
 
@@ -53,7 +53,9 @@ Cada bloque se audita por separado. Para cada uno se registran rutas y funciones
 - Las rutas de revocación usan invalidación dirigida antes de revocar el contexto central. `Services/DEPLOYMENT_GUIDE.md` exige URL ADMIN en Coordinator para la invalidación de caché.
 - `JS/Services/SessionActivityLeaseMinimization.mjs` protege que WRITE/FEEDBACK no adquieran leases ordinarias, que USERS reutilice actor cacheado para getUsers/updateProfile, que AUTH reserve la lease solo para eliminación y que ADMIN no adquiera leases.
 - `JS/Services/write.js` obtiene el nombre mediante `getAuthenticatedCollaborator()` desde `__sharedSessionActor.fullName/role`, no desde `payload.colaborador`. `users.js` exige actor confiable y compara identidad solicitada con actor para perfil.
-- El panel de actividad tiene pruebas focalizadas `ActivityDashboardContributions.mjs` y `ActivityDashboardInsights.mjs`, pero todavía no se ha demostrado aquí el aislamiento end-to-end entre cuentas ni que todos los tipos de aporte lleguen al dashboard.
+- `InboxConversations.js` deriva actor desde el contexto FEEDBACK confiable, limita destinatarios por jerarquía de roles, exige que el usuario sea participante para leer mensajes y aplica flags/ocultación por participante. Cerrar un caso está limitado a Desarrollador/Jefe/Supervisor.
+- `feedback.js` declara permisos por acción: `getActivityLogs` solo Desarrollador/Jefe/Supervisor; métricas `getServiceTraffic` pasan por ADMIN/Coordinator. El test de UI comprueba guards sin otra llamada de sesión.
+- Las pruebas de contribuciones/insights validan la agregación y el renderizado; la prueba de vistas recientes verifica que el evento se registra sin bloquear la apertura del detalle.
 
 ### Hallazgo A01-01 — pérdida/expulsión de caché local
 
@@ -78,3 +80,28 @@ Cada bloque se audita por separado. Para cada uno se registran rutas y funciones
 ### Próxima tarea
 
 Completar A01 con pruebas locales de atribución de aportes y matriz de permisos; después continuar A02, trazado de latencia y llamadas redundantes en las rutas de escritura.
+
+
+### Actualización de validación A01 — CI del commit 3ee1747 (2026-11-22)
+
+**Resultado:** <span> </span> regresión de servicios SUCCESS: 302 suites / 3,524 pruebas / 0 fallos. Sintaxis Node 22: 433 archivos; referencias relativas: 344 archivos, 1/1 PASS.
+
+Pruebas focalizadas verificadas en los logs de CI del SHA exacto:
+- `SessionActivityLeaseMinimization`: 5/5 PASS.
+- `SessionActorCacheLifetime`: 6/6 PASS; el actor se precarga al login, cache hit no revalida por acción y renueva TTL local.
+- `SessionActorCacheInvalidation`: 1/1 PASS; invalidación/precarga autenticada en USERS, WRITE, FEEDBACK y ADMIN.
+- `SessionInvalidationFlow`: 15/15 PASS.
+- `DeveloperPrivilegeRouting`: 20/20 PASS.
+- `CoordinatorCapabilityPreservation`: 6/6 PASS.
+- `ActivityDashboardContributions`: 1/1 PASS.
+- `ActivityDashboardInsights`: 1/1 PASS.
+- `RecentlyViewedActivityTelemetry`: 12/12 PASS.
+- `InboxUi`: 87/87 PASS, incluyendo reglas por rol y navegación.
+- `AuthSessionReadOptimization`: 9/9 PASS.
+
+**Conclusión A01:** la implementación local cumple el principio de no hacer viajes a Coordinator en cache hit y conserva la autorización por actor/rol. No se confirma una revalidación remota por cada acción. La revocación dirigida y los contratos de roles pasan CI. A01 queda **COMPLETADA EN CÓDIGO/CI, PENDIENTE DE BETA** para verificar dos cuentas reales, aislamiento de hojas/mensajes, cierre remoto/eliminación/cambio de rol y eviction de CacheService.
+
+**Riesgo abierto A01-01:** la pérdida espontánea de una entrada CacheService produce `SESSION_ACTOR_CACHE_MISS` y rechazo de la acción sin fallback. No equivale a una validación remota por acción; debe medirse en Beta y decidir una recuperación puntual solo ante cache miss si genera reautenticaciones inesperadas.
+
+**Límite de evidencia:** CI usa contratos y dobles locales; no ejecutó los deployments Apps Script ni probó datos reales de dos usuarios. Health read-only SUCCESS solo verifica disponibilidad de deployments existentes.
+

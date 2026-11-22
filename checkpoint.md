@@ -612,3 +612,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **HEAD de partida:** `79c01e34ac7502805cf4b4b32fdb44ffa10258ef` en `GPSpedia2.2.5_work`. Rama base no modificada.
 - **Siguiente tarea:** completar A01 con ejecución de pruebas locales de actor/invalidación/atribución y construir matriz de roles; después iniciar A02, latencia y llamadas redundantes de las rutas de aportes.
 - **Contexto:** se prioriza fluidez sin renunciar a la separación de usuarios ni al control de roles. No se considera válida una revalidación remota en cada acción ordinaria.
+
+
+## A01 cerrada localmente y A02 iniciada — 2026-11-22
+
+- **Tarea realizada:** se completó la revisión estática A01 y se validaron los contratos de sesión, invalidación, permisos por rol, Inbox, atribución y dashboard mediante CI.
+- **Evidencia exacta:** commit `3ee1747d077a972442c1c2a7dde277ef0dddcdcf`; 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 archivos y referencias relativas 344. SessionActivityLeaseMinimization 5/5, SessionActorCacheLifetime 6/6, SessionActorCacheInvalidation 1/1, SessionInvalidationFlow 15/15, DeveloperPrivilegeRouting 20/20, CoordinatorCapabilityPreservation 6/6, ActivityDashboardContributions 1/1, ActivityDashboardInsights 1/1, RecentlyViewedActivityTelemetry 12/12, InboxUi 87/87 y AuthSessionReadOptimization 9/9.
+- **Hallazgo A01:** el cache hit no consulta Coordinator ni Users/ActiveSessions; la invalidación remota se propaga por revocación. Riesgo abierto: eviction espontánea de CacheService causa SESSION_ACTOR_CACHE_MISS y rechazo, pendiente de comprobar en Beta. No se observó revalidación remota por cada acción.
+- **Límite:** no se probaron deployments ni dos cuentas reales; A01 está completa en código/CI, no en Beta.
+- **Siguiente tarea iniciada:** A02, trazar latencia y llamadas redundantes en aportes: alta de corte/vehículo, información suplementaria, imágenes desde edición in-modal y videos. Contar requests, preflight, lecturas, Drive, confirmaciones y reintentos.
+- **Contexto:** se mantiene autorización local basada en actor confiable y rol; no añadir viajes de red por acción. Se distinguen confirmaciones funcionales de revalidaciones de sesión.
