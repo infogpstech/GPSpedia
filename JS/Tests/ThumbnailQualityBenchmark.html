@@ -209,16 +209,22 @@ runButton.addEventListener("click", async () => {
     queue = createConcurrencyLimiter(2);
     const jobs = [];
     const bySample = files.map((file, index) => ({ file, index, variants: [] }));
-    for (const sample of bySample) {
-        for (const width of WIDTHS) {
-            const key = sample.file.name + "::w" + width;
-            jobs.push(makeVariant(sample.file, width, sample.index).then(result => {
-                sample.variants.push({ targetWidth: width, ...result });
-            }));
-        }
-    }
     const visibleIndex = Number(visibleSelect.value);
     const visibleSample = bySample[visibleIndex];
+    function enqueueVariant(sample, width) {
+        jobs.push(makeVariant(sample.file, width, sample.index).then(result => {
+            sample.variants.push({ targetWidth: width, ...result });
+        }));
+    }
+    for (const sample of bySample) {
+        for (const width of WIDTHS) {
+            if (sample.index === visibleIndex && width === 800) continue;
+            enqueueVariant(sample, width);
+        }
+    }
+    // La variante elegida se encola al final como precarga y luego se promueve,
+    // garantizando que la prueba mida una entrada pendiente, no una tarea activa.
+    if (visibleSample) enqueueVariant(visibleSample, 800);
     const visibleKey = visibleSample ? "sample-" + visibleIndex + "::w800" : "";
     const promoted = visibleKey ? queue.promote(visibleKey, 10) : false;
     try {

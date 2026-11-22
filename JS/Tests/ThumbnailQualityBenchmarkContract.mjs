@@ -14,6 +14,8 @@ assert.match(html, /Math\.min\(1, width \/ bitmap\.width\)/);
 assert.match(html, /canvas\.toBlob\(resolve, "image\/png"\)/);
 assert.match(html, /createConcurrencyLimiter\(2\)/);
 assert.match(html, /queue\.promote\(visibleKey, 10\)/);
+assert.match(html, /sample\.index === visibleIndex && width === 800/);
+assert.match(html, /enqueueVariant\(visibleSample, 800\)/);
 assert.match(html, /priority: 0/);
 assert.match(html, /crypto\.subtle\.digest\("SHA-256"/);
 assert.match(html, /URL\.createObjectURL\(blob\)/);
@@ -55,4 +57,4 @@ const fileFromBytes = bytes => ({ type: "image/jpeg", slice: () => ({ arrayBuffe
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(true, 6))), "6");
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(false, 8))), "8");
 assert.equal(await readExif({ type: "image/png" }), "no JPEG");
-console.log("ThumbnailQualityBenchmarkContract: 23/23 PASS — local, sin red ni persistencia");
+console.log("ThumbnailQualityBenchmarkContract: 25/25 PASS — local, sin red ni persistencia");
