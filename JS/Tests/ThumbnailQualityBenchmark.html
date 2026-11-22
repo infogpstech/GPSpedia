@@ -229,8 +229,11 @@ async function makeVariant(file, width, sampleIndex) {
         activeCompressionTasks++;
         maxActiveCompressionTasks = Math.max(maxActiveCompressionTasks, activeCompressionTasks);
         try {
+        const decodeStart = performance.now();
         const bitmap = await createImageBitmap(file);
+        const decodeMs = performance.now() - decodeStart;
         try {
+            const canvasStart = performance.now();
             const scale = Math.min(1, width / bitmap.width);
             const canvas = document.createElement("canvas");
             canvas.width = Math.max(1, Math.round(bitmap.width * scale));
@@ -238,6 +241,7 @@ async function makeVariant(file, width, sampleIndex) {
             const context = canvas.getContext("2d");
             if (!context) throw new Error("Canvas 2D no disponible");
             context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            const canvasMs = performance.now() - canvasStart;
             const encodeStart = performance.now();
             const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
             const encodeMs = performance.now() - encodeStart;
@@ -247,7 +251,7 @@ async function makeVariant(file, width, sampleIndex) {
             return {
                 blob, width: canvas.width, height: canvas.height,
                 queueWaitMs: startedAt - queuedAt, processMs, encodeMs,
-                alpha, estimatedCanvasBytes: canvas.width * canvas.height * 4
+                alpha, decodeMs, canvasMs, estimatedCanvasBytes: canvas.width * canvas.height * 4
             };
         } finally {
             if (typeof bitmap.close === "function") bitmap.close();
@@ -340,7 +344,8 @@ runButton.addEventListener("click", async () => {
                     " bytes · MIME: " + variant.blob.type + " · firma: " + outputSignature +
                     " · SHA-256: " + outputHash + " · alfa: " + variant.alpha +
                     " · espera: " + variant.queueWaitMs.toFixed(1) +
-                    " ms · proceso: " + variant.processMs.toFixed(1) + " ms · encode: " +
+                    " ms · decodificación: " + variant.decodeMs.toFixed(1) +
+                    " ms · Canvas: " + variant.canvasMs.toFixed(1) + " ms · proceso: " + variant.processMs.toFixed(1) + " ms · encode: " +
                     variant.encodeMs.toFixed(1) + " ms · Canvas estimado: " + variant.estimatedCanvasBytes + " bytes");
             }
             section.appendChild(grid);

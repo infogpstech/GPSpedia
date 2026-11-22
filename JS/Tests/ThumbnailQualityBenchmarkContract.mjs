@@ -10,6 +10,9 @@ const queue = readFileSync(resolve(root, "JS/Frontend/thumbnailCompressionQueue.
 
 assert.match(html, /createConcurrencyLimiter \} from "\.\.\/Frontend\/thumbnailCompressionQueue\.js"/);
 assert.match(html, /const WIDTHS = \[300, 800, 1600\]/);
+assert.match(html, /const decodeStart = performance\.now\(\)/);
+assert.match(html, /const canvasStart = performance\.now\(\)/);
+assert.match(html, /decodeMs, canvasMs, estimatedCanvasBytes/);
 assert.match(html, /async function generateSyntheticCorpus\(\)/);
 assert.match(html, /sintetico-diagrama-electrico\.png/);
 assert.match(html, /sintetico-guia-desarme-vertical\.png/);
@@ -105,4 +108,4 @@ const fileFromBytes = bytes => ({ type: "image/jpeg", slice: () => ({ arrayBuffe
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(true, 6))), "6");
 assert.equal(await readExif(fileFromBytes(jpegWithOrientation(false, 8))), "8");
 assert.equal(await readExif({ type: "image/png" }), "no JPEG");
-console.log("ThumbnailQualityBenchmarkContract: 46/46 PASS — corpus sintético local, sin red ni persistencia");
+console.log("ThumbnailQualityBenchmarkContract: 49/49 PASS — corpus sintético local, sin red ni persistencia");

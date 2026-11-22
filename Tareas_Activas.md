@@ -405,6 +405,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 ### P1 — harness local de calidad y rendimiento de miniaturas (2026-11-22)
 - [x] Crear JS/Tests/ThumbnailQualityBenchmark.html: procesamiento local de archivos seleccionados; variantes 300/800/1600; dimensiones, bytes, MIME/firma, SHA-256, orientación EXIF JPEG, alfa muestreado, tiempos de espera/decodificación/canvas/codificación y memoria de Canvas estimada.
 - [x] Reutilizar la cola real thumbnailCompressionQueue.js; encolar precargas a prioridad 0 y promover la variante 800 elegida a prioridad 10 cuando aún está pendiente.
+- [x] Separar en el resultado del harness la espera de cola, decodificación con createImageBitmap, trabajo de Canvas/drawImage y codificación PNG; mantener también el tiempo total de proceso.
 - [x] Añadir generador local de cinco muestras sintéticas: diagrama eléctrico apaisado con etiquetas/cables de color, guía de panel vertical, textura oscura de alto detalle, PNG con alfa parcial e imagen pequeña que no debe ampliarse. Se generan en memoria y no se guardan en el repositorio.
 - [x] El harness no ejecuta fetch/XHR, no usa IndexedDB/localStorage y no sube ni persiste archivos. Requiere servidor local HTTP para importar el módulo de cola.
 - [x] ThumbnailQualityBenchmarkContract ampliado para ejecutar el generador con dobles locales y comprobar los cinco archivos, MIME, bytes y nombres: 46/46 PASS en CI.

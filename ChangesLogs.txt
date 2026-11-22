@@ -1059,3 +1059,8 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - El primer CI detectó una secuencia de escape incorrecta en el nuevo contrato Node; se corrigió en JS/Tests/ThumbnailQualityBenchmarkContract.mjs.
 - HEAD 0d301bc3e6a04e06077fc9c39f8d7d6097671ac3: ThumbnailQualityBenchmarkContract 46/46 PASS; regresión 302 suites / 3,521 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health read-only 7/7; Pages build/deployment SUCCESS.
 - La revisión visual en navegador, el corpus real autorizado y las métricas de aplicación continúan pendientes de Beta aislada.
+
+
+2026-11-22 — Banco de miniaturas: separación de tiempos
+- Se añadieron métricas independientes de decodificación (createImageBitmap), preparación/dibujo Canvas y codificación PNG, conservando espera de cola y duración total.
+- El contrato estático se amplió para proteger los nuevos campos; resultado esperado en CI: 49/49.

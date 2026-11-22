@@ -575,3 +575,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** abrir el harness en navegador real, revisar visualmente nitidez de texto/cables, alfa y no-ampliación; después usar muestras reales autorizadas y medir CORS, primera pintura, bytes, CPU y memoria en Beta aislada. No cambiar parámetros sin evidencia.
 - **Contexto:** la validación Node comprueba la generación/contrato, no la calidad visual real del navegador ni el rendimiento de campo. La textura sintética no equivale a una fotografía y el generador no crea EXIF real.
 - **Estado:** corpus sintético local y contrato COMPLETADOS; validación visual, corpus representativo real y métricas de aplicación PENDIENTES DE BETA.
+
+
+## Ajuste de medición del harness P1 (2026-11-22)
+
+- Se detectó que el tiempo total de proceso no separaba decodificación y dibujo Canvas. El banco ahora registra `decodeMs` (createImageBitmap), `canvasMs` (preparación/dibujo) y `encodeMs` (toBlob), además de espera y duración total.
+- Se amplió el contrato estático para comprobar los tres intervalos. CI de confirmación pendiente.
+- **Siguiente:** validar el nuevo contrato en CI y conservar la lectura visual/Beta como pendiente; no usar los tiempos simulados de dobles como rendimiento real.
