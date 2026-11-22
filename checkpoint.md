@@ -927,3 +927,17 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Validación diferida:** no se desplegó Apps Script ni se modificaron Drive/Spreadsheet reales. En Beta aislada falta probar la sincronización repetida con CATALOG y Drive reales, los conflictos de identidad, la preservación de estados manuales y la recuperación de restauración con datos de prueba.
 - **Siguiente tarea:** A07-05 — mover la salida/progreso del escáner a la consola global del panel Desarrollador, conservando conteos, resultados y reanudación.
 - **HEAD de implementación verificado:** `66c35468cff047e3f9d8caa89fccad8ed731bcc7`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## A07-05 COMPLETADA — consola global para el escáner de Cortes — 2026-11-22
+
+- **Objetivo:** mover salida y progreso del escáner desde la consola embebida en el modal hacia la consola global del panel Desarrollador, manteniendo conteos, resultados y reanudación.
+- **Salida global:** appendAuditConsole dirige los mensajes al logger global mediante logDeveloperOperation_ con el prefijo [AUDITORÍA DRIVE]. Se retiraron el markup y estilos de la consola local del modal.
+- **Progreso/conteos:** se conservan los resúmenes por carpeta y lote, el estado de ejecución, errores, advertencias, duplicados, referencias no interpretables y el resumen acumulado.
+- **Resultados:** se conserva la lista de resultados clasificados en el modal. Se eliminó el log individual redundante por archivo para evitar saturar la consola global.
+- **Reanudación:** no se modificaron cursor, IndexedDB, persistState, control de lotes ni runAudit(true). El botón de reanudar sigue condicionado por cursor válido y estado incompleto.
+- **Pruebas focalizadas:** AdminDriveAuditGlobalConsole 1/1 PASS; CortesImageReconciliationUI 15/15 PASS; AdminDriveAuditClientRetry 7/7 PASS; AdminDriveAuditIndexedDB 13/13 PASS.
+- **CI final:** commit `cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d`; 304 suites / 3,562 pruebas aprobadas / 0 fallos. Sintaxis JS PASS; health read-only 7/7 SUCCESS; GitHub Pages build/deployment SUCCESS.
+- **Commits de implementación/pruebas:** `f479574bad9f492ed262a69e6d631f7059dd2f33` y `cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d`.
+- **Siguiente tarea:** A07-06 — implementar asociación sugerida por modelo basada en nombre, carpeta y alias, con revisión de ambigüedad y sin reasignación automática.
+- **HEAD verificado:** `cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

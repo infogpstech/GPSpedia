@@ -1150,3 +1150,11 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Pruebas focalizadas: AdminCandidateImageInventoryCatalogSource 7/7; AdminImageReplacementCompensation 11/11; AdminReplacedImagesIntegrity 56/56 PASS.
 - CI final SHA 66c35468cff047e3f9d8caa89fccad8ed731bcc7: 303 suites / 3,561 pruebas / 0 fallos; sintaxis PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - No se desplegó Apps Script ni se modificaron Drive/Spreadsheet reales. Integración con CATALOG/Drive/Spreadsheet aislados queda pendiente de Beta.
+
+
+2026-11-22 — A07-05 completada: salida del escáner en consola global
+- Se eliminó la consola embebida del modal de auditoría de Cortes. appendAuditConsole envía salida y progreso al logger global del panel Desarrollador con el prefijo [AUDITORÍA DRIVE].
+- Se conservan conteos por carpeta/lote, resumen acumulado, errores, advertencias y referencias no interpretables. La lista de resultados clasificados permanece en el modal; se evita duplicar cada archivo en la consola.
+- Cursor, persistencia IndexedDB y acción de reanudación no se modificaron.
+- Pruebas focalizadas: AdminDriveAuditGlobalConsole 1/1; CortesImageReconciliationUI 15/15; AdminDriveAuditClientRetry 7/7; AdminDriveAuditIndexedDB 13/13 PASS.
+- CI SHA cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d: 304 suites / 3,562 pruebas / 0 fallos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
