@@ -14,5 +14,6 @@ assert.ok(fallbackAt > deltaAt, "El snapshot completo solo debe ejecutarse despu
 assert.match(block, /offline\.isCompleteCatalogSnapshot\(currentCatalog\)/);
 assert.match(block, /offline\.isCompleteCatalogSnapshot\(fresh\.data\)/);
 assert.match(block, /isCurrentRefresh\(\)/);
+assert.match(block, /catalogBeforeFallback[\s\S]*?getState\(\)\.catalogData !== catalogBeforeFallback/);
 assert.ok(block.indexOf("if (!isCurrentRefresh()) return null;") < deltaAt);
 console.log("TutorialCatalogRefreshDeltaFirst: 6/6 PASS — delta primero, snapshot completo como fallback y guardia de sesión");

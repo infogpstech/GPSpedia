@@ -15269,9 +15269,11 @@ export function openAddTutorialModal() {
         }
 
         if (!isCurrentRefresh()) return null;
+        const catalogBeforeFallback = getState().catalogData;
         try {
             const fresh = await routeAction("getCatalogData");
             if (!isCurrentRefresh()) return null;
+            if (getState().catalogData !== catalogBeforeFallback) return getState().catalogData;
             if (fresh && offline.isCompleteCatalogSnapshot(fresh.data)) {
                 setState({ catalogData: fresh.data });
                 return fresh.data;
