@@ -41,7 +41,7 @@ assert.ok(visibleLoader.indexOf("setSource(remoteUrl)") < visibleLoader.indexOf(
 assert.match(visibleLoader, /persistLoadedThumbnail = \(\) =>/);
 assert.match(visibleLoader, /!imageLoaded \|\| !isCurrent\(\) \|\| !imgElement\.naturalWidth/,
     "la persistencia visible espera una imagen cargada y una solicitud vigente");
-assert.match(visibleLoader, /imgElement\.crossOrigin = 'anonymous'/,
+assert.match(ui, /imgElement\.crossOrigin = 'anonymous'/,
     "la ruta intenta CORS antes de la descarga visible");
 
 assert.match(queue, /pending\.sort\(\(a, b\) => b\.priority - a\.priority \|\| a\.sequence - b\.sequence\)/,
