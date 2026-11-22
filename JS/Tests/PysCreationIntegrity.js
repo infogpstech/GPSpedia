@@ -302,6 +302,13 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const h=buildHarness(feedback,ui,{pysRows:[wrong]});
         assert.throws(()=>h.api.read(),/encabezados\/orden/);
     });
+    test("getPysData reutiliza las filas ya leídas y validadas por getPysSheet_",()=>{
+        const h=buildHarness(feedback,ui,{pysRows:[HEADERS,["isue-001","Falla","Detalle","","","","","","Técnico","[]"]]});
+        const result=h.api.read();
+        assert.equal(result.data.length,1);assert.equal(result.data[0].id_problem,"isue-001");
+        const dataReads=h.state.rangeReads.filter(item=>item.name==="pys"&&item.row===2&&item.numCols===10);
+        assert.equal(dataReads.length,1,"La validación y la proyección deben compartir la misma lectura de 10 columnas.");
+    });
     test("getPysData rechaza IDs duplicados",()=>{
         const h=buildHarness(feedback,ui,{pysRows:[HEADERS,["isue-001","A"],["isue-1","B"]]});
         assert.throws(()=>h.api.read(),/IDs duplicados/);
