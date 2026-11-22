@@ -1557,3 +1557,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Pruebas: FeedbackTutorialPreflightOutsideLock **7/7**; FeedbackTutorialLookupBoundedRead **7/7**; FeedbackTutorialUpdateTitleLookupBoundedRead **6/6**. CI HEAD `4a8d2487a4076e67d45f586edd06cd74305add43`: **292 suites / 3,413 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress al checkpoint.
 - No se modificaron datos productivos ni despliegues manuales Apps Script; rama base sin cambios.
 - Siguiente: revisar si `TutorialEditEvents` y `TutorialTitleEvents` se vuelven a leer después de append para validar y proyectar; después terminar publicación CATALOG.
+
+
+## Checkpoint P1 Tutoriales — reserva de título con snapshot compartido (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; prueba: `JS/Tests/TutorialIntegrity.js`.
+- `appendTutorialTitleEvent_(record, sheetSnapshot, projectionSnapshot)` acepta contexto prevalidado opcional. `ensureTutorialTitleClaim_` obtiene una proyección de propiedad, decide con ella y la reutiliza para el append.
+- El read-back completo después del append se conserva para validar eventHash, operationId, owner y estado aplicado. Claim nuevo: tres lecturas completas reducidas a dos; claim ya existente: una lectura.
+- TutorialIntegrity: **43/43 PASS**. CI HEAD `7195622c320ada8b70ad7fd06528abf9d9d785d4`: **292 suites / 3,414 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status in_progress al checkpoint.
+- No se modificaron datos productivos ni deployments Apps Script; rama base intacta.
+- Siguiente: auditar append/read-back de eventos de edición y renombrado; después continuar la revisión final de CATALOG y cerrar la auditoría integral.
