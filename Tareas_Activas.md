@@ -492,3 +492,6 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] Repetir CI completo; A02-02 no se cierra hasta 0 fallos.
 
 - [x] Afinar prueba de slot: respuesta dirigida válida con slot ausente debe ser rechazada por el contrato de WRITE.
+
+- [x] Corregir doble de WRITE en AddCortesDiagnostics: incluir slotIndex válido al probar campos de alimentación con proyección dirigida.
+- [ ] Repetir CI y cerrar A02-02 solo con 0 fallos.

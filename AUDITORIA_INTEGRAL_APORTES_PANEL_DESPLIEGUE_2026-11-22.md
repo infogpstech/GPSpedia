@@ -164,3 +164,8 @@ Se actualizan ambos contratos para el nuevo shape {status, vehicle, source}, y s
 ### Ajuste del contrato suplementario de vídeo
 
 Se corrigió el último caso de prueba para que la validación de slot se ejecute con una respuesta de proyección dirigida válida, pero sin slot devuelto por WRITE. Así el test comprueba el contrato de slot y no pasa accidentalmente por falta de objeto vehicle.
+
+
+### Ajuste de prueba A02-02 — slot suplementario
+
+El segundo CI detectó que la nueva prueba focalizada enviaba campos de alimentación pero simulaba una respuesta WRITE sin slotIndex. El helper correctamente rechazó esa respuesta. Se ajusta el doble de WRITE para incluir slotIndex=1, y se conserva la validación estricta de que un cable requiere slot válido.

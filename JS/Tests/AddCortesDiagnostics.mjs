@@ -47,7 +47,7 @@ const verifySupplementary = new Function("routeAction", verifySource + "; return
     }
 );
 const verifiedSupplementary = await verifySupplementary(
-    { status: "success", vehicleId: "204" },
+    { status: "success", vehicleId: "204", slotIndex: 1 },
     { vehicleId: "204", apertura: "Apertura", imgApertura: "data:image/png;base64,AAAA",
       notaImportante: "Nota", cableAlimen: "Alimentación", imgCableAlimen: "data:image/png;base64,BBBB" }
 );

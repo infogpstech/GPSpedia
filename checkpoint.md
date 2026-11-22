@@ -663,3 +663,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 
 - **Tarea realizada:** el test SupplementaryVideoContract ahora suministra una proyección válida al probar ausencia de slot, para que falle por la condición correcta y no por respuesta sin vehículo.
 - **Siguiente:** repetir CI de A02-02 y revisar los resultados focalizados.
+
+
+## A02-02 — ajuste de doble de prueba — 2026-11-22
+
+- **Hallazgo CI:** el segundo CI pasó los contratos de vídeo actualizados, pero AddCortesDiagnostics falló porque el test enviaba campos de cable sin simular slotIndex. El helper de producción rechazó correctamente la respuesta incompleta.
+- **Corrección:** el doble WRITE ahora devuelve slotIndex=1 en la prueba que envía cable; se mantiene el test que verifica que un slot ausente es rechazado.
+- **Siguiente:** repetir CI completo.
