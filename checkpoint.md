@@ -713,3 +713,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Pruebas añadidas:** petición dirigida única, ID exacto, actualización puntual, disponibilidad/vídeo y fallback.
 - **Estado:** implementación preparada; CI pendiente.
 - **Siguiente:** ejecutar regresión completa. Después continuar con el inventario de llamadas/revalidaciones de imágenes y vídeo, y corregir la trazabilidad A05 de aportes suplementarios.
+
+
+## A02-04 — corrección del harness — 2026-11-22
+
+- **Hallazgo CI:** 3,478 pruebas aprobaron y falló el escenario de fallback de AddCortesDiagnostics porque el helper aislado no recibió el objeto diagnostics usado para emitir warn.
+- **Corrección:** se inyecta un logger no-op en ambas instancias del helper de prueba; la lógica de producción no cambia.
+- **Estado:** CI pendiente.
+- **Siguiente:** repetir CI completo.

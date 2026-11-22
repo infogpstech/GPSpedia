@@ -513,3 +513,6 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-04: sustituir checkVehicle post-WRITE/recuperación por getVehicleProjection dirigido por ID; actualizar un único match y conservar disponibilidad/campos de vídeo.
 - [x] Añadir pruebas de llamada dirigida, actualización de estado, campos de disponibilidad/vídeo y fallback conservador.
 - [ ] CI A02-04; no cerrar hasta 0 fallos.
+
+- [x] Corregir el harness de A02-04: inyectar diagnostics mock en pruebas aisladas del helper.
+- [ ] Repetir CI A02-04 y cerrar solo con 0 fallos.

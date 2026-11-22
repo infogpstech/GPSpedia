@@ -208,3 +208,8 @@ El CI del SHA e313ff8c57239dd5f981f6b3396aa779f2bd1a4d falló solo en el doble d
 **Corrección:** `refreshSelectedVehicleMatch` consulta ahora `getVehicleProjection({vehicleId})`; actualiza o inserta únicamente el vehículo solicitado en `state.matches`. La proyección conserva campos del vehículo, disponibilidad de cortes y URL de vídeo. Si la lectura falla o devuelve un ID distinto, mantiene el fallback conservador: no inventa disponibilidad para vehículos existentes y marca `cutAvailabilityUnknown`.
 
 **Pruebas añadidas:** una petición dirigida exacta, reemplazo de un único vehículo, preservación de tipo de corte y vídeo, eliminación de flag unknown al recibir proyección válida y fallback ante respuesta no válida. CI pendiente.
+
+
+### CI A02-04 — corrección del doble de diagnóstico
+
+El primer CI del refresco dirigido pasó los asserts funcionales de la proyección, pero falló el escenario fallback porque el test aislado no inyectaba el logger `diagnostics` que la función usa para registrar una lectura fallida. Se corrige el harness proporcionando un logger no-op. No es un fallo de la llamada dirigida ni de la lógica de fallback de producción.

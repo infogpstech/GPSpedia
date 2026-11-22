@@ -74,10 +74,11 @@ const refreshSource = extractFunction(mod[1], "refreshSelectedVehicleMatch");
 const refreshVehicle = { id: "204", tipoCorte1: "Corte de encendido", videoGuiaDesarmeUrl: "https://example.test/video", cutAvailabilityUnknown: true };
 const refreshState = { matches: [{ id: "204", marca: "Anterior" }] };
 const refreshCalls = [];
-const refreshMatch = new Function("state", "routeAction", "upsertFallbackVehicleMatch", refreshSource + "; return refreshSelectedVehicleMatch;")(
+const refreshMatch = new Function("state", "routeAction", "upsertFallbackVehicleMatch", "diagnostics", refreshSource + "; return refreshSelectedVehicleMatch;")(
     refreshState,
     async (action, payload) => { refreshCalls.push({ action, payload }); return { status: "success", vehicle: { ...refreshVehicle } }; },
-    () => { throw new Error("No debía usar fallback"); }
+    () => { throw new Error("No debía usar fallback"); },
+    { warn() {} }
 );
 const refreshedMatch = await refreshMatch("204", { isNewVehicle: false });
 assert.equal(refreshCalls.length, 1);
@@ -91,10 +92,11 @@ assert.equal(refreshState.matches[0].id, "204");
 passed++;
 process.stdout.write("PASS refresco post-WRITE usa proyección dirigida y conserva disponibilidad/video\\n");
 let fallbackCalls = 0;
-const fallbackRefresh = new Function("state", "routeAction", "upsertFallbackVehicleMatch", refreshSource + "; return refreshSelectedVehicleMatch;")(
+const fallbackRefresh = new Function("state", "routeAction", "upsertFallbackVehicleMatch", "diagnostics", refreshSource + "; return refreshSelectedVehicleMatch;")(
     { matches: [] },
     async () => ({ status: "error" }),
-    (id, options) => { fallbackCalls++; return { id, ...options, cutAvailabilityUnknown: true }; }
+    (id, options) => { fallbackCalls++; return { id, ...options, cutAvailabilityUnknown: true }; },
+    { warn() {} }
 );
 const fallbackMatch = await fallbackRefresh("204", { isNewVehicle: false });
 assert.equal(fallbackCalls, 1);
