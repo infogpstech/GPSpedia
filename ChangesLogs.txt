@@ -1082,3 +1082,13 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Etapa 3 conserva una operación durable aislada por usuario en IndexedDB, con huella del contenido y recuperación/reintento usando los mismos IDs. Las credenciales no se persisten en el snapshot.
 - Los eventos del ledger conservan actor confiable y createdAt generado por el servidor. Se reutiliza una lectura compartida del ledger para evaluar candidatos y calcular el slot de alimentación.
 - Se añadió la suite AddSupplementaryOperationRecovery y se conectó al runner. La sintaxis de los archivos de producción y del test fue comprobada; la ejecución de la suite y CI quedan pendientes. No se ha desplegado ni invocado Apps Script.
+
+
+2026-11-22 — A05-01 cerrada: trazabilidad durable de apertura y alimentación
+- Se completó el flujo de etapa 3: una petición WRITE agrupa apertura, alimentación y nota; apertura/alimentación llevan opIds independientes en AportesVehiculo y conservan replay idempotente.
+- IndexedDB conserva la operación por usuario, fingerprint y datos necesarios para recuperar respuesta perdida; los IDs se reutilizan y las credenciales no se guardan en el snapshot. La selección de imagen respeta el slot de alimentación.
+- ActorId/actorName proceden del contexto compartido confiable; createdAt se genera en el servidor. La nota importante conserva su handler existente. Se reutiliza el handle del ledger y una lectura de filas para evaluación posterior.
+- CI final SHA `1b6032d09448456ccd0306650ec73c12d64c0973`: 303 suites / 3,550 pruebas / 0 fallos; `AddSupplementaryOperationRecovery` 7/7 PASS; comprobación sintáctica PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- Durante la regresión se actualizaron contratos de pruebas que todavía exigían el antiguo `state.opId` y payload de sesión inline. No se alteró la matriz de permisos ni se añadieron revalidaciones remotas por acción.
+- No se desplegó Apps Script ni se modificaron hojas/datos reales. La prueba funcional con WRITE/CATALOG y Spreadsheet aislados queda pendiente de Beta.
+- Commits de la tarea: `13e7c403382cfdd8ea21db2595e25865e001783d`, `874d1642afc8494c9cfec10c7d24c925c3836d66`, `aecbeee59e3463b327dd0cd1306712ec2aa8a74d`, `1b6032d09448456ccd0306650ec73c12d64c0973`.

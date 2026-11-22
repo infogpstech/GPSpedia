@@ -833,3 +833,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Reintentos:** la recuperación reutiliza el snapshot y los mismos IDs; valida la respuesta y los eventos devueltos antes de retirar la operación pendiente. Se corrige además la selección de imagen según el slot de alimentación.
 - **Validación:** parsing sintáctico de los archivos de producción y del nuevo test superado durante preparación. Suite local/CI aún pendiente; no se declara tarea completada. No se ha desplegado Apps Script ni modificado datos remotos.
 - **Siguiente:** ejecutar la regresión WRITE completa y CI, corregir cualquier fallo y actualizar este checkpoint con los resultados. Después A05-02 (Activity Dashboard).
+
+
+## A05-01 COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-22
+
+- **Tarea realizada:** se implementó la trazabilidad de etapa 3 en `HTML/add_cortes.html`, `JS/Frontend/offline.js` y `JS/Services/write.js`. Apertura y alimentación se registran como eventos independientes con IDs propios; la nota importante conserva su ruta de persistencia existente.
+- **Recuperación:** snapshot IndexedDB aislado por usuario, fingerprint SHA-256, IDs reutilizables tras fallo de red/respuesta perdida y limpieza solo después de confirmar WRITE y los eventos esperados. No se guardan credenciales en el snapshot.
+- **Atribución y rendimiento:** actor desde contexto compartido confiable; fecha generada por servidor. No se añadió consulta remota de sesión por acción. El handle del ledger se valida una vez y se reutiliza; una lectura compartida alimenta la revisión de candidatos y el slot de alimentación.
+- **Correcciones de regresión:** se adaptaron pruebas heredadas que suponían el antiguo opId de etapa 3 y sesión inline. Se añadió `AddSupplementaryOperationRecovery` y se conectó al runner.
+- **CI final:** SHA `1b6032d09448456ccd0306650ec73c12d64c0973`; 303 suites / 3,550 pruebas / 0 fallos; nueva suite 7/7 PASS; sintaxis PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- **Límite:** no se desplegó Apps Script ni se escribieron datos reales. La integración funcional con WRITE/CATALOG y Spreadsheet del entorno Beta queda pendiente, sin bloquear el cierre local.
+- **Siguiente tarea:** A05-02 — extender Activity Dashboard para incluir eventos opening/feed de `AportesVehiculo`, sin duplicar cortes históricos ni alterar conteos de vehículos y votos útiles.
+

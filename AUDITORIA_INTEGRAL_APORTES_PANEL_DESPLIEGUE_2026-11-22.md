@@ -326,4 +326,6 @@ La primera implementación de etapa 3 quedó preparada en la rama de trabajo:
 - ActorId/actorName se toman del contexto compartido confiable; createdAt procede de `new Date().toISOString()` en el servicio WRITE. El slot de alimentación se calcula con la proyección del vehículo y la lectura del ledger reutilizada.
 - Se añadió una suite específica de contrato/recuperación y se conectó al runner general. La revisión sintáctica de los archivos modificados pasó; la ejecución de regresión y CI están pendientes. No hay evidencia de deployment ni prueba Apps Script/Spreadsheet real.
 
-**Estado:** EN PROGRESO — pendiente ejecutar regresión local/CI y revisar diff completo.
+**Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. CI SHA `1b6032d09448456ccd0306650ec73c12d64c0973`: 303 suites / 3,550 pruebas / 0 fallos; suite específica 7/7; sintaxis PASS; health read-only 7/7 y Pages SUCCESS. La validación funcional con WRITE/CATALOG y Spreadsheet aislados queda pendiente de Beta; no se ha desplegado Apps Script.
+
+**Siguiente tarea:** A05-02 — integrar eventos opening/feed de AportesVehiculo en Activity Dashboard sin duplicar cortes ni alterar conteos de vehículos/votos útiles.
