@@ -622,3 +622,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Límite:** no se probaron deployments ni dos cuentas reales; A01 está completa en código/CI, no en Beta.
 - **Siguiente tarea iniciada:** A02, trazar latencia y llamadas redundantes en aportes: alta de corte/vehículo, información suplementaria, imágenes desde edición in-modal y videos. Contar requests, preflight, lecturas, Drive, confirmaciones y reintentos.
 - **Contexto:** se mantiene autorización local basada en actor confiable y rol; no añadir viajes de red por acción. Se distinguen confirmaciones funcionales de revalidaciones de sesión.
+
+
+## A02 — primera optimización de latencia implementada — 2026-11-22
+
+- **Tarea realizada:** se identificó y corrigió en `HTML/add_cortes.html` una petición `checkOperation` innecesaria antes de un alta nueva con opId aleatorio. El preflight se conserva cuando el opId es determinista de Inbox o procede de una operación local recuperada.
+- **Pruebas añadidas:** `AddCutOperationRecoveryFlow.js` cubre ID nuevo sin preflight, ID determinista con preflight y mantiene escenarios de respuesta perdida antes/después del commit, limpieza fallida y recuperación offline.
+- **Estado:** código y pruebas preparados; CI pendiente.
+- **Otros hallazgos A02 abiertos:** verificación suplementaria fuerza `getCatalogData` completo tras WRITE; VIN consulta en blur y submit además de la validación autoritativa en WRITE; refresco `checkVehicle` tras alta; lecturas de ledger/Drive por imagen requieren caracterización antes de optimizar.
+- **Siguiente tarea:** ejecutar CI y corregir cualquier regresión; después continuar A02 con el análisis de lectura completa CATALOG y flujo VIN.
+- **Contexto:** se elimina solo una consulta cuyo resultado es conocido para un ID aleatorio recién creado. No se debilita la idempotencia ni la recuperación de operaciones previas.

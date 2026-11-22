@@ -404,6 +404,8 @@
             sessionToken: '',
             timestamp: null,
             opId: null,
+            // Solo operaciones recuperadas o con ID determinista necesitan preflight remoto.
+            opIdRequiresServerCheck: true,
             restoredFiles: {
                 imagenVehiculo: null,
                 imgCorte1: null
@@ -435,10 +437,12 @@
                 if (sourceOpId && pendingResult.operation.id !== sourceOpId) throw new Error('PENDING_OPERATION_ID_MISMATCH');
                 if (state.opId && state.opId !== pendingResult.operation.id) throw new Error('PENDING_OPERATION_ID_MISMATCH');
                 state.opId = pendingResult.operation.id;
+                state.opIdRequiresServerCheck = true;
                 return state.opId;
             }
             if (sourceOpId) {
                 state.opId = sourceOpId;
+                state.opIdRequiresServerCheck = true;
                 return state.opId;
             }
             state.opId = null;
@@ -448,6 +452,9 @@
             secureCrypto.getRandomValues(randomBytes);
             const randomPart = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
             state.opId = 'OP-' + Date.now() + '-' + randomPart;
+            // Un UUID recién generado no puede tener una operación remota previa.
+            // El snapshot local se persiste antes del POST y habilita recovery si se pierde la respuesta.
+            state.opIdRequiresServerCheck = false;
             return state.opId;
         }
         function clientFingerprintValue(value) { return value === null || value === undefined ? '' : String(value); }
@@ -538,7 +545,7 @@
                 } else {
                     if (checkRes.pending === true && checkRes.operationHash !== pendingOp.operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
                     if (pendingOp.status === 'completed') throw new Error('COMPLETED_SNAPSHOT_UNRESOLVED');
-                    state.opId = pendingOp.id; state.selectedVehicleId = pendingOp.vehicleId; state.vehicleInfo = pendingOp.vehicleInfo || {};
+                    state.opId = pendingOp.id; state.opIdRequiresServerCheck = true; state.selectedVehicleId = pendingOp.vehicleId; state.vehicleInfo = pendingOp.vehicleInfo || {};
                     const form2 = document.getElementById('form-stage-2');
                     if (form2) {
                         const data = pendingOp.formData || {};
@@ -1237,9 +1244,11 @@
                 if (!saved || saved.saved !== true) throw new Error('PENDING_SNAPSHOT_NOT_VERIFIED');
                 snapshotSaved = true;
                 const activeSession = getCurrentSessionForOwner(pendingOp.ownerId);
-                const checkRes = await routeAction('checkOperation', {
-                    opId, operationHash, userId: activeSession.userId, sessionToken: activeSession.sessionToken
-                }, serviceOverride);
+                const checkRes = state.opIdRequiresServerCheck === false
+                    ? { status: 'success', exists: false, pending: false }
+                    : await routeAction('checkOperation', {
+                        opId, operationHash, userId: activeSession.userId, sessionToken: activeSession.sessionToken
+                    }, serviceOverride);
                 getCurrentSessionForOwner(pendingOp.ownerId);
                 if (!checkRes || checkRes.status !== 'success') throw new Error('INVALID_CHECK_OPERATION_RESPONSE');
                 if (checkRes.exists === true) {
@@ -1251,7 +1260,7 @@
                     if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
                     const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
                     if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
-                    snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                    snapshotSaved = false; state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                     state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
                     await refreshSelectedVehicleMatch(checkRes.vehicleId, {
                         isNewVehicle: requestData.vehicleId === null, slotIndex: requestData.vehicleId === null ? 1 : checkRes.slotIndex,
@@ -1277,7 +1286,7 @@
                 if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
                 const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
                 if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
-                snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                snapshotSaved = false; state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                 state.selectedVehicleId = result.vehicleId; state.timestamp = result.timestamp || null;
                 await refreshSelectedVehicleMatch(result.vehicleId, {
                     isNewVehicle: requestData.vehicleId === null, slotIndex: result.slotIndex,

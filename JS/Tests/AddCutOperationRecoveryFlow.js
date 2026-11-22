@@ -29,7 +29,7 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
     function makeContext(mode, initialSnapshot, removeFailures, options = {}) {
         const calls = [], alerts = [], stages = [], logs = [];
         const state = {
-            userId: 'OWNER-1', sessionToken: 'session', opId: null, selectedVehicleId: null,
+            userId: 'OWNER-1', sessionToken: 'session', opId: null, opIdRequiresServerCheck: true, selectedVehicleId: null,
             vehicleInfo: { marca: 'Toyota', modelo: 'Hilux', categoria: 'Camioneta', versionesAplicables: '2.8', anoDesde: '2024', tipoEncendido: 'Llave' },
             savedFiles: { imagenVehiculo: null, imgCorte1: null }, restoredFiles: { imagenVehiculo: null, imgCorte1: null }, timestamp: null
         };
@@ -79,7 +79,7 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
         }
         const dependencies = {
             state, document, window: { location: { replace() {} } }, navigator: { onLine: options.online !== false },
-            sourceInboxItemId: '',
+            sourceInboxItemId: options.sourceInboxItemId || '',
             resolveSourceInboxReport_: async () => false,
             console: { log() {}, warn() {}, error() {} }, showConciseAlert_(message) { alerts.push(message); }, diagnostics: Object.fromEntries(['debug','info','warn','error'].map(level => [level, (event, context) => logs.push({level,event,context})])), alert(message) { alerts.push(message); },
             toggleLoading() {}, toggleNoRecomendado() {}, showPhase() {}, proceedToStage3(id) { stages.push(id); },
@@ -89,8 +89,14 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
                 if (!current.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
                 if (current.operation) {
                     if (current.operation.status === 'completed') throw new Error('COMPLETED_OPERATION_REQUIRES_RECOVERY');
+                    state.opIdRequiresServerCheck = true;
                     return current.operation.id;
                 }
+                if (options.sourceInboxItemId) {
+                    state.opIdRequiresServerCheck = true;
+                    return 'OP-FEEDBACK-' + String(options.sourceInboxItemId).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
+                }
+                state.opIdRequiresServerCheck = false;
                 return 'OP-100';
             },
             computeClientCutOperationFingerprint: async () => hash,
@@ -107,6 +113,22 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
     }
     const results = [];
     async function run(name, fn) { try { await fn(); results.push({ name, status: 'PASS' }); } catch (error) { results.push({ name, status: 'FAIL', message: String(error.message || error) }); } }
+
+
+    await run('un opId nuevo y aleatorio omite checkOperation antes del primer POST', async () => {
+        const ctx = makeContext('success', null, 0);
+        await ctx.submit();
+        assert_(ctx.getCheckCount() === 0, 'Consultó checkOperation para un opId nuevo sin historial.');
+        assert_(ctx.getAddCount() === 1, 'No ejecutó el alta exactamente una vez.');
+        assert_((await ctx.read()).operation === null && ctx.stages.length === 1, 'No completó/limpió la operación nueva.');
+    });
+
+    await run('un opId determinista de Inbox conserva checkOperation para reconciliar reintentos', async () => {
+        const ctx = makeContext('success', null, 0, { sourceInboxItemId: 'INBOX-42' });
+        await ctx.submit();
+        assert_(ctx.getCheckCount() === 1, 'Omitió el preflight para un ID determinista que puede existir.');
+        assert_(ctx.getAddCount() === 1, 'No ejecutó el alta después de comprobar la operación.');
+    });
 
     await run('respuesta perdida antes del commit restaura el mismo snapshot/opId y permite reintentar', async () => {
         const ctx = makeContext('before', null, 0);

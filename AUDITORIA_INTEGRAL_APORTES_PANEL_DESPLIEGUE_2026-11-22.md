@@ -105,3 +105,40 @@ Pruebas focalizadas verificadas en los logs de CI del SHA exacto:
 
 **Límite de evidencia:** CI usa contratos y dobles locales; no ejecutó los deployments Apps Script ni probó datos reales de dos usuarios. Health read-only SUCCESS solo verifica disponibilidad de deployments existentes.
 
+
+
+## A02 — latencia y llamadas redundantes: hallazgos iniciales
+
+### Hallazgo A02-01 — preflight `checkOperation` en alta con opId recién generado
+
+**Clasificación:** llamada de red redundante confirmada por flujo de código; corrección implementada, CI pendiente.  
+**Evidencia:** `HTML/add_cortes.html` generaba un opId aleatorio nuevo cuando no existía snapshot local ni vínculo Inbox y, aun así, consultaba `checkOperation` antes del primer `addOrUpdateCut`. No puede existir un registro remoto previo de ese identificador recién generado. La consulta sí es necesaria cuando el ID proviene de un snapshot recuperado o es determinista (`OP-FEEDBACK-...`) para conciliar intentos anteriores.  
+**Impacto:** una petición HTTP adicional antes de cada alta nueva de corte/vehículo.  
+**Corrección:** se añadió `state.opIdRequiresServerCheck`; un ID aleatorio nuevo omite el preflight, mientras que snapshots recuperados e IDs deterministas de Inbox conservan la consulta. El snapshot IndexedDB se sigue verificando antes del POST y permite recuperación ante respuesta perdida. La idempotencia del servidor no se elimina.  
+**Pruebas añadidas:** `AddCutOperationRecoveryFlow.js` comprueba alta nueva sin checkOperation, ID determinista con checkOperation y conserva escenarios de respuesta perdida antes/después del commit y recuperación de snapshot.  
+**Estado:** IMPLEMENTADO; CI exacto pendiente.
+
+### Hallazgo A02-02 — lectura completa del catálogo tras guardar información suplementaria
+
+**Clasificación:** candidato de latencia alta; no corregido todavía.  
+**Evidencia:** `handleStage3Submit` envía `addSupplementaryInfo` a WRITE y después `verifySupplementaryCatalogWrite_` solicita `getCatalogData({forceRefresh:true})`. `CATALOG.handleGetCatalogData` recorre Cortes, aportes, logos, tutoriales y relay para confirmar solo un vehículo/campo. WRITE ya confirma el evento append-only mediante lectura posterior del ledger y valida el journal de imágenes; el propio flujo redirige a index.html, que volverá a cargar el catálogo.  
+**Impacto potencial:** segunda petición de red y reconstrucción de catálogo completo antes de la redirección.  
+**Acción:** evaluar si una proyección dirigida `getVehicleProjection` (lectura del vehículo y ledger) o la confirmación de WRITE basta, sin perder detección de errores ni coherencia. No retirar la verificación hasta cubrir el caso con test.
+
+### Hallazgo A02-03 — VIN: preflight de blur y pre-submit, más validación autoritativa WRITE
+
+**Clasificación:** posible duplicación; pendiente de caracterización.  
+**Evidencia:** el formulario consulta `checkVinDuplicate` al perder foco y vuelve a consultar al enviar. WRITE vuelve a comprobar duplicados dentro de la mutación antes de registrar el VIN.  
+**Acción:** verificar si puede reutilizarse el resultado de blur mientras el VIN/vehículo no cambien, manteniendo siempre la comprobación autoritativa en WRITE para concurrencia.
+
+### Hallazgo A02-04 — refresco de coincidencia tras alta
+
+**Clasificación:** pendiente de caracterización.  
+**Evidencia:** después de `addOrUpdateCut`, `refreshSelectedVehicleMatch` puede consultar `checkVehicle` antes de mostrar etapa 3.  
+**Acción:** determinar qué campos necesita etapa 3 y si el resultado de WRITE/snapshot previo permiten evitar esa petición sin mostrar disponibilidad desactualizada.
+
+### Hallazgo A02-05 — carga suplementaria y verificación Drive/ledger
+
+**Clasificación:** pendiente; no asumir que las lecturas son duplicadas.  
+**Evidencia:** la carga de imágenes usa `ImageUploadEvents`, verifica archivo y descripción en Drive, confirma el evento y marca la carga vinculada; el aporte append-only verifica el ledger.  
+**Acción:** contar las lecturas por imagen y determinar cuáles garantizan idempotencia/recuperación y cuáles pueden compartir snapshot o ejecutarse en paralelo con seguridad.

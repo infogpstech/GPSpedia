@@ -468,3 +468,14 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] Trazar desde UI hasta persistencia los flujos addOrUpdateCut, addSupplementaryInfo, imágenes in-modal y upload de video.
 - [ ] Contabilizar por operación cada request, preflight, lookup, lectura de snapshot, Drive call, confirmación, reintento y refresco posterior.
 - [ ] Determinar si las lecturas de verificación son redundantes o necesarias para idempotencia/recuperación; medir localmente y no eliminarlas por intuición.
+
+
+### A02 — latencia y llamadas redundantes (2026-11-22)
+- [x] Trazar `add_cortes.html` etapa 2: snapshot IndexedDB, ID de operación, preflight checkOperation, POST addOrUpdateCut y refresco de coincidencia.
+- [x] Identificar llamada redundante `checkOperation` cuando se crea un ID aleatorio nuevo sin historial remoto.
+- [x] Implementar omisión selectiva del preflight solo para ID nuevo aleatorio; conservarlo para snapshot recuperado e ID determinista Inbox.
+- [x] Añadir pruebas de flujo para alta nueva y recuperación/ID determinista.
+- [ ] Ejecutar CI del cambio y revisar que la recuperación tras pérdida de respuesta no duplique escrituras.
+- [ ] Caracterizar lectura completa CATALOG forceRefresh posterior a addSupplementaryInfo y evaluar lectura dirigida.
+- [ ] Caracterizar doble preflight VIN y checkVehicle posterior al alta.
+- [ ] Medir lecturas/Drive/journal por imagen y evaluar reutilización de snapshots.
