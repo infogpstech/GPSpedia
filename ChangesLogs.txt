@@ -942,3 +942,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-21 — verificación integral: alcance de referencias activas
 - `RepositoryModuleReferences.mjs` se acotó a módulos productivos, service-worker, runner y tests integrados; se excluyen referencias de fixtures históricos no ejecutados que conservan rutas antiguas. No se modificó código legacy.
+
+
+2026-11-21 — verificación integral: referencias activas
+- El test de referencias relativas pasó para los módulos activos; corregido el contador de resumen para usar `Set.size` en lugar de `length`.

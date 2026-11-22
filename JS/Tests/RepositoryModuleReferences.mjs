@@ -55,4 +55,4 @@ for (const file of [...files].sort()) {
     }
 }
 assert.deepEqual(references, [], "Referencias relativas no resueltas:\n" + JSON.stringify(references, null, 2));
-console.log("RepositoryModuleReferences: 1/1 PASS — " + files.length + " archivos inspeccionados; referencias relativas resueltas");
+console.log("RepositoryModuleReferences: 1/1 PASS — " + files.size + " archivos inspeccionados; referencias relativas resueltas");

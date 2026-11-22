@@ -398,3 +398,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Primera ejecución de `RepositoryModuleReferences` detectó numerosas rutas antiguas en tests históricos no invocados por `RunServiceTests` (p. ej. referencias a `../../ui.js` desde `JS/Tests`). No son imports de producción ni pruebas ejecutadas por el runner; no se modifican archivos legacy por esta observación.
 - Se ajustó el escaneo para revisar `JS/Frontend`, `JS/Services`, `service-worker.js`, el runner y únicamente los tests referenciados por `RunServiceTests.mjs`. Se mantiene validación de imports, re-exports, imports dinámicos literales, `new URL` y `require` relativos.
 - El primer CI de referencias falló por alcance excesivo del validador; la sintaxis integral ya había pasado 428 archivos. Nueva ejecución pendiente.
+
+
+## Verificación integral — referencias activas (2026-11-21)
+
+- CI HEAD `26db47e5`: `RepositoryJavaScriptSyntax` 1/1 PASS, 429 archivos; `RepositoryModuleReferences` 1/1 PASS; regresión 298 suites / 3,459 pruebas / 0 fallos; health read-only SUCCESS.
+- El validador de referencias se limitó correctamente a frontend, servicios, service-worker, runner y pruebas realmente integradas. Los tests históricos no invocados con rutas antiguas no se alteraron.
+- Observación no funcional: el texto final del test usó `files.length` sobre un Set, por lo que imprimió `undefined` aunque el test pasó. Corregido a `files.size`; CI de confirmación pendiente.
