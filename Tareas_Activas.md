@@ -479,3 +479,6 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] Caracterizar lectura completa CATALOG forceRefresh posterior a addSupplementaryInfo y evaluar lectura dirigida.
 - [ ] Caracterizar doble preflight VIN y checkVehicle posterior al alta.
 - [ ] Medir lecturas/Drive/journal por imagen y evaluar reutilización de snapshots.
+
+- [x] CI exacto de A02-01: SHA `736224a541c218b934bc0d6710a27f0f35b96aaa`, 302 suites / 3,526 pruebas / 0 fallos; AddCortes diagnostics 14/14 PASS; Health read-only y Pages build/deployment SUCCESS.
+- **Siguiente:** A02-02, sustituir la lectura completa `getCatalogData(forceRefresh)` de la etapa suplementaria de `add_cortes.html` por una verificación dirigida de un vehículo, preservando detección de escritura no reflejada/candidato y pruebas de regresión.

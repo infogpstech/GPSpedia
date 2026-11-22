@@ -632,3 +632,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Otros hallazgos A02 abiertos:** verificación suplementaria fuerza `getCatalogData` completo tras WRITE; VIN consulta en blur y submit además de la validación autoritativa en WRITE; refresco `checkVehicle` tras alta; lecturas de ledger/Drive por imagen requieren caracterización antes de optimizar.
 - **Siguiente tarea:** ejecutar CI y corregir cualquier regresión; después continuar A02 con el análisis de lectura completa CATALOG y flujo VIN.
 - **Contexto:** se elimina solo una consulta cuyo resultado es conocido para un ID aleatorio recién creado. No se debilita la idempotencia ni la recuperación de operaciones previas.
+
+
+## A02-01 cerrada y A02-02 iniciada — 2026-11-22
+
+- **Tarea realizada:** optimización de `add_cortes.html`: las altas con opId aleatorio nuevo ya no realizan la consulta HTTP previa `checkOperation`; IDs deterministas de Inbox y operaciones recuperadas mantienen el preflight.
+- **CI exacto:** SHA `736224a541c218b934bc0d6710a27f0f35b96aaa`; 302 suites / 3,526 pruebas / 0 fallos. AddCortes diagnostics 14/14 PASS, incluyendo nuevo ID sin consulta, ID Inbox con consulta, pérdida de respuesta antes/después del commit, recuperación y cuota. Health read-only SUCCESS y Pages build/deployment SUCCESS.
+- **Siguiente tarea iniciada:** A02-02, reducir el costo de verificación de información suplementaria: la página add_cortes solicita el catálogo completo con forceRefresh para comprobar un solo vehículo. Evaluar y probar endpoint getVehicleProjection dirigido.
+- **Contexto:** se mantiene la confirmación de WRITE y la idempotencia; el objetivo es evitar reconstruir datos ajenos al vehículo que se acaba de modificar.

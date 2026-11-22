@@ -116,7 +116,7 @@ Pruebas focalizadas verificadas en los logs de CI del SHA exacto:
 **Impacto:** una petición HTTP adicional antes de cada alta nueva de corte/vehículo.  
 **Corrección:** se añadió `state.opIdRequiresServerCheck`; un ID aleatorio nuevo omite el preflight, mientras que snapshots recuperados e IDs deterministas de Inbox conservan la consulta. El snapshot IndexedDB se sigue verificando antes del POST y permite recuperación ante respuesta perdida. La idempotencia del servidor no se elimina.  
 **Pruebas añadidas:** `AddCutOperationRecoveryFlow.js` comprueba alta nueva sin checkOperation, ID determinista con checkOperation y conserva escenarios de respuesta perdida antes/después del commit y recuperación de snapshot.  
-**Estado:** IMPLEMENTADO; CI exacto pendiente.
+**Estado:** IMPLEMENTADO Y VALIDADO EN CI exacto del SHA `736224a541c218b934bc0d6710a27f0f35b96aaa`: 302 suites / 3,526 pruebas / 0 fallos. `AddCortes diagnostics` 14/14 PASS, incluidos ambos escenarios nuevos y recuperación tras respuesta perdida.
 
 ### Hallazgo A02-02 — lectura completa del catálogo tras guardar información suplementaria
 
@@ -142,3 +142,7 @@ Pruebas focalizadas verificadas en los logs de CI del SHA exacto:
 **Clasificación:** pendiente; no asumir que las lecturas son duplicadas.  
 **Evidencia:** la carga de imágenes usa `ImageUploadEvents`, verifica archivo y descripción en Drive, confirma el evento y marca la carga vinculada; el aporte append-only verifica el ledger.  
 **Acción:** contar las lecturas por imagen y determinar cuáles garantizan idempotencia/recuperación y cuáles pueden compartir snapshot o ejecutarse en paralelo con seguridad.
+
+
+### Cierre A02-01
+La optimización quedó validada por CI; no se detectaron regresiones en recuperación ni idempotencia. Health read-only y Pages build/deployment también SUCCESS para el SHA exacto. No equivale a prueba manual en navegador o servicio Apps Script.
