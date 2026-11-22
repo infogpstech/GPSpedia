@@ -1118,3 +1118,11 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se publicó harness manual que carga el código de producción y permite medir una imagen local sin enviarla. URL: `https://infogpstech.github.io/GPSpedia/JS/Tests/FileReaderBrowserHarness.html`.
 - Regresión de servicios SUCCESS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS. La medición CI no representa el rendimiento físico de un Android.
 - **Pendiente para cerrar A02-10:** ejecutar el harness en Chrome Android físico y registrar el JSON; desktop físico puede medirse con la misma página.
+
+
+2026-11-22 — A06-03 completada: diagnóstico individual al seleccionar servicio
+- Se añadió `checkServiceHealth(serviceKey)`, reutilizando el contrato de salud existente con un filtro de servicio para consultar un solo endpoint versionado. Los diagnósticos generales mantienen su comportamiento y siguen consultando los siete servicios.
+- Al seleccionar una tarjeta, el panel conserva el resultado actual mientras consulta el endpoint del servicio elegido; después actualiza tarjeta y detalle. Un contador de secuencia descarta respuestas tardías si el usuario seleccionó otro servicio mientras la petición seguía en curso.
+- Se añadieron pruebas que verifican que la consulta individual produce una sola petición al endpoint solicitado, que claves desconocidas no generan consultas y que el handler de selección no invoca el escaneo global.
+- CI del commit `1586c69d08953933c6cc457ea0e6fd511588faab`: 303 suites / 3,554 pruebas aprobadas / 0 fallos; `ServiceHealthContract` 19/19 PASS; sintaxis 435 archivos JS/MJS; referencias relativas 345 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- No se desplegaron servicios Apps Script ni se alteraron datos remotos.

@@ -878,3 +878,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Validación CI del commit** `d5b1227fb53c4a8346c214b36f228ab3a1b4a549`: browser 2/2 PASS; regresión de servicios SUCCESS; health read-only 7/7; Pages SUCCESS. Rama base `GPSpedia2.2.5` permanece intacta.
 - **Pendiente:** el perfil Android de Playwright es emulación Linux, no un teléfono físico. Para cerrar la tarea se necesita ejecutar el harness desde Chrome Android real y guardar el JSON resultante; el rendimiento medido en CI no debe extrapolarse al teléfono.
 - **Siguiente paso inmediato:** abrir el harness desde el teléfono Android, seleccionar una imagen de prueba y compartir el JSON de resultados.
+
+
+## A06-03 COMPLETADA — ping individual del servicio seleccionado — 2026-11-22
+
+- **Implementación:** `checkServiceHealth(serviceKey)` ejecuta el diagnóstico existente limitado al endpoint del servicio seleccionado. El escaneo global conserva el comportamiento de siete servicios.
+- **Interfaz:** seleccionar una tarjeta actualiza inmediatamente el detalle con el estado disponible y consulta en segundo plano el endpoint individual. Al llegar la respuesta, refresca la tarjeta y el detalle. Un contador de secuencia evita que una respuesta tardía de otra selección sobrescriba el servicio actualmente seleccionado.
+- **Pruebas:** una sola petición para el servicio elegido; claves desconocidas sin petición; selección de tarjeta sin escaneo global; control de respuestas tardías. `ServiceHealthContract` 19/19 PASS.
+- **CI:** commit de código `1586c69d08953933c6cc457ea0e6fd511588faab`; 303 suites / 3,554 pruebas / 0 fallos; sintaxis 435 archivos JS/MJS; referencias relativas 345; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- **Límite:** se valida la respuesta del endpoint y su contrato, no la disponibilidad interna de Spreadsheet/Drive. No se desplegaron Apps Script ni se escribieron datos reales.
+- **Siguiente tarea independiente:** A06-04 — decidir y documentar si la telemetría global debe incluir todas las solicitudes HTTP directas/no coordinadas.
+

@@ -13,8 +13,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD actual de trabajo: `a2ad72d8d898c57bacb7ea228038ca400f3ba4a6`.
-- CI exacto de HEAD actual: 302 suites / 3,524 pruebas aprobadas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- HEAD de implementación validado: `1586c69d08953933c6cc457ea0e6fd511588faab`.
+- CI exacto de ese commit: 303 suites / 3,554 pruebas aprobadas / 0 fallos; `ServiceHealthContract` 19/19 PASS; sintaxis 435 archivos JS/MJS; referencias relativas 345 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - La regresión incluye ThumbnailPriorityIntegration 15/15, ThumbnailQualityBenchmarkContract 49/49 y YouTubeInitIdempotencyBoundary 7/7 (caracterización de riesgo, no idempotencia aprobada).
 - La validación es local/CI; no despliega Apps Script ni sustituye Beta aislada.
 - Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
@@ -562,7 +562,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 
 - [x] A06-01: auditar guía de despliegue; ocho servicios, dependencias, secretos, smoke tests, frontend y rollback documentados. Lista para despliegue Beta aislado, no prueba despliegue real.
 - [x] A06-02: auditar panel de salud y métricas; escaneo general cubre 7 servicios, detalle incluye HTTP/latencia/versión/última respuesta, métricas globales Coordinator y navegador local.
-- [ ] A06-03: al seleccionar servicio, ejecutar ping fresco individual y actualizar detalle sin volver a escanear todos los servicios.
+- [x] A06-03: al seleccionar servicio, `checkServiceHealth` consulta solo el endpoint elegido y refresca tarjeta/detalle sin escaneo global; secuencia evita respuestas tardías de otra selección. `ServiceHealthContract` 19/19 PASS; CI `1586c69d08953933c6cc457ea0e6fd511588faab`: 303 suites / 3,554 pruebas / 0 fallos; sintaxis 435 archivos; referencias 345; health 7/7 y Pages SUCCESS.
 - [ ] A06-04: decidir si se requiere telemetría global de todas las solicitudes HTTP; la actual solo cuenta eventos Coordinator y excluye rutas directas/no coordinadas.
 
 - [x] A07-01 auditoría del escáner: conteos/progreso paginados existen; la consola vive dentro de audit-drive-modal, no en consola global del desarrollador.
