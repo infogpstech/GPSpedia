@@ -453,3 +453,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** resolver TEL-01/TEL-03: definir la semántica que necesita ADMIN y reducir la persistencia síncrona por petición de USERS/WRITE/FEEDBACK sin perder scopes ni presentar best-effort como exacto.
 - **Contexto breve:** se eliminó la espera de PropertiesService de la sección crítica global del Coordinator; ahora el trabajo restante es evitar que los contadores de cada servicio sigan añadiendo escrituras a las rutas ordinarias.
 - **Estado:** TEL-02 COMPLETADO localmente con contrato aprobado; rediseño de contadores directos PENDIENTE.
+
+
+### Ajuste de validación CI — contrato estático Coordinator (2026-11-22)
+- El primer CI del commit `0ec002f` ejecutó sintaxis correctamente y falló una única suite estática: `ServiceTrafficAdminContract.mjs` aún exigía la llamada antigua a telemetría dentro de `acquire_` y la versión 1.4.5.
+- La suite se actualiza para verificar el evento diferido de `acquire_`, las llamadas post-lock de feed/validación de sesión y la versión 1.4.6. No es un fallo funcional del cambio; la suite aislada de Coordinator había aprobado 95/95.
+- **Siguiente:** publicar el contrato corregido y repetir CI completo antes de continuar con el rediseño TEL-01/TEL-03.
+- **Estado:** corrección de test preparada; CI de confirmación PENDIENTE.

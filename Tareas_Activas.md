@@ -57,6 +57,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Auditoría estática de telemetría completada: USERS/WRITE/FEEDBACK persisten contadores en PropertiesService por petición y Coordinator los escribe dentro de ScriptLock. Evidencia: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
 - [x] TEL-02 — Coordinator: mover la persistencia de métricas de adquisición de leases, validación de contexto y lectura del feed fuera de `ScriptLock`; conservar scopes y conteo de operaciones nuevas.
 - [x] Contratos Coordinator: verificar que las métricas no acceden a PropertiesService dentro del lock y que fallos de persistencia no alteran lease/feed; 95/95 PASS en ejecución aislada.
+- [ ] CI integral de confirmación del contrato estático actualizado (el primer CI falló por expectativa obsoleta de versión/llamada; sintaxis PASS, 1 suite de integración fallida).
 - [ ] TEL-01/TEL-03 — rediseñar contadores directos USERS/WRITE/FEEDBACK y resolver el doble conteo de `getCatalogChanges` sin perder diagnóstico ni scopes ADMIN.
 - [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
 

@@ -973,3 +973,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Versión Coordinator 1.4.6; protocolo compartido sin cambios.
 - `JS/Tests/SharedMutationCoordinator.js`: harness instrumentado para detectar accesos a métricas dentro del lock y simular fallos de PropertiesService; cuatro contratos nuevos. Suite aislada 95/95 PASS, 0 fallos.
 - No se desplegó Apps Script ni se midió latencia real. TEL-01/TEL-03 de contadores directos continúan pendientes.
+
+
+2026-11-22 — corrección de contrato estático tras mover telemetría Coordinator
+- `ServiceTrafficAdminContract.mjs` se actualiza para reconocer los eventos de métrica diferidos fuera de `ScriptLock` y la versión Coordinator 1.4.6. El primer CI había fallado únicamente porque la expectativa estática aún exigía la llamada anterior; sintaxis modificada PASS, regresión completa de confirmación pendiente.
