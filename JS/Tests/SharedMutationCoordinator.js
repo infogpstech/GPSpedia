@@ -1145,6 +1145,54 @@ function runSharedMutationCoordinatorTests() {
             "La respuesta perdida debe recuperarse con el mismo requestId sin duplicar el lote.");
     });
 
+
+    test_("La respuesta JSON inválida tras publicar recupera el mismo requestId y no duplica el lote", function() {
+        const r = createRuntime_();
+        r.properties.setProperty("GPSpedia_COORDINATOR_URL", "https://script.google.com/macros/s/TEST_DEPLOYMENT/exec");
+        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET", r.secrets.ADMIN);
+        const payloads = [];
+        let calls = 0;
+        const client = createSharedMutationClient_({
+            properties: r.properties, uuid: r.uuid, logger: function() {},
+            fetch: function(url, options) {
+                calls++;
+                payloads.push(options.payload);
+                const result = r.coordinator.handleRequest(JSON.parse(options.payload));
+                if (calls === 1) return { getResponseCode: () => 200, getContentText: () => "{invalid-json" };
+                return { getResponseCode: () => 200, getContentText: () => JSON.stringify(result) };
+            }
+        });
+        const response = client.publishCatalogChanges("ADMIN", "normalizeImages", [
+            { collection: "cortes", recordId: "VEH-6", operation: "upsert", snapshot: { id: "VEH-6" }, sourceVersion: 1 },
+            { collection: "cortes", recordId: "VEH-7", operation: "delete", sourceVersion: 2 }
+        ]);
+        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
+        assert_(calls === 2 && payloads[0] === payloads[1],
+            "La segunda solicitud debe reutilizar el cuerpo exacto, incluido requestId.");
+        assert_(response.duplicate === true && feed.changes.length === 2 && feed.currentRevision === 2,
+            "La respuesta JSON inválida no debe duplicar revisiones ni eventos.");
+    });
+
+    test_("El cliente no reintenta un rechazo de aplicación confirmado por Coordinator", function() {
+        const r = createRuntime_();
+        r.properties.setProperty("GPSpedia_COORDINATOR_URL", "https://script.google.com/macros/s/TEST_DEPLOYMENT/exec");
+        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET", r.secrets.ADMIN);
+        let calls = 0;
+        const client = createSharedMutationClient_({
+            properties: r.properties, uuid: r.uuid, logger: function() {},
+            fetch: function() {
+                calls++;
+                return { getResponseCode: () => 200, getContentText: () => JSON.stringify({
+                    status: "error", message: "solicitud rechazada"
+                }) };
+            }
+        });
+        expectThrow_(() => client.publishCatalogChange("ADMIN", "updateVehicleField", {
+            collection: "cortes", recordId: "VEH-8", operation: "delete"
+        }), "solicitud rechazada");
+        assert_(calls === 1, "Un rechazo explícito no debe generar un segundo viaje de red.");
+    });
+
     test_("El feed público del catálogo se cuenta dentro del lock existente y sin lease adicional", function() {
         const r = createRuntime_();
         const response = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
