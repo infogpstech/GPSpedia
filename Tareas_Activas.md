@@ -217,3 +217,8 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] CI HEAD 79b7e5c8 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; ThumbnailCompressionQueueContract 24/24 PASS.
 - [x] Evaluar idempotencia de initYouTubeUpload ante respuesta perdida frente a NORMAS §15: no introducir ScriptLock/lease/espera ni serializar cargas. Sin primitivas atómicas lock-free verificadas, se documenta el riesgo bajo de sesión resumable huérfana; no implica duplicación de vídeo publicado.
 - [ ] Preparar protocolo Beta aislado para corpus técnico, rendimiento de imágenes, logos históricos y flujo real YouTube. No ejecutar contra recursos productivos.
+
+
+### P1 — protocolo Beta multimedia (2026-11-22)
+- [x] Preparar adenda con sincronización segura obligatoria y escenarios de corpus/calidad, MIME/firma/SHA, cola/precarga/primera pintura, logos históricos y YouTube resumable/aprobación.
+- [ ] Ejecutar solo en entorno Beta aislado con deployments, Spreadsheet, Drive, OAuth y canal de prueba autorizados. No ejecutar contra producción.

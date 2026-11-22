@@ -12,3 +12,5 @@ Orden completo de lectura: parte 1 y después los segmentos 001 y 002 indicados 
 Manifiesto de la rotación y verificación de reconstrucción: ROTACION_DOCUMENTAL_MANIFIESTO_2026-11-19.md.
 
 Adenda vigente incorporada el 2026-11-21: lista_beta_adenda_2026-11-21.md. Para PyS, asignación numérica WRITE, USERS, vídeos, tutoriales e Inbox, esta adenda actualiza las expectativas históricas al protocolo append-only y de operaciones directas sin leases Coordinator; no altera el contenido histórico de los segmentos.
+
+Adenda multimedia añadida el 2026-11-22: lista_beta_adenda_2026-11-22_multimedia.md. Incluye sincronización segura obligatoria y protocolos aislados para calidad de imágenes, cola/precarga, tamaños históricos de LogosMarca y flujo resumable/aprobación de YouTube.

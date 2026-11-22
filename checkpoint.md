@@ -239,3 +239,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Revisión del hallazgo YouTube: una asociación durable opVideoId→uploadUrl reduciría sesiones huérfanas tras respuesta perdida, pero no se añade ScriptLock, lease ni espera durante cargas. NORMAS §15 exige retirar locks/serialización no indispensables y no bloquear operaciones de archivo. Sin un mecanismo atómico lock-free disponible, se conserva como riesgo bajo documentado: puede quedar una sesión resumable sin uso, pero no se duplica por sí sola la publicación de vídeo.
 - La rama base permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - **Siguiente:** cerrar la revisión local P1 con un inventario de pruebas automatizadas y preparar el protocolo Beta aislado para: corpus técnico de imágenes, medición de cola/primera pintura y tamaños reales de logos; no ejecutar contra Drive/YouTube productivos.
+
+
+## Protocolo Beta P1 multimedia preparado (2026-11-22)
+
+- Se creó `lista_beta_adenda_2026-11-22_multimedia.md` y se incorporó al índice `lista_beta.txt`.
+- La adenda comienza con los comandos obligatorios de árbol limpio, rama/origen verificados y sincronización fast-forward. Incluye corpus técnico, MIME/firma/SHA, variantes, transparencia, medición de cola y primera pintura, inventario Drive de solo lectura y pruebas resumables/aprobación YouTube.
+- No se ejecutó ninguna prueba Beta ni se accedió a recursos productivos. Los deployments, Spreadsheet, Drive y canal YouTube aislados siguen siendo prerrequisitos.
+- Siguiente: cerrar la verificación local P1 multimedia y dejar pendientes Beta explícitas; revisar después el backlog vigente antes de incorporar mejoras nuevas.
