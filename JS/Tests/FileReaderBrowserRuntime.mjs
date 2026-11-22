@@ -22,7 +22,7 @@ try {
     for (const profile of profiles) {
         const context = await browser.newContext(profile.options);
         const page = await context.newPage();
-        await page.setContent('<!doctype html><html><body><input id="image" type="file" accept="image/*"></body></html>');
+        await page.setContent('<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><input id="image" type="file" accept="image/*"></body></html>');
         await page.addScriptTag({ content: `
             window.__fileReaderCalls = 0;
             const NativeFileReader = window.FileReader;
@@ -71,6 +71,7 @@ try {
         assert.equal(metrics.sameCachedPromise, true, profile.name + ": la caché debe reutilizar la Promise resuelta.");
         assert.equal(metrics.sameResult, true, profile.name + ": el contenido debe ser idéntico.");
         assert.ok(metrics.durationMs >= 0 && metrics.cachedLookupMs >= 0);
+        assert.equal(metrics.viewport.width, profile.name.includes("Android") ? 412 : 1365, profile.name + ": viewport esperado.");
         console.log("PASS " + profile.name + " " + JSON.stringify(metrics));
         await context.close();
     }
