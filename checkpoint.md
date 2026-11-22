@@ -471,3 +471,16 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Decisión de diseño:** retirar escrituras/lock de contadores directos de las rutas ordinarias; conservar un agregado global de eventos que Coordinator ya registra, claramente etiquetado como best-effort y no equivalente al total HTTP. Conservar métricas locales del navegador y RBAC/refresh del panel.
 - **Siguiente tarea:** implementar el contrato de telemetría global sin fuentes directas, retirar sus escrituras en AUTH/CATALOG/USERS/WRITE/FEEDBACK, eliminar el fan-out de cinco endpoints en la ruta nueva de ADMIN y actualizar UI/contratos para no presentar ausencia como cero.
 - **Estado:** auditoría de alcance/consumidores COMPLETADA; implementación TEL-01/TEL-03 PENDIENTE.
+
+## Implementación TEL-01/TEL-03 — retiro de contadores directos (2026-11-22)
+
+- **Tarea realizada:** se retiraron los contadores síncronos y endpoints internos getServiceTraffic de AUTH, CATALOG, USERS, WRITE y FEEDBACK. CATALOG ya no adquiere ScriptLock.tryLock(0) ni escribe PropertiesService por lecturas ordinarias.
+- **ADMIN:** Coordinator entrega su agregado de eventos registrados sin consultar cinco endpoints adicionales; se elimina fetchAll exclusivo de telemetría. Se conserva fetchAll para la precarga funcional de cachés de actor.
+- **Semántica:** el agregado global incluye adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed registradas por Coordinator. No representa todas las solicitudes HTTP. Las fuentes directas se marcan directRequestsAvailable:false con razón direct_requests_not_collected, nunca como un cero de requests.
+- **FEEDBACK/getCatalogChanges:** queda contado una sola vez por Coordinator; desaparece la suma duplicada del contador directo.
+- **UI:** se mantiene el panel Developer, su RBAC y refresco condicionado a visibilidad; el gráfico local del navegador conserva su alcance de pestaña/dispositivo y no se envía ni persiste.
+- **CATALOG:** se conserva GPSpedia_CATALOG_TRAFFIC_SECRET solo para proteger los metadatos internos del inventario de imágenes compartidos con ADMIN. Ya no es secreto de telemetría ni requiere GPSpedia_COORDINATOR_SECRET_CATALOG o GPSpedia_SERVICE_URL_CATALOG.
+- **Versión Coordinator:** 1.4.7; protocolo v1 sin cambios.
+- **Siguiente tarea:** ejecutar contratos nuevos y CI integral; después revisar el write best-effort que Coordinator aún realiza por cada evento registrado fuera del lock y decidir si puede integrarse en escrituras funcionales existentes o retirarse.
+- **Contexto breve:** se elimina el costo por petición de los cinco contadores directos y el fan-out administrativo. El único costo de persistencia de métricas que permanece es el del propio Coordinator para los eventos que registra.
+- **Estado:** implementación preparada en rama; validación CI PENDIENTE.

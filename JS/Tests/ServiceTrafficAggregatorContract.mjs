@@ -5,87 +5,48 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const admin = readFileSync(resolve(root, "JS/Services/admin.js"), "utf8");
-const normalizerMatch = admin.match(/function normalizeCoordinatorServiceTraffic_\([\s\S]*?\n\}/);
-const mergerMatch = admin.match(/function mergeDirectServiceTraffic_\(coordinatorResult, directResults\) \{[\s\S]*?\n\}/);
-assert.ok(normalizerMatch, "Falta normalizador del contrato Coordinator.");
-assert.ok(mergerMatch, "Falta agregador global.");
-const build = new Function(normalizerMatch[0] + "\n" + mergerMatch[0] +
-    "\nreturn { normalizeCoordinatorServiceTraffic_, mergeDirectServiceTraffic_ };");
-const { normalizeCoordinatorServiceTraffic_, mergeDirectServiceTraffic_ } = build();
+const match = admin.match(/function normalizeCoordinatorServiceTraffic_\([\s\S]*?\n\}/);
+assert.ok(match, "Falta normalizador del contrato Coordinator.");
+const normalizeCoordinatorServiceTraffic_ = new Function(match[0] + "\nreturn normalizeCoordinatorServiceTraffic_;")();
 const services = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
 const startAt = 1_800_000_000_000;
 const counts = Object.fromEntries(services.map(service => [service, 0]));
 const zeroTotals = () => Object.fromEntries(services.map(service => [service, 0]));
 const coordinator = {
-    status: "success",
-    scope: "coordinator_protected_operations",
-    services: services.slice(),
+    status: "success", scope: "coordinator_protected_operations", services: services.slice(),
     buckets: [{ startAt, counts: { ...counts } }],
     totals: { lastHour: zeroTotals(), last6Hours: zeroTotals(), last24Hours: zeroTotals() }
-};
-const direct = {
-    AUTH: {
-        status: "success", service: "AUTH", scope: "direct_post_requests",
-        accuracy: "best_effort_nonblocking",
-        buckets: [{ startAt, count: 3 }],
-        totals: { lastHour: 3, last6Hours: 3, last24Hours: 3 }
-    },
-    CATALOG: {
-        status: "success", service: "CATALOG", scope: "catalog_post_requests",
-        accuracy: "best_effort_nonblocking",
-        buckets: [{ startAt, count: 4 }],
-        totals: { lastHour: 4, last6Hours: 4, last24Hours: 4 }
-    }
 };
 let passed = 0;
 function check(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
-check("Normaliza los siete servicios activos y los tres periodos", () => {
+check("Normaliza los siete servicios y declara el alcance Coordinator-only", () => {
     const normalized = normalizeCoordinatorServiceTraffic_(coordinator);
     assert.deepEqual(normalized.services, services);
-    assert.deepEqual(normalized.totals.last24Hours, zeroTotals());
+    assert.equal(normalized.scope, "global_service_traffic");
+    assert.equal(normalized.sources.coordinator.available, true);
+    for (const service of ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK"]) {
+        assert.equal(normalized.sources[service].directRequestsAvailable, false);
+        assert.equal(normalized.sources[service].reason, "direct_requests_not_collected");
+    }
+    assert.match(normalized.coverage.description, /No incluye rutas directas/);
 });
-check("Combina fuentes directas sin perder el agregado Coordinator", () => {
-    const result = mergeDirectServiceTraffic_(coordinator, direct);
-    assert.equal(result.status, "success");
-    assert.equal(result.scope, "global_service_traffic");
-    assert.deepEqual(result.services, services);
-    assert.equal(result.totals.lastHour.AUTH, 3);
-    assert.equal(result.totals.lastHour.CATALOG, 4);
-    assert.equal(result.totals.lastHour.USERS, 0);
-    assert.equal(result.buckets[0].counts.AUTH, 3);
-    assert.equal(result.buckets[0].counts.CATALOG, 4);
-    assert.ok(result.services.includes("ADMIN"));
-    assert.equal(result.sources.UTILITIES, undefined);
+
+check("No muta el resultado de Coordinator ni crea contadores directos", () => {
+    const original = JSON.stringify(coordinator);
+    const normalized = normalizeCoordinatorServiceTraffic_(coordinator);
+    assert.equal(JSON.stringify(coordinator), original);
+    assert.equal(normalized.totals.last24Hours.AUTH, 0);
+    assert.equal(normalized.buckets[0].counts.CATALOG, 0);
 });
-check("No acepta agregados sin identidad/scope o sin los siete servicios", () => {
+
+check("Rechaza scope, servicios, conteos y buckets corruptos", () => {
     assert.throws(() => normalizeCoordinatorServiceTraffic_(Object.assign({}, coordinator, { scope: "other" })));
     assert.throws(() => normalizeCoordinatorServiceTraffic_(Object.assign({}, coordinator, { services: services.slice(1) })));
+    const badTotals = structuredClone(coordinator); badTotals.totals.lastHour.AUTH = -1;
+    assert.throws(() => normalizeCoordinatorServiceTraffic_(badTotals));
+    const badBucket = structuredClone(coordinator); badBucket.buckets[0].startAt = "bad";
+    assert.throws(() => normalizeCoordinatorServiceTraffic_(badBucket));
 });
-check("No acepta conteos o buckets corruptos", () => {
-    const invalidTotals = structuredClone(coordinator);
-    invalidTotals.totals.lastHour.AUTH = -1;
-    assert.throws(() => normalizeCoordinatorServiceTraffic_(invalidTotals));
-    const invalidBucket = structuredClone(coordinator);
-    invalidBucket.buckets[0].counts.ADMIN = "not-a-number";
-    assert.throws(() => normalizeCoordinatorServiceTraffic_(invalidBucket));
-});
-check("No mezcla una respuesta directa con scope o conteos inválidos", () => {
-    const invalid = {
-        AUTH: Object.assign({}, direct.AUTH, { scope: "wrong" })
-    };
-    const result = mergeDirectServiceTraffic_(coordinator, invalid);
-    assert.equal(result.totals.lastHour.AUTH, 0);
-    assert.equal(result.sources.AUTH.directRequestsAvailable, false);
-    const malformed = {
-        AUTH: Object.assign({}, direct.AUTH, { buckets: [{ startAt, count: -2 }] })
-    };
-    const partial = mergeDirectServiceTraffic_(coordinator, malformed);
-    assert.equal(partial.status, "success");
-    assert.equal(partial.totals.lastHour.AUTH, 3);
-    assert.equal(partial.buckets[0].counts.AUTH, 0);
-    assert.equal(partial.sources.AUTH.directRequestsAvailable, true);
-    assert.equal(partial.sources.AUTH.accuracy, "partial");
-    assert.equal(partial.sources.AUTH.reason, "invalid_buckets_ignored");
-});
-console.log("ServiceTrafficAggregatorContract: " + passed + "/" + passed + " PASS");
+
+console.log("ServiceTrafficAggregatorContract: " + passed + "/3 PASS");

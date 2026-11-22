@@ -24,7 +24,7 @@ Cada servicio es un proyecto Apps Script independiente. Los nombres de los archi
 
 **Importante:**
 - `SharedMutationClient.js` se copia íntegro en AUTH, USERS, WRITE, FEEDBACK, UTILITIES y ADMIN. Debe ser la versión de la misma revisión que los servicios.
-- CATALOG no incluye SharedMutationClient: solo usa su endpoint de telemetría interna de lectura.
+- CATALOG no incluye SharedMutationClient: sus lecturas públicas no requieren coordinación; conserva un secreto compartido con ADMIN únicamente para autorizar metadatos internos del inventario de imágenes.
 - `InboxConversations.js` es parte de FEEDBACK; no omitirlo.
 - No combinar los archivos de servicios distintos en un mismo proyecto. Cada proyecto mantiene su propio `doGet`, `doPost`, propiedades y deployment.
 - No desplegar archivos del frontend (`JS/Frontend/*`) como proyectos Apps Script.
@@ -69,7 +69,7 @@ Cada servicio es un proyecto Apps Script independiente. Los nombres de los archi
 4. Guardar y crear una nueva versión de Aplicación web.
 5. Registrar su URL `/exec`.
 6. Probar el GET de disponibilidad/feed y comprobar que la lectura utiliza el Spreadsheet aislado.
-7. En ScriptProperties crear `GPSpedia_COORDINATOR_SECRET` con el mismo valor que se configurará en Coordinator como `GPSpedia_COORDINATOR_SECRET_CATALOG`. Este secreto es exclusivo de CATALOG y de telemetría de solo lectura; no habilita leases ni mutaciones.
+7. En ScriptProperties crear `GPSpedia_CATALOG_TRAFFIC_SECRET` con el mismo secreto aleatorio configurado en ADMIN. Se utiliza exclusivamente para autorizar la consulta interna de metadatos del inventario de imágenes; no autentica tráfico ni conecta CATALOG con Coordinator.
 
 ### Paso 3 — AUTH
 
@@ -144,7 +144,6 @@ Una vez que existan los deployments, abrir las ScriptProperties del proyecto COO
 
 | Propiedad en Coordinator | URL que se debe pegar |
 |---|---|
-| `GPSpedia_SERVICE_URL_CATALOG` | deployment CATALOG |
 | `GPSpedia_SERVICE_URL_AUTH` | deployment AUTH |
 | `GPSpedia_SERVICE_URL_USERS` | deployment USERS |
 | `GPSpedia_SERVICE_URL_WRITE` | deployment WRITE |
@@ -165,9 +164,8 @@ Generar valores aleatorios independientes de al menos 32 caracteres. El mismo se
 | ADMIN | `GPSpedia_COORDINATOR_SECRET_ADMIN` | `GPSpedia_COORDINATOR_SECRET` en ADMIN |
 | FEEDBACK | `GPSpedia_COORDINATOR_SECRET_FEEDBACK` | `GPSpedia_COORDINATOR_SECRET` en FEEDBACK |
 | UTILITIES | `GPSpedia_COORDINATOR_SECRET_UTILITIES` | `GPSpedia_COORDINATOR_SECRET` en UTILITIES |
-| CATALOG (solo telemetría) | `GPSpedia_COORDINATOR_SECRET_CATALOG` | `GPSpedia_COORDINATOR_SECRET` en CATALOG |
 
-Propiedades heredadas de telemetría (`GPSpedia_<SERVICIO>_TRAFFIC_SECRET`) pueden permanecer durante la transición. No borrarlas hasta completar la validación Beta y comprobar que ningún deployment antiguo depende de ellas. No documentar aquí valores secretos.
+El secreto de inventario `GPSpedia_CATALOG_TRAFFIC_SECRET` debe tener el mismo valor en CATALOG y ADMIN, pero no se registra en Coordinator. Las antiguas propiedades de contadores `GPSpedia_<SERVICIO>_TRAFFIC_SECRET` y `GPSpedia_USERS_TRAFFIC_SECRET` pueden permanecer sin uso durante la ventana de rollback; no borrarlas hasta completar Beta. `GPSpedia_CATALOG_TRAFFIC_SECRET` sigue activo para el inventario de imágenes. No documentar valores secretos.
 
 ## 5. Pruebas de humo después del despliegue
 
@@ -176,9 +174,9 @@ Ejecutar únicamente en el entorno aislado aprobado:
 1. Abrir cada URL `/exec` y confirmar que responde el servicio esperado. Registrar servicio, URL identificada (sin parámetros secretos), versión y fecha.
 2. Comprobar los diagnósticos `?debug=true` donde estén implementados. Deben mostrar estado booleano/configurado, nunca valores secretos.
 3. Confirmar desde cada consumidor que `GPSpedia_COORDINATOR_URL` apunta al Coordinator del mismo entorno y que su secreto local coincide con la propiedad del servicio en Coordinator.
-4. Desde Coordinator, comprobar que la consulta de telemetría identifica las fuentes disponibles. Una fuente parcial debe quedar como parcial; no interpretarla como cero confirmado.
+4. Desde ADMIN, comprobar que el agregado global informa el alcance Coordinator-only y marca las rutas directas como no recopiladas; un cero de eventos Coordinator no significa cero solicitudes HTTP.
 5. Comprobar el flujo de sesión AUTH → Coordinator → cachés de servicios solo con cuentas de prueba.
-6. Comprobar CATALOG con lectura del catálogo Beta y que la consulta interna de telemetría usa el secreto CATALOG de solo lectura.
+6. Comprobar CATALOG con lectura del catálogo Beta y que ADMIN puede consultar metadatos internos del inventario de imágenes con `GPSpedia_CATALOG_TRAFFIC_SECRET`; no existe contador directo de tráfico CATALOG.
 7. Comprobar ADMIN → WRITE y ADMIN → CATALOG con IDs de prueba, sin ejecutar altas destructivas ni migraciones de datos reales.
 8. Probar FEEDBACK/Inbox con cuentas de prueba y hojas aisladas.
 9. Ejecutar las pruebas de concurrencia, recuperación de archivos, journals y Spreadsheet/Drive únicamente según la lista Beta vigente y sus recursos desechables.

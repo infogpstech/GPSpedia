@@ -54,11 +54,12 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] Inventario estático inicial de `UrlFetchApp.fetch`, `fetchAll`, wrappers, `routeAction`, reintentos, publicaciones y llamadas entre proyectos; los conteos de wrappers no se interpretan como requests por interacción.
 - [x] P0.2 — Instrumentación local del router: bytes UTF-8 de request/response, duración, promedio y p50/p95 de duración/tamaños sobre hasta 200 eventos efímeros por pestaña. Sin persistencia ni requests adicionales. **COMPLETADA CON VALIDACIÓN DIFERIDA**; CI: 277 suites, 3,226 pruebas, 0 fallos.
 - [ ] Línea base Beta por flujo: requests, bytes, p50/p95, lecturas/escrituras y esperas para catálogo, búsqueda, detalle, aportes, Inbox, imágenes y vídeos. Medición real requiere navegador y entorno aislado.
-- [x] Auditoría estática de telemetría completada: USERS/WRITE/FEEDBACK persisten contadores en PropertiesService por petición y Coordinator los escribe dentro de ScriptLock. Evidencia: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
+- [x] Auditoría estática de telemetría ampliada a AUTH/CATALOG/USERS/WRITE/FEEDBACK: contadores directos por petición; CATALOG usa ScriptLock.tryLock(0). Evidencia: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`.
 - [x] TEL-02 — Coordinator: mover la persistencia de métricas de adquisición de leases, validación de contexto y lectura del feed fuera de `ScriptLock`; conservar scopes y conteo de operaciones nuevas.
 - [x] Contratos Coordinator: verificar que las métricas no acceden a PropertiesService dentro del lock y que fallos de persistencia no alteran lease/feed; 95/95 PASS en ejecución aislada.
 - [x] CI integral de confirmación HEAD `+"`8feaea6`"+`: 298 suites / 3,463 pruebas / 0 fallos; health read-only SUCCESS. Pages build/deployment de este HEAD aún en curso al registrar.
-- [ ] TEL-01/TEL-03 — rediseñar contadores directos USERS/WRITE/FEEDBACK y resolver el doble conteo de `getCatalogChanges` sin perder diagnóstico ni scopes ADMIN.
+- [x] TEL-01/TEL-03 — retirar contadores directos de AUTH/CATALOG/USERS/WRITE/FEEDBACK, eliminar endpoints internos de telemetría y fan-out de cinco servicios desde ADMIN; `getCatalogChanges` queda contado una sola vez por Coordinator.
+- [ ] Evaluar el write restante de métricas Coordinator (lease, validación y feed): piggyback en escrituras funcionales o retirar eventos sin perder un diagnóstico necesario, cumpliendo §15.
 - [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
 
 ### P0 — AUTH/USERS y excepciones de sesión
@@ -359,4 +360,11 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [ ] Diseñar e implementar reducción del costo síncrono de métricas; no retirar el diagnóstico sin contrato alternativo.
 - [x] Añadir contratos de Coordinator: ausencia de acceso a PropertiesService de telemetría bajo ScriptLock y preservación del resultado ante fallos; 95/95 PASS.
 - [ ] Completar corrección de contadores directos USERS/WRITE/FEEDBACK y su contrato alternativo.
-- **Estado:** TEL-02 Coordinator COMPLETADO localmente y CI PASS; auditoría TEL-01/TEL-03 ampliada a las cinco fuentes COMPLETADA; implementación directa PENDIENTE.
+- **Estado:** TEL-01/TEL-02/TEL-03 implementación local COMPLETADA en esta rama; pruebas aisladas nuevas preparadas; CI integral de confirmación PENDIENTE. La persistencia best-effort de Coordinator sigue siendo un write adicional fuera del lock y requiere evaluación final.
+
+### P0 — validación del contrato de telemetría sin contadores directos (2026-11-22)
+- [x] El agregado ADMIN conserva siete servicios y solo muestra eventos que Coordinator registra (adquisiciones nuevas de lease, validaciones de contexto y feed); declara las rutas directas como no recopiladas, no como cero HTTP.
+- [x] AUTH/CATALOG/USERS/WRITE/FEEDBACK dejan de persistir contadores por petición y dejan de exponer endpoints internos getServiceTraffic. CATALOG conserva GPSpedia_CATALOG_TRAFFIC_SECRET únicamente para metadatos internos del inventario de imágenes.
+- [x] Coordinator deja de consultar cinco servicios con fetchAll para construir telemetría; mantiene fetchAll para la precarga de actores, que es una operación funcional distinta.
+- [x] UI Developer separa eventos globales Coordinator de solicitudes locales del navegador y aclara la cobertura.
+- [ ] Ejecutar CI integral actualizado y revisar Pages deployment del HEAD.

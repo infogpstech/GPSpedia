@@ -1024,86 +1024,43 @@ function runSharedMutationCoordinatorTests() {
     });
 
 
-    test_("Coordinator centraliza los cinco contadores directos y conserva los siete servicios", function() {
-        const services = ["CATALOG", "AUTH", "USERS", "WRITE", "FEEDBACK"];
-        const r = createRuntime_(null, null, requests => requests.map(request => {
-            const service = services.find(name => request.url.includes("/" + name + "/"));
-            const count = 2;
-            const startAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
-            return {
-                getResponseCode: () => 200,
-                getContentText: () => JSON.stringify({
-                    status: "success", service,
-                    scope: service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests",
-                    accuracy: "best_effort_nonblocking",
-                    buckets: [{ startAt, count }],
-                    totals: { lastHour: count, last6Hours: count, last24Hours: count }
-                })
-            };
-        }));
-        services.forEach(service => {
-            r.properties.setProperty("GPSpedia_SERVICE_URL_" + service, "https://script.google.com/macros/s/" + service + "/exec");
-            r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, r.secrets[service]);
+    test_("Coordinator conserva solo los eventos globales que registra y declara las fuentes directas no recopiladas", function() {
+        const r = createRuntime_(null, null, function() {
+            throw new Error("La consulta global no debe hacer fetch a cinco servicios directos.");
         });
-        acquire_(r, "AUTH", "login", "traffic-central-auth-0001");
+        acquire_(r, "AUTH", "login", "traffic-coordinator-only-0001");
         r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 10 });
         r.request("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: 0, limit: 10 });
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
-        assert_(traffic.scope === "global_service_traffic", "Coordinator debe devolver el agregado global final.");
-        assert_(traffic.services.length === 7 && !traffic.services.includes("LEGACY"),
-            "El inventario debe incluir los siete servicios activos y excluir LEGACY.");
-        assert_(traffic.totals.last24Hours.AUTH === 3, "AUTH debe combinar lease y contador directo.");
-        assert_(traffic.totals.last24Hours.CATALOG === 3, "CATALOG debe combinar feed Coordinator y contador directo.");
-        assert_(traffic.totals.last24Hours.FEEDBACK === 3, "FEEDBACK debe combinar feed interno y contador directo.");
-        assert_(traffic.totals.last24Hours.USERS === 2 && traffic.totals.last24Hours.WRITE === 2,
-            "USERS y WRITE deben sumar sus contadores directos.");
-        assert_(traffic.totals.last24Hours.UTILITIES === 0 && traffic.totals.last24Hours.ADMIN === 0,
-            "No se deben duplicar servicios sin contador directo.");
-        services.forEach(service => assert_(traffic.sources[service].directRequestsAvailable === true,
-            service + " debe confirmar su fuente directa."));
-        assert_(traffic.sources.CATALOG.feedRequests === "coordinator",
-            "El feed público debe conservar su atribución a Coordinator.");
-    });
-
-    test_("Coordinator ignora buckets directos inválidos y duplicados sin contaminar la gráfica", function() {
-        const r = createRuntime_(null, null, requests => requests.map(request => {
-            const service = request.url.includes("/AUTH/") ? "AUTH" : "OTHER";
-            const startAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
-            return {
-                getResponseCode: () => 200,
-                getContentText: () => JSON.stringify({
-                    status: "success", service, scope: "direct_post_requests",
-                    totals: { lastHour: 3, last6Hours: 3, last24Hours: 3 },
-                    buckets: [{ startAt, count: 1 }, { startAt, count: 99 }, { startAt: "invalid", count: 50 }]
-                })
-            };
-        }));
-        r.properties.setProperty("GPSpedia_SERVICE_URL_AUTH", "https://script.google.com/macros/s/AUTH/exec");
-        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_AUTH", r.secrets.AUTH);
-        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
-        assert_(traffic.sources.AUTH.accuracy === "partial" &&
-            traffic.sources.AUTH.reason === "invalid_or_duplicate_buckets_ignored",
-            "La fuente debe declararse parcial si contiene buckets repetidos o corruptos.");
-        const currentStartAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
-        const currentBucket = traffic.buckets.find(bucket => bucket.startAt === currentStartAt);
-        assert_(currentBucket && currentBucket.counts.AUTH === 1,
-            "Solo debe agregarse el primer bucket válido.");
-        assert_(traffic.totals.last24Hours.AUTH === 3,
-            "Los totales directos siguen conservando la cifra declarada por la fuente.");
-    });
-
-    test_("La falta de una fuente directa conserva el agregado y declara cobertura parcial", function() {
-        const r = createRuntime_();
-        r.properties.setProperty("GPSpedia_SERVICE_URL_AUTH", "https://script.google.com/macros/s/AUTH/exec");
-        r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_AUTH", r.secrets.AUTH);
-        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         assert_(traffic.status === "success" && traffic.scope === "global_service_traffic",
-            "Un servicio sin configuración directa no debe romper la consulta global.");
-        assert_(traffic.sources.AUTH.directRequestsAvailable === false &&
-            traffic.sources.AUTH.reason === "fetch_unavailable",
-            "La fuente sin respuesta debe declararse parcial.");
-        assert_(traffic.totals.last24Hours.AUTH === 0,
-            "Una fuente no disponible no debe inventar conteos.");
+            "ADMIN debe recibir el agregado global de Coordinator.");
+        assert_(traffic.services.length === 7 && !traffic.services.includes("LEGACY"),
+            "El agregado conserva los siete servicios activos.");
+        assert_(traffic.totals.last24Hours.AUTH === 1 && traffic.totals.last24Hours.CATALOG === 1 &&
+            traffic.totals.last24Hours.FEEDBACK === 1,
+            "Solo deben contarse los eventos registrados por Coordinator.");
+        assert_(traffic.totals.last24Hours.USERS === 0 && traffic.totals.last24Hours.WRITE === 0,
+            "No deben inventarse solicitudes directas de servicios.");
+        ["AUTH", "CATALOG", "USERS", "WRITE", "FEEDBACK"].forEach(service => {
+            assert_(traffic.sources[service].directRequestsAvailable === false &&
+                traffic.sources[service].reason === "direct_requests_not_collected",
+                service + " debe declarar que las rutas directas no se recopilan.");
+        });
+        assert_(traffic.coverage.description.includes("No incluye rutas directas"),
+            "La cobertura debe explicar el alcance limitado.");
+    });
+
+    test_("La consulta global no hace fan-out de red ni convierte fuentes ausentes en ceros de requests", function() {
+        let batches = 0;
+        const r = createRuntime_(null, null, function() { batches++; throw new Error("fetchAll inesperado"); });
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.status === "success", "La consulta global debe seguir disponible.");
+        assert_(batches === 0, "ADMIN no debe consultar endpoints directos de los cinco servicios.");
+        assert_(traffic.sources.CATALOG.reason === "direct_requests_not_collected" &&
+            traffic.sources.FEEDBACK.reason === "direct_requests_not_collected",
+            "La ausencia debe declararse como no recopilada, no como fuente vacía.");
+        assert_(traffic.totals.last24Hours.CATALOG === 0 && traffic.totals.last24Hours.FEEDBACK === 0,
+            "Los conteos reflejan cero eventos Coordinator, no cero requests HTTP.");
     });
 
     test_("La telemetría global cuenta leases por servicio y deduplica reintentos de requestId", function() {

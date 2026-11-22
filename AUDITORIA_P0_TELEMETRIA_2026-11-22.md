@@ -153,3 +153,18 @@ El colector ADMIN no necesita consultar cinco servicios adicionales si el nuevo 
 No se deben mostrar contadores directos ausentes como ceros reales. El endpoint global seguirá restringido a Desarrollador y el refresco condicionado a visibilidad.
 
 **Estado de esta ampliación:** auditoría de los cinco scopes y consumidores COMPLETADA; cambios de los contadores directos y actualización del contrato ADMIN PENDIENTES.
+
+## 9. Implementación TEL-01/TEL-03 — contadores directos retirados (2026-11-22)
+
+Se aplicó el rediseño acordado después de mapear los consumidores del panel ADMIN:
+
+- AUTH, CATALOG, USERS, WRITE y FEEDBACK ya no ejecutan contadores directos ni exponen endpoint interno getServiceTraffic. Se eliminaron las llamadas a PropertiesService por petición y el lock no bloqueante que usaba CATALOG.
+- Coordinator ya no consulta cinco endpoints de servicios con fetchAll para construir el agregado global. El fetchAll de precarga de actores se conserva porque es una operación funcional independiente.
+- El agregado global contiene solo adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed que Coordinator registra. Se etiqueta como best-effort y no equivale al total HTTP.
+- Las fuentes directas se declaran con directRequestsAvailable:false y reason:direct_requests_not_collected; no se convierten en ceros confirmados.
+- FEEDBACK/getCatalogChanges se cuenta una sola vez por Coordinator; ya no se suma el contador FEEDBACK duplicado.
+- La UI mantiene el panel Developer, RBAC, refresco condicionado a visibilidad y métricas efímeras locales del navegador. El gráfico local no se transmite ni persiste.
+- GPSpedia_CATALOG_TRAFFIC_SECRET se conserva solo para autenticar los metadatos internos del inventario de imágenes entre ADMIN y CATALOG; no es secreto de telemetría.
+- Coordinator 1.4.7; protocolo compartido v1 sin cambios.
+
+**Pendiente de validación:** contratos actualizados y CI integral del nuevo HEAD. Además, Coordinator aún persiste sus propios eventos best-effort después de liberar el lock; se debe evaluar si ese write puede piggyback en una escritura funcional o si conviene retirar algunos eventos para cumplir plenamente §15.

@@ -3,114 +3,65 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root=resolve(fileURLToPath(new URL("../..", import.meta.url)));
-const read=path=>readFileSync(resolve(root,path),"utf8");
-const admin=read("JS/Services/admin.js");
-const coordinator=read("JS/Services/Coordinator.js");
-const shared=read("JS/Services/SharedMutationClient.js");
-const api=read("JS/Frontend/api-config.js");
-const ui=read("JS/Frontend/ui.js");
-const html=read("index.html");
-const healthDoc=read("Services/SERVICE_HEALTH.md");
-const setupDoc=read("Services/COORDINATOR_SETUP.md");
+const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
+const read = path => readFileSync(resolve(root, path), "utf8");
+const admin = read("JS/Services/admin.js");
+const coordinator = read("JS/Services/Coordinator.js");
+const shared = read("JS/Services/SharedMutationClient.js");
+const api = read("JS/Frontend/api-config.js");
+const ui = read("JS/Frontend/ui.js");
+const html = read("index.html");
+const auth = read("JS/Services/Auth.js");
+const users = read("JS/Services/users.js");
+const write = read("JS/Services/write.js");
+const feedback = read("JS/Services/feedback.js");
+const catalog = read("JS/Services/catalog.js");
 
-assert.match(api,/'getServiceTraffic': 'ADMIN'/);
-assert.match(admin,/function handleGetServiceTraffic_\(payload, logMessage, developerContext\)/);
-assert.match(admin,/function getDirectServiceTrafficBatch_\(\)/);
-assert.match(admin,/UrlFetchApp\.fetchAll\(requests\)/);
-assert.match(admin,/function mergeDirectServiceTraffic_\(coordinatorResult, directResults\)/);
-assert.match(admin,/function normalizeCoordinatorServiceTraffic_\(source\)/);
-assert.match(admin,/exactamente los siete servicios activos/);
-assert.match(admin, /\{ service: "AUTH", url: AUTH_SERVICE_URL, scope: "direct_post_requests" \}/);
-assert.match(admin, /\{ service: "WRITE", url: WRITE_SERVICE_URL, scope: "direct_post_requests" \}/);
-assert.match(admin, /\{ service: "FEEDBACK", url: FEEDBACK_SERVICE_URL, scope: "direct_post_requests" \}/);
-assert.match(admin, /\{ service: "USERS", url: USERS_SERVICE_URL, scope: "direct_post_requests" \}/);
-const authService = read("JS/Services/Auth.js");
-const writeService = read("JS/Services/write.js");
-const feedbackService = read("JS/Services/feedback.js");
-const usersService = read("JS/Services/users.js");
-const catalogService = read("JS/Services/catalog.js");
-assert.match(authService,/actions: new Set\(\["validateSession"\]\)/);
-assert.match(writeService,/actions: new Set\(\["checkVehicle","getSuggestion","checkVinDuplicate"\]\)/);
-assert.match(feedbackService,/actions: new Set\(\["recordLike","reportProblem"/);
-assert.match(usersService,/USERS_DIRECT_TRAFFIC_PREFIX_/);
-assert.match(usersService,/if \(action === "getUsers"\) recordUsersDirectTraffic_\(\)/);
-assert.match(authService,/properties\.getProperty\("GPSpedia_COORDINATOR_SECRET"\)/);
-assert.match(writeService,/properties\.getProperty\("GPSpedia_COORDINATOR_SECRET"\)/);
-assert.match(feedbackService,/properties\.getProperty\("GPSpedia_COORDINATOR_SECRET"\)/);
-assert.match(usersService,/properties\.getProperty\("GPSpedia_COORDINATOR_SECRET"\)/);
-assert.match(catalogService,/properties\.getProperty\("GPSpedia_COORDINATOR_SECRET"\)/);
+assert.match(api, /'getServiceTraffic': 'ADMIN'/);
+assert.match(admin, /function handleGetServiceTraffic_\(payload, logMessage, developerContext\)/);
+assert.match(admin, /function normalizeCoordinatorServiceTraffic_\(source\)/);
+assert.match(admin, /function validateGlobalServiceTrafficResult_\(source\)/);
+assert.doesNotMatch(admin, /function getDirectServiceTrafficBatch_/);
+assert.doesNotMatch(admin, /function mergeDirectServiceTraffic_/);
+assert.match(admin, /developerContext\.role[^\n]*desarrollador/);
+assert.match(admin, /normalizeCoordinatorServiceTraffic_\(coordinatorResult\)/);
+assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
+assert.doesNotMatch(coordinator, /function readDirectServiceTrafficBatch_/);
+const trafficReader = coordinator.slice(coordinator.indexOf("function readServiceTraffic_"), coordinator.indexOf("function authorizeSession_", coordinator.indexOf("function readServiceTraffic_")));
+assert.doesNotMatch(trafficReader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
+assert.match(trafficReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
+assert.match(coordinator, /SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.7"/);
+assert.match(coordinator, /recordServiceTrafficEvent_\(service, result\.trafficCapturedAt, "validateSessionContext"\)/);
+assert.match(coordinator, /recordServiceTrafficEvent_\(trafficService, capturedAt, operation\)/);
+assert.match(shared, /function getServiceTraffic\(\)/);
+assert.match(shared, /send_\("getServiceTraffic"/);
 
-assert.match(feedbackService,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
-assert.doesNotMatch(feedbackService.slice(feedbackService.indexOf("function doPost(e)"),feedbackService.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
-assert.match(feedbackService,/anonymousSuggestion/);
-assert.match(feedbackService,/actions: new Set\([\s\S]*?"suggestYear"[\s\S]*?"sendContactForm"/);
-assert.doesNotMatch(admin,/UTILITIES_SERVICE_URL|service: "UTILITIES", url:/);
-assert.match(coordinator,/UTILITIES:\s*\{\s*migrateTimestamps:\s*\{\s*read:\s*\["SESSION_CONTEXTS",\s*"CORTES",\s*"DRIVE"\],\s*write:\s*\["UTILITIES"\]\s*\}/);
-
-assert.match(admin,/getSharedServiceTraffic_\(\)/);
-assert.match(coordinator,/getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
-assert.match(coordinator,/service !== "ADMIN" \|\| operation !== "getServiceTraffic"/);
-assert.match(coordinator,/scope: "coordinator_protected_operations"/);
-assert.match(coordinator,/function readDirectServiceTrafficBatch_\(\)/);
-assert.match(coordinator,/function mergeServiceTrafficSources_\(source, directResults\)/);
-assert.match(coordinator,/fetchAll\(requests\)/);
-assert.match(coordinator,/GPSpedia_COORDINATOR_SECRET_" \+ spec\.service/);
-assert.match(coordinator,/result\.scope = "global_service_traffic"/);
-assert.match(admin,/coordinatorResult\.scope === "global_service_traffic"/);
-assert.match(admin,/coordinatorResult\.scope === "coordinator_protected_operations"/);
-
-assert.match(coordinator,/SERVICE_TRAFFIC_BUCKET_MS_ = 60 \* 60 \* 1000/);
-assert.match(coordinator,/SERVICE_TRAFFIC_WINDOW_MS_ = 24 \* 60 \* 60 \* 1000/);
-assert.match(coordinator,/outcome\.trafficEvent\.service[\s\S]*?outcome\.trafficEvent\.capturedAt[\s\S]*?outcome\.trafficEvent\.operation/);
-assert.match(coordinator,/recordServiceTrafficEvent_\(trafficService, capturedAt, operation\)/);
-assert.match(coordinator,/recordServiceTrafficEvent_\(service, result\.trafficCapturedAt, "validateSessionContext"\)/);
-assert.match(coordinator,/SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.6"/);
-assert.match(coordinator,/function validateSessionContext_\(service, operation, payload\)/);
-assert.match(coordinator,/SHARED_MUTATION_PROTOCOL_VERSION = 1/);
-assert.match(coordinator,/SHARED_MUTATION_SUPPORTED_PROTOCOL_VERSIONS_ = Object\.freeze\(\[1\]\)/);
-assert.match(coordinator,/SHARED_MUTATION_LEGACY_PROTOCOL_VERSION_ = 1/);
-assert.match(coordinator,/request.protocolVersion === undefined/);
-assert.match(shared,/SHARED_MUTATION_CLIENT_PROTOCOL_VERSION = 1/);
-assert.match(shared,/protocolVersion: SHARED_MUTATION_CLIENT_PROTOCOL_VERSION/);
-assert.match(coordinator,/function invalidateSessionActorCaches_\(service, operation, payload\)/);
-assert.match(coordinator,/GPSpedia_SERVICE_URL_/);
-assert.match(coordinator,/action: "__invalidateSessionActorCache"/);
-assert.match(shared,/send_\("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches"/);
-assert.doesNotMatch(shared,/GPSpedia_WRITE_URL|GPSpedia_FEEDBACK_URL/);
-
-assert.match(coordinator,/!\["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"\]\.includes\(service\)/);
-assert.match(shared,/function validateSessionContext\(userId, sessionToken, service\)/);
-assert.match(shared,/error\.code = "SESSION_ACTOR_CACHE_MISS"/);
-assert.doesNotMatch(shared,/validateSharedSessionContext_\(actorUserId, actorToken, deps\.service \|\| "AUTH"\)/);
-for (const [path, service] of [
-    ["JS/Services/Auth.js", "AUTH"], ["JS/Services/admin.js", "ADMIN"],
-    ["JS/Services/feedback.js", "FEEDBACK"], ["JS/Services/users.js", "USERS"],
-    ["JS/Services/write.js", "WRITE"]
-]) {
-    assert.match(read(path), new RegExp("getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken, \\{ service: \"" + service + "\" \\}\\)"));
+for (const [name, source] of [["AUTH", auth], ["USERS", users], ["WRITE", write], ["FEEDBACK", feedback], ["CATALOG", catalog]]) {
+    assert.doesNotMatch(source, /recordDirectServiceTraffic_|readDirectServiceTraffic_|recordUsersDirectTraffic_|readUsersDirectTraffic_|recordCatalogTraffic_|readCatalogTraffic_/,
+        name + " no debe persistir ni exponer contadores directos.");
+    assert.doesNotMatch(source, /DIRECT_SERVICE_TRAFFIC_CONFIG_|USERS_DIRECT_TRAFFIC_PREFIX_|CATALOG_TRAFFIC_BUCKET_PREFIX_/,
+        name + " no debe conservar configuración de contadores directos.");
+    const start = source.indexOf("function doPost(e)");
+    const end = source.indexOf("\nfunction ", start + 15);
+    const router = source.slice(start, end > start ? end : source.length);
+    assert.doesNotMatch(router, /getServiceTraffic|record[A-Za-z]*Traffic_/,
+        name + " no debe registrar métricas en su ruta ordinaria ni exponer endpoint interno.");
 }
-assert.match(shared,/function getServiceTraffic\(\)/);
-assert.match(shared,/send_\("getServiceTraffic", "ADMIN", "getServiceTraffic", \{\}\)/);
+assert.match(catalog, /const CATALOG_TRAFFIC_SECRET_PROPERTY_/);
+assert.match(catalog, /properties\.getProperty\(CATALOG_TRAFFIC_SECRET_PROPERTY_\)/,
+    "El secreto CATALOG sigue protegiendo metadatos internos de inventario de imágenes.");
+assert.match(feedback, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
+assert.match(feedback, /FEEDBACK_PUBLIC_ACTIONS/);
 
-assert.match(html,/id="global-service-traffic-chart"/);
-assert.match(html,/Tráfico global coordinado/);
-assert.doesNotMatch(html,/id="service-traffic-chart"|Actividad de este navegador/);
-assert.match(html,/Un cero no significa necesariamente que el servicio no recibió solicitudes/);
-assert.match(ui,/routeActionWithRetry\("getServiceTraffic",\s*getSessionPayload_\(\)/);
-assert.match(ui,/lastGlobalServiceTrafficFetchAt < 60000/);
-assert.match(ui,/renderGlobalServiceTrafficChart_/);
-assert.match(ui,/Operaciones globales \(24 h\)/);
-assert.match(ui,/globalServiceTrafficData\.totals/);
-assert.match(ui,/getBrowserServiceTrafficSnapshot/);
-assert.match(ui,/const events = localTraffic/);
-assert.match(ui,/renderLocalServiceTrafficChart_/);
-assert.match(ui,/isValidGlobalServiceTrafficResponse_/);
-assert.match(ui,/filter\(key => key !== "LEGACY"\)/);
-assert.doesNotMatch(ui,/getServiceMetricsSnapshot|bucketServiceMetrics|subscribeServiceMetrics/);
-assert.doesNotMatch(api,/serviceMetrics|recordServiceMetric|getServiceMetricsSnapshot|bucketServiceMetrics/);
-assert.match(html,/operaciones protegidas/);
-assert.match(setupDoc,/telemetría global|SERVICE_TRAFFIC/i);
-assert.match(healthDoc,/2,000 ms/);
+assert.match(html, /Tráfico global coordinado/);
+assert.match(html, /No se recopilan contadores directos de rutas ordinarias/);
+assert.match(ui, /Solo eventos registrados por Coordinator/);
+assert.match(ui, /getBrowserServiceTrafficSnapshot/);
+assert.match(ui, /Solicitudes de este navegador/);
+assert.match(ui, /lastGlobalServiceTrafficFetchAt < 60000/);
+assert.match(ui, /renderGlobalServiceTrafficChart_/);
+assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
+assert.match(html, /Un cero no significa necesariamente que el servicio no recibió solicitudes/);
+assert.match(admin, /telemetría global está reservada a Desarrollador/);
 
-console.log("ServiceTrafficAdminContract: 33/33 PASS");
+console.log("ServiceTrafficAdminContract: 46/46 PASS");

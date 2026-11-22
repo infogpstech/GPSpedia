@@ -221,93 +221,6 @@ function doGet(e) {
 
 
 
-const USERS_DIRECT_TRAFFIC_PREFIX_ = "GPSpedia_USERS_DIRECT_TRAFFIC_HOUR_V1_";
-const USERS_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_USERS_TRAFFIC_SECRET";
-const USERS_DIRECT_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
-const USERS_DIRECT_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
-
-function recordUsersDirectTraffic_() {
-    // Métrica best-effort: no es rate limit ni control de acceso. Se acepta
-    // subconteo por escrituras concurrentes en PropertiesService antes que
-    // serializar las lecturas ordinarias de getUsers con el ScriptLock global.
-    try {
-        const properties = PropertiesService.getScriptProperties();
-        const capturedAt = Date.now();
-        const bucketStart = Math.floor(capturedAt / USERS_DIRECT_TRAFFIC_BUCKET_MS_) * USERS_DIRECT_TRAFFIC_BUCKET_MS_;
-        if (!Number.isSafeInteger(bucketStart) || bucketStart <= 0) return false;
-        const key = USERS_DIRECT_TRAFFIC_PREFIX_ + bucketStart;
-        const raw = properties.getProperty(key);
-        let count = 0;
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.version === 1 && parsed.startAt === bucketStart &&
-                    Number.isSafeInteger(parsed.count) && parsed.count >= 0) count = parsed.count;
-            } catch (error) {}
-        } else {
-            const firstBucket = bucketStart - USERS_DIRECT_TRAFFIC_WINDOW_MS_ + USERS_DIRECT_TRAFFIC_BUCKET_MS_;
-            const all = properties.getProperties() || {};
-            Object.keys(all).forEach(propertyKey => {
-                if (!propertyKey.startsWith(USERS_DIRECT_TRAFFIC_PREFIX_)) return;
-                const startAt = Number(propertyKey.slice(USERS_DIRECT_TRAFFIC_PREFIX_.length));
-                if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > bucketStart) {
-                    properties.deleteProperty(propertyKey);
-                }
-            });
-        }
-        properties.setProperty(key, JSON.stringify({
-            version: 1, startAt: bucketStart, count: Math.min(Number.MAX_SAFE_INTEGER, count + 1)
-        }));
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
-
-function readUsersDirectTraffic_(suppliedSecret) {
-    const properties = PropertiesService.getScriptProperties();
-    const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
-        properties.getProperty(USERS_TRAFFIC_SECRET_PROPERTY_) || "");
-    const supplied = String(suppliedSecret || "");
-    let difference = expectedSecret.length ^ supplied.length;
-    const length = Math.max(expectedSecret.length, supplied.length);
-    for (let index = 0; index < length; index++) {
-        difference |= (expectedSecret.charCodeAt(index) || 0) ^ (supplied.charCodeAt(index) || 0);
-    }
-    if (expectedSecret.length < 32 || difference !== 0) {
-        return { status: "error", message: "Acceso denegado a la telemetría USERS." };
-    }
-    const capturedAt = Date.now();
-    const currentBucket = Math.floor(capturedAt / USERS_DIRECT_TRAFFIC_BUCKET_MS_) * USERS_DIRECT_TRAFFIC_BUCKET_MS_;
-    const firstBucket = currentBucket - USERS_DIRECT_TRAFFIC_WINDOW_MS_ + USERS_DIRECT_TRAFFIC_BUCKET_MS_;
-    const all = properties.getProperties() || {};
-    const stored = new Map();
-    Object.keys(all).forEach(key => {
-        if (!key.startsWith(USERS_DIRECT_TRAFFIC_PREFIX_)) return;
-        const startAt = Number(key.slice(USERS_DIRECT_TRAFFIC_PREFIX_.length));
-        if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > currentBucket) return;
-        let parsed;
-        try { parsed = JSON.parse(all[key]); } catch (error) { parsed = null; }
-        if (parsed && parsed.version === 1 && parsed.startAt === startAt &&
-            Number.isSafeInteger(parsed.count) && parsed.count >= 0) stored.set(startAt, parsed.count);
-    });
-    const buckets = [];
-    const totals = { lastHour: 0, last6Hours: 0, last24Hours: 0 };
-    for (let startAt = firstBucket; startAt <= currentBucket; startAt += USERS_DIRECT_TRAFFIC_BUCKET_MS_) {
-        const count = stored.get(startAt) || 0;
-        buckets.push({ startAt, count });
-        if (startAt + USERS_DIRECT_TRAFFIC_BUCKET_MS_ > capturedAt - 60 * 60 * 1000) totals.lastHour += count;
-        if (startAt + USERS_DIRECT_TRAFFIC_BUCKET_MS_ > capturedAt - 6 * 60 * 60 * 1000) totals.last6Hours += count;
-        totals.last24Hours += count;
-    }
-    return {
-        status: "success", service: "USERS", scope: "direct_post_requests",
-        source: "service_script_properties", accuracy: "best_effort_nonblocking",
-        mayUndercount: true, capturedAt, windowMs: USERS_DIRECT_TRAFFIC_WINDOW_MS_,
-        bucketMs: USERS_DIRECT_TRAFFIC_BUCKET_MS_, buckets, totals
-    };
-}
-
 function isSharedMutationAction_(action) {
     return ["createUser"].includes(action);
 }
@@ -330,11 +243,6 @@ function doPost(e) {
         const result = handleSharedSessionActorCachePriming_(payload);
         return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     }
-    if (action === "getServiceTraffic") {
-        const traffic = readUsersDirectTraffic_(payload.secret);
-        return ContentService.createTextOutput(JSON.stringify(traffic)).setMimeType(ContentService.MimeType.TEXT);
-    }
-    if (action === "getUsers") recordUsersDirectTraffic_();
     const sessionOptions = { session: { sessionToken: payload.sessionToken } };
     if (!isSharedMutationAction_(action)) {
         if (!["getUsers", "updateProfile"].includes(action)) return doPostInternal_(withSharedSessionActor_(e, null));

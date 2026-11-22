@@ -6056,7 +6056,7 @@ function initAdminPanelListeners() {
         const trafficSource = globalTrafficAvailable && globalServiceTrafficData.sources
             ? globalServiceTrafficData.sources[selectedServiceKey] : null;
         const trafficCoverageLabel = trafficSource
-            ? (trafficSource.directRequestsAvailable ? "Coordinator + directo" : "Coordinator; directo parcial/no disponible")
+            ? "Solo eventos registrados por Coordinator"
             : "Coordinator";
         const metadata = item.metadata || {};
         const heading = document.createElement("div");
@@ -6115,17 +6115,11 @@ function initAdminPanelListeners() {
 
         const note = document.createElement("p");
         note.className = "dev-service-note";
-        const catalogSource = globalServiceTrafficData && globalServiceTrafficData.sources && globalServiceTrafficData.sources.CATALOG;
-        const catalogCoverageNote = selectedServiceKey === "CATALOG"
-            ? (catalogSource && catalogSource.directRequestsAvailable
-                ? " Las lecturas directas CATALOG se cuentan con un contador best-effort no bloqueante y pueden subcontarse."
-                : " Solo se cuentan las consultas del feed público coordinadas; las lecturas directas CATALOG aún no están configuradas.")
-            : "";
         const globalCoverage = globalServiceTrafficData && globalServiceTrafficData.coverage
-            ? String(globalServiceTrafficData.coverage.description || "") : "El agregado global combina operaciones protegidas de Coordinator con contadores directos disponibles.";
+            ? String(globalServiceTrafficData.coverage.description || "") : "El agregado global refleja únicamente eventos registrados por Coordinator.";
         note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. " +
             globalCoverage + " No representa todas las solicitudes HTTP y excluye sondeos de salud." +
-            catalogCoverageNote + (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
+            (globalServiceTrafficError ? " No fue posible actualizar el agregado global." : "");
         detail.appendChild(note);
         const dependencies = document.createElement("div");
         dependencies.className = "dev-service-dependencies";
@@ -6331,7 +6325,7 @@ function initAdminPanelListeners() {
         const note = document.createElement("p");
         note.className = "dev-service-note";
         note.textContent = String(data.coverage && data.coverage.description ||
-            "Agregado global de operaciones coordinadas y contadores directos disponibles.") +
+            "Agregado global de eventos registrados por Coordinator.") +
             " Excluye sondeos de salud y rutas no instrumentadas; no equivale al total de solicitudes HTTP.";
         container.appendChild(note);
     }

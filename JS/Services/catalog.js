@@ -83,121 +83,7 @@ const COLS_RELAY = {
     observacion: 11
 };
 
-const CATALOG_TRAFFIC_BUCKET_PREFIX_ = "GPSpedia_CATALOG_TRAFFIC_HOUR_V1_";
-const CATALOG_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
-const CATALOG_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
 const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
-const CATALOG_TRAFFIC_ACTIONS_ = new Set([
-    "getCatalogData", "getDropdownData", "getSuggestion", "getNavigationData",
-    "getVehicleProjection", "getContributionCandidates"
-]);
-
-function recordCatalogTraffic_(capturedAt) {
-    let lock = null;
-    let lockAcquired = false;
-    try {
-        lock = LockService.getScriptLock();
-        // No esperar por el lock: si hay contención se omite la métrica y la lectura continúa.
-        lockAcquired = lock.tryLock(0);
-        if (!lockAcquired) return false;
-        const properties = PropertiesService.getScriptProperties();
-        const currentTime = Number(capturedAt) || Date.now();
-        const bucketStart = Math.floor(currentTime / CATALOG_TRAFFIC_BUCKET_MS_) * CATALOG_TRAFFIC_BUCKET_MS_;
-        if (!Number.isSafeInteger(bucketStart) || bucketStart <= 0) return false;
-        const key = CATALOG_TRAFFIC_BUCKET_PREFIX_ + bucketStart;
-        const raw = properties.getProperty(key);
-
-        // La limpieza se ejecuta solo al crear el primer bucket de una nueva hora.
-        if (!raw) {
-            const firstBucket = bucketStart - CATALOG_TRAFFIC_WINDOW_MS_ + CATALOG_TRAFFIC_BUCKET_MS_;
-            const all = properties.getProperties() || {};
-            Object.keys(all).forEach(propertyKey => {
-                if (!propertyKey.startsWith(CATALOG_TRAFFIC_BUCKET_PREFIX_)) return;
-                const startAt = Number(propertyKey.slice(CATALOG_TRAFFIC_BUCKET_PREFIX_.length));
-                if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > bucketStart) {
-                    properties.deleteProperty(propertyKey);
-                }
-            });
-        }
-
-        let bucket = { version: 1, startAt: bucketStart, count: 0 };
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.version === 1 && parsed.startAt === bucketStart &&
-                    Number.isSafeInteger(parsed.count) && parsed.count >= 0) bucket = parsed;
-            } catch (error) { /* Un bucket dañado se reemplaza sin afectar la respuesta CATALOG. */ }
-        }
-        bucket.count = Math.min(Number.MAX_SAFE_INTEGER, bucket.count + 1);
-        properties.setProperty(key, JSON.stringify(bucket));
-        return true;
-    } catch (error) {
-        return false;
-    } finally {
-        // Apps Script solo permite liberar un lock adquirido por esta ejecución.
-        if (lock && lockAcquired) {
-            try { lock.releaseLock(); } catch (releaseError) {}
-        }
-    }
-}
-
-function catalogTrafficSecretEquals_(expected, supplied) {
-    expected = String(expected || "");
-    supplied = String(supplied || "");
-    if (expected.length < 32 || expected.length !== supplied.length) return false;
-    let difference = 0;
-    for (let index = 0; index < expected.length; index++) {
-        difference |= expected.charCodeAt(index) ^ supplied.charCodeAt(index);
-    }
-    return difference === 0;
-}
-
-function readCatalogTraffic_(suppliedSecret, capturedAt) {
-    const properties = PropertiesService.getScriptProperties();
-    const expectedSecret = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET") ||
-        properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
-    if (!catalogTrafficSecretEquals_(expectedSecret, suppliedSecret)) {
-        return { status: "error", message: "Acceso denegado a la telemetría CATALOG." };
-    }
-
-    const currentTime = Number(capturedAt) || Date.now();
-    const currentBucket = Math.floor(currentTime / CATALOG_TRAFFIC_BUCKET_MS_) * CATALOG_TRAFFIC_BUCKET_MS_;
-    const firstBucket = currentBucket - CATALOG_TRAFFIC_WINDOW_MS_ + CATALOG_TRAFFIC_BUCKET_MS_;
-    const all = properties.getProperties() || {};
-    const stored = new Map();
-    Object.keys(all).forEach(key => {
-        if (!key.startsWith(CATALOG_TRAFFIC_BUCKET_PREFIX_)) return;
-        const startAt = Number(key.slice(CATALOG_TRAFFIC_BUCKET_PREFIX_.length));
-        if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > currentBucket) return;
-        let parsed;
-        try { parsed = JSON.parse(all[key]); } catch (error) { parsed = null; }
-        if (parsed && parsed.version === 1 && parsed.startAt === startAt &&
-            Number.isSafeInteger(parsed.count) && parsed.count >= 0) stored.set(startAt, parsed.count);
-    });
-
-    const buckets = [];
-    const totals = { lastHour: 0, last6Hours: 0, last24Hours: 0 };
-    for (let startAt = firstBucket; startAt <= currentBucket; startAt += CATALOG_TRAFFIC_BUCKET_MS_) {
-        const count = stored.get(startAt) || 0;
-        buckets.push({ startAt, count });
-        if (startAt + CATALOG_TRAFFIC_BUCKET_MS_ > currentTime - 60 * 60 * 1000) totals.lastHour += count;
-        if (startAt + CATALOG_TRAFFIC_BUCKET_MS_ > currentTime - 6 * 60 * 60 * 1000) totals.last6Hours += count;
-        totals.last24Hours += count;
-    }
-    return {
-        status: "success",
-        service: "CATALOG",
-        scope: "catalog_post_requests",
-        source: "catalog_script_properties",
-        accuracy: "best_effort_nonblocking",
-        mayUndercount: true,
-        capturedAt: currentTime,
-        windowMs: CATALOG_TRAFFIC_WINDOW_MS_,
-        bucketMs: CATALOG_TRAFFIC_BUCKET_MS_,
-        buckets,
-        totals
-    };
-}
 
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
@@ -229,14 +115,6 @@ function doPost(e) {
     const request = JSON.parse(e.postData.contents);
     const action = String(request.action || "");
     const payload = request.payload || {};
-
-    // Endpoint interno ADMIN->CATALOG: no se registra a sí mismo y requiere secreto servidor-a-servidor.
-    if (action === "getServiceTraffic") {
-      const traffic = readCatalogTraffic_(payload.secret);
-      return ContentService.createTextOutput(JSON.stringify(traffic))
-        .setMimeType(ContentService.MimeType.TEXT);
-    }
-    if (CATALOG_TRAFFIC_ACTIONS_.has(action)) recordCatalogTraffic_();
 
     let result;
     switch (action) {

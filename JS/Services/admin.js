@@ -11296,90 +11296,6 @@ function recordReplacedImage(data) {
  * Handler: Consultar imágenes reemplazadas
  */
 
-function getDirectServiceTrafficBatch_() {
-    const specs = [
-        { service: "CATALOG", url: CATALOG_SERVICE_URL, scope: "catalog_post_requests" },
-        { service: "AUTH", url: AUTH_SERVICE_URL, scope: "direct_post_requests" },
-        { service: "USERS", url: USERS_SERVICE_URL, scope: "direct_post_requests" },
-        { service: "WRITE", url: WRITE_SERVICE_URL, scope: "direct_post_requests" },
-        { service: "FEEDBACK", url: FEEDBACK_SERVICE_URL, scope: "direct_post_requests" }
-    ];
-    const results = {};
-    let properties;
-    try {
-        properties = PropertiesService.getScriptProperties();
-    } catch (error) {
-        specs.forEach(spec => { results[spec.service] = { status: "unavailable", reason: "properties_unavailable" }; });
-        return results;
-    }
-
-    const requests = [];
-    const requestSpecs = [];
-    specs.forEach(spec => {
-        let secret = "";
-        try {
-            secret = String(properties.getProperty("GPSpedia_" + spec.service + "_TRAFFIC_SECRET") || "");
-        } catch (error) {
-            results[spec.service] = { status: "unavailable", reason: "properties_unavailable" };
-            return;
-        }
-        if (secret.length < 32) {
-            results[spec.service] = { status: "unavailable", reason: "not_configured" };
-            return;
-        }
-        requests.push({
-            url: spec.url,
-            method: "post",
-            contentType: "text/plain",
-            payload: JSON.stringify({ action: "getServiceTraffic", payload: { secret: secret } }),
-            muteHttpExceptions: true,
-            followRedirects: true
-        });
-        requestSpecs.push(spec);
-    });
-
-    if (!requests.length) return results;
-    let responses;
-    try {
-        responses = UrlFetchApp.fetchAll(requests);
-    } catch (batchError) {
-        // Si fetchAll no está disponible o falla globalmente, conservar diagnóstico parcial
-        // intentando cada endpoint de forma aislada; nunca se propaga al agregado Coordinator.
-        responses = requests.map(request => {
-            const options = Object.assign({}, request);
-            delete options.url;
-            try { return UrlFetchApp.fetch(request.url, options); } catch (error) { return null; }
-        });
-    }
-
-    requestSpecs.forEach((spec, index) => {
-        try {
-            const response = responses && responses[index];
-            if (!response) throw new Error("request_failed");
-            const httpStatus = response.getResponseCode();
-            if (httpStatus < 200 || httpStatus >= 300) throw new Error("request_failed");
-            const result = JSON.parse(response.getContentText() || "{}");
-            const validTotals = result && result.totals &&
-                ["lastHour", "last6Hours", "last24Hours"].every(period =>
-                    Number.isSafeInteger(Number(result.totals[period])) && Number(result.totals[period]) >= 0);
-            const validBuckets = result && Array.isArray(result.buckets) && result.buckets.every(bucket =>
-                bucket && Number.isSafeInteger(Number(bucket.startAt)) &&
-                Number.isSafeInteger(Number(bucket.count)) && Number(bucket.count) >= 0);
-            if (!result || result.status !== "success" || result.service !== spec.service ||
-                result.scope !== spec.scope || !validBuckets || !validTotals) {
-                throw new Error("invalid_response");
-            }
-            results[spec.service] = result;
-        } catch (error) {
-            results[spec.service] = {
-                status: "unavailable",
-                reason: String(error && error.message || error) === "invalid_response" ? "invalid_response" : "request_failed"
-            };
-        }
-    });
-    return results;
-}
-
 function normalizeCoordinatorServiceTraffic_(source) {
     const expectedServices = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
     if (!source || source.status !== "success" || source.scope !== "coordinator_protected_operations" ||
@@ -11407,88 +11323,43 @@ function normalizeCoordinatorServiceTraffic_(source) {
         });
         return output;
     };
-    const totals = {
-        lastHour: normalizeCounts(source.totals.lastHour, "lastHour"),
-        last6Hours: normalizeCounts(source.totals.last6Hours, "last6Hours"),
-        last24Hours: normalizeCounts(source.totals.last24Hours, "last24Hours")
-    };
-    const buckets = source.buckets.map((bucket, index) => {
-        if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0) {
-            throw new Error("El bucket " + index + " no contiene una marca temporal válida.");
-        }
-        return { startAt: bucket.startAt, counts: normalizeCounts(bucket.counts, "bucket " + index) };
-    }).sort((left, right) => left.startAt - right.startAt);
-    return Object.assign({}, source, { services: expectedServices.slice(), totals, buckets });
-}
-
-function mergeDirectServiceTraffic_(coordinatorResult, directResults) {
-    const result = normalizeCoordinatorServiceTraffic_(coordinatorResult);
-    const sources = {
-        coordinator: { available: true, scope: "protected_operations" }
-    };
-    const services = ["CATALOG", "AUTH", "WRITE", "FEEDBACK", "USERS"];
-    const bucketsByStart = new Map();
-    result.buckets.forEach(bucket => bucketsByStart.set(bucket.startAt, bucket));
-    services.forEach(service => {
-        const directResult = directResults && directResults[service];
-        const expectedScope = service === "CATALOG" ? "catalog_post_requests" : "direct_post_requests";
-        const directAvailable = Boolean(directResult && directResult.status === "success" &&
-            directResult.service === service && directResult.scope === expectedScope &&
-            Array.isArray(directResult.buckets) && directResult.totals &&
-            ["lastHour", "last6Hours", "last24Hours"].every(period =>
-                Number.isSafeInteger(directResult.totals[period]) && directResult.totals[period] >= 0));
-        const directBuckets = new Map();
-        let invalidBucketCount = 0;
-        if (directAvailable) {
-            directResult.buckets.forEach(bucket => {
-                if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0 ||
-                    !Number.isSafeInteger(bucket.count) || bucket.count < 0) {
-                    invalidBucketCount += 1;
-                    return;
-                }
-                directBuckets.set(bucket.startAt, bucket.count);
-            });
-            directBuckets.forEach((count, startAt) => {
-                let bucket = bucketsByStart.get(startAt);
-                if (!bucket) {
-                    const counts = {};
-                    result.services.forEach(name => { counts[name] = 0; });
-                    bucket = { startAt, counts };
-                    result.buckets.push(bucket);
-                    bucketsByStart.set(startAt, bucket);
-                }
-                bucket.counts[service] += count;
-            });
-            ["lastHour", "last6Hours", "last24Hours"].forEach(period => {
-                result.totals[period][service] += directResult.totals[period];
-            });
-        }
+    const result = Object.assign({}, source, {
+        services: expectedServices.slice(),
+        totals: {
+            lastHour: normalizeCounts(source.totals.lastHour, "lastHour"),
+            last6Hours: normalizeCounts(source.totals.last6Hours, "last6Hours"),
+            last24Hours: normalizeCounts(source.totals.last24Hours, "last24Hours")
+        },
+        buckets: source.buckets.map((bucket, index) => {
+            if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0) {
+                throw new Error("El bucket " + index + " no contiene una marca temporal válida.");
+            }
+            return { startAt: bucket.startAt, counts: normalizeCounts(bucket.counts, "bucket " + index) };
+        }).sort((left, right) => left.startAt - right.startAt)
+    });
+    const sources = { coordinator: { available: true, scope: "coordinator_recorded_events" } };
+    expectedServices.forEach(service => {
         sources[service] = {
             available: true,
-            coordinatorScope: "protected_operations",
-            directRequestsAvailable: directAvailable,
-            directRequestScope: directAvailable ? directResult.scope : null,
-            accuracy: directAvailable && invalidBucketCount === 0 ? directResult.accuracy : "partial",
+            coordinatorScope: "coordinator_recorded_events",
+            directRequestsAvailable: false,
+            accuracy: "not_collected",
             mayUndercount: true,
-            reason: directAvailable
-                ? (invalidBucketCount ? "invalid_buckets_ignored" : null)
-                : String(directResult && directResult.reason || "not_configured")
+            reason: "direct_requests_not_collected"
         };
-        if (service === "CATALOG") sources[service].feedRequests = "coordinator";
     });
-    result.buckets.sort((left, right) => left.startAt - right.startAt);
     result.scope = "global_service_traffic";
     result.sources = sources;
     result.coverage = {
-        description: "Agregado de operaciones protegidas de los siete servicios activos, más solicitudes directas de lectura CATALOG y rutas directas instrumentadas de AUTH, WRITE, USERS y FEEDBACK cuando sus contadores están configurados.",
-        excludes: ["sondeos de salud", "solicitudes HTTP que no atraviesan las rutas instrumentadas"]
+        description: "Conteo global best-effort de adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed registradas por Coordinator. No incluye rutas directas no coordinadas ni representa el total de solicitudes HTTP.",
+        excludes: [
+            "lecturas directas no coordinadas de AUTH, CATALOG, USERS, WRITE y FEEDBACK",
+            "sondeos de salud",
+            "solicitudes HTTP no instrumentadas"
+        ]
     };
     result.excluded = result.coverage.excludes.slice();
     return result;
-}
-
-function mergeCatalogServiceTraffic_(coordinatorResult, catalogResult) {
-    return mergeDirectServiceTraffic_(coordinatorResult, { CATALOG: catalogResult });
 }
 
 function validateGlobalServiceTrafficResult_(source) {
@@ -11522,7 +11393,7 @@ function handleGetServiceTraffic_(payload, logMessage, developerContext) {
         result = coordinatorResult;
     } else if (coordinatorResult.scope === "coordinator_protected_operations") {
         // Compatibilidad temporal con Coordinator anterior a la agregación central.
-        result = mergeDirectServiceTraffic_(coordinatorResult, getDirectServiceTrafficBatch_());
+        result = normalizeCoordinatorServiceTraffic_(coordinatorResult);
     } else {
         throw new Error("Coordinator devolvió un scope de telemetría no compatible.");
     }

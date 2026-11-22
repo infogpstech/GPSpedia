@@ -3,7 +3,7 @@
 Guía operativa paso a paso y matriz de despliegue por archivo: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
 
 
-## Estado actual — GPSpedia2.2.5_work (2026-11-21)
+## Estado actual — GPSpedia2.2.5_work (2026-11-22)
 
 Esta sección describe el contrato vigente de la rama de trabajo y prevalece sobre las notas históricas más abajo cuando exista diferencia:
 
@@ -17,7 +17,7 @@ Esta sección describe el contrato vigente de la rama de trabajo y prevalece sob
 
 ## Componentes
 
-- `JS/Services/Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
+- `JS/Services/Coordinator.js`: servicio Apps Script independiente (v1.4.7). Mantiene las leases y el agregado de eventos Coordinator en ScriptProperties; no accede a Spreadsheet ni Drive.
 - `JS/Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 - AUTH conserva lease solo para deleteUser; USERS/createUser conserva lease para exclusión frente a esa eliminación; UTILITIES/migrateTimestamps conserva lease para su migración operativa. WRITE, FEEDBACK, ADMIN y las acciones AUTH/USERS ordinarias usan actor cacheado sin leases por acción.
 - ADMIN ya no declara `ACTIVE_SESSIONS` como `sharedWriteResources` ni adquiere leases para acciones ordinarias. Usa el actor de sesión cacheado y conserva la matriz RBAC/auditoría; logout y eliminación de cuenta invalidan su caché mediante el endpoint interno autenticado.
@@ -38,26 +38,22 @@ En ScriptProperties del proyecto coordinador, crear seis secretos de autenticaci
 
 Cada secreto debe tener al menos 32 caracteres aleatorios. Generar uno distinto por servicio. No guardar los valores en el repositorio, código fuente, navegador, hojas de cálculo ni logs.
 
-Para la telemetría directa de CATALOG se agrega un secreto independiente de solo lectura:
-- `GPSpedia_COORDINATOR_SECRET_CATALOG`
-
-Este secreto no incorpora CATALOG a la lista de servicios autorizados para leases, sesiones ni mutaciones; solo autentica la consulta interna `getServiceTraffic`.
+CATALOG no usa secreto de Coordinator ni endpoint de telemetría. `GPSpedia_CATALOG_TRAFFIC_SECRET` se conserva como secreto compartido entre CATALOG y ADMIN para autorizar metadatos internos del inventario de imágenes; no es un contador de tráfico.
 
 Configurar en el proyecto Coordinator las URLs de los servicios consultados del mismo entorno:
-- `GPSpedia_SERVICE_URL_CATALOG`
 - `GPSpedia_SERVICE_URL_AUTH`
 - `GPSpedia_SERVICE_URL_USERS`
 - `GPSpedia_SERVICE_URL_WRITE`
 - `GPSpedia_SERVICE_URL_FEEDBACK`
 - `GPSpedia_SERVICE_URL_ADMIN` (también necesaria para invalidación remota de caché de actor desde AUTH; no se usa como fuente de telemetría).
 
-Coordinator consulta estas fuentes en paralelo, usando el secreto individual ya registrado. AUTH, USERS, WRITE y FEEDBACK reutilizan su `GPSpedia_COORDINATOR_SECRET_<SERVICIO>`; CATALOG usa el secreto de telemetría dedicado. Las URLs deben ser endpoints /exec del entorno correspondiente, nunca de producción desde un Coordinator de prueba.
+Coordinator no consulta endpoints directos de telemetría en AUTH, CATALOG, USERS, WRITE ni FEEDBACK. Las URLs y secretos configurados en Coordinator se usan para autenticación de servicios, precarga e invalidación de cachés de sesión; no para agregar contadores directos. No configurar URL ni secreto de CATALOG en Coordinator por analogía.
 
-En los proyectos AUTH, USERS, WRITE y FEEDBACK, `GPSpedia_COORDINATOR_SECRET` también autentica el endpoint de telemetría directa; se conserva lectura del secreto antiguo `GPSpedia_<SERVICIO>_TRAFFIC_SECRET` como fallback durante la migración. En CATALOG se configura `GPSpedia_COORDINATOR_SECRET` con el mismo valor de `GPSpedia_COORDINATOR_SECRET_CATALOG`, conservando `GPSpedia_CATALOG_TRAFFIC_SECRET` como fallback legacy. No borrar las propiedades antiguas hasta completar la migración y la validación Beta.
+En AUTH, USERS, WRITE y FEEDBACK, `GPSpedia_COORDINATOR_SECRET` se usa exclusivamente para las operaciones internas de coordinación, sesión, precarga e invalidación. Estos servicios ya no exponen endpoints de telemetría directa. CATALOG no configura `GPSpedia_COORDINATOR_SECRET` ni una identidad de Coordinator; `GPSpedia_CATALOG_TRAFFIC_SECRET` se comparte con ADMIN solo para autorizar metadatos internos del inventario de imágenes. Las antiguas propiedades de contadores pueden permanecer sin uso durante la ventana de rollback.
 
-ADMIN recibe el agregado global directamente desde Coordinator. Sus URLs y secretos directos de telemetría solo se conservan temporalmente para compatibilidad con Coordinators anteriores a 1.4.4; no son necesarios para el flujo normal con Coordinator actualizado.
+ADMIN recibe el agregado global directamente desde Coordinator. No consulta endpoints de telemetría directos de los cinco servicios ni requiere secretos de tráfico. Conserva sus URLs de servicio para operaciones funcionales e inventario, no para métricas.
 
-En el proyecto Apps Script de cada servicio, incluir `JS/Services/SharedMutationClient.js` y crear estas dos ScriptProperties:
+En cada consumidor AUTH, USERS, WRITE, FEEDBACK, UTILITIES y ADMIN, incluir `JS/Services/SharedMutationClient.js` y crear estas dos ScriptProperties:
 
 - `GPSpedia_COORDINATOR_URL`: URL /exec del coordinador correspondiente al mismo entorno.
 - `GPSpedia_COORDINATOR_SECRET`: el secreto específico de ese servicio, idéntico al valor configurado para ese servicio en el coordinador.
@@ -70,7 +66,7 @@ AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independ
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
 
-## Contexto central de sesión (Coordinator 1.4.5)
+## Contexto central de sesión (Coordinator 1.4.7)
 
 El coordinador mantiene la identidad activa en `ScriptProperties`, sin consultar `Users` ni `ActiveSessions` en cada operación de los demás servicios.
 
@@ -102,16 +98,17 @@ Coordinator 1.4.3 y SharedMutationClient declaran `protocolVersion: 1` en cada p
 - Un cambio que requiera una capacidad nueva del cliente solo exige actualizar los consumidores que invoquen esa capacidad; las acciones anteriores permanecen disponibles durante la transición.
 - Las peticiones GET del feed público mantienen su contrato de lectura separado.
 
-## Agregación central de telemetría (Coordinator 1.4.5)
+## Agregación central de telemetría (Coordinator 1.4.7)
 
-La consulta ADMIN `getServiceTraffic` devuelve el agregado final de siete servicios activos. Coordinator obtiene los buckets disponibles y consulta CATALOG, AUTH, USERS, WRITE y FEEDBACK mediante `fetchAll`, sin mantener el lock de ScriptProperties durante las llamadas externas. El bucket ADMIN ya no representa acciones ordinarias porque estas no adquieren leases.
+La consulta ADMIN `getServiceTraffic` devuelve el agregado de siete servicios activos, pero su alcance es deliberadamente Coordinator-only. Incluye adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed registradas por Coordinator. No representa todas las solicitudes HTTP ni cuenta las rutas directas ordinarias.
 
-- Cada fuente conserva su propio endpoint y responde con scope, totales y buckets; Coordinator valida identidad, scope y valores antes de agregarlos.
-- Una fuente ausente o con error se declara parcial sin descartar el agregado central ni las demás fuentes.
-- Los buckets inválidos o duplicados se ignoran y quedan señalados como cobertura parcial.
-- UTILITIES y las operaciones que aún adquieren leases se contabilizan desde Coordinator. ADMIN dejó de generar contadores por lease; no se añadirá escritura/llamada por acción para recuperar ese conteo porque la sección 15 prohíbe degradar el rendimiento por telemetría.
+- AUTH, CATALOG, USERS, WRITE y FEEDBACK ya no escriben contadores por petición ni exponen endpoints internos `getServiceTraffic`; CATALOG tampoco adquiere `ScriptLock.tryLock(0)` para telemetría.
+- Coordinator no hace `fetchAll` a cinco servicios para construir el gráfico global. Conserva `fetchAll` para la precarga funcional de cachés de actor después de sincronizar sesiones.
+- FEEDBACK/`getCatalogChanges` se registra una sola vez en Coordinator; se elimina la suma duplicada del contador directo.
+- La respuesta marca las fuentes directas con `directRequestsAvailable:false` y `reason:"direct_requests_not_collected"`. La UI no presenta esa ausencia como cero confirmado.
+- El panel Developer mantiene RBAC y refresco condicionado a visibilidad (mínimo 60 s). La gráfica local del navegador sigue siendo efímera, por pestaña/dispositivo, y no se transmite ni persiste.
 - El endpoint global no devuelve secretos, tokens ni identidades.
-- Los secretos directos antiguos se mantienen únicamente como fallback de ADMIN cuando consulta un Coordinator anterior a 1.4.4.
+- Coordinator todavía persiste sus propios eventos best-effort en PropertiesService después de liberar el lock; puede subcontar si falla. Esta escritura restante queda sujeta a evaluación de piggyback/retiro frente a §15.
 
 ## Validación de sesión por identidad de servicio (contrato 1.4.2)
 
@@ -161,26 +158,15 @@ El feed incremental del catálogo es una lectura pública y de solo lectura. La 
 
 ## Telemetría global de servicios
 
-Coordinator acumula conteos por servicio en buckets horarios de 24 horas dentro de ScriptProperties (GPSpedia_SERVICE_TRAFFIC_HOUR_). Registra operaciones protegidas que obtuvieron una lease y lecturas del feed incremental dentro del lock ya existente. Un reintento que reutiliza la misma lease no vuelve a incrementar el contador. El registro es best-effort: si falla, la operación protegida continúa.
+Coordinator acumula eventos registrados en buckets horarios de 24 horas dentro de ScriptProperties (`GPSpedia_SERVICE_TRAFFIC_HOUR_`). Cuenta adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed incremental. Un reintento que reutiliza la misma lease no vuelve a incrementar el contador. La persistencia es best-effort y se ejecuta después de liberar `ScriptLock`; si falla, la operación funcional continúa. Esta escritura restante aún se debe evaluar frente a §15.
 
-Para completar rutas POST que no pasan por Coordinator, cada servicio con rutas directas instrumentadas mantiene un contador local de ScriptProperties con buckets horarios de 24 horas y LockService.getScriptLock().tryLock(0). No espera por el lock: si hay contención o falla PropertiesService, omite únicamente el evento y continúa el handler. No se envía una llamada de red desde el navegador por cada acción.
+No hay contadores directos en AUTH, CATALOG, USERS, WRITE ni FEEDBACK. Sus rutas ordinarias no realizan escrituras/locks de telemetría y esos proyectos no exponen endpoint interno `getServiceTraffic`. La ausencia de eventos directos no equivale a cero solicitudes HTTP.
 
-**Rutas directas instrumentadas:**
-- CATALOG: getCatalogData, getDropdownData, getSuggestion y getNavigationData.
-- AUTH: validateSession.
-- WRITE: checkVehicle, getSuggestion y checkVinDuplicate.
-- FEEDBACK: getPysData, getCatalogChanges y suggestYear anónimo (userId 0). sendContactForm y suggestYear autenticado mantienen el conteo Coordinator.
-- UTILITIES: migrateTimestamps obtiene una lease de Coordinator dentro de su handler; no tiene contador local para evitar doble conteo.
-- USERS: createUser y updateProfile pasan por Coordinator; getUsers reutiliza el actor cacheado y mantiene un contador directo local no bloqueante para no añadir un viaje de red por cada lectura.
-- ADMIN: las acciones ordinarias usan actor cacheado y no pasan por Coordinator ni adquieren leases; `getServiceTraffic` conserva su consulta específica de agregado global.
+ADMIN no hace fan-out a cinco servicios para recopilar métricas. El agregado global se basa solo en eventos de Coordinator y marca las fuentes directas como `direct_requests_not_collected`. FEEDBACK/`getCatalogChanges` se cuenta una sola vez por Coordinator. UTILITIES/`migrateTimestamps` ya obtiene lease y queda incluido en el registro de Coordinator; ADMIN mantiene su consulta global de solo lectura, reservada a Desarrollador.
 
-ADMIN consulta los cinco contadores directos (CATALOG, AUTH, WRITE, FEEDBACK y USERS) en una sola operación agrupada con UrlFetchApp.fetchAll al refrescar el panel Developer. Si fetchAll falla globalmente, intenta los endpoints por separado; el fallo de una fuente no invalida las demás ni el agregado Coordinator. La consulta se ejecuta según el intervalo del panel (60 s), no por cada acción del usuario. El endpoint interno getServiceTraffic no se cuenta a sí mismo.
+**Secretos:** no se necesitan secretos de telemetría directa ni `GPSpedia_COORDINATOR_SECRET_CATALOG`. `GPSpedia_CATALOG_TRAFFIC_SECRET` sigue siendo necesario y compartido entre CATALOG y ADMIN exclusivamente para autorizar los metadatos internos del inventario de imágenes. No borrar propiedades antiguas de contadores hasta completar Beta y la ventana de rollback, pero los deployments actualizados ya no las leen ni escriben.
 
-**Configuración de secretos en Beta:** generar un secreto aleatorio distinto por servicio (mínimo 32 caracteres; por ejemplo, localmente con openssl rand -hex 32). Guardar el mismo valor para cada servicio en dos lugares: la Script Property con nombre GPSpedia_<SERVICIO>_TRAFFIC_SECRET dentro del proyecto Apps Script de ese servicio y en el proyecto ADMIN. Servicios instrumentados: AUTH, CATALOG, WRITE, FEEDBACK y USERS. Para USERS la propiedad exacta es `GPSpedia_USERS_TRAFFIC_SECRET`; se configura en el proyecto USERS y en ADMIN con el mismo valor aleatorio. UTILITIES no necesita secreto porque migrateTimestamps ya se cuenta en Coordinator. ADMIN no necesita secreto directo de tráfico: sus acciones ordinarias ya no generan contadores por lease y no se añade una escritura por acción debido a la sección 15. No guardar valores en el repositorio, navegador, logs ni documentación.
-
-Si falta un secreto, un endpoint falla o la respuesta no cumple el contrato, el dashboard conserva Coordinator y marca únicamente esa fuente directa como parcial/no disponible; nunca interpreta ausencia como cero confirmado. La consulta ADMIN/getServiceTraffic es de solo lectura, está reservada a Desarrollador y no devuelve usuarios, tokens ni identificadores de sesión. La propia consulta y los health probes no se cuentan.
-
-La interfaz Developer muestra el agregado global y, al seleccionar un servicio, una segunda gráfica local del navegador actual. Esta última se alimenta de las llamadas routeAction y de la lectura directa getCatalogChanges observadas en la sesión, identifica móvil/tableta/escritorio, conserva solo métricas efímeras en memoria y no transmite ni persiste payloads, tokens o datos personales. Los detalles muestran conteos globales y locales de 1, 6 y 24 horas. El agregado cubre las rutas instrumentadas descritas; no representa todas las solicitudes HTTP externas o rutas antiguas/no instrumentadas. Un cero no demuestra ausencia de solicitudes.
+La interfaz Developer mantiene el agregado global y la gráfica local del navegador actual. Esta última se alimenta de las llamadas `routeAction` observadas en la pestaña, identifica móvil/tableta/escritorio y conserva métricas efímeras en memoria; no transmite ni persiste payloads, tokens o datos personales. El gráfico global no representa todas las solicitudes HTTP. Un cero de eventos Coordinator no demuestra ausencia de solicitudes.
 
 ## Política y recuperación
 
@@ -210,7 +196,7 @@ Esta matriz reduce despliegues innecesarios, pero no elimina la necesidad de pub
 
 ## Catálogo canónico de secretos por servicio
 
-Cada servicio conserva una identidad criptográfica distinta. La simplificación consiste en usar el mismo nombre de propiedad local en cada proyecto y reutilizar ese secreto para autenticación Coordinator y telemetría directa; no consiste en compartir un único valor entre servicios.
+Cada servicio que se comunica con Coordinator conserva una identidad criptográfica distinta. Los contadores directos de telemetría ya no usan secretos ni endpoints. CATALOG conserva un secreto independiente con ADMIN solo para metadatos internos del inventario de imágenes.
 
 | Proyecto consumidor | Propiedad local | Propiedad correspondiente en Coordinator | Uso |
 |---|---|---|---|
@@ -220,9 +206,8 @@ Cada servicio conserva una identidad criptográfica distinta. La simplificación
 | ADMIN | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_ADMIN | Validación de actor, invalidación interna de caché y consulta global; no leases ordinarias |
 | FEEDBACK | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_FEEDBACK | Protocolo interno, leases, sesión y telemetría FEEDBACK |
 | UTILITIES | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_UTILITIES | Protocolo interno, leases y sesión |
-| CATALOG | GPSpedia_COORDINATOR_SECRET | GPSpedia_COORDINATOR_SECRET_CATALOG | Solo lectura interna de telemetría; no habilita leases ni mutaciones |
 
-Los valores de la columna Coordinator son todos diferentes. No copiar el secreto de AUTH a otro proyecto. Cada consumidor configura además GPSpedia_COORDINATOR_URL con la URL del Coordinator del mismo entorno. Las URLs de servicios consultados directamente se centralizan como GPSpedia_SERVICE_URL_<SERVICIO> en Coordinator. Las propiedades antiguas *_TRAFFIC_SECRET quedan como fallback transitorio y se retiran únicamente después de migrar y validar Beta.
+Los valores de la columna Coordinator son todos diferentes. No copiar el secreto de AUTH a otro proyecto. Cada consumidor configura además GPSpedia_COORDINATOR_URL con la URL del Coordinator del mismo entorno. Las URLs centralizadas en Coordinator se usan para precarga e invalidación de cachés de sesión. `+"`GPSpedia_CATALOG_TRAFFIC_SECRET`"+` debe coincidir entre CATALOG y ADMIN para metadatos de inventario. Las propiedades antiguas de contadores pueden permanecer sin uso durante la ventana de rollback; no son leídas por la versión actual.
 
 
 ## Actualización 2026-11-19 — ADMIN sin leases ordinarias
