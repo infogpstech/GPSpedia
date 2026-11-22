@@ -488,3 +488,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Test `FeedbackReportImageEvents.mjs` actualizado para asegurar que el append precede al read-back por reportId y que no existe el escaneo redundante por eventId. Test **3/3 PASS**.
 - CI HEAD `2f850442c3e31685b045938924a749cf08915798`: **292 suites / 3,407 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático en curso al documentar.
 - No se cambiaron archivos Drive ni registros productivos; no se modificó el esquema ni la política de adjuntos.
+
+
+## P1 FEEDBACK/Inbox — búsquedas dirigidas de estado y preferencias por participante (2026-11-22)
+
+- `inboxFindState_` y `inboxFindFlag_` dejaron de descargar sus hojas completas para localizar una combinación conversationId/userId.
+- Ambas funciones buscan el conversationId exacto en columna A mediante TextFinder y leen solo las filas candidatas con el ancho contractual; luego filtran userId y mantienen el error explícito cuando la misma combinación está duplicada.
+- Se conservan las filas completas para construir/actualizar el estado, así como los flujos de creación y read-back. No se cambian los estados de lectura, archivado, borrado ni visibilidad.
+- `InboxConversations.mjs` incorpora pruebas para estado, preferencias, búsqueda en columna A y duplicados. Se detectó en la primera regresión que los registros sintéticos quedaban en el fixture y afectaban pruebas posteriores; se corrigió con limpieza `finally`. Suite final **69/69 PASS**.
+- CI HEAD `893b29c48926e16997cfaff03a6617cd475ddb35`: **292 suites / 3,409 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático estaba in_progress al documentar.
+- No se modificaron datos productivos ni despliegues Apps Script.
