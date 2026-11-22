@@ -198,3 +198,8 @@ Tras añadir el contrato P1 de prioridad de miniaturas, el HEAD 1aa93ed686753f2d
 ## 14. Regresión general posterior — HEAD 03b58ab (2026-11-22)
 
 El HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a volvió a aprobar 301 suites / 3,498 pruebas / 0 fallos. Sintaxis 432 archivos JS/MJS; referencias relativas 343 archivos; health read-only 7/7; Pages build/deployment SUCCESS. Se añadieron pruebas de prioridad de miniaturas y un harness local sin red/persistencia; la telemetría residual de Coordinator continúa pendiente de medición Beta.
+
+
+## 15. CI general posterior — HEAD 7c916e3 (2026-11-22)
+
+El HEAD 7c916e31c311cec0da1086d378e7d287a550ca15 aprobó 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7 y Pages build/deployment SUCCESS. Se añadió una caracterización local del límite de idempotencia de init YouTube; no se modificó el comportamiento productivo de YouTube.

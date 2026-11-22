@@ -74,3 +74,10 @@ Se identificó un segundo escenario distinto de la respuesta perdida con el mism
 Este riesgo es diferente del reintento con el mismo opVideoId tras perder Location. Una reserva única en IndexedDB podría reducir la carrera dentro de un mismo navegador, pero no protege dispositivos distintos ni recupera una URL que nunca llegó al cliente. Una reserva servidor durable requiere exclusión/compare-and-set atómico que no existe en el flujo actual; no se añadirá ScriptLock, lease ni espera que bloquee el inicio de carga conforme a §15.
 
 **Decisión:** no implementar una solución parcial ni declarar idempotencia de inicialización. Mantener la carga resumable y la aprobación existentes; añadir el escenario de concurrencia al protocolo Beta con destino/canal desechable autorizado. Registrar cantidad de sesiones creadas y vídeos no listados residuales; no ejecutar esta prueba contra producción.
+
+
+## Caracterización local del límite de idempotencia — CI 2026-11-22
+
+Se añadió JS/Tests/YouTubeInitIdempotencyBoundary.mjs al runner. Con dobles locales se comprobó que una pestaña conserva su opVideoId, otra pestaña con sessionStorage independiente genera otro ID y el handler servidor crea una nueva sesión resumable al repetir init con el mismo opVideoId o con un ID distinto para el mismo destino cuando no existe aprobación pendiente. No se llamó a YouTube real.
+
+Resultado: 7/7 PASS (caracterización de riesgo, no aprobación funcional de idempotencia). CI HEAD 7c916e31c311cec0da1086d378e7d287a550ca15: 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias 344 archivos; health 7/7; Pages build/deployment SUCCESS.

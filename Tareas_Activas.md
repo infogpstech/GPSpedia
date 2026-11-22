@@ -13,9 +13,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD actual de trabajo: `616b20377252de41c60da58340c1c6f322544ae9`.
-- CI exacto de HEAD actual: 301 suites / 3,498 pruebas aprobadas / 0 fallos; sintaxis 432 archivos JS/MJS; referencias relativas 343 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
-- La regresión incluye ThumbnailPriorityIntegration 15/15 y ThumbnailQualityBenchmarkContract 30/30.
+- HEAD actual de trabajo: `7c916e31c311cec0da1086d378e7d287a550ca15`.
+- CI exacto de HEAD actual: 302 suites / 3,505 pruebas aprobadas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- La regresión incluye ThumbnailPriorityIntegration 15/15, ThumbnailQualityBenchmarkContract 30/30 y YouTubeInitIdempotencyBoundary 7/7 (caracterización de riesgo, no idempotencia aprobada).
 - La validación es local/CI; no despliega Apps Script ni sustituye Beta aislada.
 - Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 
@@ -416,3 +416,10 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Documentar riesgo de dos sesiones resumables cuando dos pestañas/dispositivos inician el mismo destino antes de que exista una operación pendiente; evidencia en AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md.
 - [x] Decidir no añadir ScriptLock/lease/espera ni persistencia parcial: no hay compare-and-set servidor verificado compatible con §15; una reserva IDB local no protege otros dispositivos ni recupera Location perdido.
 - [ ] Añadir y ejecutar escenario controlado de dos inicios simultáneos con destino/canal Beta desechable autorizado; contar sesiones y vídeos no listados residuales.
+
+
+### Confirmación YouTube — caracterización de inicialización (2026-11-22)
+- [x] Añadir YouTubeInitIdempotencyBoundary.mjs al runner. Con dobles locales demuestra que sessionStorage es por pestaña y que init repetido con el mismo opVideoId o con IDs distintos puede crear nuevas sesiones si no existe aprobación pendiente.
+- [x] Resultado de caracterización: 7/7 PASS; no se contactó a YouTube real.
+- [x] CI HEAD 7c916e31c311cec0da1086d378e7d287a550ca15: 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 archivos; referencias 344; health 7/7; Pages SUCCESS.
+- [ ] Mantener pendiente la mitigación hasta definir una reserva atómica compatible con §15; validar dos pestañas/dispositivos solo en Beta aislada.

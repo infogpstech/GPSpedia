@@ -1040,3 +1040,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se confirmó que recoveryLookupPromise consulta IndexedDB una sola vez al abrir el modal; sessionStorage es por pestaña y no existe BroadcastChannel, Web Locks ni reserva única de contexto.
 - Dos pestañas/dispositivos pueden iniciar sesiones distintas para el mismo destino antes de que exista operación pendiente. La aprobación posterior limita solicitudes pendientes duplicadas, pero no evita sesiones/vídeos no listados huérfanos.
 - No se añade lock/lease ni persistencia parcial: no hay CAS servidor verificado compatible con §15. Riesgo y decisión documentados en AUDITORIA_P1_YOUTUBE_UPLOAD_2026-11-22.md; escenario añadido a adenda Beta multimedia.
+
+
+2026-11-22 — YouTube: contrato de caracterización de init
+- YouTubeInitIdempotencyBoundary.mjs añadido al runner; 7/7 PASS con dobles locales. Confirma reutilización de opVideoId dentro de una pestaña, IDs distintos entre sessionStorage aislados y ausencia de deduplicación server-side por opVideoId/destino en init.
+- El resultado caracteriza un riesgo conocido; no es aprobación de idempotencia y no contacta a YouTube real.
+- CI HEAD 7c916e31c311cec0da1086d378e7d287a550ca15: 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health 7/7; Pages SUCCESS.
+- Mitigación diferida hasta disponer de reserva atómica compatible con §15; Beta debe probar dos pestañas/dispositivos con destino/canal desechable.

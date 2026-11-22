@@ -102,14 +102,14 @@ Usar un vídeo de prueba de tamaño suficiente para abarcar más de un bloque:
 9. Aprobar con rol autorizado y verificar URL/miniatura en destino; rechazar en otra operación y comprobar retirada exacta.
 10. Repetir la misma operación con el mismo `opVideoId`; debe recuperar el resultado original y no crear una segunda solicitud lógica.
 11. Confirmar que los roles no autorizados no pueden aprobar/rechazar y que los IDs/URLs contradictorios se rechazan.
-12. Escenario de concurrencia controlado: abrir el mismo destino en dos pestañas/dispositivos antes de iniciar cualquiera; enviar ambas inicializaciones solo en el entorno aislado; registrar cuántas sesiones resumables devuelve YouTube y si quedan vídeos no listados huérfanos. Usar destino/canal desechable; no forzar esta carrera en producción. No marcar PASS si no se verifica el estado remoto real.
+12. Escenario de concurrencia controlado: abrir el mismo destino en dos pestañas/dispositivos antes de iniciar cualquiera; enviar ambas inicializaciones solo en el entorno aislado; registrar cuántas sesiones resumables devuelve YouTube y si quedan vídeos no listados huérfanos. Usar destino/canal desechable; no forzar esta carrera en producción. No marcar PASS si no se verifica el estado remoto real. La caracterización local YouTubeInitIdempotencyBoundary 7/7 solo demuestra el límite del cliente/handler con dobles; no sustituye esta prueba remota.
 
 No forzar expiraciones reales si requieren esperar al TTL de YouTube; los estados 404/410 y reintentos se validan localmente con dobles, y la limitación se registra sin simularla como prueba real. La carrera de inicialización concurrente solo se ejecuta en Beta aislada con destino/canal desechable.
 
 ## 6. Evidencia y cierre
 
 - Guardar capturas de pantalla, métricas agregadas, SHA-256, tamaños, timestamps y resultados por escenario en el espacio aislado.
-- Separar pruebas locales ya aprobadas (HEAD 03b58abb6aa3d83b5a09b5fd4bb00bb19cf5aa7a: 301 suites / 3,498 pruebas / 0 fallos; ThumbnailPriorityIntegration 15/15 y ThumbnailQualityBenchmarkContract 30/30) de las pruebas Beta ejecutadas en este protocolo.
+- Separar pruebas locales ya aprobadas (HEAD 7c916e31c311cec0da1086d378e7d287a550ca15: 302 suites / 3,505 pruebas / 0 fallos; ThumbnailPriorityIntegration 15/15, ThumbnailQualityBenchmarkContract 30/30 y YouTubeInitIdempotencyBoundary 7/7 (caracterización local)) de las pruebas Beta ejecutadas en este protocolo.
 - Marcar cada caso PASS solo si se verificaron respuesta, persistencia, estado real y destino aislado.
 - Si aparece un defecto, conservar evidencia, reproducirlo y corregirlo en la rama de trabajo antes de repetir el escenario afectado.
 - No modificar límites, formatos, endpoints, permisos, deployments ni datos productivos durante la medición.

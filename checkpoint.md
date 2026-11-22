@@ -544,3 +544,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Decisión:** no agregar ScriptLock/lease/espera ni una persistencia no atómica; no se encontró CAS servidor compatible con §15. Una reserva IndexedDB local solo protege el mismo navegador y no resuelve el caso de dispositivos distintos ni la pérdida de Location.
 - **Siguiente tarea:** incorporar escenario controlado de dos inicios simultáneos al protocolo Beta usando destino/canal desechable autorizado; no ejecutar contra producción. Mantener el flujo resumable y aprobación actual hasta disponer de diseño atómico seguro.
 - **Estado:** auditoría estática completada; corrección diferida por ausencia de primitiva atómica segura; Beta de concurrencia PENDIENTE.
+
+
+## Actualización de continuidad vigente — 2026-11-22 (YouTube characterization)
+
+- **Tarea realizada:** se añadió YouTubeInitIdempotencyBoundary.mjs a la regresión. El test usa dobles de sessionStorage y UrlFetchApp; confirma que el mismo tab reutiliza opVideoId, otro tab puede generar uno distinto y el handler init no deduplica por opVideoId ni por destino cuando no hay aprobación pendiente. No se llamó a YouTube real.
+- **Resultado focalizado:** 7/7 PASS como caracterización del riesgo. No significa que la inicialización sea idempotente; deja evidencia automatizada del límite actual.
+- **Validación exacta del HEAD:** 7c916e31c311cec0da1086d378e7d287a550ca15. Regresión 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Rama base:** GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Siguiente tarea:** mantener la mitigación diferida hasta definir reserva atómica compatible con §15. Ejecutar prueba de dos pestañas/dispositivos solo en Beta aislada con destino/canal desechable. Continuar corpus de imágenes y mediciones en el mismo entorno.
+- **Estado:** auditoría y caracterización local COMPLETADAS; riesgo de sesiones huérfanas documentado; corrección y prueba real PENDIENTES de diseño seguro/Beta.
