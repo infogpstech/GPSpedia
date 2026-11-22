@@ -539,3 +539,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se conservan los eventos ordenados, las reglas de expectedTitleKey, el primer título proyectado y la detección de títulos duplicados.
 - Pruebas: FeedbackTutorialPreflightOutsideLock **7/7**; FeedbackTutorialLookupBoundedRead **7/7**; FeedbackTutorialUpdateTitleLookupBoundedRead **6/6**. CI HEAD `4a8d2487a4076e67d45f586edd06cd74305add43`: **292 suites / 3,413 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy automático in_progress al documentar.
 - No se modificaron filas ni eventos de Tutorial productivos.
+
+
+## P1 Tutoriales — reutilización de snapshot al reservar título (2026-11-22)
+
+- `ensureTutorialTitleClaim_` obtiene el ledger y construye una sola proyección de propiedad; usa `projection.owners` para comprobar si el título ya pertenece al tutorial.
+- Si necesita crear el claim, pasa la misma hoja y proyección a `appendTutorialTitleEvent_`, que ya no repite el preflight completo. Después del append se mantiene una segunda lectura completa para confirmar integridad, ownership y aplicación del evento.
+- El flujo de claim nuevo pasa de tres lecturas completas (owner preflight + append preflight + read-back) a dos (snapshot inicial + read-back). Si el título ya pertenece al tutorial, se mantiene una sola lectura.
+- Se conserva la validación de eventHash, operationId, first-owner y conflictos concurrentes.
+- `TutorialIntegrity.js`: **43/43 PASS**. CI HEAD `7195622c320ada8b70ad7fd06528abf9d9d785d4`: **292 suites / 3,414 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status in_progress al documentar.
