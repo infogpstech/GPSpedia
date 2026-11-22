@@ -150,19 +150,26 @@ testCase("el reporte es responsive y accesible",()=>{
  assert.match(css,/@media \(max-width: 600px\)/);
 });
 
-testCase("la auditoría concentra progreso y resultados en la consola de Cortes",()=>{
- assert.ok(ui.includes('id="audit-drive-console-output"'));
+testCase("la auditoría concentra progreso en consola global y conserva los resultados",()=>{
+ assert.ok(!ui.includes('id="audit-drive-console-output"'));
  assert.ok(ui.includes("const appendAuditConsole ="));
+ assert.ok(ui.includes("logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel)"));
  assert.ok(ui.includes("const appendAuditBatchSummary ="));
  assert.ok(ui.includes("response.foldersVisitedPaths"));
  assert.ok(ui.includes("Carpeta recorrida:"));
  assert.ok(ui.includes("Resumen acumulado:"));
+ assert.ok(ui.includes("window.gpsepediaDeveloperLog = (message, level = 'info') =>"));
+ assert.ok(html.includes('id="dev-console-log"'));
  assert.ok(ui.includes("window.gpsepediaRequestDeveloperConsoleConfirmation"));
  assert.ok(ui.includes("responde «sí» o «no» en la terminal global del Desarrollador"));
  assert.ok(ui.includes("'no_confirmada'"));
  assert.ok(ui.includes("Los conteos del resumen ADMIN no coinciden con los resultados individuales"));
+ assert.ok(ui.includes("appendFiles(uniqueResponseFiles)"));
+ assert.ok(ui.includes("container.appendChild(row)"));
+ assert.ok(ui.includes("await persistState(complete ? 'complete' : 'running')"));
+ assert.ok(ui.includes("runAudit(true)"));
  assert.ok(!ui.includes("container.hidden = true"));
  assert.ok(html.includes('id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;"'));
- assert.ok(css.includes(".audit-drive-console-output"));
+ assert.ok(!css.includes(".audit-drive-console-output"));
 });
 console.log("CortesImageReconciliationUI: "+passed+"/"+passed+" PASS");
