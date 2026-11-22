@@ -824,3 +824,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Hallazgo de asociación:** el escáner no asigna modelo/vehículo. El reconciliador usa coincidencia exacta del nombre de archivo con baseName de celda destino; ignora modelo en nombre de carpeta.
 - **Siguiente tarea:** A05-01: implementar actor/fecha/opId para aportes suplementarios de add_cortes etapa 3. Después A05-02 dashboard y A06-03/A06-04 panel; continuar A07-04..06 con diseño de inventario seguro y pruebas.
 - **Contexto de seguridad:** las asociaciones deben ser sugerencias auditables; nunca reasignar ni sobrescribir automáticamente una referencia existente. Mantener sesión actor cacheada y autorización de rol, sin validación remota por cada llamada.
+
+
+## A05-01 implementación preparada — trazabilidad de aportes suplementarios — 2026-11-22
+
+- **Trabajo realizado:** etapa 3 de `add_cortes.html` crea una operación durable con huella SHA-256 y IDs aleatorios independientes para apertura y alimentación. El snapshot queda aislado por propietario en IndexedDB y no almacena tokens/contraseñas.
+- **WRITE:** se amplía el allowlist del contrato y se registra cada tipo mediante el ledger append-only existente. El actor procede del contexto compartido confiable; la fecha se genera en servidor. La nota importante sigue usando el handler de persistencia existente.
+- **Reintentos:** la recuperación reutiliza el snapshot y los mismos IDs; valida la respuesta y los eventos devueltos antes de retirar la operación pendiente. Se corrige además la selección de imagen según el slot de alimentación.
+- **Validación:** parsing sintáctico de los archivos de producción y del nuevo test superado durante preparación. Suite local/CI aún pendiente; no se declara tarea completada. No se ha desplegado Apps Script ni modificado datos remotos.
+- **Siguiente:** ejecutar la regresión WRITE completa y CI, corregir cualquier fallo y actualizar este checkpoint con los resultados. Después A05-02 (Activity Dashboard).

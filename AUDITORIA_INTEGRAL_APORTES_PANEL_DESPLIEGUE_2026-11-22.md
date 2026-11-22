@@ -316,3 +316,14 @@ El primer CI del cambio de caché FileReader falló en dos pruebas del harness, 
 **Hallazgo confirmado:** el recorrido de Drive entrega `fileName` y `folderPath`, pero la clasificación del escáner se basa en referencias activas/protegidas, historial, MIME y verificabilidad de referencias. No genera `vehicleId`, modelo ni relación con vehículo. El reconciliador separado `buildCortesImageReconciliationPlan_` solo hace match por nombre canónico exacto entre el nombre de archivo (sin extensión) y `target.baseName`; no extrae modelos de nombres de carpeta ni resuelve alias de vehículos. Por tanto, la asociación pedida no está implementada.
 
 **Plan de resolución:** construir un índice de vehículos/alias desde catálogo; normalizar nombres de archivo y ruta; asociar solo coincidencias inequívocas; devolver candidatos y score/razón; dejar ambiguos/no reconocidos en revisión; no escribir URLs ni reasignar referencias automáticamente. Añadir pruebas con marcas/modelos/alias, nombres con sufijos y carpetas anidadas, homónimos y falsos positivos.
+
+
+### A05-01 — implementación en curso (2026-11-22)
+
+La primera implementación de etapa 3 quedó preparada en la rama de trabajo:
+- Contrato WRITE ampliado con `contributionOpIds`; apertura y alimentación se registran como eventos independientes en `AportesVehiculo`, cada uno con su propio opId. La nota importante conserva el handler de escritura existente.
+- La etapa 3 guarda un snapshot durable por usuario en IndexedDB, con fingerprint SHA-256, vehicleId, requestData y los IDs de evento. No incluye credenciales. La recuperación vuelve a enviar el mismo snapshot y verifica que WRITE devuelva los eventos esperados antes de limpiar el pending.
+- ActorId/actorName se toman del contexto compartido confiable; createdAt procede de `new Date().toISOString()` en el servicio WRITE. El slot de alimentación se calcula con la proyección del vehículo y la lectura del ledger reutilizada.
+- Se añadió una suite específica de contrato/recuperación y se conectó al runner general. La revisión sintáctica de los archivos modificados pasó; la ejecución de regresión y CI están pendientes. No hay evidencia de deployment ni prueba Apps Script/Spreadsheet real.
+
+**Estado:** EN PROGRESO — pendiente ejecutar regresión local/CI y revisar diff completo.

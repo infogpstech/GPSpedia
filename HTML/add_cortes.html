@@ -362,6 +362,7 @@
     <script type="module">
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from '../JS/Frontend/api-config.js';
+        import { getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation } from '../JS/Frontend/offline.js';
         const sourceInboxItemId = typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search || '').get('sourceInboxItemId') || ''
             : '';
@@ -457,11 +458,24 @@
             return entry.promise;
         }
 
+        function createSupplementaryOperationId_(){const c=globalThis.crypto;if(!c||!c.getRandomValues)throw Error("SECURE_RANDOM_UNAVAILABLE");const b=new Uint8Array(16);c.getRandomValues(b);return "OP-"+Date.now()+"-"+Array.from(b,x=>x.toString(16).padStart(2,"0")).join("").toUpperCase();}
+        async function computeSupplementaryOperationHash_(p){const c=globalThis.crypto;if(!c||!c.subtle||typeof TextEncoder!=="function")throw Error("SECURE_FINGERPRINT_UNAVAILABLE");const d=p||{},v=["addSupplementaryInfo:v1",String(d.vehicleId||""),String(d.apertura||""),String(d.imgApertura||""),String(d.cableAlimen||""),String(d.cableAlimen2||""),String(d.cableAlimen3||""),String(d.imgCableAlimen||""),String(d.imgCableAlimen2||""),String(d.imgCableAlimen3||""),String(d.notaImportante||""),String(d.timestamp||"")];const hash=await c.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(v)));return Array.from(new Uint8Array(hash),x=>x.toString(16).padStart(2,"0")).join("");}
+        async function getOrCreateSupplementaryOperation_(payload){
+            const owner=String(state.userId||"").trim(),vehicle=String(payload&&payload.vehicleId!=null?payload.vehicleId:"").trim();if(!owner||!vehicle)throw Error("SUPPLEMENTARY_OPERATION_OWNER_OR_VEHICLE_MISSING");
+            const hash=await computeSupplementaryOperationHash_(payload),pending=await getAddCutOperationPendingOperation(owner);if(!pending||pending.available!==true)throw Error("SUPPLEMENTARY_OPERATION_STORAGE_UNAVAILABLE");
+            if(pending.operation){const old=pending.operation;if(old.operationType!=="addSupplementaryInfo"||old.ownerId!==owner||String(old.vehicleId)!==vehicle||old.operationHash!==hash)throw Error("SUPPLEMENTARY_PENDING_OPERATION_MISMATCH");return old;}
+            const id=createSupplementaryOperationId_(),has=x=>typeof x==="string"&&x.trim()!=="",opening=has(payload.apertura)||has(payload.imgApertura),feed=["cableAlimen","cableAlimen2","cableAlimen3","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].some(k=>has(payload[k])),ids={};
+            if(opening)ids.opening=createSupplementaryOperationId_();if(feed)ids.feed=createSupplementaryOperationId_();
+            const requestData=Object.assign({},payload,{opId:id,contributionOpIds:ids}),snapshot={id,ownerId:owner,operationType:"addSupplementaryInfo",stage:3,status:"processing",operationHash:hash,vehicleId:vehicle,requestData};
+            const saved=await saveAddCutOperationPendingOperation(snapshot);if(!saved||saved.saved!==true)throw Error("SUPPLEMENTARY_OPERATION_SNAPSHOT_NOT_SAVED");return saved.operation||snapshot;
+        }
+
         async function getOrGenerateOpId() {
             const pendingResult = await getAddCutOperationPendingOperation(state.userId);
             if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
             const sourceKey = String(sourceInboxItemId || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80);
             const sourceOpId = sourceKey ? 'OP-FEEDBACK-' + sourceKey : '';
+            if (pendingResult.operation && pendingResult.operation.operationType !== 'addOrUpdateCut') throw new Error('SUPPLEMENTARY_PENDING_RECOVERY_REQUIRED');
             if (pendingResult.operation) {
                 if (pendingResult.operation.status === 'completed') throw new Error('COMPLETED_OPERATION_REQUIRES_RECOVERY');
                 if (sourceOpId && pendingResult.operation.id !== sourceOpId) throw new Error('PENDING_OPERATION_ID_MISMATCH');
@@ -545,6 +559,18 @@
                 return;
             }
             if (!pendingOp || pendingOp.ownerId !== state.userId || !['processing', 'failed', 'completed'].includes(pendingOp.status)) return;
+            if(pendingOp.operationType==='addSupplementaryInfo'){
+                if(!navigator.onLine){diagnostics.info('supplementary-recovery.offline',{stage:'recovery',opId:pendingOp.id});return;}toggleLoading(true);
+                try{const session=getCurrentSessionForOwner(pendingOp.ownerId),request=Object.assign({},pendingOp.requestData,{userId:session.userId,sessionToken:session.sessionToken}),result=await routeAction('addSupplementaryInfo',request);
+                    if(!result||result.status!=='success'||String(result.vehicleId||'').trim()!==String(pendingOp.vehicleId).trim())throw Error('SUPPLEMENTARY_RECOVERY_WRITE_UNCONFIRMED');
+                    const expected=pendingOp.requestData.contributionOpIds||{},events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
+                    for(const kind of ['opening','feed']){const id=String(expected[kind]||'');if(id&&!events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId))throw Error('SUPPLEMENTARY_RECOVERY_EVENT_UNCONFIRMED');}
+                    const removed=await removeAddCutOperationPendingOperation(pendingOp.ownerId,pendingOp.id,pendingOp.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary-recovery.cleanup-unconfirmed',{stage:'recovery',opId:pendingOp.id});
+                    try{await verifySupplementaryCatalogWrite_(result,pendingOp.requestData);}catch(error){diagnostics.error('supplementary-recovery.catalog-verification-failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'CatalogVerificationError'});}
+                    alert('Se recuperó correctamente el aporte suplementario pendiente.');window.location.href='../index.html';
+                }catch(error){diagnostics.warn('supplementary-recovery.failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'RecoveryError'});showConciseAlert_('Se detectó un aporte suplementario pendiente. Se conservaron sus datos y sus identificadores para reintentar sin duplicarlo.');}
+                finally{toggleLoading(false);}return;
+            }
             if (!navigator.onLine) { diagnostics.info('pending-recovery.offline', { stage: 'recovery', opId: pendingOp.id, status: pendingOp.status, online: false }); return; }
             toggleLoading(true);
             try {
@@ -1527,58 +1553,26 @@
             return { vehicleId, item: saved, source: response.source || "unknown" };
         }
 
-        async function handleStage3Submit(e) {
-            e.preventDefault();
-            if (isSubmittingStage3) return;
-            if (pendingOperationRecoveryPromise) { alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.'); return; }
-            isSubmittingStage3 = true;
-            const btn = e.target.querySelector('button[type="submit"]');
-            toggleLoading(true);
-            if (btn) btn.classList.add('btn-loading');
-            try {
-                const cableAlimenVal = document.getElementById('cableAlimen').value;
-                const cableImageInput = document.getElementById('imgCableAlimen');
-                const openingImageInput = document.getElementById('imgApertura');
-                const imgCableAlimenVal = await fileToBase64(cableImageInput && cableImageInput.files ? cableImageInput.files[0] : null);
-                const imgAperturaVal = await fileToBase64(openingImageInput && openingImageInput.files ? openingImageInput.files[0] : null);
-                const payload = {
-                    userId: state.userId, sessionToken: state.sessionToken, vehicleId: state.selectedVehicleId,
-                    opId: state.opId,
-                    apertura: document.getElementById('apertura').value,
-                    notaImportante: document.getElementById('notaImportante').value,
-                    imgApertura: imgAperturaVal, timestamp: state.timestamp
-                };
-                const slot = state.cableSlotToRegister || 1;
-                if (slot === 1) { payload.cableAlimen = cableAlimenVal; payload.imgCableAlimen = imgCableAlimenVal; }
-                else if (slot === 2) { payload.cableAlimen2 = cableAlimenVal; payload.imgCableAlimen2 = imgCableAlimenVal; }
-                else if (slot === 3) { payload.cableAlimen3 = cableAlimenVal; payload.imgCableAlimen3 = imgCableAlimenVal; }
-                const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
-                const serviceOverride = null;
-                const writeResult = await routeAction('addSupplementaryInfo', payload, serviceOverride);
-                if (!writeResult || writeResult.status !== 'success' ||
-                    String(writeResult.vehicleId == null ? '' : writeResult.vehicleId).trim() !== String(state.selectedVehicleId).trim()) {
-                    throw new Error(writeResult && writeResult.message || 'WRITE no confirmó el guardado para el vehículo seleccionado.');
-                }
-                try {
-                    await verifySupplementaryCatalogWrite_(writeResult, payload);
-                    alert("Información guardada y verificada en el catálogo. Serás redirigido.");
-                } catch (catalogError) {
-                    diagnostics.error('supplementary.catalog-verification-failed', { stage: 'supplementary', opId: state.opId, status: 'write-confirmed', errorCode: catalogError && catalogError.name || 'CatalogVerificationError' });
-                    showConciseAlert_("WRITE confirmó el guardado, pero no se pudo verificar la lectura actualizada del catálogo. No vuelvas a enviar el formulario para evitar duplicados; al volver se recargará la ficha.");
-                }
-                window.location.href = '../index.html';
-            } catch(error) {
-                if (error && error.name === 'FileReadError') {
-                    showConciseAlert_("No se pudo leer una de las imágenes. No se envió la información suplementaria. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
-                } else {
-                    showConciseAlert_("No se pudo guardar la información suplementaria. Tus datos permanecen en el formulario; puedes intentarlo nuevamente.");
-                }
-            } finally {
-                isSubmittingStage3 = false;
-                if (btn) btn.classList.remove('btn-loading');
-                void resumePendingOperationRecovery();
-                toggleLoading(false);
-            }
+        async function handleStage3Submit(e){
+            e.preventDefault();if(isSubmittingStage3)return;if(pendingOperationRecoveryPromise){alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.');return;}
+            isSubmittingStage3=true;const btn=e.target.querySelector('button[type="submit"]');toggleLoading(true);if(btn)btn.classList.add('btn-loading');
+            try{const cable=document.getElementById('cableAlimen').value,cf=document.getElementById('imgCableAlimen'),of=document.getElementById('imgApertura');
+                const imgCable=await fileToBase64(cf&&cf.files?cf.files[0]:null),imgOpening=await fileToBase64(of&&of.files?of.files[0]:null);
+                const payload={vehicleId:state.selectedVehicleId,apertura:document.getElementById('apertura').value,notaImportante:document.getElementById('notaImportante').value,imgApertura:imgOpening,timestamp:state.timestamp};
+                const slot=state.cableSlotToRegister||1;if(slot===1){payload.cableAlimen=cable;payload.imgCableAlimen=imgCable;}else if(slot===2){payload.cableAlimen2=cable;payload.imgCableAlimen2=imgCable;}else if(slot===3){payload.cableAlimen3=cable;payload.imgCableAlimen3=imgCable;}
+                const pending=await getOrCreateSupplementaryOperation_(payload),session=getCurrentSessionForOwner(state.userId),request=Object.assign({},pending.requestData,{userId:session.userId,sessionToken:session.sessionToken});
+                const result=await routeAction('addSupplementaryInfo',request);if(!result||result.status!=='success'||String(result.vehicleId||'').trim()!==String(state.selectedVehicleId).trim())throw Error(result&&result.message||'WRITE no confirmó el guardado para el vehículo seleccionado.');
+                const expected=pending.requestData.contributionOpIds||{},events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
+                for(const kind of ['opening','feed']){const id=String(expected[kind]||'');if(id&&!events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId))throw Error('SUPPLEMENTARY_WRITE_EVENT_UNCONFIRMED');}
+                const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});
+                try{await verifySupplementaryCatalogWrite_(result,request);alert("Información guardada y verificada en el catálogo. Serás redirigido.");}
+                catch(error){diagnostics.error('supplementary.catalog-verification-failed',{stage:'supplementary',opId:pending.id,errorCode:error&&error.name||'CatalogVerificationError'});showConciseAlert_("WRITE confirmó el guardado, pero no se pudo verificar la proyección actualizada. No vuelvas a enviar el formulario; al volver se recargará la ficha.");}
+                window.location.href='../index.html';
+            }catch(error){if(error&&error.name==='FileReadError')showConciseAlert_("No se pudo leer una de las imágenes. Los campos y archivos seleccionados permanecen en el formulario.");
+                else if(error&&error.message==='SUPPLEMENTARY_PENDING_OPERATION_MISMATCH')showConciseAlert_("Existe un aporte suplementario anterior pendiente con contenido distinto. Recupera esa operación antes de enviar otra.");
+                else if(error&&error.message==='SUPPLEMENTARY_PENDING_RECOVERY_REQUIRED')showConciseAlert_("Existe un aporte suplementario pendiente de recuperación. Espera a que se resuelva.");
+                else showConciseAlert_("No se pudo guardar la información suplementaria. Tus datos permanecen en el formulario; puedes intentarlo nuevamente.");
+            }finally{isSubmittingStage3=false;if(btn)btn.classList.remove('btn-loading');void resumePendingOperationRecovery();toggleLoading(false);}
         }
 
         // --- UI & UTILITY HELPERS ---

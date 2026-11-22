@@ -1075,3 +1075,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - HEAD a2ad72d8d898c57bacb7ea228038ca400f3ba4a6 validado: 302 suites / 3,524 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health read-only 7/7; Pages build/deployment SUCCESS.
 - P0 telemetría: contadores directos/fan-out retirados y escritura Coordinator fuera del lock; queda medición Beta del costo persistente residual.
 - P1 miniaturas: corpus sintético local y mediciones separadas integrados; validación visual y rendimiento real pendientes de Beta.
+
+
+2026-11-22 — A05-01 implementación de trazabilidad suplementaria
+- WRITE acepta el contrato contributionOpIds y procesa apertura/alimentación en una sola petición con IDs independientes; la nota importante conserva su handler existente.
+- Etapa 3 conserva una operación durable aislada por usuario en IndexedDB, con huella del contenido y recuperación/reintento usando los mismos IDs. Las credenciales no se persisten en el snapshot.
+- Los eventos del ledger conservan actor confiable y createdAt generado por el servidor. Se reutiliza una lectura compartida del ledger para evaluar candidatos y calcular el slot de alimentación.
+- Se añadió la suite AddSupplementaryOperationRecovery y se conectó al runner. La sintaxis de los archivos de producción y del test fue comprobada; la ejecución de la suite y CI quedan pendientes. No se ha desplegado ni invocado Apps Script.

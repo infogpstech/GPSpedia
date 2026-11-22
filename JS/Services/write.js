@@ -1745,7 +1745,7 @@ function createSupplementaryInfoError_(code,message){const e=new Error(message);
 function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
 function hasSupplementaryRichTextContent_(value){const visible=String(value||"").replace(/<br\s*\/?>/gi," ").replace(/<img\b[^>]*>/gi," imagen ").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim();return visible!=="";}
 function assertSupplementaryInfoPayloadKeys_(payload){
- const allowed=new Set(["vehicleId","userId","sessionToken","__sharedMutationToken","timestamp","opId","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
+ const allowed=new Set(["vehicleId","userId","sessionToken","__sharedMutationToken","timestamp","opId","contributionOpIds","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
  const videoFields=new Set(["video","videoUrl","Video","videoGuiaUrl","videoGuiaDesarmeUrl","field","fieldName"]);
  const keys=Object.keys(payload||{}),videoField=keys.find(key=>videoFields.has(key));
  if(videoField)throw createSupplementaryInfoError_("SUPPLEMENTARY_VIDEO_APPROVAL_REQUIRED","El vídeo no se puede guardar mediante addSupplementaryInfo ni con un enlace directo. Utiliza el flujo de aprobación de YouTube.");
@@ -1851,65 +1851,32 @@ function handleAddSupplementaryInfo(payload) {
     const hasFeed = normalizedPlan.slotIndex !== null;
     const hasLedgerContribution = isOpening || hasFeed;
 
-    // Los flujos del modal (+) usan opId y se registran como eventos append-only.
-    // Los payloads antiguos de nota sin opId conservan la ruta de compatibilidad.
-    if (hasLedgerContribution && String(payload.opId || "").trim()) {
-        const contributionLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
-        if (isOpening && hasFeed) {
-            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD", "Apertura y alimentación deben registrarse como operaciones independientes.");
-        }
-        if (hasSupplementaryValue_(normalizedPlan.updates.notaImportante)) {
-            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD", "La nota importante debe guardarse por separado de la apertura o alimentación.");
-        }
-
-        let preparedPayload = Object.assign({}, payload);
-        let uploadedUrls = [];
-        const hasImages = ["imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]
-            .some(field => hasSupplementaryValue_(payload[field]));
-        if (hasImages) {
-            const prepared = prepareSupplementaryImageUploads_(preparedPayload, snapshot.vehicle, normalizedPlan);
-            preparedPayload = prepared.payload;
-            uploadedUrls = prepared.uploadedUrls;
-        }
-
-        const kind = isOpening ? "opening" : "feed";
-        const contributionPayload = isOpening
-            ? { text: String(normalizedPlan.updates.apertura || ""), image: String(preparedPayload.imgApertura || "") }
-            : { text: String(preparedPayload.cableAlimen || ""), image: String(preparedPayload.imgCableAlimen || "") };
-        // Reutiliza la hoja ya validada antes de cargar archivos a Drive.
-        const appendLedgerSheet = contributionLedgerSheet;
-        const event = appendVehicleContributionEvent_({
-            spreadsheet,
-            ledgerSheet: appendLedgerSheet,
-            vehicleId: payload.vehicleId,
-            opId: payload.opId,
-            kind,
-            payload: contributionPayload,
-            actorId: payload.__sharedSessionActor && payload.__sharedSessionActor.userId || "",
-            actorName
-        });
-
-        uploadedUrls.forEach(url => {
-            try {
-                if (!markImageUploadLinked(url, { shortLedgerLock: true })) {
-                    Logger.log("El aporte quedó registrado, pero la carga permanece pendiente de reconciliación: " + String(url));
-                }
-            } catch (ledgerError) {
-                Logger.log("El aporte quedó registrado, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
-            }
-        });
-
-        return {
-            status: "success",
-            message: isOpening ? "Aporte de apertura registrado." : "Aporte de alimentación registrado.",
-            vehicleId: String(payload.vehicleId),
-            opId: String(payload.opId),
-            contributionEventId: event.eventId,
-            operationHash: event.operationHash,
-            duplicate: event.duplicate === true,
-            catalogResetRequired: true,
-            candidateReviewPending: getVehicleContributionCandidateStatus_(spreadsheet, snapshot, event.eventId, kind, appendLedgerSheet)
-        };
+    // Etapa 3 usa una solicitud durable con IDs independientes por evento.
+    if (payload.contributionOpIds !== undefined) {
+        const ids=payload.contributionOpIds,requestOpId=String(payload.opId||"").trim();
+        if(!ids||typeof ids!=="object"||Array.isArray(ids)||Object.keys(ids).some(k=>!["opening","feed"].includes(k))||!/^[A-Za-z0-9_-]{1,100}$/.test(requestOpId.replace(/^OP-/,""))||!requestOpId.startsWith("OP-"))
+            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Los identificadores de la operación suplementaria no son válidos.");
+        const openingOpId=String(ids.opening||"").trim(),feedOpId=String(ids.feed||"").trim(),valid=id=>/^OP-[A-Za-z0-9_-]{1,100}$/.test(id);
+        if((isOpening&&!valid(openingOpId))||(!isOpening&&openingOpId)||(hasFeed&&!valid(feedOpId))||(!hasFeed&&feedOpId))
+            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Cada aporte requiere su identificador idempotente independiente.");
+        const all=[requestOpId,openingOpId,feedOpId].filter(Boolean);if(new Set(all).size!==all.length)
+            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Los identificadores de solicitud, apertura y alimentación deben ser distintos.");
+        const ledger=hasLedgerContribution?getVehicleContributionLedgerSheet_(spreadsheet):null;
+        let prepared=Object.assign({},payload),uploaded=[];
+        if(["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].some(k=>hasSupplementaryValue_(payload[k]))){const result=prepareSupplementaryImageUploads_(prepared,snapshot.vehicle,normalizedPlan);prepared=result.payload;uploaded=result.uploadedUrls;}
+        const events=[];
+        if(isOpening){const event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:ledger,vehicleId:payload.vehicleId,opId:openingOpId,kind:"opening",payload:{text:String(normalizedPlan.updates.apertura||""),image:String(prepared.imgApertura||"")},actorId:payload.__sharedSessionActor&&payload.__sharedSessionActor.userId||"",actorName});events.push({event,kind:"opening"});}
+        if(hasFeed){const field=["cableAlimen","cableAlimen2","cableAlimen3"].find(k=>hasSupplementaryValue_(normalizedPlan.updates[k]));const event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:ledger,vehicleId:payload.vehicleId,opId:feedOpId,kind:"feed",payload:{text:String(field?normalizedPlan.updates[field]||"":""),image:String(prepared[field==="cableAlimen2"?"imgCableAlimen2":field==="cableAlimen3"?"imgCableAlimen3":"imgCableAlimen"]||"")},actorId:payload.__sharedSessionActor&&payload.__sharedSessionActor.userId||"",actorName});events.push({event,kind:"feed"});}
+        let noteResult=null;if(hasSupplementaryValue_(normalizedPlan.updates.notaImportante))noteResult=handleAddSupplementaryInfoLocked({vehicleId:payload.vehicleId,notaImportante:normalizedPlan.updates.notaImportante,timestamp:payload.timestamp},actorName,sheet);
+        const rows=ledger?readVehicleContributionLedgerRows_(ledger):[];
+        const candidateReviewPending=events.some(e=>getVehicleContributionCandidateStatus_(spreadsheet,snapshot,e.event.eventId,e.kind,ledger,rows));
+        const feed=events.find(e=>e.kind==="feed"),slotIndex=feed?getVehicleContributionFeedSlotIndex_(snapshot,feed.event.eventId,rows):null;
+        uploaded.forEach(url=>{try{if(!markImageUploadLinked(url,{shortLedgerLock:true}))Logger.log("Aporte registrado; carga pendiente de reconciliación: "+String(url));}catch(err){Logger.log("Aporte registrado; ImageUploadLedger pendiente: "+String(err&&err.message||err));}});
+        return {status:"success",message:"Información suplementaria registrada.",vehicleId:String(payload.vehicleId),opId:requestOpId,
+            contributionEvents:events.map(e=>({eventId:e.event.eventId,opId:e.event.opId,kind:e.kind,createdAt:e.event.createdAt,duplicate:e.event.duplicate===true})),
+            contributionEventId:events.length?events[0].event.eventId:"",operationHash:events.length?events[0].event.operationHash:"",
+            duplicate:events.length>0&&events.every(e=>e.event.duplicate===true),slotIndex,apertureSaved:isOpening,
+            noteSaved:Boolean(noteResult&&noteResult.status==="success"),catalogResetRequired:true,candidateReviewPending};
     }
 
     // Compatibilidad temporal para solicitudes heredadas de nota o sin opId.
@@ -2562,10 +2529,18 @@ function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targe
     return targetSlot;
 }
 
-function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, targetEventId, kind, validatedLedgerSheet) {
+function getVehicleContributionFeedSlotIndex_(vehicleSnapshot,targetEventId,rowsSnapshot){
+ const vehicleId=String(vehicleSnapshot&&vehicleSnapshot.vehicle&&vehicleSnapshot.vehicle.id||"").trim();
+ if(!vehicleId||!Array.isArray(rowsSnapshot)||!rowsSnapshot.length)return null;
+ const v=vehicleSnapshot.vehicle||{},occupied=[Boolean(v.cableAlimen||v.imgCableAlimen),Boolean(v.cableAlimen2||v.imgCableAlimen2),Boolean(v.cableAlimen3||v.imgCableAlimen3)],by=new Map(),conflicts=new Set();
+ rowsSnapshot.forEach((r,i)=>{const id=String(r[1]||"");if(!id)return;const e={eventId:String(r[0]||""),opId:id,vehicleId:String(r[2]||""),hash:String(r[3]||"").toLowerCase(),kind:String(r[4]||"").toLowerCase(),json:String(r[5]||""),status:String(r[9]||"").toLowerCase(),row:i+2};const old=by.get(id);if(old&&(old.vehicleId!==e.vehicleId||old.hash!==e.hash||old.kind!==e.kind||old.json!==e.json))conflicts.add(id);else if(!old)by.set(id,e);});
+ let target=null;Array.from(by.values()).sort((a,b)=>a.row-b.row).forEach(e=>{if(conflicts.has(e.opId)||e.vehicleId!==vehicleId||e.kind!=="feed"||e.status!=="accepted")return;const slot=occupied.findIndex(x=>!x);if(slot<0)return;occupied[slot]=true;if(e.eventId===String(targetEventId))target=slot+1;});return target;
+}
+
+function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, targetEventId, kind, validatedLedgerSheet, ledgerRowsSnapshot) {
     const ledger = validatedLedgerSheet || getVehicleContributionLedgerSheet_(spreadsheet);
-    const lastRow = ledger.getLastRow();
-    if (lastRow < 2) return true;
+    const rows = Array.isArray(ledgerRowsSnapshot) ? ledgerRowsSnapshot : readVehicleContributionLedgerRows_(ledger);
+    if (!rows.length) return true;
     const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
     if (!vehicleId) return true;
     const vehicle = vehicleSnapshot.vehicle || {};
@@ -2575,7 +2550,6 @@ function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, ta
         Boolean(String(vehicle.cableAlimen2 || "").trim() || String(vehicle.imgCableAlimen2 || "").trim()),
         Boolean(String(vehicle.cableAlimen3 || "").trim() || String(vehicle.imgCableAlimen3 || "").trim())
     ];
-    const rows = ledger.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
     const byOpId = new Map();
     const conflicts = new Set();
     rows.forEach((row, offset) => {
