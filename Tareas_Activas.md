@@ -407,7 +407,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Reutilizar la cola real thumbnailCompressionQueue.js; encolar precargas a prioridad 0 y promover la variante 800 elegida a prioridad 10 cuando aún está pendiente.
 - [x] Añadir generador local de cinco muestras sintéticas: diagrama eléctrico apaisado con etiquetas/cables de color, guía de panel vertical, textura oscura de alto detalle, PNG con alfa parcial e imagen pequeña que no debe ampliarse. Se generan en memoria y no se guardan en el repositorio.
 - [x] El harness no ejecuta fetch/XHR, no usa IndexedDB/localStorage y no sube ni persiste archivos. Requiere servidor local HTTP para importar el módulo de cola.
-- [x] ThumbnailQualityBenchmarkContract ampliado para ejecutar el generador con dobles locales y comprobar los cinco archivos, MIME, bytes y nombres. Resultado esperado en CI: 46/46 PASS.
+- [x] ThumbnailQualityBenchmarkContract ampliado para ejecutar el generador con dobles locales y comprobar los cinco archivos, MIME, bytes y nombres: 46/46 PASS en CI.
 - [ ] Ejecutar el corpus sintético en navegador real y revisar visualmente texto fino, cableado, alfa y orientación; añadir fotografías y diagramas reales solo desde corpus autorizado/anónimo. El corpus sintético no sustituye imágenes reales ni cubre EXIF real en navegador.
 - [ ] Medir en la aplicación real CORS, cache hit/miss, primera pintura, bytes de red, CPU y memoria; el harness local no sustituye estas pruebas.
 
@@ -424,3 +424,10 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] Resultado de caracterización: 7/7 PASS; no se contactó a YouTube real.
 - [x] CI HEAD 7c916e31c311cec0da1086d378e7d287a550ca15: 302 suites / 3,505 pruebas / 0 fallos; sintaxis 433 archivos; referencias 344; health 7/7; Pages SUCCESS.
 - [ ] Mantener pendiente la mitigación hasta definir una reserva atómica compatible con §15; validar dos pestañas/dispositivos solo en Beta aislada.
+
+
+### Confirmación CI — corpus sintético de miniaturas (2026-11-22)
+- [x] HEAD `0d301bc3e6a04e06077fc9c39f8d7d6097671ac3`: `ThumbnailQualityBenchmarkContract 46/46 PASS`; regresión integral 302 suites / 3,521 pruebas / 0 fallos.
+- [x] Sintaxis Node 22: 433 archivos JS/MJS; referencias relativas: 344 archivos; health read-only: 7/7 servicios; GitHub Pages build/deployment: SUCCESS.
+- [ ] Pendiente navegador real: revisar visualmente las cinco muestras y medir CORS, cache hit/miss, primera pintura, bytes, CPU y memoria en Beta aislada. Añadir fotografías/diagramas reales solo con corpus autorizado/anónimo.
+- **Estado:** generador y contrato local COMPLETADOS; calidad visual y rendimiento real PENDIENTES DE BETA.

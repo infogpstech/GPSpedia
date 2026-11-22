@@ -564,3 +564,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** ejecutar el corpus sintético en navegador real y revisar visualmente nitidez de etiquetas/cables, proporción, transparencia y no-ampliación; después incorporar muestras reales autorizadas/anónimas y ejecutar mediciones Beta de CORS, primera pintura, bytes, CPU y memoria. No cambiar parámetros de compresión sin esa evidencia.
 - **Contexto:** se elimina la dependencia de conseguir un corpus antes de probar el harness local, pero no se confunde el corpus sintético con evidencia de calidad sobre fotografías o diagramas reales.
 - **Rama base:** `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## Confirmación de continuidad — corpus sintético P1 y regresión (2026-11-22)
+
+- **Corrección intermedia:** el primer CI del commit `1b4d60dd93dd92fb1a46b6e05601ad87c8006a71` falló únicamente en el nuevo contrato por una secuencia de escape incorrecta al compilar el helper con `new Function`. La prueba aislada detectó el error antes de cerrar la tarea; se corrigió en el commit siguiente.
+- **HEAD validado:** `0d301bc3e6a04e06077fc9c39f8d7d6097671ac3`. `ThumbnailQualityBenchmarkContract: 46/46 PASS`; regresión 302 suites / 3,521 pruebas / 0 fallos; sintaxis 433 archivos JS/MJS; referencias relativas 344 archivos; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Rama base:** `GPSpedia2.2.5` intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- **Tarea realizada:** el harness genera cinco PNG sintéticos locales, ejecuta las variantes 300/800/1600 y utiliza la cola real. El contrato ejecuta el generador con dobles y comprueba nombres, unicidad, MIME, bytes y timestamp.
+- **Siguiente tarea:** abrir el harness en navegador real, revisar visualmente nitidez de texto/cables, alfa y no-ampliación; después usar muestras reales autorizadas y medir CORS, primera pintura, bytes, CPU y memoria en Beta aislada. No cambiar parámetros sin evidencia.
+- **Contexto:** la validación Node comprueba la generación/contrato, no la calidad visual real del navegador ni el rendimiento de campo. La textura sintética no equivale a una fotografía y el generador no crea EXIF real.
+- **Estado:** corpus sintético local y contrato COMPLETADOS; validación visual, corpus representativo real y métricas de aplicación PENDIENTES DE BETA.

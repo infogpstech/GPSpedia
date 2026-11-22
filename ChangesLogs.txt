@@ -1053,3 +1053,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se añadió generación en memoria de cinco muestras PNG (diagrama eléctrico apaisado, guía vertical de panel, textura oscura ilustrativa, alfa parcial e imagen pequeña) para probar variantes 300/800/1600 con la cola real.
 - Se amplió el contrato para ejecutar el generador con dobles locales y comprobar nombres, unicidad, MIME, contenido y timestamp determinista. Las imágenes no se guardan ni se transmiten.
 - La validación visual en navegador, el corpus real autorizado y las mediciones CORS/primera pintura/CPU/memoria permanecen pendientes de Beta.
+
+
+2026-11-22 — Confirmación CI del corpus sintético P1
+- El primer CI detectó una secuencia de escape incorrecta en el nuevo contrato Node; se corrigió en JS/Tests/ThumbnailQualityBenchmarkContract.mjs.
+- HEAD 0d301bc3e6a04e06077fc9c39f8d7d6097671ac3: ThumbnailQualityBenchmarkContract 46/46 PASS; regresión 302 suites / 3,521 pruebas / 0 fallos; sintaxis 433 JS/MJS; referencias 344; health read-only 7/7; Pages build/deployment SUCCESS.
+- La revisión visual en navegador, el corpus real autorizado y las métricas de aplicación continúan pendientes de Beta aislada.
