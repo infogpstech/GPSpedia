@@ -548,3 +548,11 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - El flujo de claim nuevo pasa de tres lecturas completas (owner preflight + append preflight + read-back) a dos (snapshot inicial + read-back). Si el título ya pertenece al tutorial, se mantiene una sola lectura.
 - Se conserva la validación de eventHash, operationId, first-owner y conflictos concurrentes.
 - `TutorialIntegrity.js`: **43/43 PASS**. CI HEAD `7195622c320ada8b70ad7fd06528abf9d9d785d4`: **292 suites / 3,414 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status in_progress al documentar.
+
+
+## P1 CATALOG — reutilización de Spreadsheet en handleGetCatalogData (2026-11-22)
+
+- `handleGetCatalogData` resuelve `getSpreadsheet()` una sola vez después de consultar la caché y reutiliza esa instancia para Cortes, FeedbackLikes, AportesVehiculo, Logos, Tutoriales, TutorialEditEvents, TutorialRenameEvents y Relay.
+- Se reducen múltiples llamadas a `SpreadsheetApp.openById`/resolución de Spreadsheet en la misma petición; no cambia la cantidad ni el orden de lecturas de datos, los mapeos ni la política de caché.
+- `CatalogSpreadsheetHandleReuse.mjs`: **9/9 PASS**. CI HEAD `5ed4a7162907500d7e0719f6db53d37b6c72b5ca`: **293 suites / 3,423 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status/deploy in_progress al documentar.
+- No se alteraron registros de catálogo, archivos ni despliegues manuales Apps Script.
