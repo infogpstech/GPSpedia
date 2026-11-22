@@ -314,7 +314,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 
 
 ## Fase de verificación técnica integral (§11 NORMAS) — inicio 2026-11-21
-- [ ] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` del repositorio mediante `RepositoryJavaScriptSyntax.mjs`; revisión pendiente de CI.
+- [ ] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` del repositorio mediante `RepositoryJavaScriptSyntax.mjs`; primera ejecución detectó que un fixture clásico (`AdminModalEditSecurity.js`) no puede forzarse a ES module por usar `delete` de globales. Se retiró la bandera de módulo forzado; nueva ejecución CI pendiente.
 - [x] Ejecutar regresión de servicios ya existente: HEAD `9cde983e`, 296 suites / 3,457 pruebas / 0 fallos; repetir sobre HEAD final de esta fase.
 - [ ] Revisar referencias/dependencias, compatibilidad frontend/Apps Script y contratos entre servicios; distinguir pruebas locales de Beta.
 - [ ] Revisar diff de cambios vigentes y regresión/anti-regresión; registrar solo defectos reproducibles.

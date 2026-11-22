@@ -25,7 +25,7 @@ assert.ok(files.length > 0, "No se encontraron archivos JavaScript para validar.
 const failures = [];
 for (const file of files) {
     const result = spawnSync(process.execPath,
-        ["--experimental-default-type=module", "--check", file],
+        ["--check", file],
         { cwd: root, encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024 });
     if (result.error || result.status !== 0) {
         failures.push({

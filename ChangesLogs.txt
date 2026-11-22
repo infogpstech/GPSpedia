@@ -925,3 +925,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-21 — verificación integral: sintaxis del repositorio
 - Añadido `JS/Tests/RepositoryJavaScriptSyntax.mjs` e integración en `JS/Tests/RunServiceTests.mjs` para analizar con Node todos los archivos `.js` y `.mjs` del árbol, sin ejecutar su contenido.
+
+
+2026-11-21 — verificación integral: compatibilidad de scripts clásicos
+- `RepositoryJavaScriptSyntax.mjs`: el primer intento forzaba todos los `.js` como módulos y rechazó un fixture clásico válido que elimina globals de prueba; se cambió a `node --check` sin forzar el tipo, para respetar módulos ESM y scripts clásicos.

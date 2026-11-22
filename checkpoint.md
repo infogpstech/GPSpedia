@@ -370,3 +370,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Se añade `JS/Tests/RepositoryJavaScriptSyntax.mjs` e integración en `RunServiceTests.mjs`: recorre el repositorio y ejecuta `node --check` sobre todos los `.js` y `.mjs`, excluyendo solo `.git` y `node_modules`. Árbol actual: 183 `.js` + 244 `.mjs` = 427 archivos.
 - La prueba integral de sintaxis aún está pendiente de CI. Regresión previa HEAD `9cde983e`: 296 suites / 3,457 pruebas / 0 fallos; health SUCCESS.
 - Siguiente: comprobar el resultado de la sintaxis completa; corregir solo fallos reproducibles y continuar con compatibilidad/referencias y revisión de diff.
+
+
+## Verificación integral — ajuste del parser (2026-11-21)
+
+- Primera ejecución CI del test `RepositoryJavaScriptSyntax.mjs` falló únicamente en `JS/Tests/AdminModalEditSecurity.js`: es un fixture clásico (sin import/export) que elimina globales de prueba mediante `delete DriveApp`/`delete SpreadsheetApp`; al forzarlo como ES module, Node lo rechaza por strict mode. No es un defecto del código Apps Script ni del fixture en su contexto original.
+- Se ajustó el harness para usar `node --check` sin forzar el tipo de módulo; `.mjs` conserva modo módulo por extensión y `.js` usa detección normal de sintaxis, preservando scripts clásicos y módulos ESM.
+- La primera regresión terminó en FAIL por el harness nuevo: 288 suites / 3,314 pruebas aprobadas / 1 fallo de suite; las suites previas al chequeo no reportaron fallo. Pendiente repetir CI tras el ajuste.
