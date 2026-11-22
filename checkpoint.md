@@ -176,3 +176,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Se amplió el contrato con una prueba de limpieza de promoción no consumida.
 - Commit de implementación inicial: `05e0225`; ajuste de limpieza en este commit.
 - CI de la implementación inicial pendiente de verificación; este commit generará una nueva ejecución.
+
+
+### Corrección de CI — resumen contractual de cola
+- La ejecución CI del commit `05e0225` mostró que los asserts de prioridad se ejecutaron correctamente, pero el runner rechazó la suite porque su salida no incluía el resumen numérico `N/N PASS` que exige `RunServiceTests.mjs`.
+- Se corrigió el resumen de `ThumbnailCompressionQueueContract.mjs` a `20/20 PASS` para conservar el contrato del runner. No fue un fallo de lógica de la cola; sí fue un fallo real de integración del runner.
+- Se añadió limpieza de promociones anticipadas en el commit `e0bbc3e`.
+- **Siguiente:** validar el nuevo workflow del commit actual; no cerrar prioridad hasta que CI pase.

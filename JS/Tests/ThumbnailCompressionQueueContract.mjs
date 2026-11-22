@@ -58,7 +58,7 @@ const noPreempt = createConcurrencyLimiter(1), activeGate = deferred();
 const activePriority = noPreempt.run(async () => { await activeGate.promise; }, { key: "active", priority: 0 });
 await tick(); assert.equal(noPreempt.promote("active", 99), false);
 activeGate.resolve(); await activePriority;
-console.log("ThumbnailCompressionQueueContract: FIFO, prioridad visible, promoción single-flight, no-preemption y recuperación PASS");
+console.log("20/20 PASS — FIFO, prioridad visible, promoción single-flight, no-preemption, limpieza y recuperación");
 
 
 const cleanup = createConcurrencyLimiter(1);

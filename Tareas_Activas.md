@@ -170,3 +170,7 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 
 - [x] Limpiar promociones anticipadas en el `finally` de single-flight para evitar overrides obsoletos; prueba contractual añadida.
 - [ ] Verificar CI de la versión final de prioridad antes de cerrar.
+
+
+- [x] Corregir el resumen de salida requerido por `RunServiceTests.mjs` (`N/N PASS`). El primer CI había ejecutado los asserts correctamente pero falló al no detectar resumen numérico.
+- [ ] Revalidar workflow del commit con la corrección; si falla, corregir antes de avanzar.
