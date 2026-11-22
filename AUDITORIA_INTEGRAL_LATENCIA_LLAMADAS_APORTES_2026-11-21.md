@@ -479,3 +479,12 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `InboxConversations.mjs` añade cobertura para deduplicación, columna consultada y ausencia de búsqueda cuando no hay messageId. Suite InboxConversations **67/67 PASS**.
 - CI HEAD `75bf48cb4efd89d81e126e6d518aa82f712c7512`: **292 suites / 3,407 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. El job deploy automático estaba waiting/in_progress al actualizar el registro.
 - No se ejecutaron cambios en datos productivos ni despliegues manuales Apps Script.
+
+
+## P1 FEEDBACK — read-back único por reportId para eventos de imagen (2026-11-22)
+
+- `appendFeedbackReportImageEvent_` ya no realiza un TextFinder adicional sobre `eventId` después del append y antes de llamar a `findFeedbackReportImageEventByReportId_`.
+- La búsqueda por `reportId` es la confirmación autoritativa: comprueba que el evento quedó disponible, recupera el metadata canónico, detecta eventos concurrentes y rechaza hashes distintos. Se mantiene first-write-wins y la limpieza de archivos no asociados.
+- Test `FeedbackReportImageEvents.mjs` actualizado para asegurar que el append precede al read-back por reportId y que no existe el escaneo redundante por eventId. Test **3/3 PASS**.
+- CI HEAD `2f850442c3e31685b045938924a749cf08915798`: **292 suites / 3,407 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático en curso al documentar.
+- No se cambiaron archivos Drive ni registros productivos; no se modificó el esquema ni la política de adjuntos.
