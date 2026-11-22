@@ -547,3 +547,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-09: compartir FileReader entre previsualización y envío de imágenes en add_cortes mediante WeakMap por objeto File.
 - [x] Añadir pruebas de una sola lectura, reutilización de promesa y retry tras fallo.
 - [ ] CI A02-09.
+
+- [x] Registrar fallo inicial del harness A02-09: MIME heredado del test previo y mock FileReader sin simulación de onerror.
+- [x] Corregir fixture de FileReader para aislar resultado MIME y fallo/reintento.
+- [ ] Repetir CI A02-09.

@@ -784,3 +784,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Pruebas añadidas:** una lectura para preview+submit, promesa compartida y reintento después de fallo.
 - **Estado:** CI pendiente.
 - **Siguiente:** ejecutar regresión y después continuar A05-01 (trazabilidad actor/fecha de aportes suplementarios).
+
+
+## A02-09 — corrección del mock FileReader — 2026-11-22
+
+- **Hallazgo CI:** 3,359 pruebas aprobadas; fallaron dos casos de la prueba nueva: el mock conservaba resultado PNG de un caso anterior y no implementaba onerror para el escenario de reintento.
+- **Corrección:** el test restablece Data URL JPEG antes del escenario y FakeFileReader ahora puede emitir onerror cuando failRead está activo.
+- **Estado:** harness corregido; CI pendiente.
+- **Siguiente:** repetir regresión completa.

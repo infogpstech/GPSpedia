@@ -11,10 +11,11 @@ const sourceLines = html.slice(start, marker).split(String.fromCharCode(10));
 const closeIndex = sourceLines.lastIndexOf("        }");
 assert.ok(start >= 0 && marker > start && closeIndex > 0, 'No se encontró fileToBase64.');
 const source = sourceLines.slice(0, closeIndex + 1).join(String.fromCharCode(10));
-let reads = 0, nextResult = 'data:image/jpeg;base64,AA==';
+let reads = 0, failRead = false, nextResult = 'data:image/jpeg;base64,AA==';
 class FakeFileReader {
     readAsDataURL(file) {
         reads++;
+        if (failRead) { this.onerror(); return; }
         this.result = nextResult;
         this.onload();
     }
@@ -55,6 +56,7 @@ await run('mantiene el rechazo de archivos vacíos antes de FileReader', async (
 });
 
 await run('previsualización y envío comparten una sola lectura FileReader', async () => {
+    nextResult = 'data:image/jpeg;base64,AA==';
     const file = {size:100,type:'image/jpeg'};
     const before = reads;
     const previewPromise = fileToBase64(file);

@@ -272,3 +272,8 @@ Los modales + de apertura/alimentación convierten la imagen una vez en el naveg
 **Corrección:** previsualización y envío usan ahora `fileToBase64` compartido con caché WeakMap por objeto File. Las llamadas concurrentes reutilizan la misma promesa; si la lectura falla, la entrada se elimina y se permite reintentar. Las validaciones de tamaño/MIME siguen ejecutándose antes de leer y el servidor conserva sus verificaciones.
 
 **Pruebas:** una lectura para preview+submit, reutilización de promesa y reintento tras fallo. CI pendiente.
+
+
+### CI inicial A02-09 — corrección de fixtures
+
+El primer CI del cambio de caché FileReader falló en dos pruebas del harness, no en la sintaxis del frontend: el mock mantenía el resultado PNG del caso anterior y no implementaba el modo de error que el test de reintento activaba. Se actualiza el mock para resetear MIME por escenario y simular onerror; la prueba comprueba que el fallo elimina la promesa cacheada y permite una segunda lectura.
