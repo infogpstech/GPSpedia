@@ -12,7 +12,17 @@ function extract(name, nextName) {
 const byIdCode = extract("findTutorialById_", "tutorialTitleExists_");
 const rowCode = extract("findTutorialRow_", "findTutorialById_");
 const findById = new Function(byIdCode + "\nreturn findTutorialById_;")();
-const findRow = new Function("findTutorialById_", "projectTutorialEditFields_", rowCode + "\nreturn findTutorialRow_;")(findById, (id, row) => ({ row, appliedOperations: new Map() }));
+let renameSheetAvailable = false, renameReads = 0, renameEvents = [];
+const normalizeTitle = value => String(value || "").trim().toLowerCase();
+const findRow = new Function("findTutorialById_", "projectTutorialEditFields_", "getTutorialRenameEventsSheet_", "readTutorialRenameEvents_", "projectTutorialTitle_",
+    rowCode + "\nreturn findTutorialRow_;")(
+    findById,
+    (id, row) => ({ row, appliedOperations: new Map() }),
+    () => renameSheetAvailable ? {} : null,
+    () => { renameReads++; return renameEvents; },
+    (id, title, events) => (events || []).filter(event => event.tutorialId === id)
+        .reduce((current, event) => event.expectedTitleKey === normalizeTitle(current) ? event.title : current, title)
+);
 
 function makeSheet(rows) {
     const calls = [];
@@ -63,6 +73,21 @@ test("resuelve por título exacto leyendo solo la columna B y la fila coincident
     assert.equal(result.row[1], "Motor no arranca");
     assert.ok(sheet.calls.some(call => call[1] === 2));
     assert.ok(sheet.calls.every(call => call[1] === 1 || call[1] === 2));
+});
+test("proyecta títulos renombrados con una sola lectura del ledger para toda la búsqueda", () => {
+    renameSheetAvailable = true;
+    renameReads = 0;
+    renameEvents = [{ tutorialId:"tut-a", expectedTitleKey:"motor antiguo", title:"Motor actualizado" }];
+    try {
+        const sheet = makeSheet([["tut-a","Motor antiguo"],["tut-b","Otro tema"],["tut-c","Tercer tema"]]);
+        const result = findRow(sheet,"Motor actualizado",true);
+        assert.equal(result.rowIndex,2);
+        assert.equal(renameReads,1,"La búsqueda por título comparte la proyección de eventos entre filas.");
+    } finally {
+        renameSheetAvailable = false;
+        renameEvents = [];
+        renameReads = 0;
+    }
 });
 test("rechaza títulos duplicados sin descargar la hoja completa", () => {
     const sheet = makeSheet([["tut-a", "Motor"], ["tut-b", "Motor"]]);
