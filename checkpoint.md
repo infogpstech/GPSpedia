@@ -721,3 +721,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Corrección:** se inyecta un logger no-op en ambas instancias del helper de prueba; la lógica de producción no cambia.
 - **Estado:** CI pendiente.
 - **Siguiente:** repetir CI completo.
+
+
+## A02-04 cerrada; comienza auditoría de imágenes — 2026-11-22
+
+- **Tarea realizada:** refresco post-WRITE y recuperación migrado de checkVehicle (coincidencias amplias) a getVehicleProjection por vehicleId.
+- **CI exacto:** SHA `825b048db860a0928205a4f288f5d4b3b8fd3c13`; 302 suites / 3,533 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- **Siguiente tarea:** A02-05, trazado de imágenes en add_cortes y modales +: lectura de archivos, validaciones, carga a Drive, ledger, reintentos y verificación posterior.
+- **Contexto:** se busca eliminar trabajo duplicado sin quitar comprobaciones necesarias para evitar pérdida/duplicación de aportes. La prueba CI no sustituye la prueba de navegador/Apps Script Beta.

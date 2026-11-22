@@ -213,3 +213,8 @@ El CI del SHA e313ff8c57239dd5f981f6b3396aa779f2bd1a4d falló solo en el doble d
 ### CI A02-04 — corrección del doble de diagnóstico
 
 El primer CI del refresco dirigido pasó los asserts funcionales de la proyección, pero falló el escenario fallback porque el test aislado no inyectaba el logger `diagnostics` que la función usa para registrar una lectura fallida. Se corrige el harness proporcionando un logger no-op. No es un fallo de la llamada dirigida ni de la lógica de fallback de producción.
+
+
+### A02-04 cerrada en CI
+
+**CI exacto:** SHA `825b048db860a0928205a4f288f5d4b3b8fd3c13` — 302 suites / 3,533 pruebas / 0 fallos. El test de refresco dirigido cubre respuesta por ID, preservación de disponibilidad/vídeo y fallback conservador. Health read-only SUCCESS y Pages build/deployment SUCCESS. A02-04 queda validada en código/CI; no equivale a prueba manual en navegador conectado a Apps Script Beta.

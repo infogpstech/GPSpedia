@@ -516,3 +516,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 
 - [x] Corregir el harness de A02-04: inyectar diagnostics mock en pruebas aisladas del helper.
 - [ ] Repetir CI A02-04 y cerrar solo con 0 fallos.
+
+- [x] A02-04 validada por CI SHA `825b048db860a0928205a4f288f5d4b3b8fd3c13`: 302 suites / 3,533 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- [ ] A02-05: auditar flujo de imágenes de apertura/alimentación desde add_cortes y modales +: contar conversiones FileReader, validaciones, POST/Drive, reintentos y lecturas de verificación; identificar conversiones repetidas o snapshots re-leídos.
+- [ ] A02-06: auditar flujo de vídeo YouTube desde add_cortes: crear/reanudar sesión, checkpoints, validación, polling, persistencia de estado y recuperación; separar requests requeridas de duplicadas.
