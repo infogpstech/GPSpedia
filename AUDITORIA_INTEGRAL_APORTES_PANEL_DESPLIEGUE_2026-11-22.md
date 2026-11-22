@@ -263,3 +263,12 @@ En `markImageUploadLinkedWithShortLedgerLock_`, el camino de recuperación sin e
 ### A02-08 — revisión de búsquedas de Drive y conversión de imagen
 
 Los modales + de apertura/alimentación convierten la imagen una vez en el navegador, generan opId al abrir el modal y envían una llamada WRITE. El servidor decodifica, calcula hash, valida MIME/tamaño, reserva journal antes de crear archivo y verifica el archivo/metadata. No se identificó una conversión FileReader duplicada en estos dos callsites. La búsqueda por nombre + enumeración de carpeta en `findExistingImageUpload` se mantiene provisionalmente para recuperación de archivos renombrados/duplicados; requiere caracterizar alternativa sin perder recuperación antes de modificar.
+
+
+### A02-09 — lectura FileReader duplicada en add_cortes
+
+**Hallazgo confirmado:** `setupImagePreview` leía cada archivo con un FileReader para mostrar la previsualización y `handleStage3Submit` volvía a leer el mismo objeto File con `fileToBase64` antes del POST. Esto duplicaba la conversión Base64 en el cliente (no dos subidas Drive, pero sí CPU/memoria y tiempo de espera).
+
+**Corrección:** previsualización y envío usan ahora `fileToBase64` compartido con caché WeakMap por objeto File. Las llamadas concurrentes reutilizan la misma promesa; si la lectura falla, la entrada se elimina y se permite reintentar. Las validaciones de tamaño/MIME siguen ejecutándose antes de leer y el servidor conserva sus verificaciones.
+
+**Pruebas:** una lectura para preview+submit, reutilización de promesa y reintento tras fallo. CI pendiente.

@@ -543,3 +543,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-08: revisar callsites de modales + y pruebas FileReader; una conversión por archivo y una petición WRITE por envío. No eliminar validación hash/Drive por ser necesaria para recuperación/integridad.
 - [ ] A05-01: corregir trazabilidad de aportes suplementarios de add_cortes etapa 3: opId propio por aporte, ledger append-only, actor y fecha; preservar flujo de nota y operaciones independientes.
 - [ ] A02-09: medir alternativas a la enumeración completa de carpeta Drive en recuperación findExistingImageUpload sin perder detección de duplicados/archivos renombrados.
+
+- [x] A02-09: compartir FileReader entre previsualización y envío de imágenes en add_cortes mediante WeakMap por objeto File.
+- [x] Añadir pruebas de una sola lectura, reutilización de promesa y retry tras fallo.
+- [ ] CI A02-09.

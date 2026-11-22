@@ -774,3 +774,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **A02-08:** revisados modales + apertura/alimentación y preflight FileReader: cada archivo se convierte una vez y cada envío realiza una petición WRITE. Las verificaciones de MIME/tamaño/hash, Drive y journal no son revalidaciones arbitrarias; protegen el archivo y la recuperación. La enumeración de carpeta se deja pendiente de análisis seguro.
 - **Siguiente tarea:** A05-01, corregir trazabilidad de etapa 3 de add_cortes, que actualmente puede enviar opId null después de completar el alta del corte. La ruta heredada no crea evento append-only con actor/fecha individual.
 - **Contexto:** el requisito de auditoría exige que cada aporte conserve el nombre del usuario y fecha de creación para el dashboard; no se deben validar sesiones contra la base en cada acción, pero sí mantener la atribución del actor confiable y los permisos por rol.
+
+
+## A02-09 implementada — eliminar doble FileReader en add_cortes — 2026-11-22
+
+- **Tarea realizada:** setupImagePreview y handleStage3Submit comparten fileToBase64; la misma selección de archivo se convierte una sola vez y su Data URL se reutiliza.
+- **Caché:** WeakMap por objeto File; comparte lectura pendiente/completada y borra la entrada si falla para permitir reintento.
+- **Seguridad/validación:** siguen activos límites 10 MB, MIME permitido, coincidencia MIME/Data URL y validación servidor. No se omite verificación Drive/journal.
+- **Pruebas añadidas:** una lectura para preview+submit, promesa compartida y reintento después de fallo.
+- **Estado:** CI pendiente.
+- **Siguiente:** ejecutar regresión y después continuar A05-01 (trazabilidad actor/fecha de aportes suplementarios).

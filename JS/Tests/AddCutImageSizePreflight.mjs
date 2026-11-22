@@ -19,7 +19,7 @@ class FakeFileReader {
         this.onload();
     }
 }
-const fileToBase64 = new Function('FileReader', source + '; return fileToBase64;')(FakeFileReader);
+const fileToBase64 = new Function('FileReader', 'imageFileReadCache', source + '; return fileToBase64;')(FakeFileReader, new WeakMap());
 const results = [];
 async function run(name, fn) {
     try { await fn(); results.push({name,status:'PASS'}); }
@@ -53,6 +53,27 @@ await run('mantiene el rechazo de archivos vacíos antes de FileReader', async (
     await assert.rejects(fileToBase64({size:0,type:'image/jpeg'}), error => error && error.name === 'FileReadError');
     assert.equal(reads, before);
 });
+
+await run('previsualización y envío comparten una sola lectura FileReader', async () => {
+    const file = {size:100,type:'image/jpeg'};
+    const before = reads;
+    const previewPromise = fileToBase64(file);
+    const submitPromise = fileToBase64(file);
+    assert.equal(previewPromise, submitPromise);
+    assert.equal(await previewPromise, 'data:image/jpeg;base64,AA==');
+    assert.equal(await submitPromise, 'data:image/jpeg;base64,AA==');
+    assert.equal(reads, before + 1);
+});
+await run('fallo de lectura se elimina de caché y permite reintento', async () => {
+    const file = {size:100,type:'image/jpeg'};
+    const before = reads;
+    failRead = true;
+    await assert.rejects(fileToBase64(file), error => error && error.name === 'FileReadError');
+    failRead = false;
+    await fileToBase64(file);
+    assert.equal(reads, before + 2);
+});
+
 const failed = results.filter(item => item.status !== 'PASS');
 for (const item of results) console.log(item.status + ' ' + item.name + (item.message ? ': ' + item.message : ''));
 console.log(results.length - failed.length + '/' + results.length + ' PASS');
