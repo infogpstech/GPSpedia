@@ -13,8 +13,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - Los archivos archivados son inmutables; este es el registro operativo vigente.
 
 ## Estado Git y CI confirmado
-- HEAD de implementación validado: `1586c69d08953933c6cc457ea0e6fd511588faab`.
-- CI exacto de ese commit: 303 suites / 3,554 pruebas aprobadas / 0 fallos; `ServiceHealthContract` 19/19 PASS; sintaxis 435 archivos JS/MJS; referencias relativas 345 archivos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- HEAD de implementación validado (A07-04): `66c35468cff047e3f9d8caa89fccad8ed731bcc7`.
+- CI exacto de ese commit: 303 suites / 3,561 pruebas aprobadas / 0 fallos; `AdminCandidateImageInventoryCatalogSource` 7/7 PASS; `AdminImageReplacementCompensation` 11/11 PASS; `AdminReplacedImagesIntegrity` 56/56 PASS; sintaxis de servicios PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - La regresión incluye ThumbnailPriorityIntegration 15/15, ThumbnailQualityBenchmarkContract 49/49 y YouTubeInitIdempotencyBoundary 7/7 (caracterización de riesgo, no idempotencia aprobada).
 - La validación es local/CI; no despliega Apps Script ni sustituye Beta aislada.
 - Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
@@ -568,6 +568,6 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A07-01 auditoría del escáner: conteos/progreso paginados existen; la consola vive dentro de audit-drive-modal, no en consola global del desarrollador.
 - [x] A07-02 auditoría de inventario: registro manual, con botón/confirmación, solo para "Sin uso detectado"; no registro automático de cada imagen encontrada.
 - [x] A07-03 auditoría de asociación: no relaciona imágenes con modelos desde carpeta/nombre; reconciliador actual usa nombre canónico exacto de destino y no resuelve modelos.
-- [ ] A07-04 diseñar e implementar registro idempotente automático en Imagenes_Reemplazadas sin sobrescribir historial, estados manuales ni referencias.
+- [x] A07-04 COMPLETADA CON VALIDACIÓN DIFERIDA: registro automático idempotente de candidatos CATALOG en Imagenes_Reemplazadas con ID estable por eventId; conflictos por ID duplicado/identidad distinta se omiten y advierten; solo se actualiza el estado automático requiere_revision y se preservan estados manuales/referencias. Las restauraciones generan operationId determinista para la imagen desplazada; un mismo operationId no puede cambiar el destino histórico. CI `66c35468cff047e3f9d8caa89fccad8ed731bcc7`: 303 suites / 3,561 pruebas / 0 fallos; pruebas focalizadas 7/7, 11/11 y 56/56. Validación real CATALOG/Drive/Spreadsheet pendiente de Beta aislada.
 - [ ] A07-05 mover salida/progreso del escáner a consola global del panel desarrollador y conservar conteos detallados, resultados y reanudación.
 - [ ] A07-06 implementar asociación sugerida por modelo basada en nombre/carpeta/alias, con revisión de ambigüedad y sin reasignación automática.

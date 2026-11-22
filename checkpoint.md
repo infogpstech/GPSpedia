@@ -913,3 +913,17 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Cierre:** la medición física requerida en Android queda aprobada. La prueba de escritorio físico no se aportó; no era requisito para cerrar el punto, ya cubierto en Chromium CI. Se conserva la evidencia de CI del commit d5b1227fb53c4a8346c214b36f228ab3a1b4a549 (browser 2/2 PASS).
 - **Siguiente tarea:** A07-04 — diseñar e implementar registro idempotente automático en Imagenes_Reemplazadas, preservando historial, estados manuales y referencias. Antes de modificar código, revisar el requisito y las auditorías relacionadas.
 - **HEAD verificado antes de esta actualización documental:** 061890e7b16625bc9e8be0c7faf23f2a78b0eab0; rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+## A07-04 COMPLETADA CON VALIDACIÓN DIFERIDA — inventario idempotente de imágenes — 2026-11-22
+
+- **Objetivo:** registrar automáticamente candidatos de imágenes procedentes de CATALOG en Imagenes_Reemplazadas, evitando duplicados y preservando el historial, los estados manuales y las referencias activas.
+- **Sincronización CATALOG → ADMIN:** se conserva el ID determinista CAND-{eventId}. Antes de modificar una fila existente se valida que coincidan tipo de contenido, vehículo, campo, Drive ID, URL original, origen, tipo de registro, eventId y opId. IDs de inventario duplicados o identidades incompatibles se omiten, se conservan sin cambios y se reportan como advertencias.
+- **Estados:** la resolución automática solo puede cambiar una fila que siga en requiere_revision. Estados manuales como en_papelera/en_uso y demás estados no pendientes permanecen intactos. La sincronización no modifica campos de referencia de Cortes.
+- **Historial de reemplazo/restauración:** la imagen desplazada durante una restauración usa un operationId determinista derivado del registro histórico, vehículo, campo e imagen activa. Los reintentos recuperan la misma fila. Un operationId existente no puede apuntar a un destino distinto; el mismo destino puede recuperar una fila cancelada sin reescribir la URL histórica.
+- **Pruebas focalizadas:** AdminCandidateImageInventoryCatalogSource 7/7 PASS; AdminImageReplacementCompensation 11/11 PASS; AdminReplacedImagesIntegrity 56/56 PASS.
+- **CI final:** commit de código `66c35468cff047e3f9d8caa89fccad8ed731bcc7`; 303 suites / 3,561 pruebas aprobadas / 0 fallos. Sintaxis de servicios PASS; health read-only 7/7 SUCCESS; GitHub Pages build/deployment SUCCESS.
+- **Commits de implementación de A07-04:** `2bade631a65297c20cd86dbc471625987440f6e8`, `bf4c2eee24f50f534f1bc9ef00526bcecf408f55`, `66c35468cff047e3f9d8caa89fccad8ed731bcc7`.
+- **Validación diferida:** no se desplegó Apps Script ni se modificaron Drive/Spreadsheet reales. En Beta aislada falta probar la sincronización repetida con CATALOG y Drive reales, los conflictos de identidad, la preservación de estados manuales y la recuperación de restauración con datos de prueba.
+- **Siguiente tarea:** A07-05 — mover la salida/progreso del escáner a la consola global del panel Desarrollador, conservando conteos, resultados y reanudación.
+- **HEAD de implementación verificado:** `66c35468cff047e3f9d8caa89fccad8ed731bcc7`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

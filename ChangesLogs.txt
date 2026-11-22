@@ -1141,3 +1141,12 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Resultado JSON: PASS; una sola llamada FileReader; las llamadas concurrentes compartieron la misma Promise; el acceso posterior reutilizó la Promise cacheada; resultado idéntico. Lectura: 141.3 ms; lookup cacheado: 0 ms.
 - La imagen se procesó localmente y no se subió. El perfil de escritorio físico no se midió; la cobertura de escritorio disponible corresponde a Chromium CI.
 - Se actualizan Tareas_Activas.md y checkpoint.md para cerrar la dependencia física pendiente. No se modificó código de producción ni se desplegaron servicios.
+
+
+2026-11-22 — A07-04 completada con validación diferida: registro idempotente de imágenes
+- La sincronización de candidatos CATALOG conserva el ID estable CAND-{eventId}; valida la identidad completa de la fila existente y no modifica filas con IDs duplicados o identidad incompatible. Los conflictos se reportan en warnings.
+- Los replays no anexan filas duplicadas. La resolución automática solo actualiza el estado requiere_revision; conserva estados manuales y no altera URLs/referencias de Cortes.
+- La restauración de una imagen histórica genera operationId determinista para registrar la imagen desplazada. Un operationId no puede cambiar su destino histórico; el mismo destino recupera la fila cancelada sin reescribir su URL.
+- Pruebas focalizadas: AdminCandidateImageInventoryCatalogSource 7/7; AdminImageReplacementCompensation 11/11; AdminReplacedImagesIntegrity 56/56 PASS.
+- CI final SHA 66c35468cff047e3f9d8caa89fccad8ed731bcc7: 303 suites / 3,561 pruebas / 0 fallos; sintaxis PASS; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- No se desplegó Apps Script ni se modificaron Drive/Spreadsheet reales. Integración con CATALOG/Drive/Spreadsheet aislados queda pendiente de Beta.
