@@ -30,6 +30,7 @@ function makeSheet(rows,name,state,options){
             return max;
         },
         getRange(row,col,numRows=1,numCols=1){
+            state.rangeReads.push({name,row,col,numRows,numCols});
             return {
                 setValues(values){for(let r=0;r<values.length;r++){const target=rows[row-1+r]||(rows[row-1+r]=[]);for(let c=0;c<values[r].length;c++)target[col-1+c]=values[r][c];}},
                 setValue(value){const target=rows[row-1]||(rows[row-1]=[]);target[col-1]=value;},
@@ -42,6 +43,22 @@ function makeSheet(rows,name,state,options){
                 getDisplayValues(){
                     if(name==="pys"&&options.failReferenceScan&&state.fileCreated&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed");
                     return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=((rows[row-1+r]||[])[col-1+c]??"");return v==null?"":String(v);}));
+                },
+                createTextFinder(query){
+                    let matchCase=false,matchEntireCell=false;
+                    const finder={
+                        matchCase(value){matchCase=value;return finder;},
+                        matchEntireCell(value){matchEntireCell=value;return finder;},
+                        findAll(){
+                            const expected=matchCase?String(query):String(query).toLowerCase(),found=[];
+                            for(let offset=0;offset<numRows;offset++)for(let c=0;c<numCols;c++){
+                                const raw=String((rows[row-1+offset]||[])[col-1+c]??""),actual=matchCase?raw:raw.toLowerCase();
+                                if(matchEntireCell?actual===expected:actual.includes(expected))found.push({getRow:()=>row+offset});
+                            }
+                            return found;
+                        }
+                    };
+                    return finder;
                 }
             };
         },
@@ -57,7 +74,7 @@ function makeSheet(rows,name,state,options){
 }
 
 function buildHarness(feedback,ui,options={}){
-    const state={pysRows:(options.pysRows||[]).map(r=>r.slice()),opsRows:(options.opsRows||[]).map(r=>r.slice()),pysSheet:null,opsSheet:null,files:{},createdFiles:0,fileCreated:false,fileCreatedWhileLocked:false,lockHeld:Boolean(options.lockAlreadyHeld),flushCount:0,lockWaits:0,lockReleases:0,trashed:0,folder:null};
+    const state={pysRows:(options.pysRows||[]).map(r=>r.slice()),opsRows:(options.opsRows||[]).map(r=>r.slice()),pysSheet:null,opsSheet:null,files:{},createdFiles:0,fileCreated:false,fileCreatedWhileLocked:false,lockHeld:Boolean(options.lockAlreadyHeld),flushCount:0,lockWaits:0,lockReleases:0,trashed:0,folder:null,rangeReads:[]};
     if(options.pysRows)state.pysSheet=makeSheet(state.pysRows,"pys",state,options);
     if(options.opsRows)state.opsSheet=makeSheet(state.opsRows,"PysOperations",state,options);
     const driveRoot={getId:()=>"drive-root"};
@@ -109,7 +126,7 @@ function buildHarness(feedback,ui,options={}){
         logUserActivity:()=>{}
     };
     const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleClearActivityLogs(payload) {");
-    vm.runInNewContext(parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
+    vm.runInNewContext(parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,readOps:readPysOperations_,writeOp:writePysOperation_,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
     const validPayload=(opId=OP_A,overrides={})=>Object.assign({
         opId,titulo:"Falla eléctrica",descripcion:"Detalle del problema",sinSolucion:true,solucion:"",
         prevenir:"Revisar conexiones",videoUrl:"",userId:"user-1",userName:"Técnico",
@@ -268,6 +285,17 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.equal(h.state.opsRows[1][3],"UPLOAD_PENDING");
         const retry=h.api.add(h.validPayload());
         assert.equal(retry.problemId,"isue-001");assert.equal(h.state.pysRows.length,2);
+    });
+    test("PysOperations confirma append con búsqueda dirigida por opId",()=>{
+        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS]});
+        const record={opId:OP_A,payloadHash:"a".repeat(64),problemId:"isue-001",status:"PENDING",imageFileId:"",imageUrl:"",createdAt:"now",updatedAt:"now"};
+        const result=h.api.writeOp(h.state.opsSheet,null,record);
+        assert.equal(result.rowNumber,2);assert.equal(result.duplicateReservationCount,0);
+        const reads=h.state.rangeReads.filter(item=>item.name==="PysOperations");
+        assert.ok(reads.some(item=>item.row===2&&item.col===1&&item.numRows===1&&item.numCols===1),"Debe localizar opId en una sola columna.");
+        assert.ok(reads.some(item=>item.row===2&&item.col===1&&item.numRows===1&&item.numCols===8),"Debe leer solo la fila candidata para confirmar el registro.");
+        assert.equal(reads.some(item=>item.row===2&&item.col===1&&item.numRows>1&&item.numCols===8),false,
+            "El read-back no debe descargar todo PysOperations.");
     });
     test("getPysData valida el esquema antes de leer",()=>{
         const wrong=HEADERS.slice();wrong[2]="Descripcion";
