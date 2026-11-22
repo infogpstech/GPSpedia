@@ -366,6 +366,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('CATALOG reintentos y cancelación','JS/Tests/CatalogRequestRetry.js');
   runCli('UI carruseles sin listeners resize acumulados','JS/Tests/CarouselResizeListenerLifecycle.mjs');
   runCli('UI refresca tutoriales mediante delta antes del snapshot','JS/Tests/TutorialCatalogRefreshDeltaFirst.mjs');
+  runCli('ADMIN no acumula listeners al reabrir panel','JS/Tests/AdminPanelListenerLifecycle.mjs');
   runCli('CATALOG feed incremental con reintentos acotados','JS/Tests/CatalogFeedRetry.mjs');
   runCli('CATALOG cierre de edición consume deltas con fallback completo','JS/Tests/CatalogEditDeltaRefresh.mjs');
   runCli('IMÁGENES cola de miniaturas FIFO y recuperación tras fallo','JS/Tests/ThumbnailCompressionQueueContract.mjs');

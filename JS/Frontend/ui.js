@@ -6907,7 +6907,7 @@ ${elapsedSec}s
     const termSendBtn = document.getElementById('btn-terminal-send');
 
     if (termInput) {
-        termInput.addEventListener('keydown', async (e) => {
+        termInput.onkeydown = async (e) => {
             if (e.key === 'Escape' && pendingDeveloperConsoleConfirmation_) {
                 e.preventDefault();
                 finishDeveloperConsoleConfirmation_(false, "Confirmación cancelada con Escape.");
@@ -6932,7 +6932,7 @@ ${elapsedSec}s
                     termInput.value = '';
                 }
             }
-        });
+        };
     }
 
     if (termSendBtn) {
@@ -7086,12 +7086,6 @@ ${elapsedSec}s
             await createBackup('backupDrive', 'drive', event.currentTarget, backupId);
         };
     }
-    if (backupResourceInput && resumeDriveBackupButton) {
-        backupResourceInput.addEventListener('input', () => {
-            resumeDriveBackupButton.disabled = !normalizeDriveBackupId(backupResourceInput.value);
-        });
-    }
-
     function normalizeSpreadsheetBackupId(value) {
         const input = String(value || '').trim();
         if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
@@ -7203,7 +7197,10 @@ ${elapsedSec}s
     }
 
     if (backupResourceInput) {
-        backupResourceInput.addEventListener('input', () => {
+        backupResourceInput.oninput = () => {
+            if (resumeDriveBackupButton) {
+                resumeDriveBackupButton.disabled = !normalizeDriveBackupId(backupResourceInput.value);
+            }
             verifiedDatabaseBackupId = null;
             vinMigrationPreview = null;
             vinMigrationPreviewBackupId = null;
@@ -7215,7 +7212,7 @@ ${elapsedSec}s
                 vinMigrationStatus.textContent = 'El enlace cambió. Genera un nuevo respaldo de Spreadsheet para habilitar la migración.';
             }
             updateVinMigrationControls();
-        });
+        };
     }
 
     if (previewVinMigrationButton) {
@@ -8004,7 +8001,7 @@ ${elapsedSec}s
         }catch(error){if(isAdminPanelCurrent_())contributionStatus.textContent="Error consultando candidatos: "+error.message;}
         finally{contributionRefreshBtn.disabled=false;}
     };
-    if(contributionRefreshBtn)contributionRefreshBtn.addEventListener("click",loadContributionCandidates);
+    if(contributionRefreshBtn)contributionRefreshBtn.onclick=()=>loadContributionCandidates();
 
     const viewReplacedBtn = document.getElementById('btn-admin-view-replaced-images');
     if (viewReplacedBtn) {
