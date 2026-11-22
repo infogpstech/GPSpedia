@@ -66,7 +66,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] P0.3 — Precarga de actor en login fuera del lock global, por lotes de 25 tokens y `fetchAll`; acciones protegidas usan solo caché local con TTL renovable y fallan cerrado si falta.
 - [x] Detectar y reducir lecturas de Users/ActiveSessions y revocaciones duplicadas dentro de una operación AUTH. Login reutiliza un snapshot de ActiveSessions; recuperación/rol reutilizan la fila objetivo; reset/cambio de contraseña invalidan usando los tokens del mismo snapshot; deleteUser lee solo ID/token de sesiones y verifica residuos por columna ID. La invalidación remota se ejecuta una sola vez antes de limpiar tokens. `AuthSessionReadOptimization.mjs`: 9/9 PASS; regresión: 284 suites / 3,309 pruebas / 0 fallos.
 - [x] USERS — alta de cuenta reutiliza un único snapshot para username, fila libre e ID; getUsers lee A:G y updateProfile verifica solo las celdas ID necesarias. Tests específicos 10/10 y 8/8; mutaciones/RBAC/rollback 16/16; CI 287 suites / 3,359 pruebas / 0 fallos.
-- [ ] Continuar optimización de lecturas/operaciones duplicadas en otros servicios tras auditar WRITE/FEEDBACK/ADMIN.
+- [x] Completar revisión estática de AUTH/USERS/UTILITIES/CATALOG después de WRITE/FEEDBACK/ADMIN: snapshots y lecturas dirigidas ya reutilizados; no se encontró duplicación de alta confianza. Las operaciones de mantenimiento con lock/lease quedan para medición Beta.
 
 ### P1 — servicios, aportes y catálogo
 - [x] ADMIN — confirmar que telemetría global y consultas de inventario/Drive se ejecutan solo desde el panel de desarrollador visible; getServiceTraffic es read-only, restringido a Desarrollador y no usa lease de mutación.
@@ -235,3 +235,12 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] ADMIN: actor cacheado validado localmente, matriz de roles, WRITE/CATALOG, inventario Drive, read-backs y auditoría persistente revisados.
 - [x] No se identificó llamada duplicada de alta confianza para retirar sin medición.
 - [ ] Medir en Beta aislada las tres leases administrativas (saveUnusedImagesInventory, createCortesImageFolder, auditDriveImagesInCortes), su contención/duración y alternativas idempotentes. No retirarlas sin pruebas de duplicados/cursor.
+
+
+### Servicios restantes — cierre de auditoría de lecturas (2026-11-22)
+- [x] AUTH: reutilización de snapshots Users/ActiveSessions, revocación única e invalidación de caché verificadas.
+- [x] USERS: alta con snapshot único, lectura A:G y búsquedas por ID con confirmación de celda; contrato integrado.
+- [x] UTILITIES: migración con snapshot, staging/backup/rollback; contrato de seguridad/concurrencia integrado.
+- [x] CATALOG: handle Spreadsheet reutilizado, snapshot de ScriptProperties y feed incremental idempotente.
+- [x] No se detectó otra lectura redundante de alta confianza para retirar sin medición.
+- [ ] Medir tiempos reales y concurrencia en Beta aislada; no modificar recursos productivos.

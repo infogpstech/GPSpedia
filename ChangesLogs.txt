@@ -857,3 +857,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - FEEDBACK: actor/RBAC, escrituras, adjuntos, PyS, Tutoriales, Inbox, YouTube, read-back y publicación CATALOG revisados; handlers ordinarios sin lease/ScriptLock global.
 - ADMIN: actor cacheado, permisos locales, reserva WRITE, proyección CATALOG, inventario Drive y auditoría revisados. Se identifican tres leases de mantenimiento que requieren medición y sustituto idempotente antes de retirarlas.
 - No se modificó código por no encontrar duplicación de alta confianza sin medición. Informe AUDITORIA_FEEDBACK_ADMIN_END_TO_END_2026-11-22.md.
+
+
+2026-11-22 — auditoría estática AUTH/USERS/UTILITIES/CATALOG
+- Revisión de snapshots, búsquedas dirigidas, locks/leases excepcionales, staging/rollback y feed incremental.
+- No se encontró duplicación de alta confianza para retirar sin medición; no se modificó código.
+- Evidencia: AUDITORIA_SERVICIOS_RESTANTES_2026-11-22.md.

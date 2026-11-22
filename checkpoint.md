@@ -267,3 +267,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Sin cambios de código: no se identificó una llamada redundante de alta confianza que pueda retirarse sin evidencia de medición.
 - Evidencia: AUDITORIA_FEEDBACK_ADMIN_END_TO_END_2026-11-22.md.
 - Siguiente: revisar optimizaciones locales pendientes y, cuando haya entorno, medir las leases administrativas y las lecturas Drive/CATALOG en Beta aislada.
+
+
+## Auditoría de servicios restantes — cierre estático (2026-11-22)
+
+- AUTH: login/revocación reutilizan snapshots; invalidación de actor una sola vez; pruebas AuthSessionReadOptimization integradas.
+- USERS: alta reutiliza snapshot; getUsers lee A:G; búsquedas por ID confirman celda puntual; pruebas UsersReadMinimization integradas.
+- UTILITIES: una migración destructiva con staging/backup/rollback; contrato UtilitiesSecurity integrado. Lock/lease se conservan como protección de migración excepcional, pendientes de medición real.
+- CATALOG: Spreadsheet handle único, snapshot de ScriptProperties y feed incremental idempotente ya optimizados.
+- No se encontró otra duplicación de alta confianza para eliminar sin medición. Evidencia: AUDITORIA_SERVICIOS_RESTANTES_2026-11-22.md.
+- Siguiente: mantener las mediciones externas en Beta aislada y retomar cualquier pendiente local nuevo solo con evidencia del backlog actual.
