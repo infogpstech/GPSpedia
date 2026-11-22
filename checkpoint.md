@@ -1536,3 +1536,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - PysCreationIntegrity: **57/57 PASS**. CI HEAD `b1f04432b394c6cbe3b02578b2bbc2c75b38dcb9`: **292 suites / 3,410 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático waiting/in_progress al checkpoint.
 - Rama base `GPSpedia2.2.5` no modificada. No se escribieron hojas productivas ni Drive.
 - Siguiente: revisar el doble read de `getPysSheet_` + `handleGetPysData` y luego los ledgers append-only de tutoriales; después cerrar la publicación CATALOG.
+
+
+## Checkpoint P1 PyS — lectura de catálogo desde snapshot validado (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; prueba: `JS/Tests/PysCreationIntegrity.js`.
+- `validatePysRecords_` devuelve las mismas filas que leyó para validar esquema lógico, formato de ID y duplicados.
+- `getPysSheet_` admite `includeSnapshot=true` sin cambiar el retorno predeterminado de hoja para los demás consumidores. `handleGetPysData` reutiliza `snapshot.rows` y elimina la lectura repetida de los 10 campos.
+- PysCreationIntegrity: **58/58 PASS**. CI HEAD `b7dcd3bf3c80f128b09777254682c6bddd6fba46`: **292 suites / 3,411 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; deploy automático waiting al checkpoint.
+- No se modificaron datos productivos ni Drive; rama base sin cambios.
+- Siguiente: auditar los ledgers de TutorialTitleEvents, TutorialEditEvents y TutorialRenameEvents para evitar lecturas repetidas, y después completar CATALOG.
