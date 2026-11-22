@@ -101,4 +101,4 @@ assert.equal(secondTabInit.status, "success");
 assert.equal(createdSessions, 3,
     "el backend no reserva el destino frente a inicios simultáneos sin aprobación pendiente");
 
-console.log("YouTubeInitIdempotencyBoundary: 7/7 caracterización — RISK CONFIRMED: init no deduplica por opVideoId ni destino; no se llamó a YouTube real.");
+console.log("YouTubeInitIdempotencyBoundary: PASS 7/7 caracterización — RISK CONFIRMED: init no deduplica por opVideoId ni destino; no se llamó a YouTube real.");
