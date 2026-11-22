@@ -59,4 +59,11 @@ Se añadió a la cola una capa de métricas efímeras, agrupadas por prioridad: 
 
 No se registran claves, URLs, IDs de vehículos ni datos personales; las métricas no se persisten ni generan solicitudes de red. La medición en navegador real (CPU, red, decodificación, CORS y memoria) sigue reservada a Beta aislada.
 
-Estado: implementación local publicada pendiente de CI. Siguiente: inspeccionar el ciclo de vida de precargas y determinar si existe un punto de cancelación seguro con ownership/ref-count; nunca cancelar una promesa single-flight compartida ni trabajo activo.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. CI HEAD 369f66a78cd3f95bbdef99a1feff027ba3e1e570 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; contrato focalizado 24/24 PASS. La revisión estática concluye que no debe añadirse cancelación por vista/sesión: las precargas alimentan caché global y single-flight comparte promesa con imágenes visibles. Siguiente: auditoría del flujo YouTube resumable.
+
+
+## Revisión de cancelación de precargas — 2026-11-22
+
+Los únicos callers encontrados de cacheItemImages son los snapshots completos/delta del catálogo (últimos 15 vehículos) y saveViewedItem. El método encola trabajo de forma desacoplada; las variantes se guardan en la caché global mediante claves estables por recurso/tamaño, no en un almacén de sesión. La deduplicación thumbnailCompressionInFlight_ es compartida por la precarga y la ruta visible.
+
+No se añade cancelación por cambio de vista o sesión. Una cancelación por clave, sin propiedad/ref-count por consumidor, podría rechazar o retirar una compresión que una imagen visible ya está esperando. Además, una vez iniciados, fetch, createImageBitmap, canvas.toBlob e IndexedDB no ofrecen un único mecanismo uniforme para interrumpir y revertir de forma segura. Mantener la precarga global de baja prioridad permite que termine sin bloquear la ruta visible; las métricas permiten observar si el backlog requiere otra estrategia.

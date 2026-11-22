@@ -200,3 +200,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - El reloj puede inyectarse al crear la cola para pruebas deterministas; producción usa reloj monotónico cuando está disponible. No se persisten métricas ni se agregan requests.
 - Siguiente: ejecutar contrato de métricas y CI; después revisar si una precarga obsoleta puede cancelarse de forma segura al cambiar vista/sesión sin afectar operaciones single-flight compartidas ni tareas activas.
 - Estado: implementación preparada en la rama de trabajo; pendiente publicación/validación CI.
+
+
+## P1 multimedia — cierre de métricas y cancelación (2026-11-22)
+
+- Commit funcional: 3aa0d034ab8748ac603ba9958d72c238da7d35c4; correcciones de compatibilidad/contrato y tiempos: ba5745cf, dc6a12c7, c6d87ef6 y 369f66a7. HEAD final de esta actividad: 369f66a78cd3f95bbdef99a1feff027ba3e1e570.
+- CI del HEAD final: workflow 44974498485 SUCCESS; job service-tests SUCCESS. Regresión: 293 suites / 3,435 pruebas / 0 fallos. `ThumbnailCompressionQueueContract`: 24/24 PASS. Health read-only 44974498458 SUCCESS.
+- getStats() y getPriorityStats() conservan sus contratos originales. getMetrics() añade contadores efímeros por prioridad, espera y duración, sin claves, URLs, IDs de vehículos, persistencia ni requests adicionales.
+- Revisión de cancelación: no se implementa. cacheItemImages se invoca desde snapshots de catálogo y vistos recientes; las imágenes son recursos compartidos que solo calientan la caché global. thumbnailCompressionInFlight_ deduplica por clave y puede compartir la promesa con la ruta visible. Cancelar por clave sin ownership/ref-count podría interrumpir un consumidor visible; además, fetch/bitmap/canvas/IndexedDB no comparten un mecanismo de cancelación uniforme.
+- Rama base protegida verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Siguiente:** auditar estáticamente JS/Frontend/youtubeUpload.js y sus contratos de transferencia resumable, checkpoints IndexedDB, pausa/reanudación/cancelación, expiración e idempotencia, así como la aprobación posterior. No cambiar el flujo sin defecto reproducible.

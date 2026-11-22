@@ -103,7 +103,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [ ] Diseñar y medir compresión/redimensionado con corpus técnico real; preservar legibilidad, transparencia, MIME/firma, metadatos, SHA-256 e idempotencia.
 - [ ] Revisar tamaños históricos de logos antes de decidir límite.
 - [ ] Medir CORS, PNG alfa, cache hit/miss, primera pintura, bytes, memoria y cancelación en navegador real.
-- [ ] Revisar cola de compresión, cancelación/reintentos y claves de idempotencia.
+- [x] Revisar prioridad visible/precarga, métricas y cancelación segura: la cola prioriza visibles y expone métricas; no se cancela trabajo compartido por falta de ownership/ref-count y porque la precarga alimenta caché global. CI 293 suites / 3,435 pruebas / 0 fallos.
+- [ ] Continuar con auditoría estática del flujo YouTube: transferencia resumable, checkpoint IndexedDB, pausa/reanudación/cancelación y aprobación.
 - [ ] Trazar vídeos/YouTube y retirar consultas solo con medición.
 - [ ] Medir por separado cliente, red, Apps Script, Drive y proyección CATALOG.
 
@@ -185,4 +186,12 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Añadir métricas efímeras por prioridad: encolados/iniciados/completados/fallidos/promovidos, activos/pendientes, espera y duración total/máxima.
 - [x] Mantener getStats() y getPriorityStats() con sus contratos anteriores; añadir getMetrics() como snapshot de diagnóstico.
 - [x] Inyectar reloj para pruebas deterministas; no registrar URLs, claves ni datos de vehículos.
-- [ ] Validar CI y revisar cancelación segura de precargas por cambio de vista/sesión.
+- [x] CI `44974498485` SUCCESS: 293 suites / 3,435 pruebas / 0 fallos; `ThumbnailCompressionQueueContract` 24/24 PASS; sintaxis aprobada.
+- [x] Revisar cancelación por cambio de vista/sesión: no implementar cancelación. Las miniaturas se guardan en caché compartida y no contienen estado de sesión; single-flight comparte la misma promesa con consumidores visibles. Sin ownership/ref-count, cancelar por clave podría interrumpir una imagen visible; el trabajo activo además no es cancelable de forma uniforme.
+
+
+### P1 — cierre de métricas y revisión de cancelación (2026-11-22)
+- [x] Métricas de cola aprobadas en CI `44974498485`: 293 suites / 3,435 pruebas / 0 fallos; contrato focalizado 24/24 PASS; sintaxis aprobada.
+- [x] Compatibilidad: getStats() y getPriorityStats() conservan sus contratos; getMetrics() agrega diagnóstico efímero por prioridad.
+- [x] Cancelación revisada: no se añade. Las precargas de catálogo/vistos solo calientan caché global; las claves no son de sesión y la promesa single-flight puede compartirse con una imagen visible. Cancelar por clave sin ownership/ref-count pondría en riesgo al consumidor visible.
+- [ ] Siguiente: auditoría estática de YouTube resumable y contratos de recuperación/aprobación.

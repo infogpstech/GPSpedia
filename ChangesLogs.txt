@@ -812,3 +812,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se incorpora reloj inyectable para pruebas reproducibles; no hay persistencia ni tráfico adicional.
 - JS/Tests/ThumbnailCompressionQueueContract.mjs: cubre espera, duración, promoción y fallos con reloj determinista.
 - Validación CI pendiente al publicar el cambio.
+
+
+2026-11-22 — P1 multimedia: cierre de métricas y revisión de cancelación
+- CI HEAD 369f66a78cd3f95bbdef99a1feff027ba3e1e570: 293 suites / 3,435 pruebas / 0 fallos; ThumbnailCompressionQueueContract 24/24 PASS; health read-only SUCCESS.
+- getStats() y getPriorityStats() mantienen sus contratos. getMetrics() incorpora contadores efímeros por prioridad, espera y duración; sin persistencia, claves, URLs ni datos de vehículos.
+- Se revisó cancelación de precargas: no se implementa porque la caché es compartida y single-flight puede servir a una imagen visible. Sin ownership/ref-count, cancelar por clave arriesga interrumpir ese consumidor; no hay cancelación uniforme de trabajo activo.
+- Siguiente: auditoría estática del flujo resumable y aprobación de YouTube.
