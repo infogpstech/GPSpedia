@@ -4599,7 +4599,7 @@ function findTutorialRow_(sheet, reference, preferId) {
         const titleValues = lastRow > 1 ? sheet.getRange(2, 2, lastRow - 1, 1).getValues() : [];
         const renameSheet = typeof getTutorialRenameEventsSheet_ === "function" ? getTutorialRenameEventsSheet_(false) : null;
         const renameEvents = renameSheet && typeof readTutorialRenameEvents_ === "function"
-            ? readTutorialRenameEvents_(renameSheet) : null;
+            ? readTutorialRenameEvents_(renameSheet) : [];
         const byTitle = [];
         titleValues.forEach((value, index) => {
             const rowIndex = index + 2;
