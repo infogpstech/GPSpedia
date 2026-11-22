@@ -278,8 +278,14 @@ function inboxFindMessageByKey_(rows, conversationId, authorId, key) {
     return matches.length ? matches[0] : null;
 }
 function inboxAppendAudit_(sheet, actor, action, conversationId, messageId, details) {
-    const rows = inboxConversationRows_(sheet, INBOX_CONVERSATION_AUDIT_HEADERS_.length);
-    if (messageId && rows.some(row => String(row[2]) === actor.id && String(row[4]) === action && String(row[6]) === messageId)) return;
+    if (messageId && sheet && sheet.getLastRow() > 1) {
+        const matches = sheet.getRange(2, 7, sheet.getLastRow() - 1, 1)
+            .createTextFinder(String(messageId)).matchCase(true).matchEntireCell(true).findAll();
+        for (const match of matches) {
+            const row = sheet.getRange(match.getRow(), 1, 1, INBOX_CONVERSATION_AUDIT_HEADERS_.length).getValues()[0];
+            if (String(row[2]) === actor.id && String(row[4]) === action && String(row[6]) === messageId) return;
+        }
+    }
     const event = [Utilities.getUuid(),new Date().toISOString(),actor.id,actor.name,action,conversationId,messageId || "",String(details || "").slice(0,500)];
     const rowNumber = sheet.getLastRow() + 1;
     sheet.getRange(rowNumber,1,1,event.length).setValues([event]);
