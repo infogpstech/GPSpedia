@@ -4475,13 +4475,17 @@ function readTutorialRenameEvents_(sheet) {
     });
     return Array.from(operations.values());
 }
-function projectTutorialTitle_(tutorialId, baseTitle) {
+function projectTutorialTitle_(tutorialId, baseTitle, renameEventsSnapshot) {
     const id = String(tutorialId || "").trim(), rowTitle = String(baseTitle || "");
     if (!id || !rowTitle) return rowTitle;
-    const sheet = getTutorialRenameEventsSheet_(false);
-    if (!sheet) return rowTitle;
+    let events = renameEventsSnapshot;
+    if (!Array.isArray(events)) {
+        const sheet = getTutorialRenameEventsSheet_(false);
+        if (!sheet) return rowTitle;
+        events = readTutorialRenameEvents_(sheet);
+    }
     let current = rowTitle;
-    readTutorialRenameEvents_(sheet).filter(event => event.tutorialId === id).forEach(event => {
+    events.filter(event => event.tutorialId === id).forEach(event => {
         if (event.expectedTitleKey === normalizeTutorialTitle_(current)) current = event.title;
     });
     return current;
@@ -4593,13 +4597,16 @@ function findTutorialRow_(sheet, reference, preferId) {
     if (preferId) {
         const lastRow = sheet.getLastRow();
         const titleValues = lastRow > 1 ? sheet.getRange(2, 2, lastRow - 1, 1).getValues() : [];
+        const renameSheet = typeof getTutorialRenameEventsSheet_ === "function" ? getTutorialRenameEventsSheet_(false) : null;
+        const renameEvents = renameSheet && typeof readTutorialRenameEvents_ === "function"
+            ? readTutorialRenameEvents_(renameSheet) : null;
         const byTitle = [];
         titleValues.forEach((value, index) => {
             const rowIndex = index + 2;
             const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
             const identity = String(row[0] || "").trim() || makeLegacyTutorialIdentity_(row[1]);
             const projectedTitle = typeof projectTutorialTitle_ === "function"
-                ? projectTutorialTitle_(identity, row[1]) : row[1];
+                ? projectTutorialTitle_(identity, row[1], renameEvents) : row[1];
             const normalizeLookupTitle = value => typeof normalizeTutorialTitle_ === "function"
                 ? normalizeTutorialTitle_(value) : String(value || "").trim().toLowerCase();
             if (normalizeLookupTitle(projectedTitle) !== normalizeLookupTitle(key)) return;
@@ -4658,12 +4665,14 @@ function tutorialTitleExists_(sheet, title, excludedRowIndex, excludedTutorialId
     const titleKey = normalizeTutorialTitle_(title);
     const excluded = Number(excludedRowIndex) || 0;
     const rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    const renameSheet = getTutorialRenameEventsSheet_(false);
+    const renameEvents = renameSheet ? readTutorialRenameEvents_(renameSheet) : [];
     return rows.some((row, index) => {
         const rowIndex = index + 2, rowId = String(row[0] || "").trim();
         if (rowIndex === excluded || (excludedTutorialId && rowId.toLowerCase() === String(excludedTutorialId).toLowerCase())) return false;
         const identity = rowId || makeLegacyTutorialIdentity_(row[1]);
         const projectedTitle = typeof projectTutorialTitle_ === "function"
-            ? projectTutorialTitle_(identity, row[1]) : row[1];
+            ? projectTutorialTitle_(identity, row[1], renameEvents) : row[1];
         return normalizeTutorialTitle_(projectedTitle) === titleKey;
     });
 }
