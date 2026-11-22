@@ -3887,13 +3887,23 @@ function writePysOperation_(sheet, rowNumber, record) {
     sheet.appendRow(values);
     SpreadsheetApp.flush();
     const last = sheet.getLastRow();
-    const rows = last > 1 ? sheet.getRange(2, 1, last - 1, 8).getValues() : [];
+    const idRange = last > 1 ? sheet.getRange(2, 1, last - 1, 1) : null;
+    let candidates = [];
+    if (idRange && typeof idRange.createTextFinder === "function") {
+        candidates = idRange.createTextFinder(String(record.opId)).matchCase(true).matchEntireCell(true).findAll();
+    } else if (idRange) {
+        idRange.getValues().forEach((value, index) => {
+            if (String(value[0] || "").trim() === String(record.opId)) candidates.push({ getRow: () => index + 2 });
+        });
+    }
     const matches = [];
-    rows.forEach((row, index) => {
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const row = sheet.getRange(rowNumber, 1, 1, 8).getValues()[0];
         if (String(row[0] || "").trim() === String(record.opId) &&
             String(row[1] || "").trim().toLowerCase() === String(record.payloadHash).toLowerCase() &&
             String(row[2] || "").trim() === String(record.problemId) &&
-            String(row[4] || "").trim() === String(record.imageFileId || "")) matches.push(index + 2);
+            String(row[4] || "").trim() === String(record.imageFileId || "")) matches.push(rowNumber);
     });
     if (!matches.length) throw new Error("No se pudo confirmar la reserva append-only de la operación PyS.");
     return Object.assign({}, record, { rowNumber: matches[0], duplicateReservationCount: matches.length - 1 });
