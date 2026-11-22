@@ -58,7 +58,7 @@ const noPreempt = createConcurrencyLimiter(1), activeGate = deferred();
 const activePriority = noPreempt.run(async () => { await activeGate.promise; }, { key: "active", priority: 0 });
 await tick(); assert.equal(noPreempt.promote("active", 99), false);
 activeGate.resolve(); await activePriority;
-console.log("20/20 PASS — FIFO, prioridad visible, promoción single-flight, no-preemption, limpieza y recuperación");
+
 
 
 const cleanup = createConcurrencyLimiter(1);
@@ -70,3 +70,35 @@ assert.equal(cleanup.clearPromotion("never-enqueued"), true,
 assert.equal(cleanup.getPriorityStats().queued, 0);
 cleanupGate.resolve();
 await cleanupActive;
+
+
+// Métricas deterministas: espera, duración, promociones y errores por prioridad.
+let fakeNow = 0;
+const measured = createConcurrencyLimiter(1, { now: () => fakeNow });
+const measuredGate = deferred();
+const measuredFirst = measured.run(async () => { await measuredGate.promise; return "ok"; }, { key: "m1", priority: 0 });
+fakeNow = 2;
+const measuredSecond = measured.run(async () => "visible", { key: "m2", priority: 10 });
+fakeNow = 5;
+await tick();
+let measuredSnapshot = measured.getMetrics();
+assert.equal(measuredSnapshot.priorities["0"].started, 1);
+assert.equal(measuredSnapshot.priorities["0"].maxWaitMs, 5);
+assert.equal(measuredSnapshot.priorities["10"].queued, 1);
+assert.equal(measured.promote("m2", 20), true);
+fakeNow = 15;
+measuredGate.resolve();
+assert.equal(await measuredFirst, "ok");
+fakeNow = 16;
+assert.equal(await measuredSecond, "visible");
+measuredSnapshot = measured.getMetrics();
+assert.equal(measuredSnapshot.priorities["0"].completed, 1);
+assert.equal(measuredSnapshot.priorities["0"].maxRunMs, 10);
+assert.equal(measuredSnapshot.priorities["10"].promoted, 1);
+assert.equal(measuredSnapshot.priorities["20"].started, 1);
+assert.equal(measuredSnapshot.priorities["20"].maxWaitMs, 13);
+const measuredFailure = createConcurrencyLimiter(1, { now: () => fakeNow });
+await assert.rejects(() => measuredFailure.run(async () => { throw new Error("metric-fail"); }, { priority: 3 }), /metric-fail/);
+assert.equal(measuredFailure.getMetrics().priorities["3"].failed, 1);
+assert.deepEqual(measuredFailure.getStats(), { limit: 1, active: 0, queued: 0 });
+console.log("24/24 PASS — FIFO, prioridad visible, promoción single-flight, no-preemption, limpieza, métricas y recuperación");

@@ -51,3 +51,12 @@ No se ejecutó una prueba de rendimiento real. La medición Beta debe usar corpu
 **Siguiente tarea:** implementar prioridad visible/precarga en cola y single-flight, empezando por pruebas contractuales; mantener la prioridad alta para imágenes visibles y baja para precarga. No cambiar la concurrencia 2 ni cancelar trabajos activos.
 
 No se modificó código y no se ejecutaron pruebas automatizadas ni navegador en esta actividad.
+
+
+## Adenda — instrumentación implementada (2026-11-22)
+
+Se añadió a la cola una capa de métricas efímeras, agrupadas por prioridad: encolados, iniciados, completados, fallidos, promovidos, activos, pendientes, espera acumulada/máxima y duración acumulada/máxima. La cola admite un reloj inyectable para que los contratos midan tiempos sin depender del reloj real. getStats() conserva su objeto y campos originales; getPriorityStats() mantiene los campos anteriores y agrega contadores; getMetrics() ofrece el detalle de diagnóstico.
+
+No se registran claves, URLs, IDs de vehículos ni datos personales; las métricas no se persisten ni generan solicitudes de red. La medición en navegador real (CPU, red, decodificación, CORS y memoria) sigue reservada a Beta aislada.
+
+Estado: implementación local publicada pendiente de CI. Siguiente: inspeccionar el ciclo de vida de precargas y determinar si existe un punto de cancelación seguro con ownership/ref-count; nunca cancelar una promesa single-flight compartida ni trabajo activo.

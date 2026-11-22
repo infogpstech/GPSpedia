@@ -165,7 +165,8 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Integrar prioridad en las dos rutas de compresión y promoción en single-flight visible.
 - [x] Ampliar `ThumbnailCompressionQueueContract.mjs` con casos de prioridad, promoción, no-preemption y compatibilidad.
 - [ ] Verificar workflow CI tras commit; no marcar pruebas como PASS hasta leer el resultado.
-- [ ] Siguiente: instrumentar métricas de cola/espera por prioridad y estudiar cancelación segura por cambio de sesión/vista.
+- [x] Instrumentar métricas efímeras por prioridad: encolados, inicios, finalizados, errores, promociones, activos/pendientes, espera y duración total/máxima. Se conserva getStats(); reloj inyectable para pruebas deterministas.
+- [ ] Siguiente: revisar cancelación segura de precargas por cambio de sesión/vista, sin cancelar compresión compartida ni trabajo activo.
 
 
 - [x] Limpiar promociones anticipadas en el `finally` de single-flight para evitar overrides obsoletos; prueba contractual añadida.
@@ -177,4 +178,11 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 
 
 - [x] Adaptar el harness aislado de `ThumbnailCacheDeduplication.mjs` a la nueva dependencia de cola, sin sustituir la prueba de single-flight.
-- [ ] Revalidar CI final; cerrar la implementación solo con workflow verde.
+- [x] CI del commit 02788fbd: workflow 44972971725 SUCCESS; job service-tests SUCCESS, sintaxis y regresión aislada aprobadas.
+
+
+### P1 — métricas de cola de miniaturas (2026-11-22)
+- [x] Añadir métricas efímeras por prioridad: encolados/iniciados/completados/fallidos/promovidos, activos/pendientes, espera y duración total/máxima.
+- [x] Mantener getStats() intacto y ampliar getPriorityStats(); añadir getMetrics() como snapshot de diagnóstico.
+- [x] Inyectar reloj para pruebas deterministas; no registrar URLs, claves ni datos de vehículos.
+- [ ] Validar CI y revisar cancelación segura de precargas por cambio de vista/sesión.

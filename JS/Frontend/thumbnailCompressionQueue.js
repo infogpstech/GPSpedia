@@ -3,7 +3,7 @@
  * JavaScript (pestaña). Las tareas se ordenan por prioridad descendente y FIFO
  * dentro de la misma prioridad. Las llamadas sin opciones conservan FIFO histórico.
  */
-export function createConcurrencyLimiter(limit = 2) {
+export function createConcurrencyLimiter(limit = 2, options = {}) {
     const maxConcurrent = Number.isFinite(limit) && limit > 0
         ? Math.max(1, Math.floor(limit))
         : 2;
@@ -12,6 +12,22 @@ export function createConcurrencyLimiter(limit = 2) {
     const pending = [];
     const activeKeys = new Set();
     const pendingPriorityOverrides = new Map();
+    const clock = options && typeof options.now === "function" ? options.now
+        : () => (typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now());
+    const metrics = new Map();
+    function readClock() {
+        const value = Number(clock());
+        return Number.isFinite(value) ? value : Date.now();
+    }
+    function metricFor(priority) {
+        const key = String(priority);
+        if (!metrics.has(key)) metrics.set(key, {
+            priority, enqueued: 0, started: 0, completed: 0, failed: 0,
+            promoted: 0, active: 0, queued: 0,
+            totalWaitMs: 0, maxWaitMs: 0, totalRunMs: 0, maxRunMs: 0
+        });
+        return metrics.get(key);
+    }
 
     function sortPending() {
         pending.sort((a, b) => b.priority - a.priority || a.sequence - b.sequence);
@@ -20,24 +36,30 @@ export function createConcurrencyLimiter(limit = 2) {
     function drain() {
         while (active < maxConcurrent && pending.length) {
             const job = pending.shift();
+            const oldMetric = metricFor(job.priority);
+            oldMetric.queued = Math.max(0, oldMetric.queued - 1);
+            const startedAt = readClock();
+            const waitMs = Math.max(0, startedAt - job.queuedAt);
+            const metric = metricFor(job.priority);
+            metric.started += 1;
+            metric.active += 1;
+            metric.totalWaitMs += waitMs;
+            metric.maxWaitMs = Math.max(metric.maxWaitMs, waitMs);
             active += 1;
             if (job.key) activeKeys.add(job.key);
-            Promise.resolve()
-                .then(job.task)
-                .then(
-                    value => {
-                        active -= 1;
-                        if (job.key) activeKeys.delete(job.key);
-                        job.resolve(value);
-                        drain();
-                    },
-                    error => {
-                        active -= 1;
-                        if (job.key) activeKeys.delete(job.key);
-                        job.reject(error);
-                        drain();
-                    }
-                );
+            const finish = (success, value) => {
+                const runMs = Math.max(0, readClock() - startedAt);
+                active -= 1;
+                metric.active = Math.max(0, metric.active - 1);
+                if (job.key) activeKeys.delete(job.key);
+                metric.totalRunMs += runMs;
+                metric.maxRunMs = Math.max(metric.maxRunMs, runMs);
+                if (success) { metric.completed += 1; job.resolve(value); }
+                else { metric.failed += 1; job.reject(value); }
+                drain();
+            };
+            Promise.resolve().then(job.task)
+                .then(value => finish(true, value), error => finish(false, error));
         }
     }
 
@@ -54,7 +76,10 @@ export function createConcurrencyLimiter(limit = 2) {
             pendingPriorityOverrides.delete(key);
         }
         return new Promise((resolve, reject) => {
-            pending.push({ task, resolve, reject, priority, sequence: nextSequence++, key });
+            const metric = metricFor(priority);
+            metric.enqueued += 1;
+            metric.queued += 1;
+            pending.push({ task, resolve, reject, priority, sequence: nextSequence++, key, queuedAt: readClock() });
             sortPending();
             drain();
         });
@@ -67,7 +92,12 @@ export function createConcurrencyLimiter(limit = 2) {
         const job = pending.find(entry => entry.key === normalizedKey);
         if (job) {
             if (nextPriority > job.priority) {
+                const oldMetric = metricFor(job.priority);
+                oldMetric.queued = Math.max(0, oldMetric.queued - 1);
                 job.priority = nextPriority;
+                const newMetric = metricFor(nextPriority);
+                newMetric.queued += 1;
+                newMetric.promoted += 1;
                 sortPending();
             }
             return true;
@@ -88,14 +118,24 @@ export function createConcurrencyLimiter(limit = 2) {
 
     function getPriorityStats() {
         const priorities = {};
-        pending.forEach(job => {
-            const key = String(job.priority);
-            priorities[key] = (priorities[key] || 0) + 1;
+        metrics.forEach((metric, key) => {
+            priorities[key] = {
+                active: metric.active, queued: metric.queued,
+                enqueued: metric.enqueued, started: metric.started,
+                completed: metric.completed, failed: metric.failed,
+                promoted: metric.promoted
+            };
         });
         return { active, queued: pending.length, priorities };
     }
 
-    return { run, promote, clearPromotion, getStats, getPriorityStats };
+    function getMetrics() {
+        const priorities = {};
+        metrics.forEach((metric, key) => { priorities[key] = { ...metric }; });
+        return { limit: maxConcurrent, active, queued: pending.length, priorities };
+    }
+
+    return { run, promote, clearPromotion, getStats, getPriorityStats, getMetrics };
 }
 
 export const MAX_CONCURRENT_THUMBNAIL_COMPRESSIONS = 2;

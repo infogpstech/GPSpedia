@@ -189,3 +189,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - CI del commit `0fac4f5`: la nueva suite de prioridad ya publicó resumen numérico, pero `ThumbnailCacheDeduplication.mjs` falló porque su wrapper aislado de `compressAndStoreThumbnail` no inyectaba la nueva dependencia `thumbnailCompressionQueue` usada en el `finally`.
 - Se actualizó el harness para inyectar un doble de cola mínimo (clearPromotion/promote/run), preservando el aislamiento y el objetivo de probar single-flight.
 - El fallo era de fixture de test, no de la cola productiva. Pendiente ejecutar CI nuevamente.
+
+
+## P1 multimedia — métricas de cola de miniaturas (2026-11-22)
+
+- CI del commit anterior 02788fbd4dd0fa754f091f6e8e1d351e68cd9a7e: workflow 44972971725 y job service-tests SUCCESS; comprobación de sintaxis y regresión aislada aprobadas.
+- La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1; la rama de trabajo partió de HEAD 02788fbd4dd0fa754f091f6e8e1d351e68cd9a7e.
+- Se añade diagnóstico efímero en thumbnailCompressionQueue.js: contadores por prioridad (encolados, iniciados, completados, fallidos y promovidos), activos/pendientes, espera y duración total/máxima.
+- getStats() conserva exactamente su contrato; getPriorityStats() mantiene sus campos previos y añade contadores; getMetrics() expone snapshot detallado sin claves, URLs ni datos de vehículos.
+- El reloj puede inyectarse al crear la cola para pruebas deterministas; producción usa reloj monotónico cuando está disponible. No se persisten métricas ni se agregan requests.
+- Siguiente: ejecutar contrato de métricas y CI; después revisar si una precarga obsoleta puede cancelarse de forma segura al cambiar vista/sesión sin afectar operaciones single-flight compartidas ni tareas activas.
+- Estado: implementación preparada en la rama de trabajo; pendiente publicación/validación CI.
