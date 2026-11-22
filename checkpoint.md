@@ -405,3 +405,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - CI HEAD `26db47e5`: `RepositoryJavaScriptSyntax` 1/1 PASS, 429 archivos; `RepositoryModuleReferences` 1/1 PASS; regresión 298 suites / 3,459 pruebas / 0 fallos; health read-only SUCCESS.
 - El validador de referencias se limitó correctamente a frontend, servicios, service-worker, runner y pruebas realmente integradas. Los tests históricos no invocados con rutas antiguas no se alteraron.
 - Observación no funcional: el texto final del test usó `files.length` sobre un Set, por lo que imprimió `undefined` aunque el test pasó. Corregido a `files.size`; CI de confirmación pendiente.
+
+
+## Verificación integral — sintaxis, referencias y regresión aprobadas (2026-11-21)
+
+- HEAD verificado: `377edf170e04c2dd696608ae63d56e7752e672df`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- `RepositoryJavaScriptSyntax`: 429 archivos `.js/.mjs`, 1/1 PASS.
+- `RepositoryModuleReferences`: 340 archivos activos (frontend, servicios, runner y suites integradas), 1/1 PASS; imports/re-exports/dynamic imports literales/new URL/require relativos resueltos.
+- Regresión de servicios: 298 suites / 3,459 pruebas / 0 fallos. Health read-only SUCCESS. Pages build del mismo HEAD seguía in_progress al cierre.
+- El chequeo de referencias excluye intencionalmente tests legacy no invocados que conservan rutas históricas; no se alteraron.
+- Siguiente: revisión del diff acumulado de implementaciones y anti-regresión dirigida. Las validaciones reales de navegador, Apps Script, Drive/Spreadsheet, OAuth y YouTube siguen diferidas a Beta aislada.

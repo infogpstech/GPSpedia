@@ -329,3 +329,11 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 
 ### Verificación integral — referencias y módulos (2026-11-21)
 - [ ] Comprobar imports/re-exports/dynamic imports, `new URL(..., import.meta.url)` y `require()` relativos en los 428 archivos JS/MJS; contrato añadido, CI pendiente.
+
+
+### Verificación integral — cierre de sintaxis, referencias y regresión (2026-11-21)
+- [x] `RepositoryJavaScriptSyntax`: 429 archivos `.js/.mjs`, 1/1 PASS.
+- [x] `RepositoryModuleReferences`: 340 módulos/runner/tests activos, 1/1 PASS; referencias relativas resueltas.
+- [x] CI HEAD `377edf17`: 298 suites / 3,459 pruebas / 0 fallos; health read-only SUCCESS.
+- [ ] Pages build/deployment del mismo HEAD seguía in_progress al cierre.
+- [ ] Revisión final del diff acumulado de implementaciones y anti-regresión dirigida.

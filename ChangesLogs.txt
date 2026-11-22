@@ -946,3 +946,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-21 — verificación integral: referencias activas
 - El test de referencias relativas pasó para los módulos activos; corregido el contador de resumen para usar `Set.size` en lugar de `length`.
+
+
+2026-11-21 — verificación integral: sintaxis, referencias y regresión
+- `RepositoryJavaScriptSyntax`: 429 archivos `.js/.mjs`, 1/1 PASS.
+- `RepositoryModuleReferences`: 340 archivos activos, 1/1 PASS.
+- CI HEAD `377edf17`: 298 suites / 3,459 pruebas / 0 fallos; health read-only SUCCESS.
