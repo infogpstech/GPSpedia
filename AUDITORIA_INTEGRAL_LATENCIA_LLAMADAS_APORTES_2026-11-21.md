@@ -508,3 +508,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Se mantienen la ventana de 500 Feedbacks/aplicaciones, rankings, identificación de usuarios y cálculo de métricas.
 - Pruebas: ActivityDashboardContributions **PASS**; GP-DASH-INSIGHTS-01 **PASS**; ActivityLogsBoundedRead/AUG-120 **7/7 PASS**. CI HEAD `eba4b299572fd7cc4afae8b15d009498e04feb5e`: **292 suites / 3,409 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy SUCCESS.
 - No se modificaron hojas productivas ni se ejecutaron despliegues manuales Apps Script.
+
+
+## P1 PyS — read-back dirigido de reserva append-only en PysOperations (2026-11-22)
+
+- `writePysOperation_` ya no vuelve a descargar todas las filas y 8 columnas de `PysOperations` después de anexar una reserva.
+- El read-back busca el `opId` exacto en columna A con TextFinder (fallback de columna ID si TextFinder no está disponible) y lee cada fila candidata en 8 columnas.
+- Se mantiene la comparación de `opId`, `payloadHash`, `problemId` e `imageFileId`, así como el recuento de reservas duplicadas y el error cuando no se confirma ninguna coincidencia.
+- `PysCreationIntegrity.js` incorpora mock de TextFinder y verifica que no se descargue el ledger completo. PysCreationIntegrity **57/57 PASS**.
+- CI HEAD `b1f04432b394c6cbe3b02578b2bbc2c75b38dcb9`: **292 suites / 3,410 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático waiting/in_progress al documentar.
+- No se modificaron datos productivos de PyS/Drive ni se ejecutaron despliegues manuales Apps Script.
