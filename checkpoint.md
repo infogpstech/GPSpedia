@@ -1494,3 +1494,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - InboxConversations: **67/67 PASS**. CI HEAD `75bf48cb4efd89d81e126e6d518aa82f712c7512`: **292 suites / 3,407 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático estaba waiting/in_progress al momento del checkpoint.
 - Rama base `GPSpedia2.2.5` sin cambios; no se tocaron hojas productivas ni deployments Apps Script.
 - Siguiente: continuar auditoría FEEDBACK de reportes/imágenes; luego vistas/actividad, PyS/tutoriales y publicación CATALOG. Cada subtask se valida y registra antes de pasar a la siguiente.
+
+
+## Checkpoint P1 FEEDBACK — confirmación de evento de imagen por reportId (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; prueba: `JS/Tests/FeedbackReportImageEvents.mjs`.
+- `appendFeedbackReportImageEvent_` ya no busca primero el eventId en columna A y luego vuelve a buscar reportId en columna B. Después del append, la búsqueda por reportId sirve como read-back único y confirma evento/metadata, detecta duplicados equivalentes y rechaza hashes contradictorios.
+- Se conservan la idempotencia por hash, first-write-wins, la asociación de archivos y la limpieza/reconciliación de adjuntos.
+- FeedbackReportImageEvents: **3/3 PASS**. CI HEAD `2f850442c3e31685b045938924a749cf08915798`: **292 suites / 3,407 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático in_progress al momento del checkpoint.
+- No se modificaron registros ni archivos productivos; rama base intacta.
+- Siguiente: continuar auditoría de reportes/Inbox y actividad; luego PyS/tutoriales y publicación CATALOG. Validación real de Drive queda reservada a Beta aislada.
