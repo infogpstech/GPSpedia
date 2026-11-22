@@ -290,3 +290,14 @@ El primer CI del cambio de caché FileReader falló en dos pruebas del harness, 
 **Hallazgo confirmado en dashboard:** `buildCutContributionSummary_` lee los colaboradores de las tres columnas de corte en `Cortes`; no consume los eventos `opening/feed` del ledger `AportesVehiculo`. Por tanto, el resumen por usuario no contabiliza esos aportes suplementarios. El historial de logs es otra vista y no sustituye el historial append-only.
 
 **Diseño requerido:** operación suplementaria con IDs idempotentes independientes por tipo; persistencia/reintento ante respuesta perdida; registro servidor de actor y fecha; soporte para aportes simultáneos apertura/alimentación y nota sin colisión de opId; extensión del dashboard para contar y mostrar los tipos de aporte desde el ledger sin duplicar los cortes históricos. No vincular actor a credenciales o contraseñas; usar el actor confiable ya cacheado por sesión.
+
+
+### A06-01 — guía de despliegue y panel de salud/tráfico
+
+**Guía de despliegue:** `Services/DEPLOYMENT_GUIDE.md` existe y está estructurada por los ocho proyectos (COORDINATOR, CATALOG, AUTH, USERS, WRITE, FEEDBACK, UTILITIES, ADMIN), orden, archivos, ScriptProperties/secretos, dependencias, pruebas de humo, actualización del frontend, redeploy selectivo y rollback. Incluye advertencia explícita de no usar IDs/URLs operativos para Beta. Se considera **documentalmente completa para preparar Beta aislada**; no acredita que se hayan desplegado o probado los servicios ni sustituye el checklist de la lista Beta.
+
+**Panel de desarrollador:** el botón de escaneo consulta los siete servicios en paralelo y valida identidad JSON/estado/versión con timeout 8 s; muestra estado, HTTP, última comprobación/respuesta válida, latencia, versión y detalle del servicio seleccionado. El gráfico global muestra contadores de eventos registrados por Coordinator (última hora/6 h/24 h) para los siete servicios; el detalle incluye además métricas locales del navegador actual.
+
+**Limitación funcional confirmada:** seleccionar una tarjeta solo cambia `selectedServiceKey` y renderiza el resultado del último escaneo; no ejecuta una comprobación fresca del servicio seleccionado. El tráfico global tampoco representa todas las solicitudes HTTP: Coordinator registra adquisiciones nuevas de lease, validaciones de contexto y feed; excluye rutas directas no coordinadas, sondeos de salud y solicitudes no instrumentadas. El propio panel/documento lo advierte, pero no debe llamarse contador global completo.
+
+**Salud de dependencias:** el endpoint solo confirma identidad/versión/estado del endpoint; no comprueba Sheets ni Drive. La guía y `SERVICE_HEALTH.md` declaran esta limitación.

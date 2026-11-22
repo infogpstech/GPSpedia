@@ -559,3 +559,8 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] A05-02: ampliar Activity Dashboard para incluir aportes opening/feed desde AportesVehiculo además de cortes y conservar los conteos de vehículos y votos útiles.
 - [ ] A05-03: probar el historial por usuario y sus estadísticas con eventos mixtos, aliases y usuarios eliminados.
 - [ ] A02-10: completar prueba de cache FileReader en navegador real Android/escritorio y medir latencia de carga, no solo CI.
+
+- [x] A06-01: auditar guía de despliegue; ocho servicios, dependencias, secretos, smoke tests, frontend y rollback documentados. Lista para despliegue Beta aislado, no prueba despliegue real.
+- [x] A06-02: auditar panel de salud y métricas; escaneo general cubre 7 servicios, detalle incluye HTTP/latencia/versión/última respuesta, métricas globales Coordinator y navegador local.
+- [ ] A06-03: al seleccionar servicio, ejecutar ping fresco individual y actualizar detalle sin volver a escanear todos los servicios.
+- [ ] A06-04: decidir si se requiere telemetría global de todas las solicitudes HTTP; la actual solo cuenta eventos Coordinator y excluye rutas directas/no coordinadas.

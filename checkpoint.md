@@ -804,3 +804,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **A05-02 defecto:** resumen del Activity Dashboard atribuye únicamente cortes de las tres columnas físicas; no agrega eventos opening/feed del ledger.
 - **Siguiente:** diseñar/implementar A05-01 sin colisionar IDs, preservar idempotencia y soportar más de un tipo de aporte; después extender dashboard.
 - **Contexto:** el requisito es identidad de autor y fecha de aporte, sin volver a validar la sesión contra el servidor en cada acción ni almacenar contraseñas/tokens en el historial.
+
+
+## A06-01/A06-02 auditadas — guía de despliegue y panel desarrollador — 2026-11-22
+
+- **Guía:** Services/DEPLOYMENT_GUIDE.md cubre 8 servicios Apps Script, orden, archivos, secretos, propiedades, dependencias, pruebas de humo, actualización frontend, redeploy y rollback. Está lista como instructivo para preparar Beta aislada; no significa que los deployments estén creados ni verificados.
+- **Panel salud:** escaneo general valida siete endpoints en paralelo, contrato de identidad/estado/versión y timeout 8 s. El detalle muestra estado, HTTP, timestamps, latencia, versión, conteos globales y métricas del navegador.
+- **Hallazgo A06-03:** seleccionar tarjeta no vuelve a consultar ese servicio; muestra resultado del último escaneo. Requisito pendiente: ping individual al seleccionar.
+- **Hallazgo A06-04:** tráfico global es agregado de eventos Coordinator, no todas las solicitudes HTTP. No incluye rutas directas, health checks ni llamadas no instrumentadas. Las métricas locales solo describen el navegador actual.
+- **Límite:** health endpoint no prueba dependencias Sheets/Drive; Beta requiere pruebas funcionales separadas.
+- **Siguiente:** implementar A05-01 (actor/fecha en etapa 3 y ledger), después A05 dashboard, luego A06-03 y A06-04.
