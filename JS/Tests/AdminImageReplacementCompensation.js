@@ -97,6 +97,51 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         try { fn("cambio concurrente", "valor leído"); } catch (_) { conflict = true; }
         assert(conflict, "Sobrescribió un cambio concurrente.");
     });
+    run("Un operationId histórico no puede reemplazar su destino aunque la fila esté cancelada", () => {
+        const recordSource = extractFunction(admin, "recordReplacedImage");
+        const operationId = "OP-12345678901234567890";
+        const originalUrl = "https://drive.google.com/file/d/FILE-A/view";
+        const oldTargetUrl = "https://drive.google.com/file/d/FILE-OLD/view";
+        const newTargetUrl = "https://drive.google.com/file/d/FILE-NEW/view";
+        const values = Array(27).fill("");
+        values[0] = "REP-" + operationId;
+        values[2] = "vehiculo"; values[3] = "VEH-1"; values[4] = "imgCorte1";
+        values[5] = "FILE-A"; values[7] = originalUrl; values[8] = oldTargetUrl; values[10] = "cancelada";
+        const writes = [], restoredStatuses = [];
+        const sheet = { getRange(row, column) { return {
+            setValue(value) { writes.push({ row, column, value }); },
+            getValue() { return values[column - 1]; }
+        }; }};
+        const record = new Function(
+            "extractDriveFileId","DriveApp","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns",
+            "findReplacedImageRecordById","getReplacedImageRecordIdentity_","isKnownReplacedImageStatus_",
+            "setReplacedImageHistoryStatusVerified_","Utilities","SpreadsheetApp",
+            recordSource + "; return recordReplacedImage;"
+        )(
+            url => String(url).includes("FILE-A") ? "FILE-A" : String(url).includes("FILE-OLD") ? "FILE-OLD" : "FILE-NEW",
+            { getFileById() { throw new Error("No debe consultar ni modificar el destino anterior."); } },
+            () => sheet, () => ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id",
+                "nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"],
+            () => ({ rowIndex: 2, values }), () => "FILE-A", () => true,
+            (targetSheet,rowIndex,status) => restoredStatuses.push({ targetSheet,rowIndex,status }),
+            { getUuid: () => "uuid" }, { flush() {} }
+        );
+        let error = "";
+        try {
+            record({ tipoContenido:"vehiculo",registroId:"VEH-1",campo:"imgCorte1",
+                imagenAnteriorUrl:originalUrl,sustituidaPorUrl:newTargetUrl,operationId });
+        } catch (caught) { error = String(caught.message || caught); }
+        assert(error.includes("no se sobrescribió el historial"), "Debe rechazar otro destino para el mismo operationId.");
+        assert(writes.length === 0, "No debe alterar las columnas del historial.");
+        assert(restoredStatuses.length === 0, "No debe reactivar una fila cancelada con otro destino.");
+
+        const replay = record({ tipoContenido:"vehiculo",registroId:"VEH-1",campo:"imgCorte1",
+            imagenAnteriorUrl:originalUrl,sustituidaPorUrl:oldTargetUrl,operationId });
+        assert(replay.created === false && replay.changed === true, "El replay idéntico debe recuperar la misma fila.");
+        assert(restoredStatuses.length === 1 && restoredStatuses[0].status === "historica",
+            "Solo el replay del mismo destino puede reabrir el estado cancelado.");
+        assert(writes.length === 0, "La recuperación del replay no debe reescribir el destino histórico.");
+    });
     run("La imagen desplazada durante una restauración reutiliza un ID idempotente y estable", () => {
         const builderSource = extractFunction(admin, "buildReplacedImageRestoreOperationId_");
         const builder = new Function("Utilities", builderSource + "; return buildReplacedImageRestoreOperationId_;")({

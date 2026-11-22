@@ -11234,26 +11234,7 @@ function recordReplacedImage(data) {
             };
         }
 
-        const previousTargetId = extractDriveFileId(values[8]);
-        let previousTargetUnavailable = !previousTargetId;
-        if (previousTargetId) {
-            try {
-                previousTargetUnavailable = DriveApp.getFileById(previousTargetId).isTrashed();
-            } catch (targetError) {
-                previousTargetUnavailable = true;
-            }
-        }
-        if (existingStatus === "cancelada" || previousTargetUnavailable) {
-            sheet.getRange(existing.rowIndex, 9).setValue(newImageUrl);
-            sheet.getRange(existing.rowIndex, 10).setValue(data.nombreVehiculo || values[9] || "");
-            sheet.getRange(existing.rowIndex, 11).setValue("historica");
-            SpreadsheetApp.flush();
-            return {
-                id: newId, rowIndex: existing.rowIndex, driveId: driveId,
-                created: false, changed: true
-            };
-        }
-        throw new Error("El registro histórico del opId ya apunta a otra sustitución activa; no se duplicó ni sobrescribió.");
+        throw new Error("El operationId ya está asociado a una sustitución diferente; no se sobrescribió el historial.");
     }
 
     if (!file) {
