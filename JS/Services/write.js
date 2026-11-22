@@ -2856,8 +2856,8 @@ function markImageUploadLinkedWithShortLedgerLock_(imageUrl) {
             throw new Error("El token de imagen está en conflicto; no se marcó como vinculado.");
         }
         if (!events.length || !events.some(entry => String(entry.values[7] || "").trim() === fileId)) {
-            appendImageUploadEventRequired_(eventsSheet, expected, "pending", fileId, [], String(metadata.name || file.getName()), "");
-            events = readImageUploadEventsByToken_(eventsSheet, expected.token);
+            const pendingEvent = appendImageUploadEventRequired_(eventsSheet, expected, "pending", fileId, [], String(metadata.name || file.getName()), "");
+            events = events.concat([pendingEvent]);
             projection = projectImageUploadEvents_(events);
         }
         if (!projection || projection.state === "requires_review" || projection.fileId !== fileId) {

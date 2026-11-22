@@ -136,6 +136,19 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   assert_(!/withImageUploadLedgerLock_|getOrCreateImageUploadLedgerSheet_|saveImageUploadLedgerRecord_/.test(linked));
   assert_(linked.indexOf('appendImageUploadEventRequired_(eventsSheet, expected, "linked"')<linked.indexOf("file.setDescription"));
  });
+
+ run_("WRITE vinculación reutiliza evento pending confirmado y conserva lectura final",function(){
+  const linked=String(sources.write).slice(String(sources.write).indexOf("function markImageUploadLinkedWithShortLedgerLock_"),String(sources.write).indexOf("function markImageUploadLinked(imageUrl"));
+  const start=linked.indexOf('const pendingEvent = appendImageUploadEventRequired_(eventsSheet, expected, "pending"');
+  const end=linked.indexOf("if (!projection || projection.state",start);
+  assert_(start>=0&&end>start);
+  const pending=linked.slice(start,end);
+  assert_(pending.includes("events = events.concat([pendingEvent])"));
+  assert_(!pending.includes("readImageUploadEventsByToken_"),"Se repite la lectura completa inmediatamente después del append.");
+  assert_(linked.includes("const latest = projectImageUploadEvents_(readImageUploadEventsByToken_(eventsSheet, expected.token))"),
+    "Debe conservarse la lectura final después del evento linked.");
+ });
+
  run_("WRITE reintento suplementario conserva la clave estable por opId/vehículo/campo",function(){
   const prepare=String(sources.write).slice(String(sources.write).indexOf("function prepareSupplementaryImageUploads_"),String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"));
   assert_(prepare.includes('buildImageUploadOperationKey(payload.opId, payload.vehicleId, field)'));

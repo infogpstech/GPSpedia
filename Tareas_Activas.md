@@ -533,3 +533,8 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-05 validada por CI SHA `b8525d110958bb63f2680460da855bc852df1865`: 302 suites / 3,535 pruebas / 0 fallos.
 - [x] A02-06 validada por CI SHA `0e8110a753b8cb5b00beca0e6d66208b0ec68daf`: 302 suites / 3,537 pruebas / 0 fallos.
 - [ ] A02-07: optimizar relectura tras append pending en markImageUploadLinkedWithShortLedgerLock_, manteniendo read-back final y detección de concurrencia.
+
+- [x] A02-07: reutilizar evento pending devuelto por append al recuperar vinculación de imagen, sin relectura completa inmediata.
+- [x] Conservar getImageUploadReferences_ y read-back final del estado linked.
+- [x] Añadir regresión estática para ambos comportamientos.
+- [ ] CI A02-07.

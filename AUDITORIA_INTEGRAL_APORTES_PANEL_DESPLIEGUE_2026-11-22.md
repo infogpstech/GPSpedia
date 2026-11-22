@@ -245,3 +245,12 @@ El primer CI del refresco dirigido pasó los asserts funcionales de la proyecci�
 ### A02-07 — lecturas repetidas al vincular imágenes
 
 En `markImageUploadLinkedWithShortLedgerLock_`, el camino de recuperación sin evento pending vuelve a leer todas las filas por token inmediatamente después de `appendImageUploadEventRequired_`, aunque el append ya devuelve la fila confirmada. Revisar si se puede reutilizar el evento devuelto y conservar la lectura final tras append linked para detectar concurrencia/conflictos. No retirar `getImageUploadReferences_`: verifica que el archivo quedó realmente referenciado antes de marcarlo linked.
+
+
+### A02-07 — vinculación de imagen sin relectura inmediata tras pending
+
+**Hallazgo:** durante recuperación, si no existe evento pending para el fileId, el helper hace append confirmado y vuelve a leer todas las filas por token para reconstruir la proyección. El append ya devuelve la fila confirmada.
+
+**Corrección:** incorpora el evento devuelto al snapshot local y calcula la proyección sin relectura inmediata. Se conserva la lectura final tras append linked para detectar conflictos y escrituras concurrentes. También se conserva la lectura completa de referencias en Cortes/AportesVehiculo antes de vincular, porque evita marcar como linked una imagen que no está realmente referenciada.
+
+**Prueba:** el contrato comprueba reutilización del evento pending y permanencia de la lectura final. CI pendiente.

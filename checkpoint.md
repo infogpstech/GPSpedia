@@ -756,3 +756,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **CI exacto:** SHA `0e8110a753b8cb5b00beca0e6d66208b0ec68daf`; 302 suites / 3,537 pruebas / 0 fallos; health read-only y Pages SUCCESS.
 - **Siguiente tarea:** A02-07, aplicar el mismo principio al evento pending de recuperación en markImageUploadLinked, conservando lectura final linked y controles de referencias.
 - **Contexto:** solo se eliminan lecturas que duplican un append ya confirmado; permanecen las lecturas que detectan vínculos reales, conflictos o carreras concurrentes.
+
+
+## A02-07 implementada — relectura de pending eliminada — 2026-11-22
+
+- **Tarea realizada:** markImageUploadLinkedWithShortLedgerLock_ incorpora el evento pending retornado por appendImageUploadEventRequired_ al snapshot existente y recalcula la proyección local.
+- **Comprobaciones conservadas:** referencias reales en Cortes/AportesVehiculo; validación de archivo, hash, carpeta y token; lectura final después de append linked para detectar conflictos/concurrencia.
+- **Prueba añadida:** verifica que no se relee el ledger inmediatamente después de append pending y que la lectura final linked permanece.
+- **Estado:** CI pendiente.
+- **Siguiente:** repetir regresión; después caracterizar búsquedas Drive en findExistingImageUpload y la trazabilidad de actor/fecha de add_cortes etapa 3.
