@@ -1526,3 +1526,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - Durante la integración se actualizaron los harnesses que extraen `handleGetActivityLogs` para incluir el snapshot compartido y sus constantes; la regresión final quedó verde.
 - Rama base `GPSpedia2.2.5` comprobada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. No se tocaron datos productivos ni deployments Apps Script.
 - Siguiente: auditar lecturas y eventos de PyS, tutoriales y publicación CATALOG; luego cerrar FEEDBACK integral antes de iniciar ADMIN.
+
+
+## Checkpoint P1 PyS — confirmación dirigida de PysOperations (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; prueba: `JS/Tests/PysCreationIntegrity.js`.
+- `writePysOperation_` reemplaza el read-back integral del ledger por TextFinder exacto en columna A (`opId`) y lectura de filas candidatas de 8 columnas. Mantiene fallback a búsqueda en la columna ID cuando TextFinder no existe.
+- Se mantienen validaciones de hash, problemId, imageFileId, unicidad de reserva y error cuando el append no puede confirmarse.
+- PysCreationIntegrity: **57/57 PASS**. CI HEAD `b1f04432b394c6cbe3b02578b2bbc2c75b38dcb9`: **292 suites / 3,410 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático waiting/in_progress al checkpoint.
+- Rama base `GPSpedia2.2.5` no modificada. No se escribieron hojas productivas ni Drive.
+- Siguiente: revisar el doble read de `getPysSheet_` + `handleGetPysData` y luego los ledgers append-only de tutoriales; después cerrar la publicación CATALOG.
