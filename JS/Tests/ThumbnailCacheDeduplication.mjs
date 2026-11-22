@@ -56,16 +56,38 @@ const entries = [
     { key: "old::w300", expired: false, blob: { size: 1 }, cachedAt: 2, lastAccessedAt: 2 },
     { key: "new::w300", expired: false, blob: { size: 1 }, cachedAt: 3, lastAccessedAt: 3 }
 ];
-const store = { getAll: () => entries, delete: key => removed.push(key) };
+const store = {
+    count: () => entries.length,
+    getAll: () => {
+        const request = {};
+        Object.defineProperty(request, "onsuccess", { set(callback) { request.result = entries; callback(); } });
+        return request;
+    },
+    delete: key => removed.push(key)
+};
 const lruFn = new Function(
     "runThumbnailStoreTransaction", "isThumbnailExpired", "MAX_THUMBNAIL_ENTRIES",
     lru[0] + "\nreturn evictLeastRecentlyUsedThumbnails;"
 )(
-    async (mode, callback) => callback(store, entries),
+    async (requestFactory, callback) => callback(store, requestFactory(store)),
     entry => entry.expired,
     1
 );
 const evicted = await lruFn();
 assert.deepEqual(removed, ["expired::w300", "old::w300"]);
-assert.equal(evicted, 1);
-console.log("ThumbnailCacheDeduplication: 20/20 PASS — single-flight, backoff, lookup acotado y limpieza LRU");
+assert.equal(evicted.removed, 1);
+
+let fullScans = 0;
+const underLimitStore = { count: () => 1, getAll: () => { fullScans++; throw new Error("no debe llamar getAll bajo el límite"); }, delete() {} };
+const underLimit = new Function(
+    "runThumbnailStoreTransaction", "isThumbnailExpired", "MAX_THUMBNAIL_ENTRIES",
+    lru[0] + "\nreturn evictLeastRecentlyUsedThumbnails;"
+)(
+    async (requestFactory, callback) => callback(underLimitStore, requestFactory(underLimitStore)),
+    entry => false,
+    1
+);
+const skippedScan = await underLimit();
+assert.equal(skippedScan.removed, 0);
+assert.equal(fullScans, 0, "El almacén bajo el límite no debe descargar todas las miniaturas.");
+console.log("ThumbnailCacheDeduplication: 22/22 PASS — single-flight, backoff, lookup acotado y LRU condicionado por count");
