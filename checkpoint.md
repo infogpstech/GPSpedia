@@ -494,3 +494,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - La limpieza conserva solo eliminación de claves con timestamp inválido o fuera de ventana.
 - **Siguiente:** validar CI completo y mantener la medición del costo residual de `recordServiceTrafficEvent_` para Beta aislada.
 - **Estado:** cambio local preparado; CI PENDIENTE.
+## P2 — auditoría de inicialización/renderizado UI (2026-11-22)
+- **Tarea realizada:** se revisó el ciclo de arranque de `main.js` y los listeners, timers y observers globales/temporales en `ui.js`.
+- **Resultado:** `initializeApp` tiene un único punto de entrada; banner de estado, Inbox, ADMIN, ayuda contextual y retry de términos tienen guards; timers Inbox se reemplazan; modales y menús temporales liberan listeners/observers; carruseles comparten un resize global.
+- **Evidencia:** `AUDITORIA_P2_UI_INIT_2026-11-22.md` y contrato `JS/Tests/UIInitializationLifecycle.mjs`.
+- **Límite:** no se ejecutó DOM real ni se midieron memoria, CPU o red; esas validaciones siguen reservadas a Beta Android/PWA/escritorio.
+- **Siguiente:** completar diff final/anti-regresión local y preparar el despliegue aislado Beta.
+- **Estado:** auditoría estática COMPLETADA; contrato añadido; CI del HEAD actual PENDIENTE.

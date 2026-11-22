@@ -61,7 +61,8 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 - [x] TEL-01/TEL-03 — retirar contadores directos de AUTH/CATALOG/USERS/WRITE/FEEDBACK, eliminar endpoints internos de telemetría y fan-out de cinco servicios desde ADMIN; `getCatalogChanges` queda contado una sola vez por Coordinator.
 - [x] ADMIN: la lectura de telemetría global ya no adquiere ScriptLock ni compite con leases; el fan-out a cinco servicios está eliminado.
 - [ ] Medir en Beta aislada el costo residual de la escritura best-effort de eventos Coordinator (lease, validación y feed). Si degrada latencia, retirar o rediseñar; no afirmar que es costo cero sin medición.
-- [ ] Completar matriz del flujo de catálogo: integrar feed incremental en UI y medir refresh post-edición, caché local y sincronización PyS en Beta.
+- [x] Integración local del feed incremental en `auth.js`: cursor persistente, aplicación de deltas, reset/fallback a snapshot completo, coordinación de cursor PyS independiente y persistencia IndexedDB; contratos `CatalogChangeFeed`, `CatalogFeedRetry` y `CatalogEditDeltaRefresh` integrados en CI.
+- [ ] Medir en Beta aislada refresh post-edición, caché local, sincronización PyS y solicitudes/bytes/latencia por flujo.
 
 ### P0 — AUTH/USERS y excepciones de sesión
 - [x] Completar mapa de consumidores de `touchSession`, `acceptTerms`, `validateSession`, login, recuperación, logout, `createUser` y `deleteUser` en `MAPA_CONSUMIDORES_AUTH_USERS_P0_2026-11-21.md`.
@@ -117,7 +118,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P2 — optimización y verificación integral
 - [x] Revisar listeners, polling, timers y observers principales: corregida acumulación resize por carrusel y handlers estáticos del panel ADMIN; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup.
 - [x] Revisar cache-first/IndexedDB: IDB y CacheStorage en paralelo, carrera 3 s, una apertura IDB compartida, transacción confirmada y PyS single-flight; medir primer render y memoria real queda para Beta.
-- [ ] Ampliar pruebas transversales de no duplicación/fallos parciales: añadidos dos casos al contrato SharedMutationCoordinator para respuesta JSON inválida tras commit (mismo requestId/cuerpo, sin duplicar) y rechazo de aplicación sin reintento. CI pendiente.
+- [x] Pruebas transversales de no duplicación/fallos parciales: respuesta JSON inválida tras commit reutiliza requestId/cuerpo sin duplicar; rechazo de aplicación no se reintenta. Contrato SharedMutationCoordinator integrado en CI.
 - [x] Documentar llamadas retiradas/conservadas y su justificación en AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
 
 ## Validaciones diferidas a Beta
@@ -277,7 +278,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Carruseles: un listener global resize con debounce; sin closures reteniendo carruseles retirados. Contrato 5/5.
 - [x] Panel ADMIN: initAdminPanelListeners se ejecuta al abrir; termInput, backupResourceInput y contributionRefreshBtn ahora reemplazan handlers en lugar de acumular addEventListener. El input de respaldo combina la habilitación de reanudación y reinicio de previews. Contrato 8/8.
 - [x] CI HEAD d01fb344 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health read-only y Pages SUCCESS.
-- [ ] Revisar inicializaciones/renderizados duplicados más allá de listeners; luego cobertura transversal de fallos parciales/no duplicación.
+- [x] Revisar inicializaciones/renderizados duplicados más allá de listeners. Auditoría estática y contrato `UIInitializationLifecycle.mjs`; sin inicializaciones repetidas ni listeners/observers temporales sin limpieza identificados. Validación DOM real queda para Beta.
 
 
 ### P2 — cierre de revisión estática UI (2026-11-22)
@@ -361,7 +362,7 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [ ] Diseñar e implementar reducción del costo síncrono de métricas; no retirar el diagnóstico sin contrato alternativo.
 - [x] Añadir contratos de Coordinator: ausencia de acceso a PropertiesService de telemetría bajo ScriptLock y preservación del resultado ante fallos; 95/95 PASS.
 - [ ] Completar corrección de contadores directos USERS/WRITE/FEEDBACK y su contrato alternativo.
-- **Estado:** TEL-01/TEL-02/TEL-03 implementación local COMPLETADA en esta rama; pruebas aisladas nuevas preparadas; CI integral de confirmación PENDIENTE. La persistencia best-effort de Coordinator sigue siendo un write adicional fuera del lock; medir su impacto real en Beta antes de decidir si se retira.
+- **Estado:** TEL-01/TEL-02/TEL-03 implementación local COMPLETADA; CI de confirmación del HEAD actual PENDIENTE. La persistencia best-effort de Coordinator sigue siendo un write adicional fuera del lock; medir su impacto real en Beta antes de decidir si se retira.
 
 ### P0 — validación del contrato de telemetría sin contadores directos (2026-11-22)
 - [x] El agregado ADMIN conserva siete servicios y solo muestra eventos que Coordinator registra (adquisiciones nuevas de lease, validaciones de contexto y feed); declara las rutas directas como no recopiladas, no como cero HTTP.
@@ -378,3 +379,8 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] La lectura ADMIN no toma ScriptLock; omite buckets vigentes con JSON/esquema inválido sin eliminarlos, para no competir con el writer concurrente.
 - [x] Solo elimina claves fuera de la ventana de 24 horas o con timestamp inválido.
 - [ ] CI integral de confirmación pendiente.
+### P2 — auditoría de inicialización y renderizado (2026-11-22)
+- [x] `initializeApp` se ejecuta una sola vez según DOMContentLoaded; banner de estado protege handler/suscripción con dataset.
+- [x] Inbox reemplaza el timer anterior y registra conectividad una sola vez; ADMIN refresh, ayuda contextual y retry de términos usan guards.
+- [x] Carruseles usan un listener resize global; menús de imágenes, modales informativos y foco legal liberan listeners/observers al cerrar.
+- [x] Contrato `UIInitializationLifecycle.mjs` añadido al runner. Es auditoría estática; DOM/memoria/CPU/red reales quedan en Beta.

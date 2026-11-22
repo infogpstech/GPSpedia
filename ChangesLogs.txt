@@ -999,3 +999,8 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 2026-11-22 — Coordinator 1.4.9: lectura concurrente de buckets
 - No se eliminan buckets vigentes con contenido inválido durante la lectura; pueden estar siendo reemplazados por el writer best-effort. Solo se limpian timestamps inválidos o claves expiradas.
 - La consulta ADMIN sigue sin ScriptLock y sin fan-out. CI integral de confirmación pendiente.
+2026-11-22 — P2 auditoría de inicialización/renderizado UI
+- Se revisaron listeners, timers, observers y puntos de entrada de main.js/ui.js; no se identificó inicialización duplicada no controlada.
+- initializeApp y banner de estado usan un único punto de entrada/guard; Inbox reemplaza timer y limita listeners globales; ADMIN, ayuda contextual y retry de términos usan guards.
+- Carruseles comparten un listener resize; menús y modales temporales liberan listeners/observers al cerrar.
+- Se añadió UIInitializationLifecycle.mjs al runner. Auditoría estática; DOM real/memoria/CPU/red quedan para Beta. CI de confirmación pendiente.
