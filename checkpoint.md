@@ -1474,3 +1474,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - No se modificó Spreadsheet/Drive productivo, secretos, propiedades ni deployments Apps Script. Concurrencia real y recuperación de respuesta perdida quedan para Beta aislada.
 - Rama base `GPSpedia2.2.5` no modificada.
 - Siguiente: continuar auditoría FEEDBACK con likes, reportes/imágenes e Inbox; después vistas/actividad, PyS/tutoriales y publicaciones CATALOG. Cerrar cada subtask con pruebas, actualización de tareas/auditoría y checkpoint antes de continuar.
+
+
+## Checkpoint P1 FEEDBACK — reutilización de snapshot en likes (2026-11-22)
+
+- Código: `JS/Services/feedback.js`; test de regresión actualizado: `JS/Tests/FeedbackLikeCompletedReplayPreflight.mjs`.
+- `handleRecordLike` ahora reutiliza `replaySnapshot.ledger` cuando el preflight ya verificó encabezados y consultó las filas del actor. `ensureFeedbackLikesSheet_` queda como fallback para preflight sin snapshot, preservando creación/validación del ledger cuando hace falta.
+- Se conserva la secuencia de replay completado/evento/pendiente, consulta de respaldo de filas, append-only y ausencia de lock global.
+- Test específico: FeedbackLikeCompletedReplayPreflight **7/7 PASS**. CI HEAD `8f448e1bb651bfcd0e3577954bdf94d6ad6dc456`: **292 suites / 3,406 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático en curso al momento de checkpoint.
+- No se modificaron datos productivos, endpoints, secretos, propiedades ni deployments Apps Script. La rama base `GPSpedia2.2.5` permanece intacta.
+- Siguiente: revisar rutas FEEDBACK de reportes/imágenes e Inbox; luego vistas/actividad, PyS/tutoriales y publicación CATALOG. Cada subtask debe cerrar con pruebas y checkpoint antes de avanzar.
