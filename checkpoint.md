@@ -1504,3 +1504,13 @@ Continuar P0 con la auditoría del punto de entrada FEEDBACK/reporte/sugerencia 
 - FeedbackReportImageEvents: **3/3 PASS**. CI HEAD `2f850442c3e31685b045938924a749cf08915798`: **292 suites / 3,407 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático in_progress al momento del checkpoint.
 - No se modificaron registros ni archivos productivos; rama base intacta.
 - Siguiente: continuar auditoría de reportes/Inbox y actividad; luego PyS/tutoriales y publicación CATALOG. Validación real de Drive queda reservada a Beta aislada.
+
+
+## Checkpoint P1 FEEDBACK/Inbox — estado y preferencias con lectura dirigida (2026-11-22)
+
+- Código: `JS/Services/InboxConversations.js`; prueba: `JS/Tests/InboxConversations.mjs`.
+- `inboxFindState_` y `inboxFindFlag_` usan TextFinder exacto sobre conversationId en columna A y leen únicamente filas candidatas para verificar userId; mantienen error por duplicados.
+- Pruebas añadidas: lectura dirigida de estado/preferencias y rechazo de duplicados. Se aisló la fixture con limpieza `finally` después de que la primera ejecución revelara que los datos sintéticos afectaban pruebas posteriores.
+- Suite InboxConversations **69/69 PASS**. CI HEAD `893b29c48926e16997cfaff03a6617cd475ddb35`: **292 suites / 3,409 pruebas aprobadas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático en curso al momento del checkpoint.
+- No se tocaron datos productivos, endpoints, secretos, propiedades ni deployments Apps Script; rama base intacta.
+- Siguiente: continuar FEEDBACK con actividad/vistas y PyS/tutoriales; revisar después publicación CATALOG y cerrar la auditoría integral antes de ADMIN.
