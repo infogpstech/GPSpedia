@@ -216,8 +216,15 @@ function inboxAssertParticipant_(row, actorId) {
     return participants;
 }
 function inboxFindState_(sheet, conversationId, userId) {
-    const rows = inboxConversationRows_(sheet, INBOX_STATE_HEADERS_.length), matches = [];
-    rows.forEach((row, index) => { if (String(row[0]) === conversationId && String(row[1]) === userId) matches.push({ row, rowNumber: index + 2 }); });
+    if (!sheet || sheet.getLastRow() < 2) return null;
+    const candidates = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1)
+        .createTextFinder(String(conversationId)).matchCase(true).matchEntireCell(true).findAll();
+    const matches = [];
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const row = sheet.getRange(rowNumber, 1, 1, INBOX_STATE_HEADERS_.length).getValues()[0];
+        if (String(row[0]) === conversationId && String(row[1]) === userId) matches.push({ row, rowNumber });
+    });
     if (matches.length > 1) throw new Error("El estado del participante está duplicado.");
     return matches.length ? matches[0] : null;
 }
@@ -237,10 +244,14 @@ function inboxFlagIsTrue_(value) {
     return value === true || String(value || "").trim().toLowerCase() === "true";
 }
 function inboxFindFlag_(sheet, conversationId, userId) {
-    if (!sheet) return null;
-    const rows = inboxConversationRows_(sheet,INBOX_FLAGS_HEADERS_.length), matches = [];
-    rows.forEach((row,index) => {
-        if (String(row[0]) === conversationId && String(row[1]) === userId) matches.push({row,rowNumber:index+2});
+    if (!sheet || sheet.getLastRow() < 2) return null;
+    const candidates = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1)
+        .createTextFinder(String(conversationId)).matchCase(true).matchEntireCell(true).findAll();
+    const matches = [];
+    candidates.forEach(candidate => {
+        const rowNumber = candidate.getRow();
+        const row = sheet.getRange(rowNumber, 1, 1, INBOX_FLAGS_HEADERS_.length).getValues()[0];
+        if (String(row[0]) === conversationId && String(row[1]) === userId) matches.push({ row, rowNumber });
     });
     if (matches.length > 1) throw new Error("Las preferencias del participante están duplicadas.");
     return matches.length ? matches[0] : null;
