@@ -29,7 +29,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const prepareAt=outer.indexOf("prepareSupplementaryImageUploads_");
   const appendAt=outer.indexOf("appendVehicleContributionEvent_");
   assert(authAt>=0&&authAt<snapshotAt&&snapshotAt<prepareAt&&prepareAt<appendAt);
-  assert(outer.includes("opId")&&outer.includes("duplicate: event.duplicate === true"));
+  assert(outer.includes("opId")&&outer.includes("contributionEvents")&&outer.includes("duplicate:events.length>0&&events.every(e=>e.event.duplicate===true)"));
   assert(!/tryLock\(|waitLock\(|getWriteContributionLock_\(|withSharedMutationLease_\(/.test(outer));
  });
  run("La carga suplementaria prepara imágenes y registra el evento sin retener locks",()=>{
@@ -131,8 +131,9 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(calls.length===2,"Cantidad inesperada de callsites UI: "+calls.length);
   assert(calls.every(m=>ui.slice(m.index,ui.indexOf(");",m.index)+2).includes("getDeveloperSessionPayload")));
   const start=add.indexOf("async function handleStage3Submit"),end=add.indexOf("\n        // --- UI & UTILITY HELPERS",start),stage=add.slice(start,end);
-  assert(stage.includes("userId: state.userId, sessionToken: state.sessionToken"));
-  assert(stage.indexOf("userId: state.userId")<stage.indexOf("routeAction('addSupplementaryInfo'"));
+  assert(stage.includes("getCurrentSessionForOwner(state.userId)"));
+  assert(stage.includes("Object.assign({},pending.requestData,{userId:session.userId,sessionToken:session.sessionToken})"));
+  assert(stage.indexOf("getCurrentSessionForOwner(state.userId)")<stage.indexOf("routeAction('addSupplementaryInfo'"));
  });
  run("Registro silencioso se procesa en WRITE y solo lo puede ejecutar Desarrollador",()=>{
   assert(add.includes("const serviceOverride = null")&&add.includes("silent: silentVal"));

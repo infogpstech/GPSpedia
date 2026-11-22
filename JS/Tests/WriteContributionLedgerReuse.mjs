@@ -26,10 +26,11 @@ assert.match(supplementary,/e\.kind,appendLedgerSheet,rows\)/);
 
 let getterCalls=0;
 const ledger={getLastRow:()=>1};
-const helpers=new Function("WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_","getVehicleContributionLedgerSheet_",
+const helpers=new Function("WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_","getVehicleContributionLedgerSheet_","readVehicleContributionLedgerRows_",
  slot+"\n"+candidate+"\nreturn {getVehicleContributionCutSlotIndex_,getVehicleContributionCandidateStatus_};")(
  ["eventId","opId","vehicleId","operationHash","kind","payloadJson","actorId","actorName","createdAt","status","supersedesEventId"],
- ()=>{getterCalls++;throw new Error("No debe volver a validar el ledger");}
+ ()=>{getterCalls++;throw new Error("No debe volver a validar el ledger");},
+ ()=>[]
 );
 assert.equal(helpers.getVehicleContributionCutSlotIndex_({}, {vehicle:{id:"42"},rowValues:[]}, "EV-1", [], ledger),null);
 assert.equal(helpers.getVehicleContributionCandidateStatus_({}, {vehicle:{id:"42"}}, "EV-1", "opening", ledger),true);
