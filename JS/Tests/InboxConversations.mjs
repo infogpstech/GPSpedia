@@ -110,7 +110,7 @@ const LockService = {
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
     "getSpreadsheet","LockService","SpreadsheetApp","Utilities","assertFeedbackSession","normalizeFeedbackRole",
-    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_, inboxPlainTextPreview_, inboxAppendAudit_ };"
+    source + "\nreturn { handleGetInboxRecipients, handleNotifyDevelopersDriveCritical, handleCreateInboxConversation, handleSendInboxMessage, handleGetInboxConversations, handleGetInboxMessages, handleMarkInboxRead, handleMarkInboxUnread, handleDeleteInboxConversation, handleArchiveInboxConversation, handleCloseInboxConversation, inboxCanStartConversationWith_, ensureInboxConversationSheets_, inboxPlainTextPreview_, inboxAppendAudit_, inboxFindState_, inboxFindFlag_ };"
 )(() => spreadsheet, LockService, SpreadsheetApp, Utilities, assertSession, normalizeRole);
 
 const actor = (id, token) => ({ userId: id, sessionToken: token });
@@ -552,6 +552,36 @@ run("Las mutaciones Inbox mantienen RBAC y usan actor cacheado sin leases por ac
     for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","markInboxUnread","deleteInboxConversation","archiveInboxConversation","closeInboxConversation"]) {
         assert.ok(feedbackSource.includes(action + ":"), action + " debe permanecer declarada en FEEDBACK_ACTION_PERMISSIONS.");
     }
+});
+run("El estado y las preferencias se localizan por conversationId sin leer sus hojas completas", () => {
+    const stateSheet = spreadsheet.getSheetByName("InboxConversationState");
+    const flagSheet = spreadsheet.getSheetByName("InboxConversationFlags");
+    const stateId = "targeted-state-0001", flagId = "targeted-flag-0001";
+    stateSheet.rows.push([stateId,"U1","2026-11-22T00:00:00Z","M1",false,false,true,"now","",""]);
+    stateSheet.rows.push([stateId,"U2","2026-11-22T00:00:00Z","M2",false,true,false,"now","",""]);
+    flagSheet.rows.push([flagId,"U2",false,false,"now"]);
+    flagSheet.rows.push([flagId,"U1",true,false,"now"]);
+    const state = api.inboxFindState_(stateSheet,stateId,"U2");
+    const flag = api.inboxFindFlag_(flagSheet,flagId,"U1");
+    assert.equal(state.rowNumber,stateSheet.getLastRow()-1);
+    assert.equal(state.row[1],"U2");
+    assert.equal(flag.rowNumber,flagSheet.getLastRow());
+    assert.equal(flag.row[1],"U1");
+    const stateLookup = stateSheet.textFinderCalls.at(-1);
+    const flagLookup = flagSheet.textFinderCalls.at(-1);
+    assert.equal(stateLookup.column,1);
+    assert.equal(stateLookup.columnCount,1);
+    assert.equal(stateLookup.query,stateId);
+    assert.equal(flagLookup.column,1);
+    assert.equal(flagLookup.columnCount,1);
+    assert.equal(flagLookup.query,flagId);
+});
+run("Los duplicados del mismo participante siguen fallando de forma explícita", () => {
+    const stateSheet = spreadsheet.getSheetByName("InboxConversationState");
+    const stateId = "targeted-state-duplicate";
+    stateSheet.rows.push([stateId,"U1","","",false,false,false,"now","",""]);
+    stateSheet.rows.push([stateId,"U1","","",false,false,false,"now","",""]);
+    assert.throws(() => api.inboxFindState_(stateSheet,stateId,"U1"),/estado del participante está duplicado/);
 });
 run("La auditoría evita leer el historial completo para deduplicar un messageId", () => {
     const audit = spreadsheet.getSheetByName("InboxConversationAudit");
