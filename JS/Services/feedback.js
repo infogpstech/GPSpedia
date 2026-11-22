@@ -4493,14 +4493,16 @@ function projectTutorialTitle_(tutorialId, baseTitle, renameEventsSnapshot) {
 function ensureTutorialTitleClaim_(tutorialId, title) {
     const id = String(tutorialId || "").trim(), titleKey = normalizeTutorialTitle_(title);
     if (!id || !titleKey) throw new Error("No se pudo identificar el tema actual del tutorial.");
-    const owner = getTutorialTitleOwner_(title);
+    const sheet = getTutorialTitleEventsSheet_(true);
+    const projection = readTutorialTitleEvents_(sheet);
+    const owner = projection.owners.get(titleKey) || "";
     if (owner && owner !== id) throw new Error("El tema actual está reservado por otro tutorial; requiere revisión.");
     if (owner === id) return;
     const payloadHash = buildTutorialContentHash_([id, titleKey, "baseline"]);
     appendTutorialTitleEvent_({
         operationId: "tutorial-title-claim-" + payloadHash,
         tutorialId: id, action: "CLAIM", titleKey, previousTitleKey: "", payloadHash
-    });
+    }, sheet, projection);
 }
 function appendTutorialRenameEvent_(tutorialId, previousTitle, nextTitle) {
     const id = String(tutorialId || "").trim(), expectedTitleKey = normalizeTutorialTitle_(previousTitle);
@@ -4732,9 +4734,9 @@ function readTutorialTitleEvents_(sheet) {
     return { operations: Array.from(operations.values()), owners, applied };
 }
 
-function appendTutorialTitleEvent_(record) {
-    const sheet = getTutorialTitleEventsSheet_(true), payloadHash = buildTutorialTitleEventHash_(record);
-    let projection = readTutorialTitleEvents_(sheet);
+function appendTutorialTitleEvent_(record, sheetSnapshot, projectionSnapshot) {
+    const sheet = sheetSnapshot || getTutorialTitleEventsSheet_(true), payloadHash = buildTutorialTitleEventHash_(record);
+    let projection = projectionSnapshot || readTutorialTitleEvents_(sheet);
     let existing = projection.operations.find(item => item.operationId === record.operationId);
     if (existing) {
         if (existing.eventHash !== payloadHash) throw new Error("El identificador de operación ya pertenece a otra reserva de título.");
