@@ -901,3 +901,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Añadida lista_beta_adenda_2026-11-22_linea_base.md e indexada en lista_beta.txt.
 - Escenarios AUTH/USERS/CATALOG/WRITE/FEEDBACK/Inbox/ADMIN y métricas browser-local; límites de percentiles y telemetría interna no medida documentados.
 - No se ejecutaron pruebas ni se accedió a producción.
+
+
+2026-11-22 — API: evitar iniciar solicitudes de catálogo tras abort previo
+- runCatalogRequestWithRetry revalida la señal externa después de registrar listener y justo antes de ejecutar el callback; el backoff también detecta abort en la ventana de registro.
+- CatalogRequestRetry 8/8; AdminDriveAuditClientRetry 7/7; CI 296 suites / 3,455 pruebas / 0 fallos; health y Pages SUCCESS.
+- Clasificados reintentos de lecturas, cursor resumable, operaciones idempotentes y mutaciones con maxAttempts=1. Informe AUDITORIA_RETRY_ABORT_2026-11-22.md.

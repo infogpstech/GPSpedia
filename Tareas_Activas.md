@@ -285,3 +285,10 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Preparar adenda con sincronización segura, escenarios por AUTH/USERS/CATALOG/WRITE/FEEDBACK/Inbox/ADMIN y métricas por servicio/acción/dispositivo.
 - [x] Documentar que serviceTelemetry es local a la pestaña, acotada a 200 eventos; p50/p95 no son poblacionales y requieren n≥30.
 - [ ] Ejecutar en Beta aislada, incluyendo contadores internos Spreadsheet/Drive/Coordinator con instrumentación temporal agregada. No ejecutar en producción.
+
+
+### P2 — reintentos, abort y efectos duplicados (2026-11-22)
+- [x] Corregir carrera pre-abort en CatalogRequest: callback de request no se ejecuta si la señal ya fue cancelada; backoff revalida cancelación.
+- [x] Clasificar consumidores de routeActionWithRetry: lecturas, cursor resumable, mutaciones idempotentes por operationId y mutaciones maxAttempts=1.
+- [x] CatalogRequestRetry 8/8; AdminDriveAuditClientRetry 7/7; CI 296 suites / 3,455 pruebas / 0 fallos.
+- [ ] Ejecutar pruebas Beta de respuesta perdida/abort de red y comprobar métricas internas Spreadsheet/Drive/Coordinator en entorno aislado.

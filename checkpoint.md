@@ -330,3 +330,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - No se ejecutaron pruebas ni se accedió a datos productivos.
 - CI HEAD 96431af2 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health y Pages SUCCESS.
 - Siguiente: revisión de contratos transversales de fallos parciales/no duplicación y después Beta cuando existan entornos aislados autorizados.
+
+
+## P2 — reintentos y cancelación de solicitudes (2026-11-22)
+
+- Corregida carrera en runCatalogRequestWithRetry: si la señal se aborta entre comprobación y ejecución del microtask, request ya no se invoca; backoff también revalida señal tras registrar listener.
+- CatalogRequestRetry 8/8 PASS; AdminDriveAuditClientRetry 7/7 PASS. Clasificados consumidores: GET/preview idempotentes; auditDriveImages reintenta mismo cursor/payload; organizer/rollback usan operationId; backupDatabase y applyCortesImageReconciliation tienen maxAttempts 1.
+- CI HEAD `1ac0d9b88cd31f5d8d0a95f8d69ef8bb4f10c0bd`: 296 suites / 3,455 pruebas / 0 fallos; health read-only y Pages SUCCESS.
+- Evidencia: AUDITORIA_RETRY_ABORT_2026-11-22.md.
+- No se ejecutaron pruebas Beta ni solicitudes contra producción.
