@@ -53,6 +53,7 @@ const late = early.run(async () => { earlyOrder.push("late-visible"); }, { key: 
 const ordinary = early.run(async () => { earlyOrder.push("ordinary"); }, { key: "ordinary", priority: 0 });
 earlyGate.resolve(); await Promise.all([earlyActive, late, ordinary]);
 assert.deepEqual(earlyOrder, ["active", "late-visible", "ordinary"]);
+assert.equal(early.getMetrics().priorities["10"].promoted, 1, "la promoción anticipada también debe medirse");
 
 const noPreempt = createConcurrencyLimiter(1), activeGate = deferred();
 const activePriority = noPreempt.run(async () => { await activeGate.promise; }, { key: "active", priority: 0 });

@@ -72,7 +72,11 @@ export function createConcurrencyLimiter(limit = 2, options = {}) {
         let priority = Number.isFinite(Number(options && options.priority))
             ? Number(options.priority) : 0;
         if (key && pendingPriorityOverrides.has(key)) {
-            priority = Math.max(priority, pendingPriorityOverrides.get(key));
+            const promotedPriority = pendingPriorityOverrides.get(key);
+            if (promotedPriority > priority) {
+                priority = promotedPriority;
+                metricFor(priority).promoted += 1;
+            }
             pendingPriorityOverrides.delete(key);
         }
         return new Promise((resolve, reject) => {
