@@ -170,6 +170,47 @@ await check("El resultado no expone IDs, nombres de hojas, cache keys ni estruct
     assert.ok(!JSON.stringify(item).includes("catalog_data_v2"));
     assert.ok(!JSON.stringify(item).includes("Cortes"));
 });
+await check("checkServiceHealth consulta únicamente el servicio solicitado", async () => {
+    const singleMatch = apiSource.match(/export async function checkServiceHealth\([\s\S]*?\n\}/);
+    assert.ok(singleMatch, "No se encontró checkServiceHealth.");
+    const endpoints = {
+        AUTH: "https://auth.invalid/exec", CATALOG: "https://catalog.invalid/exec",
+        WRITE: "https://write.invalid/exec", USERS: "https://users.invalid/exec",
+        FEEDBACK: "https://feedback.invalid/exec", UTILITIES: "https://utilities.invalid/exec",
+        ADMIN: "https://admin.invalid/exec"
+    };
+    const single = new Function(
+        "API_ENDPOINTS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
+        "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
+        "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
+        functionSource + "\n" + singleMatch[0].replace("export async function", "async function") +
+        "\nreturn checkServiceHealth;"
+    )(
+        endpoints, contracts, 8000, 2000, 300000, new Map(),
+        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date
+    );
+    const requested = [];
+    const result = await single("CATALOG", {
+        fetchImpl: async url => {
+            requested.push(url);
+            return response(200, { service: "GPSpedia-Catalog", status: "available", version: "2.4.0" });
+        }
+    });
+    assert.equal(result.status, "online");
+    assert.deepEqual(requested, ["https://catalog.invalid/exec?debug=true"]);
+    assert.equal(await single("NOT_A_SERVICE"), null);
+});
+await check("Seleccionar una tarjeta refresca solo el servicio seleccionado y no inicia el escaneo global", async () => {
+    const start = uiSource.indexOf("async function selectServiceHealthDetail_");
+    const end = uiSource.indexOf("function renderServiceDashboard()", start);
+    const selection = uiSource.slice(start, end);
+    assert.ok(start >= 0 && end > start);
+    assert.ok(selection.includes("checkServiceHealth(serviceKey)"));
+    assert.ok(selection.includes("serviceHealthSelectionSequence_"));
+    assert.ok(selection.includes("selectedServiceKey !== serviceKey"));
+    assert.ok(!selection.includes("runServicesHealthScan"));
+    assert.match(uiSource, /card\.addEventListener\("click", \(\) => \{ void selectServiceHealthDetail_\(key\); \}\);/);
+});
 await check("El ping ADMIN tiene timeout y el escaneo inicia independientemente", async () => {
     const start = uiSource.indexOf("window.triggerAdminPanelPing = async function()");
     const end = uiSource.indexOf("// Helper para progreso", start);

@@ -520,7 +520,11 @@ export async function checkAllServicesHealth(options = {}) {
         return result;
     }
 
-    await Promise.all(Object.keys(API_ENDPOINTS).map(async serviceKey => {
+    const requestedServiceKeys = Array.isArray(settings.serviceKeys)
+        ? new Set(settings.serviceKeys.filter(key => typeof key === "string")) : null;
+    const serviceKeys = Object.keys(API_ENDPOINTS).filter(serviceKey =>
+        !requestedServiceKeys || requestedServiceKeys.has(serviceKey));
+    await Promise.all(serviceKeys.map(async serviceKey => {
         const startTime = now();
         const expectedIdentity = Object.prototype.hasOwnProperty.call(SERVICE_HEALTH_CONTRACTS, serviceKey)
             ? SERVICE_HEALTH_CONTRACTS[serviceKey] : undefined;
@@ -718,6 +722,16 @@ export async function checkAllServicesHealth(options = {}) {
 
     return results;
 }
+export async function checkServiceHealth(serviceKey, options = {}) {
+    const key = String(serviceKey || "").trim().toUpperCase();
+    if (!Object.prototype.hasOwnProperty.call(API_ENDPOINTS, key)) return null;
+    const results = await checkAllServicesHealth({
+        ...(options && typeof options === "object" ? options : {}),
+        serviceKeys: [key]
+    });
+    return results[key] || null;
+}
+
 export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
     // El rol y el nombre del aprobador se derivan en FEEDBACK desde la sesión validada.
     return await routeAction("approveVideo", { itemId, ...sessionPayload });

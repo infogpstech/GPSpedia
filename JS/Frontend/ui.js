@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import { getBrowserServiceTrafficSnapshot } from './serviceTelemetry.js';
 import * as offline from './offline.js';
@@ -5949,6 +5949,7 @@ function initAdminPanelListeners() {
     window.gpsepediaRequestDeveloperConsoleConfirmation = requestDeveloperConsoleConfirmation_;
 
     let serviceHealthResults = {}, selectedServiceKey = null, isHealthScanRunning = false;
+    let serviceHealthSelectionSequence_ = 0;
     let globalServiceTrafficData = null, globalServiceTrafficError = null;
     let globalServiceTrafficLoading = false, lastGlobalServiceTrafficFetchAt = 0;
     function formatServiceCheckTime(value) {
@@ -6027,7 +6028,7 @@ function initAdminPanelListeners() {
             }
             bottom.append(latency, version);
             card.append(top, bottom);
-            card.addEventListener("click", () => { selectedServiceKey = key; renderServiceDashboard(); });
+            card.addEventListener("click", () => { void selectServiceHealthDetail_(key); });
             grid.appendChild(card);
         });
     }
@@ -6369,6 +6370,23 @@ function initAdminPanelListeners() {
             if (isAdminPanelCurrent_()) {
                 renderGlobalServiceTrafficChart_();
                 if (selectedServiceKey) renderServiceDetail();
+            }
+        }
+    }
+
+    async function selectServiceHealthDetail_(serviceKey) {
+        selectedServiceKey = serviceKey;
+        const sequence = ++serviceHealthSelectionSequence_;
+        renderServiceDashboard();
+        try {
+            const result = await checkServiceHealth(serviceKey);
+            if (sequence !== serviceHealthSelectionSequence_ || selectedServiceKey !== serviceKey || !isAdminPanelCurrent_()) return;
+            if (!result) throw new Error("No se recibió un resultado para el servicio seleccionado.");
+            serviceHealthResults = { ...serviceHealthResults, [serviceKey]: result };
+            renderServiceDashboard();
+        } catch (error) {
+            if (sequence === serviceHealthSelectionSequence_ && selectedServiceKey === serviceKey && isAdminPanelCurrent_()) {
+                log("[SALUD] No se pudo actualizar " + serviceKey + ": " + String(error && error.message || error), false, true);
             }
         }
     }
