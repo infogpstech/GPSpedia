@@ -3134,21 +3134,28 @@ function handleMarkAsResolved(payload) {
 
 
 
-function buildCutContributionSummary_() {
- const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
- if(!sheet||sheet.getLastRow()<2)return[];
- const count=sheet.getLastRow()-1;
- const vehicleIds=sheet.getRange(2,COLS_CORTES.id,count,1).getValues();
+function readActivityDashboardCutsSnapshot_() {
+ const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES),lastRow=sheet?sheet.getLastRow():0;
+ const count=Math.max(0,lastRow-1);
  const slotColumns=[
-  {type:COLS_CORTES.tipoCorte1,collaborator:COLS_CORTES.colaboradorCorte1},
-  {type:COLS_CORTES.tipoCorte2,collaborator:COLS_CORTES.colaboradorCorte2},
-  {type:COLS_CORTES.tipoCorte3,collaborator:COLS_CORTES.colaboradorCorte3}
+  {type:COLS_CORTES.tipoCorte1,collaborator:COLS_CORTES.colaboradorCorte1,votes:COLS_CORTES.utilCorte1},
+  {type:COLS_CORTES.tipoCorte2,collaborator:COLS_CORTES.colaboradorCorte2,votes:COLS_CORTES.utilCorte2},
+  {type:COLS_CORTES.tipoCorte3,collaborator:COLS_CORTES.colaboradorCorte3,votes:COLS_CORTES.utilCorte3}
  ];
+ if(!sheet||!count)return{sheet,count:0,baseRows:[],slotColumns,slotValues:[]};
+ const baseWidth=Math.max(COLS_CORTES.id,COLS_CORTES.marca,COLS_CORTES.modelo);
+ const baseRows=sheet.getRange(2,1,count,baseWidth).getValues();
  const slotValues=slotColumns.map(slot=>sheet.getRange(2,slot.type,count,slot.collaborator-slot.type+1).getValues());
- const usersSheet=getSpreadsheet().getSheetByName("Users");
- const userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
+ return{sheet,count,baseRows,slotColumns,slotValues};
+}
+
+function buildCutContributionSummary_(cutsSnapshot) {
+ const snapshot=cutsSnapshot||readActivityDashboardCutsSnapshot_(),{sheet,count,baseRows,slotColumns,slotValues}=snapshot;
+ if(!sheet||!count)return[];
  const cleanName=value=>String(value||"").replace(/\s*\[OP-[A-Za-z0-9_-]+\]/gi,"").replace(/\s*\([^)]*\)/g," ").replace(/\s+/g," ").trim();
  const keyOf=value=>cleanName(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const usersSheet=getSpreadsheet().getSheetByName("Users");
+ const userRows=usersSheet&&usersSheet.getLastRow()>1?usersSheet.getRange(2,1,usersSheet.getLastRow()-1,Math.max(8,usersSheet.getLastColumn())).getValues():[];
  const idsByName=new Map();
  userRows.forEach(row=>{
   const id=String(row[0]||"").trim(),username=String(row[1]||"").trim(),fullName=String(row[6]||username).trim();
@@ -3157,7 +3164,7 @@ function buildCutContributionSummary_() {
  });
  const stats=new Map();
  for(let rowIndex=0;rowIndex<count;rowIndex++){
-  const vehicleId=String(vehicleIds[rowIndex]&&vehicleIds[rowIndex][0]||"").trim();
+  const vehicleId=String(baseRows[rowIndex][COLS_CORTES.id-1]||"").trim();
   for(let slot=0;slot<slotColumns.length;slot++){
    const column=slotColumns[slot],values=slotValues[slot][rowIndex]||[];
    const type=String(values[0]||"").trim(),name=cleanName(values[column.collaborator-column.type])||"Comunidad de técnicos",key=keyOf(name);
@@ -3171,22 +3178,18 @@ function buildCutContributionSummary_() {
   .sort((x,y)=>y.cortesAportados-x.cortesAportados||x.nombreUsuario.localeCompare(y.nombreUsuario,"es"));
 }
 
-function buildActivityDashboardInsights_() {
- const ss=getSpreadsheet(),cuts=ss.getSheetByName(SHEET_NAMES.CORTES);
+function buildActivityDashboardInsights_(cutsSnapshot) {
+ const ss=getSpreadsheet(),snapshot=cutsSnapshot||readActivityDashboardCutsSnapshot_();
+ const {sheet:cuts,count,baseRows,slotColumns,slotValues}=snapshot;
  const summary={vehicles:0,cuts:0,usefulVotes:0,notUseful:0,notWorking:0},usefulByCut=new Map(),vehicleNames=new Map();
- if(cuts&&cuts.getLastRow()>1){
-  const count=cuts.getLastRow()-1,baseRows=cuts.getRange(2,1,count,4).getValues();
-  const typeColumns=[COLS_CORTES.tipoCorte1,COLS_CORTES.tipoCorte2,COLS_CORTES.tipoCorte3];
-  const voteColumns=[COLS_CORTES.utilCorte1,COLS_CORTES.utilCorte2,COLS_CORTES.utilCorte3];
-  const typeValues=typeColumns.map(column=>cuts.getRange(2,column,count,1).getValues());
-  const voteValues=voteColumns.map(column=>cuts.getRange(2,column,count,1).getValues());
+ if(cuts&&count>0){
   const vehicleIds=new Set();
   baseRows.forEach((base,index)=>{
    const vehicleId=String(base[COLS_CORTES.id-1]||"").trim(),brand=String(base[COLS_CORTES.marca-1]||"").trim(),model=String(base[COLS_CORTES.modelo-1]||"").trim();
    if(vehicleId){vehicleIds.add(vehicleId);vehicleNames.set(vehicleId,{brand,model});}
-   for(let slot=0;slot<3;slot++){
-    const type=String(typeValues[slot][index][0]||"").trim();if(!type)continue;summary.cuts++;
-    const votes=Number(voteValues[slot][index][0]),countVotes=Number.isSafeInteger(votes)&&votes>0?votes:0;summary.usefulVotes+=countVotes;
+   for(let slot=0;slot<slotColumns.length;slot++){
+    const values=slotValues[slot][index]||[],type=String(values[0]||"").trim();if(!type)continue;summary.cuts++;
+    const voteOffset=slotColumns[slot].votes-slotColumns[slot].type,votes=Number(values[voteOffset]),countVotes=Number.isSafeInteger(votes)&&votes>0?votes:0;summary.usefulVotes+=countVotes;
     if(countVotes){const key=[brand,model,type].join("|"),entry=usefulByCut.get(key)||{brand,model,cutType:type,usefulVotes:0};entry.usefulVotes+=countVotes;usefulByCut.set(key,entry);}
    }
   });
@@ -3250,7 +3253,8 @@ function handleGetActivityLogs(payload) {
   id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]
  }));
  result.sort((x,y)=>(y._sortTime-x._sortTime)||(x._sequence-y._sequence));
- return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),contributions:buildCutContributionSummary_(),insights:buildActivityDashboardInsights_()};
+ const cutsSnapshot=readActivityDashboardCutsSnapshot_();
+ return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),contributions:buildCutContributionSummary_(cutsSnapshot),insights:buildActivityDashboardInsights_(cutsSnapshot)};
 }
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
