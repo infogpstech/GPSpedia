@@ -921,13 +921,14 @@ function handleGetCatalogData(payload = {}) {
     }
 
     // Si no hay datos en caché (o están corruptos), procedemos a leer de la hoja de cálculo.
+    const spreadsheet = getSpreadsheet();
     const allData = {};
 
     // Fetch Cortes
-    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
     let cortesData = [];
     const categoryCounts = {};
-    const feedbackLikeEventCounts = readFeedbackLikeEventCounts_(getSpreadsheet());
+    const feedbackLikeEventCounts = readFeedbackLikeEventCounts_(spreadsheet);
 
     if (cortesSheet) {
         const cortesColumnMap = getCortesColumnMap(cortesSheet);
@@ -940,7 +941,7 @@ function handleGetCatalogData(payload = {}) {
     }
     // Los aportes append-only se proyectan sobre el contrato heredado de la ficha.
     // La hoja ausente es compatible durante la migración gradual; un esquema presente pero inválido falla de forma segura.
-    cortesData = projectVehicleContributionEvents_(cortesData, readVehicleContributionEvents_(getSpreadsheet()));
+    cortesData = projectVehicleContributionEvents_(cortesData, readVehicleContributionEvents_(spreadsheet));
     allData.cortes = cortesData;
     allData.categoryCounts = categoryCounts;
 
@@ -949,7 +950,7 @@ function handleGetCatalogData(payload = {}) {
     allData.sortedCategories = sortedCategories;
 
     // Fetch Logos
-    const logosSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGOS_MARCA);
+    const logosSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGOS_MARCA);
     let logosData = [];
     if (logosSheet) {
         const data = logosSheet.getDataRange().getValues();
@@ -959,12 +960,12 @@ function handleGetCatalogData(payload = {}) {
     allData.logos = logosData;
 
     // Fetch Tutoriales
-    const tutorialesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.TUTORIALES);
+    const tutorialesSheet = spreadsheet.getSheetByName(SHEET_NAMES.TUTORIALES);
     let tutorialesData = [];
     if (tutorialesSheet) {
         const data = tutorialesSheet.getDataRange().getValues();
-        const editEventsSheet = getSpreadsheet().getSheetByName("TutorialEditEvents");
-        const renameEventsSheet = getSpreadsheet().getSheetByName("TutorialRenameEvents");
+        const editEventsSheet = spreadsheet.getSheetByName("TutorialEditEvents");
+        const renameEventsSheet = spreadsheet.getSheetByName("TutorialRenameEvents");
         let editEventRows = [], renameEventRows = [];
         if (editEventsSheet) {
             const editData = editEventsSheet.getDataRange().getValues();
@@ -990,7 +991,7 @@ function handleGetCatalogData(payload = {}) {
     allData.tutoriales = tutorialesData;
 
     // Fetch Relay
-    const relaySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.RELAY);
+    const relaySheet = spreadsheet.getSheetByName(SHEET_NAMES.RELAY);
     let relayData = [];
     if (relaySheet) {
         const data = relaySheet.getDataRange().getValues();
