@@ -518,3 +518,13 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - `PysCreationIntegrity.js` incorpora mock de TextFinder y verifica que no se descargue el ledger completo. PysCreationIntegrity **57/57 PASS**.
 - CI HEAD `b1f04432b394c6cbe3b02578b2bbc2c75b38dcb9`: **292 suites / 3,410 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Job deploy automático waiting/in_progress al documentar.
 - No se modificaron datos productivos de PyS/Drive ni se ejecutaron despliegues manuales Apps Script.
+
+
+## P1 PyS — reutilización de filas validadas en handleGetPysData (2026-11-22)
+
+- `validatePysRecords_` ahora devuelve el snapshot de 10 columnas que ya leyó para validar IDs y duplicados, junto con `maxSuffix`, `ids` y `duplicateRows`.
+- `getPysSheet_(createIfMissing, includeSnapshot)` conserva su retorno de hoja por defecto para todos los consumidores existentes; el modo opcional devuelve `{sheet, rows}`.
+- `handleGetPysData` usa el modo snapshot y proyecta la respuesta desde las filas ya validadas. Elimina la segunda lectura completa de la misma tabla PyS por petición, sin omitir validación de esquema, IDs malformados o duplicados.
+- `PysCreationIntegrity.js` verifica que la lectura de catálogo haga una sola consulta de datos de 10 columnas. PysCreationIntegrity **58/58 PASS**.
+- CI HEAD `b7dcd3bf3c80f128b09777254682c6bddd6fba46`: **292 suites / 3,411 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS. Deploy automático waiting al documentar.
+- No se modificaron registros PyS/Drive productivos.
