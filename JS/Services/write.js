@@ -2951,8 +2951,10 @@ function uploadImageToDriveWithShortLedgerLocks_(imageData, filename, folder, op
         throw new Error("La operación de imagen está en requires_review; no se reutilizó ningún archivo.");
     }
     if (!events.length) {
-        appendImageUploadEventRequired_(eventsSheet, expected, "reserved", "", [], originalFilename, "");
-        events = readImageUploadEventsByToken_(eventsSheet, token);
+        // appendImageUploadEventRequired_ confirma por lectura el evento recién creado;
+        // reutilizar su fila evita volver a leer toda ImageUploadEvents en esta misma petición.
+        const reservedEvent = appendImageUploadEventRequired_(eventsSheet, expected, "reserved", "", [], originalFilename, "");
+        events = [reservedEvent];
         projection = projectImageUploadEvents_(events);
     }
 

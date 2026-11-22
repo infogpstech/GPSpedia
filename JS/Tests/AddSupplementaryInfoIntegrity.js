@@ -142,6 +142,19 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   assert_(prepare.includes('buildCanonicalImageBaseName(vehicle, field)'));
   assert_(prepare.includes('buildImageUploadOperationKey(payload.opId, payload.vehicleId, field)'));
  });
+
+ run_("WRITE reserva imagen y reutiliza el evento confirmado sin releer el ledger",function(){
+  const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
+  const start=upload.indexOf('const reservedEvent = appendImageUploadEventRequired_(eventsSheet, expected, "reserved"');
+  const end=upload.indexOf("let file = null",start);
+  assert_(start>=0&&end>start);
+  const reservation=upload.slice(start,end);
+  assert_(reservation.includes("events = [reservedEvent]"));
+  assert_(reservation.includes("projectImageUploadEvents_(events)"));
+  assert_(!reservation.includes("readImageUploadEventsByToken_"),"Se repite la lectura completa tras confirmar el append.");
+  assert_(upload.indexOf("appendImageUploadEventRequired_(eventsSheet, expected, \"reserved\"")<upload.indexOf("folder.createFile(blob)"));
+ });
+
  run_("WRITE rechaza contenido distinto para una operationKey antes de crear otro archivo",function(){
   const upload=String(sources.write).slice(String(sources.write).indexOf("function uploadImageToDriveWithShortLedgerLocks_"),String(sources.write).indexOf("function uploadImageToDrive("));
   const conflict=upload.indexOf("operationEvents.some(entry => String(entry.values[1] || \"\").trim() !== token)");

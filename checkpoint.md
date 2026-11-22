@@ -738,3 +738,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Prueba añadida:** el contrato verifica una sola obtención/validación del ledger y que precede a la carga de imágenes.
 - **Estado:** CI pendiente.
 - **Siguiente:** CI completo; después medir lecturas de ImageUploadEvents y búsquedas de archivos en Drive, preservando recuperación e idempotencia.
+
+
+## A02-06 implementada — reserva de imagen sin relectura inmediata — 2026-11-22
+
+- **Tarea realizada:** el evento reserved devuelto por appendImageUploadEventRequired_ se reutiliza como snapshot inicial. Se elimina la lectura completa del ledger que inmediatamente repetía la búsqueda del evento recién confirmado.
+- **Seguridad/idempotencia:** la reserva y su read-back TextFinder permanecen antes de crear el archivo. Se conservan las lecturas posteriores a Drive y la confirmación final, necesarias para detectar concurrencia, más de un fileId o requires_review.
+- **Prueba añadida:** verifica el uso del evento devuelto y ausencia de relectura entre append reserved y la selección/creación del archivo.
+- **Estado:** CI pendiente.
+- **Siguiente:** ejecutar regresión; continuar auditoría de las lecturas repetidas en markImageUploadLinked y de búsquedas de archivos Drive.

@@ -227,3 +227,12 @@ El primer CI del refresco dirigido pasó los asserts funcionales de la proyecci�
 **Corrección:** se conserva la validación temprana (antes de efectos externos en Drive) y se reutiliza el handle ya validado para el append. No se elimina ninguna comprobación de permisos, esquema, idempotencia, hash o lectura posterior del evento.
 
 **Prueba:** AddSupplementaryInfoIntegrity comprueba que el handler obtiene el handle una sola vez, antes de la carga, y lo reutiliza para el append. CI pendiente.
+
+
+### A02-06 — evitar relectura completa tras reservar una imagen
+
+**Hallazgo:** al crear el evento `reserved`, `appendImageUploadEventRequired_` ya ejecuta append + flush + TextFinder de confirmación y devuelve la fila confirmada. El flujo volvía a leer todas las filas de `ImageUploadEvents` para recuperar ese mismo evento por token.
+
+**Corrección:** se usa el evento devuelto por el append para construir la proyección local. Se conserva la lectura posterior a la operación Drive y la lectura final de confirmación, que detectan conflictos y archivos concurrentes. La reserva sigue ocurriendo antes de `folder.createFile`; no se elimina recuperación ni validación de unicidad.
+
+**Prueba:** el contrato verifica que el evento reservado se reutiliza y que no hay lectura completa inmediata entre append y búsqueda/creación del archivo. CI pendiente.

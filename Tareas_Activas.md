@@ -524,3 +524,8 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [x] A02-05: reutilizar el handle de AportesVehiculo validado al inicio de handleAddSupplementaryInfo, evitando segunda llamada getVehicleContributionLedgerSheet_ y nueva lectura de encabezados.
 - [x] Añadir regresión estática que garantiza validación temprana única y reutilización del handle.
 - [ ] CI A02-05; continuar después con el costo de lecturas de ImageUploadEvents y búsquedas Drive de recuperación.
+
+- [x] A02-06: reutilizar fila devuelta por appendImageUploadEventRequired_ al reservar imagen, evitando lectura completa redundante de ImageUploadEvents.
+- [x] Mantener lectura posterior a Drive y confirmación final para detectar colisiones/concurrencia.
+- [x] Añadir regresión estática para el fast path de reserva.
+- [ ] CI A02-06.
