@@ -895,3 +895,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Contratos UI: CarouselResizeListenerLifecycle 5/5, TutorialCatalogRefreshDeltaFirst 6/6, AdminPanelListenerLifecycle 8/8.
 - CI HEAD ef50dd98 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health read-only SUCCESS; Pages build pendiente.
 - Validación DOM/memoria/CPU/red queda para Beta aislada.
+
+
+2026-11-22 — P0: protocolo Beta de línea base por flujo
+- Añadida lista_beta_adenda_2026-11-22_linea_base.md e indexada en lista_beta.txt.
+- Escenarios AUTH/USERS/CATALOG/WRITE/FEEDBACK/Inbox/ADMIN y métricas browser-local; límites de percentiles y telemetría interna no medida documentados.
+- No se ejecutaron pruebas ni se accedió a producción.

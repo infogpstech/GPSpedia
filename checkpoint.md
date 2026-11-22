@@ -321,3 +321,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Contratos: CarouselResizeListenerLifecycle 5/5; TutorialCatalogRefreshDeltaFirst 6/6; AdminPanelListenerLifecycle 8/8; cola y requests mantienen tests de promoción, recuperación, abort y fallos.
 - CI HEAD `ef50dd98896a0310f86fedc27930369850dc9def`: 296 suites / 3,454 pruebas / 0 fallos; health read-only SUCCESS; Pages build pendiente.
 - Siguiente: validación DOM real, CPU/memoria, red y re-render en Beta Android/PWA/escritorio; después ampliar solo los casos de fallo parcial que la Beta reproduzca.
+
+
+## Protocolo Beta — línea base por flujo (2026-11-22)
+
+- Preparada `lista_beta_adenda_2026-11-22_linea_base.md` e indexada en `lista_beta.txt`.
+- Incluye sincronización segura, entorno aislado, telemetría browser-local (máx. 200 eventos por pestaña; p50/p95 solo con n≥30), límites de lo que no mide, escenarios AUTH/USERS/CATALOG/WRITE/FEEDBACK/Inbox/ADMIN y enlace al protocolo multimedia.
+- No se ejecutaron pruebas ni se accedió a datos productivos.
+- CI HEAD 96431af2 SUCCESS: 296 suites / 3,454 pruebas / 0 fallos; health y Pages SUCCESS.
+- Siguiente: revisión de contratos transversales de fallos parciales/no duplicación y después Beta cuando existan entornos aislados autorizados.
