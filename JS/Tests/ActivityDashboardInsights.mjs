@@ -23,9 +23,9 @@ const cutSheet=sheet(cuts),feedbackSheet=sheet(fb),applicationSheet=sheet(applic
 const ss={getSheetByName:name=>name==="Cortes"?cutSheet:name==="Feedbacks"?feedbackSheet:name==="FeedbackYearApplications"?applicationSheet:null};
 const cols={id:1,marca:3,modelo:4,tipoCorte1:12,utilCorte1:17,colaboradorCorte1:18,tipoCorte2:19,utilCorte2:24,colaboradorCorte2:25,tipoCorte3:26,utilCorte3:31,colaboradorCorte3:32,timestamp:37};
 const dashboard=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES","COLS_FEEDBACKS",helper+";return {readActivityDashboardCutsSnapshot_,buildCutContributionSummary_,buildActivityDashboardInsights_};")(()=>ss,{CORTES:"Cortes",FEEDBACKS:"Feedbacks"},cols,{ID:1,Usuario:2,ID_vehiculo:3,Problema:4,Respuesta:5,anoSugerido:9});
-const insights=dashboard.buildActivityDashboardInsights_();
 const sharedSnapshot=dashboard.readActivityDashboardCutsSnapshot_();
 const snapshotReadCount=cutSheet.reads.length;
+const insights=dashboard.buildActivityDashboardInsights_(sharedSnapshot);
 assert.equal(snapshotReadCount,4,"El snapshot de Cortes se construye con A:D y tres rangos combinados tipo→colaborador.");
 dashboard.buildCutContributionSummary_(sharedSnapshot);
 dashboard.buildActivityDashboardInsights_(sharedSnapshot);
