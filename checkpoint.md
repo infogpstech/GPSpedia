@@ -220,3 +220,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Hallazgo no crítico: handleInitYouTubeUpload no persiste opVideoId→uploadUrl. Si se pierde la respuesta de inicialización, el reintento puede crear una segunda sesión resumable sin uso; no duplica por sí solo vídeos publicados. Requiere diseño de almacenamiento, concurrencia, expiración/renovación y limpieza; no se improvisa en esta auditoría.
 - No se cambió código, tamaño de bloque, transferencia directa, RBAC ni aprobación. Validación real YouTube sigue reservada a Beta aislada.
 - **Siguiente:** inventario de tamaños históricos de logos y revisión de límites; no cambiar límites sin muestra representativa.
+
+
+## P1 multimedia — inventario de logos (2026-11-22)
+
+- Revisados todos los assets de Images/: Logo_TemaOscuro.png (1,346,111 bytes) y tracklink_logo.png (2,883 bytes); sus copias bajo Olds tienen el mismo SHA, no son muestras adicionales. Los demás son iconos PWA, verificación o capturas UI.
+- UI readLogoFileBase64_ y backend validateLogoImagePayload_ admiten PNG/SVG/WEBP, verifican MIME/Base64/firma, pero no imponen un máximo de bytes específico para logos.
+- No se cambia límite: los recursos versionados no representan el inventario real de LogosMarca. Los tamaños históricos residen en Drive/Spreadsheet y no hay conector Drive/Sheets disponible en esta sesión; medir en Beta aislada de solo lectura antes de proponer límite.
+- Evidencia: AUDITORIA_P1_LOGOS_TAMANO_2026-11-22.md.
+- **Siguiente:** diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida, incluyendo renovación 404/410, concurrencia y limpieza; mantener transferencia directa.

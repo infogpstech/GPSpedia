@@ -826,3 +826,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Revisados inicialización OAuth, ID final, idempotencia de aprobación, destino único, RBAC, ledger append-only y publicación/rechazo recuperables.
 - Suites de cliente/servidor incluidas en regresión; CI HEAD fd8c9040 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos.
 - Hallazgo: initYouTubeUpload no persiste opVideoId→uploadUrl; una respuesta de inicialización perdida puede dejar una sesión resumable sin uso. No duplica por sí sola vídeos publicados. Se difiere diseño seguro de almacenamiento/renovación/concurrencia/limpieza; sin cambio de código en esta auditoría.
+
+
+2026-11-22 — P1 multimedia: inventario de logos y límites
+- Assets versionados: Logo_TemaOscuro.png 1,346,111 bytes y tracklink_logo.png 2,883 bytes; las copias Olds comparten SHA. Los demás assets son iconos, verificación y capturas.
+- UI/backend admiten PNG/SVG/WEBP y validan MIME/Base64/firma; no se encontró máximo de bytes específico para logos.
+- No se cambia límite porque el repositorio no contiene una muestra representativa del inventario LogosMarca en Drive. Medición histórica queda para Beta aislada de solo lectura.
+- Informe: AUDITORIA_P1_LOGOS_TAMANO_2026-11-22.md.

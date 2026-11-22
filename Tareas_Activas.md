@@ -203,3 +203,10 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Confirmar suites de cliente/servidor incluidas en RunServiceTests; CI HEAD fd8c9040 SUCCESS: 293 suites / 3,435 pruebas / 0 fallos.
 - [ ] Diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida: asociar opVideoId con sesión, manejar renovación 404/410, concurrencia y limpieza; riesgo actual de sesiones sin uso, sin duplicación de vídeo publicado.
 - [ ] Siguiente: inventariar tamaños históricos de logos y límites actuales sin modificar parámetros sin corpus representativo.
+
+
+### P1 — inventario de logos (2026-11-22)
+- [x] Inventariar assets versionados y revisar validación cliente/backend: PNG/SVG/WEBP, MIME, Base64 canónico y firma real; no hay límite de bytes específico.
+- [x] Confirmar que los assets versionados no son una muestra representativa de LogosMarca. No cambiar límites por falta de datos.
+- [ ] Medir en Beta aislada y de solo lectura los tamaños históricos reales de Drive/Spreadsheet, MIME/firma, dimensiones y anomalías antes de definir un límite.
+- [ ] Siguiente: diseñar idempotencia durable de initYouTubeUpload ante respuesta perdida y reintentos de renovación.
