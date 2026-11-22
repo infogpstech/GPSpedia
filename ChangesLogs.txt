@@ -907,3 +907,8 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - runCatalogRequestWithRetry revalida la señal externa después de registrar listener y justo antes de ejecutar el callback; el backoff también detecta abort en la ventana de registro.
 - CatalogRequestRetry 8/8; AdminDriveAuditClientRetry 7/7; CI 296 suites / 3,455 pruebas / 0 fallos; health y Pages SUCCESS.
 - Clasificados reintentos de lecturas, cursor resumable, operaciones idempotentes y mutaciones con maxAttempts=1. Informe AUDITORIA_RETRY_ABORT_2026-11-22.md.
+
+
+2026-11-21 — pruebas transversales Coordinator: publicación idempotente ante respuesta JSON inválida
+- `JS/Tests/SharedMutationCoordinator.js`: añadido escenario donde Coordinator confirma la publicación y el cliente recibe JSON inválido; verifica reintento con cuerpo/requestId idénticos y ausencia de eventos/revisiones duplicados.
+- Añadido escenario de rechazo de aplicación confirmado que debe propagarse sin un segundo request.

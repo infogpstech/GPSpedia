@@ -339,3 +339,10 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - CI HEAD `1ac0d9b88cd31f5d8d0a95f8d69ef8bb4f10c0bd`: 296 suites / 3,455 pruebas / 0 fallos; health read-only y Pages SUCCESS.
 - Evidencia: AUDITORIA_RETRY_ABORT_2026-11-22.md.
 - No se ejecutaron pruebas Beta ni solicitudes contra producción.
+
+
+## P2 — no duplicación y fallo parcial en publicación CATALOG (2026-11-21)
+
+- Se amplió `JS/Tests/SharedMutationCoordinator.js` con dos escenarios del cliente compartido: (1) Coordinator persiste publicación y la primera respuesta HTTP 200 contiene JSON inválido; el retry reutiliza el cuerpo exacto/requestId y obtiene replay `duplicate` sin duplicar eventos/revisiones; (2) un rechazo explícito de aplicación se propaga sin reintento.
+- El contrato ya se ejecuta desde `RunServiceTests.mjs` en el grupo INTEGRATION. La validación CI del nuevo HEAD está pendiente; no marcar aún como completada.
+- Siguiente: verificar regresión y workflows; si pasan, cerrar esta tarea y continuar con el siguiente pendiente local de P1/P2 según el backlog.

@@ -111,7 +111,7 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 ### P2 — optimización y verificación integral
 - [x] Revisar listeners, polling, timers y observers principales: corregida acumulación resize por carrusel y handlers estáticos del panel ADMIN; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup.
 - [x] Revisar cache-first/IndexedDB: IDB y CacheStorage en paralelo, carrera 3 s, una apertura IDB compartida, transacción confirmada y PyS single-flight; medir primer render y memoria real queda para Beta.
-- [ ] Añadir pruebas de no duplicación y fallos parciales; ejecutar regresión integral y comparación antes/después.
+- [ ] Ampliar pruebas transversales de no duplicación/fallos parciales: añadidos dos casos al contrato SharedMutationCoordinator para respuesta JSON inválida tras commit (mismo requestId/cuerpo, sin duplicar) y rechazo de aplicación sin reintento. CI pendiente.
 - [x] Documentar llamadas retiradas/conservadas y su justificación en AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
 
 ## Validaciones diferidas a Beta
@@ -292,3 +292,9 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Clasificar consumidores de routeActionWithRetry: lecturas, cursor resumable, mutaciones idempotentes por operationId y mutaciones maxAttempts=1.
 - [x] CatalogRequestRetry 8/8; AdminDriveAuditClientRetry 7/7; CI 296 suites / 3,455 pruebas / 0 fallos.
 - [ ] Ejecutar pruebas Beta de respuesta perdida/abort de red y comprobar métricas internas Spreadsheet/Drive/Coordinator en entorno aislado.
+
+
+### P2 — publicación CATALOG ante respuesta parcial (2026-11-21)
+- [x] Añadir prueba de recuperación cuando Coordinator confirma la publicación, pero la primera respuesta llega como JSON inválido: el segundo intento conserva exactamente el cuerpo/requestId y devuelve replay `duplicate` sin crear revisiones adicionales.
+- [x] Añadir prueba de que un rechazo de aplicación explícito no genera un segundo viaje de red.
+- [ ] Ejecutar contrato SharedMutationCoordinator y regresión completa en CI; confirmar conteo final y revisar logs.
