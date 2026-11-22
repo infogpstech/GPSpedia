@@ -1017,3 +1017,11 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - La ruta visible usa el elemento ya cargado y no añade un segundo fetch; la precarga conserva su descarga CORS independiente.
 - Se corrige el texto desactualizado del inventario P1 y se añade ThumbnailPriorityIntegration.mjs al runner. El nuevo contrato queda pendiente de CI.
 - No se cambian formatos, tamaños, concurrencia ni límites sin corpus técnico y medición Beta.
+
+
+2026-11-22 — CI P1 prioridad de miniaturas (HEAD 1aa93ed)
+- ThumbnailPriorityIntegration: 15/15 PASS; confirma prioridad visible 10 sobre precarga 0, promoción de variante pendiente, reutilización del elemento ya cargado y ausencia de segundo fetch.
+- Regresión integral: 300 suites / 3,468 pruebas aprobadas; 0 fallos.
+- Sintaxis Node 22: 431 archivos JS/MJS; referencias relativas: 342 archivos inspeccionados, todas resueltas.
+- Health read-only: 7/7 servicios SUCCESS; GitHub Pages build/deployment SUCCESS.
+- No se cambiaron parámetros de compresión, tamaños, concurrencia, TTL ni límites. Corpus técnico y mediciones de navegador siguen pendientes de Beta aislada.

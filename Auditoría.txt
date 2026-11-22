@@ -39,3 +39,10 @@
 - Se retiraron contadores directos y endpoints getServiceTraffic de AUTH, CATALOG, USERS, WRITE y FEEDBACK; ADMIN ya no hace fan-out. El agregado Coordinator es parcial/best-effort y no representa solicitudes HTTP.
 - Persiste un getProperty/setProperty best-effort fuera de ScriptLock para eventos Coordinator. Su impacto no se ha medido; medir en Beta aislada antes de decidir si se retira.
 - P1: la cola de miniaturas ya tiene prioridad visible (10) sobre precarga (0), promoción de tareas pendientes y reutilización del elemento visible sin segundo fetch. Inventario inicial corregido; nuevo contrato de integración pendiente de CI.
+
+
+2026-11-22 — P1 MINIATURAS: PRIORIDAD VISIBLE VALIDADA
+- HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63: 300 suites / 3,468 pruebas / 0 fallos; ThumbnailPriorityIntegration 15/15 PASS.
+- Sintaxis 431 archivos JS/MJS; referencias relativas 342; health read-only 7/7; Pages build/deployment SUCCESS.
+- Confirmada prioridad visible 10 frente a precarga 0, promoción de trabajo pendiente y reutilización de imagen cargada sin segundo fetch. No hay cancelación de tareas activas; no se añade sin medición.
+- Pendiente: corpus técnico representativo y mediciones reales de nitidez, alfa, primera pintura, CPU, red y memoria en Beta aislada.

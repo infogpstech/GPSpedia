@@ -188,3 +188,8 @@ Solo se eliminan claves con timestamp inválido o fuera de la ventana de 24 hora
 El commit 29cc8d142d08611a0226ecd3c2bee09ad4517125 superó la regresión integral: 299 suites, 3,453 pruebas aprobadas y cero fallos. El análisis estático comprobó sintaxis en 430 archivos .js/.mjs y referencias relativas en 341 módulos/runner/tests activos. El diagnóstico remoto de salud realizó únicamente GET y confirmó 7/7 servicios. GitHub Pages build/deployment finalizó correctamente.
 
 Este CI confirma el código y los contratos locales de esa revisión. No despliega los proyectos Apps Script ni sustituye las pruebas Beta. El costo residual de escritura de Coordinator permanece pendiente de medición real.
+
+
+## 13. CI de confirmación posterior — HEAD 1aa93ed (2026-11-22)
+
+Tras añadir el contrato P1 de prioridad de miniaturas, el HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63 volvió a superar la regresión integral: 300 suites / 3,468 pruebas / 0 fallos. Sintaxis: 431 archivos JS/MJS; referencias relativas: 342 archivos. Health read-only: 7/7 servicios. GitHub Pages build/deployment: SUCCESS. Esta validación no cambia el estado pendiente de medición Beta del costo residual de Coordinator.

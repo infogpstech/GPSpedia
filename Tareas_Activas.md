@@ -390,7 +390,14 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 - [x] Confirmar que la ruta visible reutiliza el elemento img ya descargado y no inicia un segundo fetch; la precarga mantiene su fetch CORS independiente.
 - [x] Corregir el hallazgo P1-MED-01 del inventario inicial, que describía erróneamente la cola como FIFO simple y sin prioridad.
 - [x] Añadir ThumbnailPriorityIntegration.mjs al runner para proteger la integración de prioridad, single-flight y ausencia de segundo fetch.
-- [ ] Ejecutar CI del nuevo HEAD y confirmar el contrato añadido.
+- [x] CI del HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63: ThumbnailPriorityIntegration 15/15 PASS; regresión 300 suites / 3,468 pruebas / 0 fallos; sintaxis 431 archivos JS/MJS; referencias 342 archivos; health 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - [ ] Medir en Beta aislada tiempos de espera por prioridad, primera pintura, CPU, bytes, memoria y tareas que continúan tras cambiar de vista/sesión.
 - [ ] Preparar corpus técnico representativo (diagramas de cableado, conectores, relés, paneles, PNG con alfa y fotografías) y comparar nitidez/dimensiones de variantes 300/800/1600.
 - **Límite:** no cambiar concurrencia 2, PNG, tamaños, TTL, LRU ni límites de archivos sin corpus y medición real.
+
+
+### Confirmación P1 — prioridad de miniaturas (2026-11-22)
+- [x] Contrato ThumbnailPriorityIntegration: 15/15 PASS en CI.
+- [x] Regresión integral del HEAD 1aa93ed686753f2d855bb774635da436ca4d9b63: 300 suites / 3,468 pruebas / 0 fallos.
+- [x] Sintaxis: 431 archivos JS/MJS; referencias relativas: 342 archivos; health read-only 7/7; GitHub Pages build/deployment SUCCESS.
+- [ ] Siguiente: preparar corpus técnico representativo y ejecutar mediciones de cola/primera pintura en Beta aislada; no cambiar compresión ni límites sin evidencia.

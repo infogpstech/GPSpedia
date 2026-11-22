@@ -512,3 +512,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Siguiente tarea:** ejecutar CI del commit que añade ThumbnailPriorityIntegration.mjs; si pasa, continuar P1 con corpus técnico representativo y plan de medición de cola/primera pintura. No cambiar parámetros de compresión hasta disponer de corpus y mediciones.
 - **Contexto breve:** se cerró el rediseño local de contadores directos sin perder la distinción entre eventos Coordinator y solicitudes locales del navegador; la siguiente fase evita reabrir mecanismos multimedia ya corregidos y centra el trabajo en calidad visual medible.
 - **Estado:** TEL-01/TEL-03 COMPLETADOS localmente; CI del contrato de prioridad PENDIENTE; validación visual/latencia real PENDIENTE de Beta aislada.
+
+
+## Actualización de continuidad vigente — 2026-11-22 (confirmación P1)
+
+- **Tarea realizada:** se añadió el contrato de integración ThumbnailPriorityIntegration.mjs para verificar prioridad de imagen visible (10) sobre precarga (0), promoción de la misma variante pendiente, reutilización de la imagen visible y ausencia de segundo fetch.
+- **Validación exacta del HEAD:** 1aa93ed686753f2d855bb774635da436ca4d9b63. Contrato nuevo 15/15 PASS; regresión 300 suites / 3,468 pruebas / 0 fallos; sintaxis 431 archivos JS/MJS; referencias relativas 342 archivos; health read-only 7/7; Pages build/deployment SUCCESS.
+- **Rama base:** GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Siguiente tarea:** P1 — preparar/seleccionar corpus técnico representativo y definir mediciones reproducibles de espera de cola, primera pintura, CPU, bytes y memoria; ejecutar solo en Beta aislada. No modificar tamaños, formato PNG, concurrencia 2, TTL o LRU sin evidencia.
+- **Pendientes relacionados:** medir el costo residual del get/set best-effort de Coordinator en Beta; no confundir Pages deployment con despliegue Apps Script.
+- **Contexto breve:** el inventario inicial de multimedia se corrigió porque la prioridad visible ya estaba implementada; ahora el contrato evita regresiones y la fase siguiente debe centrarse en calidad visual y mediciones reales.
+- **Estado:** prioridad visible/precarga VALIDADA localmente; calidad visual y rendimiento real PENDIENTES de corpus/Beta.
