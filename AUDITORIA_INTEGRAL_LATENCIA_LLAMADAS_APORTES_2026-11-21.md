@@ -577,3 +577,14 @@ Esta es una auditoría estática inicial y un plan de trabajo, no una certificac
 - Feed: `CatalogChangeFeed` **36/36 PASS**, incluidos requestId idempotente, lotes parciales, cursor, retención, sourceVersion y reset ante corrupción/huecos.
 - CI HEAD `49ff3a6351df6e700d8325ba630a41af67ce8f61`: **293 suites / 3,424 pruebas / 0 fallos**; build SUCCESS; deployed-service-health SUCCESS; report-build-status SUCCESS; deploy in_progress al documentar.
 - Se conserva la separación: snapshots completos solo para carga inicial, reset/cursor vencido y recuperación; navegación normal consume deltas. No se cambió el comportamiento de publicación.
+
+
+### P0 — auditoría de telemetría en rutas ordinarias (2026-11-22)
+
+- Revisión estática completada de `serviceTelemetry.js`, `api-config.js`, USERS, WRITE, FEEDBACK, Coordinator y el agregado ADMIN.
+- La telemetría del navegador es local, acotada a 200 eventos y no añade requests ni persistencia.
+- USERS registra cada `getUsers`; WRITE registra `checkVehicle`, `getSuggestion` y `checkVinDuplicate`; FEEDBACK registra numerosas lecturas/mutaciones antes del dispatcher. Los contadores hacen getProperty/setProperty por petición y getProperties/limpieza al crear el bucket horario. Son best-effort y pueden subcontar, pero siguen ejecutándose síncronamente.
+- Coordinator ejecuta `recordServiceTrafficEvent_` dentro de `withCoordinatorLock_` en adquisiciones exitosas y lectura del feed; la escritura de PropertiesService extiende la sección crítica.
+- El agregado de métricas se consulta desde el panel ADMIN restringido a Desarrollador; no se ejecuta por cada acción ordinaria.
+- Evidencia detallada: `AUDITORIA_P0_TELEMETRIA_2026-11-22.md`. Hallazgos TEL-01 a TEL-04.
+- No se modificó código ni se midió latencia real. Siguiente: diseñar y probar un contrato de telemetría de bajo costo que conserve los scopes requeridos sin persistencia síncrona por acción ni escritura dentro del lock.
