@@ -377,3 +377,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Primera ejecución CI del test `RepositoryJavaScriptSyntax.mjs` falló únicamente en `JS/Tests/AdminModalEditSecurity.js`: es un fixture clásico (sin import/export) que elimina globales de prueba mediante `delete DriveApp`/`delete SpreadsheetApp`; al forzarlo como ES module, Node lo rechaza por strict mode. No es un defecto del código Apps Script ni del fixture en su contexto original.
 - Se ajustó el harness para usar `node --check` sin forzar el tipo de módulo; `.mjs` conserva modo módulo por extensión y `.js` usa detección normal de sintaxis, preservando scripts clásicos y módulos ESM.
 - La primera regresión terminó en FAIL por el harness nuevo: 288 suites / 3,314 pruebas aprobadas / 1 fallo de suite; las suites previas al chequeo no reportaron fallo. Pendiente repetir CI tras el ajuste.
+
+
+## Verificación integral — sintaxis y regresión (2026-11-21)
+
+- Se corrigió el harness para no forzar modo ES module en scripts clásicos; Node detecta módulos `.mjs` y sintaxis ESM `.js` sin cambiar su modo de ejecución. La primera falla fue exclusivamente el modo forzado del validador, no el código del repositorio.
+- CI HEAD `2955bb16ce27bb019f6f0a86f9d902b8ecea8c4d`: `RepositoryJavaScriptSyntax` 1/1 PASS, 428 archivos `.js/.mjs` comprobados; regresión 297 suites / 3,458 pruebas / 0 fallos; health read-only SUCCESS.
+- Pages build/deployment del mismo HEAD estaba in_progress al cierre. No se ha desplegado Apps Script ni modificado servicios/recursos productivos.
+- Siguiente: completar revisión de referencias/dependencias y diff acumulado, luego anti-regresión. Beta de navegador/Drive/Spreadsheet/YouTube sigue diferida a entornos aislados.

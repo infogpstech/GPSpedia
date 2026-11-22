@@ -314,7 +314,14 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 
 
 ## Fase de verificación técnica integral (§11 NORMAS) — inicio 2026-11-21
-- [ ] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` del repositorio mediante `RepositoryJavaScriptSyntax.mjs`; primera ejecución detectó que un fixture clásico (`AdminModalEditSecurity.js`) no puede forzarse a ES module por usar `delete` de globales. Se retiró la bandera de módulo forzado; nueva ejecución CI pendiente.
-- [x] Ejecutar regresión de servicios ya existente: HEAD `9cde983e`, 296 suites / 3,457 pruebas / 0 fallos; repetir sobre HEAD final de esta fase.
-- [ ] Revisar referencias/dependencias, compatibilidad frontend/Apps Script y contratos entre servicios; distinguir pruebas locales de Beta.
+- [x] Ejecutar parsing/sintaxis sobre todos los archivos `.js` y `.mjs` mediante `RepositoryJavaScriptSyntax.mjs`: 428 archivos verificados, 1/1 PASS.
+- [x] Regresión integral HEAD `2955bb16`: 297 suites / 3,458 pruebas / 0 fallos; health read-only SUCCESS.
+- [ ] Revisar referencias/dependencias y compatibilidad frontend/Apps Script; los contratos de acciones/servicios se ejercitaron en las 297 suites; distinguir pruebas locales de Beta.
 - [ ] Revisar diff de cambios vigentes y regresión/anti-regresión; registrar solo defectos reproducibles.
+
+
+### Verificación integral — sintaxis y regresión (2026-11-21)
+- [x] Sintaxis: `RepositoryJavaScriptSyntax` 1/1 PASS, 428 archivos `.js/.mjs` comprobados con Node 22.23.5.
+- [x] Regresión: CI HEAD `2955bb16ce27bb019f6f0a86f9d902b8ecea8c4d`, 297 suites / 3,458 pruebas / 0 fallos.
+- [x] Health read-only SUCCESS. Pages build del mismo HEAD seguía in_progress al cierre.
+- [ ] Revisar referencias/imports y compatibilidad de rutas/módulos restantes; diff acumulado y regresión anti-regresión.

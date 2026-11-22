@@ -929,3 +929,8 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 
 2026-11-21 — verificación integral: compatibilidad de scripts clásicos
 - `RepositoryJavaScriptSyntax.mjs`: el primer intento forzaba todos los `.js` como módulos y rechazó un fixture clásico válido que elimina globals de prueba; se cambió a `node --check` sin forzar el tipo, para respetar módulos ESM y scripts clásicos.
+
+
+2026-11-21 — verificación integral: sintaxis y regresión
+- `RepositoryJavaScriptSyntax.mjs` comprobó 428 archivos `.js/.mjs` con Node 22.23.5; 1/1 PASS. Se preservó el parseo de scripts clásicos sin forzarlos a módulo.
+- CI HEAD `2955bb16`: 297 suites / 3,458 pruebas / 0 fallos; health read-only SUCCESS.
