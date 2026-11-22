@@ -912,3 +912,7 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 2026-11-21 — pruebas transversales Coordinator: publicación idempotente ante respuesta JSON inválida
 - `JS/Tests/SharedMutationCoordinator.js`: añadido escenario donde Coordinator confirma la publicación y el cliente recibe JSON inválido; verifica reintento con cuerpo/requestId idénticos y ausencia de eventos/revisiones duplicados.
 - Añadido escenario de rechazo de aplicación confirmado que debe propagarse sin un segundo request.
+
+
+2026-11-21 — pruebas Coordinator de fallos parciales/no duplicación
+- `JS/Tests/SharedMutationCoordinator.js`: dos escenarios añadidos para JSON inválido tras publicación confirmada y rechazo de aplicación sin retry. Sin cambios en código de servicios.

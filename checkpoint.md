@@ -346,3 +346,11 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Se amplió `JS/Tests/SharedMutationCoordinator.js` con dos escenarios del cliente compartido: (1) Coordinator persiste publicación y la primera respuesta HTTP 200 contiene JSON inválido; el retry reutiliza el cuerpo exacto/requestId y obtiene replay `duplicate` sin duplicar eventos/revisiones; (2) un rechazo explícito de aplicación se propaga sin reintento.
 - El contrato ya se ejecuta desde `RunServiceTests.mjs` en el grupo INTEGRATION. La validación CI del nuevo HEAD está pendiente; no marcar aún como completada.
 - Siguiente: verificar regresión y workflows; si pasan, cerrar esta tarea y continuar con el siguiente pendiente local de P1/P2 según el backlog.
+
+
+## P2 — cierre de pruebas transversales de no duplicación/fallos parciales (2026-11-21)
+
+- `SharedMutationCoordinator.js` ampliado con dos casos: publicación confirmada con respuesta JSON inválida (retry exacto por requestId/cuerpo sin duplicar) y rechazo de aplicación sin reintento. El contrato existente también cubre respuesta perdida tras commit y recuperación de lote parcial mediante reset.
+- Revisión del diff del commit `9cde983eb6e95595519d74806d2ade03d385e126`: solo `JS/Tests/SharedMutationCoordinator.js`, +48 líneas, 0 eliminaciones; commit padre `9e909c6a4146cf19f8d4a0f1504fb00fef7fac4b`.
+- CI: 296 suites / 3,457 pruebas / 0 fallos; health read-only SUCCESS. Pages build del mismo HEAD seguía en curso; no es requisito para la suite de servicios ni implica deployment Apps Script.
+- Siguiente: cerrar trazado estático de YouTube/consultas ya auditado, mantener sin cambios la inicialización no idempotente que no puede resolverse lock-free bajo NORMAS §15; después revisar pendientes locales multimedia y preparar verificación integral cuando el backlog local esté resuelto.

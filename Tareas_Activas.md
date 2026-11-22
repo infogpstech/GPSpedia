@@ -297,4 +297,11 @@ P0 AUTH/USERS, WRITE, FEEDBACK y ADMIN quedan cerrados en código/auditoría est
 ### P2 — publicación CATALOG ante respuesta parcial (2026-11-21)
 - [x] Añadir prueba de recuperación cuando Coordinator confirma la publicación, pero la primera respuesta llega como JSON inválido: el segundo intento conserva exactamente el cuerpo/requestId y devuelve replay `duplicate` sin crear revisiones adicionales.
 - [x] Añadir prueba de que un rechazo de aplicación explícito no genera un segundo viaje de red.
-- [ ] Ejecutar contrato SharedMutationCoordinator y regresión completa en CI; confirmar conteo final y revisar logs.
+- [x] Ejecutar contrato SharedMutationCoordinator y regresión completa en CI; 296 suites / 3,457 pruebas / 0 fallos. Health read-only SUCCESS. Pages build del mismo HEAD seguía en curso al registrar.
+
+
+### P2 — pruebas transversales de no duplicación/fallos parciales (2026-11-21)
+- [x] SharedMutationCoordinator: respuesta perdida después de commit y JSON inválido tras commit reutilizan requestId/cuerpo y no duplican publicaciones.
+- [x] Rechazo explícito de aplicación no se reintenta; lote parcial ya persistido se recupera con reset.
+- [x] Regresión CI HEAD `9cde983eb6e95595519d74806d2ade03d385e126`: 296 suites / 3,457 pruebas / 0 fallos; health read-only SUCCESS.
+- [ ] Pages build/deployment del mismo HEAD: pendiente de finalización; no es deployment Apps Script.
