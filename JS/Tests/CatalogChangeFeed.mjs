@@ -10,8 +10,12 @@ const clientSource = read("../Services/SharedMutationClient.js");
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
 const propertiesStore = {};
+let catalogPropertyGetCount = 0;
 const properties = {
-    getProperty: key => Object.prototype.hasOwnProperty.call(propertiesStore, key) ? propertiesStore[key] : null,
+    getProperty: key => {
+        if (key === "GPSpedia_CATALOG_CHANGE_REVISION" || String(key).startsWith("GPSpedia_CATALOG_CHANGE_EVENT_")) catalogPropertyGetCount++;
+        return Object.prototype.hasOwnProperty.call(propertiesStore, key) ? propertiesStore[key] : null;
+    },
     setProperty: (key, value) => { propertiesStore[key] = String(value); },
     deleteProperty: key => { delete propertiesStore[key]; },
     getProperties: () => ({ ...propertiesStore })
@@ -102,6 +106,23 @@ test("ADMIN agrupa los cambios de catálogo y el cliente agrega requestId para r
     assert.match(coordinatorSource,/function publishCatalogChanges_\(service, operation, payload\)/);
     assert.match(coordinatorSource,/sourceRequestId/);
     assert.match(coordinatorSource,/recoveredPartial/);
+});
+test("publicación idempotente y lectura incremental usan snapshot sin getProperty por evento", () => {
+    catalogPropertyGetCount = 0;
+    const payload = { requestId:"CATALOG-SNAPSHOT-0001", change:{collection:"relay",recordId:"RELAY-1",operation:"delete"} };
+    const first = request("publishCatalogChange","ADMIN","restoreDatabase",payload);
+    assert.equal(first.status,"success");
+    const retry = request("publishCatalogChange","ADMIN","restoreDatabase",payload);
+    assert.equal(retry.duplicate,true);
+    assert.equal(retry.revision,first.revision);
+    assert.equal(catalogPropertyGetCount,0,
+        "El preflight idempotente debe buscar requestId en el snapshot de propiedades, no consultar cada evento por separado.");
+    catalogPropertyGetCount = 0;
+    const page = request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:first.revision-1,limit:5});
+    assert.equal(page.changes.length,1);
+    assert.equal(page.changes[0].revision,first.revision);
+    assert.equal(catalogPropertyGetCount,0,
+        "La página incremental debe leer los eventos desde el snapshot, no con getProperty por revisión.");
 });
 test("el navegador consume el feed público por GET y evita el POST autenticado", () => {
     const feedClient = apiSource.slice(apiSource.indexOf("export async function getCatalogChanges"));
