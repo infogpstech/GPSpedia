@@ -97,6 +97,34 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         try { fn("cambio concurrente", "valor leído"); } catch (_) { conflict = true; }
         assert(conflict, "Sobrescribió un cambio concurrente.");
     });
+    run("La imagen desplazada durante una restauración reutiliza un ID idempotente y estable", () => {
+        const builderSource = extractFunction(admin, "buildReplacedImageRestoreOperationId_");
+        const builder = new Function("Utilities", builderSource + "; return buildReplacedImageRestoreOperationId_;")({
+            DigestAlgorithm: { SHA_256: "SHA_256" },
+            computeDigest(algorithm, value) {
+                assert(algorithm === "SHA_256", "Debe usar SHA-256.");
+                const input = String(value || "x");
+                let checksum = 2166136261;
+                for (let index = 0; index < input.length; index++) {
+                    checksum = Math.imul(checksum ^ input.charCodeAt(index), 16777619) >>> 0;
+                }
+                return Array.from({ length: 32 }, (_, index) =>
+                    ((checksum >>> ((index % 4) * 8)) + index * 13) % 256
+                );
+            }
+        });
+        const first = builder("REP-HIST-1", "VEH-1", "imgCorte1", "https://drive.google.com/file/d/ACTIVE-A/view");
+        assert(/^RESTORE-[a-f0-9]{64}$/.test(first), "El ID debe cumplir el contrato operationId de 20 a 80 caracteres.");
+        assert(first === builder("REP-HIST-1", "VEH-1", "imgCorte1", "https://drive.google.com/file/d/ACTIVE-A/view"),
+            "El mismo registro/campo/imagen activa debe producir el mismo operationId.");
+        assert(first !== builder("REP-HIST-1", "VEH-1", "imgCorte1", "https://drive.google.com/file/d/ACTIVE-B/view"),
+            "Una imagen activa diferente debe crear una identidad de operación distinta.");
+        const restore = extractFunction(admin, "handleRecoverReplacedImage");
+        assert(restore.includes("buildReplacedImageRestoreOperationId_"), "La restauración debe derivar el ID de forma determinista.");
+        assert(restore.includes("operationId:swappedOperationId"), "El registro histórico debe recibir el ID estable.");
+        const record = extractFunction(admin, "recordReplacedImage");
+        assert(record.includes("findReplacedImageRecordById(sheet, newId)"), "El registro debe recuperar la fila existente por operationId.");
+    });
     run("El descarte conserva la base de reemplazos confirmados y verifica la restauración", () => {
         const resolver = ui.slice(ui.indexOf("async function resolvePendingAdminImageOperationsBeforeDiscard_"), ui.indexOf("export async function exitModalEditMode"));
         assert(/operationStatus === "linked"/.test(resolver), "No reconoce reemplazos confirmados.");

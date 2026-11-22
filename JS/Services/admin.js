@@ -11819,6 +11819,18 @@ function getReplacedImageRecordType(row, headers) {
 /**
  * Handler: Recuperar una imagen histórica
  */
+function buildReplacedImageRestoreOperationId_(historyId, vehicleId, fieldName, currentImageUrl) {
+    const identity = [
+        String(historyId || "").trim(),
+        String(vehicleId || "").trim(),
+        String(fieldName || "").trim(),
+        String(currentImageUrl || "").trim()
+    ].join("|");
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, identity);
+    const hash = digest.map(byte => ((byte + 256) % 256).toString(16).padStart(2, "0")).join("");
+    return "RESTORE-" + hash;
+}
+
 function handleRecoverReplacedImage(payload, logMessage) {
     const idReemplazo=String(payload&&payload.id_reemplazo||"").trim();
     if(!idReemplazo)throw new Error("ID de reemplazo requerido.");
@@ -11881,7 +11893,15 @@ function handleRecoverReplacedImage(payload, logMessage) {
         if(conflicts.some(reference=>reference.sheet!==SHEET_NAMES.CORTES||reference.row!==actualRow||reference.column!==COLS_CORTES[campo]))throw new Error("La imagen histórica ya está referenciada en otra ubicación de Cortes; no se duplicará su asociación.");
         if(currentActiveUrl===urlHistorica&&previousHistoryStatus==="restablecida")return {status:"success",message:"La imagen ya estaba activa y el historial confirma el estado restablecida.",restoredUrl:urlHistorica,vehicleId:registroId,fieldName:campo,catalogChanged:false,unchanged:true};
         let swappedRecord=null;
-        if(currentActiveUrl&&currentActiveUrl!==urlHistorica)swappedRecord=recordReplacedImage({tipoContenido:"vehiculo",registroId,campo,imagenAnteriorUrl:currentActiveUrl,sustituidaPorUrl:urlHistorica,nombreVehiculo:repData[9]||""});
+        if(currentActiveUrl&&currentActiveUrl!==urlHistorica) {
+            const swappedOperationId = buildReplacedImageRestoreOperationId_(
+                idReemplazo, registroId, campo, currentActiveUrl
+            );
+            swappedRecord=recordReplacedImage({
+                tipoContenido:"vehiculo",registroId,campo,imagenAnteriorUrl:currentActiveUrl,
+                sustituidaPorUrl:urlHistorica,nombreVehiculo:repData[9]||"",operationId:swappedOperationId
+            });
+        }
         try{
             activeCell.setValue(urlHistorica);SpreadsheetApp.flush();
             if(String(activeCell.getValue()||"").trim()!==urlHistorica)throw new Error("La referencia activa no se confirmó por lectura posterior.");
