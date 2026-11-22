@@ -218,3 +218,12 @@ El primer CI del refresco dirigido pasó los asserts funcionales de la proyecci�
 ### A02-04 cerrada en CI
 
 **CI exacto:** SHA `825b048db860a0928205a4f288f5d4b3b8fd3c13` — 302 suites / 3,533 pruebas / 0 fallos. El test de refresco dirigido cubre respuesta por ID, preservación de disponibilidad/vídeo y fallback conservador. Health read-only SUCCESS y Pages build/deployment SUCCESS. A02-04 queda validada en código/CI; no equivale a prueba manual en navegador conectado a Apps Script Beta.
+
+
+### A02-05 — reutilización del handle de AportesVehiculo en WRITE
+
+**Hallazgo confirmado:** `handleAddSupplementaryInfo` validaba/obtenía la hoja `AportesVehiculo` antes de subir imágenes y luego volvía a llamar a `getVehicleContributionLedgerSheet_` para append. La segunda llamada repetía lookup de hoja y lectura/validación de encabezados dentro de la misma petición.
+
+**Corrección:** se conserva la validación temprana (antes de efectos externos en Drive) y se reutiliza el handle ya validado para el append. No se elimina ninguna comprobación de permisos, esquema, idempotencia, hash o lectura posterior del evento.
+
+**Prueba:** AddSupplementaryInfoIntegrity comprueba que el handler obtiene el handle una sola vez, antes de la carga, y lo reutiliza para el append. CI pendiente.

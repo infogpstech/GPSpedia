@@ -729,3 +729,12 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **CI exacto:** SHA `825b048db860a0928205a4f288f5d4b3b8fd3c13`; 302 suites / 3,533 pruebas / 0 fallos; health read-only y Pages SUCCESS.
 - **Siguiente tarea:** A02-05, trazado de imágenes en add_cortes y modales +: lectura de archivos, validaciones, carga a Drive, ledger, reintentos y verificación posterior.
 - **Contexto:** se busca eliminar trabajo duplicado sin quitar comprobaciones necesarias para evitar pérdida/duplicación de aportes. La prueba CI no sustituye la prueba de navegador/Apps Script Beta.
+
+
+## A02-05 implementada — evitar doble validación del ledger — 2026-11-22
+
+- **Tarea realizada:** handleAddSupplementaryInfo ahora reutiliza contributionLedgerSheet después de la carga de imagen, en vez de volver a ejecutar getVehicleContributionLedgerSheet_.
+- **Motivo:** se mantiene la validación del esquema antes de iniciar efectos externos (Drive), pero se evita repetir la consulta de hoja y la lectura de encabezados dentro de la misma petición.
+- **Prueba añadida:** el contrato verifica una sola obtención/validación del ledger y que precede a la carga de imágenes.
+- **Estado:** CI pendiente.
+- **Siguiente:** CI completo; después medir lecturas de ImageUploadEvents y búsquedas de archivos en Drive, preservando recuperación e idempotencia.

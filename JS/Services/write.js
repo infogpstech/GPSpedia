@@ -1876,7 +1876,8 @@ function handleAddSupplementaryInfo(payload) {
         const contributionPayload = isOpening
             ? { text: String(normalizedPlan.updates.apertura || ""), image: String(preparedPayload.imgApertura || "") }
             : { text: String(preparedPayload.cableAlimen || ""), image: String(preparedPayload.imgCableAlimen || "") };
-        const appendLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
+        // Reutiliza la hoja ya validada antes de cargar archivos a Drive.
+        const appendLedgerSheet = contributionLedgerSheet;
         const event = appendVehicleContributionEvent_({
             spreadsheet,
             ledgerSheet: appendLedgerSheet,

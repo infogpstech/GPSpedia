@@ -106,6 +106,17 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   assert_(!/uploadImageToDrive|findOrCreateVehicleFolder|DriveApp/.test(inner));
  });
 
+
+ run_("WRITE valida el ledger de aportes una sola vez y reutiliza el handle",function(){
+  const start=String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)");
+  const end=String(sources.write).indexOf("function handleAddSupplementaryInfoLocked",start);
+  const handler=String(sources.write).slice(start,end);
+  const calls=handler.match(/getVehicleContributionLedgerSheet_\(spreadsheet\)/g)||[];
+  assert_(calls.length===1,"El ledger se vuelve a validar/leer durante la misma operación.");
+  assert_(handler.indexOf("getVehicleContributionLedgerSheet_(spreadsheet)")<handler.indexOf("prepareSupplementaryImageUploads_"));
+  assert_(handler.includes("const appendLedgerSheet = contributionLedgerSheet;"));
+ });
+
  run_("WRITE marca las imágenes suplementarias como linked solo después de persistir",function(){
   const outer=String(sources.write).slice(String(sources.write).indexOf("function handleAddSupplementaryInfo(payload)"),String(sources.write).indexOf("function handleAddSupplementaryInfoLocked"));
   assert_(outer.indexOf("appendVehicleContributionEvent_")<outer.indexOf("uploadedUrls.forEach"));
