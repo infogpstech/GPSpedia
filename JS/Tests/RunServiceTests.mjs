@@ -317,6 +317,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-031 persistencia incremental, migración y aislamiento de auditorías IndexedDB','JS/Tests/AdminDriveAuditIndexedDB.mjs');
  runCli('AUG-033 captura optimizada de referencias, presupuesto y memoización de Drive','JS/Tests/AdminReplacedImagesIntegrity.mjs');
  runCli('AUG-033 timeout y reintentos idempotentes de lotes de auditoría','JS/Tests/AdminDriveAuditClientRetry.mjs');
+ runCli('A07-05 salida del escáner en consola global y conservación de resultados/reanudación','JS/Tests/AdminDriveAuditGlobalConsole.mjs');
  runCli('AUG-027 ciclo de papelera, restauración, eliminación definitiva, permisos e idempotencia','JS/Tests/AdminImageTrashLifecycle.mjs');
   runCli('ADMIN valida archivo para papelera fuera del ScriptLock','JS/Tests/AdminDeleteImageDrivePreflightOutsideLock.mjs');
   runCli('ADMIN verifica Drive de restauración desde papelera fuera del ScriptLock','JS/Tests/AdminRestoreImageDrivePreflightOutsideLock.mjs');

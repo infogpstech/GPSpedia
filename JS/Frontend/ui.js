@@ -8691,23 +8691,7 @@ export async function openAuditDriveModal() {
         else { auditDriveModalGeneration_ += 1; modal.style.display = 'none'; }
     };
 
-    summaryEl.innerHTML = `
-        <section class="audit-drive-console" aria-label="Consola de auditoría de Cortes">
-            <header class="audit-drive-console-header">
-                <strong>Consola de Cortes</strong>
-                <span id="audit-drive-console-status" role="status">Lista para iniciar</span>
-            </header>
-            <div id="audit-drive-console-output" class="audit-drive-console-output"
-                 role="log" aria-live="polite" aria-relevant="additions text" tabindex="0">
-                <div class="audit-drive-console-line is-info">
-                    <span class="audit-drive-console-level">INFO</span>
-                    <span>La salida de auditoría, los lotes y los resultados aparecerán aquí.</span>
-                </div>
-            </div>
-        </section>
-    `;
-    const auditConsoleOutput = document.getElementById('audit-drive-console-output');
-    const auditConsoleStatus = document.getElementById('audit-drive-console-status');
+    summaryEl.textContent = "La salida y el progreso se registran en la consola global del panel Desarrollador. Los resultados detallados permanecen en esta ventana.";
     const allFiles = [];
     const seenFileIds = new Set();
     const renderedFileIds = new Set();
@@ -8750,29 +8734,7 @@ export async function openAuditDriveModal() {
         if (!text) return;
         const allowed = ['info', 'progress', 'success', 'warning', 'error'];
         const normalizedLevel = allowed.includes(level) ? level : 'info';
-        const labels = { info: 'INFO', progress: 'PROGRESO', success: 'OK', warning: 'AVISO', error: 'ERROR' };
-        if (!auditConsoleOutput) {
-            logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel);
-            return;
-        }
-        const wasAtBottom = auditConsoleOutput.scrollHeight - auditConsoleOutput.scrollTop -
-            auditConsoleOutput.clientHeight < 48;
-        const line = document.createElement('div');
-        line.className = 'audit-drive-console-line is-' + normalizedLevel;
-        const timestamp = document.createElement('time');
-        timestamp.dateTime = new Date().toISOString();
-        timestamp.textContent = new Date().toLocaleTimeString();
-        const levelLabel = document.createElement('span');
-        levelLabel.className = 'audit-drive-console-level';
-        levelLabel.textContent = labels[normalizedLevel];
-        const content = document.createElement('span');
-        content.className = 'audit-drive-console-message';
-        content.textContent = text;
-        line.append(timestamp, levelLabel, content);
-        auditConsoleOutput.appendChild(line);
-        if (wasAtBottom) auditConsoleOutput.scrollTop = auditConsoleOutput.scrollHeight;
-        if (auditConsoleStatus && normalizedLevel === 'error') auditConsoleStatus.textContent = 'Con errores';
-        else if (auditConsoleStatus && normalizedLevel === 'warning') auditConsoleStatus.textContent = 'Requiere revisión';
+        logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel);
     };
 
     const appendFiles = (files) => {
@@ -8782,13 +8744,6 @@ export async function openAuditDriveModal() {
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || renderedFileIds.has(fileId)) return;
             renderedFileIds.add(fileId);
             const classification = String(file.classification || 'No verificable');
-            const details = [
-                classification, String(file.folderPath || 'Ruta no disponible'),
-                String(file.fileName || 'Archivo sin nombre'), 'ID ' + fileId,
-                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB',
-                String(file.lastUpdated || 'Fecha no disponible')
-            ].join(' | ');
-            appendAuditConsole(details, classification === 'No verificable' ? 'warning' : 'info');
             if (classification !== 'Histórica' && classification !== 'Sin uso detectado') return;
 
             const row = document.createElement('div');
@@ -8894,8 +8849,6 @@ export async function openAuditDriveModal() {
                 ? 'warning' : (complete ? 'success' : 'progress');
             appendAuditConsole(statusText, statusLevel || inferredLevel);
         }
-        if (auditConsoleStatus) auditConsoleStatus.textContent =
-            complete ? 'Auditoría completa' : (isRunning ? 'En progreso' : 'Disponible');
         appendAuditConsole('Carpeta raíz: ' + rootFolderName + (rootFolderId ? ' (' + rootFolderId + ')' : '') +
             '. Versión ADMIN: ' + (serviceVersion || 'no disponible') +
             '. Último escaneo: ' + (lastScanAt ? new Date(lastScanAt).toLocaleString() : 'no disponible') + '.');
@@ -9322,8 +9275,7 @@ export async function openAuditDriveModal() {
                 inventoryConfirmedFileIds = [];
                 auditId = '';
                 auditStartedAt = Date.now();
-                if (auditConsoleOutput) auditConsoleOutput.replaceChildren();
-                appendAuditConsole('Nueva auditoría iniciada. Los resultados se mostrarán en esta consola.', 'info');
+                appendAuditConsole('Nueva auditoría iniciada. La salida y el progreso se registran en la consola global del Desarrollador.', 'info');
                 localStateRevision = 0;
                 localPageCount = 0;
                 pendingBatchIndex = null;
