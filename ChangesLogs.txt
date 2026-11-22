@@ -869,3 +869,10 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - crearCarrusel y renderPosiblesProblemasAccordion dejan de registrar un listener global por instancia; un listener único con debounce actualiza los carruseles que siguen conectados al DOM.
 - Añadido CarouselResizeListenerLifecycle 5/5 e integrado en RunServiceTests. CI HEAD d97f487e SUCCESS: 294 suites / 3,440 pruebas / 0 fallos.
 - Auditoría de timers, observers y listeners: AUDITORIA_UI_LISTENERS_2026-11-22.md.
+
+
+2026-11-22 — navegación y catálogo: refresco incremental tras alta de Tutorial
+- refreshTutorialCatalog usa auth.loadInitialData(true, {silent:true}) primero; getCatalogData completo queda como fallback. Añadidas guardias de sesión y protección para no sobrescribir sincronización concurrente más reciente.
+- Revisados restantes llamados getCatalogData, loadPysData, cache-first e IndexedDB; no se retiraron snapshots necesarios para restauración/validación.
+- TutorialCatalogRefreshDeltaFirst 6/6 PASS; CI HEAD 55fa1198 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos.
+- Informe AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.

@@ -286,3 +286,13 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - Test CarouselResizeListenerLifecycle 5/5 PASS. CI HEAD d97f487e SUCCESS: 294 suites / 3,440 pruebas / 0 fallos; health read-only y Pages SUCCESS.
 - Evidencia: AUDITORIA_UI_LISTENERS_2026-11-22.md.
 - Siguiente: revisar consultas repetidas al navegar y cachés/IndexedDB sin bloquear primer render.
+
+
+## P2 — navegación, catálogo e IndexedDB (2026-11-22)
+
+- Corregido refreshTutorialCatalog: feed incremental via auth.loadInitialData primero; snapshot completo solo como fallback; guardia de sesión y descarte de respuesta tardía si otro sync actualizó estado.
+- Otras llamadas getCatalogData revisadas: refresh post-edición ya era delta-first; asociación/detalle PyS solo consultan si el catálogo no está; restauración conserva snapshots antes/después para verificar campos.
+- IndexedDB: auth carga IDB y CacheStorage en paralelo, timeout de 3 s, cache-first, delta por cursor; offline.initDB comparte una apertura pendiente y performOp confirma al completar transacción.
+- Tests: TutorialCatalogRefreshDeltaFirst 6/6 PASS; CarouselResizeListenerLifecycle 5/5 PASS. CI HEAD 55fa1198 SUCCESS: 295 suites / 3,446 pruebas / 0 fallos; health read-only SUCCESS; Pages build en curso al cierre.
+- Evidencia: AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
+- Pendiente: medir primer render, IndexedDB, cache hit/miss, llamadas evitadas y memoria en Beta Android/PWA y escritorio.

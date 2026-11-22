@@ -110,9 +110,9 @@ Fuente normativa única: `NORMAS_DESAROLLO.md`
 
 ### P2 — optimización y verificación integral
 - [x] Revisar listeners, polling, timers y observers principales: corregida acumulación de listeners resize en carruseles; Inbox/ADMIN timers tienen start-stop/singleton; listeners de modal y AbortSignal tienen cleanup. Falta revisar consultas repetidas al navegar.
-- [ ] Revisar IndexedDB y cachés sin bloquear el primer render.
+- [x] Revisar cache-first/IndexedDB: IDB y CacheStorage en paralelo, carrera 3 s, una apertura IDB compartida, transacción confirmada y PyS single-flight; medir primer render y memoria real queda para Beta.
 - [ ] Añadir pruebas de no duplicación y fallos parciales; ejecutar regresión integral y comparación antes/después.
-- [ ] Documentar llamadas retiradas/conservadas y su justificación.
+- [x] Documentar llamadas retiradas/conservadas y su justificación en AUDITORIA_NAVEGACION_CATALOGO_CACHE_2026-11-22.md.
 
 ## Validaciones diferidas a Beta
 - [ ] AUG-159: aportes concurrentes, candidatos, correcciones y recuperación ADMIN en Spreadsheet/Drive aislados.
@@ -251,3 +251,11 @@ P0 AUTH/USERS y auditoría WRITE quedan cerrados en código, auditoría estátic
 - [x] Revisar timers Inbox/ADMIN, listeners de conectividad, popstate, observers de modal, AbortSignal, navegación, Service Worker e ImageObjectURL; restantes tienen guardas/cleanup o son singleton de app.
 - [x] Contrato CarouselResizeListenerLifecycle 5/5 PASS; CI HEAD d97f487e SUCCESS: 294 suites / 3,440 pruebas / 0 fallos; health y Pages SUCCESS.
 - [ ] Revisar consultas repetidas al navegar y el impacto IndexedDB/cache-first sobre primer render.
+
+
+### P2 — navegación, catálogo e IndexedDB (2026-11-22)
+- [x] Tutoriales: refresco posterior al alta usa feed incremental primero; snapshot completo solo como fallback; guardias de sesión y respuesta tardía.
+- [x] Navegación: otras llamadas completas se justifican por falta de catálogo, reset/caché inválida o verificación de restauración; PyS comparte cache/in-flight.
+- [x] IndexedDB: cache-first, IDB/CacheStorage en paralelo, timeout de 3 s, apertura única y transacción confirmada; persistencia secundaria a render en memoria.
+- [x] TutorialCatalogRefreshDeltaFirst 6/6 PASS; CarouselResizeListenerLifecycle 5/5 PASS; CI 295 suites / 3,446 pruebas / 0 fallos.
+- [ ] Medir primer render, IDB, cache hit/miss, llamadas completas evitadas y memoria en Android/PWA y escritorio Beta.
