@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const source = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
 let passed = 0;
 function test(name, callback) { callback(); passed++; console.log('PASS', name); }
 test('single and carousel add cards forward navigation options', () => {
