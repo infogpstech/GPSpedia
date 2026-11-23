@@ -76,11 +76,11 @@ test("limpia el marcador cuando el callback falla", () => {
 });
 
 test("reemplaza marcadores expirados y limita TTL a 420 segundos", () => {
-    store.GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_inventory:a-2 = JSON.stringify({
+    store["GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_inventory:a-2"] = JSON.stringify({
         requestId: "expired", expiresAt: now - 1
     });
     withAdminLocalOperationGuard_("inventory:a-2", () => {
-        const marker = JSON.parse(store.GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_inventory:a-2);
+        const marker = JSON.parse(store["GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_inventory:a-2"]);
         assert.equal(marker.expiresAt, now + 420000);
         assert.notEqual(marker.requestId, "expired");
     }, 9999, dependencies);
