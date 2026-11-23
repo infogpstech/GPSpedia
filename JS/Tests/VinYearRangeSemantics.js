@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { VinDifferentialEngine, doYearRangesOverlap, isYearWithinRange } from '../../VinDifferentialEngine.js';
+import { VinDifferentialEngine, doYearRangesOverlap, isYearWithinRange } from '../Frontend/VinDifferentialEngine.js';
 
 let passed = 0;
 function test(name, fn) {
