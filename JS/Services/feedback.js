@@ -5066,15 +5066,238 @@ function handleClearActivityLogs(payload) {
 // TAREA 8.1 & 8.2: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y APROBACIÓN PREVIA
 // ============================================================================
 
+const YOUTUBE_UPLOAD_RESERVATIONS_SHEET_ = "YouTubeUploadReservations";
+const YOUTUBE_UPLOAD_RESERVATION_HEADERS_ = Object.freeze([
+    "opVideoId", "userId", "contentType", "referenceId", "requestHash", "status", "createdAt", "updatedAt"
+]);
+const YOUTUBE_UPLOAD_SESSION_CACHE_TTL_SECONDS_ = 21600;
+const YOUTUBE_UPLOAD_RESERVATION_TTL_MS_ = 8 * 24 * 60 * 60 * 1000;
+
+function getYouTubeUploadReservationSheet_() {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(YOUTUBE_UPLOAD_RESERVATIONS_SHEET_);
+    if (!sheet) sheet = ss.insertSheet(YOUTUBE_UPLOAD_RESERVATIONS_SHEET_);
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length)
+            .setValues([YOUTUBE_UPLOAD_RESERVATION_HEADERS_.slice()]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+    const width = Math.max(YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0].map(value => String(value || "").trim());
+    if (width !== YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length ||
+        YOUTUBE_UPLOAD_RESERVATION_HEADERS_.some((header, index) => headers[index] !== header)) {
+        throw new Error("El esquema de YouTubeUploadReservations no coincide; no se modificó la hoja.");
+    }
+    return sheet;
+}
+
+function buildYouTubeUploadReservationHash_(payload) {
+    const canonical = JSON.stringify([
+        String(payload.title || ""), String(payload.description || ""),
+        String(payload.contentType || ""), String(payload.referenceId || ""),
+        String(payload.fileName || ""), Number(payload.fileSize), String(payload.fileType || "")
+    ]);
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8);
+    return Array.from(digest, value => (value & 255).toString(16).padStart(2, "0")).join("");
+}
+
+function buildYouTubeUploadSessionCacheKey_(userId, opVideoId) {
+    const raw = String(userId) + "|" + String(opVideoId);
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+    const hash = Array.from(digest, value => (value & 255).toString(16).padStart(2, "0")).join("");
+    return "YT_UPLOAD_SESSION_" + hash;
+}
+
+function isValidYouTubeUploadSessionUrl_(value) {
+    return typeof value === "string" &&
+        /^https:\/\/www\.googleapis\.com\/upload\/youtube\/v3\/videos\?upload_id=[A-Za-z0-9._~%=-]+$/.test(value);
+}
+
+function withYouTubeUploadReservationLock_(callback) {
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(5000)) throw new Error("Hay otra operación de vídeo en curso. Reintenta en unos segundos.");
+    try { return callback(); }
+    finally { lock.releaseLock(); }
+}
+
+function findYouTubeUploadReservation_(sheet, opVideoId) {
+    const last = sheet.getLastRow();
+    if (last < 2) return null;
+    const matches = [];
+    sheet.getRange(2, 1, last - 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).getValues()
+        .forEach((row, index) => {
+            if (String(row[0] || "") === String(opVideoId)) matches.push({ rowIndex: index + 2, values: row });
+        });
+    if (matches.length > 1) throw new Error("El identificador de operación de vídeo está duplicado en el registro; requiere revisión.");
+    return matches[0] || null;
+}
+
+function saveYouTubeUploadReservation_(sheet, record) {
+    if (!sheet || !record || !Number.isInteger(record.rowIndex) ||
+        !Array.isArray(record.values) || record.values.length !== YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length) {
+        throw new Error("No se pudo identificar la reserva de subida de vídeo.");
+    }
+    sheet.getRange(record.rowIndex, 1, 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).setValues([record.values]);
+    SpreadsheetApp.flush();
+    const saved = sheet.getRange(record.rowIndex, 1, 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).getValues()[0];
+    if (saved.some((value, index) => String(value == null ? "" : value) !== String(record.values[index] == null ? "" : record.values[index]))) {
+        throw new Error("No se pudo confirmar la reserva de subida de vídeo.");
+    }
+    return true;
+}
+
+function reserveYouTubeUploadInitialization_(payload, userId) {
+    const cache = CacheService.getScriptCache();
+    if (!cache) throw new Error("No está disponible la caché de sesión reanudable; no se inició la subida.");
+    const cacheKey = buildYouTubeUploadSessionCacheKey_(userId, payload.opVideoId);
+    const requestHash = buildYouTubeUploadReservationHash_(payload);
+    return withYouTubeUploadReservationLock_(() => {
+        const sheet = getYouTubeUploadReservationSheet_();
+        const now = Date.now();
+        const existing = findYouTubeUploadReservation_(sheet, payload.opVideoId);
+        if (existing) {
+            const row = existing.values;
+            if (String(row[1]) !== String(userId) || String(row[2]) !== String(payload.contentType) ||
+                String(row[3]) !== String(payload.referenceId) || String(row[4]) !== requestHash) {
+                throw new Error("El identificador de operación ya pertenece a otra carga o destino.");
+            }
+            const age = now - Number(row[6] || 0);
+            let status = String(row[5] || "");
+            if (age > YOUTUBE_UPLOAD_RESERVATION_TTL_MS_ && status !== "submitted") {
+                row[5] = "expired";
+                row[7] = now;
+                saveYouTubeUploadReservation_(sheet, existing);
+                status = "expired";
+            }
+            const cachedUrl = cache.get(cacheKey);
+            if ((status === "initialized" || status === "initializing" || status === "renewing") &&
+                cachedUrl && isValidYouTubeUploadSessionUrl_(cachedUrl) &&
+                (payload.renewSession !== true || cachedUrl !== String(payload.expiredUploadUrl || ""))) {
+                if (status !== "initialized") {
+                    row[5] = "initialized";
+                    row[7] = now;
+                    saveYouTubeUploadReservation_(sheet, existing);
+                }
+                return { reuse: true, uploadUrl: cachedUrl };
+            }
+            if (status === "submitted") throw new Error("Esta operación ya fue enviada a aprobación; no se creará otra sesión.");
+            if (status === "requires_review") throw new Error("La inicialización anterior quedó en estado incierto. Requiere revisión antes de crear otra sesión.");
+            if (status === "initializing" || status === "renewing") {
+                throw new Error("La sesión reanudable se está inicializando. Espera y reintenta la misma operación.");
+            }
+            if (status === "initialized" && payload.renewSession !== true) {
+                throw new Error("La sesión anterior no está disponible en el servidor. Se detuvo el reintento para evitar crear una sesión duplicada.");
+            }
+            if (payload.renewSession === true && !String(payload.expiredUploadUrl || "")) {
+                throw new Error("La renovación requiere identificar la sesión que YouTube confirmó como expirada.");
+            }
+            row[5] = "initializing";
+            row[7] = now;
+            saveYouTubeUploadReservation_(sheet, existing);
+            cache.remove(cacheKey);
+            return { reuse: false, rowIndex: existing.rowIndex, cacheKey };
+        }
+
+        const last = sheet.getLastRow();
+        if (last >= 2) {
+            const rows = sheet.getRange(2, 1, last - 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).getValues();
+            for (let index = 0; index < rows.length; index++) {
+                const row = rows[index];
+                if (String(row[2] || "") !== String(payload.contentType) ||
+                    String(row[3] || "") !== String(payload.referenceId)) continue;
+                const status = String(row[5] || "");
+                const age = now - Number(row[6] || 0);
+                if (age > YOUTUBE_UPLOAD_RESERVATION_TTL_MS_ && status !== "submitted") {
+                    row[5] = "expired";
+                    row[7] = now;
+                    sheet.getRange(index + 2, 1, 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).setValues([row]);
+                    continue;
+                }
+                if (["initializing", "renewing", "initialized", "requires_review"].includes(status)) {
+                    throw new Error("Este contenido ya tiene una carga de vídeo en curso o sin resolver. Reanuda la operación original antes de iniciar otra.");
+                }
+            }
+        }
+        const values = [
+            String(payload.opVideoId), String(userId), String(payload.contentType), String(payload.referenceId),
+            requestHash, "initializing", now, now
+        ];
+        sheet.appendRow(values);
+        SpreadsheetApp.flush();
+        const rowIndex = sheet.getLastRow();
+        const saved = sheet.getRange(rowIndex, 1, 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).getValues()[0];
+        if (saved.some((value, index) => String(value == null ? "" : value) !== String(values[index]))) {
+            throw new Error("No se pudo confirmar la reserva de destino para la subida de vídeo.");
+        }
+        return { reuse: false, rowIndex, cacheKey };
+    });
+}
+
+function finishYouTubeUploadInitialization_(reservation, status, cacheKey, uploadUrl) {
+    if (uploadUrl && isValidYouTubeUploadSessionUrl_(uploadUrl)) {
+        CacheService.getScriptCache().put(cacheKey, uploadUrl, YOUTUBE_UPLOAD_SESSION_CACHE_TTL_SECONDS_);
+    }
+    return withYouTubeUploadReservationLock_(() => {
+        const sheet = getYouTubeUploadReservationSheet_();
+        const record = findYouTubeUploadReservation_(sheet, reservation.opVideoId);
+        if (!record || record.rowIndex !== reservation.rowIndex) {
+            throw new Error("La reserva de subida cambió durante la inicialización; requiere revisión.");
+        }
+        record.values[5] = status;
+        record.values[7] = Date.now();
+        saveYouTubeUploadReservation_(sheet, record);
+        return true;
+    });
+}
+
+function markYouTubeUploadReservationSubmitted_(payload) {
+    const operationId = String(payload && payload.opVideoId || "").trim();
+    if (!operationId) return false;
+    return withYouTubeUploadReservationLock_(() => {
+        const sheet = getYouTubeUploadReservationSheet_();
+        const record = findYouTubeUploadReservation_(sheet, operationId);
+        if (!record) return false; // Compatibilidad con solicitudes de enlace manual.
+        if (String(record.values[1]) !== String(payload.userId || "") ||
+            String(record.values[2]) !== String(payload.contentType || "") ||
+            String(record.values[3]) !== String(payload.referenceId || "")) {
+            throw new Error("La reserva de vídeo no coincide con el propietario o destino de la solicitud.");
+        }
+        record.values[5] = "submitted";
+        record.values[7] = Date.now();
+        saveYouTubeUploadReservation_(sheet, record);
+        CacheService.getScriptCache().remove(buildYouTubeUploadSessionCacheKey_(payload.userId, operationId));
+        return true;
+    });
+}
+
 /**
- * Inicializa la sesión de subida de vídeo a YouTube (Resumable Upload)
+ * Inicializa o recupera de forma idempotente una sesión de subida reanudable.
+ * La URL temporal solo se conserva en CacheService y se devuelve al navegador autenticado;
+ * nunca se escribe en Spreadsheet, PropertiesService ni logs.
  */
 function handleInitYouTubeUpload(payload) {
-    const { title, description, contentType, referenceId, fileName, fileSize, fileType, opVideoId } = payload;
-    if (!title) throw new Error("El título del vídeo es obligatorio.");
-    if (!['corte', 'pys', 'tutorial'].includes(String(contentType || ''))) throw new Error("Tipo de contenido no válido para la subida.");
-    if (!String(referenceId || '').trim()) throw new Error("Debes guardar primero el contenido para asociar el vídeo a un destino válido.");
-    if (!/^[A-Za-z0-9_-]{20,80}$/.test(String(opVideoId || ''))) throw new Error("Identificador de operación de vídeo inválido.");
+    const source = payload && typeof payload === "object" ? payload : {};
+    const title = String(source.title || "").trim();
+    const description = String(source.description || "");
+    const contentType = String(source.contentType || "");
+    const referenceId = String(source.referenceId || "").trim();
+    const fileName = String(source.fileName || "").trim();
+    const fileSize = Number(source.fileSize);
+    const fileType = String(source.fileType || "video/mp4").trim().toLowerCase();
+    const opVideoId = String(source.opVideoId || "").trim();
+    const userId = String(source.userId || "").trim();
+    if (!title || title.length > 100) throw new Error("El título del vídeo es obligatorio y no debe superar 100 caracteres.");
+    if (description.length > 5000) throw new Error("La descripción del vídeo supera el límite permitido.");
+    if (!["corte", "pys", "tutorial"].includes(contentType)) throw new Error("Tipo de contenido no válido para la subida.");
+    if (!referenceId || referenceId.length > 120) throw new Error("Debes guardar primero el contenido para asociar el vídeo a un destino válido.");
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(opVideoId)) throw new Error("Identificador de operación de vídeo inválido.");
+    if (!userId) throw new Error("La sesión no proporcionó una identidad válida.");
+    if (!fileName || fileName.length > 255 || !Number.isSafeInteger(fileSize) || fileSize < 1 ||
+        !/^video\/[a-z0-9.+-]+$/i.test(fileType)) {
+        throw new Error("El archivo de vídeo no contiene nombre, tamaño o MIME válidos.");
+    }
+
     const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada; no se iniciará una subida sin poder registrar la aprobación.");
     const pendingForTarget = findPendingVideoApprovalForTarget_(feedbackSheet, contentType, referenceId);
@@ -5084,68 +5307,61 @@ function handleInitYouTubeUpload(payload) {
     const existingDestinationVideo = String(destination.sheet.getRange(destination.record.rowIndex, destination.videoColumn).getValue() || "").trim();
     if (existingDestinationVideo) throw new Error("El contenido ya tiene un vídeo asociado; no se iniciará una segunda subida.");
 
-    // Configuración permanente y obligatoria de publicación de YouTube:
+    const reservation = reserveYouTubeUploadInitialization_(source, userId);
+    if (reservation.reuse) {
+        return { status: "success", opVideoId, uploadUrl: reservation.uploadUrl, reusedSession: true,
+            message: "Se recuperó la sesión reanudable existente." };
+    }
+
     const metadata = {
-        snippet: {
-            title: title,
-            description: description || '',
-            tags: [], // Etiquetas: Ninguna
-            categoryId: '28' // Ciencia y Tecnología / Categoría predeterminada estándar
-        },
-        status: {
-            privacyStatus: 'unlisted', // Visibilidad: No listado
-            selfDeclaredMadeForKids: false, // Audiencia: No es contenido para niños
-            embeddable: true,
-            publicStatsViewable: false
-        }
+        snippet: { title, description, tags: [], categoryId: "28" },
+        status: { privacyStatus: "unlisted", selfDeclaredMadeForKids: false, embeddable: true, publicStatsViewable: false }
     };
-
+    let fetchStarted = false;
+    let responseCode = 0;
     let uploadUrl = null;
-    let videoId = null;
-
     try {
-        // En entorno Google Apps Script con token OAuth de la cuenta administradora:
         const token = ScriptApp.getOAuthToken();
-        const youtubeEndpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status';
-
-        const options = {
-            method: 'post',
-            contentType: 'application/json; charset=UTF-8',
+        const youtubeEndpoint = "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status";
+        fetchStarted = true;
+        const response = UrlFetchApp.fetch(youtubeEndpoint, {
+            method: "post",
+            contentType: "application/json; charset=UTF-8",
             headers: {
-                'Authorization': 'Bearer ' + token,
-                'X-Upload-Content-Type': fileType || 'video/mp4',
-                'X-Upload-Content-Length': String(fileSize || 0)
+                "Authorization": "Bearer " + token,
+                "X-Upload-Content-Type": fileType,
+                "X-Upload-Content-Length": String(fileSize)
             },
             payload: JSON.stringify(metadata),
             muteHttpExceptions: true
-        };
-
-        const res = UrlFetchApp.fetch(youtubeEndpoint, options);
-        const responseCode = Number(res.getResponseCode());
-        const headers = res.getAllHeaders();
-        // Solo se acepta una sesión creada por el endpoint oficial de YouTube.
-        uploadUrl = headers['Location'] || headers['location'] || null;
+        });
+        responseCode = Number(response.getResponseCode());
+        const headers = response.getAllHeaders();
+        uploadUrl = headers.Location || headers.location || null;
         if (responseCode < 200 || responseCode >= 300) {
-            throw new Error("YouTube rechazó la inicialización de la sesión (HTTP " + responseCode + ").");
+            finishYouTubeUploadInitialization_({ opVideoId, rowIndex: reservation.rowIndex }, "init_failed", reservation.cacheKey, null);
+            return { status: "error", opVideoId, uploadUrl: null,
+                message: "YouTube rechazó la inicialización de la sesión (HTTP " + responseCode + ")." };
         }
-        if (!uploadUrl || !/^https:\/\/www\.googleapis\.com\/upload\/youtube\/v3\/videos\?upload_id=/.test(String(uploadUrl))) {
-            uploadUrl = null;
-            throw new Error("YouTube no devolvió una URL de sesión reanudable válida.");
+        if (!isValidYouTubeUploadSessionUrl_(uploadUrl)) {
+            finishYouTubeUploadInitialization_({ opVideoId, rowIndex: reservation.rowIndex }, "requires_review", reservation.cacheKey, null);
+            return { status: "error", opVideoId, uploadUrl: null,
+                message: "YouTube no devolvió una URL de sesión reanudable válida; la operación requiere revisión." };
         }
-    } catch (e) {
-        uploadUrl = null;
-        Logger.log("Aviso de inicialización OAuth YouTube: " + e.message);
+        finishYouTubeUploadInitialization_({ opVideoId, rowIndex: reservation.rowIndex }, "initialized", reservation.cacheKey, uploadUrl);
+        return { status: "success", opVideoId, uploadUrl, reusedSession: false,
+            message: "Sesión Resumable de YouTube obtenida." };
+    } catch (error) {
+        const finalState = fetchStarted && (!responseCode || responseCode >= 500) ? "requires_review" : "init_failed";
+        try { finishYouTubeUploadInitialization_({ opVideoId, rowIndex: reservation.rowIndex }, finalState, reservation.cacheKey, null); }
+        catch (stateError) {}
+        Logger.log("La inicialización de YouTube no pudo completarse; se conservó el estado de recuperación sin registrar credenciales ni URL temporal.");
+        return { status: "error", opVideoId, uploadUrl: null,
+            message: finalState === "requires_review"
+                ? "No se pudo confirmar el resultado de la inicialización. La operación quedó protegida para evitar una sesión duplicada y requiere revisión."
+                : "No se pudo inicializar la sesión de YouTube. Puedes reintentar la misma operación." };
     }
-
-    // Sin URL oficial de sesión no se autoriza la transferencia; opVideoId nunca sustituye videoId.
-    return {
-        status: uploadUrl ? 'success' : 'error',
-        opVideoId: String(opVideoId),
-        uploadUrl: uploadUrl,
-        message: uploadUrl ? 'Sesión Resumable de YouTube obtenida.' : 'YouTube no devolvió una URL de sesión reanudable; no se inició la transferencia.'
-    };
 }
-
 /**
  * Registra la solicitud de aprobación de un vídeo subido a YouTube
  */
