@@ -105,7 +105,7 @@ assert.equal(partialFanout.maxCacheTtlSeconds, 21600);
 assert.doesNotMatch(JSON.stringify(fanoutCalls), /opaque-session-token/);
 console.log("MIG-014 frontend fan-out: 6 servicios, retry, fallo parcial y TTL 21600s PASS");
 
-const sharedSource = read("JS/Services/SharedMutationClient.js");
+const sharedSource = read("JS/Services/SharedSessionActor.js");
 const sharedRemoved = [];
 const sharedHandler = new Function("CacheService", sharedSource + "\nreturn handleSharedSessionActorCacheInvalidation_;")({
     getScriptCache: () => ({ remove: key => sharedRemoved.push(key) })
