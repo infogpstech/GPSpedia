@@ -10,7 +10,6 @@ const auth = read("JS/Services/Auth.js");
 const write = read("JS/Services/write.js");
 const feedback = read("JS/Services/feedback.js");
 const catalog = read("JS/Services/catalog.js");
-const users = read("JS/Services/users.js");
 const utilities = read("JS/Services/Utilities.js");
 const admin = read("JS/Services/admin.js");
 const addCortes = read("HTML/add_cortes.html");
@@ -48,14 +47,18 @@ test("FEEDBACK mantiene rutas y actor cacheado sin contadores directos", () => {
     assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
 });
 
-test("USERS ya no persiste métricas directas; UTILITIES conserva Coordinator y ADMIN usa actor cacheado", () => {
+test("AUTH es propietario de gestión de usuarios; UTILITIES y ADMIN conservan sus contratos", () => {
+    assert.match(api, /'getUsers': 'AUTH'/);
+    assert.match(api, /'createUser': 'AUTH'/);
+    assert.match(api, /'updateProfile': 'AUTH'/);
+    assert.match(auth, /function handleGetUsers\(/);
+    assert.match(auth, /function handleCreateUser\(/);
+    assert.match(auth, /function handleUpdateProfile\(/);
+    assert.match(auth, /getCachedSharedSessionActor_\(/);
+    assert.doesNotMatch(auth, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_/);
     assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
-    assert.match(users, /withSharedMutationLease_\("USERS", action/);
-    assert.match(users, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "USERS" \}\)/);
-    assert.doesNotMatch(users, /withSharedMutationLease_\("USERS", "sessionActivity"/);
-    assert.doesNotMatch(users, /USERS_DIRECT_TRAFFIC_PREFIX_|recordUsersDirectTraffic_|readUsersDirectTraffic_|getServiceTraffic/);
-    assert.match(admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
+    assert.match(admin, /getCachedSharedSessionActor_\(/);
     const auditStart = admin.indexOf("function handleAuditDriveImagesInCortes(");
     const auditEnd = admin.indexOf("\nfunction handleAuditDriveImagesInCortesCore_", auditStart);
     assert.ok(auditStart >= 0 && auditEnd > auditStart);

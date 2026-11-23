@@ -112,9 +112,14 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     assert.match(authSource, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
     assert.match(authTestSource, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
 });
-test('USERS mantiene la columna privada fuera de la escritura de perfil', () => {
-    assert.match(usersSource, /TermsAcceptance: 9/); assert.match(usersTestSource, /TermsAcceptance: 9/);
-    assert.match(usersSource, /if \(key !== 'Nombre_Completo'\)/);
+test('AUTH conserva la columna privada de aceptación fuera de la escritura de perfil', () => {
+    assert.match(authSource, /TermsAcceptance: 9/);
+    assert.match(authTestSource, /TermsAcceptance: 9/);
+    const start = authSource.indexOf('function normalizeUserProfileUpdates_(');
+    const end = authSource.indexOf('\nfunction ', start + 10);
+    assert.ok(start >= 0 && end > start);
+    assert.match(authSource.slice(start, end), /Nombre_Completo/);
+    assert.doesNotMatch(authSource.slice(start, end), /TermsAcceptance|Password|Privilegios/);
 });
 test('API dirige acceptTerms a AUTH sin enviar una llamada touchSession adicional', () => {
     assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/);

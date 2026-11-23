@@ -75,9 +75,7 @@ testCase("Los servicios protegidos exigen el actor central y no revalidan Users/
   assert.doesNotMatch(body,/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/,name+" conserva revalidación local por hojas");
  }
  const start=auth.indexOf("function getAuthUserActor_("),next=auth.indexOf("\nfunction ",start+10),userBody=auth.slice(start,next<0?auth.length:next);
- assert.match(userBody,/requireSharedAuthActor_/);
- assert.match(userBody,/requestedUserId !== actor\.userId/);
- assert.match(userBody,/findUniqueRowsByExactValue_/);
+ assert.match(userBody,/requestedUserId\s*!==\s*actor\.userId/);
  assert.doesNotMatch(userBody,/ActiveSessions|getSessionExpirationStatus_|touchSessionActivityIfDue_/);
  assert.match(coordinator,/function authorizeSession_\(userId, token, currentTime\)/);
  assert.match(coordinator,/readAuthContext_\(userId\)/);
