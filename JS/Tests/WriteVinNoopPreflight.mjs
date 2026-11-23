@@ -42,7 +42,7 @@ function makeHarness({ row = ["10", "", "", "", "Base / Full", "", "", "", "", "
     const wrapper = new Function(...Object.keys(deps), helperCode + "\n" + wrapperCode + "\nreturn handleAddVinToVehicle;")(...Object.values(deps));
     return { helper, wrapper, stats: () => ({ lockCalls, lockedCalls, authCalls, versionCalls, reads }) };
 }
-assert.match(source, /response && response\.status === "success" && response\.alreadyPresent !== true/, "Un replay sin cambios no debe invalidar CATALOG");
+assert.match(source, /const replay = findExistingVinRegistrationNoop_\(payload \|\| \{\}\);\s*if \(replay\) return replay;/, "Un replay idéntico debe terminar antes de abrir la mutación o invalidar CATALOG");
 assert.match(source, /fieldName: "vin_registration"/, "La mutación debe usar un evento VIN compuesto");
 assert.doesNotMatch(source.slice(source.indexOf("function handleAddVinToVehicle(payload) {")), /LockService\.getScriptLock|setValue\(/, "La mutación no debe usar ScriptLock ni escribir Cortes directamente");
 assert.match(source, /fieldName: "vin_registration"/, "La mutación debe usar un evento VIN compuesto");
