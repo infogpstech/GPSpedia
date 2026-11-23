@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 const apiConfig = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 
 function createRuntime() {
