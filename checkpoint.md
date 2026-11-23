@@ -157,3 +157,9 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Documentados comandos manuales de la terminal Drive y su restricción al árbol Cortes; no se encontró comando de borrado en el dispatcher revisado.
 - Escaneo estático de módulos principales sin declaraciones de triggers; alcance limitado a los archivos listados en §13.2. No se afirma ausencia global ni en deployments.
 - Pendiente inspeccionar archivos de raíz/manifiestos y configuración de proyectos Apps Script para jobs/triggers instalados.
+
+
+### Contratos AUTH — avance 2026-11-23
+- Documentados payloads de negocio y contexto, respuestas/errores representativos, RBAC y hojas para las 15 acciones AUTH en §14 de la matriz.
+- Preservadas como invariantes la respuesta genérica de recuperación, términos por dispositivo, revocación de sesiones, protección del último Desarrollador y migración de hashes heredados con dry-run/confirmación.
+- Pendiente profundizar en objetos de perfil/sesión, columnas físicas y secuencias Coordinator. MIG-001 sigue EN PROGRESO.
