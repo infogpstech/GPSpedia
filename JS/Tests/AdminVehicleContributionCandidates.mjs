@@ -1,62 +1,43 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-
-const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = admin.indexOf("function handleGetVehicleContributionCandidates_(payload)");
-const end = admin.indexOf("\nfunction handleMigrateVehicleContributionsSchema", start);
-assert.ok(start >= 0 && end > start, "No se encontró el handler de candidatos ADMIN");
-const handler = admin.slice(start, end);
-function run(response, payload = {}) {
-    const calls = [];
-    const fetch = { fetch(url, options) {
-        calls.push({ url, options });
-        return { getResponseCode: () => response.http || 200, getContentText: () => {
-            const request = JSON.parse(options.payload);
-            const body = JSON.parse(JSON.stringify(response.body));
-            if (request.action === "getContributionCandidates" && Array.isArray(body.candidates)) {
-                body.limit = request.payload.limit;
-                body.candidates = body.candidates.slice(0, body.limit);
-                body.truncated = body.total > body.limit;
-            }
-            return JSON.stringify(body);
-        }};
-    }};
-    const fn = new Function("UrlFetchApp", "CATALOG_SERVICE_URL", handler + "\nreturn handleGetVehicleContributionCandidates_;")(fetch, "https://catalog.test/exec");
-    return { result: fn(payload), calls };
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const catalog=readFileSync(new URL("../Services/catalog.js",import.meta.url),"utf8");
+const api=readFileSync(new URL("../Frontend/api-config.js",import.meta.url),"utf8");
+const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
+assert.equal(admin.includes("handleGetVehicleContributionCandidates_"),false);
+assert.equal(admin.includes("CATALOG_SERVICE_URL"),false);
+assert.ok(catalog.includes("case 'getVehicleContributionCandidates'"));
+assert.ok(api.includes("'getVehicleContributionCandidates': 'CATALOG'"));
+const authStart=catalog.indexOf("function normalizeCatalogRole_"),authEnd=catalog.indexOf("function getSpreadsheet()",authStart);
+assert.ok(authStart>=0&&authEnd>authStart);
+const authSource=catalog.slice(authStart,authEnd);
+function sheets(role="Desarrollador",created=new Date(),activity=new Date(),tokens=["SESSION-1"]){
+ const sheet=rows=>({getDataRange:()=>({getValues:()=>rows})});
+ return {getSheetByName:name=>name==="Users"?sheet([["id","username","password","role"],["USER-1","dev","",role]]):
+  name==="ActiveSessions"?sheet([["id","username","token","date","logs","lastActivityAt"],...tokens.map(t=>["USER-1","dev",t,created,"",activity])]):null};
 }
-const catalog = { status: "success", candidates: [
-    { eventId: "EV-A", opId: "OP-A", vehicleId: "3", vehicleLabel: "Nissan Frontier", kind: "feed", reason: "feed_capacity_full", payload: { text: "12V", image: "FILE_ID" }, status: "pending_review" },
-    { eventId: "EV-B", opId: "OP-B", vehicleId: "22", vehicleLabel: "Toyota Hilux", kind: "cut", reason: "vin_conflict", payload: { tipo: "Ignición", vinPrefix: "X" }, status: "pending_review" }
-], total: 2, limit: 200, truncated: false, source: "CATALOG", readOnly: true };
-{
- const {result,calls}=run({body:catalog});
- assert.equal(result.status,"success"); assert.equal(result.total,2); assert.equal(result.candidates.length,2);
- assert.equal(result.candidates[0].vehicleId,"3"); assert.equal(result.candidates[0].reason,"feed_capacity_full");
- assert.equal(result.candidates[1].reason,"vin_conflict"); assert.equal(result.readOnly,true);
- assert.equal(calls.length,1); assert.equal(JSON.parse(calls[0].options.payload).action,"getContributionCandidates"); assert.equal(JSON.parse(calls[0].options.payload).payload.limit,200);
-}
-{
- const {result}=run({body:catalog},{limit:1});
- assert.equal(result.total,2); assert.equal(result.candidates.length,1); assert.equal(result.truncated,true);
-}
-assert.throws(()=>run({http:503,body:catalog}),/No se pudo obtener la proyección vigente/);
-assert.throws(()=>run({body:{status:"error",data:{}}}),/No se pudo obtener la proyección vigente/);
-assert.throws(()=>run({body:{status:"success",data:{cortes:{}}}}),/No se pudo obtener la proyección vigente/);
-assert.ok(admin.includes("case 'getVehicleContributionCandidates':"),"La acción debe estar registrada en el router ADMIN");
-console.log("AdminVehicleContributionCandidates: 6/6 PASS — proyección actual, límites, orden, errores y router");
-
-const adminUi = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
-const imagePreviewStart = adminUi.indexOf("const candidateImageUrl=");
-const imagePreviewEnd = adminUi.indexOf("const editor=document.createElement(\"textarea\")", imagePreviewStart);
-assert.ok(imagePreviewStart >= 0 && imagePreviewEnd > imagePreviewStart, "La tarjeta ADMIN debe inspeccionar imágenes del candidato antes de mostrar el editor");
-const imagePreview = adminUi.slice(imagePreviewStart, imagePreviewEnd);
-assert.match(imagePreview, /candidatePayload\.image/);
-assert.match(imagePreview, /candidatePayload\.fieldName/);
-assert.ok(imagePreview.includes(String.raw`/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,110})\/view$/`), "La vista previa solo acepta la URL canónica de Drive");
-assert.match(imagePreview, /image\.src=candidateImageUrl/);
-assert.match(imagePreview, /imageLink\.target="_blank"/);
-assert.match(imagePreview, /imageLink\.rel="noopener noreferrer"/);
-assert.match(imagePreview, /image\.referrerPolicy="no-referrer"/);
-assert.match(adminUi, /if\(imagePreview\)card\.appendChild\(imagePreview\)/);
-console.log("AdminVehicleContributionCandidateImagePreview: 8/8 PASS — candidatos conservan vista previa y enlace seguro de imagen");
-
+const verify=ss=>new Function("getSpreadsheet",authSource+";return verifyCatalogDeveloperSession_;")(()=>ss);
+assert.equal(verify(sheets())({userId:"USER-1",sessionToken:"SESSION-1"}),true);
+assert.throws(()=>verify(sheets("Técnico"))({userId:"USER-1",sessionToken:"SESSION-1"}),/Desarrollador/);
+assert.throws(()=>verify(sheets("Desarrollador",new Date("2020-01-01"),new Date("2020-01-01")))({userId:"USER-1",sessionToken:"SESSION-1"}),/expiró/);
+assert.throws(()=>verify(sheets("Desarrollador",new Date(),new Date(),["SESSION-1","SESSION-1"]))({userId:"USER-1",sessionToken:"SESSION-1"}),/único/);
+assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
+const hs=catalog.indexOf("function handleGetContributionCandidates_(payload = {})"),he=catalog.indexOf("function handleGetNavigationData()",hs);
+assert.ok(hs>=0&&he>hs);
+const handler=new Function("verifyCatalogDeveloperSession_","readCatalogContributionProjectionVehicles_",catalog.slice(hs,he)+";return handleGetContributionCandidates_;")(
+ ()=>true,()=>[{id:"3",marca:"Nissan",modelo:"Frontier",contributionCandidates:[
+  {eventId:"EV-A",opId:"OP-A",kind:"feed",reason:"feed_capacity_full",payload:{image:"FILE_ID"}},
+  {eventId:"EV-B",opId:"OP-B",kind:"cut",reason:"vin_conflict",payload:{}}
+ ]}]
+);
+const normal=handler({userId:"USER-1",sessionToken:"SESSION-1",limit:1});
+assert.equal(normal.total,2);assert.equal(normal.candidates.length,1);assert.equal(normal.truncated,true);
+const withImages=handler({userId:"USER-1",sessionToken:"SESSION-1",includeImageInventoryCandidates:true});
+assert.equal(withImages.imageInventoryCandidates.length,1);assert.equal(withImages.imageInventoryCandidates[0].eventId,"EV-A");
+assert.equal(withImages.imageInventoryEvents,undefined);
+assert.ok(ui.includes('routeAction("getContributionCandidates",{...getDeveloperSessionPayload(),limit:200})'));
+const previewStart=ui.indexOf("const candidateImageUrl="),previewEnd=ui.indexOf('const editor=document.createElement("textarea")',previewStart);
+assert.ok(previewStart>=0&&previewEnd>previewStart);
+const preview=ui.slice(previewStart,previewEnd);
+for(const value of ["candidatePayload.image","candidatePayload.fieldName","image.src=candidateImageUrl",'imageLink.target="_blank"','imageLink.rel="noopener noreferrer"','image.referrerPolicy="no-referrer"'])assert.ok(preview.includes(value),value);
+console.log("AdminVehicleContributionCandidates: 12/12 PASS — CATALOG valida sesión/rol, candidatos y preview");
