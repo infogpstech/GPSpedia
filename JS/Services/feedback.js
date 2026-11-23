@@ -5152,6 +5152,11 @@ function reserveYouTubeUploadInitialization_(payload, userId) {
     if (!cache) throw new Error("No está disponible la caché de sesión reanudable; no se inició la subida.");
     const cacheKey = buildYouTubeUploadSessionCacheKey_(userId, payload.opVideoId);
     const requestHash = buildYouTubeUploadReservationHash_(payload);
+    const renewRequested = payload.renewSession === true;
+    const expiredUploadUrl = String(payload.expiredUploadUrl || "").trim();
+    if (renewRequested && !isValidYouTubeUploadSessionUrl_(expiredUploadUrl)) {
+        throw new Error("La renovación requiere una URL de sesión reanudable de YouTube confirmada como expirada.");
+    }
     return withYouTubeUploadReservationLock_(() => {
         const sheet = getYouTubeUploadReservationSheet_();
         const now = Date.now();
@@ -5199,6 +5204,9 @@ function reserveYouTubeUploadInitialization_(payload, userId) {
             return { reuse: false, rowIndex: existing.rowIndex, cacheKey };
         }
 
+        if (renewRequested) {
+            throw new Error("No existe una reserva previa para renovar la sesión reanudable.");
+        }
         const last = sheet.getLastRow();
         if (last >= 2) {
             const rows = sheet.getRange(2, 1, last - 1, YOUTUBE_UPLOAD_RESERVATION_HEADERS_.length).getValues();
