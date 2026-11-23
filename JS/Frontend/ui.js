@@ -445,6 +445,32 @@ function clearInMemoryEditBackup_() {
     adminModalFieldVersions = new Map();
 }
 
+function normalizeAdminFieldProjectionValueClient_(value) {
+    if(Array.isArray(value))return JSON.stringify(value.map(item=>String(item==null?"":item).trim().toUpperCase()).filter(Boolean).sort());
+    const text=String(value==null?"":value).trim();
+    if(text.startsWith("[")&&text.endsWith("]"))try{const parsed=JSON.parse(text);if(Array.isArray(parsed))return JSON.stringify(parsed.map(item=>String(item==null?"":item).trim().toUpperCase()).filter(Boolean).sort());}catch(error){}
+    return text;
+}
+async function verifyAdminVehicleFieldUpdateProjectionFrontend_(vehicleId,fieldName,proposedValue,eventId){
+    try{
+        const response=await routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim()}),vehicle=response&&response.vehicle;
+        if(!response||response.status!=="success"||!vehicle||String(vehicle.id||"").trim()!==String(vehicleId||"").trim())throw new Error("CATALOG no devolvió la proyección vigente del vehículo.");
+        const source=vehicle.contributionSources&&vehicle.contributionSources[fieldName],rawValue=vehicle[fieldName],currentValue=String(rawValue==null?"":rawValue).trim(),sourceEventId=String(source&&source.eventId||"");
+        const candidates=Array.isArray(vehicle.contributionCandidates)?vehicle.contributionCandidates:[],candidate=candidates.find(item=>String(item&&item.eventId||"")===String(eventId||""));
+        const matchesValue=normalizeAdminFieldProjectionValueClient_(rawValue)===normalizeAdminFieldProjectionValueClient_(proposedValue);
+        if(matchesValue&&sourceEventId===String(eventId||""))return{candidateReviewPending:false,projectionVerification:"applied",currentValue,currentSourceEventId:sourceEventId,message:"La versión quedó registrada y confirmada en la proyección CATALOG."};
+        if(candidate)return{candidateReviewPending:true,projectionVerification:"candidate",currentValue,currentSourceEventId:sourceEventId,candidateReason:String(candidate.reason||candidate.reasonCode||candidate.message||"Conflicto de proyección"),message:"La versión quedó registrada, pero CATALOG la conserva como candidata para revisión."};
+        if(matchesValue)return{candidateReviewPending:false,superseded:true,projectionVerification:"superseded",currentValue,currentSourceEventId:sourceEventId,message:"El valor ya aparece en CATALOG por una actualización posterior; se conserva la versión vigente."};
+        return{candidateReviewPending:true,projectionVerification:"not_applied",currentValue,currentSourceEventId:sourceEventId,message:"La versión quedó registrada, pero no se reflejó en CATALOG. Requiere revisión."};
+    }catch(error){return{candidateReviewPending:true,projectionVerification:"unavailable",currentValue:undefined,currentSourceEventId:"",verificationError:String(error&&error.message||error),message:"La versión se registró, pero no se pudo verificar su aplicación en CATALOG. Actualiza la ficha antes de continuar."};}
+}
+async function loadCatalogImageProjection_(vehicleId,fieldName,status){
+    const response=await routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim()}),vehicle=response&&response.vehicle;
+    if(!response||response.status!=="success"||!vehicle||String(vehicle.id||"").trim()!==String(vehicleId||"").trim())throw new Error("No se pudo recuperar la proyección vigente de CATALOG para reconciliar la imagen.");
+    const source=vehicle.contributionSources&&vehicle.contributionSources[fieldName],currentImageUrl=String(vehicle[fieldName]==null?"":vehicle[fieldName]).trim();
+    return Object.assign({},status||{},{currentImageUrl,currentSourceEventId:String(source&&source.eventId||""),superseded:!!(status&&status.newImageUrl&&currentImageUrl!==String(status.newImageUrl))});
+}
+
 async function saveFieldSilently(vehicleId, fieldName, value, expectedCurrentValue) {
     showSavingIndicator("saving", "Guardando...");
     try {
@@ -465,6 +491,8 @@ async function saveFieldSilently(vehicleId, fieldName, value, expectedCurrentVal
         if (!result || result.status !== "success") {
             throw new Error(result && result.message || "El servicio no confirmó la versión del campo.");
         }
+        const projectionResult=await verifyAdminVehicleFieldUpdateProjectionFrontend_(cleanVehicleId,fieldName,value,result.eventId);
+        Object.assign(result,projectionResult);
         if (result.candidateReviewPending === true || result.superseded === true) {
             const projectedValue = result.currentValue !== undefined ? result.currentValue : expectedValue;
             const projectedEventId = String(result.currentSourceEventId || expectedSourceEventId || "");
@@ -546,12 +574,8 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
         .filter(([key, operation]) => key.startsWith(ownerVehicleKey + "::") && String(operation.ownerId || "") === ownerId)
         .map(([, operation]) => operation);
     for (const operation of operations) {
-        const status = await routeAction("getAdminImageUploadStatus", {
-            ...getDeveloperSessionPayload(),
-            vehicleId: operation.vehicleId,
-            fieldName: operation.fieldName,
-            opId: operation.id
-        });
+        let status=await routeAction("getAdminImageUploadStatus",{...getDeveloperSessionPayload(),vehicleId:operation.vehicleId,fieldName:operation.fieldName,opId:operation.id});
+        status=await loadCatalogImageProjection_(operation.vehicleId,operation.fieldName,status);
         if (!isCurrentUiSessionContext_(editSession)) {
             throw new Error("La sesión cambió durante la consulta del reemplazo. La operación local se conserva para reconciliarla con la cuenta propietaria.");
         }
@@ -7701,10 +7725,29 @@ ${elapsedSec}s
         };
     }
 
-    document.getElementById('btn-admin-reorganize-db').onclick = async () => {
-        if (await requestDeveloperConsoleConfirmation_("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
-            await runAction('reorganizeDatabase');
-        }
+    document.getElementById('btn-admin-reorganize-db').onclick=async()=>{
+        const session=getDeveloperSessionPayload(),ownerId=String(session&&session.userId||"");
+        if(!ownerId||!isAdminPanelCurrent_())return;
+        const key="gpsepedia_admin_reorganize_v1_"+ownerId;let saved=null;
+        try{const raw=localStorage.getItem(key);saved=raw?JSON.parse(raw):null;if(!saved||saved.version!==1||saved.ownerId!==ownerId||!["backup_pending","freeze_pending","sort_pending"].includes(saved.stage))saved=null;}catch(error){saved=null;}
+        const confirmed=await requestDeveloperConsoleConfirmation_(saved&&saved.backupId
+            ?"Hay una reorganización pendiente con respaldo "+saved.backupId+". Se retomará desde "+saved.stage+". ¿Deseas continuar?"
+            :"¿Deseas reorganizar la base de datos? Se creará un respaldo, WRITE estabilizará los IDs y ADMIN ordenará las filas.");
+        if(!confirmed||!isAdminPanelCurrent_())return;
+        const state=saved||{version:1,ownerId,stage:"backup_pending",backupId:"",createdAt:Date.now()},persist=()=>localStorage.setItem(key,JSON.stringify(state));
+        const step=async(action,payload,progress,message)=>{
+            if(!isAdminPanelCurrent_())throw new Error("La sesión o el panel cambió; la operación quedó guardada para reanudar.");
+            setProgress(progress);log("[REORGANIZACIÓN] "+message);
+            const result=await routeAction(action,{...payload,...getDeveloperSessionPayload()});
+            if(!result||result.status!=="success")throw new Error(result&&result.message||"El servicio no confirmó "+action+".");
+            return result;
+        };
+        try{
+            if(state.stage==="backup_pending"){persist();const backup=await step("backupDatabase",{},15,"Creando y verificando respaldo preventivo…");if(!/^[A-Za-z0-9_-]{20,}$/.test(String(backup.backupId||"")))throw new Error("ADMIN no devolvió un ID de respaldo verificable.");state.backupId=String(backup.backupId);state.stage="freeze_pending";persist();}
+            if(state.stage==="freeze_pending"){persist();const frozen=await step("freezeCortesIds",{backupId:state.backupId,confirm:true},55,"Solicitando a WRITE la estabilización de IDs…");if(frozen.dryRun===true)throw new Error("WRITE solo confirmó una simulación; no se reorganizará la base.");state.stage="sort_pending";persist();}
+            if(state.stage==="sort_pending"){persist();await step("reorganizeDatabase",{backupId:state.backupId,idsFrozen:true},85,"Solicitando a ADMIN el ordenamiento con precondiciones verificadas…");}
+            localStorage.removeItem(key);setProgress(100);log("[SISTEMA] Reorganización completada. Respaldo: "+state.backupId);
+        }catch(error){try{persist();}catch(storageError){}setProgress(0);log("[ADVERTENCIA] La reorganización quedó en etapa "+state.stage+" y puede reanudarse: "+String(error&&error.message||error),false,true);}
     };
     document.getElementById('btn-admin-normalize-images').onclick = async () => {
         const continueSaved = await requestDeveloperConsoleConfirmation_("¿Deseas CONTINUAR desde el último punto de progreso guardado? Responde no para iniciar desde el principio (Fila 1).");
@@ -7963,7 +8006,7 @@ ${elapsedSec}s
         if(!contributionRefreshBtn||!contributionContainer||!isAdminPanelCurrent_())return;
         contributionRefreshBtn.disabled=true;contributionStatus.textContent="Consultando candidatos actuales...";contributionContainer.replaceChildren();
         try{
-            const response=await runAction("getVehicleContributionCandidates",{limit:200});
+            const response=await routeAction("getContributionCandidates",{...getDeveloperSessionPayload(),limit:200});
             if(!isAdminPanelCurrent_()||!response)return;
             if(response.status!=="success"||!Array.isArray(response.candidates))throw new Error(response.message||"Respuesta de candidatos no válida.");
             contributionStatus.textContent=response.total+" candidato(s)."+(response.truncated?" Se muestran los primeros "+response.limit+".":"");
@@ -8307,9 +8350,16 @@ export async function openReplacedImagesModal() {
             listContainer.innerHTML = '<div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Consultando inventario e historial en Spreadsheet...</div>';
         }
         try {
-            const response = await routeActionWithRetry('getReplacedImages', getDeveloperSessionPayload(), { timeoutMs: 120000, maxAttempts: 2, retryDelayMs: 500, shouldContinue: isCurrentRequest });
-            if (!isCurrentRequest()) return;
-            cachedReplaced = response && Array.isArray(response.data) ? response.data : [];
+            let imageInventoryCandidates=null,candidateSnapshotWarning="";
+            try{
+                const candidateSnapshot=await routeActionWithRetry("getContributionCandidates",{...getDeveloperSessionPayload(),limit:500,includeImageInventoryCandidates:true},{timeoutMs:30000,maxAttempts:2,retryDelayMs:400,shouldContinue:isCurrentRequest});
+                if(!candidateSnapshot||candidateSnapshot.status!=="success"||!Array.isArray(candidateSnapshot.imageInventoryCandidates))throw new Error(candidateSnapshot&&candidateSnapshot.message||"CATALOG no confirmó los candidatos de inventario.");
+                imageInventoryCandidates=candidateSnapshot.imageInventoryCandidates;
+            }catch(catalogError){candidateSnapshotWarning="No se pudo actualizar el inventario de imágenes candidatas desde CATALOG: "+String(catalogError&&catalogError.message||catalogError);}
+            if(!isCurrentRequest())return;
+            const response=await routeActionWithRetry('getReplacedImages',{...getDeveloperSessionPayload(),...(imageInventoryCandidates?{imageInventoryCandidates}:{})},{timeoutMs:120000,maxAttempts:2,retryDelayMs:500,shouldContinue:isCurrentRequest});
+            if(!isCurrentRequest())return;
+            cachedReplaced=response&&Array.isArray(response.data)?response.data:[];
             const currentIds = new Set(cachedReplaced.map(item => String(item.id_reemplazo || "")));
             selectedIds.forEach(id => { if (!currentIds.has(id)) selectedIds.delete(id); });
             cachedReview = response && Array.isArray(response.review) ? response.review : [];
@@ -8317,6 +8367,7 @@ export async function openReplacedImagesModal() {
             schemaReady = schemaStatus === "ready";
             referenceCheckStatus = String(response && response.referenceCheckStatus || "unavailable");
             schemaWarnings = response && Array.isArray(response.warnings) ? response.warnings : [];
+            if(candidateSnapshotWarning)schemaWarnings=schemaWarnings.concat([candidateSnapshotWarning]);
             renderList(filterInput ? filterInput.value : '');
         } catch (error) {
             if (!isCurrentRequest()) return;
