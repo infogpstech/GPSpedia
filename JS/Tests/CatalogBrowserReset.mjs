@@ -80,5 +80,54 @@ test("el runner sustituye la prueba Coordinator por la prueba CATALOG", () => {
     assert.doesNotMatch(runner, /CoordinatorBrowserCatalogReset\.mjs/);
 });
 
-console.log("CatalogBrowserReset: " + passed + "/10 PASS");
-assert.equal(passed, 10);
+await (async function testCatalogPublicationRequestIds() {
+    const nonceStart = api.indexOf("function createCatalogPublicationNonce_()");
+    const nonceEnd = api.indexOf("\\n}\\n", nonceStart) + 2;
+    const deltaStart = api.indexOf("async function publishCatalogChangeAfterMutation_");
+    const deltaEnd = api.indexOf("\\n}\\n", deltaStart) + 2;
+    assert.ok(nonceStart >= 0 && nonceEnd > nonceStart);
+    assert.ok(deltaStart >= 0 && deltaEnd > deltaStart);
+    const nonceSource = api.slice(nonceStart, nonceEnd);
+    const deltaSource = api.slice(deltaStart, deltaEnd);
+    let nonce = 0;
+    const requests = [];
+    const route = async (action, payload) => {
+        requests.push({ action, payload });
+        return { status: "success" };
+    };
+    const publish = new Function("routeActionInternal_", "crypto",
+        nonceSource + "\\n" + deltaSource + "\\nreturn publishCatalogChangeAfterMutation_;")(
+        route, { randomUUID: () => "unique-" + (++nonce) }
+    );
+    const mutation = {
+        userId: "USER-1",
+        sessionToken: "session-token-not-persisted",
+        problemId: "isue-42"
+    };
+    const result = {
+        status: "success",
+        catalogChange: { collection: "pys", recordId: "isue-42", operation: "upsert" }
+    };
+    const first = await publish("FEEDBACK", "addSolution", mutation, result);
+    const second = await publish("FEEDBACK", "addSolution", mutation, result);
+    assert.equal(first, result);
+    assert.equal(second, result);
+    assert.notEqual(requests[0].payload.requestId, requests[1].payload.requestId);
+    assert.equal(requests[0].payload.change.snapshot, undefined);
+    assert.equal(requests[0].payload.sessionToken, "session-token-not-persisted");
+
+    const retryRequests = [];
+    const retryPublish = new Function("routeActionInternal_", "crypto",
+        nonceSource + "\\n" + deltaSource + "\\nreturn publishCatalogChangeAfterMutation_;")(
+        async (action, payload) => { retryRequests.push(payload); return { status: "success" }; },
+        { randomUUID: () => "retry-" + (++nonce) }
+    );
+    const stablePayload = { ...mutation, opId: "operation-stable-0001" };
+    await retryPublish("FEEDBACK", "addSolution", stablePayload, result);
+    await retryPublish("FEEDBACK", "addSolution", stablePayload, result);
+    assert.equal(retryRequests[0].requestId, retryRequests[1].requestId);
+    passed++;
+    console.log("PASS IDs de publicación únicos por mutación y estables al reintentar");
+})();
+console.log("CatalogBrowserReset: " + passed + "/11 PASS");
+assert.equal(passed, 11);
