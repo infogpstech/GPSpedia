@@ -15,7 +15,7 @@ const services = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
 const counts = { AUTH: 2, CATALOG: 4, WRITE: 3, FEEDBACK: 5, UTILITIES: 0, ADMIN: 6 };
 const periods = ["lastHour", "last6Hours", "last24Hours"];
 const fixture = () => ({
-    status: "success", scope: "coordinator_protected_operations", services: services.slice(),
+    status: "success", scope: "coordinator_legacy_protected_operations", services: services.slice(),
     buckets: [{ startAt: 1_800_000_000_000, counts: { ...counts } }],
     totals: Object.fromEntries(periods.map(period => [period, { ...counts }]))
 });
