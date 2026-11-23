@@ -5254,21 +5254,29 @@ function finishYouTubeUploadInitialization_(reservation, status, cacheKey, uploa
 function markYouTubeUploadReservationSubmitted_(payload) {
     const operationId = String(payload && payload.opVideoId || "").trim();
     if (!operationId) return false;
-    return withYouTubeUploadReservationLock_(() => {
-        const sheet = getYouTubeUploadReservationSheet_();
-        const record = findYouTubeUploadReservation_(sheet, operationId);
-        if (!record) return false; // Compatibilidad con solicitudes de enlace manual.
-        if (String(record.values[1]) !== String(payload.userId || "") ||
-            String(record.values[2]) !== String(payload.contentType || "") ||
-            String(record.values[3]) !== String(payload.referenceId || "")) {
-            throw new Error("La reserva de vídeo no coincide con el propietario o destino de la solicitud.");
-        }
+
+    // La solicitud ya fue persistida y verificada en Feedbacks. Esta transición
+    // terminal es idempotente y no requiere un bloqueo global adicional.
+    const spreadsheet = getSpreadsheet();
+    const existingSheet = spreadsheet && spreadsheet.getSheetByName(YOUTUBE_UPLOAD_RESERVATIONS_SHEET_);
+    if (!existingSheet) return false; // Compatibilidad con solicitudes de enlace manual.
+
+    const sheet = getYouTubeUploadReservationSheet_();
+    const record = findYouTubeUploadReservation_(sheet, operationId);
+    if (!record) return false;
+    if (String(record.values[1]) !== String(payload.userId || "") ||
+        String(record.values[2]) !== String(payload.contentType || "") ||
+        String(record.values[3]) !== String(payload.referenceId || "")) {
+        throw new Error("La reserva de vídeo no coincide con el propietario o destino de la solicitud.");
+    }
+    if (String(record.values[5] || "") !== "submitted") {
         record.values[5] = "submitted";
         record.values[7] = Date.now();
         saveYouTubeUploadReservation_(sheet, record);
-        CacheService.getScriptCache().remove(buildYouTubeUploadSessionCacheKey_(payload.userId, operationId));
-        return true;
-    });
+    }
+    const cache = CacheService.getScriptCache();
+    if (cache) cache.remove(buildYouTubeUploadSessionCacheKey_(payload.userId, operationId));
+    return true;
 }
 
 /**
