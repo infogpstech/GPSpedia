@@ -181,3 +181,17 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - `CheckOperationSecurity.js`: 8/8 PASS.
 - `ActionDispatchContract.js`: 12/12 PASS.
 - Total: **134 aserciones PASS, 0 FAIL**. Solo pruebas locales sobre fuentes exactas; no se invocaron Apps Script, Spreadsheet ni Drive reales. No es validación Beta.
+
+
+
+### MIG-001 — Mapa físico de hojas AUTH / USERS / WRITE — 2026-11-23
+
+- Se confirmó mediante comparación GitHub que la rama de trabajo había avanzado 34 commits respecto del HEAD anterior registrado `9f1697e64015625c2e1abece4f131ad1e9b7b2a4`. El HEAD leído antes de esta actualización documental era `2a9c34a410ef7880f955615e745a5b338f7f2954`; no se asumió el SHA del checkpoint como HEAD actual.
+- Se confirmó que la rama base `GPSpedia2.2.5` permanece idéntica a `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se amplió `MATRIZ_MIGRACION_SERVICIOS.md` con §17: mapa de Users, ActiveSessions, Logs y Cortes; esquemas auxiliares de idempotencia, reservas de IDs, aportes, eventos de carga y configuración de secuencia de usuarios.
+- Se detectó una diferencia de definición entre AUTH y USERS: ambos declaran Users A:I, pero AUTH define ActiveSessions A:G y USERS solo A:F. Debe conservarse G al unificar.
+- Se documentaron VIN por encabezado dinámico, columnas AQ:AS sin campo declarado y AT:AV como posiciones obligatorias de indicadores de testigo.
+- Se actualizaron también los registros de MIG-001 en `TAREAS_MIGRACION_ARQUITECTURA.md`.
+- Evidencia basada en lectura del código fuente de la rama. No se consultó una Spreadsheet real ni se verificaron encabezados/datos de Beta/productivo. No se modificó código funcional, hojas, deployments, Drive ni datos.
+- MIG-001 permanece **EN PROGRESO**. Siguiente tramo: inventariar esquemas y efectos de FEEDBACK, CATALOG, ADMIN y UTILITIES; completar Drive/APIs, triggers/jobs y pruebas por acción.
+- Commits documentales de esta iteración: `5bc82a1875bae76d888585f3a045aee1000e127d` (matriz) y `b9796dc536eb721678db3893dda14c4eaf03ec0b` (registro de tareas). La actualización del checkpoint se publica a continuación.
