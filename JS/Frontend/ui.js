@@ -7734,7 +7734,9 @@ ${elapsedSec}s
             ?"Hay una reorganización pendiente con respaldo "+saved.backupId+". Se retomará desde "+saved.stage+". ¿Deseas continuar?"
             :"¿Deseas reorganizar la base de datos? Se creará un respaldo, WRITE estabilizará los IDs y ADMIN ordenará las filas.");
         if(!confirmed||!isAdminPanelCurrent_())return;
-        const state=saved||{version:1,ownerId,stage:"backup_pending",backupId:"",createdAt:Date.now()},persist=()=>localStorage.setItem(key,JSON.stringify(state));
+        const state=saved||{version:1,ownerId,stage:"backup_pending",backupId:"",createdAt:Date.now(),operationId:""},persist=()=>localStorage.setItem(key,JSON.stringify(state));
+        if(!/^[A-Za-z0-9_-]{16,100}$/.test(String(state.operationId||""))){state.operationId="reorg_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);}
+        persist();
         const step=async(action,payload,progress,message)=>{
             if(!isAdminPanelCurrent_())throw new Error("La sesión o el panel cambió; la operación quedó guardada para reanudar.");
             setProgress(progress);log("[REORGANIZACIÓN] "+message);
@@ -7743,7 +7745,7 @@ ${elapsedSec}s
             return result;
         };
         try{
-            if(state.stage==="backup_pending"){persist();const backup=await step("backupDatabase",{},15,"Creando y verificando respaldo preventivo…");if(!/^[A-Za-z0-9_-]{20,}$/.test(String(backup.backupId||"")))throw new Error("ADMIN no devolvió un ID de respaldo verificable.");state.backupId=String(backup.backupId);state.stage="freeze_pending";persist();}
+            if(state.stage==="backup_pending"){persist();const backup=await step("backupDatabase",{operationId:state.operationId},15,"Creando y verificando respaldo preventivo…");if(!/^[A-Za-z0-9_-]{20,}$/.test(String(backup.backupId||"")))throw new Error("ADMIN no devolvió un ID de respaldo verificable.");state.backupId=String(backup.backupId);state.stage="freeze_pending";persist();}
             if(state.stage==="freeze_pending"){persist();const frozen=await step("freezeCortesIds",{backupId:state.backupId,confirm:true},55,"Solicitando a WRITE la estabilización de IDs…");if(frozen.dryRun===true)throw new Error("WRITE solo confirmó una simulación; no se reorganizará la base.");state.stage="sort_pending";persist();}
             if(state.stage==="sort_pending"){persist();await step("reorganizeDatabase",{backupId:state.backupId,idsFrozen:true},85,"Solicitando a ADMIN el ordenamiento con precondiciones verificadas…");}
             localStorage.removeItem(key);setProgress(100);log("[SISTEMA] Reorganización completada. Respaldo: "+state.backupId);
