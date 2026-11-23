@@ -20,7 +20,7 @@ let benchmarkCalls=0;
 const handler=new Function("requireSharedAuthActor_","benchmarkPasswordKdf_",extract(auth,"handleBenchmarkPasswordKdf_")+"\nreturn handleBenchmarkPasswordKdf_;")(
  actorGuard,()=>{benchmarkCalls++;return [{iterations:1000,durationMs:4},{iterations:12000,durationMs:25}];});
 const mutation=new Function(extract(auth,"isSharedMutationAction_")+"\nreturn isSharedMutationAction_;")();
-const policy=new Function(extract(coordinator,"coordinatorPolicy_")+"\nreturn coordinatorPolicy_;")();
+
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
 const actor={userId:"U1",role:"Desarrollador",epoch:3,fullName:"Usuario verificado"};
 test("el benchmark consume el actor confiable sin revalidar Users/ActiveSessions",()=>{
@@ -53,8 +53,8 @@ test("el router AUTH usa el actor cacheado y no adquiere lease para el benchmark
  assert.deepEqual(calls,[{userId:"U1",token:"session-token"}]);
  assert.equal(benchmarkCalls,before+1);
 });
-test("Coordinator ya no declara una política para una acción que no lo consulta",()=>{
- assert.throws(()=>policy("AUTH","benchmarkPasswordKdf"),/no está habilitada en la política/);
+test("Coordinator no conserva rutas ni autorización del benchmark local AUTH",()=>{
+ assert.doesNotMatch(coordinator,/benchmarkPasswordKdf|withSharedMutationLease_/);
 });
 test("el benchmark usa una cadena fija y no accede a contraseñas ni hojas de usuarios",()=>{
  const source=extract(auth,"benchmarkPasswordKdf_");
