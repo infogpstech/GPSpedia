@@ -19,9 +19,10 @@ let loads=0;
 const deps={cache,keyFor:()=>"session-key",loadActor:()=>{loads++;return actor;}};
 assert.deepEqual(api.getCachedSharedSessionActor_("U-1","opaque-session-token-01",deps),actor);
 assert.equal(loads,1,"El cache miss carga el actor local desde la fuente de identidad.");
+const writesBeforeHit=writes.length;
 assert.deepEqual(api.getCachedSharedSessionActor_("U-1","opaque-session-token-01",deps),actor);
 assert.equal(loads,1,"El cache hit no vuelve a consultar Spreadsheet.");
-assert.equal(writes.at(-1).ttl,21600,"El hit renueva TTL local sin viaje de red.");
+assert.equal(writes.length,writesBeforeHit,"El TTL fijo no se renueva en cada acción.");
 
 const invalid={userId:"U-2",role:"tecnico",epoch:1};
 assert.throws(()=>api.getCachedSharedSessionActor_("U-1","opaque-session-token-01",{
