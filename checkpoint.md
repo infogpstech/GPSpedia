@@ -1041,3 +1041,17 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - MIG-017 y MIG-018 quedan cerradas con validación diferida.
 - Siguiente tarea según prioridad: **MIG-019 — PyS, tutoriales y feedback**.
 - Antes de iniciar MIG-019, consultar la última HEAD y confirmar que la rama base permanece intacta.
+
+### MIG-019 — PyS, tutoriales y feedback
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- CI Node.js 22, run `45251355899`, grupo `43 MIG019`: **363/363 pruebas PASS**, 38 suites únicas, sin fallos dentro del grupo.
+- Cobertura: altas/ediciones PyS, soluciones y prevención; integridad y relaciones bidireccionales PyS–vehículos; navegación contextual y anti-ciclos; almacenamiento/rollback/recuperación de imágenes; caché y XSS; sugerencias y reportes con idempotencia, adjuntos y recuperación; likes append-only, replay y actividad; sugerencias de año y aplicaciones versionadas; tutoriales, títulos, edición, integridad de IDs y actualización delta-first; publicación coordinada del catálogo.
+- Se actualizaron dos contratos de prueba obsoletos: la navegación de tarjetas ahora valida el helper compartido `createPysAssociationAddCard`; el contraste del acordeón valida tokens CSS semánticos vigentes. No se alteró el comportamiento de la aplicación para hacer pasar estas pruebas.
+- Regresión general en el run `45251355899`: 223 suites, 2,578 pruebas aprobadas y seis fallos fuera de MIG-019: ADMIN P4, FEEDBACK reset de vídeo desde navegador, CATALOG feed incremental, UTILITIES fixture Spreadsheet/RBAC/staging/rollback, AUTH purga Logs e INTEGRATION BETA-043.
+- Pages build/deploy del mismo HEAD, run `45251355846`: SUCCESS.
+- No se ejecutaron Apps Script, Spreadsheet, Drive ni cuentas reales. Validación Beta aislada pendiente, especialmente AUG-128 y AUG-155; no usar datos productivos.
+
+### Continuidad
+- MIG-017, MIG-018 y MIG-019 quedan cerradas con validación diferida.
+- Siguiente tarea según prioridad y dependencias: **MIG-020 — Inbox completo**.
+- Rama base protegida `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificada.

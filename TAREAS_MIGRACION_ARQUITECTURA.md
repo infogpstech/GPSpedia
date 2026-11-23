@@ -421,12 +421,17 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Validación diferida:** no se ejecutaron operaciones reales contra Apps Script o Spreadsheet. La migración/versionado de `AportesVehiculo`, la configuración central y la prueba Beta con datos aislados quedan pendientes.
 
 ### MIG-019 — PyS, tutoriales y feedback
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener alta/edición/eliminación de problemas, soluciones y prevención.
-- [ ] Mantener asociación/desasociación bidireccional de vehículos.
-- [ ] Mantener tutoriales, sugerencias, reportes, likes, vistas y formularios.
-- [ ] Mantener límites de texto, vídeos, imágenes y estados.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
+**Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §18: no se añadieron secretos compartidos/manuales ni URLs/configuración interservicio local en Apps Script; la coordinación funcional permanece en frontend cuando es viable; las llamadas técnicas existentes conservan autorización/RBAC y obtención de endpoints desde el registro central.
+- [x] Mantener alta/edición/eliminación de problemas, soluciones y prevención.
+- [x] Mantener asociación/desasociación bidireccional de vehículos.
+- [x] Mantener tutoriales, sugerencias, reportes, likes, vistas y formularios.
+- [x] Mantener límites de texto, vídeos, imágenes y estados.
+- [x] Validar contratos de integridad PyS, recuperación de imágenes, caché, navegación contextual, relaciones bidireccionales, sugerencias/reportes, likes, vistas, tutoriales y publicación incremental de catálogo.
+- [x] Actualizar pruebas de navegación PyS para reflejar el helper compartido de tarjetas y pruebas de accesibilidad/contraste para los tokens semánticos vigentes del CSS.
+**Validación CI:** GitHub Actions Node.js 22, run `45251355899`, grupo `43 MIG019`: **363/363 pruebas PASS**, 38 suites únicas, sin fallos en MIG019.
+**Regresión general:** 223 suites, 2,578 pruebas aprobadas y 6 fallos en suites ajenas a MIG019 (ADMIN P4, FEEDBACK reset de vídeo desde navegador, CATALOG feed incremental, UTILITIES fixture Spreadsheet, AUTH purga Logs e INTEGRATION BETA-043). No se declaran resueltas por esta tarea.
+**Validación diferida:** no se ejecutaron Apps Script, Spreadsheet ni Drive reales. Mantener pruebas Beta aisladas para PyS, relaciones, tutoriales, reportes, likes y vistas, incluyendo AUG-128 y AUG-155; no usar datos productivos.
 
 ### MIG-020 — Inbox completo
 **Estado: PENDIENTE**

@@ -225,3 +225,13 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Grupo MIG018: 594/594 pruebas PASS (51 resúmenes, GitHub Actions run 45249354445).
 - Regresión general en ese run: 2,135 pruebas aprobadas y seis fallos de suites ajenas a MIG-017/MIG-018 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES fixture Spreadsheet, AUTH purga Logs, INTEGRATION BETA-043).
 - No se ejecutaron llamadas reales a Apps Script, Spreadsheet ni Drive; las verificaciones de infraestructura y datos reales quedan pendientes de Beta aislada.
+
+
+### 2026-11-23 — MIG-019: PyS, tutoriales y feedback
+- Grupo MIG019 en GitHub Actions Node.js 22 run 45251355899: 363/363 pruebas PASS en 38 suites únicas, sin fallos del grupo.
+- Se cubrieron integridad de PyS, asociaciones bidireccionales, navegación sin ciclos, imágenes y recuperación, caché, seguridad XSS, sugerencias/reportes, likes, vistas, tutoriales e invalidación/publicación incremental del catálogo.
+- Se corrigieron contratos de prueba desactualizados para el helper compartido de tarjetas PyS y los tokens semánticos CSS del acordeón.
+- La regresión global reportó 2,578 pruebas aprobadas y seis fallos de suites ajenas a MIG019: ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet fixture, AUTH purga Logs e INTEGRATION BETA-043.
+- Pages build/deploy del mismo HEAD, run 45251355846: SUCCESS.
+- No se ejecutaron Apps Script, Spreadsheet, Drive ni recursos productivos. La validación Beta aislada permanece pendiente (AUG-128/AUG-155).
+- Siguiente tarea: MIG-020 — Inbox completo.
