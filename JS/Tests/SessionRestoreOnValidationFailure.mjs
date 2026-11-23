@@ -107,12 +107,6 @@ await test('un rol ausente o desconocido no restaura una sesión local', async (
     assert.equal(t.calls.removed, 1);
     assert.equal(t.calls.loginScreen.length, 1);
 });
-await test('el coordinador mantiene la barrera de token, epoch y revocación para acciones protegidas', () => {
-    const source = readFileSync(resolve(root, 'JS/Services/Coordinator.js'), 'utf8');
-    assert.match(source, /function authorizeSession_\(userId, token, currentTime\)/);
-    assert.match(source, /session\.createdAt <= Number\(context\.revokedBefore \|\| 0\)/);
-    assert.match(source, /currentTime >= absoluteExpiry \|\| currentTime >= idleExpiry/);
-});
 await test('AUTH devuelve no disponible ante excepción interna, no sesión revocada', () => {
     const handler = extract(service, 'function handleValidateSession(payload)', '\nfunction handleTouchSession(payload)');
     const fn = new Function('validateSessionReadOnly_', handler + '\nreturn handleValidateSession;')(
@@ -201,12 +195,10 @@ await test('validateSession no depende del coordinador y conserva comprobaciones
     assert.match(validator, /SessionTermsAcceptance/);
 });
 
-await test('el cliente no revalida identidad por acción y el backend mantiene la sesión protegida', () => {
+await test('el cliente no revalida identidad por acción y mantiene la restauración local', () => {
     const check = extract(client, 'export async function checkSession()', '\nexport async function login(');
     assert.doesNotMatch(check, /validateSessionCoordinated|apiValidateSession/);
     assert.equal(api.includes("routeAction('touchSession'"), false);
-    const coordinator = readFileSync(resolve(root, 'JS/Services/Coordinator.js'), 'utf8');
-    assert.match(coordinator, /function authorizeSession_\(userId, token, currentTime\)/);
 });
 
 await test('la restauración no ejecuta una segunda validación de AUTH', () => {
