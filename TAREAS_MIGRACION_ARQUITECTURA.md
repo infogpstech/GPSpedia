@@ -128,17 +128,23 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** diseño documentado y trazabilidad de claves completados, sin valores sensibles expuestos.
 
 ### MIG-008 — Lector central y caché de configuración
-**Estado: PENDIENTE**
-- [ ] Implementar lectura desde Spreadsheet por el mecanismo validado en MIG-006.
-- [ ] Crear caché de configuración con versión, caducidad y última copia válida.
-- [ ] Evitar lectura de configuración en cada acción ordinaria.
-- [ ] Manejar configuración ausente/inválida sin enrutar acciones al servicio incorrecto.
-- [ ] Implementar invalidación/actualización desde el frontend.
-- [ ] Probar fallo de Spreadsheet, caché fría/caliente y recuperación.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
+- [x] Implementar lector Apps Script con SpreadsheetApp.getActiveSpreadsheet(), sin ID/URL bootstrap, PropertiesService ni fallback openById.
+- [x] Validar control, schema_version, revisión activa, siete servicios, endpoints HTTPS, contratos, parámetros, recursos y consistencia de lectura.
+- [x] Publicar desde AUTH únicamente la proyección pública; no exponer recursos ni valores backend/admin.
+- [x] Añadir proyección backend por servicio que no devuelve registro de servicios ni URLs de otros servicios.
+- [x] Crear caché servidor con revisión, TTL de 5 min y última copia válida hasta 15 min; endpoints dejan de estar disponibles al superar 5 min.
+- [x] Crear caché frontend cache-first, single-flight, invalidación y actualización explícita; no persiste datos restringidos ni tokens.
+- [x] Evitar lecturas en cada acción ordinaria; el cargador se ejecuta bajo demanda y la integración del router queda para MIG-009.
+- [x] Manejar falta/invalidez de Spreadsheet, revisión parcial, cambio durante lectura y endpoints inválidos con fail-closed.
+- [x] Añadir pruebas locales de caché fría/caliente, expiración, recuperación, proyección, seguridad y consistencia.
+- [ ] Validar getActiveSpreadsheet() y CacheService en Web App AUTH real, con Spreadsheet desechable y deployment restringido; ejecutar protocolo MIG-006 en Beta.
 
-**Aceptación:** ningún backend necesita ScriptProperties ni constantes de configuración de GPSpedia.
+**Aceptación local:** el lector no contiene IDs, URLs de otros servicios, PropertiesService ni credenciales; la proyección pública solo entrega endpoints/valores públicos; la proyección backend no contiene URLs de servicios; el frontend no enruta con endpoints inválidos o vencidos.
 
----
+**Límite:** la prueba Web App real de MIG-006 sigue pendiente. El lector falla cerrado si no existe contexto activo; no se sustituyó por un ID bootstrap ni se modificó el acceso de datos actual. No se crearon hojas, no se migraron valores y no se desplegó el código.
+
+
 
 ## Fase 2 — Frontend como router y coordinador único
 

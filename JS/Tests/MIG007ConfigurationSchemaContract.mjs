@@ -36,6 +36,7 @@ assert.match(design, /no se almacenan API keys, contraseñas, tokens manuales, s
 assert.match(design, /Google Sheets no ofrece ACL de lectura por pestaña/);
 assert.match(design, /Endpoint ausente, deshabilitado, duplicado o inválido/);
 assert.match(design, /rollback_of_revision/);
+assert.match(design, /config_revision \\| integer/);
 assert.match(design, /stale-if-error máximo 15 min/);
 assert.match(design, /MIG-006/);
 assert.doesNotMatch(design, /1[A-Za-z0-9_-]{30,}/, 'No deben aparecer IDs de recursos o deployments');

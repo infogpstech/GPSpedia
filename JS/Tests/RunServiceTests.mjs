@@ -401,6 +401,8 @@ runGroup('38','INTEGRATION',()=>{
  runCli('SEC arquitectura: preservación de RBAC, cierre de cuentas, revocación y caché remota','JS/Tests/CoordinatorCapabilityPreservation.mjs');
  runCli('MIG-006 probe de acceso a Spreadsheet desde Web App','JS/Tests/MIG006SpreadsheetAccessProbe.mjs');
  runCli('MIG-007 contrato del esquema central de configuración','JS/Tests/MIG007ConfigurationSchemaContract.mjs');
+ runCli('MIG-008 lector central de configuración y proyección segura','JS/Tests/MIG008CentralConfigurationReader.mjs');
+ runCli('MIG-008 caché frontend de configuración central','JS/Tests/MIG008FrontendConfigurationCache.mjs');
  runCli('MIG-004 grafo de llamadas entre servicios, reemplazos y pruebas','JS/Tests/ServiceCallGraphContract.mjs');
  runCli('AUG-138 logger seguro y recuperación offline/reintentos/cuota/respuesta perdida','JS/Tests/AddCortesDiagnostics.mjs');
  recordResult('YouTube solicitudes pending sin snapshot redundante',loadFunction('JS/Tests/YouTubePendingRefreshContract.js','runYouTubePendingRefreshContractTests')(read('JS/Frontend/ui.js')));

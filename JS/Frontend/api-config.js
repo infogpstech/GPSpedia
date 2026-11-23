@@ -6,6 +6,9 @@
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
 import { recordBrowserServiceTraffic } from './serviceTelemetry.js';
+import { createCentralConfigurationCache } from './centralConfigurationCache.js';
+
+const centralConfigurationCache_ = createCentralConfigurationCache();
 
 export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode_cache";
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
@@ -82,7 +85,7 @@ export const API_ENDPOINTS = {
 };
 
 export const ACTION_TO_SERVICE_MAP = {
-    'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
+    'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
@@ -309,6 +312,25 @@ export async function routeActionWithRetry(action, payload = {}, options = {}) {
         }
     }
     throw new Error("La solicitud de auditoría terminó sin respuesta.");
+}
+
+// Lector público central. AUTH es el único punto de entrada de bootstrap actual;
+// la caché nunca persiste información backend/admin ni reemplaza la autorización de sesión.
+export async function loadCentralConfiguration(options = {}) {
+    return centralConfigurationCache_.load(
+        () => routeActionWithRetry("getPublicConfiguration", {}, {
+            timeoutMs: 6000, maxAttempts: 2, retryDelayMs: 200
+        }),
+        options
+    );
+}
+
+export async function refreshCentralConfiguration() {
+    return loadCentralConfiguration({ force: true });
+}
+
+export function invalidateCentralConfigurationCache() {
+    centralConfigurationCache_.invalidate();
 }
 
 // 3. FUNCIONES DE CONVENIENCIA (HELPERS)

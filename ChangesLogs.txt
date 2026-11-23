@@ -73,3 +73,12 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se integró JS/Tests/MIG007ConfigurationSchemaContract.mjs al runner.
 - Se actualizaron INVENTARIO_CONFIGURACION_BACKEND.md, TAREAS_MIGRACION_ARQUITECTURA.md, MATRIZ_MIGRACION_SERVICIOS.md, PLAN_NUEVA_ARQUITECTURA_FRONTEND.md y checkpoint.md.
 - No se crearon hojas ni se migraron valores; no se modificaron servicios, propiedades, endpoints, deployments, Spreadsheet, Drive ni datos.
+
+
+2026-11-23 — MIG-008: lector central y caché de configuración
+- Añadido JS/Services/CentralConfigurationReader.js con lectura por contenedor activo, validación estricta de revisión y proyecciones pública/backend sin URLs interservicio.
+- AUTH incorpora getPublicConfiguration; api-config añade el cargador público y las operaciones de caché frontend.
+- Añadido JS/Frontend/centralConfigurationCache.js con cache-first, single-flight, invalidación y stale-if-error acotado.
+- Corregido ESQUEMA_CONFIGURACION_CENTRAL.md para versionar las filas de Servicios, ConfiguracionParametros y ConfiguracionRecursos con config_revision.
+- Añadidas pruebas MIG008 de lector y caché; actualizados backlog, plan y checkpoint.
+- No se crearon hojas, no se migraron datos, no se tocaron propiedades ni deployments. La validación Web App real queda pendiente de Beta.

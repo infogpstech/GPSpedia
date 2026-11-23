@@ -598,6 +598,22 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "getPublicConfiguration") {
+        // Proyección pública únicamente: no incluye recursos, parámetros backend/admin ni identidad.
+        // Esta ruta no coordina otros servicios y no requiere sesión para datos ya públicos.
+        let result;
+        try {
+            result = getPublicCentralConfiguration_();
+        } catch (error) {
+            result = {
+                status: "error",
+                code: String(error && error.code || "CONFIGURATION_UNAVAILABLE"),
+                message: "La configuración pública central no está disponible."
+            };
+        }
+        return ContentService.createTextOutput(JSON.stringify(result))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "clearSensitiveLogs") {
         try {
             // La purga de Logs solo requiere capacidad Desarrollador; no modifica

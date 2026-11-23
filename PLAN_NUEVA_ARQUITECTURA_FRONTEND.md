@@ -98,7 +98,7 @@ La Spreadsheet guarda configuración, metadatos, IDs, estados y registros, no lo
 - Cada servicio obtiene el actor desde el contexto de sesión, con caché local de corta duración donde corresponda; nunca acepta un rol editable enviado por el frontend.
 - No se usarán claves secretas compartidas entre proyectos ni credenciales manuales entre servidores. La coordinación funcional se hace desde frontend; las llamadas directas técnicas permitidas no sustituyen la validación independiente del receptor.
 - Logout, cambio de rol/contraseña, eliminación de cuenta y limpieza de cachés se orquestan desde frontend con llamadas directas a los servicios afectados, respetando §§12–15 de las normas.
-- La solución concreta de acceso a Spreadsheet se someterá a prueba Web App real (MIG-006 Beta). El esquema de configuración quedó diseñado en ESQUEMA_CONFIGURACION_CENTRAL.md; su lector/caché y las pruebas de seguridad, consistencia y rendimiento corresponden a MIG-008. No sustituir el mecanismo actual antes de superar esas pruebas.
+- La solución concreta de acceso a Spreadsheet se someterá a prueba Web App real (MIG-006 Beta). MIG-008 implementó el lector basado exclusivamente en getActiveSpreadsheet(), la proyección pública de AUTH y cachés server/frontend con fail-closed; la lectura no funcionará en despliegue si el contexto activo devuelve null. La prueba Web App real de contexto, permisos, CacheService, latencia y concurrencia sigue pendiente de Beta. No sustituir openById() en los servicios de datos hasta superar esa prueba.
 
 ## 3. Requisitos de paridad funcional
 

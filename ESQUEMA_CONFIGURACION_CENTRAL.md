@@ -32,11 +32,11 @@ El esquema lógico se compone de seis tablas. Los nombres son definitivos para e
 
 ### 3.1 Hoja Servicios
 
-Registro público de los siete servicios de entrada actualmente inventariados: AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN. Una fila por clave estable.
+Registro público de los siete servicios de entrada actualmente inventariados: AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN. Una fila por clave estable y revisión publicada.
 
 | Campo | Tipo | Requerido | Regla |
 |---|---|---:|---|
-| service_key | enum/string | Sí | Clave única y canónica; no depende del nombre visible. |
+| config_revision | integer | Sí | Revisión completa a la que pertenece la fila; debe coincidir con ConfiguracionControl.active_revision. |\n| service_key | enum/string | Sí | Clave única y canónica dentro de la revisión; no depende del nombre visible. |
 | endpoint_url | https_url | Sí | URL de entrada HTTPS completa; no incluir tokens, query secrets ni credenciales. |
 | enabled | boolean | Sí | Solo true/false; false deshabilita el enrutamiento. |
 | contract_version | string | Sí | Versión de contrato que el cliente sabe interpretar. |
@@ -55,11 +55,11 @@ Restricciones:
 
 ### 3.2 Hoja ConfiguracionParametros
 
-Parámetros funcionales y operativos que tengan un consumidor identificado y que deban poder ajustarse sin editar código. Una fila por clave estable.
+Parámetros funcionales y operativos que tengan un consumidor identificado y que deban poder ajustarse sin editar código. Una fila por clave estable y revisión.
 
 | Campo | Tipo | Requerido | Regla |
 |---|---|---:|---|
-| config_key | string | Sí | Clave única namespaced, estable y en minúsculas; ejemplo de forma: catalog.log_invalid_image_ids. |
+| config_revision | integer | Sí | Revisión completa a la que pertenece la fila; debe coincidir con ConfiguracionControl.active_revision. |\n| config_key | string | Sí | Clave única namespaced dentro de la revisión, estable y en minúsculas; ejemplo de forma: catalog.log_invalid_image_ids. |
 | value_json | JSON scalar/object/array | Sí | Valor serializado según value_type; no admite secretos ni tokens. |
 | value_type | enum | Sí | boolean, integer, number, string, enum, json, duration_ms, bytes o url cuando proceda. |
 | scope | enum/string | Sí | global, service:<key> o feature:<key>; no es un rol de seguridad. |
@@ -83,11 +83,11 @@ Reglas:
 
 ### 3.3 Hoja ConfiguracionRecursos
 
-Localizadores no secretos de recursos externos administrados por GPSpedia, por ejemplo IDs de carpetas Drive. Una fila por clave estable.
+Localizadores no secretos de recursos externos administrados por GPSpedia, por ejemplo IDs de carpetas Drive. Una fila por clave estable y revisión.
 
 | Campo | Tipo | Requerido | Regla |
 |---|---|---:|---|
-| resource_key | string | Sí | Clave única, namespaced y estable. |
+| config_revision | integer | Sí | Revisión completa a la que pertenece la fila; debe coincidir con ConfiguracionControl.active_revision. |\n| resource_key | string | Sí | Clave única namespaced dentro de la revisión y estable. |
 | resource_type | enum | Sí | drive_folder, drive_file u otro tipo explícitamente admitido. |
 | resource_id | string | Sí | ID opaco del recurso; no es credencial. |
 | scope | enum/string | Sí | Servicio/función propietaria. |
@@ -113,7 +113,7 @@ Una única fila activa para el estado de publicación global.
 | updated_by | actor_id | Actor confiable. |
 | change_reason | string | Motivo de la última publicación. |
 
-La lectura debe observar un único active_revision y cargar únicamente filas asociadas a esa revisión. La publicación se prepara primero en una revisión nueva, se valida completa y solo entonces se conmuta active_revision. Una interrupción antes de la conmutación deja activa la revisión anterior; si no hay revisión íntegra, el lector falla cerrado. No se publica mezclando filas nuevas y antiguas.
+La lectura debe observar un único active_revision y cargar únicamente filas de Servicios, ConfiguracionParametros y ConfiguracionRecursos asociadas a esa config_revision. ConfiguracionEsquema se valida por schema_version; ConfiguracionHistorial conserva el registro append-only. La publicación se prepara primero en una revisión nueva, se valida completa y solo entonces se conmuta active_revision. Una interrupción antes de la conmutación deja activa la revisión anterior; si no hay revisión íntegra, el lector falla cerrado. No se publica mezclando filas nuevas y antiguas. El lector vuelve a leer ConfiguracionControl al terminar; si active_revision o schema_version cambió durante la carga, descarta el snapshot y vuelve a intentar en una nueva solicitud.
 
 ### 3.5 Hoja ConfiguracionHistorial
 

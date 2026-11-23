@@ -537,3 +537,42 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - MIG-001 a MIG-006: COMPLETADAS CON VALIDACIÓN DIFERIDA.
 - MIG-007: COMPLETADA (diseño).
 - Siguiente tarea: **MIG-008 — Lector central y caché de configuración**, con dependencia explícita de resolver/validar acceso a Spreadsheet sin ID, URL o propiedad bootstrap local. No implementar un workaround local.
+
+
+---
+
+## Cierre MIG-008 — lector central y caché de configuración — 2026-11-23
+
+### Resultado local
+- HEAD de partida: `ad800fa71705c11b5524bb8cb4b61ed65eddff80`; rama de trabajo `GPSpedia2.2.5_work`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Se creó `JS/Services/CentralConfigurationReader.js`: lectura exclusiva con `SpreadsheetApp.getActiveSpreadsheet()`, validación de revisión/esquema/servicios/parámetros/recursos, caché server-side y proyecciones pública/backend.
+- Si el contexto activo es null, el lector falla cerrado. No existe fallback a `openById()`, ID local, URL bootstrap, PropertiesService ni HTTP entre servicios.
+- AUTH incorpora la acción pública `getPublicConfiguration`. Solo expone los siete endpoints y parámetros visibility=public. No entrega IDs de Drive, parámetros backend/admin ni identidad.
+- La proyección backend por servicio no devuelve el registro Servicios ni endpoint_url/URLs de otros servicios.
+- Se creó `JS/Frontend/centralConfigurationCache.js`: cache-first, single-flight, TTL de 5 min, stale-if-error de parámetros públicos hasta 15 min, retirada de endpoints después de 5 min, invalidación y refresh.
+- `api-config.js` agrega el action map AUTH y exporta load/refresh/invalidate; el router ordinario sigue usando el mapa actual hasta MIG-009.
+- Se corrigió `ESQUEMA_CONFIGURACION_CENTRAL.md`: Servicios, ConfiguracionParametros y ConfiguracionRecursos requieren `config_revision`; sin ese campo no se podía cargar una publicación íntegra.
+- Se añadió `MIG008_CONFIGURATION_READER_CACHE.md`, se actualizó el plan y el backlog, y se integraron dos suites al runner.
+- No se crearon hojas, no se migraron valores, no se modificaron PropertiesService, endpoints productivos, deployments, Spreadsheet, Drive ni datos.
+
+### Validación local
+- `MIG008CentralConfigurationReader.mjs`: 8 grupos de pruebas previstos; incluye contexto ausente, proyecciones, revisión concurrente, validación de endpoints, caché y stale-if-error.
+- `MIG008FrontendConfigurationCache.mjs`: 6 grupos; incluye single-flight, cache-first, expiración, stale limitado, invalidación y rechazo de endpoint no válido.
+- `MIG007ConfigurationSchemaContract.mjs` amplía la comprobación de revisión por tabla.
+- Las suites se integraron en `RunServiceTests.mjs`. La ejecución CI posterior al commit debe confirmar resultados.
+- La prueba real de `getActiveSpreadsheet()`, CacheService, identidad de ejecución, permisos, concurrencia y latencia en Web App sigue pendiente de Beta; no se presenta como realizada.
+
+### Restricciones conservadas
+- No se añadieron secretos, API keys, contraseñas ni tokens manuales.
+- No se añadió URL/ID de otro servicio, llamada UrlFetchApp entre servicios ni coordinación backend→backend.
+- La coordinación funcional multi-servicio permanece en frontend; cada servicio conserva su autorización.
+- El endpoint AUTH usa el mapa frontend existente como punto de entrada transitorio; no se duplicó su URL en Apps Script ni se añadió un segundo mapa. MIG-009 debe resolver la sustitución del registro completo sin bootstrap circular.
+- Los servicios actuales conservan su acceso de datos existente hasta superar MIG-006 Beta.
+
+**Resultado:** MIG-008 COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+### Continuidad
+- MIG-001 a MIG-006: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- MIG-007: COMPLETADA.
+- MIG-008: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Siguiente tarea: **MIG-009 — Router de acciones basado en configuración**, respetando el bootstrap y sin fallback a URLs locales vencidas/inválidas.
