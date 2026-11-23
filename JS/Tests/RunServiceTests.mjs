@@ -611,8 +611,43 @@ runGroup('44','MIG020',()=>{
 });
 
 
+
+runGroup('45','MIG021',()=>{
+ runCli('MIG021 salud, identidad y clasificación de endpoints','JS/Tests/ServiceHealthContract.mjs');
+ runCli('MIG021 tráfico global ADMIN/Coordinator','JS/Tests/ServiceTrafficAdminContract.mjs');
+ runCli('MIG021 telemetría local de servicios y navegador','JS/Tests/ServiceBrowserTrafficContract.mjs');
+ runCli('MIG021 contrato del agregador de tráfico','JS/Tests/ServiceTrafficAggregatorContract.mjs');
+ runCli('MIG021 agregación global Coordinator','JS/Tests/ServiceTrafficAggregation.mjs');
+ runCli('MIG021 batch de fuentes de tráfico y fallos parciales','JS/Tests/ServiceTrafficBatch.mjs');
+ runCli('MIG021 telemetría directa de servicios','JS/Tests/DirectServiceTrafficTelemetry.mjs');
+ runCli('MIG021 auditoría de enrutamiento y atribución','JS/Tests/DirectTrafficRoutingCoverage.mjs');
+ runCli('MIG021 superficie ADMIN de métricas','JS/Tests/AdminTrafficSurfaceContract.mjs');
+ runCli('MIG021 telemetría de catálogo','JS/Tests/CatalogTrafficTelemetry.mjs');
+ runCli('MIG021 dashboard de actividad y contribuciones','JS/Tests/ActivityDashboardContributions.mjs');
+ runCli('MIG021 indicadores y rankings del dashboard','JS/Tests/ActivityDashboardInsights.mjs');
+ runCli('MIG021 seguridad XSS del dashboard','JS/Tests/ActivityDashboardStoredXss.js');
+ runCli('MIG021 append atómico de actividad','JS/Tests/ActivityLogAppendAtomic.mjs');
+ runCli('MIG021 retención de actividad','JS/Tests/ActivityLogRetention.mjs');
+ runCli('MIG021 lecturas acotadas de actividad','JS/Tests/ActivityLogsBoundedRead.js');
+ runCli('MIG021 limpieza de logs con feedback','JS/Tests/ActivityLogsClearFeedback.mjs');
+ runCli('MIG021 telemetría de elementos vistos recientemente','JS/Tests/RecentlyViewedActivityTelemetry.mjs');
+ runCli('MIG021 usuarios enruta a AUTH y no crea servicio USERS','JS/Tests/UsersDirectTrafficTelemetry.mjs');
+ runCli('MIG021 estado de catálogo','JS/Tests/CatalogStatus.js');
+ runCli('MIG021 accesibilidad del estado de conexión','JS/Tests/ConnectionStatusAccessibility.js');
+ runCli('MIG021 alertas de cuota y almacenamiento Drive','JS/Tests/DriveStorageAlerts.mjs');
+ runCli('MIG021 actividad de imágenes: append atómico','JS/Tests/AdminImageActivityAppendAtomic.mjs');
+ runCli('MIG021 actividad de imágenes: delete fuera del lock','JS/Tests/AdminDeleteImageActivityOutsideLock.mjs');
+ runCli('MIG021 actividad de imágenes: move fuera del lock','JS/Tests/AdminMoveImageActivityOutsideLock.mjs');
+ runCli('MIG021 actividad de imágenes: delete permanente fuera del lock','JS/Tests/AdminPermanentDeleteActivityOutsideLock.mjs');
+ runCli('MIG021 actividad de imágenes: restore fuera del lock','JS/Tests/AdminRestoreImageActivityOutsideLock.mjs');
+ runCli('MIG021 actividad de likes fuera del lock','JS/Tests/FeedbackLikeActivityOutsideLock.mjs');
+ runCli('MIG021 coordinación de actividad de sesión','JS/Tests/SessionActivityCoordination.mjs');
+ runCli('MIG021 minimización de leases de actividad','JS/Tests/SessionActivityLeaseMinimization.mjs');
+});
+
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','39','41','42','43','44','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','MIG021','39','41','42','43','44','45','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');
