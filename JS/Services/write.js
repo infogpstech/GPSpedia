@@ -46,7 +46,7 @@ const COLS_CORTES = {
  */
 function getVinColumnIndex(sheet) {
     if (!sheet || sheet.getLastColumn() < 1) return 0;
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const headers = testigoSchema.headers;
     const matches = [];
     headers.forEach((value, index) => {
         if (String(value || "").trim().toLowerCase() === "vin") matches.push(index + 1);
@@ -63,9 +63,16 @@ function ensureTestigoColumns(sheet) {
         const headerNames = ["activaTestigo1", "activaTestigo2", "activaTestigo3"];
         const lastColumn = sheet.getLastColumn();
         if (lastColumn < 1) throw new Error('La hoja «Cortes» no contiene encabezados.');
-        getVinColumnIndex(sheet); // Rechaza encabezados VIN duplicados antes de modificar AT:AV.
-
         const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+        const vinMatches = [];
+        currentHeaders.forEach((value, index) => {
+            if (String(value || "").trim().toLowerCase() === "vin") vinMatches.push(index + 1);
+        });
+        if (vinMatches.length > 1) {
+            throw new Error("La hoja «Cortes» contiene encabezados VIN duplicados en las columnas " + vinMatches.join(", ") + "; no se realizó ninguna escritura.");
+        }
+        const vinColumnIndex = vinMatches.length === 1 ? vinMatches[0] : 0;
+
         headerNames.forEach((name, index) => {
             const matches = [];
             currentHeaders.forEach((value, column) => {
@@ -85,35 +92,51 @@ function ensureTestigoColumns(sheet) {
         if (maxColumns < 48) sheet.insertColumnsAfter(maxColumns, 48 - maxColumns);
 
         const lastRow = sheet.getLastRow();
-        const targetHeaders = sheet.getRange(1, 46, 1, 3).getValues()[0];
+        // currentHeaders ya contiene AT:AV cuando existen; si lastColumn es menor,
+        // esas celdas no tienen contenido y se crearán vacías al ampliar la hoja.
+        const targetHeaders = [45, 46, 47].map(index => String(currentHeaders[index] || ""));
+        const missingHeaderIndexes = [];
         for (let index = 0; index < headerNames.length; index++) {
             const current = String(targetHeaders[index] || "").trim();
             if (current && current.toLowerCase() !== headerNames[index].toLowerCase()) {
                 throw new Error("La columna " + ["AT", "AU", "AV"][index] + " ya contiene el encabezado «" +
                     current + "»; no se sobrescribió.");
             }
-            if (!current && lastRow > 1) {
-                const values = sheet.getRange(2, targetColumns[index], lastRow - 1, 1).getValues();
-                if (values.some(row => row[0] !== "" && row[0] !== null && row[0] !== undefined)) {
+            if (!current && lastRow > 1) missingHeaderIndexes.push(index);
+        }
+        // Las columnas AT:AV son contiguas. Validar todas las columnas sin encabezado
+        // desde un único rango evita hasta tres lecturas remotas bajo el ScriptLock del alta.
+        if (missingHeaderIndexes.length) {
+            const firstMissingIndex = Math.min.apply(null, missingHeaderIndexes);
+            const lastMissingIndex = Math.max.apply(null, missingHeaderIndexes);
+            const missingColumnsData = sheet.getRange(2, targetColumns[firstMissingIndex], lastRow - 1,
+                lastMissingIndex - firstMissingIndex + 1).getValues();
+            missingHeaderIndexes.forEach(index => {
+                const offset = index - firstMissingIndex;
+                if (missingColumnsData.some(row => row[offset] !== "" && row[offset] !== null && row[offset] !== undefined)) {
                     throw new Error("La columna " + ["AT", "AU", "AV"][index] +
                         " contiene datos sin encabezado; no se reasignó.");
                 }
-            }
+            });
         }
 
+        const headersNeedWrite = headerNames.some((name, index) =>
+            String(targetHeaders[index] || "").trim() !== name);
+        if (headersNeedWrite) {
+            sheet.getRange(1, targetColumns[0], 1, headerNames.length).setValues([headerNames]);
+        }
         for (let index = 0; index < headerNames.length; index++) {
-            if (String(targetHeaders[index] || "").trim() !== headerNames[index]) {
-                sheet.getRange(1, targetColumns[index]).setValue(headerNames[index]);
-            }
+            currentHeaders[targetColumns[index] - 1] = headerNames[index];
             COLS_CORTES[headerNames[index]] = targetColumns[index];
         }
         return {
             activaTestigo1: 46,
             activaTestigo2: 47,
-            activaTestigo3: 48
+            activaTestigo3: 48,
+            vinColumnIndex: vinColumnIndex,
+            headers: currentHeaders
         };
 }
-
 
 function getAuthenticatedCollaborator(payload, allowedRoles) {
  const trusted = payload && payload.__sharedSessionActor;
@@ -1369,8 +1392,8 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
     }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    ensureTestigoColumns(sheet);
-    const vinColumnIndex = getVinColumnIndex(sheet);
+    const testigoSchema = ensureTestigoColumns(sheet);
+    const vinColumnIndex = testigoSchema.vinColumnIndex;
     const vinPrefix = cutData.vin ? extractVinPrefix(cutData.vin) : "";
     if (cutData.vin && !vinColumnIndex) {
         throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
