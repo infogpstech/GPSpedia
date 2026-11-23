@@ -277,3 +277,52 @@ Evidencia consolidada en §19 de `MATRIZ_MIGRACION_SERVICIOS.md`:
 - Se comprobó que `JS/Tests/UtilitiesSecurity.js` existe y que el runner lo ejecuta dentro del grupo UTILITIES mediante `recordResult`; por tanto, la prueba asociada a `migrateTimestamps` queda correctamente referenciada.
 - MIG-002 sigue siendo la siguiente tarea pendiente en el backlog, pero no se inicia en este ciclo.
 - Commit adicional del registro de tareas: `5db23382802043f13ccb21c29f49c07730d03af5`.
+
+
+---
+
+## Cierre MIG-002 — inventario de pantallas y capacidades visibles — 2026-11-23
+
+### Estado Git y límites
+- HEAD al iniciar esta tarea: `4697204e6311f7b7de782103174ff946e99004a1` en `GPSpedia2.2.5_work`.
+- HEAD confirmado antes de actualizar este checkpoint: `a22f317883377f6ca9aed745f7575d591e68a405`.
+- Rama base protegida `GPSpedia2.2.5`: HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación final previa al checkpoint: rama de trabajo ahead 7165 / behind 0. No se escribió en la rama base.
+- Se consultaron NORMAS_DESAROLLO.md, README.md, contexto_personal.md, checkpoint, backlog, plan rector, tareas Beta, índice/lista Beta y adenda multimedia.
+
+### Resultado
+MIG-002 se marca **COMPLETADA CON VALIDACIÓN DIFERIDA** en `TAREAS_MIGRACION_ARQUITECTURA.md`.
+
+Se añadió `INVENTARIO_PANTALLAS_CAPACIDADES.md`:
+- 17 superficies UI documentadas.
+- 335 declaraciones de controles, enlaces y formularios inspeccionadas en index.html, add_cortes.html, users.html y plantillas dinámicas ui.js/youtubeUpload.js.
+- 37 módulos frontend, tres hojas CSS y 370 archivos de pruebas JS/MJS identificados.
+- Trazabilidad de controles y grupos a handlers cliente, acciones backend/locales, permisos/roles y pruebas relacionadas.
+- Estados de carga, vacío, éxito, error, progreso, reintento, cancelación, pausa y recuperación documentados según su implementación real.
+- Se documentaron brechas de cobertura visual específica: las pruebas existentes son mayormente por flujo/contrato, no una prueba de clic individual para cada botón; About/FAQ/changelog y el flujo visual completo de Contacto tienen cobertura genérica/indirecta. No se presentaron como pruebas ejecutadas.
+- Superficies relacionadas con BETA-01 a BETA-08; navegador/dispositivos reales, deployments y servicios externos quedan para Beta.
+
+### Validación CI ejecutada
+Para el commit `a22f317883377f6ca9aed745f7575d591e68a405`:
+- Workflow `GPSpedia service regression tests`, run `45166613464`: **SUCCESS**.
+- Runner Node.js: **305 suites, 3,572 pruebas aprobadas, 0 fallos de suite**.
+- `RepositoryJavaScriptSyntax`: **437 archivos .js/.mjs** verificados sintácticamente.
+- `RepositoryModuleReferences`: **347 archivos** inspeccionados; referencias relativas resueltas.
+- El workflow verificó repositorio, rama autorizada y árbol limpio antes de ejecutar las suites.
+- Workflow `GPSpedia deployed service health (read-only)`, run `45166613396`: **SUCCESS**, siete endpoints consultados por GET. Esta prueba solo confirma salud HTTP/contrato de endpoints; no es prueba de paridad visual ni validación completa Beta.
+- No se ejecutó navegador real ni pruebas de campo/dispositivo para toda la UI. El flujo FileReader browser no se disparó porque no se modificó HTML/add_cortes ni sus archivos/workflow; la validación visual completa queda en BETA-08.
+
+### Archivos y commits de esta tarea
+- `INVENTARIO_PANTALLAS_CAPACIDADES.md`: creado en `dba5e6771a6c96d8aa65c1b78d5e2ef2c44d2c1a`; referencia de prueba corregida en `7fd4b8b1b270876a90bd2612e4343bab8b482eee`.
+- `TAREAS_MIGRACION_ARQUITECTURA.md`: MIG-002 cerrada en `d4bb7eb87604d7f6d766d1e72e7e87dab15b853b`.
+- `ChangesLogs.txt`: registro activo creado en `a22f317883377f6ca9aed745f7575d591e68a405`.
+- Este checkpoint se actualiza en el commit siguiente.
+
+### Integridad funcional
+- No se modificaron archivos de aplicación HTML/CSS/JS, acciones, handlers, RBAC, endpoints, propiedades, Spreadsheet, Drive ni deployments.
+- No se retiró ni ocultó ninguna capacidad.
+- Las acciones sin consumidor directo previamente clasificadas en MIG-001 siguen conservadas; no se inventaron controles para exponerlas.
+
+### Continuidad
+- MIG-001: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-002: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Siguiente tarea pendiente: **MIG-003 — Inventario de configuración en backend**. Su primer paso será rastrear PropertiesService/ScriptProperties/UserProperties/DocumentProperties y clasificar cada clave/constante sin eliminar ni migrar nada durante el inventario.
