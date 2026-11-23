@@ -31,7 +31,7 @@ function getSafeSheet(name) {
 }
 
 
-/** El dispatcher adjunta el actor autenticado por Coordinator; este helper no consulta hojas de sesión. */
+/** El dispatcher adjunta el actor validado localmente desde Users/ActiveSessions. */
 function normalizeFeedbackRole(role) {
     const normalized = Array.from(String(role || "").normalize("NFD"))
         .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
