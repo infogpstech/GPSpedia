@@ -15,6 +15,7 @@ function extractFunction(source, name) {
     throw new Error("Función sin cerrar: " + name);
 }
 const fn = extractFunction(source, "executeTerminalCommand");
+assert.match(fn, /split\(\/\\s\+\/\)/, "move debe separar argumentos con espacios reales, no con una barra invertida literal");
 const calls = [];
 const logs = [];
 const commandHistory = [];
