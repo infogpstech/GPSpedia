@@ -1052,10 +1052,6 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
     // estos tokens; esta llamada limpia cualquier caché local que aún los conserve.
     malformedTokens.forEach(token => revokeSharedSessionContext_(normalizedId, token));
 
-    if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
-        throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
-    }
-
     // Volver a adquirir el candado solo para limpiar filas que sigan conteniendo
     // exactamente los tokens rechazados. Se releen las filas para no usar índices obsoletos.
     if (rejected.size) {
@@ -1089,6 +1085,10 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
         } finally {
             if (cleanupLockAcquired) cleanupLock.releaseLock();
         }
+    }
+
+    if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
+        throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
     }
 
     // La identidad/rol ya fueron comprobados en AUTH y registrados en Coordinator.
