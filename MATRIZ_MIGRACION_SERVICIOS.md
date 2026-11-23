@@ -808,3 +808,9 @@ La columna `VIN` no tiene índice fijo en `COLS_CORTES`: `getVinColumnIndex` la 
 - AUTH y USERS mantienen referencias locales a Spreadsheet y AUTH accede también a Logs; WRITE declara además una carpeta Drive y utiliza hojas auxiliares. Estas referencias se inventarían en MIG-003/MIG-004; este apartado no las migra.
 - Los índices de `Cortes` no prueban que los encabezados reales de Beta/productivo coincidan. Los encabezados de Idempotencia, AportesVehiculo, ImageUploadEvents, reservas y secuencia se validan por código, pero aquí no se inspeccionó una Spreadsheet real.
 - No se deben compactar columnas vacías, mover campos, renombrar encabezados ni normalizar hojas durante la migración sin una prueba de compatibilidad y recuperación.
+
+
+
+### 17.8 Diferencia documental sobre la posición física de VIN
+
+El README vigente describe el esquema objetivo de VIN en la columna AQ (43), con AR:AS (44–45) disponibles, después de migrar los identificadores de operación. En cambio, `JS/Services/write.js` no fija VIN en `COLS_CORTES`: lo busca por el encabezado exacto `VIN` mediante `getVinColumnIndex`, y falla ante encabezados duplicados. La matriz debe conservar ambas evidencias hasta verificar la hoja real y el flujo administrativo `renameVinColumnHeader`; no se debe mover ni renombrar la columna por inferencia. La regla fija AT:AV (46–48) para `activaTestigo1..3` sí está impuesta expresamente por WRITE.
