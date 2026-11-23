@@ -59,7 +59,7 @@ test("No existen llamadas de sesión desde SharedMutationClient a Coordinator",(
 });
 test("UTILITIES conserva la comprobación local de capacidad Desarrollador",()=>{
  assert.match(utilities,/function migrateTimestamps\(payload\)[\s\S]*?getCachedSharedSessionActor_/);
- assert.match(utilities,/trusted\.role\.trim\(\)\.toLowerCase\(\)!=="desarrollador"/);
+ assert.match(utilities,/trusted\\.role\\.trim\\(\\)\\.toLowerCase\\(\\)\\s*!==\\s*"desarrollador"/);
  assert.doesNotMatch(utilities,/withSharedMutationLease_\("UTILITIES"/);
 });
 console.log("SessionActivityCoordination: "+passed+"/"+passed+" PASS — sesiones sin Coordinator ni secretos compartidos");
