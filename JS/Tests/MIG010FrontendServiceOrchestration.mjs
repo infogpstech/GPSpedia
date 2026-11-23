@@ -38,8 +38,8 @@ assert.ok(admin.includes("DriveApp.getFilesByName(backupName)"));
 assert.ok(admin.includes("existingManifest.operationId !== operationId"));
 assert.ok(admin.includes('String(existingManifest.ownerId || "") !== ownerId'));
 const operationPersist = workflow.indexOf("persist();");
-const backupRequest = workflow.indexOf('step("backupDatabase",{operationId:state.operationId}');
-assert.ok(operationPersist >= 0 && backupRequest > operationPersist, "El operationId debe persistirse antes de solicitar el respaldo.");
+const backupCallIndex = workflow.indexOf('step("backupDatabase",{operationId:state.operationId}');
+assert.ok(operationPersist >= 0 && backupCallIndex > operationPersist, "El operationId debe persistirse antes de solicitar el respaldo.");
 assert.ok(workflow.includes("state.operationId =") || workflow.includes("state.operationId="));
 
 const backupHelperStart=admin.indexOf("function cacheVerifiedDatabaseBackupForDeveloper_");
