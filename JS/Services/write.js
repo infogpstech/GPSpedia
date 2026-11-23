@@ -1340,6 +1340,14 @@ function getPreparedExistingVehicleRow_(sheet, vehicleId, snapshot) {
     return { rowIndex: snapshot.rowIndex, rowValues: rowValues };
 }
 
+function getWriteRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex) {
+    return {
+        vehicle: Boolean(vehicleData && vehicleData.imagenVehiculo && !checkFileIdValid(rowObj.imagenVehiculo)),
+        cut: Boolean(cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== "No recomendado" &&
+            !checkFileIdValid(rowObj[`imgCorte${slotIndex}`]))
+    };
+}
+
 function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot, preallocatedVehicleId) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
@@ -1399,29 +1407,30 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
             else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
             else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
 
-            // 1. Check and repair vehicle image if it was registered but is invalid/corrupted/trashed
-            if (vehicleData && vehicleData.imagenVehiculo) {
-                const currentImg = rowObj.imagenVehiculo;
-                if (!checkFileIdValid(currentImg)) {
-                    const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
-                    const newUrl = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
-                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                        return uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"), { shortLedgerLock: true });
-                    });
-                    sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
+            // 1. Determinar si la recuperación necesita reparar alguna imagen.
+            const imageRepairNeeds = getWriteRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex);
+            if (imageRepairNeeds.vehicle || imageRepairNeeds.cut) {
+                const repairedImages = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
+                    const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData || {}));
+                    let vehicleImage = "";
+                    let cutImage = "";
+                    if (imageRepairNeeds.vehicle) {
+                        const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
+                        vehicleImage = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
+                            buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"), { shortLedgerLock: true });
+                    }
+                    if (imageRepairNeeds.cut) {
+                        const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
+                        cutImage = uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                            buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex), { shortLedgerLock: true });
+                    }
+                    return { vehicle: vehicleImage, cut: cutImage };
+                });
+                if (imageRepairNeeds.vehicle) {
+                    sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(repairedImages.vehicle);
                 }
-            }
-
-            // 2. Check and repair cut image if it was registered but is invalid/corrupted/trashed
-            if (cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== 'No recomendado') {
-                const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
-                if (!checkFileIdValid(currentCorteImg)) {
-                    const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
-                    const newCorteImgUrl = runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => {
-                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                        return uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex), { shortLedgerLock: true });
-                    });
-                    sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
+                if (imageRepairNeeds.cut) {
+                    sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(repairedImages.cut);
                 }
             }
 
