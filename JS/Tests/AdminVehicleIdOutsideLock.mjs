@@ -7,8 +7,13 @@ const api = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), 
 
 assert.equal(admin.includes("requestNextVehicleIdFromWriteService"), false,
     "ADMIN no debe coordinar la asignación de IDs mediante una llamada backend→backend.");
-assert.equal(admin.includes("function handleAddOrUpdateCut("), false,
-    "ADMIN no debe conservar el handler de alta que fue trasladado a WRITE.");
+const legacyStart = admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
+const legacyEnd = admin.indexOf("\\nfunction sanitizeSupplementaryRichText_", legacyStart);
+assert.ok(legacyStart >= 0 && legacyEnd > legacyStart, "La ruta de compatibilidad ADMIN debe permanecer identificable.");
+const legacyHandler = admin.slice(legacyStart, legacyEnd);
+assert.match(legacyHandler, /ACTION_MOVED_TO_WRITE/);
+assert.doesNotMatch(legacyHandler, /UrlFetchApp|requestNextVehicleIdFromWriteService|lock\\.tryLock/,
+    "El handler legacy debe rechazar la acción sin ejecutar coordinación ni escrituras.");
 assert.match(api, /'addOrUpdateCut': 'WRITE'/,
     "El frontend debe resolver la acción de alta directamente hacia WRITE.");
 
