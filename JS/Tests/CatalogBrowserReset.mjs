@@ -83,11 +83,15 @@ test("el runner sustituye la prueba Coordinator por la prueba CATALOG", () => {
 await (async function testCatalogPublicationRequestIds() {
     const nonceStart = api.indexOf("function createCatalogPublicationNonce_()");
     const nonceEnd = api.indexOf("\n}\n", nonceStart) + 2;
+    const resetStart = api.indexOf("async function publishCatalogResetAfterMutation_");
+    const resetEnd = api.indexOf("\n}\n", resetStart) + 2;
     const deltaStart = api.indexOf("async function publishCatalogChangeAfterMutation_");
     const deltaEnd = api.indexOf("\n}\n", deltaStart) + 2;
     assert.ok(nonceStart >= 0 && nonceEnd > nonceStart);
+    assert.ok(resetStart >= 0 && resetEnd > resetStart);
     assert.ok(deltaStart >= 0 && deltaEnd > deltaStart);
     const nonceSource = api.slice(nonceStart, nonceEnd);
+    const resetSource = api.slice(resetStart, resetEnd);
     const deltaSource = api.slice(deltaStart, deltaEnd);
     let nonce = 0;
     const requests = [];
@@ -126,6 +130,20 @@ await (async function testCatalogPublicationRequestIds() {
     await retryPublish("FEEDBACK", "addSolution", stablePayload, result);
     await retryPublish("FEEDBACK", "addSolution", stablePayload, result);
     assert.equal(retryRequests[0].requestId, retryRequests[1].requestId);
+
+    const resetRequests = [];
+    const publishReset = new Function("routeActionInternal_", "crypto",
+        nonceSource + "\n" + resetSource + "\nreturn publishCatalogResetAfterMutation_;")(
+        async (action, payload) => { resetRequests.push(payload); return { status: "success" }; },
+        { randomUUID: () => "reset-" + (++nonce) }
+    );
+    await publishReset("ADMIN", "normalizeImages", mutation, { status: "success" });
+    await publishReset("ADMIN", "normalizeImages", mutation, { status: "success" });
+    assert.notEqual(resetRequests[0].requestId, resetRequests[1].requestId);
+    const stableReset = { ...mutation, opId: "reset-operation-0001" };
+    await publishReset("ADMIN", "normalizeImages", stableReset, { status: "success" });
+    await publishReset("ADMIN", "normalizeImages", stableReset, { status: "success" });
+    assert.equal(resetRequests[2].requestId, resetRequests[3].requestId);
     passed++;
     console.log("PASS IDs de publicación únicos por mutación y estables al reintentar");
 })();
