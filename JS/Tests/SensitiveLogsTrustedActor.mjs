@@ -48,7 +48,7 @@ function createHarness() {
             releaseLock() { lockReleased++; }
         }) },
         {
-            openById: () => ({
+            getActiveSpreadsheet: () => ({
                 getSheetByName(name) {
                     requestedSheets.push(name);
                     return name === "Logs" ? logsSheet : null;
