@@ -1428,9 +1428,13 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
                 });
                 if (imageRepairNeeds.vehicle) {
                     sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(repairedImages.vehicle);
+                    rowValues[COLS_CORTES.imagenVehiculo - 1] = repairedImages.vehicle;
+                    rowObj.imagenVehiculo = repairedImages.vehicle;
                 }
                 if (imageRepairNeeds.cut) {
                     sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(repairedImages.cut);
+                    rowValues[COLS_CORTES[`imgCorte${slotIndex}`] - 1] = repairedImages.cut;
+                    rowObj[`imgCorte${slotIndex}`] = repairedImages.cut;
                 }
             }
 
@@ -1496,8 +1500,8 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
                 sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(match.timestamp);
             }
             SpreadsheetApp.flush();
-            runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue(), { shortLedgerLock: true }));
-            runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue(), { shortLedgerLock: true }));
+            runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(rowValues[COLS_CORTES.imagenVehiculo - 1], { shortLedgerLock: true }));
+            runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () => markImageUploadLinked(rowValues[COLS_CORTES["imgCorte" + slotIndex] - 1], { shortLedgerLock: true }));
             if (opId && rowObj.id) {
                 recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash, idempotencyEntriesSnapshot);
             }
