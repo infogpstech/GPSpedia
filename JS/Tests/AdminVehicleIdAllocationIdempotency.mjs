@@ -19,4 +19,4 @@ assert.ok(handler.indexOf("reserveCortesVehicleIdForOperation_")<handler.indexOf
 assert.ok(write.includes("function normalizeCortesIdAllocationRequest_(payload)"));
 assert.ok(write.includes("function reserveCortesVehicleIdForOperation_(cortesSheet, request)"));
 assert.ok(write.includes("case 'allocateVehicleId':"));
-console.log("AdminVehicleIdAllocationIdempotency: PASS — reserva opId/hash en WRITE y ADMIN sin transporte interno");
+console.log("AdminVehicleIdAllocationIdempotency: 1/1 PASS — reserva opId/hash en WRITE y ADMIN sin transporte interno");
