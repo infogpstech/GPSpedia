@@ -8,7 +8,7 @@
 
 ## 1. Resultado que buscamos
 
-El navegador será el único componente que conoce las direcciones de los servicios y decide a cuál enviar cada acción. Cada proyecto Apps Script será independiente: atenderá sus propias acciones, accederá a los recursos que le corresponden y no llamará a otros servicios.
+El navegador será el único componente que conoce las direcciones de los servicios y decide a cuál enviar cada acción. Cada proyecto Apps Script será independiente: atenderá sus propias acciones, accederá a los recursos que le corresponden y no llamará a otros servicios. AUTH y USERS se consolidarán en un único servicio de identidad.
 
 - No habrá COORDINATOR.
 - No habrá SharedMutation ni leases centralizadas.
@@ -33,13 +33,13 @@ El navegador será el único componente que conoce las direcciones de los servic
                                   │
              ┌────────────────────┼────────────────────┐
              │                    │                    │
-          AUTH                 CATALOG               USERS
+          AUTH (identidad)     CATALOG               WRITE
              │                    │                    │
              └────────────────────┼────────────────────┘
                                   │
                     ┌─────────────┼─────────────┐
                     │             │             │
-                  WRITE        FEEDBACK       ADMIN
+                  FEEDBACK      ADMIN         UTILITIES
                     │             │             │
                     └─────────────┼─────────────┘
                                   │
@@ -73,7 +73,7 @@ Antes de implementar esta decisión se comprobará el mecanismo actual de acceso
 ### Fase 0 — Inventario y mapa de dependencias
 **Estado: EN PROGRESO**
 
-- Enumerar los servicios reales: AUTH, CATALOG, USERS, WRITE, FEEDBACK, UTILITIES, ADMIN y COORDINATOR.
+- Enumerar los servicios reales: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES, ADMIN y COORDINATOR.
 - Inventariar todas las acciones de `ACTION_TO_SERVICE_MAP`, incluidas acciones operativas/manuales y compatibilidad histórica.
 - Encontrar llamadas backend→backend, URLs constantes, propiedades, secretos, endpoints internos y copias de SharedMutationClient.
 - Identificar qué acciones usan leases y qué recurso protegen.
@@ -106,13 +106,13 @@ Antes de implementar esta decisión se comprobará el mecanismo actual de acceso
 - Mantener hashes de contraseña, recuperación, términos por dispositivo, límites de sesión, revocaciones y protección contra enumeración.
 - Añadir pruebas de sesión expirada, token inexistente, token revocado, cambio de rol, cambio de contraseña, usuario eliminado, caché fría/caliente y concurrencia.
 
-### Fase 4 — Sustitución de SharedMutation
-- Clasificar cada lease por recurso y riesgo real; no reemplazarla por un lock local que no coordine proyectos distintos.
-- Establecer un único propietario de escritura por recurso siempre que sea posible.
-- Para procesos multi-servicio, usar operaciones idempotentes y un registro de estado/journal en Spreadsheet, orquestados desde frontend. Definir compensación y recuperación para cada paso.
-- Preservar específicamente eliminación de usuarios, creación de usuarios, migración de timestamps, inventario de imágenes, organización/reconciliación de Drive y operaciones de mantenimiento.
-- Mantener las protecciones de duplicados, reservas, snapshots, rollback y consistencia existentes.
-- Retirar leases únicamente cuando pruebas concurrentes demuestren que el nuevo modelo protege el mismo recurso.
+### Fase 4 — Retirada de SharedMutation y simplificación de escrituras
+- Aplicar el requisito vigente de rendimiento: retirar leases, validaciones de Coordinator, locks globales y transacciones interservicio de las acciones ordinarias.
+- Resolver la concurrencia de identidad al unificar AUTH/USERS y concentrar allí las escrituras de cuenta/sesión.
+- Las operaciones que realmente necesiten dos servicios se dividirán en llamadas directas desde el frontend. Solo conservarán requestId, idempotencia o compensación cuando la operación ya lo requiera para evitar duplicados o recuperar un fallo parcial.
+- No crear journals, leases ni capas genéricas para operaciones simples.
+- Preservar las protecciones funcionales que ya evitan duplicados, pérdida de imágenes, corrupción de hojas o escrituras parciales en operaciones de Drive/Spreadsheet.
+- Retirar las leases y el cliente compartido cuando la prueba de regresión correspondiente confirme que la acción mantiene el resultado funcional sin coordinación central.
 
 ### Fase 5 — Retirada de componentes y configuración antigua
 - Eliminar llamadas internas y endpoints exclusivos del Coordinator.
@@ -139,7 +139,7 @@ Antes de implementar esta decisión se comprobará el mecanismo actual de acceso
 | `JS/Services/SharedMutationClient.js` | Llama al Coordinator y gestiona leases | Retirar tras migrar operaciones protegidas |
 | `JS/Services/admin.js` | Contiene URLs directas de WRITE/CATALOG/AUTH/USERS/FEEDBACK | Convertir operaciones cruzadas en orquestación frontend |
 | `JS/Services/Auth.js` | Usa propiedades y endpoints internos de Coordinator; registra/revoca sesiones | Validación y gestión de identidad sin Coordinator |
-| `JS/Services/users.js` | Usa actor compartido y lease para crear usuario | Autorización local + propiedad de USERS |
+| `JS/Services/users.js` | Contiene lectura, alta y perfil de usuarios | Fusionar sus handlers en AUTH y retirar el proyecto USERS tras validar paridad |
 | `JS/Services/write.js` | Usa actor compartido y coordinación en operaciones protegidas | Autorización local + propiedad de WRITE |
 | `JS/Services/feedback.js` + `InboxConversations.js` | Usa actor compartido y coordinación en ciertas escrituras | Autorización local + propiedad de FEEDBACK |
 | `JS/Services/Utilities.js` | Migración con lease compartida | Migración idempotente con journal y recuperación |
@@ -188,3 +188,17 @@ Hallazgos confirmados:
 - El mapa frontend contiene 120 acciones: AUTH 15, CATALOG 5, WRITE 9, USERS 3, FEEDBACK 41, UTILITIES 1 y ADMIN 46.
 
 **Estado:** inventario estático inicial completado; la Fase 0 sigue EN PROGRESO hasta contrastar routers, consumidores, recursos protegidos y pruebas. No se ha modificado lógica funcional ni se han cambiado deployments.
+
+
+## 9. Alineación con los requisitos vigentes de rendimiento
+
+La solución debe respetar especialmente `NORMAS_DESAROLLO.md` §15:
+
+- No reconstruir la validación central de Coordinator bajo otro nombre.
+- No consultar Spreadsheet/ActiveSessions ni hacer llamadas entre servicios en cada acción ordinaria.
+- El login establece la sesión; cada servicio verifica localmente el contexto firmado y realiza una comprobación sencilla de rol/capacidad.
+- Solo las excepciones expresamente conservadas (logout, revocaciones, cambios de rol/contraseña, reset y eliminación de cuenta) requieren invalidación remota, ahora orquestada directamente por el frontend.
+- No añadir leases, journals ni reintentos genéricos donde no sean necesarios para la integridad de una operación.
+- AUTH y USERS se consolidan para evitar carreras entre proyectos distintos que modifican el mismo recurso de identidad.
+
+La propuesta de firma local es un diseño a validar con pruebas de compatibilidad de Apps Script y seguridad antes de implementarlo. Si no se puede verificar localmente una firma confiable sin llamadas de red ni secretos en el navegador, no se sustituirá por confiar en el rol del frontend: se deberá ajustar el diseño manteniendo §15 y la seguridad.
