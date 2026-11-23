@@ -553,19 +553,48 @@ function buildFeedbackCortesCatalogChange_(reference) {
 
 
 
-const FEEDBACK_CATALOG_RESET_ACTIONS_ = new Set([
+
+const FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_ = new Set([
     "addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
-    "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"
+    "removeVehicleFromProblem", "updatePysItem"
 ]);
-function markFeedbackCatalogResetRequired_(action, response) {
+const FEEDBACK_CATALOG_TUTORIAL_CHANGE_ACTIONS_ = new Set(["updateTutorialItem", "addTutorial"]);
+
+function attachFeedbackCatalogChange_(action, payload, response) {
     if (!response || typeof response !== "object" || response.status !== "success") return response;
+    const source = payload && typeof payload === "object" ? payload : {};
     if (action === "recordLike") {
-        if (response.alreadyLiked !== true) response.catalogResetRequired = true;
+        if (response.alreadyLiked !== true) {
+            const vehicleId = String(source.vehicleId || "").trim();
+            if (vehicleId) response.catalogChange = { collection: "cortes", recordId: vehicleId, operation: "upsert" };
+            else response.catalogResetRequired = true;
+        }
         return response;
     }
-    if (FEEDBACK_CATALOG_RESET_ACTIONS_.has(action)) response.catalogResetRequired = true;
+    if (action === "suggestYear" && response.catalogResetRequired === true) {
+        const vehicleId = String(source.vehicleId || "").trim();
+        if (vehicleId) {
+            response.catalogChange = { collection: "cortes", recordId: vehicleId, operation: "upsert" };
+            delete response.catalogResetRequired;
+        }
+        return response;
+    }
+    if (FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_.has(action)) {
+        const reference = action === "addProblem"
+            ? response.problemId
+            : (source.problemId || source.id_problem || response.problemId);
+        if (reference) response.catalogChange = { collection: "pys", recordId: String(reference).trim(), operation: "upsert" };
+        else response.catalogResetRequired = true;
+        return response;
+    }
+    if (FEEDBACK_CATALOG_TUTORIAL_CHANGE_ACTIONS_.has(action)) {
+        const reference = response.referenceId || source.referenceId || source.tutorialId || source.id;
+        if (reference) response.catalogChange = { collection: "tutoriales", recordId: String(reference).trim(), operation: "upsert" };
+        else response.catalogResetRequired = true;
+    }
     return response;
 }
+
 
 function doGet(e) {
     const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
@@ -816,7 +845,7 @@ function doPostInternal_(e) {
                 throw new Error(`Acción desconocida en Feedback Service: ${action}`);
         }
 
-        response = markFeedbackCatalogResetRequired_(action, response);
+        response = attachFeedbackCatalogChange_(action, payload, response);
     } catch (error) {
         response = { status: 'error', message: error.message };
     }
