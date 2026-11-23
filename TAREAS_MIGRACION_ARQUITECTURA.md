@@ -30,6 +30,18 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 **Aceptación:** matriz completa acción → handler → consumidor → permiso → datos → pruebas.
 
+#### Evidencia de revisión estática inicial — 2026-11-23
+
+- Se leyó el mapa completo `ACTION_TO_SERVICE_MAP`: 120 claves únicas distribuidas en AUTH (15), CATALOG (5), WRITE (9), USERS (3), FEEDBACK (41), UTILITIES (1) y ADMIN (46). La matriz coincide con el mapa efectivo.
+- Se contrastaron las acciones con los dispatchers: AUTH 15; USERS 3; WRITE 9; CATALOG 5 acciones canónicas más la compatibilidad `getSuggestion`; FEEDBACK 41; ADMIN 46; UTILITIES 1 acción atendida por su router directo (fuera de un `switch`). No se identificó en esta pasada una acción canónica del mapa sin handler.
+- Se verificó el contrato estático existente `JS/Tests/ActionDispatchContract.js`: valida mapas, handlers, consumidores, compatibilidades y permisos de ADMIN. El archivo fue inspeccionado, pero la suite no se ejecutó en un runner local durante esta sesión.
+- Se identificaron rutas internas fuera del mapa público: acciones de Coordinator (leases, sesiones, cachés, feed y tráfico), `__invalidateSessionActorCache` y `__primeSessionActorCache` en USERS/WRITE/FEEDBACK/ADMIN, además de rutas de compatibilidad/rechazo en CATALOG y ADMIN. Deben incluirse en el inventario, no descartarse como acciones sin uso.
+- Se inspeccionaron consumidores frontend representativos: `main.js`, `ui.js`, `auth.js`, `youtubeUpload.js`, `pys-data.js`, `HTML/add_cortes.html`, `HTML/users.html` e `index.html`. `ui.js` concentra la mayor parte de las operaciones de administración, Drive, imágenes, PyS, VIN e Inbox; el trazado control→acción→handler→RBAC→datos→prueba sigue incompleto.
+- No se modificó código funcional ni deployments. No se ejecutaron pruebas locales ni remotas; esta evidencia es exclusivamente de inspección estática.
+
+**Resultado:** MIG-001 permanece **EN PROGRESO**. La comprobación del mapa y de los dispatchers está avanzada; falta completar consumidores/control UI, acciones manuales e internas, contratos de payload/respuesta, RBAC, hojas/archivos y cobertura de pruebas.
+
+
 ### MIG-002 — Inventario de pantallas y capacidades visibles
 **Estado: PENDIENTE**
 - [ ] Recorrer HTML/JS/CSS y listar cada pantalla, modal, botón, menú, formulario, comando, selector y estado.
