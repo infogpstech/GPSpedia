@@ -308,5 +308,5 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - Transferencia de 8 MB por bloque, Content-Range, respuesta 308/Range, checkpoint persistido, pausa, cierre seguro, reanudación y verificación de ID final real/URL canónica.
 - Privacidad unlisted, categoría 28, no infantil, embebible y estadísticas públicas desactivadas. Solicitud en Inbox, verificación de propietario, decisión append-only VideoApprovalEvents y publicación solo tras aprobación para Corte/PyS/Tutorial.
 - Roles se derivan de la sesión validada en FEEDBACK; approve/reject no confía en roles del navegador. No se usa Coordinator ni URL de otro servicio para el flujo de YouTube.
-- CI run 45238132798: 223/223 comprobaciones de vídeo PASS. Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45237698550 SUCCESS para el commit funcional.
+- CI run 45238221817: 223/223 comprobaciones de vídeo PASS. Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45238220816 SUCCESS para el commit funcional.
 - Validación Beta real de OAuth, YouTube, CacheService, Spreadsheet, RBAC, publicación y reproductores pendiente. MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA.

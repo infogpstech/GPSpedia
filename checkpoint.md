@@ -984,10 +984,10 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - FEEDBACK valida actor, propietario y permisos; aprobación/rechazo se registra con VideoApprovalEvents append-only y la publicación al destino solo ocurre después de aprobación. Se mantienen reproductores de PyS/tutorial y el modal protege el XHR durante cierre/pausa.
 
 ### Validación CI
-- GitHub Actions Node.js 22 run `45238132798`, commit `4c143414e6fd7b5a708b89eb6b54081025065b5e`.
+- GitHub Actions Node.js 22 run `45238221817`, commit `8859d00126708795ad7107f674d0d41e8f17056c`.
 - **223/223 comprobaciones específicas de vídeo PASS**: aprobación/publicación/rechazo, RBAC, init, renovación, IndexedDB, checkpoints, pausas, recuperación, overlays, XSS y reproducción.
 - Regresión global: 167 suites, 1,912 pruebas aprobadas y cuatro suites fallidas en P4 (política de roles), UTILITIES, AUTH e INTEGRATION. No son fallos del conjunto de vídeo; permanecen como deuda global independiente.
-- GitHub Pages build/deploy del commit funcional `2ae498e234d21dc23ae67bf3f2cb7530a8d386f8`: run `45237698550` — SUCCESS.
+- GitHub Pages build/deploy del commit funcional `8859d00126708795ad7107f674d0d41e8f17056c`: run `45238220816` — SUCCESS.
 - No se ejecutaron llamadas reales a YouTube ni deployments Apps Script.
 
 ### Validación Beta pendiente

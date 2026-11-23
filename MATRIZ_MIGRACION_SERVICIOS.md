@@ -1362,6 +1362,6 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - Renovación requiere URL oficial de sesión expirada y reserva previa; HTTP 404/410 dispara renovación desde frontend. Pérdida de CacheService en reserva inicializada falla cerrada para evitar duplicados.
 - Transferencia en bloques de 8 MB, Content-Range, 308/Range, checkpoints, pausa, cierre y reanudación. Publicación unlisted hasta aprobación, con ID/URL verificados.
 - Inbox FEEDBACK, propietario/actor autenticado, RBAC de aprobación/rechazo, eventos append-only y publicación recuperable a Corte/PyS/Tutorial. Reproductores suplementarios preservados.
-- CI run 45238132798: **223/223 pruebas específicas de vídeo PASS**. Regresión global: 167 suites, 1,912 aprobadas y cuatro fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45237698550 SUCCESS para el commit funcional.
+- CI run 45238221817: **223/223 pruebas específicas de vídeo PASS**. Regresión global: 167 suites, 1,912 aprobadas y cuatro fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45238220816 SUCCESS para el commit funcional.
 - Sin llamadas reales a YouTube ni deployments Apps Script. Validación Beta de OAuth, canal, sesiones, permisos y publicación pendiente.
 - MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA.

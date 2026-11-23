@@ -377,10 +377,10 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - El cliente conserva estados new/uploading/paused/interrupted/uploaded, bloquea cambios de metadatos al recuperar, permite reintentar aprobación sin volver a transferir y protege el XHR al cerrar el modal.
 
 **Validación CI — GitHub Actions Node.js 22**
-- Run 45238132798, commit `4c143414e6fd7b5a708b89eb6b54081025065b5e`.
+- Run 45238221817, commit `8859d00126708795ad7107f674d0d41e8f17056c`.
 - **223/223 comprobaciones específicas de vídeo aprobadas**, incluyendo publicación/aprobación/rechazo, permisos, idempotencia, renovación, IndexedDB, checkpoints, pausa/cierre, recuperación, overlays, XSS y reproducción suplementaria.
 - Regresión global: 167 suites, 1,912 pruebas aprobadas y cuatro suites fallidas en P4 (política de roles), UTILITIES, AUTH e INTEGRATION. Los fallos están fuera del conjunto de vídeo y ya aparecían en regresiones anteriores; se mantienen como deuda separada.
-- GitHub Pages build/deploy del commit funcional `2ae498e234d21dc23ae67bf3f2cb7530a8d386f8`: run 45237698550 — SUCCESS.
+- GitHub Pages build/deploy del commit funcional `8859d00126708795ad7107f674d0d41e8f17056c`: run 45238220816 — SUCCESS.
 - No se hicieron llamadas reales a YouTube ni despliegues Apps Script durante CI.
 
 **Validación Beta diferida**

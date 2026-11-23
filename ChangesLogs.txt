@@ -205,7 +205,7 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - URL de sesión solo en CacheService (TTL 6 h) y en IndexedDB para reanudar. CacheService sin URL para reserva inicializada provoca fallo cerrado, no una sesión duplicada. La reserva tiene TTL operativo de 8 días.
 - Renovación validada: exige URL oficial y reserva previa; el frontend solo la solicita después de HTTP 404/410. La transferencia usa bloques de 8 MB, Content-Range, 308/Range y checkpoints.
 - YouTube permanece unlisted, categoría 28, no infantil, embebible y con estadísticas públicas desactivadas. FEEDBACK verifica ID real, URL canónica, propietario y sesión; aprobación/rechazo se registra con eventos append-only y solo aprobación publica en Corte/PyS/Tutorial.
-- 223/223 comprobaciones específicas de vídeo PASS en GitHub Actions Node.js 22 run 45238132798 (commit 4c143414e6fd7b5a708b89eb6b54081025065b5e). Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera del conjunto de vídeo (P4, UTILITIES, AUTH, INTEGRATION).
-- Pages build/deploy del commit funcional 2ae498e234d21dc23ae67bf3f2cb7530a8d386f8: run 45237698550 SUCCESS. Sin llamadas reales a YouTube ni despliegues Apps Script en CI.
+- 223/223 comprobaciones específicas de vídeo PASS en GitHub Actions Node.js 22 run 45238221817 (commit 8859d00126708795ad7107f674d0d41e8f17056c). Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera del conjunto de vídeo (P4, UTILITIES, AUTH, INTEGRATION).
+- Pages build/deploy del commit funcional 8859d00126708795ad7107f674d0d41e8f17056c: run 45238220816 SUCCESS. Sin llamadas reales a YouTube ni despliegues Apps Script en CI.
 - Beta pendiente: OAuth real, canal YouTube, CacheService/Spreadsheet, 308/410, reanudación móvil/escritorio, RBAC de aprobación/rechazo y publicación real en destinos.
 - MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: MIG-017 — Herramientas y operaciones de Drive.
