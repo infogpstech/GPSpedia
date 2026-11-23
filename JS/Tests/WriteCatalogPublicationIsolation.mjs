@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const write = read("../Services/write.js");
+const admin = read("../Services/admin.js");
 const api = read("../Frontend/api-config.js");
 const coordinator = read("../Services/Coordinator.js");
 
@@ -46,15 +47,23 @@ const cleanup = new Function("PropertiesService", cleanupSource + "\nreturn remo
 });
 cleanup();
 assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
-assert.match(api, /'publishWriteCatalogReset': 'COORDINATOR'/);
+
+assert.equal(admin.includes("publishSharedCatalogChange_"), false);
+assert.equal(admin.includes("publishAdminCortesCatalogChange_"), false);
+assert.ok(admin.includes("response.catalogResetRequired = true;"));
+assert.ok(admin.includes('"resolveVehicleContributionCandidate"]'));
+assert.match(api, /'publishCatalogReset': 'COORDINATOR'/);
 assert.match(api, /const WRITE_CATALOG_RESET_ACTIONS_/);
-assert.match(api, /service === "WRITE"[\s\S]*?WRITE_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishWriteCatalogResetAfterMutation_/);
-assert.match(api, /routeActionInternal_\("publishWriteCatalogReset"/);
+assert.match(api, /const ADMIN_CATALOG_RESET_ACTIONS_/);
+assert.match(api, /service === "WRITE"[\s\S]*?WRITE_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishCatalogResetAfterMutation_/);
+assert.match(api, /service === "ADMIN" && ADMIN_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishCatalogResetAfterMutation_/);
+assert.match(api, /routeActionInternal_\("publishCatalogReset"/);
 assert.match(api, /userId: String\(payload && payload\.userId/);
 assert.match(api, /sessionToken: String\(payload && payload\.sessionToken/);
-assert.match(coordinator, /function publishWriteCatalogResetFromBrowser_\(/);
-assert.match(coordinator, /request\.action === "publishWriteCatalogReset"/);
-assert.match(coordinator, /authorizeSession_\([\s\S]*?publishCatalogChange_\("WRITE", operation/);
+assert.match(coordinator, /function publishCatalogResetFromBrowser_\(/);
+assert.match(coordinator, /request\.action === "publishCatalogReset"/);
+assert.match(coordinator, /authorizeSession_\([\s\S]*?publishCatalogChange_\(service, operation/);
 assert.match(coordinator, /change:\s*\{\s*operation:\s*"reset"\s*\}/);
-assert.match(coordinator, /operation === "freezeCortesIds" && role !== "desarrollador"/);
-console.log("WriteCatalogPublicationIsolation: 22/22 PASS — WRITE no coordina servicios desde Apps Script; el frontend publica reset autenticado");
+assert.match(coordinator, /ADMIN: new Set\([\s\S]*?resolveVehicleContributionCandidate/);
+assert.match(coordinator, /service === "ADMIN" \|\| operation === "freezeCortesIds"/);
+console.log("CatalogPublicationIsolation: 34/34 PASS — WRITE y ADMIN delegan la invalidación al frontend con sesión autenticada");
