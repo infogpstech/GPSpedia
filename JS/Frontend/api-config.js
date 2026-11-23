@@ -85,8 +85,8 @@ export const ACTION_TO_SERVICE_MAP = {
     'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
-    'publishCatalogReset': 'COORDINATOR',
-    'getCatalogChanges': 'COORDINATOR',
+    'publishCatalogReset': 'CATALOG',
+    'getCatalogChanges': 'CATALOG',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
@@ -223,7 +223,7 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
             });
         }
         if (service === "ADMIN" && ADMIN_CATALOG_RESET_ACTIONS_.has(action) &&
-            result.catalogResetRequired === true && result.dryRun !== true) {
+            result.status === "success" && result.catalogResetRequired === true && result.dryRun !== true) {
             const publication = await publishCatalogResetAfterMutation_("ADMIN", action, payload, result);
             if (publication && publication.catalogSyncPending) result.catalogSyncPending = true;
         }
@@ -263,6 +263,10 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
                 kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: responseDetails
             });
         }
+        if (service === "FEEDBACK" && result.status === "success" &&
+            result.catalogResetRequired === true && result.dryRun !== true) {
+            return await publishCatalogResetAfterMutation_("FEEDBACK", action, payload, result);
+        }
         if (service === "WRITE" && WRITE_CATALOG_RESET_ACTIONS_.has(action) &&
             result.status === "success" && result.alreadyPresent !== true && result.dryRun !== true) {
             return await publishCatalogResetAfterMutation_("WRITE", action, payload, result);
@@ -295,7 +299,7 @@ async function publishCatalogResetAfterMutation_(service, action, payload, resul
             requestId
         });
         if (!publication || publication.status !== "success") {
-            throw new Error("Coordinator no confirmó la invalidación del catálogo.");
+            throw new Error("CATALOG no confirmó la actualización del feed.");
         }
         return result;
     } catch (error) {
@@ -930,7 +934,7 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     try {
         let response;
         try {
-            const feedbackEndpoint = await getConfiguredServiceEndpoint_("COORDINATOR");
+            const feedbackEndpoint = await getConfiguredServiceEndpoint_("CATALOG");
             response = await runCatalogRequestWithRetry(async signal => {
                 const current = await fetch(feedbackEndpoint + query, {
                     method: "GET", redirect: "follow", signal
@@ -988,7 +992,7 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     } finally {
         try {
             recordBrowserServiceTraffic({
-                service: "COORDINATOR",
+                service: "CATALOG",
                 action: "getCatalogChanges",
                 timestamp: Date.now(),
                 durationMs: Date.now() - startedAt,
