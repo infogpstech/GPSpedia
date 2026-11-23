@@ -4,7 +4,7 @@ Fecha: 2026-11-22
 Repositorio: `infogpstech/GPSpedia`
 Rama de trabajo: `GPSpedia2.2.5_work`
 Rama base: `GPSpedia2.2.5`
-HEAD de referencia tras rotación documental: `PENDIENTE_DE_PUBLICACION`
+HEAD de referencia tras rotación documental: `60944c5b2bfd015ceb2450dbb2c1e87ebc58c1a4`
 HEAD de la rama base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Objetivo vigente
