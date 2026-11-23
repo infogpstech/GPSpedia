@@ -30,5 +30,11 @@ const handler = write.slice(writeStart, writeEnd);
 assert.ok(handler.includes("handleAppendExistingVehicleCut_(preparedRequest)"),
     "WRITE debe dirigir vehículos existentes al propietario canónico de escritura.");
 assert.ok(write.includes("function handleAppendExistingVehicleCut_("));
-assert.ok(write.includes("const slotCoreValues = [") && write.includes(".setValues([slotCoreValues])"));
+assert.ok(write.includes("function buildCutSlotCoreValues_(cutData, imageUrl)"));
+const writeUnsafeStart = write.indexOf("function handleAddOrUpdateCutLockedUnsafe_");
+const writeUnsafeEnd = write.indexOf("\\nfunction ", writeUnsafeStart + 10);
+assert.ok(writeUnsafeStart >= 0 && writeUnsafeEnd > writeUnsafeStart);
+const writeUnsafe = write.slice(writeUnsafeStart, writeUnsafeEnd);
+assert.ok(writeUnsafe.includes("buildCutSlotCoreValues_(cutData, imageUrl)"));
+assert.ok(writeUnsafe.includes(".setValues([slotCoreValues])"));
 console.log("AdminCutSlotBatchWrites: 1/1 PASS — ADMIN legacy bloqueado; escrituras agrupadas pertenecen a WRITE");
