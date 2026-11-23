@@ -594,3 +594,33 @@ Estas acciones no son funciones UI independientes: son el protocolo privado que 
 Las dos acciones de caché y las 13 acciones de Coordinator son rutas internas fuera del mapa. No se suman a las 120 acciones de interfaz ni se cuentan entre las 12 acciones mapeadas sin consumidor directo localizado. Estas últimas siguen pendientes de clasificación individual (manuales, mantenimiento, indirectas o históricas); la ausencia de botón no autoriza su eliminación.
 
 **Límite de esta pasada:** se identificaron dispatchers, preprocesamiento, autenticación interna y consumidores de alto nivel. Falta profundizar por operación en payload/respuesta/errores, columnas y rangos, efectos de datos, pruebas, jobs programados y procedimientos manuales.
+
+
+## 13. Clasificación preliminar de acciones sin consumidor directo — 2026-11-23
+
+Las 12 acciones siguientes están mapeadas y tienen handler, pero no se encontró llamada directa en los módulos frontend/backend examinados. La clasificación se basa en el propósito observable del handler; no equivale a una decisión de retirada ni confirma que sean obsoletas.
+
+| Acción | Servicio / handler | Función observada | Clasificación provisional y conservación |
+|---|---|---|---|
+| `touchSession` | AUTH / `handleTouchSession` | Valida y actualiza actividad de una sesión a partir del token; ante indisponibilidad devuelve estado explícito de validación no disponible. | Compatibilidad/actividad de sesión. Revisar consumidores históricos y ciclo de sesión; conservar hasta resolverlo. |
+| `benchmarkPasswordKdf` | AUTH / `handleBenchmarkPasswordKdf_` | Diagnóstico PBKDF2 exclusivo de Desarrollador; usa cadena fija, es read-only y no lee ni modifica contraseñas reales. | Herramienta de diagnóstico manual. Preservar su restricción RBAC y naturaleza no destructiva. |
+| `getNavigationData` | CATALOG / `handleGetNavigationData` | Calcula conteos por categoría, marcas ordenadas y logos leyendo columnas limitadas de Cortes/LogosMarca. | Lectura optimizada de navegación. Consumidor actual no localizado; contrastar con el modelo de navegación antes de decidir si está reemplazada. |
+| `markInboxUnread` | FEEDBACK / `handleMarkInboxUnread` | Marca una conversación como no leída para el participante, puede retirarla de Archivados y registra auditoría; revierte cambios si falla la auditoría. | Capacidad de Inbox sin consumidor directo localizado. No retirar; verificar UI/flujo de recuperación. |
+| `deleteInboxConversation` | FEEDBACK / `handleDeleteInboxConversation` | Oculta la conversación solo para el participante mediante flags; conserva mensajes e historial y audita la acción. | No es borrado físico. Conservar semántica por participante e historial. |
+| `migrateTimestamps` | UTILITIES / `migrateTimestamps` | Migración de timestamps desde Cortes a Hoja 1 con staging, backup, lectura posterior y rollback; requiere Desarrollador, lease y ScriptLock. | Mantenimiento manual/desarrollador. Conservar recuperación y guardas de seguridad. |
+| `migrateVehicleContributionsSchema` | ADMIN / `handleMigrateVehicleContributionsSchema` | Crea o valida encabezados versionados de AportesVehiculo y verifica persistencia sin alterar registros de Cortes. | Mantenimiento de esquema; además se invoca internamente desde el flujo de candidatos cuando falta la hoja. No es exclusivamente manual. |
+| `migrateIdentifiers` | ADMIN / `handleMigrateIdentifiers_` | Dry-run por defecto; exige confirmación, migrationId y digest SHA-256; persiste manifiesto/snapshots y procesa lotes verificando huellas. | Migración administrativa destructiva controlada. Mantener simulación, manifiesto, snapshots, lotes y verificación. |
+| `rollbackIdentifiers` | ADMIN / `handleRollbackIdentifiers_` | Requiere confirmación y digest; restaura en orden inverso solo filas VERIFIED cuya huella posterior y snapshot coinciden. | Recuperación manual de migración. No simplificar ni eliminar. |
+| `reconcilePendingImageUploads` | ADMIN / `handleReconcilePendingImageUploads` | Contrasta ledger/eventos, archivos Drive y referencias; dry-run por defecto y aplicación explícita con confirmación. | Mantenimiento/reconciliación de multimedia. Preservar lectura previa, clasificación y modo seguro. |
+| `createSheet` | ADMIN / `handleCreateSheet` | Crea hoja con encabezados y fórmula ID opcional, tras validar nombres, encabezados y fórmula. | Herramienta manual de estructura Spreadsheet; no se encontró consumidor directo. |
+| `addColumn` | ADMIN / `handleAddColumn` | Agrega encabezado a la siguiente columna libre de una hoja validada. | Herramienta manual de estructura Spreadsheet; no se encontró consumidor directo. |
+
+### 13.1 Decisiones pendientes
+
+- No declarar ninguna de estas acciones obsoleta solo por falta de llamada localizada.
+- Verificar comandos de terminal, panel de desarrollador, documentación histórica, jobs y procedimientos operativos antes de cerrar su clasificación.
+- Para Inbox, comprobar si la interfaz implementa la acción con otro nombre o si realmente falta el control; la semántica backend ya está identificada.
+- Para `getNavigationData`, comparar la respuesta con la navegación que actualmente se construye desde `getCatalogData` u otros datos cacheados.
+- La migración de identificadores, reconciliación de imágenes y timestamps deben conservar sus modos dry-run, manifiestos, snapshots, locks y rollback.
+
+**Resultado de esta fase:** clasificación funcional preliminar de las 12 acciones sin consumidor directo. El inventario de comandos manuales y jobs no queda cerrado todavía.
