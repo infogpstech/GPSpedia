@@ -533,15 +533,11 @@ function handleClearSensitiveLogs(payload) {
 // ============================================================================
 function doGet(e) {
     if (e.parameter.debug === 'true') {
-        const scriptProperties = PropertiesService.getScriptProperties();
-        const coordinatorUrl = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_URL') || '').trim();
-        const coordinatorSecret = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_SECRET') || '');
         const serviceState = {
             service: 'GPSpedia-Auth',
             version: '2.2.5',
             status: 'available',
-            coordinatorConfigured: coordinatorUrl.startsWith('https://script.google.com/macros/s/') &&
-                coordinatorUrl.endsWith('/exec') && coordinatorSecret.length >= 32
+            sessionAuthority: 'Users/ActiveSessions'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.JSON);
@@ -1426,9 +1422,7 @@ function parseRoleRevocationMarker_(raw) {
 function parseSharedRoleRevocationMarker_(value) {const raw=String(value||'');if(!raw.startsWith(ROLE_REVOCATION_SHARED_PREFIX))return null;return parseRoleRevocationMarker_(raw.slice(ROLE_REVOCATION_SHARED_PREFIX.length));}
 function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.invalid&&normalizeUserId(a.userId)===normalizeUserId(b.userId)&&String(a.oldRole)===String(b.oldRole)&&String(a.newRole)===String(b.newRole)&&Number(a.markedAt)===Number(b.markedAt)&&(Object.prototype.hasOwnProperty.call(a,'newFullName')===Object.prototype.hasOwnProperty.call(b,'newFullName'))&&(!Object.prototype.hasOwnProperty.call(a,'newFullName')||a.newFullName===b.newFullName));}
 function migrateLegacyRoleRevocationMarkersToSharedState_() {
-    return withSharedMutationLease_("AUTH", "migrateLegacyRoleRevocationMarkersToSharedState", function() {
-        return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
-    });
+    return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
 }
 
 function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_() {
