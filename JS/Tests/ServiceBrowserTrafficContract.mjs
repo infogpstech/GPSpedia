@@ -109,7 +109,8 @@ check("ADMIN conserva métricas locales y no consulta agregados globales", () =>
     assert.match(ui, /const lastEvent = localTraffic/);
     assert.match(ui, /renderLocalServiceTrafficChart_/);
     assert.match(ui, /filter\(key => key !== "LEGACY"\)/);
-    assert.match(ui, /services.length !== expectedServices.length/);
+    assert.match(ui, /Object\.keys\(serviceHealthResults\)\.filter\(key => key !== "LEGACY"\)/);
+    assert.doesNotMatch(ui, /COORDINATOR|getServiceTraffic|globalServiceTraffic/);
     assert.match(html, /Alcance de las métricas/);
     assert.doesNotMatch(ui, /globalServiceTraffic|getServiceTraffic/);
     assert.doesNotMatch(html, /global-service-traffic-chart|Tráfico global coordinado/);
