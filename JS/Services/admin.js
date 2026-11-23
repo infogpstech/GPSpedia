@@ -1697,25 +1697,100 @@ function buildLogoCatalogChange_(logoId, logoUrl, brandName) {
 /**
  * 1. Respaldo automático de la base de datos (Spreadsheet completo)
  */
+function cacheVerifiedDatabaseBackupForDeveloper_(developerContext, backupFile, manifest) {
+    const backupId = backupFile.getId();
+    const imageBackupRecord = {
+        backupId, backupName: backupFile.getName(), sourceSpreadsheetId: manifest.sourceSpreadsheetId,
+        createdAt: manifest.createdAt, fingerprint: manifest.fingerprint, sheetCount: manifest.sheetCount,
+        rowCount: manifest.rowCount, cellCount: manifest.cellCount, formulaCount: manifest.formulaCount
+    };
+    const imageBackupRecordJson = JSON.stringify(imageBackupRecord);
+    const imageBackupCacheKey = getImageReconciliationBackupCacheKey(developerContext.userId);
+    CacheService.getScriptCache().put(imageBackupCacheKey, imageBackupRecordJson, 21600);
+    if (CacheService.getScriptCache().get(imageBackupCacheKey) !== imageBackupRecordJson) {
+        throw new Error("No se pudo asociar el respaldo completo con la sesión para conciliación.");
+    }
+    CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
+    return imageBackupRecord;
+}
+
+/**
+ * 1. Respaldo automático de la base de datos (Spreadsheet completo)
+ * operationId opcional: permite reintentar la misma operación de reorganización
+ * sin crear respaldos duplicados si el navegador pierde la respuesta.
+ */
 function handleBackupDatabase(payload, logMessage, developerContext) {
     logMessage("Respaldo", "Generando respaldo completo de la hoja de cálculo de la base de datos...");
+    if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo con una sesión de desarrollador verificada.");
+    const ownerId = String(developerContext.userId).trim();
+    const operationId = String(payload && payload.operationId || "").trim();
+    if (operationId && !/^[A-Za-z0-9_-]{16,100}$/.test(operationId)) {
+        throw new Error("El identificador de operación del respaldo no tiene un formato válido.");
+    }
     const ss = getSpreadsheet();
     const sourceManifest = adminRestoreValidateDatabaseSchema_(ss);
-    const folder = DriveApp.getRootFolder();
+    const backupName = operationId ? `GPSpedia_DB_BACKUP_${operationId}` : `GPSpedia_DB_BACKUP_${adminRestoreRunId_()}`;
+
+    if (operationId) {
+        const matches = DriveApp.getFilesByName(backupName);
+        let existingBackup = null;
+        while (matches.hasNext()) {
+            const candidate = matches.next();
+            if (candidate.isTrashed() || !isDirectChildOfDriveRoot(candidate)) continue;
+            if (existingBackup) throw new Error("Hay más de un respaldo asociado al mismo identificador; se requiere revisión manual.");
+            existingBackup = candidate;
+        }
+        if (existingBackup) {
+            if (existingBackup.getName() !== backupName ||
+                existingBackup.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+                existingBackup.getSharingAccess() !== DriveApp.Access.PRIVATE) {
+                throw new Error("El recurso asociado al identificador de operación no es un respaldo privado válido.");
+            }
+            let existingManifest;
+            try { existingManifest = JSON.parse(String(existingBackup.getDescription() || "")); }
+            catch (error) { throw new Error("El manifiesto del respaldo asociado a la operación no es válido."); }
+            if (!existingManifest || existingManifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ ||
+                existingManifest.version !== 2 || existingManifest.status !== "complete" ||
+                existingManifest.operationId !== operationId || String(existingManifest.ownerId || "") !== ownerId ||
+                existingManifest.sourceSpreadsheetId !== ss.getId() || !existingManifest.fingerprint ||
+                !Number.isSafeInteger(Number(existingManifest.sheetCount))) {
+                throw new Error("El respaldo previo de esta operación está incompleto o no coincide con la sesión y el origen; no se creó otro respaldo.");
+            }
+            const existingUrl = existingBackup.getUrl();
+            if (!isBackupUrlForResource(existingUrl, `https://docs.google.com/spreadsheets/d/${existingBackup.getId()}`)) {
+                throw new Error("La URL del respaldo previo no pudo verificarse.");
+            }
+            const existingSpreadsheet = SpreadsheetApp.openById(existingBackup.getId());
+            const verifiedManifest = adminRestoreValidateDatabaseSchema_(existingSpreadsheet);
+            if (verifiedManifest.fingerprint !== existingManifest.fingerprint ||
+                verifiedManifest.sheetCount !== Number(existingManifest.sheetCount)) {
+                throw new Error("El respaldo previo no coincide con su manifiesto verificado.");
+            }
+            cacheVerifiedDatabaseBackupForDeveloper_(developerContext, existingBackup, existingManifest);
+            logMessage("Respaldo", `Se reutilizó el respaldo completo y verificado de la operación ${operationId}. ID: ${existingBackup.getId()}`);
+            return {
+                status: "success", backupId: existingBackup.getId(), backupUrl: existingUrl,
+                timestamp: existingManifest.createdAt, reused: true,
+                message: "El respaldo de esta operación ya existía y fue verificado nuevamente."
+            };
+        }
+    }
+
     const runId = adminRestoreRunId_();
-    const backupName = `GPSpedia_DB_BACKUP_${runId}`;
-    logMessage("Respaldo", `Copiando archivo Spreadsheet '${ss.getName()}' con el nombre '${backupName}'...`);
-    const createdBackupFile = DriveApp.getFileById(ss.getId()).makeCopy(backupName, folder);
+    const finalBackupName = operationId ? backupName : `GPSpedia_DB_BACKUP_${runId}`;
+    logMessage("Respaldo", `Copiando archivo Spreadsheet '${ss.getName()}' con el nombre '${finalBackupName}'...`);
+    const createdBackupFile = DriveApp.getFileById(ss.getId()).makeCopy(finalBackupName, DriveApp.getRootFolder());
     const backupId = createdBackupFile.getId();
     try {
+        const operationMetadata = operationId ? { operationId, ownerId } : {};
         createdBackupFile.setDescription(JSON.stringify({
             kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete",
-            createdAt: runId, sourceSpreadsheetId: ss.getId()
+            createdAt: runId, sourceSpreadsheetId: ss.getId(), ...operationMetadata
         }));
         const backupFile = DriveApp.getFileById(backupId);
         const backupUrl = backupFile.getUrl();
         if (backupFile.getId() !== backupId || backupId === ss.getId() || backupFile.isTrashed() ||
-            backupFile.getName() !== backupName || backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+            backupFile.getName() !== finalBackupName || backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
             !isDirectChildOfDriveRoot(backupFile) ||
             !isBackupUrlForResource(backupUrl, `https://docs.google.com/spreadsheets/d/${backupId}`)) {
             throw new Error("El recurso creado no pudo verificarse como un respaldo de Spreadsheet válido.");
@@ -1730,32 +1805,21 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
             kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "complete",
             createdAt: runId, sourceSpreadsheetId: ss.getId(), sheetCount: copiedManifest.sheetCount,
             rowCount: copiedManifest.rowCount, cellCount: copiedManifest.cellCount,
-            formulaCount: copiedManifest.formulaCount, fingerprint: copiedManifest.fingerprint
+            formulaCount: copiedManifest.formulaCount, fingerprint: copiedManifest.fingerprint,
+            ...operationMetadata
         };
         backupFile.setDescription(JSON.stringify(completeManifest));
         const persistedManifest = JSON.parse(String(backupFile.getDescription() || ""));
         if (persistedManifest.kind !== completeManifest.kind || persistedManifest.version !== 2 ||
             persistedManifest.status !== "complete" || persistedManifest.fingerprint !== copiedManifest.fingerprint ||
-            persistedManifest.sheetCount !== copiedManifest.sheetCount) {
+            persistedManifest.sheetCount !== copiedManifest.sheetCount ||
+            (operationId && (persistedManifest.operationId !== operationId || String(persistedManifest.ownerId || "") !== ownerId))) {
             throw new Error("No se pudo confirmar el estado completo del manifiesto DB.");
         }
-        if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo verificado con la sesión de desarrollador.");
         if (backupFile.getSharingAccess() !== DriveApp.Access.PRIVATE) {
             throw new Error("El respaldo no es privado; no se registrará como copia válida para conciliación.");
         }
-        const imageBackupRecord = {
-            backupId, backupName, sourceSpreadsheetId: ss.getId(), createdAt: runId,
-            fingerprint: copiedManifest.fingerprint, sheetCount: copiedManifest.sheetCount,
-            rowCount: copiedManifest.rowCount, cellCount: copiedManifest.cellCount,
-            formulaCount: copiedManifest.formulaCount
-        };
-        const imageBackupRecordJson = JSON.stringify(imageBackupRecord);
-        const imageBackupCacheKey = getImageReconciliationBackupCacheKey(developerContext.userId);
-        CacheService.getScriptCache().put(imageBackupCacheKey, imageBackupRecordJson, 21600);
-        if (CacheService.getScriptCache().get(imageBackupCacheKey) !== imageBackupRecordJson) {
-            throw new Error("No se pudo asociar el respaldo completo con la sesión para conciliación.");
-        }
-        CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
+        cacheVerifiedDatabaseBackupForDeveloper_(developerContext, backupFile, completeManifest);
         logMessage("Respaldo", `Recurso de respaldo de base de datos creado, comparado y verificado. ID: ${backupId}`);
         return { status: "success", backupId, backupUrl, timestamp: runId,
             message: "Respaldo de base de datos creado y verificado correctamente." };
@@ -1763,7 +1827,8 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
         try {
             createdBackupFile.setDescription(JSON.stringify({
                 kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete",
-                createdAt: runId, sourceSpreadsheetId: ss.getId(), error: String(error.message || error)
+                createdAt: runId, sourceSpreadsheetId: ss.getId(), error: String(error.message || error),
+                ...(operationId ? { operationId, ownerId } : {})
             }));
         } catch (stateError) {
             logMessage("Respaldo", `No se pudo marcar como incompleta la copia ${backupId}: ${stateError.message}`, 0, 0, true);
@@ -1774,7 +1839,6 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
         throw error;
     }
 }
-
 function handleBackupDrive(payload, logMessage) {
     let backupFolder = null, manifestFile = null, state = null;
     try {
