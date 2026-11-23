@@ -240,6 +240,24 @@ check("El estado de lectura, archivo y cierre usa las acciones del backend", () 
     assert.match(ui, /Solo quien inició el caso puede agregar comentarios/);
     assert.match(ui, /Caso cerrado\. No se pueden agregar más comentarios/);
 });
+check("La UI permite marcar como no leída una conversación recibida", () => {
+    const thread = ui.slice(ui.indexOf("function renderInboxConversationDetail_"), ui.indexOf("\nfunction renderInboxReplyForm_"));
+    assert.match(thread, /if \(item\.hasReceived && Number\(item\.unreadCount \|\| 0\) <= 0\)/);
+    assert.match(thread, /markInboxConversationUnread_\(item\)/);
+    assert.match(ui, /markInboxUnread\(item\.conversationId,context\)/);
+    assert.match(ui, /inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = \[\]/);
+    assert.match(api, /export async function markInboxUnread\(conversationId, sessionPayload = \{\}\)/);
+    assert.match(api, /routeAction\('markInboxUnread'/);
+});
+check("La eliminación de una conversación solo la oculta para el participante actual", () => {
+    const thread = ui.slice(ui.indexOf("function renderInboxConversationDetail_"), ui.indexOf("\nfunction renderInboxReplyForm_"));
+    assert.match(thread, /deleteInboxConversationForCurrentUser_\(item\)/);
+    assert.match(ui, /deleteInboxConversation\(item\.conversationId,context\)/);
+    assert.match(ui, /El historial se conservará para los demás participantes/);
+    assert.match(api, /export async function deleteInboxConversation\(conversationId, sessionPayload = \{\}\)/);
+    assert.match(api, /routeAction\('deleteInboxConversation'/);
+    assert.match(ui, /inboxConversationMessageCache_\.invalidate\(context,item\.conversationId\)/);
+});
 check("Las notificaciones internas reflejan el total de conversaciones no leídas", () => {
     assert.match(html, /id="inbox-notification-count"/);
     assert.match(ui, /counts && counts\.unread/);
