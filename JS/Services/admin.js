@@ -886,7 +886,27 @@ function isSharedMutationAction_(action) {
     return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","migrateVehicleContributionsSchema","resolveVehicleContributionCandidate","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
 }
 
+function removeLegacyAdminCoordinatorSettings_() {
+    if (typeof PropertiesService === "undefined" ||
+        typeof PropertiesService.getScriptProperties !== "function") return;
+    const properties = PropertiesService.getScriptProperties();
+    if (!properties || typeof properties.deleteProperty !== "function") {
+        throw new Error("No se pudo retirar la configuración heredada de coordinación de ADMIN.");
+    }
+    properties.deleteProperty("GPSpedia_COORDINATOR_URL");
+    properties.deleteProperty("GPSpedia_COORDINATOR_SECRET");
+}
+
 function doPost(e) {
+    try {
+        removeLegacyAdminCoordinatorSettings_();
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            status: "error",
+            code: "LEGACY_COORDINATOR_CONFIG_CLEANUP_FAILED",
+            message: "No se pudo retirar la configuración heredada de coordinación."
+        })).setMimeType(ContentService.MimeType.JSON);
+    }
     let request;
     try {
         request = JSON.parse(e && e.postData && e.postData.contents || "{}");
@@ -906,19 +926,6 @@ function doPost(e) {
             status: "error", code: "ACTION_MOVED_TO_WRITE",
             message: "Esta operación ahora se procesa directamente en WRITE."
         })).setMimeType(ContentService.MimeType.TEXT);
-    }
-    if (action === "getServiceTraffic") {
-        try {
-            // La telemetría ya consulta Coordinator para recuperar métricas; validar
-            // el rol con actor cacheado evita una lease/llamada redundante por refresco.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" });
-            return doPostInternal_(withSharedSessionActor_(e, actor));
-        } catch (error) {
-            return ContentService.createTextOutput(JSON.stringify({
-                status: "error",
-                message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
-            })).setMimeType(ContentService.MimeType.TEXT);
-        }
     }
     if (action === "ping") return doPostInternal_(withSharedSessionActor_(e, null));
     try {
@@ -1326,9 +1333,6 @@ function doPostInternal_(e) {
                 break;
             case 'getDriveStorage':
                 response = handleGetDriveStorage(payload, logMessage);
-                break;
-            case 'getServiceTraffic':
-                response = handleGetServiceTraffic_(payload, logMessage, developerContext);
                 break;
             case 'recoverReplacedImage':
                 response = handleRecoverReplacedImage(payload, logMessage);
@@ -10602,113 +10606,6 @@ function recordReplacedImage(data) {
 /**
  * Handler: Consultar imágenes reemplazadas
  */
-
-function normalizeCoordinatorServiceTraffic_(source) {
-    const expectedServices = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
-    if (!source || source.status !== "success" || source.scope !== "coordinator_protected_operations" ||
-        !Array.isArray(source.services) || !Array.isArray(source.buckets) ||
-        !source.totals || typeof source.totals !== "object") {
-        throw new Error("Coordinator devolvió un agregado de tráfico incompleto o con un scope inesperado.");
-    }
-    const reportedServices = source.services.map(value => String(value || "").toUpperCase());
-    if (reportedServices.length !== expectedServices.length ||
-        expectedServices.some(service => !reportedServices.includes(service)) ||
-        reportedServices.some(service => !expectedServices.includes(service))) {
-        throw new Error("El agregado de Coordinator no contiene exactamente los siete servicios activos.");
-    }
-    const normalizeCounts = (input, label) => {
-        if (!input || typeof input !== "object" || Array.isArray(input)) {
-            throw new Error("El agregado de Coordinator no contiene conteos válidos en " + label + ".");
-        }
-        const output = {};
-        expectedServices.forEach(service => {
-            const count = input[service];
-            if (!Number.isSafeInteger(count) || count < 0) {
-                throw new Error("El conteo de " + service + " no es válido en " + label + ".");
-            }
-            output[service] = count;
-        });
-        return output;
-    };
-    const result = Object.assign({}, source, {
-        services: expectedServices.slice(),
-        totals: {
-            lastHour: normalizeCounts(source.totals.lastHour, "lastHour"),
-            last6Hours: normalizeCounts(source.totals.last6Hours, "last6Hours"),
-            last24Hours: normalizeCounts(source.totals.last24Hours, "last24Hours")
-        },
-        buckets: source.buckets.map((bucket, index) => {
-            if (!bucket || !Number.isSafeInteger(bucket.startAt) || bucket.startAt <= 0) {
-                throw new Error("El bucket " + index + " no contiene una marca temporal válida.");
-            }
-            return { startAt: bucket.startAt, counts: normalizeCounts(bucket.counts, "bucket " + index) };
-        }).sort((left, right) => left.startAt - right.startAt)
-    });
-    const sources = { coordinator: { available: true, scope: "coordinator_recorded_events" } };
-    expectedServices.forEach(service => {
-        sources[service] = {
-            available: true,
-            coordinatorScope: "coordinator_recorded_events",
-            directRequestsAvailable: false,
-            accuracy: "not_collected",
-            mayUndercount: true,
-            reason: "direct_requests_not_collected"
-        };
-    });
-    result.scope = "global_service_traffic";
-    result.sources = sources;
-    result.coverage = {
-        description: "Conteo global best-effort de adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed registradas por Coordinator. No incluye rutas directas no coordinadas ni representa el total de solicitudes HTTP.",
-        excludes: [
-            "lecturas directas no coordinadas de AUTH, CATALOG, USERS, WRITE y FEEDBACK",
-            "sondeos de salud",
-            "solicitudes HTTP no instrumentadas"
-        ]
-    };
-    result.excluded = result.coverage.excludes.slice();
-    return result;
-}
-
-function validateGlobalServiceTrafficResult_(source) {
-    const expectedServices = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
-    if (!source || source.status !== "success" || source.scope !== "global_service_traffic" ||
-        !Array.isArray(source.services) || source.services.length !== expectedServices.length ||
-        expectedServices.some(service => !source.services.includes(service)) ||
-        source.services.some(service => !expectedServices.includes(service)) ||
-        !Array.isArray(source.buckets) || !source.totals) return false;
-    const validCounts = counts => counts && typeof counts === "object" && !Array.isArray(counts) &&
-        expectedServices.every(service => Number.isSafeInteger(counts[service]) && counts[service] >= 0);
-    if (!["lastHour", "last6Hours", "last24Hours"].every(period => validCounts(source.totals[period]))) return false;
-    return source.buckets.every(bucket => bucket && Number.isSafeInteger(bucket.startAt) && bucket.startAt > 0 &&
-        validCounts(bucket.counts));
-}
-
-function handleGetServiceTraffic_(payload, logMessage, developerContext) {
-    if (!developerContext || String(developerContext.role || "").toLowerCase() !== "desarrollador") {
-        throw new Error("Acceso denegado: la telemetría global está reservada a Desarrollador.");
-    }
-    const coordinatorResult = getSharedServiceTraffic_();
-    if (!coordinatorResult || coordinatorResult.status !== "success" ||
-        !Array.isArray(coordinatorResult.buckets) || !coordinatorResult.totals) {
-        throw new Error("No se pudo recuperar un agregado global válido del coordinador.");
-    }
-    let result;
-    if (coordinatorResult.scope === "global_service_traffic") {
-        if (!validateGlobalServiceTrafficResult_(coordinatorResult)) {
-            throw new Error("Coordinator devolvió una telemetría global incompleta o inválida.");
-        }
-        result = coordinatorResult;
-    } else if (coordinatorResult.scope === "coordinator_protected_operations") {
-        // Compatibilidad temporal con Coordinator anterior a la agregación central.
-        result = normalizeCoordinatorServiceTraffic_(coordinatorResult);
-    } else {
-        throw new Error("Coordinator devolvió un scope de telemetría no compatible.");
-    }
-    if (typeof logMessage === "function") {
-        logMessage("Telemetría global", "Se recuperaron métricas de los siete servicios mediante Coordinator.", 1, 1);
-    }
-    return result;
-}
 
 function handleGetDriveStorage(payload, logMessage) {
     const parseBytes = value => {
