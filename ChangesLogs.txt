@@ -333,3 +333,16 @@ HEAD de código validado: b51c1df563329889df7765f9c49e1c7570f2e725
 - No se modificaron deployments, proyectos Apps Script, Spreadsheet, Drive, propiedades ni triggers externos. La inspección/limpieza externa se difiere a Beta aislada y requiere autorización.
 - MIG-025: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: MIG-026 — eliminar configuración local de todos los servicios.
 ================================================================================
+
+
+================================================================================
+MIG-026 — auditoría de configuración local — 2026-11-23
+- Se contrastó la implementación backend vigente con INVENTARIO_CONFIGURACION_BACKEND.md y las dependencias MIG-006/MIG-008.
+- Se registraron residuos en AUTH, CATALOG, UTILITIES, WRITE, FEEDBACK, ADMIN y SharedSessionActor: IDs locales, ScriptProperties y/o estado operativo legacy.
+- Se detectó un consumidor ADMIN de la carpeta Cortes que aún usa CORTES_IMAGES_ROOT_FOLDER_ID pese a existir accessor central getCortesRootFolder().
+- No se sustituyó openById() por getActiveSpreadsheet() sin prueba Web App real. El intento experimental produjo fallos de fixtures/consumidores y fue revertido; no queda cambio funcional experimental aprobado.
+- Se documentó que ledgers/idempotencia/sesiones/auditorías requieren migraciones específicas, y que el secreto HMAC de recuperación no puede trasladarse a configuración ordinaria.
+- TAREAS_MIGRACION_ARQUITECTURA.md y checkpoint.md actualizados con el estado real, bloqueadores y orden siguiente.
+- No se modificaron deployments, proyectos Apps Script, propiedades instaladas, Spreadsheet, Drive ni datos externos.
+- MIG-026 sigue EN PROGRESO; depende de la evidencia Beta MIG-006/MIG-008 y de migraciones de estado con paridad.
+================================================================================
