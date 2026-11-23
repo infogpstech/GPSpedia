@@ -547,6 +547,12 @@ export async function sendInboxMessage(payload = {}) {
 export async function markInboxRead(conversationId, throughMessageId, sessionPayload = {}) {
     return await routeAction('markInboxRead', { ...sessionPayload, conversationId, throughMessageId });
 }
+export async function markInboxUnread(conversationId, sessionPayload = {}) {
+    return await routeAction('markInboxUnread', { ...sessionPayload, conversationId });
+}
+export async function deleteInboxConversation(conversationId, sessionPayload = {}) {
+    return await routeAction('deleteInboxConversation', { ...sessionPayload, conversationId });
+}
 export async function archiveInboxConversation(conversationId, archived, sessionPayload = {}) {
     return await routeAction('archiveInboxConversation', { ...sessionPayload, conversationId, archived });
 }
