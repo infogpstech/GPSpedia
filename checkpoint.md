@@ -1138,3 +1138,18 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Continuidad
 - Continuar MIG-022; no iniciar MIG-023 hasta completar pruebas locales, revisión de diff y cierre documental.
 - MIG-025 queda explícitamente obligado a retirar también cualquier `doGet`/health/ping de COORDINATOR y su inclusión como servicio independiente en el escaneo de salud. No ejecutar MIG-025 antes de resolver las dependencias MIG-022 a MIG-024.
+
+ 
+---
+ 
+## Cierre MIG-022 — 2026-11-23
+ 
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- HEAD de la rama de trabajo verificado antes de este cierre: 7775cced356b2da28c6b5bb8f88e6881b4f2d917.
+- Rama base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- Commits de implementación/contrato: 2dd13f2a66925e75459fa4e39757421f0d4924d1, e84587e6f050f7fbe55f59b495044a540fe46f60. Commits de continuidad: c12c93759851885e7a1262fbd0fe80e225534d02, bf5cd607010ac6d6fa1a58c6055df01e65bc5ea2, 7775cced356b2da28c6b5bb8f88e6881b4f2d917.
+- Validaciones específicas reproducibles: **335/335 PASS**. Incluyen creación de hojas/columnas, actor local y RBAC de UTILITIES, locks/concurrencia, staging/rollback, fórmulas e IDs, backup/restauración, consola Developer, terminal Drive, auditoría, organización/reconciliación de imágenes, papelera y purgado de actividad.
+- No se modificaron datos reales, Spreadsheet, Drive ni deployments Apps Script.
+- La regresión global CI no está verde por cinco fallos ajenos al alcance MIG-022: VehicleModalRolePolicy 11/12; falta el archivo CoordinatorBrowserCatalogReset.mjs; contrato legacy de feed CATALOG; expectativa legacy de lease AUTH; y FeedbackLockFastFail. No se ocultan ni se atribuyen a MIG-022; deben resolverse en sus tareas/fases correspondientes.
+- Pendiente Beta: validación real de Apps Script, Spreadsheet, Drive, permisos y comportamiento desplegado. No se simula ni se declara ejecutada.
+- Siguiente tarea por prioridad: **MIG-023 — Catálogo, cachés y experiencia de usuario**. Después seguir MIG-024 y MIG-025; MIG-025 debe eliminar COORDINATOR por completo, sin doGet/health/ping propio ni inclusión en el escaneo de salud.
