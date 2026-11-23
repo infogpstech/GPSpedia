@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
 
 const root = new URL("../Services/", import.meta.url);
 const adminSource = readFileSync(new URL("admin.js", root), "utf8");
@@ -73,7 +74,7 @@ const context={
  CacheService:{getScriptCache:()=>({removeAll:()=>{}})},
  Date,JSON,Number,String,Object,Array,RegExp,Error,Math
 };
-new Function("context","with(context){"+helperSource+"; this.publish=handleSetRichTextModeCentral_;}")(context);
+vm.runInNewContext(helperSource + "\nthis.publish=handleSetRichTextModeCentral_;", context);
 const publish=context.publish;
 const developer={userId:"dev-123",role:"Desarrollador"};
 let passed=0;

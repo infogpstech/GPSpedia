@@ -25,7 +25,7 @@ assert.ok(suggestion.includes("appendAttempted = true;"),"La sugerencia debe ane
 assert.ok(suggestion.includes("uploadedImage && !appendAttempted"),"La imagen solo se elimina si appendRow no pudo persistir una referencia.");
 assert.ok(suggestion.includes("appendRow pudo persistir la referencia"),"La imagen se conserva ante confirmación incierta.");
 assert.ok(suggestion.includes("canonical.rowNumber"),"La limpieza de cargas perdedoras depende de la fila canónica.");
-const router=extract(feedback,"function doPost(e)","const RICH_TEXT_MODE_PROPERTY_");
+const router=extract(feedback,"function doPost(e)","function normalizeRichTextMode_");
 assert.doesNotMatch(router,/recordDirectServiceTraffic_|DIRECT_SERVICE_TRAFFIC_CONFIG_|getServiceTraffic/,
     "FEEDBACK no debe escribir contadores directos ni exponer un endpoint de telemetría.");
 assert.ok(existsSync(new URL("../../.github/workflows/deployed-service-health.yml",import.meta.url)),"El workflow de salud no debe desaparecer.");
