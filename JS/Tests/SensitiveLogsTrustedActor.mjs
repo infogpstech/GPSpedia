@@ -6,7 +6,6 @@ import { dirname, resolve } from "node:path";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const auth = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
 const feedback = readFileSync(resolve(root, "JS/Services/feedback.js"), "utf8");
-const coordinator = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "utf8");
 const apiConfig = readFileSync(resolve(root, "JS/Frontend/api-config.js"), "utf8");
 const declaration = "function handleClearSensitiveLogs(payload)";
 const start = auth.indexOf(declaration);
@@ -76,7 +75,7 @@ function test(name, callback) {
     console.log("PASS " + name);
 }
 
-test("la purga usa el actor confiable de Coordinator y elimina solo filas sensibles", () => {
+test("la purga usa el actor local cacheado y elimina solo filas sensibles", () => {
     const h = createHarness();
     const result = h.handler({
         userId: "DEV-1",
@@ -122,7 +121,8 @@ test("AUTH no relee ActiveSessions para sincronizar cada acción", () => {
     const end = auth.indexOf("function doPostInternal_(e)", begin);
     assert.ok(begin >= 0 && end > begin);
     const dispatcher = auth.slice(begin, end);
-    assert.match(dispatcher, /withSharedMutationLease_\("AUTH", action/);
+    assert.match(dispatcher, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
+    assert.doesNotMatch(dispatcher, /withSharedMutationLease_/);
     assert.match(dispatcher, /withSharedSessionActor_\(e, actor\)/);
     assert.doesNotMatch(dispatcher, /syncAuthSheetActivityFromActor_/);
     assert.match(auth, /function handleClearSensitiveLogs\(payload\)[\s\S]*?payload\.__sharedSessionActor/);
@@ -179,8 +179,7 @@ test("la limpieza de Logs usa actor cacheado y RBAC Desarrollador sin lease", ()
     assert.deepEqual(harness.actorLookups,[{userId:"DEV-1",sessionToken:"trusted-session"}]);
     assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
     assert.equal(payload.__sharedSessionActor.epoch,7);
-    const policy = new Function(coordinator + String.fromCharCode(10) + "return coordinatorPolicy_;")();
-    assert.ok(policy("AUTH","clearSensitiveLogs").writeResources.includes("LOGS"));
+    assert.match(auth, /function handleClearSensitiveLogs\(payload\)[\s\S]*actorRole !== "desarrollador"/);
 });
 test("la limpieza de ActividadUsuario usa actor cacheado y RBAC Desarrollador sin lease", () => {
     assert.match(apiConfig, /['"]clearActivityLogs['"]\s*:\s*['"]FEEDBACK['"]/);
