@@ -32,10 +32,11 @@ test("AUTH mantiene bloqueo temporal y hash actual",()=>{
  assert.match(auth,/function beginLoginAttempt\(/);assert.match(auth,/registerFailedLoginAttempt\(/);
  assert.match(auth,/function createPasswordHash\(/);assert.match(auth,/function verifyStoredPassword\(/);
 });
-test("ADMIN conserva leases solo para operaciones de mantenimiento ajenas a sesión",()=>{
- assert.match(adminPost,/getCachedSharedSessionActor_/);assert.doesNotMatch(adminPost,/withSharedMutationLease_/);
- const operations=[...admin.matchAll(/withSharedMutationLease_\("ADMIN", "([^"]+)"/g)].map(match=>match[1]).sort();
- assert.deepEqual(operations,["auditDriveImagesInCortes","createCortesImageFolder","saveUnusedImagesInventory"].sort());
+test("ADMIN usa guardas locales de recurso, no leases remotas",()=>{
+ assert.match(adminPost,/getCachedSharedSessionActor_/);assert.doesNotMatch(admin,/withSharedMutationLease_/);
+ assert.match(admin,/function withAdminLocalOperationGuard_/);
+ assert.match(admin,/drive-inventory:/);assert.match(admin,/create-cortes-image-folder:/);assert.match(admin,/drive-audit:/);
+ assert.equal((admin.match(/withAdminLocalOperationGuard_\\(/g)||[]).length,4);
 });
 test("UTILITIES obtiene actor local sin lease Coordinator",()=>{
  assert.match(utilities,/getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken/);
