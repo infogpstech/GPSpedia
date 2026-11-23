@@ -124,12 +124,12 @@ function loadSharedSessionActorFromSpreadsheet_(userId, sessionToken, dependenci
     const id = String(userId || "").trim(), token = String(sessionToken || "");
     const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
     if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
-    const ss = typeof deps.getSpreadsheet === "function"
-        ? deps.getSpreadsheet()
-        : typeof deps.openSpreadsheet === "function"
-            ? deps.openSpreadsheet()
-            : SpreadsheetApp.getActiveSpreadsheet();
-    if (!ss) throw new Error("No hay una Spreadsheet activa vinculada al servicio para verificar la sesión.");
+    const spreadsheetId = String(deps.spreadsheetId ||
+        (typeof SPREADSHEET_ID !== "undefined" ? SPREADSHEET_ID : "") || "").trim();
+    if (!spreadsheetId) throw new Error("No está disponible la referencia de la Spreadsheet de identidad.");
+    const openSpreadsheet = typeof deps.openSpreadsheet === "function"
+        ? deps.openSpreadsheet : value => SpreadsheetApp.openById(value);
+    const ss = openSpreadsheet(spreadsheetId);
     const usersSheet = ss.getSheetByName("Users");
     const sessionsSheet = ss.getSheetByName("ActiveSessions");
     if (!usersSheet || !sessionsSheet) throw new Error("No se encontraron Users y ActiveSessions.");
