@@ -207,8 +207,8 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     return { status: failed ? "FAIL" : "PASS", passed, failed, results };
 }
 
-const feedback = fs.readFileSync(new URL("../feedback.js", import.meta.url), "utf8");
-const ui = fs.readFileSync(new URL("../../ui.js", import.meta.url), "utf8");
+const feedback = fs.readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
+const ui = fs.readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 const result = runSuggestionImageSecurityTests({ feedback, ui, assert });
 console.log(JSON.stringify(result, null, 2));
 if (result.status !== "PASS") process.exitCode = 1;

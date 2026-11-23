@@ -2135,9 +2135,11 @@ function getCortesRootFolderResource_() {
 }
 function getCortesRootFolder() {
     const resource = getCortesRootFolderResource_();
-    const folder = DriveApp.getFolderById(resource.id);
+    let folder;
+    try { folder = DriveApp.getFolderById(resource.id); }
+    catch (driveError) { throw new Error("El recurso central no corresponde a la carpeta raíz «Cortes» o no está disponible."); }
     if (!folder || folder.isTrashed() || String(folder.getId()) !== resource.id ||
-        String(folder.getName() || "").trim().toLowerCase() !== resource.expectedName.toLowerCase()) throw new Error("El recurso central no identifica una carpeta Cortes válida y disponible.");
+        String(folder.getName() || "").trim().toLowerCase() !== resource.expectedName.toLowerCase()) throw new Error("El recurso central no corresponde a la carpeta raíz «Cortes» o no está disponible.");
     const expectedParentId = resource.expectedParentId || DriveApp.getRootFolder().getId();
     const parents = folder.getParents();
     let parentVerified = false;
