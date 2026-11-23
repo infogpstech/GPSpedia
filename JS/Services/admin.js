@@ -886,27 +886,7 @@ function isSharedMutationAction_(action) {
     return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","freezeIdentifierFormulas","reconcilePendingImageUploads","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","migrateVehicleContributionsSchema","resolveVehicleContributionCandidate","auditDriveImagesInCortes","applyCortesImageOrganizer","rollbackCortesImageOrganizer"].includes(action);
 }
 
-function removeLegacyAdminCoordinatorSettings_() {
-    if (typeof PropertiesService === "undefined" ||
-        typeof PropertiesService.getScriptProperties !== "function") return;
-    const properties = PropertiesService.getScriptProperties();
-    if (!properties || typeof properties.deleteProperty !== "function") {
-        throw new Error("No se pudo retirar la configuración heredada de coordinación de ADMIN.");
-    }
-    properties.deleteProperty("GPSpedia_COORDINATOR_URL");
-    properties.deleteProperty("GPSpedia_COORDINATOR_SECRET");
-}
-
 function doPost(e) {
-    try {
-        removeLegacyAdminCoordinatorSettings_();
-    } catch (error) {
-        return ContentService.createTextOutput(JSON.stringify({
-            status: "error",
-            code: "LEGACY_COORDINATOR_CONFIG_CLEANUP_FAILED",
-            message: "No se pudo retirar la configuración heredada de coordinación."
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
     let request;
     try {
         request = JSON.parse(e && e.postData && e.postData.contents || "{}");
