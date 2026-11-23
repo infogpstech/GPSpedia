@@ -222,7 +222,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
         const wrongId = buildHarness(feedback, { wrongRootId: true });
         assert.throws(() => wrongId.api.getFolder(), /recurso central no corresponde a la carpeta raíz/);
         const wrongParent = buildHarness(feedback, { wrongRootParent: true });
-        assert.throws(() => wrongParent.api.getFolder(), /no conserva la jerarquía configurada/);
+        assert.throws(() => wrongParent.api.getFolder(), /no está ubicada directamente en el padre configurado/);
     });
 
     test("exige que el archivo conserve el acceso heredado de la carpeta", () => {
