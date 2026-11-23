@@ -6,13 +6,12 @@
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
-const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
-const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
 function getSpreadsheet() {
   if (spreadsheet === null) {
-    spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto de servicio.");
   }
   return spreadsheet;
 }
@@ -932,7 +931,7 @@ function verifyCortesIdsBackup(value) {
     const raw = String(value || "").trim();
     const match = raw.match(/\/d\/([a-zA-Z0-9_-]{20,})/) || raw.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
     const backupId = match ? match[1] : raw;
-    if (!/^[a-zA-Z0-9_-]{20,}$/.test(backupId) || backupId === SPREADSHEET_ID) {
+    if (!/^[a-zA-Z0-9_-]{20,}$/.test(backupId) || backupId === getSpreadsheet().getId()) {
         throw new Error("Se requiere un respaldo de Spreadsheet válido y distinto de producción.");
     }
     const file = DriveApp.getFileById(backupId);
@@ -2124,18 +2123,30 @@ function isYearInRange(inputYear, anoDesde, anoHasta) {
     return inputYear >= desde && inputYear <= hasta;
 }
 
+function getCortesRootFolderResource_() {
+    const snapshot = getCentralConfigurationForService_("WRITE");
+    if (!snapshot || snapshot.status !== "success" || snapshot.stale === true) throw new Error("La configuración central de recursos no está disponible o está vencida.");
+    const resource = snapshot.resources && snapshot.resources.cortes_root_folder_id;
+    if (!resource || resource.enabled !== true || resource.resourceType !== "drive_folder") throw new Error("Falta el recurso central habilitado cortes_root_folder_id.");
+    const id = String(resource.resourceId || "").trim();
+    const expectedName = String(resource.expectedName || "Cortes").trim();
+    if (!/^[A-Za-z0-9_-]{5,200}$/.test(id) || expectedName.toLowerCase() !== "cortes") throw new Error("La configuración central de la carpeta Cortes no cumple el contrato.");
+    return { id, expectedName, expectedParentId: String(resource.expectedParentId || "").trim() };
+}
 function getCortesRootFolder() {
-    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-    if (String(folder.getId()) !== String(DRIVE_FOLDER_ID) || String(folder.getName() || "").trim().toLowerCase() !== "cortes") {
-        throw new Error("DRIVE_FOLDER_ID no corresponde a la carpeta «Cortes».");
-    }
-    const driveRootId = DriveApp.getRootFolder().getId();
+    const resource = getCortesRootFolderResource_();
+    const folder = DriveApp.getFolderById(resource.id);
+    if (!folder || folder.isTrashed() || String(folder.getId()) !== resource.id ||
+        String(folder.getName() || "").trim().toLowerCase() !== resource.expectedName.toLowerCase()) throw new Error("El recurso central no identifica una carpeta Cortes válida y disponible.");
+    const expectedParentId = resource.expectedParentId || DriveApp.getRootFolder().getId();
     const parents = folder.getParents();
-    let isDirectChild = false;
-    while (parents.hasNext()) if (parents.next().getId() === driveRootId) isDirectChild = true;
-    if (!isDirectChild) throw new Error("La carpeta «Cortes» no está ubicada directamente en la raíz de Drive.");
+    let parentVerified = false;
+    while (parents.hasNext()) if (String(parents.next().getId()) === String(expectedParentId)) parentVerified = true;
+    if (!parentVerified) throw new Error("La carpeta Cortes no conserva la jerarquía configurada en el registro central.");
     return folder;
 }
+function getCortesRootFolderId_() { return String(getCortesRootFolder().getId());}
+
 function sanitizeForFolderDisplay(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(/\s+/g, ' ').replace(/__+/g, '_').trim();

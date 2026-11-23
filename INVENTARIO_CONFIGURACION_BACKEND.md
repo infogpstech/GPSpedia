@@ -169,3 +169,11 @@ Las seis tablas lógicas son Servicios, ConfiguracionParametros, ConfiguracionRe
 MIG-003 cubre el inventario estático de propiedades y configuración referenciada por el código backend de la rama. Las 26 familias de ScriptProperties, IDs, URLs, parámetros relevantes, cachés separadas, mecanismos OAuth y límites del manifiesto externo están clasificados con destino o criterio explícito de retiro/diseño.
 
 **No se migró ni eliminó ninguna propiedad.** La lectura de los valores reales instalados, scopes y deployments queda pendiente de Beta; el bootstrap de Spreadsheet queda asignado a MIG-006. Estos límites no impiden cerrar el inventario local.
+
+
+### Adenda MIG-015 — centralización de recursos de imagen — 2026-11-23
+- DRIVE_FOLDER_ID de ADMIN, WRITE y FEEDBACK se sustituye por la referencia central cortes_root_folder_id en ConfiguracionRecursos; el ID de cada entorno no se guarda en el código.
+- Los tres servicios obtienen el recurso mediante getCentralConfigurationForService_ y verifican tipo, estado, nombre y jerarquía de la carpeta Drive.
+- Los proyectos ADMIN, WRITE y FEEDBACK usan SpreadsheetApp.getActiveSpreadsheet() para acceder a la Spreadsheet vinculada, conforme al spike MIG-006; no conservan SPREADSHEET_ID local ni openById para abrir la base operativa.
+- ADMIN deja de persistir Imagenes_Sin_Uso en ScriptProperties; la carpeta se localiza por nombre bajo la raíz validada, detecta duplicados y crea bajo exclusión breve.
+- La validación Beta debe confirmar que los tres proyectos están vinculados al Spreadsheet aislado y que la revisión central contiene cortes_root_folder_id con el ID de la carpeta Cortes Beta.

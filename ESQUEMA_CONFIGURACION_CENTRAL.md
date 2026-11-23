@@ -97,6 +97,8 @@ Localizadores no secretos de recursos externos administrados por GPSpedia, por e
 | expected_name | string | No | Nombre esperado cuando sirva para verificación. |
 | updated_at / updated_by / change_reason | timestamp / actor_id / string | Sí | Trazabilidad de cambio. |
 
+**Recurso compartido requerido por MIG-015:** la definición de esquema `resource:cortes_root_folder_id` declara entity_type=resource, value_type=drive_folder, scope_allowed=global, visibility_allowed=backend, required=TRUE, validation_rule=drive_folder_id y owner_service=ADMIN. Cada revisión publicada incluye una fila habilitada con esa clave, el ID de la carpeta Cortes del entorno, scope=global, visibility=backend, expected_name=Cortes y expected_parent_id igual a la raíz de Drive. El ID real no se versiona en el repositorio. ADMIN, WRITE y FEEDBACK leen esta referencia desde el lector central y fallan cerrados si falta, está vencida o no coincide con Drive.
+
 Un ID no otorga acceso. Antes de usar un recurso, el servicio debe validar existencia, tipo, padre, propietario/permisos y coherencia con la operación. Los IDs de Spreadsheet de bootstrap no se guardan aquí: hacerlo produciría una referencia circular.
 
 ### 3.4 Hoja ConfiguracionControl

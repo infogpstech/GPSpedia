@@ -414,8 +414,63 @@ runGroup('38','INTEGRATION',()=>{
    pysData:read('JS/Frontend/pys-data.js'),ui:read('JS/Frontend/ui.js'),usersHtml:read('HTML/users.html'),youtubeUpload:read('JS/Frontend/youtubeUpload.js')}
  }));
 });
+runGroup('39','MIG015',()=>{
+ runCli('MIG-015 configuración central de Spreadsheet y Drive','JS/Tests/MIG015ImageConfigurationContract.mjs');
+ runCli('ADMIN carga de imagen valida tamaño y MIME antes de Base64','JS/Tests/AdminImageUploadPreflight.mjs');
+ runCli('ADMIN inventario de imágenes reutiliza ledger filtrado de CATALOG','JS/Tests/AdminCandidateImageInventoryCatalogSource.mjs');
+ runCli('ADMIN lectura segura y secuenciada de logotipos','JS/Tests/AdminLogoFileRead.mjs');
+ runCli('ADMIN conserva ImageUploadLedger histórico en solo lectura','JS/Tests/AdminImageUploadLedgerReadOnly.mjs');
+ runCli('ADMIN reemplazo de imagen ejecuta Drive fuera del ScriptLock','JS/Tests/AdminImageUploadDriveIsolation.mjs');
+ runCli('ADMIN recupera reemplazos linked fuera del ScriptLock','JS/Tests/AdminImageUploadLinkedRecoveryIsolation.mjs');
+ runCli('ADMIN compensa archivos Drive fuera del ScriptLock','JS/Tests/AdminImageUploadCompensationIsolation.mjs');
+ runCli('ADMIN reconciliación del journal de imágenes','JS/Tests/AdminImageUploadEventReconciliation.mjs');
+ runCli('ADMIN ciclo de papelera, restauración y eliminación de imágenes','JS/Tests/AdminImageTrashLifecycle.mjs');
+ runCli('ADMIN integridad del historial de imágenes reemplazadas','JS/Tests/AdminReplacedImagesIntegrity.mjs');
+ runCli('ADMIN biblioteca de imágenes y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
+ runCli('ADMIN conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');
+ runCli('ADMIN aplicación de conciliación, read-back y rollback','JS/Tests/CortesImageReconciliationApply.mjs');
+ runCli('ADMIN UI de conciliación de imágenes','JS/Tests/CortesImageReconciliationUI.mjs');
+ runCli('WRITE diario append-only de cargas de imágenes','JS/Tests/ImageUploadEventJournal.mjs');
+ runCli('UI variantes de imagen y transparencia PNG','JS/Tests/ImageResolutionVariants.js');
+ runCli('UI ciclo de vida de ObjectURL','JS/Tests/ImageObjectUrlLifecycle.js');
+ runCli('WRITE alta de corte: tamaño y MIME antes de Base64','JS/Tests/AddCutImageSizePreflight.mjs');
+ runCli('WRITE imágenes suplementarias: tamaño y lectura antes de Base64','JS/Tests/AddSupplementaryImagePreflight.mjs');
+ runCli('FEEDBACK ledger append-only de imágenes de reportes','JS/Tests/FeedbackReportImageEvents.mjs');
+ runCli('FEEDBACK limpieza de adjuntos de reportes','JS/Tests/FeedbackReportImageCleanupOutsideLock.mjs');
+ runCli('FEEDBACK limpieza de adjuntos de sugerencias','JS/Tests/FeedbackSuggestionImageCleanupOutsideLock.mjs');
+ runCli('FEEDBACK verificación de imágenes PyS fuera del lock','JS/Tests/FeedbackPysPendingImageVerificationOutsideLock.mjs');
+ runCli('FEEDBACK metadata y actividad PyS post-commit','JS/Tests/FeedbackPysPostCommitOutsideLock.mjs');
+ runCli('FEEDBACK rollback de imágenes PyS','JS/Tests/FeedbackPysRollbackOutsideLock.mjs');
+ runCli('FEEDBACK carga de adjuntos fuera de locks','JS/Tests/P2FeedbackImageUploadLocks.mjs');
+ runCli('FEEDBACK carga y recuperación de imágenes PyS','JS/Tests/P2PysImageUploadOutsideLock.mjs');
+ runCli('ADMIN cargas suplementarias fuera del lock','JS/Tests/AdminSupplementaryUploadOutsideLock.mjs');
+ runCli('ADMIN carpeta Cortes con lease de recurso aislado','JS/Tests/AdminCreateCortesImageFolderLease.mjs');
+ runCli('ADMIN vinculación de imágenes de cortes fuera del lock','JS/Tests/AdminCutImageLinkOutsideLock.mjs');
+ runCli('ADMIN preflight Drive de papelera y restauración','JS/Tests/AdminDeleteImageDrivePreflightOutsideLock.mjs');
+ runCli('ADMIN preflight Drive de restauración desde papelera','JS/Tests/AdminRestoreImageDrivePreflightOutsideLock.mjs');
+ runCli('ADMIN preflight Drive de protección de imagen en uso','JS/Tests/AdminMarkImageInUseDrivePreflightOutsideLock.mjs');
+ runCli('ADMIN preflight Drive de movimiento de imágenes','JS/Tests/AdminMoveImageDrivePreflightOutsideLock.mjs');
+ runCli('ADMIN preflight Drive de recuperación de imágenes','JS/Tests/AdminRecoverImageDrivePreflightOutsideLock.mjs');
+ runCli('ADMIN actividad de restauración de imágenes','JS/Tests/AdminRestoreImageActivityOutsideLock.mjs');
+ runCli('ADMIN actividad de papelera de imágenes','JS/Tests/AdminDeleteImageActivityOutsideLock.mjs');
+ runCli('ADMIN actividad de movimiento de imágenes','JS/Tests/AdminMoveImageActivityOutsideLock.mjs');
+ runCli('ADMIN preflight Drive de eliminación definitiva','JS/Tests/AdminPermanentDeleteDrivePreflightOutsideLock.mjs');
+ runCli('ADMIN actividad de eliminación definitiva','JS/Tests/AdminPermanentDeleteActivityOutsideLock.mjs');
+ runCli('ADMIN contrato del escáner de imágenes','JS/Tests/AdminImageScanCoordinatorContract.mjs');
+ runCli('ADMIN destinos del organizador de imágenes','JS/Tests/CortesImageOrganizerTargets.mjs');
+ runCli('ADMIN Safe Apply del organizador de imágenes','JS/Tests/CortesImageOrganizerApplyPlan.mjs');
+ runCli('ADMIN ejecutor del organizador de imágenes y rollback','JS/Tests/CortesImageOrganizerExecutor.mjs');
+ runCli('ADMIN ledger del organizador de imágenes','JS/Tests/CortesImageOrganizerLedger.mjs');
+ runCli('ADMIN controles UI del organizador de imágenes','JS/Tests/CortesImageOrganizerUiContract.mjs');
+ runCli('FEEDBACK validación de adjuntos de reportes','JS/Tests/ReportImageAttachment.js');
+ runCli('FEEDBACK seguridad de imágenes de sugerencias','JS/Tests/SuggestionImageSecurity.js');
+ runCli('FEEDBACK almacenamiento y recuperación de imágenes PyS','JS/Tests/PysImageStorageRecovery.js');
+ runCli('WRITE recuperación de reparación de imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
+ runCli('WRITE reutilización de snapshot para imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');
+});
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','39','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');

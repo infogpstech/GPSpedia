@@ -9,8 +9,6 @@ var currentLote = 0;
 var currentFila = 0;
 var currentRecurso = "Ninguno";
 
-const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
-const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
 
@@ -18,7 +16,8 @@ const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
 function getSpreadsheet() {
   if (spreadsheet === null) {
-    spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto de servicio.");
   }
   return spreadsheet;
 }
@@ -83,15 +82,29 @@ function isDirectChildOfDriveRoot(resource) {
     }
     return false;
 }
+function getCortesRootFolderResource_() {
+    const snapshot = getCentralConfigurationForService_("ADMIN");
+    if (!snapshot || snapshot.status !== "success" || snapshot.stale === true) throw new Error("La configuración central de recursos no está disponible o está vencida.");
+    const resource = snapshot.resources && snapshot.resources.cortes_root_folder_id;
+    if (!resource || resource.enabled !== true || resource.resourceType !== "drive_folder") throw new Error("Falta el recurso central habilitado cortes_root_folder_id.");
+    const id = String(resource.resourceId || "").trim();
+    const expectedName = String(resource.expectedName || "Cortes").trim();
+    if (!/^[A-Za-z0-9_-]{5,200}$/.test(id) || expectedName.toLowerCase() !== "cortes") throw new Error("La configuración central de la carpeta Cortes no cumple el contrato.");
+    return { id, expectedName, expectedParentId: String(resource.expectedParentId || "").trim() };
+}
 function getCortesRootFolder() {
-    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-    if (String(folder.getId()) !== String(DRIVE_FOLDER_ID) ||
-        String(folder.getName() || "").trim().toLowerCase() !== "cortes" ||
-        !isDirectChildOfDriveRoot(folder)) {
-        throw new Error("DRIVE_FOLDER_ID no corresponde a la carpeta raíz «Cortes» ubicada directamente en Drive.");
-    }
+    const resource = getCortesRootFolderResource_();
+    const folder = DriveApp.getFolderById(resource.id);
+    if (!folder || folder.isTrashed() || String(folder.getId()) !== resource.id ||
+        String(folder.getName() || "").trim().toLowerCase() !== resource.expectedName.toLowerCase()) throw new Error("El recurso central no identifica una carpeta Cortes válida y disponible.");
+    const expectedParentId = resource.expectedParentId || DriveApp.getRootFolder().getId();
+    const parents = folder.getParents();
+    let parentVerified = false;
+    while (parents.hasNext()) if (String(parents.next().getId()) === String(expectedParentId)) parentVerified = true;
+    if (!parentVerified) throw new Error("La carpeta Cortes no conserva la jerarquía configurada en el registro central.");
     return folder;
 }
+function getCortesRootFolderId_() { return String(getCortesRootFolder().getId());}
 
 function isBackupUrlForResource(backupUrl, expectedPrefix) {
     return backupUrl === expectedPrefix ||
@@ -108,7 +121,7 @@ function verifyVinMigrationBackup(backupId, developerContext) {
     const cleanBackupId = String(backupId || "").trim();
     const userId = String(developerContext && developerContext.userId || "").trim();
     if (!userId || !/^[a-zA-Z0-9_-]{20,}$/.test(cleanBackupId)) throw new Error("La migración VIN requiere el ID de un respaldo de Spreadsheet válido.");
-    if (cleanBackupId === String(SPREADSHEET_ID)) throw new Error("La Spreadsheet operativa no puede utilizarse como respaldo de sí misma.");
+    if (cleanBackupId === String(getSpreadsheet().getId())) throw new Error("La Spreadsheet operativa no puede utilizarse como respaldo de sí misma.");
     const cachedBackupId = CacheService.getScriptCache().get(getVinMigrationBackupCacheKey(userId));
     if (cachedBackupId !== cleanBackupId) throw new Error("El respaldo no fue generado y verificado por esta sesión de desarrollador. Genera un nuevo respaldo antes de continuar.");
     const backupFile = DriveApp.getFileById(cleanBackupId);
@@ -130,14 +143,14 @@ function verifyImageReconciliationBackup_(backupId, developerContext, options) {
     if (!userId || !/^[a-zA-Z0-9_-]{20,}$/.test(cleanBackupId)) {
         throw new Error("La conciliación requiere el ID de un respaldo de Spreadsheet válido.");
     }
-    if (cleanBackupId === String(SPREADSHEET_ID)) throw new Error("La Spreadsheet operativa no puede utilizarse como respaldo.");
+    if (cleanBackupId === String(getSpreadsheet().getId())) throw new Error("La Spreadsheet operativa no puede utilizarse como respaldo.");
     const cache = CacheService.getScriptCache();
     const cachedRecord = cache.get(getImageReconciliationBackupCacheKey(userId));
     if (!cachedRecord) throw new Error("No existe un respaldo verificado para esta sesión. Genera un respaldo antes de aplicar.");
     let record;
     try { record = JSON.parse(cachedRecord); }
     catch (error) { throw new Error("El registro temporal del respaldo no es válido. Genera un respaldo nuevo."); }
-    if (!record || record.backupId !== cleanBackupId || record.sourceSpreadsheetId !== String(SPREADSHEET_ID) ||
+    if (!record || record.backupId !== cleanBackupId || record.sourceSpreadsheetId !== String(getSpreadsheet().getId()) ||
         !/^[a-f0-9]{64}$/i.test(String(record.fingerprint || ""))) {
         throw new Error("El respaldo no fue generado y verificado por esta sesión de Desarrollador.");
     }
@@ -154,7 +167,7 @@ function verifyImageReconciliationBackup_(backupId, developerContext, options) {
     try { manifest = JSON.parse(String(backupFile.getDescription() || "")); }
     catch (error) { throw new Error("El manifiesto del respaldo no es válido."); }
     if (manifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ || manifest.version !== 2 ||
-        manifest.status !== "complete" || manifest.sourceSpreadsheetId !== String(SPREADSHEET_ID) ||
+        manifest.status !== "complete" || manifest.sourceSpreadsheetId !== String(getSpreadsheet().getId()) ||
         manifest.createdAt !== record.createdAt || manifest.fingerprint !== record.fingerprint ||
         Number(manifest.sheetCount) !== Number(record.sheetCount)) {
         throw new Error("El manifiesto del respaldo no coincide con la copia completa verificada.");
@@ -179,13 +192,13 @@ function verifyImageReconciliationBackup_(backupId, developerContext, options) {
     }
     return {
         backupId: cleanBackupId, backupName: record.backupName, fingerprint: record.fingerprint, createdAt: record.createdAt,
-        sourceSpreadsheetId: String(SPREADSHEET_ID), sheetCount: Number(record.sheetCount),
+        sourceSpreadsheetId: String(getSpreadsheet().getId()), sheetCount: Number(record.sheetCount),
         rowCount: Number(record.rowCount), cellCount: Number(record.cellCount), formulaCount: Number(record.formulaCount)
     };
 }
 
 function verifyImageReconciliationBackupSource_(verifiedBackup) {
-    if (!verifiedBackup || verifiedBackup.sourceSpreadsheetId !== String(SPREADSHEET_ID) ||
+    if (!verifiedBackup || verifiedBackup.sourceSpreadsheetId !== String(getSpreadsheet().getId()) ||
         !/^[a-f0-9]{64}$/i.test(String(verifiedBackup.fingerprint || ""))) {
         throw new Error("No se pudo vincular la verificación del respaldo con la Spreadsheet operativa.");
     }
@@ -978,17 +991,17 @@ function getAdminAuditResourceSummary_(action, payload, response) {
     let sourceCandidate = "";
     let targetCandidate = "";
     if (name === "backupDatabase") {
-        sourceCandidate = SPREADSHEET_ID;
+        sourceCandidate = getSpreadsheet().getId();
         targetCandidate = result.backupId || result.fileId || result.spreadsheetId;
     } else if (name === "restoreDatabase") {
         sourceCandidate = source.backupId || source.fileId;
-        targetCandidate = SPREADSHEET_ID;
+        targetCandidate = getSpreadsheet().getId();
     } else if (name === "backupDrive") {
-        sourceCandidate = DRIVE_FOLDER_ID;
+        sourceCandidate = getCortesRootFolderId_();
         targetCandidate = result.backupFolderId || result.folderId || result.backupId;
     } else if (name === "restoreDrive") {
         sourceCandidate = source.backupId || source.fileId;
-        targetCandidate = DRIVE_FOLDER_ID;
+        targetCandidate = getCortesRootFolderId_();
     } else if (name === "driveCommand") {
         sourceCandidate = source.fileId || source.currentFolderId;
         targetCandidate = source.targetFolderId;
@@ -1864,7 +1877,7 @@ function handleBackupDrive(payload, logMessage) {
                 };
             }
             if (state.status !== "copying") throw new Error("El respaldo no está en un estado reanudable; no se modificó.");
-            if (state.sourceRootId !== DRIVE_FOLDER_ID) {
+            if (state.sourceRootId !== getCortesRootFolderId_()) {
                 state.status = "incomplete";
                 state.lastError = "La carpeta de origen configurada no coincide con el manifiesto.";
                 adminRestoreWriteDriveBackupState_(manifestFile, state);
@@ -1916,7 +1929,7 @@ function handleBackupDrive(payload, logMessage) {
         }
 
         const sourceRoot = DriveApp.getFolderById(state.sourceRootId);
-        if (sourceRoot.getId() !== DRIVE_FOLDER_ID || sourceRoot.getName() !== state.sourceRootName) {
+        if (sourceRoot.getId() !== getCortesRootFolderId_() || sourceRoot.getName() !== state.sourceRootName) {
             const integrityError = new Error("La carpeta de origen ya no coincide con la captura inicial.");
             integrityError.nonResumable = true;
             throw integrityError;
@@ -2455,7 +2468,7 @@ function adminRestoreValidateDatabaseSchema_(spreadsheet) {
 }
 function adminRestoreCreateDatabaseRollback_(targetSpreadsheet, runId) {
     const sourceManifest = adminRestoreSpreadsheetManifest_(targetSpreadsheet);
-    const sourceFile = DriveApp.getFileById(SPREADSHEET_ID);
+    const sourceFile = DriveApp.getFileById(getSpreadsheet().getId());
     const rollbackName = "GPSpedia_DB_BACKUP_RESTORE_ROLLBACK_" + runId;
     const rollbackFile = sourceFile.makeCopy(rollbackName, DriveApp.getRootFolder());
     try {
@@ -2469,7 +2482,7 @@ function adminRestoreCreateDatabaseRollback_(targetSpreadsheet, runId) {
         }
         const completeManifest = {
             kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "complete",
-            createdAt: runId, sourceSpreadsheetId: SPREADSHEET_ID,
+            createdAt: runId, sourceSpreadsheetId: getSpreadsheet().getId(),
             sheetCount: copiedManifest.sheetCount, rowCount: copiedManifest.rowCount,
             cellCount: copiedManifest.cellCount, formulaCount: copiedManifest.formulaCount,
             fingerprint: copiedManifest.fingerprint
@@ -2624,7 +2637,7 @@ function adminRestoreCopyFolderRecursively_(source, target, storedManifest) {
 function handleRestoreDatabase(payload, logMessage) {
     const backupId = extractDriveFileId(payload && payload.backupId);
     if (!backupId) throw new Error("ID o enlace de respaldo de Google Sheets no válido o no proporcionado.");
-    if (backupId === SPREADSHEET_ID) throw new Error("El Spreadsheet productivo no puede utilizarse como origen de su propia restauración.");
+    if (backupId === getSpreadsheet().getId()) throw new Error("El Spreadsheet productivo no puede utilizarse como origen de su propia restauración.");
     const backupFile = DriveApp.getFileById(backupId);
     if (backupFile.getId() !== backupId || backupFile.isTrashed() ||
         backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
@@ -2648,7 +2661,7 @@ function handleRestoreDatabase(payload, logMessage) {
         throw new Error("El respaldo DB no tiene estado completo o su manifiesto no coincide con el contenido; no se inició la restauración.");
     }
 
-    const targetSS = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const targetSS = SpreadsheetApp.openById(getSpreadsheet().getId());
     const runId = adminRestoreRunId_();
     logMessage("Restauración DB", "Respaldo validado. Creando staging y copia recuperable del estado actual antes de modificar hojas...");
     const rollbackBackup = adminRestoreCreateDatabaseRollback_(targetSS, runId);
@@ -2702,7 +2715,7 @@ function handleRestoreDatabase(payload, logMessage) {
 function handleRestoreDrive(payload, logMessage) {
     const backupId = extractBackupFolderId(payload && payload.backupId);
     if (!backupId) throw new Error("ID o enlace de carpeta de respaldo de Drive no válido o no proporcionado.");
-    if (backupId === DRIVE_FOLDER_ID) throw new Error("La carpeta productiva no puede utilizarse como origen de su propia restauración.");
+    if (backupId === getCortesRootFolderId_()) throw new Error("La carpeta productiva no puede utilizarse como origen de su propia restauración.");
     const backupFolder = DriveApp.getFolderById(backupId);
     if (backupFolder.getId() !== backupId || backupFolder.isTrashed() ||
         !String(backupFolder.getName() || "").startsWith("GPSpedia_Drive_BACKUP_") ||
@@ -11578,53 +11591,20 @@ function findMissingCortesDriveReferences_(references, seenFileIds, rootFolderId
  * La identidad se conserva en ScriptProperties y se vuelve a validar contra el árbol autorizado.
  */
 function getOrCreateUnusedImagesFolder(rootFolder) {
-    const folderName = "Imagenes_Sin_Uso";
-    const propertyKey = "GPSpedia_UNUSED_IMAGES_FOLDER_ID";
-    const properties = PropertiesService.getScriptProperties();
-    const storedId = String(properties.getProperty(propertyKey) || "").trim();
-
-    if (storedId) {
-        const storedFolder = DriveApp.getFolderById(storedId);
-        if (storedFolder.isTrashed() || storedFolder.getName() !== folderName) {
-            throw new Error("La carpeta de administración registrada ya no es válida. No se creó otra carpeta para evitar duplicados.");
-        }
-        const storedParent = getSingleParentFolderInsideCortes(storedFolder, rootFolder.getId());
-        if (storedParent.getId() !== rootFolder.getId()) {
-            throw new Error("La carpeta de administración registrada ya no es hija directa de «Cortes».");
-        }
-        return { folder: storedFolder, created: false };
-    }
-
-    const matches = rootFolder.getFoldersByName(folderName);
-    let folder = null;
-    while (matches.hasNext()) {
-        const candidate = matches.next();
-        if (candidate.isTrashed()) continue;
-        if (folder) {
-            throw new Error("Existen varias carpetas «Imagenes_Sin_Uso» directamente dentro de «Cortes». Debe resolverse el duplicado antes de organizar imágenes.");
-        }
-        folder = candidate;
-    }
-
-    let created = false;
-    if (!folder) {
-        folder = rootFolder.createFolder(folderName);
-        created = true;
-    }
-
-    const parent = getSingleParentFolderInsideCortes(folder, rootFolder.getId());
-    if (parent.getId() !== rootFolder.getId()) {
-        throw new Error("La carpeta «Imagenes_Sin_Uso» no quedó ubicada directamente dentro de «Cortes».");
-    }
-
+    if (!rootFolder || typeof rootFolder.getFoldersByName !== "function") throw new Error("No se recibió la carpeta raíz Cortes verificada.");
+    const folderName = "Imagenes_Sin_Uso", lock = LockService.getScriptLock();
+    if (!lock.tryLock(1000)) { const error = new Error("ADMIN está ocupado creando o verificando la carpeta de imágenes sin uso. Reintenta."); error.code = "ADMIN_BUSY"; throw error; }
     try {
-        properties.setProperty(propertyKey, folder.getId());
-    } catch (propertyError) {
-        Logger.log("No se pudo persistir el ID de Imagenes_Sin_Uso: " + propertyError.message);
-    }
-    return { folder: folder, created: created };
+        const matches = rootFolder.getFoldersByName(folderName);
+        let folder = null;
+        while (matches.hasNext()) { const candidate = matches.next(); if (candidate.isTrashed()) continue; if (folder) throw new Error("Existen varias carpetas «Imagenes_Sin_Uso» directamente dentro de «Cortes». Debe resolverse el duplicado antes de organizar imágenes."); folder = candidate; }
+        let created = false;
+        if (!folder) { folder = rootFolder.createFolder(folderName); created = true; }
+        const parent = getSingleParentFolderInsideCortes(folder, rootFolder.getId());
+        if (parent.getId() !== rootFolder.getId()) throw new Error("La carpeta «Imagenes_Sin_Uso» no quedó ubicada directamente dentro de «Cortes».");
+        return { folder, created };
+    } finally { if (lock.hasLock()) lock.releaseLock(); }
 }
-
 /**
  * Envía a la papelera una imagen administrada, conservando la posibilidad de recuperación.
  */
@@ -13392,14 +13372,14 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     const rootValidationMs = Date.now() - rootValidationStartedAt;
     if (!rootFolder) throw new Error("No se pudo acceder a la carpeta principal 'Cortes'.");
     const folderMembershipCache = new Map();
-    const folderObjectCache = new Map([[String(DRIVE_FOLDER_ID), rootFolder]]);
+    const folderObjectCache = new Map([[String(getCortesRootFolderId_()), rootFolder]]);
     const getAuditFolderById = folderId => {
         const id = String(folderId || "").trim();
         if (!id) throw new Error("El cursor contiene una carpeta sin ID.");
         if (!folderObjectCache.has(id)) folderObjectCache.set(id, DriveApp.getFolderById(id));
         return folderObjectCache.get(id);
     };
-    folderMembershipCache.set(String(DRIVE_FOLDER_ID), true);
+    folderMembershipCache.set(String(getCortesRootFolderId_()), true);
     const cursor = payload && payload.cursor ? payload.cursor : null;
     let auditId, state, referenceSnapshot, stack, totalDiscovered, totalAnalyzed, foldersVisited;
     let errorCount, duplicateFileCount, duplicateFolderCount, pageIndex, inputFingerprint;
@@ -13429,7 +13409,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         const cursorValidationStartedAt = Date.now();
         cursor.stack.forEach(item => {
             if (!item || !item.folderId ||
-                !isFolderInsideCortes(getAuditFolderById(item.folderId), DRIVE_FOLDER_ID, folderMembershipCache)) {
+                !isFolderInsideCortes(getAuditFolderById(item.folderId), getCortesRootFolderId_(), folderMembershipCache)) {
                 throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes».");
             }
         });
@@ -13484,7 +13464,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         state.snapshotBytes = snapshotManifest.byteLength;
         state.snapshotChunks = snapshotManifest.chunkCount;
         saveDriveAuditServerState_(state);
-        stack = [{ folderId: DRIVE_FOLDER_ID, path: rootFolder.getName(), fileToken: null, folderToken: null, filesDone: false, foldersDone: false }];
+        stack = [{ folderId: getCortesRootFolderId_(), path: rootFolder.getName(), fileToken: null, folderToken: null, filesDone: false, foldersDone: false }];
         totalDiscovered = 0; totalAnalyzed = 0; foldersVisited = 1; errorCount = 0; duplicateFileCount = 0; duplicateFolderCount = 0; pageIndex = 0;
         logMessage && logMessage("Referencias", `Snapshot preparado: ${referenceSnapshot.activeDriveIds.length} referencias activas y ${referenceSnapshot.historicalDriveIds.length} históricas.`);
     }
@@ -13493,7 +13473,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     const deduplicationLoadMs = Date.now() - deduplicationLoadStartedAt;
     const pageFileIds = [], pageFolderIds = [];
     const visitedFolderPaths = new Map();
-    if (!cursor && !seenFolderIds.has(DRIVE_FOLDER_ID)) { seenFolderIds.add(DRIVE_FOLDER_ID); pageFolderIds.push(DRIVE_FOLDER_ID); }
+    if (!cursor && !seenFolderIds.has(getCortesRootFolderId_())) { seenFolderIds.add(getCortesRootFolderId_()); pageFolderIds.push(getCortesRootFolderId_()); }
     const activeDriveIds = new Set(referenceSnapshot.activeDriveIds), historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds), protectedDriveIds = new Set(referenceSnapshot.protectedDriveIds || []);
     let batchFiles = 0, batchFolders = 0, batchFileEntries = 0, batchFolderEntries = 0;
     const auditResults = [], batchFilesLimit = 25, batchFoldersLimit = 20, batchFileEntriesLimit = 50, batchFolderEntriesLimit = 40;
@@ -13540,7 +13520,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(childFolderId)) { errorCount++; continue; }
             if (seenFolderIds.has(childFolderId)) { duplicateFolderCount++; continue; }
             if (!folderObjectCache.has(childFolderId)) folderObjectCache.set(childFolderId, childFolder);
-            if (!isFolderInsideCortes(childFolder, DRIVE_FOLDER_ID, folderMembershipCache)) {
+            if (!isFolderInsideCortes(childFolder, getCortesRootFolderId_(), folderMembershipCache)) {
                 throw new Error("Se detectó una subcarpeta fuera del árbol «Cortes».");
             }
             seenFolderIds.add(childFolderId); pageFolderIds.push(childFolderId);
@@ -13577,7 +13557,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         cursorBytes: nextCursor ? Utilities.newBlob(JSON.stringify(nextCursor), "application/json; charset=utf-8").getBytes().length : 0
     };
     const response = { status: "success", auditId, serverCompletionVerified: complete, serviceVersion: ADMIN_SERVICE_VERSION, serverTimestamp,
-        rootFolderName: rootFolder.getName(), rootFolderId: DRIVE_FOLDER_ID, batchAnalyzed: batchFiles, totalDiscovered, totalAnalyzed,
+        rootFolderName: rootFolder.getName(), rootFolderId: getCortesRootFolderId_(), batchAnalyzed: batchFiles, totalDiscovered, totalAnalyzed,
         foldersVisited, foldersVisitedPaths: Array.from(visitedFolderPaths.values()), pendingFolderCount: stack.length,
         errorCount, duplicateFileCount, duplicateFolderCount,
         complete, partial: !complete, unverifiableReferenceCount: referenceSnapshot.unverifiableReferenceCount,

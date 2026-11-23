@@ -880,3 +880,30 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - No se invocaron deployments Apps Script ni recursos Spreadsheet/Drive reales. La validación Beta debe comprobar logout, cambio/reset de contraseña, cambio de rol, reset global, eliminación, permisos y limpieza en proyectos independientes.
 - Analizar y resolver las cuatro suites fallidas del run 45231811060 en sus grupos correspondientes.
 - Próxima tarea: MIG-015 — carga y administración de imágenes. Antes de iniciar, releer la sección MIG-015 y sus dependencias en el backlog; trabajar una sola tarea a la vez.
+
+
+---
+
+## Continuidad MIG-015 — 2026-11-23 (implementación inicial)
+
+### Estado Git y alcance
+- Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida: GPSpedia2.2.5; no modificar.
+- Se continúa desde el HEAD documental MIG-014. La tarea vigente es MIG-015 — carga y administración de imágenes.
+- Se inspeccionaron los flujos de ADMIN, WRITE y FEEDBACK, el router frontend, el lector central de configuración y las suites de carga, journal, recuperación, inventario y papelera.
+
+### Cambios preparados en esta iteración
+- ADMIN, WRITE y FEEDBACK pasan a usar SpreadsheetApp.getActiveSpreadsheet() y fallan cerrados si el proyecto no está vinculado a una Spreadsheet.
+- Los tres servicios obtienen cortes_root_folder_id mediante getCentralConfigurationForService_ y verifican configuración fresca, tipo de recurso, nombre y padre. Se eliminan las constantes locales SPREADSHEET_ID y DRIVE_FOLDER_ID de esos tres módulos.
+- ADMIN ya no conserva GPSpedia_UNUSED_IMAGES_FOLDER_ID; Imagenes_Sin_Uso se localiza bajo la raíz Cortes verificada, se detectan duplicados y su creación usa exclusión breve.
+- Se añadió MIG015ImageConfigurationContract.mjs y un grupo independiente --only=MIG015 en el runner para ejecutar las pruebas de imágenes aunque una suite ajena de ADMIN falle antes.
+- Se documentó el recurso requerido y las condiciones de despliegue Beta; no se tocaron deployments, propiedades ni datos externos.
+
+### Validación
+- No hay ejecución local disponible en este entorno; el clon Git local no pudo resolver github.com. Se usará GitHub Actions tras publicar el commit para ejecutar sintaxis y pruebas.
+- La última regresión conocida del HEAD previo tuvo 1,200 pruebas aprobadas y cuatro fallos de suite ajenos a los contratos específicos de imagen (ADMIN candidatos, UTILITIES, AUTH e INTEGRATION). No se atribuyen a MIG-015.
+- Estado MIG-015: EN PROGRESO, pendiente CI de la suite dedicada y revisión del diff.
+
+### Beta pendiente
+- Incluir CentralConfigurationReader.js en ADMIN, WRITE y FEEDBACK.
+- Vincular cada proyecto a la Spreadsheet Beta y publicar cortes_root_folder_id para el Drive Beta.
+- Ejecutar pruebas reales de cargas, reemplazos, adjuntos, PyS, inventario, papelera, restauración y eliminación con recursos aislados.

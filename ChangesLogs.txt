@@ -172,3 +172,11 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - La regresión global aprobó 1,200 pruebas y reportó cuatro suites fallidas en ADMIN, UTILITIES, AUTH e INTEGRATION. Las suites dirigidas MIG-014 pasaron; los fallos quedan pendientes de análisis separado.
 - No se invocaron deployments Apps Script, Spreadsheet ni Drive reales. Validación de endpoints y permisos entre proyectos pendiente de Beta.
 - MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-015 — carga y administración de imágenes.
+
+
+### 2026-11-23 — MIG-015 en progreso: recursos centrales para imágenes
+- ADMIN, WRITE y FEEDBACK dejan de declarar IDs locales de Spreadsheet/Drive; acceden a la Spreadsheet vinculada y resuelven la carpeta Cortes mediante CentralConfigurationReader.js y ConfiguracionRecursos.cortes_root_folder_id.
+- La resolución de carpeta valida estado fresco de configuración, tipo Drive, nombre y padre; no utiliza fallback local.
+- ADMIN deja de guardar el ID de Imagenes_Sin_Uso en ScriptProperties; localiza la carpeta por nombre, detecta duplicados y protege la creación concurrente.
+- Se añadió una suite MIG-015 independiente para validar el contrato de configuración y aislar las pruebas de imágenes de fallos ajenos en otros grupos. CI pendiente.
+- La validación de los proyectos vinculados y recursos Drive reales queda reservada a Beta aislada.

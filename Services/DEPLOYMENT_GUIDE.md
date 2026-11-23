@@ -264,3 +264,17 @@ El rollback restaura una versión de código/deployment; no revierte automática
 2. Confirmar que Coordinator, servicios y frontend pertenecen al mismo entorno y que las propiedades necesarias siguen configuradas.
 3. Comparar el estado de datos antes/después. No repetir una operación confirmada ni intentar deshacerla mediante redeploy.
 4. Documentar causa, servicios afectados, versiones anteriores/nuevas, cambios de URL/propiedad y evidencia de verificación. Mantener disponible la versión fallida para análisis hasta cerrar el incidente.
+
+
+---
+
+## Adenda MIG-015 — requisitos de configuración de imágenes (2026-11-23)
+
+Esta adenda prevalece sobre las instrucciones históricas de copiar IDs locales de Drive/Spreadsheet y de configurar propiedades de interconexión. No ejecutar los pasos heredados que contradigan NORMAS_DESAROLLO.md.
+
+- Los proyectos Apps Script ADMIN, WRITE y FEEDBACK deben incluir también el archivo fuente JS/Services/CentralConfigurationReader.js en el mismo proyecto. No duplicar ni editar su implementación por servicio.
+- Los tres proyectos deben estar vinculados a la Spreadsheet del entorno correspondiente. Sus funciones getSpreadsheet() usan SpreadsheetApp.getActiveSpreadsheet() y fallan cerradas si no hay una Spreadsheet activa.
+- Antes de desplegar la versión MIG-015 en Beta, publicar en ConfiguracionEsquema y ConfiguracionRecursos la clave cortes_root_folder_id según ESQUEMA_CONFIGURACION_CENTRAL.md. El recurso debe señalar la carpeta Cortes Beta, con expected_name=Cortes, expected_parent_id igual a la raíz Drive del entorno y visibilidad backend global.
+- ADMIN, WRITE y FEEDBACK validan el recurso central y la jerarquía de Drive. No hay fallback a los IDs anteriores ni a propiedades locales; si el recurso falta, está vencido o no coincide, la operación de imagen falla cerrada.
+- ADMIN ya no almacena el ID de Imagenes_Sin_Uso en ScriptProperties: busca una única carpeta hija con ese nombre y crea una si falta, bajo exclusión breve para evitar duplicados.
+- No se han modificado deployments, propiedades, Spreadsheet ni Drive reales. La verificación de vínculo y recurso se realiza durante Beta aislada.
