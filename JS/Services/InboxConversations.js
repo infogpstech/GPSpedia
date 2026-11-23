@@ -12,8 +12,15 @@ const INBOX_CONVERSATION_AUDIT_HEADERS_ = Object.freeze(["eventId","timestamp","
 const INBOX_CATEGORIES_ = new Set(["general","soporte","acceso","contenido","instalacion","otro"]);
 const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"]);
 
-function runInboxConversationAction_(callback) {
-    return callback();
+function runInboxConversationAction_(callback, mutating) {
+    if (mutating !== true) return callback();
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(5000)) throw new Error("Hay otra operación de Inbox en curso. Intenta de nuevo.");
+    try {
+        return callback();
+    } finally {
+        lock.releaseLock();
+    }
 }
 function findOrCreateInboxSheet_(name) {
     const spreadsheet = getSpreadsheet();
@@ -424,7 +431,7 @@ function handleCreateInboxConversation(payload) {
         inboxUpdateParticipantStates_(sheets.states,conversationId,inboxParticipants_(found.row),actor,message.row[0],messageRows,now);
         inboxAppendAudit_(sheets.audit,actor,"conversation_created",conversationId,message.row[0],"Conversación creada para un destinatario individual.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(existing.length)};
-    });
+    }, true);
 }
 function handleSendInboxMessage(payload) {
     const actor = inboxConversationActor_(payload);
@@ -449,7 +456,7 @@ function handleSendInboxMessage(payload) {
         inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,message.row[0],messages,now);
         inboxAppendAudit_(sheets.audit,actor,"message",conversationId,message.row[0],"Mensaje agregado a la conversación.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:!isNewMessage};
-    });
+    }, true);
 }
 function handleGetInboxConversations(payload) {
     const actor = inboxConversationActor_(payload), folder = String(payload.folder || "received").trim().toLowerCase();
@@ -685,7 +692,7 @@ function handleMarkInboxRead(payload) {
         }
         const unread = messages.slice(effectiveIndex + 1).filter(item => String(item[3]) !== actor.id).length;
         return {status:"success",conversationId,unreadCount:unread};
-    });
+    }, true);
 }
 function handleMarkInboxUnread(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
@@ -738,7 +745,7 @@ function handleMarkInboxUnread(payload) {
             }
         }
         return {status:"success",conversationId,markedUnread:true,alreadyMarkedUnread:!unreadChanged,unarchived:stateWasArchived,unreadCount};
-    });
+    }, true);
 }
 function handleDeleteInboxConversation(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
@@ -762,7 +769,7 @@ function handleDeleteInboxConversation(payload) {
             throw error;
         }
         return {status:"success",conversationId,deleted:true,alreadyDeleted:false};
-    });
+    }, true);
 }
 function handleArchiveInboxConversation(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
@@ -786,7 +793,7 @@ function handleArchiveInboxConversation(payload) {
             throw error;
         }
         return {status:"success",conversationId,archived:payload.archived};
-    });
+    }, true);
 }
 function handleCloseInboxConversation(payload) {
     const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
@@ -824,5 +831,5 @@ function handleCloseInboxConversation(payload) {
             throw error;
         }
         return {status:"success",conversationId,closed:true,alreadyClosed:false};
-    });
+    }, true);
 }

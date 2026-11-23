@@ -66,7 +66,7 @@ class FakeSpreadsheet {
     getSheetByName(name) { return this.sheets.get(name) || null; }
     insertSheet(name) { const sheet = new FakeSheet(name); this.sheets.set(name, sheet); return sheet; }
 }
-let uuid = 0, lockCalls = 0, sessionValidationCount = 0;
+let uuid = 0, lockCalls = 0, sessionValidationCount = 0, lockBusy = false, lockHeld = false;
 const spreadsheet = new FakeSpreadsheet();
 const users = spreadsheet.insertSheet("Users");
 users.getRange(1, 1, 9, 9).setValues([
@@ -109,7 +109,17 @@ const Utilities = {
     computeDigest: (_algorithm, value) => Array.from(String(value)).map(char => char.charCodeAt(0) & 255)
 };
 const LockService = {
-    getScriptLock() { lockCalls++; throw new Error("Inbox no debe adquirir locks para operaciones ordinarias."); }
+    getScriptLock() {
+        lockCalls++;
+        return {
+            tryLock() {
+                if (lockBusy || lockHeld) return false;
+                lockHeld = true;
+                return true;
+            },
+            releaseLock() { lockHeld = false; }
+        };
+    }
 };
 const SpreadsheetApp = { flush() {} };
 const api = new Function(
@@ -450,13 +460,29 @@ run("El registro de auditoría no almacena el cuerpo del mensaje", () => {
     assert.ok(audit.getLastRow() >= 4);
     assert.equal(audit.rows.slice(1).some(row => String(row[7]).includes("bienvenida")),false);
 });
-run("Las lecturas y mutaciones Inbox no adquieren locks", () => {
-    assert.throws(() => api.handleArchiveInboxConversation({
-        ...actor("U1","token-a"),conversationId:"inexistente",archived:true
-    }),/No se encontró/);
-    assert.equal(lockCalls,0);
+run("Las consultas Inbox no adquieren locks y las mutaciones serializan escrituras", () => {
+    const before = lockCalls;
     assert.equal(api.handleGetInboxConversations({...actor("U1","token-a")}).status,"success");
-    assert.equal(lockCalls,0);
+    assert.equal(api.handleGetInboxMessages({...actor("U1","token-a"),conversationId:first.conversationId}).status,"success");
+    assert.equal(lockCalls,before);
+
+    const archived = api.handleArchiveInboxConversation({
+        ...actor("U1","token-a"),conversationId:first.conversationId,archived:true
+    });
+    assert.equal(archived.status,"success");
+    assert.equal(lockCalls,before+1);
+    assert.equal(lockHeld,false,"El lock debe liberarse después de la mutación.");
+
+    const messages = spreadsheet.getSheetByName("InboxMessages");
+    const rowsBefore = messages.getLastRow();
+    lockBusy = true;
+    assert.throws(() => api.handleSendInboxMessage({
+        ...actor("U1","token-a"),conversationId:first.conversationId,
+        body:"No debe escribirse sin obtener el lock.",idempotencyKey:"busy-lock-0001"
+    }),/otra operación de Inbox en curso/);
+    lockBusy = false;
+    assert.equal(messages.getLastRow(),rowsBefore,"Un lock ocupado no debe escribir mensajes.");
+    assert.equal(lockHeld,false);
 });
 run("El mensaje se conserva como texto literal y no se ejecuta ni interpreta HTML", () => {
     // Aislar la prueba del límite de frecuencia acumulado en las pruebas previas.
