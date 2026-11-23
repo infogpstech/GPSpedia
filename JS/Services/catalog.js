@@ -25,22 +25,63 @@ function addCatalogCalendarMonthsUTC_(date, months) {
     const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
     result.setUTCDate(Math.min(day, lastDay)); return result;
 }
-function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel, purpose) {
-    const userId=String(payload&&payload.userId||"").trim(),sessionToken=String(payload&&payload.sessionToken||"").trim();
-    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para "+purpose+".");
+const CATALOG_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 21600;
+function catalogSessionActorCacheKey_(userId, sessionToken) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+        String(userId || "").trim() + "\\n" + String(sessionToken || ""), Utilities.Charset.UTF_8);
+    return "GPSpedia_CATALOG_SESSION_ACTOR_V1_" +
+        digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+}
+function loadCatalogSessionActor_(userId, sessionToken) {
     const ss=getSpreadsheet(),usersSheet=ss.getSheetByName("Users"),sessionsSheet=ss.getSheetByName("ActiveSessions");
     if(!usersSheet||!sessionsSheet)throw new Error("CATALOG no pudo verificar la sesión; faltan Users o ActiveSessions.");
     const users=usersSheet.getDataRange().getValues(),userMatches=users.slice(1).filter(row=>String(row[0]||"").trim()===userId);
     if(userMatches.length!==1)throw new Error("La identidad de la sesión no es única o no existe.");
-    const user=userMatches[0],username=String(user[1]||"").trim();
-    if(!username||username.startsWith("__deleted__:")||!allowedRoles.includes(normalizeCatalogRole_(user[3]))) {
-        throw new Error("Se requiere una cuenta activa con rol "+roleLabel+".");
+    const user=userMatches[0],username=String(user[1]||"").trim(),role=normalizeCatalogRole_(user[3]);
+    const pending=String(user[7]||"").startsWith("__role_revocation_pending__:");
+    if(!username||username.startsWith("__deleted__:")||pending||
+        !["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(role)) {
+        throw new Error("La cuenta está inactiva o no tiene un rol válido.");
     }
     const sessions=sessionsSheet.getDataRange().getValues(),matches=sessions.slice(1).filter(row=>String(row[2]||"")===sessionToken);
     if(matches.length!==1||String(matches[0][0]||"").trim()!==userId)throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
     const createdAt=parseCatalogSessionDate_(matches[0][3]),lastActivityAt=parseCatalogSessionDate_(matches[0][5])||createdAt,now=new Date();
     if(!createdAt||!lastActivityAt||now.getTime()>=addCatalogCalendarMonthsUTC_(createdAt,3).getTime()||
         now.getTime()>=addCatalogCalendarMonthsUTC_(lastActivityAt,1).getTime())throw new Error("La sesión expiró; inicia sesión nuevamente.");
+    return {userId,role,fullName:String(user[6]||""),epoch:1};
+}
+function getCatalogSessionActor_(userId, sessionToken) {
+    const cache=CacheService.getScriptCache(),key=catalogSessionActorCacheKey_(userId,sessionToken);
+    const cached=cache.get(key);
+    if(cached){
+        try{
+            const actor=JSON.parse(cached);
+            if(actor&&actor.userId===userId&&["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(actor.role)){
+                cache.put(key,JSON.stringify(actor),CATALOG_SESSION_ACTOR_CACHE_TTL_SECONDS_);
+                return actor;
+            }
+        }catch(error){}
+        cache.remove(key);
+    }
+    const actor=loadCatalogSessionActor_(userId,sessionToken);
+    cache.put(key,JSON.stringify(actor),CATALOG_SESSION_ACTOR_CACHE_TTL_SECONDS_);
+    return actor;
+}
+function invalidateCatalogSessionActorCache_(payload) {
+    const source=payload&&typeof payload==="object"?payload:{};
+    const userId=String(source.userId||"").trim(),tokens=Array.isArray(source.sessionTokens)?source.sessionTokens:[];
+    if(!userId||!tokens.length||tokens.length>25||tokens.some(token=>typeof token!=="string"||token.length<16||token.length>200)){
+        return {status:"error",message:"Datos de invalidación no válidos."};
+    }
+    const cache=CacheService.getScriptCache();
+    Array.from(new Set(tokens)).forEach(token=>cache.remove(catalogSessionActorCacheKey_(userId,token)));
+    return {status:"success",invalidated:Array.from(new Set(tokens)).length};
+}
+function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel, purpose) {
+    const userId=String(payload&&payload.userId||"").trim(),sessionToken=String(payload&&payload.sessionToken||"").trim();
+    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para "+purpose+".");
+    const actor=getCatalogSessionActor_(userId,sessionToken);
+    if(!allowedRoles.includes(actor.role))throw new Error("Se requiere una cuenta activa con rol "+roleLabel+".");
     return true;
 }
 function verifyCatalogDeveloperSession_(payload) {
@@ -141,6 +182,13 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  try {
+    const internalRequest=JSON.parse(e&&e.postData&&e.postData.contents||"{}");
+    if(internalRequest&&internalRequest.action==="__invalidateSessionActorCache"){
+      const invalidation=invalidateCatalogSessionActorCache_(internalRequest.payload);
+      return ContentService.createTextOutput(JSON.stringify(invalidation)).setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch(error) {}
   invalidImageIdsFound = []; // Resetear para cada nueva solicitud.
   const isDiagnosticMode = e.parameter.diagnostics === 'true';
   const startTime = new Date();
