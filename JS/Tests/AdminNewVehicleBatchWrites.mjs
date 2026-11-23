@@ -25,4 +25,4 @@ assert.ok(handler.includes("handleAppendExistingVehicleCut_(preparedRequest)"));
 assert.ok(handler.includes("handleAddOrUpdateCutLocked(preparedRequest"));
 assert.ok(write.includes("function handleAddOrUpdateCutLockedUnsafe_"));
 assert.ok(write.includes("runWriteDriveWorkOutsideScriptLock_"));
-console.log("AdminNewVehicleBatchWrites: PASS — reserva, alta, escrituras agrupadas y recuperación pertenecen a WRITE");
+console.log("AdminNewVehicleBatchWrites: 1/1 PASS — reserva, alta, escrituras agrupadas y recuperación pertenecen a WRITE");
