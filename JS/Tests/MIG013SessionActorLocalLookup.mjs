@@ -32,15 +32,15 @@ const cache = {
     put: (key, value, ttl) => { cacheTtls.push(ttl); values.set(key, value); },
     remove: key => values.delete(key)
 };
-const api = new Function("SpreadsheetApp","CacheService","Utilities",
+const api = new Function("SpreadsheetApp","CacheService","Utilities","SPREADSHEET_ID",
     source + "\nreturn { loadSharedSessionActorFromSpreadsheet_, getCachedSharedSessionActor_, cacheSharedSessionActor_, handleSharedSessionActorCacheInvalidation_, getSharedSessionActorCacheKey_ };"
-)({getActiveSpreadsheet:()=>makeSpreadsheet(validUsers,validSessions)},
-{getScriptCache:()=>cache},utilities);
+)({openById:()=>makeSpreadsheet(validUsers,validSessions)},
+{getScriptCache:()=>cache},utilities,"isolated-spreadsheet-id");
 
 let reads = 0;
 const deps = {
-    cache, now: () => now,
-    getSpreadsheet: () => { reads++; return makeSpreadsheet(validUsers,validSessions); }
+    cache, now: () => now, spreadsheetId: "isolated-spreadsheet-id",
+    openSpreadsheet: id => { assert.equal(id,"isolated-spreadsheet-id"); reads++; return makeSpreadsheet(validUsers,validSessions); }
 };
 const actor = api.loadSharedSessionActorFromSpreadsheet_("U-1","opaque-session-token-0001",deps);
 assert.equal(actor.userId,"U-1");
@@ -66,7 +66,7 @@ assert.throws(() => api.getCachedSharedSessionActor_("U-1","opaque-session-token
 
 function expectInvalid(users,sessions,token="opaque-session-token-0001",id="U-1",pattern=/sesión|cuenta|token|fecha|expiró|rol/i) {
     assert.throws(()=>api.loadSharedSessionActorFromSpreadsheet_(id,token,{
-        ...deps,getSpreadsheet:()=>makeSpreadsheet(users,sessions)
+        ...deps,openSpreadsheet:()=>makeSpreadsheet(users,sessions)
     }),pattern);
 }
 expectInvalid(validUsers,[headersSessions,["U-1","tecnico1","different-token-0002",new Date(now-1000),"",new Date(now-1000)]]);
@@ -82,7 +82,7 @@ const changedRoleUsers=[headersUsers,["U-1","tecnico1","hash","supervisor","",""
 api.cacheSharedSessionActor_("U-1","opaque-session-token-0001",{userId:"U-1",role:"tecnico",fullName:"Técnico Uno",epoch:1},deps);
 api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]},{cache});
 const changedRole=api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",{
- ...deps,getSpreadsheet:()=>makeSpreadsheet(changedRoleUsers,validSessions)
+ ...deps,openSpreadsheet:()=>makeSpreadsheet(changedRoleUsers,validSessions)
 });
 assert.equal(changedRole.role,"supervisor","Tras invalidar la caché, el rol nuevo se toma de Users, nunca del payload.");
 
@@ -90,13 +90,13 @@ api.cacheSharedSessionActor_("U-1","opaque-session-token-0001",{userId:"U-1",rol
 api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]},{cache});
 const deletedUsers=[headersUsers,["U-1","__deleted__:tecnico1","hash","supervisor","","","Técnico Uno",""]];
 assert.throws(()=>api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",{
- ...deps,getSpreadsheet:()=>makeSpreadsheet(deletedUsers,validSessions)
+ ...deps,openSpreadsheet:()=>makeSpreadsheet(deletedUsers,validSessions)
 }),/desactivada|rol válido|cuenta/i,"Una cuenta eliminada no recupera actor tras invalidar la caché.");
 
 api.cacheSharedSessionActor_("U-1","opaque-session-token-0001",{userId:"U-1",role:"tecnico",fullName:"Técnico Uno",epoch:1},deps);
 api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]},{cache});
 assert.throws(()=>api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",{
- ...deps,getSpreadsheet:()=>makeSpreadsheet(validUsers,[headersSessions])
+ ...deps,openSpreadsheet:()=>makeSpreadsheet(validUsers,[headersSessions])
 }),/revocada|no existe/i,"Un token revocado no recupera actor tras invalidar la caché.");
 
 const removed=[];
@@ -142,7 +142,7 @@ const catalogSpreadsheet = {
 };
 const catalogApi = new Function("SpreadsheetApp","CacheService","Utilities",
     catalog + "\nreturn {getCatalogSessionActor_,loadCatalogSessionActor_,invalidateCatalogSessionActorCache_};"
-)({getActiveSpreadsheet:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
+)({openById:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
 const catalogCold = catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001");
 assert.equal(catalogCold.role,"tecnico");
 const catalogColdReads = catalogReads;
