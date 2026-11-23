@@ -1,18 +1,19 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
-const end = source.indexOf("\nfunction sanitizeSupplementaryRichText_", start);
-assert.ok(start >= 0 && end > start, "No se encontró handleAddOrUpdateCut");
-const handler = source.slice(start, end);
-const allocation = handler.indexOf("requestNextVehicleIdFromWriteService(payload, legacyRequest ? null : opId, operationHash)");
-const lock = handler.indexOf("lock.tryLock(0)");
-assert.ok(allocation >= 0 && lock > allocation,
-    "La asignación central WRITE debe completarse antes de adquirir el ScriptLock ADMIN");
-assert.ok(handler.includes("newId = Number(preallocatedVehicleId)"),
-    "La fila nueva debe utilizar el ID preasignado, sin HTTP dentro de la sección crítica");
-assert.ok(!handler.includes("waitLock(30000)"),
-    "ADMIN no debe mantener una espera de 30 segundos para entrar en su sección crítica");
-assert.ok(handler.includes('busyError.code = "ADMIN_BUSY"'),
-    "La contención debe devolver un código de reintento inmediato");
-console.log("AdminVehicleIdOutsideLock: 4/4 PASS — WRITE fuera del ScriptLock ADMIN y adquisición inmediata");
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const write=readFileSync(new URL("../Services/write.js",import.meta.url),"utf8");
+const api=readFileSync(new URL("../Frontend/api-config.js",import.meta.url),"utf8");
+const start=admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
+const end=admin.indexOf("\nfunction sanitizeSupplementaryRichText_",start);
+assert.ok(start>=0&&end>start);
+const legacy=admin.slice(start,end);
+assert.ok(legacy.includes("ACTION_MOVED_TO_WRITE"));
+for(const token of ["UrlFetchApp","requestNextVehicleIdFromWriteService","lock.tryLock","waitLock(","setValue(","setValues("])assert.equal(legacy.includes(token),false,"ADMIN legacy no debe incluir "+token);
+assert.ok(api.includes("'addOrUpdateCut': 'WRITE'"));
+assert.ok(api.includes("'allocateVehicleId': 'WRITE'"));
+const handlerStart=write.indexOf("function handleAddOrUpdateCut(payload)");
+const handlerEnd=write.indexOf("\nconst CORTES_ID_COUNTER_PROPERTY",handlerStart);
+assert.ok(handlerStart>=0&&handlerEnd>handlerStart);
+const handler=write.slice(handlerStart,handlerEnd);
+assert.ok(handler.indexOf("reserveCortesVehicleIdForOperation_")<handler.indexOf("lock.tryLock(0)"));
+console.log("AdminVehicleIdOutsideLock: PASS — WRITE reserva antes del lock; ADMIN legacy rechaza sin coordinar");
