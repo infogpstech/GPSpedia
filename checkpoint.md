@@ -436,3 +436,18 @@ Nuevo `INVENTARIO_LLAMADAS_SERVICIOS.md`:
 - MIG-003: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - MIG-004: **COMPLETADA CON VALIDACIÓN DIFERIDA**, pendiente de anexar el resultado CI del contrato agregado.
 - Siguiente tarea: **MIG-005 — Línea base funcional y de rendimiento**. Ejecutar suite local y registrar mediciones reales solo donde exista entorno autorizado; no inventar métricas Beta.
+
+
+### Adenda de validación MIG-004 — CI — 2026-11-23
+
+La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo contrato de grafo:
+
+- Workflow `GPSpedia service regression tests`, run `45172002358`, commit `d096655d70708cc4acf40bd48fc1878f87e6392f`: **SUCCESS**.
+- Resultado: **306 suites, 3,581 pruebas aprobadas, 0 fallos de suite**.
+- Nueva prueba `ServiceCallGraphContract`: **9/9 PASS**.
+- `RepositoryJavaScriptSyntax`: **438 archivos JS/MJS**, sintaxis aprobada.
+- `RepositoryModuleReferences`: **348 archivos**, referencias relativas resueltas.
+- Workflow `GPSpedia deployed service health (read-only)`, run `45172079545`: **SUCCESS**; los siete endpoints respondieron con estado/versión válidos mediante GET. Es una comprobación de disponibilidad, no prueba de paridad funcional ni despliegue del código fuente actual.
+- No se ejecutaron pruebas de escritura sobre Spreadsheet/Drive, invalidación de cachés remota, cambios de sesión, OAuth ni YouTube en un entorno Beta aislado.
+
+**Corrección de estado:** MIG-004 queda **COMPLETADA CON VALIDACIÓN DIFERIDA** con las pruebas locales/CI pertinentes aprobadas. Solo permanecen las validaciones externas de Beta y la equivalencia funcional de las sustituciones futuras; no se modificó ningún deployment.
