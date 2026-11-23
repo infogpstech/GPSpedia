@@ -76,7 +76,11 @@ function runActionDispatchContractTests(sources) {
     let actionMap = {}, compatibility = {}, external = {}, dispatchers = {};
     const serviceKeysBlock = api.match(/export\s+const\s+CENTRAL_SERVICE_KEYS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\);/);
     assert_(!!serviceKeysBlock, "No se encontró CENTRAL_SERVICE_KEYS.");
-    const endpoints = [...serviceKeysBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
+    const requiredEndpoints = [...serviceKeysBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
+    const optionalServicesBlock = String(input.centralConfigurationCache || "").match(/const OPTIONAL_SERVICES = \\[([\\s\\S]*?)\\];/);
+    const optionalEndpoints = optionalServicesBlock
+        ? [...optionalServicesBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]) : [];
+    const endpoints = [...new Set([...requiredEndpoints, ...optionalEndpoints])];
     const consumerActions = parseConsumers_(input.consumerSources || {});
 
     run_("lee mapas, routers y consumidores versionados", () => {
@@ -84,6 +88,14 @@ function runActionDispatchContractTests(sources) {
         compatibility = parseCompatibility_(api);
         external = parseExternal_(api);
         for (const service of ["AUTH","CATALOG","WRITE","FEEDBACK","ADMIN"]) dispatchers[service] = parseDispatcher_(input[service], service);
+        const coordinatorSource = String(input.COORDINATOR || "");
+        const coordinatorActions = [], coordinatorHandlers = {};
+        if (coordinatorSource.includes('request.action === "publishWriteCatalogReset"') &&
+            hasFunction_(coordinatorSource, "publishWriteCatalogResetFromBrowser_")) {
+            coordinatorActions.push("publishWriteCatalogReset");
+            coordinatorHandlers.publishWriteCatalogReset = ["publishWriteCatalogResetFromBrowser_"];
+        }
+        dispatchers.COORDINATOR = { actions: coordinatorActions, handlers: coordinatorHandlers };
         const utilitySource = String(input.UTILITIES || "");
         const utilityMatch = utilitySource.match(/body\.action\s*!==\s*['"]([^'"]+)['"]/);
         assert_(!!utilityMatch, "No se encontró el contrato de acción de UTILITIES.");
@@ -92,6 +104,7 @@ function runActionDispatchContractTests(sources) {
         dispatchers.UTILITIES = { actions: [utilityMatch[1]], handlers: { [utilityMatch[1]]: [utilityHandler[1]] } };
         assert_(consumerActions.length > 0, "No se proporcionaron fuentes de consumidores.");
         assert_(!endpoints.includes("USERS"), "USERS sigue declarado como endpoint independiente.");
+        assert_(optionalEndpoints.includes("COORDINATOR"), "COORDINATOR debe estar declarado como endpoint opcional del registro central.");
         for (const action of ["getUsers","createUser","updateProfile"]) assert_(actionMap[action] === "AUTH", action + " debe pertenecer a AUTH.");
     });
     run_("cada acción mapeada apunta a un endpoint, dispatcher y handler existentes", () => {
