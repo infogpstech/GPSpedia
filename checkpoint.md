@@ -1358,3 +1358,51 @@ Continuidad:
 - Siguiente tarea prioritaria: MIG-026 — Eliminar configuración local de todos los servicios.
 - No iniciar MIG-027 antes de cerrar MIG-026 y sus dependencias.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — MIG-026 — 2026-11-23
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5 (no modificar)
+HEAD de trabajo al iniciar esta actualización documental: 999fe8084860de487182f5f8238fbe9d6df83372
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+Estado:
+- MIG-025 permanece COMPLETADA CON VALIDACIÓN DIFERIDA.
+- MIG-026 permanece EN PROGRESO; no cerrar ni iniciar MIG-027.
+- Actualizada la sección MIG-026 en TAREAS_MIGRACION_ARQUITECTURA.md con auditoría estática actual, dependencias, riesgos y orden de ejecución.
+
+Auditoría actual:
+- AUTH: SPREADSHEET_ID/openById y propiedades de login idempotente, recuperación HMAC, revocación y sesión.
+- CATALOG: SPREADSHEET_ID/openById y propiedades del feed incremental.
+- UTILITIES: SPREADSHEET_ID/openById.
+- WRITE: propiedad GPSpedia_CORTES_LAST_ID todavía participa en el cálculo y congelación del high-water mark.
+- FEEDBACK: GPSpedia_RICH_TEXT_MODE_V1 sigue siendo leído/escrito por handleGetRichTextMode/handleSetRichTextMode, aunque existe lector central para otros parámetros.
+- ADMIN: propiedades de auditoría, Safe Apply, guardas y estado de auditoría Drive; existe accessor central getCortesRootFolder(), pero un consumidor legacy todavía llama DriveApp.getFolderById(CORTES_IMAGES_ROOT_FOLDER_ID).
+- SharedSessionActor.js mantiene fallback a SPREADSHEET_ID si no se inyecta proveedor.
+- MIG-003 inventarió 26 familias en un estado previo; reconciliar contra el código vigente tras MIG-024/MIG-025 antes de usar esa lista como verdad actual.
+
+Bloqueadores/precauciones:
+- MIG-006/MIG-008: getActiveSpreadsheet() en Web Apps reales no está validado. No reemplazar openById ni declarar que un proyecto vinculado funciona sin prueba Beta.
+- No introducir ID/URL/secret bootstrap ni endpoint circular.
+- No tratar ledgers, idempotencia, sesiones, auditorías y estado recuperable como parámetros genéricos. Requieren migración de datos con paridad.
+- El secreto HMAC de recuperación no se traslada a hoja de configuración ni se expone al frontend; requiere diseño de seguridad aprobado.
+- La preferencia FEEDBACK no se migra hasta que exista una vía de actualización/publicación central autorizada que conserve el control Developer.
+
+Cambios de código en este corte:
+- Se probaron sustituciones locales de openById por getActiveSpreadsheet y adaptaciones de fixtures; CI mostró incompatibilidades de harness/consumidores. Se revirtieron los módulos y fixtures experimentales al contenido anterior.
+- No queda cambio funcional experimental aprobado en el código por este corte.
+- No se modificaron deployments, proyectos Apps Script, propiedades instaladas, Spreadsheet, Drive, triggers ni datos externos.
+
+Validación:
+- La regresión fallida durante el experimento correspondió a dobles de prueba que no exponían getActiveSpreadsheet y a consumidores que dependían del proveedor anterior. Se revirtió el experimento; no se declara una suite verde para el estado final tras la reversión.
+- No se ejecutó prueba Beta real de Apps Script/Spreadsheet.
+- HEAD base permanece sin cambios.
+
+Siguiente paso:
+1. Resolver evidencia Beta de MIG-006/MIG-008 o seleccionar alternativa arquitectónica documentada sin bootstrap.
+2. Reconciliar el inventario de configuración con el código vigente.
+3. Corregir el consumidor ADMIN de carpeta Cortes con pruebas.
+4. Migrar configuración y estados uno por uno, manteniendo paridad.
+================================================================================
