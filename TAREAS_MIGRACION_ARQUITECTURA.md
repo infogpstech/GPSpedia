@@ -40,7 +40,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Se revisaron también políticas RBAC de AUTH, USERS, WRITE, FEEDBACK, ADMIN, UTILITIES e Inbox: roles jerárquicos de administración de usuarios, límites de edición modal, acciones exclusivas de Desarrollador, acciones públicas/anónimas y jerarquía de destinatarios Inbox. Falta asociar cada acción a su regla exacta y a sus datos.
 - No se modificó código funcional ni deployments. Se ejecutó únicamente la prueba de contrato estático indicada (12/12 PASS); no se ejecutó `RunServiceTests.mjs`, Node.js CLI ni pruebas remotas.
 
-**Resultado:** MIG-001 permanece **EN PROGRESO**. La comprobación del mapa y de los dispatchers está avanzada; falta completar consumidores/control UI, acciones manuales e internas, contratos de payload/respuesta, RBAC, hojas/archivos y cobertura de pruebas.
+**Resultado de la primera pasada (nota histórica):** MIG-001 permanecía EN PROGRESO en ese corte. Este estado fue sustituido por el cierre integral documentado en §19 de la matriz y en el apartado «Cierre MIG-001» de este registro (2026-11-23).
 
 
 ### MIG-002 — Inventario de pantallas y capacidades visibles
