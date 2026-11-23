@@ -1,205 +1,182 @@
-# Plan de migración a arquitectura frontend-céntrica — GPSpedia
+# Plan maestro — Nueva arquitectura de GPSpedia
 
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama de trabajo:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5`  
-**Estado:** EN PROGRESO — diseño e inventario  
-**Objetivo:** retirar COORDINATOR y SharedMutation sin perder funciones, seguridad, integridad ni rendimiento.
+**Fecha de actualización:** 2026-11-22  
+**Estado:** PLAN APROBADO COMO OBJETIVO; inventario y diseño técnico en progreso.
 
-## 1. Resultado que buscamos
+## 1. Objetivo no negociable
 
-El navegador será el único componente que conoce las direcciones de los servicios y decide a cuál enviar cada acción. Cada proyecto Apps Script será independiente: atenderá sus propias acciones, accederá a los recursos que le corresponden y no llamará a otros servicios. AUTH y USERS se consolidarán en un único servicio de identidad.
+Simplificar de forma radical la arquitectura y los despliegues de GPSpedia sin perder, deshabilitar, degradar ni ocultar ninguna función que ofrece actualmente la plataforma.
 
-- No habrá COORDINATOR.
-- No habrá SharedMutation ni leases centralizadas.
-- Ningún backend almacenará URLs de otros servicios.
-- Ningún despliegue requerirá agregar/editar ScriptProperties para conectar servicios.
-- Las URLs y el registro de servicios se administrarán desde una única configuración central de Spreadsheet y el frontend.
-- La configuración pública contendrá únicamente nombres, URLs, versión y metadatos no sensibles; nunca secretos, tokens ni credenciales.
-- Las operaciones entre servicios se coordinarán desde el frontend mediante solicitudes directas, pasos idempotentes y recuperación de operaciones parciales.
-- Los permisos y la validación de sesión seguirán siendo responsabilidad de cada backend. El frontend nunca será autoridad de seguridad.
+**Todas las configuraciones de GPSpedia deben residir en la Spreadsheet. Ningún proyecto Apps Script debe guardar configuración propia de la plataforma, propiedades de conexión, URLs de otros servicios, IDs de recursos, claves compartidas ni secretos manuales.**
+
+El frontend será el único coordinador de solicitudes entre servicios. Cada servicio atenderá directamente las solicitudes del frontend y accederá a la Spreadsheet para obtener los datos y la configuración que le correspondan. Ningún servicio GPSpedia llamará a otro servicio GPSpedia.
+
+No se conservarán COORDINATOR ni SharedMutation ni se crearán sustitutos equivalentes.
 
 ## 2. Arquitectura objetivo
 
 ```text
-                    ┌───────────────────────────┐
-                    │       FRONTEND PWA        │
-                    │ routing, orchestration,   │
-                    │ retries, cache, recovery  │
-                    └─────────────┬─────────────┘
+                     ┌──────────────────────────┐
+                     │       FRONTEND PWA       │
+                     │                          │
+                     │ - Configuración/caché    │
+                     │ - Router de acciones     │
+                     │ - Orquestación           │
+                     │ - Progreso/recuperación  │
+                     └────────────┬─────────────┘
                                   │
-                    configuración centralizada
-                    obtenida desde Spreadsheet
+                    solicitudes directas / respuesta
                                   │
-             ┌────────────────────┼────────────────────┐
-             │                    │                    │
-          AUTH (identidad)     CATALOG               WRITE
-             │                    │                    │
-             └────────────────────┼────────────────────┘
+       ┌─────────────┬────────────┼────────────┬─────────────┐
+       │             │            │            │             │
+     AUTH          CATALOG       WRITE      FEEDBACK       ADMIN
+       │             │            │            │             │
+       └─────────────┴────────────┼────────────┴─────────────┘
                                   │
-                    ┌─────────────┼─────────────┐
-                    │             │             │
-                  FEEDBACK      ADMIN         UTILITIES
-                    │             │             │
-                    └─────────────┴─────────────┘
+                              UTILITIES
+                                  │
+                         ┌────────▼────────┐
+                         │   SPREADSHEET   │
+                         │ Configuración   │
+                         │ Datos y estados │
+                         │ Sesiones        │
+                         │ Métricas/logs   │
+                         └─────────────────┘
 
-       Todos los servicios son independientes y no se llaman entre sí.
-       Cada backend valida sesión, rol y permisos para sus propias acciones.
+   USERS se consolida dentro de AUTH conservando todas sus acciones.
+   Ningún backend GPSpedia llama a otro backend GPSpedia.
+   El frontend inicia y coordina todas las llamadas.
 ```
 
-### Bootstrap de configuración
+### 2.1 Responsabilidades
 
-El frontend necesita una única dirección inicial estable para obtener el registro de endpoints. Se propone reutilizar el endpoint público de lectura de CATALOG como bootstrap, añadiéndole una acción estrictamente de lectura que obtenga la configuración permitida desde una hoja de Spreadsheet. CATALOG no almacenará ni conocerá las URLs: solo leerá y devolverá el registro. El frontend conservará una copia válida en memoria/almacenamiento local con versión y caducidad para no consultar la configuración en cada acción.
+**Frontend**
+- Lee y mantiene en caché la configuración central.
+- Resuelve acción → servicio → endpoint.
+- Coordina secuencias de llamadas a varios servicios.
+- Administra progreso, reintentos seguros, estado parcial y recuperación de operaciones.
+- Conserva todas las pantallas, controles, formularios y herramientas existentes.
 
-La URL de bootstrap de CATALOG será el único endpoint que podría permanecer estático en el App Shell. Si cambia, se actualizará en un solo lugar del frontend. Las URLs de los demás servicios no se guardarán en código backend ni en propiedades de Apps Script.
+**Servicios Apps Script**
+- No contienen URLs, IDs de Spreadsheet/Drive, propiedades de configuración, secretos compartidos ni referencias a otros servicios.
+- No llaman a otros servicios GPSpedia.
+- Reciben solicitudes del frontend, validan sesión/capacidad, leen o escriben en Spreadsheet y devuelven el resultado.
+- No almacenan configuración propia de la plataforma.
+- No se mantienen ocupados coordinando operaciones que el frontend puede ejecutar directamente.
 
-Antes de implementar esta decisión se comprobará el mecanismo actual de acceso público a CATALOG, el esquema de la Spreadsheet y la política de caché. No se expondrán IDs privados, secretos ni datos de usuarios en la respuesta.
+**Spreadsheet**
+- Fuente central de configuración funcional y de endpoints.
+- Fuente de datos, registros, estados, sesiones y metadatos que actualmente se administran en hojas.
+- Mantiene esquemas identificables y versionados.
+- No se utiliza para guardar el contenido binario de imágenes o vídeos.
 
-## 3. Principios que no se pueden romper
+### 2.2 Configuración sin bootstrap oculto
 
-1. **Paridad funcional:** conservar todas las acciones, pantallas, permisos, flujos y formatos de datos existentes.
-2. **Seguridad real en backend:** cada servicio verifica la sesión y el rol con información confiable; no acepta como autoridad un rol enviado por el navegador.
-3. **Revocación segura:** logout, cambio de rol, cambio/restablecimiento de contraseña, eliminación de cuenta y reset global deben impedir el uso de sesiones invalidadas según una política de consistencia explícita y comprobable.
-4. **Integridad de datos:** mantener idempotencia, validaciones, journals, compensaciones, protección frente a duplicados y recuperación de fallos parciales.
-5. **Propiedad de datos:** cada servicio será responsable de las hojas/recursos que escribe. Evitar que varios servicios modifiquen el mismo recurso sin un protocolo de consistencia.
-6. **Rendimiento:** eliminar viajes backend→backend, fan-out de cachés, locks globales innecesarios y consultas repetidas. Medir arranque, login, lecturas y escrituras antes/después.
-7. **Despliegue independiente:** publicar un servicio no exigirá actualizar propiedades ni volver a desplegar los demás. Cambiar una URL será una modificación única en el registro central.
-8. **Transición reversible:** no borrar los componentes actuales hasta que sus sustitutos superen pruebas de contrato y regresión.
+La lectura de configuración no puede depender de una URL, ID o propiedad secreta escondida dentro de un servicio. Antes de implementar el cargador se debe resolver cómo cada servicio accede a la Spreadsheet sin almacenar su ID localmente.
 
-## 4. Fases de ejecución
+Se evaluarán como primera opción los proyectos vinculados a la Spreadsheet y el acceso por contexto activo. Se probará expresamente su funcionamiento en ejecuciones Web App desplegadas, no solo desde el editor. También se evaluará si conviene consolidar módulos en un solo proyecto vinculado para eliminar el problema de bootstrap y simplificar el despliegue. No se elegirá una opción que obligue a introducir un ID/URL/propiedad local para arrancar.
 
-### Fase 0 — Inventario y mapa de dependencias
-**Estado: EN PROGRESO**
+El frontend necesita una dirección de entrada para recibir la aplicación, pero no se creará una segunda configuración de endpoints en el código. El diseño final debe demostrar cómo obtiene el registro central sin circularidad.
 
-- Enumerar los servicios reales: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES, ADMIN y COORDINATOR.
-- Inventariar todas las acciones de `ACTION_TO_SERVICE_MAP`, incluidas acciones operativas/manuales y compatibilidad histórica.
-- Encontrar llamadas backend→backend, URLs constantes, propiedades, secretos, endpoints internos y copias de SharedMutationClient.
-- Identificar qué acciones usan leases y qué recurso protegen.
-- Documentar todos los flujos de autenticación, revocación, eliminación de usuario, cachés de actor, inventario de imágenes, administración, YouTube, Inbox y migraciones.
-- Relacionar cada dependencia con pruebas existentes en `JS/Tests/`.
+### 2.3 Archivos binarios e integraciones externas
 
-**Entregable:** matriz acción → servicio propietario → recursos → autorización → dependencias → pruebas. No se elimina código en esta fase.
+La Spreadsheet guarda configuración, metadatos, IDs, estados y registros, no los bytes de los archivos.
 
-### Fase 1 — Registro central de servicios
-- Definir una hoja de configuración con esquema versionado: servicio, URL /exec, activo, versión de contrato y fecha de actualización.
-- Validar formato y lista permitida de servicios; rechazar URLs arbitrarias, duplicadas o de dominios no autorizados.
-- Añadir la lectura pública mínima de configuración al bootstrap CATALOG.
-- Crear en frontend un cargador con caché en memoria y persistencia local, TTL, versión, validación y fallback a última configuración válida.
-- Mantener una única URL bootstrap estática. No incluir secretos en la hoja ni en el frontend.
-- Añadir pruebas de configuración incompleta, URL inválida, caché vencida, actualización y fallback.
+- Imágenes: conservar carga, ledger, SHA-256, límites, validación de MIME/tamaño, Drive, reemplazo, reconciliación y recuperación.
+- Vídeos: conservar carga reanudable directa a YouTube, OAuth administrado, estado pendiente, aprobación/rechazo y asociación al modelo/tutorial.
+- Drive: conservar administración de carpetas, movimientos, restauración, auditoría, backups y comandos de terminal.
+- Se probará primero la transferencia directa desde frontend a Drive/YouTube, manteniendo la misma identidad, propiedad, permisos y capacidad de reanudar. Si no es técnicamente equivalente, no se elimina la función: se documenta la limitación antes de decidir una excepción mínima. Nunca se expondrán tokens OAuth ni credenciales en el navegador.
 
-### Fase 2 — Enrutamiento y orquestación en frontend
-- Mantener el mapa acción → servicio en frontend como fuente de enrutamiento.
-- Cambiar las funciones de ADMIN que llaman a WRITE/CATALOG/AUTH/USERS/FEEDBACK para que el frontend ejecute la secuencia directa correspondiente; después de fusionar AUTH/USERS, las acciones de identidad se dirigirán a AUTH.
-- Conservar los contratos de respuesta actuales de la interfaz o adaptar consumidores de forma controlada.
-- Añadir orquestadores reutilizables para operaciones multi-servicio: pasos ordenados, requestId, idempotencia, progreso, reintento seguro y recuperación tras recarga.
-- El frontend no recibirá secretos ni ejecutará acciones privilegiadas sin autorización del backend.
-- No mover a frontend operaciones que deban ser atómicas dentro de un mismo recurso.
+### 2.4 Sesiones sin secretos de interconexión
 
-### Fase 3 — Identidad unificada y autorización local
-- Unificar AUTH y USERS en un solo proyecto/servicio de identidad, conforme al requisito vigente del proyecto. El frontend conservará las acciones `getUsers`, `createUser` y `updateProfile`, pero las enviará al servicio AUTH unificado.
-- Eliminar la dependencia de cada servicio respecto a `GPSpedia_COORDINATOR_URL`, secretos de Coordinator, `validateSessionContext` remoto y cachés precargadas mediante llamadas backend→backend.
-- Mantener el login como único punto de autenticación. AUTH emitirá un contexto de actor firmado, con identidad, rol y vencimiento de la sesión; cada servicio verificará localmente la firma y aplicará únicamente la comprobación de capacidad/rol que corresponda.
-- La clave de firma se mantendrá fuera del frontend y se leerá desde la configuración protegida de Spreadsheet, con caché local en Apps Script. No se configurará manualmente en ScriptProperties ni se enviará al navegador.
-- El frontend enviará el contexto firmado en las acciones protegidas. Ningún servicio confiará en un userId o rol suelto enviado por el navegador.
-- Logout, cambio de rol, cambio/restablecimiento de contraseña, reset de sesiones y eliminación de cuenta serán las excepciones de revocación: el frontend enviará invalidaciones directas y paralelas a los servicios que mantienen caché local. Cada servicio expondrá una acción interna mínima de invalidación autenticada; no llamará a otros servicios.
-- La firma, vencimiento y política de invalidación deben impedir que un token inválido o vencido sea aceptado. La transición debe probar explícitamente qué ocurre si un servicio no responde a una invalidación.
-- Mantener hashes de contraseña, recuperación, términos por dispositivo, límites de sesión y protección contra enumeración, sin aumentar el coste del hash ni añadir pasos interactivos.
-- Añadir pruebas de sesión expirada, firma inválida, token inexistente, token revocado, cambio de rol, cambio de contraseña, usuario eliminado, caché fría/caliente e invalidación parcial.
+- AUTH conserva la autenticación y la fuente de identidad; USERS se integra en AUTH según la norma vigente.
+- Se mantienen tokens de sesión opacos, almacenados/registrados en Spreadsheet y asociados al usuario/rol confiable.
+- Cada servicio obtiene el actor desde el contexto de sesión, con caché local de corta duración donde corresponda; nunca acepta un rol editable enviado por el frontend.
+- No se usarán claves secretas compartidas entre proyectos ni llamadas backend→backend.
+- Logout, cambio de rol/contraseña, eliminación de cuenta y limpieza de cachés se orquestan desde frontend con llamadas directas a los servicios afectados, respetando §§12–15 de las normas.
+- La solución concreta de acceso a Spreadsheet y caché se someterá a pruebas de seguridad, revocación y rendimiento antes de sustituir el mecanismo actual.
 
-### Fase 4 — Retirada de SharedMutation y simplificación de escrituras
-- Aplicar el requisito vigente de rendimiento: retirar leases, validaciones de Coordinator, locks globales y transacciones interservicio de las acciones ordinarias.
-- Resolver la concurrencia de identidad al unificar AUTH/USERS y concentrar allí las escrituras de cuenta/sesión.
-- Las operaciones que realmente necesiten dos servicios se dividirán en llamadas directas desde el frontend. Solo conservarán requestId, idempotencia o compensación cuando la operación ya lo requiera para evitar duplicados o recuperar un fallo parcial.
-- No crear journals, leases ni capas genéricas para operaciones simples.
-- Preservar las protecciones funcionales que ya evitan duplicados, pérdida de imágenes, corrupción de hojas o escrituras parciales en operaciones de Drive/Spreadsheet.
-- Retirar las leases y el cliente compartido cuando la prueba de regresión correspondiente confirme que la acción mantiene el resultado funcional sin coordinación central.
+## 3. Requisitos de paridad funcional
 
-### Fase 5 — Retirada de componentes y configuración antigua
-- Eliminar llamadas internas y endpoints exclusivos del Coordinator.
-- Eliminar `SharedMutationClient.js` de cada proyecto y sus dependencias.
-- Eliminar `Coordinator.js`, el proyecto COORDINATOR de la guía y la documentación obsoleta.
-- Retirar propiedades antiguas solo después de confirmar que ningún deployment las consulta; la migración no requerirá editarlas.
-- Actualizar guía de despliegue para que cada servicio se copie/despliegue de forma independiente sin configuración manual de URLs o secretos.
-- Eliminar código de compatibilidad solo después de cerrar la ventana de transición y pasar las pruebas.
+El inventario no se limita a las 120 acciones del mapa frontend. Debe incluir también handlers internos, comandos de desarrollador, herramientas administrativas, trabajos manuales, compatibilidad, tareas programadas, integraciones externas y controles visibles.
 
-### Fase 6 — Verificación integral y preparación de despliegue
-- Ejecutar toda la suite existente y las pruebas nuevas de contratos, seguridad, concurrencia, rendimiento y regresión.
-- Comparar el inventario inicial con el final para demostrar que ninguna acción desapareció.
-- Medir solicitudes, latencia de login, tiempo de arranque, lecturas de Spreadsheet, llamadas remotas y tiempo de operaciones administrativas.
-- Validar cada servicio en entorno aislado Beta; no confundir pruebas locales con deployments reales.
-- Preparar orden de despliegue, criterios de aceptación y rollback por servicio.
-- No modificar deployments ni datos productivos sin autorización expresa.
+Como mínimo, se deben preservar:
 
-## 5. Inventario inicial confirmado
+1. **Catálogo y modelos:** navegación, búsqueda, filtros existentes, fichas, modelos, versiones, rangos de años, cortes, datos técnicos, proyecciones, VIN, duplicados, contribuciones y navegación relacionada.
+2. **Imágenes:** carga desde formularios y administración, vista previa, transformación/variantes, resolución, lightbox, reemplazo, recuperación, organización, auditoría, inventario, reconciliación y borrado autorizado.
+3. **Vídeos:** carga reanudable YouTube, pausado/reanudación, metadatos, propuestas automáticas, pendientes, aprobación, rechazo, asociación a modelos/tutoriales y reproducción.
+4. **PyS:** problemas, soluciones, prevención, asociaciones bidireccionales de vehículos, edición, eliminación, búsqueda, relaciones y reproducción de vídeos.
+5. **Tutoriales:** alta, edición, consulta, imágenes, vídeos, aprobación y asociación.
+6. **Feedback:** reportes, sugerencias, formularios de contacto, likes, vistas, comentarios y estados de resolución.
+7. **Inbox:** destinatarios, conversaciones, mensajes, respuestas, plantillas, categorías, recibidos/no leídos/enviados/archivados, búsqueda, paginación, borradores, contadores, lectura/no lectura, cierre y eliminación.
+8. **Usuarios y seguridad:** login, logout, recuperación, cambio/reset de contraseña, términos, perfiles, altas, actualización, eliminación, roles, bloqueo temporal, sesiones y limpieza de caché.
+9. **Administración de datos:** migraciones, identificadores, VIN, fórmulas, hojas, columnas, backups/restauración de Spreadsheet y Drive, reorganización y saneamiento.
+10. **Drive:** comandos de terminal, navegación, carpetas, movimientos, archivos, restauración, auditoría, inventarios, almacenamiento y URLs de descarga.
+11. **Métricas y monitoreo:** ping/estado de cada servicio, conectividad, latencia en ms, tráfico, almacenamiento, métricas de usuarios, actividad, logs, auditoría y diagnósticos.
+12. **Herramientas de desarrollador:** comandos, consola, gestión de caché local, purgado autorizado, inspección de estructuras y utilidades existentes.
+13. **Experiencia y persistencia:** caché del catálogo, IndexedDB, actualizaciones incrementales, modo oscuro, PWA, impresión, QR, accesibilidad, navegación, estados vacíos y manejo de errores.
+14. **Procesos no visibles:** funciones auxiliares invocadas internamente, acciones manuales, tareas programadas, migraciones históricas y compatibilidad de datos.
 
-| Elemento | Estado actual observado | Destino |
+Cada elemento debe tener referencia al código, consumidor, permiso, datos que utiliza, servicio destino y prueba de regresión.
+
+## 4. Fases y tareas
+
+El detalle accionable se encuentra en [TAREAS_MIGRACION_ARQUITECTURA.md](./TAREAS_MIGRACION_ARQUITECTURA.md). Las fases son:
+
+| Fase | Objetivo | Estado |
 |---|---|---|
-| `JS/Frontend/api-config.js` | Contiene URLs de siete servicios y mapa de acciones | Cargador de configuración + router frontend |
-| `JS/Services/Coordinator.js` | Sesiones compartidas, leases, validación, revocación, fan-out de cachés y telemetría | Retirar tras sustituir cada capacidad |
-| `JS/Services/SharedMutationClient.js` | Llama al Coordinator y gestiona leases | Retirar tras migrar operaciones protegidas |
-| `JS/Services/admin.js` | Contiene URLs directas de WRITE/CATALOG/AUTH/USERS/FEEDBACK | Convertir operaciones cruzadas en orquestación frontend |
-| `JS/Services/Auth.js` | Usa propiedades y endpoints internos de Coordinator; registra/revoca sesiones | Validación y gestión de identidad sin Coordinator |
-| `JS/Services/users.js` | Contiene lectura, alta y perfil de usuarios | Fusionar sus handlers en AUTH y retirar el proyecto USERS tras validar paridad |
-| `JS/Services/write.js` | Usa actor compartido y coordinación en operaciones protegidas | Autorización local + propiedad de WRITE |
-| `JS/Services/feedback.js` + `InboxConversations.js` | Usa actor compartido y coordinación en ciertas escrituras | Autorización local + propiedad de FEEDBACK |
-| `JS/Services/Utilities.js` | Migración con lease compartida | Migración idempotente con journal y recuperación |
-| `JS/Services/catalog.js` | Lecturas públicas y secreto interno para metadatos de inventario | Bootstrap público mínimo y lecturas propias |
-| `Services/DEPLOYMENT_GUIDE.md` | Exige orden de despliegue, URLs, secretos y propiedades | Guía de despliegue independiente y simple |
-| `Services/COORDINATOR_SETUP.md` | Describe contratos y dependencias centrales | Archivar/eliminar al completar la migración |
+| 0 | Inventario total de funciones, configuración y dependencias | EN PROGRESO |
+| 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PENDIENTE |
+| 2 | Diseñar y probar esquema central de configuración y caché frontend | PENDIENTE |
+| 3 | Implementar router/orquestador frontend sin cambiar contratos | PENDIENTE |
+| 4 | Eliminar llamadas backend→backend de ADMIN y otros servicios | PENDIENTE |
+| 5 | Unificar AUTH/USERS y simplificar sesión sin claves compartidas | PENDIENTE |
+| 6 | Migrar cargas de imágenes, vídeos y operaciones Drive sin pérdida | PENDIENTE |
+| 7 | Migrar métricas, monitoreo, administración, Inbox, PyS y utilidades | PENDIENTE |
+| 8 | Retirar COORDINATOR, SharedMutation y configuración antigua | PENDIENTE |
+| 9 | Pruebas de paridad funcional, seguridad, rendimiento y regresión | PENDIENTE |
+| 10 | Preparar despliegue simple y validación Beta | PENDIENTE |
 
-Este inventario es inicial, no exhaustivo. La Fase 0 debe verificar cada referencia y acción directamente en código y pruebas.
+## 5. Criterios de aceptación obligatorios
 
-## 6. Criterios de aceptación
+La migración no se acepta hasta cumplir simultáneamente:
 
-La migración no se considera terminada hasta cumplir todos:
+- [ ] Ningún proyecto Apps Script tiene propiedades de configuración de GPSpedia.
+- [ ] Ningún servicio contiene URLs de otros servicios, IDs de recursos ni secretos compartidos.
+- [ ] Ningún servicio realiza llamadas HTTP a otro servicio GPSpedia.
+- [ ] No existen dependencias funcionales de COORDINATOR ni SharedMutation.
+- [ ] La configuración operativa está centralizada en Spreadsheet.
+- [ ] El frontend coordina todas las solicitudes y secuencias entre servicios.
+- [ ] AUTH/USERS conserva login, usuarios, perfiles, roles, recuperación y sesiones.
+- [ ] Se mantienen las 120 acciones del mapa actual y todas las acciones adicionales encontradas.
+- [ ] Se mantienen cargas y administración de imágenes, vídeos, Drive y YouTube.
+- [ ] Se mantienen creación/edición de modelos, VIN, PyS, tutoriales, Inbox, feedback y formularios.
+- [ ] Se mantienen métricas de servicios, latencia, tráfico, usuarios, actividad, logs y auditoría.
+- [ ] Se mantienen backups, restauración, migraciones, terminal y herramientas de desarrollador.
+- [ ] La matriz RBAC y las restricciones destructivas no cambian.
+- [ ] El rendimiento no empeora en arranque, login, catálogo, Inbox ni operaciones frecuentes.
+- [ ] Desplegar un servicio no requiere editar propiedades ni desplegar otros.
+- [ ] Las pruebas locales pasan y las pruebas Beta se ejecutan con evidencia real.
+- [ ] No se elimina ningún archivo, endpoint, hoja ni proyecto hasta comprobar que no tiene funciones o consumidores pendientes.
 
-- [ ] Todas las acciones anteriores siguen disponibles y conservan sus resultados/errores esperados.
-- [ ] Ningún servicio contiene URL de otro servicio ni realiza llamadas HTTP a otro backend de GPSpedia.
-- [ ] Ningún servicio requiere ScriptProperties para localizar o autenticar a otro servicio.
-- [ ] El frontend es el único que conoce las URLs de los servicios y coordina operaciones multi-servicio.
-- [ ] No queda dependencia funcional de COORDINATOR ni SharedMutation.
-- [ ] Sesiones, permisos, revocaciones, recuperación y cambios de rol conservan su seguridad.
-- [ ] No se pierden idempotencia, integridad, recuperación, journals ni controles de concurrencia.
-- [ ] Los cambios de URL se realizan en un solo registro central, sin editar servicios.
-- [ ] Un despliegue individual no obliga a modificar propiedades ni redesplegar otros servicios.
-- [ ] Las pruebas locales y la suite de regresión pasan; las pruebas Beta remotas quedan identificadas por separado.
-- [ ] El rendimiento medido no empeora en login, arranque y operaciones frecuentes.
+## 6. Reglas de migración
 
-## 7. Reglas de ejecución
+- Trabajar únicamente en `GPSpedia2.2.5_work`; la rama base no se modifica.
+- No desplegar ni alterar recursos productivos.
+- No realizar una sustitución global de URLs ni eliminar código antes de contar con pruebas de equivalencia.
+- Cada grupo de tareas debe conservar una referencia al comportamiento anterior y añadir pruebas de paridad.
+- Si una capacidad no puede migrarse literalmente, se conserva el flujo actual hasta resolver una alternativa equivalente.
+- Las validaciones que requieren despliegues, OAuth, Drive, YouTube o Spreadsheet Beta se registran para Beta; no se presentan como ejecutadas.
+- Registrar el avance en checkpoint y tareas, no en documentos paralelos redundantes.
 
-- Trabajar solo en `GPSpedia2.2.5_work`; no modificar `GPSpedia2.2.5`.
-- No desplegar Apps Script ni cambiar Spreadsheet/Drive productivos desde esta migración.
-- No borrar servicios, funciones, endpoints o pruebas por anticipado.
-- Hacer cambios pequeños por fase, con pruebas que fallen antes de corregir y pasen después.
-- Mantener compatibilidad durante la transición; no cambiar simultáneamente contratos de todos los servicios.
-- Registrar los cambios reales y sus validaciones. Una prueba remota no ejecutada se marca pendiente de Beta.
-- Si una alternativa requiere más propiedades, pasos manuales o viajes de red que el sistema actual, descartarla salvo que sea indispensable para preservar seguridad/integridad y no exista una alternativa más simple.
+## 7. Estado inicial
 
-
-## 8. Avance registrado — inventario inicial
-
-Se creó [MATRIZ_MIGRACION_SERVICIOS.md](./MATRIZ_MIGRACION_SERVICIOS.md), que registra las 120 acciones del mapa frontend, las dependencias conocidas de Coordinator/SharedMutation, las llamadas backend→backend detectadas y las operaciones que requieren preservar consistencia.
-
-Hallazgos confirmados:
-- ADMIN contiene llamadas backend→backend a WRITE y CATALOG. También declara URLs de AUTH, USERS y FEEDBACK que deben verificarse por referencia antes de retirarlas.
-- Coordinator realiza fan-out a USERS, WRITE, FEEDBACK y ADMIN para invalidar/precalentar cachés de actores.
-- AUTH, USERS, WRITE, FEEDBACK, ADMIN y UTILITIES contienen rutas relacionadas con SharedMutation o con el contexto de sesión compartido.
-- CATALOG y ADMIN comparten un secreto de propiedades para una consulta interna de metadatos de inventario de imágenes.
-- El mapa frontend contiene 120 acciones: AUTH 15, CATALOG 5, WRITE 9, USERS 3, FEEDBACK 41, UTILITIES 1 y ADMIN 46.
-
-**Estado:** inventario estático inicial completado; la Fase 0 sigue EN PROGRESO hasta contrastar routers, consumidores, recursos protegidos y pruebas. No se ha modificado lógica funcional ni se han cambiado deployments.
-
-
-## 9. Alineación con los requisitos vigentes de rendimiento
-
-La solución debe respetar especialmente `NORMAS_DESAROLLO.md` §15:
-
-- No reconstruir la validación central de Coordinator bajo otro nombre.
-- No consultar Spreadsheet/ActiveSessions ni hacer llamadas entre servicios en cada acción ordinaria.
-- El login establece la sesión; cada servicio verifica localmente el contexto firmado y realiza una comprobación sencilla de rol/capacidad.
-- Solo las excepciones expresamente conservadas (logout, revocaciones, cambios de rol/contraseña, reset y eliminación de cuenta) requieren invalidación remota, ahora orquestada directamente por el frontend.
-- No añadir leases, journals ni reintentos genéricos donde no sean necesarios para la integridad de una operación.
-- AUTH y USERS se consolidan para evitar carreras entre proyectos distintos que modifican el mismo recurso de identidad.
-
-La propuesta de firma local es un diseño a validar con pruebas de compatibilidad de Apps Script y seguridad antes de implementarlo. Si no se puede verificar localmente una firma confiable sin llamadas de red ni secretos en el navegador, no se sustituirá por confiar en el rol del frontend: se deberá ajustar el diseño manteniendo §15 y la seguridad.
+- Rama verificada: `GPSpedia2.2.5_work`.
+- Rama base verificada: `GPSpedia2.2.5`.
+- El mapa frontend existente contiene 120 acciones distribuidas entre AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN.
+- Existe un inventario inicial de llamadas internas, propiedades, secretos y dependencias en [MATRIZ_MIGRACION_SERVICIOS.md](./MATRIZ_MIGRACION_SERVICIOS.md).
+- Todavía no se ha modificado lógica funcional ni deployments para esta migración.
+- La siguiente actividad es completar el inventario de funciones y ejecutar el spike de acceso a Spreadsheet sin configuración local.
