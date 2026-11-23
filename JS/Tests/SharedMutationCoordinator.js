@@ -1283,7 +1283,7 @@ function runSharedMutationCoordinatorTests() {
         store.set("wrong", JSON.stringify({ userId: "U-2", role: "tecnico", epoch: 1 }));
         expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-2", {
             cache, keyFor: () => "wrong", loadActor: () => ({ userId: "U-2", role: "tecnico", epoch: 1 })
-        }), "confirmar");
+        }), "activa");
         assert_(reads === 1, "La identidad incorrecta se rechaza sin consultar Coordinator.");
         assert_(!store.has("wrong"), "Un actor de otra identidad debe eliminarse.");
     });
