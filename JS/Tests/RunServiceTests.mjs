@@ -600,11 +600,11 @@ runGroup('44','MIG020',()=>{
  runCli('MIG020 interfaz Inbox, accesibilidad, borradores, búsqueda y sincronización','JS/Tests/InboxUi.mjs');
  runCli('MIG020 caché por sesión y paginación de conversaciones/mensajes','JS/Tests/InboxCachePagination.js');
  runCli('MIG020 lectura agrupada de eventos de imágenes de reportes','JS/Tests/FeedbackInboxImageEventBatchRead.mjs');
- recordResult('MIG020 auditoría inmutable de acciones Inbox',loadFunction('JS/Tests/InboxAuditTrail.js','runInboxAuditTrailTests','\\n\\nimport {')({feedback}));
- recordResult('MIG020 roles y permisos Inbox',loadFunction('JS/Tests/InboxRoleContract.js','runInboxRoleContractTests','\\n\\nimport {')({
+ recordResult('MIG020 auditoría inmutable de acciones Inbox',loadFunction('JS/Tests/InboxAuditTrail.js','runInboxAuditTrailTests','\n\nimport {')({feedback}));
+ recordResult('MIG020 roles y permisos Inbox',loadFunction('JS/Tests/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
   ui:read('JS/Frontend/ui.js'),feedback,inbox,usersHtml:read('HTML/users.html'),authClient:read('JS/Frontend/auth.js'),api:read('JS/Frontend/api-config.js')
  }));
- recordResult('MIG020 prevención XSS en mensajes y contenido Inbox',loadFunction('JS/Tests/InboxStoredXss.js','runInboxStoredXssTests','\\n\\nimport {')({
+ recordResult('MIG020 prevención XSS en mensajes y contenido Inbox',loadFunction('JS/Tests/InboxStoredXss.js','runInboxStoredXssTests','\n\nimport {')({
   ui:read('JS/Frontend/ui.js'),feedback
  }));
  runCli('MIG020 mensajería centralizada de operaciones Developer','JS/Tests/DeveloperOperationMessages.mjs');
