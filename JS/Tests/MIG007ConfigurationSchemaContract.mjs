@@ -32,7 +32,7 @@ for (const token of [
 ]) {
   assert.ok(inventory.includes(token), 'El inventario de origen no contiene ' + token);
 }
-assert.match(design, /No se almacenan API keys, contraseñas, tokens manuales, secretos compartidos/);
+assert.match(design, /no se almacenan API keys, contraseñas, tokens manuales, secretos compartidos/i);
 assert.match(design, /Google Sheets no ofrece ACL de lectura por pestaña/);
 assert.match(design, /Endpoint ausente, deshabilitado, duplicado o inválido/);
 assert.match(design, /rollback_of_revision/);
