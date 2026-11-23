@@ -71,10 +71,11 @@ test("AUTH es propietario de gestión de usuarios; UTILITIES y ADMIN conservan s
     const auditEnd = admin.indexOf("\nfunction handleAuditDriveImagesInCortesCore_", auditStart);
     assert.ok(auditStart >= 0 && auditEnd > auditStart);
     const auditHandler = admin.slice(auditStart, auditEnd);
-    assert.match(auditHandler, /withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);
-    const adminLeaseOperations = [...admin.matchAll(/withSharedMutationLease_\("ADMIN", "([^"]+)"/g)].map(match => match[1]).sort();
-    assert.deepEqual(adminLeaseOperations, ["auditDriveImagesInCortes", "createCortesImageFolder", "saveUnusedImagesInventory"].sort(),
-        "ADMIN conserva leases solo para auditoría, creación de carpeta e inventario; el log de actividad usa appendRow sin lease.");
+    assert.match(auditHandler, /withAdminLocalOperationGuard_\(/);
+    assert.match(admin, /withAdminLocalOperationGuard_\([\s\S]{0,180}"drive-audit:"/);
+    assert.match(admin, /withAdminLocalOperationGuard_\([\s\S]{0,180}"create-cortes-image-folder:"/);
+    assert.match(admin, /withAdminLocalOperationGuard_\([\s\S]{0,180}"drive-inventory:"/);
+    assert.doesNotMatch(admin, /withSharedMutationLease_/);
     assert.doesNotMatch(admin, /withSharedMutationLease_\("ADMIN", "recordAdminImageActivity"/);
     assert.doesNotMatch(admin, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
 });
