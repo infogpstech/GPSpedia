@@ -19,7 +19,7 @@ export function runPysAccordionTitleTests({ ui, css }) {
         assert.doesNotMatch(ui, /Posibles problemas/);
     });
     test("el texto hereda el contraste del botón en modo claro y oscuro", () => {
-        assert.match(css, /\.accordion-btn\s*\{[^}]*color:\s*#007bff;/);
+        assert.match(css, /\.accordion-btn\s*\{[^}]*color:\s*var\(--gp-color-accent\);/);
         assert.match(css, /\.dark-mode \.accordion-btn\s*\{[^}]*color:\s*var\(--button-text\);/);
     });
     test("el texto puede ocupar el espacio disponible sin desplazar la flecha", () => {
