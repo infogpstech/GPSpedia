@@ -1081,10 +1081,8 @@ check("La organización revalida referencias e historial por archivo y protege u
     assert.ok(save.includes('String(row[column("estado_organizacion") - 1] || "") === "movida_manual"'));
     assert.ok(!save.includes("LockService.getScriptLock()") && !save.includes("waitLock("),
         "El handler de inventario no debe retener el ScriptLock global.");
-    assert.ok(admin.includes('withSharedMutationLease_("ADMIN", "saveUnusedImagesInventory"'),
-        "El router debe coordinar el inventario mediante su lease IMAGE_INVENTORY independiente.");
-    assert.match(coordinator, /saveUnusedImagesInventory:\s*\{\s*write:\s*\["IMAGE_INVENTORY"\]\s*\}/,
-        "Coordinator debe reservar únicamente el recurso IMAGE_INVENTORY para este handler.");
+    assert.match(admin, /withAdminLocalOperationGuard_\([\s\S]{0,180}"drive-inventory:"/, "El inventario reserva su recurso con una guarda local breve.");
+    assert.doesNotMatch(admin, /withSharedMutationLease_|GPSpedia_COORDINATOR_SECRET|GPSpedia_COORDINATOR_URL/, "ADMIN no debe depender de SharedMutation ni de configuración Coordinator.");
 
 });
 
