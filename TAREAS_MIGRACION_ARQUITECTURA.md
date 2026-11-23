@@ -601,7 +601,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 #### Próximas acciones ordenadas
 - [ ] Completar/obtener evidencia Beta de MIG-006 para cada tipo de proyecto Web App y su identidad/permisos efectivos; si el contexto activo no funciona, resolver alternativa arquitectónica sin bootstrap local.
 - [ ] Reconciliar MIG-003 contra el código vigente tras MIG-024/MIG-025 y actualizar el inventario de familias realmente activas.
-- [ ] Corregir el consumidor legacy de carpeta en ADMIN para usar `getCortesRootFolder()`, cubriendo su contrato y pruebas; no cambiar el recurso real.
+- [x] Corregir el consumidor legacy de carpeta en ADMIN para usar `getCortesRootFolder()`; contrato automatizado añadido en `AdminCentralCortesFolderConfiguration.mjs` y registrado en el runner MIG026. El cambio no altera el recurso real.
 - [ ] Migrar `rich_text_mode` a configuración central con operación autorizada de publicación/actualización y pruebas de lectura, escritura, caché, fallo cerrado y RBAC; retirar la propiedad solo al cerrar paridad.
 - [ ] Resolver el acceso central de AUTH, CATALOG y UTILITIES; retirar sus IDs locales únicamente después de probar el contexto de ejecución real.
 - [ ] Ejecutar migraciones específicas de ledgers/estado de AUTH, CATALOG, WRITE y ADMIN en las tareas dependientes, preservando recuperación y sin borrar propiedades instaladas sin autorización Beta.

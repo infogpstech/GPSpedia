@@ -113,6 +113,7 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - Antes de cualquier prueba, ejecutar la secuencia de sincronización segura del apartado 0.
 - Preparar una Spreadsheet y un Drive Beta aislados; vincular los proyectos ADMIN, WRITE y FEEDBACK a la Spreadsheet de prueba.
 - Publicar una revisión central con la definición y recurso cortes_root_folder_id según ESQUEMA_CONFIGURACION_CENTRAL.md; el ID debe corresponder a la carpeta Cortes Beta y su padre esperado a la raíz Drive Beta.
+- Ejecutar `createCortesImageFolder` con categoría, marca y modelo sintéticos; verificar creación bajo la raíz Cortes del registro central, rechazo de nombres duplicados y fallo cerrado ante configuración ausente/vencida o jerarquía incorrecta. No usar recursos productivos.
 - Confirmar que las tres aplicaciones leen el recurso central y rechazan una referencia ausente, vencida, deshabilitada, de tipo incorrecto o con jerarquía discordante. No configurar IDs de Drive/Spreadsheet en el código ni ScriptProperties.
 - Probar aportes nuevos con imagen de vehículo/corte, apertura y alimentación; verificar archivo, MIME, tamaño, SHA-256, ImageUploadEvents, ledger, vínculo a AportesVehiculo y proyección CATALOG.
 - Probar reemplazo ADMIN con la misma opId tras respuesta perdida; comprobar read-back, compare-and-set de versión, no duplicación y reconciliación de estados pending/linked/requires_review.

@@ -11690,7 +11690,7 @@ function handleCreateCortesImageFolder(payload, logMessage, developerContext) {
 
     if (!category || !brand || !model) throw new Error("Categoría, marca y modelo son obligatorios.");
 
-    const rootFolder = DriveApp.getFolderById(CORTES_IMAGES_ROOT_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     const parentFolder = findOrCreateVehicleFolder(rootFolder, category, brand);
     const modelFolders = parentFolder.getFoldersByName(model);
     if (modelFolders.hasNext()) throw new Error("La carpeta del modelo ya existe.");

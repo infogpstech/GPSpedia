@@ -641,8 +641,12 @@ runGroup('46','MIG024',()=>{
  runCli('MIG-024 guarda local ADMIN: exclusión breve, TTL y recuperación','JS/Tests/AdminLocalOperationGuard.mjs');
 });
 
+runGroup('47','MIG026',()=>{
+ runCli('MIG026 creación de carpeta Cortes desde configuración central','JS/Tests/AdminCentralCortesFolderConfiguration.mjs');
+});
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','MIG021','39','41','42','43','44','45','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','MIG021','MIG026','39','41','42','43','44','45','47','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');

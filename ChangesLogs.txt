@@ -346,3 +346,9 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - No se modificaron deployments, proyectos Apps Script, propiedades instaladas, Spreadsheet, Drive ni datos externos.
 - MIG-026 sigue EN PROGRESO; depende de la evidencia Beta MIG-006/MIG-008 y de migraciones de estado con paridad.
 ================================================================================
+
+
+2026-11-23 — MIG-026 (avance: raíz Cortes ADMIN)
+- `handleCreateCortesImageFolder` ahora obtiene la raíz mediante `getCortesRootFolder()`, eliminando la dependencia directa de `CORTES_IMAGES_ROOT_FOLDER_ID`.
+- Se añadió `AdminCentralCortesFolderConfiguration.mjs` con cuatro escenarios y se incorporó al runner de regresión como grupo MIG026.
+- Se amplió la lista Beta para verificar la creación real bajo la raíz configurada y el rechazo de configuración inválida. No se modificó Drive ni se ejecutó deployment.

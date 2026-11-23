@@ -1406,3 +1406,29 @@ Siguiente paso:
 3. Corregir el consumidor ADMIN de carpeta Cortes con pruebas.
 4. Migrar configuración y estados uno por uno, manteniendo paridad.
 ================================================================================
+
+
+================================================================================
+AVANCE DE CONTINUIDAD — MIG-026 — 2026-11-23
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5 (sin cambios)
+HEAD confirmado antes del cambio: 379e1bb2d25b388a2add8faa865c0d762c6d2180
+
+Actividad implementada:
+- `JS/Services/admin.js`: `handleCreateCortesImageFolder` obtiene la raíz con `getCortesRootFolder()`; deja de leer `CORTES_IMAGES_ROOT_FOLDER_ID` directamente.
+- Nueva suite `JS/Tests/AdminCentralCortesFolderConfiguration.mjs`: cuatro escenarios para recurso central, payload incompleto, duplicados y fallo cerrado.
+- `JS/Tests/RunServiceTests.mjs`: grupo MIG026 registrado y seleccionable.
+- `TAREAS_MIGRACION_ARQUITECTURA.md`: acción ADMIN marcada implementada localmente; MIG-026 sigue EN PROGRESO.
+- `Tareas_Beta.md`: procedimiento de validación real añadido.
+
+Validación:
+- La suite y la sintaxis se ejecutarán mediante GitHub Actions Node.js 22 después de publicar este commit; todavía no se afirma un resultado de CI.
+- No se ejecutaron Apps Script, Drive, Spreadsheet ni recursos externos. La verificación real queda pendiente de Beta aislada.
+
+Pendiente MIG-026:
+- Reconciliar inventario completo contra los servicios vigentes.
+- Resolver acceso a Spreadsheet sin configuración local conforme a MIG-006/MIG-008; no sustituir `openById` sin evidencia del contexto real.
+- Migrar parámetros y estados operativos uno por uno con paridad, sin mover ledgers ni secretos a configuración genérica.
+- Completar revisión estática, pruebas y registros antes de iniciar MIG-027.
+================================================================================
