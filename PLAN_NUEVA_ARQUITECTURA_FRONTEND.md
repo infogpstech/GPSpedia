@@ -174,3 +174,17 @@ La migración no se considera terminada hasta cumplir todos:
 - Mantener compatibilidad durante la transición; no cambiar simultáneamente contratos de todos los servicios.
 - Registrar los cambios reales y sus validaciones. Una prueba remota no ejecutada se marca pendiente de Beta.
 - Si una alternativa requiere más propiedades, pasos manuales o viajes de red que el sistema actual, descartarla salvo que sea indispensable para preservar seguridad/integridad y no exista una alternativa más simple.
+
+
+## 8. Avance registrado — inventario inicial
+
+Se creó [MATRIZ_MIGRACION_SERVICIOS.md](./MATRIZ_MIGRACION_SERVICIOS.md), que registra las 120 acciones del mapa frontend, las dependencias conocidas de Coordinator/SharedMutation, las llamadas backend→backend detectadas y las operaciones que requieren preservar consistencia.
+
+Hallazgos confirmados:
+- ADMIN contiene llamadas backend→backend a WRITE y CATALOG. También declara URLs de AUTH, USERS y FEEDBACK que deben verificarse por referencia antes de retirarlas.
+- Coordinator realiza fan-out a USERS, WRITE, FEEDBACK y ADMIN para invalidar/precalentar cachés de actores.
+- AUTH, USERS, WRITE, FEEDBACK, ADMIN y UTILITIES contienen rutas relacionadas con SharedMutation o con el contexto de sesión compartido.
+- CATALOG y ADMIN comparten un secreto de propiedades para una consulta interna de metadatos de inventario de imágenes.
+- El mapa frontend contiene 120 acciones: AUTH 15, CATALOG 5, WRITE 9, USERS 3, FEEDBACK 41, UTILITIES 1 y ADMIN 46.
+
+**Estado:** inventario estático inicial completado; la Fase 0 sigue EN PROGRESO hasta contrastar routers, consumidores, recursos protegidos y pruebas. No se ha modificado lógica funcional ni se han cambiado deployments.
