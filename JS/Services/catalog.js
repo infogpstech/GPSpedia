@@ -11,6 +11,37 @@ const LOG_INVALID_IDS = false; // Cambiar a true para registrar IDs de imagen in
 let spreadsheet = null;
 let invalidImageIdsFound = []; // Almacena IDs inválidos para el modo diagnóstico.
 
+function normalizeCatalogRole_(value) {
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
+function parseCatalogSessionDate_(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return null;
+    const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+function addCatalogCalendarMonthsUTC_(date, months) {
+    const result = new Date(date.getTime()), day = result.getUTCDate();
+    result.setUTCDate(1); result.setUTCMonth(result.getUTCMonth() + months);
+    const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+    result.setUTCDate(Math.min(day, lastDay)); return result;
+}
+function verifyCatalogDeveloperSession_(payload) {
+    const userId=String(payload&&payload.userId||"").trim(),sessionToken=String(payload&&payload.sessionToken||"").trim();
+    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para consultar candidatos.");
+    const ss=getSpreadsheet(),usersSheet=ss.getSheetByName("Users"),sessionsSheet=ss.getSheetByName("ActiveSessions");
+    if(!usersSheet||!sessionsSheet)throw new Error("CATALOG no pudo verificar la sesión; faltan Users o ActiveSessions.");
+    const users=usersSheet.getDataRange().getValues(),userMatches=users.slice(1).filter(row=>String(row[0]||"").trim()===userId);
+    if(userMatches.length!==1)throw new Error("La identidad de la sesión no es única o no existe.");
+    const user=userMatches[0],username=String(user[1]||"").trim();
+    if(!username||username.startsWith("__deleted__:")||normalizeCatalogRole_(user[3])!=="desarrollador")throw new Error("Se requiere una cuenta activa con rol Desarrollador.");
+    const sessions=sessionsSheet.getDataRange().getValues(),matches=sessions.slice(1).filter(row=>String(row[2]||"")===sessionToken);
+    if(matches.length!==1||String(matches[0][0]||"").trim()!==userId)throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
+    const createdAt=parseCatalogSessionDate_(matches[0][3]),lastActivityAt=parseCatalogSessionDate_(matches[0][5])||createdAt,now=new Date();
+    if(!createdAt||!lastActivityAt||now.getTime()>=addCatalogCalendarMonthsUTC_(createdAt,3).getTime()||
+        now.getTime()>=addCatalogCalendarMonthsUTC_(lastActivityAt,1).getTime())throw new Error("La sesión expiró; inicia sesión nuevamente.");
+    return true;
+}
+
 function getSpreadsheet() {
   if (spreadsheet === null) {
     spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -83,8 +114,6 @@ const COLS_RELAY = {
     observacion: 11
 };
 
-const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
-
 function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
@@ -132,6 +161,7 @@ function doPost(e) {
         result = handleGetVehicleProjection_(payload);
         break;
       case 'getContributionCandidates':
+      case 'getVehicleContributionCandidates':
         result = handleGetContributionCandidates_(payload);
         break;
       default:
@@ -1018,86 +1048,27 @@ function handleGetVehicleProjection_(payload = {}) {
 }
 
 function handleGetContributionCandidates_(payload = {}) {
-    const requestedLimit = Number(payload && payload.limit);
-    const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
-    const requestedImageInventoryEvents = payload && payload.includeImageInventoryEvents === true;
-    let includeImageInventoryEvents = false;
-    if (requestedImageInventoryEvents) {
-        const properties = PropertiesService.getScriptProperties();
-        const expectedSecret = String(properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
-        if (!catalogTrafficSecretEquals_(expectedSecret, payload.secret)) {
-            throw new Error("Acceso denegado a los metadatos internos del inventario de imágenes.");
-        }
-        includeImageInventoryEvents = true;
-    }
-    const projection = readCatalogContributionProjectionVehicles_(undefined, includeImageInventoryEvents);
-    const projectedVehicles = includeImageInventoryEvents ? projection && projection.vehicles : projection;
-    const sourceEvents = includeImageInventoryEvents && projection ? projection.sourceEvents : null;
-    if (!Array.isArray(projectedVehicles) || (includeImageInventoryEvents && !Array.isArray(sourceEvents))) {
-        throw new Error("CATALOG no pudo construir la proyección vigente de candidatos.");
-    }
-    const candidates = [];
-    const imageInventoryCandidates = [];
-    projectedVehicles.forEach(vehicle => {
-        if (!vehicle || !Array.isArray(vehicle.contributionCandidates)) return;
-        vehicle.contributionCandidates.forEach(candidate => {
-            if (!candidate || !String(candidate.eventId || "").trim()) return;
-            const normalized = {
-                eventId: String(candidate.eventId),
-                opId: String(candidate.opId || ""),
-                vehicleId: String(vehicle.id || ""),
-                vehicleLabel: [vehicle.marca, vehicle.modelo].filter(Boolean).join(" ").trim(),
-                kind: String(candidate.kind || ""),
-                reason: String(candidate.reason || "requires_review"),
-                payload: candidate.payload && typeof candidate.payload === "object"
-                    ? JSON.parse(JSON.stringify(candidate.payload)) : {},
-                status: "pending_review"
-            };
-            candidates.push(normalized);
-            if (includeImageInventoryEvents && ["cut", "opening", "feed"].includes(normalized.kind) &&
-                String(normalized.payload.image || "").trim()) {
-                imageInventoryCandidates.push({
-                    eventId: normalized.eventId, vehicleId: normalized.vehicleId,
-                    vehicleLabel: normalized.vehicleLabel
-                });
-            }
+    const requestedLimit=Number(payload&&payload.limit),limit=Number.isSafeInteger(requestedLimit)?Math.max(1,Math.min(500,requestedLimit)):200;
+    const includeImageInventoryCandidates=payload&&(payload.includeImageInventoryCandidates===true||payload.includeImageInventoryEvents===true);
+    verifyCatalogDeveloperSession_(payload);
+    const projectedVehicles=readCatalogContributionProjectionVehicles_();
+    if(!Array.isArray(projectedVehicles))throw new Error("CATALOG no pudo construir la proyección vigente de candidatos.");
+    const allCandidates=[],imageInventoryCandidates=[];
+    projectedVehicles.forEach(vehicle=>{
+        if(!vehicle||!Array.isArray(vehicle.contributionCandidates))return;
+        vehicle.contributionCandidates.forEach(candidate=>{
+            if(!candidate||!String(candidate.eventId||"").trim())return;
+            const normalized={eventId:String(candidate.eventId),opId:String(candidate.opId||""),vehicleId:String(vehicle.id||""),
+                vehicleLabel:[vehicle.marca,vehicle.modelo].filter(Boolean).join(" ").trim(),kind:String(candidate.kind||""),
+                reason:String(candidate.reason||"requires_review"),payload:candidate.payload&&typeof candidate.payload==="object"?JSON.parse(JSON.stringify(candidate.payload)):{},status:"pending_review"};
+            allCandidates.push(normalized);
+            if(includeImageInventoryCandidates&&["cut","opening","feed"].includes(normalized.kind)&&String(normalized.payload.image||"").trim())
+                imageInventoryCandidates.push({eventId:normalized.eventId,vehicleId:normalized.vehicleId,vehicleLabel:normalized.vehicleLabel});
         });
     });
-    candidates.sort((a, b) =>
-        a.vehicleId.localeCompare(b.vehicleId, undefined, { numeric: true }) ||
-        a.eventId.localeCompare(b.eventId)
-    );
-    const response = {
-        status: "success",
-        candidates: candidates.slice(0, limit),
-        total: candidates.length,
-        limit,
-        truncated: candidates.length > limit,
-        source: "CATALOG",
-        readOnly: true
-    };
-    if (includeImageInventoryEvents) {
-        const imageSourceEvents = sourceEvents.filter(event =>
-            event && !String(event.supersedesEventId || "").trim() &&
-            ["cut", "opening", "feed"].includes(String(event.kind || "")) &&
-            event.payload && String(event.payload.image || "").trim()
-        );
-        const imageSourceIds = new Set(imageSourceEvents.map(event => String(event.eventId || "")));
-        const imageResolutionEvents = sourceEvents.filter(event =>
-            event && imageSourceIds.has(String(event.supersedesEventId || "")) &&
-            ["cut", "opening", "feed"].includes(String(event.kind || "")) &&
-            ["accepted", "retracted"].includes(String(event.status || "").toLowerCase())
-        );
-        response.imageInventoryCandidates = imageInventoryCandidates;
-        response.imageInventoryEvents = imageSourceEvents.concat(imageResolutionEvents).map(event => ({
-            eventId: String(event.eventId || ""), opId: String(event.opId || ""),
-            vehicleId: String(event.vehicleId || ""), operationHash: String(event.operationHash || ""),
-            kind: String(event.kind || ""), payload: event.payload && typeof event.payload === "object"
-                ? JSON.parse(JSON.stringify(event.payload)) : {},
-            createdAt: String(event.createdAt || ""), status: String(event.status || ""),
-            supersedesEventId: String(event.supersedesEventId || "")
-        }));
-    }
+    allCandidates.sort((a,b)=>a.vehicleId.localeCompare(b.vehicleId,undefined,{numeric:true})||a.eventId.localeCompare(b.eventId));
+    const response={status:"success",candidates:allCandidates.slice(0,limit),total:allCandidates.length,limit,truncated:allCandidates.length>limit,source:"CATALOG",readOnly:true};
+    if(includeImageInventoryCandidates)response.imageInventoryCandidates=imageInventoryCandidates;
     return response;
 }
 
