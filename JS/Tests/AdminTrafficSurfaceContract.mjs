@@ -37,4 +37,4 @@ assert.match(coordinator, /readServiceTraffic_\("ADMIN", "getServiceTraffic"\)/)
 assert.doesNotMatch(mutation, /getServiceTraffic/);
 assert.match(policy, /getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
 
-console.log("AdminTrafficSurfaceContract: 16/16 PASS — telemetría desde Coordinator con sesión, sin llamada ADMIN→Coordinator");
+console.log("AdminTrafficSurfaceContract: 17/17 PASS — telemetría desde Coordinator con sesión, sin llamada ADMIN→Coordinator");
