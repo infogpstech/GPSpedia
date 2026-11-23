@@ -98,6 +98,7 @@ Los registros conservan evidencia e historial; no son manuales de procedimiento.
 - **Tareas.txt y registros de backlog:** mantener requisitos, dependencias y estados. No duplicar aquí las normas generales.
 - **checkpoint.md:** actualizar al iniciar/cerrar una tarea cuando aporte continuidad, y siempre que exista interrupción, bloqueo, cambio de alcance o traspaso. No es obligatorio crear un checkpoint por cada microacción ni usarlo como diario de cada fase.
 - **Registros históricos:** no borrar ni reescribir evidencia anterior. Las rectificaciones se agregan como adendas vinculadas. Las partes archivadas en `Olds/Documentacion_Legacy/` son inmutables.
+- **Purga documental autorizada:** una eliminación de registros históricos solo puede realizarse por instrucción expresa del usuario; debe quedar anotada en el checkpoint, limitarse a los archivos solicitados y no alcanzar código fuente ni suites automatizadas.
 - **Rotación:** cuando un registro acumulativo se aproxime al límite de 180,000 caracteres Unicode, preparar su rotación sin pérdida, verificar reconstrucción exacta y actualizar el manifiesto. No realizar conteos y auditorías documentales repetitivas en cada operación cuando el archivo esté lejos del límite.
 
 Solo registrar un hallazgo si existe evidencia. Si no hay hallazgos, no inventarlos para justificar actividad. Mantener los registros breves y específicos.
