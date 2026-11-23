@@ -953,3 +953,16 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Informe técnico:** AUDITORIA_A07_06_ASOCIACION_MODELOS_2026-11-22.md.
 - **Siguiente paso inmediato:** publicar en la rama autorizada, comprobar CI, corregir fallos y revisar diff completo. Solo entonces cerrar A07-06.
 - **HEAD de base de este cambio:** 71ee59a744d1dc5e53ea3dc02994bd19e64afc9b; rama base protegida sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+## A07-06 COMPLETADA CON VALIDACIÓN DIFERIDA — sugerencias de asociación de imágenes por modelo — 2026-11-22
+
+- **Implementación:** ADMIN genera sugerencias de solo lectura para imágenes sin referencia activa. Agrupa modelos por categoría + marca + modelo y compara segmentos exactos de carpeta, frases del nombre, alias explícitos y variantes conservadoras por orden de tokens.
+- **Ambigüedad:** empates o diferencias menores a 15 puntos se presentan como ambiguos con hasta cinco candidatos. Se agregan señales y confianza orientativa; no se devuelve vehicleId ni campo destino.
+- **Integridad:** se excluyen archivos ya referenciados, históricos y MIME no imagen. El resultado completo de sugerencias forma parte del digest del preview; la UI presenta hasta 300 elementos y conserva el total. No hay acción de escritura ni vínculo con Safe Apply.
+- **Alias:** el código no contiene una fuente autoritativa de alias de modelos. El motor acepta equivalencias explícitas verificadas, pero la lista curada permanece vacía; no se inventaron sinónimos. La variación de orden de tokens se etiqueta como coincidencia orientativa de baja confianza.
+- **Pruebas focalizadas:** CortesImageModelAssociationSuggestions 8/8 PASS; CortesImageOrganizerUiContract 15/15 PASS.
+- **CI final del commit de implementación** 70b90d1313be15733d0d64b1c50b1d5984fc811c: 305 suites / 3,572 pruebas / 0 fallos; sintaxis 437 archivos JS/MJS; referencias 347 archivos; health read-only 7/7 SUCCESS; GitHub Pages build/deployment SUCCESS.
+- **Alcance externo:** no se desplegó Apps Script ni se modificaron Drive/Spreadsheet. En Beta aislada queda revisar sugerencias con el inventario real y añadir únicamente alias confirmados.
+- **Siguiente tarea:** continuar el backlog después de A07-06, respetando la secuencia vigente; no iniciar una reasignación automática.
+- **HEAD de implementación:** 70b90d1313be15733d0d64b1c50b1d5984fc811c; rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.

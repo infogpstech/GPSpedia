@@ -1167,3 +1167,13 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - No existe una fuente autoritativa de alias en el esquema/código consultado; la lista curada comienza vacía. No se inventaron equivalencias.
 - Se añadió la suite CortesImageModelAssociationSuggestions (8 casos) y se amplió el contrato UI. Smoke test helper 7/7 PASS; parsing ADMIN PASS. CI y regresión pendientes.
 - No se modificaron referencias de Spreadsheet ni archivos de Drive; no se desplegó Apps Script.
+
+
+2026-11-22 — A07-06 completada con validación diferida: sugerencias de asociación por modelo
+- El preview del organizador ahora genera sugerencias de solo lectura para imágenes sin referencia activa. La comparación considera categoría/marca/modelo, nombre de archivo, segmentos de carpeta, alias explícitos y variaciones conservadoras en el orden de tokens.
+- Las coincidencias empatadas o cercanas se marcan como ambiguas. La UI muestra candidatos, señales y confianza orientativa; no propone vehículo/campo específico ni cambia referencias.
+- Se excluyen imágenes ya referenciadas e históricas. El conjunto completo de sugerencias queda ligado al digest; la UI limita la presentación a 300 resultados.
+- No existe una fuente autoritativa de alias en el esquema actual. El registro curado permanece vacío y no se añadieron equivalencias supuestas.
+- Pruebas: CortesImageModelAssociationSuggestions 8/8 PASS; CortesImageOrganizerUiContract 15/15 PASS.
+- CI SHA 70b90d1313be15733d0d64b1c50b1d5984fc811c: 305 suites / 3,572 pruebas / 0 fallos; sintaxis 437 archivos JS/MJS; referencias 347; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+- No se desplegó Apps Script ni se modificaron Drive/Spreadsheet. La revisión del inventario real y el alta de alias verificados quedan para Beta aislada.
