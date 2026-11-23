@@ -24,11 +24,12 @@ assert.match(feedback, /getActivityLogs: \["Desarrollador", "Jefe", "Supervisor"
 assert.match(feedback, /getRichTextMode: null/);
 assert.match(api, /'getActivityLogs': 'FEEDBACK'/);
 assert.match(api, /'getRichTextMode': 'FEEDBACK'/);
-assert.match(api, /'getServiceTraffic': 'ADMIN'/);
+assert.match(api, /'getServiceTraffic': 'COORDINATOR'/);
 assert.match(admin, /function assertDeveloperSession\(payload\)/);
-assert.match(admin, /function handleGetServiceTraffic_\(/);
-assert.match(coordinator, /getRichTextMode: \{ read: feedbackRead \}/);
-assert.match(coordinator, /getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
+assert.doesNotMatch(admin, /function handleGetServiceTraffic_\(/);
+assert.doesNotMatch(coordinator, /getRichTextMode:|getServiceTraffic:\s*\{/);
+assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
+assert.match(coordinator, /role !== "desarrollador"/);
 
 assert.match(ui, /function getUiSessionContext_\(user = getState\(\)\.currentUser\)/);
 assert.match(ui, /role: normalizeUiRole_\(user\.Privilegios\)/);
