@@ -47,8 +47,9 @@ assert.doesNotMatch(writeAllocate, /LockService|lock\.tryLock\(|waitLock\(|relea
 assert.match(writeAllocate, /reserveCortesVehicleIdForOperation_\(/,
     "La asignación central debe verificar el ID reservado por opId.");
 assert.match(writeDrive, /lock\.tryLock\(0\)/);
-assert.match(adminEntry, /lock\.tryLock\(0\)/);
-assert.doesNotMatch(adminEntry, /waitLock\(/);
+assert.match(adminEntry, /ACTION_MOVED_TO_WRITE/);
+assert.doesNotMatch(adminEntry, /UrlFetchApp|lock\.tryLock\(|waitLock\(/,
+    "La ruta legacy ADMIN debe rechazar el alta sin adquirir locks ni coordinar servicios.");
 assert.match(adminUpload, /findUniqueAdminVehicleRow_\(sheet, cleanVehicleId\)/,
     "El reemplazo debe rechazar vehículos inexistentes o duplicados antes de subir la imagen.");
 assert.match(adminUpload, /uploadImageToDrive\(fileData, canonicalBaseName, folder, operationKey\)/,
