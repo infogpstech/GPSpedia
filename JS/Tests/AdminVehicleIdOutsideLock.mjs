@@ -8,7 +8,7 @@ const api = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), 
 assert.equal(admin.includes("requestNextVehicleIdFromWriteService"), false,
     "ADMIN no debe coordinar la asignación de IDs mediante una llamada backend→backend.");
 const legacyStart = admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
-const legacyEnd = admin.indexOf("\\nfunction sanitizeSupplementaryRichText_", legacyStart);
+const legacyEnd = admin.indexOf("\nfunction sanitizeSupplementaryRichText_", legacyStart);
 assert.ok(legacyStart >= 0 && legacyEnd > legacyStart, "La ruta de compatibilidad ADMIN debe permanecer identificable.");
 const legacyHandler = admin.slice(legacyStart, legacyEnd);
 assert.match(legacyHandler, /ACTION_MOVED_TO_WRITE/);
