@@ -59,3 +59,21 @@ Si el tamaño futuro del catálogo exige paginación, el diseño deberá incluir
 La conclusión se basa en el código versionado: handlers de `JS/Services/catalog.js`, mapa de acciones de `JS/Frontend/api-config.js`, consumidor de `getDropdownData` en `HTML/add_cortes.html`, flujo de catálogo en `JS/Frontend/auth.js` y contrato de persistencia de `JS/Frontend/offline.js`. No se ejecutaron lecturas contra Spreadsheet productivo ni mediciones de Apps Script; esas validaciones requieren el entorno Beta y no se presentan como realizadas.
 
 **Resultado del criterio 4:** evaluación y guía de uso documentadas. No se modificaron endpoints, contratos de respuesta ni despliegues.
+
+
+---
+
+## Actualización MIG-023 — feed incremental propiedad de CATALOG (2026-11-23)
+
+El feed de cambios ya no se consulta ni se publica en COORDINATOR:
+
+- \`getCatalogChanges\` usa GET de CATALOG con \`catalogFeed=1\`, \`cursor\` y \`limit\`.
+- \`publishCatalogChange\` y \`publishCatalogReset\` llegan por POST al servicio CATALOG. El frontend coordina la publicación después de una mutación confirmada.
+- FEEDBACK devuelve únicamente metadatos de colección, registro y operación. CATALOG valida la sesión local y reconstruye el snapshot desde la Spreadsheet; no confía en snapshots enviados por el navegador.
+- Los cambios FEEDBACK de Cortes, PyS y Tutoriales se publican como deltas por registro. Si el registro no puede reconstruirse, CATALOG emite un reset para forzar una instantánea canónica.
+- WRITE y ADMIN conservan la publicación de reset después de mutaciones. El diario local de CATALOG usa ScriptProperties como almacenamiento de eventos, ScriptLock local, idempotencia por requestId y retención máxima de 100 eventos; no almacena userId ni sessionToken.
+- El consumidor frontend mantiene el cursor, aplica deltas a IndexedDB y solicita snapshot completo solo cuando el cursor requiere recuperación/reset o no existe caché válida. La sincronización debe seguir siendo silenciosa y no bloquear la primera pintura.
+
+Los endpoints heredados del feed en COORDINATOR permanecen únicamente como compatibilidad temporal hasta MIG-025. No deben usarse en nuevos consumidores ni en el flujo frontend actual. La telemetría de lectura del feed se atribuye ahora a CATALOG.
+
+**Validación local de esta migración:** las suites específicas \`CatalogChangeFeed\`, \`CatalogBrowserReset\` y \`FeedbackCatalogPublicationIsolation\` prueban el diario, cursor, recuperación, publicación autenticada, reconstrucción canónica y ausencia de publicación FEEDBACK servicio-a-servicio. Las pruebas remotas con deployments Apps Script, Spreadsheet Beta, Android/PWA y escritorio siguen pendientes de Beta.
