@@ -85,7 +85,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
-    'publishCatalogReset': 'CATALOG',
+    'publishCatalogReset': 'CATALOG', 'publishCatalogChange': 'CATALOG',
     'getCatalogChanges': 'CATALOG',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
@@ -227,6 +227,14 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
             const publication = await publishCatalogResetAfterMutation_("ADMIN", action, payload, result);
             if (publication && publication.catalogSyncPending) result.catalogSyncPending = true;
         }
+        if (service === "FEEDBACK" && result.status === "success" &&
+            result.catalogChange && typeof result.catalogChange === "object") {
+            return await publishCatalogChangeAfterMutation_("FEEDBACK", action, payload, result);
+        }
+        if (service === "FEEDBACK" && result.status === "success" &&
+            result.catalogResetRequired === true && result.dryRun !== true) {
+            return await publishCatalogResetAfterMutation_("FEEDBACK", action, payload, result);
+        }
         if (result.status === 'error') {
             const detailMessage = typeof result.details === "string" ? result.details :
                 result.details && typeof result.details.errorMessage === "string" ? result.details.errorMessage : "";
@@ -308,6 +316,46 @@ async function publishCatalogResetAfterMutation_(service, action, payload, resul
             typeof CustomEvent === "function") {
             window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
                 detail: { service: service, action: action, reason: "catalog-publication" }
+            }));
+        }
+        return pending;
+    }
+}
+
+
+
+async function publishCatalogChangeAfterMutation_(service, action, payload, result) {
+    const change = result && result.catalogChange;
+    if (!change || typeof change !== "object" || !change.collection || !change.recordId || !change.operation) {
+        return Object.assign({}, result, { catalogSyncPending: true });
+    }
+    const sourceId = String(payload && (
+        payload.opId || payload.requestId || payload.problemId || payload.tutorialId ||
+        payload.referenceId || payload.vehicleId || payload.operationId
+    ) || change.recordId || Date.now()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || String(Date.now());
+    const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
+    try {
+        const publication = await routeActionInternal_("publishCatalogChange", {
+            userId: String(payload && payload.userId || "").trim(),
+            sessionToken: String(payload && payload.sessionToken || ""),
+            service,
+            operation: action,
+            requestId,
+            change: {
+                collection: String(change.collection),
+                recordId: String(change.recordId),
+                operation: String(change.operation)
+            }
+        });
+        if (!publication || publication.status !== "success") throw new Error("CATALOG no confirmó el delta canónico.");
+        return result;
+    } catch (error) {
+        const pending = Object.assign({}, result, { catalogSyncPending: true });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
+                detail: { service, action, reason: "catalog-delta-publication" }
             }));
         }
         return pending;
