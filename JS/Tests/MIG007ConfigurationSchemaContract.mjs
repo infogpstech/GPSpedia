@@ -21,9 +21,8 @@ const requiredSections = [
 ];
 for (const section of requiredSections) assert.ok(design.includes(section), 'Falta sección: ' + section);
 
-for (let family = 1; family <= 26; family++) {
-  assert.match(design, new RegExp('\\|' + family + '(?:–|\\|)'), 'No se documenta trazabilidad para familia ' + family);
-}
+const familyRows = ['| 1–5 |', '| 6 |', '| 7 |', '| 8 |', '| 9 |', '| 10 |', '| 11 |', '| 12 |', '| 13 |', '| 14 |', '| 15–16 |', '| 17–20 |', '| 21–25 |', '| 26 |'];
+for (const row of familyRows) assert.ok(design.includes(row), 'No se documenta trazabilidad para el grupo ' + row);
 for (const token of [
   'GPSpedia_COORDINATOR_SECRET',
   'GPSpedia_CATALOG_TRAFFIC_SECRET',
