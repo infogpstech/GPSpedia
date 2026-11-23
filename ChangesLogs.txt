@@ -159,4 +159,5 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se verificaron cache miss/hit, TTL de seis horas, clave SHA-256, expiración, identidad, usuario eliminado, token revocado y cambio de rol tras invalidación.
 - Las rutas ordinarias de sesión no usan Coordinator, API de sesión remota ni leases SharedMutation; se conservan las coordinaciones no relacionadas con sesión.
 - Se ampliaron pruebas MIG-013 y se documentó la coordinación frontend de invalidación remota como alcance de MIG-014.
-- Sin cambios a endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos. La validación real de Beta queda pendiente.
+- Harness V8 aislado: MIG013SessionActorLocalLookup 21/21 PASS; SessionActivityCoordination 9/9; SessionActivityLeaseMinimization 6/6; AuthSessionReadOptimization 9/9 (45/45 aserciones dirigidas).
+- Sin cambios a endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos. La validación real de Beta queda pendiente. MIG-013: COMPLETADA CON VALIDACIÓN DIFERIDA.
