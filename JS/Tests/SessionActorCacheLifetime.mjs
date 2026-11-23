@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const source=fs.readFileSync("JS/Services/SharedMutationClient.js","utf8");
+const source=fs.readFileSync("JS/Services/SharedSessionActor.js","utf8");
 const auth=fs.readFileSync("JS/Services/Auth.js","utf8");
 assert.match(source,/SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 21600/);
 assert.match(source,/loadSharedSessionActorFromSpreadsheet_/);
