@@ -1052,3 +1052,15 @@ AUG-160 — VALIDACIÓN BETA DE CARGAS ADMIN Y JOURNAL ImageUploadEvents
 - Verificar que el reconciliador histórico no modifica ImageUploadLedger y que los eventos nuevos no se confunden con tokens históricos.
 - No ejecutar contra Drive/Spreadsheet productivos ni desplegar sin autorización expresa.
 ================================================================================
+
+================================================================================
+### 2026-11-23 — ACLARACIÓN DE CRITERIOS BETA TRAS MIG-020 (INBOX)
+La siguiente interpretación sustituye cualquier nota histórica contradictoria sobre la visibilidad de las acciones de estado:
+- El Inbox está disponible para los roles activos conforme a la matriz de secciones; cada rol conserva sus límites de consulta y destinatarios.
+- Técnico y Técnico exterior pueden iniciar conversaciones únicamente con los destinatarios permitidos por la jerarquía (Supervisor); no obtienen acceso a secciones administrativas.
+- «Marcar no leída» aparece en el detalle de una conversación recibida cuando no está ya marcada como no leída. Al ejecutarse, debe regresar a la lista sin volver a marcarla automáticamente como leída.
+- «Eliminar de mi bandeja» aparece dentro del detalle de una conversación participante. Solo oculta la copia del usuario actual; no elimina mensajes, conversación, auditoría ni la vista del otro participante.
+- getMyProblemReports conserva su alcance de reportes propios y no habilita acciones administrativas.
+- Probar ambas acciones con dos participantes y un tercero no autorizado; comprobar que el backend rechaza al tercero y que la auditoría/estado privado permanecen consistentes.
+- No usar datos productivos. Los deployments, roles, hojas y cuentas de prueba deben pertenecer al entorno Beta.
+================================================================================

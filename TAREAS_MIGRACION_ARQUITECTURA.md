@@ -434,14 +434,21 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Validación diferida:** no se ejecutaron Apps Script, Spreadsheet ni Drive reales. Mantener pruebas Beta aisladas para PyS, relaciones, tutoriales, reportes, likes y vistas, incluyendo AUG-128 y AUG-155; no usar datos productivos.
 
 ### MIG-020 — Inbox completo
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener conversaciones, mensajes, destinatarios y respuestas.
-- [ ] Mantener categorías, plantillas, borradores, búsqueda y paginación.
-- [ ] Mantener recibidos/no leídos/enviados/archivados, contador y acciones de estado.
-- [ ] Mantener cierre y eliminación con permisos actuales.
-- [ ] Mantener logs y notificaciones críticas.
-
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
+**Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §18. El feed de COORDINATOR se consulta desde frontend usando la configuración central; se retiró el handler FEEDBACK sin ruta que leía el journal compartido. No se añadieron URLs, tokens ni secretos interservicio a propiedades Apps Script.
+- [x] Mantener conversaciones, mensajes, destinatarios individuales, respuestas y jerarquía RBAC.
+- [x] Mantener categorías, plantillas, borradores recuperables por usuario, búsqueda y paginación con cursores estables.
+- [x] Mantener recibidos/no leídos/enviados/archivados, contador y estados privados por participante.
+- [x] Exponer en UI «Marcar no leída» y «Eliminar de mi bandeja» solo en el contexto de una conversación autenticada; el backend limita ambas acciones a participantes. La eliminación oculta la copia personal y conserva el historial compartido.
+- [x] Mantener cierre restringido a Desarrollador, Jefe y Supervisor, y bloquear respuestas posteriores al cierre.
+- [x] Mantener auditoría, alertas críticas idempotentes y mensajes centralizados de operaciones.
+- [x] Revertir lectura, archivo y cierre si no se puede confirmar el evento de auditoría; agregar pruebas de fallo y rollback.
+- [x] Serializar las mutaciones de Inbox con lock breve y rechazar concurrencia cuando el lock está ocupado; las consultas permanecen sin lock.
+- [x] Validar contratos de roles, XSS, paginación/caché, notificaciones, borradores y acciones de estado.
+**Validación CI:** GitHub Actions Node.js 22, run `45253324874`, grupo `44 MIG020`: **257/257 pruebas PASS**, sin fallos dentro del grupo. Detalle: InboxConversations 70/70; InboxUi 89/89; caché/paginación 19/19; eventos de imágenes 7/7; auditoría 15/15; roles 22/22; XSS 30/30; mensajes Developer 5/5.
+**Regresión general:** 231 suites, 2,835 pruebas aprobadas y 6 fallos fuera de MIG020: ADMIN P4, FEEDBACK reset de vídeo desde navegador, CATALOG feed incremental, UTILITIES Spreadsheet fixture/RBAC/staging/rollback, AUTH purga Logs e INTEGRATION BETA-043. No se declaran resueltas por MIG020.
+**Despliegue:** Pages build y deploy del mismo HEAD, run `45253324552`: SUCCESS.
+**Validación diferida:** no se ejecutaron Apps Script, Spreadsheet, cuentas ni datos productivos. Mantener las pruebas Beta de roles, estados privados, borradores, móvil, notificaciones y rollback (AUG-115, AUG-116, AUG-119, AUG-152, AUG-155 y GP-INBOX-04B/04C/04D).
 ### MIG-021 — Métricas, estados y monitoreo
 **Estado: PENDIENTE**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.

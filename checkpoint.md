@@ -1055,3 +1055,20 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - MIG-017, MIG-018 y MIG-019 quedan cerradas con validación diferida.
 - Siguiente tarea según prioridad y dependencias: **MIG-020 — Inbox completo**.
 - Rama base protegida `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificada.
+
+### MIG-020 — Inbox completo
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- CI Node.js 22, run `45253324874`, grupo `44 MIG020`: **257/257 pruebas PASS**, sin fallos dentro del grupo.
+- Detalle: InboxConversations 70/70; InboxUi 89/89; caché/paginación 19/19; eventos de imágenes de reportes 7/7; auditoría 15/15; roles 22/22; XSS 30/30; mensajes Developer 5/5.
+- Se añadieron a la interfaz las acciones «Marcar no leída» y «Eliminar de mi bandeja», con autorización por participante y conservación del historial compartido.
+- Se reforzó el rollback de lectura, archivo y cierre cuando falla la auditoría.
+- Se serializaron las mutaciones Inbox con un lock breve; las consultas no adquieren locks y las mutaciones fallan rápido si el lock está ocupado.
+- Se retiró el handler FEEDBACK sin ruta de lectura del journal COORDINATOR; el frontend mantiene la consulta mediante la configuración central, conforme a §18.
+- Regresión general en run `45253324874`: 231 suites, 2,835 pruebas aprobadas y seis fallos ajenos a MIG020: ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet fixture/RBAC/staging/rollback, AUTH purga Logs e INTEGRATION BETA-043.
+- Pages build/deploy del mismo HEAD, run `45253324552`: SUCCESS.
+- No se ejecutaron Apps Script, Spreadsheet ni cuentas reales. Validación Beta aislada pendiente: AUG-115, AUG-116, AUG-119, AUG-152, AUG-155 y GP-INBOX-04B/04C/04D.
+
+### Continuidad
+- MIG-017, MIG-018, MIG-019 y MIG-020 quedan cerradas con validación diferida.
+- Siguiente tarea según prioridad y dependencias: **MIG-021 — Métricas, estados y monitoreo**.
+- Rama base protegida `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificada.

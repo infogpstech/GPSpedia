@@ -235,3 +235,15 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Pages build/deploy del mismo HEAD, run 45251355846: SUCCESS.
 - No se ejecutaron Apps Script, Spreadsheet, Drive ni recursos productivos. La validación Beta aislada permanece pendiente (AUG-128/AUG-155).
 - Siguiente tarea: MIG-020 — Inbox completo.
+
+### 2026-11-23 — MIG-020: Inbox completo
+- Grupo MIG020, GitHub Actions Node.js 22 run 45253324874: 257/257 pruebas PASS, sin fallos del grupo.
+- Se añadieron a la interfaz las acciones «Marcar no leída» y «Eliminar de mi bandeja», con autorización por participante y conservación del historial compartido.
+- Se reforzó el rollback de lectura, archivo y cierre cuando falla la auditoría.
+- Se serializaron las mutaciones de Inbox con lock breve; consultas sin lock y mutaciones con rechazo rápido cuando está ocupado.
+- Se retiró el handler FEEDBACK sin ruta para leer el journal COORDINATOR; el frontend consulta el feed con configuración central, conforme a NORMAS_DESAROLLO.md §18.
+- Cobertura: conversaciones y RBAC, UI, borradores, categorías/plantillas, búsqueda/paginación, caché, auditoría, XSS, eventos de imágenes y mensajes de operaciones Developer.
+- Regresión general: 2,835 pruebas aprobadas y seis fallos fuera de MIG020 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet fixture, AUTH purga Logs, INTEGRATION BETA-043).
+- Pages build/deploy run 45253324552: SUCCESS.
+- No se ejecutaron servicios Apps Script ni recursos productivos. Beta aislada pendiente (AUG-115/116/119/152/155 y GP-INBOX-04B/04C/04D).
+- Siguiente tarea: MIG-021 — Métricas, estados y monitoreo.
