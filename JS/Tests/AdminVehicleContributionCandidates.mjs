@@ -16,7 +16,10 @@ function sheets(role="Desarrollador",created=new Date(),activity=new Date(),toke
  return {getSheetByName:name=>name==="Users"?sheet([["id","username","password","role"],["USER-1","dev","",role]]):
   name==="ActiveSessions"?sheet([["id","username","token","date","logs","lastActivityAt"],...tokens.map(t=>["USER-1","dev",t,created,"",activity])]):null};
 }
-const verify=ss=>new Function("getSpreadsheet",authSource+";return verifyCatalogDeveloperSession_;")(()=>ss);
+const actorCache = { get: () => null, put: () => {}, remove: () => {} };
+const cacheService = { getScriptCache: () => actorCache };
+const utilities = { DigestAlgorithm: { SHA_256: "SHA_256" }, Charset: { UTF_8: "UTF_8" }, computeDigest: () => new Array(32).fill(1) };
+const verify=ss=>new Function("getSpreadsheet","CacheService","Utilities",authSource+";return verifyCatalogDeveloperSession_;")(()=>ss,cacheService,utilities);
 assert.equal(verify(sheets())({userId:"USER-1",sessionToken:"SESSION-1"}),true);
 assert.throws(()=>verify(sheets("Técnico"))({userId:"USER-1",sessionToken:"SESSION-1"}),/Desarrollador/);
 assert.throws(()=>verify(sheets("Desarrollador",new Date("2020-01-01"),new Date("2020-01-01")))({userId:"USER-1",sessionToken:"SESSION-1"}),/expiró/);
