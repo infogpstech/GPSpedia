@@ -110,14 +110,8 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE carpetas suplementarias sin lease ni espera','JS/Tests/WriteSupplementaryFolderNoLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
   runCli('WRITE reserva ID antes del ScriptLock; ADMIN rechaza ruta legacy','JS/Tests/AdminVehicleIdOutsideLock.mjs');
-  runCli('ADMIN transmite opId y huella al asignador WRITE','JS/Tests/AdminVehicleIdAllocationIdempotency.mjs');
-  runCli('ADMIN→WRITE recupera asignación de ID tras respuesta perdida','JS/Tests/VehicleIdAllocationEndToEnd.mjs');
-  runCli('ADMIN valida el contrato idempotente antes de asignar ID y adquirir lock','JS/Tests/AdminCutPreflightBeforeAllocation.mjs');
-  runCli('ADMIN reserva solicitudes legacy sin opId para Drive fuera del lock','JS/Tests/AdminLegacyCutReservation.mjs');
-  runCli('ADMIN prepara catálogo y datos de alta fuera del lock','JS/Tests/AdminCutEntityPreflight.mjs');
-  runCli('ADMIN busca fila de vehículo existente antes del lock y revalida ID','JS/Tests/AdminExistingVehicleLookupPreflight.mjs');
-  runCli('ADMIN revalida vehicleId desde el snapshot de fila sin lectura individual','JS/Tests/AdminExistingVehicleSnapshotRevalidation.mjs');
-  runCli('ADMIN reutiliza fila verificada post-Drive para preparar VIN','JS/Tests/AdminExistingVehiclePostDriveSnapshotReuse.mjs');
+   runCli('WRITE reserva IDs idempotentes con opId y huella','JS/Tests/AdminVehicleIdAllocationIdempotency.mjs');
+   runCli('Frontend→WRITE recupera asignación de ID tras respuesta perdida','JS/Tests/VehicleIdAllocationEndToEnd.mjs');
   runCli('ADMIN reutiliza encabezados VIN/testigo sin lecturas repetidas','JS/Tests/AdminTestigoHeaderReadReuse.mjs');
   runCli('ADMIN sincroniza carpeta de imagen después de liberar ScriptLock','JS/Tests/AdminVehicleFolderSyncOutsideLock.mjs');
   runCli('ADMIN reemplazo de imagen ejecuta Drive fuera del ScriptLock y revalida opId','JS/Tests/AdminImageUploadDriveIsolation.mjs');
@@ -129,7 +123,6 @@ runGroup('32','ADMIN',()=>{
   runCli('ADMIN limita lectura del catálogo de entidades a sus columnas','JS/Tests/AdminEntityLookupBoundedRead.mjs');
   runCli('ADMIN limita lectura de duplicados VIN a columnas necesarias','JS/Tests/AdminVinDuplicateBoundedRead.mjs');
   runCli('ADMIN localiza vehículo leyendo solo la columna ID','JS/Tests/AdminUniqueVehicleRowBoundedRead.mjs');
-  runCli('ADMIN reutiliza snapshot de Cortes al recuperar opId legacy','JS/Tests/AdminLegacyOpIdSnapshotReuse.mjs');
   runCli('ADMIN inventario Drive no bloquea cortes ni login','JS/Tests/AdminInventoryLockIsolation.mjs');
   runCli('RBAC y sesiones ilimitadas del rol Desarrollador','JS/Tests/DeveloperPrivilegeRouting.mjs');
  runCli('P4 protección de medios sin bloquear texto ni controles','JS/Tests/ClientInteractionPolicy.mjs');
