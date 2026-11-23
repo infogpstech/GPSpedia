@@ -513,7 +513,7 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 agrupación jerárquica de modelos','JS/Tests/SearchModelGrouping.mjs');
  runCli('MIG018 VIN colección de navegación','JS/Tests/NavigationVinCollection.js');
  runCli('MIG018 VIN firma y persistencia','JS/Tests/VinSignaturePersistence.js');
- recordResult('MIG018 VIN integridad de testigos',new Function(read('JS/Services/admin.js')+'\\n'+read('JS/Tests/VinTestigoIntegrity.js')+'\\nreturn runVinTestigoIntegrityTests;')());
+ recordResult('MIG018 VIN integridad de testigos',new Function(read('JS/Services/admin.js')+'\n'+read('JS/Tests/VinTestigoIntegrity.js')+'\nreturn runVinTestigoIntegrityTests;')());
  runCli('MIG018 VIN semántica de rangos de años','JS/Tests/VinYearRangeSemantics.js');
  runCli('MIG018 VIN resolución de contexto','JS/Tests/VinContextResolution.js');
  runCli('MIG018 VIN normalización de consultas','JS/Tests/VinQueryNormalization.js');
