@@ -89,7 +89,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE conserva alta de vehículos y recuperación idempotente','JS/Tests/AdminNewVehicleBatchWrites.mjs');
   runCli('WRITE limpia la fila nueva antes de asignar el ID','JS/Tests/AdminNewVehicleSingleRowClear.mjs');
   runCli('WRITE revalida ID desde snapshot post-Drive','JS/Tests/AdminNewVehiclePostDriveIdSnapshotReuse.mjs');
-  runCli('ADMIN evita el ciclo Drive/lock si la recuperación no necesita reparar imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
+  runCli('WRITE evita ciclos Drive/lock innecesarios y agrupa la reparación de imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
   runCli('ADMIN reutiliza snapshot de fila para vincular imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');
   runCli('WRITE recupera opId heredados sin descargar Cortes completo','JS/Tests/WriteOpIdLegacyLookup.mjs');
   runCli('WRITE localiza vehicleId leyendo solo la columna ID','JS/Tests/WriteUniqueVehicleRowBoundedRead.mjs');
