@@ -141,7 +141,7 @@ const catalogSpreadsheet = {
     }
 };
 const catalogApi = new Function("SpreadsheetApp","CacheService","Utilities",
-    catalog + "\\nreturn {getCatalogSessionActor_,loadCatalogSessionActor_,invalidateCatalogSessionActorCache_};"
+    catalog + "\nreturn {getCatalogSessionActor_,loadCatalogSessionActor_,invalidateCatalogSessionActorCache_};"
 )({openById:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
 const catalogCold = catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001");
 assert.equal(catalogCold.role,"tecnico");
