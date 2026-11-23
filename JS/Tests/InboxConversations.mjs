@@ -778,12 +778,13 @@ run("Read, archive y close revierten el estado si no se puede confirmar la audit
         body:"La lectura debe revertirse si falla su auditoría.",idempotencyKey:"rollback-read-01"
     });
     const readState = api.inboxFindState_(spreadsheet.getSheetByName("InboxConversationState"),readConversation.conversationId,"U2");
-    const readBefore = readState.row.slice();
+    const stateSheet = spreadsheet.getSheetByName("InboxConversationState");
+    const readBefore = stateSheet.rows[readState.rowNumber - 1].slice();
     audit.failNextWrite = true;
     assert.throws(() => api.handleMarkInboxRead({
         ...actor("U2","token-b"),conversationId:readConversation.conversationId
     }),/audit write failed/);
-    assert.deepEqual(readState.row,readBefore);
+    assert.deepEqual(stateSheet.rows[readState.rowNumber - 1],readBefore);
     assert.equal(api.handleGetInboxConversations({
         ...actor("U2","token-b"),folder:"unread"
     }).data.some(item => item.conversationId === readConversation.conversationId),true);
@@ -793,12 +794,12 @@ run("Read, archive y close revierten el estado si no se puede confirmar la audit
         body:"El archivo debe revertirse si falla su auditoría.",idempotencyKey:"rollback-archive-01"
     });
     const archiveState = api.inboxFindState_(spreadsheet.getSheetByName("InboxConversationState"),archiveConversation.conversationId,"U2");
-    const archiveBefore = archiveState.row.slice();
+    const archiveBefore = stateSheet.rows[archiveState.rowNumber - 1].slice();
     audit.failNextWrite = true;
     assert.throws(() => api.handleArchiveInboxConversation({
         ...actor("U2","token-b"),conversationId:archiveConversation.conversationId,archived:true
     }),/audit write failed/);
-    assert.deepEqual(archiveState.row,archiveBefore);
+    assert.deepEqual(stateSheet.rows[archiveState.rowNumber - 1],archiveBefore);
     assert.equal(api.handleGetInboxConversations({
         ...actor("U2","token-b"),folder:"archived"
     }).data.some(item => item.conversationId === archiveConversation.conversationId),false);
