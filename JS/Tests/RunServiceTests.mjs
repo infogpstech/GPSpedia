@@ -137,6 +137,7 @@ runGroup('32','ADMIN',()=>{
  runCli('UX ayudas contextuales del formulario de cortes','JS/Tests/ContextualHelpForms.mjs');
   runCli('UX proporciones del panel Developer','JS/Tests/DeveloperPanelUX.mjs');
   runCli('Drive alertas privadas por umbral de cuota y monitor GDrive','JS/Tests/DriveStorageAlerts.mjs');
+ runCli('MIG-013 actor de sesión desde Users/ActiveSessions con caché local','JS/Tests/MIG013SessionActorLocalLookup.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
  runCli('P0 AUTH leases mínimos para términos y actividad huérfana','JS/Tests/SessionActivityLeaseMinimization.mjs');
  runCli('P0 AUTH elimina lecturas completas y revocaciones duplicadas','JS/Tests/AuthSessionReadOptimization.mjs');
