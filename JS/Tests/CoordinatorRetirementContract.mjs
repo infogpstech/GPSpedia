@@ -11,6 +11,7 @@ const reader = read("JS/Services/CentralConfigurationReader.js");
 const telemetry = read("JS/Frontend/serviceTelemetry.js");
 const invalidation = read("JS/Frontend/sessionCacheInvalidation.js");
 const ui = read("JS/Frontend/ui.js");
+const html = read("index.html");
 const activeServices = ["Auth.js","catalog.js","write.js","feedback.js","admin.js","Utilities.js","InboxConversations.js"]
     .map(name => read("JS/Services/" + name));
 assert.equal(existsSync(coordinatorPath), false, "Coordinator.js debe estar retirado.");
@@ -21,7 +22,10 @@ assert.match(reader, /GP_CONFIG_RETIRED_SERVICE_KEYS_ = \["USERS", "COORDINATOR"
 assert.doesNotMatch(telemetry, /COORDINATOR/);
 assert.doesNotMatch(invalidation, /COORDINATOR|UrlFetchApp|GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(ui, /Coordinator|globalServiceTraffic|getServiceTraffic/);
+assert.match(html, /Tráfico global coordinado · retirado/);
+assert.match(html, /No contaba todas las solicitudes HTTP/);
+assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
 for (const source of activeServices) {
     assert.doesNotMatch(source, /GPSpedia_COORDINATOR_(?:URL|SECRET)|withSharedMutationLease_|createSharedMutationClient_/);
 }
-console.log("CoordinatorRetirementContract: 10/10 PASS — fuente retirada, seis servicios y sustitutos locales");
+console.log("CoordinatorRetirementContract: 13/13 PASS — fuente retirada, seis servicios y paridad documentada de telemetría");
