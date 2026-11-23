@@ -14,33 +14,18 @@ function extractFunction(source, name) {
     }
     throw new Error("No se pudo extraer " + name);
 }
-const routeSource = "async " + extractFunction(api, "routeAction");
-const calls = [];
-let failRefresh = false, approvalStatus = "success";
-const events = [];
-const routeActionInternal_ = async (action, payload, serviceOverride) => {
-    calls.push({ action, payload, serviceOverride });
-    if (action === "approveVideo") return { status: approvalStatus, message: "Vídeo aprobado." };
-    if (action === "rejectVideo") return { status: "success", message: "Vídeo rechazado." };
-    if (action === "getCatalogData") {
-        if (failRefresh) throw new Error("CATALOG unavailable");
-        return { status: "success", data: [] };
-    }
-    return { status: "success" };
+const helperSource = "async " + extractFunction(api, "refreshCatalogAfterVideoApproval_");
+const calls = [], events = [];
+let failRefresh = false;
+const routeAction = async (action, payload) => {
+    calls.push({ action, payload });
+    if (action !== "getCatalogData") return { status: "success" };
+    if (failRefresh) throw new Error("CATALOG unavailable");
+    return { status: "success", data: [] };
 };
-const routeAction = new Function(
-    "ACTION_TO_SERVICE_MAP", "routeActionInternal_", "recordBrowserServiceTraffic",
-    "invalidateSessionActorCaches", "routeActionWithRetry", "notifySessionCacheInvalidationPending_",
-    "sessionCacheKeysFromError_", "window", "CustomEvent",
-    routeSource + "\nreturn routeAction;"
-)(
-    { approveVideo: "FEEDBACK", rejectVideo: "FEEDBACK", getCatalogData: "CATALOG" },
-    routeActionInternal_,
-    () => {},
-    async () => ({ status: "success" }),
-    async () => ({ status: "success" }),
-    () => {},
-    () => null,
+const refresh = new Function("routeAction", "window", "CustomEvent",
+    helperSource + "\nreturn refreshCatalogAfterVideoApproval_;")(
+    routeAction,
     { dispatchEvent: event => events.push(event) },
     class CustomEvent { constructor(type, options) { this.type = type; this.detail = options && options.detail; } }
 );
@@ -48,22 +33,21 @@ let passed = 0;
 async function test(name, fn) { await fn(); passed++; }
 await test("aprobación confirmada coordina actualización CATALOG desde el navegador", async () => {
     calls.length = 0;
-    const result = await routeAction("approveVideo", { itemId: "video-1" });
+    const result = await refresh("approveVideo", { status: "success", message: "Vídeo aprobado." });
     assert.equal(result.status, "success");
     assert.equal(result.catalogRefreshStatus, "success");
-    assert.deepEqual(calls.map(call => call.action), ["approveVideo", "getCatalogData"]);
-    assert.equal(calls[1].payload.forceRefresh, true);
+    assert.deepEqual(calls.map(call => call.action), ["getCatalogData"]);
+    assert.equal(calls[0].payload.forceRefresh, true);
 });
 await test("rechazo no fuerza una actualización del catálogo", async () => {
     calls.length = 0;
-    const result = await routeAction("rejectVideo", { itemId: "video-1" });
+    const result = await refresh("rejectVideo", { status: "success", message: "Vídeo rechazado." });
     assert.equal(result.status, "success");
-    assert.equal(calls.length, 1);
-    assert.equal(calls[0].action, "rejectVideo");
+    assert.equal(calls.length, 0);
 });
 await test("fallo de CATALOG no revierte ni oculta la aprobación confirmada", async () => {
     calls.length = 0; failRefresh = true;
-    const result = await routeAction("approveVideo", { itemId: "video-2" });
+    const result = await refresh("approveVideo", { status: "success", message: "Vídeo aprobado." });
     failRefresh = false;
     assert.equal(result.status, "success");
     assert.equal(result.catalogRefreshPending, true);
@@ -71,15 +55,15 @@ await test("fallo de CATALOG no revierte ni oculta la aprobación confirmada", a
     assert.ok(events.some(event => event.type === "gpsepedia:catalog-refresh-pending"));
 });
 await test("una aprobación rechazada por FEEDBACK no llama a CATALOG", async () => {
-    calls.length = 0; approvalStatus = "error";
-    const result = await routeAction("approveVideo", { itemId: "video-3" });
-    approvalStatus = "success";
+    calls.length = 0;
+    const result = await refresh("approveVideo", { status: "error", message: "No autorizado." });
     assert.equal(result.status, "error");
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 0);
 });
 await test("FEEDBACK no publica cambios de vídeo hacia Coordinator desde Apps Script", async () => {
     assert.doesNotMatch(feedback, /publishFeedbackCortesCatalogChange_\\(action, referenceId\\)/);
     assert.doesNotMatch(feedback, /publishPysCatalogChange_\\(action, referenceId\\)/);
     assert.doesNotMatch(feedback, /publishTutorialCatalogChange_\\(action, referenceId\\)/);
+    assert.match(api, /refreshCatalogAfterVideoApproval_\\(action, finalResult\\)/);
 });
 console.log("VideoApprovalCatalogRefreshFrontend: " + passed + "/" + passed + " PASS — aprobación coordina CATALOG desde frontend; FEEDBACK no usa Coordinator para decisiones de vídeo.");
