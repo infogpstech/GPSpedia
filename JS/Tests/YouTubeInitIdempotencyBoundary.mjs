@@ -246,6 +246,18 @@ test("la renovación rechaza URL ausente o ajena al endpoint oficial", () => {
     assert.equal(h.createdSessions, 1);
 });
 
+test("no permite renovar una operación sin reserva previa", () => {
+    const h = createHarness();
+    expectError(
+        () => h.api.handleInitYouTubeUpload(payload(operationA1.opVideoId, {
+            renewSession: true,
+            expiredUploadUrl: "https://www.googleapis.com/upload/youtube/v3/videos?upload_id=expired"
+        })),
+        "No existe una reserva previa"
+    );
+    assert.equal(h.createdSessions, 0);
+});
+
 test("renueva solo la URL que YouTube confirmó expirada y vuelve a deduplicar", () => {
     const h = createHarness();
     const first = h.api.handleInitYouTubeUpload(payload(operationA1.opVideoId));
