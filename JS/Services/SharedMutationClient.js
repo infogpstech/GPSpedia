@@ -423,12 +423,3 @@ function invalidateLocalSharedSessionActorCaches_(userId, sessionTokens, depende
     return tokens.length;
 }
 
-function syncSharedUserSessionContexts_(userId, role, fullName, sessions) {
-    const client = createSharedMutationClient_({
-        properties: PropertiesService.getScriptProperties(),
-        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
-        uuid: function() { return Utilities.getUuid(); },
-        logger: function(message) { Logger.log(message); }
-    });
-    return client.syncUserSessions(userId, role, fullName, sessions);
-}
