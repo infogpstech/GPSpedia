@@ -48,8 +48,8 @@ test("La invalidación local no requiere secreto compartido",()=>{
  }
 });
 test("Las mutaciones AUTH revocan sus cachés locales antes de limpiar tokens",()=>{
- assert.match(auth,/function revokeSharedSessionContext_\(userId, sessionToken\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
- assert.match(auth,/function revokeSharedUserSessionContexts_\(userId, sessionTokens\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
+ assert.match(shared,/function revokeSharedSessionContext_\(userId, sessionToken\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
+ assert.match(shared,/function revokeSharedUserSessionContexts_\(userId, sessionTokens\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
  const revoke=auth.slice(auth.indexOf("function revokeAllUserSessionsUnderLock_"),auth.indexOf("\nfunction ",auth.indexOf("function revokeAllUserSessionsUnderLock_")+10));
  assert.ok(revoke.indexOf("beforeClear(tokens)")<revoke.indexOf("tokenRange.setValues(nextValues)"));
 });
