@@ -1353,19 +1353,25 @@ function doPostInternal_(e) {
                 response = handleAuditDriveImagesInCortes(payload, logMessage, developerContext);
                 break;
             case 'saveUnusedImagesInventory':
-                response = withSharedMutationLease_("ADMIN", "saveUnusedImagesInventory", function() {
-                    return payload && payload.mode === "organize"
-                        ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
-                        : handleSaveUnusedImagesInventory(payload, logMessage, developerContext);
-                });
+                response = withAdminLocalOperationGuard_(
+                    "drive-inventory:" + String(payload && payload.auditId || developerContext && developerContext.userId || "current"),
+                    function() {
+                        return payload && payload.mode === "organize"
+                            ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
+                            : handleSaveUnusedImagesInventory(payload, logMessage, developerContext);
+                    }, 420);
                 break;
             case 'getCortesImageFolders':
                 response = handleGetCortesImageFolders(payload, logMessage);
                 break;
             case 'createCortesImageFolder':
-                response = withSharedMutationLease_("ADMIN", "createCortesImageFolder", function() {
-                    return handleCreateCortesImageFolder(payload, logMessage, developerContext);
-                });
+                response = withAdminLocalOperationGuard_(
+                    "create-cortes-image-folder:" + [
+                        String(payload && payload.category || "").trim(),
+                        String(payload && payload.brand || "").trim(),
+                        String(payload && payload.model || "").trim()
+                    ].join("|"),
+                    function() { return handleCreateCortesImageFolder(payload, logMessage, developerContext); }, 120);
                 break;
             case 'moveReplacedImage':
                 response = handleMoveReplacedImage(payload, logMessage, developerContext);
@@ -11641,6 +11647,62 @@ function handleGetCortesImageFolders(payload, logMessage) {
 /**
  * Crea una carpeta únicamente dentro del árbol Cortes.
  */
+function withAdminLocalOperationGuard_(scope, callback, ttlSeconds, dependencies) {
+    const scopeValue = String(scope || "").trim();
+    if (!scopeValue || typeof callback !== "function") {
+        throw new Error("La guarda local requiere un alcance y una función válidos.");
+    }
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const properties = deps.properties || PropertiesService.getScriptProperties();
+    const lockService = deps.lockService || LockService;
+    const now = typeof deps.now === "function" ? deps.now : function() { return Date.now(); };
+    const uuid = typeof deps.uuid === "function" ? deps.uuid : function() { return Utilities.getUuid(); };
+    const hashScope = typeof deps.hashScope === "function" ? deps.hashScope : function(value) {
+        const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, value, Utilities.Charset.UTF_8);
+        return bytes.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+    };
+    const ttl = Math.max(30, Math.min(420, Number(ttlSeconds) || 420));
+    const key = "GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_" + hashScope(scopeValue);
+    const lock = lockService.getScriptLock();
+    if (!lock.tryLock(0)) throw new Error("El registro local de operaciones ADMIN está ocupado; vuelve a intentar.");
+    let marker;
+    try {
+        const currentRaw = properties.getProperty(key);
+        if (currentRaw) {
+            let current = null;
+            try { current = JSON.parse(currentRaw); } catch (parseError) {}
+            if (current && current.requestId && Number(current.expiresAt) > now()) {
+                throw new Error("La operación equivalente ya está en curso; espera a que termine antes de repetirla.");
+            }
+            properties.deleteProperty(key);
+        }
+        marker = { requestId: String(uuid() || "").trim(), expiresAt: now() + ttl * 1000 };
+        if (!marker.requestId) throw new Error("No se pudo identificar la guarda local de operación.");
+        const serialized = JSON.stringify(marker);
+        properties.setProperty(key, serialized);
+        if (properties.getProperty(key) !== serialized) {
+            properties.deleteProperty(key);
+            throw new Error("No se pudo confirmar la reserva local de la operación.");
+        }
+    } finally {
+        lock.releaseLock();
+    }
+    try {
+        return callback();
+    } finally {
+        const cleanupLock = lockService.getScriptLock();
+        if (cleanupLock.tryLock(1000)) {
+            try {
+                let current = null;
+                try { current = JSON.parse(properties.getProperty(key) || "null"); } catch (parseError) {}
+                if (current && current.requestId === marker.requestId) properties.deleteProperty(key);
+            } finally {
+                cleanupLock.releaseLock();
+            }
+        }
+    }
+}
+
 function handleCreateCortesImageFolder(payload, logMessage, developerContext) {
     const category = String(payload.category || "").trim();
     const brand = String(payload.brand || "").trim();
@@ -13077,11 +13139,12 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
     }
 }
 function handleAuditDriveImagesInCortes(payload, logMessage, developerContext) {
-    // La lease protege únicamente el estado/cursor de auditoría. No reserva CORTES ni DRIVE,
-    // por lo que el escáner no bloquea el registro de cortes ni otras operaciones de negocio.
-    return withSharedMutationLease_("ADMIN", "auditDriveImagesInCortes", function() {
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    const cursor = payload && payload.cursor ? payload.cursor : null;
+    const auditId = cursor ? String(cursor.referenceCacheId || "invalid-cursor") : ("new:" + ownerId);
+    return withAdminLocalOperationGuard_("drive-audit:" + auditId, function() {
         return handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext);
-    });
+    }, 420);
 }
 function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext) {
     const requestStartedAt = Date.now();
