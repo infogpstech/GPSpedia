@@ -223,7 +223,7 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
             });
         }
         if (service === "ADMIN" && ADMIN_CATALOG_RESET_ACTIONS_.has(action) &&
-            result.catalogResetRequired === true) {
+            result.catalogResetRequired === true && result.dryRun !== true) {
             const publication = await publishCatalogResetAfterMutation_("ADMIN", action, payload, result);
             if (publication && publication.catalogSyncPending) result.catalogSyncPending = true;
         }
@@ -272,11 +272,17 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
 
 
 async function publishCatalogResetAfterMutation_(service, action, payload, result) {
+    const fallbackPayloadId = payload && (payload.vehicleId || payload.fieldName)
+        ? [payload.vehicleId, payload.fieldName, payload.expectedSourceEventId,
+            JSON.stringify(payload.expectedCurrentValue), JSON.stringify(payload.value)].filter(Boolean).join("_")
+        : "";
     const sourceId = String(payload && (
-        payload.opId || payload.requestId || payload.backupId || payload.migrationId || payload.eventId
+        payload.opId || payload.requestId || payload.backupId || payload.migrationId ||
+        payload.eventId || payload.operationId || payload.reconciliationId || payload.planId
     ) || result && (
-        result.opId || result.catalogVersion || result.vehicleId || result.logoId || result.backupId
-    ) || Date.now()).trim();
+        result.opId || result.operationId || result.catalogVersion || result.vehicleId ||
+        result.logoId || result.backupId || result.migrationId
+    ) || fallbackPayloadId || Date.now()).trim();
     const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || String(Date.now());
     const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
     try {
