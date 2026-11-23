@@ -41,7 +41,7 @@ test("El actor procede de Users/ActiveSessions, no del rol enviado por el navega
  assert.doesNotMatch(loader,/source\.role|payload\.role/);
 });
 test("La invalidación local no requiere secreto compartido",()=>{
- const invalidation=shared.slice(shared.indexOf("function handleSharedSessionActorCacheInvalidation_"),shared.indexOf("function handleSharedSessionActorCachePriming_"));
+ const invalidation=shared.slice(shared.indexOf("function handleSharedSessionActorCacheInvalidation_"),shared.indexOf("// El contexto de usuario/rol"));
  assert.doesNotMatch(invalidation,/GPSpedia_COORDINATOR_SECRET|secret|properties|getProperty/);
  for(const [name,source] of [["AUTH",auth],["WRITE",write],["ADMIN",admin],["FEEDBACK",feedback],["UTILITIES",utilities],["CATALOG",catalog]]){
   assert.match(source,/__invalidateSessionActorCache/,"Falta endpoint local de invalidación en "+name);
