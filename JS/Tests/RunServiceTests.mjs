@@ -550,8 +550,52 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 edición versionada de campos de vehículo','JS/Tests/AdminVehicleFieldVersioning.mjs');
 });
 
+runGroup('43','MIG019',()=>{
+ const feedback=read('JS/Services/feedback.js');
+ recordResult('MIG019 controles de seguridad, autorización y límites FEEDBACK',loadFunction('JS/Tests/FeedbackWriteSecurity.js','runFeedbackWriteSecurityTests')());
+ runCli('MIG019 integridad de creación de problemas y soluciones PyS','JS/Tests/PysCreationIntegrity.js');
+ runCli('MIG019 almacenamiento, compensación y recuperación de imágenes PyS','JS/Tests/PysImageStorageRecovery.js');
+ runCli('MIG019 caché y sincronización incremental PyS','JS/Tests/PysDataCache.js');
+ runCli('MIG019 prevención de XSS almacenado en PyS','JS/Tests/PysStoredXss.js');
+ runCli('MIG019 contexto de navegación y asociación PyS','JS/Tests/PysNavigationContext.js');
+ runCli('MIG019 relaciones bidireccionales vehículo-problema','JS/Tests/PysVehicleRelationIntegrity.js');
+ runCli('MIG019 navegación y modal de tarjetas PyS','JS/Tests/PysModalNavigation.js');
+ runCli('MIG019 título y accesibilidad del acordeón PyS','JS/Tests/PysAccordionTitleRunner.mjs');
+ runCli('MIG019 lookup de problemas PyS','JS/Tests/FeedbackPysLookupBoundedRead.mjs');
+ runCli('MIG019 verificación de imágenes pendientes fuera del lock','JS/Tests/FeedbackPysPendingImageVerificationOutsideLock.mjs');
+ runCli('MIG019 post-commit PyS fuera del lock','JS/Tests/FeedbackPysPostCommitOutsideLock.mjs');
+ runCli('MIG019 rollback de imágenes PyS','JS/Tests/FeedbackPysRollbackOutsideLock.mjs');
+ runCli('MIG019 limpieza de adjuntos PyS fuera del lock','JS/Tests/FeedbackPysRollbackOutsideLock.mjs');
+ runCli('MIG019 preflight y recuperación de sugerencias','JS/Tests/FeedbackSuggestionPreflightOutsideLock.mjs');
+ runCli('MIG019 búsqueda dirigida de sugerencias','JS/Tests/FeedbackSuggestionLookupBoundedRead.mjs');
+ runCli('MIG019 limpieza compensatoria de imágenes de sugerencias','JS/Tests/FeedbackSuggestionImageCleanupOutsideLock.mjs');
+ runCli('MIG019 alta de reportes y limpieza de adjuntos','JS/Tests/FeedbackReportImageCleanupOutsideLock.mjs');
+ runCli('MIG019 ledger append-only de imágenes de reportes','JS/Tests/FeedbackReportImageEvents.mjs');
+ runCli('MIG019 preflight y replay de reportes','JS/Tests/FeedbackReportPreflightOutsideLock.mjs');
+ runCli('MIG019 lookup acotado de reportes','JS/Tests/FeedbackReportLookupBoundedRead.mjs');
+ runCli('MIG019 contacto con reserva de ID y append','JS/Tests/FeedbackContactWriteNoGlobalLock.mjs');
+ runCli('MIG019 likes append-only','JS/Tests/FeedbackLikeAppendOnly.mjs');
+ runCli('MIG019 replay de likes completados','JS/Tests/FeedbackLikeCompletedReplayPreflight.mjs');
+ runCli('MIG019 preflight de likes','JS/Tests/FeedbackLikePreflightOutsideLock.mjs');
+ runCli('MIG019 actividad de likes post-commit','JS/Tests/FeedbackLikeActivityOutsideLock.mjs');
+ runCli('MIG019 append atómico de actividad','JS/Tests/ActivityLogAppendAtomic.mjs');
+ runCli('MIG019 sugerencias de año y actor verificado','JS/Tests/SuggestYearCoordinatorSession.mjs');
+ runCli('MIG019 umbral de votos verificados para año','JS/Tests/SuggestYearVoteThreshold.mjs');
+ runCli('MIG019 aplicación append-only de año e idempotencia','JS/Tests/FeedbackYearApplicationAppendOnly.mjs');
+ runCli('MIG019 read-back de aplicaciones de año','JS/Tests/FeedbackYearApplicationReadbackBounded.mjs');
+ runCli('MIG019 sincronización de carpetas de año fuera del lock','JS/Tests/FeedbackYearFolderSyncOutsideLock.mjs');
+ runCli('MIG019 preflight y lookup de tutoriales','JS/Tests/FeedbackTutorialPreflightOutsideLock.mjs');
+ runCli('MIG019 lookup dirigido de tutoriales','JS/Tests/FeedbackTutorialLookupBoundedRead.mjs');
+ runCli('MIG019 edición de tutorial por título','JS/Tests/FeedbackTutorialUpdateTitleLookupBoundedRead.mjs');
+ runCli('MIG019 evita escrituras cuando tutorial no cambia','JS/Tests/FeedbackTutorialUpdateNoopPreflight.mjs');
+ runCli('MIG019 integridad de tutoriales e idempotencia','JS/Tests/TutorialIntegrity.js');
+ runCli('MIG019 auditoría de referencias de IDs de tutorial','JS/Tests/TutorialIdReferenceAudit.mjs');
+ runCli('MIG019 actualización delta-first del catálogo tutorial','JS/Tests/TutorialCatalogRefreshDeltaFirst.mjs');
+ runCli('MIG019 publicación coordinada del catálogo FEEDBACK','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
+});
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','39','41','42','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','39','41','42','43','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');
