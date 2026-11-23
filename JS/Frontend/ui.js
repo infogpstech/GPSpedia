@@ -7735,7 +7735,7 @@ ${elapsedSec}s
             :"¿Deseas reorganizar la base de datos? Se creará un respaldo, WRITE estabilizará los IDs y ADMIN ordenará las filas.");
         if(!confirmed||!isAdminPanelCurrent_())return;
         const state=saved||{version:1,ownerId,stage:"backup_pending",backupId:"",createdAt:Date.now(),operationId:""},persist=()=>localStorage.setItem(key,JSON.stringify(state));
-        if(!/^[A-Za-z0-9_-]{16,100}$/.test(String(state.operationId||""))){state.operationId="reorg_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);}
+        if(!/^[A-Za-z0-9_-]{16,100}$/.test(String(state.operationId||""))){const entropy=(Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2))||Date.now().toString(36);state.operationId="reorg_"+Date.now().toString(36)+"_"+entropy;}
         persist();
         const step=async(action,payload,progress,message)=>{
             if(!isAdminPanelCurrent_())throw new Error("La sesión o el panel cambió; la operación quedó guardada para reanudar.");
