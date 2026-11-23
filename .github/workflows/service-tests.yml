@@ -45,7 +45,7 @@ jobs:
           node --check JS/Services/Auth.js
           node --check JS/Services/Coordinator.js
           node --check JS/Services/InboxConversations.js
-          node --check JS/Services/SharedMutationClient.js
+          node --check JS/Services/SharedSessionActor.js
           node --check JS/Services/Utilities.js
           node --check JS/Services/admin.js
           node --check JS/Services/catalog.js
