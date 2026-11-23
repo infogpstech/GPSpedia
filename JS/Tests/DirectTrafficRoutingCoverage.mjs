@@ -70,7 +70,8 @@ test("USERS ya no persiste métricas directas; UTILITIES conserva Coordinator y 
 
 test("CATALOG, AUTH y WRITE conservan rutas sin contadores directos", () => {
     assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_ACTIONS_|recordCatalogTraffic_|readCatalogTraffic_|getServiceTraffic/);
-    assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_SECRET_PROPERTY_|catalogTrafficSecretEquals_/);\n    assert.doesNotMatch(admin, /CATALOG_SERVICE_URL|CATALOG_TRAFFIC_SECRET_PROPERTY_|getAdminProjectedVehicleFieldSnapshot_/);
+    assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_SECRET_PROPERTY_|catalogTrafficSecretEquals_/);
+    assert.doesNotMatch(admin, /CATALOG_SERVICE_URL|CATALOG_TRAFFIC_SECRET_PROPERTY_|getAdminProjectedVehicleFieldSnapshot_/);
     assert.match(catalog, /case 'getVehicleProjection'/);
     assert.match(catalog, /case 'getContributionCandidates'/);
     assert.doesNotMatch(auth, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_|getServiceTraffic/);
