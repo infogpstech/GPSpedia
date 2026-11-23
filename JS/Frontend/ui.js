@@ -8651,6 +8651,9 @@ export async function openAuditDriveModal() {
     const organizerPreviewStatus = document.getElementById('audit-drive-organizer-status');
     const organizerPreviewCounts = document.getElementById('audit-drive-organizer-counts');
     const organizerPreviewResults = document.getElementById('audit-drive-organizer-results');
+    const modelAssociationPanel = document.getElementById('audit-drive-model-association-panel');
+    const modelAssociationSummary = document.getElementById('audit-drive-model-association-summary');
+    const modelAssociationResults = document.getElementById('audit-drive-model-association-results');
     const organizerApplyButton = document.getElementById('btn-audit-drive-apply-organizer');
     const organizerRollbackButton = document.getElementById('btn-audit-drive-rollback-organizer');
     const organizerHistoryButton = document.getElementById('btn-audit-drive-organizer-history');
@@ -9959,9 +9962,13 @@ export async function openAuditDriveModal() {
         updateOrganizerApplyControls_();
         if (organizerPreviewCounts) organizerPreviewCounts.replaceChildren();
         if (organizerPreviewResults) organizerPreviewResults.replaceChildren();
+        if (modelAssociationPanel) modelAssociationPanel.hidden = true;
+        if (modelAssociationSummary) modelAssociationSummary.replaceChildren();
+        if (modelAssociationResults) modelAssociationResults.replaceChildren();
         updateControls();
         appendAuditConsole("Iniciando preview del organizador de Cortes y LogosMarca. Operación de solo lectura.", "info");
         const allResults = [];
+        let modelAssociationPayload = null;
         let offset = 0, digest = "", totalTargets = null, pageNumber = 0;
         try {
             do {
@@ -9983,6 +9990,7 @@ export async function openAuditDriveModal() {
                     throw new Error("El manifiesto cambió entre páginas. No se combinaron resultados; ejecuta una auditoría nueva.");
                 }
                 digest = response.manifestDigest;
+                if (Number(response.offset) === 0 && response.modelAssociationSuggestions) modelAssociationPayload = response.modelAssociationSuggestions;
                 if (totalTargets === null) totalTargets = Number(response.totalTargets) || 0;
                 if (Number(response.totalTargets) !== totalTargets || Number(response.offset) !== offset) {
                     throw new Error("La paginación del manifiesto no coincide con el cursor solicitado.");
@@ -10058,6 +10066,43 @@ export async function openAuditDriveModal() {
                     note.textContent = "Se muestran " + visible.length + " de " + allResults.length +
                         " destinos. El manifiesto completo fue recorrido y su digest se conserva en esta sesión.";
                     organizerPreviewResults.appendChild(note);
+                }
+            }
+            if (modelAssociationPanel && modelAssociationSummary && modelAssociationResults) {
+                modelAssociationPanel.hidden = false;
+                const associationSummary = modelAssociationPayload && modelAssociationPayload.summary
+                    ? modelAssociationPayload.summary : { total: 0, suggested: 0, ambiguous: 0, truncated: false };
+                modelAssociationSummary.textContent = associationSummary.total
+                    ? "Archivos sin referencia con coincidencias posibles: " + associationSummary.total +
+                        " · sugerencias únicas: " + associationSummary.suggested + " · ambiguas: " + associationSummary.ambiguous +
+                        (associationSummary.truncated ? " · lista limitada a 300 resultados" : "")
+                    : "No se encontraron archivos sin referencia con coincidencias suficientes por modelo.";
+                const suggestions = modelAssociationPayload && Array.isArray(modelAssociationPayload.suggestions) ? modelAssociationPayload.suggestions : [];
+                suggestions.forEach(item => {
+                    const card = document.createElement("article");
+                    card.className = "audit-drive-result-row";
+                    const heading = document.createElement("strong");
+                    heading.textContent = (item.status === "ambiguous" ? "Revisión manual · " : "Sugerencia · ") + String(item.fileName || item.fileId || "Archivo");
+                    const detail = document.createElement("p");
+                    detail.textContent = String(item.folderPath || "Ruta no disponible") + " · confianza " + String(item.confidence || "no determinada");
+                    card.append(heading, detail);
+                    (Array.isArray(item.candidates) ? item.candidates : []).forEach(candidate => {
+                        const line = document.createElement("p");
+                        line.textContent = String(candidate.category || "") + " / " + String(candidate.brand || "") + " / " +
+                            String(candidate.model || "") + " · señales: " + (Array.isArray(candidate.signals) ? candidate.signals.join(", ") : "");
+                        card.appendChild(line);
+                    });
+                    const note = document.createElement("p");
+                    note.textContent = item.status === "ambiguous"
+                        ? "Hay más de una coincidencia plausible. Requiere revisión humana; no se asociará automáticamente."
+                        : "Coincidencia orientativa. La asociación no se modifica ni se aplica automáticamente.";
+                    card.appendChild(note);
+                    modelAssociationResults.appendChild(card);
+                });
+                if (!suggestions.length) {
+                    const empty = document.createElement("p");
+                    empty.textContent = "No hay sugerencias que cumplan los criterios conservadores de coincidencia.";
+                    modelAssociationResults.appendChild(empty);
                 }
             }
             currentOrganizerPreview = { auditId, digest, totalTargets, pageSize: 25 };

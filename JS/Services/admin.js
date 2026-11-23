@@ -4473,6 +4473,91 @@ function handleApplyCortesImageOrganizer_(payload, logMessage, developerContext)
     return result;
 }
 
+
+// Alias de modelo: incorporar solo equivalencias confirmadas por el catálogo/operador.
+// Formato: {category, brand, model, aliases: ["nombre alternativo"]}.
+const CORTES_IMAGE_MODEL_ALIASES_ = [];
+function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, activeReferences, historicalIds, aliases, columns) {
+    const files = Array.isArray(metadata) ? metadata : [];
+    const rows = Array.isArray(cortesValues) ? cortesValues : [];
+    const references = activeReferences instanceof Map ? activeReferences : new Map();
+    const history = historicalIds instanceof Set ? historicalIds : new Set();
+    const aliasRows = Array.isArray(aliases) ? aliases : [];
+    const col = key => Number(columns && columns[key]) - 1;
+    const read = (row, key) => row && col(key) >= 0 ? String(row[col(key)] || "").trim() : "";
+    const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+    const tokens = value => normalize(value).split(" ").filter(Boolean);
+    const containsPhrase = (haystack, phrase) => (" " + normalize(haystack) + " ").includes(" " + normalize(phrase) + " ") && normalize(phrase).length > 0;
+    const tokenSetKey = value => tokens(value).sort().join(" ");
+    const modelsByKey = new Map();
+    rows.slice(1).forEach(row => {
+        const category = read(row, "categoria"), brand = read(row, "marca"), model = read(row, "modelo");
+        if (!category || !brand || !model) return;
+        const key = [category, brand, model].map(normalize).join("|");
+        if (!modelsByKey.has(key)) modelsByKey.set(key, { category, brand, model, key, aliases: [] });
+    });
+    aliasRows.forEach(entry => {
+        if (!entry || !Array.isArray(entry.aliases)) return;
+        const model = modelsByKey.get([entry.category, entry.brand, entry.model].map(normalize).join("|"));
+        if (!model) return;
+        entry.aliases.forEach(alias => {
+            const value = String(alias || "").trim();
+            if (value && normalize(value) && !model.aliases.some(item => normalize(item) === normalize(value))) model.aliases.push(value);
+        });
+    });
+    const suggestions = [];
+    files.forEach(file => {
+        const fileId = String(file && file.fileId || "").trim();
+        const mime = String(file && file.mimeType || "").toLowerCase();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || !mime.startsWith("image/") || references.has(fileId) || history.has(fileId)) return;
+        const fileName = String(file.fileName || ""), folderPath = String(file.folderPath || "");
+        const nameWithoutExtension = fileName.replace(/\.[A-Za-z0-9]{2,8}$/, "");
+        const folderSegments = folderPath.split("/").map(normalize).filter(Boolean);
+        const nameTokens = new Set(tokens(nameWithoutExtension)), scored = [];
+        modelsByKey.forEach(model => {
+            const modelKey = normalize(model.model), modelTokens = tokens(model.model);
+            if (!modelKey || !modelTokens.length) return;
+            const aliasFolder = model.aliases.some(alias => folderSegments.includes(normalize(alias)));
+            const aliasName = model.aliases.some(alias => containsPhrase(nameWithoutExtension, alias));
+            const exactFolder = folderSegments.includes(modelKey), exactName = containsPhrase(nameWithoutExtension, model.model);
+            const reorderedName = modelTokens.length > 1 && modelTokens.every(token => nameTokens.has(token));
+            const reorderedFolder = modelTokens.length > 1 && folderSegments.some(segment => tokenSetKey(segment) === tokenSetKey(model.model));
+            const brandInPath = folderSegments.includes(normalize(model.brand)) || containsPhrase(nameWithoutExtension, model.brand);
+            const categoryInPath = folderSegments.includes(normalize(model.category));
+            let score = 0;
+            const signals = [];
+            if (exactFolder) { score = Math.max(score, 100); signals.push("folder_model_exact"); }
+            if (exactName) { score = Math.max(score, 90); signals.push("filename_model_exact"); }
+            if (aliasFolder) { score = Math.max(score, 80); signals.push("folder_alias"); }
+            if (aliasName) { score = Math.max(score, 70); signals.push("filename_alias"); }
+            if (reorderedFolder) { score = Math.max(score, 65); signals.push("folder_model_token_alias"); }
+            if (reorderedName) { score = Math.max(score, 60); signals.push("filename_model_token_alias"); }
+            if (!score) return;
+            if (brandInPath) { score += 15; signals.push("brand_context"); }
+            if (categoryInPath) { score += 5; signals.push("category_context"); }
+            scored.push({ category: model.category, brand: model.brand, model: model.model, score, signals: Array.from(new Set(signals)) });
+        });
+        if (!scored.length) return;
+        scored.sort((left, right) => right.score - left.score || left.category.localeCompare(right.category) ||
+            left.brand.localeCompare(right.brand) || left.model.localeCompare(right.model));
+        const bestScore = scored[0].score, best = scored.filter(item => item.score === bestScore);
+        const ambiguous = best.length > 1 || (scored.length > 1 && bestScore - scored[1].score < 15);
+        suggestions.push({
+            fileId, fileName, folderPath, status: ambiguous ? "ambiguous" : "suggested",
+            confidence: bestScore >= 110 ? "high" : (bestScore >= 85 ? "medium" : "low"),
+            candidates: (ambiguous ? scored.filter(item => item.score >= bestScore - 14) : [scored[0]]).slice(0, 5)
+        });
+    });
+    suggestions.sort((left, right) => left.status.localeCompare(right.status) || left.fileName.localeCompare(right.fileName) || left.fileId.localeCompare(right.fileId));
+    const limit = 300;
+    const summary = { total: suggestions.length, suggested: suggestions.filter(item => item.status === "suggested").length,
+        ambiguous: suggestions.filter(item => item.status === "ambiguous").length, truncated: suggestions.length > limit };
+    const digestEntries = suggestions.map(item => [item.fileId, item.status, item.confidence,
+        item.candidates.map(candidate => [candidate.category, candidate.brand, candidate.model, candidate.score, candidate.signals])]);
+    return { summary, suggestions: suggestions.slice(0, limit), digestEntries };
+}
+
 function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext) {
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("El preview del organizador requiere una sesión Desarrollador verificada.");
@@ -4503,8 +4588,9 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
     if (!cortesSheet || !logosSheet) throw new Error("No se encontraron las hojas Cortes y/o LogosMarca.");
     const cortesRange = cortesSheet.getDataRange();
     const logosRange = logosSheet.getDataRange();
+    const cortesValues = cortesRange.getValues();
     const targetSnapshot = buildCortesImageOrganizerTargets_(
-        cortesRange.getValues(), cortesRange.getFormulas(),
+        cortesValues, cortesRange.getFormulas(),
         logosRange.getValues(), logosRange.getFormulas()
     );
     const digestTargets = targetSnapshot.targets.map(item => [
@@ -4518,6 +4604,10 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
     const missingReferenceCount = Number(missingCheck.totalMissingReferences || 0);
     const referencesComplete = missingCheck.verified === true && missingReferenceCount === 0 && referenceScanVerified;
     const historicalIds = collectReplacedImageHistoryIds_();
+    const associationSuggestions = buildCortesImageModelAssociationSuggestions_(
+        metadata, cortesValues, referenceSnapshot.references, historicalIds,
+        CORTES_IMAGE_MODEL_ALIASES_, COLS_CORTES
+    );
 
     const sourceDigestPayload = JSON.stringify({
         auditId, auditCompletedAt: Number(auditState.completedAt),
@@ -4531,7 +4621,8 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
         missingReferenceCount, missingReferenceCheckVerified: missingCheck.verified === true,
         historicalIds: Array.from(historicalIds).sort(),
         inventory: metadata.map(item => [item.fileId, item.fileName, item.mimeType, item.folderPath])
-            .sort((left, right) => left[0].localeCompare(right[0]))
+            .sort((left, right) => left[0].localeCompare(right[0])),
+        modelAssociationSuggestions: associationSuggestions.digestEntries
     });
     const manifestDigest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sourceDigestPayload, Utilities.Charset.UTF_8)
         .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
@@ -4633,6 +4724,7 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
         status: "success", auditId, manifestDigest, offset, limit, nextOffset,
         complete: nextOffset === null, totalTargets: targetSnapshot.targets.length,
         summary: targetSnapshot.summary, pageSummary, rowIssues: targetSnapshot.issues,
+        modelAssociationSuggestions: offset === 0 ? { summary: associationSuggestions.summary, suggestions: associationSuggestions.suggestions } : null,
         missingReferenceCount, referenceCheckStatus: referencesComplete ? "verified" : "unverifiable",
         unreferencedDriveFileCount: metadata.filter(item => !referenceSnapshot.references.has(item.fileId)).length,
         results: selected, writePerformed: false, canApply: false

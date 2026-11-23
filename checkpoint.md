@@ -941,3 +941,15 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Commits de implementación/pruebas:** `f479574bad9f492ed262a69e6d631f7059dd2f33` y `cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d`.
 - **Siguiente tarea:** A07-06 — implementar asociación sugerida por modelo basada en nombre, carpeta y alias, con revisión de ambigüedad y sin reasignación automática.
 - **HEAD verificado:** `cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## A07-06 EN PROGRESO — sugerencias de asociación de imágenes por modelo — 2026-11-22
+
+- **Objetivo:** sugerir modelos para imágenes de Drive sin referencia activa, usando nombre, carpeta y alias; distinguir ambigüedades y no modificar asociaciones automáticamente.
+- **Análisis:** el inventario del escáner ya conserva fileId/fileName/MIME/folderPath; Cortes aporta categoría, marca y modelo. No existe una fuente autoritativa de alias en el esquema/código consultado. No se inventan equivalencias; el motor acepta alias explícitos verificados y la lista inicial queda vacía.
+- **Implementación preparada:** helper puro en ADMIN; excluye imágenes referenciadas e históricas; compara nombre/ruta/alias y contexto de marca/categoría; marca empates/cercanías como ambiguos; limita UI a 300 sugerencias y liga el resultado completo al digest del preview. No asigna vehicleId/campo ni añade acción de escritura.
+- **Interfaz:** sección de solo lectura separada del Safe Apply. Las sugerencias y ambigüedades requieren revisión humana; no se habilita movimiento, renombrado ni asociación automática.
+- **Pruebas añadidas:** suite nueva de 8 casos integrada en RunServiceTests; contrato UI ampliado. Smoke test del helper 7/7 PASS y parsing ADMIN PASS; Node/CI aún pendientes.
+- **Informe técnico:** AUDITORIA_A07_06_ASOCIACION_MODELOS_2026-11-22.md.
+- **Siguiente paso inmediato:** publicar en la rama autorizada, comprobar CI, corregir fallos y revisar diff completo. Solo entonces cerrar A07-06.
+- **HEAD de base de este cambio:** 71ee59a744d1dc5e53ea3dc02994bd19e64afc9b; rama base protegida sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.

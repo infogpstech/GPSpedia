@@ -1158,3 +1158,12 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Cursor, persistencia IndexedDB y acción de reanudación no se modificaron.
 - Pruebas focalizadas: AdminDriveAuditGlobalConsole 1/1; CortesImageReconciliationUI 15/15; AdminDriveAuditClientRetry 7/7; AdminDriveAuditIndexedDB 13/13 PASS.
 - CI SHA cd20182c3a4c8a55e9f14b6f02c6b4cc948e172d: 304 suites / 3,562 pruebas / 0 fallos; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
+
+
+2026-11-22 — A07-06 en progreso: sugerencias de asociación por modelo
+- Se incorporó en ADMIN un generador de sugerencias de solo lectura para imágenes sin referencia activa. Usa nombre de archivo, segmentos de carpeta, alias explícitos y contexto categoría/marca/modelo; excluye imágenes ya referenciadas e históricas.
+- Las coincidencias empatadas o cercanas se clasifican como ambiguas. No se genera un vehicleId/campo destino y no se habilita ninguna escritura o reasignación automática.
+- El preview incorpora el resultado completo al digest y la UI presenta hasta 300 sugerencias en una sección separada del Safe Apply.
+- No existe una fuente autoritativa de alias en el esquema/código consultado; la lista curada comienza vacía. No se inventaron equivalencias.
+- Se añadió la suite CortesImageModelAssociationSuggestions (8 casos) y se amplió el contrato UI. Smoke test helper 7/7 PASS; parsing ADMIN PASS. CI y regresión pendientes.
+- No se modificaron referencias de Spreadsheet ni archivos de Drive; no se desplegó Apps Script.
