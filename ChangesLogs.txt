@@ -1,0 +1,14 @@
+# ChangesLogs — registro activo
+
+Normativa: NORMAS_DESAROLLO.md.  
+Repositorio: infogpstech/GPSpedia.  
+Rama de trabajo: GPSpedia2.2.5_work.
+
+## 2026-11-23 — MIG-002: inventario de pantallas y capacidades visibles
+
+- Se añadió INVENTARIO_PANTALLAS_CAPACIDADES.md con el mapa de 17 superficies, controles estáticos y dinámicos, handlers, acciones backend/locales, permisos, estados de ciclo de vida, pruebas relacionadas y límites de cobertura.
+- Se inspeccionaron index.html, HTML/add_cortes.html, HTML/users.html, JS/Frontend/ui.js, JS/Frontend/main.js, auth.js, navigation.js, api-config.js, youtubeUpload.js, módulos de soporte y CSS activo.
+- Se documentaron 335 declaraciones de controles/enlaces/formularios en las superficies HTML y plantillas dinámicas, además de 37 módulos frontend.
+- Se actualizó TAREAS_MIGRACION_ARQUITECTURA.md: MIG-002 COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Se registraron las brechas de cobertura UI indirecta sin afirmar pruebas visuales inexistentes.
+- No se modificó código funcional, endpoints, RBAC, datos, Spreadsheet, Drive ni deployments.
