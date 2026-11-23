@@ -603,6 +603,10 @@ La reconciliación contra las fuentes de la rama confirma:
 
 Detalle y evidencia: `INVENTARIO_CONFIGURACION_BACKEND.md`, adenda MIG-026 del 2026-11-23. No se modificaron deployments, propiedades instaladas ni datos externos.
 
+#### Compatibilidad de la lista Beta existente
+
+La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que esperan persistencia local en `localStorage` y aislamiento entre navegadores/dispositivos. Al migrar `rich_text_mode` a la configuración central, esas expectativas deberán revisarse: el valor publicado pasará a ser central y la caché local solo podrá acelerar la lectura, no convertirse en fuente de verdad ni permitir preferencias divergentes por dispositivo. Conservar los casos de seguridad de sanitización, RBAC Developer, actualización de barras abiertas y fallback estricto. La adenda de Beta se actualizará junto con la implementación y comenzará con los comandos de sincronización segura exigidos por NORMAS §5.
+
 #### Dependencias y decisiones que impiden una sustitución segura inmediata
 1. MIG-006 dejó preparado el probe y su procedimiento, pero la prueba real de `SpreadsheetApp.getActiveSpreadsheet()` en Web Apps sigue pendiente. MIG-008 tiene la misma validación diferida. El lector central usa `getActiveSpreadsheet()` y falla cerrado; no está autorizado reemplazar `openById()` por una suposición no probada.
 2. No introducir un ID/URL bootstrap ni un endpoint auxiliar que vuelva circular el acceso. Resolver la arquitectura de acceso a Spreadsheet mediante la evidencia Beta de MIG-006 y documentar el mecanismo aprobado.

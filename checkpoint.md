@@ -1461,6 +1461,7 @@ Actividad:
 - Clasificadas las propiedades activas de AUTH (login, revocación, secreto HMAC), CATALOG (feed), WRITE (contador IDs), FEEDBACK (rich_text_mode) y ADMIN (auditoría, Safe Apply, contador, guardas y estado de auditoría Drive).
 - CentralConfigurationReader es lector/proyector; no se encontró un publicador central versionado. No se retiró GPSpedia_RICH_TEXT_MODE_V1 ni se alteró su flujo.
 - MIG006SpreadsheetAccessProbe: el contrato local simula el contenedor activo; no prueba un deployment Web App real.
+- La lista Beta histórica contiene expectativas de rich_text_mode basadas en localStorage y aislamiento por dispositivo; deberán actualizarse al completar la migración central, conservando los casos de RBAC y sanitización.
 
 Resultado:
 - Inventario y matriz MIG-026 actualizados con clasificación, evidencia y dependencias.
