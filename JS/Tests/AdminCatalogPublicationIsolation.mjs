@@ -12,18 +12,7 @@ assert.equal(admin.includes("publishAdminCatalogChange_"), false);
 assert.equal(admin.includes("publishAdminCortesCatalogChange_"), false);
 assert.equal(admin.includes("getSharedServiceTraffic_"), false);
 assert.equal(admin.includes("handleGetServiceTraffic_"), false);
-assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
-assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
-assert.ok(admin.includes("removeLegacyAdminCoordinatorSettings_();"));
-const cleanupStart = admin.indexOf("function removeLegacyAdminCoordinatorSettings_()");
-const cleanupEnd = admin.indexOf("\nfunction doPost", cleanupStart + 10);
-assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
-const deletedProperties = [];
-const cleanup = new Function("PropertiesService", admin.slice(cleanupStart, cleanupEnd) + "\nreturn removeLegacyAdminCoordinatorSettings_;")({
-    getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
-});
-cleanup();
-assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
+assert.doesNotMatch(admin, /GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|removeLegacyAdminCoordinatorSettings_/);
 
 assert.ok(api.includes("'getServiceTraffic': 'COORDINATOR'"));
 assert.ok(coordinator.includes("function getServiceTrafficFromBrowser_"));
