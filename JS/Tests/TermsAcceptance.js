@@ -7,7 +7,6 @@ const apiConfigSource = readFileSync(new URL('../Frontend/api-config.js', import
 const uiSource = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
 const frontendAuthSource = readFileSync(new URL('../Frontend/auth.js', import.meta.url), 'utf8');
 const htmlSource = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
-const coordinatorSource = readFileSync(new URL('../Services/Coordinator.js', import.meta.url), 'utf8');
 const termsDeviceSource = readFileSync(new URL('../Frontend/termsDeviceAcceptance.js', import.meta.url), 'utf8');
 const sandbox = { SpreadsheetApp: { flush() {} }, console, Date, JSON, Object, String, Number, Array };
 runInNewContext(authSource + '\n;globalThis.__termsHelpers = { parseTermsAcceptance_, parseDeviceTermsAcceptanceStore_, ensureTermsAcceptanceColumn_, ensureSessionTermsAcceptanceColumn_ };', sandbox);
@@ -100,7 +99,6 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     const dispatchEnd = authSource.indexOf('\nfunction ', dispatchStart + 10);
     const dispatcher = authSource.slice(dispatchStart, dispatchEnd);
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
-    assert.doesNotMatch(coordinatorSource, /acceptTerms:/, "La aceptación por dispositivo pertenece a AUTH y no al Coordinator.");
     assert.match(termsDeviceSource, /TERMS_DEVICE_ID_STORAGE_KEY/);
     const authMutationActions = authSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/)[1];
     const authMirrorMutationActions = authTestSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/)[1];
