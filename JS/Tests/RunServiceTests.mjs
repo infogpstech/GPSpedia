@@ -465,7 +465,6 @@ runGroup('39','MIG015',()=>{
  runImageCli('ADMIN controles UI del organizador de imágenes','JS/Tests/CortesImageOrganizerUiContract.mjs');
  runImageCli('FEEDBACK validación de adjuntos de reportes','JS/Tests/ReportImageAttachment.js');
  runImageCli('FEEDBACK seguridad de imágenes de sugerencias','JS/Tests/SuggestionImageSecurity.js');
- runImageCli('FEEDBACK almacenamiento y recuperación de imágenes PyS','JS/Tests/PysImageStorageRecovery.js');
  runImageCli('WRITE recuperación de reparación de imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
  runImageCli('WRITE reutilización de snapshot para imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');
 });

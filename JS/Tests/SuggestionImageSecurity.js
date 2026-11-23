@@ -175,8 +175,8 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     });
     test("handler propaga fallos de Drive y no confirma una sugerencia con imagen faltante", () => {
         assert.ok(handlerBlock.includes("saveSuggestionImageAttachment_(normalizedImage"));
-        assert.ok(handlerBlock.indexOf("saveSuggestionImageAttachment_(normalizedImage") < handlerBlock.indexOf("acquireFeedbackScriptLock_(lock)"));
-        assert.ok(handlerBlock.indexOf("acquireFeedbackScriptLock_(lock)") < handlerBlock.indexOf("sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario"));
+        assert.ok(!handlerBlock.includes("acquireFeedbackScriptLock_("));
+        assert.ok(handlerBlock.indexOf("saveSuggestionImageAttachment_(normalizedImage") < handlerBlock.indexOf("sheet.appendRow(suggestionRow)"));
         assert.ok(handlerBlock.includes("throw error;"));
         assert.ok(!/catch\s*\(\s*e\s*\)\s*\{\s*console\.error\("Error subiendo imagen/.test(handlerBlock));
         assert.ok(handlerBlock.includes("imageAttached: Boolean(imageMetadata)"));
@@ -194,8 +194,10 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         for (const field of ["imageFileId", "imageMimeType", "imageSize", "imageSha256"]) assert.ok(handlerBlock.includes(field));
     });
     test("idempotencia devuelve confirmación de imagen ya registrada", () => {
-        assert.ok(handlerBlock.includes("alreadySuggested: true"));
-        assert.ok(handlerBlock.includes("imageAttached: Boolean(existing.record.imageUrl)"));
+        assert.ok(feedback.includes("function buildCutSuggestionReplayResponse_(existing, reportId)"));
+        assert.ok(feedback.includes("alreadySuggested: true"));
+        assert.ok(handlerBlock.includes("buildCutSuggestionReplayResponse_(preflightExisting, normalizedReportId)"));
+        assert.ok(feedback.includes("imageAttached: Boolean(existing.record.imageUrl)"));
     });
     test("la carga no concede acceso público explícito", () => {
         assert.ok(saveBlock.includes("getSharingAccess"));
