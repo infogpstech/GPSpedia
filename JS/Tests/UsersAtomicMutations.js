@@ -16,7 +16,7 @@ function runUsersAtomicMutationTests(authSource, coordinatorSource) {
         assert(router.includes('"getUsers", "createUser", "updateProfile"'));
         assert(router.includes('{ service: "AUTH" }'));
         assert(!extract("isSharedMutationAction_").includes('"createUser"'));
-        assert(router.includes('withSharedMutationLease_("AUTH", action'));
+        assert(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" })'));
         for(const action of ["getUsers","createUser","updateProfile"]) assert(source.includes("case '"+action+"'"),"Falta dispatcher "+action);
         assert(source.includes("function getAuthUserActor_("));
         assert(source.includes("function requireSharedAuthActor_("));
@@ -25,7 +25,7 @@ function runUsersAtomicMutationTests(authSource, coordinatorSource) {
         assert(!/withSharedMutationLease_\("USERS"/.test(source));
         assert(!/USERS:\s*\{\s*createUser/.test(coordinator));
         assert(!/const targets = \["USERS"/.test(coordinator));
-        assert(/const targets = \["WRITE", "FEEDBACK", "ADMIN"\]/.test(coordinator));
+        assert(!/function primeSessionActorCaches_|function invalidateSessionActorCaches_|getUsers|createUser|updateProfile/.test(coordinator));
     });
     const names=[
         "getAuthUsersSpreadsheet_","getAuthUserActor_","findUniqueRowsByExactValue_","isActiveUserRecord","handleGetUsers",
