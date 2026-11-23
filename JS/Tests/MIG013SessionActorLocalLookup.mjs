@@ -66,6 +66,13 @@ expectInvalid([headersUsers,["U-1","__deleted__:tecnico1","hash","tecnico","",""
 expectInvalid([headersUsers,["U-1","tecnico1","hash","invitado","","","Técnico Uno",""]],validSessions);
 expectInvalid([headersUsers,["U-1","tecnico1","hash","tecnico","","","Técnico Uno","__role_revocation_pending__:{}"]],validSessions);
 expectInvalid(validUsers,[headersSessions,["U-1","tecnico1","opaque-session-token-0001",new Date(now-100*86400000),"",new Date(now-100*86400000)]]);
+expectInvalid(validUsers,[headersSessions]);
+
+const changedRoleUsers=[headersUsers,["U-1","tecnico1","hash","supervisor","","","Técnico Uno",""]];
+const changedRole=api.loadSharedSessionActorFromSpreadsheet_("U-1","opaque-session-token-0001",{
+ ...deps,openSpreadsheet:()=>makeSpreadsheet(changedRoleUsers,validSessions)
+});
+assert.equal(changedRole.role,"supervisor","Después de invalidar la caché, el rol nuevo se toma de Users, nunca del payload.");
 
 const removed=[];
 const invalidation=api.handleSharedSessionActorCacheInvalidation_(
