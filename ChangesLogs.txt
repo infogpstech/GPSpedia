@@ -287,3 +287,10 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se retiraron las rutas públicas de feed de COORDINATOR; el helper interno de SharedMutation queda para MIG-024 y la retirada de health/telemetría de Coordinator para MIG-025.
 - Se actualizaron contratos automatizados y documentación de arquitectura/Beta.
 - Pruebas locales específicas: CatalogChangeFeed 16/16, FeedbackCatalogPublicationIsolation 14/14 y CatalogBrowserReset 10/10. Regresión completa y Beta real pendientes.
+
+2026-11-23 — Cierre de implementación MIG-023
+- CATALOG es propietario del feed incremental: diario local en ScriptProperties/ScriptLock, revisiones, cursor, retención acotada, idempotencia y recuperación mediante reset.
+- El frontend enruta lectura, reset y deltas a CATALOG. FEEDBACK devuelve referencias de cambios; CATALOG reconstruye los snapshots canónicos y no acepta snapshots del navegador.
+- Los requestId de publicación reutilizan IDs de operación cuando existen y usan nonce único para mutaciones independientes sin ID, evitando colisiones entre ediciones del mismo registro.
+- Se retiraron de COORDINATOR las rutas públicas de lectura y publicación del feed. Sus helpers internos de SharedMutation quedan pendientes de MIG-024; el endpoint health y la telemetría se retiran en MIG-025.
+- Se actualizaron contratos de publicación, routing, pruebas Beta, estrategia de lectura, README, registro de tareas y checkpoint.
