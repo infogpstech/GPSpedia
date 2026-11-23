@@ -7,7 +7,7 @@ const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const read = path => readFileSync(resolve(root, path), "utf8");
 const admin = read("JS/Services/admin.js");
 const coordinator = read("JS/Services/Coordinator.js");
-const shared = read("JS/Services/SharedMutationClient.js");
+const sessionActor = read("JS/Services/SharedSessionActor.js");
 const api = read("JS/Frontend/api-config.js");
 const ui = read("JS/Frontend/ui.js");
 const html = read("index.html");
@@ -21,9 +21,7 @@ assert.equal(admin.includes("handleGetServiceTraffic_"), false);
 assert.equal(admin.includes("getSharedServiceTraffic_"), false);
 assert.equal(admin.includes("normalizeCoordinatorServiceTraffic_"), false);
 assert.equal(admin.includes("validateGlobalServiceTrafficResult_"), false);
-assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
-assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
-assert.ok(admin.includes("removeLegacyAdminCoordinatorSettings_();"));
+assert.doesNotMatch(admin, /GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|removeLegacyAdminCoordinatorSettings_/);
 assert.equal(admin.includes('properties.getProperty("GPSpedia_COORDINATOR_URL")'), false);
 assert.equal(admin.includes('properties.getProperty("GPSpedia_COORDINATOR_SECRET")'), false);
 
@@ -47,13 +45,10 @@ const validationStart = coordinator.indexOf("function validateSessionContext_");
 const validationEnd = coordinator.indexOf("\n    function ", validationStart + 10);
 assert.ok(validationStart >= 0 && validationEnd > validationStart);
 assert.doesNotMatch(coordinator.slice(validationStart, validationEnd), /recordServiceTrafficEvent_|incrementServiceTrafficBucketState_/);
-const feedStart = coordinator.indexOf("function getCatalogChanges_");
-const feedEnd = coordinator.indexOf("\n    function ", feedStart + 10);
-assert.ok(feedStart >= 0 && feedEnd > feedStart);
-assert.doesNotMatch(coordinator.slice(feedStart, feedEnd), /recordServiceTrafficEvent_|incrementServiceTrafficBucketState_/);
+assert.doesNotMatch(coordinator, /function getCatalogChanges_|catalogFeed|publishCatalogChange_/);
 
-assert.match(shared, /function getServiceTraffic\(\)/);
-assert.match(shared, /send_\("getServiceTraffic"/);
+assert.match(sessionActor, /function getCachedSharedSessionActor_\(/);
+assert.doesNotMatch(sessionActor, /getServiceTraffic|send_|UrlFetchApp/);
 for (const [name, source] of [["AUTH", auth], ["WRITE", write], ["FEEDBACK", feedback], ["CATALOG", catalog]]) {
     assert.doesNotMatch(source, /recordDirectServiceTraffic_|readDirectServiceTraffic_|recordUsersDirectTraffic_|readUsersDirectTraffic_|recordCatalogTraffic_|readCatalogTraffic_/,
         name + " no debe persistir ni exponer contadores directos.");
