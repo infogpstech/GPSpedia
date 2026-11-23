@@ -1177,3 +1177,9 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Pruebas: CortesImageModelAssociationSuggestions 8/8 PASS; CortesImageOrganizerUiContract 15/15 PASS.
 - CI SHA 70b90d1313be15733d0d64b1c50b1d5984fc811c: 305 suites / 3,572 pruebas / 0 fallos; sintaxis 437 archivos JS/MJS; referencias 347; health read-only 7/7 SUCCESS; Pages build/deployment SUCCESS.
 - No se desplegó Apps Script ni se modificaron Drive/Spreadsheet. La revisión del inventario real y el alta de alias verificados quedan para Beta aislada.
+
+
+2026-11-22 — A11 completada: revisión y actualización de la guía Apps Script
+- Se contrastó Services/DEPLOYMENT_GUIDE.md con los ocho proyectos backend, SharedMutationClient.js, COORDINATOR_SETUP.md y SERVICE_HEALTH.md. Se confirmaron archivos, orden, dependencias, URLs/propiedades, secretos, pruebas de humo, frontend y redeploy selectivo.
+- Se corrigió una referencia interna de sección y se añadió el procedimiento de rollback controlado, incluyendo orden ante incompatibilidad, restauración segura de propiedades y separación entre rollback de código y recuperación de datos.
+- No se añadieron secretos, IDs ni URLs operativas. No se desplegó Apps Script ni se probaron datos reales; la guía sigue siendo un instructivo para Beta aislada.

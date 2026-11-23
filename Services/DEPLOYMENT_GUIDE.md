@@ -54,7 +54,7 @@ Cada servicio es un proyecto Apps Script independiente. Los nombres de los archi
 6. Configurar el acceso HTTP según el modelo ya autorizado para ese entorno y el consumo desde navegador/servicios. No ampliar el acceso de un deployment existente por conveniencia.
 7. Implementar y copiar la URL terminada en `/exec`. Registrar esa URL en la hoja de control del entorno, no en el repositorio.
 8. Abrir la URL en navegador. Debe responder el JSON de disponibilidad/versión del Coordinator, no una página de error.
-9. En **Configuración del proyecto → Propiedades del script**, crear los secretos descritos en el paso 2 de la sección 4. No se configura una URL del Coordinator dentro del propio Coordinator.
+9. En **Configuración del proyecto → Propiedades del script**, crear los secretos indicados en la sección 4. No se configura una URL del Coordinator dentro del propio Coordinator.
 10. Las URLs de los servicios consumidores se completarán después de desplegar cada uno.
 
 **Dependencia:** todos los consumidores que utilizan coordinación deben apuntar a esta URL del mismo entorno. No continuar conectando servicios a un Coordinator de otro entorno.
@@ -228,3 +228,37 @@ Por cada servicio guardar fuera del repositorio o en un registro operativo sin s
 - Deployment anterior que permite rollback.
 
 **No publicar secretos, tokens, contenido de hojas, datos personales ni credenciales en el registro.**
+
+
+## 9. Rollback controlado
+
+El rollback restaura una versión de código/deployment; no revierte automáticamente escrituras, cambios de Spreadsheet, archivos Drive ni operaciones externas ya confirmadas. La recuperación de datos requiere el procedimiento específico de la operación y sus registros de idempotencia/auditoría.
+
+### 9.1 Antes de revertir
+
+1. Identificar el servicio afectado, el commit publicado, la versión Apps Script activa y la última versión estable conocida. Usar el registro operativo del despliegue; no inferir versiones ni endpoints.
+2. Confirmar qué servicios consumidores dependen del contrato cambiado y si el Coordinator/frontend también fueron actualizados.
+3. Conservar logs, IDs de operación y evidencia del fallo. No borrar deployments anteriores ni propiedades antiguas durante el diagnóstico.
+4. No ejecutar rollback contra producción sin autorización expresa. En Beta, usar únicamente los proyectos y recursos aislados.
+
+### 9.2 Restaurar un servicio Apps Script
+
+1. Abrir el proyecto Apps Script del servicio afectado y entrar en **Implementar → Gestionar implementaciones**.
+2. Editar el deployment correspondiente y seleccionar la versión estable registrada anteriormente. Si esa versión no está disponible para el deployment, crear una nueva implementación desde el código de la revisión estable y registrar la nueva URL `/exec`.
+3. Mantener el mismo deployment/URL cuando Apps Script permita actualizar su versión; si cambia la URL, actualizar únicamente los consumidores del mismo entorno que la utilizan.
+4. No cambiar ScriptProperties por analogía. Restaurar una propiedad solo si el registro operativo confirma su valor anterior; los valores secretos no se recuperan desde Git ni se copian a este documento.
+5. Ejecutar las pruebas de humo de la sección 5 para el servicio y sus consumidores directos. Registrar versión restaurada, URL, commit, fecha y resultado.
+
+### 9.3 Orden cuando hay cambios incompatibles
+
+- Si solo falla un consumidor y el Coordinator conserva compatibilidad hacia atrás, restaurar únicamente ese consumidor.
+- Si se publicó un Coordinator nuevo que requiere consumidores nuevos y estos deben volver a una versión anterior, restaurar primero los consumidores a versiones compatibles y después el Coordinator.
+- Si el Coordinator anterior ya no admite consumidores nuevos, restaurar primero el Coordinator/contrato compatible solo después de comprobar que los consumidores activos pueden operar con él; cuando no exista compatibilidad segura, detener la secuencia y preparar un rollback coordinado de los proyectos afectados en Beta.
+- Si cambió `api-config.js`, revertir el frontend por separado mediante un commit de reversión en la rama autorizada y comprobar que sus endpoints corresponden a las versiones backend restauradas. No reescribir historial ni usar force push.
+
+### 9.4 Cierre del rollback
+
+1. Verificar disponibilidad de los endpoints y ejecutar las pruebas funcionales no destructivas aplicables.
+2. Confirmar que Coordinator, servicios y frontend pertenecen al mismo entorno y que las propiedades necesarias siguen configuradas.
+3. Comparar el estado de datos antes/después. No repetir una operación confirmada ni intentar deshacerla mediante redeploy.
+4. Documentar causa, servicios afectados, versiones anteriores/nuevas, cambios de URL/propiedad y evidencia de verificación. Mantener disponible la versión fallida para análisis hasta cerrar el incidente.

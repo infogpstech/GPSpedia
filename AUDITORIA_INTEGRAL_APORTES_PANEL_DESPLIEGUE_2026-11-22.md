@@ -358,3 +358,8 @@ Se añadió un workflow Playwright que ejecuta el helper `fileToBase64` extraíd
 Se publicó un harness manual que obtiene el helper de `HTML/add_cortes.html`, acepta un archivo local y presenta user agent, tamaño/MIME, número de lecturas y latencia. No envía el archivo. URL: `https://infogpstech.github.io/GPSpedia/JS/Tests/FileReaderBrowserHarness.html`.
 
 **Estado:** EN PROGRESO. CI browser 2/2 PASS; regresión de servicios SUCCESS; health read-only 7/7 y Pages SUCCESS en SHA `d5b1227fb53c4a8346c214b36f228ab3a1b4a549`. Falta la ejecución en un teléfono Android físico; Playwright solo emula el perfil Android en Linux.
+
+
+### A11 — revisión de completitud y vigencia de la guía Apps Script — 2026-11-22
+
+**Resultado:** COMPLETADA. La guía se contrastó con los ocho proyectos y archivos actuales. Coinciden el orden, dependencias, archivos, configuración de Coordinator, matriz de secretos, URLs directas ADMIN, ausencia de SERVICE_URL para UTILITIES, CATALOG sin SharedMutationClient, pruebas de humo y actualización selectiva. Se corrigió el enlace textual a la matriz de secretos y se añadió un procedimiento de rollback paso a paso. No se hizo deployment ni prueba remota; la guía es documentalmente completa para preparar Beta aislada, no evidencia de despliegue real.

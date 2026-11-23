@@ -453,7 +453,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] A07: validar nombre/fecha del servidor, registros silenciosos con fecha de un año anterior y todos los indicadores del dashboard.
 - [ ] A08: validar health individual/global y métricas de tráfico con cobertura declarada.
 - [ ] A09–A10: auditar consola, progreso, inventario automático de imágenes reemplazadas y asociación por modelo/carpeta.
-- [ ] A11: revisar completitud y vigencia de la guía Apps Script.
+- [x] A11 COMPLETADA: revisada la guía Services/DEPLOYMENT_GUIDE.md contra los ocho proyectos y sus fuentes actuales; archivos, orden, dependencias, URLs/propiedades, matriz de secretos, pruebas de humo, frontend y redeploy selectivo coinciden. Se corrigió una referencia interna de sección y se añadió procedimiento explícito de rollback coordinado. No contiene valores secretos ni autoriza despliegues; Beta/producción permanecen separadas.
 - [ ] A12: regresión integral y cierre de pendientes Beta.
 
 

@@ -966,3 +966,14 @@ Mejorar rendimiento, consumo de memoria y resiliencia del ciclo multimedia sin r
 - **Alcance externo:** no se desplegó Apps Script ni se modificaron Drive/Spreadsheet. En Beta aislada queda revisar sugerencias con el inventario real y añadir únicamente alias confirmados.
 - **Siguiente tarea:** continuar el backlog después de A07-06, respetando la secuencia vigente; no iniciar una reasignación automática.
 - **HEAD de implementación:** 70b90d1313be15733d0d64b1c50b1d5984fc811c; rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+## A11 COMPLETADA — revisión y actualización de la guía de despliegue — 2026-11-22
+
+- **Fuente revisada:** Services/DEPLOYMENT_GUIDE.md contra Coordinator.js, catalog.js, Auth.js, users.js, write.js, feedback.js, Utilities.js, admin.js, SharedMutationClient.js, COORDINATOR_SETUP.md y SERVICE_HEALTH.md.
+- **Cobertura confirmada:** ocho proyectos, archivos completos por proyecto, orden/dependencias, IDs/endpoints por entorno, propiedades, secretos sin valores, pruebas de humo, actualización frontend y redeploy selectivo. Se verificó que Coordinator autentica ADMIN/WRITE/FEEDBACK/AUTH/USERS/UTILITIES; CATALOG no requiere SharedMutationClient ni secreto Coordinator; ADMIN conserva URLs directas a WRITE/CATALOG/AUTH/USERS/FEEDBACK; UTILITIES no requiere SERVICE_URL propio.
+- **Correcciones:** se corrigió la referencia incorrecta a un inexistente “paso 2” de la sección 4. Se añadió sección 9 con rollback controlado, orden de reversión ante contratos incompatibles, restauración de propiedades solo desde registro operativo y separación entre rollback de código y recuperación de datos.
+- **Seguridad:** no se añadieron valores de secretos, URLs operativas ni IDs reales. La guía sigue prohibiendo probar o desplegar sobre producción sin autorización y exige recursos aislados para Beta.
+- **Validación:** inspección cruzada documental/estática; no se ejecutó deployment Apps Script ni pruebas funcionales remotas. La guía queda completa como instructivo, no como evidencia de deployment.
+- **Siguiente tarea:** A12 — revisión final de la regresión integral y cierre de pendientes del plan A01–A12, separando trabajo local de validaciones Beta.
+- **HEAD de base de esta actualización:** 143746e1179f5841eb20fbdb024564d4209530fb; rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
