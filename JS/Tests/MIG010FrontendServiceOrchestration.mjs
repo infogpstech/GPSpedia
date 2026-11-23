@@ -35,6 +35,8 @@ assert.throws(()=>verify(sheets("Técnico")).modal({userId:"U-1",sessionToken:"S
 assert.throws(()=>verify(sheets("Desarrollador",new Date("2020-01-01"),new Date("2020-01-01"))).modal({userId:"U-1",sessionToken:"S-1"}),/expiró/);
 assert.ok(admin.includes("function cacheVerifiedDatabaseBackupForDeveloper_"));
 assert.ok(admin.includes("DriveApp.getFilesByName(backupName)"));
+assert.ok(admin.includes("existingBackup.getId() === ss.getId()"));
+assert.ok(admin.includes("if (!ownerId) throw new Error"));
 assert.ok(admin.includes("existingManifest.operationId !== operationId"));
 assert.ok(admin.includes('String(existingManifest.ownerId || "") !== ownerId'));
 const operationPersist = workflow.indexOf("persist();");
