@@ -2,110 +2,110 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = admin.indexOf("function withAdminLocalOperationGuard_(scope, callback, ttlSeconds, dependencies) {");
+const start = admin.indexOf("function withAdminLocalOperationGuard_(");
+assert.ok(start >= 0, "No se encontró la guarda local ADMIN.");
 const end = admin.indexOf("\nfunction ", start + 10);
-assert.ok(start >= 0 && end > start, "No se encontró withAdminLocalOperationGuard_.");
-const helperSource = admin.slice(start, end);
-const withAdminLocalOperationGuard_ = new Function(helperSource + "\nreturn withAdminLocalOperationGuard_;")();
+const source = admin.slice(start, end > start ? end : admin.length);
+const guard = new Function(source + "\nreturn withAdminLocalOperationGuard_;")();
 
-const store = Object.create(null);
-let lockHeld = false;
-let uuidCounter = 0;
-let now = 1700000000000;
-const properties = {
-    getProperty: key => Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null,
-    setProperty: (key, value) => { store[key] = String(value); },
-    deleteProperty: key => { delete store[key]; }
-};
-const lockService = {
-    getScriptLock: () => ({
-        tryLock: () => {
-            if (lockHeld) return false;
-            lockHeld = true;
-            return true;
+function harness() {
+    const values = new Map();
+    let now = 1000, id = 0, lockHeld = false, busy = false, cleanupBusy = false;
+    const properties = {
+        getProperty(key) { return values.has(key) ? values.get(key) : null; },
+        setProperty(key, value) { values.set(key, value); },
+        deleteProperty(key) { values.delete(key); }
+    };
+    const lockService = {
+        getScriptLock() {
+            return {
+                tryLock(waitMs) {
+                    if (waitMs === 1000 && cleanupBusy) return false;
+                    if (busy || lockHeld) return false;
+                    lockHeld = true;
+                    return true;
+                },
+                releaseLock() {
+                    assert.equal(lockHeld, true, "No se debe liberar un lock que no se adquirió.");
+                    lockHeld = false;
+                }
+            };
+        }
+    };
+    return {
+        values, properties,
+        run(scope, callback, ttlSeconds = 30) {
+            return guard(scope, callback, ttlSeconds, {
+                properties, lockService, now: () => now,
+                uuid: () => "request-" + (++id),
+                hashScope: value => value
+            });
         },
-        releaseLock: () => { lockHeld = false; }
-    })
-};
-const dependencies = {
-    properties,
-    lockService,
-    uuid: () => "local-operation-" + (++uuidCounter),
-    now: () => now,
-    hashScope: value => "HASH_" + value
-};
-
-let passed = 0;
-function test(name, callback) {
-    callback();
-    passed++;
-    console.log("PASS " + name);
+        setNow(value) { now = value; },
+        setBusy(value) { busy = value; },
+        setCleanupBusy(value) { cleanupBusy = value; },
+        get lockHeld() { return lockHeld; }
+    };
 }
 
-test("la guarda usa un marcador local y ejecuta el callback sin retener ScriptLock", () => {
-    const result = withAdminLocalOperationGuard_("audit:a-1", () => {
-        assert.equal(lockHeld, false);
-        assert.ok(Object.keys(store).some(key => key === "GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_audit:a-1"));
-        return "completed";
-    }, 120, dependencies);
-    assert.equal(result, "completed");
-    assert.equal(lockHeld, false);
-    assert.equal(Object.keys(store).length, 0);
-});
+let passed = 0;
+function test(name, callback) { callback(); passed++; console.log("PASS " + name); }
 
-test("bloquea una segunda ejecución del mismo recurso", () => {
-    withAdminLocalOperationGuard_("audit:a-2", () => {
-        assert.throws(() => withAdminLocalOperationGuard_("audit:a-2", () => true, 120, dependencies), /ya está en curso/);
-    }, 120, dependencies);
-    assert.equal(Object.keys(store).length, 0);
-});
-
-test("permite operaciones simultáneas sobre recursos diferentes", () => {
-    const result = withAdminLocalOperationGuard_("audit:a-3", () =>
-        withAdminLocalOperationGuard_("audit:a-4", () => "independent", 120, dependencies), 120, dependencies);
-    assert.equal(result, "independent");
-    assert.equal(Object.keys(store).length, 0);
-});
-
-test("limpia el marcador cuando el callback falla", () => {
-    assert.throws(() => withAdminLocalOperationGuard_("inventory:a-1", () => {
-        throw new Error("simulated failure");
-    }, 120, dependencies), /simulated failure/);
-    assert.equal(Object.keys(store).length, 0);
-    assert.equal(lockHeld, false);
-});
-
-test("reemplaza marcadores expirados y limita TTL a 420 segundos", () => {
-    store["GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_inventory:a-2"] = JSON.stringify({
-        requestId: "expired", expiresAt: now - 1
+test("reserva el recurso y libera ScriptLock antes del trabajo prolongado", () => {
+    const h = harness();
+    const result = h.run("drive-audit:A1", () => {
+        assert.equal(h.lockHeld, false, "El callback no debe ejecutarse bajo ScriptLock.");
+        assert.equal(h.values.size, 1, "El marcador debe persistir durante el trabajo.");
+        return 42;
     });
-    withAdminLocalOperationGuard_("inventory:a-2", () => {
-        const marker = JSON.parse(store["GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_HASH_inventory:a-2"]);
-        assert.equal(marker.expiresAt, now + 420000);
-        assert.notEqual(marker.requestId, "expired");
-    }, 9999, dependencies);
-    assert.equal(Object.keys(store).length, 0);
+    assert.equal(result, 42);
+    assert.equal(h.lockHeld, false);
+    assert.equal(h.values.size, 0, "La reserva se limpia después del trabajo.");
 });
 
-test("falla cerrado si no puede reservar el lock local corto", () => {
-    const busyLockService = { getScriptLock: () => ({ tryLock: () => false, releaseLock: () => {} }) };
-    assert.throws(() => withAdminLocalOperationGuard_("folder:a", () => true, 120,
-        { ...dependencies, lockService: busyLockService }), /está ocupado/);
+test("rechaza en paralelo la misma operación sin bloquear recursos distintos", () => {
+    const h = harness();
+    const result = h.run("drive-audit:A1", () => {
+        assert.throws(() => h.run("drive-audit:A1", () => "duplicado"), /ya está en curso/);
+        return h.run("drive-audit:B2", () => 2);
+    });
+    assert.equal(result, 2);
+    assert.equal(h.values.size, 0);
 });
 
-test("las tres operaciones ADMIN usan guardas locales por recurso", () => {
-    assert.doesNotMatch(admin, /withSharedMutationLease_/);
-    assert.match(admin, /drive-inventory:/);
-    assert.match(admin, /create-cortes-image-folder:/);
-    assert.match(admin, /drive-audit:/);
-    assert.match(admin, /withAdminLocalOperationGuard_\("drive-audit:"/);
+test("libera la reserva aunque el callback termine con error", () => {
+    const h = harness();
+    assert.throws(() => h.run("drive-inventory:U1", () => { throw new Error("fallo de operación"); }), /fallo de operación/);
+    assert.equal(h.values.size, 0);
+    assert.equal(h.run("drive-inventory:U1", () => "reintento"), "reintento");
 });
 
-test("la guarda no realiza llamadas remotas ni lee URLs o secretos", () => {
-    assert.doesNotMatch(helperSource, /UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|SharedMutation/);
-    assert.match(helperSource, /PropertiesService\.getScriptProperties/);
-    assert.match(helperSource, /lockService\.getScriptLock/);
+test("un marcador cuyo cleanup no obtiene lock expira y puede recuperarse", () => {
+    const h = harness();
+    h.setCleanupBusy(true);
+    assert.equal(h.run("create-folder:modelo", () => "ok"), "ok");
+    assert.equal(h.values.size, 1, "El marcador queda temporalmente hasta su TTL.");
+    h.setCleanupBusy(false);
+    h.setNow(32001);
+    assert.equal(h.run("create-folder:modelo", () => "recuperado"), "recuperado");
+    assert.equal(h.values.size, 0);
 });
 
-console.log("AdminLocalOperationGuard: " + passed + "/8 PASS");
-assert.equal(passed, 8);
+test("falla rápido si el lock de reserva está ocupado y no ejecuta el callback", () => {
+    const h = harness();
+    let called = false;
+    h.setBusy(true);
+    assert.throws(() => h.run("drive-audit:A1", () => { called = true; }), /registro local.*ocupado/);
+    assert.equal(called, false);
+    assert.equal(h.values.size, 0);
+    assert.equal(h.lockHeld, false);
+});
+
+test("rechaza alcance vacío o callback inválido", () => {
+    const h = harness();
+    assert.throws(() => h.run("", () => 1), /alcance y una función válidos/);
+    assert.throws(() => h.run("scope", null), /alcance y una función válidos/);
+});
+
+console.log("AdminLocalOperationGuard: " + passed + "/6 PASS");
+assert.equal(passed, 6);

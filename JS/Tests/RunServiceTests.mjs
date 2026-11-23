@@ -646,6 +646,7 @@ runGroup('45','MIG021',()=>{
 
 runGroup('46','MIG024',()=>{
  runCli('MIG-024 retirada de SharedMutation y preservación transitoria de Coordinator','JS/Tests/SharedMutationRemovalContract.mjs');
+ runCli('MIG-024 guarda local ADMIN: exclusión breve, TTL y recuperación','JS/Tests/AdminLocalOperationGuard.mjs');
 });
 
 if(selected){
