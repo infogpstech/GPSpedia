@@ -11,8 +11,8 @@ assert.ok(start >= 0 && end > start, "No se encontró el normalizador de telemet
 const source = "const SERVICE_TRAFFIC_SERVICES_ = Object.freeze([\"AUTH\", \"CATALOG\", \"WRITE\", \"USERS\", \"FEEDBACK\", \"UTILITIES\", \"ADMIN\"]);\n" +
     coordinator.slice(start, end) + "\nreturn mergeServiceTrafficSources_;";
 const merge = new Function(source)();
-const services = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
-const counts = { AUTH: 2, CATALOG: 4, WRITE: 3, USERS: 1, FEEDBACK: 5, UTILITIES: 0, ADMIN: 6 };
+const services = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+const counts = { AUTH: 2, CATALOG: 4, WRITE: 3, FEEDBACK: 5, UTILITIES: 0, ADMIN: 6 };
 const periods = ["lastHour", "last6Hours", "last24Hours"];
 const fixture = () => ({
     status: "success", scope: "coordinator_protected_operations", services: services.slice(),
@@ -38,7 +38,7 @@ test("Declara explícitamente cobertura y exclusiones de rutas directas", () => 
     const result = merge(fixture());
     assert.match(result.coverage.description, /No incluye rutas directas no coordinadas/);
     assert.ok(result.coverage.excludes.includes("sondeos de salud"));
-    assert.ok(result.coverage.excludes.some(value => value.includes("AUTH, CATALOG, USERS, WRITE y FEEDBACK")));
+    assert.ok(result.coverage.excludes.some(value => value.includes("AUTH, CATALOG, WRITE y FEEDBACK")));
 });
 
 test("Rechaza estructura o conteos Coordinator inválidos", () => {

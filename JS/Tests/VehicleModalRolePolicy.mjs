@@ -6,7 +6,6 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const ui=readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
 const admin=readFileSync(resolve(root,"JS/Services/admin.js"),"utf8");
 const auth=readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
-const users=readFileSync(resolve(root,"JS/Services/users.js"),"utf8");
 const write=readFileSync(resolve(root,"JS/Services/write.js"),"utf8");
 const feedback=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
 const inbox=readFileSync(resolve(root,"JS/Services/InboxConversations.js"),"utf8");
@@ -100,11 +99,11 @@ check("WRITE acepta los cinco roles activos y restringe el mantenimiento de IDs"
  assert.doesNotMatch(write.slice(start,end),/getDataRange\(\)|getSpreadsheet\(\)/);
 });
 check("AUTH y USERS conservan jerarquía coherente para crear, modificar y eliminar cuentas",()=>{
- assert.ok(users.includes("'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']"));
- assert.ok(users.includes("'Jefe': ['Supervisor', 'Tecnico']"));
- assert.ok(users.includes("'Supervisor': ['Tecnico']"));
- assert.ok(users.includes("if (requesterRole === 'Jefe') return ['Supervisor', 'Tecnico'].includes(role)"));
- assert.ok(users.includes("if (requesterRole === 'Supervisor') return role === 'Tecnico'"));
+ assert.ok(auth.includes("const USERS_ALLOWED_ROLES_"));
+ assert.ok(auth.includes("'jefe': ['Supervisor', 'Tecnico']"));
+ assert.ok(auth.includes("'supervisor': ['Tecnico']"));
+ assert.ok(auth.includes("if (requesterRole === 'jefe') return ['supervisor', 'tecnico'].includes(targetRole)"));
+ assert.ok(auth.includes("if (requesterRole === 'supervisor') return targetRole === 'tecnico'"));
  assert.ok(auth.includes("jefe: role => ['supervisor', 'tecnico'].includes(role)"));
  assert.ok(auth.includes("supervisor: role => role === 'tecnico'"));
  assert.ok(auth.includes("if (alreadyDeleted && requesterRole !== 'desarrollador')"));

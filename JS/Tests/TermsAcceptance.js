@@ -3,8 +3,6 @@ import { runInNewContext } from 'node:vm';
 import assert from 'node:assert/strict';
 const authSource = readFileSync(new URL('../Services/Auth.js', import.meta.url), 'utf8');
 const authTestSource = readFileSync(new URL('./Auth.js', import.meta.url), 'utf8');
-const usersSource = readFileSync(new URL('../Services/users.js', import.meta.url), 'utf8');
-const usersTestSource = readFileSync(new URL('./users.js', import.meta.url), 'utf8');
 const apiConfigSource = readFileSync(new URL('../Frontend/api-config.js', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
 const frontendAuthSource = readFileSync(new URL('../Frontend/auth.js', import.meta.url), 'utf8');
