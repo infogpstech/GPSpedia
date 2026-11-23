@@ -216,3 +216,13 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - La inspección fue estática sobre los archivos de la rama. No se accedió a Spreadsheet/Drive reales ni a proyectos Apps Script desplegados. No se ejecutaron pruebas remotas.
 - Se actualizó `TAREAS_MIGRACION_ARQUITECTURA.md`; MIG-001 permanece **EN PROGRESO**.
 - Commit de matriz: `c5230a86c3e7405b3d56457580aa4daf3472f8e3`. Commit de tareas: `79157ef09a1fbe5a9ab8ef0c0a089efbf7ab6a2e`.
+
+
+
+### MIG-001 — Cierre de primera extracción de esquemas auxiliares — 2026-11-23
+
+- Se completaron en §18.9 de la matriz los encabezados de `FeedbackLikes`, `FeedbackYearApplications` (A:P; M:P extensión), `FeedbackYearApplicationEvents`, `AdminState` e `Imagenes_Reemplazadas` (A:K histórico más 16 columnas añadidas por encabezado).
+- Se contrastó el esquema de restauración de ADMIN con los escritores: ActiveSessions A:F frente a AUTH A:G; Cortes A:AP en el esquema de restauración frente a VIN dinámico y AT:AV de WRITE; Logs D aparece como `Data` en restauración y contiene detalles JSON desde AUTH. Son diferencias estáticas por validar con backups aislados; no se declara pérdida real ni se modifican datos.
+- Se actualizó `TAREAS_MIGRACION_ARQUITECTURA.md`. MIG-001 sigue **EN PROGRESO**: aún falta relacionar hojas/rangos con acciones y pruebas concretas, revisar el flujo completo de backup/restore, inventariar todos los consumidores UI y procesos programados, y completar la revisión de APIs/Drive.
+- No se invocaron Apps Script, Spreadsheet, Drive, YouTube ni OAuth reales; no se ejecutaron pruebas Beta. No se modificó código funcional ni datos.
+- Commit de matriz: `f40208667cc94703d26ebeccff4e24a0458967dd`; commit de tareas: `1432cac205c48108cd7e05013ee2ac59f97a866d`.
