@@ -3,7 +3,9 @@
 // Requiere cargar Services/feedback.js.
 function runYouTubeApprovalInitTests() {
     const results=[];let passed=0,failed=0;
-    const oldGetSafe=getSafeSheet,oldToken=ScriptApp.getOAuthToken,oldFetch=UrlFetchApp.fetch,oldLog=Logger.log;
+    const oldGetSafe=getSafeSheet,oldToken=ScriptApp.getOAuthToken,oldFetch=UrlFetchApp.fetch,oldLog=Logger.log,oldReserve=reserveYouTubeUploadInitialization_,oldFinish=finishYouTubeUploadInitialization_;
+    reserveYouTubeUploadInitialization_=()=>({reuse:false,rowIndex:2,cacheKey:"test-upload-session"});
+    finishYouTubeUploadInitialization_=()=>true;
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
@@ -16,7 +18,7 @@ function runYouTubeApprovalInitTests() {
         };}
         return{data,getLastRow:()=>data.length,getLastColumn:()=>Math.max(0,...data.map(row=>row.length)),getRange:range_,getDataRange:()=>range_(1,1,data.length,Math.max(1,Math.max(0,...data.map(row=>row.length))))};
     }
-    const op="o".repeat(32),payload={title:"Vídeo técnico",description:"Detalle",contentType:"corte",referenceId:"veh-1",fileName:"video.mp4",fileSize:2048,fileType:"video/mp4",opVideoId:op};
+    const op="o".repeat(32),payload={title:"Vídeo técnico",description:"Detalle",contentType:"corte",referenceId:"veh-1",fileName:"video.mp4",fileSize:2048,fileType:"video/mp4",opVideoId:op,userId:"user-1"};
     let map={},requestOptions=null,location="https://www.googleapis.com/upload/youtube/v3/videos?upload_id=test",responseCode=201;
     function reset_(currentUrl){
         responseCode=201;
@@ -75,7 +77,7 @@ function runYouTubeApprovalInitTests() {
             assert_(requestOptions===null);
         });
     }finally{
-        getSafeSheet=oldGetSafe;ScriptApp.getOAuthToken=oldToken;UrlFetchApp.fetch=oldFetch;Logger.log=oldLog;
+        getSafeSheet=oldGetSafe;ScriptApp.getOAuthToken=oldToken;UrlFetchApp.fetch=oldFetch;Logger.log=oldLog;reserveYouTubeUploadInitialization_=oldReserve;finishYouTubeUploadInitialization_=oldFinish;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
