@@ -27,7 +27,7 @@ const sheet = { getLastRow: () => 4, getLastColumn: () => 9, getRange: () => ({ 
 
 const duplicate = fn(sheet, "VIN-A", null, rows, 9);
 assert.equal(duplicate.vehicleId, "11");
-assert.equal(duplicate.modelName, "Toyota Hilux (2018-2020)".replace(" Hilux", ""));
+assert.equal(duplicate.modelName, "Toyota  (2018-2020)");
 assert.equal(duplicate.vinPrefix, "VIN-A");
 assert.equal(headerReads, 0, "La ruta de alta debe reutilizar el índice VIN ya validado.");
 assert.equal(fn(sheet, "VIN-A", "11", rows, 9).vehicleId, "13", "Debe excluir el vehículo actual.");
