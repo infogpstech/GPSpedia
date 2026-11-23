@@ -92,3 +92,13 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - Confirmar que las acciones getUsers/createUser/updateProfile funcionan desde el frontend y que no existen consumidores externos del deployment USERS.
 - Revisar permisos Apps Script/Spreadsheet y ausencia de efectos sobre datos productivos.
 - Solo tras aprobar lo anterior, deshabilitar el deployment heredado USERS y retirar su fila del registro central. La fila histórica se ignora actualmente por el lector central; no se debe borrar antes del cutover.
+
+
+## 5. Validación Beta diferida — MIG-013 sesiones locales
+- Desplegar AUTH y los servicios consumidores en entorno aislado, sin alterar endpoints productivos.
+- Probar login correcto/incorrecto, hash actual, bloqueo después de cinco intentos y token opaco registrado en ActiveSessions.
+- Verificar desde cada servicio protegido el primer acceso con caché fría y los accesos siguientes con caché caliente.
+- Probar token desconocido, revocado, duplicado y expirado; userId no coincidente; usuario eliminado/desactivado; rol cambiado y revocación pendiente.
+- Confirmar permisos RBAC por servicio y que un rol/userId enviado desde el navegador no altera el actor autorizado.
+- Verificar logout, cambio de rol, reset de sesiones y eliminación de cuenta con invalidación entre servicios, junto con los casos de indisponibilidad y reintento definidos en MIG-014.
+- Confirmar permisos efectivos Apps Script/Spreadsheet y ausencia de efectos en datos productivos. No considerar las pruebas simuladas o CI como sustituto de esta validación.
