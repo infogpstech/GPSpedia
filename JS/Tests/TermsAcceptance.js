@@ -100,7 +100,7 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     const dispatchEnd = authSource.indexOf('\nfunction ', dispatchStart + 10);
     const dispatcher = authSource.slice(dispatchStart, dispatchEnd);
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
-    assert.match(coordinatorSource, /acceptTerms: \{ read: \["SESSION_CONTEXTS"\], write: \["USERS"\], trackActivity: false \}/);
+    assert.doesNotMatch(coordinatorSource, /acceptTerms:/, "La aceptación por dispositivo pertenece a AUTH y no al Coordinator.");
     assert.match(termsDeviceSource, /TERMS_DEVICE_ID_STORAGE_KEY/);
     const authMutationActions = authSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/)[1];
     const authMirrorMutationActions = authTestSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/)[1];
