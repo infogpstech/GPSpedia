@@ -51,7 +51,7 @@ const unsafe=extract("handleAddOrUpdateCutLockedUnsafe_","handleCheckVehicle");
 assert.equal((unsafe.match(/uploadImageToDrive\(/g)||[]).length,5);
 assert.equal((unsafe.match(/runWriteDriveWorkOutsideScriptLock_/g)||[]).length,8);
 assert.doesNotMatch(unsafe,/getAuthenticatedCollaborator\(/);
-assert.ok(unsafe.split("\n").filter(line=>line.includes("uploadImageToDrive(")).every(line=>line.includes("shortLedgerLock: true")));
+assert.equal((unsafe.match(/\{ shortLedgerLock: true \}/g)||[]).length,5,"Cada carga de imagen debe usar el bloqueo breve del journal.");
 assert.ok(unsafe.includes("findNextAvailableCutSlot_(rowValues, vehicleId)"));
 const locked=extract("handleAddOrUpdateCutLocked","handleAddOrUpdateCutLockedUnsafe_");
 const preflight=extract("prepareAddOrUpdateCutRequest_","handleAddOrUpdateCut");
