@@ -76,6 +76,8 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 **Aceptación:** inventario estático en `INVENTARIO_LLAMADAS_SERVICIOS.md`; cada llamada backend→backend versionada tiene origen, destino, propietario, reemplazo y pruebas representativas. Los consumidores externos no versionados y validaciones de deployments quedan explícitamente pendientes de Beta. No se eliminó ninguna llamada ni capacidad.
 
+**Validación CI:** run `45172002358` SUCCESS; 306 suites, 3,581 pruebas aprobadas, cero fallos; sintaxis verificada en 438 archivos JS/MJS y referencias relativas en 348 archivos. El contrato nuevo `ServiceCallGraphContract` aprobó 9/9.
+
 ### MIG-005 — Línea base funcional y de rendimiento
 **Estado: PENDIENTE**
 - [ ] Ejecutar la suite local disponible y guardar resultado inicial.
