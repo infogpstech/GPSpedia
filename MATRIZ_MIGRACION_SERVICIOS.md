@@ -927,3 +927,288 @@ La función de respaldo/restauración de ADMIN declara un esquema requerido prop
 3. El esquema de restauración llama `Data` a la columna D de `Logs`; AUTH escribe allí el JSON de detalles. El nombre semántico no coincide (`Data` frente a `details`), aunque ambos ocupen la cuarta columna.
 
 Estas diferencias son hallazgos de inventario, no defectos confirmados de restauración: falta ejecutar pruebas con copias aisladas que contengan esos campos y revisar el algoritmo completo de backup/restore. No modificar encabezados ni datos reales para resolverlas durante MIG-001.
+
+
+---
+
+## 19. Cierre de inventario MIG-001 — cobertura total de código, operaciones y validación (2026-11-23)
+
+Este apartado consolida el inventario estático de la rama y cierra los pendientes de MIG-001. La fuente es el árbol Git completo de la rama, los routers y funciones de los diez archivos backend, los módulos frontend/HTML, las pruebas y los manifiestos/workflows versionados. No equivale a inspeccionar deployments, proyectos Apps Script externos ni datos reales de Spreadsheet/Drive.
+
+### 19.1 Universo de archivos y funciones inspeccionado
+
+El árbol Git consultado no está truncado: **615 rutas** en total. Se identificaron:
+
+| Área | Inventario verificado |
+|---|---|
+| Backend Apps Script versionado | 10 archivos: Auth, Coordinator, InboxConversations, SharedMutationClient, Utilities, admin, catalog, feedback, users y write |
+| Funciones backend | 1,041 declaraciones de función con nombre en los diez archivos |
+| Frontend | 37 módulos JS/MJS bajo `JS/Frontend/` |
+| Superficies HTML | `index.html`, `HTML/add_cortes.html` y `HTML/users.html` |
+| Pruebas | 373 entradas bajo `JS/Tests/` |
+| Workflows | 3 workflows de GitHub Actions |
+| Documentación de despliegue | `Services/` contiene guías/diseños/health; no contiene proyectos Apps Script ni código de servicio desplegable |
+
+Recuento por archivo backend (funciones con nombre; los handlers son un subconjunto):
+
+| Archivo | Funciones | Funciones con prefijo `handle` | Rutas/acciones observadas |
+|---|---:|---:|---:|
+| Auth.js | 91 | 15 | 15 |
+| users.js | 36 | 3 | 3 |
+| write.js | 148 | 14 | 9 |
+| catalog.js | 28 | 6 | 6 (5 canónicas + compatibilidad `getSuggestion`) |
+| feedback.js | 213 | 33 | 41, incluyendo el dispatcher delegado de Inbox |
+| InboxConversations.js | 44 | 11 | 11 handlers llamados desde FEEDBACK |
+| admin.js | 398 | 51 | 46 |
+| Utilities.js | 12 | 0 | 1 acción directa `migrateTimestamps` |
+| Coordinator.js | 41 | 1 (`handleRequest`) | 13 operaciones internas |
+| SharedMutationClient.js | 30 | 2 endpoints internos de caché | cliente y adaptadores de coordinación |
+| **Total** | **1,041** | — | — |
+
+Los conteos de funciones incluyen helpers privados, validadores, normalizadores, proyecciones, adaptadores de Drive, lógica de recuperación y wrappers; no deben interpretarse como número de endpoints. WRITE tiene helpers `handle*` internos que no son acciones públicas adicionales. FEEDBACK delega las operaciones Inbox a `InboxConversations.js`. ADMIN contiene helpers internos de respaldo/restauración, migraciones, Drive, auditoría, imágenes y proyección que no deben retirarse al consolidar acciones.
+
+Los 37 módulos frontend se revisaron en el árbol: VinDifferentialEngine, activityDashboard, adminImageUploadIsolation, api-config, auth, catalogRequest, catalogStatus, clientInteractionPolicy, developerConsoleConfirmation, diagnosticLogger, driveStorageAlerts, editBackupStore, imageObjectUrlCache, inboxPageCache, lightbox, likeState, main, modalNavigation, navigation, navigationHistory, offline, overlayHistory, pendingOperationStore, printQr, pys-data, qrcode-generator, rich-text, search-utils, serviceTelemetry, share-utils, state, termsDeviceAcceptance, thumbnailCompressionQueue, ui, validationBannerLifecycle, validationSubmission y youtubeUpload.
+
+Los consumidores de acciones se concentran en `api-config.js`, `ui.js`, `auth.js`, `main.js`, `pys-data.js`, `youtubeUpload.js`, `add_cortes.html` y `users.html`. Los demás módulos sostienen navegación, caché, PWA, multimedia, impresión, historial, telemetría, controles y estados de interfaz; son dependencias de capacidad aunque no invoquen un endpoint por nombre.
+
+### 19.2 Acciones, handlers, compatibilidad y rutas no públicas
+
+Se reconcilió el mapa efectivo con los routers reales:
+
+| Servicio | Acciones canónicas en el mapa | Dispatcher backend | Observación |
+|---|---:|---:|---|
+| AUTH | 15 | 15 | Coincidencia exacta |
+| CATALOG | 5 | 6 | Incluye compatibilidad histórica `getSuggestion`, canónica en WRITE |
+| WRITE | 9 | 9 | Coincidencia exacta |
+| USERS | 3 | 3 | Coincidencia exacta |
+| FEEDBACK | 41 | 41 | Incluye las operaciones de Inbox delegadas |
+| UTILITIES | 1 | 1 | Router directo; no usa switch de acciones |
+| ADMIN | 46 | 46 | Incluye ping inline y handlers administrativos |
+| **Mapa frontend** | **120** | — | 120 claves únicas; ninguna clave duplicada |
+
+Resultado de la reconciliación: **120/120 acciones del mapa tienen ruta backend y handler/ejecución identificada; cero acciones mapeadas sin handler**. La compatibilidad adicional CATALOG `getSuggestion` no se cuenta como una acción canónica adicional del mapa.
+
+Se conservan además, fuera de las 120 acciones:
+
+- **13 operaciones privadas de Coordinator:** `acquire`, `release`, `validate`, `publishCatalogChange`, `publishCatalogChanges`, `getCatalogChanges`, `registerSession`, `syncUserSessions`, `revokeSession`, `revokeUserSessions`, `validateSessionContext`, `invalidateSessionActorCaches` y `getServiceTraffic`.
+- **8 rutas privadas de caché de actor:** `__invalidateSessionActorCache` y `__primeSessionActorCache` en USERS, WRITE, FEEDBACK y ADMIN.
+- **GET de salud** en los servicios, GET `catalogFeed=1` para el feed incremental y parámetros de diagnóstico `debug=true` donde están implementados.
+- **Rutas de rechazo/compatibilidad:** CATALOG acepta `getSuggestion` como ruta histórica; ADMIN conserva respuestas explícitas `ACTION_MOVED_TO_WRITE` para operaciones que ahora pertenecen a WRITE; UTILITIES recibe `migrateTimestamps` por su dispatcher directo.
+- **Acciones de Inbox:** FEEDBACK resuelve las once acciones de conversación/participantes por medio de `runInboxConversationAction_` y `InboxConversations.js`; no son un servicio o endpoint independiente.
+
+La matriz §9 mantiene la relación individual de las 120 acciones con servicio, handler y consumidor. Las §§10 y 14–18 documentan RBAC, contratos, hojas y dependencias. No se encontró consumidor directo para doce acciones; su clasificación y pruebas se detallan en §19.5.
+
+### 19.3 Contratos de entrada/salida restantes por servicio
+
+Los contratos AUTH, USERS y WRITE permanecen en §§14–16. Esta tabla complementa esos contratos con los servicios restantes. Los campos listados son los que el handler lee directamente del payload o los campos de negocio que delega a validadores específicos; el contexto confiable de sesión se adjunta en backend y no convierte `userId` o el rol enviado por navegador en autoridad.
+
+**CATALOG**
+
+| Acción | Entrada/selector observado | Resultado principal |
+|---|---|---|
+| `getCatalogData` | opciones de refresco/paginación y selección de campos (`forceRefresh`, `shift`, `map`, `slice`) | `data`, `source`, estado |
+| `getDropdownData` | sin campos de negocio obligatorios | listas de categoría, marca, tipo de corte/encendido y configuración de relay |
+| `getVehicleProjection` | `vehicleId` | `vehicle`, `source`, `readOnly` |
+| `getContributionCandidates` | `limit`; opción de inventario `includeImageInventoryEvents`; el acceso a metadatos internos requiere secreto CATALOG validado en servidor | candidatos, total, límite/truncamiento, origen, estado de solo lectura y eventos de inventario cuando se autoriza |
+| `getNavigationData` | sin campos de negocio obligatorios | `data`, `source` |
+| `getSuggestion` (compatibilidad) | `term`, `field`, `brand` según el contrato histórico | `suggestion`; la ruta canónica permanece en WRITE |
+
+**FEEDBACK y operaciones de negocio no Inbox**
+
+| Acción | Entrada/selector directo identificado | Resultado principal / dependencia |
+|---|---|---|
+| `getRichTextMode` | contexto de sesión | estado y modo global |
+| `setRichTextMode` | `mode` y sesión | estado y modo confirmado |
+| `suggestYear` | propuesta de año, vehículo e identidad de actor; permite ruta anónima expresamente definida | estado de registro/aplicación, recuperación y resultado de umbral |
+| `recordLike` | `vehicleId`, `corteIndex`, identidad/nombre de usuario asociados | `alreadyLiked`, `likeCount`, recuperación; hojas FeedbackLikes/Cortes/ActividadUsuario |
+| `reportProblem` | `reportId`, `corteIndex`, `activaTestigoMotor`, `category`, `subject`, `imageAttachment` | estado, ID, categoría/asunto, duplicado y metadatos de adjunto |
+| `sendContactForm` | `name`, `email`, `message` | estado y mensaje |
+| `getFeedbackItems` | actor autenticado y paginación/cursor | items y `nextCursor` |
+| `getMyProblemReports` | paginación (`length`/cursor) | data, cursor, `hasMore`, total |
+| `replyToFeedback`, `markAsResolved` | ID del reporte y contenido/estado validados por sus handlers | estado y mensaje; Feedbacks |
+| `recordVehicleView` | `vehicleId` | estado; telemetría/actividad |
+| `getActivityLogs` | filtros/paginación según handler | data; ActividadUsuario |
+| `suggestCutChange` | payload de propuesta validado por normalizadores de campos, imágenes y contexto de corte | registro/replay de sugerencia; Feedbacks y adjuntos Drive cuando se aportan |
+| `getCatalogChanges` | `cursor`, `limit` | eventos/deltas; además existe la ruta GET incremental `catalogFeed=1` |
+| `getPysData` | sin selector obligatorio | data de PyS |
+| `addProblem` | problema, descripción, solución/previsión inicial, imagen y alcance/modelos según validador | ID/estado/replay; pys y PysOperations, Drive si hay imagen |
+| `addSolution`, `addPrevention` | ID de problema y texto de solución/previsión validados | estado/replay; pys |
+| `addTutorial` | tema, imagen, contenido y colaborador según validador | `referenceId`, estado/replay; Tutorial y eventos de título/edición |
+| `deleteFeedbackItem` | ID/tipo del elemento y control de rol | estado; eliminación lógica/física según tipo autorizado |
+| `addVehicleToProblem`, `removeVehicleFromProblem` | ID de problema y vehículo | estado y lista `modelosAsociados`; pys/Cortes |
+| `clearActivityLogs` | `keepLastWeek` | conteo eliminado y registros no clasificados retenidos |
+| `initYouTubeUpload` | metadatos iniciales del destino/contenido | `opVideoId`, `uploadUrl`; sesión resumable de YouTube |
+| `getVideoApprovalByOperation` | `createdByUserId`, estado, tipo y referencia de contenido, URL de vídeo | encontrado, ID de operación, estado de aprobación y destino |
+| `submitVideoForApproval` | `createdByUserId`, `contentType`, `referenceId`, `videoId`, `videoUrl`, título, descripción y estado | ID, `opVideoId`, URL y estado de aprobación; Feedbacks/eventos |
+| `approveVideo`, `rejectVideo` | ID de aprobación/operación y decisión validada | resultado idempotente; VideoApprovalEvents y publicación/compensación del destino |
+| `updatePysItem` | payload de edición de PyS validado, incluido control de rol y vídeo | estado, cambio y URL confirmada; pys |
+| `updateTutorialItem` | ID/identidad de tutorial, campos editables, hash esperado y vídeo sujeto a aprobación | estado, contenido y recuperación; Tutorial y eventos |
+
+**Inbox (FEEDBACK + InboxConversations.js)**
+
+| Acción | Entrada principal | Resultado / efecto |
+|---|---|---|
+| `getInboxRecipients` | sesión | destinatarios filtrados por jerarquía |
+| `notifyDevelopersDriveCritical` | `usagePercent`, `alertDate` | notificación y número de desarrolladores; evita duplicar avisos según su control de estado |
+| `getInboxConversations` | `folder`, `category`, `query`, `cursor`, `pageSize` | lista paginada/proyección por participante |
+| `getInboxMessages` | `conversationId`, `cursor`, `pageSize` | mensajes y total |
+| `createInboxConversation` | `subject`, `body`, `category`, `idempotencyKey`, `recipientId` | conversación/mensaje y replay idempotente |
+| `sendInboxMessage` | `conversationId`, `body`, `idempotencyKey` | mensaje y replay idempotente |
+| `markInboxRead` | `conversationId`, `throughMessageId` | estado y contador no leído |
+| `markInboxUnread` | `conversationId` | estado, ya marcado y desarchivado si corresponde |
+| `deleteInboxConversation` | `conversationId` | ocultación lógica solo para el participante; conserva mensajes e historial |
+| `archiveInboxConversation` | `conversationId`, `archived` | estado de archivado por participante |
+| `closeInboxConversation` | `conversationId` | cierre idempotente de conversación |
+
+**ADMIN y UTILITIES**
+
+La tabla §9 conserva la correspondencia de las 46 acciones ADMIN con sus handlers. Para evitar que los contratos se reduzcan a una lista de nombres, se agrupan aquí por tipo de operación y se enumeran los campos de control que gobiernan su ejecución:
+
+| Grupo / acciones | Campos de entrada/control identificados | Respuesta / efectos principales |
+|---|---|---|
+| Salud y telemetría: `ping`, `getServiceTraffic` | ping sin payload de negocio; consulta de métricas con filtros/ventana del panel | identidad/estado/versión de ADMIN; tráfico agregado Coordinator, no conteo completo de solicitudes directas |
+| Backups/restauración: `backupDatabase`, `backupDrive`, `restoreDatabase`, `restoreDrive`, `reorganizeDatabase` | `backupId` cuando se restaura; IDs de carpeta/operación y estado reanudable para Drive | manifiestos, conteos, rollback y errores de limpieza; Spreadsheet y Drive |
+| Migraciones/IDs: `migrateCortesOperationIds`, `migrateIdentifiers`, `rollbackIdentifiers`, `auditIdentifiers`, `freezeIdentifierFormulas`, `migrateVehicleContributionsSchema`, `migrateReplacedImagesSchema` | `confirm`, `migrationId`, digest, lote/offset, respaldo, encabezados/hoja destino según acción | dry-run, manifiestos, snapshots, estado por lote, rollback y verificación de lectura posterior |
+| Catálogo y contribuciones: `getVehicleContributionCandidates`, `resolveVehicleContributionCandidate`, `addLogo` | `limit`, `eventId`, `requestId`, `decision`, `correctedPayload`; datos/logo de marca | candidatos de ledger, decisión append-only/supersedes, ID de logo y publicación de delta |
+| Modelos/cortes: `updateVehicleField`, `uploadAdminImage`, `getAdminImageUploadStatus`, `restoreAllTrashedImages` | `vehicleId`, `fieldName`, `value`, valor/hash esperado, ID de operación y datos de imagen | proyección, versión, compensación, integridad de archivo y estado de carga |
+| Cortes/imágenes y reconciliación: `previewCortesImageReconciliation`, `applyCortesImageReconciliation`, `previewCortesImageOrganizer`, `getCortesImageOrganizerOperations`, `applyCortesImageOrganizer`, `rollbackCortesImageOrganizer` | `auditId`, `manifestDigest`, `approvedFileIds`, `operationIds`, `confirm/confirmed`, `backupId`, paginación | plan read-only, aplicación explícita, ledger durable, rollback y resultados parciales |
+| Inventario y archivos reemplazados: `getReplacedImages`, `recoverReplacedImage`, `deleteReplacedImage`, `restoreReplacedImageFromTrash`, `permanentlyDeleteReplacedImage`, `markReplacedImageInUse`, `getReplacedImageDownloadUrl`, `moveReplacedImage` | `id_reemplazo`, `targetFolderId`, tipo/estado/confirmación según acción | historial, ACL, papelera, restauración, borrado definitivo protegido, URL de descarga y ruta final |
+| Drive/terminal: `driveCommand`, `getDriveStorage`, `getCortesImageFolders`, `createCortesImageFolder` | comando y argumentos; `category`, `brand`, `model` al crear carpeta | árbol/carpeta/almacenamiento; navegación restringida al árbol Cortes |
+| Procesos de archivos: `normalizeImages`, `organizePrimaryVehicleImages`, `reconcilePendingImageUploads`, `auditDriveImagesInCortes`, `saveUnusedImagesInventory` | `processId`, `startRow`, `limit`, `cursor`, `mode`, `files`, `auditId`, `confirmed`, `inventoryOperationId` | progreso por lotes, dry-run, conteos, conflictos, ledger, reanudación y estado de error |
+| Herramientas de esquema: `createSheet`, `addColumn` | nombre de hoja, encabezados, fórmula ID opcional; nombre de columna | resultado de creación/añadido tras validar nombre, encabezados y fórmula |
+| Acciones de WRITE delegadas históricamente | `addOrUpdateCut`, `addSupplementaryInfo`, `checkOperation` en wrapper/compatibilidad | los handlers canónicos están en WRITE; ADMIN ya no debe duplicar su autoridad |
+
+ADMIN aplica `assertDeveloperSession` a las acciones generales; solo las acciones incluidas en `ADMIN_MODAL_EDIT_ACTIONS` (`getDropdownData`, `updateVehicleField`, `uploadAdminImage`, `getAdminImageUploadStatus`) aceptan también Jefe/Supervisor. `ping` es la excepción de salud sin sesión. La autorización se ejecuta en servidor mediante actor confiable. La matriz exacta y sus excepciones permanecen en §10 y en `ActionDispatchContract.js`.
+
+UTILITIES recibe únicamente `migrateTimestamps`: exige actor Desarrollador confiable, lee `Cortes`, consulta la columna I (`imagenVehiculo`), calcula timestamps y sustituye `Hoja 1` mediante staging/backup, verificación y recuperación. Las hojas temporales son `__utilities_timestamps_staging__` y `__utilities_timestamps_backup__`. No hay un consumidor frontend directo; se conserva como mantenimiento manual.
+
+### 19.4 Configuración, estado operativo e integraciones externas — inventario completo de fuentes versionadas
+
+**Referencias de recursos fijadas en código**
+
+- AUTH, USERS, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES declaran `SPREADSHEET_ID` local con el mismo identificador de la base.
+- WRITE, FEEDBACK y ADMIN declaran también `DRIVE_FOLDER_ID` para la carpeta raíz Cortes.
+- ADMIN declara URLs directas de AUTH, USERS, WRITE, CATALOG y FEEDBACK para sus wrappers actuales.
+- `JS/Frontend/api-config.js` declara siete endpoints: AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN.
+- Coordinator construye destinos mediante propiedades `GPSpedia_SERVICE_URL_<servicio>`; no tiene un mapa de Spreadsheet propio.
+- El árbol no contiene `appsscript.json`, `.clasp.json`, archivos `.gs` ni configuración de proyecto Apps Script. El archivo raíz `manifest.json` es el manifiesto PWA/web app, no el manifiesto Apps Script.
+
+**PropertiesService: claves de configuración y estado observadas**
+
+| Servicio | Claves/uso observado | Clasificación para MIG-003 |
+|---|---|---|
+| AUTH | `GPSpedia_COORDINATOR_URL`, `GPSpedia_COORDINATOR_SECRET` | configuración de interconexión que debe desaparecer |
+| AUTH | `GPSpedia_PASSWORD_RECOVERY_SECRET_V1` | secreto criptográfico de recuperación; no mover al navegador ni a una hoja pública; requiere decisión de diseño segura |
+| AUTH | `login_request_<requestId>`, `role_revocation_pending_<userId>` | estado temporal/idempotencia y marcador de revocación; no confundir con configuración |
+| USERS | no se detectó PropertiesService; conserva `SPREADSHEET_ID` constante | configuración fija incrustada |
+| WRITE | `GPSpedia_CORTES_LAST_ID` | contador operativo de IDs; debe migrarse como estado, no tratarse como endpoint |
+| CATALOG | `GPSpedia_CATALOG_TRAFFIC_SECRET` | secreto de autorización interna de inventario; no exponer al frontend |
+| FEEDBACK | `GPSpedia_COORDINATOR_URL`, `GPSpedia_COORDINATOR_SECRET` | configuración de interconexión |
+| FEEDBACK | propiedad de modo de texto enriquecido (`RICH_TEXT_MODE_PROPERTY_`) | preferencia global de producto; debe residir en configuración central |
+| ADMIN | `GPSpedia_CATALOG_TRAFFIC_SECRET`, `LOGOS_MARCA_ID_COUNTER` | secreto de consulta interna y contador de IDs |
+| ADMIN | claves dinámicas de auditoría Drive, selección de carpeta, estado/ledger de organizador y estado de operación | estado de ejecución/reanudación, no configuración de endpoints |
+| Coordinator | `GPSpedia_COORDINATOR_SECRET_<service>`, `GPSpedia_SERVICE_URL_<target>` | secretos y URLs de interconexión |
+| Coordinator | leases, contextos de autenticación por usuario, índice token→usuario, epochs, eventos/revisiones del catálogo y buckets de tráfico | estado operativo central hoy persistido en ScriptProperties |
+| SharedMutationClient | `GPSpedia_COORDINATOR_URL`, `GPSpedia_COORDINATOR_SECRET` | configuración de interconexión duplicada en consumidores |
+| UTILITIES | sin uso directo de PropertiesService en el archivo actual | mantiene ID fijo y estado de migración en hojas temporales |
+
+AUTH usa además CacheService para intentos fallidos/reservas de login y estado de recuperación; ADMIN usa CacheService para verificar respaldos por sesión y mantener referencias temporales de auditoría; Coordinator y servicios usan cachés locales de actor. Estos estados efímeros no son equivalentes a configuración central. La migración deberá decidir explícitamente cuáles se reconstruyen desde Spreadsheet, cuáles pueden permanecer en caché de ejecución y cuáles requieren caducidad/recuperación.
+
+**Integraciones Google y externas**
+
+| API/servicio | Consumidores | Función |
+|---|---|---|
+| SpreadsheetApp | todos los servicios excepto Coordinator/SharedMutationClient | lectura/escritura de datos, configuración, sesiones, ledgers, backups y hojas temporales |
+| DriveApp | WRITE, FEEDBACK, ADMIN, UTILITIES | archivos/carpetas, imágenes, backups, ACL, papelera, auditoría y staging |
+| Drive REST API v3 vía UrlFetchApp + OAuth de Apps Script | ADMIN | cuota/almacenamiento y operaciones de metadatos/archivos cuando DriveApp no cubre el caso |
+| YouTube Data API resumable | FEEDBACK y cliente `youtubeUpload.js` | iniciar sesión de carga, transferir vídeo, consultar/aprobar/rechazar y publicar destino |
+| MailApp | AUTH | envío de códigos/enlaces de recuperación de contraseña |
+| UrlFetchApp entre servicios GPSpedia | ADMIN→WRITE/CATALOG; SharedMutationClient→Coordinator; Coordinator→servicios para precarga/invalidez; AUTH/FEEDBACK/UTILITIES→Coordinator | llamadas backend→backend que MIG-004/MIG-011 deberán sustituir por orquestación frontend, sin perder resultados/compensación |
+| UrlFetchApp a recursos externos | WRITE/ADMIN/FEEDBACK | descarga/validación de imágenes y llamadas API externas; no confundirlas con llamadas a otro servicio GPSpedia |
+| OAuth administrado por Apps Script | ADMIN/FEEDBACK | autorización de Google Drive/YouTube; los tokens no se trasladan al navegador |
+
+El navegador mantiene capacidades adicionales que forman parte del inventario: IndexedDB para catálogo, operaciones pendientes, borradores, vídeos y auditorías; localStorage para preferencias/sesión donde corresponda; Cache API/service worker para PWA/offline; FileReader, Blob/ObjectURL, canvas y cola de miniaturas para multimedia; impresión y QR locales; telemetría de navegador. No se debe sustituir la capa backend sin mantener esos contratos de persistencia y recuperación.
+
+### 19.5 Acciones sin consumidor directo: clasificación y prueba asociada
+
+Las doce acciones identificadas en §9.1 quedan clasificadas y conservadas:
+
+| Acción | Clasificación final de inventario | Evidencia/prueba existente localizada |
+|---|---|---|
+| `touchSession` | compatibilidad de actividad de sesión; sin consumidor frontend directo | `SessionActivityCoordination.mjs`, `SessionActivityLeaseMinimization.mjs`, contrato de sesión AUTH |
+| `benchmarkPasswordKdf` | diagnóstico manual exclusivo de Desarrollador, read-only | `PasswordKdfBenchmark.mjs` |
+| `getNavigationData` | lectura optimizada/compatibilidad de navegación; consumidor actual no localizado, contrastar con snapshot de catálogo | `CatalogNavigationRead.mjs` |
+| `markInboxUnread` | capacidad de Inbox con handler, pendiente de conexión directa a control UI | `InboxConversations.mjs`, `InboxUi.mjs`, `InboxRoleContract.js` |
+| `deleteInboxConversation` | ocultación lógica por participante; no borra mensajes físicamente | `InboxConversations.mjs`, `InboxUi.mjs`, `InboxAuditTrail.js` |
+| `migrateTimestamps` | mantenimiento manual Desarrollador con staging/backup/rollback | `UtilitiesSecurity.js` |
+| `migrateVehicleContributionsSchema` | mantenimiento de esquema invocado también por el flujo de candidatos cuando falta el ledger | `VehicleContributionProjection.mjs`, pruebas de ledger/proyección de aportes |
+| `migrateIdentifiers` | migración administrativa por lotes, dry-run, digest y snapshot | `IdentifierMigration.mjs`, `IdentifierFormulaMigration.mjs` |
+| `rollbackIdentifiers` | recuperación manual ligada a manifiesto/digest y huella verificada | `IdentifierMigration.mjs`, `IdentifierFormulaMigration.mjs` |
+| `reconcilePendingImageUploads` | mantenimiento/reconciliación de cargas Drive, dry-run y confirmación | `AdminImageUploadEventReconciliation.mjs`, `ImageUploadEventJournal.mjs` |
+| `createSheet` | herramienta manual de esquema Spreadsheet | `AdminSheetActionsContract.mjs` |
+| `addColumn` | herramienta manual de esquema Spreadsheet | `AdminSheetActionsContract.mjs` |
+
+No se autoriza retirar ninguna acción por falta de botón/consumidor. Para `markInboxUnread` y `deleteInboxConversation`, el inventario detecta una brecha de consumidor UI, no una ausencia de handler. Debe decidirse en la tarea de UI correspondiente si se conecta el control existente o se conserva el endpoint manual; no se amplía ni reduce su RBAC aquí.
+
+La terminal `driveCommand` tiene comandos `dir/ls`, `cd`, `cd ..`, retorno a raíz, `mkdir`, `move` y `tree`; restringe las operaciones al árbol Cortes y no ofrece comando de borrado. Las migraciones de IDs, reconciliación de cargas, backups/restauración, auditorías e inventarios son operaciones manuales/desarrollador que requieren dry-run/confirmación, manifiesto, respaldo, ledger o rollback según la acción.
+
+### 19.6 Trazabilidad de capacidades CAP-01 a CAP-19
+
+| Capacidad | UI/consumidores principales | Backend/datos principales | Pruebas existentes representativas |
+|---|---|---|---|
+| CAP-01 Catálogo/navegación | index, main, navigation, search-utils, api-config | CATALOG; Cortes, LogosMarca, Tutorial, Relay; feed Coordinator | CatalogNavigationRead, CatalogDropdownRead, CatalogSnapshotSync, CatalogChangeFeed, CatalogStartupIntegrity |
+| CAP-02 Modelos/cortes/contribuciones | add_cortes, ui, VinDifferentialEngine | WRITE/ADMIN/CATALOG; Cortes, Relay, AportesVehiculo, idempotencia | CutPayloadValidation, AddCutOperationIntegrity, AddSupplementaryInfoIntegrity, VehicleContributionProjection |
+| CAP-03 VIN | add_cortes, ui, VinDifferentialEngine | WRITE/ADMIN; Cortes.VIN dinámico, AT:AV | VinAuthoritativeValidation, VinContextResolution, VinTestigoIntegrity, NavigationVinCollection |
+| CAP-04 Imágenes | ui, add_cortes, youtubeUpload auxiliar, lightbox, imageObjectUrlCache, thumbnailCompressionQueue | WRITE/FEEDBACK/ADMIN; Drive, ImageUploadLedger, ImageUploadEvents, reportes/PyS | ImageUploadLedger, ImageUploadEventJournal, AdminImageUploadIsolation, ImageResolutionVariants, CortesImageReconciliation* |
+| CAP-05 Vídeos | youtubeUpload, ui, Inbox | FEEDBACK; YouTube resumable, VideoApprovalEvents, Feedbacks/pys/Tutorial | YouTubeUploadClient, YouTubeUploadCheckpointRecovery, VideoApprovalContracts, VideoApprovalPublishing, SupplementaryVideoContract |
+| CAP-06 PyS | pys-data, ui, activityDashboard | FEEDBACK; pys, PysOperations, Cortes, Drive | PysDataCache, PysVehicleRelationIntegrity, PysCreationIntegrity, FeedbackPys* |
+| CAP-07 Tutoriales | ui, main | FEEDBACK/CATALOG; Tutorial y eventos versionados | TutorialIntegrity, FeedbackTutorialLookupBoundedRead, FeedbackTutorialPreflightOutsideLock |
+| CAP-08 Feedback | main, ui, api-config | FEEDBACK; Feedbacks, Contactanos, FeedbackLikes, FeedbackYearApplications, ActivityUsuario, eventos de imagen | FeedbackWriteSecurity, FeedbackYearApplicationAppendOnly, FeedbackLikeAppendOnly, FeedbackReportImageEvents |
+| CAP-09 Inbox | ui, inboxPageCache | FEEDBACK/InboxConversations; cinco hojas Inbox | InboxConversations, InboxRoleContract, InboxAuditTrail, InboxCachePagination, InboxUi, InboxStoredXss |
+| CAP-10 Usuarios/identidad | auth, users.html, api-config | AUTH/USERS; Users, ActiveSessions, Logs, CacheService y contexto Coordinator | Auth, UsersAtomicMutations, PasswordRecovery, PasswordHashMigration, TermsAcceptance, SessionInvalidationFlow |
+| CAP-11 Drive | ui, developer console, driveStorageAlerts | ADMIN/WRITE/FEEDBACK/UTILITIES; Drive y hojas de historial | DriveTerminalScope, DriveStorageAlerts, AdminImageTrashLifecycle, AdminDriveAudit* |
+| CAP-12 Backup/restauración | ui, editBackupStore | ADMIN; Spreadsheet/Drive, manifiestos y rollback | AdminRestoreRecovery, EditBackupIsolation, AdminBackupResumeUI |
+| CAP-13 Administración de datos | ui, consola Developer | ADMIN/UTILITIES/WRITE; hojas, columnas, IDs, manifiestos | AdminSheetActionsContract, IdentifierAudit, IdentifierMigration, IdentifierFormulaMigration, UtilitiesSecurity |
+| CAP-14 Estado de servicios | api-config, catalogStatus, ui | GET salud de los siete servicios; ping ADMIN | ServiceHealthContract, RemoteServiceHealth, DirectTrafficRoutingCoverage |
+| CAP-15 Métricas/actividad | activityDashboard, serviceTelemetry, ui | FEEDBACK/ADMIN/Coordinator; ActividadUsuario, tráfico, almacenamiento | ActivityDashboardContributions, ActivityDashboardInsights, ServiceTrafficAggregatorContract, ServiceTrafficAggregation |
+| CAP-16 Herramientas Developer | ui, developerConsoleConfirmation, diagnosticLogger | ADMIN/AUTH/UTILITIES/Coordinator | DeveloperConsoleRouting, DeveloperConsoleConfirmation, DeveloperPrivilegeRouting, DeveloperOperationMessages |
+| CAP-17 PWA/experiencia/cache | main, offline, state, service-worker, navigation, catalogRequest | navegador, IndexedDB, Cache API, service worker y CATALOG | PWAStartupScenarios, ServiceWorkerCache, IndexedDBTransactions, CatalogRequestRetry, CatalogStartupParallelism |
+| CAP-18 Impresión/QR | printQr, ui, index | navegador; sin backend obligatorio para QR local/impresión | PrintQrPrivacy, PrintSheetLayoutModes, PrintSheetPaginationIntegrity, PrintSheetPageContract |
+| CAP-19 Procesos auxiliares | consola Developer y procedimientos manuales | Coordinator, SharedMutationClient, UTILITIES y handlers de mantenimiento | SharedMutationCoordinator, CoordinatorCapabilityPreservation, UtilitiesSecurity, ActionDispatchContract |
+
+Las pruebas representativas son evidencia de cobertura por capacidad, no una afirmación de que cada acción tenga una prueba individual exclusiva. La matriz de 120 acciones, la clasificación de acciones sin consumidor y los contratos por servicio completan la trazabilidad funcional; las brechas de prueba específica se mantienen visibles para MIG-027/MIG-028.
+
+### 19.7 Pruebas, workflows y límites de ejecución
+
+- `JS/Tests/` contiene 373 entradas. `RunServiceTests.mjs` organiza ocho grupos: WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e INTEGRATION.
+- El runner declara 274 llamadas `runCli`, que corresponden a 270 archivos CLI únicos (cuatro referencias duplicadas), y 31 ejecuciones/assertions mediante `recordResult`. No se debe inferir que las 373 entradas se ejecutan todas automáticamente.
+- `.github/workflows/service-tests.yml` corre en push/PR/manual sobre la rama de trabajo, usa Node.js 22, comprueba repositorio/rama/árbol limpio, ejecuta `node --check` en módulos backend/frontend principales y lanza `RunServiceTests.mjs`.
+- `.github/workflows/deployed-service-health.yml` consulta por GET los siete endpoints desplegados; no realiza escrituras y no valida Spreadsheet/Drive de forma directa.
+- `.github/workflows/file-reader-browser.yml` ejecuta Playwright/Chromium para el helper FileReader del formulario.
+- Las suites locales previamente registradas en checkpoint incluyen 247 aserciones aprobadas en nueve grupos de contratos y 12/12 PASS en `ActionDispatchContract.js`; no se vuelven a contabilizar como ejecutadas en esta iteración. Esta actualización fue una inspección estática/documental, no una ejecución de Node.js ni un workflow.
+- No hay un manifiesto Apps Script ni configuración `clasp` en el árbol; tampoco se encontraron archivos `.gs`. La búsqueda estática en los diez archivos backend y los módulos frontend principales no identificó `ScriptApp.newTrigger`, `newTrigger`, `timeBased`, `onOpen` ni `onEdit`. Esto permite afirmar que no hay declaraciones de triggers en esos archivos versionados, pero **no permite afirmar que los proyectos Apps Script desplegados carezcan de triggers instalados**.
+- Los proyectos Apps Script externos, sus triggers instalados, scopes/owners, propiedades reales, deployments, hojas/columnas reales y permisos de Drive/YouTube no están representados íntegramente en el repositorio. Su verificación se difiere a Beta con proyectos y recursos aislados; no bloquea el cierre del inventario estático MIG-001.
+
+### 19.8 Hallazgos nuevos que se entregan a las tareas dependientes
+
+1. Las siete URLs de servicio en `api-config.js`, los IDs de Spreadsheet repetidos en siete servicios y los IDs de carpeta Cortes en WRITE/FEEDBACK/ADMIN son referencias fijas que MIG-003/MIG-006 debe migrar sin bootstrap oculto.
+2. ADMIN contiene llamadas backend→backend a WRITE y CATALOG y constantes URL de AUTH/USERS/WRITE/CATALOG/FEEDBACK. Coordinator y SharedMutationClient contienen el plano de coordinación, URLs/secretos y estado que debe ser inventariado en MIG-004 antes de retirarlo.
+3. AUTH mantiene un secreto de recuperación autogenerado en ScriptProperties; no debe copiarse a una hoja pública ni al navegador. Su sustitución requiere un diseño de secreto seguro y compatible.
+4. Coordinator persiste leases, contextos de sesión, índices de token, revisiones/eventos del catálogo y buckets de tráfico en ScriptProperties. Son estados de negocio/operación que deben migrarse o sustituirse con recuperación explícita, no borrarse junto con las URLs.
+5. FEEDBACK persiste el modo de texto enriquecido en ScriptProperties; WRITE mantiene contador de IDs; ADMIN conserva contadores, auditorías y estado de operaciones. Estas claves no son todas de la misma clase.
+6. El estado de telemetría Coordinator-only declara que no cuenta todas las peticiones directas. La interfaz debe conservar la distinción `directRequestsAvailable:false`; no presentar el agregado como métricas completas de cada servicio.
+7. La prueba de salud GET verifica el contrato del endpoint, no la integridad de Spreadsheet/Drive ni la operación de escritura.
+8. Las diferencias de esquema de respaldo/restore y VIN descritas en §§17.8 y 18.9 requieren pruebas aisladas de paridad en MIG-027/Beta antes de alterar columnas o restauración.
+
+### 19.9 Resultado y criterio de cierre de MIG-001
+
+- 120/120 acciones del mapa: handler y servicio reconciliados.
+- 12/12 acciones sin consumidor directo: clasificadas como compatibilidad, diagnóstico, mantenimiento o brecha de consumidor; todas conservadas.
+- 13 operaciones internas de Coordinator y 8 rutas privadas de caché de actor: inventariadas.
+- Rutas GET, compatibilidades, rechazos de endpoint, comandos de terminal y operaciones manuales: inventariados.
+- Consumidores frontend, superficies HTML, módulos de soporte, 19 capacidades CAP, hojas/columnas, integraciones externas y dependencias backend→backend: trazados en §§9–19.
+- RBAC por servicio/acción y contratos AUTH/USERS/WRITE más payloads/efectos de CATALOG/FEEDBACK/Inbox/ADMIN/UTILITIES: documentados.
+- Pruebas existentes y brechas de cobertura por capacidad: vinculadas; validaciones de deployment/Spreadsheet/Drive/YouTube real quedan para Beta.
+- No se modificó código funcional, endpoints, propiedades, deployments, Spreadsheet ni Drive durante MIG-001.
+
+**Estado MIG-001: COMPLETADA CON VALIDACIÓN DIFERIDA.** El inventario estático y la matriz de trazabilidad cumplen el alcance local. Permanecen diferidas exclusivamente las verificaciones que requieren proyectos Apps Script desplegados, triggers instalados, credenciales/OAuth, Spreadsheet/Drive aislados y APIs externas; estas no autorizan retirar funciones y deben ejecutarse en Beta o en las tareas de paridad MIG-027/MIG-028.
