@@ -226,3 +226,46 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Se actualizó `TAREAS_MIGRACION_ARQUITECTURA.md`. MIG-001 sigue **EN PROGRESO**: aún falta relacionar hojas/rangos con acciones y pruebas concretas, revisar el flujo completo de backup/restore, inventariar todos los consumidores UI y procesos programados, y completar la revisión de APIs/Drive.
 - No se invocaron Apps Script, Spreadsheet, Drive, YouTube ni OAuth reales; no se ejecutaron pruebas Beta. No se modificó código funcional ni datos.
 - Commit de matriz: `f40208667cc94703d26ebeccff4e24a0458967dd`; commit de tareas: `1432cac205c48108cd7e05013ee2ac59f97a866d`.
+
+
+---
+
+## Cierre MIG-001 — inventario integral — 2026-11-23
+
+### Estado Git antes de esta actualización
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD confirmado antes de iniciar esta tanda: `4e46b37bb5af7e9542aa472950040d0c90bdff5d`.
+- Rama base: `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; la comparación confirma que la rama de trabajo no está detrás de la base y no se escribió en ella.
+- El primer cambio de esta tanda fue documental, sobre la matriz; no hubo cambios funcionales.
+
+### Resultado de MIG-001
+Se completó el inventario estático integral y se marcó **COMPLETADA CON VALIDACIÓN DIFERIDA** en `TAREAS_MIGRACION_ARQUITECTURA.md`.
+
+Evidencia consolidada en §19 de `MATRIZ_MIGRACION_SERVICIOS.md`:
+- Árbol Git completo consultado: 615 rutas, sin truncamiento.
+- Diez archivos backend inspeccionados, 1,041 declaraciones de funciones con nombre.
+- 37 módulos frontend, tres superficies HTML, 373 entradas de pruebas y tres workflows.
+- 120/120 acciones canónicas del mapa reconciliadas con servicio, dispatcher y handler; la compatibilidad CATALOG `getSuggestion` está diferenciada de la ruta canónica WRITE.
+- 13 operaciones privadas de Coordinator y 8 endpoints privados de caché de actor identificados.
+- Las 12 acciones sin consumidor directo fueron clasificadas por función y enlazadas a pruebas representativas. No se retiró ninguna.
+- Completada la trazabilidad de consumidores, CAP-01 a CAP-19, RBAC, contratos de payload/respuesta, hojas/rangos, propiedades, estados operativos, Drive, YouTube, MailApp, terminal, backups/restauración, migraciones, rutas GET y procesos manuales.
+- Se inventariaron las URLs e IDs incrustados, propiedades de configuración y estado, y las llamadas backend→backend que deben migrarse en tareas posteriores.
+- Se comprobó que el repositorio no contiene `appsscript.json`, `.clasp.json` ni archivos `.gs`; `manifest.json` es el manifiesto PWA. No se encontraron declaraciones de triggers en los diez archivos backend y módulos frontend principales inspeccionados. No se puede deducir desde Git si hay triggers instalados en proyectos Apps Script externos.
+
+### Pruebas y límites
+- Se revisó `RunServiceTests.mjs`: ocho grupos de servicio, 270 archivos CLI únicos referenciados y 31 ejecuciones/assertions `recordResult`. El directorio contiene 373 entradas; no se afirmó que todas sean ejecutadas automáticamente.
+- Las 247 aserciones y 12/12 de ActionDispatchContract registradas previamente siguen siendo evidencia histórica. No se reejecutaron en esta tanda; la edición actual fue documental/estática.
+- No se invocaron Apps Script desplegados, Spreadsheet/Drive reales, OAuth, YouTube ni MailApp. No se comprobaron triggers instalados, scopes, propietarios ni permisos reales.
+- Las validaciones que requieren proyectos desplegados, credenciales o recursos aislados se difieren a Beta y MIG-027/MIG-028. No impiden el cierre del inventario estático.
+- No se modificó código funcional, endpoints, propiedades, deployments ni datos.
+
+### Commits de esta tanda
+- Matriz integral §19: `7672b7f4f2452f57f7f5642f7e3c1a880ee65ad4`.
+- Estado de matriz actualizado: `27b5e723c636eabae92f882fcd55e721836a4f44`.
+- MIG-001 cerrada en tareas: `7384ff1f3973e0ad8b1d67ece0eb0d3b19056dc0`.
+- El checkpoint se actualiza en el commit siguiente.
+
+### Continuidad
+- MIG-001: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Próxima tarea pendiente del backlog: **MIG-002 — Inventario de pantallas y capacidades visibles**. No iniciar MIG-002 dentro de este cierre; el usuario pidió completar MIG-001 y mantener una tarea por vez.
+- MIG-003 y MIG-004 ya tienen hallazgos de entrada documentados en la matriz, pero permanecen pendientes como tareas separadas.
