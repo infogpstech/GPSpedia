@@ -295,7 +295,7 @@ test("mutaciones PyS publican upsert exacto sin leases por acción", () => {
         assert.ok(coordinatorSource.includes(action));
     }
 });
-test("WRITE coordina reset desde frontend y FEEDBACK/ADMIN conservan su publicación", () => {
+test("WRITE y ADMIN coordinan reset desde frontend; FEEDBACK conserva su publicación", () => {
     assert.equal(writeSource.includes("publishSharedCatalogChange_"), false);
     assert.equal(writeSource.includes("publishCortesCatalogChange_"), false);
     assert.ok(apiSource.includes("'publishCatalogReset': 'COORDINATOR'"));
@@ -307,8 +307,11 @@ test("WRITE coordina reset desde frontend y FEEDBACK/ADMIN conservan su publicac
     assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
     assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", "recordLike", { operation: "reset" })'));
     assert.ok(feedbackSource.includes("function buildFeedbackCortesCatalogChange_(reference)"));
-    assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
-    assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
+    assert.equal(adminSource.includes("publishSharedCatalogChange_"), false);
+    assert.equal(adminSource.includes("publishAdminCortesCatalogChange_"), false);
+    assert.ok(adminSource.includes("response.catalogResetRequired = true;"));
+    assert.ok(adminSource.includes('"resolveVehicleContributionCandidate"]'));
+    assert.ok(apiSource.includes("ADMIN_CATALOG_RESET_ACTIONS_"));
 });
 test("FEEDBACK usa versiones de origen para evitar snapshots fuera de orden", () => {
     const first = request("publishCatalogChange","FEEDBACK","recordLike",{change:{collection:"cortes",recordId:"V-FEEDBACK",operation:"upsert",snapshot:{id:"V-FEEDBACK",utilCorte1:1},sourceVersion:1}});
