@@ -1454,7 +1454,7 @@ function doPostInternal_(e) {
         } else if (catalogAction === "resolveVehicleContributionCandidate") {
             catalogChanged = response.status === "success";
         }
-        if (catalogChanged) response.catalogResetRequired = true;
+        if (catalogChanged && response.dryRun !== true) response.catalogResetRequired = true;
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
