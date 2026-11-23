@@ -39,40 +39,35 @@ La matriz de 120 acciones y sus handlers permanece en `MATRIZ_MIGRACION_SERVICIO
 
 | Origen | Destino | Operaciones observadas | Estado |
 |---|---|---|---|
-| ADMIN | WRITE | `allocateVehicleId`, `freezeCortesIds` | 2 llamadas POST directas |
-| ADMIN | CATALOG | `getVehicleProjection`, `getContributionCandidates` | 2 llamadas POST directas |
-| AUTH, USERS, WRITE, FEEDBACK, ADMIN, UTILITIES | COORDINATOR | leases, sesiones, cachés, feed y telemetría | A través de SharedMutationClient |
-| COORDINATOR | USERS, WRITE, FEEDBACK, ADMIN | `__primeSessionActorCache`, `__invalidateSessionActorCache` | Fan-out POST; lotes |
-| CATALOG | — | Sin llamadas backend→backend detectadas | Lectura directa de Spreadsheet |
+| ADMIN | — | Sin llamadas a WRITE ni CATALOG | MIG-010: retiradas del código ejecutable |
+| AUTH, USERS, WRITE, FEEDBACK, ADMIN, UTILITIES | COORDINATOR | leases, sesiones, cachés, feed y telemetría | A través de SharedMutationClient; fuera del alcance de MIG-010 |
+| COORDINATOR | USERS, WRITE, FEEDBACK, ADMIN | `__primeSessionActorCache`, `__invalidateSessionActorCache` | Fan-out POST; fuera del alcance de MIG-010 |
+| CATALOG | — | Sin llamadas backend→backend | Lectura directa de Spreadsheet |
 | InboxConversations.js | — | Sin transporte HTTP propio | Lógica delegada dentro de FEEDBACK |
 
-No se detectaron otras llamadas HTTP entre los diez módulos backend. Las llamadas a Drive API, YouTube y URLs de imágenes se clasifican aparte en §7.
+MIG-010 elimina la coordinación backend→backend de ADMIN con WRITE y CATALOG. Las secuencias que requieren ambos servicios se coordinan desde el frontend, que realiza solicitudes independientes a los endpoints correspondientes. Las mutaciones indivisibles permanecen en su servicio propietario. No se trasladan secretos, URLs ni credenciales de un servicio al navegador.
 
-## 3. Llamadas directas de ADMIN a servicios
+## 3. ADMIN: llamadas interservicio retiradas por MIG-010
 
-### 3.1 ADMIN → WRITE
+### 3.1 ADMIN / WRITE
 
-Transporte: `callWriteServiceAction()` en `JS/Services/admin.js`, que hace POST a WRITE y valida HTTP, JSON y `status: success`.
+Se retiró el cliente ADMIN que invocaba `allocateVehicleId` en WRITE y el handler heredado ya no ejecuta la asignación ni la escritura. La ruta de compatibilidad devuelve `ACTION_MOVED_TO_WRITE` sin hacer llamadas HTTP ni mutaciones.
 
-| Acción WRITE | Consumidor ADMIN | Payload relevante | Respuesta usada | Reemplazo objetivo |
-|---|---|---|---|---|
-| `allocateVehicleId` | `requestNextVehicleIdFromWriteService`, invocado por el handler heredado `handleAddOrUpdateCut` | `userId`, `sessionToken`, `opId`, `operationHash` | `vehicleId` validado como entero positivo | La asignación canónica ya pertenece a WRITE y la acción ya existe en el mapa frontend. El alta vigente debe ejecutar la asignación dentro de WRITE; retirar el wrapper ADMIN solo después de demostrar que el handler heredado no tiene consumidor externo. |
-| `freezeCortesIds` | `requestCortesIdFreezeFromWriteService`, invocado por `handleFreezeIdentifierFormulas` | `userId`, `sessionToken`, `backupId`, `confirm: true` | Resultado confirmado de WRITE | El frontend coordina primero el backup ADMIN y, si termina correctamente, llama directamente a WRITE/freezeCortesIds con el backupId. La escritura y verificación de IDs permanece indivisible dentro de WRITE. |
+El alta de vehículos, la reserva idempotente de IDs (`opId` y `operationHash`), las escrituras de Cortes y la finalización de la operación pertenecen a WRITE. El frontend enruta `addOrUpdateCut` y `allocateVehicleId` directamente a WRITE. La reserva y la mutación se mantienen dentro de la operación propietaria para evitar que el navegador divida una escritura crítica.
 
-**Observación de compatibilidad:** ADMIN devuelve `ACTION_MOVED_TO_WRITE` para las antiguas acciones `checkOperation`, `addOrUpdateCut` y `addSupplementaryInfo`. El helper de asignación dentro de `handleAddOrUpdateCut` es una ruta heredada que no debe tratarse como consumidor frontend activo. No se elimina en MIG-004.
+La acción `freezeCortesIds` también se enruta directamente a WRITE. Cuando el flujo requiere un respaldo ADMIN previo, el frontend espera su resultado y luego envía a WRITE el identificador del respaldo; WRITE conserva la operación de congelación y su verificación.
 
-**Pruebas existentes:** `AdminVehicleIdAllocationIdempotency.mjs`, `VehicleIdAllocationEndToEnd.mjs`, `WriteFreezeCortesIdsBackupOutsideLock.mjs`, `AdminCutPreflightBeforeAllocation.mjs`, `WriteVehicleIdAllocationIdempotency.mjs`. Confirmar en la tarea de implementación que el flujo frontend mantiene backup previo, opId, hash, reintento y resultado original.
+### 3.2 ADMIN / CATALOG
 
-### 3.2 ADMIN → CATALOG
+Se retiró el cliente ADMIN que consultaba `getVehicleProjection` y `getContributionCandidates` en CATALOG. ADMIN ya no contiene URL, secreto compartido ni wrapper de transporte hacia CATALOG.
 
-| Acción CATALOG | Consumidor ADMIN | Payload relevante | Respuesta usada | Reemplazo objetivo |
-|---|---|---|---|---|
-| `getVehicleProjection` | `getAdminProjectedVehicleFieldSnapshot_`, usado antes de editar un campo/imagen de vehículo | `vehicleId` | Proyección del vehículo, valor del campo y fuente de contribución | El frontend consulta CATALOG directamente como prelectura. ADMIN debe validar en su propia ejecución la versión/valor esperado contra Spreadsheet antes de escribir; no debe confiar en una proyección enviada por el navegador. |
-| `getContributionCandidates` | `handleGetVehicleContributionCandidates_`; también lo consume el flujo de inventario/reconciliación de imágenes | `limit`; opcional `includeImageInventoryEvents` | Candidatos, total, truncamiento, origen y eventos autorizados de inventario | El frontend consulta CATALOG directamente. Los metadatos restringidos deben autorizarse mediante sesión y rol verificados por CATALOG; no se debe conservar el secreto compartido ADMIN↔CATALOG ni exponerlo al navegador. ADMIN vuelve a comprobar la identidad/estado del recurso antes de aplicar una mutación. |
+El frontend consulta directamente CATALOG para obtener proyecciones y candidatos. CATALOG valida su propia sesión y rol antes de responder; el frontend no recibe ni reenvía secretos interservicio. Las mutaciones posteriores se envían al servicio propietario, que vuelve a comprobar la identidad, el estado y la versión del recurso antes de escribir.
 
-**Riesgo de seguridad identificado:** la lectura opcional de eventos de inventario usa `GPSpedia_CATALOG_TRAFFIC_SECRET`, compartido entre ADMIN y CATALOG. Esto contradice la arquitectura objetivo de §17. No copiar ese secreto al frontend ni trasladarlo a una hoja pública. La sustitución debe ser autorización local de CATALOG con actor/rol de sesión y respuesta mínima.
+El ledger interno de eventos de inventario no se expone como respuesta genérica de candidatos. CATALOG entrega la proyección mínima autorizada necesaria para el flujo de frontend.
 
-**Pruebas existentes:** `AdminVehicleTargetedCatalogRead.mjs`, `AdminVehicleFieldVersioning.mjs`, `AdminVehicleContributionCandidates.mjs`, `AdminCandidateImageInventoryCatalogSource.mjs`, `AdminVehicleContributionResolution.mjs`, `VehicleContributionProjection.mjs`.
+**Pruebas de regresión:** `AdminVehicleIdOutsideLock.mjs`, `AdminVehicleIdAllocationIdempotency.mjs`, `AdminNewVehicleBatchWrites.mjs`, `AdminCutSlotBatchWrites.mjs`, `AdminOperationReadInventory.mjs`, `AdminVehicleTargetedCatalogRead.mjs`, `CatalogTargetedResponses.mjs`, `CatalogTrafficTelemetry.mjs`, `ServiceTrafficAdminContract.mjs`, `DirectTrafficRoutingCoverage.mjs` y `ServiceCallGraphContract.mjs`.
+
+**Límite de evidencia:** estas pruebas verifican código y contratos versionados. La comprobación de sesiones, roles, URLs desplegadas y comportamiento real de Apps Script debe ejecutarse en Beta aislada; no se afirma que haya sido validada por las pruebas estáticas.
 
 ## 4. SharedMutationClient → COORDINATOR
 
