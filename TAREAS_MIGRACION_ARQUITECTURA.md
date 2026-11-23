@@ -524,7 +524,6 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - La invalidación de cachés ya se coordina desde `JS/Frontend/sessionCacheInvalidation.js` hacia cada servicio, sin secreto compartido. El registro `USERS` está excluido del registro central activo y no existe su servicio fuente en el árbol actual; la fila de despliegue heredada debe quedar documentada como obsoleta.
 - La telemetría global/health y los endpoints transitorios restantes de COORDINATOR pertenecen a MIG-025; no se eliminarán prematuramente en esta tarea.
 
-**Requisito técnico transversal:**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Confirmar que todos los consumidores fueron migrados.
 - [ ] Retirar wrappers, archivos duplicados, endpoints y propiedades relacionadas.
