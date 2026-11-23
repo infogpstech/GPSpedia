@@ -385,3 +385,54 @@ Se creó `INVENTARIO_CONFIGURACION_BACKEND.md` con:
 - MIG-002: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - MIG-003: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Siguiente tarea pendiente: **MIG-004 — Inventario de llamadas entre servicios y SharedMutation**. Identificar llamadas directas/indirectas, propietarios, consumidores, payloads, autenticación y reemplazo frontend; no eliminar todavía ningún endpoint ni cliente.
+
+
+---
+
+## Cierre MIG-004 — inventario de llamadas entre servicios y SharedMutation — 2026-11-23
+
+### Estado y alcance
+- HEAD verificado al cerrar la documentación: `5840e245c3bd8557e7cca6e37d63b8b80cc3eaaf` en `GPSpedia2.2.5_work`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribió en ella.
+- Se leyeron las normas vigentes, README, contexto operativo, checkpoint, backlog, matriz de servicios, inventarios MIG-001/002/003 y documentación de despliegue/Coordinator pertinente.
+
+### Resultado
+MIG-004 queda documentada como **COMPLETADA CON VALIDACIÓN DIFERIDA** en `TAREAS_MIGRACION_ARQUITECTURA.md`.
+
+Nuevo `INVENTARIO_LLAMADAS_SERVICIOS.md`:
+- ADMIN→WRITE: asignación de ID y congelación de fórmulas.
+- ADMIN→CATALOG: proyección de vehículo y candidatos de aportes.
+- SharedMutationClient→Coordinator: las 13 operaciones del protocolo, consumidores, payloads y reemplazo.
+- Coordinator→USERS/WRITE/FEEDBACK/ADMIN: precarga e invalidación de cachés de actor.
+- Seis callsites activos de leases y un helper AUTH de mantenimiento sin consumidor versionado.
+- Ocho endpoints privados de caché (dos en cada uno de los cuatro servicios).
+- Feed incremental, sesiones/revocación, telemetría y operaciones protegidas.
+- Clasificación separada de llamadas externas a Drive API, YouTube y URLs de imágenes.
+- Reemplazos mediante frontend, límites de escritura por servicio y riesgos de colisión en Users/ActiveSessions, Cortes y Drive.
+- Matriz de pruebas existentes y tareas de equivalencia para cada arista.
+
+### Prueba de contrato agregada
+- Se creó `JS/Tests/ServiceCallGraphContract.mjs`.
+- Se registró en `JS/Tests/RunServiceTests.mjs`.
+- La ejecución CI de esta prueba queda pendiente de consultar y documentar después de la publicación del checkpoint; no se presenta aún como aprobada.
+
+### Archivos y commits
+- `INVENTARIO_LLAMADAS_SERVICIOS.md`: `4cbce170ea3e4f8da8689c29aea1f2d92dee59f2`; corrección de conteo de leases: `394ab6e1a201d84362eef7c871935b407d828250`.
+- `JS/Tests/ServiceCallGraphContract.mjs`: `fd13c1e31576ee6f9a779bfb766fdd77d9f3720c`.
+- `JS/Tests/RunServiceTests.mjs`: `d096655d70708cc4acf40bd48fc1878f87e6392f`.
+- `TAREAS_MIGRACION_ARQUITECTURA.md`: `06768d781e6454b094f50bf2fd384e618bcc399e`.
+- `MATRIZ_MIGRACION_SERVICIOS.md`: `5ed74f05522b9d5073e3579e711da3c28090e1cc`.
+- `ChangesLogs.txt`: `5840e245c3bd8557e7cca6e37d63b8b80cc3eaaf`.
+- Este checkpoint se actualiza en el commit siguiente.
+
+### Integridad
+- No se retiraron llamadas, acciones, endpoints, propiedades, secretos, rutas de compatibilidad ni capacidades.
+- No se modificó código funcional, RBAC, Spreadsheet, Drive ni deployments.
+- Se identificaron explícitamente las colisiones de escritura que deben resolverse antes de retirar leases; no se simularon como resueltas.
+
+### Continuidad
+- MIG-001: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-002: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-003: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-004: **COMPLETADA CON VALIDACIÓN DIFERIDA**, pendiente de anexar el resultado CI del contrato agregado.
+- Siguiente tarea: **MIG-005 — Línea base funcional y de rendimiento**. Ejecutar suite local y registrar mediciones reales solo donde exista entorno autorizado; no inventar métricas Beta.
