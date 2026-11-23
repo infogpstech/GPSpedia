@@ -12,7 +12,6 @@ const frontendAuthSource = readFileSync(resolve(root, "JS/Frontend/auth.js"), "u
 const mainSource = readFileSync(resolve(root, "JS/Frontend/main.js"), "utf8");
 const htmlSource = readFileSync(resolve(root, "index.html"), "utf8");
 const workerSource = readFileSync(resolve(root, "service-worker.js"), "utf8");
-const coordinatorTests = readFileSync(resolve(root, "JS/Tests/SharedMutationCoordinator.js"), "utf8");
 
 function extractFunction(source, name) {
     const start = source.indexOf("function " + name + "(");
@@ -230,7 +229,7 @@ assert.match(authSource, /function handleRequestPasswordRecovery[\s\S]*?LockServ
 assert.match(authSource, /function handleCompletePasswordRecovery[\s\S]*?revokeSharedUserSessionContexts_/);
 assert.ok(authSource.includes("case 'requestPasswordRecovery':"));
 assert.ok(authSource.includes("case 'completePasswordRecovery':"));
-assert.ok(coordinatorSource.includes('requestPasswordRecovery: { write: ["PASSWORD_RECOVERY"], trackActivity: false }'));
+assert.doesNotMatch(coordinatorSource, /requestPasswordRecovery|completePasswordRecovery/);
 assert.ok(apiSource.includes("'requestPasswordRecovery': 'AUTH'"));
 assert.ok(apiSource.includes("'completePasswordRecovery': 'AUTH'"));
 const loginBoundary = frontendAuthSource.indexOf("\nexport async function login(");
@@ -242,7 +241,5 @@ assert.ok(mainSource.includes("passwordRecoveryCompleteForm.addEventListener('su
 assert.ok(htmlSource.includes('id="password-recovery-request-form"'));
 assert.ok(htmlSource.includes('id="password-recovery-complete-form"'));
 assert.ok(workerSource.includes("gpsepedia-cache-v74"));
-assert.ok(coordinatorTests.includes("AUTH/requestPasswordRecovery no requiere sesión"));
-assert.ok(coordinatorTests.includes("AUTH/completePasswordRecovery protege identidad"));
 
 console.log("PasswordRecovery: " + passed + "/" + passed + " PASS");
