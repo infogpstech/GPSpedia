@@ -33,9 +33,8 @@ test("ADMIN no mantiene el batch de cinco endpoints directos y Coordinator prote
     assert.match(coordinator, /return readServiceTraffic_\("ADMIN", "getServiceTraffic"\)/);
 });
 
-test("La telemetría conserva el fan-out de precarga de sesiones, no el de métricas", () => {
-    assert.match(coordinator, /function primeSessionActorCaches_/);
-    assert.match(coordinator, /fetchAll\(requests\)/);
+test("Coordinator ya no hace fan-out de sesión ni de métricas", () => {
+    assert.doesNotMatch(coordinator, /function primeSessionActorCaches_|function invalidateSessionActorCaches_|UrlFetchApp\.fetch|fetchAll\(/);
     assert.doesNotMatch(coordinatorReader, /fetchAll/);
 });
 
