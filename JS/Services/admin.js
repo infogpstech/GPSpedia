@@ -108,6 +108,224 @@ function getCortesRootFolder() {
 }
 function getCortesRootFolderId_() { return String(getCortesRootFolder().getId());}
 
+/**
+ * Publica el parámetro global rich_text_mode como una revisión completa.
+ * La revisión anterior permanece activa hasta que las tres tablas versionadas
+ * estén copiadas y la nueva revisión haya superado la lectura/validación.
+ */
+function readCentralConfigurationPublishTable_(spreadsheet, name, requiredHeaders) {
+    const sheet = spreadsheet.getSheetByName(name);
+    if (!sheet) throw new Error("Falta la hoja central requerida: " + name + ".");
+    const values = sheet.getDataRange().getValues();
+    if (!Array.isArray(values) || !values.length || !Array.isArray(values[0])) {
+        throw new Error("La tabla central no tiene encabezados válidos: " + name + ".");
+    }
+    const headers = values[0].map(value => String(value === null || value === undefined ? "" : value).trim());
+    const positions = {};
+    headers.forEach((header, index) => {
+        if (!header) return;
+        if (Object.prototype.hasOwnProperty.call(positions, header)) {
+            throw new Error("Hay encabezados duplicados en " + name + ".");
+        }
+        positions[header] = index;
+    });
+    requiredHeaders.forEach(header => {
+        if (!Object.prototype.hasOwnProperty.call(positions, header)) {
+            throw new Error("Falta el encabezado " + header + " en " + name + ".");
+        }
+    });
+    const rows = values.slice(1).filter(row =>
+        row.some(value => value !== "" && value !== null && value !== undefined)
+    );
+    return { sheet, headers, positions, rows };
+}
+
+function appendCentralConfigurationPublishRows_(table, rows) {
+    if (!rows.length) return;
+    const firstRow = table.sheet.getLastRow() + 1;
+    table.sheet.getRange(firstRow, 1, rows.length, table.headers.length).setValues(rows);
+    const persisted = table.sheet.getRange(firstRow, 1, rows.length, table.headers.length).getValues();
+    if (JSON.stringify(persisted) !== JSON.stringify(rows)) {
+        throw new Error("No se pudo verificar la escritura de la nueva revisión en " + table.sheet.getName() + ".");
+    }
+}
+
+function handleSetRichTextModeCentral_(payload, actor) {
+    const mode = String(payload && payload.mode || "").trim().toLowerCase();
+    if (!actor || String(actor.role || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase() !== "desarrollador") {
+        throw new Error("Acceso denegado: solo un Desarrollador puede cambiar el formato global.");
+    }
+    if (mode !== "strict" && mode !== "advanced") throw new Error("Modo de texto enriquecido no válido.");
+    const requestId = String(payload && payload.requestId || "").trim();
+    if (!/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) throw new Error("Identificador de publicación inválido.");
+    const reason = String(payload && payload.changeReason || "Cambio del modo global de texto enriquecido").trim().slice(0, 300);
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(1000)) {
+        const error = new Error("La configuración central está siendo modificada; vuelve a intentar.");
+        error.code = "CENTRAL_CONFIGURATION_BUSY";
+        throw error;
+    }
+    try {
+        const spreadsheet = getSpreadsheet();
+        const current = readCentralConfigurationSnapshot_();
+        const control = readCentralConfigurationPublishTable_(spreadsheet, "ConfiguracionControl",
+            ["control_key", "schema_version", "active_revision", "publication_state", "published_at", "updated_by", "change_reason"]);
+        const services = readCentralConfigurationPublishTable_(spreadsheet, "Servicios",
+            ["config_revision", "service_key", "endpoint_url", "enabled", "contract_version", "min_client_version", "health_action", "updated_at", "updated_by", "change_reason"]);
+        const parameters = readCentralConfigurationPublishTable_(spreadsheet, "ConfiguracionParametros",
+            ["config_revision", "config_key", "value_json", "value_type", "scope", "visibility", "enabled", "default_json", "validation_rule", "schema_version", "updated_at", "updated_by", "change_reason"]);
+        const resources = readCentralConfigurationPublishTable_(spreadsheet, "ConfiguracionRecursos",
+            ["config_revision", "resource_key", "resource_type", "resource_id", "scope", "visibility", "enabled", "expected_parent_id", "expected_name", "updated_at", "updated_by", "change_reason"]);
+        const schema = readCentralConfigurationPublishTable_(spreadsheet, "ConfiguracionEsquema",
+            ["config_key", "entity_type", "value_type", "scope_allowed", "visibility_allowed", "required", "default_json", "validation_rule", "introduced_schema_version", "deprecated_schema_version", "replacement_key", "owner_service", "description"]);
+        const history = readCentralConfigurationPublishTable_(spreadsheet, "ConfiguracionHistorial",
+            ["history_id", "config_revision", "entity_type", "entity_key", "operation", "previous_value_json", "new_value_json", "actor_id", "changed_at", "change_reason", "rollback_of_revision", "schema_version"]);
+
+        if (control.rows.length !== 1 ||
+            String(control.rows[0][control.positions.control_key]) !== "CONFIGURATION_ACTIVE" ||
+            Number(control.rows[0][control.positions.active_revision]) !== Number(current.revision) ||
+            String(control.rows[0][control.positions.publication_state]) !== "READY") {
+            throw new Error("El control de configuración cambió o no está listo para publicar.");
+        }
+        const priorMode = current.parameters && current.parameters.rich_text_mode || "strict";
+        const existingHistory = history.rows.find(row => String(row[history.positions.history_id]) === requestId);
+        if (existingHistory) {
+            const sameRequest = String(existingHistory[history.positions.entity_type]) === "parameter" &&
+                String(existingHistory[history.positions.entity_key]) === "rich_text_mode" &&
+                String(existingHistory[history.positions.new_value_json]) === JSON.stringify(mode) &&
+                Number(existingHistory[history.positions.config_revision]) === Number(current.revision) &&
+                priorMode === mode;
+            if (sameRequest) return { status: "success", mode, revision: current.revision, idempotent: true };
+            throw new Error("El identificador de publicación ya fue utilizado para otro cambio o revisión.");
+        }
+        if (priorMode === mode) return { status: "success", mode, revision: current.revision, unchanged: true };
+
+        function maximumRevision(table) {
+            const index = table.positions.config_revision;
+            let maximum = Number(current.revision);
+            table.rows.forEach(row => {
+                const value = Number(row[index]);
+                if (!Number.isSafeInteger(value) || value < 1) throw new Error("Hay una revisión inválida en " + table.sheet.getName() + ".");
+                maximum = Math.max(maximum, value);
+            });
+            return maximum;
+        }
+        const nextRevision = Math.max(maximumRevision(services), maximumRevision(parameters), maximumRevision(resources)) + 1;
+        if (!Number.isSafeInteger(nextRevision)) throw new Error("Se alcanzó el límite seguro de revisiones.");
+        const revisionRows = table => table.rows
+            .filter(row => Number(row[table.positions.config_revision]) === Number(current.revision))
+            .map(row => {
+                const copy = row.slice();
+                copy[table.positions.config_revision] = nextRevision;
+                return copy;
+            });
+        const nextServices = revisionRows(services);
+        const nextResources = revisionRows(resources);
+        const nextParameters = revisionRows(parameters);
+        const parameterMatches = nextParameters.filter(row => String(row[parameters.positions.config_key]) === "rich_text_mode");
+        if (parameterMatches.length > 1) throw new Error("La revisión activa contiene rich_text_mode duplicado.");
+        const now = new Date().toISOString();
+        const actorId = String(actor.userId || "").trim();
+        if (!actorId) throw new Error("No se pudo identificar al Desarrollador que publica la configuración.");
+        let operation = "update";
+        if (parameterMatches.length === 1) {
+            const row = parameterMatches[0];
+            row[parameters.positions.value_json] = JSON.stringify(mode);
+            row[parameters.positions.enabled] = true;
+            row[parameters.positions.updated_at] = now;
+            row[parameters.positions.updated_by] = actorId;
+            row[parameters.positions.change_reason] = reason;
+        } else {
+            operation = "create";
+            const schemaRow = schema.rows.find(row =>
+                String(row[schema.positions.config_key]) === "rich_text_mode" &&
+                String(row[schema.positions.entity_type]) === "parameter");
+            if (!schemaRow) throw new Error("No existe definición aprobada para rich_text_mode.");
+            const row = new Array(parameters.headers.length).fill("");
+            row[parameters.positions.config_revision] = nextRevision;
+            row[parameters.positions.config_key] = "rich_text_mode";
+            row[parameters.positions.value_json] = JSON.stringify(mode);
+            row[parameters.positions.value_type] = schemaRow[schema.positions.value_type];
+            row[parameters.positions.scope] = "global";
+            row[parameters.positions.visibility] = "public";
+            row[parameters.positions.enabled] = true;
+            row[parameters.positions.default_json] = schemaRow[schema.positions.default_json];
+            row[parameters.positions.validation_rule] = schemaRow[schema.positions.validation_rule];
+            row[parameters.positions.schema_version] = current.schemaVersion;
+            row[parameters.positions.updated_at] = now;
+            row[parameters.positions.updated_by] = actorId;
+            row[parameters.positions.change_reason] = reason;
+            nextParameters.push(row);
+        }
+
+        appendCentralConfigurationPublishRows_(services, nextServices);
+        appendCentralConfigurationPublishRows_(parameters, nextParameters);
+        appendCentralConfigurationPublishRows_(resources, nextResources);
+
+        const originalControl = control.rows[0].slice();
+        const nextControl = originalControl.slice();
+        nextControl[control.positions.active_revision] = nextRevision;
+        nextControl[control.positions.publication_state] = "READY";
+        nextControl[control.positions.published_at] = now;
+        nextControl[control.positions.updated_by] = actorId;
+        nextControl[control.positions.change_reason] = reason;
+
+        function restorePreviousRevision() {
+            try {
+                control.sheet.getRange(2, 1, 1, control.headers.length).setValues([originalControl]);
+                SpreadsheetApp.flush();
+                const restored = readCentralConfigurationSnapshot_();
+                if (Number(restored.revision) !== Number(current.revision)) throw new Error("La revisión anterior no quedó activa.");
+            } catch (restoreError) {
+                const fatal = new Error("Falló la publicación y no se pudo restaurar la revisión central anterior.");
+                fatal.code = "CENTRAL_CONFIGURATION_ROLLBACK_FAILED";
+                throw fatal;
+            }
+        }
+
+        try {
+            control.sheet.getRange(2, 1, 1, control.headers.length).setValues([nextControl]);
+            SpreadsheetApp.flush();
+            const published = readCentralConfigurationSnapshot_();
+            if (Number(published.revision) !== nextRevision ||
+                String(published.parameters && published.parameters.rich_text_mode || "") !== mode) {
+                throw new Error("La nueva revisión no superó la lectura de confirmación.");
+            }
+        } catch (publishError) {
+            restorePreviousRevision();
+            throw publishError;
+        }
+
+        const historyRow = new Array(history.headers.length).fill("");
+        historyRow[history.positions.history_id] = requestId;
+        historyRow[history.positions.config_revision] = nextRevision;
+        historyRow[history.positions.entity_type] = "parameter";
+        historyRow[history.positions.entity_key] = "rich_text_mode";
+        historyRow[history.positions.operation] = operation;
+        historyRow[history.positions.previous_value_json] = JSON.stringify(priorMode);
+        historyRow[history.positions.new_value_json] = JSON.stringify(mode);
+        historyRow[history.positions.actor_id] = actorId;
+        historyRow[history.positions.changed_at] = now;
+        historyRow[history.positions.change_reason] = reason;
+        historyRow[history.positions.rollback_of_revision] = "";
+        historyRow[history.positions.schema_version] = current.schemaVersion;
+        try {
+            appendCentralConfigurationPublishRows_(history, [historyRow]);
+        } catch (historyError) {
+            restorePreviousRevision();
+            throw new Error("La revisión se restauró porque no se pudo confirmar su historial.");
+        }
+
+        try {
+            CacheService.getScriptCache().removeAll(["GP_CONFIG_V1_public", "GP_CONFIG_V1_backend_ADMIN"]);
+        } catch (cacheError) {}
+        return { status: "success", mode, revision: nextRevision, requestId };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+
 function isBackupUrlForResource(backupUrl, expectedPrefix) {
     return backupUrl === expectedPrefix ||
         backupUrl.startsWith(expectedPrefix + "/") ||
@@ -1216,6 +1434,9 @@ function doPostInternal_(e) {
         switch (action) {
             case 'ping':
                 response = { status: 'success', message: 'pong' };
+                break;
+            case 'setRichTextMode':
+                response = handleSetRichTextModeCentral_(payload, developerContext);
                 break;
             case 'backupDatabase':
                 response = handleBackupDatabase(payload, logMessage, developerContext);

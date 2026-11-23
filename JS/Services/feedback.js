@@ -650,8 +650,6 @@ function doPost(e) {
     }
 }
 
-const RICH_TEXT_MODE_PROPERTY_ = "GPSpedia_RICH_TEXT_MODE_V1";
-
 function normalizeRichTextMode_(value) {
     const mode = String(value || "").trim().toLowerCase();
     return mode === "strict" || mode === "advanced" ? mode : null;
@@ -660,22 +658,18 @@ function normalizeRichTextMode_(value) {
 function handleGetRichTextMode(payload) {
     const actor = payload && payload.__feedbackActor;
     if (!actor || !actor.userId) throw new Error("Se requiere una sesión activa para consultar el formato global.");
-    const mode = normalizeRichTextMode_(PropertiesService.getScriptProperties().getProperty(RICH_TEXT_MODE_PROPERTY_)) || "strict";
-    return { status: "success", mode };
+    const snapshot = getPublicCentralConfiguration_();
+    const mode = normalizeRichTextMode_(snapshot && snapshot.parameters && snapshot.parameters.rich_text_mode) || "strict";
+    return { status: "success", mode, revision: Number(snapshot && snapshot.revision) || null };
 }
 
-function handleSetRichTextMode(payload) {
+function handleInvalidateRichTextModeCache(payload) {
     const actor = payload && payload.__feedbackActor;
     if (!actor || normalizeFeedbackRole(actor.role) !== "desarrollador") {
-        throw new Error("Acceso denegado: solo un Desarrollador puede cambiar el formato global.");
+        throw new Error("Acceso denegado: solo un Desarrollador puede invalidar la caché de configuración.");
     }
-    const mode = normalizeRichTextMode_(payload && payload.mode);
-    if (!mode) throw new Error("Modo de texto enriquecido no válido.");
-    const properties = PropertiesService.getScriptProperties();
-    properties.setProperty(RICH_TEXT_MODE_PROPERTY_, mode);
-    const saved = normalizeRichTextMode_(properties.getProperty(RICH_TEXT_MODE_PROPERTY_));
-    if (saved !== mode) throw new Error("No se pudo confirmar el guardado del formato global.");
-    return { status: "success", mode: saved };
+    CacheService.getScriptCache().remove("GP_CONFIG_V1_public");
+    return { status: "success" };
 }
 
 const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
@@ -689,7 +683,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     getInboxRecipients: null, notifyDevelopersDriveCritical: ["Desarrollador"], getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, markInboxUnread: null, deleteInboxConversation: null, archiveInboxConversation: null,
     closeInboxConversation: ["Desarrollador", "Jefe", "Supervisor"],
-    getRichTextMode: null, setRichTextMode: ["Desarrollador"],
+    getRichTextMode: null, invalidateRichTextModeCache: ["Desarrollador"],
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], recordVehicleView: null, clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
     approveVideo: ["Desarrollador"], rejectVideo: ["Desarrollador"]
@@ -723,8 +717,8 @@ function doPostInternal_(e) {
             case 'getRichTextMode':
                 response = handleGetRichTextMode(payload);
                 break;
-            case 'setRichTextMode':
-                response = handleSetRichTextMode(payload);
+            case 'invalidateRichTextModeCache':
+                response = handleInvalidateRichTextModeCache(payload);
                 break;
             case 'recordLike':
                 response = handleRecordLike(payload);

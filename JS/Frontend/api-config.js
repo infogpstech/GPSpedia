@@ -66,10 +66,21 @@ export async function setRichTextMode(mode, actorRole, session) {
     }
     if (!normalizedMode) throw new Error("Modo de texto enriquecido no válido.");
     const sessionPayload = getRichTextSession_(session);
-    const response = await routeAction("setRichTextMode", { ...sessionPayload, mode: normalizedMode });
+    const requestId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : "rtm_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    const response = await routeAction("setRichTextMode", {
+        ...sessionPayload, mode: normalizedMode, requestId,
+        changeReason: "Cambio del modo global de texto enriquecido desde Developer"
+    });
     const confirmedMode = normalizeRichTextMode_(response && response.mode);
     if (!response || response.status !== "success" || confirmedMode !== normalizedMode) {
         throw new Error("El servidor no confirmó el cambio de formato global.");
+    }
+    try {
+        await routeAction("invalidateRichTextModeCache", sessionPayload);
+    } catch (cacheError) {
+        console.warn("No se pudo invalidar inmediatamente la caché de rich_text_mode:", cacheError);
     }
     cacheRichTextMode_(confirmedMode);
     return confirmedMode;
@@ -93,7 +104,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
     'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
-    'migrateTimestamps': 'UTILITIES', 'getRichTextMode': 'FEEDBACK', 'setRichTextMode': 'FEEDBACK',
+    'migrateTimestamps': 'UTILITIES', 'getRichTextMode': 'FEEDBACK', 'setRichTextMode': 'ADMIN', 'invalidateRichTextModeCache': 'FEEDBACK',
     'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'migrateVehicleContributionsSchema': 'ADMIN', 'getVehicleContributionCandidates': 'CATALOG', 'resolveVehicleContributionCandidate': 'ADMIN', 'migrateIdentifiers': 'ADMIN', 'rollbackIdentifiers': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
     'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'organizePrimaryVehicleImages': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'auditIdentifiers': 'ADMIN', 'freezeIdentifierFormulas': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
