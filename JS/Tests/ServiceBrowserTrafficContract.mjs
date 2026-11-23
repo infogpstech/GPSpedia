@@ -97,8 +97,9 @@ check("La instrumentación del router es no bloqueante y registra éxito/error",
     assert.match(api, /requestBytes: trafficMetrics.requestBytes/);
     assert.match(api, /responseBytes: trafficMetrics.responseBytes/);
     assert.match(api, /new TextEncoder\(\)/);
+    assert.match(api, /'getCatalogChanges': 'COORDINATOR'/);
     assert.match(api, /action: "getCatalogChanges"/);
-    assert.match(api, /service: "FEEDBACK"/);
+    assert.match(api, /service: "COORDINATOR"/);
 });
 check("ADMIN declara las métricas locales, corrige events y muestra las dos gráficas", () => {
     const ui = read("JS/Frontend/ui.js");
