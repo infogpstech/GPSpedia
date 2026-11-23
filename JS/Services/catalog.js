@@ -25,9 +25,9 @@ function addCatalogCalendarMonthsUTC_(date, months) {
     const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
     result.setUTCDate(Math.min(day, lastDay)); return result;
 }
-function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel) {
+function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel, purpose) {
     const userId=String(payload&&payload.userId||"").trim(),sessionToken=String(payload&&payload.sessionToken||"").trim();
-    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para consultar la proyección.");
+    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para "+purpose+".");
     const ss=getSpreadsheet(),usersSheet=ss.getSheetByName("Users"),sessionsSheet=ss.getSheetByName("ActiveSessions");
     if(!usersSheet||!sessionsSheet)throw new Error("CATALOG no pudo verificar la sesión; faltan Users o ActiveSessions.");
     const users=usersSheet.getDataRange().getValues(),userMatches=users.slice(1).filter(row=>String(row[0]||"").trim()===userId);
@@ -44,10 +44,10 @@ function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel) {
     return true;
 }
 function verifyCatalogDeveloperSession_(payload) {
-    return verifyCatalogSessionForRoles_(payload,["desarrollador"],"Desarrollador");
+    return verifyCatalogSessionForRoles_(payload,["desarrollador"],"Desarrollador","consultar candidatos");
 }
 function verifyCatalogModalEditSession_(payload) {
-    return verifyCatalogSessionForRoles_(payload,["desarrollador","jefe","supervisor"],"Desarrollador, Jefe o Supervisor");
+    return verifyCatalogSessionForRoles_(payload,["desarrollador","jefe","supervisor"],"Desarrollador, Jefe o Supervisor","consultar la proyección");
 }
 
 function getSpreadsheet() {
