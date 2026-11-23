@@ -7970,15 +7970,6 @@ function runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, operation, 
     return runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, operationHash, 0);
 }
 
-function getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex) {
-    const needsVehicleImage = Boolean(vehicleData && vehicleData.imagenVehiculo &&
-        !checkFileIdValid(rowObj.imagenVehiculo));
-    const needsCutImage = Boolean(cutData && cutData.imgCorte1 &&
-        cutData.tipoCorte1 !== "No recomendado" &&
-        !checkFileIdValid(rowObj[`imgCorte${slotIndex}`]));
-    return { vehicle: needsVehicleImage, cut: needsCutImage };
-}
-
 function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     throw new Error("ACTION_MOVED_TO_WRITE: el alta, la reserva idempotente del ID y la recuperación se ejecutan directamente en WRITE desde el frontend.");
 }
