@@ -181,7 +181,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - [x] No mover secretos ni decisiones de autorización al frontend; CATALOG valida localmente la sesión y los roles autorizados para la proyección; los candidatos siguen restringidos a Desarrollador.
 
 **Validación local aislada — 2026-11-23**
-- `JS/Tests/MIG010FrontendServiceOrchestration.mjs` ejecutada en harness V8 aislado: 56 aserciones PASS, incluida simulación de creación/replay del respaldo, rechazo de replay por otro usuario, autorización por rol, sesión vencida, orden de pasos y persistencia previa del operationId.
+- `JS/Tests/MIG010FrontendServiceOrchestration.mjs` ejecutada en harness V8 aislado: 58 aserciones PASS, incluida simulación de creación/replay del respaldo, rechazo de replay por otro usuario, autorización por rol, sesión vencida, orden de pasos y persistencia previa del operationId.
 - Los archivos `admin.js`, `catalog.js`, `ui.js` y la suite MIG010 pasaron parsing en el entorno V8 usado para la validación.
 - La suite quedó registrada en `JS/Tests/RunServiceTests.mjs`.
 - **Pendiente de confirmar:** ejecución del workflow completo Node.js 22 / regresión de servicios en GitHub Actions. La consulta de estado disponible no devolvió checks asociados; no se declara CI aprobado.
