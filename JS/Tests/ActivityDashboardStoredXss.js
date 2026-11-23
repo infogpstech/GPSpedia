@@ -42,7 +42,7 @@ function runActivityDashboardStoredXssTests() {
         assert(auth.includes("assertFeedbackSession(source, FEEDBACK_ACTION_PERMISSIONS[action])")&&auth.includes("userId: actor.userId, userName: actor.userName, userRole: actor.role"),"Identidad no derivada.");
     });
     test("La regresión POST directo incluye nombre HTML malicioso y sesión ausente",()=>{
-        const source=readFileSync(new URL("../FeedbackWriteSecurity.js",import.meta.url),"utf8");
+        const source=readFileSync(new URL("./FeedbackWriteSecurity.js",import.meta.url),"utf8");
         assert(source.includes('<img src=x onerror=alert("forged")>')&&source.includes("const missingSession = doPost")&&source.includes('received.userName === "Usuario verificado"'),"Falta regresión de identidad.");
     });
     return {status:failed===0?"PASS":"FAIL",passed,failed,results};
