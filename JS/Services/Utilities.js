@@ -25,11 +25,9 @@ function assertUtilitiesDeveloperSession_(payload, _spreadsheet) {
  return {userId,role:"Desarrollador",epoch:trusted.epoch};
 }
 function migrateTimestamps(payload){
- const session={userId:payload&&payload.userId,sessionToken:payload&&payload.sessionToken};
- return withSharedMutationLease_("UTILITIES","migrateTimestamps",function(token,actor){
-  const trustedPayload=Object.assign({},payload||{},{__sharedSessionActor:actor});
-  return migrateTimestampsSafe_(trustedPayload);
- },{session});
+ const actor=getCachedSharedSessionActor_(payload&&payload.userId,payload&&payload.sessionToken,{service:"UTILITIES"});
+ const trustedPayload=Object.assign({},payload||{},{__sharedSessionActor:actor});
+ return migrateTimestampsSafe_(trustedPayload);
 }
 function migrateTimestampsSafe_(payload){
  const lock=LockService.getScriptLock();let acquired=false;
