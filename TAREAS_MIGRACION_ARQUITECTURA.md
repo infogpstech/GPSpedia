@@ -65,14 +65,16 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** inventario estático completo en `INVENTARIO_CONFIGURACION_BACKEND.md`; ninguna clave fue eliminada ni migrada. Los valores reales de proyectos desplegados y sus scopes quedan para Beta; el acceso a Spreadsheet sin bootstrap queda para MIG-006.
 
 ### MIG-004 — Inventario de llamadas entre servicios y SharedMutation
-**Estado: PENDIENTE**
-- [ ] Buscar `UrlFetchApp.fetch`, wrappers HTTP y llamadas indirectas a endpoints Apps Script.
-- [ ] Identificar llamadas de ADMIN a WRITE/CATALOG y otras dependencias no detectadas.
-- [ ] Enumerar todas las funciones de `SharedMutationClient.js` y sus consumidores por servicio.
-- [ ] Mapear capacidades de COORDINATOR: sesiones, revocaciones, cachés, leases, feed incremental, telemetría y operaciones protegidas.
-- [ ] Separar operaciones que el frontend puede coordinar de operaciones que deben ser una única escritura atómica en Spreadsheet.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+- [x] Inspeccionar UrlFetchApp.fetch, fetchAll, wrappers HTTP y destinos dinámicos en los diez módulos backend activos.
+- [x] Identificar y documentar ADMIN→WRITE (asignación de ID y freeze) y ADMIN→CATALOG (proyección y candidatos), incluidos payloads, resultados y consumidores heredados.
+- [x] Enumerar las 13 operaciones del protocolo Coordinator, sus callsites, wrappers sin consumidor versionado y seis usos activos de leases.
+- [x] Mapear la precarga/invalidez de cachés entre Coordinator y USERS/WRITE/FEEDBACK/ADMIN, más las rutas privadas de los cuatro servicios.
+- [x] Clasificar sesión/revocación, feed incremental, telemetría y operaciones protegidas; separar las llamadas a Drive/YouTube/URLs de imágenes de las dependencias entre microservicios.
+- [x] Definir reemplazos directos desde frontend, límites de escritura que deben permanecer en un servicio y solapamientos de propiedad Users/Cortes/Drive.
+- [x] Vincular cada arista/capacidad con pruebas existentes y agregar ServiceCallGraphContract al runner de regresión.
 
-**Aceptación:** ninguna llamada backend→backend sin propietario, reemplazo y prueba definidos.
+**Aceptación:** inventario estático en `INVENTARIO_LLAMADAS_SERVICIOS.md`; cada llamada backend→backend versionada tiene origen, destino, propietario, reemplazo y pruebas representativas. Los consumidores externos no versionados y validaciones de deployments quedan explícitamente pendientes de Beta. No se eliminó ninguna llamada ni capacidad.
 
 ### MIG-005 — Línea base funcional y de rendimiento
 **Estado: PENDIENTE**
