@@ -8,7 +8,7 @@ const coordinator = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "u
 const start = coordinator.indexOf("function mergeServiceTrafficSources_(source)");
 const end = coordinator.indexOf("\n    function readServiceTraffic_", start);
 assert.ok(start >= 0 && end > start, "No se encontró el normalizador de telemetría Coordinator.");
-const source = "const SERVICE_TRAFFIC_SERVICES_ = Object.freeze([\"AUTH\", \"CATALOG\", \"WRITE\", \"USERS\", \"FEEDBACK\", \"UTILITIES\", \"ADMIN\"]);\n" +
+const source = "const SERVICE_TRAFFIC_SERVICES_ = Object.freeze([\"AUTH\", \"CATALOG\", \"WRITE\", \"FEEDBACK\", \"UTILITIES\", \"ADMIN\"]);\n" +
     coordinator.slice(start, end) + "\nreturn mergeServiceTrafficSources_;";
 const merge = new Function(source)();
 const services = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
