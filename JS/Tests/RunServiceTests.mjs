@@ -552,7 +552,7 @@ runGroup('42','MIG018',()=>{
 
 runGroup('43','MIG019',()=>{
  const feedback=read('JS/Services/feedback.js');
- recordResult('MIG019 controles de seguridad, autorización y límites FEEDBACK',new Function(feedback+'\\n'+read('JS/Tests/FeedbackWriteSecurity.js')+'\\nreturn runFeedbackWriteSecurityTests;')()());
+ recordResult('MIG019 controles de seguridad, autorización y límites FEEDBACK',new Function(feedback+'\n'+read('JS/Tests/FeedbackWriteSecurity.js')+'\\nreturn runFeedbackWriteSecurityTests;')()());
  runCli('MIG019 integridad de creación de problemas y soluciones PyS','JS/Tests/PysCreationIntegrity.js');
  runCli('MIG019 almacenamiento, compensación y recuperación de imágenes PyS','JS/Tests/PysImageStorageRecovery.js');
  runCli('MIG019 caché y sincronización incremental PyS','JS/Tests/PysDataCache.js');
