@@ -143,7 +143,7 @@ function runActionDispatchContractTests(sources) {
                 assert_(actionMap[action] === service || (compatibility[service] || []).includes(action),
                     service + "/" + action + " carece de mapa o declaración de compatibilidad.");
                 const handler = dispatcher.handlers[action];
-                if (handler) for (const name of handler) assert_(hasFunction_(input[service], name), service + "/" + action + " referencia una función inexistente: " + name);
+                if (handler) for (const name of handler) assert_((service === "COORDINATOR" ? hasCoordinatorHandler_(input[service], name) : hasFunction_(input[service], name)), service + "/" + action + " referencia una función inexistente: " + name);
             }
         }
     });
