@@ -1352,5 +1352,5 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - La validación del recurso verifica frescura de configuración, tipo Drive, ID, nombre y padre; no existe fallback local. Los IDs locales SPREADSHEET_ID/DRIVE_FOLDER_ID fueron retirados de los tres servicios.
 - ADMIN ya no persiste el ID de Imagenes_Sin_Uso en ScriptProperties; la carpeta se localiza bajo Cortes y se rechazan duplicados.
 - Se preservan límites por flujo (10 MB ADMIN/WRITE; 3 MB FEEDBACK/PyS), validación MIME/firma, SHA-256, ledger/journal, idempotencia, compensación, recuperación y reconciliación.
-- CI Node.js 22 run 45236140268: MIG-015 605/605 comprobaciones aprobadas. Regresión global: 157 suites, 1,805 aprobadas, cuatro fallidas en familias ADMIN candidatos, UTILITIES, AUTH e INTEGRATION; los mismos grupos ya fallaban antes de esta tarea.
+- CI Node.js 22 run 45236342364: MIG-015 605/605 comprobaciones aprobadas. Regresión global: 157 suites, 1,909 aprobadas, cuatro fallidas en familias P4 política de roles, UTILITIES, AUTH e INTEGRATION; los mismos grupos ya fallaban antes de esta tarea.
 - La validación Beta real de proyectos vinculados, permisos heredados y operaciones Drive permanece pendiente. MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA.

@@ -296,6 +296,6 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - Los módulos ADMIN, WRITE y FEEDBACK ya no declaran SPREADSHEET_ID ni DRIVE_FOLDER_ID. ADMIN no guarda el ID de Imagenes_Sin_Uso en ScriptProperties; localiza la carpeta bajo Cortes y detecta duplicados.
 - Límites preservados por flujo: 10 MB en ADMIN/WRITE y 3 MB en adjuntos FEEDBACK/PyS. MIME, firma binaria, SHA-256, ledger/journal append-only, idempotencia, compensación y reconciliación permanecen activos.
 - Se conservan variantes de imagen, PNG/transparencia, ObjectURL, IndexedDB/Lightbox, reemplazos, recuperación, inventario, papelera, restauración y eliminación definitiva.
-- CI Node.js 22 run 45236140268: suites MIG-015 **605/605 PASS**. La regresión global tuvo 1,805 pruebas aprobadas y cuatro fallos de suites preexistentes fuera de MIG-015 (ADMIN candidatos, UTILITIES, AUTH e INTEGRATION).
+- CI Node.js 22 run 45236342364: suites MIG-015 **605/605 PASS**. La regresión global tuvo 1,805 pruebas aprobadas y cuatro fallos de suites preexistentes fuera de MIG-015 (ADMIN candidatos, UTILITIES, AUTH e INTEGRATION).
 - Las invocaciones reales y permisos entre proyectos Apps Script, Spreadsheet y Drive siguen pendientes de Beta aislada. No se modificaron deployments ni datos externos.
 - MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA.
