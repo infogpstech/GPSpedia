@@ -679,3 +679,48 @@ Fuente: handlers de `JS/Services/Auth.js`, router `doPost` y política RBAC docu
 ### 14.2 Límites y pendientes de precisión
 
 Esta primera tabla identifica campos de entrada y familias de respuesta/errores a partir del handler. Para cerrar el contrato AUTH falta capturar los objetos completos de perfil/sesión, los campos exactos de cada error, las columnas físicas de Users/ActiveSessions/Logs por operación y la secuencia exacta de llamadas a Coordinator. Las pruebas de integración con MailApp, Spreadsheet y deployments permanecen reservadas a Beta; no se simularon.
+
+
+## 15. Contratos USERS — payload, respuesta, RBAC y datos (primera pasada 2026-11-23)
+
+| Acción | Payload observado | Respuesta / errores | RBAC / datos |
+|---|---|---|---|
+| `getUsers` | Contexto `sessionToken` (más `userId` para validar actor/cache) | `status:success`, `users[]` con `ID`, `Nombre_Usuario`, `Privilegios`, `Telefono`, `Correo_Electronico`, `Nombre_Completo`; error de permisos insuficientes. | Desarrollador ve todos los roles activos; Jefe ve Supervisor/Técnico; Supervisor ve Técnico. Lee Users y valida sesión. |
+| `createUser` | `newUser` con solo `Nombre_Usuario`, `Password`, `Privilegios`, `Telefono`, `Correo_Electronico`, `Nombre_Completo`; `sessionToken` | `status/message`; nombre duplicado devuelve error de disponibilidad. Valida formato, longitudes, rol, correo/teléfono, ID y fila vacía; hash antes de escribir. | Desarrollador crea todos los roles; Jefe crea Supervisor/Técnico; Supervisor crea Técnico. Escribe Users bajo ScriptLock fail-fast y verifica/recupera escritura. |
+| `updateProfile` | `userId`, `updates.Nombre_Completo`, `sessionToken` | `status/message`; solo admite Nombre_Completo, exige identidad propia y verifica read-back. | Cualquier rol activo; actualiza exclusivamente el perfil propio en Users. |
+
+### 15.1 Dependencias y datos USERS
+
+- Hoja principal: `Users`; la validación de sesión usa el contexto de `ActiveSessions`/actor compartido.
+- Secuencia de ID: lee `__IdentifierSequenceConfig__` cuando existe; valida encabezados, prefijo, padding y fórmula contra Users.ID. El fallback histórico detecta el patrón de fórmula existente o usa `USR-` con padding 4 si no hay fórmula heredada.
+- La creación escribe ID permanente como valor, no copia fórmulas; valida IDs únicos, username único, roles permitidos y formato de campos.
+- `updateProfile` solo permite `Nombre_Completo`; no ampliar la lista de campos durante la unificación AUTH/USERS sin una decisión expresa y pruebas.
+- La unificación con AUTH debe conservar el filtrado jerárquico, validación de actor, generación de IDs, exclusión mutua y escritura atómica/rollback.
+
+
+## 16. Contratos WRITE — payload, respuesta, RBAC y datos (primera pasada 2026-11-23)
+
+| Acción | Payload observado | Respuesta / errores relevantes | RBAC / datos |
+|---|---|---|---|
+| `checkVehicle` | `marca`, `modelo`, `anoDesde`, `tipoEncendido` | `status:success`, `matches[]` de vehículos; error si falta algún criterio. | Lectura sin actor en handler; consulta Cortes y compara marca/modelo normalizados, año en rango y tipo de encendido exacto. |
+| `getSuggestion` | `term`, `field` (marca/modelo), `brand` opcional | `status:success`, `suggestion` o null; error por campo/criterio inválido. | Lectura sin actor; consulta Cortes, normaliza y busca coincidencia exacta/aproximada. CATALOG mantiene ruta histórica de compatibilidad. |
+| `checkOperation` | `opId`, `operationHash` opcional | `status:success` con `exists`, `pending`, estado, vehicleId/hash y origen; detecta conflictos de huella. | Sin actor/lease por diseño; opId aleatorio de 128 bits y respuesta mínima. Lee Cortes/Idempotencia y, si corresponde, AportesVehiculo. Mantener el contrato de seguridad existente. |
+| `addOrUpdateCut` | `vehicleId` opcional, `vehicleData`, `cutData`, `opId`, `operationHash`, `silent`; contexto de sesión. `cutData`: `tipoCorte1`, `configRelay1`, `ubicacionCorte1`, `colorCableCorte1`, `activaTestigo1`, `imgCorte1`, `vin`. `vehicleData`: `categoria`, `marca`, `modelo`, `versionesAplicables`, `anoDesde`, `anoHasta`, `tipoEncendido`, `imagenVehiculo`. | Respuesta de alta/aporte con `status`, `vehicleId`, `opId`, `timestamp`, slot/evento/hash, duplicado y flags de revisión/feed; errores tipados como WRITE_BUSY/WRITE_OP_ID_REQUIRED y validaciones de catálogo/VIN. | Cualquier rol activo; `silent:true` solo Desarrollador. Lee Cortes/Relay; usa Idempotencia/Idempotencia_Cortes y AportesVehiculo según flujo; imágenes mediante Drive/ledger. Alta nueva y aporte a vehículo existente siguen rutas transaccionales distintas. |
+| `addSupplementaryInfo` | `vehicleId`, `userId`, `sessionToken`, `timestamp`, `opId`, `contributionOpIds`; campos `apertura`, `cableAlimen`, `cableAlimen2`, `cableAlimen3`, `notaImportante`, `imgApertura`, `imgCableAlimen`, `imgCableAlimen2`, `imgCableAlimen3`. No acepta campos de vídeo. | Respuesta moderna incluye evento(s), IDs/hash, slot, apertura/nota, duplicado, reset de catálogo y revisión pendiente; ruta legacy devuelve resultado de escritura. Errores SUPPLEMENTARY_* para payload, conflicto, esquema, vehículo o persistencia. | Cualquier rol activo; Cortes, AportesVehiculo y ledger de cargas/Drive cuando hay imágenes. Una sola entrada de cable por operación; no sobrescribe apertura existente; append-only para eventos modernos. |
+| `checkVinDuplicate` | `vin`, `currentVehicleId` opcional | `status:success, duplicate:false` o `status:duplicate, duplicate:true` con vehículo/modelo/prefijo. | Lectura sin actor; consulta Cortes y compara prefijo VIN procesado. |
+| `addVinToVehicle` | `vehicleId`, `vin`, `trimLevel`, `isNewTrim`; contexto de sesión | `status/message`, `alreadyPresent`, `duplicate`, `vinPrefix`, colección VIN, versiones, opId/evento y reset de catálogo; errores con código cuando corresponde. | Cualquier rol activo; Cortes y AportesVehiculo. Máximo 3 versiones; VIN conserva prefijo procesado y colección JSON; append-only para actualización. |
+| `allocateVehicleId` | `opId` y `operationHash` opcionales para asignación idempotente; legacy puede generar reserva | `status:success`, `vehicleId`; errores por opId/hash inválido o conflicto. | Solo Desarrollador; Cortes e Idempotencia_Cortes, reserva append-only. |
+| `freezeCortesIds` | `backupId`, `confirm` | Dry-run: `status`, `dryRun:true`, resumen de filas/fórmulas/IDs. Confirmado: `dryRun:false` y resumen; errores de respaldo, lock, IDs o verificación. | Solo Desarrollador; requiere respaldo de Spreadsheet válido y distinto del recurso principal; Cortes, ScriptLock y contador técnico actual. Convierte fórmulas en valores solo con confirmación. |
+
+### 16.1 Invariantes WRITE para la migración
+
+- Las lecturas públicas `checkVehicle`, `getSuggestion`, `checkOperation` y `checkVinDuplicate` no deben recibir viajes de red/validaciones adicionales que alteren sus contratos actuales.
+- `checkOperation` permanece sin sesión/lease por decisión de seguridad documentada; el opId impredecible y la respuesta mínima son parte del contrato.
+- Las escrituras protegidas requieren actor confiable cacheado; el frontend no puede enviar un rol como autoridad.
+- Las altas y aportes mantienen idempotencia, hashes de operación, ledger append-only, lectura posterior, reserva de IDs y recuperación ante respuesta perdida.
+- Las imágenes suplementarias mantienen transferencia/ledger/Drive; los vídeos se rechazan expresamente en este endpoint y deben continuar por el flujo YouTube de aprobación.
+- `freezeCortesIds` conserva el requisito de respaldo, dry-run por defecto, confirmación explícita, lock y verificación de valores/formulas.
+
+### 16.2 Límite de esta primera pasada
+
+Los campos anidados de `addOrUpdateCut` y `addSupplementaryInfo` se han extraído de sus validadores; las respuestas se resumen por variante de alta/aporte. Falta asociar columnas/rangos exactos y pruebas por acción, y revisar efectos de Drive/ledger en cada variante. No se ejecutaron escrituras reales.
