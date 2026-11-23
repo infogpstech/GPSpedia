@@ -404,3 +404,10 @@ Se revisó el propósito de los 12 handlers sin llamada directa localizada: acti
 Se confirmó que `migrateVehicleContributionsSchema` también se invoca internamente cuando el flujo de candidatos necesita crear/verificar el ledger; no es solo una acción manual. `deleteInboxConversation` oculta por participante y conserva el historial, no borra mensajes físicamente. Las migraciones mantienen dry-run/confirmación, snapshots, digest y rollback según el caso.
 
 La clasificación es provisional. Aún falta buscar comandos de terminal, documentación histórica y jobs/triggers antes de cerrar el inventario manual. MIG-001 sigue EN PROGRESO.
+
+
+#### Terminal de desarrollador y triggers — revisión parcial 2026-11-23
+
+- Inventariados los comandos de `driveCommand`: `dir/ls`, `cd`, `cd ..`, retorno a raíz, `mkdir`, `move` y `tree`. Se documentaron las restricciones al árbol Cortes y la ausencia de comando de borrado en el dispatcher revisado.
+- Búsqueda estática de triggers en los módulos backend/frontend principales indicados en §13.2: no se encontraron declaraciones `newTrigger`, `timeBased`, `onOpen` ni `onEdit` en ese conjunto. No se extiende la conclusión al repositorio completo ni a deployments.
+- Pendiente: revisar archivos de raíz/manifiestos y configuración de proyectos Apps Script para descubrir triggers instalados, jobs y tareas manuales fuera de esos módulos.
