@@ -453,7 +453,7 @@ function normalizeAdminFieldProjectionValueClient_(value) {
 }
 async function verifyAdminVehicleFieldUpdateProjectionFrontend_(vehicleId,fieldName,proposedValue,eventId){
     try{
-        const response=await routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim()}),vehicle=response&&response.vehicle;
+        const response=await routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim(),...getDeveloperSessionPayload()}),vehicle=response&&response.vehicle;
         if(!response||response.status!=="success"||!vehicle||String(vehicle.id||"").trim()!==String(vehicleId||"").trim())throw new Error("CATALOG no devolvió la proyección vigente del vehículo.");
         const source=vehicle.contributionSources&&vehicle.contributionSources[fieldName],rawValue=vehicle[fieldName],currentValue=String(rawValue==null?"":rawValue).trim(),sourceEventId=String(source&&source.eventId||"");
         const candidates=Array.isArray(vehicle.contributionCandidates)?vehicle.contributionCandidates:[],candidate=candidates.find(item=>String(item&&item.eventId||"")===String(eventId||""));
@@ -465,7 +465,7 @@ async function verifyAdminVehicleFieldUpdateProjectionFrontend_(vehicleId,fieldN
     }catch(error){return{candidateReviewPending:true,projectionVerification:"unavailable",currentValue:undefined,currentSourceEventId:"",verificationError:String(error&&error.message||error),message:"La versión se registró, pero no se pudo verificar su aplicación en CATALOG. Actualiza la ficha antes de continuar."};}
 }
 async function loadCatalogImageProjection_(vehicleId,fieldName,status){
-    const response=await routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim()}),vehicle=response&&response.vehicle;
+    const response=await routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim(),...getDeveloperSessionPayload()}),vehicle=response&&response.vehicle;
     if(!response||response.status!=="success"||!vehicle||String(vehicle.id||"").trim()!==String(vehicleId||"").trim())throw new Error("No se pudo recuperar la proyección vigente de CATALOG para reconciliar la imagen.");
     const source=vehicle.contributionSources&&vehicle.contributionSources[fieldName],currentImageUrl=String(vehicle[fieldName]==null?"":vehicle[fieldName]).trim();
     return Object.assign({},status||{},{currentImageUrl,currentSourceEventId:String(source&&source.eventId||""),superseded:!!(status&&status.newImageUrl&&currentImageUrl!==String(status.newImageUrl))});
