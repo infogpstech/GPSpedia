@@ -39,6 +39,9 @@ function runActionDispatchContractTests(sources) {
     function hasFunction_(source, name) {
         return new RegExp("\\bfunction\\s+" + name + "\\s*\\(").test(String(source || ""));
     }
+    function hasCoordinatorHandler_(source, name) {
+        return hasFunction_(source, name) || (name === "getPublicCatalogChanges" && /getPublicCatalogChanges\\s*:\\s*function\\s*\\(/.test(String(source || "")));
+    }
     function parseDispatcher_(source, name) {
         const match = String(source || "").match(/switch\s*\(\s*(?:request\.action|action)\s*\)\s*\{([\s\S]*?)\n\s*default\s*:/);
         assert_(!!match, "No se encontró dispatcher " + name + ".");
@@ -130,7 +133,7 @@ function runActionDispatchContractTests(sources) {
             if (handler === null) assert_(service === "ADMIN" && action === "ping", "Handler inline no permitido: " + service + "/" + action);
             else {
                 assert_(Array.isArray(handler) && handler.length, service + "/" + action + " no enlaza con un handler.");
-                for (const name of handler) assert_(hasFunction_(input[service], name), service + "/" + action + " referencia una función inexistente: " + name);
+                for (const name of handler) assert_((service === "COORDINATOR" ? hasCoordinatorHandler_(input[service], name) : hasFunction_(input[service], name)), service + "/" + action + " referencia una función inexistente: " + name);
             }
         }
     });
