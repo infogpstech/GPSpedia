@@ -36,7 +36,7 @@ test("ADMIN usa guardas locales de recurso, no leases remotas",()=>{
  assert.match(adminPost,/getCachedSharedSessionActor_/);assert.doesNotMatch(admin,/withSharedMutationLease_/);
  assert.match(admin,/function withAdminLocalOperationGuard_/);
  assert.match(admin,/drive-inventory:/);assert.match(admin,/create-cortes-image-folder:/);assert.match(admin,/drive-audit:/);
- assert.equal((admin.match(/withAdminLocalOperationGuard_\\(/g)||[]).length,4);
+ assert.equal((admin.match(/withAdminLocalOperationGuard_\(/g)||[]).length,4);
 });
 test("UTILITIES obtiene actor local sin lease Coordinator",()=>{
  assert.match(utilities,/getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken/);
