@@ -460,3 +460,17 @@ Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariame
 
 
 **Aclaración de esquema VIN:** al revisar el README completo se encontró que documenta VIN en AQ (43), con AR:AS disponibles, mientras WRITE resuelve la columna dinámicamente por encabezado. Se añadió la discrepancia a §17.8 de la matriz; su resolución requiere verificar la hoja real y `renameVinColumnHeader`, sin mover columnas por inferencia.
+
+
+
+#### Esquemas FEEDBACK / CATALOG / ADMIN / UTILITIES / Inbox — avance 2026-11-23
+
+- Se amplió §18 de la matriz con los mapas de LogosMarca, Tutorial, Relay, Feedbacks, Contactanos, ActividadUsuario, PyS, operaciones PyS, eventos de tutorial/vídeo, imágenes de reportes y las cinco tablas Inbox.
+- Se registraron los diarios administrativos AdminImageUploads, ImageUploadLedger, ImageUploadEvents, AportesVehiculo, manifiestos de migración y hojas de idempotencia.
+- Se identificaron hojas adicionales cuyos encabezados siguen pendientes: FeedbackLikes, FeedbackYearApplications, FeedbackYearApplicationEvents, AdminState e Imagenes_Reemplazadas; también faltan las hojas dinámicas creadas por acciones ADMIN.
+- Se confirmó por inspección que ADMIN conserva URLs constantes de AUTH, USERS, WRITE, CATALOG y FEEDBACK y wrappers con UrlFetchApp.fetch. Coordinator mantiene propiedades para leases, contexto/sesiones, revisiones/eventos de catálogo y tráfico. UTILITIES conserva dependencia del actor/contexto de Coordinator.
+- Estos puntos se registran como dependencias para MIG-003/MIG-004/MIG-011; no se modificaron servicios, endpoints, propiedades ni datos.
+- No se inspeccionaron hojas reales ni se ejecutaron Apps Script. Los encabezados son contratos extraídos del código.
+- MIG-001 permanece **EN PROGRESO**.
+
+**Siguiente tramo:** extraer los esquemas pendientes de FEEDBACK/ADMIN y UTILITIES, detallar las hojas staging/backup y operaciones por acción; después completar inventario de UI/consumidores, integraciones externas y triggers/manifiestos antes de cerrar MIG-001.
