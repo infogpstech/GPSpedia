@@ -33,7 +33,7 @@ check("El backend autoriza la edición según el rol vigente, sin confiar en el 
 });
 check("El backend consume el actor central y permite editar solo a Supervisor, Jefe y Desarrollador",()=>{
  const start=admin.indexOf("function getAdminSessionContext_(");
- const end=admin.indexOf("/** Consume el actor autenticado por Coordinator",start);
+ const end=admin.indexOf("function assertDeveloperSession",start);
  assert.ok(start>=0&&end>start);
  const helper=admin.slice(start,end);
  const nl=String.fromCharCode(10);
