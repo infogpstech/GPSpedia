@@ -93,7 +93,7 @@ function runActionDispatchContractTests(sources) {
         if (coordinatorSource.includes('request.action === "publishCatalogReset"') &&
             hasFunction_(coordinatorSource, "publishCatalogResetFromBrowser_")) {
             coordinatorActions.push("publishCatalogReset");
-            coordinatorHandlers.publishWriteCatalogReset = ["publishWriteCatalogResetFromBrowser_"];
+            coordinatorHandlers.publishCatalogReset = ["publishCatalogResetFromBrowser_"];
         }
         if (coordinatorSource.includes('parameters.catalogFeed || ""') &&
             hasFunction_(coordinatorSource, "getPublicCatalogChanges")) {
