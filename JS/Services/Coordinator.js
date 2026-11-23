@@ -1472,6 +1472,17 @@ function createSharedMutationCoordinator_(dependencies) {
         });
     }
 
+    function getServiceTrafficFromBrowser_(payload) {
+        const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+        const userId = String(source.userId || "").trim();
+        const sessionToken = String(source.sessionToken || "");
+        if (!userId || !sessionToken) throw new Error("La telemetría global requiere una sesión autenticada.");
+        const actor = authorizeSession_(userId, sessionToken, now());
+        const role = String(actor && actor.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+        if (role !== "desarrollador") throw new Error("Acceso denegado: la telemetría global está reservada a Desarrollador.");
+        return readServiceTraffic_("ADMIN", "getServiceTraffic");
+    }
+
     function handleRequest(request) {
         if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("Solicitud inválida.");
         const protocolVersion = request.protocolVersion === undefined || request.protocolVersion === null
@@ -1505,6 +1516,7 @@ function createSharedMutationCoordinator_(dependencies) {
     return {
         handleRequest: handleRequest,
         publishCatalogResetFromBrowser: publishCatalogResetFromBrowser_,
+        getServiceTrafficFromBrowser: getServiceTrafficFromBrowser_,
         // Feed público: solo expone los eventos ya publicados de colecciones del catálogo.
         // Las escrituras y las operaciones de sesión continúan en el canal POST autenticado.
         getPublicCatalogChanges: function(payload) {
@@ -1556,6 +1568,8 @@ function doPost(e) {
         });
         if (request && request.action === "publishCatalogReset") {
             response = coordinator.publishCatalogResetFromBrowser(request.payload);
+        } else if (request && request.action === "getServiceTraffic") {
+            response = coordinator.getServiceTrafficFromBrowser(request.payload);
         } else {
             response = coordinator.handleRequest(request);
         }
