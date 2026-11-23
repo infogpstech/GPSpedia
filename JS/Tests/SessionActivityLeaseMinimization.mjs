@@ -7,6 +7,8 @@ const users = readFileSync("JS/Services/users.js", "utf8");
 const write = readFileSync("JS/Services/write.js", "utf8");
 const feedback = readFileSync("JS/Services/feedback.js", "utf8");
 const coordinator = readFileSync("JS/Services/Coordinator.js", "utf8");
+const ui = readFileSync("JS/Frontend/ui.js", "utf8");
+const apiConfig = readFileSync("JS/Frontend/api-config.js", "utf8");
 
 function functionBlock(source, name, nextName) {
     const start = source.indexOf("function " + name + "(");
@@ -78,12 +80,17 @@ test("ADMIN usa actor cacheado para todas las acciones y no adquiere leases", ()
     assert.match(adminDoPost, /doPostInternal_\(withSharedSessionActor_\(e, actor\)\)/);
     assert.doesNotMatch(adminDoPost, /withSharedMutationLease_|sessionActivity|nestedToken|__sharedMutationToken|isSharedMutationAction_/);
 });
-test("ADMIN→WRITE conserva autenticación de actor sin token compartido", () => {
-    assert.match(admin, /function callWriteServiceAction\(action, payload\)/);
-    assert.doesNotMatch(admin, /callWriteServiceAction\([\s\S]{0,500}__sharedMutationToken/);
-    assert.match(writeDoPost, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
-    assert.match(admin, /requestNextVehicleIdFromWriteService\(payload,/);
-    assert.match(admin, /requestCortesIdFreezeFromWriteService\(payload, backupInfo\.backupId\)/);
+test("MIG-010 coordina ADMIN/WRITE desde frontend y cada receptor valida su sesión", () => {
+    assert.doesNotMatch(admin, /callWriteServiceAction|requestNextVehicleIdFromWriteService|requestCortesIdFreezeFromWriteService/);
+    assert.match(apiConfig, /'addOrUpdateCut': 'WRITE'/);
+    assert.match(apiConfig, /'allocateVehicleId': 'WRITE'/);
+    assert.match(apiConfig, /'freezeCortesIds': 'WRITE'/);
+    assert.match(ui, /step\\("backupDatabase"/);
+    assert.match(ui, /step\\("freezeCortesIds"/);
+    assert.match(ui, /step\\("reorganizeDatabase"/);
+    assert.match(writeDoPost, /getCachedSharedSessionActor_/);
+    assert.match(write, /function assertDeveloperForIdMaintenance\\(payload\\)/);
+
 });
 
 console.log("SessionActivityLeaseMinimization: " + passed + "/" + passed + " PASS");
