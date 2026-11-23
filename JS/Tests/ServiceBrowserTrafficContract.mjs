@@ -21,7 +21,7 @@ function check(name, fn) {
 const base = 1_800_000_000_000;
 check("El inventario local contiene exactamente los siete servicios activos", () => {
     assert.deepEqual(BROWSER_SERVICE_TRAFFIC_SERVICES, [
-        "AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"
+        "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN", "COORDINATOR"
     ]);
 });
 check("El navegador móvil se identifica mediante userAgentData", () => {
@@ -75,10 +75,13 @@ check("El snapshot local contiene buckets de 24 horas y totales por periodo", ()
     assert.equal(snapshot.totals.last24Hours, 2);
     assert.equal(snapshot.buckets.reduce((sum, bucket) => sum + bucket.count, 0), 2);
 });
-check("Los servicios desconocidos y LEGACY no generan métricas", () => {
+check("USERS retirado y servicios desconocidos no generan métricas; COORDINATOR sí", () => {
+    assert.equal(recordBrowserServiceTraffic({ service: "USERS", action: "old", timestamp: base }), null);
     assert.equal(recordBrowserServiceTraffic({ service: "LEGACY", action: "old", timestamp: base }), null);
+    assert.equal(getBrowserServiceTrafficSnapshot("USERS", { now: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("LEGACY", { now: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("UNKNOWN", { now: base }), null);
+    assert.equal(recordBrowserServiceTraffic({ service: "COORDINATOR", action: "getServiceTraffic", timestamp: base }).service, "COORDINATOR");
 });
 check("Las métricas no almacenan payloads, tokens ni datos de usuario", () => {
     const serialized = JSON.stringify(getBrowserServiceTrafficSnapshot("AUTH", { now: base + 3000 }));
