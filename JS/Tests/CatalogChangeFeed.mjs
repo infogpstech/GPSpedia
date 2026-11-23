@@ -196,24 +196,16 @@ test("alta ADMIN de Logo publica upsert exacto tras verificar la fila persistida
     assert.match(adminSource,/catalogAction === "addLogo"[\s\S]*?buildLogoCatalogChange_\(response\.logoId, response\.logoUrl, payload && payload\.nombreMarca\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, change\)/);
     assert.match(adminSource,/publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
 });
-test("WRITE publica upsert exacto de Cortes tras releer fila y conserva reset para migración masiva", () => {
-    assert.ok(writeSource.includes("function buildCortesCatalogChange_(reference)"));
-    assert.ok(writeSource.includes("function publishCortesCatalogChange_(action, reference, sourceVersion)"));
-    assert.ok(writeSource.includes('collection: "cortes", recordId: wanted, operation: "upsert"'));
-    assert.ok(writeSource.includes('["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"].includes(action)'));
-    assert.ok(writeSource.includes('publishCortesCatalogChange_(action, vehicleId, response.catalogVersion)'));
-    assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
-    assert.ok(writeSource.includes("function nextWriteCatalogSourceVersion_("));
-    const addStart = writeSource.indexOf("function handleAddOrUpdateCut(payload)");
-    const addEnd = writeSource.indexOf("\nfunction ", addStart + 10);
-    const addHandler = writeSource.slice(addStart, addEnd);
-    assert.ok(addHandler.indexOf("finally") < addHandler.indexOf("nextWriteCatalogSourceVersion_"), "La versión CATALOG se asigna después de liberar el lock físico.");
-    assert.doesNotMatch(writeSource,/nextWriteCatalogVersionLocked_/);
-    const publisherStart = writeSource.indexOf("function publishCortesCatalogChange_");
-    const publisherEnd = writeSource.indexOf("\nfunction runWriteDriveWorkOutsideScriptLock_", publisherStart);
-    const publisher = writeSource.slice(publisherStart, publisherEnd);
-    assert.ok(publisherEnd > publisherStart);
-    assert.doesNotMatch(publisher, /LockService|getScriptLock|waitLock|tryLock/);
+test("WRITE delega la publicación del catálogo al frontend y elimina la llamada interservicio", () => {
+    assert.doesNotMatch(writeSource,/publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
+    assert.ok(apiSource.includes("'publishWriteCatalogReset': 'COORDINATOR'"));
+    assert.match(apiSource,/WRITE_CATALOG_RESET_ACTIONS_/);
+    assert.match(apiSource,/publishWriteCatalogResetAfterMutation_/);
+    assert.match(apiSource,/routeActionInternal_\("publishWriteCatalogReset"/);
+    assert.match(coordinatorSource,/function publishWriteCatalogResetFromBrowser_/);
+    assert.match(coordinatorSource,/request\.action === "publishWriteCatalogReset"/);
+    assert.match(coordinatorSource,/publishCatalogChange_\("WRITE", operation/);
+    assert.match(coordinatorSource,/change:\s*\{\s*operation:\s*"reset"\s*\}/);
 });
 test("normalizeImages publica solo filas reescritas y usa reset ante respuestas parciales/error", () => {
     assert.ok(adminSource.includes("const changedVehicleIds = new Set()"));
@@ -301,11 +293,12 @@ test("mutaciones PyS publican upsert exacto sin leases por acción", () => {
         assert.ok(coordinatorSource.includes(action));
     }
 });
-test("WRITE y FEEDBACK publican deltas exactos y conservan reset para operaciones masivas", () => {
-    assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(action\)[\s\S]*?publishCortesCatalogChange_\(action, vehicleId, response\.catalogVersion\)/);
-    assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle"\]/);
-    assert.ok(writeSource.includes('publishSharedCatalogChange_("WRITE", action, { operation: "reset" })'));
-    assert.match(writeSource,/!String\(requestPayload\.__sharedMutationToken \|\| ""\)\.trim\(\)/);
+test("WRITE coordina reset desde frontend y FEEDBACK/ADMIN conservan su publicación", () => {
+    assert.doesNotMatch(writeSource,/publishSharedCatalogChange_|publishCortesCatalogChange_/);
+    assert.ok(apiSource.includes("'publishWriteCatalogReset': 'COORDINATOR'"));
+    assert.ok(apiSource.includes("WRITE_CATALOG_RESET_ACTIONS_"));
+    assert.ok(apiSource.includes("publishWriteCatalogResetAfterMutation_"));
+    assert.ok(coordinatorSource.includes("publishWriteCatalogResetFromBrowser_"));
     assert.ok(feedbackSource.includes("publishPysCatalogChange_(action, problemId)"));
     assert.ok(feedbackSource.includes("publishTutorialCatalogChange_(action, tutorialId)"));
     assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
@@ -355,5 +348,35 @@ test("ADMIN usa versiones de origen para Cortes y convierte snapshots legacy en 
 });
 test("sourceVersion ADMIN solo se acepta para la colección Cortes", () => {
     assert.throws(()=>request("publishCatalogChange","ADMIN","addLogo",{change:{collection:"logos",recordId:"L-1",operation:"upsert",snapshot:{id:"L-1"},sourceVersion:1}}),/versión de origen/);
+});
+test("WRITE publica reset desde navegador con sesión y sin secreto compartido", () => {
+    const userId = "USER-WRITE-BROWSER";
+    const token = "SESSION-WRITE-BROWSER-123456789";
+    const key = "GPSpedia_AUTH_CONTEXT_V1_" + encodeURIComponent(userId);
+    properties.setProperty(key, JSON.stringify({
+        schemaVersion: 1, userId, epoch: 1, revokedBefore: 0,
+        sessions: [{ token, role: "tecnico", fullName: "Técnico", createdAt: clock - 1000, lastActivityAt: clock }]
+    }));
+    properties.deleteProperty("GPSpedia_COORDINATOR_SECRET_WRITE");
+    const payload = {
+        userId, sessionToken: token, operation: "addOrUpdateCut",
+        requestId: "write-addOrUpdateCut-OP-12345678"
+    };
+    const first = coordinator.publishWriteCatalogResetFromBrowser(payload);
+    assert.equal(first.status, "success");
+    assert.equal(first.resetRequired, false);
+    const retry = coordinator.publishWriteCatalogResetFromBrowser(payload);
+    assert.equal(retry.duplicate, true);
+    assert.equal(retry.revision, first.revision);
+    const page = coordinator.getPublicCatalogChanges({ cursor: first.revision - 1, limit: 1 });
+    assert.equal(page.changes.length, 1);
+    assert.equal(page.changes[0].operation, "reset");
+    assert.equal(page.changes[0].collection, "*");
+    assert.throws(() => coordinator.publishWriteCatalogResetFromBrowser({
+        ...payload, operation: "unknownAction", requestId: "write-unknown-OP-12345678"
+    }), /no está autorizada/);
+    assert.throws(() => coordinator.publishWriteCatalogResetFromBrowser({
+        ...payload, operation: "freezeCortesIds", requestId: "write-freeze-OP-12345678"
+    }), /Solo Desarrollador/);
 });
 console.log("CatalogChangeFeed: " + passed + "/" + passed + " PASS");
