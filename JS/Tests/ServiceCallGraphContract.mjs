@@ -24,7 +24,7 @@ function check(name, run) {
 
 check("El inventario de MIG-004 existe y declara el grafo, reemplazos y pruebas", () => {
     assert.match(inventory, /## 2\. Arquitectura de comunicación actual/);
-    assert.match(inventory, /## 3\. Llamadas directas de ADMIN a servicios/);
+    assert.match(inventory, /## 3\. ADMIN: llamadas interservicio retiradas por MIG-010/);
     assert.match(inventory, /## 4\. SharedMutationClient → COORDINATOR/);
     assert.match(inventory, /## 5\. COORDINATOR → servicios/);
     assert.match(inventory, /## 6\. Operaciones coordinables desde frontend/);
