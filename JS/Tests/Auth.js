@@ -603,7 +603,7 @@ function doPost(e) {
         // Esta ruta no coordina otros servicios y no requiere sesión para datos ya públicos.
         let result;
         try {
-            result = getPublicCentralConfiguration_();
+            result = handleGetPublicConfiguration_();
         } catch (error) {
             result = {
                 status: "error",
@@ -675,12 +675,19 @@ function doPost(e) {
     }
 }
 
+function handleGetPublicConfiguration_() {
+    return getPublicCentralConfiguration_();
+}
+
 function doPostInternal_(e) {
     let response;
     try {
         const request = JSON.parse(e.postData.contents);
 
         switch (request.action) {
+            case 'getPublicConfiguration':
+                response = handleGetPublicConfiguration_();
+                break;
             case 'login':
                 response = handleLogin(request.payload);
                 break;
