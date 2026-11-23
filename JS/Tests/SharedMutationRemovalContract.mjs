@@ -35,7 +35,7 @@ test("ningún servicio activo conserva cliente, lease, publicación compartida o
     for (const [name, source] of services) {
         assert.doesNotMatch(source, /createSharedMutationClient_|withSharedMutationLease_|publishSharedCatalogChange_|publishSharedCatalogChanges_|getSharedCatalogChanges_|getSharedServiceTraffic_/,
             "SharedMutation sigue referenciado por " + name);
-        assert.doesNotMatch(source, /getProperty\(["']GPSpedia_COORDINATOR_(?:URL|SECRET)["']\)|setProperty\(["']GPSpedia_COORDINATOR_(?:URL|SECRET)["']/,
+        assert.doesNotMatch(source, /GPSpedia_COORDINATOR_(?:URL|SECRET)/,
             "El servicio " + name + " todavía lee/escribe configuración Coordinator.");
     }
 });
