@@ -1007,64 +1007,105 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
     if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
         throw new Error("No se pudo registrar una identidad o rol válido en el contexto compartido.");
     }
-    const lock = LockService.getScriptLock();
-    let acquired = false;
+
+    // El candado protege únicamente la lectura consistente de ActiveSessions.
+    // Nunca debe mantenerse durante las llamadas HTTP a Coordinator/otros servicios.
+    let rows;
+    const readLock = LockService.getScriptLock();
+    let readLockAcquired = false;
     try {
-        lock.waitLock(10000);
-        acquired = true;
+        readLock.waitLock(10000);
+        readLockAcquired = true;
         const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
-        const rows = sessionsSheet.getDataRange().getValues().slice(1)
+        rows = sessionsSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }))
             .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
                 String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
-
-        const sessions = [], malformedTokens = [];
-        rows.forEach(item => {
-            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-            try {
-                const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
-                const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
-                const lastActivityAt = sharedSessionTimestamp_(activityValue);
-                sessions.push({ token, createdAt, lastActivityAt });
-            } catch (error) {
-                malformedTokens.push(token);
-            }
-        });
-
-        const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
-        if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
-            throw new Error("No se pudo confirmar la sincronización central de sesiones.");
-        }
-        const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
-        rows.forEach(item => {
-            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-            if (rejected.has(token)) {
-                if (malformedTokens.includes(token)) revokeSharedSessionContext_(normalizedId, token);
-                sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
-            }
-        });
-        if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
-            throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
-        }
-        // La identidad/rol ya fueron comprobados en AUTH y registrados en Coordinator.
-        // Precalentar el actor evita una validación remota adicional en la primera acción protegida.
-        try {
-            cacheSharedSessionActor_(normalizedId, currentSessionToken, {
-                userId: normalizedId, role: normalizedRole, fullName: String(fullName || ""),
-                epoch: synchronized.epoch
-            });
-        } catch (cacheError) {
-            console.warn("No se pudo precalentar la caché local del actor:", cacheError && cacheError.message ? cacheError.message : cacheError);
-        }
-        const cachePriming = synchronized.cachePriming || {};
-        if (Array.isArray(cachePriming.failedServices) && cachePriming.failedServices.length) {
-            console.warn("No se pudo precargar el actor en todos los servicios:", cachePriming.failedServices.join(","));
-        }
-        return { registered: synchronized.synced, epoch: synchronized.epoch, cachePriming };
     } finally {
-        if (acquired) lock.releaseLock();
+        if (readLockAcquired) readLock.releaseLock();
     }
+
+    const sessions = [], malformedTokens = [];
+    rows.forEach(item => {
+        const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
+        try {
+            const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
+            const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
+            const lastActivityAt = sharedSessionTimestamp_(activityValue);
+            sessions.push({ token, createdAt, lastActivityAt });
+        } catch (error) {
+            malformedTokens.push(token);
+        }
+    });
+
+    // Esta operación puede realizar varias solicitudes HTTP y precargar cuatro servicios.
+    // Se ejecuta deliberadamente sin retener el ScriptLock de AUTH.
+    const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
+    if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
+        throw new Error("No se pudo confirmar la sincronización central de sesiones.");
+    }
+
+    const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
+
+    // Invalidar cachés remotas fuera del candado. La sincronización central ya excluyó
+    // estos tokens; esta llamada limpia cualquier caché local que aún los conserve.
+    malformedTokens.forEach(token => revokeSharedSessionContext_(normalizedId, token));
+
+    if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
+        throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
+    }
+
+    // Volver a adquirir el candado solo para limpiar filas que sigan conteniendo
+    // exactamente los tokens rechazados. Se releen las filas para no usar índices obsoletos.
+    if (rejected.size) {
+        const cleanupLock = LockService.getScriptLock();
+        let cleanupLockAcquired = false;
+        try {
+            cleanupLock.waitLock(10000);
+            cleanupLockAcquired = true;
+            const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+            if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para limpiar sesiones rechazadas.");
+            const currentRows = sessionsSheet.getDataRange().getValues();
+            const matchesByToken = new Map();
+            for (let index = 1; index < currentRows.length; index++) {
+                const row = currentRows[index];
+                if (normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizedId) continue;
+                const token = String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim();
+                if (!rejected.has(token)) continue;
+                if (!matchesByToken.has(token)) matchesByToken.set(token, []);
+                matchesByToken.get(token).push(index + 1);
+            }
+            for (const token of rejected) {
+                const matches = matchesByToken.get(token) || [];
+                if (matches.length > 1) throw new Error("Un token rechazado aparece duplicado en ActiveSessions; no se modificaron sus filas.");
+                if (!matches.length) continue;
+                const tokenCell = sessionsSheet.getRange(matches[0], COLS_ACTIVE_SESSIONS.ActiveSessions);
+                tokenCell.clearContent();
+                if (String(tokenCell.getValue() || "").trim()) {
+                    throw new Error("No se pudo confirmar la limpieza de una sesión rechazada.");
+                }
+            }
+        } finally {
+            if (cleanupLockAcquired) cleanupLock.releaseLock();
+        }
+    }
+
+    // La identidad/rol ya fueron comprobados en AUTH y registrados en Coordinator.
+    // Precalentar el actor evita una validación remota adicional en la primera acción protegida.
+    try {
+        cacheSharedSessionActor_(normalizedId, currentSessionToken, {
+            userId: normalizedId, role: normalizedRole, fullName: String(fullName || ""),
+            epoch: synchronized.epoch
+        });
+    } catch (cacheError) {
+        console.warn("No se pudo precalentar la caché local del actor:", cacheError && cacheError.message ? cacheError.message : cacheError);
+    }
+    const cachePriming = synchronized.cachePriming || {};
+    if (Array.isArray(cachePriming.failedServices) && cachePriming.failedServices.length) {
+        console.warn("No se pudo precargar el actor en todos los servicios:", cachePriming.failedServices.join(","));
+    }
+    return { registered: synchronized.synced, epoch: synchronized.epoch, cachePriming };
 }
 
 
