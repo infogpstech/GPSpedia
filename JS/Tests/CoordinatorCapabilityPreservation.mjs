@@ -7,7 +7,8 @@ const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const read = path => readFileSync(resolve(root, path), "utf8");
 const auth = read("JS/Services/Auth.js");
 const coordinator = read("JS/Services/Coordinator.js");
-const client = read("JS/Services/SharedMutationClient.js");
+const sessionActor = read("JS/Services/SharedSessionActor.js");
+const sessionInvalidation = read("JS/Frontend/sessionCacheInvalidation.js");
 const admin = read("JS/Services/admin.js");
 
 function extract(source, name) {
@@ -50,33 +51,27 @@ check("La cuenta se desactiva solo después de invalidar sesiones y login pendie
     assert.match(deletion, /status: 'error'/);
     assert.match(deletion, /disabled: true/);
 });
-check("Solo eliminación de cuenta conserva lease; otras revocaciones mantienen coordinación directa", () => {
+check("AUTH conserva RBAC y revocación local sin cliente SharedMutation", () => {
     const actionSet = extract(auth, "isSharedMutationAction_");
-    const policy = extract(coordinator, "coordinatorPolicy_");
     const update = extract(auth, "handleUpdateUser");
     const reset = extract(auth, "handleResetUserSessions");
     const logout = extract(auth, "handleLogout");
     assert.match(actionSet, /return \["deleteUser"\]/);
     assert.doesNotMatch(actionSet, /updateUser|resetUserSessions|logout|changePassword|resetUserPassword/);
-    assert.match(policy, /deleteUser: \{ write: \[\.\.\.identityWrite, "SESSION_CONTEXTS"\] \}/);
     assert.match(update, /reconcileRoleRevocationUnderLock_\(usersSheet, sessionsSheet, userId, targetRows\[0\]\.rowIndex\)/);
     assert.match(reset, /revokeSharedUserSessionContexts_\(targetUserId/);
     assert.match(logout, /revokeSharedSessionContext_\(requestedUserId, sessionToken\)/);
-    assert.match(update, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor"\]/);
-    assert.match(reset, /requireSharedAuthActor_\(payload, \["desarrollador"\]/);
+    assert.doesNotMatch(auth, /createSharedMutationClient_|withSharedMutationLease_|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
 });
-check("La invalidación remota exige confirmación de WRITE, FEEDBACK y ADMIN antes de revocar", () => {
-    const invalidate = extract(client, "invalidateSessionActorCaches");
-    const revokeOne = extract(client, "revokeSession");
-    const revokeAll = extract(client, "revokeUserSessions");
-    assert.match(invalidate, /send_\("invalidateSessionActorCaches", "AUTH"/);
-    assert.match(invalidate, /!\["WRITE", "FEEDBACK", "ADMIN"\]\.every/);
-    assert.ok(revokeOne.indexOf("invalidateSessionActorCaches") < revokeOne.indexOf('send_("revokeSession"'));
-    assert.ok(revokeAll.indexOf("invalidateSessionActorCaches") < revokeAll.indexOf('send_("revokeUserSessions"'));
-    const remote = extract(coordinator, "invalidateSessionActorCaches_");
-    assert.match(remote, /service !== "AUTH"/);
-    assert.match(remote, /\["WRITE", "FEEDBACK", "ADMIN"\]/);
-    assert.match(remote, /fetchAll\(requests\)/);
+check("La invalidación de cachés se coordina desde el navegador hacia cada servicio", () => {
+    assert.match(sessionInvalidation, /SESSION_CACHE_SERVICES = Object\.freeze\(/);
+    assert.match(sessionInvalidation, /"AUTH", "WRITE", "CATALOG", "FEEDBACK", "ADMIN", "UTILITIES"/);
+    assert.match(sessionInvalidation, /retry\("__invalidateSessionActorCache", payload/);
+    assert.doesNotMatch(sessionInvalidation, /COORDINATOR|UrlFetchApp|GPSpedia_COORDINATOR_SECRET|sessionToken/);
+    assert.match(sessionActor, /function invalidateLocalSharedSessionActorCaches_/);
+    assert.match(sessionActor, /cache\.remove\(keyFor\(id, token\)\)/);
+    assert.doesNotMatch(sessionActor, /createSharedMutationClient_|UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
+    assert.doesNotMatch(coordinator, /function invalidateSessionActorCaches_|function primeSessionActorCaches_/);
 });
 check("El coordinador no sustituye los controles de permisos ni las operaciones remotas del panel ADMIN", () => {
     assert.match(admin, /function handleGetServiceTraffic_/);
