@@ -137,3 +137,10 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Añadido a la matriz el inventario de hojas por servicio y el esquema de las cinco hojas Inbox.
 - Identificado `SPREADSHEET_ID` local en AUTH/USERS/WRITE/CATALOG/FEEDBACK/ADMIN/UTILITIES; `DRIVE_FOLDER_ID` en ADMIN/FEEDBACK. Se reserva la migración de estas referencias para MIG-003/MIG-004.
 - MIG-001 sigue **EN PROGRESO**: falta mapear columnas/rangos y efectos por acción, Drive, triggers y APIs.
+
+
+### Rutas internas fuera del mapa — avance 2026-11-23
+- Extraídas las acciones aceptadas por los dispatchers y ramas de `doPost` frente a `ACTION_TO_SERVICE_MAP`: 120/120 acciones mapeadas tienen ruta backend; 0 faltantes.
+- Documentadas las 2 acciones internas de caché de actor en USERS/WRITE/FEEDBACK/ADMIN (8 rutas) y las 13 acciones privadas de Coordinator, con sus consumidores y propósito.
+- Registrados GET `catalogFeed=1`, estados `debug=true`, diagnóstico CATALOG, compatibilidad de CATALOG `getSuggestion`, rechazos ADMIN `ACTION_MOVED_TO_WRITE` y ruta directa de UTILITIES.
+- Las 12 acciones sin consumidor directo siguen pendientes de clasificación. MIG-001 permanece EN PROGRESO; no se modificó código funcional ni deployments.
