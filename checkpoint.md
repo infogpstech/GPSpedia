@@ -195,3 +195,12 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Evidencia basada en lectura del código fuente de la rama. No se consultó una Spreadsheet real ni se verificaron encabezados/datos de Beta/productivo. No se modificó código funcional, hojas, deployments, Drive ni datos.
 - MIG-001 permanece **EN PROGRESO**. Siguiente tramo: inventariar esquemas y efectos de FEEDBACK, CATALOG, ADMIN y UTILITIES; completar Drive/APIs, triggers/jobs y pruebas por acción.
 - Commits documentales de esta iteración: `5bc82a1875bae76d888585f3a045aee1000e127d` (matriz) y `b9796dc536eb721678db3893dda14c4eaf03ec0b` (registro de tareas). La actualización del checkpoint se publica a continuación.
+
+
+
+### Aclaración VIN en MIG-001 — 2026-11-23
+
+- La lectura completa de README.md identificó una referencia documental que no coincide con la implementación del índice: README describe VIN en AQ (43), con AR:AS libres; WRITE busca el encabezado `VIN` dinámicamente y no fija su posición en `COLS_CORTES`.
+- Se añadió la diferencia a §17.8 de `MATRIZ_MIGRACION_SERVICIOS.md` y a `TAREAS_MIGRACION_ARQUITECTURA.md`. La posición real debe comprobarse contra la Spreadsheet y el flujo `renameVinColumnHeader`; no se modificaron columnas ni código.
+- El README completo (202 líneas), NORMAS_DESAROLLO.md (secciones 1–17), contexto_personal.md, checkpoint.md, plan, tareas de migración, matriz y documentación Beta fueron consultados para esta continuidad.
+- Commit adicional de matriz: `edf1b96fed3a5e5a9271a70c7475dde38386b48b`; commit adicional de tareas: `1fc84f1aa0edc63bdca20df6597920e421a46652`.
