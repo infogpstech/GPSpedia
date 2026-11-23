@@ -86,7 +86,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
   runCli('WRITE registra cortes existentes mediante ledger append-only','JS/Tests/AdminCutSlotBatchWrites.mjs');
   runCli('MIG-010 recuperación idempotente de altas se ejecuta en WRITE','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
-  runCli('ADMIN agrupa escrituras del alta de vehículos nuevos','JS/Tests/AdminNewVehicleBatchWrites.mjs');
+  runCli('WRITE conserva alta de vehículos y recuperación idempotente','JS/Tests/AdminNewVehicleBatchWrites.mjs');
   runCli('ADMIN limpia la fila nueva con una sola llamada clearContent','JS/Tests/AdminNewVehicleSingleRowClear.mjs');
   runCli('ADMIN revalida ID de vehículo nuevo desde snapshot post-Drive','JS/Tests/AdminNewVehiclePostDriveIdSnapshotReuse.mjs');
   runCli('ADMIN evita el ciclo Drive/lock si la recuperación no necesita reparar imágenes','JS/Tests/AdminRecoveryImageRepairFastPath.mjs');
