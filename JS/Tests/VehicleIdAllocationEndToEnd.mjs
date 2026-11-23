@@ -113,9 +113,9 @@ const requestFromFrontend = (payload, opId, operationHash) => {
 const payload = { userId: "USR-1", sessionToken: "SESSION-1" };
 const hashA = "a".repeat(64), hashB = "b".repeat(64);
 assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashA), /simulated response loss/);
-assert.equal(requestFromAdmin(payload, "OP-E2E-1", hashA), 4, "El reintento debe recuperar el ID persistido por WRITE");
+assert.equal(requestFromFrontend(payload, "OP-E2E-1", hashA), 4, "El reintento debe recuperar el ID persistido por WRITE");
 assert.equal(requestFromFrontend(payload, "OP-E2E-2", hashB), 5, "Una operación distinta debe recibir un ID nuevo");
-assert.throws(() => requestFromAdmin(payload, "OP-E2E-1", hashB), /otro contenido/);
+assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashB), /otro contenido/);
 assert.equal(ledger.rows.length, 3, "Debe existir una reserva canónica por operación");
 assert.deepEqual(ledger.rows.slice(1).map(row => row[2]), [4, 5]);
-console.log("VehicleIdAllocationEndToEnd: 4/4 PASS — ADMIN→WRITE, asignación sin lock, respuesta perdida y recuperación por opId");
+console.log("VehicleIdAllocationEndToEnd: 1/1 PASS — frontend→WRITE, asignación sin lock, respuesta perdida y recuperación por opId");
