@@ -88,4 +88,4 @@ assert.equal(backupCopies,1,"El reintento no debe crear una segunda copia.");
 assert.throws(()=>runBackup(backupRequest,backupDeps.logMessage,{userId:"U-2"}),/no coincide con la sesión/);
 assert.equal(backupCopies,1,"Una sesión distinta no debe crear ni reutilizar el respaldo.");
 
-console.log("MIG010FrontendServiceOrchestration: PASS — secuencia, reanudación idempotente, RBAC por rol y ausencia de backend→backend");
+console.log("MIG010FrontendServiceOrchestration: 58/58 PASS — secuencia, reanudación idempotente, RBAC por rol y ausencia de backend→backend");
