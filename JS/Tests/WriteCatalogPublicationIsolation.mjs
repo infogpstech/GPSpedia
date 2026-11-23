@@ -37,7 +37,7 @@ assert.match(write, /deleteProperty\\("GPSpedia_COORDINATOR_SECRET"\\)/);
 assert.match(write, /function doPost\\(e\\)\\s*\\{\\s*try\\s*\\{\\s*removeLegacyWriteCoordinatorSettings_\\(\\)/);
 const cleanupSource = extract("removeLegacyWriteCoordinatorSettings_", "doPost");
 const deletedProperties = [];
-const cleanup = new Function("PropertiesService", cleanupSource + "\\nreturn removeLegacyWriteCoordinatorSettings_;")({
+const cleanup = new Function("PropertiesService", cleanupSource + "\nreturn removeLegacyWriteCoordinatorSettings_;")({
     getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
 });
 cleanup();

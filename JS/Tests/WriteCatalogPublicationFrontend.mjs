@@ -10,10 +10,10 @@ assert.doesNotMatch(writeSource, /publishSharedCatalogChange_|publishCortesCatal
 assert.match(writeSource, /deleteProperty\\("GPSpedia_COORDINATOR_URL"\\)/);
 assert.match(writeSource, /deleteProperty\\("GPSpedia_COORDINATOR_SECRET"\\)/);
 const cleanupStart = writeSource.indexOf("function removeLegacyWriteCoordinatorSettings_()");
-const cleanupEnd = writeSource.indexOf("\\nfunction ", cleanupStart + 10);
+const cleanupEnd = writeSource.indexOf("\nfunction ", cleanupStart + 10);
 assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
 const deletedProperties = [];
-const cleanup = new Function("PropertiesService", writeSource.slice(cleanupStart, cleanupEnd) + "\\nreturn removeLegacyWriteCoordinatorSettings_;")({
+const cleanup = new Function("PropertiesService", writeSource.slice(cleanupStart, cleanupEnd) + "\nreturn removeLegacyWriteCoordinatorSettings_;")({
     getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
 });
 cleanup();
