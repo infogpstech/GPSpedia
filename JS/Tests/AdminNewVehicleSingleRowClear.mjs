@@ -20,5 +20,6 @@ const confirm=handler.indexOf("sheet.getRange(rowIndex, COLS_CORTES.id).getValue
 assert.ok(copyFormat>=0&&copyValidation>copyFormat&&clear>copyValidation&&clearId>clear&&flush>clearId&&assign>flush&&confirm>assign,
  "WRITE debe copiar formato/validaciones, limpiar, hacer flush y luego asignar/verificar el ID");
 assert.match(write,/recordOpId\(opId, newId, 1, formattedDate, "pending"/);
-assert.ok(write.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending"')<write.indexOf("runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId"));
+const pendingReservation=write.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending"');
+assert.ok(pendingReservation>=0&&write.indexOf("runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId",pendingReservation)>pendingReservation);
 console.log("AdminNewVehicleSingleRowClear: 1/1 PASS — WRITE limpia la fila, asigna ID reservado y conserva recuperación idempotente");
