@@ -1010,7 +1010,7 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - Repositorio: `infogpstech/GPSpedia`.
 - Rama de trabajo: `GPSpedia2.2.5_work`.
 - Rama base protegida: `GPSpedia2.2.5`, HEAD verificado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribieron cambios en la base.
-- Último commit funcional/pruebas verificado para los grupos MIG-017 y MIG-018: `6b4eb86c84adf0156246a29f7d43a2524fdf9ec1`. Después se actualizó documentación de tareas en `a181c36a03b1849033e540e229e79fe7a344b822`.
+- Último commit funcional/pruebas verificado para los grupos MIG-017 y MIG-018: `6b4eb86c84adf0156246a29f7d43a2524fdf9ec1`. La documentación de cierre se registró en `a181c36a03b1849033e540e229e79fe7a344b822`, `3c99b02bac36e5e4b9eeff22fc91ff0aa47a76fc`, `6abe2ddb9a960c902f1bb67ad9791c7b06ce2537` y `1f7193e14dae0a98828d7d42ffdb51b087637ce7`.
 
 ### MIG-017 — Herramientas y operaciones de Drive
 - Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
@@ -1026,7 +1026,8 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - No se invocaron Apps Script ni Spreadsheet reales. Migración/versionado de `AportesVehiculo`, despliegues y prueba Beta con datos aislados siguen pendientes.
 
 ### Regresión general y despliegue
-- En el mismo run `45249354445`: 184 suites, 2,135 pruebas aprobadas y 6 fallos de suites fuera de MIG-017/MIG-018:
+- Confirmación posterior en el run `45249567158` (HEAD documental `6abe2ddb9a960c902f1bb67ad9791c7b06ce2537`): los grupos MIG-017/MIG-018 siguen sin fallos y la regresión global conserva 184 suites, 2,135 pruebas aprobadas y las mismas seis fallas externas.
+- En el run de código `45249354445`: 184 suites, 2,135 pruebas aprobadas y 6 fallos de suites fuera de MIG-017/MIG-018:
   1. ADMIN — P4 política de roles.
   2. FEEDBACK — reset de vídeo desde navegador sin secreto compartido.
   3. CATALOG — feed incremental autenticado, cursor y recuperación.
@@ -1034,7 +1035,7 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
   5. AUTH — purga de Logs usando actor confiable.
   6. INTEGRATION — BETA-043 telemetría local por servicio y navegador móvil.
 - Estas seis fallas no pertenecen a los grupos dirigidos MIG-017/MIG-018 y deben mantenerse como deuda de regresión separada; no se declararon resueltas.
-- Pages build del commit `6b4eb86c84adf0156246a29f7d43a2524fdf9ec1`, run `45249353848`: build y reporte de estado SUCCESS; despliegue estaba en curso al registrar este checkpoint.
+- Pages build del commit `6b4eb86c84adf0156246a29f7d43a2524fdf9ec1`, run `45249353848`: build, reporte y deploy SUCCESS.
 
 ### Continuidad
 - MIG-017 y MIG-018 quedan cerradas con validación diferida.
