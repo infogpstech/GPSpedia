@@ -1,5 +1,7 @@
 > **AVISO DE VIGENCIA (2026-11-23):** documento histórico de la arquitectura anterior. No ejecutar sus instrucciones de crear/configurar secretos compartidos, claves de interconexión ni propiedades locales. La fuente normativa vigente es NORMAS_DESAROLLO.md §17: la coordinación funcional multi-servicio corresponde al frontend; las llamadas técnicas directas entre servicios pueden existir sin secretos manuales; la autorización la valida cada servicio receptor. Se conserva como evidencia histórica hasta retirar los componentes heredados.
 
+> **Adenda de vigencia MIG-023 (2026-11-23):** el feed incremental del catálogo fue trasladado a \`JS/Services/catalog.js\`. El frontend consulta \`getCatalogChanges\` directamente en CATALOG y publica \`publishCatalogChange\`/\`publishCatalogReset\` allí. FEEDBACK solo devuelve metadatos; CATALOG reconstruye los snapshots canónicos desde Spreadsheet. Las rutas \`catalogFeed\`, \`getCatalogChanges\` y \`publishCatalogReset\` de este Coordinator se consideran compatibilidad histórica hasta MIG-025: no configurarlas ni usarlas en consumidores nuevos. El resto de Coordinator sigue siendo transitorio para las dependencias pendientes de MIG-024/MIG-025. Esta adenda prevalece sobre las instrucciones históricas de publicación del feed que aparecen más abajo.
+
 # Coordinador compartido de mutaciones — configuración
 
 Guía operativa paso a paso y matriz de despliegue por archivo: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
