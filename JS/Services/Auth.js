@@ -456,7 +456,8 @@ function handleClearSensitiveLogs(payload) {
         lock.waitLock(10000);
         lockAcquired = true;
 
-        const spreadsheet = getAuthUsersSpreadsheet_();
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al servicio AUTH.");
         const logsSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGS);
         if (!logsSheet) throw new Error("No se encontró la hoja Logs.");
 
