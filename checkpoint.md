@@ -1109,3 +1109,32 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Estado y continuidad
 - MIG-021: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Siguiente tarea según prioridad: **MIG-022 — Administración de Spreadsheet y mantenimiento**.
+
+
+---
+
+## Continuidad MIG-022 — 2026-11-23
+
+### Rama y HEAD
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD actual tras el avance inicial: `e84587e6f050f7fbe55f59b495044a540fe46f60`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; verificada sin modificaciones.
+- Commits de esta actividad: `2dd13f2a66925e75459fa4e39757421f0d4924d1` (comentario de Utilities) y `e84587e6f050f7fbe55f59b495044a540fe46f60` (contrato de pruebas Utilities).
+
+### MIG-022 — Administración de Spreadsheet y mantenimiento
+- Estado: **EN PROGRESO**.
+- Se inspeccionaron las acciones internas ADMIN `createSheet`/`addColumn`, handlers de respaldo/restauración, migraciones de identificadores/fórmulas, mantenimiento de Logs y el servicio UTILITIES.
+- Se detectó que el contrato de `UtilitiesSecurity.js` seguía exigiendo lease remota de COORDINATOR, aunque `Utilities.migrateTimestamps` ya usa actor de sesión local y ScriptLock local. El harness también carecía de mocks de CacheService y de las primitivas SHA-256 requeridas por la caché de actor.
+- Se corrigió el contrato para probar el comportamiento implementado: actor desde Users/ActiveSessions, roles, sesión duplicada/expirada/revocada, staging, rollback, concurrencia y ausencia de URL/secreto/endpoint COORDINATOR.
+- Prueba aislada V8 sobre las fuentes exactas de la rama: **19/19 PASS**.
+- Se actualizó el comentario de Utilities para no afirmar una lease compartida inexistente. No se modificaron datos ni deployments Apps Script.
+
+### Validación pendiente
+- GitHub Actions Node.js 22 para HEAD `e84587e6f050f7fbe55f59b495044a540fe46f60`: regresión en ejecución al actualizar este checkpoint; comprobar grupo UTILITIES y fallos globales.
+- Verificar las suites ADMIN de `createSheet`, `addColumn`, backup/restore, rollback, migración de IDs/fórmulas, mantenimiento de Logs y consola.
+- No se ejecutaron Spreadsheet/Drive/Apps Script reales; validación Beta aislada sigue diferida.
+
+### Continuidad
+- Continuar MIG-022; no iniciar MIG-023 hasta completar pruebas locales, revisión de diff y cierre documental.
+- MIG-025 queda explícitamente obligado a retirar también cualquier `doGet`/health/ping de COORDINATOR y su inclusión como servicio independiente en el escaneo de salud. No ejecutar MIG-025 antes de resolver las dependencias MIG-022 a MIG-024.
