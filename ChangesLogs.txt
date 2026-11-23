@@ -12,3 +12,8 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se actualizó TAREAS_MIGRACION_ARQUITECTURA.md: MIG-002 COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Se registraron las brechas de cobertura UI indirecta sin afirmar pruebas visuales inexistentes.
 - No se modificó código funcional, endpoints, RBAC, datos, Spreadsheet, Drive ni deployments.
+
+### Adenda MIG-002 — controles dinámicos de ficha
+
+- Se amplió INVENTARIO_PANTALLAS_CAPACIDADES.md para incluir explícitamente los formularios dinámicos de alta de corte, apertura, alimentación y vídeo desde la ficha del vehículo.
+- Se documentó que los botones de coincidencia de add_cortes generan su atributo id a partir de match.id; no tienen un identificador estático común.
