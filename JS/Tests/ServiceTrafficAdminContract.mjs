@@ -48,9 +48,10 @@ for (const [name, source] of [["AUTH", auth], ["USERS", users], ["WRITE", write]
     assert.doesNotMatch(router, /getServiceTraffic|record[A-Za-z]*Traffic_/,
         name + " no debe registrar métricas en su ruta ordinaria ni exponer endpoint interno.");
 }
-assert.match(catalog, /const CATALOG_TRAFFIC_SECRET_PROPERTY_/);
-assert.match(catalog, /properties\.getProperty\(CATALOG_TRAFFIC_SECRET_PROPERTY_\)/,
-    "El secreto CATALOG sigue protegiendo metadatos internos de inventario de imágenes.");
+assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_SECRET_PROPERTY_|catalogTrafficSecretEquals_/,
+    "CATALOG no debe conservar el secreto compartido del endpoint interno retirado por MIG-010.");
+assert.doesNotMatch(admin, /CATALOG_SERVICE_URL|CATALOG_TRAFFIC_SECRET_PROPERTY_|getAdminProjectedVehicleFieldSnapshot_/,
+    "ADMIN no debe conservar URLs, secretos ni clientes backend→CATALOG.");
 assert.match(feedback, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
 assert.match(feedback, /FEEDBACK_PUBLIC_ACTIONS/);
 
