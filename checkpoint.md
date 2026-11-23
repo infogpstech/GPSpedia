@@ -666,7 +666,7 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - No se desplegaron Apps Script ni se modificaron deployments, endpoints instalados, PropertiesService, Spreadsheet, Drive o datos externos.
 - Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
 
-## Continuidad MIG-011 — verificación de aceptación — 2026-11-23
+## Cierre MIG-011 — 2026-11-23
 
 ### Estado Git de partida
 - Repositorio: infogpstech/GPSpedia.
@@ -682,12 +682,22 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - Las llamadas HTTP externas de ADMIN a Drive API y recursos de imagen se preservan.
 - No se modificó código funcional, endpoints, propiedades, deployments, Spreadsheet, Drive ni datos.
 
-### Validación pendiente
-- El commit documental de esta revisión debe activar el workflow GPSpedia service regression tests (Node.js 22). Esperar su resultado antes de cambiar MIG-011 a COMPLETADA CON VALIDACIÓN DIFERIDA.
-- La validación de endpoints Apps Script, sesiones/roles reales y permisos sobre recursos aislados permanece pendiente de Beta.
+### Validación local y resultados
+- GitHub Actions Node.js 22: SUCCESS — run 45212028964.
+- Regresión completa: 306 suites / 3,558 pruebas / 0 fallos.
+- MIG010FrontendServiceOrchestration: 58/58 PASS; ServiceCallGraphContract: 9/9 PASS.
+- AdminVehicleTargetedCatalogRead: 3/3; AdminVehicleContributionCandidates: 12/12; AdminCandidateImageInventoryCatalogSource: 4/4.
+- AdminVehicleIdAllocationIdempotency: 1/1; VehicleIdAllocationEndToEnd: 1/1; WriteFreezeCortesIdsBackupOutsideLock: 5/5.
+- Comprobación sintáctica del workflow: SUCCESS.
+- GitHub Pages build/deploy: SUCCESS — run 45212025471.
+- Diff del commit de verificación limitado a ChangesLogs.txt, INVENTARIO_LLAMADAS_SERVICIOS.md, TAREAS_MIGRACION_ARQUITECTURA.md y checkpoint.md; no hubo cambios funcionales.
+- La validación real de endpoints Apps Script, sesiones/roles efectivos y permisos sobre Spreadsheet/Drive aislados permanece pendiente de Beta. No se desplegaron servicios ni se modificaron datos externos.
+
+### Resultado
+- MIG-011: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- No quedan dependencias funcionales ADMIN→WRITE ni ADMIN→CATALOG. Las integraciones externas de Drive e imágenes se conservan.
 
 ### Próximo paso exacto
-1. Confirmar el resultado CI posterior a esta actualización y revisar el diff/HEAD.
-2. Si CI aprueba, cerrar MIG-011 como COMPLETADA CON VALIDACIÓN DIFERIDA y registrar el run.
-3. Continuar con MIG-012 — unificación funcional AUTH/USERS.
+1. Iniciar MIG-012 — unificación funcional AUTH/USERS, según su prioridad y dependencias.
+2. Mantener las validaciones reales de Beta de MIG-010/MIG-011 como pendientes independientes; no marcarlas como ejecutadas.
 

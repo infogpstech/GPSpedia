@@ -199,7 +199,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** cumplida en código y regresión CI: las operaciones multi-servicio cubiertas se coordinan desde frontend, los servicios propietarios validan autorización localmente y no se usan llamadas backend→backend para estos flujos. Se cierra MIG-010 con validación real de Beta expresamente diferida.
 
 ### MIG-011 — Eliminar dependencias backend→backend de ADMIN
-**Estado: EN PROGRESO**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Migrar consulta de proyección de vehículo a llamada directa frontend→CATALOG.
 - [x] Migrar consulta de candidatos de contribución/inventario a llamada directa frontend→CATALOG.
@@ -215,12 +215,14 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Las operaciones HTTP que permanecen en ADMIN corresponden a Google Drive API y recursos de imagen externos; están clasificadas en §7 de INVENTARIO_LLAMADAS_SERVICIOS.md y no son dependencias entre microservicios GPSpedia.
 - JS/Frontend/api-config.js enruta getVehicleProjection y getContributionCandidates a CATALOG, y allocateVehicleId y freezeCortesIds a WRITE. Las secuencias de reorganización se coordinan en frontend.
 - CATALOG mantiene autorización local: getVehicleProjection valida sesión y roles de edición permitidos; getContributionCandidates exige Desarrollador. ADMIN conserva precondiciones y validaciones propias antes de mutaciones.
-- La cobertura existente está integrada en MIG010FrontendServiceOrchestration.mjs, ServiceCallGraphContract.mjs y las suites de proyección, candidatos, asignación de IDs y congelación de IDs. La ejecución CI de esta revisión queda pendiente de confirmación antes del cierre definitivo.
+- La cobertura existente está integrada en MIG010FrontendServiceOrchestration.mjs, ServiceCallGraphContract.mjs y las suites de proyección, candidatos, asignación de IDs y congelación de IDs. GitHub Actions Node.js 22 aprobó la regresión completa: 306 suites, 3,558 pruebas aprobadas y cero fallos. La suite MIG010FrontendServiceOrchestration pasó 58/58; ServiceCallGraphContract 9/9; AdminVehicleTargetedCatalogRead 3/3; AdminVehicleContributionCandidates 12/12; AdminCandidateImageInventoryCatalogSource 4/4; AdminVehicleIdAllocationIdempotency 1/1; VehicleIdAllocationEndToEnd 1/1; WriteFreezeCortesIdsBackupOutsideLock 5/5.
 
 ---
 
 ## Fase 3 — Identidad, usuarios y sesión
 
+ 
+**Cierre y validación diferida:** workflow https://github.com/infogpstech/GPSpedia/actions/runs/45212028964 (**SUCCESS**, commit `3ec8936d8b498d55bbc0322fa05239f8b812d0c8`). La verificación sintáctica del workflow también aprobó. GitHub Pages build/deploy: https://github.com/infogpstech/GPSpedia/actions/runs/45212025471 (**SUCCESS**). Las invocaciones reales de Apps Script, sesiones/roles efectivos y permisos sobre Spreadsheet/Drive aislados permanecen PENDIENTES DE VALIDACIÓN BETA; no se simularon ni se desplegaron servicios.
 ### MIG-012 — Unificación funcional AUTH/USERS
 **Estado: PENDIENTE**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.

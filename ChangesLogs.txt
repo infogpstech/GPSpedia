@@ -123,3 +123,12 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Las llamadas HTTP restantes de ADMIN son integraciones externas de Drive e imágenes, no llamadas a microservicios GPSpedia; se preservan.
 - Se identificó cobertura existente en MIG010FrontendServiceOrchestration, ServiceCallGraphContract y pruebas de paridad relacionadas. No fue necesario modificar código funcional.
 - Se actualizan backlog, inventario y checkpoint. La regresión Node.js 22 queda pendiente de resultado del workflow posterior a esta publicación; Beta real sigue pendiente.
+
+### 2026-11-23 — Cierre MIG-011: dependencias backend de ADMIN
+- MIG-011 se marca COMPLETADA CON VALIDACIÓN DIFERIDA tras la aprobación de CI Node.js 22, run 45212028964.
+- Regresión completa: 306 suites, 3,558 pruebas aprobadas, 0 fallos; sintaxis verificada por workflow.
+- Pruebas representativas: MIG010FrontendServiceOrchestration 58/58; ServiceCallGraphContract 9/9; proyección CATALOG 3/3; candidatos CATALOG 12/12; inventario de imágenes desde CATALOG 4/4; asignación WRITE 1/1; recuperación frontend→WRITE 1/1; freeze IDs 5/5.
+- GitHub Pages build/deploy SUCCESS, run 45212025471.
+- No se requirieron cambios funcionales adicionales: las dependencias se habían retirado en MIG-010 y MIG-011 formalizó su comprobación. No se modificaron deployments ni recursos externos.
+- La validación real de endpoints, sesiones/RBAC y permisos Apps Script/Spreadsheet/Drive permanece pendiente de Beta.
+- Siguiente tarea: MIG-012 — unificación funcional AUTH/USERS.

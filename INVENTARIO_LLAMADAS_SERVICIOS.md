@@ -87,7 +87,7 @@ La revisión de la rama GPSpedia2.2.5_work confirma que las aristas ADMIN→WRIT
 
 La paridad local queda sustentada por las suites existentes MIG010FrontendServiceOrchestration.mjs, ServiceCallGraphContract.mjs, AdminVehicleTargetedCatalogRead.mjs, AdminVehicleContributionCandidates.mjs, AdminCandidateImageInventoryCatalogSource.mjs, AdminVehicleIdAllocationIdempotency.mjs, VehicleIdAllocationEndToEnd.mjs y WriteFreezeCortesIdsBackupOutsideLock.mjs. No se elimina ninguna capacidad ADMIN ni integración externa.
 
-La ejecución completa Node.js 22 se disparará al publicar esta actualización documental. Hasta recibir su resultado, MIG-011 permanece EN PROGRESO. Las invocaciones reales de Apps Script, permisos y recursos aislados continúan pendientes de Beta.
+GitHub Actions Node.js 22 aprobó la regresión completa (run 45212028964): 306 suites, 3,558 pruebas y cero fallos; MIG010FrontendServiceOrchestration 58/58 y ServiceCallGraphContract 9/9. El workflow de GitHub Pages también terminó SUCCESS (run 45212025471). Las invocaciones reales de Apps Script, permisos y recursos aislados continúan pendientes de Beta.
 
 ## 4. SharedMutationClient → COORDINATOR
 
