@@ -54,7 +54,7 @@ assert.ok(admin.includes("response.catalogResetRequired = true;"));
 assert.ok(admin.includes('"resolveVehicleContributionCandidate"]'));
 assert.match(api, /'publishCatalogReset': 'CATALOG'/);
 assert.match(api, /'publishCatalogChange': 'CATALOG'/);
-assert.match(api, /SERVICE_COMPATIBILITY_ACTIONS = \\{[\\s\\S]*?COORDINATOR: \\['publishCatalogReset', 'getCatalogChanges'\\]/);
+assert.match(api, /SERVICE_COMPATIBILITY_ACTIONS = \{[\s\S]*?COORDINATOR: \['publishCatalogReset', 'getCatalogChanges'\\]/);
 assert.match(api, /const WRITE_CATALOG_RESET_ACTIONS_/);
 assert.match(api, /const ADMIN_CATALOG_RESET_ACTIONS_/);
 assert.match(api, /service === "WRITE"[\s\S]*?WRITE_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishCatalogResetAfterMutation_/);
