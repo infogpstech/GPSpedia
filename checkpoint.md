@@ -600,7 +600,7 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 
 ### Validación y límites
 - Las pruebas nuevas cubren el mapa de 121 acciones, los siete servicios, actualización de revisión, endpoints deshabilitados/inválidos, vencimiento y ausencia de fallback local.
-- La CI debe confirmar la suite completa, sintaxis y contratos sobre el commit publicado.
+- CI sobre el commit funcional 1cf6f4a3011289531bd151ab1c9daa344eb73a0a: SUCCESS (run 45185426367); 312 suites, 3,626 pruebas aprobadas, 0 fallos; sintaxis 446 archivos y referencias de módulos 355 archivos.
 - La prueba de navegador real que cambie un endpoint desde Spreadsheet y confirme la actualización automática, así como el acceso real de AUTH a Spreadsheet/CacheService, queda pendiente de Beta conforme a MIG-006/MIG-008. No se desplegó ni modificó ningún servicio.
 - No se modificaron Apps Script, PropertiesService, deployments, endpoints instalados, Spreadsheet, Drive ni datos.
 
@@ -608,3 +608,13 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - MIG-001 a MIG-008 conservan sus estados previos.
 - MIG-009: COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a CI y con prueba remota de actualización pendiente de Beta.
 - Siguiente tarea: MIG-010 — Orquestador frontend de operaciones multi-servicio.
+
+
+### Resultado de validación final MIG-009
+- Regresión: SUCCESS — https://github.com/infogpstech/GPSpedia/actions/runs/45185426367
+- Suite MIG009FrontendActionRouter: 5/5 PASS; inventario verificado: 121 acciones y siete servicios.
+- Sintaxis: 446 archivos .js/.mjs verificados.
+- Referencias relativas: 355 archivos inspeccionados y resueltos.
+- GitHub Pages build/deploy: SUCCESS — https://github.com/infogpstech/GPSpedia/actions/runs/45185424818
+- Health check remoto de Apps Script: pendiente de Beta; requiere que el handler getPublicConfiguration esté desplegado y la configuración central esté publicada. No se ejecutó ni se modificó ningún deployment de Apps Script.
+- Rama base protegida verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.

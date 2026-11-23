@@ -37,3 +37,11 @@ La primera consulta necesita una dirección de arranque para AUTH, porque el reg
 - RemoteServiceHealth.mjs: obtiene endpoints del bootstrap central y realiza únicamente GET de diagnóstico.
 - RunServiceTests.mjs: incluye la suite MIG-009.
 - La aprobación final de CI y sintaxis corresponde al commit publicado.
+
+## Resultado de CI del commit funcional
+
+- Regresión: SUCCESS, run 45185426367 — 312 suites, 3,626 pruebas aprobadas y 0 fallos.
+- MIG009FrontendActionRouter: 5/5 PASS; 121 acciones y siete servicios.
+- Sintaxis: 446 archivos .js/.mjs; referencias entre módulos: 355 archivos.
+- GitHub Pages build/deploy: SUCCESS, run 45185424818.
+- La validación remota del bootstrap AUTH y del cambio de endpoints desde Spreadsheet sigue pendiente de Beta; no se ha desplegado Apps Script.

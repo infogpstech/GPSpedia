@@ -92,3 +92,6 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Las pruebas de salud y el probe remoto se adaptaron para utilizar la configuración central; el workflow remoto queda manual para ejecutarse tras el despliegue autorizado de AUTH.
 - Se añadieron pruebas de contrato para las 121 acciones, resolución dinámica, actualización de revisión, servicios deshabilitados y fail-closed.
 - No se modificaron archivos Apps Script, propiedades, deployments, endpoints productivos, Spreadsheet, Drive ni datos. La actualización real de endpoints desde Spreadsheet queda pendiente de Beta.
+
+- Validación final MIG-009: CI SUCCESS (run 45185426367), 312 suites / 3,626 pruebas / 0 fallos; sintaxis 446 archivos; referencias 355 archivos; Pages build/deploy SUCCESS (run 45185424818).
+- Prueba remota de configuración/servicios permanece diferida a Beta por requerir despliegue explícito de getPublicConfiguration; no se modificó Apps Script productivo.
