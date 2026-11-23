@@ -36,7 +36,7 @@ test("Conserva los conteos Coordinator sin sumar fuentes directas", () => {
 
 test("Declara explícitamente cobertura y exclusiones de rutas directas", () => {
     const result = merge(fixture());
-    assert.match(result.coverage.description, /No incluye rutas directas no coordinadas/);
+    assert.match(result.coverage.description, /No recoge tráfico nuevo ni representa el total de solicitudes HTTP/);
     assert.ok(result.coverage.excludes.includes("sondeos de salud"));
     assert.ok(result.coverage.excludes.some(value => value.includes("AUTH, CATALOG, WRITE y FEEDBACK")));
 });
