@@ -29,3 +29,13 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se señalaron secretos que deben retirarse o requieren diseño protegido; no se copiaron secretos a hojas.
 - No se modificó código funcional, propiedades reales, endpoints, Spreadsheet, Drive ni deployments.
 - MIG-003 se cerró con validación local estática completa y lectura de propiedades/deployments reales diferida a Beta; MIG-006 debe resolver el bootstrap de Spreadsheet.
+
+### 2026-11-23 — MIG-004: inventario de llamadas entre servicios
+
+- Se creó INVENTARIO_LLAMADAS_SERVICIOS.md con el grafo de llamadas backend→backend, las 13 operaciones Coordinator, seis callsites activos de leases, rutas privadas de caché, contratos/payloads, reemplazos frontend, límites de escritura y pruebas representativas.
+- Se documentaron ADMIN→WRITE, ADMIN→CATALOG y Coordinator→USERS/WRITE/FEEDBACK/ADMIN.
+- Se separaron las integraciones externas Drive, YouTube y URLs de imágenes.
+- Se registraron riesgos de solapamiento de escritura en Users/ActiveSessions, Cortes y Drive, y el secreto compartido ADMIN↔CATALOG.
+- Se agregó JS/Tests/ServiceCallGraphContract.mjs y se registró en JS/Tests/RunServiceTests.mjs.
+- Se cerró MIG-004 en TAREAS_MIGRACION_ARQUITECTURA.md y se añadió la sección 20 a MATRIZ_MIGRACION_SERVICIOS.md.
+- No se retiraron llamadas, endpoints, capacidades, propiedades, secretos ni deployments. No se modificó código funcional.
