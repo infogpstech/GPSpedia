@@ -320,3 +320,145 @@ Los tokens OAuth administrados por Google para integraciones externas no se cons
 - La configuración/llamadas internas conocidas están descritas en secciones 2 y 3.
 - El inventario se considera **PARCIAL** hasta cerrar MIG-001 a MIG-005.
 - Ninguna función se ha retirado ni se autoriza retirarla por aparecer duplicada, sin consumidor aparente o fuera del mapa frontend.
+
+
+## 9. Trazabilidad inicial de acciones → handlers → consumidores (2026-11-23)
+
+La siguiente tabla se extrajo de `ACTION_TO_SERVICE_MAP`, los dispatchers reales y los módulos consumidores de la rama `GPSpedia2.2.5_work`. El consumidor se identifica por llamada directa, wrapper o llamada backend-a-backend. La ausencia de consumidor localizado **no autoriza eliminar una acción**: debe determinarse si es mantenimiento manual, llamada indirecta, integración externa o compatibilidad histórica.
+
+| Acción | Servicio canónico | Handler / ejecución | Consumidor localizado |
+|---|---|---|---|
+| `login` | AUTH | `handleLogin` | api-config.js |
+| `requestPasswordRecovery` | AUTH | `handleRequestPasswordRecovery` | auth.js |
+| `completePasswordRecovery` | AUTH | `handleCompletePasswordRecovery` | auth.js |
+| `validateSession` | AUTH | `handleValidateSession` | api-config.js, users.html |
+| `touchSession` | AUTH | `handleTouchSession` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `acceptTerms` | AUTH | `handleAcceptTerms` | ui.js |
+| `changePassword` | AUTH | `handleChangePassword` | users.html |
+| `resetUserPassword` | AUTH | `handleResetUserPassword` | users.html |
+| `logout` | AUTH | `handleLogout` | auth.js, users.html |
+| `migrateLegacyPasswords` | AUTH | `handleMigrateLegacyPasswords` | ui.js |
+| `benchmarkPasswordKdf` | AUTH | `handleBenchmarkPasswordKdf_` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `getNavigationData` | CATALOG | `handleGetNavigationData` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `getCatalogData` | CATALOG | `handleGetCatalogData` | api-config.js, ui.js |
+| `getDropdownData` | CATALOG | `handleGetDropdownData` | add_cortes.html, ui.js |
+| `getVehicleProjection` | CATALOG | `handleGetVehicleProjection_` | add_cortes.html |
+| `getContributionCandidates` | CATALOG | `handleGetContributionCandidates_` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `getSuggestion` | WRITE | `handleGetSuggestion` | add_cortes.html |
+| `checkVehicle` | WRITE | `handleCheckVehicle` | add_cortes.html |
+| `checkOperation` | WRITE | `handleCheckOperation` | add_cortes.html |
+| `addOrUpdateCut` | WRITE | `handleAddOrUpdateCut` | add_cortes.html, ui.js |
+| `addSupplementaryInfo` | WRITE | `handleAddSupplementaryInfo` | add_cortes.html, ui.js |
+| `checkVinDuplicate` | WRITE | `handleCheckVinDuplicate` | add_cortes.html, ui.js |
+| `addVinToVehicle` | WRITE | `handleAddVinToVehicle` | ui.js |
+| `allocateVehicleId` | WRITE | `handleAllocateVehicleId` | admin.js → WRITE (servidor a servidor) |
+| `freezeCortesIds` | WRITE | `handleFreezeCortesIds` | admin.js → WRITE (servidor a servidor) |
+| `getUsers` | USERS | `handleGetUsers` | users.html |
+| `createUser` | USERS | `handleCreateUser` | users.html |
+| `updateUser` | AUTH | `handleUpdateUser` | users.html |
+| `deleteUser` | AUTH | `handleDeleteUser` | users.html |
+| `updateProfile` | USERS | `handleUpdateProfile` | users.html |
+| `resetUserSessions` | AUTH | `handleResetUserSessions` | users.html |
+| `getCatalogChanges` | FEEDBACK | `handleGetCatalogChanges` | auth.js → api-config.js (GET catalogFeed=1 → FEEDBACK/Coordinator) |
+| `recordLike` | FEEDBACK | `handleRecordLike` | api-config.js |
+| `recordVehicleView` | FEEDBACK | `handleRecordVehicleView` | api-config.js |
+| `reportProblem` | FEEDBACK | `handleReportProblem` | api-config.js |
+| `sendContactForm` | FEEDBACK | `handleSendContactForm` | api-config.js, main.js |
+| `addTutorial` | FEEDBACK | `handleAddTutorial` | api-config.js |
+| `suggestYear` | FEEDBACK | `handleSuggestYear` | api-config.js |
+| `suggestCutChange` | FEEDBACK | `handleSuggestCutChange` | api-config.js |
+| `getPysData` | FEEDBACK | `handleGetPysData` | pys-data.js |
+| `addProblem` | FEEDBACK | `handleAddProblem` | ui.js |
+| `addSolution` | FEEDBACK | `handleAddSolution` | ui.js |
+| `addPrevention` | FEEDBACK | `handleAddPrevention` | ui.js |
+| `addVehicleToProblem` | FEEDBACK | `handleAddVehicleToProblem` | ui.js |
+| `getFeedbackItems` | FEEDBACK | `handleGetFeedbackItems` | api-config.js |
+| `getMyProblemReports` | FEEDBACK | `handleGetMyProblemReports` | ui.js |
+| `replyToFeedback` | FEEDBACK | `handleReplyToFeedback` | api-config.js |
+| `markAsResolved` | FEEDBACK | `handleMarkAsResolved` | api-config.js, add_cortes.html |
+| `getActivityLogs` | FEEDBACK | `handleGetActivityLogs` | api-config.js |
+| `deleteFeedbackItem` | FEEDBACK | `handleDeleteFeedbackItem` | api-config.js |
+| `clearActivityLogs` | FEEDBACK | `handleClearActivityLogs` | api-config.js |
+| `clearSensitiveLogs` | AUTH | `handleClearSensitiveLogs` | api-config.js |
+| `getInboxRecipients` | FEEDBACK | `handleGetInboxRecipients` | api-config.js |
+| `notifyDevelopersDriveCritical` | FEEDBACK | `handleNotifyDevelopersDriveCritical` | ui.js |
+| `getInboxConversations` | FEEDBACK | `handleGetInboxConversations` | api-config.js |
+| `getInboxMessages` | FEEDBACK | `handleGetInboxMessages` | api-config.js |
+| `createInboxConversation` | FEEDBACK | `handleCreateInboxConversation` | api-config.js |
+| `sendInboxMessage` | FEEDBACK | `handleSendInboxMessage` | api-config.js |
+| `markInboxRead` | FEEDBACK | `handleMarkInboxRead` | api-config.js |
+| `markInboxUnread` | FEEDBACK | `handleMarkInboxUnread` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `deleteInboxConversation` | FEEDBACK | `handleDeleteInboxConversation` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `archiveInboxConversation` | FEEDBACK | `handleArchiveInboxConversation` | api-config.js |
+| `closeInboxConversation` | FEEDBACK | `handleCloseInboxConversation` | api-config.js |
+| `initYouTubeUpload` | FEEDBACK | `handleInitYouTubeUpload` | youtubeUpload.js |
+| `getVideoApprovalByOperation` | FEEDBACK | `handleGetVideoApprovalByOperation` | youtubeUpload.js |
+| `submitVideoForApproval` | FEEDBACK | `handleSubmitVideoForApproval` | ui.js, youtubeUpload.js |
+| `approveVideo` | FEEDBACK | `handleApproveVideo` | api-config.js |
+| `rejectVideo` | FEEDBACK | `handleRejectVideo` | api-config.js |
+| `removeVehicleFromProblem` | FEEDBACK | `handleRemoveVehicleFromProblem` | ui.js |
+| `updatePysItem` | FEEDBACK | `handleUpdatePysItem` | ui.js |
+| `updateTutorialItem` | FEEDBACK | `handleUpdateTutorialItem` | ui.js |
+| `migrateTimestamps` | UTILITIES | `migrateTimestamps` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `getRichTextMode` | FEEDBACK | `handleGetRichTextMode` | api-config.js |
+| `setRichTextMode` | FEEDBACK | `handleSetRichTextMode` | api-config.js |
+| `ping` | ADMIN | `respuesta inline` | ui.js |
+| `migrateCortesOperationIds` | ADMIN | `handleMigrateCortesOperationIds` | ui.js |
+| `migrateVehicleContributionsSchema` | ADMIN | `handleMigrateVehicleContributionsSchema` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `getVehicleContributionCandidates` | ADMIN | `handleGetVehicleContributionCandidates_` | ui.js |
+| `resolveVehicleContributionCandidate` | ADMIN | `handleResolveVehicleContributionCandidate_` | ui.js |
+| `migrateIdentifiers` | ADMIN | `handleMigrateIdentifiers_` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `rollbackIdentifiers` | ADMIN | `handleRollbackIdentifiers_` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `reconcilePendingImageUploads` | ADMIN | `handleReconcilePendingImageUploads` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `backupDatabase` | ADMIN | `handleBackupDatabase` | ui.js |
+| `backupDrive` | ADMIN | `handleBackupDrive` | ui.js (createBackup) |
+| `restoreDatabase` | ADMIN | `handleRestoreDatabase` | ui.js (restoreBackup) |
+| `restoreDrive` | ADMIN | `handleRestoreDrive` | ui.js (restoreBackup) |
+| `reorganizeDatabase` | ADMIN | `handleReorganizeDatabase` | ui.js |
+| `normalizeImages` | ADMIN | `handleNormalizeImages` | ui.js |
+| `organizePrimaryVehicleImages` | ADMIN | `handleOrganizePrimaryVehicleImages` | ui.js |
+| `restoreAllTrashedImages` | ADMIN | `validateAndRestoreAllTrashedImagesInSpreadsheet` | ui.js |
+| `addLogo` | ADMIN | `handleAddLogo` | ui.js |
+| `auditIdentifiers` | ADMIN | `handleAuditIdentifiers` | ui.js |
+| `freezeIdentifierFormulas` | ADMIN | `handleFreezeIdentifierFormulas_` | ui.js |
+| `createSheet` | ADMIN | `handleCreateSheet` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `addColumn` | ADMIN | `handleAddColumn` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `driveCommand` | ADMIN | `handleDriveCommand` | ui.js |
+| `updateVehicleField` | ADMIN | `handleUpdateVehicleField` | ui.js |
+| `uploadAdminImage` | ADMIN | `handleUploadAdminImage` | ui.js |
+| `getAdminImageUploadStatus` | ADMIN | `handleGetAdminImageUploadStatus` | ui.js |
+| `getReplacedImages` | ADMIN | `handleGetReplacedImages` | ui.js |
+| `previewCortesImageReconciliation` | ADMIN | `handlePreviewCortesImageReconciliation_` | ui.js |
+| `previewCortesImageOrganizer` | ADMIN | `handlePreviewCortesImageOrganizer_` | ui.js |
+| `getCortesImageOrganizerOperations` | ADMIN | `handleGetCortesImageOrganizerOperations_` | ui.js |
+| `applyCortesImageOrganizer` | ADMIN | `handleApplyCortesImageOrganizer_` | ui.js |
+| `rollbackCortesImageOrganizer` | ADMIN | `handleRollbackCortesImageOrganizer_` | ui.js |
+| `applyCortesImageReconciliation` | ADMIN | `handleApplyCortesImageReconciliation_` | ui.js |
+| `migrateReplacedImagesSchema` | ADMIN | `handleMigrateReplacedImagesSchema` | ui.js |
+| `getDriveStorage` | ADMIN | `handleGetDriveStorage` | ui.js |
+| `recoverReplacedImage` | ADMIN | `handleRecoverReplacedImage` | ui.js |
+| `deleteReplacedImage` | ADMIN | `handleDeleteReplacedImage` | ui.js |
+| `restoreReplacedImageFromTrash` | ADMIN | `handleRestoreReplacedImageFromTrash` | ui.js |
+| `permanentlyDeleteReplacedImage` | ADMIN | `handlePermanentlyDeleteReplacedImage` | ui.js |
+| `markReplacedImageInUse` | ADMIN | `handleMarkReplacedImageInUse` | ui.js |
+| `auditDriveImagesInCortes` | ADMIN | `handleAuditDriveImagesInCortes` | ui.js |
+| `saveUnusedImagesInventory` | ADMIN | `handleOrganizeUnusedImagesBatch + handleSaveUnusedImagesInventory` | ui.js |
+| `getServiceTraffic` | ADMIN | `handleGetServiceTraffic_` | ui.js |
+| `getCortesImageFolders` | ADMIN | `handleGetCortesImageFolders` | ui.js |
+| `createCortesImageFolder` | ADMIN | `handleCreateCortesImageFolder` | ui.js |
+| `moveReplacedImage` | ADMIN | `handleMoveReplacedImage` | ui.js |
+| `getReplacedImageDownloadUrl` | ADMIN | `handleGetReplacedImageDownloadUrl` | ui.js |
+
+### 9.1 Acciones sin consumidor directo localizado
+
+En los consumidores inspeccionados no se encontró llamada directa para: `touchSession`, `benchmarkPasswordKdf`, `getNavigationData`, `getContributionCandidates`, `markInboxUnread`, `deleteInboxConversation`, `migrateTimestamps`, `migrateVehicleContributionsSchema`, `migrateIdentifiers`, `rollbackIdentifiers`, `reconcilePendingImageUploads`, `createSheet`, `addColumn`. Algunas pueden ser operaciones internas o manuales; deben revisarse con sus invocadores backend, documentación operativa y registros antes de decidir su destino. En particular, `touchSession`, `benchmarkPasswordKdf`, `getNavigationData`, `getContributionCandidates`, `markInboxUnread`, `deleteInboxConversation`, `migrateTimestamps`, las migraciones administrativas y `createSheet/addColumn` no se deben retirar por falta de botón visible.
+
+### 9.2 Coordinación interna no incluida en las 120 acciones frontend
+
+Coordinator expone 13 operaciones internas: `acquire`, `release`, `validate`, `publishCatalogChange`, `publishCatalogChanges`, `getCatalogChanges`, `registerSession`, `syncUserSessions`, `revokeSession`, `revokeUserSessions`, `validateSessionContext`, `invalidateSessionActorCaches` y `getServiceTraffic`. Se invocan desde `SharedMutationClient.js` y los servicios, no desde controles frontend.
+
+También existen rutas internas `__invalidateSessionActorCache` y `__primeSessionActorCache` en USERS, WRITE, FEEDBACK y ADMIN. La acción pública `getCatalogChanges` conserva handler POST en FEEDBACK, pero el flujo incremental observado en frontend usa GET `catalogFeed=1` en FEEDBACK, que entrega el feed mediante Coordinator. Esta diferencia de transporte debe preservarse y documentarse durante la migración.
+
+### 9.3 Alcance y límites de esta trazabilidad
+
+La tabla confirma la relación inicial acción → servicio → handler y localiza consumidores en `api-config.js`, `ui.js`, `auth.js`, `main.js`, `pys-data.js`, `youtubeUpload.js`, `add_cortes.html` y `users.html`. No sustituye el inventario de payloads/respuestas, permisos por acción, hojas/columnas, archivos Drive, llamadas externas, triggers, operaciones programadas ni pruebas. MIG-001 permanece **EN PROGRESO** hasta completar esos vínculos y revisar todas las capacidades CAP-01 a CAP-19.
