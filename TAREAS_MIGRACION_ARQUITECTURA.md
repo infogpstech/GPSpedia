@@ -171,8 +171,10 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** las 121 acciones, health checks y feed incremental usan destinos del registro central; no existen URLs locales para servicios ni fallback a valores anteriores; ante registro inválido, vencido o no disponible, el router no utiliza destinos antiguos. AUTH bootstrap es el único localizador de arranque y no actúa como fallback.
 
 ### MIG-010 — Orquestador frontend de operaciones multi-servicio
-**Estado: EN PROGRESO**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
+
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
+
 - [x] Implementar secuencias explícitas para los flujos que hoy resuelve ADMIN mediante llamadas internas: reorganización ADMIN→WRITE→ADMIN y lecturas directas frontend→CATALOG para proyección y candidatos.
 - [x] Preservar orden, precondiciones, resultados, errores y recuperación; WRITE confirma la estabilización y ADMIN vuelve a validar respaldo/manifiesto/fórmulas antes de ordenar.
 - [x] Trasladar a WRITE la creación de vehículos, reserva idempotente de IDs y recuperación de altas; ADMIN rechaza las rutas heredadas sin escribir ni coordinar servicios.
@@ -180,16 +182,21 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - [x] Mostrar progreso y estado parcial sin bloquear módulos independientes; la reorganización registra etapa, porcentaje y errores.
 - [x] Reanudar o permitir recuperación tras interrupción del navegador mediante estado local por usuario, backupId y operationId persistente.
 - [x] No mover secretos ni decisiones de autorización al frontend; CATALOG valida localmente la sesión y los roles autorizados para la proyección; los candidatos siguen restringidos a Desarrollador.
+- [x] Retirar las llamadas backend→backend de ADMIN a WRITE/CATALOG cubiertas por esta migración; el frontend coordina las solicitudes y cada receptor valida su propia sesión.
 
-**Validación local aislada — 2026-11-23**
-- La suite completa Node.js 22 de GitHub Actions está en reejecución tras corregir contratos heredados y rutas de dispatcher; no declarar CI aprobado hasta recuperar el resultado de la última ejecución.
-- `JS/Tests/MIG010FrontendServiceOrchestration.mjs` ejecutada en harness V8 aislado: 58 aserciones PASS, incluida simulación de creación/replay del respaldo, rechazo de replay por otro usuario, autorización por rol, sesión vencida, orden de pasos y persistencia previa del operationId.
-- Los archivos `admin.js`, `catalog.js`, `ui.js` y la suite MIG010 pasaron parsing en el entorno V8 usado para la validación.
-- La suite quedó registrada en `JS/Tests/RunServiceTests.mjs`.
-- **Pendiente de confirmar:** ejecución del workflow completo Node.js 22 / regresión de servicios en GitHub Actions. La consulta de estado disponible no devolvió checks asociados; no se declara CI aprobado.
-- **Pendiente de Beta:** invocaciones reales de ADMIN/CATALOG/WRITE con sesiones y recursos aislados. No se desplegó Apps Script ni se modificaron datos externos.
+**Validación CI — 2026-11-23**
+- GitHub Actions GPSpedia service regression tests: SUCCESS, run 45209447602.
+- Regresión completa Node.js 22: 306 suites, 3,558 pruebas aprobadas, 0 fallos.
+- JS/Tests/MIG010FrontendServiceOrchestration.mjs: 58/58 PASS; cubre secuencia, persistencia previa del operationId, recuperación/replay de respaldo, rechazo de replay por otro usuario, sesión vencida, roles y ausencia de backend→backend.
+- Pruebas adicionales de WRITE, vinculación de imágenes, proyección CATALOG y contratos de compatibilidad incluidas en la regresión completa.
+- Verificación sintáctica integral aprobada dentro del workflow.
+- GitHub Pages build/deploy: SUCCESS, run 45209445911.
 
-**Aceptación:** las operaciones cruzadas se ejecutan con llamadas directas frontend→servicio, sin backend→backend. La implementación local está desarrollada; el cierre queda pendiente de confirmar la regresión CI.
+**Validación diferida a Beta**
+- Pendiente ejecutar invocaciones reales frontend→ADMIN/CATALOG/WRITE con sesiones y recursos aislados, y confirmar permisos efectivos de Apps Script/Spreadsheet/Drive.
+- No se desplegaron servicios Apps Script ni se modificaron endpoints instalados, PropertiesService, Spreadsheet, Drive o datos externos.
+
+**Aceptación:** cumplida en código y regresión CI: las operaciones multi-servicio cubiertas se coordinan desde frontend, los servicios propietarios validan autorización localmente y no se usan llamadas backend→backend para estos flujos. Se cierra MIG-010 con validación real de Beta expresamente diferida.
 
 ### MIG-011 — Eliminar dependencias backend→backend de ADMIN
 **Estado: PENDIENTE**
