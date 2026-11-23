@@ -104,7 +104,7 @@ test("las tres operaciones ADMIN usan guardas locales por recurso", () => {
 test("la guarda no realiza llamadas remotas ni lee URLs o secretos", () => {
     assert.doesNotMatch(helperSource, /UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|SharedMutation/);
     assert.match(helperSource, /PropertiesService\.getScriptProperties/);
-    assert.match(helperSource, /LockService\.getScriptLock/);
+    assert.match(helperSource, /lockService\.getScriptLock/);
 });
 
 console.log("AdminLocalOperationGuard: " + passed + "/8 PASS");
