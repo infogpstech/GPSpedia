@@ -2,6 +2,7 @@
 // VERSION: 1.5.0 | OUTPUT: Hoja 1 (columna A)
 // AUTH owns the session record; UTILITIES loads and caches the actor from Users/ActiveSessions locally.
 // Mutations are serialized by the local ScriptLock; session actors are loaded and cached locally.
+const SPREADSHEET_ID="1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
 const SOURCE_COLS={imagenVehiculo:9};
 function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"available",service:"GPSpedia-Utilities",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
@@ -36,7 +37,7 @@ function migrateTimestampsSafe_(payload){
  const lock=LockService.getScriptLock();let acquired=false;
  try{
   lock.waitLock(30000);acquired=true;
-  const ss=SpreadsheetApp.getActiveSpreadsheet();if(!ss)throw new Error("No hay una Spreadsheet activa vinculada al servicio UTILITIES.");assertUtilitiesDeveloperSession_(payload,ss);
+  const ss=SpreadsheetApp.openById(SPREADSHEET_ID);assertUtilitiesDeveloperSession_(payload,ss);
   recoverUtilitiesInterruptedMigration_(ss);
   const source=ss.getSheetByName(SHEET_NAMES.SOURCE);if(!source)throw new Error("Hoja 'Cortes' no existe.");
   const last=source.getLastRow(),sourceValues=last<2?[]:source.getRange(2,SOURCE_COLS.imagenVehiculo,last-1,1).getValues();
