@@ -203,9 +203,9 @@ test("WRITE delega la publicación del catálogo al frontend y elimina la llamad
     assert.ok(apiSource.includes("'publishCatalogReset': 'COORDINATOR'"));
     assert.match(apiSource,/WRITE_CATALOG_RESET_ACTIONS_/);
     assert.match(apiSource,/publishCatalogResetAfterMutation_/);
-    assert.match(apiSource,/routeActionInternal_\("publishWriteCatalogReset"/);
+    assert.match(apiSource,/routeActionInternal_\("publishCatalogReset"/);
     assert.match(coordinatorSource,/function publishCatalogResetFromBrowser_/);
-    assert.match(coordinatorSource,/request\.action === "publishWriteCatalogReset"/);
+    assert.match(coordinatorSource,/request\.action === "publishCatalogReset"/);
     assert.match(coordinatorSource,/publishCatalogChange_\(service, operation/);
     assert.match(coordinatorSource,/change:\s*\{\s*operation:\s*"reset"\s*\}/);
 });
