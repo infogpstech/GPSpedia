@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs";
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const api = read("../Frontend/api-config.js");
 const catalog = read("../Services/catalog.js");
-const coordinator = read("../Services/Coordinator.js");
 const write = read("../Services/write.js");
 const admin = read("../Services/admin.js");
 
@@ -44,10 +43,8 @@ test("CATALOG posee el feed, su GET público y sus publicaciones autenticadas", 
     assert.match(catalog, /case 'getCatalogChanges':/);
 });
 
-test("Coordinator deja de exponer publicación de reset y lectura pública del catálogo", () => {
-    assert.doesNotMatch(coordinator, /publishCatalogResetFromBrowser_|getPublicCatalogChanges|catalogFeed/);
-    assert.doesNotMatch(coordinator, /request\.action === "publishCatalogReset"/);
-    assert.match(coordinator, /function getServiceTrafficFromBrowser_/);
+test("el frontend no enruta acciones retiradas a Coordinator", () => {
+    assert.doesNotMatch(api, /COORDINATOR|getServiceTraffic/);
 });
 
 console.log("CatalogPublicationFrontend: " + passed + "/4 PASS");
