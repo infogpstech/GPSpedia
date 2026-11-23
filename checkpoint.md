@@ -1289,3 +1289,21 @@ Commits de esta continuación:
 Siguiente tarea prioritaria: MIG-025 — Eliminar COORDINATOR.
 Antes de borrar el servicio, inventariar todos sus handlers, health, métricas, compatibilidad y tareas programadas; identificar sustitutos y consumidores; retirar el escaneo de salud/telemetría de forma que no desaparezcan capacidades. Mantener la regla de §17: ninguna función se elimina sin matriz de paridad y prueba equivalente. No desplegar ni modificar datos productivos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — INICIO MIG-025 (2026-11-23)
+Rama: GPSpedia2.2.5_work
+HEAD de partida: acad94c5a44b469424dd9f8ca187c6a354f02b27
+MIG-024 quedó cerrada localmente en el commit documental acad94c5. MIG-025 es la tarea activa.
+
+Inventario inicial:
+- Coordinator.js contiene contexto de sesión legado, telemetría global y endpoints health/GET/POST.
+- Los servicios activos ya no consumen API remota de sesión ni leases de Coordinator.
+- Frontend todavía incluye COORDINATOR en CENTRAL_SERVICE_KEYS, SERVICE_HEALTH_CONTRACTS y telemetría local; getServiceTraffic sigue mapeado a COORDINATOR.
+- El panel Developer muestra métricas globales Coordinator-only y métricas locales por navegador. Las globales reflejan eventos legacy, no todas las solicitudes HTTP. No retirar ni reemplazar sin resolver paridad.
+- Los seis servicios activos restantes tienen health propio y el frontend consulta sus endpoints directamente desde el registro central.
+- No se han borrado fuentes, guías, filas de configuración ni propiedades externas; no se han modificado deployments ni datos reales.
+
+Siguiente acción: inventario completo de consumidores y referencias (fuente, frontend, registro central, documentación, pruebas, workflows y Beta); diseñar la continuidad de salud y telemetría antes de retirar Coordinator.
+================================================================================

@@ -307,3 +307,14 @@ HEAD: 38e9ec5f6f32710ef9fc6f9f07b24cd7312cc997
 - Beta real pendiente según Tareas_Beta.md §6.4. No se desplegó Apps Script ni se tocaron datos productivos.
 - Siguiente: MIG-025 — retirar COORDINATOR, preservando antes sus capacidades de health/telemetría y el inventario de funciones exigido por NORMAS §17.
 ================================================================================
+
+
+================================================================================
+2026-11-23 — INICIO MIG-025: INVENTARIO DE RETIRADA DE COORDINATOR
+HEAD de partida: acad94c5a44b469424dd9f8ca187c6a354f02b27
+- Inventariadas las funciones de Coordinator: contexto de sesión legado, telemetría global y health/GET/POST.
+- No se identifican consumidores backend activos de sus API de sesión después de MIG-024; la coordinación de invalidación se realiza desde frontend.
+- Consumidores frontend restantes: health de siete servicios, acción getServiceTraffic y panel de métricas globales. La telemetría global solo refleja eventos legacy Coordinator; no equivale al total HTTP.
+- Se mantiene como condición de paridad resolver la continuidad de métricas globales antes de retirar el panel; no se elimina ninguna función de monitorización por conveniencia.
+- Siguiente: inventario completo de endpoints, configuración central, documentación, pruebas y jobs; diseñar sustitutos antes de borrar Coordinator.
+================================================================================

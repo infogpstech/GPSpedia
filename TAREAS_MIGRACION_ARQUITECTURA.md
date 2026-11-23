@@ -540,14 +540,24 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Resultado:** MIG-024 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-025 — Eliminar COORDINATOR.
 
 ### MIG-025 — Eliminar COORDINATOR
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Confirmar que sesiones, revocaciones, métricas y operaciones protegidas tienen sustituto.
-- [ ] Confirmar que el frontend realiza las llamadas directas necesarias.
-- [ ] Retirar todo endpoint de COORDINATOR, incluido cualquier `doGet`/health/ping propio; COORDINATOR no debe aparecer como servicio independiente en el escaneo de salud.
-- [ ] Retirar fuente, guía, registro de endpoints, configuración y referencias de COORDINATOR.
-- [ ] Confirmar que ningún servicio consulta su URL o propiedades y que ninguna operación residual depende de él.
+**Estado: EN PROGRESO (2026-11-23)**
 
+**Inventario inicial de capacidades y consumidores (sin cambios de código todavía):**
+- `JS/Services/Coordinator.js` v1.4.9 concentra contexto de sesión legado (`registerSession_`, `revokeSession_`, `revokeUserSessions_`, `syncUserSessions_` y `validateSessionContext_`), telemetría global (`readServiceTraffic_` / `getServiceTrafficFromBrowser_`) y `doGet` / `doPost`.
+- Tras MIG-024, los servicios activos ya no usan clientes remotos, leases, URL/secretos ni la API de sesión de Coordinator. Los contratos `SessionActivityCoordination` y `SessionActivityLeaseMinimization` verifican que las acciones activas se coordinan desde el frontend y consumen actor local.
+- Consumidor frontend residual: `getServiceTraffic` se enruta a COORDINATOR desde `ACTION_TO_SERVICE_MAP`. La telemetría global se muestra en el panel Developer junto a la telemetría local del navegador.
+- La comprobación de salud incluye todavía COORDINATOR en `CENTRAL_SERVICE_KEYS` y `SERVICE_HEALTH_CONTRACTS`. Los otros seis servicios ya exponen health propio y el frontend los consulta directamente desde el registro central.
+- `serviceTelemetry.js` todavía incluye COORDINATOR en el inventario local de métricas del navegador. `RemoteServiceHealth.mjs` y `ServiceHealthContract.mjs` esperan siete servicios.
+- La configuración central y documentación de salud/setup aún contienen la fila/identidad de COORDINATOR y referencias históricas. No borrar ni modificar datos de Spreadsheet/PropertiesService hasta identificar la política de retiro y su validación Beta.
+- La guía `Services/COORDINATOR_SETUP.md` y la fuente `JS/Services/Coordinator.js` deben retirarse o archivarse de forma que no queden enlaces activos ni instrucciones ejecutables; README y registros deben actualizarse.
+
+**Paridad obligatoria antes de retirar:**
+- Health: conservar el escaneo directo de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; quitar solo la tarjeta/contrato del servicio que se retira.
+- Métricas: el agregado global actual es Coordinator-only y refleja eventos legacy (leases/validaciones/feed), no todas las solicitudes HTTP. No eliminar el panel ni declararlo sustituido por métricas locales sin resolver y documentar la diferencia. La telemetría local por navegador debe permanecer disponible y correctamente etiquetada.
+- Sesión/revocación: verificar con tests y búsqueda global que no queda ningún consumidor real de las API legacy antes de retirar `registerSession`, `revokeSession`, `syncUserSessions` o `validateSessionContext`.
+- Inventariar tareas programadas, endpoints manuales, diagnósticos, guías, pruebas, registros y filas de configuración. No borrar proyectos ni propiedades externas sin autorización; documentar la limpieza Beta/operativa separada.
+
+**Siguiente paso:** cerrar la matriz de paridad de telemetría global y salud, localizar todos los consumidores de Coordinator y preparar pruebas equivalentes de seis servicios. No eliminar la fuente hasta que las capacidades estén cubiertas y los tests actualizados.
 ### MIG-026 — Eliminar configuración local de todos los servicios
 **Estado: PENDIENTE**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
