@@ -1549,7 +1549,8 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({
         status: "success",
         service: "GPSpedia-SharedMutationCoordinator",
-        version: SHARED_MUTATION_COORDINATOR_VERSION
+        version: SHARED_MUTATION_COORDINATOR_VERSION,
+        status: "available"
     })).setMimeType(ContentService.MimeType.JSON);
 }
 
