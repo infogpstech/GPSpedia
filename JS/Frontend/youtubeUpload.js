@@ -666,7 +666,8 @@ export function openYouTubeUploadModal(options = {}) {
                             title: uploadRecord.title, description: uploadRecord.description,
                             contentType, referenceId, metadata: uploadRecord.metadata,
                             fileName: uploadRecord.fileName, fileSize: uploadRecord.fileSize,
-                            fileType: uploadRecord.fileType, opVideoId, userId, sessionToken
+                            fileType: uploadRecord.fileType, opVideoId, userId, sessionToken,
+                            renewSession: true, expiredUploadUrl: uploadRecord.uploadUrl
                         });
                         if (!initRes || initRes.status !== "success" || !initRes.uploadUrl || initRes.opVideoId !== opVideoId) throw new Error("La sesión de YouTube expiró y no pudo renovarse.");
                         uploadRecord.uploadUrl = initRes.uploadUrl;
