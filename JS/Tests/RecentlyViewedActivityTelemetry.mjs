@@ -18,7 +18,7 @@ assert.match(handler,/\["utilCorte1", "utilCorte2", "utilCorte3"\]/);
 assert.match(handler,/Number\.isFinite\(numericValue\) && numericValue >= 0/);
 assert.match(handler,/logUserActivity\(actor\.userId, actor\.userName, "view_vehicle", vehicleId, JSON\.stringify\(utilityCounters\)\)/);
 assert.doesNotMatch(handler,/payload\.userName|payload\.details|payload\.data|payload\.item/);
-assert.match(coordinator,/recordVehicleView: \{ read: feedbackRead, write: \["ACTIVITY"\] \}/);
+assert.doesNotMatch(coordinator,/recordVehicleView:/);
 const ds=ui.indexOf("export function mostrarDetalleModal("), de=ui.indexOf("\n    const { relay: datosRelay }",ds), detail=ui.slice(ds,de);
 assert.match(detail,/offline\.saveViewedItem\(activeItem, ownerId\)/);
 assert.match(detail,/recordVehicleView\(String\(activeItem\.id\), \{\s*utilCorte1: activeItem\.utilCorte1,\s*utilCorte2: activeItem\.utilCorte2,\s*utilCorte3: activeItem\.utilCorte3\s*\}, getSessionPayload_\(\)\)\.catch\(\(\) => \{\}\)/);
