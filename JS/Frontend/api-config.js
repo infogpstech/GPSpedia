@@ -85,6 +85,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
+    'publishWriteCatalogReset': 'COORDINATOR',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
@@ -100,6 +101,11 @@ export const ACTION_TO_SERVICE_MAP = {
     'previewCortesImageReconciliation': 'ADMIN', 'previewCortesImageOrganizer': 'ADMIN', 'getCortesImageOrganizerOperations': 'ADMIN', 'applyCortesImageOrganizer': 'ADMIN', 'rollbackCortesImageOrganizer': 'ADMIN', 'applyCortesImageReconciliation': 'ADMIN', 'migrateReplacedImagesSchema': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'restoreReplacedImageFromTrash': 'ADMIN', 'permanentlyDeleteReplacedImage': 'ADMIN', 'markReplacedImageInUse': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
     'getServiceTraffic': 'ADMIN', 'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
 };
+
+const WRITE_CATALOG_RESET_ACTIONS_ = new Set([
+    "addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"
+]);
+
 
 /**
  * Rutas directas históricas conservadas por compatibilidad. Las operaciones
@@ -246,9 +252,41 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
                 kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: responseDetails
             });
         }
+        if (service === "WRITE" && WRITE_CATALOG_RESET_ACTIONS_.has(action) &&
+            result.status === "success" && result.alreadyPresent !== true && result.dryRun !== true) {
+            return await publishWriteCatalogResetAfterMutation_(action, payload, result);
+        }
         return result;
 }
 
+
+async function publishWriteCatalogResetAfterMutation_(action, payload, result) {
+    const sourceId = String(payload && (payload.opId || payload.backupId) ||
+        result && (result.opId || result.catalogVersion || result.vehicleId) || Date.now()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 90) || String(Date.now());
+    const requestId = ("write-" + action + "-" + safeId).slice(0, 128);
+    try {
+        const publication = await routeActionInternal_("publishWriteCatalogReset", {
+            userId: String(payload && payload.userId || "").trim(),
+            sessionToken: String(payload && payload.sessionToken || ""),
+            operation: action,
+            requestId
+        });
+        if (!publication || publication.status !== "success") {
+            throw new Error("Coordinator no confirmó la invalidación del catálogo.");
+        }
+        return result;
+    } catch (error) {
+        const pending = Object.assign({}, result, { catalogSyncPending: true });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
+                detail: { action: action, reason: "write-publication" }
+            }));
+        }
+        return pending;
+    }
+}
 
 /**
  * Registra métricas efímeras del navegador actual sin persistir ni transmitir datos.
