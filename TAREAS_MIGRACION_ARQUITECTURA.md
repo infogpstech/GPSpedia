@@ -355,3 +355,13 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - La prueba `ActionDispatchContract.js` ejecutada sobre fuentes exactas de la rama sigue en **12/12 PASS**.
 
 **MIG-001 sigue EN PROGRESO**: falta asociar las 120 acciones y 19 categorías CAP con payload/response, RBAC exacto, hojas/columnas, archivos/Drive, APIs externas, procesos manuales/programados y pruebas específicas de paridad.
+
+
+#### RBAC y contratos de acceso — primera pasada 2026-11-23
+
+- Se documentó en la matriz la política por servicio y grupos de acciones: AUTH, USERS, CATALOG, WRITE, FEEDBACK, ADMIN, UTILITIES y Coordinator.
+- Se confirmó que `checkOperation` no exige actor ni lease por diseño: usa `opId` aleatorio de 128 bits y devuelve metadatos mínimos; `CheckOperationSecurity.js` lo prueba expresamente. No se modificará ese contrato durante la migración.
+- Se documentó la jerarquía de destinatarios Inbox y los controles de participante.
+- Hallazgo de configuración: `getContributionCandidates` puede devolver metadatos internos de inventario de imágenes solo con un secreto de CATALOG almacenado en ScriptProperties; migrar el secreto sin exponerlo al frontend.
+
+**MIG-001 permanece EN PROGRESO**: falta completar payloads/respuestas, errores, hojas/columnas, recursos Drive/APIs, triggers/procesos manuales y pruebas de paridad.
