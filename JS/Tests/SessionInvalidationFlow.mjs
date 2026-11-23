@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { invalidateSessionActorCaches, SESSION_CACHE_SERVICES, SESSION_ACTOR_CACHE_TTL_SECONDS } from "../Frontend/sessionCacheInvalidation.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const read = path => readFileSync(resolve(root, path), "utf8");
@@ -57,3 +58,49 @@ assert.match(css, /body\.dark-mode #login-modal #login-error\.login-session-ende
 assert.match(ui, /deactivateLegalModalFocus_\(termsModal, false\)/);
 assert.match(ui, /termsModal\.style\.display = 'none'/);
 console.log("SessionInvalidationFlow: 15/15 PASS");
+
+const sharedKeys = ["GPSpedia_SHARED_SESSION_ACTOR_V1_" + "a".repeat(64)];
+const catalogKeys = ["GPSpedia_CATALOG_SESSION_ACTOR_V1_" + "b".repeat(64)];
+const calls = [];
+const attempts = new Map();
+const fanout = await invalidateSessionActorCaches({
+    sessionCacheKeys: { userId: "U-1", shared: sharedKeys, catalog: catalogKeys },
+    routeAction: async (action, payload, service) => {
+        calls.push({ action, payload, service });
+        const attemptKey = service + ":" + payload.cacheKeys[0];
+        const attempt = (attempts.get(attemptKey) || 0) + 1;
+        attempts.set(attemptKey, attempt);
+        if (service === "ADMIN" && attempt === 1) throw new Error("fallo transitorio");
+        return { status: "success", invalidated: payload.cacheKeys.length };
+    },
+    routeActionWithRetry: async (action, payload, options) => {
+        let lastError;
+        for (let i = 0; i < options.maxAttempts; i++) {
+            try { return await options.routeAction(action, payload); }
+            catch (error) { lastError = error; }
+        }
+        throw lastError;
+    }
+});
+assert.equal(fanout.status, "success");
+assert.deepEqual(fanout.invalidatedServices, SESSION_CACHE_SERVICES);
+assert.equal(attempts.get("ADMIN:" + sharedKeys[0]), 2);
+assert.equal(calls.length, SESSION_CACHE_SERVICES.length + 1);
+assert.ok(calls.every(call => call.action === "__invalidateSessionActorCache"));
+assert.ok(calls.find(call => call.service === "CATALOG").payload.cacheKeys[0].startsWith("GPSpedia_CATALOG_SESSION_ACTOR_V1_"));
+assert.ok(calls.filter(call => call.service !== "CATALOG").every(call => call.payload.cacheKeys[0].startsWith("GPSpedia_SHARED_SESSION_ACTOR_V1_")));
+assert.equal(SESSION_ACTOR_CACHE_TTL_SECONDS, 21600);
+
+const partialFanout = await invalidateSessionActorCaches({
+    sessionCacheKeys: { userId: "U-2", shared: sharedKeys, catalog: catalogKeys },
+    routeAction: async (action, payload, service) => {
+        if (service === "FEEDBACK") throw new Error("servicio no disponible");
+        return { status: "success", invalidated: payload.cacheKeys.length };
+    },
+    routeActionWithRetry: async (action, payload, options) => options.routeAction(action, payload)
+});
+assert.equal(partialFanout.status, "partial");
+assert.deepEqual(partialFanout.failedServices, ["FEEDBACK"]);
+assert.equal(partialFanout.maxCacheTtlSeconds, 21600);
+assert.doesNotMatch(JSON.stringify(calls), /opaque-session-token/);
+console.log("MIG-014 frontend fan-out: 6 servicios, retry, fallo parcial y TTL 21600s PASS");

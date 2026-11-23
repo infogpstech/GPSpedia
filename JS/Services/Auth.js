@@ -644,7 +644,33 @@ function handleGetPublicConfiguration_() {
     return getPublicCentralConfiguration_();
 }
 
+var sessionCacheKeysForResponse_ = null;
+
+function recordSessionCacheKeysForResponse_(userId, sessionTokens) {
+    if (!sessionCacheKeysForResponse_) return;
+    const id = String(userId || "").trim();
+    const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
+        .map(token => String(token || "")).filter(Boolean)));
+    if (!id || !tokens.length) return;
+    if (sessionCacheKeysForResponse_.userId && sessionCacheKeysForResponse_.userId !== id) {
+        sessionCacheKeysForResponse_.error = true;
+        return;
+    }
+    sessionCacheKeysForResponse_.userId = id;
+    tokens.forEach(token => {
+        try {
+            const sharedKey = getSharedSessionActorCacheKey_(id, token);
+            const digest = sharedKey.replace("GPSpedia_SHARED_SESSION_ACTOR_V1_", "");
+            sessionCacheKeysForResponse_.shared.add(sharedKey);
+            sessionCacheKeysForResponse_.catalog.add("GPSpedia_CATALOG_SESSION_ACTOR_V1_" + digest);
+        } catch (error) {
+            sessionCacheKeysForResponse_.error = true;
+        }
+    });
+}
+
 function doPostInternal_(e) {
+    sessionCacheKeysForResponse_ = { userId: "", shared: new Set(), catalog: new Set(), error: false };
     let response;
     try {
         const request = JSON.parse(e.postData.contents);
@@ -713,6 +739,17 @@ function doPostInternal_(e) {
     } catch (error) {
         logToSheet('ERROR', `Error in doPost: ${error.message}`, { stack: error.stack });
         response = { status: 'error', message: error.message };
+    }
+    if (sessionCacheKeysForResponse_ &&
+        (sessionCacheKeysForResponse_.shared.size || sessionCacheKeysForResponse_.catalog.size || sessionCacheKeysForResponse_.error)) {
+        response = response && typeof response === "object" && !Array.isArray(response)
+            ? response : { status: "error", message: "La operación no devolvió una respuesta válida." };
+        response.sessionCacheKeys = {
+            userId: sessionCacheKeysForResponse_.userId,
+            shared: Array.from(sessionCacheKeysForResponse_.shared),
+            catalog: Array.from(sessionCacheKeysForResponse_.catalog)
+        };
+        if (sessionCacheKeysForResponse_.error) response.sessionCacheInvalidationPending = true;
     }
     return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.TEXT);
 }

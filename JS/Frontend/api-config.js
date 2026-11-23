@@ -7,6 +7,7 @@
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
 import { recordBrowserServiceTraffic } from './serviceTelemetry.js';
 import { createCentralConfigurationCache, resolveCentralServiceEndpoint } from './centralConfigurationCache.js';
+import { invalidateSessionActorCaches } from './sessionCacheInvalidation.js';
 
 const centralConfigurationCache_ = createCentralConfigurationCache();
 
@@ -230,12 +231,20 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
                         detail: { sessionToken }
                     }));
                 }
+                const responseDetails = result.sessionCacheKeys || result.sessionCacheInvalidationPending
+                    ? { details: result.details, sessionCacheKeys: result.sessionCacheKeys || null,
+                        sessionCacheInvalidationPending: Boolean(result.sessionCacheInvalidationPending) }
+                    : result.details;
                 throw createRouteActionError_("Sesión terminada", {
-                    kind: "session", code: "SESSION_INVALID", httpStatus, details: result.details
+                    kind: "session", code: "SESSION_INVALID", httpStatus, details: responseDetails
                 });
             }
+            const responseDetails = result.sessionCacheKeys || result.sessionCacheInvalidationPending
+                ? { details: result.details, sessionCacheKeys: result.sessionCacheKeys || null,
+                    sessionCacheInvalidationPending: Boolean(result.sessionCacheInvalidationPending) }
+                : result.details;
             throw createRouteActionError_(errorMessage, {
-                kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: result.details
+                kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: responseDetails
             });
         }
         return result;
@@ -246,6 +255,23 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
  * Registra métricas efímeras del navegador actual sin persistir ni transmitir datos.
  * Cada intento HTTP se contabiliza; los reintentos quedan visibles como intentos separados.
  */
+function notifySessionCacheInvalidationPending_(outcome, userId) {
+    if (typeof window === "undefined" || typeof CustomEvent !== "function" ||
+        typeof window.dispatchEvent !== "function") return;
+    window.dispatchEvent(new CustomEvent("gpsepedia:session-cache-cleanup-pending", {
+        detail: {
+            userId: String(userId || ""),
+            failedServices: outcome && Array.isArray(outcome.failedServices) ? outcome.failedServices : [],
+            maxCacheTtlSeconds: 21600
+        }
+    }));
+}
+
+function sessionCacheKeysFromError_(error) {
+    const details = error && error.details;
+    return details && typeof details === "object" ? details.sessionCacheKeys : null;
+}
+
 export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action] || "";
     const startedAt = Date.now();
@@ -255,14 +281,38 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
     });
     try {
         const result = await routeActionInternal_(action, payload, serviceOverride, internalOptions);
+        let finalResult = result;
+        if (result && (result.sessionCacheKeys || result.sessionCacheInvalidationPending)) {
+            const cacheKeys = result.sessionCacheKeys;
+            const invalidation = cacheKeys
+                ? await invalidateSessionActorCaches({ sessionCacheKeys: cacheKeys, routeAction, routeActionWithRetry })
+                : { status: "partial", failedServices: ["AUTH", "WRITE", "CATALOG", "FEEDBACK", "ADMIN", "UTILITIES"] };
+            finalResult = Object.assign({}, result);
+            delete finalResult.sessionCacheKeys;
+            delete finalResult.sessionCacheInvalidationPending;
+            finalResult.sessionCacheInvalidation = invalidation;
+            if (invalidation.status !== "success") {
+                finalResult.cleanupPending = true;
+                notifySessionCacheInvalidationPending_(invalidation, cacheKeys && cacheKeys.userId);
+            }
+        }
         try {
             recordBrowserServiceTraffic({
                 service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
                 outcome: "success", requestBytes: trafficMetrics.requestBytes, responseBytes: trafficMetrics.responseBytes
             });
         } catch (telemetryError) {}
-        return result;
+        return finalResult;
     } catch (error) {
+        const cacheKeys = sessionCacheKeysFromError_(error);
+        if (cacheKeys || (error && error.details && error.details.sessionCacheInvalidationPending)) {
+            const invalidation = cacheKeys
+                ? await invalidateSessionActorCaches({ sessionCacheKeys: cacheKeys, routeAction, routeActionWithRetry })
+                : { status: "partial", failedServices: ["AUTH", "WRITE", "CATALOG", "FEEDBACK", "ADMIN", "UTILITIES"] };
+            error.sessionCacheInvalidation = invalidation;
+            error.cleanupPending = invalidation.status !== "success";
+            if (error.cleanupPending) notifySessionCacheInvalidationPending_(invalidation, cacheKeys && cacheKeys.userId);
+        }
         try {
             recordBrowserServiceTraffic({
                 service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,

@@ -341,6 +341,13 @@ function handleConfirmedSessionInvalidation_(event) {
 
 if (typeof window !== 'undefined') {
     window.addEventListener('gpsepedia:session-invalid', handleConfirmedSessionInvalidation_);
+    window.addEventListener('gpsepedia:session-cache-cleanup-pending', event => {
+        const services = Array.from(new Set(event && event.detail && Array.isArray(event.detail.failedServices)
+            ? event.detail.failedServices : []));
+        if (!services.length) return;
+        showGlobalError('La sesión fue revocada, pero no se pudo confirmar la limpieza de caché en: ' +
+            services.join(', ') + '. Las cachés tienen un vencimiento máximo de 6 horas; revisa la disponibilidad de esos servicios.');
+    });
 }
 
 // Caché de coordinación, no es autorización: AUTH y los servicios siguen validando cada operación.

@@ -68,13 +68,25 @@ function getCatalogSessionActor_(userId, sessionToken) {
 }
 function invalidateCatalogSessionActorCache_(payload) {
     const source=payload&&typeof payload==="object"?payload:{};
-    const userId=String(source.userId||"").trim(),tokens=Array.isArray(source.sessionTokens)?source.sessionTokens:[];
-    if(!userId||!tokens.length||tokens.length>25||tokens.some(token=>typeof token!=="string"||token.length<16||token.length>200)){
+    const userId=String(source.userId||"").trim();
+    const cacheKeys=Array.from(new Set(Array.isArray(source.cacheKeys)?source.cacheKeys:[]));
+    const tokens=Array.isArray(source.sessionTokens)?source.sessionTokens:[];
+    if(!userId||userId.length>128)return {status:"error",message:"Datos de invalidación no válidos."};
+    const cache=CacheService.getScriptCache();
+    if(cacheKeys.length){
+        const pattern=/^GPSpedia_CATALOG_SESSION_ACTOR_V1_[a-f0-9]{64}$/;
+        if(cacheKeys.length>100||cacheKeys.some(key=>typeof key!=="string"||!pattern.test(key))){
+            return {status:"error",message:"Las referencias de caché no son válidas."};
+        }
+        cacheKeys.forEach(key=>cache.remove(key));
+        return {status:"success",invalidated:cacheKeys.length};
+    }
+    if(!tokens.length||tokens.length>25||tokens.some(token=>typeof token!=="string"||token.length<16||token.length>200)){
         return {status:"error",message:"Datos de invalidación no válidos."};
     }
-    const cache=CacheService.getScriptCache();
-    Array.from(new Set(tokens)).forEach(token=>cache.remove(catalogSessionActorCacheKey_(userId,token)));
-    return {status:"success",invalidated:Array.from(new Set(tokens)).length};
+    const uniqueTokens=Array.from(new Set(tokens));
+    uniqueTokens.forEach(token=>cache.remove(catalogSessionActorCacheKey_(userId,token)));
+    return {status:"success",invalidated:uniqueTokens.length};
 }
 function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel, purpose) {
     const userId=String(payload&&payload.userId||"").trim(),sessionToken=String(payload&&payload.sessionToken||"").trim();

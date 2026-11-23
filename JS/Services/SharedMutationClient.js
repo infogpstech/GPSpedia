@@ -288,8 +288,25 @@ function getSharedSessionActorCacheKey_(userId, sessionToken) {
 function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
     const source = payload && typeof payload === "object" ? payload : {};
     const userId = String(source.userId || "").trim();
+    const cacheKeys = Array.from(new Set(Array.isArray(source.cacheKeys) ? source.cacheKeys : []));
     const tokens = Array.isArray(source.sessionTokens) ? source.sessionTokens : [];
-    if (!userId || userId.length > 128 || !tokens.length || tokens.length > 25 ||
+    if (!userId || userId.length > 128) {
+        return { status: "error", message: "Datos de invalidación no válidos." };
+    }
+    if (cacheKeys.length) {
+        const pattern = /^GPSpedia_SHARED_SESSION_ACTOR_V1_[a-f0-9]{64}$/;
+        if (cacheKeys.length > 100 || cacheKeys.some(key => typeof key !== "string" || !pattern.test(key))) {
+            return { status: "error", message: "Las referencias de caché no son válidas." };
+        }
+        const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+        const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
+        if (!cache || typeof cache.remove !== "function") {
+            return { status: "error", message: "La caché local no está disponible." };
+        }
+        cacheKeys.forEach(key => cache.remove(key));
+        return { status: "success", invalidated: cacheKeys.length };
+    }
+    if (!tokens.length || tokens.length > 25 ||
         tokens.some(token => typeof token !== "string" || token.length < 16 || token.length > 200)) {
         return { status: "error", message: "Datos de invalidación no válidos." };
     }
@@ -424,6 +441,9 @@ function invalidateLocalSharedSessionActorCaches_(userId, sessionTokens, depende
     const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
         .map(token => String(token || "")).filter(Boolean)));
     if (!id || !tokens.length) return 0;
+    if (typeof recordSessionCacheKeysForResponse_ === "function") {
+        recordSessionCacheKeysForResponse_(id, tokens);
+    }
     const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
     const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
     const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
