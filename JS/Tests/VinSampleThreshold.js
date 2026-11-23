@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { VinDifferentialEngine } from '../../VinDifferentialEngine.js';
+import { VinDifferentialEngine } from '../Frontend/VinDifferentialEngine.js';
 
 function makeRecords({ samplesPerVersion = 2, overlappingYears = true } = {}) {
     const records = [];
