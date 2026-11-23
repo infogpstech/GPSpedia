@@ -59,6 +59,24 @@ Las operaciones multi-servicio cubiertas por MIG-010 se coordinan desde el front
 
 **Validación:** GitHub Actions Node.js 22, run 45209447602 — 306 suites, 3,558 pruebas, 0 fallos; suite MIG010 58/58 PASS. La ejecución real de endpoints Apps Script y permisos sobre recursos permanece diferida a Beta.
 
+## 3. Dependencias ADMIN retiradas por MIG-010
+
+### 3.1 ADMIN → WRITE
+
+Las antiguas llamadas allocateVehicleId y freezeCortesIds desde ADMIN fueron retiradas. El alta vigente se enruta directamente desde frontend a WRITE; el flujo de reorganización ejecuta el respaldo ADMIN y luego invoca WRITE para congelar IDs. ADMIN conserva únicamente una ruta de compatibilidad que rechaza las acciones de alta heredadas con ACTION_MOVED_TO_WRITE.
+
+No existe en JS/Services/admin.js un cliente funcional, URL operativa ni wrapper para coordinar WRITE. WRITE valida su propia sesión y rol y conserva la operación indivisible de alta/reserva idempotente.
+
+### 3.2 ADMIN → CATALOG
+
+Las antiguas consultas getVehicleProjection y getContributionCandidates desde ADMIN fueron retiradas. El frontend consulta CATALOG directamente y envía el contexto de sesión; CATALOG aplica sus propias validaciones de sesión y rol.
+
+En la reconciliación de reemplazos de imágenes, ADMIN informa el estado del journal y el frontend añade la proyección vigente de CATALOG. ADMIN no sustituye esa proyección leyendo la fila materializada de Cortes.
+
+No se conserva secreto compartido ADMIN↔CATALOG ni se copia al frontend. La autorización de las respuestas se realiza localmente en CATALOG.
+
+**Pruebas de regresión relevantes:** MIG010FrontendServiceOrchestration.mjs, AdminVehicleIdAllocationIdempotency.mjs, VehicleIdAllocationEndToEnd.mjs, AdminTestigoHeaderReadReuse.mjs, AdminImageUploadLinkedRecoveryIsolation.mjs, AdminCutImageLinkOutsideLock.mjs, AdminVinDuplicateBoundedRead.mjs, CatalogTargetedResponses.mjs, CatalogTrafficTelemetry.mjs, DirectTrafficRoutingCoverage.mjs y SessionActivityLeaseMinimization.mjs.
+
 ## 4. SharedMutationClient → COORDINATOR
 
 ### 4.1 Las 13 operaciones del protocolo
