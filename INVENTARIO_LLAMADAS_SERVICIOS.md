@@ -98,12 +98,12 @@ Transporte: `callWriteServiceAction()` en `JS/Services/admin.js`, que hace POST 
 
 ### 4.2 Callers reales de leases
 
-La búsqueda de callsites de `withSharedMutationLease_` encontró siete usos actuales:
+La búsqueda de callsites de `withSharedMutationLease_` encontró seis usos activos y un helper de mantenimiento sin consumidor versionado:
 
 | Servicio | Operación | Ubicación/función |
 |---|---|---|
 | AUTH | `deleteUser` | Router `doPost` |
-| AUTH | `migrateLegacyRoleRevocationMarkersToSharedState` | Helper de mantenimiento |
+| AUTH | `migrateLegacyRoleRevocationMarkersToSharedState` | Helper definido, sin callsite externo/versionado localizado; no se cuenta como lease activa |
 | USERS | `createUser` | Router `doPost` |
 | ADMIN | `saveUnusedImagesInventory` | Dispatcher de ADMIN |
 | ADMIN | `createCortesImageFolder` | Dispatcher de ADMIN |
