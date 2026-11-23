@@ -33,11 +33,12 @@ test("CATALOG valida desde Spreadsheet en cache miss y reutiliza caché local",(
  assert.match(catalog,/now\.getTime\(\)>=addCatalogCalendarMonthsUTC_\(createdAt,3\)/);
 });
 test("El actor procede de Users/ActiveSessions, no del rol enviado por el navegador",()=>{
- assert.match(shared,/const userRows = usersSheet\.getDataRange\(\)\.getValues\(\)\.slice\(1\)/);
- assert.match(shared,/const role = String\(user\[3\]/);
- assert.match(shared,/pendingMarker\.startsWith\("__role_revocation_pending__:"\)/);
- assert.match(shared,/now >= addMonths\(createdAt, 3\) \|\| now >= addMonths\(lastActivityAt, 1\)/);
- assert.doesNotMatch(shared,/source\.role|payload\.role/);
+ const loader=shared.slice(shared.indexOf("function loadSharedSessionActorFromSpreadsheet_"),shared.indexOf("\\nfunction cacheSharedSessionActor_",shared.indexOf("function loadSharedSessionActorFromSpreadsheet_")));
+ assert.match(loader,/const userRows = usersSheet\.getDataRange\(\)\.getValues\(\)\.slice\(1\)/);
+ assert.match(loader,/const role = String\(user\[3\]/);
+ assert.match(loader,/pendingMarker\.startsWith\("__role_revocation_pending__:"\)/);
+ assert.match(loader,/now >= addMonths\(createdAt, 3\) \|\| now >= addMonths\(lastActivityAt, 1\)/);
+ assert.doesNotMatch(loader,/source\.role|payload\.role/);
 });
 test("La invalidación local no requiere secreto compartido",()=>{
  const invalidation=shared.slice(shared.indexOf("function handleSharedSessionActorCacheInvalidation_"),shared.indexOf("function handleSharedSessionActorCachePriming_"));
