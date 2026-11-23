@@ -253,7 +253,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - No se ejecutaron deployments ni se modificaron propiedades Apps Script, hojas, Drive, endpoints ni datos externos. El deployment y la fila histórica USERS se mantienen intactos hasta la verificación Beta.
 
 ### MIG-013 — Sesiones sin Coordinator ni secretos compartidos
-**Estado: COMPLETADA EN CÓDIGO — VALIDACIÓN BETA DIFERIDA**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §§15 y 18: autenticación ordinaria local y de baja latencia; no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas técnicas directas solo por necesidad concreta, sin secretos compartidos y con autorización/RBAC del receptor.
 
 - [x] Mantener el hash PBKDF2 actual y el bloqueo temporal de login después de cinco intentos fallidos (15 minutos); no se modificó el coste del hash.
