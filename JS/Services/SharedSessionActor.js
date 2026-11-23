@@ -77,7 +77,6 @@ function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
 }
 
 // El contexto de usuario/rol se sincroniza al iniciar sesión; CacheService admite hasta 6 h.
-const SHARED_SESSION_ACTOR_CACHE_TTL_SECONDS_ = 21600;
 function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     const id = String(userId || "").trim(), token = String(sessionToken || "");
     if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
