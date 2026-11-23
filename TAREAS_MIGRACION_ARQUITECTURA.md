@@ -474,3 +474,11 @@ Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariame
 - MIG-001 permanece **EN PROGRESO**.
 
 **Siguiente tramo:** extraer los esquemas pendientes de FEEDBACK/ADMIN y UTILITIES, detallar las hojas staging/backup y operaciones por acción; después completar inventario de UI/consumidores, integraciones externas y triggers/manifiestos antes de cerrar MIG-001.
+
+
+
+**Ampliación del inventario de esquemas — 2026-11-23**
+- Se completaron los encabezados de FeedbackLikes (A:G), FeedbackYearApplications (A:P, con extensión M:P), FeedbackYearApplicationEvents (A:E), AdminState (A:F) e Imagenes_Reemplazadas (A:K más 16 columnas añadidas por encabezado).
+- La revisión de `ADMIN_RESTORE_REQUIRED_SCHEMA_` encontró diferencias frente a los mapas de escritura: ActiveSessions restaura/valida A:F mientras AUTH usa G; Cortes enumera A:AP y no incluye VIN ni AT:AV; Logs nombra la columna D `Data` mientras AUTH la utiliza para detalles JSON.
+- Se registraron en §18.9 de la matriz como discrepancias que requieren pruebas de backup/restore aisladas; no se modificaron datos ni esquemas.
+- MIG-001 continúa **EN PROGRESO**: falta trazabilidad por acción, rangos completos de restauración, UI/consumidores y procesos programados.
