@@ -109,24 +109,24 @@ assert.deepEqual(removed,["U-1:opaque-session-token-0001","U-1:opaque-session-to
 assert.equal(api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["x"]}).status,"error");
 
 const sessionEntryPoints = [
-    ["AUTH", auth, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
-    ["WRITE", write, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
-    ["FEEDBACK", feedback, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
-    ["ADMIN", admin, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
-    ["UTILITIES", utilitiesSource, /getCachedSharedSessionActor_\\(payload&&payload\\.userId,payload&&payload\\.sessionToken/]
+    ["AUTH", auth, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/],
+    ["WRITE", write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/],
+    ["FEEDBACK", feedback, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/],
+    ["ADMIN", admin, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/],
+    ["UTILITIES", utilitiesSource, /getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken/]
 ];
 for (const [name, service, actorLookup] of sessionEntryPoints) {
     assert.match(service, actorLookup, name + " debe resolver el actor localmente.");
-    assert.doesNotMatch(service, /client\\.(?:registerSession|syncUserSessions|validateSessionContext|revokeSession|revokeUserSessions)/,
+    assert.doesNotMatch(service, /client\.(?:registerSession|syncUserSessions|validateSessionContext|revokeSession|revokeUserSessions)/,
         name + " no debe delegar la sesión a Coordinator.");
 }
 assert.match(catalog, /function getCatalogSessionActor_/);
 assert.match(catalog, /function loadCatalogSessionActor_/);
 assert.doesNotMatch(catalog, /GPSpedia_COORDINATOR_SECRET|withSharedMutationLease_/);
-assert.match(auth, /const token = record \? record\\.token : Utilities\\.getUuid\\(\\)/,
+assert.match(auth, /const token = record \? record\.token : Utilities\.getUuid\(\)/,
     "La sesión debe usar un token opaco generado en servidor.");
 assert.match(auth, /LOGIN_MAX_ATTEMPTS = 5/);
-assert.match(auth, /LOGIN_LOCKOUT_SECONDS = 15 \\* 60/);
-assert.match(auth, /function createPasswordHash\\(/);
-assert.match(auth, /function verifyStoredPassword\\(/);
-console.log("MIG013SessionActorLocalLookup: 18/18 PASS — caché fría/caliente, TTL, token opaco, identidad, RBAC, expiración, usuario eliminado, token revocado e invalidación local");
+assert.match(auth, /LOGIN_LOCKOUT_SECONDS = 15 \* 60/);
+assert.match(auth, /function createPasswordHash\(/);
+assert.match(auth, /function verifyStoredPassword\(/);
+console.log("MIG013SessionActorLocalLookup: 20/20 PASS — caché fría/caliente, TTL, token opaco, identidad, RBAC, expiración, usuario eliminado, token revocado e invalidación local");
