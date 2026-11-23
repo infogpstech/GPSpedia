@@ -418,3 +418,11 @@ La clasificación es provisional. Aún falta buscar comandos de terminal, docume
 - Extraídos campos de payload de las 15 acciones AUTH y documentadas respuestas, errores representativos, roles y hojas en §14 de la matriz.
 - Diferenciado contexto de sesión (`userId/sessionToken`) de los campos de negocio. Registradas recuperación genérica anti-enumeración, aceptación de términos por dispositivo, revocación de sesiones y migración de hashes heredados con dry-run/confirmación.
 - Pendiente completar estructura exacta de perfiles/respuestas, columnas físicas por acción y secuencias Coordinator. Este trabajo inicia la matriz contractual servicio por servicio; no cierra MIG-001.
+
+
+#### Contratos USERS y WRITE — primera pasada 2026-11-23
+
+- Extraídos los 3 contratos USERS: campos permitidos de alta, perfil propio, filtrado jerárquico, secuencia de IDs y hojas/configuración relacionadas.
+- Extraídos los 9 contratos WRITE: payloads de consultas, operaciones idempotentes, alta/edición de cortes, aportes suplementarios, VIN, reserva de ID y congelación de fórmulas.
+- Documentadas las invariantes críticas: checkOperation sin sesión/lease y respuesta mínima; actor confiable en escrituras; ledgers append-only, hashes, reintentos, VIN por versión, Drive/imágenes y separación del flujo de vídeo.
+- Detalle en §§15–16 de la matriz. Pendiente completar columnas/rangos, errores exhaustivos, pruebas por acción y efectos de Drive/ledger.
