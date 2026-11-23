@@ -411,3 +411,10 @@ La clasificación es provisional. Aún falta buscar comandos de terminal, docume
 - Inventariados los comandos de `driveCommand`: `dir/ls`, `cd`, `cd ..`, retorno a raíz, `mkdir`, `move` y `tree`. Se documentaron las restricciones al árbol Cortes y la ausencia de comando de borrado en el dispatcher revisado.
 - Búsqueda estática de triggers en los módulos backend/frontend principales indicados en §13.2: no se encontraron declaraciones `newTrigger`, `timeBased`, `onOpen` ni `onEdit` en ese conjunto. No se extiende la conclusión al repositorio completo ni a deployments.
 - Pendiente: revisar archivos de raíz/manifiestos y configuración de proyectos Apps Script para descubrir triggers instalados, jobs y tareas manuales fuera de esos módulos.
+
+
+#### Contratos AUTH — primera pasada 2026-11-23
+
+- Extraídos campos de payload de las 15 acciones AUTH y documentadas respuestas, errores representativos, roles y hojas en §14 de la matriz.
+- Diferenciado contexto de sesión (`userId/sessionToken`) de los campos de negocio. Registradas recuperación genérica anti-enumeración, aceptación de términos por dispositivo, revocación de sesiones y migración de hashes heredados con dry-run/confirmación.
+- Pendiente completar estructura exacta de perfiles/respuestas, columnas físicas por acción y secuencias Coordinator. Este trabajo inicia la matriz contractual servicio por servicio; no cierra MIG-001.
