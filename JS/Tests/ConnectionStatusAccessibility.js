@@ -87,7 +87,8 @@ test('el indicador mantiene exactamente 3px y el texto oculto no altera el layou
 test('prefers-reduced-motion elimina la animación pero conserva el estado offline', () => {
     assert.match(cssSource, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
     assert.match(cssSource, /#connection-status\.offline\s*\{\s*animation:\s*none;/);
-    assert.match(cssSource, /#connection-status\.offline\s*\{[^}]*background-color:\s*#ffc107/s);
+    assert.match(cssSource, /--gp-color-warning\s*:/);
+    assert.match(cssSource, /#connection-status\.offline\s*\{[^}]*background-color:\s*var\(--gp-color-warning\)/s);
 });
 
 test('el indicador no muestra ni promete estado de disponibilidad de servicios', () => {
