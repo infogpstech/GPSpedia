@@ -296,7 +296,7 @@ runGroup('36','AUTH',()=>{
  runCli('AUTH generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
  runCli('AUTH creación reutiliza un único snapshot para username, fila e ID','JS/Tests/UsersMutationSnapshot.mjs');
  runCli('AUTH lecturas de lista y perfil limitadas a columnas necesarias','JS/Tests/UsersReadMinimization.mjs');
- recordResult('AUTH gestión de usuarios: RBAC, atomicidad, rollback y sesión',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(read('JS/Services/Auth.js'),"")));
+ recordResult('AUTH gestión de usuarios: RBAC, atomicidad, rollback y sesión',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(read('JS/Services/Auth.js'),""));
 });
 runGroup('38','INTEGRATION',()=>{
  runCli('GP-UX-SEARCH-MODEL-GROUPING-01 agrupación y jerarquía de vehículos','JS/Tests/SearchModelGrouping.mjs');
