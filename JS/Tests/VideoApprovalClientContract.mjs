@@ -100,4 +100,10 @@ test("alta PyS y Tutorial exige ID de operación y rechaza enlaces directos",()=
  assert.match(pys,/source\.videoUrl/);
  assert.match(pys,/no se aceptan enlaces directos/);
 });
+test("el frontend publica el reset de aprobación/rechazo directamente a Coordinator",()=>{
+ assert.match(api, /'publishVideoCatalogReset': 'COORDINATOR'/);
+ assert.match(api, /routeAction\("publishVideoCatalogReset"/);
+ assert.match(api, /requestId: "video-" \+ safeId \+ "-approved"/);
+ assert.match(api, /requestId: "video-" \+ safeId \+ "-rejected"/);
+});
 console.log("VideoApprovalClientContract: "+passed+"/"+passed+" PASS");

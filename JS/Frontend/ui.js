@@ -10912,6 +10912,7 @@ export function renderInboxDetail(item) {
                         }
                     }
                     invalidateInboxCache_(context);
+                    if (approvalResult && approvalResult.catalogSyncPending) mostrarNotificacion("La aprobación se guardó, pero no se pudo notificar a las demás sesiones; la actualización llegará al recargar el catálogo.", "warning");
                     if (approvalResult && approvalResult.catalogRefreshPending) {
                         mostrarNotificacion(approvalResult.message || "El vídeo fue aprobado, pero el catálogo requiere actualización.", "warning");
                     } else {
@@ -10941,7 +10942,8 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    await rejectVideo(item.id, userName, reason, userRole, getSessionPayload_());
+                    const rejectionResult = await rejectVideo(item.id, userName, reason, userRole, getSessionPayload_());
+                    if (rejectionResult && rejectionResult.catalogSyncPending) mostrarNotificacion("El rechazo se guardó, pero no se pudo notificar a las demás sesiones.", "warning");
                     if (!isCurrentInboxDetail()) return;
                     invalidateInboxCache_(context);
                     mostrarNotificacion("Vídeo rechazado.", "info");

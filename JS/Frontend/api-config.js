@@ -89,7 +89,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
     'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
-    'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
+    'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK', 'publishVideoCatalogReset': 'COORDINATOR',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateTimestamps': 'UTILITIES', 'getRichTextMode': 'FEEDBACK', 'setRichTextMode': 'FEEDBACK',
     'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'migrateVehicleContributionsSchema': 'ADMIN', 'getVehicleContributionCandidates': 'CATALOG', 'resolveVehicleContributionCandidate': 'ADMIN', 'migrateIdentifiers': 'ADMIN', 'rollbackIdentifiers': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
@@ -842,13 +842,33 @@ export async function checkServiceHealth(serviceKey, options = {}) {
 }
 
 export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
-    // El rol y el nombre del aprobador se derivan en FEEDBACK desde la sesión validada.
-    return await routeAction("approveVideo", { itemId, ...sessionPayload });
+    const result = await routeAction("approveVideo", { itemId, ...sessionPayload });
+    if (!result || result.status !== "success") return result;
+    try {
+        const safeId = String(itemId || "").trim().replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 72);
+        if (!safeId) throw new Error("No se pudo identificar la aprobación para notificar el catálogo.");
+        await routeAction("publishVideoCatalogReset", {
+            ...sessionPayload, operation: "approveVideo", requestId: "video-" + safeId + "-approved"
+        });
+    } catch (error) {
+        return Object.assign({}, result, { catalogSyncPending: true });
+    }
+    return result;
 }
 
 export async function rejectVideo(itemId, rejecterName, reason, userRole, sessionPayload = {}) {
-    // El rol y el nombre del revisor se derivan en FEEDBACK desde la sesión validada.
-    return await routeAction("rejectVideo", { itemId, reason, ...sessionPayload });
+    const result = await routeAction("rejectVideo", { itemId, reason, ...sessionPayload });
+    if (!result || result.status !== "success") return result;
+    try {
+        const safeId = String(itemId || "").trim().replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 72);
+        if (!safeId) throw new Error("No se pudo identificar el rechazo para notificar el catálogo.");
+        await routeAction("publishVideoCatalogReset", {
+            ...sessionPayload, operation: "rejectVideo", requestId: "video-" + safeId + "-rejected"
+        });
+    } catch (error) {
+        return Object.assign({}, result, { catalogSyncPending: true });
+    }
+    return result;
 }
 
 
