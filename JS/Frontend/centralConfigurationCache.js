@@ -1,7 +1,7 @@
 // Cache público de configuración central. No persiste tokens ni datos backend/admin.
 export const CENTRAL_CONFIG_FRESH_TTL_MS = 5 * 60 * 1000;
 export const CENTRAL_CONFIG_STALE_TTL_MS = 15 * 60 * 1000;
-const REQUIRED_SERVICES = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
+const REQUIRED_SERVICES = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
 const ENDPOINT_PATTERN = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/;
 

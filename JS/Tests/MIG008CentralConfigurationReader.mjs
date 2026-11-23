@@ -14,7 +14,7 @@ assert.match(auth, /action === "getPublicConfiguration"[\s\S]*?getPublicCentralC
 assert.match(auth, /getPublicConfiguration/);
 assert.doesNotMatch(source, /UrlFetchApp\.fetch|UrlFetchApp\.fetchAll|PropertiesService/);
 
-const serviceKeys = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
+const serviceKeys = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
 const serviceHeaders = ["config_revision","service_key","endpoint_url","enabled","contract_version","min_client_version","health_action","updated_at","updated_by","change_reason"];
 const parameterHeaders = ["config_revision","config_key","value_json","value_type","scope","visibility","enabled","default_json","validation_rule","schema_version","updated_at","updated_by","change_reason"];
 const resourceHeaders = ["config_revision","resource_key","resource_type","resource_id","scope","visibility","enabled","expected_parent_id","expected_name","updated_at","updated_by","change_reason"];
@@ -23,7 +23,7 @@ const schemaHeaders = ["config_key","entity_type","value_type","scope_allowed","
 
 function makeDatabase() {
     const rows = {};
-    rows.Servicios = [serviceHeaders, ...serviceKeys.map((key, index) => [4,key,"https://script.google.com/macros/s/FAKE_DEPLOYMENT_"+key+"_123456789/exec",true,"2.2.5","2.2.5","ping",new Date(0),"operator","initial"])];
+    rows.Servicios = [serviceHeaders, ...serviceKeys.map((key, index) => [4,key,"https://script.google.com/macros/s/FAKE_DEPLOYMENT_"+key+"_123456789/exec",true,"2.2.5","2.2.5","ping",new Date(0),"operator","initial"]), [4,"USERS","https://script.google.com/macros/s/LEGACY_USERS_123456789/exec",false,"2.4.2","2.2.5","ping",new Date(0),"operator","retired"]];
     rows.ConfiguracionParametros = [parameterHeaders, [4,"rich_text_mode",'"advanced"',"enum","global","public",true,'"strict"',"enum:strict|advanced",1,new Date(0),"operator","initial"]];
     rows.ConfiguracionRecursos = [resourceHeaders, [4,"admin.unused_images_folder_id","drive_folder","FAKE_FOLDER_ID_12345","service:ADMIN","backend",true,"","Imagenes_Sin_Uso",new Date(0),"operator","initial"]];
     rows.ConfiguracionControl = [controlHeaders, ["CONFIGURATION_ACTIVE",1,4,"READY",new Date(0),"operator","initial"]];
@@ -76,7 +76,8 @@ function expectCode(fn, code) {
     const result=env.context.getPublicCentralConfiguration_();
     assert.equal(result.status,"success");
     assert.equal(result.routingAvailable,true);
-    assert.equal(Object.keys(result.services).length,7);
+    assert.equal(Object.keys(result.services).length,6);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.services,"USERS"),false);
     assert.equal(result.services.AUTH.endpointUrl.includes("FAKE_DEPLOYMENT_AUTH"),true);
     assert.deepEqual(JSON.parse(JSON.stringify(result.parameters)),{rich_text_mode:"advanced"});
     assert.equal(Object.prototype.hasOwnProperty.call(result,"resources"),false);

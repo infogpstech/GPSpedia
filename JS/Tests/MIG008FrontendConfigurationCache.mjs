@@ -5,7 +5,7 @@ const { createCentralConfigurationCache, CENTRAL_CONFIG_FRESH_TTL_MS, CENTRAL_CO
     await import("data:text/javascript;base64," + Buffer.from(cacheModuleSource, "utf8").toString("base64"));
 
 const services = {};
-for (const key of ["AUTH","CATALOG","WRITE","USERS","FEEDBACK","UTILITIES","ADMIN"]) {
+for (const key of ["AUTH","CATALOG","WRITE","FEEDBACK","UTILITIES","ADMIN"]) {
     services[key] = {endpointUrl:"https://script.google.com/macros/s/FAKE_DEPLOYMENT_"+key+"_123456789/exec",enabled:true,contractVersion:"2.2.5",minClientVersion:"2.2.5"};
 }
 const valid = {status:"success",schemaVersion:1,revision:7,generatedAt:"2026-11-23T00:00:00.000Z",stale:false,routingAvailable:true,services,parameters:{rich_text_mode:"strict"}};

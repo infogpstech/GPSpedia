@@ -5,7 +5,7 @@ var GP_CONFIG_SCHEMA_VERSION_ = 1;
 var GP_CONFIG_FRESH_TTL_MS_ = 5 * 60 * 1000;
 var GP_CONFIG_STALE_TTL_MS_ = 15 * 60 * 1000;
 var GP_CONFIG_CACHE_TTL_SECONDS_ = 900;
-var GP_CONFIG_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
+var GP_CONFIG_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
 var GP_CONFIG_PARAMETER_RULES_ = {
   rich_text_mode: { valueType: "enum", values: ["strict", "advanced"], scope: "global", visibility: "public", owner: "FEEDBACK" }
 };
@@ -215,7 +215,8 @@ function validateCentralConfigurationSchema_(rows, schemaVersion) {
 }
 
 function validateCentralConfigurationServices_(rows, revision) {
-  var active = rows.filter(function(row) { return Number(row.config_revision) === revision; });
+  // USERS es un registro heredado; se ignora mientras el registro central conserva la fila histórica.
+  var active = rows.filter(function(row) { return Number(row.config_revision) === revision && String(row.service_key || "").trim().toUpperCase() !== "USERS"; });
   var result = {}, endpointOwners = {};
   active.forEach(function(row) {
     var key = String(row.service_key || "").trim().toUpperCase();
@@ -239,7 +240,7 @@ function validateCentralConfigurationServices_(rows, revision) {
   });
   if (Object.keys(result).length !== GP_CONFIG_SERVICE_KEYS_.length ||
       GP_CONFIG_SERVICE_KEYS_.some(function(key) { return !result[key]; })) {
-    throw centralConfigurationError_("CONFIGURATION_SERVICES_INCOMPLETE", "La revisión no contiene los siete servicios requeridos.");
+    throw centralConfigurationError_("CONFIGURATION_SERVICES_INCOMPLETE", "La revisión no contiene los seis servicios requeridos.");
   }
   return result;
 }
