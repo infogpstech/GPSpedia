@@ -22,7 +22,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-001 — Inventario de todas las acciones y handlers
 **Estado: EN PROGRESO**
-- [ ] Contrastar las 120 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
+- [x] Contrastar las 120 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
 - [ ] Extraer acciones aceptadas por cada `doPost` que no estén en el mapa frontend.
 - [ ] Inventariar funciones internas, acciones manuales, endpoints de mantenimiento y compatibilidad histórica.
 - [ ] Registrar para cada acción: handler, consumidores UI, payload, respuesta, errores, rol/RBAC, hojas/archivos, dependencias y pruebas.
@@ -365,3 +365,23 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Hallazgo de configuración: `getContributionCandidates` puede devolver metadatos internos de inventario de imágenes solo con un secreto de CATALOG almacenado en ScriptProperties; migrar el secreto sin exponerlo al frontend.
 
 **MIG-001 permanece EN PROGRESO**: falta completar payloads/respuestas, errores, hojas/columnas, recursos Drive/APIs, triggers/procesos manuales y pruebas de paridad.
+
+
+#### Pruebas de contrato y preservación ejecutadas — 2026-11-23
+
+Se ejecutaron suites existentes con el código fuente exacto recuperado de `GPSpedia2.2.5_work`, usando los mismos argumentos de entrada definidos por `RunServiceTests.mjs`:
+
+| Suite | Aprobadas | Fallidas |
+|---|---:|---:|
+| `ActionDispatchContract.js` | 12 | 0 |
+| `CheckOperationSecurity.js` | 8 | 0 |
+| `SharedMutationCoordinator.js` | 94 | 0 |
+| `UsersAtomicMutations.js` | 16 | 0 |
+| `WriteAuthorizationContracts.js` | 10 | 0 |
+| `WriteAuthorizationMinimization.js` | 15 | 0 |
+| `AddSupplementaryInfoIntegrity.js` | 61 | 0 |
+| `VinAuthoritativeValidation.js` | 12 | 0 |
+| `UtilitiesSecurity.js` | 19 | 0 |
+| **Total de aserciones ejecutadas** | **247** | **0** |
+
+Estas pruebas cubren contratos de acciones, RBAC, actor/sesión, leases, coordinación, usuarios, WRITE, aportes suplementarios, VIN y UTILITIES. El total representa aserciones reportadas por las suites (no necesariamente 247 casos funcionales independientes). No se ejecutó el runner Node.js completo `RunServiceTests.mjs`, no se ejecutaron todas las pruebas del repositorio y no se invocaron deployments reales, Spreadsheet ni Drive. No interpretar este resultado como validación Beta.
