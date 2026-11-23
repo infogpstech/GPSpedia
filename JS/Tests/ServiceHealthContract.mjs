@@ -260,7 +260,7 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
         AUTH: "GPSpedia-Auth", CATALOG: "GPSpedia-Catalog", WRITE: "GPSpedia-Write",
         FEEDBACK: "GPSpedia-Feedback",
         UTILITIES: "GPSpedia-Utilities", ADMIN: "GPSpedia-Admin",
-        COORDINATOR: "GPSpedia-SharedMutationCoordinator"
+        COORDINATOR: "GPSpedia-Coordinator"
     };
     for (const [key, identity] of Object.entries(expected)) {
         const source = backendSources[key];
