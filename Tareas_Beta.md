@@ -42,6 +42,7 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 
 ### BETA-02 — CATALOG y navegación
 - Carga con caché fría/caliente, snapshot local, cursor incremental y deltas.
+- El feed pertenece a CATALOG: GET `catalogFeed=1`; publicación frontend mediante `publishCatalogChange`/`publishCatalogReset`. No usar COORDINATOR para el feed.
 - Reset y recuperación por snapshot completo.
 - Búsqueda, detalle, regreso y cambios concurrentes controlados.
 - Requests, bytes, render, hit/miss y consistencia.
@@ -56,6 +57,7 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 - Reportes, sugerencias, likes, tutoriales y operaciones PyS.
 - Inbox: listar, enviar, marcar leído y archivar.
 - Reintentos, idempotencia, publicación de deltas y recuperación.
+- FEEDBACK devuelve metadatos; el frontend los publica en CATALOG, que reconstruye el snapshot canónico de Cortes/PyS/Tutoriales. Verificar delta por registro y fallback reset, sin llamadas Apps Script→Apps Script.
 - Aislamiento por rol y usuario.
 
 ### BETA-05 — ADMIN y mantenimiento
