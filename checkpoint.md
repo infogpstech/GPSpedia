@@ -1233,3 +1233,24 @@ Rama base protegida: `GPSpedia2.2.5` (sin cambios).
 - MIG-023: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - MIG-024 — Eliminar SharedMutation: **siguiente tarea**. No iniciar MIG-025 hasta completar MIG-024.
 - La instrucción de retirar por completo COORDINATOR, su endpoint health y su presencia en el escaneo de salud permanece como requisito obligatorio de MIG-025.
+
+---
+
+## Inicio MIG-024 — Eliminar SharedMutation — 2026-11-23
+
+### Auditoría de consumidores y límites
+- `SharedMutationClient.js` mezcla dos responsabilidades: llamadas remotas del protocolo SharedMutation y helpers locales de contexto/caché de actor. Se debe extraer la segunda responsabilidad a `SharedSessionActor.js` antes de eliminar el cliente.
+- Únicos consumidores activos de `withSharedMutationLease_` encontrados en servicios: ADMIN `saveUnusedImagesInventory`, `createCortesImageFolder` y `auditDriveImagesInCortes`. Reemplazar por guardas locales de alcance mínimo; no mantener locks globales durante escaneos o escrituras prolongadas.
+- `JS/Frontend/sessionCacheInvalidation.js` ya coordina desde el navegador la invalidación de cachés locales de AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES mediante `__invalidateSessionActorCache`; no necesita el endpoint de invalidación de COORDINATOR.
+- El registro `USERS` está excluido de `CENTRAL_SERVICE_KEYS` y del registro central activo; no hay fuente `JS/Services/users.js` en el árbol de trabajo. La fila USERS de la guía de despliegue es histórica y debe identificarse como obsoleta.
+- COORDINATOR conserva temporalmente telemetría/health y otras capacidades que pertenecen a MIG-025. No retirar el servicio entero en MIG-024.
+
+### Secuencia de implementación
+1. Extraer helpers locales de actor desde `SharedMutationClient.js` a `SharedSessionActor.js` y actualizar servicios, tests y guías.
+2. Sustituir las tres leases remotas ADMIN por guardas locales por recurso, con lock corto solo para reservar/liberar marcador y expiración automática.
+3. Retirar `SharedMutationClient.js`, acciones de lease/publicación y llamadas remotas obsoletas; mantener solo capacidades de COORDINATOR que correspondan a MIG-025.
+4. Actualizar pruebas de contrato y ejecutar regresión completa; verificar que no quedan referencias activas al cliente ni URLs/secretos de SharedMutation.
+
+### Estado
+- MIG-024 EN PROGRESO. No se ha eliminado todavía `SharedMutationClient.js`; primero se preservarán y probarán los helpers locales de sesión.
+- MIG-023 permanece cerrada como COMPLETADA CON VALIDACIÓN DIFERIDA.
