@@ -426,3 +426,21 @@ La clasificación es provisional. Aún falta buscar comandos de terminal, docume
 - Extraídos los 9 contratos WRITE: payloads de consultas, operaciones idempotentes, alta/edición de cortes, aportes suplementarios, VIN, reserva de ID y congelación de fórmulas.
 - Documentadas las invariantes críticas: checkOperation sin sesión/lease y respuesta mínima; actor confiable en escrituras; ledgers append-only, hashes, reintentos, VIN por versión, Drive/imágenes y separación del flujo de vídeo.
 - Detalle en §§15–16 de la matriz. Pendiente completar columnas/rangos, errores exhaustivos, pruebas por acción y efectos de Drive/ledger.
+
+
+#### Pruebas locales de contratos USERS/WRITE — 2026-11-23
+
+Ejecutadas sobre las fuentes exactas de `GPSpedia2.2.5_work`:
+
+| Suite | PASS | FAIL |
+|---|---:|---:|
+| `UsersAtomicMutations.js` | 16 | 0 |
+| `WriteAuthorizationContracts.js` | 10 | 0 |
+| `WriteAuthorizationMinimization.js` | 15 | 0 |
+| `AddSupplementaryInfoIntegrity.js` | 61 | 0 |
+| `VinAuthoritativeValidation.js` | 12 | 0 |
+| `CheckOperationSecurity.js` | 8 | 0 |
+| `ActionDispatchContract.js` | 12 | 0 |
+| **Total** | **134** | **0** |
+
+Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariamente a 134 escenarios funcionales independientes. Se probaron mutaciones/lecturas de USERS, RBAC y minimización de autenticación WRITE, integridad de aportes, VIN, contrato de checkOperation y mapa de acciones. No se invocaron deployments, Spreadsheet, Drive ni datos reales; no es validación Beta.
