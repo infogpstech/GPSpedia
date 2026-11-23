@@ -16,7 +16,7 @@ const accepted=api.handleSharedSessionActorCacheInvalidation_(
 assert.deepEqual(accepted,{status:"success",invalidated:2});
 assert.deepEqual(local,["U-1:opaque-session-token-01","U-1:opaque-session-token-02"]);
 assert.equal(api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["short"]}).status,"error");
-assert.doesNotMatch(source.slice(source.indexOf("function handleSharedSessionActorCacheInvalidation_"),source.indexOf("function handleSharedSessionActorCachePriming_")),/GPSpedia_COORDINATOR_SECRET|properties|getProperty|secret/);
+assert.doesNotMatch(source.slice(source.indexOf("function handleSharedSessionActorCacheInvalidation_"),source.indexOf("// El contexto de usuario/rol")),/GPSpedia_COORDINATOR_SECRET|properties|getProperty|secret/);
 
 for(const {path,source:code} of services){
  if(path.endsWith("catalog.js")) assert.match(code,/function invalidateCatalogSessionActorCache_/);
