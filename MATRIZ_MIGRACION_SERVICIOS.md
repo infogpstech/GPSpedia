@@ -1335,3 +1335,13 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - Las cachés exponen invalidación local sin secreto compartido. La orquestación frontend de revocación/invalidación entre servicios queda en MIG-014.
 - Pruebas dirigidas en harness V8 aislado: MIG013SessionActorLocalLookup 21/21; SessionActivityCoordination 9/9; SessionActivityLeaseMinimization 6/6; AuthSessionReadOptimization 9/9. Total 45/45 aserciones aprobadas. No sustituyen la validación Beta real.
 - MIG-013: COMPLETADA EN CÓDIGO; login, sesiones y permisos reales en deployments aislados permanecen pendientes de Beta.
+
+
+### 22.3 Cierre de código MIG-014 — revocación y caché frontend — 2026-11-23
+- El ciclo de revocación AUTH captura referencias SHA-256 de las claves de caché afectadas; el frontend coordina la invalidación directa en los seis servicios.
+- WRITE, FEEDBACK, ADMIN y UTILITIES reciben claves de caché del espacio compartido; CATALOG recibe únicamente claves CATALOG. Cada receptor borra su propia caché local.
+- No se envían tokens de sesión entre servicios, no se agregan secretos/URLs a propiedades Apps Script y no hay coordinación funcional backend entre servicios.
+- El frontend reintenta dos veces, registra los destinos no confirmados y comunica el estado parcial. TTL máximo del actor: 21,600 segundos.
+- Pruebas dirigidas en CI: SessionInvalidationFlow 15/15; fan-out (seis servicios, retry, fallo parcial y TTL) PASS; contrato backend/cache 10/10; SessionActorCacheInvalidation 6/6.
+- CI global run 45231811060: 1,200 aprobadas, cuatro suites fallidas en ADMIN/UTILITIES/AUTH/INTEGRATION. Se mantienen como deuda de regresión general.
+- Validación Beta de endpoints y permisos reales diferida. MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA.

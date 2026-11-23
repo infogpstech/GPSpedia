@@ -287,15 +287,35 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Validación Beta diferida:** probar login/logout, expiración, revocación, cambio de rol, eliminación de usuario y accesos autorizados/no autorizados sobre deployments y hojas aisladas. La coordinación de invalidación remota desde frontend y la respuesta ante servicios no disponibles pertenecen a MIG-014.
 
 ### MIG-014 — Revocación y limpieza de caché desde frontend
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Logout: invalidar sesión y llamar directamente a los servicios que deban limpiar su caché.
-- [ ] Cambio/reset de contraseña, cambio de rol, reset global y eliminación: conservar invalidación efectiva.
-- [ ] Definir respuesta ante servicio no disponible y vencimiento máximo de caché.
-- [ ] Evitar que una sesión eliminada pueda volver a iniciar o mantener permisos.
-- [ ] Probar invalidación parcial, reintento y expiración.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (código y pruebas dirigidas aprobados; CI global con fallos ajenos pendientes; Beta real pendiente)**
 
-**Aceptación:** todas las excepciones de sesión de §15 mantienen comportamiento sin coordinación backend.
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
+
+- [x] Logout y revocaciones: AUTH devuelve únicamente referencias SHA-256 de las claves de caché afectadas; el frontend coordina la invalidación directa de los seis proyectos de servicio.
+- [x] Cambio/reset de contraseña, cambio de rol, reset global y eliminación: los caminos backend existentes que revocan sesiones pasan por la invalidación local común y quedan cubiertos por la captura de claves para la respuesta AUTH.
+- [x] Respuesta ante servicio no disponible: fan-out concurrente, hasta dos intentos por destino, resultado parcial explícito y aviso al usuario con los servicios que no confirmaron limpieza.
+- [x] Vencimiento máximo: 21,600 segundos (seis horas), coincidente con el TTL máximo de actor local.
+- [x] La caché de cada receptor se limpia mediante su endpoint local __invalidateSessionActorCache; el frontend envía hashes de claves, nunca tokens de sesión ni secretos compartidos.
+- [x] Pruebas de fan-out exitoso, reintento, fallo parcial, separación de claves CATALOG/otros servicios, TTL y contrato de los seis receptores.
+
+**Implementación registrada**
+- JS/Frontend/sessionCacheInvalidation.js: orquestador frontend para AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES.
+- JS/Frontend/api-config.js: procesa metadatos de revocación tanto en respuestas satisfactorias como en errores de AUTH y dispara la limpieza entre servicios.
+- JS/Frontend/auth.js: informa cuando alguna limpieza remota queda pendiente.
+- JS/Services/Auth.js, SharedMutationClient.js y catalog.js: captura y acepta referencias de caché locales; los receptores ya exponen invalidación local en sus respectivos proyectos.
+- JS/Tests/SessionInvalidationFlow.mjs y SessionActorCacheInvalidation.mjs: pruebas dirigidas; ambas suites pasan en CI.
+
+**Evidencia CI — GitHub Actions Node.js 22**
+- Run 45231811060 (https://github.com/infogpstech/GPSpedia/actions/runs/45231811060), commit 9a13003407cc568e0381089b27f833b85dd16cc3.
+- Sintaxis de módulos: PASS.
+- SessionInvalidationFlow: 15/15 PASS; fan-out MIG-014: seis servicios, reintento, fallo parcial y TTL 21,600 s PASS; contrato backend/cache MIG-014: 10/10 PASS; SessionActorCacheInvalidation: 6/6 PASS.
+- La regresión completa reportó 1,200 pruebas aprobadas y cuatro suites fallidas en grupos ADMIN, UTILITIES, AUTH e INTEGRATION. No corresponden a las suites dirigidas MIG-014; se dejan registradas como deuda de regresión general y no se atribuye causalidad sin análisis independiente.
+
+**Validación Beta diferida**
+- Aún deben ejecutarse logout, cambio/reset de contraseña, cambio de rol, reset global y eliminación contra deployments Apps Script y Spreadsheet aislados, con todos los servicios desplegados y sus permisos reales.
+- Verificar limpieza efectiva en cachés de proyectos independientes y comprobar que los tokens revocados no conservan acceso. No se invocaron deployments, Spreadsheet ni Drive reales en esta tarea.
+
+**Aceptación de código:** cumplida para la coordinación frontend, invalidación local, reintentos, fallo parcial y expiración máxima. No se declara validación Beta ni aprobación completa de la regresión global.
 
 ---
 

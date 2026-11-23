@@ -855,3 +855,28 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - HEAD de la rama de trabajo antes de este apunte: `5450f039111ffda02d441b51cff00d8617d05739`.
 - La rama base protegida conserva `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Próxima tarea pendiente: MIG-014. No se inicia dentro del cierre de MIG-013.
+
+
+---
+
+## Continuidad MIG-014 — 2026-11-23
+
+### Verificación de rama y CI
+- Rama de trabajo: GPSpedia2.2.5_work; HEAD verificado: 9a13003407cc568e0381089b27f833b85dd16cc3.
+- Rama base protegida GPSpedia2.2.5: no se realizaron escrituras en ella.
+- Workflow Node.js 22 del commit 9a13003407cc568e0381089b27f833b85dd16cc3: run 45231811060, resultado global FAILURE. Verificación de rama y sintaxis PASS.
+- Suites dirigidas MIG-014: SessionInvalidationFlow 15/15; fan-out seis servicios/reintento/fallo parcial/TTL PASS; contrato backend/cache 10/10; SessionActorCacheInvalidation 6/6.
+- Regresión global: 1,200 pruebas aprobadas y cuatro suites fallidas de ADMIN, UTILITIES, AUTH e INTEGRATION. Quedan pendientes de análisis separado; no se afirma causalidad con MIG-014.
+
+### MIG-014 — resultado
+- El frontend coordina invalidación local de caché en AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES.
+- AUTH adjunta referencias SHA-256 de claves de caché revocadas; las referencias no contienen tokens legibles. CATALOG utiliza su espacio de claves separado.
+- Los receptores exponen invalidación local y no llaman a otros servicios. No se agregaron secretos compartidos, URLs de otros servicios ni propiedades operativas Apps Script.
+- Fan-out concurrente, dos intentos por destino, estado parcial y aviso visible si algún servicio no confirma.
+- TTL máximo de actor: 21,600 segundos (seis horas).
+- MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA (código y pruebas dirigidas aprobados; CI global parcialmente fallido; Beta real pendiente).
+
+### Límites y tareas pendientes
+- No se invocaron deployments Apps Script ni recursos Spreadsheet/Drive reales. La validación Beta debe comprobar logout, cambio/reset de contraseña, cambio de rol, reset global, eliminación, permisos y limpieza en proyectos independientes.
+- Analizar y resolver las cuatro suites fallidas del run 45231811060 en sus grupos correspondientes.
+- Próxima tarea: MIG-015 — carga y administración de imágenes. Antes de iniciar, releer la sección MIG-015 y sus dependencias en el backlog; trabajar una sola tarea a la vez.

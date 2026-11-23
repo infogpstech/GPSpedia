@@ -161,3 +161,14 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se ampliaron pruebas MIG-013 y se documentó la coordinación frontend de invalidación remota como alcance de MIG-014.
 - Harness V8 aislado: MIG013SessionActorLocalLookup 21/21 PASS; SessionActivityCoordination 9/9; SessionActivityLeaseMinimization 6/6; AuthSessionReadOptimization 9/9 (45/45 aserciones dirigidas).
 - Sin cambios a endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos. La validación real de Beta queda pendiente. MIG-013: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### 2026-11-23 — MIG-014: revocación y limpieza de caché desde frontend
+- AUTH devuelve referencias SHA-256 de las claves de caché afectadas sin exponer tokens en la coordinación entre servicios.
+- El frontend coordina en paralelo la invalidación local de AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES; CATALOG recibe solo sus claves específicas.
+- Los caminos de revocación de logout, cambio/reset de contraseña, cambio de rol, reset global y eliminación pasan por el mecanismo común de captura de claves.
+- Se definió reintento acotado (dos intentos), resultado parcial, aviso al usuario y vencimiento máximo de seis horas.
+- CI Node.js 22, run 45231811060: sintaxis PASS; SessionInvalidationFlow 15/15; fan-out MIG-014 PASS; contrato backend/cache 10/10; SessionActorCacheInvalidation 6/6.
+- La regresión global aprobó 1,200 pruebas y reportó cuatro suites fallidas en ADMIN, UTILITIES, AUTH e INTEGRATION. Las suites dirigidas MIG-014 pasaron; los fallos quedan pendientes de análisis separado.
+- No se invocaron deployments Apps Script, Spreadsheet ni Drive reales. Validación de endpoints y permisos entre proyectos pendiente de Beta.
+- MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-015 — carga y administración de imágenes.

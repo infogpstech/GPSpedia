@@ -279,3 +279,12 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - Los endpoints `__invalidateSessionActorCache` limpian la caché del proyecto receptor sin secreto compartido. La orquestación frontend de invalidación remota y el manejo de servicios no disponibles corresponden a MIG-014.
 - La suite `MIG013SessionActorLocalLookup.mjs` cubre ambos loaders, cache miss/hit, TTL, cambio de rol, cuenta eliminada, token revocado/desconocido, expiración, identidad y ausencia de llamadas de sesión a Coordinator.
 - No se alteraron endpoints, deployments, propiedades, hojas ni datos externos. Las pruebas con Apps Script/Spreadsheet reales quedan diferidas a Beta.
+
+
+### 3.6 MIG-014 — invalidación de caché por coordinación frontend — 2026-11-23
+- AUTH incluye en la respuesta de las operaciones de revocación las referencias SHA-256 de las claves afectadas, separadas por el espacio de claves compartido y CATALOG. No se devuelve el token de sesión a otros servicios.
+- sessionCacheInvalidation.js ejecuta llamadas directas desde el navegador a los seis proyectos; cada servicio elimina exclusivamente las claves locales que coinciden con su prefijo y formato.
+- La invalidación no usa Coordinator, SharedMutation, propiedades de Script ni secretos compartidos. Los servicios no contienen URLs operativas de otros servicios ni coordinan entre sí.
+- Se admiten hasta dos intentos por destino; el resultado parcial identifica servicios sin confirmación y el frontend informa al usuario. El TTL de actor local fija el vencimiento máximo en 21,600 segundos.
+- Suites MIG-014 en GitHub Actions Node.js 22: 15/15 flujo de sesión, fan-out/reintento/fallo parcial PASS, contrato backend/cache 10/10 y contrato de invalidación local 6/6.
+- Validación Beta de deployments y Spreadsheet aislados pendiente; no se afirma que los endpoints reales hayan sido invocados.
