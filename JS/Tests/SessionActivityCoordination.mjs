@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const read=path=>fs.readFileSync(path,"utf8");
-const auth=read("JS/Services/Auth.js"),shared=read("JS/Services/SharedMutationClient.js");
+const auth=read("JS/Services/Auth.js"),shared=read("JS/Services/SharedSessionActor.js");
 const write=read("JS/Services/write.js"),admin=read("JS/Services/admin.js");
 const feedback=read("JS/Services/feedback.js"),catalog=read("JS/Services/catalog.js");
 const utilities=read("JS/Services/Utilities.js");
