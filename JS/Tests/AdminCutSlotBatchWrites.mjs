@@ -19,4 +19,4 @@ assert.ok(write.includes("function handleAppendExistingVehicleCut_("));
 assert.ok(write.includes("function handleAppendExistingVehicleCut_(preparedRequest)"));
 assert.ok(write.includes("appendVehicleContributionEvent_"));
 assert.ok(write.includes("operationHash"));
-console.log("AdminCutSlotBatchWrites: PASS — alta de cortes existentes usa ledger append-only en WRITE");
+console.log("AdminCutSlotBatchWrites: 1/1 PASS — alta de cortes existentes usa ledger append-only en WRITE");
