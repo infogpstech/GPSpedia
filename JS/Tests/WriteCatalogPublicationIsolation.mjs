@@ -43,4 +43,4 @@ assert.match(coordinator, /request\.action === "publishWriteCatalogReset"/);
 assert.match(coordinator, /authorizeSession_\([\s\S]*?publishCatalogChange_\("WRITE", operation/);
 assert.match(coordinator, /change:\s*\{\s*operation:\s*"reset"\s*\}/);
 assert.match(coordinator, /operation === "freezeCortesIds" && role !== "desarrollador"/);
-console.log("WriteCatalogPublicationIsolation: 14/14 PASS — WRITE no coordina servicios desde Apps Script; el frontend publica reset autenticado");
+console.log("WriteCatalogPublicationIsolation: 18/18 PASS — WRITE no coordina servicios desde Apps Script; el frontend publica reset autenticado");

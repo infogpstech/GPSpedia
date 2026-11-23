@@ -497,7 +497,7 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 ledger validado y reutilizado en aportes','JS/Tests/WriteContributionLedgerReuse.mjs');
  runCli('MIG018 flujo moderno de información suplementaria','JS/Tests/WriteSupplementaryLedgerModernFlow.mjs');
  runCli('MIG018 publicación del catálogo coordinada desde frontend','JS/Tests/WriteCatalogPublicationIsolation.mjs');
- runCli('MIG018 feed CATALOG y reset autenticado desde navegador','JS/Tests/CatalogChangeFeed.mjs');
+ runCli('MIG018 reset WRITE autenticado desde navegador','JS/Tests/WriteCatalogPublicationFrontend.mjs');
  runCli('MIG018 append concurrente e idempotencia de aportes','JS/Tests/WriteContributionAppendConcurrency.mjs');
  runCli('MIG018 snapshot posterior y conflictos VIN','JS/Tests/WriteContributionPostAppendSnapshot.mjs');
  runCli('MIG018 recuperación durable de aportes','JS/Tests/WriteContributionRecovery.mjs');
