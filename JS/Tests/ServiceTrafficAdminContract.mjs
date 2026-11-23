@@ -39,7 +39,7 @@ assert.doesNotMatch(trafficReader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/)
 assert.match(trafficReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
 assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
 assert.doesNotMatch(coordinator, /function incrementServiceTrafficBucketState_|function saveLeases_|recordServiceTrafficEvent_/);
-assert.match(coordinator, /function saveLeases_\(leases, trafficEvent\)/);
+assert.doesNotMatch(coordinator, /function saveLeases_\(leases, trafficEvent\)/);
 assert.doesNotMatch(coordinator, /function recordServiceTrafficEvent_/);
 const validationStart = coordinator.indexOf("function validateSessionContext_");
 const validationEnd = coordinator.indexOf("\n    function ", validationStart + 10);
