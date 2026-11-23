@@ -1333,5 +1333,5 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - TTL de actor: máximo 21,600 segundos; clave basada en SHA-256(userId/token). No se guardan tokens legibles como clave de caché.
 - No hay llamada a Coordinator ni lease SharedMutation para login, carga de actor, validación de sesión o comprobación ordinaria de capacidad. Las operaciones Coordinator ajenas al flujo de sesión se conservan.
 - Las cachés exponen invalidación local sin secreto compartido. La orquestación frontend de revocación/invalidación entre servicios queda en MIG-014.
-- Pruebas de contrato ampliadas en `MIG013SessionActorLocalLookup.mjs`, junto con `SessionActivityCoordination.mjs` y `SessionActivityLeaseMinimization.mjs`. La regresión CI y sus resultados se registran en checkpoint al terminar.
+- Pruebas dirigidas en harness V8 aislado: MIG013SessionActorLocalLookup 21/21; SessionActivityCoordination 9/9; SessionActivityLeaseMinimization 6/6; AuthSessionReadOptimization 9/9. Total 45/45 aserciones aprobadas. No sustituyen la validación Beta real.
 - MIG-013: COMPLETADA EN CÓDIGO; login, sesiones y permisos reales en deployments aislados permanecen pendientes de Beta.
