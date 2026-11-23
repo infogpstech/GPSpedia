@@ -47,7 +47,7 @@ No se conservarán COORDINATOR ni SharedMutation ni se crearán sustitutos equiv
                          └─────────────────┘
 
    USERS se consolida dentro de AUTH conservando todas sus acciones.
-   Ningún backend GPSpedia llama a otro backend GPSpedia.
+   La coordinación funcional multi-servicio se ejecuta en frontend; llamadas técnicas directas entre servicios se permiten sin secretos compartidos.
    El frontend inicia y coordina todas las llamadas.
 ```
 
@@ -133,7 +133,7 @@ El detalle accionable se encuentra en [TAREAS_MIGRACION_ARQUITECTURA.md](./TAREA
 | 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PENDIENTE |
 | 2 | Diseñar y probar esquema central de configuración y caché frontend | PENDIENTE |
 | 3 | Implementar router/orquestador frontend sin cambiar contratos | PENDIENTE |
-| 4 | Eliminar llamadas backend→backend de ADMIN y otros servicios | PENDIENTE |
+| 4 | Mover coordinación funcional de ADMIN y otros servicios al frontend; conservar solo llamadas técnicas directas justificadas y sin secretos | PENDIENTE |
 | 5 | Unificar AUTH/USERS y simplificar sesión sin claves compartidas | PENDIENTE |
 | 6 | Migrar cargas de imágenes, vídeos y operaciones Drive sin pérdida | PENDIENTE |
 | 7 | Migrar métricas, monitoreo, administración, Inbox, PyS y utilidades | PENDIENTE |
