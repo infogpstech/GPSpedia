@@ -52,8 +52,8 @@ test("el router AUTH usa el actor cacheado y no adquiere lease para el benchmark
  assert.deepEqual(calls,[{userId:"U1",token:"session-token"}]);
  assert.equal(benchmarkCalls,before+1);
 });
-test("Coordinator no conserva rutas ni autorización del benchmark local AUTH",()=>{
- assert.doesNotMatch(coordinator,/benchmarkPasswordKdf|withSharedMutationLease_/);
+test("test("AUTH no depende de rutas ni leases compartidas para el benchmark local",()=>{
+ assert.doesNotMatch(auth,/GPSpedia_COORDINATOR_(?:URL|SECRET)|withSharedMutationLease_/);
 });
 test("el benchmark usa una cadena fija y no accede a contraseñas ni hojas de usuarios",()=>{
  const source=extract(auth,"benchmarkPasswordKdf_");
