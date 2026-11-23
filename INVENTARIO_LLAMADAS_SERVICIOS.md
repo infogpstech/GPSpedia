@@ -48,6 +48,10 @@ La matriz de 120 acciones y sus handlers permanece en `MATRIZ_MIGRACION_SERVICIO
 
 No se detectaron otras llamadas HTTP entre los diez módulos backend. Las llamadas a Drive API, YouTube y URLs de imágenes se clasifican aparte en §7.
 
+### MIG-010 — Coordinación frontend y recuperación de altas
+
+Las operaciones multi-servicio cubiertas por MIG-010 se coordinan desde el frontend mediante solicitudes directas a los servicios propietarios, sin secretos compartidos ni URLs operativas incrustadas en Apps Script. La creación de vehículos, la reserva idempotente de IDs y la recuperación de altas pertenecen a WRITE; ADMIN conserva una ruta de compatibilidad que rechaza esas acciones con `ACTION_MOVED_TO_WRITE` y no realiza escrituras ni llamadas backend→backend. Las lecturas de proyección/candidatos de CATALOG se solicitan desde el frontend y CATALOG valida sesión y rol localmente.
+
 ## 3. Llamadas directas de ADMIN a servicios
 
 ### 3.1 ADMIN → WRITE
