@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, markInboxUnread, deleteInboxConversation, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import { getBrowserServiceTrafficSnapshot } from './serviceTelemetry.js';
 import * as offline from './offline.js';
@@ -5719,6 +5719,50 @@ async function toggleInboxConversationArchive_(item) {
         } else renderInboxConversationDetail_();
         inboxSetStatus_(item.archived ? "Conversación restaurada." : "Conversación archivada.", false);
     } catch (error) { inboxSetStatus_(error && error.message ? error.message : "No se pudo actualizar el archivo.", true); }
+}
+async function markInboxConversationUnread_(item) {
+    const context = getUiSessionContext_();
+    if (!context || !item || !item.hasReceived || Number(item.unreadCount || 0) > 0) return;
+    try {
+        const response = await markInboxUnread(item.conversationId,context);
+        if (!response || response.status !== "success" || response.markedUnread !== true) {
+            throw new Error(response && response.message || "No se pudo marcar la conversación como no leída.");
+        }
+        invalidateInboxConversationListCache_(context);
+        if (inboxConversationSelectedId_ === item.conversationId) {
+            inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
+            inboxConversationMessageCache_.invalidate(context,item.conversationId);
+            document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+            renderInboxConversationDetail_();
+        }
+        await loadInboxConversations_({ reset: true, preserveScroll: true, forceRefresh: true });
+        inboxSetStatus_("Conversación marcada como no leída.",false);
+    } catch (error) {
+        inboxSetStatus_(error && error.message ? error.message : "No se pudo marcar la conversación como no leída.",true);
+    }
+}
+async function deleteInboxConversationForCurrentUser_(item) {
+    const context = getUiSessionContext_();
+    if (!context || !item) return;
+    if (typeof window !== "undefined" && typeof window.confirm === "function" &&
+        !window.confirm("¿Eliminar esta conversación de tu bandeja? El historial se conservará para los demás participantes.")) return;
+    try {
+        const response = await deleteInboxConversation(item.conversationId,context);
+        if (!response || response.status !== "success" || response.deleted !== true) {
+            throw new Error(response && response.message || "No se pudo eliminar la conversación de tu bandeja.");
+        }
+        invalidateInboxConversationListCache_(context);
+        inboxConversationMessageCache_.invalidate(context,item.conversationId);
+        if (inboxConversationSelectedId_ === item.conversationId) {
+            inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
+            document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+            renderInboxConversationDetail_();
+        }
+        await loadInboxConversations_({ reset: true, preserveScroll: true, forceRefresh: true });
+        inboxSetStatus_("Conversación eliminada de tu bandeja. El historial de los demás participantes se conserva.",false);
+    } catch (error) {
+        inboxSetStatus_(error && error.message ? error.message : "No se pudo eliminar la conversación.",true);
+    }
 }
 async function closeSelectedInboxConversation_(item) {
     const context = getUiSessionContext_();
