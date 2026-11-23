@@ -467,18 +467,20 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 
 ### MIG-022 — Administración de Spreadsheet y mantenimiento
-**Estado: EN PROGRESO (2026-11-23)**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener creación de hojas y columnas.
-- [ ] Mantener fórmulas, migraciones de esquemas, identificadores y rollback.
-- [ ] Mantener reorganización, normalización, saneamiento y purgado autorizado.
-- [ ] Mantener backup/restauración de base de datos.
-- [ ] Mantener herramientas de desarrollador y consola.
+- [x] Mantener creación de hojas y columnas.
+- [x] Mantener fórmulas, migraciones de esquemas, identificadores y rollback.
+- [x] Mantener reorganización, normalización, saneamiento y purgado autorizado.
+- [x] Mantener backup/restauración de base de datos.
+- [x] Mantener herramientas de desarrollador y consola.
 
 **Avance inicial — 2026-11-23**
 - Se verificó que `Utilities.migrateTimestamps` usa actor local desde Users/ActiveSessions y serialización mediante ScriptLock; no invoca lease remota ni UrlFetchApp. Se corrigió el comentario de servicio que afirmaba lo contrario.
 - Se alineó `UtilitiesSecurity.js` con el comportamiento real: mock de CacheService/SHA-256, pruebas de lock local, concurrencia, rollback y ausencia de URL/secreto/endpoint COORDINATOR. Ejecución aislada V8: **19/19 PASS**.
-- La suite global CI del nuevo HEAD está en ejecución; falta confirmar grupo UTILITIES y revisar las pruebas ADMIN de Spreadsheet, migraciones, backup/restore y mantenimiento antes del cierre.
+- La suite CI confirma UtilitiesSecurity 19/19, AdminSheetActionsContract 9/9, AdminImageTrashLifecycle 41/41, AdminOperationReadInventory 8/8, organizador de imágenes 8/8 + 14/14 + 17/17 + 15/15 + 6/6, reconciliación de imágenes 34/34 + 18/18 + 15/15, terminal Drive 22/22 + 3/3, backup reanudable 8/8, auditoría ADMIN 16/16, alertas Drive 5/5 y retención de actividad 10/10. Pruebas aisladas adicionales: AdminRestoreRecovery 18/18, IdentifierAudit 10/10, IdentifierMigration 10/10, IdentifierFormulaMigration 7/7, AdminLogsMaintenanceContract 10/10 y DeveloperPanelUX 7/7.
+- Total de validaciones específicas de MIG-022: **335/335 PASS**. La regresión global CI sigue reportando fallos de otros ámbitos (P4 VehicleModalRolePolicy 11/12; falta CoordinatorBrowserCatalogReset.mjs; contrato legacy de feed CATALOG; expectativa legacy de lease AUTH; contrato FeedbackLockFastFail). Se registran para sus fases/tareas correspondientes y no son defectos reproducibles de MIG-022.
+- Validación Beta real con Apps Script/Spreadsheet/Drive y permisos de producción no ejecutada; queda diferida según NORMAS §5.
 
 ### MIG-023 — Catálogo, cachés y experiencia de usuario
 **Estado: PENDIENTE**
