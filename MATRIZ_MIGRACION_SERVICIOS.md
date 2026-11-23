@@ -465,3 +465,47 @@ La tabla confirma la relación inicial acción → servicio → handler y locali
 
 
 **Corrección de invocadores backend — 2026-11-23:** la primera extracción se centró en módulos frontend y había clasificado `getVehicleProjection` y `getContributionCandidates` como si solo tuvieran consumidor UI o ninguno. La revisión de `admin.js` confirmó llamadas directas ADMIN→CATALOG para ambas acciones; además, ADMIN→WRITE invoca `allocateVehicleId` y `freezeCortesIds`. La tabla se corrigió. Quedan **12**, no 13, acciones sin consumidor directo localizado en las fuentes frontend/backend inspeccionadas; siguen pendientes de clasificar como manuales, indirectas o históricas.
+
+
+## 10. Primera matriz de autorización y RBAC por servicio (2026-11-23)
+
+Esta matriz resume las reglas efectivas observadas en los handlers. Las decisiones de autorización se mantienen en backend; los roles visibles en frontend no sustituyen la comprobación del actor confiable.
+
+| Servicio | Acciones / capacidades | Regla observada |
+|---|---|---|
+| AUTH | `login`, `requestPasswordRecovery`, `completePasswordRecovery` | Rutas públicas sujetas a validación de credenciales o código de recuperación. |
+| AUTH | `validateSession`, `touchSession`, `logout` | Requieren token de sesión válido para consultar/tocar/cerrar la sesión; no equivalen a autorización por rol. |
+| AUTH | `acceptTerms`, `changePassword` | Todos los roles activos: Desarrollador, Jefe, Supervisor, Técnico y Técnico exterior. Cambio de contraseña valida la identidad de la sesión. |
+| AUTH | `updateUser`, `deleteUser` | Desarrollador, Jefe y Supervisor; las operaciones aplican jerarquía sobre los usuarios destino y protegen al último Desarrollador. |
+| AUTH | `resetUserPassword`, `resetUserSessions`, `clearSensitiveLogs`, `migrateLegacyPasswords`, `benchmarkPasswordKdf` | Exclusivas de Desarrollador. |
+| USERS | `getUsers` | Desarrollador/Jefe/Supervisor; el conjunto visible se filtra por jerarquía: Jefe ve Supervisor/Técnico y Supervisor ve Técnico. |
+| USERS | `createUser` | Desarrollador puede crear todos los roles; Jefe puede crear Supervisor/Técnico; Supervisor puede crear Técnico. |
+| USERS | `updateProfile` | Actualización del perfil propio, basada en el actor compartido y la fila única del usuario autenticado. |
+| CATALOG | `getCatalogData`, `getDropdownData`, `getSuggestion`, `getNavigationData`, `getVehicleProjection` | Lecturas de catálogo/proyección sin regla de rol explícita en los handlers inspeccionados. |
+| CATALOG | `getContributionCandidates` | Lectura de proyección; el acceso a metadatos adicionales del inventario de imágenes exige el secreto interno de CATALOG. Ese secreto es configuración y debe migrarse según MIG-003, no exponerse al frontend. |
+| WRITE | `checkVehicle`, `getSuggestion`, `checkOperation`, `checkVinDuplicate` | Lecturas sin actor en el handler. `checkOperation` está expresamente diseñado sin revalidación de sesión/lease: usa `opId` aleatorio de 128 bits y devuelve solo estado/metadatos mínimos, sin la fila completa. El contrato `CheckOperationSecurity.js` confirma esa decisión; preservarla salvo cambio autorizado. |
+| WRITE | `addOrUpdateCut`, `addSupplementaryInfo`, `addVinToVehicle` | Requieren actor compartido de cualquiera de los cinco roles activos. El registro silencioso de corte se limita a Desarrollador. |
+| WRITE | `allocateVehicleId`, `freezeCortesIds` | Exclusivas de Desarrollador. ADMIN las invoca actualmente mediante llamadas backend→WRITE. |
+| FEEDBACK | `getPysData`, `sendContactForm`, `getCatalogChanges` | Rutas públicas; el feed incremental observado usa GET `catalogFeed=1` en FEEDBACK/Coordinator. |
+| FEEDBACK | `recordLike`, `reportProblem`, `addProblem`, `addSolution`, `addPrevention`, `addVehicleToProblem`, `suggestCutChange`, `getMyProblemReports`, `recordVehicleView`, operaciones ordinarias de Inbox, carga/envío de vídeo y `getRichTextMode` | Requieren sesión válida de cualquier rol, salvo la ruta anónima expresamente permitida para `suggestYear`. Inbox añade comprobaciones de participante por conversación. |
+| FEEDBACK | `getFeedbackItems`, `replyToFeedback`, `markAsResolved`, `deleteFeedbackItem`, `closeInboxConversation`, `getActivityLogs` | Desarrollador/Jefe/Supervisor. |
+| FEEDBACK | `removeVehicleFromProblem`, `updatePysItem`, `updateTutorialItem`, `addTutorial`, `notifyDevelopersDriveCritical`, `setRichTextMode`, `clearActivityLogs`, `approveVideo`, `rejectVideo` | Exclusivas de Desarrollador según `FEEDBACK_ACTION_PERMISSIONS`. |
+| ADMIN | `ping` | Endpoint de salud sin actor de sesión. |
+| ADMIN | `updateVehicleField`, `uploadAdminImage`, `getAdminImageUploadStatus` | Desarrollador/Jefe/Supervisor; la edición de campos está limitada por lista permitida y validaciones del servidor. |
+| ADMIN | Resto de acciones administrativas | Exclusivas de Desarrollador antes de ejecutar el dispatcher. |
+| UTILITIES | `migrateTimestamps` | Exclusiva de Desarrollador; además adquiere lease de Coordinator y ScriptLock local. |
+| COORDINATOR | leases, sesión, revocación, cachés, feed y telemetría | Autentica la identidad del servicio mediante configuración compartida y aplica políticas por servicio/operación; no es una autorización directa del navegador. |
+
+### 10.1 Jerarquía de destinatarios Inbox
+
+La política de creación de conversaciones observada es:
+- Desarrollador → todos los roles.
+- Jefe → Supervisor, Técnico y Técnico exterior.
+- Supervisor → Jefe.
+- Técnico y Técnico exterior → Supervisor.
+
+Las operaciones posteriores verifican que el actor sea participante; marcar como no leído y ocultar/eliminar una conversación afectan únicamente al participante correspondiente. `markInboxUnread` y `deleteInboxConversation` tienen handlers, aunque no se localizó consumidor frontend directo.
+
+### 10.2 Límites de esta matriz
+
+La matriz resume políticas visibles en los handlers y no sustituye pruebas por acción, comprobación de permisos en cada ruta interna ni verificación Beta. La migración debe conservar los casos públicos, la ruta anónima de sugerencia, el contrato mínimo de `checkOperation`, la jerarquía Inbox y todas las restricciones de Desarrollador/Jefe/Supervisor. MIG-001 continúa **EN PROGRESO** hasta enlazar estos permisos con payloads, respuestas, datos y pruebas de cada acción.
