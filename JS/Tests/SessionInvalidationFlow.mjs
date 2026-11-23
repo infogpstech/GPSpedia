@@ -104,3 +104,39 @@ assert.deepEqual(partialFanout.failedServices, ["FEEDBACK"]);
 assert.equal(partialFanout.maxCacheTtlSeconds, 21600);
 assert.doesNotMatch(JSON.stringify(calls), /opaque-session-token/);
 console.log("MIG-014 frontend fan-out: 6 servicios, retry, fallo parcial y TTL 21600s PASS");
+
+const sharedSource = read("JS/Services/SharedMutationClient.js");
+const sharedRemoved = [];
+const sharedHandler = new Function("CacheService", sharedSource + "\\nreturn handleSharedSessionActorCacheInvalidation_;")({
+    getScriptCache: () => ({ remove: key => sharedRemoved.push(key) })
+});
+const sharedKey = "GPSpedia_SHARED_SESSION_ACTOR_V1_" + "d".repeat(64);
+assert.deepEqual(sharedHandler({ userId: "U-3", cacheKeys: [sharedKey] }), { status: "success", invalidated: 1 });
+assert.deepEqual(sharedRemoved, [sharedKey]);
+assert.equal(sharedHandler({ userId: "U-3", cacheKeys: ["GPSpedia_CATALOG_SESSION_ACTOR_V1_" + "d".repeat(64)] }).status, "error");
+
+const catalogSource = read("JS/Services/catalog.js");
+const catalogRemoved = [];
+const catalogHandler = new Function("CacheService", catalogSource + "\\nreturn invalidateCatalogSessionActorCache_;")({
+    getScriptCache: () => ({ remove: key => catalogRemoved.push(key) })
+});
+const catalogKey = "GPSpedia_CATALOG_SESSION_ACTOR_V1_" + "e".repeat(64);
+assert.deepEqual(catalogHandler({ userId: "U-3", cacheKeys: [catalogKey] }), { status: "success", invalidated: 1 });
+assert.deepEqual(catalogRemoved, [catalogKey]);
+assert.equal(catalogHandler({ userId: "U-3", cacheKeys: [sharedKey] }).status, "error");
+
+const authServiceSource = read("JS/Services/Auth.js");
+const captureStart = authServiceSource.indexOf("function recordSessionCacheKeysForResponse_");
+const captureEnd = authServiceSource.indexOf("\\nfunction doPostInternal_", captureStart);
+assert.ok(captureStart >= 0 && captureEnd > captureStart);
+const captureFunction = authServiceSource.slice(captureStart, captureEnd);
+const captureResult = new Function("getSharedSessionActorCacheKey_", "let sessionCacheKeysForResponse_ = { userId: '', shared: new Set(), catalog: new Set(), error: false }; " +
+    captureFunction + "; recordSessionCacheKeysForResponse_('U-4', ['opaque-session-token-01']); return sessionCacheKeysForResponse_;")(
+    () => sharedKey
+);
+assert.deepEqual(Array.from(captureResult.shared), [sharedKey]);
+assert.deepEqual(Array.from(captureResult.catalog), ["GPSpedia_CATALOG_SESSION_ACTOR_V1_" + "d".repeat(64)]);
+assert.doesNotMatch(JSON.stringify({ shared: Array.from(captureResult.shared), catalog: Array.from(captureResult.catalog) }), /opaque-session-token-01/);
+assert.match(authServiceSource, /response\.sessionCacheKeys =/);
+assert.match(sharedSource, /recordSessionCacheKeysForResponse_\(id, tokens\)/);
+console.log("MIG-014 cache fan-out and backend contracts: 10/10 PASS");

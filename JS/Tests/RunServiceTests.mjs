@@ -38,6 +38,7 @@ function runGroup(id, service, fn) {
 }
 function normalizedCopy(s) { return String(s).replace(/(const\s+SPREADSHEET_ID\s*=\s*)["'][^"']+["']/,'$1"__ISOLATED_TEST_SPREADSHEET__"'); }
 runGroup('31','WRITE',()=>{
+ runCli('MIG-014 invalidación frontend de caché de sesión','JS/Tests/SessionInvalidationFlow.mjs');
  const write=read('JS/Services/write.js'),admin=read('JS/Services/admin.js');
  recordResult('WRITE payload/límites/integridad',loadFunction('JS/Tests/CutPayloadValidation.js','runCutPayloadValidationTests')(write));
  recordResult('WRITE/ADMIN VIN',loadFunction('JS/Tests/VinAuthoritativeValidation.js','runVinAuthoritativeValidationTests')({write,admin,ui:read('JS/Frontend/ui.js'),addCuts:read('HTML/add_cortes.html')}));
@@ -265,7 +266,7 @@ runGroup('36','AUTH',()=>{
  runCli('FEEDBACK limpieza de ActividadUsuario: retención y resultados sin cambios','JS/Tests/ActivityLogsClearFeedback.mjs');
  runCli('ADMIN UI: selector compacto y mensajes de limpieza de Logs','JS/Tests/AdminLogsMaintenanceContract.mjs');
  runCli('AUTH restauración de sesión sin revalidación redundante','JS/Tests/SessionRestoreOnValidationFailure.mjs');
-  runCli('AUTH recuperación accesible de sesiones revocadas/legacy','JS/Tests/SessionInvalidationFlow.mjs');
+
  runCli('AUTH PBKDF2 versionado, compatibilidad legacy y coste','JS/Tests/PasswordHashMigration.mjs');
  runCli('AUTH benchmark PBKDF2 protegido de solo lectura','JS/Tests/PasswordKdfBenchmark.mjs');
   runCli('AUTH recuperación por correo, código temporal, límites y revocación','JS/Tests/PasswordRecovery.mjs');
