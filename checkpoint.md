@@ -1000,3 +1000,57 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Estado y continuidad
 - MIG-016: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Próxima tarea: MIG-017 — Herramientas y operaciones de Drive. No iniciar otra tarea hasta registrar el cierre documental de MIG-016.
+
+
+---
+
+## Cierre MIG-017 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-23
+
+### Estado Git
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- Rama base protegida: `GPSpedia2.2.5`, HEAD verificado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin escrituras.
+- HEAD de trabajo al registrar este cierre: `acc1ac4f7f5e7ddcbebcaa8aa4790d66b42e1d84`.
+- Se conservaron los cambios concurrentes ajenos a MIG-017 presentes en la rama; no se reescribió historial.
+
+### Implementación MIG-017
+- La terminal Drive muestra IDs de carpetas y archivos; el cliente convierte `move <ID_ARCHIVO> <ID_CARPETA_DESTINO>` en el payload estructurado que exige ADMIN.
+- El parser de `move` separa correctamente argumentos por espacios y valida exactamente dos IDs.
+- ADMIN valida origen y destino dentro de Cortes, exige una única carpeta de origen, verifica la cadena de carpetas y rechaza rutas compartidas o externas.
+- Antes del movimiento se captura propietario y permisos Drive mediante el servicio de permisos; después del movimiento se verifica que no hayan cambiado. Si cambian, se revierte y se comprueba la ubicación y ACL originales. Si no puede verificarse la reversión, devuelve un error explícito con los IDs afectados.
+- Se mantienen los comandos `dir`, `cd`, `mkdir`, `tree`, `move`, la navegación, el respaldo por lotes reanudable, la restauración con staging/rollback, la auditoría de imágenes, métricas de almacenamiento, URLs de descarga restringidas y operaciones de papelera/restauración/eliminación definitiva con sus preflight y RBAC.
+- No se introdujeron secretos, tokens OAuth ni URLs de otros servicios en propiedades Apps Script. La terminal continúa usando la autorización del servicio ADMIN.
+
+### Commits de MIG-017
+- `a68f8507ac2075f09de19f7133c7af1b12bb5273` — conexión de `move` en la consola y visualización de IDs.
+- `f7ba91eedda7e24fc0eecb98a223a90b069d37a5` — corrección del separador whitespace.
+- `66a86d5b07b5aee0eec63ab9783c0dc8ffcfde2c` — verificación de ACL y propietario al mover.
+- `196db47ead72d331bef1e4ed73d5981ddee27baf` — pruebas de permisos y rollback del movimiento.
+- `78fc17781c262db9a4ea4ab4542f098120bd0002` — grupo aislado MIG017.
+- `1147691b2d78ec964158eca477cfe1e2fb64150f` — prueba del separador whitespace.
+- `23166ec62151101b1a66110bd72d5426482246c3` — ejecución del contrato actualizado en CI.
+
+### Evidencia CI
+- GitHub Actions Node.js 22, run `45241204744`, commit `acc1ac4f7f5e7ddcbebcaa8aa4790d66b42e1d84`.
+- Grupo MIG017: **72/72 PASS**:
+  - DriveTerminalScope 22/22.
+  - DriveTerminalMoveClient 3/3.
+  - AdminBackupResumeUI 8/8.
+  - DriveStorageAlerts 5/5.
+  - AdminRestoreRecovery 18/18.
+  - AdminAuditTrail 16/16.
+- Suites relacionadas del grupo de imágenes: AdminImageTrashLifecycle 41/41; AdminReplacedImagesIntegrity 56/56; preflight de eliminación 10/10, restauración 10/10, marcar en uso 10/10, movimiento 11/11, recuperación 11/11 y eliminación definitiva 9/9; contratos de actividad y Safe Apply aprobados.
+- Regresión global del commit: 138 suites, 1,593 pruebas aprobadas y seis fallos fuera del grupo MIG017: P4, FEEDBACK, CATALOG, UTILITIES, AUTH e INTEGRATION. Se mantienen como deuda de regresión general y no se atribuyen a MIG017.
+- GitHub Pages build/deploy run `45241204088`: SUCCESS.
+
+### Validación Beta pendiente
+- Probar con una raíz Cortes Beta y archivos desechables, sin tocar Drive productivo.
+- Confirmar con cuentas reales el propietario y los permisos heredados/directos antes y después de mover; comprobar rollback ante ACL distintas.
+- Crear, interrumpir y reanudar respaldos por lotes con el mismo backupId; restaurar y verificar staging, manifiesto y rollback.
+- Ejecutar auditoría de imágenes, papelera, restauración y eliminación definitiva con registros referenciados y no referenciados.
+- Validar cuotas, umbral de alerta, URLs de descarga y RBAC con roles reales.
+- Confirmar en logs, hojas y ScriptProperties que no se exponen tokens ni credenciales.
+
+### Continuidad
+- MIG-017: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Siguiente tarea pendiente: **MIG-018 — Modelos, cortes, VIN y contribuciones**. Antes de modificarla, contrastar los cambios recientes de CATALOG/FEEDBACK presentes en el HEAD actual con el checkpoint y el backlog.

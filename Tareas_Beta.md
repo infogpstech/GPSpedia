@@ -116,3 +116,17 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - Probar inventario, imagen reemplazada, marcar en uso, mover, papelera, restaurar y eliminación definitiva con recursos desechables; verificar propietario, padre, RBAC, read-back y rollback.
 - Confirmar que Imagenes_Sin_Uso se localiza por nombre, que los duplicados se reportan sin mover archivos y que no se crea una segunda carpeta.
 - No usar recursos productivos ni simular pruebas Beta con CI. Registrar commit, servicio, rol, dispositivo/navegador y evidencia anonimizada.
+
+
+## 6.2 Validación Beta diferida — MIG-017 herramientas y operaciones Drive
+- Ejecutar primero la secuencia de sincronización segura del apartado 0.
+- Preparar una cuenta y unidad Drive Beta aisladas; configurar el recurso central `cortes_root_folder_id` para apuntar exclusivamente a la carpeta Cortes Beta. No usar archivos ni carpetas productivos.
+- Probar `dir`, `cd`, `mkdir`, `tree` y `move`; confirmar que los listados muestran IDs y que el movimiento usa exactamente el ID de archivo y el ID de destino.
+- Intentar mover un archivo dentro de Cortes Beta, hacia una carpeta externa, desde una ruta con ancestro externo y hacia una carpeta con ACL distinta/compartida. Confirmar rechazo seguro, propietario y permisos sin cambios y rollback verificable.
+- Crear un respaldo con archivos y subcarpetas desechables; interrumpir un lote, reanudar usando el mismo backupId y comprobar manifiesto, cantidades, integridad y ausencia de duplicados.
+- Restaurar un respaldo Beta; verificar staging, lectura posterior, comparación del manifiesto, rollback ante error y que la raíz original queda consistente.
+- Ejecutar auditoría de imágenes y conciliación Drive ↔ Cortes; verificar duplicados, archivos huérfanos, referencias activas, rutas manuales y que no se mueven archivos automáticamente sin aprobación.
+- Probar papelera, restauración, marcar en uso, movimiento y eliminación definitiva con archivos desechables. Confirmar que referencias activas bloquean acciones destructivas y que RBAC rechaza roles no autorizados.
+- Consultar métricas de almacenamiento y probar alertas al alcanzar el umbral crítico; comprobar idempotencia de la alerta Inbox.
+- Probar URLs de descarga solo para registros permitidos y sin referencias activas; confirmar que la papelera no permite descargar como imagen histórica.
+- Revisar registros, hojas y ScriptProperties para descartar tokens OAuth, credenciales o URLs temporales. Registrar commit, rol, dispositivo/navegador y evidencia anonimizada.

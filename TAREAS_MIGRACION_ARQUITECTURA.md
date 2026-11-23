@@ -393,16 +393,20 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** flujo automatizado conservado y validado. MIG-016 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**; pruebas reales de OAuth, YouTube, CacheService, Spreadsheet, permisos y reproducción quedan pendientes de Beta aislada.
 
 ### MIG-017 — Herramientas y operaciones de Drive
-**Estado: PENDIENTE**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener comandos `dir`, `cd`, `mkdir`, `tree`, `move` y navegación.
-- [ ] Mantener creación/organización de carpetas, mover/restaurar/eliminar archivos.
-- [ ] Mantener backups/restauración de Drive y auditorías de imágenes.
-- [ ] Mantener métricas de almacenamiento y URLs de descarga.
-- [ ] Preservar propietario, permisos y restricciones de acciones destructivas.
+- [x] Mantener comandos `dir`, `cd`, `mkdir`, `tree`, `move` y navegación.
+- [x] Mantener creación/organización de carpetas, mover/restaurar/eliminar archivos.
+- [x] Mantener backups/restauración de Drive y auditorías de imágenes.
+- [x] Mantener métricas de almacenamiento y URLs de descarga.
+- [x] Preservar propietario, permisos y restricciones de acciones destructivas.
 - [ ] Probar con recursos Beta aislados.
 
-**Aceptación:** todas las operaciones de Drive siguen disponibles con la misma matriz RBAC.
+**Aceptación:** todas las operaciones de Drive siguen disponibles con la misma matriz RBAC. Validado mediante contratos de RBAC, auditoría y preflight de acciones destructivas.
+
+**Validación automatizada:** grupo MIG017 de GitHub Actions: 72/72 PASS (22 alcance/ACL de terminal, 3 cliente move, 8 respaldo reanudable, 5 métricas/alertas, 18 respaldo/restauración/rollback y 16 auditoría). Las suites relacionadas de imagen y papelera también aprobaron en el grupo de regresión de imágenes.
+
+**Validación Beta diferida:** el CI no sustituye las pruebas con una unidad Drive Beta, permisos reales, cuotas y operaciones de respaldo/restauración. Consultar `Tareas_Beta.md` §6.2.
 
 ---
 
