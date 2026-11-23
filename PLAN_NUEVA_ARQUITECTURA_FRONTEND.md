@@ -48,7 +48,7 @@ No se conservarán COORDINATOR ni SharedMutation ni se crearán sustitutos equiv
 
    USERS se consolida dentro de AUTH conservando todas sus acciones.
    La coordinación funcional multi-servicio se ejecuta en frontend; llamadas técnicas directas entre servicios se permiten sin secretos compartidos.
-   El frontend inicia y coordina todas las llamadas.
+   El frontend inicia y coordina las llamadas de los flujos funcionales; los servicios pueden realizar llamadas técnicas directas justificadas.
 ```
 
 ### 2.1 Responsabilidades
@@ -64,7 +64,7 @@ No se conservarán COORDINATOR ni SharedMutation ni se crearán sustitutos equiv
 - No contienen URLs, IDs de Spreadsheet/Drive, propiedades de configuración, secretos compartidos ni referencias a otros servicios.
 - No orquestan flujos funcionales que corresponden al frontend.
 - Pueden realizar llamadas técnicas directas a otro servicio cuando sea necesario, sin secretos de interconexión; el receptor valida sesión/capacidad y permisos.
-- Reciben solicitudes del frontend, validan sesión/capacidad, leen o escriben en Spreadsheet y devuelven el resultado.
+- Atienden solicitudes del frontend y, cuando sea necesario, llamadas técnicas directas; validan sesión/capacidad, leen o escriben en Spreadsheet y devuelven el resultado.
 - No almacenan configuración propia de la plataforma.
 - No se mantienen ocupados coordinando operaciones que el frontend puede ejecutar directamente.
 
@@ -130,7 +130,7 @@ El detalle accionable se encuentra en [TAREAS_MIGRACION_ARQUITECTURA.md](./TAREA
 | Fase | Objetivo | Estado |
 |---|---|---|
 | 0 | Inventario total de funciones, configuración y dependencias | EN PROGRESO |
-| 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PENDIENTE |
+| 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PRUEBA LOCAL PREPARADA; WEB APP BETA PENDIENTE |
 | 2 | Diseñar y probar esquema central de configuración y caché frontend | PENDIENTE |
 | 3 | Implementar router/orquestador frontend sin cambiar contratos | PENDIENTE |
 | 4 | Mover coordinación funcional de ADMIN y otros servicios al frontend; conservar solo llamadas técnicas directas justificadas y sin secretos | PENDIENTE |
