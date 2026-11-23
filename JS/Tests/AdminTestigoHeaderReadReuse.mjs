@@ -10,7 +10,7 @@ function extract(name) {
 }
 const ensure=extract("ensureTestigoColumns");
 const handlerStart=source.indexOf("function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot, preallocatedVehicleId)");
-const handlerEnd=source.indexOf("\\nfunction ",handlerStart+15);
+const handlerEnd=source.indexOf("\nfunction ",handlerStart+15);
 assert.ok(handlerStart>=0&&handlerEnd>handlerStart,"No se encontró la mutación canónica WRITE");
 const handler=source.slice(handlerStart,handlerEnd);
 let passed=0;
