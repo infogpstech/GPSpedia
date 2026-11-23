@@ -1167,3 +1167,28 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - Mantener snapshot completo, cursor, recuperación ante huecos/corrupción y actualización IndexedDB silenciosa. No aceptar snapshots/deltas arbitrarios del navegador sin validación del backend.
 - El endpoint de salud y las operaciones restantes de COORDINATOR no se eliminan en MIG-023; su retirada completa, incluido doGet/health/ping, permanece en MIG-025 después de MIG-024.
 - Siguiente paso: implementar feed CATALOG con almacenamiento local del servicio, lock local, idempotencia por requestId, retención acotada y lectura GET pública; migrar API frontend y notificaciones FEEDBACK; reemplazar contratos heredados que esperan COORDINATOR.
+
+
+## Continuidad MIG-023 — actualización 2026-11-23
+
+Repositorio: `infogpstech/GPSpedia`
+Rama de trabajo: `GPSpedia2.2.5_work`
+Rama base protegida: `GPSpedia2.2.5` (sin cambios).
+
+### Estado verificado
+- El feed incremental del catálogo pertenece a CATALOG. El frontend enruta `getCatalogChanges`, `publishCatalogChange` y `publishCatalogReset` a ese servicio.
+- FEEDBACK devuelve metadatos de colección/registro/operación; ya no publica el feed a través de SharedMutationClient. CATALOG valida sesión local y reconstruye snapshots desde las hojas canónicas de Cortes, PyS y Tutoriales.
+- El navegador no puede enviar snapshots. El feed usa lock local, revisiones monotónicas, cursor, idempotencia por requestId, retención máxima de 100 eventos y reset de recuperación.
+- Las rutas públicas `catalogFeed`, `getCatalogChanges` y `publishCatalogReset` fueron retiradas de COORDINATOR. El helper interno de SharedMutation queda pendiente de MIG-024; endpoint health y agregación de tráfico de COORDINATOR quedan para MIG-025.
+- Documentación actualizada: `Catalog_Read_Strategy.md`, `Services/COORDINATOR_SETUP.md`, `README.md`, `Tareas_Beta.md` y el índice `lista_beta.txt`.
+
+### Pruebas locales ejecutadas
+- `CatalogChangeFeed`: 16 casos PASS.
+- `FeedbackCatalogPublicationIsolation`: 14 casos PASS.
+- `CatalogBrowserReset`: 10 casos PASS.
+- También se ejecutaron satisfactoriamente los contratos locales de InboxRole, ActionDispatch, ServiceBrowserTraffic, DirectTrafficRouting, FeedbackLikeAppendOnly, WriteCatalogPublicationIsolation, WriteCatalogPublicationFrontend y AdminCatalogPublicationIsolation en el estado disponible durante esta sesión.
+
+### Pendiente
+- Ejecutar y revisar la última corrida completa de GitHub Actions después de los últimos cambios.
+- Investigar únicamente los fallos ajenos a MIG-023 que la suite reporte (AUTH purga de logs, política P4 y esperas FEEDBACK/Inbox), sin mezclar su corrección con esta tarea.
+- Completar las pruebas de cache-first/IndexedDB y la validación Beta real antes de cerrar MIG-023.
