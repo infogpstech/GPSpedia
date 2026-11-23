@@ -8,7 +8,7 @@ const feedback=read("JS/Services/feedback.js"),catalog=read("JS/Services/catalog
 const utilities=read("JS/Services/Utilities.js");
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
 test("AUTH registra el actor local tras login sin sincronizarlo con Coordinator",()=>{
- const sync=auth.slice(auth.indexOf("function syncSharedSessionContextsForUser_"),auth.indexOf("\nfunction handleLogin",auth.indexOf("function syncSharedSessionContextsForUser_")));
+ const sync=auth.slice(auth.indexOf("function cacheLocalSessionActorAfterLogin_"),auth.indexOf("\nfunction handleLogin",auth.indexOf("function cacheLocalSessionActorAfterLogin_")));
  assert.match(sync,/cacheSharedSessionActor_/);assert.doesNotMatch(sync,/syncSharedUserSessionContexts_|UrlFetchApp|Coordinator/);
  assert.match(auth,/function handleValidateSession\(payload\) \{[\s\S]*?validateSessionReadOnly_\(sessionToken, userId\)/);
  assert.doesNotMatch(auth,/validateSharedSessionContext_|syncSharedUserSessionContexts_|withSharedMutationLease_\("AUTH"/);
