@@ -24,7 +24,7 @@ function check(name, run) {
 
 check("El inventario de MIG-004 existe y declara el grafo, reemplazos y pruebas", () => {
     assert.match(inventory, /## 2\. Arquitectura de comunicación actual/);
-    assert.match(inventory, /## 3\. Llamadas directas de ADMIN a servicios/);
+    assert.match(inventory, /## 3\. Dependencias ADMIN retiradas por MIG-010/);
     assert.match(inventory, /## 4\. SharedMutationClient → COORDINATOR/);
     assert.match(inventory, /## 5\. COORDINATOR → servicios/);
     assert.match(inventory, /## 6\. Operaciones coordinables desde frontend/);
@@ -44,7 +44,7 @@ check("CATALOG valida sesión propia y frontend coordina proyección/candidatos"
     assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
     assert.ok(ui.includes('routeAction("getVehicleProjection"'));
     assert.ok(ui.includes("includeImageInventoryCandidates"));
-    assert.ok(inventory.includes("sin secretos compartidos"));
+    assert.ok(inventory.includes("No se conserva secreto compartido ADMIN↔CATALOG"));
 });
 
 check("El frontend enruta directamente los servicios y acciones de reemplazo", () => {
