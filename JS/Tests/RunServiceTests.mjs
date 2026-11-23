@@ -244,7 +244,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
  runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');
- runCli('ADMIN creación de carpeta con lease de recurso aislado','JS/Tests/AdminCreateCortesImageFolderLease.mjs');
+ runCli('ADMIN creación de carpeta con lease de recurso aislado','JS/Tests/AdminLocalOperationGuard.mjs');
   runCli('ADMIN reconciliación del journal de imágenes','JS/Tests/AdminImageUploadEventReconciliation.mjs');
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
@@ -262,7 +262,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG estados de presentación','JS/Tests/CatalogStatus.js');
 });
 runGroup('35','UTILITIES',()=>{
- recordResult('UTILITIES Spreadsheet simulado/RBAC/staging/rollback',new Function(read('JS/Services/SharedMutationClient.js')+'\n'+read('JS/Services/Utilities.js')+'\n'+read('JS/Tests/UtilitiesSecurity.js')+'\nreturn runUtilitiesSecurityTests();')());
+ recordResult('UTILITIES Spreadsheet simulado/RBAC/staging/rollback',new Function(read('JS/Services/SharedSessionActor.js')+'\n'+read('JS/Services/Utilities.js')+'\n'+read('JS/Tests/UtilitiesSecurity.js')+'\nreturn runUtilitiesSecurityTests();')());
 });
 runGroup('36','AUTH',()=>{
  runCli('AUTH aceptación de términos por usuario y dispositivo','JS/Tests/TermsAcceptance.js');
@@ -395,7 +395,7 @@ runGroup('38','INTEGRATION',()=>{
   runCli('AUG-139 política anti-debugging, zoom y autorización backend','JS/Tests/AntiDebuggingPolicy.mjs');
  runCli('Verificación sintáctica integral de archivos JavaScript','JS/Tests/RepositoryJavaScriptSyntax.mjs');
  runCli('Verificación de referencias relativas e imports','JS/Tests/RepositoryModuleReferences.mjs');
- recordResult('Coordinador compartido/concurrencia/leases',new Function(read('JS/Services/Coordinator.js')+'\n'+read('JS/Services/SharedMutationClient.js')+'\n'+read('JS/Tests/SharedMutationCoordinator.js')+'\nreturn runSharedMutationCoordinatorTests();')());
+ recordResult('Coordinador compartido/concurrencia/leases',new Function(read('JS/Services/Coordinator.js')+'\n'+read('JS/Services/SharedSessionActor.js')+'\n'+read('JS/Tests/SharedMutationCoordinator.js')+'\nreturn runSharedMutationCoordinatorTests();')());
  runCli('SEC arquitectura: preservación de RBAC, cierre de cuentas, revocación y caché remota','JS/Tests/CoordinatorCapabilityPreservation.mjs');
  runCli('MIG-006 probe de acceso a Spreadsheet desde Web App','JS/Tests/MIG006SpreadsheetAccessProbe.mjs');
  runCli('MIG-007 contrato del esquema central de configuración','JS/Tests/MIG007ConfigurationSchemaContract.mjs');
@@ -451,7 +451,7 @@ runGroup('39','MIG015',()=>{
  runImageCli('FEEDBACK carga de adjuntos fuera de locks','JS/Tests/P2FeedbackImageUploadLocks.mjs');
  runImageCli('FEEDBACK carga y recuperación de imágenes PyS','JS/Tests/P2PysImageUploadOutsideLock.mjs');
  runImageCli('ADMIN cargas suplementarias fuera del lock','JS/Tests/AdminSupplementaryUploadOutsideLock.mjs');
- runImageCli('ADMIN carpeta Cortes con lease de recurso aislado','JS/Tests/AdminCreateCortesImageFolderLease.mjs');
+ runImageCli('ADMIN carpeta Cortes con lease de recurso aislado','JS/Tests/AdminLocalOperationGuard.mjs');
  runImageCli('ADMIN vinculación de imágenes de cortes fuera del lock','JS/Tests/AdminCutImageLinkOutsideLock.mjs');
  runImageCli('ADMIN preflight Drive de papelera y restauración','JS/Tests/AdminDeleteImageDrivePreflightOutsideLock.mjs');
  runImageCli('ADMIN preflight Drive de restauración desde papelera','JS/Tests/AdminRestoreImageDrivePreflightOutsideLock.mjs');
