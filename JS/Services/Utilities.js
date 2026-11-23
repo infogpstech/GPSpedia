@@ -11,6 +11,10 @@ function doPost(e){
  try{
   const raw=e&&e.postData&&typeof e.postData.contents==="string"?e.postData.contents:"{}";
   const body=JSON.parse(raw);
+  if(body&&body.action==="__invalidateSessionActorCache"){
+   response=handleSharedSessionActorCacheInvalidation_(body.payload);
+   return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+  }
   if(!body||body.action!=="migrateTimestamps")throw new Error("Acción no soportada.");
   const payload=body.payload&&typeof body.payload==="object"&&!Array.isArray(body.payload)?body.payload:{};
   response=migrateTimestamps(payload);
