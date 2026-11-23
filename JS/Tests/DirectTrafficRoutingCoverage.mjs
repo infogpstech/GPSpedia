@@ -22,7 +22,9 @@ test("rutas directas actuales coinciden con ACTION_TO_SERVICE_MAP", () => {
     assert.match(api, /'getSuggestion': 'WRITE'/);
     assert.match(api, /'checkOperation': 'WRITE'/);
     assert.match(api, /'getPysData': 'FEEDBACK'/);
-    assert.match(api, /'getCatalogChanges': 'COORDINATOR'/);
+    assert.match(api, /'getCatalogChanges': 'CATALOG'/);
+    assert.match(api, /'publishCatalogChange': 'CATALOG'/);
+    assert.match(api, /'publishCatalogReset': 'CATALOG'/);
     assert.match(api, /'getNavigationData': 'CATALOG'.*'getCatalogData': 'CATALOG'.*'getDropdownData': 'CATALOG'/);
 });
 
