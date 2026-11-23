@@ -341,3 +341,47 @@ Para el commit `a22f317883377f6ca9aed745f7575d591e68a405`:
 - Se actualizó `ChangesLogs.txt` con la adenda de controles dinámicos; commit `c54892370ddee02885897c143e51ba37d106adbf`.
 - HEAD de trabajo antes de esta actualización: `c54892370ddee02885897c143e51ba37d106adbf`. La rama base sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación: ahead 7169 / behind 0.
 - MIG-002 permanece **COMPLETADA CON VALIDACIÓN DIFERIDA**. No se modificó código funcional, servicios, endpoints, permisos, datos ni deployments.
+
+
+---
+
+## Cierre MIG-003 — inventario de configuración backend — 2026-11-23
+
+### Estado Git al iniciar y publicar
+- Rama: `GPSpedia2.2.5_work`.
+- HEAD confirmado antes de la publicación: `28bdf2eca2b96fa33cde286478076274980fa5bd`.
+- Rama base protegida: `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación previa: ahead 7170 / behind 0.
+- La normativa `NORMAS_DESAROLLO.md` fue revisada íntegramente; se consultaron README, contexto_personal, plan rector, matriz, backlog y continuidad.
+
+### Resultado
+MIG-003 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+
+Se creó `INVENTARIO_CONFIGURACION_BACKEND.md` con:
+- Diez módulos backend activos inspeccionados.
+- Siete módulos con ScriptProperties; tres sin referencias.
+- Cero usos identificados de UserProperties y DocumentProperties en los módulos revisados.
+- 26 familias de claves persistentes, incluidas familias dinámicas.
+- IDs de Spreadsheet/Drive, URLs de despliegue, parámetros, límites, secretos, OAuth, cachés y destinos propuestos en Spreadsheet.
+- Clasificación separada de configuración, estado operativo, datos temporales, secretos de interconexión y contratos/protocolos que deben permanecer en código.
+- Esquema de hojas propuesto y dependencias de bootstrap, seguridad y paridad.
+
+### Límites de validación
+- El repositorio no permite leer valores reales de PropertiesService en los proyectos Apps Script desplegados; no se afirma que se hayan enumerado propiedades huérfanas o valores manuales.
+- No están versionados `appsscript.json`, `.clasp.json` ni archivos `.gs`. Los scopes, propietarios, identidad de ejecución y parámetros de Web App deben comprobarse en Beta.
+- No se modificó código funcional, propiedades, endpoints, Spreadsheet, Drive ni deployments.
+- No se crearon las hojas propuestas; su diseño/implementación depende de MIG-006 y MIG-007.
+- El secreto HMAC de recuperación requiere diseño de almacenamiento protegido; no se trasladó a una hoja ordinaria.
+- Las claves Coordinator/SharedMutation y secretos de interconexión se clasificaron para retiro con sus consumidores, no para copiar a Spreadsheet.
+
+### Archivos actualizados
+- `INVENTARIO_CONFIGURACION_BACKEND.md`: nuevo inventario.
+- `TAREAS_MIGRACION_ARQUITECTURA.md`: MIG-003 cerrada.
+- `MATRIZ_MIGRACION_SERVICIOS.md`: §20 enlaza el inventario y resume destinos.
+- `ChangesLogs.txt`: registro factual de la tarea.
+- Este checkpoint registra el cierre y la continuidad.
+
+### Continuidad
+- MIG-001: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-002: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-003: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Siguiente tarea pendiente: **MIG-004 — Inventario de llamadas entre servicios y SharedMutation**. Identificar llamadas directas/indirectas, propietarios, consumidores, payloads, autenticación y reemplazo frontend; no eliminar todavía ningún endpoint ni cliente.

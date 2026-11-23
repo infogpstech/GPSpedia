@@ -17,3 +17,15 @@ Rama de trabajo: GPSpedia2.2.5_work.
 
 - Se amplió INVENTARIO_PANTALLAS_CAPACIDADES.md para incluir explícitamente los formularios dinámicos de alta de corte, apertura, alimentación y vídeo desde la ficha del vehículo.
 - Se documentó que los botones de coincidencia de add_cortes generan su atributo id a partir de match.id; no tienen un identificador estático común.
+
+
+## 2026-11-23 — MIG-003: inventario de configuración backend
+
+- Se creó INVENTARIO_CONFIGURACION_BACKEND.md.
+- Se inspeccionaron diez módulos backend activos: siete usan ScriptProperties; tres no presentan referencias. No se encontraron usos de UserProperties ni DocumentProperties en los módulos revisados.
+- Se identificaron y clasificaron 26 familias de claves persistentes, incluidos prefijos dinámicos y estados operativos.
+- Se registraron siete endpoints frontend, cinco URLs internas duplicadas en ADMIN, siete referencias al mismo SPREADSHEET_ID y tres al mismo DRIVE_FOLDER_ID.
+- Se documentaron parámetros funcionales, límites, cachés separadas, OAuth de ejecución, ausencia de manifiesto Apps Script versionado y destinos propuestos en Spreadsheet.
+- Se señalaron secretos que deben retirarse o requieren diseño protegido; no se copiaron secretos a hojas.
+- No se modificó código funcional, propiedades reales, endpoints, Spreadsheet, Drive ni deployments.
+- MIG-003 se cerró con validación local estática completa y lectura de propiedades/deployments reales diferida a Beta; MIG-006 debe resolver el bootstrap de Spreadsheet.

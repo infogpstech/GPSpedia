@@ -54,14 +54,15 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** inventario de pantallas y controles con trazabilidad funcional y de pruebas en `INVENTARIO_PANTALLAS_CAPACIDADES.md` §§2–7. Las validaciones reales de navegador/dispositivos y servicios externos quedan para Beta; no bloquean el cierre del inventario estático.
 
 ### MIG-003 — Inventario de configuración en backend
-**Estado: PENDIENTE**
-- [ ] Buscar todos los usos de `PropertiesService`, ScriptProperties, UserProperties y DocumentProperties.
-- [ ] Clasificar cada clave: URL, ID de Spreadsheet/Drive, secreto, OAuth, parámetros, feature flags, caché, estado de negocio o dato temporal.
-- [ ] Buscar URLs de Apps Script, IDs de recursos y secretos incrustados en constantes o archivos.
-- [ ] Distinguir configuración de GPSpedia de valores técnicos obligatorios del manifiesto de Apps Script.
-- [ ] Identificar quién lee/escribe cada clave y cuándo se crea automáticamente.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+- [x] Buscar los usos de PropertiesService/ScriptProperties/UserProperties/DocumentProperties en los diez módulos backend activos.
+- [x] Clasificar las 26 familias de claves persistentes: endpoints, secretos, parámetros, idempotencia/login, revocación, contadores, auditoría, estado de Drive, sesiones, feed incremental y telemetría.
+- [x] Identificar IDs de Spreadsheet/Drive, siete endpoints de entrada y cinco URLs duplicadas en ADMIN.
+- [x] Distinguir configuración GPSpedia, estado operativo/caché, secretos OAuth de ejecución, protocolos externos y valores técnicos del manifiesto Apps Script no versionado.
+- [x] Identificar lectores/escritores, generación automática, TTL/retención y destino o criterio de retiro de cada familia.
+- [x] Proponer hojas destino sin crear hojas ni alterar proyectos, y registrar dependencias de bootstrap, seguridad y paridad.
 
-**Aceptación:** inventario de todas las claves/constantes y destino Spreadsheet; ninguna clave se borra antes de migrar sus consumidores.
+**Aceptación:** inventario estático completo en `INVENTARIO_CONFIGURACION_BACKEND.md`; ninguna clave fue eliminada ni migrada. Los valores reales de proyectos desplegados y sus scopes quedan para Beta; el acceso a Spreadsheet sin bootstrap queda para MIG-006.
 
 ### MIG-004 — Inventario de llamadas entre servicios y SharedMutation
 **Estado: PENDIENTE**
@@ -513,3 +514,16 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - No se modificó código funcional, endpoints, RBAC, datos, Spreadsheet, Drive ni deployments.
 
 **Resultado:** MIG-002 COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+#### Cierre MIG-003 — 2026-11-23
+
+- Diez módulos backend activos inspeccionados; siete usan ScriptProperties y tres no presentan uso.
+- Se identificaron 26 familias de claves de ScriptProperties. No se encontraron usos de UserProperties ni DocumentProperties en los módulos revisados.
+- Se clasificaron claves y prefijos dinámicos por configuración, secreto, sesión, idempotencia, contador, auditoría, estado operativo, feed y métricas.
+- Se localizaron siete endpoints frontend, cinco URLs internas duplicadas en ADMIN, un ID de Spreadsheet repetido en siete servicios y un ID de carpeta Cortes repetido en tres.
+- Se clasificaron parámetros operativos y límites relevantes, valores de protocolo/seguridad que no deben hacerse editables, cachés separadas y OAuth de ejecución.
+- Se definieron destinos de Spreadsheet y criterios de retiro sin crear hojas ni modificar consumidores.
+- No se accedió a los valores reales de propiedades instaladas ni a manifiestos/scopes de Apps Script desplegados; quedan para Beta.
+- No se modificó código funcional, propiedades, endpoints, Spreadsheet, Drive ni deployments.
+
+**Resultado:** MIG-003 COMPLETADA CON VALIDACIÓN DIFERIDA.

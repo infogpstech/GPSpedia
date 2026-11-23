@@ -1212,3 +1212,31 @@ Las pruebas representativas son evidencia de cobertura por capacidad, no una afi
 - No se modificó código funcional, endpoints, propiedades, deployments, Spreadsheet ni Drive durante MIG-001.
 
 **Estado MIG-001: COMPLETADA CON VALIDACIÓN DIFERIDA.** El inventario estático y la matriz de trazabilidad cumplen el alcance local. Permanecen diferidas exclusivamente las verificaciones que requieren proyectos Apps Script desplegados, triggers instalados, credenciales/OAuth, Spreadsheet/Drive aislados y APIs externas; estas no autorizan retirar funciones y deben ejecutarse en Beta o en las tareas de paridad MIG-027/MIG-028.
+
+
+---
+
+## 20. Inventario de configuración backend — MIG-003
+
+El inventario detallado de configuración y persistencia está en [INVENTARIO_CONFIGURACION_BACKEND.md](./INVENTARIO_CONFIGURACION_BACKEND.md).
+
+### 20.1 Alcance estático
+
+- Diez módulos backend activos inspeccionados.
+- Siete módulos usan `PropertiesService.getScriptProperties()`; USERS, UTILITIES e InboxConversations no presentan uso.
+- No se encontraron usos de UserProperties ni DocumentProperties en los módulos activos revisados.
+- Se identificaron 26 familias de claves persistentes, incluidas claves dinámicas.
+- Se localizaron siete endpoints de entrada en `api-config.js`, cinco URLs duplicadas en ADMIN, el ID de Spreadsheet repetido en siete servicios y el ID de la carpeta Cortes repetido en tres.
+
+### 20.2 Criterios de clasificación y destino
+
+- URLs/IDs y parámetros funcionales: registro central `Servicios`, `ConfiguracionRecursos` y `ConfiguracionParametros`, sujetos al bootstrap MIG-006 y esquema/caché MIG-007.
+- Login idempotente, auditoría ADMIN, Safe Apply, auditoría Drive, feed incremental y telemetría: hojas/ledgers operativos específicos, no la hoja de parámetros.
+- Contadores de IDs: reconciliar con los ledgers de reservas existentes; no mantener contadores duplicados.
+- Secretos de interconexión Coordinator/Catalog: retirar con sus consumidores; no copiar a Spreadsheet.
+- Secreto HMAC de recuperación: requiere diseño de almacenamiento protegido antes de migrar.
+- Leases/contextos/índices Coordinator: retirar conforme a §§15 y 17; no replicar el mecanismo antiguo en hojas.
+
+### 20.3 Límites
+
+No se leyeron valores de propiedades reales instaladas, scopes ni configuración de Web Apps desplegadas. No se modificó ningún consumidor, propiedad, hoja ni deployment. La inspección Beta de valores reales queda pendiente; el acceso a Spreadsheet sin ID/bootstrap local queda en MIG-006.
