@@ -82,9 +82,9 @@ test("el runner sustituye la prueba Coordinator por la prueba CATALOG", () => {
 
 await (async function testCatalogPublicationRequestIds() {
     const nonceStart = api.indexOf("function createCatalogPublicationNonce_()");
-    const nonceEnd = api.indexOf("\\n}\\n", nonceStart) + 2;
+    const nonceEnd = api.indexOf("\n}\n", nonceStart) + 2;
     const deltaStart = api.indexOf("async function publishCatalogChangeAfterMutation_");
-    const deltaEnd = api.indexOf("\\n}\\n", deltaStart) + 2;
+    const deltaEnd = api.indexOf("\n}\n", deltaStart) + 2;
     assert.ok(nonceStart >= 0 && nonceEnd > nonceStart);
     assert.ok(deltaStart >= 0 && deltaEnd > deltaStart);
     const nonceSource = api.slice(nonceStart, nonceEnd);
@@ -96,7 +96,7 @@ await (async function testCatalogPublicationRequestIds() {
         return { status: "success" };
     };
     const publish = new Function("routeActionInternal_", "crypto",
-        nonceSource + "\\n" + deltaSource + "\\nreturn publishCatalogChangeAfterMutation_;")(
+        nonceSource + "\n" + deltaSource + "\nreturn publishCatalogChangeAfterMutation_;")(
         route, { randomUUID: () => "unique-" + (++nonce) }
     );
     const mutation = {
@@ -118,7 +118,7 @@ await (async function testCatalogPublicationRequestIds() {
 
     const retryRequests = [];
     const retryPublish = new Function("routeActionInternal_", "crypto",
-        nonceSource + "\\n" + deltaSource + "\\nreturn publishCatalogChangeAfterMutation_;")(
+        nonceSource + "\n" + deltaSource + "\nreturn publishCatalogChangeAfterMutation_;")(
         async (action, payload) => { retryRequests.push(payload); return { status: "success" }; },
         { randomUUID: () => "retry-" + (++nonce) }
     );
