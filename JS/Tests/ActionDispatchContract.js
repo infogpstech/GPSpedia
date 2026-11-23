@@ -54,6 +54,7 @@ function runActionDispatchContractTests(sources) {
             actions.push(action);
             if (handlerNames.length) handlers[action] = [...new Set(handlerNames)];
             else if (name === "ADMIN" && action === "ping" && /response\s*=\s*\{\s*status\s*:\s*['"]success['"]/.test(body)) handlers[action] = null;
+            else if (name === "CATALOG" && action === "getCatalogChanges" && /createCatalogChangeFeed_\(\)\.getChanges\(payload\)/.test(body)) handlers[action] = ["createCatalogChangeFeed_"];
             else handlers[action] = "";
         }
         assert_(new Set(actions).size === actions.length, "Acciones duplicadas en dispatcher " + name + ".");
