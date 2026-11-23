@@ -1441,6 +1441,29 @@ function createSharedMutationCoordinator_(dependencies) {
         return result;
     }
 
+    function publishWriteCatalogResetFromBrowser_(payload) {
+        const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+        const userId = String(source.userId || "").trim();
+        const sessionToken = String(source.sessionToken || "");
+        const operation = String(source.operation || "").trim();
+        const requestId = String(source.requestId || "").trim();
+        const allowedOperations = new Set(["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"]);
+        if (!userId || !sessionToken) throw new Error("La publicación de WRITE requiere una sesión autenticada.");
+        if (!allowedOperations.has(operation)) throw new Error("La operación WRITE no está autorizada para publicar el catálogo.");
+        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) throw new Error("El identificador de publicación WRITE no es válido.");
+        const actor = authorizeSession_(userId, sessionToken, now());
+        const role = String(actor && actor.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+        const allowedRoles = new Set(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
+        if (!allowedRoles.has(role)) throw new Error("El rol de la sesión no puede publicar cambios de WRITE.");
+        if (operation === "freezeCortesIds" && role !== "desarrollador") {
+            throw new Error("Solo Desarrollador puede publicar la estabilización masiva de IDs.");
+        }
+        return publishCatalogChange_("WRITE", operation, {
+            requestId: requestId,
+            change: { operation: "reset" }
+        });
+    }
+
     function handleRequest(request) {
         if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("Solicitud inválida.");
         const protocolVersion = request.protocolVersion === undefined || request.protocolVersion === null
@@ -1473,6 +1496,7 @@ function createSharedMutationCoordinator_(dependencies) {
 
     return {
         handleRequest: handleRequest,
+        publishWriteCatalogResetFromBrowser: publishWriteCatalogResetFromBrowser_,
         // Feed público: solo expone los eventos ya publicados de colecciones del catálogo.
         // Las escrituras y las operaciones de sesión continúan en el canal POST autenticado.
         getPublicCatalogChanges: function(payload) {
@@ -1522,7 +1546,11 @@ function doPost(e) {
             fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
             fetchAll: function(requests) { return UrlFetchApp.fetchAll(requests); }
         });
-        response = coordinator.handleRequest(request);
+        if (request && request.action === "publishWriteCatalogReset") {
+            response = coordinator.publishWriteCatalogResetFromBrowser(request.payload);
+        } else {
+            response = coordinator.handleRequest(request);
+        }
     } catch (error) {
         response = { status: "error", message: error && error.message ? error.message : "Solicitud rechazada." };
     }
