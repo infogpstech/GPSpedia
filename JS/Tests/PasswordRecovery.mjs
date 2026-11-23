@@ -6,7 +6,6 @@ import { dirname, resolve } from "node:path";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const authSource = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
-const coordinatorSource = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "utf8");
 const apiSource = readFileSync(resolve(root, "JS/Frontend/api-config.js"), "utf8");
 const frontendAuthSource = readFileSync(resolve(root, "JS/Frontend/auth.js"), "utf8");
 const mainSource = readFileSync(resolve(root, "JS/Frontend/main.js"), "utf8");
@@ -229,7 +228,7 @@ assert.match(authSource, /function handleRequestPasswordRecovery[\s\S]*?LockServ
 assert.match(authSource, /function handleCompletePasswordRecovery[\s\S]*?revokeSharedUserSessionContexts_/);
 assert.ok(authSource.includes("case 'requestPasswordRecovery':"));
 assert.ok(authSource.includes("case 'completePasswordRecovery':"));
-assert.doesNotMatch(coordinatorSource, /requestPasswordRecovery|completePasswordRecovery/);
+assert.doesNotMatch(apiSource, /COORDINATOR|getServiceTraffic/);
 assert.ok(apiSource.includes("'requestPasswordRecovery': 'AUTH'"));
 assert.ok(apiSource.includes("'completePasswordRecovery': 'AUTH'"));
 const loginBoundary = frontendAuthSource.indexOf("\nexport async function login(");
