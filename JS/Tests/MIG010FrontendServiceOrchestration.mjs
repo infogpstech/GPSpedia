@@ -43,12 +43,12 @@ assert.ok(operationPersist >= 0 && backupRequest > operationPersist, "El operati
 assert.ok(workflow.includes("state.operationId =") || workflow.includes("state.operationId="));
 
 const backupHelperStart=admin.indexOf("function cacheVerifiedDatabaseBackupForDeveloper_");
-const backupHelperEnd=admin.indexOf("\\n/**\\n * 1. Respaldo",backupHelperStart);
+const backupHelperEnd=admin.indexOf("\n/**\n * 1. Respaldo",backupHelperStart);
 const backupHandlerStart=admin.indexOf("function handleBackupDatabase(");
-const backupHandlerEnd=admin.indexOf("\\nfunction handleBackupDrive(",backupHandlerStart);
+const backupHandlerEnd=admin.indexOf("\nfunction handleBackupDrive(",backupHandlerStart);
 assert.ok(backupHelperStart>=0&&backupHelperEnd>backupHelperStart);
 assert.ok(backupHandlerStart>=0&&backupHandlerEnd>backupHandlerStart);
-const backupSource=admin.slice(backupHelperStart,backupHelperEnd)+"\\n"+admin.slice(backupHandlerStart,backupHandlerEnd);
+const backupSource=admin.slice(backupHelperStart,backupHelperEnd)+"\n"+admin.slice(backupHandlerStart,backupHandlerEnd);
 const mockFiles=new Map(),mockCache=new Map();let backupCopies=0;
 const sourceSpreadsheet={getId:()=>"SOURCE_ID",getName:()=>"GPSpedia DB",getSheetByName:()=>({})};
 function mockBackupFile(name,id){
@@ -73,7 +73,7 @@ const backupDeps={
  adminRestoreRunId_:()=>"RUN-1",logMessage:()=>{}
 };
 const runBackup=new Function("DriveApp","SpreadsheetApp","CacheService",...Object.keys(backupDeps),
- backupSource+"\\nreturn handleBackupDatabase;")(mockDrive,mockSpreadsheetApp,mockCacheService,...Object.values(backupDeps));
+ backupSource+"\nreturn handleBackupDatabase;")(mockDrive,mockSpreadsheetApp,mockCacheService,...Object.values(backupDeps));
 const backupRequest={operationId:"reorg_test_20261123_abc123xyz"},backupOwner={userId:"U-1"};
 const firstBackup=runBackup(backupRequest,backupDeps.logMessage,backupOwner);
 const replayBackup=runBackup(backupRequest,backupDeps.logMessage,backupOwner);
