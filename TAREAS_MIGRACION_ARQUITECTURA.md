@@ -79,15 +79,18 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Validación CI:** run `45172002358` SUCCESS; 306 suites, 3,581 pruebas aprobadas, cero fallos; sintaxis verificada en 438 archivos JS/MJS y referencias relativas en 348 archivos. El contrato nuevo `ServiceCallGraphContract` aprobó 9/9.
 
 ### MIG-005 — Línea base funcional y de rendimiento
-**Estado: PENDIENTE**
-- [ ] Ejecutar la suite local disponible y guardar resultado inicial.
-- [ ] Registrar latencia de arranque/login/catálogo/Inbox y operaciones frecuentes cuando haya entorno autorizado.
-- [ ] Registrar tamaño/tiempo de snapshot y deltas del catálogo.
-- [ ] Medir tiempos de carga de imagen/vídeo y operaciones de Drive.
-- [ ] Registrar estado de cachés, número de llamadas y lecturas/escrituras de Spreadsheet.
-- [ ] No inventar mediciones de Beta si no se ejecutan.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+- [x] Ejecutar la suite de regresión disponible en CI sobre el HEAD exacto de la rama y guardar el resultado inicial.
+- [x] Registrar la duración observada del workflow de CI como referencia del proceso de pruebas, separada del rendimiento de la aplicación.
+- [ ] Medir latencia real de arranque/login/catálogo/Inbox y operaciones frecuentes: pendiente de navegador/dispositivo y credenciales del entorno Beta.
+- [ ] Medir tamaño y tiempo de snapshot/deltas del catálogo: pendiente de instrumentación/ejecución con servicios y Spreadsheet aislados.
+- [ ] Medir carga real de imágenes/vídeos y operaciones Drive: pendiente de navegador, OAuth y recursos de prueba Beta.
+- [ ] Medir estado de cachés, número real de llamadas y lecturas/escrituras Spreadsheet: pendiente de telemetría/invocaciones autorizadas.
+- [x] Distinguir resultados observados de métricas no disponibles; no inferir ni inventar valores de Beta.
 
-**Aceptación:** línea base con resultados medidos y limitaciones explícitas.
+**Evidencia:** LINEA_BASE_MIGRACION_2026-11-23.md. Workflow GPSpedia service regression tests, run 45172298195, commit f20bc9934031adb63947e82e1e26b7a24ef4b0f1: 306 suites, 3,581 pruebas aprobadas, 0 fallos; sintaxis de 438 archivos JS/MJS y referencias relativas de 348 archivos aprobadas. Duración del workflow observada: aproximadamente 30 s, incluida preparación del runner; no es latencia de GPSpedia. Health read-only run 45172298206: 7/7 servicios respondieron correctamente por GET.
+
+**Criterio de cierre:** línea base reproducible de pruebas CI registrada. Las mediciones de rendimiento de la aplicación y contadores reales de servicios/Spreadsheet quedan expresamente diferidas a Beta; no bloquean el cierre local según NORMAS §5 y §10.
 
 ---
 

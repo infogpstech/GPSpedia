@@ -39,3 +39,14 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se agregó JS/Tests/ServiceCallGraphContract.mjs y se registró en JS/Tests/RunServiceTests.mjs.
 - Se cerró MIG-004 en TAREAS_MIGRACION_ARQUITECTURA.md y se añadió la sección 20 a MATRIZ_MIGRACION_SERVICIOS.md.
 - No se retiraron llamadas, endpoints, capacidades, propiedades, secretos ni deployments. No se modificó código funcional.
+
+
+### 2026-11-23 — MIG-005: línea base funcional y de rendimiento
+
+- Se creó LINEA_BASE_MIGRACION_2026-11-23.md con la línea base de CI y la separación explícita entre contratos/simulaciones locales y métricas reales pendientes de Beta.
+- Workflow GPSpedia service regression tests, run 45172298195, commit f20bc9934031adb63947e82e1e26b7a24ef4b0f1: SUCCESS; 306 suites, 3,581 pruebas aprobadas, 0 fallos de suite.
+- Sintaxis: 438 archivos JS/MJS aprobados. Referencias relativas: 348 archivos inspeccionados y resueltos. Contrato ServiceCallGraphContract: 9/9 PASS.
+- Workflow de health read-only run 45172298206: siete endpoints consultados por GET; SUCCESS. No se realizaron escrituras ni despliegues.
+- Se registró la duración aproximada de 30 s del workflow completo como métrica del runner, no como latencia de la aplicación.
+- Arranque/login, catálogo e Inbox reales, snapshot/deltas, multimedia, Drive, cachés, llamadas y lecturas/escrituras Spreadsheet quedan pendientes de medición Beta por falta de navegador, credenciales y recursos aislados autorizados.
+- MIG-005 se cerró como COMPLETADA CON VALIDACIÓN DIFERIDA. No se modificó código funcional, endpoints, propiedades, Spreadsheet, Drive ni deployments.

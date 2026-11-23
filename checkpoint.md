@@ -451,3 +451,30 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - No se ejecutaron pruebas de escritura sobre Spreadsheet/Drive, invalidación de cachés remota, cambios de sesión, OAuth ni YouTube en un entorno Beta aislado.
 
 **Corrección de estado:** MIG-004 queda **COMPLETADA CON VALIDACIÓN DIFERIDA** con las pruebas locales/CI pertinentes aprobadas. Solo permanecen las validaciones externas de Beta y la equivalencia funcional de las sustituciones futuras; no se modificó ningún deployment.
+
+
+---
+
+## Cierre MIG-005 — línea base funcional y de rendimiento — 2026-11-23
+
+### Estado Git y validación
+- Rama de trabajo verificada: GPSpedia2.2.5_work.
+- HEAD de referencia al iniciar la actualización: f20bc9934031adb63947e82e1e26b7a24ef4b0f1.
+- Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+- Workflow de regresión run 45172298195, commit f20bc9934031adb63947e82e1e26b7a24ef4b0f1: SUCCESS, 306 suites, 3,581 pruebas aprobadas y 0 fallos de suite.
+- RepositoryJavaScriptSyntax: 438 archivos JS/MJS aprobados.
+- RepositoryModuleReferences: 348 archivos inspeccionados; referencias relativas resueltas.
+- Health read-only run 45172298206: SUCCESS, siete endpoints consultados por GET.
+
+### Resultado MIG-005
+- Se creó LINEA_BASE_MIGRACION_2026-11-23.md con resultados reproducibles, métricas de CI, contratos locales de rendimiento y matriz explícita de mediciones no disponibles.
+- Se registra una duración aproximada de 30 segundos para el workflow CI completo (preparación, ejecución y limpieza). No se presenta como latencia de GPSpedia.
+- Las pruebas de catálogo, miniaturas, caché, lecturas acotadas, lotes, locks y PBKDF2 aportan contratos/simulaciones; no equivalen a mediciones reales de servicios o navegador.
+- Arranque/login, catálogo e Inbox de extremo a extremo, tamaño/tiempo de snapshot y deltas, carga real de imagen/vídeo, operaciones Drive, cachés, llamadas y lecturas/escrituras Spreadsheet quedan PENDIENTES DE VALIDACIÓN BETA por falta de navegador/sesión de prueba, OAuth y recursos aislados autorizados.
+- No se inventaron métricas, no se modificó código funcional, endpoints, propiedades, Spreadsheet, Drive ni deployments.
+
+**Resultado:** MIG-005 queda COMPLETADA CON VALIDACIÓN DIFERIDA. La línea base local de CI está registrada; las métricas reales de rendimiento deben obtenerse en Beta y compararse con esta referencia antes de aceptar la paridad de rendimiento.
+
+### Continuidad
+- MIG-001 a MIG-005: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- Siguiente tarea pendiente: MIG-006 — Spike técnico de acceso a Spreadsheet, prioridad 1. Demostrar acceso al contenedor activo desde Web App sin ID/configuración local, mediante prueba reproducible de lectura/escritura en una hoja desechable; no modificar datos ni deployments reales sin autorización.
