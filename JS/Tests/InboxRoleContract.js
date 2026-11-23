@@ -51,7 +51,7 @@ run('El journal de cambios se consulta desde frontend directamente en CATALOG',(
   const start=api.indexOf('export async function getCatalogChanges(');
   const end=api.indexOf('\nexport async function ',start+10);
   const body=api.slice(start,end>start?end:api.length);
-  assert(start>=0&&body.includes("getConfiguredServiceEndpoint_(\"COORDINATOR\")"));
+  assert(start>=0&&body.includes("getConfiguredServiceEndpoint_(\"CATALOG\")"));
   assert(!/GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/.test(body));
 });
  run('Lecturas FEEDBACK protegidas usan actor cacheado; rutas públicas no requieren sesión',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const RICH_TEXT_MODE_PROPERTY_'));assert(d.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));assert(!d.includes('withSharedMutationLease_'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
