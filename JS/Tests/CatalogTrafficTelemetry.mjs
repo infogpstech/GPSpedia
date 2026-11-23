@@ -19,7 +19,7 @@ test("CATALOG no mantiene contador directo ni endpoint de telemetría", () => {
 test("CATALOG expone inventario mínimo bajo sesión propia, sin secreto interservicio", () => {
     assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_SECRET_PROPERTY_|catalogTrafficSecretEquals_/);
     assert.match(catalog, /includeImageInventoryCandidates/);
-    assert.match(catalog, /verifyCatalogDeveloperSession_\\(payload\\)/);
+    assert.match(catalog, /verifyCatalogDeveloperSession_\(payload\)/);
     assert.match(catalog, /case 'getContributionCandidates'/);
 });
 
