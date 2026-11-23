@@ -169,6 +169,8 @@ function doPost(e) {
         result = handleGetVehicleProjection_(payload);
         break;
       case 'getContributionCandidates':
+        result = handleGetContributionCandidates_(payload);
+        break;
       case 'getVehicleContributionCandidates':
         result = handleGetContributionCandidates_(payload);
         break;
