@@ -326,3 +326,18 @@ Para el commit `a22f317883377f6ca9aed745f7575d591e68a405`:
 - MIG-001: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - MIG-002: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Siguiente tarea pendiente: **MIG-003 — Inventario de configuración en backend**. Su primer paso será rastrear PropertiesService/ScriptProperties/UserProperties/DocumentProperties y clasificar cada clave/constante sin eliminar ni migrar nada durante el inventario.
+
+
+### Adenda final MIG-002 — completitud de controles dinámicos y validación final — 2026-11-23
+
+- Se amplió el inventario para listar expresamente los formularios dinámicos add-cut-model, apertura, alimentación y vídeo que se abren desde la ficha del vehículo.
+- Se realizó una comprobación estática de los IDs literales en todos los archivos con controles activos: index.html (131 IDs interactivos), HTML/add_cortes.html (27 IDs fijos más el ID dinámico derivado de match.id), HTML/users.html (15), JS/Frontend/ui.js (69) y JS/Frontend/youtubeUpload.js (8). Todos los IDs literales quedaron incluidos en INVENTARIO_PANTALLAS_CAPACIDADES.md; el ID variable de coincidencias quedó descrito por su origen.
+- Se comprobaron 142 referencias a archivos del inventario; ninguna referencia quedó sin resolver en el árbol Git.
+- CI tras la última ampliación del inventario, commit `fc144f5a7a8404f205172e113c97ba69bb99c53c`:
+  - `GPSpedia service regression tests`, run `45166938911`: **SUCCESS**, 305 suites, 3,572 pruebas aprobadas y 0 fallos de suite.
+  - `RepositoryJavaScriptSyntax`: 437 archivos JS/MJS verificados.
+  - `RepositoryModuleReferences`: 347 archivos inspeccionados y referencias relativas resueltas.
+  - `GPSpedia deployed service health (read-only)`, run `45166939043`: **SUCCESS**, siete endpoints consultados por GET. No equivale a validación de UI ni a pruebas Beta de escritura.
+- Se actualizó `ChangesLogs.txt` con la adenda de controles dinámicos; commit `c54892370ddee02885897c143e51ba37d106adbf`.
+- HEAD de trabajo antes de esta actualización: `c54892370ddee02885897c143e51ba37d106adbf`. La rama base sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; comparación: ahead 7169 / behind 0.
+- MIG-002 permanece **COMPLETADA CON VALIDACIÓN DIFERIDA**. No se modificó código funcional, servicios, endpoints, permisos, datos ni deployments.
