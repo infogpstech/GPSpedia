@@ -123,10 +123,46 @@ for (const [name, service, actorLookup] of sessionEntryPoints) {
 assert.match(catalog, /function getCatalogSessionActor_/);
 assert.match(catalog, /function loadCatalogSessionActor_/);
 assert.doesNotMatch(catalog, /GPSpedia_COORDINATOR_SECRET|withSharedMutationLease_/);
+
+// CATALOG mantiene su caché aislada porque su proyecto no incluye el helper común.
+let catalogUsers = [headersUsers,["U-1","tecnico1","hash","Técnico","","","Técnico Uno",""]];
+let catalogSessions = [headersSessions,["U-1","tecnico1","opaque-session-token-0001",new Date(now-60000),"",new Date(now-30000)]];
+let catalogReads = 0;
+const catalogValues = new Map(), catalogTtls = [];
+const catalogCache = {
+    get: key => catalogValues.get(key) || null,
+    put: (key,value,ttl) => { catalogTtls.push(ttl); catalogValues.set(key,value); },
+    remove: key => catalogValues.delete(key)
+};
+const catalogSpreadsheet = {
+    getSheetByName: name => {
+        const rows = name === "Users" ? catalogUsers : name === "ActiveSessions" ? catalogSessions : null;
+        return rows ? {getDataRange:()=>({getValues:()=>{catalogReads++;return rows.map(row=>row.slice());}})} : null;
+    }
+};
+const catalogApi = new Function("SpreadsheetApp","CacheService","Utilities",
+    catalog + "\\nreturn {getCatalogSessionActor_,loadCatalogSessionActor_,invalidateCatalogSessionActorCache_};"
+)({openById:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
+const catalogCold = catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001");
+assert.equal(catalogCold.role,"tecnico");
+const catalogColdReads = catalogReads;
+const catalogHot = catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001");
+assert.equal(catalogHot.userId,"U-1");
+assert.equal(catalogReads,catalogColdReads,"CATALOG reutiliza su caché local en accesos calientes.");
+assert.equal(catalogTtls.at(-1),21600,"CATALOG aplica el TTL local de seis horas.");
+catalogUsers = [headersUsers,["U-1","tecnico1","hash","supervisor","","","Técnico Uno",""]];
+catalogApi.invalidateCatalogSessionActorCache_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]});
+assert.equal(catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001").role,"supervisor");
+catalogSessions = [headersSessions];
+catalogApi.invalidateCatalogSessionActorCache_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]});
+assert.throws(()=>catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001"),/sesión|registro único/i);
+catalogSessions = [headersSessions,["U-1","tecnico1","opaque-session-token-0001",new Date(now-100*86400000),"",new Date(now-100*86400000)]];
+catalogApi.invalidateCatalogSessionActorCache_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]});
+assert.throws(()=>catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001"),/expiró/i);
 assert.match(auth, /const token = record \? record\.token : Utilities\.getUuid\(\)/,
     "La sesión debe usar un token opaco generado en servidor.");
 assert.match(auth, /LOGIN_MAX_ATTEMPTS = 5/);
 assert.match(auth, /LOGIN_LOCKOUT_SECONDS = 15 \* 60/);
 assert.match(auth, /function createPasswordHash\(/);
 assert.match(auth, /function verifyStoredPassword\(/);
-console.log("MIG013SessionActorLocalLookup: 20/20 PASS — caché fría/caliente, TTL, token opaco, identidad, RBAC, expiración, usuario eliminado, token revocado e invalidación local");
+console.log("MIG013SessionActorLocalLookup: 21/21 PASS — caché fría/caliente, TTL, token opaco, identidad, RBAC, expiración, usuario eliminado, token revocado e invalidación local");
