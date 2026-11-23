@@ -197,14 +197,16 @@ test("alta ADMIN de Logo publica upsert exacto tras verificar la fila persistida
     assert.match(adminSource,/publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
 });
 test("WRITE delega la publicación del catálogo al frontend y elimina la llamada interservicio", () => {
-    assert.doesNotMatch(writeSource,/publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
-    assert.ok(apiSource.includes("'publishWriteCatalogReset': 'COORDINATOR'"));
+    assert.equal(writeSource.includes("publishSharedCatalogChange_"), false);
+    assert.equal(writeSource.includes("publishCortesCatalogChange_"), false);
+    assert.equal(writeSource.includes('properties.getProperty("GPSpedia_COORDINATOR_SECRET")'), false);
+    assert.ok(apiSource.includes("'publishCatalogReset': 'COORDINATOR'"));
     assert.match(apiSource,/WRITE_CATALOG_RESET_ACTIONS_/);
-    assert.match(apiSource,/publishWriteCatalogResetAfterMutation_/);
+    assert.match(apiSource,/publishCatalogResetAfterMutation_/);
     assert.match(apiSource,/routeActionInternal_\("publishWriteCatalogReset"/);
-    assert.match(coordinatorSource,/function publishWriteCatalogResetFromBrowser_/);
+    assert.match(coordinatorSource,/function publishCatalogResetFromBrowser_/);
     assert.match(coordinatorSource,/request\.action === "publishWriteCatalogReset"/);
-    assert.match(coordinatorSource,/publishCatalogChange_\("WRITE", operation/);
+    assert.match(coordinatorSource,/publishCatalogChange_\(service, operation/);
     assert.match(coordinatorSource,/change:\s*\{\s*operation:\s*"reset"\s*\}/);
 });
 test("normalizeImages publica solo filas reescritas y usa reset ante respuestas parciales/error", () => {
@@ -294,11 +296,12 @@ test("mutaciones PyS publican upsert exacto sin leases por acción", () => {
     }
 });
 test("WRITE coordina reset desde frontend y FEEDBACK/ADMIN conservan su publicación", () => {
-    assert.doesNotMatch(writeSource,/publishSharedCatalogChange_|publishCortesCatalogChange_/);
-    assert.ok(apiSource.includes("'publishWriteCatalogReset': 'COORDINATOR'"));
+    assert.equal(writeSource.includes("publishSharedCatalogChange_"), false);
+    assert.equal(writeSource.includes("publishCortesCatalogChange_"), false);
+    assert.ok(apiSource.includes("'publishCatalogReset': 'COORDINATOR'"));
     assert.ok(apiSource.includes("WRITE_CATALOG_RESET_ACTIONS_"));
-    assert.ok(apiSource.includes("publishWriteCatalogResetAfterMutation_"));
-    assert.ok(coordinatorSource.includes("publishWriteCatalogResetFromBrowser_"));
+    assert.ok(apiSource.includes("publishCatalogResetAfterMutation_"));
+    assert.ok(coordinatorSource.includes("publishCatalogResetFromBrowser_"));
     assert.ok(feedbackSource.includes("publishPysCatalogChange_(action, problemId)"));
     assert.ok(feedbackSource.includes("publishTutorialCatalogChange_(action, tutorialId)"));
     assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
@@ -359,23 +362,23 @@ test("WRITE publica reset desde navegador con sesión y sin secreto compartido",
     }));
     properties.deleteProperty("GPSpedia_COORDINATOR_SECRET_WRITE");
     const payload = {
-        userId, sessionToken: token, operation: "addOrUpdateCut",
+        userId, sessionToken: token, service: "WRITE", operation: "addOrUpdateCut",
         requestId: "write-addOrUpdateCut-OP-12345678"
     };
-    const first = coordinator.publishWriteCatalogResetFromBrowser(payload);
+    const first = coordinator.publishCatalogResetFromBrowser(payload);
     assert.equal(first.status, "success");
     assert.equal(first.resetRequired, false);
-    const retry = coordinator.publishWriteCatalogResetFromBrowser(payload);
+    const retry = coordinator.publishCatalogResetFromBrowser(payload);
     assert.equal(retry.duplicate, true);
     assert.equal(retry.revision, first.revision);
     const page = coordinator.getPublicCatalogChanges({ cursor: first.revision - 1, limit: 1 });
     assert.equal(page.changes.length, 1);
     assert.equal(page.changes[0].operation, "reset");
     assert.equal(page.changes[0].collection, "*");
-    assert.throws(() => coordinator.publishWriteCatalogResetFromBrowser({
+    assert.throws(() => coordinator.publishCatalogResetFromBrowser({
         ...payload, operation: "unknownAction", requestId: "write-unknown-OP-12345678"
     }), /no está autorizada/);
-    assert.throws(() => coordinator.publishWriteCatalogResetFromBrowser({
+    assert.throws(() => coordinator.publishCatalogResetFromBrowser({
         ...payload, operation: "freezeCortesIds", requestId: "write-freeze-OP-12345678"
     }), /Solo Desarrollador/);
 });
