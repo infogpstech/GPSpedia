@@ -61,15 +61,15 @@ console.log("SessionInvalidationFlow: 15/15 PASS");
 
 const sharedKeys = ["GPSpedia_SHARED_SESSION_ACTOR_V1_" + "a".repeat(64)];
 const catalogKeys = ["GPSpedia_CATALOG_SESSION_ACTOR_V1_" + "b".repeat(64)];
-const calls = [];
-const attempts = new Map();
+const fanoutCalls = [];
+const fanoutAttempts = new Map();
 const fanout = await invalidateSessionActorCaches({
     sessionCacheKeys: { userId: "U-1", shared: sharedKeys, catalog: catalogKeys },
     routeAction: async (action, payload, service) => {
-        calls.push({ action, payload, service });
+        fanoutCalls.push({ action, payload, service });
         const attemptKey = service + ":" + payload.cacheKeys[0];
-        const attempt = (attempts.get(attemptKey) || 0) + 1;
-        attempts.set(attemptKey, attempt);
+        const attempt = (fanoutAttempts.get(attemptKey) || 0) + 1;
+        fanoutAttempts.set(attemptKey, attempt);
         if (service === "ADMIN" && attempt === 1) throw new Error("fallo transitorio");
         return { status: "success", invalidated: payload.cacheKeys.length };
     },
@@ -84,11 +84,11 @@ const fanout = await invalidateSessionActorCaches({
 });
 assert.equal(fanout.status, "success");
 assert.deepEqual(fanout.invalidatedServices, SESSION_CACHE_SERVICES);
-assert.equal(attempts.get("ADMIN:" + sharedKeys[0]), 2);
-assert.equal(calls.length, SESSION_CACHE_SERVICES.length + 1);
-assert.ok(calls.every(call => call.action === "__invalidateSessionActorCache"));
-assert.ok(calls.find(call => call.service === "CATALOG").payload.cacheKeys[0].startsWith("GPSpedia_CATALOG_SESSION_ACTOR_V1_"));
-assert.ok(calls.filter(call => call.service !== "CATALOG").every(call => call.payload.cacheKeys[0].startsWith("GPSpedia_SHARED_SESSION_ACTOR_V1_")));
+assert.equal(fanoutAttempts.get("ADMIN:" + sharedKeys[0]), 2);
+assert.equal(fanoutCalls.length, SESSION_CACHE_SERVICES.length + 1);
+assert.ok(fanoutCalls.every(call => call.action === "__invalidateSessionActorCache"));
+assert.ok(fanoutCalls.find(call => call.service === "CATALOG").payload.cacheKeys[0].startsWith("GPSpedia_CATALOG_SESSION_ACTOR_V1_"));
+assert.ok(fanoutCalls.filter(call => call.service !== "CATALOG").every(call => call.payload.cacheKeys[0].startsWith("GPSpedia_SHARED_SESSION_ACTOR_V1_")));
 assert.equal(SESSION_ACTOR_CACHE_TTL_SECONDS, 21600);
 
 const partialFanout = await invalidateSessionActorCaches({
@@ -102,7 +102,7 @@ const partialFanout = await invalidateSessionActorCaches({
 assert.equal(partialFanout.status, "partial");
 assert.deepEqual(partialFanout.failedServices, ["FEEDBACK"]);
 assert.equal(partialFanout.maxCacheTtlSeconds, 21600);
-assert.doesNotMatch(JSON.stringify(calls), /opaque-session-token/);
+assert.doesNotMatch(JSON.stringify(fanoutCalls), /opaque-session-token/);
 console.log("MIG-014 frontend fan-out: 6 servicios, retry, fallo parcial y TTL 21600s PASS");
 
 const sharedSource = read("JS/Services/SharedMutationClient.js");
