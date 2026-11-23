@@ -1489,37 +1489,6 @@ function createSharedMutationCoordinator_(dependencies) {
         return result;
     }
 
-    function publishCatalogResetFromBrowser_(payload) {
-        const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
-        const userId = String(source.userId || "").trim();
-        const sessionToken = String(source.sessionToken || "");
-        const service = String(source.service || "").trim().toUpperCase();
-        const operation = String(source.operation || "").trim();
-        const requestId = String(source.requestId || "").trim();
-        const allowedOperations = {
-            WRITE: new Set(["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"]),
-            ADMIN: new Set(["addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
-                "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
-                "migrateIdentifiers", "rollbackIdentifiers", "resolveVehicleContributionCandidate"])
-        };
-        if (!userId || !sessionToken) throw new Error("La publicación del catálogo requiere una sesión autenticada.");
-        if (!allowedOperations[service] || !allowedOperations[service].has(operation)) {
-            throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
-        }
-        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) throw new Error("El identificador de publicación no es válido.");
-        const actor = authorizeSession_(userId, sessionToken, now());
-        const role = String(actor && actor.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-        const allowedRoles = new Set(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
-        if (!allowedRoles.has(role)) throw new Error("El rol de la sesión no puede publicar cambios del catálogo.");
-        if ((service === "ADMIN" || operation === "freezeCortesIds") && role !== "desarrollador") {
-            throw new Error("Solo Desarrollador puede publicar estas operaciones administrativas.");
-        }
-        return publishCatalogChange_(service, operation, {
-            requestId: requestId,
-            change: { operation: "reset" }
-        });
-    }
-
     function getServiceTrafficFromBrowser_(payload) {
         const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
         const userId = String(source.userId || "").trim();
@@ -1563,37 +1532,12 @@ function createSharedMutationCoordinator_(dependencies) {
 
     return {
         handleRequest: handleRequest,
-        publishCatalogResetFromBrowser: publishCatalogResetFromBrowser_,
         getServiceTrafficFromBrowser: getServiceTrafficFromBrowser_,
-        // Feed público: solo expone los eventos ya publicados de colecciones del catálogo.
-        // Las escrituras y las operaciones de sesión continúan en el canal POST autenticado.
-        getPublicCatalogChanges: function(payload) {
-            return getCatalogChanges_("PUBLIC", "getCatalogChanges", payload || {});
-        }
     };
 }
 
 function doGet(e) {
     const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
-    if (String(parameters.catalogFeed || "") === "1") {
-        let response;
-        try {
-            const coordinator = createSharedMutationCoordinator_({
-                properties: PropertiesService.getScriptProperties(),
-                lockService: LockService,
-                now: function() { return Date.now(); },
-                uuid: function() { return Utilities.getUuid(); },
-                sleep: function(milliseconds) { Utilities.sleep(milliseconds); }
-            });
-            response = coordinator.getPublicCatalogChanges({
-                cursor: parameters.cursor,
-                limit: parameters.limit
-            });
-        } catch (error) {
-            response = { status: "error", message: error && error.message ? error.message : "No se pudo consultar el catálogo." };
-        }
-        return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
-    }
     return ContentService.createTextOutput(JSON.stringify({
         status: "available",
         service: "GPSpedia-SharedMutationCoordinator",
@@ -1614,9 +1558,7 @@ function doPost(e) {
             fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
             fetchAll: function(requests) { return UrlFetchApp.fetchAll(requests); }
         });
-        if (request && request.action === "publishCatalogReset") {
-            response = coordinator.publishCatalogResetFromBrowser(request.payload);
-        } else if (request && request.action === "getServiceTraffic") {
+        if (request && request.action === "getServiceTraffic") {
             response = coordinator.getServiceTrafficFromBrowser(request.payload);
         } else {
             response = coordinator.handleRequest(request);
