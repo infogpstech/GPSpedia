@@ -55,4 +55,4 @@ const failedLock = {
     tryLock() { return false; }
 };
 assert.throws(() => runOutside(failedLock, {}, "OP-4", () => true), error => error.code === "WRITE_LOCK_REACQUIRE_PENDING");
-console.log("AdminCutImageLinkOutsideLock: PASS — WRITE ejecuta cinco vínculos Drive fuera del lock y gestiona recuperación/contención");
+console.log("AdminCutImageLinkOutsideLock: 12/12 PASS — WRITE ejecuta cinco vínculos Drive fuera del lock y gestiona recuperación/contención");
