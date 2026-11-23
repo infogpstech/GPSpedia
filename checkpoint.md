@@ -204,3 +204,15 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Se añadió la diferencia a §17.8 de `MATRIZ_MIGRACION_SERVICIOS.md` y a `TAREAS_MIGRACION_ARQUITECTURA.md`. La posición real debe comprobarse contra la Spreadsheet y el flujo `renameVinColumnHeader`; no se modificaron columnas ni código.
 - El README completo (202 líneas), NORMAS_DESAROLLO.md (secciones 1–17), contexto_personal.md, checkpoint.md, plan, tareas de migración, matriz y documentación Beta fueron consultados para esta continuidad.
 - Commit adicional de matriz: `edf1b96fed3a5e5a9271a70c7475dde38386b48b`; commit adicional de tareas: `1fc84f1aa0edc63bdca20df6597920e421a46652`.
+
+
+
+### MIG-001 — Inventario de esquemas y dependencias FEEDBACK / CATALOG / ADMIN / UTILITIES / Inbox — 2026-11-23
+
+- Se amplió `MATRIZ_MIGRACION_SERVICIOS.md` con §18: tablas principales de FEEDBACK, mapas de CATALOG, PyS, tutoriales y eventos, tablas directas Inbox y diarios/hojas administrativas.
+- Se registraron cinco hojas Inbox independientes y sus encabezados completos; se conserva la semántica de estado, archivado, flags por usuario y auditoría.
+- Quedaron identificadas, pero aún sin esquema completo, `FeedbackLikes`, `FeedbackYearApplications`, `FeedbackYearApplicationEvents`, `AdminState` e `Imagenes_Reemplazadas`, además de hojas ADMIN creadas dinámicamente y el detalle de staging/backup de UTILITIES.
+- Se constató que ADMIN conserva URLs de otros cinco servicios y wrappers `UrlFetchApp.fetch`; Coordinator mantiene propiedades para leases, sesiones/contexto, revisiones/eventos y tráfico; UTILITIES requiere el contexto confiable de Coordinator. Se documentó como inventario para MIG-003/MIG-004/MIG-011, sin modificar código ni configuración.
+- La inspección fue estática sobre los archivos de la rama. No se accedió a Spreadsheet/Drive reales ni a proyectos Apps Script desplegados. No se ejecutaron pruebas remotas.
+- Se actualizó `TAREAS_MIGRACION_ARQUITECTURA.md`; MIG-001 permanece **EN PROGRESO**.
+- Commit de matriz: `c5230a86c3e7405b3d56457580aa4daf3472f8e3`. Commit de tareas: `79157ef09a1fbe5a9ab8ef0c0a089efbf7ab6a2e`.
