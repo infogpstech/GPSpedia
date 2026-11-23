@@ -352,3 +352,8 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - `handleCreateCortesImageFolder` ahora obtiene la raíz mediante `getCortesRootFolder()`, eliminando la dependencia directa de `CORTES_IMAGES_ROOT_FOLDER_ID`.
 - Se añadió `AdminCentralCortesFolderConfiguration.mjs` con cuatro escenarios y se incorporó al runner de regresión como grupo MIG026.
 - Se amplió la lista Beta para verificar la creación real bajo la raíz configurada y el rechazo de configuración inválida. No se modificó Drive ni se ejecutó deployment.
+
+
+2026-11-23 — Resultado CI MIG-026
+- Run 45290329039: sintaxis PASS y AdminCentralCortesFolderConfiguration 4/4 PASS.
+- Regresión: 4,671 pruebas PASS; falla preexistente FeedbackLockFastFail.mjs, reproducida también en run 45289392165 anterior al commit MIG-026. No atribuible al cambio ADMIN.

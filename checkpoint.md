@@ -1423,7 +1423,7 @@ Actividad implementada:
 - `Tareas_Beta.md`: procedimiento de validación real añadido.
 
 Validación:
-- La suite y la sintaxis se ejecutarán mediante GitHub Actions Node.js 22 después de publicar este commit; todavía no se afirma un resultado de CI.
+- GitHub Actions Node.js 22, run 45290329039, commit 169a249875eabdd32db234940e0c74e9bcca8773: sintaxis de módulos modificados SUCCESS; `AdminCentralCortesFolderConfiguration` 4/4 PASS; regresión global 4,671 pruebas PASS y 1 suite fallida ajena a MIG-026 (`FeedbackLockFastFail.mjs`, expectativa preexistente sobre locks FEEDBACK). El mismo fallo aparece en el run anterior 45289392165, antes del commit MIG-026; no se atribuye a este cambio.
 - No se ejecutaron Apps Script, Drive, Spreadsheet ni recursos externos. La verificación real queda pendiente de Beta aislada.
 
 Pendiente MIG-026:
@@ -1431,4 +1431,18 @@ Pendiente MIG-026:
 - Resolver acceso a Spreadsheet sin configuración local conforme a MIG-006/MIG-008; no sustituir `openById` sin evidencia del contexto real.
 - Migrar parámetros y estados operativos uno por uno con paridad, sin mover ledgers ni secretos a configuración genérica.
 - Completar revisión estática, pruebas y registros antes de iniciar MIG-027.
+================================================================================
+
+
+================================================================================
+RESULTADO DE CI — MIG-026 — 2026-11-23
+Commit: 169a249875eabdd32db234940e0c74e9bcca8773
+GitHub Actions run: 45290329039
+- Verificación de rama/repositorio: PASS.
+- Sintaxis de módulos JavaScript modificados: PASS.
+- Suite AdminCentralCortesFolderConfiguration: 4/4 PASS.
+- Regresión global: 418 suites iniciadas; 4,671 pruebas aprobadas; 1 suite fallida.
+- Fallo: `JS/Tests/FeedbackLockFastFail.mjs`, comprobación histórica que espera ausencia de `LockService` en FEEDBACK. El log muestra el fallo en el run anterior 45289392165, antes del commit MIG-026 (417 suites, 4,667 pruebas, misma suite fallida). Se considera fallo preexistente y fuera del cambio MIG-026; no se modifica FEEDBACK como parte de esta tarea sin análisis propio.
+- No se ejecutó Beta real ni se accedió a recursos de Apps Script, Drive o Spreadsheet.
+Estado MIG-026: EN PROGRESO. No iniciar MIG-027.
 ================================================================================
