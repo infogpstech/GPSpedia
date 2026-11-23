@@ -805,7 +805,7 @@ run("Read, archive y close revierten el estado si no se puede confirmar la audit
     }).data.some(item => item.conversationId === archiveConversation.conversationId),false);
 
     const closeConversation = api.handleCreateInboxConversation({
-        ...actor("U6","token-d"),recipientId:"U2",subject:"Rollback cierre",category:"soporte",
+        ...actor("U6","token-d"),recipientId:"U7",subject:"Rollback cierre",category:"soporte",
         body:"El cierre debe revertirse si falla su auditoría.",idempotencyKey:"rollback-close-01"
     });
     const conversationSheet = spreadsheet.getSheetByName("InboxConversations");
