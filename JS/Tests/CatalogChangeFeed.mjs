@@ -238,5 +238,5 @@ test("valida cursor y límite", () => {
     assert.throws(() => h.feed.getChanges({ cursor: 0, limit: 51 }));
 });
 
-console.log("CatalogChangeFeed: " + passed + "/15 PASS");
-assert.equal(passed, 15);
+console.log("CatalogChangeFeed: " + passed + "/16 PASS");
+assert.equal(passed, 16);
