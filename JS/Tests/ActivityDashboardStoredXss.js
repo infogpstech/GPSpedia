@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { renderActivityLogs } from "../../activityDashboard.js";
+import { renderActivityLogs } from "../Frontend/activityDashboard.js";
 function assert(condition, message) { if (!condition) throw new Error(message || "Aserción fallida."); }
 class FakeElement {
     constructor(tagName) { this.tagName = tagName; this.children = []; this.ownerDocument = null; this._textContent = ""; }
@@ -29,20 +29,20 @@ function runActivityDashboardStoredXssTests() {
     });
     test("Una respuesta vacía limpia las filas anteriores",()=>{renderActivityLogs(container,[],doc);assert(container.children.length===0);renderActivityLogs(container,null,doc);assert(container.children.length===0);});
     test("El dashboard usa el renderer seguro y no interpola campos del log en HTML",()=>{
-        const ui=readFileSync(new URL("../../ui.js",import.meta.url),"utf8"),start=ui.indexOf("const openDashboardModal_"),end=ui.indexOf("export async function openDashboard",start);
+        const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8"),start=ui.indexOf("const openDashboardModal_"),end=ui.indexOf("export async function openDashboard",start);
         assert(start>=0&&end>start,"No se encontró el dashboard.");
         const block=ui.slice(start,end);
         assert(block.includes("renderActivityLogs(logContainer, result.data)"),"No usa renderer seguro.");
         assert(!/tr\.innerHTML|\$\{log\.(?:nombreUsuario|tipoActividad|detalle)/.test(block),"Interpolación dinámica insegura.");
     });
     test("recordLike valida sesión y sustituye identidad cliente",()=>{
-        const source=readFileSync(new URL("../../Services/feedback.js",import.meta.url),"utf8"),permissions=source.match(/const FEEDBACK_ACTION_PERMISSIONS = Object\.freeze\(\{[\s\S]*?\}\);/);
+        const source=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8"),permissions=source.match(/const FEEDBACK_ACTION_PERMISSIONS = Object\.freeze\(\{[\s\S]*?\}\);/);
         const start=source.indexOf("function authorizeFeedbackAction_"),end=source.indexOf("function doPostInternal_",start),auth=source.slice(start,end);
         assert(permissions&&/recordLike:\s*null/.test(permissions[0]),"recordLike no está declarado.");
         assert(auth.includes("assertFeedbackSession(source, FEEDBACK_ACTION_PERMISSIONS[action])")&&auth.includes("userId: actor.userId, userName: actor.userName, userRole: actor.role"),"Identidad no derivada.");
     });
     test("La regresión POST directo incluye nombre HTML malicioso y sesión ausente",()=>{
-        const source=readFileSync(new URL("../../Services/Test/FeedbackWriteSecurity.js",import.meta.url),"utf8");
+        const source=readFileSync(new URL("../FeedbackWriteSecurity.js",import.meta.url),"utf8");
         assert(source.includes('<img src=x onerror=alert("forged")>')&&source.includes("const missingSession = doPost")&&source.includes('received.userName === "Usuario verificado"'),"Falta regresión de identidad.");
     });
     return {status:failed===0?"PASS":"FAIL",passed,failed,results};
