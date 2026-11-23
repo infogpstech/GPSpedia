@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { VinDifferentialEngine, getClassificationKey, mapVinMatchesToRecords } from '../../VinDifferentialEngine.js';
+import { VinDifferentialEngine, getClassificationKey, mapVinMatchesToRecords } from '../Frontend/VinDifferentialEngine.js';
 let passed=0;function test(name,fn){fn();passed++;console.log('PASS',name);}
 test('extractSharedChars exige mismo carácter en la misma posición',()=>{const e=new VinDifferentialEngine();assert.deepEqual(e.extractSharedChars([{positions:[0,3,5],values:['A','7','X']},{positions:[0,3,5],values:['A','8','X']},{positions:[0,3],values:['A','7']}]),[{position:1,char:'A'}]);});
 test('extractSharedChars admite posiciones fuera de orden',()=>{const e=new VinDifferentialEngine();assert.deepEqual(e.extractSharedChars([{positions:[2,0],values:['C','A']},{positions:[0,2],values:['A','C']}]),[{position:3,char:'C'},{position:1,char:'A'}]);});
