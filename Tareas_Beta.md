@@ -116,3 +116,29 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - Probar inventario, imagen reemplazada, marcar en uso, mover, papelera, restaurar y eliminación definitiva con recursos desechables; verificar propietario, padre, RBAC, read-back y rollback.
 - Confirmar que Imagenes_Sin_Uso se localiza por nombre, que los duplicados se reportan sin mover archivos y que no se crea una segunda carpeta.
 - No usar recursos productivos ni simular pruebas Beta con CI. Registrar commit, servicio, rol, dispositivo/navegador y evidencia anonimizada.
+
+
+---
+
+## 6.2 Validación Beta diferida — MIG-017 herramientas y operaciones Drive
+- Ejecutar primero la sincronización segura y crear una unidad/carpeta Drive Beta aislada, sin archivos productivos.
+- Publicar en la configuración central el recurso de la raíz Cortes Beta; no introducir IDs de carpetas, URLs ni credenciales en código o ScriptProperties.
+- Probar `dir`, `cd`, `tree`, `mkdir` y navegación en raíz, subcarpetas, rutas inválidas, padres externos y carpetas compartidas.
+- Probar `move` de archivos entre subcarpetas autorizadas, con espacios en nombres; comprobar read-back, ID, propietario, permisos, padre y ausencia de copias/duplicados.
+- Provocar fallos controlados para verificar rollback de movimiento y que no se alteran ACL/propietario.
+- Probar backup reanudable, pausa, reanudación, checksum, restauración y recuperación ante respuesta perdida con archivos desechables.
+- Probar auditoría de imágenes, inventario, métricas y alertas de almacenamiento; validar límites, paginación, URLs de descarga y RBAC por rol.
+- Probar papelera, restauración y eliminación definitiva únicamente con archivos creados para Beta; comprobar confirmaciones y bloqueos de acciones destructivas.
+- Registrar proyecto Apps Script, rol, operación, IDs anonimizados, resultado y evidencia; no copiar datos de clientes.
+
+## 6.3 Validación Beta diferida — MIG-018 modelos, cortes, VIN y contribuciones
+- Preparar Spreadsheet Beta aislada, con copia anonimizada del esquema de Cortes/Relay y sin datos personales/productivos. Confirmar los permisos mínimos de CATALOG, WRITE y ADMIN.
+- Ejecutar la migración explícita de `AportesVehiculo`; comprobar encabezados versionados, rechazo de esquemas incompatibles, idempotencia y que no se recrea ni sobrescribe una hoja existente.
+- Probar creación y edición de modelos/cortes, IDs, asignación concurrente, slots, versiones y campos versionados; verificar límites de capacidad y recuperación por `opId`.
+- Probar aportes de apertura, alimentación, imágenes y notas; comprobar IDs idempotentes independientes, actor/fecha de servidor, append-only, read-back y recuperación después de respuesta perdida.
+- Probar candidatos de contribución: aceptación, corrección, descarte, conflicto VIN, resolución duplicada y auditoría; verificar que no se edita ni elimina el evento original.
+- Probar proyección CATALOG de contribuciones y VIN con varias sesiones concurrentes, VIN duplicados entre vehículos, versiones múltiples y campos ya ocupados; ningún conflicto debe sobrescribir datos existentes.
+- Probar búsqueda por marca/modelo/versión/año, rangos abiertos/cerrados, selección ambigua, navegación atrás/adelante, historial y recarga.
+- Probar VIN en formularios y navegación con valores incompletos, malformados, repetidos y colecciones heredadas; confirmar privacidad, normalización, firmas y que no se expone más información de la necesaria.
+- Probar operaciones suplementarias con y sin imágenes, cierre/recarga del navegador, reintentos y recuperación IndexedDB; confirmar que no se duplican eventos ni se pierden aportes.
+- Ejecutar con roles reales y registrar permisos, proyecto/servicio, operación, dispositivo/navegador, IDs anonimizados y evidencia. No considerar CI simulado como sustituto de estas pruebas.
