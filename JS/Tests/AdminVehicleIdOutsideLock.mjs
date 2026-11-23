@@ -12,7 +12,7 @@ const legacyEnd = admin.indexOf("\nfunction sanitizeSupplementaryRichText_", leg
 assert.ok(legacyStart >= 0 && legacyEnd > legacyStart, "La ruta de compatibilidad ADMIN debe permanecer identificable.");
 const legacyHandler = admin.slice(legacyStart, legacyEnd);
 assert.match(legacyHandler, /ACTION_MOVED_TO_WRITE/);
-assert.doesNotMatch(legacyHandler, /UrlFetchApp|requestNextVehicleIdFromWriteService|lock\\.tryLock/,
+assert.doesNotMatch(legacyHandler, /UrlFetchApp|requestNextVehicleIdFromWriteService|lock\.tryLock/,
     "El handler legacy debe rechazar la acción sin ejecutar coordinación ni escrituras.");
 assert.match(api, /'addOrUpdateCut': 'WRITE'/,
     "El frontend debe resolver la acción de alta directamente hacia WRITE.");
