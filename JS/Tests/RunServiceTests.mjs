@@ -85,7 +85,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE reutiliza la fila de vehículo localizada durante el registro de cortes','JS/Tests/WriteCutExistingVehicleSnapshotReuse.mjs');
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
   runCli('ADMIN agrupa los cinco campos contiguos del corte existente','JS/Tests/AdminCutSlotBatchWrites.mjs');
-  runCli('ADMIN agrupa reparaciones de registros recuperados','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
+  runCli('MIG-010 recuperación idempotente de altas se ejecuta en WRITE','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
   runCli('ADMIN agrupa escrituras del alta de vehículos nuevos','JS/Tests/AdminNewVehicleBatchWrites.mjs');
   runCli('ADMIN limpia la fila nueva con una sola llamada clearContent','JS/Tests/AdminNewVehicleSingleRowClear.mjs');
   runCli('ADMIN revalida ID de vehículo nuevo desde snapshot post-Drive','JS/Tests/AdminNewVehiclePostDriveIdSnapshotReuse.mjs');
