@@ -21,6 +21,6 @@ import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const result=runActivityLogsBoundedReadTests({feedback:readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8")});
 result.results.forEach(item=>console.log(item.status+" "+item.name+(item.message?" — "+item.message:"")));
-console.log("AUG-120: "+result.passed+"/"+(result.passed+result.failed)+" pruebas aprobadas.");
+console.log("ActivityLogsBoundedRead: "+result.passed+"/"+(result.passed+result.failed)+" "+result.status+" — AUG-120");
 if(result.failed)process.exitCode=1;
 export {runActivityLogsBoundedReadTests};
