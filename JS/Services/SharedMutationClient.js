@@ -142,56 +142,9 @@ function createSharedMutationClient_(dependencies) {
         }
         return result;
     }
-    function registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
-        return send_("registerSession", "AUTH", "registerSession", { userId, sessionToken, role, fullName, createdAt, lastActivityAt });
-    }
-    function syncUserSessions(userId, role, fullName, sessions) {
-        return send_("syncUserSessions", "AUTH", "syncUserSessions", { userId, role, fullName, sessions });
-    }
-    function invalidateSessionActorCaches(userId, sessionTokens) {
-        const id = String(userId || "").trim();
-        const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
-            .map(token => String(token || "")).filter(Boolean)));
-        if (!id || id.length > 128 || tokens.some(token => token.length < 16 || token.length > 200)) {
-            throw new Error("La invalidación de caché requiere un usuario y tokens de sesión válidos.");
-        }
-        if (!tokens.length) return { status: "success", invalidated: 0 };
-        // Coordinator mantiene las URLs y secretos de WRITE/FEEDBACK/ADMIN.
-        // AUTH solo envía tokens al canal interno autenticado; no conoce credenciales ajenas.
-        for (let offset = 0; offset < tokens.length; offset += 25) {
-            const batch = tokens.slice(offset, offset + 25);
-            const result = send_("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", {
-                userId: id,
-                sessionTokens: batch
-            });
-            if (!result || result.status !== "success" || result.invalidated !== batch.length ||
-                !Array.isArray(result.services) || !["WRITE", "FEEDBACK", "ADMIN"].every(service => result.services.includes(service))) {
-                throw new Error("Coordinator no confirmó la invalidación remota completa de caché.");
-            }
-        }
-        return { status: "success", invalidated: tokens.length };
-    }
-
-    function revokeSession(userId, sessionToken) {
-        invalidateSessionActorCaches(userId, [sessionToken]);
-        return send_("revokeSession", "AUTH", "revokeSession", { userId, sessionToken });
-    }
-    function revokeUserSessions(userId, sessionTokens) {
-        invalidateSessionActorCaches(userId, sessionTokens);
-        return send_("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
-    }
-    function validateSessionContext(userId, sessionToken, service) {
-        const caller = String(service || "AUTH").trim().toUpperCase();
-        return send_("validateSessionContext", caller, "validateSessionContext", { userId, sessionToken });
-    }
-
     return { withLease: withLease, publishCatalogChange: publishCatalogChange,
         publishCatalogChanges: publishCatalogChanges, getCatalogChanges: getCatalogChanges,
-        getServiceTraffic: getServiceTraffic,
-        registerSession: registerSession, syncUserSessions: syncUserSessions,
-        revokeSession: revokeSession, revokeUserSessions: revokeUserSessions,
-        invalidateSessionActorCaches: invalidateSessionActorCaches,
-        validateSessionContext: validateSessionContext };
+        getServiceTraffic: getServiceTraffic };
 }
 
 function withSharedMutationLease_(service, operation, callback, options) {
@@ -246,38 +199,21 @@ function getSharedCatalogChanges_(cursor, limit) {
 }
 
 
-function registerSharedSessionContext_(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
-    const client = createSharedMutationClient_({
-        properties: PropertiesService.getScriptProperties(),
-        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
-        uuid: function() { return Utilities.getUuid(); },
-        logger: function(message) { Logger.log(message); }
-    });
-    return client.registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt);
+function registerSharedSessionContext_(userId, sessionToken, role, fullName) {
+    const actor = { userId: String(userId || "").trim(), role: String(role || "").trim().toLowerCase(),
+        fullName: String(fullName || ""), epoch: 1 };
+    return cacheSharedSessionActor_(actor.userId, sessionToken, actor)
+        ? { status: "success", registered: true }
+        : { status: "error", registered: false };
 }
 
 function revokeSharedSessionContext_(userId, sessionToken) {
-    invalidateLocalSharedSessionActorCaches_(userId, [sessionToken]);
-    const client = createSharedMutationClient_({
-        properties: PropertiesService.getScriptProperties(),
-        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
-        uuid: function() { return Utilities.getUuid(); },
-        logger: function(message) { Logger.log(message); }
-    });
-    return client.revokeSession(userId, sessionToken);
+    return invalidateLocalSharedSessionActorCaches_(userId, [sessionToken]);
 }
 
 function revokeSharedUserSessionContexts_(userId, sessionTokens) {
-    invalidateLocalSharedSessionActorCaches_(userId, sessionTokens);
-    const client = createSharedMutationClient_({
-        properties: PropertiesService.getScriptProperties(),
-        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
-        uuid: function() { return Utilities.getUuid(); },
-        logger: function(message) { Logger.log(message); }
-    });
-    return client.revokeUserSessions(userId, sessionTokens);
+    return invalidateLocalSharedSessionActorCaches_(userId, sessionTokens);
 }
-
 
 function withSharedSessionActor_(event, actor) {
     const source = event && event.postData && typeof event.postData.contents === "string"
@@ -307,18 +243,6 @@ function withSharedSessionActor_(event, actor) {
 }
 
 
-function validateSharedSessionContext_(userId, sessionToken, service) {
-    const client = createSharedMutationClient_({
-        properties: PropertiesService.getScriptProperties(),
-        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
-        uuid: function() { return Utilities.getUuid(); },
-        logger: function(message) { Logger.log(message); }
-    });
-    return client.validateSessionContext(userId, sessionToken, service);
-}
-
-
-
 function getSharedSessionActorCacheKey_(userId, sessionToken) {
     const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
         String(userId || "").trim() + "\\n" + String(sessionToken || ""), Utilities.Charset.UTF_8);
@@ -328,68 +252,32 @@ function getSharedSessionActorCacheKey_(userId, sessionToken) {
 
 function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
     const source = payload && typeof payload === "object" ? payload : {};
-    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
-    const properties = deps.properties || PropertiesService.getScriptProperties();
-    const cache = deps.cache || CacheService.getScriptCache();
-    const expected = String(deps.secret !== undefined ? deps.secret :
-        properties.getProperty("GPSpedia_COORDINATOR_SECRET") || "");
-    const supplied = String(source.secret || "");
-    let difference = expected.length ^ supplied.length;
-    for (let i = 0; i < Math.max(expected.length, supplied.length); i++) {
-        difference |= (expected.charCodeAt(i) || 0) ^ (supplied.charCodeAt(i) || 0);
-    }
-    if (expected.length < 32 || difference !== 0) {
-        return { status: "error", message: "Solicitud interna no autorizada." };
-    }
     const userId = String(source.userId || "").trim();
     const tokens = Array.isArray(source.sessionTokens) ? source.sessionTokens : [];
-    if (!userId || userId.length > 128 || !tokens.length || tokens.length > 5 ||
-        tokens.some(token => typeof token !== "string" || !token || token.length > 200)) {
+    if (!userId || userId.length > 128 || !tokens.length || tokens.length > 25 ||
+        tokens.some(token => typeof token !== "string" || token.length < 16 || token.length > 200)) {
         return { status: "error", message: "Datos de invalidación no válidos." };
     }
-    const uniqueTokens = Array.from(new Set(tokens));
-    uniqueTokens.forEach(token => cache.remove(getSharedSessionActorCacheKey_(userId, token)));
-    return { status: "success", invalidated: uniqueTokens.length };
+    const invalidated = invalidateLocalSharedSessionActorCaches_(userId, tokens, dependencies);
+    return { status: "success", invalidated };
 }
 
 function handleSharedSessionActorCachePriming_(payload, dependencies) {
     const source = payload && typeof payload === "object" ? payload : {};
-    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
-    const properties = deps.properties || PropertiesService.getScriptProperties();
-    const expected = String(deps.secret !== undefined ? deps.secret :
-        properties.getProperty("GPSpedia_COORDINATOR_SECRET") || "");
-    const supplied = String(source.secret || "");
-    let difference = expected.length ^ supplied.length;
-    for (let i = 0; i < Math.max(expected.length, supplied.length); i++) {
-        difference |= (expected.charCodeAt(i) || 0) ^ (supplied.charCodeAt(i) || 0);
-    }
-    if (expected.length < 32 || difference !== 0) {
-        return { status: "error", message: "Solicitud interna no autorizada." };
-    }
     const userId = String(source.userId || "").trim();
-    const role = String(source.role || "").trim().toLowerCase();
-    const fullName = String(source.fullName || "");
-    const epoch = Number(source.epoch);
     const tokens = Array.isArray(source.sessionTokens) ? source.sessionTokens : [];
-    if (!userId || userId.length > 128 || fullName.length > 120 ||
-        !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(role) ||
-        !Number.isSafeInteger(epoch) || epoch < 1 || !tokens.length || tokens.length > 5 ||
+    if (!userId || !tokens.length || tokens.length > 5 ||
         tokens.some(token => typeof token !== "string" || token.length < 16 || token.length > 200)) {
         return { status: "error", message: "Datos de precarga de sesión no válidos." };
     }
-    const uniqueTokens = Array.from(new Set(tokens));
-    if (uniqueTokens.length !== tokens.length) {
-        return { status: "error", message: "La precarga contiene tokens duplicados." };
-    }
-    const cache = deps.cache || CacheService.getScriptCache();
     let primed = 0;
-    uniqueTokens.forEach(token => {
-        if (cacheSharedSessionActor_(userId, token, { userId, role, fullName, epoch }, {
-            cache, keyFor: deps.keyFor, ttlSeconds: deps.ttlSeconds
-        })) primed++;
-    });
-    if (primed !== uniqueTokens.length) {
-        return { status: "error", message: "No se pudo precargar el contexto de sesión completo.", primed };
+    try {
+        tokens.forEach(token => {
+            getCachedSharedSessionActor_(userId, token, Object.assign({}, dependencies || {}, { forceReload: true }));
+            primed++;
+        });
+    } catch (error) {
+        return { status: "error", message: "No se pudo validar la sesión desde ActiveSessions.", primed };
     }
     return { status: "success", primed };
 }
@@ -403,6 +291,7 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     const cache = Object.prototype.hasOwnProperty.call(deps, "cache") ? deps.cache : CacheService.getScriptCache();
     const keyFor = typeof deps.keyFor === "function" ? deps.keyFor : getSharedSessionActorCacheKey_;
     const cacheKey = keyFor(id, token);
+    const forceReload = deps.forceReload === true;
     const validActor = actor => actor && typeof actor === "object" && actor.userId === id &&
         typeof actor.role === "string" &&
         ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(actor.role.trim().toLowerCase()) &&
@@ -410,7 +299,7 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
     if (cache && typeof cache.get === "function") {
         try {
             const cached = cache.get(cacheKey);
-            if (cached) {
+            if (cached && !forceReload) {
                 const actor = JSON.parse(cached);
                 if (validActor(actor)) {
                     // Renovar TTL localmente: una sesión activa no vuelve a Coordinator.
@@ -428,9 +317,80 @@ function getCachedSharedSessionActor_(userId, sessionToken, dependencies) {
             throw new Error("No se pudo leer el contexto local de sesión. Inicia sesión nuevamente.");
         }
     }
-    const error = new Error("El contexto de sesión no está precargado en este servicio. Inicia sesión nuevamente.");
-    error.code = "SESSION_ACTOR_CACHE_MISS";
-    throw error;
+    const loader = typeof deps.loadActor === "function"
+        ? deps.loadActor
+        : loadSharedSessionActorFromSpreadsheet_;
+    try {
+        const actor = loader(id, token, deps);
+        if (!validActor(actor)) throw new Error("La sesión no está activa en Users/ActiveSessions.");
+        cacheSharedSessionActor_(id, token, actor, deps);
+        return actor;
+    } catch (loadError) {
+        const error = new Error(loadError && loadError.message
+            ? loadError.message : "No se pudo confirmar la sesión desde Users/ActiveSessions.");
+        error.code = loadError && loadError.code || "SESSION_ACTOR_CACHE_MISS";
+        throw error;
+    }
+}
+
+function loadSharedSessionActorFromSpreadsheet_(userId, sessionToken, dependencies) {
+    const id = String(userId || "").trim(), token = String(sessionToken || "");
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
+    const spreadsheetId = String(deps.spreadsheetId ||
+        (typeof SPREADSHEET_ID !== "undefined" ? SPREADSHEET_ID : "") || "").trim();
+    if (!spreadsheetId) throw new Error("No está disponible la referencia de la Spreadsheet de identidad.");
+    const openSpreadsheet = typeof deps.openSpreadsheet === "function"
+        ? deps.openSpreadsheet : value => SpreadsheetApp.openById(value);
+    const ss = openSpreadsheet(spreadsheetId);
+    const usersSheet = ss.getSheetByName("Users");
+    const sessionsSheet = ss.getSheetByName("ActiveSessions");
+    if (!usersSheet || !sessionsSheet) throw new Error("No se encontraron Users y ActiveSessions.");
+    const sessionRows = sessionsSheet.getDataRange().getValues();
+    const matches = [];
+    for (let index = 1; index < sessionRows.length; index++) {
+        const row = sessionRows[index];
+        if (String(row[2] || "") === token) matches.push({ row, rowIndex: index + 1 });
+    }
+    if (matches.length !== 1) throw new Error(matches.length > 1
+        ? "El token aparece en varias sesiones." : "La sesión fue revocada o no existe.");
+    const session = matches[0].row;
+    const sessionUserId = String(session[0] === null || session[0] === undefined ? "" : session[0]).trim();
+    if (!sessionUserId || sessionUserId !== id) throw new Error("La identidad no corresponde al token de sesión.");
+    const createdAt = session[3] instanceof Date ? new Date(session[3].getTime()) : new Date(session[3]);
+    const rawActivity = session[5] === null || session[5] === undefined || String(session[5]).trim() === ""
+        ? session[3] : session[5];
+    const lastActivityAt = rawActivity instanceof Date ? new Date(rawActivity.getTime()) : new Date(rawActivity);
+    if (Number.isNaN(createdAt.getTime()) || Number.isNaN(lastActivityAt.getTime())) {
+        throw new Error("La fecha de la sesión no es válida.");
+    }
+    const now = typeof deps.now === "function" ? Number(deps.now()) : Date.now();
+    const addMonths = (date, months) => {
+        const value = new Date(date.getTime()), day = value.getUTCDate();
+        value.setUTCDate(1); value.setUTCMonth(value.getUTCMonth() + months);
+        const lastDay = new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth() + 1, 0)).getUTCDate();
+        value.setUTCDate(Math.min(day, lastDay));
+        return value.getTime();
+    };
+    if (now >= addMonths(createdAt, 3) || now >= addMonths(lastActivityAt, 1)) {
+        throw new Error("La sesión expiró por antigüedad o inactividad.");
+    }
+    const userRows = usersSheet.getDataRange().getValues().slice(1)
+        .filter(row => String(row[0] === null || row[0] === undefined ? "" : row[0]).trim() === id);
+    if (userRows.length !== 1) throw new Error("La cuenta no existe o su identificador no es único.");
+    const user = userRows[0];
+    const username = String(user[1] || "").trim();
+    const role = String(user[3] || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const allowedRoles = ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"];
+    if (!username || username.startsWith("__deleted__:") || !allowedRoles.includes(role)) {
+        throw new Error("La cuenta está desactivada o no tiene un rol válido.");
+    }
+    const pendingMarker = String(user[7] || "");
+    if (pendingMarker.startsWith("__role_revocation_pending__:")) {
+        throw new Error("La revocación de rol de esta cuenta sigue pendiente.");
+    }
+    return { userId: id, role, fullName: String(user[6] || ""), epoch: 1,
+        createdAt: createdAt.getTime(), lastActivityAt: lastActivityAt.getTime() };
 }
 
 function cacheSharedSessionActor_(userId, sessionToken, actor, dependencies) {
