@@ -35,3 +35,44 @@ Deben conservarse `main`, `GPSpedia2.2.5` (base) y `GPSpedia2.2.5_work` (work). 
 2. Verificar aislamiento de deployments, Spreadsheet y Drive Beta.
 3. Ejecutar la matriz de `Tareas_Beta.md` sin modificar código.
 4. Registrar resultados observados en `Hallazgos_Beta.md`.
+
+
+---
+
+## Nuevo objetivo prioritario — Migración de arquitectura sin pérdida funcional
+
+Fecha de actualización: 2026-11-22
+
+El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limitarse a la validación Beta para esta línea de trabajo: rediseñar la arquitectura de servicios para que no exista configuración operativa guardada dentro de proyectos Apps Script y el frontend sea el único coordinador.
+
+### Requisitos vinculantes
+- Todas las configuraciones de GPSpedia se almacenan en Spreadsheet.
+- Ningún servicio guarda propiedades, URLs de otros servicios, IDs de recursos, secretos compartidos ni configuración manual.
+- Ningún servicio GPSpedia llama a otro servicio GPSpedia.
+- No se mantienen COORDINATOR ni SharedMutation ni se crean intermediarios equivalentes.
+- El frontend enruta y coordina solicitudes directas.
+- AUTH/USERS se unifican conservando las funciones de ambos.
+- No se pierde ninguna función de la plataforma: cargas y administración de imágenes/vídeos, creación/edición de modelos, VIN, PyS, tutoriales, Inbox, feedback, Drive, backups/restauración, terminal, estados/latencia/tráfico de servicios, métricas de usuarios, logs, auditorías, herramientas de desarrollador y procesos internos.
+- La configuración y los metadatos se guardan en Spreadsheet; los binarios mantienen un almacenamiento compatible. La migración de Drive/YouTube debe conservar identidad, permisos, propiedad y reanudación.
+- La seguridad y RBAC no se delegan al frontend. No se exponen tokens OAuth ni se introducen claves compartidas de interconexión.
+- Ninguna función se retira por no aparecer en el mapa de 120 acciones: se requiere inventario completo de UI, handlers y procesos manuales/internos.
+
+### Documentos registrados en la rama de trabajo
+- `NORMAS_DESAROLLO.md`: §17 establece configuración centralizada y paridad funcional.
+- `PLAN_NUEVA_ARQUITECTURA_FRONTEND.md`: arquitectura objetivo, fases y criterios de aceptación.
+- `TAREAS_MIGRACION_ARQUITECTURA.md`: 30 tareas con entregables y criterios.
+- `MATRIZ_MIGRACION_SERVICIOS.md`: 120 acciones actuales más matriz CAP-01 a CAP-19 de capacidades a preservar.
+
+### Estado verificado
+- HEAD de `GPSpedia2.2.5_work`: `2a8c1dc449b9503963be82f1693faf5eb8d827ed`.
+- HEAD de `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- La rama base no se modificó.
+- En esta actualización solo se modificaron documentos normativos/de planificación; no se cambió lógica funcional, deployments, Spreadsheet ni Drive.
+- La matriz de 120 acciones ya está registrada, pero el inventario total de pantallas, handlers no mapeados, comandos y procesos internos sigue pendiente.
+
+### Próximas tareas
+1. Completar MIG-001 a MIG-005: inventario real de UI, handlers, propiedades, llamadas internas y línea base.
+2. Ejecutar MIG-006 como prioridad técnica: demostrar acceso a Spreadsheet desde Web Apps sin guardar ID/configuración en los servicios y sin introducir bootstrap oculto.
+3. Diseñar y probar la solución de configuración y caché antes de modificar los servicios funcionales.
+4. No retirar COORDINATOR, SharedMutation, USERS ni endpoints antiguos hasta que todas sus capacidades tengan sustituto probado.
+5. Mantener pruebas Beta reales separadas de las pruebas locales; no afirmar que un deployment fue validado si no se invocó.
