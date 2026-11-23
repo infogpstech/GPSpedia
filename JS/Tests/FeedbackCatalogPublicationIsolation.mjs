@@ -103,5 +103,5 @@ test("el frontend puede enviar el cambio sin transportar datos arbitrarios", () 
     assert.deepEqual(result.snapshot, { fake: true });
 });
 
-console.log("FeedbackCatalogPublicationIsolation: " + passed + "/13 PASS");
-assert.equal(passed, 13);
+console.log("FeedbackCatalogPublicationIsolation: " + passed + "/14 PASS");
+assert.equal(passed, 14);
