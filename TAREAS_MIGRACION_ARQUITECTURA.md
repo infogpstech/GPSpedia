@@ -483,21 +483,30 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Validación Beta real con Apps Script/Spreadsheet/Drive y permisos de producción no ejecutada; queda diferida según NORMAS §5.
 
 ### MIG-023 — Catálogo, cachés y experiencia de usuario
-**Estado: EN PROGRESO (2026-11-23)**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 
 **Punto de partida actualizado (2026-11-23):** el feed incremental ya pertenece a CATALOG. `getCatalogChanges`, `publishCatalogChange` y `publishCatalogReset` se enrutan a CATALOG; FEEDBACK devuelve metadatos y el frontend coordina la publicación después de una mutación confirmada. CATALOG reconstruye los snapshots canónicos desde Spreadsheet y PyS, sin aceptar snapshots del navegador. Las rutas públicas `catalogFeed`, `getCatalogChanges` y `publishCatalogReset` fueron retiradas de COORDINATOR en MIG-023. Permanece pendiente retirar el helper interno `publishCatalogChange_` dentro de SharedMutation (MIG-024) y el endpoint health/agregación de tráfico de COORDINATOR (MIG-025).
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener snapshot/delta, cursor, caché IndexedDB y arranque cache-first.
-- [ ] Mantener navegación, búsqueda, modal de detalle, impresión y QR.
-- [ ] Mantener modo oscuro, PWA, estados de carga/error y accesibilidad.
-- [ ] Mantener funcionamiento parcial cuando un servicio independiente no esté disponible.
-- [ ] Verificar que IndexedDB/miniaturas no bloqueen módulos independientes.
+- [x] Mantener snapshot/delta, cursor, caché IndexedDB y arranque cache-first.
+- [x] Mantener navegación, búsqueda, modal de detalle, impresión y QR.
+- [x] Mantener modo oscuro, PWA, estados de carga/error y accesibilidad.
+- [x] Mantener funcionamiento parcial cuando un servicio independiente no esté disponible.
+- [x] Verificar que IndexedDB/miniaturas no bloqueen módulos independientes.
 
 **Avance de implementación (2026-11-23):**
 - [x] Trasladar el feed de cambios a CATALOG: diario local con ScriptProperties/ScriptLock, revisiones monotónicas, cursor, idempotencia por requestId, retención acotada y recuperación por reset.
 - [x] Enrutar desde frontend `getCatalogChanges`, `publishCatalogChange` y `publishCatalogReset` hacia CATALOG; FEEDBACK deja de llamar a SharedMutationClient para notificar cambios.
 - [x] Reconstruir deltas canónicos para Cortes, PyS y Tutoriales en CATALOG; el navegador solo envía colección/ID/operación y nunca el snapshot.
 - [x] Retirar las rutas públicas de feed de COORDINATOR y actualizar contratos/pruebas para reflejar la nueva propiedad.
+**Validación local y cierre (2026-11-23):**
+- `CatalogChangeFeed`: 16/16 PASS; `CatalogBrowserReset`: 11/11 PASS; `FeedbackCatalogPublicationIsolation`: 14/14 PASS; `AdminCatalogPublicationIsolation`: 26/26 PASS; `CatalogPublicationIsolation`: 27/27 PASS; `CatalogPublicationFrontend`: 4/4 PASS; `DirectTrafficRoutingCoverage`: 6/6 PASS.
+- Cache-first/IndexedDB: `CatalogSnapshotSync`: 29/29 PASS; `CatalogStartupIntegrity`: 25/25 PASS. Incluyen fallback por fallo/lentitud de IndexedDB, delta incremental, cursor, reset, recuperación, aislamiento de fallos PyS y reconciliación silenciosa.
+- Regresión CI Node.js 22 del HEAD `e7ce57dfde8b5141c7bcb60496c0b6e11fa8a37b`: 335 suites y 4,015 pruebas aprobadas. Tres suites fallaron fuera de MIG-023: ADMIN `VehicleModalRolePolicy` (11/12), AUTH `SensitiveLogsTrustedActor` (contrato legacy de lease) e INTEGRATION `GP-PERF FEEDBACK/Inbox` (expectativa legacy sobre locks). No bloquean ni pertenecen al alcance MIG-023; quedan registradas para su tarea correspondiente.
+- GitHub Pages workflow del mismo HEAD: build, reporte y deploy SUCCESS. No se realizó despliegue manual de Apps Script ni se modificaron hojas/datos externos.
+- Pendiente de Beta: deployments CATALOG/FEEDBACK/WRITE/ADMIN, Spreadsheet aislada, lectura GET y publicación POST reales, concurrencia y recuperación de cursor, Android/PWA y escritorio. No se presentan como ejecutadas.
+
+**Resultado:** MIG-023 **COMPLETADA CON VALIDACIÓN DIFERIDA**. Siguiente tarea: MIG-024 — Eliminar SharedMutation.
+
 - [ ] Completar regresión de cache-first/IndexedDB, navegación, búsqueda, impresión/QR, PWA, accesibilidad y operación parcial; validar en Beta real.
 
 
