@@ -20,7 +20,7 @@ assert.doesNotMatch(source.slice(source.indexOf("function handleSharedSessionAct
 
 for(const {path,source:code} of services){
  if(path.endsWith("catalog.js")) assert.match(code,/function invalidateCatalogSessionActorCache_/);
- else assert.match(code,/function handleSharedSessionActorCacheInvalidation_/);
+ else assert.match(code,/handleSharedSessionActorCacheInvalidation_\(/);
  assert.match(code,/__invalidateSessionActorCache/,"Debe exponer invalidación local sin secreto: "+path);
 }
 assert.match(source,/function revokeSharedSessionContext_\(userId, sessionToken\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
