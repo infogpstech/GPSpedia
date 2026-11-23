@@ -74,8 +74,9 @@ function runActionDispatchContractTests(sources) {
 
     const api = String(input.apiConfig || "");
     let actionMap = {}, compatibility = {}, external = {}, dispatchers = {};
-    const endpointBlock = parseObject_(api, "API_ENDPOINTS");
-    const endpoints = [...endpointBlock.matchAll(/([A-Z]+)\s*:\s*['"]([^'"]+)['"]/g)].map(x => x[1]);
+    const serviceKeysBlock = api.match(/export\s+const\s+CENTRAL_SERVICE_KEYS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\);/);
+    assert_(!!serviceKeysBlock, "No se encontró CENTRAL_SERVICE_KEYS.");
+    const endpoints = [...serviceKeysBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
     const consumerActions = parseConsumers_(input.consumerSources || {});
 
     run_("lee mapas, routers y consumidores versionados", () => {
@@ -155,9 +156,11 @@ function runActionDispatchContractTests(sources) {
     run_("assignCollaborator no está expuesta por dispatcher", () => {
         for (const [service, dispatcher] of Object.entries(dispatchers)) assert_(!dispatcher.actions.includes("assignCollaborator"), service + " aún expone assignCollaborator.");
     });
-    run_("routeAction falla cerrado ante un servicio no configurado", () => {
-        assert_(/if\s*\(!targetUrl\)\s*throw new Error/.test(api), "routeAction aún redirige silenciosamente a LEGACY.");
-        assert_(!/if\s*\(!targetUrl\)\s*targetUrl\s*=\s*API_ENDPOINTS\.LEGACY/.test(api), "Se conserva fallback a LEGACY.");
+    run_("router y health checks resuelven endpoints centrales sin fallback local", () => {
+        assert_(/resolveCentralServiceEndpoint\(snapshot, service\)/.test(api), "El router no consulta el endpoint central.");
+        assert_(/resolveCentralServiceEndpoint\(routingSnapshot, serviceKey\)/.test(api), "Health checks no consultan el registro central.");
+        assert_(!/API_ENDPOINTS/.test(api), "Se conserva un mapa local de endpoints.");
+        assert_(!/targetUrl\s*=\s*CENTRAL_CONFIGURATION_BOOTSTRAP_URL/.test(api), "El bootstrap se usa como fallback.");
     });
     run_("ADMIN separa acciones de edición modal del resto de acciones exclusivas de Desarrollador", () => {
         const adminSource = String(input.ADMIN || "");

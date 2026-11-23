@@ -6,7 +6,7 @@
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
 import { recordBrowserServiceTraffic } from './serviceTelemetry.js';
-import { createCentralConfigurationCache } from './centralConfigurationCache.js';
+import { createCentralConfigurationCache, resolveCentralServiceEndpoint } from './centralConfigurationCache.js';
 
 const centralConfigurationCache_ = createCentralConfigurationCache();
 
@@ -74,15 +74,11 @@ export async function setRichTextMode(mode, actorRole, session) {
     return confirmedMode;
 }
 
-export const API_ENDPOINTS = {
-    AUTH:     "https://script.google.com/macros/s/AKfycbxoSybH_LsnqfBXCcE-5f9DM5rxEh8IFVPUMb2KF_j8yYl68hxEvF034ogADXEdrXUG/exec",
-    CATALOG:  "https://script.google.com/macros/s/AKfycbxp1l7Eo9qTcXhz78V-PNOdyKY3lD54L67aUObI6BZZ6VQ8wQDDYD9i7O-Egeq4Q0a4/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbyfBehSEcvlE9uCv3mSIYqO8ZMX-XOJpJopKRfSdpXy67nnnhNN6BcaU1C6OgkmynevPA/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbzrG8TYeM_3RXJB4NoIMOzOvRypTw9kwa9YUw76dKUA3gRkTAqMhpO_1r3FBrQ30BisnQ/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbzngNAEEu7gEreNCR8di2jW0Rf7jnLxuNWPQtk8tKcq8laNAgD_57RXZ8wWyvXVJr_2vg/exec",
-    UTILITIES: "https://script.google.com/macros/s/AKfycbwS_ot7u4e3juNas2mYIorsIy6J-VK8pjulhWQ8H33c6byMJ2rrjnYx8WBeXpj1UyFh/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbwdeSwWeYND4Knto-B3fF5WZwiI6i3ctDk-p-OaTqTcA0efcfeJmwFd7pvBqmL_JKyygA/exec"
-};
+// Único localizador de arranque para consultar AUTH; nunca es fallback de otras rutas.
+const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "https://script.google.com/macros/s/AKfycbxoSybH_LsnqfBXCcE-5f9DM5rxEh8IFVPUMb2KF_j8yYl68hxEvF034ogADXEdrXUG/exec";
+export const CENTRAL_SERVICE_KEYS = Object.freeze([
+    "AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"
+]);
 
 export const ACTION_TO_SERVICE_MAP = {
     'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
@@ -135,12 +131,16 @@ function createRouteActionError_(message, options = {}) {
     return error;
 }
 
+async function getConfiguredServiceEndpoint_(service) {
+    const snapshot = await loadCentralConfiguration();
+    return resolveCentralServiceEndpoint(snapshot, service);
+}
+
 // 2. LÓGICA DE RUTEO CENTRAL
 async function routeActionInternal_(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);
-    const targetUrl = API_ENDPOINTS[service];
-    if (!targetUrl) throw new Error(`Servicio no configurado: ${service}`);
+    const targetUrl = await getConfiguredServiceEndpoint_(service);
     let httpStatus = null;
     let response;
     const requestBody = JSON.stringify({ action, payload });
@@ -525,8 +525,10 @@ export async function checkAllServicesHealth(options = {}) {
 
     const requestedServiceKeys = Array.isArray(settings.serviceKeys)
         ? new Set(settings.serviceKeys.filter(key => typeof key === "string")) : null;
-    const serviceKeys = Object.keys(API_ENDPOINTS).filter(serviceKey =>
+    const serviceKeys = CENTRAL_SERVICE_KEYS.filter(serviceKey =>
         !requestedServiceKeys || requestedServiceKeys.has(serviceKey));
+    let routingSnapshot = null;
+    try { routingSnapshot = await loadCentralConfiguration(); } catch (configurationError) {}
     await Promise.all(serviceKeys.map(async serviceKey => {
         const startTime = now();
         const expectedIdentity = Object.prototype.hasOwnProperty.call(SERVICE_HEALTH_CONTRACTS, serviceKey)
@@ -534,12 +536,20 @@ export async function checkAllServicesHealth(options = {}) {
         let controller = null;
         let timeoutId = null;
         let result;
+        let serviceEndpoint = null;
+        try { serviceEndpoint = resolveCentralServiceEndpoint(routingSnapshot, serviceKey); } catch (configurationError) {}
 
         try {
             if (expectedIdentity === undefined || expectedIdentity === null) {
                 result = makeResult("unknown", startTime, now(), {
                     errorCode: expectedIdentity === null ? "HEALTH_IDENTITY_UNVERIFIED" : "HEALTH_CONTRACT_UNDEFINED",
                     error: "No existe un contrato de identidad configurado para este servicio; no se consulta."
+                });
+            } else if (!serviceEndpoint) {
+                const checkedAtMs = now();
+                result = makeResult("unavailable", startTime, checkedAtMs, {
+                    errorCode: "CENTRAL_CONFIGURATION_UNAVAILABLE",
+                    error: "No hay un endpoint central vigente y habilitado para este servicio."
                 });
             } else if (typeof fetchImpl !== "function") {
                 const checkedAtMs = now();
@@ -556,7 +566,7 @@ export async function checkAllServicesHealth(options = {}) {
             } else {
                 controller = new AbortController();
                 timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-                const response = await fetchImpl(API_ENDPOINTS[serviceKey] + "?debug=true", {
+                const response = await fetchImpl(serviceEndpoint + "?debug=true", {
                     method: "GET",
                     redirect: "follow",
                     signal: controller.signal
@@ -727,7 +737,7 @@ export async function checkAllServicesHealth(options = {}) {
 }
 export async function checkServiceHealth(serviceKey, options = {}) {
     const key = String(serviceKey || "").trim().toUpperCase();
-    if (!Object.prototype.hasOwnProperty.call(API_ENDPOINTS, key)) return null;
+    if (!CENTRAL_SERVICE_KEYS.includes(key)) return null;
     const results = await checkAllServicesHealth({
         ...(options && typeof options === "object" ? options : {}),
         serviceKeys: [key]
@@ -756,8 +766,9 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     try {
         let response;
         try {
+            const feedbackEndpoint = await getConfiguredServiceEndpoint_("FEEDBACK");
             response = await runCatalogRequestWithRetry(async signal => {
-                const current = await fetch(API_ENDPOINTS.FEEDBACK + query, {
+                const current = await fetch(feedbackEndpoint + query, {
                     method: "GET", redirect: "follow", signal
                 });
                 const status = Number(current && current.status);
@@ -824,15 +835,33 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     }
 }
 
-// Lector público central. AUTH es el único punto de entrada de bootstrap actual;
-// la caché nunca persiste información backend/admin ni reemplaza la autorización de sesión.
+// El bootstrap consulta AUTH para obtener el registro central; no enruta otras acciones.
+async function fetchCentralConfigurationBootstrap_() {
+    const response = await fetch(CENTRAL_CONFIGURATION_BOOTSTRAP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "getPublicConfiguration", payload: {} }),
+        redirect: "follow"
+    });
+    if (!response || !response.ok) {
+        const status = Number(response && response.status);
+        const error = new Error("No se pudo consultar la configuración central de servicios.");
+        error.kind = "http";
+        error.httpStatus = Number.isInteger(status) ? status : null;
+        throw error;
+    }
+    const body = await response.text();
+    let result;
+    try { result = JSON.parse(body); }
+    catch (error) { throw new Error("AUTH devolvió una configuración central con formato inválido."); }
+    if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") {
+        throw new Error("AUTH no confirmó una configuración central válida.");
+    }
+    return result;
+}
+
 export async function loadCentralConfiguration(options = {}) {
-    return centralConfigurationCache_.load(
-        () => routeActionWithRetry("getPublicConfiguration", {}, {
-            timeoutMs: 6000, maxAttempts: 2, retryDelayMs: 200
-        }),
-        options
-    );
+    return centralConfigurationCache_.load(fetchCentralConfigurationBootstrap_, options);
 }
 
 export async function refreshCentralConfiguration() {

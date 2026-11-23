@@ -82,3 +82,13 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Corregido ESQUEMA_CONFIGURACION_CENTRAL.md para versionar las filas de Servicios, ConfiguracionParametros y ConfiguracionRecursos con config_revision.
 - Añadidas pruebas MIG008 de lector y caché; actualizados backlog, plan y checkpoint.
 - No se crearon hojas, no se migraron datos, no se tocaron propiedades ni deployments. La validación Web App real queda pendiente de Beta.
+
+
+2026-11-23 — Requisito técnico transversal y MIG-009
+- Se registró en NORMAS_DESAROLLO.md §18 el requisito obligatorio aplicable a MIG-001–MIG-030 y se añadió la referencia explícita en cada tarea del backlog.
+- api-config.js deja de mantener siete URLs estáticas; el router POST, el feed GET y los health checks resuelven endpoints desde la proyección pública central.
+- Se conserva un único localizador bootstrap AUTH para obtener la primera configuración; no se utiliza como fallback de otros servicios.
+- La caché frontend mantiene cache-first/single-flight y refresca al vencer TTL; los endpoints dejan de estar disponibles cuando el registro no permite enrutar.
+- Las pruebas de salud y el probe remoto se adaptaron para utilizar la configuración central; el workflow remoto queda manual para ejecutarse tras el despliegue autorizado de AUTH.
+- Se añadieron pruebas de contrato para las 120 acciones, resolución dinámica, actualización de revisión, servicios deshabilitados y fail-closed.
+- No se modificaron archivos Apps Script, propiedades, deployments, endpoints productivos, Spreadsheet, Drive ni datos. La actualización real de endpoints desde Spreadsheet queda pendiente de Beta.

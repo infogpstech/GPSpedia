@@ -41,6 +41,20 @@ function validatePublicSnapshot_(value) {
     return JSON.parse(JSON.stringify(value));
 }
 
+export function resolveCentralServiceEndpoint(snapshot, serviceKey) {
+    const key = String(serviceKey || "").trim().toUpperCase();
+    if (!snapshot || snapshot.status !== "success" || snapshot.routingAvailable !== true ||
+        !snapshot.services || typeof snapshot.services !== "object" || Array.isArray(snapshot.services)) {
+        throw new Error("La configuración central no permite enrutar solicitudes; no se utilizarán endpoints locales.");
+    }
+    if (!REQUIRED_SERVICES.includes(key)) throw new Error("Servicio desconocido en el registro central: " + key);
+    const service = snapshot.services[key];
+    if (!service || service.enabled !== true) throw new Error("El servicio " + key + " está deshabilitado en la configuración central.");
+    const endpoint = String(service.endpointUrl || "");
+    if (!ENDPOINT_PATTERN.test(endpoint)) throw new Error("El endpoint central de " + key + " no es válido.");
+    return endpoint;
+}
+
 export function createCentralConfigurationCache(options = {}) {
     const now = typeof options.now === "function" ? options.now : () => Date.now();
     let cached = null;

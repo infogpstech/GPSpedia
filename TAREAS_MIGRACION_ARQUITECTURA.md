@@ -22,6 +22,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-001 — Inventario de todas las acciones y handlers
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Contrastar las 120 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
 - [x] Extraer acciones aceptadas por cada `doPost` que no estén en el mapa frontend.
 - [x] Inventariar funciones internas, acciones manuales, endpoints de mantenimiento, compatibilidad histórica, rutas GET, terminal y procesos auxiliares.
@@ -45,6 +46,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-002 — Inventario de pantallas y capacidades visibles
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Recorrer HTML/JS/CSS activos y listar pantallas, modales, controles, comandos, selectores y estados.
 - [x] Registrar estados de carga, vacío, éxito, error, progreso, cancelación, pausa y reanudación donde están implementados.
 - [x] Cubrir catálogo, ficha/modelos/cortes, VIN, imágenes, vídeos, tutoriales, Relay, PyS, feedback, Inbox, Dashboard, administración, usuarios y Developer Tools.
@@ -55,6 +57,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-003 — Inventario de configuración en backend
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Buscar los usos de PropertiesService/ScriptProperties/UserProperties/DocumentProperties en los diez módulos backend activos.
 - [x] Clasificar las 26 familias de claves persistentes: endpoints, secretos, parámetros, idempotencia/login, revocación, contadores, auditoría, estado de Drive, sesiones, feed incremental y telemetría.
 - [x] Identificar IDs de Spreadsheet/Drive, siete endpoints de entrada y cinco URLs duplicadas en ADMIN.
@@ -66,6 +69,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-004 — Inventario de llamadas entre servicios y SharedMutation
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Inspeccionar UrlFetchApp.fetch, fetchAll, wrappers HTTP y destinos dinámicos en los diez módulos backend activos.
 - [x] Identificar y documentar ADMIN→WRITE (asignación de ID y freeze) y ADMIN→CATALOG (proyección y candidatos), incluidos payloads, resultados y consumidores heredados.
 - [x] Enumerar las 13 operaciones del protocolo Coordinator, sus callsites, wrappers sin consumidor versionado y seis usos activos de leases.
@@ -80,6 +84,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-005 — Línea base funcional y de rendimiento
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Ejecutar la suite de regresión disponible en CI sobre el HEAD exacto de la rama y guardar el resultado inicial.
 - [x] Registrar la duración observada del workflow de CI como referencia del proceso de pruebas, separada del rendimiento de la aplicación.
 - [ ] Medir latencia real de arranque/login/catálogo/Inbox y operaciones frecuentes: pendiente de navegador/dispositivo y credenciales del entorno Beta.
@@ -98,6 +103,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-006 — Spike técnico de acceso a Spreadsheet
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Inspeccionar los siete servicios que usan SPREADSHEET_ID/openById y confirmar que InboxConversations no abre la hoja directamente.
 - [x] Preparar un probe Apps Script con GET read-only, UI Web App y POST de escritura limitada a una hoja reservada; sin ID, PropertiesService, UrlFetchApp ni credenciales.
 - [x] Añadir harness local que cubre contexto nulo/activo, UI, lectura sin escritura, confirmación obligatoria, escritura acotada y lectura posterior.
@@ -113,6 +119,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-007 — Diseño del esquema central de configuración
 **Estado: COMPLETADA**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Definir hojas de configuración con claves estables, tipos, valores, descripción, estado y versión.
 - [x] Incluir endpoints de servicio, parámetros de negocio, límites y opciones hoy duplicadas en proyectos.
 - [x] Separar proyecciones pública, backend y admin; documentar límites reales de permisos de lectura de Google Sheets.
@@ -129,6 +136,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-008 — Lector central y caché de configuración
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Implementar lector Apps Script con SpreadsheetApp.getActiveSpreadsheet(), sin ID/URL bootstrap, PropertiesService ni fallback openById.
 - [x] Validar control, schema_version, revisión activa, siete servicios, endpoints HTTPS únicos, contratos, parámetros, recursos, defaults opcionales y consistencia de lectura.
 - [x] Publicar desde AUTH únicamente la proyección pública; no exponer recursos ni valores backend/admin.
@@ -149,17 +157,22 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ## Fase 2 — Frontend como router y coordinador único
 
 ### MIG-009 — Router de acciones basado en configuración
-**Estado: PENDIENTE**
-- [ ] Sustituir URLs hardcodeadas de `api-config.js` por el registro central.
-- [ ] Mantener el mapa completo acción → servicio y compatibilidad de payload/respuesta.
-- [ ] Mantener una caché frontend rápida y un fallback válido.
-- [ ] Añadir pruebas para todos los nombres de acción, servicio destino y endpoint.
-- [ ] Conservar estados de error localizados por módulo.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
+- [x] Sustituir el mapa local de siete URLs por resolución desde la proyección pública central.
+- [x] Mantener el mapa acción → servicio y los contratos payload/respuesta; conservar las 120 acciones.
+- [x] Mantener caché cache-first/single-flight con refresco automático al vencer TTL; fallar cerrado sin fallback local.
+- [x] Enrutar solicitudes POST, feed GET incremental y health checks mediante el registro central.
+- [x] Mantener errores HTTP, red, JSON y aplicación y estados de error localizados.
+- [x] Añadir pruebas de mapa, servicio destino, actualización, servicios deshabilitados/inválidos, vencimiento y ausencia de fallback.
+- [x] Conservar un único localizador bootstrap AUTH, limitado a consultar la primera proyección central.
+- [ ] Validar en Beta el cambio de URL desde Spreadsheet y la actualización automática desde navegador real; ejecutar health remoto manualmente tras desplegar getPublicConfiguration.
 
-**Aceptación:** las 120 acciones siguen enrutándose al servicio correcto y se añaden las acciones no incluidas en el mapa.
+**Aceptación:** las 120 acciones, health checks y feed incremental usan destinos del registro central; no existen URLs locales para servicios ni fallback a valores anteriores; ante registro inválido, vencido o no disponible, el router no utiliza destinos antiguos. AUTH bootstrap es el único localizador de arranque y no actúa como fallback.
 
 ### MIG-010 — Orquestador frontend de operaciones multi-servicio
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Implementar secuencias explícitas para los flujos que hoy resuelve ADMIN mediante llamadas internas.
 - [ ] Preservar orden, precondiciones, resultados, errores y recuperación.
 - [ ] Usar identificadores de operación/idempotencia solo donde el flujo actual los necesite.
@@ -171,6 +184,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-011 — Eliminar dependencias backend→backend de ADMIN
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Migrar consulta de proyección de vehículo a llamada directa frontend→CATALOG.
 - [ ] Migrar consulta de candidatos de contribución/inventario a llamada directa frontend→CATALOG.
 - [ ] Migrar delegaciones de cortes/IDs a llamadas directas frontend→WRITE cuando corresponda.
@@ -185,6 +199,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-012 — Unificación funcional AUTH/USERS
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Integrar handlers de `getUsers`, `createUser` y `updateProfile` en AUTH.
 - [ ] Mantener exactamente los contratos, campos, permisos y resultados.
 - [ ] Actualizar el mapa frontend para enrutar estas acciones a AUTH.
@@ -195,6 +210,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-013 — Sesiones sin Coordinator ni secretos compartidos
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener autenticación con el hash actual, bloqueo temporal por intentos fallidos y tokens de sesión opacos.
 - [ ] Mantener registro de sesión y actor confiable en Spreadsheet.
 - [ ] Definir cómo cada servicio valida/carga actor desde sesión sin llamada a otro servicio y sin confiar en el rol del frontend.
@@ -207,6 +223,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-014 — Revocación y limpieza de caché desde frontend
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Logout: invalidar sesión y llamar directamente a los servicios que deban limpiar su caché.
 - [ ] Cambio/reset de contraseña, cambio de rol, reset global y eliminación: conservar invalidación efectiva.
 - [ ] Definir respuesta ante servicio no disponible y vencimiento máximo de caché.
@@ -221,6 +238,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-015 — Carga y administración de imágenes
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener subida desde aportes y administración.
 - [ ] Mantener límite de 10 MB, MIME/tamaño, ledger, SHA-256 y verificación posterior.
 - [ ] Mantener variantes 300/800/1600, transparencia PNG, ObjectURL, IndexedDB y Lightbox.
@@ -232,6 +250,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-016 — Carga reanudable y aprobación de vídeos
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener init de YouTube Resumable Upload y transferencia directa de bytes.
 - [ ] Mantener pausa, cierre de modal, reanudación y registro IndexedDB.
 - [ ] Mantener título/descripción contextual y parámetros de publicación actuales.
@@ -244,6 +263,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-017 — Herramientas y operaciones de Drive
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener comandos `dir`, `cd`, `mkdir`, `tree`, `move` y navegación.
 - [ ] Mantener creación/organización de carpetas, mover/restaurar/eliminar archivos.
 - [ ] Mantener backups/restauración de Drive y auditorías de imágenes.
@@ -259,6 +279,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-018 — Modelos, cortes, VIN y contribuciones
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener creación/edición de modelos y cortes, identificadores y contribuciones.
 - [ ] Mantener sugerencias, proyecciones, duplicados, VIN y sus reglas de privacidad.
 - [ ] Mantener operaciones suplementarias y validaciones de esquema.
@@ -266,6 +287,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-019 — PyS, tutoriales y feedback
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener alta/edición/eliminación de problemas, soluciones y prevención.
 - [ ] Mantener asociación/desasociación bidireccional de vehículos.
 - [ ] Mantener tutoriales, sugerencias, reportes, likes, vistas y formularios.
@@ -273,6 +295,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-020 — Inbox completo
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener conversaciones, mensajes, destinatarios y respuestas.
 - [ ] Mantener categorías, plantillas, borradores, búsqueda y paginación.
 - [ ] Mantener recibidos/no leídos/enviados/archivados, contador y acciones de estado.
@@ -281,6 +304,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-021 — Métricas, estados y monitoreo
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener `ping` y escaneo de conectividad de todos los servicios.
 - [ ] Mantener estado, latencia en ms y errores por servicio.
 - [ ] Mantener métricas de tráfico y almacenamiento.
@@ -290,6 +314,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-022 — Administración de Spreadsheet y mantenimiento
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener creación de hojas y columnas.
 - [ ] Mantener fórmulas, migraciones de esquemas, identificadores y rollback.
 - [ ] Mantener reorganización, normalización, saneamiento y purgado autorizado.
@@ -298,6 +323,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-023 — Catálogo, cachés y experiencia de usuario
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener snapshot/delta, cursor, caché IndexedDB y arranque cache-first.
 - [ ] Mantener navegación, búsqueda, modal de detalle, impresión y QR.
 - [ ] Mantener modo oscuro, PWA, estados de carga/error y accesibilidad.
@@ -310,6 +336,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-024 — Eliminar SharedMutation
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Confirmar que todos los consumidores fueron migrados.
 - [ ] Retirar wrappers, archivos duplicados, endpoints y propiedades relacionadas.
 - [ ] Ejecutar búsqueda global y suite de regresión.
@@ -317,6 +344,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-025 — Eliminar COORDINATOR
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Confirmar que sesiones, revocaciones, métricas y operaciones protegidas tienen sustituto.
 - [ ] Confirmar que el frontend realiza las llamadas directas necesarias.
 - [ ] Retirar endpoint, fuente, guía y referencias.
@@ -324,6 +352,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-026 — Eliminar configuración local de todos los servicios
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Retirar lecturas/escrituras de ScriptProperties/UserProperties/DocumentProperties para configuración de GPSpedia.
 - [ ] Retirar URLs e IDs de otros servicios y recursos.
 - [ ] Migrar valores a Spreadsheet y probar caché.
@@ -338,6 +367,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-027 — Suite de paridad de las funciones existentes
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Construir pruebas de contrato para todas las acciones.
 - [ ] Comparar payloads, respuestas, errores, roles y efectos sobre datos.
 - [ ] Cubrir cada grupo de funciones de MIG-015 a MIG-023.
@@ -345,6 +375,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-028 — Seguridad, rendimiento y regresión
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Ejecutar sintaxis, pruebas unitarias, contratos y regresión.
 - [ ] Probar sesiones/revocaciones, roles y operaciones concurrentes.
 - [ ] Comparar latencias contra MIG-005.
@@ -353,6 +384,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-029 — Guía de despliegue simplificada
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Reescribir la guía para que desplegar no requiera agregar/editar propiedades.
 - [ ] Documentar únicamente pasos reales y necesarios por proyecto.
 - [ ] Registrar cómo se publica una nueva URL en la configuración central, si el diseño mantiene varios deployments.
@@ -361,6 +393,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 ### MIG-030 — Validación Beta integral
 **Estado: PENDIENTE**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Preparar comandos de sincronización Beta conforme a NORMAS §5.
 - [ ] Probar login, catálogo, usuarios, modelos, imágenes, vídeos, Drive, PyS, tutoriales, Inbox, métricas, administración, backups y restauración.
 - [ ] Probar roles autorizados/no autorizados.

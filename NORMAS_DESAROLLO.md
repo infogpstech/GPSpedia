@@ -299,3 +299,19 @@ Este requisito, registrado el 2026-11-22, define la arquitectura objetivo de la 
 - Los despliegues Beta deben validar cargas reales de imágenes y vídeos, creación/edición de modelos, estados y métricas, Drive, Inbox, PyS, backups/restauración y operaciones administrativas, además del catálogo y login.
 - No borrar proyectos, acciones, hojas, archivos, endpoints ni datos hasta cerrar su matriz de paridad y confirmar que no tienen consumidores vigentes.
 - Si un requisito arquitectónico literal entra en conflicto con conservar una función existente, no se sacrifica silenciosamente la función: se documenta la incompatibilidad y se detiene únicamente la decisión afectada para resolverla con el usuario.
+
+
+## 18. Requisito técnico transversal obligatorio: coordinación frontend y configuración central
+
+Este requisito aplica a todas las tareas MIG-001 a MIG-030, a sus análisis, implementación, pruebas, documentación y criterios de aceptación. Ninguna tarea puede introducir una excepción implícita ni contradecirlo.
+
+- No almacenar claves, API keys, contraseñas, tokens manuales ni secretos compartidos de interconexión en PropertiesService ni en otras propiedades de proyectos Apps Script.
+- Ningún servicio Apps Script debe contener URLs, endpoints, IDs de conexión ni configuración local de otros servicios. Tampoco debe implementar coordinación funcional u orquestación de flujos multi-servicio que pueda ejecutar el frontend.
+- La coordinación de servicios y secuencias funcionales se realiza desde el frontend siempre que sea posible. El frontend resuelve acción → servicio → endpoint desde el registro central.
+- La comunicación directa entre servicios solo se permite cuando exista una necesidad técnica concreta que no pueda resolverse razonablemente desde el frontend. No puede exigir secretos compartidos, claves, contraseñas ni tokens manuales. El servicio receptor valida por sí mismo la sesión, permisos y RBAC aplicables; el origen de la llamada no concede privilegios.
+- Las URLs y parámetros operativos se obtienen del registro central versionado y validado. La caché debe actualizarse automáticamente al vencer su TTL; no se mantiene un mapa local duplicado ni se usa una URL antigua como fallback cuando la configuración esté vencida, inválida o no disponible.
+- Si existe una dirección técnica inevitable para el primer acceso al registro central, debe ser un único localizador de bootstrap explícito, documentado y limitado a consultar la configuración. No puede utilizarse para enrutar otras acciones ni convertirse en un segundo mapa local. Cualquier cambio de ese localizador debe tratarse como cambio de bootstrap, no como actualización ordinaria de endpoints.
+- No exponer tokens OAuth, credenciales ni secretos de servidor al navegador. Los mecanismos administrados por Google no se transforman en secretos manuales.
+- En cada tarea se debe comprobar el cumplimiento que corresponda al alcance y registrar expresamente cualquier validación que requiera un deployment real como pendiente de Beta, sin simularla.
+
+**Criterio de aceptación transversal:** cero nuevos secretos compartidos/manuales en propiedades Apps Script; cero nuevas URLs/configuración interservicio local en backend; coordinación funcional en frontend siempre que sea viable; llamadas técnicas directas justificadas y sin secreto compartido; URLs operativas obtenidas y actualizadas desde el registro central; ausencia de fallback local ante configuración no válida.

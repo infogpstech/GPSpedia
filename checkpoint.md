@@ -576,3 +576,35 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - MIG-007: COMPLETADA.
 - MIG-008: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Siguiente tarea: **MIG-009 — Router de acciones basado en configuración**, respetando el bootstrap y sin fallback a URLs locales vencidas/inválidas.
+
+
+---
+
+## Cierre MIG-009 — router frontend basado en configuración central — 2026-11-23
+
+### Requisito técnico transversal registrado
+- NORMAS_DESAROLLO.md §18 establece el requisito obligatorio para todas las tareas MIG-001 a MIG-030.
+- Se añadió una referencia del requisito en cada una de las 30 tareas del backlog.
+- No se permiten claves, tokens manuales ni secretos compartidos en propiedades Apps Script; los servicios backend no contienen URLs ni coordinación funcional de otros servicios; el frontend coordina cuando sea viable; las llamadas directas se reservan para necesidades técnicas y no usan secretos compartidos; cada receptor conserva su autorización/RBAC.
+- Las URLs operativas se obtienen del registro central y se refrescan automáticamente; no hay fallback local ante configuración vencida/inválida/no disponible.
+
+### Resultado local MIG-009
+- Se retiró de JS/Frontend/api-config.js el mapa de siete URLs hardcodeadas.
+- El router POST, los health checks y el feed incremental GET obtienen sus endpoints desde getPublicConfiguration y la proyección central de AUTH.
+- El mapa acción → servicio se conserva como metadato sin URLs.
+- Se mantiene un único localizador bootstrap AUTH para obtener el primer registro central; se usa solo para getPublicConfiguration y no como destino alternativo de acciones.
+- La caché frontend conserva cache-first/single-flight y refresca al vencer su TTL. Si no hay snapshot enrutable, si un servicio está deshabilitado o si el endpoint no es válido, la solicitud falla cerrada y no usa URL local.
+- Se adaptaron ServiceHealthContract.mjs y RemoteServiceHealth.mjs; la comprobación remota se ejecuta manualmente tras desplegar el handler de configuración central.
+- Se agregó resolveCentralServiceEndpoint y la suite JS/Tests/MIG009FrontendActionRouter.mjs; se adaptó ActionDispatchContract.js y se integró MIG-009 en RunServiceTests.mjs.
+- Se actualizó TAREAS_MIGRACION_ARQUITECTURA.md, PLAN_NUEVA_ARQUITECTURA_FRONTEND.md, NORMAS_DESAROLLO.md, ChangesLogs.txt y este checkpoint.
+
+### Validación y límites
+- Las pruebas nuevas cubren el mapa de 120 acciones, los siete servicios, actualización de revisión, endpoints deshabilitados/inválidos, vencimiento y ausencia de fallback local.
+- La CI debe confirmar la suite completa, sintaxis y contratos sobre el commit publicado.
+- La prueba de navegador real que cambie un endpoint desde Spreadsheet y confirme la actualización automática, así como el acceso real de AUTH a Spreadsheet/CacheService, queda pendiente de Beta conforme a MIG-006/MIG-008. No se desplegó ni modificó ningún servicio.
+- No se modificaron Apps Script, PropertiesService, deployments, endpoints instalados, Spreadsheet, Drive ni datos.
+
+### Continuidad
+- MIG-001 a MIG-008 conservan sus estados previos.
+- MIG-009: COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a CI y con prueba remota de actualización pendiente de Beta.
+- Siguiente tarea: MIG-010 — Orquestador frontend de operaciones multi-servicio.

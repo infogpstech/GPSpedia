@@ -21,14 +21,25 @@ const functionMatch = apiSource.match(/export async function checkAllServicesHea
 assert.ok(functionMatch, "No se encontró checkAllServicesHealth.");
 const functionSource = functionMatch[0].replace("export async function", "async function");
 function buildChecker(endpoints, lastKnown = new Map()) {
+    const keys = Object.keys(endpoints);
+    const snapshot = { status: "success", routingAvailable: true, services: Object.fromEntries(
+        Object.entries(endpoints).map(([key, endpointUrl]) => [key, { endpointUrl, enabled: true }])
+    ) };
+    const loadConfiguration = async () => snapshot;
+    const resolveEndpoint = (config, key) => {
+        if (!config || config.routingAvailable !== true || !config.services[key] || config.services[key].enabled !== true) throw new Error("No central route");
+        return config.services[key].endpointUrl;
+    };
     return new Function(
-        "API_ENDPOINTS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
+        "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
-        functionSource + "\nreturn checkAllServicesHealth;"
+        "loadCentralConfiguration", "resolveCentralServiceEndpoint",
+        functionSource + "\\nreturn checkAllServicesHealth;"
     )(
-        endpoints, contracts, 8000, 2000, 300000, lastKnown,
-        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date
+        keys, contracts, 8000, 2000, 300000, lastKnown,
+        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date,
+        loadConfiguration, resolveEndpoint
     );
 }
 function response(status, body, ok = status >= 200 && status < 300) {
@@ -179,15 +190,23 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
         FEEDBACK: "https://feedback.invalid/exec", UTILITIES: "https://utilities.invalid/exec",
         ADMIN: "https://admin.invalid/exec"
     };
+    const keys = Object.keys(endpoints);
+    const snapshot = { status: "success", routingAvailable: true, services: Object.fromEntries(
+        Object.entries(endpoints).map(([key, endpointUrl]) => [key, { endpointUrl, enabled: true }])
+    ) };
+    const loadConfiguration = async () => snapshot;
+    const resolveEndpoint = (config, key) => config.services[key].endpointUrl;
     const single = new Function(
-        "API_ENDPOINTS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
+        "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
-        functionSource + "\n" + singleMatch[0].replace("export async function", "async function") +
-        "\nreturn checkServiceHealth;"
+        "loadCentralConfiguration", "resolveCentralServiceEndpoint",
+        functionSource + "\\n" + singleMatch[0].replace("export async function", "async function") +
+        "\\nreturn checkServiceHealth;"
     )(
-        endpoints, contracts, 8000, 2000, 300000, new Map(),
-        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date
+        keys, contracts, 8000, 2000, 300000, new Map(),
+        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date,
+        loadConfiguration, resolveEndpoint
     );
     const requested = [];
     const result = await single("CATALOG", {

@@ -131,8 +131,8 @@ El detalle accionable se encuentra en [TAREAS_MIGRACION_ARQUITECTURA.md](./TAREA
 |---|---|---|
 | 0 | Inventario total de funciones, configuración y dependencias | EN PROGRESO |
 | 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PRUEBA LOCAL PREPARADA; WEB APP BETA PENDIENTE |
-| 2 | Diseñar y probar esquema central de configuración y caché frontend | DISEÑO MIG-007 COMPLETADO; lector/caché MIG-008 PENDIENTE |
-| 3 | Implementar router/orquestador frontend sin cambiar contratos | PENDIENTE |
+| 2 | Diseñar e implementar esquema central y caché frontend | MIG-007 y MIG-008 COMPLETADAS CON VALIDACIÓN DIFERIDA |
+| 3 | Implementar router/orquestador frontend sin cambiar contratos | MIG-009 ROUTER COMPLETADO CON VALIDACIÓN BETA PENDIENTE; MIG-010 PENDIENTE |
 | 4 | Mover coordinación funcional de ADMIN y otros servicios al frontend; conservar solo llamadas técnicas directas justificadas y sin secretos | PENDIENTE |
 | 5 | Unificar AUTH/USERS y simplificar sesión sin claves compartidas | PENDIENTE |
 | 6 | Migrar cargas de imágenes, vídeos y operaciones Drive sin pérdida | PENDIENTE |
@@ -147,6 +147,9 @@ La migración no se acepta hasta cumplir simultáneamente:
 
 - [ ] Ningún proyecto Apps Script tiene propiedades de configuración de GPSpedia.
 - [ ] Ningún servicio contiene URLs de otros servicios, IDs de recursos ni secretos compartidos.
+- [ ] Ninguna propiedad Apps Script almacena claves, tokens manuales o secretos compartidos de interconexión.
+- [ ] El frontend obtiene y actualiza automáticamente endpoints desde el registro central; sin fallback local vencido o inválido.
+- [ ] Llamadas directas servicio-a-servicio solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor.
 - [ ] Ningún servicio realiza llamadas HTTP a otro servicio GPSpedia.
 - [ ] No existen dependencias funcionales de COORDINATOR ni SharedMutation.
 - [ ] La configuración operativa está centralizada en Spreadsheet.
@@ -181,3 +184,8 @@ La migración no se acepta hasta cumplir simultáneamente:
 - Existe un inventario inicial de llamadas internas, propiedades, secretos y dependencias en [MATRIZ_MIGRACION_SERVICIOS.md](./MATRIZ_MIGRACION_SERVICIOS.md).
 - Todavía no se ha modificado lógica funcional ni deployments para esta migración.
 - La siguiente actividad es completar el inventario de funciones y ejecutar el spike de acceso a Spreadsheet sin configuración local.
+
+
+## Anexo — Requisito técnico transversal para todas las tareas MIG
+
+Todas las tareas MIG-001 a MIG-030 deben respetar NORMAS_DESAROLLO.md §18: no secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación desde frontend siempre que sea viable; llamadas directas solo por necesidad técnica y sin secretos compartidos; autorización/RBAC independiente en el receptor; URLs operativas desde configuración central autoactualizable y sin fallback local. El bootstrap AUTH, cuando sea inevitable, es un único localizador explícito y limitado a consultar la configuración central.
