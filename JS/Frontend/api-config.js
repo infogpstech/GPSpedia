@@ -85,7 +85,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
-    'publishWriteCatalogReset': 'COORDINATOR',
+    'publishCatalogReset': 'COORDINATOR',
     'getCatalogChanges': 'COORDINATOR',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
@@ -105,6 +105,11 @@ export const ACTION_TO_SERVICE_MAP = {
 
 const WRITE_CATALOG_RESET_ACTIONS_ = new Set([
     "addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"
+]);
+const ADMIN_CATALOG_RESET_ACTIONS_ = new Set([
+    "addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
+    "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
+    "migrateIdentifiers", "rollbackIdentifiers", "resolveVehicleContributionCandidate"
 ]);
 
 
@@ -217,6 +222,11 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
                 kind: "invalid_response", code: "INVALID_RESPONSE", httpStatus
             });
         }
+        if (service === "ADMIN" && ADMIN_CATALOG_RESET_ACTIONS_.has(action) &&
+            result.catalogResetRequired === true) {
+            const publication = await publishCatalogResetAfterMutation_("ADMIN", action, payload, result);
+            if (publication && publication.catalogSyncPending) result.catalogSyncPending = true;
+        }
         if (result.status === 'error') {
             const detailMessage = typeof result.details === "string" ? result.details :
                 result.details && typeof result.details.errorMessage === "string" ? result.details.errorMessage : "";
@@ -255,21 +265,25 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
         }
         if (service === "WRITE" && WRITE_CATALOG_RESET_ACTIONS_.has(action) &&
             result.status === "success" && result.alreadyPresent !== true && result.dryRun !== true) {
-            return await publishWriteCatalogResetAfterMutation_(action, payload, result);
+            return await publishCatalogResetAfterMutation_("WRITE", action, payload, result);
         }
         return result;
 }
 
 
-async function publishWriteCatalogResetAfterMutation_(action, payload, result) {
-    const sourceId = String(payload && (payload.opId || payload.backupId) ||
-        result && (result.opId || result.catalogVersion || result.vehicleId) || Date.now()).trim();
-    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 90) || String(Date.now());
-    const requestId = ("write-" + action + "-" + safeId).slice(0, 128);
+async function publishCatalogResetAfterMutation_(service, action, payload, result) {
+    const sourceId = String(payload && (
+        payload.opId || payload.requestId || payload.backupId || payload.migrationId || payload.eventId
+    ) || result && (
+        result.opId || result.catalogVersion || result.vehicleId || result.logoId || result.backupId
+    ) || Date.now()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || String(Date.now());
+    const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
     try {
-        const publication = await routeActionInternal_("publishWriteCatalogReset", {
+        const publication = await routeActionInternal_("publishCatalogReset", {
             userId: String(payload && payload.userId || "").trim(),
             sessionToken: String(payload && payload.sessionToken || ""),
+            service: service,
             operation: action,
             requestId
         });
@@ -282,12 +296,13 @@ async function publishWriteCatalogResetAfterMutation_(action, payload, result) {
         if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
             typeof CustomEvent === "function") {
             window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
-                detail: { action: action, reason: "write-publication" }
+                detail: { service: service, action: action, reason: "catalog-publication" }
             }));
         }
         return pending;
     }
 }
+
 
 /**
  * Registra métricas efímeras del navegador actual sin persistir ni transmitir datos.
