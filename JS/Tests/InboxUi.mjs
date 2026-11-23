@@ -418,8 +418,15 @@ check("El detalle existente de reportes muestra categoría, asunto, descripción
     assert.match(ui, /item\.reply/);
     assert.match(ui, /item\.isResolved/);
 });
-check("Las acciones y la consulta de tickets propios no añaden controles visibles antes de autorización", () => {
-    assert.doesNotMatch(ui, /markInboxUnread|deleteInboxConversation/);
+check("Las acciones de estado aparecen solo dentro de una conversación autenticada y no alteran los tickets históricos", () => {
+    const thread = ui.slice(ui.indexOf("function renderInboxConversationDetail_"), ui.indexOf("\\nfunction renderInboxReplyForm_"));
+    assert.match(thread, /if \\(item\\.hasReceived && Number\\(item\\.unreadCount \\|\\| 0\\) <= 0\\)/);
+    assert.match(thread, /markInboxConversationUnread_\\(item\\)/);
+    assert.match(thread, /deleteInboxConversationForCurrentUser_\\(item\\)/);
+    assert.match(ui, /async function markInboxConversationUnread_\\(item\\)/);
+    assert.match(ui, /async function deleteInboxConversationForCurrentUser_\\(item\\)/);
+    assert.match(ui, /const context = getUiSessionContext_\\(\\)/);
+    assert.match(html, /id="inbox-conversation-detail"/);
     assert.doesNotMatch(html, /inbox-mark-unread|inbox-delete-conversation|inbox-my-tickets/);
 });
 check("Los modales principales no usan spans como controles de cierre", () => {
