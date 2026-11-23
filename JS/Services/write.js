@@ -1416,7 +1416,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
             if (vinPrefix) {
                 const existing = parseVinCollection(rowValues[vinColumnIndex - 1]);
                 if (!existing.includes(vinPrefix)) {
-                    const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, rowObj.id);
+                    const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, rowObj.id, null, vinColumnIndex);
                     if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
                     const maxAllowed = countEquipmentVersions((vehicleData && vehicleData.versionesAplicables) || rowObj.versionesAplicables);
                     recoveredVinCollection = addVinToAvailableSlot(existing, vinPrefix, maxAllowed).collection;
@@ -1547,7 +1547,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
     let savedSlotIndex = 1;
 
     if (vinPrefix && !vehicleId) {
-        const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, null);
+        const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, null, null, vinColumnIndex);
         if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
     }
 
@@ -1560,7 +1560,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         if (vinPrefix) {
             const existingVinCollection = parseVinCollection(rowValues[vinColumnIndex - 1]);
             if (!existingVinCollection.includes(vinPrefix)) {
-                const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId);
+                const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId, null, vinColumnIndex);
                 if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
                 const maxAllowed = countEquipmentVersions((vehicleData && vehicleData.versionesAplicables) || vehicleInfo.versionesAplicables);
                 updatedVinCollection = addVinToAvailableSlot(existingVinCollection, vinPrefix, maxAllowed).collection;
@@ -3891,9 +3891,10 @@ function extractVinPrefix(vinStr) {
     return cleaned.substring(0, cleaned.length - 5);
 }
 
-function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId, rowsSnapshot) {
+function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId, rowsSnapshot, vinColumnIndexOverride) {
   if (!vinPrefix) return null;
-  const vinColumnIndex = getVinColumnIndex(sheet);
+  const vinColumnIndex = Number.isInteger(vinColumnIndexOverride) && vinColumnIndexOverride > 0
+    ? vinColumnIndexOverride : getVinColumnIndex(sheet);
   if (!vinColumnIndex) {
     throw new Error("La hoja «Cortes» no contiene una columna «vin»; no es posible validar duplicados.");
   }
