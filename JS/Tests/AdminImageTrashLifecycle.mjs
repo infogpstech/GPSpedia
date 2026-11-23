@@ -389,7 +389,7 @@ check("La interfaz del desarrollador ofrece enviar a papelera, restaurar y elimi
 });
 check("Las mutaciones de papelera conservan autorización local sin lease compartida",()=>{
     const dispatcher=fnSource(admin,"doPostInternal_");
-    assert.match(dispatcher,/assertDeveloperSession\\(payload\\)/);
+    assert.match(dispatcher,/assertDeveloperSession\(payload\)/);
     assert.doesNotMatch(admin,/withSharedMutationLease_|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
 });
 check("El helper Drive API envía GET/DELETE con supportsAllDrives y token OAuth",()=>{
