@@ -5,11 +5,20 @@ const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const coordinatorSource = read("../Services/Coordinator.js");
 const apiSource = read("../Frontend/api-config.js");
 const writeSource = read("../Services/write.js");
+const adminSource = read("../Services/admin.js");
 
 assert.equal(writeSource.includes("publishSharedCatalogChange_"), false);
 assert.equal(writeSource.includes("publishCortesCatalogChange_"), false);
-assert.ok(writeSource.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
-assert.ok(writeSource.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
+assert.equal(adminSource.includes("publishSharedCatalogChange_"), false);
+assert.equal(adminSource.includes("publishAdminCortesCatalogChange_"), false);
+assert.ok(adminSource.includes("response.catalogResetRequired = true;"));
+assert.ok(apiSource.includes("'publishCatalogReset': 'COORDINATOR'"));
+assert.ok(apiSource.includes("WRITE_CATALOG_RESET_ACTIONS_"));
+assert.ok(apiSource.includes("ADMIN_CATALOG_RESET_ACTIONS_"));
+assert.ok(apiSource.includes("publishCatalogResetAfterMutation_"));
+assert.ok(coordinatorSource.includes("function publishCatalogResetFromBrowser_"));
+assert.ok(coordinatorSource.includes('request.action === "publishCatalogReset"'));
+
 const cleanupStart = writeSource.indexOf("function removeLegacyWriteCoordinatorSettings_()");
 const cleanupEnd = writeSource.indexOf("\nfunction ", cleanupStart + 10);
 assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
@@ -19,11 +28,6 @@ const cleanup = new Function("PropertiesService", writeSource.slice(cleanupStart
 });
 cleanup();
 assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
-assert.match(apiSource, /'publishWriteCatalogReset': 'COORDINATOR'/);
-assert.match(apiSource, /WRITE_CATALOG_RESET_ACTIONS_/);
-assert.match(apiSource, /publishWriteCatalogResetAfterMutation_/);
-assert.match(coordinatorSource, /function publishWriteCatalogResetFromBrowser_/);
-assert.match(coordinatorSource, /request\.action === "publishWriteCatalogReset"/);
 
 const propertiesStore = {};
 const properties = {
@@ -57,13 +61,13 @@ assert.equal(properties.getProperty("GPSpedia_COORDINATOR_SECRET_WRITE"), null,
     "La publicación del navegador no debe depender de un secreto WRITE.");
 
 const payload = {
-    userId, sessionToken: token, operation: "addOrUpdateCut",
-    requestId: "write-addOrUpdateCut-OP-12345678"
+    userId, sessionToken: token, service: "WRITE", operation: "addOrUpdateCut",
+    requestId: "catalog-WRITE-addOrUpdateCut-OP-12345678"
 };
-const first = coordinator.publishWriteCatalogResetFromBrowser(payload);
+const first = coordinator.publishCatalogResetFromBrowser(payload);
 assert.equal(first.status, "success");
 assert.equal(first.resetRequired, false);
-const retry = coordinator.publishWriteCatalogResetFromBrowser(payload);
+const retry = coordinator.publishCatalogResetFromBrowser(payload);
 assert.equal(retry.duplicate, true);
 assert.equal(retry.revision, first.revision);
 const page = coordinator.getPublicCatalogChanges({ cursor: first.revision - 1, limit: 1 });
@@ -71,20 +75,30 @@ assert.equal(page.changes.length, 1);
 assert.equal(page.changes[0].operation, "reset");
 assert.equal(page.changes[0].collection, "*");
 
-assert.throws(() => coordinator.publishWriteCatalogResetFromBrowser({
-    ...payload, operation: "unknownAction", requestId: "write-unknown-OP-12345678"
+assert.throws(() => coordinator.publishCatalogResetFromBrowser({
+    ...payload, operation: "unknownAction", requestId: "catalog-WRITE-unknown-OP-12345678"
 }), /no está autorizada/);
-assert.throws(() => coordinator.publishWriteCatalogResetFromBrowser({
-    ...payload, operation: "freezeCortesIds", requestId: "write-freeze-OP-12345678"
+assert.throws(() => coordinator.publishCatalogResetFromBrowser({
+    ...payload, operation: "freezeCortesIds", requestId: "catalog-WRITE-freeze-OP-12345678"
+}), /Solo Desarrollador/);
+assert.throws(() => coordinator.publishCatalogResetFromBrowser({
+    ...payload, service: "ADMIN", operation: "resolveVehicleContributionCandidate",
+    requestId: "catalog-ADMIN-resolve-REQ-12345678"
 }), /Solo Desarrollador/);
 
 const developerId = "USER-WRITE-DEVELOPER", developerToken = "SESSION-WRITE-DEVELOPER-123456";
 registerSession(developerId, "desarrollador", developerToken);
-const freeze = coordinator.publishWriteCatalogResetFromBrowser({
-    userId: developerId, sessionToken: developerToken, operation: "freezeCortesIds",
-    requestId: "write-freezeCortesIds-OP-12345678"
+const freeze = coordinator.publishCatalogResetFromBrowser({
+    userId: developerId, sessionToken: developerToken, service: "WRITE",
+    operation: "freezeCortesIds", requestId: "catalog-WRITE-freezeCortesIds-OP-12345678"
 });
 assert.equal(freeze.status, "success");
 assert.equal(freeze.resetRequired, false);
+const adminReset = coordinator.publishCatalogResetFromBrowser({
+    userId: developerId, sessionToken: developerToken, service: "ADMIN",
+    operation: "resolveVehicleContributionCandidate", requestId: "catalog-ADMIN-resolveVehicle-REQ-12345678"
+});
+assert.equal(adminReset.status, "success");
+assert.equal(adminReset.resetRequired, false);
 
-console.log("WriteCatalogPublicationFrontend: 8/8 PASS — sesión/RBAC, reset seguro, idempotencia y ausencia de secreto compartido");
+console.log("CatalogPublicationFrontend: 9/9 PASS — sesión/RBAC, resets WRITE/ADMIN, idempotencia y limpieza de propiedades heredadas");
