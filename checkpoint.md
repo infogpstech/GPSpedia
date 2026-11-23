@@ -847,3 +847,11 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - MIG-013: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Próxima tarea: MIG-014 — revocación y limpieza de caché desde frontend.
 - HEAD antes de este cierre documental: `306df706da975accd044cbb7f44414b5bb8d26e0`.
+
+
+### Verificación final de registro MIG-013
+- El backlog queda normalizado con estado **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Los resultados locales dirigidos son 21/21 + 9/9 + 6/6 + 9/9 = **45/45 PASS**.
+- HEAD de la rama de trabajo antes de este apunte: `5450f039111ffda02d441b51cff00d8617d05739`.
+- La rama base protegida conserva `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Próxima tarea pendiente: MIG-014. No se inicia dentro del cierre de MIG-013.
