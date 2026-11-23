@@ -395,3 +395,12 @@ Estas pruebas cubren contratos de acciones, RBAC, actor/sesión, leases, coordin
 - La extracción estática confirma 120 acciones únicas y 0 acciones mapeadas sin router/handler. Las 12 acciones sin consumidor directo localizado siguen pendientes de clasificación y no se retiran.
 
 **MIG-001 continúa EN PROGRESO**: quedan inventario manual/histórico, contratos completos por acción, RBAC individual, datos/columnas, Drive/APIs, triggers y pruebas específicas de paridad.
+
+
+#### Clasificación inicial de las 12 acciones sin consumidor directo — 2026-11-23
+
+Se revisó el propósito de los 12 handlers sin llamada directa localizada: actividad de sesión (`touchSession`), diagnóstico PBKDF2 (`benchmarkPasswordKdf`), datos de navegación (`getNavigationData`), estados/ocultación por participante de Inbox (`markInboxUnread`, `deleteInboxConversation`), mantenimiento de timestamps, esquema AportesVehiculo, migración/rollback de identificadores, reconciliación de cargas y creación de hojas/columnas. El detalle y las precauciones están en §13 de la matriz.
+
+Se confirmó que `migrateVehicleContributionsSchema` también se invoca internamente cuando el flujo de candidatos necesita crear/verificar el ledger; no es solo una acción manual. `deleteInboxConversation` oculta por participante y conserva el historial, no borra mensajes físicamente. Las migraciones mantienen dry-run/confirmación, snapshots, digest y rollback según el caso.
+
+La clasificación es provisional. Aún falta buscar comandos de terminal, documentación histórica y jobs/triggers antes de cerrar el inventario manual. MIG-001 sigue EN PROGRESO.
