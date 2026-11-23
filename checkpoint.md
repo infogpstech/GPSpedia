@@ -809,3 +809,41 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Estado y siguiente paso
 - MIG-013: implementación de código completada; cierre sujeto a regresión CI.
 - Siguiente tarea de código: MIG-014 — revocación y limpieza de caché desde frontend.
+
+
+---
+
+## Cierre final MIG-013 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-23
+
+### Validación local ejecutada
+- `MIG013SessionActorLocalLookup.mjs`: 21/21 PASS.
+- `SessionActivityCoordination.mjs`: 9/9 PASS.
+- `SessionActivityLeaseMinimization.mjs`: 6/6 PASS.
+- `AuthSessionReadOptimization.mjs`: 9/9 PASS.
+- Total: 45/45 aserciones dirigidas aprobadas en harness V8 aislado con Spreadsheet y Cache simuladas.
+- Se comprobó que el test MIG-013 y los contratos de sesión pueden ejecutarse con las fuentes actuales de la rama; no se presentaron las simulaciones como llamadas Apps Script reales.
+
+### Criterios de aceptación
+- Login mantiene hash PBKDF2, bloqueo temporal de cinco intentos durante 15 minutos y token opaco generado en servidor.
+- AUTH es autoridad de Users/ActiveSessions; los servicios no confían en el rol del navegador.
+- AUTH, WRITE, FEEDBACK, ADMIN y UTILITIES usan caché local del actor; CATALOG tiene loader/caché local equivalente.
+- Cache miss valida identidad, token único, vigencia, usuario activo, rol y revocación pendiente; cache hit no hace lecturas de Spreadsheet por acción.
+- TTL máximo seis horas y clave de caché derivada por SHA-256(userId/token).
+- El flujo ordinario de sesión no llama a Coordinator ni adquiere leases SharedMutation. Se conservan leases y coordinaciones que pertenecen a otras funciones.
+- La invalidación local no necesita secretos compartidos. La orquestación frontend de invalidación entre servicios queda en MIG-014.
+
+### Cambios funcionales y límites
+- No fue necesario modificar lógica backend de sesión: la implementación local ya existía y cumplía los criterios; se amplió y ejecutó su cobertura de regresión para AUTH y CATALOG.
+- Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md, INVENTARIO_LLAMADAS_SERVICIOS.md, MATRIZ_MIGRACION_SERVICIOS.md, ChangesLogs.txt, Tareas_Beta.md y este checkpoint.
+- No se modificaron endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos.
+
+### Validación Beta pendiente
+- Desplegar AUTH y servicios consumidores en entorno aislado.
+- Probar login, intentos fallidos, token opaco, sesión fría/caliente, expiración, revocación, cambio de rol, usuario eliminado y permisos RBAC efectivos.
+- Confirmar logout y limpieza entre servicios conforme a MIG-014, incluidos errores/reintentos cuando un servicio no esté disponible.
+- Las pruebas locales no sustituyen las llamadas reales a Apps Script/Spreadsheet.
+
+### Estado final
+- MIG-013: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Próxima tarea: MIG-014 — revocación y limpieza de caché desde frontend.
+- HEAD antes de este cierre documental: `306df706da975accd044cbb7f44414b5bb8d26e0`.
