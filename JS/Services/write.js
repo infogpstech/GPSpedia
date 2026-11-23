@@ -1659,7 +1659,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
             const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
             if (!verified ||
                 verified.rowIndex !== rowIndex ||
-                verified.vehicleId !== String(newId) ||
+                String(verified.vehicleId) !== String(newId) ||
                 verified.slotIndex !== 1 ||
                 verified.operationHash !== operationHash ||
                 Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)) {
