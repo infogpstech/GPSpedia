@@ -14,7 +14,7 @@ const reader = coordinator.slice(start, end);
 assert.equal(admin.includes("normalizeCoordinatorServiceTraffic_"), false);
 assert.equal(admin.includes("validateGlobalServiceTrafficResult_"), false);
 assert.equal(admin.includes("handleGetServiceTraffic_"), false);
-assert.match(reader, /scope: "coordinator_protected_operations"/);
+assert.match(reader, /scope: "coordinator_legacy_protected_operations"/);
 assert.match(reader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
 assert.match(reader, /properties\.getProperties\(\)/);
 assert.doesNotMatch(reader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
