@@ -344,3 +344,14 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - [ ] No declarar funciones probadas sin invocación real.
 
 **Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; cero configuración local prohibida; despliegue simplificado y rendimiento no inferior a la línea base.
+
+
+#### Trazabilidad de acciones completada en primera pasada — 2026-11-23
+
+- Se generó en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de **120 acciones → servicio → handler → consumidor localizado**. Las 120 acciones tienen handler o ejecución inline identificada; no hay acciones del mapa sin dispatcher/handler en esta extracción.
+- Se identificaron **13 acciones sin consumidor directo localizado** en los módulos frontend inspeccionados. Quedan para clasificación como manuales, internas, indirectas o históricas; no se autoriza retirarlas por ese motivo.
+- Se inventariaron aparte las 13 operaciones internas de Coordinator y las rutas internas de caché de actor en USERS/WRITE/FEEDBACK/ADMIN.
+- Se documentó la diferencia de transporte de `getCatalogChanges`: el flujo incremental frontend usa GET `catalogFeed=1` en FEEDBACK y Coordinator, aunque existe también el handler POST de FEEDBACK.
+- La prueba `ActionDispatchContract.js` ejecutada sobre fuentes exactas de la rama sigue en **12/12 PASS**.
+
+**MIG-001 sigue EN PROGRESO**: falta asociar las 120 acciones y 19 categorías CAP con payload/response, RBAC exacto, hojas/columnas, archivos/Drive, APIs externas, procesos manuales/programados y pruebas específicas de paridad.
