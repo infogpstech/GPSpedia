@@ -10,7 +10,7 @@ const legacyEnd = admin.indexOf("\\nfunction sanitizeSupplementaryRichText_", le
 assert.ok(legacyStart >= 0 && legacyEnd > legacyStart, "No se encontró la ruta de compatibilidad ADMIN.");
 const legacy = admin.slice(legacyStart, legacyEnd);
 assert.match(legacy, /ACTION_MOVED_TO_WRITE/);
-assert.doesNotMatch(legacy, /setValues\\(|setValue\\(|UrlFetchApp|requestNextVehicleIdFromWriteService/,
+assert.doesNotMatch(legacy, /setValues\(|setValue\(|UrlFetchApp|requestNextVehicleIdFromWriteService/,
     "ADMIN debe rechazar la ruta antigua sin conservar escrituras ni llamadas backend→backend.");
 
 assert.match(api, /'addOrUpdateCut': 'WRITE'/);
