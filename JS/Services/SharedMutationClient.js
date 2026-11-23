@@ -346,7 +346,7 @@ function loadSharedSessionActorFromSpreadsheet_(userId, sessionToken, dependenci
     if (userRows.length !== 1) throw new Error("La cuenta no existe o su identificador no es único.");
     const user = userRows[0];
     const username = String(user[1] || "").trim();
-    const role = String(user[3] || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const role = String(user[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     const allowedRoles = ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"];
     if (!username || username.startsWith("__deleted__:") || !allowedRoles.includes(role)) {
         throw new Error("La cuenta está desactivada o no tiene un rol válido.");
