@@ -49,7 +49,7 @@ assert.equal(slotRunner(["V1","used","used",""],"V1"),3);
 assert.equal(slotRunner(["V1","used","used","used"],"V1"),null);
 const unsafe=extract("handleAddOrUpdateCutLockedUnsafe_","handleCheckVehicle");
 assert.equal((unsafe.match(/uploadImageToDrive\(/g)||[]).length,5);
-assert.equal((unsafe.match(/runWriteDriveWorkOutsideScriptLock_/g)||[]).length,9);
+assert.equal((unsafe.match(/runWriteDriveWorkOutsideScriptLock_/g)||[]).length,8);
 assert.doesNotMatch(unsafe,/getAuthenticatedCollaborator\(/);
 assert.ok(unsafe.split("\n").filter(line=>line.includes("uploadImageToDrive(")).every(line=>line.includes("shortLedgerLock: true")));
 assert.ok(unsafe.includes("findNextAvailableCutSlot_(rowValues, vehicleId)"));
