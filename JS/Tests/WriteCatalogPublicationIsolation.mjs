@@ -30,14 +30,7 @@ assert.ok(releaseIndex >= 0 && versionIndex > releaseIndex, "La versión local s
 
 assert.doesNotMatch(write, /publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_/);
 assert.doesNotMatch(write, /properties\.getProperty\("GPSpedia_COORDINATOR_(URL|SECRET)"\)/);
-assert.match(write, /removeLegacyWriteCoordinatorSettings_\(\)/);
-const cleanupSource = extract("removeLegacyWriteCoordinatorSettings_", "doPost");
-const deletedProperties = [];
-const cleanup = new Function("PropertiesService", cleanupSource + "\nreturn removeLegacyWriteCoordinatorSettings_;")({
-    getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
-});
-cleanup();
-assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
+assert.doesNotMatch(write, /GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|removeLegacyWriteCoordinatorSettings_/);
 
 assert.doesNotMatch(admin, /publishSharedCatalogChange_|publishAdminCortesCatalogChange_/);
 assert.match(admin, /response\.catalogResetRequired = true;/);
