@@ -514,6 +514,10 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 publicación ADMIN coordinada desde frontend','JS/Tests/AdminCatalogPublicationIsolation.mjs');
  runCli('MIG018 proyección dirigida de campos ADMIN','JS/Tests/AdminVehicleTargetedCatalogRead.mjs');
  runCli('MIG018 inventario de imágenes de candidatos','JS/Tests/AdminCandidateImageInventoryCatalogSource.mjs');
+ runCli('MIG018 superficie telemetría ADMIN','JS/Tests/AdminTrafficSurfaceContract.mjs');
+ runCli('MIG018 contrato telemetría ADMIN/Coordinator','JS/Tests/ServiceTrafficAdminContract.mjs');
+ runCli('MIG018 agregación local de telemetría','JS/Tests/ServiceTrafficAggregatorContract.mjs');
+ runCli('MIG018 agregación de tráfico Coordinator','JS/Tests/ServiceTrafficAggregation.mjs');
  runCli('MIG018 proyección de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
  runCli('MIG018 CATALOG proyección individual y VIN globales','JS/Tests/CatalogVehicleProjectionRead.mjs');
  runCli('MIG018 CATALOG respuestas dirigidas','JS/Tests/CatalogTargetedResponses.mjs');
