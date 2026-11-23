@@ -55,20 +55,20 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 - No se pierde ninguna función de la plataforma: cargas y administración de imágenes/vídeos, creación/edición de modelos, VIN, PyS, tutoriales, Inbox, feedback, Drive, backups/restauración, terminal, estados/latencia/tráfico de servicios, métricas de usuarios, logs, auditorías, herramientas de desarrollador y procesos internos.
 - La configuración y los metadatos se guardan en Spreadsheet; los binarios mantienen un almacenamiento compatible. La migración de Drive/YouTube debe conservar identidad, permisos, propiedad y reanudación.
 - La seguridad y RBAC no se delegan al frontend. No se exponen tokens OAuth ni se introducen claves compartidas de interconexión.
-- Ninguna función se retira por no aparecer en el mapa de 120 acciones: se requiere inventario completo de UI, handlers y procesos manuales/internos.
+- Ninguna función se retira por no aparecer en el mapa de 121 acciones: se requiere inventario completo de UI, handlers y procesos manuales/internos.
 
 ### Documentos registrados en la rama de trabajo
 - `NORMAS_DESAROLLO.md`: §17 establece configuración centralizada y paridad funcional.
 - `PLAN_NUEVA_ARQUITECTURA_FRONTEND.md`: arquitectura objetivo, fases y criterios de aceptación.
 - `TAREAS_MIGRACION_ARQUITECTURA.md`: 30 tareas con entregables y criterios.
-- `MATRIZ_MIGRACION_SERVICIOS.md`: 120 acciones actuales más matriz CAP-01 a CAP-19 de capacidades a preservar.
+- `MATRIZ_MIGRACION_SERVICIOS.md`: 121 acciones actuales más matriz CAP-01 a CAP-19 de capacidades a preservar.
 
 ### Estado verificado
 - HEAD de `GPSpedia2.2.5_work`: `2a8c1dc449b9503963be82f1693faf5eb8d827ed`.
 - HEAD de `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - La rama base no se modificó.
 - En esta actualización solo se modificaron documentos normativos/de planificación; no se cambió lógica funcional, deployments, Spreadsheet ni Drive.
-- La matriz de 120 acciones ya está registrada, pero el inventario total de pantallas, handlers no mapeados, comandos y procesos internos sigue pendiente.
+- La matriz de 121 acciones ya está registrada, pero el inventario total de pantallas, handlers no mapeados, comandos y procesos internos sigue pendiente.
 
 ### Próximas tareas
 1. Completar MIG-001 a MIG-005: inventario real de UI, handlers, propiedades, llamadas internas y línea base.
@@ -112,7 +112,7 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 
 
 ### Trazabilidad de acciones — avance adicional 2026-11-23
-- Publicada en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de 120 acciones con servicio, handler y consumidor localizado. En la extracción no quedó ninguna acción del mapa sin dispatcher/handler.
+- Publicada en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de 121 acciones con servicio, handler y consumidor localizado. En la extracción no quedó ninguna acción del mapa sin dispatcher/handler.
 - Se identificaron 12 acciones sin consumidor frontend directo en los módulos inspeccionados; quedan para clasificación manual/interna/indirecta/histórica, sin retirarlas.
 - Registradas las 13 operaciones internas de Coordinator, las rutas de caché de actor y la ruta GET incremental `catalogFeed=1` usada por el frontend.
 - `ActionDispatchContract.js`: 12/12 PASS con fuentes exactas de esta rama.
@@ -140,7 +140,7 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 
 
 ### Rutas internas fuera del mapa — avance 2026-11-23
-- Extraídas las acciones aceptadas por los dispatchers y ramas de `doPost` frente a `ACTION_TO_SERVICE_MAP`: 120/120 acciones mapeadas tienen ruta backend; 0 faltantes.
+- Extraídas las acciones aceptadas por los dispatchers y ramas de `doPost` frente a `ACTION_TO_SERVICE_MAP`: 120/121 acciones mapeadas tienen ruta backend; 0 faltantes.
 - Documentadas las 2 acciones internas de caché de actor en USERS/WRITE/FEEDBACK/ADMIN (8 rutas) y las 13 acciones privadas de Coordinator, con sus consumidores y propósito.
 - Registrados GET `catalogFeed=1`, estados `debug=true`, diagnóstico CATALOG, compatibilidad de CATALOG `getSuggestion`, rechazos ADMIN `ACTION_MOVED_TO_WRITE` y ruta directa de UTILITIES.
 - Las 12 acciones sin consumidor directo siguen pendientes de clasificación. MIG-001 permanece EN PROGRESO; no se modificó código funcional ni deployments.
@@ -245,7 +245,7 @@ Evidencia consolidada en §19 de `MATRIZ_MIGRACION_SERVICIOS.md`:
 - Árbol Git completo consultado: 615 rutas, sin truncamiento.
 - Diez archivos backend inspeccionados, 1,041 declaraciones de funciones con nombre.
 - 37 módulos frontend, tres superficies HTML, 373 entradas de pruebas y tres workflows.
-- 120/120 acciones canónicas del mapa reconciliadas con servicio, dispatcher y handler; la compatibilidad CATALOG `getSuggestion` está diferenciada de la ruta canónica WRITE.
+- 120/121 acciones canónicas del mapa reconciliadas con servicio, dispatcher y handler; la compatibilidad CATALOG `getSuggestion` está diferenciada de la ruta canónica WRITE.
 - 13 operaciones privadas de Coordinator y 8 endpoints privados de caché de actor identificados.
 - Las 12 acciones sin consumidor directo fueron clasificadas por función y enlazadas a pruebas representativas. No se retiró ninguna.
 - Completada la trazabilidad de consumidores, CAP-01 a CAP-19, RBAC, contratos de payload/respuesta, hojas/rangos, propiedades, estados operativos, Drive, YouTube, MailApp, terminal, backups/restauración, migraciones, rutas GET y procesos manuales.
@@ -599,7 +599,7 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - Se actualizó TAREAS_MIGRACION_ARQUITECTURA.md, PLAN_NUEVA_ARQUITECTURA_FRONTEND.md, NORMAS_DESAROLLO.md, ChangesLogs.txt y este checkpoint.
 
 ### Validación y límites
-- Las pruebas nuevas cubren el mapa de 120 acciones, los siete servicios, actualización de revisión, endpoints deshabilitados/inválidos, vencimiento y ausencia de fallback local.
+- Las pruebas nuevas cubren el mapa de 121 acciones, los siete servicios, actualización de revisión, endpoints deshabilitados/inválidos, vencimiento y ausencia de fallback local.
 - La CI debe confirmar la suite completa, sintaxis y contratos sobre el commit publicado.
 - La prueba de navegador real que cambie un endpoint desde Spreadsheet y confirme la actualización automática, así como el acceso real de AUTH a Spreadsheet/CacheService, queda pendiente de Beta conforme a MIG-006/MIG-008. No se desplegó ni modificó ningún servicio.
 - No se modificaron Apps Script, PropertiesService, deployments, endpoints instalados, Spreadsheet, Drive ni datos.

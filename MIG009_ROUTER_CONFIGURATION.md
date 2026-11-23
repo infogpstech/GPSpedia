@@ -31,7 +31,7 @@ La primera consulta necesita una dirección de arranque para AUTH, porque el reg
 
 ## Pruebas
 
-- MIG009FrontendActionRouter.mjs: cobertura del mapa de 120 acciones, siete servicios, endpoint dinámico, actualización de revisión, servicio deshabilitado, URL inválida y fail-closed.
+- MIG009FrontendActionRouter.mjs: cobertura del mapa de 121 acciones, siete servicios, endpoint dinámico, actualización de revisión, servicio deshabilitado, URL inválida y fail-closed.
 - ActionDispatchContract.js: valida servicios contra CENTRAL_SERVICE_KEYS y comprueba que el router no mantiene mapa ni fallback local.
 - ServiceHealthContract.mjs: ejecuta comprobaciones con una proyección central simulada e inyectable.
 - RemoteServiceHealth.mjs: obtiene endpoints del bootstrap central y realiza únicamente GET de diagnóstico.

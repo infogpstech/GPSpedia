@@ -23,7 +23,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ### MIG-001 — Inventario de todas las acciones y handlers
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [x] Contrastar las 120 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
+- [x] Contrastar las 121 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
 - [x] Extraer acciones aceptadas por cada `doPost` que no estén en el mapa frontend.
 - [x] Inventariar funciones internas, acciones manuales, endpoints de mantenimiento, compatibilidad histórica, rutas GET, terminal y procesos auxiliares.
 - [x] Registrar para cada acción: handler, consumidores UI, payload/validadores, respuesta, errores, rol/RBAC, hojas/archivos, dependencias e inventario de pruebas.
@@ -160,7 +160,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Sustituir el mapa local de siete URLs por resolución desde la proyección pública central.
-- [x] Mantener el mapa acción → servicio y los contratos payload/respuesta; conservar las 120 acciones.
+- [x] Mantener el mapa acción → servicio y los contratos payload/respuesta; conservar las 121 acciones.
 - [x] Mantener caché cache-first/single-flight con refresco automático al vencer TTL; fallar cerrado sin fallback local.
 - [x] Enrutar solicitudes POST, feed GET incremental y health checks mediante el registro central.
 - [x] Mantener errores HTTP, red, JSON y aplicación y estados de error localizados.
@@ -168,7 +168,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - [x] Conservar un único localizador bootstrap AUTH, limitado a consultar la primera proyección central.
 - [ ] Validar en Beta el cambio de URL desde Spreadsheet y la actualización automática desde navegador real; ejecutar health remoto manualmente tras desplegar getPublicConfiguration.
 
-**Aceptación:** las 120 acciones, health checks y feed incremental usan destinos del registro central; no existen URLs locales para servicios ni fallback a valores anteriores; ante registro inválido, vencido o no disponible, el router no utiliza destinos antiguos. AUTH bootstrap es el único localizador de arranque y no actúa como fallback.
+**Aceptación:** las 121 acciones, health checks y feed incremental usan destinos del registro central; no existen URLs locales para servicios ni fallback a valores anteriores; ante registro inválido, vencido o no disponible, el router no utiliza destinos antiguos. AUTH bootstrap es el único localizador de arranque y no actúa como fallback.
 
 ### MIG-010 — Orquestador frontend de operaciones multi-servicio
 **Estado: PENDIENTE**
@@ -405,13 +405,13 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 #### Trazabilidad de acciones completada en primera pasada — 2026-11-23
 
-- Se generó en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de **120 acciones → servicio → handler → consumidor localizado**. Las 120 acciones tienen handler o ejecución inline identificada; no hay acciones del mapa sin dispatcher/handler en esta extracción.
+- Se generó en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de **121 acciones → servicio → handler → consumidor localizado**. Las 121 acciones tienen handler o ejecución inline identificada; no hay acciones del mapa sin dispatcher/handler en esta extracción.
 - Se identificaron **12 acciones sin consumidor directo localizado** en los módulos frontend inspeccionados. Quedan para clasificación como manuales, internas, indirectas o históricas; no se autoriza retirarlas por ese motivo.
 - Se inventariaron aparte las 13 operaciones internas de Coordinator y las rutas internas de caché de actor en USERS/WRITE/FEEDBACK/ADMIN. Se verificaron además las llamadas ADMIN→CATALOG (`getVehicleProjection`, `getContributionCandidates`) y ADMIN→WRITE (`allocateVehicleId`, `freezeCortesIds`).
 - Se documentó la diferencia de transporte de `getCatalogChanges`: el flujo incremental frontend usa GET `catalogFeed=1` en FEEDBACK y Coordinator, aunque existe también el handler POST de FEEDBACK.
 - La prueba `ActionDispatchContract.js` ejecutada sobre fuentes exactas de la rama sigue en **12/12 PASS**.
 
-**MIG-001 sigue EN PROGRESO**: falta asociar las 120 acciones y 19 categorías CAP con payload/response, RBAC exacto, hojas/columnas, archivos/Drive, APIs externas, procesos manuales/programados y pruebas específicas de paridad.
+**MIG-001 sigue EN PROGRESO**: falta asociar las 121 acciones y 19 categorías CAP con payload/response, RBAC exacto, hojas/columnas, archivos/Drive, APIs externas, procesos manuales/programados y pruebas específicas de paridad.
 
 
 #### RBAC y contratos de acceso — primera pasada 2026-11-23
@@ -449,7 +449,7 @@ Estas pruebas cubren contratos de acciones, RBAC, actor/sesión, leases, coordin
 - Completada la extracción de acciones de los dispatchers y ramas previas a cada `doPost` frente a las 120 claves de `ACTION_TO_SERVICE_MAP`.
 - No se encontró acción del mapa sin ruta backend. Se documentaron 2 acciones internas de caché de actor en cada uno de USERS/WRITE/FEEDBACK/ADMIN (8 rutas de servicio) y las 13 acciones privadas de Coordinator.
 - Se documentaron GET `catalogFeed=1`, respuestas `debug=true`, diagnóstico CATALOG, compatibilidad CATALOG `getSuggestion`, rechazos ADMIN `ACTION_MOVED_TO_WRITE` y ruta directa de UTILITIES.
-- La extracción estática confirma 120 acciones únicas y 0 acciones mapeadas sin router/handler. Las 12 acciones sin consumidor directo localizado siguen pendientes de clasificación y no se retiran.
+- La extracción estática confirma 121 acciones únicas y 0 acciones mapeadas sin router/handler. Las 12 acciones sin consumidor directo localizado siguen pendientes de clasificación y no se retiran.
 
 **MIG-001 continúa EN PROGRESO**: quedan inventario manual/histórico, contratos completos por acción, RBAC individual, datos/columnas, Drive/APIs, triggers y pruebas específicas de paridad.
 
@@ -547,7 +547,7 @@ Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariame
 Se completó la reconciliación estática de todas las acciones, handlers, rutas internas, consumidores, capacidades, datos e integraciones. Evidencia consolidada en §19 de `MATRIZ_MIGRACION_SERVICIOS.md`:
 
 - Árbol Git de 615 rutas, sin truncamiento; 10 archivos backend con 1,041 funciones nombradas; 37 módulos frontend y las tres superficies HTML.
-- 120/120 acciones del mapa con ruta backend/handler; CATALOG conserva una ruta adicional de compatibilidad `getSuggestion`.
+- 120/121 acciones del mapa con ruta backend/handler; CATALOG conserva una ruta adicional de compatibilidad `getSuggestion`.
 - 13 operaciones internas de Coordinator y 8 rutas privadas de caché de actor documentadas.
 - 12 acciones sin consumidor directo clasificadas como compatibilidad, diagnóstico, mantenimiento o brecha UI; todas conservadas y vinculadas a pruebas representativas.
 - Trazabilidad de CAP-01 a CAP-19, RBAC, contratos de entrada/salida, hojas/rangos, recursos Drive, APIs externas, propiedades de configuración y estado operativo.

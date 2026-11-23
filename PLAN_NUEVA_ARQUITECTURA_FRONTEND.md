@@ -102,7 +102,7 @@ La Spreadsheet guarda configuración, metadatos, IDs, estados y registros, no lo
 
 ## 3. Requisitos de paridad funcional
 
-El inventario no se limita a las 120 acciones del mapa frontend. Debe incluir también handlers internos, comandos de desarrollador, herramientas administrativas, trabajos manuales, compatibilidad, tareas programadas, integraciones externas y controles visibles.
+El inventario no se limita a las 121 acciones del mapa frontend. Debe incluir también handlers internos, comandos de desarrollador, herramientas administrativas, trabajos manuales, compatibilidad, tareas programadas, integraciones externas y controles visibles.
 
 Como mínimo, se deben preservar:
 
@@ -155,7 +155,7 @@ La migración no se acepta hasta cumplir simultáneamente:
 - [ ] La configuración operativa está centralizada en Spreadsheet.
 - [ ] El frontend coordina todas las solicitudes y secuencias entre servicios.
 - [ ] AUTH/USERS conserva login, usuarios, perfiles, roles, recuperación y sesiones.
-- [ ] Se mantienen las 120 acciones del mapa actual y todas las acciones adicionales encontradas.
+- [ ] Se mantienen las 121 acciones del mapa actual y todas las acciones adicionales encontradas.
 - [ ] Se mantienen cargas y administración de imágenes, vídeos, Drive y YouTube.
 - [ ] Se mantienen creación/edición de modelos, VIN, PyS, tutoriales, Inbox, feedback y formularios.
 - [ ] Se mantienen métricas de servicios, latencia, tráfico, usuarios, actividad, logs y auditoría.
@@ -180,7 +180,7 @@ La migración no se acepta hasta cumplir simultáneamente:
 
 - Rama verificada: `GPSpedia2.2.5_work`.
 - Rama base verificada: `GPSpedia2.2.5`.
-- El mapa frontend existente contiene 120 acciones distribuidas entre AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN.
+- El mapa frontend existente contiene 121 acciones distribuidas entre AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN.
 - Existe un inventario inicial de llamadas internas, propiedades, secretos y dependencias en [MATRIZ_MIGRACION_SERVICIOS.md](./MATRIZ_MIGRACION_SERVICIOS.md).
 - Todavía no se ha modificado lógica funcional ni deployments para esta migración.
 - La siguiente actividad es completar el inventario de funciones y ejecutar el spike de acceso a Spreadsheet sin configuración local.

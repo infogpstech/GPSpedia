@@ -90,5 +90,5 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se conserva un único localizador bootstrap AUTH para obtener la primera configuración; no se utiliza como fallback de otros servicios.
 - La caché frontend mantiene cache-first/single-flight y refresca al vencer TTL; los endpoints dejan de estar disponibles cuando el registro no permite enrutar.
 - Las pruebas de salud y el probe remoto se adaptaron para utilizar la configuración central; el workflow remoto queda manual para ejecutarse tras el despliegue autorizado de AUTH.
-- Se añadieron pruebas de contrato para las 120 acciones, resolución dinámica, actualización de revisión, servicios deshabilitados y fail-closed.
+- Se añadieron pruebas de contrato para las 121 acciones, resolución dinámica, actualización de revisión, servicios deshabilitados y fail-closed.
 - No se modificaron archivos Apps Script, propiedades, deployments, endpoints productivos, Spreadsheet, Drive ni datos. La actualización real de endpoints desde Spreadsheet queda pendiente de Beta.

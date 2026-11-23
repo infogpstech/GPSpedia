@@ -14,7 +14,7 @@ const serviceMatch = api.match(/export\s+const\s+CENTRAL_SERVICE_KEYS\s*=\s*Obje
 assert.ok(serviceMatch, "No se encontró CENTRAL_SERVICE_KEYS.");
 const serviceKeys = [...serviceMatch[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
 assert.deepEqual(serviceKeys, ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"]);
-assert.equal(Object.keys(actionMap).length, 120, "Cambió el total de acciones sin revisar inventario.");
+assert.equal(Object.keys(actionMap).length, 121, "Cambió el total de acciones sin revisar inventario.");
 for (const [action, service] of Object.entries(actionMap)) assert.ok(serviceKeys.includes(service), action + " apunta a servicio desconocido.");
 assert.doesNotMatch(api, /API_ENDPOINTS/);
 assert.equal((api.match(/https:\/\/script\.google\.com\/macros\/s\//g) || []).length, 1);
@@ -56,4 +56,4 @@ function makeSnapshot(revision = 1, deployment = "CURRENT") {
  assert.equal(second.revision,2);
  assert.match(resolveCentralServiceEndpoint(second,"ADMIN"),/ROTATED_ADMIN/);
 }
-console.log("MIG009FrontendActionRouter: 5/5 PASS — 120 acciones, siete servicios, actualización de URLs, health checks y fail-closed.");
+console.log("MIG009FrontendActionRouter: 5/5 PASS — 121 acciones, siete servicios, actualización de URLs, health checks y fail-closed.");

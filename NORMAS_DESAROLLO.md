@@ -294,7 +294,7 @@ Este requisito, registrado el 2026-11-22, define la arquitectura objetivo de la 
 ### 17.4 Prueba de paridad y aceptación
 
 - Antes de migrar, construir un inventario verificable de pantallas, botones, acciones, handlers, permisos, integraciones, procesos manuales y pruebas existentes.
-- Cada función tendrá un identificador de seguimiento y una prueba de equivalencia antes/después. El mapa de 120 acciones no constituye por sí solo el inventario completo.
+- Cada función tendrá un identificador de seguimiento y una prueba de equivalencia antes/después. El mapa de 121 acciones no constituye por sí solo el inventario completo.
 - La migración se acepta solo si todas las funciones del inventario permanecen disponibles, los contratos y permisos se conservan y las pruebas de regresión pasan.
 - Los despliegues Beta deben validar cargas reales de imágenes y vídeos, creación/edición de modelos, estados y métricas, Drive, Inbox, PyS, backups/restauración y operaciones administrativas, además del catálogo y login.
 - No borrar proyectos, acciones, hojas, archivos, endpoints ni datos hasta cerrar su matriz de paridad y confirmar que no tienen consumidores vigentes.
