@@ -31,6 +31,7 @@ function runCli(label, path) {
  for (const m of summaries) { totals.passed += Number(m[1]); if (m[1] !== m[2]) throw new Error(label + ': resumen parcial o fallido.'); }
  totals.suites++;
 }
+
 function runGroup(id, service, fn) {
  if (selected && !selected.has(service) && !selected.has(id)) return;
  console.log('\n[' + id + '] ' + service);
