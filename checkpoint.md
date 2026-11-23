@@ -618,3 +618,41 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - GitHub Pages build/deploy: SUCCESS — https://github.com/infogpstech/GPSpedia/actions/runs/45185424818
 - Health check remoto de Apps Script: pendiente de Beta; requiere que el handler getPublicConfiguration esté desplegado y la configuración central esté publicada. No se ejecutó ni se modificó ningún deployment de Apps Script.
 - Rama base protegida verificada sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+---
+
+## Continuidad MIG-010 — 2026-11-23
+
+### Estado Git verificado
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD después de los registros: `037d19bff723c2ce3889c86a46d2dc4c2d23d6fa`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; permanece sin modificaciones.
+- Todos los cambios de esta continuación se realizaron en la rama de trabajo.
+
+### Trabajo MIG-010 realizado
+1. Se consolidó la secuencia de reorganización en frontend: ADMIN `backupDatabase` → WRITE `freezeCortesIds` → ADMIN `reorganizeDatabase`.
+2. Se corrigió la recuperación de respaldo ante pérdida de respuesta: el navegador persiste operationId antes de la llamada; ADMIN lo vincula al usuario y al origen en el manifiesto privado, busca la copia previa, verifica su integridad y reutiliza el mismo backupId. Se rechazan identificadores de otro usuario, manifiestos incompletos/ambiguos y respaldos movidos fuera de la raíz.
+3. Se mantuvo el progreso por etapas, backupId y recuperación local por usuario. No se añadió un identificador de operación a las llamadas ordinarias de backupDatabase que no lo necesitan.
+4. Las consultas de proyección y candidatos se realizan desde frontend hacia CATALOG. ADMIN no contiene wrappers ni destinos de coordinación hacia WRITE/CATALOG.
+5. Se protegió `getVehicleProjection` con validación local de sesión para Desarrollador, Jefe y Supervisor; `getContributionCandidates` continúa limitado a Desarrollador. Las dos llamadas frontend envían el contexto de sesión y el backend aplica RBAC.
+6. Se añadió `JS/Tests/MIG010FrontendServiceOrchestration.mjs` y se registró en `JS/Tests/RunServiceTests.mjs`.
+7. Se actualizaron `TAREAS_MIGRACION_ARQUITECTURA.md`, `INVENTARIO_LLAMADAS_SERVICIOS.md` y `ChangesLogs.txt`.
+
+### Validación realizada
+- Suite MIG010 ejecutada en un harness V8 aislado: **56 aserciones PASS**.
+- Incluye simulación de creación/reintento del respaldo, reutilización del mismo backupId, rechazo de replay por otro usuario, validación de roles y expiración, protección de proyección, envío de sesión desde frontend, orden de secuencia y persistencia previa del operationId.
+- Parsing V8 aprobado para `JS/Services/admin.js`, `JS/Services/catalog.js`, `JS/Frontend/ui.js` y la suite MIG010.
+- La ejecución del workflow completo Node.js 22 no se pudo confirmar: la consulta de estado de commit no devolvió checks. **No declarar CI SUCCESS hasta recuperar el resultado real de GitHub Actions.**
+
+### Límites y pendientes
+- MIG-010 permanece **EN PROGRESO** hasta confirmar la regresión completa Node.js 22.
+- Beta pendiente: llamadas reales frontend→ADMIN/CATALOG/WRITE, permisos y sesiones en Apps Script, acceso a Spreadsheet y recuperación con recursos aislados.
+- No se desplegaron servicios Apps Script ni se modificaron endpoints instalados, PropertiesService, Spreadsheet, Drive o datos.
+- No iniciar MIG-011 hasta completar el cierre de MIG-010 según las normas.
+
+### Próximo paso exacto
+1. Recuperar y revisar el resultado del workflow `GPSpedia service regression tests` disparado por los commits de esta rama; si falla, corregir y repetir.
+2. Con CI aprobado, registrar MIG-010 como COMPLETADA CON VALIDACIÓN DIFERIDA, dejando Beta explícitamente pendiente.
+3. Continuar con MIG-011 — eliminar dependencias backend→backend restantes de ADMIN.
+
