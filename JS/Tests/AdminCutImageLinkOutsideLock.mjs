@@ -1,29 +1,58 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
-const hs=source.indexOf("function handleAddOrUpdateCut("),he=source.indexOf("\nfunction ",hs+20);
-assert.ok(hs>=0&&he>hs,"No se encontró handleAddOrUpdateCut");
-const handler=source.slice(hs,he);
-assert.doesNotMatch(handler,/markImageUploadLinked\(/,"El handler no debe ejecutar Drive directamente");
-const calls=[...handler.matchAll(/markAdminCutImagesLinkedOutsideLock_\(/g)].map(m=>m.index);
-assert.equal(calls.length,3,"Recuperación, existente y nuevo deben usar el wrapper");
-for(const i of calls){const p=handler.lastIndexOf("recordOpId(",i);assert.ok(p>=0&&handler.slice(p,i).includes('"completed"'),"Debe persistir completed antes de sincronizar");}
-const s=source.indexOf("function markAdminCutImagesLinkedOutsideLock_("),e=source.indexOf("\nfunction markImageUploadLinked(",s);
-assert.ok(s>=0&&e>s,"No se encontró wrapper");
-const code=source.slice(s,e);
-assert.ok(code.includes("runAdminDriveWorkOutsideScriptLock_")&&code.includes("return urls.map(url => markImageUploadLinked(url))"),"Drive debe ejecutarse dentro del callback aislado");
-assert.ok(code.includes('latest.status !== "completed"')&&code.includes("latest.operationHash !== operationHash")&&code.includes("latest.slotIndex"),"Debe revalidar opId/estado/slot/huella");
-assert.ok(code.includes("ADMIN_IMAGE_LINK_"),"Legacy requiere clave estable");
-const build=new Function("runAdminDriveWorkOutsideScriptLock_","getImageUploadFileId_","markImageUploadLinked","getSpreadsheet","SHEET_NAMES","findRowByOpId",code+"\nreturn markAdminCutImagesLinkedOutsideLock_;");
-let held=true,driveRan=false,key="";
-const lock={hasLock:()=>held,releaseLock:()=>{assert.equal(held,true);held=false;},tryLock:n=>{assert.equal(n,0);held=true;return true;}};
-const fake=(l,k,work,revalidate)=>{key=k;l.releaseLock();const result=work();assert.equal(l.hasLock(),false);l.tryLock(0);return revalidate(result);};
-const fn=build(fake,v=>String(v).match(/id=([^&]+)/)?.[1]||"",url=>{assert.equal(held,false);driveRan=true;return true;},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>({status:"completed",vehicleId:"42",slotIndex:2,operationHash:"hash"}));
-assert.deepEqual(fn(lock,"OP-1","42",2,"hash",["https://drive.google.com/uc?export=view&id=a","https://drive.google.com/uc?export=view&id=a","https://drive.google.com/uc?export=view&id=b"]),[true,true]);
-assert.equal(key,"OP-1");assert.equal(driveRan,true);assert.equal(held,true);
-held=true;driveRan=false;
-assert.deepEqual(fn(lock,null,"42",1,null,["https://drive.google.com/uc?export=view&id=c"]),[true]);
-assert.equal(key,"ADMIN_IMAGE_LINK_42_c");assert.equal(driveRan,true);
-const conflict=build(fake,v=>String(v).match(/id=([^&]+)/)?.[1]||"",()=>true,()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>({status:"pending",vehicleId:"42",slotIndex:2,operationHash:"hash"}));
-assert.throws(()=>conflict(lock,"OP-1","42",2,"hash",["https://drive.google.com/uc?export=view&id=d"]),/cambió durante la vinculación/);
-console.log("AdminCutImageLinkOutsideLock: 12/12 PASS — Drive fuera del lock, revalidación y clave legacy estable");
+
+const source = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
+const start = source.indexOf("function handleAddOrUpdateCutLockedUnsafe_(");
+const end = source.indexOf("\\nfunction ", start + 20);
+assert.ok(start >= 0 && end > start, "No se encontró la mutación canónica WRITE.");
+const handler = source.slice(start, end);
+const driveCalls = [...handler.matchAll(/markImageUploadLinked\\(/g)];
+assert.equal(driveCalls.length, 5, "Recuperación, vehículo existente y vehículo nuevo deben vincular las imágenes.");
+for (const call of driveCalls) {
+    const prefix = handler.slice(Math.max(0, call.index - 150), call.index);
+    assert.ok(prefix.includes("runWriteDriveWorkOutsideScriptLock_(lock, lockState, opId, () =>"),
+        "Toda vinculación de imágenes debe ejecutarse dentro del wrapper WRITE fuera del lock.");
+}
+assert.ok(!handler.includes("markAdminCutImagesLinkedOutsideLock_"),
+    "WRITE no debe depender del wrapper ADMIN retirado.");
+
+const helperStart = source.indexOf("function runWriteDriveWorkOutsideScriptLock_(");
+const helperEnd = source.indexOf("\\nfunction ", helperStart + 20);
+assert.ok(helperStart >= 0 && helperEnd > helperStart, "No se encontró el wrapper de Drive de WRITE.");
+const helper = source.slice(helperStart, helperEnd);
+const build = new Function(helper + "\\nreturn runWriteDriveWorkOutsideScriptLock_;");
+const runOutside = build();
+let held = true, released = 0, reacquired = 0, ran = false;
+const lock = {
+    hasLock: () => held,
+    releaseLock() { assert.equal(held, true); held = false; released++; },
+    tryLock(timeout) { assert.equal(timeout, 0); assert.equal(held, false); held = true; reacquired++; return true; }
+};
+const state = { releasedForDrive: false };
+const result = runOutside(lock, state, "OP-1", () => {
+    assert.equal(held, false, "Drive debe ejecutarse sin el ScriptLock global.");
+    ran = true;
+    return "linked";
+});
+assert.equal(result, "linked");
+assert.equal(ran, true);
+assert.equal(held, true);
+assert.equal(released, 1);
+assert.equal(reacquired, 1);
+assert.equal(state.releasedForDrive, true);
+
+assert.throws(() => runOutside(lock, state, "OP-2", () => { throw new Error("drive failure"); }), /drive failure/);
+assert.equal(held, true, "El lock debe recuperarse incluso cuando Drive falla.");
+assert.equal(released, 2);
+assert.equal(reacquired, 2);
+
+const noLockResult = runOutside({ hasLock: () => false }, {}, "OP-3", () => "without-lock");
+assert.equal(noLockResult, "without-lock");
+
+const failedLock = {
+    hasLock: () => true,
+    releaseLock() { held = false; },
+    tryLock() { return false; }
+};
+assert.throws(() => runOutside(failedLock, {}, "OP-4", () => true), error => error.code === "WRITE_LOCK_REACQUIRE_PENDING");
+console.log("AdminCutImageLinkOutsideLock: PASS — WRITE ejecuta cinco vínculos Drive fuera del lock y gestiona recuperación/contención");
