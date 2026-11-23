@@ -909,3 +909,21 @@ UTILITIES expone únicamente `migrateTimestamps` por su `doPost` directo. Usa `C
 - Terminar los esquemas y rangos de `Hoja 1`, staging/backup de UTILITIES y las hojas de CATALOG/FEEDBACK que se crean por flujo.
 - Trazar cada hoja a las acciones concretas, columnas leídas/escritas, permisos, efectos Drive/YouTube/Mail y pruebas de paridad.
 - Revisar manifiestos y configuración de los proyectos Apps Script para detectar triggers instalados. El escaneo estático previo de módulos principales no demuestra ausencia global de triggers.
+
+
+
+### 18.9 Esquemas pendientes completados y discrepancias del contrato de restauración
+
+- `FeedbackLikes` A:G: `actorKey`, `vehicleId`, `corteIndex`, `previousCount`, `targetCount`, `status`, `createdAt`.
+- `FeedbackYearApplications` A:P: `operationId`, `vehicleId`, `year`, `previousFrom`, `previousTo`, `targetFrom`, `targetTo`, `voteCount`, `status`, `activityAttempted`, `createdAt`, `updatedAt`, `previousRawFrom`, `previousSourceFromEventId`, `previousRawTo`, `previousSourceToEventId`. Las primeras 12 columnas son el esquema heredado y M:P son una extensión versionada que el código inicializa/verifica.
+- `FeedbackYearApplicationEvents` A:E: `eventId`, `operationId`, `eventType`, `createdAt`, `payloadJson`.
+- `AdminState` A:F: `Action`, `LastIndex`, `Total`, `Percentage`, `Date`, `ProcessId`.
+- `Imagenes_Reemplazadas` conserva A:K histórico: `id_reemplazo`, `fecha_reemplazo`, `tipo_contenido`, `registro_id`, `campo`, `archivo_drive_id`, `nombre_archivo`, `url_anterior`, `sustituida_por_url`, `referencia_texto`, `estado`. ADMIN añade hasta 16 encabezados de inventario/organización por nombre, sin desplazar la base: `origen_registro`, `tipo_mime`, `ubicacion_original`, `fecha_creacion_drive`, `fecha_deteccion`, `url_visualizacion`, `ubicacion_actual`, `ultima_auditoria_id`, `tipo_registro`, `estado_organizacion`, `error_organizacion`, `fecha_organizacion`, `estado_previo_papelera`, `ultima_operacion_inventario_id`, `resultado_inventario`, `detalle_resultado_inventario`. El orden/posición de estas columnas añadidas depende de las columnas existentes y se resuelve por encabezado.
+
+La función de respaldo/restauración de ADMIN declara un esquema requerido propio. La comparación estática detecta diferencias que deben resolverse antes de migrar o confiar en una restauración:
+
+1. `ADMIN_RESTORE_REQUIRED_SCHEMA_.ActiveSessions` exige A:F, mientras AUTH define también G (`SessionTermsAcceptance`). El proceso de restauración puede no validar esa columna adicional.
+2. `ADMIN_RESTORE_REQUIRED_SCHEMA_.Cortes` enumera A:AP (42 columnas) y no incluye la posición dinámica de VIN ni AT:AV (`activaTestigo1..3`) que WRITE utiliza. Debe comprobarse que backup/restauración preserve esos datos aunque no estén en el esquema requerido actual.
+3. El esquema de restauración llama `Data` a la columna D de `Logs`; AUTH escribe allí el JSON de detalles. El nombre semántico no coincide (`Data` frente a `details`), aunque ambos ocupen la cuarta columna.
+
+Estas diferencias son hallazgos de inventario, no defectos confirmados de restauración: falta ejecutar pruebas con copias aisladas que contengan esos campos y revisar el algoritmo completo de backup/restore. No modificar encabezados ni datos reales para resolverlas durante MIG-001.
