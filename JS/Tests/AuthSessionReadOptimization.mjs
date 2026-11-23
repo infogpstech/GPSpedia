@@ -62,7 +62,7 @@ const revokeAll = block("revokeAllUserSessionsUnderLock_");
 const callbackAt = revokeAll.indexOf("beforeClear(tokens)");
 const clearAt = revokeAll.indexOf("tokenRange.setValues(nextValues)");
 assert.ok(callbackAt >= 0 && clearAt > callbackAt,
-    "La invalidación remota debe completarse antes de limpiar tokens locales.");
+    "La invalidación de la caché local debe completarse antes de limpiar tokens locales.");
 assert.match(revokeAll, /return \{ rows, tokens, revokedSessions, pendingRows/);
 
 const reconcile = block("reconcileRoleRevocationUnderLock_");
