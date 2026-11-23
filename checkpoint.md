@@ -701,3 +701,32 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 1. Iniciar MIG-012 — unificación funcional AUTH/USERS, según su prioridad y dependencias.
 2. Mantener las validaciones reales de Beta de MIG-010/MIG-011 como pendientes independientes; no marcarlas como ejecutadas.
 
+
+
+---
+
+## Continuidad MIG-012 — implementación publicada para regresión — 2026-11-23
+
+### Estado Git de partida
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD de partida: `3b29b97c4d5ed8c1ce216fdd68f84feaf8acd64c`.
+- Rama base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modifica.
+
+### Implementación MIG-012
+- `getUsers`, `createUser` y `updateProfile` ya están integradas en `JS/Services/Auth.js`, con dispatcher AUTH y actor cacheado local.
+- Las tres acciones se enrutan a AUTH desde frontend. USERS ya no es destino de endpoint ni servicio de salud.
+- Se conserva el esquema de Users/ActiveSessions, roles jerárquicos, hash PBKDF2, generación secuencial de IDs, atomicidad, rollback y edición exclusiva del perfil propio.
+- `createUser` usa el ScriptLock local de AUTH; no necesita lease Coordinator para competir con `deleteUser`, que usa el mismo lock local.
+- Coordinator ya no tiene política/allowlist de servicio USERS ni precarga/invalidez de caché hacia ese proyecto. Los destinos restantes de caché son WRITE, FEEDBACK y ADMIN.
+- Se retiraron `JS/Services/users.js` y `JS/Tests/users.js` después de trasladar los tests al grupo AUTH.
+- Harness aislado: 15/15 PASS. Sintaxis del archivo AUTH: PASS.
+
+### Validación pendiente antes del cierre
+1. Revisar el diff/HEAD y el workflow de regresión Node.js 22 posterior al commit.
+2. Corregir cualquier regresión detectada y repetir CI hasta obtener SUCCESS.
+3. Solo entonces marcar MIG-012 COMPLETADA CON VALIDACIÓN DIFERIDA y registrar los runs.
+4. Mantener pendiente Beta real: deployment AUTH, sesiones/roles efectivos, hojas/recursos aislados y deshabilitación del deployment/fila heredada USERS. No modificar esos recursos desde este commit.
+
+### Siguiente paso exacto
+Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013 — sesiones sin Coordinator ni secretos compartidos.

@@ -4,7 +4,6 @@ import { readFileSync } from "node:fs";
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const admin = read("Services/admin.js");
 const auth = read("Services/Auth.js");
-const users = read("Services/users.js");
 const write = read("Services/write.js");
 const feedback = read("Services/feedback.js");
 const utilities = read("Services/Utilities.js");
@@ -48,7 +47,7 @@ check("CATALOG valida sesión propia y frontend coordina proyección/candidatos"
 });
 
 check("El frontend enruta directamente los servicios y acciones de reemplazo", () => {
-    for (const service of ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"]) {
+    for (const service of ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]) {
         assert.match(api, new RegExp("\\b" + service + "\\s*:"));
     }
     for (const [action, service] of [
@@ -83,10 +82,10 @@ check("Las 13 operaciones internas están en cliente, dispatcher y documento", (
 });
 
 check("El fan-out de Coordinator solo apunta a los cuatro servicios con caché de actor", () => {
-    assert.match(coordinator, /const targets = \["USERS", "WRITE", "FEEDBACK", "ADMIN"\]/);
+    assert.match(coordinator, /const targets = \["WRITE", "FEEDBACK", "ADMIN"\]/);
     assert.match(coordinator, /action: "__invalidateSessionActorCache"/);
     assert.match(coordinator, /action: "__primeSessionActorCache"/);
-    for (const source of [users, write, feedback, admin]) {
+    for (const source of [write, feedback, admin]) {
         assert.match(source, /handleSharedSessionActorCacheInvalidation_\(/);
         assert.match(source, /handleSharedSessionActorCachePriming_\(/);
     }
@@ -97,7 +96,8 @@ check("El fan-out de Coordinator solo apunta a los cuatro servicios con caché d
 check("Los callsites de leases están diferenciados de wrappers/ayudantes sin consumidor", () => {
     assert.match(auth, /withSharedMutationLease_\("AUTH", action/);
     assert.match(auth, /function migrateLegacyRoleRevocationMarkersToSharedState_\(/);
-    assert.match(users, /withSharedMutationLease_\("USERS", action/);
+    for (const action of ["getUsers", "createUser", "updateProfile"]) assert.ok(auth.includes("case '" + action + "'"));
+    assert.doesNotMatch(api, /USERS/);
     assert.match(admin, /withSharedMutationLease_\("ADMIN", "saveUnusedImagesInventory"/);
     assert.match(admin, /withSharedMutationLease_\("ADMIN", "createCortesImageFolder"/);
     assert.match(admin, /withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);

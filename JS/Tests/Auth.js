@@ -627,7 +627,7 @@ function doPost(e) {
             })).setMimeType(ContentService.MimeType.TEXT);
         }
     }
-    if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords"].includes(action)) {
+    if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"].includes(action)) {
         try {
             // Las acciones ordinarias consumen el actor preparado al iniciar sesión.
             // No adquieren lease ni revalidan identidad por acción; la revocación remota
@@ -720,6 +720,15 @@ function doPostInternal_(e) {
                 break;
             case 'deleteUser':
                 response = handleDeleteUser(request.payload);
+                break;
+            case 'getUsers':
+                response = handleGetUsers(request.payload);
+                break;
+            case 'createUser':
+                response = handleCreateUser(request.payload);
+                break;
+            case 'updateProfile':
+                response = handleUpdateProfile(request.payload);
                 break;
             case 'updateUser':
                 response = handleUpdateUser(request.payload);
@@ -2751,3 +2760,439 @@ function handleLogout(payload) {
         cleanupPending
     };
 }
+
+// MIG-012: gestión de usuarios integrada en AUTH; no depende de un endpoint USERS.
+function getAuthUsersSpreadsheet_(){return SpreadsheetApp.openById(SPREADSHEET_ID);}
+function getAuthUserActor_(payload,allowedRoles,actionLabel,requireUserRow){const actor=requireSharedAuthActor_(payload,allowedRoles,actionLabel),requestedUserId=normalizeUserId(payload&&payload.userId);if(!requestedUserId||requestedUserId!==actor.userId)throw new Error("Acceso no autorizado: el contexto de sesión no coincide con la identidad solicitada.");let userRowIndex=null;if(requireUserRow===true){const usersSheet=getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS),matches=findUniqueRowsByExactValue_(usersSheet,COLS_USERS.ID,actor.userId,true);if(matches.length!==1)throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");userRowIndex=matches[0].rowIndex;}return {userId:actor.userId,role:actor.role,userRowIndex,epoch:actor.epoch};}
+function findUniqueRowsByExactValue_(sheet,column,value,trimCell=false) {
+    if (!sheet || !value) return [];
+    const lastRow = Number(sheet.getLastRow ? sheet.getLastRow() : 0);
+    if (lastRow < 2) return [];
+    const expected = String(value), range = sheet.getRange(2,column,lastRow-1,1);
+    let rowNumbers = [];
+    if (range && typeof range.createTextFinder === "function") {
+        const finder = range.createTextFinder(expected);
+        if (finder && typeof finder.matchCase === "function") finder.matchCase(true);
+        if (finder && typeof finder.matchEntireCell === "function") finder.matchEntireCell(!trimCell);
+        const matches = finder && typeof finder.findAll === "function" ? finder.findAll() || [] : [];
+        rowNumbers = matches.map(cell => cell.getRow());
+    } else {
+        const values = range.getValues();
+        for (let i=0;i<values.length;i++) {
+            const actual = String(values[i][0] === null || values[i][0] === undefined ? "" : values[i][0]);
+            if ((trimCell ? actual.trim() : actual) === expected) rowNumbers.push(i+2);
+        }
+    }
+    return rowNumbers.map(rowIndex => {
+        const cell = sheet.getRange(rowIndex,column,1,1).getValue();
+        const actual = String(cell === null || cell === undefined ? "" : cell);
+        return {rowIndex,actual:trimCell ? actual.trim() : actual};
+    }).filter(item => item.actual === expected).map(item => ({rowIndex:item.rowIndex}));
+}
+
+function isActiveUserRecord(row) {
+    if (!row) return false;
+    const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
+    const rawRole = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const role = rawRole;
+    return Boolean(username) && !username.startsWith('__deleted__:') &&
+        ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
+}
+
+function handleGetUsers(payload) {
+    const { role: requesterRole } = getAuthUserActor_(payload, ["desarrollador", "jefe", "supervisor"], "consultar usuarios");
+
+    if (!['desarrollador', 'jefe', 'supervisor'].includes(requesterRole)) {
+        throw new Error('Acceso denegado. Permisos insuficientes.');
+    }
+
+    const userSheet = getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS);
+    const lastRow = userSheet.getLastRow();
+    const data = lastRow > 1
+        ? userSheet.getRange(1, 1, lastRow, COLS_USERS.Nombre_Completo).getValues()
+        : [];
+    data.shift(); // Remove headers
+
+    const users = data
+        .filter(row => {
+            if (!isActiveUserRecord(row)) return false;
+            const role = row[COLS_USERS.Privilegios - 1];
+            const targetRole = String(role || '').trim().toLowerCase();
+            if (requesterRole === 'desarrollador') return true;
+            if (requesterRole === 'jefe') return ['supervisor', 'tecnico'].includes(targetRole);
+            if (requesterRole === 'supervisor') return targetRole === 'tecnico';
+            return false;
+        })
+        .map(row => {
+            return {
+                ID: row[COLS_USERS.ID - 1],
+                Nombre_Usuario: row[COLS_USERS.Nombre_Usuario - 1],
+                Privilegios: row[COLS_USERS.Privilegios - 1],
+                Telefono: row[COLS_USERS.Telefono - 1],
+                Correo_Electronico: row[COLS_USERS.Correo_Electronico - 1],
+                Nombre_Completo: row[COLS_USERS.Nombre_Completo - 1]
+            };
+        });
+
+    return { status: 'success', users: users };
+}
+
+function parseUserIdSequenceFormula_(formula) {
+    const raw = String(formula || "").trim();
+    const match = /^=\s*"([^"]{1,40})"\s*&\s*(?:TEXTO|TEXT)\s*\(\s*(?:FILA|ROW)\s*\(\s*\)\s*-\s*\d+\s*,\s*"([0]+)"\s*\)\s*$/i.exec(raw);
+    return match ? { prefix: match[1], padding: match[2].length, formula: raw } : null;
+}
+
+function readUsersMutationSnapshot_(userSheet) {
+    const lastRow = userSheet.getLastRow();
+    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.TermsAcceptance);
+    const rowCount = Math.max(0, lastRow - 1);
+    const range = rowCount ? userSheet.getRange(2, 1, rowCount, lastColumn) : null;
+    return {
+        lastRow,
+        lastColumn,
+        rows: range ? range.getValues() : [],
+        formulas: range ? range.getFormulas() : []
+    };
+}
+
+function getUserIdSequencePattern_(userSheet, snapshot) {
+    const configHeaders = ["sheet","column","header","prefix","padding","formula","updatedAt"];
+    const configSheet = getAuthUsersSpreadsheet_().getSheetByName("__IdentifierSequenceConfig__");
+    if (configSheet && configSheet.getLastRow() > 1) {
+        const headers = configSheet.getRange(1, 1, 1, configHeaders.length).getValues()[0].map(value => String(value || ""));
+        if (JSON.stringify(headers) !== JSON.stringify(configHeaders)) {
+            throw new Error("La configuración central de IDs no tiene un esquema compatible.");
+        }
+        const rows = configSheet.getRange(2, 1, configSheet.getLastRow() - 1, configHeaders.length).getValues();
+        const matches = rows.filter(row => String(row[0]) === "Users" && Number(row[1]) === COLS_USERS.ID);
+        if (matches.length > 1) throw new Error("La configuración de IDs de Users está duplicada.");
+        if (matches.length === 1) {
+            const pattern = { prefix: String(matches[0][3] || ""), padding: Number(matches[0][4]), formula: String(matches[0][5] || "") };
+            if (String(userSheet.getRange(1, COLS_USERS.ID).getValue() || "").trim() !== String(matches[0][2] || "") ||
+                !pattern.prefix || !pattern.formula || !Number.isInteger(pattern.padding) || pattern.padding < 1 || pattern.padding > 20) {
+                throw new Error("La configuración backend de IDs no coincide con la columna Users.");
+            }
+            const formulas = snapshot
+                ? snapshot.formulas.map(row => row[COLS_USERS.ID - 1] || "")
+                : (() => {
+                    const lastRow = userSheet.getLastRow();
+                    return lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat() : [];
+                })();
+            if (formulas.some(formula => formula && formula !== pattern.formula)) {
+                throw new Error("La columna Users.ID contiene una fórmula distinta de la configuración backend.");
+            }
+            return pattern;
+        }
+    }
+    const formulas = snapshot
+        ? snapshot.formulas.map(row => row[COLS_USERS.ID - 1] || "").filter(Boolean)
+        : (() => {
+            const lastRow = userSheet.getLastRow();
+            return lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat().filter(Boolean) : [];
+        })();
+    if (!formulas.length) return { prefix: "USR-", padding: 4, formula: "" };
+    const patterns = formulas.map(parseUserIdSequenceFormula_);
+    if (patterns.some(pattern => !pattern)) throw new Error("La fórmula histórica de Users.ID no es compatible con un generador backend seguro.");
+    const first = patterns[0];
+    if (patterns.some(pattern => pattern.prefix !== first.prefix || pattern.padding !== first.padding || pattern.formula !== first.formula)) {
+        throw new Error("Users.ID contiene fórmulas con formatos diferentes; se requiere revisión.");
+    }
+    return first;
+}
+
+// Genera IDs permanentes secuenciales. La columna ID se escribe como valor,
+// nunca se copia ni se conserva su fórmula en las filas nuevas.
+function generateNextUserId_(userSheet, snapshot) {
+    const pattern = getUserIdSequencePattern_(userSheet, snapshot);
+    const lastRow = snapshot ? snapshot.lastRow : userSheet.getLastRow();
+    const lastColumn = snapshot ? snapshot.lastColumn : Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
+    const rows = snapshot
+        ? snapshot.rows
+        : (lastRow > 1 ? userSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : []);
+    const seen = new Set();
+    let maxSequence = 0;
+
+    rows.forEach((row, index) => {
+        const id = String(row[COLS_USERS.ID - 1] === null || row[COLS_USERS.ID - 1] === undefined
+            ? '' : row[COLS_USERS.ID - 1]).trim();
+        const hasAccountData = row.slice(1).some(value =>
+            String(value === null || value === undefined ? '' : value).trim() !== ''
+        );
+        if (!hasAccountData && !id) return;
+        if (!hasAccountData) return;
+        if (!id) throw new Error('Existe una fila de usuario con datos pero sin ID. No se creó la cuenta.');
+        if (!id.toUpperCase().startsWith(pattern.prefix.toUpperCase()) || !/^\d+$/.test(id.slice(pattern.prefix.length))) {
+            throw new Error('El ID de usuario de la fila ' + (index + 2) + ' no coincide con el formato backend configurado.');
+        }
+        const normalizedId = id.toUpperCase();
+        if (seen.has(normalizedId)) throw new Error('Se detectó un ID de usuario duplicado. No se creó la cuenta.');
+        seen.add(normalizedId);
+        const suffix = Number(id.slice(pattern.prefix.length));
+        if (!Number.isSafeInteger(suffix) || suffix < 1) throw new Error('El sufijo del ID de usuario no es un entero positivo seguro.');
+        maxSequence = Math.max(maxSequence, suffix);
+    });
+
+    if (!Number.isSafeInteger(maxSequence) || maxSequence >= Number.MAX_SAFE_INTEGER) {
+        throw new Error('Se agotó el rango disponible para generar IDs de usuario.');
+    }
+    return pattern.prefix + String(maxSequence + 1).padStart(pattern.padding, '0');
+}
+
+// Reutiliza la primera fila sin datos de cuenta. Si la hoja tiene fórmulas
+// prellenadas en Users.ID, la escritura del ID fijo sustituye la fórmula de esa fila.
+function findNextUserRow_(userSheet, snapshot) {
+    const lastRow = snapshot ? snapshot.lastRow : userSheet.getLastRow();
+    if (lastRow < 2) return 2;
+
+    const lastColumn = snapshot ? snapshot.lastColumn : Math.max(userSheet.getLastColumn(), COLS_USERS.TermsAcceptance);
+    const rows = snapshot
+        ? snapshot.rows.map(row => row.slice(COLS_USERS.Nombre_Usuario - 1, lastColumn))
+        : userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1).getValues();
+    const formulas = snapshot
+        ? snapshot.formulas.map(row => row.slice(COLS_USERS.Nombre_Usuario - 1, lastColumn))
+        : userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1).getFormulas();
+    for (let i = 0; i < rows.length; i++) {
+        const valuesEmpty = rows[i].every(value =>
+            String(value === null || value === undefined ? '' : value).trim() === ''
+        );
+        const formulasEmpty = formulas[i].every(formula => !String(formula || '').trim());
+        if (valuesEmpty && formulasEmpty) return i + 2;
+    }
+    return lastRow + 1;
+}
+
+// Nombre de usuario: el backend acepta solo texto y aplica la política común de identidad.
+function normalizeUsername_(value) {
+    if (typeof value !== 'string') throw new Error('El nombre de usuario debe ser texto.');
+    const normalized = value.trim();
+    if (!normalized) throw new Error('El nombre de usuario es obligatorio.');
+    if (normalized.toLowerCase().startsWith('__deleted__:')) {
+        throw new Error('El prefijo __deleted__: está reservado para cuentas desactivadas.');
+    }
+    return normalized;
+}
+
+// Serializa únicamente la creación de cuentas: username e ID deben ser únicos.
+// Es fail-fast; no mantiene solicitudes ordinarias esperando por el lock global.
+function withUsersMutationLock_(operation) {
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try { acquired = lock.tryLock(0); } catch (error) { acquired = false; }
+    if (!acquired) throw new Error('El servidor está ocupado. Por favor intenta de nuevo en unos momentos.');
+    try {
+        return operation();
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
+}
+
+const USERS_ALLOWED_ROLES_ = Object.freeze(['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']);
+
+function normalizeNewUserInput_(newUser) {
+    if (!newUser || typeof newUser !== 'object' || Array.isArray(newUser)) {
+        throw new Error('Los datos del nuevo usuario no tienen un formato válido.');
+    }
+    const allowedKeys = ['Nombre_Usuario', 'Password', 'Privilegios', 'Telefono', 'Correo_Electronico', 'Nombre_Completo'];
+    Object.keys(newUser).forEach(key => {
+        if (!allowedKeys.includes(key)) throw new Error("La propiedad '" + key + "' no está permitida para crear usuarios.");
+    });
+    const username = normalizeUsername_(newUser.Nombre_Usuario);
+    if (username.length > 80) throw new Error('El nombre de usuario no puede superar 80 caracteres.');
+    if (typeof newUser.Password !== 'string' || normalizePassword(newUser.Password).length < 8 || normalizePassword(newUser.Password).length > 256) {
+        throw new Error('La contraseña debe contener entre 8 y 256 caracteres después de quitar espacios externos.');
+    }
+    if (typeof newUser.Privilegios !== 'string' || !USERS_ALLOWED_ROLES_.includes(newUser.Privilegios)) {
+        throw new Error('El privilegio solicitado no es válido.');
+    }
+    const optionalText = (key, maxLength) => {
+        const value = newUser[key] === undefined || newUser[key] === null ? '' : newUser[key];
+        if (typeof value !== 'string') throw new Error("El campo '" + key + "' debe ser texto.");
+        const normalized = value.trim();
+        if (normalized.length > maxLength) throw new Error("El campo '" + key + "' supera la longitud permitida.");
+        return normalized;
+    };
+    const phone = optionalText('Telefono', 30);
+    const email = optionalText('Correo_Electronico', 254);
+    const fullName = optionalText('Nombre_Completo', 120);
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('El correo electrónico no tiene un formato válido.');
+    }
+    if (phone && !/^[0-9+().\-\s]+$/.test(phone)) throw new Error('El teléfono contiene caracteres no permitidos.');
+    return {
+        username,
+        password: normalizePassword(newUser.Password),
+        role: newUser.Privilegios,
+        phone,
+        email,
+        fullName
+    };
+}
+
+function normalizeUserProfileUpdates_(updates) {
+    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+        throw new Error('Los cambios del perfil no tienen un formato válido.');
+    }
+    const keys = Object.keys(updates);
+    if (!keys.length) throw new Error('No se recibieron campos para actualizar.');
+    keys.forEach(key => {
+        if (key !== 'Nombre_Completo') throw new Error("El campo '" + key + "' no está permitido en la actualización del perfil.");
+    });
+    if (typeof updates.Nombre_Completo !== 'string') throw new Error('El nombre completo debe ser texto.');
+    const fullName = updates.Nombre_Completo.trim();
+    if (!fullName || fullName.length > 120) throw new Error('El nombre completo debe contener entre 1 y 120 caracteres.');
+    return { Nombre_Completo: fullName };
+}
+
+function findUniqueUserRow_(userSheet, userId) {
+    const normalizedId = String(userId === null || userId === undefined ? '' : userId).trim();
+    if (!normalizedId) throw new Error('El ID de usuario es obligatorio.');
+    const lastRow = userSheet.getLastRow();
+    if (lastRow < 2) throw new Error('Usuario no encontrado.');
+    const matches = userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getValues()
+        .map((row, index) => ({ id: String(row[0] === null || row[0] === undefined ? '' : row[0]).trim(), rowIndex: index + 2 }))
+        .filter(item => item.id === normalizedId);
+    if (matches.length !== 1) {
+        throw new Error(matches.length > 1
+            ? 'El ID de usuario está duplicado; no se modificó ninguna fila.'
+            : 'Usuario no encontrado.');
+    }
+    return matches[0].rowIndex;
+}
+
+function writeUserRangeAtomically_(userSheet, rowIndex, columnIndex, values) {
+    const range = userSheet.getRange(rowIndex, columnIndex, values.length, values[0].length);
+    const previousValues = range.getValues();
+    const previousFormulas = range.getFormulas();
+    let writeError = null;
+    try {
+        range.setValues(values);
+        SpreadsheetApp.flush();
+        const persisted = range.getValues();
+        if (JSON.stringify(persisted) !== JSON.stringify(values)) {
+            throw new Error('La hoja no confirmó todos los valores solicitados.');
+        }
+        return true;
+    } catch (error) {
+        writeError = error;
+    }
+    let rollbackError = null;
+    try {
+        range.setValues(previousValues);
+        for (let r = 0; r < previousFormulas.length; r++) {
+            for (let c = 0; c < previousFormulas[r].length; c++) {
+                if (previousFormulas[r][c]) {
+                    userSheet.getRange(rowIndex + r, columnIndex + c).setFormula(previousFormulas[r][c]);
+                }
+            }
+        }
+        SpreadsheetApp.flush();
+        const restored = range.getValues();
+        const formulasRestored = range.getFormulas();
+        if (JSON.stringify(restored) !== JSON.stringify(previousValues) ||
+            JSON.stringify(formulasRestored) !== JSON.stringify(previousFormulas)) {
+            throw new Error('La restauración no pudo verificarse.');
+        }
+    } catch (error) {
+        rollbackError = error;
+    }
+    throw new Error((writeError && writeError.message ? writeError.message : 'Falló la escritura del usuario.') +
+        (rollbackError ? ' Además, la restauración requiere revisión: ' + rollbackError.message : ' Se restauraron los valores anteriores.'));
+}
+
+function writeUserProfileNameNonBlocking_(userSheet, rowIndex, fullName) {
+    const cell = userSheet.getRange(rowIndex, COLS_USERS.Nombre_Completo);
+    let writeError = null;
+    try {
+        cell.setValue(fullName);
+        SpreadsheetApp.flush();
+    } catch (error) {
+        writeError = error;
+    }
+
+    let persisted;
+    try {
+        const rawPersisted = cell.getValue();
+        persisted = String(rawPersisted === null || rawPersisted === undefined ? "" : rawPersisted);
+    } catch (readError) {
+        throw new Error((writeError && writeError.message ? writeError.message : "No se pudo confirmar el perfil.") +
+            " No fue posible verificar el valor persistido.");
+    }
+    if (persisted !== fullName) {
+        throw new Error((writeError && writeError.message ? writeError.message + " " : "") +
+            "La actualización no quedó confirmada; consulta el perfil antes de volver a intentarlo.");
+    }
+    // Escritura de una sola celda: no restaurar un snapshot antiguo, porque
+    // podría sobrescribir una edición concurrente posterior (last-write-wins).
+    return true;
+}
+
+function handleCreateUser(payload) {
+    const { newUser, sessionToken } = payload || {};
+    if (!newUser || typeof sessionToken !== 'string' || !sessionToken.trim()) {
+        throw new Error('Datos insuficientes para crear el usuario. Se requiere sessionToken.');
+    }
+    const normalized = normalizeNewUserInput_(newUser);
+    const { role: creatorRole } = getAuthUserActor_(payload, ["desarrollador", "jefe", "supervisor"], "crear usuarios");
+    const allowedRoles = {
+        'desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
+        'jefe': ['Supervisor', 'Tecnico'],
+        'supervisor': ['Tecnico']
+    };
+    if (!allowedRoles[creatorRole] || !allowedRoles[creatorRole].includes(normalized.role)) {
+        throw new Error("El rol '" + creatorRole + "' no tiene permisos para crear usuarios de tipo '" + normalized.role + "'.");
+    }
+    const passwordHash = createPasswordHash(normalized.password);
+
+    return withUsersMutationLock_(() => {
+        const userSheet = getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS);
+        if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
+        const snapshot = readUsersMutationSnapshot_(userSheet);
+        const lastRow = snapshot.lastRow;
+        const existingUsernames = snapshot.rows.map(row => row[COLS_USERS.Nombre_Usuario - 1]);
+        if (existingUsernames.some(username => String(username || '').trim().toLowerCase() === normalized.username.toLowerCase())) {
+            return { status: 'error', message: 'Ese nombre de usuario no está disponible' };
+        }
+
+        const newRowNumber = findNextUserRow_(userSheet, snapshot);
+        const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
+        const newRowRange = userSheet.getRange(newRowNumber, 1, 1, COLS_USERS.SessionToken);
+        const currentRow = newRowRange.getValues()[0];
+        if (currentRow.slice(1).some(value => String(value === null || value === undefined ? '' : value).trim() !== '')) {
+            throw new Error('La fila seleccionada para el nuevo usuario dejó de estar vacía. Intenta nuevamente.');
+        }
+        const newUserId = generateNextUserId_(userSheet, snapshot);
+
+        // Copiar únicamente formato y validaciones al extender la hoja; nunca fórmulas.
+        if (lastRow > 0 && newRowNumber > lastRow) {
+            const previousRow = userSheet.getRange(lastRow, 1, 1, lastColumn);
+            const destinationRow = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
+            previousRow.copyTo(destinationRow, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+            previousRow.copyTo(destinationRow, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
+        }
+        const rowValues = [[newUserId, normalized.username, passwordHash, normalized.role,
+            normalized.phone, normalized.email, normalized.fullName, '']];
+        writeUserRangeAtomically_(userSheet, newRowNumber, COLS_USERS.ID, rowValues);
+        return { status: 'success', message: "Usuario '" + normalized.username + "' creado." };
+    });
+}
+
+function handleUpdateProfile(payload) {
+    const userId = String(payload && payload.userId === undefined ? '' : payload && payload.userId || '').trim();
+    const updates = normalizeUserProfileUpdates_(payload && payload.updates);
+    const sessionToken = payload && payload.sessionToken;
+    if (!userId || typeof sessionToken !== 'string' || !sessionToken.trim()) throw new Error('Datos insuficientes.');
+
+    const { userId: authenticatedUserId, userRowIndex } = getAuthUserActor_(payload, ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"], "actualizar perfil", true);
+    if (String(authenticatedUserId).trim() !== userId) {
+        throw new Error('Acceso no autorizado: Solo puedes editar tu propio perfil.');
+    }
+    const userSheet = getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS);
+    if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
+    const rowIndex = userRowIndex;
+    if (!Number.isInteger(rowIndex) || rowIndex < 2) throw new Error('No se pudo confirmar la fila del perfil autenticado.');
+    writeUserProfileNameNonBlocking_(userSheet, rowIndex, updates.Nombre_Completo);
+    return { status: 'success', message: 'Perfil actualizado correctamente.' };
+}
+
+

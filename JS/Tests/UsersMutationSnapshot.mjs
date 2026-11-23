@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const source=readFileSync(resolve(root,"JS/Services/users.js"),"utf8");
+const source=readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
 function block(name){
  const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"No se encontró "+name);
  const next=source.indexOf("\nfunction ",start+10);
@@ -18,7 +18,7 @@ assert.match(create,/generateNextUserId_\(userSheet, snapshot\)/);
 assert.doesNotMatch(create,/getRange\(2, COLS_USERS\.Nombre_Usuario/);
 
 const names=["parseUserIdSequenceFormula_","readUsersMutationSnapshot_","getUserIdSequencePattern_","generateNextUserId_","findNextUserRow_"];
-const harness=new Function("COLS_USERS","getSpreadsheet",names.map(block).join("\n")+
+const harness=new Function("COLS_USERS","getAuthUsersSpreadsheet_",names.map(block).join("\n")+
  "\nreturn {readUsersMutationSnapshot_,getUserIdSequencePattern_,generateNextUserId_,findNextUserRow_};")(
  {ID:1,Nombre_Usuario:2,SessionToken:8,TermsAcceptance:9},()=>({getSheetByName:()=>null})
 );

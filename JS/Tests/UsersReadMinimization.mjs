@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const source=readFileSync(resolve(root,"JS/Services/users.js"),"utf8");
+const source=readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
 function block(name){
  const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"No se encontró "+name);
  const next=source.indexOf("\nfunction ",start+10);
@@ -13,8 +13,8 @@ function block(name){
 const list=block("handleGetUsers");
 assert.match(list,/getRange\(1, 1, lastRow, COLS_USERS\.Nombre_Completo\)/);
 assert.doesNotMatch(list,/getDataRange\(\)/);
-const verifier=block("getVerifiedSession");
-assert.match(verifier,/findUniqueRowsByExactValue_\(usersSheet, COLS_USERS\.ID, userId, true\)/);
+const verifier=block("getAuthUserActor_");
+assert.match(verifier,/findUniqueRowsByExactValue_\(usersSheet, COLS_USERS\.ID, actor\.userId, true\)/);
 const lookup=block("findUniqueRowsByExactValue_");
 assert.match(lookup,/getRange\(rowIndex,column,1,1\)\.getValue\(\)/);
 assert.doesNotMatch(lookup,/getLastColumn|getRange\(rowIndex,1,1,/);

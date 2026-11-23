@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const read=path=>fs.readFileSync(resolve(root,path),"utf8");
-const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),users=read("JS/Services/users.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js"),client=read("JS/Services/SharedMutationClient.js"),utilities=read("JS/Services/Utilities.js");
+const api=read("JS/Frontend/api-config.js"),write=read("JS/Services/write.js"),admin=read("JS/Services/admin.js"),feedback=read("JS/Services/feedback.js"),auth=read("JS/Services/Auth.js"),coordinator=read("JS/Services/Coordinator.js"),client=read("JS/Services/SharedMutationClient.js"),utilities=read("JS/Services/Utilities.js");
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
 testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para mutaciones",()=>{
  assert.match(write,/if \(!isSharedMutationAction_\(action\)\) \{[\s\S]*?doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
@@ -24,16 +24,14 @@ testCase("WRITE consulta checkOperation sin lease y usa actor cacheado para muta
  assert.doesNotMatch(write.slice(write.indexOf("function handleCheckOperation"),write.indexOf("\nfunction ",write.indexOf("function handleCheckOperation")+10)),/getAuthenticatedCollaborator\(/);
 });
 
-testCase("USERS usa actor cacheado para perfil y conserva lease solo para createUser",()=>{
- assert.match(users,/if \(!\["getUsers", "updateProfile"\]\.includes\(action\)\) return doPostInternal_\(withSharedSessionActor_\(e, null\)\)/);
- assert.match(users,/function isSharedMutationAction_\(action\)\s*\{\s*return \["createUser"\]/);
- assert.match(users,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "USERS" \}\)/);
- assert.match(users,/withSharedMutationLease_\("USERS", action/);
- assert.doesNotMatch(users,/touchSessionActivityIfDue_|getSessionExpirationStatus_/);
+testCase("AUTH integra las acciones de usuarios con actor cacheado y lock local",()=>{
+ assert.match(auth,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
+ assert.match(auth,/getUsers", "createUser", "updateProfile/);
  ["handleGetUsers","handleCreateUser","handleUpdateProfile"].forEach(name=>{
-  const i=users.indexOf("function "+name);assert.ok(i>=0,name);
-  const j=users.indexOf("\nfunction ",i+10);assert.match(users.slice(i,j<0?undefined:j),/getVerifiedSession\(/,name+" debe consumir el actor central");
+  const i=auth.indexOf("function "+name);assert.ok(i>=0,name);
+  const j=auth.indexOf("\nfunction ",i+10);assert.match(auth.slice(i,j<0?undefined:j),/getAuthUserActor_\(/,name+" debe consumir el actor central");
  });
+ assert.match(auth,/function withUsersMutationLock_/);
 });
 
 testCase("ADMIN exige actor central cacheado y no coordina acciones ordinarias",()=>{
@@ -76,11 +74,11 @@ testCase("Los servicios protegidos exigen el actor central y no revalidan Users/
   assert.match(body,/__sharedSessionActor/,name+" debe exigir actor central");
   assert.doesNotMatch(body,/getSpreadsheet|ActiveSessions|Users|findUniqueRowsByExactValue_|getSessionExpirationStatus_|touchSessionActivityIfDue_/,name+" conserva revalidación local por hojas");
  }
- const start=users.indexOf("function getVerifiedSession("),next=users.indexOf("\nfunction ",start+10),userBody=users.slice(start,next<0?users.length:next);
- const body=userBody.slice(userBody.indexOf("{")+1);
- assert.match(body,/__sharedSessionActor/);
- assert.match(body,/if \(requireUserRow === true\)/);
- assert.doesNotMatch(body,/ActiveSessions|getSessionExpirationStatus_|touchSessionActivityIfDue_|sessionToken/);
+ const start=auth.indexOf("function getAuthUserActor_("),next=auth.indexOf("\\nfunction ",start+10),userBody=auth.slice(start,next<0?auth.length:next);
+ assert.match(userBody,/requireSharedAuthActor_/);
+ assert.match(userBody,/requestedUserId !== actor\\.userId/);
+ assert.match(userBody,/findUniqueRowsByExactValue_/);
+ assert.doesNotMatch(userBody,/ActiveSessions|getSessionExpirationStatus_|touchSessionActivityIfDue_/);
  assert.match(coordinator,/function authorizeSession_\(userId, token, currentTime\)/);
  assert.match(coordinator,/readAuthContext_\(userId\)/);
  assert.match(coordinator,/context\.revokedBefore/);

@@ -9,7 +9,6 @@ const backendSources = {
     AUTH: read("JS/Services/Auth.js"),
     CATALOG: read("JS/Services/catalog.js"),
     WRITE: read("JS/Services/write.js"),
-    USERS: read("JS/Services/users.js"),
     FEEDBACK: read("JS/Services/feedback.js"),
     UTILITIES: read("JS/Services/Utilities.js"),
     ADMIN: read("JS/Services/admin.js")
@@ -118,7 +117,7 @@ await check("JSON vacío, HTML, inválido, primitivo o array quedan unknown", as
     }
 });
 await check("Identidad incorrecta, estado ausente y versión inválida quedan unknown", async () => {
-    const wrong = await scanOne("AUTH", response(200, { service: "GPSpedia-Users", status: "available" }));
+    const wrong = await scanOne("AUTH", response(200, { service: "GPSpedia-Catalog", status: "available" }));
     const missing = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth" }));
     const badVersion = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", status: "available", version: {} }));
     assert.equal(wrong.status, "unknown");
@@ -136,6 +135,8 @@ await check("HTTP 200 con estado backend error/degraded no se marca online", asy
 await check("LEGACY está retirado del registro, documentación activa y red", async () => {
     const healthDoc = read("Services/SERVICE_HEALTH.md");
     assert.equal(contracts.LEGACY, undefined);
+    assert.equal(contracts.USERS, undefined);
+    assert.equal(apiSource.includes("GPSpedia-Users"), false);
     assert.equal(apiSource.includes("LEGACY"), false);
     assert.equal(apiSource.includes("logFrontend"), false);
     assert.doesNotMatch(healthDoc, /\| LEGACY \|/);
@@ -186,7 +187,7 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
     assert.ok(singleMatch, "No se encontró checkServiceHealth.");
     const endpoints = {
         AUTH: "https://auth.invalid/exec", CATALOG: "https://catalog.invalid/exec",
-        WRITE: "https://write.invalid/exec", USERS: "https://users.invalid/exec",
+        WRITE: "https://write.invalid/exec",
         FEEDBACK: "https://feedback.invalid/exec", UTILITIES: "https://utilities.invalid/exec",
         ADMIN: "https://admin.invalid/exec"
     };
@@ -256,7 +257,7 @@ await check("El panel presenta los seis estados y no muestra metadatos internos"
 await check("Los doGet versionados exponen identidad/estado y no metadatos internos", async () => {
     const expected = {
         AUTH: "GPSpedia-Auth", CATALOG: "GPSpedia-Catalog", WRITE: "GPSpedia-Write",
-        USERS: "GPSpedia-Users", FEEDBACK: "GPSpedia-Feedback",
+        FEEDBACK: "GPSpedia-Feedback",
         UTILITIES: "GPSpedia-Utilities", ADMIN: "GPSpedia-Admin"
     };
     for (const [key, identity] of Object.entries(expected)) {

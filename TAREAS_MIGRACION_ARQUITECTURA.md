@@ -224,15 +224,29 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
  
 **Cierre y validación diferida:** workflow https://github.com/infogpstech/GPSpedia/actions/runs/45212028964 (**SUCCESS**, commit `3ec8936d8b498d55bbc0322fa05239f8b812d0c8`). La verificación sintáctica del workflow también aprobó. GitHub Pages build/deploy: https://github.com/infogpstech/GPSpedia/actions/runs/45212025471 (**SUCCESS**). Las invocaciones reales de Apps Script, sesiones/roles efectivos y permisos sobre Spreadsheet/Drive aislados permanecen PENDIENTES DE VALIDACIÓN BETA; no se simularon ni se desplegaron servicios.
 ### MIG-012 — Unificación funcional AUTH/USERS
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Integrar handlers de `getUsers`, `createUser` y `updateProfile` en AUTH.
-- [ ] Mantener exactamente los contratos, campos, permisos y resultados.
-- [ ] Actualizar el mapa frontend para enrutar estas acciones a AUTH.
-- [ ] Conservar gestión de usuarios, roles, perfiles y altas.
-- [ ] Retirar el proyecto USERS solo tras paridad y prueba de que no quedan consumidores.
+- [x] Integrar handlers de `getUsers`, `createUser` y `updateProfile` en AUTH.
+- [x] Mantener los contratos, campos, permisos, resultados y hash de contraseña existentes.
+- [x] Actualizar el mapa frontend para enrutar estas acciones a AUTH.
+- [x] Conservar gestión de usuarios, roles, perfiles, generación de IDs, atomicidad y rollback.
+- [x] Retirar el código del proyecto USERS tras paridad y comprobación de consumidores versionados.
+- [x] Retirar USERS del mapa de servicios, health checks, políticas/telemetría de Coordinator y fan-out de caché de sesión.
+- [ ] Confirmar regresión CI Node.js 22 posterior a esta implementación.
+- [ ] Validar Beta aislada y deshabilitar deployment/registro heredado de USERS tras comprobar que AUTH está desplegado.
 
 **Aceptación:** ninguna función de USERS desaparece; no hay proyecto/endpoint independiente requerido.
+
+#### Evidencia de implementación MIG-012 — 2026-11-23
+- `getUsers`, `createUser` y `updateProfile` se incorporan a `JS/Services/Auth.js` y al dispatcher AUTH. Las tres acciones obtienen el actor cacheado localmente con identidad AUTH; no consultan el endpoint USERS ni adquieren leases Coordinator por acción.
+- Se conserva el hash PBKDF2 y el esquema de la hoja `Users`; se mantiene la configuración histórica de secuencia `__IdentifierSequenceConfig__`, la validación de username/rol y la escritura atómica con rollback.
+- `createUser` usa el ScriptLock local de AUTH con adquisición fail-fast. `deleteUser` ya utiliza el mismo ScriptLock del proyecto AUTH, por lo que ambas mutaciones de identidad quedan serializadas sin lease entre proyectos.
+- `updateProfile` sigue limitado a `Nombre_Completo`, exige que el actor coincida con el userId solicitado y localiza una única fila antes de escribir; no adquiere lock global para una escritura de una celda.
+- El frontend enruta las tres acciones a AUTH. USERS se elimina de los seis destinos activos, contratos de salud, políticas/allowlists de Coordinator y destinos de precarga/invalidez de caché; AUTH ya precalienta su actor al iniciar sesión y conserva las cachés de WRITE/FEEDBACK/ADMIN.
+- Se retiraron `JS/Services/users.js` y su fixture aislado `JS/Tests/users.js` después de trasladar las pruebas y eliminar los consumidores versionados.
+- Harness aislado local: 15/15 PASS (RBAC, filtrado jerárquico, identidad de actor, alta, unicidad, ID secuencial, hash, lock fail-fast, rollback y actualización de perfil).
+- No se han ejecutado deployments ni se ha modificado la fila histórica de USERS en el registro central. La validación de endpoint AUTH real y el retiro del deployment heredado quedan pendientes de Beta.
+
 
 ### MIG-013 — Sesiones sin Coordinator ni secretos compartidos
 **Estado: PENDIENTE**

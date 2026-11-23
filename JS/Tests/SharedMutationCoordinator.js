@@ -61,7 +61,7 @@ function runSharedMutationCoordinatorTests() {
         };
         const secrets = {
             ADMIN: "A".repeat(40), WRITE: "W".repeat(40), FEEDBACK: "F".repeat(40),
-            AUTH: "H".repeat(40), USERS: "U".repeat(40), UTILITIES: "T".repeat(40), CATALOG: "C".repeat(40)
+            AUTH: "H".repeat(40), UTILITIES: "T".repeat(40), CATALOG: "C".repeat(40)
         };
         Object.keys(secrets).forEach(service => properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, secrets[service]));
         const coordinator = createSharedMutationCoordinator_({
@@ -304,13 +304,9 @@ function runSharedMutationCoordinatorTests() {
         });
     });
 
-    test_("createUser conserva lease para unicidad frente a mutaciones de identidad", function() {
-        const r = createRuntime_();
-        const users = acquire_(r, "USERS", "createUser");
-        assert_(users.status === "success", "USERS/createUser debe obtener lease por unicidad de username.");
-        const write = acquire_(r, "WRITE", "addOrUpdateCut");
-        assert_(write.status === "error" && write.code === "busy", "WRITE debía esperar por USERS.");
-        release_(r, "USERS", "createUser", users.token);
+    test_("createUser no utiliza leases de Coordinator después de integrarse en AUTH", function() {
+        expectThrow_(() => coordinatorPolicy_("AUTH", "createUser"), "no está habilitada");
+        expectThrow_(() => coordinatorPolicy_("USERS", "createUser"), "no está habilitada");
     });
 
     test_("Mantenimiento exclusivo bloquea operaciones activas y nuevas", function() {
@@ -711,7 +707,7 @@ function runSharedMutationCoordinatorTests() {
 
     test_("AUTH/completePasswordRecovery protege identidad y consumo del código", function() {
         const policy = coordinatorPolicy_("AUTH", "completePasswordRecovery");
-        ["USERS","ACTIVE_SESSIONS","LOGS","SESSION_CONTEXTS","PASSWORD_RECOVERY"].forEach(resource =>
+        ["ACTIVE_SESSIONS","LOGS","SESSION_CONTEXTS","PASSWORD_RECOVERY"].forEach(resource =>
             assert_(policy.writeResources.includes(resource), "La finalización debe reservar " + resource + "."));
         const r = createRuntime_();
         const completion = acquire_(r, "AUTH", "completePasswordRecovery");
@@ -880,33 +876,11 @@ function runSharedMutationCoordinatorTests() {
             "La revocación global debe limpiar todos los bloques.");
     });
 
-    test_("USERS createUser no se solapa con AUTH deleteUser mientras se desactiva la cuenta", function() {
-        const r = createRuntime_();
-        const userId = "USR-DELETE-CREATE-RACE";
-        const sessionToken = "session-token-delete-create-race-0001";
-        const createdAt = 1700000000000;
-        r.request("syncUserSessions", "AUTH", "syncUserSessions", {
-            userId, role: "desarrollador", fullName: "Developer",
-            sessions: [{ token: sessionToken, createdAt, lastActivityAt: createdAt }]
-        });
-        const deletion = r.request("acquire", "AUTH", "deleteUser", {
-            requestId: "delete-user-race-request-0001", waitMs: 0, userId, sessionToken
-        });
-        assert_(deletion.status === "success", "AUTH/deleteUser debe reservar Users y sesiones.");
-        const blockedCreate = r.request("acquire", "USERS", "createUser", {
-            requestId: "create-user-race-request-0001", waitMs: 0, userId, sessionToken
-        });
-        assert_(blockedCreate.status === "error" && blockedCreate.code === "busy",
-            "USERS/createUser debe esperar mientras AUTH/deleteUser mantiene el recurso Users.");
-        release_(r, "AUTH", "deleteUser", deletion.token);
-        const allowedCreate = r.request("acquire", "USERS", "createUser", {
-            requestId: "create-user-race-request-0002", waitMs: 0, userId, sessionToken
-        });
-        assert_(allowedCreate.status === "success", "createUser puede continuar después de terminar deleteUser.");
-        release_(r, "USERS", "createUser", allowedCreate.token);
+    test_("La exclusión de altas de usuarios ya no depende de una lease remota", function() {
+        expectThrow_(() => coordinatorPolicy_("USERS", "createUser"), "no está habilitada");
     });
 
-    test_("Login precarga actores en USERS/WRITE/FEEDBACK/ADMIN en lotes y fuera del lock", function() {
+    test_("Login precarga actores en WRITE/FEEDBACK/ADMIN en lotes y fuera del lock", function() {
         const batches = [];
         const coordinatorLock = {
             held: false,
@@ -926,7 +900,7 @@ function runSharedMutationCoordinatorTests() {
             });
         };
         const r = createRuntime_(null, lockService, fetchAll);
-        ["USERS", "WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
+        ["WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
             r.properties.setProperty("GPSpedia_SERVICE_URL_" + service,
                 "https://script.google.com/macros/s/" + service + "/exec");
             r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, (service + "-secret-").padEnd(40, "x"));
@@ -940,11 +914,11 @@ function runSharedMutationCoordinatorTests() {
             userId: "USR-PRIME", role: "tecnico", fullName: "Técnico", sessions
         });
         assert_(result.status === "success" && result.synced === 60, "La sincronización central debe completarse.");
-        assert_(result.cachePriming.primedServices.join(",") === "USERS,WRITE,FEEDBACK,ADMIN",
-            "Los cuatro servicios deben confirmar la precarga.");
+        assert_(result.cachePriming.primedServices.join(",") === "WRITE,FEEDBACK,ADMIN",
+            "Los tres servicios deben confirmar la precarga.");
         assert_(result.cachePriming.failedServices.length === 0, "No deben quedar servicios pendientes.");
-        assert_(batches.length === 1 && batches[0].length === 12,
-            "Sesenta sesiones se distribuyen en tres lotes por servicio (4 × 3).");
+        assert_(batches.length === 1 && batches[0].length === 9,
+            "Sesenta sesiones se distribuyen en tres lotes por servicio (3 × 3).");
         batches[0].forEach(request => {
             const body = JSON.parse(request.payload);
             assert_(body.action === "__primeSessionActorCache", "La llamada interna debe usar el endpoint de precarga.");
@@ -957,7 +931,6 @@ function runSharedMutationCoordinatorTests() {
     test_("Un fallo de precarga en un servicio no revierte el login y queda reportado", function() {
         const r = createRuntime_(null, null, requests => requests.map(request => {
             const service = request.url.includes("/FEEDBACK/") ? "FEEDBACK" :
-                request.url.includes("/USERS/") ? "USERS" :
                 request.url.includes("/WRITE/") ? "WRITE" : "ADMIN";
             return {
                 getResponseCode: () => service === "FEEDBACK" ? 503 : 200,
@@ -966,7 +939,7 @@ function runSharedMutationCoordinatorTests() {
                     : { status: "success", primed: JSON.parse(request.payload).payload.sessionTokens.length })
             };
         }));
-        ["USERS", "WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
+        ["WRITE", "FEEDBACK", "ADMIN"].forEach(service => {
             r.properties.setProperty("GPSpedia_SERVICE_URL_" + service,
                 "https://script.google.com/macros/s/" + service + "/exec");
             r.properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, (service + "-secret-").padEnd(40, "x"));
@@ -978,8 +951,7 @@ function runSharedMutationCoordinatorTests() {
         });
         assert_(result.status === "success", "La sincronización de sesión no debe revertirse por un servicio opcional no disponible.");
         assert_(result.cachePriming.failedServices.includes("FEEDBACK"), "El servicio fallido debe quedar reportado.");
-        assert_(result.cachePriming.primedServices.includes("USERS") &&
-            result.cachePriming.primedServices.includes("WRITE") &&
+        assert_(result.cachePriming.primedServices.includes("WRITE") &&
             result.cachePriming.primedServices.includes("ADMIN"), "Los demás servicios deben quedar precargados.");
     });
 
@@ -1034,14 +1006,14 @@ function runSharedMutationCoordinatorTests() {
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         assert_(traffic.status === "success" && traffic.scope === "global_service_traffic",
             "ADMIN debe recibir el agregado global de Coordinator.");
-        assert_(traffic.services.length === 7 && !traffic.services.includes("LEGACY"),
+        assert_(traffic.services.length === 6 && !traffic.services.includes("LEGACY"),
             "El agregado conserva los siete servicios activos.");
         assert_(traffic.totals.last24Hours.AUTH === 1 && traffic.totals.last24Hours.CATALOG === 1 &&
             traffic.totals.last24Hours.FEEDBACK === 1,
             "Solo deben contarse los eventos registrados por Coordinator.");
-        assert_(traffic.totals.last24Hours.USERS === 0 && traffic.totals.last24Hours.WRITE === 0,
+        assert_(traffic.totals.last24Hours.WRITE === 0,
             "No deben inventarse solicitudes directas de servicios.");
-        ["AUTH", "CATALOG", "USERS", "WRITE", "FEEDBACK"].forEach(service => {
+        ["AUTH", "CATALOG", "WRITE", "FEEDBACK"].forEach(service => {
             assert_(traffic.sources[service].directRequestsAvailable === false &&
                 traffic.sources[service].reason === "direct_requests_not_collected",
                 service + " debe declarar que las rutas directas no se recopilan.");
@@ -1324,15 +1296,12 @@ function runSharedMutationCoordinatorTests() {
                 return { getResponseCode: () => 200,
                     getContentText: () => JSON.stringify({ status: "success", primed: request.payload.sessionTokens.length }) };
             }
-            const target = url.includes("USERS") ? "USERS" : url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
+            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             remoteCalls.push({ target, tokens: request.payload.sessionTokens.slice() });
             return { getResponseCode: () => 200,
                 getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length }) };
         });
-        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
-        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
-        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
-        r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
+                                r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const client = r.makeClient("AUTH");
@@ -1360,15 +1329,15 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => r.request("validateSessionContext", "AUTH", "validateSessionContext", {
             userId, sessionToken: sessions[6].token
         }), "revocada");
-        assert_(remoteCalls.length === 12, "Las invalidaciones individual y global deben llegar a USERS, WRITE, FEEDBACK y ADMIN.");
+        assert_(remoteCalls.length === 6, "Las invalidaciones individual y global deben llegar a WRITE, FEEDBACK y ADMIN.");
     });
 
-    test_("Coordinator centraliza invalidación remota por lotes para USERS, WRITE, FEEDBACK y ADMIN", function() {
+    test_("Coordinator centraliza invalidación remota por lotes para WRITE, FEEDBACK y ADMIN", function() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
             calls.push({ url, request });
-            const target = url.includes("USERS") ? "USERS" : url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
+            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             assert_(request.action === "__invalidateSessionActorCache", "Debe usar el endpoint interno de invalidación.");
             assert_(request.payload.secret === r.secrets[target], "Debe usar el secreto propio de " + target + ".");
             return {
@@ -1376,8 +1345,7 @@ function runSharedMutationCoordinatorTests() {
                 getContentText: () => JSON.stringify({ status: "success", invalidated: request.payload.sessionTokens.length })
             };
         });
-        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
-        r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
+                r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const tokens = Array.from({ length: 7 }, (_, index) => "session-token-cache-" + String(index).padStart(4, "0"));
@@ -1385,8 +1353,8 @@ function runSharedMutationCoordinatorTests() {
             userId: "USR-CACHE-1", sessionTokens: tokens
         });
         assert_(result.status === "success" && result.invalidated === 7, "Debe confirmar todos los tokens.");
-        assert_(result.confirmed.USERS === 7 && result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7 && result.confirmed.ADMIN === 7, "Los cuatro servicios deben confirmar cada token.");
-        assert_(calls.length === 8, "Siete tokens deben dividirse en dos lotes por cada uno de los cuatro servicios.");
+        assert_(result.confirmed.WRITE === 7 && result.confirmed.FEEDBACK === 7 && result.confirmed.ADMIN === 7, "Los tres servicios deben confirmar cada token.");
+        assert_(calls.length === 6, "Siete tokens deben dividirse en dos lotes por cada uno de los tres servicios.");
         assert_(calls.every(call => call.request.payload.userId === "USR-CACHE-1"), "Debe conservar la identidad objetivo.");
         assert_(!JSON.stringify(result).includes("session-token-cache"), "La respuesta no debe exponer tokens.");
     });
@@ -1396,7 +1364,7 @@ function runSharedMutationCoordinatorTests() {
         const calls = [];
         const r = createRuntime_(null, function(url, options) {
             const request = JSON.parse(options.payload);
-            const target = url.includes("USERS") ? "USERS" : url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
+            const target = url.includes("WRITE") ? "WRITE" : url.includes("FEEDBACK") ? "FEEDBACK" : "ADMIN";
             calls.push(target);
             const invalidated = request.payload.sessionTokens.length;
             if (target === "FEEDBACK" && failFeedback) {
@@ -1404,17 +1372,16 @@ function runSharedMutationCoordinatorTests() {
             }
             return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ status: "success", invalidated }) };
         });
-        r.properties.setProperty("GPSpedia_SERVICE_URL_USERS", "https://script.google.com/macros/s/USERS/exec");
-        r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
+                r.properties.setProperty("GPSpedia_SERVICE_URL_WRITE", "https://script.google.com/macros/s/WRITE/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_FEEDBACK", "https://script.google.com/macros/s/FEEDBACK/exec");
         r.properties.setProperty("GPSpedia_SERVICE_URL_ADMIN", "https://script.google.com/macros/s/ADMIN/exec");
         const payload = { userId: "USR-CACHE-2", sessionTokens: ["session-token-cache-retry-0001"] };
         expectThrow_(() => r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload), "FEEDBACK");
-        assert_(calls.join(",") === "USERS,WRITE,FEEDBACK", "La primera ejecución debe detectar el fallo parcial.");
+        assert_(calls.join(",") === "WRITE,FEEDBACK", "La primera ejecución debe detectar el fallo parcial.");
         failFeedback = false;
         const retry = r.request("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", payload);
         assert_(retry.status === "success" && retry.invalidated === 1, "El mismo lote debe poder repetirse sin duplicar efectos.");
-        assert_(calls.join(",") === "USERS,WRITE,FEEDBACK,USERS,WRITE,FEEDBACK,ADMIN", "El reintento debe confirmar los cuatro destinos.");
+        assert_(calls.join(",") === "WRITE,FEEDBACK,WRITE,FEEDBACK,ADMIN", "El reintento debe confirmar los tres destinos.");
     });
 
     test_("La invalidación remota de caché permanece reservada a AUTH", function() {
@@ -1475,7 +1442,7 @@ function runSharedMutationCoordinatorTests() {
             userId, sessionToken: token, role: "tecnico", fullName: "Técnico",
             createdAt, lastActivityAt: createdAt
         });
-        const services = ["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"];
+        const services = ["AUTH", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"];
         services.forEach(service => {
             const client = r.makeClient(service);
             const result = client.validateSessionContext(userId, token, service);

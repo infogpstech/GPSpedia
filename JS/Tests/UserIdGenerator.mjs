@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const users=fs.readFileSync(resolve(root,"JS/Services/users.js"),"utf8");
+const users=fs.readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
 function extract(name){
  const start=users.indexOf("function "+name+"(");assert.ok(start>=0,"No se encontró "+name);
  const next=users.indexOf("\nfunction ",start+10);return users.slice(start,next<0?users.length:next);
@@ -17,7 +17,7 @@ function sheet(rows,formulas=[]){
   })};
 }
 let spreadsheet={getSheetByName:()=>null};
-const generate=new Function("COLS_USERS","getSpreadsheet",
+const generate=new Function("COLS_USERS","getAuthUsersSpreadsheet_",
  extract("parseUserIdSequenceFormula_")+"\n"+
  extract("getUserIdSequencePattern_")+"\n"+
  extract("generateNextUserId_")+"\nreturn generateNextUserId_;")(

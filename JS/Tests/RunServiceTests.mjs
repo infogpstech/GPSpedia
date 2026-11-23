@@ -138,7 +138,7 @@ runGroup('32','ADMIN',()=>{
   runCli('UX proporciones del panel Developer','JS/Tests/DeveloperPanelUX.mjs');
   runCli('Drive alertas privadas por umbral de cuota y monitor GDrive','JS/Tests/DriveStorageAlerts.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
- runCli('P0 AUTH/USERS leases mínimos para términos y actividad huérfana','JS/Tests/SessionActivityLeaseMinimization.mjs');
+ runCli('P0 AUTH leases mínimos para términos y actividad huérfana','JS/Tests/SessionActivityLeaseMinimization.mjs');
  runCli('P0 AUTH elimina lecturas completas y revocaciones duplicadas','JS/Tests/AuthSessionReadOptimization.mjs');
  runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
  runCli('GP-IMG-DATA-01 planner exacto de conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');
@@ -282,17 +282,14 @@ runGroup('36','AUTH',()=>{
  recordResult('UI invalidación de sesión y rol/AUG-042',loadFunction('JS/Tests/SessionUiRoleInvalidation.js','runSessionUiRoleInvalidationTests')({
   ui:read('JS/Frontend/ui.js'),auth:read('JS/Frontend/auth.js'),users:html,authService:auth,main:read('JS/Frontend/main.js'),feedback:read('JS/Services/feedback.js'),css:read('style.css')
  }));
-});
-runGroup('37','USERS',()=>{
- runCli('USERS telemetría directa de consultas getUsers','JS/Tests/UsersDirectTrafficTelemetry.mjs');
-  runCli('USERS tabla responsive y acciones iconográficas móviles','JS/Tests/ResponsiveFormsUsers.js');
- const users=read('JS/Services/users.js'),testUsers=read('JS/Tests/users.js');
- runCli('P2 generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
- runCli('USERS creación reutiliza un único snapshot para username, fila e ID','JS/Tests/UsersMutationSnapshot.mjs');
- runCli('USERS lecturas de lista y perfil limitadas a columnas necesarias','JS/Tests/UsersReadMinimization.mjs');
- recordResult('USERS mutaciones/RBAC/rollback/coordinación',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(users,read('JS/Services/Auth.js'),read('JS/Services/Coordinator.js')));
- if(normalizedCopy(users)!==normalizedCopy(testUsers)) throw new Error('La copia USERS difiere fuera del ID aislado.');
- recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
+
+ // MIG-012: pruebas de gestión de usuarios ya integradas en AUTH.
+ runCli('AUTH enrutamiento de getUsers/createUser/updateProfile','JS/Tests/UsersDirectTrafficTelemetry.mjs');
+ runCli('Gestión de usuarios: tabla responsive y acciones móviles','JS/Tests/ResponsiveFormsUsers.js');
+ runCli('AUTH generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
+ runCli('AUTH creación reutiliza un único snapshot para username, fila e ID','JS/Tests/UsersMutationSnapshot.mjs');
+ runCli('AUTH lecturas de lista y perfil limitadas a columnas necesarias','JS/Tests/UsersReadMinimization.mjs');
+ recordResult('AUTH gestión de usuarios: RBAC, atomicidad, rollback y sesión',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(read('JS/Services/Auth.js'),read('JS/Services/Coordinator.js')));
 });
 runGroup('38','INTEGRATION',()=>{
  runCli('GP-UX-SEARCH-MODEL-GROUPING-01 agrupación y jerarquía de vehículos','JS/Tests/SearchModelGrouping.mjs');
@@ -340,7 +337,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('PyS relaciones y mutaciones bajo lease compartida','JS/Tests/PysVehicleRelationIntegrity.js');
  runCli('GP-PERF ADMIN información suplementaria: cargas Drive fuera del lock','JS/Tests/AdminSupplementaryUploadOutsideLock.mjs');
  runCli('P3.1 actor de login cacheado y sin consultas por acción','JS/Tests/SessionActorCacheLifetime.mjs');
- runCli('P3.1c precarga e invalidación de cachés de actor en USERS/WRITE/FEEDBACK/ADMIN','JS/Tests/SessionActorCacheInvalidation.mjs');
+ runCli('P3.1c precarga e invalidación de cachés de actor en WRITE/FEEDBACK/ADMIN','JS/Tests/SessionActorCacheInvalidation.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
  runCli('Dashboard y aportes de cortes por usuario','JS/Tests/ActivityDashboardContributions.mjs');
  runCli('GP-DASH-INSIGHTS-01 indicadores, rankings y render seguro','JS/Tests/ActivityDashboardInsights.mjs');
@@ -408,14 +405,14 @@ runGroup('38','INTEGRATION',()=>{
   index:read('index.html'),ui:read('JS/Frontend/ui.js'),main:read('JS/Frontend/main.js')
  }));
  recordResult('Mapa de acciones y routers',loadFunction('JS/Tests/ActionDispatchContract.js','runActionDispatchContractTests')({
-  apiConfig:read('JS/Frontend/api-config.js'),AUTH:read('JS/Services/Auth.js'),USERS:read('JS/Services/users.js'),CATALOG:read('JS/Services/catalog.js'),
+  apiConfig:read('JS/Frontend/api-config.js'),AUTH:read('JS/Services/Auth.js'),CATALOG:read('JS/Services/catalog.js'),
   WRITE:read('JS/Services/write.js'),FEEDBACK:read('JS/Services/feedback.js')+'\\n'+read('JS/Services/InboxConversations.js'),ADMIN:read('JS/Services/admin.js'),UTILITIES:read('JS/Services/Utilities.js'),usersHtml:read('HTML/users.html'),
   consumerSources:{apiConfig:read('JS/Frontend/api-config.js'),addCortes:read('HTML/add_cortes.html'),auth:read('JS/Frontend/auth.js'),main:read('JS/Frontend/main.js'),
    pysData:read('JS/Frontend/pys-data.js'),ui:read('JS/Frontend/ui.js'),usersHtml:read('HTML/users.html'),youtubeUpload:read('JS/Frontend/youtubeUpload.js')}
  }));
 });
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','USERS','INTEGRATION','31','32','33','34','35','36','37','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');

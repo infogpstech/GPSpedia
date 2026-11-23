@@ -36,7 +36,7 @@ const SHARED_AUTH_TOUCH_INTERVAL_MS_ = 5 * 60 * 1000;
 const SERVICE_TRAFFIC_BUCKET_PREFIX_ = "GPSpedia_SERVICE_TRAFFIC_HOUR_";
 const SERVICE_TRAFFIC_BUCKET_MS_ = 60 * 60 * 1000;
 const SERVICE_TRAFFIC_WINDOW_MS_ = 24 * 60 * 60 * 1000;
-const SERVICE_TRAFFIC_SERVICES_ = Object.freeze(["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"]);
+const SERVICE_TRAFFIC_SERVICES_ = Object.freeze(["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]);
 const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
     WRITE: new Set(["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","freezeCortesIds"]),
     FEEDBACK: new Set(["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
@@ -63,11 +63,6 @@ function coordinatorPolicy_(service, operation) {
             logout: { write: [...identityWrite, "SESSION_CONTEXTS"] },
             migrateLegacyPasswords: { write: identityWrite },
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS", "SESSION_CONTEXTS"] }
-        },
-        USERS: {
-            // Solo necesita serializar la escritura de Users frente a la desactivación de cuenta AUTH/deleteUser.
-            // El actor de sesión ya fue establecido en login; createUser no relee ActiveSessions/SESSION_CONTEXTS.
-            createUser: { read: ["USERS"], write: ["USERS"] }
         },
         UTILITIES: {
             migrateTimestamps: { read: ["SESSION_CONTEXTS", "CORTES", "DRIVE"], write: ["UTILITIES"] }
@@ -211,7 +206,7 @@ function createSharedMutationCoordinator_(dependencies) {
 
     function authenticate_(payload) {
         const service = String(payload.service || "").trim().toUpperCase();
-        if (!["ADMIN", "WRITE", "FEEDBACK", "AUTH", "USERS", "UTILITIES"].includes(service)) {
+        if (!["ADMIN", "WRITE", "FEEDBACK", "AUTH", "UTILITIES"].includes(service)) {
             throw new Error("Servicio no autorizado para el coordinador compartido.");
         }
         const expected = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + service) || "");
@@ -584,7 +579,7 @@ function createSharedMutationCoordinator_(dependencies) {
         if (typeof fetch !== "function") {
             throw new Error("La comunicación remota de invalidación no está disponible en Coordinator.");
         }
-        const targets = ["USERS", "WRITE", "FEEDBACK", "ADMIN"];
+        const targets = ["WRITE", "FEEDBACK", "ADMIN"];
         const batchSize = 5;
         targets.forEach(target => {
             const url = String(properties.getProperty("GPSpedia_SERVICE_URL_" + target) || "").trim();
@@ -594,7 +589,7 @@ function createSharedMutationCoordinator_(dependencies) {
                 throw new Error("La configuración de invalidación remota de " + target + " está incompleta.");
             }
         });
-        const confirmed = { USERS: 0, WRITE: 0, FEEDBACK: 0, ADMIN: 0 };
+        const confirmed = { WRITE: 0, FEEDBACK: 0, ADMIN: 0 };
         for (let offset = 0; offset < tokens.length; offset += batchSize) {
             const batch = tokens.slice(offset, offset + batchSize);
             targets.forEach(target => {
@@ -634,7 +629,7 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function primeSessionActorCaches_(userId, role, fullName, epoch, sessionTokens) {
-        const targets = ["USERS", "WRITE", "FEEDBACK", "ADMIN"];
+        const targets = ["WRITE", "FEEDBACK", "ADMIN"];
         const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
             .map(token => String(token || "")).filter(Boolean)));
         if (!tokens.length) return { primedServices: [], failedServices: [] };
@@ -778,7 +773,7 @@ function createSharedMutationCoordinator_(dependencies) {
     }
 
     function validateSessionContext_(service, operation, payload) {
-        if (!["AUTH", "USERS", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"].includes(service) ||
+        if (!["AUTH", "WRITE", "ADMIN", "FEEDBACK", "UTILITIES"].includes(service) ||
             operation !== "validateSessionContext") {
             throw new Error("El servicio no está autorizado para validar un contexto de sesión.");
         }
@@ -875,7 +870,7 @@ function createSharedMutationCoordinator_(dependencies) {
         result.coverage = {
             description: "Conteo global best-effort de adquisiciones nuevas de lease, validaciones de contexto y lecturas del feed registradas por Coordinator. No incluye rutas directas no coordinadas ni representa el total de solicitudes HTTP.",
             excludes: [
-                "lecturas directas no coordinadas de AUTH, CATALOG, USERS, WRITE y FEEDBACK",
+                "lecturas directas no coordinadas de AUTH, CATALOG, WRITE y FEEDBACK",
                 "sondeos de salud",
                 "solicitudes HTTP no instrumentadas"
             ]

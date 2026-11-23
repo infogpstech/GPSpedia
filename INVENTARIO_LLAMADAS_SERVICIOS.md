@@ -3,8 +3,8 @@
 **Tarea:** MIG-004 — Inventario de llamadas entre servicios y SharedMutation  
 **Fecha:** 2026-11-23  
 **Rama auditada:** `GPSpedia2.2.5_work`  
-**Alcance:** análisis estático de los diez módulos backend activos, el router frontend y las pruebas relacionadas.  
-**Resultado:** mapa de dependencias, propietario funcional, reemplazo objetivo y evidencia de prueba. No se cambió código funcional ni se retiró ningún endpoint.
+**Alcance:** inventario estático de arquitectura y adendas de verificación MIG-010 a MIG-012.  
+**Resultado actual:** seis destinos de servicio; gestión de usuarios integrada en AUTH; el deployment USERS dejó de ser necesario en el código versionado. El retiro del deployment/registro remoto permanece pendiente de Beta.
 
 ## 1. Criterio y límites
 
@@ -26,7 +26,7 @@ Este documento describe el código versionado. No acredita que las URLs, secreto
 
 `JS/Frontend/api-config.js` es el router único de solicitudes de aplicación:
 
-- Declara siete destinos: AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN.
+- Declara seis destinos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Las acciones getUsers, createUser y updateProfile pertenecen ahora a AUTH.
 - `ACTION_TO_SERVICE_MAP` contiene 120 acciones canónicas y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
 - `routeAction` mide tráfico local del navegador y no envía esas métricas a un servicio de telemetría.
 - `getCatalogChanges` está mapeada actualmente a FEEDBACK.
@@ -40,8 +40,8 @@ La matriz de 120 acciones y sus handlers permanece en `MATRIZ_MIGRACION_SERVICIO
 | Origen | Destino | Operaciones observadas | Estado |
 |---|---|---|---|
 | ADMIN | — | Sin llamadas funcionales a WRITE ni CATALOG | MIG-010: llamadas retiradas; secuencias coordinadas desde frontend |
-| AUTH, USERS, WRITE, FEEDBACK, ADMIN, UTILITIES | COORDINATOR | leases, sesiones, cachés, feed y telemetría | A través de SharedMutationClient |
-| COORDINATOR | USERS, WRITE, FEEDBACK, ADMIN | __primeSessionActorCache, __invalidateSessionActorCache | Fan-out POST; lotes |
+| AUTH, WRITE, FEEDBACK, ADMIN, UTILITIES | COORDINATOR | leases, sesiones, cachés, feed y telemetría | A través de SharedMutationClient |
+| COORDINATOR | WRITE, FEEDBACK, ADMIN | __primeSessionActorCache, __invalidateSessionActorCache | Fan-out POST; lotes |
 | CATALOG | — | Sin llamadas backend→backend detectadas | Lectura directa de Spreadsheet |
 | InboxConversations.js | — | Sin transporte HTTP propio | Lógica delegada dentro de FEEDBACK |
 
@@ -257,3 +257,13 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - La suite se ejecutó de forma aislada en V8 con 58 aserciones aprobadas y simulación de replay del respaldo. La ejecución Node.js 22 del workflow completo queda pendiente de confirmar.
 - Las pruebas locales no equivalen a llamadas contra deployments reales. La validación Beta de permisos Apps Script, Spreadsheet, Drive y operación entre servicios sigue pendiente.
 
+
+### 3.4 MIG-012 — Unificación funcional AUTH/USERS — 2026-11-23
+
+- Las acciones `getUsers`, `createUser` y `updateProfile` se enrutan ahora a AUTH desde `JS/Frontend/api-config.js` y se resuelven en el dispatcher de `JS/Services/Auth.js`.
+- AUTH usa el actor cacheado de su propio proyecto. El login ya precalienta la caché local AUTH; el fan-out de Coordinator se reduce a WRITE, FEEDBACK y ADMIN.
+- `createUser` conserva validación de username, rol, correo/teléfono, hash PBKDF2, ID secuencial desde `__IdentifierSequenceConfig__`, snapshot, escritura atómica y rollback. Su lock fail-fast es local al proyecto AUTH y se comparte con la ruta de eliminación de cuentas.
+- `updateProfile` conserva la edición exclusiva de `Nombre_Completo`, exige identidad propia y una fila ID única; no amplía campos ni adquiere un lock global para la escritura de celda.
+- `getUsers` conserva el filtrado jerárquico: Desarrollador ve todos; Jefe ve Supervisor/Técnico; Supervisor ve Técnico. No expone hash ni token.
+- El router, el mapa de servicios, el contrato de salud, el tráfico global, las allowlists Coordinator y las listas de caché ya no declaran USERS como servicio independiente. Se eliminaron `JS/Services/users.js` y `JS/Tests/users.js` después de migrar sus pruebas al grupo AUTH.
+- Harness local de migración: 15/15 PASS. La regresión completa Node.js 22 posterior a este commit y las invocaciones reales de Apps Script quedan pendientes. El deployment antiguo y su fila en el registro central se deshabilitarán tras validar AUTH en Beta.

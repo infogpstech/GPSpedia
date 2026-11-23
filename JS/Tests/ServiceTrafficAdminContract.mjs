@@ -12,7 +12,6 @@ const api = read("JS/Frontend/api-config.js");
 const ui = read("JS/Frontend/ui.js");
 const html = read("index.html");
 const auth = read("JS/Services/Auth.js");
-const users = read("JS/Services/users.js");
 const write = read("JS/Services/write.js");
 const feedback = read("JS/Services/feedback.js");
 const catalog = read("JS/Services/catalog.js");
@@ -37,7 +36,7 @@ assert.match(coordinator, /recordServiceTrafficEvent_\(trafficService, capturedA
 assert.match(shared, /function getServiceTraffic\(\)/);
 assert.match(shared, /send_\("getServiceTraffic"/);
 
-for (const [name, source] of [["AUTH", auth], ["USERS", users], ["WRITE", write], ["FEEDBACK", feedback], ["CATALOG", catalog]]) {
+for (const [name, source] of [["AUTH", auth], ["WRITE", write], ["FEEDBACK", feedback], ["CATALOG", catalog]]) {
     assert.doesNotMatch(source, /recordDirectServiceTraffic_|readDirectServiceTraffic_|recordUsersDirectTraffic_|readUsersDirectTraffic_|recordCatalogTraffic_|readCatalogTraffic_/,
         name + " no debe persistir ni exponer contadores directos.");
     assert.doesNotMatch(source, /DIRECT_SERVICE_TRAFFIC_CONFIG_|USERS_DIRECT_TRAFFIC_PREFIX_|CATALOG_TRAFFIC_BUCKET_PREFIX_/,

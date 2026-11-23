@@ -13,7 +13,6 @@ El endpoint de diagnóstico es una superficie pública de solo lectura. Su respu
 | AUTH | `GPSpedia-Auth` | 2.2.5 | `available` |
 | CATALOG | `GPSpedia-Catalog` | 2.4.0 | `available` |
 | WRITE | `GPSpedia-Write` | 2.3.1 | `available` |
-| USERS | `GPSpedia-Users` | 2.4.2 | `available` |
 | FEEDBACK | `GPSpedia-Feedback` | 1.2.2 | `available` |
 | UTILITIES | `GPSpedia-Utilities` | 1.5.0 | `available` |
 | ADMIN | `GPSpedia-Admin` | 2.7.1 | `available` |
@@ -21,6 +20,9 @@ El endpoint de diagnóstico es una superficie pública de solo lectura. Su respu
 La versión se informa cuando está disponible; no reemplaza la validación de identidad. Los deployments externos no se consideran verificados solo porque exista código fuente con el contrato esperado.
 
 ## Servicio retirado
+
+**USERS dejó de ser un microservicio independiente por MIG-012.** `getUsers`, `createUser` y `updateProfile` forman parte de AUTH y no existe una clave de salud ni una ruta frontend hacia un endpoint USERS. El deployment histórico y su fila heredada del registro central se deshabilitarán después de la validación Beta; no se modificaron desde este commit.
+
 
 **LEGACY está retirado y no forma parte del inventario de servicios ni del contrato de salud.** No existe endpoint configurado, acción pública ni solicitud de red asociada. La mención se conserva únicamente como constancia de retirada; no debe mostrarse como un microservicio pendiente de conexión.
 
@@ -46,7 +48,7 @@ Un HTTP 2xx por sí solo nunca establece `online`. Un estado backend no reconoci
 
 No se añadieron probes de Sheets/Drive: las fuentes disponibles no proporcionan un endpoint de solo lectura que compruebe esas dependencias de forma segura, uniforme y sin efectos secundarios. El panel separa expresamente la respuesta del endpoint de la salud de dependencias internas.
 
-La revisión local cubre los siete servicios versionados. LEGACY está excluido del inventario y no genera solicitudes. La identidad, versión, MIME, redacción y comportamiento efectivo de los deployments actuales no pueden certificarse desde este repositorio; deben verificarse en Beta aislada. No se modificaron deployments ni datos productivos.
+La revisión local cubre los seis servicios versionados. LEGACY está excluido del inventario y no genera solicitudes. La identidad, versión, MIME, redacción y comportamiento efectivo de los deployments actuales no pueden certificarse desde este repositorio; deben verificarse en Beta aislada. No se modificaron deployments ni datos productivos.
 
 ## Prueba local
 

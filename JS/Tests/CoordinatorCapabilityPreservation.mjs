@@ -8,7 +8,6 @@ const read = path => readFileSync(resolve(root, path), "utf8");
 const auth = read("JS/Services/Auth.js");
 const coordinator = read("JS/Services/Coordinator.js");
 const client = read("JS/Services/SharedMutationClient.js");
-const users = read("JS/Services/users.js");
 const admin = read("JS/Services/admin.js");
 
 function extract(source, name) {
@@ -66,23 +65,23 @@ check("Solo eliminación de cuenta conserva lease; otras revocaciones mantienen 
     assert.match(update, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor"\]/);
     assert.match(reset, /requireSharedAuthActor_\(payload, \["desarrollador"\]/);
 });
-check("La invalidación remota exige confirmación de USERS, WRITE, FEEDBACK y ADMIN antes de revocar", () => {
+check("La invalidación remota exige confirmación de WRITE, FEEDBACK y ADMIN antes de revocar", () => {
     const invalidate = extract(client, "invalidateSessionActorCaches");
     const revokeOne = extract(client, "revokeSession");
     const revokeAll = extract(client, "revokeUserSessions");
     assert.match(invalidate, /send_\("invalidateSessionActorCaches", "AUTH"/);
-    assert.match(invalidate, /!\["USERS", "WRITE", "FEEDBACK", "ADMIN"\]\.every/);
+    assert.match(invalidate, /!\["WRITE", "FEEDBACK", "ADMIN"\]\.every/);
     assert.ok(revokeOne.indexOf("invalidateSessionActorCaches") < revokeOne.indexOf('send_("revokeSession"'));
     assert.ok(revokeAll.indexOf("invalidateSessionActorCaches") < revokeAll.indexOf('send_("revokeUserSessions"'));
     const remote = extract(coordinator, "invalidateSessionActorCaches_");
     assert.match(remote, /service !== "AUTH"/);
-    assert.match(remote, /\["USERS", "WRITE", "FEEDBACK", "ADMIN"\]/);
+    assert.match(remote, /\["WRITE", "FEEDBACK", "ADMIN"\]/);
     assert.match(remote, /fetchAll\(requests\)/);
 });
 check("El coordinador no sustituye los controles de permisos ni las operaciones remotas del panel ADMIN", () => {
     assert.match(admin, /function handleGetServiceTraffic_/);
     assert.match(admin, /developerContext\.role[\s\S]*desarrollador/);
     assert.match(admin, /function handleGetServiceTraffic_/);
-    assert.match(users, /function handleCreateUser|createUser/);
+    assert.match(auth, /function handleCreateUser/);
 });
 console.log("CoordinatorCapabilityPreservation: " + passed + "/" + passed + " PASS");

@@ -83,7 +83,7 @@ function runActionDispatchContractTests(sources) {
         actionMap = parseMap_(api, "ACTION_TO_SERVICE_MAP");
         compatibility = parseCompatibility_(api);
         external = parseExternal_(api);
-        for (const service of ["AUTH","USERS","CATALOG","WRITE","FEEDBACK","ADMIN"]) dispatchers[service] = parseDispatcher_(input[service], service);
+        for (const service of ["AUTH","CATALOG","WRITE","FEEDBACK","ADMIN"]) dispatchers[service] = parseDispatcher_(input[service], service);
         const utilitySource = String(input.UTILITIES || "");
         const utilityMatch = utilitySource.match(/body\.action\s*!==\s*['"]([^'"]+)['"]/);
         assert_(!!utilityMatch, "No se encontró el contrato de acción de UTILITIES.");
@@ -91,6 +91,8 @@ function runActionDispatchContractTests(sources) {
         assert_(!!utilityHandler, "UTILITIES no declara el handler de su acción.");
         dispatchers.UTILITIES = { actions: [utilityMatch[1]], handlers: { [utilityMatch[1]]: [utilityHandler[1]] } };
         assert_(consumerActions.length > 0, "No se proporcionaron fuentes de consumidores.");
+        assert_(!endpoints.includes("USERS"), "USERS sigue declarado como endpoint independiente.");
+        for (const action of ["getUsers","createUser","updateProfile"]) assert_(actionMap[action] === "AUTH", action + " debe pertenecer a AUTH.");
     });
     run_("cada acción mapeada apunta a un endpoint, dispatcher y handler existentes", () => {
         for (const [action, service] of Object.entries(actionMap)) {

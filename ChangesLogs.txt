@@ -132,3 +132,12 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - No se requirieron cambios funcionales adicionales: las dependencias se habían retirado en MIG-010 y MIG-011 formalizó su comprobación. No se modificaron deployments ni recursos externos.
 - La validación real de endpoints, sesiones/RBAC y permisos Apps Script/Spreadsheet/Drive permanece pendiente de Beta.
 - Siguiente tarea: MIG-012 — unificación funcional AUTH/USERS.
+
+
+### 2026-11-23 — MIG-012: unificación funcional AUTH/USERS
+- Se integraron getUsers, createUser y updateProfile en AUTH y se actualizaron sus rutas frontend.
+- Se conservaron contratos, campos, RBAC jerárquico, hash PBKDF2, secuencia de IDs, atomicidad, rollback y perfil propio.
+- createUser usa el ScriptLock local de AUTH, compartido con deleteUser; se retiró la lease cruzada USERS/createUser.
+- Se retiró USERS del mapa de servicios, health check, telemetría, políticas Coordinator y fan-out de caché de actor. AUTH precalienta su propia caché en login; se mantienen WRITE, FEEDBACK y ADMIN como destinos remotos.
+- Se eliminaron JS/Services/users.js y JS/Tests/users.js tras mover sus pruebas a AUTH.
+- Harness funcional aislado: 15/15 PASS. Regresión CI Node.js 22 posterior al commit pendiente; validación real Beta y deshabilitación del deployment/registro remoto heredado USERS quedan pendientes.
