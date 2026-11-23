@@ -46,8 +46,8 @@ run('FEEDBACK no guarda URLs, secretos ni configuración local de COORDINATOR',(
   assert(!router.includes('getCatalogChanges'));
   assert(!/FEEDBACK_PUBLIC_ACTIONS[^;]*getCatalogChanges/.test(feedback));
 });
-run('El journal de cambios se consulta desde frontend a través de la configuración central de COORDINATOR',()=>{
-  assert(/'getCatalogChanges': 'COORDINATOR'/.test(api));
+run('El journal de cambios se consulta desde frontend directamente en CATALOG',()=>{
+  assert(/'getCatalogChanges': 'CATALOG'/.test(api));
   const start=api.indexOf('export async function getCatalogChanges(');
   const end=api.indexOf('\nexport async function ',start+10);
   const body=api.slice(start,end>start?end:api.length);
