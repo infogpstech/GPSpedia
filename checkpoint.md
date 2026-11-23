@@ -163,3 +163,10 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Documentados payloads de negocio y contexto, respuestas/errores representativos, RBAC y hojas para las 15 acciones AUTH en §14 de la matriz.
 - Preservadas como invariantes la respuesta genérica de recuperación, términos por dispositivo, revocación de sesiones, protección del último Desarrollador y migración de hashes heredados con dry-run/confirmación.
 - Pendiente profundizar en objetos de perfil/sesión, columnas físicas y secuencias Coordinator. MIG-001 sigue EN PROGRESO.
+
+
+### Contratos USERS y WRITE — avance 2026-11-23
+- Documentados payloads, respuestas y RBAC de las 3 acciones USERS y 9 WRITE en §§15–16 de la matriz.
+- Registrados campos permitidos de alta/perfil, secuencia de IDs, consultas, idempotencia, cortes, aportes suplementarios, VIN y congelación de fórmulas.
+- Invariantes a conservar: checkOperation sin actor/lease, actor confiable para escrituras, ledgers append-only, hashes/opId, read-back, reintentos y separación del flujo YouTube.
+- Pendiente mapa de columnas/rangos, errores exhaustivos y pruebas/efectos por acción. MIG-001 sigue EN PROGRESO.
