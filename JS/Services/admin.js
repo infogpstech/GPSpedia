@@ -10270,6 +10270,43 @@ function hasDirectDriveParent_(resource, parentId) {
     return Boolean(parents && parents.some(parent => String(parent.getId()) === String(parentId)));
 }
 
+function getCortesTerminalFolderChain_(folder, rootFolderId, visitedIds) {
+    const id = String(folder && folder.getId ? folder.getId() : "");
+    const visited = Array.isArray(visitedIds) ? visitedIds : [];
+    if (!id || visited.includes(id)) throw new Error("La ruta Drive contiene una carpeta inválida o un ciclo.");
+    if (id === String(rootFolderId)) return [folder];
+    const parents = getDriveParentFolders_(folder);
+    if (!parents || parents.length !== 1 || !isDriveFolderWithinCortes_(parents[0], rootFolderId)) {
+        throw new Error("No se pudo verificar una ruta única de carpetas dentro de Cortes.");
+    }
+    return getCortesTerminalFolderChain_(parents[0], rootFolderId, visited.concat(id)).concat(folder);
+}
+
+function getDriveTerminalAccessSnapshot_(resource) {
+    if (!resource || typeof resource.getOwner !== "function") throw new Error("No se pudo consultar el propietario del archivo.");
+    const owner = resource.getOwner();
+    let ownerEmail = "";
+    if (owner) {
+        if (typeof owner.getEmail !== "function") throw new Error("No se pudo verificar el propietario del archivo.");
+        ownerEmail = String(owner.getEmail() || "").trim().toLowerCase();
+        if (!ownerEmail) throw new Error("El propietario del archivo no devolvió una identidad verificable.");
+    }
+    const acl = getDrivePermissionsForImageResource_(resource.getId(), new Map());
+    if (!acl || acl.verified !== true || !Array.isArray(acl.permissions)) {
+        throw new Error("No se pudieron verificar los permisos Drive del archivo; el movimiento se canceló.");
+    }
+    const permissions = acl.permissions.map(permission => {
+        if (!permission || !permission.id || !permission.type || !permission.role) {
+            throw new Error("Drive devolvió un permiso incompleto; el movimiento se canceló.");
+        }
+        return {
+            id: String(permission.id), type: String(permission.type), role: String(permission.role),
+            allowFileDiscovery: typeof permission.allowFileDiscovery === "boolean" ? permission.allowFileDiscovery : null
+        };
+    }).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+    return JSON.stringify({ ownerEmail, permissions });
+}
+
 function handleDriveCommand(payload, logMessage) {
     const input = payload && typeof payload === "object" ? payload : {};
     const { command, currentFolderId, args } = input;
@@ -10358,33 +10395,56 @@ function handleDriveCommand(payload, logMessage) {
     if (cmd === "move") {
         const fileId = String(input.fileId || "").trim();
         const targetFolderId = String(input.targetFolderId || "").trim();
-        if (!fileId || !targetFolderId) throw new Error("ID de archivo y ID de carpeta destino requeridos.");
-
+        if (!fileId || !targetFolderId) throw new Error("Uso: move <ID de archivo> <ID de carpeta destino>.");
         let file, targetDir;
+        try { file = DriveApp.getFileById(fileId); targetDir = DriveApp.getFolderById(targetFolderId); }
+        catch (error) { throw new Error("El archivo o la carpeta destino no existe o no está disponible."); }
+        if (!isDriveFileWithinCortes_(file, rootFolderId)) throw new Error("Acceso denegado: el archivo de origen no pertenece al árbol Cortes.");
+        if (!isDriveFolderWithinCortes_(targetDir, rootFolderId)) throw new Error("Acceso denegado: la carpeta destino no pertenece al árbol Cortes.");
+        const sourceParents = getDriveParentFolders_(file);
+        if (!sourceParents || sourceParents.length !== 1 || !isDriveFolderWithinCortes_(sourceParents[0], rootFolderId)) {
+            throw new Error("El archivo debe tener una única carpeta de origen verificable dentro de Cortes.");
+        }
+        const sourceFolder = sourceParents[0];
+        verifyCortesOrganizerFolderAcl_(getCortesTerminalFolderChain_(sourceFolder, rootFolderId));
+        verifyCortesOrganizerFolderAcl_(getCortesTerminalFolderChain_(targetDir, rootFolderId));
+        const originalAccessSnapshot = getDriveTerminalAccessSnapshot_(file);
+        if (String(sourceFolder.getId()) === String(targetDir.getId())) return { status: "success", message: "El archivo ya se encontraba en la carpeta destino." };
         try {
-            file = DriveApp.getFileById(fileId);
-            targetDir = DriveApp.getFolderById(targetFolderId);
-        } catch (error) {
-            throw new Error("El archivo o la carpeta destino no existe o no está disponible.");
+            if (!isDriveFileWithinCortes_(file, rootFolderId) || !isDriveFolderWithinCortes_(targetDir, rootFolderId)) {
+                throw new Error("La ubicación del archivo o del destino cambió durante la validación.");
+            }
+            file.moveTo(targetDir);
+            const movedParents = getDriveParentFolders_(file);
+            if (!isDriveFileWithinCortes_(file, rootFolderId) || !movedParents || movedParents.length !== 1 ||
+                String(movedParents[0].getId()) !== String(targetDir.getId())) throw new Error("Drive no confirmó la ubicación destino solicitada.");
+            if (getDriveTerminalAccessSnapshot_(file) !== originalAccessSnapshot) {
+                throw new Error("El movimiento modificaría el propietario o los permisos efectivos del archivo.");
+            }
+        } catch (moveError) {
+            let rollbackError = null;
+            try {
+                const currentParents = getDriveParentFolders_(file);
+                const alreadyAtSource = currentParents && currentParents.length === 1 &&
+                    String(currentParents[0].getId()) === String(sourceFolder.getId());
+                if (!alreadyAtSource) file.moveTo(sourceFolder);
+                const restoredParents = getDriveParentFolders_(file);
+                if (!restoredParents || restoredParents.length !== 1 ||
+                    String(restoredParents[0].getId()) !== String(sourceFolder.getId()) ||
+                    getDriveTerminalAccessSnapshot_(file) !== originalAccessSnapshot) {
+                    throw new Error("La ubicación, el propietario o los permisos originales no coinciden.");
+                }
+            } catch (error) { rollbackError = error; }
+            if (rollbackError) {
+                throw new Error("El movimiento no pudo confirmarse y la reversión no pudo verificarse. Archivo " +
+                    fileId + "; carpeta origen " + sourceFolder.getId() + "; carpeta destino " + targetFolderId +
+                    ". Error: " + String(moveError && moveError.message || moveError) +
+                    ". Reversión: " + String(rollbackError && rollbackError.message || rollbackError));
+            }
+            throw new Error("No se completó el movimiento. Se restauraron y verificaron la ubicación, el propietario y los permisos originales. Motivo: " +
+                String(moveError && moveError.message || moveError));
         }
-        if (!isDriveFileWithinCortes_(file, rootFolderId)) {
-            throw new Error("Acceso denegado: el archivo de origen no pertenece al árbol Cortes.");
-        }
-        if (!isDriveFolderWithinCortes_(targetDir, rootFolderId)) {
-            throw new Error("Acceso denegado: la carpeta destino no pertenece al árbol Cortes.");
-        }
-
-        // Revalidar justo antes de la escritura para reducir la ventana ante cambios externos en Drive.
-        if (!isDriveFileWithinCortes_(file, rootFolderId) ||
-            !isDriveFolderWithinCortes_(targetDir, rootFolderId)) {
-            throw new Error("La ubicación del archivo o del destino cambió durante la validación; no se realizó el movimiento.");
-        }
-        file.moveTo(targetDir);
-        if (!isDriveFileWithinCortes_(file, rootFolderId) ||
-            !hasDirectDriveParent_(file, targetDir.getId())) {
-            throw new Error("El movimiento se ejecutó, pero no pudo verificarse su ubicación final dentro de Cortes. Revisa el archivo antes de reintentar.");
-        }
-        return { status: "success", message: "Archivo '" + file.getName() + "' movido a '" + targetDir.getName() + "'." };
+        return { status: "success", message: "Archivo '" + file.getName() + "' movido a '" + targetDir.getName() + "' conservando propietario y permisos." };
     }
 
     if (cmd === "tree") {
