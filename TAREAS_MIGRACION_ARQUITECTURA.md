@@ -175,12 +175,14 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Implementar secuencias explícitas para los flujos que hoy resuelve ADMIN mediante llamadas internas: reorganización ADMIN→WRITE→ADMIN y lecturas directas frontend→CATALOG para proyección y candidatos.
 - [x] Preservar orden, precondiciones, resultados, errores y recuperación; WRITE confirma la estabilización y ADMIN vuelve a validar respaldo/manifiesto/fórmulas antes de ordenar.
+- [x] Trasladar a WRITE la creación de vehículos, reserva idempotente de IDs y recuperación de altas; ADMIN rechaza las rutas heredadas sin escribir ni coordinar servicios.
 - [x] Usar identificadores de operación/idempotencia donde el flujo lo necesita: el respaldo de reorganización conserva operationId antes de la solicitud y ADMIN reutiliza el respaldo completo del mismo usuario.
 - [x] Mostrar progreso y estado parcial sin bloquear módulos independientes; la reorganización registra etapa, porcentaje y errores.
 - [x] Reanudar o permitir recuperación tras interrupción del navegador mediante estado local por usuario, backupId y operationId persistente.
 - [x] No mover secretos ni decisiones de autorización al frontend; CATALOG valida localmente la sesión y los roles autorizados para la proyección; los candidatos siguen restringidos a Desarrollador.
 
 **Validación local aislada — 2026-11-23**
+- La suite completa Node.js 22 de GitHub Actions está en reejecución tras corregir contratos heredados y rutas de dispatcher; no declarar CI aprobado hasta recuperar el resultado de la última ejecución.
 - `JS/Tests/MIG010FrontendServiceOrchestration.mjs` ejecutada en harness V8 aislado: 58 aserciones PASS, incluida simulación de creación/replay del respaldo, rechazo de replay por otro usuario, autorización por rol, sesión vencida, orden de pasos y persistencia previa del operationId.
 - Los archivos `admin.js`, `catalog.js`, `ui.js` y la suite MIG010 pasaron parsing en el entorno V8 usado para la validación.
 - La suite quedó registrada en `JS/Tests/RunServiceTests.mjs`.
