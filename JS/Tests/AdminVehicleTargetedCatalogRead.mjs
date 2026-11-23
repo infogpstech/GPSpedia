@@ -1,35 +1,22 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-
-const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = admin.indexOf("function getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName)");
-const end = admin.indexOf("\nfunction handleGetAdminImageUploadStatus", start);
-assert.ok(start >= 0 && end > start);
-const source = admin.slice(start, end);
-const calls = [];
-const helper = new Function("UrlFetchApp", "CATALOG_SERVICE_URL", source + "\nreturn getAdminProjectedVehicleFieldSnapshot_;")(
-    { fetch(url, options) { calls.push(JSON.parse(options.payload)); return {
-        getResponseCode: () => 200,
-        getContentText: () => JSON.stringify({ status: "success", vehicle: {
-            id: "42", imgCorte1: "FILE-NEW",
-            contributionSources: { imgCorte1: { eventId: "EV-42" } },
-            contributionCandidates: [{ eventId: "EV-C", reason: "field_conflict" }]
-        }})
-    }; }},
-    "https://catalog.test/exec"
-);
-const result = helper("42", "imgCorte1");
-assert.equal(result.value, "FILE-NEW");
-assert.equal(result.eventId, "EV-42");
-assert.equal(result.candidates.length, 1);
-assert.equal(calls.length, 1);
-assert.equal(calls[0].action, "getVehicleProjection");
-assert.equal(calls[0].payload.vehicleId, "42");
-assert.throws(() => {
-    const broken = new Function("UrlFetchApp", "CATALOG_SERVICE_URL", source + "\nreturn getAdminProjectedVehicleFieldSnapshot_;")(
-        { fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify({ status: "success", vehicle: { id: "7" } }) }) },
-        "https://catalog.test/exec"
-    );
-    broken("42", "imgCorte1");
-}, /No se pudo recuperar/);
-console.log("AdminVehicleTargetedCatalogRead: 2/2 PASS");
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
+assert.equal(admin.includes("getAdminProjectedVehicleFieldSnapshot_"),false);
+assert.equal(admin.includes("CATALOG_SERVICE_URL"),false);
+assert.ok(ui.includes("verifyAdminVehicleFieldUpdateProjectionFrontend_"));
+assert.ok(ui.includes('routeAction("getVehicleProjection"'));
+const start=ui.indexOf("function normalizeAdminFieldProjectionValueClient_"),end=ui.indexOf("async function saveFieldSilently",start);
+assert.ok(start>=0&&end>start);
+const helpers=ui.slice(start,end);
+async function run(vehicle,eventId,proposed){
+ const verify=new Function("routeAction",helpers+";return verifyAdminVehicleFieldUpdateProjectionFrontend_;")(async()=>({status:"success",vehicle}));
+ return verify("42","modelo",proposed,eventId);
+}
+const applied=await run({id:"42",modelo:"Corolla X",contributionSources:{modelo:{eventId:"EV-1"}},contributionCandidates:[]},"EV-1","Corolla X");
+assert.equal(applied.projectionVerification,"applied");assert.equal(applied.candidateReviewPending,false);
+const candidate=await run({id:"42",modelo:"Corolla",contributionSources:{modelo:{eventId:"EV-OLD"}},contributionCandidates:[{eventId:"EV-1",reason:"field_conflict"}]},"EV-1","Corolla X");
+assert.equal(candidate.projectionVerification,"candidate");assert.equal(candidate.candidateReviewPending,true);
+const superseded=await run({id:"42",modelo:"Corolla X",contributionSources:{modelo:{eventId:"EV-2"}},contributionCandidates:[]},"EV-1","Corolla X");
+assert.equal(superseded.projectionVerification,"superseded");assert.equal(superseded.superseded,true);
+console.log("AdminVehicleTargetedCatalogRead: 3/3 PASS — proyección CATALOG coordinada desde frontend");
