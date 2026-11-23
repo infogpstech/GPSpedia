@@ -296,6 +296,34 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
                 notifySessionCacheInvalidationPending_(invalidation, cacheKeys && cacheKeys.userId);
             }
         }
+        if (action === "approveVideo" && finalResult && finalResult.status === "success") {
+            try {
+                const catalogRefresh = await routeAction("getCatalogData", { forceRefresh: true });
+                if (!catalogRefresh || catalogRefresh.status !== "success") {
+                    throw new Error("CATALOG no confirmó la actualización de su caché.");
+                }
+                finalResult = Object.assign({}, finalResult, { catalogRefreshStatus: "success" });
+                if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+                    typeof CustomEvent === "function") {
+                    window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-completed", {
+                        detail: { action: "approveVideo" }
+                    }));
+                }
+            } catch (catalogRefreshError) {
+                finalResult = Object.assign({}, finalResult, {
+                    catalogRefreshPending: true,
+                    message: [String(finalResult.message || "El vídeo fue aprobado."),
+                        "El catálogo no pudo actualizarse automáticamente; vuelve a consultarlo para cargar los cambios."]
+                        .filter(Boolean).join(" ")
+                });
+                if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+                    typeof CustomEvent === "function") {
+                    window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
+                        detail: { action: "approveVideo" }
+                    }));
+                }
+            }
+        }
         try {
             recordBrowserServiceTraffic({
                 service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,

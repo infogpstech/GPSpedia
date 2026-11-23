@@ -206,7 +206,8 @@ runGroup('33','FEEDBACK',()=>{
  const stateTest=read('JS/Tests/VideoApprovalState.js');
  recordResult('FEEDBACK estados y unicidad de aprobación',
   new Function(feedback+'\n'+stateTest+'\nreturn runVideoApprovalStateTests();')());
- runCli('FEEDBACK frontera de idempotencia init YouTube (riesgo caracterizado)','JS/Tests/YouTubeInitIdempotencyBoundary.mjs');
+ runCli('FEEDBACK init YouTube idempotente y reserva por destino','JS/Tests/YouTubeInitIdempotencyBoundary.mjs');
+    runCli('FEEDBACK aprobación de vídeo refresca CATALOG desde frontend','JS/Tests/VideoApprovalCatalogRefreshFrontend.mjs');
  const initTest=read('JS/Tests/YouTubeApprovalInit.js');
  const init=new Function('ScriptApp','UrlFetchApp','Logger',feedback+'\n'+initTest+'\nreturn runYouTubeApprovalInitTests();')(
   {getOAuthToken:()=> 'oauth-token'},{fetch:()=>({getAllHeaders:()=>({}),getResponseCode:()=>500,getContentText:()=>''})},{log(){}});

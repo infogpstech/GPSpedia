@@ -872,20 +872,6 @@ function doPostInternal_(e) {
                 console.error("La sugerencia de año se procesó, pero no se pudo publicar su cambio incremental:",
                     catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
             }
-        } else if ((action === "approveVideo" || action === "rejectVideo") && response && response.status === "success") {
-            try {
-                const targetType = String(response.targetType || "").trim();
-                const contentType = String(response.contentType || "").trim();
-                const referenceId = String(response.referenceId || "").trim();
-                if (!referenceId || targetType !== contentType) throw new Error("El destino del vídeo no se pudo verificar.");
-                if (targetType === "corte") publishFeedbackCortesCatalogChange_(action, referenceId);
-                else if (targetType === "pys") publishPysCatalogChange_(action, referenceId);
-                else if (targetType === "tutorial") publishTutorialCatalogChange_(action, referenceId);
-                else throw new Error("El tipo de destino del vídeo no está soportado por el feed.");
-            } catch (catalogPublishError) {
-                try { publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" }); }
-                catch (resetError) { console.error("No se pudo publicar el cambio de vídeo ni su reset de recuperación:", resetError); }
-            }
         } else if (response && response.status === "success" &&
             ["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
              "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"].includes(action)) {
@@ -5371,7 +5357,7 @@ function handleInitYouTubeUpload(payload) {
         return { status: "success", opVideoId, uploadUrl, reusedSession: false,
             message: "Sesión Resumable de YouTube obtenida." };
     } catch (error) {
-        const finalState = fetchStarted && (!responseCode || responseCode >= 500) ? "requires_review" : "init_failed";
+        const finalState = fetchStarted && (!responseCode || responseCode >= 500 || Boolean(uploadUrl)) ? "requires_review" : "init_failed";
         try { finishYouTubeUploadInitialization_({ opVideoId, rowIndex: reservation.rowIndex }, finalState, reservation.cacheKey, null); }
         catch (stateError) {}
         Logger.log("La inicialización de YouTube no pudo completarse; se conservó el estado de recuperación sin registrar credenciales ni URL temporal.");
