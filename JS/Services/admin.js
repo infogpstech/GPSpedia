@@ -14,64 +14,7 @@ const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
 
-const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbyfBehSEcvlE9uCv3mSIYqO8ZMX-XOJpJopKRfSdpXy67nnnhNN6BcaU1C6OgkmynevPA/exec";
-const CATALOG_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxp1l7Eo9qTcXhz78V-PNOdyKY3lD54L67aUObI6BZZ6VQ8wQDDYD9i7O-Egeq4Q0a4/exec";
-const AUTH_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxoSybH_LsnqfBXCcE-5f9DM5rxEh8IFVPUMb2KF_j8yYl68hxEvF034ogADXEdrXUG/exec";
-const USERS_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzrG8TYeM_3RXJB4NoIMOzOvRypTw9kwa9YUw76dKUA3gRkTAqMhpO_1r3FBrQ30BisnQ/exec";
-const FEEDBACK_SERVICE_URL = "https://script.google.com/macros/s/AKfycbzngNAEEu7gEreNCR8di2jW0Rf7jnLxuNWPQtk8tKcq8laNAgD_57RXZ8wWyvXVJr_2vg/exec";
-const CATALOG_TRAFFIC_SECRET_PROPERTY_ = "GPSpedia_CATALOG_TRAFFIC_SECRET";
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
-
-/** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes.
- * WRITE resuelve el actor desde su caché de sesión; no requiere una lease entre servicios.
- */
-function callWriteServiceAction(action, payload) {
-    const requestPayload = Object.assign({}, payload || {});
-    const response = UrlFetchApp.fetch(WRITE_SERVICE_URL, {
-        method: "post",
-        contentType: "text/plain",
-        payload: JSON.stringify({ action, payload: requestPayload }),
-        muteHttpExceptions: true,
-        followRedirects: true
-    });
-    const httpStatus = response.getResponseCode();
-    let result;
-    try {
-        result = JSON.parse(response.getContentText());
-    } catch (error) {
-        throw new Error(`WRITE no devolvió JSON válido para ${action} (HTTP ${httpStatus}).`);
-    }
-    if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success") {
-        const detail = result && result.details && result.details.errorMessage;
-        throw new Error(detail || (result && result.message) || `WRITE rechazó ${action} (HTTP ${httpStatus}).`);
-    }
-    return result;
-}
-
-function requestNextVehicleIdFromWriteService(payload, opId, operationHash) {
-    const allocationPayload = {
-        userId: payload && payload.userId,
-        sessionToken: payload && payload.sessionToken
-    };
-    if (opId) {
-        allocationPayload.opId = opId;
-        allocationPayload.operationHash = operationHash;
-    }
-    const result = callWriteServiceAction("allocateVehicleId", allocationPayload);
-    const vehicleId = Number(result.vehicleId);
-    if (!Number.isSafeInteger(vehicleId) || vehicleId < 1) throw new Error("WRITE devolvió un ID de vehículo inválido.");
-    return vehicleId;
-}
-
-function requestCortesIdFreezeFromWriteService(payload, backupId) {
-    return callWriteServiceAction("freezeCortesIds", {
-        userId: payload && payload.userId,
-        sessionToken: payload && payload.sessionToken,
-        backupId,
-        confirm: true
-    });
-}
-
 
 function getSpreadsheet() {
   if (spreadsheet === null) {
@@ -1367,9 +1310,6 @@ function doPostInternal_(e) {
                 break;
             case 'migrateVehicleContributionsSchema':
                 response = handleMigrateVehicleContributionsSchema(payload, logMessage);
-                break;
-            case 'getVehicleContributionCandidates':
-                response = handleGetVehicleContributionCandidates_(payload);
                 break;
             case 'resolveVehicleContributionCandidate':
                 response = handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage);
@@ -2807,32 +2747,42 @@ function clearFolderContents(folder) {
  * 3. Organización automática de la base de datos (por Marca)
  */
 function handleReorganizeDatabase(payload, logMessage, developerContext) {
-    logMessage("Reorganización DB", "Ejecutando copia de seguridad preventiva antes de reorganizar...");
-    const backupInfo = handleBackupDatabase(payload, logMessage, developerContext);
-    logMessage("Reorganización DB", "Estabilizando los IDs de Cortes antes de cambiar el orden de las filas...");
-    const idFreezeResult = requestCortesIdFreezeFromWriteService(payload, backupInfo.backupId);
-    logMessage("Reorganización DB", `IDs estabilizados: ${idFreezeResult.formulasToFreeze || 0} fórmulas convertidas y ${idFreezeResult.emptyFormulaRowsToClear || 0} fórmulas vacías retiradas.`);
-
-    logMessage("Reorganización DB", "Iniciando reordenamiento alfabético por marca en la hoja Cortes...");
+    payload = payload && typeof payload === "object" ? payload : {};
+    const backupId = String(payload.backupId || "").trim();
+    if (!developerContext || !developerContext.userId) throw new Error("La reorganización requiere una sesión Desarrollador verificada.");
+    if (!/^[A-Za-z0-9_-]{20,}$/.test(backupId)) throw new Error("Se requiere el respaldo preventivo confirmado antes de reorganizar.");
+    if (payload.idsFrozen !== true) throw new Error("WRITE debe confirmar la estabilización de IDs antes de reorganizar.");
+    const backupFile = DriveApp.getFileById(backupId);
+    if (backupFile.isTrashed() || backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+        !String(backupFile.getName() || "").startsWith("GPSpedia_DB_BACKUP_") ||
+        !isDirectChildOfDriveRoot(backupFile) || backupFile.getSharingAccess() !== DriveApp.Access.PRIVATE) {
+        throw new Error("El respaldo preventivo no coincide con un recurso DB válido, privado y verificable.");
+    }
+    let manifest;
+    try { manifest = JSON.parse(String(backupFile.getDescription() || "")); }
+    catch (error) { throw new Error("El manifiesto del respaldo preventivo no es válido."); }
+    if (!manifest || manifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ ||
+        manifest.version !== 2 || manifest.status !== "complete" ||
+        !manifest.fingerprint || !Number.isSafeInteger(Number(manifest.sheetCount))) {
+        throw new Error("El respaldo preventivo no tiene un manifiesto completo y verificado.");
+    }
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error("No se encontró la hoja Cortes.");
     const lastRow = sheet.getLastRow();
-
+    if (lastRow > 1) {
+        const idFormulas = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getFormulas();
+        if (idFormulas.some(row => String(row[0] || "").trim())) {
+            throw new Error("WRITE no dejó todos los IDs como valores estáticos; no se reorganizó ninguna fila.");
+        }
+    }
     if (lastRow > 2) {
-        // Obtenemos los datos desde la fila 2 en adelante
         const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
-
         logMessage("Reorganización DB", `Ordenando ${lastRow - 1} filas por columna Marca (Columna 3)...`);
         range.sort({ column: COLS_CORTES.marca, ascending: true });
-
         SpreadsheetApp.flush();
     }
-
     logMessage("Reorganización DB", "La base de datos fue organizada alfabéticamente por fabricante.");
-    return {
-        status: 'success',
-        backupId: backupInfo.backupId,
-        message: "Los vehículos fueron agrupados por marca de manera segura conservando la integridad de sus registros."
-    };
+    return { status: "success", backupId, message: "Los vehículos fueron agrupados por marca; el respaldo y la estabilización de IDs se confirmaron previamente." };
 }
 
 /**
@@ -6836,44 +6786,6 @@ function normalizeAdminFieldProjectionValue_(value) {
     return text;
 }
 
-function verifyAdminVehicleFieldUpdateProjection_(vehicleId, fieldName, proposedValue, eventId) {
-    try {
-        const snapshot = getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName);
-        const currentValue = snapshot.rawValue !== undefined ? snapshot.rawValue : snapshot.value;
-        const candidate = (snapshot.candidates || []).find(item => String(item && item.eventId || "") === String(eventId));
-        const matchesValue = normalizeAdminFieldProjectionValue_(currentValue) === normalizeAdminFieldProjectionValue_(proposedValue);
-        const applied = matchesValue && String(snapshot.eventId || "") === String(eventId);
-        if (applied) return {
-            candidateReviewPending: false, projectionVerification: "applied",
-            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
-            message: "La versión quedó registrada y confirmada en la proyección CATALOG."
-        };
-        if (candidate) return {
-            candidateReviewPending: true, projectionVerification: "candidate",
-            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
-            candidateReason: String(candidate.reason || candidate.reasonCode || candidate.message || "Conflicto de proyección"),
-            message: "La versión quedó registrada, pero CATALOG la conserva como candidata para revisión."
-        };
-        if (matchesValue) return {
-            candidateReviewPending: false, superseded: true, projectionVerification: "superseded",
-            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
-            message: "El valor ya aparece en CATALOG por una actualización posterior; se conserva la versión vigente."
-        };
-        return {
-            candidateReviewPending: true, projectionVerification: "not_applied",
-            currentValue: snapshot.value, currentSourceEventId: snapshot.eventId,
-            message: "La versión quedó registrada, pero no se reflejó en CATALOG. Requiere revisión."
-        };
-    } catch (error) {
-        return {
-            candidateReviewPending: true, projectionVerification: "unavailable",
-            currentValue: undefined, currentSourceEventId: "",
-            verificationError: String(error && error.message || error),
-            message: "La versión se registró, pero no se pudo verificar su aplicación en CATALOG. Actualiza la ficha antes de continuar."
-        };
-    }
-}
-
 function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expectedCurrentValue,expectedSourceEventId,modalContext,logMessage) {
     const cleanVehicleId=String(vehicleId||"").trim(),sourceEventId=String(expectedSourceEventId||"").trim();
     if(!cleanVehicleId)throw new Error("ID de vehículo no válido.");
@@ -6902,11 +6814,9 @@ function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expecte
             String(existing[4]||"")!=="vehicle_update"||String(existing[10]||"").trim()!==sourceEventId)
             throw new Error("La clave idempotente de esta edición ya está asociada a otro contenido.");
         const duplicateEventId = String(existing[0]);
-        const projection = verifyAdminVehicleFieldUpdateProjection_(cleanVehicleId, fieldName, valueToStore, duplicateEventId);
-        return Object.assign({
-            status:"success",duplicate:true,eventId:duplicateEventId,opId,fieldName,value:valueToStore,
-            expectedCurrentValue:expected,expectedSourceEventId:sourceEventId,folderSyncWarning:false
-        }, projection);
+        return { status:"success",duplicate:true,eventId:duplicateEventId,opId,fieldName,value:valueToStore,
+            expectedCurrentValue:expected,expectedSourceEventId:sourceEventId,folderSyncWarning:false,
+            projectionVerification:"pending_frontend" };
     }
     const eventId="EV-"+Utilities.getUuid(),createdAt=new Date().toISOString();
     ledgerSheet.appendRow([eventId,opId,cleanVehicleId,operationHash,"vehicle_update",JSON.stringify(payloadData),
@@ -6920,14 +6830,9 @@ function appendAdminVehicleFieldUpdate_(vehicleId,fieldName,valueToStore,expecte
         throw new Error("No se pudo verificar la actualización versionada después de anexarla.");
     const folderMetadataFields=new Set(["categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","imagenVehiculo"]);
     const folderSyncWarning=folderMetadataFields.has(fieldName);
-    const projection = verifyAdminVehicleFieldUpdateProjection_(cleanVehicleId, fieldName, valueToStore, eventId);
-    if(logMessage)logMessage("Edición In-Modal",projection.candidateReviewPending
-        ? "Se anexó una versión candidata del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; CATALOG no la materializó."
-        : "Se anexó una versión del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; resultado de proyección: "+projection.projectionVerification+".");
-    return Object.assign({
-        status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue:expected,
-        expectedSourceEventId:sourceEventId,folderSyncWarning
-    }, projection);
+    if(logMessage)logMessage("Edición In-Modal","Se anexó la versión del campo '"+fieldName+"' para el vehículo "+cleanVehicleId+"; la comprobación de proyección corresponde al frontend.");
+    return { status:"success",duplicate:false,eventId,opId,fieldName,value:valueToStore,expectedCurrentValue:expected,
+        expectedSourceEventId:sourceEventId,folderSyncWarning,projectionVerification:"pending_frontend" };
 }
 
 function handleUpdateVehicleField(payload,logMessage,modalContext) {
@@ -7143,32 +7048,6 @@ function updateAdminImageUploadFileState_(file, operationId, contentHash, state,
  * Subir o recuperar de forma idempotente una imagen modificada desde el modal.
  * El ledger AdminImageUploads conserva el estado incluso cuando el campo no tenía URL anterior.
  */
-function getAdminProjectedVehicleFieldSnapshot_(vehicleId, fieldName) {
-    const cleanVehicleId = String(vehicleId || "").trim();
-    const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
-        method: "post", contentType: "text/plain",
-        payload: JSON.stringify({ action: "getVehicleProjection", payload: { vehicleId: cleanVehicleId } }),
-        muteHttpExceptions: true, followRedirects: true
-    });
-    const httpStatus = response.getResponseCode();
-    let result;
-    try { result = JSON.parse(response.getContentText()); }
-    catch (error) { throw new Error("CATALOG no devolvió JSON válido al recuperar la versión de imagen (HTTP " + httpStatus + ")."); }
-    if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
-        !result.vehicle || String(result.vehicle.id || "").trim() !== cleanVehicleId) {
-        throw new Error("No se pudo recuperar la proyección vigente del vehículo desde CATALOG.");
-    }
-    const vehicle = result.vehicle;
-    const source = vehicle.contributionSources && vehicle.contributionSources[fieldName];
-    const rawValue = vehicle[fieldName];
-    return {
-        value: String(rawValue == null ? "" : rawValue).trim(),
-        rawValue,
-        eventId: String(source && source.eventId || ""),
-        candidates: Array.isArray(vehicle.contributionCandidates) ? vehicle.contributionCandidates : []
-    };
-}
-
 function handleGetAdminImageUploadStatus(payload, logMessage) {
     const { vehicleId, fieldName, opId } = payload || {};
     const cleanVehicleId = String(vehicleId || "").trim();
@@ -7188,8 +7067,7 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
     const operationKey = buildImageUploadOperationKey(operationId, cleanVehicleId, cleanFieldName);
     const entries = findImageUploadEventsByOperationKeyForAdmin_(eventsSheet, operationKey);
     if (!entries.length) return { status: "success", operationStatus: "not_found", currentImageUrl: materializedImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
-    const currentSnapshot = getAdminProjectedVehicleFieldSnapshot_(cleanVehicleId, cleanFieldName);
-    const currentImageUrl = currentSnapshot.value;
+    const currentImageUrl = materializedImageUrl;
     const tokens = new Set(entries.map(entry => String(entry.values[1] || "").trim()));
     if (tokens.size !== 1) return { status: "success", operationStatus: "requires_review", currentImageUrl, newImageUrl: "", fileIntegrity: "invalid" };
     const projection = projectImageUploadEventsForAdmin_(entries);
@@ -7211,7 +7089,8 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
     logMessage("Edición In-Modal", "Estado del reemplazo " + operationId + ": " + projection.state + ".");
     return {
         status: "success", operationStatus: projection.state, currentImageUrl, newImageUrl, fileIntegrity,
-        currentSourceEventId: currentSnapshot.eventId,
+        currentSourceEventId: "",
+        projectionVerification: "pending_frontend",
         superseded: !!(newImageUrl && currentImageUrl !== newImageUrl)
     };
 }
@@ -8064,9 +7943,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
 
     // WRITE asigna el ID fuera del ScriptLock ADMIN; conserva su propia exclusión.
-    const preallocatedVehicleId = String(vehicleId || "").trim()
-        ? null
-        : requestNextVehicleIdFromWriteService(payload, legacyRequest ? null : opId, operationHash);
+    throw new Error("ACTION_MOVED_TO_WRITE: la asignación de IDs y el alta de cortes se ejecutan directamente en WRITE desde el frontend.");
 
     // La lectura del catálogo y la normalización de entidades no modifican el registro.
     // Se preparan antes del ScriptLock para que su latencia no serialice otras operaciones.
@@ -11105,51 +10982,6 @@ const ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_ = Object.freeze([
     "actorId", "actorName", "createdAt", "status", "supersedesEventId"
 ]);
 
-function handleGetVehicleContributionCandidates_(payload) {
-    payload = payload && typeof payload === "object" ? payload : {};
-    const requestedLimit = Number(payload.limit);
-    const limit = Number.isSafeInteger(requestedLimit) ? Math.max(1, Math.min(500, requestedLimit)) : 200;
-    const requestedImageInventoryEvents = payload.includeImageInventoryEvents === true;
-    let catalogSecret = "";
-    if (requestedImageInventoryEvents) {
-        try {
-            const properties = PropertiesService.getScriptProperties();
-            catalogSecret = String(properties.getProperty(CATALOG_TRAFFIC_SECRET_PROPERTY_) || "");
-        } catch (error) { catalogSecret = ""; }
-    }
-    const includeImageInventoryEvents = requestedImageInventoryEvents && catalogSecret.length >= 32;
-    const catalogPayload = { limit, includeImageInventoryEvents };
-    if (includeImageInventoryEvents) catalogPayload.secret = catalogSecret;
-    const response = UrlFetchApp.fetch(CATALOG_SERVICE_URL, {
-        method: "post",
-        contentType: "text/plain",
-        payload: JSON.stringify({ action: "getContributionCandidates", payload: catalogPayload }),
-        muteHttpExceptions: true,
-        followRedirects: true
-    });
-    const httpStatus = response.getResponseCode();
-    let result;
-    try { result = JSON.parse(response.getContentText()); }
-    catch (error) { throw new Error("CATALOG no devolvió JSON válido al consultar candidatos ADMIN (HTTP " + httpStatus + ")."); }
-    if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success" ||
-        !Array.isArray(result.candidates) || !Number.isSafeInteger(Number(result.total)) ||
-        Number(result.total) < result.candidates.length) {
-        throw new Error("No se pudo obtener la proyección vigente de aportes desde CATALOG.");
-    }
-    return {
-        status: "success",
-        candidates: result.candidates,
-        total: Number(result.total),
-        limit: Number(result.limit) || limit,
-        truncated: result.truncated === true,
-        source: "CATALOG",
-        readOnly: true,
-        imageInventoryCandidates: Array.isArray(result.imageInventoryCandidates) ? result.imageInventoryCandidates : undefined,
-        imageInventoryEvents: Array.isArray(result.imageInventoryEvents) ? result.imageInventoryEvents : undefined
-    };
-}
-
-
 function handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage) {
  payload=payload&&typeof payload==="object"?payload:{};
  const targetEventId=String(payload.eventId||"").trim(),requestId=String(payload.requestId||"").trim(),decision=String(payload.decision||"").trim().toLowerCase();
@@ -11587,7 +11419,7 @@ function getContributionCandidateInventoryId_(eventId) {
     return "CAND-" + clean;
 }
 
-function syncContributionCandidateImageInventory_(currentCandidates, inventoryEvents) {
+function syncContributionCandidateImageInventory_(currentCandidates) {
     const spreadsheet = getSpreadsheet();
     const inventory = spreadsheet.getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
     if (!inventory) return { status: "not_initialized", created: 0, updated: 0, skipped: 0 };
@@ -11596,20 +11428,9 @@ function syncContributionCandidateImageInventory_(currentCandidates, inventoryEv
         return { status: "schema_incomplete", created: 0, updated: 0, skipped: 0, missingHeaders: readSchema.missingHeaders };
     }
 
-    let ledgerRows = null;
-    if (Array.isArray(inventoryEvents)) {
-        ledgerRows = inventoryEvents.map(event => [
-            String(event && event.eventId || ""), String(event && event.opId || ""),
-            String(event && event.vehicleId || ""), String(event && event.operationHash || ""),
-            String(event && event.kind || ""), JSON.stringify(event && event.payload && typeof event.payload === "object" ? event.payload : {}),
-            "", "", String(event && event.createdAt || ""), String(event && event.status || ""),
-            String(event && event.supersedesEventId || "")
-        ]);
-    } else {
-        const ledger = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
-        if (!ledger || ledger.getLastRow() < 2) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
-        ledgerRows = ledger.getRange(2, 1, ledger.getLastRow() - 1, ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
-    }
+    const ledger = spreadsheet.getSheetByName(ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_);
+    if (!ledger || ledger.getLastRow() < 2) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
+    const ledgerRows = ledger.getRange(2, 1, ledger.getLastRow() - 1, ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
     if (!ledgerRows.length) return { status: "no_contributions", created: 0, updated: 0, skipped: 0 };
     const eventsById = new Map(), resolutionsByTarget = new Map();
     ledgerRows.forEach(row => {
@@ -11630,10 +11451,12 @@ function syncContributionCandidateImageInventory_(currentCandidates, inventoryEv
     (Array.isArray(currentCandidates) ? currentCandidates : []).forEach(candidate => {
         const eventId = String(candidate && candidate.eventId || "").trim();
         if (!eventId || !eventsById.has(eventId)) return;
-        records.set(eventId, {
-            eventRow: eventsById.get(eventId), status: "requiere_revision",
-            vehicleLabel: String(candidate.vehicleLabel || "Vehículo " + candidate.vehicleId)
-        });
+        const eventRow = eventsById.get(eventId);
+        const candidateVehicleId = String(candidate && candidate.vehicleId || "").trim();
+        const eventVehicleId = String(eventRow[2] || "").trim();
+        const eventKind = String(eventRow[4] || "").trim().toLowerCase();
+        if (!candidateVehicleId || candidateVehicleId !== eventVehicleId || !["cut","opening","feed"].includes(eventKind)) return;
+        records.set(eventId,{eventRow,status:"requiere_revision",vehicleLabel:"Vehículo "+eventVehicleId});
     });
     resolutionsByTarget.forEach((resolutions, targetEventId) => {
         const targetRow = eventsById.get(targetEventId);
@@ -11788,13 +11611,9 @@ function handleGetReplacedImages(payload, logMessage) {
     const schema = getReplacedImagesReadSchema_();
     if (!schema.sheet) return { status: "success", data: [], review: [], schemaStatus: "not_initialized", missingHeaders: schema.missingHeaders, referenceCheckStatus: "unavailable", duplicateDriveIdCount: 0 };
     let candidateInventorySync = { status: "skipped", created: 0, updated: 0, skipped: 0 };
-    if (!schema.missingHeaders.length) {
+    if (!schema.missingHeaders.length && Array.isArray(payload && payload.imageInventoryCandidates)) {
         try {
-            const candidateResponse = handleGetVehicleContributionCandidates_({ limit: 500, includeImageInventoryEvents: true });
-            candidateInventorySync = syncContributionCandidateImageInventory_(
-                candidateResponse.imageInventoryCandidates || candidateResponse.candidates,
-                candidateResponse.imageInventoryEvents
-            );
+            candidateInventorySync = syncContributionCandidateImageInventory_(payload.imageInventoryCandidates);
         } catch (candidateSyncError) {
             candidateInventorySync = { status: "error", message: String(candidateSyncError && candidateSyncError.message || candidateSyncError) };
         }
