@@ -2127,7 +2127,7 @@ function getCortesRootFolderResource_() {
     const snapshot = getCentralConfigurationForService_("WRITE");
     if (!snapshot || snapshot.status !== "success" || snapshot.stale === true) throw new Error("La configuración central de recursos no está disponible o está vencida.");
     const resource = snapshot.resources && snapshot.resources.cortes_root_folder_id;
-    if (!resource || resource.enabled !== true || resource.resourceType !== "drive_folder") throw new Error("Falta el recurso central habilitado cortes_root_folder_id.");
+    if (!resource || resource.resourceType !== "drive_folder") throw new Error("Falta el recurso central habilitado cortes_root_folder_id.");
     const id = String(resource.resourceId || "").trim();
     const expectedName = String(resource.expectedName || "Cortes").trim();
     if (!/^[A-Za-z0-9_-]{5,200}$/.test(id) || expectedName.toLowerCase() !== "cortes") throw new Error("La configuración central de la carpeta Cortes no cumple el contrato.");

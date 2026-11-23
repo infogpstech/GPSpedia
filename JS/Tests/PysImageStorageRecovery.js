@@ -31,6 +31,7 @@ function buildHarness(feedback, options = {}) {
     const driveRoot = { getId: () => "drive-root" };
     const wrongParent = { getId: () => "other-parent" };
     const makeFolder = (id, name, parent) => ({
+        isTrashed: () => false,
         getId: () => id,
         getName: () => name,
         getParents: () => iterator(parent ? [parent] : []),
@@ -105,6 +106,9 @@ function buildHarness(feedback, options = {}) {
             base64Encode: value => Buffer.from(value).toString("base64"),
             newBlob: (bytes, mimeType, name) => ({ bytes: Array.from(bytes), mimeType, name }), DigestAlgorithm: { SHA_256: "SHA_256" }, computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(Array.isArray(value) ? Buffer.from(value) : String(value)).digest())
         },
+        getCentralConfigurationForService_: serviceKey => ({ status: "success", stale: false, resources: { cortes_root_folder_id: {
+            resourceType: "drive_folder", resourceId: "root-cortes", expectedParentId: "drive-root", expectedName: "Cortes"
+        } } }),
         DriveApp: {
             getFolderById: id => {
                 if (options.wrongRootId || id !== "root-cortes") throw new Error("Authorized Drive root unavailable");

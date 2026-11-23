@@ -36,7 +36,7 @@ for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
             key => { assert.equal(key, serviceKey); return snapshot; }, drive);
     check(serviceKey + " resuelve el recurso central y valida carpeta/jerarquía", () => {
         const api = makeApi({ status: "success", stale: false, resources: { cortes_root_folder_id: {
-            enabled: true, resourceType: "drive_folder", resourceId: "FOLDER_12345",
+            resourceType: "drive_folder",resourceId: "FOLDER_12345",
             expectedParentId: "ROOT_12345", expectedName: "Cortes"
         } } });
         assert.equal(api.getCortesRootFolder().getId(), "FOLDER_12345");
@@ -44,11 +44,11 @@ for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
     });
     check(serviceKey + " falla cerrado si falta o vence la configuración", () => {
         assert.throws(() => makeApi({ status: "success", stale: false, resources: {} }).getCortesRootFolder(), /Falta el recurso central/);
-        assert.throws(() => makeApi({ status: "success", stale: true, resources: { cortes_root_folder_id: { enabled: true, resourceType: "drive_folder", resourceId: "FOLDER_12345" } } }).getCortesRootFolder(), /no está disponible o está vencida/);
+        assert.throws(() => makeApi({ status: "success", stale: true, resources: { cortes_root_folder_id: { resourceType: "drive_folder",resourceId: "FOLDER_12345" } } }).getCortesRootFolder(), /no está disponible o está vencida/);
     });
     check(serviceKey + " rechaza jerarquía de Drive discordante", () => {
         const api = makeApi({ status: "success", stale: false, resources: { cortes_root_folder_id: {
-            enabled: true, resourceType: "drive_folder", resourceId: "FOLDER_12345",
+            resourceType: "drive_folder",resourceId: "FOLDER_12345",
             expectedParentId: "OTHER_PARENT", expectedName: "Cortes"
         } } });
         assert.throws(() => api.getCortesRootFolder(), /jerarquía configurada/);
