@@ -6,7 +6,7 @@ const feedbackSource = readFileSync(new URL("../Services/feedback.js", import.me
 const coordinatorSource = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 
 class FakeSheet {
-    constructor(name) { this.name = name; this.rows = []; this.textFinderCalls = []; }
+    constructor(name) { this.name = name; this.rows = []; this.textFinderCalls = []; this.failNextWrite = false; }
     getLastRow() { return this.rows.length; }
     getLastColumn() { return this.rows.reduce((max, row) => Math.max(max, row.length), 0); }
     insertColumnBefore(column) { this.rows.forEach(row => row.splice(column - 1, 0, "")); }
@@ -22,6 +22,10 @@ class FakeSheet {
                 return result;
             },
             setValues(values) {
+                if (sheet.name === "InboxConversationAudit" && sheet.failNextWrite) {
+                    sheet.failNextWrite = false;
+                    throw new Error("audit write failed");
+                }
                 values.forEach((valuesRow, r) => {
                     const targetIndex = row - 1 + r;
                     while (sheet.rows.length <= targetIndex) sheet.rows.push([]);
@@ -767,6 +771,53 @@ run("Marcar como no leída crea un indicador privado, idempotente y reversible a
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"unread" }).data.some(row => row.conversationId === created.conversationId),false);
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"read" }).data.some(row => row.conversationId === created.conversationId),true);
 });
+run("Read, archive y close revierten el estado si no se puede confirmar la auditoría", () => {
+    const audit = spreadsheet.getSheetByName("InboxConversationAudit");
+    const readConversation = api.handleCreateInboxConversation({
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Rollback lectura",category:"general",
+        body:"La lectura debe revertirse si falla su auditoría.",idempotencyKey:"rollback-read-01"
+    });
+    const readState = api.inboxFindState_(spreadsheet.getSheetByName("InboxConversationState"),readConversation.conversationId,"U2");
+    const readBefore = readState.row.slice();
+    audit.failNextWrite = true;
+    assert.throws(() => api.handleMarkInboxRead({
+        ...actor("U2","token-b"),conversationId:readConversation.conversationId
+    }),/audit write failed/);
+    assert.deepEqual(readState.row,readBefore);
+    assert.equal(api.handleGetInboxConversations({
+        ...actor("U2","token-b"),folder:"unread"
+    }).data.some(item => item.conversationId === readConversation.conversationId),true);
+
+    const archiveConversation = api.handleCreateInboxConversation({
+        ...actor("U3","token-c"),recipientId:"U2",subject:"Rollback archivo",category:"general",
+        body:"El archivo debe revertirse si falla su auditoría.",idempotencyKey:"rollback-archive-01"
+    });
+    const archiveState = api.inboxFindState_(spreadsheet.getSheetByName("InboxConversationState"),archiveConversation.conversationId,"U2");
+    const archiveBefore = archiveState.row.slice();
+    audit.failNextWrite = true;
+    assert.throws(() => api.handleArchiveInboxConversation({
+        ...actor("U2","token-b"),conversationId:archiveConversation.conversationId,archived:true
+    }),/audit write failed/);
+    assert.deepEqual(archiveState.row,archiveBefore);
+    assert.equal(api.handleGetInboxConversations({
+        ...actor("U2","token-b"),folder:"archived"
+    }).data.some(item => item.conversationId === archiveConversation.conversationId),false);
+
+    const closeConversation = api.handleCreateInboxConversation({
+        ...actor("U6","token-d"),recipientId:"U2",subject:"Rollback cierre",category:"soporte",
+        body:"El cierre debe revertirse si falla su auditoría.",idempotencyKey:"rollback-close-01"
+    });
+    const conversationSheet = spreadsheet.getSheetByName("InboxConversations");
+    const closeRow = conversationSheet.rows.find(row => row[0] === closeConversation.conversationId);
+    const closeBefore = closeRow.slice();
+    audit.failNextWrite = true;
+    assert.throws(() => api.handleCloseInboxConversation({
+        ...actor("U6","token-d"),conversationId:closeConversation.conversationId
+    }),/audit write failed/);
+    assert.deepEqual(closeRow,closeBefore);
+    assert.equal(closeRow[6],"open");
+});
+
 run("Marcar como no leída desde Archivados restaura la conversación a la bandeja no leída", () => {
     const created = api.handleCreateInboxConversation({
         ...actor("U3","token-c"),recipientId:"U2",subject:"Restaurar al marcar no leído",category:"general",
