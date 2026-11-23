@@ -265,7 +265,7 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
     for (const [key, identity] of Object.entries(expected)) {
         const source = backendSources[key];
         assert.ok(source.includes("service: '" + identity + "'") || source.includes('service:"' + identity + '"') || source.includes('service: "' + identity + '"'), key + " no declara identidad.");
-        assert.ok(source.includes("status: 'available'") || source.includes('status:"available"'), key + " no declara available.");
+        assert.ok(source.includes("status: 'available'") || source.includes('status:"available"') || source.includes('status: "available"'), key + " no declara available.");
         assert.ok(source.includes("version:"), key + " no declara versión.");
         assert.ok(source.includes("ContentService.MimeType.JSON"), key + " no responde JSON.");
         const start = source.indexOf("function doGet");
