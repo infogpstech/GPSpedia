@@ -1153,3 +1153,17 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - La regresión global CI no está verde por cinco fallos ajenos al alcance MIG-022: VehicleModalRolePolicy 11/12; falta el archivo CoordinatorBrowserCatalogReset.mjs; contrato legacy de feed CATALOG; expectativa legacy de lease AUTH; y FeedbackLockFastFail. No se ocultan ni se atribuyen a MIG-022; deben resolverse en sus tareas/fases correspondientes.
 - Pendiente Beta: validación real de Apps Script, Spreadsheet, Drive, permisos y comportamiento desplegado. No se simula ni se declara ejecutada.
 - Siguiente tarea por prioridad: **MIG-023 — Catálogo, cachés y experiencia de usuario**. Después seguir MIG-024 y MIG-025; MIG-025 debe eliminar COORDINATOR por completo, sin doGet/health/ping propio ni inclusión en el escaneo de salud.
+
+ 
+---
+ 
+## Inicio MIG-023 — 2026-11-23
+ 
+- Estado: **EN PROGRESO**.
+- HEAD al iniciar: 5160fe1adac44662a9b7138718c1aa1cec94811b.
+- Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+- Hallazgo principal: ACTION_TO_SERVICE_MAP aún dirige publishCatalogReset y getCatalogChanges a COORDINATOR; getCatalogChanges consulta su GET catalogFeed=1. FEEDBACK todavía publica cambios de catálogo por SharedMutationClient. CATALOG ya valida sesiones localmente y entrega el snapshot completo, pero no es dueño del feed.
+- Objetivo de MIG-023: mover el feed/cursor/publicación de reset a CATALOG; el frontend debe publicar después de una mutación exitosa y consultar el feed directamente desde CATALOG. FEEDBACK no debe llamar a COORDINATOR ni a otro Apps Script para notificar cambios.
+- Mantener snapshot completo, cursor, recuperación ante huecos/corrupción y actualización IndexedDB silenciosa. No aceptar snapshots/deltas arbitrarios del navegador sin validación del backend.
+- El endpoint de salud y las operaciones restantes de COORDINATOR no se eliminan en MIG-023; su retirada completa, incluido doGet/health/ping, permanece en MIG-025 después de MIG-024.
+- Siguiente paso: implementar feed CATALOG con almacenamiento local del servicio, lock local, idempotencia por requestId, retención acotada y lectura GET pública; migrar API frontend y notificaciones FEEDBACK; reemplazar contratos heredados que esperan COORDINATOR.
