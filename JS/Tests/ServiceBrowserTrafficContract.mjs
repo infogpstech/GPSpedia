@@ -19,9 +19,9 @@ function check(name, fn) {
 }
 
 const base = 1_800_000_000_000;
-check("El inventario local contiene exactamente los siete servicios activos", () => {
+check("El inventario local contiene exactamente los seis servicios activos", () => {
     assert.deepEqual(BROWSER_SERVICE_TRAFFIC_SERVICES, [
-        "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN", "COORDINATOR"
+        "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"
     ]);
 });
 check("El navegador móvil se identifica mediante userAgentData", () => {
@@ -75,13 +75,14 @@ check("El snapshot local contiene buckets de 24 horas y totales por periodo", ()
     assert.equal(snapshot.totals.last24Hours, 2);
     assert.equal(snapshot.buckets.reduce((sum, bucket) => sum + bucket.count, 0), 2);
 });
-check("USERS retirado y servicios desconocidos no generan métricas; COORDINATOR sí", () => {
+check("USERS, COORDINATOR y servicios desconocidos retirados no generan métricas", () => {
     assert.equal(recordBrowserServiceTraffic({ service: "USERS", action: "old", timestamp: base }), null);
     assert.equal(recordBrowserServiceTraffic({ service: "LEGACY", action: "old", timestamp: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("USERS", { now: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("LEGACY", { now: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("UNKNOWN", { now: base }), null);
-    assert.equal(recordBrowserServiceTraffic({ service: "COORDINATOR", action: "getServiceTraffic", timestamp: base }).service, "COORDINATOR");
+    assert.equal(recordBrowserServiceTraffic({ service: "COORDINATOR", action: "getServiceTraffic", timestamp: base }), null);
+    assert.equal(getBrowserServiceTrafficSnapshot("COORDINATOR", { now: base }), null);
 });
 check("Las métricas no almacenan payloads, tokens ni datos de usuario", () => {
     const serialized = JSON.stringify(getBrowserServiceTrafficSnapshot("AUTH", { now: base + 3000 }));
@@ -101,16 +102,16 @@ check("La instrumentación del router es no bloqueante y registra éxito/error",
     assert.match(api, /action: "getCatalogChanges"/);
     assert.match(api, /service: "CATALOG"/);
 });
-check("ADMIN declara las métricas locales, corrige events y muestra las dos gráficas", () => {
+check("ADMIN conserva métricas locales y no consulta agregados globales", () => {
     const ui = read("JS/Frontend/ui.js");
     const html = read("index.html");
     assert.match(ui, /const events = localTraffic/);
     assert.match(ui, /const lastEvent = localTraffic/);
     assert.match(ui, /renderLocalServiceTrafficChart_/);
-    assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
     assert.match(ui, /filter\(key => key !== "LEGACY"\)/);
-    assert.match(ui, /filter\(key => key !== "LEGACY" && key !== "COORDINATOR"\)/);
     assert.match(ui, /services.length !== expectedServices.length/);
-    assert.match(html, /id="global-service-traffic-chart"/);
+    assert.match(html, /Alcance de las métricas/);
+    assert.doesNotMatch(ui, /globalServiceTraffic|getServiceTraffic/);
+    assert.doesNotMatch(html, /global-service-traffic-chart|Tráfico global coordinado/);
 });
 console.log("ServiceBrowserTrafficContract: " + passed + "/" + passed + " PASS");

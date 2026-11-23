@@ -12,7 +12,6 @@ const backendSources = {
     FEEDBACK: read("JS/Services/feedback.js"),
     UTILITIES: read("JS/Services/Utilities.js"),
     ADMIN: read("JS/Services/admin.js"),
-    COORDINATOR: read("JS/Services/Coordinator.js")
 };
 const contractsMatch = apiSource.match(/export const SERVICE_HEALTH_CONTRACTS = Object\.freeze\((\{[\s\S]*?\})\);/);
 assert.ok(contractsMatch, "No se encontró SERVICE_HEALTH_CONTRACTS.");
@@ -66,12 +65,11 @@ await check("Contrato válido exige identidad y estado y clasifica online", asyn
     assert.equal(item.httpStatus, 200);
     assert.equal(item.error, null);
 });
-await check("AUTH informa si el coordinador está configurado sin exponer secretos", async () => {
-    const ready = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", version: "2.2.5", status: "available", coordinatorConfigured: true }));
-    const missing = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", version: "2.2.5", status: "available", coordinatorConfigured: false }));
-    assert.equal(ready.metadata.coordinatorConfigured, true);
-    assert.equal(missing.metadata.coordinatorConfigured, false);
-    assert.doesNotMatch(JSON.stringify(ready.metadata), /secret|token|password/i);
+await check("La salud no expone configuración ni dependencia de Coordinator", async () => {
+    assert.doesNotMatch(apiSource, /coordinatorConfigured|COORDINATOR|getServiceTraffic/);
+    assert.doesNotMatch(uiSource, /coordinatorConfigured|GPSpedia_COORDINATOR/);
+    const item = await scanOne("AUTH", response(200, { service: "GPSpedia-Auth", version: "2.2.5", status: "available", coordinatorConfigured: false }));
+    assert.equal(item.metadata.coordinatorConfigured, undefined);
 });
 await check("Latencia superior al umbral configurable se clasifica slow", async () => {
     const times = [100, 2300];
@@ -260,7 +258,6 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
         AUTH: "GPSpedia-Auth", CATALOG: "GPSpedia-Catalog", WRITE: "GPSpedia-Write",
         FEEDBACK: "GPSpedia-Feedback",
         UTILITIES: "GPSpedia-Utilities", ADMIN: "GPSpedia-Admin",
-        COORDINATOR: "GPSpedia-Coordinator"
     };
     for (const [key, identity] of Object.entries(expected)) {
         const source = backendSources[key];

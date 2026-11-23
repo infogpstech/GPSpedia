@@ -26,6 +26,6 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin "$TARGET_COMMIT"
           git cat-file -e "$TARGET_COMMIT^{commit}"
-          test "$(git show "$TARGET_COMMIT:JS/Frontend/api-config.js" | grep -c 'GPSpedia-')" -eq 7
-      - name: Probe all seven deployed services (GET only)
+          test "$(git show "$TARGET_COMMIT:JS/Frontend/api-config.js" | grep -c 'GPSpedia-')" -eq 6
+      - name: Probe all six deployed services (GET only)
         run: node JS/Tests/RemoteServiceHealth.mjs

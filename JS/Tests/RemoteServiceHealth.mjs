@@ -15,7 +15,7 @@ function parseObject(name) {
  return values;
 }
 const identities=parseObject("SERVICE_HEALTH_CONTRACTS"), keys=Object.keys(identities).sort();
-if(serviceKeys.length!==7||serviceKeys.slice().sort().join(",")!==keys.join(","))throw new Error("El inventario central y los contratos de salud no coinciden.");
+if(serviceKeys.length!==6||serviceKeys.slice().sort().join(",")!==keys.join(","))throw new Error("El inventario central y los contratos de salud no coinciden.");
 const bootstrapResponse=await fetch(bootstrapMatch[1],{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"getPublicConfiguration",payload:{}}),redirect:"follow",signal:AbortSignal.timeout(12000)});
 if(!bootstrapResponse.ok)throw new Error("AUTH bootstrap respondió HTTP "+bootstrapResponse.status+".");
 const config=await bootstrapResponse.json();

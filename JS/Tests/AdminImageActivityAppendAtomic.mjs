@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 function extract(name) {
     const start = admin.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
@@ -58,11 +57,8 @@ test("el registro sin actor no escribe", () => {
     assert.equal(calls, 0);
 });
 
-test("Coordinator ya no conserva policy ni primitivas de lease SharedMutation", () => {
-    assert.doesNotMatch(coordinator, /coordinatorPolicy_|withSharedMutationLease_/);
-    assert.equal(coordinator.includes("function acquire_"), false);
-    assert.equal(coordinator.includes("function release_"), false);
-    assert.doesNotMatch(coordinator, /SHARED_MUTATION_(?:COORDINATOR_VERSION|PROTOCOL_VERSION|LEASE_TTL|DRAIN|MAX_WAIT|MAX_ACTIVE|MAX_STATE)/);
+test("la fuente Coordinator queda retirada", () => {
+    assert.equal(existsSync(new URL("../Services/Coordinator.js", import.meta.url)), false);
 });
 
 console.log("AdminImageActivityAppendAtomic: " + passed + "/" + passed + " PASS");

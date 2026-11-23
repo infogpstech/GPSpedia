@@ -44,7 +44,7 @@ function getRichTextSession_(session) {
 export async function loadRichTextMode(session) {
     const sessionPayload = getRichTextSession_(session);
     // La lectura es idempotente: dos intentos acotados evitan dejar el arranque
-    // esperando indefinidamente si FEEDBACK/Coordinator tarda en responder.
+    // esperando indefinidamente si FEEDBACK tarda en responder.
     const response = await routeActionWithRetry("getRichTextMode", sessionPayload, {
         timeoutMs: 6000,
         maxAttempts: 2,
@@ -78,7 +78,7 @@ export async function setRichTextMode(mode, actorRole, session) {
 // Único localizador de arranque para consultar AUTH; nunca es fallback de otras rutas.
 const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "https://script.google.com/macros/s/AKfycbxoSybH_LsnqfBXCcE-5f9DM5rxEh8IFVPUMb2KF_j8yYl68hxEvF034ogADXEdrXUG/exec";
 export const CENTRAL_SERVICE_KEYS = Object.freeze([
-    "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN", "COORDINATOR"
+    "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"
 ]);
 
 export const ACTION_TO_SERVICE_MAP = {
@@ -100,7 +100,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN', 'getAdminImageUploadStatus': 'ADMIN',
     'getReplacedImages': 'ADMIN',
     'previewCortesImageReconciliation': 'ADMIN', 'previewCortesImageOrganizer': 'ADMIN', 'getCortesImageOrganizerOperations': 'ADMIN', 'applyCortesImageOrganizer': 'ADMIN', 'rollbackCortesImageOrganizer': 'ADMIN', 'applyCortesImageReconciliation': 'ADMIN', 'migrateReplacedImagesSchema': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'restoreReplacedImageFromTrash': 'ADMIN', 'permanentlyDeleteReplacedImage': 'ADMIN', 'markReplacedImageInUse': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
-    'getServiceTraffic': 'COORDINATOR', 'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
+    'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
 };
 
 const WRITE_CATALOG_RESET_ACTIONS_ = new Set([
@@ -703,7 +703,6 @@ export const SERVICE_HEALTH_CONTRACTS = Object.freeze({
     FEEDBACK: "GPSpedia-Feedback",
     UTILITIES: "GPSpedia-Utilities",
     ADMIN: "GPSpedia-Admin",
-    COORDINATOR: "GPSpedia-SharedMutationCoordinator",
 });
 export const SERVICE_HEALTH_TIMEOUT_MS = 8000;
 export const SERVICE_HEALTH_SLOW_THRESHOLD_MS = 2000;
@@ -884,10 +883,6 @@ export async function checkAllServicesHealth(options = {}) {
                                     version,
                                     reportedStatus
                                 };
-                                if ((serviceKey === "AUTH" || serviceKey === "FEEDBACK") &&
-                                    typeof data.coordinatorConfigured === "boolean") {
-                                    metadata.coordinatorConfigured = data.coordinatorConfigured;
-                                }
                                 if (reportedStatus === "available" || reportedStatus === "online") {
                                     const status = latency >= slowThresholdMs ? "slow" : "online";
                                     result = makeResult(status, startTime, checkedAtMs, {

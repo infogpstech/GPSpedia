@@ -39,9 +39,6 @@ function runActionDispatchContractTests(sources) {
     function hasFunction_(source, name) {
         return new RegExp("\\bfunction\\s+" + name + "\\s*\\(").test(String(source || ""));
     }
-    function hasCoordinatorHandler_(source, name) {
-        return hasFunction_(source, name) || (name === "getPublicCatalogChanges" && String(source || "").includes("getPublicCatalogChanges: function(payload)"));
-    }
     function parseDispatcher_(source, name) {
         const match = String(source || "").match(/switch\s*\(\s*(?:request\.action|action)\s*\)\s*\{([\s\S]*?)\n\s*default\s*:/);
         assert_(!!match, "No se encontró dispatcher " + name + ".");
@@ -92,24 +89,6 @@ function runActionDispatchContractTests(sources) {
         compatibility = parseCompatibility_(api);
         external = parseExternal_(api);
         for (const service of ["AUTH","CATALOG","WRITE","FEEDBACK","ADMIN"]) dispatchers[service] = parseDispatcher_(input[service], service);
-        const coordinatorSource = String(input.COORDINATOR || "");
-        const coordinatorActions = [], coordinatorHandlers = {};
-        if (coordinatorSource.includes('request.action === "publishCatalogReset"') &&
-            hasFunction_(coordinatorSource, "publishCatalogResetFromBrowser_")) {
-            coordinatorActions.push("publishCatalogReset");
-            coordinatorHandlers.publishCatalogReset = ["publishCatalogResetFromBrowser_"];
-        }
-        if (coordinatorSource.includes('parameters.catalogFeed || ""') &&
-            coordinatorSource.includes("getPublicCatalogChanges: function(payload)")) {
-            coordinatorActions.push("getCatalogChanges");
-            coordinatorHandlers.getCatalogChanges = ["getPublicCatalogChanges"];
-        }
-        if (coordinatorSource.includes('request.action === "getServiceTraffic"') &&
-            hasFunction_(coordinatorSource, "getServiceTrafficFromBrowser_")) {
-            coordinatorActions.push("getServiceTraffic");
-            coordinatorHandlers.getServiceTraffic = ["getServiceTrafficFromBrowser_"];
-        }
-        dispatchers.COORDINATOR = { actions: coordinatorActions, handlers: coordinatorHandlers };
         const utilitySource = String(input.UTILITIES || "");
         const utilityMatch = utilitySource.match(/body\.action\s*!==\s*['"]([^'"]+)['"]/);
         assert_(!!utilityMatch, "No se encontró el contrato de acción de UTILITIES.");
@@ -118,7 +97,7 @@ function runActionDispatchContractTests(sources) {
         dispatchers.UTILITIES = { actions: [utilityMatch[1]], handlers: { [utilityMatch[1]]: [utilityHandler[1]] } };
         assert_(consumerActions.length > 0, "No se proporcionaron fuentes de consumidores.");
         assert_(!endpoints.includes("USERS"), "USERS sigue declarado como endpoint independiente.");
-        assert_(optionalEndpoints.includes("COORDINATOR"), "COORDINATOR debe estar declarado como endpoint opcional del registro central.");
+        assert_(!endpoints.includes("COORDINATOR"), "COORDINATOR ya no debe formar parte del registro routable.");
         for (const action of ["getUsers","createUser","updateProfile"]) assert_(actionMap[action] === "AUTH", action + " debe pertenecer a AUTH.");
     });
     run_("cada acción mapeada apunta a un endpoint, dispatcher y handler existentes", () => {
@@ -134,7 +113,7 @@ function runActionDispatchContractTests(sources) {
             if (handler === null) assert_(service === "ADMIN" && action === "ping", "Handler inline no permitido: " + service + "/" + action);
             else {
                 assert_(Array.isArray(handler) && handler.length, service + "/" + action + " no enlaza con un handler.");
-                for (const name of handler) assert_((service === "COORDINATOR" ? hasCoordinatorHandler_(input[service], name) : hasFunction_(input[service], name)), service + "/" + action + " referencia una función inexistente: " + name);
+                for (const name of handler) assert_(hasFunction_(input[service], name), service + "/" + action + " referencia una función inexistente: " + name);
             }
         }
     });

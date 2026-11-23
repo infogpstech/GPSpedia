@@ -186,7 +186,7 @@ Las categorías de visibilidad son una política de exposición de la aplicació
 
 | # MIG-003 | Familia/uso | Destino aprobado por diseño |
 |---:|---|---|
-| 1–5 | URL/secretos de Coordinator, secretos por servicio, URLs backend y secreto de tráfico CATALOG | Retirar junto con MIG-011/MIG-013/MIG-024/MIG-025; ningún valor se copia a hojas. |
+| 1–5 | URL/secretos de Coordinator, secretos por servicio, URLs backend y secreto de tráfico CATALOG | Retiradas en MIG-011/MIG-013/MIG-024/MIG-025; no replicar ni trasladar valores a hojas. |
 | 6 | Secreto HMAC de recuperación AUTH | Fuera del esquema; diseño de almacenamiento protegido pendiente. |
 | 7 | login_request_<requestId> | Estado operativo en LoginRequests, no configuración. Preservar idempotencia/recuperación. |
 | 8 | role_revocation_pending_<userId> | Estado canónico en Users.SessionToken según inventario; retirar duplicado solo tras prueba. |
@@ -205,7 +205,7 @@ La tabla conserva la correspondencia completa con el inventario de 26 familias. 
 
 ### 6.3 Parámetros candidatos del código
 
-Los parámetros propuestos en INVENTARIO_CONFIGURACION_BACKEND.md §5 se incorporarán solo después de confirmar consumidor vigente y paridad. Candidatos: catalog.log_invalid_image_ids; rich_text_mode; terms.current_version; límites de cargas/textos; políticas de retención y capacidad de auditorías; tamaño de lote de restauración Drive. Las políticas exclusivas de Coordinator/SharedMutation se retiran con esos componentes y no se trasladan.
+Los parámetros propuestos en INVENTARIO_CONFIGURACION_BACKEND.md §5 se incorporarán solo después de confirmar consumidor vigente y paridad. Candidatos: catalog.log_invalid_image_ids; rich_text_mode; terms.current_version; límites de cargas/textos; políticas de retención y capacidad de auditorías; tamaño de lote de restauración Drive. Las políticas exclusivas de Coordinator/SharedMutation quedaron retiradas en MIG-025 y no se trasladan.
 
 No se convierten en valores editables los algoritmos/parámetros criptográficos, matriz RBAC, nombres de acciones, contratos, encabezados, índices de columnas, MIME/protocolos ni límites máximos de seguridad. Los valores que deban coincidir entre frontend y backend tienen una única definición validada y se distribuyen como parte de la misma revisión.
 

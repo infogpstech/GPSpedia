@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 
 function extractFunction(source, name) {
@@ -50,15 +49,10 @@ assert.ok(internal.includes("assertDeveloperSession(payload)"));
 assert.ok(internal.includes("beginAdminAuditEvent_(action, payload, developerContext, startTime)"));
 assert.ok(internal.includes("if (action !== \"ping\" && isSharedMutationAction_(action))"));
 
-assert.doesNotMatch(coordinator, /function coordinatorPolicy_|function acquire_\(|function release_\(|function validate_\(/,
-    "Coordinator ya no debe mantener el protocolo de leases de SharedMutation.");
-assert.doesNotMatch(coordinator, /publishCatalogChange_|publishCatalogChanges_|getCatalogChanges_/,
-    "La publicación y lectura del catálogo pertenecen a CATALOG.");
-assert.match(coordinator, /function getServiceTrafficFromBrowser_/,
-    "La telemetría transitoria permanece hasta MIG-025.");
-assert.match(coordinator, /function doGet\(e\)/,
-    "El endpoint health transitorio se retira en MIG-025, no en esta tarea.");
+assert.equal(existsSync(new URL("../Services/Coordinator.js", import.meta.url)), false,
+    "Coordinator ya debe estar retirado después de MIG-025.");
+assert.doesNotMatch(ui, /COORDINATOR|getServiceTraffic|globalServiceTraffic/);
 
 assert.match(ui, /routeActionWithRetry\('auditDriveImagesInCortes'[\s\S]*?timeoutMs:\s*cursor\s*\?\s*45000\s*:\s*120000/);
 assert.match(ui, /routeActionWithRetry\(['"]getReplacedImages['"][\s\S]*?timeoutMs:\s*120000,\s*maxAttempts:\s*2/);
-console.log("AdminImageScanCoordinatorContract: 1/1 PASS — guardas locales, RBAC/auditoría y metadatos preservados");
+console.log("AdminImageScanLocalGuardContract: 1/1 PASS — guardas locales, RBAC/auditoría y metadatos preservados");

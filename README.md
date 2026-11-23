@@ -54,7 +54,7 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ## Despliegue de servicios Apps Script
 
-[Services/DEPLOYMENT_GUIDE.md](Services/DEPLOYMENT_GUIDE.md) y [Services/COORDINATOR_SETUP.md](Services/COORDINATOR_SETUP.md) se conservan como evidencia histórica de despliegues anteriores; no ejecutar sus pasos de configuración de Coordinator/SharedMutation. La guía simplificada y vigente se actualizará en MIG-029. Desde MIG-023, el feed incremental del catálogo pertenece a CATALOG; no configurar ni enrutar nuevas operaciones del catálogo a COORDINATOR. No ejecutar pasos de despliegue sobre producción sin autorización.
+[Las guías históricas de despliegue y Coordinator](Olds/Documentacion_Legacy/Services/DEPLOYMENT_GUIDE.md) y [configuración de Coordinator](Olds/Documentacion_Legacy/Services/COORDINATOR_SETUP.md) se archivaron en Olds tras MIG-025; no ejecutar sus instrucciones. La guía operativa simplificada se actualizará en MIG-029. Desde MIG-023, el feed incremental pertenece a CATALOG. No ejecutar despliegues sobre producción sin autorización.
 
 ## 4. Características y Mejoras Recientes (v2.1.5)
 

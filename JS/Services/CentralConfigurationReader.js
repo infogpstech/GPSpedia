@@ -6,8 +6,8 @@ var GP_CONFIG_FRESH_TTL_MS_ = 5 * 60 * 1000;
 var GP_CONFIG_STALE_TTL_MS_ = 15 * 60 * 1000;
 var GP_CONFIG_CACHE_TTL_SECONDS_ = 900;
 var GP_CONFIG_REQUIRED_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
-var GP_CONFIG_OPTIONAL_SERVICE_KEYS_ = ["COORDINATOR"];
-var GP_CONFIG_SERVICE_KEYS_ = GP_CONFIG_REQUIRED_SERVICE_KEYS_.concat(GP_CONFIG_OPTIONAL_SERVICE_KEYS_);
+var GP_CONFIG_RETIRED_SERVICE_KEYS_ = ["USERS", "COORDINATOR"];
+var GP_CONFIG_SERVICE_KEYS_ = GP_CONFIG_REQUIRED_SERVICE_KEYS_.slice();
 var GP_CONFIG_PARAMETER_RULES_ = {
   rich_text_mode: { valueType: "enum", values: ["strict", "advanced"], scope: "global", visibility: "public", owner: "FEEDBACK" }
 };
@@ -218,7 +218,7 @@ function validateCentralConfigurationSchema_(rows, schemaVersion) {
 
 function validateCentralConfigurationServices_(rows, revision) {
   // USERS es un registro heredado; se ignora mientras el registro central conserva la fila histórica.
-  var active = rows.filter(function(row) { return Number(row.config_revision) === revision && String(row.service_key || "").trim().toUpperCase() !== "USERS"; });
+  var active = rows.filter(function(row) { return Number(row.config_revision) === revision && GP_CONFIG_RETIRED_SERVICE_KEYS_.indexOf(String(row.service_key || "").trim().toUpperCase()) < 0; });
   var result = {}, endpointOwners = {};
   active.forEach(function(row) {
     var key = String(row.service_key || "").trim().toUpperCase();

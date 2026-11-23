@@ -436,7 +436,7 @@ function requireSharedAuthActor_(payload, allowedRoles, actionLabel) {
 }
 
 function handleClearSensitiveLogs(payload) {
-    // La sesión/token ya fueron autorizados por Coordinator en doPost().
+    // La sesión/token se valida localmente en AUTH antes de ejecutar la acción.
     // Solo se consume el actor confiable y su rol; no se vuelven a leer Users/ActiveSessions.
     const actor = payload && payload.__sharedSessionActor;
     const requestedUserId = normalizeUserId(payload && payload.userId);
@@ -618,7 +618,7 @@ function doPost(e) {
     if (action === "benchmarkPasswordKdf") {
         try {
             // El benchmark solo calcula con una cadena fija: el actor cacheado basta;
-            // no requiere lease ni actualización de actividad en Coordinator.
+            // no requiere lease ni coordinación remota de actividad.
             const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {

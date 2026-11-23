@@ -635,7 +635,7 @@ function doPost(e) {
     const isDeclared = Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action);
 
     // FEEDBACK usa el actor confiable en caché local; no adquiere leases ni hace viajes
-    // a Coordinator por cada acción. Las rutas públicas/anónimas siguen sin requerir sesión.
+    // a otro servicio por cada acción. Las rutas públicas/anónimas siguen sin requerir sesión.
     if (isPublic || anonymousSuggestion || !isDeclared) {
         return doPostInternal_(withSharedSessionActor_(e, null));
     }

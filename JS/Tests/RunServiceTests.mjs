@@ -45,7 +45,7 @@ runGroup('31','WRITE',()=>{
  recordResult('WRITE payload/límites/integridad',loadFunction('JS/Tests/CutPayloadValidation.js','runCutPayloadValidationTests')(write));
  recordResult('WRITE/ADMIN VIN',loadFunction('JS/Tests/VinAuthoritativeValidation.js','runVinAuthoritativeValidationTests')({write,admin,ui:read('JS/Frontend/ui.js'),addCuts:read('HTML/add_cortes.html')}));
  recordResult('WRITE información suplementaria/sesiones/rollback',loadFunction('JS/Tests/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
-  write,admin,coordinator:read('JS/Services/Coordinator.js'),ui:read('JS/Frontend/ui.js')
+  write,admin,ui:read('JS/Frontend/ui.js')
  }));
  recordResult('WRITE checkOperation autenticación/minimización',loadFunction('JS/Tests/CheckOperationSecurity.js','runCheckOperationSecurityTests')({
   write,frontend:read('HTML/add_cortes.html')
@@ -54,7 +54,7 @@ runGroup('31','WRITE',()=>{
   write,admin,ui:read('JS/Frontend/ui.js'),addCortes:read('HTML/add_cortes.html'),apiConfig:read('JS/Frontend/api-config.js')
  }));
  recordResult('WRITE autorización de información suplementaria/AUG-122',loadFunction('JS/Tests/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
-  write,admin,ui:read('JS/Frontend/ui.js'),coordinator:read('JS/Services/Coordinator.js')
+  write,admin,ui:read('JS/Frontend/ui.js'),
  }));
  recordResult('WRITE checkOperation autenticado/respuesta mínima/AUG-054',loadFunction('JS/Tests/CheckOperationSecurity.js','runCheckOperationSecurityTests')({
   write,frontend:read('HTML/add_cortes.html')
@@ -296,19 +296,16 @@ runGroup('36','AUTH',()=>{
  runCli('AUTH generador backend de IDs de usuario','JS/Tests/UserIdGenerator.mjs');
  runCli('AUTH creación reutiliza un único snapshot para username, fila e ID','JS/Tests/UsersMutationSnapshot.mjs');
  runCli('AUTH lecturas de lista y perfil limitadas a columnas necesarias','JS/Tests/UsersReadMinimization.mjs');
- recordResult('AUTH gestión de usuarios: RBAC, atomicidad, rollback y sesión',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(read('JS/Services/Auth.js'),read('JS/Services/Coordinator.js')));
+ recordResult('AUTH gestión de usuarios: RBAC, atomicidad, rollback y sesión',loadFunction('JS/Tests/UsersAtomicMutations.js','runUsersAtomicMutationTests')(read('JS/Services/Auth.js'),"")));
 });
 runGroup('38','INTEGRATION',()=>{
  runCli('GP-UX-SEARCH-MODEL-GROUPING-01 agrupación y jerarquía de vehículos','JS/Tests/SearchModelGrouping.mjs');
  runCli('AUG-022 eliminación asíncrona de caché IndexedDB ADMIN','JS/Tests/AdminClientCacheDeletion.mjs');
- runCli('MIG-008 registro central admite Coordinator opcional para telemetría agregada','JS/Tests/MIG008CentralConfigurationReader.mjs');
+ runCli('MIG-008 registro central ignora servicios retirados','JS/Tests/MIG008CentralConfigurationReader.mjs');
  runCli('AUG-024 contrato de salud, identidad y clasificación de servicios','JS/Tests/ServiceHealthContract.mjs');
  runCli('BETA-043 contrato de telemetría global coordinada','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('BETA-043 telemetría local por servicio y navegador móvil','JS/Tests/ServiceBrowserTrafficContract.mjs');
- runCli('BETA-043 contrato y agregación de tráfico de los siete servicios','JS/Tests/ServiceTrafficAggregatorContract.mjs');
- runCli('BETA-043 agregación global Coordinator + fuentes directas','JS/Tests/ServiceTrafficAggregation.mjs');
  runCli('BETA-043 telemetría directa AUTH WRITE FEEDBACK','JS/Tests/DirectServiceTrafficTelemetry.mjs');
- runCli('BETA-043 contrato global sin fan-out a servicios directos','JS/Tests/ServiceTrafficBatch.mjs');
  runCli('BETA-043 auditoría de rutas directas y Coordinator','JS/Tests/DirectTrafficRoutingCoverage.mjs');
  runCli('BETA-043 telemetría local del navegador y agregado Coordinator','JS/Tests/ServiceMetricsTelemetry.mjs');
  runCli('AUG-026 integridad, estados y recuperación del historial de imágenes','JS/Tests/AdminReplacedImagesIntegrity.mjs');
@@ -326,7 +323,7 @@ runGroup('38','INTEGRATION',()=>{
   runCli('ADMIN registra actividad de papelera después del ScriptLock','JS/Tests/AdminDeleteImageActivityOutsideLock.mjs');
   runCli('ADMIN verifica archivo histórico Drive fuera del ScriptLock y revalida el registro','JS/Tests/AdminRecoverImageDrivePreflightOutsideLock.mjs');
  runCli('AUG-023 contrato y validación de acciones ADMIN createSheet/addColumn','JS/Tests/AdminSheetActionsContract.mjs');
- runCli('AUG-156 coordinación de inventario, escáner y migración de historial','JS/Tests/AdminImageScanCoordinatorContract.mjs');
+ runCli('AUG-156 coordinación de inventario, escáner y migración de historial','JS/Tests/AdminImageScanLocalGuardContract.mjs');
  runCli('ADMIN telemetría solo en panel visible y restringido a Desarrollador','JS/Tests/AdminTrafficSurfaceContract.mjs');
  runCli('ADMIN inventario de lecturas y contratos de backup/restore/upload','JS/Tests/AdminOperationReadInventory.mjs');
  runCli('Organizador Cortes: rutas, nombres, códigos y bloqueos del constructor','JS/Tests/CortesImageOrganizerTargets.mjs');
@@ -395,7 +392,7 @@ runGroup('38','INTEGRATION',()=>{
   runCli('AUG-139 política anti-debugging, zoom y autorización backend','JS/Tests/AntiDebuggingPolicy.mjs');
  runCli('Verificación sintáctica integral de archivos JavaScript','JS/Tests/RepositoryJavaScriptSyntax.mjs');
  runCli('Verificación de referencias relativas e imports','JS/Tests/RepositoryModuleReferences.mjs');
- runCli('SEC arquitectura: RBAC, cierre de cuentas y revocación coordinada desde frontend','JS/Tests/CoordinatorCapabilityPreservation.mjs');
+ runCli('SEC arquitectura: RBAC, cierre de cuentas y revocación coordinada desde frontend','JS/Tests/SessionActorCapabilityPreservation.mjs');
  runCli('MIG-006 probe de acceso a Spreadsheet desde Web App','JS/Tests/MIG006SpreadsheetAccessProbe.mjs');
  runCli('MIG-007 contrato del esquema central de configuración','JS/Tests/MIG007ConfigurationSchemaContract.mjs');
  runCli('MIG-008 lector central de configuración y proyección segura','JS/Tests/MIG008CentralConfigurationReader.mjs');
@@ -413,7 +410,7 @@ runGroup('38','INTEGRATION',()=>{
  }));
  recordResult('Mapa de acciones y routers',loadFunction('JS/Tests/ActionDispatchContract.js','runActionDispatchContractTests')({
   apiConfig:read('JS/Frontend/api-config.js'),AUTH:read('JS/Services/Auth.js'),CATALOG:read('JS/Services/catalog.js'),
-  COORDINATOR:read('JS/Services/Coordinator.js'),centralConfigurationCache:read('JS/Frontend/centralConfigurationCache.js'),
+  centralConfigurationCache:read('JS/Frontend/centralConfigurationCache.js'),
   WRITE:read('JS/Services/write.js'),FEEDBACK:read('JS/Services/feedback.js')+'\n'+read('JS/Services/InboxConversations.js'),ADMIN:read('JS/Services/admin.js'),UTILITIES:read('JS/Services/Utilities.js'),usersHtml:read('HTML/users.html'),
   consumerSources:{apiConfig:read('JS/Frontend/api-config.js'),addCortes:read('HTML/add_cortes.html'),auth:read('JS/Frontend/auth.js'),main:read('JS/Frontend/main.js'),
    pysData:read('JS/Frontend/pys-data.js'),ui:read('JS/Frontend/ui.js'),usersHtml:read('HTML/users.html'),youtubeUpload:read('JS/Frontend/youtubeUpload.js')}
@@ -461,7 +458,7 @@ runGroup('39','MIG015',()=>{
  runImageCli('ADMIN actividad de movimiento de imágenes','JS/Tests/AdminMoveImageActivityOutsideLock.mjs');
  runImageCli('ADMIN preflight Drive de eliminación definitiva','JS/Tests/AdminPermanentDeleteDrivePreflightOutsideLock.mjs');
  runImageCli('ADMIN actividad de eliminación definitiva','JS/Tests/AdminPermanentDeleteActivityOutsideLock.mjs');
- runImageCli('ADMIN contrato del escáner de imágenes','JS/Tests/AdminImageScanCoordinatorContract.mjs');
+ runImageCli('ADMIN contrato del escáner de imágenes','JS/Tests/AdminImageScanLocalGuardContract.mjs');
  runImageCli('ADMIN destinos del organizador de imágenes','JS/Tests/CortesImageOrganizerTargets.mjs');
  runImageCli('ADMIN Safe Apply del organizador de imágenes','JS/Tests/CortesImageOrganizerApplyPlan.mjs');
  runImageCli('ADMIN ejecutor del organizador de imágenes y rollback','JS/Tests/CortesImageOrganizerExecutor.mjs');
@@ -490,13 +487,13 @@ runGroup('42','MIG018',()=>{
   write,admin,ui:read('JS/Frontend/ui.js'),addCuts:read('HTML/add_cortes.html')
  }));
  recordResult('MIG018 integridad de información suplementaria',loadFunction('JS/Tests/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
-  write,admin,coordinator:read('JS/Services/Coordinator.js'),ui:read('JS/Frontend/ui.js')
+  write,admin,ui:read('JS/Frontend/ui.js')
  }));
  runCli('MIG018 ledger validado y reutilizado en aportes','JS/Tests/WriteContributionLedgerReuse.mjs');
  runCli('MIG018 flujo moderno de información suplementaria','JS/Tests/WriteSupplementaryLedgerModernFlow.mjs');
  recordResult('MIG018 contrato de rutas frontend y Coordinator',loadFunction('JS/Tests/ActionDispatchContract.js','runActionDispatchContractTests')({
   apiConfig:read('JS/Frontend/api-config.js'),AUTH:read('JS/Services/Auth.js'),CATALOG:read('JS/Services/catalog.js'),
-  COORDINATOR:read('JS/Services/Coordinator.js'),centralConfigurationCache:read('JS/Frontend/centralConfigurationCache.js'),
+  centralConfigurationCache:read('JS/Frontend/centralConfigurationCache.js'),
   WRITE:read('JS/Services/write.js'),FEEDBACK:read('JS/Services/feedback.js')+'\n'+read('JS/Services/InboxConversations.js'),ADMIN:read('JS/Services/admin.js'),UTILITIES:read('JS/Services/Utilities.js'),usersHtml:read('HTML/users.html'),
   consumerSources:{apiConfig:read('JS/Frontend/api-config.js'),addCortes:read('HTML/add_cortes.html'),auth:read('JS/Frontend/auth.js'),main:read('JS/Frontend/main.js'),
    pysData:read('JS/Frontend/pys-data.js'),ui:read('JS/Frontend/ui.js'),usersHtml:read('HTML/users.html'),youtubeUpload:read('JS/Frontend/youtubeUpload.js')}
@@ -513,9 +510,7 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 proyección dirigida de campos ADMIN','JS/Tests/AdminVehicleTargetedCatalogRead.mjs');
  runCli('MIG018 inventario de imágenes de candidatos','JS/Tests/AdminCandidateImageInventoryCatalogSource.mjs');
  runCli('MIG018 superficie telemetría ADMIN','JS/Tests/AdminTrafficSurfaceContract.mjs');
- runCli('MIG018 contrato telemetría ADMIN/Coordinator','JS/Tests/ServiceTrafficAdminContract.mjs');
- runCli('MIG018 agregación local de telemetría','JS/Tests/ServiceTrafficAggregatorContract.mjs');
- runCli('MIG018 agregación de tráfico Coordinator','JS/Tests/ServiceTrafficAggregation.mjs');
+ runCli('MIG018 contrato telemetría local ADMIN','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('MIG018 proyección de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
  runCli('MIG018 CATALOG proyección individual y VIN globales','JS/Tests/CatalogVehicleProjectionRead.mjs');
  runCli('MIG018 CATALOG respuestas dirigidas','JS/Tests/CatalogTargetedResponses.mjs');
@@ -612,11 +607,8 @@ runGroup('44','MIG020',()=>{
 
 runGroup('45','MIG021',()=>{
  runCli('MIG021 salud, identidad y clasificación de endpoints','JS/Tests/ServiceHealthContract.mjs');
- runCli('MIG021 tráfico global ADMIN/Coordinator','JS/Tests/ServiceTrafficAdminContract.mjs');
+ runCli('MIG021 telemetría local ADMIN','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('MIG021 telemetría local de servicios y navegador','JS/Tests/ServiceBrowserTrafficContract.mjs');
- runCli('MIG021 contrato del agregador de tráfico','JS/Tests/ServiceTrafficAggregatorContract.mjs');
- runCli('MIG021 agregación global Coordinator','JS/Tests/ServiceTrafficAggregation.mjs');
- runCli('MIG021 batch de fuentes de tráfico y fallos parciales','JS/Tests/ServiceTrafficBatch.mjs');
  runCli('MIG021 telemetría directa de servicios','JS/Tests/DirectServiceTrafficTelemetry.mjs');
  runCli('MIG021 auditoría de enrutamiento y atribución','JS/Tests/DirectTrafficRoutingCoverage.mjs');
  runCli('MIG021 superficie ADMIN de métricas','JS/Tests/AdminTrafficSurfaceContract.mjs');
@@ -645,7 +637,7 @@ runGroup('45','MIG021',()=>{
 
 
 runGroup('46','MIG024',()=>{
- runCli('MIG-024 retirada de SharedMutation y preservación transitoria de Coordinator','JS/Tests/SharedMutationRemovalContract.mjs');
+ runCli('MIG-025 retirada de Coordinator y paridad de servicios','JS/Tests/CoordinatorRetirementContract.mjs');
  runCli('MIG-024 guarda local ADMIN: exclusión breve, TTL y recuperación','JS/Tests/AdminLocalOperationGuard.mjs');
 });
 
