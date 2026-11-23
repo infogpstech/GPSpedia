@@ -11,7 +11,7 @@ const reader = read("JS/Services/CentralConfigurationReader.js");
 const telemetry = read("JS/Frontend/serviceTelemetry.js");
 const invalidation = read("JS/Frontend/sessionCacheInvalidation.js");
 const ui = read("JS/Frontend/ui.js");
-const activeServices = ["Auth.js","catalog.js","write.js","feedback.js","admin.js","utilities.js","InboxConversations.js"]
+const activeServices = ["Auth.js","catalog.js","write.js","feedback.js","admin.js","Utilities.js","InboxConversations.js"]
     .map(name => read("JS/Services/" + name));
 assert.equal(existsSync(coordinatorPath), false, "Coordinator.js debe estar retirado.");
 assert.doesNotMatch(api, /COORDINATOR|getServiceTraffic/);
