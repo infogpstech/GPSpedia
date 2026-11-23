@@ -59,7 +59,9 @@ test("el registro sin actor no escribe", () => {
 });
 
 test("Coordinator ya no conserva policy ni primitivas de lease SharedMutation", () => {
-    assert.doesNotMatch(coordinator, /coordinatorPolicy_|withSharedMutationLease_|function acquire_|function release_/);
+    assert.doesNotMatch(coordinator, /coordinatorPolicy_|withSharedMutationLease_/);
+    assert.equal(coordinator.includes("function acquire_"), false);
+    assert.equal(coordinator.includes("function release_"), false);
     assert.doesNotMatch(coordinator, /SHARED_MUTATION_(?:COORDINATOR_VERSION|PROTOCOL_VERSION|LEASE_TTL|DRAIN|MAX_WAIT|MAX_ACTIVE|MAX_STATE)/);
 });
 
