@@ -216,3 +216,29 @@ La cobertura existente es mayoritariamente de contratos, dobles y lógica local.
 - No se modificó código funcional, URLs, endpoints, propiedades, RBAC, Spreadsheet, Drive ni deployments.
 
 **Criterio de aceptación MIG-004:** cumplido para el inventario estático y la trazabilidad. Las pruebas locales de equivalencia para la sustitución de cada arista pertenecen a las tareas de implementación; las pruebas reales de deployments y recursos externos se reservan para Beta.
+
+## 11. Implementación de reemplazos MIG-010 — 2026-11-23
+
+La implementación frontend de las secuencias identificadas en el inventario queda registrada así:
+
+| Flujo | Coordinación vigente | Protección / recuperación |
+|---|---|---|
+| Reorganización de Spreadsheet | Frontend → ADMIN `backupDatabase` → WRITE `freezeCortesIds` → ADMIN `reorganizeDatabase` | Etapas y backupId persistidos por usuario; operationId estable; ADMIN revalida manifiesto, propiedad del respaldo, fórmulas y precondiciones antes de ordenar. |
+| Confirmación de edición de campos | Frontend → ADMIN `updateVehicleField` → CATALOG `getVehicleProjection` | ADMIN registra el evento; frontend consulta la proyección vigente y presenta aplicado, candidato, reemplazado o no disponible. CATALOG valida sesión local con roles Desarrollador, Jefe o Supervisor. |
+| Reconciliación de imágenes editadas | Frontend → ADMIN `uploadAdminImage` → CATALOG `getVehicleProjection` | La lectura de proyección se ejecuta desde el navegador con la sesión activa; no requiere wrapper ni URL de CATALOG en ADMIN. |
+| Inventario de candidatos de imágenes | Frontend → CATALOG `getContributionCandidates` → ADMIN `getReplacedImages` | CATALOG limita la consulta de candidatos al rol Desarrollador; ADMIN conserva su autorización y validación propias. |
+
+### Salvaguardas implementadas
+
+- ADMIN no contiene destinos de servicios Apps Script ni wrappers de coordinación funcional hacia WRITE/CATALOG.
+- El router frontend resuelve los servicios por el mapa de acciones y el registro central de endpoints; no se añadieron URLs locales.
+- La reorganización persiste un operationId antes de pedir el respaldo. ADMIN asocia el identificador al usuario y al origen en el manifiesto privado; un reintento del mismo usuario verifica y reutiliza la copia existente. Un identificador de otro usuario, una copia incompleta, ambigua o movida fuera de la raíz se rechaza.
+- `getVehicleProjection` exige sesión activa y conserva la matriz de edición del modal: Desarrollador, Jefe y Supervisor. `getContributionCandidates` mantiene el requisito de Desarrollador.
+- El navegador transmite el contexto de sesión, pero no decide permisos ni recibe secretos de servicio. Cada backend valida la sesión y el rol que le corresponde.
+
+### Cobertura y límites
+
+- Prueba de contrato: `JS/Tests/MIG010FrontendServiceOrchestration.mjs`, integrada en `JS/Tests/RunServiceTests.mjs`.
+- La suite se ejecutó de forma aislada en V8 con 56 aserciones aprobadas y simulación de replay del respaldo. La ejecución Node.js 22 del workflow completo queda pendiente de confirmar.
+- Las pruebas locales no equivalen a llamadas contra deployments reales. La validación Beta de permisos Apps Script, Spreadsheet, Drive y operación entre servicios sigue pendiente.
+
