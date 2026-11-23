@@ -34,7 +34,7 @@ function getAdminSessionContext_(payload, allowedRoles) {
  const displayRole=role==="desarrollador"?"Desarrollador":role==="jefe"?"Jefe":"Supervisor";
  return {userId:id,role:displayRole,fullName,userName:fullName||"Usuario",epoch:trusted.epoch};
 }
-/** Consume el actor autenticado por Coordinator; no reconsulta Users ni ActiveSessions. */
+/** Consume el actor local de sesión; la caché fría se resuelve desde Users/ActiveSessions. */
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
 function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}
 const ADMIN_MODAL_EDIT_ACTIONS = new Set(["getDropdownData","updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);
