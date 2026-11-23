@@ -604,7 +604,7 @@ runGroup('44','MIG020',()=>{
  recordResult('MIG020 roles y permisos Inbox',loadFunction('JS/Tests/InboxRoleContract.js','runInboxRoleContractTests','\\n\\nimport {')({
   ui:read('JS/Frontend/ui.js'),feedback,inbox,usersHtml:read('HTML/users.html'),authClient:read('JS/Frontend/auth.js'),api:read('JS/Frontend/api-config.js')
  }));
- recordResult('MIG020 prevención XSS en mensajes y contenido Inbox',loadFunction('JS/Tests/InboxStoredXss.js','runInboxStoredXssTests')({
+ recordResult('MIG020 prevención XSS en mensajes y contenido Inbox',loadFunction('JS/Tests/InboxStoredXss.js','runInboxStoredXssTests','\\n\\nimport {')({
   ui:read('JS/Frontend/ui.js'),feedback
  }));
  runCli('MIG020 mensajería centralizada de operaciones Developer','JS/Tests/DeveloperOperationMessages.mjs');
