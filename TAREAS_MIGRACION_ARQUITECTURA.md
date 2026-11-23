@@ -333,7 +333,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - [x] Probar los flujos y fallos parciales en suites dedicadas.
 
 **Resultado de CI — GitHub Actions Node.js 22**
-- Run 45235835156, commit `96cfbdae76e0df41c98ca39282b4bdede57cf72c`.
+- Run 45236140268, commit `734b6ea7023cb277452f47f3c776798b41f1cb8a`.
 - Suites MIG-015: **605/605 comprobaciones PASS**.
 - Incluye configuración central, preflight, ledger, journal, compensación, recuperación, variantes/ObjectURL, PyS, feedback, reemplazo, inventario, papelera, restauración, eliminación y organizador de imágenes.
 - La regresión global registró 157 suites, 1,805 pruebas aprobadas y cuatro suites fallidas en ADMIN (candidatos de aportes), UTILITIES, AUTH e INTEGRATION. Los mismos grupos ya presentaban fallos antes de MIG-015; se mantienen como deuda separada y no se atribuyen a esta tarea.

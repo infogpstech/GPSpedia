@@ -916,7 +916,7 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Rama y commit
 - Repositorio: infogpstech/GPSpedia.
 - Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5: sin escrituras.
-- HEAD registrado para validación: `96cfbdae76e0df41c98ca39282b4bdede57cf72c`.
+- HEAD registrado para validación: `734b6ea7023cb277452f47f3c776798b41f1cb8a`.
 
 ### Implementación
 - ADMIN, WRITE y FEEDBACK usan SpreadsheetApp.getActiveSpreadsheet() y fallan cerrados si no existe Spreadsheet vinculada.
@@ -927,7 +927,7 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - No se agregaron secretos compartidos ni URLs/configuración local de otros servicios Apps Script. No se movió orquestación funcional al backend.
 
 ### Validación CI
-- GitHub Actions Node.js 22, run 45235835156, commit `96cfbdae76e0df41c98ca39282b4bdede57cf72c`.
+- GitHub Actions Node.js 22, run 45236140268, commit `734b6ea7023cb277452f47f3c776798b41f1cb8a`.
 - Suites dedicadas MIG-015: **605/605 comprobaciones PASS**.
 - Regresión global: 157 suites, 1,805 pruebas aprobadas y cuatro suites fallidas en ADMIN (consulta de candidatos de aportes), UTILITIES, AUTH e INTEGRATION. Estas familias de fallos ya estaban presentes antes de MIG-015; quedan registradas fuera de su alcance.
 - No se ejecutaron llamadas reales a Apps Script, Spreadsheet ni Drive.
