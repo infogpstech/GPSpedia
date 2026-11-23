@@ -85,9 +85,9 @@ test("MIG-010 coordina ADMIN/WRITE desde frontend y cada receptor valida su sesi
     assert.match(apiConfig, /'addOrUpdateCut': 'WRITE'/);
     assert.match(apiConfig, /'allocateVehicleId': 'WRITE'/);
     assert.match(apiConfig, /'freezeCortesIds': 'WRITE'/);
-    assert.match(ui, /step\\("backupDatabase"/);
-    assert.match(ui, /step\\("freezeCortesIds"/);
-    assert.match(ui, /step\\("reorganizeDatabase"/);
+    assert.ok(ui.includes('step("backupDatabase"'));
+    assert.ok(ui.includes('step("freezeCortesIds"'));
+    assert.ok(ui.includes('step("reorganizeDatabase"'));
     assert.match(writeDoPost, /getCachedSharedSessionActor_/);
     assert.match(write, /function assertDeveloperForIdMaintenance\\(payload\\)/);
 
