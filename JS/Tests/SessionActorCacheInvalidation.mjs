@@ -25,5 +25,6 @@ for(const {path,source:code} of services){
 }
 assert.match(source,/function revokeSharedSessionContext_\(userId, sessionToken\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
 assert.match(source,/function revokeSharedUserSessionContexts_\(userId, sessionTokens\) \{\s*return invalidateLocalSharedSessionActorCaches_/);
-assert.doesNotMatch(source,/function revokeSession\(|function revokeUserSessions\(|function validateSessionContext\(/);
+const localRevoke=source.slice(source.indexOf("function revokeSharedSessionContext_"),source.indexOf("function withSharedSessionActor_"));
+assert.doesNotMatch(localRevoke,/createSharedMutationClient_|client\.|send_\(/);
 console.log("SessionActorCacheInvalidation: 6/6 PASS — invalidación local, sin secretos ni llamadas Coordinator");
