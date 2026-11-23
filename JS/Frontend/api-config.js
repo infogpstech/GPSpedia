@@ -78,7 +78,7 @@ export async function setRichTextMode(mode, actorRole, session) {
 // Único localizador de arranque para consultar AUTH; nunca es fallback de otras rutas.
 const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "https://script.google.com/macros/s/AKfycbxoSybH_LsnqfBXCcE-5f9DM5rxEh8IFVPUMb2KF_j8yYl68hxEvF034ogADXEdrXUG/exec";
 export const CENTRAL_SERVICE_KEYS = Object.freeze([
-    "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"
+    "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN", "COORDINATOR"
 ]);
 
 export const ACTION_TO_SERVICE_MAP = {
@@ -642,6 +642,7 @@ export const SERVICE_HEALTH_CONTRACTS = Object.freeze({
     FEEDBACK: "GPSpedia-Feedback",
     UTILITIES: "GPSpedia-Utilities",
     ADMIN: "GPSpedia-Admin",
+    COORDINATOR: "GPSpedia-SharedMutationCoordinator",
 });
 export const SERVICE_HEALTH_TIMEOUT_MS = 8000;
 export const SERVICE_HEALTH_SLOW_THRESHOLD_MS = 2000;
