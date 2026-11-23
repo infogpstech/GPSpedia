@@ -643,3 +643,39 @@ La acción ADMIN `driveCommand` es una herramienta manual invocada desde la cons
 La terminal no es un explorador genérico de Drive: restringe navegación, origen y destino al árbol Cortes. No se observó un comando de borrado en el dispatcher revisado. La migración debe conservar estos límites de seguridad y no añadir operaciones destructivas por equivalencia superficial.
 
 Se hizo una búsqueda estática de `ScriptApp.newTrigger`, `newTrigger(`, `timeBased(`, `onOpen` y `onEdit` en estos módulos: AUTH, USERS, WRITE, CATALOG, FEEDBACK, InboxConversations, ADMIN, UTILITIES, Coordinator, SharedMutationClient y los módulos frontend ui.js/main.js. No se encontraron declaraciones de triggers en ese conjunto. **Esto no demuestra que el repositorio completo ni los proyectos Apps Script desplegados carezcan de triggers**; falta inspeccionar archivos de raíz/manifiestos y configuración de cada proyecto antes de cerrar el inventario programado.
+
+
+## 14. Contratos AUTH — payload, respuesta, RBAC y datos (primera pasada 2026-11-23)
+
+Fuente: handlers de `JS/Services/Auth.js`, router `doPost` y política RBAC documentada en §10. Los campos `userId`/`sessionToken` indicados como contexto son consumidos por el preprocesamiento de sesión cuando corresponde; no todos forman parte del payload de negocio del handler. Las respuestas descritas son contratos observados, no una sustitución de los tests de integración.
+
+| Acción | Payload de negocio observado | Respuesta / errores relevantes | RBAC / datos |
+|---|---|---|---|
+| `login` | `username`, `password`, `requestId` opcional | Éxito: `status`, `user`, `sessionCleanupPending`; error: `status`, `message`. Credenciales inválidas, cuenta desactivada/no única, hoja de sesiones ausente o revocación anterior pendiente. | Pública; lee Users y crea/gestiona ActiveSessions; bloqueo de intentos y hash de contraseña. |
+| `validateSession` | `userId`, `sessionToken` | `valid:false`, perfil validado o estado no disponible `valid:null/unavailable/reason`. Puede recuperar sesiones heredadas y sincronizarlas con contexto compartido. | Token válido; consulta contexto y sincroniza actividad en ActiveSessions. |
+| `acceptTerms` | `version`, `deviceId`; `userId` opcional para confirmar identidad | `status`, `accepted`, `alreadyAccepted`, `termsAcceptance`. Rechaza versión distinta, dispositivo inválido, identidad no coincidente o fila no única. | Cualquier rol activo; actualiza Users.TermsAcceptance bajo ScriptLock y verifica read-back. |
+| `touchSession` | `sessionToken` | Devuelve `valid`; ante fallo puede devolver `valid:null`, `unavailable:true`, `reason`. | Token de sesión; valida y toca actividad. Sin consumidor directo localizado. |
+| `requestPasswordRecovery` | `username`, `email` | Respuesta genérica `status:success` para evitar enumeración de cuentas, incluso si los datos no coinciden; envía código por correo cuando procede. | Pública; lee Users, reserva/expide desafío de un solo uso con vencimiento de 10 minutos; no revela existencia de cuenta. |
+| `completePasswordRecovery` | `username`, `email`, `code`, `newPassword` | Éxito `status/message/cleanupPending`; error genérico de código inválido/expirado/no coincidente o contraseña fuera de longitud. | Pública con código válido; lee/escribe Users y ActiveSessions, hashea nueva contraseña y revoca sesiones. |
+| `changePassword` | `currentPassword`, `newPassword`; `userId` opcional debe coincidir con actor | `status/message`, con información de sesiones revocadas/limpieza pendiente según resultado. Errores de contraseña actual, identidad, revocación o esquema. | Cualquier rol activo; actor cacheado, Users y ActiveSessions; invalida sesiones. |
+| `resetUserPassword` | `targetUserId`, `newPassword` | `status/message`; rechaza auto-restablecimiento, destino inexistente/no único y revocación incompleta. | Solo Desarrollador; Users y ActiveSessions; hash y revocación antes de confirmar. |
+| `resetUserSessions` | `targetUserId` | `status`, `cleanupPending`, `message`; no permite cerrar remotamente la sesión propia. | Solo Desarrollador; Users y ActiveSessions; revoca tokens y elimina filas cuando es seguro. |
+| `clearSensitiveLogs` | Contexto `userId/sessionToken`; actor confiable interno | `status/message` y posible `cleanupPending`; error si no hay actor Desarrollador, hoja Logs o encabezado válido. | Solo Desarrollador; hoja Logs; elimina únicamente registros clasificados como sensibles bajo ScriptLock. |
+| `deleteUser` | `userId` destino | `status`, `disabled/deleted`, `message`; puede informar cuenta ya desactivada o limpieza pendiente. | Desarrollador/Jefe/Supervisor con jerarquía; Users y ActiveSessions; protege último Desarrollador y revoca sesiones. |
+| `updateUser` | `userId` destino, objeto `updates` | `status/message`; rechaza cambios de contraseña por esta ruta, rol no permitido, destino ambiguo y degradación del último Desarrollador. | Desarrollador/Jefe/Supervisor con jerarquía; Users y ActiveSessions; cambio de rol implica revocación y limpieza. |
+| `logout` | `userId`, `sessionToken` | Respuesta con `status`; rechaza token ambiguo, identidad que no coincide o revocación no confirmada. | Sesión propia; ActiveSessions y Users; invalida token y referencias de sesión. |
+| `migrateLegacyPasswords` | `dryRun` (por defecto true), `confirm`, `batchSize` (1–10, por defecto 5); contexto de sesión | Dry-run informa cuentas elegibles, hashes pendientes, omitidas, ambiguas y modo de reanudación; escritura devuelve estado de lote/progreso. | Solo Desarrollador; Users y ActiveSessions; requiere confirmación para escribir, procesa por lotes y verifica hashes. |
+| `benchmarkPasswordKdf` | Sin campos de negocio; solo contexto de sesión | `status`, `benchmarkOnly:true`, `readOnly:true`, nota y resultados. | Solo Desarrollador; diagnóstico fijo PBKDF2, sin leer ni modificar contraseñas de usuarios. |
+
+### 14.1 Datos y dependencias AUTH
+
+- Hojas directas identificadas: `Users`, `ActiveSessions`, `Logs`.
+- Sesiones: registro de tokens, expiración/actividad, revocación, limpieza y contexto confiable de usuario/rol.
+- Recuperación: desafío de un solo uso, vinculado a usuario/correo y expiración; envío mediante MailApp. El código no debe filtrarse en logs ni respuestas.
+- Contraseñas: almacenamiento como hash y compatibilidad de hashes heredados; `migrateLegacyPasswords` es una operación de mantenimiento con dry-run/confirmación.
+- Aceptación de términos: almacenamiento por dispositivo en `Users.TermsAcceptance`, versión vigente `2026-07`, con verificación de escritura.
+- Coordinator/SharedMutation actual: AUTH registra/sincroniza/revoca sesiones y solicita invalidación de cachés remotas. Esas dependencias deben convertirse en llamadas directas del frontend o en mecanismos locales equivalentes antes de retirar el protocolo actual.
+
+### 14.2 Límites y pendientes de precisión
+
+Esta primera tabla identifica campos de entrada y familias de respuesta/errores a partir del handler. Para cerrar el contrato AUTH falta capturar los objetos completos de perfil/sesión, los campos exactos de cada error, las columnas físicas de Users/ActiveSessions/Logs por operación y la secuencia exacta de llamadas a Coordinator. Las pruebas de integración con MailApp, Spreadsheet y deployments permanecen reservadas a Beta; no se simularon.
