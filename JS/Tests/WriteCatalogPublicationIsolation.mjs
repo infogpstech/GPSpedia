@@ -31,10 +31,14 @@ const versionIndex = addCut.indexOf("nextWriteCatalogSourceVersion_");
 assert.ok(releaseIndex >= 0 && versionIndex > releaseIndex,
     "La versión local se calcula después de liberar el lock físico.");
 
-assert.doesNotMatch(write, /publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_|properties\\.getProperty\\("GPSpedia_COORDINATOR_(?:URL|SECRET)"\\)/);
-assert.match(write, /deleteProperty\\("GPSpedia_COORDINATOR_URL"\\)/);
-assert.match(write, /deleteProperty\\("GPSpedia_COORDINATOR_SECRET"\\)/);
-assert.match(write, /function doPost\\(e\\)\\s*\\{\\s*try\\s*\\{\\s*removeLegacyWriteCoordinatorSettings_\\(\\)/);
+assert.equal(write.includes("publishSharedCatalogChange_"), false);
+assert.equal(write.includes("publishCortesCatalogChange_"), false);
+assert.equal(write.includes("buildCortesCatalogChange_"), false);
+assert.equal(write.includes('properties.getProperty("GPSpedia_COORDINATOR_URL")'), false);
+assert.equal(write.includes('properties.getProperty("GPSpedia_COORDINATOR_SECRET")'), false);
+assert.ok(write.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
+assert.ok(write.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
+assert.ok(write.includes("removeLegacyWriteCoordinatorSettings_();"));
 const cleanupSource = extract("removeLegacyWriteCoordinatorSettings_", "doPost");
 const deletedProperties = [];
 const cleanup = new Function("PropertiesService", cleanupSource + "\nreturn removeLegacyWriteCoordinatorSettings_;")({

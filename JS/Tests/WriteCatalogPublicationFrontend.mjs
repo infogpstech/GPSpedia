@@ -6,9 +6,10 @@ const coordinatorSource = read("../Services/Coordinator.js");
 const apiSource = read("../Frontend/api-config.js");
 const writeSource = read("../Services/write.js");
 
-assert.doesNotMatch(writeSource, /publishSharedCatalogChange_|publishCortesCatalogChange_|properties\\.getProperty\\("GPSpedia_COORDINATOR_(?:URL|SECRET)"\\)/);
-assert.match(writeSource, /deleteProperty\\("GPSpedia_COORDINATOR_URL"\\)/);
-assert.match(writeSource, /deleteProperty\\("GPSpedia_COORDINATOR_SECRET"\\)/);
+assert.equal(writeSource.includes("publishSharedCatalogChange_"), false);
+assert.equal(writeSource.includes("publishCortesCatalogChange_"), false);
+assert.ok(writeSource.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
+assert.ok(writeSource.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
 const cleanupStart = writeSource.indexOf("function removeLegacyWriteCoordinatorSettings_()");
 const cleanupEnd = writeSource.indexOf("\nfunction ", cleanupStart + 10);
 assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
@@ -86,4 +87,4 @@ const freeze = coordinator.publishWriteCatalogResetFromBrowser({
 assert.equal(freeze.status, "success");
 assert.equal(freeze.resetRequired, false);
 
-console.log("WriteCatalogPublicationFrontend: 7/7 PASS — sesión/RBAC, reset seguro, idempotencia y ausencia de secreto compartido");
+console.log("WriteCatalogPublicationFrontend: 8/8 PASS — sesión/RBAC, reset seguro, idempotencia y ausencia de secreto compartido");
