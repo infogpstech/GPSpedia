@@ -106,4 +106,4 @@ const traffic = coordinator.getServiceTrafficFromBrowser({ userId: developerId, 
 assert.equal(traffic.status, "success");
 assert.equal(traffic.scope, "global_service_traffic");
 
-console.log("CatalogPublicationFrontend: 10/10 PASS — sesión/RBAC, resets WRITE/ADMIN, idempotencia y limpieza de propiedades heredadas");
+console.log("CatalogPublicationFrontend: 32/32 PASS — sesión/RBAC, resets WRITE/ADMIN, idempotencia y limpieza de propiedades heredadas");
