@@ -7,25 +7,28 @@
 Guía operativa paso a paso y matriz de despliegue por archivo: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
 
 
-## Estado actual — GPSpedia2.2.5_work (2026-11-22)
+## Estado actual — GPSpedia2.2.5_work (2026-11-23)
 
-Esta sección describe el contrato vigente de la rama de trabajo y prevalece sobre las notas históricas más abajo cuando exista diferencia:
+Esta sección prevalece sobre las instrucciones históricas que siguen. No desplegar ni configurar el protocolo retirado.
 
-- AUTH conserva lease compartida únicamente para deleteUser. El login usa lock local para intentos fallidos/sesión y sincroniza el contexto inicial; no adquiere lease. Logout, cambios/restablecimientos de contraseña, reset de sesiones, cambios de rol y recuperación conservan la revocación/invalidación remota necesaria, pero no adquieren leases por acción.
-- USERS conserva lease en createUser únicamente para excluir la creación frente a AUTH/deleteUser sobre el recurso lógico USERS. getUsers y updateProfile usan actor precargado localmente, sin lease.
-- touchSession permanece como acción heredada sin consumidor frontend activo y sin lease. acceptTerms usa actor precargado y lock local para proteger su escritura JSON; no hace touchSession adicional.
-- Después de syncUserSessions, Coordinator precarga el actor en USERS, WRITE, FEEDBACK y ADMIN mediante el endpoint interno autenticado __primeSessionActorCache. La precarga se ejecuta después de liberar el lock de Coordinator y en lotes de hasta 25 tokens por servicio. AUTH precalienta también su caché local.
-- getCachedSharedSessionActor_ solo lee la caché local y renueva su TTL (máximo seis horas). Un cache miss no llama a validateSessionContext ni revalida identidad: falla cerrado y solicita iniciar sesión nuevamente. El login debe precargar los servicios antes de que el usuario ejecute acciones protegidas. Si la precarga de un servicio falla, AUTH registra el servicio pendiente y ese servicio no acepta acciones protegidas hasta que una nueva sesión precargue su actor.
-- La invalidación remota incluye USERS, WRITE, FEEDBACK y ADMIN. El proyecto Coordinator debe tener GPSpedia_SERVICE_URL_USERS y GPSpedia_COORDINATOR_SECRET_USERS configurados, además de las URLs/secretos de los otros tres servicios. Cada proyecto de servicio debe tener SharedMutationClient.js actualizado, su GPSpedia_COORDINATOR_SECRET correspondiente y los endpoints internos de precarga e invalidación.
-- CacheService renueva el TTL en cada hit local; una caché expirada/evictada requiere un nuevo login. No se guardan tokens en logs ni en los valores de actor: las claves se derivan mediante hash.
+- MIG-023 trasladó el feed incremental a CATALOG y retiró las rutas públicas de feed de Coordinator.
+- MIG-024 retiró el cliente SharedMutation, las leases, las acciones de publicación/lectura de catálogo y las llamadas `UrlFetchApp` de Coordinator.
+- `SharedMutationClient.js` fue retirado. Los helpers locales de contexto/caché de actor están en `JS/Services/SharedSessionActor.js`; se incluyen en AUTH, WRITE, FEEDBACK, UTILITIES y ADMIN. CATALOG mantiene su propio actor local.
+- AUTH, WRITE, FEEDBACK, UTILITIES y ADMIN no consumen leases remotas. ADMIN usa guardas locales por recurso con un lock breve para reservar/liberar el marcador; no mantiene ScriptLock durante el procesamiento.
+- La invalidación de cachés se coordina desde `JS/Frontend/sessionCacheInvalidation.js` directamente con AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES. Coordinator ya no precarga ni invalida cachés de otros servicios.
+- USERS no forma parte del registro central activo y no tiene fuente de servicio en el árbol actual; las referencias USERS de las secciones históricas no representan un consumidor vigente.
+- Coordinator conserva temporalmente contexto de sesión legado, telemetría y su endpoint health. Estas capacidades se migran/retiran en MIG-025; no agregar consumidores nuevos ni configurar SharedMutation.
+- Las propiedades `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET` ya no deben configurarse en los servicios activos. Las propiedades internas heredadas del proyecto Coordinator se retiran al completar MIG-025.
+- La dependencia CATALOG/ADMIN del secreto de metadatos del inventario de imágenes es una integración heredada separada, pendiente de MIG-026; no debe copiarse a nuevos entornos.
 
-## Componentes
+## Componentes vigentes
 
-- `JS/Services/Coordinator.js`: servicio Apps Script independiente (v1.4.7). Mantiene las leases y el agregado de eventos Coordinator en ScriptProperties; no accede a Spreadsheet ni Drive.
-- `JS/Services/SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
-- AUTH conserva lease solo para deleteUser; USERS/createUser conserva lease para exclusión frente a esa eliminación; UTILITIES/migrateTimestamps conserva lease para su migración operativa. WRITE, FEEDBACK, ADMIN y las acciones AUTH/USERS ordinarias usan actor cacheado sin leases por acción.
-- ADMIN ya no declara `ACTIVE_SESSIONS` como `sharedWriteResources` ni adquiere leases para acciones ordinarias. Usa el actor de sesión cacheado y conserva la matriz RBAC/auditoría; logout y eliminación de cuenta invalidan su caché mediante el endpoint interno autenticado.
-- FEEDBACK usa el actor cacheado para lecturas y mutaciones autenticadas; no adquiere `FEEDBACK/sessionActivity` ni leases por acción. `recordLike` conserva sus escrituras funcionales en Cortes, Feedback y Activity sin bloquear una operación con viajes a Coordinator.
+- `JS/Services/Coordinator.js`: servicio transitorio limitado a contexto legado, telemetría y health hasta MIG-025. Ya no administra leases, no publica el feed del catálogo y no llama a otros servicios.
+- `JS/Services/SharedSessionActor.js`: helpers exclusivamente locales de actor/caché; no realiza llamadas HTTP ni usa secretos compartidos.
+- `JS/Frontend/sessionCacheInvalidation.js`: coordinación desde navegador de la invalidación de cachés locales.
+- `JS/Services/admin.js`: guardas locales por recurso para auditoría, inventario y creación de carpetas.
+
+**Historial:** las instrucciones de protocolo, leases, precarga remota, invalidación remota, URLs/secretos y compatibilidad v1/v2 de las secciones siguientes describen la arquitectura anterior. No ejecutarlas. Se conservan solo para trazabilidad hasta retirar Coordinator en MIG-025.
 
 ## Configuración de cada entorno
 
