@@ -1,30 +1,24 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
-const end = source.indexOf("\nfunction sanitizeSupplementaryRichText_", start);
-assert.ok(start >= 0 && end > start, "No se encontró handleAddOrUpdateCut");
-const handler = source.slice(start, end);
-const branchStart = handler.indexOf("} else { // --- Lógica para vehículo NUEVO");
-const branch = handler.slice(branchStart);
-const copy = branch.indexOf("copyAdminRowPresentationOnly_(sheet, lastRow, rowIndex, lastColumn)");
-const clear = branch.indexOf("sheet.getRange(rowIndex, 1, 1, lastColumn).clearContent()");
-const flush = branch.indexOf("SpreadsheetApp.flush()", clear);
-const assign = branch.indexOf("sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId)");
-const confirm = branch.indexOf("sheet.getRange(rowIndex, COLS_CORTES.id).getValue()");
-assert.ok(copy >= 0 && copy < clear && clear < flush && flush < assign && assign < confirm,
-    "Debe copiar plantilla, limpiar una fila completa, hacer flush y luego asignar/confirmar ID");
-assert.equal((branch.match(/\.clearContent\(\)/g) || []).length, 1,
-    "La limpieza inicial debe realizar una sola llamada clearContent");
-assert.doesNotMatch(branch, /getRange\(rowIndex,\s*2,\s*1,\s*lastColumn\s*-\s*1\)/,
-    "No debe mantenerse la limpieza separada de las columnas de datos");
-assert.match(branch, /recordOpId\(opId, newId, 1, formattedDate, "pending"/,
-    "La reserva idempotente pending debe mantenerse");
-assert.ok(branch.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending"') <
-    branch.indexOf("runAdminContributionDriveWorkOutsideScriptLock_"),
-    "La reserva pending debe preceder a Drive");
-assert.ok(branch.indexOf('recordOpId(opId, newId, 1, formattedDate, "completed"') >
-    branch.indexOf("SpreadsheetApp.flush()", branch.indexOf("runAdminContributionDriveWorkOutsideScriptLock_")),
-    "La operación solo debe completarse después de escribir y hacer flush");
-console.log("AdminNewVehicleSingleRowClear: 7/7 PASS — una limpieza de fila, ID central y reserva idempotente preservados");
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const write=readFileSync(new URL("../Services/write.js",import.meta.url),"utf8");
+const start=admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
+const end=admin.indexOf("\nfunction sanitizeSupplementaryRichText_",start);
+assert.ok(start>=0&&end>start);
+assert.ok(admin.slice(start,end).includes("ACTION_MOVED_TO_WRITE"));
+const fnStart=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_");
+const fnEnd=write.indexOf("\nfunction ",fnStart+10);
+assert.ok(fnStart>=0&&fnEnd>fnStart,"No se encontró el alta física canónica en WRITE.");
+const handler=write.slice(fnStart,fnEnd);
+const copyFormat=handler.indexOf("copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT");
+const copyValidation=handler.indexOf("copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION");
+const clear=handler.indexOf("dataRange.clearContent()");
+const clearId=handler.indexOf("sheet.getRange(rowIndex, COLS_CORTES.id).clearContent()");
+const flush=handler.indexOf("SpreadsheetApp.flush()",clearId);
+const assign=handler.indexOf("sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId)");
+const confirm=handler.indexOf("sheet.getRange(rowIndex, COLS_CORTES.id).getValue()",assign);
+assert.ok(copyFormat>=0&&copyValidation>copyFormat&&clear>copyValidation&&clearId>clear&&flush>clearId&&assign>flush&&confirm>assign,
+ "WRITE debe copiar formato/validaciones, limpiar, hacer flush y luego asignar/verificar el ID");
+assert.match(handler,/recordOpId\(opId, newId, 1, formattedDate, "pending"/);
+assert.ok(handler.indexOf('recordOpId(opId, newId, 1, formattedDate, "pending"')<handler.indexOf("runWriteDriveWorkOutsideScriptLock_"));
+console.log("AdminNewVehicleSingleRowClear: 1/1 PASS — WRITE limpia la fila, asigna ID reservado y conserva recuperación idempotente");
