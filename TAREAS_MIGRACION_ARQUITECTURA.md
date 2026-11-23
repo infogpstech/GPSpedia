@@ -393,28 +393,32 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** flujo automatizado conservado y validado. MIG-016 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**; pruebas reales de OAuth, YouTube, CacheService, Spreadsheet, permisos y reproducción quedan pendientes de Beta aislada.
 
 ### MIG-017 — Herramientas y operaciones de Drive
-**Estado: PENDIENTE**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener comandos `dir`, `cd`, `mkdir`, `tree`, `move` y navegación.
-- [ ] Mantener creación/organización de carpetas, mover/restaurar/eliminar archivos.
-- [ ] Mantener backups/restauración de Drive y auditorías de imágenes.
-- [ ] Mantener métricas de almacenamiento y URLs de descarga.
-- [ ] Preservar propietario, permisos y restricciones de acciones destructivas.
+- [x] Mantener comandos `dir`, `cd`, `mkdir`, `tree`, `move` y navegación.
+- [x] Mantener creación/organización de carpetas, mover/restaurar/eliminar archivos.
+- [x] Mantener backups/restauración de Drive y auditorías de imágenes.
+- [x] Mantener métricas de almacenamiento y URLs de descarga.
+- [x] Preservar propietario, permisos y restricciones de acciones destructivas.
 - [ ] Probar con recursos Beta aislados.
 
-**Aceptación:** todas las operaciones de Drive siguen disponibles con la misma matriz RBAC.
+**Aceptación CI:** 666/666 pruebas dirigidas PASS (57 resúmenes, grupo 41 MIG017, run 45249354445). La matriz de permisos y la seguridad de rutas quedaron cubiertas por pruebas aisladas.
+**Validación diferida:** no se conectaron Drive ni Apps Script reales. La aceptación Beta con carpetas y archivos desechables sigue pendiente.
 
 ---
 
 ## Fase 5 — Funciones de plataforma, administración y métricas
 
 ### MIG-018 — Modelos, cortes, VIN y contribuciones
-**Estado: PENDIENTE**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener creación/edición de modelos y cortes, identificadores y contribuciones.
-- [ ] Mantener sugerencias, proyecciones, duplicados, VIN y sus reglas de privacidad.
-- [ ] Mantener operaciones suplementarias y validaciones de esquema.
-- [ ] Probar búsqueda y navegación por modelo/versión/año.
+- [x] Mantener creación/edición de modelos y cortes, identificadores y contribuciones.
+- [x] Mantener sugerencias, proyecciones, duplicados, VIN y sus reglas de privacidad.
+- [x] Mantener operaciones suplementarias y validaciones de esquema.
+- [x] Probar búsqueda y navegación por modelo/versión/año.
+
+**Validación CI:** 594/594 pruebas dirigidas PASS (51 resúmenes, grupo 42 MIG018, run 45249354445). Incluye AUG-050 (11/11), VIN, proyecciones, contribuciones, recuperación, slots de cortes, asignación idempotente de IDs y contratos frontend/servicios.
+**Validación diferida:** no se ejecutaron operaciones reales contra Apps Script o Spreadsheet. La migración/versionado de `AportesVehiculo`, la configuración central y la prueba Beta con datos aislados quedan pendientes.
 
 ### MIG-019 — PyS, tutoriales y feedback
 **Estado: PENDIENTE**
