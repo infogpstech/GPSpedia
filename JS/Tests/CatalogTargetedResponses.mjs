@@ -70,7 +70,7 @@ const inventoryResponse = new Function("readCatalogContributionProjectionVehicle
     () => true
 );
 const inventoryPayload = inventoryResponse({ limit: 500, includeImageInventoryEvents: true, secret: "s".repeat(40) });
-assert.throws(() => inventoryResponse({ limit: 500, includeImageInventoryEvents: true, secret: "wrong" }), /Acceso denegado/);
+assert.equal(inventoryResponse({ limit: 500, includeImageInventoryEvents: true, secret: "wrong" }).status, "success", "El contrato ya no usa un secreto interservicio; CATALOG aplica sesión/RBAC propia.");
 assert.equal(inventoryPayload.imageInventoryCandidates.length, 1);
 assert.equal(inventoryPayload.imageInventoryCandidates[0].eventId, "EV-IMG");
 assert.equal(inventoryPayload.imageInventoryEvents, undefined, "CATALOG ya no expone el ledger interno de eventos al consumidor.");
