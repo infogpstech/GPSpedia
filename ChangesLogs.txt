@@ -105,3 +105,14 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md e INVENTARIO_LLAMADAS_SERVICIOS.md.
 - No se modificaron endpoints instalados, PropertiesService, deployments, Spreadsheet, Drive ni datos.
 
+
+### 2026-11-23 — Cierre MIG-010: orquestación frontend multi-servicio
+- MIG-010 se marca COMPLETADA CON VALIDACIÓN DIFERIDA tras la aprobación de la regresión Node.js 22 en GitHub Actions.
+- CI SUCCESS: run 45209447602; 306 suites, 3,558 pruebas aprobadas y 0 fallos. La suite MIG010FrontendServiceOrchestration obtuvo 58/58 PASS.
+- GitHub Pages build/deploy SUCCESS: run 45209445911.
+- Se actualizó el inventario de llamadas: ADMIN ya no coordina funcionalmente WRITE ni CATALOG para los flujos cubiertos; el frontend realiza las solicitudes y cada servicio valida su propia sesión/rol.
+- Se actualizaron contratos de pruebas heredados que todavía exigían wrappers backend→backend, trasladando la cobertura de altas, reserva idempotente, encabezados VIN/testigo y vinculación de imágenes al servicio propietario WRITE.
+- WRITE reutiliza el snapshot de encabezados VIN/testigo y el índice VIN validado en las comprobaciones de duplicados.
+- La recuperación de reemplazos de imágenes separa estado ADMIN y proyección CATALOG: el frontend combina ambas respuestas sin lectura materializada de Cortes desde ADMIN.
+- Beta real sigue pendiente: no se desplegaron servicios Apps Script ni se modificaron PropertiesService, deployments, endpoints instalados, Spreadsheet, Drive o datos externos.
+- Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md, INVENTARIO_LLAMADAS_SERVICIOS.md y checkpoint.md. Siguiente tarea: MIG-011.
