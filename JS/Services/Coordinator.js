@@ -40,7 +40,7 @@ const SERVICE_TRAFFIC_SERVICES_ = Object.freeze(["AUTH", "CATALOG", "WRITE", "FE
 const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
     WRITE: new Set(["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","freezeCortesIds"]),
     FEEDBACK: new Set(["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
-    ADMIN: new Set(["addLogo","createCortesImageFolder","migrateVehicleContributionsSchema","updateVehicleField","uploadAdminImage","normalizeImages","organizePrimaryVehicleImages","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","moveReplacedImage","applyCortesImageReconciliation","restoreDatabase","reorganizeDatabase","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads"])
+    ADMIN: new Set(["addLogo","createCortesImageFolder","migrateVehicleContributionsSchema","updateVehicleField","uploadAdminImage","normalizeImages","organizePrimaryVehicleImages","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","moveReplacedImage","applyCortesImageReconciliation","restoreDatabase","reorganizeDatabase","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","resolveVehicleContributionCandidate"])
 });
 
 function coordinatorPolicy_(service, operation) {
@@ -1441,24 +1441,32 @@ function createSharedMutationCoordinator_(dependencies) {
         return result;
     }
 
-    function publishWriteCatalogResetFromBrowser_(payload) {
+    function publishCatalogResetFromBrowser_(payload) {
         const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
         const userId = String(source.userId || "").trim();
         const sessionToken = String(source.sessionToken || "");
+        const service = String(source.service || "").trim().toUpperCase();
         const operation = String(source.operation || "").trim();
         const requestId = String(source.requestId || "").trim();
-        const allowedOperations = new Set(["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"]);
-        if (!userId || !sessionToken) throw new Error("La publicación de WRITE requiere una sesión autenticada.");
-        if (!allowedOperations.has(operation)) throw new Error("La operación WRITE no está autorizada para publicar el catálogo.");
-        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) throw new Error("El identificador de publicación WRITE no es válido.");
+        const allowedOperations = {
+            WRITE: new Set(["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"]),
+            ADMIN: new Set(["addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
+                "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
+                "migrateIdentifiers", "rollbackIdentifiers", "resolveVehicleContributionCandidate"])
+        };
+        if (!userId || !sessionToken) throw new Error("La publicación del catálogo requiere una sesión autenticada.");
+        if (!allowedOperations[service] || !allowedOperations[service].has(operation)) {
+            throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
+        }
+        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) throw new Error("El identificador de publicación no es válido.");
         const actor = authorizeSession_(userId, sessionToken, now());
         const role = String(actor && actor.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
         const allowedRoles = new Set(["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
-        if (!allowedRoles.has(role)) throw new Error("El rol de la sesión no puede publicar cambios de WRITE.");
-        if (operation === "freezeCortesIds" && role !== "desarrollador") {
-            throw new Error("Solo Desarrollador puede publicar la estabilización masiva de IDs.");
+        if (!allowedRoles.has(role)) throw new Error("El rol de la sesión no puede publicar cambios del catálogo.");
+        if ((service === "ADMIN" || operation === "freezeCortesIds") && role !== "desarrollador") {
+            throw new Error("Solo Desarrollador puede publicar estas operaciones administrativas.");
         }
-        return publishCatalogChange_("WRITE", operation, {
+        return publishCatalogChange_(service, operation, {
             requestId: requestId,
             change: { operation: "reset" }
         });
@@ -1496,7 +1504,7 @@ function createSharedMutationCoordinator_(dependencies) {
 
     return {
         handleRequest: handleRequest,
-        publishWriteCatalogResetFromBrowser: publishWriteCatalogResetFromBrowser_,
+        publishCatalogResetFromBrowser: publishCatalogResetFromBrowser_,
         // Feed público: solo expone los eventos ya publicados de colecciones del catálogo.
         // Las escrituras y las operaciones de sesión continúan en el canal POST autenticado.
         getPublicCatalogChanges: function(payload) {
@@ -1546,8 +1554,8 @@ function doPost(e) {
             fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
             fetchAll: function(requests) { return UrlFetchApp.fetchAll(requests); }
         });
-        if (request && request.action === "publishWriteCatalogReset") {
-            response = coordinator.publishWriteCatalogResetFromBrowser(request.payload);
+        if (request && request.action === "publishCatalogReset") {
+            response = coordinator.publishCatalogResetFromBrowser(request.payload);
         } else {
             response = coordinator.handleRequest(request);
         }
