@@ -49,7 +49,7 @@ run('FEEDBACK no guarda URLs, secretos ni configuración local de COORDINATOR',(
 run('El journal de cambios se consulta desde frontend a través de la configuración central de COORDINATOR',()=>{
   assert(/'getCatalogChanges': 'COORDINATOR'/.test(api));
   const start=api.indexOf('export async function getCatalogChanges(');
-  const end=api.indexOf('\\nexport async function ',start+10);
+  const end=api.indexOf('\nexport async function ',start+10);
   const body=api.slice(start,end>start?end:api.length);
   assert(start>=0&&body.includes("getConfiguredServiceEndpoint_(\"COORDINATOR\")"));
   assert(!/GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/.test(body));
