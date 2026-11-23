@@ -475,7 +475,7 @@ runGroup('39','MIG015',()=>{
 runGroup('41','MIG017',()=>{
  const a=read('JS/Services/admin.js');
  runCli('MIG017 terminal Drive: alcance, navegación y permisos','JS/Tests/DriveTerminalScope.mjs');
- runCli('MIG017 terminal Drive: cliente move e IDs visibles','JS/Tests/DriveTerminalMoveClient.mjs');
+ runCli('MIG017 terminal Drive: cliente move, IDs y separador whitespace','JS/Tests/DriveTerminalMoveClient.mjs');
  runCli('MIG017 respaldo Drive reanudable','JS/Tests/AdminBackupResumeUI.mjs');
  runCli('MIG017 métricas y alertas de almacenamiento Drive','JS/Tests/DriveStorageAlerts.mjs');
  recordResult('MIG017 respaldo/restauración/rollback Drive',loadFunction('JS/Tests/AdminRestoreRecovery.js','runAdminRestoreRecoveryTests')(a));
