@@ -6,7 +6,18 @@ const coordinatorSource = read("../Services/Coordinator.js");
 const apiSource = read("../Frontend/api-config.js");
 const writeSource = read("../Services/write.js");
 
-assert.doesNotMatch(writeSource, /publishSharedCatalogChange_|publishCortesCatalogChange_|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
+assert.doesNotMatch(writeSource, /publishSharedCatalogChange_|publishCortesCatalogChange_|properties\\.getProperty\\("GPSpedia_COORDINATOR_(?:URL|SECRET)"\\)/);
+assert.match(writeSource, /deleteProperty\\("GPSpedia_COORDINATOR_URL"\\)/);
+assert.match(writeSource, /deleteProperty\\("GPSpedia_COORDINATOR_SECRET"\\)/);
+const cleanupStart = writeSource.indexOf("function removeLegacyWriteCoordinatorSettings_()");
+const cleanupEnd = writeSource.indexOf("\\nfunction ", cleanupStart + 10);
+assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
+const deletedProperties = [];
+const cleanup = new Function("PropertiesService", writeSource.slice(cleanupStart, cleanupEnd) + "\\nreturn removeLegacyWriteCoordinatorSettings_;")({
+    getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
+});
+cleanup();
+assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
 assert.match(apiSource, /'publishWriteCatalogReset': 'COORDINATOR'/);
 assert.match(apiSource, /WRITE_CATALOG_RESET_ACTIONS_/);
 assert.match(apiSource, /publishWriteCatalogResetAfterMutation_/);
@@ -75,4 +86,4 @@ const freeze = coordinator.publishWriteCatalogResetFromBrowser({
 assert.equal(freeze.status, "success");
 assert.equal(freeze.resetRequired, false);
 
-console.log("WriteCatalogPublicationFrontend: 6/6 PASS — sesión/RBAC, reset seguro, idempotencia y ausencia de secreto compartido");
+console.log("WriteCatalogPublicationFrontend: 7/7 PASS — sesión/RBAC, reset seguro, idempotencia y ausencia de secreto compartido");

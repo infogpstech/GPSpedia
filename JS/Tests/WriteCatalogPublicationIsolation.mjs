@@ -31,7 +31,17 @@ const versionIndex = addCut.indexOf("nextWriteCatalogSourceVersion_");
 assert.ok(releaseIndex >= 0 && versionIndex > releaseIndex,
     "La versión local se calcula después de liberar el lock físico.");
 
-assert.doesNotMatch(write, /publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
+assert.doesNotMatch(write, /publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_|properties\\.getProperty\\("GPSpedia_COORDINATOR_(?:URL|SECRET)"\\)/);
+assert.match(write, /deleteProperty\\("GPSpedia_COORDINATOR_URL"\\)/);
+assert.match(write, /deleteProperty\\("GPSpedia_COORDINATOR_SECRET"\\)/);
+assert.match(write, /function doPost\\(e\\)\\s*\\{\\s*try\\s*\\{\\s*removeLegacyWriteCoordinatorSettings_\\(\\)/);
+const cleanupSource = extract("removeLegacyWriteCoordinatorSettings_", "doPost");
+const deletedProperties = [];
+const cleanup = new Function("PropertiesService", cleanupSource + "\\nreturn removeLegacyWriteCoordinatorSettings_;")({
+    getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
+});
+cleanup();
+assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
 assert.match(api, /'publishWriteCatalogReset': 'COORDINATOR'/);
 assert.match(api, /const WRITE_CATALOG_RESET_ACTIONS_/);
 assert.match(api, /service === "WRITE"[\s\S]*?WRITE_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishWriteCatalogResetAfterMutation_/);
@@ -43,4 +53,4 @@ assert.match(coordinator, /request\.action === "publishWriteCatalogReset"/);
 assert.match(coordinator, /authorizeSession_\([\s\S]*?publishCatalogChange_\("WRITE", operation/);
 assert.match(coordinator, /change:\s*\{\s*operation:\s*"reset"\s*\}/);
 assert.match(coordinator, /operation === "freezeCortesIds" && role !== "desarrollador"/);
-console.log("WriteCatalogPublicationIsolation: 18/18 PASS — WRITE no coordina servicios desde Apps Script; el frontend publica reset autenticado");
+console.log("WriteCatalogPublicationIsolation: 22/22 PASS — WRITE no coordina servicios desde Apps Script; el frontend publica reset autenticado");
