@@ -63,10 +63,8 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 ### BETA-05 — ADMIN y mantenimiento
 - Panel Developer: health individual de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; telemetría local del navegador claramente etiquetada. No existe agregado global de Coordinator.
 - Confirmar identidad, versión, latencia, estados online/slow/unavailable/error/unknown/stale, timeout y aislamiento de fallos entre endpoints.
-- Tráfico global: validar ventanas de 1/6/24 horas, RBAC Desarrollador, compatibilidad de buckets históricos v1 y nuevos v2, deduplicación de reintentos y retención de 24 horas.
-- Verificar que los nuevos incrementos globales corresponden únicamente a adquisiciones exitosas de lease; las validaciones de sesión, lecturas del feed y sondeos de salud no deben escribir métricas. Comprobar que la persistencia usa el guardado de lease ya requerido, sin una escritura adicional.
-- Verificar que el histórico v1 se suma una sola vez durante la transición y desaparece al expirar; no comparar el contador global con el total de requests HTTP.
-- Telemetría local del navegador: validar percentiles, ventanas horarias, límites de eventos, ausencia de payloads/tokens/identidad y separación respecto del agregado global. Confirmar que se reinicia al cerrar/recargar la pestaña.
+- Agregado global Coordinator: retirado en MIG-025 junto con su recopilador. No ejecutar pruebas de ventanas 1/6/24 horas, RBAC del endpoint getServiceTraffic, transición de buckets v1/v2 ni retención de ese agregado; esos contratos ya no pertenecen a los servicios activos. Los valores históricos que pudieran persistir en ScriptProperties no se borran automáticamente.
+- Telemetría local del navegador: validar ventanas horarias, límites de eventos, ausencia de payloads/tokens/identidad y alcance por pestaña/navegador. Confirmar que no se transmite ni persiste y que se reinicia al cerrar/recargar la pestaña. No presentarla como sustituto ni estimación del tráfico global.
 - Inventario de imágenes, escaneo Drive y operaciones sobre recursos de prueba.
 - Separar consultas read-only de acciones mutables.
 - Permisos, confirmaciones, read-back y rollback.
@@ -170,7 +168,7 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 
 - Confirmar que el registro central entrega únicamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN y que sus seis endpoints health responden de forma independiente.
 - Simular caída, lentitud, respuesta inválida y recuperación de cada servicio; verificar que el panel identifica el servicio afectado sin bloquear el resto.
-- Confirmar que el panel Developer presenta la telemetría local como solicitudes del navegador actual, sin afirmar que representa tráfico global ni todos los requests HTTP.
+- Confirmar que el panel Developer conserva una nota visible sobre el agregado global retirado: el antiguo contador solo reflejaba eventos legacy de Coordinator y no todas las solicitudes HTTP. Verificar que las métricas locales se identifican como datos del navegador actual y no se presentan como sustituto del agregado global.
 - Verificar que no se invocan endpoints de COORDINATOR, no existe fallback a su URL y las acciones ordinarias, sesión, invalidación y feed siguen funcionando sin ese servicio.
 - Revisar deployments, triggers y propiedades Apps Script existentes solo en proyectos Beta desechables; documentar recursos externos huérfanos para limpieza autorizada. No borrar proyectos, propiedades ni datos automáticamente.
 - Registrar HEAD, versiones de deployments, servicio, rol, navegador/dispositivo, resultado y evidencia anonimizada. No copiar secretos ni datos personales.
