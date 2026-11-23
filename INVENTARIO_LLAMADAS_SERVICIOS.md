@@ -267,3 +267,15 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - `getUsers` conserva el filtrado jerárquico: Desarrollador ve todos; Jefe ve Supervisor/Técnico; Supervisor ve Técnico. No expone hash ni token.
 - El router, el mapa de servicios, el contrato de salud, el tráfico global, las allowlists Coordinator y las listas de caché ya no declaran USERS como servicio independiente. Se eliminaron `JS/Services/users.js` y `JS/Tests/users.js` después de migrar sus pruebas al grupo AUTH.
 - Harness local de migración: 15/15 PASS. GitHub Actions Node.js 22: SUCCESS — run 45222509966 (305 suites, 3,554 pruebas, 0 fallos). Sintaxis: 445 archivos PASS; referencias: 347 archivos PASS. El lector central exige seis servicios e ignora la fila histórica USERS hasta completar el cutover Beta. Las invocaciones reales de Apps Script y la desactivación del deployment heredado siguen pendientes de Beta.
+
+
+### 3.5 MIG-013 — Sesiones y actor local sin Coordinator — 2026-11-23
+
+- AUTH es la autoridad de login y del registro `Users/ActiveSessions`. El token de sesión es opaco, se genera en servidor y se registra en ActiveSessions; el hash PBKDF2 y el bloqueo temporal de login permanecen sin cambios.
+- AUTH, WRITE, FEEDBACK, ADMIN y UTILITIES obtienen el actor mediante `getCachedSharedSessionActor_`; CATALOG utiliza `getCatalogSessionActor_`/`loadCatalogSessionActor_`. Cada implementación usa CacheService local del proyecto y consulta la Spreadsheet únicamente en cache miss o tras invalidación.
+- La clave de caché deriva de SHA-256(userId + token); TTL máximo 21,600 segundos. La caché caliente evita lecturas de Users/ActiveSessions en cada acción.
+- En cache miss se valida token único, correspondencia de userId, sesión vigente, fechas, usuario único/activo, rol permitido y ausencia de revocación pendiente. El rol se toma de Users, nunca del payload del navegador.
+- Las rutas de sesión y autorización ordinaria no llaman a Coordinator ni adquieren leases SharedMutation. Las comprobaciones de capacidad son locales y mantienen la matriz RBAC existente.
+- Los endpoints `__invalidateSessionActorCache` limpian la caché del proyecto receptor sin secreto compartido. La orquestación frontend de invalidación remota y el manejo de servicios no disponibles corresponden a MIG-014.
+- La suite `MIG013SessionActorLocalLookup.mjs` cubre ambos loaders, cache miss/hit, TTL, cambio de rol, cuenta eliminada, token revocado/desconocido, expiración, identidad y ausencia de llamadas de sesión a Coordinator.
+- No se alteraron endpoints, deployments, propiedades, hojas ni datos externos. Las pruebas con Apps Script/Spreadsheet reales quedan diferidas a Beta.
