@@ -1183,3 +1183,11 @@ P1 MULTIMEDIA — PRIORIDAD VISIBLE/PRECARGA — 2026-11-21
 - Se contrastó Services/DEPLOYMENT_GUIDE.md con los ocho proyectos backend, SharedMutationClient.js, COORDINATOR_SETUP.md y SERVICE_HEALTH.md. Se confirmaron archivos, orden, dependencias, URLs/propiedades, secretos, pruebas de humo, frontend y redeploy selectivo.
 - Se corrigió una referencia interna de sección y se añadió el procedimiento de rollback controlado, incluyendo orden ante incompatibilidad, restauración segura de propiedades y separación entre rollback de código y recuperación de datos.
 - No se añadieron secretos, IDs ni URLs operativas. No se desplegó Apps Script ni se probaron datos reales; la guía sigue siendo un instructivo para Beta aislada.
+
+
+2026-11-22 — A12 completada con validación diferida: regresión integral y pendientes Beta
+- CI HEAD c70d04c8211b5f801477a801efd05a153d0fa05f: 305 suites / 3,572 pruebas / 0 fallos; sintaxis 437 JS/MJS; referencias 347; health read-only 7/7; Pages build/deployment SUCCESS.
+- Contratos de roles, sesión, invalidación, aislamiento de escrituras/Drive, RBAC, staging y rollback aprobaron; CortesImageModelAssociationSuggestions 8/8 y CortesImageOrganizerUiContract 15/15 PASS.
+- Se documentó la matriz Beta con preflight seguro de sincronización, cuentas/roles, concurrencia, Spreadsheet/Drive, corpus multimedia, YouTube, dashboard, escáner, asociación de modelos, interfaz y Safe Apply.
+- Diff reciente A07-06/A11 revisado. La comparación de rama muestra 7,087 commits ahead / 0 behind y el endpoint limita archivos a 300; no se afirma una revisión exhaustiva línea por línea del histórico. Las tareas previas conservan sus propias evidencias y validaciones.
+- No se ejecutaron pruebas remotas, deployments Apps Script, escrituras reales ni Safe Apply. Los pendientes Beta se mantienen abiertos hasta disponer de recursos aislados autorizados.

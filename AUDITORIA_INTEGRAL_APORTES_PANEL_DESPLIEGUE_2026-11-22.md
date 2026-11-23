@@ -363,3 +363,48 @@ Se publicó un harness manual que obtiene el helper de `HTML/add_cortes.html`, a
 ### A11 — revisión de completitud y vigencia de la guía Apps Script — 2026-11-22
 
 **Resultado:** COMPLETADA. La guía se contrastó con los ocho proyectos y archivos actuales. Coinciden el orden, dependencias, archivos, configuración de Coordinator, matriz de secretos, URLs directas ADMIN, ausencia de SERVICE_URL para UTILITIES, CATALOG sin SharedMutationClient, pruebas de humo y actualización selectiva. Se corrigió el enlace textual a la matriz de secretos y se añadió un procedimiento de rollback paso a paso. No se hizo deployment ni prueba remota; la guía es documentalmente completa para preparar Beta aislada, no evidencia de despliegue real.
+
+## A12 COMPLETADA CON VALIDACIÓN DIFERIDA — regresión integral y cierre de pendientes Beta — 2026-11-22
+
+- **CI de referencia:** HEAD c70d04c8211b5f801477a801efd05a153d0fa05f; 305 suites / 3,572 pruebas / 0 fallos.
+- **Calidad estática:** RepositoryJavaScriptSyntax 437 archivos JS/MJS PASS; RepositoryModuleReferences 347 archivos inspeccionados, referencias relativas resueltas.
+- **Roles/sesión/aislamiento:** CoordinatorCapabilityPreservation 6/6; SessionActivityCoordination 11/11; SessionActivityLeaseMinimization 5/5; SessionInvalidationFlow 15/15; VehicleModalRolePolicy 12/12; USERS mutaciones/RBAC/rollback/coordinación 16/16; AdminImageScanCoordinatorContract 1/1; UTILITIES Spreadsheet simulado/RBAC/staging/rollback 19/19. También pasan los contratos específicos de aislamiento ADMIN/WRITE/FEEDBACK y A07-06.
+- **Pruebas recientes:** CortesImageModelAssociationSuggestions 8/8; CortesImageOrganizerUiContract 15/15.
+- **Entorno:** health read-only 7/7 servicios disponibles; GitHub Pages build/deployment SUCCESS. No se desplegaron proyectos Apps Script ni se modificaron recursos reales.
+- **Diff:** se revisaron los cambios de implementación A07-06 y la actualización documental A11, junto con la evidencia por tarea conservada en checkpoint. La comparación global de la rama reporta 7,087 commits ahead y 0 behind; el endpoint de comparación limita la lista de archivos a 300. No se presenta esa consulta como una auditoría línea por línea de todo el histórico acumulado.
+- **Resultado:** no se detectó un fallo local reproducible en la regresión. Las validaciones reales se mantienen separadas para Beta; no se ejecuta Safe Apply hasta tener autorización, preview, ACL y rollback revisados.
+
+### Preflight obligatorio antes de cualquier prueba Beta
+
+Ejecutar primero estos comandos desde el clon local autorizado. Deben detenerse si el repositorio, la rama o el árbol no coinciden. No usar reset --hard, clean ni force push.
+
+```bash
+cd /ruta/local/GPSpedia || exit 1
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || exit 1
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || exit 1
+test -z "$(git status --porcelain)" || { echo "Árbol con cambios locales; detener sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work &&
+git pull --ff-only origin GPSpedia2.2.5_work &&
+git rev-parse --abbrev-ref HEAD &&
+git rev-parse HEAD
+```
+
+### Matriz de validaciones Beta pendientes
+
+1. **AUTH/USERS y aislamiento:** dos cuentas de prueba con roles distintos; separación de aportes y mensajes; logout remoto; eliminación de cuenta; cambio de rol; expiración/eviction de CacheService e imposibilidad de reutilizar sesiones revocadas.
+2. **WRITE/FEEDBACK/ADMIN y concurrencia:** alta/edición, aportes suplementarios, correcciones, likes, Inbox, pérdida de respuesta, appendRow simultáneo, reintentos, recuperación, journals y read-back en Spreadsheet/Drive aislados.
+3. **Imágenes y logos:** corpus técnico autorizado/anónimo; PNG con alfa, JPEG, orientación, MIME/firma, SHA-256, nitidez de diagramas/cableado y variantes 300/800/1600; CORS, cache hit/miss, primera pintura, bytes, CPU, memoria y cancelación; inventario de tamaños históricos de logos.
+4. **Vídeos/YouTube:** canal de prueba autorizado; sesión resumable, bloques de 8 MiB, checkpoints IndexedDB, pausa/reanudación/cancelación, pérdida de respuesta, recuperación y aprobación/rechazo.
+5. **Dashboard y panel de desarrollador:** fecha de servidor, actor confiable, registros silenciosos con fecha de un año anterior, indicadores de actividad, health global/individual y alcance parcial de telemetría.
+6. **Escáner y asociación de imágenes:** inventario automático idempotente en Imagenes_Reemplazadas; revisión humana de sugerencias por nombre/carpeta; resolver colisiones/ambigüedades y añadir solo alias confirmados. No aplicar asociaciones automáticamente.
+7. **Interfaz:** validar modales, Tutorial/Relay, escritorio, Android/PWA, modo oscuro, navegación y desbordamientos.
+8. **Safe Apply:** no ejecutar hasta disponer de preview actual, ACL autorizada, plan de rollback y recursos Beta desechables. Nunca ejecutar sobre producción como parte de esta lista.
+
+### Precondiciones Beta
+
+- Deployments Apps Script separados y versionados; Spreadsheet y Drive desechables; usuarios de prueba; OAuth y permisos mínimos; canal YouTube de prueba si aplica.
+- Las URLs y propiedades deben pertenecer al mismo entorno. No reutilizar IDs, secretos ni datos operativos.
+- Registrar por prueba: commit, servicio, entorno, rol, navegador/dispositivo, estado de caché, tiempos, requests/bytes, resultado y evidencia.
+- Si no existe un entorno Beta autorizado, mantener estos puntos como PENDIENTES DE BETA; no simularlos ni sustituirlos por health checks.
+
+- **Siguiente fase:** ejecutar esta matriz cuando el entorno Beta aislado y sus credenciales estén autorizados. No añadir nuevas funcionalidades antes de resolver los pendientes vigentes y revisar la evidencia Beta.

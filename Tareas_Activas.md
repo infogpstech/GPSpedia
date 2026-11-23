@@ -454,7 +454,7 @@ P0 telemetría directa y P1 prioridad/benchmark de miniaturas quedan cerrados lo
 - [ ] A08: validar health individual/global y métricas de tráfico con cobertura declarada.
 - [ ] A09–A10: auditar consola, progreso, inventario automático de imágenes reemplazadas y asociación por modelo/carpeta.
 - [x] A11 COMPLETADA: revisada la guía Services/DEPLOYMENT_GUIDE.md contra los ocho proyectos y sus fuentes actuales; archivos, orden, dependencias, URLs/propiedades, matriz de secretos, pruebas de humo, frontend y redeploy selectivo coinciden. Se corrigió una referencia interna de sección y se añadió procedimiento explícito de rollback coordinado. No contiene valores secretos ni autoriza despliegues; Beta/producción permanecen separadas.
-- [ ] A12: regresión integral y cierre de pendientes Beta.
+- [x] A12 COMPLETADA CON VALIDACIÓN DIFERIDA: regresión integral CI 305 suites / 3,572 pruebas / 0 fallos; sintaxis 437 JS/MJS; referencias 347; contratos de roles, sesión, aislamiento y rollback PASS; health 7/7 y Pages SUCCESS en HEAD c70d04c8211b5f801477a801efd05a153d0fa05f. Se conserva checklist Beta aislada con preflight obligatorio; no se ejecutaron pruebas remotas ni Safe Apply en producción. La revisión final cubrió los diffs A07-06/A11 y evidencia individual del checkpoint; no se re-auditó el histórico completo de la rama.
 
 
 ### A01 — sesión, identidad, roles y atribución (2026-11-22)
