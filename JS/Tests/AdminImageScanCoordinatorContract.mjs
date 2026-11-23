@@ -35,7 +35,7 @@ const auditHandler = extractFunction(admin, "handleAuditDriveImagesInCortes");
 assert.match(auditHandler, /withAdminLocalOperationGuard_\("drive-audit:"/,
     "El escáner reserva solo su propio auditId en el guard local.");
 const guard = extractFunction(admin, "withAdminLocalOperationGuard_");
-assert.match(guard, /LockService\.getScriptLock\(\)/);
+assert.match(guard, /lockService\.getScriptLock\(\)/);
 assert.match(guard, /tryLock\(0\)/);
 assert.match(guard, /PropertiesService\.getScriptProperties\(\)/);
 assert.doesNotMatch(guard, /UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|withSharedMutationLease_/);
