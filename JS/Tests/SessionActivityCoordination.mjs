@@ -56,8 +56,7 @@ test("Las mutaciones AUTH revocan sus cachés locales antes de limpiar tokens",(
 test("Los flujos activos no invocan la API legacy de sesión de Coordinator",()=>{
  assert.doesNotMatch(auth,/client\.registerSession|client\.syncUserSessions|client\.validateSessionContext|client\.revokeSession|validateSharedSessionContext_/);
  assert.doesNotMatch(utilities,/client\.registerSession|client\.syncUserSessions|client\.validateSessionContext|client\.revokeSession/);
- assert.match(shared,/function registerSession\(/,"La API legacy permanece aislada para compatibilidad, sin consumidores del flujo actual.");
- assert.match(shared,/function validateSessionContext\(/);
+  assert.doesNotMatch(shared,/function registerSession\(|function validateSessionContext\(|UrlFetchApp/,"SharedSessionActor solo conserva helpers locales.");
 });
 test("UTILITIES conserva la comprobación local de capacidad Desarrollador",()=>{
  assert.match(utilities,/function migrateTimestamps\(payload\)[\s\S]*?getCachedSharedSessionActor_/);
