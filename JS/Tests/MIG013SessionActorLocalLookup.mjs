@@ -2,6 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const source = fs.readFileSync("JS/Services/SharedMutationClient.js", "utf8");
+const auth = fs.readFileSync("JS/Services/Auth.js", "utf8");
+const write = fs.readFileSync("JS/Services/write.js", "utf8");
+const feedback = fs.readFileSync("JS/Services/feedback.js", "utf8");
+const admin = fs.readFileSync("JS/Services/admin.js", "utf8");
+const catalog = fs.readFileSync("JS/Services/catalog.js", "utf8");
+const utilitiesSource = fs.readFileSync("JS/Services/Utilities.js", "utf8");
 const now = Date.UTC(2026, 10, 23, 12, 0, 0);
 const utilities = {
     DigestAlgorithm: { SHA_256: "SHA_256" },
@@ -20,9 +26,10 @@ const headersSessions = ["ID_Usuario","Usuario","ActiveSessions","date","Logs","
 const validUsers = [headersUsers,["U-1","tecnico1","hash","Técnico","","","Técnico Uno",""]];
 const validSessions = [headersSessions,["U-1","tecnico1","opaque-session-token-0001",new Date(now-60000),"",new Date(now-30000)]];
 const values = new Map();
+const cacheTtls = [];
 const cache = {
     get: key => values.get(key) || null,
-    put: (key, value, ttl) => { values.set(key, value); },
+    put: (key, value, ttl) => { cacheTtls.push(ttl); values.set(key, value); },
     remove: key => values.delete(key)
 };
 const api = new Function("SpreadsheetApp","CacheService","Utilities","SPREADSHEET_ID",
@@ -48,6 +55,9 @@ assert.equal(reads,2,"Un cache miss valida en la Spreadsheet y carga el actor lo
 const hot = api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",deps);
 assert.equal(hot.userId,"U-1");
 assert.equal(reads,2,"Las acciones siguientes usan la caché local sin releer Users/ActiveSessions.");
+assert.equal(cacheTtls.at(-1),21600,"La caché tiene un TTL máximo explícito de seis horas.");
+assert.match(api.getSharedSessionActorCacheKey_("U-1","opaque-session-token-0001"),/^GPSpedia_SHARED_SESSION_ACTOR_V1_[a-f0-9]{64}$/);
+assert.doesNotMatch(api.getSharedSessionActorCacheKey_("U-1","opaque-session-token-0001"),/opaque-session-token/);
 
 assert.throws(() => api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",{
     ...deps,cache:{get:()=>null,put(){},remove(){}},
@@ -76,6 +86,19 @@ const changedRole=api.getCachedSharedSessionActor_("U-1","opaque-session-token-0
 });
 assert.equal(changedRole.role,"supervisor","Tras invalidar la caché, el rol nuevo se toma de Users, nunca del payload.");
 
+api.cacheSharedSessionActor_("U-1","opaque-session-token-0001",{userId:"U-1",role:"supervisor",fullName:"Técnico Uno",epoch:1},deps);
+api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]},{cache});
+const deletedUsers=[headersUsers,["U-1","__deleted__:tecnico1","hash","supervisor","","","Técnico Uno",""]];
+assert.throws(()=>api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",{
+ ...deps,openSpreadsheet:()=>makeSpreadsheet(deletedUsers,validSessions)
+}),/desactivada|rol válido|cuenta/i,"Una cuenta eliminada no recupera actor tras invalidar la caché.");
+
+api.cacheSharedSessionActor_("U-1","opaque-session-token-0001",{userId:"U-1",role:"tecnico",fullName:"Técnico Uno",epoch:1},deps);
+api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["opaque-session-token-0001"]},{cache});
+assert.throws(()=>api.getCachedSharedSessionActor_("U-1","opaque-session-token-0001",{
+ ...deps,openSpreadsheet:()=>makeSpreadsheet(validUsers,[headersSessions])
+}),/revocada|no existe/i,"Un token revocado no recupera actor tras invalidar la caché.");
+
 const removed=[];
 const invalidation=api.handleSharedSessionActorCacheInvalidation_(
     {userId:"U-1",sessionTokens:["opaque-session-token-0001","opaque-session-token-0001","opaque-session-token-0002"]},
@@ -85,4 +108,25 @@ assert.deepEqual(invalidation,{status:"success",invalidated:2});
 assert.deepEqual(removed,["U-1:opaque-session-token-0001","U-1:opaque-session-token-0002"]);
 assert.equal(api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["x"]}).status,"error");
 
-console.log("MIG013SessionActorLocalLookup: 15/15 PASS — caché fría/caliente, identidad, RBAC, revocación, expiración e invalidación local");
+const sessionEntryPoints = [
+    ["AUTH", auth, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
+    ["WRITE", write, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
+    ["FEEDBACK", feedback, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
+    ["ADMIN", admin, /getCachedSharedSessionActor_\\(payload\\.userId, payload\\.sessionToken/],
+    ["UTILITIES", utilitiesSource, /getCachedSharedSessionActor_\\(payload&&payload\\.userId,payload&&payload\\.sessionToken/]
+];
+for (const [name, service, actorLookup] of sessionEntryPoints) {
+    assert.match(service, actorLookup, name + " debe resolver el actor localmente.");
+    assert.doesNotMatch(service, /client\\.(?:registerSession|syncUserSessions|validateSessionContext|revokeSession|revokeUserSessions)/,
+        name + " no debe delegar la sesión a Coordinator.");
+}
+assert.match(catalog, /function getCatalogSessionActor_/);
+assert.match(catalog, /function loadCatalogSessionActor_/);
+assert.doesNotMatch(catalog, /GPSpedia_COORDINATOR_SECRET|withSharedMutationLease_/);
+assert.match(auth, /const token = record \? record\\.token : Utilities\\.getUuid\\(\\)/,
+    "La sesión debe usar un token opaco generado en servidor.");
+assert.match(auth, /LOGIN_MAX_ATTEMPTS = 5/);
+assert.match(auth, /LOGIN_LOCKOUT_SECONDS = 15 \\* 60/);
+assert.match(auth, /function createPasswordHash\\(/);
+assert.match(auth, /function verifyStoredPassword\\(/);
+console.log("MIG013SessionActorLocalLookup: 18/18 PASS — caché fría/caliente, TTL, token opaco, identidad, RBAC, expiración, usuario eliminado, token revocado e invalidación local");
