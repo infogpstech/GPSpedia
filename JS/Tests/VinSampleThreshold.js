@@ -104,4 +104,4 @@ test('queryVehicle excluye firmas insuficientes', () => {
     assert.equal(engine.queryVehicle({ vin: records[0].vin }).identificationType, 'sin_coincidencias');
 });
 
-console.log('VIN sample threshold tests passed:', passed, '/ 9');
+console.log('VIN sample threshold tests:', passed + '/9 PASS');
