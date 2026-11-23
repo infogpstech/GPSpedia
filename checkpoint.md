@@ -1185,13 +1185,12 @@ Rama base protegida: `GPSpedia2.2.5` (sin cambios).
 ### Pruebas locales ejecutadas
 - `CatalogChangeFeed`: 16 casos PASS.
 - `FeedbackCatalogPublicationIsolation`: 14 casos PASS.
-- `CatalogBrowserReset`: 10 casos PASS.
+- `CatalogBrowserReset`: 11 casos PASS.
 - También se ejecutaron satisfactoriamente los contratos locales de InboxRole, ActionDispatch, ServiceBrowserTraffic, DirectTrafficRouting, FeedbackLikeAppendOnly, WriteCatalogPublicationIsolation, WriteCatalogPublicationFrontend y AdminCatalogPublicationIsolation en el estado disponible durante esta sesión.
 
-### Pendiente
-- Ejecutar y revisar la última corrida completa de GitHub Actions después de los últimos cambios.
-- Investigar únicamente los fallos ajenos a MIG-023 que la suite reporte (AUTH purga de logs, política P4 y esperas FEEDBACK/Inbox), sin mezclar su corrección con esta tarea.
-- Completar las pruebas de cache-first/IndexedDB y la validación Beta real antes de cerrar MIG-023.
+### Pendiente al cierre de esta actualización intermedia
+- La corrida completa de GitHub Actions, las pruebas cache-first/IndexedDB y la revisión de fallos ajenos a MIG-023 se completaron después; el resultado consolidado figura en «Cierre MIG-023» al final de este archivo.
+- La validación Beta real permanece diferida y no se declara ejecutada.
 
 ---
 
