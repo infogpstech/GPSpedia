@@ -907,3 +907,37 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - Incluir CentralConfigurationReader.js en ADMIN, WRITE y FEEDBACK.
 - Vincular cada proyecto a la Spreadsheet Beta y publicar cortes_root_folder_id para el Drive Beta.
 - Ejecutar pruebas reales de cargas, reemplazos, adjuntos, PyS, inventario, papelera, restauración y eliminación con recursos aislados.
+
+
+---
+
+## Cierre MIG-015 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-23
+
+### Rama y commit
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5: sin escrituras.
+- HEAD registrado para validación: `96cfbdae76e0df41c98ca39282b4bdede57cf72c`.
+
+### Implementación
+- ADMIN, WRITE y FEEDBACK usan SpreadsheetApp.getActiveSpreadsheet() y fallan cerrados si no existe Spreadsheet vinculada.
+- Los tres servicios obtienen `cortes_root_folder_id` del lector central y verifican configuración no vencida, tipo `drive_folder`, ID, nombre y padre.
+- Eliminados IDs locales SPREADSHEET_ID/DRIVE_FOLDER_ID de esos tres módulos. ADMIN elimina GPSpedia_UNUSED_IMAGES_FOLDER_ID de ScriptProperties; Imagenes_Sin_Uso se resuelve bajo Cortes y se detectan duplicados.
+- Se preservan límites por flujo: 10 MB ADMIN/WRITE y 3 MB FEEDBACK/PyS; validación MIME/firma, hash SHA-256, ledger/journal, idempotencia, compensación, recuperación y reconciliación.
+- Se preservan variantes 300/800/1600, transparencia PNG, ObjectURL, IndexedDB/Lightbox, reemplazo, inventario, papelera, restauración y eliminación definitiva.
+- No se agregaron secretos compartidos ni URLs/configuración local de otros servicios Apps Script. No se movió orquestación funcional al backend.
+
+### Validación CI
+- GitHub Actions Node.js 22, run 45235835156, commit `96cfbdae76e0df41c98ca39282b4bdede57cf72c`.
+- Suites dedicadas MIG-015: **605/605 comprobaciones PASS**.
+- Regresión global: 157 suites, 1,805 pruebas aprobadas y cuatro suites fallidas en ADMIN (consulta de candidatos de aportes), UTILITIES, AUTH e INTEGRATION. Estas familias de fallos ya estaban presentes antes de MIG-015; quedan registradas fuera de su alcance.
+- No se ejecutaron llamadas reales a Apps Script, Spreadsheet ni Drive.
+
+### Validación Beta pendiente
+- Añadir CentralConfigurationReader.js a los proyectos desplegados ADMIN, WRITE y FEEDBACK.
+- Vincular cada proyecto con su Spreadsheet aislada y publicar `cortes_root_folder_id` para la raíz Drive Cortes de Beta.
+- Verificar permisos heredados, lectura/escritura y todos los ciclos de carga, reemplazo, adjuntos, PyS, inventario, papelera, restauración, reconciliación y eliminación con recursos aislados.
+
+### Estado y continuidad
+- MIG-015: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Deuda de regresión global pendiente: suites ADMIN candidatos, UTILITIES, AUTH e INTEGRATION; no atribuidas a MIG-015.
+- Próxima tarea: MIG-016 — carga reanudable y aprobación de vídeos. No iniciar otra tarea hasta que el cierre documental de MIG-015 quede registrado.

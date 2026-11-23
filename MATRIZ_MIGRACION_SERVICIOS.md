@@ -1345,3 +1345,12 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - Pruebas dirigidas en CI: SessionInvalidationFlow 15/15; fan-out (seis servicios, retry, fallo parcial y TTL) PASS; contrato backend/cache 10/10; SessionActorCacheInvalidation 6/6.
 - CI global run 45231811060: 1,200 aprobadas, cuatro suites fallidas en ADMIN/UTILITIES/AUTH/INTEGRATION. Se mantienen como deuda de regresión general.
 - Validación Beta de endpoints y permisos reales diferida. MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### 22.4 Cierre MIG-015 — imágenes y recursos Drive — 2026-11-23
+- ADMIN, WRITE y FEEDBACK usan Spreadsheet vinculada y el lector central para resolver el recurso `cortes_root_folder_id`.
+- La validación del recurso verifica frescura de configuración, tipo Drive, ID, nombre y padre; no existe fallback local. Los IDs locales SPREADSHEET_ID/DRIVE_FOLDER_ID fueron retirados de los tres servicios.
+- ADMIN ya no persiste el ID de Imagenes_Sin_Uso en ScriptProperties; la carpeta se localiza bajo Cortes y se rechazan duplicados.
+- Se preservan límites por flujo (10 MB ADMIN/WRITE; 3 MB FEEDBACK/PyS), validación MIME/firma, SHA-256, ledger/journal, idempotencia, compensación, recuperación y reconciliación.
+- CI Node.js 22 run 45235835156: MIG-015 605/605 comprobaciones aprobadas. Regresión global: 157 suites, 1,805 aprobadas, cuatro fallidas en familias ADMIN candidatos, UTILITIES, AUTH e INTEGRATION; los mismos grupos ya fallaban antes de esta tarea.
+- La validación Beta real de proyectos vinculados, permisos heredados y operaciones Drive permanece pendiente. MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA.

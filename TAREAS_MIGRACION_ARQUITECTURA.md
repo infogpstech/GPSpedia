@@ -322,16 +322,36 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ## Fase 4 — Imágenes, vídeos y Drive
 
 ### MIG-015 — Carga y administración de imágenes
-**Estado: PENDIENTE**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener subida desde aportes y administración.
-- [ ] Mantener límite de 10 MB, MIME/tamaño, ledger, SHA-256 y verificación posterior.
-- [ ] Mantener variantes 300/800/1600, transparencia PNG, ObjectURL, IndexedDB y Lightbox.
-- [ ] Mantener reemplazo, recuperación, eliminación, inventario y reconciliación.
-- [ ] Mantener estado de carga, error, reintento y recuperación.
-- [ ] Probar operación completa y fallos parciales.
+- [x] Mantener subida desde aportes y administración.
+- [x] Mantener límites vigentes por flujo: 10 MB en ADMIN y WRITE; 3 MB en adjuntos FEEDBACK/PyS; validar MIME, tamaño y contenido antes de decodificar Base64.
+- [x] Mantener ledger, SHA-256, verificación posterior, journal append-only, idempotencia y reconciliación.
+- [x] Mantener variantes 300/800/1600, transparencia PNG, ObjectURL, IndexedDB y Lightbox.
+- [x] Mantener reemplazo, recuperación, eliminación, inventario, papelera, restauración y reconciliación.
+- [x] Mantener estados de carga, error, compensación, reintento y recuperación.
+- [x] Probar los flujos y fallos parciales en suites dedicadas.
 
-**Aceptación:** carga y administración de imágenes equivalente a la versión actual.
+**Resultado de CI — GitHub Actions Node.js 22**
+- Run 45235835156, commit `96cfbdae76e0df41c98ca39282b4bdede57cf72c`.
+- Suites MIG-015: **605/605 comprobaciones PASS**.
+- Incluye configuración central, preflight, ledger, journal, compensación, recuperación, variantes/ObjectURL, PyS, feedback, reemplazo, inventario, papelera, restauración, eliminación y organizador de imágenes.
+- La regresión global registró 157 suites, 1,805 pruebas aprobadas y cuatro suites fallidas en ADMIN (candidatos de aportes), UTILITIES, AUTH e INTEGRATION. Los mismos grupos ya presentaban fallos antes de MIG-015; se mantienen como deuda separada y no se atribuyen a esta tarea.
+- El build de Pages para el commit 96cfbdae está pendiente de confirmación; no se declara despliegue exitoso.
+
+**Cambios y cumplimiento §18**
+- ADMIN, WRITE y FEEDBACK utilizan SpreadsheetApp.getActiveSpreadsheet() y fallan cerrados si el proyecto no está vinculado a una Spreadsheet.
+- Los tres servicios resuelven `cortes_root_folder_id` mediante CentralConfigurationReader.js y ConfiguracionRecursos; se valida configuración vigente, tipo, nombre e identidad del padre. No se mantiene fallback local.
+- Se eliminaron los IDs locales SPREADSHEET_ID/DRIVE_FOLDER_ID de esos módulos y la propiedad local GPSpedia_UNUSED_IMAGES_FOLDER_ID. Imagenes_Sin_Uso se localiza bajo Cortes y se detectan duplicados.
+- No se añadieron secretos compartidos, URLs de otros servicios ni orquestación entre servicios Apps Script. La coordinación sigue en frontend cuando corresponde.
+
+**Validación Beta diferida**
+- Incluir CentralConfigurationReader.js en los proyectos ADMIN, WRITE y FEEDBACK desplegados.
+- Vincular cada proyecto a su Spreadsheet Beta y registrar el recurso Drive Cortes correcto en ConfiguracionRecursos.
+- Ejecutar con recursos aislados pruebas reales de carga, reemplazo, adjuntos, PyS, inventario, permisos heredados, papelera, restauración, reconciliación y eliminación definitiva.
+- No se invocaron deployments Apps Script ni recursos reales Spreadsheet/Drive durante esta tarea.
+
+**Aceptación:** equivalencia funcional automatizada aprobada. MIG-015 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**; el despliegue y la verificación real de permisos/recursos quedan pendientes de Beta.
 
 ### MIG-016 — Carga reanudable y aprobación de vídeos
 **Estado: PENDIENTE**

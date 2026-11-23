@@ -288,3 +288,14 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - Se admiten hasta dos intentos por destino; el resultado parcial identifica servicios sin confirmación y el frontend informa al usuario. El TTL de actor local fija el vencimiento máximo en 21,600 segundos.
 - Suites MIG-014 en GitHub Actions Node.js 22: 15/15 flujo de sesión, fan-out/reintento/fallo parcial PASS, contrato backend/cache 10/10 y contrato de invalidación local 6/6.
 - Validación Beta de deployments y Spreadsheet aislados pendiente; no se afirma que los endpoints reales hayan sido invocados.
+
+
+### 3.7 MIG-015 — carga y administración de imágenes — 2026-11-23
+- ADMIN, WRITE y FEEDBACK obtienen la Spreadsheet mediante `SpreadsheetApp.getActiveSpreadsheet()`; si el proyecto no está vinculado, la operación falla cerrada.
+- La raíz Drive Cortes se resuelve desde `CentralConfigurationReader.js` mediante `cortes_root_folder_id` en ConfiguracionRecursos. Se valida que la configuración esté vigente, que el recurso sea carpeta Drive y que ID, nombre y padre coincidan. No hay fallback local.
+- Los módulos ADMIN, WRITE y FEEDBACK ya no declaran SPREADSHEET_ID ni DRIVE_FOLDER_ID. ADMIN no guarda el ID de Imagenes_Sin_Uso en ScriptProperties; localiza la carpeta bajo Cortes y detecta duplicados.
+- Límites preservados por flujo: 10 MB en ADMIN/WRITE y 3 MB en adjuntos FEEDBACK/PyS. MIME, firma binaria, SHA-256, ledger/journal append-only, idempotencia, compensación y reconciliación permanecen activos.
+- Se conservan variantes de imagen, PNG/transparencia, ObjectURL, IndexedDB/Lightbox, reemplazos, recuperación, inventario, papelera, restauración y eliminación definitiva.
+- CI Node.js 22 run 45235835156: suites MIG-015 **605/605 PASS**. La regresión global tuvo 1,805 pruebas aprobadas y cuatro fallos de suites preexistentes fuera de MIG-015 (ADMIN candidatos, UTILITIES, AUTH e INTEGRATION).
+- Las invocaciones reales y permisos entre proyectos Apps Script, Spreadsheet y Drive siguen pendientes de Beta aislada. No se modificaron deployments ni datos externos.
+- MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA.

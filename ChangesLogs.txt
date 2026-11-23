@@ -180,3 +180,14 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - ADMIN deja de guardar el ID de Imagenes_Sin_Uso en ScriptProperties; localiza la carpeta por nombre, detecta duplicados y protege la creación concurrente.
 - Se añadió una suite MIG-015 independiente para validar el contrato de configuración y aislar las pruebas de imágenes de fallos ajenos en otros grupos. CI pendiente.
 - La validación de los proyectos vinculados y recursos Drive reales queda reservada a Beta aislada.
+
+
+### 2026-11-23 — MIG-015: carga y administración de imágenes
+- ADMIN, WRITE y FEEDBACK eliminan IDs locales de Spreadsheet/Drive y usan SpreadsheetApp.getActiveSpreadsheet() más CentralConfigurationReader.js para resolver cortes_root_folder_id desde ConfiguracionRecursos.
+- La carpeta Cortes se valida con configuración vigente, tipo Drive, nombre e identidad del padre. No hay fallback local. ADMIN deja de guardar Imagenes_Sin_Uso en ScriptProperties y la localiza bajo Cortes, con detección de duplicados.
+- Se conserva el límite de 10 MB en ADMIN/WRITE y 3 MB en adjuntos FEEDBACK/PyS, junto con allowlist MIME, comprobación de firma, SHA-256, ledger/journal append-only, idempotencia y reconciliación.
+- Se verificaron variantes 300/800/1600, PNG/transparencia, ObjectURL, IndexedDB/Lightbox, reemplazo, recuperación, inventario, papelera, restauración y eliminación.
+- GitHub Actions Node.js 22, run 45235835156, commit 96cfbdae76e0df41c98ca39282b4bdede57cf72c: **605/605 comprobaciones dirigidas MIG-015 PASS**.
+- La regresión general reportó 1,805 aprobadas y cuatro suites fallidas (ADMIN candidatos, UTILITIES, AUTH, INTEGRATION), las mismas familias de fallos ya observadas antes de MIG-015. Se registran como deuda separada.
+- No se invocaron deployments Apps Script ni recursos reales. La validación de Spreadsheet, Drive, permisos y despliegues queda pendiente de Beta aislada.
+- MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-016 — carga reanudable y aprobación de vídeos.
