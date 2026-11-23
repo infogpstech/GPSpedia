@@ -342,8 +342,8 @@ La siguiente tabla se extrajo de `ACTION_TO_SERVICE_MAP`, los dispatchers reales
 | `getNavigationData` | CATALOG | `handleGetNavigationData` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
 | `getCatalogData` | CATALOG | `handleGetCatalogData` | api-config.js, ui.js |
 | `getDropdownData` | CATALOG | `handleGetDropdownData` | add_cortes.html, ui.js |
-| `getVehicleProjection` | CATALOG | `handleGetVehicleProjection_` | add_cortes.html |
-| `getContributionCandidates` | CATALOG | `handleGetContributionCandidates_` | No localizado en consumidores inspeccionados; clasificar como manual/interno/legado sin retirarlo |
+| `getVehicleProjection` | CATALOG | `handleGetVehicleProjection_` | add_cortes.html, admin.js → CATALOG (servidor a servidor) |
+| `getContributionCandidates` | CATALOG | `handleGetContributionCandidates_` | admin.js → CATALOG (servidor a servidor; candidatos/proyección de aportes) |
 | `getSuggestion` | WRITE | `handleGetSuggestion` | add_cortes.html |
 | `checkVehicle` | WRITE | `handleCheckVehicle` | add_cortes.html |
 | `checkOperation` | WRITE | `handleCheckOperation` | add_cortes.html |
@@ -451,7 +451,7 @@ La siguiente tabla se extrajo de `ACTION_TO_SERVICE_MAP`, los dispatchers reales
 
 ### 9.1 Acciones sin consumidor directo localizado
 
-En los consumidores inspeccionados no se encontró llamada directa para: `touchSession`, `benchmarkPasswordKdf`, `getNavigationData`, `getContributionCandidates`, `markInboxUnread`, `deleteInboxConversation`, `migrateTimestamps`, `migrateVehicleContributionsSchema`, `migrateIdentifiers`, `rollbackIdentifiers`, `reconcilePendingImageUploads`, `createSheet`, `addColumn`. Algunas pueden ser operaciones internas o manuales; deben revisarse con sus invocadores backend, documentación operativa y registros antes de decidir su destino. En particular, `touchSession`, `benchmarkPasswordKdf`, `getNavigationData`, `getContributionCandidates`, `markInboxUnread`, `deleteInboxConversation`, `migrateTimestamps`, las migraciones administrativas y `createSheet/addColumn` no se deben retirar por falta de botón visible.
+En los consumidores inspeccionados no se encontró llamada directa para: `touchSession`, `benchmarkPasswordKdf`, `getNavigationData`, `markInboxUnread`, `deleteInboxConversation`, `migrateTimestamps`, `migrateVehicleContributionsSchema`, `migrateIdentifiers`, `rollbackIdentifiers`, `reconcilePendingImageUploads`, `createSheet`, `addColumn`. Algunas pueden ser operaciones internas o manuales; deben revisarse con sus invocadores backend, documentación operativa y registros antes de decidir su destino. En particular, `touchSession`, `benchmarkPasswordKdf`, `getNavigationData`, `markInboxUnread`, `deleteInboxConversation`, `migrateTimestamps`, las migraciones administrativas y `createSheet/addColumn` no se deben retirar por falta de botón visible.
 
 ### 9.2 Coordinación interna no incluida en las 120 acciones frontend
 
@@ -462,3 +462,6 @@ También existen rutas internas `__invalidateSessionActorCache` y `__primeSessio
 ### 9.3 Alcance y límites de esta trazabilidad
 
 La tabla confirma la relación inicial acción → servicio → handler y localiza consumidores en `api-config.js`, `ui.js`, `auth.js`, `main.js`, `pys-data.js`, `youtubeUpload.js`, `add_cortes.html` y `users.html`. No sustituye el inventario de payloads/respuestas, permisos por acción, hojas/columnas, archivos Drive, llamadas externas, triggers, operaciones programadas ni pruebas. MIG-001 permanece **EN PROGRESO** hasta completar esos vínculos y revisar todas las capacidades CAP-01 a CAP-19.
+
+
+**Corrección de invocadores backend — 2026-11-23:** la primera extracción se centró en módulos frontend y había clasificado `getVehicleProjection` y `getContributionCandidates` como si solo tuvieran consumidor UI o ninguno. La revisión de `admin.js` confirmó llamadas directas ADMIN→CATALOG para ambas acciones; además, ADMIN→WRITE invoca `allocateVehicleId` y `freezeCortesIds`. La tabla se corrigió. Quedan **12**, no 13, acciones sin consumidor directo localizado en las fuentes frontend/backend inspeccionadas; siguen pendientes de clasificar como manuales, indirectas o históricas.
