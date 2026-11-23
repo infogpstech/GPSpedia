@@ -1307,3 +1307,54 @@ Inventario inicial:
 
 Siguiente acción: inventario completo de consumidores y referencias (fuente, frontend, registro central, documentación, pruebas, workflows y Beta); diseñar la continuidad de salud y telemetría antes de retirar Coordinator.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — MIG-025 — 2026-11-23
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD de código validado: b51c1df563329889df7765f9c49e1c7570f2e725
+HEAD documental previo a este checkpoint: 79af4a9a9f5a87aec663b1a6499c5c737f484058
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+
+MIG-025 — Eliminar COORDINATOR
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Retirado JS/Services/Coordinator.js, incluidos doGet/doPost, health, telemetría y dispatcher.
+- ACTION_TO_SERVICE_MAP ya no contiene getServiceTraffic ni rutas a COORDINATOR.
+- CENTRAL_SERVICE_KEYS y SERVICE_HEALTH_CONTRACTS contienen solo AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. El lector central ignora la fila histórica COORDINATOR mientras se completa su limpieza externa autorizada.
+- serviceTelemetry.js mantiene métricas locales de los seis servicios. No incluye COORDINATOR.
+- La consulta y el gráfico de tráfico global se retiraron. El panel Developer conserva una sección visible que explica que el agregado legacy solo medía eventos instrumentados (principalmente adquisiciones exitosas de leases), no todas las solicitudes HTTP, y que las métricas locales por navegador no lo sustituyen ni permiten inferir el total global.
+- La invalidación de cachés sigue coordinada desde frontend; AUTH/servicios mantienen actores locales y no dependen del endpoint retirado.
+- Guías antiguas de despliegue/Coordinator archivadas en Olds/Documentacion_Legacy/Services. README, SERVICE_HEALTH, Tareas_Beta, lista_beta, MATRIZ_MIGRACION_SERVICIOS, TAREAS_MIGRACION_ARQUITECTURA y ChangesLogs actualizados.
+- No se borraron filas de Spreadsheet ni propiedades de Apps Script; no se tocaron deployments, proyectos, triggers ni datos externos.
+
+Validaciones CI:
+- GitHub Actions Node.js 22, run 45285424788, HEAD b51c1df563329889df7765f9c49e1c7570f2e725: 417 suites, 4,667 pruebas aprobadas, 1 suite fallida ajena al alcance: FeedbackLockFastFail.mjs (expectativa general sobre locks FEEDBACK, ya conocida desde MIG-023/MIG-024). Los contratos específicos MIG-025 aprobaron.
+- CoordinatorRetirementContract 13/13.
+- ServiceHealthContract 19/19.
+- ServiceBrowserTrafficContract 10/10.
+- ServiceTrafficAdminContract 10/10.
+- AdminTrafficSurfaceContract 12/12.
+- DirectTrafficRoutingCoverage 6/6.
+- ServiceMetricsTelemetry 1/1.
+- DeveloperPrivilegeRouting 20/20.
+- PasswordRecovery 10/10.
+- PasswordKdfBenchmark 5/5.
+- El paso CI de comprobación sintáctica de módulos modificados aprobó.
+- GitHub Pages run 45285423155, mismo HEAD: SUCCESS.
+- No se ejecutaron pruebas de deployments Apps Script ni invocaciones reales de Spreadsheet/Drive.
+
+Pendiente Beta — Tareas_Beta.md §6.5:
+- Verificar seis endpoints health reales, identidad, versión, timeout, fallo parcial y recuperación.
+- Confirmar ausencia de consumidores, endpoints y fallback a COORDINATOR en los deployments Beta.
+- Inspeccionar proyectos, deployments, triggers y propiedades externas; documentar recursos huérfanos y solicitar autorización antes de cualquier limpieza.
+- Comprobar el panel Developer y el alcance de telemetría local. No simular ni declarar agregado global equivalente.
+
+Continuidad:
+- MIG-025 cerrada como COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Siguiente tarea prioritaria: MIG-026 — Eliminar configuración local de todos los servicios.
+- No iniciar MIG-027 antes de cerrar MIG-026 y sus dependencias.
+================================================================================
