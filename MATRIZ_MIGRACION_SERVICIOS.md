@@ -2,7 +2,7 @@
 
 **Rama:** `GPSpedia2.2.5_work`  
 **Base:** `GPSpedia2.2.5`  
-**Estado:** Inventario estático inicial; requiere ampliar con trazado de consumidores y pruebas.
+**Estado:** INVENTARIO ESTÁTICO COMPLETADO — MIG-001 COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23). La evidencia y los límites pendientes de Beta están consolidados en §19.
 
 ## 1. Alcance funcional medido
 
@@ -315,10 +315,10 @@ Los tokens OAuth administrados por Google para integraciones externas no se cons
 
 ## 8. Estado de inventario
 
-- Las 120 acciones del mapa frontend están enumeradas en la sección 1.
-- La cobertura de capacidades CAP-01 a CAP-19 está definida; el trazado de cada control, handler, permiso y prueba sigue pendiente.
-- La configuración/llamadas internas conocidas están descritas en secciones 2 y 3.
-- El inventario se considera **PARCIAL** hasta cerrar MIG-001 a MIG-005.
+- Las 120 acciones del mapa frontend están enumeradas y reconciliadas con sus routers y handlers en §§1 y 9.
+- Las 19 capacidades CAP están vinculadas a consumidores, servicios, datos y pruebas representativas en §19.6.
+- Las rutas internas, acciones manuales, compatibilidades, RBAC, datos, integraciones y pruebas están inventariados en §§9–19.
+- MIG-001 está **COMPLETADA CON VALIDACIÓN DIFERIDA**. MIG-002 a MIG-005 siguen siendo tareas independientes del backlog.
 - Ninguna función se ha retirado ni se autoriza retirarla por aparecer duplicada, sin consumidor aparente o fuera del mapa frontend.
 
 
