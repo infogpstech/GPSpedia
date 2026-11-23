@@ -542,7 +542,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ### MIG-025 — Eliminar COORDINATOR
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 
-**Inventario inicial de capacidades y consumidores (sin cambios de código todavía):**
+**Inventario inicial de capacidades y consumidores (estado previo a la implementación):**
 - `JS/Services/Coordinator.js` v1.4.9 concentra contexto de sesión legado (`registerSession_`, `revokeSession_`, `revokeUserSessions_`, `syncUserSessions_` y `validateSessionContext_`), telemetría global (`readServiceTraffic_` / `getServiceTrafficFromBrowser_`) y `doGet` / `doPost`.
 - Tras MIG-024, los servicios activos ya no usan clientes remotos, leases, URL/secretos ni la API de sesión de Coordinator. Los contratos `SessionActivityCoordination` y `SessionActivityLeaseMinimization` verifican que las acciones activas se coordinan desde el frontend y consumen actor local.
 - Consumidor frontend residual: `getServiceTraffic` se enruta a COORDINATOR desde `ACTION_TO_SERVICE_MAP`. La telemetría global se muestra en el panel Developer junto a la telemetría local del navegador.
@@ -560,17 +560,19 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Resultado y paridad implementada:**
 - Se retiró `JS/Services/Coordinator.js`, sus handlers `doGet`/`doPost`, el routing `getServiceTraffic`, el registro de salud del servicio y su inclusión en telemetría local. No quedan consumidores activos del servicio.
 - Health conserva el escaneo directo y aislado de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; los seis contratos de identidad/versionado siguen disponibles. La fila histórica COORDINATOR se ignora en el lector central mientras la limpieza externa espera Beta.
-- El agregado global legacy no se reemplazó por telemetría local: medía solo eventos instrumentados de Coordinator, principalmente adquisiciones de leases, y no todas las solicitudes HTTP. Se retiró el panel de datos del agregado, pero se conserva una sección visible en Developer que explica su retirada, límites históricos y ausencia de equivalente global actual. Las métricas locales permanecen identificadas como datos temporales de este navegador y no transmitidos.
+- El agregado global legacy no se reemplazó por telemetría local: medía solo eventos instrumentados de Coordinator, principalmente adquisiciones de leases, y no todas las solicitudes HTTP. Se retiraron la consulta y el gráfico de datos globales, pero se conserva una sección visible en Developer que explica su retirada, límites históricos y ausencia de equivalente global actual. Las métricas locales permanecen identificadas como datos temporales de este navegador y no transmitidos.
 - Las API de sesión/revocación y SharedMutation ya habían sido retiradas en MIG-013/MIG-024; se actualizaron pruebas heredadas que aún abrían Coordinator.js.
 - La guía antigua de despliegue/Coordinator se archivó en `Olds/Documentacion_Legacy/Services/`; README y documentación de health/Beta se actualizaron. La matriz conserva sus inventarios históricos y añade una adenda de retirada.
 - No se borraron filas de Spreadsheet, propiedades de Apps Script, deployments, proyectos ni triggers externos.
 
 **Validación local/CI:**
-- `CoordinatorRetirementContract`: 10/10 PASS.
-- `ServiceHealthContract`: contrato de seis servicios y escaneo directo; ver ejecución CI.
-- `ServiceBrowserTrafficContract`: inventario de seis servicios, rechaza USERS/COORDINATOR y mantiene telemetría local.
-- `PasswordKdfBenchmark`, `DeveloperPrivilegeRouting`, `PasswordRecovery` y contratos de catálogo se ajustaron para no depender de la fuente retirada.
-- El workflow completo se ejecutó; cualquier fallo global ajeno a MIG-025 se identifica en checkpoint sin atribuirlo a esta tarea.
+- `CoordinatorRetirementContract`: 13/13 PASS; valida ausencia de la fuente, seis servicios activos, retiro del routing y explicación visible de la telemetría legacy.
+- `ServiceHealthContract`: 19/19 PASS; contratos de identidad/estado, seis endpoints, timeout, latencia, errores y aislamiento de fallos.
+- `ServiceBrowserTrafficContract`: 10/10 PASS; seis servicios, rechaza USERS/COORDINATOR y conserva telemetría local diferenciada.
+- `ServiceTrafficAdminContract`: 10/10 PASS; `AdminTrafficSurfaceContract`: 12/12 PASS; `ServiceMetricsTelemetry`: 1/1 PASS; `DirectTrafficRoutingCoverage`: 6/6 PASS.
+- `DeveloperPrivilegeRouting`: 20/20 PASS; `PasswordRecovery`: 10/10 PASS; `PasswordKdfBenchmark`: 5/5 PASS. Los contratos heredados se actualizaron para no abrir ni enrutar a Coordinator.
+- GitHub Actions Node.js 22, run `45285424788`, HEAD `b51c1df563329889df7765f9c49e1c7570f2e725`: 417 suites, 4,667 pruebas aprobadas y un fallo de suite ajeno al alcance: `FeedbackLockFastFail.mjs` (expectativa general sobre locks FEEDBACK, ya conocida desde MIG-023/MIG-024). No hubo fallos en los contratos MIG-025.
+- GitHub Pages, run `45285423155`, mismo HEAD: SUCCESS. El paso de sintaxis de módulos modificados también pasó en el workflow.
 
 **Validación Beta diferida:** comprobar endpoints desplegados de los seis servicios, fallos parciales y recuperación; revisar proyectos/deployments/triggers/propiedades externos huérfanos en entorno aislado; no borrar recursos sin autorización. Ver `Tareas_Beta.md` §6.5.
 
