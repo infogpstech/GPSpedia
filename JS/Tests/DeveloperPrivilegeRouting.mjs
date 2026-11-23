@@ -8,7 +8,6 @@ const read = path => readFileSync(resolve(root, path), "utf8");
 const auth = read("JS/Services/Auth.js");
 const feedback = read("JS/Services/feedback.js");
 const admin = read("JS/Services/admin.js");
-const coordinator = read("JS/Services/Coordinator.js");
 const api = read("JS/Frontend/api-config.js");
 const ui = read("JS/Frontend/ui.js");
 
@@ -24,17 +23,14 @@ assert.match(feedback, /getActivityLogs: \["Desarrollador", "Jefe", "Supervisor"
 assert.match(feedback, /getRichTextMode: null/);
 assert.match(api, /'getActivityLogs': 'FEEDBACK'/);
 assert.match(api, /'getRichTextMode': 'FEEDBACK'/);
-assert.match(api, /'getServiceTraffic': 'COORDINATOR'/);
+assert.doesNotMatch(api, /COORDINATOR|getServiceTraffic/);
 assert.match(admin, /function assertDeveloperSession\(payload\)/);
 assert.doesNotMatch(admin, /function handleGetServiceTraffic_\(/);
-assert.doesNotMatch(coordinator, /getRichTextMode:|getServiceTraffic:\s*\{/);
-assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
-assert.match(coordinator, /role !== "desarrollador"/);
+assert.doesNotMatch(ui, /getServiceTraffic|globalServiceTraffic|Coordinator/);
 
 assert.match(ui, /function getUiSessionContext_\(user = getState\(\)\.currentUser\)/);
 assert.match(ui, /role: normalizeUiRole_\(user\.Privilegios\)/);
 assert.match(ui, /function ensureUiSessionRole_\(allowedRoles\)/);
-assert.match(ui, /routeActionWithRetry\("getServiceTraffic", getSessionPayload_\(\)/);
 const guardStart = ui.indexOf("function ensureUiSessionRole_");
 const guardEnd = ui.indexOf("function getSessionPayload_", guardStart);
 assert.ok(guardStart >= 0 && guardEnd > guardStart);
