@@ -3,16 +3,11 @@ import crypto from "node:crypto";
 import { readFileSync } from "node:fs";
 
 const writeSource = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
-const adminSource = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const apiSource = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 const writeStart = writeSource.indexOf("const CORTES_ID_COUNTER_PROPERTY =");
 const writeEnd = writeSource.indexOf("\nfunction assertDeveloperForIdMaintenance", writeStart);
 assert.ok(writeStart >= 0 && writeEnd > writeStart, "No se encontró el asignador WRITE");
 const writeCode = writeSource.slice(writeStart, writeEnd);
-const adminStart = adminSource.indexOf("function requestNextVehicleIdFromWriteService(");
-const adminEnd = adminSource.indexOf("\nfunction requestCortesIdFreezeFromWriteService", adminStart);
-assert.ok(adminStart >= 0 && adminEnd > adminStart, "No se encontró el cliente ADMIN");
-const adminCode = adminSource.slice(adminStart, adminEnd);
-
 function createSheet(initialRows) {
     const rows = initialRows.map(row => row.slice()), formulas = new Map();
     const sheet = {
@@ -103,24 +98,23 @@ const allocateInWrite = new Function(
     }
 );
 
+assert.match(apiSource, /'allocateVehicleId': 'WRITE'/);
+assert.match(apiSource, /'addOrUpdateCut': 'WRITE'/);
 let loseNextResponse = true;
-const requestFromAdmin = new Function("callWriteServiceAction", adminCode + "\nreturn requestNextVehicleIdFromWriteService;")(
-    (action, payload) => {
-        assert.equal(action, "allocateVehicleId");
-        const result = allocateInWrite(payload);
-        if (loseNextResponse) {
-            loseNextResponse = false;
-            throw new Error("simulated response loss after WRITE commit");
-        }
-        return result;
+const requestFromFrontend = (payload, opId, operationHash) => {
+    const result = allocateInWrite({ ...payload, opId, operationHash });
+    if (loseNextResponse) {
+        loseNextResponse = false;
+        throw new Error("simulated response loss after WRITE commit");
     }
-);
+    return result;
+};
 
 const payload = { userId: "USR-1", sessionToken: "SESSION-1" };
 const hashA = "a".repeat(64), hashB = "b".repeat(64);
-assert.throws(() => requestFromAdmin(payload, "OP-E2E-1", hashA), /simulated response loss/);
+assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashA), /simulated response loss/);
 assert.equal(requestFromAdmin(payload, "OP-E2E-1", hashA), 4, "El reintento debe recuperar el ID persistido por WRITE");
-assert.equal(requestFromAdmin(payload, "OP-E2E-2", hashB), 5, "Una operación distinta debe recibir un ID nuevo");
+assert.equal(requestFromFrontend(payload, "OP-E2E-2", hashB), 5, "Una operación distinta debe recibir un ID nuevo");
 assert.throws(() => requestFromAdmin(payload, "OP-E2E-1", hashB), /otro contenido/);
 assert.equal(ledger.rows.length, 3, "Debe existir una reserva canónica por operación");
 assert.deepEqual(ledger.rows.slice(1).map(row => row[2]), [4, 5]);
