@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const auth=readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
-const coordinator=readFileSync(resolve(root,"JS/Services/Coordinator.js"),"utf8");
 const api=readFileSync(resolve(root,"JS/Frontend/api-config.js"),"utf8");
 function extract(source,name){
  const start=source.indexOf("function "+name+"(");
