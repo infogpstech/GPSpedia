@@ -95,3 +95,13 @@ Rama de trabajo: GPSpedia2.2.5_work.
 
 - Validación final MIG-009: CI SUCCESS (run 45185426367), 312 suites / 3,626 pruebas / 0 fallos; sintaxis 446 archivos; referencias 355 archivos; Pages build/deploy SUCCESS (run 45185424818).
 - Prueba remota de configuración/servicios permanece diferida a Beta por requerir despliegue explícito de getPublicConfiguration; no se modificó Apps Script productivo.
+
+### 2026-11-23 — MIG-010: orquestación frontend y recuperación
+- El flujo de reorganización se coordina desde el frontend: respaldo ADMIN, estabilización de IDs WRITE y ordenamiento ADMIN.
+- Se añadió operationId persistente para el respaldo preventivo; ADMIN verifica el manifiesto, propietario y Spreadsheet de origen y reutiliza la copia existente ante reintentos, sin duplicarla.
+- Las consultas de proyección y candidatos se realizan directamente desde frontend hacia CATALOG; ADMIN deja de contener wrappers y destinos de coordinación para esas operaciones.
+- CATALOG valida la sesión local para getVehicleProjection con los roles Desarrollador, Jefe y Supervisor; getContributionCandidates conserva acceso exclusivo de Desarrollador.
+- Se añadió JS/Tests/MIG010FrontendServiceOrchestration.mjs y se integró en JS/Tests/RunServiceTests.mjs.
+- Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md e INVENTARIO_LLAMADAS_SERVICIOS.md.
+- No se modificaron endpoints instalados, PropertiesService, deployments, Spreadsheet, Drive ni datos.
+
