@@ -61,7 +61,7 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
    }else assert_(block.includes("tryLock(0)")&&block.includes("finally")&&block.includes("releaseLock"));
   });
  });
- run_("Coordinador cubre Cortes, Drive y ledger",function(){assert_(String(sources.coordinator||"").includes('addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] }'));});
+ run_("WRITE procesa aportes sin lease ni dependencia de Coordinator",function(){const source=String(sources.write||"");assert_(source.includes("getAuthenticatedCollaborator"));assert_(!/withSharedMutationLease_|UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/.test(source));});
  run_("UI no calcula slot desde item posiblemente obsoleto",function(){assert_(!String(sources.ui||"").includes("if (!item.cableAlimen)")&&String(sources.ui||"").includes("El servidor asigna el primer par"));});
 
  const authStart=String(sources.write).indexOf("function getAuthenticatedCollaborator(");
