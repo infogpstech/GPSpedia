@@ -95,6 +95,11 @@ function runActionDispatchContractTests(sources) {
             coordinatorActions.push("publishWriteCatalogReset");
             coordinatorHandlers.publishWriteCatalogReset = ["publishWriteCatalogResetFromBrowser_"];
         }
+        if (coordinatorSource.includes('parameters.catalogFeed || ""') &&
+            hasFunction_(coordinatorSource, "getPublicCatalogChanges")) {
+            coordinatorActions.push("getCatalogChanges");
+            coordinatorHandlers.getCatalogChanges = ["getPublicCatalogChanges"];
+        }
         dispatchers.COORDINATOR = { actions: coordinatorActions, handlers: coordinatorHandlers };
         const utilitySource = String(input.UTILITIES || "");
         const utilityMatch = utilitySource.match(/body\.action\s*!==\s*['"]([^'"]+)['"]/);

@@ -86,6 +86,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'publishWriteCatalogReset': 'COORDINATOR',
+    'getCatalogChanges': 'COORDINATOR',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
