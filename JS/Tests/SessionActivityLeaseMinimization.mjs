@@ -89,7 +89,7 @@ test("MIG-010 coordina ADMIN/WRITE desde frontend y cada receptor valida su sesi
     assert.ok(ui.includes('step("freezeCortesIds"'));
     assert.ok(ui.includes('step("reorganizeDatabase"'));
     assert.match(writeDoPost, /getCachedSharedSessionActor_/);
-    assert.match(write, /function assertDeveloperForIdMaintenance\\(payload\\)/);
+    assert.ok(write.includes("function assertDeveloperForIdMaintenance(payload)"));
 
 });
 
