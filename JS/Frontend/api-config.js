@@ -275,7 +275,19 @@ function sessionCacheKeysFromError_(error) {
 async function refreshCatalogAfterVideoApproval_(action, result) {
     if (action !== "approveVideo" || !result || result.status !== "success") return result;
     if (String(result.contentType || "").trim().toLowerCase() === "pys") {
-        return Object.assign({}, result, { catalogRefreshStatus: "pys_refresh_required" });
+        const change = result.catalogChange;
+        if (!change || change.collection !== "pys" || change.operation !== "upsert" ||
+            String(change.recordId || "").trim() !== String(result.referenceId || "").trim() ||
+            !change.snapshot || typeof change.snapshot !== "object") {
+            return Object.assign({}, result, { catalogRefreshPending: true,
+                message: "El vídeo fue aprobado, pero no se pudo preparar la actualización de PyS." });
+        }
+        const pysResult = Object.assign({}, result, { pysCatalogChange: change, catalogRefreshStatus: "success" });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:pys-catalog-change", { detail: { change } }));
+        }
+        return pysResult;
     }
     let finalResult = result;
     try {

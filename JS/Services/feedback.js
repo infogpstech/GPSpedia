@@ -5792,7 +5792,8 @@ function handleApproveVideoUnlocked_(payload) {
             videoUrl: videoData.videoUrl,
             targetType: targetResult.targetType,
             contentType: videoData.contentType,
-            referenceId: videoData.referenceId
+            referenceId: videoData.referenceId,
+            catalogChange: videoData.contentType === "pys" ? buildPysCatalogChange_(videoData.referenceId) : null
         };
     }
 
@@ -5840,7 +5841,8 @@ function handleApproveVideoUnlocked_(payload) {
         videoUrl: savedPayload.videoUrl,
         targetType: targetResult.targetType,
         contentType: savedPayload.contentType,
-        referenceId: savedPayload.referenceId
+        referenceId: savedPayload.referenceId,
+        catalogChange: savedPayload.contentType === "pys" ? buildPysCatalogChange_(savedPayload.referenceId) : null
     };
 }
 

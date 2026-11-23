@@ -21,13 +21,28 @@ import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { createInboxPageCache, mergeInboxMessagePages } from './inboxPageCache.js';
-import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
+import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache, applyPysCatalogChanges } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars, mountRichTextEditors, positionRichTextMenu, stripRichTextDemoPlaceholder, bindRichTextEditorSelection_ } from './rich-text.js';
 import { renderActivityLogs, renderActivityContributions, renderActivityInsights } from './activityDashboard.js';
 import { getDriveStorageCriticalState } from './driveStorageAlerts.js';
 import { getOrCreateTermsDeviceId, getDeviceTermsAcceptance, getDeviceTermsSyncStatus, saveDeviceTermsAcceptance } from './termsDeviceAcceptance.js';
 import { parseDeveloperConsoleConfirmation } from './developerConsoleConfirmation.js';
+
+// Las aprobaciones de vídeo PyS entregan un upsert verificado por FEEDBACK.
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    window.addEventListener("gpsepedia:pys-catalog-change", event => {
+        const change = event && event.detail && event.detail.change;
+        const applied = applyPysCatalogChanges(change ? [change] : []);
+        if (applied.needsRefresh) {
+            invalidatePysDataCache();
+            loadPysData().catch(error => {
+                console.warn("No se pudo recuperar PyS después de aprobar un vídeo:", error && error.message ? error.message : error);
+                mostrarNotificacion("El vídeo fue aprobado, pero PyS requiere una actualización manual.", "warning");
+            });
+        }
+    });
+}
 
 // Recalcula flechas de todos los carruseles activos con un único listener global.
 // Los carruseles se crean/destruyen durante la navegación; no registrar un listener
@@ -10897,14 +10912,6 @@ export function renderInboxDetail(item) {
                         try { await performSilentSync(approvalResult.catalogRefreshData); }
                         catch (refreshError) {
                             mostrarNotificacion("El vídeo fue aprobado, pero no se pudo aplicar la actualización del catálogo en esta pantalla.", "warning");
-                        }
-                    }
-                    if (item.videoMeta && item.videoMeta.contentType === "pys") {
-                        try {
-                            invalidatePysDataCache();
-                            await loadPysData({ refresh: true });
-                        } catch (refreshError) {
-                            mostrarNotificacion("El vídeo fue aprobado, pero PyS no pudo actualizarse automáticamente.", "warning");
                         }
                     }
                     invalidateInboxCache_(context);
