@@ -120,3 +120,10 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 
 
 Corrección de trazabilidad: ADMIN también consume CATALOG mediante `getVehicleProjection` y `getContributionCandidates`, además de WRITE mediante `allocateVehicleId` y `freezeCortesIds`. La matriz se actualizó y el total de acciones sin consumidor directo localizado se corrigió de 13 a 12.
+
+
+### RBAC — avance 2026-11-23
+- Añadida a la matriz la primera clasificación de permisos por servicio y acciones, incluida jerarquía de administración de usuarios, restricciones de Desarrollador, acciones públicas y permisos de Inbox.
+- Confirmado el contrato intencional de `WRITE/checkOperation`: sin actor/lease, `opId` aleatorio de 128 bits y respuesta mínima, cubierto por `CheckOperationSecurity.js`. Debe conservarse.
+- Identificado secreto interno de CATALOG para metadatos de inventario de imágenes; requiere migración segura en MIG-003.
+- MIG-001 sigue **EN PROGRESO**; aún faltan contratos de payload/respuesta, datos, APIs y pruebas de paridad.
