@@ -77,7 +77,7 @@ function runActionDispatchContractTests(sources) {
     const serviceKeysBlock = api.match(/export\s+const\s+CENTRAL_SERVICE_KEYS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\);/);
     assert_(!!serviceKeysBlock, "No se encontró CENTRAL_SERVICE_KEYS.");
     const requiredEndpoints = [...serviceKeysBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
-    const optionalServicesBlock = String(input.centralConfigurationCache || "").match(/const OPTIONAL_SERVICES = \\[([\\s\\S]*?)\\];/);
+    const optionalServicesBlock = String(input.centralConfigurationCache || "").match(/const OPTIONAL_SERVICES = \[([\s\S]*?)\];/);
     const optionalEndpoints = optionalServicesBlock
         ? [...optionalServicesBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]) : [];
     const endpoints = [...new Set([...requiredEndpoints, ...optionalEndpoints])];
