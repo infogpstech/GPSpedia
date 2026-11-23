@@ -109,6 +109,7 @@ check("ADMIN declara las mÃ©tricas locales, corrige events y muestra las dos grÃ
     assert.match(ui, /renderLocalServiceTrafficChart_/);
     assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
     assert.match(ui, /filter\(key => key !== "LEGACY"\)/);
+    assert.match(ui, /filter\(key => key !== "LEGACY" && key !== "COORDINATOR"\)/);
     assert.match(ui, /services.length !== expectedServices.length/);
     assert.match(html, /id="global-service-traffic-chart"/);
 });
