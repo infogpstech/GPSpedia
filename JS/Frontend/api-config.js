@@ -314,25 +314,6 @@ export async function routeActionWithRetry(action, payload = {}, options = {}) {
     throw new Error("La solicitud de auditoría terminó sin respuesta.");
 }
 
-// Lector público central. AUTH es el único punto de entrada de bootstrap actual;
-// la caché nunca persiste información backend/admin ni reemplaza la autorización de sesión.
-export async function loadCentralConfiguration(options = {}) {
-    return centralConfigurationCache_.load(
-        () => routeActionWithRetry("getPublicConfiguration", {}, {
-            timeoutMs: 6000, maxAttempts: 2, retryDelayMs: 200
-        }),
-        options
-    );
-}
-
-export async function refreshCentralConfiguration() {
-    return loadCentralConfiguration({ force: true });
-}
-
-export function invalidateCentralConfigurationCache() {
-    centralConfigurationCache_.invalidate();
-}
-
 // 3. FUNCIONES DE CONVENIENCIA (HELPERS)
 function createLoginRequestId_() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -842,3 +823,23 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
         } catch (telemetryError) {}
     }
 }
+
+// Lector público central. AUTH es el único punto de entrada de bootstrap actual;
+// la caché nunca persiste información backend/admin ni reemplaza la autorización de sesión.
+export async function loadCentralConfiguration(options = {}) {
+    return centralConfigurationCache_.load(
+        () => routeActionWithRetry("getPublicConfiguration", {}, {
+            timeoutMs: 6000, maxAttempts: 2, retryDelayMs: 200
+        }),
+        options
+    );
+}
+
+export async function refreshCentralConfiguration() {
+    return loadCentralConfiguration({ force: true });
+}
+
+export function invalidateCentralConfigurationCache() {
+    centralConfigurationCache_.invalidate();
+}
+
