@@ -25,7 +25,7 @@ const SHEET_NAMES = {
     ACTIVE_SESSIONS: "ActiveSessions"
 };
 
-// La identidad y el rol llegan desde Coordinator; WRITE no duplica los esquemas de Users/ActiveSessions.
+// WRITE carga el actor desde Users/ActiveSessions al primer acceso y lo conserva en caché local.
 
 const COLS_CORTES = {
     id: 1, categoria: 2, marca: 3, modelo: 4, versionesAplicables: 5, anoDesde: 6, anoHasta: 7, tipoEncendido: 8,
