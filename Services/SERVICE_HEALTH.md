@@ -21,7 +21,7 @@ La versión se informa cuando está disponible; no reemplaza la validación de i
 
 ## Servicio retirado
 
-**USERS dejó de ser un microservicio independiente por MIG-012.** `getUsers`, `createUser` y `updateProfile` forman parte de AUTH y no existe una clave de salud ni una ruta frontend hacia un endpoint USERS. El deployment histórico y su fila heredada del registro central se deshabilitarán después de la validación Beta; no se modificaron desde este commit.
+**USERS dejó de ser un microservicio independiente por MIG-012.** `getUsers`, `createUser` y `updateProfile` forman parte de AUTH y no existe una clave de salud ni una ruta frontend hacia un endpoint USERS. El lector de configuración central ignora temporalmente la fila histórica USERS, por lo que no participa en el enrutamiento activo. El deployment y su fila heredados se deshabilitarán/retirarán después de validar AUTH y ausencia de consumidores externos en Beta; no se modificaron desde este commit.
 
 
 **LEGACY está retirado y no forma parte del inventario de servicios ni del contrato de salud.** No existe endpoint configurado, acción pública ni solicitud de red asociada. La mención se conserva únicamente como constancia de retirada; no debe mostrarse como un microservicio pendiente de conexión.

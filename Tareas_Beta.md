@@ -84,3 +84,11 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 
 ## 3. Estado inicial
 Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pruebas locales anteriores no sustituyen las pruebas remotas con Apps Script, Spreadsheet, Drive, OAuth o YouTube.
+
+
+## 4. Validación Beta diferida — MIG-012 AUTH/USERS
+- Desplegar AUTH en entorno aislado y confirmar que el endpoint real responde con el contrato esperado.
+- Verificar login, sesiones, roles jerárquicos, altas, actualización de perfil y bajas usando hojas de prueba Users/ActiveSessions.
+- Confirmar que las acciones getUsers/createUser/updateProfile funcionan desde el frontend y que no existen consumidores externos del deployment USERS.
+- Revisar permisos Apps Script/Spreadsheet y ausencia de efectos sobre datos productivos.
+- Solo tras aprobar lo anterior, deshabilitar el deployment heredado USERS y retirar su fila del registro central. La fila histórica se ignora actualmente por el lector central; no se debe borrar antes del cutover.

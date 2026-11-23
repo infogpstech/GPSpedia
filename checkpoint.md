@@ -730,3 +730,38 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 
 ### Siguiente paso exacto
 Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013 — sesiones sin Coordinator ni secretos compartidos.
+
+
+---
+
+## Cierre MIG-012 — código y regresión aprobados; Beta diferida — 2026-11-23
+
+### Estado Git verificado
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD: `89a8b60b872e97ab81086fd9d685b07186ca3c66`.
+- Rama base protegida: `GPSpedia2.2.5` — `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+
+### Resultado MIG-012
+- Gestión de usuarios integrada en AUTH: `getUsers`, `createUser`, `updateProfile`.
+- USERS retirado de los seis destinos de servicio activos, frontend, health, telemetría, Coordinator, fan-out de caché y configuración central pública.
+- `CentralConfigurationReader.js` y `centralConfigurationCache.js` requieren seis servicios y omiten la fila histórica USERS durante el periodo previo al cutover Beta.
+- Se conserva la hoja Users/ActiveSessions, RBAC, hash PBKDF2, secuencia de IDs, bloqueo local compartido para altas/bajas, atomicidad y rollback.
+- Harness aislado de mutaciones: 15/15 PASS.
+
+### CI y pruebas
+- GitHub Actions Node.js 22: SUCCESS — run `45222509966`.
+- Regresión: 305 suites, 3,554 pruebas aprobadas, 0 fallos.
+- Sintaxis: 445 archivos .js/.mjs PASS.
+- Referencias de módulos: 347 archivos inspeccionados, PASS.
+- GitHub Pages build/deploy: SUCCESS — run `45222508791`.
+
+### Pendiente exclusivamente de Beta
+- Desplegar AUTH en entorno aislado y comprobar endpoint real.
+- Verificar sesiones, roles, permisos de Spreadsheet y operaciones de altas/perfiles/bajas.
+- Confirmar que no existen consumidores externos del deployment USERS.
+- Solo después de esas comprobaciones, deshabilitar el deployment histórico y retirar su fila del registro central. No se modificaron deployments, propiedades, hojas, Drive ni datos externos en esta tarea.
+
+### Estado y siguiente paso
+- MIG-012: COMPLETADA EN CÓDIGO, con cutover remoto diferido a Beta.
+- No iniciar MIG-013 en este cierre; queda como siguiente tarea pendiente según prioridad: sesiones sin Coordinator ni secretos compartidos.

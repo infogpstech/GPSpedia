@@ -1306,7 +1306,7 @@ La visibilidad public/backend/admin es filtrado de aplicación, no ACL de lectur
 
 El inventario inicial de §§1–19 describe la arquitectura antes de la unificación y se conserva como evidencia histórica. El estado vigente de la rama `GPSpedia2.2.5_work` es:
 
-- El mapa contiene 120 acciones y seis destinos: AUTH 18, CATALOG 5, WRITE 9, FEEDBACK 41, UTILITIES 1 y ADMIN 46. `getUsers`, `createUser` y `updateProfile` se asignan a AUTH.
+- El mapa contiene 121 acciones y seis destinos: AUTH 19, CATALOG 6, WRITE 9, FEEDBACK 41, UTILITIES 1 y ADMIN 45. `getUsers`, `createUser` y `updateProfile` se asignan a AUTH.
 - AUTH es el propietario único de las funciones de identidad/usuarios y mantiene las hojas `Users` y `ActiveSessions` sin migrar datos ni cambiar índices. Se conserva la columna G de ActiveSessions definida por AUTH.
 - `getUsers` conserva el filtrado jerárquico Desarrollador/Jefe/Supervisor; `createUser` conserva campos, validadores, hash PBKDF2, generación secuencial, snapshot, escritura atómica y rollback; `updateProfile` solo modifica `Nombre_Completo` del usuario autenticado.
 - La creación de usuarios usa ScriptLock local de AUTH. La eliminación de cuenta también usa ese mismo lock de proyecto, sustituyendo la lease cruzada AUTH↔USERS sin abrir una ventana de concurrencia entre altas y bajas.
@@ -1314,4 +1314,12 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - `JS/Services/users.js`, `JS/Tests/users.js` y la clave de health USERS fueron retiradas del código versionado. No quedan acciones frontend ni políticas de servicio que requieran un endpoint USERS.
 - No se ha borrado ni alterado un deployment Apps Script remoto ni su fila heredada en el registro central. Su deshabilitación se hará tras verificar el despliegue AUTH en Beta y confirmar ausencia de consumidores externos.
 
-**Prueba funcional local:** `UsersAtomicMutations.js` — 15/15 PASS. La ejecución de la regresión completa y la verificación real de sesiones, roles y permisos sobre recursos aislados quedan pendientes de CI/Beta.
+**Pruebas:** `UsersAtomicMutations.js` — 15/15 PASS. GitHub Actions Node.js 22 SUCCESS — run `45222509966`: 305 suites, 3,554 pruebas aprobadas, 0 fallos. Sintaxis 445 archivos PASS; referencias de módulos 347 archivos PASS. La verificación real de sesiones, roles y permisos sobre recursos aislados permanece pendiente de Beta.
+
+
+### 22.1 Cierre de validación MIG-012 — 2026-11-23
+- El mapa canónico actual contiene 121 acciones y seis servicios: AUTH 19, CATALOG 6, WRITE 9, FEEDBACK 41, UTILITIES 1 y ADMIN 45.
+- Las acciones de usuarios `getUsers`, `createUser` y `updateProfile` son propiedad de AUTH. El servicio independiente USERS fue retirado del código versionado.
+- El registro central y su caché pública requieren seis servicios. El lector ignora temporalmente la fila histórica USERS hasta el cutover Beta; no se alteró el registro remoto.
+- Regresión CI Node.js 22: run 45222509966 — 305 suites, 3,554 pruebas, 0 fallos. GitHub Pages build/deploy: run 45222508791 — SUCCESS.
+- MIG-012: código completado. Despliegue AUTH, verificación de recursos/permisos y retiro del deployment USERS siguen como validación Beta.

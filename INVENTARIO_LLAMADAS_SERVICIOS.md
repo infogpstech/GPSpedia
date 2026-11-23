@@ -27,13 +27,13 @@ Este documento describe el código versionado. No acredita que las URLs, secreto
 `JS/Frontend/api-config.js` es el router único de solicitudes de aplicación:
 
 - Declara seis destinos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Las acciones getUsers, createUser y updateProfile pertenecen ahora a AUTH.
-- `ACTION_TO_SERVICE_MAP` contiene 120 acciones canónicas y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
+- `ACTION_TO_SERVICE_MAP` contiene 121 acciones canónicas y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
 - `routeAction` mide tráfico local del navegador y no envía esas métricas a un servicio de telemetría.
 - `getCatalogChanges` está mapeada actualmente a FEEDBACK.
 - Las acciones `allocateVehicleId` y `freezeCortesIds` ya están mapeadas a WRITE; `getVehicleProjection` y `getContributionCandidates` a CATALOG.
 - La salud de los servicios se consulta desde el frontend usando sus endpoints; no requiere que un servicio consulte a otro.
 
-La matriz de 120 acciones y sus handlers permanece en `MATRIZ_MIGRACION_SERVICIOS.md` §19.2 y §19.3. Las rutas de compatibilidad no deben confundirse con nuevas acciones canónicas.
+La matriz histórica de acciones y sus handlers permanece en `MATRIZ_MIGRACION_SERVICIOS.md` §19.2 y §19.3. Las rutas de compatibilidad no deben confundirse con nuevas acciones canónicas.
 
 ### 2.2 Grafo de dependencias backend actuales
 
@@ -266,4 +266,4 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - `updateProfile` conserva la edición exclusiva de `Nombre_Completo`, exige identidad propia y una fila ID única; no amplía campos ni adquiere un lock global para la escritura de celda.
 - `getUsers` conserva el filtrado jerárquico: Desarrollador ve todos; Jefe ve Supervisor/Técnico; Supervisor ve Técnico. No expone hash ni token.
 - El router, el mapa de servicios, el contrato de salud, el tráfico global, las allowlists Coordinator y las listas de caché ya no declaran USERS como servicio independiente. Se eliminaron `JS/Services/users.js` y `JS/Tests/users.js` después de migrar sus pruebas al grupo AUTH.
-- Harness local de migración: 15/15 PASS. La regresión completa Node.js 22 posterior a este commit y las invocaciones reales de Apps Script quedan pendientes. El deployment antiguo y su fila en el registro central se deshabilitarán tras validar AUTH en Beta.
+- Harness local de migración: 15/15 PASS. GitHub Actions Node.js 22: SUCCESS — run 45222509966 (305 suites, 3,554 pruebas, 0 fallos). Sintaxis: 445 archivos PASS; referencias: 347 archivos PASS. El lector central exige seis servicios e ignora la fila histórica USERS hasta completar el cutover Beta. Las invocaciones reales de Apps Script y la desactivación del deployment heredado siguen pendientes de Beta.

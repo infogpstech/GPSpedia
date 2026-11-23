@@ -141,3 +141,13 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se retiró USERS del mapa de servicios, health check, telemetría, políticas Coordinator y fan-out de caché de actor. AUTH precalienta su propia caché en login; se mantienen WRITE, FEEDBACK y ADMIN como destinos remotos.
 - Se eliminaron JS/Services/users.js y JS/Tests/users.js tras mover sus pruebas a AUTH.
 - Harness funcional aislado: 15/15 PASS. Regresión CI Node.js 22 posterior al commit pendiente; validación real Beta y deshabilitación del deployment/registro remoto heredado USERS quedan pendientes.
+
+
+### 2026-11-23 — Cierre MIG-012: CI y regresión aprobados
+- Se corrigieron las pruebas heredadas que todavía importaban `JS/Services/users.js` o esperaban siete servicios en el router central.
+- La configuración central activa y su caché pública pasan a seis servicios. El lector backend ignora la fila heredada USERS sin exigir su eliminación inmediata del registro externo; el cutover remoto queda sujeto a Beta.
+- GitHub Actions Node.js 22 SUCCESS — run 45222509966: 305 suites, 3,554 pruebas, 0 fallos.
+- RepositoryJavaScriptSyntax: 445 archivos PASS; RepositoryModuleReferences: 347 archivos PASS.
+- GitHub Pages build/deploy SUCCESS — run 45222508791.
+- MIG-012 queda COMPLETADA EN CÓDIGO. La verificación del deployment AUTH y la desactivación del deployment/fila heredada USERS permanecen pendientes de Beta; no se modificaron recursos externos.
+- Siguiente tarea: MIG-013 — sesiones sin Coordinator ni secretos compartidos.
