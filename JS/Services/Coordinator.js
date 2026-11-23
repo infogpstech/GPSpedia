@@ -1,6 +1,8 @@
 // ============================================================================
-// GPSpedia — Coordinador compartido de mutaciones entre proyectos Apps Script
-// No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
+// GPSpedia — Servicio transitorio de contexto de sesión y telemetría histórica.
+// MIG-024 retiró SharedMutation, sus leases y la publicación del catálogo.
+// La retirada total de este servicio, incluido doGet/health, corresponde a MIG-025.
+// No realiza llamadas HTTP a otros servicios GPSpedia.
 // ============================================================================
 
 const COORDINATOR_VERSION_ = "1.4.9";
