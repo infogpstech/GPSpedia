@@ -113,7 +113,10 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 
 ### Trazabilidad de acciones — avance adicional 2026-11-23
 - Publicada en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de 120 acciones con servicio, handler y consumidor localizado. En la extracción no quedó ninguna acción del mapa sin dispatcher/handler.
-- Se identificaron 13 acciones sin consumidor frontend directo en los módulos inspeccionados; quedan para clasificación manual/interna/indirecta/histórica, sin retirarlas.
+- Se identificaron 12 acciones sin consumidor frontend directo en los módulos inspeccionados; quedan para clasificación manual/interna/indirecta/histórica, sin retirarlas.
 - Registradas las 13 operaciones internas de Coordinator, las rutas de caché de actor y la ruta GET incremental `catalogFeed=1` usada por el frontend.
 - `ActionDispatchContract.js`: 12/12 PASS con fuentes exactas de esta rama.
 - MIG-001 continúa **EN PROGRESO**: faltan payloads/respuestas, RBAC por acción, recursos de datos, Drive/APIs, operaciones manuales/programadas y cobertura de paridad.
+
+
+Corrección de trazabilidad: ADMIN también consume CATALOG mediante `getVehicleProjection` y `getContributionCandidates`, además de WRITE mediante `allocateVehicleId` y `freezeCortesIds`. La matriz se actualizó y el total de acciones sin consumidor directo localizado se corrigió de 13 a 12.
