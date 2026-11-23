@@ -199,14 +199,6 @@ function getSharedCatalogChanges_(cursor, limit) {
 }
 
 
-function registerSharedSessionContext_(userId, sessionToken, role, fullName) {
-    const actor = { userId: String(userId || "").trim(), role: String(role || "").trim().toLowerCase(),
-        fullName: String(fullName || ""), epoch: 1 };
-    return cacheSharedSessionActor_(actor.userId, sessionToken, actor)
-        ? { status: "success", registered: true }
-        : { status: "error", registered: false };
-}
-
 function revokeSharedSessionContext_(userId, sessionToken) {
     return invalidateLocalSharedSessionActorCaches_(userId, [sessionToken]);
 }
@@ -260,26 +252,6 @@ function handleSharedSessionActorCacheInvalidation_(payload, dependencies) {
     }
     const invalidated = invalidateLocalSharedSessionActorCaches_(userId, tokens, dependencies);
     return { status: "success", invalidated };
-}
-
-function handleSharedSessionActorCachePriming_(payload, dependencies) {
-    const source = payload && typeof payload === "object" ? payload : {};
-    const userId = String(source.userId || "").trim();
-    const tokens = Array.isArray(source.sessionTokens) ? source.sessionTokens : [];
-    if (!userId || !tokens.length || tokens.length > 5 ||
-        tokens.some(token => typeof token !== "string" || token.length < 16 || token.length > 200)) {
-        return { status: "error", message: "Datos de precarga de sesión no válidos." };
-    }
-    let primed = 0;
-    try {
-        tokens.forEach(token => {
-            getCachedSharedSessionActor_(userId, token, Object.assign({}, dependencies || {}, { forceReload: true }));
-            primed++;
-        });
-    } catch (error) {
-        return { status: "error", message: "No se pudo validar la sesión desde ActiveSessions.", primed };
-    }
-    return { status: "success", primed };
 }
 
 // El contexto de usuario/rol se sincroniza al iniciar sesión; CacheService admite hasta 6 h.
