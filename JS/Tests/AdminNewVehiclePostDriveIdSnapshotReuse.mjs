@@ -1,33 +1,35 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const write=readFileSync(new URL("../Services/write.js",import.meta.url),"utf8");
+const adminStart=admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
+const adminEnd=admin.indexOf("\nfunction sanitizeSupplementaryRichText_",adminStart);
+assert.ok(adminStart>=0&&adminEnd>adminStart);
+assert.ok(admin.slice(adminStart,adminEnd).includes("ACTION_MOVED_TO_WRITE"));
 
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = source.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
-const end = source.indexOf("\nfunction sanitizeSupplementaryRichText_", start);
-assert.ok(start >= 0 && end > start, "No se encontró handleAddOrUpdateCut");
-const handler = source.slice(start, end);
-const newBranchStart = handler.indexOf("} else { // --- Lógica para vehículo NUEVO");
-assert.ok(newBranchStart >= 0, "No se encontró rama de vehículo nuevo");
-const branch = handler.slice(newBranchStart);
-const driveStart = branch.indexOf("const uploaded = runAdminContributionDriveWorkOutsideScriptLock_");
-const callbackEnd = branch.indexOf("}, operationHash);", driveStart);
-assert.ok(driveStart >= 0 && callbackEnd > driveStart, "No se encontró callback post-Drive");
-const callback = branch.slice(driveStart, callbackEnd);
-const verified = callback.indexOf("const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);");
-const identity = callback.indexOf("verified.rowIndex !== rowIndex");
-const vehicle = callback.indexOf("verified.vehicleId !== String(newId)");
-const slot = callback.indexOf("verified.slotIndex !== 1");
-const hash = callback.indexOf("verified.operationHash !== operationHash");
-const idSnapshot = callback.indexOf("Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)");
-assert.ok(verified >= 0 && verified < identity && identity < vehicle && vehicle < slot && slot < hash && hash < idSnapshot,
-    "La revalidación debe verificar reserva e ID usando el snapshot devuelto después de Drive");
-assert.doesNotMatch(callback, /getRange\(rowIndex,\s*COLS_CORTES\.id\)\.getValue\(\)/,
-    "No debe consultar individualmente el ID después de que findRowByOpId devuelve la fila completa");
-assert.match(callback, /verified\.rowValues\[COLS_CORTES\.id - 1\]/);
+const start=write.indexOf("function handleAddOrUpdateCutLockedUnsafe_");
+const end=write.indexOf("\nfunction ",start+10);
+assert.ok(start>=0&&end>start,"No se encontró la transacción física de alta en WRITE.");
+const handler=write.slice(start,end);
+const drive=handler.indexOf("const preparedImages = runWriteDriveWorkOutsideScriptLock_");
+const verify=handler.indexOf("const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot)",drive);
+const row=handler.indexOf("const rowCoreValues = [",verify);
+assert.ok(drive>=0&&verify>drive&&row>verify,"WRITE debe revalidar después de Drive y antes de escribir la fila.");
+const checks=[
+ "verified.rowIndex !== rowIndex",
+ "String(verified.vehicleId) !== String(newId)",
+ "verified.slotIndex !== 1",
+ "verified.operationHash !== operationHash",
+ "Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)"
+];
+let previous=verify;
+for(const check of checks){const at=handler.indexOf(check,previous);assert.ok(at>previous,"Falta revalidación ordenada: "+check);previous=at;}
+assert.doesNotMatch(handler.slice(verify,row),/getRange\(rowIndex,\s*COLS_CORTES\.id\)\.getValue\(\)/,
+ "La revalidación debe reutilizar el snapshot completo, sin lectura individual redundante.");
 
-const helperStart = source.indexOf("function findUniqueCortesVehicleRow_");
-const helperEnd = source.indexOf("\nfunction ", helperStart + 10);
-const helper = source.slice(helperStart, helperEnd);
-assert.match(helper, /const rowValues = sheet\.getRange\(rowIndex, 1, 1, sheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/);
-assert.match(helper, /return \{ rowIndex: rowIndex, rowValues: rowValues \}/);
-console.log("AdminNewVehiclePostDriveIdSnapshotReuse: 7/7 PASS — ID revalidado desde la fila completa verificada; sin getValue redundante");
+const helperStart=write.indexOf("function findUniqueCortesVehicleRow_");
+const helperEnd=write.indexOf("\nfunction ",helperStart+10);
+const helper=write.slice(helperStart,helperEnd);
+assert.match(helper,/getRange\(rowIndex, 1, 1, cortesSheet\.getLastColumn\(\)\)\.getValues\(\)\[0\]/);
+assert.match(helper,/return \{ rowIndex: rowIndex, rowValues: rowValues \}/);
+console.log("AdminNewVehiclePostDriveIdSnapshotReuse: 1/1 PASS — WRITE revalida ID/reserva desde snapshot post-Drive");
