@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { VinDifferentialEngine } from '../../VinDifferentialEngine.js';
+import { VinDifferentialEngine } from '../Frontend/VinDifferentialEngine.js';
 const engine=new VinDifferentialEngine(),common={vinLength:17,positions:[0],values:['J'],confidence:100,status:'validada'};
 engine.signatures=new Map([
 ['A',{...common,classKey:'A',marca:'Toyota',modelo:'Corolla',anoDesde:2018,anoHasta:2022,rangoAnos:'2018-2022',version:'LE'}],
