@@ -84,7 +84,7 @@ function expectCode(fn, code) {
 }
 {
     const fixture=makeDatabase();
-    fixture.rows.Servicios.push([4,"COORDINATOR","https://script.google.com/macros/s/FAKE_COORDINATOR_123456789/exec",true,"2.2.5","2.2.5","catalogFeed",new Date(0),"operator","initial"]);
+    fixture.rows.Servicios.push([4,"COORDINATOR","https://script.google.com/macros/s/FAKE_COORDINATOR_123456789/exec",true,"2.2.5","2.2.5","trafficAggregation",new Date(0),"operator","initial"]);
     const active={current:fixture.database}, env=createEnvironment(active);
     const result=env.context.getPublicCentralConfiguration_();
     assert.equal(result.services.COORDINATOR.enabled,true);
