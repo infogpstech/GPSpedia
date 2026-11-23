@@ -127,7 +127,7 @@ function readCatalogTutorials_(catalog, tutorialRows, editEvents = [], renameEve
     return context.read({ forceRefresh: true });
 }
 
-export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }) {
+export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
     const results = [];
     let passed = 0, failed = 0;
     const test = (name, fn) => {
@@ -642,7 +642,6 @@ if (process.argv[1] && process.argv[1].endsWith("TutorialIntegrity.js")) {
     const result = runTutorialIntegrityTests({
         feedback: fs.readFileSync("JS/Services/feedback.js", "utf8"),
         ui: fs.readFileSync("JS/Frontend/ui.js", "utf8"),
-        coordinator: fs.readFileSync("JS/Services/Coordinator.js", "utf8"),
         catalog: fs.readFileSync("JS/Services/catalog.js", "utf8")
     });
     console.log("TutorialIntegrity: " + result.passed + "/" + (result.passed + result.failed) + " PASS");
