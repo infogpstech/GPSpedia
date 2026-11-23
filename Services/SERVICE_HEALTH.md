@@ -51,7 +51,7 @@ Un HTTP 2xx por sí solo nunca establece `online`. Un estado backend no reconoci
 
 No se añadieron probes de Sheets/Drive: las fuentes disponibles no proporcionan un endpoint de solo lectura que compruebe esas dependencias de forma segura, uniforme y sin efectos secundarios. El panel separa expresamente la respuesta del endpoint de la salud de dependencias internas.
 
-La revisión local cubre los seis servicios activos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. COORDINATOR fue retirado en MIG-025 y ya no forma parte del registro central ni del contrato de salud. Su GET informa identidad, versión y estado del endpoint; no certifica que ScriptProperties, leases u otras dependencias estén disponibles. LEGACY está excluido del inventario y no genera solicitudes. La identidad, versión, MIME, redacción y comportamiento efectivo de los deployments actuales no pueden certificarse desde este repositorio; deben verificarse en Beta aislada. No se modificaron deployments ni datos productivos.
+La revisión local cubre los seis servicios activos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. COORDINATOR fue retirado en MIG-025 y ya no forma parte del registro central ni del contrato de salud; no se debe consultar ni desplegar como servicio activo. LEGACY está excluido del inventario y no genera solicitudes. La identidad, versión, MIME, redacción y comportamiento efectivo de los deployments actuales no pueden certificarse desde este repositorio; deben verificarse en Beta aislada. No se modificaron deployments ni datos productivos.
 
 ## Prueba local
 
