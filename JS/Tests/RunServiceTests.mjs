@@ -472,8 +472,18 @@ runGroup('39','MIG015',()=>{
  runImageCli('WRITE reutilización de snapshot para imágenes recuperadas','JS/Tests/AdminRecoveryImageSnapshotReuse.mjs');
 });
 
+runGroup('41','MIG017',()=>{
+ const a=read('JS/Services/admin.js');
+ runCli('MIG017 terminal Drive: alcance, navegación y permisos','JS/Tests/DriveTerminalScope.mjs');
+ runCli('MIG017 terminal Drive: cliente move e IDs visibles','JS/Tests/DriveTerminalMoveClient.mjs');
+ runCli('MIG017 respaldo Drive reanudable','JS/Tests/AdminBackupResumeUI.mjs');
+ runCli('MIG017 métricas y alertas de almacenamiento Drive','JS/Tests/DriveStorageAlerts.mjs');
+ recordResult('MIG017 respaldo/restauración/rollback Drive',loadFunction('JS/Tests/AdminRestoreRecovery.js','runAdminRestoreRecoveryTests')(a));
+ runCli('MIG017 auditoría persistente ADMIN','JS/Tests/AdminAuditTrail.mjs');
+});
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','39','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','39','41','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');
