@@ -119,6 +119,8 @@ const ADMIN_CATALOG_RESET_ACTIONS_ = new Set([
  */
 export const SERVICE_COMPATIBILITY_ACTIONS = {
     CATALOG: ['getSuggestion'],
+    // MIG-023: compatibilidad temporal; el frontend ya publica/consulta el feed en CATALOG.
+    COORDINATOR: ['publishCatalogReset', 'getCatalogChanges'],
     ADMIN: []
 };
 
