@@ -44,7 +44,7 @@ check("CATALOG valida sesión propia y frontend coordina proyección/candidatos"
     assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
     assert.ok(ui.includes('routeAction("getVehicleProjection"'));
     assert.ok(ui.includes("includeImageInventoryCandidates"));
-    assert.ok(inventory.includes("sin secretos compartidos"));
+    assert.match(inventory, /MIG-010[\\s\\S]*frontend coordina/i);
 });
 
 check("El frontend enruta directamente los servicios y acciones de reemplazo", () => {
