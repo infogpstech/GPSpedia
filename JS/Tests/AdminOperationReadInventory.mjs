@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 function block(name) {
     const start = admin.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
@@ -79,12 +80,14 @@ test("upload ADMIN conserva compare-and-set, ledger append-only y estado require
     assert.match(upload, /file\.getDescription\(\)\s*\|\| ""\) !== linkedDescription/);
 });
 
-test("status de upload solo consulta CATALOG tras encontrar eventos de la operación", () => {
+test("status ADMIN y proyección CATALOG se consultan por separado desde frontend", () => {
     const entries = uploadStatus.indexOf("const entries = findImageUploadEventsByOperationKeyForAdmin_");
     const empty = uploadStatus.indexOf("if (!entries.length)");
-    const projection = uploadStatus.indexOf("getAdminProjectedVehicleFieldSnapshot_");
-    assert.ok(entries >= 0 && empty > entries && projection > empty);
+    assert.ok(entries >= 0 && empty > entries);
     assert.match(uploadStatus, /verifyImageUploadFile_/);
+    assert.doesNotMatch(uploadStatus, /getAdminProjectedVehicleFieldSnapshot_|CATALOG_SERVICE_URL|UrlFetchApp/);
+    assert.ok(ui.includes('routeAction("getVehicleProjection"'));
+    assert.ok(ui.includes("loadCatalogImageProjection_"));
 });
 
 console.log("AdminOperationReadInventory: " + passed + "/" + passed + " PASS — respaldos, restore, escáneres y uploads");
