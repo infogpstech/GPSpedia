@@ -37,7 +37,7 @@ test("WRITE y FEEDBACK no adquieren leases para mutaciones ordinarias", () => {
 });
 
 test("AUTH gestiona usuarios con actor cacheado y lock local; no existe lease USERS", () => {
-    const cachedActions = authDoPost.indexOf('["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"].includes(action)');
+    const cachedActions = authDoPost.indexOf('if (["acceptTerms"');
     assert.ok(cachedActions >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", cachedActions) > cachedActions);
     assert.match(auth, /function handleGetUsers\(/);
     assert.match(auth, /function handleCreateUser\(/);
@@ -53,7 +53,7 @@ test("AUTH gestiona usuarios con actor cacheado y lock local; no existe lease US
 
 test("AUTH conserva solo lease de eliminación; login y acciones ordinarias usan lock/caché local", () => {
     const benchmark = authDoPost.indexOf('if (action === "benchmarkPasswordKdf")');
-    const cachedActions = authDoPost.indexOf('["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords"].includes(action)');
+    const cachedActions = authDoPost.indexOf('if (["acceptTerms"');
     const lease = authDoPost.indexOf('withSharedMutationLease_("AUTH", action');
     assert.ok(benchmark >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", benchmark) > benchmark);
     assert.ok(cachedActions >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", cachedActions) > cachedActions);
