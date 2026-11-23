@@ -107,7 +107,7 @@ console.log("MIG-014 frontend fan-out: 6 servicios, retry, fallo parcial y TTL 2
 
 const sharedSource = read("JS/Services/SharedMutationClient.js");
 const sharedRemoved = [];
-const sharedHandler = new Function("CacheService", sharedSource + "\\nreturn handleSharedSessionActorCacheInvalidation_;")({
+const sharedHandler = new Function("CacheService", sharedSource + "\nreturn handleSharedSessionActorCacheInvalidation_;")({
     getScriptCache: () => ({ remove: key => sharedRemoved.push(key) })
 });
 const sharedKey = "GPSpedia_SHARED_SESSION_ACTOR_V1_" + "d".repeat(64);
@@ -117,7 +117,7 @@ assert.equal(sharedHandler({ userId: "U-3", cacheKeys: ["GPSpedia_CATALOG_SESSIO
 
 const catalogSource = read("JS/Services/catalog.js");
 const catalogRemoved = [];
-const catalogHandler = new Function("CacheService", catalogSource + "\\nreturn invalidateCatalogSessionActorCache_;")({
+const catalogHandler = new Function("CacheService", catalogSource + "\nreturn invalidateCatalogSessionActorCache_;")({
     getScriptCache: () => ({ remove: key => catalogRemoved.push(key) })
 });
 const catalogKey = "GPSpedia_CATALOG_SESSION_ACTOR_V1_" + "e".repeat(64);
@@ -127,7 +127,7 @@ assert.equal(catalogHandler({ userId: "U-3", cacheKeys: [sharedKey] }).status, "
 
 const authServiceSource = read("JS/Services/Auth.js");
 const captureStart = authServiceSource.indexOf("function recordSessionCacheKeysForResponse_");
-const captureEnd = authServiceSource.indexOf("\\nfunction doPostInternal_", captureStart);
+const captureEnd = authServiceSource.indexOf("\nfunction doPostInternal_", captureStart);
 assert.ok(captureStart >= 0 && captureEnd > captureStart);
 const captureFunction = authServiceSource.slice(captureStart, captureEnd);
 const captureResult = new Function("getSharedSessionActorCacheKey_", "let sessionCacheKeysForResponse_ = { userId: '', shared: new Set(), catalog: new Set(), error: false }; " +
