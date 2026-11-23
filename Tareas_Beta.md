@@ -61,7 +61,7 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 - Aislamiento por rol y usuario.
 
 ### BETA-05 — ADMIN y mantenimiento
-- Panel Developer, telemetría y health individual/global para los seis servicios principales y COORDINATOR cuando esté habilitado.
+- Panel Developer: health individual de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; telemetría local del navegador claramente etiquetada. No existe agregado global de Coordinator.
 - Confirmar identidad, versión, latencia, estados online/slow/unavailable/error/unknown/stale, timeout y aislamiento de fallos entre endpoints.
 - Tráfico global: validar ventanas de 1/6/24 horas, RBAC Desarrollador, compatibilidad de buckets históricos v1 y nuevos v2, deduplicación de reintentos y retención de 24 horas.
 - Verificar que los nuevos incrementos globales corresponden únicamente a adquisiciones exitosas de lease; las validaciones de sesión, lecturas del feed y sondeos de salud no deben escribir métricas. Comprobar que la persistencia usa el guardado de lease ya requerido, sin una escritura adicional.
@@ -160,6 +160,18 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - En ADMIN, ejecutar auditoría Drive, creación de carpeta e inventario en dos recursos distintos simultáneamente; confirmar que no se bloquean entre sí.
 - Repetir dos operaciones sobre el mismo recurso; confirmar que la segunda recibe conflicto recuperable mientras la primera sigue activa, sin duplicar archivos ni registros.
 - Simular fallo durante el callback y fallo al limpiar el marcador; comprobar liberación/expiración por TTL y recuperación sin mantener ScriptLock durante el trabajo Drive.
-- Comprobar que los endpoints health/telemetría de Coordinator son los únicos remanentes y registrar su retirada como MIG-025; no confundirlos con un consumidor SharedMutation.
+- Confirmar que no hay endpoints, despliegues ni consumidores activos de Coordinator. La retirada del servicio se valida en MIG-025; cualquier limpieza de proyectos, triggers o propiedades externas se gestiona por separado y con autorización.
 - Registrar HEAD, versiones de deployments, rol, navegador/dispositivo, recurso sintético y evidencia anonimizada. No copiar secretos, tokens ni datos personales.
+- No desplegar ni ejecutar contra producción. CI local no sustituye esta validación Beta.
+
+
+## 6.5 Validación Beta diferida — MIG-025 retirada de COORDINATOR
+**Estado: PENDIENTE DE EJECUCIÓN EN Beta aislada.**
+
+- Confirmar que el registro central entrega únicamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN y que sus seis endpoints health responden de forma independiente.
+- Simular caída, lentitud, respuesta inválida y recuperación de cada servicio; verificar que el panel identifica el servicio afectado sin bloquear el resto.
+- Confirmar que el panel Developer presenta la telemetría local como solicitudes del navegador actual, sin afirmar que representa tráfico global ni todos los requests HTTP.
+- Verificar que no se invocan endpoints de COORDINATOR, no existe fallback a su URL y las acciones ordinarias, sesión, invalidación y feed siguen funcionando sin ese servicio.
+- Revisar deployments, triggers y propiedades Apps Script existentes solo en proyectos Beta desechables; documentar recursos externos huérfanos para limpieza autorizada. No borrar proyectos, propiedades ni datos automáticamente.
+- Registrar HEAD, versiones de deployments, servicio, rol, navegador/dispositivo, resultado y evidencia anonimizada. No copiar secretos ni datos personales.
 - No desplegar ni ejecutar contra producción. CI local no sustituye esta validación Beta.
