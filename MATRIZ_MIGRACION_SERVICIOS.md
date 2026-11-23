@@ -724,3 +724,87 @@ Esta primera tabla identifica campos de entrada y familias de respuesta/errores 
 ### 16.2 Límite de esta primera pasada
 
 Los campos anidados de `addOrUpdateCut` y `addSupplementaryInfo` se han extraído de sus validadores; las respuestas se resumen por variante de alta/aporte. Falta asociar columnas/rangos exactos y pruebas por acción, y revisar efectos de Drive/ledger en cada variante. No se ejecutaron escrituras reales.
+
+
+
+## 17. Mapa físico de hojas y rangos — AUTH, USERS y WRITE (primera pasada 2026-11-23)
+
+Fuente: constantes de columnas, nombres de hojas y operaciones de lectura/escritura de `JS/Services/Auth.js`, `JS/Services/users.js` y `JS/Services/write.js`. Los índices siguientes son los contratos que el código espera; **no representan una inspección en vivo de la Spreadsheet**. La validación de encabezados y datos reales queda pendiente de un entorno de prueba aislado.
+
+### 17.1 AUTH / USERS — `Users`
+
+| Columna | Campo | Uso observado |
+|---|---|---|
+| A (1) | `ID` | Identificador de usuario y búsqueda de registros |
+| B (2) | `Nombre_Usuario` | Nombre de inicio de sesión y búsqueda de cuenta |
+| C (3) | `Password` | Hash de contraseña; actualización y verificación |
+| D (4) | `Privilegios` | Rol; lectura y cambios protegidos |
+| E (5) | `Telefono` | Datos de perfil y administración |
+| F (6) | `Correo_Electronico` | Recuperación y administración |
+| G (7) | `Nombre_Completo` | Perfil y nombre visible |
+| H (8) | `SessionToken` | Puntero heredado de sesión y marcador temporal de revocación de rol |
+| I (9) | `TermsAcceptance` | Aceptación de términos por dispositivo |
+
+AUTH y USERS declaran el mismo mapa A:I. USERS lee normalmente A:G para listar usuarios; las operaciones de perfil/creación usan los índices definidos. No se debe tratar H como un campo libre: AUTH/USERS lo utilizan para compatibilidad y coordinación de revocaciones pendientes.
+
+### 17.2 AUTH / USERS — `ActiveSessions`
+
+| Columna | Campo | Uso observado |
+|---|---|---|
+| A (1) | `ID_Usuario` | Relación con Users.ID |
+| B (2) | `Usuario` | Nombre de usuario asociado |
+| C (3) | `ActiveSessions` | Token opaco de sesión; búsqueda, revocación y eliminación |
+| D (4) | `date` | Fecha de creación de sesión y fallback histórico de actividad |
+| E (5) | `Logs` | Campo heredado conservado en el esquema |
+| F (6) | `LastActivityAt` | Actividad reciente; AUTH comprueba/crea el encabezado `lastActivityAt` |
+| G (7) | `SessionTermsAcceptance` | Aceptación de términos asociada a la sesión/dispositivo |
+
+AUTH declara A:G. USERS declara A:F y no define el campo G en su mapa local. La unificación debe adoptar un único contrato compartido sin desplazar columnas ni borrar G. El código de AUTH también valida que F esté vacía o tenga el encabezado esperado antes de inicializarlo; no se debe asumir que basta con ampliar rangos.
+
+### 17.3 AUTH — `Logs`
+
+AUTH inserta cada registro nuevo en la fila 2 y escribe el rango A:D en este orden:
+
+1. `timestamp` (ISO),
+2. `level`,
+3. `message`,
+4. `details` (JSON o vacío).
+
+La fila 1 se conserva como encabezado. La purga de registros sensibles opera sobre esta hoja bajo permiso Desarrollador; no equivale a una limpieza indiscriminada.
+
+### 17.4 WRITE — `Cortes`
+
+Mapa de columnas declarado por `COLS_CORTES`:
+
+| Rango | Campos |
+|---|---|
+| A:H (1–8) | `id`, `categoria`, `marca`, `modelo`, `versionesAplicables`, `anoDesde`, `anoHasta`, `tipoEncendido` |
+| I:K (9–11) | `imagenVehiculo`, `videoGuiaDesarmeUrl`, `contadorBusqueda` |
+| L:R (12–18) | `tipoCorte1`, `ubicacionCorte1`, `colorCableCorte1`, `configRelay1`, `imgCorte1`, `utilCorte1`, `colaboradorCorte1` |
+| S:Y (19–25) | Campos equivalentes del corte 2 |
+| Z:AF (26–32) | Campos equivalentes del corte 3 |
+| AG:AP (33–42) | `apertura`, `imgApertura`, `cableAlimen`, `imgCableAlimen`, `timestamp`, `notaImportante`, `cableAlimen2`, `imgCableAlimen2`, `cableAlimen3`, `imgCableAlimen3` |
+| AQ:AS (43–45) | Sin campo declarado en `COLS_CORTES`; conservar sin desplazar ni reutilizar por inferencia |
+| AT:AV (46–48) | `activaTestigo1`, `activaTestigo2`, `activaTestigo3`; el código exige estas posiciones físicas |
+
+La columna `VIN` no tiene índice fijo en `COLS_CORTES`: `getVinColumnIndex` la localiza por encabezado, rechaza duplicados y devuelve ausencia cuando no existe. La migración debe mantener esa resolución dinámica y no asignarle AQ:AS sin inspección real.
+
+### 17.5 WRITE — hojas auxiliares con esquema explícito
+
+| Hoja | Columnas / encabezados | Función |
+|---|---|---|
+| `Idempotencia` / `Idempotencia_Cortes` | A:F: `opId`, `vehicleId`, `slotIndex`, `timestamp`, `status`, `operationHash` | Registro de idempotencia; se prefiere la hoja principal compatible y se usa fallback solo bajo reglas de compatibilidad |
+| `CortesIdReservations` | A:D: `opId`, `operationHash`, `vehicleId`, `createdAt` | Reservas append-only de IDs de vehículo |
+| `AportesVehiculo` | A:K: `eventId`, `opId`, `vehicleId`, `operationHash`, `kind`, `payloadJson`, `actorId`, `actorName`, `createdAt`, `status`, `supersedesEventId` | Ledger append-only versionado de aportes |
+| `ImageUploadEvents` | A:N: `eventId`, `token`, `operationKey`, `folderId`, `mimeType`, `sizeBytes`, `contentHash`, `fileId`, `fileUrl`, `state`, `referencesJson`, `fileName`, `createdAt`, `lastError` | Diario append-only de transiciones de cargas; no sustituye por sí solo el ledger heredado |
+
+### 17.6 Configuración de secuencia de IDs de USERS
+
+`__IdentifierSequenceConfig__` declara encabezados exactos A:G: `sheet`, `column`, `header`, `prefix`, `padding`, `formula`, `updatedAt`. USERS busca la fila de `Users` y la columna ID (1), rechaza encabezados incompatibles o registros duplicados y contrasta prefijo, padding y fórmula con la hoja destino. Si no hay configuración aplicable, existe un fallback histórico basado en la fórmula/patrón existente o `USR-` con padding 4. No migrar ni eliminar esta hoja antes de trasladar su contrato y probar la asignación.
+
+### 17.7 Diferencias y riesgos de esquema identificados
+
+- AUTH y USERS comparten el mapa Users A:I, pero sus mapas ActiveSessions difieren: AUTH incluye G (`SessionTermsAcceptance`) y USERS termina en F. La consolidación debe centralizar el esquema más completo.
+- AUTH y USERS mantienen referencias locales a Spreadsheet y AUTH accede también a Logs; WRITE declara además una carpeta Drive y utiliza hojas auxiliares. Estas referencias se inventarían en MIG-003/MIG-004; este apartado no las migra.
+- Los índices de `Cortes` no prueban que los encabezados reales de Beta/productivo coincidan. Los encabezados de Idempotencia, AportesVehiculo, ImageUploadEvents, reservas y secuencia se validan por código, pero aquí no se inspeccionó una Spreadsheet real.
+- No se deben compactar columnas vacías, mover campos, renombrar encabezados ni normalizar hojas durante la migración sin una prueba de compatibilidad y recuperación.
