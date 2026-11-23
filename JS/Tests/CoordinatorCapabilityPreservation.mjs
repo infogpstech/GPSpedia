@@ -73,10 +73,10 @@ check("La invalidación de cachés se coordina desde el navegador hacia cada ser
     assert.doesNotMatch(sessionActor, /createSharedMutationClient_|UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
     assert.doesNotMatch(coordinator, /function invalidateSessionActorCaches_|function primeSessionActorCaches_/);
 });
-check("El coordinador no sustituye los controles de permisos ni las operaciones remotas del panel ADMIN", () => {
-    assert.match(admin, /function handleGetServiceTraffic_/);
-    assert.match(admin, /developerContext\.role[\s\S]*desarrollador/);
-    assert.match(admin, /function handleGetServiceTraffic_/);
+check("La telemetría transitoria de Coordinator sigue restringida a Desarrollador", () => {
+    const traffic = extract(coordinator, "getServiceTrafficFromBrowser_");
+    assert.match(traffic, /authorizeSession_\(userId, sessionToken, now\(\)\)/);
+    assert.match(traffic, /role !== "desarrollador"/);
     assert.match(auth, /function handleCreateUser/);
 });
 console.log("CoordinatorCapabilityPreservation: " + passed + "/" + passed + " PASS");
