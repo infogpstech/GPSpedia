@@ -10,7 +10,6 @@ const auth = read("JS/Services/Auth.js");
 const write = read("JS/Services/write.js");
 const feedback = read("JS/Services/feedback.js");
 const catalog = read("JS/Services/catalog.js");
-const coordinator = read("JS/Services/Coordinator.js");
 const utilities = read("JS/Services/Utilities.js");
 const admin = read("JS/Services/admin.js");
 const addCortes = read("HTML/add_cortes.html");
@@ -27,8 +26,7 @@ test("rutas directas actuales coinciden con ACTION_TO_SERVICE_MAP", () => {
     assert.match(api, /'publishCatalogChange': 'CATALOG'/);
     assert.match(api, /'publishCatalogReset': 'CATALOG'/);
     assert.match(api, /'getNavigationData': 'CATALOG'.*'getCatalogData': 'CATALOG'.*'getDropdownData': 'CATALOG'/);
-    assert.doesNotMatch(coordinator, /publishCatalogResetFromBrowser_|getPublicCatalogChanges|catalogFeed/);
-    assert.doesNotMatch(coordinator, /request\\.action === "publishCatalogReset"/);
+    assert.doesNotMatch(api, /COORDINATOR|getServiceTraffic/);
 });
 
 test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", () => {
