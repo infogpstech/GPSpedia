@@ -1000,3 +1000,43 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Estado y continuidad
 - MIG-016: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Próxima tarea: MIG-017 — Herramientas y operaciones de Drive. No iniciar otra tarea hasta registrar el cierre documental de MIG-016.
+
+
+---
+
+## Continuidad MIG-017 y MIG-018 — 2026-11-23
+
+### Rama y límites
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- Rama base protegida: `GPSpedia2.2.5`, HEAD verificado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribieron cambios en la base.
+- Último commit funcional/pruebas verificado para los grupos MIG-017 y MIG-018: `6b4eb86c84adf0156246a29f7d43a2524fdf9ec1`. Después se actualizó documentación de tareas en `a181c36a03b1849033e540e229e79fe7a344b822`.
+
+### MIG-017 — Herramientas y operaciones de Drive
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- CI Node.js 22, run `45249354445`, grupo `41 MIG017`: **666/666 pruebas PASS**, 57 resúmenes, sin fallos en el grupo.
+- Cobertura: árbol autorizado Cortes, navegación, límites de rutas, ACL/propietario, move y rollback, backups reanudables, restauración, auditoría, métricas, alertas y controles de acciones destructivas.
+- No se conectó a Drive real ni a proyectos Apps Script. Prueba Beta aislada pendiente.
+
+### MIG-018 — Modelos, cortes, VIN y contribuciones
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- CI Node.js 22, run `45249354445`, grupo `42 MIG018`: **594/594 pruebas PASS**, 51 resúmenes, sin fallos en el grupo.
+- Cobertura: contratos de payload y transacciones de cortes; VIN autoritativo, privacidad, colección, firmas, rangos de años, contexto, normalización, umbrales y presentación; AUG-050 (11/11); ledger append-only de aportes, concurrencia, idempotencia, recuperación, candidatos y resolución ADMIN; proyecciones CATALOG, slots, asignación de IDs y versionado de campos.
+- Se corrigieron defectos de las pruebas: rutas relativas de módulos VIN, formato de resúmenes CLI, invocación del test AT:AV y contrato de replay VIN. Se corrigió además la lectura del ledger suplementario para reutilizar `appendLedgerSheet` y evitar una referencia fuera de ámbito.
+- No se invocaron Apps Script ni Spreadsheet reales. Migración/versionado de `AportesVehiculo`, despliegues y prueba Beta con datos aislados siguen pendientes.
+
+### Regresión general y despliegue
+- En el mismo run `45249354445`: 184 suites, 2,135 pruebas aprobadas y 6 fallos de suites fuera de MIG-017/MIG-018:
+  1. ADMIN — P4 política de roles.
+  2. FEEDBACK — reset de vídeo desde navegador sin secreto compartido.
+  3. CATALOG — feed incremental autenticado, cursor y recuperación.
+  4. UTILITIES — fixture Spreadsheet/RBAC/staging/rollback (10/19).
+  5. AUTH — purga de Logs usando actor confiable.
+  6. INTEGRATION — BETA-043 telemetría local por servicio y navegador móvil.
+- Estas seis fallas no pertenecen a los grupos dirigidos MIG-017/MIG-018 y deben mantenerse como deuda de regresión separada; no se declararon resueltas.
+- Pages build del commit `6b4eb86c84adf0156246a29f7d43a2524fdf9ec1`, run `45249353848`: build y reporte de estado SUCCESS; despliegue estaba en curso al registrar este checkpoint.
+
+### Continuidad
+- MIG-017 y MIG-018 quedan cerradas con validación diferida.
+- Siguiente tarea según prioridad: **MIG-019 — PyS, tutoriales y feedback**.
+- Antes de iniciar MIG-019, consultar la última HEAD y confirmar que la rama base permanece intacta.
