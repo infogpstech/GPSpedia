@@ -66,4 +66,4 @@ assert.match(ui, /renderGlobalServiceTrafficChart_/);
 assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
 assert.match(html, /Un cero no significa necesariamente que el servicio no recibió solicitudes/);
 
-console.log("ServiceTrafficAdminContract: 33/33 PASS");
+console.log("ServiceTrafficAdminContract: 37/37 PASS");
