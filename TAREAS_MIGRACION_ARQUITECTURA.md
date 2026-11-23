@@ -21,14 +21,14 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ## Fase 0 — Inventario total y línea base
 
 ### MIG-001 — Inventario de todas las acciones y handlers
-**Estado: EN PROGRESO**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 - [x] Contrastar las 120 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
 - [x] Extraer acciones aceptadas por cada `doPost` que no estén en el mapa frontend.
-- [ ] Inventariar funciones internas, acciones manuales, endpoints de mantenimiento y compatibilidad histórica.
-- [ ] Registrar para cada acción: handler, consumidores UI, payload, respuesta, errores, rol/RBAC, hojas/archivos, dependencias y pruebas.
-- [ ] Detectar handlers sin consumidores y consumidores sin handler, sin eliminar ninguno.
+- [x] Inventariar funciones internas, acciones manuales, endpoints de mantenimiento, compatibilidad histórica, rutas GET, terminal y procesos auxiliares.
+- [x] Registrar para cada acción: handler, consumidores UI, payload/validadores, respuesta, errores, rol/RBAC, hojas/archivos, dependencias e inventario de pruebas.
+- [x] Detectar handlers sin consumidores y consumidores sin handler, sin eliminar ninguno; clasificar las 12 acciones sin consumidor directo y conservar sus endpoints.
 
-**Aceptación:** matriz completa acción → handler → consumidor → permiso → datos → pruebas.
+**Aceptación:** matriz acción → handler → consumidor → permiso → datos → pruebas completada en §§9–19 de `MATRIZ_MIGRACION_SERVICIOS.md`. La validación de deployments, triggers instalados, Spreadsheet/Drive reales y APIs externas queda diferida a Beta; no bloquea el cierre del inventario estático.
 
 #### Evidencia de revisión estática inicial — 2026-11-23
 
@@ -482,3 +482,20 @@ Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariame
 - La revisión de `ADMIN_RESTORE_REQUIRED_SCHEMA_` encontró diferencias frente a los mapas de escritura: ActiveSessions restaura/valida A:F mientras AUTH usa G; Cortes enumera A:AP y no incluye VIN ni AT:AV; Logs nombra la columna D `Data` mientras AUTH la utiliza para detalles JSON.
 - Se registraron en §18.9 de la matriz como discrepancias que requieren pruebas de backup/restore aisladas; no se modificaron datos ni esquemas.
 - MIG-001 continúa **EN PROGRESO**: falta trazabilidad por acción, rangos completos de restauración, UI/consumidores y procesos programados.
+
+
+
+#### Cierre MIG-001 — inventario integral y validación diferida — 2026-11-23
+
+Se completó la reconciliación estática de todas las acciones, handlers, rutas internas, consumidores, capacidades, datos e integraciones. Evidencia consolidada en §19 de `MATRIZ_MIGRACION_SERVICIOS.md`:
+
+- Árbol Git de 615 rutas, sin truncamiento; 10 archivos backend con 1,041 funciones nombradas; 37 módulos frontend y las tres superficies HTML.
+- 120/120 acciones del mapa con ruta backend/handler; CATALOG conserva una ruta adicional de compatibilidad `getSuggestion`.
+- 13 operaciones internas de Coordinator y 8 rutas privadas de caché de actor documentadas.
+- 12 acciones sin consumidor directo clasificadas como compatibilidad, diagnóstico, mantenimiento o brecha UI; todas conservadas y vinculadas a pruebas representativas.
+- Trazabilidad de CAP-01 a CAP-19, RBAC, contratos de entrada/salida, hojas/rangos, recursos Drive, APIs externas, propiedades de configuración y estado operativo.
+- Revisión de terminal de desarrollador, comandos, backups/restauración, migraciones, reconciliación, rutas GET, workflows y manifiestos.
+- `JS/Tests/` contiene 373 entradas; el runner registra 270 archivos CLI únicos y 31 ejecuciones/assertions `recordResult` en ocho grupos. Se documentaron workflows y pruebas representativas por capacidad.
+- No hay manifiestos de Apps Script ni archivos `.gs`/clasp versionados; no se detectaron declaraciones de triggers en los diez archivos backend revisados. Los triggers instalados y las configuraciones externas solo se pueden confirmar en los proyectos desplegados.
+
+**Resultado:** MIG-001 se marca **COMPLETADA CON VALIDACIÓN DIFERIDA**. No se modificó código funcional, endpoints, propiedades, deployments ni datos. Las verificaciones de proyectos Apps Script, triggers instalados, Spreadsheet/Drive aislados, OAuth, YouTube y despliegues quedan para Beta/MIG-027/MIG-028. No se presentan como ejecutadas.
