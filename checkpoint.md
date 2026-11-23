@@ -131,3 +131,9 @@ Corrección de trazabilidad: ADMIN también consume CATALOG mediante `getVehicle
 
 ### Pruebas de preservación ejecutadas — 2026-11-23
 Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argumentos de entrada del runner: `ActionDispatchContract.js` 12/12; `CheckOperationSecurity.js` 8/8; `SharedMutationCoordinator.js` 94/94; `UsersAtomicMutations.js` 16/16; `WriteAuthorizationContracts.js` 10/10; `WriteAuthorizationMinimization.js` 15/15; `AddSupplementaryInfoIntegrity.js` 61/61; `VinAuthoritativeValidation.js` 12/12; `UtilitiesSecurity.js` 19/19. Total: **247 aserciones aprobadas, 0 fallidas**. No se ejecutó el runner Node.js completo ni se invocaron Apps Script/Spreadsheet/Drive reales; no es validación Beta.
+
+
+### Recursos Spreadsheet — avance 2026-11-23
+- Añadido a la matriz el inventario de hojas por servicio y el esquema de las cinco hojas Inbox.
+- Identificado `SPREADSHEET_ID` local en AUTH/USERS/WRITE/CATALOG/FEEDBACK/ADMIN/UTILITIES; `DRIVE_FOLDER_ID` en ADMIN/FEEDBACK. Se reserva la migración de estas referencias para MIG-003/MIG-004.
+- MIG-001 sigue **EN PROGRESO**: falta mapear columnas/rangos y efectos por acción, Drive, triggers y APIs.
