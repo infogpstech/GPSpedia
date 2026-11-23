@@ -23,7 +23,7 @@ function createStorage(initial = {}) {
     return { values, getItem(key) { return values.has(key) ? values.get(key) : null; },
         setItem(key, value) { values.set(key, String(value)); } };
 }
-const apiBlock = extract(apiSource, "export const RICH_TEXT_MODE_KEY", "export const API_ENDPOINTS").replace(/^export /gm, "");
+const apiBlock = extract(apiSource, "export const RICH_TEXT_MODE_KEY", "const CENTRAL_CONFIGURATION_BOOTSTRAP_URL").replace(/^export /gm, "");
 function createApi(storage, handler, retryHandler = async (action, payload, options) => handler(action, payload, options)) {
     return new Function("localStorage", "routeAction", "routeActionWithRetry", apiBlock +
         "\nreturn { RICH_TEXT_MODE_KEY, RICH_TEXT_MODES, getRichTextMode, loadRichTextMode, setRichTextMode };")(storage, handler, retryHandler);
