@@ -5258,6 +5258,26 @@ function renderInboxConversationDetail_(options = {}) {
     archive.addEventListener("click", () => toggleInboxConversationArchive_(item));
     toolbarActions.appendChild(archive);
 
+    if (item.hasReceived && Number(item.unreadCount || 0) <= 0) {
+        const unread = makeThreadAction(
+            "inbox-thread-unread inbox-thread-toolbar-action",
+            "fa-solid fa-envelope",
+            "Marcar no leída",
+            "Marcar conversación como no leída"
+        );
+        unread.addEventListener("click", () => markInboxConversationUnread_(item));
+        toolbarActions.appendChild(unread);
+    }
+
+    const remove = makeThreadAction(
+        "inbox-thread-delete inbox-thread-toolbar-action",
+        "fa-solid fa-trash-can",
+        "Eliminar",
+        "Eliminar conversación de mi bandeja"
+    );
+    remove.addEventListener("click", () => deleteInboxConversationForCurrentUser_(item));
+    toolbarActions.appendChild(remove);
+
     const context = getUiSessionContext_();
     if (item.status === "open" && context &&
         ["desarrollador","jefe","supervisor"].includes(normalizeUiRole_(context.role))) {
