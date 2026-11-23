@@ -10,7 +10,7 @@ const start=ui.indexOf("function normalizeAdminFieldProjectionValueClient_"),end
 assert.ok(start>=0&&end>start);
 const helpers=ui.slice(start,end);
 async function run(vehicle,eventId,proposed){
- const verify=new Function("routeAction",helpers+";return verifyAdminVehicleFieldUpdateProjectionFrontend_;")(async()=>({status:"success",vehicle}));
+ const verify=new Function("routeAction","getDeveloperSessionPayload",helpers+";return verifyAdminVehicleFieldUpdateProjectionFrontend_;")(async()=>({status:"success",vehicle}),()=>({userId:"DEV-1",sessionToken:"SESSION-1"}));
  return verify("42","modelo",proposed,eventId);
 }
 const applied=await run({id:"42",modelo:"Corolla X",contributionSources:{modelo:{eventId:"EV-1"}},contributionCandidates:[]},"EV-1","Corolla X");
