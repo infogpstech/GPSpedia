@@ -1365,3 +1365,16 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - CI run 45238221817: **223/223 pruebas específicas de vídeo PASS**. Regresión global: 167 suites, 1,912 aprobadas y cuatro fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45238220816 SUCCESS para el commit funcional.
 - Sin llamadas reales a YouTube ni deployments Apps Script. Validación Beta de OAuth, canal, sesiones, permisos y publicación pendiente.
 - MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+---
+
+## Adenda MIG-025 — retirada de COORDINATOR (2026-11-23)
+
+- La fuente activa `JS/Services/Coordinator.js` y su dispatcher `doGet`/`doPost` fueron retirados. La guía operativa antigua quedó archivada bajo `Olds/Documentacion_Legacy/Services/`; su contenido se conserva como evidencia histórica, no como procedimiento vigente.
+- No quedan acciones `getServiceTraffic`, rutas de salud, clientes, leases ni coordinación de sesión que dependan de COORDINATOR en los servicios activos. La configuración central ignora temporalmente la fila histórica `COORDINATOR`; no se modifican Spreadsheet, ScriptProperties, deployments ni triggers externos.
+- La comprobación de salud mantiene los seis endpoints independientes: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. El contrato y la prueba remota usan ese inventario de seis; los fallos individuales no cancelan las demás comprobaciones.
+- Paridad de telemetría: el agregado antiguo no era un contador global HTTP. Registraba eventos legacy instrumentados por Coordinator (principalmente adquisiciones de leases) y excluía validaciones de sesión, lecturas del feed, sondeos de salud y rutas no instrumentadas. Se retiró junto con su único recopilador; no se declara reemplazado por telemetría local.
+- El panel Developer conserva una sección explícita de retirada y explica el alcance del agregado histórico. La telemetría local por navegador continúa disponible, temporal y no transmitida; solo representa solicitudes observadas por esa pestaña/dispositivo.
+- La limpieza de filas/configuración y propiedades históricas, deployments, proyectos y triggers instalados queda pendiente de inspección y autorización en Beta aislada. No borrar recursos externos automáticamente.
+- Pruebas locales/CI: ver cierre MIG-025 en `checkpoint.md` y `ChangesLogs.txt`; las pruebas Beta siguen diferidas conforme a `Tareas_Beta.md` §6.5.
