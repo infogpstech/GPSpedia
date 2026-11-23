@@ -578,17 +578,39 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 **Resultado:** MIG-025 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-026 — eliminar configuración local de todos los servicios.
 ### MIG-026 — Eliminar configuración local de todos los servicios
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO — BLOQUEADA PARCIALMENTE POR DEPENDENCIAS MIG-006/MIG-008 Y MIGRACIONES DE ESTADO.**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Retirar lecturas/escrituras de ScriptProperties/UserProperties/DocumentProperties para configuración de GPSpedia.
-- [ ] Retirar URLs e IDs de otros servicios y recursos.
-- [ ] Migrar valores a Spreadsheet y probar caché.
-- [ ] Mantener únicamente requisitos técnicos del manifiesto que no constituyan configuración funcional y documentarlos.
-- [ ] Buscar patrones residuales en todo el repositorio.
 
-**Aceptación:** búsqueda estática global sin configuración local prohibida.
+#### Verificación de alcance en la rama (2026-11-23)
+- Revisión estática de los módulos actuales de `JS/Services/` y contraste con `INVENTARIO_CONFIGURACION_BACKEND.md`.
+- Persisten IDs de Spreadsheet en AUTH y UTILITIES (`SPREADSHEET_ID` + llamadas `openById`); CATALOG también conserva ID local y apertura por ID.
+- Persisten familias de estado/configuración en ScriptProperties: AUTH (login idempotente, recuperación HMAC, revocación/estado de sesión), CATALOG (feed incremental), WRITE (contador histórico de IDs Cortes), FEEDBACK (preferencia `rich_text_mode`) y ADMIN (auditoría, operaciones Safe Apply, auditoría Drive y guardas locales).
+- FEEDBACK ya consulta el lector central para otros parámetros, pero sus handlers `handleGetRichTextMode`/`handleSetRichTextMode` siguen leyendo/escribiendo `GPSpedia_RICH_TEXT_MODE_V1` en ScriptProperties.
+- WRITE obtiene `cortes_root_folder_id` desde configuración central. ADMIN contiene `getCortesRootFolder()` centralizado, pero un consumidor legacy en `admin.js` todavía usa `DriveApp.getFolderById(CORTES_IMAGES_ROOT_FOLDER_ID)`; debe migrarse al accessor central y verificar la declaración/resolución del símbolo.
+- `SharedSessionActor.js` conserva un fallback legacy que consulta `SPREADSHEET_ID` si no recibe un proveedor explícito. No debe confundirse con el ID operativo AUTH ni retirarse sin adaptar los consumidores y contratos de sesión.
+- Los patrones `GPSpedia_...` que son nombres de claves o prefijos no se deben eliminar por búsqueda ciega: hay que clasificar configuración frente a datos operativos, ledgers recuperables y claves de caché.
+- El inventario MIG-003 describía 26 familias; el estado actual tras MIG-024/MIG-025 requiere una reconciliación contra código vigente antes de declarar cerrada la lista. Los datos reales de propiedades instaladas no son accesibles desde GitHub y quedan para Beta.
 
----
+#### Dependencias y decisiones que impiden una sustitución segura inmediata
+1. MIG-006 dejó preparado el probe y su procedimiento, pero la prueba real de `SpreadsheetApp.getActiveSpreadsheet()` en Web Apps sigue pendiente. MIG-008 tiene la misma validación diferida. El lector central usa `getActiveSpreadsheet()` y falla cerrado; no está autorizado reemplazar `openById()` por una suposición no probada.
+2. No introducir un ID/URL bootstrap ni un endpoint auxiliar que vuelva circular el acceso. Resolver la arquitectura de acceso a Spreadsheet mediante la evidencia Beta de MIG-006 y documentar el mecanismo aprobado.
+3. Los datos de AUTH, CATALOG, WRITE y ADMIN que actualmente viven en propiedades no son todos parámetros. Requieren migraciones específicas a hojas/ledgers con idempotencia, concurrencia, expiración, aislamiento por actor, recuperación y paridad. No moverlos a `ConfiguracionParametros` como valores genéricos.
+4. El secreto HMAC de recuperación de contraseña no puede copiarse a una hoja de configuración ni exponerse al navegador. Su destino de seguridad requiere una decisión compatible con §17 antes de tocar el flujo.
+5. La configuración central física y el mecanismo de escritura/publicación deben estar listos para que FEEDBACK pueda retirar su propiedad de preferencia sin perder la operación de cambio desde el panel Developer.
+
+#### Próximas acciones ordenadas
+- [ ] Completar/obtener evidencia Beta de MIG-006 para cada tipo de proyecto Web App y su identidad/permisos efectivos; si el contexto activo no funciona, resolver alternativa arquitectónica sin bootstrap local.
+- [ ] Reconciliar MIG-003 contra el código vigente tras MIG-024/MIG-025 y actualizar el inventario de familias realmente activas.
+- [ ] Corregir el consumidor legacy de carpeta en ADMIN para usar `getCortesRootFolder()`, cubriendo su contrato y pruebas; no cambiar el recurso real.
+- [ ] Migrar `rich_text_mode` a configuración central con operación autorizada de publicación/actualización y pruebas de lectura, escritura, caché, fallo cerrado y RBAC; retirar la propiedad solo al cerrar paridad.
+- [ ] Resolver el acceso central de AUTH, CATALOG y UTILITIES; retirar sus IDs locales únicamente después de probar el contexto de ejecución real.
+- [ ] Ejecutar migraciones específicas de ledgers/estado de AUTH, CATALOG, WRITE y ADMIN en las tareas dependientes, preservando recuperación y sin borrar propiedades instaladas sin autorización Beta.
+- [ ] Ejecutar búsqueda estática global final en backend, frontend, manifiestos y documentación; clasificar cada coincidencia y dejar cero configuración local prohibida.
+- [ ] Validar sintaxis, contratos, regresión y Beta; documentar expresamente las validaciones externas pendientes.
+
+**Resultado de este corte:** no se conserva ningún cambio funcional experimental que sustituya `openById()` por `getActiveSpreadsheet()` sin evidencia de Web App. Se restauraron los módulos y fixtures afectados a su contenido previo; la rama mantiene el comportamiento funcional conocido. No se modificaron deployments, proyectos Apps Script, propiedades instaladas, Spreadsheet, Drive ni datos externos.
+
+**Aceptación:** búsqueda estática global sin configuración local prohibida; migraciones de estado con paridad demostrada; ningún secreto de recuperación/interconexión en configuración ordinaria; lectura/escritura central probada en el contexto real de ejecución; cero pérdida de funciones y regresión aprobada.
 
 ## Fase 7 — Verificación y despliegue
 
