@@ -52,7 +52,9 @@ assert.equal(admin.includes("publishSharedCatalogChange_"), false);
 assert.equal(admin.includes("publishAdminCortesCatalogChange_"), false);
 assert.ok(admin.includes("response.catalogResetRequired = true;"));
 assert.ok(admin.includes('"resolveVehicleContributionCandidate"]'));
-assert.match(api, /'publishCatalogReset': 'COORDINATOR'/);
+assert.match(api, /'publishCatalogReset': 'CATALOG'/);
+assert.match(api, /'publishCatalogChange': 'CATALOG'/);
+assert.match(api, /SERVICE_COMPATIBILITY_ACTIONS = \\{[\\s\\S]*?COORDINATOR: \\['publishCatalogReset', 'getCatalogChanges'\\]/);
 assert.match(api, /const WRITE_CATALOG_RESET_ACTIONS_/);
 assert.match(api, /const ADMIN_CATALOG_RESET_ACTIONS_/);
 assert.match(api, /service === "WRITE"[\s\S]*?WRITE_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishCatalogResetAfterMutation_/);
@@ -66,4 +68,4 @@ assert.match(coordinator, /authorizeSession_\([\s\S]*?publishCatalogChange_\(ser
 assert.match(coordinator, /change:\s*\{\s*operation:\s*"reset"\s*\}/);
 assert.match(coordinator, /ADMIN: new Set\([\s\S]*?resolveVehicleContributionCandidate/);
 assert.match(coordinator, /service === "ADMIN" \|\| operation === "freezeCortesIds"/);
-console.log("CatalogPublicationIsolation: 34/34 PASS — WRITE y ADMIN delegan la invalidación al frontend con sesión autenticada");
+console.log("CatalogPublicationIsolation: 34/34 PASS — WRITE y ADMIN delegan el reset a CATALOG desde frontend con sesión autenticada");
