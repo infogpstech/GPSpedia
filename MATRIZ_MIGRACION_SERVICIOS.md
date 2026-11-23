@@ -542,3 +542,55 @@ Los servicios AUTH, USERS, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES resuelven
 La migración debe preservar encabezados, orden de columnas, claves, idempotencia, flags por participante, auditoría y la creación/validación segura del esquema. No consolidar estas hojas en `Feedbacks` ni eliminar el historial.
 
 **Estado:** inventario de hojas en primera pasada; MIG-001 sigue **EN PROGRESO** hasta contrastar cada acción con columnas/rangos, lecturas/escrituras, fórmulas, archivos Drive, triggers y pruebas.
+
+
+## 12. Rutas internas y acciones fuera del mapa frontend — 2026-11-23
+
+La extracción se hizo comparando `ACTION_TO_SERVICE_MAP` con los `switch(request.action)` y las ramas de preprocesamiento de cada `doPost`, además de las rutas GET especiales. Resultado: las 120 acciones del mapa están presentes en los routers correspondientes o en un handler directo; no hay una acción mapeada sin ruta backend identificada. Las rutas siguientes son adicionales y no deben confundirse con acciones de interfaz.
+
+### 12.1 Endpoints internos de caché de actor
+
+Cuatro servicios aceptan dos acciones internas antes de entrar al dispatcher ordinario:
+
+| Servicio destino | Acción | Función | Uso |
+|---|---|---|---|
+| USERS | `__invalidateSessionActorCache` | `handleSharedSessionActorCacheInvalidation_` | Eliminar entradas locales de caché para sesiones revocadas/cambiadas. |
+| USERS | `__primeSessionActorCache` | `handleSharedSessionActorCachePriming_` | Precargar actor confiable (userId, rol, nombre y epoch) después de sincronizar sesión. |
+| WRITE | Las mismas dos acciones | Las mismas funciones | Invalidar/precargar caché local usada por operaciones WRITE. |
+| FEEDBACK | Las mismas dos acciones | Las mismas funciones | Invalidar/precargar caché local usada por FEEDBACK e Inbox. |
+| ADMIN | Las mismas dos acciones | Las mismas funciones | Invalidar/precargar caché local usada por ADMIN. |
+
+Son **8 rutas de servicio** (2 acciones × 4 servicios). No están en `ACTION_TO_SERVICE_MAP` y no son llamadas del navegador. Coordinator las invoca en fan-out durante la preparación o invalidación de sesiones. Cada destino compara en tiempo constante el secreto recibido con `GPSpedia_COORDINATOR_SECRET` local (mínimo 32 caracteres), valida forma/cantidad de tokens y, para priming, rol permitido y epoch positivo. Esta dependencia de secreto/propiedad es parte del diseño actual y se elimina únicamente al migrar de forma segura la sesión; nunca se expone al frontend.
+
+### 12.2 Acciones internas de COORDINATOR
+
+El dispatcher interno acepta **13 acciones**, autenticadas mediante `authenticate_` y versión de protocolo:
+
+| Acción | Consumidor/flujo actual |
+|---|---|
+| `acquire`, `release`, `validate` | Leases de operaciones coordinadas en AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES. |
+| `publishCatalogChange`, `publishCatalogChanges` | Publicación de cambios/deltas desde WRITE, FEEDBACK y ADMIN. |
+| `getCatalogChanges` | Lectura del feed incremental; FEEDBACK lo consume mediante el cliente interno y también expone GET `catalogFeed=1`. |
+| `registerSession`, `syncUserSessions` | Registro y sincronización del contexto de sesión desde AUTH. |
+| `revokeSession`, `revokeUserSessions` | Revocación de sesión/sesiones desde AUTH, precedida por invalidación de cachés de actor. |
+| `validateSessionContext` | Validación de contexto desde AUTH para operaciones de sesión que requieren esa consulta explícita. |
+| `invalidateSessionActorCaches` | Fan-out de invalidación hacia USERS, WRITE, FEEDBACK y ADMIN. |
+| `getServiceTraffic` | Lectura de telemetría solicitada por ADMIN. |
+
+Estas acciones no son funciones UI independientes: son el protocolo privado que actualmente implementa SharedMutation/Coordinator. Deben migrarse por capacidad y conservar sus garantías de concurrencia, revocación, feed y telemetría antes de retirar cualquiera de esos componentes.
+
+### 12.3 Rutas GET y compatibilidad que también forman parte del contrato
+
+- Todos los servicios con `doGet` exponen una respuesta de disponibilidad; varios aceptan `debug=true` con metadatos de estado/versión. No equivale a ejecutar un health check profundo.
+- Coordinator acepta GET `catalogFeed=1` para el feed público incremental; FEEDBACK acepta el mismo parámetro y delega la lectura al cliente de Coordinator. Conservar cursor, límite y formato de respuesta.
+- CATALOG admite `diagnostics=true` en POST para envolver la respuesta con datos de diagnóstico. Es un modificador de transporte, no una acción adicional.
+- CATALOG conserva `getSuggestion` como ruta de compatibilidad histórica aunque el mapa actual enruta esa acción a WRITE.
+- ADMIN conserva rechazo explícito `ACTION_MOVED_TO_WRITE` para `checkOperation`, `addOrUpdateCut` y `addSupplementaryInfo`; son acciones del mapa atendidas por WRITE, pero la respuesta histórica de ADMIN evita que una llamada antigua ejecute una escritura duplicada.
+- ADMIN intercepta `getServiceTraffic` para preparar el actor cacheado y luego entra al handler de telemetría; `ping` es una ruta de salud sin actor. Ambas acciones están en el mapa.
+- UTILITIES atiende `migrateTimestamps` mediante un `doPost` directo (no un switch); sí aparece en el mapa y exige actor Desarrollador más lease/ScriptLock.
+
+### 12.4 Diferencia entre acciones no mapeadas y funciones sin consumidor
+
+Las dos acciones de caché y las 13 acciones de Coordinator son rutas internas fuera del mapa. No se suman a las 120 acciones de interfaz ni se cuentan entre las 12 acciones mapeadas sin consumidor directo localizado. Estas últimas siguen pendientes de clasificación individual (manuales, mantenimiento, indirectas o históricas); la ausencia de botón no autoriza su eliminación.
+
+**Límite de esta pasada:** se identificaron dispatchers, preprocesamiento, autenticación interna y consumidores de alto nivel. Falta profundizar por operación en payload/respuesta/errores, columnas y rangos, efectos de datos, pruebas, jobs programados y procedimientos manuales.
