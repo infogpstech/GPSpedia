@@ -20,7 +20,8 @@ const handlerStart = write.indexOf("function handleAddOrUpdateCut(payload)");
 const handlerEnd = write.indexOf("\nconst CORTES_ID_COUNTER_PROPERTY", handlerStart);
 assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, "WRITE debe conservar el handler canónico de alta.");
 const handler = write.slice(handlerStart, handlerEnd);
-assert.ok(handler.includes("recordOpId"), "WRITE debe conservar el registro idempotente de operación.");
+assert.ok(handler.includes("reserveCortesVehicleIdForOperation_"), "WRITE debe reservar el ID mediante el ledger idempotente.");
+assert.ok(handler.includes("operationHash"), "WRITE debe conservar la huella de la operación para detectar reintentos incompatibles.");
 assert.ok(handler.includes("SpreadsheetApp.flush()"), "WRITE debe confirmar las escrituras antes de completar la operación.");
 assert.ok(handler.includes("runWriteContributionDriveWorkOutsideScriptLock_") ||
     handler.includes("runAdminContributionDriveWorkOutsideScriptLock_") ||
