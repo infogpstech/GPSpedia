@@ -273,3 +273,9 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Validaciones específicas: 335/335 PASS; CI confirma Utilities 19/19, ADMIN createSheet/addColumn 9/9, backup/resume 8/8, papelera 41/41, organizador y reconciliación, terminal, auditoría, inventario, alertas y retención. Pruebas aisladas adicionales de backup/restore, migración IDs/fórmulas, logs y Developer UX también aprobaron.
 - La regresión global sigue fallando por cinco contratos/fuentes ajenos a MIG-022 (VehicleModalRolePolicy, test CoordinatorBrowserCatalogReset ausente, feed CATALOG legacy, lease AUTH legacy y FeedbackLockFastFail). Registrados en checkpoint para las tareas correspondientes.
 - Beta Apps Script/Spreadsheet/Drive pendiente; siguiente tarea MIG-023.
+
+ 
+2026-11-23 — Inicio MIG-023
+- Se inició la migración del feed incremental del catálogo desde COORDINATOR hacia CATALOG.
+- Hallazgo: api-config.js enruta publishCatalogReset/getCatalogChanges a COORDINATOR y FEEDBACK usa SharedMutationClient para publicar cambios. El plan MIG-023 moverá la lectura/publicación al servicio CATALOG y dejará la coordinación en frontend.
+- La retirada total de COORDINATOR, incluido su endpoint health, sigue en MIG-025 tras completar MIG-024.
