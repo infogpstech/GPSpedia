@@ -627,7 +627,7 @@ test("el rename append-only libera el título anterior y reserva el nuevo", () =
         assert.doesNotMatch(feedback, /(?:getSheetByName|insertSheet)\("Tutoriales"\)/);
     });
 
-    test("    test("Tutoriales y aprobaciones de vídeo no usan leases ni configuración interservicio", () => {
+    test("Tutoriales y aprobaciones de vídeo no usan leases ni configuración interservicio", () => {
         assert.doesNotMatch(feedback, /withSharedMutationLease_|createSharedMutationClient_|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
         assert.match(feedback, /appendTutorialTitleEvent_\(/);
         assert.match(feedback, /appendVideoApprovalEvent_\(/);
