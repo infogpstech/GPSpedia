@@ -152,7 +152,7 @@ function appendCentralConfigurationPublishRows_(table, rows) {
 
 function handleSetRichTextModeCentral_(payload, actor) {
     const mode = String(payload && payload.mode || "").trim().toLowerCase();
-    if (!actor || String(actor.role || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase() !== "desarrollador") {
+    if (!actor || String(actor.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() !== "desarrollador") {
         throw new Error("Acceso denegado: solo un Desarrollador puede cambiar el formato global.");
     }
     if (mode !== "strict" && mode !== "advanced") throw new Error("Modo de texto enriquecido no válido.");
@@ -187,7 +187,10 @@ function handleSetRichTextModeCentral_(payload, actor) {
             String(control.rows[0][control.positions.publication_state]) !== "READY") {
             throw new Error("El control de configuración cambió o no está listo para publicar.");
         }
-        const priorMode = current.parameters && current.parameters.rich_text_mode || "strict";
+        const priorParameter = current.parameters && current.parameters.rich_text_mode;
+        const priorMode = typeof priorParameter === "string"
+            ? priorParameter
+            : (priorParameter && priorParameter.enabled === true ? String(priorParameter.value || "strict") : "strict");
         const existingHistory = history.rows.find(row => String(row[history.positions.history_id]) === requestId);
         if (existingHistory) {
             const sameRequest = String(existingHistory[history.positions.entity_type]) === "parameter" &&
@@ -287,8 +290,10 @@ function handleSetRichTextModeCentral_(payload, actor) {
             control.sheet.getRange(2, 1, 1, control.headers.length).setValues([nextControl]);
             SpreadsheetApp.flush();
             const published = readCentralConfigurationSnapshot_();
-            if (Number(published.revision) !== nextRevision ||
-                String(published.parameters && published.parameters.rich_text_mode || "") !== mode) {
+            const publishedParameter = published.parameters && published.parameters.rich_text_mode;
+            const publishedMode = typeof publishedParameter === "string"
+                ? publishedParameter : (publishedParameter && publishedParameter.enabled === true ? publishedParameter.value : "");
+            if (Number(published.revision) !== nextRevision || String(publishedMode || "") !== mode) {
                 throw new Error("La nueva revisión no superó la lectura de confirmación.");
             }
         } catch (publishError) {
