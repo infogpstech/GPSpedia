@@ -187,7 +187,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         assert.ok(handlerBlock.includes("String(storedProblem || \"\") !== problemDesc"));
     });
     test("handler retira el archivo huérfano si no se confirma la fila", () => {
-        assert.ok(handlerBlock.includes("if (!rowCommitted && uploadedImage && (!pendingSheet || !pendingRowNumber || rollbackConfirmed)) trashReportImageUpload_(uploadedImage)"));
+        assert.ok(handlerBlock.includes("if (!rowCommitted && uploadedImage && !appendAttempted)"));assert.ok(handlerBlock.includes("else if (!rowCommitted && uploadedImage)"));assert.ok(handlerBlock.includes("La imagen se conserva porque appendRow pudo persistir"));
         assert.ok(handlerBlock.indexOf("rowCommitted = true") < handlerBlock.lastIndexOf("uploadedImage = null"));
     });
     test("handler devuelve metadatos MIME, tamaño, hash e ID de Drive", () => {

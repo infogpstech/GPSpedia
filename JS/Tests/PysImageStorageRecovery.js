@@ -220,7 +220,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
         const wrongName = buildHarness(feedback, { wrongRootName: true });
         assert.throws(() => wrongName.api.getFolder(), /no corresponde a la carpeta/);
         const wrongId = buildHarness(feedback, { wrongRootId: true });
-        assert.throws(() => wrongId.api.getFolder(), /Authorized Drive root unavailable/);
+        assert.throws(() => wrongId.api.getFolder(), /recurso central no corresponde a la carpeta raíz/);
         const wrongParent = buildHarness(feedback, { wrongRootParent: true });
         assert.throws(() => wrongParent.api.getFolder(), /no está ubicada directamente/);
     });
