@@ -55,4 +55,4 @@ assert.match(catalog, /catalogFeed/);
 assert.doesNotMatch(coordinator, /publishCatalogResetFromBrowser_|getPublicCatalogChanges|catalogFeed/);
 assert.doesNotMatch(coordinator, /request\.action === "publishCatalogReset"/);
 assert.match(coordinator, /function getServiceTrafficFromBrowser_/);
-console.log("CatalogPublicationIsolation: 1/1 PASS — WRITE y ADMIN delegan a CATALOG; Coordinator ya no expone el feed");
+console.log("CatalogPublicationIsolation: 27/27 PASS — WRITE y ADMIN delegan a CATALOG; Coordinator ya no expone el feed");
