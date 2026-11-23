@@ -9,6 +9,9 @@
 
 > **Advertencia de entorno:** los archivos fuente actuales contienen IDs de Spreadsheet/Drive y algunas URLs de servicios que corresponden al entorno operativo. Esta guía no autoriza publicar cambios ni probarlos contra producción. Para Beta, primero se deben sustituir los IDs y endpoints por los recursos desechables del entorno Beta. No copiar secretos reales al repositorio ni a este documento.
 
+ 
+> **ACTUALIZACIÓN MIG-024 (2026-11-23):** `SharedMutationClient.js` fue retirado. Los helpers locales de sesión/cache de actor están en `JS/Services/SharedSessionActor.js` y se incluyen en AUTH, WRITE, FEEDBACK, UTILITIES y ADMIN; CATALOG mantiene su helper propio. USERS no forma parte de `CENTRAL_SERVICE_KEYS` ni del árbol activo, por lo que su fila histórica no representa un deployment vigente. COORDINATOR conserva temporalmente solo capacidades transitorias de sesión/telemetría/health hasta MIG-025; ya no administra leases ni feed de catálogo y no realiza llamadas entre servicios. No seguir las instrucciones históricas de SharedMutationClient ni configurar nuevas propiedades `GPSpedia_COORDINATOR_URL`/`GPSpedia_COORDINATOR_SECRET`. La retirada de URLs/IDs locales y demás configuración se completa en MIG-026.
+
 ## 1. Inventario de proyectos y archivos
 
 Cada servicio es un proyecto Apps Script independiente. Los nombres de los archivos en el editor pueden conservar la capitalización indicada.
@@ -17,18 +20,19 @@ Cada servicio es un proyecto Apps Script independiente. Los nombres de los archi
 |---:|---|---|
 | 1 | COORDINATOR | `JS/Services/Coordinator.js` |
 | 2 | CATALOG | `JS/Services/catalog.js` |
-| 3 | AUTH | `JS/Services/Auth.js`, `JS/Services/SharedMutationClient.js` |
-| 4 | USERS | `JS/Services/users.js`, `JS/Services/SharedMutationClient.js` |
-| 5 | WRITE | `JS/Services/write.js`, `JS/Services/SharedMutationClient.js` |
-| 6 | FEEDBACK | `JS/Services/feedback.js`, `JS/Services/InboxConversations.js`, `JS/Services/SharedMutationClient.js` |
-| 7 | UTILITIES | `JS/Services/Utilities.js`, `JS/Services/SharedMutationClient.js` |
-| 8 | ADMIN | `JS/Services/admin.js`, `JS/Services/SharedMutationClient.js` |
+| 3 | AUTH | `JS/Services/Auth.js`, `JS/Services/SharedSessionActor.js` |
+| 4 | USERS (legacy) | No existe fuente activa en `JS/Services/`; no está en configuración central |
+| 5 | WRITE | `JS/Services/write.js`, `JS/Services/SharedSessionActor.js` |
+| 6 | FEEDBACK | `JS/Services/feedback.js`, `JS/Services/InboxConversations.js`, `JS/Services/SharedSessionActor.js` |
+| 7 | UTILITIES | `JS/Services/Utilities.js`, `JS/Services/SharedSessionActor.js` |
+| 8 | ADMIN | `JS/Services/admin.js`, `JS/Services/SharedSessionActor.js` |
 
-**Importante:**
-- `SharedMutationClient.js` se copia íntegro en AUTH, USERS, WRITE, FEEDBACK, UTILITIES y ADMIN. Debe ser la versión de la misma revisión que los servicios.
-- CATALOG no incluye SharedMutationClient: sus lecturas públicas no requieren coordinación; conserva un secreto compartido con ADMIN únicamente para autorizar metadatos internos del inventario de imágenes.
+**Importante (estado MIG-024):**
+- `SharedSessionActor.js` contiene únicamente helpers locales de actor/caché; no realiza llamadas entre servicios ni usa secretos compartidos. Incluirlo en AUTH, WRITE, FEEDBACK, UTILITIES y ADMIN.
+- CATALOG no incluye `SharedSessionActor.js` porque conserva `getCatalogSessionActor_` local.
+- USERS es una referencia histórica; no se incluye en el registro central ni en la secuencia activa de despliegue.
 - `InboxConversations.js` es parte de FEEDBACK; no omitirlo.
-- No combinar los archivos de servicios distintos en un mismo proyecto. Cada proyecto mantiene su propio `doGet`, `doPost`, propiedades y deployment.
+- No combinar los archivos de servicios distintos en un mismo proyecto. Cada proyecto mantiene su propio `doGet`, `doPost` y deployment.
 - No desplegar archivos del frontend (`JS/Frontend/*`) como proyectos Apps Script.
 
 ## 2. Preparación antes de crear deployments
