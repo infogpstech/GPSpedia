@@ -151,3 +151,12 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - GitHub Pages build/deploy SUCCESS — run 45222508791.
 - MIG-012 queda COMPLETADA EN CÓDIGO. La verificación del deployment AUTH y la desactivación del deployment/fila heredada USERS permanecen pendientes de Beta; no se modificaron recursos externos.
 - Siguiente tarea: MIG-013 — sesiones sin Coordinator ni secretos compartidos.
+
+
+### 2026-11-23 — MIG-013: sesiones sin Coordinator ni secretos compartidos
+- Se verificó la autoridad de AUTH sobre login y Users/ActiveSessions, conservando hash PBKDF2, bloqueo temporal y tokens opacos generados en servidor.
+- Los seis servicios protegidos obtienen el actor desde la fuente de identidad con caché local por proyecto; CATALOG mantiene su loader independiente equivalente.
+- Se verificaron cache miss/hit, TTL de seis horas, clave SHA-256, expiración, identidad, usuario eliminado, token revocado y cambio de rol tras invalidación.
+- Las rutas ordinarias de sesión no usan Coordinator, API de sesión remota ni leases SharedMutation; se conservan las coordinaciones no relacionadas con sesión.
+- Se ampliaron pruebas MIG-013 y se documentó la coordinación frontend de invalidación remota como alcance de MIG-014.
+- Sin cambios a endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos. La validación real de Beta queda pendiente.
