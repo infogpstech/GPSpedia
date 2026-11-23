@@ -18,8 +18,8 @@ function harness(){
  const inventory={getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),getLastRow:()=>rows.length,getRange(row,col){return{setValues(values){values.forEach((v,i)=>{rows[row-1+i]=v.slice();});},setValue(value){rows[row-1][col-1]=value;}};}};
  const ledger={getLastRow:()=>ledgerRows.length,getRange:()=>({getValues:()=>ledgerRows.slice(1).map(r=>r.slice())})};
  const ss={getSheetByName:name=>name==="Imagenes_Reemplazadas"?inventory:name==="AportesVehiculo"?ledger:null};
- const fn=new Function("getSpreadsheet","SHEET_NAMES","getReplacedImagesReadSchema_","ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_","getContributionCandidateImageUrl_","extractDriveFileIds","DriveApp","getContributionCandidateInventoryId_","withReplacedImagesSchemaLock_","ensureReplacedImagesInventoryColumns","SpreadsheetApp",source+";return syncContributionCandidateImageInventory_;")(
-  ()=>ss,{IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas"},()=>({sheet:inventory,missingHeaders:[]}),"AportesVehiculo",
+ const fn=new Function("getSpreadsheet","SHEET_NAMES","getReplacedImagesReadSchema_","ADMIN_VEHICLE_CONTRIBUTIONS_SHEET_NAME_","ADMIN_VEHICLE_CONTRIBUTIONS_HEADERS_","getContributionCandidateImageUrl_","extractDriveFileIds","DriveApp","getContributionCandidateInventoryId_","withReplacedImagesSchemaLock_","ensureReplacedImagesInventoryColumns","SpreadsheetApp",source+";return syncContributionCandidateImageInventory_;")(
+  ()=>ss,{IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas"},()=>({sheet:inventory,missingHeaders:[]}),"AportesVehiculo",["eventId","opId","vehicleId","operationHash","kind","payloadJson","actorId","actorName","createdAt","status","supersedesEventId"],
   p=>p.image,()=>["FILE1234567890"],
   {getFileById:()=>({getName:()=>"cut.png",getMimeType:()=>"image/png",getDateCreated:()=>"2026-11-21T00:00:00.000Z",getParents:()=>({hasNext:()=>false}),isTrashed:()=>false})},
   id=>"CAND-"+id,fn=>fn(),()=>headers,{flush(){}}
