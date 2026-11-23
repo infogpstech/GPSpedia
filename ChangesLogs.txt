@@ -258,3 +258,10 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - La regresión general reportó 3,567 pruebas aprobadas y seis suites fallidas ajenas a MIG021 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet, AUTH purga Logs e INTEGRATION GP-PERF FEEDBACK/Inbox).
 - Pages build/deploy run 45263213731: SUCCESS. El commit `a58e69825736a60308216862e85f86d4482fd4ab` contiene el ajuste de UI, contrato, documentación y lista Beta. No se invocaron servicios Apps Script, Spreadsheet ni Drive reales; validación Beta aislada pendiente.
 - MIG-021: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-022 — Administración de Spreadsheet y mantenimiento.
+
+
+2026-11-23 — MIG-022 (avance inicial)
+- Se corrigió el comentario de JS/Services/Utilities.js: migrateTimestamps se serializa mediante ScriptLock local; no adquiere lease remota.
+- Se actualizó JS/Tests/UtilitiesSecurity.js para modelar CacheService/SHA-256 y validar sesión local, RBAC, staging, rollback, concurrencia y ausencia de URL/secreto/endpoint COORDINATOR. Prueba aislada V8: 19/19 PASS.
+- Commits: 2dd13f2a66925e75459fa4e39757421f0d4924d1 y e84587e6f050f7fbe55f59b495044a540fe46f60.
+- MIG-022 permanece EN PROGRESO; CI global y validación de los demás módulos ADMIN pendientes.
