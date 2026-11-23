@@ -1,18 +1,24 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const source = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
+const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
+const write = read("../Services/write.js");
+const api = read("../Frontend/api-config.js");
+const coordinator = read("../Services/Coordinator.js");
+
 function extract(name, nextName) {
-    const start = source.indexOf("function " + name + "(");
+    const start = write.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
-    const end = nextName ? source.indexOf("\nfunction " + nextName + "(", start + 10) : source.indexOf("\nfunction ", start + 10);
-    return source.slice(start, end > start ? end : source.length);
+    const end = nextName
+        ? write.indexOf("\nfunction " + nextName + "(", start + 10)
+        : write.indexOf("\nfunction ", start + 10);
+    return write.slice(start, end > start ? end : write.length);
 }
 
-const versionHelper = extract("nextWriteCatalogSourceVersion_", "publishCortesCatalogChange_");
-const version = new Function("Date", versionHelper + ";return nextWriteCatalogSourceVersion_;")(
-    { now: () => 1700000000123 }
-);
+const versionHelper = extract("nextWriteCatalogSourceVersion_", "runWriteDriveWorkOutsideScriptLock_");
+const version = new Function("Date", versionHelper + "\nreturn nextWriteCatalogSourceVersion_;")({
+    now: () => 1700000000123
+});
 assert.equal(version("42"), 1700000000123);
 assert.equal(version("42"), 1700000000123);
 assert.throws(() => version("0"), /ID de vehículo válido/);
@@ -23,18 +29,18 @@ const addCut = extract("handleAddOrUpdateCut");
 const releaseIndex = addCut.indexOf("if (lock.hasLock()) lock.releaseLock()");
 const versionIndex = addCut.indexOf("nextWriteCatalogSourceVersion_");
 assert.ok(releaseIndex >= 0 && versionIndex > releaseIndex,
-    "La versión de catálogo debe asignarse después de liberar el lock físico");
+    "La versión local se calcula después de liberar el lock físico.");
 
-const publisherSource = extract("publishCortesCatalogChange_", "runWriteDriveWorkOutsideScriptLock_");
-assert.doesNotMatch(publisherSource, /LockService|getScriptLock|waitLock|tryLock/);
-let published = null;
-const publish = new Function("buildCortesCatalogChange_", "publishSharedCatalogChange_", publisherSource + ";return publishCortesCatalogChange_;")(
-    id => ({ collection: "cortes", recordId: String(id), operation: "upsert", snapshot: { id: String(id) } }),
-    (service, action, change) => { published = { service, action, change }; }
-);
-publish("addOrUpdateCut", "42", 9);
-assert.equal(published.service, "WRITE");
-assert.equal(published.change.sourceVersion, 9);
-assert.equal(published.change.recordId, "42");
-assert.throws(() => publish("addOrUpdateCut", "42", null), /versión de catálogo verificable/);
-console.log("WriteCatalogPublicationIsolation: 7/7 PASS — versión temporal fuera del lock y publicación sin ScriptLock local");
+assert.doesNotMatch(write, /publishSharedCatalogChange_|publishCortesCatalogChange_|buildCortesCatalogChange_|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
+assert.match(api, /'publishWriteCatalogReset': 'COORDINATOR'/);
+assert.match(api, /const WRITE_CATALOG_RESET_ACTIONS_/);
+assert.match(api, /service === "WRITE"[\s\S]*?WRITE_CATALOG_RESET_ACTIONS_\.has\(action\)[\s\S]*?publishWriteCatalogResetAfterMutation_/);
+assert.match(api, /routeActionInternal_\("publishWriteCatalogReset"/);
+assert.match(api, /userId: String\(payload && payload\.userId/);
+assert.match(api, /sessionToken: String\(payload && payload\.sessionToken/);
+assert.match(coordinator, /function publishWriteCatalogResetFromBrowser_\(/);
+assert.match(coordinator, /request\.action === "publishWriteCatalogReset"/);
+assert.match(coordinator, /authorizeSession_\([\s\S]*?publishCatalogChange_\("WRITE", operation/);
+assert.match(coordinator, /change:\s*\{\s*operation:\s*"reset"\s*\}/);
+assert.match(coordinator, /operation === "freezeCortesIds" && role !== "desarrollador"/);
+console.log("WriteCatalogPublicationIsolation: 14/14 PASS — WRITE no coordina servicios desde Apps Script; el frontend publica reset autenticado");
