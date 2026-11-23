@@ -283,6 +283,15 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
 }
 
 
+function createCatalogPublicationNonce_() {
+    try {
+        if (typeof crypto !== "undefined" && crypto && typeof crypto.randomUUID === "function") {
+            return crypto.randomUUID();
+        }
+    } catch (error) {}
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 14);
+}
+
 async function publishCatalogResetAfterMutation_(service, action, payload, result) {
     const fallbackPayloadId = payload && (payload.vehicleId || payload.fieldName)
         ? [payload.vehicleId, payload.fieldName, payload.expectedSourceEventId,
@@ -293,10 +302,10 @@ async function publishCatalogResetAfterMutation_(service, action, payload, resul
         payload.eventId || payload.operationId || payload.reconciliationId || payload.planId ||
         payload.expectedSourceEventId
     ) || fallbackPayloadId || result && (
-        result.opId || result.operationId || result.catalogVersion || result.vehicleId ||
-        result.logoId || result.backupId || result.migrationId
-    ) || Date.now()).trim();
-    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || String(Date.now());
+        result.opId || result.operationId || result.catalogVersion || result.logoId ||
+        result.backupId || result.migrationId
+    ) || createCatalogPublicationNonce_()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || createCatalogPublicationNonce_();
     const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
     try {
         const publication = await routeActionInternal_("publishCatalogReset", {
@@ -330,10 +339,10 @@ async function publishCatalogChangeAfterMutation_(service, action, payload, resu
         return Object.assign({}, result, { catalogSyncPending: true });
     }
     const sourceId = String(payload && (
-        payload.opId || payload.requestId || payload.problemId || payload.tutorialId ||
-        payload.referenceId || payload.vehicleId || payload.operationId
-    ) || change.recordId || Date.now()).trim();
-    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || String(Date.now());
+        payload.opId || payload.requestId || payload.operationId
+    ) || result && (result.opId || result.requestId || result.operationId) ||
+        createCatalogPublicationNonce_()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || createCatalogPublicationNonce_();
     const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
     try {
         const publication = await routeActionInternal_("publishCatalogChange", {
