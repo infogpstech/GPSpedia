@@ -12,6 +12,7 @@ const coordinator = read("Services/Coordinator.js");
 const client = read("Services/SharedMutationClient.js");
 const catalog = read("Services/catalog.js");
 const api = read("Frontend/api-config.js");
+const ui = read("Frontend/ui.js");
 const inventory = readFileSync(new URL("../../INVENTARIO_LLAMADAS_SERVICIOS.md", import.meta.url), "utf8");
 
 let passed = 0;
@@ -30,22 +31,20 @@ check("El inventario de MIG-004 existe y declara el grafo, reemplazos y pruebas"
     assert.match(inventory, /## 8\. Pruebas y trazabilidad de paridad/);
 });
 
-check("ADMIN→WRITE conserva las dos acciones y los consumidores fuente", () => {
-    assert.match(admin, /UrlFetchApp\.fetch\(WRITE_SERVICE_URL/);
-    assert.match(admin, /callWriteServiceAction\("allocateVehicleId"/);
-    assert.match(admin, /callWriteServiceAction\("freezeCortesIds"/);
-    assert.match(admin, /requestCortesIdFreezeFromWriteService\(payload, backupInfo\.backupId\)/);
-    assert.match(inventory, /ADMIN → WRITE/);
-    assert.match(inventory, /AdminVehicleIdAllocationIdempotency\.mjs/);
+check("ADMIN no contiene URLs, secretos ni llamadas backend→backend a WRITE/CATALOG", () => {
+    for (const value of ["WRITE_SERVICE_URL","CATALOG_SERVICE_URL","AUTH_SERVICE_URL","CATALOG_TRAFFIC_SECRET_PROPERTY_","callWriteServiceAction","requestCortesIdFreezeFromWriteService","getAdminProjectedVehicleFieldSnapshot_","handleGetVehicleContributionCandidates_"]) assert.equal(admin.includes(value),false,value);
+    assert.equal(admin.includes("script.google.com/macros/s/"),false);
+    assert.ok(ui.includes("freezeCortesIds"));
+    assert.ok(inventory.includes("MIG-010"));
 });
 
-check("ADMIN→CATALOG conserva proyección y candidatos", () => {
-    assert.match(admin, /UrlFetchApp\.fetch\(CATALOG_SERVICE_URL/);
-    assert.match(admin, /action: "getVehicleProjection"/);
-    assert.match(admin, /action: "getContributionCandidates"/);
-    assert.match(catalog, /getContributionCandidates/);
-    assert.match(inventory, /GPSpedia_CATALOG_TRAFFIC_SECRET/);
-    assert.match(inventory, /AdminVehicleTargetedCatalogRead\.mjs/);
+check("CATALOG valida sesión propia y frontend coordina proyección/candidatos", () => {
+    assert.ok(catalog.includes("verifyCatalogDeveloperSession_(payload)"));
+    assert.ok(catalog.includes("case 'getVehicleContributionCandidates'"));
+    assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
+    assert.ok(ui.includes('routeAction("getVehicleProjection"'));
+    assert.ok(ui.includes("includeImageInventoryCandidates"));
+    assert.ok(inventory.includes("sin secretos compartidos"));
 });
 
 check("El frontend enruta directamente los servicios y acciones de reemplazo", () => {
@@ -55,6 +54,7 @@ check("El frontend enruta directamente los servicios y acciones de reemplazo", (
     for (const [action, service] of [
         ["getVehicleProjection", "CATALOG"],
         ["getContributionCandidates", "CATALOG"],
+        ["getVehicleContributionCandidates", "CATALOG"],
         ["allocateVehicleId", "WRITE"],
         ["freezeCortesIds", "WRITE"],
         ["getCatalogChanges", "FEEDBACK"]
