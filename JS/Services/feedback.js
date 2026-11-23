@@ -3849,15 +3849,6 @@ function buildPysPayloadHash_(p,image,models){return getPysSha256_(JSON.stringif
 function buildPysExpectedRow_(id,p,url,models){return[id,p.titulo,p.descripcion,p.sinSolucion?"":"x",p.sinSolucion?"":p.solucion,p.prevenir,url,"",p.userName,models.length?JSON.stringify(models):""];}
 function pysRowMatchesPayload_(row,expected){return expected.every((v,i)=>String(row[i]==null?"":row[i])===String(v));}
 function verifyPendingPysImageFile_(r,image,folder){const file=DriveApp.getFileById(r.imageFileId);if(!file||(typeof file.isTrashed==="function"&&file.isTrashed()===true)||String(file.getMimeType())!==image.mimeType||Number(file.getSize())!==image.sizeBytes||r.imageUrl!=="https://drive.google.com/file/d/"+r.imageFileId+"/view")throw new Error("La imagen pendiente de la operación PyS no coincide con el contenido recibido; requiere revisión.");const d=String(file.getDescription()||"");if(!(d.includes("problemId="+r.problemId)||d.includes("opId="+r.opId))||!d.includes("fileId="+r.imageFileId))throw new Error("Los metadatos de la imagen pendiente PyS no permiten confirmar su asociación.");const parents=file.getParents();let direct=false;while(parents.hasNext())if(String(parents.next().getId())===String(folder.getId()))direct=true;if(!direct)throw new Error("La imagen pendiente no pertenece a la carpeta PyS autorizada.");assertPysImageFolderPermissions_(file,folder);return file;}
-function handleGetCatalogChanges(payload) {
-    // El feed solo contiene snapshots publicados del catálogo público; no requiere
-    // identidad FEEDBACK ni una lease de usuario para una consulta de solo lectura.
-    const result = getSharedCatalogChanges_(payload && payload.cursor, payload && payload.limit);
-    return result && result.status === "success"
-        ? result
-        : { status: "error", message: "No se pudo consultar el feed incremental del catálogo." };
-}
-
 function handleGetPysData() {
     const snapshot = getPysSheet_(false, true), sheet = snapshot.sheet;
     if (!sheet || !snapshot.rows.length) return { status: "success", data: [] };
