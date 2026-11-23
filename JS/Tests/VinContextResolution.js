@@ -13,4 +13,4 @@ test('año dentro del rango',()=>{const r=engine.queryVehicle({vin,context:{ano:
 test('versión',()=>{const r=engine.queryVehicle({vin,context:{marca:'Toyota',modelo:'Corolla',version:'XLE'}});assert.equal(r.identificationType,'completa');assert.equal(r.match.version,'XLE');});
 test('rechaza contexto contradictorio con una única coincidencia',()=>{const x=new VinDifferentialEngine();x.signatures.set('A',{...common,classKey:'A',marca:'Toyota',modelo:'Corolla',version:'LE'});const r=x.queryVehicle({vin,context:{marca:'Ford'}});assert.equal(r.identificationType,'sin_coincidencias');});
 test('mantiene ambigüedad con contexto insuficiente',()=>{const r=engine.queryVehicle({vin,context:{marca:'Toyota'}});assert.equal(r.identificationType,'ambigua');assert.equal(r.matches.length,2);});
-console.log('VIN context resolution:',passed,'/ 6');
+console.log('VIN context resolution:',passed + '/6 PASS');
