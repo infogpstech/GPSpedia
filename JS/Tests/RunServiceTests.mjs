@@ -525,6 +525,7 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 navegación de catálogo','JS/Tests/CatalogNavigationRead.mjs');
  runCli('MIG018 dropdowns de cortes','JS/Tests/CatalogDropdownRead.mjs');
  runCli('MIG018 agrupación jerárquica de modelos','JS/Tests/SearchModelGrouping.mjs');
+ runCli('MIG018 VIN AUG-050 y clasificación de versiones','JS/Tests/VinAUG050Completion.js');
  runCli('MIG018 VIN colección de navegación','JS/Tests/NavigationVinCollection.js');
  runCli('MIG018 VIN firma y persistencia','JS/Tests/VinSignaturePersistence.js');
  runCli('MIG018 VIN integridad de testigos','JS/Tests/VinTestigoIntegrityRunner.mjs');
