@@ -18,6 +18,8 @@ assert.ok(apiSource.includes("ADMIN_CATALOG_RESET_ACTIONS_"));
 assert.ok(apiSource.includes("publishCatalogResetAfterMutation_"));
 assert.ok(coordinatorSource.includes("function publishCatalogResetFromBrowser_"));
 assert.ok(coordinatorSource.includes('request.action === "publishCatalogReset"'));
+assert.ok(coordinatorSource.includes("function getServiceTrafficFromBrowser_"));
+assert.ok(apiSource.includes("'getServiceTraffic': 'COORDINATOR'"));
 
 const cleanupStart = writeSource.indexOf("function removeLegacyWriteCoordinatorSettings_()");
 const cleanupEnd = writeSource.indexOf("\nfunction ", cleanupStart + 10);
@@ -100,5 +102,8 @@ const adminReset = coordinator.publishCatalogResetFromBrowser({
 });
 assert.equal(adminReset.status, "success");
 assert.equal(adminReset.resetRequired, false);
+const traffic = coordinator.getServiceTrafficFromBrowser({ userId: developerId, sessionToken: developerToken });
+assert.equal(traffic.status, "success");
+assert.equal(traffic.scope, "global_service_traffic");
 
-console.log("CatalogPublicationFrontend: 9/9 PASS — sesión/RBAC, resets WRITE/ADMIN, idempotencia y limpieza de propiedades heredadas");
+console.log("CatalogPublicationFrontend: 10/10 PASS — sesión/RBAC, resets WRITE/ADMIN, idempotencia y limpieza de propiedades heredadas");
