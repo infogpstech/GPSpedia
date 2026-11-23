@@ -103,10 +103,11 @@ function verifyCatalogModalEditSession_(payload) {
 }
 
 
+
 const CATALOG_FEED_REVISION_PROPERTY_ = "GPSpedia_CATALOG_CHANGE_REVISION";
 const CATALOG_FEED_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
 const CATALOG_FEED_MAX_EVENTS_ = 100;
-const CATALOG_FEED_MAX_EVENT_LENGTH_ = 4000;
+const CATALOG_FEED_MAX_EVENT_LENGTH_ = 7500;
 const CATALOG_FEED_ALLOWED_OPERATIONS_ = Object.freeze({
     WRITE: new Set(["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"]),
     ADMIN: new Set(["addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
@@ -114,6 +115,14 @@ const CATALOG_FEED_ALLOWED_OPERATIONS_ = Object.freeze({
         "migrateIdentifiers", "rollbackIdentifiers", "resolveVehicleContributionCandidate"]),
     FEEDBACK: new Set(["recordLike", "suggestYear", "addProblem", "addSolution", "addPrevention",
         "addVehicleToProblem", "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"])
+});
+const CATALOG_FEED_ALLOWED_COLLECTIONS_ = Object.freeze({
+    FEEDBACK: Object.freeze({
+        recordLike: "cortes", suggestYear: "cortes",
+        addProblem: "pys", addSolution: "pys", addPrevention: "pys",
+        addVehicleToProblem: "pys", removeVehicleFromProblem: "pys", updatePysItem: "pys",
+        updateTutorialItem: "tutoriales", addTutorial: "tutoriales"
+    })
 });
 
 function createCatalogChangeFeed_(dependencies) {
@@ -142,91 +151,124 @@ function createCatalogChangeFeed_(dependencies) {
             .sort((a, b) => a - b);
     }
 
-    function publishReset(source) {
+    function validateSource_(source) {
         const request = source && typeof source === "object" && !Array.isArray(source) ? source : {};
         const service = String(request.service || "").trim().toUpperCase();
         const operation = String(request.operation || "").trim();
         const requestId = String(request.requestId || "").trim();
         const allowed = CATALOG_FEED_ALLOWED_OPERATIONS_[service];
-        if (!allowed || !allowed.has(operation)) {
-            throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
+        if (!allowed || !allowed.has(operation)) throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
+        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) throw new Error("El identificador de publicación del catálogo no es válido.");
+        return { service, operation, requestId };
+    }
+
+    function findDuplicate_(snapshot, source) {
+        const revisions = revisions_(snapshot);
+        let first = null, last = null;
+        for (const revision of revisions) {
+            const raw = snapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
+            if (!raw) continue;
+            try {
+                const event = JSON.parse(raw);
+                if (event && event.sourceRequestId === source.requestId &&
+                    event.sourceService === source.service && event.sourceOperation === source.operation) {
+                    if (first === null) first = revision;
+                    last = revision;
+                }
+            } catch (error) {}
         }
-        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) {
-            throw new Error("El identificador de publicación del catálogo no es válido.");
+        return first === null ? null : { firstRevision: first, lastRevision: last };
+    }
+
+    function appendEvent_(source, resolved) {
+        const propertySnapshot = properties.getProperties() || {};
+        const duplicate = findDuplicate_(propertySnapshot, source);
+        if (duplicate) return {
+            status: "success", revision: duplicate.lastRevision,
+            firstRevision: duplicate.firstRevision, lastRevision: duplicate.lastRevision,
+            resetRequired: false, duplicate: true
+        };
+
+        const collection = String(resolved.collection || "").trim().toLowerCase();
+        const recordId = String(resolved.recordId || "").trim();
+        const operation = String(resolved.operation || "").trim().toLowerCase();
+        const snapshot = resolved.snapshot === undefined ? null : resolved.snapshot;
+        if (!["reset", "upsert", "delete"].includes(operation)) throw new Error("La operación del evento de catálogo no es válida.");
+        if (operation === "reset") {
+            if (collection !== "*" || recordId !== "*") throw new Error("El evento reset del catálogo no es válido.");
+        } else {
+            if (!["cortes", "pys", "tutoriales"].includes(collection) || !recordId || recordId.length > 128) {
+                throw new Error("La referencia del registro de catálogo no es válida.");
+            }
+            if (operation === "upsert" && (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot))) {
+                throw new Error("El evento upsert del catálogo requiere un snapshot canónico.");
+            }
+            if (operation === "delete" && snapshot !== null) throw new Error("El evento delete no debe incluir snapshot.");
         }
 
+        const revisions = revisions_(propertySnapshot);
+        const storedRevision = Number(propertySnapshot[CATALOG_FEED_REVISION_PROPERTY_] || 0);
+        const currentRevision = Math.max(
+            Number.isSafeInteger(storedRevision) && storedRevision >= 0 ? storedRevision : 0,
+            revisions.length ? revisions[revisions.length - 1] : 0
+        );
+        if (!Number.isSafeInteger(currentRevision + 1)) throw new Error("La revisión del catálogo alcanzó su límite seguro.");
+        const revision = currentRevision + 1;
+        const event = {
+            revision, collection, recordId, operation, snapshot,
+            createdAt: new Date(now()).toISOString(),
+            sourceService: source.service,
+            sourceOperation: source.operation,
+            sourceRequestId: source.requestId,
+            resetRequired: operation === "reset"
+        };
+        const serialized = JSON.stringify(event);
+        if (serialized.length > CATALOG_FEED_MAX_EVENT_LENGTH_) throw new Error("El evento del catálogo excede el tamaño máximo permitido.");
+        properties.setProperty(CATALOG_FEED_EVENT_PREFIX_ + revision, serialized);
+        properties.setProperty(CATALOG_FEED_REVISION_PROPERTY_, String(revision));
+        const retained = revisions_(properties.getProperties() || propertySnapshot);
+        while (retained.length > maxEvents) properties.deleteProperty(CATALOG_FEED_EVENT_PREFIX_ + retained.shift());
+        return {
+            status: "success", revision, firstRevision: revision, lastRevision: revision,
+            resetRequired: operation === "reset", duplicate: false
+        };
+    }
+
+    function publishReset(source) {
+        const normalized = validateSource_(source);
+        return withLock_(function() {
+            return appendEvent_(normalized, { collection: "*", recordId: "*", operation: "reset", snapshot: null });
+        });
+    }
+
+    function publishChange(source, resolver) {
+        const normalized = validateSource_(source);
+        const change = source && source.change && typeof source.change === "object" && !Array.isArray(source.change)
+            ? source.change : null;
+        if (!change || Object.prototype.hasOwnProperty.call(change, "snapshot")) {
+            throw new Error("El navegador solo puede enviar la referencia del cambio; CATALOG reconstruye el snapshot.");
+        }
+        if (typeof resolver !== "function") throw new Error("No existe un resolvedor canónico para el cambio.");
         return withLock_(function() {
             const propertySnapshot = properties.getProperties() || {};
-            const revisions = revisions_(propertySnapshot);
-            const storedRevision = Number(propertySnapshot[CATALOG_FEED_REVISION_PROPERTY_] || 0);
-            let currentRevision = Math.max(
-                Number.isSafeInteger(storedRevision) && storedRevision >= 0 ? storedRevision : 0,
-                revisions.length ? revisions[revisions.length - 1] : 0
-            );
-
-            for (const revision of revisions) {
-                const raw = propertySnapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
-                if (!raw) continue;
-                try {
-                    const event = JSON.parse(raw);
-                    if (event && event.sourceRequestId === requestId &&
-                        event.sourceService === service && event.sourceOperation === operation) {
-                        return {
-                            status: "success", revision: event.revision,
-                            firstRevision: event.revision, lastRevision: event.revision,
-                            resetRequired: true, duplicate: true
-                        };
-                    }
-                } catch (error) {}
-            }
-
-            if (!Number.isSafeInteger(currentRevision + 1)) {
-                throw new Error("La revisión del catálogo alcanzó su límite seguro.");
-            }
-            currentRevision++;
-            const event = {
-                revision: currentRevision,
-                collection: "*",
-                recordId: "*",
-                operation: "reset",
-                snapshot: null,
-                createdAt: new Date(now()).toISOString(),
-                sourceService: service,
-                sourceOperation: operation,
-                sourceRequestId: requestId,
-                resetRequired: true
+            const duplicate = findDuplicate_(propertySnapshot, normalized);
+            if (duplicate) return {
+                status: "success", revision: duplicate.lastRevision,
+                firstRevision: duplicate.firstRevision, lastRevision: duplicate.lastRevision,
+                resetRequired: false, duplicate: true
             };
-            const serialized = JSON.stringify(event);
-            if (serialized.length > CATALOG_FEED_MAX_EVENT_LENGTH_) {
-                throw new Error("El evento de actualización del catálogo excede el tamaño permitido.");
-            }
-            properties.setProperty(CATALOG_FEED_EVENT_PREFIX_ + currentRevision, serialized);
-            properties.setProperty(CATALOG_FEED_REVISION_PROPERTY_, String(currentRevision));
-
-            const retained = revisions_(properties.getProperties() || propertySnapshot);
-            while (retained.length > maxEvents) {
-                const oldest = retained.shift();
-                properties.deleteProperty(CATALOG_FEED_EVENT_PREFIX_ + oldest);
-            }
-            return {
-                status: "success", revision: currentRevision,
-                firstRevision: currentRevision, lastRevision: currentRevision,
-                resetRequired: true, duplicate: false
-            };
+            return appendEvent_(normalized, resolver(change));
         });
     }
 
     function getChanges(payload) {
         const request = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
-        const cursor = request.cursor === undefined || request.cursor === null || request.cursor === ""
-            ? 0 : Number(request.cursor);
-        const requestedLimit = request.limit === undefined || request.limit === null || request.limit === ""
-            ? 50 : Number(request.limit);
+        const cursor = request.cursor === undefined || request.cursor === null || request.cursor === "" ? 0 : Number(request.cursor);
+        const requestedLimit = request.limit === undefined || request.limit === null || request.limit === "" ? 50 : Number(request.limit);
         if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("El cursor del catálogo no es válido.");
         if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50) {
             throw new Error("El límite de cambios debe estar entre 1 y 50.");
         }
-
         return withLock_(function() {
             const propertySnapshot = properties.getProperties() || {};
             const revisions = revisions_(propertySnapshot);
@@ -237,22 +279,18 @@ function createCatalogChangeFeed_(dependencies) {
             );
             const minRevision = revisions.length ? revisions[0] : currentRevision + 1;
             const resetPage = function() {
-                return {
-                    status: "success", resetRequired: true, changes: [],
-                    currentRevision, minRevision, nextCursor: currentRevision, hasMore: false
-                };
+                return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
             };
             if (cursor > currentRevision || (revisions.length && cursor < minRevision - 1)) return resetPage();
-
             const changes = [];
             const endRevision = Math.min(currentRevision, cursor + requestedLimit);
             for (let revision = cursor + 1; revision <= endRevision; revision++) {
                 const raw = propertySnapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
                 if (!raw) return resetPage();
                 let event;
-                try { event = JSON.parse(raw); }
-                catch (error) { return resetPage(); }
-                if (!event || event.revision !== revision || event.operation !== "reset") return resetPage();
+                try { event = JSON.parse(raw); } catch (error) { return resetPage(); }
+                if (!event || event.revision !== revision || !["reset", "upsert", "delete"].includes(event.operation)) return resetPage();
+                if (event.operation === "upsert" && (!event.snapshot || typeof event.snapshot !== "object")) return resetPage();
                 changes.push(event);
             }
             const nextCursor = changes.length ? changes[changes.length - 1].revision : cursor;
@@ -264,7 +302,98 @@ function createCatalogChangeFeed_(dependencies) {
         });
     }
 
-    return { publishReset, getChanges };
+    return { publishReset, publishChange, getChanges };
+}
+
+function normalizeCatalogPysImageReference_(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/^[A-Za-z0-9_-]{10,110}$/.test(raw)) return "https://drive.google.com/file/d/" + raw + "/view";
+    let match = raw.match(/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,110})(?:\/view)?(?:[?#].*)?$/i);
+    if (!match) match = raw.match(/^https:\/\/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([A-Za-z0-9_-]{10,110})(?:&[^#]*)?(?:#.*)?$/i);
+    if (!match) match = raw.match(/^https:\/\/lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]{10,110})(?:=[^\s]*)?$/i);
+    if (match) return "https://drive.google.com/file/d/" + match[1] + "/view";
+    if (/drive\.google\.com|googleusercontent\.com/i.test(raw)) return "";
+    return /^https:\/\//i.test(raw) ? raw : "";
+}
+
+function parseCatalogModelosAsociados_(raw) {
+    if (raw === null || raw === undefined || raw === "") return [];
+    let values;
+    if (Array.isArray(raw)) values = raw;
+    else {
+        const text = String(raw).trim();
+        if (!text) return [];
+        if (text.startsWith("[") || text.endsWith("]")) {
+            try { values = JSON.parse(text); }
+            catch (error) { throw new Error("modelos_asociados contiene una lista JSON inválida."); }
+            if (!Array.isArray(values)) throw new Error("modelos_asociados debe contener una lista JSON.");
+        } else values = text.split(/[,/\\;]+/);
+    }
+    const seen = new Set(), output = [];
+    values.forEach(value => {
+        if (value === null || value === undefined) return;
+        const id = String(value).trim();
+        if (!id) return;
+        if (id.length > 100 || /[,/\\;\[\]"'\u0000-\u001F\u007F]/.test(id)) throw new Error("modelos_asociados contiene un identificador con formato inválido.");
+        if (!seen.has(id)) { seen.add(id); output.push(id); }
+    });
+    return output;
+}
+
+function buildCatalogPysSnapshot_(recordId) {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.PYS);
+    if (!sheet) throw new Error("No se encontró la hoja PyS para reconstruir el delta.");
+    const expectedHeaders = ["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"];
+    if (sheet.getLastColumn() > expectedHeaders.length) throw new Error("El esquema PyS contiene columnas adicionales.");
+    const headers = sheet.getRange(1, 1, 1, expectedHeaders.length).getDisplayValues()[0];
+    if (expectedHeaders.some((header, index) => String(headers[index] || "") !== header)) throw new Error("Los encabezados de la hoja PyS no coinciden con el contrato de catálogo.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const target = String(recordId || "").trim().toLowerCase();
+    const rows = sheet.getRange(2, 1, lastRow - 1, expectedHeaders.length).getValues();
+    const matches = rows.filter(row => String(row[0] || "").trim().toLowerCase() === target);
+    if (!matches.length) return null;
+    if (matches.length > 1 && matches.some(row => JSON.stringify(row) !== JSON.stringify(matches[0]))) throw new Error("El ID PyS tiene filas duplicadas con contenido contradictorio.");
+    const row = matches[0], id = String(row[0] || "").trim();
+    if (!/^isue-\d+$/i.test(id)) throw new Error("El ID PyS no tiene un formato persistente válido.");
+    return {
+        id_problem: id,
+        Problema: row[1] === "" || row[1] === undefined ? null : row[1],
+        Descripcion: row[2] === "" || row[2] === undefined ? null : row[2],
+        Se_soluciono: row[3] === "" || row[3] === undefined ? null : row[3],
+        Solucion: row[4] === "" || row[4] === undefined ? null : row[4],
+        Prevenir: row[5] === "" || row[5] === undefined ? null : row[5],
+        Imagen: normalizeCatalogPysImageReference_(row[6]),
+        Video: row[7] === "" || row[7] === undefined ? null : row[7],
+        Colaborador: row[8] || "",
+        modelosAsociados: parseCatalogModelosAsociados_(row[9] || "")
+    };
+}
+
+function resolveCanonicalCatalogChange_(change) {
+    const collection = String(change.collection || "").trim().toLowerCase();
+    const recordId = String(change.recordId || "").trim();
+    const operation = String(change.operation || "upsert").trim().toLowerCase();
+    if (!recordId || recordId.length > 128 || !["upsert", "delete"].includes(operation)) throw new Error("El cambio del catálogo contiene una referencia inválida.");
+    if (collection === "pys") {
+        const snapshot = buildCatalogPysSnapshot_(recordId);
+        if (!snapshot) {
+            if (operation === "delete") return { collection, recordId, operation: "delete", snapshot: null };
+            return { collection: "*", recordId: "*", operation: "reset", snapshot: null };
+        }
+        return { collection, recordId: snapshot.id_problem, operation: "upsert", snapshot };
+    }
+    if (!["cortes", "tutoriales"].includes(collection)) throw new Error("La colección no admite deltas desde FEEDBACK.");
+    const catalog = handleGetCatalogData({ forceRefresh: true });
+    if (!catalog || catalog.status !== "success" || !catalog.data || !Array.isArray(catalog.data[collection])) throw new Error("No se pudo reconstruir el snapshot canónico del catálogo.");
+    const idField = collection === "tutoriales" ? "ID" : "id";
+    const match = catalog.data[collection].find(record => String(record && record[idField] || "").trim() === recordId);
+    if (!match) {
+        if (operation === "delete") return { collection, recordId, operation: "delete", snapshot: null };
+        return { collection: "*", recordId: "*", operation: "reset", snapshot: null };
+    }
+    return { collection, recordId, operation: "upsert", snapshot: match };
 }
 
 function publishCatalogResetForActor_(payload, actor, feed) {
@@ -299,6 +428,45 @@ function handlePublishCatalogReset_(payload) {
     return publishCatalogResetForActor_(source, actor, createCatalogChangeFeed_());
 }
 
+function publishCatalogChangeForActor_(payload, actor, feed, resolver) {
+    const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+    const userId = String(source.userId || "").trim();
+    const sessionToken = String(source.sessionToken || "");
+    const service = String(source.service || "").trim().toUpperCase();
+    const operation = String(source.operation || "").trim();
+    const requestId = String(source.requestId || "").trim();
+    const change = source.change && typeof source.change === "object" && !Array.isArray(source.change) ? source.change : null;
+    if (!userId || !sessionToken) throw new Error("La publicación del catálogo requiere una sesión activa.");
+    if (service !== "FEEDBACK") throw new Error("Solo FEEDBACK puede publicar deltas del catálogo desde el navegador.");
+    const allowed = CATALOG_FEED_ALLOWED_OPERATIONS_[service];
+    if (!allowed || !allowed.has(operation)) throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
+    const expectedCollection = CATALOG_FEED_ALLOWED_COLLECTIONS_[service][operation];
+    if (!change || String(change.collection || "").trim().toLowerCase() !== expectedCollection ||
+        !String(change.recordId || "").trim() || String(change.operation || "").trim().toLowerCase() !== "upsert") {
+        throw new Error("La referencia del delta no coincide con el contrato de la operación.");
+    }
+    if (Object.prototype.hasOwnProperty.call(change, "snapshot")) throw new Error("El navegador no puede proporcionar snapshots al feed del catálogo.");
+    const role = normalizeCatalogRole_(actor && actor.role);
+    const validRoles = ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"];
+    if (!validRoles.includes(role)) throw new Error("La sesión no tiene un rol válido para publicar cambios del catálogo.");
+    if (["updatePysItem", "updateTutorialItem", "addTutorial"].includes(operation) && role !== "desarrollador") {
+        throw new Error("Solo Desarrollador puede publicar esta actualización del catálogo.");
+    }
+    return (feed || createCatalogChangeFeed_()).publishChange(
+        { service, operation, requestId, change }, resolver || resolveCanonicalCatalogChange_
+    );
+}
+
+function handlePublishCatalogChange_(payload) {
+    const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+    const userId = String(source.userId || "").trim();
+    const sessionToken = String(source.sessionToken || "");
+    if (!userId || !sessionToken) throw new Error("La publicación del catálogo requiere una sesión activa.");
+    const actor = getCatalogSessionActor_(userId, sessionToken);
+    return publishCatalogChangeForActor_(source, actor, createCatalogChangeFeed_(), resolveCanonicalCatalogChange_);
+}
+
+
 function getSpreadsheet() {
   if (spreadsheet === null) {
     spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -310,7 +478,8 @@ const SHEET_NAMES = {
     CORTES: "Cortes",
     LOGOS_MARCA: "LogosMarca",
     TUTORIALES: "Tutorial",
-    RELAY: "Relay"
+    RELAY: "Relay",
+    PYS: "pys"
 };
 
 // Mapas de columnas actualizados al esquema v2.0
@@ -418,6 +587,9 @@ function doPost(e) {
     switch (action) {
       case 'publishCatalogReset':
         result = handlePublishCatalogReset_(payload);
+        break;
+      case 'publishCatalogChange':
+        result = handlePublishCatalogChange_(payload);
         break;
       case 'getCatalogChanges':
         result = createCatalogChangeFeed_().getChanges(payload);
