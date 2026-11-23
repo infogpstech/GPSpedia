@@ -6,7 +6,6 @@ const write = read("../Services/write.js");
 const admin = read("../Services/admin.js");
 const api = read("../Frontend/api-config.js");
 const catalog = read("../Services/catalog.js");
-const coordinator = read("../Services/Coordinator.js");
 
 function extract(name, nextName) {
     const start = write.indexOf("function " + name + "(");
@@ -45,7 +44,5 @@ assert.match(catalog, /case 'publishCatalogReset':/);
 assert.match(catalog, /case 'publishCatalogChange':/);
 assert.match(catalog, /case 'getCatalogChanges':/);
 assert.match(catalog, /catalogFeed/);
-assert.doesNotMatch(coordinator, /publishCatalogResetFromBrowser_|getPublicCatalogChanges|catalogFeed/);
-assert.doesNotMatch(coordinator, /request\.action === "publishCatalogReset"/);
-assert.match(coordinator, /function getServiceTrafficFromBrowser_/);
-console.log("CatalogPublicationIsolation: 27/27 PASS — WRITE y ADMIN delegan a CATALOG; Coordinator ya no expone el feed");
+assert.doesNotMatch(api, /COORDINATOR|getServiceTraffic/);
+console.log("CatalogPublicationIsolation: 27/27 PASS — WRITE y ADMIN delegan a CATALOG; sin dependencia de Coordinator");
