@@ -1240,3 +1240,46 @@ El inventario detallado de configuración y persistencia está en [INVENTARIO_CO
 ### 20.3 Límites
 
 No se leyeron valores de propiedades reales instaladas, scopes ni configuración de Web Apps desplegadas. No se modificó ningún consumidor, propiedad, hoja ni deployment. La inspección Beta de valores reales queda pendiente; el acceso a Spreadsheet sin ID/bootstrap local queda en MIG-006.
+
+
+---
+
+## 20. Grafo de llamadas entre servicios y SharedMutation — MIG-004
+
+Inventario completo de comunicación HTTP backend→backend, reemplazos y pruebas: `INVENTARIO_LLAMADAS_SERVICIOS.md`.
+
+### 20.1 Aristas backend actuales
+
+| Origen | Destino | Acciones/operaciones | Reemplazo objetivo |
+|---|---|---|---|
+| ADMIN | WRITE | `allocateVehicleId`, `freezeCortesIds` | Frontend llama WRITE directamente; backup ADMIN → freeze WRITE conserva orden y confirmación |
+| ADMIN | CATALOG | `getVehicleProjection`, `getContributionCandidates` | Frontend consulta CATALOG; ADMIN revalida datos/versión antes de escribir |
+| AUTH/USERS/WRITE/FEEDBACK/ADMIN/UTILITIES | Coordinator | 13 operaciones privadas vía SharedMutationClient | Eliminar intermediario; AUTH/Spreadsheet para sesión, Spreadsheet para feed, frontend para secuencias |
+| Coordinator | USERS/WRITE/FEEDBACK/ADMIN | `__primeSessionActorCache`, `__invalidateSessionActorCache` | Frontend invoca directamente endpoints locales, autenticados por sesión y RBAC |
+| CATALOG, InboxConversations | — | Sin llamadas backend→backend detectadas | Sin sustitución requerida |
+
+Las llamadas a Google Drive API, YouTube Data API y URLs de imágenes son integraciones externas, no aristas entre microservicios.
+
+### 20.2 Operaciones SharedMutation
+
+Se reconciliaron las 13 operaciones del dispatcher Coordinator: acquire, release, validate, publishCatalogChange, publishCatalogChanges, getCatalogChanges, registerSession, syncUserSessions, revokeSession, revokeUserSessions, validateSessionContext, invalidateSessionActorCaches y getServiceTraffic.
+
+Seis callsites activos de `withSharedMutationLease_` están en AUTH/deleteUser, USERS/createUser, ADMIN/saveUnusedImagesInventory, ADMIN/createCortesImageFolder, ADMIN/auditDriveImagesInCortes y UTILITIES/migrateTimestamps. El helper AUTH/migrateLegacyRoleRevocationMarkersToSharedState existe, pero no se localizó consumidor versionado. El wrapper `registerSharedSessionContext_` tampoco tiene callsite versionado. La ruta nested `validate` acepta `__sharedMutationToken`, pero no se localizó un productor versionado activo.
+
+Las ocho rutas privadas de caché (dos acciones en USERS, WRITE, FEEDBACK y ADMIN) siguen vigentes en el código; no se retiran en MIG-004.
+
+### 20.3 Integridad, escritura y compatibilidad
+
+- AUTH debe conservar autoridad de sesión y revocación; la invalidación/precarga local se coordinará desde frontend.
+- CATALOG será lector canónico del feed; los servicios escritores publicarán eventos idempotentes en Spreadsheet dentro de su propia operación.
+- Backup→freeze, prelectura de proyección→edición, candidatos→inventario y fan-out de sesión son secuencias que el frontend puede coordinar.
+- Alta/edición de cortes, mutaciones PyS/Inbox, aprobación de vídeo, auditoría, backup/restauración y migraciones conservan su escritura lógica en el servicio propietario.
+- Se identificaron solapamientos de escritura en Users/ActiveSessions, Cortes y Drive. Deben resolverse antes de retirar leases; ScriptLock de proyectos Apps Script distintos no es un lock compartido.
+- El secreto CATALOG compartido con ADMIN para metadatos de inventario debe sustituirse por autorización local de CATALOG; no trasladarlo al navegador ni a Spreadsheet pública.
+- No se cambió ningún endpoint, secreto, propiedad, permiso, dato o deployment.
+
+### 20.4 Pruebas de trazabilidad
+
+Se agregó `JS/Tests/ServiceCallGraphContract.mjs` al runner. La matriz de pruebas representativas por arista se conserva en `INVENTARIO_LLAMADAS_SERVICIOS.md` §8. Las pruebas locales de equivalencia de las futuras sustituciones y las validaciones reales de Apps Script/Spreadsheet/Drive/OAuth/YouTube permanecen asignadas a sus tareas de implementación y Beta, respectivamente.
+
+**Estado MIG-004:** COMPLETADA CON VALIDACIÓN DIFERIDA.
