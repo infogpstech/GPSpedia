@@ -1192,3 +1192,45 @@ Rama base protegida: `GPSpedia2.2.5` (sin cambios).
 - Ejecutar y revisar la última corrida completa de GitHub Actions después de los últimos cambios.
 - Investigar únicamente los fallos ajenos a MIG-023 que la suite reporte (AUTH purga de logs, política P4 y esperas FEEDBACK/Inbox), sin mezclar su corrección con esta tarea.
 - Completar las pruebas de cache-first/IndexedDB y la validación Beta real antes de cerrar MIG-023.
+
+---
+
+## Cierre MIG-023 — catálogo, cachés y experiencia de usuario — 2026-11-23
+
+### Rama y estado Git
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD de código validado: `e7ce57dfde8b5141c7bcb60496c0b6e11fa8a37b`.
+- Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin cambios.
+- Los commits posteriores al HEAD de código registran exclusivamente correcciones de contratos y documentación de MIG-023.
+
+### Resultado
+- `ACTION_TO_SERVICE_MAP` enruta `getCatalogChanges`, `publishCatalogReset` y `publishCatalogChange` directamente a CATALOG.
+- CATALOG mantiene el diario local con ScriptProperties/ScriptLock, revisión monotónica, cursor, idempotencia, retención de 100 eventos, paginación y recuperación por reset.
+- FEEDBACK solo devuelve colección/ID/operación. El frontend publica después de la mutación confirmada; CATALOG valida la sesión local y reconstruye snapshots canónicos de Cortes, PyS y Tutoriales. El navegador no puede enviar snapshots.
+- WRITE y ADMIN solicitan reset desde frontend. Los requestId usan identificadores de operación cuando existen y nonce único cuando no existen, evitando colisiones entre ediciones sucesivas del mismo registro y conservando la idempotencia de reintentos de una misma llamada.
+- Se retiraron de COORDINATOR las rutas públicas `catalogFeed`, `getCatalogChanges` y `publishCatalogReset`. El helper interno del protocolo SharedMutation queda para MIG-024. La retirada de COORDINATOR, incluido `doGet`/health/ping y su inclusión en el escaneo de salud, sigue en MIG-025 después de MIG-024.
+- Se conservaron las rutas de catálogo completo, caché IndexedDB, cursor, navegación, búsqueda, modal, impresión, QR, PWA y carga de imágenes.
+
+### Validaciones locales y CI
+- `CatalogChangeFeed`: 16/16 PASS.
+- `CatalogBrowserReset`: 11/11 PASS (incluye unicidad de requestId entre mutaciones y estabilidad en reintentos).
+- `FeedbackCatalogPublicationIsolation`: 14/14 PASS.
+- `AdminCatalogPublicationIsolation`: 26/26 PASS.
+- `CatalogPublicationIsolation`: 27/27 PASS.
+- `CatalogPublicationFrontend`: 4/4 PASS.
+- `DirectTrafficRoutingCoverage`: 6/6 PASS.
+- `CatalogSnapshotSync`: 29/29 PASS; `CatalogStartupIntegrity`: 25/25 PASS.
+- GitHub Actions Node.js 22: 335 suites; 4,015 pruebas aprobadas; tres fallos de suites fuera de MIG-023: ADMIN `VehicleModalRolePolicy` (11/12), AUTH `SensitiveLogsTrustedActor` (expectativa antigua de lease) e INTEGRATION `GP-PERF FEEDBACK/Inbox` (expectativa antigua sobre locks). No se atribuyen a MIG-023 ni bloquean su cierre.
+- GitHub Pages workflow del mismo HEAD: build, reporte y deploy SUCCESS. No se realizó despliegue manual de Apps Script ni se modificaron hojas/datos externos.
+
+### Validación Beta pendiente
+- Despliegues Apps Script CATALOG/FEEDBACK/WRITE/ADMIN y Spreadsheet Beta aislada.
+- Lectura GET y publicación POST reales; deltas Cortes/PyS/Tutoriales, resets, concurrencia, pérdida de respuesta, cursor obsoleto, huecos y recuperación.
+- Navegadores Android/PWA y escritorio: arranque cache-first, navegación/búsqueda, miniaturas, estados offline y sincronización silenciosa.
+- No se invocaron deployments, hojas ni datos productivos; las validaciones Beta no se presentan como realizadas.
+
+### Estado y continuidad
+- MIG-023: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- MIG-024 — Eliminar SharedMutation: **siguiente tarea**. No iniciar MIG-025 hasta completar MIG-024.
+- La instrucción de retirar por completo COORDINATOR, su endpoint health y su presencia en el escaneo de salud permanece como requisito obligatorio de MIG-025.
