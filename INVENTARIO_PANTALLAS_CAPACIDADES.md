@@ -92,6 +92,8 @@ Los IDs siguientes son identificadores del código versionado. Los controles que
 - Impresión: print-layout-mode, print-resource-status, print-action, print-pages, adaptive-tech-grid.
 - Compartir, like, vista, sugerencia de año y navegación contextual se renderizan dentro de la ficha según permisos y datos disponibles.
 
+**Modales de aportes desde la ficha:** add-cut-for-model-modal, add-cut-pending-notice, add-cut-model-form, add-cut-tipo, add-cut-relay, add-cut-retry-dropdowns, add-cut-detalles, add-cut-color, add-cut-testigo, add-cut-img-file; add-apertura-modal, add-apertura-form, add-apertura-detalles, add-apertura-img-file; add-feed-modal, add-feed-form, add-feed-detalles, add-feed-img-file; add-video-modal, vehicle-video-context y btn-open-yt-upload. Estos controles permiten agregar corte, apertura, alimentación o vídeo sin abandonar la ficha. El ID de los botones de coincidencia de add_cortes se genera a partir del ID del vehículo; no es un ID fijo compartido.
+
 **Handlers y acciones:** mostrarCategorias, mostrarMarcas, mostrarModelosPorMarca, mostrarModelos, mostrarTiposEncendido, mostrarVersiones, mostrarVersionesEquipamiento, mostrarResultadosDeBusqueda, mostrarDetalleModal, performSilentSync, updateFullState, renderPosiblesProblemasAccordion y exportVehiclePrintSheet. Acciones relacionadas: getCatalogData, getVehicleProjection, getDropdownData, getNavigationData, recordVehicleView, recordLike, suggestYear, reportProblem, suggestCutChange, checkVinDuplicate y addVinToVehicle. Las funciones de compartir/QR/impresión y la navegación del lightbox se ejecutan localmente.
 
 ### UI-05 — Alta de vehículo y cortes (HTML/add_cortes.html)
