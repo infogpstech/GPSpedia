@@ -89,7 +89,7 @@ function expectCode(fn, code) {
     const result=env.context.getPublicCentralConfiguration_();
     assert.equal(result.services.COORDINATOR,undefined);
     assert.deepEqual(Object.keys(result.services).sort(),["ADMIN","AUTH","CATALOG","FEEDBACK","UTILITIES","WRITE"]);
-    assert.equal(Object.keys(result.services).length,7);
+    assert.equal(Object.keys(result.services).length,6);
 }
 {
     const fixture=makeDatabase(), active={current:fixture.database}, env=createEnvironment(active);
