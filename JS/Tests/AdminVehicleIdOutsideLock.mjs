@@ -16,4 +16,4 @@ const handlerEnd=write.indexOf("\nconst CORTES_ID_COUNTER_PROPERTY",handlerStart
 assert.ok(handlerStart>=0&&handlerEnd>handlerStart);
 const handler=write.slice(handlerStart,handlerEnd);
 assert.ok(handler.indexOf("reserveCortesVehicleIdForOperation_")<handler.indexOf("lock.tryLock(0)"));
-console.log("AdminVehicleIdOutsideLock: PASS — WRITE reserva antes del lock; ADMIN legacy rechaza sin coordinar");
+console.log("AdminVehicleIdOutsideLock: 1/1 PASS — WRITE reserva antes del lock; ADMIN legacy rechaza sin coordinar");
