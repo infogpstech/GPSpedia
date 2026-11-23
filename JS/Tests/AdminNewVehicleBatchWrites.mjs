@@ -6,7 +6,7 @@ const write = readFileSync(new URL("../Services/write.js", import.meta.url), "ut
 const api = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 
 const legacyStart = admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
-const legacyEnd = admin.indexOf("\\nfunction sanitizeSupplementaryRichText_", legacyStart);
+const legacyEnd = admin.indexOf("\nfunction sanitizeSupplementaryRichText_", legacyStart);
 assert.ok(legacyStart >= 0 && legacyEnd > legacyStart, "No se encontró la ruta de compatibilidad ADMIN.");
 const legacy = admin.slice(legacyStart, legacyEnd);
 assert.match(legacy, /ACTION_MOVED_TO_WRITE/);
@@ -17,7 +17,7 @@ assert.match(api, /'addOrUpdateCut': 'WRITE'/);
 assert.match(api, /'allocateVehicleId': 'WRITE'/);
 
 const handlerStart = write.indexOf("function handleAddOrUpdateCut(payload)");
-const handlerEnd = write.indexOf("\\nconst CORTES_ID_COUNTER_PROPERTY", handlerStart);
+const handlerEnd = write.indexOf("\nconst CORTES_ID_COUNTER_PROPERTY", handlerStart);
 assert.ok(handlerStart >= 0 && handlerEnd > handlerStart, "WRITE debe conservar el handler canónico de alta.");
 const handler = write.slice(handlerStart, handlerEnd);
 assert.ok(handler.includes("recordOpId"), "WRITE debe conservar el registro idempotente de operación.");
