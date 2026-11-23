@@ -83,4 +83,4 @@ assert.deepEqual(invalidation,{status:"success",invalidated:2});
 assert.deepEqual(removed,["U-1:opaque-session-token-0001","U-1:opaque-session-token-0002"]);
 assert.equal(api.handleSharedSessionActorCacheInvalidation_({userId:"U-1",sessionTokens:["x"]}).status,"error");
 
-console.log("MIG013SessionActorLocalLookup: 12/12 PASS — caché fría/caliente, identidad, RBAC, revocación, expiración e invalidación local");
+console.log("MIG013SessionActorLocalLookup: 15/15 PASS — caché fría/caliente, identidad, RBAC, revocación, expiración e invalidación local");
