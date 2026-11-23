@@ -11,8 +11,8 @@
 
 ## Cobertura y límites
 
-- El agregado global refleja únicamente adquisiciones exitosas de lease que pasan por Coordinator. No representa el total de solicitudes HTTP ni incluye lecturas de sesión/feed ni rutas directas no coordinadas.
-- Las consultas al feed público de catálogo no se persisten en el agregado global; el navegador registra el destino de red COORDINATOR en su telemetría local.
+- Los buckets v2 nuevos reflejan únicamente adquisiciones exitosas de lease que pasan por Coordinator. Los buckets históricos v1 se conservan y suman una sola vez durante su ventana de retención de 24 horas; pueden contener eventos de validación/feed registrados antes de la migración. Después de expirar el histórico, el agregado v2 no incluye lecturas de sesión/feed. El total no representa todas las solicitudes HTTP ni incluye rutas directas no coordinadas.
+- Las consultas al feed público de catálogo no generan incrementos nuevos en el agregado global; el navegador registra el destino de red COORDINATOR en su telemetría local.
 - USERS fue retirado como microservicio independiente por MIG-012. No tiene endpoint ni clave de telemetría. Sus operaciones de usuarios se enrutan a AUTH.
 - LEGACY está retirado y no forma parte del inventario.
 - COORDINATOR es opcional en el registro público de configuración para compatibilidad; cuando está habilitado, aparece en el diagnóstico de salud y en la telemetría local del navegador. No es una séptima categoría del agregado global de operaciones protegidas, que conserva las seis claves de servicio principal.

@@ -450,14 +450,21 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Despliegue:** Pages build y deploy del mismo HEAD, run `45253324552`: SUCCESS.
 **Validación diferida:** no se ejecutaron Apps Script, Spreadsheet, cuentas ni datos productivos. Mantener las pruebas Beta de roles, estados privados, borradores, móvil, notificaciones y rollback (AUG-115, AUG-116, AUG-119, AUG-152, AUG-155 y GP-INBOX-04B/04C/04D).
 ### MIG-021 — Métricas, estados y monitoreo
-**Estado: PENDIENTE**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener `ping` y escaneo de conectividad de todos los servicios.
-- [ ] Mantener estado, latencia en ms y errores por servicio.
-- [ ] Mantener métricas de tráfico y almacenamiento.
-- [ ] Mantener métricas de usuarios, actividad, logs y auditoría.
-- [ ] Mantener paneles, gráficas, estados vacíos y exportaciones existentes.
-- [ ] Evitar que las métricas añadan viajes de red o escrituras síncronas a acciones normales.
+- [x] Mantener `ping` y escaneo de conectividad de los seis servicios principales y COORDINATOR opcional.
+- [x] Mantener estado, latencia en ms y errores por servicio, incluidos timeout, slow, stale y contratos inválidos.
+- [x] Mantener métricas de tráfico y almacenamiento, separando el agregado global de la telemetría local del navegador.
+- [x] Mantener métricas de usuarios, actividad, logs y auditoría.
+- [x] Mantener paneles, gráficas y estados vacíos; no se añadió una exportación de métricas inexistente ni se alteraron las exportaciones existentes de fichas técnicas.
+- [x] Evitar escrituras síncronas adicionales: los buckets v2 se incluyen en el guardado de lease ya requerido; validaciones de sesión y lecturas del feed no escriben métricas.
+**Implementación:** Coordinator almacena buckets horarios v2 en el mismo estado JSON de leases. Los buckets v1 previos se leen y suman una sola vez durante su ventana restante de retención; el histórico puede contener validaciones/feed anteriores a esta actualización. El panel distingue el agregado global de la telemetría local de la pestaña y no presenta el agregado como total HTTP.
+**Validación CI:** GitHub Actions Node.js 22, run `45262601103`, grupo `45 MIG021`: todas las suites del grupo PASS. Contratos y suites: ServiceHealth 19/19; tráfico ADMIN 45/45; tráfico navegador 10/10; agregador 10/10; agregación 3/3; batch 3/3; telemetría directa 6/6; routing 6/6; superficie ADMIN 17/17; catálogo 3/3; contribuciones 3/3; insights 1/1; XSS 6/6; append actividad 6/6; retención 10/10; lectura acotada 7/7; limpieza logs 5/5; vistos recientes 12/12; usuarios 2/2; estado catálogo 4/4; accesibilidad conexión 8/8; alertas Drive 5/5; actividad imágenes 5/5 + 6/6 + 7/7 + 6/6; likes 5/5; coordinación sesión 9/9; minimización leases 6/6.
+**Prueba aislada adicional:** SharedMutationCoordinator 95/95 PASS; incluye compatibilidad v1/v2, idempotencia, retención, fallo best-effort y ausencia de escrituras de métricas separadas en feed/validación.
+**Regresión general:** 296 suites, 3,561 pruebas aprobadas y 6 suites fallidas ajenas al grupo MIG021: ADMIN P4, FEEDBACK reset de vídeo desde navegador, CATALOG feed incremental, UTILITIES fixture Spreadsheet/RBAC/staging/rollback, AUTH purga de Logs e INTEGRATION GP-PERF FEEDBACK/Inbox. No se atribuyen a MIG021.
+**Despliegue:** GitHub Pages build/deploy del mismo HEAD, run `45262599497`: SUCCESS.
+**Validación diferida:** no se invocaron deployments Apps Script, Spreadsheet, Drive ni endpoints reales. Mantener la validación de siete endpoints, roles Developer, métricas globales/locales y recursos aislados en Beta según BETA-05.
+
 
 ### MIG-022 — Administración de Spreadsheet y mantenimiento
 **Estado: PENDIENTE**

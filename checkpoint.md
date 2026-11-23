@@ -1072,3 +1072,39 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - MIG-017, MIG-018, MIG-019 y MIG-020 quedan cerradas con validación diferida.
 - Siguiente tarea según prioridad y dependencias: **MIG-021 — Métricas, estados y monitoreo**.
 - Rama base protegida `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificada.
+
+
+---
+
+## Cierre MIG-021 — métricas, estados y monitoreo — 2026-11-23
+
+### Estado Git y alcance
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5`.
+- HEAD de código MIG-021 verificado: `235d90ca6c0d4e48088fba4e822f4cac3b99d030`.
+- HEAD de la rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribieron cambios en la base.
+- Commits de implementación/correcciones: `5c48c8345a6219dcff99f2cd041e144ee359a941`, `1cf3da626e7aef9e19a10151897bcc87194553f9`, `235d90ca6c0d4e48088fba4e822f4cac3b99d030`.
+
+### Resultado técnico
+- Se mantuvo el diagnóstico de los seis servicios principales y COORDINATOR opcional: identidad, versión, estado, latencia, errores, timeout y clasificación stale/unknown.
+- El agregado global de Coordinator conserva las ventanas horarias 1/6/24 h y RBAC de Desarrollador. Los incrementos nuevos corresponden a adquisiciones exitosas de lease.
+- Los buckets v2 se guardan en el mismo estado JSON y la misma escritura ya necesaria para confirmar una lease; no se añade una propiedad ni una escritura independiente de métricas a esa operación.
+- Las validaciones de contexto y las lecturas del feed ya no escriben métricas. Los sondeos de salud permanecen fuera del tráfico de usuario.
+- Los buckets históricos v1 se conservan y suman una sola vez durante su ventana restante de 24 horas; el histórico puede contener eventos de validación/feed anteriores a esta actualización. La retención v2 elimina buckets fuera de ventana.
+- El panel distingue el agregado global de la telemetría local de la pestaña. La telemetría local mantiene sus límites, percentiles y exclusión de payloads, tokens e identidad.
+- Se corrigió el texto de ayuda del panel para reflejar el alcance actual del agregado y la transición histórica v1/v2. No se añadieron exportaciones nuevas; se mantienen sin cambios las funciones de exportación ya existentes.
+- No se añadieron secretos, URLs ni configuración interservicio local a servicios Apps Script; no se alteraron deployments ni recursos externos.
+
+### Pruebas y CI
+- Harness aislado V8 de SharedMutationCoordinator: **95/95 PASS**, incluyendo adquisición/idempotencia, estado v1/v2, retención, transición de buckets históricos, fallo best-effort y ausencia de persistencia separada en feed/validación.
+- GitHub Actions Node.js 22, run `45262601103`, grupo `45 MIG021`: todas las suites del grupo PASS (**235 comprobaciones** tras la actualización final del contrato). Cobertura: salud 19/19; tráfico ADMIN 45/45; navegador 10/10; agregador 10/10; agregación 3/3; batch 3/3; telemetría directa 6/6; routing 6/6; superficie ADMIN 17/17; catálogo 3/3; contribuciones 3/3; insights 1/1; XSS 6/6; append actividad 6/6; retención 10/10; lectura acotada 7/7; limpieza logs 5/5; vistos recientes 12/12; usuarios 2/2; estado catálogo 4/4; accesibilidad conexión 8/8; alertas Drive 5/5; actividad imágenes 5/5, 6/6, 7/7 y 6/6; likes 5/5; coordinación sesión 9/9; minimización leases 6/6.
+- Regresión general en ese run: **296 suites, 3,561 pruebas aprobadas y 6 fallos** ajenos al grupo MIG021: ADMIN P4; FEEDBACK reset de vídeo desde navegador; CATALOG feed incremental; UTILITIES Spreadsheet simulado/RBAC/staging/rollback; AUTH purga de Logs; INTEGRATION GP-PERF FEEDBACK/Inbox. No se atribuyen a MIG-021.
+- Pages build/deploy del HEAD de código, run `45262599497`: **SUCCESS**.
+
+### Validación Beta pendiente
+- No se ejecutaron deployments Apps Script, endpoints reales, Spreadsheet ni Drive. Mantener BETA-05 en entorno aislado: siete identidades/estados, latencias y errores reales; permisos Developer; buckets globales/locales; compatibilidad histórica; cuota/almacenamiento Drive; comportamiento móvil/escritorio.
+- Las pruebas CI y el harness local no se presentan como validación Beta.
+
+### Estado y continuidad
+- MIG-021: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Siguiente tarea según prioridad: **MIG-022 — Administración de Spreadsheet y mantenimiento**.

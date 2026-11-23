@@ -69,6 +69,8 @@ assert.match(feedback, /FEEDBACK_PUBLIC_ACTIONS/);
 
 assert.match(html, /Tráfico global coordinado/);
 assert.match(html, /No se recopilan contadores directos de rutas ordinarias/);
+assert.match(html, /adquisiciones exitosas de lease registradas por Coordinator/);
+assert.match(html, /validaciones de sesión, lecturas del feed y sondeos de salud no generan nuevos incrementos/);
 assert.match(ui, /Solo eventos registrados por Coordinator/);
 assert.match(ui, /getBrowserServiceTrafficSnapshot/);
 assert.match(ui, /Solicitudes de este navegador/);
@@ -77,4 +79,4 @@ assert.match(ui, /renderGlobalServiceTrafficChart_/);
 assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
 assert.match(html, /Un cero no significa necesariamente que el servicio no recibió solicitudes/);
 
-console.log("ServiceTrafficAdminContract: 43/43 PASS");
+console.log("ServiceTrafficAdminContract: 45/45 PASS");

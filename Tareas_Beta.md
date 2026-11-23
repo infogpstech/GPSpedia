@@ -59,7 +59,12 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 - Aislamiento por rol y usuario.
 
 ### BETA-05 — ADMIN y mantenimiento
-- Panel Developer, telemetría y health individual/global.
+- Panel Developer, telemetría y health individual/global para los seis servicios principales y COORDINATOR cuando esté habilitado.
+- Confirmar identidad, versión, latencia, estados online/slow/unavailable/error/unknown/stale, timeout y aislamiento de fallos entre endpoints.
+- Tráfico global: validar ventanas de 1/6/24 horas, RBAC Desarrollador, compatibilidad de buckets históricos v1 y nuevos v2, deduplicación de reintentos y retención de 24 horas.
+- Verificar que los nuevos incrementos globales corresponden únicamente a adquisiciones exitosas de lease; las validaciones de sesión, lecturas del feed y sondeos de salud no deben escribir métricas. Comprobar que la persistencia usa el guardado de lease ya requerido, sin una escritura adicional.
+- Verificar que el histórico v1 se suma una sola vez durante la transición y desaparece al expirar; no comparar el contador global con el total de requests HTTP.
+- Telemetría local del navegador: validar percentiles, ventanas horarias, límites de eventos, ausencia de payloads/tokens/identidad y separación respecto del agregado global. Confirmar que se reinicia al cerrar/recargar la pestaña.
 - Inventario de imágenes, escaneo Drive y operaciones sobre recursos de prueba.
 - Separar consultas read-only de acciones mutables.
 - Permisos, confirmaciones, read-back y rollback.
