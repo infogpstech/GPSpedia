@@ -67,4 +67,4 @@ test('queryVehicle no selecciona rangos sin año inicial', () => {
     assert.equal(result.identificationType, 'sin_coincidencias');
 });
 
-console.log('VIN year range semantics:', passed, '/ 11');
+console.log('VIN year range semantics:', passed + '/11 PASS');
