@@ -141,7 +141,6 @@ check("Ambas mutaciones exigen Desarrollador, actor cacheado y auditoría antes 
     assert.match(adminSource.slice(auditStart, auditEnd), /withAdminLocalOperationGuard_\(/);
     assert.doesNotMatch(adminSource, /withSharedMutationLease_/);
     assert.match(adminSource, /withAdminLocalOperationGuard_\([\s\S]{0,180}"drive-audit:"/);
-    assert.ok(!adminLeaseOperations.includes("recordAdminImageActivity"), "El log de actividad append-only no debe adquirir una lease.");
     assert.ok(adminSource.includes("function isSharedMutationAction_(action)"));
     assert.ok(adminSource.includes('"createSheet","addColumn","driveCommand"'));
 });

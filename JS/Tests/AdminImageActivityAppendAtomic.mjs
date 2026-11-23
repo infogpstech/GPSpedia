@@ -11,7 +11,6 @@ function extract(name) {
 }
 const activity = extract("recordImageAdministrationActivity");
 const pattern = extract("getAdminFormulaBasedIdPattern_");
-const policy = new Function(coordinator + "\nreturn coordinatorPolicy_;")();
 
 let passed = 0;
 function test(name, run) { run(); passed++; console.log("PASS " + name); }
@@ -59,8 +58,9 @@ test("el registro sin actor no escribe", () => {
     assert.equal(calls, 0);
 });
 
-test("la policy ACTIVITY independiente desaparece de Coordinator", () => {
-    assert.throws(() => policy("ADMIN", "recordAdminImageActivity"), /no está habilitada en la política/);
+test("Coordinator ya no conserva policy ni primitivas de lease SharedMutation", () => {
+    assert.doesNotMatch(coordinator, /coordinatorPolicy_|withSharedMutationLease_|function acquire_\\(|function release_\\(/);
+    assert.doesNotMatch(coordinator, /SHARED_MUTATION_(?:COORDINATOR_VERSION|PROTOCOL_VERSION|LEASE_TTL|DRAIN|MAX_WAIT|MAX_ACTIVE|MAX_STATE)/);
 });
 
 console.log("AdminImageActivityAppendAtomic: " + passed + "/" + passed + " PASS");
