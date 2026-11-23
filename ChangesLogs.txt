@@ -209,3 +209,19 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Pages build/deploy del commit funcional 8859d00126708795ad7107f674d0d41e8f17056c: run 45238220816 SUCCESS. Sin llamadas reales a YouTube ni despliegues Apps Script en CI.
 - Beta pendiente: OAuth real, canal YouTube, CacheService/Spreadsheet, 308/410, reanudación móvil/escritorio, RBAC de aprobación/rechazo y publicación real en destinos.
 - MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: MIG-017 — Herramientas y operaciones de Drive.
+
+
+### 2026-11-23 — MIG-017: herramientas y operaciones de Drive
+- Se verificó el grupo dedicado MIG017 en GitHub Actions Node.js 22: 666/666 pruebas PASS (57 resúmenes, run 45249354445).
+- La cobertura incluye árbol Cortes, rutas permitidas, ACL/propietario, navegación, movimiento y rollback, backups/restauración, auditoría, métricas y restricciones destructivas.
+- Se corrigieron los contratos de parser/cliente de `move` y se incorporó validación de espacios en argumentos.
+- Validación real de Drive y Apps Script queda diferida a Beta aislada; no se usaron recursos productivos.
+
+### 2026-11-23 — MIG-018: modelos, cortes, VIN y contribuciones
+- Se corrigió el flujo moderno de información suplementaria para reutilizar el ledger ya validado (`appendLedgerSheet`) y evitar referencias fuera de ámbito.
+- Se añadieron pruebas de reutilización del ledger y del flujo moderno; ambas suites: 15/15 y 2/2 PASS.
+- Se corrigieron rutas relativas de pruebas VIN, salidas CLI no normalizadas, ejecución del contrato AT:AV y la expectativa del replay idempotente de VIN.
+- Se integró la cobertura AUG-050 (11/11), navegación, versiones, rangos de años, privacidad VIN, proyección de contribuciones, ledger append-only, concurrencia, recuperación, slots de cortes y asignación de IDs.
+- Grupo MIG018: 594/594 pruebas PASS (51 resúmenes, GitHub Actions run 45249354445).
+- Regresión general en ese run: 2,135 pruebas aprobadas y seis fallos de suites ajenas a MIG-017/MIG-018 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES fixture Spreadsheet, AUTH purga Logs, INTEGRATION BETA-043).
+- No se ejecutaron llamadas reales a Apps Script, Spreadsheet ni Drive; las verificaciones de infraestructura y datos reales quedan pendientes de Beta aislada.
