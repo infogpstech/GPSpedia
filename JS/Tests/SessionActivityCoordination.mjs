@@ -33,7 +33,7 @@ test("CATALOG valida desde Spreadsheet en cache miss y reutiliza caché local",(
  assert.match(catalog,/now\.getTime\(\)>=addCatalogCalendarMonthsUTC_\(createdAt,3\)/);
 });
 test("El actor procede de Users/ActiveSessions, no del rol enviado por el navegador",()=>{
- const loader=shared.slice(shared.indexOf("function loadSharedSessionActorFromSpreadsheet_"),shared.indexOf("\\nfunction cacheSharedSessionActor_",shared.indexOf("function loadSharedSessionActorFromSpreadsheet_")));
+ const loader=shared.slice(shared.indexOf("function loadSharedSessionActorFromSpreadsheet_"),shared.indexOf("\nfunction cacheSharedSessionActor_",shared.indexOf("function loadSharedSessionActorFromSpreadsheet_")));
  assert.match(loader,/const userRows = usersSheet\.getDataRange\(\)\.getValues\(\)\.slice\(1\)/);
  assert.match(loader,/const role = String\(user\[3\]/);
  assert.match(loader,/pendingMarker\.startsWith\("__role_revocation_pending__:"\)/);
