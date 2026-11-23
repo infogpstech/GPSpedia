@@ -95,7 +95,7 @@ export function runPysStoredXssTests({ ui }) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-    const ui = fs.readFileSync("ui.js", "utf8");
+    const ui = fs.readFileSync("JS/Frontend/ui.js", "utf8");
     const result = runPysStoredXssTests({ ui });
     console.log(JSON.stringify(result, null, 2));
     if (result.status !== "PASS") process.exitCode = 1;
