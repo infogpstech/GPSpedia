@@ -144,3 +144,10 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Documentadas las 2 acciones internas de caché de actor en USERS/WRITE/FEEDBACK/ADMIN (8 rutas) y las 13 acciones privadas de Coordinator, con sus consumidores y propósito.
 - Registrados GET `catalogFeed=1`, estados `debug=true`, diagnóstico CATALOG, compatibilidad de CATALOG `getSuggestion`, rechazos ADMIN `ACTION_MOVED_TO_WRITE` y ruta directa de UTILITIES.
 - Las 12 acciones sin consumidor directo siguen pendientes de clasificación. MIG-001 permanece EN PROGRESO; no se modificó código funcional ni deployments.
+
+
+### Acciones sin consumidor directo — clasificación inicial 2026-11-23
+- Revisados los 12 handlers sin consumidor directo localizado y documentado su propósito en §13 de la matriz.
+- Diferenciadas acciones de sesión/diagnóstico/navegación/Inbox, migraciones de esquema e identificadores, reconciliación multimedia y herramientas manuales de Spreadsheet.
+- Confirmado que `migrateVehicleContributionsSchema` también se invoca internamente; `deleteInboxConversation` oculta por participante y conserva el historial.
+- Clasificación provisional: aún falta rastrear terminal de desarrollador, documentación histórica y jobs/triggers. MIG-001 continúa EN PROGRESO.
