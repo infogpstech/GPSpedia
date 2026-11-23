@@ -169,27 +169,7 @@ function isSharedMutationAction_(action) {
     return ["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","allocateVehicleId","freezeCortesIds"].includes(action);
 }
 
-function removeLegacyWriteCoordinatorSettings_() {
-    if (typeof PropertiesService === "undefined" ||
-        typeof PropertiesService.getScriptProperties !== "function") return;
-    const properties = PropertiesService.getScriptProperties();
-    if (!properties || typeof properties.deleteProperty !== "function") {
-        throw new Error("No se pudo retirar la configuración heredada de coordinación de WRITE.");
-    }
-    properties.deleteProperty("GPSpedia_COORDINATOR_URL");
-    properties.deleteProperty("GPSpedia_COORDINATOR_SECRET");
-}
-
 function doPost(e) {
-    try {
-        removeLegacyWriteCoordinatorSettings_();
-    } catch (error) {
-        return ContentService.createTextOutput(JSON.stringify({
-            status: "error",
-            code: "LEGACY_COORDINATOR_CONFIG_CLEANUP_FAILED",
-            message: "No se pudo retirar la configuración heredada de coordinación."
-        })).setMimeType(ContentService.MimeType.JSON);
-    }
     let request;
     try { request = JSON.parse(e && e.postData && e.postData.contents || "{}"); }
     catch (error) { return doPostInternal_(e); }
