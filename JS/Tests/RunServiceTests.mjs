@@ -593,8 +593,26 @@ runGroup('43','MIG019',()=>{
  runCli('MIG019 publicación coordinada del catálogo FEEDBACK','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
 });
 
+
+runGroup('44','MIG020',()=>{
+ const feedback=read('JS/Services/feedback.js'),inbox=read('JS/Services/InboxConversations.js');
+ runCli('MIG020 conversaciones, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
+ runCli('MIG020 interfaz Inbox, accesibilidad, borradores, búsqueda y sincronización','JS/Tests/InboxUi.mjs');
+ runCli('MIG020 caché por sesión y paginación de conversaciones/mensajes','JS/Tests/InboxCachePagination.js');
+ runCli('MIG020 lectura agrupada de eventos de imágenes de reportes','JS/Tests/FeedbackInboxImageEventBatchRead.mjs');
+ recordResult('MIG020 auditoría inmutable de acciones Inbox',loadFunction('JS/Tests/InboxAuditTrail.js','runInboxAuditTrailTests','\\n\\nimport {')({feedback}));
+ recordResult('MIG020 roles y permisos Inbox',loadFunction('JS/Tests/InboxRoleContract.js','runInboxRoleContractTests','\\n\\nimport {')({
+  ui:read('JS/Frontend/ui.js'),feedback,inbox,usersHtml:read('HTML/users.html'),authClient:read('JS/Frontend/auth.js'),api:read('JS/Frontend/api-config.js')
+ }));
+ recordResult('MIG020 prevención XSS en mensajes y contenido Inbox',loadFunction('JS/Tests/InboxStoredXss.js','runInboxStoredXssTests')({
+  ui:read('JS/Frontend/ui.js'),feedback
+ }));
+ runCli('MIG020 mensajería centralizada de operaciones Developer','JS/Tests/DeveloperOperationMessages.mjs');
+});
+
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','39','41','42','43','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','39','41','42','43','44','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');
