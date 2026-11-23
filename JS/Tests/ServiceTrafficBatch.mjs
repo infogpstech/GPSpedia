@@ -29,7 +29,7 @@ test("ADMIN no mantiene el batch de cinco endpoints directos y Coordinator prote
     assert.doesNotMatch(admin, /function handleGetServiceTraffic_/);
     assert.equal(adminHandler, "");
     assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
-    assert.match(coordinator, /Solo Desarrollador puede consultar la telemetría global/);
+    assert.match(coordinator, /la telemetría global está reservada a Desarrollador/);
     assert.match(coordinator, /return readServiceTraffic_\("ADMIN", "getServiceTraffic"\)/);
 });
 
