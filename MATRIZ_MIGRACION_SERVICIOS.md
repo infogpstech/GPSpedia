@@ -1283,3 +1283,20 @@ Las ocho rutas privadas de caché (dos acciones en USERS, WRITE, FEEDBACK y ADMI
 Se agregó `JS/Tests/ServiceCallGraphContract.mjs` al runner. La matriz de pruebas representativas por arista se conserva en `INVENTARIO_LLAMADAS_SERVICIOS.md` §8. Las pruebas locales de equivalencia de las futuras sustituciones y las validaciones reales de Apps Script/Spreadsheet/Drive/OAuth/YouTube permanecen asignadas a sus tareas de implementación y Beta, respectivamente.
 
 **Estado MIG-004:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+---
+
+## 21. Esquema central de configuración — MIG-007
+
+El diseño versionado de las seis tablas lógicas, columnas, validación, defaults, publicación atómica por revisión, historial append-only, rollback, separación de visibilidad y política de caché está en [ESQUEMA_CONFIGURACION_CENTRAL.md](./ESQUEMA_CONFIGURACION_CENTRAL.md). La trazabilidad de las 26 familias MIG-003 y de los siete endpoints se incluye en §6 del documento.
+
+- Servicios: endpoints públicos de entrada, una fila por service_key.
+- ConfiguracionParametros: parámetros funcionales/operativos validados; sin contratos criptográficos ni RBAC editable.
+- ConfiguracionRecursos: IDs no secretos de Drive, con validación del recurso y jerarquía.
+- ConfiguracionControl: schema_version, active_revision y estado de publicación.
+- ConfiguracionHistorial: historial append-only y rollback como nueva revisión.
+- ConfiguracionEsquema: catálogo de claves/tipos/reglas admitidas, versionado en código.
+
+La visibilidad public/backend/admin es filtrado de aplicación, no ACL de lectura por pestaña: Google Sheets no separa permisos de lectura por hoja. La Spreadsheet debe ser privada y el frontend solo recibe la proyección pública del lector servidor. Los secretos de interconexión y el secreto HMAC de recuperación quedan fuera del esquema.
+
+**Estado MIG-007:** COMPLETADA (diseño/documentación/contrato estático). No se crearon hojas ni se migraron valores. MIG-008 implementará el lector y la caché solo después de resolver el acceso inicial sin bootstrap local; MIG-006 Web App real permanece pendiente de Beta.

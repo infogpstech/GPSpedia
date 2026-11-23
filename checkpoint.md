@@ -510,3 +510,30 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 ### Continuidad
 - Siguiente tarea: MIG-007 — Diseño del esquema central de configuración.
 - Restricción transversal: coordinación funcional en frontend; llamadas técnicas directas permitidas sin secretos de interconexión; configuración no secreta centralizada; no exponer tokens OAuth al navegador.
+
+
+---
+
+## Cierre MIG-007 — diseño del esquema central de configuración — 2026-11-23
+
+### Resultado
+- MIG-007 queda **COMPLETADA** en alcance de diseño/documentación.
+- Se creó ESQUEMA_CONFIGURACION_CENTRAL.md con seis tablas lógicas: Servicios, ConfiguracionParametros, ConfiguracionRecursos, ConfiguracionControl, ConfiguracionHistorial y ConfiguracionEsquema.
+- Se definieron columnas/tipos, claves estables, scopes, visibilidad, defaults, validación estricta, versionado de esquema/valores/contrato, publicación por revisión íntegra, historial append-only y rollback como nueva revisión.
+- Se documentó la limitación de Google Sheets: no hay ACL de lectura por pestaña. La Spreadsheet debe ser privada; la proyección pública se filtra en servidor. visibility no equivale a permisos de Drive.
+- Se trazaron las 26 familias de ScriptProperties, los siete endpoints, las cinco URLs internas duplicadas de ADMIN, SPREADSHEET_ID y DRIVE_FOLDER_ID.
+- Se excluyeron secretos de interconexión, tokens OAuth, contraseñas y secreto HMAC de recuperación del esquema ordinario. El HMAC requiere diseño protegido separado.
+- Se definió caché inicial propuesta por clase, fail-closed para endpoints inválidos/vencidos y recuperación sin fallback a URLs locales.
+- Se agregó JS/Tests/MIG007ConfigurationSchemaContract.mjs y se integró en RunServiceTests.mjs.
+- Se actualizó INVENTARIO_CONFIGURACION_BACKEND.md §8, TAREAS_MIGRACION_ARQUITECTURA.md, MATRIZ_MIGRACION_SERVICIOS.md §21 y PLAN_NUEVA_ARQUITECTURA_FRONTEND.md.
+- No se crearon hojas, no se migraron valores ni se accedió a PropertiesService real; no se modificaron endpoints, deployments, Spreadsheet, Drive ni datos.
+
+### Validación y límites
+- El contrato automatizado verifica la estructura del diseño, seis tablas, reglas de seguridad/versionado/caché y trazabilidad de 26 familias.
+- La prueba Web App real de MIG-006 sigue pendiente de Beta; el lector/caché, la escritura atómica y la proyección pública se implementarán en MIG-008.
+- No se afirma que la prueba externa esté realizada ni que el esquema se encuentre desplegado.
+
+### Continuidad
+- MIG-001 a MIG-006: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- MIG-007: COMPLETADA (diseño).
+- Siguiente tarea: **MIG-008 — Lector central y caché de configuración**, con dependencia explícita de resolver/validar acceso a Spreadsheet sin ID, URL o propiedad bootstrap local. No implementar un workaround local.

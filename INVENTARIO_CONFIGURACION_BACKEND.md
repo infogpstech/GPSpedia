@@ -129,35 +129,21 @@ La migración de cachés debe mantener aislamiento por usuario/sesión, expiraci
 - Los scopes OAuth efectivos, propietarios, identidad de ejecución, acceso a Spreadsheet/Drive, versión del runtime, modo de ejecución y acceso público/privado de cada Web App viven en los proyectos Apps Script desplegados y no se pueden verificar desde este repositorio.
 - Los scopes, permisos y parámetros técnicos propios de Apps Script no deben confundirse con configuración funcional de GPSpedia ni copiarse a una hoja. Su inventario real se valida en Beta.
 
-## 8. Esquema central propuesto en Spreadsheet
+## 8. Esquema central de configuración — diseño MIG-007
 
-Los siguientes nombres son **propuestas de destino**, no hojas creadas ni cambios ya realizados. Deben validarse en MIG-006/MIG-007 antes de implementarse.
+El esquema definitivo, las columnas, validadores, separación de visibilidad, versionado, historial, rollback, caché y trazabilidad de las 26 familias se especifican en [ESQUEMA_CONFIGURACION_CENTRAL.md](./ESQUEMA_CONFIGURACION_CENTRAL.md).
 
-| Hoja propuesta | Contenido | Reglas mínimas |
-|---|---|---|
-| `Servicios` | Registro de siete endpoints de entrada: clave de servicio, URL, estado, versión/metadata y fecha de actualización. | Una fila por servicio; claves únicas; URL HTTPS validada; el frontend cachea el mapa y resuelve acciones. No guardar secretos compartidos. |
-| `ConfiguracionParametros` | Parámetros funcionales, límites y flags que continúen vigentes. | Clave única, tipo, valor, ámbito, versión, updatedAt; esquema/enum/rangos; valores seguros por defecto; caché versionada. |
-| `ConfiguracionRecursos` | IDs de carpetas/recursos Drive administrados. | Clave única, tipo de recurso, ID, estado y fecha; validar existencia, nombre, padre y permisos antes de usar. |
-| `LoginRequests` | Idempotencia y recuperación de creación de sesión. | Clave requestId única, estado, token protegido, expiración, limpieza y reconciliación. No mezclar con parámetros. |
-| `AdminOperationAudit` | Auditoría durable de operaciones administrativas. | Evento/actor/acción/resultado; escritura verificable, retención y paginación. |
-| `CortesOrganizerOperations` | Ledger Safe Apply y rollback. | operationId único, digest, estado, propietario, rutas, timestamps y recuperación. |
-| `DriveAuditRuns` | Estado/cursor/progreso de auditoría y último auditId por usuario. | Aislamiento por actor, expiración de 6 h, cursor/huella y recuperación; datos voluminosos fuera de una sola celda. |
-| `CatalogChangeEvents` y `CatalogChangeState` | Feed incremental, revisión y versiones de origen. | requestId idempotente, revisión monotónica, reset ante lote parcial, ventana de eventos y cursor. |
-| `ServiceTraffic` | Métricas agregadas por servicio/intervalo. | Consolidación por lotes; ventana y alcance explícitos; no bloquear acciones normales. |
-| `CortesIdReservations` | Ledger de reservas de IDs de vehículos ya existente. | Reutilizar como autoridad para el high-water mark; no duplicar un contador sin control de concurrencia. |
-| `LogosMarcaIdReservations` | Reserva de IDs de logotipos si la implementación la necesita. | Crear solo después de diseñar idempotencia y concurrencia; el máximo actual de la hoja LogosMarca debe reconciliarse. |
+Las seis tablas lógicas son Servicios, ConfiguracionParametros, ConfiguracionRecursos, ConfiguracionControl, ConfiguracionHistorial y ConfiguracionEsquema. La hoja Servicios contiene los siete endpoints de entrada; las cinco URLs internas duplicadas de ADMIN no se trasladan. Los IDs de Spreadsheet permanecen fuera del esquema por el problema de bootstrap.
 
-### Condición de bootstrap: no se puede omitir
+**Estado:** diseño completado en MIG-007. No se han creado hojas ni migrado valores. La implementación del lector, proyección pública, escritura/versionado y caché corresponde a MIG-008 y depende de validar el acceso a Spreadsheet sin bootstrap local.
 
-La hoja `Servicios`, `ConfiguracionParametros` o `ConfiguracionRecursos` no resuelve por sí sola cómo un proyecto Apps Script independiente obtiene la Spreadsheet. Guardar el ID de la Spreadsheet dentro de esa misma Spreadsheet y pretender que el servicio lo lea antes de conocer su ubicación crea una dependencia circular.
-
-Por eso, el destino de `SPREADSHEET_ID` queda condicionado al spike **MIG-006** y a la solución descrita en `PLAN_NUEVA_ARQUITECTURA_FRONTEND.md` §2.2. No se debe introducir un ID, URL o secreto bootstrap alternativo escondido en un servicio.
+**Seguridad:** visibility es una regla de filtrado de la aplicación, no un ACL de lectura de pestañas. La Spreadsheet debe permanecer privada; el frontend solo recibe una proyección pública filtrada por un lector servidor. No se incluyen secretos ni tokens OAuth.
 
 ## 9. Dependencias, decisiones y riesgos que pasan a las tareas siguientes
 
 1. **MIG-004:** retirar llamadas backend→backend de ADMIN y Coordinator/SharedMutation. Las URLs y secretos de interconexión identificados aquí se retiran solo después de mover cada consumidor y probar paridad.
 2. **MIG-006:** demostrar acceso a Spreadsheet desde proyectos Apps Script independientes sin ID ni propiedad local. Esta decisión condiciona cualquier configuración central.
-3. **MIG-007:** definir esquema/versionado/caché del registro de servicios y parámetros, incluyendo defaults seguros y recuperación ante indisponibilidad.
+3. **MIG-007:** diseño completado en ESQUEMA_CONFIGURACION_CENTRAL.md; implementar lector, publicación y caché en MIG-008 después de validar el bootstrap.
 4. **MIG-008/MIG-011:** diseñar sesión y revocación sin secretos de interconexión ni validaciones redundantes; conservar cierre remoto, bloqueo temporal y eliminación de cuenta.
 5. **MIG-012 y siguientes:** migrar parámetros de aportes/cargas, auditorías, Safe Apply, catálogo incremental y métricas a sus hojas/servicios de destino sin perder funciones.
 6. **Secreto HMAC de recuperación:** decidir almacenamiento protegido antes de migrar. No degradar la seguridad ni guardar el secreto en una hoja de configuración pública/general.

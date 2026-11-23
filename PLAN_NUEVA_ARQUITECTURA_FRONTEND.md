@@ -98,7 +98,7 @@ La Spreadsheet guarda configuración, metadatos, IDs, estados y registros, no lo
 - Cada servicio obtiene el actor desde el contexto de sesión, con caché local de corta duración donde corresponda; nunca acepta un rol editable enviado por el frontend.
 - No se usarán claves secretas compartidas entre proyectos ni credenciales manuales entre servidores. La coordinación funcional se hace desde frontend; las llamadas directas técnicas permitidas no sustituyen la validación independiente del receptor.
 - Logout, cambio de rol/contraseña, eliminación de cuenta y limpieza de cachés se orquestan desde frontend con llamadas directas a los servicios afectados, respetando §§12–15 de las normas.
-- La solución concreta de acceso a Spreadsheet y caché se someterá a pruebas de seguridad, revocación y rendimiento antes de sustituir el mecanismo actual.
+- La solución concreta de acceso a Spreadsheet se someterá a prueba Web App real (MIG-006 Beta). El esquema de configuración quedó diseñado en ESQUEMA_CONFIGURACION_CENTRAL.md; su lector/caché y las pruebas de seguridad, consistencia y rendimiento corresponden a MIG-008. No sustituir el mecanismo actual antes de superar esas pruebas.
 
 ## 3. Requisitos de paridad funcional
 
@@ -131,7 +131,7 @@ El detalle accionable se encuentra en [TAREAS_MIGRACION_ARQUITECTURA.md](./TAREA
 |---|---|---|
 | 0 | Inventario total de funciones, configuración y dependencias | EN PROGRESO |
 | 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PRUEBA LOCAL PREPARADA; WEB APP BETA PENDIENTE |
-| 2 | Diseñar y probar esquema central de configuración y caché frontend | PENDIENTE |
+| 2 | Diseñar y probar esquema central de configuración y caché frontend | DISEÑO MIG-007 COMPLETADO; lector/caché MIG-008 PENDIENTE |
 | 3 | Implementar router/orquestador frontend sin cambiar contratos | PENDIENTE |
 | 4 | Mover coordinación funcional de ADMIN y otros servicios al frontend; conservar solo llamadas técnicas directas justificadas y sin secretos | PENDIENTE |
 | 5 | Unificar AUTH/USERS y simplificar sesión sin claves compartidas | PENDIENTE |

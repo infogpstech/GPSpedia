@@ -61,3 +61,15 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - No se modificaron servicios funcionales, IDs actuales, propiedades instaladas, deployments, endpoints, Spreadsheet, Drive ni datos.
 - La prueba local del probe valida guardas y lógica simulada; la ejecución real Web App, varios proyectos, permisos, cuotas y concurrencia quedan pendientes de Beta.
 - MIG-006: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-007.
+
+
+### 2026-11-23 — MIG-007: diseño del esquema central de configuración
+- Se creó ESQUEMA_CONFIGURACION_CENTRAL.md con seis tablas lógicas, columnas, tipos, claves estables, scopes, visibilidad, defaults y validadores.
+- Se definieron schema_version, config_revision y contract_version; publicación de snapshot completo, historial append-only y rollback como nueva revisión.
+- Se documentó la separación public/backend/admin y la limitación de Sheets: no existen ACL de lectura por pestaña; la Spreadsheet debe permanecer privada y la proyección pública filtrarse en servidor.
+- Se trazaron las 26 familias de propiedades, siete endpoints, cinco URLs internas duplicadas y localizadores Spreadsheet/Drive.
+- Se excluyeron secretos compartidos, tokens OAuth, contraseñas y secreto HMAC de recuperación del esquema ordinario.
+- Se propuso política de caché por clase y recuperación fail-closed, sin fallback a URLs locales.
+- Se integró JS/Tests/MIG007ConfigurationSchemaContract.mjs al runner.
+- Se actualizaron INVENTARIO_CONFIGURACION_BACKEND.md, TAREAS_MIGRACION_ARQUITECTURA.md, MATRIZ_MIGRACION_SERVICIOS.md, PLAN_NUEVA_ARQUITECTURA_FRONTEND.md y checkpoint.md.
+- No se crearon hojas ni se migraron valores; no se modificaron servicios, propiedades, endpoints, deployments, Spreadsheet, Drive ni datos.

@@ -112,15 +112,20 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación local:** probe y pruebas reproducibles preparados y aprobados. La prueba Web App real y los límites externos quedan diferidos según NORMAS §5 y §10; no se reemplaza ningún acceso actual por getActiveSpreadsheet() sin evidencia del deployment.
 
 ### MIG-007 — Diseño del esquema central de configuración
-**Estado: PENDIENTE**
-- [ ] Definir hojas de configuración con claves estables, tipos, valores, descripción, estado y versión.
-- [ ] Incluir endpoints de servicio, parámetros de negocio, límites y opciones hoy duplicadas en proyectos.
-- [ ] Separar configuración pública de configuración restringida; aplicar permisos de hoja/lectura.
-- [ ] Definir valores por defecto, validación, historial y mecanismo de rollback.
-- [ ] Evitar guardar tokens OAuth, contraseñas en texto plano o secretos de interconexión.
-- [ ] Definir qué información se cachea y por cuánto tiempo.
+**Estado: COMPLETADA**
+- [x] Definir hojas de configuración con claves estables, tipos, valores, descripción, estado y versión.
+- [x] Incluir endpoints de servicio, parámetros de negocio, límites y opciones hoy duplicadas en proyectos.
+- [x] Separar proyecciones pública, backend y admin; documentar límites reales de permisos de lectura de Google Sheets.
+- [x] Definir valores por defecto, validación, historial append-only y rollback mediante una revisión nueva.
+- [x] Excluir tokens OAuth, contraseñas en texto plano, secretos de interconexión y secreto HMAC del esquema ordinario.
+- [x] Definir caché por clase, caducidad y recuperación ante indisponibilidad.
+- [x] Trazar las 26 familias de ScriptProperties, los siete endpoints, IDs de recursos y URLs internas duplicadas.
 
-**Aceptación:** esquema documentado y migración de claves trazable, sin valores sensibles expuestos.
+**Evidencia:** [ESQUEMA_CONFIGURACION_CENTRAL.md](./ESQUEMA_CONFIGURACION_CENTRAL.md), enlazado desde INVENTARIO_CONFIGURACION_BACKEND.md §8. Contrato estático: JS/Tests/MIG007ConfigurationSchemaContract.mjs.
+
+**Límites:** no se crearon hojas ni se migraron valores; no se leyó PropertiesService real ni se cambió ningún deployment. El acceso Web App a Spreadsheet continúa pendiente de Beta conforme a MIG-006. La lectura/validación/cache y su implementación pertenecen a MIG-008.
+
+**Aceptación:** diseño documentado y trazabilidad de claves completados, sin valores sensibles expuestos.
 
 ### MIG-008 — Lector central y caché de configuración
 **Estado: PENDIENTE**
