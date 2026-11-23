@@ -269,3 +269,11 @@ Evidencia consolidada en §19 de `MATRIZ_MIGRACION_SERVICIOS.md`:
 - MIG-001: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Próxima tarea pendiente del backlog: **MIG-002 — Inventario de pantallas y capacidades visibles**. No iniciar MIG-002 dentro de este cierre; el usuario pidió completar MIG-001 y mantener una tarea por vez.
 - MIG-003 y MIG-004 ya tienen hallazgos de entrada documentados en la matriz, pero permanecen pendientes como tareas separadas.
+
+
+### Ajuste de consistencia del registro MIG-001 — 2026-11-23
+
+- Se marcó como histórica la nota inicial del registro de tareas que todavía decía «MIG-001 EN PROGRESO». El estado vigente es el cierre integral de §19 de la matriz y el apartado de cierre de `TAREAS_MIGRACION_ARQUITECTURA.md`.
+- Se comprobó que `JS/Tests/UtilitiesSecurity.js` existe y que el runner lo ejecuta dentro del grupo UTILITIES mediante `recordResult`; por tanto, la prueba asociada a `migrateTimestamps` queda correctamente referenciada.
+- MIG-002 sigue siendo la siguiente tarea pendiente en el backlog, pero no se inicia en este ciclo.
+- Commit adicional del registro de tareas: `5db23382802043f13ccb21c29f49c07730d03af5`.
