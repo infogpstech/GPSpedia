@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 const catalog = readFileSync(new URL("../Services/catalog.js", import.meta.url), "utf8");
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 const vehicleStart = catalog.indexOf("function handleGetVehicleProjection_(payload = {})");
 const vehicleEnd = catalog.indexOf("\nfunction handleGetContributionCandidates_", vehicleStart);
 const candidatesStart = vehicleEnd;
