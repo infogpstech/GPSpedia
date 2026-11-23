@@ -13,6 +13,17 @@ assert.equal(admin.includes("getSharedServiceTraffic_"), false);
 assert.equal(admin.includes("handleGetServiceTraffic_"), false);
 assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
 assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
+assert.ok(admin.includes("removeLegacyAdminCoordinatorSettings_();"));
+const cleanupStart = admin.indexOf("function removeLegacyAdminCoordinatorSettings_()");
+const cleanupEnd = admin.indexOf("\nfunction doPost", cleanupStart + 10);
+assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
+const deletedProperties = [];
+const cleanup = new Function("PropertiesService", admin.slice(cleanupStart, cleanupEnd) + "\nreturn removeLegacyAdminCoordinatorSettings_;")({
+    getScriptProperties: () => ({ deleteProperty: key => deletedProperties.push(key) })
+});
+cleanup();
+assert.deepEqual(deletedProperties, ["GPSpedia_COORDINATOR_URL", "GPSpedia_COORDINATOR_SECRET"]);
+
 assert.ok(api.includes("'getServiceTraffic': 'COORDINATOR'"));
 assert.ok(coordinator.includes("function getServiceTrafficFromBrowser_"));
 assert.ok(coordinator.includes('request.action === "getServiceTraffic"'));
@@ -24,4 +35,4 @@ assert.ok(coordinator.includes("publishCatalogResetFromBrowser_"));
 assert.ok(coordinator.includes('ADMIN: new Set(["addLogo"'));
 assert.ok(coordinator.includes("resolveVehicleContributionCandidate"));
 assert.ok(coordinator.includes('service === "ADMIN" || operation === "freezeCortesIds"'));
-console.log("AdminCatalogPublicationIsolation: 19/19 PASS — ADMIN no publica entre servicios; frontend invalida el feed con sesión de desarrollador");
+console.log("AdminCatalogPublicationIsolation: 22/22 PASS — ADMIN no publica entre servicios; frontend invalida el feed con sesión de desarrollador");
