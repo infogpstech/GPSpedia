@@ -5,48 +5,19 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const admin = readFileSync(resolve(root, "JS/Services/admin.js"), "utf8");
-const match = admin.match(/function normalizeCoordinatorServiceTraffic_\([\s\S]*?\n\}/);
-assert.ok(match, "Falta normalizador del contrato Coordinator.");
-const normalizeCoordinatorServiceTraffic_ = new Function(match[0] + "\nreturn normalizeCoordinatorServiceTraffic_;")();
-const services = ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"];
-const startAt = 1_800_000_000_000;
-const counts = Object.fromEntries(services.map(service => [service, 0]));
-const zeroTotals = () => Object.fromEntries(services.map(service => [service, 0]));
-const coordinator = {
-    status: "success", scope: "coordinator_protected_operations", services: services.slice(),
-    buckets: [{ startAt, counts: { ...counts } }],
-    totals: { lastHour: zeroTotals(), last6Hours: zeroTotals(), last24Hours: zeroTotals() }
-};
-let passed = 0;
-function check(name, fn) { fn(); passed++; console.log("PASS " + name); }
+const coordinator = readFileSync(resolve(root, "JS/Services/Coordinator.js"), "utf8");
+const start = coordinator.indexOf("function readServiceTraffic_");
+const end = coordinator.indexOf("\n    function authorizeSession_", start);
+assert.ok(start >= 0 && end > start, "Falta el lector local de telemetría en Coordinator.");
+const reader = coordinator.slice(start, end);
 
-check("Normaliza los siete servicios y declara el alcance Coordinator-only", () => {
-    const normalized = normalizeCoordinatorServiceTraffic_(coordinator);
-    assert.deepEqual(normalized.services, services);
-    assert.equal(normalized.scope, "global_service_traffic");
-    assert.equal(normalized.sources.coordinator.available, true);
-    for (const service of ["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK"]) {
-        assert.equal(normalized.sources[service].directRequestsAvailable, false);
-        assert.equal(normalized.sources[service].reason, "direct_requests_not_collected");
-    }
-    assert.match(normalized.coverage.description, /No incluye rutas directas/);
-});
-
-check("No muta el resultado de Coordinator ni crea contadores directos", () => {
-    const original = JSON.stringify(coordinator);
-    const normalized = normalizeCoordinatorServiceTraffic_(coordinator);
-    assert.equal(JSON.stringify(coordinator), original);
-    assert.equal(normalized.totals.last24Hours.AUTH, 0);
-    assert.equal(normalized.buckets[0].counts.CATALOG, 0);
-});
-
-check("Rechaza scope, servicios, conteos y buckets corruptos", () => {
-    assert.throws(() => normalizeCoordinatorServiceTraffic_(Object.assign({}, coordinator, { scope: "other" })));
-    assert.throws(() => normalizeCoordinatorServiceTraffic_(Object.assign({}, coordinator, { services: services.slice(1) })));
-    const badTotals = structuredClone(coordinator); badTotals.totals.lastHour.AUTH = -1;
-    assert.throws(() => normalizeCoordinatorServiceTraffic_(badTotals));
-    const badBucket = structuredClone(coordinator); badBucket.buckets[0].startAt = "bad";
-    assert.throws(() => normalizeCoordinatorServiceTraffic_(badBucket));
-});
-
-console.log("ServiceTrafficAggregatorContract: " + passed + "/3 PASS");
+assert.equal(admin.includes("normalizeCoordinatorServiceTraffic_"), false);
+assert.equal(admin.includes("validateGlobalServiceTrafficResult_"), false);
+assert.equal(admin.includes("handleGetServiceTraffic_"), false);
+assert.match(reader, /scope: "coordinator_protected_operations"/);
+assert.match(reader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
+assert.match(reader, /properties\.getProperties\(\)/);
+assert.doesNotMatch(reader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
+assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
+assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
+console.log("ServiceTrafficAggregatorContract: 9/9 PASS — lectura y agregación locales en Coordinator");
