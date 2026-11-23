@@ -509,3 +509,36 @@ Las operaciones posteriores verifican que el actor sea participante; marcar como
 ### 10.2 Límites de esta matriz
 
 La matriz resume políticas visibles en los handlers y no sustituye pruebas por acción, comprobación de permisos en cada ruta interna ni verificación Beta. La migración debe conservar los casos públicos, la ruta anónima de sugerencia, el contrato mínimo de `checkOperation`, la jerarquía Inbox y todas las restricciones de Desarrollador/Jefe/Supervisor. MIG-001 continúa **EN PROGRESO** hasta enlazar estos permisos con payloads, respuestas, datos y pruebas de cada acción.
+
+
+## 11. Recursos Spreadsheet por servicio — primera pasada (2026-11-23)
+
+Inventario extraído de `getSheetByName`, constantes `SHEET_NAMES` y hojas creadas por los módulos. Los nombres listados son los observados en el código; pueden existir accesos dinámicos adicionales que deben verificarse antes de cerrar MIG-001.
+
+| Servicio/módulo | Hojas identificadas | Uso/observación |
+|---|---|---|
+| AUTH | `Users`, `ActiveSessions`, `Logs` | Identidad, roles, sesiones, revocación y auditoría de autenticación. |
+| USERS | `Users`, `ActiveSessions`, `__IdentifierSequenceConfig__` | Altas, perfiles, sesiones y secuencia/configuración de IDs de usuario. |
+| WRITE | `Cortes`, `Idempotencia`, `Idempotencia_Cortes`, `Users`, `ActiveSessions`, `Relay`, `AportesVehiculo` | Escritura de cortes, asignación de IDs, operaciones idempotentes, VIN y ledger append-only de aportes. |
+| CATALOG | `Cortes`, `LogosMarca`, `Tutorial`, `Relay`, `FeedbackLikes`, `TutorialEditEvents`, `TutorialRenameEvents` | Catálogo/proyección, navegación, logos, tutoriales y eventos que afectan la proyección. |
+| FEEDBACK | `Cortes`, `Feedbacks`, `Contactanos`, `ActividadUsuario`, `FeedbackLikes`, `FeedbackYearApplications`, `FeedbackYearApplicationEvents`, `AportesVehiculo`, `Users`, `Tutorial`, `TutorialTitleEvents`, `TutorialEditEvents`, `TutorialRenameEvents`, `VideoApprovalEvents` | Feedback, contacto, actividad, sugerencias de año, eventos de contribución, tutoriales y aprobación de vídeo. |
+| InboxConversations | `InboxConversations`, `InboxMessages`, `InboxConversationState`, `InboxConversationFlags`, `InboxConversationAudit`, además de lectura de `Users` | Cinco hojas propias; contienen conversaciones, mensajes, estado por participante, flags y auditoría. El módulo crea/valida encabezados al inicializar el esquema. |
+| ADMIN | `Cortes`, `AdminState`, `LogosMarca`, `Imagenes_Reemplazadas`, `Relay`, `Idempotencia`, `Idempotencia_Cortes`, `Users`, `Feedbacks`, `pys`, `ActividadUsuario`, `PysOperations`, `Tutorial` | Administración, inventario y reemplazo de imágenes, operaciones de PyS, logs y estado de procesos. |
+| UTILITIES | `Cortes`, `Hoja 1`, `__utilities_timestamps_staging__`, `__utilities_timestamps_backup__` | Migración de timestamps con staging y backup para recuperación. |
+| COORDINATOR | Sin hoja Spreadsheet directa identificada en este módulo | Mantiene estado de coordinación/telemetría mediante almacenamiento del proyecto; revisar por separado en MIG-003/MIG-004. |
+
+### 11.1 Dependencias de acceso compartidas
+
+Los servicios AUTH, USERS, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES resuelven la Spreadsheet mediante un símbolo local `SPREADSHEET_ID` y `SpreadsheetApp.openById`. ADMIN y FEEDBACK también contienen `DRIVE_FOLDER_ID`. ADMIN conserva URLs locales para WRITE/CATALOG y otros servicios. No se copiaron valores de IDs ni URLs en esta matriz: las claves y referencias se rastrearán en MIG-003/MIG-004 para migrarlas de forma segura.
+
+### 11.2 Esquema Inbox que debe conservarse
+
+- `InboxConversations`: `conversationId`, creación/actualización, asunto, categoría, tipo, estado, creador, participantes, clave/hash de creación, último mensaje y contador.
+- `InboxMessages`: `messageId`, conversación, fecha, autor, rol, cuerpo, clave idempotente y hash del payload.
+- `InboxConversationState`: estado individual de lectura, archivo, envío/recepción y cursores de mensajes.
+- `InboxConversationFlags`: override de no leído, eliminación lógica por participante y fecha de actualización.
+- `InboxConversationAudit`: evento, fecha, actor, acción, conversación, mensaje y detalles.
+
+La migración debe preservar encabezados, orden de columnas, claves, idempotencia, flags por participante, auditoría y la creación/validación segura del esquema. No consolidar estas hojas en `Feedbacks` ni eliminar el historial.
+
+**Estado:** inventario de hojas en primera pasada; MIG-001 sigue **EN PROGRESO** hasta contrastar cada acción con columnas/rangos, lecturas/escrituras, fórmulas, archivos Drive, triggers y pruebas.
