@@ -533,15 +533,11 @@ function handleClearSensitiveLogs(payload) {
 // ============================================================================
 function doGet(e) {
     if (e.parameter.debug === 'true') {
-        const scriptProperties = PropertiesService.getScriptProperties();
-        const coordinatorUrl = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_URL') || '').trim();
-        const coordinatorSecret = String(scriptProperties.getProperty('GPSpedia_COORDINATOR_SECRET') || '');
         const serviceState = {
             service: 'GPSpedia-Auth',
             version: '2.2.5',
             status: 'available',
-            coordinatorConfigured: coordinatorUrl.startsWith('https://script.google.com/macros/s/') &&
-                coordinatorUrl.endsWith('/exec') && coordinatorSecret.length >= 32
+            sessionAuthority: 'Users/ActiveSessions'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.JSON);
@@ -560,33 +556,6 @@ function isSharedMutationAction_(action) {
     return ["deleteUser"].includes(action);
 }
 
-function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
-    if (!actor || !actor.userId || actor.userId !== normalizeUserId(userId) ||
-        !sessionToken || !Number.isFinite(Number(actor.lastActivityAt))) {
-        throw new Error("No se pudo confirmar el contexto de sesión para la operación AUTH.");
-    }
-    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar la actividad.");
-    const rows = sessionsSheet.getDataRange().getValues();
-    const matches = [];
-    for (let index = 1; index < rows.length; index++) {
-        if (String(rows[index][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "") === String(sessionToken)) {
-            matches.push({ row: rows[index], rowIndex: index + 1 });
-        }
-    }
-    if (matches.length !== 1 ||
-        normalizeUserId(matches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
-        throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
-    }
-    const currentValue = matches[0].row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] ||
-        matches[0].row[COLS_ACTIVE_SESSIONS.date - 1];
-    const current = currentValue instanceof Date ? currentValue.getTime() : new Date(currentValue).getTime();
-    const central = Number(actor.lastActivityAt);
-    if (!Number.isFinite(current) || central > current) {
-        sessionsSheet.getRange(matches[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date(central));
-    }
-    return true;
-}
 
 function doPost(e) {
     let request;
@@ -598,6 +567,11 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "__invalidateSessionActorCache") {
+        const invalidation = handleSharedSessionActorCacheInvalidation_(payload);
+        return ContentService.createTextOutput(JSON.stringify(invalidation))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "getPublicConfiguration") {
         // Proyección pública únicamente: no incluye recursos, parámetros backend/admin ni identidad.
         // Esta ruta no coordina otros servicios y no requiere sesión para datos ya públicos.
@@ -629,9 +603,9 @@ function doPost(e) {
     }
     if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"].includes(action)) {
         try {
-            // Las acciones ordinarias consumen el actor preparado al iniciar sesión.
-            // No adquieren lease ni revalidan identidad por acción; la revocación remota
-            // se mantiene únicamente en los handlers de cambio de rol/contraseña/sesión.
+            // Las acciones ordinarias consumen el actor local preparado al iniciar sesión o cargado
+            // desde Users/ActiveSessions ante un cache miss. No adquieren lease ni revalidan
+            // identidad por acción; cada mutación invalida la caché local AUTH.
             const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
@@ -655,22 +629,13 @@ function doPost(e) {
         }
     }
     if (!isSharedMutationAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
-
-    const nestedToken = String(payload.__sharedMutationToken || "").trim();
-    const sessionOptions = payload.sessionToken && action !== "logout"
-        ? { session: { sessionToken: payload.sessionToken } } : undefined;
     try {
-        return withSharedMutationLease_("AUTH", action, function(token, actor) {
-            // Coordinator valida token, epoch, expiración y revocación una sola vez
-            // y entrega el actor confiable al handler. No sincronizar ActiveSessions
-            // mediante una lectura completa en cada acción AUTH.
-            const wrappedEvent = withSharedSessionActor_(e, actor);
-            return doPostInternal_(wrappedEvent);
-        }, Object.assign(sessionOptions || {}, nestedToken ? { nestedToken: nestedToken } : {}));
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+        return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
-            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
         })).setMimeType(ContentService.MimeType.TEXT);
     }
 }
@@ -679,7 +644,33 @@ function handleGetPublicConfiguration_() {
     return getPublicCentralConfiguration_();
 }
 
+var sessionCacheKeysForResponse_ = null;
+
+function recordSessionCacheKeysForResponse_(userId, sessionTokens) {
+    if (!sessionCacheKeysForResponse_) return;
+    const id = String(userId || "").trim();
+    const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
+        .map(token => String(token || "")).filter(Boolean)));
+    if (!id || !tokens.length) return;
+    if (sessionCacheKeysForResponse_.userId && sessionCacheKeysForResponse_.userId !== id) {
+        sessionCacheKeysForResponse_.error = true;
+        return;
+    }
+    sessionCacheKeysForResponse_.userId = id;
+    tokens.forEach(token => {
+        try {
+            const sharedKey = getSharedSessionActorCacheKey_(id, token);
+            const digest = sharedKey.replace("GPSpedia_SHARED_SESSION_ACTOR_V1_", "");
+            sessionCacheKeysForResponse_.shared.add(sharedKey);
+            sessionCacheKeysForResponse_.catalog.add("GPSpedia_CATALOG_SESSION_ACTOR_V1_" + digest);
+        } catch (error) {
+            sessionCacheKeysForResponse_.error = true;
+        }
+    });
+}
+
 function doPostInternal_(e) {
+    sessionCacheKeysForResponse_ = { userId: "", shared: new Set(), catalog: new Set(), error: false };
     let response;
     try {
         const request = JSON.parse(e.postData.contents);
@@ -748,6 +739,17 @@ function doPostInternal_(e) {
     } catch (error) {
         logToSheet('ERROR', `Error in doPost: ${error.message}`, { stack: error.stack });
         response = { status: 'error', message: error.message };
+    }
+    if (sessionCacheKeysForResponse_ &&
+        (sessionCacheKeysForResponse_.shared.size || sessionCacheKeysForResponse_.catalog.size || sessionCacheKeysForResponse_.error)) {
+        response = response && typeof response === "object" && !Array.isArray(response)
+            ? response : { status: "error", message: "La operación no devolvió una respuesta válida." };
+        response.sessionCacheKeys = {
+            userId: sessionCacheKeysForResponse_.userId,
+            shared: Array.from(sessionCacheKeysForResponse_.shared),
+            catalog: Array.from(sessionCacheKeysForResponse_.catalog)
+        };
+        if (sessionCacheKeysForResponse_.error) response.sessionCacheInvalidationPending = true;
     }
     return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.TEXT);
 }
@@ -1033,70 +1035,23 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     return { token, createdAt, sessionCount, oldestSession, cleanupPending, termsAcceptance };
 }
 
-function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessionToken) {
+function cacheLocalSessionActorAfterLogin_(userId, role, fullName, currentSessionToken) {
     const normalizedId = normalizeUserId(userId);
     const normalizedRole = normalizeRoleName(role);
-    if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
-        throw new Error("No se pudo registrar una identidad o rol válido en el contexto compartido.");
+    if (!normalizedId || !currentSessionToken ||
+        !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
+        throw new Error("No se pudo registrar una identidad o rol válido en la sesión.");
     }
-    const lock = LockService.getScriptLock();
-    let acquired = false;
+    const actor = { userId: normalizedId, role: normalizedRole,
+        fullName: String(fullName || ""), epoch: 1 };
+    let cached = false;
     try {
-        lock.waitLock(10000);
-        acquired = true;
-        const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
-        const rows = sessionsSheet.getDataRange().getValues().slice(1)
-            .map((row, index) => ({ row, rowIndex: index + 2 }))
-            .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
-                String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
-
-        const sessions = [], malformedTokens = [];
-        rows.forEach(item => {
-            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-            try {
-                const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
-                const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
-                const lastActivityAt = sharedSessionTimestamp_(activityValue);
-                sessions.push({ token, createdAt, lastActivityAt });
-            } catch (error) {
-                malformedTokens.push(token);
-            }
-        });
-
-        const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
-        if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
-            throw new Error("No se pudo confirmar la sincronización central de sesiones.");
-        }
-        const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
-        rows.forEach(item => {
-            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-            if (rejected.has(token)) {
-                if (malformedTokens.includes(token)) revokeSharedSessionContext_(normalizedId, token);
-                sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
-            }
-        });
-        if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
-            throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
-        }
-        // La identidad/rol ya fueron comprobados en AUTH y registrados en Coordinator.
-        // Precalentar el actor evita una validación remota adicional en la primera acción protegida.
-        try {
-            cacheSharedSessionActor_(normalizedId, currentSessionToken, {
-                userId: normalizedId, role: normalizedRole, fullName: String(fullName || ""),
-                epoch: synchronized.epoch
-            });
-        } catch (cacheError) {
-            console.warn("No se pudo precalentar la caché local del actor:", cacheError && cacheError.message ? cacheError.message : cacheError);
-        }
-        const cachePriming = synchronized.cachePriming || {};
-        if (Array.isArray(cachePriming.failedServices) && cachePriming.failedServices.length) {
-            console.warn("No se pudo precargar el actor en todos los servicios:", cachePriming.failedServices.join(","));
-        }
-        return { registered: synchronized.synced, epoch: synchronized.epoch, cachePriming };
-    } finally {
-        if (acquired) lock.releaseLock();
+        cached = cacheSharedSessionActor_(normalizedId, currentSessionToken, actor);
+    } catch (cacheError) {
+        console.warn("No se pudo precalentar la caché local AUTH; el primer acceso la cargará desde ActiveSessions.",
+            cacheError && cacheError.message ? cacheError.message : cacheError);
     }
+    return { registered: true, epoch: 1, cachePriming: { local: cached, remote: false } };
 }
 
 
@@ -1223,7 +1178,7 @@ function handleLogin(payload) {
             throw sessionOperationError;
         }
         if (sessionCleanupPending) logToSheet('ERROR', 'Login succeeded but an inactive session row could not be deleted.', { userId, requestId: loginRequestId });
-        syncSharedSessionContextsForUser_(
+        cacheLocalSessionActorAfterLogin_(
             userId,
             foundUserRow[COLS_USERS.Privilegios - 1],
             foundUserRow[COLS_USERS.Nombre_Completo - 1],
@@ -1336,25 +1291,7 @@ function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        let sharedContext;
-        try {
-            sharedContext = validateSharedSessionContext_(userId, sessionToken);
-        } catch (contextError) {
-            const message = String(contextError && contextError.message || contextError);
-            if (!message.includes("no está registrada en el contexto compartido")) throw contextError;
-            const legacyValidation = validateSessionReadOnly_(sessionToken, userId);
-            if (!legacyValidation || legacyValidation.valid !== true || !legacyValidation.profile) return legacyValidation;
-            syncSharedSessionContextsForUser_(
-                userId,
-                legacyValidation.profile.Privilegios,
-                legacyValidation.profile.Nombre_Completo,
-                sessionToken
-            );
-            sharedContext = validateSharedSessionContext_(userId, sessionToken);
-        }
-        if (!sharedContext || sharedContext.valid !== true || !sharedContext.actor) return { valid: false, reason: 'shared_context_invalid' };
-        syncAuthSheetActivityFromActor_(userId, sessionToken, sharedContext.actor);
-        return validateSessionReadOnly_(sessionToken, userId, sharedContext.actor);
+        return validateSessionReadOnly_(sessionToken, userId);
     } catch (error) {
         console.error('handleValidateSession:', error && error.message ? error.message : error);
         return { valid: null, unavailable: true, reason: 'validation_unavailable' };
@@ -1504,9 +1441,7 @@ function parseRoleRevocationMarker_(raw) {
 function parseSharedRoleRevocationMarker_(value) {const raw=String(value||'');if(!raw.startsWith(ROLE_REVOCATION_SHARED_PREFIX))return null;return parseRoleRevocationMarker_(raw.slice(ROLE_REVOCATION_SHARED_PREFIX.length));}
 function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.invalid&&normalizeUserId(a.userId)===normalizeUserId(b.userId)&&String(a.oldRole)===String(b.oldRole)&&String(a.newRole)===String(b.newRole)&&Number(a.markedAt)===Number(b.markedAt)&&(Object.prototype.hasOwnProperty.call(a,'newFullName')===Object.prototype.hasOwnProperty.call(b,'newFullName'))&&(!Object.prototype.hasOwnProperty.call(a,'newFullName')||a.newFullName===b.newFullName));}
 function migrateLegacyRoleRevocationMarkersToSharedState_() {
-    return withSharedMutationLease_("AUTH", "migrateLegacyRoleRevocationMarkersToSharedState", function() {
-        return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
-    });
+    return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
 }
 
 function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_() {
