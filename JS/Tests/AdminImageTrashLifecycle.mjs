@@ -387,9 +387,10 @@ check("La interfaz del desarrollador ofrece enviar a papelera, restaurar y elimi
     assert.match(ui,/canTrash/);
     assert.match(ui,/canRestoreFromTrash/);
 });
-check("La lease de recursos declara Drive, inventario y actividad para las nuevas mutaciones",()=>{
-    assert.match(coordinator,/restoreReplacedImageFromTrash: \{ read: identityRead, write: \["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"\] \}/);
-    assert.match(coordinator,/permanentlyDeleteReplacedImage: \{ read: identityRead, write: \["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"\] \}/);
+check("Las mutaciones de papelera conservan autorización local sin lease compartida",()=>{
+    const dispatcher=fnSource(admin,"doPostInternal_");
+    assert.match(dispatcher,/assertDeveloperSession\\(payload\\)/);
+    assert.doesNotMatch(admin,/withSharedMutationLease_|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
 });
 check("El helper Drive API envía GET/DELETE con supportsAllDrives y token OAuth",()=>{
     const source=fnSource(admin,"requestAdminDriveFile_");
