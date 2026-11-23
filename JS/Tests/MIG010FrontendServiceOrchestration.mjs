@@ -16,7 +16,7 @@ assert.ok(api.includes("'getVehicleContributionCandidates': 'CATALOG'"));
 assert.ok(catalog.includes("verifyCatalogDeveloperSession_(payload)"));
 assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
 const projectionHandlerStart=catalog.indexOf("function handleGetVehicleProjection_");
-const projectionHandlerEnd=catalog.indexOf("\\nfunction handleGetContributionCandidates_",projectionHandlerStart);
+const projectionHandlerEnd=catalog.indexOf("\nfunction handleGetContributionCandidates_",projectionHandlerStart);
 const projectionHandler=catalog.slice(projectionHandlerStart,projectionHandlerEnd);
 assert.ok(projectionHandler.includes("verifyCatalogModalEditSession_(payload)"));
 assert.ok(ui.includes('routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim(),...getDeveloperSessionPayload()})'));
