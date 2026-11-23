@@ -1723,6 +1723,7 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
     logMessage("Respaldo", "Generando respaldo completo de la hoja de cálculo de la base de datos...");
     if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo con una sesión de desarrollador verificada.");
     const ownerId = String(developerContext.userId).trim();
+    if (!ownerId) throw new Error("La sesión de desarrollador no contiene un identificador de usuario válido.");
     const operationId = String(payload && payload.operationId || "").trim();
     if (operationId && !/^[A-Za-z0-9_-]{16,100}$/.test(operationId)) {
         throw new Error("El identificador de operación del respaldo no tiene un formato válido.");
@@ -1742,7 +1743,7 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
             existingBackup = candidate;
         }
         if (existingBackup) {
-            if (existingBackup.getName() !== backupName ||
+            if (existingBackup.getId() === ss.getId() || existingBackup.getName() !== backupName ||
                 existingBackup.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
                 existingBackup.getSharingAccess() !== DriveApp.Access.PRIVATE) {
                 throw new Error("El recurso asociado al identificador de operación no es un respaldo privado válido.");
