@@ -89,8 +89,8 @@ test("Los escritores ADMIN y WRITE no copian fórmulas al crear registros",()=>{
  assert.match(activity,/getAdminFormulaBasedIdPattern_\(sheet,\s*1\)/);
  assert.match(activity,/sheet\.appendRow\(\[/);
  assert.doesNotMatch(activity,/copyTo\(newRowRange\)/);
+ assert.match(admin,/function copyAdminRowPresentationOnly_\(sheet,\s*sourceRow,\s*targetRow,\s*lastColumn\)/);
  assert.match(admin,/copyAdminRowPresentationOnly_\(sheet,\s*lastRow,\s*newRow,\s*lastColumn\)/);
- assert.match(admin,/copyAdminRowPresentationOnly_\(sheet,\s*lastRow,\s*rowIndex,\s*lastColumn\)/);
  assert.doesNotMatch(write,/previousRowRange\.copyTo\(newRowRange\);/);
  assert.match(write,/previousRowRange\.copyTo\(newRowRange,\s*SpreadsheetApp\.CopyPasteType\.PASTE_FORMAT/);
 });
