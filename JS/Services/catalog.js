@@ -102,6 +102,203 @@ function verifyCatalogModalEditSession_(payload) {
     return verifyCatalogSessionForRoles_(payload,["desarrollador","jefe","supervisor"],"Desarrollador, Jefe o Supervisor","consultar la proyección");
 }
 
+
+const CATALOG_FEED_REVISION_PROPERTY_ = "GPSpedia_CATALOG_CHANGE_REVISION";
+const CATALOG_FEED_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
+const CATALOG_FEED_MAX_EVENTS_ = 100;
+const CATALOG_FEED_MAX_EVENT_LENGTH_ = 4000;
+const CATALOG_FEED_ALLOWED_OPERATIONS_ = Object.freeze({
+    WRITE: new Set(["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"]),
+    ADMIN: new Set(["addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
+        "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
+        "migrateIdentifiers", "rollbackIdentifiers", "resolveVehicleContributionCandidate"]),
+    FEEDBACK: new Set(["recordLike", "suggestYear", "addProblem", "addSolution", "addPrevention",
+        "addVehicleToProblem", "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"])
+});
+
+function createCatalogChangeFeed_(dependencies) {
+    const deps = dependencies || {};
+    const properties = deps.properties || PropertiesService.getScriptProperties();
+    const lockService = deps.lockService || LockService;
+    const now = typeof deps.now === "function" ? deps.now : function() { return Date.now(); };
+    const maxEvents = Number.isInteger(deps.maxEvents) && deps.maxEvents >= 1 && deps.maxEvents <= 100
+        ? deps.maxEvents : CATALOG_FEED_MAX_EVENTS_;
+
+    function withLock_(callback) {
+        const lock = lockService && typeof lockService.getScriptLock === "function"
+            ? lockService.getScriptLock() : null;
+        if (!lock || typeof lock.tryLock !== "function" || !lock.tryLock(5000)) {
+            throw new Error("El feed del catálogo está ocupado; vuelve a intentarlo.");
+        }
+        try { return callback(); }
+        finally { lock.releaseLock(); }
+    }
+
+    function revisions_(snapshot) {
+        return Object.keys(snapshot || {})
+            .filter(key => key.indexOf(CATALOG_FEED_EVENT_PREFIX_) === 0)
+            .map(key => Number(key.slice(CATALOG_FEED_EVENT_PREFIX_.length)))
+            .filter(revision => Number.isSafeInteger(revision) && revision > 0)
+            .sort((a, b) => a - b);
+    }
+
+    function publishReset(source) {
+        const request = source && typeof source === "object" && !Array.isArray(source) ? source : {};
+        const service = String(request.service || "").trim().toUpperCase();
+        const operation = String(request.operation || "").trim();
+        const requestId = String(request.requestId || "").trim();
+        const allowed = CATALOG_FEED_ALLOWED_OPERATIONS_[service];
+        if (!allowed || !allowed.has(operation)) {
+            throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
+        }
+        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) {
+            throw new Error("El identificador de publicación del catálogo no es válido.");
+        }
+
+        return withLock_(function() {
+            const propertySnapshot = properties.getProperties() || {};
+            const revisions = revisions_(propertySnapshot);
+            const storedRevision = Number(propertySnapshot[CATALOG_FEED_REVISION_PROPERTY_] || 0);
+            let currentRevision = Math.max(
+                Number.isSafeInteger(storedRevision) && storedRevision >= 0 ? storedRevision : 0,
+                revisions.length ? revisions[revisions.length - 1] : 0
+            );
+
+            for (const revision of revisions) {
+                const raw = propertySnapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
+                if (!raw) continue;
+                try {
+                    const event = JSON.parse(raw);
+                    if (event && event.sourceRequestId === requestId &&
+                        event.sourceService === service && event.sourceOperation === operation) {
+                        return {
+                            status: "success", revision: event.revision,
+                            firstRevision: event.revision, lastRevision: event.revision,
+                            resetRequired: true, duplicate: true
+                        };
+                    }
+                } catch (error) {}
+            }
+
+            if (!Number.isSafeInteger(currentRevision + 1)) {
+                throw new Error("La revisión del catálogo alcanzó su límite seguro.");
+            }
+            currentRevision++;
+            const event = {
+                revision: currentRevision,
+                collection: "*",
+                recordId: "*",
+                operation: "reset",
+                snapshot: null,
+                createdAt: new Date(now()).toISOString(),
+                sourceService: service,
+                sourceOperation: operation,
+                sourceRequestId: requestId,
+                resetRequired: true
+            };
+            const serialized = JSON.stringify(event);
+            if (serialized.length > CATALOG_FEED_MAX_EVENT_LENGTH_) {
+                throw new Error("El evento de actualización del catálogo excede el tamaño permitido.");
+            }
+            properties.setProperty(CATALOG_FEED_EVENT_PREFIX_ + currentRevision, serialized);
+            properties.setProperty(CATALOG_FEED_REVISION_PROPERTY_, String(currentRevision));
+
+            const retained = revisions_(properties.getProperties() || propertySnapshot);
+            while (retained.length > maxEvents) {
+                const oldest = retained.shift();
+                properties.deleteProperty(CATALOG_FEED_EVENT_PREFIX_ + oldest);
+            }
+            return {
+                status: "success", revision: currentRevision,
+                firstRevision: currentRevision, lastRevision: currentRevision,
+                resetRequired: true, duplicate: false
+            };
+        });
+    }
+
+    function getChanges(payload) {
+        const request = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+        const cursor = request.cursor === undefined || request.cursor === null || request.cursor === ""
+            ? 0 : Number(request.cursor);
+        const requestedLimit = request.limit === undefined || request.limit === null || request.limit === ""
+            ? 50 : Number(request.limit);
+        if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("El cursor del catálogo no es válido.");
+        if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50) {
+            throw new Error("El límite de cambios debe estar entre 1 y 50.");
+        }
+
+        return withLock_(function() {
+            const propertySnapshot = properties.getProperties() || {};
+            const revisions = revisions_(propertySnapshot);
+            const storedRevision = Number(propertySnapshot[CATALOG_FEED_REVISION_PROPERTY_] || 0);
+            const currentRevision = Math.max(
+                Number.isSafeInteger(storedRevision) && storedRevision >= 0 ? storedRevision : 0,
+                revisions.length ? revisions[revisions.length - 1] : 0
+            );
+            const minRevision = revisions.length ? revisions[0] : currentRevision + 1;
+            const resetPage = function() {
+                return {
+                    status: "success", resetRequired: true, changes: [],
+                    currentRevision, minRevision, nextCursor: currentRevision, hasMore: false
+                };
+            };
+            if (cursor > currentRevision || (revisions.length && cursor < minRevision - 1)) return resetPage();
+
+            const changes = [];
+            const endRevision = Math.min(currentRevision, cursor + requestedLimit);
+            for (let revision = cursor + 1; revision <= endRevision; revision++) {
+                const raw = propertySnapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
+                if (!raw) return resetPage();
+                let event;
+                try { event = JSON.parse(raw); }
+                catch (error) { return resetPage(); }
+                if (!event || event.revision !== revision || event.operation !== "reset") return resetPage();
+                changes.push(event);
+            }
+            const nextCursor = changes.length ? changes[changes.length - 1].revision : cursor;
+            return {
+                status: "success",
+                resetRequired: changes.some(change => change.operation === "reset" || change.resetRequired === true),
+                changes, currentRevision, minRevision, nextCursor, hasMore: nextCursor < currentRevision
+            };
+        });
+    }
+
+    return { publishReset, getChanges };
+}
+
+function publishCatalogResetForActor_(payload, actor, feed) {
+    const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+    const userId = String(source.userId || "").trim();
+    const sessionToken = String(source.sessionToken || "");
+    const service = String(source.service || "").trim().toUpperCase();
+    const operation = String(source.operation || "").trim();
+    const requestId = String(source.requestId || "").trim();
+    if (!userId || !sessionToken) throw new Error("La publicación del catálogo requiere una sesión activa.");
+    const allowed = CATALOG_FEED_ALLOWED_OPERATIONS_[service];
+    if (!allowed || !allowed.has(operation)) {
+        throw new Error("La operación no está autorizada para publicar cambios del catálogo.");
+    }
+    const role = normalizeCatalogRole_(actor && actor.role);
+    const validRoles = ["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"];
+    if (!validRoles.includes(role)) throw new Error("La sesión no tiene un rol válido para publicar cambios del catálogo.");
+    if ((service === "ADMIN" || (service === "WRITE" && operation === "freezeCortesIds") ||
+        (service === "FEEDBACK" && ["updatePysItem", "updateTutorialItem", "addTutorial"].includes(operation))) &&
+        role !== "desarrollador") {
+        throw new Error("Solo Desarrollador puede publicar esta actualización del catálogo.");
+    }
+    return (feed || createCatalogChangeFeed_()).publishReset({ service, operation, requestId });
+}
+
+function handlePublishCatalogReset_(payload) {
+    const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+    const userId = String(source.userId || "").trim();
+    const sessionToken = String(source.sessionToken || "");
+    if (!userId || !sessionToken) throw new Error("La publicación del catálogo requiere una sesión activa.");
+    const actor = getCatalogSessionActor_(userId, sessionToken);
+    return publishCatalogResetForActor_(source, actor, createCatalogChangeFeed_());
+}
+
 function getSpreadsheet() {
   if (spreadsheet === null) {
     spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -175,6 +372,14 @@ const COLS_RELAY = {
 };
 
 function doGet(e) {
+    const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
+    if (String(parameters.catalogFeed || "") === "1") {
+        let response;
+        try { response = createCatalogChangeFeed_().getChanges(parameters); }
+        catch (error) { response = { status: "error", message: error && error.message ? error.message : "No se pudo consultar el feed del catálogo." }; }
+        return ContentService.createTextOutput(JSON.stringify(response))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Catalog',
@@ -211,6 +416,12 @@ function doPost(e) {
 
     let result;
     switch (action) {
+      case 'publishCatalogReset':
+        result = handlePublishCatalogReset_(payload);
+        break;
+      case 'getCatalogChanges':
+        result = createCatalogChangeFeed_().getChanges(payload);
+        break;
       case 'getCatalogData':
         result = handleGetCatalogData(payload);
         break;
