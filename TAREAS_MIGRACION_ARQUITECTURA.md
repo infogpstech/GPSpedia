@@ -485,13 +485,21 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ### MIG-023 — Catálogo, cachés y experiencia de usuario
 **Estado: EN PROGRESO (2026-11-23)**
 
-**Punto de partida:** el feed incremental y la publicación de resets todavía usan COORDINATOR; `api-config.js` mapea `getCatalogChanges` y `publishCatalogReset` a COORDINATOR. FEEDBACK aún publica cambios mediante SharedMutationClient. La estrategia es trasladar el feed al servicio CATALOG y coordinar publicaciones desde frontend, sin llamadas Apps Script→Apps Script. El endpoint/servicio COORDINATOR se conservará solo para las funciones pendientes de MIG-024/MIG-025.
+**Punto de partida actualizado (2026-11-23):** el feed incremental ya pertenece a CATALOG. `getCatalogChanges`, `publishCatalogChange` y `publishCatalogReset` se enrutan a CATALOG; FEEDBACK devuelve metadatos y el frontend coordina la publicación después de una mutación confirmada. CATALOG reconstruye los snapshots canónicos desde Spreadsheet y PyS, sin aceptar snapshots del navegador. Las rutas públicas `catalogFeed`, `getCatalogChanges` y `publishCatalogReset` fueron retiradas de COORDINATOR en MIG-023. Permanece pendiente retirar el helper interno `publishCatalogChange_` dentro de SharedMutation (MIG-024) y el endpoint health/agregación de tráfico de COORDINATOR (MIG-025).
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener snapshot/delta, cursor, caché IndexedDB y arranque cache-first.
 - [ ] Mantener navegación, búsqueda, modal de detalle, impresión y QR.
 - [ ] Mantener modo oscuro, PWA, estados de carga/error y accesibilidad.
 - [ ] Mantener funcionamiento parcial cuando un servicio independiente no esté disponible.
 - [ ] Verificar que IndexedDB/miniaturas no bloqueen módulos independientes.
+
+**Avance de implementación (2026-11-23):**
+- [x] Trasladar el feed de cambios a CATALOG: diario local con ScriptProperties/ScriptLock, revisiones monotónicas, cursor, idempotencia por requestId, retención acotada y recuperación por reset.
+- [x] Enrutar desde frontend `getCatalogChanges`, `publishCatalogChange` y `publishCatalogReset` hacia CATALOG; FEEDBACK deja de llamar a SharedMutationClient para notificar cambios.
+- [x] Reconstruir deltas canónicos para Cortes, PyS y Tutoriales en CATALOG; el navegador solo envía colección/ID/operación y nunca el snapshot.
+- [x] Retirar las rutas públicas de feed de COORDINATOR y actualizar contratos/pruebas para reflejar la nueva propiedad.
+- [ ] Completar regresión de cache-first/IndexedDB, navegación, búsqueda, impresión/QR, PWA, accesibilidad y operación parcial; validar en Beta real.
+
 
 ---
 
