@@ -8,9 +8,13 @@ assert.ok(helperMatch, "No se encontró createRouteActionError_.");
 assert.ok(routeMatch, "No se encontró routeAction.");
 const routeSource = routeMatch[0];
 function buildRouteAction(fetchImpl) {
-    return new Function("ACTION_TO_SERVICE_MAP","API_ENDPOINTS","fetch",
+    const resolveEndpoint = async service => {
+        assert.equal(service, "TEST");
+        return "https://test.invalid/exec";
+    };
+    return new Function("ACTION_TO_SERVICE_MAP","fetch","getConfiguredServiceEndpoint_",
         helperMatch[0] + "\n" + routeSource + "\nreturn routeActionInternal_;")(
-        { testAction:"TEST" }, { TEST:"https://test.invalid/exec" }, fetchImpl
+        { testAction:"TEST" }, fetchImpl, resolveEndpoint
     );
 }
 function response(status, body, ok = status >= 200 && status < 300) {

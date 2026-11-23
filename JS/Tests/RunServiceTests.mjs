@@ -404,6 +404,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('MIG-008 lector central de configuración y proyección segura','JS/Tests/MIG008CentralConfigurationReader.mjs');
  runCli('MIG-008 caché frontend de configuración central','JS/Tests/MIG008FrontendConfigurationCache.mjs');
  runCli('MIG-009 router frontend basado en configuración central','JS/Tests/MIG009FrontendActionRouter.mjs');
+ runCli('MIG-009 router frontend basado en configuración central','JS/Tests/MIG009FrontendActionRouter.mjs');
  runCli('MIG-004 grafo de llamadas entre servicios, reemplazos y pruebas','JS/Tests/ServiceCallGraphContract.mjs');
  runCli('AUG-138 logger seguro y recuperación offline/reintentos/cuota/respuesta perdida','JS/Tests/AddCortesDiagnostics.mjs');
  recordResult('YouTube solicitudes pending sin snapshot redundante',loadFunction('JS/Tests/YouTubePendingRefreshContract.js','runYouTubePendingRefreshContractTests')(read('JS/Frontend/ui.js')));
