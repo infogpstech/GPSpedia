@@ -13,7 +13,7 @@ function runVideoApprovalPublishingTests() {
     };
     const oldLockService=LockService,oldSharedLease=globalThis.withSharedMutationLease_;
     let lockAcquired=0,lockReleased=0,coordinatorCalls=0;
-    LockService={getScriptLock:()=>({tryLock:()=>{lockAcquired++;return true;},waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
+    LockService={getScriptLock:()=>({waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
     globalThis.withSharedMutationLease_=()=>{coordinatorCalls++;throw new Error("La aprobación de vídeo no debe invocar Coordinator.");};
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}

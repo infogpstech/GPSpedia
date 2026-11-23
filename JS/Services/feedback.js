@@ -5257,7 +5257,9 @@ function markYouTubeUploadReservationSubmitted_(payload) {
 
     // La solicitud ya fue persistida y verificada en Feedbacks. Esta transición
     // terminal es idempotente y no requiere un bloqueo global adicional.
-    const spreadsheet = getSpreadsheet();
+    let spreadsheet = null;
+    try { spreadsheet = getSpreadsheet(); }
+    catch (error) { return false; } // La solicitud de Feedbacks ya fue persistida; reserva ausente es compatible.
     const existingSheet = spreadsheet && spreadsheet.getSheetByName(YOUTUBE_UPLOAD_RESERVATIONS_SHEET_);
     if (!existingSheet) return false; // Compatibilidad con solicitudes de enlace manual.
 
