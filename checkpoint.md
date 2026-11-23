@@ -941,3 +941,25 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - MIG-015: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Deuda de regresión global pendiente: suites ADMIN candidatos, UTILITIES, AUTH e INTEGRATION; no atribuidas a MIG-015.
 - Próxima tarea: MIG-016 — carga reanudable y aprobación de vídeos. No iniciar otra tarea hasta que el cierre documental de MIG-015 quede registrado.
+
+
+---
+
+## Actualización final de continuidad MIG-015 — 2026-11-23
+
+### Estado remoto verificado
+- HEAD actual de GPSpedia2.2.5_work: 3a6673d9136f610d4c7c6f8e91d895974fed9f6c.
+- Último commit con cambios de código/pruebas MIG-015: 7ff8315dbb42132903e4f288f4b013c463ec118d. Los commits posteriores son actualizaciones documentales de cierre.
+- HEAD de GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; comparación confirma base no modificada y rama de trabajo sin commits detrás.
+- El último cambio de código corrigió el fixture de ADMIN candidatos para proporcionar CacheService/Utilities simulados; el fallo de ese test quedó resuelto.
+
+### Evidencia final de CI
+- GitHub Actions Node.js 22, run 45236342364, commit 7ff8315dbb42132903e4f288f4b013c463ec118d.
+- Grupo dedicado MIG-015: 52 resúmenes, **605/605 pruebas PASS**, sin fallos en el grupo.
+- Regresión global: 167 suites, 1,909 pruebas aprobadas y cuatro fallos de suite: ADMIN P4 política de roles, UTILITIES Spreadsheet simulado, AUTH purga de Logs e INTEGRATION BETA-043. No son fallos del grupo MIG-015; se mantienen como deuda de regresión general.
+- Pages build run 45235833828 para commit 96cfbdae76e0df41c98ca39282b4bdede57cf72c: SUCCESS. Los builds de commits documentales/pruebas posteriores fueron cancelados por pushes siguientes; no se modificó frontend productivo después del commit 96cf.
+
+### Cierre
+- MIG-015: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- No se invocaron proyectos Apps Script, Spreadsheet ni Drive reales. La configuración central cortes_root_folder_id, vínculo de los proyectos y permisos Drive quedan pendientes de Beta aislada.
+- Siguiente tarea autorizada por prioridad: **MIG-016 — carga reanudable y aprobación de vídeos**. MIG-015 queda cerrada; continuar una tarea a la vez.

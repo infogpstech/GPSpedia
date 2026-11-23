@@ -191,3 +191,9 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - La regresión general reportó 1,909 aprobadas y cuatro suites fallidas (P4 política de roles, UTILITIES, AUTH, INTEGRATION), las mismas familias de fallos ya observadas antes de MIG-015. Se registran como deuda separada.
 - No se invocaron deployments Apps Script ni recursos reales. La validación de Spreadsheet, Drive, permisos y despliegues queda pendiente de Beta aislada.
 - MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-016 — carga reanudable y aprobación de vídeos.
+
+
+### 2026-11-23 — MIG-015, ajuste de fixtures de regresión
+- Se actualizaron los fixtures de pruebas de sesión CATALOG para simular CacheService y Utilities sin invocar servicios Google reales.
+- Se alinearon los contratos de prueba de adjuntos FEEDBACK con el journal append-only y las comprobaciones de lectura posterior.
+- Se mantuvo la suite específica MIG-015 separada del resto de la regresión para que sus resultados puedan verificarse independientemente.
