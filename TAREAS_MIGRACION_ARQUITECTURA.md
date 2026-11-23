@@ -224,7 +224,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
  
 **Cierre y validación diferida:** workflow https://github.com/infogpstech/GPSpedia/actions/runs/45212028964 (**SUCCESS**, commit `3ec8936d8b498d55bbc0322fa05239f8b812d0c8`). La verificación sintáctica del workflow también aprobó. GitHub Pages build/deploy: https://github.com/infogpstech/GPSpedia/actions/runs/45212025471 (**SUCCESS**). Las invocaciones reales de Apps Script, sesiones/roles efectivos y permisos sobre Spreadsheet/Drive aislados permanecen PENDIENTES DE VALIDACIÓN BETA; no se simularon ni se desplegaron servicios.
 ### MIG-012 — Unificación funcional AUTH/USERS
-**Estado: COMPLETADA EN CÓDIGO — VALIDACIÓN BETA DIFERIDA**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Integrar handlers de `getUsers`, `createUser` y `updateProfile` en AUTH.
 - [x] Mantener contratos, campos, permisos, resultados, hash PBKDF2 y esquema de las hojas.
@@ -279,8 +279,9 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Los loaders comprueban correspondencia userId/token, unicidad del token y usuario, cuenta activa, rol permitido, marca de revocación pendiente y fechas de expiración. El rol no procede del payload del navegador.
 - Las cachés son propias de cada proyecto Apps Script, se indexan mediante SHA-256 del userId/token y tienen TTL máximo de seis horas. La ruta caliente no consulta la Spreadsheet.
 - Las acciones ordinarias no invocan `registerSession`, `syncUserSessions`, `validateSessionContext`, `revokeSession` ni `revokeUserSessions` de Coordinator, ni adquieren leases SharedMutation para validar actor o rol.
-- La suite `JS/Tests/MIG013SessionActorLocalLookup.mjs` se amplió para probar el loader común y el loader independiente CATALOG, caché fría/caliente, TTL, clave no reversible, cambio de rol tras invalidación, usuario eliminado, token revocado, expiración, identidad y ausencia de llamadas Coordinator en rutas de sesión.
-- `SessionActivityCoordination.mjs` y `SessionActivityLeaseMinimization.mjs` verifican además la separación de AUTH/WRITE/FEEDBACK/ADMIN/UTILITIES y el mantenimiento de las operaciones de Coordinator que no pertenecen al flujo de sesión.
+- `JS/Tests/MIG013SessionActorLocalLookup.mjs`: 21/21 PASS en harness V8 aislado, incluyendo loader común y CATALOG, caché fría/caliente, TTL, clave hasheada, cambio de rol tras invalidación, usuario eliminado, token revocado, expiración e identidad.
+- `SessionActivityCoordination.mjs`: 9/9 PASS; `SessionActivityLeaseMinimization.mjs`: 6/6 PASS; `AuthSessionReadOptimization.mjs`: 9/9 PASS. Total dirigido: 45/45 aserciones aprobadas.
+- Las pruebas se ejecutaron sobre las fuentes recuperadas de la rama y dependencias Spreadsheet/Cache aisladas; no equivalen a validación de deployments Apps Script reales.
 - No se modificaron hashes, RBAC, contratos de login, esquema de Users/ActiveSessions, endpoints, propiedades Apps Script, deployments ni datos externos.
 
 **Validación Beta diferida:** probar login/logout, expiración, revocación, cambio de rol, eliminación de usuario y accesos autorizados/no autorizados sobre deployments y hojas aisladas. La coordinación de invalidación remota desde frontend y la respuesta ante servicios no disponibles pertenecen a MIG-014.
