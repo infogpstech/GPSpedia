@@ -361,9 +361,10 @@
                             <section id="service-health-detail" class="dev-service-detail" aria-live="polite">
                                 <p class="dev-empty-state">Selecciona una tarjeta para consultar sus parámetros.</p>
                             </section>
-                            <section class="dev-service-traffic-panel">
-                                <h4>Alcance de las métricas</h4>
-                                <p class="dev-service-note">Las métricas disponibles se calculan localmente en este navegador y se muestran al seleccionar un servicio. No se recopila ni transmite un agregado global de tráfico.</p>
+                            <section class="dev-service-traffic-panel" aria-labelledby="dev-global-traffic-retired-title">
+                                <h4 id="dev-global-traffic-retired-title">Tráfico global coordinado · retirado</h4>
+                                <p class="dev-service-note">El agregado global anterior registraba únicamente eventos legacy instrumentados por COORDINATOR, principalmente adquisiciones exitosas de leases. No contaba todas las solicitudes HTTP: excluía validaciones de sesión, lecturas del feed, sondeos de salud y rutas no instrumentadas. Al retirar COORDINATOR se retiró también su recopilación; no existe actualmente un agregado global equivalente.</p>
+                                <p class="dev-service-note">Las métricas locales mostradas al seleccionar un servicio corresponden solo a las solicitudes observadas por este navegador durante la sesión. Son temporales, no se transmiten ni persisten y no sustituyen ni permiten inferir el tráfico global.</p>
                             </section>
                         </div>
                     </section>
