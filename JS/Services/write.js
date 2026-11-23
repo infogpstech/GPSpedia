@@ -1653,6 +1653,20 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         const vehiculoImageUrl = preparedImages.vehicleImage;
         const corteImageUrl = preparedImages.cutImage;
 
+        // El ScriptLock se readquirió al terminar Drive. Revalidar la reserva y la fila
+        // desde un único snapshot antes de escribir cualquier dato del vehículo.
+        if (opId) {
+            const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+            if (!verified ||
+                verified.rowIndex !== rowIndex ||
+                verified.vehicleId !== String(newId) ||
+                verified.slotIndex !== 1 ||
+                verified.operationHash !== operationHash ||
+                Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)) {
+                throw new Error("La reserva del vehículo cambió durante la carga de Drive; se conserva la operación pendiente para recuperación segura.");
+            }
+        }
+
         // 4. Escribir los datos base y el primer corte en un lote; los campos separados se actualizan individualmente.
         // La fila nueva fue limpiada antes de la carga; las columnas 2–16 se escriben en un solo lote.
         const rowCoreValues = [
