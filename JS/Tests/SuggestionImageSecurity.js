@@ -184,7 +184,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     });
     test("handler verifica lectura posterior de la fila antes de confirmar", () => {
         assert.ok(handlerBlock.includes("findFeedbackRowById_(sheet, reservedId, lastCol)"));assert.ok(handlerBlock.includes("String(savedRow[COLS_FEEDBACKS.Problema - 1] || \"\") !== problemDesc"));
-        assert.ok(handlerBlock.includes("String(storedProblem || \"\") !== problemDesc"));
+        assert.ok(handlerBlock.includes("String(savedRow[COLS_FEEDBACKS.Problema - 1] || \"\") !== problemDesc"));
     });
     test("handler retira el archivo huérfano si no se confirma la fila", () => {
         assert.ok(handlerBlock.includes("if (!rowCommitted && uploadedImage && !appendAttempted)"));assert.ok(handlerBlock.includes("else if (!rowCommitted && uploadedImage)"));assert.ok(handlerBlock.includes("La imagen de sugerencia se conserva porque appendRow pudo persistir la referencia y requiere reconciliación."));

@@ -26,13 +26,13 @@ export function runReportImageAttachmentTests({ui,api,feedback}) {
  test("retira archivo huérfano",()=>{let trashed=false;sandbox.trash({file:{setTrashed(){trashed=true;}}});assert.equal(trashed,true);});
  const form=extract(ui,"export function openReportCutModal","function showReportSuccessModal"),apiFn=extract(api,"export async function reportProblem","export async function suggestYear"),inbox=extract(ui,"function renderInboxDetail","function getYouTubeEmbedUrl"),handler=extract(feedback,"function handleReportProblem(payload)","function enforceFeedbackRateLimit_");
  test("el identificador del reporte usa aleatoriedad criptográfica y no Math.random",()=>{
-  assert.match(form,/window\\.crypto/);
-  assert.match(form,/cryptoApi\\.randomUUID/);
-  assert.match(form,/cryptoApi\\.getRandomValues/);
-  assert.match(form,/new Uint8Array\\(24\\)/);
-  assert.match(form,/El navegador no dispone de un generador seguro/);
-  assert.doesNotMatch(form,/Math\\.random/);
-  assert.match(form,/const reportId = "REP-" \\+ reportOperationId/);
+  assert.ok(form.includes("const cryptoApi = window.crypto;"));
+  assert.ok(form.includes("cryptoApi.randomUUID()"));
+  assert.ok(form.includes("cryptoApi.getRandomValues(operationBytes)"));
+  assert.ok(form.includes("new Uint8Array(24)"));
+  assert.ok(form.includes("El navegador no dispone de un generador seguro"));
+  assert.ok(!form.includes("Math.random"));
+  assert.ok(form.includes('const reportId = "REP-" + reportOperationId'));
  });
  test("formulario limita MIME/tamaño y maneja error/abort",()=>{assert.match(form,/image\/jpeg,image\/png,image\/webp/);assert.match(form,/3 \* 1024 \* 1024/);assert.match(form,/readAsDataURL/);assert.match(form,/reader\.onerror/);assert.match(form,/reader\.onabort/);});
  test("transmite adjunto aparte y exige confirmación",()=>{assert.match(form,/getSessionPayload_\(\), imageAttachment/);assert.doesNotMatch(form,/fullProblemText\s*\+=.*file\.name/);assert.match(form,/res\.imageAttached !== true/);});
