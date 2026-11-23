@@ -109,3 +109,11 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 - MIG-002 a MIG-005: **PENDIENTES**, sujetas a las dependencias de inventario.
 - MIG-006: prioridad técnica posterior, no iniciar el spike hasta cerrar el inventario y documentar los requisitos de acceso/bootstrap.
 - Continuar con extracción de consumidores de UI, handlers internos, permisos y dependencias; después registrar la matriz trazable y ejecutar las pruebas locales disponibles.
+
+
+### Trazabilidad de acciones — avance adicional 2026-11-23
+- Publicada en `MATRIZ_MIGRACION_SERVICIOS.md` una tabla de 120 acciones con servicio, handler y consumidor localizado. En la extracción no quedó ninguna acción del mapa sin dispatcher/handler.
+- Se identificaron 13 acciones sin consumidor frontend directo en los módulos inspeccionados; quedan para clasificación manual/interna/indirecta/histórica, sin retirarlas.
+- Registradas las 13 operaciones internas de Coordinator, las rutas de caché de actor y la ruta GET incremental `catalogFeed=1` usada por el frontend.
+- `ActionDispatchContract.js`: 12/12 PASS con fuentes exactas de esta rama.
+- MIG-001 continúa **EN PROGRESO**: faltan payloads/respuestas, RBAC por acción, recursos de datos, Drive/APIs, operaciones manuales/programadas y cobertura de paridad.
