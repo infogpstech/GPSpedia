@@ -10878,11 +10878,18 @@ export function renderInboxDetail(item) {
                     if (!isCurrentInboxDetail()) return;
                     if (approvalResult && approvalResult.catalogRefreshData &&
                         offline.isCompleteCatalogSnapshot(approvalResult.catalogRefreshData)) {
-                        await performSilentSync(approvalResult.catalogRefreshData);
+                        try { await performSilentSync(approvalResult.catalogRefreshData); }
+                        catch (refreshError) {
+                            mostrarNotificacion("El vídeo fue aprobado, pero no se pudo aplicar la actualización del catálogo en esta pantalla.", "warning");
+                        }
                     }
                     if (item.videoMeta && item.videoMeta.contentType === "pys") {
-                        invalidatePysDataCache();
-                        await loadPysData({ refresh: true });
+                        try {
+                            invalidatePysDataCache();
+                            await loadPysData({ refresh: true });
+                        } catch (refreshError) {
+                            mostrarNotificacion("El vídeo fue aprobado, pero PyS no pudo actualizarse automáticamente.", "warning");
+                        }
                     }
                     invalidateInboxCache_(context);
                     if (approvalResult && approvalResult.catalogRefreshPending) {

@@ -32,6 +32,13 @@ await test("aprobación confirmada coordina CATALOG desde navegador y devuelve s
     assert.equal(calls[0].payload.forceRefresh, true);
     assert.ok(events.some(event => event.type === "gpsepedia:catalog-refresh-completed"));
 });
+await test("la aprobación de PyS no consulta CATALOG; la interfaz refresca su colección dedicada", async () => {
+    calls.length = 0;
+    const result = await refresh("approveVideo", { status: "success", contentType: "pys", message: "Vídeo aprobado." });
+    assert.equal(result.status, "success");
+    assert.equal(result.catalogRefreshStatus, "pys_refresh_required");
+    assert.equal(calls.length, 0);
+});
 await test("rechazo no fuerza una actualización del catálogo", async () => {
     calls.length = 0;
     const result = await refresh("rejectVideo", { status: "success", message: "Vídeo rechazado." });

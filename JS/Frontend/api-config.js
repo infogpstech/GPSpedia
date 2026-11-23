@@ -274,6 +274,9 @@ function sessionCacheKeysFromError_(error) {
 
 async function refreshCatalogAfterVideoApproval_(action, result) {
     if (action !== "approveVideo" || !result || result.status !== "success") return result;
+    if (String(result.contentType || "").trim().toLowerCase() === "pys") {
+        return Object.assign({}, result, { catalogRefreshStatus: "pys_refresh_required" });
+    }
     let finalResult = result;
     try {
         const catalogRefresh = await routeAction("getCatalogData", { forceRefresh: true });
