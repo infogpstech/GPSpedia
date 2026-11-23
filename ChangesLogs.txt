@@ -357,3 +357,12 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 2026-11-23 — Resultado CI MIG-026
 - Run 45290329039: sintaxis PASS y AdminCentralCortesFolderConfiguration 4/4 PASS.
 - Regresión: 4,671 pruebas PASS; falla preexistente FeedbackLockFastFail.mjs, reproducida también en run 45289392165 anterior al commit MIG-026. No atribuible al cambio ADMIN.
+
+
+### 2026-11-23 — MIG-026: reconciliación estática de configuración
+- Se contrastaron los módulos backend vigentes y el lector central contra el inventario MIG-003 después de MIG-024/MIG-025.
+- Se confirmó que AUTH, CATALOG y UTILITIES aún conservan `SPREADSHEET_ID/openById`; WRITE, FEEDBACK, ADMIN y CentralConfigurationReader usan Spreadsheet activa. SharedSessionActor conserva un fallback condicionado a proveedor.
+- Se clasificaron las propiedades activas de AUTH, CATALOG, WRITE, FEEDBACK y ADMIN como estado operativo, ledger, contador o secreto protegido; no deben trasladarse como parámetros genéricos.
+- Se confirmó que FEEDBACK sigue leyendo/escribiendo `GPSpedia_RICH_TEXT_MODE_V1` y que el lector central no incorpora un mecanismo de publicación versionada. Se difiere su retirada hasta implementar y probar una vía autorizada con paridad.
+- El probe MIG006 local/simulado no prueba el comportamiento del deployment Web App real. La validación Beta sigue pendiente.
+- Se actualizaron `INVENTARIO_CONFIGURACION_BACKEND.md` y `TAREAS_MIGRACION_ARQUITECTURA.md`. No se modificó código funcional, Apps Script desplegado, PropertiesService instalado, Spreadsheet, Drive ni datos externos.

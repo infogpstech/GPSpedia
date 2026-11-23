@@ -591,6 +591,18 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Los patrones `GPSpedia_...` que son nombres de claves o prefijos no se deben eliminar por búsqueda ciega: hay que clasificar configuración frente a datos operativos, ledgers recuperables y claves de caché.
 - El inventario MIG-003 describía 26 familias; el estado actual tras MIG-024/MIG-025 requiere una reconciliación contra código vigente antes de declarar cerrada la lista. Los datos reales de propiedades instaladas no son accesibles desde GitHub y quedan para Beta.
 
+#### Reconciliación estática vigente — 2026-11-23
+
+La reconciliación contra las fuentes de la rama confirma:
+- AUTH, CATALOG y UTILITIES conservan `SPREADSHEET_ID/openById`; WRITE, FEEDBACK, ADMIN y CentralConfigurationReader usan Spreadsheet activa.
+- SharedSessionActor conserva un fallback a `SPREADSHEET_ID/openById` si no recibe proveedor explícito.
+- AUTH mantiene login idempotente, marcadores de revocación y secreto HMAC; CATALOG mantiene el diario de feed; WRITE conserva el contador heredado de IDs; FEEDBACK mantiene `GPSpedia_RICH_TEXT_MODE_V1`; ADMIN mantiene auditoría, Safe Apply, contador, guardas locales y estado reanudable de auditoría Drive.
+- Estos elementos se clasifican como estado operativo/secretos y no como parámetros genéricos. Su migración requiere paridad y recuperación específicas.
+- CentralConfigurationReader solo lee/proyecta y cachea la configuración; no se localizó un publicador central versionado. Por ello, no se retira todavía la propiedad rich_text_mode.
+- El probe MIG006 5/5 es simulado/local; no sustituye la prueba de Web App real.
+
+Detalle y evidencia: `INVENTARIO_CONFIGURACION_BACKEND.md`, adenda MIG-026 del 2026-11-23. No se modificaron deployments, propiedades instaladas ni datos externos.
+
 #### Dependencias y decisiones que impiden una sustitución segura inmediata
 1. MIG-006 dejó preparado el probe y su procedimiento, pero la prueba real de `SpreadsheetApp.getActiveSpreadsheet()` en Web Apps sigue pendiente. MIG-008 tiene la misma validación diferida. El lector central usa `getActiveSpreadsheet()` y falla cerrado; no está autorizado reemplazar `openById()` por una suposición no probada.
 2. No introducir un ID/URL bootstrap ni un endpoint auxiliar que vuelva circular el acceso. Resolver la arquitectura de acceso a Spreadsheet mediante la evidencia Beta de MIG-006 y documentar el mecanismo aprobado.

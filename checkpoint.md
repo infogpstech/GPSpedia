@@ -1446,3 +1446,29 @@ GitHub Actions run: 45290329039
 - No se ejecutó Beta real ni se accedió a recursos de Apps Script, Drive o Spreadsheet.
 Estado MIG-026: EN PROGRESO. No iniciar MIG-027.
 ================================================================================
+
+
+================================================================================
+RECONCILIACIÓN ESTÁTICA — MIG-026 — 2026-11-23
+Rama: GPSpedia2.2.5_work
+HEAD de partida: 4a3c93b007902db3cb90c21c9bdf9d732b0830c8
+Rama base protegida: GPSpedia2.2.5 (sin cambios)
+
+Actividad:
+- Reconciliado INVENTARIO_CONFIGURACION_BACKEND.md con los módulos vigentes después de MIG-024/MIG-025.
+- AUTH, CATALOG y UTILITIES conservan SPREADSHEET_ID/openById; WRITE, FEEDBACK, ADMIN y CentralConfigurationReader usan Spreadsheet activa.
+- SharedSessionActor conserva fallback a SPREADSHEET_ID/openById cuando no se inyecta proveedor.
+- Clasificadas las propiedades activas de AUTH (login, revocación, secreto HMAC), CATALOG (feed), WRITE (contador IDs), FEEDBACK (rich_text_mode) y ADMIN (auditoría, Safe Apply, contador, guardas y estado de auditoría Drive).
+- CentralConfigurationReader es lector/proyector; no se encontró un publicador central versionado. No se retiró GPSpedia_RICH_TEXT_MODE_V1 ni se alteró su flujo.
+- MIG006SpreadsheetAccessProbe: el contrato local simula el contenedor activo; no prueba un deployment Web App real.
+
+Resultado:
+- Inventario y matriz MIG-026 actualizados con clasificación, evidencia y dependencias.
+- Sin cambios funcionales ni modificaciones a proyectos Apps Script, deployments, PropertiesService instaladas, Spreadsheet, Drive o datos externos.
+- MIG-026 continúa EN PROGRESO. No iniciar MIG-027.
+
+Siguiente acción:
+1. Diseñar la publicación central versionada de parámetros con autorización Developer, read-back, historial, caché e invalidación; probarla localmente sin despliegue.
+2. Mantener pendiente de Beta la comprobación real de getActiveSpreadsheet() para AUTH/CATALOG/UTILITIES y los consumidores SharedSessionActor.
+3. Migrar estados operativos únicamente en sus tareas específicas, con ledger, idempotencia y recuperación.
+================================================================================

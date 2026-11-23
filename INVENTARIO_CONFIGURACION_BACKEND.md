@@ -177,3 +177,35 @@ MIG-003 cubre el inventario estático de propiedades y configuración referencia
 - Los proyectos ADMIN, WRITE y FEEDBACK usan SpreadsheetApp.getActiveSpreadsheet() para acceder a la Spreadsheet vinculada, conforme al spike MIG-006; no conservan SPREADSHEET_ID local ni openById para abrir la base operativa.
 - ADMIN deja de persistir Imagenes_Sin_Uso en ScriptProperties; la carpeta se localiza por nombre bajo la raíz validada, detecta duplicados y crea bajo exclusión breve.
 - La validación Beta debe confirmar que los tres proyectos están vinculados al Spreadsheet aislado y que la revisión central contiene cortes_root_folder_id con el ID de la carpeta Cortes Beta.
+
+
+---
+
+## Adenda MIG-026 — reconciliación estática posterior a MIG-024/MIG-025 — 2026-11-23
+
+Esta adenda prevalece sobre las ubicaciones y consumidores históricos descritos en las secciones anteriores cuando exista una diferencia con el código vigente. La revisión se realizó sobre `GPSpedia2.2.5_work`, HEAD `4a3c93b007902db3cb90c21c9bdf9d732b0830c8`; no se inspeccionaron propiedades instaladas ni deployments.
+
+### Estado vigente comprobado en fuentes
+
+| Servicio / módulo | Acceso a Spreadsheet | Estado persistente en ScriptProperties | Clasificación y tratamiento |
+|---|---|---|---|
+| AUTH | Conserva `SPREADSHEET_ID` y llamadas `SpreadsheetApp.openById`. | Prefijo `login_request_`; marcadores `role_revocation_pending_`; secreto HMAC `GPSpedia_PASSWORD_RECOVERY_SECRET_V1`. | El ID depende de resolver MIG-006. Login y revocación son estado operativo con migración de paridad; el secreto HMAC requiere decisión de almacenamiento protegido y no se mueve a configuración genérica ni al frontend. |
+| CATALOG | Conserva `SPREADSHEET_ID` y `openById`. | `GPSpedia_CATALOG_CHANGE_REVISION` y `GPSpedia_CATALOG_CHANGE_EVENT_*`. | El feed incremental es un diario operativo con cursor/revisión/idempotencia y retención; no es un parámetro editable. Requiere migración específica y pruebas de recuperación/concurrencia. |
+| WRITE | Usa `getActiveSpreadsheet()`; no declara ID local. | `GPSpedia_CORTES_LAST_ID`. | El contador heredado participa en el high-water mark; no eliminarlo hasta demostrar paridad con `CortesIdReservations` y la recuperación de IDs. Las reservas en hoja son estado/ledger separado. |
+| FEEDBACK | Usa `getActiveSpreadsheet()`; no declara ID local. | `GPSpedia_RICH_TEXT_MODE_V1`. | Es el único parámetro funcional identificado en esta pasada. Los handlers Developer siguen leyendo/escribiendo la propiedad. El lector central reconoce `rich_text_mode`, pero no se encontró un publicador/escritor central versionado que permita retirar la propiedad conservando el cambio desde UI. No cambiar todavía el flujo. |
+| ADMIN | Usa `getActiveSpreadsheet()`; el acceso a la raíz Cortes ya pasa por `getCortesRootFolder()` y configuración central. | `GPSpedia_ADMIN_AUDIT_V1_*`, `GPSpedia_CORTES_ORGANIZER_OP_V1_*`, `LOGOS_MARCA_ID_COUNTER`, `GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_*`, `GPSpedia_DRIVE_AUDIT_STATE_*`, `GPSpedia_DRIVE_AUDIT_LATEST_*`. | Son auditoría, ledger Safe Apply, contador, guardas por recurso y estado reanudable. No convertirlos en parámetros ni retirarlos sin migraciones dedicadas, matriz de paridad y pruebas de recuperación. |
+| UTILITIES | Conserva `SPREADSHEET_ID` y `openById`. | No se encontraron operaciones de `PropertiesService` en la fuente vigente. | El acceso depende de la resolución de MIG-006; no sustituirlo por una suposición. |
+| SharedSessionActor | No declara un ID propio, pero su fallback usa `SPREADSHEET_ID` global y `openById` cuando no se inyecta proveedor. | Usa `CacheService` para actor temporal; no es ScriptProperties. | Retirar el fallback solo después de adaptar y probar todos los consumidores con proveedor explícito. |
+| CentralConfigurationReader | Usa `getActiveSpreadsheet()` y falla cerrado si no existe contenedor activo. | Caché de lectura en `CacheService`; no ScriptProperties. | Lector únicamente; expone proyecciones pública/backend, no contiene un mecanismo de publicación o escritura de revisiones. |
+| InboxConversations | Sin referencias encontradas a `PropertiesService`, IDs locales o URLs interservicio. | Sin estado persistente local identificado en esta inspección. | Sin cambio requerido en este corte. |
+
+### Correcciones de inventario y límites
+
+- La adenda MIG-015 sigue vigente: ADMIN, WRITE y FEEDBACK usan Spreadsheet activa; ADMIN/WRITE/FEEDBACK no deben volver a recibir IDs locales.
+- La auditoría vigente confirma que AUTH, CATALOG y UTILITIES aún conservan el ID local; no se ha demostrado que sus Web Apps reciban un contenedor activo.
+- El probe `MIG006SpreadsheetAccessProbe.mjs` (5/5 en su entorno simulado) valida guardas, lectura/escritura aisladas y comportamiento del código. No demuestra el comportamiento de un deployment Web App real. La validación Beta MIG-006/MIG-008 sigue pendiente.
+- La propiedad FEEDBACK `rich_text_mode` no puede retirarse solo porque exista un lector: se necesita una ruta de publicación central autorizada, versionada, con read-back, RBAC Developer, invalidación/caché y comportamiento fail-closed.
+- Las claves de AUTH, CATALOG y ADMIN descritas arriba son estado operativo o secretos protegidos, no configuración genérica. Sus migraciones deben preservar idempotencia, concurrencia, expiración, aislamiento, trazabilidad y recuperación.
+- No se accedió a Apps Script, PropertiesService instalado, Spreadsheet, Drive ni deployments. No se borró ni modificó ningún valor externo.
+
+**Resultado de esta reconciliación:** inventario estático actualizado. MIG-026 continúa EN PROGRESO; los siguientes tramos seguros son diseñar y probar el mecanismo de publicación central de parámetros sin desplegar, y resolver las dependencias de acceso real a Spreadsheet. No se autoriza iniciar MIG-027.
