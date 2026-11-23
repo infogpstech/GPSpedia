@@ -157,7 +157,7 @@ function runSharedMutationCoordinatorTests() {
         assert_(metrics.leaseStateWrites === 1 && metrics.embeddedTrafficWriteAttempts === 1,
             "El contador debe compartir la única escritura necesaria para guardar la lease.");
         assert_(metrics.accessesWhileLocked === 1, "El bucket se escribe en el mismo guardado de lease ya protegido por ScriptLock.");
-        const stored = storedLeases_(r);
+        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
         assert_(stored.version === 2 && stored.leases.some(lease => lease.token === acquired.token),
             "El estado combinado debe conservar la lease confirmada.");
         assert_(Object.keys(stored.trafficBuckets).length === 1, "El estado combinado debe guardar el bucket horario.");
@@ -406,7 +406,7 @@ function runSharedMutationCoordinatorTests() {
         const migration = acquire_(r, "ADMIN", "migrateCortesOperationIds", r.uuid(), 250);
         assert_(migration.status === "error" && migration.code === "busy", "La migración debe detenerse si la operación activa no termina.");
         assert_(migration.message.includes("WRITE/addOrUpdateCut"), "La respuesta debe identificar el servicio y acción que impiden el mantenimiento.");
-        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+        const stored = storedLeases_(r);
         assert_(!stored.some(lease => lease.maintenance && lease.operation === "migrateCortesOperationIds"),
             "La reserva de mantenimiento debe retirarse cuando la migración no logra drenar.");
         const serialized = acquire_(r, "FEEDBACK", "reportProblem");
