@@ -516,6 +516,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const feedback=fs.readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
     const ui=fs.readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
     const result=runPysCreationIntegrityTests({feedback,ui});
-    console.log(JSON.stringify(result,null,2));
+    console.log(JSON.stringify(result,null,2)); console.log("PysCreationIntegrity: "+result.passed+"/"+(result.passed+result.failed)+" PASS");
     if(result.status!=="PASS")process.exitCode=1;
 }
