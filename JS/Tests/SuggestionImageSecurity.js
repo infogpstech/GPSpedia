@@ -183,11 +183,11 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         assert.ok(handlerBlock.includes("String(imageAttachment != null ? imageAttachment.dataUrl || \"\" : imgBase64 || \"\")"));
     });
     test("handler verifica lectura posterior de la fila antes de confirmar", () => {
-        assert.ok(handlerBlock.includes("const storedProblem = sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).getValue()"));
+        assert.ok(handlerBlock.includes("findFeedbackRowById_(sheet, reservedId, lastCol)"));assert.ok(handlerBlock.includes("String(savedRow[COLS_FEEDBACKS.Problema - 1] || \"\") !== problemDesc"));
         assert.ok(handlerBlock.includes("String(storedProblem || \"\") !== problemDesc"));
     });
     test("handler retira el archivo huérfano si no se confirma la fila", () => {
-        assert.ok(handlerBlock.includes("if (!rowCommitted && uploadedImage && !appendAttempted)"));assert.ok(handlerBlock.includes("else if (!rowCommitted && uploadedImage)"));assert.ok(handlerBlock.includes("La imagen se conserva porque appendRow pudo persistir"));
+        assert.ok(handlerBlock.includes("if (!rowCommitted && uploadedImage && !appendAttempted)"));assert.ok(handlerBlock.includes("else if (!rowCommitted && uploadedImage)"));assert.ok(handlerBlock.includes("La imagen de sugerencia se conserva porque appendRow pudo persistir la referencia y requiere reconciliación."));
         assert.ok(handlerBlock.indexOf("rowCommitted = true") < handlerBlock.lastIndexOf("uploadedImage = null"));
     });
     test("handler devuelve metadatos MIME, tamaño, hash e ID de Drive", () => {
