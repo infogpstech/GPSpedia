@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { createCentralConfigurationCache, CENTRAL_CONFIG_FRESH_TTL_MS, CENTRAL_CONFIG_STALE_TTL_MS } from "../Frontend/centralConfigurationCache.js";
+import { readFileSync } from "node:fs";
+const cacheModuleSource = readFileSync(new URL("../Frontend/centralConfigurationCache.js", import.meta.url), "utf8");
+const { createCentralConfigurationCache, CENTRAL_CONFIG_FRESH_TTL_MS, CENTRAL_CONFIG_STALE_TTL_MS } =
+    await import("data:text/javascript;base64," + Buffer.from(cacheModuleSource, "utf8").toString("base64"));
 
 const services = {};
 for (const key of ["AUTH","CATALOG","WRITE","USERS","FEEDBACK","UTILITIES","ADMIN"]) {
