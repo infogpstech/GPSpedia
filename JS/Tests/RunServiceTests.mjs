@@ -415,7 +415,7 @@ runGroup('38','INTEGRATION',()=>{
  recordResult('Mapa de acciones y routers',loadFunction('JS/Tests/ActionDispatchContract.js','runActionDispatchContractTests')({
   apiConfig:read('JS/Frontend/api-config.js'),AUTH:read('JS/Services/Auth.js'),CATALOG:read('JS/Services/catalog.js'),
   COORDINATOR:read('JS/Services/Coordinator.js'),centralConfigurationCache:read('JS/Frontend/centralConfigurationCache.js'),
-  WRITE:read('JS/Services/write.js'),FEEDBACK:read('JS/Services/feedback.js')+'\\n'+read('JS/Services/InboxConversations.js'),ADMIN:read('JS/Services/admin.js'),UTILITIES:read('JS/Services/Utilities.js'),usersHtml:read('HTML/users.html'),
+  WRITE:read('JS/Services/write.js'),FEEDBACK:read('JS/Services/feedback.js')+'\n'+read('JS/Services/InboxConversations.js'),ADMIN:read('JS/Services/admin.js'),UTILITIES:read('JS/Services/Utilities.js'),usersHtml:read('HTML/users.html'),
   consumerSources:{apiConfig:read('JS/Frontend/api-config.js'),addCortes:read('HTML/add_cortes.html'),auth:read('JS/Frontend/auth.js'),main:read('JS/Frontend/main.js'),
    pysData:read('JS/Frontend/pys-data.js'),ui:read('JS/Frontend/ui.js'),usersHtml:read('HTML/users.html'),youtubeUpload:read('JS/Frontend/youtubeUpload.js')}
  }));
