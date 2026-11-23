@@ -41,9 +41,7 @@ El navegador será el único componente que conoce las direcciones de los servic
                     │             │             │
                   FEEDBACK      ADMIN         UTILITIES
                     │             │             │
-                    └─────────────┼─────────────┘
-                                  │
-                              UTILITIES
+                    └─────────────┴─────────────┘
 
        Todos los servicios son independientes y no se llaman entre sí.
        Cada backend valida sesión, rol y permisos para sus propias acciones.
@@ -92,19 +90,22 @@ Antes de implementar esta decisión se comprobará el mecanismo actual de acceso
 
 ### Fase 2 — Enrutamiento y orquestación en frontend
 - Mantener el mapa acción → servicio en frontend como fuente de enrutamiento.
-- Cambiar las funciones de ADMIN que llaman a WRITE/CATALOG/AUTH/USERS/FEEDBACK para que el frontend ejecute la secuencia directa correspondiente.
+- Cambiar las funciones de ADMIN que llaman a WRITE/CATALOG/AUTH/USERS/FEEDBACK para que el frontend ejecute la secuencia directa correspondiente; después de fusionar AUTH/USERS, las acciones de identidad se dirigirán a AUTH.
 - Conservar los contratos de respuesta actuales de la interfaz o adaptar consumidores de forma controlada.
 - Añadir orquestadores reutilizables para operaciones multi-servicio: pasos ordenados, requestId, idempotencia, progreso, reintento seguro y recuperación tras recarga.
 - El frontend no recibirá secretos ni ejecutará acciones privilegiadas sin autorización del backend.
 - No mover a frontend operaciones que deban ser atómicas dentro de un mismo recurso.
 
-### Fase 3 — Autenticación y autorización independientes
-- Eliminar la dependencia de cada servicio respecto a `GPSpedia_COORDINATOR_URL`, secretos de Coordinator, `validateSessionContext` remoto y cachés precargadas por fan-out.
-- Definir un contrato local común para validar sesión y rol contra los datos confiables compartidos, manteniendo las funciones de AUTH como autoridad de identidad.
-- Evaluar y medir dos opciones antes de elegir: lectura directa acotada de `Users/ActiveSessions` por servicio o validación con caché local de duración limitada y política de revocación explícita.
-- El mecanismo elegido no puede confiar en userId/role enviados por frontend ni permitir que un token revocado recupere vigencia.
-- Mantener hashes de contraseña, recuperación, términos por dispositivo, límites de sesión, revocaciones y protección contra enumeración.
-- Añadir pruebas de sesión expirada, token inexistente, token revocado, cambio de rol, cambio de contraseña, usuario eliminado, caché fría/caliente y concurrencia.
+### Fase 3 — Identidad unificada y autorización local
+- Unificar AUTH y USERS en un solo proyecto/servicio de identidad, conforme al requisito vigente del proyecto. El frontend conservará las acciones `getUsers`, `createUser` y `updateProfile`, pero las enviará al servicio AUTH unificado.
+- Eliminar la dependencia de cada servicio respecto a `GPSpedia_COORDINATOR_URL`, secretos de Coordinator, `validateSessionContext` remoto y cachés precargadas mediante llamadas backend→backend.
+- Mantener el login como único punto de autenticación. AUTH emitirá un contexto de actor firmado, con identidad, rol y vencimiento de la sesión; cada servicio verificará localmente la firma y aplicará únicamente la comprobación de capacidad/rol que corresponda.
+- La clave de firma se mantendrá fuera del frontend y se leerá desde la configuración protegida de Spreadsheet, con caché local en Apps Script. No se configurará manualmente en ScriptProperties ni se enviará al navegador.
+- El frontend enviará el contexto firmado en las acciones protegidas. Ningún servicio confiará en un userId o rol suelto enviado por el navegador.
+- Logout, cambio de rol, cambio/restablecimiento de contraseña, reset de sesiones y eliminación de cuenta serán las excepciones de revocación: el frontend enviará invalidaciones directas y paralelas a los servicios que mantienen caché local. Cada servicio expondrá una acción interna mínima de invalidación autenticada; no llamará a otros servicios.
+- La firma, vencimiento y política de invalidación deben impedir que un token inválido o vencido sea aceptado. La transición debe probar explícitamente qué ocurre si un servicio no responde a una invalidación.
+- Mantener hashes de contraseña, recuperación, términos por dispositivo, límites de sesión y protección contra enumeración, sin aumentar el coste del hash ni añadir pasos interactivos.
+- Añadir pruebas de sesión expirada, firma inválida, token inexistente, token revocado, cambio de rol, cambio de contraseña, usuario eliminado, caché fría/caliente e invalidación parcial.
 
 ### Fase 4 — Retirada de SharedMutation y simplificación de escrituras
 - Aplicar el requisito vigente de rendimiento: retirar leases, validaciones de Coordinator, locks globales y transacciones interservicio de las acciones ordinarias.
