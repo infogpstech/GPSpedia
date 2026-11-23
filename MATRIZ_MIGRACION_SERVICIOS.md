@@ -1323,3 +1323,15 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - El registro central y su caché pública requieren seis servicios. El lector ignora temporalmente la fila histórica USERS hasta el cutover Beta; no se alteró el registro remoto.
 - Regresión CI Node.js 22: run 45222509966 — 305 suites, 3,554 pruebas, 0 fallos. GitHub Pages build/deploy: run 45222508791 — SUCCESS.
 - MIG-012: código completado. Despliegue AUTH, verificación de recursos/permisos y retiro del deployment USERS siguen como validación Beta.
+
+
+### 22.2 Cierre MIG-013 — sesiones con actor local — 2026-11-23
+
+- AUTH mantiene la autoridad de login y Users/ActiveSessions, el hash PBKDF2 actual, bloqueo temporal de cinco intentos fallidos y tokens opacos generados en servidor.
+- AUTH, WRITE, FEEDBACK, ADMIN y UTILITIES resuelven actor desde Users/ActiveSessions mediante caché local del proyecto; CATALOG mantiene loader y caché locales equivalentes.
+- Cache miss valida sesión/token, identidad, expiración, usuario activo y rol autoritativo. Cache hit reutiliza el actor sin llamadas de red ni lecturas de Spreadsheet por acción.
+- TTL de actor: máximo 21,600 segundos; clave basada en SHA-256(userId/token). No se guardan tokens legibles como clave de caché.
+- No hay llamada a Coordinator ni lease SharedMutation para login, carga de actor, validación de sesión o comprobación ordinaria de capacidad. Las operaciones Coordinator ajenas al flujo de sesión se conservan.
+- Las cachés exponen invalidación local sin secreto compartido. La orquestación frontend de revocación/invalidación entre servicios queda en MIG-014.
+- Pruebas de contrato ampliadas en `MIG013SessionActorLocalLookup.mjs`, junto con `SessionActivityCoordination.mjs` y `SessionActivityLeaseMinimization.mjs`. La regresión CI y sus resultados se registran en checkpoint al terminar.
+- MIG-013: COMPLETADA EN CÓDIGO; login, sesiones y permisos reales en deployments aislados permanecen pendientes de Beta.
