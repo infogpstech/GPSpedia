@@ -81,7 +81,7 @@ check("USERS retirado y servicios desconocidos no generan métricas; COORDINATOR
     assert.equal(getBrowserServiceTrafficSnapshot("USERS", { now: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("LEGACY", { now: base }), null);
     assert.equal(getBrowserServiceTrafficSnapshot("UNKNOWN", { now: base }), null);
-    assert.equal(recordBrowserServiceTraffic({ service: "COORDINATOR", action: "getServiceTraffic", timestamp: base }).service, "COORDINATOR");
+    assert.equal(recordBrowserServiceTraffic({ service: "CATALOG", action: "getServiceTraffic", timestamp: base }).service, "COORDINATOR");
 });
 check("Las métricas no almacenan payloads, tokens ni datos de usuario", () => {
     const serialized = JSON.stringify(getBrowserServiceTrafficSnapshot("AUTH", { now: base + 3000 }));
@@ -97,7 +97,7 @@ check("La instrumentación del router es no bloqueante y registra éxito/error",
     assert.match(api, /requestBytes: trafficMetrics.requestBytes/);
     assert.match(api, /responseBytes: trafficMetrics.responseBytes/);
     assert.match(api, /new TextEncoder\(\)/);
-    assert.match(api, /'getCatalogChanges': 'COORDINATOR'/);
+    assert.match(api, /'getCatalogChanges': 'CATALOG'/);
     assert.match(api, /action: "getCatalogChanges"/);
     assert.match(api, /service: "COORDINATOR"/);
 });
