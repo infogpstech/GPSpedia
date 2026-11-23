@@ -556,33 +556,6 @@ function isSharedMutationAction_(action) {
     return ["deleteUser"].includes(action);
 }
 
-function syncAuthSheetActivityFromActor_(userId, sessionToken, actor) {
-    if (!actor || !actor.userId || actor.userId !== normalizeUserId(userId) ||
-        !sessionToken || !Number.isFinite(Number(actor.lastActivityAt))) {
-        throw new Error("No se pudo confirmar el contexto de sesión para la operación AUTH.");
-    }
-    const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-    if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar la actividad.");
-    const rows = sessionsSheet.getDataRange().getValues();
-    const matches = [];
-    for (let index = 1; index < rows.length; index++) {
-        if (String(rows[index][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "") === String(sessionToken)) {
-            matches.push({ row: rows[index], rowIndex: index + 1 });
-        }
-    }
-    if (matches.length !== 1 ||
-        normalizeUserId(matches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== normalizeUserId(userId)) {
-        throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
-    }
-    const currentValue = matches[0].row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] ||
-        matches[0].row[COLS_ACTIVE_SESSIONS.date - 1];
-    const current = currentValue instanceof Date ? currentValue.getTime() : new Date(currentValue).getTime();
-    const central = Number(actor.lastActivityAt);
-    if (!Number.isFinite(current) || central > current) {
-        sessionsSheet.getRange(matches[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date(central));
-    }
-    return true;
-}
 
 function doPost(e) {
     let request;
@@ -630,9 +603,9 @@ function doPost(e) {
     }
     if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"].includes(action)) {
         try {
-            // Las acciones ordinarias consumen el actor preparado al iniciar sesión.
-            // No adquieren lease ni revalidan identidad por acción; la revocación remota
-            // se mantiene únicamente en los handlers de cambio de rol/contraseña/sesión.
+            // Las acciones ordinarias consumen el actor local preparado al iniciar sesión o cargado
+            // desde Users/ActiveSessions ante un cache miss. No adquieren lease ni revalidan
+            // identidad por acción; cada mutación invalida la caché local AUTH.
             const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
@@ -1025,7 +998,7 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
     return { token, createdAt, sessionCount, oldestSession, cleanupPending, termsAcceptance };
 }
 
-function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessionToken) {
+function cacheLocalSessionActorAfterLogin_(userId, role, fullName, currentSessionToken) {
     const normalizedId = normalizeUserId(userId);
     const normalizedRole = normalizeRoleName(role);
     if (!normalizedId || !currentSessionToken ||
@@ -1168,7 +1141,7 @@ function handleLogin(payload) {
             throw sessionOperationError;
         }
         if (sessionCleanupPending) logToSheet('ERROR', 'Login succeeded but an inactive session row could not be deleted.', { userId, requestId: loginRequestId });
-        syncSharedSessionContextsForUser_(
+        cacheLocalSessionActorAfterLogin_(
             userId,
             foundUserRow[COLS_USERS.Privilegios - 1],
             foundUserRow[COLS_USERS.Nombre_Completo - 1],
