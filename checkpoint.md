@@ -626,7 +626,7 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 ### Estado Git verificado
 - Repositorio: `infogpstech/GPSpedia`.
 - Rama de trabajo: `GPSpedia2.2.5_work`.
-- HEAD de código y registros verificado inmediatamente antes del commit de este checkpoint: `542069d1c4d5df3b889e026ca9080be3bdfe2078`.
+- HEAD de código y registros verificado inmediatamente antes de actualizar este checkpoint: `8253b54968fdf41ee591c699e733ccc10859552b`.
 - Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; permanece sin modificaciones.
 - Todos los cambios de esta continuación se realizaron en la rama de trabajo.
 
@@ -646,13 +646,26 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - La ejecución del workflow completo Node.js 22 no se pudo confirmar: la consulta de estado de commit no devolvió checks. **No declarar CI SUCCESS hasta recuperar el resultado real de GitHub Actions.**
 
 ### Límites y pendientes
-- MIG-010 permanece **EN PROGRESO** hasta confirmar la regresión completa Node.js 22.
+- MIG-010: **COMPLETADA CON VALIDACIÓN DIFERIDA**. GitHub Actions Node.js 22 aprobó la regresión completa: 306 suites, 3,558 pruebas, 0 fallos.
 - Beta pendiente: llamadas reales frontend→ADMIN/CATALOG/WRITE, permisos y sesiones en Apps Script, acceso a Spreadsheet y recuperación con recursos aislados.
 - No se desplegaron servicios Apps Script ni se modificaron endpoints instalados, PropertiesService, Spreadsheet, Drive o datos.
-- No iniciar MIG-011 hasta completar el cierre de MIG-010 según las normas.
+- MIG-011 permanece **PENDIENTE** y es la siguiente tarea; no se inició durante el cierre de MIG-010.
+
+### Resultado final MIG-010 — 2026-11-23
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Workflow Node.js 22: SUCCESS — https://github.com/infogpstech/GPSpedia/actions/runs/45209447602.
+- Regresión: **306 suites / 3,558 pruebas / 0 fallos**.
+- Suite MIG010FrontendServiceOrchestration: **58/58 PASS**.
+- GitHub Pages build/deploy: SUCCESS — https://github.com/infogpstech/GPSpedia/actions/runs/45209445911.
+- Se actualizó el inventario para dejar explícito que ADMIN ya no coordina funcionalmente WRITE ni CATALOG; la secuencia y las consultas cubiertas se ejecutan desde frontend.
+- Se actualizaron los contratos heredados de pruebas que aún esperaban wrappers ADMIN→WRITE/CATALOG y se trasladaron al propietario actual las pruebas de altas, VIN, encabezados testigo y vinculación de imágenes.
+- WRITE reutiliza una sola lectura del encabezado para validar VIN/columnas testigo y pasa el índice VIN ya validado a las comprobaciones de duplicados.
+- ADMIN devuelve el estado del journal de reemplazos de imágenes; frontend completa la proyección consultando CATALOG directamente, sin lectura de la fila materializada por ADMIN.
+- Beta pendiente: invocaciones reales frontend→ADMIN/CATALOG/WRITE, sesiones/roles efectivos y permisos de Spreadsheet/Drive en recursos aislados.
+- No se desplegaron Apps Script ni se modificaron deployments, endpoints instalados, PropertiesService, Spreadsheet, Drive o datos externos.
+- Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
 
 ### Próximo paso exacto
-1. Recuperar y revisar el resultado del workflow `GPSpedia service regression tests` disparado por los commits de esta rama; si falla, corregir y repetir.
-2. Con CI aprobado, registrar MIG-010 como COMPLETADA CON VALIDACIÓN DIFERIDA, dejando Beta explícitamente pendiente.
-3. Continuar con MIG-011 — eliminar dependencias backend→backend restantes de ADMIN.
+1. Iniciar MIG-011 — eliminar las dependencias backend→backend restantes de ADMIN, siguiendo NORMAS_DESAROLLO.md §18.
+2. Mantener la validación real de Beta de MIG-010 como pendiente independiente; no marcarla como ejecutada.
 
