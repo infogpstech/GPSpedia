@@ -142,7 +142,7 @@ testCase("El contexto central de sesión se registra al login, se revoca y se re
  assert.match(client,/options && options\.session/);
  assert.match(client,/function withSharedSessionActor_\(/);
  assert.match(client,/delete payload\.__feedbackActor/);
- assert.match(auth,/sessionOptions = \{ session: \{ sessionToken: payload\.sessionToken \} \}/);
+ assert.match(auth,/sessionOptions = payload\.sessionToken && action !== "logout"[\s\S]*?sessionToken: payload\.sessionToken/);
  assert.match(auth,/withSharedSessionActor_\(e, actor\)/);
  assert.match(admin,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "ADMIN" \}\)/);
  assert.match(admin,/withSharedSessionActor_\(e, actor\)/);

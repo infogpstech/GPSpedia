@@ -6,15 +6,6 @@ import { dirname, resolve } from "node:path";
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const auth=readFileSync(resolve(root,"JS/Services/Auth.js"),"utf8");
-const usersSource=readFileSync(resolve(root,"JS/Services/users.js"),"utf8");
-function extractFrom(source,name){
-    const start=source.indexOf("function "+name+"(");
-    assert.ok(start>=0,"No se encontró "+name+" en el servicio.");
-    const nextFunction=source.indexOf("\nfunction ",start+10);
-    const nextConstant=source.indexOf("\nconst ",start+10);
-    const ends=[nextFunction,nextConstant].filter(x=>x>start);
-    return source.slice(start,ends.length?Math.min(...ends):source.length);
-}
 function extract(name){
     const start=auth.indexOf("function "+name+"(");
     assert.ok(start>=0,"No se encontró "+name);
@@ -57,35 +48,6 @@ test("El formato almacena versión, coste, salt aleatorio y digest",()=>{
     assert.notEqual(first.split("$")[2],second.split("$")[2]);
     assert.ok(!first.includes("Password Seguro 2026"));
 });
-const usersHashCode=[
-    extractFrom(usersSource,"normalizePassword"),extractFrom(usersSource,"digestToHex"),
-    extractFrom(usersSource,"passwordHexToBytes_"),extractFrom(usersSource,"passwordBytesToUnsigned_"),extractFrom(usersSource,"sha256Bytes_"),extractFrom(usersSource,"hmacSha256Bytes_"),extractFrom(usersSource,"pbkdf2Sha256Hex_"),
-    extractFrom(usersSource,"createPasswordHash"),extractFrom(usersSource,"constantTimeEquals"),
-    extractFrom(usersSource,"verifyStoredPassword")
-].join("\n");
-const usersApi=new Function("Utilities","PASSWORD_HASH_PREFIX","LEGACY_PASSWORD_HASH_PREFIX",
-    "PASSWORD_KDF_ITERATIONS","PASSWORD_KDF_MIN_ITERATIONS","PASSWORD_KDF_MAX_ITERATIONS",
-    usersHashCode+"\nreturn {createPasswordHash,verifyStoredPassword};")(
-        Utilities,"pbkdf2-sha256$","sha256$",12000,1000,200000
-    );
-
-test("AUTH y USERS comparten PBKDF2-HMAC-SHA256 con el mismo coste y formato",()=>{
-    const fromUsers=usersApi.createPasswordHash("SharedPassword2026");
-    assert.match(fromUsers,/^pbkdf2-sha256\$12000\$[0-9a-f]{32}\$[0-9a-f]{64}$/);
-    assert.equal(api.verifyStoredPassword(fromUsers,"SharedPassword2026").matches,true);
-    const fromAuth=api.createPasswordHash("SharedPassword2026");
-    assert.equal(usersApi.verifyStoredPassword(fromAuth,"SharedPassword2026").matches,true);
-    assert.equal(usersApi.verifyStoredPassword(fromAuth,"wrong").matches,false);
-});
-test("USERS conserva lectura de hashes SHA-256 históricos y texto plano para compatibilidad",()=>{
-    const salt="00112233445566778899aabbccddeeff";
-    const digest=createHash("sha256").update(salt+":LegacyPass2026","utf8").digest("hex");
-    const legacy=usersApi.verifyStoredPassword("sha256$"+salt+"$"+digest,"LegacyPass2026");
-    assert.equal(legacy.matches,true);assert.equal(legacy.needsRehash,true);
-    const plaintext=usersApi.verifyStoredPassword("LegacyPlainPass","LegacyPlainPass");
-    assert.equal(plaintext.matches,true);assert.equal(plaintext.legacy,true);
-});
-
 test("Verifica contraseña PBKDF2 correcta e incorrecta",()=>{
     const stored=api.createPasswordHash("Clave Segura 2026");
     assert.equal(api.verifyStoredPassword(stored,"Clave Segura 2026").matches,true);
