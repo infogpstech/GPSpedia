@@ -100,6 +100,11 @@ function runActionDispatchContractTests(sources) {
             coordinatorActions.push("getCatalogChanges");
             coordinatorHandlers.getCatalogChanges = ["getPublicCatalogChanges"];
         }
+        if (coordinatorSource.includes('request.action === "getServiceTraffic"') &&
+            hasFunction_(coordinatorSource, "getServiceTrafficFromBrowser_")) {
+            coordinatorActions.push("getServiceTraffic");
+            coordinatorHandlers.getServiceTraffic = ["getServiceTrafficFromBrowser_"];
+        }
         dispatchers.COORDINATOR = { actions: coordinatorActions, handlers: coordinatorHandlers };
         const utilitySource = String(input.UTILITIES || "");
         const utilityMatch = utilitySource.match(/body\.action\s*!==\s*['"]([^'"]+)['"]/);

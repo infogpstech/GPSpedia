@@ -100,7 +100,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN', 'getAdminImageUploadStatus': 'ADMIN',
     'getReplacedImages': 'ADMIN',
     'previewCortesImageReconciliation': 'ADMIN', 'previewCortesImageOrganizer': 'ADMIN', 'getCortesImageOrganizerOperations': 'ADMIN', 'applyCortesImageOrganizer': 'ADMIN', 'rollbackCortesImageOrganizer': 'ADMIN', 'applyCortesImageReconciliation': 'ADMIN', 'migrateReplacedImagesSchema': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'restoreReplacedImageFromTrash': 'ADMIN', 'permanentlyDeleteReplacedImage': 'ADMIN', 'markReplacedImageInUse': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
-    'getServiceTraffic': 'ADMIN', 'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
+    'getServiceTraffic': 'COORDINATOR', 'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
 };
 
 const WRITE_CATALOG_RESET_ACTIONS_ = new Set([
