@@ -57,7 +57,6 @@ function getCatalogSessionActor_(userId, sessionToken) {
         try{
             const actor=JSON.parse(cached);
             if(actor&&actor.userId===userId&&["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(actor.role)){
-                cache.put(key,JSON.stringify(actor),CATALOG_SESSION_ACTOR_CACHE_TTL_SECONDS_);
                 return actor;
             }
         }catch(error){}
