@@ -318,3 +318,18 @@ HEAD de partida: acad94c5a44b469424dd9f8ca187c6a354f02b27
 - Se mantiene como condición de paridad resolver la continuidad de métricas globales antes de retirar el panel; no se elimina ninguna función de monitorización por conveniencia.
 - Siguiente: inventario completo de endpoints, configuración central, documentación, pruebas y jobs; diseñar sustitutos antes de borrar Coordinator.
 ================================================================================
+
+
+================================================================================
+2026-11-23 — MIG-025: RETIRADA DE COORDINATOR
+HEAD de código validado: b51c1df563329889df7765f9c49e1c7570f2e725
+- Se eliminó JS/Services/Coordinator.js y se retiraron sus handlers GET/POST, el routing getServiceTraffic, la identidad de health y su inclusión en el inventario local de telemetría.
+- El registro central y el escaneo de salud conservan únicamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. La fila histórica COORDINATOR se ignora en el lector; no se modificaron Spreadsheet ni propiedades externas.
+- La telemetría global legacy no se sustituyó por métricas locales: el agregado anterior registraba eventos instrumentados (principalmente adquisiciones exitosas de leases), no todas las solicitudes HTTP. Se retiró su consulta/gráfico y se conservó una sección visible en el panel Developer que explica su alcance y ausencia de equivalente global actual.
+- Se conservaron las métricas locales por navegador, temporales, no transmitidas ni persistidas. La documentación distingue expresamente su alcance del agregado histórico.
+- Se archivaron las guías antiguas de despliegue/Coordinator; README, SERVICE_HEALTH, Tareas_Beta, lista_beta, matriz de migración y registro de tareas fueron actualizados. La matriz conserva el inventario histórico y añade adenda de retirada.
+- Pruebas dirigidas: CoordinatorRetirementContract 13/13; ServiceHealthContract 19/19; ServiceBrowserTrafficContract 10/10; ServiceTrafficAdminContract 10/10; AdminTrafficSurfaceContract 12/12; DirectTrafficRoutingCoverage 6/6; ServiceMetricsTelemetry 1/1; DeveloperPrivilegeRouting 20/20; PasswordRecovery 10/10; PasswordKdfBenchmark 5/5.
+- GitHub Actions Node.js 22, run 45285424788: 417 suites, 4,667 pruebas aprobadas, 1 fallo conocido fuera del alcance (FeedbackLockFastFail.mjs, expectativa general sobre locks FEEDBACK). Los contratos MIG-025 aprobaron. GitHub Pages run 45285423155: SUCCESS.
+- No se modificaron deployments, proyectos Apps Script, Spreadsheet, Drive, propiedades ni triggers externos. La inspección/limpieza externa se difiere a Beta aislada y requiere autorización.
+- MIG-025: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: MIG-026 — eliminar configuración local de todos los servicios.
+================================================================================
