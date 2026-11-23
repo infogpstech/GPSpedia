@@ -6900,13 +6900,29 @@ ${elapsedSec}s
             args = args.replace(/^\/[dD]\s*/, '');
         }
 
-        try {
-            const res = await routeAction('driveCommand', {
+        let commandPayload = {
+            command: cmd,
+            args: args,
+            currentFolderId: currentTerminalFolderId,
+            ...getDeveloperSessionPayload()
+        };
+        if (cmd === 'move') {
+            const moveIds = args.trim().split(/\\s+/).filter(Boolean);
+            if (moveIds.length !== 2) {
+                log("[USO] move <ID_ARCHIVO> <ID_CARPETA_DESTINO>. Usa 'dir' para consultar los IDs.", false, true);
+                return;
+            }
+            commandPayload = {
                 command: cmd,
-                args: args,
+                fileId: moveIds[0],
+                targetFolderId: moveIds[1],
                 currentFolderId: currentTerminalFolderId,
                 ...getDeveloperSessionPayload()
-            });
+            };
+        }
+
+        try {
+            const res = await routeAction('driveCommand', commandPayload);
             if (!isAdminPanelCurrent_()) return;
 
             if (res && res.status === 'success') {
@@ -6922,10 +6938,10 @@ ${elapsedSec}s
                         log("(Carpeta vacía)");
                     }
                     res.folders.forEach(f => {
-                        log(`📁 [${f.name}]  (Escribe 'cd ${f.name}' para entrar)`);
+                        log(`📁 [${f.name}] (ID: ${f.id}) (Escribe 'cd ${f.name}' para entrar)`);
                     });
                     res.files.forEach(f => {
-                        log(`📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
+                        log(`📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB) (ID: ${f.id})`);
                     });
                 }
                 if (res.message) {

@@ -133,6 +133,7 @@ runGroup('32','ADMIN',()=>{
  recordResult('ADMIN respaldo/restauración/rollback',loadFunction('JS/Tests/AdminRestoreRecovery.js','runAdminRestoreRecoveryTests')(a));
  runCli('ADMIN reanudación de respaldo Drive y sintaxis Node.js','JS/Tests/AdminBackupResumeUI.mjs');
  runCli('AUG-019 alcance de terminal Drive y protección de árbol Cortes','JS/Tests/DriveTerminalScope.mjs');
+ runCli('MIG-017 terminal conecta move con IDs visibles de Drive','JS/Tests/DriveTerminalMoveClient.mjs');
  runCli('AUG-021 auditoría persistente de operaciones ADMIN','JS/Tests/AdminAuditTrail.mjs');
  runCli('P2 auditoría de identificadores sin escritura','JS/Tests/IdentifierAudit.mjs');
  runCli('P2 motor de migración de IDs, lotes, huellas y rollback','JS/Tests/IdentifierMigration.mjs');
