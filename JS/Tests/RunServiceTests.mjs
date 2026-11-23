@@ -109,7 +109,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE publicación del catálogo fuera del ScriptLock global','JS/Tests/WriteCatalogPublicationIsolation.mjs');
   runCli('WRITE carpetas suplementarias sin lease ni espera','JS/Tests/WriteSupplementaryFolderNoLease.mjs');
   runCli('ADMIN libera ScriptLock durante trabajo Drive con revalidación','JS/Tests/AdminDriveLockIsolation.mjs');
-  runCli('ADMIN asigna ID WRITE antes de tomar el ScriptLock','JS/Tests/AdminVehicleIdOutsideLock.mjs');
+  runCli('WRITE reserva ID antes del ScriptLock; ADMIN rechaza ruta legacy','JS/Tests/AdminVehicleIdOutsideLock.mjs');
   runCli('ADMIN transmite opId y huella al asignador WRITE','JS/Tests/AdminVehicleIdAllocationIdempotency.mjs');
   runCli('ADMIN→WRITE recupera asignación de ID tras respuesta perdida','JS/Tests/VehicleIdAllocationEndToEnd.mjs');
   runCli('ADMIN valida el contrato idempotente antes de asignar ID y adquirir lock','JS/Tests/AdminCutPreflightBeforeAllocation.mjs');
