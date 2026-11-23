@@ -97,15 +97,19 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ## Fase 1 — Acceso a Spreadsheet sin configuración local
 
 ### MIG-006 — Spike técnico de acceso a Spreadsheet
-**Estado: PENDIENTE — PRIORIDAD 1**
-- [ ] Probar si los proyectos Apps Script vinculados a la Spreadsheet pueden obtener el contenedor activo desde una Web App desplegada.
-- [ ] Probar lectura y escritura de una hoja de prueba con identidad/permisos equivalentes al deployment actual.
-- [ ] Verificar si varios proyectos independientes pueden operar con el mismo modelo sin ID almacenado en código/propiedades.
-- [ ] Evaluar consolidar módulos en un único proyecto vinculado si es la única forma simple de eliminar el ID de Spreadsheet y el bootstrap.
-- [ ] Comprobar límites de tamaño, cuotas, concurrencia, tiempo de ejecución, permisos y facilidad de despliegue de cada opción.
-- [ ] Documentar la opción mínima que cumple cero configuración local.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+- [x] Inspeccionar los siete servicios que usan SPREADSHEET_ID/openById y confirmar que InboxConversations no abre la hoja directamente.
+- [x] Preparar un probe Apps Script con GET read-only, UI Web App y POST de escritura limitada a una hoja reservada; sin ID, PropertiesService, UrlFetchApp ni credenciales.
+- [x] Añadir harness local que cubre contexto nulo/activo, UI, lectura sin escritura, confirmación obligatoria, escritura acotada y lectura posterior.
+- [x] Evaluar proyectos independientes, consolidación y alternativas de bootstrap; no seleccionar una opción sin evidencia Web App.
+- [x] Documentar permisos, cuotas, concurrencia, límites, facilidad de despliegue y procedimiento Beta.
+- [x] Registrar la aclaración: coordinación de flujos en frontend; comunicación directa entre servicios permitida cuando sea necesaria, sin secretos/keys manuales entre servidores.
+- [ ] Ejecutar el probe en una Web App real, con Spreadsheet desechable y permisos equivalentes al deployment: pendiente de Beta.
+- [ ] Repetir en varios proyectos independientes y medir cuotas, concurrencia y latencia real: pendiente de Beta.
 
-**Aceptación:** prueba reproducible en contexto Web App; no basta ejecutar desde el editor.
+**Evidencia:** MIG006_SPREADSHEET_ACCESS_SPIKE.md y suite MIG006SpreadsheetAccessProbe (local). La simulación no se presenta como ejecución de Apps Script real.
+
+**Aceptación local:** probe y pruebas reproducibles preparados y aprobados. La prueba Web App real y los límites externos quedan diferidos según NORMAS §5 y §10; no se reemplaza ningún acceso actual por getActiveSpreadsheet() sin evidencia del deployment.
 
 ### MIG-007 — Diseño del esquema central de configuración
 **Estado: PENDIENTE**
