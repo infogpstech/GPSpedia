@@ -354,17 +354,43 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** equivalencia funcional automatizada aprobada. MIG-015 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**; el despliegue y la verificación real de permisos/recursos quedan pendientes de Beta.
 
 ### MIG-016 — Carga reanudable y aprobación de vídeos
-**Estado: PENDIENTE**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener init de YouTube Resumable Upload y transferencia directa de bytes.
-- [ ] Mantener pausa, cierre de modal, reanudación y registro IndexedDB.
-- [ ] Mantener título/descripción contextual y parámetros de publicación actuales.
-- [ ] Mantener Inbox de aprobación, rechazo y asociación a vehículo/tutorial.
-- [ ] Mantener reproductor y vídeos de PyS/tutoriales.
-- [ ] No exponer OAuth token ni URL temporal en logs o configuración.
-- [ ] Verificar identidad/permisos del flujo directo desde frontend.
+- [x] Mantener init de YouTube Resumable Upload y transferencia directa de bytes.
+- [x] Mantener pausa, cierre del modal, reanudación y checkpoint IndexedDB.
+- [x] Mantener título/descripción contextual y parámetros fijos de publicación.
+- [x] Mantener Inbox de aprobación, rechazo y asociación a corte/PyS/tutorial.
+- [x] Mantener reproductor y vídeos de PyS/tutoriales.
+- [x] No persistir OAuth token ni URL temporal en Spreadsheet, ScriptProperties o logs.
+- [x] Verificar identidad/permisos del flujo directo desde frontend y autoridad derivada en FEEDBACK.
+- [x] Hacer idempotente la inicialización por opVideoId y bloquear reservas duplicadas por destino.
+- [x] Validar renovación únicamente con URL de sesión oficial confirmada como expirada.
 
-**Aceptación:** el usuario puede subir, pausar, reanudar, someter, aprobar/rechazar y reproducir vídeos como hoy.
+**Implementación**
+- FEEDBACK crea/valida la hoja `YouTubeUploadReservations` con opVideoId, userId, contentType, referenceId, requestHash, status y marcas temporales; no almacena URL de sesión ni OAuth token.
+- LockService local protege la reserva de operación/destino. La URL de sesión se conserva temporalmente en CacheService (TTL 6 h) y en IndexedDB del navegador para recuperación; la reserva expira operativamente a los 8 días.
+- El mismo opVideoId y huella de solicitud recuperan la misma URL; un opVideoId con metadatos distintos se rechaza; otra pestaña no puede abrir una segunda reserva para el mismo destino. Si CacheService pierde la URL de una reserva inicializada, el backend falla cerrado y no crea una sesión duplicada.
+- La renovación exige una URL con formato oficial de sesión YouTube y una reserva previa; solo se renueva la sesión que el cliente identificó como expirada tras HTTP 404/410.
+- Transferencia directa en bloques de 8 MB, Content-Range, confirmación 308/Range, checkpoints IndexedDB y recuperación de estado final. Se validan ID final real de 11 caracteres y URL canónica.
+- YouTube recibe categoría 28, privacidad unlisted, audiencia no infantil, vídeo embebible y estadísticas públicas desactivadas. La URL no se publica en GPSpedia antes de aprobación.
+- FEEDBACK valida sesión/propietario, registra la solicitud pendiente y usa VideoApprovalEvents append-only para decisiones y publicación recuperable. Aprobar/rechazar deriva identidad y rol del actor validado; el navegador no es autoridad de rol. La publicación se limita a los destinos corte, PyS y tutorial.
+- El cliente conserva estados new/uploading/paused/interrupted/uploaded, bloquea cambios de metadatos al recuperar, permite reintentar aprobación sin volver a transferir y protege el XHR al cerrar el modal.
+
+**Validación CI — GitHub Actions Node.js 22**
+- Run 45238132798, commit `4c143414e6fd7b5a708b89eb6b54081025065b5e`.
+- **223/223 comprobaciones específicas de vídeo aprobadas**, incluyendo publicación/aprobación/rechazo, permisos, idempotencia, renovación, IndexedDB, checkpoints, pausa/cierre, recuperación, overlays, XSS y reproducción suplementaria.
+- Regresión global: 167 suites, 1,912 pruebas aprobadas y cuatro suites fallidas en P4 (política de roles), UTILITIES, AUTH e INTEGRATION. Los fallos están fuera del conjunto de vídeo y ya aparecían en regresiones anteriores; se mantienen como deuda separada.
+- GitHub Pages build/deploy del commit funcional `2ae498e234d21dc23ae67bf3f2cb7530a8d386f8`: run 45237698550 — SUCCESS.
+- No se hicieron llamadas reales a YouTube ni despliegues Apps Script durante CI.
+
+**Validación Beta diferida**
+- Desplegar/actualizar FEEDBACK con scopes OAuth de YouTube Data API y verificar consentimiento de la cuenta/canal autorizado.
+- Verificar creación de YouTubeUploadReservations en la Spreadsheet Beta, LockService y CacheService con TTL real.
+- Subir un vídeo de prueba no listado; comprobar respuesta 308/Range, pausa, cierre del modal, recarga, reanudación y renovación real tras 404/410.
+- Probar solicitud pendiente, aprobación y rechazo con la matriz RBAC real; verificar publicación solo después de aprobar en Corte, PyS y Tutorial.
+- Verificar reproductores en navegador móvil/escritorio y que ningún token/URL temporal aparezca en logs, hojas o ScriptProperties.
+
+**Aceptación:** flujo automatizado conservado y validado. MIG-016 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**; pruebas reales de OAuth, YouTube, CacheService, Spreadsheet, permisos y reproducción quedan pendientes de Beta aislada.
 
 ### MIG-017 — Herramientas y operaciones de Drive
 **Estado: PENDIENTE**

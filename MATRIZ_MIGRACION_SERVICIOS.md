@@ -1354,3 +1354,14 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - Se preservan límites por flujo (10 MB ADMIN/WRITE; 3 MB FEEDBACK/PyS), validación MIME/firma, SHA-256, ledger/journal, idempotencia, compensación, recuperación y reconciliación.
 - CI Node.js 22 run 45236342364: MIG-015 605/605 comprobaciones aprobadas. Regresión global: 157 suites, 1,909 aprobadas, cuatro fallidas en familias P4 política de roles, UTILITIES, AUTH e INTEGRATION; los mismos grupos ya fallaban antes de esta tarea.
 - La validación Beta real de proyectos vinculados, permisos heredados y operaciones Drive permanece pendiente. MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### 22.5 Cierre MIG-016 — YouTube resumable y aprobación — 2026-11-23
+- FEEDBACK reserva init con opVideoId, SHA-256 de solicitud y destino único; LockService local protege la reserva. YouTubeUploadReservations solo guarda identidad, destino, hash, estado y timestamps.
+- URL de sesión temporal en CacheService (6 h) y IndexedDB de navegador para reanudación; OAuth token solo runtime mediante ScriptApp.getOAuthToken(). Ninguno se escribe en Spreadsheet, ScriptProperties ni logs.
+- Renovación requiere URL oficial de sesión expirada y reserva previa; HTTP 404/410 dispara renovación desde frontend. Pérdida de CacheService en reserva inicializada falla cerrada para evitar duplicados.
+- Transferencia en bloques de 8 MB, Content-Range, 308/Range, checkpoints, pausa, cierre y reanudación. Publicación unlisted hasta aprobación, con ID/URL verificados.
+- Inbox FEEDBACK, propietario/actor autenticado, RBAC de aprobación/rechazo, eventos append-only y publicación recuperable a Corte/PyS/Tutorial. Reproductores suplementarios preservados.
+- CI run 45238132798: **223/223 pruebas específicas de vídeo PASS**. Regresión global: 167 suites, 1,912 aprobadas y cuatro fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45237698550 SUCCESS para el commit funcional.
+- Sin llamadas reales a YouTube ni deployments Apps Script. Validación Beta de OAuth, canal, sesiones, permisos y publicación pendiente.
+- MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA.

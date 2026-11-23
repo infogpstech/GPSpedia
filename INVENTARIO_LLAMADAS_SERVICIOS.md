@@ -299,3 +299,14 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - CI Node.js 22 run 45236342364: suites MIG-015 **605/605 PASS**. La regresión global tuvo 1,909 pruebas aprobadas y cuatro fallos de suite fuera del grupo MIG-015 (ADMIN P4 política de roles, UTILITIES, AUTH e INTEGRATION). El fixture de ADMIN candidatos se corrigió para simular CacheService/Utilities.
 - Las invocaciones reales y permisos entre proyectos Apps Script, Spreadsheet y Drive siguen pendientes de Beta aislada. No se modificaron deployments ni datos externos.
 - MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### 3.8 MIG-016 — carga reanudable y aprobación de vídeos — 2026-11-23
+- FEEDBACK administra reservas idempotentes en YouTubeUploadReservations: opVideoId, userId, tipo/destino, requestHash, estado y timestamps. LockService local evita reservas concurrentes por destino; el mismo opVideoId recupera la sesión y un hash distinto se rechaza.
+- CacheService conserva la URL temporal durante 6 h; la hoja no guarda URL ni OAuth token. El navegador conserva URL y File en IndexedDB para reanudación; sessionStorage conserva solo el opVideoId de la pestaña. No se registran URL/token en logs.
+- Renovación solo con URL oficial de sesión expirada y reserva previa; cliente solicita renovación ante 404/410. Si se pierde la URL de CacheService para una reserva inicializada, el backend falla cerrado.
+- Transferencia de 8 MB por bloque, Content-Range, respuesta 308/Range, checkpoint persistido, pausa, cierre seguro, reanudación y verificación de ID final real/URL canónica.
+- Privacidad unlisted, categoría 28, no infantil, embebible y estadísticas públicas desactivadas. Solicitud en Inbox, verificación de propietario, decisión append-only VideoApprovalEvents y publicación solo tras aprobación para Corte/PyS/Tutorial.
+- Roles se derivan de la sesión validada en FEEDBACK; approve/reject no confía en roles del navegador. No se usa Coordinator ni URL de otro servicio para el flujo de YouTube.
+- CI run 45238132798: 223/223 comprobaciones de vídeo PASS. Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45237698550 SUCCESS para el commit funcional.
+- Validación Beta real de OAuth, YouTube, CacheService, Spreadsheet, RBAC, publicación y reproductores pendiente. MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA.

@@ -963,3 +963,40 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - MIG-015: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - No se invocaron proyectos Apps Script, Spreadsheet ni Drive reales. La configuración central cortes_root_folder_id, vínculo de los proyectos y permisos Drive quedan pendientes de Beta aislada.
 - Siguiente tarea autorizada por prioridad: **MIG-016 — carga reanudable y aprobación de vídeos**. MIG-015 queda cerrada; continuar una tarea a la vez.
+
+
+---
+
+## Cierre MIG-016 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-23
+
+### Rama y commit
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5: sin escrituras; HEAD base verificado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- HEAD de trabajo al cierre documental: `8859d00126708795ad7107f674d0d41e8f17056c`.
+
+### Implementación
+- Reserva idempotente de init YouTube por opVideoId + SHA-256 de la solicitud y unicidad por destino, protegida con LockService local de FEEDBACK.
+- YouTubeUploadReservations almacena solo IDs, hash, estado y timestamps. CacheService conserva URL temporal por 6 h; no se guarda OAuth token ni URL temporal en Spreadsheet, ScriptProperties o logs.
+- Reserva operativa de 8 días, bloqueo de duplicados entre pestañas, recuperación de URL desde CacheService y fallo cerrado si la caché se pierde para una reserva inicializada.
+- Renovación exige URL oficial de sesión y reserva previa. El frontend solo intenta renovar ante HTTP 404/410; el backend rechaza URL ausente/ajena y no crea una reserva nueva como parte de una renovación.
+- Transferencia directa por bloques de 8 MB con Content-Range, 308/Range, checkpoints IndexedDB y recuperación de estados new/uploading/paused/interrupted/uploaded.
+- YouTube recibe privacidad unlisted, categoría 28, audiencia no infantil, embebible y estadísticas públicas desactivadas. El ID real y la URL canónica se verifican antes de crear la solicitud.
+- FEEDBACK valida actor, propietario y permisos; aprobación/rechazo se registra con VideoApprovalEvents append-only y la publicación al destino solo ocurre después de aprobación. Se mantienen reproductores de PyS/tutorial y el modal protege el XHR durante cierre/pausa.
+
+### Validación CI
+- GitHub Actions Node.js 22 run `45238132798`, commit `4c143414e6fd7b5a708b89eb6b54081025065b5e`.
+- **223/223 comprobaciones específicas de vídeo PASS**: aprobación/publicación/rechazo, RBAC, init, renovación, IndexedDB, checkpoints, pausas, recuperación, overlays, XSS y reproducción.
+- Regresión global: 167 suites, 1,912 pruebas aprobadas y cuatro suites fallidas en P4 (política de roles), UTILITIES, AUTH e INTEGRATION. No son fallos del conjunto de vídeo; permanecen como deuda global independiente.
+- GitHub Pages build/deploy del commit funcional `2ae498e234d21dc23ae67bf3f2cb7530a8d386f8`: run `45237698550` — SUCCESS.
+- No se ejecutaron llamadas reales a YouTube ni deployments Apps Script.
+
+### Validación Beta pendiente
+- Scopes y consentimiento OAuth reales de YouTube Data API en FEEDBACK y cuenta/canal autorizado.
+- Hoja YouTubeUploadReservations, LockService y CacheService reales, incluido TTL y expiración.
+- Subida de vídeo de prueba, respuesta 308/Range, pausa/cierre, recarga/reanudación y expiración/renovación HTTP 404/410.
+- Aprobación/rechazo con roles reales, publicación solo después de aprobación en Corte, PyS y Tutorial, y reproducción móvil/escritorio.
+- Auditoría de logs, hojas y ScriptProperties para confirmar ausencia de token OAuth y URL temporal.
+
+### Estado y continuidad
+- MIG-016: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Próxima tarea: MIG-017 — Herramientas y operaciones de Drive. No iniciar otra tarea hasta registrar el cierre documental de MIG-016.
