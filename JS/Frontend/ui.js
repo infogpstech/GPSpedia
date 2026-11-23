@@ -6438,7 +6438,7 @@ function initAdminPanelListeners() {
         if (!result || typeof result !== "object" || result.status !== "success" ||
             result.scope !== "global_service_traffic" || !Array.isArray(result.services) ||
             !Array.isArray(result.buckets) || !result.totals || typeof result.totals !== "object") return false;
-        const expectedServices = Object.keys(serviceHealthResults).filter(key => key !== "LEGACY");
+        const expectedServices = Object.keys(serviceHealthResults).filter(key => key !== "LEGACY" && key !== "COORDINATOR");
         const services = result.services.map(value => String(value || "").toUpperCase());
         if (!services.length || services.includes("LEGACY") || new Set(services).size !== services.length) return false;
         if (expectedServices.length && (services.length !== expectedServices.length ||
