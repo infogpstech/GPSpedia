@@ -7,7 +7,7 @@ const COORDINATOR_VERSION_ = "1.4.9";
 const COORDINATOR_SESSION_PROTOCOL_VERSION_ = 1;
 const COORDINATOR_SESSION_SUPPORTED_PROTOCOL_VERSIONS_ = Object.freeze([1]);
 const COORDINATOR_SESSION_LEGACY_PROTOCOL_VERSION_ = 1;
-// Solo lectura temporal de buckets históricos; no se escriben leases ni estado SharedMutation.
+// Solo lectura temporal de buckets históricos de operaciones protegidas; no se escriben leases.
 const LEGACY_COORDINATOR_TRAFFIC_STATE_PROPERTY_ = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_AUTH_CONTEXT_PREFIX_ = "GPSpedia_AUTH_CONTEXT_V1_";
 const SHARED_AUTH_TOKEN_INDEX_PREFIX_ = "GPSpedia_AUTH_TOKEN_V1_";
@@ -460,7 +460,7 @@ function createCoordinatorService_(dependencies) {
             throw new Error("Solo ADMIN puede consultar la telemetría global.");
         }
         // Los buckets independientes y el estado combinado se leen solo como historial legado.
-        // MIG-024 retiró el escritor de leases; no se generan nuevos eventos SharedMutation.
+        // MIG-024 retiró el escritor de leases; no se generan nuevos buckets de operaciones protegidas.
         const capturedAt = now();
         const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
         const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
