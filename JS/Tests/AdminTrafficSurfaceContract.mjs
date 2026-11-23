@@ -18,7 +18,6 @@ const loadTraffic = block(ui, "loadGlobalServiceTraffic_");
 const runHealth = block(ui, "runServicesHealthScan");
 const visible = block(ui, "isGlobalServiceTrafficVisible_");
 const mutation = block(admin, "isSharedMutationAction_");
-const policy = block(coordinator, "coordinatorPolicy_");
 
 assert.match(loadTraffic, /if \(globalServiceTrafficLoading \|\| !isAdminPanelCurrent_\(\)\) return/);
 assert.match(loadTraffic, /routeActionWithRetry\("getServiceTraffic"/);
@@ -35,6 +34,6 @@ assert.match(coordinator, /request\.action === "getServiceTraffic"/);
 assert.match(coordinator, /role !== "desarrollador"/);
 assert.match(coordinator, /readServiceTraffic_\("ADMIN", "getServiceTraffic"\)/);
 assert.doesNotMatch(mutation, /getServiceTraffic/);
-assert.match(policy, /getServiceTraffic: \{ read: \["SERVICE_TRAFFIC"\] \}/);
+assert.doesNotMatch(coordinator, /coordinatorPolicy_|getServiceTraffic:\s*\{/);
 
 console.log("AdminTrafficSurfaceContract: 17/17 PASS — telemetría desde Coordinator con sesión, sin llamada ADMIN→Coordinator");
