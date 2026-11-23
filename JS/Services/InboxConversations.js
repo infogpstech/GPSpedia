@@ -664,13 +664,26 @@ function handleMarkInboxRead(payload) {
         row[2] = effectiveIndex >= 0 ? messages[effectiveIndex][2] : "";
         row[3] = effectiveIndex >= 0 ? String(messages[effectiveIndex][0]) : "";
         row[7] = now;
-        inboxWriteState_(sheets.states,state,row);
-        if (wasMarkedUnread) {
-            const flagRow = flag.row.slice(); flagRow[2] = false; flagRow[4] = now;
-            inboxWriteFlag_(flagsSheet,flag,flagRow);
+        const previousState = state.row.slice(), previousFlag = wasMarkedUnread ? flag.row.slice() : null;
+        try {
+            inboxWriteState_(sheets.states,state,row);
+            if (wasMarkedUnread) {
+                const flagRow = flag.row.slice(); flagRow[2] = false; flagRow[4] = now;
+                inboxWriteFlag_(flagsSheet,flag,flagRow);
+            }
+            if (previousMarker !== row[3] || wasMarkedUnread) {
+                inboxAppendAudit_(sheets.audit,actor,"read",conversationId,row[3],"Lectura confirmada hasta el mensaje indicado.");
+            }
+        } catch (error) {
+            try {
+                inboxWriteState_(sheets.states,state,previousState);
+                if (previousFlag) inboxWriteFlag_(flagsSheet,flag,previousFlag);
+            } catch (rollbackError) {
+                console.error("No se pudo revertir el estado de lectura tras fallar la auditoría:",rollbackError);
+            }
+            throw error;
         }
         const unread = messages.slice(effectiveIndex + 1).filter(item => String(item[3]) !== actor.id).length;
-        if (previousMarker !== row[3] || wasMarkedUnread) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,row[3],"Lectura confirmada hasta el mensaje indicado.");
         return {status:"success",conversationId,unreadCount:unread};
     });
 }
@@ -759,11 +772,19 @@ function handleArchiveInboxConversation(payload) {
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
         inboxAssertVisible_(sheets.flags,conversationId,actor.id);
-        const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), row = state.row.slice();
+        const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), previousState = state.row.slice(), row = state.row.slice();
         const changed = row[4] !== payload.archived;
         row[4] = payload.archived; row[7] = new Date().toISOString();
-        inboxWriteState_(sheets.states,state,row);
-        if (changed) inboxAppendAudit_(sheets.audit,actor,payload.archived?"archive":"unarchive",conversationId,"","Estado de archivo actualizado.");
+        try {
+            if (changed) {
+                inboxWriteState_(sheets.states,state,row);
+                inboxAppendAudit_(sheets.audit,actor,payload.archived?"archive":"unarchive",conversationId,"","Estado de archivo actualizado.");
+            }
+        } catch (error) {
+            try { inboxWriteState_(sheets.states,state,previousState); }
+            catch (rollbackError) { console.error("No se pudo revertir el archivo tras fallar la auditoría:",rollbackError); }
+            throw error;
+        }
         return {status:"success",conversationId,archived:payload.archived};
     });
 }
@@ -780,14 +801,28 @@ function handleCloseInboxConversation(payload) {
         inboxAssertVisible_(sheets.flags,conversationId,actor.id);
         if (String(found.row[6]) === "closed") return {status:"success",conversationId,closed:true,alreadyClosed:true};
         if (String(found.row[6]) !== "open") throw new Error("El estado del caso no permite cerrarlo.");
-        const now = new Date().toISOString(), row = found.row.slice();
+        const previous = found.row.slice(), now = new Date().toISOString(), row = found.row.slice();
         row[2] = now;
         row[6] = "closed";
-        sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).setValues([row]);
-        SpreadsheetApp.flush();
-        const saved = sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).getValues()[0];
-        if (String(saved[6]) !== "closed" || String(saved[2]) !== now) throw new Error("No se pudo confirmar el cierre del caso.");
-        inboxAppendAudit_(sheets.audit,actor,"close",conversationId,"","Caso cerrado; no admite más comentarios.");
+        try {
+            sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).setValues([row]);
+            SpreadsheetApp.flush();
+            const saved = sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).getValues()[0];
+            if (String(saved[6]) !== "closed" || String(saved[2]) !== now) throw new Error("No se pudo confirmar el cierre del caso.");
+            inboxAppendAudit_(sheets.audit,actor,"close",conversationId,"","Caso cerrado; no admite más comentarios.");
+        } catch (error) {
+            try {
+                const range = sheets.conversations.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length);
+                range.setValues([previous]); SpreadsheetApp.flush();
+                const restored = range.getValues()[0];
+                if (previous.some((value,index) => String(restored[index]) !== String(value))) {
+                    throw new Error("El read-back del rollback de cierre no coincide.");
+                }
+            } catch (rollbackError) {
+                console.error("No se pudo revertir el cierre tras fallar la auditoría:",rollbackError);
+            }
+            throw error;
+        }
         return {status:"success",conversationId,closed:true,alreadyClosed:false};
     });
 }
