@@ -540,7 +540,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Resultado:** MIG-024 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-025 — Eliminar COORDINATOR.
 
 ### MIG-025 — Eliminar COORDINATOR
-**Estado: EN PROGRESO (2026-11-23)**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 
 **Inventario inicial de capacidades y consumidores (sin cambios de código todavía):**
 - `JS/Services/Coordinator.js` v1.4.9 concentra contexto de sesión legado (`registerSession_`, `revokeSession_`, `revokeUserSessions_`, `syncUserSessions_` y `validateSessionContext_`), telemetría global (`readServiceTraffic_` / `getServiceTrafficFromBrowser_`) y `doGet` / `doPost`.
@@ -557,7 +557,24 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Sesión/revocación: verificar con tests y búsqueda global que no queda ningún consumidor real de las API legacy antes de retirar `registerSession`, `revokeSession`, `syncUserSessions` o `validateSessionContext`.
 - Inventariar tareas programadas, endpoints manuales, diagnósticos, guías, pruebas, registros y filas de configuración. No borrar proyectos ni propiedades externas sin autorización; documentar la limpieza Beta/operativa separada.
 
-**Siguiente paso:** cerrar la matriz de paridad de telemetría global y salud, localizar todos los consumidores de Coordinator y preparar pruebas equivalentes de seis servicios. No eliminar la fuente hasta que las capacidades estén cubiertas y los tests actualizados.
+**Resultado y paridad implementada:**
+- Se retiró `JS/Services/Coordinator.js`, sus handlers `doGet`/`doPost`, el routing `getServiceTraffic`, el registro de salud del servicio y su inclusión en telemetría local. No quedan consumidores activos del servicio.
+- Health conserva el escaneo directo y aislado de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; los seis contratos de identidad/versionado siguen disponibles. La fila histórica COORDINATOR se ignora en el lector central mientras la limpieza externa espera Beta.
+- El agregado global legacy no se reemplazó por telemetría local: medía solo eventos instrumentados de Coordinator, principalmente adquisiciones de leases, y no todas las solicitudes HTTP. Se retiró el panel de datos del agregado, pero se conserva una sección visible en Developer que explica su retirada, límites históricos y ausencia de equivalente global actual. Las métricas locales permanecen identificadas como datos temporales de este navegador y no transmitidos.
+- Las API de sesión/revocación y SharedMutation ya habían sido retiradas en MIG-013/MIG-024; se actualizaron pruebas heredadas que aún abrían Coordinator.js.
+- La guía antigua de despliegue/Coordinator se archivó en `Olds/Documentacion_Legacy/Services/`; README y documentación de health/Beta se actualizaron. La matriz conserva sus inventarios históricos y añade una adenda de retirada.
+- No se borraron filas de Spreadsheet, propiedades de Apps Script, deployments, proyectos ni triggers externos.
+
+**Validación local/CI:**
+- `CoordinatorRetirementContract`: 10/10 PASS.
+- `ServiceHealthContract`: contrato de seis servicios y escaneo directo; ver ejecución CI.
+- `ServiceBrowserTrafficContract`: inventario de seis servicios, rechaza USERS/COORDINATOR y mantiene telemetría local.
+- `PasswordKdfBenchmark`, `DeveloperPrivilegeRouting`, `PasswordRecovery` y contratos de catálogo se ajustaron para no depender de la fuente retirada.
+- El workflow completo se ejecutó; cualquier fallo global ajeno a MIG-025 se identifica en checkpoint sin atribuirlo a esta tarea.
+
+**Validación Beta diferida:** comprobar endpoints desplegados de los seis servicios, fallos parciales y recuperación; revisar proyectos/deployments/triggers/propiedades externos huérfanos en entorno aislado; no borrar recursos sin autorización. Ver `Tareas_Beta.md` §6.5.
+
+**Resultado:** MIG-025 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-026 — eliminar configuración local de todos los servicios.
 ### MIG-026 — Eliminar configuración local de todos los servicios
 **Estado: PENDIENTE**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
