@@ -55,4 +55,4 @@ export function runReportImageAttachmentTests({ui,api,feedback}) {
  return {status:failed?"FAIL":"PASS",passed,failed,results};
 }
 const result=runReportImageAttachmentTests({ui:fs.readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8"),api:fs.readFileSync(new URL("../Frontend/api-config.js",import.meta.url),"utf8"),feedback:fs.readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8")});
-console.log(JSON.stringify(result,null,2));if(result.status!=="PASS")process.exitCode=1;
+console.log(JSON.stringify(result,null,2));if(result.status!=="PASS")process.exitCode=1;console.log(result.passed+"/"+(result.passed+result.failed)+" PASS");

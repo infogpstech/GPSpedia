@@ -214,3 +214,4 @@ const ui = fs.readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8"
 const result = runSuggestionImageSecurityTests({ feedback, ui, assert });
 console.log(JSON.stringify(result, null, 2));
 if (result.status !== "PASS") process.exitCode = 1;
+console.log(result.passed + "/" + (result.passed + result.failed) + " PASS");

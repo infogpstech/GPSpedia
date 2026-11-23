@@ -51,7 +51,7 @@ for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
             resourceType: "drive_folder",resourceId: "FOLDER_12345",
             expectedParentId: "OTHER_PARENT", expectedName: "Cortes"
         } } });
-        assert.throws(() => api.getCortesRootFolder(), /jerarquía configurada/);
+        assert.throws(() => api.getCortesRootFolder(), /no está ubicada directamente en el padre configurado/);
     });
 }
 check("ADMIN ya no persiste Imagenes_Sin_Uso en ScriptProperties", () => {
