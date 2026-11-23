@@ -12,12 +12,11 @@ function runInboxRoleContractTests(sources) {
  run('Campo Rol no concede acceso sin Privilegios',()=>{const c=session({ID:'U1',SessionToken:'S1',Rol:'Desarrollador'});assert(c&&c.role==='');});
  run('UI permite únicamente Desarrollador',()=>{['Desarrollador'].forEach(r=>assert(canApprove(r)));['Jefe','Supervisor','Tecnico','Tecnico_exterior','Anónimo','Gefe',''].forEach(r=>assert(!canApprove(r)));});
  run('Detalle Inbox usa el rol normalizado del contexto',()=>{const s=ui.indexOf('export function renderInboxDetail(');assert(s>=0);const marks=["\nexport function ","\nfunction "].map(x=>ui.indexOf(x,s+20)).filter(x=>x>=0);const body=ui.slice(s,marks.length?Math.min(...marks):ui.length);assert(body.includes('const userRole = context.role'));assert(body.includes('canApproveInboxVideo_(userRole)'));assert(!/currentUser\.(?:Rol|Privilegios)/.test(body));});
- run('FEEDBACK no requiere URL, secreto ni diagnóstico local de Coordinator',()=>{
-  assert(!api.includes('(serviceKey === "AUTH" || serviceKey === "FEEDBACK")'));
-  assert(!ui.includes('selectedServiceKey === "FEEDBACK" ? "Configuración local del coordinador"'));
-  assert(!ui.includes('__gpsepediaFeedbackCoordinatorWarningLogged'));
-  assert(!feedback.includes('GPSpedia_COORDINATOR_URL'));
-  assert(!feedback.includes('GPSpedia_COORDINATOR_SECRET'));
+ run('el diagnóstico de salud conserva el indicador de coordinador de FEEDBACK sin interpretar coincidencia de secretos',()=>{
+  assert(api.includes('(serviceKey === "AUTH" || serviceKey === "FEEDBACK")'));
+  assert(ui.includes('selectedServiceKey === "FEEDBACK" ? "Configuración local del coordinador"'));
+  assert(ui.includes('sin verificar coincidencia remota'));
+  assert(ui.includes('__gpsepediaFeedbackCoordinatorWarningLogged'));
  });
  run('Backend mantiene RBAC para aprobación y rechazo',()=>{const s=feedback.indexOf('const FEEDBACK_ACTION_PERMISSIONS = Object.freeze(');assert(s>=0);const e=feedback.indexOf(');',s)+2;const policy=feedback.slice(s,e);assert(policy.includes('approveVideo: ["Desarrollador"]'));assert(policy.includes('rejectVideo: ["Desarrollador"]'));});
  run('Las acciones de no leído y ocultación son autenticadas, coordinadas y privadas',()=>{
@@ -40,18 +39,19 @@ function runInboxRoleContractTests(sources) {
    'FEEDBACK conserva una revalidación local de usuario/sesión.');
  });
 
-run('FEEDBACK ya no proxifica ni expone la lectura del feed de Coordinator',()=>{
-  assert(!feedback.includes('function handleGetCatalogChanges'));
-  assert(!feedback.includes('getCatalogChanges'));
-  assert(!feedback.includes('catalogFeed=1'));
-  assert(api.includes('getConfiguredServiceEndpoint_("COORDINATOR")'));
-  assert(api.includes('service: "COORDINATOR"'));
- });
- run('el feed público se resuelve desde el registro central sin configuración local en FEEDBACK',()=>{
-  assert(api.includes('getConfiguredServiceEndpoint_("COORDINATOR")'));
-  assert(api.includes('service: "COORDINATOR"'));
-  assert(!feedback.includes('GPSpedia_COORDINATOR_URL'));
-  assert(!feedback.includes('GPSpedia_COORDINATOR_SECRET'));
+run('getCatalogChanges es una lectura pública del journal y no exige actor/lease FEEDBACK',()=>{const start=feedback.indexOf('function handleGetCatalogChanges(');const end=feedback.indexOf('\nfunction ',start+10);const body=feedback.slice(start,end<0?feedback.length:end);assert(!body.includes('getFeedbackActor_('));assert(!body.includes('assertFeedbackSession('));assert(feedback.includes('FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm", "getCatalogChanges"])'));});
+ run('FEEDBACK expone solo un booleano seguro para diagnosticar la configuración local del coordinador',()=>{
+  const helper=extract(feedback,'isFeedbackCoordinatorConfigured_');
+  const build=new Function('PropertiesService','withSharedMutationLease_',helper+'; return isFeedbackCoordinatorConfigured_;');
+  const configured=build({getScriptProperties:()=>({getProperty:key=>key==='GPSpedia_COORDINATOR_URL'?'https://script.google.com/macros/s/deployment/exec':'x'.repeat(40)})},()=>{});
+  const absent=build({getScriptProperties:()=>({getProperty:()=>''})},()=>{});
+  const malformed=build({getScriptProperties:()=>({getProperty:key=>key==='GPSpedia_COORDINATOR_URL'?'https://example.com/exec':'x'.repeat(40)})},()=>{});
+  assert(configured()===true,'Una URL Apps Script y secreto con longitud suficiente deben indicar configuración local presente.');
+  assert(absent()===false&&malformed()===false,'Configuración ausente o URL ajena debe reportarse como no configurada.');
+  assert(feedback.includes('coordinatorConfigured: isFeedbackCoordinatorConfigured_()'));
+  const debug=feedback.slice(feedback.indexOf('function doGet(e)'),feedback.indexOf('function doPost(e)'));
+  assert(debug.includes('coordinatorConfigured'));
+  assert(!debug.includes('GPSpedia_COORDINATOR_SECRET'),'El endpoint de diagnóstico no debe exponer nombres ni valores secretos.');
  });
  run('Lecturas FEEDBACK protegidas usan actor cacheado; rutas públicas no requieren sesión',()=>{const d=feedback.slice(feedback.indexOf('function doPost(e)'),feedback.indexOf('const RICH_TEXT_MODE_PROPERTY_'));assert(d.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "FEEDBACK" })'));assert(!d.includes('withSharedMutationLease_'));assert(d.includes('FEEDBACK_PUBLIC_ACTIONS.has(action)'));});
 

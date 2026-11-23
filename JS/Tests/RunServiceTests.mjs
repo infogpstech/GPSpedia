@@ -484,8 +484,56 @@ runGroup('41','MIG017',()=>{
  runCli('MIG017 auditoría persistente ADMIN','JS/Tests/AdminAuditTrail.mjs');
 });
 
+runGroup('42','MIG018',()=>{
+ const write=read('JS/Services/write.js'),admin=read('JS/Services/admin.js');
+ recordResult('MIG018 contrato de payload y transacción de cortes',loadFunction('JS/Tests/CutPayloadValidation.js','runCutPayloadValidationTests')(write));
+ recordResult('MIG018 validación autoritativa y privacidad VIN',loadFunction('JS/Tests/VinAuthoritativeValidation.js','runVinAuthoritativeValidationTests')({
+  write,admin,ui:read('JS/Frontend/ui.js'),addCuts:read('HTML/add_cortes.html')
+ }));
+ recordResult('MIG018 integridad de información suplementaria',loadFunction('JS/Tests/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
+  write,admin,coordinator:read('JS/Services/Coordinator.js'),ui:read('JS/Frontend/ui.js')
+ }));
+ runCli('MIG018 ledger validado y reutilizado en aportes','JS/Tests/WriteContributionLedgerReuse.mjs');
+ runCli('MIG018 flujo moderno de información suplementaria','JS/Tests/WriteSupplementaryLedgerModernFlow.mjs');
+ runCli('MIG018 append concurrente e idempotencia de aportes','JS/Tests/WriteContributionAppendConcurrency.mjs');
+ runCli('MIG018 snapshot posterior y conflictos VIN','JS/Tests/WriteContributionPostAppendSnapshot.mjs');
+ runCli('MIG018 recuperación durable de aportes','JS/Tests/WriteContributionRecovery.mjs');
+ runCli('MIG018 recuperación UI de operaciones suplementarias','JS/Tests/AddSupplementaryOperationRecovery.mjs');
+ runCli('MIG018 candidatos CATALOG de contribuciones','JS/Tests/AdminVehicleContributionCandidates.mjs');
+ runCli('MIG018 resolución ADMIN append-only','JS/Tests/AdminVehicleContributionResolution.mjs');
+ runCli('MIG018 proyección de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
+ runCli('MIG018 CATALOG proyección individual y VIN globales','JS/Tests/CatalogVehicleProjectionRead.mjs');
+ runCli('MIG018 CATALOG respuestas dirigidas','JS/Tests/CatalogTargetedResponses.mjs');
+ runCli('MIG018 CATALOG lectura aislada de candidatos','JS/Tests/CatalogContributionReadIsolation.mjs');
+ runCli('MIG018 navegación de catálogo','JS/Tests/CatalogNavigationRead.mjs');
+ runCli('MIG018 dropdowns de cortes','JS/Tests/CatalogDropdownRead.mjs');
+ runCli('MIG018 agrupación jerárquica de modelos','JS/Tests/SearchModelGrouping.mjs');
+ runCli('MIG018 VIN colección de navegación','JS/Tests/NavigationVinCollection.js');
+ runCli('MIG018 VIN firma y persistencia','JS/Tests/VinSignaturePersistence.js');
+ runCli('MIG018 VIN integridad de testigos','JS/Tests/VinTestigoIntegrity.js');
+ runCli('MIG018 VIN semántica de rangos de años','JS/Tests/VinYearRangeSemantics.js');
+ runCli('MIG018 VIN resolución de contexto','JS/Tests/VinContextResolution.js');
+ runCli('MIG018 VIN normalización de consultas','JS/Tests/VinQueryNormalization.js');
+ runCli('MIG018 VIN umbral de muestra','JS/Tests/VinSampleThreshold.js');
+ runCli('MIG018 VIN presentación de versiones','JS/Tests/VinVersionPresentation.js');
+ runCli('MIG018 reservas de slots de corte','JS/Tests/AdminCutSlotReservation.mjs');
+ runCli('MIG018 escritura agrupada de slots de corte','JS/Tests/WriteCutSlotBatchWrites.mjs');
+ runCli('MIG018 append de cortes existentes','JS/Tests/AdminCutSlotBatchWrites.mjs');
+ runCli('MIG018 preflight de corte fuera del lock','JS/Tests/WriteCutPreflightOutsideLock.mjs');
+ runCli('MIG018 snapshot de vehículo en escritura de corte','JS/Tests/WriteCutExistingVehicleSnapshotReuse.mjs');
+ runCli('MIG018 entidades solo bajo demanda','JS/Tests/WriteEntityCatalogDemand.mjs');
+ runCli('MIG018 lookup acotado de entidades','JS/Tests/WriteEntityLookupBoundedRead.mjs');
+ runCli('MIG018 asignación idempotente de IDs','JS/Tests/WriteVehicleIdAllocationIdempotency.mjs');
+ runCli('MIG018 asignador de IDs con lectura acotada','JS/Tests/WriteVehicleIdAllocatorBoundedRead.mjs');
+ runCli('MIG018 recuperación de asignación de ID en frontend','JS/Tests/VehicleIdAllocationEndToEnd.mjs');
+ runCli('MIG018 VIN duplicados con lectura acotada','JS/Tests/AdminVinDuplicateBoundedRead.mjs');
+ runCli('MIG018 snapshot de VIN reutilizado','JS/Tests/WriteVinSnapshotReuse.mjs');
+ runCli('MIG018 replay idempotente de VIN','JS/Tests/WriteVinNoopPreflight.mjs');
+ runCli('MIG018 edición versionada de campos de vehículo','JS/Tests/AdminVehicleFieldVersioning.mjs');
+});
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','39','41','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','39','41','42','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');

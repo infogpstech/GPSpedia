@@ -6052,13 +6052,15 @@ function initAdminPanelListeners() {
             latency.textContent = Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "Latencia no disponible";
             const version = document.createElement("span");
             version.textContent = item.metadata?.version ? `v${item.metadata.version}` : "Versión no reportada";
-            if (key === "AUTH" && item.metadata?.coordinatorConfigured === false) {
+            if ((key === "AUTH" || key === "FEEDBACK") && item.metadata?.coordinatorConfigured === false) {
                 version.textContent += " · Coordinador pendiente";
-                const warningKey = "__gpsepediaAuthCoordinatorWarningLogged";
+                const warningKey = key === "FEEDBACK"
+                    ? "__gpsepediaFeedbackCoordinatorWarningLogged"
+                    : "__gpsepediaAuthCoordinatorWarningLogged";
                 if (!window[warningKey] && typeof window.gpsepediaDeveloperLog === "function") {
                     window[warningKey] = true;
                     window.gpsepediaDeveloperLog(
-                        "AUTH: configura el coordinador compartido según el registro central.",
+                        key + ": configura GPSpedia_COORDINATOR_URL y GPSpedia_COORDINATOR_SECRET en ScriptProperties del servicio.",
                         "warning"
                     );
                 }
@@ -6110,10 +6112,11 @@ function initAdminPanelListeners() {
         metrics.className = "dev-service-metrics";
         metrics.append(
             createServiceMetric("Versión reportada", metadata.version || "No disponible"),
-            ...(selectedServiceKey === "AUTH" ? [createServiceMetric(
-                "Coordinador compartido",
-                metadata.coordinatorConfigured === true ? "Configurado" :
-                    metadata.coordinatorConfigured === false ? "Sin configurar" : "No verificado"
+            ...(["AUTH", "FEEDBACK"].includes(selectedServiceKey) ? [createServiceMetric(
+                selectedServiceKey === "FEEDBACK" ? "Configuración local del coordinador" : "Coordinador compartido",
+                metadata.coordinatorConfigured === true
+                    ? (selectedServiceKey === "FEEDBACK" ? "URL y secreto presentes (sin verificar coincidencia remota)" : "Configurado")
+                    : metadata.coordinatorConfigured === false ? "Sin configurar" : "No verificado"
             )] : []),
             createServiceMetric("Código HTTP", item.httpStatus === null || item.httpStatus === undefined ? "No disponible" : String(item.httpStatus)),
             createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
@@ -10912,7 +10915,6 @@ export function renderInboxDetail(item) {
                         }
                     }
                     invalidateInboxCache_(context);
-                    if (approvalResult && approvalResult.catalogSyncPending) mostrarNotificacion("La aprobación se guardó, pero no se pudo notificar a las demás sesiones; la actualización llegará al recargar el catálogo.", "warning");
                     if (approvalResult && approvalResult.catalogRefreshPending) {
                         mostrarNotificacion(approvalResult.message || "El vídeo fue aprobado, pero el catálogo requiere actualización.", "warning");
                     } else {
@@ -10942,8 +10944,7 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    const rejectionResult = await rejectVideo(item.id, userName, reason, userRole, getSessionPayload_());
-                    if (rejectionResult && rejectionResult.catalogSyncPending) mostrarNotificacion("El rechazo se guardó, pero no se pudo notificar a las demás sesiones.", "warning");
+                    await rejectVideo(item.id, userName, reason, userRole, getSessionPayload_());
                     if (!isCurrentInboxDetail()) return;
                     invalidateInboxCache_(context);
                     mostrarNotificacion("Vídeo rechazado.", "info");

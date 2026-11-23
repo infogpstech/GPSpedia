@@ -1441,28 +1441,6 @@ function createSharedMutationCoordinator_(dependencies) {
         return result;
     }
 
-    function publishVideoCatalogResetFromBrowser_(payload) {
-        const source = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
-        const userId = String(source.userId || "").trim();
-        const sessionToken = String(source.sessionToken || "");
-        const operation = String(source.operation || "").trim();
-        const requestId = String(source.requestId || "").trim();
-        if (!userId || !sessionToken) throw new Error("La publicación requiere una sesión autenticada.");
-        if (!["approveVideo", "rejectVideo"].includes(operation)) {
-            throw new Error("La operación no está autorizada para publicar un cambio de vídeo.");
-        }
-        if (!/^[A-Za-z0-9_-]{8,128}$/.test(requestId)) {
-            throw new Error("El identificador de publicación de vídeo no es válido.");
-        }
-        const actor = authorizeSession_(userId, sessionToken, now());
-        if (String(actor.role || "").trim().toLowerCase() !== "desarrollador") {
-            throw new Error("Acceso denegado: solo Desarrollador puede publicar decisiones de vídeo.");
-        }
-        return publishCatalogChange_("FEEDBACK", operation, {
-            requestId, change: { operation: "reset" }
-        });
-    }
-
     function handleRequest(request) {
         if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("Solicitud inválida.");
         const protocolVersion = request.protocolVersion === undefined || request.protocolVersion === null
@@ -1495,7 +1473,6 @@ function createSharedMutationCoordinator_(dependencies) {
 
     return {
         handleRequest: handleRequest,
-        publishVideoCatalogResetFromBrowser: publishVideoCatalogResetFromBrowser_,
         // Feed público: solo expone los eventos ya publicados de colecciones del catálogo.
         // Las escrituras y las operaciones de sesión continúan en el canal POST autenticado.
         getPublicCatalogChanges: function(payload) {
@@ -1545,11 +1522,7 @@ function doPost(e) {
             fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
             fetchAll: function(requests) { return UrlFetchApp.fetchAll(requests); }
         });
-        if (request && request.action === "publishVideoCatalogReset") {
-            response = coordinator.publishVideoCatalogResetFromBrowser(request.payload);
-        } else {
-            response = coordinator.handleRequest(request);
-        }
+        response = coordinator.handleRequest(request);
     } catch (error) {
         response = { status: "error", message: error && error.message ? error.message : "Solicitud rechazada." };
     }

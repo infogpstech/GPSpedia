@@ -23,6 +23,8 @@ assert.ok(supplementary.indexOf("prepareSupplementaryImageUploads_") < supplemen
 assert.ok(supplementary.indexOf("const appendLedgerSheet") < supplementary.indexOf("appendVehicleContributionEvent_"));
 assert.match(supplementary,/ledgerSheet:\s*appendLedgerSheet/);
 assert.match(supplementary,/e\.kind,appendLedgerSheet,rows\)/);
+assert.ok(supplementary.includes("const rows=appendLedgerSheet?readVehicleContributionLedgerRows_(appendLedgerSheet):[];"));
+assert.equal(supplementary.includes("const rows=ledger?"),false);
 
 let getterCalls=0;
 const ledger={getLastRow:()=>1};
