@@ -1272,20 +1272,20 @@ function runSharedMutationCoordinatorTests() {
         });
         assert_(validations === 0);
     });
-    test_("La caché exige actor precargado y no revalida en Coordinator ante miss", function() {
+    test_("La caché fría carga actor desde Users/ActiveSessions y rechaza otra identidad", function() {
         const store = new Map(), cache = { get: key => store.get(key) || null, put: (key, value) => store.set(key, value), remove: key => store.delete(key) };
-        let validations = 0;
-        expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-1", {
-            cache, keyFor: () => "revoked",
-            validate: () => { validations++; return { status: "success", valid: false }; }
-        }), "precargado");
+        let reads = 0;
+        const trusted = { userId: "U-1", role: "tecnico", fullName: "Técnico", epoch: 1 };
+        const deps = { cache, keyFor: () => "revoked",
+            loadActor: () => { reads++; return trusted; } };
+        const loaded = getCachedSharedSessionActor_("U-1", "token-1", deps);
+        assert_(loaded.userId === "U-1" && reads === 1, "Un miss debe cargar el actor de la fuente local.");
         store.set("wrong", JSON.stringify({ userId: "U-2", role: "tecnico", epoch: 1 }));
         expectThrow_(() => getCachedSharedSessionActor_("U-1", "token-2", {
-            cache, keyFor: () => "wrong",
-            validate: () => { validations++; return { status: "success", valid: true, actor: { userId: "U-2", role: "tecnico", epoch: 1 } }; }
-        }), "precargado");
-        assert_(validations === 0, "Un cache miss no debe volver a consultar Coordinator.");
-        assert_(store.size === 0, "Un actor de otra identidad debe eliminarse.");
+            cache, keyFor: () => "wrong", loadActor: () => ({ userId: "U-2", role: "tecnico", epoch: 1 })
+        }), "confirmar");
+        assert_(reads === 1, "La identidad incorrecta se rechaza sin consultar Coordinator.");
+        assert_(!store.has("wrong"), "Un actor de otra identidad debe eliminarse.");
     });
 
     test_("El cliente AUTH conserva revocación individual y global usando invalidación central", function() {
