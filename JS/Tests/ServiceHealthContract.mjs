@@ -11,7 +11,8 @@ const backendSources = {
     WRITE: read("JS/Services/write.js"),
     FEEDBACK: read("JS/Services/feedback.js"),
     UTILITIES: read("JS/Services/Utilities.js"),
-    ADMIN: read("JS/Services/admin.js")
+    ADMIN: read("JS/Services/admin.js"),
+    COORDINATOR: read("JS/Services/Coordinator.js")
 };
 const contractsMatch = apiSource.match(/export const SERVICE_HEALTH_CONTRACTS = Object\.freeze\((\{[\s\S]*?\})\);/);
 assert.ok(contractsMatch, "No se encontró SERVICE_HEALTH_CONTRACTS.");
@@ -258,11 +259,12 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
     const expected = {
         AUTH: "GPSpedia-Auth", CATALOG: "GPSpedia-Catalog", WRITE: "GPSpedia-Write",
         FEEDBACK: "GPSpedia-Feedback",
-        UTILITIES: "GPSpedia-Utilities", ADMIN: "GPSpedia-Admin"
+        UTILITIES: "GPSpedia-Utilities", ADMIN: "GPSpedia-Admin",
+        COORDINATOR: "GPSpedia-SharedMutationCoordinator"
     };
     for (const [key, identity] of Object.entries(expected)) {
         const source = backendSources[key];
-        assert.ok(source.includes("service: '" + identity + "'") || source.includes('service:"' + identity + '"'), key + " no declara identidad.");
+        assert.ok(source.includes("service: '" + identity + "'") || source.includes('service:"' + identity + '"') || source.includes('service: "' + identity + '"'), key + " no declara identidad.");
         assert.ok(source.includes("status: 'available'") || source.includes('status:"available"'), key + " no declara available.");
         assert.ok(source.includes("version:"), key + " no declara versión.");
         assert.ok(source.includes("ContentService.MimeType.JSON"), key + " no responde JSON.");
