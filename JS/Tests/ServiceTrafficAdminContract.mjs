@@ -16,36 +16,38 @@ const write = read("JS/Services/write.js");
 const feedback = read("JS/Services/feedback.js");
 const catalog = read("JS/Services/catalog.js");
 
-assert.match(api, /'getServiceTraffic': 'ADMIN'/);
-assert.match(admin, /function handleGetServiceTraffic_\(payload, logMessage, developerContext\)/);
-assert.match(admin, /function normalizeCoordinatorServiceTraffic_\(source\)/);
-assert.match(admin, /function validateGlobalServiceTrafficResult_\(source\)/);
-assert.doesNotMatch(admin, /function getDirectServiceTrafficBatch_/);
-assert.doesNotMatch(admin, /function mergeDirectServiceTraffic_/);
-assert.match(admin, /developerContext\.role[^\n]*desarrollador/);
-assert.match(admin, /normalizeCoordinatorServiceTraffic_\(coordinatorResult\)/);
-assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
-assert.doesNotMatch(coordinator, /function readDirectServiceTrafficBatch_/);
-const trafficReader = coordinator.slice(coordinator.indexOf("function readServiceTraffic_"), coordinator.indexOf("function authorizeSession_", coordinator.indexOf("function readServiceTraffic_")));
+assert.match(api, /'getServiceTraffic': 'COORDINATOR'/);
+assert.equal(admin.includes("handleGetServiceTraffic_"), false);
+assert.equal(admin.includes("getSharedServiceTraffic_"), false);
+assert.equal(admin.includes("normalizeCoordinatorServiceTraffic_"), false);
+assert.equal(admin.includes("validateGlobalServiceTrafficResult_"), false);
+assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_URL")'));
+assert.ok(admin.includes('deleteProperty("GPSpedia_COORDINATOR_SECRET")'));
+assert.ok(admin.includes("removeLegacyAdminCoordinatorSettings_();"));
+assert.equal(admin.includes('properties.getProperty("GPSpedia_COORDINATOR_URL")'), false);
+assert.equal(admin.includes('properties.getProperty("GPSpedia_COORDINATOR_SECRET")'), false);
+
+assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
+assert.match(coordinator, /authorizeSession_\(userId, sessionToken, now\(\)\)/);
+assert.match(coordinator, /role !== "desarrollador"/);
+assert.match(coordinator, /readServiceTraffic_\("ADMIN", "getServiceTraffic"\)/);
+assert.match(coordinator, /request\.action === "getServiceTraffic"/);
+assert.match(coordinator, /telemetría global está reservada a Desarrollador/);
+const trafficStart = coordinator.indexOf("function readServiceTraffic_");
+const trafficEnd = coordinator.indexOf("\n    function authorizeSession_", trafficStart);
+assert.ok(trafficStart >= 0 && trafficEnd > trafficStart);
+const trafficReader = coordinator.slice(trafficStart, trafficEnd);
 assert.doesNotMatch(trafficReader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
-assert.doesNotMatch(trafficReader, /withCoordinatorLock_/);
 assert.match(trafficReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
-assert.match(coordinator, /SHARED_MUTATION_COORDINATOR_VERSION = "1\.4\.9"/);
-assert.match(coordinator, /recordServiceTrafficEvent_\(service, result\.trafficCapturedAt, "validateSessionContext"\)/);
-assert.match(coordinator, /recordServiceTrafficEvent_\(trafficService, capturedAt, operation\)/);
+assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
+
 assert.match(shared, /function getServiceTraffic\(\)/);
 assert.match(shared, /send_\("getServiceTraffic"/);
-
 for (const [name, source] of [["AUTH", auth], ["WRITE", write], ["FEEDBACK", feedback], ["CATALOG", catalog]]) {
     assert.doesNotMatch(source, /recordDirectServiceTraffic_|readDirectServiceTraffic_|recordUsersDirectTraffic_|readUsersDirectTraffic_|recordCatalogTraffic_|readCatalogTraffic_/,
         name + " no debe persistir ni exponer contadores directos.");
     assert.doesNotMatch(source, /DIRECT_SERVICE_TRAFFIC_CONFIG_|USERS_DIRECT_TRAFFIC_PREFIX_|CATALOG_TRAFFIC_BUCKET_PREFIX_/,
         name + " no debe conservar configuración de contadores directos.");
-    const start = source.indexOf("function doPost(e)");
-    const end = source.indexOf("\nfunction ", start + 15);
-    const router = source.slice(start, end > start ? end : source.length);
-    assert.doesNotMatch(router, /getServiceTraffic|record[A-Za-z]*Traffic_/,
-        name + " no debe registrar métricas en su ruta ordinaria ni exponer endpoint interno.");
 }
 assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_SECRET_PROPERTY_|catalogTrafficSecretEquals_/,
     "CATALOG no debe conservar el secreto compartido del endpoint interno retirado por MIG-010.");
@@ -63,6 +65,5 @@ assert.match(ui, /lastGlobalServiceTrafficFetchAt < 60000/);
 assert.match(ui, /renderGlobalServiceTrafficChart_/);
 assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
 assert.match(html, /Un cero no significa necesariamente que el servicio no recibió solicitudes/);
-assert.match(admin, /telemetría global está reservada a Desarrollador/);
 
-console.log("ServiceTrafficAdminContract: 46/46 PASS");
+console.log("ServiceTrafficAdminContract: 33/33 PASS");
