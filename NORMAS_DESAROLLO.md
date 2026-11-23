@@ -254,3 +254,47 @@ El objetivo rector de los trabajos sobre los servicios de GPSpedia es **simplifi
 **Criterio de aceptación:** cada cambio relacionado con despliegues debe mantener o reducir la complejidad total del proceso. La opción preferida es la que permita desplegar y actualizar los servicios con menos intervenciones manuales, menos configuraciones duplicadas y menor riesgo de error, sin sacrificar la integridad ni los requisitos funcionales.
 
 Esta regla prevalece sobre cualquier propuesta técnica anterior que aumente innecesariamente la complejidad del despliegue.
+
+
+## 17. Requisito expreso del usuario: configuración centralizada y conservación total de funciones
+
+Este requisito, registrado el 2026-11-22, define la arquitectura objetivo de la siguiente migración y prevalece sobre propuestas anteriores que mantengan configuración operativa dentro de cada proyecto Apps Script.
+
+### 17.1 Configuración y despliegue
+
+- Ningún servicio Apps Script debe almacenar configuración propia de GPSpedia en `PropertiesService`, variables de configuración locales, constantes de URLs, IDs de Spreadsheet/Drive, endpoints de otros servicios, claves compartidas o secretos de interconexión.
+- La configuración operativa de la plataforma se centraliza en hojas específicas de la Spreadsheet: registro de servicios/endpoints, parámetros funcionales, estados, límites y demás valores que hoy estén duplicados en proyectos.
+- Un servicio no debe conocer ni llamar la URL de otro servicio GPSpedia. Se eliminan las dependencias de COORDINATOR y SharedMutation; no se sustituirán por otro intermediario equivalente.
+- El frontend será responsable del enrutamiento y de coordinar secuencias que involucren más de un servicio. Cada llamada backend se origina desde el frontend y cada servicio responde al frontend.
+- Los servicios acceden a la Spreadsheet como fuente de configuración y datos. El método para que cada proyecto llegue a esa Spreadsheet debe evitar introducir un ID o propiedad de configuración local; se debe validar técnicamente una vinculación/arquitectura que lo permita.
+- No se requieren claves secretas compartidas entre servicios ni secretos configurados manualmente para que los proyectos se comuniquen. Los mecanismos propios de Google para autorizar acceso a recursos (por ejemplo, OAuth administrado por Apps Script) no se deben convertir en secretos manuales ni exponer al navegador.
+- No introducir un endpoint bootstrap cuya URL o ID de Spreadsheet vuelva a convertirse en una configuración oculta dentro de un servicio. Resolver explícitamente el arranque de configuración y documentar cualquier referencia técnica inevitable antes de aprobar el diseño.
+- Desplegar o actualizar un servicio no debe requerir editar propiedades, URLs, IDs o secretos en otros proyectos ni redesplegarlos.
+- La configuración almacenada en Spreadsheet debe tener esquema, validación, versión, caché y recuperación ante indisponibilidad. La caché evita consultar la hoja en cada acción ordinaria; no debe degradar el rendimiento ni dejar configuraciones incoherentes.
+
+### 17.2 Conservación obligatoria de la plataforma
+
+- La migración debe conservar todas las funciones visibles y operativas de GPSpedia, no solo las acciones principales del catálogo o el inicio de sesión.
+- Se incluyen, sin limitarse a ellas: alta/edición/consulta de modelos y cortes, VIN, sugerencias, aportes, imágenes, vídeos, carga reanudable, aprobación/rechazo de vídeos, tutoriales, PyS, soluciones y prevención, likes, vistas, reportes, formularios, Inbox, mensajes, plantillas, archivos, Drive, administración de carpetas, backups/restauración, migraciones, inventarios, auditorías, terminal de Drive, estados de servicios, latencia, tráfico, métricas de usuarios, logs, roles, autenticación, recuperación de contraseña y preferencias.
+- También se conservan las funciones operativas o de mantenimiento que no aparezcan en el mapa de acciones del frontend, incluidas herramientas de desarrollador, tareas programadas, compatibilidad histórica, acciones manuales y procesos de reconciliación.
+- Ninguna función se elimina, oculta, degrada, limita a otro rol ni se sustituye por una pantalla sin operación real para facilitar la migración.
+- La Spreadsheet almacena configuración, registros y metadatos; no se debe intentar guardar en celdas el contenido binario de imágenes o vídeos. Los archivos conservan su almacenamiento compatible y sus flujos de carga. La migración debe mantener permisos, propietario, tamaño, MIME, integridad, reanudación y recuperación.
+- Para Drive, YouTube y otros recursos externos, evaluar si la transferencia puede ejecutarse directamente desde el navegador con el mismo modelo de identidad, permisos y propiedad actual. Si la transferencia directa no conserva todas las capacidades, no se deshabilita la función: se documenta la incompatibilidad y se presenta una alternativa compatible antes de modificar el flujo. No se deben exponer tokens OAuth ni credenciales en el frontend.
+
+### 17.3 Seguridad, sesión y rendimiento
+
+- La coordinación frontend no sustituye la autorización backend. Cada servicio conserva la comprobación local de la sesión y de la capacidad/rol permitidos por las normas vigentes.
+- No confiar en userId, rol o permisos que el navegador pueda editar. No usar secretos compartidos entre servicios como sustituto de la autenticación.
+- Mantener las reglas de sesión, bloqueo temporal por intentos fallidos, cierre remoto, invalidación de cachés, eliminación de cuenta y matriz RBAC vigentes en §§12–15.
+- No introducir llamadas backend→backend, validación remota central por acción, leases, esperas o reintentos genéricos que contradigan el requisito de rendimiento de §15.
+- Las excepciones de revocación se coordinan desde el frontend con solicitudes directas a los servicios afectados. La política de expiración/caché debe impedir que una revocación parcial deje permisos indefinidamente vigentes.
+- Las métricas de salud, latencia, tráfico y usuarios deben conservarse sin añadir viajes de red o escrituras síncronas que degraden las acciones ordinarias.
+
+### 17.4 Prueba de paridad y aceptación
+
+- Antes de migrar, construir un inventario verificable de pantallas, botones, acciones, handlers, permisos, integraciones, procesos manuales y pruebas existentes.
+- Cada función tendrá un identificador de seguimiento y una prueba de equivalencia antes/después. El mapa de 120 acciones no constituye por sí solo el inventario completo.
+- La migración se acepta solo si todas las funciones del inventario permanecen disponibles, los contratos y permisos se conservan y las pruebas de regresión pasan.
+- Los despliegues Beta deben validar cargas reales de imágenes y vídeos, creación/edición de modelos, estados y métricas, Drive, Inbox, PyS, backups/restauración y operaciones administrativas, además del catálogo y login.
+- No borrar proyectos, acciones, hojas, archivos, endpoints ni datos hasta cerrar su matriz de paridad y confirmar que no tienen consumidores vigentes.
+- Si un requisito arquitectónico literal entra en conflicto con conservar una función existente, no se sacrifica silenciosamente la función: se documenta la incompatibilidad y se detiene únicamente la decisión afectada para resolverla con el usuario.
