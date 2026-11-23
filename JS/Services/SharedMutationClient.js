@@ -142,9 +142,52 @@ function createSharedMutationClient_(dependencies) {
         }
         return result;
     }
+    // API legacy para clientes externos; no participa en el flujo de sesión de GPSpedia.
+    function registerSession(userId, sessionToken, role, fullName, createdAt, lastActivityAt) {
+        return send_("registerSession", "AUTH", "registerSession", { userId, sessionToken, role, fullName, createdAt, lastActivityAt });
+    }
+    function syncUserSessions(userId, role, fullName, sessions) {
+        return send_("syncUserSessions", "AUTH", "syncUserSessions", { userId, role, fullName, sessions });
+    }
+    function invalidateSessionActorCaches(userId, sessionTokens) {
+        const id = String(userId || "").trim();
+        const tokens = Array.from(new Set((Array.isArray(sessionTokens) ? sessionTokens : [])
+            .map(token => String(token || "")).filter(Boolean)));
+        if (!id || id.length > 128 || tokens.some(token => token.length < 16 || token.length > 200)) {
+            throw new Error("La invalidación de caché requiere un usuario y tokens de sesión válidos.");
+        }
+        if (!tokens.length) return { status: "success", invalidated: 0 };
+        for (let offset = 0; offset < tokens.length; offset += 25) {
+            const batch = tokens.slice(offset, offset + 25);
+            const result = send_("invalidateSessionActorCaches", "AUTH", "invalidateSessionActorCaches", {
+                userId: id, sessionTokens: batch
+            });
+            if (!result || result.status !== "success" || result.invalidated !== batch.length ||
+                !Array.isArray(result.services) || !["WRITE", "FEEDBACK", "ADMIN"].every(service => result.services.includes(service))) {
+                throw new Error("Coordinator no confirmó la invalidación remota completa de caché.");
+            }
+        }
+        return { status: "success", invalidated: tokens.length };
+    }
+    function revokeSession(userId, sessionToken) {
+        invalidateSessionActorCaches(userId, [sessionToken]);
+        return send_("revokeSession", "AUTH", "revokeSession", { userId, sessionToken });
+    }
+    function revokeUserSessions(userId, sessionTokens) {
+        invalidateSessionActorCaches(userId, sessionTokens);
+        return send_("revokeUserSessions", "AUTH", "revokeUserSessions", { userId });
+    }
+    function validateSessionContext(userId, sessionToken, service) {
+        const caller = String(service || "AUTH").trim().toUpperCase();
+        return send_("validateSessionContext", caller, "validateSessionContext", { userId, sessionToken });
+    }
+
     return { withLease: withLease, publishCatalogChange: publishCatalogChange,
         publishCatalogChanges: publishCatalogChanges, getCatalogChanges: getCatalogChanges,
-        getServiceTraffic: getServiceTraffic };
+        getServiceTraffic: getServiceTraffic, registerSession: registerSession,
+        syncUserSessions: syncUserSessions, revokeSession: revokeSession,
+        revokeUserSessions: revokeUserSessions, invalidateSessionActorCaches: invalidateSessionActorCaches,
+        validateSessionContext: validateSessionContext };
 }
 
 function withSharedMutationLease_(service, operation, callback, options) {
