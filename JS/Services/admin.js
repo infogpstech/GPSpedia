@@ -7124,16 +7124,14 @@ function handleGetAdminImageUploadStatus(payload, logMessage) {
     if (!cleanVehicleId || !imageFields.has(cleanFieldName) || !/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
         throw new Error("Parámetros inválidos para consultar el estado del reemplazo de imagen.");
     }
-    const cutsSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    if (!cutsSheet || cutsSheet.getLastRow() < 2) throw new Error("No hay registros disponibles en la hoja Cortes.");
-    const materializedRow = findUniqueAdminVehicleRow_(cutsSheet, cleanVehicleId);
-    const materializedImageUrl = String(cutsSheet.getRange(materializedRow, COLS_CORTES[cleanFieldName]).getValue() || "").trim();
+    // La versión vigente del campo la obtiene el frontend directamente de CATALOG.
+    // ADMIN solo informa el estado del journal de carga y no lee la proyección materializada.
     const eventsSheet = getImageUploadEventsSheetForAdmin_();
-    if (!eventsSheet) return { status: "success", operationStatus: "not_found", currentImageUrl: materializedImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
+    if (!eventsSheet) return { status: "success", operationStatus: "not_found", currentImageUrl: "", newImageUrl: "", fileIntegrity: "not_available" };
     const operationKey = buildImageUploadOperationKey(operationId, cleanVehicleId, cleanFieldName);
     const entries = findImageUploadEventsByOperationKeyForAdmin_(eventsSheet, operationKey);
     if (!entries.length) return { status: "success", operationStatus: "not_found", currentImageUrl: materializedImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
-    const currentImageUrl = materializedImageUrl;
+    const currentImageUrl = "";
     const tokens = new Set(entries.map(entry => String(entry.values[1] || "").trim()));
     if (tokens.size !== 1) return { status: "success", operationStatus: "requires_review", currentImageUrl, newImageUrl: "", fileIntegrity: "invalid" };
     const projection = projectImageUploadEventsForAdmin_(entries);
