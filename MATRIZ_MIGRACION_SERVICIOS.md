@@ -624,3 +624,22 @@ Las 12 acciones siguientes están mapeadas y tienen handler, pero no se encontr�
 - La migración de identificadores, reconciliación de imágenes y timestamps deben conservar sus modos dry-run, manifiestos, snapshots, locks y rollback.
 
 **Resultado de esta fase:** clasificación funcional preliminar de las 12 acciones sin consumidor directo. El inventario de comandos manuales y jobs no queda cerrado todavía.
+
+
+### 13.2 Terminal de desarrollador y procesos programados — revisión parcial
+
+La acción ADMIN `driveCommand` es una herramienta manual invocada desde la consola de desarrollador. Los comandos observados en `handleDriveCommand` son:
+
+| Comando | Comportamiento |
+|---|---|
+| `dir` / `ls` | Lista carpetas y archivos de la carpeta activa. |
+| `cd <carpeta>` | Navega a una subcarpeta única dentro del árbol Cortes. |
+| `cd ..` | Sube al padre único validado; en raíz permanece en raíz. |
+| `cd \\ ` o `cd /` | Regresa a la raíz Cortes. |
+| `mkdir <nombre>` | Crea una subcarpeta y verifica su pertenencia/parentesco. |
+| `move` | Mueve un archivo a una carpeta destino dentro del árbol Cortes, con validación previa y posterior. |
+| `tree` | Muestra el árbol hasta la profundidad implementada (máximo 2 niveles adicionales). |
+
+La terminal no es un explorador genérico de Drive: restringe navegación, origen y destino al árbol Cortes. No se observó un comando de borrado en el dispatcher revisado. La migración debe conservar estos límites de seguridad y no añadir operaciones destructivas por equivalencia superficial.
+
+Se hizo una búsqueda estática de `ScriptApp.newTrigger`, `newTrigger(`, `timeBased(`, `onOpen` y `onEdit` en estos módulos: AUTH, USERS, WRITE, CATALOG, FEEDBACK, InboxConversations, ADMIN, UTILITIES, Coordinator, SharedMutationClient y los módulos frontend ui.js/main.js. No se encontraron declaraciones de triggers en ese conjunto. **Esto no demuestra que el repositorio completo ni los proyectos Apps Script desplegados carezcan de triggers**; falta inspeccionar archivos de raíz/manifiestos y configuración de cada proyecto antes de cerrar el inventario programado.
