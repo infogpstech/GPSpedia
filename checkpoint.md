@@ -765,3 +765,47 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 ### Estado y siguiente paso
 - MIG-012: COMPLETADA EN CÓDIGO, con cutover remoto diferido a Beta.
 - No iniciar MIG-013 en este cierre; queda como siguiente tarea pendiente según prioridad: sesiones sin Coordinator ni secretos compartidos.
+
+
+---
+
+## Cierre MIG-013 — implementación y cobertura de sesión local — 2026-11-23
+
+### Estado Git
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo: `GPSpedia2.2.5_work`.
+- Rama base protegida: `GPSpedia2.2.5`; no se modifica.
+- Último commit documental previo a este checkpoint: `3ef2eebdfba57b166a735ecf0a78508f60868ba0`.
+
+### Resultado técnico
+- AUTH mantiene login, hash PBKDF2 actual, bloqueo temporal de cinco intentos fallidos durante 15 minutos y tokens opacos generados en servidor.
+- Users/ActiveSessions sigue siendo la fuente autoritativa de identidad, rol, token y actividad.
+- AUTH, WRITE, FEEDBACK, ADMIN y UTILITIES usan el loader común de actor con caché local del proyecto. CATALOG conserva loader y caché locales equivalentes.
+- Cache miss comprueba token único, correspondencia de userId, vigencia, fechas, usuario único/activo, rol permitido y revocación pendiente. El rol procede de Users, no del navegador.
+- Cache hit evita nuevas lecturas de Spreadsheet y llamadas entre servicios. La caché utiliza clave SHA-256(userId/token) y TTL máximo de 21,600 segundos.
+- Ninguna ruta ordinaria de login, carga de actor, validación de sesión o comprobación de capacidad usa Coordinator ni adquiere leases SharedMutation. Las coordinaciones no relacionadas con sesión se mantienen.
+- La invalidación local no requiere secreto compartido. La coordinación frontend de invalidación entre servicios, revocación y recuperación ante indisponibilidad corresponde a MIG-014.
+
+### Pruebas añadidas/ampliadas
+- `JS/Tests/MIG013SessionActorLocalLookup.mjs`: loader común y CATALOG, caché fría/caliente, TTL, clave hasheada, identidad, sesión desconocida/revocada/expirada, usuario eliminado, cambio de rol tras invalidación y ausencia de API de sesión Coordinator en servicios protegidos.
+- `JS/Tests/SessionActivityCoordination.mjs`: AUTH, loaders locales, RBAC, ausencia de llamadas de sesión Coordinator y endpoints locales de invalidación.
+- `JS/Tests/SessionActivityLeaseMinimization.mjs`: ausencia de leases en rutas ordinarias y conservación de leases de mantenimiento ajenas a sesión.
+- `JS/Tests/CoordinatorCapabilityPreservation.mjs`: preservación de RBAC, eliminación de cuenta y operaciones de coordinación fuera del flujo ordinario.
+
+### Archivos actualizados
+- `JS/Tests/MIG013SessionActorLocalLookup.mjs`
+- `TAREAS_MIGRACION_ARQUITECTURA.md`
+- `INVENTARIO_LLAMADAS_SERVICIOS.md`
+- `MATRIZ_MIGRACION_SERVICIOS.md`
+- `ChangesLogs.txt`
+- `Tareas_Beta.md`
+- `checkpoint.md`
+
+### Validación pendiente
+- Confirmar el resultado de GitHub Actions Node.js 22 para el commit de esta tarea y corregir cualquier regresión.
+- Probar deployments AUTH y consumidores con Spreadsheet aislada en Beta: login, expiración, revocación, cambio de rol, eliminación, cache miss/hit y permisos RBAC reales.
+- No se modificaron endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos.
+
+### Estado y siguiente paso
+- MIG-013: implementación de código completada; cierre sujeto a regresión CI.
+- Siguiente tarea de código: MIG-014 — revocación y limpieza de caché desde frontend.
