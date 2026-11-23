@@ -22,7 +22,7 @@ test("rutas directas actuales coinciden con ACTION_TO_SERVICE_MAP", () => {
     assert.match(api, /'getSuggestion': 'WRITE'/);
     assert.match(api, /'checkOperation': 'WRITE'/);
     assert.match(api, /'getPysData': 'FEEDBACK'/);
-    assert.match(api, /'getCatalogChanges': 'FEEDBACK'/);
+    assert.match(api, /'getCatalogChanges': 'COORDINATOR'/);
     assert.match(api, /'getNavigationData': 'CATALOG'.*'getCatalogData': 'CATALOG'.*'getDropdownData': 'CATALOG'/);
 });
 
@@ -38,10 +38,11 @@ test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", (
 
 test("FEEDBACK mantiene rutas y actor cacheado sin contadores directos", () => {
     assert.doesNotMatch(feedback, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_/);
-    assert.match(feedback, /const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm", "getCatalogChanges"\]\)/);
+    assert.match(feedback, /const FEEDBACK_PUBLIC_ACTIONS = new Set\(\["getPysData", "sendContactForm"\]\)/);
     const start=feedback.indexOf("function doPost(e)"),end=feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_",start),router=feedback.slice(start,end);
     assert.ok(start>=0&&end>start);
     assert.doesNotMatch(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_/);
+    assert.doesNotMatch(router,/getCatalogChanges/);
     assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
     assert.doesNotMatch(router,/withSharedMutationLease_/);
     assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
