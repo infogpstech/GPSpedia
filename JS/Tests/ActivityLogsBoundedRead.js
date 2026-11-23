@@ -19,7 +19,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
-const result=runActivityLogsBoundedReadTests({feedback:readFileSync(resolve(root,"Services/feedback.js"),"utf8")});
+const result=runActivityLogsBoundedReadTests({feedback:readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8")});
 result.results.forEach(item=>console.log(item.status+" "+item.name+(item.message?" — "+item.message:"")));
 console.log("AUG-120: "+result.passed+"/"+(result.passed+result.failed)+" pruebas aprobadas.");
 if(result.failed)process.exitCode=1;
