@@ -814,3 +814,98 @@ La columna `VIN` no tiene índice fijo en `COLS_CORTES`: `getVinColumnIndex` la 
 ### 17.8 Diferencia documental sobre la posición física de VIN
 
 El README vigente describe el esquema objetivo de VIN en la columna AQ (43), con AR:AS (44–45) disponibles, después de migrar los identificadores de operación. En cambio, `JS/Services/write.js` no fija VIN en `COLS_CORTES`: lo busca por el encabezado exacto `VIN` mediante `getVinColumnIndex`, y falla ante encabezados duplicados. La matriz debe conservar ambas evidencias hasta verificar la hoja real y el flujo administrativo `renameVinColumnHeader`; no se debe mover ni renombrar la columna por inferencia. La regla fija AT:AV (46–48) para `activaTestigo1..3` sí está impuesta expresamente por WRITE.
+
+
+
+## 18. Mapa de datos FEEDBACK, CATALOG, ADMIN, UTILITIES e Inbox — primera pasada 2026-11-23
+
+Fuente: definiciones de hojas, mapas de columnas, encabezados versionados y accesos observados en los módulos de servicio de la rama. Como en §17, esto describe contratos del código; no es una lectura de datos reales de Spreadsheet.
+
+### 18.1 CATALOG
+
+Hojas declaradas: `Cortes`, `LogosMarca`, `Tutorial` y `Relay`.
+
+| Hoja | Mapa físico declarado |
+|---|---|
+| `Cortes` | A:AP (1–42), mismo mapa base descrito en §17.4. VIN se resuelve por encabezado; indicadores de testigo se agregan al mapa si existen. |
+| `LogosMarca` | A:C: `id`, `nombreMarca`, `urlLogo` |
+| `Tutorial` | A:H: `ID`, `Tema`, `Imagen`, `comoIdentificarlo`, `dondeEncontrarlo`, `Detalles`, `Video`, `Colaborador` |
+| `Relay` | A:K: `ID`, `configuracion`, `funcion`, `vehiculoDondeSeUtiliza`, `pin30Entrada`, `pin85BobinaPositivo`, `pin86bobinaNegativo`, `pin87aComunCerrado`, `pin87ComunmenteAbierto`, `imagen`, `observacion` |
+| `AportesVehiculo` | A:K, encabezados versionados idénticos a los documentados en §17.5; CATALOG lee el ledger para proyectar contribuciones. |
+
+### 18.2 FEEDBACK — hojas principales
+
+Hojas declaradas: `Cortes`, `Feedbacks`, `Contactanos` y `ActividadUsuario`. `SUGERENCIAS_ANO` es un alias de `Feedbacks`, no una hoja distinta.
+
+| Hoja | Columnas |
+|---|---|
+| `Feedbacks` | A:I: `ID`, `Usuario`, `ID_vehiculo`, `Problema`, `Respuesta`, `Se resolvio`, `Responde`, `Reporte de util`, `anoSugerido` |
+| `Contactanos` | A:F: `Contacto_ID`, `User_ID`, `Asunto`, `Mensaje`, `Respuesta_mensaje`, `ID_usuario_responde` |
+| `ActividadUsuario` | A:G: `id`, `timestamp`, `idUsuario`, `nombreUsuario`, `tipoActividad`, `idElementoAsociado`, `detalle` |
+| `Cortes` | Mapa base A:AP descrito en §17.4; el código de FEEDBACK también consulta datos del catálogo. |
+
+### 18.3 FEEDBACK — PyS, tutoriales, vídeo y eventos
+
+| Hoja | Columnas / encabezados |
+|---|---|
+| `pys` | A:J: `id_problem`, `Problema`, `Descripción`, `Se soluciono`, `Solucion`, `Prevenir`, `Imagen`, `Video`, `Colaborador`, `modelos_asociados` |
+| `PysOperations` | A:H: `opId`, `payloadHash`, `problemId`, `status`, `imageFileId`, `imageUrl`, `createdAt`, `updatedAt` |
+| `Tutorial` | A:H, encabezados descritos en §18.1 |
+| `TutorialTitleEvents` | A:H: `operationId`, `eventHash`, `tutorialId`, `action`, `titleKey`, `previousTitleKey`, `payloadHash`, `createdAt` |
+| `TutorialEditEvents` | A:F: `operationId`, `payloadHash`, `tutorialId`, `expectedHash`, `snapshotJson`, `createdAt` |
+| `TutorialRenameEvents` | A:F: `operationId`, `payloadHash`, `tutorialId`, `expectedTitleKey`, `title`, `createdAt` |
+| `VideoApprovalEvents` | A:F: `eventId`, `payloadHash`, `itemId`, `decision`, `snapshotJson`, `createdAt` |
+| `FeedbackReportImageEvents` | A:J: `eventId`, `reportId`, `userId`, `imageFileId`, `imageUrl`, `imageName`, `imageMimeType`, `imageSize`, `imageSha256`, `createdAt` |
+| `FeedbackLikes`, `FeedbackYearApplications`, `FeedbackYearApplicationEvents` | Hojas localizadas en el código; sus encabezados/columnas exactos aún deben extraerse y contrastarse. |
+
+FEEDBACK también utiliza `__IdentifierSequenceConfig__` (A:G, contrato descrito en §17.6) y `__IdentifierSequenceReservations__` (A:F: `reservationId`, `sheet`, `column`, `reservedSuffix`, `baseSuffix`, `createdAt`).
+
+### 18.4 Inbox — tablas de conversaciones directas
+
+El módulo `JS/Services/InboxConversations.js` define cinco hojas separadas de Feedback/Contactanos:
+
+| Hoja | Columnas |
+|---|---|
+| `InboxConversations` | A:Q (17): `conversationId`, `createdAt`, `updatedAt`, `subject`, `category`, `type`, `status`, `createdById`, `createdByName`, `createdByRole`, `participantsJson`, `createKey`, `createHash`, `lastMessageId`, `lastMessageAt`, `lastMessagePreview`, `messageCount` |
+| `InboxMessages` | A:I (9): `messageId`, `conversationId`, `createdAt`, `authorId`, `authorName`, `authorRole`, `body`, `idempotencyKey`, `payloadHash` |
+| `InboxConversationState` | A:J (10): `conversationId`, `userId`, `lastReadAt`, `lastReadMessageId`, `archived`, `hasSent`, `hasReceived`, `updatedAt`, `lastReceivedMessageId`, `lastSentMessageId` |
+| `InboxConversationFlags` | A:E (5): `conversationId`, `userId`, `unreadOverride`, `deleted`, `updatedAt` |
+| `InboxConversationAudit` | A:H (8): `eventId`, `timestamp`, `actorId`, `actorName`, `action`, `conversationId`, `messageId`, `details` |
+
+La separación de tablas, las marcas de archivo/lectura/borrado por usuario y la auditoría son parte del contrato; no reemplazar las tablas por una columna de estado única ni convertir el borrado lógico por participante en borrado físico.
+
+### 18.5 ADMIN — hojas y diarios versionados identificados
+
+Hojas directas/localizadas: `Cortes`, `LogosMarca`, `Tutorial`, `Relay`, `AdminState`, `Idempotencia`, `Idempotencia_Cortes`, `Imagenes_Reemplazadas`, `Users`, `Feedbacks`, `pys` y `ActividadUsuario`. También consume `AportesVehiculo` e `ImageUploadEvents`.
+
+| Hoja | Encabezados |
+|---|---|
+| `AdminImageUploads` | A:L: `opId`, `vehicleId`, `fieldName`, `urlAnterior`, `urlNueva`, `archivoDriveId`, `contentHash`, `tipoMime`, `nombreArchivo`, `estado`, `fechaCreacion`, `fechaActualizacion` |
+| `ImageUploadLedger` | A:Q: `token`, `operationKey`, `folderId`, `mimeType`, `sizeBytes`, `contentHash`, `fileId`, `fileUrl`, `state`, `referenceSheet`, `referenceRow`, `referenceColumns`, `referencesJson`, `fileName`, `createdAt`, `updatedAt`, `lastError` |
+| `ImageUploadEvents` | A:N, encabezados descritos en §17.5 |
+| `AportesVehiculo` | A:K, encabezados descritos en §17.5 |
+| `Idempotencia` / `Idempotencia_Cortes` | A:F, encabezados descritos en §17.5 |
+| `__IdentifierFormulaFreezeManifest__` | A:H: `migrationId`, `digest`, `entryIndex`, `entryJson`, `status`, `batch`, `updatedAt`, `lastError` |
+| `__IdentifierMigrationManifest__` | A:I: `migrationId`, `manifestDigest`, `entryIndex`, `entryJson`, `status`, `batch`, `createdAt`, `updatedAt`, `lastError` |
+| `__IdentifierSequenceConfig__` | A:G, contrato descrito en §17.6 |
+
+`AdminState` e `Imagenes_Reemplazadas` están identificadas como hojas, pero sus esquemas completos no se han extraído todavía. Tampoco se considera cerrado el inventario de hojas auxiliares que se crean dinámicamente dentro de ADMIN.
+
+### 18.6 UTILITIES
+
+UTILITIES expone únicamente `migrateTimestamps` por su `doPost` directo. Usa `Cortes` como origen, `Hoja 1` como destino y hojas técnicas `__utilities_timestamps_staging__` / `__utilities_timestamps_backup__` para staging y recuperación. El campo de imagen consultado en origen está en la columna I (9). El contrato completo de rangos, columnas de destino, backup y rollback aún debe detallarse desde el handler; no se asume que Hoja 1 sea una tabla equivalente a Cortes.
+
+### 18.7 Dependencias entre servicios detectadas durante el inventario
+
+- ADMIN declara URLs de AUTH, USERS, WRITE, CATALOG y FEEDBACK y contiene wrappers que invocan `UrlFetchApp.fetch`; por tanto, mantiene llamadas backend→backend y dependencias de endpoints hardcodeados que deben migrarse en MIG-004/MIG-011. No se copian los valores de URL a esta matriz.
+- ADMIN también lee una propiedad de ScriptProperties para el secreto de telemetría CATALOG; CATALOG declara la propiedad correspondiente para validación de tráfico. El inventario de propiedades/lectores/escritores corresponde a MIG-003.
+- Coordinator conserva propiedades de leases, contexto/sesiones, revisiones y eventos de catálogo, y contadores de tráfico. Sus funciones son capacidades existentes que deben inventariarse y trasladarse antes de retirarlo.
+- UTILITIES declara que recibe actor confiable de Coordinator y requiere contexto de sesión compartido. Su endpoint directo no elimina esa dependencia funcional.
+- No se modificó ninguno de estos módulos ni sus endpoints; son hallazgos de inventario, no correcciones.
+
+### 18.8 Límites pendientes de esta pasada
+
+- Extraer columnas/encabezados de `FeedbackLikes`, `FeedbackYearApplications`, `FeedbackYearApplicationEvents`, `AdminState` e `Imagenes_Reemplazadas`, además de las hojas creadas por acciones ADMIN.
+- Terminar los esquemas y rangos de `Hoja 1`, staging/backup de UTILITIES y las hojas de CATALOG/FEEDBACK que se crean por flujo.
+- Trazar cada hoja a las acciones concretas, columnas leídas/escritas, permisos, efectos Drive/YouTube/Mail y pruebas de paridad.
+- Revisar manifiestos y configuración de los proyectos Apps Script para detectar triggers instalados. El escaneo estático previo de módulos principales no demuestra ausencia global de triggers.
