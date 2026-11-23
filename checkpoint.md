@@ -170,3 +170,14 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Registrados campos permitidos de alta/perfil, secuencia de IDs, consultas, idempotencia, cortes, aportes suplementarios, VIN y congelación de fórmulas.
 - Invariantes a conservar: checkOperation sin actor/lease, actor confiable para escrituras, ledgers append-only, hashes/opId, read-back, reintentos y separación del flujo YouTube.
 - Pendiente mapa de columnas/rangos, errores exhaustivos y pruebas/efectos por acción. MIG-001 sigue EN PROGRESO.
+
+
+### Pruebas locales USERS/WRITE — 2026-11-23
+- `UsersAtomicMutations.js`: 16/16 PASS.
+- `WriteAuthorizationContracts.js`: 10/10 PASS.
+- `WriteAuthorizationMinimization.js`: 15/15 PASS.
+- `AddSupplementaryInfoIntegrity.js`: 61/61 PASS.
+- `VinAuthoritativeValidation.js`: 12/12 PASS.
+- `CheckOperationSecurity.js`: 8/8 PASS.
+- `ActionDispatchContract.js`: 12/12 PASS.
+- Total: **134 aserciones PASS, 0 FAIL**. Solo pruebas locales sobre fuentes exactas; no se invocaron Apps Script, Spreadsheet ni Drive reales. No es validación Beta.
