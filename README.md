@@ -54,7 +54,7 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ## Despliegue de servicios Apps Script
 
-La guía [Services/DEPLOYMENT_GUIDE.md](Services/DEPLOYMENT_GUIDE.md) describe el orden de despliegue, archivos por proyecto, URLs `/exec`, ScriptProperties, secretos y pruebas de humo. Complementa [Services/COORDINATOR_SETUP.md](Services/COORDINATOR_SETUP.md). No ejecutar sus pasos sobre producción sin autorización.
+La guía [Services/DEPLOYMENT_GUIDE.md](Services/DEPLOYMENT_GUIDE.md) describe el orden de despliegue, archivos por proyecto, URLs `/exec`, configuración y pruebas de humo. [Services/COORDINATOR_SETUP.md](Services/COORDINATOR_SETUP.md) se conserva como evidencia histórica de la arquitectura anterior. Desde MIG-023, el feed incremental del catálogo pertenece a CATALOG; no configurar ni enrutar nuevas operaciones del catálogo a COORDINATOR. No ejecutar pasos de despliegue sobre producción sin autorización.
 
 ## 4. Características y Mejoras Recientes (v2.1.5)
 
