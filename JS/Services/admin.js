@@ -7980,8 +7980,492 @@ function getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotInd
 }
 
 function handleAddOrUpdateCut(payload, logMessage, developerContext) {
+    const { vehicleData, cutData, vehicleId } = payload || {};
+    if (!cutData) throw new Error("Los datos del corte son requeridos.");
+    const colaboradorName = String(developerContext && developerContext.fullName || "").trim();
+    if (!colaboradorName) throw new Error("El perfil del usuario autenticado no tiene un nombre completo registrado.");
+
+    // Resolver y validar el contrato idempotente antes de cualquier llamada remota
+    // o sección crítica. Un payload inválido no debe consumir un ID de WRITE.
+    let opId = payload.opId || null;
+    // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
+    // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
+    if (!opId && typeof payload.colaborador === "string") {
+        const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
+        if (opMatch) opId = opMatch[1];
+    }
+    const legacyRequest = !opId;
+    // Las solicitudes antiguas reciben una clave interna: permite reservar el slot y liberar
+    // el lock durante Drive sin dejar la ejecución legacy dentro de la sección crítica.
+    if (legacyRequest) opId = "OP-LEGACY-" + Utilities.getUuid().replace(/-/g, "");
+    const operationHash = computeCutOperationFingerprint_(payload);
+    if (!legacyRequest && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut ADMIN") !== operationHash) {
+        throw new Error("La huella enviada no coincide con el contenido de la operación.");
+    }
+    const vinPrefix = cutData.vin ? extractVinPrefixForAdmin(cutData.vin) : "";
+    // El timestamp administrativo es independiente de la hoja y se prepara antes del lock.
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - 365);
+    const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+
+    // WRITE asigna el ID fuera del ScriptLock ADMIN; conserva su propia exclusión.
     throw new Error("ACTION_MOVED_TO_WRITE: la asignación de IDs y el alta de cortes se ejecutan directamente en WRITE desde el frontend.");
+
+    // La lectura del catálogo y la normalización de entidades no modifican el registro.
+    // Se preparan antes del ScriptLock para que su latencia no serialice otras operaciones.
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+
+    // La búsqueda completa del ID es una lectura de preparación. Dentro del lock solo
+    // se confirma la celda candidata, evitando recorrer toda la columna en la sección crítica.
+    let existingVehicleRowIndex = null;
+    if (String(vehicleId || "").trim()) {
+        const lastRowForLookup = sheet.getLastRow();
+        if (lastRowForLookup >= 2) {
+            const idsSnapshot = sheet.getRange(2, 1, lastRowForLookup - 1, 1).getValues().flat();
+            const existingIndex = idsSnapshot.findIndex(id => String(id) === String(vehicleId));
+            if (existingIndex !== -1) existingVehicleRowIndex = existingIndex + 2;
+        }
+    }
+
+    let preparedVehicleData = null;
+    let preparedVehicleYear = null;
+    if (!vehicleId) {
+        if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
+        const entities = getExistingEntities(sheet);
+        preparedVehicleData = Object.assign({}, vehicleData);
+        preparedVehicleData.marca = resolveAndNormalizeEntity(preparedVehicleData.marca, entities.brands, false);
+        preparedVehicleData.modelo = resolveAndNormalizeEntity(preparedVehicleData.modelo, entities.models, false);
+        preparedVehicleData.versionesAplicables = resolveAndNormalizeEntity(preparedVehicleData.versionesAplicables, entities.versions, true);
+
+        const yearInput = preparedVehicleData.anoDesde.trim();
+        let anoDesde, anoHasta;
+        if (yearInput.includes('-')) {
+            const [start, end] = yearInput.split('-').map(y => parseInt(y.trim(), 10));
+            anoDesde = Math.min(start, end);
+            anoHasta = Math.max(start, end);
+        } else {
+            anoDesde = parseInt(yearInput, 10);
+            anoHasta = anoDesde;
+        }
+        preparedVehicleYear = { anoDesde: anoDesde, anoHasta: anoHasta };
+    }
+
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    try {
+        // No esperar ni mantener una cola global: la contención es retryable y conserva
+        // el mismo opId para que el siguiente intento recupere la reserva sin duplicarla.
+        lockAcquired = lock.tryLock(0);
+    } catch (lockError) {
+        lockAcquired = false;
+    }
+    if (!lockAcquired) {
+        const busyError = new Error("ADMIN está ocupado con una escritura breve. Conserva el mismo opId y reintenta.");
+        busyError.code = "ADMIN_BUSY";
+        throw busyError;
+    }
+
+    try {
+
+        logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
+        const testigoSchema = ensureTestigoColumns(sheet);
+        const vinColumnIndex = testigoSchema.vinColumnIndex;
+        if (cutData.vin && !vinColumnIndex) {
+            throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
+        }
+
+        // Un único snapshot integral por operación; tras liberar/re-adquirir el lock,
+        // las comprobaciones dirigidas del opId refrescan y validan su entrada.
+        let idempotencyEntriesSnapshot = null;
+        if (opId) {
+            const idempotencySheet = getIdempotenciaSheet();
+            idempotencyEntriesSnapshot = readIdempotenciaEntries_(idempotencySheet, false);
+            idempotencyEntriesSnapshot.sheet = idempotencySheet;
+        }
+
+        if (opId) {
+            // El snapshot se leyó bajo este mismo ScriptLock; no repetir la consulta remota inicial.
+            let match = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot, false);
+            if (match) {
+                if (!match.operationHash || match.operationHash !== operationHash) {
+                    throw new Error("El opId ya existe, pero su contenido no coincide o pertenece a un registro legado sin huella verificable.");
+                }
+                const storedVehicleId = normalizeIdempotenciaVehicleId_(match.vehicleId || match.rowValues[COLS_CORTES.id - 1], "Reintento addOrUpdateCut ADMIN");
+                if (vehicleId && storedVehicleId !== normalizeIdempotenciaVehicleId_(vehicleId, "Reintento addOrUpdateCut ADMIN")) {
+                    throw new Error("El opId ya está vinculado a otro vehículo; no se modificó.");
+                }
+                let rowIndex = match.rowIndex;
+                let rowValues = match.rowValues;
+                let rowObj = mapRowToObject(rowValues, COLS_CORTES);
+                const recoveredVinCollection = vinPrefix
+                    ? prepareVinCollectionForAdmin(sheet, rowValues, rowObj.id, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
+                    : null;
+                const headers = testigoSchema.headers;
+                const matchedColName = String(headers[match.colIndex - 1] || "").toLowerCase();
+
+                let slotIndex = 1;
+                if (matchedColName.includes("1") || match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
+                else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
+                else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
+
+                const imageRepairNeeds = getAdminRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotIndex);
+                let repairedImages = null;
+                // Si las imágenes ya están completas, no hay trabajo Drive: conservar el lock
+                // y evitar una liberación/reacquisición y una consulta de revalidación innecesarias.
+                if (imageRepairNeeds.vehicle || imageRepairNeeds.cut) {
+                    repairedImages = runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, function() {
+                        let vehicleImageUrl = "", cutImageUrl = "";
+                        const needsVehicleImage = imageRepairNeeds.vehicle;
+                        const needsCutImage = imageRepairNeeds.cut;
+                        if (needsVehicleImage || needsCutImage) {
+                            const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
+                            if (needsVehicleImage) {
+                                const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo");
+                                vehicleImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder,
+                                    buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
+                            }
+                            if (needsCutImage) {
+                                const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex);
+                                cutImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                                    buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
+                            }
+                        }
+                        return { vehicleImageUrl, cutImageUrl };
+                    }, function(images) {
+                        const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+                        if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== slotIndex ||
+                            verified.vehicleId !== String(rowObj.id) || verified.operationHash !== operationHash) {
+                            throw new Error("La reserva cambió durante la reparación de imágenes; no se aplicaron los cambios.");
+                        }
+                        const current = mapRowToObject(verified.rowValues, COLS_CORTES);
+                        if (images.vehicleImageUrl && !checkFileIdValid(current.imagenVehiculo)) {
+                            sheet.getRange(verified.rowIndex, COLS_CORTES.imagenVehiculo).setValue(images.vehicleImageUrl);
+                            verified.rowValues[COLS_CORTES.imagenVehiculo - 1] = images.vehicleImageUrl;
+                        }
+                        if (images.cutImageUrl && !checkFileIdValid(current[`imgCorte${slotIndex}`])) {
+                            sheet.getRange(verified.rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(images.cutImageUrl);
+                            verified.rowValues[COLS_CORTES[`imgCorte${slotIndex}`] - 1] = images.cutImageUrl;
+                        }
+                        return verified;
+                        }, operationHash);
+                }
+                if (repairedImages && repairedImages.rowIndex) {
+                    match = repairedImages; rowIndex = match.rowIndex; rowValues = match.rowValues;
+                    rowObj = mapRowToObject(rowValues, COLS_CORTES);
+                }
+
+                // 3. Completar campos faltantes con escrituras por lote.
+                // El snapshot de la fila fue leído/revalidado bajo el lock; se conservan
+                // intactos los valores existentes y solo se sustituyen campos vacíos.
+                if (vehicleData) {
+                    const vehicleFieldValues = [
+                        rowValues[COLS_CORTES.categoria - 1],
+                        rowValues[COLS_CORTES.marca - 1],
+                        rowValues[COLS_CORTES.modelo - 1],
+                        rowValues[COLS_CORTES.versionesAplicables - 1],
+                        rowValues[COLS_CORTES.anoDesde - 1],
+                        rowValues[COLS_CORTES.anoHasta - 1],
+                        rowValues[COLS_CORTES.tipoEncendido - 1]
+                    ];
+                    let vehicleFieldsChanged = false;
+                    if (!rowObj.categoria && vehicleData.categoria) {
+                        vehicleFieldValues[0] = vehicleData.categoria;
+                        vehicleFieldsChanged = true;
+                    }
+                    if (!rowObj.marca && vehicleData.marca) {
+                        vehicleFieldValues[1] = vehicleData.marca;
+                        vehicleFieldsChanged = true;
+                    }
+                    if (!rowObj.modelo && vehicleData.modelo) {
+                        vehicleFieldValues[2] = vehicleData.modelo;
+                        vehicleFieldsChanged = true;
+                    }
+                    if (!rowObj.versionesAplicables && vehicleData.versionesAplicables) {
+                        vehicleFieldValues[3] = vehicleData.versionesAplicables;
+                        vehicleFieldsChanged = true;
+                    }
+                    if (!rowObj.anoDesde && vehicleData.anoDesde) {
+                        const yearInput = String(vehicleData.anoDesde).trim();
+                        let anoDesde = yearInput;
+                        let anoHasta = yearInput;
+                        if (yearInput.includes('-')) {
+                            const [start, end] = yearInput.split('-').map(function(y) { return parseInt(y.trim(), 10); });
+                            anoDesde = Math.min(start, end);
+                            anoHasta = Math.max(start, end);
+                        }
+                        vehicleFieldValues[4] = anoDesde;
+                        vehicleFieldsChanged = true;
+                        if (!rowObj.anoHasta) {
+                            vehicleFieldValues[5] = anoHasta;
+                        }
+                    }
+                    if (!rowObj.tipoEncendido && vehicleData.tipoEncendido) {
+                        vehicleFieldValues[6] = vehicleData.tipoEncendido;
+                        vehicleFieldsChanged = true;
+                    }
+                    if (vehicleFieldsChanged) {
+                        sheet.getRange(rowIndex, COLS_CORTES.categoria, 1, vehicleFieldValues.length)
+                            .setValues([vehicleFieldValues]);
+                    }
+                }
+
+                if (cutData) {
+                    const cutSlotCoreFields = [
+                        { key: "tipoCorte" + slotIndex, value: cutData.tipoCorte1 },
+                        { key: "ubicacionCorte" + slotIndex, value: cutData.ubicacionCorte1 },
+                        { key: "colorCableCorte" + slotIndex, value: cutData.colorCableCorte1 },
+                        { key: "configRelay" + slotIndex, value: cutData.configRelay1 }
+                    ];
+                    const cutSlotCoreValues = cutSlotCoreFields.map(function(field) {
+                        return rowValues[COLS_CORTES[field.key] - 1];
+                    });
+                    let cutSlotCoreChanged = false;
+                    cutSlotCoreFields.forEach(function(field, index) {
+                        if (!rowObj[field.key] && field.value) {
+                            cutSlotCoreValues[index] = field.value;
+                            cutSlotCoreChanged = true;
+                        }
+                    });
+                    if (cutSlotCoreChanged) {
+                        sheet.getRange(rowIndex, COLS_CORTES["tipoCorte" + slotIndex], 1, cutSlotCoreValues.length)
+                            .setValues([cutSlotCoreValues]);
+                    }
+                    const testigoKey = `activaTestigo${slotIndex}`;
+                    if ((rowObj[testigoKey] === "" || rowObj[testigoKey] === null || rowObj[testigoKey] === undefined) && typeof cutData.activaTestigo1 === "boolean") {
+                        sheet.getRange(rowIndex, COLS_CORTES[testigoKey]).setValue(cutData.activaTestigo1);
+                    }
+                    if (!rowObj[`colaboradorCorte${slotIndex}`] && colaboradorName) {
+                        sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${slotIndex}`]).setValue(colaboradorName || "");
+                    }
+                }
+
+                if (recoveredVinCollection) {
+                    sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection(recoveredVinCollection));
+                }
+                if (match.timestamp && (match.status === "pending" || !rowObj.timestamp)) {
+                    sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(match.timestamp);
+                }
+                SpreadsheetApp.flush();
+                if (opId && rowObj.id) {
+                    recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash, idempotencyEntriesSnapshot);
+                }
+                markAdminCutImagesLinkedOutsideLock_(lock, opId, rowObj.id, slotIndex, operationHash, [
+                    rowValues[COLS_CORTES.imagenVehiculo - 1],
+                    rowValues[COLS_CORTES["imgCorte" + slotIndex] - 1]
+                ], idempotencyEntriesSnapshot);
+                return {
+                    status: 'success',
+                    message: 'La operación ya fue completada (recuperada, reparada y completada).',
+                    vehicleId: rowObj.id, timestamp: match.timestamp || rowObj.timestamp,
+                    slotIndex: slotIndex, operationHash: operationHash
+                };
+            }
+        }
+
+        if (vinPrefix && !vehicleId) {
+            const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, null, vinColumnIndex);
+            if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
+        }
+
+        let rowIndex;
+        let newId;
+        let savedSlotIndex = 1;
+
+    if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---
+        if (existingVehicleRowIndex === null) throw new Error("El ID del vehículo no fue encontrado.");
+        rowIndex = existingVehicleRowIndex;
+
+        // Revalidar la posición candidata bajo lock: la búsqueda previa nunca autoriza
+        // escribir si el ID fue eliminado, movido o reemplazado mientras se preparaba.
+        // La fila completa ya incluye el ID. Una sola lectura entrega un snapshot
+        // coherente y permite revalidar la identidad sin una consulta getValue adicional.
+        // El snapshot solo necesita el esquema ADMIN y la columna VIN dinámica; no transferir columnas auxiliares ajenas.
+        const snapshotWidth = Math.max(48, vinColumnIndex || 0);
+        const rowValues = sheet.getRange(rowIndex, 1, 1, snapshotWidth).getValues()[0];
+        if (String(rowValues[COLS_CORTES.id - 1]) !== String(vehicleId)) {
+            throw new Error("La ubicación del vehículo cambió durante la preparación. Reintenta la operación.");
+        }
+        const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
+        let preparedVinCollection = null;
+        const cutSlotIndex = findNextAvailableCutSlot_(rowValues, vehicleId);
+        if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
+        savedSlotIndex = cutSlotIndex;
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
+
+        const imageUrl = runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, function() {
+            if (!cutData.imgCorte1) return "";
+            const folder = findOrCreateVehicleFolder(vehicleInfo);
+            const cutImageInfo = Object.assign({}, vehicleInfo);
+            cutImageInfo["tipoCorte" + cutSlotIndex] = cutData.tipoCorte1;
+            const filename = buildCanonicalImageBaseName(cutImageInfo, "imgCorte" + cutSlotIndex);
+            return uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
+        }, function(url) {
+            let verifiedRowValues = null;
+            if (opId) {
+                const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+                if (!verified || verified.rowIndex !== rowIndex || verified.slotIndex !== cutSlotIndex ||
+                    verified.vehicleId !== String(vehicleId) || verified.operationHash !== operationHash ||
+                    String(verified.rowValues[COLS_CORTES["tipoCorte" + cutSlotIndex] - 1] || "").trim()) {
+                    throw new Error("El vehículo o espacio de corte cambió durante la carga; no se aplicó la imagen.");
+                }
+                // findRowByOpId ya revalidó la unicidad y devolvió la fila actualizada bajo lock.
+                verifiedRowValues = verified.rowValues;
+            }
+            if (!verifiedRowValues) {
+                throw new Error("No se obtuvo la fila verificada después de Drive; no se preparó ni escribió el VIN.");
+            }
+            const currentValues = verifiedRowValues;
+            preparedVinCollection = vinPrefix
+                ? prepareVinCollectionForAdmin(sheet, currentValues, vehicleId, vinColumnIndex, vinPrefix, vehicleData && vehicleData.versionesAplicables)
+                : null;
+            return url;
+        }, operationHash);
+
+        // Las columnas 12–16, 19–23 y 26–30 mantienen el mismo contrato:
+        // cinco campos consecutivos del corte. Se escriben en una sola llamada;
+        // testigo y colaborador permanecen separados por el esquema histórico.
+        const slotCoreValues = [
+            cutData.tipoCorte1, cutData.ubicacionCorte1, cutData.colorCableCorte1,
+            cutData.configRelay1, imageUrl
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`], 1, slotCoreValues.length)
+            .setValues([slotCoreValues]);
+        sheet.getRange(rowIndex, COLS_CORTES[`activaTestigo${cutSlotIndex}`]).setValue(cutData.activaTestigo1 === true);
+        sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
+        if (preparedVinCollection) {
+            sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection(preparedVinCollection));
+        }
+        sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
+        SpreadsheetApp.flush();
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed", operationHash, idempotencyEntriesSnapshot);
+        markAdminCutImagesLinkedOutsideLock_(lock, opId, vehicleId, cutSlotIndex, operationHash, [imageUrl], idempotencyEntriesSnapshot);
+
+        newId = vehicleId;
+
+    } else { // --- Lógica para vehículo NUEVO (CORREGIDO PARA PRESERVAR FÓRMULA DE ID) ---
+        const newVehicleData = preparedVehicleData;
+        const lastRow = sheet.getLastRow();
+        rowIndex = lastRow + 1;
+        const lastColumn = sheet.getLastColumn();
+
+        // Copiar la plantilla de formato/validación y retirar la fórmula heredada de ID.
+        copyAdminRowPresentationOnly_(sheet, lastRow, rowIndex, lastColumn);
+
+        // Toda la fila debe quedar vacía, incluido el ID heredado, antes de asignar el ID central.
+        sheet.getRange(rowIndex, 1, 1, lastColumn).clearContent();
+        SpreadsheetApp.flush();
+
+        // ID central reservado antes del ScriptLock de ADMIN; nunca se genera localmente.
+        try {
+            newId = Number(preallocatedVehicleId);
+            if (!Number.isSafeInteger(newId) || newId < 1) throw new Error("No hay un ID central preasignado válido.");
+            sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
+            SpreadsheetApp.flush();
+            if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
+                throw new Error("La celda ID no conservó el valor asignado por WRITE.");
+            }
+        } catch (allocationError) {
+            removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
+            throw new Error("No se pudo asignar un ID centralizado al nuevo vehículo: " + allocationError.message);
+        }
+        if (opId) {
+            try {
+                recordOpId(opId, newId, 1, formattedDate, "pending", operationHash, idempotencyEntriesSnapshot);
+            } catch (error) {
+                try {
+                    const persistedOperation = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+                    if (!persistedOperation || persistedOperation.rowIndex !== rowIndex) removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
+                } catch (verificationError) {
+                    Logger.log("No se pudo determinar si la reserva de opId quedó persistida: " + verificationError.message);
+                }
+                throw error;
+            }
+        }
+        if (vinPrefix) {
+            sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection([vinPrefix]));
+        }
+
+
+        // 3. Preparar los datos que se van a escribir.
+        // Parsear año...
+        const anoDesde = preparedVehicleYear.anoDesde;
+        const anoHasta = preparedVehicleYear.anoHasta;
+        const anioParaFolder = anoDesde;
+
+        // Subir imágenes fuera del ScriptLock; la fila e ID pendientes reservan el destino.
+        const canonicalVehicleInfo = Object.assign({}, newVehicleData, {
+            anoDesde: anoDesde, anoHasta: anoHasta, tipoCorte1: cutData.tipoCorte1
+        });
+        const uploaded = runAdminContributionDriveWorkOutsideScriptLock_(lock, opId, function() {
+            const folder = findOrCreateVehicleFolder(canonicalVehicleInfo);
+            let vehicleImageUrl = "", cutImageUrl = "";
+            if (newVehicleData.imagenVehiculo) {
+                const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imagenVehiculo");
+                vehicleImageUrl = uploadImageToDrive(newVehicleData.imagenVehiculo, filename, folder,
+                    buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
+            }
+            if (cutData.imgCorte1) {
+                const filename = buildCanonicalImageBaseName(canonicalVehicleInfo, "imgCorte1");
+                cutImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder,
+                    buildImageUploadOperationKey(opId, newId, "imgCorte1"));
+            }
+            return { vehicleImageUrl, cutImageUrl };
+        }, function(images) {
+            if (opId) {
+                const verified = findRowByOpId(sheet, opId, idempotencyEntriesSnapshot);
+                if (!verified || verified.rowIndex !== rowIndex || verified.vehicleId !== String(newId) ||
+                    verified.slotIndex !== 1 || verified.operationHash !== operationHash ||
+                    Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)) {
+                    throw new Error("La reserva del vehículo cambió durante la carga; no se aplicaron las imágenes.");
+                }
+            }
+            return images;
+        }, operationHash);
+        const vehiculoImageUrl = uploaded.vehicleImageUrl;
+        const corteImageUrl = uploaded.cutImageUrl;
+
+        // 4. Guardar los campos contiguos del vehículo y del primer corte en dos lotes.
+        // ID, reserva pending y cargas Drive ya fueron confirmados; timestamp, testigo y
+        // colaborador permanecen separados por su ubicación no contigua en el esquema.
+        const newVehicleValues = [
+            newVehicleData.categoria || '',
+            newVehicleData.marca,
+            newVehicleData.modelo,
+            newVehicleData.versionesAplicables || '',
+            anoDesde,
+            anoHasta,
+            newVehicleData.tipoEncendido,
+            vehiculoImageUrl
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES.categoria, 1, newVehicleValues.length)
+            .setValues([newVehicleValues]);
+        sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
+
+        const newCutSlotValues = [
+            cutData.tipoCorte1,
+            cutData.ubicacionCorte1,
+            cutData.colorCableCorte1,
+            cutData.configRelay1,
+            corteImageUrl
+        ];
+        sheet.getRange(rowIndex, COLS_CORTES.tipoCorte1, 1, newCutSlotValues.length)
+            .setValues([newCutSlotValues]);
+        sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
+        sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
+        SpreadsheetApp.flush();
+        if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash, idempotencyEntriesSnapshot);
+        markAdminCutImagesLinkedOutsideLock_(lock, opId, newId, 1, operationHash, [vehiculoImageUrl, corteImageUrl], idempotencyEntriesSnapshot);
+    }
+
+    logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
+    return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId, timestamp: formattedDate, slotIndex: savedSlotIndex, opId: opId, operationHash: operationHash };
+    } finally {
+        if (lock.hasLock()) lock.releaseLock();
+    }
 }
+
 
 function sanitizeSupplementaryRichText_(value) {
  if(value===null||value===undefined)return "";
