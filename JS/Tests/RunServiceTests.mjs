@@ -496,6 +496,13 @@ runGroup('42','MIG018',()=>{
  }));
  runCli('MIG018 ledger validado y reutilizado en aportes','JS/Tests/WriteContributionLedgerReuse.mjs');
  runCli('MIG018 flujo moderno de información suplementaria','JS/Tests/WriteSupplementaryLedgerModernFlow.mjs');
+ recordResult('MIG018 contrato de rutas frontend y Coordinator',loadFunction('JS/Tests/ActionDispatchContract.js','runActionDispatchContractTests')({
+  apiConfig:read('JS/Frontend/api-config.js'),AUTH:read('JS/Services/Auth.js'),CATALOG:read('JS/Services/catalog.js'),
+  COORDINATOR:read('JS/Services/Coordinator.js'),centralConfigurationCache:read('JS/Frontend/centralConfigurationCache.js'),
+  WRITE:read('JS/Services/write.js'),FEEDBACK:read('JS/Services/feedback.js')+'\n'+read('JS/Services/InboxConversations.js'),ADMIN:read('JS/Services/admin.js'),UTILITIES:read('JS/Services/Utilities.js'),usersHtml:read('HTML/users.html'),
+  consumerSources:{apiConfig:read('JS/Frontend/api-config.js'),addCortes:read('HTML/add_cortes.html'),auth:read('JS/Frontend/auth.js'),main:read('JS/Frontend/main.js'),
+   pysData:read('JS/Frontend/pys-data.js'),ui:read('JS/Frontend/ui.js'),usersHtml:read('HTML/users.html'),youtubeUpload:read('JS/Frontend/youtubeUpload.js')}
+ }));
  runCli('MIG018 publicación del catálogo coordinada desde frontend','JS/Tests/WriteCatalogPublicationIsolation.mjs');
  runCli('MIG018 reset WRITE autenticado desde navegador','JS/Tests/WriteCatalogPublicationFrontend.mjs');
  runCli('MIG018 append concurrente e idempotencia de aportes','JS/Tests/WriteContributionAppendConcurrency.mjs');
