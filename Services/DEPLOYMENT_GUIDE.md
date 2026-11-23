@@ -4,13 +4,13 @@
 
 **Alcance:** despliegue ordenado de los proyectos backend y su conexión entre sí.  
 **Fuente de código:** `JS/Services/`.  
-**Configuración de coordinación:** `Services/COORDINATOR_SETUP.md`.  
+**Configuración de coordinación:** referencia histórica en `Services/COORDINATOR_SETUP.md`; no ejecutar sus pasos heredados.  
 **Rama de preparación:** `GPSpedia2.2.5_work`.
 
 > **Advertencia de entorno:** los archivos fuente actuales contienen IDs de Spreadsheet/Drive y algunas URLs de servicios que corresponden al entorno operativo. Esta guía no autoriza publicar cambios ni probarlos contra producción. Para Beta, primero se deben sustituir los IDs y endpoints por los recursos desechables del entorno Beta. No copiar secretos reales al repositorio ni a este documento.
 
  
-> **ACTUALIZACIÓN MIG-024 (2026-11-23):** `SharedMutationClient.js` fue retirado. Los helpers locales de sesión/cache de actor están en `JS/Services/SharedSessionActor.js` y se incluyen en AUTH, WRITE, FEEDBACK, UTILITIES y ADMIN; CATALOG mantiene su helper propio. USERS no forma parte de `CENTRAL_SERVICE_KEYS` ni del árbol activo, por lo que su fila histórica no representa un deployment vigente. COORDINATOR conserva temporalmente solo capacidades transitorias de sesión/telemetría/health hasta MIG-025; ya no administra leases ni feed de catálogo y no realiza llamadas entre servicios. No seguir las instrucciones históricas de SharedMutationClient ni configurar nuevas propiedades `GPSpedia_COORDINATOR_URL`/`GPSpedia_COORDINATOR_SECRET`. La retirada de URLs/IDs locales y demás configuración se completa en MIG-026.
+> **ACTUALIZACIÓN MIG-024 (2026-11-23):** `SharedMutationClient.js` fue retirado. Los helpers locales de sesión/cache de actor están en `JS/Services/SharedSessionActor.js` y se incluyen en AUTH, WRITE, FEEDBACK, UTILITIES y ADMIN; CATALOG mantiene su helper propio. USERS no forma parte de `CENTRAL_SERVICE_KEYS` ni del árbol activo, por lo que su fila histórica no representa un deployment vigente. COORDINATOR conserva temporalmente solo capacidades transitorias de sesión/telemetría/health hasta MIG-025; ya no administra leases ni feed de catálogo y no realiza llamadas entre servicios. No seguir las instrucciones históricas de SharedMutationClient ni configurar nuevas propiedades `GPSpedia_COORDINATOR_URL`/`GPSpedia_COORDINATOR_SECRET`. Los pasos numerados y las tablas de propiedades/secretos de esta guía son históricos y no deben ejecutarse; la guía operativa se reescribirá en MIG-029. La retirada de URLs/IDs locales y demás configuración se completa en MIG-026.
 
 ## 1. Inventario de proyectos y archivos
 
