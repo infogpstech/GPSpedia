@@ -25,21 +25,29 @@ function addCatalogCalendarMonthsUTC_(date, months) {
     const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
     result.setUTCDate(Math.min(day, lastDay)); return result;
 }
-function verifyCatalogDeveloperSession_(payload) {
+function verifyCatalogSessionForRoles_(payload, allowedRoles, roleLabel) {
     const userId=String(payload&&payload.userId||"").trim(),sessionToken=String(payload&&payload.sessionToken||"").trim();
-    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para consultar candidatos.");
+    if(!userId||!sessionToken)throw new Error("Se requiere una sesión activa para consultar la proyección.");
     const ss=getSpreadsheet(),usersSheet=ss.getSheetByName("Users"),sessionsSheet=ss.getSheetByName("ActiveSessions");
     if(!usersSheet||!sessionsSheet)throw new Error("CATALOG no pudo verificar la sesión; faltan Users o ActiveSessions.");
     const users=usersSheet.getDataRange().getValues(),userMatches=users.slice(1).filter(row=>String(row[0]||"").trim()===userId);
     if(userMatches.length!==1)throw new Error("La identidad de la sesión no es única o no existe.");
     const user=userMatches[0],username=String(user[1]||"").trim();
-    if(!username||username.startsWith("__deleted__:")||normalizeCatalogRole_(user[3])!=="desarrollador")throw new Error("Se requiere una cuenta activa con rol Desarrollador.");
+    if(!username||username.startsWith("__deleted__:")||!allowedRoles.includes(normalizeCatalogRole_(user[3]))) {
+        throw new Error("Se requiere una cuenta activa con rol "+roleLabel+".");
+    }
     const sessions=sessionsSheet.getDataRange().getValues(),matches=sessions.slice(1).filter(row=>String(row[2]||"")===sessionToken);
     if(matches.length!==1||String(matches[0][0]||"").trim()!==userId)throw new Error("La sesión no coincide con un registro único de ActiveSessions.");
     const createdAt=parseCatalogSessionDate_(matches[0][3]),lastActivityAt=parseCatalogSessionDate_(matches[0][5])||createdAt,now=new Date();
     if(!createdAt||!lastActivityAt||now.getTime()>=addCatalogCalendarMonthsUTC_(createdAt,3).getTime()||
         now.getTime()>=addCatalogCalendarMonthsUTC_(lastActivityAt,1).getTime())throw new Error("La sesión expiró; inicia sesión nuevamente.");
     return true;
+}
+function verifyCatalogDeveloperSession_(payload) {
+    return verifyCatalogSessionForRoles_(payload,["desarrollador"],"Desarrollador");
+}
+function verifyCatalogModalEditSession_(payload) {
+    return verifyCatalogSessionForRoles_(payload,["desarrollador","jefe","supervisor"],"Desarrollador, Jefe o Supervisor");
 }
 
 function getSpreadsheet() {
@@ -1030,6 +1038,7 @@ function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
 }
 
 function handleGetVehicleProjection_(payload = {}) {
+    verifyCatalogModalEditSession_(payload);
     const vehicleId = String(payload && payload.vehicleId || "").trim();
     if (!/^[1-9]\d{0,14}$/.test(vehicleId)) {
         throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
