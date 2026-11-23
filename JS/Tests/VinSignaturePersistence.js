@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { VinDifferentialEngine, VinSignatureStore, fingerprintVinCatalog, ensureVinSignatures } from '../../VinDifferentialEngine.js';
+import { VinDifferentialEngine, VinSignatureStore, fingerprintVinCatalog, ensureVinSignatures } from '../Frontend/VinDifferentialEngine.js';
 const memory=new Map();globalThis.localStorage={getItem:k=>memory.has(k)?memory.get(k):null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k)};
 let passed=0;function test(name,fn){fn();passed++;console.log('PASS',name);}
 const records=[{id:'A1',marca:'Toyota',modelo:'Corolla',anoDesde:2018,anoHasta:2022,versionesAplicables:'LE',vin:'JT2A1BCDEFGH00001'},{id:'A2',marca:'Toyota',modelo:'Corolla',anoDesde:2018,anoHasta:2022,versionesAplicables:'LE',vin:'JT2A1BCDEFGH00002'},{id:'B1',marca:'Toyota',modelo:'Corolla',anoDesde:2018,anoHasta:2022,versionesAplicables:'XLE',vin:'JT2B1BCDEFGH00001'},{id:'B2',marca:'Toyota',modelo:'Corolla',anoDesde:2018,anoHasta:2022,versionesAplicables:'XLE',vin:'JT2B1BCDEFGH00002'}];
