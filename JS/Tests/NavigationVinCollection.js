@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const navigation = readFileSync("navigation.js", "utf8");
+const navigation = readFileSync(new URL("../Frontend/navigation.js", import.meta.url), "utf8");
 const start = navigation.indexOf("function parseVinCollectionNavigation(rawVin) {");
 const end = navigation.indexOf("/* AUG-050:", start);
 if (start < 0 || end <= start) throw new Error("No se encontró el parser VIN de navegación.");
