@@ -5,9 +5,9 @@ let passed = 0;
 function test(name, callback) { callback(); passed++; console.log('PASS', name); }
 test('shared add-card helper forwards navigation options to the association modal', () => {
  const start = source.indexOf('function createPysAssociationAddCard');
- const end = source.indexOf('\\nexport function renderPosiblesProblemasAccordion', start);
+ const end = source.indexOf('\nexport function renderPosiblesProblemasAccordion', start);
  const helper = source.slice(start, end);
- assert.match(helper, /card\\.onclick = \\(\\) => openAssociateExistingProblemModal\\(activeItem, navOptions\\);/);
+ assert.match(helper, /card\.onclick = \(\) => openAssociateExistingProblemModal\(activeItem, navOptions\);/);
 });
 test('existing-problem modal preserves options when opening pre-associated creation', () => {
  assert.match(source, /export async function openAssociateExistingProblemModal\(vehicle, navOptions = \{\}\)/);
@@ -26,9 +26,9 @@ test('anti-cycle guard remains contextual and association payload is unchanged',
 });
 test('both add-card variants use the shared helper and preserve navigation options', () => {
  const start = source.indexOf('export function renderPosiblesProblemasAccordion');
- const end = source.indexOf('\\nexport ', start + 10);
+ const end = source.indexOf('\nexport ', start + 10);
  const section = source.slice(start, end);
- assert.equal((section.match(/createPysAssociationAddCard\\(activeItem, navOptions\\)/g) || []).length, 2);
+ assert.equal((section.match(/createPysAssociationAddCard\(activeItem, navOptions\)/g) || []).length, 2);
 });
 
 console.log('PysNavigationContext:', passed + '/6 PASS');
