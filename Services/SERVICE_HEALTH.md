@@ -16,6 +16,7 @@ El endpoint de diagnóstico es una superficie pública de solo lectura. Su respu
 | FEEDBACK | `GPSpedia-Feedback` | 1.2.2 | `available` |
 | UTILITIES | `GPSpedia-Utilities` | 1.5.0 | `available` |
 | ADMIN | `GPSpedia-Admin` | 2.7.1 | `available` |
+| COORDINATOR | `GPSpedia-SharedMutationCoordinator` | 1.4.9 | `available` |
 
 La versión se informa cuando está disponible; no reemplaza la validación de identidad. Los deployments externos no se consideran verificados solo porque exista código fuente con el contrato esperado.
 
@@ -48,7 +49,7 @@ Un HTTP 2xx por sí solo nunca establece `online`. Un estado backend no reconoci
 
 No se añadieron probes de Sheets/Drive: las fuentes disponibles no proporcionan un endpoint de solo lectura que compruebe esas dependencias de forma segura, uniforme y sin efectos secundarios. El panel separa expresamente la respuesta del endpoint de la salud de dependencias internas.
 
-La revisión local cubre los seis servicios versionados. LEGACY está excluido del inventario y no genera solicitudes. La identidad, versión, MIME, redacción y comportamiento efectivo de los deployments actuales no pueden certificarse desde este repositorio; deben verificarse en Beta aislada. No se modificaron deployments ni datos productivos.
+La revisión local cubre siete endpoints: los seis servicios principales y COORDINATOR, que es opcional en la configuración central pero se comprueba cuando está habilitado. Su GET informa identidad, versión y estado del endpoint; no certifica que ScriptProperties, leases u otras dependencias estén disponibles. LEGACY está excluido del inventario y no genera solicitudes. La identidad, versión, MIME, redacción y comportamiento efectivo de los deployments actuales no pueden certificarse desde este repositorio; deben verificarse en Beta aislada. No se modificaron deployments ni datos productivos.
 
 ## Prueba local
 
