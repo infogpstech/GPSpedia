@@ -5152,6 +5152,7 @@ function reserveYouTubeUploadInitialization_(payload, userId) {
     if (!cache) throw new Error("No está disponible la caché de sesión reanudable; no se inició la subida.");
     const cacheKey = buildYouTubeUploadSessionCacheKey_(userId, payload.opVideoId);
     const requestHash = buildYouTubeUploadReservationHash_(payload);
+    // La renovación solo puede referirse a una sesión oficial previa; nunca debe crear una reserva nueva.
     const renewRequested = payload.renewSession === true;
     const expiredUploadUrl = String(payload.expiredUploadUrl || "").trim();
     if (renewRequested && !isValidYouTubeUploadSessionUrl_(expiredUploadUrl)) {
