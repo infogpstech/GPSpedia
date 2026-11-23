@@ -579,6 +579,14 @@ function attachFeedbackCatalogChange_(action, payload, response) {
         }
         return response;
     }
+    if (action === "suggestYear" && response.catalogResetRequired === true) {
+        const vehicleId = String(source.vehicleId || "").trim();
+        if (vehicleId) {
+            response.catalogChange = { collection: "cortes", recordId: vehicleId, operation: "upsert" };
+            delete response.catalogResetRequired;
+        }
+        return response;
+    }
     if (FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_.has(action)) {
         const reference = action === "addProblem"
             ? response.problemId
