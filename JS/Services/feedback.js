@@ -5470,6 +5470,7 @@ function handleSubmitVideoForApproval(payload) {
  const existing=findVideoApprovalByOperation_(sheet,operationId);
  if(existing){const data=existing.data,sameOperation=String(data.createdByUserId||"")===String(userId)&&String(data.contentType||"")===normalizedContentType&&String(data.referenceId||"")===normalizedReferenceId&&String(data.videoId||"")===actualVideoId&&String(data.videoUrl||"")===canonicalUrl&&String(data.title||"")===normalizedTitle&&String(data.description||"")===normalizedDescription;
   if(!sameOperation)throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra solicitud.");
+  markYouTubeUploadReservationSubmitted_({opVideoId:operationId,userId,contentType:normalizedContentType,referenceId:normalizedReferenceId});
   return{status:"success",id:String(existing.row[COLS_FEEDBACKS.ID-1]||""),opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:String(data.status||"pending"),message:"La solicitud de aprobación ya existía; se devolvió el registro original."};}
  const pendingForTarget=findPendingVideoApprovalForTarget_(sheet,normalizedContentType,normalizedReferenceId);
  if(pendingForTarget)throw new Error("Ya existe una solicitud de vídeo pendiente para este contenido. Revisa la bandeja de aprobación antes de enviar otra.");
@@ -5483,6 +5484,7 @@ function handleSubmitVideoForApproval(payload) {
  sheet.getRange(newRowNumber,1,1,COLS_FEEDBACKS.anoSugerido).setValues([newRow]);SpreadsheetApp.flush();
  const saved=findVideoApprovalByOperation_(sheet,operationId);
  if(!saved||String(saved.row[COLS_FEEDBACKS.ID-1]||"")!==newId)throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
+ markYouTubeUploadReservationSubmitted_({opVideoId:operationId,userId,contentType:normalizedContentType,referenceId:normalizedReferenceId});
  return{status:"success",id:newId,opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:"pending",message:"Vídeo enviado para aprobación interna."};
     })();
 }
