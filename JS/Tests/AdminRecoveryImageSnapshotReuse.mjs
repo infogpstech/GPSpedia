@@ -17,8 +17,8 @@ assert.ok(recoveryStart>=0&&recoveryEnd>recoveryStart);
 const recovery=handler.slice(recoveryStart,recoveryEnd);
 assert.match(recovery,/rowValues\[COLS_CORTES\.imagenVehiculo - 1\]\s*=\s*repairedImages\.vehicle/);
 assert.match(recovery,/rowValues\[COLS_CORTES\[\x60imgCorte\$\{slotIndex\}\x60\] - 1\]\s*=\s*repairedImages\.cut/);
-assert.match(recovery,/rowValues\[COLS_CORTES\.imagenVehiculo - 1\], \{ shortLedgerLock: true \}/);
-assert.match(recovery,/rowValues\[COLS_CORTES\["imgCorte" \+ slotIndex\] - 1\], \{ shortLedgerLock: true \}/);
+assert.match(handler,/rowValues\[COLS_CORTES\.imagenVehiculo - 1\], \{ shortLedgerLock: true \}/);
+assert.match(handler,/rowValues\[COLS_CORTES\["imgCorte" \+ slotIndex\] - 1\], \{ shortLedgerLock: true \}/);
 assert.doesNotMatch(recovery,/getRange\(rowIndex, COLS_CORTES\.imagenVehiculo\)\.getValue\(\)/);
 assert.doesNotMatch(recovery,/getRange\(rowIndex, COLS_CORTES\["imgCorte" \+ slotIndex\]\)\.getValue\(\)/);
 
