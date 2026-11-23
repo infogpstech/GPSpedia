@@ -44,11 +44,11 @@ assert.match(coordinator, /function incrementServiceTrafficBucketState_\(service
 assert.match(coordinator, /function saveLeases_\(leases, trafficEvent\)/);
 assert.doesNotMatch(coordinator, /function recordServiceTrafficEvent_/);
 const validationStart = coordinator.indexOf("function validateSessionContext_");
-const validationEnd = coordinator.indexOf("\\n    function ", validationStart + 10);
+const validationEnd = coordinator.indexOf("\n    function ", validationStart + 10);
 assert.ok(validationStart >= 0 && validationEnd > validationStart);
 assert.doesNotMatch(coordinator.slice(validationStart, validationEnd), /recordServiceTrafficEvent_|incrementServiceTrafficBucketState_/);
 const feedStart = coordinator.indexOf("function getCatalogChanges_");
-const feedEnd = coordinator.indexOf("\\n    function ", feedStart + 10);
+const feedEnd = coordinator.indexOf("\n    function ", feedStart + 10);
 assert.ok(feedStart >= 0 && feedEnd > feedStart);
 assert.doesNotMatch(coordinator.slice(feedStart, feedEnd), /recordServiceTrafficEvent_|incrementServiceTrafficBucketState_/);
 
