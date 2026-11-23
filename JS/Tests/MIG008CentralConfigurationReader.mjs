@@ -132,4 +132,15 @@ function expectCode(fn, code) {
     fixture.rows.ConfiguracionParametros[1][2]='"invalid"';
     expectCode(()=>env.context.getPublicCentralConfiguration_(),"CONFIGURATION_PARAMETER_VALUE_INVALID");
 }
-console.log("MIG008CentralConfigurationReader: 8/8 PASS — acceso sin bootstrap local, proyección pública/backend, caché, stale-if-error, validación y fail-closed.");
+{
+    const fixture=makeDatabase(), active={current:fixture.database}, env=createEnvironment(active);
+    fixture.rows.Servicios[2][2]=fixture.rows.Servicios[1][2];
+    expectCode(()=>env.context.getPublicCentralConfiguration_(),"CONFIGURATION_SERVICE_INVALID");
+}
+{
+    const fixture=makeDatabase(), active={current:fixture.database}, env=createEnvironment(active);
+    fixture.rows.ConfiguracionParametros.splice(1);
+    const result=env.context.getPublicCentralConfiguration_();
+    assert.equal(result.parameters.rich_text_mode,"strict");
+}
+console.log("MIG008CentralConfigurationReader: 10/10 PASS — acceso sin bootstrap local, proyección pública/backend, caché, stale-if-error, validación, defaults y fail-closed.");

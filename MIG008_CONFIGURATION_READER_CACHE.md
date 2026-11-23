@@ -30,8 +30,8 @@ El lector:
 2. lee una única fila `CONFIGURATION_ACTIVE` en estado `READY`;
 3. exige schema_version compatible y active_revision válida;
 4. lee únicamente filas con `config_revision` igual a la revisión activa;
-5. valida exactamente los siete service_key conocidos, URL HTTPS de Apps Script, enabled booleano y contract_version;
-6. valida claves de parámetros contra el catálogo admitido por código, tipos, scope, visibility, JSON y enum;
+5. valida exactamente los siete service_key conocidos, endpoints únicos y URL HTTPS de Apps Script, enabled booleano y contract_version;
+6. valida claves de parámetros contra el catálogo admitido por código, tipos, scope, visibility, JSON y enum; aplica defaults versionados solo a parámetros opcionales aprobados y rechaza los obligatorios ausentes;
 7. valida recursos backend por tipo, propietario, alcance e ID;
 8. vuelve a leer ConfiguracionControl y descarta la lectura si cambió la revisión durante el proceso.
 

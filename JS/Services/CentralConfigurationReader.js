@@ -195,6 +195,7 @@ function validateCentralConfigurationSchema_(rows, schemaVersion) {
       visibilities: String(row.visibility_allowed || "").split(/[|,]/).map(function(x) { return x.trim(); }).filter(Boolean),
       required: required,
       validationRule: String(row.validation_rule || "").trim(),
+      defaultJson: String(row.default_json || "").trim(),
       owner: owner
     };
     if (entity === "parameter") {
@@ -215,19 +216,20 @@ function validateCentralConfigurationSchema_(rows, schemaVersion) {
 
 function validateCentralConfigurationServices_(rows, revision) {
   var active = rows.filter(function(row) { return Number(row.config_revision) === revision; });
-  var result = {};
+  var result = {}, endpointOwners = {};
   active.forEach(function(row) {
     var key = String(row.service_key || "").trim().toUpperCase();
     var endpoint = String(row.endpoint_url || "").trim();
     var contract = String(row.contract_version || "").trim();
     var minClient = String(row.min_client_version || "").trim();
-    if (GP_CONFIG_SERVICE_KEYS_.indexOf(key) < 0 || result[key] ||
+    if (GP_CONFIG_SERVICE_KEYS_.indexOf(key) < 0 || String(row.service_key || "").trim() !== key || result[key] || endpointOwners[endpoint] ||
         typeof row.enabled !== "boolean" ||
         !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint) ||
         !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(contract) ||
         (minClient && !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(minClient))) {
       throw centralConfigurationError_("CONFIGURATION_SERVICE_INVALID", "El registro de servicios contiene una clave, endpoint o contrato inválido.");
     }
+    endpointOwners[endpoint] = key;
     result[key] = {
       endpointUrl: endpoint,
       enabled: row.enabled,
@@ -271,6 +273,19 @@ function validateCentralConfigurationParameters_(rows, revision, schemaVersion, 
     }
     result[key] = { value: value, enabled: row.enabled, scope: rule.scope, visibility: rule.visibility };
   });
+  Object.keys(schema).forEach(function(mapKey) {
+    if (mapKey.indexOf("parameter:") !== 0) return;
+    var key = mapKey.slice("parameter:".length), schemaRule = schema[mapKey], rule = GP_CONFIG_PARAMETER_RULES_[key];
+    if (!rule) throw centralConfigurationError_("CONFIGURATION_SCHEMA_UNKNOWN_PARAMETER", "El esquema contiene un parámetro no aprobado por el código.");
+    if (!result[key]) {
+      if (schemaRule.required) throw centralConfigurationError_("CONFIGURATION_PARAMETER_REQUIRED", "Falta un parámetro obligatorio: " + key + ".");
+      var defaultValue = parseCentralConfigurationJson_(schemaRule.defaultJson, key + ".schema_default");
+      if (rule.values.indexOf(defaultValue) < 0) throw centralConfigurationError_("CONFIGURATION_DEFAULT_INVALID", "El valor predeterminado no cumple su regla: " + key + ".");
+      result[key] = { value: defaultValue, enabled: true, scope: rule.scope, visibility: rule.visibility, defaulted: true };
+    } else if (schemaRule.required && !result[key].enabled) {
+      throw centralConfigurationError_("CONFIGURATION_PARAMETER_REQUIRED", "Un parámetro obligatorio está deshabilitado: " + key + ".");
+    }
+  });
   return result;
 }
 
@@ -290,7 +305,7 @@ function validateCentralConfigurationResources_(rows, revision, schema) {
         !/^(?:global|service:[A-Z_]+)$/.test(scope) ||
         (scope !== "global" && scope !== "service:" + owner) ||
         ["backend", "admin"].indexOf(visibility) < 0 ||
-        schemaRule.visibilities.indexOf(visibility) < 0 ||
+        schemaRule.visibilities.indexOf(visibility) < 0 || schemaRule.scopes.indexOf(scope) < 0 ||
         !/^[A-Za-z0-9_-]{5,200}$/.test(id) ||
         typeof row.enabled !== "boolean") {
       throw centralConfigurationError_("CONFIGURATION_RESOURCE_INVALID", "El registro de recursos contiene una clave, tipo, alcance o ID inválido.");
@@ -308,6 +323,13 @@ function validateCentralConfigurationResources_(rows, revision, schema) {
       expectedParentId: parent || null,
       expectedName: String(row.expected_name || "").trim() || null
     };
+  });
+  Object.keys(schema).forEach(function(mapKey) {
+    if (mapKey.indexOf("resource:") !== 0) return;
+    var key = mapKey.slice("resource:".length), schemaRule = schema[mapKey];
+    if (schemaRule.required && (!result[key] || !result[key].enabled)) {
+      throw centralConfigurationError_("CONFIGURATION_RESOURCE_REQUIRED", "Falta un recurso obligatorio: " + key + ".");
+    }
   });
   return result;
 }

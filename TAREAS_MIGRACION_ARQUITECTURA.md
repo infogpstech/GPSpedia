@@ -130,7 +130,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ### MIG-008 — Lector central y caché de configuración
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**
 - [x] Implementar lector Apps Script con SpreadsheetApp.getActiveSpreadsheet(), sin ID/URL bootstrap, PropertiesService ni fallback openById.
-- [x] Validar control, schema_version, revisión activa, siete servicios, endpoints HTTPS, contratos, parámetros, recursos y consistencia de lectura.
+- [x] Validar control, schema_version, revisión activa, siete servicios, endpoints HTTPS únicos, contratos, parámetros, recursos, defaults opcionales y consistencia de lectura.
 - [x] Publicar desde AUTH únicamente la proyección pública; no exponer recursos ni valores backend/admin.
 - [x] Añadir proyección backend por servicio que no devuelve registro de servicios ni URLs de otros servicios.
 - [x] Crear caché servidor con revisión, TTL de 5 min y última copia válida hasta 15 min; endpoints dejan de estar disponibles al superar 5 min.
