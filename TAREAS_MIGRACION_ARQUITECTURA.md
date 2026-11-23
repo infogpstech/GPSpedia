@@ -483,7 +483,9 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Validación Beta real con Apps Script/Spreadsheet/Drive y permisos de producción no ejecutada; queda diferida según NORMAS §5.
 
 ### MIG-023 — Catálogo, cachés y experiencia de usuario
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO (2026-11-23)**
+
+**Punto de partida:** el feed incremental y la publicación de resets todavía usan COORDINATOR; `api-config.js` mapea `getCatalogChanges` y `publishCatalogReset` a COORDINATOR. FEEDBACK aún publica cambios mediante SharedMutationClient. La estrategia es trasladar el feed al servicio CATALOG y coordinar publicaciones desde frontend, sin llamadas Apps Script→Apps Script. El endpoint/servicio COORDINATOR se conservará solo para las funciones pendientes de MIG-024/MIG-025.
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener snapshot/delta, cursor, caché IndexedDB y arranque cache-first.
 - [ ] Mantener navegación, búsqueda, modal de detalle, impresión y QR.
