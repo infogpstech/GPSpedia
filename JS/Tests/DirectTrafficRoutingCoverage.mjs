@@ -57,7 +57,9 @@ test("AUTH es propietario de gestión de usuarios; UTILITIES y ADMIN conservan s
     assert.match(auth, /function handleUpdateProfile\(/);
     assert.match(auth, /getCachedSharedSessionActor_\(/);
     assert.doesNotMatch(auth, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_/);
-    assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
+    assert.match(utilities, /getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken,\{service:"UTILITIES"\}\)/);
+    assert.match(utilities, /const lock=LockService\.getScriptLock\(\)/);
+    assert.doesNotMatch(utilities, /withSharedMutationLease_/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);
     assert.match(admin, /getCachedSharedSessionActor_\(/);
     const auditStart = admin.indexOf("function handleAuditDriveImagesInCortes(");
