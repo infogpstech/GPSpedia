@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const coordinator = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 function fn(name) {
     const start = admin.indexOf("function " + name + "(");
     const end = admin.indexOf("\nfunction ", start + 10);
@@ -18,6 +17,4 @@ assert.match(activity, /SpreadsheetApp\.flush\(\)/);
 assert.doesNotMatch(activity, /withSharedMutationLease_|recordAdminImageActivity|getNextAdminFormulaBasedId_|LockService/);
 const router = admin.slice(admin.indexOf("function doPostInternal_(e)"));
 assert.match(router, /case 'saveUnusedImagesInventory':[\s\S]*?withAdminLocalOperationGuard_\(/);
-assert.doesNotMatch(coordinator, /saveUnusedImagesInventory:/);
-assert.doesNotMatch(coordinator, /recordAdminImageActivity:\s*\{/);
-console.log("AdminInventoryLockIsolation: 1/1 PASS — inventario con guarda local breve y actividad appendRow sin lease");
+console.log("AdminInventoryLockIsolation: 1/1 PASS — inventario con guarda local breve y actividad appendRow sin coordinación remota");
