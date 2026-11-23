@@ -1034,10 +1034,14 @@ function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessio
     }
     const actor = { userId: normalizedId, role: normalizedRole,
         fullName: String(fullName || ""), epoch: 1 };
-    if (!cacheSharedSessionActor_(normalizedId, currentSessionToken, actor)) {
-        throw new Error("No se pudo preparar la caché local de sesión AUTH.");
+    let cached = false;
+    try {
+        cached = cacheSharedSessionActor_(normalizedId, currentSessionToken, actor);
+    } catch (cacheError) {
+        console.warn("No se pudo precalentar la caché local AUTH; el primer acceso la cargará desde ActiveSessions.",
+            cacheError && cacheError.message ? cacheError.message : cacheError);
     }
-    return { registered: true, epoch: 1, cachePriming: { local: true, remote: false } };
+    return { registered: true, epoch: 1, cachePriming: { local: cached, remote: false } };
 }
 
 
