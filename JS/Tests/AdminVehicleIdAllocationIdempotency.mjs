@@ -1,26 +1,22 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
-const start = source.indexOf("function requestNextVehicleIdFromWriteService(");
-const end = source.indexOf("\nfunction requestCortesIdFreezeFromWriteService", start);
-assert.ok(start >= 0 && end > start, "No se encontró requestNextVehicleIdFromWriteService");
-const helper = source.slice(start, end), calls = [];
-const request = new Function("callWriteServiceAction", helper + "\nreturn requestNextVehicleIdFromWriteService;")(
-    (action, payload) => { calls.push({ action, payload }); return { status: "success", vehicleId: 42 }; }
-);
-const hash = "a".repeat(64);
-assert.equal(request({ userId: "user-1", sessionToken: "session-1" }, "OP-RETRY-1", hash), 42);
-assert.deepEqual(calls[0], {
-    action: "allocateVehicleId",
-    payload: { userId: "user-1", sessionToken: "session-1", opId: "OP-RETRY-1", operationHash: hash }
-});
-request({ userId: "user-2", sessionToken: "session-2" });
-assert.deepEqual(calls[1], {
-    action: "allocateVehicleId",
-    payload: { userId: "user-2", sessionToken: "session-2" }
-});
-const invalid = new Function("callWriteServiceAction", helper + "\nreturn requestNextVehicleIdFromWriteService;")(
-    () => ({ status: "success", vehicleId: "not-an-id" })
-);
-assert.throws(() => invalid({}, "OP-RETRY-2", hash), /ID de vehículo inválido/);
-console.log("AdminVehicleIdAllocationIdempotency: 3/3 PASS — ADMIN transmite opId/operationHash y conserva compatibilidad legacy");
+const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+const write=readFileSync(new URL("../Services/write.js",import.meta.url),"utf8");
+const api=readFileSync(new URL("../Frontend/api-config.js",import.meta.url),"utf8");
+assert.equal(admin.includes("requestNextVehicleIdFromWriteService"),false);
+const start=admin.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
+const end=admin.indexOf("\nfunction sanitizeSupplementaryRichText_",start);
+assert.ok(start>=0&&end>start&&admin.slice(start,end).includes("ACTION_MOVED_TO_WRITE"));
+assert.ok(api.includes("'addOrUpdateCut': 'WRITE'"));
+assert.ok(api.includes("'allocateVehicleId': 'WRITE'"));
+const handlerStart=write.indexOf("function handleAddOrUpdateCut(payload)");
+const handlerEnd=write.indexOf("\nconst CORTES_ID_COUNTER_PROPERTY",handlerStart);
+assert.ok(handlerStart>=0&&handlerEnd>handlerStart);
+const handler=write.slice(handlerStart,handlerEnd);
+assert.ok(handler.includes("reserveCortesVehicleIdForOperation_"));
+assert.ok(handler.includes("operationHash"));
+assert.ok(handler.indexOf("reserveCortesVehicleIdForOperation_")<handler.indexOf("lock.tryLock(0)"));
+assert.ok(write.includes("function normalizeCortesIdAllocationRequest_(payload)"));
+assert.ok(write.includes("function reserveCortesVehicleIdForOperation_(cortesSheet, request)"));
+assert.ok(write.includes("case 'allocateVehicleId':"));
+console.log("AdminVehicleIdAllocationIdempotency: PASS — reserva opId/hash en WRITE y ADMIN sin transporte interno");
