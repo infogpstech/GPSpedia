@@ -456,3 +456,7 @@ Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariame
 - No se modificó código, estructura de hojas, deployments ni datos. MIG-001 permanece **EN PROGRESO**.
 
 **Siguiente tramo de MIG-001:** continuar el mismo inventario para FEEDBACK, CATALOG, ADMIN y UTILITIES; completar los contratos de datos/columnas y dependencias Drive/APIs; revisar manifiestos y posibles triggers/jobs fuera de los módulos ya inspeccionados; después asociar pruebas de paridad por acción.
+
+
+
+**Aclaración de esquema VIN:** al revisar el README completo se encontró que documenta VIN en AQ (43), con AR:AS disponibles, mientras WRITE resuelve la columna dinámicamente por encabezado. Se añadió la discrepancia a §17.8 de la matriz; su resolución requiere verificar la hoja real y `renameVinColumnHeader`, sin mover columnas por inferencia.
