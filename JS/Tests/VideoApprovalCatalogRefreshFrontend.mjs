@@ -36,6 +36,7 @@ await test("aprobación confirmada coordina actualización CATALOG desde el nave
     const result = await refresh("approveVideo", { status: "success", message: "Vídeo aprobado." });
     assert.equal(result.status, "success");
     assert.equal(result.catalogRefreshStatus, "success");
+    assert.deepEqual(result.catalogRefreshData, []);
     assert.deepEqual(calls.map(call => call.action), ["getCatalogData"]);
     assert.equal(calls[0].payload.forceRefresh, true);
 });

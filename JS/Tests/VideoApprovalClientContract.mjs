@@ -71,6 +71,14 @@ test("openAddVideoModal no ofrece enlace manual ni campos arbitrarios",()=>{
  assert.ok(body.includes("openYouTubeUploadModal"));
  assert.doesNotMatch(body,/fieldName|fieldValue|addSupplementaryInfo/);
 });
+test("la aprobación aplica el snapshot CATALOG refrescado al estado de la interfaz",()=>{
+ const start=ui.indexOf("approveVideoBtn.addEventListener");
+ const end=ui.indexOf("const rejectVideoBtn",start);
+ const body=ui.slice(start,end);
+ assert.match(body,/const approvalResult = await approveVideo/);
+ assert.match(body,/performSilentSync\(approvalResult\.catalogRefreshData\)/);
+ assert.match(body,/approvalResult\.catalogRefreshPending/);
+});
 test("PyS y Tutorial bloquean cambios directos de URL",()=>{
  const pys=feedback.slice(feedback.indexOf("function handleUpdatePysItem(payload)"),feedback.indexOf("function handleUpdateTutorialItem(payload)"));
  const start=feedback.indexOf("function handleUpdateTutorialItem(payload)");

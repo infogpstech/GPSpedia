@@ -10874,10 +10874,18 @@ export function renderInboxDetail(item) {
                 try {
                     approveVideoBtn.disabled = true;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
-                    await approveVideo(item.id, userName, userRole, getSessionPayload_());
+                    const approvalResult = await approveVideo(item.id, userName, userRole, getSessionPayload_());
                     if (!isCurrentInboxDetail()) return;
+                    if (approvalResult && approvalResult.catalogRefreshData &&
+                        offline.isCompleteCatalogSnapshot(approvalResult.catalogRefreshData)) {
+                        await performSilentSync(approvalResult.catalogRefreshData);
+                    }
                     invalidateInboxCache_(context);
-                    mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    if (approvalResult && approvalResult.catalogRefreshPending) {
+                        mostrarNotificacion(approvalResult.message || "El vídeo fue aprobado, pero el catálogo requiere actualización.", "warning");
+                    } else {
+                        mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    }
                     await syncApprovedVehicleVideoDetail_(item.videoMeta, {
                         notifyRefreshFailure: message => {
                             if (isCurrentInboxDetail()) mostrarNotificacion(message, "warning");

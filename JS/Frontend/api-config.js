@@ -280,11 +280,11 @@ async function refreshCatalogAfterVideoApproval_(action, result) {
         if (!catalogRefresh || catalogRefresh.status !== "success") {
             throw new Error("CATALOG no confirmó la actualización de su caché.");
         }
-        finalResult = Object.assign({}, finalResult, { catalogRefreshStatus: "success" });
+        finalResult = Object.assign({}, finalResult, { catalogRefreshStatus: "success", catalogRefreshData: catalogRefresh.data });
         if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
             typeof CustomEvent === "function") {
             window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-completed", {
-                detail: { action: "approveVideo" }
+                detail: { action: "approveVideo", data: catalogRefresh.data }
             }));
         }
     } catch (catalogRefreshError) {
