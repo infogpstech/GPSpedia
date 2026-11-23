@@ -137,7 +137,7 @@ function buildHarness(feedback, options = {}) {
     return { api: context.api, state };
 }
 
-export function runPysVehicleRelationIntegrityTests({ feedback, ui, coordinator }) {
+export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
     const results = [];
     let passed = 0, failed = 0;
     function test(name, callback) {
@@ -151,16 +151,12 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui, coordinator 
         assert.match(feedback, /function authorizeFeedbackAction_\([\s\S]*?userRole: actor\.role/);
     });
 
-    test("las mutaciones PyS ordinarias no dependen de Coordinator ni de leases", () => {
-        assert.ok(coordinator, "Coordinator.js debe formar parte del contrato integrado");
-        const start = coordinator.indexOf("function coordinatorPolicy_");
-        const end = coordinator.indexOf("\nfunction createSharedMutationCoordinator_", start);
-        const policy = coordinator.slice(start, end);
-        assert.doesNotMatch(feedback, /withPysMutationLease_/);
+    test("las mutaciones PyS ordinarias funcionan sin Coordinator, leases ni configuración interservicio", () => {
+        assert.doesNotMatch(feedback, /withPysMutationLease_|createSharedMutationClient_|SharedMutation|GPSpedia_COORDINATOR_(?:URL|SECRET)/);
         for (const action of ["addSolution", "addPrevention", "addVehicleToProblem", "removeVehicleFromProblem"]) {
-            assert.doesNotMatch(policy, new RegExp(action + ":\\s*\\{"));
+            assert.match(feedback, new RegExp(action + ":"));
         }
-    });
+    });;
 
     test("renderTrackVehicles elimina tarjetas duplicadas y omite IDs sin vehículo", () => {
         assert.match(ui, /uniqueModelosAsociados = new Set\(\)/);
@@ -316,8 +312,7 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui, coordinator 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const feedback = readFileSync(resolve(ROOT, "JS/Services/feedback.js"), "utf8");
 const ui = readFileSync(resolve(ROOT, "JS/Frontend/ui.js"), "utf8");
-const coordinator = readFileSync(resolve(ROOT, "JS/Services/Coordinator.js"), "utf8");
-const result = runPysVehicleRelationIntegrityTests({ feedback, ui, coordinator });
+const result = runPysVehicleRelationIntegrityTests({ feedback, ui });
 console.log("PysVehicleRelationIntegrity: " + result.passed + "/" + (result.passed + result.failed) + " PASS");
 for (const item of result.results) {
     if (item.status !== "PASS") console.error(item.name + ": " + item.message);
