@@ -113,3 +113,10 @@ No copiar el probe a un deployment productivo ni usar la Spreadsheet operativa. 
 La parte local quedó implementada y probada: probe reproducible, guardas de escritura, harness de simulación y documentación de decisión. La prueba de contexto real Web App, los proyectos independientes, permisos, cuotas, concurrencia y mediciones quedan pendientes de Beta porque requieren proyectos Apps Script y Spreadsheet desechables autorizados. No se afirma que el acceso activo ya funcione en despliegue.
 
 No se modificaron servicios funcionales, IDs actuales, propiedades instaladas, endpoints, deployments, hojas ni datos.
+
+
+## 11. Estado heredado de secretos entre servicios
+
+La inspección del código fuente confirma que todavía existen referencias heredadas a propiedades como GPSpedia_COORDINATOR_SECRET, GPSpedia_COORDINATOR_SECRET_<SERVICIO> y GPSpedia_CATALOG_TRAFFIC_SECRET en los componentes actuales de Coordinator/SharedMutation y en rutas de inventario ADMIN/CATALOG. Esas referencias describen la implementación anterior; no son una recomendación ni autorización para crear, reponer o configurar esas propiedades.
+
+MIG-006 no retiró esos mecanismos porque su alcance es el acceso a Spreadsheet. Su eliminación y sustitución funcional corresponde a las tareas de migración de llamadas ADMIN (MIG-011), sesiones sin Coordinator (MIG-013), retirada de SharedMutation (MIG-024) y retirada de Coordinator (MIG-025). Hasta que esas tareas se ejecuten, el código fuente conserva dependencias legacy que deben eliminarse antes de adoptar el diseño objetivo; no se debe añadir ningún secreto nuevo ni copiar valores existentes a otro proyecto.
