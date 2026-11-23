@@ -41,4 +41,4 @@ assert.ok(catalog.includes('ADMIN: new Set(["addLogo"'));
 assert.ok(catalog.includes("resolveVehicleContributionCandidate"));
 assert.ok(catalog.includes('service === "ADMIN"'));
 assert.ok(catalog.includes("Solo Desarrollador"));
-console.log("AdminCatalogPublicationIsolation: 21/21 PASS — ADMIN publica reset en CATALOG; Coordinator conserva solo tráfico");
+console.log("AdminCatalogPublicationIsolation: 26/26 PASS — ADMIN publica reset en CATALOG; Coordinator conserva solo tráfico");
