@@ -565,7 +565,7 @@ runGroup('43','MIG019',()=>{
  runCli('MIG019 verificación de imágenes pendientes fuera del lock','JS/Tests/FeedbackPysPendingImageVerificationOutsideLock.mjs');
  runCli('MIG019 post-commit PyS fuera del lock','JS/Tests/FeedbackPysPostCommitOutsideLock.mjs');
  runCli('MIG019 rollback de imágenes PyS','JS/Tests/FeedbackPysRollbackOutsideLock.mjs');
- runCli('MIG019 limpieza de adjuntos PyS fuera del lock','JS/Tests/FeedbackPysRollbackOutsideLock.mjs');
+ runCli('MIG019 carga de imágenes PyS fuera del lock y recuperación','JS/Tests/P2PysImageUploadOutsideLock.mjs');
  runCli('MIG019 preflight y recuperación de sugerencias','JS/Tests/FeedbackSuggestionPreflightOutsideLock.mjs');
  runCli('MIG019 búsqueda dirigida de sugerencias','JS/Tests/FeedbackSuggestionLookupBoundedRead.mjs');
  runCli('MIG019 limpieza compensatoria de imágenes de sugerencias','JS/Tests/FeedbackSuggestionImageCleanupOutsideLock.mjs');
