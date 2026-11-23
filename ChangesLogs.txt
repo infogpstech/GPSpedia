@@ -116,3 +116,10 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - La recuperación de reemplazos de imágenes separa estado ADMIN y proyección CATALOG: el frontend combina ambas respuestas sin lectura materializada de Cortes desde ADMIN.
 - Beta real sigue pendiente: no se desplegaron servicios Apps Script ni se modificaron PropertiesService, deployments, endpoints instalados, Spreadsheet, Drive o datos externos.
 - Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md, INVENTARIO_LLAMADAS_SERVICIOS.md y checkpoint.md. Siguiente tarea: MIG-011.
+
+### 2026-11-23 — MIG-011: verificación de dependencias backend de ADMIN
+- Se contrastaron las fuentes actuales de ADMIN, CATALOG, WRITE y el router frontend contra los cinco criterios de MIG-011.
+- Se confirmó que las rutas de proyección/candidatos van de frontend a CATALOG y las operaciones de asignación/congelación de IDs van de frontend a WRITE; ADMIN no conserva URLs ni wrappers de esos servicios.
+- Las llamadas HTTP restantes de ADMIN son integraciones externas de Drive e imágenes, no llamadas a microservicios GPSpedia; se preservan.
+- Se identificó cobertura existente en MIG010FrontendServiceOrchestration, ServiceCallGraphContract y pruebas de paridad relacionadas. No fue necesario modificar código funcional.
+- Se actualizan backlog, inventario y checkpoint. La regresión Node.js 22 queda pendiente de resultado del workflow posterior a esta publicación; Beta real sigue pendiente.

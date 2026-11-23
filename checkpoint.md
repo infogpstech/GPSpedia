@@ -666,7 +666,28 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 - No se desplegaron Apps Script ni se modificaron deployments, endpoints instalados, PropertiesService, Spreadsheet, Drive o datos externos.
 - Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
 
+## Continuidad MIG-011 — verificación de aceptación — 2026-11-23
+
+### Estado Git de partida
+- Repositorio: infogpstech/GPSpedia.
+- Rama autorizada: GPSpedia2.2.5_work.
+- HEAD confirmado antes de esta actualización: 5ec2ac01750bffa4052f248cad1bf6d4fd71ddae.
+- Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+
+### Resultado de análisis
+- MIG-010 ya retiró las llamadas funcionales ADMIN→WRITE y ADMIN→CATALOG; esta tarea verifica los cinco criterios y formaliza la aceptación.
+- ADMIN no contiene destinos Apps Script ni wrappers funcionales hacia AUTH, WRITE o CATALOG.
+- El frontend enruta proyección/candidatos a CATALOG y asignación/congelación de IDs a WRITE; se mantienen las secuencias de backup y reorganización en frontend.
+- CATALOG aplica validación local de sesión/RBAC; ADMIN y WRITE conservan las precondiciones de sus mutaciones.
+- Las llamadas HTTP externas de ADMIN a Drive API y recursos de imagen se preservan.
+- No se modificó código funcional, endpoints, propiedades, deployments, Spreadsheet, Drive ni datos.
+
+### Validación pendiente
+- El commit documental de esta revisión debe activar el workflow GPSpedia service regression tests (Node.js 22). Esperar su resultado antes de cambiar MIG-011 a COMPLETADA CON VALIDACIÓN DIFERIDA.
+- La validación de endpoints Apps Script, sesiones/roles reales y permisos sobre recursos aislados permanece pendiente de Beta.
+
 ### Próximo paso exacto
-1. Iniciar MIG-011 — eliminar las dependencias backend→backend restantes de ADMIN, siguiendo NORMAS_DESAROLLO.md §18.
-2. Mantener la validación real de Beta de MIG-010 como pendiente independiente; no marcarla como ejecutada.
+1. Confirmar el resultado CI posterior a esta actualización y revisar el diff/HEAD.
+2. Si CI aprueba, cerrar MIG-011 como COMPLETADA CON VALIDACIÓN DIFERIDA y registrar el run.
+3. Continuar con MIG-012 — unificación funcional AUTH/USERS.
 

@@ -199,15 +199,23 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** cumplida en código y regresión CI: las operaciones multi-servicio cubiertas se coordinan desde frontend, los servicios propietarios validan autorización localmente y no se usan llamadas backend→backend para estos flujos. Se cierra MIG-010 con validación real de Beta expresamente diferida.
 
 ### MIG-011 — Eliminar dependencias backend→backend de ADMIN
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Migrar consulta de proyección de vehículo a llamada directa frontend→CATALOG.
-- [ ] Migrar consulta de candidatos de contribución/inventario a llamada directa frontend→CATALOG.
-- [ ] Migrar delegaciones de cortes/IDs a llamadas directas frontend→WRITE cuando corresponda.
-- [ ] Preservar precondiciones, validaciones, rollback y resultados.
-- [ ] Retirar constantes URL internas solo tras comprobar referencias.
+- [x] Migrar consulta de proyección de vehículo a llamada directa frontend→CATALOG.
+- [x] Migrar consulta de candidatos de contribución/inventario a llamada directa frontend→CATALOG.
+- [x] Migrar delegaciones de cortes/IDs a llamadas directas frontend→WRITE cuando corresponda.
+- [x] Preservar precondiciones, validaciones, rollback y resultados.
+- [x] Retirar constantes URL internas solo tras comprobar referencias.
 
 **Aceptación:** ADMIN no contiene URLs ni wrappers para otros servicios y sus herramientas mantienen paridad.
+
+#### Evidencia de verificación MIG-011 — 2026-11-23
+- La migración funcional de estas rutas quedó implementada durante MIG-010; MIG-011 verifica y formaliza su aceptación, sin duplicar ni rehacer los cambios.
+- JS/Services/admin.js no contiene URLs de Apps Script, constantes de endpoints de AUTH/WRITE/CATALOG, wrappers de llamadas a esos servicios ni el secreto compartido ADMIN↔CATALOG.
+- Las operaciones HTTP que permanecen en ADMIN corresponden a Google Drive API y recursos de imagen externos; están clasificadas en §7 de INVENTARIO_LLAMADAS_SERVICIOS.md y no son dependencias entre microservicios GPSpedia.
+- JS/Frontend/api-config.js enruta getVehicleProjection y getContributionCandidates a CATALOG, y allocateVehicleId y freezeCortesIds a WRITE. Las secuencias de reorganización se coordinan en frontend.
+- CATALOG mantiene autorización local: getVehicleProjection valida sesión y roles de edición permitidos; getContributionCandidates exige Desarrollador. ADMIN conserva precondiciones y validaciones propias antes de mutaciones.
+- La cobertura existente está integrada en MIG010FrontendServiceOrchestration.mjs, ServiceCallGraphContract.mjs y las suites de proyección, candidatos, asignación de IDs y congelación de IDs. La ejecución CI de esta revisión queda pendiente de confirmación antes del cierre definitivo.
 
 ---
 

@@ -77,6 +77,18 @@ No se conserva secreto compartido ADMIN↔CATALOG ni se copia al frontend. La au
 
 **Pruebas de regresión relevantes:** MIG010FrontendServiceOrchestration.mjs, AdminVehicleIdAllocationIdempotency.mjs, VehicleIdAllocationEndToEnd.mjs, AdminTestigoHeaderReadReuse.mjs, AdminImageUploadLinkedRecoveryIsolation.mjs, AdminCutImageLinkOutsideLock.mjs, AdminVinDuplicateBoundedRead.mjs, CatalogTargetedResponses.mjs, CatalogTrafficTelemetry.mjs, DirectTrafficRoutingCoverage.mjs y SessionActivityLeaseMinimization.mjs.
 
+### 3.3 Verificación de aceptación MIG-011 — 2026-11-23
+
+La revisión de la rama GPSpedia2.2.5_work confirma que las aristas ADMIN→WRITE y ADMIN→CATALOG están retiradas:
+- Las consultas de proyección y candidatos se originan en el frontend y llegan directamente a CATALOG.
+- La asignación y congelación de IDs se enrutan desde el frontend a WRITE; el respaldo y la reorganización permanecen en ADMIN.
+- ADMIN no conserva URLs, endpoints ni wrappers para AUTH, WRITE o CATALOG. Las llamadas UrlFetchApp restantes son integraciones externas de Drive/imagen descritas en §7.
+- Se mantienen las validaciones locales de sesión/RBAC en CATALOG y las precondiciones de escritura en ADMIN/WRITE.
+
+La paridad local queda sustentada por las suites existentes MIG010FrontendServiceOrchestration.mjs, ServiceCallGraphContract.mjs, AdminVehicleTargetedCatalogRead.mjs, AdminVehicleContributionCandidates.mjs, AdminCandidateImageInventoryCatalogSource.mjs, AdminVehicleIdAllocationIdempotency.mjs, VehicleIdAllocationEndToEnd.mjs y WriteFreezeCortesIdsBackupOutsideLock.mjs. No se elimina ninguna capacidad ADMIN ni integración externa.
+
+La ejecución completa Node.js 22 se disparará al publicar esta actualización documental. Hasta recibir su resultado, MIG-011 permanece EN PROGRESO. Las invocaciones reales de Apps Script, permisos y recursos aislados continúan pendientes de Beta.
+
 ## 4. SharedMutationClient → COORDINATOR
 
 ### 4.1 Las 13 operaciones del protocolo
