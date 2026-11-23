@@ -176,7 +176,7 @@ await test('AUTH conserva rechazo para identidad incompleta y valida contexto an
     assert.equal(validPayload.valid, false);
     assert.equal(validPayload.reason, 'missing_session');
     assert.equal(calls.sessionValidation, 1);
-    assert.equal(calls.activity, 1);
+    assert.equal(calls.activity, 0, 'La validación de solo lectura no debe registrar actividad.');
 });
 
 await test('el cliente no ejecuta touchSession ni revalida identidad y rol por acción', () => {
