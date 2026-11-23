@@ -278,11 +278,12 @@ async function publishCatalogResetAfterMutation_(service, action, payload, resul
         : "";
     const sourceId = String(payload && (
         payload.opId || payload.requestId || payload.backupId || payload.migrationId ||
-        payload.eventId || payload.operationId || payload.reconciliationId || payload.planId
-    ) || result && (
+        payload.eventId || payload.operationId || payload.reconciliationId || payload.planId ||
+        payload.expectedSourceEventId
+    ) || fallbackPayloadId || result && (
         result.opId || result.operationId || result.catalogVersion || result.vehicleId ||
         result.logoId || result.backupId || result.migrationId
-    ) || fallbackPayloadId || Date.now()).trim();
+    ) || Date.now()).trim();
     const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || String(Date.now());
     const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
     try {
