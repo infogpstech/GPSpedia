@@ -23,11 +23,14 @@ test("Coordinator no consulta contadores directos ni hace fan-out desde getServi
     assert.match(coordinatorReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
 });
 
-test("ADMIN no mantiene el batch de cinco endpoints directos", () => {
+test("ADMIN no mantiene el batch de cinco endpoints directos y Coordinator protege la lectura global", () => {
     assert.doesNotMatch(admin, /function getDirectServiceTrafficBatch_/);
     assert.doesNotMatch(admin, /function mergeDirectServiceTraffic_/);
-    assert.doesNotMatch(adminHandler, /getDirectServiceTrafficBatch_|UrlFetchApp\.fetchAll/);
-    assert.match(adminHandler, /normalizeCoordinatorServiceTraffic_\(coordinatorResult\)/);
+    assert.doesNotMatch(admin, /function handleGetServiceTraffic_/);
+    assert.equal(adminHandler, "");
+    assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
+    assert.match(coordinator, /Solo Desarrollador puede consultar la telemetría global/);
+    assert.match(coordinator, /return readServiceTraffic_\("ADMIN", "getServiceTraffic"\)/);
 });
 
 test("La telemetría conserva el fan-out de precarga de sesiones, no el de métricas", () => {
