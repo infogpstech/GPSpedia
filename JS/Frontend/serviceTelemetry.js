@@ -1,6 +1,6 @@
 // Métricas locales de solicitudes API del navegador actual.
 // No persiste datos, no transmite telemetría y nunca conserva payloads, tokens o datos personales.
-const SERVICE_KEYS = Object.freeze(["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN"]);
+const SERVICE_KEYS = Object.freeze(["AUTH", "CATALOG", "WRITE", "USERS", "FEEDBACK", "UTILITIES", "ADMIN", "COORDINATOR"]);
 const BUCKET_MS = 60 * 60 * 1000;
 const WINDOW_MS = 24 * BUCKET_MS;
 const MAX_EVENTS = 200;

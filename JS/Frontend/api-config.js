@@ -86,7 +86,6 @@ export const ACTION_TO_SERVICE_MAP = {
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
-    'getCatalogChanges': 'FEEDBACK',
     'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
     'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
@@ -863,7 +862,7 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     try {
         let response;
         try {
-            const feedbackEndpoint = await getConfiguredServiceEndpoint_("FEEDBACK");
+            const feedbackEndpoint = await getConfiguredServiceEndpoint_("COORDINATOR");
             response = await runCatalogRequestWithRetry(async signal => {
                 const current = await fetch(feedbackEndpoint + query, {
                     method: "GET", redirect: "follow", signal
@@ -921,7 +920,7 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     } finally {
         try {
             recordBrowserServiceTraffic({
-                service: "FEEDBACK",
+                service: "COORDINATOR",
                 action: "getCatalogChanges",
                 timestamp: Date.now(),
                 durationMs: Date.now() - startedAt,

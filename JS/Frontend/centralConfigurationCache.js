@@ -2,6 +2,8 @@
 export const CENTRAL_CONFIG_FRESH_TTL_MS = 5 * 60 * 1000;
 export const CENTRAL_CONFIG_STALE_TTL_MS = 15 * 60 * 1000;
 const REQUIRED_SERVICES = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+const OPTIONAL_SERVICES = ["COORDINATOR"];
+const ROUTABLE_SERVICES = [...REQUIRED_SERVICES, ...OPTIONAL_SERVICES];
 const ENDPOINT_PATTERN = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/;
 
@@ -17,10 +19,11 @@ function validatePublicSnapshot_(value) {
             throw new Error("El registro central de servicios no está disponible.");
         }
         const keys = Object.keys(value.services).sort();
-        if (keys.join("|") !== REQUIRED_SERVICES.slice().sort().join("|")) {
-            throw new Error("El registro central no contiene exactamente los servicios aprobados.");
+        if (REQUIRED_SERVICES.some(key => !Object.prototype.hasOwnProperty.call(value.services, key)) ||
+            keys.some(key => !ROUTABLE_SERVICES.includes(key))) {
+            throw new Error("El registro central no contiene los servicios requeridos o incluye claves desconocidas.");
         }
-        for (const key of REQUIRED_SERVICES) {
+        for (const key of keys) {
             const item = value.services[key];
             if (!item || typeof item !== "object" || typeof item.enabled !== "boolean" ||
                 !ENDPOINT_PATTERN.test(String(item.endpointUrl || "")) ||
@@ -47,7 +50,7 @@ export function resolveCentralServiceEndpoint(snapshot, serviceKey) {
         !snapshot.services || typeof snapshot.services !== "object" || Array.isArray(snapshot.services)) {
         throw new Error("La configuración central no permite enrutar solicitudes; no se utilizarán endpoints locales.");
     }
-    if (!REQUIRED_SERVICES.includes(key)) throw new Error("Servicio desconocido en el registro central: " + key);
+    if (!ROUTABLE_SERVICES.includes(key)) throw new Error("Servicio desconocido en el registro central: " + key);
     const service = snapshot.services[key];
     if (!service || service.enabled !== true) throw new Error("El servicio " + key + " está deshabilitado en la configuración central.");
     const endpoint = String(service.endpointUrl || "");

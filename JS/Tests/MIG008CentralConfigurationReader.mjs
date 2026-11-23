@@ -83,6 +83,15 @@ function expectCode(fn, code) {
     assert.equal(Object.prototype.hasOwnProperty.call(result,"resources"),false);
 }
 {
+    const fixture=makeDatabase();
+    fixture.rows.Servicios.push([4,"COORDINATOR","https://script.google.com/macros/s/FAKE_COORDINATOR_123456789/exec",true,"2.2.5","2.2.5","catalogFeed",new Date(0),"operator","initial"]);
+    const active={current:fixture.database}, env=createEnvironment(active);
+    const result=env.context.getPublicCentralConfiguration_();
+    assert.equal(result.services.COORDINATOR.enabled,true);
+    assert.match(result.services.COORDINATOR.endpointUrl,/FAKE_COORDINATOR/);
+    assert.equal(Object.keys(result.services).length,7);
+}
+{
     const fixture=makeDatabase(), active={current:fixture.database}, env=createEnvironment(active);
     const result=env.context.getCentralConfigurationForService_("ADMIN");
     assert.equal(result.status,"success");

@@ -7,6 +7,8 @@ const writeSource = read("../Services/write.js");
 const adminSource = read("../Services/admin.js");
 const apiSource = read("../Frontend/api-config.js");
 const clientSource = read("../Services/SharedMutationClient.js");
+const centralConfigSource = read("../Frontend/centralConfigurationCache.js");
+const telemetrySource = read("../Frontend/serviceTelemetry.js");
 let passed = 0;
 function test(name, fn) { fn(); passed++; console.log("PASS " + name); }
 const propertiesStore = {};
@@ -90,14 +92,15 @@ test("huecos o eventos corruptos obligan a reiniciar el cursor", () => {
 test("se autentica cada solicitud y no permite leer el feed con secreto incorrecto", () => {
     assert.throws(()=>request("getCatalogChanges","FEEDBACK","getCatalogChanges",{cursor:0,limit:5},"bad"),/no autorizado/);
 });
-test("el feed público no exige actor ni secreto interno de FEEDBACK", () => {
-    assert.doesNotMatch(feedbackSource,/getCatalogChanges:\s*null/);
-    assert.match(feedbackSource,/const FEEDBACK_PUBLIC_ACTIONS = new Set\(\[[^\]]*getCatalogChanges/);
-    assert.match(feedbackSource,/case 'getCatalogChanges':\s*response = handleGetCatalogChanges\(payload\)/);
-    assert.doesNotMatch(feedbackSource,/function handleGetCatalogChanges\(payload\)[\s\S]*?getFeedbackActor_\(payload, null\)/);
-    assert.match(clientSource,/catalogFeed=1/);
+test("el navegador consulta directamente el feed público de Coordinator desde el registro central", () => {
+    assert.doesNotMatch(feedbackSource,/catalogFeed=1|getSharedCatalogChanges_\(/);
+    assert.doesNotMatch(feedbackSource,/isFeedbackCoordinatorConfigured_|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
+    assert.match(apiSource,/getConfiguredServiceEndpoint_\("COORDINATOR"\)/);
+    assert.match(apiSource,/service: "COORDINATOR"[\s\S]*?action: "getCatalogChanges"/);
+    assert.doesNotMatch(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
     assert.match(coordinatorSource,/function doGet\(e\)/);
-    assert.match(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
+    assert.match(centralConfigSource,/OPTIONAL_SERVICES = \["COORDINATOR"\]/);
+    assert.match(telemetrySource,/"COORDINATOR"/);
 });
 test("ADMIN agrupa los cambios de catálogo y el cliente agrega requestId para reintentos", () => {
     assert.match(adminSource,/for \(let offset = 0; offset < versionedChanges\.length; offset \+= 50\)[\s\S]*?publishSharedCatalogChanges_/);
@@ -124,12 +127,13 @@ test("publicación idempotente y lectura incremental usan snapshot sin getProper
     assert.equal(catalogPropertyGetCount,0,
         "La página incremental debe leer los eventos desde el snapshot, no con getProperty por revisión.");
 });
-test("el navegador consume el feed público por GET y evita el POST autenticado", () => {
+test("el navegador consume el feed público por GET directo a Coordinator", () => {
     const feedClient = apiSource.slice(apiSource.indexOf("export async function getCatalogChanges"));
     assert.ok(feedClient.includes('method: "GET"'));
     assert.ok(feedClient.includes("catalogFeed=1"));
-    assert.ok(feedbackSource.includes('if (String(parameters.catalogFeed || "") === "1")'));
-    assert.ok(feedbackSource.includes("getSharedCatalogChanges_(cursor, limit)"));
+    assert.ok(feedClient.includes('getConfiguredServiceEndpoint_("COORDINATOR")'));
+    assert.ok(!feedbackSource.includes('if (String(parameters.catalogFeed || "") === "1")'));
+    assert.ok(!feedbackSource.includes("getSharedCatalogChanges_(cursor, limit)"));
 });
 test("la lectura pública preserva cursor y límites sin autenticar servicio", () => {
     const headPage = coordinator.getPublicCatalogChanges({cursor:Number.MAX_SAFE_INTEGER,limit:1});

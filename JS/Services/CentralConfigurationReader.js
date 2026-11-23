@@ -5,7 +5,9 @@ var GP_CONFIG_SCHEMA_VERSION_ = 1;
 var GP_CONFIG_FRESH_TTL_MS_ = 5 * 60 * 1000;
 var GP_CONFIG_STALE_TTL_MS_ = 15 * 60 * 1000;
 var GP_CONFIG_CACHE_TTL_SECONDS_ = 900;
-var GP_CONFIG_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+var GP_CONFIG_REQUIRED_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+var GP_CONFIG_OPTIONAL_SERVICE_KEYS_ = ["COORDINATOR"];
+var GP_CONFIG_SERVICE_KEYS_ = GP_CONFIG_REQUIRED_SERVICE_KEYS_.concat(GP_CONFIG_OPTIONAL_SERVICE_KEYS_);
 var GP_CONFIG_PARAMETER_RULES_ = {
   rich_text_mode: { valueType: "enum", values: ["strict", "advanced"], scope: "global", visibility: "public", owner: "FEEDBACK" }
 };
@@ -238,8 +240,7 @@ function validateCentralConfigurationServices_(rows, revision) {
       minClientVersion: minClient || null
     };
   });
-  if (Object.keys(result).length !== GP_CONFIG_SERVICE_KEYS_.length ||
-      GP_CONFIG_SERVICE_KEYS_.some(function(key) { return !result[key]; })) {
+  if (GP_CONFIG_REQUIRED_SERVICE_KEYS_.some(function(key) { return !result[key]; })) {
     throw centralConfigurationError_("CONFIGURATION_SERVICES_INCOMPLETE", "La revisión no contiene los seis servicios requeridos.");
   }
   return result;
