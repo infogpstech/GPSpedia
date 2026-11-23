@@ -39,4 +39,4 @@ assert.match(design, /rollback_of_revision/);
 assert.match(design, /stale-if-error máximo 15 min/);
 assert.match(design, /MIG-006/);
 assert.doesNotMatch(design, /1[A-Za-z0-9_-]{30,}/, 'No deben aparecer IDs de recursos o deployments');
-console.log('MIG007ConfigurationSchemaContract: ' + requiredSections.length + ' secciones, 26 familias y reglas de seguridad/versionado verificadas.');
+console.log('MIG007ConfigurationSchemaContract: ' + requiredSections.length + '/' + requiredSections.length + ' PASS — secciones, 26 familias y reglas de seguridad/versionado verificadas.');
