@@ -20,4 +20,4 @@ assert.match(reader, /properties\.getProperties\(\)/);
 assert.doesNotMatch(reader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
 assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
 assert.match(coordinator, /function getServiceTrafficFromBrowser_\(/);
-console.log("ServiceTrafficAggregatorContract: 9/9 PASS — lectura y agregación locales en Coordinator");
+console.log("ServiceTrafficAggregatorContract: 10/10 PASS — lectura y agregación locales en Coordinator");
