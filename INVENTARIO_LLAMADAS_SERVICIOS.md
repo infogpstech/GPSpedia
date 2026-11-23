@@ -39,44 +39,25 @@ La matriz de 120 acciones y sus handlers permanece en `MATRIZ_MIGRACION_SERVICIO
 
 | Origen | Destino | Operaciones observadas | Estado |
 |---|---|---|---|
-| ADMIN | WRITE | `allocateVehicleId`, `freezeCortesIds` | 2 llamadas POST directas |
-| ADMIN | CATALOG | `getVehicleProjection`, `getContributionCandidates` | 2 llamadas POST directas |
+| ADMIN | — | Sin llamadas funcionales a WRITE ni CATALOG | MIG-010: llamadas retiradas; secuencias coordinadas desde frontend |
 | AUTH, USERS, WRITE, FEEDBACK, ADMIN, UTILITIES | COORDINATOR | leases, sesiones, cachés, feed y telemetría | A través de SharedMutationClient |
-| COORDINATOR | USERS, WRITE, FEEDBACK, ADMIN | `__primeSessionActorCache`, `__invalidateSessionActorCache` | Fan-out POST; lotes |
+| COORDINATOR | USERS, WRITE, FEEDBACK, ADMIN | __primeSessionActorCache, __invalidateSessionActorCache | Fan-out POST; lotes |
 | CATALOG | — | Sin llamadas backend→backend detectadas | Lectura directa de Spreadsheet |
 | InboxConversations.js | — | Sin transporte HTTP propio | Lógica delegada dentro de FEEDBACK |
 
-No se detectaron otras llamadas HTTP entre los diez módulos backend. Las llamadas a Drive API, YouTube y URLs de imágenes se clasifican aparte en §7.
+Las llamadas funcionales ADMIN→WRITE y ADMIN→CATALOG descritas históricamente en §3 fueron sustituidas por solicitudes directas del frontend a los servicios propietarios. Las llamadas a Drive API, YouTube y URLs de imágenes se clasifican aparte en §7.
 
 ### MIG-010 — Coordinación frontend y recuperación de altas
 
-Las operaciones multi-servicio cubiertas por MIG-010 se coordinan desde el frontend mediante solicitudes directas a los servicios propietarios, sin secretos compartidos ni URLs operativas incrustadas en Apps Script. La creación de vehículos, la reserva idempotente de IDs y la recuperación de altas pertenecen a WRITE; ADMIN conserva una ruta de compatibilidad que rechaza esas acciones con `ACTION_MOVED_TO_WRITE` y no realiza escrituras ni llamadas backend→backend. Las lecturas de proyección/candidatos de CATALOG se solicitan desde el frontend y CATALOG valida sesión y rol localmente.
+Las operaciones multi-servicio cubiertas por MIG-010 se coordinan desde el frontend mediante solicitudes independientes a los servicios propietarios. Las URLs operativas se resuelven por el registro central; no se trasladan secretos compartidos al navegador.
 
-## 3. Llamadas directas de ADMIN a servicios
+- Reorganización: frontend ADMIN backupDatabase → WRITE freezeCortesIds → ADMIN reorganizeDatabase. El frontend conserva etapa, progreso, operationId y backupId para recuperación.
+- Respaldo: ADMIN vincula operationId con usuario y Spreadsheet de origen en un manifiesto privado; los reintentos del mismo usuario reutilizan el respaldo completo y verificado, sin crear copias duplicadas.
+- Altas: WRITE es propietario de addOrUpdateCut, allocateVehicleId, reserva idempotente y recuperación por opId/huella. ADMIN rechaza las rutas heredadas con ACTION_MOVED_TO_WRITE, sin escrituras ni llamadas internas.
+- Proyección/candidatos: frontend consulta directamente CATALOG. getVehicleProjection valida sesión para Desarrollador, Jefe y Supervisor; getContributionCandidates continúa limitado a Desarrollador.
+- Recuperación de imágenes: ADMIN devuelve el estado del journal; el frontend completa la reconciliación consultando directamente la proyección vigente de CATALOG. ADMIN no lee la fila materializada para sustituir esa proyección.
 
-### 3.1 ADMIN → WRITE
-
-Transporte: `callWriteServiceAction()` en `JS/Services/admin.js`, que hace POST a WRITE y valida HTTP, JSON y `status: success`.
-
-| Acción WRITE | Consumidor ADMIN | Payload relevante | Respuesta usada | Reemplazo objetivo |
-|---|---|---|---|---|
-| `allocateVehicleId` | `requestNextVehicleIdFromWriteService`, invocado por el handler heredado `handleAddOrUpdateCut` | `userId`, `sessionToken`, `opId`, `operationHash` | `vehicleId` validado como entero positivo | La asignación canónica ya pertenece a WRITE y la acción ya existe en el mapa frontend. El alta vigente debe ejecutar la asignación dentro de WRITE; retirar el wrapper ADMIN solo después de demostrar que el handler heredado no tiene consumidor externo. |
-| `freezeCortesIds` | `requestCortesIdFreezeFromWriteService`, invocado por `handleFreezeIdentifierFormulas` | `userId`, `sessionToken`, `backupId`, `confirm: true` | Resultado confirmado de WRITE | El frontend coordina primero el backup ADMIN y, si termina correctamente, llama directamente a WRITE/freezeCortesIds con el backupId. La escritura y verificación de IDs permanece indivisible dentro de WRITE. |
-
-**Observación de compatibilidad:** ADMIN devuelve `ACTION_MOVED_TO_WRITE` para las antiguas acciones `checkOperation`, `addOrUpdateCut` y `addSupplementaryInfo`. El helper de asignación dentro de `handleAddOrUpdateCut` es una ruta heredada que no debe tratarse como consumidor frontend activo. No se elimina en MIG-004.
-
-**Pruebas existentes:** `AdminVehicleIdAllocationIdempotency.mjs`, `VehicleIdAllocationEndToEnd.mjs`, `WriteFreezeCortesIdsBackupOutsideLock.mjs`, `AdminCutPreflightBeforeAllocation.mjs`, `WriteVehicleIdAllocationIdempotency.mjs`. Confirmar en la tarea de implementación que el flujo frontend mantiene backup previo, opId, hash, reintento y resultado original.
-
-### 3.2 ADMIN → CATALOG
-
-| Acción CATALOG | Consumidor ADMIN | Payload relevante | Respuesta usada | Reemplazo objetivo |
-|---|---|---|---|---|
-| `getVehicleProjection` | `getAdminProjectedVehicleFieldSnapshot_`, usado antes de editar un campo/imagen de vehículo | `vehicleId` | Proyección del vehículo, valor del campo y fuente de contribución | El frontend consulta CATALOG directamente como prelectura. ADMIN debe validar en su propia ejecución la versión/valor esperado contra Spreadsheet antes de escribir; no debe confiar en una proyección enviada por el navegador. |
-| `getContributionCandidates` | `handleGetVehicleContributionCandidates_`; también lo consume el flujo de inventario/reconciliación de imágenes | `limit`; opcional `includeImageInventoryEvents` | Candidatos, total, truncamiento, origen y eventos autorizados de inventario | El frontend consulta CATALOG directamente. Los metadatos restringidos deben autorizarse mediante sesión y rol verificados por CATALOG; no se debe conservar el secreto compartido ADMIN↔CATALOG ni exponerlo al navegador. ADMIN vuelve a comprobar la identidad/estado del recurso antes de aplicar una mutación. |
-
-**Riesgo de seguridad identificado:** la lectura opcional de eventos de inventario usa `GPSpedia_CATALOG_TRAFFIC_SECRET`, compartido entre ADMIN y CATALOG. Esto contradice la arquitectura objetivo de §17. No copiar ese secreto al frontend ni trasladarlo a una hoja pública. La sustitución debe ser autorización local de CATALOG con actor/rol de sesión y respuesta mínima.
-
-**Pruebas existentes:** `AdminVehicleTargetedCatalogRead.mjs`, `AdminVehicleFieldVersioning.mjs`, `AdminVehicleContributionCandidates.mjs`, `AdminCandidateImageInventoryCatalogSource.mjs`, `AdminVehicleContributionResolution.mjs`, `VehicleContributionProjection.mjs`.
+**Validación:** GitHub Actions Node.js 22, run 45209447602 — 306 suites, 3,558 pruebas, 0 fallos; suite MIG010 58/58 PASS. La ejecución real de endpoints Apps Script y permisos sobre recursos permanece diferida a Beta.
 
 ## 4. SharedMutationClient → COORDINATOR
 
