@@ -6,6 +6,7 @@ const admin = read("../Services/admin.js");
 const api = read("../Frontend/api-config.js");
 const catalog = read("../Services/catalog.js");
 const coordinator = read("../Services/Coordinator.js");
+const catalog = read("../Services/catalog.js");
 
 assert.equal(admin.includes("publishSharedCatalogChange_"), false);
 assert.equal(admin.includes("publishAdminCatalogChange_"), false);
