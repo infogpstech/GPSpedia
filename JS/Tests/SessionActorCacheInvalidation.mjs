@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const source=fs.readFileSync("JS/Services/SharedMutationClient.js","utf8");
+const source=fs.readFileSync("JS/Services/SharedSessionActor.js","utf8");
 const services=["JS/Services/Auth.js","JS/Services/write.js","JS/Services/admin.js","JS/Services/feedback.js","JS/Services/Utilities.js","JS/Services/catalog.js"]
  .map(path=>({path,source:fs.readFileSync(path,"utf8")}));
 const removed=[];
