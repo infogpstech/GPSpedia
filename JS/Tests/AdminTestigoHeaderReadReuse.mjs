@@ -9,9 +9,9 @@ function extract(name) {
  return source.slice(start,end);
 }
 const ensure=extract("ensureTestigoColumns");
-const handlerStart=source.indexOf("function handleAddOrUpdateCut(payload, logMessage, developerContext)");
-const handlerEnd=source.indexOf("\nfunction sanitizeSupplementaryRichText_",handlerStart);
-assert.ok(handlerStart>=0&&handlerEnd>handlerStart,"No se encontró handleAddOrUpdateCut");
+const handlerStart=source.indexOf("function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot, preallocatedVehicleId)");
+const handlerEnd=source.indexOf("\\nfunction ",handlerStart+15);
+assert.ok(handlerStart>=0&&handlerEnd>handlerStart,"No se encontró la mutación canónica WRITE");
 const handler=source.slice(handlerStart,handlerEnd);
 let passed=0;
 function test(name,fn){fn();passed++;}
