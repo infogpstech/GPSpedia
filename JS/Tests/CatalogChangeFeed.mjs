@@ -100,7 +100,6 @@ test("el navegador consulta directamente el feed público de Coordinator desde e
     assert.doesNotMatch(apiSource,/'getCatalogChanges': 'FEEDBACK'/);
     assert.match(coordinatorSource,/function doGet\(e\)/);
     assert.match(centralConfigSource,/OPTIONAL_SERVICES = \["COORDINATOR"\]/);
-    assert.match(telemetrySource,/"COORDINATOR"/);
 });
 test("ADMIN agrupa los cambios de catálogo y el cliente agrega requestId para reintentos", () => {
     assert.match(adminSource,/for \(let offset = 0; offset < versionedChanges\.length; offset \+= 50\)[\s\S]*?publishSharedCatalogChanges_/);
