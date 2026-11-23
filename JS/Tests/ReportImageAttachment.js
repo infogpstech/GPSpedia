@@ -37,7 +37,20 @@ export function runReportImageAttachmentTests({ui,api,feedback}) {
  test("formulario limita MIME/tamaño y maneja error/abort",()=>{assert.match(form,/image\/jpeg,image\/png,image\/webp/);assert.match(form,/3 \* 1024 \* 1024/);assert.match(form,/readAsDataURL/);assert.match(form,/reader\.onerror/);assert.match(form,/reader\.onabort/);});
  test("transmite adjunto aparte y exige confirmación",()=>{assert.match(form,/getSessionPayload_\(\), imageAttachment/);assert.doesNotMatch(form,/fullProblemText\s*\+=.*file\.name/);assert.match(form,/res\.imageAttached !== true/);});
  test("API preserva cuatro argumentos y añade quinto opcional",()=>{assert.match(apiFn,/sessionPayload = \{\}, imageAttachment = null/);assert.match(apiFn,/imageAttachment: imageAttachment \|\| null/);});
- test("FEEDBACK carga el adjunto antes del lock y conserva validación/idempotencia/rollback",()=>{assert.match(handler,/validateReportImageAttachment_\(payload\.imageAttachment\)/);assert.match(handler,/imageSha256/);assert.ok(handler.includes("findReportByReportId_(feedbackSheet, reportContext.reportId"));assert.ok(handler.includes("normalizeReportImageMetadata_(existing.metadata)"));assert.match(handler,/imageSha256/);assert.match(handler,/trashReportImageUpload_/);assert.ok(handler.indexOf("saveReportImageAttachment_")<handler.indexOf("acquireFeedbackScriptLock_(lock)"));assert.match(handler,/if\(lockAcquired\) lock\.releaseLock\(\)/);});
+ test("FEEDBACK carga el adjunto antes del append y conserva journal/idempotencia/compensación",()=>{
+  assert.match(handler,/validateReportImageAttachment_\(payload\.imageAttachment\)/);
+  assert.match(handler,/imageSha256/);
+  assert.ok(handler.includes("findReportByReportId_(feedbackSheet, reportContext.reportId"));
+  assert.ok(handler.includes("normalizeReportImageMetadata_(existing.metadata)"));
+  assert.ok(handler.includes("isFeedbackReportImageFileReferenced_"));
+  assert.match(handler,/trashReportImageUpload_/);
+  const appendAt=handler.indexOf("feedbackSheet.appendRow(reportRow)");
+  const eventAt=handler.indexOf("appendFeedbackReportImageEvent_",appendAt);
+  assert.ok(handler.indexOf("saveReportImageAttachment_")<appendAt);
+  assert.ok(appendAt>=0&&eventAt>appendAt);
+  assert.doesNotMatch(handler,/LockService\.getScriptLock|acquireFeedbackScriptLock_/);
+  assert.match(handler,/alreadyReported: true/);
+ });
  test("Inbox enlaza solo URL canónica con noopener",()=>{assert.match(inbox,/https:\/\/drive\.google\.com\/file\/d\//);assert.match(inbox,/noopener noreferrer/);assert.match(inbox,/makeElement\('a'/);});
  return {status:failed?"FAIL":"PASS",passed,failed,results};
 }

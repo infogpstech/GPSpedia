@@ -2144,7 +2144,7 @@ function getCortesRootFolder() {
     const parents = folder.getParents();
     let parentVerified = false;
     while (parents.hasNext()) if (String(parents.next().getId()) === String(expectedParentId)) parentVerified = true;
-    if (!parentVerified) throw new Error("La carpeta Cortes no conserva la jerarquía configurada en el registro central.");
+    if (!parentVerified) throw new Error("La carpeta Cortes no está ubicada directamente en el padre configurado en el registro central.");
     return folder;
 }
 function getCortesRootFolderId_() { return String(getCortesRootFolder().getId());}
