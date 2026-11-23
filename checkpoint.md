@@ -640,11 +640,12 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 7. Se actualizaron `TAREAS_MIGRACION_ARQUITECTURA.md`, `INVENTARIO_LLAMADAS_SERVICIOS.md` y `ChangesLogs.txt`.
 
 ### Validación realizada
-- Suite MIG010 ejecutada en un harness V8 aislado: **58 aserciones PASS**.
-- Incluye simulación de creación/reintento del respaldo, reutilización del mismo backupId, rechazo de replay por otro usuario, validación de roles y expiración, protección de proyección, envío de sesión desde frontend, orden de secuencia y persistencia previa del operationId.
-- Parsing V8 aprobado para `JS/Services/admin.js`, `JS/Services/catalog.js`, `JS/Frontend/ui.js` y la suite MIG010.
-- La ejecución del workflow completo Node.js 22 no se pudo confirmar: la consulta de estado de commit no devolvió checks. **No declarar CI SUCCESS hasta recuperar el resultado real de GitHub Actions.**
-
+- Suite MIG010FrontendServiceOrchestration: **58/58 PASS**.
+- GitHub Actions Node.js 22: **SUCCESS**, run 45209447602; regresión completa **306 suites / 3,558 pruebas / 0 fallos**.
+- GitHub Pages build/deploy: **SUCCESS**, run 45209445911.
+- La verificación sintáctica integral de archivos JavaScript pasó dentro del workflow.
+- La suite MIG-010 cubre secuencia, persistencia previa de operationId, creación/replay de respaldo, rechazo de replay por otro usuario, autorización por rol, expiración de sesión y ausencia de coordinación backend→backend.
+- Se actualizaron contratos heredados de pruebas para reflejar la arquitectura actual frontend→servicio y la propiedad de las mutaciones en WRITE.
 ### Límites y pendientes
 - MIG-010: **COMPLETADA CON VALIDACIÓN DIFERIDA**. GitHub Actions Node.js 22 aprobó la regresión completa: 306 suites, 3,558 pruebas, 0 fallos.
 - Beta pendiente: llamadas reales frontend→ADMIN/CATALOG/WRITE, permisos y sesiones en Apps Script, acceso a Spreadsheet y recuperación con recursos aislados.
