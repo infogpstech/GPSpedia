@@ -149,3 +149,17 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - Probar VIN en formularios y navegación con valores incompletos, malformados, repetidos y colecciones heredadas; confirmar privacidad, normalización, firmas y que no se expone más información de la necesaria.
 - Probar operaciones suplementarias con y sin imágenes, cierre/recarga del navegador, reintentos y recuperación IndexedDB; confirmar que no se duplican eventos ni se pierden aportes.
 - Ejecutar con roles reales y registrar permisos, proyecto/servicio, operación, dispositivo/navegador, IDs anonimizados y evidencia. No considerar CI simulado como sustituto de estas pruebas.
+
+
+## 6.4 Validación Beta diferida — MIG-024 retirada de SharedMutation
+**Estado: PENDIENTE DE EJECUCIÓN EN Beta aislada.**
+
+- Preparar deployments compatibles de AUTH, WRITE, FEEDBACK, CATALOG, ADMIN y UTILITIES en proyectos Apps Script de prueba, vinculados a una Spreadsheet y un Drive desechables. No modificar endpoints productivos.
+- Confirmar que las acciones ordinarias y la invalidación de sesión no realizan llamadas backend→Coordinator ni requieren `GPSpedia_COORDINATOR_URL`, secretos compartidos o propiedades manuales.
+- Revocar una sesión y eliminar una cuenta desde el flujo frontend; verificar que la invalidación alcanza los servicios afectados y que un actor revocado no puede continuar operando.
+- En ADMIN, ejecutar auditoría Drive, creación de carpeta e inventario en dos recursos distintos simultáneamente; confirmar que no se bloquean entre sí.
+- Repetir dos operaciones sobre el mismo recurso; confirmar que la segunda recibe conflicto recuperable mientras la primera sigue activa, sin duplicar archivos ni registros.
+- Simular fallo durante el callback y fallo al limpiar el marcador; comprobar liberación/expiración por TTL y recuperación sin mantener ScriptLock durante el trabajo Drive.
+- Comprobar que los endpoints health/telemetría de Coordinator son los únicos remanentes y registrar su retirada como MIG-025; no confundirlos con un consumidor SharedMutation.
+- Registrar HEAD, versiones de deployments, rol, navegador/dispositivo, recurso sintético y evidencia anonimizada. No copiar secretos, tokens ni datos personales.
+- No desplegar ni ejecutar contra producción. CI local no sustituye esta validación Beta.

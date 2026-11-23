@@ -1254,3 +1254,38 @@ Rama base protegida: `GPSpedia2.2.5` (sin cambios).
 ### Estado
 - MIG-024 EN PROGRESO. No se ha eliminado todavía `SharedMutationClient.js`; primero se preservarán y probarán los helpers locales de sesión.
 - MIG-023 permanece cerrada como COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — 2026-11-23 (CIERRE MIG-024)
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5 (no modificar)
+HEAD confirmado: 38e9ec5f6f32710ef9fc6f9f07b24cd7312cc997
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+MIG-024 — Eliminar SharedMutation:
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- SharedMutationClient.js eliminado; SharedSessionActor.js conserva solo helpers locales.
+- Servicios activos sin cliente remoto, leases, publicación compartida ni URLs/secretos de Coordinator.
+- ADMIN usa guardas locales independientes para inventario, creación de carpeta y auditoría Drive. Reserva con tryLock(0), libera ScriptLock durante el trabajo, controla duplicados por recurso y expira marcadores abandonados.
+- La invalidación de cachés se coordina desde el frontend hacia cada servicio.
+- Coordinator queda únicamente para health/telemetría transitoria de MIG-025. La clave histórica GPSpedia_SHARED_MUTATION_LEASES se conserva solo como fuente histórica de telemetría en lectura; no se adquieren ni escriben leases.
+- Los nombres isSharedMutationAction_ restantes solo seleccionan acciones que reciben actor local; no son clientes ni leases remotas.
+
+Pruebas en HEAD:
+- SharedMutationRemovalContract: 6/6 PASS.
+- AdminLocalOperationGuard: 6/6 PASS.
+- AdminImageScanCoordinatorContract y AdminSheetActionsContract: sin fallos en regresión.
+- CI servicios: 425 suites, 4,826 aprobadas, 1 fallo conocido fuera de MIG-024: FeedbackLockFastFail.mjs (expectativa general de ausencia de locks en FEEDBACK, ya registrada desde MIG-023).
+- GitHub Pages: SUCCESS.
+- Beta real pendiente; ver Tareas_Beta.md §6.4. No se desplegaron proyectos Apps Script ni se modificaron datos productivos.
+
+Commits de esta continuación:
+- 22e3ca62e8c0222fdcd432ed824b50d98ef44a6e — actualización de contratos legacy.
+- 282073433145653fdeac6bc1e4fc89df7107de45 — corrección de contrato Coordinator.
+- 38e9ec5f6f32710ef9fc6f9f07b24cd7312cc997 — pruebas de concurrencia/TTL de guarda local ADMIN.
+
+Siguiente tarea prioritaria: MIG-025 — Eliminar COORDINATOR.
+Antes de borrar el servicio, inventariar todos sus handlers, health, métricas, compatibilidad y tareas programadas; identificar sustitutos y consumidores; retirar el escaneo de salud/telemetría de forma que no desaparezcan capacidades. Mantener la regla de §17: ninguna función se elimina sin matriz de paridad y prueba equivalente. No desplegar ni modificar datos productivos.
+================================================================================

@@ -516,19 +516,28 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ## Fase 6 — Retirada de arquitectura antigua
 
 ### MIG-024 — Eliminar SharedMutation
-**Estado: EN PROGRESO (2026-11-23)**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
 
-**Auditoría inicial de consumidores:**
-- `SharedMutationClient.js` mezcla llamadas remotas de leases/publicación con helpers locales de caché de actor. Los helpers locales se conservarán en `SharedSessionActor.js`; no deben eliminarse con el cliente remoto.
-- Los únicos consumidores activos de `withSharedMutationLease_` encontrados en servicios son tres acciones ADMIN: `saveUnusedImagesInventory`, `createCortesImageFolder` y `auditDriveImagesInCortes`. Se migrarán a guardas locales por recurso, sin mantener un ScriptLock durante el procesamiento.
-- La invalidación de cachés ya se coordina desde `JS/Frontend/sessionCacheInvalidation.js` hacia cada servicio, sin secreto compartido. El registro `USERS` está excluido del registro central activo y no existe su servicio fuente en el árbol actual; la fila de despliegue heredada debe quedar documentada como obsoleta.
-- La telemetría global/health y los endpoints transitorios restantes de COORDINATOR pertenecen a MIG-025; no se eliminarán prematuramente en esta tarea.
+**Auditoría final de consumidores y sustitutos:**
+- `SharedMutationClient.js` fue retirado; los helpers de caché/actor local permanecen en `SharedSessionActor.js`.
+- Los servicios activos AUTH, WRITE, FEEDBACK, CATALOG, ADMIN y UTILITIES no conservan clientes remotos, leases, publicación compartida ni URLs/secretos de Coordinator. InboxConversations también fue revisado y no conserva referencias a SharedMutation ni a Coordinator.
+- Las tres operaciones ADMIN que antes adquirían leases remotas (`saveUnusedImagesInventory`, `createCortesImageFolder` y `auditDriveImagesInCortes`) usan guardas locales independientes por recurso. La guarda reserva mediante `tryLock(0)`, libera el ScriptLock antes del trabajo prolongado, evita duplicados por alcance y expira marcadores abandonados mediante TTL.
+- La invalidación de cachés se coordina desde `JS/Frontend/sessionCacheInvalidation.js` hacia cada servicio; no se delega en Coordinator.
+- Coordinator conserva únicamente health y telemetría transitoria para MIG-025. Su protocolo de leases, publicación del feed y fan-out de sesión fue retirado. La clave histórica `GPSpedia_SHARED_MUTATION_LEASES` se conserva solo como fuente histórica de telemetría mientras exista el lector transitorio; no se usa para adquirir ni escribir leases y se retirará junto con Coordinator en MIG-025.
+- Los nombres `isSharedMutationAction_` que aún aparecen en routers solo clasifican acciones que necesitan adjuntar el actor local confiable; no ejecutan comunicación remota, leases ni coordinación entre servicios.
 
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Confirmar que todos los consumidores fueron migrados.
-- [ ] Retirar wrappers, archivos duplicados, endpoints y propiedades relacionadas.
-- [ ] Ejecutar búsqueda global y suite de regresión.
-- [ ] No eliminar código que tenga otra función no cubierta.
+**Requisito técnico transversal:** cumplido según NORMAS_DESAROLLO.md §§15–18. No se añadieron secretos compartidos, URLs de otros servicios ni configuración interservicio local en Apps Script. La coordinación funcional e invalidación se mantiene en frontend.
+
+**Pruebas locales y CI (HEAD `38e9ec5f6f32710ef9fc6f9f07b24cd7312cc997`):**
+- `SharedMutationRemovalContract`: 6/6 PASS.
+- `AdminLocalOperationGuard`: 6/6 PASS (reserva breve, aislamiento por recurso, duplicado concurrente, cleanup, expiración TTL y fallo rápido).
+- `AdminImageScanCoordinatorContract` y `AdminSheetActionsContract` ejecutadas dentro de la regresión sin fallos.
+- Regresión de servicios: 425 suites; 4,826 pruebas aprobadas; 1 suite fallida (`FeedbackLockFastFail.mjs`). Esta expectativa amplia sobre locks de FEEDBACK ya estaba registrada como pendiente fuera de MIG-024 desde MIG-023; no corresponde al cambio SharedMutation. No se oculta ni se declara verde la regresión global.
+- GitHub Pages: SUCCESS. No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet/Drive reales.
+
+**Pendiente de Beta (no bloquea el cierre local):** validar en proyectos Apps Script, Spreadsheet y Drive desechables que las tres guardas ADMIN aíslan recursos, que la invalidación frontend alcanza cada deployment y que no quedan consumidores remotos en los despliegues. Ver `Tareas_Beta.md` §6.4. No usar producción.
+
+**Resultado:** MIG-024 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-025 — Eliminar COORDINATOR.
 
 ### MIG-025 — Eliminar COORDINATOR
 **Estado: PENDIENTE**

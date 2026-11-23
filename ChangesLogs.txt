@@ -294,3 +294,16 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Los requestId de publicación reutilizan IDs de operación cuando existen y usan nonce único para mutaciones independientes sin ID, evitando colisiones entre ediciones del mismo registro.
 - Se retiraron de COORDINATOR las rutas públicas de lectura y publicación del feed. Sus helpers internos de SharedMutation quedan pendientes de MIG-024; el endpoint health y la telemetría se retiran en MIG-025.
 - Se actualizaron contratos de publicación, routing, pruebas Beta, estrategia de lectura, README, registro de tareas y checkpoint.
+
+
+================================================================================
+2026-11-23 — MIG-024 COMPLETADA LOCALMENTE: RETIRADA DE SHAREDMUTATION
+HEAD: 38e9ec5f6f32710ef9fc6f9f07b24cd7312cc997
+- Se retiró SharedMutationClient.js; se conservaron los helpers locales SharedSessionActor.
+- Las tres operaciones ADMIN sustituyeron leases remotas por guardas locales por recurso, con reserva breve, trabajo fuera de ScriptLock y expiración TTL.
+- Se retiró la coordinación de invalidación de caché desde Coordinator; el frontend contacta directamente a cada servicio.
+- Se actualizaron contratos obsoletos y se añadió AdminLocalOperationGuard.mjs (6/6 PASS).
+- SharedMutationRemovalContract: 6/6 PASS. Regresión CI: 425 suites, 4,826 pruebas PASS y 1 suite conocida fuera de alcance con fallo (FeedbackLockFastFail.mjs). GitHub Pages SUCCESS.
+- Beta real pendiente según Tareas_Beta.md §6.4. No se desplegó Apps Script ni se tocaron datos productivos.
+- Siguiente: MIG-025 — retirar COORDINATOR, preservando antes sus capacidades de health/telemetría y el inventario de funciones exigido por NORMAS §17.
+================================================================================
