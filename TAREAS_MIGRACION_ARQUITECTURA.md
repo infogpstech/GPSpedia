@@ -467,13 +467,18 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 
 ### MIG-022 — Administración de Spreadsheet y mantenimiento
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO (2026-11-23)**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Mantener creación de hojas y columnas.
 - [ ] Mantener fórmulas, migraciones de esquemas, identificadores y rollback.
 - [ ] Mantener reorganización, normalización, saneamiento y purgado autorizado.
 - [ ] Mantener backup/restauración de base de datos.
 - [ ] Mantener herramientas de desarrollador y consola.
+
+**Avance inicial — 2026-11-23**
+- Se verificó que `Utilities.migrateTimestamps` usa actor local desde Users/ActiveSessions y serialización mediante ScriptLock; no invoca lease remota ni UrlFetchApp. Se corrigió el comentario de servicio que afirmaba lo contrario.
+- Se alineó `UtilitiesSecurity.js` con el comportamiento real: mock de CacheService/SHA-256, pruebas de lock local, concurrencia, rollback y ausencia de URL/secreto/endpoint COORDINATOR. Ejecución aislada V8: **19/19 PASS**.
+- La suite global CI del nuevo HEAD está en ejecución; falta confirmar grupo UTILITIES y revisar las pruebas ADMIN de Spreadsheet, migraciones, backup/restore y mantenimiento antes del cierre.
 
 ### MIG-023 — Catálogo, cachés y experiencia de usuario
 **Estado: PENDIENTE**
@@ -501,8 +506,9 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [ ] Confirmar que sesiones, revocaciones, métricas y operaciones protegidas tienen sustituto.
 - [ ] Confirmar que el frontend realiza las llamadas directas necesarias.
-- [ ] Retirar endpoint, fuente, guía y referencias.
-- [ ] Confirmar que ningún servicio consulta su URL o propiedades.
+- [ ] Retirar todo endpoint de COORDINATOR, incluido cualquier `doGet`/health/ping propio; COORDINATOR no debe aparecer como servicio independiente en el escaneo de salud.
+- [ ] Retirar fuente, guía, registro de endpoints, configuración y referencias de COORDINATOR.
+- [ ] Confirmar que ningún servicio consulta su URL o propiedades y que ninguna operación residual depende de él.
 
 ### MIG-026 — Eliminar configuración local de todos los servicios
 **Estado: PENDIENTE**
