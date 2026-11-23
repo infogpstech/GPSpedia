@@ -47,5 +47,5 @@ function runActivityDashboardStoredXssTests() {
     });
     return {status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
-const result=runActivityDashboardStoredXssTests();console.log(JSON.stringify(result,null,2));if(result.status!=="PASS")process.exitCode=1;
+const result=runActivityDashboardStoredXssTests();console.log(JSON.stringify(result,null,2));console.log("ActivityDashboardStoredXss: "+result.passed+"/"+(result.passed+result.failed)+" "+result.status);if(result.status!=="PASS")process.exitCode=1;
 export { runActivityDashboardStoredXssTests };
