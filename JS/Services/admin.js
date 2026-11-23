@@ -1729,14 +1729,15 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
     }
     const ss = getSpreadsheet();
     const sourceManifest = adminRestoreValidateDatabaseSchema_(ss);
-    const backupName = operationId ? `GPSpedia_DB_BACKUP_${operationId}` : `GPSpedia_DB_BACKUP_${adminRestoreRunId_()}`;
+    const backupName = operationId ? `GPSpedia_DB_BACKUP_${operationId}` : "";
 
     if (operationId) {
         const matches = DriveApp.getFilesByName(backupName);
         let existingBackup = null;
         while (matches.hasNext()) {
             const candidate = matches.next();
-            if (candidate.isTrashed() || !isDirectChildOfDriveRoot(candidate)) continue;
+            if (candidate.isTrashed()) continue;
+            if (!isDirectChildOfDriveRoot(candidate)) throw new Error("El respaldo asociado al identificador fue movido fuera de la raíz de Drive; se requiere revisión manual.");
             if (existingBackup) throw new Error("Hay más de un respaldo asociado al mismo identificador; se requiere revisión manual.");
             existingBackup = candidate;
         }
