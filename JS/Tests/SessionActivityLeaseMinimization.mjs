@@ -24,7 +24,7 @@ test("AUTH elimina la lease de sesión y carga actor desde la fuente local",()=>
  assert.match(authPost,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
  assert.doesNotMatch(authPost,/withSharedMutationLease_|sessionOptions|validateSharedSessionContext_/);
  assert.match(authPost,/if \(!isSharedMutationAction_\(action\)\)/);
- assert.match(auth,/function syncSharedSessionContextsForUser_[\s\S]*?cacheSharedSessionActor_/);
+ assert.match(auth,/function cacheLocalSessionActorAfterLogin_[\s\S]*?cacheSharedSessionActor_/);
  assert.doesNotMatch(auth,/syncSharedUserSessionContexts_|validateSharedSessionContext_/);
  assert.match(auth,/function handleValidateSession\(payload\) \{[\s\S]*?validateSessionReadOnly_\(sessionToken, userId\)/);
 });
