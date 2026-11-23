@@ -24,4 +24,12 @@ const verify=ss=>new Function("getSpreadsheet",auth+";return verifyCatalogDevelo
 assert.equal(verify(sheets())({userId:"U-1",sessionToken:"S-1"}),true);
 assert.throws(()=>verify(sheets("Técnico"))({userId:"U-1",sessionToken:"S-1"}),/Desarrollador/);
 assert.throws(()=>verify(sheets("Desarrollador",new Date("2020-01-01"),new Date("2020-01-01")))({userId:"U-1",sessionToken:"S-1"}),/expiró/);
-console.log("MIG010FrontendServiceOrchestration: 16/16 PASS — secuencia, reanudación, RBAC y ausencia de backend→backend");
+assert.ok(admin.includes("function cacheVerifiedDatabaseBackupForDeveloper_"));
+assert.ok(admin.includes("DriveApp.getFilesByName(backupName)"));
+assert.ok(admin.includes("existingManifest.operationId !== operationId"));
+assert.ok(admin.includes('String(existingManifest.ownerId || "") !== ownerId'));
+const operationPersist = workflow.indexOf("persist();");
+const backupRequest = workflow.indexOf('step("backupDatabase",{operationId:state.operationId}');
+assert.ok(operationPersist >= 0 && backupRequest > operationPersist, "El operationId debe persistirse antes de solicitar el respaldo.");
+assert.ok(workflow.includes("state.operationId =") || workflow.includes("state.operationId="));
+console.log("MIG010FrontendServiceOrchestration: PASS — secuencia, reanudación, idempotencia del respaldo, RBAC y ausencia de backend→backend");
