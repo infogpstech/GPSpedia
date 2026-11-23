@@ -171,16 +171,23 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Aceptación:** las 121 acciones, health checks y feed incremental usan destinos del registro central; no existen URLs locales para servicios ni fallback a valores anteriores; ante registro inválido, vencido o no disponible, el router no utiliza destinos antiguos. AUTH bootstrap es el único localizador de arranque y no actúa como fallback.
 
 ### MIG-010 — Orquestador frontend de operaciones multi-servicio
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Implementar secuencias explícitas para los flujos que hoy resuelve ADMIN mediante llamadas internas.
-- [ ] Preservar orden, precondiciones, resultados, errores y recuperación.
-- [ ] Usar identificadores de operación/idempotencia solo donde el flujo actual los necesite.
-- [ ] Mostrar progreso y estado parcial sin bloquear módulos independientes.
-- [ ] Reanudar o permitir recuperación cuando se interrumpe el navegador.
-- [ ] No mover secretos ni decisiones de autorización al frontend.
+- [x] Implementar secuencias explícitas para los flujos que hoy resuelve ADMIN mediante llamadas internas: reorganización ADMIN→WRITE→ADMIN y lecturas directas frontend→CATALOG para proyección y candidatos.
+- [x] Preservar orden, precondiciones, resultados, errores y recuperación; WRITE confirma la estabilización y ADMIN vuelve a validar respaldo/manifiesto/fórmulas antes de ordenar.
+- [x] Usar identificadores de operación/idempotencia donde el flujo lo necesita: el respaldo de reorganización conserva operationId antes de la solicitud y ADMIN reutiliza el respaldo completo del mismo usuario.
+- [x] Mostrar progreso y estado parcial sin bloquear módulos independientes; la reorganización registra etapa, porcentaje y errores.
+- [x] Reanudar o permitir recuperación tras interrupción del navegador mediante estado local por usuario, backupId y operationId persistente.
+- [x] No mover secretos ni decisiones de autorización al frontend; CATALOG valida localmente la sesión y los roles autorizados para la proyección; los candidatos siguen restringidos a Desarrollador.
 
-**Aceptación:** las operaciones cruzadas se ejecutan con llamadas directas frontend→servicio, sin backend→backend.
+**Validación local aislada — 2026-11-23**
+- `JS/Tests/MIG010FrontendServiceOrchestration.mjs` ejecutada en harness V8 aislado: 56 aserciones PASS, incluida simulación de creación/replay del respaldo, rechazo de replay por otro usuario, autorización por rol, sesión vencida, orden de pasos y persistencia previa del operationId.
+- Los archivos `admin.js`, `catalog.js`, `ui.js` y la suite MIG010 pasaron parsing en el entorno V8 usado para la validación.
+- La suite quedó registrada en `JS/Tests/RunServiceTests.mjs`.
+- **Pendiente de confirmar:** ejecución del workflow completo Node.js 22 / regresión de servicios en GitHub Actions. La consulta de estado disponible no devolvió checks asociados; no se declara CI aprobado.
+- **Pendiente de Beta:** invocaciones reales de ADMIN/CATALOG/WRITE con sesiones y recursos aislados. No se desplegó Apps Script ni se modificaron datos externos.
+
+**Aceptación:** las operaciones cruzadas se ejecutan con llamadas directas frontend→servicio, sin backend→backend. La implementación local está desarrollada; el cierre queda pendiente de confirmar la regresión CI.
 
 ### MIG-011 — Eliminar dependencias backend→backend de ADMIN
 **Estado: PENDIENTE**
