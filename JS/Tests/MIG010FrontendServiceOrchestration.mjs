@@ -15,15 +15,23 @@ for(const value of ["verifyAdminVehicleFieldUpdateProjectionFrontend_","loadCata
 assert.ok(api.includes("'getVehicleContributionCandidates': 'CATALOG'"));
 assert.ok(catalog.includes("verifyCatalogDeveloperSession_(payload)"));
 assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
+const projectionHandlerStart=catalog.indexOf("function handleGetVehicleProjection_");
+const projectionHandlerEnd=catalog.indexOf("\\nfunction handleGetContributionCandidates_",projectionHandlerStart);
+const projectionHandler=catalog.slice(projectionHandlerStart,projectionHandlerEnd);
+assert.ok(projectionHandler.includes("verifyCatalogModalEditSession_(payload)"));
+assert.ok(ui.includes('routeAction("getVehicleProjection",{vehicleId:String(vehicleId||"").trim(),...getDeveloperSessionPayload()})'));
 const as=catalog.indexOf("function normalizeCatalogRole_"),ae=catalog.indexOf("function getSpreadsheet()",as),auth=catalog.slice(as,ae);
 function sheets(role="Desarrollador",created=new Date(),activity=new Date(),token="S-1"){
  const sh=rows=>({getDataRange:()=>({getValues:()=>rows})});
  return {getSheetByName:name=>name==="Users"?sh([["id","username","password","role"],["U-1","dev","",role]]):name==="ActiveSessions"?sh([["id","username","token","date","logs","lastActivityAt"],["U-1","dev",token,created,"",activity]]):null};
 }
-const verify=ss=>new Function("getSpreadsheet",auth+";return verifyCatalogDeveloperSession_;")(()=>ss);
-assert.equal(verify(sheets())({userId:"U-1",sessionToken:"S-1"}),true);
-assert.throws(()=>verify(sheets("Técnico"))({userId:"U-1",sessionToken:"S-1"}),/Desarrollador/);
-assert.throws(()=>verify(sheets("Desarrollador",new Date("2020-01-01"),new Date("2020-01-01")))({userId:"U-1",sessionToken:"S-1"}),/expiró/);
+const verify=ss=>new Function("getSpreadsheet",auth+";return {developer:verifyCatalogDeveloperSession_,modal:verifyCatalogModalEditSession_};")(()=>ss);
+assert.equal(verify(sheets()).developer({userId:"U-1",sessionToken:"S-1"}),true);
+assert.equal(verify(sheets("Jefe")).modal({userId:"U-1",sessionToken:"S-1"}),true);
+assert.equal(verify(sheets("Supervisor")).modal({userId:"U-1",sessionToken:"S-1"}),true);
+assert.throws(()=>verify(sheets("Técnico")).developer({userId:"U-1",sessionToken:"S-1"}),/Desarrollador/);
+assert.throws(()=>verify(sheets("Técnico")).modal({userId:"U-1",sessionToken:"S-1"}),/Desarrollador, Jefe o Supervisor/);
+assert.throws(()=>verify(sheets("Desarrollador",new Date("2020-01-01"),new Date("2020-01-01"))).modal({userId:"U-1",sessionToken:"S-1"}),/expiró/);
 assert.ok(admin.includes("function cacheVerifiedDatabaseBackupForDeveloper_"));
 assert.ok(admin.includes("DriveApp.getFilesByName(backupName)"));
 assert.ok(admin.includes("existingManifest.operationId !== operationId"));
@@ -32,4 +40,4 @@ const operationPersist = workflow.indexOf("persist();");
 const backupRequest = workflow.indexOf('step("backupDatabase",{operationId:state.operationId}');
 assert.ok(operationPersist >= 0 && backupRequest > operationPersist, "El operationId debe persistirse antes de solicitar el respaldo.");
 assert.ok(workflow.includes("state.operationId =") || workflow.includes("state.operationId="));
-console.log("MIG010FrontendServiceOrchestration: PASS — secuencia, reanudación, idempotencia del respaldo, RBAC y ausencia de backend→backend");
+console.log("MIG010FrontendServiceOrchestration: PASS — secuencia, reanudación idempotente, RBAC por rol y ausencia de backend→backend");
