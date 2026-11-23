@@ -655,22 +655,13 @@ function doPost(e) {
         }
     }
     if (!isSharedMutationAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
-
-    const nestedToken = String(payload.__sharedMutationToken || "").trim();
-    const sessionOptions = payload.sessionToken && action !== "logout"
-        ? { session: { sessionToken: payload.sessionToken } } : undefined;
     try {
-        return withSharedMutationLease_("AUTH", action, function(token, actor) {
-            // Coordinator valida token, epoch, expiración y revocación una sola vez
-            // y entrega el actor confiable al handler. No sincronizar ActiveSessions
-            // mediante una lectura completa en cada acción AUTH.
-            const wrappedEvent = withSharedSessionActor_(e, actor);
-            return doPostInternal_(wrappedEvent);
-        }, Object.assign(sessionOptions || {}, nestedToken ? { nestedToken: nestedToken } : {}));
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+        return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
             status: "error",
-            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            message: error && error.message ? error.message : "No se pudo recuperar el contexto de sesión."
         })).setMimeType(ContentService.MimeType.TEXT);
     }
 }
@@ -1036,67 +1027,16 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
 function syncSharedSessionContextsForUser_(userId, role, fullName, currentSessionToken) {
     const normalizedId = normalizeUserId(userId);
     const normalizedRole = normalizeRoleName(role);
-    if (!normalizedId || !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
-        throw new Error("No se pudo registrar una identidad o rol válido en el contexto compartido.");
+    if (!normalizedId || !currentSessionToken ||
+        !["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
+        throw new Error("No se pudo registrar una identidad o rol válido en la sesión.");
     }
-    const lock = LockService.getScriptLock();
-    let acquired = false;
-    try {
-        lock.waitLock(10000);
-        acquired = true;
-        const sessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        if (!sessionsSheet) throw new Error("No se encontró ActiveSessions para sincronizar el contexto compartido.");
-        const rows = sessionsSheet.getDataRange().getValues().slice(1)
-            .map((row, index) => ({ row, rowIndex: index + 2 }))
-            .filter(item => normalizeUserId(item.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizedId &&
-                String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "").trim());
-
-        const sessions = [], malformedTokens = [];
-        rows.forEach(item => {
-            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-            try {
-                const createdAt = sharedSessionTimestamp_(item.row[COLS_ACTIVE_SESSIONS.date - 1]);
-                const activityValue = item.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || item.row[COLS_ACTIVE_SESSIONS.date - 1];
-                const lastActivityAt = sharedSessionTimestamp_(activityValue);
-                sessions.push({ token, createdAt, lastActivityAt });
-            } catch (error) {
-                malformedTokens.push(token);
-            }
-        });
-
-        const synchronized = syncSharedUserSessionContexts_(normalizedId, normalizedRole, String(fullName || ""), sessions);
-        if (!synchronized || synchronized.status !== "success" || !Array.isArray(synchronized.acceptedTokens)) {
-            throw new Error("No se pudo confirmar la sincronización central de sesiones.");
-        }
-        const rejected = new Set([...(synchronized.rejectedTokens || []), ...malformedTokens]);
-        rows.forEach(item => {
-            const token = String(item.row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || "");
-            if (rejected.has(token)) {
-                if (malformedTokens.includes(token)) revokeSharedSessionContext_(normalizedId, token);
-                sessionsSheet.getRange(item.rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
-            }
-        });
-        if (!synchronized.acceptedTokens.includes(String(currentSessionToken || ""))) {
-            throw new Error("La sesión fue revocada o expiró antes de sincronizarse. Inicia sesión nuevamente.");
-        }
-        // La identidad/rol ya fueron comprobados en AUTH y registrados en Coordinator.
-        // Precalentar el actor evita una validación remota adicional en la primera acción protegida.
-        try {
-            cacheSharedSessionActor_(normalizedId, currentSessionToken, {
-                userId: normalizedId, role: normalizedRole, fullName: String(fullName || ""),
-                epoch: synchronized.epoch
-            });
-        } catch (cacheError) {
-            console.warn("No se pudo precalentar la caché local del actor:", cacheError && cacheError.message ? cacheError.message : cacheError);
-        }
-        const cachePriming = synchronized.cachePriming || {};
-        if (Array.isArray(cachePriming.failedServices) && cachePriming.failedServices.length) {
-            console.warn("No se pudo precargar el actor en todos los servicios:", cachePriming.failedServices.join(","));
-        }
-        return { registered: synchronized.synced, epoch: synchronized.epoch, cachePriming };
-    } finally {
-        if (acquired) lock.releaseLock();
+    const actor = { userId: normalizedId, role: normalizedRole,
+        fullName: String(fullName || ""), epoch: 1 };
+    if (!cacheSharedSessionActor_(normalizedId, currentSessionToken, actor)) {
+        throw new Error("No se pudo preparar la caché local de sesión AUTH.");
     }
+    return { registered: true, epoch: 1, cachePriming: { local: true, remote: false } };
 }
 
 
@@ -1336,25 +1276,7 @@ function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        let sharedContext;
-        try {
-            sharedContext = validateSharedSessionContext_(userId, sessionToken);
-        } catch (contextError) {
-            const message = String(contextError && contextError.message || contextError);
-            if (!message.includes("no está registrada en el contexto compartido")) throw contextError;
-            const legacyValidation = validateSessionReadOnly_(sessionToken, userId);
-            if (!legacyValidation || legacyValidation.valid !== true || !legacyValidation.profile) return legacyValidation;
-            syncSharedSessionContextsForUser_(
-                userId,
-                legacyValidation.profile.Privilegios,
-                legacyValidation.profile.Nombre_Completo,
-                sessionToken
-            );
-            sharedContext = validateSharedSessionContext_(userId, sessionToken);
-        }
-        if (!sharedContext || sharedContext.valid !== true || !sharedContext.actor) return { valid: false, reason: 'shared_context_invalid' };
-        syncAuthSheetActivityFromActor_(userId, sessionToken, sharedContext.actor);
-        return validateSessionReadOnly_(sessionToken, userId, sharedContext.actor);
+        return validateSessionReadOnly_(sessionToken, userId);
     } catch (error) {
         console.error('handleValidateSession:', error && error.message ? error.message : error);
         return { valid: null, unavailable: true, reason: 'validation_unavailable' };
