@@ -551,27 +551,21 @@ function buildFeedbackCortesCatalogChange_(reference) {
     return { collection: "cortes", recordId: wanted, operation: "upsert", snapshot: snapshot };
 }
 
-function publishFeedbackCatalogChange_(action, buildChange) {
-    let change = { operation: "reset" };
-    try {
-        const snapshot = buildChange();
-        if (snapshot && typeof snapshot === "object" && snapshot.operation !== "reset") {
-            // Date.now() ofrece una versión de origen no bloqueante. Si dos ejecuciones
-            // coinciden en el mismo milisegundo, Coordinator convierte la versión repetida
-            // en reset y reconstruye el snapshot; no se pierde la actualización.
-            change = Object.assign({}, snapshot, { sourceVersion: Math.max(1, Date.now()) });
-        }
-    } catch (catalogSnapshotError) {
-        console.error("No se pudo preparar el snapshot del catálogo FEEDBACK; se publicará reset.",
-            catalogSnapshotError && catalogSnapshotError.message ? catalogSnapshotError.message : catalogSnapshotError);
-        change = { operation: "reset" };
-    }
-    return publishSharedCatalogChange_("FEEDBACK", action, change);
-}
-function publishFeedbackCortesCatalogChange_(action, reference) {
-    return publishFeedbackCatalogChange_(action, () => buildFeedbackCortesCatalogChange_(reference));
-}
 
+
+const FEEDBACK_CATALOG_RESET_ACTIONS_ = new Set([
+    "addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
+    "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"
+]);
+function markFeedbackCatalogResetRequired_(action, response) {
+    if (!response || typeof response !== "object" || response.status !== "success") return response;
+    if (action === "recordLike") {
+        if (response.alreadyLiked !== true) response.catalogResetRequired = true;
+        return response;
+    }
+    if (FEEDBACK_CATALOG_RESET_ACTIONS_.has(action)) response.catalogResetRequired = true;
+    return response;
+}
 
 function doGet(e) {
     const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
@@ -822,59 +816,7 @@ function doPostInternal_(e) {
                 throw new Error(`Acción desconocida en Feedback Service: ${action}`);
         }
 
-        // Publicar el cambio solo después de confirmar el like y liberar su ScriptLock.
-        // Un fallo del feed no revierte ni convierte en error una reacción ya guardada.
-        if (action === "recordLike" && response && response.status === "success" && !response.alreadyLiked) {
-            try {
-                // Los likes nuevos son eventos append-only; un reset obliga a CATALOG a
-                // recomponer el contador desde FeedbackLikes sin reservar versión bajo ScriptLock.
-                publishSharedCatalogChange_("FEEDBACK", "recordLike", { operation: "reset" });
-            } catch (catalogPublishError) {
-                console.error("El like se guardó, pero no se pudo invalidar CATALOG:",
-                    catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
-            }
-        } else if (action === "suggestYear" && response &&
-            (response.recovered === false || response.recovered === true)) {
-            // Solo una aplicación de rango confirmada modifica la fila Cortes; los votos previos no generan delta.
-            try {
-                const vehicleId = String(payload.vehicleId || "").trim();
-                if (!vehicleId) throw new Error("No se recibió el ID del vehículo actualizado.");
-                publishFeedbackCortesCatalogChange_(action, vehicleId);
-            } catch (catalogPublishError) {
-                console.error("La sugerencia de año se procesó, pero no se pudo publicar su cambio incremental:",
-                    catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
-            }
-        } else if (response && response.status === "success" &&
-            ["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
-             "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial"].includes(action)) {
-            // PyS y Tutoriales publican snapshots individuales después de verificar la fila persistida.
-            try {
-                if (["addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
-                    "removeVehicleFromProblem", "updatePysItem"].includes(action)) {
-                    const problemId = action === "addProblem"
-                        ? response.problemId
-                        : payload && payload.problemId;
-                    if (!problemId) throw new Error("La operación PyS no devolvió un ID verificable.");
-                    publishPysCatalogChange_(action, problemId);
-                } else if (action === "addTutorial" || action === "updateTutorialItem") {
-                    const tutorialId = action === "addTutorial"
-                        ? response.referenceId
-                        : response.updated && response.updated.tutorialId;
-                    if (!tutorialId) throw new Error("La operación no devolvió un ID de tutorial verificable.");
-                    publishTutorialCatalogChange_(action, tutorialId);
-                } else {
-                    publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
-                }
-            } catch (catalogPublishError) {
-                // Si no puede obtenerse/publicarse un snapshot exacto, el reset conserva la coherencia.
-                try {
-                    publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
-                } catch (resetPublishError) {
-                    console.error("La operación FEEDBACK se confirmó, pero no se pudo publicar su cambio:",
-                        resetPublishError && resetPublishError.message ? resetPublishError.message : "CatalogFeedError");
-                }
-            }
-        }
+        response = markFeedbackCatalogResetRequired_(action, response);
     } catch (error) {
         response = { status: 'error', message: error.message };
     }
@@ -1118,16 +1060,7 @@ function handleSuggestYear(payload) {
     if (!result || typeof result !== "object") return result;
     const catalogResetRequest = result._catalogResetRequest === true;
     delete result._catalogResetRequest;
-    if (catalogResetRequest) {
-        try {
-            publishFeedbackCatalogChange_("suggestYear", () => ({ operation: "reset" }));
-        } catch (catalogError) {
-            result.catalogSyncWarning = true;
-            result.message += " La ampliación quedó registrada, pero la actualización de caché del catálogo requiere reintento.";
-            Logger.log("No se pudo invalidar el catálogo tras anexar la ampliación de años: " +
-                String(catalogError && catalogError.message || catalogError));
-        }
-    }
+    if (catalogResetRequest) result.catalogResetRequired = true;
 
     const activityLogRequest = result._activityLogRequest;
     delete result._activityLogRequest;
@@ -3891,10 +3824,6 @@ function buildPysCatalogChange_(reference) {
     return { collection: "pys", recordId: id, operation: "upsert", snapshot: snapshot };
 }
 
-function publishPysCatalogChange_(action, reference) {
-    return publishFeedbackCatalogChange_(action, () => buildPysCatalogChange_(reference));
-}
-
 const PYS_TITLE_MAX_LENGTH=15;
 const PYS_DESCRIPTION_MAX_LENGTH=200;
 const PYS_SOLUTION_MAX_LENGTH=700;
@@ -4431,10 +4360,6 @@ function buildTutorialCatalogChange_(reference) {
         Colaborador: row[7] === "" || row[7] === undefined ? null : row[7]
     };
     return { collection: "tutoriales", recordId: id, operation: "upsert", snapshot: snapshot };
-}
-
-function publishTutorialCatalogChange_(action, reference) {
-    return publishFeedbackCatalogChange_(action, () => buildTutorialCatalogChange_(reference));
 }
 
 function findTutorialRow_(sheet, reference, preferId) {
