@@ -35,7 +35,7 @@ function buildChecker(endpoints, lastKnown = new Map()) {
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
         "loadCentralConfiguration", "resolveCentralServiceEndpoint",
-        functionSource + "\\nreturn checkAllServicesHealth;"
+        functionSource + "\nreturn checkAllServicesHealth;"
     )(
         keys, contracts, 8000, 2000, 300000, lastKnown,
         AbortController, globalThis.fetch, setTimeout, clearTimeout, Date,
@@ -201,8 +201,8 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
         "loadCentralConfiguration", "resolveCentralServiceEndpoint",
-        functionSource + "\\n" + singleMatch[0].replace("export async function", "async function") +
-        "\\nreturn checkServiceHealth;"
+        functionSource + "\n" + singleMatch[0].replace("export async function", "async function") +
+        "\nreturn checkServiceHealth;"
     )(
         keys, contracts, 8000, 2000, 300000, new Map(),
         AbortController, globalThis.fetch, setTimeout, clearTimeout, Date,

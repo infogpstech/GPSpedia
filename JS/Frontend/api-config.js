@@ -837,12 +837,20 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
 
 // El bootstrap consulta AUTH para obtener el registro central; no enruta otras acciones.
 async function fetchCentralConfigurationBootstrap_() {
-    const response = await fetch(CENTRAL_CONFIGURATION_BOOTSTRAP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "getPublicConfiguration", payload: {} }),
-        redirect: "follow"
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    let response;
+    try {
+        response = await fetch(CENTRAL_CONFIGURATION_BOOTSTRAP_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ action: "getPublicConfiguration", payload: {} }),
+            redirect: "follow",
+            signal: controller.signal
+        });
+    } finally {
+        clearTimeout(timeoutId);
+    }
     if (!response || !response.ok) {
         const status = Number(response && response.status);
         const error = new Error("No se pudo consultar la configuración central de servicios.");
