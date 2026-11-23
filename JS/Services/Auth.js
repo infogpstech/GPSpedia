@@ -594,6 +594,11 @@ function doPost(e) {
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    if (action === "__invalidateSessionActorCache") {
+        const invalidation = handleSharedSessionActorCacheInvalidation_(payload);
+        return ContentService.createTextOutput(JSON.stringify(invalidation))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "getPublicConfiguration") {
         // Proyección pública únicamente: no incluye recursos, parámetros backend/admin ni identidad.
         // Esta ruta no coordina otros servicios y no requiere sesión para datos ya públicos.
