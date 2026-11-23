@@ -84,7 +84,7 @@ runGroup('32','ADMIN',()=>{
   runCli('WRITE prepara validación de cortes fuera del ScriptLock con lecturas acotadas','JS/Tests/WriteCutPreflightOutsideLock.mjs');
   runCli('WRITE reutiliza la fila de vehículo localizada durante el registro de cortes','JS/Tests/WriteCutExistingVehicleSnapshotReuse.mjs');
   runCli('WRITE agrupa escrituras de cortes sin alterar campos separados','JS/Tests/WriteCutSlotBatchWrites.mjs');
-  runCli('ADMIN agrupa los cinco campos contiguos del corte existente','JS/Tests/AdminCutSlotBatchWrites.mjs');
+  runCli('WRITE registra cortes existentes mediante ledger append-only','JS/Tests/AdminCutSlotBatchWrites.mjs');
   runCli('MIG-010 recuperación idempotente de altas se ejecuta en WRITE','JS/Tests/AdminRecoveryRepairBatchWrites.mjs');
   runCli('ADMIN agrupa escrituras del alta de vehículos nuevos','JS/Tests/AdminNewVehicleBatchWrites.mjs');
   runCli('ADMIN limpia la fila nueva con una sola llamada clearContent','JS/Tests/AdminNewVehicleSingleRowClear.mjs');
