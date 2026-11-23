@@ -44,13 +44,14 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 
 ### MIG-002 — Inventario de pantallas y capacidades visibles
-**Estado: PENDIENTE**
-- [ ] Recorrer HTML/JS/CSS y listar cada pantalla, modal, botón, menú, formulario, comando, selector y estado.
-- [ ] Registrar estados de carga, vacío, éxito, error, progreso, cancelación, pausa y reanudación.
-- [ ] Cubrir catálogo, modelos/cortes, VIN, imágenes, vídeos, tutoriales, PyS, feedback, Inbox, administración y herramientas de desarrollador.
-- [ ] Relacionar cada control con las acciones/handlers que ejecuta.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-23)**
+- [x] Recorrer HTML/JS/CSS activos y listar pantallas, modales, controles, comandos, selectores y estados.
+- [x] Registrar estados de carga, vacío, éxito, error, progreso, cancelación, pausa y reanudación donde están implementados.
+- [x] Cubrir catálogo, ficha/modelos/cortes, VIN, imágenes, vídeos, tutoriales, Relay, PyS, feedback, Inbox, Dashboard, administración, usuarios y Developer Tools.
+- [x] Relacionar los grupos de controles con handlers cliente, acciones backend/locales, condiciones de rol y pruebas automatizadas existentes.
+- [x] Distinguir pruebas directas de UI, contratos/regresiones de backend y validaciones de navegador/Beta; documentar expresamente la cobertura indirecta y las brechas sin presentarlas como aprobadas.
 
-**Aceptación:** no queda control visible sin trazabilidad funcional y prueba.
+**Aceptación:** inventario de pantallas y controles con trazabilidad funcional y de pruebas en `INVENTARIO_PANTALLAS_CAPACIDADES.md` §§2–7. Las validaciones reales de navegador/dispositivos y servicios externos quedan para Beta; no bloquean el cierre del inventario estático.
 
 ### MIG-003 — Inventario de configuración en backend
 **Estado: PENDIENTE**
@@ -499,3 +500,16 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - No hay manifiestos de Apps Script ni archivos `.gs`/clasp versionados; no se detectaron declaraciones de triggers en los diez archivos backend revisados. Los triggers instalados y las configuraciones externas solo se pueden confirmar en los proyectos desplegados.
 
 **Resultado:** MIG-001 se marca **COMPLETADA CON VALIDACIÓN DIFERIDA**. No se modificó código funcional, endpoints, propiedades, deployments ni datos. Las verificaciones de proyectos Apps Script, triggers instalados, Spreadsheet/Drive aislados, OAuth, YouTube y despliegues quedan para Beta/MIG-027/MIG-028. No se presentan como ejecutadas.
+
+
+#### Cierre MIG-002 — 2026-11-23
+
+- Inventario completo en `INVENTARIO_PANTALLAS_CAPACIDADES.md`: 17 superficies de UI; 335 declaraciones de controles/enlaces/formularios en HTML activo y plantillas dinámicas; 37 módulos frontend y tres hojas CSS.
+- Se trazaron controles de App Shell/login/recuperación, catálogo/ficha, alta de cortes, tutoriales, Relay, PyS, Inbox, Dashboard, Developer Tools, biblioteca y auditoría Drive, usuarios, YouTube, legales, contacto, impresión, Lightbox y editores.
+- Se relacionaron handlers cliente, acciones backend/locales, restricciones por rol y pruebas existentes por superficie.
+- Se documentaron estados de carga, vacío, éxito, error, progreso, reintento, pausa, cancelación y recuperación realmente implementados.
+- Se registraron las limitaciones de cobertura: las pruebas son mayoritariamente por flujo/contrato, no una prueba de clic por cada botón; About/FAQ/changelog y la interacción visual de Contacto tienen cobertura genérica/indirecta, no una suite visual dedicada. No se afirma cobertura que no existe.
+- Se relacionó el inventario con BETA-01 a BETA-08. Las validaciones de navegador/dispositivo real, despliegues, Apps Script, Spreadsheet/Drive, OAuth y YouTube se reservan para Beta.
+- No se modificó código funcional, endpoints, RBAC, datos, Spreadsheet, Drive ni deployments.
+
+**Resultado:** MIG-002 COMPLETADA CON VALIDACIÓN DIFERIDA.
