@@ -92,4 +92,4 @@ test('el contexto se aplica a las coincidencias obtenidas desde el prefijo', () 
     assert.equal(result.match.classKey, 'EX');
 });
 
-console.log('VIN query normalization:', passed, '/ 9');
+console.log('VIN query normalization:', passed + '/9 PASS');
