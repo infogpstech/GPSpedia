@@ -33,7 +33,7 @@ const cache = {
     remove: key => values.delete(key)
 };
 const api = new Function("SpreadsheetApp","CacheService","Utilities","SPREADSHEET_ID",
-    source + "\nreturn { loadSharedSessionActorFromSpreadsheet_, getCachedSharedSessionActor_, cacheSharedSessionActor_, handleSharedSessionActorCacheInvalidation_ };"
+    source + "\nreturn { loadSharedSessionActorFromSpreadsheet_, getCachedSharedSessionActor_, cacheSharedSessionActor_, handleSharedSessionActorCacheInvalidation_, getSharedSessionActorCacheKey_ };"
 )({openById:()=>makeSpreadsheet(validUsers,validSessions)},
 {getScriptCache:()=>cache},utilities,"isolated-spreadsheet-id");
 
