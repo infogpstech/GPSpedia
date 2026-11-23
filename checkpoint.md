@@ -127,3 +127,7 @@ Corrección de trazabilidad: ADMIN también consume CATALOG mediante `getVehicle
 - Confirmado el contrato intencional de `WRITE/checkOperation`: sin actor/lease, `opId` aleatorio de 128 bits y respuesta mínima, cubierto por `CheckOperationSecurity.js`. Debe conservarse.
 - Identificado secreto interno de CATALOG para metadatos de inventario de imágenes; requiere migración segura en MIG-003.
 - MIG-001 sigue **EN PROGRESO**; aún faltan contratos de payload/respuesta, datos, APIs y pruebas de paridad.
+
+
+### Pruebas de preservación ejecutadas — 2026-11-23
+Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argumentos de entrada del runner: `ActionDispatchContract.js` 12/12; `CheckOperationSecurity.js` 8/8; `SharedMutationCoordinator.js` 94/94; `UsersAtomicMutations.js` 16/16; `WriteAuthorizationContracts.js` 10/10; `WriteAuthorizationMinimization.js` 15/15; `AddSupplementaryInfoIntegrity.js` 61/61; `VinAuthoritativeValidation.js` 12/12; `UtilitiesSecurity.js` 19/19. Total: **247 aserciones aprobadas, 0 fallidas**. No se ejecutó el runner Node.js completo ni se invocaron Apps Script/Spreadsheet/Drive reales; no es validación Beta.
