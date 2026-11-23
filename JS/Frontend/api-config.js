@@ -755,7 +755,7 @@ export async function checkAllServicesHealth(options = {}) {
                                     version,
                                     reportedStatus
                                 };
-                                if ((serviceKey === "AUTH" || serviceKey === "FEEDBACK") &&
+                                if (serviceKey === "AUTH" &&
                                     typeof data.coordinatorConfigured === "boolean") {
                                     metadata.coordinatorConfigured = data.coordinatorConfigured;
                                 }
