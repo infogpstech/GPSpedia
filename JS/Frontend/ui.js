@@ -6922,7 +6922,7 @@ ${elapsedSec}s
             ...getDeveloperSessionPayload()
         };
         if (cmd === 'move') {
-            const moveIds = args.trim().split(/\\s+/).filter(Boolean);
+            const moveIds = args.trim().split(/\s+/).filter(Boolean);
             if (moveIds.length !== 2) {
                 log("[USO] move <ID_ARCHIVO> <ID_CARPETA_DESTINO>. Usa 'dir' para consultar los IDs.", false, true);
                 return;
