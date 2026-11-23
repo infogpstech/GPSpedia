@@ -4,15 +4,15 @@
 
 ## Fuentes de información
 
-1. **Telemetría global de Coordinator:** registra adquisiciones de lease, validaciones de contexto y lecturas del feed incremental. Mantiene buckets horarios de 24 horas por servicio principal: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. La lectura global está protegida para el rol Desarrollador.
+1. **Telemetría global de Coordinator:** registra adquisiciones exitosas de lease. Los buckets horarios de 24 horas se incluyen en el mismo estado JSON y en la escritura que ya necesita confirmar la lease; no se añade una escritura independiente a la operación. Las validaciones de contexto y las lecturas del feed incremental no escriben métricas. La lectura global está protegida para el rol Desarrollador.
 2. **Telemetría local del navegador:** `JS/Frontend/serviceTelemetry.js` mantiene en memoria del navegador actual hasta 200 eventos, buckets horarios de 24 horas, percentiles p50/p95 y tamaños de solicitud/respuesta. Incluye siete destinos de enrutamiento: los seis servicios principales y COORDINATOR. No persiste datos, no transmite eventos y no conserva payloads, tokens ni identificadores de usuario.
 3. **Panel ADMIN:** presenta por separado el agregado global coordinado y las solicitudes del navegador actual. La consulta global se limita al panel Developer visible y tiene una ventana mínima de 60 segundos entre refrescos. Los datos locales nunca se suman al agregado global.
 4. **Salud de endpoints:** comprueba identidad, estado y versión de los seis servicios principales y el endpoint opcional COORDINATOR. No ejecuta probes de Sheets ni Drive.
 
 ## Cobertura y límites
 
-- El agregado global refleja únicamente operaciones que pasan por Coordinator y están instrumentadas. No representa el total de solicitudes HTTP ni incluye todas las lecturas directas no coordinadas.
-- Las consultas al feed público de catálogo se atribuyen a CATALOG en el agregado global; el navegador registra el destino de red COORDINATOR en su telemetría local.
+- El agregado global refleja únicamente adquisiciones exitosas de lease que pasan por Coordinator. No representa el total de solicitudes HTTP ni incluye lecturas de sesión/feed ni rutas directas no coordinadas.
+- Las consultas al feed público de catálogo no se persisten en el agregado global; el navegador registra el destino de red COORDINATOR en su telemetría local.
 - USERS fue retirado como microservicio independiente por MIG-012. No tiene endpoint ni clave de telemetría. Sus operaciones de usuarios se enrutan a AUTH.
 - LEGACY está retirado y no forma parte del inventario.
 - COORDINATOR es opcional en el registro público de configuración para compatibilidad; cuando está habilitado, aparece en el diagnóstico de salud y en la telemetría local del navegador. No es una séptima categoría del agregado global de operaciones protegidas, que conserva las seis claves de servicio principal.
@@ -22,7 +22,7 @@
 ## Seguridad y arquitectura
 
 - La coordinación entre servicios se realiza en el frontend mediante la configuración central. No se agregan URLs de otros servicios, secretos compartidos ni credenciales a Script Properties de servicios de negocio para instrumentar métricas.
-- Coordinator mantiene su propio estado interno de leases y buckets de métricas. Las rutas de consulta global validan sesión y rol Desarrollador.
+- Coordinator mantiene su estado de leases y buckets horarios en el mismo valor de ScriptProperties. La telemetría se incorpora a la escritura ya requerida por la lease; si la parte opcional de métricas excede el límite o falla, se conserva la lease y se descarta el incremento. Las rutas de consulta global validan sesión y rol Desarrollador.
 - Los probes de salud son GET de solo lectura y devuelven únicamente identidad estable, versión y estado. No exponen IDs de recursos, nombres de hojas, claves, tokens, secretos, excepciones ni stack traces.
 - La consulta de salud no implica que Sheets, Drive, CacheService u otras dependencias estén disponibles.
 

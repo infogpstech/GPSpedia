@@ -40,6 +40,17 @@ const trafficReader = coordinator.slice(trafficStart, trafficEnd);
 assert.doesNotMatch(trafficReader, /fetchAll|UrlFetchApp|GPSpedia_SERVICE_URL_/);
 assert.match(trafficReader, /mergeServiceTrafficSources_\(coordinatorResult\)/);
 assert.match(coordinator, /function mergeServiceTrafficSources_\(source\)/);
+assert.match(coordinator, /function incrementServiceTrafficBucketState_\(service, capturedAt, operation\)/);
+assert.match(coordinator, /function saveLeases_\(leases, trafficEvent\)/);
+assert.doesNotMatch(coordinator, /function recordServiceTrafficEvent_/);
+const validationStart = coordinator.indexOf("function validateSessionContext_");
+const validationEnd = coordinator.indexOf("\\n    function ", validationStart + 10);
+assert.ok(validationStart >= 0 && validationEnd > validationStart);
+assert.doesNotMatch(coordinator.slice(validationStart, validationEnd), /recordServiceTrafficEvent_|incrementServiceTrafficBucketState_/);
+const feedStart = coordinator.indexOf("function getCatalogChanges_");
+const feedEnd = coordinator.indexOf("\\n    function ", feedStart + 10);
+assert.ok(feedStart >= 0 && feedEnd > feedStart);
+assert.doesNotMatch(coordinator.slice(feedStart, feedEnd), /recordServiceTrafficEvent_|incrementServiceTrafficBucketState_/);
 
 assert.match(shared, /function getServiceTraffic\(\)/);
 assert.match(shared, /send_\("getServiceTraffic"/);
@@ -66,4 +77,4 @@ assert.match(ui, /renderGlobalServiceTrafficChart_/);
 assert.match(ui, /isValidGlobalServiceTrafficResponse_/);
 assert.match(html, /Un cero no significa necesariamente que el servicio no recibió solicitudes/);
 
-console.log("ServiceTrafficAdminContract: 37/37 PASS");
+console.log("ServiceTrafficAdminContract: 43/43 PASS");

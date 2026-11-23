@@ -27,8 +27,17 @@ function runSharedMutationCoordinatorTests() {
         let trafficReads = 0;
         let trafficWrites = 0;
         let trafficAccessWhileLocked = 0;
+        let leaseStateWrites = 0;
+        let embeddedTrafficWriteAttempts = 0;
         let failTrafficProperties = false;
         const isTrafficKey = key => String(key || "").startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_");
+        const hasEmbeddedTraffic = value => {
+            try {
+                const parsed = JSON.parse(String(value));
+                return parsed && !Array.isArray(parsed) && parsed.version === 2 &&
+                    parsed.trafficBuckets && Object.keys(parsed.trafficBuckets).length > 0;
+            } catch (error) { return false; }
+        };
         const properties = {
             getProperty: key => {
                 if (isTrafficKey(key)) {
@@ -43,6 +52,14 @@ function runSharedMutationCoordinatorTests() {
                     trafficWrites++;
                     if (lockHeld) trafficAccessWhileLocked++;
                     if (failTrafficProperties) throw new Error("traffic properties unavailable");
+                }
+                if (key === "GPSpedia_SHARED_MUTATION_LEASES") {
+                    leaseStateWrites++;
+                    if (hasEmbeddedTraffic(value)) {
+                        embeddedTrafficWriteAttempts++;
+                        if (lockHeld) trafficAccessWhileLocked++;
+                        if (failTrafficProperties) throw new Error("optional traffic state unavailable");
+                    }
                 }
                 store[key] = String(value);
                 return properties;
@@ -83,7 +100,7 @@ function runSharedMutationCoordinatorTests() {
 
         return {
             properties, secrets, coordinator, request, uuid,
-            trafficMetrics: () => ({ reads: trafficReads, writes: trafficWrites, accessesWhileLocked: trafficAccessWhileLocked }),
+            trafficMetrics: () => ({ reads: trafficReads, writes: trafficWrites, accessesWhileLocked: trafficAccessWhileLocked, leaseStateWrites, embeddedTrafficWriteAttempts }),
             failTrafficProperties: value => { failTrafficProperties = value === true; },
             advance: milliseconds => { clock += milliseconds; },
             makeClient: function(service) {
@@ -126,40 +143,59 @@ function runSharedMutationCoordinatorTests() {
         return runtime.request("release", service, operation, { token });
     }
 
-    test_("La telemetría de adquisición se persiste después de liberar ScriptLock", function() {
+    function storedLeases_(runtime) {
+        const parsed = JSON.parse(runtime.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES") || "[]");
+        return Array.isArray(parsed) ? parsed : parsed.leases;
+    }
+
+    test_("La telemetría comparte la escritura existente de lease sin otra propiedad", function() {
         const r = createRuntime_();
         const acquired = acquire_(r, "WRITE", "addOrUpdateCut");
         assert_(acquired.status === "success", "La lease debe confirmarse.");
         const metrics = r.trafficMetrics();
-        assert_(metrics.reads === 1 && metrics.writes === 1, "La adquisición debe conservar un evento de telemetría.");
-        assert_(metrics.accessesWhileLocked === 0, "PropertiesService de telemetría no debe tocarse dentro de ScriptLock.");
-        const storedLease = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES") || "[]");
-        assert_(storedLease.some(lease => lease.token === acquired.token), "La lease confirmada debe permanecer persistida.");
+        assert_(metrics.reads === 0 && metrics.writes === 0, "No debe haber lecturas ni escrituras en propiedades separadas de métricas.");
+        assert_(metrics.leaseStateWrites === 1 && metrics.embeddedTrafficWriteAttempts === 1,
+            "El contador debe compartir la única escritura necesaria para guardar la lease.");
+        assert_(metrics.accessesWhileLocked === 1, "El bucket se escribe en el mismo guardado de lease ya protegido por ScriptLock.");
+        const stored = storedLeases_(r);
+        assert_(stored.version === 2 && stored.leases.some(lease => lease.token === acquired.token),
+            "El estado combinado debe conservar la lease confirmada.");
+        assert_(Object.keys(stored.trafficBuckets).length === 1, "El estado combinado debe guardar el bucket horario.");
     });
 
-    test_("Un fallo de persistencia de telemetría no revierte ni rechaza una lease", function() {
+    test_("Un fallo opcional del bucket conserva la lease y descarta el incremento", function() {
         const r = createRuntime_();
         r.failTrafficProperties(true);
         const acquired = acquire_(r, "WRITE", "addOrUpdateCut");
-        assert_(acquired.status === "success", "La adquisición funcional debe continuar aunque falle la telemetría.");
-        const storedLease = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES") || "[]");
-        assert_(storedLease.some(lease => lease.token === acquired.token), "La lease debe seguir confirmada.");
+        assert_(acquired.status === "success", "La operación funcional debe continuar aunque falle la parte opcional de métricas.");
+        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+        const leases = Array.isArray(stored) ? stored : stored.leases;
+        assert_(leases.some(lease => lease.token === acquired.token), "La lease debe seguir confirmada.");
+        assert_(r.trafficMetrics().writes === 0, "No debe intentarse una escritura independiente de telemetría.");
     });
 
-    test_("La lectura del feed registra telemetría después de liberar ScriptLock", function() {
+    test_("Las lecturas de feed no escriben métricas ni añaden persistencia", function() {
         const r = createRuntime_();
         const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 10 });
         assert_(feed.status === "success", "El feed debe responder normalmente.");
         const metrics = r.trafficMetrics();
-        assert_(metrics.reads === 1 && metrics.writes === 1, "La lectura del feed debe conservar el conteo.");
-        assert_(metrics.accessesWhileLocked === 0, "La telemetría del feed debe persistirse fuera de ScriptLock.");
+        assert_(metrics.reads === 0 && metrics.writes === 0 && metrics.leaseStateWrites === 0,
+            "La lectura del feed no debe añadir lecturas ni escrituras de métricas.");
     });
 
-    test_("Un fallo de telemetría no altera el resultado funcional del feed", function() {
+    test_("La validación de contexto de sesión no escribe métricas", function() {
         const r = createRuntime_();
-        r.failTrafficProperties(true);
-        const feed = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 10 });
-        assert_(feed.status === "success" && Array.isArray(feed.changes), "El feed debe responder aunque falle la telemetría.");
+        const userId = "USR-TRAFFIC-READ";
+        const token = "session-token-traffic-read-0001";
+        r.request("registerSession", "AUTH", "registerSession", {
+            userId, sessionToken: token, role: "tecnico", fullName: "Técnico",
+            createdAt: 1700000000000, lastActivityAt: 1700000000000
+        });
+        const response = r.makeClient("WRITE").validateSessionContext(userId, token, "WRITE");
+        assert_(response.status === "success" && response.valid === true, "La validación debe conservar su contrato.");
+        const metrics = r.trafficMetrics();
+        assert_(metrics.reads === 0 && metrics.writes === 0 && metrics.leaseStateWrites === 0,
+            "La validación de sesión no debe añadir persistencia de telemetría.");
     });
 
     test_("Rechaza secretos incorrectos y servicios no autorizados", function() {
@@ -332,7 +368,7 @@ function runSharedMutationCoordinatorTests() {
             sleepCount++;
             const attempt = acquire_(runtime, "ADMIN", "addOrUpdateCut");
             blockedDuringDrain = attempt.status === "error" && attempt.code === "busy";
-            const leases = JSON.parse(runtime.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+            const leases = storedLeases_(runtime);
             const reservation = leases.find(lease => lease.operation === "migrateCortesOperationIds");
             try {
                 runtime.request("validate", "ADMIN", "migrateCortesOperationIds", { token: reservation.token });
@@ -507,7 +543,11 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => client.withLease("WRITE", "addVinToVehicle", function() {
             throw new Error("fallo-controlado");
         }), "fallo-controlado");
-        assert_(!r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"), "Lease debía liberarse tras excepción.");
+        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+        const leases = Array.isArray(stored) ? stored : stored.leases;
+        assert_(leases.length === 0, "La lease debe liberarse tras excepción.");
+        assert_(Array.isArray(stored) || Object.keys(stored.trafficBuckets || {}).length > 0,
+            "La retención de métricas debe sobrevivir a la liberación de la última lease.");
     });
 
     test_("Cliente falla cerrado sin configuración; ADMIN→WRITE no requiere lease anidada", function() {
@@ -1008,9 +1048,9 @@ function runSharedMutationCoordinatorTests() {
             "ADMIN debe recibir el agregado global de Coordinator.");
         assert_(traffic.services.length === 6 && !traffic.services.includes("LEGACY"),
             "El agregado conserva los siete servicios activos.");
-        assert_(traffic.totals.last24Hours.AUTH === 1 && traffic.totals.last24Hours.CATALOG === 1 &&
-            traffic.totals.last24Hours.FEEDBACK === 1,
-            "Solo deben contarse los eventos registrados por Coordinator.");
+        assert_(traffic.totals.last24Hours.AUTH === 1 && traffic.totals.last24Hours.CATALOG === 0 &&
+            traffic.totals.last24Hours.FEEDBACK === 0,
+            "Solo deben contarse adquisiciones exitosas de lease; feed y validaciones de contexto no escriben métricas.");
         assert_(traffic.totals.last24Hours.WRITE === 0,
             "No deben inventarse solicitudes directas de servicios.");
         ["AUTH", "CATALOG", "WRITE", "FEEDBACK"].forEach(service => {
@@ -1184,25 +1224,42 @@ function runSharedMutationCoordinatorTests() {
         assert_(calls === 1, "Un rechazo explícito no debe generar un segundo viaje de red.");
     });
 
-    test_("El feed público conserva su conteo fuera del lock y sin lease adicional", function() {
+    test_("El feed público no añade escrituras ni se atribuye como tráfico global", function() {
         const r = createRuntime_();
         const response = r.coordinator.getPublicCatalogChanges({ cursor: 0, limit: 50 });
         assert_(response.status === "success", "El feed público debe conservar su contrato.");
-        assert_(r.trafficMetrics().accessesWhileLocked === 0, "El feed no debe persistir métricas dentro de ScriptLock.");
+        const metrics = r.trafficMetrics();
+        assert_(metrics.reads === 0 && metrics.writes === 0 && metrics.leaseStateWrites === 0,
+            "La lectura pública no debe añadir persistencia de telemetría.");
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
-        assert_(traffic.totals.last24Hours.CATALOG === 1,
-            "Una consulta pública válida del feed debe contabilizarse como CATALOG.");
-        assert_(traffic.totals.last24Hours.ADMIN === 0,
-            "La consulta de telemetría no debe contar como tráfico ADMIN.");
+        assert_(traffic.totals.last24Hours.CATALOG === 0 && traffic.totals.last24Hours.ADMIN === 0,
+            "El feed no se incluye en el agregado de adquisiciones de lease.");
     });
 
-    test_("El feed solicitado por FEEDBACK conserva la clasificación de ese servicio", function() {
+    test_("El feed solicitado por FEEDBACK no genera escrituras de métricas", function() {
         const r = createRuntime_();
         const response = r.request("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: 0, limit: 50 });
         assert_(response.status === "success", "FEEDBACK debe conservar el contrato del feed.");
+        assert_(r.trafficMetrics().reads === 0 && r.trafficMetrics().writes === 0,
+            "La lectura de FEEDBACK no debe añadir persistencia de telemetría.");
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
-        assert_(traffic.totals.last24Hours.FEEDBACK === 1,
-            "El feed interno debe atribuirse al servicio autenticado FEEDBACK.");
+        assert_(traffic.totals.last24Hours.FEEDBACK === 0,
+            "El feed interno queda fuera del agregado global de leases.");
+    });
+
+    test_("Los buckets históricos v1 se suman una sola vez a los incrementos v2", function() {
+        const r = createRuntime_();
+        const startAt = Math.floor(1700000000000 / (60 * 60 * 1000)) * (60 * 60 * 1000);
+        r.properties.setProperty("GPSpedia_SERVICE_TRAFFIC_HOUR_" + startAt, JSON.stringify({
+            version: 1, startAt, counts: { AUTH: 3, CATALOG: 2 }
+        }));
+        acquire_(r, "AUTH", "login", "traffic-legacy-compat-0001");
+        const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(traffic.totals.last24Hours.AUTH === 4 && traffic.totals.last24Hours.CATALOG === 2,
+            "Los eventos legacy y los nuevos deben sumarse sin sobrescribir el histórico.");
+        const again = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
+        assert_(again.totals.last24Hours.AUTH === 4 && again.totals.last24Hours.CATALOG === 2,
+            "Las lecturas repetidas no deben duplicar los buckets v2.");
     });
 
     test_("La telemetría separa ventanas de una hora, seis horas y veinticuatro horas", function() {
@@ -1237,19 +1294,33 @@ function runSharedMutationCoordinatorTests() {
         assert_(traffic.buckets.length === 24, "La respuesta debe limitarse a 24 buckets.");
         assert_(traffic.totals.last24Hours.AUTH === 0 && traffic.totals.last24Hours.WRITE === 1,
             "No debe incluirse tráfico de más de 24 horas.");
-        const keys = Object.keys(r.properties.getProperties()).filter(key => key.startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_"));
-        assert_(keys.length === 1, "Los buckets expirados deben eliminarse del almacenamiento.");
+        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+        assert_(stored.version === 2 && Object.keys(stored.trafficBuckets).length === 1,
+            "El estado combinado debe conservar únicamente el bucket vigente de 24 horas.");
+        const legacyKeys = Object.keys(r.properties.getProperties()).filter(key => key.startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_"));
+        assert_(legacyKeys.length === 0, "Las adquisiciones nuevas no deben crear propiedades de métricas independientes.");
     });
 
-    test_("Un fallo al guardar telemetría nunca bloquea la lease protegida", function() {
+    test_("El bucket opcional puede descartarse sin perder la lease si falla el estado combinado", function() {
         const r = createRuntime_();
         const originalSet = r.properties.setProperty;
         r.properties.setProperty = (key, value) => {
-            if (String(key).startsWith("GPSpedia_SERVICE_TRAFFIC_HOUR_")) throw new Error("quota telemetry");
+            let hasTraffic = false;
+            try {
+                const parsed = JSON.parse(String(value));
+                hasTraffic = parsed && !Array.isArray(parsed) && parsed.version === 2 &&
+                    parsed.trafficBuckets && Object.keys(parsed.trafficBuckets).length > 0;
+            } catch (error) {}
+            if (key === "GPSpedia_SHARED_MUTATION_LEASES" && hasTraffic) throw new Error("quota telemetry");
             return originalSet(key, value);
         };
         const lease = acquire_(r, "AUTH", "login", "traffic-best-effort-request-0001");
-        assert_(lease.status === "success", "La operación debe continuar aunque falle la telemetría.");
+        assert_(lease.status === "success", "La operación debe continuar aunque falle la persistencia opcional de métricas.");
+        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+        const leases = Array.isArray(stored) ? stored : stored.leases;
+        assert_(leases.some(item => item.token === lease.token), "El fallback debe conservar la lease sin el incremento nuevo.");
+        assert_(Array.isArray(stored) || Object.keys(stored.trafficBuckets || {}).length === 0,
+            "El fallback no debe presentar el incremento descartado como persistido.");
     });
 
     test_("El actor se precarga al login y las acciones siguientes usan caché local sin Coordinator", function() {
@@ -1453,8 +1524,8 @@ function runSharedMutationCoordinatorTests() {
         });
         const traffic = r.request("getServiceTraffic", "ADMIN", "getServiceTraffic");
         services.forEach(service => {
-            assert_(traffic.totals.last24Hours[service] >= 1,
-                "La validación debe atribuirse al servicio solicitante " + service + ".");
+            assert_(traffic.totals.last24Hours[service] === 0,
+                "La validación de sesión no debe generar escrituras de telemetría para " + service + ".");
         });
         expectThrow_(() => r.makeClient("FEEDBACK").validateSessionContext(userId, token, "CATALOG"), "no autorizado");
     });

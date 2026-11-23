@@ -184,6 +184,7 @@ function createSharedMutationCoordinator_(dependencies) {
     const sleep = dependencies.sleep;
     const fetch = dependencies.fetch;
     const fetchAll = dependencies.fetchAll;
+    let serviceTrafficBuckets_ = {};
 
     function constantTimeEquals_(left, right) {
         left = String(left || "");
@@ -217,16 +218,35 @@ function createSharedMutationCoordinator_(dependencies) {
         return service;
     }
 
+    function normalizeServiceTrafficBuckets_(input) {
+        const normalized = {};
+        if (!input || typeof input !== "object" || Array.isArray(input)) return normalized;
+        Object.keys(input).forEach(key => {
+            const startAt = Number(key), values = input[key];
+            if (!Number.isSafeInteger(startAt) || startAt <= 0 || !Array.isArray(values)) return;
+            normalized[String(startAt)] = SERVICE_TRAFFIC_SERVICES_.map((service, index) => {
+                const value = Number(values[index] || 0);
+                return Number.isSafeInteger(value) && value >= 0 ? Math.min(Number.MAX_SAFE_INTEGER, value) : 0;
+            });
+        });
+        return normalized;
+    }
+
     function readLeases_() {
         const raw = properties.getProperty(SHARED_MUTATION_LEASES_PROPERTY);
-        if (!raw) return [];
+        if (!raw) { serviceTrafficBuckets_ = {}; return []; }
+        let parsed;
+        try { parsed = JSON.parse(raw); }
+        catch (error) { throw new Error("El estado del coordinador está dañado; las operaciones permanecen bloqueadas."); }
         let leases;
-        try {
-            leases = JSON.parse(raw);
-        } catch (error) {
-            throw new Error("El estado del coordinador está dañado; las operaciones permanecen bloqueadas.");
-        }
-        if (!Array.isArray(leases)) {
+        if (Array.isArray(parsed)) {
+            leases = parsed;
+            serviceTrafficBuckets_ = {};
+        } else if (parsed && parsed.version === 2 && Array.isArray(parsed.leases) &&
+            parsed.trafficBuckets && typeof parsed.trafficBuckets === "object" && !Array.isArray(parsed.trafficBuckets)) {
+            leases = parsed.leases;
+            serviceTrafficBuckets_ = normalizeServiceTrafficBuckets_(parsed.trafficBuckets);
+        } else {
             throw new Error("El estado del coordinador está dañado; las operaciones permanecen bloqueadas.");
         }
         leases.forEach(lease => {
@@ -235,9 +255,8 @@ function createSharedMutationCoordinator_(dependencies) {
                 typeof lease.requestId !== "string" || !Array.isArray(lease.readResources) ||
                 !Array.isArray(lease.writeResources) ||
                 (lease.sharedWriteResources !== undefined && !Array.isArray(lease.sharedWriteResources)) ||
-                typeof lease.maintenance !== "boolean" ||
-                typeof lease.expiresAt !== "number" || !lease.nestedActions ||
-                typeof lease.nestedActions !== "object" ||
+                typeof lease.maintenance !== "boolean" || typeof lease.expiresAt !== "number" ||
+                !lease.nestedActions || typeof lease.nestedActions !== "object" ||
                 (lease.phase !== undefined && lease.phase !== "active" && lease.phase !== "draining")) {
                 throw new Error("El estado del coordinador contiene una lease inválida; las operaciones permanecen bloqueadas.");
             }
@@ -248,18 +267,73 @@ function createSharedMutationCoordinator_(dependencies) {
         return leases;
     }
 
-    function saveLeases_(leases) {
-        if (!leases.length) {
+    function incrementServiceTrafficBucketState_(service, capturedAt, operation) {
+        if (!SERVICE_TRAFFIC_SERVICES_.includes(service) || (service === "ADMIN" && operation === "getServiceTraffic")) return;
+        const timestamp = Number(capturedAt);
+        const bucketStart = Math.floor(timestamp / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
+        if (!Number.isSafeInteger(bucketStart) || bucketStart <= 0) return;
+        const key = String(bucketStart);
+        const counts = Array.isArray(serviceTrafficBuckets_[key]) ? serviceTrafficBuckets_[key].slice() : SERVICE_TRAFFIC_SERVICES_.map(() => 0);
+        const index = SERVICE_TRAFFIC_SERVICES_.indexOf(service);
+        const current = Number(counts[index] || 0);
+        counts[index] = Number.isSafeInteger(current) && current >= 0 ? Math.min(Number.MAX_SAFE_INTEGER, current + 1) : 1;
+        serviceTrafficBuckets_[key] = counts;
+        const firstBucket = bucketStart - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
+        Object.keys(serviceTrafficBuckets_).forEach(bucketKey => {
+            const startAt = Number(bucketKey);
+            if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > bucketStart) delete serviceTrafficBuckets_[bucketKey];
+        });
+    }
+
+    function saveLeases_(leases, trafficEvent) {
+        const previousBuckets = normalizeServiceTrafficBuckets_(serviceTrafficBuckets_);
+        if (trafficEvent) incrementServiceTrafficBucketState_(trafficEvent.service, trafficEvent.capturedAt, trafficEvent.operation);
+        if (!leases.length && !Object.keys(serviceTrafficBuckets_).length) {
             properties.deleteProperty(SHARED_MUTATION_LEASES_PROPERTY);
             return;
         }
-        const serialized = JSON.stringify(leases);
+        const state = { version: 2, leases, trafficBuckets: serviceTrafficBuckets_ };
+        const serialize = () => JSON.stringify(state);
+        let serialized = serialize();
+        if (serialized.length > SHARED_MUTATION_MAX_STATE_LENGTH) {
+            const keys = Object.keys(serviceTrafficBuckets_).sort((a, b) => Number(a) - Number(b));
+            while (serialized.length > SHARED_MUTATION_MAX_STATE_LENGTH && keys.length) {
+                delete serviceTrafficBuckets_[keys.shift()];
+                serialized = serialize();
+            }
+            if (serialized.length > SHARED_MUTATION_MAX_STATE_LENGTH && trafficEvent) {
+                serviceTrafficBuckets_ = previousBuckets;
+                state.trafficBuckets = serviceTrafficBuckets_;
+                serialized = serialize();
+                if (serialized.length > SHARED_MUTATION_MAX_STATE_LENGTH) {
+                    serviceTrafficBuckets_ = {};
+                    state.trafficBuckets = serviceTrafficBuckets_;
+                    serialized = serialize();
+                }
+            }
+        }
         if (serialized.length > SHARED_MUTATION_MAX_STATE_LENGTH) {
             throw new Error("Se alcanzó el límite seguro de estado del coordinador; no se concedieron más leases.");
         }
-        properties.setProperty(SHARED_MUTATION_LEASES_PROPERTY, serialized);
+        try { properties.setProperty(SHARED_MUTATION_LEASES_PROPERTY, serialized); }
+        catch (error) {
+            if (trafficEvent) {
+                serviceTrafficBuckets_ = previousBuckets;
+                state.trafficBuckets = serviceTrafficBuckets_;
+                const previousState = serialize();
+                if (previousState.length <= SHARED_MUTATION_MAX_STATE_LENGTH) {
+                    try { properties.setProperty(SHARED_MUTATION_LEASES_PROPERTY, previousState); return; }
+                    catch (previousStateError) { /* Fallback al formato v1 para no perder la lease. */ }
+                }
+                const leaseOnly = JSON.stringify(leases);
+                if (leaseOnly.length <= SHARED_MUTATION_MAX_STATE_LENGTH) {
+                    properties.setProperty(SHARED_MUTATION_LEASES_PROPERTY, leaseOnly);
+                    return;
+                }
+            }
+            throw error;
+        }
     }
-
     function pruneExpiredLeases_(leases, currentTime) {
         const active = leases.filter(lease => lease.expiresAt > currentTime);
         return { leases: active, changed: active.length !== leases.length };
@@ -780,40 +854,13 @@ function createSharedMutationCoordinator_(dependencies) {
         const userId = String(payload.userId || "").trim();
         const token = String(payload.sessionToken || "");
         if (!userId || !token) throw new Error("La validación requiere userId y sessionToken.");
-        const result = withCoordinatorLock_(() => {
+        return withCoordinatorLock_(() => {
             const currentTime = now();
             const actor = authorizeSession_(userId, token, currentTime);
-            return { status: "success", valid: true, actor, trafficCapturedAt: currentTime };
+            return { status: "success", valid: true, actor };
         });
-        try { recordServiceTrafficEvent_(service, result.trafficCapturedAt, "validateSessionContext"); }
-        catch (trafficError) { /* La telemetría best-effort nunca altera la restauración de sesión. */ }
-        delete result.trafficCapturedAt;
-        return result;
     }
 
-    function recordServiceTrafficEvent_(service, capturedAt, operation) {
-        if (!SERVICE_TRAFFIC_SERVICES_.includes(service)) return false;
-        if (service === "ADMIN" && operation === "getServiceTraffic") return false;
-        const bucketStart = Math.floor(Number(capturedAt) / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
-        if (!Number.isSafeInteger(bucketStart) || bucketStart <= 0) return false;
-        const key = SERVICE_TRAFFIC_BUCKET_PREFIX_ + bucketStart;
-        let bucket = { version: 1, startAt: bucketStart, counts: {} };
-        const raw = properties.getProperty(key);
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.version === 1 && parsed.startAt === bucketStart &&
-                    parsed.counts && typeof parsed.counts === "object" && !Array.isArray(parsed.counts)) {
-                    bucket = parsed;
-                }
-            } catch (error) { /* Un bucket dañado se reemplaza sin afectar la operación protegida. */ }
-        }
-        const current = Number(bucket.counts[service] || 0);
-        bucket.counts[service] = Number.isSafeInteger(current) && current >= 0
-            ? Math.min(Number.MAX_SAFE_INTEGER, current + 1) : 1;
-        properties.setProperty(key, JSON.stringify(bucket));
-        return true;
-    }
 
     function mergeServiceTrafficSources_(source) {
         const expectedServices = SERVICE_TRAFFIC_SERVICES_.slice();
@@ -883,10 +930,9 @@ function createSharedMutationCoordinator_(dependencies) {
         if (service !== "ADMIN" || operation !== "getServiceTraffic") {
             throw new Error("Solo ADMIN puede consultar la telemetría global.");
         }
-        // El escritor de métricas es best-effort y no usa ScriptLock. La lectura tampoco
-        // debe tomar el lock compartido ni retrasar adquisiciones de leases. Los buckets
-        // se leen como snapshot no transaccional; una entrada actual inválida se omite,
-        // pero no se elimina para no competir con una escritura concurrente.
+        // Los buckets nuevos se incluyen en el mismo estado y escritura que una lease.
+        // Se leen sin lock; los buckets v1 independientes se conservan para compatibilidad
+        // histórica y se suman a los incrementos posteriores del estado v2.
         const capturedAt = now();
         const currentBucket = Math.floor(capturedAt / SERVICE_TRAFFIC_BUCKET_MS_) * SERVICE_TRAFFIC_BUCKET_MS_;
         const firstBucket = currentBucket - SERVICE_TRAFFIC_WINDOW_MS_ + SERVICE_TRAFFIC_BUCKET_MS_;
@@ -914,6 +960,24 @@ function createSharedMutationCoordinator_(dependencies) {
             });
             stored.set(startAt, counts);
         });
+        const leaseStateRaw = all[SHARED_MUTATION_LEASES_PROPERTY];
+        if (leaseStateRaw) {
+            try {
+                const leaseState = JSON.parse(leaseStateRaw);
+                const embedded = leaseState && !Array.isArray(leaseState) && leaseState.version === 2 &&
+                    leaseState.trafficBuckets && typeof leaseState.trafficBuckets === "object" ? leaseState.trafficBuckets : {};
+                Object.keys(embedded).forEach(key => {
+                    const startAt = Number(key), values = embedded[key];
+                    if (!Number.isSafeInteger(startAt) || startAt < firstBucket || startAt > currentBucket || !Array.isArray(values)) return;
+                    const counts = stored.get(startAt) || Object.fromEntries(SERVICE_TRAFFIC_SERVICES_.map(name => [name, 0]));
+                    SERVICE_TRAFFIC_SERVICES_.forEach((serviceName, index) => {
+                        const value = Number(values[index] || 0);
+                        if (Number.isSafeInteger(value) && value >= 0) counts[serviceName] = Math.min(Number.MAX_SAFE_INTEGER, counts[serviceName] + value);
+                    });
+                    stored.set(startAt, counts);
+                });
+            } catch (error) { /* Estado combinado inválido: se omite sin afectar operaciones. */ }
+        }
         const zeroCounts = () => Object.fromEntries(SERVICE_TRAFFIC_SERVICES_.map(key => [key, 0]));
         const totals = { lastHour: zeroCounts(), last6Hours: zeroCounts(), last24Hours: zeroCounts() };
         const buckets = [];
@@ -1024,10 +1088,10 @@ function createSharedMutationCoordinator_(dependencies) {
                             if (!active.length) {
                                 existing.phase = "active";
                                 existing.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
-                                saveLeases_(leases);
+                                saveLeases_(leases, { service, capturedAt: currentTime, operation });
                                 return {
                                     kind: "success", token: existing.token, expiresAt: existing.expiresAt,
-                                    actor: existing.actor || actor, trafficEvent: { service, capturedAt: currentTime, operation }
+                                    actor: existing.actor || actor
                                 };
                             }
                             if (pruned.changed) saveLeases_(leases);
@@ -1067,10 +1131,9 @@ function createSharedMutationCoordinator_(dependencies) {
                     if (!active.length) {
                         lease.phase = "active";
                         lease.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
-                        saveLeases_(leases);
+                        saveLeases_(leases, { service, capturedAt: currentTime, operation });
                         return {
-                            kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null,
-                            trafficEvent: { service, capturedAt: currentTime }
+                            kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null
                         };
                     }
                     saveLeases_(leases);
@@ -1099,22 +1162,12 @@ function createSharedMutationCoordinator_(dependencies) {
                     expiresAt: currentTime + SHARED_MUTATION_LEASE_TTL_MS
                 };
                 leases.push(lease);
-                saveLeases_(leases);
+                saveLeases_(leases, { service, capturedAt: currentTime, operation });
                 return {
-                    kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null,
-                    trafficEvent: { service, capturedAt: currentTime }
+                    kind: "success", token: token, expiresAt: lease.expiresAt, actor: lease.actor || null
                 };
             });
 
-            if (outcome.trafficEvent) {
-                try {
-                    recordServiceTrafficEvent_(
-                        outcome.trafficEvent.service,
-                        outcome.trafficEvent.capturedAt,
-                        outcome.trafficEvent.operation
-                    );
-                } catch (trafficError) { /* Métrica best-effort: la lease ya está confirmada y no se revierte. */ }
-            }
             if (outcome.kind === "success") {
                 return { status: "success", token: outcome.token, expiresAt: outcome.expiresAt, actor: outcome.actor || null };
             }
@@ -1407,7 +1460,6 @@ function createSharedMutationCoordinator_(dependencies) {
         const requestedLimit = payload.limit === undefined ? 50 : Number(payload.limit);
         if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("El cursor del catálogo no es válido.");
         if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50) throw new Error("El límite de cambios debe estar entre 1 y 50.");
-        const capturedAt = now();
         const result = withCoordinatorLock_(() => {
             const propertySnapshot = properties.getProperties() || {};
             const revisions = catalogChangeRevisions_(propertySnapshot);
@@ -1434,10 +1486,6 @@ function createSharedMutationCoordinator_(dependencies) {
             const nextCursor = changes.length ? changes[changes.length - 1].revision : cursor;
             return { status: "success", resetRequired: changes.some(change => change.operation === "reset" || change.resetRequired === true), changes, currentRevision, minRevision, nextCursor, hasMore: nextCursor < currentRevision };
         });
-        try {
-            const trafficService = service === "PUBLIC" ? "CATALOG" : service;
-            recordServiceTrafficEvent_(trafficService, capturedAt, operation);
-        } catch (trafficError) { /* Telemetría best-effort fuera del lock; nunca altera el feed. */ }
         return result;
     }
 
