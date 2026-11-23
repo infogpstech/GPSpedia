@@ -35,4 +35,4 @@ assert.ok(coordinator.includes("publishCatalogResetFromBrowser_"));
 assert.ok(coordinator.includes('ADMIN: new Set(["addLogo"'));
 assert.ok(coordinator.includes("resolveVehicleContributionCandidate"));
 assert.ok(coordinator.includes('service === "ADMIN" || operation === "freezeCortesIds"'));
-console.log("AdminCatalogPublicationIsolation: 22/22 PASS — ADMIN no publica entre servicios; frontend invalida el feed con sesión de desarrollador");
+console.log("AdminCatalogPublicationIsolation: 21/21 PASS — ADMIN no publica entre servicios; frontend invalida el feed con sesión de desarrollador");
