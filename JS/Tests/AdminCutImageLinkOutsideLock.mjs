@@ -3,10 +3,10 @@ import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../Services/write.js", import.meta.url), "utf8");
 const start = source.indexOf("function handleAddOrUpdateCutLockedUnsafe_(");
-const end = source.indexOf("\\nfunction ", start + 20);
+const end = source.indexOf("\nfunction ", start + 20);
 assert.ok(start >= 0 && end > start, "No se encontró la mutación canónica WRITE.");
 const handler = source.slice(start, end);
-const driveCalls = [...handler.matchAll(/markImageUploadLinked\\(/g)];
+const driveCalls = [...handler.matchAll(/markImageUploadLinked\(/g)];
 assert.equal(driveCalls.length, 5, "Recuperación, vehículo existente y vehículo nuevo deben vincular las imágenes.");
 for (const call of driveCalls) {
     const prefix = handler.slice(Math.max(0, call.index - 150), call.index);
@@ -17,10 +17,10 @@ assert.ok(!handler.includes("markAdminCutImagesLinkedOutsideLock_"),
     "WRITE no debe depender del wrapper ADMIN retirado.");
 
 const helperStart = source.indexOf("function runWriteDriveWorkOutsideScriptLock_(");
-const helperEnd = source.indexOf("\\nfunction ", helperStart + 20);
+const helperEnd = source.indexOf("\nfunction ", helperStart + 20);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "No se encontró el wrapper de Drive de WRITE.");
 const helper = source.slice(helperStart, helperEnd);
-const build = new Function(helper + "\\nreturn runWriteDriveWorkOutsideScriptLock_;");
+const build = new Function(helper + "\nreturn runWriteDriveWorkOutsideScriptLock_;");
 const runOutside = build();
 let held = true, released = 0, reacquired = 0, ran = false;
 const lock = {
