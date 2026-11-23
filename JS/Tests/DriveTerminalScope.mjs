@@ -6,7 +6,8 @@ const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "u
 const helperNames = [
     "getDriveParentFolders_", "isDriveFolderWithinCortes_", "isDriveFileWithinCortes_",
     "getValidatedCortesTerminalFolder_", "getCortesTerminalChildFolders_",
-    "getCortesTerminalFiles_", "hasDirectDriveParent_"
+    "getCortesTerminalFiles_", "hasDirectDriveParent_",
+    "getCortesTerminalFolderChain_", "getDriveTerminalAccessSnapshot_", "verifyCortesOrganizerFolderAcl_", "getDrivePermissionsForImageResource_"
 ];
 function extractFunction(name) {
     const start = source.indexOf("function " + name + "(");
@@ -44,9 +45,11 @@ function createDriveFixture() {
     const fileShared = makeFile("file-shared", "compartido.jpg", [leaf, outside]);
     function makeFolder(id, name, parents) {
         const folder = {
-            id, name, parents: parents.slice(), children: [], contents: [],
+            id, name, parents: parents.slice(), children: [], contents: [], access: "PRIVATE", editors: [], viewers: [], permissions: [{id:"owner-permission",type:"user",role:"owner"}],
             getId(){return this.id;}, getName(){return this.name;},
             getParents(){return iterator(this.parents);},
+            getSharingAccess(){return this.access;}, getEditors(){return this.editors.map(email=>({getEmail:()=>email}));},
+            getViewers(){return this.viewers.map(email=>({getEmail:()=>email}));},
             getFolders(){return iterator(this.children.slice());},
             getFiles(){return iterator(this.contents.slice());},
             getFoldersByName(value){return iterator(this.children.filter(x=>x.name===value));},
@@ -63,14 +66,16 @@ function createDriveFixture() {
     }
     function makeFile(id,name,parents) {
         const file = {
-            id,name,parents:parents.slice(),
+            id,name,parents:parents.slice(), ownerEmail:"owner@example.com", permissions:[{id:"owner-permission",type:"user",role:"owner"}],
             getId(){return this.id;},getName(){return this.name;},
             getParents(){return iterator(this.parents);},
             getSize(){return 1024;},getMimeType(){return "image/jpeg";},
+            getOwner(){return {getEmail:()=>this.ownerEmail};},
             moveTo(target){
                 moveCount++;
                 this.parents.forEach(parent=>parent.contents=parent.contents.filter(x=>x!==this));
                 this.parents=[target];
+                this.permissions=target.permissions.map(permission=>({...permission}));
                 if(!target.contents.includes(this))target.contents.push(this);
                 return this;
             }
@@ -79,12 +84,17 @@ function createDriveFixture() {
         parents.forEach(parent=>parent.contents.push(file));
         return file;
     }
-    const DriveApp = {
+    const DriveApp = { Access: { PRIVATE: "PRIVATE" },
         getFolderById(id){if(!folders.has(String(id)))throw new Error("folder not found");return folders.get(String(id));},
         getFileById(id){if(!files.has(String(id)))throw new Error("file not found");return files.get(String(id));}
     };
+    const Drive = { Permissions: { list(id) {
+        const resource = files.get(String(id)) || folders.get(String(id));
+        if (!resource) throw new Error("resource not found");
+        return { permissions: resource.permissions.map(permission => ({...permission})) };
+    } } };
     const getCortesRootFolder=()=>root;
-    const handler=new Function("DriveApp","getCortesRootFolder",helperSource+"\n"+handlerSource+"\nreturn handleDriveCommand;")(DriveApp,getCortesRootFolder);
+    const handler=new Function("DriveApp","Drive","getCortesRootFolder",helperSource+"\n"+handlerSource+"\nreturn handleDriveCommand;")(DriveApp,Drive,getCortesRootFolder);
     return {handler,folders,files,root,nested,leaf,outside,outsideNested,shared,multiInside,raceFolder,fileIn,fileOut,fileShared,
         get moveCount(){return moveCount;},get createCount(){return createCount;}};
 }
@@ -161,6 +171,24 @@ check("move permite un archivo y destino dentro del árbol Cortes",()=>{
     assert.equal(result.status,"success");
     assert.equal(f.moveCount,1);
     assert.equal(f.fileIn.parents[0].id,"nested");
+});
+check("move revierte el cambio si el destino altera permisos efectivos",()=>{
+    const scenario=createDriveFixture();
+    scenario.nested.editors=["destino@example.com"];
+    scenario.nested.permissions=[{id:"owner-permission",type:"user",role:"owner"},{id:"destino-permission",type:"user",role:"writer"}];
+    const before=scenario.moveCount;
+    rejects(()=>scenario.handler({command:"move",fileId:"file-in",targetFolderId:"nested"},null),"Se restauraron y verificaron");
+    assert.equal(scenario.moveCount,before+2);
+    assert.equal(scenario.fileIn.parents[0].id,"leaf");
+    assert.equal(scenario.fileIn.permissions.length,1);
+});
+check("move rechaza carpetas compartidas antes de modificar el archivo",()=>{
+    const scenario=createDriveFixture();
+    scenario.nested.access="ANYONE";
+    const before=scenario.moveCount;
+    rejects(()=>scenario.handler({command:"move",fileId:"file-in",targetFolderId:"nested"},null),"acceso general compartido");
+    assert.equal(scenario.moveCount,before);
+    assert.equal(scenario.fileIn.parents[0].id,"leaf");
 });
 check("move rechaza archivos de origen externos sin moverlos",()=>{
     const before=f.moveCount;
