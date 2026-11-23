@@ -507,7 +507,8 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 **Resultado:** MIG-023 **COMPLETADA CON VALIDACIÓN DIFERIDA**. Siguiente tarea: MIG-024 — Eliminar SharedMutation.
 
-- [ ] Completar regresión de cache-first/IndexedDB, navegación, búsqueda, impresión/QR, PWA, accesibilidad y operación parcial; validar en Beta real.
+- [x] Completar regresión local de cache-first/IndexedDB, navegación, búsqueda, impresión/QR, PWA, accesibilidad y operación parcial.
+- [ ] Validar despliegues y comportamiento real en Beta (validación diferida; no bloquea el cierre local).
 
 
 ---
