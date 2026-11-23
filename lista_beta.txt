@@ -16,3 +16,5 @@ Adenda vigente incorporada el 2026-11-21: lista_beta_adenda_2026-11-21.md. Para 
 Adenda multimedia añadida el 2026-11-22: lista_beta_adenda_2026-11-22_multimedia.md. Incluye sincronización segura obligatoria y protocolos aislados para calidad de imágenes, cola/precarga, tamaños históricos de LogosMarca y flujo resumable/aprobación de YouTube.
 
 Adenda de línea base por flujo añadida el 2026-11-22: lista_beta_adenda_2026-11-22_linea_base.md. Complementa el protocolo multimedia con AUTH, USERS, CATALOG, WRITE, FEEDBACK, Inbox y ADMIN, y define límites de la telemetría local del navegador.
+
+Actualización de arquitectura MIG-023 (2026-11-23): consultar `Tareas_Beta.md` BETA-02/BETA-04 y `Catalog_Read_Strategy.md` para el feed incremental ahora alojado en CATALOG; las rutas Coordinator del feed son compatibilidad histórica hasta MIG-025.
