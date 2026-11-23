@@ -151,3 +151,9 @@ Se ejecutaron suites existentes sobre fuentes exactas de la rama, con los argume
 - Diferenciadas acciones de sesión/diagnóstico/navegación/Inbox, migraciones de esquema e identificadores, reconciliación multimedia y herramientas manuales de Spreadsheet.
 - Confirmado que `migrateVehicleContributionsSchema` también se invoca internamente; `deleteInboxConversation` oculta por participante y conserva el historial.
 - Clasificación provisional: aún falta rastrear terminal de desarrollador, documentación histórica y jobs/triggers. MIG-001 continúa EN PROGRESO.
+
+
+### Terminal y triggers — revisión parcial 2026-11-23
+- Documentados comandos manuales de la terminal Drive y su restricción al árbol Cortes; no se encontró comando de borrado en el dispatcher revisado.
+- Escaneo estático de módulos principales sin declaraciones de triggers; alcance limitado a los archivos listados en §13.2. No se afirma ausencia global ni en deployments.
+- Pendiente inspeccionar archivos de raíz/manifiestos y configuración de proyectos Apps Script para jobs/triggers instalados.
