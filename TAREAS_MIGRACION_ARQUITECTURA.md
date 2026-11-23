@@ -444,3 +444,15 @@ Ejecutadas sobre las fuentes exactas de `GPSpedia2.2.5_work`:
 | **Total** | **134** | **0** |
 
 Las 134 aserciones reportadas por estas suites pasaron; no equivalen necesariamente a 134 escenarios funcionales independientes. Se probaron mutaciones/lecturas de USERS, RBAC y minimización de autenticación WRITE, integridad de aportes, VIN, contrato de checkOperation y mapa de acciones. No se invocaron deployments, Spreadsheet, Drive ni datos reales; no es validación Beta.
+
+
+
+#### Mapa físico de datos AUTH / USERS / WRITE — avance 2026-11-23
+
+- Se documentaron en §17 de `MATRIZ_MIGRACION_SERVICIOS.md` los mapas de columnas de Users (A:I), ActiveSessions (A:G), Logs (A:D) y Cortes (A:AV), además de los esquemas explícitos de Idempotencia, CortesIdReservations, AportesVehiculo, ImageUploadEvents y __IdentifierSequenceConfig__.
+- Se registró que AUTH define ActiveSessions hasta G (`SessionTermsAcceptance`) mientras USERS solo declara A:F; la unificación debe preservar G y consolidar un único esquema.
+- Se documentaron las columnas AQ:AS sin campo declarado, AT:AV para los indicadores de testigo y la resolución dinámica de VIN por encabezado, sin inferir posiciones ni mover datos.
+- Los mapas proceden de constantes y operaciones del código fuente de la rama. No se inspeccionó una Spreadsheet real; por tanto, la coincidencia de encabezados/datos Beta sigue sin verificar.
+- No se modificó código, estructura de hojas, deployments ni datos. MIG-001 permanece **EN PROGRESO**.
+
+**Siguiente tramo de MIG-001:** continuar el mismo inventario para FEEDBACK, CATALOG, ADMIN y UTILITIES; completar los contratos de datos/columnas y dependencias Drive/APIs; revisar manifiestos y posibles triggers/jobs fuera de los módulos ya inspeccionados; después asociar pruebas de paridad por acción.
