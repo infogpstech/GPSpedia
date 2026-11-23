@@ -511,6 +511,9 @@ runGroup('42','MIG018',()=>{
  runCli('MIG018 recuperación UI de operaciones suplementarias','JS/Tests/AddSupplementaryOperationRecovery.mjs');
  runCli('MIG018 candidatos CATALOG de contribuciones','JS/Tests/AdminVehicleContributionCandidates.mjs');
  runCli('MIG018 resolución ADMIN append-only','JS/Tests/AdminVehicleContributionResolution.mjs');
+ runCli('MIG018 publicación ADMIN coordinada desde frontend','JS/Tests/AdminCatalogPublicationIsolation.mjs');
+ runCli('MIG018 proyección dirigida de campos ADMIN','JS/Tests/AdminVehicleTargetedCatalogRead.mjs');
+ runCli('MIG018 inventario de imágenes de candidatos','JS/Tests/AdminCandidateImageInventoryCatalogSource.mjs');
  runCli('MIG018 proyección de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
  runCli('MIG018 CATALOG proyección individual y VIN globales','JS/Tests/CatalogVehicleProjectionRead.mjs');
  runCli('MIG018 CATALOG respuestas dirigidas','JS/Tests/CatalogTargetedResponses.mjs');
