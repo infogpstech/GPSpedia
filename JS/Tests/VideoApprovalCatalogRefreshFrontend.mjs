@@ -2,26 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const api = readFileSync("JS/Frontend/api-config.js", "utf8");
 const feedback = readFileSync("JS/Services/feedback.js", "utf8");
-function extractFunction(source, name) {
-    const marker = new RegExp("function\\s+" + name + "\\s*\\(");
-    const match = marker.exec(source);
-    assert.ok(match, "No se encontró " + name);
-    const start = match.index, brace = source.indexOf("{", start);
-    let depth = 0;
-    for (let i = brace; i < source.length; i++) {
-        if (source[i] === "{") depth++;
-        else if (source[i] === "}" && --depth === 0) return source.slice(start, i + 1);
-    }
-    throw new Error("No se pudo extraer " + name);
-}
-const helperSource = "async " + extractFunction(api, "refreshCatalogAfterVideoApproval_");
+const start = api.indexOf("async function refreshCatalogAfterVideoApproval_(");
+const end = api.indexOf("\nexport async function routeAction(", start);
+assert.ok(start >= 0 && end > start, "No se encontró la función de refresco de vídeo.");
+const helperSource = api.slice(start, end).trim();
 const calls = [], events = [];
 let failRefresh = false;
 const routeAction = async (action, payload) => {
     calls.push({ action, payload });
     if (action !== "getCatalogData") return { status: "success" };
     if (failRefresh) throw new Error("CATALOG unavailable");
-    return { status: "success", data: [] };
+    return { status: "success", data: { cortes: [], tutoriales: [], logos: [] } };
 };
 const refresh = new Function("routeAction", "window", "CustomEvent",
     helperSource + "\nreturn refreshCatalogAfterVideoApproval_;")(
@@ -31,14 +22,15 @@ const refresh = new Function("routeAction", "window", "CustomEvent",
 );
 let passed = 0;
 async function test(name, fn) { await fn(); passed++; }
-await test("aprobación confirmada coordina actualización CATALOG desde el navegador", async () => {
+await test("aprobación confirmada coordina CATALOG desde navegador y devuelve snapshot", async () => {
     calls.length = 0;
     const result = await refresh("approveVideo", { status: "success", message: "Vídeo aprobado." });
     assert.equal(result.status, "success");
     assert.equal(result.catalogRefreshStatus, "success");
-    assert.deepEqual(result.catalogRefreshData, []);
+    assert.deepEqual(result.catalogRefreshData, { cortes: [], tutoriales: [], logos: [] });
     assert.deepEqual(calls.map(call => call.action), ["getCatalogData"]);
     assert.equal(calls[0].payload.forceRefresh, true);
+    assert.ok(events.some(event => event.type === "gpsepedia:catalog-refresh-completed"));
 });
 await test("rechazo no fuerza una actualización del catálogo", async () => {
     calls.length = 0;
@@ -62,9 +54,9 @@ await test("una aprobación rechazada por FEEDBACK no llama a CATALOG", async ()
     assert.equal(calls.length, 0);
 });
 await test("FEEDBACK no publica cambios de vídeo hacia Coordinator desde Apps Script", async () => {
-    assert.doesNotMatch(feedback, /publishFeedbackCortesCatalogChange_\\(action, referenceId\\)/);
-    assert.doesNotMatch(feedback, /publishPysCatalogChange_\\(action, referenceId\\)/);
-    assert.doesNotMatch(feedback, /publishTutorialCatalogChange_\\(action, referenceId\\)/);
-    assert.match(api, /refreshCatalogAfterVideoApproval_\\(action, finalResult\\)/);
+    assert.doesNotMatch(feedback, /publishFeedbackCortesCatalogChange_\(action, referenceId\)/);
+    assert.doesNotMatch(feedback, /publishPysCatalogChange_\(action, referenceId\)/);
+    assert.doesNotMatch(feedback, /publishTutorialCatalogChange_\(action, referenceId\)/);
+    assert.match(api, /refreshCatalogAfterVideoApproval_\(action, finalResult\)/);
 });
-console.log("VideoApprovalCatalogRefreshFrontend: " + passed + "/" + passed + " PASS — aprobación coordina CATALOG desde frontend; FEEDBACK no usa Coordinator para decisiones de vídeo.");
+console.log("VideoApprovalCatalogRefreshFrontend: " + passed + "/" + passed + " PASS — aprobación coordina CATALOG desde frontend; FEEDBACK no publica decisiones de vídeo hacia Coordinator.");

@@ -10880,6 +10880,10 @@ export function renderInboxDetail(item) {
                         offline.isCompleteCatalogSnapshot(approvalResult.catalogRefreshData)) {
                         await performSilentSync(approvalResult.catalogRefreshData);
                     }
+                    if (item.videoMeta && item.videoMeta.contentType === "pys") {
+                        invalidatePysDataCache();
+                        await loadPysData({ refresh: true });
+                    }
                     invalidateInboxCache_(context);
                     if (approvalResult && approvalResult.catalogRefreshPending) {
                         mostrarNotificacion(approvalResult.message || "El vídeo fue aprobado, pero el catálogo requiere actualización.", "warning");

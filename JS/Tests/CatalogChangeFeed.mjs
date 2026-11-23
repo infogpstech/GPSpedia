@@ -267,16 +267,16 @@ test("ADMIN ediciones In-Modal publican upsert exacto de Cortes y mantenimiento 
     assert.ok(adminSource.includes("findUniqueAdminVehicleRow_"));
     assert.ok(adminSource.includes('publishSharedCatalogChange_("ADMIN", catalogAction, { operation: "reset" })'));
 });
-test("approveVideo/rejectVideo publican upsert del destino único y conservan reset si no se verifica", () => {
+test("approveVideo/rejectVideo no orquestan Coordinator desde FEEDBACK; CATALOG se refresca en frontend", () => {
     assert.ok(feedbackSource.includes("contentType: videoData.contentType"));
     assert.ok(feedbackSource.includes("referenceId: videoData.referenceId"));
     assert.ok(feedbackSource.includes("contentType: savedPayload.contentType"));
-    assert.ok(feedbackSource.includes('targetType !== contentType'));
-    assert.ok(feedbackSource.includes('publishFeedbackCortesCatalogChange_(action, referenceId)'));
-    assert.ok(feedbackSource.includes('publishPysCatalogChange_(action, referenceId)'));
-    assert.ok(feedbackSource.includes('publishTutorialCatalogChange_(action, referenceId)'));
-    assert.ok(feedbackSource.includes('publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" })'));
-    assert.ok(!feedbackSource.includes('"addTutorial", "approveVideo", "rejectVideo"].includes(action)'));
+    assert.ok(feedbackSource.includes("function handleApproveVideo(payload)"));
+    assert.ok(!feedbackSource.includes('publishFeedbackCortesCatalogChange_(action, referenceId)'));
+    assert.ok(!feedbackSource.includes('publishPysCatalogChange_(action, referenceId)'));
+    assert.ok(!feedbackSource.includes('publishTutorialCatalogChange_(action, referenceId)'));
+    assert.ok(apiSource.includes("refreshCatalogAfterVideoApproval_"));
+    assert.ok(apiSource.includes('routeAction("getCatalogData", { forceRefresh: true })'));
 });
 test("suggestYear publica Cortes solo cuando se aplica o recupera una ampliación confirmada", () => {
     assert.ok(feedbackSource.includes('action === "suggestYear" && response &&'));
