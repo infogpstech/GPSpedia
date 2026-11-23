@@ -26,9 +26,12 @@ function runCli(label, path) {
  const r = spawnSync(process.execPath, ['--experimental-default-type=module', path], {cwd:ROOT,encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
  if (r.stdout) process.stdout.write(r.stdout); if (r.stderr) process.stderr.write(r.stderr);
  if (r.error) throw r.error; if (r.status !== 0) throw new Error(label + ': Node CLI terminó con código ' + r.status);
- const summaries = [...String(r.stdout || '').matchAll(/(\d+)\/(\d+)\s+PASS/g)];
- if (!summaries.length) throw new Error(label + ': no publicó resumen verificable.');
+ const output = String(r.stdout || '');
+ const summaries = [...output.matchAll(/(\\d+)\\/(\\d+)\\s+PASS/g)];
+ const jsonSummaries = [...output.matchAll(/"status"\\s*:\\s*"(PASS|FAIL)"\\s*,\\s*"passed"\\s*:\\s*(\\d+)\\s*,\\s*"failed"\\s*:\\s*(\\d+)/g)];
+ if (!summaries.length && !jsonSummaries.length) throw new Error(label + ': no publicó resumen verificable.');
  for (const m of summaries) { totals.passed += Number(m[1]); if (m[1] !== m[2]) throw new Error(label + ': resumen parcial o fallido.'); }
+ for (const m of jsonSummaries) { totals.passed += Number(m[2]); if (m[1] !== 'PASS' || Number(m[3]) !== 0) throw new Error(label + ': resumen JSON parcial o fallido.'); }
  totals.suites++;
 }
 function runGroup(id, service, fn) {
