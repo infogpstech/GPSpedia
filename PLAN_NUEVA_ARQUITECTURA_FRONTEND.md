@@ -12,7 +12,7 @@ Simplificar de forma radical la arquitectura y los despliegues de GPSpedia sin p
 
 **Todas las configuraciones de GPSpedia deben residir en la Spreadsheet. Ningún proyecto Apps Script debe guardar configuración propia de la plataforma, propiedades de conexión, URLs de otros servicios, IDs de recursos, claves compartidas ni secretos manuales.**
 
-El frontend será el único coordinador de solicitudes entre servicios. Cada servicio atenderá directamente las solicitudes del frontend y accederá a la Spreadsheet para obtener los datos y la configuración que le correspondan. Ningún servicio GPSpedia llamará a otro servicio GPSpedia.
+El frontend coordina las secuencias funcionales que involucran varios servicios. Se permite comunicación directa entre servicios cuando sea técnicamente necesaria, pero no una orquestación paralela de flujos de negocio. Esa comunicación no requiere ni puede exigir claves, API keys, contraseñas, secretos compartidos ni tokens manuales entre servidores. Cada servicio mantiene su autorización de usuario/sesión y RBAC.
 
 No se conservarán COORDINATOR ni SharedMutation ni se crearán sustitutos equivalentes.
 
@@ -62,7 +62,8 @@ No se conservarán COORDINATOR ni SharedMutation ni se crearán sustitutos equiv
 
 **Servicios Apps Script**
 - No contienen URLs, IDs de Spreadsheet/Drive, propiedades de configuración, secretos compartidos ni referencias a otros servicios.
-- No llaman a otros servicios GPSpedia.
+- No orquestan flujos funcionales que corresponden al frontend.
+- Pueden realizar llamadas técnicas directas a otro servicio cuando sea necesario, sin secretos de interconexión; el receptor valida sesión/capacidad y permisos.
 - Reciben solicitudes del frontend, validan sesión/capacidad, leen o escriben en Spreadsheet y devuelven el resultado.
 - No almacenan configuración propia de la plataforma.
 - No se mantienen ocupados coordinando operaciones que el frontend puede ejecutar directamente.
@@ -95,7 +96,7 @@ La Spreadsheet guarda configuración, metadatos, IDs, estados y registros, no lo
 - AUTH conserva la autenticación y la fuente de identidad; USERS se integra en AUTH según la norma vigente.
 - Se mantienen tokens de sesión opacos, almacenados/registrados en Spreadsheet y asociados al usuario/rol confiable.
 - Cada servicio obtiene el actor desde el contexto de sesión, con caché local de corta duración donde corresponda; nunca acepta un rol editable enviado por el frontend.
-- No se usarán claves secretas compartidas entre proyectos ni llamadas backend→backend.
+- No se usarán claves secretas compartidas entre proyectos ni credenciales manuales entre servidores. La coordinación funcional se hace desde frontend; las llamadas directas técnicas permitidas no sustituyen la validación independiente del receptor.
 - Logout, cambio de rol/contraseña, eliminación de cuenta y limpieza de cachés se orquestan desde frontend con llamadas directas a los servicios afectados, respetando §§12–15 de las normas.
 - La solución concreta de acceso a Spreadsheet y caché se someterá a pruebas de seguridad, revocación y rendimiento antes de sustituir el mecanismo actual.
 

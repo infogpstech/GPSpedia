@@ -1,3 +1,5 @@
+> **AVISO DE VIGENCIA (2026-11-23):** documento histórico de la arquitectura anterior. No ejecutar sus instrucciones de crear/configurar secretos compartidos, claves de interconexión ni propiedades locales. La fuente normativa vigente es NORMAS_DESAROLLO.md §17: la coordinación funcional multi-servicio corresponde al frontend; las llamadas técnicas directas entre servicios pueden existir sin secretos manuales; la autorización la valida cada servicio receptor. Se conserva como evidencia histórica hasta retirar los componentes heredados.
+
 # Guía de despliegue de servicios Apps Script — GPSpedia 2.2.5
 
 **Alcance:** despliegue ordenado de los proyectos backend y su conexión entre sí.  

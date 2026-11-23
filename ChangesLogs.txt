@@ -50,3 +50,14 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se registró la duración aproximada de 30 s del workflow completo como métrica del runner, no como latencia de la aplicación.
 - Arranque/login, catálogo e Inbox reales, snapshot/deltas, multimedia, Drive, cachés, llamadas y lecturas/escrituras Spreadsheet quedan pendientes de medición Beta por falta de navegador, credenciales y recursos aislados autorizados.
 - MIG-005 se cerró como COMPLETADA CON VALIDACIÓN DIFERIDA. No se modificó código funcional, endpoints, propiedades, Spreadsheet, Drive ni deployments.
+
+
+### 2026-11-23 — MIG-006: spike de acceso a Spreadsheet
+
+- Añadidos JS/Tests/MIG006SpreadsheetAccessProbe.js y JS/Tests/MIG006SpreadsheetAccessProbe.mjs; el harness quedó integrado en JS/Tests/RunServiceTests.mjs.
+- Añadido MIG006_SPREADSHEET_ACCESS_SPIKE.md con inventario de accesos, probe Web App, guardas, alternativas, límites y procedimiento Beta.
+- Actualizados NORMAS_DESAROLLO.md §17 y PLAN_NUEVA_ARQUITECTURA_FRONTEND.md para distinguir coordinación funcional del frontend de llamadas técnicas directas permitidas entre servicios, sin secretos compartidos/manuales.
+- Guías históricas COORDINATOR_SETUP.md, DEPLOYMENT_GUIDE.md y SERVICE_ARCHITECTURE_PLAN.md marcadas como no vigentes para configurar secretos.
+- No se modificaron servicios funcionales, IDs actuales, propiedades instaladas, deployments, endpoints, Spreadsheet, Drive ni datos.
+- La prueba local del probe valida guardas y lógica simulada; la ejecución real Web App, varios proyectos, permisos, cuotas y concurrencia quedan pendientes de Beta.
+- MIG-006: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-007.

@@ -478,3 +478,35 @@ La consulta de GitHub Actions confirmó la ejecución del runner con el nuevo co
 ### Continuidad
 - MIG-001 a MIG-005: COMPLETADAS CON VALIDACIÓN DIFERIDA.
 - Siguiente tarea pendiente: MIG-006 — Spike técnico de acceso a Spreadsheet, prioridad 1. Demostrar acceso al contenedor activo desde Web App sin ID/configuración local, mediante prueba reproducible de lectura/escritura en una hoja desechable; no modificar datos ni deployments reales sin autorización.
+
+
+---
+
+## Cierre MIG-006 — spike de acceso a Spreadsheet — 2026-11-23
+
+### Resultado local
+- HEAD de partida: 7b532a9e799b6ad72e9a02c2732b77d12158c6f2; rama de trabajo GPSpedia2.2.5_work. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- Se inspeccionaron los siete servicios que abren la Spreadsheet mediante SPREADSHEET_ID/openById; InboxConversations no realiza acceso directo.
+- Se añadió JS/Tests/MIG006SpreadsheetAccessProbe.js: GET de solo lectura, UI Web App y POST con confirmación explícita que escribe únicamente A1:B1 de __MIG006_ACCESS_PROBE__.
+- Se añadió JS/Tests/MIG006SpreadsheetAccessProbe.mjs y se integró al runner. La simulación local cubre contexto nulo/activo, UI, GET sin escritura, rechazo sin confirmación, escritura limitada y lectura posterior.
+- Se documentó MIG006_SPREADSHEET_ACCESS_SPIKE.md con alternativas, límites, decisión condicional y procedimiento Beta.
+- No se sustituyó openById() por getActiveSpreadsheet() en producción: el contexto activo Web App no está demostrado y puede ser null. No se almacenó un ID bootstrap, URL de otro servicio ni credencial.
+- No se desplegó ni invocó Apps Script real; no se accedió ni modificó Spreadsheet, Drive, PropertiesService, endpoints ni datos productivos.
+
+### Aclaración normativa del usuario — 2026-11-23
+- La coordinación funcional de secuencias multi-servicio se hace desde frontend.
+- Se permiten llamadas técnicas directas entre servicios cuando sean necesarias.
+- Esas llamadas no requieren ni pueden exigir API keys, contraseñas, secretos compartidos o tokens manuales entre servidores.
+- Las URLs no son secretos; no deben duplicarse como constantes/propiedades locales. El servicio receptor conserva la autorización de usuario/sesión y RBAC.
+- Se actualizó NORMAS_DESAROLLO.md §17 y el plan de arquitectura. Las guías de Coordinator/despliegue antiguas quedaron marcadas como históricas y no ejecutables en lo relativo a secretos.
+
+### Validación
+- La suite MIG006SpreadsheetAccessProbe cubre cinco grupos de aserciones locales sobre el probe.
+- La ejecución Web App real, la lectura/escritura con identidad equivalente al deployment, varios proyectos independientes, cuotas, concurrencia y latencia quedan pendientes de Beta.
+- No se afirma que getActiveSpreadsheet() funcione en Web App ni que la consolidación resuelva el bootstrap.
+
+**Resultado:** MIG-006 COMPLETADA CON VALIDACIÓN DIFERIDA. La decisión de arquitectura queda condicionada al resultado de la prueba Beta; no se altera el acceso actual ni se introduce bootstrap oculto.
+
+### Continuidad
+- Siguiente tarea: MIG-007 — Diseño del esquema central de configuración.
+- Restricción transversal: coordinación funcional en frontend; llamadas técnicas directas permitidas sin secretos de interconexión; configuración no secreta centralizada; no exponer tokens OAuth al navegador.
