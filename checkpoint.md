@@ -1082,6 +1082,7 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 - Repositorio: `infogpstech/GPSpedia`.
 - Rama de trabajo: `GPSpedia2.2.5_work`; rama base protegida: `GPSpedia2.2.5`.
 - HEAD de código MIG-021 verificado: `235d90ca6c0d4e48088fba4e822f4cac3b99d030`.
+- Commit de cierre del panel, contrato, diseño y lista Beta: `a58e69825736a60308216862e85f86d4482fd4ab`.
 - HEAD de la rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se escribieron cambios en la base.
 - Commits de implementación/correcciones: `5c48c8345a6219dcff99f2cd041e144ee359a941`, `1cf3da626e7aef9e19a10151897bcc87194553f9`, `235d90ca6c0d4e48088fba4e822f4cac3b99d030`.
 
@@ -1097,9 +1098,9 @@ Confirmar la regresión completa; si aprueba, cerrar MIG-012 y continuar MIG-013
 
 ### Pruebas y CI
 - Harness aislado V8 de SharedMutationCoordinator: **95/95 PASS**, incluyendo adquisición/idempotencia, estado v1/v2, retención, transición de buckets históricos, fallo best-effort y ausencia de persistencia separada en feed/validación.
-- GitHub Actions Node.js 22, run `45262601103`, grupo `45 MIG021`: todas las suites del grupo PASS (**235 comprobaciones** tras la actualización final del contrato). Cobertura: salud 19/19; tráfico ADMIN 45/45; navegador 10/10; agregador 10/10; agregación 3/3; batch 3/3; telemetría directa 6/6; routing 6/6; superficie ADMIN 17/17; catálogo 3/3; contribuciones 3/3; insights 1/1; XSS 6/6; append actividad 6/6; retención 10/10; lectura acotada 7/7; limpieza logs 5/5; vistos recientes 12/12; usuarios 2/2; estado catálogo 4/4; accesibilidad conexión 8/8; alertas Drive 5/5; actividad imágenes 5/5, 6/6, 7/7 y 6/6; likes 5/5; coordinación sesión 9/9; minimización leases 6/6.
-- Regresión general en ese run: **296 suites, 3,561 pruebas aprobadas y 6 fallos** ajenos al grupo MIG021: ADMIN P4; FEEDBACK reset de vídeo desde navegador; CATALOG feed incremental; UTILITIES Spreadsheet simulado/RBAC/staging/rollback; AUTH purga de Logs; INTEGRATION GP-PERF FEEDBACK/Inbox. No se atribuyen a MIG-021.
-- Pages build/deploy del HEAD de código, run `45262599497`: **SUCCESS**.
+- GitHub Actions Node.js 22, run `45263215575`, grupo `45 MIG021`: todas las suites del grupo PASS (**235 comprobaciones** tras la actualización final del contrato). Cobertura: salud 19/19; tráfico ADMIN 45/45; navegador 10/10; agregador 10/10; agregación 3/3; batch 3/3; telemetría directa 6/6; routing 6/6; superficie ADMIN 17/17; catálogo 3/3; contribuciones 3/3; insights 1/1; XSS 6/6; append actividad 6/6; retención 10/10; lectura acotada 7/7; limpieza logs 5/5; vistos recientes 12/12; usuarios 2/2; estado catálogo 4/4; accesibilidad conexión 8/8; alertas Drive 5/5; actividad imágenes 5/5, 6/6, 7/7 y 6/6; likes 5/5; coordinación sesión 9/9; minimización leases 6/6.
+- Regresión general en ese run: **296 suites, 3,567 pruebas aprobadas y 6 fallos** ajenos al grupo MIG021: ADMIN P4; FEEDBACK reset de vídeo desde navegador; CATALOG feed incremental; UTILITIES Spreadsheet simulado/RBAC/staging/rollback; AUTH purga de Logs; INTEGRATION GP-PERF FEEDBACK/Inbox. No se atribuyen a MIG-021.
+- Pages build/deploy del HEAD de código, run `45263213731`: **SUCCESS**.
 
 ### Validación Beta pendiente
 - No se ejecutaron deployments Apps Script, endpoints reales, Spreadsheet ni Drive. Mantener BETA-05 en entorno aislado: siete identidades/estados, latencias y errores reales; permisos Developer; buckets globales/locales; compatibilidad histórica; cuota/almacenamiento Drive; comportamiento móvil/escritorio.

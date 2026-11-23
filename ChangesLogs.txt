@@ -253,8 +253,8 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Coordinator conserva los buckets horarios globales en el mismo estado JSON y escritura de lease ya requerida; se eliminó la escritura independiente de métricas.
 - Las adquisiciones exitosas de lease son los únicos eventos que generan incrementos v2. Las validaciones de sesión y lecturas del feed no añaden persistencia; los sondeos de salud permanecen excluidos.
 - Los buckets históricos v1 se leen y suman una sola vez durante su ventana de retención; los nuevos incrementos v2 se almacenan junto con las leases y se retienen 24 horas.
-- Se actualizó el contrato de tráfico ADMIN y el texto de ayuda del panel para distinguir métricas globales, locales e histórico anterior.
-- SharedMutationCoordinator aislado: 95/95 PASS. Grupo MIG021 en GitHub Actions Node.js 22, run 45262601103: todas las suites del grupo PASS; el contrato de tráfico ADMIN se amplió a 45/45.
-- La regresión general reportó 3,561 pruebas aprobadas y seis suites fallidas ajenas a MIG021 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet, AUTH purga Logs e INTEGRATION GP-PERF FEEDBACK/Inbox).
-- Pages build/deploy run 45262599497: SUCCESS. No se invocaron servicios Apps Script, Spreadsheet ni Drive reales; validación Beta aislada pendiente.
+- Se actualizó el contrato de tráfico ADMIN y el texto de ayuda del panel para distinguir métricas globales, locales e histórico anterior. La adenda Beta de línea base ahora prueba el inventario vigente (seis servicios y COORDINATOR), el esquema v1/v2 y la ausencia de escrituras por feed/sesión.
+- SharedMutationCoordinator aislado: 95/95 PASS. Grupo MIG021 en GitHub Actions Node.js 22, run 45263215575: todas las suites del grupo PASS; el contrato de tráfico ADMIN se amplió a 45/45.
+- La regresión general reportó 3,567 pruebas aprobadas y seis suites fallidas ajenas a MIG021 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet, AUTH purga Logs e INTEGRATION GP-PERF FEEDBACK/Inbox).
+- Pages build/deploy run 45263213731: SUCCESS. El commit `a58e69825736a60308216862e85f86d4482fd4ab` contiene el ajuste de UI, contrato, documentación y lista Beta. No se invocaron servicios Apps Script, Spreadsheet ni Drive reales; validación Beta aislada pendiente.
 - MIG-021: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-022 — Administración de Spreadsheet y mantenimiento.

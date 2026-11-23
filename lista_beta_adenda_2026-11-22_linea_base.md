@@ -37,7 +37,7 @@ La telemetría del navegador `serviceTelemetry.js`:
 - Expone requests, éxitos/errores, duración media, p50/p95 de duración y bytes de request/response.
 - Los percentiles se calculan sobre el historial efímero disponible; no representan población ni un percentil de 24 horas.
 
-Capturar snapshots para AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN usando `getBrowserServiceTrafficSnapshot(service)`. Registrar el tamaño de muestra y no comparar p50/p95 si hay menos de 30 muestras.
+Capturar snapshots para AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES, ADMIN y COORDINATOR usando `getBrowserServiceTrafficSnapshot(service)`. USERS está retirado como servicio independiente y no debe generar métricas ni requests. Registrar el tamaño de muestra y no comparar p50/p95 si hay menos de 30 muestras.
 
 La telemetría del navegador no mide directamente lecturas/escrituras Spreadsheet, llamadas Drive, esperas de locks/leases ni operaciones internas de Apps Script. Para esas cifras se requiere instrumentación diagnóstica temporal en el deployment Beta, agregada y sin payloads; no inferirlas a partir de la latencia total del navegador.
 
@@ -98,6 +98,14 @@ Por servicio/acción/dispositivo registrar:
 - hit/miss IndexedDB/CacheStorage y llamadas completas/deltas.
 
 Comparar antes/después en el mismo dataset y dispositivo. Separar resultados de caché fría/caliente. No sumar p50/p95 de diferentes servicios ni interpretar el historial acotado como telemetría poblacional.
+
+### MIG-021 — agregado global Coordinator y telemetría local
+- Validar ventanas globales de 1/6/24 horas y RBAC de Desarrollador. El agregado no representa el total de solicitudes HTTP.
+- Los buckets v2 nuevos cuentan adquisiciones exitosas de lease. Las validaciones de sesión, lecturas del feed y sondeos de salud no generan incrementos ni escrituras nuevas.
+- Confirmar que el bucket v2 se guarda en el mismo estado y escritura de lease ya necesaria; no debe aparecer una escritura separada de telemetría en la operación.
+- Los buckets históricos v1 se conservan y suman una sola vez durante su ventana restante de 24 horas. El histórico anterior puede incluir validaciones/feed; comprobar que desaparece al expirar y no duplica el conteo v2.
+- La telemetría local del navegador permanece en la pestaña, no se transmite ni se suma al agregado global. No debe almacenar payloads, tokens ni identidad.
+- Comprobar que los errores del almacenamiento opcional de métricas no cambian el resultado de la operación protegida; reportar cualquier incremento descartado como subregistro, no como error de negocio.
 
 ## 5. Criterios de aceptación
 
