@@ -90,9 +90,9 @@ function runActionDispatchContractTests(sources) {
         for (const service of ["AUTH","CATALOG","WRITE","FEEDBACK","ADMIN"]) dispatchers[service] = parseDispatcher_(input[service], service);
         const coordinatorSource = String(input.COORDINATOR || "");
         const coordinatorActions = [], coordinatorHandlers = {};
-        if (coordinatorSource.includes('request.action === "publishWriteCatalogReset"') &&
-            hasFunction_(coordinatorSource, "publishWriteCatalogResetFromBrowser_")) {
-            coordinatorActions.push("publishWriteCatalogReset");
+        if (coordinatorSource.includes('request.action === "publishCatalogReset"') &&
+            hasFunction_(coordinatorSource, "publishCatalogResetFromBrowser_")) {
+            coordinatorActions.push("publishCatalogReset");
             coordinatorHandlers.publishWriteCatalogReset = ["publishWriteCatalogResetFromBrowser_"];
         }
         if (coordinatorSource.includes('parameters.catalogFeed || ""') &&
