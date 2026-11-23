@@ -55,9 +55,10 @@ test("el helper devuelve el índice VIN calculado",()=>{
  assert.ok(ensure.includes("currentHeaders[targetColumns[index] - 1] = headerNames[index];"));
 });
 test("WRITE valida encabezados testigo y VIN antes de la mutación",()=>{
- assert.ok(handler.includes("ensureTestigoColumns(sheet);"));
- assert.ok(handler.includes("const vinColumnIndex = getVinColumnIndex(sheet);"));
- assert.ok(handler.indexOf("ensureTestigoColumns(sheet);") < handler.indexOf("getVinColumnIndex(sheet);"));
- assert.ok(handler.includes("const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];"));
+ assert.ok(handler.includes("const testigoSchema = ensureTestigoColumns(sheet);"));
+ assert.ok(handler.includes("const vinColumnIndex = testigoSchema.vinColumnIndex;"));
+ assert.ok(handler.includes("const headers = testigoSchema.headers;"));
+ assert.ok(!handler.includes("getVinColumnIndex(sheet)"));
+ assert.ok(!handler.includes("sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]"));
 });
 console.log("AdminTestigoHeaderReadReuse: "+passed+"/"+passed+" PASS — encabezados compartidos, validación VIN, AT:AV y recuperación");
