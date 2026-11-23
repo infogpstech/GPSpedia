@@ -98,9 +98,11 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 - Confirmadas 120 claves únicas del mapa frontend y su distribución: AUTH 15, CATALOG 5, WRITE 9, USERS 3, FEEDBACK 41, UTILITIES 1 y ADMIN 46.
 - Contrastados los dispatchers y handlers principales. CATALOG conserva `getSuggestion` como ruta de compatibilidad; UTILITIES enruta `migrateTimestamps` mediante un `doPost` directo, sin switch.
 - Identificadas acciones internas adicionales de Coordinator y de caché de actor, así como rutas de compatibilidad/rechazo. Se deben inventariar junto con las acciones públicas.
-- Inspeccionado el contrato `JS/Tests/ActionDispatchContract.js`, sin ejecución local todavía.
+- Ejecutado `JS/Tests/ActionDispatchContract.js` con fuentes exactas de la rama y el conjunto de consumidores del runner: **12/12 PASS**. No se ejecutó la suite completa `RunServiceTests.mjs` ni Node.js CLI.
+- Recuento estático inicial de UI: `index.html` 113 botones/5 formularios/278 IDs; `ui.js` 42 botones de plantilla/8 formularios/138 IDs únicos; `add_cortes.html` 17 botones/3 formularios/61 IDs; `users.html` 9 botones/3 formularios/29 IDs únicos.
+- Revisadas políticas RBAC de AUTH, USERS, WRITE, FEEDBACK, ADMIN, UTILITIES e Inbox; el trazado individual por acción y recurso permanece pendiente.
 - Revisados consumidores frontend representativos, incluidos `ui.js`, `main.js`, `auth.js`, `youtubeUpload.js`, `pys-data.js`, `add_cortes.html` y `users.html`.
-- No se modificó código funcional, deployments, Spreadsheet ni Drive. No se ejecutaron pruebas en esta actualización.
+- No se modificó código funcional, deployments, Spreadsheet ni Drive. Solo se ejecutó el contrato estático 12/12 PASS; no hubo invocaciones remotas.
 
 ### Estado y siguiente paso
 - MIG-001: **EN PROGRESO**. Falta completar trazabilidad de todos los controles/consumidores, contratos, permisos, datos y pruebas; incluir comandos y procesos manuales/programados.
