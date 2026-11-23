@@ -113,7 +113,7 @@ const requestFromFrontend = (payload, opId, operationHash) => {
 const payload = { userId: "USR-1", sessionToken: "SESSION-1" };
 const hashA = "a".repeat(64), hashB = "b".repeat(64);
 assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashA), /simulated response loss/);
-assert.equal(requestFromFrontend(payload, "OP-E2E-1", hashA), 4, "El reintento debe recuperar el ID persistido por WRITE");
+assert.deepEqual(requestFromFrontend(payload, "OP-E2E-1", hashA), { status: "success", vehicleId: 4 }, "El reintento debe recuperar el ID persistido por WRITE con el contrato de respuesta actual.");
 assert.equal(requestFromFrontend(payload, "OP-E2E-2", hashB), 5, "Una operación distinta debe recibir un ID nuevo");
 assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashB), /otro contenido/);
 assert.equal(ledger.rows.length, 3, "Debe existir una reserva canónica por operación");
