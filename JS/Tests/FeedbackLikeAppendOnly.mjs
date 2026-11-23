@@ -15,13 +15,13 @@ assert.match(extract(catalog,"handleGetCatalogData"),/readFeedbackLikeEventCount
 assert.match(extract(feedback,"buildFeedbackCortesCatalogChange_"),/getFeedbackLikeEventCount_/,"El feed incremental debe incluir eventos de likes");
 assert.match(extract(feedback,"findCompletedLikeReplayNoop_"),/getFeedbackLikeEventCount_/,"El replay legacy debe devolver el contador efectivo");
 const helperStart=feedback.indexOf("const FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_");
-const helperEnd=feedback.indexOf("\\nfunction doGet(e)",helperStart);
-const attachFeedbackCatalogChange_=new Function(feedback.slice(helperStart,helperEnd)+"\\nreturn attachFeedbackCatalogChange_;")();
+const helperEnd=feedback.indexOf("\nfunction doGet(e)",helperStart);
+const attachFeedbackCatalogChange_=new Function(feedback.slice(helperStart,helperEnd)+"\nreturn attachFeedbackCatalogChange_;")();
 const likeDelta=attachFeedbackCatalogChange_("recordLike",{vehicleId:"100"},{status:"success",alreadyLiked:false});
 const duplicateLike=attachFeedbackCatalogChange_("recordLike",{vehicleId:"100"},{status:"success",alreadyLiked:true});
 assert.deepEqual(likeDelta.catalogChange,{collection:"cortes",recordId:"100",operation:"upsert"});
 assert.equal(duplicateLike.catalogChange,undefined);
-assert.match(feedback,/response = attachFeedbackCatalogChange_\\(action, payload, response\\)/);
+assert.match(feedback,/response = attachFeedbackCatalogChange_\(action, payload, response\)/);
 assert.doesNotMatch(feedback,/publishSharedCatalogChange_/, "FEEDBACK no debe llamar a Coordinator para publicar likes.");
 const helper=extract(catalog,"readFeedbackLikeEventCounts_");
 const code=helper+"\nreturn readFeedbackLikeEventCounts_;";
