@@ -239,6 +239,6 @@ La implementación frontend de las secuencias identificadas en el inventario que
 ### Cobertura y límites
 
 - Prueba de contrato: `JS/Tests/MIG010FrontendServiceOrchestration.mjs`, integrada en `JS/Tests/RunServiceTests.mjs`.
-- La suite se ejecutó de forma aislada en V8 con 56 aserciones aprobadas y simulación de replay del respaldo. La ejecución Node.js 22 del workflow completo queda pendiente de confirmar.
+- La suite se ejecutó de forma aislada en V8 con 58 aserciones aprobadas y simulación de replay del respaldo. La ejecución Node.js 22 del workflow completo queda pendiente de confirmar.
 - Las pruebas locales no equivalen a llamadas contra deployments reales. La validación Beta de permisos Apps Script, Spreadsheet, Drive y operación entre servicios sigue pendiente.
 
