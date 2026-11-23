@@ -23,7 +23,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 ### MIG-001 — Inventario de todas las acciones y handlers
 **Estado: EN PROGRESO**
 - [x] Contrastar las 120 acciones de `ACTION_TO_SERVICE_MAP` con los routers reales.
-- [ ] Extraer acciones aceptadas por cada `doPost` que no estén en el mapa frontend.
+- [x] Extraer acciones aceptadas por cada `doPost` que no estén en el mapa frontend.
 - [ ] Inventariar funciones internas, acciones manuales, endpoints de mantenimiento y compatibilidad histórica.
 - [ ] Registrar para cada acción: handler, consumidores UI, payload, respuesta, errores, rol/RBAC, hojas/archivos, dependencias y pruebas.
 - [ ] Detectar handlers sin consumidores y consumidores sin handler, sin eliminar ninguno.
@@ -385,3 +385,13 @@ Se ejecutaron suites existentes con el código fuente exacto recuperado de `GPSp
 | **Total de aserciones ejecutadas** | **247** | **0** |
 
 Estas pruebas cubren contratos de acciones, RBAC, actor/sesión, leases, coordinación, usuarios, WRITE, aportes suplementarios, VIN y UTILITIES. El total representa aserciones reportadas por las suites (no necesariamente 247 casos funcionales independientes). No se ejecutó el runner Node.js completo `RunServiceTests.mjs`, no se ejecutaron todas las pruebas del repositorio y no se invocaron deployments reales, Spreadsheet ni Drive. No interpretar este resultado como validación Beta.
+
+
+#### Acciones fuera del mapa y rutas internas — 2026-11-23
+
+- Completada la extracción de acciones de los dispatchers y ramas previas a cada `doPost` frente a las 120 claves de `ACTION_TO_SERVICE_MAP`.
+- No se encontró acción del mapa sin ruta backend. Se documentaron 2 acciones internas de caché de actor en cada uno de USERS/WRITE/FEEDBACK/ADMIN (8 rutas de servicio) y las 13 acciones privadas de Coordinator.
+- Se documentaron GET `catalogFeed=1`, respuestas `debug=true`, diagnóstico CATALOG, compatibilidad CATALOG `getSuggestion`, rechazos ADMIN `ACTION_MOVED_TO_WRITE` y ruta directa de UTILITIES.
+- La extracción estática confirma 120 acciones únicas y 0 acciones mapeadas sin router/handler. Las 12 acciones sin consumidor directo localizado siguen pendientes de clasificación y no se retiran.
+
+**MIG-001 continúa EN PROGRESO**: quedan inventario manual/histórico, contratos completos por acción, RBAC individual, datos/columnas, Drive/APIs, triggers y pruebas específicas de paridad.
