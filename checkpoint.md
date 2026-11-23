@@ -76,3 +76,34 @@ El usuario definió un nuevo objetivo que reemplaza el enfoque anterior de limit
 3. Diseñar y probar la solución de configuración y caché antes de modificar los servicios funcionales.
 4. No retirar COORDINATOR, SharedMutation, USERS ni endpoints antiguos hasta que todas sus capacidades tengan sustituto probado.
 5. Mantener pruebas Beta reales separadas de las pruebas locales; no afirmar que un deployment fue validado si no se invocó.
+
+
+---
+
+## Continuidad de migración — actualización 2026-11-23
+
+### Verificación GitHub
+- Rama de trabajo confirmada: `GPSpedia2.2.5_work`.
+- HEAD confirmado al iniciar esta actualización: `9f1697e64015625c2e1abece4f131ad1e9b7b2a4`.
+- El HEAD registrado anteriormente (`2a8c1dc449b9503963be82f1693faf5eb8d827ed`) era el padre inmediato: la comparación de GitHub mostró exactamente un commit posterior, `9f1697e64015625c2e1abece4f131ad1e9b7b2a4`, que solo actualizó este checkpoint.
+- Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- El commit `9f1697e` dejó la rama en el mismo punto que el HEAD indicado en el resumen de la sesión anterior; no hay cambios funcionales posteriores a ese registro.
+
+### Lectura normativa y de continuidad
+- Leído `NORMAS_DESAROLLO.md` completo, incluidas las secciones 1–17. Se aplica §17 como objetivo arquitectónico y §§5–10 para validación, registros y publicación.
+- Leídos `README.md`, `contexto_personal.md`, este checkpoint, `PLAN_NUEVA_ARQUITECTURA_FRONTEND.md`, `TAREAS_MIGRACION_ARQUITECTURA.md`, `MATRIZ_MIGRACION_SERVICIOS.md`, `Tareas_Beta.md` y `Hallazgos_Beta.md`.
+- La validación Beta anterior queda subordinada al nuevo objetivo de migración. Se conservan BETA-F001 y BETA-F002 como antecedentes; no se ejecutaron pruebas remotas.
+
+### Avance de inventario (MIG-001)
+- Confirmadas 120 claves únicas del mapa frontend y su distribución: AUTH 15, CATALOG 5, WRITE 9, USERS 3, FEEDBACK 41, UTILITIES 1 y ADMIN 46.
+- Contrastados los dispatchers y handlers principales. CATALOG conserva `getSuggestion` como ruta de compatibilidad; UTILITIES enruta `migrateTimestamps` mediante un `doPost` directo, sin switch.
+- Identificadas acciones internas adicionales de Coordinator y de caché de actor, así como rutas de compatibilidad/rechazo. Se deben inventariar junto con las acciones públicas.
+- Inspeccionado el contrato `JS/Tests/ActionDispatchContract.js`, sin ejecución local todavía.
+- Revisados consumidores frontend representativos, incluidos `ui.js`, `main.js`, `auth.js`, `youtubeUpload.js`, `pys-data.js`, `add_cortes.html` y `users.html`.
+- No se modificó código funcional, deployments, Spreadsheet ni Drive. No se ejecutaron pruebas en esta actualización.
+
+### Estado y siguiente paso
+- MIG-001: **EN PROGRESO**. Falta completar trazabilidad de todos los controles/consumidores, contratos, permisos, datos y pruebas; incluir comandos y procesos manuales/programados.
+- MIG-002 a MIG-005: **PENDIENTES**, sujetas a las dependencias de inventario.
+- MIG-006: prioridad técnica posterior, no iniciar el spike hasta cerrar el inventario y documentar los requisitos de acceso/bootstrap.
+- Continuar con extracción de consumidores de UI, handlers internos, permisos y dependencias; después registrar la matriz trazable y ejecutar las pruebas locales disponibles.
