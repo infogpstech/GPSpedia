@@ -17,7 +17,7 @@ export function runPysStoredXssTests({ ui }) {
     };
 
     const helperBlock = section(ui, "export function getValidatedYouTubeVideoId(", "function getYouTubeEmbedUrl(");
-    const helpers = new Function("URL", helperBlock + "\nreturn { getValidatedYouTubeVideoId, getValidatedYouTubeVideoEmbedUrl };")(URL);
+    const helpers = new Function("URL", helperBlock.replace(/^export function /gm, "function ") + "\nreturn { getValidatedYouTubeVideoId, getValidatedYouTubeVideoEmbedUrl };")(URL);
 
     test("acepta un ID de YouTube exacto de 11 caracteres", () => {
         assert.equal(helpers.getValidatedYouTubeVideoId("dQw4w9WgXcQ"), "dQw4w9WgXcQ");
