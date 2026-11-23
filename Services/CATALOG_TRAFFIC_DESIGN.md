@@ -1,80 +1,53 @@
-# Cobertura de tráfico global — Coordinator y contadores directos
+# Métricas de tráfico, salud y monitoreo — arquitectura vigente
 
-**Tarea:** GP-DEV-TRAFFIC-GLOBAL-02  
-**Fecha de actualización:** 2026-11-17  
-**Estado:** contadores directos implementados en fuente para rutas no coordinadas; regresión y revisión de cobertura en curso.  
-**Alcance:** código fuente de la rama de trabajo. No implica que los proyectos Apps Script desplegados tengan este código ni que sus Script Properties estén configuradas.
+**Estado:** arquitectura fuente alineada con la coordinación central. Las métricas son best-effort y no certifican por sí solas la salud integral de dependencias ni el total de solicitudes HTTP.
 
-## Arquitectura
+## Fuentes de información
 
-El panel Developer combina dos fuentes sin enviar una llamada de red por cada acción del usuario:
+1. **Telemetría global de Coordinator:** registra adquisiciones de lease, validaciones de contexto y lecturas del feed incremental. Mantiene buckets horarios de 24 horas por servicio principal: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. La lectura global está protegida para el rol Desarrollador.
+2. **Telemetría local del navegador:** `JS/Frontend/serviceTelemetry.js` mantiene en memoria del navegador actual hasta 200 eventos, buckets horarios de 24 horas, percentiles p50/p95 y tamaños de solicitud/respuesta. Incluye siete destinos de enrutamiento: los seis servicios principales y COORDINATOR. No persiste datos, no transmite eventos y no conserva payloads, tokens ni identificadores de usuario.
+3. **Panel ADMIN:** presenta por separado el agregado global coordinado y las solicitudes del navegador actual. La consulta global se limita al panel Developer visible y tiene una ventana mínima de 60 segundos entre refrescos. Los datos locales nunca se suman al agregado global.
+4. **Salud de endpoints:** comprueba identidad, estado y versión de los seis servicios principales y el endpoint opcional COORDINATOR. No ejecuta probes de Sheets ni Drive.
 
-1. **Coordinator:** cuenta operaciones protegidas que obtienen una lease y lecturas del feed incremental. Mantiene buckets horarios de 24 horas.
-2. **Contadores locales por servicio:** cada servicio cuenta solo las rutas POST que su router ejecuta directamente, sin lease Coordinator. Usa ScriptProperties y tryLock(0), sin esperar por lock.
-3. **ADMIN:** al refrescar el panel consulta los cuatro endpoints de telemetría directa en una operación agrupada UrlFetchApp.fetchAll; si el lote falla globalmente, intenta cada endpoint por separado. Combina buckets con Coordinator y marca las fuentes parciales/no disponibles.
-4. **Frontend:** consulta el agregado cuando el panel Developer está visible, con intervalo mínimo de 60 segundos. No almacena métricas locales del navegador ni las presenta como globales.
+## Cobertura y límites
 
-El endpoint getServiceTraffic de cada servicio es interno, protegido con un secreto servidor-a-servidor y no se contabiliza a sí mismo. La consulta ADMIN está reservada al rol Desarrollador y Coordinator excluye su propia operación de telemetría.
+- El agregado global refleja únicamente operaciones que pasan por Coordinator y están instrumentadas. No representa el total de solicitudes HTTP ni incluye todas las lecturas directas no coordinadas.
+- Las consultas al feed público de catálogo se atribuyen a CATALOG en el agregado global; el navegador registra el destino de red COORDINATOR en su telemetría local.
+- USERS fue retirado como microservicio independiente por MIG-012. No tiene endpoint ni clave de telemetría. Sus operaciones de usuarios se enrutan a AUTH.
+- LEGACY está retirado y no forma parte del inventario.
+- COORDINATOR es opcional en el registro público de configuración para compatibilidad; cuando está habilitado, aparece en el diagnóstico de salud y en la telemetría local del navegador. No es una séptima categoría del agregado global de operaciones protegidas, que conserva las seis claves de servicio principal.
+- Las métricas locales del navegador se reinician al cerrar/recargar la pestaña y no deben interpretarse como estadísticas poblacionales.
+- Los fallos de telemetría no deben cambiar el resultado de la operación de negocio ni introducir esperas de red adicionales.
 
-## Alternativas evaluadas
+## Seguridad y arquitectura
 
-| Alternativa | Ventaja | Coste/riesgo | Decisión |
-|---|---|---|---|
-| Enviar cada acción directa al Coordinator | Agregado central | Un viaje de red por acción y dependencia/latencia extra | Rechazada |
-| Mantener lock global durante lecturas de Spreadsheet | Conteo central | Serializa lecturas y puede degradar catálogo | Rechazada |
-| CacheService como contador de 24 h | Escritura ligera | TTL, desalojos y ausencia de garantía de ventana | Rechazada |
-| ScriptProperties + tryLock(0) local | Sin viaje de red por acción; no espera lock | Puede subcontar en contención; escritura local síncrona | Elegida como best-effort; medir en Beta |
-| Envío agrupado desde navegador | Reduce llamadas si se agrupa | Pérdida al cerrar, retrasos, duplicados y solo clientes cooperantes | Rechazada como fuente autoritativa |
+- La coordinación entre servicios se realiza en el frontend mediante la configuración central. No se agregan URLs de otros servicios, secretos compartidos ni credenciales a Script Properties de servicios de negocio para instrumentar métricas.
+- Coordinator mantiene su propio estado interno de leases y buckets de métricas. Las rutas de consulta global validan sesión y rol Desarrollador.
+- Los probes de salud son GET de solo lectura y devuelven únicamente identidad estable, versión y estado. No exponen IDs de recursos, nombres de hojas, claves, tokens, secretos, excepciones ni stack traces.
+- La consulta de salud no implica que Sheets, Drive, CacheService u otras dependencias estén disponibles.
 
-## Rutas instrumentadas
+## Inventario de salud
 
-- **CATALOG:** getCatalogData, getDropdownData, getSuggestion y getNavigationData.
-- **AUTH:** validateSession.
-- **WRITE:** checkVehicle, getSuggestion y checkVinDuplicate.
-- **FEEDBACK:** getPysData, getCatalogChanges y suggestYear anónimo (userId 0) son directos. sendContactForm y suggestYear autenticado se cuentan mediante Coordinator.
-- **UTILITIES:** migrateTimestamps ya obtiene una lease UTILITIES dentro de su handler y se cuenta mediante Coordinator; no lleva contador local.
-- **USERS:** getUsers, createUser y updateProfile pasan por Coordinator; no se añade contador local.
-- **ADMIN:** operaciones pasan por Coordinator; ping se excluye como sondeo.
+| Clave | Identidad | Fuente |
+|---|---|---|
+| AUTH | GPSpedia-Auth | `Auth.js` |
+| CATALOG | GPSpedia-Catalog | `catalog.js` |
+| WRITE | GPSpedia-Write | `write.js` |
+| FEEDBACK | GPSpedia-Feedback | `feedback.js` |
+| UTILITIES | GPSpedia-Utilities | `Utilities.js` |
+| ADMIN | GPSpedia-Admin | `admin.js` |
+| COORDINATOR | GPSpedia-SharedMutationCoordinator | `Coordinator.js` |
 
-La auditoría de routers y ACTION_TO_SERVICE_MAP confirmó que las acciones anteriores son rutas directas conocidas; las demás operaciones protegidas usan Coordinator. No contar dos veces una operación que ya adquiere lease.
+El workflow `deployed-service-health.yml` es manual y de solo lectura. Obtiene los siete endpoints de la configuración pública central y verifica el contrato JSON de cada uno; no utiliza URLs locales ni secretos.
 
-## Contrato del contador local
+## Validación
 
-- Prefijo de bucket propio por servicio, retención de 24 horas y ventanas 1/6/24 h.
-- tryLock(0) nunca espera. Si no se adquiere el lock, se omite el evento y no se llama releaseLock.
-- Solo liberar el lock si la ejecución lo adquirió.
-- Fallos de LockService/PropertiesService son best-effort y no cambian el status/cuerpo del handler.
-- No guardar URL, payload, userId, token, sesión ni datos de hojas.
-- Endpoint interno getServiceTraffic valida secreto aleatorio de al menos 32 caracteres con comparación de longitud constante; no expone el secreto.
-- ADMIN realiza consultas directas agrupadas solo al refrescar el panel, no por cada operación de usuario.
-- Una fuente que no tenga secreto o no responda se marca parcial/no disponible sin borrar ni reemplazar los conteos Coordinator.
+- `ServiceHealthContract.mjs`: clasificación de estados, identidad, versión, timeout, errores de red, stale y redacción.
+- `RemoteServiceHealth.mjs`: prueba remota read-only de los siete endpoints usando el commit exacto y configuración central.
+- `ServiceBrowserTrafficContract.mjs`: inventario de destinos, límites locales, percentiles y ausencia de datos sensibles.
+- `ServiceTrafficAdminContract.mjs`, `ServiceTrafficAggregation.mjs` y `ServiceTrafficBatch.mjs`: agregado global, permisos, fuentes y respuestas parciales.
+- `DirectTrafficRoutingCoverage.mjs`: verificación de ACTION_TO_SERVICE_MAP y separación de Coordinator.
 
-## Configuración Beta pendiente
+## Validación Beta pendiente
 
-Generar un secreto aleatorio distinto por servicio (por ejemplo openssl rand -hex 32) y configurar el mismo valor en Script Properties del servicio correspondiente y en ADMIN:
-- GPSpedia_AUTH_TRAFFIC_SECRET
-- GPSpedia_CATALOG_TRAFFIC_SECRET
-- GPSpedia_WRITE_TRAFFIC_SECRET
-- GPSpedia_FEEDBACK_TRAFFIC_SECRET
-No crear secreto para USERS, UTILITIES ni ADMIN: sus acciones conocidas ya pasan por Coordinator o usan el agregado central. Nunca guardar valores en el repositorio, navegador, logs o documentación. Desplegar los proyectos Apps Script actualizados solo en entorno Beta autorizado.
-
-## Pruebas locales
-
-- CatalogTrafficTelemetry: lock libre/ocupado, no espera, liberación correcta, buckets, retención, secretos y errores best-effort.
-- DirectServiceTrafficTelemetry: AUTH/WRITE/FEEDBACK; acciones directas, buckets, secretos, lock ocupado y fallos de PropertiesService.
-- ServiceTrafficAggregation: suma de Coordinator y contadores locales por servicio, conservación de otras métricas, entradas inválidas y fuentes parciales.
-- ServiceTrafficBatch: fetchAll, fallback por endpoint, secreto faltante, error individual y fallo de PropertiesService.
-- ServiceTrafficAdminContract: rol Developer, consulta de solo lectura, fuentes, rutas instrumentadas, UI y exclusión de métricas locales.
-- SharedMutationCoordinator: feed público contado bajo el lock existente y atribución FEEDBACK conservada.
-- Regresión completa, sintaxis y health remoto read-only; no reducir suites ni relajar aserciones.
-
-## Medición Beta pendiente
-
-1. Configurar los cinco secretos en los proyectos Beta.
-2. Desplegar los servicios Apps Script actualizados.
-3. Medir p50/p95 de las rutas directas instrumentadas antes/después.
-4. Medir eventos omitidos por lock, fallos de PropertiesService y discrepancia frente a una referencia temporal independiente.
-5. Verificar ADMIN, acceso exclusivo a Desarrollador, respuesta parcial por fuente y que el contador no añade esperas.
-6. No declarar tráfico HTTP universal: rutas externas/legacy no instrumentadas y health probes permanecen excluidas.
-
-**Límite de exactitud:** el agregado combina operaciones Coordinator y rutas directas conocidas instrumentadas en AUTH, CATALOG, WRITE y FEEDBACK; UTILITIES se cuenta mediante lease Coordinator. USERS y ADMIN se miden mediante Coordinator. Puede subcontar cuando tryLock(0) no está disponible y no incluye solicitudes externas o rutas no mapeadas. La disponibilidad y latencia de los servicios tienen prioridad sobre el conteo.
+El código fuente y las pruebas locales no certifican que los deployments Apps Script externos estén actualizados. Ejecutar el workflow remoto en entorno Beta autorizado y comprobar las siete identidades, versiones y estados. No cambiar deployments, Script Properties ni datos productivos desde esta tarea.
