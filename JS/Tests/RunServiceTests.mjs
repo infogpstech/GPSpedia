@@ -395,7 +395,6 @@ runGroup('38','INTEGRATION',()=>{
   runCli('AUG-139 política anti-debugging, zoom y autorización backend','JS/Tests/AntiDebuggingPolicy.mjs');
  runCli('Verificación sintáctica integral de archivos JavaScript','JS/Tests/RepositoryJavaScriptSyntax.mjs');
  runCli('Verificación de referencias relativas e imports','JS/Tests/RepositoryModuleReferences.mjs');
-  runCli('MIG-024 retirada de SharedMutation y preservación transitoria de Coordinator','JS/Tests/SharedMutationRemovalContract.mjs');
  runCli('SEC arquitectura: RBAC, cierre de cuentas y revocación coordinada desde frontend','JS/Tests/CoordinatorCapabilityPreservation.mjs');
  runCli('MIG-006 probe de acceso a Spreadsheet desde Web App','JS/Tests/MIG006SpreadsheetAccessProbe.mjs');
  runCli('MIG-007 contrato del esquema central de configuración','JS/Tests/MIG007ConfigurationSchemaContract.mjs');
@@ -644,6 +643,10 @@ runGroup('45','MIG021',()=>{
  runCli('MIG021 minimización de leases de actividad','JS/Tests/SessionActivityLeaseMinimization.mjs');
 });
 
+
+runGroup('46','MIG024',()=>{
+ runCli('MIG-024 retirada de SharedMutation y preservación transitoria de Coordinator','JS/Tests/SharedMutationRemovalContract.mjs');
+});
 
 if(selected){
  const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','MIG021','39','41','42','43','44','45','31','32','33','34','35','36','38']);
