@@ -39,6 +39,7 @@ function runGroup(id, service, fn) {
 function normalizedCopy(s) { return String(s).replace(/(const\s+SPREADSHEET_ID\s*=\s*)["'][^"']+["']/,'$1"__ISOLATED_TEST_SPREADSHEET__"'); }
 runGroup('31','WRITE',()=>{
  runCli('MIG-014 invalidación frontend de caché de sesión','JS/Tests/SessionInvalidationFlow.mjs');
+ runCli('MIG-014 invalidación local sin Coordinator ni secretos','JS/Tests/SessionActorCacheInvalidation.mjs');
  const write=read('JS/Services/write.js'),admin=read('JS/Services/admin.js');
  recordResult('WRITE payload/límites/integridad',loadFunction('JS/Tests/CutPayloadValidation.js','runCutPayloadValidationTests')(write));
  recordResult('WRITE/ADMIN VIN',loadFunction('JS/Tests/VinAuthoritativeValidation.js','runVinAuthoritativeValidationTests')({write,admin,ui:read('JS/Frontend/ui.js'),addCuts:read('HTML/add_cortes.html')}));
