@@ -279,3 +279,11 @@ Rama de trabajo: GPSpedia2.2.5_work.
 - Se inició la migración del feed incremental del catálogo desde COORDINATOR hacia CATALOG.
 - Hallazgo: api-config.js enruta publishCatalogReset/getCatalogChanges a COORDINATOR y FEEDBACK usa SharedMutationClient para publicar cambios. El plan MIG-023 moverá la lectura/publicación al servicio CATALOG y dejará la coordinación en frontend.
 - La retirada total de COORDINATOR, incluido su endpoint health, sigue en MIG-025 tras completar MIG-024.
+
+
+2026-11-23 — Avance MIG-023: feed CATALOG y retiro de rutas públicas Coordinator
+- Se implementó el diario local del feed en CATALOG con revisiones, cursor, lock local, idempotencia por requestId, retención de 100 eventos y recuperación por reset.
+- FEEDBACK ahora devuelve metadatos de deltas para Cortes/PyS/Tutoriales; el frontend publica a CATALOG después de confirmar la mutación. CATALOG reconstruye los snapshots desde Spreadsheet y rechaza snapshots enviados por el navegador.
+- Se retiraron las rutas públicas de feed de COORDINATOR; el helper interno de SharedMutation queda para MIG-024 y la retirada de health/telemetría de Coordinator para MIG-025.
+- Se actualizaron contratos automatizados y documentación de arquitectura/Beta.
+- Pruebas locales específicas: CatalogChangeFeed 16/16, FeedbackCatalogPublicationIsolation 14/14 y CatalogBrowserReset 10/10. Regresión completa y Beta real pendientes.
