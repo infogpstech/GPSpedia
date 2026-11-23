@@ -14,7 +14,7 @@ const list=block("handleGetUsers");
 assert.match(list,/getRange\(1, 1, lastRow, COLS_USERS\.Nombre_Completo\)/);
 assert.doesNotMatch(list,/getDataRange\(\)/);
 const verifier=block("getAuthUserActor_");
-assert.match(verifier,/findUniqueRowsByExactValue_\(usersSheet, COLS_USERS\.ID, actor\.userId, true\)/);
+assert.match(verifier,/findUniqueRowsByExactValue_\(\s*usersSheet,\s*COLS_USERS\.ID,\s*actor\.userId,\s*true\)/);
 const lookup=block("findUniqueRowsByExactValue_");
 assert.match(lookup,/getRange\(rowIndex,column,1,1\)\.getValue\(\)/);
 assert.doesNotMatch(lookup,/getLastColumn|getRange\(rowIndex,1,1,/);

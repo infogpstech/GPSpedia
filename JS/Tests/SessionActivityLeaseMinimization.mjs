@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 
 const admin = readFileSync("JS/Services/admin.js", "utf8");
 const auth = readFileSync("JS/Services/Auth.js", "utf8");
-const users = readFileSync("JS/Services/users.js", "utf8");
 const write = readFileSync("JS/Services/write.js", "utf8");
 const feedback = readFileSync("JS/Services/feedback.js", "utf8");
 const coordinator = readFileSync("JS/Services/Coordinator.js", "utf8");
@@ -19,17 +18,10 @@ function functionBlock(source, name, nextName) {
 }
 
 const adminDoPost = functionBlock(admin, "doPost", "doPostInternal_");
-const usersDoPost = functionBlock(users, "doPost", "doPostInternal_");
 const authDoPost = functionBlock(auth, "doPost", "doPostInternal_");
 const writeDoPost = functionBlock(write, "doPost", "doPostInternal_");
 const feedbackDoPost = functionBlock(feedback, "doPost", "doPostInternal_");
 const authMutationPolicy = functionBlock(auth, "isSharedMutationAction_", "syncAuthSheetActivityFromActor_");
-const usersMutationPolicy = functionBlock(users, "isSharedMutationAction_", "doPost");
-const usersCoordinatorPolicy = coordinator.slice(
-    coordinator.indexOf("USERS:"),
-    coordinator.indexOf("UTILITIES:", coordinator.indexOf("USERS:"))
-);
-
 let passed = 0;
 function test(name, callback) {
     callback();
@@ -44,16 +36,19 @@ test("WRITE y FEEDBACK no adquieren leases para mutaciones ordinarias", () => {
     assert.doesNotMatch(feedbackDoPost, /withSharedMutationLease_\s*\(/);
 });
 
-test("USERS getUsers/updateProfile reutilizan actor cacheado; solo createUser conserva lease", () => {
-    const branch = usersDoPost.indexOf('if (!["getUsers", "updateProfile"].includes(action))');
-    const lease = usersDoPost.indexOf('withSharedMutationLease_("USERS", "sessionActivity"');
-    assert.ok(branch >= 0 && usersDoPost.indexOf("getCachedSharedSessionActor_", branch) > branch);
-    assert.equal(lease, -1);
-    assert.doesNotMatch(usersCoordinatorPolicy, /sessionActivity/);
-    assert.match(usersMutationPolicy, /createUser/);
-    assert.doesNotMatch(usersMutationPolicy, /updateProfile/);
-    assert.match(usersDoPost, /withSharedMutationLease_\("USERS", action/);
-    assert.doesNotMatch(usersDoPost, /withSharedMutationLease_\("USERS",\s*["']updateProfile/);
+test("AUTH gestiona usuarios con actor cacheado y lock local; no existe lease USERS", () => {
+    const cachedActions = authDoPost.indexOf('["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"].includes(action)');
+    assert.ok(cachedActions >= 0 && authDoPost.indexOf("getCachedSharedSessionActor_", cachedActions) > cachedActions);
+    assert.match(auth, /function handleGetUsers\(/);
+    assert.match(auth, /function handleCreateUser\(/);
+    assert.match(auth, /function handleUpdateProfile\(/);
+    assert.match(auth, /function withUsersMutationLock_\(/);
+    assert.match(auth, /withUsersMutationLock_\(/);
+    assert.doesNotMatch(authDoPost, /withSharedMutationLease_\("AUTH",\s*"(getUsers|createUser|updateProfile)"/);
+    assert.doesNotMatch(coordinator, /USERS:\s*\{/);
+    assert.match(apiConfig, /'getUsers': 'AUTH'/);
+    assert.match(apiConfig, /'createUser': 'AUTH'/);
+    assert.match(apiConfig, /'updateProfile': 'AUTH'/);
 });
 
 test("AUTH conserva solo lease de eliminación; login y acciones ordinarias usan lock/caché local", () => {

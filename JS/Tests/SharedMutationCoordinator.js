@@ -1329,7 +1329,8 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => r.request("validateSessionContext", "AUTH", "validateSessionContext", {
             userId, sessionToken: sessions[6].token
         }), "revocada");
-        assert_(remoteCalls.length === 6, "Las invalidaciones individual y global deben llegar a WRITE, FEEDBACK y ADMIN.");
+        assert_(remoteCalls.length === 9, "La revocación individual y los dos lotes globales deben llegar a WRITE, FEEDBACK y ADMIN.");
+        ["WRITE", "FEEDBACK", "ADMIN"].forEach(target => assert_(remoteCalls.filter(call => call.target === target).length === 3, target + " debe confirmar las tres invalidaciones."));
     });
 
     test_("Coordinator centraliza invalidación remota por lotes para WRITE, FEEDBACK y ADMIN", function() {
