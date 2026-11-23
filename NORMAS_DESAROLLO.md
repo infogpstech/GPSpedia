@@ -237,3 +237,19 @@ Este requisito, registrado el 2026-11-17, modifica el criterio de las secciones 
 - El alcance es toda la plataforma, no solo los formularios de aportes. Priorizar en este orden: inventario de latencia y llamadas; escrituras/aportes; cargas de archivos; sesión y excepciones conservadas; optimización general; regresión local.
 
 Este requisito sustituye expresamente el criterio anterior de mantener revalidación central, leases, epoch/expiración por cada operación ordinaria. La sesión se establece en login; las excepciones de revocación remota y eliminación de cuenta se implementan mediante el mecanismo de sesión correspondiente, sin convertirlas en validaciones transaccionales de cada acción.
+
+## 16. Requisito expreso del usuario: simplificación del despliegue de servicios
+
+El objetivo rector de los trabajos sobre los servicios de GPSpedia es **simplificar su despliegue, actualización y mantenimiento**. Una solución no cumple el requisito si resuelve un problema puntual a costa de añadir complejidad operativa innecesaria.
+
+- Priorizar diseños que reduzcan los pasos manuales, las intervenciones repetitivas y la posibilidad de errores durante los despliegues.
+- Evitar la duplicación de configuraciones, especialmente URL y referencias entre servicios, y evitar que una actualización obligue a modificar manualmente múltiples proyectos cuando exista una alternativa más sencilla y segura.
+- Favorecer una fuente centralizada de configuración cuando sea compatible con la arquitectura, los permisos, la disponibilidad y el rendimiento requeridos. No imponer una tecnología o almacenamiento sin evaluar sus consecuencias.
+- No añadir scripts temporales, propiedades, archivos, procesos, dependencias o pasos de despliegue que después deban mantenerse, salvo que sean estrictamente necesarios y aporten una ventaja comprobable.
+- Antes de proponer cambios, revisar el ciclo completo de despliegue y las dependencias entre servicios. Resolver la causa arquitectónica cuando sea viable, en lugar de acumular instrucciones manuales para sortear sus síntomas.
+- Toda propuesta debe comparar la complejidad operativa antes y después: cantidad de pasos, lugares que deben actualizarse, despliegues requeridos, puntos de fallo y mantenimiento futuro.
+- No modificar despliegues productivos ni endpoints sin autorización expresa. Las mejoras deben prepararse y validarse localmente; las pruebas que requieran despliegues reales se documentan para Beta según las reglas vigentes.
+
+**Criterio de aceptación:** cada cambio relacionado con despliegues debe mantener o reducir la complejidad total del proceso. La opción preferida es la que permita desplegar y actualizar los servicios con menos intervenciones manuales, menos configuraciones duplicadas y menor riesgo de error, sin sacrificar la integridad ni los requisitos funcionales.
+
+Esta regla prevalece sobre cualquier propuesta técnica anterior que aumente innecesariamente la complejidad del despliegue.
