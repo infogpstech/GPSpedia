@@ -46,7 +46,7 @@ const COLS_CORTES = {
  */
 function getVinColumnIndex(sheet) {
     if (!sheet || sheet.getLastColumn() < 1) return 0;
-    const headers = testigoSchema.headers;
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const matches = [];
     headers.forEach((value, index) => {
         if (String(value || "").trim().toLowerCase() === "vin") matches.push(index + 1);
@@ -1422,7 +1422,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
                     recoveredVinCollection = addVinToAvailableSlot(existing, vinPrefix, maxAllowed).collection;
                 }
             }
-            const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+            const headers = testigoSchema.headers;
             const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
 
             let slotIndex = 1;
