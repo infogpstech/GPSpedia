@@ -253,17 +253,37 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - No se ejecutaron deployments ni se modificaron propiedades Apps Script, hojas, Drive, endpoints ni datos externos. El deployment y la fila histórica USERS se mantienen intactos hasta la verificación Beta.
 
 ### MIG-013 — Sesiones sin Coordinator ni secretos compartidos
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Mantener autenticación con el hash actual, bloqueo temporal por intentos fallidos y tokens de sesión opacos.
-- [ ] Mantener registro de sesión y actor confiable en Spreadsheet.
-- [ ] Definir cómo cada servicio valida/carga actor desde sesión sin llamada a otro servicio y sin confiar en el rol del frontend.
-- [ ] Implementar caché local de actor conforme a §15, sin consultas de identidad en cada acción.
-- [ ] Mantener comprobación local sencilla de capacidad/rol.
-- [ ] No crear claves secretas compartidas ni tokens firmados con secretos configurados manualmente.
-- [ ] Probar expiración, sesión desconocida, token revocado, cambio de rol, usuario eliminado y caché fría/caliente.
+**Estado: COMPLETADA EN CÓDIGO — VALIDACIÓN BETA DIFERIDA**
+**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §§15 y 18: autenticación ordinaria local y de baja latencia; no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas técnicas directas solo por necesidad concreta, sin secretos compartidos y con autorización/RBAC del receptor.
 
-**Aceptación:** autorización segura, baja latencia y ausencia de Coordinator/SharedMutation.
+- [x] Mantener el hash PBKDF2 actual y el bloqueo temporal de login después de cinco intentos fallidos (15 minutos); no se modificó el coste del hash.
+- [x] Mantener tokens de sesión opacos generados por AUTH en servidor con `Utilities.getUuid()`, registrados en `ActiveSessions`; no se firman con secretos manuales ni se exponen secretos al navegador.
+- [x] Mantener `Users` y `ActiveSessions` como fuente autoritativa de identidad, rol, actividad y sesión.
+- [x] Cada servicio protegido resuelve el actor desde la Spreadsheet de identidad en cache miss; no acepta el rol enviado por el navegador.
+- [x] Implementar caché local por proyecto y token, con clave SHA-256 y TTL máximo de 21,600 segundos. Los accesos calientes no vuelven a leer Users/ActiveSessions.
+- [x] CATALOG mantiene su implementación local equivalente, sin llamada a otro servicio.
+- [x] Conservar expiración por antigüedad (tres meses) e inactividad (un mes), sesión única por token, identidad única, usuario activo y rol permitido al cargar desde fuente autoritativa.
+- [x] Mantener comprobaciones locales sencillas de capacidad/RBAC en AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES.
+- [x] Retirar del flujo ordinario de sesión las llamadas a Coordinator, validación remota, registro/sincronización de sesión y leases SharedMutation.
+- [x] Mantener endpoints locales de invalidación de caché sin secreto compartido. La coordinación de invalidación entre servicios desde frontend y los casos de revocación se completan en MIG-014.
+- [x] Ampliar pruebas de caché fría/caliente, TTL, token opaco, identidad, sesión desconocida/revocada/expirada, usuario eliminado, cambio de rol e invalidación para los seis servicios.
+- [ ] Validar login, sesiones y permisos mediante deployments Apps Script y Spreadsheet aislados en Beta.
+
+**Aceptación de código:** cumplida. Las acciones ordinarias validan capacidad usando actor local cacheado, sin viaje de red, Coordinator ni lease SharedMutation. El rol se obtiene de Users/ActiveSessions y cada servicio aplica su RBAC; no se confía en datos de autorización editables por el navegador.
+
+**Alcance de SharedMutation:** el cliente Coordinator/SharedMutation permanece para operaciones ajenas al ciclo ordinario de sesión que todavía lo requieren (por ejemplo, exclusión de ciertas operaciones de mantenimiento y publicación/telemetría). Ninguna ruta de lectura/carga de actor, login, validación de sesión o comprobación ordinaria de capacidad adquiere esas leases ni llama a la API de sesión de Coordinator. No se retiró funcionalidad no relacionada.
+
+#### Evidencia de implementación y pruebas MIG-013 — 2026-11-23
+- AUTH conserva `createPasswordHash`/`verifyStoredPassword`, el control de intentos fallidos y la creación/recuperación idempotente de sesión. El token opaco queda registrado en `ActiveSessions`.
+- AUTH, WRITE, FEEDBACK, ADMIN y UTILITIES usan `getCachedSharedSessionActor_` para resolver el actor localmente; CATALOG usa `getCatalogSessionActor_` y `loadCatalogSessionActor_`. Ambos caminos cargan Users/ActiveSessions solo ante cache miss o después de invalidación.
+- Los loaders comprueban correspondencia userId/token, unicidad del token y usuario, cuenta activa, rol permitido, marca de revocación pendiente y fechas de expiración. El rol no procede del payload del navegador.
+- Las cachés son propias de cada proyecto Apps Script, se indexan mediante SHA-256 del userId/token y tienen TTL máximo de seis horas. La ruta caliente no consulta la Spreadsheet.
+- Las acciones ordinarias no invocan `registerSession`, `syncUserSessions`, `validateSessionContext`, `revokeSession` ni `revokeUserSessions` de Coordinator, ni adquieren leases SharedMutation para validar actor o rol.
+- La suite `JS/Tests/MIG013SessionActorLocalLookup.mjs` se amplió para probar el loader común y el loader independiente CATALOG, caché fría/caliente, TTL, clave no reversible, cambio de rol tras invalidación, usuario eliminado, token revocado, expiración, identidad y ausencia de llamadas Coordinator en rutas de sesión.
+- `SessionActivityCoordination.mjs` y `SessionActivityLeaseMinimization.mjs` verifican además la separación de AUTH/WRITE/FEEDBACK/ADMIN/UTILITIES y el mantenimiento de las operaciones de Coordinator que no pertenecen al flujo de sesión.
+- No se modificaron hashes, RBAC, contratos de login, esquema de Users/ActiveSessions, endpoints, propiedades Apps Script, deployments ni datos externos.
+
+**Validación Beta diferida:** probar login/logout, expiración, revocación, cambio de rol, eliminación de usuario y accesos autorizados/no autorizados sobre deployments y hojas aisladas. La coordinación de invalidación remota desde frontend y la respuesta ante servicios no disponibles pertenecen a MIG-014.
 
 ### MIG-014 — Revocación y limpieza de caché desde frontend
 **Estado: PENDIENTE**
