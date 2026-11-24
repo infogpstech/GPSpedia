@@ -569,7 +569,7 @@
 
                         <div class="dev-card dev-tools-card" id="central-service-urls-card">
                             <div class="dev-heading-with-help"><strong><i class="fa-solid fa-network-wired"></i> Endpoints de servicios</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre endpoints" title="Ayuda" aria-controls="dev-help-central-service-urls" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-central-service-urls" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Administra las URL de CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. La URL de AUTH no se modifica aquí: se actualiza directamente en el frontend y funciona como punto de entrada fijo. AUTH completa automáticamente versiones, estados, fechas, responsables, historial y demás metadatos. No edites otras columnas de la hoja Servicios.</span></div>
-                            <p>Actualiza únicamente las URL de los cinco servicios secundarios. La URL de AUTH se administra directamente en el frontend y no se modifica desde este modal. La publicación genera una revisión central completa.</p>
+                            
                             <div class="dev-action-row">
                                 <div style="flex:1 1 260px;min-width:0;"><label for="central-service-url-catalog">CATALOG</label><input type="url" id="central-service-url-catalog" class="dev-input" autocomplete="off" spellcheck="false" placeholder="URL del servicio CATALOG" required></div>
                                 <div style="flex:1 1 260px;min-width:0;"><label for="central-service-url-write">WRITE</label><input type="url" id="central-service-url-write" class="dev-input" autocomplete="off" spellcheck="false" placeholder="URL del servicio WRITE" required></div>
@@ -652,7 +652,7 @@
         <button type="button" class="info-close-btn" id="close-audit-drive-modal" aria-label="Cerrar auditoría">&times;</button>
         <div class="dev-heading-with-help"><h2 id="audit-drive-title"><i class="fa-brands fa-google-drive"></i> Auditoría de Cortes</h2><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre alcance de auditoría" title="Ayuda" aria-controls="dev-help-audit-scope" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-scope" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Explora recursivamente la carpeta principal Cortes. El progreso y los resultados parciales se conservan localmente. La auditoría no mueve archivos; cada traslado requiere una acción explícita y confirmación del Desarrollador.</span></div>
         <div class="dev-heading-with-help dev-audit-scope-row">
-            <p id="audit-drive-results-scope" style="font-size:0.85em; color:var(--text-disabled); margin:0;">La consola registra todos los archivos y resultados; la lista complementaria muestra vistas previas de imágenes históricas y sin uso detectado.</p>
+            
             <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre categorías del resumen" title="Ayuda" aria-controls="dev-help-audit-categories" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-categories" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Descubiertos: archivos únicos con ID válido. Analizados: archivos cuya clasificación se intentó, incluidos errores. Pendientes: carpetas aún por recorrer. Errores: IDs o metadatos que no pudieron leerse. Las miniaturas se verifican con la sesión autorizada. Los duplicados se omiten y contabilizan por separado.</span></div>
         <div id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar" aria-label="Herramientas de auditoría de Cortes" aria-orientation="horizontal">
             <button type="button" id="btn-audit-drive-toolbar-toggle" class="btn btn-secondary audit-drive-toolbar-toggle" aria-label="Expandir etiquetas de acciones" title="Expandir acciones" aria-expanded="false" aria-controls="audit-drive-toolbar-actions">
@@ -679,17 +679,21 @@
             <button type="button" id="btn-audit-drive-apply-reconciliation" class="btn btn-primary" hidden disabled>Aplicar propuestas seleccionadas</button>
         </section>
         <section id="audit-drive-organizer-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
-            <h3>Preview de organización Cortes / LogosMarca</h3>
-            <p id="audit-drive-organizer-status">La simulación compara rutas, nombres, extensiones y referencias. No modifica Drive ni Spreadsheet.</p>
+            <div class="dev-heading-with-help">
+                <h3>Preview de organización Cortes / LogosMarca</h3>
+                <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre la organización de imágenes" title="Ayuda" aria-controls="dev-help-audit-organizer" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
+                <span id="dev-help-audit-organizer" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>La simulación compara rutas, nombres, extensiones y referencias sin modificar Drive ni Spreadsheet. Las coincidencias por nombre, carpeta o alias son orientativas; las ambiguas requieren revisión manual y no asignan imágenes automáticamente. La aplicación requiere aprobación explícita del Desarrollador. Selecciona entre 1 y 10 imágenes de una misma página; cada lote se vuelve a validar en el servidor.</span>
+            </div>
+            <p id="audit-drive-organizer-status">Pendiente.</p>
             <div id="audit-drive-organizer-counts" class="audit-drive-reconciliation-counts"></div>
             <div id="audit-drive-organizer-results" class="audit-drive-reconciliation-results"></div>
             <section id="audit-drive-model-association-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
                 <h4>Sugerencias de asociación por modelo</h4>
                 <p id="audit-drive-model-association-summary"></p>
                 <div id="audit-drive-model-association-results" class="audit-drive-reconciliation-results"></div>
-                <p class="text-muted">Las coincidencias por nombre, carpeta o alias son orientativas. Las ambiguas requieren revisión manual; esta sección no modifica referencias ni asigna imágenes automáticamente.</p>
+                
             </section>
-            <p class="text-muted">La aplicación requiere aprobación explícita del Desarrollador. Selecciona entre 1 y 10 imágenes de una misma página; cada lote se vuelve a validar en el servidor.</p>
+            
             <div class="audit-drive-reconciliation-actions">
                 <button type="button" id="btn-audit-drive-apply-organizer" class="btn btn-primary" hidden disabled>Aplicar selección aprobada</button>
                 <button type="button" id="btn-audit-drive-rollback-organizer" class="btn btn-secondary" hidden disabled>Revertir lote seleccionado</button>
