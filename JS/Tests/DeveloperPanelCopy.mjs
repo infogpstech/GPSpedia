@@ -68,7 +68,7 @@ testCase("las pestañas conservan un único título visible y la consola usa con
     assert.equal((developer.match(/class="dev-panel-heading dev-panel-heading-visually-hidden"/g) || []).length, 4);
     assert.match(developer, /id="btn-clear-console-log"[^>]*aria-label="Limpiar consola"/);
     assert.match(developer, /id="btn-copy-console-log"[^>]*aria-label="Copiar registro"/);
-    assert.match(developer, /class="dev-terminal-input-shell"[\\s\\S]*?class="dev-terminal-prompt"/);
+    assert.match(developer, /class="dev-terminal-input-shell"[\s\S]*?class="dev-terminal-prompt"/);
     assert.match(developer, /id="btn-terminal-send"[^>]*aria-label="Ejecutar comando">&gt;_/);
 });
 
