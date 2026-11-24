@@ -3,7 +3,7 @@
 // Requiere cargar Services/feedback.js.
 function runYouTubeApprovalInitTests() {
     const results=[];let passed=0,failed=0;
-    const oldGetSafe=getSafeSheet,oldToken=ScriptApp.getOAuthToken,oldFetch=UrlFetchApp.fetch,oldLog=Logger.log,oldReserve=reserveYouTubeUploadInitialization_,oldFinish=finishYouTubeUploadInitialization_;
+    const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldToken=ScriptApp.getOAuthToken,oldFetch=UrlFetchApp.fetch,oldLog=Logger.log,oldReserve=reserveYouTubeUploadInitialization_,oldFinish=finishYouTubeUploadInitialization_;
     reserveYouTubeUploadInitialization_=()=>({reuse:false,rowIndex:2,cacheKey:"test-upload-session"});
     finishYouTubeUploadInitialization_=()=>true;
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
@@ -28,11 +28,21 @@ function runYouTubeApprovalInitTests() {
         const row=new Array(45).fill("");row[0]="veh-1";row[9]=currentUrl||"";
         map={Cortes:sheet_([headers,row]),Feedbacks:sheet_([["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido"]])};
         getSafeSheet=name=>map[name]||null;
+        getSpreadsheet=()=>({getSheetByName:name=>map[name]||null,insertSheet:name=>{const created=sheet_([]);map[name]=created;return created;}});
         ScriptApp.getOAuthToken=()=>"oauth-token";
         UrlFetchApp.fetch=(url,options)=>{requestOptions={url,options};return{getAllHeaders:()=>location?{Location:location}:{},getResponseCode:()=>responseCode,getContentText:()=>""};};
         Logger.log=()=>{};
     }
     try{
+        run_("inicializa carga YouTube para Tutorial histórico mediante referenceId legacy",()=>{
+            reset_();
+            const title="Tutorial demo";
+            const legacyId=makeLegacyTutorialIdentity_(title);
+            map.Tutorial=sheet_([TUTORIAL_HEADERS.slice(),["",title,"","","","", "", "Owner"]]);
+            const result=handleInitYouTubeUpload({...payload,contentType:"tutorial",referenceId:legacyId});
+            assert_(result.status==="success"&&result.uploadUrl===location);
+            assert_(requestOptions&&requestOptions.url.indexOf("upload/youtube/v3/videos")>=0);
+        });
         run_("envía categoryId 28 y privacidad unlisted con audiencia no infantil",()=>{
             reset_();const result=handleInitYouTubeUpload(payload);
             const body=JSON.parse(requestOptions.options.payload);
@@ -77,7 +87,7 @@ function runYouTubeApprovalInitTests() {
             assert_(requestOptions===null);
         });
     }finally{
-        getSafeSheet=oldGetSafe;ScriptApp.getOAuthToken=oldToken;UrlFetchApp.fetch=oldFetch;Logger.log=oldLog;reserveYouTubeUploadInitialization_=oldReserve;finishYouTubeUploadInitialization_=oldFinish;
+        getSafeSheet=oldGetSafe;getSpreadsheet=oldGetSpreadsheet;ScriptApp.getOAuthToken=oldToken;UrlFetchApp.fetch=oldFetch;Logger.log=oldLog;reserveYouTubeUploadInitialization_=oldReserve;finishYouTubeUploadInitialization_=oldFinish;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
