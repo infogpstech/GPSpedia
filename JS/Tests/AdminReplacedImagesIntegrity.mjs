@@ -1163,7 +1163,11 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     assert.ok(ui.includes("Versión ADMIN: "));
     assert.ok(ui.includes("Último escaneo: "));
     assert.ok(ui.includes("Miniatura cargada en la sesión autorizada actual"));
-    assert.ok(html.includes("La consola registra todos los archivos y resultados"));
+    const auditHelpStart = html.indexOf('id="dev-help-audit-scope"');
+    const auditHelpEnd = html.indexOf("</span>", auditHelpStart);
+    const auditHelp = html.slice(auditHelpStart, auditHelpEnd);
+    assert.ok(auditHelp.includes("Los resultados parciales se conservan localmente"));
+    assert.match(auditHelp, /role="tooltip" hidden/);
     assert.ok(html.includes("dev-help-audit-categories"));
     assert.ok(ui.includes("reconciliationUrl"));
 });
