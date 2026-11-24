@@ -112,4 +112,4 @@ let acquired = false;
 assert.equal(acquireFailFast({tryLock:()=>{acquired=true;return true;}}), true);
 assert.equal(acquired, true);
 
-console.log("LoginRequestLedger: 40/40 PASS");
+console.log("LoginRequestLedger: 47/47 PASS");
