@@ -3,6 +3,10 @@
 // ============================================================================
 // COMPONENT VERSION: 2.2.5
 
+// Recurso propio del proyecto Apps Script; no depende de copiar un helper para localizarlo.
+// El ID es un localizador, no una credencial ni un secreto.
+var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
+
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
@@ -794,12 +798,40 @@ function loginRequestRecordToRow_(record) {
         String(record.updatedAt || new Date().toISOString())];
 }
 
+function loginRequestTextCell_(value) {
+    if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+    return String(value === null || value === undefined ? '' : value);
+}
+function loginRequestBooleanCell_(value) {
+    if (value === true || value === false) return value;
+    const normalized = String(value === null || value === undefined ? '' : value).trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false' || normalized === '') return false;
+    return null;
+}
+// Sheets puede devolver fechas como Date y números como number aunque se hayan escrito como texto.
+// La comparación respeta el contrato de cada columna y sigue rechazando diferencias reales.
+function loginRequestRowsEqual_(expected, actual) {
+    if (!Array.isArray(expected) || !Array.isArray(actual) ||
+        expected.length !== actual.length || expected.length < 7 ||
+        expected.length > LOGIN_REQUEST_HEADERS_.length) return false;
+    for (let index = 0; index < expected.length; index++) {
+        if (index === 4) {
+            const left = Number(expected[index]), right = Number(actual[index]);
+            if (!Number.isFinite(left) || !Number.isFinite(right) || left !== right) return false;
+        } else if (index === 6) {
+            const left = loginRequestBooleanCell_(expected[index]), right = loginRequestBooleanCell_(actual[index]);
+            if (left === null || right === null || left !== right) return false;
+        } else if (loginRequestTextCell_(expected[index]) !== loginRequestTextCell_(actual[index])) return false;
+    }
+    return true;
+}
 function loginRequestRecordFromRow_(row) {
     if (!Array.isArray(row) || row.length < LOGIN_REQUEST_HEADERS_.length) throw new Error('El registro de LoginRequests está incompleto.');
-    const record = { requestId:String(row[0]||''), userId:normalizeUserId(row[1]), token:String(row[2]||''),
-        createdAt:String(row[3]||''), createdAtMs:Number(row[4]), status:String(row[5]||''),
-        pointerSet:row[6]===true||String(row[6]).toLowerCase()==='true',
-        committedAt:String(row[7]||''), revokedAt:String(row[8]||''), updatedAt:String(row[9]||'') };
+    const record = { requestId:loginRequestTextCell_(row[0]), userId:normalizeUserId(row[1]), token:loginRequestTextCell_(row[2]),
+        createdAt:loginRequestTextCell_(row[3]), createdAtMs:Number(row[4]), status:loginRequestTextCell_(row[5]),
+        pointerSet:loginRequestBooleanCell_(row[6]) === true,
+        committedAt:loginRequestTextCell_(row[7]), revokedAt:loginRequestTextCell_(row[8]), updatedAt:loginRequestTextCell_(row[9]) };
     if (!/^[A-Za-z0-9_-]{16,80}$/.test(record.requestId) || !record.userId || !record.token ||
         !record.createdAt || !Number.isFinite(record.createdAtMs) || !LOGIN_REQUEST_STATUS_.includes(record.status)) {
         throw new Error('El registro de LoginRequests contiene datos inválidos.');
@@ -842,13 +874,13 @@ function ensureLoginRequestsSheet_(spreadsheet) {
         if(!createdAt||!Number.isFinite(createdAtMs))throw new Error('Existe un registro legacy de login sin fecha válida; no se completó el baseline.');
         const record={requestId,userId:normalizeUserId(old.userId),token:old.token,createdAt,createdAtMs,status:String(old.status),pointerSet:old.pointerSet===true,committedAt:String(old.committedAt||''),revokedAt:String(old.revokedAt||''),updatedAt:new Date().toISOString()};
         const row=loginRequestRecordToRow_(record),prior=existing.get(requestId);
-        if(prior){if(JSON.stringify(prior.row.slice(0,7))!==JSON.stringify(row.slice(0,7)))throw new Error('El baseline detectó un registro distinto para el mismo requestId.');}
+        if(prior){if(!loginRequestRowsEqual_(row.slice(0,7),prior.row.slice(0,7)))throw new Error('El baseline detectó un registro distinto para el mismo requestId.');}
         else{imports.push(row);existing.set(requestId,{row});}
     });
     if(imports.length){
         const start=sheet.getLastRow()+1;sheet.getRange(start,1,imports.length,LOGIN_REQUEST_HEADERS_.length).setValues(imports);SpreadsheetApp.flush();
         const back=sheet.getRange(start,1,imports.length,LOGIN_REQUEST_HEADERS_.length).getValues();
-        if(JSON.stringify(back)!==JSON.stringify(imports))throw new Error('No se pudo verificar el baseline de LoginRequests; se reintentará sin duplicar.');
+        if(back.length!==imports.length || back.some((row,index)=>!loginRequestRowsEqual_(imports[index],row)))throw new Error('No se pudo verificar el baseline de LoginRequests; se reintentará sin duplicar.');
     }
     sheet.getRange(2,6).setValue('baseline_v1');sheet.getRange(2,10).setValue(new Date().toISOString());SpreadsheetApp.flush();
     if(String(sheet.getRange(2,6).getValue()||'')!=='baseline_v1')throw new Error('No se pudo confirmar el baseline de LoginRequests.');
@@ -870,7 +902,7 @@ function saveLoginRequestRecord_(sheet,record,rowIndex=null){
     else sheet.getRange(rowIndex,1,1,LOGIN_REQUEST_HEADERS_.length).setValues([row]);
     SpreadsheetApp.flush();
     const back=sheet.getRange(rowIndex,1,1,LOGIN_REQUEST_HEADERS_.length).getValues()[0];
-    if(JSON.stringify(back)!==JSON.stringify(row))throw new Error('No se pudo confirmar el registro de idempotencia de login; reintenta la misma solicitud.');
+    if(!loginRequestRowsEqual_(row,back))throw new Error('No se pudo confirmar el registro de idempotencia de login; reintenta la misma solicitud.');
     return rowIndex;
 }
 

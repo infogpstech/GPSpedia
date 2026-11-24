@@ -3,6 +3,11 @@
 // ============================================================================
 // COMPONENT VERSION: 2.3.1
 
+// Recursos propios del proyecto Apps Script; no dependen de copiar un helper.
+// Los IDs son localizadores, no credenciales ni secretos.
+var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
+var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
+
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================

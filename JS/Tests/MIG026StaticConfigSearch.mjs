@@ -54,13 +54,22 @@ test("los seis servicios abren la Spreadsheet principal configurada y los servic
     const feedback = read("JS/Services/feedback.js");
     const utilities = read("JS/Services/Utilities.js");
     const admin = read("JS/Services/admin.js");
-    assert.ok(central.includes('var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";'));
-    assert.ok(central.includes('var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";'));
-    for (const source of [auth, catalog, write, feedback, utilities, admin, central]) {
-        assert.ok(source.includes("SpreadsheetApp.openById(GPSpediaSpreadsheetId_)"));
+    const spreadsheetBinding = 'var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";';
+    const driveBinding = 'var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";';
+    assert.ok(central.includes(spreadsheetBinding));
+    assert.ok(central.includes(driveBinding));
+    const spreadsheetServices = [
+        ["AUTH", auth], ["CATALOG", catalog], ["WRITE", write],
+        ["FEEDBACK", feedback], ["UTILITIES", utilities], ["ADMIN", admin]
+    ];
+    for (const [name, source] of spreadsheetServices) {
+        assert.ok(source.includes(spreadsheetBinding), name + " debe declarar su propio ID de Spreadsheet.");
+        assert.ok(source.includes("SpreadsheetApp.openById(GPSpediaSpreadsheetId_)"),
+            name + " debe abrir explícitamente la Spreadsheet central.");
         assert.equal(source.includes("SpreadsheetApp.getActiveSpreadsheet("), false);
     }
-    for (const source of [write, feedback, admin]) {
+    for (const [name, source] of [["WRITE", write], ["FEEDBACK", feedback], ["ADMIN", admin]]) {
+        assert.ok(source.includes(driveBinding), name + " debe declarar su propio ID de carpeta Drive.");
         assert.ok(source.includes("GPSpediaCortesRootFolderId_"));
         assert.ok(source.includes('expectedName: "Cortes"'));
     }

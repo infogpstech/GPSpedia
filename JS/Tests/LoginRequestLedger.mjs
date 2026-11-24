@@ -21,7 +21,8 @@ assert.doesNotMatch(ledger, /\.setProperty\(|\.deleteProperty\(/,
 assert.match(ledger, /baseline_pending/);
 assert.match(ledger, /baseline_v1/);
 assert.match(ledger, /setValues\(imports\)/);
-assert.match(ledger, /JSON\.stringify\(back\)!==JSON\.stringify\(imports\)/);
+assert.match(ledger, /loginRequestRowsEqual_\(imports\[index\],row\)/);
+assert.doesNotMatch(ledger, /JSON\.stringify\(back\)!==JSON\.stringify\(imports\)/);
 
 const loginSession = block(auth, "createOrRecoverLoginSessionUnderLock_");
 assert.doesNotMatch(loginSession, /PropertiesService|ScriptProperties|LEGACY_LOGIN_REQUEST|cleanupExpiredLoginRequests_/,
@@ -64,20 +65,37 @@ assert.match(api, /sessionStorage\.setItem\(key, requestId\)/,
     "Los reintentos del cliente deben conservar el mismo requestId.");
 assert.match(api, /crypto\.getRandomValues\(bytes\)/);
 
-const rowFns = block(auth, "loginRequestRecordToRow_") + "\n" + block(auth, "loginRequestRecordFromRow_");
+const rowFns = ["loginRequestTextCell_", "loginRequestBooleanCell_", "loginRequestRowsEqual_", "loginRequestRecordToRow_", "loginRequestRecordFromRow_"]
+    .map(name => block(auth, name)).join("\n");
 const factory = new Function("normalizeUserId", "LOGIN_REQUEST_HEADERS_", "LOGIN_REQUEST_STATUS_", rowFns +
-    "\nreturn {loginRequestRecordToRow_, loginRequestRecordFromRow_};");
-const { loginRequestRecordToRow_, loginRequestRecordFromRow_ } = factory(
+    "\nreturn {loginRequestTextCell_, loginRequestRowsEqual_, loginRequestRecordToRow_, loginRequestRecordFromRow_};");
+const { loginRequestTextCell_, loginRequestRowsEqual_, loginRequestRecordToRow_, loginRequestRecordFromRow_ } = factory(
     value => String(value || "").trim(),
     ["requestId","userId","token","createdAt","createdAtMs","status","pointerSet","committedAt","revokedAt","updatedAt"],
     ["pending","committed","revoked"]
 );
-const original = {requestId:"0123456789abcdef0123456789abcdef",userId:"USR-0001",token:"session-token",
+const original = {requestId:"0123456789abcdef0123456789abcdef",userId:"123",token:"session-token",
     createdAt:"2026-11-24T00:00:00.000Z",createdAtMs:1795478400000,status:"pending",
     pointerSet:false,committedAt:"",revokedAt:"",updatedAt:"2026-11-24T00:00:00.000Z"};
 const row = loginRequestRecordToRow_(original);
 assert.equal(row.length, 10);
 assert.deepEqual(loginRequestRecordFromRow_(row), original);
+const sheetsRoundTrip = row.slice();
+sheetsRoundTrip[1] = 123;
+sheetsRoundTrip[3] = new Date(original.createdAt);
+sheetsRoundTrip[7] = 1795478400000;
+sheetsRoundTrip[9] = new Date(original.updatedAt);
+assert.equal(loginRequestRowsEqual_(row, sheetsRoundTrip), true,
+    "Debe aceptar coerciones de tipo equivalentes devueltas por Google Sheets.");
+assert.equal(loginRequestRecordFromRow_(sheetsRoundTrip).createdAt, original.createdAt);
+assert.equal(loginRequestRecordFromRow_(sheetsRoundTrip).updatedAt, original.updatedAt);
+assert.equal(loginRequestRecordFromRow_(sheetsRoundTrip).committedAt, "1795478400000");
+const corruptedRoundTrip = sheetsRoundTrip.slice();
+corruptedRoundTrip[2] = "another-token";
+assert.equal(loginRequestRowsEqual_(row, corruptedRoundTrip), false);
+const invalidBooleanRoundTrip = sheetsRoundTrip.slice();
+invalidBooleanRoundTrip[6] = "unknown";
+assert.equal(loginRequestRowsEqual_(row, invalidBooleanRoundTrip), false);
 assert.throws(() => loginRequestRecordFromRow_(row.slice(0, 9)), /incompleto/);
 assert.throws(() => loginRequestRecordFromRow_([...row.slice(0,5), "unknown", ...row.slice(6)]), /inválidos/);
 assert.throws(() => loginRequestRecordFromRow_([...row.slice(0,2), "", ...row.slice(3)]), /inválidos/);

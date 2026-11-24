@@ -728,3 +728,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Las variantes sin dato se conservan como opciones explícitas cuando coexisten con valores informados; no se descartan silenciosamente.
 - Cuando la combinación seleccionada contiene un único registro y un único rango, se abre directamente el modal de detalle. Los registros múltiples que comparten rango siguen visibles y no se selecciona uno arbitrariamente.
 - Se amplió SearchModelGrouping.mjs para cubrir opciones vacías, selección de versión/encendido, apertura directa y conservación de duplicados. CI run `45465653696`, job `138699734920`, HEAD `a1641afc3264d77fc9e2b5e1df349d437320f8e1`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos; SearchModelGrouping 28/28 PASS y sintaxis PASS.
+
+
+### 2026-11-24 — Vinculación autónoma de recursos y confirmación del ledger de login
+
+- Se añadió el ID de Spreadsheet directamente a los seis archivos principales de servicio. AUTH, WRITE, FEEDBACK y ADMIN ya no dependen de que CentralConfigurationReader.js declare el localizador; CATALOG y UTILITIES conservan su declaración directa existente.
+- WRITE, FEEDBACK y ADMIN declaran además el ID compartido de la carpeta raíz Cortes, manteniendo las validaciones existentes de identidad, nombre y jerarquía. No se añadieron URLs, credenciales ni propiedades Apps Script.
+- AUTH normaliza los valores leídos de LoginRequests según el tipo contractual de cada columna. La confirmación acepta equivalencias de Sheets (Date frente a ISO y número frente a texto numérico), conserva la comprobación de read-back y rechaza diferencias reales.
+- Se sincronizó JS/Tests/Auth.js con AUTH y se ampliaron LoginRequestLedger.mjs y MIG026StaticConfigSearch.mjs para cubrir coerciones de celdas y vinculación autónoma por servicio.
+- No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet, Drive, permisos, propiedades o datos externos.
