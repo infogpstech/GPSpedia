@@ -886,3 +886,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - FEEDBACK precondiciones de subida resumable: 10/10 PASS.
 - CI run `45506352069`: SUCCESS; 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45506351422`: SUCCESS.
 - No se ejecutó OAuth ni una subida real a YouTube; la validación externa queda en Beta aislada.
+
+2026-11-24 | Registro de nueva revisión de interfaz
+- Se creó `Tareas_Activas.md` para centralizar tres tareas nuevas y su orden de ejecución, una a la vez.
+- Modal Tutorial: preservar formato HTML enriquecido con sanitización avanzada y corregir el iframe de YouTube mediante URL validada.
+- Dashboard: no duplicar la agregación existente de modelos, cortes, utilidades y colaboradores; completar la tabla mostrando cortes aportados por usuario de forma independiente.
+- Developer: mover la navegación debajo de la línea de comando, expandir etiqueta solo para pestaña activa, duplicar altura de consola, compactar espaciado, mostrar estados de endpoints solo en consola y renombrar el botón a «Actualizar Servicios».
+- BETA-F007 permanece cerrada en código/CI y pendiente solo de la validación Beta descrita en Tareas_Beta.md §24. No se desplegaron Apps Script ni se modificaron recursos externos.
