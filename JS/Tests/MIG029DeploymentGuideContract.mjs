@@ -6,6 +6,9 @@ const guide = read("Services/DEPLOYMENT_GUIDE.md");
 const readme = read("README.md");
 const schema = read("ESQUEMA_CONFIGURACION_CENTRAL.md");
 const auth = read("JS/Services/Auth.js");
+const ui = read("JS/Frontend/ui.js");
+const api = read("JS/Frontend/api-config.js");
+const html = read("index.html");
 const catalog = read("JS/Services/catalog.js");
 const write = read("JS/Services/write.js");
 const feedback = read("JS/Services/feedback.js");
@@ -130,4 +133,16 @@ check("La lista de evidencia registra SHA, versión, URL y resultado por servici
     assert.ok(guide.includes(field), "Falta campo " + field);
 });
 
-console.log("MIG029DeploymentGuideContract: " + passed + "/15 PASS");
+check("La guía incluye el modal Developer y el flujo manual sin sesión GPSpedia", () => {
+  assert.match(guide, /7\.1 Desde la plataforma/);
+  assert.match(guide, /7\.2 Desde el editor de Apps Script/);
+  assert.match(guide, /prepareCentralConfigurationServiceUrlInput\(\)/);
+  assert.match(guide, /publishCentralConfigurationFromServiceUrlDraft\(\)/);
+  assert.match(guide, /no requiere una sesión ni un rol de GPSpedia/i);
+  assert.match(auth, /function handleUpdateCentralServiceUrls_/);
+  assert.match(auth, /function publishCentralConfigurationFromServiceUrlDraft\(/);
+  assert.match(ui, /initializeCentralServiceUrlsControl_/);
+  assert.match(api, /callCentralAuthBootstrapAction_/);
+  assert.match(html, /id="central-service-urls-card"/);
+});
+console.log("MIG029DeploymentGuideContract: " + passed + "/16 PASS");
