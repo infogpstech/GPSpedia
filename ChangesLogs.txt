@@ -601,3 +601,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - El checkpoint activo y TAREAS_MIGRACION_ARQUITECTURA.md reflejan la dependencia y la siguiente acción. No se modificó código funcional ni se invocaron servicios externos.
 
 - Precisión de MIG-026: se sustituyó la etiqueta de bloqueo por una descripción del trabajo pendiente. Permanecen tres localizadores Spreadsheet locales y su retirada requiere validar primero el contexto real de Web App; no se cambia el comportamiento de acceso sin esa evidencia.
+
+
+### Ajuste de criterio de cierre MIG-030 — 2026-11-24
+
+- Se alineó el estado de MIG-030 con NORMAS_DESAROLLO.md §§5 y 10: COMPLETADA CON VALIDACIÓN DIFERIDA, porque su preparación, contratos y regresión local aprobaron; las pruebas de campo permanecen pendientes sin bloquear el cierre local.
+- MIG-026 sigue EN PROGRESO por una condición distinta: tres servicios conservan SPREADSHEET_ID/openById y no existe aún una solución local segura que elimine esa configuración sin arriesgar la disponibilidad de las funciones.
+- No se sustituye el acceso por getActiveSpreadsheet() sin comprobar el contexto de Web App; un resultado nulo rompería las funciones dependientes. La prueba real se reserva a Beta, mientras continúa el diseño local de una solución no circular.
