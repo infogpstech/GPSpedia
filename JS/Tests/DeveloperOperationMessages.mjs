@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const ui = readFileSync(resolve(root, "JS/Frontend/ui.js"), "utf8");
+const addCuts = readFileSync(resolve(root, "HTML/add_cortes.html"), "utf8");
 const replacedStart = ui.indexOf("export async function openReplacedImagesModal()");
 const auditStart = ui.indexOf("export async function openAuditDriveModal()", replacedStart);
 const auditEnd = ui.indexOf("\nexport const openAboutUs", auditStart);
@@ -52,6 +53,22 @@ testCase("la auditoría registra inicio, avance, resultados y errores en la cons
     assert.match(audit, /const appendAuditConsole =/);
     assert.match(audit, /const appendFiles = \(files\)/);
     assert.match(audit, /const requestAuditConsoleConfirmation = async/);
+});
+
+testCase("los errores de cortes y modelos son breves y los detalles quedan en la consola de desarrollo", () => {
+    assert.match(ui, /logDeveloperOperation_\("\[CORTES\] Error al agregar corte:/);
+    assert.match(ui, /showGlobalError\("No se pudo agregar el corte\. Inténtalo de nuevo\."\)/);
+    assert.match(ui, /logDeveloperOperation_\("\[PYS\] Error al vincular modelos:/);
+    assert.match(ui, /showGlobalError\("No se pudieron vincular los modelos\."\)/);
+    assert.doesNotMatch(ui, /showGlobalError\("No se pudo confirmar el agregado del corte: /);
+    assert.doesNotMatch(ui, /showGlobalError\("Error al vincular modelos: /);
+    assert.match(addCuts, /window\.parent\.gpsepediaDeveloperLog/);
+    assert.match(addCuts, /No se pudieron cargar los datos del formulario/);
+    assert.match(addCuts, /No se pudo verificar el vehículo/);
+    assert.match(addCuts, /Corte agregado correctamente/);
+    assert.match(addCuts, /Cambios guardados correctamente/);
+    assert.doesNotMatch(addCuts, /Error al verificar: \$\{error\.message\}/);
+    assert.doesNotMatch(addCuts, /Error al cargar datos del formulario: \$\{error\.message\}/);
 });
 
 testCase("inventario y organización conservan confirmación global y resultados en consola de Cortes", () => {
