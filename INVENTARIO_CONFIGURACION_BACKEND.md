@@ -394,3 +394,13 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - CI run 45370448353: 499 suites, 5,889 pruebas aprobadas, 0 fallos; sintaxis PASS.
 - Pages run 45370445917: SUCCESS.
 - La excepción `SPREADSHEET_ID` en AUTH/CATALOG/UTILITIES sigue pendiente de MIG-006/Beta y no se considera cerrada por la búsqueda estática.
+
+
+### Adenda MIG-026 — retirada de IDs locales Spreadsheet — 2026-11-24
+
+- AUTH, CATALOG y UTILITIES ya no declaran `SPREADSHEET_ID` ni usan `SpreadsheetApp.openById(SPREADSHEET_ID)`.
+- AUTH resuelve el contenedor activo mediante `getAuthUsersSpreadsheet_()`; CATALOG mediante `getSpreadsheet()`; UTILITIES mediante `getUtilitiesSpreadsheet_()` y reutiliza el handle durante la petición. Todos fallan cerrado cuando no existe contexto activo.
+- No se añadió ID, URL, propiedad, secreto, endpoint bootstrap ni fallback local. La copia de prueba AUTH mantiene paridad exacta.
+- MIG026StaticConfigSearch 10/10 PASS; MIG013SessionActorLocalLookup 22/22 PASS; CatalogChangeFeed 19/19 PASS; UtilitiesSecurity 19/19 PASS. CI run 45399766285: 513 suites, 6,051 pruebas, 0 fallos.
+- La disponibilidad del contexto activo en cada deployment Web App, identidad y permisos efectivos, lectura/escritura, concurrencia y latencia quedan pendientes de Beta. Si falla, no se restaura el ID local; se debe resolver una alternativa sin configuración local antes del despliegue.
+- No se modificaron deployments, propiedades instaladas, hojas ni datos reales.
