@@ -24,3 +24,5 @@ Actualización MIG-026 (2026-11-24): la validación Beta del baseline WRITE de G
 Actualización MIG-026 AUTH (2026-11-24): consultar Tareas_Beta.md §8 para probar recuperación de contraseña sin secreto HMAC persistente, código de 96 bits, SHA-256 en CacheService y limpieza autorizada de la propiedad legacy. Sigue pendiente de ejecución en deployment aislado.
 
 Actualización MIG-026 AUTH (2026-11-24): consultar Tareas_Beta.md §9 para validar LoginRequests, baseline de propiedades legacy, recuperación de append ambiguo, expiración de 24 h, limpieza acotada y concurrencia fail-fast. AUTH no espera por ScriptLock; las contenciones deben responder inmediatamente. La prueba real y la limpieza de propiedades instaladas siguen pendientes.
+
+Actualización MIG-026 AUTH (2026-11-24): consultar Tareas_Beta.md §10 para validar baseline role_revocation_pending_, importación reanudable, marcador compartido Users.SessionToken, revocación de sesiones y ausencia de lecturas legacy después de baseline_v1. No borrar propiedades instaladas sin autorización.

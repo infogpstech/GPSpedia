@@ -460,3 +460,13 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - CI run 45308365799: sintaxis PASS; 338 suites; 3,921 pruebas aprobadas; tres fallos ajenos al cambio (WriteCatalogPublicationIsolation en dos grupos y GP-PERF FEEDBACK/Inbox). LoginRequestLedger 39/39; PasswordRecovery 10/10; AUTH operativo/copia 32/32; perfil/revocación 23/23. Pages run 45308365427 SUCCESS.
 - No se desplegó Apps Script ni se modificaron propiedades, hojas o datos instalados. Validación real y limpieza de login_request_ legacy pendientes de Beta.
 - Siguiente tarea: migrar role_revocation_pending_ en AUTH; ADMIN permanece después.
+
+
+### 2026-11-24 — MIG-026 AUTH: migración de role_revocation_pending_
+- Migrado el marcador legacy a Users.SessionToken; baseline versionado y reanudable en LoginRequests fila 2, columna H.
+- El baseline valida JSON, userId, unicidad, estado activo, rol actual y concordancia de marcadores; read-back de cada escritura. No escribe ni elimina propiedades.
+- hasPendingRoleRevocation_ y reconcileRoleRevocationUnderLock_ ya no consultan ScriptProperties. doPost asegura baseline antes del actor protegido; login, validación de sesión, logout y recuperación también lo aseguran.
+- AUTH no contiene waitLock ni tryLock temporizado; todas las adquisiciones ScriptLock son tryLock(0).
+- CI run 45310018557: sintaxis PASS; 339 suites; 3,961 pruebas aprobadas; RoleRevocationLedger 39/39, LoginRequestLedger 40/40, PasswordRecovery 10/10, AUTH operativo/copia 32/32, perfil/revocación 23/23 y PasswordKdfBenchmark 5/5. Tres fallos externos (WriteCatalogPublicationIsolation en dos grupos y GP-PERF FEEDBACK/Inbox). Pages 45310017580 SUCCESS.
+- No se desplegó Apps Script ni se modificaron propiedades instaladas. Validación real y limpieza legacy pendientes de Beta.
+- Siguiente tarea: primera familia de estado ADMIN, una a la vez.

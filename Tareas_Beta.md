@@ -247,3 +247,17 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Mantener una ejecución AUTH ocupando el ScriptLock y lanzar login, cierre, cambio de perfil, recuperación y validación. Confirmar que ninguna función espera 10 s ni queda en cola: las operaciones que requieren lock usan tryLock(0) y responden de inmediato con contención reintentable; las lecturas que no requieren mutación continúan según su contrato.
 - Confirmar por búsqueda estática que AUTH no contiene .waitLock(. Confirmar que las propiedades legacy login_request_ no se escriben ni eliminan y que solo se leen durante baseline si el marcador no existe.
 - No borrar propiedades login_request_ instaladas durante esta prueba. La limpieza requiere baseline verificado, despliegue controlado y autorización Beta explícita. Registrar deployment, evidencia anonimizada y resultados por caso en Hallazgos_Beta.md.
+
+
+## 10. Validación Beta diferida — MIG-026 AUTH: baseline role_revocation_pending_
+**Estado: PENDIENTE.** El estado canónico compartido y el baseline local están implementados; falta la verificación en Spreadsheet/Apps Script real.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar proyecto AUTH, Spreadsheet y usuarios desechables; nunca producción.
+- Preparar propiedades legacy role_revocation_pending_<userId> con marcadores válidos: solo oldRole, con newRole y con newFullName. Ejecutar el baseline y comprobar que LoginRequests, fila 2 columna H, pasa de role_revocation_baseline_pending a role_revocation_baseline_v1.
+- Confirmar que cada marcador se copia a Users.SessionToken con el prefijo compartido, que se verifica por read-back y que los campos userId/oldRole/newRole/markedAt/newFullName se preservan exactamente.
+- Repetir tras interrupciones simuladas: después de escribir el estado pending, después de migrar una de varias cuentas y después de escribir el último marcador pero antes de confirmar el baseline. El reintento debe completar sin duplicar ni alterar marcadores.
+- Inyectar JSON inválido, userId de clave y cuerpo distintos, ID duplicado, usuario inexistente/inactivo, rol actual no coincidente, marcador compartido corrupto y divergencia entre marcador legacy y compartido. Confirmar fail-closed y que el baseline no se marque completo.
+- Confirmar que, una vez marcado role_revocation_baseline_v1, las rutas protegidas no vuelven a consultar PropertiesService para role_revocation_pending_. Verificar que hasPendingRoleRevocation_ y reconcileRoleRevocationUnderLock_ leen/escriben solo Users.SessionToken.
+- Probar cambio de rol y nombre, degradación del último Desarrollador, cierre de sesión, recuperación de contraseña, eliminación de usuario y reintentos tras fallo de flush. Confirmar revocación de todas las sesiones y del ledger LoginRequests antes de limpiar el marcador compartido.
+- Ejecutar dos operaciones de AUTH simultáneas. La adquisición de ScriptLock debe usar tryLock(0); la operación que encuentre contención debe responder inmediatamente, sin espera ni cola, y poder reintentarse. No debe quedar un marcador parcialmente aplicado que permita acceso con el rol anterior.
+- No borrar las propiedades role_revocation_pending_ durante la prueba. La limpieza física requiere baseline verificado, despliegue controlado y autorización Beta explícita. Registrar deployment, evidencia anonimizada y resultados en Hallazgos_Beta.md.

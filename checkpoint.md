@@ -1709,3 +1709,31 @@ Pendiente Beta: baseline sobre Spreadsheet real, concurrencia entre ejecuciones,
 
 Siguiente tarea MIG-026, por orden: migrar los marcadores role_revocation_pending_ de AUTH. No iniciar ADMIN en paralelo.
 ================================================================================
+
+
+================================================================================
+MIG-026 — AUTH — MIGRACIÓN DE MARCADORES DE REVOCACIÓN — 2026-11-24
+Commit de implementación: e09779ae200c3304b00a31b60e317192de986425.
+Commit de ajuste de harness protegido: 8ed3a0d6f50fd0cd30eb79bfc1c3c5e5e9330071.
+Commit de validación/fixture: fae502c3daa7365fa550f4ddd512242ae887e5ef.
+Commit de harness benchmark: d96129b4548cebe417b6759498e1817ffbca52eb.
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Cambios:
+- role_revocation_pending_ se migra al marcador compartido en Users.SessionToken.
+- Baseline reanudable guardado en LoginRequests, fila 2 columna H. Lee legacy una sola vez, valida identidad/rol/duplicados/divergencias, verifica read-back y marca versión al completar.
+- hasPendingRoleRevocation_ y reconcileRoleRevocationUnderLock_ ya no consultan PropertiesService. Se retiraron las escrituras/eliminaciones legacy.
+- doPost ejecuta baseline antes de resolver actor protegido; login, validación de sesión, logout y recuperación lo aseguran bajo el lock ya adquirido.
+- Todas las adquisiciones AUTH ScriptLock usan tryLock(0); no hay waitLock ni tryLock temporizado.
+
+Validación CI run 45310018557:
+- Sintaxis PASS; 339 suites; 3,961 pruebas aprobadas.
+- RoleRevocationLedger 39/39; LoginRequestLedger 40/40; PasswordRecovery 10/10; AUTH operativo/copia 32/32; fixture/paridad 1/1; perfil/revocación 23/23; PasswordKdfBenchmark 5/5.
+- Tres fallos externos: WriteCatalogPublicationIsolation (dos grupos) y GP-PERF FEEDBACK/Inbox.
+- GitHub Pages run 45310017580: SUCCESS.
+- No se desplegó Apps Script ni se modificaron propiedades instaladas.
+
+Pendiente Beta: probar baseline con Spreadsheet real, interrupciones, concurrencia, cambio de rol y revocación completa; no borrar propiedades legacy sin autorización. Consultar Tareas_Beta.md §10.
+
+Siguiente tarea MIG-026: primera familia de estado ADMIN, una familia por tarea, siguiendo el inventario y sus dependencias. No ejecutar migraciones ADMIN en paralelo.
+================================================================================
