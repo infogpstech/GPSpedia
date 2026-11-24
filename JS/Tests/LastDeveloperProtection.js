@@ -136,7 +136,7 @@ function runLastDeveloperProtectionTests(sources) {
         assert(!third.pending,'El segundo reintento debe completar la operación.');
         equal(users[1][6],'Nombre nuevo');equal(users[1][7],'');
         equal(sessions.length,1,'La fila de sesión revocada debe eliminarse tras recuperar.');
-        assert(!properties.has('role:T1'),'El marcador local se elimina solo al confirmar el perfil y flush.');
+        assert(properties.has('role:T1'),'La propiedad legacy no se borra durante la migración; su limpieza queda para Beta.');
     });
     run('Marcadores compartido y local rechazan metadatos de perfil divergentes',()=>{
         const parse=new Function('normalizeUserId','normalizeRoleName',extract(auth,'parseRoleRevocationMarker_')+'\n'+extract(auth,'sameRoleRevocationMarker_')+'\nreturn {parseRoleRevocationMarker_,sameRoleRevocationMarker_};')(

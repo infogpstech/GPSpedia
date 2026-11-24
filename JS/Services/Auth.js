@@ -47,6 +47,8 @@ const SESSION_LIMITS = {
 
 const ROLE_REVOCATION_PROPERTY_PREFIX = 'role_revocation_pending_';
 const ROLE_REVOCATION_SHARED_PREFIX = '__role_revocation_pending__:';
+const ROLE_REVOCATION_BASELINE_PENDING_ = 'role_revocation_baseline_pending';
+const ROLE_REVOCATION_BASELINE_VERSION_ = 'role_revocation_baseline_v1';
 const LEGACY_LOGIN_REQUEST_PROPERTY_PREFIX = 'login_request_';
 const LOGIN_REQUEST_HEADERS_ = Object.freeze(['requestId','userId','token','createdAt','createdAtMs','status','pointerSet','committedAt','revokedAt','updatedAt']);
 const LOGIN_REQUEST_BASELINE_MARKER_ = '__META__:LOGIN_REQUESTS_BASELINE_V1';
@@ -591,6 +593,18 @@ function doPost(e) {
         }
         return ContentService.createTextOutput(JSON.stringify(result))
             .setMimeType(ContentService.MimeType.JSON);
+    }
+    const requiresSessionActor = action === "clearSensitiveLogs" ||
+        ["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile", "benchmarkPasswordKdf"].includes(action) ||
+        isSharedMutationAction_(action);
+    if (requiresSessionActor) {
+        try { migrateLegacyRoleRevocationMarkersToSharedState_(); }
+        catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "No se pudo verificar el estado de revocación AUTH."
+            })).setMimeType(ContentService.MimeType.JSON);
+        }
     }
     if (action === "clearSensitiveLogs") {
         try {
@@ -1221,6 +1235,7 @@ function handleLogin(payload) {
             }
             const activeSessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
             if (!activeSessionsSheet) throw new Error('Hoja ActiveSessions no encontrada.');
+            migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(spreadsheet, userSheet);
             ensureActiveSessionsActivityColumn_(activeSessionsSheet);
             ensureSessionTermsAcceptanceColumn_(activeSessionsSheet);
             const roleRevocation = reconcileRoleRevocationUnderLock_(userSheet, activeSessionsSheet, userId, currentUserRowIndex);
@@ -1307,6 +1322,7 @@ function validateSessionReadOnly_(sessionToken, expectedUserId, trustedActor) {
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) return { valid: null, unavailable: true, reason: 'missing_sheet' };
+        migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(spreadsheet, usersSheet);
         const sessions = sessionsSheet.getDataRange().getValues();
         const matches = [];
         for (let index = 1; index < sessions.length; index++) {
@@ -1506,10 +1522,6 @@ function ensureSessionTermsAcceptanceColumn_(sheet) {
     return column;
 }
 
-function roleRevocationPropertyKey_(userId) {
-    return ROLE_REVOCATION_PROPERTY_PREFIX + encodeURIComponent(normalizeUserId(userId));
-}
-
 function isRoleRevocationPendingValue_(value) { return String(value || '').startsWith(ROLE_REVOCATION_SHARED_PREFIX); }
 function parseRoleRevocationMarker_(raw) {
  if(typeof raw!=='string'||!raw)return null;let marker;try{marker=JSON.parse(raw);}catch(error){return{invalid:true};}
@@ -1519,41 +1531,101 @@ function parseRoleRevocationMarker_(raw) {
 }
 function parseSharedRoleRevocationMarker_(value) {const raw=String(value||'');if(!raw.startsWith(ROLE_REVOCATION_SHARED_PREFIX))return null;return parseRoleRevocationMarker_(raw.slice(ROLE_REVOCATION_SHARED_PREFIX.length));}
 function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.invalid&&normalizeUserId(a.userId)===normalizeUserId(b.userId)&&String(a.oldRole)===String(b.oldRole)&&String(a.newRole)===String(b.newRole)&&Number(a.markedAt)===Number(b.markedAt)&&(Object.prototype.hasOwnProperty.call(a,'newFullName')===Object.prototype.hasOwnProperty.call(b,'newFullName'))&&(!Object.prototype.hasOwnProperty.call(a,'newFullName')||a.newFullName===b.newFullName));}
+function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(spreadsheet, usersSheet) {
+    if (!spreadsheet || !usersSheet) throw new Error('No se pudo abrir Users para migrar los marcadores de revocación.');
+    const loginRequestsSheet = ensureLoginRequestsSheet_(spreadsheet);
+    const baselineCell = loginRequestsSheet.getRange(2, 8);
+    let baselineState = String(baselineCell.getValue() || '');
+    if (baselineState === ROLE_REVOCATION_BASELINE_VERSION_) return { status: 'success', markers: 0, migrated: 0, alreadyComplete: true };
+    if (baselineState && baselineState !== ROLE_REVOCATION_BASELINE_PENDING_) throw new Error('El marcador de baseline de revocación AUTH no es válido.');
+    if (!baselineState) {
+        baselineCell.setValue(ROLE_REVOCATION_BASELINE_PENDING_);
+        SpreadsheetApp.flush();
+        baselineState = String(baselineCell.getValue() || '');
+        if (baselineState !== ROLE_REVOCATION_BASELINE_PENDING_) throw new Error('No se pudo iniciar el baseline de revocación AUTH.');
+    }
+
+    // Importación única y reanudable. Las propiedades legacy se leen, pero nunca se escriben ni eliminan.
+    const legacy = PropertiesService.getScriptProperties().getProperties();
+    const keys = Object.keys(legacy).filter(key => key.startsWith(ROLE_REVOCATION_PROPERTY_PREFIX));
+    const userRows = usersSheet.getDataRange().getValues().slice(1)
+        .map((row, index) => ({ row, rowIndex: index + 2 }));
+    const rowsById = new Map();
+    userRows.forEach(item => {
+        const id = normalizeUserId(item.row[COLS_USERS.ID - 1]);
+        if (!id) return;
+        if (!rowsById.has(id)) rowsById.set(id, []);
+        rowsById.get(id).push(item);
+    });
+    const migratedUsers = new Set();
+    let migrated = 0;
+    for (const key of keys) {
+        let userId = '';
+        try { userId = decodeURIComponent(key.slice(ROLE_REVOCATION_PROPERTY_PREFIX.length)); }
+        catch (error) { throw new Error('Existe un ID inválido en un marcador legacy de revocación.'); }
+        if (!userId || migratedUsers.has(userId)) throw new Error('Existe más de un marcador legacy para la misma cuenta.');
+        migratedUsers.add(userId);
+        const marker = parseRoleRevocationMarker_(String(legacy[key] || ''));
+        if (!marker || marker.invalid || normalizeUserId(marker.userId) !== userId) {
+            throw new Error('Existe un marcador legacy de revocación dañado o inconsistente.');
+        }
+        const matches = rowsById.get(userId) || [];
+        if (matches.length !== 1 || !isActiveAuthUserRecord(matches[0].row)) {
+            throw new Error('La cuenta asociada a un marcador legacy no es única y activa: ' + userId);
+        }
+        const currentRole = normalizeRoleName(matches[0].row[COLS_USERS.Privilegios - 1]);
+        if (currentRole !== normalizeRoleName(marker.oldRole) && currentRole !== normalizeRoleName(marker.newRole)) {
+            throw new Error('El rol actual no coincide con el marcador legacy de revocación.');
+        }
+        const pointer = usersSheet.getRange(matches[0].rowIndex, COLS_USERS.SessionToken);
+        const shared = parseSharedRoleRevocationMarker_(String(pointer.getValue() || ''));
+        if (shared && shared.invalid) throw new Error('El marcador compartido de revocación está dañado.');
+        if (shared && !sameRoleRevocationMarker_(shared, marker)) throw new Error('Los marcadores legacy y compartido de revocación no coinciden.');
+        if (!shared) {
+            const expected = ROLE_REVOCATION_SHARED_PREFIX + JSON.stringify(marker);
+            let writeError = null;
+            try { pointer.setValue(expected); } catch (error) { writeError = error; }
+            SpreadsheetApp.flush();
+            if (String(pointer.getValue() || '') !== expected) {
+                throw new Error('No se pudo confirmar el marcador compartido de revocación.' + (writeError ? ' ' + writeError.message : ''));
+            }
+            migrated++;
+        }
+    }
+    SpreadsheetApp.flush();
+    baselineCell.setValue(ROLE_REVOCATION_BASELINE_VERSION_);
+    SpreadsheetApp.flush();
+    if (String(baselineCell.getValue() || '') !== ROLE_REVOCATION_BASELINE_VERSION_) {
+        throw new Error('No se pudo confirmar el baseline de marcadores de revocación AUTH.');
+    }
+    return { status: 'success', markers: keys.length, migrated, alreadyComplete: false };
+}
+
 function migrateLegacyRoleRevocationMarkersToSharedState_() {
-    return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
+        acquired = true;
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!usersSheet) throw new Error('No se encontró la hoja Users.');
+        return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(spreadsheet, usersSheet);
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
 }
 
-function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_() {
- const lock=LockService.getScriptLock();let acquired=false;
- try {
-  if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');acquired=true;const properties=PropertiesService.getScriptProperties(),all=properties.getProperties();
-  const keys=Object.keys(all).filter(key=>key.startsWith(ROLE_REVOCATION_PROPERTY_PREFIX));
-  const usersSheet=SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)throw new Error('No se encontró la hoja Users.');
-  let migrated=0;
-  for(const key of keys){
-   const marker=parseRoleRevocationMarker_(all[key]);if(!marker||marker.invalid)throw new Error('Marcador legacy dañado: '+key);
-   let userId='';try{userId=decodeURIComponent(key.slice(ROLE_REVOCATION_PROPERTY_PREFIX.length));}catch(error){throw new Error('ID inválido en marcador legacy: '+key);}
-   if(normalizeUserId(marker.userId)!==normalizeUserId(userId))throw new Error('El ID del marcador legacy no coincide con su clave.');
-   const rows=readTargetRows();
-   if(rows.length!==1||!isActiveAuthUserRecord(rows[0].row))throw new Error('El usuario del marcador legacy no es único o no está activo: '+userId);
-   const currentRole=normalizeRoleName(rows[0].row[COLS_USERS.Privilegios-1]);
-   if(currentRole!==normalizeRoleName(marker.oldRole)&&currentRole!==normalizeRoleName(marker.newRole))throw new Error('El rol actual no coincide con el marcador legacy: '+userId);
-   const cell=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),value=String(cell.getValue()||''),shared=parseSharedRoleRevocationMarker_(value);
-   if(shared&&!sameRoleRevocationMarker_(shared,marker))throw new Error('Existe un marcador compartido distinto para '+userId);
-   if(!shared){const expected=ROLE_REVOCATION_SHARED_PREFIX+JSON.stringify(marker);try{cell.setValue(expected);}catch(error){}if(String(cell.getValue()||'')!==expected)throw new Error('No se confirmó el marcador compartido para '+userId);migrated++;}
-  }
-  SpreadsheetApp.flush();return{status:'success',markers:keys.length,migrated};
- } finally {if(acquired)lock.releaseLock();}
+function hasPendingRoleRevocation_(userId, usersSheetOverride = null) {
+    try {
+        const usersSheet = usersSheetOverride || SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);
+        if (!usersSheet) return true;
+        const matches = usersSheet.getDataRange().getValues().slice(1)
+            .filter(row => normalizeUserId(row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
+        if (matches.length !== 1 || !isActiveAuthUserRecord(matches[0])) return true;
+        return isRoleRevocationPendingValue_(matches[0][COLS_USERS.SessionToken - 1]);
+    } catch (error) { return true; }
 }
-function hasPendingRoleRevocation_(userId,usersSheetOverride=null) {
- const key=roleRevocationPropertyKey_(userId);try{if(PropertiesService.getScriptProperties().getProperty(key))return true;}catch(error){return true;}
- try{const sh=usersSheetOverride||SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);if(!sh)return true;
-  const rows=sh.getDataRange().getValues().slice(1).filter(r=>normalizeUserId(r[COLS_USERS.ID-1])===normalizeUserId(userId));
-  if(rows.length!==1)return true;return isRoleRevocationPendingValue_(rows[0][COLS_USERS.SessionToken-1]);
- }catch(error){return true;}
-}
-
-
 function assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterUserId) {
     if (!hasPendingRoleRevocation_(requesterUserId, usersSheet)) return;
     let reconciliation;
@@ -1670,58 +1742,90 @@ function deleteRevokedSessionRowsUnderLock_(sheet, rows) {
 }
 
 
-function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId,knownRowIndex) {
- const properties=PropertiesService.getScriptProperties(),key=roleRevocationPropertyKey_(userId);
- let raw=null,propertyReadError=null;try{raw=properties.getProperty(key);}catch(error){propertyReadError=error;}
- const readTargetRows=()=>Number.isInteger(knownRowIndex)&&knownRowIndex>=2
-  ? [{row:usersSheet.getRange(knownRowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0],rowIndex:knownRowIndex}]
-  : usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>normalizeUserId(item.row[COLS_USERS.ID-1])===normalizeUserId(userId));
- let rows=readTargetRows();
- if(rows.length!==1||normalizeUserId(rows[0].row[COLS_USERS.ID-1])!==normalizeUserId(userId)||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:0,error:'La cuenta destino dejó de ser única o activa.'};
- const pointer=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),shared=parseSharedRoleRevocationMarker_(rows[0].row[COLS_USERS.SessionToken-1]);
- if(shared&&shared.invalid)return{pending:true,cleanupPending:true,revokedSessions:0,error:'El marcador compartido de revocación está dañado.'};
- const local=raw?parseRoleRevocationMarker_(raw):null;
- if(local&&local.invalid&&!shared)return{pending:true,cleanupPending:true,revokedSessions:0,error:'El marcador local de revocación está dañado.'};
- if(shared&&local&&!local.invalid&&!sameRoleRevocationMarker_(shared,local))return{pending:true,cleanupPending:true,revokedSessions:0,error:'Los marcadores local y compartido de revocación no coinciden.'};
- const marker=shared||local;if(!marker){if(propertyReadError)return{pending:true,cleanupPending:true,revokedSessions:0,error:propertyReadError.message};return{pending:false,cleanupPending:false,revokedSessions:0};}
- if(normalizeUserId(marker.userId)!==normalizeUserId(userId))return{pending:true,cleanupPending:true,revokedSessions:0,error:'El marcador de revocación pertenece a otra cuenta.'};
- const sharedValue=ROLE_REVOCATION_SHARED_PREFIX+JSON.stringify(marker);
- if(!shared){let writeError=null;try{pointer.setValue(sharedValue);}catch(error){writeError=error;}let persisted='';try{persisted=String(pointer.getValue()||'');}catch(error){return{pending:true,cleanupPending:true,revokedSessions:0,error:error.message};}
-  if(persisted!==sharedValue)return{pending:true,cleanupPending:true,revokedSessions:0,error:writeError?writeError.message:'No se confirmó el marcador compartido de revocación.'};}
- if(!raw){try{properties.setProperty(key,JSON.stringify(marker));}catch(error){}}
- const revocation=revokeAllUserSessionsUnderLock_(sessionsSheet,userId,
-  tokens=>revokeSharedUserSessionContexts_(userId,tokens));
- if(revocation.pendingRows.length||revocation.pendingLoginRequests)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,pendingTokens:revocation.pendingRows.length,error:revocation.writeError?revocation.writeError.message:''};
- rows=readTargetRows();
- if(rows.length!==1||normalizeUserId(rows[0].row[COLS_USERS.ID-1])!==normalizeUserId(userId)||!isActiveAuthUserRecord(rows[0].row))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'La cuenta destino dejó de ser única o activa.'};
- const role=String(rows[0].row[COLS_USERS.Privilegios-1]||'').trim();
- if(role!==marker.newRole&&role!==marker.oldRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El rol cambió fuera de la operación pendiente; se requiere revisión.'};
- if(role!==marker.newRole){let writeError=null;try{usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).setValue(marker.newRole);}catch(error){writeError=error;}
-  if(String(usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).getValue()||'').trim()!==marker.newRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:writeError?writeError.message:'No se confirmó la escritura del nuevo rol.'};}
- if(Object.prototype.hasOwnProperty.call(marker,'newFullName')){
-  const nameRange=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Nombre_Completo);let nameWriteError=null;
-  try{nameRange.setValue(marker.newFullName);}catch(error){nameWriteError=error;}
-  let persistedName='';try{persistedName=String(nameRange.getValue()===null||nameRange.getValue()===undefined?'':nameRange.getValue());}
-  catch(error){return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'No se pudo verificar el nombre completo pendiente: '+error.message};}
-  if(persistedName!==marker.newFullName)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:nameWriteError?nameWriteError.message:'No se confirmó el nombre completo pendiente.'};
- }
- try{SpreadsheetApp.flush();}catch(error){return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'No se pudo confirmar la escritura del rol y el perfil: '+error.message};}
- const confirmedRole=String(usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).getValue()||'').trim();
- if(confirmedRole!==marker.newRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El rol no quedó confirmado después de flush.'};
- if(Object.prototype.hasOwnProperty.call(marker,'newFullName')){
-  const confirmedName=String(usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Nombre_Completo).getValue()||'');
-  if(confirmedName!==marker.newFullName)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El nombre completo no quedó confirmado después de flush.'};
- }
- const latest=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),latestMarker=parseSharedRoleRevocationMarker_(String(latest.getValue()||''));
- if(!latestMarker||latestMarker.invalid||!sameRoleRevocationMarker_(latestMarker,marker))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El marcador compartido cambió antes de completar la revocación.'};
- const deletion=deleteRevokedSessionRowsUnderLock_(sessionsSheet,revocation.rows);
- try{properties.deleteProperty(key);if(properties.getProperty(key))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El marcador local de revocación sigue activo.'};}
- catch(error){return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:error.message};}
- let clearError=null;try{latest.clearContent();}catch(error){clearError=error;}let remaining='';try{remaining=String(latest.getValue()||'');}catch(error){clearError=clearError||error;}
- if(remaining)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:clearError?clearError.message:'Users.SessionToken conserva el marcador compartido.'};
- return{pending:false,cleanupPending:deletion.cleanupPending,revokedSessions:revocation.revokedSessions,cleanupError:deletion.cleanupError?deletion.cleanupError.message:''};
-}
+function reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId, knownRowIndex) {
+    const readTargetRows = () => Number.isInteger(knownRowIndex) && knownRowIndex >= 2
+        ? [{ row: usersSheet.getRange(knownRowIndex, 1, 1, COLS_USERS.TermsAcceptance).getValues()[0], rowIndex: knownRowIndex }]
+        : usersSheet.getDataRange().getValues().slice(1)
+            .map((row, index) => ({ row, rowIndex: index + 2 }))
+            .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
+    let rows = readTargetRows();
+    if (rows.length !== 1 || normalizeUserId(rows[0].row[COLS_USERS.ID - 1]) !== normalizeUserId(userId) ||
+        !isActiveAuthUserRecord(rows[0].row)) {
+        return { pending: true, cleanupPending: true, revokedSessions: 0, error: 'La cuenta destino dejó de ser única o activa.' };
+    }
+    const shared = parseSharedRoleRevocationMarker_(String(rows[0].row[COLS_USERS.SessionToken - 1] || ''));
+    if (shared && shared.invalid) return { pending: true, cleanupPending: true, revokedSessions: 0, error: 'El marcador compartido de revocación está dañado.' };
+    if (!shared) return { pending: false, cleanupPending: false, revokedSessions: 0 };
+    const marker = shared;
+    if (normalizeUserId(marker.userId) !== normalizeUserId(userId)) {
+        return { pending: true, cleanupPending: true, revokedSessions: 0, error: 'El marcador de revocación pertenece a otra cuenta.' };
+    }
 
+    const revocation = revokeAllUserSessionsUnderLock_(sessionsSheet, userId,
+        tokens => revokeSharedUserSessionContexts_(userId, tokens));
+    if (revocation.pendingRows.length || revocation.pendingLoginRequests) {
+        return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions,
+            pendingTokens: revocation.pendingRows.length, error: revocation.writeError ? revocation.writeError.message : '' };
+    }
+    rows = readTargetRows();
+    if (rows.length !== 1 || normalizeUserId(rows[0].row[COLS_USERS.ID - 1]) !== normalizeUserId(userId) ||
+        !isActiveAuthUserRecord(rows[0].row)) {
+        return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'La cuenta destino dejó de ser única o activa.' };
+    }
+    const role = String(rows[0].row[COLS_USERS.Privilegios - 1] || '').trim();
+    if (role !== marker.newRole && role !== marker.oldRole) {
+        return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'El rol cambió fuera de la operación pendiente; se requiere revisión.' };
+    }
+    if (role !== marker.newRole) {
+        const roleRange = usersSheet.getRange(rows[0].rowIndex, COLS_USERS.Privilegios);
+        let writeError = null;
+        try { roleRange.setValue(marker.newRole); } catch (error) { writeError = error; }
+        if (String(roleRange.getValue() || '').trim() !== marker.newRole) {
+            return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions,
+                error: writeError ? writeError.message : 'No se confirmó la escritura del nuevo rol.' };
+        }
+    }
+    if (Object.prototype.hasOwnProperty.call(marker, 'newFullName')) {
+        const nameRange = usersSheet.getRange(rows[0].rowIndex, COLS_USERS.Nombre_Completo);
+        let nameWriteError = null;
+        try { nameRange.setValue(marker.newFullName); } catch (error) { nameWriteError = error; }
+        let persistedName = '';
+        try { persistedName = String(nameRange.getValue() === null || nameRange.getValue() === undefined ? '' : nameRange.getValue()); }
+        catch (error) { return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'No se pudo verificar el nombre completo pendiente: ' + error.message }; }
+        if (persistedName !== marker.newFullName) {
+            return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions,
+                error: nameWriteError ? nameWriteError.message : 'No se confirmó el nombre completo pendiente.' };
+        }
+    }
+    try { SpreadsheetApp.flush(); }
+    catch (error) { return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'No se pudo confirmar la escritura del rol y el perfil: ' + error.message }; }
+    const confirmedRole = String(usersSheet.getRange(rows[0].rowIndex, COLS_USERS.Privilegios).getValue() || '').trim();
+    if (confirmedRole !== marker.newRole) {
+        return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'El rol no quedó confirmado después de flush.' };
+    }
+    if (Object.prototype.hasOwnProperty.call(marker, 'newFullName')) {
+        const confirmedName = String(usersSheet.getRange(rows[0].rowIndex, COLS_USERS.Nombre_Completo).getValue() || '');
+        if (confirmedName !== marker.newFullName) {
+            return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'El nombre completo no quedó confirmado después de flush.' };
+        }
+    }
+    const latest = usersSheet.getRange(rows[0].rowIndex, COLS_USERS.SessionToken);
+    const latestMarker = parseSharedRoleRevocationMarker_(String(latest.getValue() || ''));
+    if (!latestMarker || latestMarker.invalid || !sameRoleRevocationMarker_(latestMarker, marker)) {
+        return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions, error: 'El marcador compartido cambió antes de completar la revocación.' };
+    }
+    const deletion = deleteRevokedSessionRowsUnderLock_(sessionsSheet, revocation.rows);
+    let clearError = null;
+    try { latest.clearContent(); } catch (error) { clearError = error; }
+    let remaining = '';
+    try { remaining = String(latest.getValue() || ''); } catch (error) { clearError = clearError || error; }
+    if (remaining) {
+        return { pending: true, cleanupPending: true, revokedSessions: revocation.revokedSessions,
+            error: clearError ? clearError.message : 'Users.SessionToken conserva el marcador compartido.' };
+    }
+    return { pending: false, cleanupPending: deletion.cleanupPending, revokedSessions: revocation.revokedSessions,
+        cleanupError: deletion.cleanupError ? deletion.cleanupError.message : '' };
+}
 function handleUpdateUser(payload) {
     const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor"], "actualizar usuarios");
     const requesterUserId = actor.userId;
@@ -1795,15 +1899,9 @@ function handleUpdateUser(payload) {
             ? updates.Nombre_Completo
             : String(targetRows[0].row[COLS_USERS.Nombre_Completo - 1] || '');
 
-        const markerKey = roleRevocationPropertyKey_(userId);
-        const properties = PropertiesService.getScriptProperties();
-        let pendingRaw = null;
-        try { pendingRaw = properties.getProperty(markerKey); } catch (error) { throw new Error('No se pudo verificar el estado pendiente del cambio de rol.'); }
         const sharedMarker = parseSharedRoleRevocationMarker_(String(targetRows[0].row[COLS_USERS.SessionToken - 1] || ''));
-        const propertyMarker = pendingRaw ? parseRoleRevocationMarker_(pendingRaw) : null;
-        if ((sharedMarker && sharedMarker.invalid) || (propertyMarker && propertyMarker.invalid && !sharedMarker)) throw new Error('Existe un marcador de cambio de rol dañado que requiere revisión.');
-        if (sharedMarker && propertyMarker && !propertyMarker.invalid && !sameRoleRevocationMarker_(sharedMarker, propertyMarker)) throw new Error('Los marcadores de cambio de rol no coinciden; se requiere revisión.');
-        const pendingMarker = sharedMarker || propertyMarker, hasPending = Boolean(pendingRaw) || Boolean(sharedMarker);
+        if (sharedMarker && sharedMarker.invalid) throw new Error('Existe un marcador de cambio de rol dañado que requiere revisión.');
+        const pendingMarker = sharedMarker, hasPending = Boolean(sharedMarker);
         if (hasPending && pendingMarker && pendingMarker.newRole && nextRole !== currentTargetRole && nextRole !== pendingMarker.newRole) throw new Error('Existe un cambio de rol anterior pendiente. Completa primero esa revocación antes de solicitar otro rol.');
         if (hasPending && hasFullNameUpdate && (!pendingMarker || !Object.prototype.hasOwnProperty.call(pendingMarker,'newFullName'))) {
             throw new Error('Existe una revocación anterior sin datos de perfil recuperables. Completa primero la revocación y actualiza el nombre por separado.');
@@ -1818,7 +1916,6 @@ function handleUpdateUser(payload) {
             const pointer = usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.SessionToken);
             let sharedWriteError = null; try { pointer.setValue(sharedValue); } catch (error) { sharedWriteError = error; }
             if (String(pointer.getValue() || '') !== sharedValue) throw new Error('No se pudo confirmar el estado compartido de revocación; no se inició el cambio de rol. ' + (sharedWriteError ? sharedWriteError.message : ''));
-            try { properties.setProperty(markerKey, JSON.stringify(marker)); } catch (error) { /* El marcador compartido permite reintentar. */ }
         }
         if (nextRole !== currentTargetRole || hasPending) {
             const reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId, targetRows[0].rowIndex);
@@ -1944,6 +2041,7 @@ function handleResetUserSessions(payload) {
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(ss, usersSheet);
 
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }));
@@ -2127,8 +2225,6 @@ function handleDeleteUser(payload) {
             alreadyDeleted = true;
         }
 
-        try { PropertiesService.getScriptProperties().deleteProperty(roleRevocationPropertyKey_(userId)); }
-        catch (markerError) { console.error('No se pudo retirar el marcador de rol de la cuenta desactivada:', markerError.message); }
 
         // Revocar todas las sesiones en orden descendente; un fallo es reintentable.
         for (let i = targetSessionRows.length - 1; i >= 0; i--) {
@@ -2329,6 +2425,7 @@ function handleCompletePasswordRecovery(payload){
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');acquired=true;
         const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS),sessionsSheet=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if(!usersSheet||!sessionsSheet)throw new Error("No se encontraron las hojas Users y ActiveSessions.");
+        migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(ss, usersSheet);
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
             .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
                 String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
@@ -2344,7 +2441,6 @@ function handleCompletePasswordRecovery(payload){
         writePasswordHashAndVerifyUnderLock_(usersSheet,matches[0].rowIndex,newHash);
         const pointer=clearUserSessionPointerUnderLock_(usersSheet,matches[0].rowIndex),deletion=deleteRevokedSessionRowsUnderLock_(sessionsSheet,revocation.rows);
         const cleanupPending=Boolean(pointer.pending||deletion.cleanupPending);
-        if(!cleanupPending&&hasPendingRoleRevocation_(userId))PropertiesService.getScriptProperties().deleteProperty(roleRevocationPropertyKey_(userId));
         SpreadsheetApp.flush();
         result={status:"success",message:cleanupPending?
             "La contraseña se actualizó y las sesiones fueron invalidadas. La limpieza de algunas referencias quedó pendiente.":
@@ -2400,9 +2496,6 @@ function handleChangePassword(payload) {
         const deletion = deleteRevokedSessionRowsUnderLock_(sessionsSheet, revocation.rows);
         cleanupPending = cleanupPending || deletion.cleanupPending;
         cleanupError = cleanupError || deletion.cleanupError;
-        if (!cleanupPending && hasPendingRoleRevocation_(userId)) {
-            PropertiesService.getScriptProperties().deleteProperty(roleRevocationPropertyKey_(userId));
-        }
         SpreadsheetApp.flush();
     } finally {
         if (acquired) lock.releaseLock();
@@ -2470,9 +2563,6 @@ function handleResetUserPassword(payload) {
         const deletion = deleteRevokedSessionRowsUnderLock_(sessionsSheet, revocation.rows);
         cleanupPending = cleanupPending || deletion.cleanupPending;
         cleanupError = cleanupError || deletion.cleanupError;
-        if (!cleanupPending && hasPendingRoleRevocation_(targetId)) {
-            PropertiesService.getScriptProperties().deleteProperty(roleRevocationPropertyKey_(targetId));
-        }
         SpreadsheetApp.flush();
     } finally {
         if (acquired) lock.releaseLock();
@@ -2676,6 +2766,7 @@ function handleLogout(payload) {
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(ss, usersSheet);
 
         const matchingSessions = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
         if (matchingSessions.length > 1) throw new Error('El token aparece en varias sesiones; no se modificó ninguna fila.');

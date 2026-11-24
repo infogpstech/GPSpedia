@@ -146,7 +146,7 @@ function makeHandlerHarness(options = {}) {
         "getPasswordRecoveryManager_","isActiveAuthUserRecord","normalizeUserId","MailApp","logToSheet",
         "normalizePassword","createPasswordHash","revokeSharedUserSessionContexts_","getActiveSessionTokensForUserUnderLock_","revokeAllUserSessionsUnderLock_",
         "writePasswordHashAndVerifyUnderLock_","clearUserSessionPointerUnderLock_","deleteRevokedSessionRowsUnderLock_",
-        "hasPendingRoleRevocation_","roleRevocationPropertyKey_","PropertiesService",
+        "hasPendingRoleRevocation_","migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_","roleRevocationPropertyKey_","PropertiesService",
         requestSource + "\n" + completeSource + "\nreturn {handleRequestPasswordRecovery,handleCompletePasswordRecovery};"
     )(
         {openById:()=>spreadsheet,flush(){}}, "TEST_DB",
@@ -163,7 +163,7 @@ function makeHandlerHarness(options = {}) {
         (sheet,rowIndex,passwordHash)=>{users[rowIndex-1][2]=passwordHash;},
         (sheet,rowIndex)=>{users[rowIndex-1][7]="";return{pending:false,error:null};},
         ()=>({cleanupPending:false,cleanupError:null}),()=>false,
-        userId=>"role_revocation_pending_"+userId, {getScriptProperties:()=>properties}
+        ()=>false, ()=>({status:"success"}), userId=>"role_revocation_pending_"+userId, {getScriptProperties:()=>properties}
     );
     return { handlers, users, sent, logs, revocations, manager, lockEvents };
 }
