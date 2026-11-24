@@ -35,10 +35,30 @@ testCase("los botones Developer usan etiquetas breves y conservan nombre accesib
  }
 });
 
-testCase("la consola está sobre las pestañas y ocupa una franja de altura amplia",()=>{
+testCase("la consola está sobre las pestañas y ocupa menos del 30% del modal en escritorio",()=>{
  assert.ok(html.indexOf('class="dev-console-shared"') < html.indexOf('class="dev-tools-tabs"'));
- assert.match(css,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 50%/);
+ const start=css.lastIndexOf("#dev-tools-modal .dev-console-shared {");
+ const rule=css.slice(start,css.indexOf("}",start));
+ assert.match(rule,/flex: 0 0 24%/);
+ assert.match(rule,/max-height: 28%/);
  assert.match(css,/#dev-tools-modal \.dev-console-output \{[\s\S]*?flex: 1 1 0/);
+});
+testCase("en móvil la consola conserva una altura compacta y la barra de comandos es horizontal",()=>{
+ const start=css.lastIndexOf("@media (max-width: 520px)");
+ const mobile=css.slice(start);
+ assert.match(mobile,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex-basis: 27%[\s\S]*?max-height: 30%/);
+ assert.match(mobile,/#dev-tools-modal \.dev-terminal-row,[\s\S]*?flex-direction: row/);
+ assert.match(css,/#dev-tools-modal \.dev-terminal-input-shell \{[\s\S]*?display: flex/);
+ assert.match(html,/class="dev-terminal-input-shell"[\s\S]*?id="dev-terminal-input"/);
+ assert.match(html,/id="btn-terminal-send"[^>]*>&gt;_/);
+});
+testCase("limpiar y copiar comparten la fila del título y muestran solo iconos",()=>{
+ const start=html.indexOf('class="dev-card-heading dev-heading-with-help"');
+ const end=html.indexOf("</div>",start);
+ const heading=html.slice(start,end);
+ assert.ok(heading.indexOf('id="btn-clear-console-log"') > heading.indexOf("<h4>"));
+ assert.ok(heading.indexOf('id="btn-copy-console-log"') > heading.indexOf('id="btn-clear-console-log"'));
+ assert.doesNotMatch(heading,/Limpiar consola<|Copiar registro</);
 });
 testCase("el título del panel tiene expansión animada y respeta movimiento reducido",()=>{
  assert.match(css,/@keyframes dev-tools-title-expand/);
