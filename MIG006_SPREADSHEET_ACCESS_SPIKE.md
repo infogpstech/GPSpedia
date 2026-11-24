@@ -124,3 +124,18 @@ Las menciones a esas propiedades en las secciones históricas de este spike y en
 El único localizador estático de arranque admitido es `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en el frontend, limitado a `getPublicConfiguration` de AUTH según MIG-009. No es un secreto ni un endpoint para acciones ordinarias.
 
 La única limitación de configuración local detectada en servicios Apps Script sigue siendo el ID de la Spreadsheet en AUTH, CATALOG y UTILITIES. Su retirada depende de la prueba Web App real de MIG-006; no sustituir `openById()` hasta demostrar el acceso activo en Beta.
+
+## 12. Adenda — implementación local de acceso activo — 2026-11-24
+
+La decisión de código local se actualiza con la evidencia de la regresión automatizada y el criterio de finalización local de NORMAS_DESAROLLO.md §§5 y 10:
+
+- AUTH ya no declara `SPREADSHEET_ID` ni llama `openById(SPREADSHEET_ID)`. Todas sus operaciones usan `getAuthUsersSpreadsheet_()`, que obtiene `SpreadsheetApp.getActiveSpreadsheet()` y falla cerrado si no existe.
+- CATALOG ya no declara el ID local; `getSpreadsheet()` usa el contenedor activo y falla cerrado si no existe.
+- UTILITIES ya no declara el ID local; `getUtilitiesSpreadsheet_()` obtiene el contenedor activo. La petición reutiliza el mismo handle para cargar el actor y ejecutar la operación.
+- No se añadió ID, URL, propiedad, secreto, endpoint auxiliar ni fallback local. La copia aislada AUTH conserva paridad exacta.
+- CI run 45399766285, job 138464973056, commit a894a402d3dbcae2c922bc815b8efc3e8cba4a1d: SUCCESS; Node.js 22.23.5; sintaxis PASS; 513 suites, 6,051 pruebas aprobadas y 0 fallos. Pruebas dirigidas: MIG013SessionActorLocalLookup 22/22, CatalogChangeFeed 19/19, UtilitiesSecurity 19/19, PasswordHashMigration 16/16, SensitiveLogsTrustedActor 7/7, SessionActivityLeaseMinimization 6/6 y MIG026StaticConfigSearch 10/10.
+- Estos resultados prueban el código y los contratos locales; no prueban el contexto de los deployments. La lectura/escritura desde Web App, la identidad efectiva, permisos, concurrencia y latencia siguen pendientes de Beta para cada proyecto.
+- Si una Web App devuelve `NO_ACTIVE_SPREADSHEET` o carece de permisos, no restaurar `openById` ni un bootstrap local. Mantener sin desplegar esa versión y resolver una alternativa sin configuración local, evaluando vinculación/consolidación de proyectos antes de publicar.
+- No se modificaron proyectos Apps Script desplegados, propiedades instaladas, Spreadsheet, permisos ni datos.
+
+Esta adenda actualiza la decisión de implementación local; las secciones anteriores conservan su valor histórico sobre el momento en que se preparó el probe.
