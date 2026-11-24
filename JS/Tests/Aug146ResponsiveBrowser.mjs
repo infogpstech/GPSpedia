@@ -166,7 +166,7 @@ try {
         color: style ? style.color : "",
         textAlign: style ? style.textAlign : "",
         fontSize: style ? style.fontSize : "",
-        emphasisPreserved: Boolean(paragraph && paragraph.querySelector("strong")?.textContent === "Texto destacado"),
+        emphasisPreserved: Boolean(paragraph && Array.from(paragraph.querySelectorAll("strong")).some(node => node.textContent.trim() === "Texto destacado")),
         listPreserved: Boolean(detail.querySelector(".detail-rich-text-paragraph ul > li")?.textContent === "Detalle con formato"),
         unsafeMarkupRemoved: Boolean(paragraph && !paragraph.querySelector("script,iframe,[onclick],[onerror],a[href^='javascript:'],img[src^='javascript:']")),
         iframeSrc: validIframe ? validIframe.src : "",
