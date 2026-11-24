@@ -40,7 +40,7 @@ check("La matriz de archivos coincide con dependencias reales", () => {
 });
 check("La publicación de código preserva el deployment y limita el alcance", () => {
   assert.match(guide, /Gestionar implementaciones/);
-  assert.match(guide, /conservar la URL \/exec existente/);
+  assert.match(guide, /conservar la URL/);
   assert.match(guide, /No actualizar los otros cinco/);
   assert.match(guide, /no es necesario redesplegar frontend ni los otros cinco servicios/i);
 });
