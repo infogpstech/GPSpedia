@@ -499,3 +499,15 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - No se ejecutaron GET de salud ni workflows remotos porque no está confirmado que el bootstrap apunte a un entorno Beta aislado. No se modificaron deployments, endpoints, Spreadsheet ni permisos.
 - **Única tarea activa:** MIG-URL-002. No iniciar MIG-URL-003 ni tareas externas al plan hasta recuperar el snapshot de solo lectura y verificar las seis identidades de salud.
 - Dato pendiente: export/snapshot de solo lectura de `ConfiguracionControl` y `Servicios`, incluyendo `active_revision`, `publication_state` y las seis filas de esa revisión. No hacen falta credenciales ni permisos de escritura.
+
+
+---
+
+# Cierre MIG-URL-002 y continuidad MIG-URL-003 — 2026-11-24
+
+- El usuario proporcionó las seis URLs operativas de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; están registradas en `Inventario_URL_Servicios.md` con procedencia directa.
+- Validación estructural realizada: seis URLs HTTPS de Google Apps Script con ruta `/exec` y seis IDs de deployment diferentes.
+- No fue posible leer `ConfiguracionControl.active_revision` ni contrastar Spreadsheet porque el conector Google Drive/Sheets está deshabilitado. No se atribuye esa fuente a los valores proporcionados.
+- No se realizaron peticiones remotas. Identidad `GPSpedia-*` y salud funcional quedan diferidas a MIG-URL-008, en Beta aislada y con autorización expresa.
+- **MIG-URL-002 COMPLETADA. MIG-URL-003 es la única tarea activa.** Implementar el objeto único `API_ENDPOINTS` en `JS/Frontend/api-config.js`, preservando el mapa de acciones y los contratos actuales. No iniciar tareas ajenas a MIG-URL-001..008.
+- Rama de trabajo: `GPSpedia2.2.5_work`. Rama protegida `GPSpedia2.2.5`: no modificar.
