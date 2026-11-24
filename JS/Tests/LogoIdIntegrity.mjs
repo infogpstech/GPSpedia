@@ -182,7 +182,7 @@ function addLogoHarness(options={}){
   normalizeOrganizerSegment_:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/[\\/\s]+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""),
   normalizeOrganizerFilePart_:value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/[\\/,]/g,"_").replace(/\s+/g,"_").replace(/[^a-zA-Z0-9_-]/g,"_").replace(/_+/g,"_").replace(/^_+|_+$/g,""),
   COLS_CORTES:{categoria:2,marca:3},
-  Utilities:{base64Decode:()=>[137,80,78,71,13,10,26,10],base64Encode:()=>"iVBORw0KGgo=",newBlob:(data,mime,name)=>{createdFilename=name;return {}; }},
+  Utilities:{getUuid:()=>"reservation-add-logo",base64Decode:()=>[137,80,78,71,13,10,26,10],base64Encode:()=>"iVBORw0KGgo=",newBlob:(data,mime,name)=>{createdFilename=name;return {}; }},
   LockService:{getScriptLock:()=>lock},
   SpreadsheetApp:{flush,CopyPasteType:{PASTE_FORMAT:"PASTE_FORMAT",PASTE_DATA_VALIDATION:"PASTE_DATA_VALIDATION"}},
   PropertiesService:{getScriptProperties:()=>properties},
