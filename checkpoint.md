@@ -413,3 +413,10 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Dashboard:** la corrección evita que una hoja nueva/estática quede sin poder registrar el primer evento. La validación Beta debe comprobar también lectura y render; si la hoja ya tiene filas y sigue sin mostrarlas, continuar con los diagnósticos de origen/lectura indicados en Tareas_Beta §22, sin asumir que el fallback de ID sea la única causa.
 - **Rama de trabajo actual:** `GPSpedia2.2.5_work`, HEAD `2b39236ca5b529a3b2ed8f36abc0f19857fba72f`. **Rama base protegida:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
 - **Siguiente paso:** ejecutar las validaciones de integración en Beta aislada de `Tareas_Beta.md` §§22–24. No se debe declarar el cierre de Beta sin evidencia real.
+
+## Nueva revisión de interfaz solicitada — 2026-11-24
+
+- Las incidencias nuevas se registran en `Tareas_Activas.md`, sin asignar IDs AUG no oficiales ni reabrir BETA-F007.
+- Orden de desarrollo, una tarea a la vez: (1) modal de detalle Tutorial — formato enriquecido seguro y vídeo YouTube; (2) Dashboard — mostrar `cortesAportados` por usuario separado de los aportes totales; (3) modal Developer — barra de pestañas bajo la línea de comando, etiquetas expandidas solo en la pestaña activa, consola al doble de altura y mensajes de endpoints exclusivamente en consola con botón «Actualizar Servicios».
+- Auditoría de duplicados: la agregación de modelos, cortes, utilidades y contribuciones del Dashboard ya existe; la tarea 2 solo completa la presentación del conteo individual de cortes, que el backend ya calcula. AUG-146/AUG-147 cubren otros aspectos del modal Developer; las nuevas condiciones de orden, altura y salida de mensajes no están cubiertas.
+- Siguiente paso de desarrollo: implementar y probar únicamente la tarea 1 de `Tareas_Activas.md`. La validación Beta de BETA-F007 y demás procedimientos existentes permanece separada.
