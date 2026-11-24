@@ -46,7 +46,7 @@ test("FEEDBACK mantiene rutas y actor cacheado sin contadores directos", () => {
     assert.ok(start>=0&&end>start);
     assert.doesNotMatch(router,/DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_/);
     assert.doesNotMatch(router,/getCatalogChanges/);
-    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
+    assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{[\s\S]*?service: "FEEDBACK",[\s\S]*?loadSpreadsheet: getSpreadsheet[\s\S]*?\}\)/);
     assert.doesNotMatch(router,/withSharedMutationLease_/);
     assert.doesNotMatch(feedback,/function isSharedMutationAction_\(action\)/);
 });

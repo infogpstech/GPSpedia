@@ -85,6 +85,6 @@ assert.equal(anonymous.captured[0].userRole, "Anónimo");
 assert.equal(anonymous.captured[0].suggestionActorKey, "anon:unverified");
 
 assert.match(apiConfig, /['"]suggestYear['"]\s*:\s*['"]FEEDBACK['"]/);
-assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
+assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{[\s\S]*?service: "FEEDBACK",[\s\S]*?loadSpreadsheet: getSpreadsheet[\s\S]*?\}\)/);
 assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 console.log("SuggestYearCoordinatorSession: 2/2 PASS");

@@ -183,7 +183,7 @@ function initializeCatalogChangeFeedSheets_(dependencies) {
                 initialized.push(name);
             }
         });
-        if (typeof deps.flush === "function") deps.flush();
+        if (initialized.length && typeof deps.flush === "function") deps.flush();
         specs.forEach(([name, headers]) => {
             validateCatalogFeedSheet_(spreadsheet.getSheetByName(name), name, headers);
         });
