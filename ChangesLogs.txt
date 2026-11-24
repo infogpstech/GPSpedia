@@ -899,3 +899,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 - Se rectifica la adenda de checkpoint/Hallazgos que había clasificado AUG-147 a AUG-150 como IDs no oficiales. La revisión del historial del propio repositorio confirma registros de inicio/cierre para AUG-147 (caché v76) y AUG-150 (esquema Inbox); AUG-148 y AUG-149 aparecen como tareas pendientes en checkpoint y Hallazgos, sin cierre funcional en este changelog.
 - El registro operativo actual es `Tareas_Activas.md`, commit `9442da203814be4891de82f93a1730700fb4b31d`. Su primer punto activo es el modal de detalle Tutorial (HTML enriquecido seguro y vídeo YouTube validado). No se asignan IDs nuevos.
+
+
+### 2026-11-24 — Cierre de tarea activa 1: modal de detalle Tutorial
+
+- Se verificó que el modal ya utiliza sanitización avanzada permitida, conserva el formato enriquecido y construye el iframe YouTube mediante DOM a partir de una URL validada; no se modificó código productivo.
+- Se reforzó `Aug146ResponsiveBrowser.mjs` para verificar énfasis, listas, estilos, XSS, protocolos/hosts/credenciales/puertos/parámetros inválidos y variantes YouTube válidas.
+- CI run `45507769616`: 517 suites, 6,156 pruebas, 0 fallos; Chromium responsive 216/216 PASS en cuatro viewports; Pages run `45507768695`: SUCCESS.
+- Se inicia la tarea activa 2: mostrar `cortesAportados` por usuario en el Dashboard, separado de aportes registrados y vehículos con aportes. El backend ya calcula el valor; revisar contrato/render del frontend antes de modificar.
