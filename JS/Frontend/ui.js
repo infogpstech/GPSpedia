@@ -4591,9 +4591,14 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
     const logContainer = document.getElementById('activity-logs');
     const contributionContainer = document.getElementById('activity-contributions');
     const insightContainer = document.getElementById('activity-insights');
-    if (logContainer && !logContainer.children.length) logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
-    if (contributionContainer && !contributionContainer.children.length) contributionContainer.innerHTML = '<tr><td colspan="3">Cargando aportes...</td></tr>';
-    if (insightContainer && !insightContainer.children.length) insightContainer.textContent = 'Preparando indicadores...';
+    const statusContainer = document.getElementById('activity-dashboard-status');
+    if (logContainer) logContainer.replaceChildren();
+    if (contributionContainer) contributionContainer.replaceChildren();
+    if (insightContainer) insightContainer.textContent = 'Consultando indicadores...';
+    if (statusContainer) {
+        statusContainer.hidden = false;
+        statusContainer.textContent = 'Consultando actividad y aportes...';
+    }
     const tabs = modal.querySelectorAll('[data-activity-tab]');
     tabs.forEach(button => {
         if (button.dataset.listenerSet === 'true') return;
@@ -4611,16 +4616,44 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
     try {
         const result = await getActivityLogs(getSessionPayload_());
         if (!isCurrentUiSessionContext_(requestContext)) return;
-        if (result.status === 'success') {
-            if (logContainer) renderActivityLogs(logContainer, result.data);
-            if (contributionContainer) renderActivityContributions(contributionContainer, result.contributions || []);
-            if (insightContainer) renderActivityInsights(insightContainer, result.insights || {}, result.contributions || []);
+        if (!result || result.status !== 'success') {
+            throw new Error(result && result.message ? String(result.message) : 'FEEDBACK no devolvió un resultado válido.');
+        }
+        const logs = Array.isArray(result.data) ? result.data : [];
+        const contributions = Array.isArray(result.contributions) ? result.contributions : [];
+        const insights = result.insights && typeof result.insights === 'object' ? result.insights : {};
+        if (logContainer) renderActivityLogs(logContainer, logs);
+        if (contributionContainer) renderActivityContributions(contributionContainer, contributions);
+        if (insightContainer) renderActivityInsights(insightContainer, insights, contributions);
+        if (statusContainer) {
+            const diagnostics = result.diagnostics && typeof result.diagnostics === 'object' ? result.diagnostics : {};
+            const missingSources = [];
+            if (diagnostics.activitySheetAvailable === false) missingSources.push('ActividadUsuario');
+            if (diagnostics.cortesSheetAvailable === false) missingSources.push('Cortes');
+            const summary = insights.summary && typeof insights.summary === 'object' ? insights.summary : {};
+            const hasAnyData = logs.length > 0 || contributions.length > 0 ||
+                Number(summary.vehicles || 0) > 0 || Number(summary.cuts || 0) > 0;
+            if (missingSources.length) {
+                statusContainer.textContent = 'Dashboard parcial: no se encontraron las hojas ' + missingSources.join(' y ') + '. Revisa la configuración de FEEDBACK en la Spreadsheet correspondiente.';
+                statusContainer.hidden = false;
+            } else if (!hasAnyData) {
+                statusContainer.textContent = 'FEEDBACK respondió correctamente, pero no encontró registros de actividad o aportes. Comprueba que el servicio desplegado esté actualizado y que las hojas ActividadUsuario y Cortes contengan datos.';
+                statusContainer.hidden = false;
+            } else {
+                statusContainer.textContent = '';
+                statusContainer.hidden = true;
+            }
         }
     } catch (error) {
         if (!isCurrentUiSessionContext_(requestContext)) return;
-        if (logContainer) logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar actividad</td></tr>';
-        if (contributionContainer) contributionContainer.innerHTML = '<tr><td colspan="3" style="color:red;">Error al cargar aportes</td></tr>';
-        if (insightContainer) insightContainer.textContent = 'No se pudieron cargar los indicadores. Intenta abrir el panel nuevamente.';
+        const detail = error && typeof error.message === 'string' ? error.message.trim().slice(0, 220) : '';
+        if (logContainer) logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">No se pudo cargar la actividad.</td></tr>';
+        if (contributionContainer) contributionContainer.innerHTML = '<tr><td colspan="3" style="color:red;">No se pudieron cargar los aportes.</td></tr>';
+        if (insightContainer) insightContainer.textContent = 'No se pudieron cargar los indicadores.';
+        if (statusContainer) {
+            statusContainer.hidden = false;
+            statusContainer.textContent = 'No se pudo consultar FEEDBACK.' + (detail ? ' ' + detail : ' Revisa la conexión y el deployment del servicio.');
+        }
     }
 });
 

@@ -56,7 +56,8 @@ testCase("limpiar y copiar comparten la fila del título y muestran solo iconos"
  const start=html.indexOf('class="dev-card-heading dev-heading-with-help"');
  const end=html.indexOf("</div>",start);
  const heading=html.slice(start,end);
- assert.ok(heading.indexOf('id="btn-clear-console-log"') > heading.indexOf("<h4>"));
+ assert.ok(heading.indexOf('class="gp-help-trigger"') > heading.indexOf("<h4>"));
+ assert.ok(heading.indexOf('id="btn-clear-console-log"') > heading.indexOf('class="gp-help-trigger"'));
  assert.ok(heading.indexOf('id="btn-copy-console-log"') > heading.indexOf('id="btn-clear-console-log"'));
  assert.doesNotMatch(heading,/Limpiar consola<|Copiar registro</);
 });
@@ -76,14 +77,20 @@ testCase("limpiar y copiar expanden su etiqueta solo al recibir foco",()=>{
  assert.match(reduced,/#dev-tools-modal #btn-clear-console-log::after/);
  assert.match(reduced,/#dev-tools-modal #btn-copy-console-log::after/);
 });
-testCase("la navegación usa iconos compactos y expande solo la pestaña seleccionada",()=>{
- const start=css.lastIndexOf("/* AUG-146 — navegación del desarrollador");
+testCase("las cuatro secciones del desarrollador conservan una fila horizontal en todos los tamaños",()=>{
+ const start=css.lastIndexOf("/* REV-2026-11-24 — panel Developer");
  const nav=css.slice(start);
- assert.match(nav,/#dev-tools-modal \.dev-tools-layout \{[\s\S]*?grid-template-columns: 62px minmax\(0, 1fr\)/);
- assert.match(nav,/#dev-tools-modal \.dev-tab-link \{[\s\S]*?width: 44px[\s\S]*?overflow: hidden/);
- assert.match(nav,/#dev-tools-modal \.dev-tab-link span \{[\s\S]*?max-width: 0[\s\S]*?opacity: 0/);
- assert.match(nav,/#dev-tools-modal \.dev-tools-tabs:has\(#dev-tab-diagnostics:checked\)[\s\S]*?width: 190px/);
- assert.match(nav,/@media \(max-width: 760px\)[\s\S]*?flex-basis: 170px/);
- assert.match(nav,/@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none !important/);
+ assert.match(nav,/#dev-tools-modal \.dev-tools-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/);
+ assert.match(nav,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+ assert.match(nav,/#dev-tools-modal \.dev-tab-link span \{[\s\S]*?max-width: none[\s\S]*?opacity: 1/);
+ assert.match(nav,/@media \(max-width: 520px\)[\s\S]*?\.dev-tab-link span \{[\s\S]*?display: none/);
+ assert.doesNotMatch(nav,/grid-template-columns: 62px/);
+});
+testCase("la consola ocupa la mitad del ancho en escritorio y todo el ancho en móvil",()=>{
+ const start=css.lastIndexOf("/* REV-2026-11-24 — panel Developer");
+ const nav=css.slice(start);
+ assert.match(nav,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?width: 50%[\s\S]*?max-width: 50%/);
+ assert.match(nav,/@media \(max-width: 760px\)[\s\S]*?\.dev-console-shared \{[\s\S]*?width: 100%[\s\S]*?max-width: 100%/);
+ assert.match(nav,/\.dev-card-heading \.gp-help-trigger,[\s\S]*?#btn-clear-console-log,[\s\S]*?#btn-copy-console-log[\s\S]*?margin: 0 !important/);
 });
 console.log("DeveloperPanelUX: "+passed+"/"+passed+" PASS");

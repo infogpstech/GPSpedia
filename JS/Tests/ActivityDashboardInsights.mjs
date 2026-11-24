@@ -34,7 +34,7 @@ assert.deepEqual(insights.summary,{vehicles:2,cuts:2,usefulVotes:9,notUseful:1,n
 assert.equal(insights.topUseful[0].brand,"Toyota");assert.deepEqual(insights.topNegative.map(row=>row.model),["Hilux","L200"]);
 assert.deepEqual(insights.years,{confirmations:1,suggestions:1,verified:3,anonymous:1,applied:1});
 assert.equal(insights.windowLimited,false);
-assert.match(ui,/renderActivityInsights\(insightContainer/);assert.match(html,/id="activity-insights"/);assert.match(html,/data-activity-tab="insights"/);assert.match(css,/GP-DASH-INSIGHTS-01/);
+assert.match(ui,/renderActivityInsights\(insightContainer/);assert.match(ui,/activity-dashboard-status/);assert.match(ui,/result\.status !== 'success'/);assert.match(feedback,/activitySheetAvailable/);assert.match(html,/id="activity-insights"/);assert.match(html,/id="activity-dashboard-status"/);assert.match(html,/data-activity-tab="insights"/);assert.match(css,/GP-DASH-INSIGHTS-01/);
 class FakeElement{constructor(tag){this.tagName=tag;this.children=[];this.className="";this.style={};this._textContent="";}set textContent(v){this._textContent=String(v);this.children=[];}get textContent(){return this._textContent;}set innerHTML(_v){throw new Error("No usar innerHTML.");}appendChild(c){this.children.push(c);return c;}replaceChildren(){this.children=[];}}
 const doc={createElement:tag=>new FakeElement(tag)},container=doc.createElement("div");
 renderActivityInsights(container,{summary:{vehicles:2,cuts:2,usefulVotes:9,notUseful:1},topUseful:[{brand:"<img onerror=alert(1)>",model:"Hilux",cutType:"Corte",usefulVotes:9}],years:{confirmations:1,suggestions:1,applied:1,verified:3,anonymous:1}},[],doc);
@@ -43,5 +43,10 @@ assert.ok(collect(container).includes("<img onerror=alert(1)>"));assert.equal(co
 const logContainer=doc.createElement("tbody");
 renderActivityLogs(logContainer,[{timestamp:"2026-11-17T10:00:00Z",nombreUsuario:"Técnico",tipoActividad:"like",detalle:"Valoración enviada",idElementoAsociado:"VEH-01"}],doc);
 assert.match(logContainer.children[0].children[3].textContent,/Referencia: VEH-01/);
+const emptyLogContainer=doc.createElement("tbody");
+renderActivityLogs(emptyLogContainer,[],doc);
+assert.equal(emptyLogContainer.children.length,1);
+assert.equal(emptyLogContainer.children[0].children[0].colSpan,4);
+assert.match(emptyLogContainer.children[0].children[0].textContent,/Todavía no hay actividad registrada/);
 
 console.log("1/1 PASS — GP-DASH-INSIGHTS-01 agregación, ranking, años, ventana acotada y render seguro");

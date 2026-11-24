@@ -261,6 +261,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG readiness','JS/Tests/CatalogReadiness.js');
  runCli('CATALOG snapshots/IndexedDB aislado','JS/Tests/CatalogSnapshotSync.js');
  runCli('CATALOG arranque cache-first y fallback incremental','JS/Tests/CatalogStartupIntegrity.mjs');
+ runCli('CATALOG feed ausente: diagnóstico y fallback snapshot','JS/Tests/CatalogFeedInitializationFallback.mjs');
  runCli('CATALOG estados de presentación','JS/Tests/CatalogStatus.js');
 });
 runGroup('35','UTILITIES',()=>{

@@ -126,6 +126,26 @@ const CATALOG_POLL_LEASE_KEY = "gpsepedia_catalog_poll_lease";
 const CATALOG_POLL_LEASE_MS = 60000;
 const CATALOG_SYNC_SIGNAL_KEY = "gpsepedia_catalog_sync_signal";
 let catalogLoadController_ = null;
+let catalogFeedSetupNoticeLogged_ = false;
+const CATALOG_FEED_SETUP_NOTICE_KEY_ = "gpsepedia_catalog_feed_setup_notice";
+function isCatalogFeedNotInitializedError_(error) {
+    const message = String(error && error.message || error || "");
+    return /Falta la hoja requerida del feed CATALOG:\s*CatalogChange(?:State|Events)/i.test(message);
+}
+function reportCatalogFeedHeadError_(error) {
+    if (!isCatalogFeedNotInitializedError_(error)) {
+        console.warn("No se pudo establecer el cursor inicial del catálogo:", error);
+        return;
+    }
+    let alreadyReported = catalogFeedSetupNoticeLogged_;
+    try {
+        alreadyReported = alreadyReported || sessionStorage.getItem(CATALOG_FEED_SETUP_NOTICE_KEY_) === "1";
+    } catch (storageError) {}
+    if (alreadyReported) return;
+    catalogFeedSetupNoticeLogged_ = true;
+    try { sessionStorage.setItem(CATALOG_FEED_SETUP_NOTICE_KEY_, "1"); } catch (storageError) {}
+    console.info("[CATALOG] El feed incremental aún no está inicializado. Se continuará con una instantánea completa. En Beta, ejecuta initializeCatalogChangeFeedSheets() una sola vez en el proyecto CATALOG.");
+}
 let catalogPollTimer_ = null;
 let catalogPollInterval_ = CATALOG_POLL_INTERVAL_MS;
 let catalogPollInFlight_ = false;
@@ -677,7 +697,7 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
                 cursorToPersist = await getCatalogFeedHead_(currentUser, loadController.signal);
             } catch (headError) {
                 if (!isCurrentLoad()) return;
-                console.warn("No se pudo establecer el cursor inicial del catálogo:", headError);
+                reportCatalogFeedHeadError_(headError);
                 cursorToPersist = null;
             }
         }

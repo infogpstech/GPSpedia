@@ -3072,17 +3072,31 @@ function handleGetActivityLogs(payload) {
  const result=[];let sequence=0;
  const addEntry=entry=>{const parsedTime=new Date(entry.timestamp).getTime();result.push({...entry,_sortTime:Number.isFinite(parsedTime)?parsedTime:0,_sequence:sequence++});};
  const activitySheet=getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
+ const activityRowsAvailable=activitySheet?Math.max(0,Number(activitySheet.getLastRow()||0)-1):0;
  readLatestRows(activitySheet,COLS_ACTIVIDAD_USUARIO.detalle).forEach(row=>addEntry({
   id:row[COLS_ACTIVIDAD_USUARIO.id-1],timestamp:row[COLS_ACTIVIDAD_USUARIO.timestamp-1],idUsuario:row[COLS_ACTIVIDAD_USUARIO.idUsuario-1],
   nombreUsuario:row[COLS_ACTIVIDAD_USUARIO.nombreUsuario-1],tipoActividad:row[COLS_ACTIVIDAD_USUARIO.tipoActividad-1],idElementoAsociado:row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado-1],detalle:row[COLS_ACTIVIDAD_USUARIO.detalle-1]
  }));
  const auditSheet=getSpreadsheet().getSheetByName(INBOX_AUDIT_SHEET_NAME);
+ const inboxAuditRowsAvailable=auditSheet?Math.max(0,Number(auditSheet.getLastRow()||0)-1):0;
  readLatestRows(auditSheet,INBOX_AUDIT_HEADERS.length).forEach(row=>addEntry({
   id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]
  }));
  result.sort((x,y)=>(y._sortTime-x._sortTime)||(x._sequence-y._sequence));
  const cutsSnapshot=readActivityDashboardCutsSnapshot_();
- return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),contributions:buildCutContributionSummary_(cutsSnapshot),insights:buildActivityDashboardInsights_(cutsSnapshot)};
+ const contributions=buildCutContributionSummary_(cutsSnapshot);
+ const insights=buildActivityDashboardInsights_(cutsSnapshot);
+ return{
+  status:"success",
+  data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry),
+  contributions,insights,
+  diagnostics:{
+   activitySheetAvailable:Boolean(activitySheet),activityRowsAvailable,
+   inboxAuditSheetAvailable:Boolean(auditSheet),inboxAuditRowsAvailable,
+   cortesSheetAvailable:Boolean(cutsSnapshot&&cutsSnapshot.sheet),cortesRowsAvailable:Number(cutsSnapshot&&cutsSnapshot.count)||0,
+   contributionsAvailable:contributions.length>0
+  }
+ };
 }
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */

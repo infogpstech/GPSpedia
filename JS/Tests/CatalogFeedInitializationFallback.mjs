@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
+const auth=readFileSync(resolve(root,"JS/Frontend/auth.js"),"utf8");
+const start=auth.indexOf("function isCatalogFeedNotInitializedError_(error) {");
+const end=auth.indexOf("\nfunction reportCatalogFeedHeadError_",start);
+assert.ok(start>=0&&end>start,"No se encontró el clasificador de inicialización del feed.");
+const predicate=new Function("error",auth.slice(start,end)+"\nreturn isCatalogFeedNotInitializedError_(error);");
+assert.equal(predicate(new Error("Falta la hoja requerida del feed CATALOG: CatalogChangeState.")),true);
+assert.equal(predicate(new Error("Falta la hoja requerida del feed CATALOG: CatalogChangeEvents.")),true);
+assert.equal(predicate(new Error("No se recibió respuesta del feed público del catálogo.")),false);
+assert.match(auth,/reportCatalogFeedHeadError_\(headError\)/);
+assert.match(auth,/requiresFullSnapshot = true;\s*cursorToPersist = null;/);
+assert.match(auth,/Se continuará con una instantánea completa/);
+console.log("CatalogFeedInitializationFallback: 7/7 PASS — error de bootstrap identificado, aviso no repetitivo y fallback snapshot");

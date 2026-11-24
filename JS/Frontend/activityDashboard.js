@@ -23,6 +23,14 @@ export function renderActivityLogs(container, logs, doc = container && container
         values.forEach(value => { const cell = doc.createElement("td"); cell.textContent = value; row.appendChild(cell); });
         container.appendChild(row);
     });
+    if (!entries.length) {
+        const row = doc.createElement("tr");
+        const cell = doc.createElement("td");
+        cell.colSpan = 4;
+        cell.textContent = "Todavía no hay actividad registrada.";
+        row.appendChild(cell);
+        container.appendChild(row);
+    }
     return container;
 }
 

@@ -70,12 +70,29 @@ try {
     await page.route("**/JS/Frontend/main.js", route =>
       route.fulfill({ status: 204, contentType: "text/javascript", body: "" }));
     await page.route("https://cdnjs.cloudflare.com/**", route => route.abort());
-    await page.route("https://script.google.com/**", route =>
-      route.fulfill({ status: 200, contentType: "application/json",
-        body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) }));
-    await page.route("https://script.googleusercontent.com/**", route =>
-      route.fulfill({ status: 200, contentType: "application/json",
-        body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) }));
+    const fulfillSyntheticService = async route => {
+      let action = "";
+      try { action = String(route.request().postDataJSON()?.action || ""); } catch {}
+      if (action === "getActivityLogs") {
+        return route.fulfill({ status: 200, contentType: "text/plain",
+          body: JSON.stringify({
+            status: "success",
+            data: [{ timestamp: "2026-11-24T12:00:00Z", nombreUsuario: "Usuario sintético",
+              tipoActividad: "like", detalle: "Actividad de prueba", idElementoAsociado: "VEH-TEST-01" }],
+            contributions: [{ userId: "SYNTHETIC", nombreUsuario: "Colaborador sintético",
+              cortesAportados: 2, aportesRegistrados: 2, vehiculosConAportes: 1 }],
+            insights: { summary: { vehicles: 1, cuts: 2, usefulVotes: 3, notUseful: 0, notWorking: 0 },
+              topUseful: [], topNegative: [], years: {}, feedbackWindow: 500, windowLimited: false },
+            diagnostics: { activitySheetAvailable: true, activityRowsAvailable: 1,
+              inboxAuditSheetAvailable: true, inboxAuditRowsAvailable: 0,
+              cortesSheetAvailable: true, cortesRowsAvailable: 1, contributionsAvailable: true }
+          }) });
+      }
+      return route.fulfill({ status: 200, contentType: "application/json",
+        body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) });
+    };
+    await page.route("https://script.google.com/**", fulfillSyntheticService);
+    await page.route("https://script.googleusercontent.com/**", fulfillSyntheticService);
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#dev-tools-modal", { state: "attached" });
     await page.evaluate(async () => {
@@ -114,23 +131,30 @@ try {
     check(developerBounds.y + developerBounds.height <= profile.height + 1,
       profile.name + ": modal Developer no excede la altura del viewport");
 
+    const consoleCard = developerModal.locator(".dev-console-shared");
     const consoleHeading = developerModal.locator(".dev-console-shared .dev-card-heading");
     const headingTitle = consoleHeading.locator("h4");
+    const infoButton = consoleHeading.locator(".gp-help-trigger");
     const clearButton = developerModal.locator("#btn-clear-console-log");
     const copyButton = developerModal.locator("#btn-copy-console-log");
-    const [headingBox, titleBox, clearBox, copyBox] = await Promise.all([
-      consoleHeading.boundingBox(), headingTitle.boundingBox(),
-      clearButton.boundingBox(), copyButton.boundingBox()
+    const contentBox = await developerModal.locator(".dev-tools-modal-content").boundingBox();
+    const [consoleBox, headingBox, titleBox, infoBox, clearBox, copyBox] = await Promise.all([
+      consoleCard.boundingBox(), consoleHeading.boundingBox(), headingTitle.boundingBox(),
+      infoButton.boundingBox(), clearButton.boundingBox(), copyButton.boundingBox()
     ]);
-    check(Boolean(headingBox && titleBox && clearBox && copyBox),
+    check(Boolean(contentBox && consoleBox && headingBox && titleBox && infoBox && clearBox && copyBox),
       profile.name + ": encabezado y controles de consola renderizados");
-    check(near(titleBox.y + titleBox.height / 2, clearBox.y + clearBox.height / 2, 4) &&
-      near(titleBox.y + titleBox.height / 2, copyBox.y + copyBox.height / 2, 4),
-      profile.name + ": título, limpiar y copiar alineados verticalmente");
-    check(titleBox.x + titleBox.width <= clearBox.x + 2 &&
+    const consoleWidthRatio = consoleBox.width / contentBox.width;
+    check(profile.width <= 760 ? consoleWidthRatio >= 0.9 : near(consoleWidthRatio, 0.5, 0.12),
+      profile.name + ": consola ocupa 50% en escritorio y 100% en móvil");
+    check([infoBox, clearBox, copyBox].every(box =>
+      near(titleBox.y + titleBox.height / 2, box.y + box.height / 2, 4)),
+      profile.name + ": información, limpiar y copiar alineados junto al título");
+    check(titleBox.x + titleBox.width <= infoBox.x + 2 &&
+      infoBox.x + infoBox.width <= clearBox.x + 2 &&
       clearBox.x + clearBox.width <= copyBox.x + 2 &&
       copyBox.x + copyBox.width <= headingBox.x + headingBox.width + 1,
-      profile.name + ": controles de consola no se solapan ni desbordan");
+      profile.name + ": título e iconos agrupados a la izquierda sin separaciones automáticas");
 
     const terminalRow = developerModal.locator(".dev-terminal-row");
     const terminalInput = developerModal.locator("#dev-terminal-input");
@@ -146,12 +170,21 @@ try {
       inputBox.x + inputBox.width <= sendBox.x + 2,
       profile.name + ": terminal contenida y sin solapamientos");
 
-    for (const tabId of ["diagnostics", "database", "images", "system"]) {
+    const tabIds = ["diagnostics", "database", "images", "system"];
+    const tabBoxes = [];
+    for (const tabId of tabIds) {
       const radio = developerModal.locator("#dev-tab-" + tabId);
       const label = developerModal.locator('label[for="dev-tab-' + tabId + '"]');
       await label.click();
       check(await radio.isChecked(), profile.name + ": pestaña " + tabId + " seleccionable");
+      tabBoxes.push(await label.boundingBox());
     }
+    check(tabBoxes.every(Boolean), profile.name + ": cuatro pestañas con geometría disponible");
+    check(tabBoxes.every(box => near(box.y, tabBoxes[0].y, 3)),
+      profile.name + ": las cuatro pestañas permanecen en una sola fila horizontal");
+    check(tabBoxes.every((box, index) => index === 0 ||
+      tabBoxes[index - 1].x + tabBoxes[index - 1].width <= box.x + 2),
+      profile.name + ": pestañas ordenadas de izquierda a derecha sin solaparse");
 
     const helpButtons = developerModal.locator(".gp-help-trigger");
     const helpCount = await helpButtons.count();
@@ -320,12 +353,34 @@ try {
       fullPage: false
     });
 
+    await page.evaluate(async () => {
+      const detail = document.getElementById("modalDetalle");
+      if (detail) { detail.style.display = "none"; detail.classList.remove("visible"); }
+      await window.__aug146Ui.openDashboard();
+    });
+    const dashboard = page.locator("#dashboard-modal");
+    await dashboard.waitFor({ state: "visible" });
+    const activityRows = dashboard.locator("#activity-logs tr");
+    const contributionRows = dashboard.locator("#activity-contributions tr");
+    check(await activityRows.count() === 1, profile.name + ": dashboard muestra la actividad sintética");
+    check((await activityRows.first().innerText()).includes("Actividad de prueba"),
+      profile.name + ": descripción de actividad visible");
+    check(await contributionRows.count() === 1, profile.name + ": dashboard muestra el aporte sintético");
+    check((await dashboard.locator("#activity-insights").innerText()).includes("3"),
+      profile.name + ": dashboard muestra métricas sintéticas");
+    check(await dashboard.locator("#activity-dashboard-status").evaluate(element => element.hidden),
+      profile.name + ": dashboard oculta el estado cuando los datos están disponibles");
+    await page.screenshot({
+      path: path.join(ROOT, "artifacts", "aug-146-" + profile.name + "-dashboard.png"),
+      fullPage: false
+    });
+
     check(pageErrors.length === 0,
       profile.name + ": sin excepciones JavaScript en navegador (" + pageErrors.join("; ") + ")");
     console.log("PASS " + profile.name + " (" + profile.width + "x" + profile.height + ")");
     await context.close();
   }
-  console.log("AUG-146 Playwright: " + assertions + "/" + assertions + " PASS; 4 viewports; 12 capturas.");
+  console.log("AUG-146 Playwright: " + assertions + "/" + assertions + " PASS; 4 viewports; 16 capturas.");
 } catch (error) {
   failures.push(error);
 } finally {
