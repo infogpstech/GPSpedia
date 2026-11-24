@@ -626,3 +626,16 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Fixtures y contratos actualizados. MIG013SessionActorLocalLookup 22/22, CatalogChangeFeed 19/19, UtilitiesSecurity 19/19, PasswordHashMigration 16/16, SensitiveLogsTrustedActor 7/7, SessionActivityLeaseMinimization 6/6 y MIG026StaticConfigSearch 10/10 PASS.
 - CI run 45399766285, job 138464973056, commit a894a402d3dbcae2c922bc815b8efc3e8cba4a1d: SUCCESS; sintaxis PASS; 513 suites, 6,051 pruebas aprobadas y 0 fallos.
 - La prueba de contexto activo, identidad/permisos, lectura/escritura, concurrencia y latencia de Web Apps reales queda pendiente de Beta. No se desplegaron Apps Script ni se modificaron propiedades, Spreadsheet o datos instalados.
+
+
+### Verificación técnica integral MIG-001..030 — 2026-11-24
+
+- CI final de regresión: run **45400544234**, job **138467663045**, commit `5bd3da718d3e675dfc31015a294a0adb33300838`: SUCCESS; Node.js v22.23.5; 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- Integridad estática: RepositoryJavaScriptSyntax 1/1 (463 archivos .js/.mjs); RepositoryModuleReferences 1/1 (384 archivos, referencias resueltas).
+- Paridad y seguridad: MIG027FunctionalParity 8/8; MIG028SecurityPerformanceRegression 9/9; MIG026StaticConfigSearch 10/10; MIG013SessionActorLocalLookup 22/22.
+- Acceso Spreadsheet: CatalogChangeFeed 19/19; UTILITIES 19/19; SensitiveLogsTrustedActor 7/7; PasswordHashMigration 16/16; SessionActivityLeaseMinimization 6/6.
+- Independencia y concurrencia: NonBlockingServiceLocks 27/27; WriteContributionAppendConcurrency 9/9; AdminDriveLockIsolation 9/9.
+- GitHub Pages build/deploy: run **45400543527**, build job **138467670290**, deploy job **138467951389**: SUCCESS. No corresponde a despliegue de Apps Script.
+- Revisión del diff de la iteración desde `2bb7c0f8e27261c1edd8f6278779e978a2fbc30f`: 21 archivos modificados, sin archivos añadidos/eliminados ni cambios fuera de los tres servicios, sus fixtures/contratos y la documentación de MIG-026/verificación. No se detectaron cambios funcionales ajenos.
+- La rama protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no fue modificada.
+- Se cierra la verificación técnica integral local conforme a NORMAS_DESAROLLO.md §11. Las pruebas Beta reales, contexto Spreadsheet de Web Apps, permisos efectivos, concurrencia entre deployments, métricas p50/p95 y limpieza de propiedades legacy siguen pendientes en `Tareas_Beta.md`; no se presentan como validadas.
