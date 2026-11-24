@@ -65,7 +65,7 @@ check("La guía no revive secretos, propiedades ni rutas legacy", () => {
 check("La guía separa pruebas GET, validación Beta y límites de autorización", () => {
   assert.match(guide, /read-only/);
   assert.match(guide, /Tareas_Beta\.md/);
-  assert.match(guide, /No se autoriza.*despliegue productivo/s);
+  assert.match(guide, /no autoriza despliegues productivos/i);
   assert.match(guide, /no demuestra login, RBAC, escritura, concurrencia ni acceso a Drive\/YouTube/);
 });
 
