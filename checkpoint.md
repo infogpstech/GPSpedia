@@ -156,3 +156,22 @@ Ejecutar BETA-09: comparar visualmente los límites de edición, impresión, com
 
 ## Próxima acción
 Ejecutar en Beta aislada la prueba de acceso de los seis servicios con la identidad real de cada deployment; verificar lectura/escritura de Spreadsheet y acceso, identidad, nombre y jerarquía de la carpeta Cortes para WRITE/FEEDBACK/ADMIN. Revisar scopes/autorizaciones solicitados. No desplegar en producción sin autorización expresa.
+
+
+## Publicación de endpoints centrales AUTH y modal Developer — 2026-11-24
+
+**Estado: IMPLEMENTADO EN CÓDIGO Y APROBADO EN CI; EJECUCIÓN OPERATIVA DIFERIDA A BETA.**
+
+- Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Código funcional validado en commit 3e8041dc34a338e4088ca547e911221e23595384. Rama base protegida GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+- Se añadieron getCentralServiceUrls y updateCentralServiceUrls a AUTH. Ambas requieren sesión vigente y actor confiable; AUTH comprueba rol Desarrollador en backend. El frontend no puede conceder ese rol.
+- El modal Herramientas de desarrollador → Sistema contiene seis campos de URL (AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN). Solo esas URL son editables. La UI consulta y actualiza directamente mediante el único bootstrap AUTH.
+- El flujo manual de Apps Script usa prepareCentralConfigurationServiceUrlInput() para crear seis filas borrador y publishCentralConfigurationFromServiceUrlDraft() para validar y publicar. Solo se completa endpoint_url; las demás columnas se generan o conservan automáticamente. No requiere autenticación GPSpedia; sí puede requerir autorización Google normal para Spreadsheet.
+- AUTH genera metadatos de servicio desde contratos/versiones reales, copia parámetros y recursos vigentes, crea el esquema inicial y rich_text_mode=strict si corresponde, verifica el snapshot, registra historial append-only y cambia active_revision/READY únicamente después de la validación. No se codifican URLs de otros servicios, secretos ni llamadas interservicio.
+- Se mantuvo byte-identical JS/Services/Auth.js y JS/Tests/Auth.js. Se actualizaron inventarios y contratos para 125 acciones (AUTH 21). Los errores de UI son neutros; la consola conserva diagnósticos y la interfaz distingue una publicación confirmada de un refresco de caché pendiente.
+- CI run 45456746900, job 138668136581, commit 3e8041dc34a338e4088ca547e911221e23595384: SUCCESS; 515 suites, 6,078 pruebas aprobadas, 0 fallos. CentralConfigurationInitializer 7/7; CentralServiceUrlPublisher 7/7; ServiceCallGraphContract 9/9; MIG029DeploymentGuideContract 16/16. GitHub Pages run 45456746700: SUCCESS.
+- Tareas_Beta.md §19 contiene la lista de verificación para ejecutar el flujo en una Spreadsheet y deployments aislados, validar RBAC, primera publicación, cambios, idempotencia, errores y transición del bootstrap AUTH.
+- No se ejecutó el script sobre la Spreadsheet real, no se modificaron datos/propiedades/permisos productivos y no se desplegó Apps Script. La URL inicial de AUTH continúa siendo el único bootstrap fijo del frontend.
+
+## Próxima acción
+
+Preparar Beta aislada y ejecutar Tareas_Beta.md §19 con las seis URL de deployment Beta. Primero ejecutar el flujo manual en AUTH y verificar la primera revisión; después probar el modal con rol Desarrollador y los rechazos con sesión/rol no autorizados. Mantener el bootstrap anterior disponible durante cualquier cambio de URL AUTH. No desplegar a producción ni modificar la Spreadsheet productiva sin autorización expresa.
