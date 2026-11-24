@@ -4,7 +4,7 @@ Fecha: 2026-11-24
 Repositorio: `infogpstech/GPSpedia`
 Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.
-HEAD de trabajo antes de este checkpoint: `1d20ee06ac8c989deabea98a9ddd89d3928aa624`
+HEAD de trabajo antes de este checkpoint: `d8160863f3196c50598d1438019ae1b2135f07b7`
 HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Reglas de continuidad
@@ -60,7 +60,7 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Nueva tarea autorizada — AUG-145: ampliar la guía de despliegue de servicios Apps Script
 
-**Estado: PENDIENTE.** Solicitud incorporada el 2026-11-24. La tarea consiste en actualizar `Services/DEPLOYMENT_GUIDE.md` para que un operador pueda desplegar los servicios Google Apps Script siguiendo un procedimiento completo, específico y ordenado.
+**Estado: COMPLETADA EN DOCUMENTACIÓN Y CI; SIN DESPLIEGUES REALES.** Solicitud incorporada el 2026-11-24. La guía operativa quedó ampliada y validada en CI.
 
 ### Alcance obligatorio
 - Documentar el procedimiento paso a paso para cada uno de los seis proyectos activos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
@@ -84,6 +84,16 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - Verificar nombres/rutas de proyectos, archivos, menús de Apps Script, secuencia, condiciones de rollback, enlaces y referencias documentales.
 - Añadir o actualizar pruebas de contrato documental para asegurar que la guía enumera los seis servicios, mantiene el orden definido, no incluye servicios retirados y conserva las reglas de configuración central/seguridad.
 - Revisar el diff y confirmar que el cambio se limita a la documentación y pruebas contractuales realmente necesarias. No desplegar Apps Script ni modificar PropertiesService, permisos, Spreadsheet, Drive, OAuth, endpoints o datos productivos.
+
+### Implementación documental y CI — AUG-145 — 2026-11-24
+
+- Guía actualizada: `Services/DEPLOYMENT_GUIDE.md`; README enlaza la versión ampliada. Se documentó el orden completo AUTH → CATALOG → WRITE → FEEDBACK → UTILITIES → ADMIN, justificado como secuencia operativa y no como dependencia backend.
+- Se añadieron pasos específicos por proyecto, identidades de salud, archivos fuente, actualización del deployment Web App existente, pruebas funcionales Beta, matriz de propagación de helpers compartidos, criterios de fallo parcial, publicación versionada de URLs, excepción del bootstrap AUTH, rollback y checklist de evidencia.
+- El análisis de los seis servicios confirmó que el frontend coordina las operaciones entre servicios; no se deben introducir llamadas Apps Script→Apps Script. Se conservaron las exclusiones USERS/COORDINATOR y las reglas de no secretos/URLs locales.
+- Se amplió `JS/Tests/MIG029DeploymentGuideContract.mjs` a 15 verificaciones. Resultado: 15/15 PASS.
+- CI run `45412598879`, job `138510122635`, commit `d8160863f3196c50598d1438019ae1b2135f07b7`: SUCCESS; Node.js v22.23.5; 513 suites, 6,060 pruebas aprobadas, 0 fallos; `RepositoryJavaScriptSyntax` 1/1 sobre 463 archivos.
+- GitHub Pages build/deploy run `45412598149`: SUCCESS (build job `138510137341`, deploy job `138510421315`). No es despliegue Apps Script.
+- No se desplegó ningún servicio Apps Script ni se modificaron PropertiesService, permisos, Spreadsheet, Drive, OAuth, endpoints o datos productivos. La ejecución real de los procedimientos permanece sujeta a autorización y Beta aislada.
 
 ## MIG-026 — acceso Spreadsheet
 - AUTH usa `getAuthUsersSpreadsheet_()`; CATALOG usa `getSpreadsheet()`; UTILITIES usa `getUtilitiesSpreadsheet_()` y comparte un handle por petición entre carga de actor y operación.
@@ -115,4 +125,4 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - El manifiesto de rotación conserva las referencias a las partes anteriores.
 
 ## Próxima acción
-Ejecutar AUG-145: ampliar `Services/DEPLOYMENT_GUIDE.md` con el orden de despliegue justificado y el procedimiento paso a paso de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Mantener las pruebas visuales de AUG-144 en BETA-09; cualquier despliegue real Apps Script sigue sujeto a autorización y Beta aislada.
+Ejecutar BETA-09: comparar visualmente los límites de edición, impresión, compartir y cerrar antes/después de AUG-144 en los mismos viewports y validar el encabezado con logos y nombres de distinta longitud. Continuar las pruebas BETA-01..08 cuando el entorno esté aislado y autorizado. No desplegar servicios Apps Script en producción sin autorización expresa.
