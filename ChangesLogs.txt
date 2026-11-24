@@ -417,3 +417,10 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Se reforzó getCatalogChanges: un ledger vacío no se interpreta como feed vigente sin cambios; responde resetRequired hasta que exista un evento reset inicial.
 - Se añadió contrato para inicialización: publicar reset como Desarrollador genera revisión 1 y hace que los clientes reconstruyan snapshot antes de continuar con deltas.
 - CatalogChangeFeed: 19/19 PASS. CI run 45299704239: 4,691 pruebas aprobadas; una suite fallida preexistente FeedbackLockFastFail.
+
+
+### 2026-11-24 — MIG-026: CI y Pages confirmados en HEAD de documentación
+- HEAD de rama: b2a919af6342927e9e7155cfeb3e29f3fc0cb860. El código funcional corresponde al commit 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3; las modificaciones posteriores de este corte son registros/documentación.
+- Regresión de servicios run 45300194745: 420 suites, 4,691 pruebas PASS y una suite fallida, FeedbackLockFastFail. El fallo es la aserción preexistente que prohíbe LockService en FEEDBACK; ya se reproduce en runs anteriores a MIG-026.
+- GitHub Pages run 45300194094: build y deploy automáticos completados correctamente. No se desplegaron proyectos Apps Script.
+- Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.

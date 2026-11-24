@@ -1606,3 +1606,14 @@ ANÁLISIS DE SIGUIENTE SUBTRAMO — WRITE CORTES ID HIGH-WATER — 2026-11-24
 - Pruebas relacionadas existentes: WriteVehicleIdReservationOutsidePhysicalLock.mjs, WriteFreezeCortesIdsBackupOutsideLock.mjs, AdminLegacyCutReservation.mjs y AdminCutSlotReservation.mjs.
 - No se modificó código WRITE en este subtramo ni se accedió a datos reales. La migración WRITE queda como siguiente tarea local dentro de MIG-026.
 ================================================================================
+
+
+================================================================================
+VERIFICACIÓN FINAL DEL CORTE — 2026-11-24
+- Rama de trabajo HEAD: b2a919af6342927e9e7155cfeb3e29f3fc0cb860.
+- Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+- CI service regression run 45300194745: 420 suites, 4,691 pruebas aprobadas, 1 suite fallida: FeedbackLockFastFail. El fallo es el contrato estático que prohíbe LockService en FEEDBACK, reproducido antes de MIG-026.
+- GitHub Pages build/deploy automático run 45300194094: SUCCESS. No se desplegó Apps Script.
+- Último código probado: commit 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3; HEAD posterior solo contiene documentación de continuidad.
+- MIG-026 sigue EN PROGRESO. Próximo subtramo: migración baseline del contador WRITE GPSpedia_CORTES_LAST_ID al ledger CortesIdReservations; después AUTH y ADMIN. Las validaciones de Spreadsheet Web App y limpieza de propiedades instaladas permanecen en Beta.
+================================================================================
