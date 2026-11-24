@@ -26,7 +26,12 @@ function sheets(role="Desarrollador",created=new Date(),activity=new Date(),toke
  const sh=rows=>({getDataRange:()=>({getValues:()=>rows})});
  return {getSheetByName:name=>name==="Users"?sh([["id","username","password","role"],["U-1","dev","",role]]):name==="ActiveSessions"?sh([["id","username","token","date","logs","lastActivityAt"],["U-1","dev",token,created,"",activity]]):null};
 }
-const verify=ss=>new Function("getSpreadsheet",auth+";return {developer:verifyCatalogDeveloperSession_,modal:verifyCatalogModalEditSession_};")(()=>ss);
+const verify=ss=>{
+ const cache={get:()=>null,put:()=>{},remove:()=>{}};
+ const cacheService={getScriptCache:()=>cache};
+ const utilities={DigestAlgorithm:{SHA_256:"SHA_256"},Charset:{UTF_8:"UTF_8"},computeDigest:()=>new Array(32).fill(1)};
+ return new Function("getSpreadsheet","CacheService","Utilities",auth+";return {developer:verifyCatalogDeveloperSession_,modal:verifyCatalogModalEditSession_};")(()=>ss,cacheService,utilities);
+};
 assert.equal(verify(sheets()).developer({userId:"U-1",sessionToken:"S-1"}),true);
 assert.equal(verify(sheets("Jefe")).modal({userId:"U-1",sessionToken:"S-1"}),true);
 assert.equal(verify(sheets("Supervisor")).modal({userId:"U-1",sessionToken:"S-1"}),true);
