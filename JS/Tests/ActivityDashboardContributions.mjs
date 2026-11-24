@@ -45,6 +45,7 @@ assert.ok(helper.includes('||"Comunidad de técnicos"'));
 assert.ok(helper.includes('.replace(/\\s*\\([^)]*\\)/g," ")'));
 assert.match(dash,/export function renderActivityContributions/);
 assert.match(ui,/renderActivityContributions\(contributionContainer/);
+assert.match(ui,/colspan="4" style="color:red;"/);
 assert.match(html,/data-activity-tab="contributions"/);
 assert.match(html,/id="activity-contributions"/);
 assert.match(html,/Cortes aportados/);
@@ -81,6 +82,9 @@ const tbody=new FakeElement("tbody");tbody.ownerDocument=doc;
 renderActivityContributions(tbody,[{nombreUsuario:"pAbLo pEñA.<br>PABLO PENA",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1}],doc);
 assert.equal(tbody.children.length,1);
 assert.deepEqual(tbody.children[0].children.map(cell=>cell.textContent),["Pablo Peña","2","5","1"]);
+const emptyTbody=new FakeElement("tbody");emptyTbody.ownerDocument=doc;
+renderActivityContributions(emptyTbody,[],doc);
+assert.equal(emptyTbody.children[0].children[0].colSpan,4);
 
 const insightContainer=new FakeElement("div");insightContainer.ownerDocument=doc;
 renderActivityInsights(insightContainer,{summary:{}},[{nombreUsuario:"Ana",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1}],doc);
