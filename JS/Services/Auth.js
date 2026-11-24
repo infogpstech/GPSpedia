@@ -6,7 +6,6 @@
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
-const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os"; // <-- ACTUALIZADO A DB V2.0
 const SHEET_NAMES = {
     USERS: "Users",
     ACTIVE_SESSIONS: "ActiveSessions",
@@ -401,7 +400,7 @@ function logToSheet(level, message, details = {}) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         lockAcquired = true;
-        const logSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.LOGS);
+        const logSheet = getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.LOGS);
         if (!logSheet) throw new Error("Hoja Logs no encontrada.");
         if (logSheet.getLastRow() < 1) throw new Error("La hoja Logs no contiene una fila de encabezados.");
         const timestamp = new Date().toISOString();
@@ -463,7 +462,7 @@ function handleClearSensitiveLogs(payload) {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         lockAcquired = true;
 
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const logsSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGS);
         if (!logsSheet) throw new Error("No se encontró la hoja Logs.");
 
@@ -1163,7 +1162,7 @@ function handleLogin(payload) {
         attemptId = beginLoginAttempt(normalizedUsername);
         attemptReserved = true;
 
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const userSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         const data = userSheet.getDataRange().getValues();
         data.shift();
@@ -1322,7 +1321,7 @@ function validateSessionReadOnly_(sessionToken, expectedUserId, trustedActor) {
     try {
         if (!lock.tryLock(0)) return { valid: null, unavailable: true, reason: 'session_busy' };
         acquired = true;
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) return { valid: null, unavailable: true, reason: 'missing_sheet' };
@@ -1612,7 +1611,7 @@ function migrateLegacyRoleRevocationMarkersToSharedState_() {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         if (!usersSheet) throw new Error('No se encontró la hoja Users.');
         return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(spreadsheet, usersSheet);
@@ -1623,7 +1622,7 @@ function migrateLegacyRoleRevocationMarkersToSharedState_() {
 
 function hasPendingRoleRevocation_(userId, usersSheetOverride = null) {
     try {
-        const usersSheet = usersSheetOverride || SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);
+        const usersSheet = usersSheetOverride || getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS);
         if (!usersSheet) return true;
         const matches = usersSheet.getDataRange().getValues().slice(1)
             .filter(row => normalizeUserId(row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
@@ -1850,7 +1849,7 @@ function handleUpdateUser(payload) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const ss = getAuthUsersSpreadsheet_();
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
@@ -1972,7 +1971,7 @@ function validateAndTouchSession_(token, expectedUserId = null) {
     const lock = LockService.getScriptLock(); let acquired = false;
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.'); acquired = true;
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) return { valid: null, unavailable: true, reason: 'missing_sheet' };
@@ -2042,7 +2041,7 @@ function handleResetUserSessions(payload) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const ss = getAuthUsersSpreadsheet_();
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
@@ -2126,7 +2125,7 @@ function handleDeleteUser(payload) {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         lockAcquired = true;
 
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) {
@@ -2392,7 +2391,7 @@ function handleRequestPasswordRecovery(payload){
     if(!username||!email||username.length>80||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return generic;
     const lock=LockService.getScriptLock();let acquired=false,manager=null,delivery=null,userId="";
     try{
-        const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)return generic;
+        const ss=getAuthUsersSpreadsheet_(),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)return generic;
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
             .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
                 String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
@@ -2428,7 +2427,7 @@ function handleCompletePasswordRecovery(payload){
     const lock=LockService.getScriptLock();let acquired=false,userId="",result=null;
     try{
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');acquired=true;
-        const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS),sessionsSheet=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const ss=getAuthUsersSpreadsheet_(),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS),sessionsSheet=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if(!usersSheet||!sessionsSheet)throw new Error("No se encontraron las hojas Users y ActiveSessions.");
         migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(ss, usersSheet);
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
@@ -2472,7 +2471,7 @@ function handleChangePassword(payload) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const ss = getAuthUsersSpreadsheet_();
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
@@ -2534,7 +2533,7 @@ function handleResetUserPassword(payload) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const ss = getAuthUsersSpreadsheet_();
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
@@ -2600,7 +2599,7 @@ function handleAcceptTerms(payload) {
     let acquired = false;
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.'); acquired = true;
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const spreadsheet = getAuthUsersSpreadsheet_();
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         if (!usersSheet) throw new Error('No se encontró la hoja Users.');
         const userMatches = usersSheet.getDataRange().getValues().slice(1)
@@ -2648,7 +2647,7 @@ function handleMigrateLegacyPasswords(payload) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const ss = getAuthUsersSpreadsheet_();
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
@@ -2767,7 +2766,7 @@ function handleLogout(payload) {
     try {
         if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const ss = getAuthUsersSpreadsheet_();
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
         if (!sessionsSheet || !usersSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
@@ -2871,7 +2870,14 @@ function handleLogout(payload) {
 }
 
 // MIG-012: gestión de usuarios integrada en AUTH; no depende de un endpoint USERS.
-function getAuthUsersSpreadsheet_(){return SpreadsheetApp.openById(SPREADSHEET_ID);}
+let authSpreadsheet = null;
+function getAuthUsersSpreadsheet_() {
+    if (authSpreadsheet === null) {
+        authSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        if (!authSpreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto AUTH.");
+    }
+    return authSpreadsheet;
+}
 function getAuthUserActor_(payload,allowedRoles,actionLabel,requireUserRow){const actor=requireSharedAuthActor_(payload,allowedRoles,actionLabel),requestedUserId=normalizeUserId(payload&&payload.userId);if(!requestedUserId||requestedUserId!==actor.userId)throw new Error("Acceso no autorizado: el contexto de sesión no coincide con la identidad solicitada.");let userRowIndex=null;if(requireUserRow===true){const usersSheet=getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS),matches=findUniqueRowsByExactValue_(usersSheet,COLS_USERS.ID,actor.userId,true);if(matches.length!==1)throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");userRowIndex=matches[0].rowIndex;}return {userId:actor.userId,role:actor.role,userRowIndex,epoch:actor.epoch};}
 function findUniqueRowsByExactValue_(sheet,column,value,trimCell=false) {
     if (!sheet || !value) return [];
