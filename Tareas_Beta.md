@@ -328,3 +328,19 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Confirmar que cleanup no elimina ni modifica las propiedades legacy GPSpedia_DRIVE_AUDIT_STATE_. El puntero GPSpedia_DRIVE_AUDIT_LATEST_ sigue siendo una familia separada y debe probarse por su tarea propia.
 - Después del baseline, confirmar que load/save/cleanup de estado no vuelven a obtener ScriptProperties. Las únicas lecturas restantes en este flujo corresponden al puntero latest, aún no migrado.
 - Registrar deployment, Spreadsheet, owners, auditIds sintéticos, cursores, resultados y evidencia anonimizada en Hallazgos_Beta.md.
+
+
+## 15. Validación Beta diferida — MIG-026 ADMIN: DriveAuditLatest
+**Estado: PENDIENTE DE BETA.** CI run 45327887713 aprobó 496 suites, 5,856 pruebas y 0 fallos; AdminReplacedImagesIntegrity 64/64. Falta validar Apps Script/Spreadsheet reales en entorno aislado.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar proyecto ADMIN y Spreadsheet Beta desechables.
+- Crear manualmente DriveAuditLatest con 5 encabezados exactos en fila 1: ownerHash, ownerId, latestAuditId, updatedAt, schemaVersion. Fila 2 META/BASELINE; registros desde fila 3. No crear la hoja automáticamente.
+- Preparar propiedades legacy GPSpedia_DRIVE_AUDIT_LATEST_<sha256(ownerId)[0:32]> cuyo auditId corresponda a un estado completo vigente en DriveAuditRuns. Verificar que el baseline resuelve el owner a partir de estados por auditId, confirma read-back y marca drive_audit_latest_baseline_v1.
+- Preparar punteros huérfanos cuyo estado no exista o esté vencido. Deben omitirse sin borrar ni modificar propiedades legacy. Un hash truncado que coincida con más de un owner debe fallar cerrado. Un auditId de otro owner o estado no completo debe fallar cerrado.
+- Interrumpir baseline en pending y después de importar parte de los punteros; reintentar y confirmar idempotencia y ausencia de filas duplicadas por ownerHash.
+- Probar getLatest por dos owners, rechazo de acceso cruzado, estado running no entregable como última auditoría completa y estado complete entregable.
+- Probar save/upsert con read-back, respuesta perdida, ownerHash duplicado, auditId inválido, fila huérfana y schemaVersion desconocida.
+- Expirar un estado DriveAuditRuns y confirmar que cleanup elimina el puntero correspondiente en DriveAuditLatest solo después de que su baseline esté completo. Antes del baseline, las propiedades latest legacy deben permanecer intactas.
+- Ejecutar finalización de auditorías distintas de forma solapada. El lock debe ser tryLock(0), solo durante baseline/upsert/cleanup; nunca durante Drive. Contención retryable, sin waitLock ni cola.
+- Después de drive_audit_latest_baseline_v1, confirmar que getLatest, save y cleanup no vuelven a obtener ScriptProperties para esta familia. No borrar propiedades legacy durante Beta; limpieza física requiere autorización explícita.
+- Registrar owners, auditIds sintéticos, Spreadsheet, resultado y evidencia anonimizada en Hallazgos_Beta.md.

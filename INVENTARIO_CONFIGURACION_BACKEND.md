@@ -239,7 +239,7 @@ Esta adenda prevalece sobre las ubicaciones y consumidores históricos descritos
 8. ADMIN: ledger Safe Apply GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>.
 9. ADMIN: guardas temporales GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)>; migración a hoja AdminOperationGuards, baseline legacy solo de reservas vigentes, exclusión por scope y TTL 30–420 s.
 10. ADMIN: estado reanudable de auditoría Drive GPSpedia_DRIVE_AUDIT_STATE_<auditId>; migrado a DriveAuditRuns con baseline, read-back, TTL de 6 h y páginas/snapshots fuera de celdas.
-11. ADMIN: puntero por actor GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>.
+11. ADMIN: puntero por actor GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>; migrado a DriveAuditLatest con baseline, ownerHash, read-back y limpieza por expiración.
 12. ADMIN: contador LOGOS_MARCA_ID_COUNTER.
 
 Las familias de Coordinator/SharedMutation (secrets, URLs, leases, contexto/sesiones y telemetría) y la antigua preferencia FEEDBACK GPSpedia_RICH_TEXT_MODE_V1 ya no aparecen en el código activo revisado. Esto confirma ausencia de referencias en la rama, no limpieza de valores instalados en proyectos Apps Script.
@@ -345,3 +345,15 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - CI run 45327051980: 496 suites, 5,841 pruebas aprobadas, 0 fallos. Pages run 45327050709 SUCCESS.
 - Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 2 (3 total). ADMIN conserva el puntero latest por actor y LOGOS_MARCA_ID_COUNTER; auditoría, Safe Apply, guardas y estado reanudable quedan como lectores de baseline legacy.
 - Beta pendiente en Tareas_Beta.md §14.
+
+
+### Adenda MIG-026 ADMIN-04 — puntero latest por actor — 2026-11-23
+
+- La familia GPSpedia_DRIVE_AUDIT_LATEST_<sha256(ownerId)[0:32]> pasa a DriveAuditLatest (5 columnas): ownerHash, ownerId, latestAuditId, updatedAt, schemaVersion. Fila 2 META/BASELINE; filas 3+.
+- Baseline idempotente/reanudable: primero confirma DriveAuditRuns; resuelve el hash truncado a un owner único mediante estados vigentes; importa solo punteros que refieren a estado completo del mismo owner; valida read-back y marca drive_audit_latest_baseline_v1.
+- Punteros huérfanos o de estados expirados se omiten sin borrar propiedades legacy. Colisiones de hash, identidad cruzada, auditId inválido y estado no completo fallan cerrados.
+- save/upsert y clear usan ScriptLock tryLock(0) solo en transiciones breves; getLatest lee el puntero y valida estado completo/owner. Cleanup elimina el puntero de Spreadsheet únicamente si el baseline latest está completo; antes de ese momento conserva la propiedad legacy.
+- Después del baseline, getLatest/save/cleanup no obtienen ScriptProperties para esta familia. No se modifican propiedades legacy.
+- CI run 45327887713: 496 suites, 5,856 pruebas aprobadas, 0 fallos; AdminReplacedImagesIntegrity 64/64. Pages run 45327886488 SUCCESS.
+- Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 1 (2 total). ADMIN conserva únicamente LOGOS_MARCA_ID_COUNTER; auditoría, Safe Apply, guardas, estado y latest quedan como lectores de baseline legacy.
+- Beta pendiente en Tareas_Beta.md §15.

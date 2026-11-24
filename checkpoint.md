@@ -1838,3 +1838,20 @@ Commit de ajuste del harness de pruebas: 7ccc136973babed24f7c007fd89812faccd0984
 
 Resultado: subtramo DriveAuditRuns COMPLETADO EN CÓDIGO Y CI; VALIDACIÓN BETA PENDIENTE. Siguiente familia según inventario: GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>. Después: LOGOS_MARCA_ID_COUNTER; luego búsqueda estática global.
 ================================================================================
+
+================================================================================
+MIG-026 ADMIN-04 — CIERRE LOCAL DEL PUNTERO LATEST DRIVE — 2026-11-23
+HEAD de implementación y pruebas: a7f8489861f1387027069b95b5fe73cfd60b6732
+Commit de migración: da38a4e5b5dbe041e4fed5e4d3c9b8e275bd8527
+Commit de ajuste de contrato legacy: a7f8489861f1387027069b95b5fe73cfd60b6732
+
+- GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)> migrado a DriveAuditLatest (5 columnas). La fila de estado se resuelve por ownerHash y latestAuditId.
+- Baseline usa DriveAuditRuns para resolver hash truncado a owner único y verificar que el puntero refiere a estado completo del mismo owner. Es idempotente/reanudable y confirma read-back.
+- Los punteros huérfanos se omiten sin borrar propiedades legacy. El cleanup solo elimina punteros de Spreadsheet tras baseline latest completo; antes preserva ScriptProperties.
+- getLatest valida owner y estado complete. save/upsert y cleanup usan tryLock(0) breve; no se retiene lock durante Drive. La contención devuelve DRIVE_AUDIT_LATEST_BUSY.
+- AdminReplacedImagesIntegrity 64/64 PASS; baseline, punteros huérfanos, owner isolation, estado running, cleanup y fail-fast.
+- CI run 45327887713: 496 suites, 5,856 pruebas aprobadas, 0 fallos. GitHub Pages run 45327886488 SUCCESS.
+- No se desplegó Apps Script ni se creó/modificó Spreadsheet/Drive real. Propiedades legacy intactas.
+
+Resultado: subtramo DriveAuditLatest COMPLETADO EN CÓDIGO Y CI; VALIDACIÓN BETA PENDIENTE. Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 1 (2 total). Siguiente familia: LOGOS_MARCA_ID_COUNTER; luego búsqueda estática global.
+================================================================================
