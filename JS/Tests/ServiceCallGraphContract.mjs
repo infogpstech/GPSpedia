@@ -93,7 +93,7 @@ check("Las llamadas HTTP externas a Drive, YouTube e imágenes no se confunden c
 
 check("El inventario refleja la arquitectura actual y la secuencia MIG-026", () => {
     assert.match(inventory, /No se conservan COORDINATOR ni SharedMutation/);
-    assert.match(inventory, /ACTION_TO_SERVICE_MAP contiene 123 acciones canónicas/);
+    assert.match(inventory, /123 acciones canónicas \(AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45\)/);
     assert.match(inventory, /## 3\.9 MIG-025/);
     assert.match(inventory, /## 3\.10 MIG-026/);
     assert.match(inventory, /primera familia de estado ADMIN, una familia por tarea/);
