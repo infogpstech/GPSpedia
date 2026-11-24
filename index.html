@@ -302,16 +302,18 @@
                 <div class="dev-card-heading dev-heading-with-help">
                     <h4><i class="fa-solid fa-terminal"></i> Consola</h4>
                     <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre comandos de consola" title="Ayuda" aria-controls="dev-help-console" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-console" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Ejecuta dir, cd, mkdir, tree y move para explorar y organizar Cortes. Para mover un archivo: move &lt;ID_ARCHIVO&gt; &lt;ID_CARPETA_DESTINO&gt;. Usa dir para consultar los IDs.</span>
-                    <button type="button" id="btn-clear-console-log" class="btn btn-secondary"><i class="fa-solid fa-eraser"></i> Limpiar consola</button>
-                    <button id="btn-copy-console-log" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar registro</button>
+                    <button type="button" id="btn-clear-console-log" class="btn btn-secondary" aria-label="Limpiar consola" title="Limpiar consola"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
+                    <button type="button" id="btn-copy-console-log" class="btn btn-secondary" aria-label="Copiar registro" title="Copiar registro"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
                 </div>
                 <div id="dev-console-log" class="dev-console-output" role="log" aria-live="polite" aria-relevant="additions text">
                     [SISTEMA] Consola lista.
                 </div>
                 <div class="dev-terminal-row">
-                    <span class="dev-terminal-prompt">&gt;</span>
-                    <input type="text" id="dev-terminal-input" placeholder="Comando..." class="dev-input" aria-label="Comando de consola">
-                    <button id="btn-terminal-send" class="btn btn-primary"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
+                    <div class="dev-terminal-input-shell">
+                        <span class="dev-terminal-prompt" aria-hidden="true">&gt;</span>
+                        <input type="text" id="dev-terminal-input" placeholder="Comando..." class="dev-input" aria-label="Comando de consola">
+                    </div>
+                    <button type="button" id="btn-terminal-send" class="btn btn-primary" aria-label="Ejecutar comando" title="Ejecutar comando">&gt;_</button>
                 </div>
                 <div id="dev-progress-container" class="dev-progress-container">
                     <div id="dev-progress-bar" class="dev-progress-bar"></div>
@@ -347,7 +349,7 @@
                 <div class="dev-tools-panels">
                     <!-- Diagnóstico -->
                     <section id="dev-panel-diagnostics" class="dev-tab-panel dev-panel-diagnostics" role="region" aria-labelledby="dev-panel-title-diagnostics">
-                        <div class="dev-panel-heading">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
                             <h3 id="dev-panel-title-diagnostics"><i class="fa-solid fa-stethoscope"></i> Diagnóstico</h3>
                         </div>
 
@@ -362,17 +364,12 @@
                             <section id="service-health-detail" class="dev-service-detail" aria-live="polite">
                                 <p class="dev-empty-state">Selecciona una tarjeta para consultar sus parámetros.</p>
                             </section>
-                            <section class="dev-service-traffic-panel" aria-labelledby="dev-global-traffic-retired-title">
-                                <h4 id="dev-global-traffic-retired-title">Tráfico global coordinado · retirado</h4>
-                                <p class="dev-service-note">El agregado global anterior registraba únicamente eventos legacy instrumentados por COORDINATOR, principalmente adquisiciones exitosas de leases. No representa todas las solicitudes HTTP: excluía validaciones de sesión, lecturas del feed, sondeos de salud y rutas no instrumentadas. Al retirar COORDINATOR se retiró también su recopilación; no existe actualmente un agregado global equivalente.</p>
-                                <p class="dev-service-note">Las métricas locales mostradas al seleccionar un servicio corresponden solo a las solicitudes observadas por este navegador durante la sesión. Son temporales, no se transmiten ni persisten y no sustituyen ni permiten inferir el tráfico global.</p>
-                            </section>
                         </div>
                     </section>
 
                     <!-- Base de datos -->
                     <section id="dev-panel-database" class="dev-tab-panel dev-panel-database" role="region" aria-labelledby="dev-panel-title-database">
-                        <div class="dev-panel-heading">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
                             <h3 id="dev-panel-title-database"><i class="fa-solid fa-database"></i> Datos y respaldos</h3>
                             <p>Respaldos y mantenimiento.</p>
                         </div>
@@ -500,7 +497,7 @@
 
                     <!-- Imágenes y Drive -->
                     <section id="dev-panel-images" class="dev-tab-panel dev-panel-images" role="region" aria-labelledby="dev-panel-title-images">
-                        <div class="dev-panel-heading">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
                             <h3 id="dev-panel-title-images"><i class="fa-solid fa-images"></i> Imágenes y Drive</h3>
                             <p>Imágenes, logotipos e historial.</p>
                         </div>
@@ -555,7 +552,7 @@
 
                     <!-- Sistema -->
                     <section id="dev-panel-system" class="dev-tab-panel dev-panel-system" role="region" aria-labelledby="dev-panel-title-system">
-                        <div class="dev-panel-heading">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
                             <h3 id="dev-panel-title-system"><i class="fa-solid fa-gears"></i> Sistema</h3>
                             <p>Preferencias y caché local.</p>
                         </div>
