@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, markInboxUnread, deleteInboxConversation, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, markInboxUnread, deleteInboxConversation, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, loadCentralServiceUrls, saveCentralServiceUrls, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import { getBrowserServiceTrafficSnapshot } from './serviceTelemetry.js';
 import * as offline from './offline.js';
@@ -5897,6 +5897,82 @@ function initializeRichTextModeControl_() {
     }
 }
 
+
+function initializeCentralServiceUrlsControl_() {
+    const card = document.getElementById("central-service-urls-card");
+    if (!card) return;
+    const status = document.getElementById("central-service-urls-status");
+    const saveButton = document.getElementById("btn-save-central-service-urls");
+    const keys = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+    const fields = Object.fromEntries(keys.map(key => [key, document.getElementById("central-service-url-" + key.toLowerCase())]));
+    const context = getUiSessionContext_();
+    const allowed = Boolean(context && context.role === "desarrollador");
+    Object.values(fields).forEach(field => { if (field) field.disabled = !allowed; });
+    if (saveButton) saveButton.disabled = !allowed;
+    if (!allowed) {
+        if (status) status.textContent = "Esta configuración está disponible únicamente para usuarios Desarrollador.";
+        return;
+    }
+
+    const setBusy = busy => {
+        Object.values(fields).forEach(field => { if (field) field.disabled = busy; });
+        if (saveButton) saveButton.disabled = busy;
+    };
+    const load = async () => {
+        setBusy(true);
+        if (status) status.textContent = "Consultando endpoints registrados en AUTH...";
+        try {
+            const urls = await loadCentralServiceUrls(context);
+            if (!isCurrentUiSessionContext_(context)) return;
+            keys.forEach(key => { if (fields[key]) fields[key].value = urls[key] || ""; });
+            if (status) status.textContent = "Puedes modificar las URL. Los demás metadatos se completan y validan automáticamente al publicar.";
+        } catch (error) {
+            if (status) status.textContent = error && error.message ? error.message : "No se pudieron consultar los endpoints.";
+        } finally {
+            if (isCurrentUiSessionContext_(context)) setBusy(false);
+        }
+    };
+
+    if (saveButton && saveButton.dataset.centralServiceUrlsBound !== "true") {
+        saveButton.addEventListener("click", async () => {
+            const activeContext = getUiSessionContext_();
+            if (!activeContext || activeContext.role !== "desarrollador" || !isCurrentUiSessionContext_(context)) {
+                if (status) status.textContent = "La sesión de desarrollador ya no está activa. Vuelve a iniciar sesión.";
+                return;
+            }
+            const urls = {};
+            for (const key of keys) {
+                const field = fields[key];
+                const value = String(field && field.value || "").trim();
+                if (!value) {
+                    if (status) status.textContent = "Completa la URL de " + key + " antes de guardar.";
+                    if (field) field.focus();
+                    return;
+                }
+                urls[key] = value;
+            }
+            setBusy(true);
+            if (status) status.textContent = "Validando y publicando una nueva revisión de endpoints...";
+            try {
+                const result = await saveCentralServiceUrls(urls, activeContext.role, activeContext);
+                if (!isCurrentUiSessionContext_(context)) return;
+                const revision = Number(result && result.revision);
+                if (!Number.isSafeInteger(revision) || revision < 1) throw new Error("AUTH no confirmó una revisión válida.");
+                if (status) status.textContent = result.unchanged
+                    ? "Las URL ya estaban actualizadas. No fue necesario crear otra revisión."
+                    : "Endpoints actualizados y revisión " + revision + " publicada correctamente.";
+                await load();
+            } catch (error) {
+                if (status) status.textContent = error && error.message ? error.message : "No se pudieron actualizar los endpoints.";
+            } finally {
+                if (isCurrentUiSessionContext_(context)) setBusy(false);
+            }
+        });
+        saveButton.dataset.centralServiceUrlsBound = "true";
+    }
+    load();
+}
+
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
     const modal = document.getElementById('dev-tools-modal');
@@ -5924,6 +6000,7 @@ const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
         }
     });
     initializeRichTextModeControl_();
+    initializeCentralServiceUrlsControl_();
     initAdminPanelListeners();
     if (window.triggerAdminPanelPing) {
         window.triggerAdminPanelPing();
