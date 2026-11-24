@@ -1382,20 +1382,20 @@ function sameAdminAuditRecord_(left, right) {
         String(b[index] === null || b[index] === undefined ? "" : b[index]));
 }
 
-function findAdminAuditEventRow_(sheet, eventId) {
-    const target = String(eventId || "");
+function getAdminAuditEventMap_(sheet) {
     const values = sheet.getDataRange().getValues();
-    const matches = [];
+    const events = new Map();
     for (let index = 2; index < values.length; index++) {
         const row = values[index];
-        if (String(row[0] || "") === "EVENT" && String(row[1] || "") === target) {
-            matches.push({ rowIndex: index + 1, record: adminAuditRowToRecord_(row) });
-        }
+        if (!row || !row.some(value => value !== "" && value !== null && value !== undefined)) continue;
+        const record = adminAuditRowToRecord_(row);
+        if (events.has(record.eventId)) throw createAdminAuditError_("El ledger ADMIN contiene eventos duplicados.", "ADMIN_AUDIT_CORRUPT_STATE", record.eventId);
+        events.set(record.eventId, { rowIndex: index + 1, record });
     }
-    if (matches.length > 1) {
-        throw createAdminAuditError_("El ledger ADMIN contiene eventos duplicados.", "ADMIN_AUDIT_CORRUPT_STATE", target);
-    }
-    return matches.length ? matches[0] : null;
+    return events;
+}
+function findAdminAuditEventRow_(sheet, eventId) {
+    return getAdminAuditEventMap_(sheet).get(String(eventId || "")) || null;
 }
 
 function appendAdminAuditRecord_(sheet, record) {
@@ -1436,62 +1436,60 @@ function ensureAdminAuditBaseline_() {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
-        if (!lock.tryLock(0)) {
-            throw createAdminAuditError_("El baseline ADMIN está ocupado; no esperó por otra ejecución.", "ADMIN_AUDIT_BUSY");
-        }
+        if (!lock.tryLock(0)) throw createAdminAuditError_("El baseline ADMIN está ocupado; no esperó por otra ejecución.", "ADMIN_AUDIT_BUSY");
         acquired = true;
         sheet = getAdminAuditSheet_();
         state = readAdminAuditBaselineState_(sheet);
         if (state === ADMIN_AUDIT_BASELINE_VERSION_) return { status: "success", migrated: 0, alreadyComplete: true };
-        if (state && state !== ADMIN_AUDIT_BASELINE_PENDING_) {
-            throw createAdminAuditError_("El marcador de baseline ADMIN no es válido.", "ADMIN_AUDIT_BASELINE_INVALID");
-        }
+        if (state && state !== ADMIN_AUDIT_BASELINE_PENDING_) throw createAdminAuditError_("El marcador de baseline ADMIN no es válido.", "ADMIN_AUDIT_BASELINE_INVALID");
         if (!state) {
-            if (Number(sheet.getLastRow() || 0) > 1) {
-                throw createAdminAuditError_("AdminOperationAudit contiene datos sin marcador de baseline.", "ADMIN_AUDIT_BASELINE_INVALID");
-            }
+            if (Number(sheet.getLastRow() || 0) > 1) throw createAdminAuditError_("AdminOperationAudit contiene datos sin marcador de baseline.", "ADMIN_AUDIT_BASELINE_INVALID");
             writeAdminAuditBaselineState_(sheet, ADMIN_AUDIT_BASELINE_PENDING_);
         }
-
-        const properties = PropertiesService.getScriptProperties();
-        const legacy = properties.getProperties();
+        const legacy = PropertiesService.getScriptProperties().getProperties();
         const keys = Object.keys(legacy).filter(key => key.indexOf(ADMIN_AUDIT_PROPERTY_PREFIX_) === 0);
-        const seen = new Set();
-        let migrated = 0;
+        const seen = new Set(), records = [], existing = getAdminAuditEventMap_(sheet);
         for (const key of keys) {
             let record;
             try { record = JSON.parse(String(legacy[key] || "")); }
-            catch (error) {
-                throw createAdminAuditError_("El registro legacy de auditoría ADMIN contiene JSON ilegible.", "ADMIN_AUDIT_CORRUPT_STATE");
-            }
+            catch (error) { throw createAdminAuditError_("El registro legacy de auditoría ADMIN contiene JSON ilegible.", "ADMIN_AUDIT_CORRUPT_STATE"); }
             const suffix = key.slice(ADMIN_AUDIT_PROPERTY_PREFIX_.length);
-            if (!record || typeof record !== "object" || Array.isArray(record) ||
-                !record.eventId || String(record.eventId) !== suffix || seen.has(suffix)) {
+            if (!record || typeof record !== "object" || Array.isArray(record) || !record.eventId ||
+                String(record.eventId) !== suffix || safeAdminAuditId_(suffix, null) !== suffix || seen.has(suffix)) {
                 throw createAdminAuditError_("El registro legacy de auditoría ADMIN tiene una identidad inválida o duplicada.", "ADMIN_AUDIT_CORRUPT_STATE");
             }
             seen.add(suffix);
-            const serialized = JSON.stringify(record);
-            if (serialized.length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) {
-                throw createAdminAuditError_("Un registro legacy de auditoría ADMIN excede el tamaño permitido.", "ADMIN_AUDIT_RECORD_TOO_LARGE", suffix);
-            }
-            const existing = findAdminAuditEventRow_(sheet, suffix);
-            if (existing) {
-                if (!sameAdminAuditRecord_(existing.record, record)) {
-                    throw createAdminAuditError_("El registro legacy y el ledger ADMIN no coinciden.", "ADMIN_AUDIT_CORRUPT_STATE", suffix);
-                }
-            } else {
-                appendAdminAuditRecord_(sheet, record);
-                migrated++;
+            if (JSON.stringify(record).length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) throw createAdminAuditError_("Un registro legacy de auditoría ADMIN excede el tamaño permitido.", "ADMIN_AUDIT_RECORD_TOO_LARGE", suffix);
+            const prior = existing.get(suffix);
+            if (prior) {
+                if (!sameAdminAuditRecord_(prior.record, record)) throw createAdminAuditError_("El registro legacy y el ledger ADMIN no coinciden.", "ADMIN_AUDIT_CORRUPT_STATE", suffix);
+            } else records.push(record);
+        }
+        let writeError = null;
+        if (records.length) {
+            const firstRow = Number(sheet.getLastRow() || 1) + 1;
+            try {
+                sheet.getRange(firstRow, 1, records.length, ADMIN_AUDIT_HEADERS_.length).setValues(records.map(adminAuditRecordToRow_));
+                SpreadsheetApp.flush();
+            } catch (error) { writeError = error; }
+        }
+        const verified = getAdminAuditEventMap_(sheet);
+        for (const key of keys) {
+            const suffix = key.slice(ADMIN_AUDIT_PROPERTY_PREFIX_.length);
+            const legacyRecord = JSON.parse(String(legacy[key] || ""));
+            const persisted = verified.get(suffix);
+            if (!persisted || !sameAdminAuditRecord_(persisted.record, legacyRecord)) {
+                throw createAdminAuditError_("No se pudo confirmar el baseline completo de auditoría ADMIN." +
+                    (writeError ? " " + String(writeError.message || writeError) : ""), "ADMIN_AUDIT_BASELINE_WRITE_FAILED", suffix);
             }
         }
         SpreadsheetApp.flush();
         writeAdminAuditBaselineState_(sheet, ADMIN_AUDIT_BASELINE_VERSION_);
-        return { status: "success", markers: keys.length, migrated, alreadyComplete: false };
+        return { status: "success", markers: keys.length, migrated: records.length, alreadyComplete: false };
     } finally {
         if (acquired) lock.releaseLock();
     }
 }
-
 function pruneAdminAuditSheetUnderLock_(sheet, currentTime) {
     const values = sheet.getDataRange().getValues();
     const entries = [];
@@ -1512,8 +1510,17 @@ function pruneAdminAuditSheetUnderLock_(sheet, currentTime) {
     const remove = finalized.filter(entry => entry.finishedAt < cutoff);
     const retained = finalized.filter(entry => entry.finishedAt >= cutoff).sort((left, right) => left.finishedAt - right.finishedAt);
     while (retained.length > ADMIN_AUDIT_MAX_FINALIZED_) remove.push(retained.shift());
-    remove.map(entry => entry.rowIndex).sort((a, b) => b - a).forEach(rowIndex => sheet.deleteRow(rowIndex));
-    if (remove.length) SpreadsheetApp.flush();
+    const indexes = Array.from(new Set(remove.map(entry => entry.rowIndex))).sort((a, b) => b - a);
+    for (let index = 0; index < indexes.length;) {
+        const highest = indexes[index];
+        let count = 1;
+        while (index + count < indexes.length && indexes[index + count] === highest - count) count++;
+        const first = highest - count + 1;
+        if (typeof sheet.deleteRows === "function") sheet.deleteRows(first, count);
+        else for (let offset = 0; offset < count; offset++) sheet.deleteRow(highest - offset);
+        index += count;
+    }
+    if (indexes.length) SpreadsheetApp.flush();
     return { removed: remove.length, pending: pending.length };
 }
 

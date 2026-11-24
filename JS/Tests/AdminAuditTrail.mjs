@@ -13,7 +13,7 @@ const helperNames = [
     "getAdminAuditResourceSummary_", "getAdminAuditPartialResult_", "getAdminAuditOutcome_",
     "getAdminAuditResultCode_", "getAdminAuditSheet_", "readAdminAuditBaselineState_",
     "writeAdminAuditBaselineState_", "adminAuditRecordToRow_", "adminAuditRowToRecord_",
-    "sameAdminAuditRecord_", "findAdminAuditEventRow_", "appendAdminAuditRecord_",
+    "sameAdminAuditRecord_", "getAdminAuditEventMap_", "findAdminAuditEventRow_", "appendAdminAuditRecord_",
     "updateAdminAuditRecord_", "ensureAdminAuditBaseline_", "pruneAdminAuditSheetUnderLock_",
     "beginAdminAuditEvent_", "finalizeAdminAuditEvent_", "isSharedMutationAction_"
 ];
@@ -72,11 +72,13 @@ function createSheet(options = {}) {
                 },
                 getValue() { return this.getValues()[0][0]; },
                 setValues(values) {
+                    if (row >= 3 && options.batchFailBefore > 0) { options.batchFailBefore--; throw new Error("batch before write"); }
                     ensureRows(row - 1 + values.length);
                     values.forEach((line, r) => {
                         ensureRows(row + r);
                         for (let c = 0; c < colCount; c++) rows[row - 1 + r][col - 1 + c] = line[c] === undefined ? "" : line[c];
                     });
+                    if (row >= 3 && options.batchFailAfter > 0) { options.batchFailAfter--; throw new Error("batch response lost"); }
                     return this;
                 },
                 setValue(value) {
@@ -96,7 +98,8 @@ function createSheet(options = {}) {
             if (options.appendFailAfter > 0) { options.appendFailAfter--; throw new Error("append response lost"); }
             return this;
         },
-        deleteRow(rowIndex) { rows.splice(rowIndex - 1, 1); return this; }
+        deleteRow(rowIndex) { rows.splice(rowIndex - 1, 1); return this; },
+        deleteRows(rowIndex, count) { rows.splice(rowIndex - 1, count); return this; }
     };
     return sheet;
 }
@@ -200,7 +203,7 @@ check("Un baseline interrumpido se reanuda desde pending sin duplicar eventos", 
     const legacyEvent = makeEvent("legacy-retry");
     const h = createHarness({
         legacy: { ["GPSpedia_ADMIN_AUDIT_V1_legacy-retry"]: JSON.stringify(legacyEvent) },
-        appendFailBefore: 1
+        batchFailBefore: 1
     });
     assert.throws(() => h.api.ensureAdminAuditBaseline_(), error => error.code === "ADMIN_AUDIT_START_FAILED");
     assert.equal(h.api.readAdminAuditBaselineState_(h.sheet), "pending");
@@ -210,11 +213,11 @@ check("Un baseline interrumpido se reanuda desde pending sin duplicar eventos", 
     assert.equal(h.propertyReads, 2);
 });
 
-check("Un append legacy ambiguo se reconcilia por eventId y no duplica la fila", () => {
+check("Una escritura batch legacy ambigua se reconcilia por eventId y no duplica filas", () => {
     const legacyEvent = makeEvent("legacy-ambiguous");
     const h = createHarness({
         legacy: { ["GPSpedia_ADMIN_AUDIT_V1_legacy-ambiguous"]: JSON.stringify(legacyEvent) },
-        appendFailAfter: 1
+        batchFailAfter: 1
     });
     const result = h.api.ensureAdminAuditBaseline_();
     assert.equal(result.migrated, 1);
@@ -399,14 +402,14 @@ check("PropertiesService solo se consulta durante el baseline legacy y nunca se 
 });
 
 check("El router trata el inicio y cierre de auditoría como best-effort", () => {
-    const body = source.slice(source.indexOf("function doPostInternal_(e)"), source.indexOf("// ADMIN publica un delta exacto"));
+    const body = extractFunction("doPostInternal_");
     assert.match(body, /try\s*\{\s*auditEvent = beginAdminAuditEvent_\([\s\S]*?catch\s*\(auditError\)/);
     assert.match(body, /la operación continúa sin bloquearse/);
     assert.match(body, /La operación se completó, pero el cierre de auditoría quedó pendiente de revisión/);
 });
 
 check("El ping de salud no depende de auditoría ni adquiere locks", () => {
-    const body = source.slice(source.indexOf("function doPostInternal_(e)"), source.indexOf("// ADMIN publica un delta exacto"));
+    const body = extractFunction("doPostInternal_");
     assert.match(body, /if \(action !== "ping" && isSharedMutationAction_\(action\)\)/);
     assert.doesNotMatch(body, /LockService\.getScriptLock|waitLock\(|tryLock\(/);
     assert.equal(createHarness().api.isSharedMutationAction_("ping"), false);
