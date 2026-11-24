@@ -257,7 +257,7 @@
             } catch (error) {}
             if (!hostUi && window.ui) hostUi = window.ui;
             if (hostUi && typeof hostUi.showGlobalError === 'function') {
-                hostUi.showGlobalError(detail);
+                hostUi.showGlobalError(detail.length > 110 ? 'No se pudo completar la operación.' : detail);
                 return;
             }
             if (detail.length > 110) {
