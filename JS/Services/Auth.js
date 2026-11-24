@@ -618,7 +618,7 @@ function doPost(e) {
             })).setMimeType(ContentService.MimeType.TEXT);
         }
     }
-    if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"].includes(action)) {
+    if (["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile", "getCentralServiceUrls", "updateCentralServiceUrls"].includes(action)) {
         try {
             // Las acciones ordinarias consumen el actor local preparado al iniciar sesión o cargado
             // desde Users/ActiveSessions ante un cache miss. No adquieren lease ni revalidan
