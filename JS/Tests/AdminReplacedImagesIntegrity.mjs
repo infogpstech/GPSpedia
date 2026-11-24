@@ -100,7 +100,6 @@ function lockHarness() {
     const state={locked:false,waits:0,releases:0,tryLocks:0};
     const LockService={getScriptLock(){return {
         hasLock(){return state.locked;},
-        waitLock(){state.waits++;state.locked=true;},
         tryLock(timeout){state.tryLocks++;assert.equal(timeout,0);state.locked=true;return true;},
         releaseLock(){state.releases++;state.locked=false;}
     };}};
@@ -146,7 +145,8 @@ check("Los 16 encabezados dinámicos se migran de forma idempotente y se verific
     api.ensureReplacedImagesInventoryColumns(sheet);
     assert.equal(sheet.getLastColumn(),columns);
     assert.equal(sheet.writeCount,writes);
-    assert.equal(lock.state.waits,2);
+    assert.equal(lock.state.waits,0);
+    assert.equal(lock.state.tryLocks,2);
     assert.equal(lock.state.releases,2);
 });
 
@@ -165,6 +165,7 @@ check("El wrapper de migración respeta un ScriptLock ya adquirido",()=>{
     lock.state.locked=true;
     assert.equal(api.withReplacedImagesSchemaLock_(()=>42),42);
     assert.equal(lock.state.waits,0);
+    assert.equal(lock.state.tryLocks,0);
     assert.equal(lock.state.releases,0);
 });
 
@@ -423,7 +424,7 @@ check("Las acciones mutantes usan búsqueda única e identidad; la descarga no m
 check("La acción de migración coordina el lock, ejecuta el esquema y devuelve un resultado verificable",()=>{
     const source=fnSource(admin,"handleMigrateReplacedImagesSchema");
     let locked=false,waits=0,releases=0,creates=0,migrations=0;
-    const lock={waitLock(){waits++;locked=true;},releaseLock(){releases++;locked=false;}};
+    const lock={tryLock(timeout){assert.equal(timeout,0);waits++;locked=true;return true;},releaseLock(){releases++;locked=false;}};
     const handler=new Function("LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns",source+"\nreturn handleMigrateReplacedImagesSchema;")(
         {getScriptLock:()=>lock},()=>{creates++;return {getLastRow:()=>4};},()=>{migrations++;return HEADERS;});
     const result=handler({},()=>{});

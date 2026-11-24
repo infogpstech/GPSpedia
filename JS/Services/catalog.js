@@ -165,7 +165,7 @@ function createCatalogChangeFeed_(dependencies) {
     function withLock_(callback) {
         const lock = lockService && typeof lockService.getScriptLock === "function"
             ? lockService.getScriptLock() : null;
-        if (!lock || typeof lock.tryLock !== "function" || !lock.tryLock(5000)) {
+        if (!lock || typeof lock.tryLock !== "function" || !lock.tryLock(0)) {
             throw new Error("El feed del catálogo está ocupado; vuelve a intentarlo.");
         }
         try { return callback(); }

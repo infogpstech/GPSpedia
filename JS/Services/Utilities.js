@@ -36,7 +36,7 @@ function migrateTimestamps(payload){
 function migrateTimestampsSafe_(payload){
  const lock=LockService.getScriptLock();let acquired=false;
  try{
-  lock.waitLock(30000);acquired=true;
+  if (!lock.tryLock(0)) throw new Error('UTILITIES está ocupado con otra migración; reintenta sin esperar.'); acquired=true;
   const ss=SpreadsheetApp.openById(SPREADSHEET_ID);assertUtilitiesDeveloperSession_(payload,ss);
   recoverUtilitiesInterruptedMigration_(ss);
   const source=ss.getSheetByName(SHEET_NAMES.SOURCE);if(!source)throw new Error("Hoja 'Cortes' no existe.");

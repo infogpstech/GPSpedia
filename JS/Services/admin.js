@@ -160,7 +160,7 @@ function handleSetRichTextModeCentral_(payload, actor) {
     if (!/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) throw new Error("Identificador de publicación inválido.");
     const reason = String(payload && payload.changeReason || "Cambio del modo global de texto enriquecido").trim().slice(0, 300);
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(1000)) {
+    if (!lock.tryLock(0)) {
         const error = new Error("La configuración central está siendo modificada; vuelve a intentar.");
         error.code = "CENTRAL_CONFIGURATION_BUSY";
         throw error;
@@ -4010,7 +4010,7 @@ function saveCortesOrganizerOperationLedger_(record) {
 
 function withCortesOrganizerLedgerLock_(callback) {
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(250)) {
+    if (!lock.tryLock(0)) {
         const error = new Error("Safe Apply no pudo reservar el ledger dentro de la espera breve; conserva el mismo intento y reintenta.");
         error.code = "ORGANIZER_LEDGER_BUSY";
         throw error;
@@ -4862,7 +4862,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
     const backupId = String(payload.backupId || "").trim();
     if (!/^[a-zA-Z0-9_-]{20,}$/.test(backupId)) throw new Error("La conciliación requiere un respaldo completo y verificado antes de escribir.");
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo bloquear la aplicación de imágenes. Intenta nuevamente."); }
+    if (!lock.tryLock(0)) throw new Error("ADMIN está ocupado; la conciliación no esperó por otra ejecución. Intenta nuevamente.");
     try {
         const verifiedBackup = runAdminDriveWorkOutsideScriptLock_(
             lock,
@@ -5913,7 +5913,7 @@ function handleFreezeIdentifierFormulas_(payload, developerContext) {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
-        lock.waitLock(10000); acquired = true;
+        if (!lock.tryLock(0)) throw new Error('ADMIN está ocupado; la migración de identificadores no esperó por otra ejecución. Intenta nuevamente.'); acquired = true;
         let plan = null, manifest = null, items = [];
         if (!dryRun) {
             if (options.confirm !== true) throw new Error("La migración requiere confirm:true.");
@@ -7168,7 +7168,7 @@ function handleUploadAdminImageLegacy_(payload, logMessage, modalContext) {
     const lock = LockService.getScriptLock();
     try {
         // La carga de archivos se ejecuta fuera del lock; aquí solo se reserva y confirma Sheets.
-        lock.waitLock(2000);
+        if (!lock.tryLock(0)) throw new Error('ADMIN_BUSY');
     } catch (lockError) {
         const busyError = new Error("ADMIN está finalizando otra escritura breve. Conserva el mismo opId y reintenta el reemplazo.");
         busyError.code = "ADMIN_BUSY";
@@ -7922,13 +7922,7 @@ function runAdminDriveWorkOutsideScriptLock_(lock, opId, operation, revalidate, 
     try { result = operation(); } catch (error) { operationError = error; }
     let reacquired = false;
     try {
-        const waitMs = Math.max(0, Math.min(5000, Number(lockWaitMs) || 0));
-        if (waitMs > 0 && typeof lock.waitLock === "function") {
-            lock.waitLock(waitMs);
-            reacquired = true;
-        } else {
-            reacquired = lock.tryLock(0);
-        }
+        reacquired = lock.tryLock(0);
     } catch (lockError) { reacquired = false; }
     const retryHint = " Reintenta con opId " + cleanOpId +
         (operationHash ? " y operationHash " + operationHash : "") + ".";
@@ -9893,7 +9887,7 @@ function renameVinColumnHeader(sheet) {
 function handleMigrateCortesOperationIds(payload, logMessage, developerContext) {
     const lock = LockService.getScriptLock();
     try {
-        lock.waitLock(30000);
+        if (!lock.tryLock(0)) throw new Error("ADMIN está ocupado; la migración no esperó por otra ejecución.");
     } catch (error) {
         throw new Error("No se pudo obtener el bloqueo para migrar los identificadores de operación.");
     }
@@ -10457,7 +10451,7 @@ function withReplacedImagesSchemaLock_(callback) {
     const lock = LockService.getScriptLock();
     const alreadyLocked = typeof lock.hasLock === "function" && lock.hasLock();
     let acquired = false;
-    try { if (!alreadyLocked) { lock.waitLock(30000); acquired = true; } return callback(); }
+    try { if (!alreadyLocked) { if (!lock.tryLock(0)) { const error = new Error("ADMIN está ocupado con otra operación de esquema; reintenta."); error.code = "ADMIN_BUSY"; throw error; } acquired = true; } return callback(); }
     finally { if (acquired) lock.releaseLock(); }
 }
 function getOrCreateReplacedImagesSheet() {
@@ -10584,7 +10578,7 @@ function setReplacedImageTrashPreviousStatusVerified_(sheet,rowIndex,headers,sta
 
 function handleMigrateReplacedImagesSchema(payload,logMessage){
     const lock=LockService.getScriptLock();
-    try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la migración del historial de imágenes.");}
+    if(!lock.tryLock(0))throw new Error("ADMIN está ocupado; la migración del historial no esperó por otra ejecución.");
     try{
         const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
         const result={status:"success",migrated:true,columnCount:headers.length,rowCount:Math.max(0,sheet.getLastRow()-1),headers};
@@ -11238,7 +11232,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
     const idReemplazo=String(payload&&payload.id_reemplazo||"").trim();
     if(!idReemplazo)throw new Error("ID de reemplazo requerido.");
     const lock=LockService.getScriptLock();
-    try{lock.waitLock(30000);}catch(e){throw new Error("No se pudo bloquear la restauración. Intenta nuevamente.");}
+    if(!lock.tryLock(0))throw new Error("ADMIN está ocupado; la restauración no esperó por otra ejecución.");
     try{
         const sheetRep=getOrCreateReplacedImagesSheet(),inventoryHeaders=ensureReplacedImagesInventoryColumns(sheetRep);
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);
@@ -11525,7 +11519,7 @@ function findMissingCortesDriveReferences_(references, seenFileIds, rootFolderId
 function getOrCreateUnusedImagesFolder(rootFolder) {
     if (!rootFolder || typeof rootFolder.getFoldersByName !== "function") throw new Error("No se recibió la carpeta raíz Cortes verificada.");
     const folderName = "Imagenes_Sin_Uso", lock = LockService.getScriptLock();
-    if (!lock.tryLock(1000)) { const error = new Error("ADMIN está ocupado creando o verificando la carpeta de imágenes sin uso. Reintenta."); error.code = "ADMIN_BUSY"; throw error; }
+    if (!lock.tryLock(0)) { const error = new Error("ADMIN está ocupado creando o verificando la carpeta de imágenes sin uso. Reintenta."); error.code = "ADMIN_BUSY"; throw error; }
     try {
         const matches = rootFolder.getFoldersByName(folderName);
         let folder = null;
@@ -11692,7 +11686,7 @@ function requestAdminDriveFile_(fileId,method){
 
 function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContext){
     const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
-    const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la eliminación definitiva. Intenta nuevamente.");}
+    const lock=LockService.getScriptLock();if(!lock.tryLock(0))throw new Error("ADMIN está ocupado; la eliminación definitiva no esperó por otra ejecución.");
     let lockAcquired=true;
     const releaseLock=()=>{if(lockAcquired){if(typeof lock.hasLock!=="function"||lock.hasLock())lock.releaseLock();lockAcquired=false;}};
     try{
@@ -11763,8 +11757,7 @@ function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
     const id = String(payload && payload.id_reemplazo || "").trim();
     if (!id) throw new Error("ID de registro de imagen requerido.");
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) { throw new Error("No se pudo bloquear la protección de la imagen. Intenta nuevamente."); }
+    if (!lock.tryLock(0)) throw new Error("ADMIN está ocupado; la protección de la imagen no esperó por otra ejecución.");
     let postCommitActivity = null, result = null;
     try {
         const sheet = getOrCreateReplacedImagesSheet();
@@ -11897,7 +11890,7 @@ function withAdminLocalOperationGuard_(scope, callback, ttlSeconds, dependencies
         return callback();
     } finally {
         const cleanupLock = lockService.getScriptLock();
-        if (cleanupLock.tryLock(1000)) {
+        if (cleanupLock.tryLock(0)) {
             try {
                 let current = null;
                 try { current = JSON.parse(properties.getProperty(key) || "null"); } catch (parseError) {}
@@ -11934,8 +11927,7 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
     if (!idReemplazo || !targetFolderId) throw new Error("Selecciona el registro de imagen y una carpeta destino.");
 
     const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (e) { throw new Error("No se pudo bloquear el movimiento de la imagen. Intenta nuevamente."); }
+    if (!lock.tryLock(0)) throw new Error("ADMIN está ocupado; el movimiento de la imagen no esperó por otra ejecución.");
 
     let postCommitActivity = null;
     let result = null;

@@ -15,7 +15,7 @@ const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","jefe","supervisor","tecnic
 function runInboxConversationAction_(callback, mutating) {
     if (mutating !== true) return callback();
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(5000)) throw new Error("Hay otra operación de Inbox en curso. Intenta de nuevo.");
+    if (!lock.tryLock(0)) throw new Error("Hay otra operación de Inbox en curso. Intenta de nuevo.");
     try {
         return callback();
     } finally {

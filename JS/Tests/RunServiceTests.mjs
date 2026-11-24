@@ -277,6 +277,7 @@ runGroup('36','AUTH',()=>{
   runCli('AUTH recuperación por correo, código temporal, límites y revocación','JS/Tests/PasswordRecovery.mjs');
  runCli('AUTH ledger LoginRequests, baseline idempotente y locks fail-fast','JS/Tests/LoginRequestLedger.mjs');
  runCli('AUTH baseline role_revocation_pending_ y ledger compartido','JS/Tests/RoleRevocationLedger.mjs');
+ runCli('Servicios backend: locks no bloqueantes','JS/Tests/NonBlockingServiceLocks.mjs');
  runCli('ADMIN auditoría de referencias de IDs de Tutorial','JS/Tests/TutorialIdReferenceAudit.mjs');
  runCli('ADMIN auditoría de referencias cruzadas de usuarios','JS/Tests/UserIdReferenceAudit.mjs');
  const auth=read('JS/Services/Auth.js'),testAuth=read('JS/Tests/Auth.js'),html=read('HTML/users.html');

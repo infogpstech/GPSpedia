@@ -5013,7 +5013,7 @@ function isValidYouTubeUploadSessionUrl_(value) {
 
 function withYouTubeUploadReservationLock_(callback) {
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(5000)) throw new Error("Hay otra operación de vídeo en curso. Reintenta en unos segundos.");
+    if (!lock.tryLock(0)) throw new Error("Hay otra operación de vídeo en curso. Reintenta en unos segundos.");
     try { return callback(); }
     finally { lock.releaseLock(); }
 }
