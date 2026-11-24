@@ -38,7 +38,8 @@ Se actualizó `NORMAS_DESAROLLO.md` §§17.1 y 18 para establecer el patrón de 
 **Estado: EN PROGRESO — inventario documental realizado; verificación de valores bloqueada por falta de acceso de lectura a la Spreadsheet central.**  
 **Dependencia:** MIG-URL-001.  
 **Alcance:** localizar la revisión central activa, recuperar las seis direcciones y contrastarlas con el registro de deployments/fuentes y sus identidades de salud. Documentar servicio, URL, fuente de evidencia, estado de verificación y cualquier discrepancia. No inventar ni cambiar URLs.  
-**Estado de avance:** fuentes Git inspeccionadas; valores activos no están versionados. AUTH/Spreadsheet es la fuente de datos, pero su contenido no es accesible con las conexiones disponibles. Se documentó el inventario en `Inventario_URL_Servicios.md`. No usar las URLs históricas de `GPSpedia2.2.5:api-config.js` como si fueran vigentes.\n**Criterio de cierre:** seis URLs verificadas y trazables, o discrepancias concretas registradas como decisión pendiente antes de moverlas. Requiere snapshot de solo lectura de `ConfiguracionControl` y `Servicios` (revisión activa) y verificación de identidad de salud en entorno aislado.
+**Estado de avance:** fuentes Git inspeccionadas; valores activos no están versionados. AUTH/Spreadsheet es la fuente de datos, pero su contenido no es accesible con las conexiones disponibles. Se documentó el inventario en `Inventario_URL_Servicios.md`. No usar las URLs históricas de `GPSpedia2.2.5:api-config.js` como si fueran vigentes.
+**Criterio de cierre:** seis URLs verificadas y trazables, o discrepancias concretas registradas como decisión pendiente antes de moverlas. Requiere snapshot de solo lectura de `ConfiguracionControl` y `Servicios` (revisión activa) y verificación de identidad de salud en entorno aislado.
 
 ### MIG-URL-003 — Implementar configuración local y resolución de endpoints
 **Estado: PENDIENTE.**  
