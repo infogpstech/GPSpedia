@@ -18,7 +18,8 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 ## Estado de trabajo
 - MIG-029: COMPLETADA CON VALIDACIÓN DIFERIDA. Guía de despliegue en `Services/DEPLOYMENT_GUIDE.md`; contrato 7/7 y regresión CI verificados.
 - MIG-026: EN PROGRESO. Las migraciones locales de estado están cubiertas, pero permanecen tres `SPREADSHEET_ID/openById` en AUTH, CATALOG y UTILITIES. No retirarlos hasta demostrar el contexto real de acceso Spreadsheet en cada Web App; la prueba Beta correspondiente sigue pendiente.
-- MIG-030: EN PROGRESO. Preparación de Beta, contratos y regresión local aprobados. La aceptación integral de las 30 tareas depende de resolver el remanente de implementación MIG-026. Las pruebas reales BETA-01..08 y validaciones diferidas MIG-012/013/015/017/018/024/025/026 siguen pendientes en `Tareas_Beta.md`.
+- MIG-030: COMPLETADA CON VALIDACIÓN DIFERIDA. Preparación de Beta, contratos y regresión local aprobados; las pruebas reales BETA-01..08 y validaciones de campo se reservan para Beta en `Tareas_Beta.md`.
+- MIG-026: EN PROGRESO por un defecto local conocido de arquitectura: AUTH, CATALOG y UTILITIES aún dependen de `SPREADSHEET_ID/openById`. No se reemplazará por `getActiveSpreadsheet()` sin evidencia porque una Web App puede carecer de Spreadsheet activa y dejar fuera de servicio las funciones dependientes. La solución debe eliminar la configuración local sin asumir un contexto no probado.
 - No se ejecutaron deployments, llamadas a endpoints, operaciones Apps Script, cambios de propiedades/permisos ni escrituras en Spreadsheet/Drive/OAuth/YouTube durante esta continuidad.
 
 ## Evidencia CI más reciente
@@ -35,4 +36,4 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - El manifiesto de rotación conserva las referencias a todas las partes anteriores.
 
 ## Próxima acción
-Continuar MIG-026: resolver por vía autorizada la prueba de acceso Spreadsheet en el contexto real de AUTH, CATALOG y UTILITIES; solo después retirar los tres IDs locales y validar sintaxis, contratos, regresión y ausencia de bloqueo entre funciones. Mantener `Tareas_Beta.md` como procedimiento de campo. Antes de cualquier prueba remota, confirmar los seis deployments activos y el aislamiento de Spreadsheet, Drive, cuentas y datos sintéticos. Comenzar por health/read-only; no ejecutar mutaciones sin permisos, previsualización y recuperación confirmados. Registrar solo resultados observados en `Hallazgos_Beta.md`.
+Continuar MIG-026 con diseño y validación local de una arquitectura de acceso central sin IDs locales, preservando fail-closed y las funciones actuales. La prueba real de cada Web App queda diferida a Beta y no se debe usar como sustituto de una solución local segura. Mantener `Tareas_Beta.md` como procedimiento de campo. Antes de cualquier prueba remota, confirmar los seis deployments activos y el aislamiento de Spreadsheet, Drive, cuentas y datos sintéticos. Comenzar por health/read-only; no ejecutar mutaciones sin permisos, previsualización y recuperación confirmados. Registrar solo resultados observados en `Hallazgos_Beta.md`.
