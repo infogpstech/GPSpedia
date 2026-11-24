@@ -277,19 +277,32 @@ try {
     const editInput = detailModal.locator(".detail-modal-title-input");
     await editInput.waitFor({ state: "visible" });
     const editInputBox = await editInput.boundingBox();
-    const editToolbarBox = await detailModal.locator(".detail-modal-toolbar").boundingBox();
+    const editToolbar = detailModal.locator(".detail-modal-toolbar");
+    const editToolbarBox = await editToolbar.boundingBox();
+    const editLogoBox = await logoImage.boundingBox();
     const editActionsBox = await detailModal.locator(".detail-modal-header-actions").boundingBox();
+    const titleLayout = await editToolbar.getAttribute("data-model-title-layout");
     const saveButton = detailModal.locator('button[aria-label="Guardar cambios"]');
     const discardButton = detailModal.locator('button[aria-label="Descartar cambios"]');
     const saveBox = await saveButton.boundingBox();
     const discardBox = await discardButton.boundingBox();
-    check(Boolean(editInputBox && editToolbarBox && editActionsBox && saveBox && discardBox),
+    check(Boolean(editInputBox && editToolbarBox && editLogoBox && editActionsBox && saveBox && discardBox),
       profile.name + ": input y acciones del encabezado en modo edición");
     check(editInputBox.x >= editToolbarBox.x - 1 &&
       editInputBox.x + editInputBox.width <= editToolbarBox.x + editToolbarBox.width + 1,
       profile.name + ": input de edición contenido en el encabezado");
-    check(editInputBox.x >= logoBox.x + logoBox.width - 1,
-      profile.name + ": input de edición no invade la columna del logo");
+    const overlapsLogo = editInputBox.x < editLogoBox.x + editLogoBox.width - 1 &&
+      editInputBox.x + editInputBox.width > editLogoBox.x + 1 &&
+      editInputBox.y < editLogoBox.y + editLogoBox.height - 1 &&
+      editInputBox.y + editInputBox.height > editLogoBox.y + 1;
+    check(!overlapsLogo, profile.name + ": input de edición no se solapa con el logo");
+    if (titleLayout === "below-logo") {
+      check(editInputBox.y >= editLogoBox.y + editLogoBox.height - 1,
+        profile.name + ": nombre largo se coloca debajo del logo");
+    } else {
+      check(editInputBox.x >= editLogoBox.x + editLogoBox.width - 1,
+        profile.name + ": input corto conserva la columna derecha del logo");
+    }
     check(editInputBox.y >= editActionsBox.y + editActionsBox.height - 1,
       profile.name + ": input de edición debajo de los controles superiores");
     check(saveBox.x >= editActionsBox.x - 1 &&
@@ -307,7 +320,7 @@ try {
     console.log("PASS " + profile.name + " (" + profile.width + "x" + profile.height + ")");
     await context.close();
   }
-  console.log("AUG-146 Playwright: " + assertions + "/" + assertions + " PASS; 4 viewports; 8 capturas.");
+  console.log("AUG-146 Playwright: " + assertions + "/" + assertions + " PASS; 4 viewports; 12 capturas.");
 } catch (error) {
   failures.push(error);
 } finally {
