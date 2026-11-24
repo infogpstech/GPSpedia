@@ -1308,7 +1308,11 @@ function handleLogin(payload) {
             }
         }
         logToSheet('ERROR', `Error in handleLogin: ${error.message}`, { stack: error.stack });
-        return { status: 'error', message: error.message };
+        return {
+            status: 'error',
+            code: invalidCredentials ? 'INVALID_CREDENTIALS' : 'LOGIN_FAILED',
+            message: error.message
+        };
     }
 }
 

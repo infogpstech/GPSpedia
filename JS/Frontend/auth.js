@@ -950,7 +950,8 @@ export function logout(reason = null, expectedSession = null) {
     if (!guardedSession || sameSession(readStoredSession(), guardedSession)) {
         localStorage.removeItem(SESSION_KEY);
     }
-    showLoginScreen(reason);
+    if (reason) console.warn('[AUTH] Motivo técnico del cierre de sesión:', reason);
+    showLoginScreen(reason ? 'Error en el inicio de sesión, intente otra vez' : undefined);
 
     if (!sessionToken) return true;
     if (!userId) {

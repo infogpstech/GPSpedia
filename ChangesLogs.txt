@@ -513,3 +513,11 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Resultado: no quedan URLs de otros servicios ni secretos compartidos en servicios Apps Script. Se mantiene una única bootstrap pública frontend según MIG-009.
 - Pendiente Beta MIG-006: tres SPREADSHEET_ID locales en AUTH/CATALOG/UTILITIES; no se retiraron sin prueba Web App real.
 - MIG-026 queda COMPLETADA EN CÓDIGO Y CI, CON VALIDACIÓN BETA PENDIENTE.
+
+
+2026-11-24 — Privacidad de errores de autenticación y sesión (MIG-026)
+- AUTH clasifica las credenciales incorrectas con el código `INVALID_CREDENTIALS`; los fallos restantes de login se clasifican como `LOGIN_FAILED`.
+- El frontend registra el objeto de error en la consola y solo muestra uno de los dos mensajes permitidos: `Contraseña o usuario incorrecto` o `Error en el inicio de sesión, intente otra vez`.
+- Los motivos técnicos de cierre de sesión se registran en consola y se sustituyen por el mensaje genérico antes de mostrarlos en pantalla.
+- Se sincronizó el fixture de AUTH y se añadió la prueba estática `AuthErrorPrivacy.mjs` al runner.
+- Validación CI pendiente para el commit que contiene estos cambios; sin despliegue ni pruebas Beta.

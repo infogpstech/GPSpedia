@@ -1935,3 +1935,15 @@ CI: run 45370448353 — 499 suites, 5,889 pruebas aprobadas, 0 fallos; MIG026Sta
 Estado: búsqueda estática local COMPLETADA; cierre total de MIG-026 pendiente de Beta (MIG-006 y lectura de propiedades instaladas). No se modificaron deployments, propiedades ni hojas productivas.
 Siguiente tarea local por prioridad: MIG-027 — suite de paridad funcional de las funciones existentes. MIG-006/Beta se mantiene como bloqueo externo para retirar los tres IDs locales.
 ================================================================================
+
+
+================================================================================
+REQUISITO CRÍTICO — PRIVACIDAD DE ERRORES AUTH/SESIÓN — 2026-11-24
+
+- Requisito del usuario: no mostrar errores técnicos de autenticación o sesión en la interfaz. Mensajes permitidos para login: `Error en el inicio de sesión, intente otra vez` y `Contraseña o usuario incorrecto` (solo si AUTH clasifica credenciales inválidas).
+- Los detalles técnicos se registran en la consola del navegador. Los motivos de cierre de sesión se sanitizan antes de mostrarlos en la pantalla de login.
+- Cambios preparados en JS/Frontend/auth.js, JS/Services/Auth.js, JS/Tests/Auth.js, JS/Tests/AuthErrorPrivacy.mjs y JS/Tests/RunServiceTests.mjs.
+- La prueba estática AuthErrorPrivacy se integra al grupo MIG026; pendiente ejecutar CI después de publicar el commit.
+- HEAD verificado antes de estos cambios: 39c02d165a26e194e97489847ec5c3c39f1d3c0f. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificar.
+- Próximo paso: publicar el conjunto en GPSpedia2.2.5_work con actualización condicionada al HEAD esperado, revisar CI y corregir cualquier regresión. No desplegar Apps Script ni modificar datos reales.
+================================================================================

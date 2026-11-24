@@ -875,3 +875,11 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - Las funciones AUTH que usan ScriptLock no llaman waitLock: usan tryLock(0) y devuelven contención inmediata, sin espera de hasta 10 s. Las secciones críticas necesarias para mantener la unicidad de sesiones permanecen protegidas; una contención puede requerir reintento.
 - CI run 45308365799 sobre commit 7c4b342d66623d078101f3f50cb3879e374f40c3: sintaxis PASS; 338 suites, 3,922 pruebas aprobadas; 3 fallos fuera de este subtramo: WriteCatalogPublicationIsolation (dos grupos) y GP-PERF FEEDBACK/Inbox. Pages run 45308365427 SUCCESS.
 - No se desplegó Apps Script ni se accedió a hojas/propiedades instaladas. La limpieza física de propiedades login_request_ queda pendiente de Beta, después de verificar el baseline en un proyecto aislado.
+
+
+### Requisito crítico adicional — privacidad de errores AUTH/sesión — 2026-11-24
+- La interfaz nunca debe mostrar mensajes técnicos, excepciones, trazas, nombres de funciones, códigos internos ni detalles que revelen el estado de una cuenta o sesión.
+- Para errores de inicio de sesión, la UI queda limitada a: `Error en el inicio de sesión, intente otra vez` y, únicamente cuando AUTH clasifique explícitamente credenciales incorrectas, `Contraseña o usuario incorrecto`.
+- Los detalles diagnósticos se registran en la consola del navegador mediante `console.error`/`console.warn`; los motivos de cierre de sesión se sanitizan antes de llamar a `showLoginScreen`.
+- Implementación añadida en `JS/Frontend/auth.js`, clasificación `INVALID_CREDENTIALS` en `JS/Services/Auth.js` y fixture `JS/Tests/Auth.js`. Se añadió `JS/Tests/AuthErrorPrivacy.mjs` al runner MIG026.
+- Estado: implementado en código; pendiente CI del commit y revisión de resultados. No se ha desplegado AUTH ni se ha realizado validación Beta.
