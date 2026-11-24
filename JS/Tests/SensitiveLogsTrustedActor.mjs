@@ -44,7 +44,7 @@ function createHarness() {
         value => String(value || "").trim(),
         value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase(),
         { getScriptLock: () => ({
-            waitLock() { lockAcquired++; },
+            tryLock() { lockAcquired++; return true; },
             releaseLock() { lockReleased++; }
         }) },
         {
