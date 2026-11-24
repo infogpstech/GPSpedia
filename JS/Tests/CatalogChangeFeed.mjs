@@ -246,10 +246,13 @@ test("CATALOG reconstruye el snapshot PyS desde su hoja canónica", () => {
 test("el evento no persiste usuario ni token de sesión", () => {
     const h = createHarness();
     runtime.publishCatalogResetForActor_(basePayload, jefe, h.feed);
-    const event = JSON.parse(h.eventsSheet.getRange(2, 5, 1, 1).getValues()[0][0]);
-    assert.equal(Object.prototype.hasOwnProperty.call(event, "userId"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(event, "sessionToken"), false);
-    assert.equal(JSON.stringify(h.eventsSheet._rows[1]).includes("session-token-that-is-not-persisted"), false);
+    const headers = h.eventsSheet.getRange(1, 1, 1, 10).getDisplayValues()[0];
+    const eventRow = h.eventsSheet.getRange(2, 1, 1, 10).getValues()[0];
+    assert.equal(headers.includes("userId"), false);
+    assert.equal(headers.includes("sessionToken"), false);
+    assert.equal(JSON.stringify(eventRow).includes("session-token-that-is-not-persisted"), false);
+    assert.equal(eventRow[6], "WRITE");
+    assert.equal(eventRow[8], basePayload.requestId);
 });
 
 test("requiere ambas hojas y sus encabezados versionados", () => {
