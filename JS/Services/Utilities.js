@@ -2,9 +2,10 @@
 // VERSION: 1.5.0 | OUTPUT: Hoja 1 (columna A)
 // AUTH owns the session record; UTILITIES loads and caches the actor from Users/ActiveSessions locally.
 // Mutations are serialized by the local ScriptLock; session actors are loaded and cached locally.
+var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 function getUtilitiesSpreadsheet_() {
- const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
- if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto UTILITIES.");
+ const spreadsheet = SpreadsheetApp.openById(GPSpediaSpreadsheetId_);
+ if (!spreadsheet || String(spreadsheet.getId()) !== GPSpediaSpreadsheetId_) throw new Error("No se pudo abrir la Spreadsheet central configurada para UTILITIES.");
  return spreadsheet;
 }
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
