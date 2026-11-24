@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizeContributionRows, renderActivityContributions } from "../Frontend/activityDashboard.js";
+import { normalizeContributionRows, renderActivityContributions, renderActivityInsights } from "../Frontend/activityDashboard.js";
 const root=resolve(dirname(fileURLToPath(import.meta.url)),"../..");
 const fb=readFileSync(resolve(root,"JS/Services/feedback.js"),"utf8");
 const dash=readFileSync(resolve(root,"JS/Frontend/activityDashboard.js"),"utf8");
@@ -47,25 +47,29 @@ assert.match(dash,/export function renderActivityContributions/);
 assert.match(ui,/renderActivityContributions\(contributionContainer/);
 assert.match(html,/data-activity-tab="contributions"/);
 assert.match(html,/id="activity-contributions"/);
+assert.match(html,/Cortes aportados/);
 assert.match(html,/Aportes registrados/);
+assert.match(html,/Vehículos con aportes/);
+assert.match(dash,/entry\.aportesRegistrados/);
+assert.match(dash,/entry\.cortesAportados/);
 const normalized=normalizeContributionRows([
- {nombreUsuario:"Pablo Peña.<br>PABLO PENA <br> María López",cortesAportados:2,vehiculosConAportes:1},
- {nombreUsuario:"pablo pena .",cortesAportados:3,vehiculosConAportes:2},
- {nombreUsuario:"MÁRIA   LÓPEZ.",cortesAportados:1,vehiculosConAportes:1},
- {nombreUsuario:"<b>JOSE</b> <i>GARCIA</i>",cortesAportados:1,vehiculosConAportes:1},
- {nombreUsuario:"Pablo Peña.<br><script>alert('x')</script>",cortesAportados:1,vehiculosConAportes:1},
- {nombreUsuario:"Byron Lopez (apert)",cortesAportados:2,vehiculosConAportes:1},
- {nombreUsuario:"BYRON LÓPEZ (corte)",cortesAportados:3,vehiculosConAportes:2},
- {nombreUsuario:"Comunidad Internacional de técnicos",cortesAportados:2,vehiculosConAportes:1},
- {nombreUsuario:"Comunidad de técnicos.",cortesAportados:1,vehiculosConAportes:1},
+ {nombreUsuario:"Pablo Peña.<br>PABLO PENA <br> María López",cortesAportados:2,aportesRegistrados:4,vehiculosConAportes:1},
+ {nombreUsuario:"pablo pena .",cortesAportados:3,aportesRegistrados:5,vehiculosConAportes:2},
+ {nombreUsuario:"MÁRIA   LÓPEZ.",cortesAportados:1,aportesRegistrados:2,vehiculosConAportes:1},
+ {nombreUsuario:"<b>JOSE</b> <i>GARCIA</i>",cortesAportados:1,aportesRegistrados:1,vehiculosConAportes:1},
+ {nombreUsuario:"Pablo Peña.<br><script>alert('x')</script>",cortesAportados:1,aportesRegistrados:1,vehiculosConAportes:1},
+ {nombreUsuario:"Byron Lopez (apert)",cortesAportados:2,aportesRegistrados:3,vehiculosConAportes:1},
+ {nombreUsuario:"BYRON LÓPEZ (corte)",cortesAportados:3,aportesRegistrados:4,vehiculosConAportes:2},
+ {nombreUsuario:"Comunidad Internacional de técnicos",cortesAportados:2,aportesRegistrados:3,vehiculosConAportes:1},
+ {nombreUsuario:"Comunidad de técnicos.",cortesAportados:1,aportesRegistrados:1,vehiculosConAportes:1},
  {nombreUsuario:"",cortesAportados:1,vehiculosConAportes:1}
 ]);
 assert.deepEqual(normalized,[
- {nombreUsuario:"Pablo Peña",cortesAportados:6,vehiculosConAportes:2},
- {nombreUsuario:"Byron Lopez",cortesAportados:5,vehiculosConAportes:2},
- {nombreUsuario:"Comunidad de técnicos",cortesAportados:3,vehiculosConAportes:1},
- {nombreUsuario:"María López",cortesAportados:3,vehiculosConAportes:1},
- {nombreUsuario:"Jose Garcia",cortesAportados:1,vehiculosConAportes:1}
+ {nombreUsuario:"Pablo Peña",cortesAportados:6,aportesRegistrados:10,vehiculosConAportes:2},
+ {nombreUsuario:"Byron Lopez",cortesAportados:5,aportesRegistrados:7,vehiculosConAportes:2},
+ {nombreUsuario:"Comunidad de técnicos",cortesAportados:3,aportesRegistrados:4,vehiculosConAportes:1},
+ {nombreUsuario:"Jose Garcia",cortesAportados:1,aportesRegistrados:1,vehiculosConAportes:1},
+ {nombreUsuario:"María López",cortesAportados:1,aportesRegistrados:2,vehiculosConAportes:1}
 ]);
 class FakeElement {
  constructor(tag){this.tagName=tag;this.children=[];this.textContent="";this.ownerDocument=null;}
@@ -74,31 +78,39 @@ class FakeElement {
 }
 const doc={createElement(tag){const node=new FakeElement(tag);node.ownerDocument=doc;return node;}};
 const tbody=new FakeElement("tbody");tbody.ownerDocument=doc;
-renderActivityContributions(tbody,[{nombreUsuario:"pAbLo pEñA.<br>PABLO PENA",cortesAportados:2,vehiculosConAportes:1}],doc);
+renderActivityContributions(tbody,[{nombreUsuario:"pAbLo pEñA.<br>PABLO PENA",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1}],doc);
 assert.equal(tbody.children.length,1);
-assert.deepEqual(tbody.children[0].children.map(cell=>cell.textContent),["Pablo Peña","2","1"]);
+assert.deepEqual(tbody.children[0].children.map(cell=>cell.textContent),["Pablo Peña","2","5","1"]);
+
+const insightContainer=new FakeElement("div");insightContainer.ownerDocument=doc;
+renderActivityInsights(insightContainer,{summary:{}},[{nombreUsuario:"Ana",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1}],doc);
+const collectText=node=>[node.textContent,...node.children.flatMap(collectText)];
+assert.ok(collectText(insightContainer).includes("2 cortes · 5 aportes registrados · 1 vehículos"),
+    "El ranking debe mantener separados cortes, aportes registrados y vehículos.");
 
 const sharedContributors = normalizeContributionRows([
- {nombreUsuario:"Pablo Peña, Byron Lopez",cortesAportados:2,vehiculosConAportes:1},
- {nombreUsuario:"Byron Lopez, Pablo Peña",cortesAportados:3,vehiculosConAportes:2}
+ {nombreUsuario:"Pablo Peña, Byron Lopez",cortesAportados:2,aportesRegistrados:3,vehiculosConAportes:1},
+ {nombreUsuario:"Byron Lopez, Pablo Peña",cortesAportados:3,aportesRegistrados:5,vehiculosConAportes:2}
 ]);
 assert.deepEqual(sharedContributors,[
- {nombreUsuario:"Byron Lopez",cortesAportados:5,vehiculosConAportes:2},
- {nombreUsuario:"Pablo Peña",cortesAportados:5,vehiculosConAportes:2}
+ {nombreUsuario:"Byron Lopez",cortesAportados:5,aportesRegistrados:8,vehiculosConAportes:2},
+ {nombreUsuario:"Pablo Peña",cortesAportados:5,aportesRegistrados:8,vehiculosConAportes:2}
 ]);
 const ledgerOnlyDashboard=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES","COLS_FEEDBACKS",helper+";return {buildCutContributionSummary_};")(()=>ss,{CORTES:"Cortes",FEEDBACKS:"Feedbacks"},columns,{ID:1,Usuario:2,ID_vehiculo:3,Problema:4,Respuesta:5,anoSugerido:9});
 const ledgerOnly=ledgerOnlyDashboard.buildCutContributionSummary_({sheet:null,count:0,baseRows:[],slotColumns:[],slotValues:[]});
 assert.equal(ledgerOnly.length,2,"El ledger debe aportar datos aunque Cortes esté vacío.");
 assert.equal(ledgerOnly.find(row=>row.userId==="U1").aportesRegistrados,1);
 const byIdentity=normalizeContributionRows([
- {userId:"U1",nombreUsuario:"Pablo Peña",aportesRegistrados:2,vehiculosConAportes:1},
- {userId:"U1",nombreUsuario:"PABLO PENA",aportesRegistrados:3,vehiculosConAportes:2},
- {userId:"U2",nombreUsuario:"Pablo Peña",aportesRegistrados:4,vehiculosConAportes:1}
+ {userId:"U1",nombreUsuario:"Pablo Peña",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1},
+ {userId:"U1",nombreUsuario:"PABLO PENA",cortesAportados:3,aportesRegistrados:7,vehiculosConAportes:2},
+ {userId:"U2",nombreUsuario:"Pablo Peña",cortesAportados:4,aportesRegistrados:8,vehiculosConAportes:1}
 ]);
 assert.deepEqual(byIdentity,[
- {nombreUsuario:"Pablo Peña",cortesAportados:5,vehiculosConAportes:2},
- {nombreUsuario:"Pablo Peña",cortesAportados:4,vehiculosConAportes:1}
+ {nombreUsuario:"Pablo Peña",cortesAportados:5,aportesRegistrados:12,vehiculosConAportes:2},
+ {nombreUsuario:"Pablo Peña",cortesAportados:4,aportesRegistrados:8,vehiculosConAportes:1}
 ]);
+const legacyShape=normalizeContributionRows([{nombreUsuario:"Usuario antiguo",aportesRegistrados:3,vehiculosConAportes:1}]);
+assert.deepEqual(legacyShape,[{nombreUsuario:"Usuario Antiguo",cortesAportados:3,aportesRegistrados:3,vehiculosConAportes:1}]);
 const ambiguousUsers=[Array(8).fill("header"),["U1","ana","","","","","Ana",""],["U4","ana-dos","","","","","Ana",""]];
 const ambiguousCuts=[Array(32).fill("header"),makeRow("VA",[["Corte","Ana"]])];
 const ambiguousLedger=[ledgerHeaders,
