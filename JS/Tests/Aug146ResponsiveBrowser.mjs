@@ -70,6 +70,7 @@ try {
     await page.route("**/JS/Frontend/main.js", route =>
       route.fulfill({ status: 204, contentType: "text/javascript", body: "" }));
     await page.route("https://cdnjs.cloudflare.com/**", route => route.abort());
+    await page.route("https://www.youtube.com/**", route => route.abort());
     const fulfillSyntheticService = async route => {
       let requestBody = "", request = {};
       try { requestBody = String(route.request().postData() || ""); request = JSON.parse(requestBody || "{}"); } catch {}
@@ -125,9 +126,75 @@ try {
       // permitir interacciones reales con los controles que se están verificando.
       const splash = document.getElementById("splash-screen");
       if (splash) splash.style.display = "none";
-      await ui.openDevTools();
     });
 
+    const tutorialRender = await page.evaluate(() => {
+      const ui = window.__aug146Ui;
+      const variants = [
+        "https://www.youtube.com/watch?v=abcdefghijk",
+        "https://youtu.be/abcdefghijk",
+        "https://www.youtube.com/shorts/abcdefghijk",
+        "https://www.youtube.com/embed/abcdefghijk",
+        "abcdefghijk"
+      ];
+      const invalidVariants = [
+        "https://evil.example/watch?v=abcdefghijk",
+        "https://www.youtube.com.evil.example/watch?v=abcdefghijk"
+      ];
+      const embeds = variants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
+      const invalidEmbeds = invalidVariants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
+      ui.mostrarDetalleTutorialModal({
+        Tema: "Tutorial sintético",
+        comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:20px" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
+        dondeEncontrarlo: '<p style="text-align:right;color:#008000">Ubicación de prueba</p>',
+        Detalles: '<ul><li>Detalle con formato</li></ul>',
+        Video: "https://www.youtube.com/shorts/abcdefghijk"
+      }, false);
+      const detail = document.getElementById("detalleCompleto");
+      const paragraph = detail.querySelector(".detail-rich-text-paragraph");
+      const styled = paragraph && paragraph.querySelector("div[style]");
+      const style = styled ? getComputedStyle(styled) : null;
+      const validIframe = detail.querySelector("iframe.tutorial-youtube-embed");
+      const validResult = {
+        color: style ? style.color : "",
+        textAlign: style ? style.textAlign : "",
+        fontSize: style ? style.fontSize : "",
+        unsafeMarkupRemoved: Boolean(paragraph && !paragraph.querySelector("script,iframe,[onclick]")),
+        iframeSrc: validIframe ? validIframe.src : "",
+        iframeTitle: validIframe ? validIframe.title : ""
+      };
+      ui.mostrarDetalleTutorialModal({
+        Tema: "Tutorial con URL inválida",
+        Video: "https://evil.example/watch?v=abcdefghijk"
+      }, false);
+      const invalidDetail = document.getElementById("detalleCompleto");
+      const invalidResult = {
+        iframeCount: invalidDetail.querySelectorAll("iframe").length,
+        notice: invalidDetail.querySelector(".tutorial-video-unavailable")?.textContent || ""
+      };
+      const modal = document.getElementById("modalDetalle");
+      if (modal) modal.classList.remove("visible");
+      return { embeds, invalidEmbeds, validResult, invalidResult };
+    });
+    check(tutorialRender.embeds.length === 5 &&
+      tutorialRender.embeds.every(value => value === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1"),
+      profile.name + ": acepta watch, youtu.be, shorts, embed e ID de YouTube");
+    check(tutorialRender.invalidEmbeds.every(value => value === null),
+      profile.name + ": rechaza dominios de vídeo ajenos a YouTube");
+    check(tutorialRender.validResult.color === "rgb(255, 0, 0)" &&
+      tutorialRender.validResult.textAlign === "center" &&
+      tutorialRender.validResult.fontSize === "20px",
+      profile.name + ": conserva color, alineación y tamaño de texto en detalle de Tutorial");
+    check(tutorialRender.validResult.unsafeMarkupRemoved,
+      profile.name + ": elimina scripts, iframes y handlers del contenido enriquecido");
+    check(tutorialRender.validResult.iframeSrc === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1" &&
+      tutorialRender.validResult.iframeTitle.includes("Tutorial sintético"),
+      profile.name + ": renderiza el vídeo validado como iframe de YouTube");
+    check(tutorialRender.invalidResult.iframeCount === 0 &&
+      tutorialRender.invalidResult.notice.includes("URL válida de YouTube"),
+      profile.name + ": no renderiza iframe para una URL de vídeo no confiable");
+
+    await page.evaluate(() => window.__aug146Ui.openDevTools());
     const developerModal = page.locator("#dev-tools-modal");
     await developerModal.waitFor({ state: "visible" });
     const developerBounds = await developerModal.boundingBox();

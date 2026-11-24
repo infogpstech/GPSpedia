@@ -2465,11 +2465,12 @@ function getActivaTestigoValue(item, index) {
 }
 
 // Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
-function createDetailParagraph(label, text) {
+function createDetailParagraph(label, text, modeOverride = null) {
     if (text) {
         const p = document.createElement('div');
+        p.className = "detail-rich-text-paragraph";
         p.style.margin = "1em 0";
-        p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text)}`;
+        p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text, modeOverride)}`;
         return p;
     }
     return null;
@@ -12339,21 +12340,40 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             setOptimizedImage(image, item.Imagen, IMG_SIZE_LARGE);
             cont.appendChild(image);
         }
-        if (item.Video) {
-            const videoContainer = document.createElement("div");
-            const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
-            videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:8px;"></iframe>`;
-            cont.appendChild(videoContainer);
+        const tutorialVideoValue = String(item.Video || "").trim();
+        if (tutorialVideoValue) {
+            const videoEmbedUrl = getValidatedYouTubeVideoEmbedUrl(tutorialVideoValue);
+            if (videoEmbedUrl) {
+                const videoContainer = document.createElement("div");
+                videoContainer.className = "tutorial-video-container";
+                videoContainer.style.cssText = "position:relative;width:100%;aspect-ratio:16/9;max-height:315px;margin-bottom:12px;overflow:hidden;border-radius:8px;";
+                const iframe = document.createElement("iframe");
+                iframe.className = "tutorial-youtube-embed";
+                iframe.src = videoEmbedUrl;
+                iframe.title = `Vídeo de YouTube: ${String(item.Tema || "Tutorial")}`;
+                iframe.loading = "lazy";
+                iframe.referrerPolicy = "strict-origin-when-cross-origin";
+                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+                iframe.allowFullscreen = true;
+                iframe.style.cssText = "display:block;width:100%;height:100%;border:0;border-radius:8px;";
+                videoContainer.appendChild(iframe);
+                cont.appendChild(videoContainer);
+            } else {
+                const unavailable = document.createElement("p");
+                unavailable.className = "tutorial-video-unavailable";
+                unavailable.textContent = "El vídeo asociado no tiene una URL válida de YouTube.";
+                cont.appendChild(unavailable);
+            }
         }
 
         [
-            createDetailParagraph("Cómo Identificarlo", item.comoIdentificarlo),
-            createDetailParagraph("Dónde Encontrarlo", item.dondeEncontrarlo),
-            createDetailParagraph("Detalles", item.Detalles || item.Descripcion)
+            createDetailParagraph("Cómo Identificarlo", item.comoIdentificarlo, "advanced"),
+            createDetailParagraph("Dónde Encontrarlo", item.dondeEncontrarlo, "advanced"),
+            createDetailParagraph("Detalles", item.Detalles || item.Descripcion, "advanced")
         ].forEach(detail => { if (detail) cont.appendChild(detail); });
 
         if (item.Colaborador) {
-            const collaborator = createDetailParagraph("Colaborador", item.Colaborador);
+            const collaborator = createDetailParagraph("Colaborador", item.Colaborador, "advanced");
             if (collaborator) cont.appendChild(collaborator);
         }
     }
