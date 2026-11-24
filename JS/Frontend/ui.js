@@ -5907,6 +5907,21 @@ function initializeCentralServiceUrlsControl_() {
     const status = document.getElementById("central-service-urls-status");
     const saveButton = document.getElementById("btn-save-central-service-urls");
     const keys = ["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+    const serviceLabels = {
+        CATALOG: "Catálogo",
+        WRITE: "Escritura",
+        FEEDBACK: "Feedback",
+        UTILITIES: "Utilidades",
+        ADMIN: "Administración"
+    };
+    const appendConsoleStatus = message => {
+        const output = document.getElementById("dev-console-log");
+        if (!output) return;
+        const line = document.createElement("div");
+        line.textContent = "[SERVICIOS] " + message;
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
+    };
     const fields = Object.fromEntries(keys.map(key => [key, document.getElementById("central-service-url-" + key.toLowerCase())]));
     const context = getUiSessionContext_();
     const allowed = Boolean(context && context.role === "desarrollador");
@@ -5962,17 +5977,31 @@ function initializeCentralServiceUrlsControl_() {
                 if (!isCurrentUiSessionContext_(context)) return;
                 const revision = Number(result && result.revision);
                 if (!Number.isSafeInteger(revision) || revision < 1) throw new Error("AUTH no confirmó una revisión válida.");
+                const changedServices = new Set(Array.isArray(result.changedServices) ? result.changedServices : []);
+                keys.forEach(key => {
+                    const label = serviceLabels[key] || key;
+                    if (changedServices.has(key)) {
+                        appendConsoleStatus("El servidor de " + label + " se actualizó con éxito. Revisión " + revision + ".");
+                    } else if (result.unchanged || result.idempotent) {
+                        appendConsoleStatus("El servidor de " + label + " no requirió cambios.");
+                    } else {
+                        appendConsoleStatus("El servidor de " + label + " conserva su URL; no necesitó actualización.");
+                    }
+                });
                 if (result.configurationRefreshPending) {
-                    if (status) status.textContent = "La revisión " + revision + " fue publicada, pero la caché local no se pudo actualizar. Vuelve a abrir el modal para consultar el estado.";
+                    appendConsoleStatus("La revisión " + revision + " fue publicada, pero la lectura de configuración local debe reintentarse.");
+                    if (status) status.textContent = "Endpoints publicados; falta actualizar la configuración local.";
                     return;
                 }
                 if (status) status.textContent = result.unchanged
-                    ? "Las URL ya estaban actualizadas. No fue necesario crear otra revisión."
-                    : "Endpoints actualizados y revisión " + revision + " publicada correctamente.";
+                    ? "No había cambios en los endpoints."
+                    : "Cambios guardados. Revisión " + revision + ".";
                 await load();
             } catch (error) {
                 console.warn("No se pudieron publicar los endpoints centrales:", error);
-                if (status) status.textContent = "No se pudo completar la actualización. Verifica las URL y vuelve a intentarlo.";
+                appendConsoleStatus("ERROR: no se pudo publicar la configuración de servicios. " + String(error && error.message || "Error no identificado"));
+                keys.forEach(key => appendConsoleStatus("El servidor de " + (serviceLabels[key] || key) + " no se actualizó."));
+                if (status) status.textContent = "No se pudieron guardar los cambios.";
             } finally {
                 if (isCurrentUiSessionContext_(context)) setBusy(false);
             }
