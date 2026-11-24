@@ -14,9 +14,9 @@ const serviceMatch = api.match(/export\s+const\s+CENTRAL_SERVICE_KEYS\s*=\s*Obje
 assert.ok(serviceMatch, "No se encontró CENTRAL_SERVICE_KEYS.");
 const serviceKeys = [...serviceMatch[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
 assert.deepEqual(serviceKeys, ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]);
-assert.equal(Object.keys(actionMap).length, 123, "Cambió el total de acciones sin revisar inventario.");
+assert.equal(Object.keys(actionMap).length, 125, "Cambió el total de acciones sin revisar inventario.");
 const actionCounts = Object.fromEntries(serviceKeys.map(key => [key, Object.values(actionMap).filter(service => service === key).length]));
-assert.deepEqual(actionCounts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
+assert.deepEqual(actionCounts, { AUTH: 21, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
 assert.equal(actionMap.getPublicConfiguration, "AUTH");
 assert.equal(actionMap.publishCatalogReset, "CATALOG");
 assert.equal(actionMap.invalidateRichTextModeCache, "FEEDBACK");
