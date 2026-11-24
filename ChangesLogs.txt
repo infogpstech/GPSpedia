@@ -536,3 +536,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Los detalles de invalidación/rol/errores permanecen en la consola del navegador; la UI muestra el mensaje genérico permitido.
 - Se normalizó literalmente el mensaje de credenciales a `contraseña o usuario incorrecto`.
 - Se amplió AuthErrorPrivacy para cubrir los límites de presentación.
+
+
+- Publicación del refuerzo de privacidad en la rama de trabajo: commit de código/pruebas `9d489acaa308d12ff0b5ceff164bed146c14dfa9`; archivos afectados: `JS/Frontend/auth.js`, `JS/Frontend/ui.js` y `JS/Tests/AuthErrorPrivacy.mjs`. Se incorporó el requisito normativo §19 y se actualizaron los registros de continuidad.
