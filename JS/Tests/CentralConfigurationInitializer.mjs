@@ -70,7 +70,7 @@ class FakeSpreadsheet {
 }
 function createEnvironment(spreadsheet) {
     let flushed = 0;
-    const context = { SpreadsheetApp: { getActiveSpreadsheet: () => spreadsheet, flush: () => { flushed++; } } };
+    const context = { GPSpediaSpreadsheetId_: "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os", SpreadsheetApp: { openById: id => { assert.equal(id, "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os"); return spreadsheet; }, flush: () => { flushed++; } } };
     vm.runInNewContext(executable, context);
     return { context, get flushed() { return flushed; } };
 }
@@ -138,7 +138,7 @@ check("tolera que otra ejecución cree una pestaña simultáneamente", () => {
 });
 check("falla de forma segura si AUTH no tiene Spreadsheet activa", () => {
     const env = createEnvironment(null);
-    assert.throws(() => env.context.initializeCentralConfigurationSheets(), /No hay una Spreadsheet activa vinculada/);
+    assert.throws(() => env.context.initializeCentralConfigurationSheets(), /No se pudo abrir la Spreadsheet central configurada/);
 });
 check("no publica ni inventa filas operativas", () => {
     const spreadsheet = new FakeSpreadsheet();
