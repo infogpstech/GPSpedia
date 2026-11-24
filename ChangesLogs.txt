@@ -762,3 +762,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI run `45471714577`, HEAD `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`: SUCCESS; 516 suites, 6,105 pruebas aprobadas, 0 fallos; sintaxis PASS en 466 archivos. `CatalogChangeFeedInitialization` 6/6, `MIG013SessionActorLocalLookup` 22/22, `InboxRoleContract` 22/22 y `SensitiveLogsTrustedActor` 7/7 PASS.
 - GitHub Pages run `45471712477`: SUCCESS.
 - No se desplegaron proyectos Apps Script ni se ejecutó la inicialización de hojas. La operación manual y las pruebas con Spreadsheet/deployments Beta aislados siguen pendientes.
+
+
+### Registro AUG-146 — 2026-11-24 — revisión de modales y panel de desarrollador
+
+- Se registra la revisión del encabezado del modal de detalle: márgenes simétricos del logo, cuadrícula más alta, reducción del espacio bajo la línea azul, campo de edición sin solapamiento y ubicación correcta del estado «Guardando…».
+- Se registra la reorganización del modal de desarrollador en escritorio y móvil: consola compacta, pestañas con iconos y expansión al seleccionar, controles de consola alineados, prompt integrado al campo, eliminación de títulos duplicados y retiro del apartado «Tráfico global coordinado · retirado».
+- Las acciones de limpiar consola, copiar registro, ejecutar comandos y cambiar pestañas deben conservar su funcionamiento; los cambios solicitados para esos controles son visuales.
+- Las explicaciones extensas se mostrarán solo mediante el botón de información. Los mensajes de resultado visibles al usuario serán breves y no expondrán detalles internos en producción.
+- La tarea queda EN PROGRESO. Se ejecutará por bloques con pruebas de regresión; no se autorizan despliegues Apps Script ni cambios en recursos productivos.
