@@ -213,7 +213,7 @@ check("AUTH exige sesión para consultar y actualizar endpoints y el frontend us
     const panel=ui.slice(panelStart,panelEnd);
     assert.match(panel,/configurationRefreshPending/);
     assert.match(panel,/console\.warn/);
-    assert.doesNotMatch(panel,/error\s*&&\s*error\.message/);
+    assert.match(panel,/appendConsoleStatus\("ERROR: no se pudo publicar/);\n    assert.match(panel,/No se pudieron guardar los cambios/);
     for(const key of editableKeys) assert.match(html,new RegExp('central-service-url-'+key.toLowerCase()));
     assert.doesNotMatch(html,/id="central-service-url-auth"/);
     assert.match(html,/AUTH no se modifica aquí|AUTH se administra directamente en el frontend/);
