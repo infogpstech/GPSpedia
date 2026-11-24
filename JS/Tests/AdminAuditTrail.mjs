@@ -205,7 +205,7 @@ check("Un baseline interrumpido se reanuda desde pending sin duplicar eventos", 
         legacy: { ["GPSpedia_ADMIN_AUDIT_V1_legacy-retry"]: JSON.stringify(legacyEvent) },
         batchFailBefore: 1
     });
-    assert.throws(() => h.api.ensureAdminAuditBaseline_(), error => error.code === "ADMIN_AUDIT_START_FAILED");
+    assert.throws(() => h.api.ensureAdminAuditBaseline_(), error => error.code === "ADMIN_AUDIT_BASELINE_WRITE_FAILED");
     assert.equal(h.api.readAdminAuditBaselineState_(h.sheet), "pending");
     h.api.ensureAdminAuditBaseline_();
     assert.equal(h.api.readAdminAuditBaselineState_(h.sheet), "admin_audit_baseline_v1");
