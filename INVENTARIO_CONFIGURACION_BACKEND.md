@@ -404,3 +404,13 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - MIG026StaticConfigSearch 10/10 PASS; MIG013SessionActorLocalLookup 22/22 PASS; CatalogChangeFeed 19/19 PASS; UtilitiesSecurity 19/19 PASS. CI run 45399766285: 513 suites, 6,051 pruebas, 0 fallos.
 - La disponibilidad del contexto activo en cada deployment Web App, identidad y permisos efectivos, lectura/escritura, concurrencia y latencia quedan pendientes de Beta. Si falla, no se restaura el ID local; se debe resolver una alternativa sin configuración local antes del despliegue.
 - No se modificaron deployments, propiedades instaladas, hojas ni datos reales.
+
+
+### Adenda — vinculación de recursos Apps Script — 2026-11-24
+
+- El estado anterior del inventario describía Spreadsheet activa para WRITE/FEEDBACK/ADMIN y una excepción de IDs en AUTH/CATALOG/UTILITIES. Esa descripción es histórica y queda sustituida por la implementación vigente.
+- Los seis servicios abren la misma Spreadsheet con `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)`. AUTH, WRITE, FEEDBACK y ADMIN obtienen la constante desde `CentralConfigurationReader.js`; CATALOG y UTILITIES la declaran en su módulo.
+- WRITE, FEEDBACK y ADMIN abren la carpeta raíz Cortes mediante `GPSpediaCortesRootFolderId_` compartido en `CentralConfigurationReader.js`. No se requiere ID de carpeta en AUTH, CATALOG ni UTILITIES porque no utilizan esa raíz.
+- Los dos IDs fueron proporcionados expresamente por el propietario y están cubiertos por la excepción temporal de NORMAS §17.1. No son credenciales. No se introdujeron URLs, endpoints, tokens, claves ni secretos.
+- CI run 45444136611: 514 suites, 6,070 pruebas aprobadas, 0 fallos; MIG015 16/16 y MIG026StaticConfigSearch 10/10 PASS.
+- Validación Beta pendiente: permisos de identidad de ejecución, scopes/autorizaciones, acceso de lectura/escritura, identidad y jerarquía real de la carpeta. No se modificaron deployments ni recursos externos.
