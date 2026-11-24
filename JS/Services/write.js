@@ -487,6 +487,8 @@ function handleAddOrUpdateCut(payload) {
 
 
 const CORTES_ID_COUNTER_PROPERTY = "GPSpedia_CORTES_LAST_ID";
+const CORTES_ID_BASELINE_OP_ID = "OP-BASELINE-CORTES-LAST-ID-V1";
+const CORTES_ID_BASELINE_OPERATION_HASH = "71e6dae8fc9c7cb8ac468ac7be5f4044a2db6166baf0794c0d962dc859d8576c";
 
 /**
  * Devuelve el máximo ID ya existente o reservado.
@@ -556,12 +558,9 @@ function getCortesVehicleIdHighWaterMark_(sheet, options) {
         }
     }
 
-    const properties = PropertiesService.getScriptProperties();
-    const storedValue = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
-    const storedId = storedValue === null ? 0 : Number(storedValue);
-    if (!Number.isSafeInteger(storedId) || storedId < 0) {
-        throw new Error("El contador central de IDs de Cortes contiene un valor inválido.");
-    }
+    // El contador legacy solo se lee durante la siembra única del baseline.
+    // Las asignaciones normales dependen exclusivamente de Cortes + ledger.
+    const storedId = 0;
     let minimumReservedId = options.minimumReservedId === undefined ? 0 : Number(options.minimumReservedId);
     if (!Number.isSafeInteger(minimumReservedId) || minimumReservedId < 0) {
         throw new Error("El último ID reservado contiene un valor inválido.");
@@ -573,7 +572,7 @@ function getCortesVehicleIdHighWaterMark_(sheet, options) {
             minimumReservedId = Math.max(minimumReservedId, getLastCortesIdReservation_(reservationSheet));
         }
     }
-    return Math.max(maxSheetId, storedId, minimumReservedId);
+    return Math.max(maxSheetId, minimumReservedId);
 }
 
 const CORTES_ID_RESERVATIONS_SHEET_NAME = "CortesIdReservations";
@@ -594,6 +593,76 @@ function buildLegacyCortesIdAllocationRequest_() {
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, opId);
     const operationHash = digest.map(value => ("0" + (Number(value) & 255).toString(16)).slice(-2)).join("");
     return { opId, operationHash };
+}
+
+function findCortesIdBaseline_(sheet) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const matches = sheet.getRange(2, 1, lastRow - 1, 1)
+        .createTextFinder(CORTES_ID_BASELINE_OP_ID).matchEntireCell(true).findAll();
+    if (!matches.length) return null;
+    if (matches.length !== 1) throw new Error("El ledger contiene más de un baseline de IDs; no se asignó otro ID.");
+    const rowIndex = matches[0].getRow();
+    const row = sheet.getRange(rowIndex, 1, 1, CORTES_ID_RESERVATIONS_HEADERS.length).getValues()[0] || [];
+    const vehicleId = Number(row[2]);
+    if (String(row[0] || "").trim() !== CORTES_ID_BASELINE_OP_ID ||
+        String(row[1] || "").trim().toLowerCase() !== CORTES_ID_BASELINE_OPERATION_HASH ||
+        !Number.isSafeInteger(vehicleId) || vehicleId < 0) {
+        throw new Error("El baseline histórico de IDs está incompleto o corrupto; no se asignó otro ID.");
+    }
+    return { opId: CORTES_ID_BASELINE_OP_ID, operationHash: CORTES_ID_BASELINE_OPERATION_HASH, vehicleId, rowIndex };
+}
+
+/**
+ * Migra una sola vez el high-water mark heredado al ledger append-only.
+ * La fila de baseline es metadato reservado; no representa un vehículo.
+ */
+function ensureCortesIdReservationBaseline_(cortesSheet, ledger) {
+    ledger = ledger || getCortesIdReservationsSheet_();
+    let baseline = findCortesIdBaseline_(ledger);
+    if (baseline) return { ledger, baseline, highWaterMark: getLastCortesIdReservation_(ledger) };
+
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try { acquired = lock.tryLock(0); } catch (error) { acquired = false; }
+    if (!acquired) {
+        const error = new Error("WRITE está ocupado inicializando el ledger de IDs. Conserva el mismo opId y reintenta.");
+        error.code = "WRITE_BUSY";
+        throw error;
+    }
+    try {
+        baseline = findCortesIdBaseline_(ledger);
+        if (baseline) return { ledger, baseline, highWaterMark: getLastCortesIdReservation_(ledger) };
+
+        const lastReservedId = getLastCortesIdReservation_(ledger);
+        const sheetHighWater = getCortesVehicleIdHighWaterMark_(cortesSheet, {
+            includeReservations: false,
+            minimumReservedId: lastReservedId
+        });
+        const properties = PropertiesService.getScriptProperties();
+        const storedValue = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
+        const legacyHighWater = storedValue === null ? 0 : Number(storedValue);
+        if (!Number.isSafeInteger(legacyHighWater) || legacyHighWater < 0) {
+            throw new Error("El contador histórico de IDs de Cortes contiene un valor inválido.");
+        }
+        const highWaterMark = Math.max(sheetHighWater, lastReservedId, legacyHighWater);
+        ledger.appendRow([
+            CORTES_ID_BASELINE_OP_ID,
+            CORTES_ID_BASELINE_OPERATION_HASH,
+            highWaterMark,
+            new Date().toISOString()
+        ]);
+        SpreadsheetApp.flush();
+
+        const verified = findCortesIdBaseline_(ledger);
+        const verifiedHighWater = getLastCortesIdReservation_(ledger);
+        if (!verified || verified.vehicleId !== highWaterMark || verifiedHighWater < highWaterMark) {
+            throw new Error("No se pudo verificar el baseline histórico del ledger de IDs.");
+        }
+        return { ledger, baseline: verified, highWaterMark: verifiedHighWater };
+    } finally {
+        if (lock.hasLock()) lock.releaseLock();
+    }
 }
 
 function getCortesIdReservationsSheet_() {
@@ -685,6 +754,16 @@ function getLastCortesIdReservation_(sheet) {
         const opId = String(row[0] || "").trim();
         const operationHash = String(row[1] || "").trim().toLowerCase();
         const vehicleId = Number(row[2]);
+        if (opId === CORTES_ID_BASELINE_OP_ID) {
+            if (String(row[1] || "").trim().toLowerCase() !== CORTES_ID_BASELINE_OPERATION_HASH ||
+                !Number.isSafeInteger(vehicleId) || vehicleId < 0 || seenIds.has(CORTES_ID_BASELINE_OP_ID) ||
+                vehicleId < previousId) {
+                throw new Error("El baseline del ledger de IDs está incompleto o fuera de secuencia.");
+            }
+            seenIds.add(CORTES_ID_BASELINE_OP_ID);
+            previousId = Math.max(previousId, vehicleId);
+            return;
+        }
         if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId) || !/^[a-f0-9]{64}$/.test(operationHash) ||
             !Number.isSafeInteger(vehicleId) || vehicleId < 1) {
             throw new Error("La reserva de ID de la fila " + (offset + 2) + " está incompleta o corrupta.");
@@ -712,6 +791,7 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
         throw new Error("La reserva de ID requiere opId y operationHash SHA-256 válidos.");
     }
     const ledger = getCortesIdReservationsSheet_();
+    ensureCortesIdReservationBaseline_(cortesSheet, ledger);
     const lastReservedId = getLastCortesIdReservation_(ledger);
     const existing = findCortesIdReservation_(ledger, request.opId);
     if (existing) {
@@ -850,11 +930,9 @@ function handleFreezeCortesIds(payload) {
             return { status: "success", dryRun: true, ...summary, message: "Simulación completada; no se modificó Cortes." };
         }
 
-        const properties = PropertiesService.getScriptProperties();
-        const storedValue = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
-        const storedId = storedValue === null ? 0 : Number(storedValue);
-        if (!Number.isSafeInteger(storedId) || storedId < 0) throw new Error("El contador central de IDs contiene un valor inválido.");
-        properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(Math.max(storedId, plan.maxId)));
+        // La misma migración idempotente se ejecuta al confirmar la estabilización.
+        // No se vuelve a escribir la propiedad legacy; el ledger pasa a ser autoritativo.
+        ensureCortesIdReservationBaseline_(sheet);
 
         if (plan.finalValues.length) {
             const idRange = sheet.getRange(2, COLS_CORTES.id, plan.finalValues.length, 1);

@@ -1617,3 +1617,26 @@ VERIFICACIÓN FINAL DEL CORTE — 2026-11-24
 - Último código probado: commit 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3; HEAD posterior solo contiene documentación de continuidad.
 - MIG-026 sigue EN PROGRESO. Próximo subtramo: migración baseline del contador WRITE GPSpedia_CORTES_LAST_ID al ledger CortesIdReservations; después AUTH y ADMIN. Las validaciones de Spreadsheet Web App y limpieza de propiedades instaladas permanecen en Beta.
 ================================================================================
+
+
+================================================================================
+SUBTRAMO MIG-026 — BASELINE DEL CONTADOR WRITE — 2026-11-24
+Rama: GPSpedia2.2.5_work
+HEAD anterior confirmado: ec16ec95f0643c36934355b1650c1da38ec1696b
+
+Implementación:
+- WRITE migra GPSpedia_CORTES_LAST_ID al ledger append-only CortesIdReservations mediante el marcador determinista OP-BASELINE-CORTES-LAST-ID-V1.
+- El baseline captura el máximo entre IDs físicos válidos de Cortes, reservas existentes y contador heredado; acepta cero sin consumir un ID de vehículo.
+- La inicialización es idempotente, usa un lock fail-fast solo durante la primera siembra, confirma append + flush + read-back y falla cerrado ante marcador duplicado/corrupto.
+- Las reservas normales verifican/aseguran el baseline y calculan el siguiente ID desde Cortes + ledger; getCortesVehicleIdHighWaterMark_ deja de consultar ScriptProperties.
+- freezeCortesIds deja de escribir GPSpedia_CORTES_LAST_ID; conserva su dry-run, respaldo y conversión de fórmulas.
+- Se añadió JS/Tests/WriteCortesIdLedgerBaseline.mjs y se registró en el grupo MIG026 del runner.
+
+Validación:
+- Pendiente de ejecutar CI del commit de esta tarea. No se afirma todavía aprobación de sintaxis ni regresión.
+- No se ejecutaron Apps Script, Spreadsheet, Drive ni deployments reales; la paridad del ledger en el contexto Beta queda diferida.
+
+Estado:
+- Subtramo WRITE high-water: IMPLEMENTADO; cierre sujeto a CI local.
+- MIG-026 global: EN PROGRESO. Pendientes AUTH/ADMIN, acceso Spreadsheet de AUTH/CATALOG/UTILITIES, búsqueda estática global y validación Beta.
+================================================================================

@@ -424,3 +424,11 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Regresión de servicios run 45300194745: 420 suites, 4,691 pruebas PASS y una suite fallida, FeedbackLockFastFail. El fallo es la aserción preexistente que prohíbe LockService en FEEDBACK; ya se reproduce en runs anteriores a MIG-026.
 - GitHub Pages run 45300194094: build y deploy automáticos completados correctamente. No se desplegaron proyectos Apps Script.
 - Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+
+
+### 2026-11-24 — MIG-026: baseline del contador WRITE en ledger append-only
+- Se migró GPSpedia_CORTES_LAST_ID al ledger CortesIdReservations mediante un marcador determinista e idempotente que conserva el máximo entre Cortes, reservas previas y contador heredado.
+- La inicialización acepta cero sin consumir un ID, usa lock fail-fast solo durante la primera siembra y verifica persistencia mediante flush/read-back.
+- Las reservas normales dejan de consultar ScriptProperties; freezeCortesIds deja de escribir el contador legacy y conserva dry-run/respaldo/conversión de fórmulas.
+- Se añadió WriteCortesIdLedgerBaseline.mjs y se registró en el grupo MIG026 del runner.
+- CI y pruebas Beta reales aún no ejecutadas para este cambio; no se modificaron deployments, hojas ni propiedades instaladas.
