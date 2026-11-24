@@ -51,7 +51,7 @@ check("La nueva URL se publica mediante revisión central íntegra e historial",
   assert.match(guide, /mecanismo controlado aprobado/);
 });
 check("El rollback conserva historial y no modifica revisiones publicadas", () => {
-  assert.match(guide, /## 6\. Rollback/);
+  assert.match(guide, /## 9\. Rollback/);
   assert.match(guide, /nueva revisión completa/);
   assert.match(guide, /Nunca editar una revisión ya publicada/);
 });
@@ -114,7 +114,7 @@ check("El procedimiento exige contexto Spreadsheet y conserva rollback", () => {
   assert.match(guide, /getActiveSpreadsheet\(\)/);
   assert.match(guide, /no restaurar.*SPREADSHEET_ID.*openById/s);
   assert.match(guide, /## 9\. Rollback/);
-  assert.match(guide, /Nunca editar una revisión publicada/);
+  assert.match(guide, /Nunca editar una revisión ya publicada/);
   assert.match(schema, /Flujo de publicación:/);
 });
 check("El health workflow solo se ejecuta con bootstrap Beta confirmado", () => {
