@@ -285,6 +285,6 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Pruebas: se reforzaron `DeveloperPanelCopy`, `DeveloperPanelUX`, `CutDetailModalLayout`, `DeveloperOperationMessages`, `CentralServiceUrlPublisher`, `DevToolsModalAccessibility`, `SupplementaryVideoContract`, `CortesImageReconciliationUI`, `AdminReplacedImagesIntegrity` y el fixture AUTH.
 - CI run `45486260447`, HEAD `465194319f7e1c8b21aff181afea3142ef8384a9`: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos.
 - GitHub Pages run `45486258242`: SUCCESS sobre el mismo HEAD.
-- Rama de trabajo: `GPSpedia2.2.5_work`, HEAD `465194319f7e1c8b21aff181afea3142ef8384a9`. Rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Código funcional validado en `465194319f7e1c8b21aff181afea3142ef8384a9` sobre `GPSpedia2.2.5_work`. Los registros de cierre se actualizaron después en `checkpoint.md` y `ChangesLogs.txt`. La rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
 - No se desplegaron servicios Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos.
 - Pendiente exclusivamente: validación visual con navegador en viewports reales (móvil y escritorio) y prueba de publicación de endpoints en Beta aislada. Sin esa comprobación no se declara validación visual ni remota completada.
