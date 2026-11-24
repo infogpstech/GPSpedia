@@ -101,7 +101,7 @@
                 <input type="hidden" id="password-recovery-complete-email" name="email">
                 <div class="form-group">
                     <label for="password-recovery-code">Código de recuperación</label>
-                    <input type="text" id="password-recovery-code" name="code" required minlength="12" maxlength="14" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+                    <input type="text" id="password-recovery-code" name="code" required minlength="24" maxlength="24" pattern="[A-Fa-f0-9]{24}" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
                 </div>
                 <div class="form-group">
                     <label for="password-recovery-new-password">Nueva contraseña</label>

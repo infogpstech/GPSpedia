@@ -2163,7 +2163,7 @@ function createPasswordRecoveryManager_(dependencies) {
     }
     function issue(userId,email){
         const id=String(userId||"").trim(),normalizedEmail=normalize_(email);if(!id||!normalizedEmail)return null;
-        const code=String(createCode()||"").trim().toUpperCase();if(!/^[A-F0-9]{12}$/.test(code))throw new Error("No se pudo generar un código de recuperación válido.");
+        const code=String(createCode()||"").trim().toUpperCase();if(!/^[A-F0-9]{24}$/.test(code))throw new Error("No se pudo generar un código de recuperación válido.");
         const challengeId=String(createId()||"").trim();if(!challengeId)throw new Error("No se pudo generar el identificador de recuperación.");
         const current=Number(now()),challenge={id:challengeId,userId:id,emailDigest:hash("email:"+normalizedEmail),codeDigest:hash("code:"+code),attempts:0,status:"issued",createdAt:current,expiresAt:current+challengeTtlSeconds*1000};
         writeJson_(challengeKey_(id),challenge,challengeTtlSeconds);return {code,challengeId,expiresAt:challenge.expiresAt};
@@ -2175,7 +2175,7 @@ function createPasswordRecoveryManager_(dependencies) {
             if(challenge&&Number(challenge.expiresAt)<=current)remove(key);return {valid:false};
         }
         const supplied=String(code||"").replace(/[\s-]/g,"").toUpperCase();
-        const matches=/^[A-F0-9]{12}$/.test(supplied)&&constantTimeEquals(String(challenge.codeDigest||""),String(hash("code:"+supplied)));
+        const matches=/^[A-F0-9]{24}$/.test(supplied)&&constantTimeEquals(String(challenge.codeDigest||""),String(hash("code:"+supplied)));
         if(!matches){challenge.attempts=Math.max(0,Number(challenge.attempts)||0)+1;if(challenge.attempts>=maxAttempts)challenge.status="locked";
             const remaining=Math.ceil((Number(challenge.expiresAt)-current)/1000);if(remaining>0)writeJson_(key,challenge,remaining);else remove(key);
             return {valid:false,locked:challenge.status==="locked"};}
@@ -2197,14 +2197,13 @@ function createPasswordRecoveryManager_(dependencies) {
 }
 
 function getPasswordRecoveryManager_(){
-    const properties=PropertiesService.getScriptProperties();
-    let secret=String(properties.getProperty("GPSpedia_PASSWORD_RECOVERY_SECRET_V1")||"");
-    if(!secret){secret=Utilities.getUuid()+Utilities.getUuid();properties.setProperty("GPSpedia_PASSWORD_RECOVERY_SECRET_V1",secret);
-        if(String(properties.getProperty("GPSpedia_PASSWORD_RECOVERY_SECRET_V1")||"")!==secret)throw new Error("No se pudo inicializar la protección de recuperación.");}
     const cache=CacheService.getScriptCache();
-    const hash=value=>digestToHex(Utilities.computeHmacSha256Signature(String(value||""),secret,Utilities.Charset.UTF_8));
+    // El código aleatorio tiene 96 bits; solo se conserva su digest SHA-256 en CacheService.
+    // No se necesita una clave HMAC ni un secreto persistente en PropertiesService.
+    const hash=value=>digestToHex(Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256, String(value||""), Utilities.Charset.UTF_8));
     return createPasswordRecoveryManager_({get:key=>cache.get(key),put:(key,value,ttl)=>cache.put(key,value,ttl),remove:key=>cache.remove(key),
-        now:()=>Date.now(),hash,createCode:()=>Utilities.getUuid().replace(/-/g,"").slice(0,12).toUpperCase(),createId:()=>Utilities.getUuid()});
+        now:()=>Date.now(),hash,createCode:()=>Utilities.getUuid().replace(/-/g,"").slice(0,24).toUpperCase(),createId:()=>Utilities.getUuid()});
 }
 
 function handleRequestPasswordRecovery(payload){
@@ -2244,7 +2243,7 @@ function handleCompletePasswordRecovery(payload){
     const invalid={status:"error",message:"El código no es válido o expiró, o los datos de recuperación no coinciden."};
     const username=String(payload&&payload.username||"").trim().toLowerCase(),email=String(payload&&payload.email||"").trim().toLowerCase();
     const code=String(payload&&payload.code||"").replace(/[\s-]/g,"").toUpperCase(),newPassword=normalizePassword(payload&&payload.newPassword);
-    if(!username||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[A-F0-9]{12}$/.test(code))return invalid;
+    if(!username||!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[A-F0-9]{24}$/.test(code))return invalid;
     if(newPassword.length<8||newPassword.length>256)return {status:"error",message:"La contraseña nueva debe tener entre 8 y 256 caracteres."};
     const lock=LockService.getScriptLock();let acquired=false,userId="",result=null;
     try{

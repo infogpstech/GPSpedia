@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -35,7 +35,7 @@ let now = 1_800_000_000_000;
 let challengeCounter = 0;
 let codeCounter = 0;
 const cache = new Map();
-const hash = value => createHmac("sha256", "test-only-secret").update(String(value)).digest("hex");
+const hash = value => createHash("sha256").update(String(value)).digest("hex");
 function createManager(options = {}) {
     return managerFactory({
         get: key => cache.has(key) ? cache.get(key) : null,
@@ -43,28 +43,29 @@ function createManager(options = {}) {
         remove: key => cache.delete(key),
         now: () => now,
         hash,
-        createCode: () => options.code || (++codeCounter % 2 ? "A1B2C3D4E5F6" : "B1B2C3D4E5F6"),
+        createCode: () => options.code || (++codeCounter % 2 ? "A1B2C3D4E5F6A1B2C3D4E5F6" : "B1B2C3D4E5F6B1B2C3D4E5F6"),
         createId: () => "challenge-" + (++challengeCounter)
     });
 }
 let passed = 0;
 function test(name, run) { run(); passed++; console.log("PASS " + name); }
 
-test("El desafío almacena solo HMAC y nunca conserva el código en claro", () => {
+test("El desafío almacena solo SHA-256 y nunca conserva el código en claro", () => {
     cache.clear();
-    const manager = createManager({code:"A1B2C3D4E5F6"});
+    const manager = createManager({code:"A1B2C3D4E5F6A1B2C3D4E5F6"});
     assert.equal(manager.reserveRequest("alice", "alice@example.com", "U1"), true);
     const issued = manager.issue("U1", "alice@example.com");
     const stored = [...cache.values()].join("\n");
-    assert.equal(issued.code, "A1B2C3D4E5F6");
+    assert.equal(issued.code, "A1B2C3D4E5F6A1B2C3D4E5F6");
     assert.ok(!stored.includes(issued.code));
     assert.ok(stored.includes(hash("code:" + issued.code)));
+    assert.equal(issued.code.length, 24);
     assert.ok(stored.includes(hash("email:alice@example.com")));
 });
 
 test("La verificación exige simultáneamente la cuenta y el correo registrados", () => {
     cache.clear();
-    const manager = createManager({code:"A1B2C3D4E5F6"});
+    const manager = createManager({code:"A1B2C3D4E5F6A1B2C3D4E5F6"});
     manager.reserveRequest("alice", "alice@example.com", "U1");
     const issued = manager.issue("U1", "alice@example.com");
     assert.equal(manager.verify("U1", "other@example.com", issued.code).valid, false);
@@ -74,7 +75,7 @@ test("La verificación exige simultáneamente la cuenta y el correo registrados"
 
 test("El código expira y no puede verificarse después de diez minutos", () => {
     cache.clear();
-    const manager = createManager({code:"A1B2C3D4E5F6"});
+    const manager = createManager({code:"A1B2C3D4E5F6A1B2C3D4E5F6"});
     manager.reserveRequest("alice", "alice@example.com", "U1");
     const issued = manager.issue("U1", "alice@example.com");
     now += 10 * 60 * 1000 + 1;
@@ -83,11 +84,11 @@ test("El código expira y no puede verificarse después de diez minutos", () => 
 
 test("Cinco códigos incorrectos bloquean el desafío", () => {
     cache.clear();
-    const manager = createManager({code:"A1B2C3D4E5F6"});
+    const manager = createManager({code:"A1B2C3D4E5F6A1B2C3D4E5F6"});
     manager.reserveRequest("alice", "alice@example.com", "U1");
     const issued = manager.issue("U1", "alice@example.com");
-    for (let i = 0; i < 4; i++) assert.equal(manager.verify("U1", "alice@example.com", "000000000000").locked, false);
-    assert.equal(manager.verify("U1", "alice@example.com", "000000000000").locked, true);
+    for (let i = 0; i < 4; i++) assert.equal(manager.verify("U1", "alice@example.com", "000000000000000000000000").locked, false);
+    assert.equal(manager.verify("U1", "alice@example.com", "000000000000000000000000").locked, true);
     assert.equal(manager.verify("U1", "alice@example.com", issued.code).valid, false);
 });
 
@@ -135,7 +136,7 @@ function makeHandlerHarness(options = {}) {
     };
     const sessionsSheet = { getDataRange: () => ({ getValues: () => sessions.map(row=>row.slice()) }) };
     const spreadsheet = { getSheetByName: name => name === "Users" ? usersSheet : name === "ActiveSessions" ? sessionsSheet : null };
-    const manager = createManager({code:"A1B2C3D4E5F6"});
+    const manager = createManager({code:"A1B2C3D4E5F6A1B2C3D4E5F6"});
     const lock = { waitLock(){lockEvents.push("wait");}, releaseLock(){lockEvents.push("release");} };
     const properties = { deleteProperty(){} };
     const requestSource = extractFunction(authSource, "handleRequestPasswordRecovery");
@@ -180,7 +181,7 @@ test("La solicitud responde igual para una cuenta existente y otra inexistente",
 test("Un correo distinto al registrado no puede completar la recuperación", () => {
     const h = makeHandlerHarness();
     h.handlers.handleRequestPasswordRecovery({username:"alice",email:"alice@example.com"});
-    const code = h.sent[0].body.match(/Código de recuperación:\s*([A-F0-9]{12})/)[1];
+    const code = h.sent[0].body.match(/Código de recuperación:\s*([A-F0-9]{24})/)[1];
     const result = h.handlers.handleCompletePasswordRecovery({
         username:"alice",email:"attacker@example.com",code,newPassword:"NewPassword2026"
     });
@@ -192,7 +193,7 @@ test("Un correo distinto al registrado no puede completar la recuperación", () 
 test("La finalización actualiza el hash, revoca sesiones y consume el código", () => {
     const h = makeHandlerHarness();
     h.handlers.handleRequestPasswordRecovery({username:"alice",email:"alice@example.com"});
-    const code = h.sent[0].body.match(/Código de recuperación:\s*([A-F0-9]{12})/)[1];
+    const code = h.sent[0].body.match(/Código de recuperación:\s*([A-F0-9]{24})/)[1];
     h.lockEvents.length = 0;
     const result = h.handlers.handleCompletePasswordRecovery({
         username:"alice",email:"alice@example.com",code,newPassword:"NewPassword2026"
@@ -218,9 +219,14 @@ test("Si MailApp falla, el código preparado se invalida y no puede consumirse",
     const h = makeHandlerHarness({mailFailure:true});
     const response = h.handlers.handleRequestPasswordRecovery({username:"alice",email:"alice@example.com"});
     assert.equal(response.status, "success");
-    assert.equal(h.manager.verify("U1","alice@example.com","A1B2C3D4E5F6").valid, false);
+    assert.equal(h.manager.verify("U1","alice@example.com","A1B2C3D4E5F6A1B2C3D4E5F6").valid, false);
 });
 
+const recoveryManagerSource = extractFunction(authSource, "getPasswordRecoveryManager_");
+assert.doesNotMatch(recoveryManagerSource, /PropertiesService|GPSpedia_PASSWORD_RECOVERY_SECRET_V1|computeHmacSha256Signature/);
+assert.match(recoveryManagerSource, /Utilities\.DigestAlgorithm\.SHA_256/);
+assert.match(recoveryManagerSource, /slice\(0,24\)/);
+assert.match(extractFunction(authSource, "createPasswordRecoveryManager_"), /\^\[A-F0-9\]\{24\}\$/);
 const authMutationPolicy = authSource.match(/function isSharedMutationAction_\(action\) \{([\s\S]*?)\n\}/);
 assert.ok(authMutationPolicy);
 assert.doesNotMatch(authMutationPolicy[1], /requestPasswordRecovery|completePasswordRecovery/);
@@ -238,7 +244,7 @@ assert.ok(loginBoundary >= 0 && recoveryExports > loginBoundary, "Los exports de
 assert.ok(mainSource.includes("passwordRecoveryRequestForm.addEventListener('submit'"));
 assert.ok(mainSource.includes("passwordRecoveryCompleteForm.addEventListener('submit'"));
 assert.ok(htmlSource.includes('id="password-recovery-request-form"'));
-assert.ok(htmlSource.includes('id="password-recovery-complete-form"'));
-assert.ok(workerSource.includes("gpsepedia-cache-v74"));
+assert.ok(htmlSource.includes('id="password-recovery-complete-form"') && htmlSource.includes('pattern="[A-Fa-f0-9]{24}"'));
+assert.ok(workerSource.includes("gpsepedia-cache-v75"));
 
 console.log("PasswordRecovery: " + passed + "/" + passed + " PASS");
