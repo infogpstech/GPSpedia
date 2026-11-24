@@ -72,6 +72,17 @@ testCase("las pestañas conservan un único título visible y la consola usa con
     assert.match(developer, /id="btn-terminal-send"[^>]*aria-label="Ejecutar comando"[^>]*>&gt;_/);
 });
 
+testCase("las explicaciones extensas de endpoints y organización solo aparecen en ayuda contextual", () => {
+    assert.doesNotMatch(developer, /Actualiza únicamente las URL de los cinco servicios secundarios/);
+    assert.match(developer, /aria-controls="dev-help-central-service-urls" aria-expanded="false"/);
+    assert.match(developer, /id="dev-help-central-service-urls"[^>]*class="gp-help-popover[^"]*"[^>]*hidden/);
+    assert.match(html, /aria-controls="dev-help-audit-organizer" aria-expanded="false"/);
+    assert.match(html, /id="dev-help-audit-organizer"[^>]*class="gp-help-popover[^"]*"[^>]*hidden/);
+    assert.match(html, /La simulación compara rutas, nombres, extensiones y referencias sin modificar Drive ni Spreadsheet/);
+    assert.doesNotMatch(html, /Las coincidencias por nombre, carpeta o alias son orientativas/);
+    assert.doesNotMatch(html, /La aplicación requiere aprobación explícita del Desarrollador/);
+});
+
 testCase("las ayudas del inventario y auditoría están asociadas a su modal correcto", () => {
     assert.match(html, /id="replaced-images-modal"[^>]*aria-labelledby="replaced-images-title"/);
     assert.match(html, /id="audit-drive-modal"[^>]*aria-labelledby="audit-drive-title"/);
