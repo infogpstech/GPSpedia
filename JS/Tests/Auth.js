@@ -592,7 +592,7 @@ function doPost(e) {
         try {
             // La purga de Logs solo requiere capacidad Desarrollador; no modifica
             // sesiones ni necesita una lease o autorización remota por acción.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
@@ -606,7 +606,7 @@ function doPost(e) {
             // Las acciones ordinarias consumen el actor local preparado al iniciar sesión o cargado
             // desde Users/ActiveSessions ante un cache miss. No adquieren lease ni revalidan
             // identidad por acción; cada mutación invalida la caché local AUTH.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
@@ -619,7 +619,7 @@ function doPost(e) {
         try {
             // El benchmark solo calcula con una cadena fija: el actor cacheado basta;
             // no requiere lease ni coordinación remota de actividad.
-            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+            const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ });
             return doPostInternal_(withSharedSessionActor_(e, actor));
         } catch (error) {
             return ContentService.createTextOutput(JSON.stringify({
@@ -630,7 +630,7 @@ function doPost(e) {
     }
     if (!isSharedMutationAction_(action)) return doPostInternal_(withSharedSessionActor_(e, null));
     try {
-        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" });
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ });
         return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
