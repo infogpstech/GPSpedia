@@ -2124,3 +2124,15 @@ HEAD al iniciar esta adenda: b5ba4aaecb6a4d671c497697522c955be0d988b6
 - Resultados reales de Git en fixture: PASS fast-forward v1→v2; PASS detección de working tree sucio; PASS detección de rama incorrecta. Se comprobó que el flujo pull usa --ff-only.
 - Alcance: prueba del comportamiento de los guardas y sincronización Git en fixture local. No se ejecutó fetch/pull contra GitHub ni se sincronizó el clon real del usuario. El fixture temporal se eliminó al finalizar.
 - No hubo cambios de código ni pruebas contra servicios Beta. Los casos remotos permanecen pendientes de deployments y recursos Beta aislados.
+
+
+MIG-030 — EVIDENCIA ADICIONAL DE HEALTH Y BLOQUEO DE EJECUCIÓN REMOTA — 2026-11-24
+- HEAD de referencia de la validación: cb794f1afe23d84845db046b4202c825691a6420.
+- GitHub Actions run 45395676090, job 138450683262, workflow de regresión de servicios: SUCCESS. Node.js v22.23.5; rama GPSpedia2.2.5_work y checkout exacto del SHA indicado.
+- ServiceHealthContract.mjs: 19/19 PASS en dos ejecuciones del runner (AUG-024 y MIG-021). Regresión: 513 suites, 6,051 pruebas aprobadas, 0 fallos. Son pruebas de contrato/locales, no disponibilidad remota.
+- Se confirmó por GitHub que el repositorio usa main como rama predeterminada y que .github/workflows/deployed-service-health.yml no existe allí (404); el workflow_dispatch remoto no está disponible en su estado actual.
+- RemoteServiceHealth.mjs usa un bootstrap fijo extraído de JS/Frontend/api-config.js y no permite seleccionar entorno. No se verificó independientemente que el bootstrap apunte exclusivamente a recursos Beta aislados. Por seguridad, no se ejecutó el script ni se realizaron solicitudes a los deployments.
+- La matriz Tareas_Beta.md ya advierte expresamente este límite. No se cambió el código ni el workflow durante las pruebas Beta; no se registró como defecto funcional ni se añadió a Hallazgos_Beta.md porque no hubo invocación real.
+- Las pruebas reales BETA-01..08 y MIG-012/013/015/017/018/024/025/026 continúan pendientes de acceso autorizado a Apps Script, Spreadsheet, Drive, OAuth/YouTube y cuentas/recursos sintéticos aislados.
+- La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+
