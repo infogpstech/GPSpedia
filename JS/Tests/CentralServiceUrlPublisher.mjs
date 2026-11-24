@@ -149,6 +149,11 @@ check("cada revisión contiene una instantánea única y las lecturas usan solo 
     assert.equal(snapshot.revision,2);
     assert.equal(snapshot.services.CATALOG.contractVersion,"2.4.0");
     assert.equal(snapshot.services.FEEDBACK.contractVersion,"1.2.2");
+    const activeCatalog = activeRows.find(row=>row[1]==="CATALOG");
+    const originalVersion = activeCatalog[4];
+    activeCatalog[4] = "invalid-version";
+    assert.throws(()=>context.getAuthCentralServiceUrlMap_(fixture,false),/versión de contrato válida/);
+    activeCatalog[4] = originalVersion;
     const duplicate=activeRows[0].slice();
     fixture.sheets.Servicios.rows.push(duplicate);
     assert.throws(()=>context.getAuthCentralServiceUrlMap_(fixture,false),/servicio duplicado/);
