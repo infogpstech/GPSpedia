@@ -4,20 +4,20 @@ Fecha: 2026-11-24
 Repositorio: `infogpstech/GPSpedia`
 Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.
-HEAD de trabajo antes de este checkpoint: `d8160863f3196c50598d1438019ae1b2135f07b7`
+HEAD de trabajo antes de esta actualización documental: `71d243b61e552c921f1356e12df14584a335b4a4`
 HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Reglas de continuidad
 - `NORMAS_DESAROLLO.md` es la única fuente normativa vigente; consultarla antes de cambiar código/documentación operativa.
 - Confirmar rama y HEAD antes de cada escritura. No forzar actualizaciones ni modificar la rama base.
 - No declarar pruebas ni efectos externos sin evidencia observada. Diferenciar CI/fixtures de Beta real.
-- Apps Script: sin secretos compartidos/manuales ni URLs/IDs locales de otros servicios; coordinación funcional frontend cuando sea posible; llamadas backend directas solo por necesidad técnica, con autorización/RBAC del receptor; endpoints operativos desde registro central autoactualizable, sin fallback local.
+- Apps Script: sin secretos compartidos/manuales ni URLs/endpoints de otros servicios; coordinación funcional frontend cuando sea posible; llamadas backend directas solo por necesidad técnica, con autorización/RBAC del receptor. Excepción temporal autorizada para los IDs de Spreadsheet y carpeta Cortes suministrados por el propietario, documentada en NORMAS §17.1.
 - Un fallo de servicio u operación no debe bloquear funciones independientes.
 
 ## Estado de tareas
 - MIG-001 a MIG-030: implementación y validación local cerradas según sus criterios. Las validaciones externas se marcan como diferidas a Beta cuando requieren recursos/despliegues reales.
 - MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA; CI global posterior aprobado.
-- MIG-026: COMPLETADA CON VALIDACIÓN DIFERIDA. AUTH, CATALOG y UTILITIES no contienen `SPREADSHEET_ID` ni `openById(SPREADSHEET_ID)`; usan `SpreadsheetApp.getActiveSpreadsheet()` y fallan cerrado si falta contexto.
+- MIG-026: vinculación explícita implementada y validada en CI; Beta pendiente. Los seis servicios usan `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)`; WRITE, FEEDBACK y ADMIN abren además la carpeta `Cortes` por `GPSpediaCortesRootFolderId_`.
 - MIG-028: COMPLETADA CON VALIDACIÓN DIFERIDA; pruebas locales aprobadas, métricas reales p50/p95 pendientes.
 - MIG-029 y MIG-030: COMPLETADAS CON VALIDACIÓN DIFERIDA.
 - La matriz BETA-01..09 y pruebas de MIG-006/008/012/013/015/017/018/024/025/026 permanecen como procedimiento de campo en `Tareas_Beta.md`.
@@ -139,3 +139,20 @@ Ejecutar BETA-09: comparar visualmente los límites de edición, impresión, com
 - Solo se generan encabezados. No se agregan URLs, IDs, recursos, filas de publicación ni estado `READY`; no se habilita el enrutamiento hasta completar una revisión real válida.
 - Prueba `CentralConfigurationInitializer.mjs`: 7/7 PASS. CI run `45436552111`, job `138595813855`: SUCCESS; 514 suites, 6,067 pruebas aprobadas, 0 fallos; sintaxis de los módulos modificados PASS.
 - No se ejecutó la función en una Spreadsheet real y no se desplegó AUTH. Pendiente Beta: verificar que AUTH tenga el contexto Spreadsheet correcto, ejecutar manualmente la función, completar los datos reales, publicar la revisión y desplegar AUTH con autorización.
+
+
+## Corrección de vinculación compartida Spreadsheet/Drive — 2026-11-24
+
+**Estado: IMPLEMENTADA EN CÓDIGO Y CI; validación real diferida a Beta.**
+
+- Repositorio: `infogpstech/GPSpedia`; rama de trabajo: `GPSpedia2.2.5_work`.
+- HEAD al registrar la actualización: `71d243b61e552c921f1356e12df14584a335b4a4`. Rama base protegida verificada: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Spreadsheet compartida: `1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os`. Carpeta raíz Cortes: `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2`.
+- Los seis servicios abren la misma Spreadsheet por ID. AUTH/WRITE/FEEDBACK/ADMIN reciben el ID desde `CentralConfigurationReader.js`; CATALOG/UTILITIES lo declaran en sus módulos.
+- WRITE/FEEDBACK/ADMIN usan el ID de carpeta compartido y mantienen validaciones de nombre `Cortes`, papelera y relación directa con la raíz de Drive.
+- La excepción temporal está autorizada y documentada en NORMAS §17.1; solo cubre los dos IDs de recursos. No hay URLs, tokens, claves ni secretos compartidos nuevos.
+- CI run `45444136611`, job `138623108916`, checkout HEAD `0aa586c933296d745fa3509887aeccf7e5d2d84e`: SUCCESS; 514 suites, 6,070 pruebas aprobadas, 0 fallos; sintaxis PASS. Pages run `45444134417`: SUCCESS.
+- No se desplegaron Apps Script ni se modificaron recursos externos, permisos, scopes, propiedades instaladas o datos reales.
+
+## Próxima acción
+Ejecutar en Beta aislada la prueba de acceso de los seis servicios con la identidad real de cada deployment; verificar lectura/escritura de Spreadsheet y acceso, identidad, nombre y jerarquía de la carpeta Cortes para WRITE/FEEDBACK/ADMIN. Revisar scopes/autorizaciones solicitados. No desplegar en producción sin autorización expresa.
