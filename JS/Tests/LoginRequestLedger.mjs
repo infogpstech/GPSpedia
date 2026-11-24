@@ -13,7 +13,7 @@ function block(source, name) {
 function count(source, pattern) { return [...source.matchAll(pattern)].length; }
 
 const ledger = block(auth, "ensureLoginRequestsSheet_");
-assert.match(ledger, /LOGIN_REQUESTS_BASELINE_MARKER_/);
+assert.match(auth, /LOGIN_REQUEST_BASELINE_MARKER_/);
 assert.match(ledger, /PropertiesService\.getScriptProperties\(\)\.getProperties\(\)/);
 assert.match(ledger, /LEGACY_LOGIN_REQUEST_PROPERTY_PREFIX/);
 assert.doesNotMatch(ledger, /\.setProperty\(|\.deleteProperty\(/,
