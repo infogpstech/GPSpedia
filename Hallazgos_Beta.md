@@ -198,3 +198,6 @@ _Aún no hay hallazgos confirmados._
 - **Pruebas:** `FeedbackTutorialLookupBoundedRead` 9/9 PASS; `TutorialIntegrity` 48/48 PASS; FEEDBACK precondiciones de subida resumable 9/9 PASS, incluida inicialización YouTube con Tutorial histórico y referencia legacy.
 - **Validación completa:** CI run `45505972628`, HEAD `ff27665eb3083b5c401f13f9268e983394320214`: SUCCESS; 517 suites, 6,155 pruebas, 0 fallos. Chromium responsive 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700. Pages run `45505971953`: SUCCESS.
 - **Alcance no verificado:** no se reprodujo el error contra la cuenta/Spreadsheet/Drive Beta del usuario ni se realizó una subida real a YouTube. No se desplegó Apps Script ni se modificaron recursos externos. La prueba Beta debe cubrir tanto tutorial histórico sin ID físico como tutorial nuevo con ID `tut-...`.
+
+
+- **Ampliación de verificación — 2026-11-24:** se añadió cobertura directa de inicialización YouTube para ambos tipos de destino: Tutorial histórico con referencia `legacy-<SHA-256>` y Tutorial nuevo con ID canónico `tut-...`. FEEDBACK precondiciones de subida resumable: 10/10 PASS. CI run `45506352069`: SUCCESS; 517 suites, 6,156 pruebas, 0 fallos. Chromium 184/184 PASS; Pages run `45506351422`: SUCCESS. La carga real en YouTube Beta sigue sin ejecutarse.
