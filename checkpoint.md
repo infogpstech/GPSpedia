@@ -444,3 +444,12 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Pruebas:** `ActivityDashboardContributions` 3/3 PASS, incluyendo agregación por identidad, aliases, forma histórica, render de cuatro columnas, estado vacío y ranking. CI run `45508470807`: 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 216/216 PASS; Pages run `45508470780`: SUCCESS.
 - **Tarea 3 — Modal Developer, disposición, consola y actualización de servicios:** EN PROGRESO. Seguir los requisitos de `Tareas_Activas.md`: pestañas debajo de la línea de comando, etiquetas solo en pestaña activa, consola con el doble de altura útil, compactación sin perder handlers, mensajes funcionales de Endpoints solo en consola y botón “Actualizar Servicios”. Añadir pruebas responsive de geometría y resultados individuales.
 - No asignar ID nuevo; seguir el orden de `Tareas_Activas.md`.
+
+### Cierre de tarea activa 3 — Modal Developer — 2026-11-24
+
+- **Tarea 3 — Modal Developer, disposición, consola y actualización de servicios:** COMPLETADA EN CÓDIGO Y CI. La consola y la línea de comandos aparecen antes de las pestañas. La pestaña activa expande su etiqueta; las demás muestran iconografía solamente. La consola pasa de 24% a 48% de altura útil y ocupa el ancho disponible. Se compactaron paddings, márgenes y botones, preservando IDs y handlers.
+- Endpoints envía exclusivamente a la consola Developer los estados de carga, validación, permisos/sesión, resultados individuales, endpoints sin cambios, errores y cierre de actualización. No se muestran mensajes bajo el botón. El botón se denomina **Actualizar Servicios**.
+- **Pruebas:** `DeveloperPanelUX` 11/11 PASS; `DeveloperOperationMessages` 8/8 PASS. CI run `45509850708`: 517 suites, 6,160 pruebas aprobadas, 0 fallos. Chromium `Aug146ResponsiveBrowser` 236/236 PASS en 1366×768, 390×844, 360×800 y 320×700. Pages run `45509849705`: SUCCESS.
+- No se modificaron Apps Script, endpoints reales, PropertiesService, OAuth, permisos, Spreadsheet, Drive ni datos. No se desplegaron servicios backend.
+- **Rama de trabajo:** `GPSpedia2.2.5_work`; HEAD al cerrar esta tarea `711ce5f5733dd0c48804c810af97ba6913cc1b0e`. **Rama base protegida:** `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- **Siguiente paso:** revisar tareas activas y auditorías para seleccionar la siguiente actividad prioritaria.

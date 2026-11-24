@@ -915,3 +915,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - La tabla muestra Usuario, Cortes aportados, Aportes registrados y Vehículos con aportes. El ranking superior presenta los tres valores; los estados vacío y error usan colspan 4.
 - `ActivityDashboardContributions`: 3/3 PASS. CI run `45508470807`: 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 216/216 PASS; Pages run `45508470780`: SUCCESS.
 - No se modificó el backend, Spreadsheet ni datos almacenados. Se inicia la tarea activa 3: ajustes responsive y funcionales del modal Developer según `Tareas_Activas.md`.
+
+### 2026-11-24 — Cierre de tarea activa 3: modal Developer
+
+- Se reordenó el panel para mantener consola y línea de comandos antes de las pestañas. Las pestañas inactivas muestran solo iconos; la seleccionada expande su etiqueta en escritorio y móvil.
+- La consola se amplió de 24% a 48% de la altura útil, ocupa el ancho disponible y mantiene su salida desplazable. Se compactaron paddings, márgenes, botones y encabezados sin modificar IDs ni handlers.
+- Endpoints comunica carga, validación, permisos/sesión, resultados por servicio, idempotencia/sin cambios y errores solo en consola Developer. Se eliminó el mensaje bajo el botón, renombrado a **Actualizar Servicios**.
+- Pruebas: `DeveloperPanelUX` 11/11 PASS; `DeveloperOperationMessages` 8/8 PASS. CI run `45509850708`: 517 suites, 6,160 pruebas, 0 fallos; Chromium 236/236 PASS en cuatro viewports; Pages run `45509849705`: SUCCESS.
+- No se modificaron Apps Script, endpoints reales, PropertiesService, OAuth, permisos, Spreadsheet, Drive ni datos.
