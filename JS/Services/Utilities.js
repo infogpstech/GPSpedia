@@ -2,13 +2,10 @@
 // VERSION: 1.5.0 | OUTPUT: Hoja 1 (columna A)
 // AUTH owns the session record; UTILITIES loads and caches the actor from Users/ActiveSessions locally.
 // Mutations are serialized by the local ScriptLock; session actors are loaded and cached locally.
-let utilitiesSpreadsheet = null;
 function getUtilitiesSpreadsheet_() {
- if (utilitiesSpreadsheet === null) {
-  utilitiesSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  if (!utilitiesSpreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto UTILITIES.");
- }
- return utilitiesSpreadsheet;
+ const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+ if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto UTILITIES.");
+ return spreadsheet;
 }
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
 const SOURCE_COLS={imagenVehiculo:9};
@@ -36,15 +33,16 @@ function assertUtilitiesDeveloperSession_(payload, _spreadsheet) {
  return {userId,role:"Desarrollador",epoch:trusted.epoch};
 }
 function migrateTimestamps(payload){
- const actor=getCachedSharedSessionActor_(payload&&payload.userId,payload&&payload.sessionToken,{service:"UTILITIES",loadSpreadsheet:getUtilitiesSpreadsheet_});
+ const spreadsheet=getUtilitiesSpreadsheet_();
+ const actor=getCachedSharedSessionActor_(payload&&payload.userId,payload&&payload.sessionToken,{service:"UTILITIES",loadSpreadsheet:()=>spreadsheet});
  const trustedPayload=Object.assign({},payload||{},{__sharedSessionActor:actor});
- return migrateTimestampsSafe_(trustedPayload);
+ return migrateTimestampsSafe_(trustedPayload,spreadsheet);
 }
-function migrateTimestampsSafe_(payload){
+function migrateTimestampsSafe_(payload,spreadsheetOverride){
  const lock=LockService.getScriptLock();let acquired=false;
  try{
   if (!lock.tryLock(0)) throw new Error('UTILITIES está ocupado con otra migración; reintenta sin esperar.'); acquired=true;
-  const ss=getUtilitiesSpreadsheet_();assertUtilitiesDeveloperSession_(payload,ss);
+  const ss=spreadsheetOverride||getUtilitiesSpreadsheet_();assertUtilitiesDeveloperSession_(payload,ss);
   recoverUtilitiesInterruptedMigration_(ss);
   const source=ss.getSheetByName(SHEET_NAMES.SOURCE);if(!source)throw new Error("Hoja 'Cortes' no existe.");
   const last=source.getLastRow(),sourceValues=last<2?[]:source.getRange(2,SOURCE_COLS.imagenVehiculo,last-1,1).getValues();
