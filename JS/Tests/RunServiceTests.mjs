@@ -243,6 +243,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG navegación lee solo columnas de contrato','JS/Tests/CatalogNavigationRead.mjs');
  runCli('CATALOG reutiliza una instancia Spreadsheet por lectura','JS/Tests/CatalogSpreadsheetHandleReuse.mjs');
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
+ runCli('CATALOG inicialización manual e idempotente de hojas del feed','JS/Tests/CatalogChangeFeedInitialization.mjs');
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
  runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');
  runCli('ADMIN guardas temporales de inventario, auditoría y carpeta Cortes','JS/Tests/AdminLocalOperationGuard.mjs');

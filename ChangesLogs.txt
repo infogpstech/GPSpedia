@@ -748,3 +748,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Validación remota pendiente de Beta aislada. No se desplegó Apps Script ni se modificaron datos, propiedades, permisos o recursos productivos.
 
 - Confirmación final tras ajustar el contador de aserciones: CI run `45466859277`, HEAD `5e09578efce8fb3b0680809fd39b48f4dbcca6c8`: SUCCESS; 515 suites, 6,099 pruebas aprobadas, 0 fallos; `LoginRequestLedger: 47/47 PASS`, `MIG026StaticConfigSearch: 10/10 PASS`, sintaxis PASS. GitHub Pages run `45466858354`: SUCCESS.
+
+
+### 2026-11-24 — Corrección de arranque del feed CATALOG y proveedor de identidad FEEDBACK
+
+- FEEDBACK ahora inyecta `getSpreadsheet` en `getCachedSharedSessionActor_`, permitiendo resolver Users/ActiveSessions en cache miss sin restaurar el fallback global retirado en MIG-026. Esto cubre las acciones protegidas de dashboard, aportes e Inbox que entran por FEEDBACK.
+- CATALOG incorpora `initializeCatalogChangeFeedSheets()`, función manual de editor Apps Script. Crea únicamente las hojas ausentes o escribe encabezados en hojas vacías; valida previamente las hojas existentes, conserva datos válidos, falla cerrado ante esquemas incompatibles y no se invoca desde GET/POST ni durante consultas ordinarias.
+- Se añadió `CatalogChangeFeedInitialization.mjs` y se reforzó `MIG013SessionActorLocalLookup.mjs` para exigir proveedor explícito en FEEDBACK.
+- Se actualizó el procedimiento Beta para ejecutar la inicialización en Spreadsheet aislada y verificar read-back. No se desplegaron servicios ni se modificaron hojas, propiedades, permisos o datos externos.

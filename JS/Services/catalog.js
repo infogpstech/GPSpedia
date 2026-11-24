@@ -144,6 +144,69 @@ function validateCatalogFeedSheet_(sheet, name, headers) {
     return sheet;
 }
 
+function initializeCatalogChangeFeedSheets_(dependencies) {
+    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
+    const spreadsheet = deps.spreadsheet ||
+        (typeof deps.getSpreadsheet === "function" ? deps.getSpreadsheet() : getSpreadsheet());
+    if (!spreadsheet || typeof spreadsheet.getSheetByName !== "function" ||
+        typeof spreadsheet.insertSheet !== "function") {
+        throw new Error("CATALOG no pudo resolver una Spreadsheet apta para inicializar el feed.");
+    }
+    const lockService = deps.lockService || LockService;
+    const lock = lockService && typeof lockService.getScriptLock === "function"
+        ? lockService.getScriptLock() : null;
+    if (!lock || typeof lock.tryLock !== "function" || !lock.tryLock(0)) {
+        throw new Error("La inicialización del feed CATALOG está ocupada; vuelve a intentarlo.");
+    }
+    const specs = [
+        [CATALOG_FEED_STATE_SHEET_, CATALOG_FEED_STATE_HEADERS_],
+        [CATALOG_FEED_EVENTS_SHEET_, CATALOG_FEED_EVENT_HEADERS_]
+    ];
+    const created = [], initialized = [];
+    try {
+        // Preflight completo: una hoja existente incompatible detiene el proceso
+        // antes de crear o modificar cualquiera de las dos.
+        specs.forEach(([name, headers]) => {
+            const existing = spreadsheet.getSheetByName(name);
+            if (existing && Number(existing.getLastRow() || 0) > 0) {
+                validateCatalogFeedSheet_(existing, name, headers);
+            }
+        });
+        specs.forEach(([name, headers]) => {
+            let sheet = spreadsheet.getSheetByName(name);
+            if (!sheet) {
+                sheet = spreadsheet.insertSheet(name);
+                created.push(name);
+            }
+            if (Number(sheet.getLastRow() || 0) === 0) {
+                sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
+                initialized.push(name);
+            }
+        });
+        if (typeof deps.flush === "function") deps.flush();
+        specs.forEach(([name, headers]) => {
+            validateCatalogFeedSheet_(spreadsheet.getSheetByName(name), name, headers);
+        });
+        return { status: "success", created, initialized, validated: specs.map(([name]) => name) };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
+ * Inicialización manual, una sola vez por Spreadsheet/entorno.
+ * Ejecutar desde el editor del proyecto CATALOG; nunca se invoca al leer el feed.
+ * Solo crea hojas ausentes o agrega encabezados a hojas completamente vacías.
+ * Las hojas existentes con datos/esquema incompatible se conservan sin cambios.
+ */
+function initializeCatalogChangeFeedSheets() {
+    return initializeCatalogChangeFeedSheets_({
+        spreadsheet: getSpreadsheet(),
+        lockService: LockService,
+        flush: () => SpreadsheetApp.flush()
+    });
+}
+
 function createCatalogChangeFeed_(dependencies) {
     const deps = dependencies || {};
     const spreadsheet = deps.spreadsheet ||

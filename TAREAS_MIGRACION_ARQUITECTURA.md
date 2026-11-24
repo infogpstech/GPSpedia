@@ -951,3 +951,11 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - Se amplía el saneamiento en frontend y se aplica una lista permitida directamente en `showLoginScreen`, conservando el aviso neutral de cierre voluntario.
 - El mensaje de credenciales se normaliza exactamente a `contraseña o usuario incorrecto`; los diagnósticos específicos permanecen en consola.
 - La corrección se mantiene dentro del requisito de privacidad AUTH/sesión; no modifica contratos backend, permisos, servicios desplegados ni datos reales.
+
+
+### Adenda correctiva — proveedor de identidad FEEDBACK y hojas del feed CATALOG — 2026-11-24
+
+- Se detectó que FEEDBACK omitía `loadSpreadsheet: getSpreadsheet` al invocar SharedSessionActor, en contradicción con MIG-026 (proveedor obligatorio). Se corrige la inyección en el dispatcher protegido; no se reintroduce fallback global ni se amplía RBAC.
+- Se añade inicializador manual para `CatalogChangeState`/`CatalogChangeEvents`, porque el feed de CATALOG requiere ambas hojas y el runtime deliberadamente no crea esquema durante GET/POST. El inicializador es idempotente, valida ambas hojas antes de escribir, preserva datos válidos y falla cerrado ante esquema incompatible.
+- Suites añadidas/reforzadas: `MIG013SessionActorLocalLookup` exige proveedor FEEDBACK; `CatalogChangeFeedInitialization` valida creación, read-back, idempotencia, preservación, preflight y lock no bloqueante.
+- Despliegue y operación del inicializador sobre Spreadsheet Beta aislada permanecen pendientes. No se modificaron hojas ni datos externos.

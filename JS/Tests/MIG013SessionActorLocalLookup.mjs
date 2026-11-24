@@ -13,6 +13,8 @@ assert.doesNotMatch(source, /SPREADSHEET_ID|SpreadsheetApp\.openById/,
 assert.equal((auth.match(/loadSpreadsheet: getAuthUsersSpreadsheet_/g) || []).length, 4,
     "Las cuatro rutas protegidas de AUTH inyectan su proveedor de identidad.");
 assert.match(admin, /loadSpreadsheet: getSpreadsheet/);
+assert.match(feedback, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{[\s\S]*?service: "FEEDBACK",[\s\S]*?loadSpreadsheet: getSpreadsheet[\s\S]*?\}\)/,
+    "FEEDBACK debe inyectar su Spreadsheet local para resolver Users/ActiveSessions en cache miss.");
 assert.match(write, /loadSpreadsheet: getSpreadsheet/);
 assert.match(utilitiesSource, /loadSpreadsheet:\(\)=>spreadsheet/);
 const now = Date.UTC(2026, 10, 23, 12, 0, 0);

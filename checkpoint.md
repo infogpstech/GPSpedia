@@ -209,3 +209,15 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Validación diferida: desplegar los seis proyectos en Beta aislada, verificar permisos de Spreadsheet y carpeta Cortes y probar login/idempotencia con solicitudes sintéticas. No se desplegó Apps Script ni se modificaron datos, propiedades, permisos o recursos productivos.
 
 - Confirmación final CI en el HEAD de código/pruebas `5e09578efce8fb3b0680809fd39b48f4dbcca6c8`: run `45466859277` SUCCESS; 515 suites, 6,099 pruebas aprobadas, 0 fallos; `LoginRequestLedger: 47/47 PASS`, `MIG026StaticConfigSearch: 10/10 PASS`, sintaxis PASS. GitHub Pages run `45466858354`: SUCCESS.
+
+
+## Corrección solicitada — feed CATALOG, dashboard/aportes e Inbox — 2026-11-24
+
+**Estado: EN PROGRESO; cambios locales preparados, CI y revisión pendientes.**
+
+- HEAD confirmado al iniciar: `ecf28f3d5c9dd485911a0051a34f6a8787dad244`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- CATALOG: `createCatalogChangeFeed_()` falla si faltan `CatalogChangeState` o `CatalogChangeEvents`. El contrato MIG-026 establece que las consultas ordinarias no crean hojas automáticamente. Se añade inicializador manual `initializeCatalogChangeFeedSheets()`, idempotente, con preflight de ambas hojas, validación de encabezados, read-back, lock no bloqueante y preservación de datos; no se conecta a HTTP GET/POST.
+- FEEDBACK: el dispatcher llamaba `getCachedSharedSessionActor_()` sin `loadSpreadsheet`. SharedSessionActor exige proveedor explícito desde MIG-026. La omisión causaba `No se inyectó el proveedor de la Spreadsheet de identidad` y afectaba acciones protegidas de FEEDBACK: dashboard/actividad, agregados de aportes e Inbox.
+- Cambios preparados: `JS/Services/feedback.js`, `JS/Services/catalog.js`, `JS/Tests/MIG013SessionActorLocalLookup.mjs`, nueva `JS/Tests/CatalogChangeFeedInitialization.mjs`, runner y procedimiento Beta.
+- La inicialización de hojas no se ejecutó sobre ninguna Spreadsheet. No se desplegaron Apps Script ni se modificaron endpoints, permisos, propiedades o datos externos.
+- Próximo paso: ejecutar CI, corregir cualquier fallo de prueba, revisar diff y publicar únicamente en `GPSpedia2.2.5_work`; después registrar SHA y resultados. Validación remota queda pendiente de Beta aislada/autorizada.
