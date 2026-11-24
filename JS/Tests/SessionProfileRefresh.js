@@ -12,7 +12,7 @@ function runSessionProfileRefreshTests(sources) {
   const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity','SessionTermsAcceptance'],...(o.sessions||[['U1','user1','token-1',new Date('2026-11-01T10:00:00Z'),'','2026-11-01T10:00:00Z','{"version":"2026-07","acceptedAt":"2026-11-01","status":"accepted"}']]).map(r=>r.slice())];
   const sheet=rows=>({getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),getRange:(r,c)=>({getValue:()=>rows[r-1][c-1],setValue:v=>{rows[r-1][c-1]=v;}})});
   const us=sheet(users),ss=sheet(sessions),deps={
-   LockService:{getScriptLock:()=>({waitLock:()=>{},releaseLock:()=>{}})},
+   LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
    SpreadsheetApp:{openById:()=>({getSheetByName:n=>n==='Users'?us:n==='ActiveSessions'?ss:null}),flush:()=>{}},
    SPREADSHEET_ID:'ISOLATED_TEST_ONLY',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},COLS_USERS:uc,COLS_ACTIVE_SESSIONS:sc,
    normalizeUserId:v=>String(v??'').trim(),isActiveAuthUserRecord:active,hasPendingRoleRevocation_:()=>o.pending===true,reconcileRoleRevocationUnderLock_:()=>({pending:false}),
@@ -48,7 +48,7 @@ function runSessionProfileRefreshTests(sources) {
   const auth=services[0][1],dispatch=extract(auth,'doPostInternal_'),accept=extract(auth,'handleAcceptTerms');
   assert(!dispatch.includes('touchProtectedAuthRequestSession_'));
   assert(!dispatch.includes('validateAndTouchSession_')&&!dispatch.includes('validateSessionReadOnly_'));
-  assert(accept.includes('lock.waitLock(10000)'));
+  assert(accept.includes('lock.tryLock(0)'));
   assert(accept.includes('requireSharedAuthActor_('));
   assert(!accept.includes('findSessionRowsByTokenUnderLock_'));
   assert(!accept.includes('getSessionExpirationStatus_'));
