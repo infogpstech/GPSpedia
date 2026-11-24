@@ -591,7 +591,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Los patrones `GPSpedia_...` que son nombres de claves o prefijos no se deben eliminar por búsqueda ciega: hay que clasificar configuración frente a datos operativos, ledgers recuperables y claves de caché.
 - El inventario MIG-003 describía 26 familias; el estado actual tras MIG-024/MIG-025 requiere una reconciliación contra código vigente antes de declarar cerrada la lista. Los datos reales de propiedades instaladas no son accesibles desde GitHub y quedan para Beta.
 
-#### Reconciliación estática vigente — 2026-11-23
+#### Reconciliación estática inicial — 2026-11-23 (histórica; actualizada por adendas 2026-11-24)
 
 La reconciliación contra las fuentes de la rama confirma:
 - AUTH, CATALOG y UTILITIES conservan `SPREADSHEET_ID/openById`; WRITE, FEEDBACK, ADMIN y CentralConfigurationReader usan Spreadsheet activa.
