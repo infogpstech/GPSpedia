@@ -1915,9 +1915,22 @@ function logUserActivity(userId, userName, activityType, associatedId, details) 
             Logger.log("CRITICAL: No se encontró la hoja de actividad de usuario: " + SHEET_NAMES.ACTIVIDAD_USUARIO);
             return;
         }
-        const pattern = getFormulaBasedIdPattern_(sheet, COLS_ACTIVIDAD_USUARIO.id);
+        let activityId;
+        try {
+            const pattern = getFormulaBasedIdPattern_(sheet, COLS_ACTIVIDAD_USUARIO.id);
+            activityId = pattern.formula;
+        } catch (patternError) {
+            const message = String(patternError && patternError.message || "");
+            const noEstablishedPattern =
+                message.includes("No existe una fórmula ni configuración previa para generar IDs en ActividadUsuario.") ||
+                message.includes("No se ha confirmado el patrón backend de ID para ActividadUsuario.");
+            if (!noEstablishedPattern) throw patternError;
+            // Una hoja nueva o con IDs históricos estáticos no debe quedar incapaz
+            // de registrar su primer evento. UUID evita depender de una fila previa.
+            activityId = "ACT-" + Utilities.getUuid();
+        }
         const row = [
-            pattern.formula,
+            activityId,
             new Date().toISOString(),
             userId,
             userName,
