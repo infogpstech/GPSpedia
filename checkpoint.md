@@ -175,3 +175,15 @@ Ejecutar en Beta aislada la prueba de acceso de los seis servicios con la identi
 ## Próxima acción
 
 Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo manual en AUTH y verificar la primera revisión de los seis servicios; después probar el modal con rol Desarrollador, que solo permite modificar CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. AUTH se actualiza exclusivamente en CENTRAL_CONFIGURATION_BOOTSTRAP_URL del frontend. Mantener el bootstrap anterior disponible durante esa transición. No desplegar a producción ni modificar la Spreadsheet productiva sin autorización expresa.
+
+
+## Mejora autorizada — agrupación y navegación de modelos en búsqueda global (2026-11-24)
+
+**Estado: IMPLEMENTACIÓN PUBLICADA; validación automatizada pendiente.** Esta tarea se prioriza por instrucción expresa del usuario antes de continuar las validaciones Beta pendientes.
+
+- `JS/Frontend/search-utils.js`: el resolver jerárquico distingue Trim Level, tipo de encendido y rangos de años; conserva opciones sin dato cuando coexisten con valores informados y no colapsa registros duplicados.
+- `JS/Frontend/ui.js`: las tarjetas de búsqueda muestran solo marca/modelo; las pantallas de selección usan «Versiones de equipamiento» y contemplan registros sin Trim Level o sin tipo de encendido. Una selección inequívoca con un único registro y rango abre el detalle directamente.
+- `JS/Tests/SearchModelGrouping.mjs`: se amplían pruebas de lógica y contratos UI para variantes vacías, filtros de selección, navegación directa y preservación de duplicados.
+- La implementación se limita a la búsqueda y navegación de Cortes. Relay, Tutoriales, PyS, VIN ambiguo, prioridades y orden de resultados permanecen fuera del cambio.
+- HEAD confirmado antes de publicar esta tarea: `ad649202033021b1386f9fe63f7280e653274734`. Rama base protegida: `GPSpedia2.2.5`; no modificar.
+- Próximo paso: ejecutar SearchModelGrouping y el conjunto de regresión CI; registrar SHA y resultados comprobados al cerrar. Las validaciones Beta quedan pospuestas hasta terminar esta tarea.

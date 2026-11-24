@@ -239,26 +239,38 @@ export function groupVehicleSearchResults(results) {
     }).map(entry => entry.item);
 }
 
-/** Resuelve el próximo paso visible sin omitir variantes ni escoger duplicados arbitrariamente. */
-export function resolveVehicleNavigation(records, selectedVersion = null) {
+/** Resuelve el siguiente nivel por opciones reales, incluyendo variantes sin dato. */
+export function resolveVehicleNavigation(records, selectedVersion = null, selectedIgnition = null) {
     const source = Array.isArray(records) ? records.filter(Boolean) : [];
     let rows = source;
-    if (selectedVersion !== null && selectedVersion !== undefined && selectedVersion !== '') {
-        rows = rows.filter(row => String(row.versionesAplicables || '') === String(selectedVersion));
+    const valuesFor = (items, field) => [...new Set(items.map(row => String(row[field] ?? '').trim()))];
+    if (selectedVersion !== null && selectedVersion !== undefined) {
+        rows = rows.filter(row => String(row.versionesAplicables ?? '').trim() === String(selectedVersion).trim());
     }
-    const versions = [...new Set(rows.map(row => String(row.versionesAplicables || '')).filter(Boolean))];
-    if (!selectedVersion && versions.length > 1) return { step: 'equipment', options: versions, records: rows };
-    if (!selectedVersion && versions.length === 1) rows = rows.filter(row => String(row.versionesAplicables || '') === versions[0]);
-    const ignitions = [...new Set(rows.map(row => String(row.tipoEncendido || '')).filter(Boolean))];
-    if (ignitions.length > 1) return { step: 'ignition', options: ignitions, records: rows,
-        version: selectedVersion || (versions.length === 1 ? versions[0] : null) };
-    if (ignitions.length === 1) rows = rows.filter(row => String(row.tipoEncendido || '') === ignitions[0]);
+    const versions = valuesFor(rows, 'versionesAplicables');
+    if (selectedVersion === null || selectedVersion === undefined) {
+        if (versions.length > 1) return { step: 'equipment', options: versions, records: rows };
+    }
+    const activeVersion = selectedVersion !== null && selectedVersion !== undefined
+        ? selectedVersion : (versions.length === 1 ? versions[0] : null);
+    if (selectedIgnition !== null && selectedIgnition !== undefined) {
+        rows = rows.filter(row => String(row.tipoEncendido ?? '').trim() === String(selectedIgnition).trim());
+    }
+    const ignitions = valuesFor(rows, 'tipoEncendido');
+    if (selectedIgnition === null || selectedIgnition === undefined) {
+        if (ignitions.length > 1) return { step: 'ignition', options: ignitions, records: rows, version: activeVersion };
+    }
     const ranges = new Map();
     rows.forEach(row => {
-        const key = JSON.stringify([String(row.anoDesde || ''), String(row.anoHasta || '')]);
+        const key = JSON.stringify([String(row.anoDesde ?? '').trim(), String(row.anoHasta ?? '').trim()]);
         if (!ranges.has(key)) ranges.set(key, []);
         ranges.get(key).push(row);
     });
-    if (ranges.size === 1 && [...ranges.values()][0].length === 1) return { step: 'detail', records: [...ranges.values()][0] };
-    return { step: 'ranges', records: rows, ranges: [...ranges.entries()].map(([key, items]) => ({ key, records: items })) };
+    if (ranges.size === 1 && [...ranges.values()][0].length === 1) {
+        return { step: 'detail', records: [...ranges.values()][0], version: activeVersion,
+            ignition: selectedIgnition ?? (ignitions.length === 1 ? ignitions[0] : null) };
+    }
+    return { step: 'ranges', records: rows, version: activeVersion,
+        ignition: selectedIgnition ?? (ignitions.length === 1 ? ignitions[0] : null),
+        ranges: [...ranges.entries()].map(([key, items]) => ({ key, records: items })) };
 }

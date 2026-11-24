@@ -1711,11 +1711,11 @@ export function mostrarModelosPorMarca(marca) {
  * @param {string} marca - La marca del vehículo.
  * @param {string} modelo - El modelo del vehículo.
  */
-function resolverNavegacionModelo_(categoria, marca, modelo, versionSeleccionada = null) {
+function resolverNavegacionModelo_(categoria, marca, modelo, versionSeleccionada = null, encendidoSeleccionado = null) {
     const { catalogData } = getState();
     const cortes = Array.isArray(catalogData && catalogData.cortes) ? catalogData.cortes : [];
     const filas = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
-    const decision = resolveVehicleNavigation(filas, versionSeleccionada);
+    const decision = resolveVehicleNavigation(filas, versionSeleccionada, encendidoSeleccionado);
     if (decision.step === 'equipment') mostrarVersionesEquipamiento(categoria, marca, modelo);
     else if (decision.step === 'ignition') mostrarTiposEncendido(categoria, marca, decision.version, modelo);
     else if (decision.step === 'detail') mostrarDetalleModal(decision.records[0]);
@@ -1802,29 +1802,31 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
         item.categoria === categoria &&
         item.marca === marca &&
         item.modelo === modelo &&
-        (!versionEquipamiento || item.versionesAplicables === versionEquipamiento)
+        (versionEquipamiento === null || versionEquipamiento === undefined ||
+            String(item.versionesAplicables ?? '').trim() === String(versionEquipamiento).trim())
     );
 
-    const tiposEncendido = [...new Set(vehiculos.map(v => v.tipoEncendido).filter(Boolean))];
-
-    // Esta pantalla solo se abre cuando el resolver detecta más de un tipo de encendido.
-    // Cada selección filtra los registros antes de resolver el siguiente nivel (rangos o detalle).
-
+    const tiposEncendido = [...new Set(vehiculos.map(v => String(v.tipoEncendido ?? '').trim()))];
+    // Incluye registros sin tipo de encendido para no ocultar variantes incompletas.
     const grid = document.createElement("div"); grid.className = "grid";
     tiposEncendido.forEach(tipo => {
-        const ejemplo = vehiculos.find(v => v.tipoEncendido === tipo);
+        const ejemplo = vehiculos.find(v => String(v.tipoEncendido ?? '').trim() === tipo) || {};
         const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarVersiones(vehiculos.filter(v => v.tipoEncendido === tipo), categoria, marca, modelo);
-
+        card.onclick = () => mostrarVersiones(
+            vehiculos.filter(v => String(v.tipoEncendido ?? '').trim() === tipo), categoria, marca, modelo
+        );
         const img = document.createElement("img");
         setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
-        img.alt = tipo;
+        const label = tipo || "Sin tipo de encendido";
+        img.alt = label;
         img.loading = "lazy";
         card.appendChild(img);
-
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div class="overlay-text-primary">${tipo}</div>`;
+        const title = document.createElement("div");
+        title.className = "overlay-text-primary";
+        title.textContent = label;
+        overlay.appendChild(title);
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1911,37 +1913,38 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
         (['busqueda', 'busqueda_focused', 'modelosPorMarca', 'modelos'].includes(previousState.level) || previousState.section === 'cortes')
         ? previousState
         : { level: 'modelos', categoria, marca, origin };
-    cont.innerHTML = `<h4>Versiones de ${modelo}</h4>`;
+    cont.innerHTML = `<h4>Versiones de equipamiento de ${modelo}</h4>`;
     renderNavigationBackButton(cont, backTarget);
 
-    // Comentario: Se filtra por modelo específico para mostrar solo las versiones relevantes.
     const vehiculosDelModelo = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
-    const versiones = [...new Set(vehiculosDelModelo.map(item => item.versionesAplicables).filter(v => v))];
-
+    const versiones = [...new Set(vehiculosDelModelo.map(item => String(item.versionesAplicables ?? '').trim()))];
     const grid = document.createElement("div");
     grid.className = "grid";
-
     versiones.forEach(version => {
-        const vehiculosDeVersion = vehiculosDelModelo.filter(v => v.versionesAplicables === version);
-        const tiposDeEncendidoEnVersion = [...new Set(vehiculosDeVersion.map(v => v.tipoEncendido).filter(Boolean))].join(' / ');
-
+        const vehiculosDeVersion = vehiculosDelModelo.filter(v => String(v.versionesAplicables ?? '').trim() === version);
+        const tiposDeEncendidoEnVersion = [...new Set(vehiculosDeVersion.map(v => String(v.tipoEncendido ?? '').trim()).filter(Boolean))].join(' / ');
         const ejemplo = vehiculosDeVersion.find(item => item.imagenVehiculo);
         const card = document.createElement("div");
         card.className = "card";
-
-        // Comentario CORREGIDO: Al hacer clic, se filtran los vehículos de esta versión y se avanza a la pantalla de Años.
         card.onclick = () => resolverNavegacionModelo_(categoria, marca, modelo, version);
-
         const img = document.createElement("img");
         setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
-        img.alt = `Versión ${version}`;
+        const label = version || "Sin versión de equipamiento";
+        img.alt = label;
         img.loading = "lazy";
         card.appendChild(img);
-
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        // Comentario: La tarjeta ahora muestra el nombre de la versión y los tipos de encendido asociados.
-        overlay.innerHTML = `<div class="overlay-text-primary">${version}</div><div class="overlay-text-secondary">${tiposDeEncendidoEnVersion}</div>`;
+        const title = document.createElement("div");
+        title.className = "overlay-text-primary";
+        title.textContent = label;
+        overlay.appendChild(title);
+        if (tiposDeEncendidoEnVersion) {
+            const subtitle = document.createElement("div");
+            subtitle.className = "overlay-text-secondary";
+            subtitle.textContent = tiposDeEncendidoEnVersion;
+            overlay.appendChild(subtitle);
+        }
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -2408,10 +2411,10 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
                 card.appendChild(img);
                 const overlay = document.createElement('div');
                 overlay.className = 'overlay';
-                overlay.innerHTML = '<div class="overlay-text-primary"></div><div class="overlay-text-secondary"></div>';
-                overlay.querySelector('.overlay-text-primary').textContent = [item.marca, item.modelo].filter(Boolean).join(' ');
-                const combinations = new Set(item.records.map(row => [row.versionesAplicables,row.tipoEncendido,row.anoDesde,row.anoHasta].map(v => String(v || '')).join('|')));
-                overlay.querySelector('.overlay-text-secondary').textContent = combinations.size + (combinations.size === 1 ? ' configuración disponible' : ' configuraciones disponibles');
+                const title = document.createElement('div');
+                title.className = 'overlay-text-primary';
+                title.textContent = [item.marca, item.modelo].filter(Boolean).join(' ');
+                overlay.appendChild(title);
                 card.appendChild(overlay);
                 grid.appendChild(card);
             } else grid.appendChild(crearCardVehiculo(item));

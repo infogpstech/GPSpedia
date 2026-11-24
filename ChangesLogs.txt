@@ -719,3 +719,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - El backend AUTH aplica la misma restricción: rechaza solicitudes del modal que incluyan AUTH o que no contengan exactamente los otros cinco servicios. Para publicar la revisión completa, conserva la URL AUTH ya activa y la combina internamente con las cinco URL recibidas. Así se mantienen los seis registros versionados sin permitir que el modal modifique el bootstrap.
 - La inicialización manual desde Apps Script continúa admitiendo las seis URL para preparar la primera publicación. Esta vía es independiente del modal y no cambia el criterio de actualización de AUTH desde el frontend.
 - Se amplió la prueba de contrato para verificar la ausencia del campo AUTH, el conjunto exacto de cinco claves y la preservación del endpoint AUTH publicado.
+
+
+### 2026-11-24 — Búsqueda global: agrupación jerárquica por modelo y variantes
+
+- Los resultados de Cortes agrupados por categoría, marca y modelo muestran únicamente el nombre del modelo; se retiró el contador de configuraciones de la tarjeta.
+- Al seleccionar un modelo, la navegación identifica opciones reales de versión de equipamiento (Trim Level), tipo de encendido y rango de años. Cuando no existe Trim Level, continúa directamente por tipo de encendido.
+- Las variantes sin dato se conservan como opciones explícitas cuando coexisten con valores informados; no se descartan silenciosamente.
+- Cuando la combinación seleccionada contiene un único registro y un único rango, se abre directamente el modal de detalle. Los registros múltiples que comparten rango siguen visibles y no se selecciona uno arbitrariamente.
+- Se amplió SearchModelGrouping.mjs para cubrir opciones vacías, selección de versión/encendido, apertura directa y conservación de duplicados. La validación automatizada queda asociada al commit de esta tarea.
