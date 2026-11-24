@@ -608,3 +608,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se alineó el estado de MIG-030 con NORMAS_DESAROLLO.md §§5 y 10: COMPLETADA CON VALIDACIÓN DIFERIDA, porque su preparación, contratos y regresión local aprobaron; las pruebas de campo permanecen pendientes sin bloquear el cierre local.
 - MIG-026 sigue EN PROGRESO por una condición distinta: tres servicios conservan SPREADSHEET_ID/openById y no existe aún una solución local segura que elimine esa configuración sin arriesgar la disponibilidad de las funciones.
 - No se sustituye el acceso por getActiveSpreadsheet() sin comprobar el contexto de Web App; un resultado nulo rompería las funciones dependientes. La prueba real se reserva a Beta, mientras continúa el diseño local de una solución no circular.
+
+
+### CI posterior al ajuste de MIG-030 — 2026-11-24
+
+- Run 45397851823, job 138458289189, HEAD 8346fd1a324eb9190bb5f6f63e959c292cd8120a: SUCCESS.
+- Node.js v22.23.5; sintaxis PASS; regresión general 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- MIG026StaticConfigSearch: 10/10 PASS. La prueba confirma la excepción conocida de IDs Spreadsheet locales en AUTH/CATALOG/UTILITIES; no los considera eliminados.
+- El resultado valida código/contratos locales. No se desplegaron Web Apps ni se probó Spreadsheet activa en runtime real.
