@@ -17,7 +17,7 @@ class Sheet{
 }
 function harness(options={}){
  const sheet=new Sheet(),values=new Map(Object.entries(options.legacy||{}));
- let now=1000,id=0,held=false,busy=false,cleanupBusy=false,reads=0,writes=0,deletes=0;
+ let now=1000,id=0,held=false,busy=false,cleanupBusy=false,reads=0,writes=0,deletes=0,serviceCalls=0;
  const properties={getProperties(){reads++;return Object.fromEntries(values);},getProperty(k){return values.get(k)||null;},setProperty(k,v){writes++;values.set(k,v);},deleteProperty(k){deletes++;values.delete(k);}};
  const lockService={getScriptLock(){return{
   tryLock(ms){assert.equal(ms,0,"No se permite esperar por el lock");if((cleanupBusy&&id>0)||busy||held)return false;held=true;return true;},
@@ -26,11 +26,12 @@ function harness(options={}){
  const hashScope=value=>{let n=7;for(const ch of String(value))n=(Math.imul(n,31)+ch.charCodeAt(0))>>>0;return n.toString(16).padStart(64,"0");};
  const factory=new Function("PropertiesService","LockService","Utilities","SpreadsheetApp",
   source+"\nreturn withAdminLocalOperationGuard_;"
- )({getScriptProperties:()=>properties},lockService,{}, {flush(){}});
+ )({getScriptProperties(){serviceCalls++;return properties;}},lockService,{}, {flush(){}});
  return{
   sheet,values,properties,lockService,run(scope,callback,ttl=30){return factory(scope,callback,ttl,{sheet,properties,lockService,now:()=>now,uuid:()=>"request-"+(++id),hashScope});},
+  runDefault(scope,callback,ttl=30){return factory(scope,callback,ttl,{sheet,lockService,now:()=>now,uuid:()=>"request-"+(++id),hashScope});},
   setNow(v){now=v;},setBusy(v){busy=v;},setCleanupBusy(v){cleanupBusy=v;},
-  get lockHeld(){return held;},get reads(){return reads;},get writes(){return writes;},get deletes(){return deletes;}
+  get lockHeld(){return held;},get reads(){return reads;},get writes(){return writes;},get deletes(){return deletes;},get serviceCalls(){return serviceCalls;}
  };
 }
 let passed=0;
@@ -125,9 +126,16 @@ test("rechaza nuevas reservas al alcanzar 500 guardas activas sin tocar las exis
  assert.equal(called,false);
  assert.equal(h.sheet.getLastRow(),502);
 });
+test("el flujo normal no solicita el servicio PropertiesService después del baseline",()=>{
+ const h=harness();
+ h.runDefault("drive-audit:A1",()=>{});
+ assert.equal(h.serviceCalls,1,"PropertiesService solo se obtiene durante baseline");
+ h.runDefault("drive-audit:A2",()=>{});
+ assert.equal(h.serviceCalls,1,"El flujo normal no consulta ni obtiene ScriptProperties");
+});
 test("el bloque no usa espera temporizada ni escribe/elimina propiedades legacy",()=>{
  assert.equal(/waitLock|tryLock\s*\(\s*[1-9]/.test(source),false);
  assert.equal(/\.setProperty\s*\(|\.deleteProperty\s*\(/.test(source),false);
 });
 console.log("AdminLocalOperationGuard: "+passed+"/"+passed+" PASS");
-assert.equal(passed,11);
+assert.equal(passed,12);

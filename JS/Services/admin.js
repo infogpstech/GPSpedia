@@ -12294,7 +12294,7 @@ function findAdminLocalGuardRow_(sheet,scopeHash) {
     if(matches.length>1)throw new Error("AdminOperationGuards contiene reservas duplicadas para el mismo recurso.");
     return matches.length?matches[0]:null;
 }
-function ensureAdminLocalGuardBaseline_(sheet,properties,lockService,now) {
+function ensureAdminLocalGuardBaseline_(sheet,propertiesProvider,lockService,now) {
     let state=readAdminLocalGuardBaselineState_(sheet);
     if(state===ADMIN_LOCAL_GUARD_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
     if(state&&state!==ADMIN_LOCAL_GUARD_BASELINE_PENDING_)throw new Error("La versión del baseline AdminOperationGuards no es reconocida.");
@@ -12307,6 +12307,8 @@ function ensureAdminLocalGuardBaseline_(sheet,properties,lockService,now) {
         state=readAdminLocalGuardBaselineState_(sheet);
         if(state===ADMIN_LOCAL_GUARD_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
         if(!state)writeAdminLocalGuardBaselineState_(sheet,ADMIN_LOCAL_GUARD_BASELINE_PENDING_);
+        const properties=typeof propertiesProvider==="function"?propertiesProvider():propertiesProvider;
+        if(!properties||typeof properties.getProperties!=="function")throw new Error("No se pudo leer el baseline legacy de guardas ADMIN.");
         const legacy=properties.getProperties();
         const keys=Object.keys(legacy).filter(key=>key.startsWith(ADMIN_LOCAL_GUARD_PROPERTY_PREFIX_));
         const existing=getAdminLocalGuardRows_(sheet),byHash=new Map();
@@ -12384,7 +12386,7 @@ function withAdminLocalOperationGuard_(scope,callback,ttlSeconds,dependencies) {
     const scopeValue=String(scope||"").trim();
     if(!scopeValue||typeof callback!=="function")throw new Error("La guarda local requiere un alcance y una función válidos.");
     const deps=dependencies&&typeof dependencies==="object"?dependencies:{};
-    const properties=deps.properties||PropertiesService.getScriptProperties();
+    const propertiesProvider=typeof deps.properties==="function"?deps.properties:function(){return deps.properties||PropertiesService.getScriptProperties();};
     const lockService=deps.lockService||LockService;
     const now=typeof deps.now==="function"?deps.now:function(){return Date.now();};
     const uuid=typeof deps.uuid==="function"?deps.uuid:function(){return Utilities.getUuid();};
@@ -12396,7 +12398,7 @@ function withAdminLocalOperationGuard_(scope,callback,ttlSeconds,dependencies) {
     const scopeHash=String(hashScope(scopeValue)||"").toLowerCase();
     if(!/^[a-f0-9]{64}$/i.test(scopeHash))throw new Error("No se pudo derivar la identidad de la guarda ADMIN.");
     const sheet=getAdminLocalGuardSheet_(deps.sheet);
-    ensureAdminLocalGuardBaseline_(sheet,properties,lockService,now);
+    ensureAdminLocalGuardBaseline_(sheet,propertiesProvider,lockService,now);
     const marker={requestId:String(uuid()||"").trim(),expiresAt:now()+ttl*1000};
     if(!marker.requestId)throw new Error("No se pudo identificar la guarda local de operación.");
     const reserveLock=lockService.getScriptLock();
