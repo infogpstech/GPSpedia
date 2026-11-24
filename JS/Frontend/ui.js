@@ -11443,12 +11443,16 @@ export function showLoginScreen(reason = null) {
     document.getElementById('login-modal').style.display = 'flex';
 
     const loginError = document.getElementById('login-error');
-    const sessionEnded = reason === 'Sesión terminada';
+    // Defensa final: nunca renderizar razones técnicas recibidas desde flujos de sesión.
+    const safeReason = reason === 'Sesión terminada'
+        ? reason
+        : reason ? 'Error en el inicio de sesión, intente otra vez' : null;
+    const sessionEnded = safeReason === 'Sesión terminada';
     loginError.classList.toggle('login-session-ended', sessionEnded);
     loginError.setAttribute('role', sessionEnded ? 'status' : 'alert');
     loginError.setAttribute('aria-live', sessionEnded ? 'polite' : 'assertive');
-    if (reason) {
-        loginError.textContent = reason;
+    if (safeReason) {
+        loginError.textContent = safeReason;
         loginError.style.display = 'block';
     } else {
         loginError.textContent = '';
