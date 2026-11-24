@@ -6787,12 +6787,14 @@ textarea.rich-text-source[hidden] { display:none !important; }
     overflow: visible;
     white-space: nowrap;
 }
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tab-link[for="dev-tab-database"],
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tab-link[for="dev-tab-images"],
-#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tab-link[for="dev-tab-system"] {
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+    flex: 1 1 0;
     flex-basis: 0;
     width: auto;
+    min-width: 0;
 }
 #dev-tools-modal .dev-console-shared {
     align-self: flex-start;
