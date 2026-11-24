@@ -21,13 +21,13 @@ function makeDrive(folderId = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2", folderName = 
 for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
     const source = sourceOf(filename);
     check(serviceKey + " usa Spreadsheet y carpeta compartidas sin propiedades locales", () => {
-        assert.match(source, /SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+        assert.ok(source.includes("SpreadsheetApp.openById(GPSpediaSpreadsheetId_)"));
         assert.ok(source.includes("GPSpediaCortesRootFolderId_"));
         assert.doesNotMatch(source, /PropertiesService|CORTES_IMAGES_ROOT_FOLDER_ID/);
     });
     const resolver = helperBlock(source);
     const makeApi = (drive = makeDrive()) => new Function("GPSpediaCortesRootFolderId_", "DriveApp",
-        resolver + "\\nreturn { getCortesRootFolderResource_, getCortesRootFolder, getCortesRootFolderId_ };")(
+        resolver + "\nreturn { getCortesRootFolderResource_, getCortesRootFolder, getCortesRootFolderId_ };")(
             "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2", drive);
     check(serviceKey + " abre y verifica la carpeta Cortes configurada", () => {
         const api = makeApi();
@@ -41,7 +41,7 @@ for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
         assert.throws(() => makeApi(makeDrive(undefined, "Cortes", "OTHER_PARENT")).getCortesRootFolder(), /no está ubicada directamente/);
     });
     check(serviceKey + " falla cerrado si no hay ID de carpeta", () => {
-        const api = new Function("GPSpediaCortesRootFolderId_", resolver + "\\nreturn getCortesRootFolderResource_;")("");
+        const api = new Function("GPSpediaCortesRootFolderId_", resolver + "\nreturn getCortesRootFolderResource_;")("");
         assert.throws(() => api(), /ID de la carpeta raíz Cortes no está configurado/);
     });
 }
