@@ -17,7 +17,7 @@ function runLogger({patternError=null,pattern={formula:'="ACT-"&TEXT(ROW()-1,"00
  const sheet={getName:()=>"ActividadUsuario",getLastRow:()=>rows.length,getRange:()=>({getValue:()=>"id"}),appendRow(row){rows.push(row.slice());}};
  let uuid=0,logged=[];
  const logger=new Function("getSafeSheet","SHEET_NAMES","COLS_ACTIVIDAD_USUARIO","getFormulaBasedIdPattern_","Utilities","SpreadsheetApp","Logger",fn+"\nreturn logUserActivity;")(
-  ()=>sheet,{ACTIVIDAD_USUARIO:"ActividadUsuario"},{id:1},()=>{if(patternError)throw new Error(patternError);return pattern,
+  ()=>sheet,{ACTIVIDAD_USUARIO:"ActividadUsuario"},{id:1},()=>{if(patternError)throw new Error(patternError);return pattern;},
   {getUuid:()=>"uuid-"+(++uuid)},{flush(){}},{log:value=>logged.push(String(value))}
  );
  logger("U1","Tech","view_vehicle","V1","details");
