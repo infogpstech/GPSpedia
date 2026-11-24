@@ -9,9 +9,9 @@ const auth = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
 const fixture = readFileSync(resolve(root, "JS/Tests/Auth.js"), "utf8");
 assert.equal(auth, fixture, "La copia aislada de AUTH debe conservar paridad exacta.");
 
-const functionStart = auth.indexOf("let authSpreadsheet = null;");
-const functionEnd = auth.indexOf("function getAuthUserActor_", functionStart);
-assert.ok(functionStart >= 0 && functionEnd > functionStart, "No se encontró el acceso activo de AUTH.");
+const functionStart = auth.indexOf("function initializeCentralConfigurationSheets()");
+const functionEnd = auth.indexOf("// ============================================================================\n// CONFIGURACIÓN CENTRAL:", functionStart);
+assert.ok(functionStart >= 0 && functionEnd > functionStart, "No se encontró el inicializador aislado de AUTH.");
 const executable = auth.slice(functionStart, functionEnd);
 assert.equal((auth.match(/\binitializeCentralConfigurationSheets\s*\(/g) || []).length, 1,
     "El inicializador solo debe estar declarado; nunca debe ejecutarse automáticamente.");
