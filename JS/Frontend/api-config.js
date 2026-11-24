@@ -129,24 +129,27 @@ async function callCentralAuthBootstrapAction_(action, payload) {
     return result;
 }
 
+const CENTRAL_EDITABLE_SERVICE_KEYS_ = Object.freeze(["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]);
+
 export async function loadCentralServiceUrls(session) {
     const sessionPayload = getRichTextSession_(session);
     const result = await callCentralAuthBootstrapAction_("getCentralServiceUrls", sessionPayload);
     const services = result.services;
     if (!services || typeof services !== "object" || Array.isArray(services) ||
-        CENTRAL_SERVICE_KEYS.some(key => typeof services[key] !== "string")) {
-        throw new Error("AUTH no devolvió el conjunto completo de endpoints.");
+        CENTRAL_EDITABLE_SERVICE_KEYS_.some(key => typeof services[key] !== "string")) {
+        throw new Error("AUTH no devolvió los cinco endpoints editables.");
     }
-    return services;
+    return Object.fromEntries(CENTRAL_EDITABLE_SERVICE_KEYS_.map(key => [key, services[key]]));
 }
 
 export async function saveCentralServiceUrls(services, actorRole, session) {
-    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
     if (normalizedRole !== "desarrollador") throw new Error("Solo un Desarrollador puede actualizar los endpoints.");
     const sessionPayload = getRichTextSession_(session);
     if (!services || typeof services !== "object" || Array.isArray(services) ||
-        CENTRAL_SERVICE_KEYS.some(key => typeof services[key] !== "string" || !services[key].trim())) {
-        throw new Error("Debes proporcionar las seis URL de servicios.");
+        Object.keys(services).sort().join(",") !== CENTRAL_EDITABLE_SERVICE_KEYS_.slice().sort().join(",") ||
+        CENTRAL_EDITABLE_SERVICE_KEYS_.some(key => typeof services[key] !== "string" || !services[key].trim())) {
+        throw new Error("Debes proporcionar únicamente las cinco URL editables: CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. AUTH se actualiza directamente en el frontend.");
     }
     const requestId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
         ? crypto.randomUUID()
