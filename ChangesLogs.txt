@@ -647,3 +647,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Requisitos registrados: logotipo de 66 px de alto y ancho automático; alineación izquierda; offsets superior e izquierdo de 6 px; nombre del modelo a la derecha con gap de 6 px; alineación inferior de logo y nombre; separación de 6 px respecto a la línea azul inferior.
 - Invariante explícita: los botones de edición, impresión, compartir y cierre deben conservar exactamente sus posiciones actuales. La implementación deberá medir y comparar sus posiciones antes/después en los mismos viewports; si se desplazan, se debe corregir la distribución del encabezado.
 - La tarea no implementa cambios de interfaz todavía. Queda pendiente la inspección del DOM/CSS real, implementación y validación visual/responsive.
+
+
+### Registro de tarea AUG-145 — 2026-11-24
+
+- Se registra la ampliación de `Services/DEPLOYMENT_GUIDE.md` para documentar el despliegue paso a paso de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN, con un orden global justificado por dependencias reales.
+- El alcance incluye matriz de fuentes por proyecto, prerrequisitos, actualización del deployment existente, comprobación de salud y pruebas funcionales por servicio, despliegues selectivos cuando cambien fuentes compartidas/contratos, manejo de fallos parciales, rollback y checklist de evidencia.
+- Se mantienen las reglas de configuración central versionada, ausencia de secretos/URLs de interconexión en código o propiedades Apps Script y separación entre CI, salud GET y validación Beta real.
+- AUG-145 queda PENDIENTE y en cola después de AUG-144. En este registro no se modificó la guía ni se desplegaron servicios Apps Script.
