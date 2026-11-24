@@ -223,6 +223,32 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
 
 
 
+testCase("AUG-146 conserva espacios simétricos y evita solapamientos en edición", () => {
+    const toolbarStart = css.lastIndexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {');
+    const toolbarRule = css.slice(toolbarStart, css.indexOf("}", toolbarStart));
+    assert.match(toolbarRule, /padding: 6px 0 0 6px !important/);
+    assert.match(toolbarRule, /grid-template-rows: 40px 48px auto/);
+    assert.match(toolbarRule, /column-gap: 6px/);
+    const logoStart = css.lastIndexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title {');
+    const logoRule = css.slice(logoStart, css.indexOf("}", logoStart));
+    assert.match(logoRule, /grid-row: 1 \/ span 2/);
+    assert.match(logoRule, /align-self: start/);
+    assert.match(logoRule, /transform: none !important/);
+    const inputStart = css.lastIndexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-input {');
+    const inputRule = css.slice(inputStart, css.indexOf("}", inputStart));
+    assert.match(inputRule, /grid-row: 2/);
+    assert.match(inputRule, /height: 32px/);
+    assert.match(inputRule, /transform: none !important/);
+    const savingStart = css.lastIndexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-saving-indicator {');
+    const savingRule = css.slice(savingStart, css.indexOf("}", savingStart));
+    assert.match(savingRule, /grid-column: 2/);
+    assert.match(savingRule, /grid-row: 2/);
+    const metaStart = css.lastIndexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-meta {');
+    const metaRule = css.slice(metaStart, css.indexOf("}", metaStart));
+    assert.match(metaRule, /margin-top: -8px/);
+    assert.match(css, /data-model-title-layout="below-logo"[\s\S]*?grid-template-rows: 40px 26px auto auto/);
+});
+
 testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no se recorta", () => {
     assert.match(detail, /headerDivider\.className = "detail-modal-divider"/);
     assert.match(detail, /headerDiv\.insertBefore\(headerDivider, savingIndicator\)/);
