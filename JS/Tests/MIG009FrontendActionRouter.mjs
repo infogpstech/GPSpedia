@@ -61,4 +61,4 @@ function makeSnapshot(revision = 1, deployment = "CURRENT") {
  assert.equal(second.revision,2);
  assert.match(resolveCentralServiceEndpoint(second,"ADMIN"),/ROTATED_ADMIN/);
 }
-console.log("MIG009FrontendActionRouter: 5/5 PASS — 123 acciones, seis servicios, actualización de URLs, health checks y fail-closed.");
+console.log("MIG009FrontendActionRouter: 5/5 PASS — 125 acciones, seis servicios, actualización de URLs, health checks y fail-closed.");
