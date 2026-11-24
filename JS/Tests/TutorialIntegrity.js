@@ -73,6 +73,7 @@ function buildHarness_(feedback, options = {}) {
             const file = {
                 getId: () => record.id, getName: () => record.name, getMimeType: () => record.mimeType,
                 getSize: () => record.bytes.length, getDescription: () => record.description,
+                getBlob: () => ({ getBytes: () => record.bytes.slice() }),
                 setDescription: value => { record.description = String(value); },
                 isTrashed: () => record.trashed,
                 getParents: () => makeIterator([tutorialFolder]),
@@ -238,6 +239,20 @@ export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
         assert.equal(retry.alreadyCreated, true);
         assert.equal(h.imageFiles.length, 1, "El reintento debe reutilizar el archivo original.");
         assert.equal(h.sheet.data.length, 2, "El reintento no debe duplicar la fila Tutorial.");
+    });
+
+    test("recupera metadata de un archivo pendiente verificando su contenido antes de reutilizarlo", () => {
+        const pngBytes = Buffer.from([137,80,78,71,13,10,26,10,9,8,7,6]);
+        const imagenDataUrl = "data:image/png;base64," + pngBytes.toString("base64");
+        const h = buildHarness_(feedback, { missingSheet: true });
+        h.api.add({ ...base, imagenDataUrl });
+        h.sheet.data.pop();
+        h.imageFiles[0].setDescription("");
+        const recovered = h.api.add({ ...base, imagenDataUrl });
+        assert.equal(recovered.status, "success");
+        assert.equal(h.sheet.data.length, 2);
+        assert.equal(h.imageFiles.length, 1);
+        assert.match(h.imageFiles[0].getDescription(), /state=linked/);
     });
 
     test("rechaza reutilizar operationId con otra imagen y no crea un segundo archivo", () => {
