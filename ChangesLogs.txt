@@ -821,3 +821,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI run 45498897055: SUCCESS; 517 suites, 6,125 pruebas aprobadas, 0 fallos. Playwright/Chromium: 184/184 PASS, cuatro viewports y 16 capturas sintéticas. Artefacto 14970486726. GitHub Pages run 45498895792: SUCCESS.
 - Pendiente validar FEEDBACK y CATALOG contra Spreadsheet/deployments Beta aislados. No se desplegaron Apps Script ni se modificaron recursos externos o productivos.
 - HEAD funcional probado: 57b3aaa511b9a0ffd279e339dd82b5b38b0b87bf. Base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+
+
+### 2026-11-24 — Registro de cuatro reportes posteriores a AUG-146 y primera corrección de caché
+
+- Se registraron los reportes de modal Developer, Dashboard sin datos, ausencia de carga de imagen para tarjetas Tutorial y error FEEDBACK `INBOX_AUDIT_SHEET_NAME is not defined` en checkpoint y Hallazgos_Beta. Los SHA de deployments Beta no fueron verificados; los reportes se mantienen diferenciados de reproducción local.
+- Se inicia AUG-147 (una tarea a la vez). El CSS actual ya contiene el layout horizontal y el ancho requerido de consola; se encontró que el Service Worker mantenía la caché v75 aunque `style.css` se modificó en el commit `113ed1d5d3786a6a1ea426a723004a8dd072861d`. Se actualiza el identificador de caché a v76 y el contrato de `JS/Tests/ServiceWorkerCache.js` para forzar una instalación con los recursos actuales.
+- No se modificaron Apps Script desplegados, Spreadsheet, Drive, propiedades, endpoints, permisos ni datos productivos.
+- HEAD de código al preparar la corrección: `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`. Pruebas de esta corrección: pendientes de CI y Chromium.

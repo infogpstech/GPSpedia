@@ -79,3 +79,72 @@ _Aún no hay hallazgos confirmados._
 - **Corrección preparada en rama:** inyección de `loadSpreadsheet: getSpreadsheet` en FEEDBACK; inicializador manual e idempotente `initializeCatalogChangeFeedSheets()` para CATALOG, con validación previa y sin sobrescribir datos.
 - **Estado:** corrección publicada en `GPSpedia2.2.5_work`; CI run `45471714577` SUCCESS (516 suites, 6,105 pruebas, 0 fallos) y Pages run `45471712477` SUCCESS. No se invocaron deployments ni se consultó/modificó la Spreadsheet remota desde esta tarea.
 - **Validación Beta requerida:** en Spreadsheet Beta aislada, ejecutar el inicializador manual CATALOG, comprobar encabezados/read-back y consulta GET del feed; desplegar FEEDBACK con proveedor explícito y probar dashboard, aportes e Inbox con usuario sintético. No ejecutar contra producción sin autorización.
+
+
+### BETA-F003 — Modal Developer conserva estilos anteriores y distribución visual incorrecta
+- **Fecha/hora:** 2026-11-24 (reporte del usuario; hora exacta no registrada).
+- **Servicio / módulo / flujo:** Frontend / modal Developer / navegación y consola.
+- **Commit de referencia:** `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`; SHA realmente servido por Beta: NO VERIFICADO.
+- **Entorno:** versión Beta reportada por el usuario; navegador/dispositivo no especificados.
+- **Rol / dispositivo / navegador:** Desarrollador; dispositivo y navegador NO MEDIDOS.
+- **Precondiciones:** abrir el modal Developer después de los últimos cambios.
+- **Pasos para reproducir:** abrir el modal; observar las cuatro pestañas, el ancho de la consola y los controles del encabezado.
+- **Resultado esperado:** Diagnóstico, Base de datos, Imágenes y Sistema en una fila horizontal; consola al 50% en escritorio y 100% en móvil; información, limpiar y copiar agrupados a la izquierda.
+- **Resultado observado:** el usuario reporta pestañas apiladas verticalmente, consola demasiado estrecha y botones de limpiar/copiar separados.
+- **Evidencia técnica de revisión:** el CSS de la rama contiene reglas para la distribución solicitada, pero el Service Worker continúa en `gpsepedia-cache-v75` aunque `style.css` cambió en `113ed1d5`. La caché prioriza la respuesta almacenada y refresca en segundo plano; el origen probable es CSS obsoleto en la PWA. La prueba Chromium del HEAD actual ya contiene aserciones de alineación/ancho, pero no demuestra qué CSS recibió el dispositivo del reporte.
+- **Frecuencia / muestras:** reporte del usuario; reproducción independiente NO EJECUTADA.
+- **Impacto:** navegación y uso del panel Developer degradados.
+- **Severidad:** MEDIA.
+- **Estado:** REPORTADO; causa probable de caché localizada, pendiente de corrección y comprobación Beta.
+- **Tarea relacionada:** AUG-147.
+
+### BETA-F004 — Dashboard de actividad continúa sin mostrar datos
+- **Fecha/hora:** 2026-11-24 (reporte del usuario; hora exacta no registrada).
+- **Servicio / módulo / flujo:** Frontend Dashboard → acción `getActivityLogs` → FEEDBACK.
+- **Commit de referencia:** `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`; SHA realmente servido por Beta: NO VERIFICADO.
+- **Entorno:** Beta reportado por el usuario; identidad de Spreadsheet y deployment no verificados.
+- **Rol / dispositivo / navegador:** Desarrollador; dispositivo y navegador NO MEDIDOS.
+- **Precondiciones:** abrir Dashboard de actividad.
+- **Pasos para reproducir:** abrir Dashboard y revisar Actividad reciente, Aportes e Indicadores.
+- **Resultado esperado:** presentar actividad y agregados disponibles, o estados vacíos/diagnóstico cuando no existan registros.
+- **Resultado observado:** el usuario informa que no se muestra ningún dato.
+- **Evidencia técnica de revisión:** `handleGetActivityLogs()` consulta `INBOX_AUDIT_SHEET_NAME` antes de devolver el objeto con `data`, `contributions`, `insights` y `diagnostics`; esa constante no está declarada en `feedback.js`. Este error puede abortar la respuesta completa. Falta comprobar si hay causas adicionales tras corregirlo.
+- **Frecuencia / muestras:** reporte del usuario; reproducción independiente NO EJECUTADA.
+- **Impacto:** el Dashboard no puede mostrar historial ni indicadores aunque las hojas fuente tengan registros.
+- **Severidad:** ALTA.
+- **Estado:** REPORTADO; causa de código probable identificada, pendiente de corrección y pruebas.
+- **Tarea relacionada:** AUG-148; dependencia directa AUG-150.
+
+### BETA-F005 — Formulario de Tutorial no permite subir imagen de tarjeta
+- **Fecha/hora:** 2026-11-24 (reporte del usuario; hora exacta no registrada).
+- **Servicio / módulo / flujo:** Frontend Tutoriales → `openAddTutorialModal()` → FEEDBACK/CATALOG.
+- **Commit de referencia:** `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`; SHA realmente servido por Beta: NO VERIFICADO.
+- **Entorno:** Beta reportado por el usuario; navegador no especificado.
+- **Rol / dispositivo / navegador:** Desarrollador; dispositivo y navegador NO MEDIDOS.
+- **Precondiciones:** abrir Agregar Tutorial.
+- **Pasos para reproducir:** abrir el formulario y buscar un control para seleccionar/subir la imagen de portada.
+- **Resultado esperado:** poder seleccionar y cargar una imagen de tarjeta, con persistencia de su referencia en el campo `Imagen` del esquema Tutorial.
+- **Resultado observado:** el formulario no ofrece forma de subir una imagen.
+- **Evidencia técnica de revisión:** el formulario solo incluye campos de texto y carga de vídeo; `handleAddTutorial()` construye la fila con la columna `Imagen` vacía. No se encontró un flujo de carga de imagen conectado al alta de tutorial.
+- **Frecuencia / muestras:** reporte del usuario; reproducción independiente NO EJECUTADA.
+- **Impacto:** las tarjetas de tutorial no pueden recibir una imagen de portada desde el flujo de alta.
+- **Severidad:** MEDIA.
+- **Estado:** REPORTADO; brecha de interfaz/contrato confirmada por inspección estática.
+- **Tarea relacionada:** AUG-149.
+
+### BETA-F006 — FEEDBACK falla por constante INBOX_AUDIT_SHEET_NAME no definida
+- **Fecha/hora:** 2026-11-24 (reporte del usuario; hora exacta no registrada).
+- **Servicio / módulo / flujo:** FEEDBACK / auditoría Inbox / Dashboard de actividad.
+- **Commit de referencia:** `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`; SHA realmente servido por Beta: NO VERIFICADO.
+- **Entorno:** Beta reportado por el usuario; deployment no verificado.
+- **Rol / dispositivo / navegador:** NO MEDIDO.
+- **Precondiciones:** ejecutar una acción que consulte el registro de auditoría Inbox o abrir Dashboard.
+- **Pasos para reproducir:** abrir Panel de actividad y consultar el error del servicio FEEDBACK.
+- **Resultado esperado:** FEEDBACK debe resolver el nombre de hoja y sus encabezados contractuales antes de consultar o escribir auditoría.
+- **Resultado observado:** el usuario reporta `INBOX_AUDIT_SHEET_NAME is not defined`.
+- **Evidencia técnica de revisión:** `JS/Services/feedback.js` referencia `INBOX_AUDIT_SHEET_NAME` en `ensureInboxAuditSheet_()` y `handleGetActivityLogs()`, e `INBOX_AUDIT_HEADERS` en creación/lectura de auditoría; ninguna está declarada en el archivo. El test `JS/Tests/InboxAuditTrail.js` define ambas dentro del harness y las inyecta en `new Function`, ocultando la omisión del runtime real. El contrato del test define `InboxAuditLog` con ocho encabezados: `eventId,timestamp,actorId,actorName,action,itemType,itemId,details`.
+- **Frecuencia / muestras:** error reportado por el usuario; revisión estática independiente confirmada; ejecución remota NO REALIZADA.
+- **Impacto:** falla la lectura del Dashboard y las operaciones del Inbox que intentan registrar eventos de auditoría.
+- **Severidad:** ALTA.
+- **Estado:** CAUSA ESTÁTICA CONFIRMADA; corrección local pendiente.
+- **Tarea relacionada:** AUG-150; desbloquea la validación completa de AUG-148.
