@@ -15411,7 +15411,7 @@ export function openAddTutorialModal() {
         const reader = new FileReader();
         reader.onload = () => {
             const dataUrl = String(reader.result || "");
-            if (!/^data:image\\/(?:jpeg|png|webp);base64,/i.test(dataUrl)) {
+            if (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(dataUrl)) {
                 reject(new Error("No se pudo leer la imagen seleccionada."));
                 return;
             }
