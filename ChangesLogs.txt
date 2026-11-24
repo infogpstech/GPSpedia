@@ -411,3 +411,9 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - CatalogChangeFeed: 18/18 PASS. CI: 4,690 pruebas aprobadas; una suite preexistente falla en FeedbackLockFastFail por contrato estático de LockService en FEEDBACK, reproducido antes de MIG-026.
 - CATALOG pasa a cero referencias a PropertiesService. El inventario queda en 3 módulos/10 familias restantes (AUTH, WRITE, ADMIN).
 - Las hojas y limpieza de propiedades instaladas se reservan para Beta aislada; no se accedió a Spreadsheet ni PropertiesService desplegado.
+
+
+### 2026-11-24 — MIG-026: reset inicial obligatorio del feed CATALOG
+- Se reforzó getCatalogChanges: un ledger vacío no se interpreta como feed vigente sin cambios; responde resetRequired hasta que exista un evento reset inicial.
+- Se añadió contrato para inicialización: publicar reset como Desarrollador genera revisión 1 y hace que los clientes reconstruyan snapshot antes de continuar con deltas.
+- CatalogChangeFeed: 19/19 PASS. CI run 45299704239: 4,691 pruebas aprobadas; una suite fallida preexistente FeedbackLockFastFail.

@@ -819,7 +819,7 @@ El README vigente describe el esquema objetivo de VIN en la columna AQ (43), con
 
 ### 17.9 CATALOG — ledger del feed incremental (actualización MIG-026, 2026-11-24)
 
-El feed incremental de CATALOG dejó de persistirse en ScriptProperties y utiliza dos hojas privadas de la Spreadsheet operativa de CATALOG. El servicio valida los encabezados exactos y falla cerrado si falta una hoja o su esquema no coincide; no crea hojas automáticamente.
+El feed incremental de CATALOG dejó de persistirse en ScriptProperties y utiliza dos hojas privadas de la Spreadsheet operativa de CATALOG. El servicio valida los encabezados exactos y falla cerrado si falta una hoja o su esquema no coincide; no crea hojas automáticamente. Un ledger vacío solicita resetRequired; antes de habilitar clientes debe publicarse el reset inicial como Desarrollador (revisión 1).
 
 | Hoja | Rango/columnas | Contrato |
 |---|---|---|

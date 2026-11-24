@@ -279,8 +279,8 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - La persistencia requiere dos hojas privadas dentro de la Spreadsheet de CATALOG. No se crean automáticamente: si falta una hoja o su encabezado no coincide, CATALOG falla cerrado.
 - CatalogChangeState A:D: schemaVersion, revision, minRevision, updatedAt. Se mantiene una única fila de estado bajo encabezado.
 - CatalogChangeEvents A:J: revision, collection, recordId, operation, snapshotJson, createdAt, sourceService, sourceOperation, sourceRequestId, resetRequired.
-- El feed mantiene lock de Script, revisión monotónica, idempotencia por service+operation+requestId, snapshots canónicos reconstruidos por CATALOG, lectura de confirmación de estado/evento, retención activa de 100 eventos y reset ante cursor obsoleto, hueco o evento corrupto.
+- El feed mantiene lock de Script, revisión monotónica, idempotencia por service+operation+requestId, snapshots canónicos reconstruidos por CATALOG, lectura de confirmación de estado/evento, retención activa de 100 eventos y reset ante cursor obsoleto, hueco o evento corrupto. Un ledger vacío también devuelve resetRequired hasta que se publique el reset inicial de revisión 1.
 - No persiste userId ni sessionToken en el ledger. El requestId se usa para deduplicación dentro de la ventana retenida.
-- CatalogChangeFeed.mjs: 18/18 PASS; regresión CI del HEAD c44728e851839540ba8d2489caa78bbff0dc80a6: 4,690 pruebas aprobadas y una suite fallida preexistente FeedbackLockFastFail.
+- CatalogChangeFeed.mjs: 19/19 PASS; regresión CI del HEAD 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3: 4,691 pruebas aprobadas y una suite fallida preexistente FeedbackLockFastFail.
 - Recuento actual tras la migración: 3 módulos con ScriptProperties (AUTH, WRITE y ADMIN) y 10 familias de estado/configuración vigentes en código: AUTH 3, WRITE 1, ADMIN 6. CATALOG deja de usar ScriptProperties.
 - Las hojas deben crearse con esos encabezados en Beta aislada antes del despliegue. No se creó ni modificó ninguna Spreadsheet real y no se borraron propiedades antiguas instaladas.

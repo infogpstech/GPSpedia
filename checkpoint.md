@@ -1592,3 +1592,7 @@ Estado de MIG-026:
 
 Siguiente paso: elegir la siguiente familia de estado de AUTH/WRITE/ADMIN y migrarla como subtramo independiente, con su contrato de recuperación e idempotencia. No borrar valores instalados sin autorización Beta.
 ================================================================================
+
+
+- Endurecimiento del feed CATALOG: un ledger vacío devuelve resetRequired para impedir que clientes con snapshot local antiguo interpreten la ausencia de eventos como feed vigente. Beta debe publicar el reset inicial como Desarrollador (revisión 1) antes de habilitar clientes.
+- CI del HEAD 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3, run 45299704239: sintaxis PASS; CatalogChangeFeed 19/19 PASS; regresión 4,691 PASS y una suite fallida preexistente FeedbackLockFastFail.
