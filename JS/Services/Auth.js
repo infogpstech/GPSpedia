@@ -2883,115 +2883,86 @@ function getAuthUsersSpreadsheet_() {
 // Inicialización manual de la estructura central.
 // Ejecutar únicamente desde el editor del proyecto AUTH y sobre su Spreadsheet activa.
 // No publica una revisión ni introduce endpoints, IDs o valores operativos.
+// No usa ScriptLock para no competir con el login ni con otras operaciones de AUTH.
 function initializeCentralConfigurationSheets() {
     const spreadsheet = getAuthUsersSpreadsheet_();
-    const lock = LockService.getScriptLock();
-    let acquired = false;
-    try {
-        acquired = lock.tryLock(0);
-    } catch (error) {
-        acquired = false;
-    }
-    if (!acquired) {
-        throw new Error("AUTH está ocupado; la inicialización no esperó ni modificó la Spreadsheet. Intenta nuevamente.");
-    }
+    const definitions = [
+        { name: "ConfiguracionControl", headers: ["control_key", "schema_version", "active_revision", "publication_state", "published_at", "updated_by", "change_reason"] },
+        { name: "ConfiguracionEsquema", headers: ["config_key", "entity_type", "value_type", "scope_allowed", "visibility_allowed", "required", "default_json", "validation_rule", "introduced_schema_version", "deprecated_schema_version", "replacement_key", "owner_service", "description"] },
+        { name: "Servicios", headers: ["config_revision", "service_key", "endpoint_url", "enabled", "contract_version", "min_client_version", "health_action", "updated_at", "updated_by", "change_reason"] },
+        { name: "ConfiguracionParametros", headers: ["config_revision", "config_key", "value_json", "value_type", "scope", "visibility", "enabled", "default_json", "validation_rule", "schema_version", "updated_at", "updated_by", "change_reason"] },
+        { name: "ConfiguracionRecursos", headers: ["config_revision", "resource_key", "resource_type", "resource_id", "scope", "visibility", "enabled", "expected_parent_id", "expected_name", "updated_at", "updated_by", "change_reason"] },
+        { name: "ConfiguracionHistorial", headers: ["history_id", "config_revision", "entity_type", "entity_key", "operation", "previous_value_json", "new_value_json", "actor_id", "changed_at", "change_reason", "rollback_of_revision", "schema_version"] }
+    ];
 
-    try {
-        const definitions = [
-            {
-                name: "ConfiguracionControl",
-                headers: ["control_key", "schema_version", "active_revision", "publication_state", "published_at", "updated_by", "change_reason"]
-            },
-            {
-                name: "ConfiguracionEsquema",
-                headers: ["config_key", "entity_type", "value_type", "scope_allowed", "visibility_allowed", "required", "default_json", "validation_rule", "introduced_schema_version", "deprecated_schema_version", "replacement_key", "owner_service", "description"]
-            },
-            {
-                name: "Servicios",
-                headers: ["config_revision", "service_key", "endpoint_url", "enabled", "contract_version", "min_client_version", "health_action", "updated_at", "updated_by", "change_reason"]
-            },
-            {
-                name: "ConfiguracionParametros",
-                headers: ["config_revision", "config_key", "value_json", "value_type", "scope", "visibility", "enabled", "default_json", "validation_rule", "schema_version", "updated_at", "updated_by", "change_reason"]
-            },
-            {
-                name: "ConfiguracionRecursos",
-                headers: ["config_revision", "resource_key", "resource_type", "resource_id", "scope", "visibility", "enabled", "expected_parent_id", "expected_name", "updated_at", "updated_by", "change_reason"]
-            },
-            {
-                name: "ConfiguracionHistorial",
-                headers: ["history_id", "config_revision", "entity_type", "entity_key", "operation", "previous_value_json", "new_value_json", "actor_id", "changed_at", "change_reason", "rollback_of_revision", "schema_version"]
-            }
-        ];
+    const createdSheets = [];
+    const initializedSheets = [];
+    const preservedSheets = [];
 
-        const createdSheets = [];
-        const initializedSheets = [];
-        const preservedSheets = [];
-
-        definitions.forEach(function(definition) {
-            let sheet = spreadsheet.getSheetByName(definition.name);
-            if (!sheet) {
+    definitions.forEach(function(definition) {
+        let sheet = spreadsheet.getSheetByName(definition.name);
+        if (!sheet) {
+            try {
                 sheet = spreadsheet.insertSheet(definition.name);
                 createdSheets.push(definition.name);
+            } catch (createError) {
+                // Otra ejecución pudo crear la misma pestaña entre la consulta y la inserción.
+                sheet = spreadsheet.getSheetByName(definition.name);
+                if (!sheet) throw createError;
             }
+        }
 
-            const lastRow = sheet.getLastRow();
-            const lastColumn = sheet.getLastColumn();
-            if (lastRow === 0 && lastColumn === 0) {
-                sheet.getRange(1, 1, 1, definition.headers.length).setValues([definition.headers]);
-                sheet.setFrozenRows(1);
-                initializedSheets.push(definition.name);
-                return;
-            }
+        const lastRow = sheet.getLastRow();
+        const lastColumn = sheet.getLastColumn();
+        if (lastRow === 0 && lastColumn === 0) {
+            sheet.getRange(1, 1, 1, definition.headers.length).setValues([definition.headers]);
+            sheet.setFrozenRows(1);
+            initializedSheets.push(definition.name);
+            return;
+        }
+        if (lastRow < 1 || lastColumn < 1) {
+            throw new Error("La hoja " + definition.name + " contiene datos sin una fila de encabezados válida. No se modificó.");
+        }
 
-            if (lastRow < 1 || lastColumn < 1) {
-                throw new Error("La hoja " + definition.name + " contiene datos sin una fila de encabezados válida. No se modificó.");
+        const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
+            .map(function(value) { return String(value === null || value === undefined ? "" : value).trim(); });
+        const positions = {};
+        currentHeaders.forEach(function(header) {
+            if (!header) return;
+            if (Object.prototype.hasOwnProperty.call(positions, header)) {
+                throw new Error("La hoja " + definition.name + " contiene encabezados duplicados. No se modificó.");
             }
-
-            const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
-                .map(function(value) { return String(value === null || value === undefined ? "" : value).trim(); });
-            const positions = {};
-            currentHeaders.forEach(function(header) {
-                if (!header) return;
-                if (Object.prototype.hasOwnProperty.call(positions, header)) {
-                    throw new Error("La hoja " + definition.name + " contiene encabezados duplicados. No se modificó.");
-                }
-                positions[header] = true;
-            });
-            const missing = definition.headers.filter(function(header) {
-                return !Object.prototype.hasOwnProperty.call(positions, header);
-            });
-            if (missing.length) {
-                throw new Error("La hoja " + definition.name + " ya contiene información, pero no cumple el esquema. Faltan: " + missing.join(", ") + ". No se sobrescribió.");
-            }
-            preservedSheets.push(definition.name);
+            positions[header] = true;
         });
-
-        SpreadsheetApp.flush();
-
-        definitions.forEach(function(definition) {
-            const sheet = spreadsheet.getSheetByName(definition.name);
-            const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
-                .map(function(value) { return String(value === null || value === undefined ? "" : value).trim(); });
-            const missing = definition.headers.filter(function(header) { return headers.indexOf(header) < 0; });
-            if (missing.length) {
-                throw new Error("No se pudo confirmar la estructura de " + definition.name + ": " + missing.join(", ") + ".");
-            }
+        const missing = definition.headers.filter(function(header) {
+            return !Object.prototype.hasOwnProperty.call(positions, header);
         });
+        if (missing.length) {
+            throw new Error("La hoja " + definition.name + " ya contiene información, pero no cumple el esquema. Faltan: " + missing.join(", ") + ". No se sobrescribió.");
+        }
+        preservedSheets.push(definition.name);
+    });
 
-        return {
-            status: "success",
-            spreadsheetName: spreadsheet.getName(),
-            createdSheets: createdSheets,
-            initializedSheets: initializedSheets,
-            preservedSheets: preservedSheets,
-            publicationReady: false,
-            message: "Estructura creada y verificada. Aún faltan los datos operativos y la publicación de una revisión válida."
-        };
-    } finally {
-        lock.releaseLock();
-    }
+    SpreadsheetApp.flush();
+    definitions.forEach(function(definition) {
+        const sheet = spreadsheet.getSheetByName(definition.name);
+        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+            .map(function(value) { return String(value === null || value === undefined ? "" : value).trim(); });
+        const missing = definition.headers.filter(function(header) { return headers.indexOf(header) < 0; });
+        if (missing.length) throw new Error("No se pudo confirmar la estructura de " + definition.name + ": " + missing.join(", ") + ".");
+    });
+
+    return {
+        status: "success",
+        spreadsheetName: spreadsheet.getName(),
+        createdSheets: createdSheets,
+        initializedSheets: initializedSheets,
+        preservedSheets: preservedSheets,
+        publicationReady: false,
+        message: "Estructura creada y verificada. Aún faltan los datos operativos y la publicación de una revisión válida."
+    };
 }
+
 function getAuthUserActor_(payload,allowedRoles,actionLabel,requireUserRow){const actor=requireSharedAuthActor_(payload,allowedRoles,actionLabel),requestedUserId=normalizeUserId(payload&&payload.userId);if(!requestedUserId||requestedUserId!==actor.userId)throw new Error("Acceso no autorizado: el contexto de sesión no coincide con la identidad solicitada.");let userRowIndex=null;if(requireUserRow===true){const usersSheet=getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS),matches=findUniqueRowsByExactValue_(usersSheet,COLS_USERS.ID,actor.userId,true);if(matches.length!==1)throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");userRowIndex=matches[0].rowIndex;}return {userId:actor.userId,role:actor.role,userRowIndex,epoch:actor.epoch};}
 function findUniqueRowsByExactValue_(sheet,column,value,trimCell=false) {
     if (!sheet || !value) return [];

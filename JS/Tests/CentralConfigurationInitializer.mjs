@@ -15,8 +15,8 @@ assert.ok(functionStart >= 0 && functionEnd > functionStart, "No se encontró el
 const executable = auth.slice(functionStart, functionEnd);
 assert.equal((auth.match(/\binitializeCentralConfigurationSheets\s*\(/g) || []).length, 1,
     "El inicializador solo debe estar declarado; nunca debe ejecutarse automáticamente.");
-for (const forbidden of [/PropertiesService/, /UrlFetchApp/, /openById\s*\(/, /SPREADSHEET_ID/, /https?:\/\//]) {
-    assert.equal(forbidden.test(executable), false, "El inicializador contiene un mecanismo o dato local prohibido: " + forbidden);
+for (const forbidden of [/PropertiesService/, /UrlFetchApp/, /openById\s*\(/, /SPREADSHEET_ID/, /https?:\/\//, /LockService/]) {
+    assert.equal(forbidden.test(executable), false, "El inicializador contiene un mecanismo o dato prohibido: " + forbidden);
 }
 
 const expected = {
@@ -54,32 +54,25 @@ class FakeSheet {
     setFrozenRows(value) { this.frozenRows = value; }
 }
 class FakeSpreadsheet {
-    constructor(sheets = []) { this.sheets = new Map(sheets.map(sheet => [sheet.name, sheet])); }
+    constructor(sheets = [], insertRaceName = "") {
+        this.sheets = new Map(sheets.map(sheet => [sheet.name, sheet]));
+        this.insertRaceName = insertRaceName;
+    }
     getName() { return "AUTH test spreadsheet"; }
     getSheetByName(name) { return this.sheets.get(name) || null; }
     insertSheet(name) {
         if (this.sheets.has(name)) throw new Error("duplicate sheet");
         const sheet = new FakeSheet(name);
         this.sheets.set(name, sheet);
+        if (name === this.insertRaceName) throw new Error("concurrent creation");
         return sheet;
     }
 }
-function createEnvironment(spreadsheet, lockAvailable = true) {
-    let released = 0, flushed = 0;
-    const context = {
-        SpreadsheetApp: {
-            getActiveSpreadsheet: () => spreadsheet,
-            flush: () => { flushed++; }
-        },
-        LockService: {
-            getScriptLock: () => ({
-                tryLock: () => lockAvailable,
-                releaseLock: () => { released++; }
-            })
-        }
-    };
+function createEnvironment(spreadsheet) {
+    let flushed = 0;
+    const context = { SpreadsheetApp: { getActiveSpreadsheet: () => spreadsheet, flush: () => { flushed++; } } };
     vm.runInNewContext(executable, context);
-    return { context, get released() { return released; }, get flushed() { return flushed; } };
+    return { context, get flushed() { return flushed; } };
 }
 function headersFor(sheet) {
     return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -102,7 +95,6 @@ check("crea únicamente las seis pestañas de contrato y sus encabezados", () =>
         assert.deepEqual(headersFor(spreadsheet.getSheetByName(name)), headers);
         assert.equal(spreadsheet.getSheetByName(name).frozenRows, 1);
     }
-    assert.equal(env.released, 1);
     assert.equal(env.flushed, 1);
 });
 check("segunda ejecución es idempotente y no vuelve a escribir", () => {
@@ -115,7 +107,6 @@ check("segunda ejecución es idempotente y no vuelve a escribir", () => {
     assert.equal(result.initializedSheets.length, 0);
     assert.deepEqual(result.preservedSheets, Object.keys(expected));
     assert.equal([...spreadsheet.sheets.values()].reduce((sum, sheet) => sum + sheet.writes, 0), writes);
-    assert.equal(env.released, 2);
 });
 check("preserva encabezados y datos preexistentes", () => {
     const sheets = Object.entries(expected).map(([name, headers]) => new FakeSheet(name, [headers, ["existing-row"]]));
@@ -137,17 +128,17 @@ check("rechaza una pestaña existente incompatible sin sobrescribirla", () => {
     assert.equal(JSON.stringify(incompatible.rows), before);
     assert.equal(spreadsheet.sheets.size, 1);
 });
-check("no crea pestañas si el ScriptLock ya está ocupado", () => {
-    const spreadsheet = new FakeSpreadsheet();
-    const env = createEnvironment(spreadsheet, false);
-    assert.throws(() => env.context.initializeCentralConfigurationSheets(), /AUTH está ocupado/);
-    assert.equal(spreadsheet.sheets.size, 0);
-    assert.equal(env.released, 0);
+check("tolera que otra ejecución cree una pestaña simultáneamente", () => {
+    const spreadsheet = new FakeSpreadsheet([], "ConfiguracionControl");
+    const env = createEnvironment(spreadsheet);
+    const result = env.context.initializeCentralConfigurationSheets();
+    assert.equal(result.status, "success");
+    assert.ok(spreadsheet.getSheetByName("ConfiguracionControl"));
+    assert.deepEqual(headersFor(spreadsheet.getSheetByName("ConfiguracionControl")), expected.ConfiguracionControl);
 });
 check("falla de forma segura si AUTH no tiene Spreadsheet activa", () => {
     const env = createEnvironment(null);
     assert.throws(() => env.context.initializeCentralConfigurationSheets(), /No hay una Spreadsheet activa vinculada/);
-    assert.equal(env.released, 0);
 });
 check("no publica ni inventa filas operativas", () => {
     const spreadsheet = new FakeSpreadsheet();
@@ -157,4 +148,4 @@ check("no publica ni inventa filas operativas", () => {
     for (const sheet of spreadsheet.sheets.values()) assert.equal(sheet.getLastRow(), 1);
 });
 
-console.log("CentralConfigurationInitializer: " + passed + "/7 PASS — idempotencia, preservación de datos, encabezados, lock fail-fast, contexto AUTH y no publicación automática.");
+console.log("CentralConfigurationInitializer: " + passed + "/7 PASS — idempotencia, preservación, encabezados, creación concurrente, contexto AUTH y no publicación automática.");
