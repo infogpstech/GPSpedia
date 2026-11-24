@@ -599,3 +599,5 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - La eliminación requiere comprobar el acceso Spreadsheet en el contexto real de las Web Apps; no se reemplazará por una simulación ni se retirarán IDs por inferencia.
 - Se rectifica el estado global de MIG-030 a EN PROGRESO. La entrada anterior que la marcó completada con validación diferida queda corregida por esta adenda; no se altera ni elimina el historial.
 - El checkpoint activo y TAREAS_MIGRACION_ARQUITECTURA.md reflejan la dependencia y la siguiente acción. No se modificó código funcional ni se invocaron servicios externos.
+
+- Precisión de MIG-026: se sustituyó la etiqueta de bloqueo por una descripción del trabajo pendiente. Permanecen tres localizadores Spreadsheet locales y su retirada requiere validar primero el contexto real de Web App; no se cambia el comportamiento de acceso sin esa evidencia.
