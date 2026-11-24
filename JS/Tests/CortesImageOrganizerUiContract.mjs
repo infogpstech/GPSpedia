@@ -16,7 +16,7 @@ const checks = [
     ["El frontend solo ofrece rollback de operaciones del último lote", /routeActionWithRetry\("rollbackCortesImageOrganizer"/.test(ui) && /operationIds: lastOrganizerOperationIds, confirm: true/.test(ui)],
     ["La UI permite consultar historial durable y seleccionar solo operaciones completas", /routeActionWithRetry\("getCortesImageOrganizerOperations"/.test(ui) && /operation\.status === "complete"/.test(ui)],
     ["El panel de historial y su acción están presentes", /id="btn-audit-drive-organizer-history"/.test(html) && /id="audit-drive-organizer-history"/.test(html)],
-    ["El historial del servidor filtra por propietario autenticado", /record\.ownerId !== owner/.test(admin) && /getCortesOrganizerOperationLedgerPage_\(/.test(admin)],
+    ["El historial del servidor filtra por propietario autenticado", /record\.ownerId === String\(ownerId \|\| ""\)/.test(admin) && /getCortesOrganizerOperationLedgerPage_\(/.test(admin)],
     ["El backend vuelve a generar preview y compara digest", /handlePreviewCortesImageOrganizer_\(\{\s*auditId, offset, limit\s*\}/.test(admin) && /preview\.manifestDigest !== digest/.test(admin)],
     ["Ambos endpoints siguen enrutados a ADMIN", /'applyCortesImageOrganizer': 'ADMIN'/.test(api) && /'rollbackCortesImageOrganizer': 'ADMIN'/.test(api)],
     ["El preview sigue siendo solo lectura y no se autoautoriza", /writePerformed: false, canApply: false/.test(admin)],
