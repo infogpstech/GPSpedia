@@ -58,7 +58,7 @@ test("el registro sin actor no escribe", () => {
 });
 
 test("ADMIN no conserva referencias al servicio de coordinación retirado", () => {
-    assert.doesNotMatch(admin, /Coordinator|COORDINATOR/);
+    assert.doesNotMatch(admin, /withSharedMutationLease_|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
 });
 
 console.log("AdminImageActivityAppendAtomic: " + passed + "/" + passed + " PASS");

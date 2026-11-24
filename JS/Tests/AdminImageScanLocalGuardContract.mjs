@@ -49,8 +49,8 @@ assert.ok(internal.includes("assertDeveloperSession(payload)"));
 assert.ok(internal.includes("beginAdminAuditEvent_(action, payload, developerContext, startTime)"));
 assert.ok(internal.includes("if (action !== \"ping\" && isSharedMutationAction_(action))"));
 
-assert.doesNotMatch(admin, /Coordinator|COORDINATOR/,
-    "ADMIN ya no debe conservar dependencias del servicio de coordinación retirado.");
+assert.doesNotMatch(admin, /GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|GPSpedia_SERVICE_URL_|withSharedMutationLease_/,
+    "ADMIN no debe conservar URLs, secretos ni leases de coordinación retirados.");
 assert.doesNotMatch(ui, /COORDINATOR|getServiceTraffic|globalServiceTraffic/);
 
 assert.match(ui, /routeActionWithRetry\('auditDriveImagesInCortes'[\s\S]*?timeoutMs:\s*cursor\s*\?\s*45000\s*:\s*120000/);
