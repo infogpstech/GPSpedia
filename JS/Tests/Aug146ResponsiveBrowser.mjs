@@ -233,8 +233,11 @@ try {
     check(Boolean(contentBox && consoleBox && headingBox && titleBox && infoBox && clearBox && copyBox),
       profile.name + ": encabezado y controles de consola renderizados");
     const consoleWidthRatio = consoleBox.width / contentBox.width;
-    check(profile.width <= 760 ? consoleWidthRatio >= 0.9 : near(consoleWidthRatio, 0.5, 0.12),
-      profile.name + ": consola ocupa 50% en escritorio y 100% en móvil");
+    const consoleHeightRatio = consoleBox.height / contentBox.height;
+    check(consoleWidthRatio >= 0.9,
+      profile.name + ": consola ocupa todo el ancho disponible");
+    check(consoleHeightRatio >= 0.4,
+      profile.name + ": consola conserva aproximadamente la mitad de la altura útil");
     check([infoBox, clearBox, copyBox].every(box =>
       near(titleBox.y + titleBox.height / 2, box.y + box.height / 2, 4)),
       profile.name + ": información, limpiar y copiar alineados junto al título");
@@ -265,6 +268,17 @@ try {
       const label = developerModal.locator('label[for="dev-tab-' + tabId + '"]');
       await label.click();
       check(await radio.isChecked(), profile.name + ": pestaña " + tabId + " seleccionable");
+      const labelStates = await developerModal.locator(".dev-tab-link").evaluateAll(labels =>
+        labels.map(item => ({
+          active: item.htmlFor === "dev-tab-" + tabId,
+          maxWidth: getComputedStyle(item.querySelector("span")).maxWidth,
+          opacity: getComputedStyle(item.querySelector("span")).opacity,
+          iconVisible: Boolean(item.querySelector("i") && getComputedStyle(item.querySelector("i")).display !== "none")
+        }))
+      );
+      check(labelStates.every(state => state.iconVisible &&
+        (state.active ? state.opacity === "1" : state.opacity === "0")),
+        profile.name + ": solo la pestaña " + tabId + " expande su etiqueta");
       tabBoxes.push(await label.boundingBox());
     }
     check(tabBoxes.every(Boolean), profile.name + ": cuatro pestañas con geometría disponible");
