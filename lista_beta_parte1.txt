@@ -1071,8 +1071,8 @@ Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. 
 
 Pruebas con cuentas y catálogo aislados:
 1. Iniciar sesión como Desarrollador y comprobar que el selector solo está disponible dentro del panel de Desarrollador; iniciar sesión con Técnico y confirmar que no puede abrir el panel ni cambiar el modo.
-2. Eliminar la clave `gpsepedia_rich_text_mode` del almacenamiento local de la instalación de prueba y confirmar que se aplica modo estricto.
-3. Guardar un valor inválido en la clave y confirmar fallback seguro a estricto.
+2. Eliminar las claves `gpsepedia_rich_text_mode_cache` y `gpsepedia_rich_text_mode_cache_meta` del almacenamiento local de la instalación de prueba; confirmar que se aplica modo estricto hasta recibir la configuración central.
+3. Probar modo inválido, metadatos ausentes, revisión inválida y caché con más de 5 minutos; confirmar fallback seguro a estricto y posterior lectura desde FEEDBACK.
 4. En modo estricto, comprobar que las barras solo muestran negrita y color; probar saltos naturales, texto plano y estilos de color autorizados.
 5. Cambiar a avanzado; comprobar que aparecen cursiva, subrayado, tachado, fuente, tamaño y listas; probar cada formato permitido.
 6. Cambiar de modo con varias barras ya abiertas; confirmar que se actualizan los controles y que las acciones de formato se corresponden con el modo actual.

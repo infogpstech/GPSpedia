@@ -644,6 +644,7 @@ runGroup('46','MIG024',()=>{
 runGroup('47','MIG026',()=>{
  runCli('MIG026 creación de carpeta Cortes desde configuración central','JS/Tests/AdminCentralCortesFolderConfiguration.mjs');
  runCli('MIG026 publicación versionada de rich_text_mode','JS/Tests/CentralConfigurationPublisherContract.mjs');
+ runCli('MIG026 preferencia global, caché con TTL y RBAC','JS/Tests/RichTextGlobalPreference.mjs');
 });
 
 if(selected){
