@@ -2069,3 +2069,28 @@ RECTIFICACIÓN DE CONTINUIDAD — ORDEN DE TAREAS — 2026-11-24
 - Estado correcto: MIG-029 EN PROGRESO — falta ejecutar MIG029DeploymentGuideContract.mjs y confirmar CI; MIG-030 PENDIENTE — no iniciar hasta cerrar MIG-029. No se ejecutaron pruebas Beta ni se alteraron recursos externos.
 - Próximo paso único: obtener un entorno con acceso a la rama (para ejecutar Node.js 22 y el runner) o una ejecución CI verificable de la rama de trabajo; validar MIG-029, corregir cualquier fallo y actualizar los registros. Solo entonces comenzar MIG-030.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE CONTINUIDAD — MIG-029 VALIDADA — 2026-11-24
+
+HEAD al registrar: 62d801efd610f47c95ac452f3973d057f4fffc18
+Rama: GPSpedia2.2.5_work
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Corrección de diagnóstico anterior: no era necesario detenerse por falta de clonación local. Se consultaron directamente los workflows y los logs de GitHub Actions.
+
+Evidencia verificada:
+- Workflow: .github/workflows/service-tests.yml — checkout de GPSpedia2.2.5_work, Node.js 22, comprobación de rama/repositorio/árbol limpio, node --check y runner JS/Tests/RunServiceTests.mjs.
+- Run 45392164256, commit c1a5fbd025dc296353d8ae23ea1f102677418e4b: SUCCESS. Logs del job 138442678847 muestran grupo [50] MIG029, las siete aserciones PASS y MIG029DeploymentGuideContract: 7/7 PASS. Resumen global: 513 suites, 6,051 pruebas aprobadas, 0 fallos.
+- Run 45393390865, commit 48c8318a09edcb48ee1739acf85ac0b6327c29f3: SUCCESS; también completó sintaxis y regresión general. Se revisaron los pasos completados y los logs del job.
+- Se ejecutó además una reproducción independiente de las siete aserciones del contrato en el runtime JavaScript disponible, usando los doce archivos fuente recuperados de la misma rama: 7/7 PASS. Esta reproducción no se contabiliza como Node.js; la evidencia Node.js válida es el workflow anterior.
+- Se actualizó TAREAS_MIGRACION_ARQUITECTURA.md con ambos runs y resultados.
+
+Estado:
+- MIG-029: COMPLETADA EN VALIDACIÓN LOCAL; queda pendiente únicamente la validación Beta real ya declarada en la tarea (deployments aislados, permisos, Spreadsheet, salud GET, continuidad y rollback).
+- MIG-030: PENDIENTE, siguiente tarea. No se inicia prueba real sin los recursos Beta aislados; se continuará con toda la preparación, contratos y validaciones seguras disponibles.
+- No se ejecutaron despliegues ni escrituras en Apps Script/Spreadsheet/Drive productivos. No se cambió la rama base.
+
+Instrucción operativa reforzada: una limitación de una herramienta o runtime no detiene el trabajo global. Buscar logs/workflows alternativos, ejecutar el contrato en un runtime equivalente cuando proceda, inspeccionar resultados, adaptar el método de prueba sin debilitar criterios y continuar las actividades seguras. Diferenciar siempre la prueba exacta Node.js de una reproducción equivalente.
+================================================================================
