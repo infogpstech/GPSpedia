@@ -14,7 +14,7 @@ const byIdCode = extract("findTutorialById_", "tutorialTitleExists_");
 const rowCode = extract("findTutorialRow_", "findTutorialById_");
 const identityCode = extract("findTutorialByIdentity_", "appendTutorialEditEvent_");
 const findById = new Function(byIdCode + "\nreturn findTutorialById_;")();
-const normalizeTitle = value => String(value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().replace(/\\s+/g, " ").toLowerCase();
+const normalizeTitle = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, " ").toLowerCase();
 const makeLegacyIdentity = title => "legacy-" + createHash("sha256").update(normalizeTitle(title)).digest("hex");
 const findByIdentity = new Function("makeLegacyTutorialIdentity_", identityCode + "\nreturn findTutorialByIdentity_;")(makeLegacyIdentity);
 let renameSheetAvailable = false, renameReads = 0, renameEvents = [];
