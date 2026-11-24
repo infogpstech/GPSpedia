@@ -1166,7 +1166,7 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     const auditHelpStart = html.indexOf('id="dev-help-audit-scope"');
     const auditHelpEnd = html.indexOf("</span>", auditHelpStart);
     const auditHelp = html.slice(auditHelpStart, auditHelpEnd);
-    assert.ok(auditHelp.includes("Los resultados parciales se conservan localmente"));
+    assert.ok(auditHelp.includes("El progreso y los resultados parciales se conservan localmente"));
     assert.match(auditHelp, /role="tooltip" hidden/);
     assert.ok(html.includes("dev-help-audit-categories"));
     assert.ok(ui.includes("reconciliationUrl"));
