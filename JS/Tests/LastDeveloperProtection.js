@@ -31,6 +31,9 @@ function runLastDeveloperProtectionTests(sources) {
             _rows:rows
         });
         const usersSheet=makeSheet(users,false),sessionsSheet=makeSheet(sessions,true),logs=[],revokedSharedUsers=[];
+        const spreadsheet={getSheetByName:n=>n==='Users'?usersSheet:n==='ActiveSessions'?sessionsSheet:null};
+        usersSheet.getParent=()=>spreadsheet;
+        sessionsSheet.getParent=()=>spreadsheet;
         const context={
             SPREADSHEET_ID:'TEST',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},
             ROLE_REVOCATION_SHARED_PREFIX:'__role_revocation_pending__:',
@@ -59,8 +62,8 @@ function runLastDeveloperProtectionTests(sources) {
                 row[7]='';
                 return {revokedSessions:0,pending:false,cleanupPending:false};
             },
-            LockService:{getScriptLock:()=>({waitLock:()=>{},releaseLock:()=>{}})},
-            SpreadsheetApp:{openById:()=>({getSheetByName:n=>n==='Users'?usersSheet:n==='ActiveSessions'?sessionsSheet:null}),flush:()=>{}},
+            LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
+            SpreadsheetApp:{openById:()=>spreadsheet,flush:()=>{}},
             PropertiesService:{getScriptProperties:()=>({getProperty:()=>null,setProperty:()=>{},deleteProperty:()=>{}})},
             Utilities:{getUuid:()=>'uuid-test'},logToSheet:(...args)=>logs.push(args),console:{error:()=>{}}
         };
@@ -100,7 +103,8 @@ function runLastDeveloperProtectionTests(sources) {
                 setValues:values=>values.forEach((line,ri)=>line.forEach((value,ci)=>{sessions[row+ri-1][col+ci-1]=value;})),
                 getValue:()=>sessions[row-1][col-1]
             }),
-            deleteRow:row=>sessions.splice(row-1,1)
+            deleteRow:row=>sessions.splice(row-1,1),
+            getParent:()=>({})
         };
         const normalizeRole=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
         const code=helperCode;
