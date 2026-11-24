@@ -63,7 +63,7 @@ testCase("los errores de cortes y modelos son breves y los detalles quedan en la
     assert.doesNotMatch(ui, /showGlobalError\("No se pudo confirmar el agregado del corte: /);
     assert.doesNotMatch(ui, /showGlobalError\("Error al vincular modelos: /);
     assert.match(addCuts, /window\.parent\.gpsepediaDeveloperLog/);
-    assert.match(addCuts, /hostUi\.showGlobalError\('No se pudo completar la operación\.')/);
+    assert.ok(addCuts.includes("hostUi.showGlobalError('No se pudo completar la operación.')"));
     assert.match(addCuts, /window\.console\.error\('\[ALTA DE CORTE\]'/);
     assert.match(addCuts, /Corte agregado; reporte pendiente\./);
     assert.match(addCuts, /Cambios guardados\./);
