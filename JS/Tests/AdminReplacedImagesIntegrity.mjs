@@ -630,16 +630,21 @@ const auditStateHelperStart = admin.indexOf('const DRIVE_AUDIT_STATE_PROPERTY_PR
 const auditStateHelperEnd = admin.indexOf("\nfunction getDriveAuditPageResultCacheKey_(", auditStateHelperStart);
 assert.ok(auditStateHelperStart >= 0 && auditStateHelperEnd > auditStateHelperStart, "No se encontró el ledger de estado Drive");
 const auditStateHelperSource = admin.slice(auditStateHelperStart, auditStateHelperEnd);
+const auditConfigStart = admin.indexOf("function getDriveAuditReferenceSnapshotConfig_()");
+const auditConfigEnd = admin.indexOf("\n}", auditConfigStart) + 2;
+assert.ok(auditConfigStart >= 0 && auditConfigEnd > auditConfigStart, "No se encontró configuración de snapshot");
+const auditConfigSource = admin.slice(auditConfigStart, auditConfigEnd);
 const auditHelperNames = [
     "getDriveAuditPageResultCacheKey_", "getDriveAuditResponseCacheKey_",
     "getDriveAuditSeenPageCacheKey_", "storeDriveAuditSeenPage_", "loadDriveAuditSeenIds_",
     "getDuplicateDriveImageRows_", "getReplacedImageReconciliationUrl_", "buildVerifiedDriveVisualizationUrl_",
     "storeDriveAuditPageResults_", "loadDriveAuditUnusedFileIds_", "getLatestDriveAuditIdForUser_",
-    "validateCompletedDriveAudit_", "getDriveAuditReferenceSnapshotConfig_", "validateAuditDriveReferenceSnapshot_",
+    "validateCompletedDriveAudit_", "validateAuditDriveReferenceSnapshot_",
     "removeAuditDriveReferenceSnapshotCache_", "storeAuditDriveReferenceSnapshot", "loadAuditDriveReferenceSnapshot",
     "refreshAuditDriveReferenceSnapshot_", "clearAuditDriveReferenceSnapshot"
 ];
-const auditHelperSource = auditStateHelperSource + "\n" + auditHelperNames.map(name => fnSource(admin, name)).join("\n");
+const auditHelperSource = auditConfigSource + "\n" + auditStateHelperSource + "\n" +
+    auditHelperNames.map(name => fnSource(admin, name)).join("\n");
 const DRIVE_AUDIT_HEADERS = ["auditId","ownerId","status","createdAt","updatedAt","expiresAt","stateJson","schemaVersion"];
 function auditHarness() {
     const properties = new Map(), cache = new Map();
