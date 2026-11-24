@@ -27,7 +27,7 @@ Este documento describe el código versionado. No acredita que las URLs, secreto
 `JS/Frontend/api-config.js` es el router único de solicitudes de aplicación:
 
 - Declara seis destinos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Las acciones getUsers, createUser y updateProfile pertenecen ahora a AUTH.
-- `ACTION_TO_SERVICE_MAP` contiene 123 acciones canónicas (AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45) y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
+- `ACTION_TO_SERVICE_MAP` contiene 125 acciones canónicas (AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45) y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
 - `routeAction` mide tráfico local del navegador y no envía esas métricas a un servicio de telemetría.
 - `getCatalogChanges` está mapeada actualmente a FEEDBACK.
 - Las acciones `allocateVehicleId` y `freezeCortesIds` ya están mapeadas a WRITE; `getVehicleProjection` y `getContributionCandidates` a CATALOG.
