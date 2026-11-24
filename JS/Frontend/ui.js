@@ -4649,7 +4649,7 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
         if (!isCurrentUiSessionContext_(requestContext)) return;
         const detail = error && typeof error.message === 'string' ? error.message.trim().slice(0, 220) : '';
         if (logContainer) logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">No se pudo cargar la actividad.</td></tr>';
-        if (contributionContainer) contributionContainer.innerHTML = '<tr><td colspan="3" style="color:red;">No se pudieron cargar los aportes.</td></tr>';
+        if (contributionContainer) contributionContainer.innerHTML = '<tr><td colspan="4" style="color:red;">No se pudieron cargar los aportes.</td></tr>';
         if (insightContainer) insightContainer.textContent = 'No se pudieron cargar los indicadores.';
         if (statusContainer) {
             statusContainer.hidden = false;
