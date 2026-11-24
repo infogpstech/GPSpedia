@@ -2413,7 +2413,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
                 overlay.className = 'overlay';
                 const title = document.createElement('div');
                 title.className = 'overlay-text-primary';
-                title.textContent = [item.marca, item.modelo].filter(Boolean).join(' ');
+                title.textContent = String(item.modelo || '');
                 overlay.appendChild(title);
                 card.appendChild(overlay);
                 grid.appendChild(card);

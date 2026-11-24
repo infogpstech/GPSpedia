@@ -31,7 +31,7 @@ test('la búsqueda renderiza modelos agrupados solo con el nombre y navega con i
     assert.match(ui,/groupVehicleSearchResults\(results\)/);
     assert.match(ui,/navegarADetallesDeModelo\(item\.categoria, item\.marca, item\.modelo\)/);
     assert.doesNotMatch(ui,/configuraciones disponibles/);
-    assert.match(ui,/title\.textContent = \[item\.marca, item\.modelo\]/);
+    assert.match(ui,/title\.textContent = String\(item\.modelo \|\| ''\)/);
 });
 test('la selección de versión de equipamiento vuelve a resolver el siguiente nivel',()=>{
     assert.match(ui,/resolverNavegacionModelo_\(categoria, marca, modelo, version\)/);
