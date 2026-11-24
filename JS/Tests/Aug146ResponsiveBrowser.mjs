@@ -96,6 +96,10 @@ try {
         },
         catalogData: { cortes: [], tutoriales: [], relay: [], logos: [] }
       });
+      // La prueba no inicia main.js: retira únicamente el splash estático para
+      // permitir interacciones reales con los controles que se están verificando.
+      const splash = document.getElementById("splash-screen");
+      if (splash) splash.style.display = "none";
       await ui.openDevTools();
     });
 
