@@ -885,3 +885,11 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - Estado: implementado en código; pendiente CI del commit y revisión de resultados. No se ha desplegado AUTH ni se ha realizado validación Beta.
 
 - Cierre de validación 2026-11-24: tras ajustar el contrato de cierre de sesión y la aserción de consola, CI run 45383504489 terminó SUCCESS: 500 suites, 5,896 pruebas aprobadas, 0 fallos; sintaxis PASS. AuthErrorPrivacy 7/7 PASS y regresión SessionUiRoleInvalidation quedó aprobada. Commit funcional final: 334c5b51a1ae7fd3b4a952b5038ffd874ff9431a. Estado del requisito: COMPLETADO EN CÓDIGO Y CI; validación visual de navegador real diferida a Beta. No se desplegó AUTH.
+
+
+#### Adenda — privacidad AUTH/sesión, cierre de brechas de presentación — 2026-11-24
+
+- La revisión posterior al cierre de CI detectó rutas adicionales de exposición: sesión local inválida, rol local inválido, cierre desde otra pestaña y fallo de limpieza de caché.
+- Se amplía el saneamiento en frontend y se aplica una lista permitida directamente en `showLoginScreen`, conservando el aviso neutral de cierre voluntario.
+- El mensaje de credenciales se normaliza exactamente a `contraseña o usuario incorrecto`; los diagnósticos específicos permanecen en consola.
+- La corrección se mantiene dentro del requisito de privacidad AUTH/sesión; no modifica contratos backend, permisos, servicios desplegados ni datos reales.
