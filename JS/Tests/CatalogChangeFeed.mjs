@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 const catalogSource = readFileSync(new URL("../Services/catalog.js", import.meta.url), "utf8");
 const runtimeFactory = new Function(
-    catalogSource + "\nreturn { createCatalogChangeFeed_, publishCatalogResetForActor_, publishCatalogChangeForActor_, resolveCanonicalCatalogChange_, buildCatalogPysSnapshot_ };"
+    catalogSource + "\nreturn { createCatalogChangeFeed_, publishCatalogResetForActor_, publishCatalogChangeForActor_, resolveCanonicalCatalogChange_, buildCatalogPysSnapshot_, CATALOG_FEED_STATE_HEADERS_, CATALOG_FEED_EVENT_HEADERS_ };"
 );
 const runtime = runtimeFactory();
 
