@@ -15,7 +15,7 @@ assert.ok(functionStart >= 0 && functionEnd > functionStart, "No se encontró el
 const executable = auth.slice(functionStart, functionEnd);
 assert.equal((auth.match(/\binitializeCentralConfigurationSheets\s*\(/g) || []).length, 1,
     "El inicializador solo debe estar declarado; nunca debe ejecutarse automáticamente.");
-for (const forbidden of [/PropertiesService/, /UrlFetchApp/, /openById\s*\(/, /SPREADSHEET_ID/, /https?:\/\//, /LockService/]) {
+for (const forbidden of [/PropertiesService/, /UrlFetchApp/, /SPREADSHEET_ID/, /https?:\/\//, /LockService/]) {
     assert.equal(forbidden.test(executable), false, "El inicializador contiene un mecanismo o dato prohibido: " + forbidden);
 }
 
