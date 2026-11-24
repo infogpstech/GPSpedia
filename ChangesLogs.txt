@@ -396,3 +396,9 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Run 45298456129, HEAD 0f53fe3f941715b75c8198314efbbb9c54f434ae: sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; regresión 4,688 pruebas aprobadas y una suite fallida.
 - La única suite fallida es FeedbackLockFastFail: su aserción estática prohíbe LockService en FEEDBACK, aunque el código vigente lo contiene. El mismo fallo se reproduce en ejecuciones anteriores a MIG-026 (45291268637 y 45289392165); no se modificó FEEDBACK porque no forma parte de este subtramo.
 - Pages build del mismo HEAD: pendiente de consultar su resultado final.
+
+
+### 2026-11-24 — MIG-026: búsqueda preliminar de interconexión backend
+- Revisión estática de los 9 módulos activos: no se encontraron URLs de Web Apps, constantes de URL de otros servicios ni secretos Coordinator/SharedMutation en backend.
+- Las llamadas UrlFetchApp restantes corresponden a operaciones de imagen, YouTube o APIs Google/Drive; no se identificó coordinación backend→backend entre servicios GPSpedia.
+- Se confirma que el secreto HMAC propio de recuperación de AUTH permanece como elemento de seguridad independiente, no como secreto compartido. La búsqueda global final sigue pendiente.

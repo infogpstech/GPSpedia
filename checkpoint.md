@@ -1556,3 +1556,13 @@ Siguiente paso:
 1. Verificar el CI del HEAD actual y cerrar este subtramo documentalmente.
 2. Continuar MIG-026 únicamente con cambios locales que no requieran asumir el contexto de ejecución de Web Apps ni migrar ledgers fuera de sus tareas específicas.
 ================================================================================
+
+
+================================================================================
+REVISIÓN PRELIMINAR DE INTERCONEXIÓN BACKEND — MIG-026 — 2026-11-24
+- Se inspeccionaron los 9 módulos activos buscando UrlFetchApp, URLs de Web Apps, *_SERVICE_URL, GPSpedia_COORDINATOR_*, secretos compartidos y referencias Coordinator/SharedMutation.
+- No se encontraron endpoints script.google.com/macros/s ni llamadas backend→backend entre servicios GPSpedia en los módulos revisados.
+- Las referencias UrlFetchApp restantes se asocian a imágenes/URLs, YouTube o APIs Google/Drive.
+- AUTH conserva GPSpedia_PASSWORD_RECOVERY_SECRET_V1 como secreto HMAC propio de recuperación; no se clasifica como secreto compartido y su almacenamiento futuro requiere diseño de seguridad específico.
+- Esta es una revisión preliminar de JS/Services, no la búsqueda estática global final. MIG-026 continúa EN PROGRESO.
+================================================================================

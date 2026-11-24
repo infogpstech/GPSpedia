@@ -262,3 +262,12 @@ Las familias de Coordinator/SharedMutation (secrets, URLs, leases, contexto/sesi
 - La inyección conserva la fuente de identidad Users/ActiveSessions y el comportamiento de caché; no cambia la política de roles ni la vigencia de sesiones.
 - MIG013SessionActorLocalLookup: 22/22 PASS; PasswordKdfBenchmark: 5/5 PASS; contratos de rutas, autorización, invalidación y actividad de sesión aprobados en la última regresión.
 - El fallback ya no existe en el helper común. Los IDs operativos que AUTH/CATALOG/Utilities mantienen siguen pendientes de la evidencia de contexto Web App de MIG-006/MIG-008; esta modificación no los elimina ni afirma que getActiveSpreadsheet funcione en dichos deployments.
+
+
+### Revisión estática preliminar de interconexión backend — MIG-026 (2026-11-24)
+
+Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web Apps, URLs de servicio, secretos compartidos y nombres Coordinator/SharedMutation:
+- No se encontraron URLs script.google.com/macros/s, constantes *_SERVICE_URL, GPSpedia_COORDINATOR_* ni secretos compartidos de interconexión en los módulos activos.
+- Las referencias UrlFetchApp restantes están asociadas a operaciones de imagen/URL, YouTube o APIs de Google/Drive; no se identificó una llamada backend→backend entre servicios GPSpedia.
+- AUTH conserva GPSpedia_PASSWORD_RECOVERY_SECRET_V1 como secreto HMAC propio de recuperación; no es secreto compartido entre servicios y su almacenamiento futuro requiere decisión de seguridad separada.
+- Esta revisión es preliminar y acotada a JS/Services; no sustituye la búsqueda estática global final de MIG-026.
