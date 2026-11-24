@@ -35,7 +35,7 @@ check("La matriz de archivos coincide con dependencias reales", () => {
   assert.match(shared, /getCachedSharedSessionActor_/);
   assert.match(central, /function getCentralConfigurationForService_/);
   assert.match(catalog, /function getCatalogSessionActor_/);
-  assert.match(inbox, /function getInbox/);
+  assert.match(inbox, /runInboxConversationAction_\(/);
   assert.match(utilities, /getCachedSharedSessionActor_/);
 });
 check("La publicación de código preserva el deployment y limita el alcance", () => {
