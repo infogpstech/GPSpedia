@@ -124,12 +124,12 @@ function loadSharedSessionActorFromSpreadsheet_(userId, sessionToken, dependenci
     const id = String(userId || "").trim(), token = String(sessionToken || "");
     const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
     if (!id || !token) throw new Error("La sesión requiere userId y sessionToken.");
-    const spreadsheetId = String(deps.spreadsheetId ||
-        (typeof SPREADSHEET_ID !== "undefined" ? SPREADSHEET_ID : "") || "").trim();
-    if (!spreadsheetId) throw new Error("No está disponible la referencia de la Spreadsheet de identidad.");
-    const openSpreadsheet = typeof deps.openSpreadsheet === "function"
-        ? deps.openSpreadsheet : value => SpreadsheetApp.openById(value);
-    const ss = openSpreadsheet(spreadsheetId);
+    const loadSpreadsheet = typeof deps.loadSpreadsheet === "function" ? deps.loadSpreadsheet : null;
+    if (!loadSpreadsheet) throw new Error("No se inyectó el proveedor de la Spreadsheet de identidad.");
+    const ss = loadSpreadsheet();
+    if (!ss || typeof ss.getSheetByName !== "function") {
+        throw new Error("El proveedor de la Spreadsheet de identidad no devolvió un contenedor válido.");
+    }
     const usersSheet = ss.getSheetByName("Users");
     const sessionsSheet = ss.getSheetByName("ActiveSessions");
     if (!usersSheet || !sessionsSheet) throw new Error("No se encontraron Users y ActiveSessions.");

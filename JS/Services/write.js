@@ -184,7 +184,7 @@ function doPost(e) {
         return doPostInternal_(withSharedSessionActor_(e, null));
     }
     try {
-        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "WRITE" });
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "WRITE", loadSpreadsheet: getSpreadsheet });
         return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({

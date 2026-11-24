@@ -29,7 +29,7 @@ function assertUtilitiesDeveloperSession_(payload, _spreadsheet) {
  return {userId,role:"Desarrollador",epoch:trusted.epoch};
 }
 function migrateTimestamps(payload){
- const actor=getCachedSharedSessionActor_(payload&&payload.userId,payload&&payload.sessionToken,{service:"UTILITIES"});
+ const actor=getCachedSharedSessionActor_(payload&&payload.userId,payload&&payload.sessionToken,{service:"UTILITIES",loadSpreadsheet:()=>SpreadsheetApp.openById(SPREADSHEET_ID)});
  const trustedPayload=Object.assign({},payload||{},{__sharedSessionActor:actor});
  return migrateTimestampsSafe_(trustedPayload);
 }

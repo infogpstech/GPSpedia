@@ -1135,7 +1135,7 @@ function doPost(e) {
         // La sesión se valida contra el actor cacheado al iniciar sesión. Las
         // capacidades se comprueban localmente en doPostInternal_; no se adquiere
         // una lease ni se consulta Coordinator en cada acción ADMIN.
-        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" });
+        const actor = getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN", loadSpreadsheet: getSpreadsheet });
         return doPostInternal_(withSharedSessionActor_(e, actor));
     } catch (error) {
         return ContentService.createTextOutput(JSON.stringify({
