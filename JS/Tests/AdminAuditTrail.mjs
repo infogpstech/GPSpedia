@@ -186,6 +186,15 @@ check("El baseline importa eventos legacy y verifica read-back sin escribir ni b
     assert.equal(h.propertyDeletes, 0);
 });
 
+check("El baseline rechaza filas sin marcador legacy en una siembra pendiente", () => {
+    const orphan = makeEvent("orphan-event");
+    const h = createHarness({ rows: [headers, baselineRow("pending")] });
+    h.sheet.appendRow(h.api.adminAuditRecordToRow_(orphan));
+    assert.throws(() => h.api.ensureAdminAuditBaseline_(), error => error.code === "ADMIN_AUDIT_BASELINE_INVALID");
+    assert.equal(h.api.readAdminAuditBaselineState_(h.sheet), "pending");
+    assert.equal(h.propertyReads, 1);
+});
+
 check("El baseline es idempotente y después de completarse no vuelve a leer ScriptProperties", () => {
     const legacyEvent = makeEvent("legacy-2", new Date().toISOString(), "success");
     const h = createHarness({ legacy: { ["GPSpedia_ADMIN_AUDIT_V1_legacy-2"]: JSON.stringify(legacyEvent) } });

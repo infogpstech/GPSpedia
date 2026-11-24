@@ -1465,6 +1465,11 @@ function ensureAdminAuditBaseline_() {
                 if (!sameAdminAuditRecord_(prior.record, record)) throw createAdminAuditError_("El registro legacy y el ledger ADMIN no coinciden.", "ADMIN_AUDIT_CORRUPT_STATE", suffix);
             } else records.push(record);
         }
+        for (const eventId of existing.keys()) {
+            if (!seen.has(eventId)) {
+                throw createAdminAuditError_("AdminOperationAudit contiene un evento sin marcador legacy durante el baseline.", "ADMIN_AUDIT_BASELINE_INVALID", eventId);
+            }
+        }
         let writeError = null;
         if (records.length) {
             const firstRow = Number(sheet.getLastRow() || 1) + 1;
