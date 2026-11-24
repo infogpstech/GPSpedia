@@ -35,7 +35,7 @@ Se actualizó `NORMAS_DESAROLLO.md` §§17.1 y 18 para establecer el patrón de 
 **Criterio de cierre:** regla normativa coherente, plan y secuencia registrados; cumplido.
 
 ### MIG-URL-002 — Inventariar y verificar las seis URLs vigentes
-**Estado: EN PROGRESO — inventario documental realizado; verificación de valores bloqueada por falta de acceso de lectura a la Spreadsheet central.**  
+**Estado: COMPLETADA — 2026-11-24.**  
 **Dependencia:** MIG-URL-001.  
 **Alcance:** localizar la revisión central activa, recuperar las seis direcciones y contrastarlas con el registro de deployments/fuentes y sus identidades de salud. Documentar servicio, URL, fuente de evidencia, estado de verificación y cualquier discrepancia. No inventar ni cambiar URLs.  
 **Estado de avance:** fuentes Git inspeccionadas; valores activos no están versionados. AUTH/Spreadsheet es la fuente de datos, pero su contenido no es accesible con las conexiones disponibles. Se documentó el inventario en `Inventario_URL_Servicios.md`. No usar las URLs históricas de `GPSpedia2.2.5:api-config.js` como si fueran vigentes.
@@ -90,4 +90,4 @@ Se actualizó `NORMAS_DESAROLLO.md` §§17.1 y 18 para establecer el patrón de 
 
 ## Estado y continuidad
 
-MIG-URL-001 está cerrada. MIG-URL-002 continúa siendo la única tarea activa; no iniciar MIG-URL-003 mientras falte la evidencia externa indicada en `Inventario_URL_Servicios.md`. El orden obligatorio es MIG-URL-001 → MIG-URL-002 → MIG-URL-003 → MIG-URL-004 → MIG-URL-005 → MIG-URL-006 → MIG-URL-007 → MIG-URL-008, respetando dependencias explícitas. No adelantar eliminaciones que dependan de una configuración local probada. El checkpoint vigente determina el punto exacto de continuidad.
+MIG-URL-001 y MIG-URL-002 están cerradas. MIG-URL-003 es la siguiente y única tarea activa. La comprobación de identidad/health de deployments queda diferida a MIG-URL-008; no ejecutar llamadas remotas antes de Beta aislada autorizada. El orden obligatorio es MIG-URL-001 → MIG-URL-002 → MIG-URL-003 → MIG-URL-004 → MIG-URL-005 → MIG-URL-006 → MIG-URL-007 → MIG-URL-008, respetando dependencias explícitas. No adelantar eliminaciones que dependan de una configuración local probada. El checkpoint vigente determina el punto exacto de continuidad.
