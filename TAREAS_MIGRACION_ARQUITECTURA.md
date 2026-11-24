@@ -643,12 +643,19 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 ## Fase 7 — Verificación y despliegue
 
 ### MIG-027 — Suite de paridad de las funciones existentes
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Construir pruebas de contrato para todas las acciones.
-- [ ] Comparar payloads, respuestas, errores, roles y efectos sobre datos.
-- [ ] Cubrir cada grupo de funciones de MIG-015 a MIG-023.
-- [ ] Confirmar que no desapareció ningún control visible ni acción manual.
+**Estado: COMPLETADA — validación estática/CI aprobada; pruebas con recursos reales diferidas a Beta**
+**Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §§17–19. No se agregaron secretos, tokens compartidos, URLs operativas locales ni coordinación backend entre servicios.
+
+- [x] Construir pruebas de contrato para todas las acciones: `ACTION_TO_SERVICE_MAP` contiene 123 acciones únicas en seis servicios; se verificó el enlace mapa → endpoint → dispatcher → handler → consumidor mediante `ActionDispatchContract`.
+- [x] Comparar payloads, respuestas, errores, roles y efectos sobre datos mediante contratos y fixtures aislados existentes de las operaciones MIG-015 a MIG-023; se reforzaron los contratos de vídeo, creación de hojas/columnas, feed de catálogo, reset y arranque.
+- [x] Integrar cobertura ejecutable para MIG-015 a MIG-023: MIG-016 (YouTube reanudable/aprobación), MIG-022 (acciones Spreadsheet) y MIG-023 (feed/reset/arranque/impresión) quedaron conectadas explícitamente al runner de regresión.
+- [x] Confirmar continuidad de controles visibles y acciones manuales: se compararon los IDs de `index.html` de la rama base y de trabajo; los 18 IDs heredados que ya no aparecen en la pantalla actual tienen sustitución localizada en las superficies activas. Se contrastó además el inventario de 335 declaraciones de controles y las superficies UI-01 a UI-17.
+- [x] Crear `JS/Tests/MIG027FunctionalParity.mjs` (8/8 PASS) y añadir el grupo 48 MIG027 a `JS/Tests/RunServiceTests.mjs`.
+- [x] Ejecutar regresión integral CI en Node.js 22: run **45388156117**, commit `ba5a987650f243219a31bc075e4730f5cdf15d86`, **511 suites, 6,035 pruebas aprobadas y 0 fallos**; sintaxis PASS.
+
+**Distribución verificada del mapa actual:** AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45 (123 en total). La matriz de migración contiene trazabilidad documental para las 123 acciones.
+
+**Límite de validación:** las pruebas de esta tarea son contratos estáticos y fixtures aislados. No se invocaron deployments Apps Script, YouTube, Spreadsheet ni Drive productivos. La ejecución con recursos Beta desechables, permisos reales y verificación de efectos externos corresponde a MIG-030 y no se declara como realizada.
 
 ### MIG-028 — Seguridad, rendimiento y regresión
 **Estado: PENDIENTE**
