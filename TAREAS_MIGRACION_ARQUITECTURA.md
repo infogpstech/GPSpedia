@@ -584,7 +584,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 **Resultado:** MIG-025 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-026 — eliminar configuración local de todos los servicios.
 ### MIG-026 — Eliminar configuración local de todos los servicios
-**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — AUTH, CATALOG y UTILITIES ya no contienen IDs locales y resuelven la Spreadsheet activa con fallo cerrado; la disponibilidad en Web Apps reales queda pendiente de Beta.**
+**Estado: IMPLEMENTADA EN CÓDIGO Y CI; VALIDACIÓN DE ACCESO REAL DIFERIDA A BETA.** La corrección de 2026-11-24 reemplaza el supuesto de Spreadsheet activa por la vinculación explícita a los recursos autorizados por el propietario.
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 
 #### Verificación de alcance en la rama (2026-11-23)
@@ -657,6 +657,20 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 
 ## Fase 7 — Verificación y despliegue
 
+
+#### Adenda — vinculación explícita de Spreadsheet y Drive — 2026-11-24
+
+**Estado: IMPLEMENTADA Y VALIDADA EN CI; sin despliegue Apps Script.** Esta adenda sustituye, para el estado vigente de la rama, las decisiones históricas de usar `getActiveSpreadsheet()` y no mantener IDs locales.
+
+- El propietario proporcionó el ID de la Spreadsheet principal `1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os` y el ID de la carpeta raíz Drive `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2`.
+- Los seis servicios AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN abren la misma Spreadsheet con `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)`.
+- AUTH, WRITE, FEEDBACK y ADMIN reciben el identificador desde `CentralConfigurationReader.js`; CATALOG y UTILITIES declaran el mismo ID en sus módulos porque no incluyen ese helper. La configuración común no contiene URLs de otros servicios, claves, tokens ni secretos.
+- WRITE, FEEDBACK y ADMIN utilizan `GPSpediaCortesRootFolderId_` desde `CentralConfigurationReader.js`. Se conservan las validaciones de carpeta no eliminada, nombre `Cortes` e hijo directo de la raíz Drive.
+- `JS/Tests/Auth.js` conserva paridad exacta con `JS/Services/Auth.js`. Se actualizaron fixtures de AUTH, CATALOG, UTILITIES, lector central, recuperación PyS, contratos MIG-015/MIG-026/MIG-029 y guía de despliegue.
+- `NORMAS_DESAROLLO.md` §17.1 documenta la excepción temporal autorizada por el propietario: únicamente estos dos localizadores de recursos mientras los módulos Apps Script sigan versionados. No autoriza endpoints, URLs, secretos ni propiedades de interconexión.
+- CI run **45444136611**, job **138623108916**, checkout HEAD `0aa586c933296d745fa3509887aeccf7e5d2d84e`: SUCCESS; **514 suites, 6,070 pruebas aprobadas, 0 fallos**; sintaxis PASS. `MIG015ImageConfigurationContract` 16/16, `CentralConfigurationInitializer` 7/7 y `MIG026StaticConfigSearch` 10/10 PASS. GitHub Pages run **45444134417**: SUCCESS.
+- No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet, Drive, permisos o propiedades instaladas. Beta debe comprobar acceso efectivo con la identidad de ejecución, lectura/escritura de cada servicio, identidad/nombre/jerarquía de la carpeta y scopes/autorizaciones requeridos.
+
 ### MIG-027 — Suite de paridad de las funciones existentes
 **Estado: COMPLETADA — validación estática/CI aprobada; pruebas con recursos reales diferidas a Beta**
 **Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §§17–19. No se agregaron secretos, tokens compartidos, URLs operativas locales ni coordinación backend entre servicios.
@@ -720,9 +734,9 @@ El workflow `GPSpedia service regression tests` confirmó el checkout exacto de 
 
 **Validación Beta diferida:** no se ejecutó la sonda remota. Se confirmó que `.github/workflows/deployed-service-health.yml` no existe en `main` (404), y `RemoteServiceHealth.mjs` usa un bootstrap fijo sin selector de entorno; no se verificó independientemente que sus destinos sean exclusivamente Beta. No se enviaron solicitudes a endpoints ni se modificaron deployments, propiedades Apps Script, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos. La matriz Beta mantiene esas pruebas pendientes hasta contar con acceso autorizado y recursos sintéticos aislados.
 
-**Criterio de cierre local:** cumplido conforme a NORMAS_DESAROLLO.md §§5 y 10. La preparación Beta, los contratos y la regresión local de MIG-030 están aprobados. Las pruebas que requieren deployments, Spreadsheet, Drive, OAuth/YouTube y cuentas/datos sintéticos permanecen diferidas a Beta y no mantienen abierta esta tarea. MIG-030 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**. MIG-026 conserva un pendiente de implementación local distinto: resolver la arquitectura de acceso central sin IDs locales en AUTH, CATALOG y UTILITIES. Ese defecto conocido y el riesgo de romper el acceso a datos impiden cerrar MIG-026; no se debe confundir con las pruebas de campo de MIG-030. La ejecución Beta continúa pendiente en `Tareas_Beta.md`; ninguna función real se declara probada.
+**Criterio de cierre local:** cumplido conforme a NORMAS_DESAROLLO.md §§5 y 10. La preparación Beta, los contratos y la regresión local de MIG-030 están aprobados. Las pruebas que requieren deployments, Spreadsheet, Drive, OAuth/YouTube y cuentas/datos sintéticos permanecen diferidas a Beta y no mantienen abierta esta tarea. MIG-030 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**. MIG-026 ya tiene la vinculación explícita implementada y validada en CI; permanece diferida únicamente la comprobación Beta de permisos, acceso y lectura/escritura reales. La excepción temporal de IDs está autorizada y documentada en NORMAS §17.1. La ejecución Beta continúa pendiente en `Tareas_Beta.md`; ninguna función real se declara probada.
 
-**Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; cero configuración local prohibida; despliegue simplificado y rendimiento no inferior a la línea base.
+**Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; sin configuración local prohibida salvo los dos IDs de recursos cubiertos por la excepción temporal autorizada en NORMAS §17.1; despliegue simplificado y rendimiento no inferior a la línea base.
 
 #### Trazabilidad de acciones completada en primera pasada — 2026-11-23
 
