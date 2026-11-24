@@ -227,3 +227,41 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - GitHub Pages run `45471712477`: SUCCESS.
 - HEAD de código y pruebas: `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`. Rama base protegida sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Validación Beta pendiente: desplegar `catalog.js` y `feedback.js` en los proyectos Beta existentes; ejecutar manualmente `initializeCatalogChangeFeedSheets()` en CATALOG contra la Spreadsheet Beta aislada; probar GET del feed, dashboard, contribuciones e Inbox con usuario sintético y cache miss. No se ejecutó el inicializador ni se modificó ninguna Spreadsheet real desde esta tarea.
+
+
+## Nueva tarea autorizada — AUG-146: revisión integral de modales y experiencia del panel de desarrollador
+
+**Estado: EN PROGRESO.** Solicitud registrada el 2026-11-24. Ejecutar en la rama `GPSpedia2.2.5_work`; no modificar `GPSpedia2.2.5`.
+
+### A. Modal de detalle — encabezado
+- Mantener el logo separado del borde superior e izquierdo del modal con el mismo espacio en ambos lados.
+- Aumentar la altura útil de la cuadrícula del encabezado y reducir el espacio sobrante entre la línea azul y la línea de texto con versión de equipamiento y rango de años.
+- Evitar que el campo de edición del nombre cubra los botones de deshacer y aceptar; coordinar su distribución con la altura de la cuadrícula.
+- Mostrar «Guardando…» sobre el nombre del modelo, entre el logo y los botones de deshacer/aceptar, nunca debajo de la línea azul.
+- Mantener intactos los comportamientos de edición, guardado, deshacer y aceptar.
+
+### B. Panel de desarrollador — estructura y distribución
+- Retirar por completo el apartado informativo «Tráfico global coordinado · retirado» y su explicación. No mostrar al usuario explicaciones sobre estructura interna del código o del repositorio.
+- En escritorio, reducir la altura/ocupación de la consola para que no desplace ni oculte las funciones de las pestañas; reorganizar los espacios y compactar la navegación.
+- Los botones de pestañas deben iniciar como iconos compactos y expandir su etiqueta únicamente al seleccionarse.
+- En móvil, alinear «Consola» arriba a la izquierda y los botones de limpiar/copiar en la misma línea horizontal. Usar iconos compactos con expansión de etiqueta al seleccionar.
+- En móvil, integrar el símbolo `>` dentro del campo de comando, mantener una sola línea horizontal y colocar al final un botón de ejecución solo con el icono `>_`; retirar el botón que actualmente queda debajo.
+- Eliminar el segundo título que repite el nombre de la pestaña seleccionada en escritorio y móvil. Conservar el nombre dinámico del botón seleccionado.
+- Mantener sin cambios la lógica y los efectos de los botones de limpiar consola, copiar registro, ejecutar comando y navegación entre pestañas; esta tarea es exclusivamente visual para esos controles.
+
+### C. Ayuda contextual
+- Las explicaciones extensas del modal de desarrollador deben permanecer ocultas al abrirlo y mostrarse únicamente al activar el botón de información correspondiente.
+- Conservar accesibilidad, relaciones aria-controls/expanded y los comportamientos actuales de ayuda contextual.
+
+### D. Mensajes de operaciones
+- Simplificar los mensajes de éxito y error dirigidos al usuario: breves, claros y centrados en el resultado (por ejemplo, «Cambios guardados», «Modelo agregado», «Corte agregado»).
+- No exponer en producción trazas, detalles internos, nombres de funciones, estructura del repositorio ni mensajes técnicos extensos. Los detalles diagnósticos deben permanecer en los canales internos existentes, sin alterar la operación ni ocultar fallos al sistema.
+
+### Orden y validación
+1. Inspeccionar HTML, CSS, JS y pruebas actuales de ambos modales antes de editar.
+2. Implementar primero el encabezado del modal de detalle y su regresión de edición/guardado.
+3. Ajustar estructura, consola, pestañas y ayudas del modal de desarrollador sin cambiar la lógica de controles.
+4. Revisar los mensajes de confirmación/error en las operaciones de imágenes, modelos y cortes, manteniendo el diagnóstico interno.
+5. Añadir o actualizar pruebas de contrato y regresión para escritorio/móvil, solapamientos, orden/alineación, visibilidad de ayudas y mensajes públicos.
+6. Ejecutar sintaxis, suites pertinentes y CI; revisar el diff completo. La validación visual de navegador/viewport se registrará como pendiente de Beta si no hay navegador disponible.
+7. Actualizar checkpoint y ChangesLogs con evidencia real. No desplegar servicios Apps Script ni modificar recursos productivos.
