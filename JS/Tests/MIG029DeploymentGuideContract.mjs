@@ -76,7 +76,7 @@ check("El orden completo es explícito y AUTH precede al enrutamiento de los dem
   assert.ok(positions.every(position => position >= 0));
   assert.ok(positions.every((position, index) => index === 0 || position > positions[index - 1]));
   assert.match(guide, /orden operativo de liberación/i);
-  assert.match(guide, /no es una cadena de dependencias backend/i);
+  assert.match(guide, /no una cadena de dependencias backend/i);
   assert.match(guide, /no llama a AUTH ni a otros proyectos Apps Script/i);
 });
 check("Cada proyecto tiene identidad, archivos y pasos funcionales específicos", () => {
