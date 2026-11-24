@@ -40,6 +40,14 @@ function runYouTubeApprovalInitTests() {
         Logger.log=()=>{};
     }
     try{
+        run_("inicializa carga YouTube para Tutorial nuevo mediante ID canónico",()=>{
+            reset_();
+            const tutorialId="tut-"+"a".repeat(32);
+            map.Tutorial=sheet_([TUTORIAL_HEADERS.slice(),[tutorialId,"Tutorial nuevo","","","","","","Owner"]]);
+            const result=handleInitYouTubeUpload({...payload,contentType:"tutorial",referenceId:tutorialId});
+            assert_(result.status==="success"&&result.uploadUrl===location);
+            assert_(requestOptions&&requestOptions.url.indexOf("upload/youtube/v3/videos")>=0);
+        });
         run_("inicializa carga YouTube para Tutorial histórico mediante referenceId legacy",()=>{
             reset_();
             const title="Tutorial demo";
