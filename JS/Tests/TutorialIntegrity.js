@@ -170,7 +170,7 @@ function readCatalogTutorials_(catalog, tutorialRows, editEvents = [], renameEve
         CacheService: { getScriptCache: () => ({ get: () => null }) },
         getCortesColumnMap: () => ({}),
         normalizeAndValidateImageId: value => {
-            const match = String(value || "").match(/file\\/d\\/([A-Za-z0-9_-]{10,110})/i);
+            const match = String(value || "").match(/file\/d\/([A-Za-z0-9_-]{10,110})/i);
             return match ? match[1] : value;
         },
         normalizeYouTubeUrl: value => value,
