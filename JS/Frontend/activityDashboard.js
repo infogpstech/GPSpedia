@@ -170,6 +170,8 @@ export function renderActivityInsights(container,insights,contributions,doc=cont
  dashboardNode(yearCard,"p","Las consultas por modelo no se muestran porque no existe un registro histórico fiable de aperturas.","activity-insight-note",doc);container.appendChild(yearCard);
  const contributorCard=doc.createElement("section");contributorCard.className="activity-insight-card";dashboardNode(contributorCard,"h3","Principales colaboradores","activity-insight-heading",doc);
  const rows=normalizeContributionRows(contributions).slice(0,5);if(!rows.length)dashboardNode(contributorCard,"p","Todavía no hay aportaciones atribuidas.","activity-insight-empty",doc);
- rows.forEach((entry,index)=>{const row=doc.createElement("p");row.className="activity-insight-contributor";dashboardNode(row,"span",(index+1)+". "+entry.nombreUsuario,"",doc);dashboardNode(row,"strong",entry.cortesAportados+" cortes · "+entry.aportesRegistrados+" aportes registrados · "+entry.vehiculosConAportes+" vehículos","",doc);contributorCard.appendChild(row);});
+ rows.forEach((entry,index)=>{const row=doc.createElement("p");row.className="activity-insight-contributor";dashboardNode(row,"span",(index+1)+". "+entry.nombreUsuario,"",doc);
+  const cutsLabel=entry.cortesAportados===1?"corte":"cortes",registeredLabel=entry.aportesRegistrados===1?"aporte registrado":"aportes registrados",vehiclesLabel=entry.vehiculosConAportes===1?"vehículo":"vehículos";
+  dashboardNode(row,"strong",entry.cortesAportados+" "+cutsLabel+" · "+entry.aportesRegistrados+" "+registeredLabel+" · "+entry.vehiculosConAportes+" "+vehiclesLabel,"",doc);contributorCard.appendChild(row);});
  container.appendChild(contributorCard);return container;
 }
