@@ -497,3 +497,48 @@ git rev-parse HEAD
 9. Registrar evidencia anonimizada y resultado en `Hallazgos_Beta.md`. Si no se dispone de deployment/Spreadsheet Beta aislados, marcar cada paso como NO EJECUTADO.
 
 **Límites:** no utilizar Spreadsheet, Drive, propiedades, permisos, cuentas, datos ni deployments productivos. No ejecutar cargas reales ni modificar recursos externos fuera del alcance autorizado.
+
+
+## 23. Validación Beta diferida — imagen de tarjeta en alta de Tutorial
+
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; PENDIENTE DE VALIDACIÓN CON DRIVE Y SPREADSHEET BETA AISLADOS.** El formulario acepta imagen opcional JPEG/PNG/WebP de hasta 3 MB. FEEDBACK valida el contenido y guarda el archivo en `Cortes/Tutoriales`; la hoja Tutorial conserva únicamente la referencia en la columna C `Imagen`.
+
+### Sincronización segura obligatoria
+
+Ejecutar desde el clon local del repositorio `infogpstech/GPSpedia`. Los comandos no descartan cambios y detienen la secuencia si el repositorio, rama o árbol no coinciden:
+
+```bash
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+case "$(git remote get-url origin)" in *github.com/infogpstech/GPSpedia*) ;; *) echo "Origin no corresponde a infogpstech/GPSpedia"; exit 1 ;; esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; guardar o resolverlos antes de sincronizar"; exit 1; }
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+### Evidencia local aprobada
+
+- Commit de implementación: `58e6ca989bc39d2fbc13a3ba5ae7c65f780370be`.
+- CI run [45504362878](https://github.com/infogpstech/GPSpedia/actions/runs/45504362878): SUCCESS; 517 suites, 6,147 pruebas, 0 fallos.
+- `TutorialIntegrity`: 47/47 PASS; cubre alta, validación binaria, asociación de referencia, reintento idempotente, rechazo de contenido distinto, recuperación y proyección CATALOG.
+- Chromium responsive: 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700.
+- GitHub Pages run [45504362787](https://github.com/infogpstech/GPSpedia/actions/runs/45504362787): SUCCESS.
+- CI no utiliza ni modifica Drive o Spreadsheet Beta/productivo.
+
+### Pasos en Beta aislada
+
+1. Confirmar que el deployment FEEDBACK y la Spreadsheet/Drive pertenecen al entorno Beta autorizado. No utilizar identificadores ni cuentas productivas.
+2. Publicar únicamente el código FEEDBACK aprobado en el deployment Beta existente. No modificar producción ni ejecutar despliegues globales.
+3. Iniciar sesión como Desarrollador y abrir Agregar Tutorial.
+4. Completar los campos obligatorios y seleccionar una imagen sintética JPEG, PNG o WebP de menos de 3 MB. Confirmar que el formulario rechaza archivos de otro formato y archivos superiores al límite antes de enviar.
+5. Guardar el tutorial. Confirmar que FEEDBACK devuelve éxito y que la fila se registra en la hoja canónica `Tutorial`.
+6. Revisar la columna C `Imagen`: debe contener una referencia `https://drive.google.com/file/d/.../view`, no Base64 ni datos binarios. Las demás columnas y encabezados deben conservar su orden.
+7. Revisar Drive Beta: debe existir un único archivo determinista dentro de la carpeta hija directa `Cortes/Tutoriales`. Confirmar MIME, tamaño, descripción de operación y estado `linked`.
+8. Confirmar que el archivo conserva los permisos heredados de la carpeta. No cambiar acceso, compartir públicamente ni ajustar permisos para forzar la visualización.
+9. Actualizar/abrir el catálogo y confirmar que la tarjeta del tutorial muestra la imagen correcta. Verificar que CATALOG normaliza la referencia a ID y que el frontend usa la imagen optimizada.
+10. Si la respuesta de alta es incierta, reintentar desde el mismo modal conservando la selección y la operación; no abrir otro tutorial ni cambiar la imagen para el mismo intento. Confirmar que no aparece una segunda fila ni un segundo archivo.
+11. Repetir con un tutorial sintético sin imagen y confirmar que el alta histórica sigue funcionando con la columna C vacía.
+12. Registrar evidencia anonimizada, nombre de carpeta, conteos y resultado en `Hallazgos_Beta.md`. Si no se dispone de Beta aislada, marcar los pasos como NO EJECUTADOS.
+
+**Límites:** no cargar imágenes reales de clientes, no almacenar Base64 en Spreadsheet, no alterar permisos, no usar cuentas/Drive/Spreadsheet productivos y no coordinar servicios Apps Script mediante URLs. La operación FEEDBACK escribe en su propia hoja y Drive; CATALOG solo lee la referencia existente.
