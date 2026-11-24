@@ -42,8 +42,9 @@ test("listeners globales de conectividad Inbox se registran una sola vez", () =>
     assert.match(ui, /inboxConnectivityBound_ = true/);
 });
 
-test("refresh global ADMIN y ayuda contextual protegen su inicialización", () => {
-    assert.match(ui, /if \(!window\.adminGlobalServiceTrafficRefreshInterval\)/);
+test("telemetría global ADMIN retirada y ayuda contextual protege su inicialización", () => {
+    assert.doesNotMatch(ui, /adminGlobalServiceTrafficRefreshInterval|globalServiceTraffic/);
+    assert.match(ui, /function renderLocalServiceTrafficChart_/);
     assert.match(ui, /function ensureContextualHelpGlobalListeners_\(\)[\s\S]*?if \(gpContextHelpGlobalListenersInstalled_\) return/);
     assert.match(ui, /gpContextHelpGlobalListenersInstalled_ = true/);
 });
