@@ -3,14 +3,14 @@
 Fecha de revisión: 2026-11-24  
 Repositorio: `infogpstech/GPSpedia`  
 Rama revisada: `GPSpedia2.2.5_work`  
-Estado: **EN PROGRESO — valores operativos no verificables con las fuentes disponibles**  
+Estado: **INVENTARIO DE VALORES COMPLETADO; comprobación de salud diferida a MIG-URL-008**  
 Tarea rectora: `MIG-URL-002`.
 
 ## Resultado ejecutivo
 
-Se identificó el mecanismo que actualmente mantiene las URLs activas: AUTH lee la revisión central de Google Spreadsheet, hoja `Servicios`, columna `endpoint_url`, filtrada por `ConfiguracionControl.active_revision` y estado `READY`. La guía de despliegue confirma que la revisión activa es la fuente que utiliza el frontend.
+El usuario proporcionó directamente las seis URLs que deben quedar como configuración de frontend. Se validó su estructura: todas usan HTTPS, el dominio de Google Apps Script, la ruta `/exec` y seis identificadores de deployment distintos. La procedencia queda registrada como confirmación directa del usuario.
 
-Sin embargo, el contenido real de esa Spreadsheet no está versionado en Git y no se pudo consultar desde esta sesión. El conector Google Drive/Sheets no está disponible para esta cuenta/sesión (la búsqueda del plugin lo devuelve como `DISABLED_BY_ADMIN` / `NOT_AVAILABLE`). Por ello, no hay evidencia suficiente para declarar ninguna de las seis direcciones como deployment vigente. No se deben copiar a la configuración nueva URLs históricas de la rama protegida sin verificar que siguen activas y corresponden a la identidad de salud correcta.
+La integración Google Drive/Sheets sigue sin estar disponible, por lo que no se pudo contrastar el snapshot de `ConfiguracionControl.active_revision`. Esta limitación no impide inventariar los seis valores expresamente suministrados para la migración; no se atribuye falsamente su origen a la Spreadsheet. La identidad funcional de cada deployment y su respuesta de salud se verificarán en MIG-URL-008, únicamente en Beta aislada y con autorización.
 
 ## Fuentes inspeccionadas
 
@@ -25,25 +25,29 @@ Sin embargo, el contenido real de esa Spreadsheet no está versionado en Git y n
 
 ## Inventario por servicio
 
-| Servicio | Clave en revisión activa | URL operativa actual | Identidad de salud esperada | Estado |
-|---|---|---|---|---|
-| AUTH | AUTH | No recuperada | `GPSpedia-Auth` | PENDIENTE: leer revisión activa y verificar deployment |
-| CATALOG | CATALOG | No recuperada | `GPSpedia-Catalog` | PENDIENTE: leer revisión activa y verificar deployment |
-| WRITE | WRITE | No recuperada | `GPSpedia-Write` | PENDIENTE: leer revisión activa y verificar deployment |
-| FEEDBACK | FEEDBACK | No recuperada | `GPSpedia-Feedback` | PENDIENTE: leer revisión activa y verificar deployment |
-| UTILITIES | UTILITIES | No recuperada | `GPSpedia-Utilities` | PENDIENTE: leer revisión activa y verificar deployment |
-| ADMIN | ADMIN | No recuperada | `GPSpedia-Admin` | PENDIENTE: leer revisión activa y verificar deployment |
+| Servicio | URL proporcionada | Validación estructural | Procedencia / verificación funcional |
+|---|---|---|---|
+| AUTH | `https://script.google.com/macros/s/AKfycby0OcUfWsUmHHXwixDmtClz5E4rBrIBSpttjqdsbqKIdRg8U19kQKm5MH7gN1o627wm8w/exec` | HTTPS + /exec; ID único | Proporcionada directamente por el usuario; identidad del deployment pendiente en Beta |
+| CATALOG | `https://script.google.com/macros/s/AKfycbwskd8-pS5CioHU-vw6mkIW6XFA6tBF8CR5968PZ0qrZPf4AGWcVOJU--p8vv8lQIpz/exec` | HTTPS + /exec; ID único | Proporcionada directamente por el usuario; identidad del deployment pendiente en Beta |
+| WRITE | `https://script.google.com/macros/s/AKfycbyfXLAUUe-lGlXkDwRopGaXp--QJ4V96txM_5E604oHH5kN1qfV2xJYDsqesfbUHHgJ/exec` | HTTPS + /exec; ID único | Proporcionada directamente por el usuario; identidad del deployment pendiente en Beta |
+| FEEDBACK | `https://script.google.com/macros/s/AKfycbwJmb_g4-Hb5iXpLdLwxfBQ44mQ9pHb1JYQ3vAwzafpPXiDDRgSAls2bkqKZ5QhnrYEcA/exec` | HTTPS + /exec; ID único | Proporcionada directamente por el usuario; identidad del deployment pendiente en Beta |
+| UTILITIES | `https://script.google.com/macros/s/AKfycbzUc402Sju0_ZU7PQST1Kma-qrgJs2v10Pi6hA62rWZZvsCefD6Mr6PCo5GEDA0dGRk/exec` | HTTPS + /exec; ID único | Proporcionada directamente por el usuario; identidad del deployment pendiente en Beta |
+| ADMIN | `https://script.google.com/macros/s/AKfycby779ceEVYBaZ8eAFueon4kDdedYeb1xuApUFjh0IdZ5ZQdy5DfVN3tWXQKE55QZtyb1g/exec` | HTTPS + /exec; ID único | Proporcionada directamente por el usuario; identidad del deployment pendiente en Beta |
+
+**Resultado de validación estructural:** 6/6 URLs válidas en formato; 6/6 IDs distintos; no se realizó ninguna petición HTTP ni se comprobó la identidad del deployment.
 
 ## Localizador bootstrap (no confundir con la URL operativa de AUTH)
 
 `JS/Frontend/api-config.js` contiene `CENTRAL_CONFIGURATION_BOOTSTRAP_URL`, usado para solicitar la configuración central a AUTH. Ese valor solo permite llegar al mecanismo de arranque; no sustituye ni acredita el endpoint operativo de AUTH que aparece en la revisión central. La migración posterior debe resolver esta diferencia explícitamente y evitar un ciclo de arranque.
 
-## Criterios que faltan para cerrar MIG-URL-002
+## Criterios y resultado de MIG-URL-002
 
-1. Obtener un snapshot de solo lectura de la revisión activa: `ConfiguracionControl.active_revision`, `publication_state`, y las seis filas de `Servicios` correspondientes a esa revisión.
-2. Registrar cada URL exacta y su procedencia, sin copiar filas borrador con `config_revision` vacío ni revisiones históricas.
-3. Contrastar cada URL con su deployment autorizado y la respuesta `?debug=true`, confirmando la identidad `GPSpedia-*` correspondiente. No ejecutar el workflow remoto si no se ha confirmado que el bootstrap apunta a un entorno aislado autorizado.
-4. Confirmar que las seis URLs son HTTPS, deployments distintos y que no existe discrepancia entre la revisión activa y el registro privado de despliegues.
+1. Recuperar las seis URLs exactas: **COMPLETADO**, suministradas expresamente por el usuario y registradas arriba.
+2. Verificar HTTPS, estructura `/exec` e identificadores distintos: **COMPLETADO**.
+3. Contrastar la revisión activa de Spreadsheet: **NO DISPONIBLE** por falta de conector de lectura; no se declara que los valores procedan de esa hoja.
+4. Confirmar identidad de salud `GPSpedia-*` y funcionamiento real: **DIFERIDO A MIG-URL-008**, sin llamadas remotas hasta disponer de Beta aislada y autorización expresa.
+
+**Cierre de MIG-URL-002:** inventario de valores completado con procedencia trazable al mensaje del usuario. La validación funcional remota queda explícitamente diferida a MIG-URL-008 y no se considera ejecutada.
 
 ## Restricción de seguridad y no regresión
 
@@ -52,6 +56,3 @@ Sin embargo, el contenido real de esa Spreadsheet no está versionado en Git y n
 - No se ejecutaron GET remotos ni workflows de salud: la guía advierte que el bootstrap no tiene selector de entorno y podría apuntar a producción.
 - La tarea permanece abierta. No iniciar MIG-URL-003 ni ninguna tarea ajena al plan hasta verificar los seis valores y completar los criterios anteriores.
 
-## Dato de entrada requerido para continuar
-
-Se necesita acceso de solo lectura a la hoja central que contiene `ConfiguracionControl` y `Servicios`, o un export/snapshot de esas dos hojas que incluya la revisión activa y las seis filas activas. Los datos pueden compartirse como CSV/XLSX o texto; no se necesitan credenciales, tokens ni permisos de escritura.
