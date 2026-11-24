@@ -673,13 +673,19 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 
 
 ### MIG-029 — Guía de despliegue simplificada
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Reescribir la guía para que desplegar no requiera agregar/editar propiedades.
-- [ ] Documentar únicamente pasos reales y necesarios por proyecto.
-- [ ] Registrar cómo se publica una nueva URL en la configuración central, si el diseño mantiene varios deployments.
-- [ ] Verificar que cambiar un servicio no exige redesplegar los demás.
-- [ ] Añadir procedimiento de rollback.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (despliegue real y rollback Beta)**
+**Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §18. La guía no incorpora secretos, propiedades de interconexión, URLs locales backend ni coordinación Apps Script→Apps Script.
+
+- [x] Reescribir la guía para que desplegar no requiera agregar/editar propiedades de proyecto.
+- [x] Documentar únicamente seis proyectos activos y sus fuentes reales: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; excluir USERS y COORDINATOR retirados.
+- [x] Documentar la publicación de URL nueva en la hoja central Servicios mediante revisión completa, historial append-only, validación y conmutación controlada de active_revision. Se aclara que no existe una pantalla/acción genérica para editar endpoints.
+- [x] Documentar que actualizar el código de un servicio en su deployment existente conserva su URL y no exige redesplegar los otros servicios ni el frontend por un cambio exclusivo de URL.
+- [x] Añadir rollback para versiones del mismo deployment y para cambios de URL mediante una nueva revisión central.
+- [x] Actualizar README y añadir MIG029DeploymentGuideContract.mjs (7 verificaciones) al runner general.
+
+**Validación local:** contrato documental conectado al workflow de regresión; comprobar sintaxis y CI final antes del cierre. **Pendiente Beta:** ejecutar el procedimiento en proyectos Apps Script y Spreadsheet central aislados, verificar identidad/permisos, publicación real de revisión/URL, salud GET, continuidad entre servicios y rollback. No se ejecutaron deployments ni se modificaron propiedades, permisos o datos productivos.
+
+**Documentación:** `Services/DEPLOYMENT_GUIDE.md`. Las guías anteriores en `Olds/Documentacion_Legacy/Services/` permanecen archivadas y expresamente no ejecutables.
 
 ### MIG-030 — Validación Beta integral
 **Estado: PENDIENTE**
