@@ -428,3 +428,11 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Registro vigente:** `Tareas_Activas.md` fue añadido a la rama en el commit `9442da203814be4891de82f93a1730700fb4b31d`. Su orden pasa a ser la fuente operativa para el trabajo pendiente: (1) modal de detalle Tutorial — formato enriquecido y vídeo YouTube; (2) desglose de cortes aportados por usuario en Dashboard; (3) ajustes adicionales del modal Developer. No asignar IDs nuevos.
 - **BETA-F007:** corrección de referencia legacy y prueba de inicialización para Tutorial histórico y nuevo completadas en código/CI. CI `45506352069`: 517 suites, 6,156 pruebas, 0 fallos; FEEDBACK inicialización YouTube 10/10 PASS. Beta real sigue pendiente.
 - **Nueva tarea en curso:** iniciar el punto 1 de `Tareas_Activas.md`. Preservar HTML enriquecido mediante el modo de sanitización permitido, mantener protección XSS y construir el iframe YouTube solo con URLs validadas y DOM; no interpolar contenido no validado en `innerHTML`.
+
+
+### Cierre de tarea activa 1 y comienzo de tarea activa 2 — 2026-11-24
+
+- **Tarea 1 — Modal de detalle Tutorial:** COMPLETADA. La implementación existente cumple el contrato: contenido enriquecido con `sanitizeHtmlContent(..., "advanced")`, eliminación de scripts/handlers/URLs activas, iframe creado con DOM y URL validada por `getValidatedYouTubeVideoEmbedUrl()`. No se modificó código productivo; se reforzó la prueba de navegador para comprobar énfasis, listas, estilos, XSS y siete variantes válidas/seis no confiables de URL.
+- **Pruebas:** CI run `45507769616`: 517 suites, 6,156 pruebas, 0 fallos; `TutorialIntegrity` 48/48 PASS; `FeedbackTutorialLookupBoundedRead` 9/9 PASS; Chromium `Aug146ResponsiveBrowser` 216/216 PASS en 1366×768, 390×844, 360×800 y 320×700; Pages run `45507768695`: SUCCESS.
+- **Tarea 2 — Dashboard de actividad, desglose de aportes por usuario:** EN PROGRESO. Reutilizar `readActivityDashboardCutsSnapshot_()`, `buildActivityDashboardInsights_()` y `buildCutContributionSummary_()`; exponer `cortesAportados` por usuario en la tabla, separado de `aportesRegistrados` y `vehiculosConAportes`. No crear segunda fuente ni alterar hojas/datos.
+- El orden de trabajo sigue el archivo `Tareas_Activas.md`. No se asigna un ID nuevo.
