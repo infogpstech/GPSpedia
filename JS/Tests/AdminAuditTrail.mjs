@@ -236,6 +236,26 @@ check("Una escritura batch legacy ambigua se reconcilia por eventId y no duplica
     assert.equal(h.api.findAdminAuditEventRow_(h.sheet, "legacy-ambiguous").record.outcome, "started");
 });
 
+check("El baseline solo importa campos permitidos y no copia secretos legacy al ledger", () => {
+    const legacyEvent = makeEvent("legacy-sanitized");
+    legacyEvent.sourceResourceId = "https://drive.google.com/file/d/SECRET_RESOURCE";
+    legacyEvent.partialResult = { processed: 3, sessionToken: "SECRET_SESSION", password: "SECRET_PASSWORD", message: "PRIVATE_TEXT" };
+    const h = createHarness({ legacy: { ["GPSpedia_ADMIN_AUDIT_V1_legacy-sanitized"]: JSON.stringify(legacyEvent) } });
+    h.api.ensureAdminAuditBaseline_();
+    const record = h.api.findAdminAuditEventRow_(h.sheet, "legacy-sanitized").record;
+    assert.equal(record.sourceResourceId, "");
+    assert.deepEqual(record.partialResult, { processed: 3 });
+    assert.doesNotMatch(JSON.stringify(record), /SECRET_RESOURCE|SECRET_SESSION|SECRET_PASSWORD|PRIVATE_TEXT/);
+});
+
+check("El lector rechaza campos no canónicos o resúmenes con datos no permitidos", () => {
+    const h = createHarness({ rows: [headers, baselineRow("admin_audit_baseline_v1")] });
+    const row = h.api.adminAuditRecordToRow_(makeEvent("tampered"));
+    row[14] = JSON.stringify({ processed: 1, sessionToken: "SECRET_SESSION" });
+    h.sheet.appendRow(row);
+    assert.throws(() => h.api.findAdminAuditEventRow_(h.sheet, "tampered"), error => error.code === "ADMIN_AUDIT_CORRUPT_STATE");
+});
+
 check("El baseline rechaza JSON legacy corrupto y deja el marcador pending", () => {
     const h = createHarness({ legacy: { "GPSpedia_ADMIN_AUDIT_V1_bad": "{broken" } });
     assert.throws(() => h.api.ensureAdminAuditBaseline_(), error => error.code === "ADMIN_AUDIT_CORRUPT_STATE");

@@ -1318,45 +1318,47 @@ function writeAdminAuditBaselineState_(sheet, state) {
 
 function adminAuditRecordToRow_(record) {
     const source = record && typeof record === "object" ? record : {};
+    const eventId = safeAdminAuditId_(source.eventId, null);
+    const actorId = safeAdminAuditId_(source.actorId, null);
+    const actorRole = String(source.actorRole || "").trim().toLowerCase();
+    const action = safeAdminAuditId_(source.action, null);
+    const resourceType = String(source.resourceType || "admin");
+    const startedAt = String(source.startedAt || "");
+    const finishedAt = source.finishedAt ? String(source.finishedAt) : "";
+    const outcome = String(source.outcome || "started");
+    const duration = source.durationMs === null || source.durationMs === undefined ? "" : Number(source.durationMs);
+    const schemaVersion = Number(source.schemaVersion || 1);
+    if (!eventId || !actorId || !action || !["desarrollador", "jefe"].includes(actorRole) ||
+        !["admin", "drive", "spreadsheet", "vehicle", "operation"].includes(resourceType) ||
+        !Number.isFinite(Date.parse(startedAt)) ||
+        (finishedAt && !Number.isFinite(Date.parse(finishedAt))) ||
+        !["started", "success", "partial", "error"].includes(outcome) ||
+        (outcome === "started" && finishedAt) || (outcome !== "started" && !finishedAt) ||
+        (duration !== "" && (!Number.isFinite(duration) || duration < 0)) || schemaVersion !== 1) {
+        throw createAdminAuditError_("El registro de auditoría ADMIN no cumple el esquema seguro.", "ADMIN_AUDIT_CORRUPT_STATE", eventId);
+    }
+    const resultCode = safeAdminAuditId_(source.resultCode || (outcome === "started" ? "PENDING" : "SERVICE_ERROR"), null).slice(0, 48) || "SERVICE_ERROR";
     return [
-        "EVENT",
-        String(source.eventId || ""),
-        String(source.actorId || ""),
-        String(source.actorRole || ""),
-        String(source.action || ""),
-        String(source.resourceType || "admin"),
-        String(source.sourceResourceId || ""),
-        String(source.targetResourceId || ""),
-        String(source.startedAt || ""),
-        source.finishedAt ? String(source.finishedAt) : "",
-        String(source.outcome || "started"),
-        String(source.stage || "Inicio"),
-        source.durationMs === null || source.durationMs === undefined ? "" : Number(source.durationMs),
-        String(source.resultCode || "PENDING"),
-        JSON.stringify(source.partialResult && typeof source.partialResult === "object" ? source.partialResult : {}),
-        Number(source.schemaVersion || 1)
+        "EVENT", eventId, actorId, actorRole, action, resourceType,
+        safeAdminAuditId_(source.sourceResourceId, null),
+        safeAdminAuditId_(source.targetResourceId, null),
+        startedAt, finishedAt, outcome, safeAdminAuditStage_(source.stage),
+        duration, resultCode, JSON.stringify(getAdminAuditPartialResult_(source.partialResult)), schemaVersion
     ];
 }
-
 function adminAuditRowToRecord_(row) {
     const source = Array.isArray(row) ? row : [];
     if (String(source[0] || "") !== "EVENT" || !String(source[1] || "")) {
         throw createAdminAuditError_("El registro persistente ADMIN contiene una fila inválida.", "ADMIN_AUDIT_CORRUPT_STATE");
     }
     let partialResult = {};
-    try {
-        partialResult = JSON.parse(String(source[14] || "{}"));
-    } catch (error) {
-        throw createAdminAuditError_("El resumen de un evento ADMIN está dañado.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]);
-    }
+    try { partialResult = JSON.parse(String(source[14] || "{}")); }
+    catch (error) { throw createAdminAuditError_("El resumen de un evento ADMIN está dañado.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]); }
     if (!partialResult || typeof partialResult !== "object" || Array.isArray(partialResult)) {
         throw createAdminAuditError_("El resumen de un evento ADMIN no tiene un formato válido.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]);
     }
     const duration = source[12] === "" || source[12] === null || source[12] === undefined ? null : Number(source[12]);
-    if (duration !== null && (!Number.isFinite(duration) || duration < 0)) {
-        throw createAdminAuditError_("La duración de un evento ADMIN no es válida.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]);
-    }
-    return {
+    const record = {
         schemaVersion: Number(source[15] || 1),
         eventId: String(source[1]),
         actorId: String(source[2] || ""),
@@ -1373,8 +1375,23 @@ function adminAuditRowToRecord_(row) {
         resultCode: String(source[13] || "PENDING"),
         partialResult
     };
+    const canonical = adminAuditRecordToRow_(record);
+    for (let index = 0; index < ADMIN_AUDIT_HEADERS_.length; index++) {
+        const actual = String(source[index] === null || source[index] === undefined ? "" : source[index]);
+        const expected = String(canonical[index] === null || canonical[index] === undefined ? "" : canonical[index]);
+        if (actual !== expected) {
+            throw createAdminAuditError_("La fila del ledger ADMIN contiene campos no canónicos o datos sensibles.", "ADMIN_AUDIT_CORRUPT_STATE", record.eventId);
+        }
+    }
+    return {
+        schemaVersion: record.schemaVersion, eventId: record.eventId, actorId: record.actorId,
+        actorRole: record.actorRole, action: record.action, resourceType: record.resourceType,
+        sourceResourceId: canonical[6], targetResourceId: canonical[7],
+        startedAt: record.startedAt, finishedAt: record.finishedAt, outcome: record.outcome,
+        stage: canonical[11], durationMs: record.durationMs, resultCode: canonical[13],
+        partialResult: getAdminAuditPartialResult_(record.partialResult)
+    };
 }
-
 function sameAdminAuditRecord_(left, right) {
     const a = adminAuditRecordToRow_(left);
     const b = adminAuditRecordToRow_(right);
