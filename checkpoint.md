@@ -1543,7 +1543,7 @@ Validación:
 - MIG013SessionActorLocalLookup: 22/22 PASS.
 - PasswordKdfBenchmark: 5/5 PASS.
 - Regresión CI: 4,688 pruebas aprobadas; 1 suite falla en FeedbackLockFastFail por una aserción estática que prohíbe LockService en FEEDBACK. El fallo exacto ya estaba presente en runs previos (45291268637 y 45289392165); no es causado por este cambio.
-- Run de evidencia: 45298104105 (commit previo a la última corrección de fixture AUTH) muestra que solo persistía la suite preexistente. El siguiente run debe confirmar el estado del HEAD actual.
+- Run de evidencia del HEAD 0f53fe3f941715b75c8198314efbbb9c54f434ae: 45298456129. Sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; regresión 4,688 pruebas PASS y una única suite fallida, FeedbackLockFastFail. La misma aserción estática aparece en runs previos a MIG-026 (45291268637 y 45289392165); no se atribuye a este cambio.
 - No se desplegó Apps Script ni se modificaron PropertiesService, Spreadsheet, Drive o datos externos.
 
 Estado:

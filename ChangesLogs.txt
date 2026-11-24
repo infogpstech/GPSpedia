@@ -390,3 +390,9 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Se actualizaron los contratos/fixtures de AUTH, WRITE, ADMIN, UTILITIES y los tests de enrutamiento, sesión y KDF para reflejar la inyección explícita.
 - CI: sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; PasswordKdfBenchmark 5/5 PASS; regresión 4,688 pruebas PASS con un único fallo preexistente en FeedbackLockFastFail (prohibición estática de LockService en FEEDBACK, reproducida en runs anteriores al cambio). No se modificaron los locks de FEEDBACK.
 - No se desplegaron servicios ni se modificaron hojas, PropertiesService instaladas o datos externos.
+
+
+### 2026-11-24 — MIG-026: confirmación CI del proveedor explícito
+- Run 45298456129, HEAD 0f53fe3f941715b75c8198314efbbb9c54f434ae: sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; regresión 4,688 pruebas aprobadas y una suite fallida.
+- La única suite fallida es FeedbackLockFastFail: su aserción estática prohíbe LockService en FEEDBACK, aunque el código vigente lo contiene. El mismo fallo se reproduce en ejecuciones anteriores a MIG-026 (45291268637 y 45289392165); no se modificó FEEDBACK porque no forma parte de este subtramo.
+- Pages build del mismo HEAD: pendiente de consultar su resultado final.
