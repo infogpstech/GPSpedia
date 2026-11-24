@@ -7,6 +7,7 @@
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
 const LOG_INVALID_IDS = false; // Cambiar a true para registrar IDs de imagen inválidos en la consola.
+var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 let spreadsheet = null;
 let invalidImageIdsFound = []; // Almacena IDs inválidos para el modo diagnóstico.
 
@@ -562,8 +563,8 @@ function handlePublishCatalogChange_(payload) {
 
 function getSpreadsheet() {
   if (spreadsheet === null) {
-    spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto CATALOG.");
+    spreadsheet = SpreadsheetApp.openById(GPSpediaSpreadsheetId_);
+    if (!spreadsheet) throw new Error("No se pudo abrir la Spreadsheet central configurada para CATALOG.");
   }
   return spreadsheet;
 }
