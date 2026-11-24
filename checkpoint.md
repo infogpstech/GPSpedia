@@ -2026,3 +2026,16 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
 - MIG-028 queda COMPLETADA en su alcance local automatizado, con mediciones de aplicación diferidas a Beta.
 - Siguiente tarea por orden: MIG-029.
 ================================================================================
+
+
+================================================================================
+MIG-029 — GUÍA DE DESPLIEGUE SIMPLIFICADA — 2026-11-24
+Documentación: Services/DEPLOYMENT_GUIDE.md
+Pruebas: JS/Tests/MIG029DeploymentGuideContract.mjs (7 verificaciones)
+- La guía cubre AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN con los archivos fuente requeridos; USERS y COORDINATOR quedan fuera del inventario activo.
+- Se documenta publicar código en el deployment existente, conservar URL, actualizar solo el servicio afectado y publicar URL nueva con revisión central íntegra, historial append-only y cambio controlado de active_revision.
+- Se añadió rollback de versión y de URL. README enlaza la guía. No se requieren propiedades de interconexión ni secretos manuales.
+- No se desplegó Apps Script ni se modificaron datos/configuración productivos. Despliegue real, permisos, lectura central y rollback quedan pendientes de Beta aislada.
+- MIG-029: COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a CI final aprobado.
+- Siguiente tarea por orden: MIG-030.
+================================================================================
