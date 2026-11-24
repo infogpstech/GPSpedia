@@ -20,7 +20,8 @@ function harness() {
         getScriptLock() {
             return {
                 tryLock(waitMs) {
-                    if (waitMs === 1000 && cleanupBusy) return false;
+                    assert.equal(waitMs, 0);
+                    if (cleanupBusy && values.size > 0) return false;
                     if (busy || lockHeld) return false;
                     lockHeld = true;
                     return true;

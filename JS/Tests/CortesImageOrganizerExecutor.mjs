@@ -222,7 +222,7 @@ run("reconcilia el rollback si el guardado final sufre contención", () => {
 run("el lock del ledger libera siempre y falla con estado retryable", () => {
     let held = false, releases = 0;
     const lock = {
-        tryLock: timeout => { assert.equal(timeout, 250); if (held) return false; held = true; return true; },
+        tryLock: timeout => { assert.equal(timeout, 0); if (held) return false; held = true; return true; },
         hasLock: () => held,
         releaseLock: () => { assert.equal(held, true); held = false; releases++; }
     };
@@ -231,7 +231,7 @@ run("el lock del ledger libera siempre y falla con estado retryable", () => {
     assert.equal(held, false);
     assert.equal(releases, 1);
     const busy = {
-        tryLock: timeout => { assert.equal(timeout, 250); return false; },
+        tryLock: timeout => { assert.equal(timeout, 0); return false; },
         hasLock: () => false,
         releaseLock: () => { throw new Error("No debía liberar un lock ajeno"); }
     };

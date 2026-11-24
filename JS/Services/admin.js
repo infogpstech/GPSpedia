@@ -4862,17 +4862,28 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
     const backupId = String(payload.backupId || "").trim();
     if (!/^[a-zA-Z0-9_-]{20,}$/.test(backupId)) throw new Error("La conciliación requiere un respaldo completo y verificado antes de escribir.");
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(0)) throw new Error("ADMIN está ocupado; la conciliación no esperó por otra ejecución. Intenta nuevamente.");
+    if (!lock.tryLock(0)) { const busyError = new Error("ADMIN está ocupado; la conciliación no esperó por otra ejecución. Intenta nuevamente."); busyError.code = "ADMIN_LOCK_BUSY"; throw busyError; }
     try {
-        const verifiedBackup = runAdminDriveWorkOutsideScriptLock_(
-            lock,
-            "ADMIN_CORTES_RECONCILIATION_BACKUP_" + backupId,
-            () => verifyImageReconciliationBackup_(backupId, developerContext, { skipSourceValidation: true }),
-            backup => {
-                verifyImageReconciliationBackupSource_(backup);
-                return backup;
+        let verifiedBackup;
+        try {
+            verifiedBackup = runAdminDriveWorkOutsideScriptLock_(
+                lock,
+                "ADMIN_CORTES_RECONCILIATION_BACKUP_" + backupId,
+                () => verifyImageReconciliationBackup_(backupId, developerContext, { skipSourceValidation: true }),
+                backup => {
+                    verifyImageReconciliationBackupSource_(backup);
+                    return backup;
+                }
+            );
+        } catch (backupError) {
+            if (backupError && backupError.code === "ADMIN_LOCK_REACQUIRE_PENDING") {
+                return { status: "partial", writePerformed: false, processed: 0, total: approvals.length,
+                    appliedCount: 0, failedCount: approvals.length, rolledBackCount: 0, rollbackConfirmed: false,
+                    rollbackErrors: [String(backupError.message || backupError)], backupId,
+                    message: "La verificación del respaldo terminó, pero ADMIN no pudo readquirir el lock; no se aplicaron cambios ni se ejecutó rollback sin bloqueo. Reintenta con el mismo backupId." };
             }
-        );
+            throw backupError;
+        }
         const auditState = loadDriveAuditServerState_(auditId);
         if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
             auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
