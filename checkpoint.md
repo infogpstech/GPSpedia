@@ -48,6 +48,34 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - Ejecutar parsing/sintaxis y las pruebas de regresión frontend pertinentes. Si no hay navegador automatizado disponible, declarar la validación visual como no ejecutada y preparar el procedimiento Beta; no presentarla como aprobada.
 - No modificar funcionalidades ni controles ajenos al encabezado.
 
+
+## Nueva tarea autorizada — AUG-145: ampliar la guía de despliegue de servicios Apps Script
+
+**Estado: PENDIENTE.** Solicitud incorporada el 2026-11-24. La tarea consiste en actualizar `Services/DEPLOYMENT_GUIDE.md` para que un operador pueda desplegar los servicios Google Apps Script siguiendo un procedimiento completo, específico y ordenado.
+
+### Alcance obligatorio
+- Documentar el procedimiento paso a paso para cada uno de los seis proyectos activos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
+- Establecer un orden global de despliegue explícito. Antes de fijarlo, analizar las dependencias reales, los consumidores, los contratos y la configuración central; justificar por qué ese orden es seguro. No asumir dependencias backend-backend que no existan ni introducir coordinación entre servicios dentro de Apps Script.
+- Para cada servicio, indicar los archivos exactos que se deben actualizar, los prerrequisitos, el proyecto Apps Script que corresponde, la carga/sustitución de fuentes, guardado, creación de versión, actualización del deployment Web App existente, comprobación de URL y salud, y pruebas funcionales específicas.
+- Explicar qué servicios deben desplegarse cuando cambia un archivo compartido o un contrato, y cuáles no necesitan redespliegue. Evitar publicar los seis servicios por rutina si el cambio solo afecta a uno.
+- Incluir el orden de verificación posterior, criterios para continuar o detener la secuencia, tratamiento de fallos parciales y preservación de servicios independientes.
+- Incorporar rollback paso a paso por servicio, incluyendo la restauración de una versión anterior y, cuando aplique, la publicación controlada de una nueva revisión de configuración central para restaurar una URL anterior.
+- Mantener la actualización de endpoints mediante la configuración central versionada; nunca introducir URLs de otros servicios, secretos o credenciales en código, propiedades Apps Script ni frontend.
+- Diferenciar claramente despliegue de código, cambio de URL, comprobación GET de salud y pruebas funcionales Beta. Incluir los límites de autorización y no ejecutar despliegues ni modificar recursos reales como parte de la documentación.
+- Añadir una lista de comprobación final que permita registrar servicio, SHA publicado, versión/deployment, URL conservada o actualizada, pruebas ejecutadas, resultado y evidencia.
+
+### Restricciones y dependencias
+- Mantener como fuente normativa `NORMAS_DESAROLLO.md` y respetar los requisitos Apps Script de su §12 y los apartados aplicables.
+- Conservar los seis proyectos activos y la matriz real de archivos fuente vigente. USERS y COORDINATOR no deben reintroducirse como servicios activos.
+- No alterar la arquitectura ni el comportamiento de los servicios para adaptar el manual. Si el análisis descubre una dependencia o ambigüedad técnica, documentarla con evidencia y separar cualquier corrección de código como tarea distinta.
+- AUG-144 permanece como la siguiente tarea de implementación; AUG-145 queda en cola para ejecutarse después de cerrar AUG-144, conforme al orden de continuidad del backlog.
+
+### Validación y cierre
+- Contrastar cada paso y el orden propuesto con los seis archivos fuente y sus dependencias reales, la configuración central y los workflows de salud/pruebas existentes.
+- Verificar nombres/rutas de proyectos, archivos, menús de Apps Script, secuencia, condiciones de rollback, enlaces y referencias documentales.
+- Añadir o actualizar pruebas de contrato documental para asegurar que la guía enumera los seis servicios, mantiene el orden definido, no incluye servicios retirados y conserva las reglas de configuración central/seguridad.
+- Revisar el diff y confirmar que el cambio se limita a la documentación y pruebas contractuales realmente necesarias. No desplegar Apps Script ni modificar PropertiesService, permisos, Spreadsheet, Drive, OAuth, endpoints o datos productivos.
+
 ## MIG-026 — acceso Spreadsheet
 - AUTH usa `getAuthUsersSpreadsheet_()`; CATALOG usa `getSpreadsheet()`; UTILITIES usa `getUtilitiesSpreadsheet_()` y comparte un handle por petición entre carga de actor y operación.
 - La copia aislada `JS/Tests/Auth.js` conserva paridad exacta.
@@ -77,4 +105,4 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - El manifiesto de rotación conserva las referencias a las partes anteriores.
 
 ## Próxima acción
-Atender AUG-144: inspeccionar el encabezado real del modal de detalle, medir primero las posiciones de edición/impresión/compartir/cerrar y ajustar exclusivamente el bloque de marca/modelo. La posición de esos cuatro botones es un invariante. Validar escritorio y móvil, comparar límites antes/después y ejecutar regresión frontend. Mantener las pruebas de campo Apps Script pendientes en `Tareas_Beta.md`; no mezclar ese alcance con AUG-144.
+Atender AUG-144: inspeccionar el encabezado real del modal de detalle, medir primero las posiciones de edición/impresión/compartir/cerrar y ajustar exclusivamente el bloque de marca/modelo. La posición de esos cuatro botones es un invariante. Validar escritorio y móvil, comparar límites antes/después y ejecutar regresión frontend. Después, ejecutar AUG-145: ampliar `Services/DEPLOYMENT_GUIDE.md` con el orden justificado y el procedimiento paso a paso de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Mantener cualquier despliegue real sujeto a autorización y Beta aislada.
