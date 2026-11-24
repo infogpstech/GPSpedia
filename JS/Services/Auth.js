@@ -2873,15 +2873,15 @@ function handleLogout(payload) {
 let authSpreadsheet = null;
 function getAuthUsersSpreadsheet_() {
     if (authSpreadsheet === null) {
-        authSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-        if (!authSpreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto AUTH.");
+        authSpreadsheet = SpreadsheetApp.openById(GPSpediaSpreadsheetId_);
+        if (!authSpreadsheet) throw new Error("No se pudo abrir la Spreadsheet central configurada para AUTH.");
     }
     return authSpreadsheet;
 }
 
 
 // Inicialización manual de la estructura central.
-// Ejecutar únicamente desde el editor del proyecto AUTH y sobre su Spreadsheet activa.
+// Ejecutar únicamente desde el editor del proyecto AUTH y sobre la Spreadsheet central configurada.
 // No publica una revisión ni introduce endpoints, IDs o valores operativos.
 // No usa ScriptLock para no competir con el login ni con otras operaciones de AUTH.
 function initializeCentralConfigurationSheets() {
