@@ -314,7 +314,7 @@ testCase("el modelo conserva su posición superior junto al logo y los botones r
     assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin:0;[\s\S]*?transform:translate\(-17px,-19px\)/);
     assert.match(cutHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:3px 2px;/);
     const mobileHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
-    assert.match(mobileHeader, /\.detail-modal-title-text \{[\s\S]*?margin:6px 0 0 !important/);
+    assert.match(mobileHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin:0 !important;[\s\S]*?transform:translate\(-13px,-19px\) !important/);
     assert.match(mobileHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:2px 1px;/);
     assert.match(cutHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:66px !important/);
     assert.match(mobileHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:66px !important/);
