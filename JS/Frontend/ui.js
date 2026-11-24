@@ -5923,6 +5923,7 @@ function initializeCentralServiceUrlsControl_() {
         output.scrollTop = output.scrollHeight;
     };
     const fields = Object.fromEntries(keys.map(key => [key, document.getElementById("central-service-url-" + key.toLowerCase())]));
+    let lastLoadedUrls = {};
     const context = getUiSessionContext_();
     const allowed = Boolean(context && context.role === "desarrollador");
     Object.values(fields).forEach(field => { if (field) field.disabled = !allowed; });
@@ -5942,6 +5943,7 @@ function initializeCentralServiceUrlsControl_() {
         try {
             const urls = await loadCentralServiceUrls(context);
             if (!isCurrentUiSessionContext_(context)) return;
+            lastLoadedUrls = Object.fromEntries(keys.map(key => [key, String(urls[key] || "").trim()]));
             keys.forEach(key => { if (fields[key]) fields[key].value = urls[key] || ""; });
             if (status) status.textContent = "Puedes modificar las URL. Los demás metadatos se completan y validan automáticamente al publicar.";
         } catch (error) {
@@ -5970,6 +5972,7 @@ function initializeCentralServiceUrlsControl_() {
                 }
                 urls[key] = value;
             }
+            const changedByClient = keys.filter(key => String(lastLoadedUrls[key] || "") !== String(urls[key] || ""));
             setBusy(true);
             if (status) status.textContent = "Validando y publicando una nueva revisión de endpoints...";
             try {
@@ -5977,7 +5980,10 @@ function initializeCentralServiceUrlsControl_() {
                 if (!isCurrentUiSessionContext_(context)) return;
                 const revision = Number(result && result.revision);
                 if (!Number.isSafeInteger(revision) || revision < 1) throw new Error("AUTH no confirmó una revisión válida.");
-                const changedServices = new Set(Array.isArray(result.changedServices) ? result.changedServices : []);
+                const changedServices = new Set(Array.isArray(result.changedServices) ? result.changedServices : changedByClient);
+                if (!Array.isArray(result.changedServices)) {
+                    appendConsoleStatus("El servicio de configuración no devolvió el detalle individual; se compararon las URL cargadas con las nuevas.");
+                }
                 keys.forEach(key => {
                     const label = serviceLabels[key] || key;
                     if (changedServices.has(key)) {
