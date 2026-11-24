@@ -13,7 +13,8 @@ function runSessionProfileRefreshTests(sources) {
   const sheet=rows=>({getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),getRange:(r,c)=>({getValue:()=>rows[r-1][c-1],setValue:v=>{rows[r-1][c-1]=v;}})});
   const us=sheet(users),ss=sheet(sessions),deps={
    LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
-   SpreadsheetApp:{openById:()=>({getSheetByName:n=>n==='Users'?us:n==='ActiveSessions'?ss:null}),flush:()=>{}},
+   SpreadsheetApp:{getActiveSpreadsheet:()=>({getSheetByName:n=>n==='Users'?us:n==='ActiveSessions'?ss:null}),flush:()=>{}},
+   getAuthUsersSpreadsheet_:()=>({getSheetByName:n=>n==='Users'?us:n==='ActiveSessions'?ss:null}),
    SPREADSHEET_ID:'ISOLATED_TEST_ONLY',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},COLS_USERS:uc,COLS_ACTIVE_SESSIONS:sc,
    normalizeUserId:v=>String(v??'').trim(),isActiveAuthUserRecord:active,hasPendingRoleRevocation_:()=>o.pending===true,reconcileRoleRevocationUnderLock_:()=>({pending:false}),
    getSessionExpirationStatus_:r=>({expired:false,createdAt:new Date(r[3])}),ensureActiveSessionsActivityColumn_:()=>{},ensureSessionTermsAcceptanceColumn_:()=>{},ensureTermsAcceptanceColumn_:()=>{},
