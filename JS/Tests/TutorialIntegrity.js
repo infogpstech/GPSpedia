@@ -52,6 +52,38 @@ function buildHarness_(feedback, options = {}) {
     const initial = options.rows || [];
     const sheet = makeSheet_(initial, options);
     const state = { lockWaits: 0, lockReleases: 0, flushes: 0, inserted: false, insertedTitleEvents: false, insertedEditEvents: false, insertedRenameEvents: false, titleEventsSheet: null, renameEventsSheet: null };
+    const imageFiles = [];
+    const makeIterator = values => {
+        let index = 0;
+        return { hasNext: () => index < values.length, next: () => values[index++] };
+    };
+    const rootFolder = { getId: () => "root-folder-000000000000000000000001" };
+    const tutorialFolder = {
+        getId: () => "tutorial-folder-00000000000000000000001",
+        getName: () => "Tutoriales",
+        getParents: () => makeIterator([rootFolder]),
+        getSharingAccess: () => "PRIVATE",
+        getSharingPermission: () => "NONE",
+        getFilesByName: name => makeIterator(imageFiles.filter(file => file.getName() === name)),
+        createFile(blob) {
+            const record = {
+                id: "fileid-" + String(imageFiles.length + 1).padStart(30, "0"),
+                name: blob.name, mimeType: blob.mimeType, bytes: blob.bytes.slice(), description: "", trashed: false
+            };
+            const file = {
+                getId: () => record.id, getName: () => record.name, getMimeType: () => record.mimeType,
+                getSize: () => record.bytes.length, getDescription: () => record.description,
+                setDescription: value => { record.description = String(value); },
+                isTrashed: () => record.trashed,
+                getParents: () => makeIterator([tutorialFolder]),
+                getSharingAccess: () => "PRIVATE", getSharingPermission: () => "NONE",
+                record
+            };
+            imageFiles.push(file);
+            return file;
+        }
+    };
+    state.imageFiles = imageFiles;
     const titleEventsSheet = makeSheet_(options.titleEvents || [], options);
     state.titleEventsSheet = titleEventsSheet;
     const editEventsSheet = makeSheet_(options.editEvents || [], options);
@@ -64,8 +96,31 @@ function buildHarness_(feedback, options = {}) {
         }) },
         Utilities: {
             DigestAlgorithm: { SHA_256: "SHA_256" },
-            computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(String(value)).digest())
+            computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256")
+                .update(value instanceof Uint8Array ? Buffer.from(value) : String(value)).digest()),
+            base64Decode: value => Array.from(Buffer.from(String(value), "base64")),
+            base64Encode: value => Buffer.from(value).toString("base64"),
+            newBlob: (bytes, mimeType, name) => ({ bytes: Array.from(bytes), mimeType, name })
         },
+        DriveApp: {
+            getFileById(id) {
+                const file = imageFiles.find(candidate => candidate.getId() === String(id));
+                if (!file) throw new Error("File not found");
+                return file;
+            }
+        },
+        getCortesRootFolder: () => rootFolder,
+        findOrCreateSubFolder: (parent, name) => {
+            assert.equal(parent, rootFolder);
+            assert.equal(name, "Tutoriales");
+            return tutorialFolder;
+        },
+        getFolderCanonicalName: value => String(value || "").normalize("NFD").replace(/\\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, ""),
+        assertPysImageFolderPermissions_: (file, folder) => {
+            if (file.getSharingAccess() !== folder.getSharingAccess() ||
+                file.getSharingPermission() !== folder.getSharingPermission()) throw new Error("sharing mismatch");
+        },
+        Logger: { log: () => {} },
         SpreadsheetApp: { flush() { state.flushes++; if (options.failFlushAt === state.flushes) throw new Error("simulated flush failure"); } },
         getSpreadsheet: () => ({
             getSheetByName: name => name === "Tutorial"
@@ -91,7 +146,7 @@ function buildHarness_(feedback, options = {}) {
     if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
     const update = feedback.slice(updateStart);
     vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS, appendTitleEvent: appendTutorialTitleEvent_, readTitleEvents: readTutorialTitleEvents_, titleOwner: getTutorialTitleOwner_, ensureTitleClaim: ensureTutorialTitleClaim_, appendEditEvent: appendTutorialEditEvent_, projectEdit: projectTutorialEditFields_, projectTitle: projectTutorialTitle_, titleEventsSheet: state.titleEventsSheet, renameEventsSheet: state.renameEventsSheet };", context);
-    return { api: context.api, sheet, state, editEventsSheet };
+    return { api: context.api, sheet, state, editEventsSheet, imageFiles };
 }
 
 function readCatalogTutorials_(catalog, tutorialRows, editEvents = [], renameEvents = []) {
