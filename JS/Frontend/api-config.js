@@ -143,7 +143,7 @@ export async function loadCentralServiceUrls(session) {
 }
 
 export async function saveCentralServiceUrls(services, actorRole, session) {
-    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     if (normalizedRole !== "desarrollador") throw new Error("Solo un Desarrollador puede actualizar los endpoints.");
     const sessionPayload = getRichTextSession_(session);
     if (!services || typeof services !== "object" || Array.isArray(services) ||
