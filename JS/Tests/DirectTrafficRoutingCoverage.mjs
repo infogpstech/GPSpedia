@@ -34,7 +34,7 @@ test("add_cortes procesa aportes y consultas de cortes directamente en WRITE", (
     assert.match(api, /'addOrUpdateCut': 'WRITE'/);
     assert.match(api, /'addSupplementaryInfo': 'WRITE'/);
     assert.match(api, /'checkOperation': 'WRITE'/);
-    assert.match(write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE" \}\)/);
+    assert.match(write, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "WRITE", loadSpreadsheet: getSpreadsheet \}\)/);
     assert.doesNotMatch(write, /withSharedMutationLease_\("WRITE", action/);
     assert.match(admin, /"ACTION_MOVED_TO_WRITE"/);
 });
@@ -60,7 +60,7 @@ test("AUTH es propietario de gestión de usuarios; UTILITIES y ADMIN conservan s
     assert.match(auth, /function handleUpdateProfile\(/);
     assert.match(auth, /getCachedSharedSessionActor_\(/);
     assert.doesNotMatch(auth, /DIRECT_SERVICE_TRAFFIC_CONFIG_|recordDirectServiceTraffic_|readDirectServiceTraffic_/);
-    assert.match(utilities, /getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken,\{service:"UTILITIES"\}\)/);
+    assert.match(utilities, /getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken,\{service:"UTILITIES",loadSpreadsheet:\(\)=>SpreadsheetApp\.openById\(SPREADSHEET_ID\)\}\)/);
     assert.match(utilities, /const lock=LockService\.getScriptLock\(\)/);
     assert.doesNotMatch(utilities, /withSharedMutationLease_/);
     assert.doesNotMatch(utilities, /DIRECT_SERVICE_TRAFFIC_CONFIG_/);

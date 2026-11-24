@@ -21,7 +21,7 @@ test("WRITE/FEEDBACK usan actor cacheado y no adquieren lease por acción",()=>{
  assert.match(feedbackPost,/getCachedSharedSessionActor_/);assert.doesNotMatch(feedbackPost,/withSharedMutationLease_/);
 });
 test("AUTH elimina la lease de sesión y carga actor desde la fuente local",()=>{
- assert.match(authPost,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
+ assert.match(authPost,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ \}\)/);
  assert.doesNotMatch(authPost,/withSharedMutationLease_|sessionOptions|validateSharedSessionContext_/);
  assert.match(authPost,/if \(!isSharedMutationAction_\(action\)\)/);
  assert.match(auth,/function cacheLocalSessionActorAfterLogin_[\s\S]*?cacheSharedSessionActor_/);
@@ -39,7 +39,7 @@ test("ADMIN usa guardas locales de recurso, no leases remotas",()=>{
  assert.equal((admin.match(/withAdminLocalOperationGuard_\(/g)||[]).length,4);
 });
 test("UTILITIES obtiene actor local sin lease Coordinator",()=>{
- assert.match(utilities,/getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken/);
+ assert.match(utilities,/getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken,\{service:"UTILITIES",loadSpreadsheet:\(\)=>SpreadsheetApp\.openById\(SPREADSHEET_ID\)\}\)/);
  assert.doesNotMatch(utilities,/withSharedMutationLease_\("UTILITIES"/);
 });
 test("Frontend mantiene el enrutamiento directo a cada servicio",()=>{

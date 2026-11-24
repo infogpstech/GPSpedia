@@ -28,7 +28,7 @@ assert.equal(mutation("backupDatabase"), true);
 assert.equal(mutation("createSheet"), true);
 
 const router = admin.slice(admin.indexOf("function doPost(e)"), admin.indexOf("const ADMIN_AUDIT_PROPERTY_PREFIX_"));
-assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
+assert.ok(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN", loadSpreadsheet: getSpreadsheet })'));
 assert.doesNotMatch(router, /withSharedMutationLease_/);
 const auditHandler = extractFunction(admin, "handleAuditDriveImagesInCortes");
 assert.match(auditHandler, /withAdminLocalOperationGuard_\("drive-audit:"/,

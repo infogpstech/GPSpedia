@@ -121,7 +121,7 @@ test("AUTH no relee ActiveSessions para sincronizar cada acción", () => {
     const end = auth.indexOf("function doPostInternal_(e)", begin);
     assert.ok(begin >= 0 && end > begin);
     const dispatcher = auth.slice(begin, end);
-    assert.match(dispatcher, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
+    assert.match(dispatcher, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ \}\)/);
     assert.doesNotMatch(dispatcher, /withSharedMutationLease_/);
     assert.match(dispatcher, /withSharedSessionActor_\(e, actor\)/);
     assert.doesNotMatch(dispatcher, /syncAuthSheetActivityFromActor_/);
