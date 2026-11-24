@@ -688,18 +688,24 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 **Documentación:** `Services/DEPLOYMENT_GUIDE.md`. Las guías anteriores en `Olds/Documentacion_Legacy/Services/` permanecen archivadas y expresamente no ejecutables.
 
 ### MIG-030 — Validación Beta integral
-**Estado: EN PROGRESO**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (ejecución en recursos Beta reales)**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [x] Preparar comandos de sincronización Beta conforme a NORMAS §5; verificados mediante contrato estático 8/8 PASS el 2026-11-24.
-- [ ] Probar login, catálogo, usuarios, modelos, imágenes, vídeos, Drive, PyS, tutoriales, Inbox, métricas, administración, backups y restauración.
-- [ ] Probar roles autorizados/no autorizados.
-- [ ] Registrar evidencia, tiempos, recursos de prueba y resultados.
-- [ ] No declarar funciones probadas sin invocación real.
+- [x] Preparar comandos de sincronización Beta conforme a NORMAS §5; contrato estático 8/8 PASS y fixture Git aislado 3/3 PASS.
+- [x] Ejecutar validación local de contratos, salud, aislamiento funcional y regresión general en CI.
+- [x] Mantener una matriz de pruebas Beta BETA-01 a BETA-08 y validaciones diferidas MIG-012/013/015/017/018/024/025/026 con condiciones de seguridad, recursos aislados y evidencia requerida.
+- [x] No declarar funciones probadas sin invocación real.
+- [ ] Ejecutar login, catálogo, usuarios, modelos, imágenes, vídeos, Drive, PyS, tutoriales, Inbox, métricas, administración, backups y restauración en los recursos Beta aislados.
+- [ ] Probar roles autorizados/no autorizados y registrar evidencia, tiempos, recursos de prueba y resultados reales.
 
-**Avance de preparación — 2026-11-24:** se verificó que `Tareas_Beta.md` comienza con la sincronización segura obligatoria: remoto exacto, rama exacta, árbol limpio, `fetch` + `pull --ff-only`, HEAD final y ausencia de comandos destructivos. La matriz principal BETA-01 a BETA-08 está presente. La comprobación se ejecutó en el runtime JavaScript disponible (8/8 aserciones); no equivale a ejecutar los comandos en un clon Git ni a realizar pruebas Beta reales. Las pruebas remotas siguen pendientes de los recursos aislados y autorizados. Después se ejecutó la secuencia shell en un repositorio Git fixture aislado: fast-forward real v1→v2, detección de árbol sucio y detección de rama incorrecta, todos PASS. El remoto fue un bare local y no el repositorio GitHub; no se sincronizó la rama real. El workflow de regresión de Node.js 22 se ejecutó para el HEAD `cb794f1afe23d84845db046b4202c825691a6420` (run `45395676090`, job `138450683262`): `ServiceHealthContract.mjs` aprobó 19/19 en dos invocaciones del runner; regresión completa 513 suites, 6,051 pruebas aprobadas, 0 fallos. Esto valida el contrato local, no la disponibilidad de deployments. La sonda remota no se ejecutó: se confirmó que `.github/workflows/deployed-service-health.yml` no existe en `main` (404) y que el bootstrap fijo del script no tiene selector de entorno; no se verificó independientemente que apunte a Beta aislada. La matriz Beta ya advierte que no se debe disparar hasta confirmar ese aislamiento.
+**Validación local — 2026-11-24:** el preflight de `Tareas_Beta.md` conserva como primera sección la sincronización segura: remoto/rama exactos, árbol limpio, `fetch` + `pull --ff-only`, HEAD final y ausencia de comandos destructivos. Contrato estático 8/8 PASS. La secuencia se ejecutó además en un repositorio Git fixture temporal: fast-forward v1→v2, detección de árbol sucio y detección de rama incorrecta, 3/3 PASS; no se sincronizó el clon real ni se hizo fetch/pull contra GitHub.
+
+El workflow `GPSpedia service regression tests` confirmó el checkout exacto de `GPSpedia2.2.5_work`, Node.js v22.23.5, sintaxis PASS y ejecución del runner general. Run **45396084519**, job **138452115396**, commit **142b9057f57909c364a9726fd448f43d6e048cad**: **513 suites, 6,051 pruebas aprobadas, 0 fallos**. `ServiceHealthContract.mjs` aprobó 19/19 en las ejecuciones registradas del run anterior **45395676090**. Los contratos de MIG-028 y MIG-014 verifican fallos parciales, aislamiento y coordinación frontend sin detener servicios independientes. Estos resultados son pruebas automatizadas locales/CI; no acreditan disponibilidad ni comportamiento de deployments reales.
+
+**Validación Beta diferida:** no se ejecutó la sonda remota. Se confirmó que `.github/workflows/deployed-service-health.yml` no existe en `main` (404), y `RemoteServiceHealth.mjs` usa un bootstrap fijo sin selector de entorno; no se verificó independientemente que sus destinos sean exclusivamente Beta. No se enviaron solicitudes a endpoints ni se modificaron deployments, propiedades Apps Script, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos. La matriz Beta mantiene esas pruebas pendientes hasta contar con acceso autorizado y recursos sintéticos aislados.
+
+**Criterio de cierre local:** cumplido. Conforme a NORMAS_DESAROLLO.md §§5 y 10, la falta de navegador, deployments o recursos externos no mantiene abierta una tarea cuyas validaciones locales pertinentes ya aprobaron. MIG-030 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**; la ejecución de campo permanece registrada como pendiente operativa en `Tareas_Beta.md`, sin declarar funciones reales como probadas.
 
 **Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; cero configuración local prohibida; despliegue simplificado y rendimiento no inferior a la línea base.
-
 
 #### Trazabilidad de acciones completada en primera pasada — 2026-11-23
 
