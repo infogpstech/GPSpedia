@@ -3182,10 +3182,10 @@ function getAuthCentralServiceUrlMap_(spreadsheet, allowDraft) {
             }
             var endpointUrl = String(record.values[services.positions.endpoint_url] || "").trim();
             var contractVersion = String(record.values[services.positions.contract_version] || "").trim();
-            if (!endpointUrl || !/^https:\/\/script\\.google\\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpointUrl)) {
+            if (!endpointUrl || !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpointUrl)) {
                 throw new Error("La revisión activa contiene un endpoint inválido para " + key + ".");
             }
-            if (!/^\\d+\\.\\d+\\.\\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(contractVersion)) {
+            if (!/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(contractVersion)) {
                 throw new Error("La revisión activa no declara una versión de contrato válida para " + key + ".");
             }
             result[key] = endpointUrl;
