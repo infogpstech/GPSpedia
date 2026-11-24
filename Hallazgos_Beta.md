@@ -174,3 +174,15 @@ _Aún no hay hallazgos confirmados._
 - **Severidad:** ALTA para el flujo de publicación; pendiente confirmar alcance.
 - **Estado:** REPORTADO; investigación pendiente después de la corrección local del Dashboard y de la tarea de imagen de tarjeta.
 - **Validación:** no se ejecutó subida real ni se utilizó OAuth/YouTube API. La prueba externa queda reservada a Beta aislada.
+
+
+### Actualización BETA-F005 — implementación de imagen de tarjeta
+
+- **Estado:** CORREGIDO EN RAMA Y VALIDADO EN CI; validación Beta aislada pendiente.
+- **Implementación:** el modal `openAddTutorialModal()` incorpora selector opcional de archivo JPEG/PNG/WebP, máximo 3 MB. El frontend lee el archivo y envía `imagenDataUrl` con el alta existente; no se agrega otra acción ni otro servicio.
+- **FEEDBACK:** valida formato, Base64, límite y firma binaria; almacena en Drive bajo `Cortes/Tutoriales`, confirma que la carpeta sea hija directa de la raíz autorizada y verifica permisos heredados. La columna C `Imagen` de `Tutorial` conserva solo la URL de referencia.
+- **Idempotencia y recuperación:** hash de imagen incluido en el payload de creación; mismo `operationId`/contenido reutiliza archivo; contenido diferente se rechaza. Los archivos existentes se verifican por contenido/hash, MIME, tamaño, nombre, metadata y ubicación antes de reutilizarse.
+- **CATALOG:** la URL Drive se normaliza al ID de archivo usado por el render de tarjetas.
+- **Pruebas:** `TutorialIntegrity` 47/47 PASS; CI run `45504362878`: 517 suites, 6,147 pruebas, 0 fallos; Chromium 184/184 PASS; Pages run `45504362787`: SUCCESS.
+- **Restricción:** no se ejecutó carga real ni se modificó Drive/Spreadsheet Beta o productivo. Comprobar el flujo con archivo sintético en Beta aislada según Tareas_Beta §23.
+
