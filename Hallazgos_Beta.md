@@ -186,3 +186,15 @@ _Aún no hay hallazgos confirmados._
 - **Pruebas:** `TutorialIntegrity` 47/47 PASS; CI run `45504362878`: 517 suites, 6,147 pruebas, 0 fallos; Chromium 184/184 PASS; Pages run `45504362787`: SUCCESS.
 - **Restricción:** no se ejecutó carga real ni se modificó Drive/Spreadsheet Beta o productivo. Comprobar el flujo con archivo sintético en Beta aislada según Tareas_Beta §23.
 
+
+
+### Actualización BETA-F007 — resolución de identidad de Tutorial en carga YouTube
+
+- **Estado:** CORRECCIÓN EN RAMA Y VALIDADA EN CI; reproducción y carga real en YouTube Beta pendientes.
+- **Brecha identificada:** CATALOG podía devolver tutoriales históricos sin ID físico con `ID: null`. El botón de carga enviaba el título visible como referencia. FEEDBACK tenía `findTutorialByIdentity_()` para resolver identidades legacy, pero `findTutorialRow_()` —usado por la inicialización y el envío de aprobación de vídeo— no aceptaba esas referencias y podía terminar en `Tutorial no encontrado`.
+- **Corrección de contrato:** CATALOG añade `referenceId` a cada tutorial: utiliza el ID físico cuando existe y, para filas históricas sin ID, genera `legacy-<SHA-256>` a partir del título físico original. La identidad se calcula antes de proyectar renombres, por lo que permanece estable ante los cambios append-only de título.
+- **Corrección de frontend:** el modal de detalle envía `item.ID || item.referenceId || item.Tema`; los metadatos usan la misma referencia estable. El frontend sigue coordinando CATALOG y FEEDBACK; no se añadió comunicación directa entre servicios Apps Script ni URLs de servicios en backend.
+- **Corrección FEEDBACK:** `findTutorialRow_()` resuelve referencias `legacy-<SHA-256>` mediante `findTutorialByIdentity_()` y proyecta ediciones/renombres. Los IDs canónicos `tut-...` siguen siendo estrictos: si no existen, se rechazan sin buscar otro tutorial por título.
+- **Pruebas:** `FeedbackTutorialLookupBoundedRead` 9/9 PASS; `TutorialIntegrity` 48/48 PASS; FEEDBACK precondiciones de subida resumable 9/9 PASS, incluida inicialización YouTube con Tutorial histórico y referencia legacy.
+- **Validación completa:** CI run `45505972628`, HEAD `ff27665eb3083b5c401f13f9268e983394320214`: SUCCESS; 517 suites, 6,155 pruebas, 0 fallos. Chromium responsive 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700. Pages run `45505971953`: SUCCESS.
+- **Alcance no verificado:** no se reprodujo el error contra la cuenta/Spreadsheet/Drive Beta del usuario ni se realizó una subida real a YouTube. No se desplegó Apps Script ni se modificaron recursos externos. La prueba Beta debe cubrir tanto tutorial histórico sin ID físico como tutorial nuevo con ID `tut-...`.
