@@ -53,7 +53,8 @@ function runVideoApprovalPublishingTests() {
         const pys=makeSheet_([pysHeaders,["isue-001","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]],
             options.failTargetVideoWrite?{failSetValueAtColumn:8,failSetValueOnce:true}:{});
         const tutHeaders=VIDEO_TUTORIAL_HEADERS.slice();
-        const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],
+        const tutorialRow=[options.legacyTutorial?"":"tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"];
+        const tutorial=makeSheet_([tutHeaders,tutorialRow],
             options.failTutorialImageWrite?{failSetValueAtColumn:3,failSetValueOnce:true}:
                 options.failTargetVideoWrite?{failSetValueAtColumn:7,failSetValueOnce:true}:{});
         const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutorial":tutorial };
@@ -93,6 +94,14 @@ function runVideoApprovalPublishingTests() {
             const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
             assert_(r.targetType==="pys"&&e.pys.data[1][7]===videoUrl&&saved.status==="approved");
         }));
+        run_("resuelve destino Tutorial histórico mediante referencia legacy estable",()=>{
+            const legacyId=makeLegacyTutorialIdentity_("Tutorial demo");
+            withEnv_("tutorial",{legacyTutorial:true,referenceId:legacyId},e=>{
+                const target=getVideoApprovalTarget_({contentType:"tutorial",referenceId:legacyId});
+                assert_(target.type==="tutorial"&&target.record&&target.record.rowIndex===2);
+                assert_(target.record.row[1]==="Tutorial demo");
+            });
+        });
         run_("aprueba Tutorial por ID y genera miniatura solo si está vacía",()=>withEnv_("tutorial",{},e=>{
             const r=handleApproveVideo(actor_("vid-1"));
             const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
