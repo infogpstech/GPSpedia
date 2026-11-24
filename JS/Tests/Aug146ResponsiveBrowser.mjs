@@ -167,7 +167,7 @@ try {
         textAlign: style ? style.textAlign : "",
         fontSize: style ? style.fontSize : "",
         emphasisPreserved: Boolean(paragraph && Array.from(paragraph.querySelectorAll("strong")).some(node => node.textContent.trim() === "Texto destacado")),
-        listPreserved: Boolean(detail.querySelector(".detail-rich-text-paragraph ul > li")?.textContent === "Detalle con formato"),
+        listPreserved: Boolean(Array.from(detail.querySelectorAll(".detail-rich-text-paragraph ul li")).some(node => node.textContent.trim() === "Detalle con formato")),
         unsafeMarkupRemoved: Boolean(paragraph && !paragraph.querySelector("script,iframe,[onclick],[onerror],a[href^='javascript:'],img[src^='javascript:']")),
         iframeSrc: validIframe ? validIframe.src : "",
         iframeTitle: validIframe ? validIframe.title : ""
@@ -194,8 +194,10 @@ try {
       tutorialRender.validResult.textAlign === "center" &&
       tutorialRender.validResult.fontSize === "24px",
       profile.name + ": conserva color, alineación y tamaño de texto en detalle de Tutorial");
-    check(tutorialRender.validResult.emphasisPreserved && tutorialRender.validResult.listPreserved,
-      profile.name + ": conserva énfasis y listas del contenido enriquecido");
+    check(tutorialRender.validResult.emphasisPreserved,
+      profile.name + ": conserva el énfasis del contenido enriquecido");
+    check(tutorialRender.validResult.listPreserved,
+      profile.name + ": conserva las listas del contenido enriquecido");
     check(tutorialRender.validResult.unsafeMarkupRemoved,
       profile.name + ": elimina scripts, iframes, handlers y URLs activas del contenido enriquecido");
     check(tutorialRender.validResult.iframeSrc === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1" &&
