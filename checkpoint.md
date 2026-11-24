@@ -37,3 +37,10 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Próxima acción
 Continuar MIG-026 con diseño y validación local de una arquitectura de acceso central sin IDs locales, preservando fail-closed y las funciones actuales. La prueba real de cada Web App queda diferida a Beta y no se debe usar como sustituto de una solución local segura. Mantener `Tareas_Beta.md` como procedimiento de campo. Antes de cualquier prueba remota, confirmar los seis deployments activos y el aislamiento de Spreadsheet, Drive, cuentas y datos sintéticos. Comenzar por health/read-only; no ejecutar mutaciones sin permisos, previsualización y recuperación confirmados. Registrar solo resultados observados en `Hallazgos_Beta.md`.
+
+
+## Continuidad — verificación posterior al ajuste documental
+- HEAD verificado antes de este registro: 8346fd1a324eb9190bb5f6f63e959c292cd8120a.
+- CI run 45397851823, job 138458289189, sobre ese HEAD: SUCCESS; checkout de rama autorizada; Node.js v22.23.5; sintaxis de módulos modificados PASS; regresión 513 suites, 6,051 pruebas aprobadas, 0 fallos.
+- MIG-026StaticConfigSearch: 10/10 PASS. El contrato confirma explícitamente que las referencias Spreadsheet locales permanecen confinadas al pendiente MIG-006 conocido; no certifica su eliminación.
+- MIG-030 se mantiene COMPLETADA CON VALIDACIÓN DIFERIDA; MIG-026 continúa EN PROGRESO por el problema local de arquitectura de acceso Spreadsheet.
