@@ -893,3 +893,9 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Dashboard: no duplicar la agregación existente de modelos, cortes, utilidades y colaboradores; completar la tabla mostrando cortes aportados por usuario de forma independiente.
 - Developer: mover la navegación debajo de la línea de comando, expandir etiqueta solo para pestaña activa, duplicar altura de consola, compactar espaciado, mostrar estados de endpoints solo en consola y renombrar el botón a «Actualizar Servicios».
 - BETA-F007 permanece cerrada en código/CI y pendiente solo de la validación Beta descrita en Tareas_Beta.md §24. No se desplegaron Apps Script ni se modificaron recursos externos.
+
+
+### 2026-11-24 — Rectificación de trazabilidad de tareas
+
+- Se rectifica la adenda de checkpoint/Hallazgos que había clasificado AUG-147 a AUG-150 como IDs no oficiales. La revisión del historial del propio repositorio confirma registros de inicio/cierre para AUG-147 (caché v76) y AUG-150 (esquema Inbox); AUG-148 y AUG-149 aparecen como tareas pendientes en checkpoint y Hallazgos, sin cierre funcional en este changelog.
+- El registro operativo actual es `Tareas_Activas.md`, commit `9442da203814be4891de82f93a1730700fb4b31d`. Su primer punto activo es el modal de detalle Tutorial (HTML enriquecido seguro y vídeo YouTube validado). No se asignan IDs nuevos.
