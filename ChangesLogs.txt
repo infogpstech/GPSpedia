@@ -578,3 +578,7 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - No se ejecutaron pruebas Beta remotas ni se modificaron deployments, propiedades, permisos, Spreadsheet, Drive o datos productivos. Las pruebas reales permanecen pendientes de recursos Beta aislados.
 
 - Prueba adicional del bloque de sincronización en un repositorio Git fixture temporal: fast-forward v1→v2, guardia de árbol sucio y guardia de rama incorrecta, todos PASS. El remoto fue local/aislado; no se hizo fetch/pull del repositorio GitHub ni se invocaron servicios Beta.
+
+- CI Node.js 22 para HEAD cb794f1afe23d84845db046b4202c825691a6420 (run 45395676090): ServiceHealthContract 19/19 PASS en dos invocaciones; regresión 513 suites / 6,051 pruebas / 0 fallos.
+- La sonda remota no se ejecutó: workflow ausente en main y bootstrap de entorno fijo sin selector; aislamiento Beta no verificado. Se mantiene la precaución documentada en Tareas_Beta.md.
+- No se ejecutaron operaciones Apps Script/Spreadsheet/Drive/OAuth ni se modificó producción; Beta real continúa pendiente.
