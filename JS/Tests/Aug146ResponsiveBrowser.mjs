@@ -77,7 +77,7 @@ try {
       route.fulfill({ status: 200, contentType: "application/json",
         body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) }));
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("#dev-tools-modal");
+    await page.waitForSelector("#dev-tools-modal", { state: "attached" });
     await page.evaluate(async () => {
       const [ui, state, overlays] = await Promise.all([
         import("/JS/Frontend/ui.js"),
