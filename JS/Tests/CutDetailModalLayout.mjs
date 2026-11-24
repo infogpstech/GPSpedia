@@ -121,17 +121,17 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     const mobileLogoRules = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileLogoRules, /grid-template-columns:max-content minmax\(0,1fr\)/);
     assert.match(mobileLogoRules, /column-gap:6px/);
-    assert.match(mobileLogoRules, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:48px !important;[\s\S]*?min-height:48px !important;[\s\S]*?max-height:48px !important;[\s\S]*?max-width:100% !important;[\s\S]*?object-fit:contain/);
+    assert.match(mobileLogoRules, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:66px !important;[\s\S]*?min-height:66px !important;[\s\S]*?max-height:66px !important;[\s\S]*?max-width:none !important;[\s\S]*?object-fit:contain/);
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
-    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:48px;[\s\S]*?min-height:48px;/);
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?height:66px;[\s\S]*?min-height:66px;/);
     assert.match(mobileLogoRules, /justify-content:flex-start/);
     const mobileLogoContainerStart = mobileLogoRules.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title {');
     const mobileLogoContainerEnd = mobileLogoRules.indexOf("}", mobileLogoContainerStart);
     const mobileLogoContainer = mobileLogoRules.slice(mobileLogoContainerStart, mobileLogoContainerEnd);
-    assert.ok(mobileLogoContainer.includes("grid-row:1 / span 2;") && mobileLogoContainer.includes("align-self:end;"));
-    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;[\s\S]*?align-items:flex-start/);
+    assert.ok(mobileLogoContainer.includes("grid-row:1 / span 2;") && mobileLogoContainer.includes("align-self:end;") && mobileLogoContainer.includes("height:66px;"));
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;[\s\S]*?align-items:flex-start;[\s\S]*?transform:translate\(-13px,-19px\)/);
     assert.match(mobileLogoRules, /object-position:left top/);
-    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-start;[\s\S]*?align-self:flex-start;[\s\S]*?margin:6px 0 0 !important;[\s\S]*?transform:none !important/);
+    assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-end;[\s\S]*?align-self:end;[\s\S]*?margin:0 !important;[\s\S]*?transform:translate\(-13px,-19px\) !important/);
 });
 
 testCase("los cinco campos de edición se agrupan en una rejilla con asociaciones accesibles", () => {
@@ -213,11 +213,11 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
     assert.match(detail, /setAttribute\("aria-labelledby", title\.id\)/);
     assert.match(detail, /titleContainer\.appendChild\(logoImg\)/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?height: 120px !important;[\s\S]*?max-height: 120px !important/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:end;[\s\S]*?margin:0;[\s\S]*?transform:translate\(-17px,-19px\)/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:end;[\s\S]*?height:32px;[\s\S]*?transform:translate\(-17px,-19px\)/);
     const mobileCutHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
-    assert.match(mobileCutHeader, /\.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:\s*1px 6px 2px\s*!important/);
+    assert.match(mobileCutHeader, /\.detail-modal-title-input \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2;[\s\S]*?align-self:end;[\s\S]*?height:32px;[\s\S]*?transform:translate\(-13px,-19px\)/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:6px 6px 2px !important;[\s\S]*?transform:translateY\(-19px\)/);
 });
 
 
@@ -226,8 +226,8 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
 testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no se recorta", () => {
     assert.match(detail, /headerDivider\.className = "detail-modal-divider"/);
     assert.match(detail, /headerDiv\.insertBefore\(headerDivider, savingIndicator\)/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:\s*1px 6px 2px\s*!important/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?height:64px;[\s\S]*?min-height:64px;[\s\S]*?padding:0 !important/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-divider \{[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:6px 6px 2px !important;[\s\S]*?transform:translateY\(-19px\)/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?height:66px;[\s\S]*?min-height:66px;[\s\S]*?padding:0 !important/);
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
     const desktopLogoStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {');
     const desktopLogoRule = css.slice(desktopLogoStart, css.indexOf("}", desktopLogoStart));
@@ -262,7 +262,7 @@ testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado
 testCase("el logo ocupa dos filas y su contenedor se alinea abajo junto al modelo", () => {
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
     assert.match(cutHeader, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns:max-content minmax\(0,1fr\);[\s\S]*?grid-template-rows:auto auto auto auto/);
-    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?width:max-content;[\s\S]*?height:64px;[\s\S]*?align-items:flex-start/);
+    assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?width:max-content;[\s\S]*?height:66px;[\s\S]*?align-items:flex-start/);
     assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2/);
     assert.match(cutHeader, /\.detail-modal-header-actions \{[\s\S]*?justify-content:flex-end/);
     assert.match(cutHeader, /\.detail-modal-divider \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:\s*1px 6px 2px\s*!important/);
@@ -311,13 +311,13 @@ testCase("el nombre completo pasa debajo del logo solo cuando no cabe junto a é
 
 testCase("el modelo conserva su posición superior junto al logo y los botones reducen su relleno horizontal", () => {
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
-    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:flex-start;[\s\S]*?margin-top:6px;[\s\S]*?transform:none/);
+    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin:0;[\s\S]*?transform:translate\(-17px,-19px\)/);
     assert.match(cutHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:3px 2px;/);
     const mobileHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileHeader, /\.detail-modal-title-text \{[\s\S]*?margin:6px 0 0 !important/);
     assert.match(mobileHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:2px 1px;/);
-    assert.match(cutHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:64px !important/);
-    assert.match(mobileHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:48px !important/);
+    assert.match(cutHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:66px !important/);
+    assert.match(mobileHeader, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important;[\s\S]*?height:66px !important/);
 });
 
 
@@ -334,6 +334,18 @@ testCase("todos los estilos del encabezado de detalle están agrupados en un ún
     assert.match(consolidatedCss, /\.detail-modal-toolbar \{/);
     assert.match(consolidatedCss, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-toolbar \{/);
     assert.match(consolidatedCss, /@media \(max-width:560px\)[\s\S]*?\.detail-modal-title \{/);
+});
+
+testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grupo de botones", () => {
+    const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
+    const actionsStart = css.indexOf(".detail-modal-header-actions {");
+    const actionsRule = css.slice(actionsStart, css.indexOf("}", actionsStart));
+    assert.ok(actionsRule.includes("grid-column: 2;") && actionsRule.includes("grid-row: 1;"));
+    assert.ok(actionsRule.includes("justify-content: flex-end;") && actionsRule.includes("gap: 6px;") && actionsRule.includes("padding-right: 48px"));
+    assert.ok(cutHeader.includes("grid-template-rows:40px 32px auto auto"));
+    assert.ok(cutHeader.includes("grid-column:2;") && cutHeader.includes("grid-row:1;") && cutHeader.includes("justify-content:flex-end"));
+    assert.ok(detail.includes('const actionButtons = Array.from(headerActions.querySelectorAll("button"))'));
+    assert.ok(detail.includes("firstActionLeft - titleRect.left - 6"));
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
