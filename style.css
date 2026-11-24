@@ -6494,6 +6494,14 @@ textarea.rich-text-source[hidden] { display:none !important; }
         flex-direction: row;
         align-items: center;
     }
+    #dev-tools-modal .dev-action-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    #dev-tools-modal .dev-action-row button {
+        flex: 0 0 auto;
+        width: 100%;
+    }
     #dev-tools-modal .dev-terminal-row .dev-terminal-input-shell {
         min-width: 0;
     }
