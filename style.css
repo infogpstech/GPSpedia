@@ -6041,6 +6041,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     max-width:100%;
     align-self:end;
     margin:0;
+    padding:0 !important;
     justify-self:stretch;
     text-align:left;
     line-height:32px;

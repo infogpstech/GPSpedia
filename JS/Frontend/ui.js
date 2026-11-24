@@ -2836,6 +2836,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     if (typeof ResizeObserver === "function") {
         const titleLayoutObserver = new ResizeObserver(updateCutModelTitleLayout);
         titleLayoutObserver.observe(headerDiv);
+        titleLayoutObserver.observe(titleContainer);
+        if (logoImg) titleLayoutObserver.observe(logoImg);
         if (modalDetalle) modalDetalle._detailModalTitleLayoutObserver = titleLayoutObserver;
     }
     if (titleNode.tagName === "INPUT") {

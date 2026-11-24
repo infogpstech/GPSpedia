@@ -311,7 +311,7 @@ testCase("el nombre completo pasa debajo del logo solo cuando no cabe junto a é
 
 testCase("el modelo conserva su posición superior junto al logo y los botones reducen su relleno horizontal", () => {
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
-    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin:0;[\s\S]*?transform:translate\(-17px,-19px\)/);
+    assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin:0;[\s\S]*?padding:0 !important;[\s\S]*?line-height:32px;[\s\S]*?transform:translate\(-17px,-19px\)/);
     assert.match(cutHeader, /\.detail-modal-header-actions \.share-modal-btn \{\s*padding:3px 2px;/);
     const mobileHeader = css.slice(css.indexOf("GP-UX-DETAIL-LOGO-MOBILE-02"));
     assert.match(mobileHeader, /\.detail-modal-title-text \{[\s\S]*?align-self:end;[\s\S]*?margin:0 !important;[\s\S]*?transform:translate\(-13px,-19px\) !important/);
@@ -346,6 +346,7 @@ testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grup
     assert.ok(cutHeader.includes("grid-column:2;") && cutHeader.includes("grid-row:1;") && cutHeader.includes("justify-content:flex-end"));
     assert.ok(detail.includes('const actionButtons = Array.from(headerActions.querySelectorAll("button"))'));
     assert.ok(detail.includes("const logoRect = titleContainer.getBoundingClientRect()"));
+    assert.ok(detail.includes("titleLayoutObserver.observe(titleContainer)") && detail.includes("titleLayoutObserver.observe(logoImg)"));
     assert.ok(detail.includes("logoRect.right + 6"));
     assert.ok(detail.includes("firstActionLeft - titleStart"));
 });
