@@ -686,3 +686,14 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - La inicialización escribe únicamente encabezados. No crea filas operativas, no inventa URLs/IDs, no activa `READY` ni publica una revisión; la configuración queda cerrada hasta completar y validar los datos reales.
 - Prueba nueva `CentralConfigurationInitializer.mjs`: 7/7 PASS. CI run `45436552111`, job `138595813855`, commit `062e22eeafa792769ef20ed9e6bdbfbc2778b654`: SUCCESS; 514 suites, 6,067 pruebas aprobadas, 0 fallos; comprobación sintáctica PASS.
 - No se modificó ninguna Spreadsheet real ni se desplegó Apps Script. Quedan para Beta la comprobación del contexto activo de AUTH, la ejecución manual en la Spreadsheet correcta, el llenado/versionado de los valores reales y el despliegue autorizado de la nueva versión de AUTH.
+
+
+### 2026-11-24 — Corrección de vinculación compartida Spreadsheet/Drive (MIG-026)
+
+- Se corrigió el acceso de los seis servicios Apps Script independientes: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN usan ahora `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)` con el mismo ID de Spreadsheet suministrado por el propietario.
+- AUTH, WRITE, FEEDBACK y ADMIN reciben el ID desde `CentralConfigurationReader.js`; CATALOG y UTILITIES declaran el mismo localizador en sus módulos, pues no incluyen ese helper.
+- WRITE, FEEDBACK y ADMIN utilizan `GPSpediaCortesRootFolderId_` compartido desde `CentralConfigurationReader.js`. Se mantienen las comprobaciones de ID, nombre `Cortes`, papelera y ubicación directa bajo la raíz de Drive.
+- No se añadieron propiedades Apps Script, claves, tokens, secretos, URLs ni endpoints de otros servicios. La excepción temporal para los dos IDs expresamente autorizados se registró en NORMAS_DESAROLLO.md §17.1 y se retirará al eliminar los módulos Apps Script del repositorio.
+- Se actualizaron los fixtures y contratos de AUTH, CATALOG, UTILITIES, MIG-008, MIG-015, MIG-026 y MIG-029; la guía de despliegue, README, Tareas_Beta, inventario y checkpoint.
+- CI run `45444136611`, job `138623108916`, checkout HEAD `0aa586c933296d745fa3509887aeccf7e5d2d84e`: SUCCESS; 514 suites, 6,070 pruebas aprobadas, 0 fallos; sintaxis PASS. MIG015ImageConfigurationContract 16/16, CentralConfigurationInitializer 7/7 y MIG026StaticConfigSearch 10/10 PASS. GitHub Pages run `45444134417`: SUCCESS.
+- No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, permisos, scopes ni propiedades instaladas. Quedan para Beta la verificación de identidad de ejecución, scopes/autorización, lectura/escritura y acceso real a la carpeta raíz.
