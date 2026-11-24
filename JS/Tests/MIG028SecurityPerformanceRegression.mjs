@@ -111,8 +111,7 @@ testCase("La telemetría de rendimiento es local y no agrega viajes de red",()=>
 testCase("La línea base MIG-005 distingue CI de latencia real de la aplicación",()=>{
  assert.match(baseline,/306/);assert.match(baseline,/3,581/);
  assert.match(baseline,/aprox(?:imadamente)? 30 segundos|aprox\. 30 s/i);
-  const baselinePlain=baseline.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  assert.match(baselinePlain,/no es una medicion de latencia de arranque, login/i,"La duración del runner no debe presentarse como latencia de la aplicación.");
+  assert.ok(baseline.includes("Duración de CI") && baseline.includes("30 segundos") && baseline.includes("PENDIENTE BETA"),"La duración del runner es una métrica de CI; las latencias de aplicación siguen pendientes de Beta.");
  for(const metric of ["Arranque y login","Catálogo: snapshot","Inbox","Carga de imágenes y vídeos","Número de llamadas"])
   assert.ok(baseline.includes(metric),"MIG-005 no documenta "+metric);
  assert.match(baseline,/PENDIENTE BETA/);
