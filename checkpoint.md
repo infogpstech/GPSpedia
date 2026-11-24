@@ -1820,3 +1820,21 @@ Commit de acceso lazy a ScriptProperties: b55e48ae3708c8fe6b72278d5d8cd11aee6f71
 
 Resultado: guardas temporales ADMIN migradas en código y CI; validación Beta pendiente. Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 3 (4 total). Siguiente familia según inventario: GPSpedia_DRIVE_AUDIT_STATE_<auditId>. Después: puntero latest por actor y contador LOGOS_MARCA_ID_COUNTER. La limpieza estática global se realiza tras completar esas familias.
 ================================================================================
+
+================================================================================
+MIG-026 ADMIN-03 — CIERRE LOCAL DEL ESTADO REANUDABLE DRIVE — 2026-11-23
+HEAD de implementación y pruebas: 7ccc136973babed24f7c007fd89812faccd09844
+Commit de migración: 612d82ecdb705adf497e7c8f2025154f4605b2aa
+Commit de ajuste del harness de pruebas: 7ccc136973babed24f7c007fd89812faccd09844
+
+- GPSpedia_DRIVE_AUDIT_STATE_<auditId> migrado a DriveAuditRuns (8 columnas). El estado completo queda en stateJson; páginas, respuestas y snapshots grandes continúan en CacheService.
+- Baseline valida UUID/auditId/owner/status/updatedAt, importa solo estados vigentes, es reanudable e idempotente, verifica read-back y marca drive_audit_state_baseline_v1. Las propiedades legacy se conservan sin setProperty/deleteProperty.
+- save actualiza/upsert con read-back; load valida identidad y TTL de 6 horas; cleanup retira filas vencidas en lotes y limpia caches/latest pointer fuera del lock. Máximo 500 estados y stateJson máximo 8,000 caracteres.
+- ScriptLock fail-fast tryLock(0), únicamente en baseline/save/cleanup; load no retiene lock. No se mantiene lock durante Drive. La contención devuelve DRIVE_AUDIT_STATE_BUSY y permite reintento.
+- AdminReplacedImagesIntegrity: baseline vigente/vencido, read-back, no eliminación legacy, lock fail-fast, owner, TTL y contratos de snapshots aprobados.
+- CI run 45327051980: sintaxis PASS; 496 suites, 5,841 pruebas aprobadas, 0 fallos.
+- GitHub Pages run 45327050709: SUCCESS.
+- No se desplegó Apps Script ni se creó/modificó Spreadsheet/Drive real. Beta pendiente.
+
+Resultado: subtramo DriveAuditRuns COMPLETADO EN CÓDIGO Y CI; VALIDACIÓN BETA PENDIENTE. Siguiente familia según inventario: GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>. Después: LOGOS_MARCA_ID_COUNTER; luego búsqueda estática global.
+================================================================================

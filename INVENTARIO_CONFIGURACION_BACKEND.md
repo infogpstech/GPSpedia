@@ -238,7 +238,7 @@ Esta adenda prevalece sobre las ubicaciones y consumidores históricos descritos
 7. ADMIN: auditoría GPSpedia_ADMIN_AUDIT_V1_<eventId>.
 8. ADMIN: ledger Safe Apply GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>.
 9. ADMIN: guardas temporales GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)>; migración a hoja AdminOperationGuards, baseline legacy solo de reservas vigentes, exclusión por scope y TTL 30–420 s.
-10. ADMIN: estado reanudable de auditoría Drive GPSpedia_DRIVE_AUDIT_STATE_<auditId>.
+10. ADMIN: estado reanudable de auditoría Drive GPSpedia_DRIVE_AUDIT_STATE_<auditId>; migrado a DriveAuditRuns con baseline, read-back, TTL de 6 h y páginas/snapshots fuera de celdas.
 11. ADMIN: puntero por actor GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>.
 12. ADMIN: contador LOGOS_MARCA_ID_COUNTER.
 
@@ -333,3 +333,15 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - No se modifica el comportamiento de las funciones Drive protegidas. La hoja se prepara manualmente en Beta; no se crea automáticamente ni se despliegan servicios.
 - Estado de familias operativas tras esta migración: AUTH 0, WRITE 1, ADMIN 3 (4 total). ADMIN conserva LOGOS_MARCA_ID_COUNTER y las dos familias DRIVE_AUDIT_STATE/LATEST; auditoría, Safe Apply y guardas quedan como lectores de baseline legacy.
 - CI run 45325854986: 496 suites, 5,832 pruebas aprobadas, 0 fallos; AdminLocalOperationGuard 12/12. GitHub Pages run 45325854063 SUCCESS. Beta pendiente en Tareas_Beta.md §13.
+
+
+### Adenda MIG-026 ADMIN-03 — estado reanudable de auditoría Drive — 2026-11-23
+
+- La familia GPSpedia_DRIVE_AUDIT_STATE_<auditId> pasa a DriveAuditRuns (8 columnas): auditId, ownerId, status, createdAt, updatedAt, expiresAt, stateJson, schemaVersion. Fila 2 META/BASELINE; filas 3+ estados.
+- Baseline legacy idempotente/reanudable: valida UUID/auditId, owner, status, updatedAt y JSON; importa solo estados vigentes; verifica read-back; marca drive_audit_state_baseline_v1. Estados vencidos se omiten y sus caches/latest pointer asociado se limpian fuera del lock. Propiedades de estado legacy se conservan sin modificación.
+- save/load/cleanup operan contra Spreadsheet; stateJson máximo 8,000 caracteres; TTL 6 horas; límite 500 estados. Páginas, respuestas y snapshots permanecen en CacheService con TTL 6 horas.
+- Lock fail-fast tryLock(0) solo durante baseline, save y cleanup. load no retiene lock. Cleanup borra filas en grupos descendentes y limpia caches/latest pointer fuera del lock. Ninguna sección crítica contiene operaciones Drive.
+- El puntero GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)> permanece como familia separada pendiente; cleanup todavía puede leerlo/eliminarlo al expirar el estado relacionado.
+- CI run 45327051980: 496 suites, 5,841 pruebas aprobadas, 0 fallos. Pages run 45327050709 SUCCESS.
+- Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 2 (3 total). ADMIN conserva el puntero latest por actor y LOGOS_MARCA_ID_COUNTER; auditoría, Safe Apply, guardas y estado reanudable quedan como lectores de baseline legacy.
+- Beta pendiente en Tareas_Beta.md §14.

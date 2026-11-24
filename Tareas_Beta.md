@@ -311,3 +311,20 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Confirmar TTL mínimo 30 s y máximo 420 s, limpieza de vencidos y capacidad máxima segura de 500 reservas activas. Ninguna función debe esperar por otra ni mantener lock durante Drive/Spreadsheet prolongado.
 - Después de admin_local_guard_baseline_v1, confirmar que el flujo ordinario no vuelve a consultar ScriptProperties para esta familia. No borrar propiedades legacy durante Beta; limpieza física requiere autorización explícita.
 - Registrar deployment, Spreadsheet, actor, scopes sintéticos, resultados y evidencia anonimizada en Hallazgos_Beta.md.
+
+
+## 14. Validación Beta diferida — MIG-026 ADMIN: DriveAuditRuns
+**Estado: PENDIENTE DE BETA.** CI run 45327051980 aprobó 496 suites y 5,841 pruebas, 0 fallos. Falta validar Apps Script, Spreadsheet y Drive reales en entorno aislado.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar proyecto ADMIN, Spreadsheet y Drive desechables.
+- Crear manualmente DriveAuditRuns con estos 8 encabezados exactos en fila 1: auditId, ownerId, status, createdAt, updatedAt, expiresAt, stateJson, schemaVersion. Fila 2 vacía para META/BASELINE; estados desde fila 3. No crear la hoja automáticamente.
+- Preparar propiedades legacy GPSpedia_DRIVE_AUDIT_STATE_<auditId> con estados running y complete. Verificar importación de auditId, ownerId, status, timestamps y JSON completo; marcador drive_audit_state_baseline_v1; read-back; idempotencia; reanudación tras pending; y preservación de propiedades legacy.
+- Preparar un estado legacy vencido (>6 h) y uno con timestamp futuro fuera de tolerancia. El vencido se omite del baseline y se limpian sus caches/último puntero asociado; el futuro inválido falla cerrado. JSON corrupto, clave/auditId discordante, owner vacío, status vacío, filas duplicadas/huérfanas, schemaVersion desconocida y encabezados alterados deben fallar sin borrar propiedades.
+- Confirmar stateJson máximo 8,000 caracteres y máximo 500 estados; el estado reanudable debe conservar progreso, cursor, fingerprints, contadores, métricas, digest de archivos y resumen de inventario. No guardar páginas, respuestas ni snapshots grandes en celdas: deben permanecer en CacheService con TTL de 6 horas.
+- Interrumpir el baseline en pending, durante importación parcial y antes del marcador final. Reintentar y confirmar que solo se importan filas faltantes.
+- Simular save con error de Spreadsheet y respuesta perdida. Read-back debe decidir si la escritura quedó confirmada; no aceptar persistencia ambigua.
+- Iniciar auditorías de dos propietarios distintos de forma solapada. La reserva/actualización del ledger debe usar tryLock(0), no waitLock; la sección crítica solo cubre la hoja, nunca Drive. Contención responde retryable y no bloquea ni deja en cola otra función.
+- Confirmar que load y validación de estado son lecturas y no retienen ScriptLock; save y cleanup liberan el lock al terminar. Cleanup elimina filas expiradas por lotes, y la eliminación de caches/último puntero ocurre fuera del lock.
+- Confirmar que cleanup no elimina ni modifica las propiedades legacy GPSpedia_DRIVE_AUDIT_STATE_. El puntero GPSpedia_DRIVE_AUDIT_LATEST_ sigue siendo una familia separada y debe probarse por su tarea propia.
+- Después del baseline, confirmar que load/save/cleanup de estado no vuelven a obtener ScriptProperties. Las únicas lecturas restantes en este flujo corresponden al puntero latest, aún no migrado.
+- Registrar deployment, Spreadsheet, owners, auditIds sintéticos, cursores, resultados y evidencia anonimizada en Hallazgos_Beta.md.
