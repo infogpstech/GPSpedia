@@ -456,3 +456,44 @@ La comprobación manual en dispositivos físicos/navegadores de campo permanece 
 5. La aplicación no crea estas hojas durante una lectura normal. El aviso informativo de inicialización pendiente no sustituye la ejecución manual ni declara disponible el feed.
 
 **Límites:** las pruebas CI no ejecutan Apps Script, no escriben en Spreadsheet/Drive y no validan deployments remotos. No se desplegaron servicios Apps Script ni se modificaron propiedades, permisos, hojas, archivos Drive o datos productivos. Registrar cualquier paso no disponible como NO EJECUTADO; no inferir aprobación a partir de la simulación.
+
+
+## 22. Validación Beta diferida — FEEDBACK: inicialización y persistencia de actividad
+
+**Estado: CORRECCIÓN LOCAL COMPLETADA; PENDIENTE DE VERIFICACIÓN EN BETA AISLADA.** La implementación permite registrar actividad aunque `ActividadUsuario` todavía no tenga una fórmula de ID ni una configuración de secuencia. La fórmula histórica se conserva cuando existe; en una hoja sin patrón se usa un ID estático único `ACT-<UUID>`. Los patrones incompatibles siguen fallando cerrados.
+
+### Sincronización segura obligatoria
+
+Ejecutar desde el clon local del repositorio `infogpstech/GPSpedia`. Estos comandos no descartan cambios locales y detienen la secuencia si el repositorio, rama o árbol no coinciden:
+
+```bash
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+case "$(git remote get-url origin)" in *github.com/infogpstech/GPSpedia*) ;; *) echo "Origin no corresponde a infogpstech/GPSpedia"; exit 1 ;; esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; guardar o resolverlos antes de sincronizar"; exit 1; }
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+### Evidencia local ya aprobada
+
+- HEAD: `a13dd84379e575d06f0a4e73bc1909cdad346f1d`.
+- CI run [45502874404](https://github.com/infogpstech/GPSpedia/actions/runs/45502874404): SUCCESS; 517 suites, 6,139 pruebas aprobadas, 0 fallos.
+- `ActivityLogAppendAtomic`: 10/10 PASS; `ActivityLogsBoundedRead`: 8/8 PASS; pruebas de contribuciones e indicadores PASS.
+- GitHub Pages run [45502874103](https://github.com/infogpstech/GPSpedia/actions/runs/45502874103): SUCCESS.
+- Las pruebas locales no consultan ni modifican la Spreadsheet Beta o productiva.
+
+### Pasos en Beta aislada
+
+1. Confirmar que el deployment FEEDBACK y la Spreadsheet utilizados pertenecen al entorno Beta autorizado. Registrar sus identificadores/versiones sin exponer tokens ni datos personales.
+2. Publicar únicamente en el deployment FEEDBACK Beta el código aprobado en la rama de trabajo. No modificar el deployment de producción.
+3. Revisar en la Spreadsheet Beta la hoja `ActividadUsuario` y confirmar que sus siete encabezados corresponden a `id,timestamp,idUsuario,nombreUsuario,tipoActividad,idElementoAsociado,detalle`. No crear ni renombrar hojas de forma improvisada.
+4. Si la hoja no tiene filas de datos y no existe patrón de fórmula/configuración, generar un evento sintético autorizado desde la aplicación (por ejemplo, vista de un vehículo de prueba). Confirmar que se agrega una fila con ID `ACT-<UUID>`, fecha, actor, tipo, referencia y detalle.
+5. Generar un segundo evento y confirmar que se agrega otra fila con un ID diferente. Si la hoja ya tenía fórmula válida, confirmar que la fórmula histórica continúa generando los IDs.
+6. Abrir Dashboard de actividad y comprobar que `getActivityLogs` devuelve el evento reciente y que la tabla lo presenta. Revisar `activitySheetAvailable`, `activityRowsAvailable`, `inboxAuditSheetAvailable`, `inboxAuditRowsAvailable`, `cortesSheetAvailable` y `cortesRowsAvailable`.
+7. Comprobar por separado los aportes e indicadores con datos sintéticos autorizados. Si las hojas existen pero están vacías, registrar estado vacío; no declarar un fallo de carga únicamente por ausencia de registros.
+8. Si el evento no aparece, conservar respuesta FEEDBACK, diagnóstico, nombre de la hoja y conteo de filas para aislar si la falla está en escritura, lectura, autorización o deployment. No alterar datos para forzar el resultado.
+9. Registrar evidencia anonimizada y resultado en `Hallazgos_Beta.md`. Si no se dispone de deployment/Spreadsheet Beta aislados, marcar cada paso como NO EJECUTADO.
+
+**Límites:** no utilizar Spreadsheet, Drive, propiedades, permisos, cuentas, datos ni deployments productivos. No ejecutar cargas reales ni modificar recursos externos fuera del alcance autorizado.
