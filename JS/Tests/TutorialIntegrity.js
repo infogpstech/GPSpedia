@@ -404,10 +404,10 @@ export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
         assert.match(ui, /referenceId: createdTutorialId/);
         assert.match(ui, /referenceId: item\.ID \|\| item\.Tema/);
         assert.match(ui, /id="tut-imagen"/);
-        assert.match(ui, /accept="image\\/jpeg,image\\/png,image\\/webp"/);
+        assert.match(ui, /accept="image\/jpeg,image\/png,image\/webp"/);
         assert.match(ui, /imagenDataUrl/);
         assert.match(ui, /readTutorialImageFile/);
-        assert.match(ui, /3 \\* 1024 \\* 1024/);
+        assert.match(ui, /3 \* 1024 \* 1024/);
         assert.match(ui, /Colaborador/);
         assert.match(ui, /tutorialId: item\.ID \|\| ""/);
         assert.match(ui, /comoIdentificarlo: newComo/);
