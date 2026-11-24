@@ -143,6 +143,7 @@ function createDispatchHarness(source, service, extraBindings = {}) {
             return callback("coordinator-token", actor);
         },
         getAuthUsersSpreadsheet_() { return {}; },
+        getSpreadsheet() { return {}; },
         migrateLegacyRoleRevocationMarkersToSharedState_() { return { status:"success" }; },
         getCachedSharedSessionActor_(userId, sessionToken) {
             actorLookups.push({ userId, sessionToken });
@@ -194,7 +195,7 @@ test("la limpieza de ActividadUsuario usa actor cacheado y RBAC Desarrollador si
     assert.equal(payload.__sharedSessionActor.userId,"DEV-1");
     assert.equal(payload.__sharedSessionActor.epoch,7);
     assert.match(feedback,/clearActivityLogs:\s*\["Desarrollador"\]/);
-    assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "FEEDBACK" \}\)/);
+    assert.match(feedback,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{[\s\S]*?service: "FEEDBACK",[\s\S]*?loadSpreadsheet: getSpreadsheet[\s\S]*?\}\)/);
     assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"),feedback.indexOf("\nconst RICH_TEXT_MODE_PROPERTY_")),/withSharedMutationLease_/);
 });
 test("distingue una hoja sin registros de una revisión sin datos confidenciales", () => {
