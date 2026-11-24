@@ -688,13 +688,15 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 **Documentación:** `Services/DEPLOYMENT_GUIDE.md`. Las guías anteriores en `Olds/Documentacion_Legacy/Services/` permanecen archivadas y expresamente no ejecutables.
 
 ### MIG-030 — Validación Beta integral
-**Estado: PENDIENTE**
+**Estado: EN PROGRESO**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Preparar comandos de sincronización Beta conforme a NORMAS §5.
+- [x] Preparar comandos de sincronización Beta conforme a NORMAS §5; verificados mediante contrato estático 8/8 PASS el 2026-11-24.
 - [ ] Probar login, catálogo, usuarios, modelos, imágenes, vídeos, Drive, PyS, tutoriales, Inbox, métricas, administración, backups y restauración.
 - [ ] Probar roles autorizados/no autorizados.
 - [ ] Registrar evidencia, tiempos, recursos de prueba y resultados.
 - [ ] No declarar funciones probadas sin invocación real.
+
+**Avance de preparación — 2026-11-24:** se verificó que `Tareas_Beta.md` comienza con la sincronización segura obligatoria: remoto exacto, rama exacta, árbol limpio, `fetch` + `pull --ff-only`, HEAD final y ausencia de comandos destructivos. La matriz principal BETA-01 a BETA-08 está presente. La comprobación se ejecutó en el runtime JavaScript disponible (8/8 aserciones); no equivale a ejecutar los comandos en un clon Git ni a realizar pruebas Beta reales. Las pruebas remotas siguen pendientes de los recursos aislados y autorizados.
 
 **Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; cero configuración local prohibida; despliegue simplificado y rendimiento no inferior a la línea base.
 
