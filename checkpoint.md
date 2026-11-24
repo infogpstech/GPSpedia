@@ -1971,3 +1971,19 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificacione
 - Validación CI pendiente después de publicar; validación visual de navegador real permanece diferida a Beta.
 - Siguiente tarea después de cerrar este refuerzo: MIG-027, suite de paridad funcional según `TAREAS_MIGRACION_ARQUITECTURA.md`.
 ================================================================================
+
+
+================================================================================
+PUBLICACIÓN Y VALIDACIÓN ESTÁTICA — REFUERZO AUTH/SESIÓN — 2026-11-24
+HEAD de código y pruebas: 9d489acaa308d12ff0b5ceff164bed146c14dfa9
+Commit de actualización del changelog: d0dcdf874f68b3e69fbe0e9c3f4d0989fe1aa335
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+- Publicados los cambios de auth.js, ui.js y AuthErrorPrivacy.mjs en GPSpedia2.2.5_work. La integración disponible guarda archivos individualmente, por lo que se generaron commits secuenciales sin reescribir historial.
+- Se verificó el diff desde el HEAD previo: únicamente los siete archivos previstos (dos fuentes frontend, prueba, norma, registro de tareas, changelog y checkpoint).
+- Se ejecutó en V8 una comprobación estática de las 13 condiciones del contrato con los contenidos remotos versionados: 13/13 PASS. También se comprobó que todas las llamadas a showLoginScreen usan mensajes permitidos o el aviso neutral de cierre voluntario.
+- La suite Node AuthErrorPrivacy.mjs quedó integrada al workflow de regresión. No se pudo confirmar un resultado CI: el endpoint de estados devolvió una lista vacía y la herramienta de consulta de runs solo expone ejecuciones disparadas por PR. El workflow sí está configurado para push a esta rama. No se declara CI aprobado para este refuerzo.
+- No se desplegó AUTH ni se modificaron propiedades, Spreadsheet, Drive o datos reales.
+- Estado: implementación y comprobaciones estáticas publicadas; pendiente confirmar ejecución CI y validación visual en Beta.
+- Próximo paso: confirmar CI de este HEAD; después continuar MIG-027 (suite de paridad funcional), una tarea a la vez.
+================================================================================
