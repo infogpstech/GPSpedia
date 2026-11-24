@@ -36,7 +36,8 @@ const operation = {
     targetName: "Hilux_2020_ign1.jpg", targetFolderPath: "Cortes/Toyota/Hilux"
 };
 function fixture(options = {}) {
-    const state = { fileId, fileName: "old.jpg", folderPath: "Cortes/Entrada", mimeType: "image/jpeg", trashed: false };
+    const localFileId = options.fileId || fileId;
+    const state = { fileId:localFileId, fileName: "old.jpg", folderPath: "Cortes/Entrada", mimeType: "image/jpeg", trashed: false };
     const ledger = new Map();
     const events = [];
     const adapters = {
@@ -238,9 +239,66 @@ run("el lock del ledger libera siempre y falla con estado retryable", () => {
     assert.throws(() => withLedgerLock({ getScriptLock: () => busy })(() => 1),
         error => error && error.code === "ORGANIZER_LEDGER_BUSY");
 });
+run("dos Safe Apply de archivos distintos se ejecutan sin mantener un lock global durante Drive", () => {
+    let lockHeld = false;
+    const first = fixture(), second = fixture({fileId:"drive_file_id_0000000000000002"});
+    const secondOperation = Object.assign({}, operation, {
+        operationId:"b".repeat(64)+":drive_file_id_0000000000000002",
+        fileId:"drive_file_id_0000000000000002",
+        targetName:"Ranger_2022_ign1.jpg"
+    });
+    function wrapLedger(adapters) {
+        const reserve = adapters.reserveLedger, save = adapters.saveLedger;
+        adapters.reserveLedger = (...args) => {
+            assert.equal(lockHeld, false, "No se debe entrar a otra operación con el lock retenido");
+            lockHeld = true;
+            try { return reserve(...args); } finally { lockHeld = false; }
+        };
+        adapters.saveLedger = (...args) => {
+            assert.equal(lockHeld, false);
+            lockHeld = true;
+            try { return save(...args); } finally { lockHeld = false; }
+        };
+    }
+    wrapLedger(first.adapters); wrapLedger(second.adapters);
+    const firstMove = first.adapters.moveAndRename;
+    first.adapters.moveAndRename = (...args) => {
+        assert.equal(lockHeld, false, "El lock del ledger debe estar libre durante Drive");
+        const nested = execute([secondOperation], "developer-1", second.adapters);
+        assert.equal(nested.results[0].status, "applied", "La operación independiente debe avanzar");
+        return firstMove(...args);
+    };
+    const result = execute([operation], "developer-1", first.adapters);
+    assert.equal(result.results[0].status, "applied");
+    assert.equal(second.ledger.get(secondOperation.operationId).status, "complete");
+});
+run("contención durante lectura del baseline devuelve retry y no ejecuta Drive", () => {
+    const f = fixture();
+    f.adapters.loadLedger = () => {
+        const error = new Error("baseline ocupado");
+        error.code = "ORGANIZER_LEDGER_BUSY";
+        throw error;
+    };
+    const result = execute([operation], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "retry");
+    assert.equal(f.events.some(event => event.startsWith("move:")), false);
+});
+run("reconcilia processing si Drive ya aplicó el destino antes de perderse la respuesta", () => {
+    const f = fixture();
+    f.state.folderPath = operation.targetFolderPath;
+    f.state.fileName = operation.targetName;
+    f.ledger.set(operation.operationId, {
+        operationId:operation.operationId, ownerId:"developer-1", fileId,
+        manifestDigest:operation.manifestDigest, status:"processing", attempts:1
+    });
+    const result = execute([operation], "developer-1", f.adapters);
+    assert.equal(result.results[0].status, "already_applied");
+    assert.equal(f.ledger.get(operation.operationId).status, "complete");
+    assert.equal(f.events.some(event => event.startsWith("move:")), false);
+});
 run("rechaza IDs duplicados o inválidos en rollback", () => {
     const f = fixture();
     assert.throws(() => rollback([operation.operationId, operation.operationId], "developer-1", f.adapters), /inválidos o repetidos/i);
     assert.throws(() => rollback(["bad"], "developer-1", f.adapters), /inválidos o repetidos/i);
 });
-console.log("CortesImageOrganizerExecutor: 17/17 PASS");
+console.log("CortesImageOrganizerExecutor: 20/20 PASS");

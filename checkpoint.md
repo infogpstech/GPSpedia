@@ -1769,3 +1769,18 @@ Pendiente Beta: crear AdminOperationAudit con encabezados exactos (fila 1; fila 
 
 Estado de familias: AUTH 0, WRITE 1, ADMIN 5; total 6. Siguiente subtramo por orden del inventario: GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)> (Safe Apply). No iniciar otra familia ADMIN en paralelo.
 ================================================================================
+
+================================================================================
+MIG-026 — ADMIN — SAFE APPLY DEL ORGANIZADOR CORTES — 2026-11-23
+HEAD anterior confirmado: b6efb93073ce3785f3ef9ba7bb10e72a0b940cc3
+
+- Migrado el ledger \`GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>\` desde ScriptProperties a \`CortesOrganizerOperations\` (20 columnas). La fila 2 queda reservada para META/BASELINE y los registros comienzan en fila 3.
+- Baseline idempotente y reanudable: lee propiedades legacy, valida digest/operationId/identidad/estado, importa filas faltantes, verifica read-back y marca \`cortes_organizer_ledger_v1\`. No escribe ni elimina propiedades legacy; el flujo normal deja de consultarlas después del baseline.
+- Lectura por operationId, reserva/upsert bajo lock fail-fast breve, historial paginado por propietario, read-back y retención de 180 días (200 terminales/250 totales). Estados no terminales se conservan.
+- La adquisición usa \`tryLock(0)\`; el ScriptLock solo protege el ledger y se libera antes de Drive. La ejecución y rollback no mantienen locks durante operaciones Drive. La contención devuelve retry sin iniciar un movimiento.
+- Se añadió reconciliación de estados \`processing\`/\`rollback_processing\` cuando Drive ya refleja el destino/origen, para recuperar una respuesta perdida sin repetir el movimiento.
+- Pruebas actualizadas: baseline, reanudación, no escritura de propiedades, historial, retención y lock fail-fast; prueba de dos operaciones sobre archivos distintos durante trabajo Drive.
+- No se desplegó Apps Script ni se creó/modificó Spreadsheet o Drive real. Las propiedades legacy instaladas no se tocaron.
+
+Estado provisional: pendiente ejecutar CI sobre el commit publicado y revisar sus resultados antes de marcar el subtramo como completado. Beta diferida en Tareas_Beta.md §12.
+================================================================================

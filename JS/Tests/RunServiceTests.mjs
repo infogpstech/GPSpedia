@@ -649,6 +649,7 @@ runGroup('47','MIG026',()=>{
  runCli('MIG026 publicación versionada de rich_text_mode','JS/Tests/CentralConfigurationPublisherContract.mjs');
  runCli('MIG026 preferencia global, caché con TTL y RBAC','JS/Tests/RichTextGlobalPreference.mjs');
  runCli('MIG026 baseline del contador WRITE en ledger append-only','JS/Tests/WriteCortesIdLedgerBaseline.mjs');
+ runCli('MIG026 Safe Apply ADMIN: baseline Spreadsheet, ledger y no bloqueo entre operaciones','JS/Tests/CortesImageOrganizerLedger.mjs');
 });
 
 if(selected){

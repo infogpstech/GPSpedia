@@ -4155,135 +4155,225 @@ function buildCortesImageOrganizerRollbackPlan_(manifest, operationResults, file
 
 
 const CORTES_ORGANIZER_LEDGER_PREFIX_ = "GPSpedia_CORTES_ORGANIZER_OP_V1_";
+const CORTES_ORGANIZER_LEDGER_SHEET_ = "CortesOrganizerOperations";
+const CORTES_ORGANIZER_LEDGER_BASELINE_PENDING_ = "pending";
+const CORTES_ORGANIZER_LEDGER_BASELINE_VERSION_ = "cortes_organizer_ledger_v1";
+const CORTES_ORGANIZER_LEDGER_HEADERS_ = Object.freeze([
+    "operationId", "ownerId", "fileId", "manifestDigest", "auditId", "status", "attempts",
+    "sourceFolderPath", "sourceName", "targetFolderPath", "targetName", "currentFolderPath",
+    "currentName", "createdAt", "updatedAt", "completedAt", "rolledBackAt", "error",
+    "recoveryError", "schemaVersion"
+]);
+const CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ = 200;
+const CORTES_ORGANIZER_LEDGER_MAX_TOTAL_ = 250;
+const CORTES_ORGANIZER_LEDGER_RETENTION_MS_ = 180 * 24 * 60 * 60 * 1000;
+const CORTES_ORGANIZER_LEDGER_TERMINAL_STATES_ = ["complete", "rolled_back"];
+const CORTES_ORGANIZER_LEDGER_STATES_ = ["processing", "rollback_processing", "complete", "rolled_back", "needs_review"];
 
 function getCortesOrganizerLedgerKey_(operationId) {
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(operationId || ""), Utilities.Charset.UTF_8)
         .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
     return CORTES_ORGANIZER_LEDGER_PREFIX_ + digest;
 }
-
-function loadCortesOrganizerOperationLedger_(operationId) {
-    const key = getCortesOrganizerLedgerKey_(operationId);
-    const raw = PropertiesService.getScriptProperties().getProperty(key);
-    if (!raw) return null;
-    let record;
-    try { record = JSON.parse(raw); }
-    catch (error) { throw new Error("El registro durable de Safe Apply está corrupto; la operación requiere revisión."); }
-    if (!record || record.operationId !== String(operationId)) {
-        throw new Error("La identidad del registro durable no coincide; la operación requiere revisión.");
-    }
-    return record;
+function getCortesOrganizerLedgerSheet_() {
+    const sheet = getSpreadsheet().getSheetByName(CORTES_ORGANIZER_LEDGER_SHEET_);
+    if (!sheet) throw new Error("No existe CortesOrganizerOperations; prepara el esquema antes de habilitar Safe Apply.");
+    const header = sheet.getRange(1, 1, 1, CORTES_ORGANIZER_LEDGER_HEADERS_.length).getValues()[0];
+    if (!CORTES_ORGANIZER_LEDGER_HEADERS_.every((name, index) => String(header[index] || "").trim() === name))
+        throw new Error("El esquema de CortesOrganizerOperations no coincide con la versión esperada.");
+    return sheet;
 }
-
-const CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ = 200;
-const CORTES_ORGANIZER_LEDGER_MAX_TOTAL_ = 250;
-const CORTES_ORGANIZER_LEDGER_RETENTION_MS_ = 180 * 24 * 60 * 60 * 1000;
-
-function pruneCortesOrganizerOperationLedger_(properties, nowValue) {
-    const now = Number(nowValue) || Date.now();
-    const all = properties.getProperties();
-    const entries = [];
-    Object.keys(all).forEach(key => {
-        if (!key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_)) return;
-        try {
-            const record = JSON.parse(all[key]);
-            if (record && record.operationId && ["complete", "rolled_back"].includes(record.status)) {
-                entries.push({ key, updatedAt: Number(record.updatedAt) || 0 });
-            }
-        } catch (error) {
-            // Un registro corrupto se conserva para revisión; no se elimina automáticamente.
-        }
-    });
-    const remove = new Set(entries.filter(item => now - item.updatedAt > CORTES_ORGANIZER_LEDGER_RETENTION_MS_).map(item => item.key));
-    let remaining = Object.keys(all).filter(key => key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_) && !remove.has(key)).length;
-    const terminal = entries.filter(item => !remove.has(item.key)).sort((a, b) => a.updatedAt - b.updatedAt);
-    while (terminal.length && (terminal.length > CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ || remaining >= CORTES_ORGANIZER_LEDGER_MAX_TOTAL_)) {
-        const oldest = terminal.shift();
-        if (remove.has(oldest.key)) continue;
-        remove.add(oldest.key);
-        remaining--;
-    }
-    remove.forEach(key => properties.deleteProperty(key));
-    if (remaining >= CORTES_ORGANIZER_LEDGER_MAX_TOTAL_) {
-        throw new Error("El ledger Safe Apply alcanzó su capacidad segura; revisa operaciones pendientes antes de iniciar otra.");
-    }
-    return { removed: remove.size, remaining };
+function readCortesOrganizerLedgerBaselineState_(sheet) {
+    if (Number(sheet.getLastRow() || 0) < 2) return "";
+    const row = sheet.getRange(2, 1, 1, CORTES_ORGANIZER_LEDGER_HEADERS_.length).getValues()[0];
+    const empty = row.every(value => value === "" || value === null);
+    if (!empty && (String(row[0] || "") !== "META" || String(row[1] || "") !== "BASELINE"))
+        throw new Error("La fila reservada de baseline Safe Apply está ocupada o dañada.");
+    return String(row[2] || "");
 }
-
-function getCortesOrganizerOperationLedgerPage_(properties, ownerId, offsetValue, limitValue) {
-    const owner = String(ownerId || "");
-    const offset = Number.isInteger(Number(offsetValue)) && Number(offsetValue) >= 0 ? Number(offsetValue) : 0;
-    const limit = Number.isInteger(Number(limitValue)) && Number(limitValue) > 0 ? Math.min(Number(limitValue), 50) : 25;
-    const all = properties.getProperties();
-    const records = [];
-    Object.keys(all).forEach(key => {
-        if (!key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_)) return;
-        try {
-            const record = JSON.parse(all[key]);
-            if (!record || record.ownerId !== owner || !record.operationId) return;
-            records.push({
-                operationId: String(record.operationId), fileId: String(record.fileId || ""),
-                auditId: String(record.auditId || ""), status: String(record.status || ""),
-                sourceFolderPath: String(record.sourceFolderPath || ""), sourceName: String(record.sourceName || ""),
-                targetFolderPath: String(record.targetFolderPath || ""), targetName: String(record.targetName || ""),
-                updatedAt: Number(record.updatedAt) || 0, completedAt: Number(record.completedAt) || 0,
-                rolledBackAt: Number(record.rolledBackAt) || 0,
-                error: String(record.error || "").slice(0, 900)
-            });
-        } catch (error) {}
-    });
-    records.sort((a, b) => b.updatedAt - a.updatedAt || a.operationId.localeCompare(b.operationId));
+function writeCortesOrganizerLedgerBaselineState_(sheet, state) {
+    const row = new Array(CORTES_ORGANIZER_LEDGER_HEADERS_.length).fill("");
+    row[0] = "META"; row[1] = "BASELINE"; row[2] = String(state || "");
+    let writeError = null;
+    try { sheet.getRange(2, 1, 1, row.length).setValues([row]); SpreadsheetApp.flush(); }
+    catch (error) { writeError = error; }
+    const saved = sheet.getRange(2, 1, 1, row.length).getValues()[0];
+    if (String(saved[0] || "") !== "META" || String(saved[1] || "") !== "BASELINE" || String(saved[2] || "") !== String(state || ""))
+        throw new Error("No se confirmó el baseline Safe Apply." + (writeError ? " " + String(writeError.message || writeError) : ""));
+    return String(saved[2] || "");
+}
+function cortesOrganizerLedgerRecordToRow_(record) {
+    const r = record && typeof record === "object" ? record : {};
+    const row = [
+        String(r.operationId || ""), String(r.ownerId || ""), String(r.fileId || ""), String(r.manifestDigest || ""),
+        String(r.auditId || ""), String(r.status || ""), Number(r.attempts || 0),
+        String(r.sourceFolderPath || ""), String(r.sourceName || ""), String(r.targetFolderPath || ""),
+        String(r.targetName || ""), String(r.currentFolderPath || ""), String(r.currentName || ""),
+        Number(r.createdAt || r.updatedAt || Date.now()), Number(r.updatedAt || Date.now()),
+        Number(r.completedAt || 0), Number(r.rolledBackAt || 0), String(r.error || "").slice(0, 900),
+        String(r.recoveryError || "").slice(0, 500), 1
+    ];
+    if (!row[0] || !row[1] || !row[2] || !/^[a-f0-9]{64}$/i.test(row[3]) || !row[4] ||
+        !CORTES_ORGANIZER_LEDGER_STATES_.includes(row[5]) || !Number.isInteger(row[6]) || row[6] < 0)
+        throw new Error("El registro Safe Apply carece de identidad o estado válido.");
+    return row;
+}
+function cortesOrganizerLedgerRowToRecord_(r) {
+    if (!Array.isArray(r) || !r[0]) return null;
     return {
-        total: records.length, offset, limit,
-        operations: records.slice(offset, offset + limit),
-        nextOffset: offset + limit < records.length ? offset + limit : null
+        operationId:String(r[0]), ownerId:String(r[1]), fileId:String(r[2]), manifestDigest:String(r[3]),
+        auditId:String(r[4]), status:String(r[5]), attempts:Number(r[6] || 0),
+        sourceFolderPath:String(r[7] || ""), sourceName:String(r[8] || ""),
+        targetFolderPath:String(r[9] || ""), targetName:String(r[10] || ""),
+        currentFolderPath:String(r[11] || ""), currentName:String(r[12] || ""),
+        createdAt:Number(r[13] || 0), updatedAt:Number(r[14] || 0),
+        completedAt:Number(r[15] || 0), rolledBackAt:Number(r[16] || 0),
+        error:String(r[17] || ""), recoveryError:String(r[18] || ""), schemaVersion:Number(r[19] || 1)
     };
 }
-
-function saveCortesOrganizerOperationLedger_(record) {
-    if (!record || !record.operationId || !record.fileId || !record.manifestDigest) {
-        throw new Error("No se puede persistir una operación Safe Apply sin identidad completa.");
-    }
-    const serialized = JSON.stringify(Object.assign({}, record, { updatedAt: Date.now() }));
-    if (serialized.length > 8000) throw new Error("El registro durable Safe Apply supera el límite seguro de persistencia.");
-    const properties = PropertiesService.getScriptProperties();
-    const key = getCortesOrganizerLedgerKey_(record.operationId);
-    if (!properties.getProperty(key)) pruneCortesOrganizerOperationLedger_(properties, Date.now());
-    properties.setProperty(key, serialized);
-    if (properties.getProperty(key) !== serialized) {
-        throw new Error("No se pudo verificar la persistencia durable de Safe Apply.");
-    }
-    return JSON.parse(serialized);
+function getCortesOrganizerLedgerRows_(sheet) {
+    const last = Number(sheet.getLastRow() || 0);
+    if (last < 3) return [];
+    return sheet.getRange(3, 1, last - 2, CORTES_ORGANIZER_LEDGER_HEADERS_.length).getValues()
+        .map((row, index) => {
+            if (!row.some(value => value !== "" && value !== null)) return null;
+            const record = cortesOrganizerLedgerRowToRecord_(row);
+            if (!record || record.schemaVersion !== 1) {
+                throw new Error("Existe una fila huérfana o una versión desconocida en CortesOrganizerOperations.");
+            }
+            cortesOrganizerLedgerRecordToRow_(record);
+            return { rowIndex:index + 3, row, record };
+        }).filter(Boolean);
 }
-
+function findCortesOrganizerLedgerRecord_(sheet, operationId) {
+    const found = getCortesOrganizerLedgerRows_(sheet).filter(item => item.record.operationId === String(operationId));
+    if (found.length > 1) throw new Error("El ledger Safe Apply contiene operationId duplicados; requiere revisión.");
+    return found.length ? found[0] : null;
+}
+function ensureCortesOrganizerLedgerBaseline_() {
+    const sheet = getCortesOrganizerLedgerSheet_();
+    let state = readCortesOrganizerLedgerBaselineState_(sheet);
+    if (state === CORTES_ORGANIZER_LEDGER_BASELINE_VERSION_) return {status:"success", imported:0, alreadyComplete:true};
+    if (state && state !== CORTES_ORGANIZER_LEDGER_BASELINE_PENDING_) throw new Error("La versión del baseline Safe Apply no es reconocida.");
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(0)) {
+        const error = new Error("Baseline Safe Apply ocupado; no se esperó por otra ejecución. Reintenta la misma operación.");
+        error.code = "ORGANIZER_LEDGER_BUSY"; throw error;
+    }
+    try {
+        state = readCortesOrganizerLedgerBaselineState_(sheet);
+        if (state === CORTES_ORGANIZER_LEDGER_BASELINE_VERSION_) return {status:"success", imported:0, alreadyComplete:true};
+        if (!state) writeCortesOrganizerLedgerBaselineState_(sheet, CORTES_ORGANIZER_LEDGER_BASELINE_PENDING_);
+        const legacy = PropertiesService.getScriptProperties().getProperties();
+        const keys = Object.keys(legacy).filter(key => key.startsWith(CORTES_ORGANIZER_LEDGER_PREFIX_));
+        const existing = getCortesOrganizerLedgerRows_(sheet), byId = new Map();
+        existing.forEach(item => {
+            if (byId.has(item.record.operationId)) throw new Error("Hay operationId duplicados en el ledger durante el baseline.");
+            byId.set(item.record.operationId, item);
+        });
+        const seen = new Set(), pending = [];
+        keys.forEach(key => {
+            let record;
+            try { record = JSON.parse(String(legacy[key] || "")); }
+            catch (error) { throw new Error("Un registro legacy Safe Apply está corrupto; se conserva sin cambios."); }
+            const id = String(record && record.operationId || "");
+            if (!id || getCortesOrganizerLedgerKey_(id) !== key || seen.has(id))
+                throw new Error("La identidad o unicidad de un registro legacy Safe Apply no es válida.");
+            seen.add(id);
+            const row = cortesOrganizerLedgerRecordToRow_(record), current = byId.get(id);
+            if (current) {
+                if (JSON.stringify(current.row) !== JSON.stringify(row))
+                    throw new Error("El registro legacy y su copia en Spreadsheet no coinciden; requiere revisión.");
+            } else pending.push(row);
+        });
+        if (pending.length) {
+            const first = Math.max(3, Number(sheet.getLastRow() || 2) + 1);
+            sheet.getRange(first, 1, pending.length, CORTES_ORGANIZER_LEDGER_HEADERS_.length).setValues(pending);
+            SpreadsheetApp.flush();
+            const verified = new Map(getCortesOrganizerLedgerRows_(sheet).map(item => [item.record.operationId, item.row]));
+            pending.forEach(row => {
+                if (JSON.stringify(verified.get(String(row[0]))) !== JSON.stringify(row))
+                    throw new Error("El baseline Safe Apply no superó la lectura de confirmación.");
+            });
+        }
+        writeCortesOrganizerLedgerBaselineState_(sheet, CORTES_ORGANIZER_LEDGER_BASELINE_VERSION_);
+        return {status:"success", imported:pending.length, alreadyComplete:false};
+    } finally { if (lock.hasLock()) lock.releaseLock(); }
+}
+function loadCortesOrganizerOperationLedger_(operationId) {
+    ensureCortesOrganizerLedgerBaseline_();
+    const found = findCortesOrganizerLedgerRecord_(getCortesOrganizerLedgerSheet_(), operationId);
+    return found ? found.record : null;
+}
+function pruneCortesOrganizerOperationLedger_(sheet, nowValue) {
+    const now = Number(nowValue) || Date.now(), entries = getCortesOrganizerLedgerRows_(sheet);
+    const remove = new Set(entries.filter(item =>
+        CORTES_ORGANIZER_LEDGER_TERMINAL_STATES_.includes(item.record.status) &&
+        now - Number(item.record.updatedAt || 0) > CORTES_ORGANIZER_LEDGER_RETENTION_MS_
+    ).map(item => item.rowIndex));
+    const remaining = () => entries.filter(item => !remove.has(item.rowIndex));
+    const terminal = remaining().filter(item => CORTES_ORGANIZER_LEDGER_TERMINAL_STATES_.includes(item.record.status))
+        .sort((a,b) => a.record.updatedAt - b.record.updatedAt);
+    while (terminal.length && (terminal.length > CORTES_ORGANIZER_LEDGER_MAX_TERMINAL_ ||
+        remaining().length >= CORTES_ORGANIZER_LEDGER_MAX_TOTAL_)) remove.add(terminal.shift().rowIndex);
+    Array.from(remove).sort((a,b) => b-a).forEach(row => sheet.deleteRow(row));
+    const count = entries.length - remove.size;
+    if (count >= CORTES_ORGANIZER_LEDGER_MAX_TOTAL_)
+        throw new Error("El ledger Safe Apply alcanzó su capacidad segura; revisa operaciones pendientes.");
+    return {removed:remove.size, remaining:count};
+}
+function getCortesOrganizerOperationLedgerPage_(sheet, ownerId, offsetValue, limitValue) {
+    const offset = Number.isInteger(Number(offsetValue)) && Number(offsetValue) >= 0 ? Number(offsetValue) : 0;
+    const limit = Number.isInteger(Number(limitValue)) && Number(limitValue) > 0 ? Math.min(Number(limitValue), 50) : 25;
+    const records = getCortesOrganizerLedgerRows_(sheet).map(item => item.record)
+        .filter(record => record.ownerId === String(ownerId || ""));
+    records.sort((a,b) => b.updatedAt - a.updatedAt || a.operationId.localeCompare(b.operationId));
+    return {
+        total:records.length, offset, limit,
+        operations:records.slice(offset, offset + limit).map(r => ({
+            operationId:r.operationId, fileId:r.fileId, auditId:r.auditId, status:r.status,
+            sourceFolderPath:r.sourceFolderPath, sourceName:r.sourceName, targetFolderPath:r.targetFolderPath,
+            targetName:r.targetName, updatedAt:r.updatedAt, completedAt:r.completedAt,
+            rolledBackAt:r.rolledBackAt, error:r.error.slice(0,900)
+        })),
+        nextOffset:offset + limit < records.length ? offset + limit : null
+    };
+}
+function saveCortesOrganizerOperationLedger_(record) {
+    const sheet = getCortesOrganizerLedgerSheet_();
+    const row = cortesOrganizerLedgerRecordToRow_(Object.assign({}, record, {updatedAt:Date.now()}));
+    const found = findCortesOrganizerLedgerRecord_(sheet, record.operationId);
+    if (!found) pruneCortesOrganizerOperationLedger_(sheet, Date.now());
+    const target = found ? found.rowIndex : Math.max(3, Number(sheet.getLastRow() || 2) + 1);
+    let writeError = null;
+    try { sheet.getRange(target, 1, 1, row.length).setValues([row]); SpreadsheetApp.flush(); }
+    catch (error) { writeError = error; }
+    const persisted = sheet.getRange(target, 1, 1, row.length).getValues()[0];
+    if (JSON.stringify(persisted) !== JSON.stringify(row))
+        throw new Error("No se pudo verificar la persistencia durable de Safe Apply." +
+            (writeError ? " " + String(writeError.message || writeError) : ""));
+    return cortesOrganizerLedgerRowToRecord_(persisted);
+}
+// El lock global protege únicamente la transición breve del ledger; se libera antes de cualquier trabajo Drive.
 function withCortesOrganizerLedgerLock_(callback) {
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(0)) {
-        const error = new Error("Safe Apply no pudo reservar el ledger dentro de la espera breve; conserva el mismo intento y reintenta.");
-        error.code = "ORGANIZER_LEDGER_BUSY";
-        throw error;
+        const error = new Error("Safe Apply no pudo reservar el ledger sin espera; conserva el mismo intento y reintenta.");
+        error.code = "ORGANIZER_LEDGER_BUSY"; throw error;
     }
     try { return callback(); }
     finally { if (lock.hasLock()) lock.releaseLock(); }
 }
-
 function decideCortesOrganizerLedgerReservation_(record, current, allowedStatuses) {
-    if (!record || !record.operationId || !record.ownerId || !Array.isArray(allowedStatuses)) {
+    if (!record || !record.operationId || !record.ownerId || !Array.isArray(allowedStatuses))
         throw new Error("La reserva Safe Apply carece de identidad o estados permitidos.");
-    }
-    if (current && (current.operationId !== record.operationId || current.fileId !== record.fileId)) {
+    if (current && (current.operationId !== record.operationId || current.fileId !== record.fileId))
         throw new Error("La identidad del registro Safe Apply no coincide; requiere revisión.");
-    }
-    if (current && current.ownerId !== record.ownerId) {
-        return { reserved: false, reason: "owner_mismatch", current };
-    }
-    const currentStatus = current ? String(current.status || "") : "absent";
-    if (!allowedStatuses.includes(currentStatus)) {
-        return { reserved: false, reason: "state_conflict", current };
-    }
-    return { reserved: true, previous: current || null, record };
+    if (current && current.ownerId !== record.ownerId) return {reserved:false, reason:"owner_mismatch", current};
+    const status = current ? String(current.status || "") : "absent";
+    if (!allowedStatuses.includes(status)) return {reserved:false, reason:"state_conflict", current};
+    return {reserved:true, previous:current || null, record};
 }
-
 function resolveCortesOrganizerFolderPath_(rootFolder, targetPath, createMissing) {
     const parts = String(targetPath || "").split("/").filter(Boolean);
     if (!parts.length || normalizeOrganizerSegment_(parts.shift()) !== normalizeOrganizerSegment_(rootFolder.getName())) {
@@ -4357,8 +4447,10 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
         try {
             try { ledger = adapters.loadLedger(operation.operationId); }
             catch (ledgerReadError) {
-                result.status = "needs_review";
-                result.message = "No se pudo leer el ledger durable: " + String(ledgerReadError && ledgerReadError.message || ledgerReadError);
+                result.status = ledgerReadError && ledgerReadError.code === "ORGANIZER_LEDGER_BUSY" ? "retry" : "needs_review";
+                result.message = result.status === "retry"
+                    ? "El ledger está ocupado por una transición breve; no se inició el movimiento. Reintenta con el mismo manifiesto."
+                    : "No se pudo leer el ledger durable: " + String(ledgerReadError && ledgerReadError.message || ledgerReadError);
                 results.push(result);
                 return;
             }
@@ -4382,9 +4474,43 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
                 results.push(result);
                 return;
             }
-            if (ledger && ["processing", "rollback_processing"].includes(ledger.status)) {
+            if (ledger && ledger.status === "processing") {
+                const processingState = adapters.inspectFile(operation.fileId);
+                const processingClassification = classifyCortesImageOrganizerOperationState_(processingState, operation);
+                if (processingClassification.status === "already_applied") {
+                    adapters.saveLedger(Object.assign({}, ledger, {
+                        status:"complete", currentFolderPath:operation.targetFolderPath,
+                        currentName:operation.targetName, completedAt:Date.now()
+                    }));
+                    result.status = "already_applied";
+                    results.push(result);
+                    return;
+                }
+                if (processingClassification.status !== "ready") {
+                    result.status = "needs_review";
+                    result.message = "La operación quedó en processing y Drive ya no coincide con origen ni destino; requiere revisión.";
+                    results.push(result);
+                    return;
+                }
                 result.status = "in_progress";
-                result.message = "La operación ya tiene una reserva activa; no se iniciará un segundo movimiento.";
+                result.message = "La operación mantiene una reserva activa y Drive aún muestra el origen; no se iniciará un segundo movimiento.";
+                results.push(result);
+                return;
+            }
+            if (ledger && ledger.status === "rollback_processing") {
+                const rollbackState = adapters.inspectFile(operation.fileId);
+                if (!rollbackState.trashed && rollbackState.folderPath === operation.currentFolderPath &&
+                    rollbackState.fileName === operation.currentName) {
+                    adapters.saveLedger(Object.assign({}, ledger, {
+                        status:"rolled_back", rolledBackAt:Date.now(),
+                        currentFolderPath:operation.currentFolderPath, currentName:operation.currentName
+                    }));
+                    result.status = "already_rolled_back";
+                    results.push(result);
+                    return;
+                }
+                result.status = "in_progress";
+                result.message = "El rollback mantiene una reserva activa; no se iniciará otra transición.";
                 results.push(result);
                 return;
             }
@@ -4511,16 +4637,20 @@ function executeCortesImageOrganizerManifest_(manifest, ownerId, adapters) {
 }
 
 function createCortesOrganizerDriveAdapters_(rootFolder) {
+    ensureCortesOrganizerLedgerBaseline_();
     return {
         loadLedger: operationId => loadCortesOrganizerOperationLedger_(operationId),
         saveLedger: record => withCortesOrganizerLedgerLock_(() => saveCortesOrganizerOperationLedger_(record)),
-        reserveLedger: (record, allowedStatuses) => withCortesOrganizerLedgerLock_(() => {
-            const current = loadCortesOrganizerOperationLedger_(record.operationId);
-            const decision = decideCortesOrganizerLedgerReservation_(record, current, allowedStatuses);
-            if (!decision.reserved) return decision;
-            decision.record = saveCortesOrganizerOperationLedger_(record);
-            return decision;
-        }),
+        reserveLedger: (record, allowedStatuses) => {
+            ensureCortesOrganizerLedgerBaseline_();
+            return withCortesOrganizerLedgerLock_(() => {
+                const current = loadCortesOrganizerOperationLedger_(record.operationId);
+                const decision = decideCortesOrganizerLedgerReservation_(record, current, allowedStatuses);
+                if (!decision.reserved) return decision;
+                decision.record = saveCortesOrganizerOperationLedger_(record);
+                return decision;
+            });
+        },
         inspectFile: fileId => {
             const state = inspectCortesOrganizerDriveFile_(fileId, rootFolder.getId());
             return {
@@ -4562,8 +4692,10 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
         try {
             try { ledger = adapters.loadLedger(operationId); }
             catch (ledgerReadError) {
-                result.status = "needs_review";
-                result.message = "No se pudo leer el ledger durable: " + String(ledgerReadError && ledgerReadError.message || ledgerReadError);
+                result.status = ledgerReadError && ledgerReadError.code === "ORGANIZER_LEDGER_BUSY" ? "retry" : "needs_review";
+                result.message = result.status === "retry"
+                    ? "El ledger está ocupado por una transición breve; no se inició el movimiento. Reintenta con el mismo manifiesto."
+                    : "No se pudo leer el ledger durable: " + String(ledgerReadError && ledgerReadError.message || ledgerReadError);
                 results.push(result);
                 return;
             }
@@ -4573,10 +4705,25 @@ function rollbackCortesImageOrganizerOperations_(operationIds, ownerId, adapters
                 results.push(result);
                 return;
             }
-            if (ledger.status === "rollback_processing" || ledger.status === "processing") {
+            if (ledger.status === "processing") {
                 result.fileId = ledger.fileId;
                 result.status = "in_progress";
-                result.message = "La operación ya tiene una transición activa; no se iniciará un segundo rollback.";
+                result.message = "La aplicación original sigue en curso; el rollback no se iniciará en paralelo.";
+                results.push(result);
+                return;
+            }
+            if (ledger.status === "rollback_processing") {
+                const current = adapters.inspectFile(ledger.fileId);
+                if (!current.trashed && current.folderPath === ledger.sourceFolderPath && current.fileName === ledger.sourceName) {
+                    adapters.saveLedger(Object.assign({}, ledger, {status:"rolled_back", rolledBackAt:Date.now()}));
+                    result.fileId = ledger.fileId;
+                    result.status = "already_rolled_back";
+                    results.push(result);
+                    return;
+                }
+                result.fileId = ledger.fileId;
+                result.status = "in_progress";
+                result.message = "El rollback mantiene una reserva activa; no se iniciará otro rollback.";
                 results.push(result);
                 return;
             }
@@ -4686,8 +4833,9 @@ function handleRollbackCortesImageOrganizer_(payload, logMessage, developerConte
 function handleGetCortesImageOrganizerOperations_(payload, developerContext) {
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("El historial Safe Apply requiere una sesión Desarrollador verificada.");
+    ensureCortesOrganizerLedgerBaseline_();
     const page = getCortesOrganizerOperationLedgerPage_(
-        PropertiesService.getScriptProperties(), ownerId,
+        getCortesOrganizerLedgerSheet_(), ownerId,
         payload && payload.offset, payload && payload.limit
     );
     return Object.assign({ status: "success", writePerformed: false }, page);
