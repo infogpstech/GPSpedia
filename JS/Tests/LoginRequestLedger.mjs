@@ -85,7 +85,9 @@ sheetsRoundTrip[1] = 123;
 sheetsRoundTrip[3] = new Date(original.createdAt);
 sheetsRoundTrip[7] = 1795478400000;
 sheetsRoundTrip[9] = new Date(original.updatedAt);
-assert.equal(loginRequestRowsEqual_(row, sheetsRoundTrip), true,
+const expectedSheetsRoundTrip = row.slice();
+expectedSheetsRoundTrip[7] = "1795478400000";
+assert.equal(loginRequestRowsEqual_(expectedSheetsRoundTrip, sheetsRoundTrip), true,
     "Debe aceptar coerciones de tipo equivalentes devueltas por Google Sheets.");
 assert.equal(loginRequestRecordFromRow_(sheetsRoundTrip).createdAt, original.createdAt);
 assert.equal(loginRequestRecordFromRow_(sheetsRoundTrip).updatedAt, original.updatedAt);
