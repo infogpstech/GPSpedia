@@ -14,7 +14,7 @@ assert.match(ui, /const events = localTraffic/);
 assert.match(ui, /renderLocalServiceTrafficChart_/);
 assert.doesNotMatch(ui, /globalServiceTraffic|global-service-traffic|Coordinator/);
 assert.match(html, /Tráfico global coordinado · retirado/);
-assert.match(html, /No contaba todas las solicitudes HTTP/);
+assert.match(html, /No representa todas las solicitudes HTTP/);
 assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
 assert.doesNotMatch(html, /global-service-traffic-chart|btn-refresh-global-service-traffic/);
 assert.match(telemetry, /const SERVICE_KEYS = Object\.freeze\(\["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"\]\)/);
