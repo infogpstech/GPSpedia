@@ -1741,12 +1741,15 @@ Siguiente tarea MIG-026: primera familia de estado ADMIN, una familia por tarea,
 
 ================================================================================
 MIG-026 — ADMIN — MIGRACIÓN DE AUDITORÍA PERSISTENTE — 2026-11-24
-HEAD de código: 8082c467ca705c9c0757619898288a819d4b68ee.
+HEAD de código funcional: 8082c467ca705c9c0757619898288a819d4b68ee.
+HEAD de trabajo/documentación y contratos: fe8669567101d53639ecf4e1e5c467429796980b.
 Commits principales:
 - 7ae0207d14 — ledger AdminOperationAudit y baseline legacy.
 - ea05f4530a — baseline por lote y limpieza por lotes; harness de regresión.
 - 8475e4402a — rechazo de filas huérfanas durante baseline.
 - 8082c467ca — sanitización de legacy/filas y resumen parcial allowlist.
+- 41520882b4 — registros de inventario, tarea y Beta.
+- 91cd783e21 / fe86695671 — alineación final del contrato de inventario y prueba CI.
 Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
 
 Cambios:
@@ -1758,8 +1761,8 @@ Cambios:
 
 Validación:
 - AdminAuditTrail 27/27 PASS.
-- CI run 45316668967: 495 suites, 5,799 pruebas aprobadas, 0 fallos.
-- GitHub Pages run 45316668147: SUCCESS.
+- CI run 45317266195: 495 suites, 5,799 pruebas aprobadas, 0 fallos; sintaxis 457 archivos y referencias 377 archivos PASS.
+- GitHub Pages run 45317265579: SUCCESS.
 - No se desplegó Apps Script, ni se creó/modificó Spreadsheet real, ni se modificaron propiedades instaladas.
 
 Pendiente Beta: crear AdminOperationAudit con encabezados exactos (fila 1; fila 2 vacía), probar baseline real, interrupciones, append/read-back, lock contention, operaciones concurrentes, retención y ausencia de secretos; no borrar GPSpedia_ADMIN_AUDIT_V1_ durante la prueba. Consultar Tareas_Beta.md §11.

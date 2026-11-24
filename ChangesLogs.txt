@@ -477,6 +477,6 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Baseline legacy idempotente/reanudable, importación por lote, verificación read-back, rechazo de filas huérfanas/duplicadas/corruptas y sanitización de campos; no escribe ni elimina propiedades legacy.
 - El flujo ordinario ya no consulta ScriptProperties para auditoría. Inicio/cierre usan `tryLock(0)`; no hay `waitLock`; el registro es best-effort y no detiene la operación funcional cuando hay contención o falla de esquema.
 - Retención 180 días, 300 eventos finalizados, 20 pendientes; limpieza por lotes. AdminAuditTrail 27/27 PASS.
-- CI run 45316668967: 495 suites, 5,799 pruebas aprobadas, 0 fallos. GitHub Pages run 45316668147: SUCCESS.
+- CI run 45317266195: 495 suites, 5,799 pruebas aprobadas, 0 fallos; sintaxis 457 archivos y referencias 377 archivos PASS. GitHub Pages run 45317265579: SUCCESS.
 - No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas. Preparación de hoja real, concurrencia y limpieza legacy quedan pendientes de Beta (§11).
 - Siguiente familia ADMIN: Safe Apply `GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>`, una tarea a la vez.
