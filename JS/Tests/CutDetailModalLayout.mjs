@@ -224,7 +224,8 @@ testCase("el detalle de corte tiene nombre accesible y conserva el logo de marca
 
 
 testCase("AUG-146 conserva espacios simétricos y evita solapamientos en edición", () => {
-    const toolbarStart = css.lastIndexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {');
+    const augStart = css.lastIndexOf("/* AUG-146 — encabezado de detalle");
+    const toolbarStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {', augStart);
     const toolbarRule = css.slice(toolbarStart, css.indexOf("}", toolbarStart));
     assert.match(toolbarRule, /padding: 6px 0 0 6px !important/);
     assert.match(toolbarRule, /grid-template-rows: 40px 48px auto/);
@@ -247,6 +248,10 @@ testCase("AUG-146 conserva espacios simétricos y evita solapamientos en edició
     const metaRule = css.slice(metaStart, css.indexOf("}", metaStart));
     assert.match(metaRule, /margin-top: -8px/);
     assert.match(css, /data-model-title-layout="below-logo"[\s\S]*?grid-template-rows: 40px 26px auto auto/);
+    const mobileStart = css.lastIndexOf("@media (max-width: 560px)");
+    const mobileRule = css.slice(mobileStart);
+    assert.match(mobileRule, /padding-left: 6px !important/);
+    assert.match(mobileRule, /grid-template-rows: 40px 48px auto/);
 });
 
 testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no se recorta", () => {
