@@ -36,7 +36,7 @@ test("Drive no se ejecuta dentro de la sección crítica", () => {
     const end = handler.indexOf("} finally {", start);
     const critical = handler.slice(start, end);
     assert.doesNotMatch(critical, /DriveApp|createFile\(|findOrCreateSubFolder\(|getCortesRootFolder\(|file\.setDescription|file\.setTrashed|markRecovery\(|trashUnlinkedFile\(|logMessage\(/);
-    assert.ok(handler.indexOf("file.setDescription(\"GPSpedia LogosMarca — LINKED") > handler.indexOf("} finally {", start));
+    assert.ok(handler.indexOf('file.setDescription("GPSpedia LogosMarca — LINKED') > handler.indexOf("} finally {", start));
 });
 test("la secuencia y la fila se escriben bajo lock y se libera solo si fue adquirido", () => {
     assert.ok(handler.indexOf("lock.tryLock(0)") < handler.indexOf("getNextLogoIdLocked_(sheet, logoIdSnapshot)"));

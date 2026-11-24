@@ -58,7 +58,7 @@ test("ninguna operación Drive permanece dentro de la sección crítica de asign
  const fn=block("handleAddLogo"),start=fn.indexOf("let newRow"),end=fn.indexOf("} finally {",start);
  assert.ok(start>=0&&end>start);
  assert.doesNotMatch(fn.slice(start,end),/DriveApp|createFile\(|findOrCreateSubFolder\(|getCortesRootFolder\(|file\.setDescription|file\.setTrashed|markRecovery\(|trashUnlinkedFile\(|logMessage\(/);
- assert.ok(fn.indexOf("file.setDescription(\\"GPSpedia LogosMarca — LINKED")>end);
+ assert.ok(fn.indexOf('file.setDescription("GPSpedia LogosMarca — LINKED')>end);
 });
 test("ADMIN no espera por locks ni usa esperas temporizadas",()=>{
  assert.doesNotMatch(source,/\.waitLock\(/);
