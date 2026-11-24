@@ -1301,7 +1301,7 @@ function validateSessionReadOnly_(sessionToken, expectedUserId, trustedActor) {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
-        if (!lock.tryLock(2500)) return { valid: null, unavailable: true, reason: 'session_busy' };
+        if (!lock.tryLock(0)) return { valid: null, unavailable: true, reason: 'session_busy' };
         acquired = true;
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);

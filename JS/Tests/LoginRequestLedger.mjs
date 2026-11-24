@@ -47,6 +47,9 @@ for (const name of ["revokePendingLoginRequestsForUserUnderLock_", "revokeLoginR
 }
 
 assert.match(auth, /\.tryLock\(0\)/);
+const lockTimeouts = [...auth.matchAll(/\.tryLock\(([^)]*)\)/g)].map(match => match[1].trim());
+assert.ok(lockTimeouts.length >= 15 && lockTimeouts.every(timeout => timeout === "0"),
+    "Todas las adquisiciones de ScriptLock deben ser tryLock(0), sin esperas temporizadas.");
 assert.doesNotMatch(auth, /\.waitLock\(/,
     "Ninguna función AUTH debe esperar por el ScriptLock global; las contenciones son fail-fast.");
 assert.match(block(auth, "handleLogin"), /sessionLock\.tryLock\(0\)/);
@@ -89,4 +92,4 @@ let acquired = false;
 assert.equal(acquireFailFast({tryLock:()=>{acquired=true;return true;}}), true);
 assert.equal(acquired, true);
 
-console.log("LoginRequestLedger: 39/39 PASS");
+console.log("LoginRequestLedger: 40/40 PASS");
