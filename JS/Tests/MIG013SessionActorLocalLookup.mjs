@@ -153,7 +153,7 @@ const catalogSpreadsheet = {
 };
 const catalogApi = new Function("SpreadsheetApp","CacheService","Utilities",
     catalog + "\nreturn {getCatalogSessionActor_,loadCatalogSessionActor_,invalidateCatalogSessionActorCache_};"
-)({getActiveSpreadsheet:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
+)({openById:id=>{assert.equal(id, "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os");return catalogSpreadsheet;}},{getScriptCache:()=>catalogCache},utilities);
 const catalogCold = catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001");
 assert.equal(catalogCold.role,"tecnico");
 const catalogColdReads = catalogReads;
