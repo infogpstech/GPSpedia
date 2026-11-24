@@ -34,7 +34,7 @@ function makeLedgerMock(){
  };
  return {ledger,rows};
 }
-const ledgerHelpers=["inspectLogoIdHighWater_","getLogoIdReservationsSheet_","readLogoIdReservationLedger_","ensureLogoIdReservationBaselineUnderLock_","getNextLogoIdLocked_"];
+const ledgerHelpers=["inspectLogoIdHighWater_","getLogoIdReservationsSheet_","readLogoIdReservationLedger_","readLatestLogoIdReservation_","ensureLogoIdReservationBaselineUnderLock_","getNextLogoIdLocked_"];
 function generator(sheetValue,storedValue=null){
  let stored=storedValue,propertyReads=0;
  const {ledger,rows}=makeLedgerMock();

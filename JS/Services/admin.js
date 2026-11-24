@@ -6886,6 +6886,22 @@ function readLogoIdReservationLedger_(sheet) {
     return { maxId, count: reservations.length, reservations };
 }
 
+function readLatestLogoIdReservation_(sheet) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 2) return { maxId: 0, count: 0 };
+    const row = sheet.getRange(lastRow, 1, 1, LOGO_ID_RESERVATIONS_HEADERS_.length).getValues()[0];
+    const recordType = String(row[0] || "");
+    const reservationId = String(row[1] || "").trim();
+    const id = Number(row[2]);
+    const createdAt = Number(row[3]);
+    const schemaVersion = Number(row[4]);
+    if (recordType !== "RESERVATION" || !reservationId || !Number.isSafeInteger(id) || id < 1 ||
+        !Number.isFinite(createdAt) || createdAt < 0 || schemaVersion !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
+        throw new Error("La última reserva de LogoIdReservations está dañada.");
+    }
+    return { maxId: id, count: 1, reservationId };
+}
+
 function ensureLogoIdReservationBaselineUnderLock_(spreadsheet, logoSheet, ledgerSheet) {
     const metaRange = ledgerSheet.getRange(2, 1, 1, LOGO_ID_RESERVATIONS_HEADERS_.length);
     let meta = metaRange.getValues()[0];
@@ -6939,7 +6955,10 @@ function getNextLogoIdLocked_(sheet, observedLogoState) {
     const baseline = ensureLogoIdReservationBaselineUnderLock_(spreadsheet, sheet, ledgerSheet);
     const logoState = observedLogoState && observedLogoState.lastRow === sheet.getLastRow()
         ? observedLogoState : inspectLogoIdHighWater_(sheet);
-    const ledgerState = readLogoIdReservationLedger_(ledgerSheet);
+    const ledgerState = readLatestLogoIdReservation_(ledgerSheet);
+    if (ledgerState.count && baseline.highWater > ledgerState.maxId) {
+        throw new Error("El high-water de LogoIdReservations supera la última reserva; se requiere revisión.");
+    }
     const nextId = Math.max(logoState.maxId, baseline.highWater, ledgerState.maxId) + 1;
     if (!Number.isSafeInteger(nextId) || nextId < 1) throw new Error("Se alcanzó el límite seguro de IDs de LogosMarca.");
 
@@ -6952,13 +6971,9 @@ function getNextLogoIdLocked_(sheet, observedLogoState) {
     catch (error) { writeError = error; }
     try { SpreadsheetApp.flush(); } catch (error) { writeError = writeError || error; }
 
-    const lastRow = ledgerSheet.getLastRow();
-    const persisted = lastRow >= 3
-        ? ledgerSheet.getRange(3, 1, lastRow - 2, LOGO_ID_RESERVATIONS_HEADERS_.length).getValues()
-            .filter(item => String(item[1] || "") === reservationId)
-        : [];
-    if (persisted.length !== 1 || String(persisted[0][0]) !== "RESERVATION" ||
-        Number(persisted[0][2]) !== nextId || Number(persisted[0][4]) !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
+    const persisted = ledgerSheet.getRange(row, 1, 1, LOGO_ID_RESERVATIONS_HEADERS_.length).getValues()[0];
+    if (String(persisted[0] || "") !== "RESERVATION" || String(persisted[1] || "") !== reservationId ||
+        Number(persisted[2]) !== nextId || Number(persisted[4]) !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
         throw new Error("No se pudo confirmar la reserva del ID de logotipo." + (writeError ? " " + writeError.message : ""));
     }
 
@@ -7085,7 +7100,7 @@ function handleAddLogo(payload, logMessage) {
     const expectedExtensionByMime = { "image/png": ".png", "image/svg+xml": ".svg", "image/webp": ".webp" };
     const expectedExtension = expectedExtensionByMime[String(mimeType || "").trim().toLowerCase()];
     if (!extension || !expectedExtension || String(extension).toLowerCase() !== expectedExtension) {
-        throw new Error("La extensión del logotipo no coincide con su MIME real.");
+        throw new Error("La extensión del logotipo no coincide con el MIME real.");
     }
     if (!logoDestination.targetBaseName) throw new Error("No se pudo construir el nombre canónico del logotipo conservando su extensión.");
     const canonicalFilename = logoDestination.targetBaseName + extension;
@@ -7123,7 +7138,9 @@ function handleAddLogo(payload, logMessage) {
         busyError.code = "ADMIN_BUSY";
         throw busyError;
     }
+
     let newRow = null, newId = null, lastColumn = 4, rowPrepared = false;
+    let response = null, operationError = null, recoveryReason = "", rowCleanupError = null;
     try {
         const lastRow = sheet.getLastRow();
         newRow = lastRow + 1;
@@ -7144,15 +7161,12 @@ function handleAddLogo(payload, logMessage) {
         if (Number(generatedId) !== newId || generatedFormula) {
             throw new Error("No se pudo confirmar el ID numérico permanente del logotipo.");
         }
-        try { if (typeof file.setDescription === "function") file.setDescription("GPSpedia LogosMarca — LINKED\nlogoId=" + newId); }
-        catch (metadataError) { console.warn("No se pudo actualizar metadata del logotipo vinculado:", metadataError); }
-        logMessage("Registro Logo", `Registro completado. ID de logotipo asignado: ${generatedId}`);
-        return {
+        response = {
             status: "success", logoId: generatedId, logoUrl,
             message: "Logotipo registrado exitosamente en la base de datos conservando su formato y transparencia."
         };
     } catch (error) {
-        let matches;
+        let matches = [];
         try {
             const last = sheet.getLastRow();
             const width = Math.max(sheet.getLastColumn(), 4);
@@ -7160,52 +7174,66 @@ function handleAddLogo(payload, logMessage) {
             matches = rows.map((row, index) => ({ row, rowIndex: index + 2 }))
                 .filter(item => String(item.row[2] || "").trim() === logoUrl);
         } catch (readError) {
-            markRecovery("No se pudo verificar la fila después del error: " + String(readError && readError.message || readError));
-            throw new Error(String(error && error.message || error) + " El estado del vínculo no pudo verificarse; el archivo se conservó para recuperación.");
+            recoveryReason = "No se pudo verificar la fila después del error: " + String(readError && readError.message || readError);
+            operationError = new Error(String(error && error.message || error) + " El estado del vínculo no pudo verificarse; el archivo se conservó para recuperación.");
         }
-        if (matches.length === 1) {
+        if (!operationError && matches.length === 1) {
             const row = matches[0].row;
             const recoveredId = Number(row[0]);
             if (Number.isSafeInteger(recoveredId) && recoveredId > 0 &&
                 String(row[1] || "").trim() === String(nombreMarca).trim() &&
                 String(row[3] || "").trim() === String(nombreMarca).trim()) {
-                try { if (typeof file.setDescription === "function") file.setDescription("GPSpedia LogosMarca — LINKED\nlogoId=" + recoveredId); } catch (metadataError) {}
-                return {
+                response = {
                     status: "success", logoId: recoveredId, logoUrl, recovered: true,
                     message: "Logotipo registrado y verificado después de una respuesta parcial."
                 };
+            } else {
+                recoveryReason = "La fila enlazada no coincide con los metadatos esperados.";
+                operationError = new Error("El logotipo quedó asociado a una fila que requiere revisión; el archivo se conservó.");
             }
-            markRecovery("La fila enlazada no coincide con los metadatos esperados.");
-            throw new Error("El logotipo quedó asociado a una fila que requiere revisión; el archivo se conservó.");
+        } else if (!operationError && matches.length > 1) {
+            recoveryReason = "La URL aparece en varias filas; se requiere reconciliación.";
+            operationError = new Error("La URL del logotipo aparece en varias filas; el archivo se conservó para reconciliación.");
+        } else if (!operationError) {
+            if (rowPrepared && newRow && newRow <= sheet.getLastRow()) {
+                try {
+                    sheet.getRange(newRow, 1, 1, lastColumn).clearContent();
+                    SpreadsheetApp.flush();
+                    const cleared = sheet.getRange(newRow, 1, 1, lastColumn).getValues()[0];
+                    if (cleared.some(value => value !== "" && value !== null && value !== undefined)) {
+                        throw new Error("La fila parcial de LogosMarca no quedó vacía tras la compensación.");
+                    }
+                } catch (cleanupError) { rowCleanupError = cleanupError; }
+            }
+            operationError = error;
         }
-        if (matches.length > 1) {
-            markRecovery("La URL aparece en varias filas; se requiere reconciliación.");
-            throw new Error("La URL del logotipo aparece en varias filas; el archivo se conservó para reconciliación.");
-        }
-        let rowCleanupError = null;
-        if (rowPrepared && newRow && newRow <= sheet.getLastRow()) {
-            try {
-                sheet.getRange(newRow, 1, 1, lastColumn).clearContent();
-                SpreadsheetApp.flush();
-                const cleared = sheet.getRange(newRow, 1, 1, lastColumn).getValues()[0];
-                if (cleared.some(value => value !== "" && value !== null && value !== undefined)) {
-                    throw new Error("La fila parcial de LogosMarca no quedó vacía tras la compensación.");
-                }
-            } catch (cleanupError) { rowCleanupError = cleanupError; }
+    } finally {
+        if (lockAcquired && lock.hasLock()) lock.releaseLock();
+    }
+
+    // Toda interacción Drive/telemetría posterior a la escritura ocurre fuera del ScriptLock.
+    if (operationError) {
+        if (recoveryReason) {
+            markRecovery(recoveryReason);
+            throw operationError;
         }
         try { trashUnlinkedFile(); }
         catch (cleanupError) {
             markRecovery(cleanupError.message + (rowCleanupError ? "; rowCleanup=" + rowCleanupError.message : ""));
-            throw new Error(String(error && error.message || error) + " El archivo no vinculado quedó marcado para recuperación manual.");
+            throw new Error(String(operationError && operationError.message || operationError) + " El archivo no vinculado quedó marcado para recuperación manual.");
         }
         if (rowCleanupError) {
             markRecovery("La imagen se retiró, pero la fila parcial requiere limpieza: " + rowCleanupError.message);
-            throw new Error(String(error && error.message || error) + " La fila parcial requiere revisión manual.");
+            throw new Error(String(operationError && operationError.message || operationError) + " La fila parcial requiere revisión manual.");
         }
-        throw error;
-    } finally {
-        if (lockAcquired && lock.hasLock()) lock.releaseLock();
+        throw operationError;
     }
+
+    try { if (typeof file.setDescription === "function") file.setDescription("GPSpedia LogosMarca — LINKED\nlogoId=" + response.logoId); }
+    catch (metadataError) { console.warn("No se pudo actualizar metadata del logotipo vinculado:", metadataError); }
+    try { logMessage("Registro Logo", "Registro completado. ID de logotipo asignado: " + response.logoId); }
+    catch (logError) { console.warn("No se pudo registrar el mensaje de alta de logotipo:", logError); }
+    return response;
 }
 
 function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue, vinColumnIndex) {

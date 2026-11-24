@@ -31,11 +31,11 @@ test("el flujo ordinario no accede directamente a PropertiesService",()=>{
 });
 test("las reservas tienen identidad, read-back y high-water monotónico",()=>{
  const fn=block("getNextLogoIdLocked_");
- assert.match(fn,/readLogoIdReservationLedger_\(ledgerSheet\)/);
+ assert.match(fn,/readLatestLogoIdReservation_\(ledgerSheet\)/);
  assert.match(fn,/Math\.max\(logoState\.maxId, baseline\.highWater, ledgerState\.maxId\) \+ 1/);
  assert.match(fn,/Utilities\.getUuid\(\)/);
  assert.match(fn,/reservationId/);
- assert.match(fn,/persisted\.length !== 1/);
+ assert.match(fn,/String\(persisted\[1\] \|\| ""\) !== reservationId/);
  assert.match(fn,/metaRange\.setValue\(nextId\)/);
 });
 test("el lector del ledger rechaza filas dañadas y duplicadas",()=>{
@@ -43,15 +43,22 @@ test("el lector del ledger rechaza filas dañadas y duplicadas",()=>{
  assert.match(fn,/recordType !== "RESERVATION"/);
  assert.match(fn,/ids\.has\(id\) \|\| reservationIds\.has\(reservationId\)/);
 });
+test("el flujo ordinario lee solo la última reserva y no recorre todo el ledger",()=>{
+ const fn=block("readLatestLogoIdReservation_");
+ assert.match(fn,/getLastRow\(\)/);
+ assert.match(fn,/getRange\(lastRow, 1, 1/);
+ assert.doesNotMatch(fn,/getRange\(3, 1, lastRow - 2/);
+});
 test("el escaneo de LogosMarca se realiza antes del lock y se reconcilia si cambia la hoja",()=>{
  const fn=block("handleAddLogo");
  assert.ok(fn.indexOf("inspectLogoIdHighWater_(sheet)")<fn.indexOf("lock.tryLock(0)"));
  assert.match(fn,/getNextLogoIdLocked_\(sheet, logoIdSnapshot\)/);
 });
 test("ninguna operación Drive permanece dentro de la sección crítica de asignación",()=>{
- const fn=block("handleAddLogo"),start=fn.indexOf("lock.tryLock(0)"),end=fn.indexOf("finally {",start);
+ const fn=block("handleAddLogo"),start=fn.indexOf("let newRow"),end=fn.indexOf("} finally {",start);
  assert.ok(start>=0&&end>start);
- assert.doesNotMatch(fn.slice(start,end),/DriveApp|createFile\(|findOrCreateSubFolder\(|getCortesRootFolder\(/);
+ assert.doesNotMatch(fn.slice(start,end),/DriveApp|createFile\(|findOrCreateSubFolder\(|getCortesRootFolder\(|file\.setDescription|file\.setTrashed|markRecovery\(|trashUnlinkedFile\(|logMessage\(/);
+ assert.ok(fn.indexOf("file.setDescription(\\"GPSpedia LogosMarca — LINKED")>end);
 });
 test("ADMIN no espera por locks ni usa esperas temporizadas",()=>{
  assert.doesNotMatch(source,/\.waitLock\(/);
