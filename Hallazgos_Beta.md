@@ -146,5 +146,6 @@ _Aún no hay hallazgos confirmados._
 - **Frecuencia / muestras:** error reportado por el usuario; revisión estática independiente confirmada; ejecución remota NO REALIZADA.
 - **Impacto:** falla la lectura del Dashboard y las operaciones del Inbox que intentan registrar eventos de auditoría.
 - **Severidad:** ALTA.
-- **Estado:** CAUSA ESTÁTICA CONFIRMADA; corrección local pendiente.
+- **Estado:** CORREGIDO EN RAMA Y VALIDADO EN CI; verificación del deployment Beta pendiente.
+- **Validación de corrección:** `JS/Services/feedback.js` declara las constantes contractuales; `JS/Tests/InboxAuditTrail.js` ya no las inyecta y evalúa el esquema del módulo. CI run `45501003318`: SUCCESS, 517 suites / 6,125 pruebas, 0 fallos; pruebas Inbox 15/15 en FEEDBACK y 15/15 en MIG020.
 - **Tarea relacionada:** AUG-150; desbloquea la validación completa de AUG-148.
