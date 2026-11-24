@@ -231,7 +231,7 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 
 ## Nueva tarea autorizada — AUG-146: revisión integral de modales y experiencia del panel de desarrollador
 
-**Estado: EN PROGRESO.** Solicitud registrada el 2026-11-24. Ejecutar en la rama `GPSpedia2.2.5_work`; no modificar `GPSpedia2.2.5`.
+**Estado: COMPLETADA EN CÓDIGO; VALIDACIÓN VISUAL DIFERIDA A BETA.** Solicitud registrada el 2026-11-24. Ejecutar en la rama `GPSpedia2.2.5_work`; no modificar `GPSpedia2.2.5`.
 
 ### A. Modal de detalle — encabezado
 - Mantener el logo separado del borde superior e izquierdo del modal con el mismo espacio en ambos lados.
@@ -273,3 +273,18 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 5. Añadir o actualizar pruebas de contrato y regresión para escritorio/móvil, solapamientos, orden/alineación, visibilidad de ayudas y mensajes públicos.
 6. Ejecutar sintaxis, suites pertinentes y CI; revisar el diff completo. La validación visual de navegador/viewport se registrará como pendiente de Beta si no hay navegador disponible.
 7. Actualizar checkpoint y ChangesLogs con evidencia real. No desplegar servicios Apps Script ni modificar recursos productivos.
+
+
+### Resultado de ejecución AUG-146 — 2026-11-24
+
+- Modal de detalle: se ajustaron márgenes superiores/izquierdos iguales para el logo, altura de cuadrícula, espacio de metadatos, campo de edición, divisor y posición del indicador de guardado. Se conserva el flujo JS de edición, guardado, deshacer y aceptar.
+- Modal de desarrollador: se retiró el apartado informativo del tráfico global retirado; consola compactada a 24% en escritorio y máximo 30% en móvil; navegación por iconos con expansión de pestaña activa; limpiar/copiar alineados junto al título y expansión de etiquetas al recibir foco; prompt integrado en una sola barra con ejecución `>_`; encabezados duplicados ocultos visualmente y preservados para accesibilidad.
+- Ayuda contextual: las explicaciones extensas se trasladaron a popovers ocultos inicialmente y asociados a botones de información; se eliminaron duplicados visibles. Se conserva el estado accesible de los controles y se respeta `prefers-reduced-motion`.
+- Mensajes: las alertas de alta de Cortes y páginas auxiliares se redujeron a mensajes genéricos breves; los detalles se conservan en el logger autorizado de desarrollador. Las confirmaciones se acortaron sin alterar las operaciones.
+- Endpoints: el frontend registra por servicio si la URL cambió o permaneció igual. AUTH ahora selecciona exclusivamente la revisión activa, valida la versión de contrato contra el mapa compatible y falla cerrado ante servicios duplicados/faltantes o versión incompatible. En nuevas revisiones se conserva la metadata de auditoría de servicios sin cambios; el historial solo registra los servicios realmente modificados. La instantánea versionada completa de seis servicios y el historial append-only se mantienen.
+- Pruebas: se reforzaron `DeveloperPanelCopy`, `DeveloperPanelUX`, `CutDetailModalLayout`, `DeveloperOperationMessages`, `CentralServiceUrlPublisher`, `DevToolsModalAccessibility`, `SupplementaryVideoContract`, `CortesImageReconciliationUI`, `AdminReplacedImagesIntegrity` y el fixture AUTH.
+- CI run `45486260447`, HEAD `465194319f7e1c8b21aff181afea3142ef8384a9`: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos.
+- GitHub Pages run `45486258242`: SUCCESS sobre el mismo HEAD.
+- Rama de trabajo: `GPSpedia2.2.5_work`, HEAD `465194319f7e1c8b21aff181afea3142ef8384a9`. Rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- No se desplegaron servicios Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos.
+- Pendiente exclusivamente: validación visual con navegador en viewports reales (móvil y escritorio) y prueba de publicación de endpoints en Beta aislada. Sin esa comprobación no se declara validación visual ni remota completada.
