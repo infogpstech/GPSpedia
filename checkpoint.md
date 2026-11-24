@@ -402,3 +402,14 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Seguridad/alcance:** no se desplegó Apps Script, no se subió vídeo a YouTube y no se modificaron Spreadsheet, Drive, propiedades, permisos ni datos productivos. Las tres correcciones están en rama; las pruebas de integración Beta siguen pendientes.
 - **Rama de trabajo actual:** `GPSpedia2.2.5_work`, HEAD `5c537c8d6316d5c72a33610e6efea559806ea0b5`. **Rama base protegida:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
 - **Siguiente paso operativo:** validar en Beta aislada las tres correcciones conforme a `Tareas_Beta.md` §§22–24. No se debe declarar resuelto en Beta hasta contar con esa evidencia.
+
+
+### Adenda final de validación — YouTube Tutorial — 2026-11-24
+
+- Se amplió la prueba de inicialización para cubrir tanto Tutorial histórico sin ID físico (referencia `legacy-<SHA-256>`) como Tutorial nuevo con ID canónico `tut-...`. Ambas rutas pasan.
+- `FeedbackTutorialLookupBoundedRead`: 9/9 PASS; `TutorialIntegrity`: 48/48 PASS; FEEDBACK precondiciones de subida resumable: 10/10 PASS.
+- CI run `45506352069`, commit de código `ffaea2ec6d78adebcea5d7b826163484a4f50ddd`: SUCCESS; 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 184/184 PASS. Pages run `45506351422`: SUCCESS.
+- **Límite de diagnóstico:** se corrigió la brecha de resolución de tutoriales históricos y se validaron ambos formatos de referencia en pruebas aisladas. No se reprodujo el error en el deployment Beta real ni se subió un vídeo real; si el problema persiste con un tutorial nuevo, la siguiente evidencia necesaria es la etapa exacta (init/submit), el formato de referencia y la existencia de la fila en la misma Spreadsheet Beta usada por CATALOG y FEEDBACK.
+- **Dashboard:** la corrección evita que una hoja nueva/estática quede sin poder registrar el primer evento. La validación Beta debe comprobar también lectura y render; si la hoja ya tiene filas y sigue sin mostrarlas, continuar con los diagnósticos de origen/lectura indicados en Tareas_Beta §22, sin asumir que el fallback de ID sea la única causa.
+- **Rama de trabajo actual:** `GPSpedia2.2.5_work`, HEAD `2b39236ca5b529a3b2ed8f36abc0f19857fba72f`. **Rama base protegida:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
+- **Siguiente paso:** ejecutar las validaciones de integración en Beta aislada de `Tareas_Beta.md` §§22–24. No se debe declarar el cierre de Beta sin evidencia real.
