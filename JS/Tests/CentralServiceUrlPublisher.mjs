@@ -121,7 +121,7 @@ check("actualiza únicamente URL y metadatos de auditoría, conserva contrato y 
     const changed={...first,CATALOG:"https://script.google.com/macros/s/DEPLOYMENT_CATALOG_B/exec"};
     const result=context.publishAuthCentralServiceUrls_(changed,{userId:"dev-2"},"URL CATALOG renovada","request-update-000002");
     assert.equal(result.revision,2);
-    assert.deepEqual(result.changedServices,["CATALOG"]);
+    assert.deepEqual(Array.from(result.changedServices),["CATALOG"]);
     const row=fixture.sheets.Servicios.rows.find(item=>Number(item[0])===2&&item[1]==="CATALOG");
     assert.equal(row[2],changed.CATALOG);
     assert.equal(row[4],"2.4.0");
