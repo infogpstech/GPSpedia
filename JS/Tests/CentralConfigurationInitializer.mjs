@@ -89,8 +89,8 @@ check("crea únicamente las seis pestañas de contrato y sus encabezados", () =>
     const result = env.context.initializeCentralConfigurationSheets();
     assert.equal(result.status, "success");
     assert.equal(result.publicationReady, false);
-    assert.deepEqual(result.createdSheets, Object.keys(expected));
-    assert.deepEqual(result.initializedSheets, Object.keys(expected));
+    assert.deepEqual(Array.from(result.createdSheets), Object.keys(expected));
+    assert.deepEqual(Array.from(result.initializedSheets), Object.keys(expected));
     for (const [name, headers] of Object.entries(expected)) {
         assert.deepEqual(headersFor(spreadsheet.getSheetByName(name)), headers);
         assert.equal(spreadsheet.getSheetByName(name).frozenRows, 1);
@@ -105,7 +105,7 @@ check("segunda ejecución es idempotente y no vuelve a escribir", () => {
     const result = env.context.initializeCentralConfigurationSheets();
     assert.equal(result.createdSheets.length, 0);
     assert.equal(result.initializedSheets.length, 0);
-    assert.deepEqual(result.preservedSheets, Object.keys(expected));
+    assert.deepEqual(Array.from(result.preservedSheets), Object.keys(expected));
     assert.equal([...spreadsheet.sheets.values()].reduce((sum, sheet) => sum + sheet.writes, 0), writes);
 });
 check("preserva encabezados y datos preexistentes", () => {
@@ -115,7 +115,7 @@ check("preserva encabezados y datos preexistentes", () => {
     const env = createEnvironment(spreadsheet);
     const result = env.context.initializeCentralConfigurationSheets();
     assert.equal(result.createdSheets.length, 0);
-    assert.deepEqual(result.preservedSheets, Object.keys(expected));
+    assert.deepEqual(Array.from(result.preservedSheets), Object.keys(expected));
     assert.equal(JSON.stringify([...spreadsheet.sheets.entries()].map(([name, sheet]) => [name, sheet.rows])), before);
     assert.equal([...spreadsheet.sheets.values()].reduce((sum, sheet) => sum + sheet.writes, 0), 0);
 });
