@@ -82,6 +82,7 @@ const Utilities = {
     DigestAlgorithm: { SHA_256: "SHA_256" },
     computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(String(value)).digest())
 };
+let lockAcquires = 0, lockHeld = false;
 const allocateInWrite = new Function(
     "COLS_CORTES", "SHEET_NAMES", "PropertiesService", "LockService", "SpreadsheetApp",
     "Utilities", "getSpreadsheet", "assertDeveloperForIdMaintenance",
@@ -89,7 +90,7 @@ const allocateInWrite = new Function(
 )(
     { id: 1 }, { CORTES: "Cortes" },
     { getScriptProperties: () => properties },
-    { getScriptLock: () => { throw new Error("WRITE ID allocator must not acquire ScriptLock"); } },
+    { getScriptLock: () => ({ tryLock(timeout) { assert.equal(timeout, 0); lockAcquires++; if (lockHeld) return false; lockHeld = true; return true; }, releaseLock() { assert.equal(lockHeld, true); lockHeld = false; } }) },
     { flush() { if (ledger) ledger.recalculate(); } },
     Utilities, () => spreadsheet,
     payload => {
@@ -113,9 +114,12 @@ const requestFromFrontend = (payload, opId, operationHash) => {
 const payload = { userId: "USR-1", sessionToken: "SESSION-1" };
 const hashA = "a".repeat(64), hashB = "b".repeat(64);
 assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashA), /simulated response loss/);
+assert.equal(lockAcquires, 1, "Solo el baseline inicial puede adquirir ScriptLock.");
+assert.equal(lockHeld, false);
 assert.deepEqual(requestFromFrontend(payload, "OP-E2E-1", hashA), { status: "success", vehicleId: 4 }, "El reintento debe recuperar el ID persistido por WRITE con el contrato de respuesta actual.");
+assert.equal(lockAcquires, 1, "Las reservas ordinarias no vuelven a adquirir ScriptLock.");
 assert.deepEqual(requestFromFrontend(payload, "OP-E2E-2", hashB), { status: "success", vehicleId: 5 }, "Una operación distinta debe recibir un ID nuevo con el contrato de respuesta actual.");
 assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashB), /otro contenido/);
 assert.equal(ledger.rows.length, 3, "Debe existir una reserva canónica por operación");
 assert.deepEqual(ledger.rows.slice(1).map(row => row[2]), [4, 5]);
-console.log("VehicleIdAllocationEndToEnd: 1/1 PASS — frontend→WRITE, asignación sin lock, respuesta perdida y recuperación por opId");
+console.log("VehicleIdAllocationEndToEnd: 1/1 PASS — frontend→WRITE, baseline fail-fast único, respuesta perdida y recuperación por opId");

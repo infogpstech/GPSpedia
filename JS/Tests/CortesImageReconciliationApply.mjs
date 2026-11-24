@@ -23,8 +23,8 @@ function createHarness(options={}) {
  const formulas=new Map();
  const cell=(row,column)=>({getValue:()=>values[row-1][column-1],getFormula:()=>formulas.get(row+":"+column)||"",setValue:value=>{values[row-1][column-1]=value;},clearContent:()=>{values[row-1][column-1]="";}});
  const sheet={getLastRow:()=>2,getRange:(row,column,numRows,numColumns)=>numRows!==undefined&&numColumns!==undefined?{getValues:()=>values.slice(row-1,row-1+numRows).map(line=>line.slice(column-1,column-1+numColumns))}:cell(row,column)};
- let released=false,locked=false,tryLockCalls=0,logCalls=0,previewCalls=0,activityCalls=[],backupChecks=0,cacheRemovals=[];
- const lock={hasLock:()=>locked,tryLock(timeout){assert.equal(timeout,0);tryLockCalls++;if(options.lockReacquireFailure || options.lockReacquireFailureAt===tryLockCalls)return false;locked=true;return true;},releaseLock:()=>{released=true;locked=false;}},LockService={getScriptLock:()=>lock};
+ let released=false,locked=false,hasReleased=false,tryLockCalls=0,logCalls=0,previewCalls=0,activityCalls=[],backupChecks=0,cacheRemovals=[];
+ const lock={hasLock:()=>locked,tryLock(timeout){assert.equal(timeout,0);if(hasReleased){tryLockCalls++;if(options.lockReacquireFailure || options.lockReacquireFailureAt===tryLockCalls)return false;}locked=true;hasReleased=false;return true;},releaseLock:()=>{released=true;locked=false;hasReleased=true;}},LockService={getScriptLock:()=>lock};
  const SHEET_NAMES={CORTES:"Cortes"};
  const COLS_CORTES={id:1,imagenVehiculo:9,imgCorte1:10,imgCorte2:11,imgCorte3:12,imgApertura:13,imgCableAlimen:14,imgCableAlimen2:15,imgCableAlimen3:16};
  const SpreadsheetApp={flush:()=>{}},getSpreadsheet=()=>({getSheetByName:name=>name==="Cortes"?sheet:null});
@@ -114,7 +114,7 @@ testCase("rechaza archivos renombrados después de la auditoría completa",()=>{
 testCase("si no se readquiere el lock tras validar el respaldo Drive, no inicia la aplicación",()=>{
  const h=createHarness({lockReacquireFailureAt:1});
  let error=null;try{h.handler(h.payload,()=>{},{userId:"DEV-1"});}catch(e){error=e;}
- assert.ok(error);assert.equal(error.code,"ADMIN_LOCK_BUSY");
+ assert.ok(error);assert.equal(error.code,"ADMIN_LOCK_REACQUIRE_PENDING");
  assert.equal(h.previewCalls,0);assert.equal(h.values[1][8],"");assert.equal(h.locked,false);
 });
 testCase("verifica el fingerprint operativo bajo lock después de validar el respaldo fuera del lock",()=>{
