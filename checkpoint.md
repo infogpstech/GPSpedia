@@ -1955,3 +1955,19 @@ ADENDA DE CIERRE — PRIVACIDAD AUTH/SESIÓN — 2026-11-24
 - La primera ejecución CI (45383116439) falló por dos expectativas de prueba no alineadas con el cambio. Se corrigieron y se repitió CI; la segunda ejecución aprobó íntegramente.
 - Rama de trabajo verificada en el commit funcional; rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se desplegó AUTH ni se modificaron recursos reales.
 - Requisito completado en código y CI. Pendiente únicamente validación visual en navegador real durante Beta.
+
+
+================================================================================
+REFUERZO DE PRIVACIDAD AUTH/SESIÓN — 2026-11-24
+HEAD de inicio verificado: d5f1e1e16ea6ea0d3bad882a69f1d500f54612d8
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+- La revisión de todas las llamadas de sesión encontró exposiciones adicionales fuera del catch de login: sesión local inválida, rol inválido, cierre desde otra pestaña y fallo de limpieza de caché.
+- Se identificó que `showLoginScreen` insertaba directamente cualquier `reason` en el DOM. Se refuerza con lista permitida: solo conserva el aviso neutral `Sesión terminada` y sustituye cualquier motivo de error por `Error en el inicio de sesión, intente otra vez`.
+- El mensaje de credenciales queda exactamente como `contraseña o usuario incorrecto`; solo se usa cuando AUTH entrega `INVALID_CREDENTIALS`.
+- Los detalles específicos (incluidos servicios de caché afectados y rol local inválido) se registran en consola, no en la interfaz.
+- Se amplía `AuthErrorPrivacy.mjs` a 13 aserciones estáticas para cubrir las rutas y el límite de presentación.
+- No se modifican contratos backend, permisos, deployments, propiedades, Spreadsheet, Drive ni datos reales.
+- Validación CI pendiente después de publicar; validación visual de navegador real permanece diferida a Beta.
+- Siguiente tarea después de cerrar este refuerzo: MIG-027, suite de paridad funcional según `TAREAS_MIGRACION_ARQUITECTURA.md`.
+================================================================================
