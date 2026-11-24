@@ -7,7 +7,7 @@ import vm from "node:vm";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = readFileSync(resolve(root, "JS/Services/CentralConfigurationReader.js"), "utf8");
 const auth = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
-for (const pattern of [/PropertiesService/, /UrlFetchApp/, /openById\s*\(/, /SPREADSHEET_ID/, /API_ENDPOINTS/, /COORDINATOR_SECRET|API_KEY|PASSWORD|TOKEN/i, /https?:\/\//]) {
+for (const pattern of [/PropertiesService/, /UrlFetchApp/, /SPREADSHEET_ID/, /API_ENDPOINTS/, /COORDINATOR_SECRET|API_KEY|PASSWORD|TOKEN/i, /https?:\/\//]) {
     assert.equal(pattern.test(source), false, "El lector contiene configuración local, URL o credencial prohibida: " + pattern);
 }
 assert.match(auth, /action === "getPublicConfiguration"[\s\S]*?getPublicCentralConfiguration_\(\)/);
@@ -55,7 +55,7 @@ function createEnvironment(active) {
     };
     const context = {
         GPSpediaSpreadsheetId_: "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os",
-        SpreadsheetApp: {openById(id) { assert.equal(id, "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3Os"); if (!active.current) throw new Error("Spreadsheet unavailable"); return active.current; }},
+        SpreadsheetApp: {openById(id) { assert.equal(id, "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os"); if (!active.current) throw new Error("Spreadsheet unavailable"); return active.current; }},
         CacheService: {getScriptCache() { return cache; }},
         Date: TestDate, JSON, Number, String, Object, Array, RegExp, Error, Math
     };
