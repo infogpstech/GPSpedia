@@ -266,6 +266,7 @@ runGroup('35','UTILITIES',()=>{
  recordResult('UTILITIES Spreadsheet simulado/RBAC/staging/rollback',new Function(read('JS/Services/SharedSessionActor.js')+'\n'+read('JS/Services/Utilities.js')+'\n'+read('JS/Tests/UtilitiesSecurity.js')+'\nreturn runUtilitiesSecurityTests();')());
 });
 runGroup('36','AUTH',()=>{
+ runCli('AUTH inicializador idempotente de configuración central','JS/Tests/CentralConfigurationInitializer.mjs');
  runCli('AUTH aceptación de términos por usuario y dispositivo','JS/Tests/TermsAcceptance.js');
   runCli('AUTH aceptación local y sincronización asíncrona por sesión/dispositivo','JS/Tests/TermsAsyncSync.mjs');
  runCli('AUTH purga de Logs usando actor confiable sin revalidación por acción','JS/Tests/SensitiveLogsTrustedActor.mjs');
