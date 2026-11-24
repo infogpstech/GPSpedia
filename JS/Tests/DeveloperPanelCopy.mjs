@@ -69,7 +69,7 @@ testCase("las pestañas conservan un único título visible y la consola usa con
     assert.match(developer, /id="btn-clear-console-log"[^>]*aria-label="Limpiar consola"/);
     assert.match(developer, /id="btn-copy-console-log"[^>]*aria-label="Copiar registro"/);
     assert.match(developer, /class="dev-terminal-input-shell"[\s\S]*?class="dev-terminal-prompt"/);
-    assert.match(developer, /id="btn-terminal-send"[^>]*aria-label="Ejecutar comando">&gt;_/);
+    assert.match(developer, /id="btn-terminal-send"[^>]*aria-label="Ejecutar comando"[^>]*>&gt;_/);
 });
 
 testCase("las ayudas del inventario y auditoría están asociadas a su modal correcto", () => {

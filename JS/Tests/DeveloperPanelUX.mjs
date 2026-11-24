@@ -66,7 +66,7 @@ testCase("el título del panel tiene expansión animada y respeta movimiento red
 });
 testCase("la expansión de la pestaña activa desactiva transiciones con movimiento reducido",()=>{
  const reducedMotion = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
- assert.match(reducedMotion, /#dev-tools-modal \.dev-tab-link,\s*#dev-tools-modal \.dev-tab-link span\s*\{\s*transition: none !important;/);
+ assert.match(reducedMotion, /#dev-tools-modal \.dev-tools-sidebar,[\s\S]*?#dev-tools-modal \.dev-tab-link,[\s\S]*?#dev-tools-modal \.dev-tab-link span,[\s\S]*?#audit-drive-modal \.audit-drive-action-label\s*\{\s*transition: none !important;/);
  assert.match(reducedMotion, /#dev-tools-modal \.dev-tools-title\s*\{\s*animation: none;/);
 });
 testCase("la navegación usa iconos compactos y expande solo la pestaña seleccionada",()=>{
