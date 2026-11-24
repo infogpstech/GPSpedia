@@ -138,7 +138,7 @@ El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. 
 
 La visibilidad del repositorio y la ejecución de los microservicios son aspectos distintos. Los deployments, endpoints, permisos de Google y datos de Spreadsheet/Drive se administran en sus plataformas respectivas. No se debe inferir su estado ni sus permisos a partir del código versionado.
 
-Los identificadores de la Spreadsheet y de la carpeta de Drive de pruebas se conservan en sus ubicaciones actuales dentro de los servicios, según la decisión del proyecto. Son referencias a recursos de prueba de GPSpedia; no se trasladan ni se sustituyen en esta tarea. Su acceso efectivo depende de los permisos configurados en Google, que deben verificarse en el entorno correspondiente. No se incluyen en el frontend como mecanismo de autorización.
+Los seis proyectos Apps Script abren la misma Spreadsheet mediante `GPSpediaSpreadsheetId_`. AUTH, WRITE, FEEDBACK y ADMIN reciben el identificador desde `CentralConfigurationReader.js`; CATALOG y UTILITIES lo declaran en sus módulos. WRITE, FEEDBACK y ADMIN comparten además `GPSpediaCortesRootFolderId_` para la carpeta raíz `Cortes`. Son localizadores de recursos, no credenciales ni mecanismos de autorización; el acceso efectivo depende de los permisos Google de la identidad de ejecución. El propietario autorizó temporalmente estos dos IDs mientras los módulos Apps Script sigan versionados en el repositorio; se retirarán junto con esos módulos.
 
 ### Integración de subida de vídeos a YouTube
 
