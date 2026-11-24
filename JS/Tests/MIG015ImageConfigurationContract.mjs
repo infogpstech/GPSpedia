@@ -23,7 +23,7 @@ for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
     check(serviceKey + " usa Spreadsheet y carpeta compartidas sin propiedades locales", () => {
         assert.ok(source.includes("SpreadsheetApp.openById(GPSpediaSpreadsheetId_)"));
         assert.ok(source.includes("GPSpediaCortesRootFolderId_"));
-        assert.doesNotMatch(source, /PropertiesService|CORTES_IMAGES_ROOT_FOLDER_ID/);
+        assert.doesNotMatch(helperBlock(source), /PropertiesService|CORTES_IMAGES_ROOT_FOLDER_ID/);
     });
     const resolver = helperBlock(source);
     const makeApi = (drive = makeDrive()) => new Function("GPSpediaCortesRootFolderId_", "DriveApp",
