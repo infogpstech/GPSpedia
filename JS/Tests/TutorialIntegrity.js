@@ -168,7 +168,11 @@ function readCatalogTutorials_(catalog, tutorialRows, editEvents = [], renameEve
         IMAGE_FIELDS_CORTES: new Set(), IMAGE_FIELDS_LOGOS: new Set(),
         IMAGE_FIELDS_TUTORIALES: new Set(["Imagen"]), IMAGE_FIELDS_RELAY: new Set(),
         CacheService: { getScriptCache: () => ({ get: () => null }) },
-        getCortesColumnMap: () => ({}), normalizeAndValidateImageId: value => value,
+        getCortesColumnMap: () => ({}),
+        normalizeAndValidateImageId: value => {
+            const match = String(value || "").match(/file\\/d\\/([A-Za-z0-9_-]{10,110})/i);
+            return match ? match[1] : value;
+        },
         normalizeYouTubeUrl: value => value,
         Utilities: { DigestAlgorithm: { SHA_256: "SHA_256" },
             computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(String(value)).digest()) },
@@ -227,6 +231,9 @@ export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
         assert.equal(h.sheet.data[1][2], "https://drive.google.com/file/d/" + h.imageFiles[0].getId() + "/view");
         assert.equal(h.imageFiles.length, 1);
         assert.match(h.imageFiles[0].getDescription(), /state=linked/);
+        const catalogResult = readCatalogTutorials_(catalog, h.sheet.data);
+        assert.equal(catalogResult.data.tutoriales[0].Imagen, h.imageFiles[0].getId(),
+            "CATALOG debe normalizar la referencia Drive al ID de imagen.");
         const retry = h.api.add({ ...base, imagenDataUrl });
         assert.equal(retry.alreadyCreated, true);
         assert.equal(h.imageFiles.length, 1, "El reintento debe reutilizar el archivo original.");
