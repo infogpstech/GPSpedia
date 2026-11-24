@@ -298,7 +298,7 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 
 
 ## 13. Validación Beta diferida — MIG-026 ADMIN: guardas temporales por recurso
-**Estado: PENDIENTE.** La migración debe aprobar CI y después validarse en Apps Script/Spreadsheet aislados.
+**Estado: PENDIENTE DE BETA.** CI run 45325854986 aprobó 496 suites y 5,832 pruebas con 0 fallos; AdminLocalOperationGuard 12/12. Falta validar Apps Script/Spreadsheet aislados.
 
 - Ejecutar primero la sincronización segura del apartado 0. Usar proyecto ADMIN, Spreadsheet y recursos Drive desechables.
 - Crear manualmente la hoja AdminOperationGuards con estos 5 encabezados exactos en fila 1: scopeHash, requestId, expiresAt, updatedAt, schemaVersion. Dejar fila 2 vacía para META/BASELINE; las reservas empiezan en fila 3. No crear el esquema automáticamente.

@@ -332,4 +332,4 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - ScriptLock se adquiere con tryLock(0) únicamente durante baseline/reserva/cleanup. El callback de negocio se ejecuta siempre fuera del lock. Scopes diferentes pueden operar anidados/solapados; mismo scope se rechaza de inmediato. Si cleanup no obtiene lock, la reserva expira por TTL.
 - No se modifica el comportamiento de las funciones Drive protegidas. La hoja se prepara manualmente en Beta; no se crea automáticamente ni se despliegan servicios.
 - Estado de familias operativas tras esta migración: AUTH 0, WRITE 1, ADMIN 3 (4 total). ADMIN conserva LOGOS_MARCA_ID_COUNTER y las dos familias DRIVE_AUDIT_STATE/LATEST; auditoría, Safe Apply y guardas quedan como lectores de baseline legacy.
-- Validación CI pendiente en el commit que incorpore esta adenda. Beta pendiente en Tareas_Beta.md §13.
+- CI run 45325854986: 496 suites, 5,832 pruebas aprobadas, 0 fallos; AdminLocalOperationGuard 12/12. GitHub Pages run 45325854063 SUCCESS. Beta pendiente en Tareas_Beta.md §13.

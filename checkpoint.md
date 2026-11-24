@@ -1774,11 +1774,11 @@ Estado de familias: AUTH 0, WRITE 1, ADMIN 5; total 6. Siguiente subtramo por or
 MIG-026 — ADMIN — SAFE APPLY DEL ORGANIZADOR CORTES — 2026-11-23
 HEAD anterior confirmado: b6efb93073ce3785f3ef9ba7bb10e72a0b940cc3
 
-- Migrado el ledger \`GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>\` desde ScriptProperties a \`CortesOrganizerOperations\` (20 columnas). La fila 2 queda reservada para META/BASELINE y los registros comienzan en fila 3.
-- Baseline idempotente y reanudable: lee propiedades legacy, valida digest/operationId/identidad/estado, importa filas faltantes, verifica read-back y marca \`cortes_organizer_ledger_v1\`. No escribe ni elimina propiedades legacy; el flujo normal deja de consultarlas después del baseline.
+- Migrado el ledger `GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>` desde ScriptProperties a `CortesOrganizerOperations` (20 columnas). La fila 2 queda reservada para META/BASELINE y los registros comienzan en fila 3.
+- Baseline idempotente y reanudable: lee propiedades legacy, valida digest/operationId/identidad/estado, importa filas faltantes, verifica read-back y marca `cortes_organizer_ledger_v1`. No escribe ni elimina propiedades legacy; el flujo normal deja de consultarlas después del baseline.
 - Lectura por operationId, reserva/upsert bajo lock fail-fast breve, historial paginado por propietario, read-back y retención de 180 días (200 terminales/250 totales). Estados no terminales se conservan.
-- La adquisición usa \`tryLock(0)\`; el ScriptLock solo protege el ledger y se libera antes de Drive. La ejecución y rollback no mantienen locks durante operaciones Drive. La contención devuelve retry sin iniciar un movimiento.
-- Se añadió reconciliación de estados \`processing\`/\`rollback_processing\` cuando Drive ya refleja el destino/origen, para recuperar una respuesta perdida sin repetir el movimiento.
+- La adquisición usa `tryLock(0)`; el ScriptLock solo protege el ledger y se libera antes de Drive. La ejecución y rollback no mantienen locks durante operaciones Drive. La contención devuelve retry sin iniciar un movimiento.
+- Se añadió reconciliación de estados `processing`/`rollback_processing` cuando Drive ya refleja el destino/origen, para recuperar una respuesta perdida sin repetir el movimiento.
 - Pruebas actualizadas: baseline, reanudación, no escritura de propiedades, historial, retención y lock fail-fast; prueba de dos operaciones sobre archivos distintos durante trabajo Drive.
 - No se desplegó Apps Script ni se creó/modificó Spreadsheet o Drive real. Las propiedades legacy instaladas no se tocaron.
 
@@ -1800,4 +1800,23 @@ Commit de ajuste de contratos: dc00d522282de6b25a6596401f784c7b8353cc49
 - No se desplegó Apps Script ni se creó/modificó Spreadsheet/Drive real. Las propiedades legacy instaladas permanecen intactas.
 
 Resultado del subtramo Safe Apply: COMPLETADO EN CÓDIGO Y CI; VALIDACIÓN DIFERIDA A BETA. MIG-026 global continúa EN PROGRESO. Siguiente familia por orden del inventario: GPSpedia_UNUSED_IMAGES_FOLDER_ID / recurso unused_images_folder_id o la siguiente familia ADMIN definida por el inventario actualizado; antes de elegirla, reconciliar el orden exacto y no ejecutar dos familias en paralelo.
+================================================================================
+
+================================================================================
+MIG-026 ADMIN-02 — CIERRE DE GUARDAS TEMPORALES — 2026-11-23
+HEAD de implementación y pruebas: b55e48ae3708c8fe6b72278d5d8cd11aee6f7159
+Commit de migración: a0f31bc3dede78054da9323897318a060bf7f3fc
+Commit de acceso lazy a ScriptProperties: b55e48ae3708c8fe6b72278d5d8cd11aee6f7159
+
+- Migrada la familia GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)> a AdminOperationGuards, con cinco columnas y fila META/BASELINE.
+- El baseline importa únicamente reservas vigentes; valida hash, requestId y expiresAt; admite reanudación; confirma read-back; no escribe ni elimina propiedades legacy.
+- El flujo ordinario no obtiene el servicio ScriptProperties después de confirmar baseline. La prueba lazy verifica que getScriptProperties se invoca una sola vez durante baseline y cero veces en operaciones posteriores.
+- Las reservas por scope usan TTL 30–420 s, purga de expiradas y límite de 500 activas. Same-scope concurrente se rechaza; scopes diferentes pueden ejecutarse anidados/solapados.
+- ScriptLock usa tryLock(0) y se mantiene únicamente en baseline/reserva/cleanup. El callback Drive se ejecuta fuera del lock. Si cleanup no obtiene lock, la reserva expira; el callback de negocio conserva su resultado.
+- AdminLocalOperationGuard 12/12 PASS.
+- CI run 45325854986: 496 suites, 5,832 pruebas aprobadas, 0 fallos. Sintaxis PASS.
+- GitHub Pages run 45325854063: SUCCESS.
+- No se desplegó Apps Script ni se creó/modificó Spreadsheet/Drive real; propiedades legacy intactas.
+
+Resultado: guardas temporales ADMIN migradas en código y CI; validación Beta pendiente. Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 3 (4 total). Siguiente familia según inventario: GPSpedia_DRIVE_AUDIT_STATE_<auditId>. Después: puntero latest por actor y contador LOGOS_MARCA_ID_COUNTER. La limpieza estática global se realiza tras completar esas familias.
 ================================================================================
