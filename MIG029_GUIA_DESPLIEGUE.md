@@ -29,7 +29,15 @@ USERS y COORDINATOR no son deployments activos. Las guías heredadas en `Olds/Do
 6. Ejecutar health GET de solo lectura y las pruebas Beta aplicables.
 7. Rollback por versión anterior del mismo deployment o por una nueva revisión central que restaure la URL anterior.
 
-Se deja explícito que el repositorio no contiene una interfaz administrativa genérica para cambiar endpoints; la publicación de URL requiere un operador autorizado de la configuración central. No se inventa una acción ni un flujo automatizado inexistente.
+La actualización de endpoints ya cuenta con una interfaz en el modal del desarrollador y un flujo manual desde el editor de AUTH. Ambos mecanismos publican una revisión central íntegra; la interfaz exige sesión GPSpedia con rol Desarrollador y el script manual usa los permisos Google del editor, sin solicitar autenticación GPSpedia.
+
+## Actualización de endpoints desde la plataforma
+
+- El modal **Herramientas de desarrollador → Sistema → Endpoints de servicios** permite modificar únicamente las seis URL.
+- AUTH valida sesión y rol Desarrollador en backend, no confía en el rol enviado por el navegador y genera los metadatos, revisión e historial.
+- Para el procedimiento manual, AUTH ofrece \`prepareCentralConfigurationServiceUrlInput()\` y \`publishCentralConfigurationFromServiceUrlDraft()\`. Solo se introducen URL en filas de borrador de \`Servicios\`; no se rellenan manualmente las demás columnas.
+- El procedimiento detallado y las condiciones del bootstrap AUTH están en \`Services/DEPLOYMENT_GUIDE.md\`, §7.
+- Las acciones administrativas llaman directamente al único bootstrap AUTH documentado; no dependen de la configuración central para la primera consulta. Las acciones ordinarias continúan usando el router central del frontend.
 
 ## Independencia de servicios
 
