@@ -1078,7 +1078,7 @@ Pruebas con cuentas y catálogo aislados:
 6. Cambiar de modo con varias barras ya abiertas; confirmar que se actualizan los controles y que las acciones de formato se corresponden con el modo actual.
 7. En modo estricto, cargar un registro histórico con markup avanzado seguro y comprobar que se conserva el texto visible sin ejecutar ni habilitar etiquetas no permitidas; confirmar que los registros históricos de texto plano no cambian.
 8. En modo avanzado, probar etiquetas/estilos permitidos y payloads con script, iframe, SVG, eventos, javascript:, data: y CSS peligroso; confirmar que ambos modos mantienen el bloqueo de contenido activo.
-9. Recargar la página y abrir otra pestaña del mismo navegador; confirmar persistencia local del modo. Verificar que otro navegador/dispositivo no hereda la preferencia local.
+9. Confirmar que la preferencia es global: tras cambiarla desde una sesión Developer, otro usuario/navegador debe recibir el mismo modo al consultar la configuración central. La caché local solo puede acelerar la lectura durante un máximo de 5 minutos y debe incluir revisión; una caché antigua, inválida o sin metadatos debe caer a estricto y refrescarse desde FEEDBACK. Verificar que una actualización central se refleja al vencer TTL o tras invalidar la caché del servicio.
 10. Probar formularios de Cortes, apertura, alimentación, Tutorial, PyS, Solución, Prevención y Contacto; comprobar que el backend continúa sanitizando independientemente del modo cliente.
 11. Confirmar que el App Shell carga la versión `gpsepedia-cache-v18` y que una actualización del service worker no restaura la versión anterior.
 12. Revisar claro/oscuro, escritorio y móvil; confirmar que la barra avanzada no desborda ni tapa los campos.

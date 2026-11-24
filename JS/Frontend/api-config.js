@@ -12,6 +12,8 @@ import { invalidateSessionActorCaches } from './sessionCacheInvalidation.js';
 const centralConfigurationCache_ = createCentralConfigurationCache();
 
 export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode_cache";
+export const RICH_TEXT_MODE_CACHE_META_KEY = "gpsepedia_rich_text_mode_cache_meta";
+export const RICH_TEXT_MODE_CACHE_TTL_MS = 5 * 60 * 1000;
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
 
 function normalizeRichTextMode_(value) {
@@ -21,16 +23,32 @@ function normalizeRichTextMode_(value) {
 
 export function getRichTextMode() {
     try {
-        return localStorage.getItem(RICH_TEXT_MODE_KEY) === RICH_TEXT_MODES.ADVANCED
-            ? RICH_TEXT_MODES.ADVANCED
-            : RICH_TEXT_MODES.STRICT;
+        const mode = normalizeRichTextMode_(localStorage.getItem(RICH_TEXT_MODE_KEY));
+        const metadata = JSON.parse(localStorage.getItem(RICH_TEXT_MODE_CACHE_META_KEY) || "null");
+        const fetchedAt = Number(metadata && metadata.fetchedAt);
+        const revision = Number(metadata && metadata.revision);
+        if (!mode || !Number.isSafeInteger(revision) || revision < 1 ||
+            !Number.isFinite(fetchedAt) || fetchedAt <= 0 ||
+            Date.now() - fetchedAt < 0 || Date.now() - fetchedAt > RICH_TEXT_MODE_CACHE_TTL_MS) {
+            return RICH_TEXT_MODES.STRICT;
+        }
+        return mode;
     } catch (error) {
         return RICH_TEXT_MODES.STRICT;
     }
 }
 
-function cacheRichTextMode_(mode) {
-    try { localStorage.setItem(RICH_TEXT_MODE_KEY, mode); } catch (error) {}
+function cacheRichTextMode_(mode, revision) {
+    const normalized = normalizeRichTextMode_(mode);
+    const numericRevision = Number(revision);
+    if (!normalized || !Number.isSafeInteger(numericRevision) || numericRevision < 1) return;
+    try {
+        localStorage.setItem(RICH_TEXT_MODE_KEY, normalized);
+        localStorage.setItem(RICH_TEXT_MODE_CACHE_META_KEY, JSON.stringify({
+            revision: numericRevision,
+            fetchedAt: Date.now()
+        }));
+    } catch (error) {}
 }
 
 function getRichTextSession_(session) {
@@ -51,10 +69,11 @@ export async function loadRichTextMode(session) {
         retryDelayMs: 250
     });
     const mode = normalizeRichTextMode_(response && response.mode);
-    if (!response || response.status !== "success" || !mode) {
+    const revision = Number(response && response.revision);
+    if (!response || response.status !== "success" || !mode || !Number.isSafeInteger(revision) || revision < 1) {
         throw new Error("No se recibió una configuración global de texto válida.");
     }
-    cacheRichTextMode_(mode);
+    cacheRichTextMode_(mode, revision);
     return mode;
 }
 
@@ -74,7 +93,8 @@ export async function setRichTextMode(mode, actorRole, session) {
         changeReason: "Cambio del modo global de texto enriquecido desde Developer"
     });
     const confirmedMode = normalizeRichTextMode_(response && response.mode);
-    if (!response || response.status !== "success" || confirmedMode !== normalizedMode) {
+    const revision = Number(response && response.revision);
+    if (!response || response.status !== "success" || confirmedMode !== normalizedMode || !Number.isSafeInteger(revision) || revision < 1) {
         throw new Error("El servidor no confirmó el cambio de formato global.");
     }
     try {
@@ -82,7 +102,7 @@ export async function setRichTextMode(mode, actorRole, session) {
     } catch (cacheError) {
         console.warn("No se pudo invalidar inmediatamente la caché de rich_text_mode:", cacheError);
     }
-    cacheRichTextMode_(confirmedMode);
+    cacheRichTextMode_(confirmedMode, revision);
     return confirmedMode;
 }
 
