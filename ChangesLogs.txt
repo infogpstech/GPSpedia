@@ -737,3 +737,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - AUTH normaliza los valores leídos de LoginRequests según el tipo contractual de cada columna. La confirmación acepta equivalencias de Sheets (Date frente a ISO y número frente a texto numérico), conserva la comprobación de read-back y rechaza diferencias reales.
 - Se sincronizó JS/Tests/Auth.js con AUTH y se ampliaron LoginRequestLedger.mjs y MIG026StaticConfigSearch.mjs para cubrir coerciones de celdas y vinculación autónoma por servicio.
 - No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet, Drive, permisos, propiedades o datos externos.
+
+
+### 2026-11-24 — Validación de vinculación de recursos y ledger AUTH
+
+- CI run `45466314443`, commit `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos. `LoginRequestLedger: 40/40 PASS`; `MIG026StaticConfigSearch: 10/10 PASS`; sintaxis PASS.
+- GitHub Pages run `45466312293`: SUCCESS.
+- Commits de la corrección: `a6c7819fe82158109805f87d82cd33c3f257076d` (implementación y contratos) y `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb` (ajuste del escenario de coerción numérica de committedAt).
+- Se verificó que los seis archivos de servicio declaran el ID de Spreadsheet y usan openById; WRITE, FEEDBACK y ADMIN declaran también la carpeta Cortes.
+- Validación remota pendiente de Beta aislada. No se desplegó Apps Script ni se modificaron datos, propiedades, permisos o recursos productivos.

@@ -194,13 +194,16 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 
 ## Corrección solicitada — vinculación de Spreadsheet/Drive y fallo de idempotencia AUTH — 2026-11-24
 
-**Estado: EN PROGRESO; cambios de código preparados, validación local/CI pendiente.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** Código y regresión local/CI aprobados; queda la verificación de deployments y recursos reales en Beta aislada.
 
-- HEAD confirmado al iniciar esta corrección: `a1641afc3264d77fc9e2b5e1df349d437320f8e1`. Rama protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificar.
+- HEAD confirmado al iniciar esta corrección: `f8953006a3bde69c232cb29ac18177c014129c32`. Rama protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificar.
 - Hallazgo de recursos: AUTH, WRITE, FEEDBACK y ADMIN utilizaban `GPSpediaSpreadsheetId_` y/o `GPSpediaCortesRootFolderId_` declarados únicamente en `CentralConfigurationReader.js`. Si ese helper no estaba copiado al proyecto Apps Script independiente, las variables no existían en el runtime. CATALOG y UTILITIES ya tenían declaración local de Spreadsheet.
 - Corrección preparada: cada uno de los seis archivos principales declara directamente el ID de Spreadsheet; WRITE, FEEDBACK y ADMIN declaran además el ID de la carpeta Cortes. Se conservan los mismos recursos autorizados y las comprobaciones existentes. No se añadieron secretos, URLs, propiedades ni coordinación interservicio.
 - Hallazgo de AUTH: `saveLoginRequestRecord_()` y el baseline comparaban el read-back de Sheets con la fila enviada mediante `JSON.stringify`, aunque Sheets puede devolver fechas como `Date` y valores numéricos como `number`. La comparación estricta podía rechazar una escritura correcta.
 - Corrección preparada: comparación por tipo contractual de columna, normalización ISO de fechas y confirmación de read-back para login y baseline. Los campos de identidad/token/estado continúan comparándose exactamente; las diferencias reales siguen fallando.
 - Pruebas actualizadas: `LoginRequestLedger.mjs` cubre coerciones de Date/número y rechazos de datos alterados; `MIG026StaticConfigSearch.mjs` exige localizadores propios por servicio. `JS/Tests/Auth.js` conserva paridad con AUTH.
 - No se desplegó Apps Script ni se modificaron recursos, permisos, propiedades o datos externos. La validación real de permisos/lectura/escritura continúa diferida a Beta aislada.
-- Siguiente paso: publicar el cambio en esta rama, ejecutar regresión CI y revisar el diff completo; después registrar SHA y resultados comprobados. La rama base permanece protegida.
+- Commits: implementación `a6c7819fe82158109805f87d82cd33c3f257076d`; ajuste del escenario de read-back `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb`.
+- CI run `45466314443`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos. `LoginRequestLedger: 40/40 PASS`; `MIG026StaticConfigSearch: 10/10 PASS`; sintaxis PASS. GitHub Pages run `45466312293`: SUCCESS.
+- HEAD de cierre: `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb`. Rama base protegida confirmada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Validación diferida: desplegar los seis proyectos en Beta aislada, verificar permisos de Spreadsheet y carpeta Cortes y probar login/idempotencia con solicitudes sintéticas. No se desplegó Apps Script ni se modificaron datos, propiedades, permisos o recursos productivos.

@@ -103,3 +103,13 @@ La búsqueda estática y el contrato se actualizan para reflejar la decisión ex
 - Las comprobaciones reales de permisos, identidad de ejecución, lectura/escritura y carpeta Drive quedan pendientes de Beta. No se desplegó ni modificó ningún recurso externo.
 
 Esta adenda prevalece sobre las secciones históricas de este informe que indicaban retirar los IDs y usar `getActiveSpreadsheet()`.
+
+
+## Adenda 2026-11-24 — localizadores propios por servicio y ledger AUTH
+
+- La inspección posterior detectó que AUTH, WRITE, FEEDBACK y ADMIN dependían de variables de recurso declaradas en `CentralConfigurationReader.js`. Como cada deployment es un proyecto Apps Script independiente, esa dependencia podía dejar variables sin declarar si el helper no se copiaba al proyecto.
+- Los seis archivos principales ahora declaran localmente `GPSpediaSpreadsheetId_` y usan `SpreadsheetApp.openById`. WRITE, FEEDBACK y ADMIN declaran también `GPSpediaCortesRootFolderId_`. Los valores se mantienen idénticos a los localizadores autorizados existentes; no son credenciales ni secretos.
+- La suite `MIG026StaticConfigSearch.mjs` exige ahora declaraciones locales por servicio y la apertura explícita de Spreadsheet. Resultado CI: 10/10 PASS.
+- AUTH sustituye la comparación JSON estricta del read-back de LoginRequests por una comparación tipada que normaliza fechas Date/ISO y equivalencias numéricas, sin relajar la igualdad de requestId, token, estado ni otros campos textuales. `LoginRequestLedger.mjs`: 40/40 PASS.
+- Regresión CI run `45466314443`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- Los deployments y permisos reales siguen pendientes de validación Beta aislada. No se alteraron recursos productivos ni propiedades Apps Script.
