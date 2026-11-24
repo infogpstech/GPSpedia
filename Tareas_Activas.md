@@ -23,17 +23,18 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 
 ### 2. Dashboard de actividad — desglose de aportes por usuario
 
-**Estado: EN PROGRESO — iniciada 2026-11-24 tras cerrar la tarea 1.**
+**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-24.**
 
 - Reutilizar `readActivityDashboardCutsSnapshot_()`, `buildActivityDashboardInsights_()` y `buildCutContributionSummary_()`; no crear una segunda fuente de métricas.
 - Mantener el total de modelos/vehículos distintos, cortes registrados y suma de utilidades/votos leídos desde `utilCorte1`, `utilCorte2` y `utilCorte3`.
 - Exponer explícitamente `cortesAportados` por usuario en la tabla de contribuciones, separado de `aportesRegistrados` y `vehiculosConAportes`. El total de aportes incluye apertura/alimentación y no sustituye el conteo de cortes.
 - Conservar colaboradores de Cortes y el ledger aceptado de `AportesVehiculo`, identidad del actor, deduplicación de `opId`, aliases y nombres históricos.
 - Añadir pruebas de renderizado/contrato para el nuevo encabezado y los valores por usuario, incluyendo usuario sin aportes y registros históricos. No alterar hojas ni datos.
+- **Evidencia de cierre:** `normalizeContributionRows()` conserva `cortesAportados`, `aportesRegistrados` y `vehiculosConAportes` por separado; agrupa cortes y aportes registrados de forma independiente y evita duplicar vehículos. La tabla muestra Usuario, Cortes aportados, Aportes registrados y Vehículos con aportes. El ranking superior presenta las tres métricas; estados vacío/error abarcan las cuatro columnas. `ActivityDashboardContributions`: 3/3 PASS. CI run `45508470807`: 517 suites, 6,156 pruebas, 0 fallos; Chromium 216/216 PASS; Pages run `45508470780`: SUCCESS. No se modificó backend ni datos almacenados.
 
 ### 3. Modal Developer — disposición, consola y actualización de servicios
 
-**Estado: PENDIENTE — después de la tarea 2.**
+**Estado: EN PROGRESO — iniciada 2026-11-24 tras cerrar la tarea 2.**
 
 - Reubicar la barra de pestañas debajo de la línea de comando. Las pestañas no seleccionadas muestran únicamente icono; la seleccionada expande su etiqueta sin desplazar ni solapar el resto.
 - Duplicar la altura útil actual de la consola de comandos, conservando scroll y legibilidad.
