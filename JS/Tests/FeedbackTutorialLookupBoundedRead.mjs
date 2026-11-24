@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
 function extract(name, nextName) {
@@ -11,12 +12,15 @@ function extract(name, nextName) {
 }
 const byIdCode = extract("findTutorialById_", "tutorialTitleExists_");
 const rowCode = extract("findTutorialRow_", "findTutorialById_");
+const identityCode = extract("findTutorialByIdentity_", "appendTutorialEditEvent_");
 const findById = new Function(byIdCode + "\nreturn findTutorialById_;")();
+const normalizeTitle = value => String(value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().replace(/\\s+/g, " ").toLowerCase();
+const makeLegacyIdentity = title => "legacy-" + createHash("sha256").update(normalizeTitle(title)).digest("hex");
+const findByIdentity = new Function("makeLegacyTutorialIdentity_", identityCode + "\nreturn findTutorialByIdentity_;")(makeLegacyIdentity);
 let renameSheetAvailable = false, renameReads = 0, renameEvents = [];
-const normalizeTitle = value => String(value || "").trim().toLowerCase();
-const findRow = new Function("findTutorialById_", "projectTutorialEditFields_", "getTutorialRenameEventsSheet_", "readTutorialRenameEvents_", "projectTutorialTitle_",
+const findRow = new Function("findTutorialById_", "findTutorialByIdentity_", "projectTutorialEditFields_", "getTutorialRenameEventsSheet_", "readTutorialRenameEvents_", "projectTutorialTitle_",
     rowCode + "\nreturn findTutorialRow_;")(
-    findById,
+    findById, findByIdentity,
     (id, row) => ({ row, appliedOperations: new Map() }),
     () => renameSheetAvailable ? {} : null,
     () => { renameReads++; return renameEvents; },
@@ -93,6 +97,20 @@ test("rechaza títulos duplicados sin descargar la hoja completa", () => {
     const sheet = makeSheet([["tut-a", "Motor"], ["tut-b", "Motor"]]);
     assert.throws(() => findRow(sheet, "Motor", true), /tema del tutorial aparece más de una vez/);
     assert.ok(sheet.calls.every(call => call[1] === 1 || call[1] === 2));
+});
+test("resuelve una referencia legacy estable sin depender del título visible", () => {
+    const title = "Manual técnico GPS";
+    const legacyId = makeLegacyIdentity(title);
+    const sheet = makeSheet([["", title], ["tut-other", "Otro tema"]]);
+    const result = findRow(sheet, legacyId, true);
+    assert.equal(result.rowIndex, 2);
+    assert.equal(result.row[1], title);
+    assert.ok(sheet.calls.every(call => call[1] === 1));
+});
+test("una referencia legacy inexistente falla sin caer a búsqueda por título", () => {
+    const sheet = makeSheet([["", "Manual técnico GPS"]]);
+    assert.throws(() => findRow(sheet, "legacy-" + "f".repeat(64), true), /Tutorial no encontrado/);
+    assert.ok(sheet.calls.every(call => call[1] === 1));
 });
 test("un ID canónico ausente no cae a la búsqueda por título", () => {
     const sheet = makeSheet([["tut-other", "Tema"]]);
