@@ -46,16 +46,28 @@ test("el registro central operativo solo contiene los seis servicios vigentes", 
     assert.doesNotMatch(telemetry, /COORDINATOR|USERS/);
     assert.match(read("JS/Services/CentralConfigurationReader.js"), /GP_CONFIG_RETIRED_SERVICE_KEYS_\s*=\s*\["USERS",\s*"COORDINATOR"\]/);
 });
-test("AUTH, CATALOG y UTILITIES resuelven Spreadsheet activa sin IDs locales", () => {
-    const holders = services.filter(item => /\bSPREADSHEET_ID\b/.test(item.source)).map(item => item.name).sort();
-    assert.deepEqual(holders, []);
+test("los seis servicios abren la Spreadsheet principal configurada y los servicios Drive usan la carpeta raíz compartida", () => {
+    const central = read("JS/Services/CentralConfigurationReader.js");
     const auth = read("JS/Services/Auth.js");
     const catalog = read("JS/Services/catalog.js");
+    const write = read("JS/Services/write.js");
+    const feedback = read("JS/Services/feedback.js");
     const utilities = read("JS/Services/Utilities.js");
-    assert.match(auth, /function getAuthUsersSpreadsheet_\(\)[\s\S]*?SpreadsheetApp\.getActiveSpreadsheet\(\)[\s\S]*?if \(!authSpreadsheet\)/);
-    assert.match(catalog, /function getSpreadsheet\(\)[\s\S]*?SpreadsheetApp\.getActiveSpreadsheet\(\)[\s\S]*?if \(!spreadsheet\)/);
-    assert.match(utilities, /function getUtilitiesSpreadsheet_\(\)[\s\S]*?SpreadsheetApp\.getActiveSpreadsheet\(\)[\s\S]*?if \(!spreadsheet\)/);
-    for (const source of [auth, catalog, utilities]) assert.doesNotMatch(source, /SpreadsheetApp\.openById\s*\(/);
+    const admin = read("JS/Services/admin.js");
+    assert.match(central, /var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";/);
+    assert.match(central, /var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";/);
+    assert.match(auth, /getAuthUsersSpreadsheet_[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    assert.match(catalog, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    assert.match(write, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    assert.match(feedback, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    assert.match(utilities, /function getUtilitiesSpreadsheet_\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    assert.match(admin, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    for (const source of [auth, catalog, write, feedback, utilities, admin, central]) {
+        assert.doesNotMatch(source, /SpreadsheetApp\\.getActiveSpreadsheet\\s*\\(/);
+    }
+    for (const source of [write, feedback, admin]) {
+        assert.match(source, /function getCortesRootFolderResource_\\(\\)[\\s\\S]*?GPSpediaCortesRootFolderId_/);
+    }
 });
 test("PropertiesService solo se consulta desde los baselines legacy identificados", () => {
     const allowed = new Set([
