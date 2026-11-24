@@ -100,6 +100,7 @@ function buildHarness(feedback, options = {}) {
     };
 
     const context = {
+        GPSpediaCortesRootFolderId_: "root-cortes",
         console,
         Utilities: {
             base64Decode: value => Array.from(Buffer.from(value, "base64")),
