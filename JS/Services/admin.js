@@ -1146,6 +1146,14 @@ function doPost(e) {
 }
 
 const ADMIN_AUDIT_PROPERTY_PREFIX_ = "GPSpedia_ADMIN_AUDIT_V1_";
+const ADMIN_AUDIT_SHEET_NAME_ = "AdminOperationAudit";
+const ADMIN_AUDIT_BASELINE_PENDING_ = "pending";
+const ADMIN_AUDIT_BASELINE_VERSION_ = "admin_audit_baseline_v1";
+const ADMIN_AUDIT_HEADERS_ = Object.freeze([
+    "recordType", "eventId", "actorId", "actorRole", "action", "resourceType",
+    "sourceResourceId", "targetResourceId", "startedAt", "finishedAt", "outcome",
+    "stage", "durationMs", "resultCode", "partialResultJson", "schemaVersion"
+]);
 const ADMIN_AUDIT_RETENTION_MS_ = 180 * 24 * 60 * 60 * 1000;
 const ADMIN_AUDIT_MAX_FINALIZED_ = 300;
 const ADMIN_AUDIT_MAX_PENDING_ = 20;
@@ -1263,135 +1271,346 @@ function getAdminAuditResultCode_(response, error, outcome) {
     return safeAdminAuditId_(raw, null).slice(0, 48) || "SERVICE_ERROR";
 }
 
-function pruneAdminAuditProperties_(properties, currentTime) {
-    const all = properties.getProperties();
+function getAdminAuditSheet_() {
+    const spreadsheet = getSpreadsheet();
+    if (!spreadsheet || typeof spreadsheet.getSheetByName !== "function") {
+        throw createAdminAuditError_("No se pudo abrir la Spreadsheet para la auditoría ADMIN.", "ADMIN_AUDIT_SCHEMA_UNAVAILABLE");
+    }
+    const sheet = spreadsheet.getSheetByName(ADMIN_AUDIT_SHEET_NAME_);
+    if (!sheet) {
+        throw createAdminAuditError_("No existe la hoja AdminOperationAudit. Debe prepararse su esquema antes de habilitar la auditoría.", "ADMIN_AUDIT_SCHEMA_UNAVAILABLE");
+    }
+    const header = sheet.getRange(1, 1, 1, ADMIN_AUDIT_HEADERS_.length).getValues()[0];
+    if (!ADMIN_AUDIT_HEADERS_.every((name, index) => String(header[index] || "").trim() === name)) {
+        throw createAdminAuditError_("El esquema de AdminOperationAudit no coincide con la versión esperada.", "ADMIN_AUDIT_SCHEMA_INVALID");
+    }
+    return sheet;
+}
+
+function readAdminAuditBaselineState_(sheet) {
+    const lastRow = Number(sheet.getLastRow() || 0);
+    if (lastRow < 2) return "";
+    const row = sheet.getRange(2, 1, 1, ADMIN_AUDIT_HEADERS_.length).getValues()[0];
+    if (String(row[0] || "") !== "META" || String(row[1] || "") !== "BASELINE") {
+        throw createAdminAuditError_("La fila reservada de baseline AdminOperationAudit está ocupada o dañada.", "ADMIN_AUDIT_CORRUPT_STATE");
+    }
+    return String(row[2] || "");
+}
+
+function writeAdminAuditBaselineState_(sheet, state) {
+    const row = new Array(ADMIN_AUDIT_HEADERS_.length).fill("");
+    row[0] = "META";
+    row[1] = "BASELINE";
+    row[2] = String(state || "");
+    let writeError = null;
+    try {
+        sheet.getRange(2, 1, 1, ADMIN_AUDIT_HEADERS_.length).setValues([row]);
+        SpreadsheetApp.flush();
+    } catch (error) { writeError = error; }
+    const persisted = sheet.getRange(2, 1, 1, ADMIN_AUDIT_HEADERS_.length).getValues()[0];
+    if (String(persisted[0] || "") !== "META" || String(persisted[1] || "") !== "BASELINE" ||
+        String(persisted[2] || "") !== String(state || "")) {
+        throw createAdminAuditError_("No se pudo confirmar el marcador de baseline de auditoría ADMIN." +
+            (writeError ? " " + String(writeError.message || writeError) : ""), "ADMIN_AUDIT_BASELINE_WRITE_FAILED");
+    }
+    return String(persisted[2] || "");
+}
+
+function adminAuditRecordToRow_(record) {
+    const source = record && typeof record === "object" ? record : {};
+    return [
+        "EVENT",
+        String(source.eventId || ""),
+        String(source.actorId || ""),
+        String(source.actorRole || ""),
+        String(source.action || ""),
+        String(source.resourceType || "admin"),
+        String(source.sourceResourceId || ""),
+        String(source.targetResourceId || ""),
+        String(source.startedAt || ""),
+        source.finishedAt ? String(source.finishedAt) : "",
+        String(source.outcome || "started"),
+        String(source.stage || "Inicio"),
+        source.durationMs === null || source.durationMs === undefined ? "" : Number(source.durationMs),
+        String(source.resultCode || "PENDING"),
+        JSON.stringify(source.partialResult && typeof source.partialResult === "object" ? source.partialResult : {}),
+        Number(source.schemaVersion || 1)
+    ];
+}
+
+function adminAuditRowToRecord_(row) {
+    const source = Array.isArray(row) ? row : [];
+    if (String(source[0] || "") !== "EVENT" || !String(source[1] || "")) {
+        throw createAdminAuditError_("El registro persistente ADMIN contiene una fila inválida.", "ADMIN_AUDIT_CORRUPT_STATE");
+    }
+    let partialResult = {};
+    try {
+        partialResult = JSON.parse(String(source[14] || "{}"));
+    } catch (error) {
+        throw createAdminAuditError_("El resumen de un evento ADMIN está dañado.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]);
+    }
+    if (!partialResult || typeof partialResult !== "object" || Array.isArray(partialResult)) {
+        throw createAdminAuditError_("El resumen de un evento ADMIN no tiene un formato válido.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]);
+    }
+    const duration = source[12] === "" || source[12] === null || source[12] === undefined ? null : Number(source[12]);
+    if (duration !== null && (!Number.isFinite(duration) || duration < 0)) {
+        throw createAdminAuditError_("La duración de un evento ADMIN no es válida.", "ADMIN_AUDIT_CORRUPT_STATE", source[1]);
+    }
+    return {
+        schemaVersion: Number(source[15] || 1),
+        eventId: String(source[1]),
+        actorId: String(source[2] || ""),
+        actorRole: String(source[3] || ""),
+        action: String(source[4] || ""),
+        resourceType: String(source[5] || "admin"),
+        sourceResourceId: String(source[6] || ""),
+        targetResourceId: String(source[7] || ""),
+        startedAt: String(source[8] || ""),
+        finishedAt: String(source[9] || "") || null,
+        outcome: String(source[10] || "started"),
+        stage: String(source[11] || "Inicio"),
+        durationMs: duration,
+        resultCode: String(source[13] || "PENDING"),
+        partialResult
+    };
+}
+
+function sameAdminAuditRecord_(left, right) {
+    const a = adminAuditRecordToRow_(left);
+    const b = adminAuditRecordToRow_(right);
+    return a.every((value, index) => String(value === null || value === undefined ? "" : value) ===
+        String(b[index] === null || b[index] === undefined ? "" : b[index]));
+}
+
+function findAdminAuditEventRow_(sheet, eventId) {
+    const target = String(eventId || "");
+    const values = sheet.getDataRange().getValues();
+    const matches = [];
+    for (let index = 2; index < values.length; index++) {
+        const row = values[index];
+        if (String(row[0] || "") === "EVENT" && String(row[1] || "") === target) {
+            matches.push({ rowIndex: index + 1, record: adminAuditRowToRecord_(row) });
+        }
+    }
+    if (matches.length > 1) {
+        throw createAdminAuditError_("El ledger ADMIN contiene eventos duplicados.", "ADMIN_AUDIT_CORRUPT_STATE", target);
+    }
+    return matches.length ? matches[0] : null;
+}
+
+function appendAdminAuditRecord_(sheet, record) {
+    const expected = adminAuditRecordToRow_(record);
+    let writeError = null;
+    try {
+        sheet.appendRow(expected);
+        SpreadsheetApp.flush();
+    } catch (error) { writeError = error; }
+    const persisted = findAdminAuditEventRow_(sheet, record.eventId);
+    if (persisted && sameAdminAuditRecord_(persisted.record, record)) return persisted.rowIndex;
+    throw createAdminAuditError_("No se pudo confirmar el append del evento ADMIN." +
+        (writeError ? " " + String(writeError.message || writeError) : ""), "ADMIN_AUDIT_START_FAILED", record.eventId);
+}
+
+function updateAdminAuditRecord_(sheet, rowIndex, record) {
+    const expected = adminAuditRecordToRow_(record);
+    let writeError = null;
+    try {
+        sheet.getRange(rowIndex, 1, 1, ADMIN_AUDIT_HEADERS_.length).setValues([expected]);
+        SpreadsheetApp.flush();
+    } catch (error) { writeError = error; }
+    const persisted = sheet.getRange(rowIndex, 1, 1, ADMIN_AUDIT_HEADERS_.length).getValues()[0];
+    let actual;
+    try { actual = adminAuditRowToRecord_(persisted); }
+    catch (error) { actual = null; }
+    if (!actual || !sameAdminAuditRecord_(actual, record)) {
+        throw createAdminAuditError_("No se pudo confirmar la actualización del evento ADMIN." +
+            (writeError ? " " + String(writeError.message || writeError) : ""), "ADMIN_AUDIT_FINALIZE_FAILED", record.eventId);
+    }
+    return true;
+}
+
+function ensureAdminAuditBaseline_() {
+    let sheet = getAdminAuditSheet_();
+    let state = readAdminAuditBaselineState_(sheet);
+    if (state === ADMIN_AUDIT_BASELINE_VERSION_) return { status: "success", migrated: 0, alreadyComplete: true };
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        if (!lock.tryLock(0)) {
+            throw createAdminAuditError_("El baseline ADMIN está ocupado; no esperó por otra ejecución.", "ADMIN_AUDIT_BUSY");
+        }
+        acquired = true;
+        sheet = getAdminAuditSheet_();
+        state = readAdminAuditBaselineState_(sheet);
+        if (state === ADMIN_AUDIT_BASELINE_VERSION_) return { status: "success", migrated: 0, alreadyComplete: true };
+        if (state && state !== ADMIN_AUDIT_BASELINE_PENDING_) {
+            throw createAdminAuditError_("El marcador de baseline ADMIN no es válido.", "ADMIN_AUDIT_BASELINE_INVALID");
+        }
+        if (!state) {
+            if (Number(sheet.getLastRow() || 0) > 1) {
+                throw createAdminAuditError_("AdminOperationAudit contiene datos sin marcador de baseline.", "ADMIN_AUDIT_BASELINE_INVALID");
+            }
+            writeAdminAuditBaselineState_(sheet, ADMIN_AUDIT_BASELINE_PENDING_);
+        }
+
+        const properties = PropertiesService.getScriptProperties();
+        const legacy = properties.getProperties();
+        const keys = Object.keys(legacy).filter(key => key.indexOf(ADMIN_AUDIT_PROPERTY_PREFIX_) === 0);
+        const seen = new Set();
+        let migrated = 0;
+        for (const key of keys) {
+            let record;
+            try { record = JSON.parse(String(legacy[key] || "")); }
+            catch (error) {
+                throw createAdminAuditError_("El registro legacy de auditoría ADMIN contiene JSON ilegible.", "ADMIN_AUDIT_CORRUPT_STATE");
+            }
+            const suffix = key.slice(ADMIN_AUDIT_PROPERTY_PREFIX_.length);
+            if (!record || typeof record !== "object" || Array.isArray(record) ||
+                !record.eventId || String(record.eventId) !== suffix || seen.has(suffix)) {
+                throw createAdminAuditError_("El registro legacy de auditoría ADMIN tiene una identidad inválida o duplicada.", "ADMIN_AUDIT_CORRUPT_STATE");
+            }
+            seen.add(suffix);
+            const serialized = JSON.stringify(record);
+            if (serialized.length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) {
+                throw createAdminAuditError_("Un registro legacy de auditoría ADMIN excede el tamaño permitido.", "ADMIN_AUDIT_RECORD_TOO_LARGE", suffix);
+            }
+            const existing = findAdminAuditEventRow_(sheet, suffix);
+            if (existing) {
+                if (!sameAdminAuditRecord_(existing.record, record)) {
+                    throw createAdminAuditError_("El registro legacy y el ledger ADMIN no coinciden.", "ADMIN_AUDIT_CORRUPT_STATE", suffix);
+                }
+            } else {
+                appendAdminAuditRecord_(sheet, record);
+                migrated++;
+            }
+        }
+        SpreadsheetApp.flush();
+        writeAdminAuditBaselineState_(sheet, ADMIN_AUDIT_BASELINE_VERSION_);
+        return { status: "success", markers: keys.length, migrated, alreadyComplete: false };
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
+}
+
+function pruneAdminAuditSheetUnderLock_(sheet, currentTime) {
+    const values = sheet.getDataRange().getValues();
     const entries = [];
-    Object.keys(all).filter(key => key.indexOf(ADMIN_AUDIT_PROPERTY_PREFIX_) === 0).forEach(key => {
-        let record;
-        try { record = JSON.parse(all[key]); } catch (error) {
-            throw createAdminAuditError_("El registro persistente ADMIN contiene una entrada ilegible; las operaciones sensibles permanecen detenidas.", "ADMIN_AUDIT_CORRUPT_STATE");
-        }
-        if (!record || typeof record !== "object" || !record.eventId) {
-            throw createAdminAuditError_("El registro persistente ADMIN contiene una entrada inválida; las operaciones sensibles permanecen detenidas.", "ADMIN_AUDIT_CORRUPT_STATE");
-        }
+    for (let index = 2; index < values.length; index++) {
+        const row = values[index];
+        if (!row || !row.some(value => value !== "" && value !== null && value !== undefined)) continue;
+        const record = adminAuditRowToRecord_(row);
         const finishedAt = Date.parse(record.finishedAt || "");
         const finalized = Boolean(record.outcome && record.outcome !== "started" && Number.isFinite(finishedAt));
-        entries.push({ key, record, finishedAt, finalized });
-    });
-
+        entries.push({ rowIndex: index + 1, record, finishedAt, finalized });
+    }
     const pending = entries.filter(entry => !entry.finalized);
     if (pending.length >= ADMIN_AUDIT_MAX_PENDING_) {
-        throw createAdminAuditError_("Hay demasiadas operaciones ADMIN sin cierre de auditoría. Se requiere revisión antes de ejecutar nuevas operaciones sensibles.", "ADMIN_AUDIT_PENDING_REVIEW_REQUIRED");
+        throw createAdminAuditError_("Hay demasiadas operaciones ADMIN sin cierre de auditoría. Se requiere revisión antes de registrar nuevas operaciones.", "ADMIN_AUDIT_PENDING_REVIEW_REQUIRED");
     }
-
     const cutoff = currentTime - ADMIN_AUDIT_RETENTION_MS_;
     const finalized = entries.filter(entry => entry.finalized);
-    finalized.filter(entry => entry.finishedAt < cutoff).forEach(entry => properties.deleteProperty(entry.key));
+    const remove = finalized.filter(entry => entry.finishedAt < cutoff);
     const retained = finalized.filter(entry => entry.finishedAt >= cutoff).sort((left, right) => left.finishedAt - right.finishedAt);
-    while (retained.length > ADMIN_AUDIT_MAX_FINALIZED_) {
-        const oldest = retained.shift();
-        properties.deleteProperty(oldest.key);
-    }
+    while (retained.length > ADMIN_AUDIT_MAX_FINALIZED_) remove.push(retained.shift());
+    remove.map(entry => entry.rowIndex).sort((a, b) => b - a).forEach(rowIndex => sheet.deleteRow(rowIndex));
+    if (remove.length) SpreadsheetApp.flush();
+    return { removed: remove.length, pending: pending.length };
 }
 
 function beginAdminAuditEvent_(action, payload, actor, startedAt) {
     try {
-        const properties = PropertiesService.getScriptProperties();
-        const now = Date.now();
-        pruneAdminAuditProperties_(properties, now);
-
         const actorSource = actor && typeof actor === "object" ? actor : {};
         const actorId = safeAdminAuditId_(actorSource.userId, null);
-        const rawRole = String(actorSource.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-        const role = rawRole;
+        const role = String(actorSource.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
         if (!actorId || !["desarrollador", "jefe"].includes(role)) {
             throw createAdminAuditError_("No se pudo acreditar el actor autenticado para el registro ADMIN.", "ADMIN_AUDIT_ACTOR_INVALID");
         }
-
-        const eventId = String(Utilities.getUuid() || "");
         const safeAction = safeAdminAuditId_(action, null);
-        if (!eventId || !safeAction) throw createAdminAuditError_("No se pudo identificar la operación ADMIN para auditoría.", "ADMIN_AUDIT_EVENT_INVALID");
+        if (!safeAction) throw createAdminAuditError_("No se pudo identificar la operación ADMIN para auditoría.", "ADMIN_AUDIT_EVENT_INVALID");
+        const now = Date.now();
         const resource = getAdminAuditResourceSummary_(safeAction, payload, null);
-        const start = startedAt instanceof Date ? startedAt : new Date(startedAt || now);
-        const event = {
-            schemaVersion: 1,
-            eventId,
-            actorId,
-            actorRole: role,
-            action: safeAction,
-            resourceType: resource.resourceType,
-            sourceResourceId: resource.sourceResourceId,
-            targetResourceId: resource.targetResourceId,
-            startedAt: start.toISOString(),
-            finishedAt: null,
-            outcome: "started",
-            stage: "Inicio",
-            durationMs: null,
-            resultCode: "PENDING",
-            partialResult: {}
-        };
-        const serialized = JSON.stringify(event);
-        if (serialized.length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) {
-            throw createAdminAuditError_("El registro de auditoría excede el tamaño seguro.", "ADMIN_AUDIT_RECORD_TOO_LARGE", eventId);
+        ensureAdminAuditBaseline_();
+
+        const lock = LockService.getScriptLock();
+        let acquired = false;
+        try {
+            if (!lock.tryLock(0)) {
+                throw createAdminAuditError_("La escritura de auditoría ADMIN está ocupada; no esperó por otra ejecución.", "ADMIN_AUDIT_BUSY");
+            }
+            acquired = true;
+            const sheet = getAdminAuditSheet_();
+            pruneAdminAuditSheetUnderLock_(sheet, now);
+            const eventId = String(Utilities.getUuid() || "");
+            if (!eventId) throw createAdminAuditError_("No se pudo generar el ID del evento ADMIN.", "ADMIN_AUDIT_EVENT_INVALID");
+            const start = startedAt instanceof Date ? startedAt : new Date(startedAt || now);
+            const event = {
+                schemaVersion: 1, eventId, actorId, actorRole: role, action: safeAction,
+                resourceType: resource.resourceType,
+                sourceResourceId: resource.sourceResourceId,
+                targetResourceId: resource.targetResourceId,
+                startedAt: start.toISOString(), finishedAt: null, outcome: "started",
+                stage: "Inicio", durationMs: null, resultCode: "PENDING", partialResult: {}
+            };
+            if (JSON.stringify(event).length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) {
+                throw createAdminAuditError_("El registro de auditoría excede el tamaño seguro.", "ADMIN_AUDIT_RECORD_TOO_LARGE", eventId);
+            }
+            appendAdminAuditRecord_(sheet, event);
+            return { key: eventId, eventId, action: safeAction };
+        } finally {
+            if (acquired) lock.releaseLock();
         }
-        const key = ADMIN_AUDIT_PROPERTY_PREFIX_ + eventId;
-        properties.setProperty(key, serialized);
-        if (properties.getProperty(key) !== serialized) {
-            throw createAdminAuditError_("No se pudo verificar la persistencia del inicio de la operación ADMIN.", "ADMIN_AUDIT_START_FAILED", eventId);
-        }
-        return { key, eventId };
     } catch (error) {
         if (error && error.code) throw error;
-        throw createAdminAuditError_("No se pudo iniciar el registro persistente de auditoría; la operación ADMIN no fue ejecutada.", "ADMIN_AUDIT_START_FAILED");
+        throw createAdminAuditError_("No se pudo iniciar el registro persistente de auditoría; la operación ADMIN continúa sin esperar.", "ADMIN_AUDIT_START_FAILED");
     }
 }
-
 function finalizeAdminAuditEvent_(auditEvent, details) {
+    const reference = auditEvent && typeof auditEvent === "object" ? auditEvent : {};
     try {
-        const properties = PropertiesService.getScriptProperties();
-        const reference = auditEvent && typeof auditEvent === "object" ? auditEvent : {};
-        const raw = properties.getProperty(reference.key);
-        if (!raw) throw createAdminAuditError_("No se encontró el registro de inicio de auditoría ADMIN.", "ADMIN_AUDIT_EVENT_MISSING", reference.eventId);
-        let event;
-        try { event = JSON.parse(raw); } catch (error) {
-            throw createAdminAuditError_("El registro de inicio de auditoría ADMIN está dañado.", "ADMIN_AUDIT_CORRUPT_STATE", reference.eventId);
-        }
-        if (!event || event.eventId !== reference.eventId || event.outcome !== "started" || event.finishedAt) {
-            throw createAdminAuditError_("El evento de auditoría no coincide o ya fue finalizado.", "ADMIN_AUDIT_EVENT_STATE_INVALID", reference.eventId);
-        }
-
         const input = details && typeof details === "object" ? details : {};
         const response = input.response && typeof input.response === "object" ? input.response : null;
         const error = input.error || null;
         const outcome = ["success", "partial", "error"].includes(input.outcome)
             ? input.outcome : getAdminAuditOutcome_(response, error);
-        const resource = getAdminAuditResourceSummary_(event.action, input.payload, response);
-        if (!event.sourceResourceId) event.sourceResourceId = resource.sourceResourceId;
-        if (!event.targetResourceId) event.targetResourceId = resource.targetResourceId;
-        event.finishedAt = new Date().toISOString();
-        event.outcome = outcome;
-        event.stage = safeAdminAuditStage_(input.stage || event.stage);
-        const duration = Number(input.durationMs);
-        event.durationMs = Number.isFinite(duration) && duration >= 0 ? Math.round(duration) : null;
-        event.resultCode = getAdminAuditResultCode_(response, error, outcome);
-        event.partialResult = getAdminAuditPartialResult_(response);
-        const serialized = JSON.stringify(event);
-        if (serialized.length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) {
-            throw createAdminAuditError_("El resultado resumido excede el tamaño seguro del registro de auditoría.", "ADMIN_AUDIT_RECORD_TOO_LARGE", event.eventId);
+        const resource = getAdminAuditResourceSummary_(reference.action || "", input.payload, response);
+        const lock = LockService.getScriptLock();
+        let acquired = false;
+        try {
+            if (!lock.tryLock(0)) {
+                throw createAdminAuditError_("El cierre de auditoría ADMIN está ocupado; no esperó por otra ejecución.", "ADMIN_AUDIT_BUSY", reference.eventId);
+            }
+            acquired = true;
+            const sheet = getAdminAuditSheet_();
+            const found = findAdminAuditEventRow_(sheet, reference.eventId || reference.key);
+            if (!found) throw createAdminAuditError_("No se encontró el registro de inicio de auditoría ADMIN.", "ADMIN_AUDIT_EVENT_MISSING", reference.eventId);
+            const event = found.record;
+            if (event.eventId !== String(reference.eventId || reference.key || "") || event.outcome !== "started" || event.finishedAt) {
+                throw createAdminAuditError_("El evento de auditoría no coincide o ya fue finalizado.", "ADMIN_AUDIT_EVENT_STATE_INVALID", reference.eventId);
+            }
+            if (!event.sourceResourceId) event.sourceResourceId = resource.sourceResourceId;
+            if (!event.targetResourceId) event.targetResourceId = resource.targetResourceId;
+            event.finishedAt = new Date().toISOString();
+            event.outcome = outcome;
+            event.stage = safeAdminAuditStage_(input.stage || event.stage);
+            const duration = Number(input.durationMs);
+            event.durationMs = Number.isFinite(duration) && duration >= 0 ? Math.round(duration) : null;
+            event.resultCode = getAdminAuditResultCode_(response, error, outcome);
+            event.partialResult = getAdminAuditPartialResult_(response);
+            if (JSON.stringify(event).length > ADMIN_AUDIT_MAX_RECORD_LENGTH_) {
+                throw createAdminAuditError_("El resultado resumido excede el tamaño seguro del registro de auditoría.", "ADMIN_AUDIT_RECORD_TOO_LARGE", event.eventId);
+            }
+            updateAdminAuditRecord_(sheet, found.rowIndex, event);
+            try { pruneAdminAuditSheetUnderLock_(sheet, Date.now()); }
+            catch (pruneError) { Logger.log("La limpieza de eventos ADMIN se pospuso: " + String(pruneError && pruneError.message || pruneError)); }
+            return event.eventId;
+        } finally {
+            if (acquired) lock.releaseLock();
         }
-        properties.setProperty(reference.key, serialized);
-        if (properties.getProperty(reference.key) !== serialized) {
-            throw createAdminAuditError_("No se pudo verificar el cierre del registro persistente ADMIN.", "ADMIN_AUDIT_FINALIZE_FAILED", event.eventId);
-        }
-        try { pruneAdminAuditProperties_(properties, Date.now()); }
-        catch (pruneError) { Logger.log("La limpieza de eventos ADMIN se pospuso: " + String(pruneError && pruneError.message || pruneError)); }
-        return event.eventId;
     } catch (error) {
         if (error && error.code) throw error;
-        throw createAdminAuditError_("No se pudo finalizar el registro persistente de auditoría ADMIN.", "ADMIN_AUDIT_FINALIZE_FAILED", auditEvent && auditEvent.eventId);
+        throw createAdminAuditError_("No se pudo finalizar el registro persistente de auditoría ADMIN.", "ADMIN_AUDIT_FINALIZE_FAILED", reference.eventId);
     }
 }
-
 function doPostInternal_(e) {
     let response;
     let catalogAction = "";
