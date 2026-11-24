@@ -72,10 +72,11 @@ test('los avisos extensos se guardan en la terminal y la interfaz muestra texto 
     assert.match(ui, /original\.length > 110/);
     assert.match(ui, /No se pudo completar la operación\./);
 });
-test('el panel diagnostica la configuración del coordinador AUTH', () => {
-    assert.match(ui, /metadata\.coordinatorConfigured === false/);
-    assert.match(ui, /Coordinador pendiente/);
-    assert.match(ui, /Coordinador compartido/);
+test('el panel diagnostica servicios mediante metadatos de salud sin depender de Coordinator', () => {
+    assert.match(ui, /const metadata = item\.metadata \|\| \{\}/);
+    assert.match(ui, /metadata\.service \|\| selectedServiceKey/);
+    assert.match(ui, /metadata\.reportedStatus \|\| "No verificado"/);
+    assert.doesNotMatch(ui, /coordinatorConfigured|Coordinador pendiente|Coordinador compartido/);
 });
 test('las páginas auxiliares remiten los detalles largos al aviso central', () => {
     for (const source of [usersPage, addCortesPage]) {
