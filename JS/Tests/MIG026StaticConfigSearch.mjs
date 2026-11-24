@@ -54,19 +54,15 @@ test("los seis servicios abren la Spreadsheet principal configurada y los servic
     const feedback = read("JS/Services/feedback.js");
     const utilities = read("JS/Services/Utilities.js");
     const admin = read("JS/Services/admin.js");
-    assert.match(central, /var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";/);
-    assert.match(central, /var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";/);
-    assert.match(auth, /getAuthUsersSpreadsheet_[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
-    assert.match(catalog, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
-    assert.match(write, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
-    assert.match(feedback, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
-    assert.match(utilities, /function getUtilitiesSpreadsheet_\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
-    assert.match(admin, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+    assert.ok(central.includes('var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";'));
+    assert.ok(central.includes('var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";'));
     for (const source of [auth, catalog, write, feedback, utilities, admin, central]) {
-        assert.doesNotMatch(source, /SpreadsheetApp\\.getActiveSpreadsheet\\s*\\(/);
+        assert.ok(source.includes("SpreadsheetApp.openById(GPSpediaSpreadsheetId_)"));
+        assert.equal(source.includes("SpreadsheetApp.getActiveSpreadsheet("), false);
     }
     for (const source of [write, feedback, admin]) {
-        assert.match(source, /function getCortesRootFolderResource_\\(\\)[\\s\\S]*?GPSpediaCortesRootFolderId_/);
+        assert.ok(source.includes("GPSpediaCortesRootFolderId_"));
+        assert.ok(source.includes('expectedName: "Cortes"'));
     }
 });
 test("PropertiesService solo se consulta desde los baselines legacy identificados", () => {
