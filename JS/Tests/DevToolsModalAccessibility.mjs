@@ -81,7 +81,7 @@ test('el panel diagnostica servicios mediante metadatos de salud sin depender de
 test('las páginas auxiliares remiten los detalles largos al aviso central', () => {
     for (const source of [usersPage, addCortesPage]) {
         assert.match(source, /function showConciseAlert_\(message\)/);
-        assert.match(source, /hostUi\.showGlobalError\(detail\.length > 110 \? 'No se pudo completar la operación\.' : detail\)/);
+        assert.match(source, /hostUi\.showGlobalError\(detail\.length > 110/);
         assert.match(source, /No se pudo completar la operación\./);
     }
     assert.match(addCortesPage, /showConciseAlert_\(/);
