@@ -710,3 +710,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Pruebas CI run 45456746900, job 138668136581, commit funcional 3e8041dc34a338e4088ca547e911221e23595384: SUCCESS; 515 suites, 6,078 pruebas aprobadas, 0 fallos. CentralConfigurationInitializer 7/7, CentralServiceUrlPublisher 7/7, ServiceCallGraphContract 9/9 y MIG029DeploymentGuideContract 16/16 PASS. GitHub Pages run 45456746700: SUCCESS.
 - Se añadió Tareas_Beta.md §19 con el procedimiento para probar la inicialización, primera publicación, edición desde el modal, RBAC, errores, idempotencia y cambio de bootstrap en entorno aislado.
 - No se ejecutaron funciones contra la Spreadsheet real, no se modificaron datos/propiedades/permisos productivos y no se desplegó ningún proyecto Apps Script. La validación operativa queda pendiente de Beta y autorización expresa.
+
+
+### 2026-11-24 — Corrección de alcance: URL AUTH fuera del modal Developer
+
+- Se ajustó el modal Herramientas de desarrollador → Sistema → Endpoints de servicios: solo muestra y permite editar CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
+- La URL AUTH no se expone como campo editable ni se envía en el payload desde el modal. Su actualización se realiza directamente en el frontend mediante el único localizador CENTRAL_CONFIGURATION_BOOTSTRAP_URL.
+- El backend AUTH aplica la misma restricción: rechaza solicitudes del modal que incluyan AUTH o que no contengan exactamente los otros cinco servicios. Para publicar la revisión completa, conserva la URL AUTH ya activa y la combina internamente con las cinco URL recibidas. Así se mantienen los seis registros versionados sin permitir que el modal modifique el bootstrap.
+- La inicialización manual desde Apps Script continúa admitiendo las seis URL para preparar la primera publicación. Esta vía es independiente del modal y no cambia el criterio de actualización de AUTH desde el frontend.
+- Se amplió la prueba de contrato para verificar la ausencia del campo AUTH, el conjunto exacto de cinco claves y la preservación del endpoint AUTH publicado.
