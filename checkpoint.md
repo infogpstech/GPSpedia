@@ -1737,3 +1737,32 @@ Pendiente Beta: probar baseline con Spreadsheet real, interrupciones, concurrenc
 
 Siguiente tarea MIG-026: primera familia de estado ADMIN, una familia por tarea, siguiendo el inventario y sus dependencias. No ejecutar migraciones ADMIN en paralelo.
 ================================================================================
+
+
+================================================================================
+MIG-026 — ADMIN — MIGRACIÓN DE AUDITORÍA PERSISTENTE — 2026-11-24
+HEAD de código: 8082c467ca705c9c0757619898288a819d4b68ee.
+Commits principales:
+- 7ae0207d14 — ledger AdminOperationAudit y baseline legacy.
+- ea05f4530a — baseline por lote y limpieza por lotes; harness de regresión.
+- 8475e4402a — rechazo de filas huérfanas durante baseline.
+- 8082c467ca — sanitización de legacy/filas y resumen parcial allowlist.
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Cambios:
+- La auditoría ADMIN deja de usar GPSpedia_ADMIN_AUDIT_V1_<eventId> como estado ordinario y pasa a AdminOperationAudit (A:P, 16 columnas). La fila 2 queda reservada para META/BASELINE; los eventos comienzan en fila 3.
+- Baseline único, idempotente y reanudable: lectura legacy, validación de identidad/esquema, importación por lote, read-back, detección de duplicados/filas huérfanas y rechazo de datos corruptos. Las propiedades legacy no se escriben ni eliminan.
+- Los campos importados se normalizan; partialResult conserva únicamente contadores/booleanos permitidos. No se copian mensajes, payloads ni credenciales.
+- El flujo normal de inicio/cierre/prune opera sobre la hoja. Los locks usan tryLock(0), sin waitLock ni esperas temporizadas. La auditoría es best-effort: contención/esquema ausente no bloquea la operación funcional; se devuelve advertencia.
+- Retención 180 días, 300 finalizados, 20 pendientes; eventos STARTED no se purgan; limpieza de filas por lotes.
+
+Validación:
+- AdminAuditTrail 27/27 PASS.
+- CI run 45316668967: 495 suites, 5,799 pruebas aprobadas, 0 fallos.
+- GitHub Pages run 45316668147: SUCCESS.
+- No se desplegó Apps Script, ni se creó/modificó Spreadsheet real, ni se modificaron propiedades instaladas.
+
+Pendiente Beta: crear AdminOperationAudit con encabezados exactos (fila 1; fila 2 vacía), probar baseline real, interrupciones, append/read-back, lock contention, operaciones concurrentes, retención y ausencia de secretos; no borrar GPSpedia_ADMIN_AUDIT_V1_ durante la prueba. Consultar Tareas_Beta.md §11.
+
+Estado de familias: AUTH 0, WRITE 1, ADMIN 5; total 6. Siguiente subtramo por orden del inventario: GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)> (Safe Apply). No iniciar otra familia ADMIN en paralelo.
+================================================================================

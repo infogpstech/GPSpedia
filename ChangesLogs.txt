@@ -470,3 +470,13 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - CI run 45310018557: sintaxis PASS; 339 suites; 3,961 pruebas aprobadas; RoleRevocationLedger 39/39, LoginRequestLedger 40/40, PasswordRecovery 10/10, AUTH operativo/copia 32/32, perfil/revocación 23/23 y PasswordKdfBenchmark 5/5. Tres fallos externos (WriteCatalogPublicationIsolation en dos grupos y GP-PERF FEEDBACK/Inbox). Pages 45310017580 SUCCESS.
 - No se desplegó Apps Script ni se modificaron propiedades instaladas. Validación real y limpieza legacy pendientes de Beta.
 - Siguiente tarea: primera familia de estado ADMIN, una a la vez.
+
+
+### 2026-11-24 — MIG-026 ADMIN: auditoría persistente en AdminOperationAudit
+- Migrada la familia `GPSpedia_ADMIN_AUDIT_V1_<eventId>` a la hoja privada `AdminOperationAudit` (16 columnas); fila 2 reservada para baseline y eventos desde fila 3.
+- Baseline legacy idempotente/reanudable, importación por lote, verificación read-back, rechazo de filas huérfanas/duplicadas/corruptas y sanitización de campos; no escribe ni elimina propiedades legacy.
+- El flujo ordinario ya no consulta ScriptProperties para auditoría. Inicio/cierre usan `tryLock(0)`; no hay `waitLock`; el registro es best-effort y no detiene la operación funcional cuando hay contención o falla de esquema.
+- Retención 180 días, 300 eventos finalizados, 20 pendientes; limpieza por lotes. AdminAuditTrail 27/27 PASS.
+- CI run 45316668967: 495 suites, 5,799 pruebas aprobadas, 0 fallos. GitHub Pages run 45316668147: SUCCESS.
+- No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas. Preparación de hoja real, concurrencia y limpieza legacy quedan pendientes de Beta (§11).
+- Siguiente familia ADMIN: Safe Apply `GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>`, una tarea a la vez.

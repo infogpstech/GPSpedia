@@ -325,5 +325,13 @@ La implementación frontend de las secuencias identificadas en el inventario que
 
 - CATALOG ya trasladó su feed incremental a CatalogChangeState/CatalogChangeEvents; WRITE trasladó el high-water mark a CortesIdReservations.
 - AUTH trasladó la idempotencia de login a LoginRequests, eliminó el secreto HMAC persistente de recuperación y trasladó role_revocation_pending_ al marcador compartido Users.SessionToken. Las propiedades antiguas solo se leen durante sus baselines; no se borran en deployments.
-- El siguiente subtramo local pendiente es la primera familia de estado ADMIN, una familia por tarea, conforme a INVENTARIO_CONFIGURACION_BACKEND.md. No iniciar familias ADMIN en paralelo.
+- La primera familia ADMIN (`GPSpedia_ADMIN_AUDIT_V1_<eventId>`) ya se migró a `AdminOperationAudit`. Quedan cinco familias operativas ADMIN; la siguiente pendiente por orden es `GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>` (Safe Apply), una familia por tarea. No iniciar migraciones ADMIN en paralelo.
 - Las validaciones que requieren proyectos Apps Script, Spreadsheet, propiedades instaladas o deployments permanecen diferidas a Beta; no se han ejecutado ni simulado aquí.
+
+
+## 3.11 MIG-026 ADMIN-01 — ledger de auditoría — 2026-11-24
+
+- Las operaciones mutables ADMIN registran inicio y cierre en `AdminOperationAudit`; el ledger reemplaza el uso ordinario de `GPSpedia_ADMIN_AUDIT_V1_<eventId>`.
+- El backend ADMIN no coordina con otros servicios ni introduce URLs/secretos. La escritura del ledger es local y fail-fast: `tryLock(0)`, sin `waitLock`; el registro es best-effort y no bloquea la operación funcional.
+- El baseline legacy es único, idempotente y reanudable; importa por lote, verifica read-back y conserva intactas las propiedades instaladas. No se borra información legacy.
+- Siguiente familia ADMIN: Safe Apply (`GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>`). La prueba real de Spreadsheet/Apps Script queda diferida a Beta.

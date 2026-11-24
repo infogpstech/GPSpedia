@@ -309,3 +309,16 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - La propiedad instalada no se elimina. El código nuevo no la modifica; su limpieza requiere validar el baseline en Apps Script real y autorización Beta.
 - Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 6. AUTH conserva dos lectores de baseline legacy, que no se usan después de confirmar sus marcadores.
 - CI run 45310018557: 339 suites, 3,961 pruebas aprobadas; RoleRevocationLedger 39/39; LoginRequestLedger 40/40; PasswordRecovery 10/10; AUTH operativo/copia 32/32; perfil/revocación 23/23. Tres fallos externos a esta tarea: WriteCatalogPublicationIsolation (dos grupos) y GP-PERF FEEDBACK/Inbox.
+
+
+## Adenda MIG-026 ADMIN-01 — migración de auditoría persistente — 2026-11-24
+
+- La familia `GPSpedia_ADMIN_AUDIT_V1_<eventId>` deja de ser estado operativo en ScriptProperties. El ledger canónico es la hoja privada `AdminOperationAudit` de la Spreadsheet ADMIN.
+- Esquema A:P (16 columnas): `recordType, eventId, actorId, actorRole, action, resourceType, sourceResourceId, targetResourceId, startedAt, finishedAt, outcome, stage, durationMs, resultCode, partialResultJson, schemaVersion`. La fila 1 contiene exactamente estos encabezados; la fila 2 debe permanecer vacía antes del primer uso. El código reserva la fila 2 para `META / BASELINE / pending` y al terminar escribe `admin_audit_baseline_v1`. Los eventos comienzan en la fila 3.
+- La hoja no se crea automáticamente. Si falta o el encabezado no coincide, el registro de auditoría falla de forma visible, pero la operación ADMIN no se cancela ni espera por la auditoría.
+- El baseline importa las propiedades legacy una sola vez, por lote, valida identidad y esquema, rechaza filas huérfanas/divergentes, permite reanudación tras interrupción, verifica read-back y nunca ejecuta `setProperty` ni `deleteProperty`. Los campos importados se normalizan y los resúmenes parciales se limitan a contadores/booleanos permitidos.
+- El flujo ordinario lee y escribe únicamente `AdminOperationAudit`. Inicio, cierre, baseline y limpieza usan `tryLock(0)`; no hay `waitLock` ni esperas temporizadas. La sección crítica se limita a operaciones de hoja y limpieza por lotes. Si el lock está ocupado, la auditoría no espera: el flujo de negocio continúa y devuelve la advertencia de auditoría correspondiente.
+- Política conservada: retención de 180 días, máximo de 300 eventos finalizados y 20 pendientes. Los eventos `started` no se purgan automáticamente; al llegar a 20 pendientes, se detienen nuevos registros de auditoría hasta revisión, sin bloquear la operación funcional.
+- Estado actual de familias operativas: AUTH 0, WRITE 1 y ADMIN 5 (6 en total). AUTH mantiene lectores de baseline legacy; la propiedad de auditoría ADMIN queda como lector de baseline únicamente hasta validar Beta.
+- AdminAuditTrail 27/27 PASS; CI run 45316668967: 495 suites, 5,799 pruebas aprobadas, 0 fallos; GitHub Pages run 45316668147 SUCCESS. No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas.
+- La preparación real de `AdminOperationAudit`, concurrencia, respuesta perdida, retención y verificación de propiedades legacy queda pendiente de Beta aislada. Consultar `Tareas_Beta.md` §11.
