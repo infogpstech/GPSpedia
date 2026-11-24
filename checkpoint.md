@@ -1596,3 +1596,13 @@ Siguiente paso: elegir la siguiente familia de estado de AUTH/WRITE/ADMIN y migr
 
 - Endurecimiento del feed CATALOG: un ledger vacío devuelve resetRequired para impedir que clientes con snapshot local antiguo interpreten la ausencia de eventos como feed vigente. Beta debe publicar el reset inicial como Desarrollador (revisión 1) antes de habilitar clientes.
 - CI del HEAD 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3, run 45299704239: sintaxis PASS; CatalogChangeFeed 19/19 PASS; regresión 4,691 PASS y una suite fallida preexistente FeedbackLockFastFail.
+
+
+================================================================================
+ANÁLISIS DE SIGUIENTE SUBTRAMO — WRITE CORTES ID HIGH-WATER — 2026-11-24
+- WRITE ya mantiene el ledger append-only CortesIdReservations (opId, operationHash, vehicleId, createdAt) para las reservas modernas.
+- La propiedad GPSpedia_CORTES_LAST_ID aún se consulta en getCortesVehicleIdHighWaterMark_ y se actualiza durante freezeCortesIds.
+- No retirar directamente: el valor puede conservar IDs históricos que ya no aparecen en Cortes ni en el ledger. El próximo cambio debe sembrar un baseline idempotente por encima del máximo entre propiedad, hoja y ledger, verificar lectura y concurrencia, y solo después eliminar la dependencia normal de ScriptProperties.
+- Pruebas relacionadas existentes: WriteVehicleIdReservationOutsidePhysicalLock.mjs, WriteFreezeCortesIdsBackupOutsideLock.mjs, AdminLegacyCutReservation.mjs y AdminCutSlotReservation.mjs.
+- No se modificó código WRITE en este subtramo ni se accedió a datos reales. La migración WRITE queda como siguiente tarea local dentro de MIG-026.
+================================================================================

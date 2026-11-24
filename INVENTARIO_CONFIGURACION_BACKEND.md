@@ -284,3 +284,11 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - CatalogChangeFeed.mjs: 19/19 PASS; regresión CI del HEAD 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3: 4,691 pruebas aprobadas y una suite fallida preexistente FeedbackLockFastFail.
 - Recuento actual tras la migración: 3 módulos con ScriptProperties (AUTH, WRITE y ADMIN) y 10 familias de estado/configuración vigentes en código: AUTH 3, WRITE 1, ADMIN 6. CATALOG deja de usar ScriptProperties.
 - Las hojas deben crearse con esos encabezados en Beta aislada antes del despliegue. No se creó ni modificó ninguna Spreadsheet real y no se borraron propiedades antiguas instaladas.
+
+
+### Nota de continuidad — siguiente estado pendiente WRITE (2026-11-24)
+
+- WRITE ya posee el ledger append-only CortesIdReservations con columnas opId, operationHash, vehicleId y createdAt; la reserva moderna usa fórmula de secuencia, requestId/opId y lectura de confirmación.
+- Aún persiste GPSpedia_CORTES_LAST_ID: getCortesVehicleIdHighWaterMark_ lo consulta y la operación de congelación de IDs lo actualiza. No se debe retirar de forma directa: puede contener un máximo histórico mayor que el máximo visible en Cortes o que el último registro actual del ledger.
+- Siguiente subtramo: comparar el high-water legacy con el ledger y Cortes, registrar una reserva baseline idempotente en CortesIdReservations cuando sea necesario, verificar que el próximo ID sea estrictamente mayor y solo entonces retirar la lectura/escritura de ScriptProperties. Probar concurrencia, reintentos y freeze/rollback.
+- No se ejecutó ni se modificó ningún valor real de PropertiesService o Spreadsheet.
