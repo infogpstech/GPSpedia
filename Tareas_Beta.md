@@ -231,3 +231,19 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Forzar fallo de MailApp y confirmar que el desafío se invalida. Confirmar que una recuperación correcta actualiza la contraseña, revoca todas las sesiones y cierra el acceso anterior.
 - Verificar que la versión desplegada no consulta ni crea GPSpedia_PASSWORD_RECOVERY_SECRET_V1. Solo después de comprobar que no quedan deployments/versiones activas que dependan de ella, eliminar esa propiedad legacy del proyecto AUTH de prueba y confirmar que el flujo sigue funcionando. No modificar propiedades de producción sin autorización explícita.
 - Registrar commit, deployment, navegador, resultado y evidencia anonimizada en Hallazgos_Beta.md. La suite local PasswordRecovery 10/10 no sustituye esta validación.
+
+
+## 9. Validación Beta diferida — MIG-026 AUTH: LoginRequests y operaciones fail-fast
+**Estado: PENDIENTE.** Implementación y pruebas automatizadas locales aprobadas; no se ha ejecutado en un deployment AUTH real.
+
+- Ejecutar primero la sincronización segura del apartado 0. Utilizar proyecto Apps Script, Spreadsheet, cuentas y sesiones desechables, nunca producción.
+- En el primer login, confirmar creación de LoginRequests con los 10 encabezados exactos y marcador LOGIN_REQUEST_BASELINE_MARKER_. Probar baseline vacío y baseline con varias propiedades legacy login_request_; comprobar importación íntegra, read-back y marcador baseline_v1.
+- Interrumpir la siembra antes de confirmar el marcador y reintentar. Debe completar solo las filas faltantes, no duplicar requestId y no aceptar registros distintos para la misma clave.
+- Inyectar propiedad legacy JSON corrupta, requestId inválido, token/userId vacío, fecha inválida, fila duplicada, encabezados alterados y marcador desconocido. Debe fallar cerrado sin confirmar baseline.
+- Repetir login con el mismo requestId y comprobar que devuelve el mismo token y no crea una segunda fila en ActiveSessions. Usar el mismo requestId con otro userId y confirmar rechazo. Simular append con respuesta perdida y confirmar recuperación por read-back.
+- Verificar estados pending/committed/revoked, confirmación del puntero Users.SessionToken, revocación por token al cerrar sesión/expirar, revocación por userId al cambiar contraseña/eliminar usuario y rechazo de replays después de revocar.
+- Avanzar el reloj más de 24 h. Confirmar limpieza rotatoria de máximo 25 registros por login, cursor persistente, invalidación de tokens pending vencidos y conservación de sesiones committed aunque expire su registro de idempotencia. Reutilizar un requestId vencido y comprobar nueva reserva segura.
+- Ejecutar concurrencia controlada con requestId iguales y distintos, límites de sesión 1/3/5/ilimitado, respuesta perdida y operaciones de perfil/revocación simultáneas. Comprobar unicidad de tokens, puntero coherente, ausencia de sesiones duplicadas y recuperación con el mismo requestId.
+- Mantener una ejecución AUTH ocupando el ScriptLock y lanzar login, cierre, cambio de perfil, recuperación y validación. Confirmar que ninguna función espera 10 s ni queda en cola: las operaciones que requieren lock usan tryLock(0) y responden de inmediato con contención reintentable; las lecturas que no requieren mutación continúan según su contrato.
+- Confirmar por búsqueda estática que AUTH no contiene .waitLock(. Confirmar que las propiedades legacy login_request_ no se escriben ni eliminan y que solo se leen durante baseline si el marcador no existe.
+- No borrar propiedades login_request_ instaladas durante esta prueba. La limpieza requiere baseline verificado, despliegue controlado y autorización Beta explícita. Registrar deployment, evidencia anonimizada y resultados por caso en Hallazgos_Beta.md.

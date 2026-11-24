@@ -1683,3 +1683,29 @@ Validación:
 
 Siguiente tarea AUTH: migrar idempotencia de login (prefijo login_request_) a estado persistente recuperable sin ScriptProperties. Mantener después, como tarea separada, los marcadores de revocación de rol.
 ================================================================================
+
+
+================================================================================
+MIG-026 — AUTH — MIGRACIÓN DE IDEMPOTENCIA DE LOGIN — 2026-11-24
+Código y pruebas: commit 7c4b342d66623d078101f3f50cb3879e374f40c3.
+Commits de implementación: 011d386462b5da6daa3fd90956b9593065aba0da; ajuste de locks fail-fast cf5af534f1c33d996d9f11ca45d5a6569cc85c62.
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Cambios:
+- Estado login_request_ migrado a hoja operativa LoginRequests, esquema de 10 columnas y baseline idempotente/reanudable.
+- El baseline importa legacy una sola vez, verifica read-back y no escribe ni elimina propiedades. El flujo normal de login no consulta ScriptProperties.
+- Recuperación del mismo token entre reintentos; append ambiguo reconciliado; revocación por usuario/token; TTL 24 h y limpieza rotatoria de 25 filas por ejecución.
+- Eliminadas todas las llamadas waitLock en AUTH. Las operaciones protegidas usan tryLock(0) y no esperan por otra ejecución; los conflictos se devuelven inmediatamente para reintento.
+- Fixture AUTH y mocks de pruebas sincronizados con LockService/SpreadsheetApp reales.
+
+Validación CI run 45308365799:
+- Sintaxis PASS; 338 suites procesadas; 3,921 pruebas aprobadas.
+- LoginRequestLedger 39/39; PasswordRecovery 10/10; AUTH operativo/copia 32/32; fixture/paridad 1/1; perfil/revocación 23/23; UI invalidación 18/18.
+- Tres fallos ajenos a esta tarea: WriteCatalogPublicationIsolation (dos grupos) y GP-PERF FEEDBACK/Inbox.
+- GitHub Pages run 45308365427: SUCCESS.
+- No se desplegó Apps Script ni se accedió a PropertiesService instalado.
+
+Pendiente Beta: baseline sobre Spreadsheet real, concurrencia entre ejecuciones, respuesta perdida, expiración/limpieza y autorización para retirar propiedades legacy. Consultar Tareas_Beta.md §9.
+
+Siguiente tarea MIG-026, por orden: migrar los marcadores role_revocation_pending_ de AUTH. No iniciar ADMIN en paralelo.
+================================================================================

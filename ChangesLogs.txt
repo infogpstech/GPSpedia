@@ -450,3 +450,13 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - CI 45305099851: 337 suites; 3,882 pruebas aprobadas y 3 fallos ajenos al cambio (WriteCatalogPublicationIsolation duplicada en dos grupos y GP-PERF FEEDBACK/Inbox). Pages 45305099649 SUCCESS.
 - La propiedad HMAC legacy no se borró de proyectos instalados; limpieza física pendiente de Beta después de desplegar y verificar la nueva versión.
 - Próxima tarea: migrar login_request_ a un ledger/estado persistente; después marcadores de revocación AUTH.
+
+
+### 2026-11-24 — MIG-026 AUTH: LoginRequests y locks fail-fast
+- Migrada la idempotencia login_request_ a hoja operativa LoginRequests (10 columnas), baseline idempotente/reanudable y read-back. Las propiedades legacy solo se leen durante la primera siembra; no se escriben ni borran.
+- Se mantiene token estable entre reintentos, recuperación de append ambiguo, revocación por usuario/token, TTL de 24 h y limpieza rotatoria acotada a 25 filas por login.
+- Todas las llamadas waitLock de AUTH se sustituyeron por tryLock(0). Ninguna función AUTH espera hasta 10 s por otra ejecución; contención inmediata y reintentable.
+- Actualizados Auth.js, fixture, LoginRequestLedger.mjs, AuthSessionReadOptimization.mjs y harnesses LastDeveloperProtection, SessionProfileRefresh, PasswordRecovery, PasswordHashMigration y SensitiveLogsTrustedActor.
+- CI run 45308365799: sintaxis PASS; 338 suites; 3,921 pruebas aprobadas; tres fallos ajenos al cambio (WriteCatalogPublicationIsolation en dos grupos y GP-PERF FEEDBACK/Inbox). LoginRequestLedger 39/39; PasswordRecovery 10/10; AUTH operativo/copia 32/32; perfil/revocación 23/23. Pages run 45308365427 SUCCESS.
+- No se desplegó Apps Script ni se modificaron propiedades, hojas o datos instalados. Validación real y limpieza de login_request_ legacy pendientes de Beta.
+- Siguiente tarea: migrar role_revocation_pending_ en AUTH; ADMIN permanece después.

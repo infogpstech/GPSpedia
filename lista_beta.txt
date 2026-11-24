@@ -22,3 +22,5 @@ Actualización de arquitectura MIG-023 a MIG-025 (2026-11-23): consultar `Tareas
 Actualización MIG-026 (2026-11-24): la validación Beta del baseline WRITE de GPSpedia_CORTES_LAST_ID migrado a CortesIdReservations está documentada en Tareas_Beta.md §7. La implementación y CI local no sustituyen la prueba de concurrencia y persistencia real; mantenerla PENDIENTE hasta ejecutarla en recursos aislados.
 
 Actualización MIG-026 AUTH (2026-11-24): consultar Tareas_Beta.md §8 para probar recuperación de contraseña sin secreto HMAC persistente, código de 96 bits, SHA-256 en CacheService y limpieza autorizada de la propiedad legacy. Sigue pendiente de ejecución en deployment aislado.
+
+Actualización MIG-026 AUTH (2026-11-24): consultar Tareas_Beta.md §9 para validar LoginRequests, baseline de propiedades legacy, recuperación de append ambiguo, expiración de 24 h, limpieza acotada y concurrencia fail-fast. AUTH no espera por ScriptLock; las contenciones deben responder inmediatamente. La prueba real y la limpieza de propiedades instaladas siguen pendientes.
