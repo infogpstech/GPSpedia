@@ -126,6 +126,12 @@ check("actualiza únicamente URL y metadatos de auditoría, conserva contrato y 
     const row=fixture.sheets.Servicios.rows.find(item=>Number(item[0])===2&&item[1]==="CATALOG");
     assert.equal(row[2],changed.CATALOG);
     assert.equal(row[4],"2.4.0");
+    const unchangedWriteV2=fixture.sheets.Servicios.rows.find(item=>Number(item[0])===2&&item[1]==="WRITE");
+    const unchangedWriteV1=fixture.sheets.Servicios.rows.find(item=>Number(item[0])===1&&item[1]==="WRITE");
+    assert.equal(unchangedWriteV2[7],unchangedWriteV1[7]);
+    assert.equal(unchangedWriteV2[8],unchangedWriteV1[8]);
+    assert.equal(unchangedWriteV2[9],unchangedWriteV1[9]);
+    assert.equal(unchangedWriteV2[2],unchangedWriteV1[2]);
     assert.equal(fixture.sheets.ConfiguracionParametros.rows.filter(item=>Number(item[0])===2).length,1);
     assert.equal(fixture.sheets.ConfiguracionHistorial.rows.length,8);
     assert.equal(fixture.sheets.Servicios.rows.find(item=>item[0]===""&&item[1]==="CATALOG")[2],changed.CATALOG);
@@ -153,6 +159,8 @@ check("cada revisión contiene una instantánea única y las lecturas usan solo 
     const originalVersion = activeCatalog[4];
     activeCatalog[4] = "invalid-version";
     assert.throws(()=>context.getAuthCentralServiceUrlMap_(fixture,false),/versión de contrato válida/);
+    activeCatalog[4] = "9.9.9";
+    assert.throws(()=>context.getAuthCentralServiceUrlMap_(fixture,false),/no coincide con la versión compatible/);
     activeCatalog[4] = originalVersion;
     const duplicate=activeRows[0].slice();
     fixture.sheets.Servicios.rows.push(duplicate);
