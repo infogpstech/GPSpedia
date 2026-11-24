@@ -184,6 +184,12 @@ check("AUTH exige sesión para consultar y actualizar endpoints y el frontend us
     assert.match(api,/callCentralAuthBootstrapAction_\("updateCentralServiceUrls"/);
     assert.match(api,/CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
     assert.match(ui,/initializeCentralServiceUrlsControl_\(\)/);
+    const panelStart=ui.indexOf("function initializeCentralServiceUrlsControl_");
+    const panelEnd=ui.indexOf("/* TAREA 1.2:",panelStart);
+    const panel=ui.slice(panelStart,panelEnd);
+    assert.match(panel,/configurationRefreshPending/);
+    assert.match(panel,/console\.warn/);
+    assert.doesNotMatch(panel,/error\s*&&\s*error\.message/);
     for(const key of keys) assert.match(html,new RegExp('central-service-url-'+key.toLowerCase()));
     assert.match(html,/btn-save-central-service-urls/);
 });
