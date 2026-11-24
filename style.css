@@ -6490,9 +6490,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
         min-height: 34px;
         padding: 0;
     }
-    #dev-tools-modal .dev-terminal-row,
-    #dev-tools-modal .dev-action-row,
-    #dev-tools-modal .dev-backup-id-row {
+    #dev-tools-modal .dev-terminal-row {
         flex-direction: row;
         align-items: center;
     }
