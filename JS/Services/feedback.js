@@ -12,6 +12,10 @@ var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
 // <-- ACTUALIZADO A DB V2.0
+// Esquema local de auditoría Inbox. Es configuración del propio servicio FEEDBACK.
+const INBOX_AUDIT_SHEET_NAME = "InboxAuditLog";
+const INBOX_AUDIT_HEADERS = Object.freeze(["eventId", "timestamp", "actorId", "actorName", "action", "itemType", "itemId", "details"]);
+
 let spreadsheet = null;
 
 function getSpreadsheet() {
