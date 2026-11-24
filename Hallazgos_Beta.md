@@ -149,3 +149,28 @@ _Aún no hay hallazgos confirmados._
 - **Estado:** CORREGIDO EN RAMA Y VALIDADO EN CI; verificación del deployment Beta pendiente.
 - **Validación de corrección:** `JS/Services/feedback.js` declara las constantes contractuales; `JS/Tests/InboxAuditTrail.js` ya no las inyecta y evalúa el esquema del módulo. CI run `45501003318`: SUCCESS, 517 suites / 6,125 pruebas, 0 fallos; pruebas Inbox 15/15 en FEEDBACK y 15/15 en MIG020.
 - **Tarea relacionada:** AUG-150; desbloquea la validación completa de AUG-148.
+
+
+
+## Adenda de rectificación y evidencia — 2026-11-24
+
+- **IDs de tareas:** las referencias AUG-147, AUG-148, AUG-149 y AUG-150 que aparecen en el registro anterior fueron etiquetas asignadas por el asistente y no IDs confirmados del backlog oficial. Se preservan como texto histórico, pero no deben utilizarse para crear dependencias ni identificar tareas oficiales. La numeración BETA-F003 a BETA-F006 sí corresponde a hallazgos de este registro.
+- **BETA-F003 / Developer:** la corrección de caché se aplicó en rama; el Service Worker usa `gpsepedia-cache-v76`. CI run `45501003318` y el responsive-browser del run correspondiente finalizaron correctamente. Sigue pendiente verificar el SHA servido por Beta/PWA.
+- **BETA-F004 / Dashboard:** además del defecto de constantes registrado en BETA-F006, se identificó una causa independiente en `logUserActivity()`: una hoja `ActividadUsuario` vacía o con IDs estáticos no podía recibir nuevos eventos si no existía fórmula/configuración de secuencia. La función fallaba y solo registraba el error en Logger. Se corrigió con fallback `ACT-<UUID>` exclusivamente cuando no existe patrón previo; se conserva la fórmula válida y se rechazan patrones incompatibles. CI run `45502874404`: SUCCESS; 517 suites, 6,139 pruebas, 0 fallos. `ActivityLogAppendAtomic` 10/10 y `ActivityLogsBoundedRead` 8/8 PASS. La validación con Spreadsheet/deployment Beta aislados sigue pendiente; CI no demuestra que existan registros reales.
+- **BETA-F005 / imagen Tutorial:** el reporte repetido de que no existe forma de subir imagen de tarjeta corresponde al mismo defecto. Se mantiene como un único hallazgo pendiente, sin duplicar tarea.
+- **BETA-F006 / constante Inbox:** corregida en rama y validada por CI según la evidencia de cierre registrada en checkpoint y ChangesLogs. La comprobación en deployment Beta sigue pendiente.
+
+### BETA-F007 — Error al subir vídeo de Tutorial a YouTube: «Tutorial no encontrado»
+
+- **Fecha/hora:** 2026-11-24 (reporte del usuario; hora exacta no registrada).
+- **Servicio / módulo / flujo:** frontend Tutoriales → carga de vídeo a YouTube → FEEDBACK / aprobación de vídeo.
+- **Commit de referencia:** `a13dd84379e575d06f0a4e73bc1909cdad346f1d`; SHA servido por Beta: NO VERIFICADO.
+- **Entorno:** Beta reportado por el usuario; deployment, cuenta OAuth y tutorial objetivo no verificados.
+- **Precondiciones:** seleccionar un tutorial y ejecutar la subida del vídeo a YouTube desde la plataforma.
+- **Resultado esperado:** FEEDBACK debe localizar el tutorial seleccionado, reservar/registrar la operación y completar el flujo de carga y aprobación según el contrato vigente.
+- **Resultado observado:** el usuario reporta `Error durante la subida del vídeo: Tutorial no encontrado`.
+- **Evidencia técnica disponible:** mensaje comunicado por el usuario. Aún no se ha localizado la rama exacta que produce el error ni se ha reproducido con un tutorial sintético; no se presume que el tutorial realmente falte.
+- **Impacto:** no se puede completar la carga de vídeo asociada al tutorial desde la plataforma.
+- **Severidad:** ALTA para el flujo de publicación; pendiente confirmar alcance.
+- **Estado:** REPORTADO; investigación pendiente después de la corrección local del Dashboard y de la tarea de imagen de tarjeta.
+- **Validación:** no se ejecutó subida real ni se utilizó OAuth/YouTube API. La prueba externa queda reservada a Beta aislada.
