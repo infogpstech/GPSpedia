@@ -74,6 +74,7 @@ function createSheet(initialRows, options = {}) {
         },
         deleteRow(index) { cells.splice(index - 1, 1); return this; },
         deleteRows(start, count) { cells.splice(start - 1, count); return this; },
+        deleteRows(start, count) { cells.splice(start - 1, count); return this; },
         getDataRange() { return range(1, 1, Math.max(1, this.getLastRow()), Math.max(1, this.getLastColumn())); },
         get writeCount() { return writes; }
     };
@@ -646,6 +647,7 @@ const auditHelperNames = [
 const auditHelperSource = auditConfigSource + "\n" + auditStateHelperSource + "\n" +
     auditHelperNames.map(name => fnSource(admin, name)).join("\n");
 const DRIVE_AUDIT_HEADERS = ["auditId","ownerId","status","createdAt","updatedAt","expiresAt","stateJson","schemaVersion"];
+const DRIVE_AUDIT_LATEST_HEADERS = ["ownerHash","ownerId","latestAuditId","updatedAt","schemaVersion"];
 function auditHarness() {
     const properties = new Map(), cache = new Map();
     let propertyReads=0,propertyWrites=0,propertyDeletes=0,serviceCalls=0;
@@ -656,7 +658,8 @@ function auditHarness() {
         deleteProperty: key => { propertyDeletes++; return properties.delete(key); }
     }; } };
     const driveAuditSheet=createSheet([DRIVE_AUDIT_HEADERS]);
-    const getSpreadsheet=()=>({getSheetByName:name=>name==="DriveAuditRuns"?driveAuditSheet:null});
+    const driveAuditLatestSheet=createSheet([DRIVE_AUDIT_LATEST_HEADERS]);
+    const getSpreadsheet=()=>({getSheetByName:name=>name==="DriveAuditRuns"?driveAuditSheet:name==="DriveAuditLatest"?driveAuditLatestSheet:null});
     const lockState={locked:false,busy:false,waits:0,releases:0,tryLocks:0};
     const LockService={getScriptLock(){return{
         hasLock(){return lockState.locked;},
@@ -713,7 +716,7 @@ function auditHarness() {
         return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? [text] : [];
     };
     const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds","LockService","SpreadsheetApp","getSpreadsheet",auditHelperSource+
-        "\nreturn {cleanupExpiredDriveAuditServerStates_,clearExpiredDriveAuditCacheState_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditStateSheet_,getDriveAuditStateRows_,findDriveAuditStateRow_,ensureDriveAuditStateBaseline_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getDriveAuditReferenceSnapshotConfig_,validateAuditDriveReferenceSnapshot_,removeAuditDriveReferenceSnapshotCache_,storeAuditDriveReferenceSnapshot,loadAuditDriveReferenceSnapshot,refreshAuditDriveReferenceSnapshot_,clearAuditDriveReferenceSnapshot};")(
+        "\nreturn {cleanupExpiredDriveAuditServerStates_,clearExpiredDriveAuditCacheState_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditStateSheet_,getDriveAuditStateRows_,findDriveAuditStateRow_,ensureDriveAuditStateBaseline_,getDriveAuditLatestSheet_,getDriveAuditLatestRows_,findDriveAuditLatestRow_,ensureDriveAuditLatestBaseline_,saveDriveAuditLatestPointer_,clearDriveAuditLatestPointer_,clearDriveAuditLatestPointerIfMigrated_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getDriveAuditReferenceSnapshotConfig_,validateAuditDriveReferenceSnapshot_,removeAuditDriveReferenceSnapshotCache_,storeAuditDriveReferenceSnapshot,loadAuditDriveReferenceSnapshot,refreshAuditDriveReferenceSnapshot_,clearAuditDriveReferenceSnapshot};")(
             PropertiesService,CacheService,Utilities,extractDriveFileIds,lock.LockService,SpreadsheetApp,getSpreadsheet);
     function getStateRecord(auditId){const item=api.findDriveAuditStateRow_(driveAuditSheet,auditId);return item?item.state:null;}
     function setStateUpdatedAt(auditId,updatedAt){
@@ -723,7 +726,7 @@ function auditHarness() {
         const row=driveAuditSheet.cells[item.rowIndex-1];
         row[4]=updatedAt;row[5]=updatedAt+21600000;row[6]=JSON.stringify(state);
     }
-    return { ...api, properties, cache, cacheTtl, driveAuditSheet, lockState:lock.state,
+    return { ...api, properties, cache, cacheTtl, driveAuditSheet, driveAuditLatestSheet, lockState:lock.state,
         getStateRecord,setStateUpdatedAt,
         get propertyReads(){return propertyReads;},get propertyWrites(){return propertyWrites;},get propertyDeletes(){return propertyDeletes;},get serviceCalls(){return serviceCalls;},
         get getAllCalls() { return getAllCalls; }, get putAllCalls() { return putAllCalls; },
@@ -916,6 +919,58 @@ check("La reserva del estado usa lock fail-fast y no espera por otra función",(
     h.setLockBusy(true);
     assert.throws(()=>h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running"}),error=>error&&error.code==="DRIVE_AUDIT_STATE_BUSY");
     assert.equal(h.driveAuditSheet.getLastRow(),2);
+    assert.equal(h.lockState.locked,false);
+});
+check("El baseline latest importa punteros válidos por propietario sin modificar propiedades",()=>{
+    const h=auditHarness();
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",createdAt:Date.now()-1000});
+    const key="GPSpedia_DRIVE_AUDIT_LATEST_"+h.hashDriveAuditValue_(AUDIT_OWNER).slice(0,32);
+    h.properties.set(key,AUDIT_ID);
+    const baseline=h.ensureDriveAuditLatestBaseline_();
+    assert.equal(baseline.imported,1);
+    assert.equal(h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),AUDIT_ID);
+    assert.equal(h.properties.has(key),true);
+    assert.equal(h.propertyWrites,0);
+    assert.equal(h.propertyDeletes,0);
+    const calls=h.serviceCalls;
+    assert.equal(h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),AUDIT_ID);
+    assert.equal(h.serviceCalls,calls,"El flujo latest no vuelve a obtener ScriptProperties después del baseline");
+});
+check("El baseline latest omite punteros huérfanos sin borrar propiedades legacy",()=>{
+    const h=auditHarness(),key="GPSpedia_DRIVE_AUDIT_LATEST_"+"f".repeat(32);
+    h.properties.set(key,AUDIT_ID);
+    const result=h.ensureDriveAuditLatestBaseline_();
+    assert.equal(result.imported,0);
+    assert.equal(h.driveAuditLatestSheet.getLastRow(),2);
+    assert.equal(h.properties.has(key),true);
+    assert.equal(h.propertyDeletes,0);
+});
+check("El puntero latest mantiene aislamiento por owner y se puede limpiar por expiración",()=>{
+    const h=auditHarness();
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete"});
+    h.ensureDriveAuditLatestBaseline_();
+    h.saveDriveAuditLatestPointer_(AUDIT_OWNER,AUDIT_ID);
+    assert.equal(h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),AUDIT_ID);
+    assert.throws(()=>h.getLatestDriveAuditIdForUser_("otro-owner"),/No existe una auditoría completa/);
+    h.clearExpiredDriveAuditCacheState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER});
+    assert.equal(h.driveAuditLatestSheet.getLastRow(),2);
+});
+check("El puntero de una auditoría aún running no se entrega como última auditoría completa",()=>{
+    const h=auditHarness();
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running"});
+    h.ensureDriveAuditLatestBaseline_();
+    h.saveDriveAuditLatestPointer_(AUDIT_OWNER,AUDIT_ID);
+    assert.throws(()=>h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),/auditoría completa/i);
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete"});
+    assert.equal(h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),AUDIT_ID);
+});
+check("La escritura del puntero latest usa lock fail-fast y no espera",()=>{
+    const h=auditHarness();
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete"});
+    h.ensureDriveAuditLatestBaseline_();
+    h.setLockBusy(true);
+    assert.throws(()=>h.saveDriveAuditLatestPointer_(AUDIT_OWNER,AUDIT_ID),error=>error&&error.code==="DRIVE_AUDIT_LATEST_BUSY");
+    assert.equal(h.driveAuditLatestSheet.getLastRow(),2);
     assert.equal(h.lockState.locked,false);
 });
 check("El estado de auditoría se conserva en servidor y queda vinculado a su propietario",()=>{

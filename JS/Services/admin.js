@@ -12843,6 +12843,183 @@ function withDriveAuditStateLock_(callback) {
     finally{if(lock.hasLock())lock.releaseLock();}
 }
 
+const DRIVE_AUDIT_LATEST_PROPERTY_PREFIX_ = "GPSpedia_DRIVE_AUDIT_LATEST_";
+const DRIVE_AUDIT_LATEST_SHEET_NAME_ = "DriveAuditLatest";
+const DRIVE_AUDIT_LATEST_BASELINE_PENDING_ = "pending";
+const DRIVE_AUDIT_LATEST_BASELINE_VERSION_ = "drive_audit_latest_baseline_v1";
+const DRIVE_AUDIT_LATEST_HEADERS_ = Object.freeze(["ownerHash","ownerId","latestAuditId","updatedAt","schemaVersion"]);
+const DRIVE_AUDIT_LATEST_MAX_ = 500;
+
+function getDriveAuditLatestSheet_() {
+    const sheet=getSpreadsheet().getSheetByName(DRIVE_AUDIT_LATEST_SHEET_NAME_);
+    if(!sheet)throw new Error("No existe la hoja DriveAuditLatest. Debe prepararse su esquema antes de habilitar el puntero latest.");
+    const header=sheet.getRange(1,1,1,DRIVE_AUDIT_LATEST_HEADERS_.length).getValues()[0];
+    if(!DRIVE_AUDIT_LATEST_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
+        throw new Error("El esquema de DriveAuditLatest no coincide con la versión esperada.");
+    return sheet;
+}
+function readDriveAuditLatestBaselineState_(sheet) {
+    if(Number(sheet.getLastRow()||0)<2)return "";
+    const row=sheet.getRange(2,1,1,DRIVE_AUDIT_LATEST_HEADERS_.length).getValues()[0];
+    const empty=row.every(value=>value===""||value===null);
+    if(!empty&&(String(row[0]||"")!=="META"||String(row[1]||"")!=="BASELINE"))
+        throw new Error("La fila reservada de baseline DriveAuditLatest está ocupada o dañada.");
+    return String(row[2]||"");
+}
+function writeDriveAuditLatestBaselineState_(sheet,state) {
+    const row=new Array(DRIVE_AUDIT_LATEST_HEADERS_.length).fill("");
+    row[0]="META";row[1]="BASELINE";row[2]=String(state||"");
+    let writeError=null;
+    try{sheet.getRange(2,1,1,row.length).setValues([row]);SpreadsheetApp.flush();}
+    catch(error){writeError=error;}
+    const saved=sheet.getRange(2,1,1,row.length).getValues()[0];
+    if(String(saved[0]||"")!=="META"||String(saved[1]||"")!=="BASELINE"||String(saved[2]||"")!==String(state||""))
+        throw new Error("No se confirmó el baseline DriveAuditLatest."+(writeError?" "+String(writeError.message||writeError):""));
+    return String(saved[2]||"");
+}
+function getDriveAuditLatestRows_(sheet) {
+    const last=Number(sheet.getLastRow()||0);
+    if(last<3)return [];
+    return sheet.getRange(3,1,last-2,DRIVE_AUDIT_LATEST_HEADERS_.length).getValues().map((row,index)=>{
+        if(!row.some(value=>value!==""&&value!==null))return null;
+        const item={rowIndex:index+3,ownerHash:String(row[0]||""),ownerId:String(row[1]||""),
+            latestAuditId:String(row[2]||""),updatedAt:Number(row[3]||0),schemaVersion:Number(row[4]||0)};
+        if(!/^[a-f0-9]{64}$/i.test(item.ownerHash)||!item.ownerId||
+            hashDriveAuditValue_(item.ownerId)!==item.ownerHash||
+            !/^[0-9a-f-]{36}$/i.test(item.latestAuditId)||!Number.isFinite(item.updatedAt)||
+            item.updatedAt<=0||item.schemaVersion!==1)
+            throw new Error("Existe una fila huérfana o inválida en DriveAuditLatest.");
+        return item;
+    }).filter(Boolean);
+}
+function findDriveAuditLatestRow_(sheet,ownerHash) {
+    const matches=getDriveAuditLatestRows_(sheet).filter(item=>item.ownerHash===String(ownerHash));
+    if(matches.length>1)throw new Error("DriveAuditLatest contiene punteros duplicados para el mismo propietario.");
+    return matches.length?matches[0]:null;
+}
+function withDriveAuditLatestLock_(callback) {
+    const lock=LockService.getScriptLock();
+    if(!lock.tryLock(0)){
+        const error=new Error("DriveAuditLatest está ocupado; no se esperó por otra función. Reintenta.");
+        error.code="DRIVE_AUDIT_LATEST_BUSY";throw error;
+    }
+    try{return callback();}
+    finally{if(lock.hasLock())lock.releaseLock();}
+}
+function ensureDriveAuditLatestBaseline_() {
+    ensureDriveAuditStateBaseline_();
+    const sheet=getDriveAuditLatestSheet_();
+    let baseline=readDriveAuditLatestBaselineState_(sheet);
+    if(baseline===DRIVE_AUDIT_LATEST_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
+    if(baseline&&baseline!==DRIVE_AUDIT_LATEST_BASELINE_PENDING_)throw new Error("La versión del baseline DriveAuditLatest no es reconocida.");
+    const lock=LockService.getScriptLock();
+    if(!lock.tryLock(0)){
+        const error=new Error("El baseline DriveAuditLatest está ocupado; no esperó por otra ejecución. Reintenta.");
+        error.code="DRIVE_AUDIT_LATEST_BUSY";throw error;
+    }
+    let imported=0;
+    try{
+        baseline=readDriveAuditLatestBaselineState_(sheet);
+        if(baseline===DRIVE_AUDIT_LATEST_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
+        if(!baseline)writeDriveAuditLatestBaselineState_(sheet,DRIVE_AUDIT_LATEST_BASELINE_PENDING_);
+        const legacy=PropertiesService.getScriptProperties().getProperties();
+        const keys=Object.keys(legacy).filter(key=>key.startsWith(DRIVE_AUDIT_LATEST_PROPERTY_PREFIX_));
+        const states=getDriveAuditStateRows_(getDriveAuditStateSheet_()).filter(item=>{
+            const age=Date.now()-item.updatedAt;
+            return age>=-60000&&age<=DRIVE_AUDIT_STATE_TTL_MS_;
+        });
+        const ownersByPrefix=new Map(),statesById=new Map();
+        states.forEach(item=>{
+            statesById.set(item.auditId,item);
+            const prefix=hashDriveAuditValue_(item.ownerId).slice(0,32);
+            if(!ownersByPrefix.has(prefix))ownersByPrefix.set(prefix,new Set());
+            ownersByPrefix.get(prefix).add(item.ownerId);
+        });
+        const existing=getDriveAuditLatestRows_(sheet),byHash=new Map();
+        existing.forEach(item=>{
+            if(byHash.has(item.ownerHash))throw new Error("Hay propietarios duplicados durante el baseline DriveAuditLatest.");
+            byHash.set(item.ownerHash,item);
+        });
+        const seen=new Set(),pending=[];
+        keys.forEach(key=>{
+            const prefix=key.slice(DRIVE_AUDIT_LATEST_PROPERTY_PREFIX_.length).toLowerCase();
+            if(!/^[a-f0-9]{32}$/.test(prefix)||seen.has(prefix))
+                throw new Error("Una clave legacy latest tiene un hash inválido o duplicado.");
+            seen.add(prefix);
+            const owners=Array.from(ownersByPrefix.get(prefix)||[]);
+            if(!owners.length)return; // Puntero huérfano de un estado ya expirado; se conserva legacy sin importarlo.
+            if(owners.length!==1)throw new Error("El hash latest no identifica un único propietario.");
+            const ownerId=owners[0],ownerHash=hashDriveAuditValue_(ownerId),auditId=String(legacy[key]||"").trim();
+            if(!/^[0-9a-f-]{36}$/i.test(auditId))throw new Error("Un puntero latest legacy contiene un auditId inválido.");
+            const state=statesById.get(auditId);
+            if(!state)return;
+            if(state.ownerId!==ownerId||state.status!=="complete")
+                throw new Error("El puntero latest legacy no coincide con un estado completo del mismo propietario.");
+            const row=[ownerHash,ownerId,auditId,state.updatedAt,1],current=byHash.get(ownerHash);
+            if(current){
+                if(current.ownerId!==ownerId||current.latestAuditId!==auditId)
+                    throw new Error("El puntero latest legacy y su copia en Spreadsheet no coinciden.");
+            }else pending.push(row);
+        });
+        if(pending.length){
+            if(getDriveAuditLatestRows_(sheet).length+pending.length>DRIVE_AUDIT_LATEST_MAX_)
+                throw new Error("DriveAuditLatest supera la capacidad segura de 500 propietarios.");
+            const first=Math.max(3,Number(sheet.getLastRow()||2)+1);
+            sheet.getRange(first,1,pending.length,DRIVE_AUDIT_LATEST_HEADERS_.length).setValues(pending);
+            SpreadsheetApp.flush();
+            const verified=new Map(getDriveAuditLatestRows_(sheet).map(item=>[item.ownerHash,item]));
+            pending.forEach(row=>{
+                const item=verified.get(row[0]);
+                if(!item||item.ownerId!==row[1]||item.latestAuditId!==row[2])
+                    throw new Error("El baseline DriveAuditLatest no superó la lectura de confirmación.");
+            });
+            imported=pending.length;
+        }
+        writeDriveAuditLatestBaselineState_(sheet,DRIVE_AUDIT_LATEST_BASELINE_VERSION_);
+    }finally{if(lock.hasLock())lock.releaseLock();}
+    return {status:"success",imported,alreadyComplete:false};
+}
+function saveDriveAuditLatestPointer_(ownerId,auditId) {
+    const owner=String(ownerId||"").trim(),id=String(auditId||"").trim();
+    if(!owner||!/^[0-9a-f-]{36}$/i.test(id))throw new Error("El puntero latest requiere propietario y auditId válidos.");
+    ensureDriveAuditLatestBaseline_();
+    const state=findDriveAuditStateRow_(getDriveAuditStateSheet_(),id);
+    if(!state||state.ownerId!==owner)throw new Error("El auditId no pertenece al propietario del puntero latest.");
+    const ownerHash=hashDriveAuditValue_(owner),sheet=getDriveAuditLatestSheet_();
+    return withDriveAuditLatestLock_(()=>{
+        const current=findDriveAuditLatestRow_(sheet,ownerHash);
+        if(!current&&getDriveAuditLatestRows_(sheet).length>=DRIVE_AUDIT_LATEST_MAX_)
+            throw new Error("DriveAuditLatest alcanzó su capacidad segura de 500 propietarios.");
+        const row=[ownerHash,owner,id,Date.now(),1],target=current?current.rowIndex:Math.max(3,Number(sheet.getLastRow()||2)+1);
+        let writeError=null;
+        try{sheet.getRange(target,1,1,row.length).setValues([row]);SpreadsheetApp.flush();}
+        catch(error){writeError=error;}
+        const saved=sheet.getRange(target,1,1,row.length).getValues()[0];
+        if(JSON.stringify(saved)!==JSON.stringify(row))
+            throw new Error("No se pudo verificar la persistencia del puntero latest."+(writeError?" "+String(writeError.message||writeError):""));
+        return {ownerId:owner,latestAuditId:id,updatedAt:row[3]};
+    });
+}
+function clearDriveAuditLatestPointer_(ownerId,auditId) {
+    const owner=String(ownerId||"").trim(),id=String(auditId||"").trim();
+    if(!owner||!id)return false;
+    const sheet=getDriveAuditLatestSheet_(),ownerHash=hashDriveAuditValue_(owner);
+    return withDriveAuditLatestLock_(()=>{
+        const current=findDriveAuditLatestRow_(sheet,ownerHash);
+        if(!current||current.ownerId!==owner||current.latestAuditId!==id)return false;
+        sheet.deleteRow(current.rowIndex);
+        SpreadsheetApp.flush();
+        if(findDriveAuditLatestRow_(sheet,ownerHash))throw new Error("No se confirmó la limpieza del puntero latest expirado.");
+        return true;
+    });
+}
+function clearDriveAuditLatestPointerIfMigrated_(ownerId,auditId) {
+    const book=getSpreadsheet(),sheet=book&&book.getSheetByName(DRIVE_AUDIT_LATEST_SHEET_NAME_);
+    if(!sheet)return false;
+    if(readDriveAuditLatestBaselineState_(sheet)!==DRIVE_AUDIT_LATEST_BASELINE_VERSION_)return false;
+    return clearDriveAuditLatestPointer_(ownerId,auditId);
+}
+
 function cleanupExpiredDriveAuditServerStates_() {
     ensureDriveAuditStateBaseline_();
     const sheet=getDriveAuditStateSheet_(),now=Date.now(),expired=[];
@@ -12878,9 +13055,8 @@ function clearExpiredDriveAuditCacheState_(state) {
     for (let i = 0; i < keys.length; i += 100) cache.removeAll(keys.slice(i, i + 100));
     const owner = String(state.ownerId || "").trim();
     if (owner) {
-        const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(owner).slice(0, 32);
-        const properties = PropertiesService.getScriptProperties();
-        if (properties.getProperty(latestKey) === state.auditId) properties.deleteProperty(latestKey);
+        try { clearDriveAuditLatestPointerIfMigrated_(owner, state.auditId); }
+        catch (error) { console.error("No se pudo limpiar el puntero latest de DriveAudit; se conserva para revisión:", String(error && error.message || error)); }
     }
 }
 function getDriveAuditServerStateKey_(auditId) {
@@ -13121,12 +13297,15 @@ function loadDriveAuditUnusedFileIds_(auditId, pageCount) {
     return Array.from(ids).sort();
 }
 function getLatestDriveAuditIdForUser_(ownerId) {
-    const owner = String(ownerId || "").trim();
-    if (!owner) throw new Error("No se pudo identificar la sesión Desarrollador de la auditoría.");
-    const key = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(owner).slice(0, 32);
-    const auditId = String(PropertiesService.getScriptProperties().getProperty(key) || "").trim();
-    if (!auditId) throw new Error("No existe una auditoría completa reciente para esta sesión. Ejecuta una auditoría nueva.");
-    return auditId;
+    const owner=String(ownerId||"").trim();
+    if(!owner)throw new Error("No se pudo identificar la sesión Desarrollador de la auditoría.");
+    ensureDriveAuditLatestBaseline_();
+    const row=findDriveAuditLatestRow_(getDriveAuditLatestSheet_(),hashDriveAuditValue_(owner));
+    if(!row||row.ownerId!==owner)throw new Error("No existe una auditoría completa reciente para esta sesión. Ejecuta una auditoría nueva.");
+    const state=loadDriveAuditServerState_(row.latestAuditId);
+    if(state.ownerId!==owner||state.status!=="complete")
+        throw new Error("El puntero latest no coincide con una auditoría completa de esta sesión.");
+    return row.latestAuditId;
 }
 function validateCompletedDriveAudit_(auditId, ownerId, files) {
     const state = loadDriveAuditServerState_(auditId);
@@ -14240,9 +14419,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         const allUnusedIds = loadDriveAuditUnusedFileIds_(auditId, nextPageCount);
         state.status = "complete"; state.completedAt = Date.now(); state.imageMetadataVersion = 1; state.expectedUnusedCount = allUnusedIds.length;
         state.expectedUnusedDigest = hashDriveAuditFileIds_(allUnusedIds); state.expectedCursorFingerprint = "";
-        const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(ownerId).slice(0, 32), properties = PropertiesService.getScriptProperties();
-        properties.setProperty(latestKey, auditId);
-        if (properties.getProperty(latestKey) !== auditId) throw new Error("No se pudo verificar la referencia a la última auditoría completa.");
+        saveDriveAuditLatestPointer_(ownerId, auditId);
     } else { state.status = "running"; state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor); }
     saveDriveAuditServerState_(state);
     if (previousResponseCacheKey && previousResponseCacheKey !== responseCacheKey) {
