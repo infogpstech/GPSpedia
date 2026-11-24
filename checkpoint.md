@@ -2115,3 +2115,12 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
 
 Próxima acción: preparar una secuencia de ejecución por servicio que empiece con health/read-only de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; luego ejecutar BETA-01 y BETA-02 con cuentas/recursos sintéticos, y registrar solo observaciones reproducibles en Hallazgos_Beta.md. No ejecutar mutaciones hasta confirmar aislamiento, rol autorizado, previsualización y recuperación.
 ================================================================================
+
+
+ADENDA MIG-030 PREFLIGHT GIT — 2026-11-24
+HEAD al iniciar esta adenda: b5ba4aaecb6a4d671c497697522c955be0d988b6
+
+- Además del contrato estático 8/8, se ejecutó el bloque shell de sincronización en un repositorio Git fixture temporal y aislado, con un remoto bare local y un wrapper transparente para la URL esperada.
+- Resultados reales de Git en fixture: PASS fast-forward v1→v2; PASS detección de working tree sucio; PASS detección de rama incorrecta. Se comprobó que el flujo pull usa --ff-only.
+- Alcance: prueba del comportamiento de los guardas y sincronización Git en fixture local. No se ejecutó fetch/pull contra GitHub ni se sincronizó el clon real del usuario. El fixture temporal se eliminó al finalizar.
+- No hubo cambios de código ni pruebas contra servicios Beta. Los casos remotos permanecen pendientes de deployments y recursos Beta aislados.
