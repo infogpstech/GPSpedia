@@ -3,7 +3,13 @@
 // Requiere cargar Services/feedback.js.
 function runYouTubeApprovalInitTests() {
     const results=[];let passed=0,failed=0;
-    const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldToken=ScriptApp.getOAuthToken,oldFetch=UrlFetchApp.fetch,oldLog=Logger.log,oldReserve=reserveYouTubeUploadInitialization_,oldFinish=finishYouTubeUploadInitialization_;
+    const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldToken=ScriptApp.getOAuthToken,oldFetch=UrlFetchApp.fetch,oldLog=Logger.log,oldReserve=reserveYouTubeUploadInitialization_,oldFinish=finishYouTubeUploadInitialization_,oldUtilities=globalThis.Utilities;
+    const testUtilities=Object.assign({},oldUtilities||{},{
+        DigestAlgorithm:Object.assign({},oldUtilities&&oldUtilities.DigestAlgorithm||{},{SHA_256:"SHA_256"}),
+        computeDigest:oldUtilities&&typeof oldUtilities.computeDigest==="function"?oldUtilities.computeDigest:
+            ((algorithm,value)=>{const bytes=new Array(32).fill(0);String(value).split("").forEach((character,index)=>{bytes[index%32]=(bytes[index%32]*33+character.charCodeAt(0))&255;});return bytes;})
+    });
+    globalThis.Utilities=testUtilities;
     reserveYouTubeUploadInitialization_=()=>({reuse:false,rowIndex:2,cacheKey:"test-upload-session"});
     finishYouTubeUploadInitialization_=()=>true;
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
@@ -88,6 +94,7 @@ function runYouTubeApprovalInitTests() {
         });
     }finally{
         getSafeSheet=oldGetSafe;getSpreadsheet=oldGetSpreadsheet;ScriptApp.getOAuthToken=oldToken;UrlFetchApp.fetch=oldFetch;Logger.log=oldLog;reserveYouTubeUploadInitialization_=oldReserve;finishYouTubeUploadInitialization_=oldFinish;
+        if(oldUtilities===undefined)delete globalThis.Utilities;else globalThis.Utilities=oldUtilities;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
