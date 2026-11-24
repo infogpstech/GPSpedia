@@ -5903,7 +5903,7 @@ function initializeCentralServiceUrlsControl_() {
     if (!card) return;
     const status = document.getElementById("central-service-urls-status");
     const saveButton = document.getElementById("btn-save-central-service-urls");
-    const keys = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+    const keys = ["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
     const fields = Object.fromEntries(keys.map(key => [key, document.getElementById("central-service-url-" + key.toLowerCase())]));
     const context = getUiSessionContext_();
     const allowed = Boolean(context && context.role === "desarrollador");
