@@ -688,7 +688,7 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 **Documentación:** `Services/DEPLOYMENT_GUIDE.md`. Las guías anteriores en `Olds/Documentacion_Legacy/Services/` permanecen archivadas y expresamente no ejecutables.
 
 ### MIG-030 — Validación Beta integral
-**Estado: EN PROGRESO — preparación local aprobada; aceptación integral pendiente de resolver MIG-026.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (preparación local y contratos aprobados; ejecución de campo pendiente).**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 - [x] Preparar comandos de sincronización Beta conforme a NORMAS §5; contrato estático 8/8 PASS y fixture Git aislado 3/3 PASS.
 - [x] Ejecutar validación local de contratos, salud, aislamiento funcional y regresión general en CI.
@@ -703,7 +703,7 @@ El workflow `GPSpedia service regression tests` confirmó el checkout exacto de 
 
 **Validación Beta diferida:** no se ejecutó la sonda remota. Se confirmó que `.github/workflows/deployed-service-health.yml` no existe en `main` (404), y `RemoteServiceHealth.mjs` usa un bootstrap fijo sin selector de entorno; no se verificó independientemente que sus destinos sean exclusivamente Beta. No se enviaron solicitudes a endpoints ni se modificaron deployments, propiedades Apps Script, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos. La matriz Beta mantiene esas pruebas pendientes hasta contar con acceso autorizado y recursos sintéticos aislados.
 
-**Estado de cierre:** la preparación Beta, los contratos y la regresión local de MIG-030 están aprobados. Sin embargo, no se satisface todavía la aceptación integral indicada abajo: MIG-026 sigue EN PROGRESO y conserva tres referencias locales `SPREADSHEET_ID/openById` en AUTH, CATALOG y UTILITIES. La retirada depende de demostrar el acceso a Spreadsheet desde el contexto real de cada Web App; no se sustituirá por una suposición ni por un fixture. Por tanto, MIG-030 permanece **EN PROGRESO** hasta resolver esa dependencia de implementación y validar el cierre de las 30 tareas. La ejecución de campo continúa pendiente en `Tareas_Beta.md`; ninguna función real se declara probada.
+**Criterio de cierre local:** cumplido conforme a NORMAS_DESAROLLO.md §§5 y 10. La preparación Beta, los contratos y la regresión local de MIG-030 están aprobados. Las pruebas que requieren deployments, Spreadsheet, Drive, OAuth/YouTube y cuentas/datos sintéticos permanecen diferidas a Beta y no mantienen abierta esta tarea. MIG-030 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**. MIG-026 conserva un pendiente de implementación local distinto: resolver la arquitectura de acceso central sin IDs locales en AUTH, CATALOG y UTILITIES. Ese defecto conocido y el riesgo de romper el acceso a datos impiden cerrar MIG-026; no se debe confundir con las pruebas de campo de MIG-030. La ejecución Beta continúa pendiente en `Tareas_Beta.md`; ninguna función real se declara probada.
 
 **Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; cero configuración local prohibida; despliegue simplificado y rendimiento no inferior a la línea base.
 
