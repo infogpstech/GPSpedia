@@ -829,3 +829,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se inicia AUG-147 (una tarea a la vez). El CSS actual ya contiene el layout horizontal y el ancho requerido de consola; se encontró que el Service Worker mantenía la caché v75 aunque `style.css` se modificó en el commit `113ed1d5d3786a6a1ea426a723004a8dd072861d`. Se actualiza el identificador de caché a v76 y el contrato de `JS/Tests/ServiceWorkerCache.js` para forzar una instalación con los recursos actuales.
 - No se modificaron Apps Script desplegados, Spreadsheet, Drive, propiedades, endpoints, permisos ni datos productivos.
 - HEAD de código al preparar la corrección: `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`. Pruebas de esta corrección: pendientes de CI y Chromium.
+
+
+### 2026-11-24 — Cierre AUG-147
+
+- Service Worker actualizado a `gpsepedia-cache-v76` para que las instalaciones PWA no sigan priorizando CSS antiguo del panel Developer. Se actualizó también el contrato `ServiceWorkerCache.js`.
+- CI detectó una aserción transversal obsoleta en `PasswordRecovery.mjs` que esperaba v75; se alineó a v76 sin cambiar el comportamiento de recuperación.
+- CI final: run `45500716073` SUCCESS, 517 suites / 6,125 pruebas aprobadas / 0 fallos; Chromium responsive SUCCESS en los cuatro viewports; Pages run `45500714866` SUCCESS.
+- HEAD validado `9d88477315700d5b87778ce17a2e96e5f95d2331`. Base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Beta visual/PWA sigue pendiente de verificación de SHA servido. No hubo despliegues Apps Script ni cambios en Spreadsheet, Drive, propiedades, permisos o datos productivos.
