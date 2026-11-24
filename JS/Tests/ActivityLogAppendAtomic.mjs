@@ -16,8 +16,8 @@ function runLogger({patternError=null,pattern={formula:'="ACT-"&TEXT(ROW()-1,"00
  const rows=Array.from({length:initialRows},(_,i)=>i===0?["id","timestamp","idUsuario","nombreUsuario","tipoActividad","idElementoAsociado","detalle"]:["ACT-OLD","2026-01-01T00:00:00Z","U0","Old","like","V0","old"]);
  const sheet={getName:()=>"ActividadUsuario",getLastRow:()=>rows.length,getRange:()=>({getValue:()=>"id"}),appendRow(row){rows.push(row.slice());}};
  let uuid=0,logged=[];
- const logger=new Function("getSafeSheet","COLS_ACTIVIDAD_USUARIO","getFormulaBasedIdPattern_","Utilities","SpreadsheetApp","Logger",fn+"\nreturn logUserActivity;")(
-  ()=>sheet,{id:1},()=>{if(patternError)throw new Error(patternError);return pattern;},
+ const logger=new Function("getSafeSheet","SHEET_NAMES","COLS_ACTIVIDAD_USUARIO","getFormulaBasedIdPattern_","Utilities","SpreadsheetApp","Logger",fn+"\nreturn logUserActivity;")(
+  ()=>sheet,{ACTIVIDAD_USUARIO:"ActividadUsuario"},{id:1},()=>{if(patternError)throw new Error(patternError);return pattern,
   {getUuid:()=>"uuid-"+(++uuid)},{flush(){}},{log:value=>logged.push(String(value))}
  );
  logger("U1","Tech","view_vehicle","V1","details");
