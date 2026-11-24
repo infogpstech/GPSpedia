@@ -47,15 +47,15 @@ test("el registro central operativo solo contiene los seis servicios vigentes", 
     assert.match(read("JS/Services/CentralConfigurationReader.js"), /GP_CONFIG_RETIRED_SERVICE_KEYS_\s*=\s*\["USERS",\s*"COORDINATOR"\]/);
 });
 test("AUTH, CATALOG y UTILITIES resuelven Spreadsheet activa sin IDs locales", () => {
-    const holders = services.filter(item => /\\bSPREADSHEET_ID\\b/.test(item.source)).map(item => item.name).sort();
+    const holders = services.filter(item => /\bSPREADSHEET_ID\b/.test(item.source)).map(item => item.name).sort();
     assert.deepEqual(holders, []);
     const auth = read("JS/Services/Auth.js");
     const catalog = read("JS/Services/catalog.js");
     const utilities = read("JS/Services/Utilities.js");
-    assert.match(auth, /function getAuthUsersSpreadsheet_\\(\\)[\\s\\S]*?SpreadsheetApp\\.getActiveSpreadsheet\\(\\)[\\s\\S]*?if \\(!authSpreadsheet\\)/);
-    assert.match(catalog, /function getSpreadsheet\\(\\)[\\s\\S]*?SpreadsheetApp\\.getActiveSpreadsheet\\(\\)[\\s\\S]*?if \\(!spreadsheet\\)/);
-    assert.match(utilities, /function getUtilitiesSpreadsheet_\\(\\)[\\s\\S]*?SpreadsheetApp\\.getActiveSpreadsheet\\(\\)[\\s\\S]*?if \\(!utilitiesSpreadsheet\\)/);
-    for (const source of [auth, catalog, utilities]) assert.doesNotMatch(source, /SpreadsheetApp\\.openById\\s*\\(/);
+    assert.match(auth, /function getAuthUsersSpreadsheet_\(\)[\s\S]*?SpreadsheetApp\.getActiveSpreadsheet\(\)[\s\S]*?if \(!authSpreadsheet\)/);
+    assert.match(catalog, /function getSpreadsheet\(\)[\s\S]*?SpreadsheetApp\.getActiveSpreadsheet\(\)[\s\S]*?if \(!spreadsheet\)/);
+    assert.match(utilities, /function getUtilitiesSpreadsheet_\(\)[\s\S]*?SpreadsheetApp\.getActiveSpreadsheet\(\)[\s\S]*?if \(!spreadsheet\)/);
+    for (const source of [auth, catalog, utilities]) assert.doesNotMatch(source, /SpreadsheetApp\.openById\s*\(/);
 });
 test("PropertiesService solo se consulta desde los baselines legacy identificados", () => {
     const allowed = new Set([
