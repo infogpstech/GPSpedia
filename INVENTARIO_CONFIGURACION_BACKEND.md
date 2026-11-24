@@ -237,7 +237,7 @@ Esta adenda prevalece sobre las ubicaciones y consumidores históricos descritos
 6. CATALOG: eventos GPSpedia_CATALOG_CHANGE_EVENT_<revision>.
 7. ADMIN: auditoría GPSpedia_ADMIN_AUDIT_V1_<eventId>.
 8. ADMIN: ledger Safe Apply GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>.
-9. ADMIN: guardas temporales GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)>.
+9. ADMIN: guardas temporales GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)>; migración a hoja AdminOperationGuards, baseline legacy solo de reservas vigentes, exclusión por scope y TTL 30–420 s.
 10. ADMIN: estado reanudable de auditoría Drive GPSpedia_DRIVE_AUDIT_STATE_<auditId>.
 11. ADMIN: puntero por actor GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>.
 12. ADMIN: contador LOGOS_MARCA_ID_COUNTER.
@@ -322,3 +322,14 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - Estado actual de familias operativas: AUTH 0, WRITE 1 y ADMIN 5 (6 en total). AUTH mantiene lectores de baseline legacy; la propiedad de auditoría ADMIN queda como lector de baseline únicamente hasta validar Beta.
 - AdminAuditTrail 27/27 PASS; CI run 45317266195: 495 suites, 5,799 pruebas aprobadas, 0 fallos; sintaxis 457 archivos y referencias 377 archivos PASS; GitHub Pages run 45317265579 SUCCESS. No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas.
 - La preparación real de `AdminOperationAudit`, concurrencia, respuesta perdida, retención y verificación de propiedades legacy queda pendiente de Beta aislada. Consultar `Tareas_Beta.md` §11.
+
+
+### Adenda MIG-026 ADMIN-02 — migración de guardas temporales por recurso — 2026-11-23
+
+- La familia GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)> pasa a la hoja AdminOperationGuards (5 columnas). Fila 1: scopeHash, requestId, expiresAt, updatedAt, schemaVersion; fila 2 META/BASELINE; filas 3+ reservas.
+- El baseline importa únicamente reservas legacy vigentes, valida hash/requestId/expiry, admite reanudación, verifica read-back y marca admin_local_guard_baseline_v1. Las propiedades legacy solo se leen durante baseline y no se escriben ni eliminan.
+- El flujo normal reserva/libera por scopeHash en Spreadsheet. TTL se conserva entre 30 y 420 segundos; vencidas se purgan al reservar; límite seguro 500 activas.
+- ScriptLock se adquiere con tryLock(0) únicamente durante baseline/reserva/cleanup. El callback de negocio se ejecuta siempre fuera del lock. Scopes diferentes pueden operar anidados/solapados; mismo scope se rechaza de inmediato. Si cleanup no obtiene lock, la reserva expira por TTL.
+- No se modifica el comportamiento de las funciones Drive protegidas. La hoja se prepara manualmente en Beta; no se crea automáticamente ni se despliegan servicios.
+- Estado de familias operativas tras esta migración: AUTH 0, WRITE 1, ADMIN 3 (4 total). ADMIN conserva LOGOS_MARCA_ID_COUNTER y las dos familias DRIVE_AUDIT_STATE/LATEST; auditoría, Safe Apply y guardas quedan como lectores de baseline legacy.
+- Validación CI pendiente en el commit que incorpore esta adenda. Beta pendiente en Tareas_Beta.md §13.

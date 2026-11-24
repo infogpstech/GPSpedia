@@ -12242,62 +12242,181 @@ function handleGetCortesImageFolders(payload, logMessage) {
 /**
  * Crea una carpeta únicamente dentro del árbol Cortes.
  */
-function withAdminLocalOperationGuard_(scope, callback, ttlSeconds, dependencies) {
-    const scopeValue = String(scope || "").trim();
-    if (!scopeValue || typeof callback !== "function") {
-        throw new Error("La guarda local requiere un alcance y una función válidos.");
+const ADMIN_LOCAL_GUARD_PROPERTY_PREFIX_ = "GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_";
+const ADMIN_LOCAL_GUARD_SHEET_NAME_ = "AdminOperationGuards";
+const ADMIN_LOCAL_GUARD_BASELINE_PENDING_ = "pending";
+const ADMIN_LOCAL_GUARD_BASELINE_VERSION_ = "admin_local_guard_baseline_v1";
+const ADMIN_LOCAL_GUARD_HEADERS_ = Object.freeze(["scopeHash","requestId","expiresAt","updatedAt","schemaVersion"]);
+const ADMIN_LOCAL_GUARD_MAX_ACTIVE_ = 500;
+
+function getAdminLocalGuardSheet_(sheetOverride) {
+    const sheet = sheetOverride || getSpreadsheet().getSheetByName(ADMIN_LOCAL_GUARD_SHEET_NAME_);
+    if (!sheet) throw new Error("No existe la hoja AdminOperationGuards. Debe prepararse su esquema antes de habilitar las guardas ADMIN.");
+    const header = sheet.getRange(1,1,1,ADMIN_LOCAL_GUARD_HEADERS_.length).getValues()[0];
+    if (!ADMIN_LOCAL_GUARD_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
+        throw new Error("El esquema de AdminOperationGuards no coincide con la versión esperada.");
+    return sheet;
+}
+function readAdminLocalGuardBaselineState_(sheet) {
+    if (Number(sheet.getLastRow()||0)<2) return "";
+    const row=sheet.getRange(2,1,1,ADMIN_LOCAL_GUARD_HEADERS_.length).getValues()[0];
+    const empty=row.every(value=>value===""||value===null);
+    if (!empty&&(String(row[0]||"")!=="META"||String(row[1]||"")!=="BASELINE"))
+        throw new Error("La fila reservada de baseline AdminOperationGuards está ocupada o dañada.");
+    return String(row[2]||"");
+}
+function writeAdminLocalGuardBaselineState_(sheet,state) {
+    const row=new Array(ADMIN_LOCAL_GUARD_HEADERS_.length).fill("");
+    row[0]="META";row[1]="BASELINE";row[2]=String(state||"");
+    let writeError=null;
+    try{sheet.getRange(2,1,1,row.length).setValues([row]);SpreadsheetApp.flush();}
+    catch(error){writeError=error;}
+    const saved=sheet.getRange(2,1,1,row.length).getValues()[0];
+    if(String(saved[0]||"")!=="META"||String(saved[1]||"")!=="BASELINE"||String(saved[2]||"")!==String(state||""))
+        throw new Error("No se confirmó el baseline de AdminOperationGuards."+(writeError?" "+String(writeError.message||writeError):""));
+    return String(saved[2]||"");
+}
+function getAdminLocalGuardRows_(sheet) {
+    const last=Number(sheet.getLastRow()||0);
+    if(last<3)return [];
+    return sheet.getRange(3,1,last-2,ADMIN_LOCAL_GUARD_HEADERS_.length).getValues().map((row,index)=>{
+        if(!row.some(value=>value!==""&&value!==null))return null;
+        const item={rowIndex:index+3,scopeHash:String(row[0]||""),requestId:String(row[1]||""),
+            expiresAt:Number(row[2]||0),updatedAt:Number(row[3]||0),schemaVersion:Number(row[4]||0)};
+        if(!/^[a-f0-9]{64}$/i.test(item.scopeHash)||!item.requestId||
+            !Number.isFinite(item.expiresAt)||item.expiresAt<=0||item.schemaVersion!==1)
+            throw new Error("Existe una reserva huérfana o inválida en AdminOperationGuards.");
+        return item;
+    }).filter(Boolean);
+}
+function findAdminLocalGuardRow_(sheet,scopeHash) {
+    const matches=getAdminLocalGuardRows_(sheet).filter(item=>item.scopeHash===String(scopeHash));
+    if(matches.length>1)throw new Error("AdminOperationGuards contiene reservas duplicadas para el mismo recurso.");
+    return matches.length?matches[0]:null;
+}
+function ensureAdminLocalGuardBaseline_(sheet,properties,lockService,now) {
+    let state=readAdminLocalGuardBaselineState_(sheet);
+    if(state===ADMIN_LOCAL_GUARD_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
+    if(state&&state!==ADMIN_LOCAL_GUARD_BASELINE_PENDING_)throw new Error("La versión del baseline AdminOperationGuards no es reconocida.");
+    const lock=lockService.getScriptLock();
+    if(!lock.tryLock(0)){
+        const error=new Error("El baseline de guardas ADMIN está ocupado; no esperó por otra ejecución. Reintenta.");
+        error.code="ADMIN_LOCAL_GUARD_BUSY";throw error;
     }
-    const deps = dependencies && typeof dependencies === "object" ? dependencies : {};
-    const properties = deps.properties || PropertiesService.getScriptProperties();
-    const lockService = deps.lockService || LockService;
-    const now = typeof deps.now === "function" ? deps.now : function() { return Date.now(); };
-    const uuid = typeof deps.uuid === "function" ? deps.uuid : function() { return Utilities.getUuid(); };
-    const hashScope = typeof deps.hashScope === "function" ? deps.hashScope : function(value) {
-        const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, value, Utilities.Charset.UTF_8);
-        return bytes.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+    try{
+        state=readAdminLocalGuardBaselineState_(sheet);
+        if(state===ADMIN_LOCAL_GUARD_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
+        if(!state)writeAdminLocalGuardBaselineState_(sheet,ADMIN_LOCAL_GUARD_BASELINE_PENDING_);
+        const legacy=properties.getProperties();
+        const keys=Object.keys(legacy).filter(key=>key.startsWith(ADMIN_LOCAL_GUARD_PROPERTY_PREFIX_));
+        const existing=getAdminLocalGuardRows_(sheet),byHash=new Map();
+        existing.forEach(item=>{
+            if(byHash.has(item.scopeHash))throw new Error("Hay reservas duplicadas durante el baseline AdminOperationGuards.");
+            byHash.set(item.scopeHash,item);
+        });
+        const seen=new Set(),pending=[];
+        keys.forEach(key=>{
+            const hash=key.slice(ADMIN_LOCAL_GUARD_PROPERTY_PREFIX_.length);
+            if(!/^[a-f0-9]{64}$/i.test(hash)||seen.has(hash))
+                throw new Error("Una clave legacy de guarda ADMIN tiene un hash inválido o duplicado.");
+            seen.add(hash);
+            let marker;
+            try{marker=JSON.parse(String(legacy[key]||""));}
+            catch(error){throw new Error("Una reserva legacy de guarda ADMIN está corrupta; se conserva sin cambios.");}
+            const requestId=String(marker&&marker.requestId||"").trim(),expiresAt=Number(marker&&marker.expiresAt);
+            if(!requestId||!Number.isFinite(expiresAt)||expiresAt<=0)
+                throw new Error("Una reserva legacy de guarda ADMIN carece de requestId o vencimiento válido.");
+            if(expiresAt<=now())return;
+            const row=[hash,requestId,expiresAt,0,1],current=byHash.get(hash);
+            if(current){
+                if(current.requestId!==requestId||current.expiresAt!==expiresAt)
+                    throw new Error("La reserva legacy y su copia en Spreadsheet no coinciden.");
+            }else pending.push(row);
+        });
+        if(pending.length){
+            const first=Math.max(3,Number(sheet.getLastRow()||2)+1);
+            sheet.getRange(first,1,pending.length,ADMIN_LOCAL_GUARD_HEADERS_.length).setValues(pending);
+            SpreadsheetApp.flush();
+            const verified=new Map(getAdminLocalGuardRows_(sheet).map(item=>[item.scopeHash,item]));
+            pending.forEach(row=>{
+                const item=verified.get(row[0]);
+                if(!item||item.requestId!==row[1]||item.expiresAt!==row[2]||item.schemaVersion!==1)
+                    throw new Error("El baseline de guardas ADMIN no superó la lectura de confirmación.");
+            });
+        }
+        writeAdminLocalGuardBaselineState_(sheet,ADMIN_LOCAL_GUARD_BASELINE_VERSION_);
+        return {status:"success",imported:pending.length,alreadyComplete:false};
+    }finally{if(lock.hasLock())lock.releaseLock();}
+}
+function pruneAdminLocalGuardRows_(sheet,now) {
+    const expired=getAdminLocalGuardRows_(sheet).filter(item=>item.expiresAt<=now).sort((a,b)=>b.rowIndex-a.rowIndex);
+    expired.forEach(item=>sheet.deleteRow(item.rowIndex));
+    return expired.length;
+}
+function reserveAdminLocalGuard_(sheet,scopeHash,marker,now) {
+    pruneAdminLocalGuardRows_(sheet,now);
+    const current=findAdminLocalGuardRow_(sheet,scopeHash);
+    if(current&&current.expiresAt>now)
+        throw new Error("La operación equivalente ya está en curso; espera a que termine antes de repetirla.");
+    const active=getAdminLocalGuardRows_(sheet).filter(item=>item.expiresAt>now).length;
+    if(active>=ADMIN_LOCAL_GUARD_MAX_ACTIVE_)
+        throw new Error("AdminOperationGuards alcanzó su capacidad segura; reintenta cuando expiren operaciones activas.");
+    const row=[String(scopeHash),String(marker.requestId),Number(marker.expiresAt),Number(now),1];
+    const target=current?current.rowIndex:Math.max(3,Number(sheet.getLastRow()||2)+1);
+    let writeError=null;
+    try{sheet.getRange(target,1,1,row.length).setValues([row]);SpreadsheetApp.flush();}
+    catch(error){writeError=error;}
+    const saved=sheet.getRange(target,1,1,row.length).getValues()[0];
+    if(String(saved[0]||"")!==row[0]||String(saved[1]||"")!==row[1]||
+        Number(saved[2])!==row[2]||Number(saved[4])!==1)
+        throw new Error("No se pudo confirmar la reserva de la operación ADMIN."+(writeError?" "+String(writeError.message||writeError):""));
+    return true;
+}
+function releaseAdminLocalGuard_(sheet,scopeHash,requestId) {
+    const current=findAdminLocalGuardRow_(sheet,scopeHash);
+    if(!current||current.requestId!==String(requestId))return false;
+    sheet.deleteRow(current.rowIndex);
+    SpreadsheetApp.flush();
+    if(findAdminLocalGuardRow_(sheet,scopeHash))throw new Error("No se confirmó la liberación de la guarda ADMIN.");
+    return true;
+}
+function withAdminLocalOperationGuard_(scope,callback,ttlSeconds,dependencies) {
+    const scopeValue=String(scope||"").trim();
+    if(!scopeValue||typeof callback!=="function")throw new Error("La guarda local requiere un alcance y una función válidos.");
+    const deps=dependencies&&typeof dependencies==="object"?dependencies:{};
+    const properties=deps.properties||PropertiesService.getScriptProperties();
+    const lockService=deps.lockService||LockService;
+    const now=typeof deps.now==="function"?deps.now:function(){return Date.now();};
+    const uuid=typeof deps.uuid==="function"?deps.uuid:function(){return Utilities.getUuid();};
+    const hashScope=typeof deps.hashScope==="function"?deps.hashScope:function(value){
+        const bytes=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,value,Utilities.Charset.UTF_8);
+        return bytes.map(byte=>((Number(byte)+256)%256).toString(16).padStart(2,"0")).join("");
     };
-    const ttl = Math.max(30, Math.min(420, Number(ttlSeconds) || 420));
-    const key = "GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_" + hashScope(scopeValue);
-    const lock = lockService.getScriptLock();
-    if (!lock.tryLock(0)) throw new Error("El registro local de operaciones ADMIN está ocupado; vuelve a intentar.");
-    let marker;
-    try {
-        const currentRaw = properties.getProperty(key);
-        if (currentRaw) {
-            let current = null;
-            try { current = JSON.parse(currentRaw); } catch (parseError) {}
-            if (current && current.requestId && Number(current.expiresAt) > now()) {
-                throw new Error("La operación equivalente ya está en curso; espera a que termine antes de repetirla.");
-            }
-            properties.deleteProperty(key);
-        }
-        marker = { requestId: String(uuid() || "").trim(), expiresAt: now() + ttl * 1000 };
-        if (!marker.requestId) throw new Error("No se pudo identificar la guarda local de operación.");
-        const serialized = JSON.stringify(marker);
-        properties.setProperty(key, serialized);
-        if (properties.getProperty(key) !== serialized) {
-            properties.deleteProperty(key);
-            throw new Error("No se pudo confirmar la reserva local de la operación.");
-        }
-    } finally {
-        lock.releaseLock();
+    const ttl=Math.max(30,Math.min(420,Number(ttlSeconds)||420));
+    const scopeHash=String(hashScope(scopeValue)||"").toLowerCase();
+    if(!/^[a-f0-9]{64}$/i.test(scopeHash))throw new Error("No se pudo derivar la identidad de la guarda ADMIN.");
+    const sheet=getAdminLocalGuardSheet_(deps.sheet);
+    ensureAdminLocalGuardBaseline_(sheet,properties,lockService,now);
+    const marker={requestId:String(uuid()||"").trim(),expiresAt:now()+ttl*1000};
+    if(!marker.requestId)throw new Error("No se pudo identificar la guarda local de operación.");
+    const reserveLock=lockService.getScriptLock();
+    if(!reserveLock.tryLock(0)){
+        const error=new Error("El registro local de operaciones ADMIN está ocupado; vuelve a intentar.");
+        error.code="ADMIN_LOCAL_GUARD_BUSY";throw error;
     }
-    try {
-        return callback();
-    } finally {
-        const cleanupLock = lockService.getScriptLock();
-        if (cleanupLock.tryLock(0)) {
-            try {
-                let current = null;
-                try { current = JSON.parse(properties.getProperty(key) || "null"); } catch (parseError) {}
-                if (current && current.requestId === marker.requestId) properties.deleteProperty(key);
-            } finally {
-                cleanupLock.releaseLock();
-            }
+    try{reserveAdminLocalGuard_(sheet,scopeHash,marker,now());}
+    finally{if(reserveLock.hasLock())reserveLock.releaseLock();}
+    try{return callback();}
+    finally{
+        const cleanupLock=lockService.getScriptLock();
+        if(cleanupLock.tryLock(0)){
+            try{
+                try{releaseAdminLocalGuard_(sheet,scopeHash,marker.requestId);}
+                catch(cleanupError){console.error("No se pudo limpiar la guarda temporal ADMIN; expirará por TTL:",String(cleanupError&&cleanupError.message||cleanupError));}
+            }finally{if(cleanupLock.hasLock())cleanupLock.releaseLock();}
         }
     }
 }
-
 function handleCreateCortesImageFolder(payload, logMessage, developerContext) {
     const category = String(payload.category || "").trim();
     const brand = String(payload.brand || "").trim();

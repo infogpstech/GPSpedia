@@ -244,7 +244,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG feed incremental autenticado, cursor y recuperación','JS/Tests/CatalogChangeFeed.mjs');
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
  runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');
- runCli('ADMIN guardas locales de inventario, auditoría y carpeta Cortes','JS/Tests/AdminLocalOperationGuard.mjs');
+ runCli('ADMIN guardas temporales de inventario, auditoría y carpeta Cortes','JS/Tests/AdminLocalOperationGuard.mjs');
   runCli('ADMIN reconciliación del journal de imágenes','JS/Tests/AdminImageUploadEventReconciliation.mjs');
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
@@ -641,7 +641,7 @@ runGroup('45','MIG021',()=>{
 
 runGroup('46','MIG024',()=>{
  runCli('MIG-025 retirada de Coordinator y paridad de servicios','JS/Tests/CoordinatorRetirementContract.mjs');
- runCli('MIG-024 guarda local ADMIN: exclusión breve, TTL y recuperación','JS/Tests/AdminLocalOperationGuard.mjs');
+
 });
 
 runGroup('47','MIG026',()=>{
@@ -650,6 +650,7 @@ runGroup('47','MIG026',()=>{
  runCli('MIG026 preferencia global, caché con TTL y RBAC','JS/Tests/RichTextGlobalPreference.mjs');
  runCli('MIG026 baseline del contador WRITE en ledger append-only','JS/Tests/WriteCortesIdLedgerBaseline.mjs');
  runCli('MIG026 Safe Apply ADMIN: baseline Spreadsheet, ledger y no bloqueo entre operaciones','JS/Tests/CortesImageOrganizerLedger.mjs');
+ runCli('MIG026 ADMIN guardas temporales: baseline, exclusión por recurso y TTL sin bloqueo durante Drive','JS/Tests/AdminLocalOperationGuard.mjs');
 });
 
 if(selected){

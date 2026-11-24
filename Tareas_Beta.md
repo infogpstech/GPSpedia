@@ -295,3 +295,19 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Probar ACL privada, conflicto de nombre, carpeta fuera de Cortes, archivo en papelera, metadata cambiada, error de Drive, error de Spreadsheet y rollback. Ninguna operación debe sobrescribir cambios manuales posteriores ni afectar archivos ajenos.
 - Confirmar que, después de \`cortes_organizer_ledger_v1\`, Safe Apply e historial no vuelven a leer ScriptProperties para esta familia. No borrar propiedades legacy durante esta prueba; la limpieza física requiere autorización Beta explícita tras verificar el baseline.
 - Registrar deployment, Spreadsheet/Drive aislados, rol, archivo sintético, operación, evidencia anonimizada y resultado en \`Hallazgos_Beta.md\`. Las suites locales no sustituyen esta validación real.
+
+
+## 13. Validación Beta diferida — MIG-026 ADMIN: guardas temporales por recurso
+**Estado: PENDIENTE.** La migración debe aprobar CI y después validarse en Apps Script/Spreadsheet aislados.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar proyecto ADMIN, Spreadsheet y recursos Drive desechables.
+- Crear manualmente la hoja AdminOperationGuards con estos 5 encabezados exactos en fila 1: scopeHash, requestId, expiresAt, updatedAt, schemaVersion. Dejar fila 2 vacía para META/BASELINE; las reservas empiezan en fila 3. No crear el esquema automáticamente.
+- Preparar propiedades legacy GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)> con marcadores válidos activos y vencidos. Ejecutar baseline, confirmar que solo importa reservas no vencidas, que el marcador final es admin_local_guard_baseline_v1, que se verifica read-back y que no se escriben/eliminan propiedades.
+- Interrumpir después de escribir pending y después de importar parte de las reservas; reintentar y comprobar idempotencia, ausencia de duplicados y preservación de los marcadores legacy.
+- Inyectar JSON corrupto, hash inválido, requestId vacío, expiresAt no numérico/negativo, filas huérfanas/duplicadas, encabezados alterados y marcador desconocido. Debe fallar cerrado sin marcar baseline completo.
+- Ejecutar dos funciones con el mismo scope: solo una obtiene reserva; la segunda responde de inmediato como operación equivalente en curso. Ejecutar funciones con scopes distintos de forma anidada/solapada y confirmar que no se bloquean entre sí.
+- Mantener una operación Drive activa mientras se inicia otra función ADMIN independiente. Confirmar que el callback Drive corre sin ScriptLock, que la sección crítica solo cubre baseline/reserva/liberación y que todas las adquisiciones usan tryLock(0); no debe existir waitLock.
+- Forzar que la limpieza no consiga lock. El marcador debe permanecer solo hasta expiresAt; una nueva reserva debe purgarlo y continuar. Probar callback con error y cleanup con respuesta perdida.
+- Confirmar TTL mínimo 30 s y máximo 420 s, limpieza de vencidos y capacidad máxima segura de 500 reservas activas. Ninguna función debe esperar por otra ni mantener lock durante Drive/Spreadsheet prolongado.
+- Después de admin_local_guard_baseline_v1, confirmar que el flujo ordinario no vuelve a consultar ScriptProperties para esta familia. No borrar propiedades legacy durante Beta; limpieza física requiere autorización explícita.
+- Registrar deployment, Spreadsheet, actor, scopes sintéticos, resultados y evidencia anonimizada en Hallazgos_Beta.md.
