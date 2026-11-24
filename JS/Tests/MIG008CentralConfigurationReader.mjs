@@ -33,6 +33,7 @@ function makeDatabase() {
     ];
     const calls = {reads:0};
     const database = {
+        getId() { return "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3Os"; },
         getSheetByName(name) {
             if (!rows[name]) return null;
             return {getDataRange() { calls.reads++; return {getValues() { return rows[name].map(row => row.slice()); }}; }};
@@ -53,7 +54,8 @@ function createEnvironment(active) {
         remove(key) { values.delete(key); }
     };
     const context = {
-        SpreadsheetApp: {getActiveSpreadsheet() { return active.current; }},
+        GPSpediaSpreadsheetId_: "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os",
+        SpreadsheetApp: {openById(id) { assert.equal(id, "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3Os"); if (!active.current) throw new Error("Spreadsheet unavailable"); return active.current; }},
         CacheService: {getScriptCache() { return cache; }},
         Date: TestDate, JSON, Number, String, Object, Array, RegExp, Error, Math
     };
@@ -69,7 +71,7 @@ function expectCode(fn, code) {
 
 {
     const active={current:null}, env=createEnvironment(active);
-    expectCode(()=>env.context.getPublicCentralConfiguration_(),"NO_ACTIVE_SPREADSHEET");
+    expectCode(()=>env.context.getPublicCentralConfiguration_(),"SPREADSHEET_ACCESS_DENIED");
 }
 {
     const fixture=makeDatabase(), active={current:fixture.database}, env=createEnvironment(active);
