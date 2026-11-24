@@ -655,3 +655,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - El alcance incluye matriz de fuentes por proyecto, prerrequisitos, actualización del deployment existente, comprobación de salud y pruebas funcionales por servicio, despliegues selectivos cuando cambien fuentes compartidas/contratos, manejo de fallos parciales, rollback y checklist de evidencia.
 - Se mantienen las reglas de configuración central versionada, ausencia de secretos/URLs de interconexión en código o propiedades Apps Script y separación entre CI, salud GET y validación Beta real.
 - AUG-145 queda PENDIENTE y en cola después de AUG-144. En este registro no se modificó la guía ni se desplegaron servicios Apps Script.
+
+
+### 2026-11-24 — Implementación AUG-144: encabezado del modal de detalle
+
+- Se ajustó el encabezado de marca/modelo en el modal de detalle: logo de 66 px de alto con ancho automático, offsets de 6 px, modelo a la derecha con gap de 6 px y alineación inferior; línea azul separada 6 px.
+- Se conservaron las reglas de los botones de edición, impresión, compartir y cerrar. La fila de acciones mantiene 40 px y anclaje derecho; el cálculo de espacio disponible del modelo ahora descuenta el ancho real del grupo de botones y observa el tamaño intrínseco del logo para activar correctamente el fallback de nombres largos.
+- Archivos funcionales/pruebas: `style.css`, `JS/Frontend/ui.js`, `JS/Tests/CutDetailModalLayout.mjs`, `JS/Tests/ModalHeaderCssCascade.mjs`.
+- CI run `45408996633`, job `138497373654`, commit `1d20ee06ac8c989deabea98a9ddd89d3928aa624`: SUCCESS; Node.js v22.23.5; 513 suites, 6,052 pruebas aprobadas y 0 fallos. `CutDetailModalLayout` 30/30, `ModalHeaderCssCascade` 14/14 y sintaxis de 463 archivos PASS.
+- La comparación visual de posiciones antes/después no se ejecutó en navegador; se registró BETA-09 en `Tareas_Beta.md` para verificar bounding boxes en escritorio/móvil, roles con dos/cuatro botones, proporciones de logo y nombres largos.
+- No se desplegaron servicios Apps Script ni se modificaron deployments, propiedades, permisos, Spreadsheet, Drive, OAuth o datos productivos.

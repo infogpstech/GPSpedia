@@ -4,7 +4,7 @@ Fecha: 2026-11-24
 Repositorio: `infogpstech/GPSpedia`
 Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.
-HEAD de trabajo antes de este checkpoint: `9bddefae8483bbeecb3257a7107ffff99074d733`
+HEAD de trabajo antes de este checkpoint: `1d20ee06ac8c989deabea98a9ddd89d3928aa624`
 HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Reglas de continuidad
@@ -20,11 +20,11 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - MIG-026: COMPLETADA CON VALIDACIÓN DIFERIDA. AUTH, CATALOG y UTILITIES no contienen `SPREADSHEET_ID` ni `openById(SPREADSHEET_ID)`; usan `SpreadsheetApp.getActiveSpreadsheet()` y fallan cerrado si falta contexto.
 - MIG-028: COMPLETADA CON VALIDACIÓN DIFERIDA; pruebas locales aprobadas, métricas reales p50/p95 pendientes.
 - MIG-029 y MIG-030: COMPLETADAS CON VALIDACIÓN DIFERIDA.
-- La matriz BETA-01..08 y pruebas de MIG-006/008/012/013/015/017/018/024/025/026 permanecen como procedimiento de campo en `Tareas_Beta.md`.
+- La matriz BETA-01..09 y pruebas de MIG-006/008/012/013/015/017/018/024/025/026 permanecen como procedimiento de campo en `Tareas_Beta.md`.
 
 ## Nueva tarea autorizada — AUG-144: corregir encabezado de marca/modelo del modal de detalle
 
-**Estado: PENDIENTE.** Solicitud incorporada el 2026-11-24. Alcance limitado al encabezado visual del modal de detalle de dispositivos.
+**Estado: IMPLEMENTADA EN CÓDIGO Y CI; VALIDACIÓN VISUAL DIFERIDA A BETA-09.** Solicitud incorporada el 2026-11-24. Alcance limitado al encabezado visual del modal de detalle de dispositivos.
 
 ### Requisitos de distribución
 - El logotipo de marca debe renderizarse con **66 px de alto** y **ancho automático**, conservando su proporción natural y sin reducirse para encajar de forma incorrecta.
@@ -49,6 +49,15 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - No modificar funcionalidades ni controles ajenos al encabezado.
 
 
+### Implementación local y CI — AUG-144 — 2026-11-24
+
+- Commit funcional: `1d20ee06ac8c989deabea98a9ddd89d3928aa624`; archivos: `style.css`, `JS/Frontend/ui.js` y `JS/Tests/CutDetailModalLayout.mjs`.
+- El logo del modal de corte usa 66 px de alto y ancho automático sin límite fijo; se aplican los offsets de 6 px desde el borde del modal. El nombre del modelo queda a la derecha, separado 6 px y alineado por abajo; la línea azul conserva 6 px de separación vertical.
+- Las reglas de los botones de edición, impresión, compartir y cerrar no se modificaron. La fila de acciones conserva 40 px y el anclaje derecho; el cálculo de espacio del modelo descuenta el ancho real de los botones y mantiene el fallback para nombres largos. Se observa el logo para recalcular cuando carga o cambia su ancho intrínseco.
+- CI run `45408996633`, job `138497373654`: SUCCESS; Node.js v22.23.5; 513 suites, 6,052 pruebas aprobadas, 0 fallos. `CutDetailModalLayout` 30/30, `ModalHeaderCssCascade` 14/14 y `RepositoryJavaScriptSyntax` 1/1 (463 archivos) PASS.
+- La comprobación visual con navegador y la comparación de bounding boxes antes/después no se ejecutaron; quedan pendientes en BETA-09. CI valida contratos y sintaxis, no sustituye la comprobación visual.
+- No se desplegaron servicios Apps Script ni se tocaron deployments, propiedades, permisos, Spreadsheet, Drive, OAuth o datos productivos.
+
 ## Nueva tarea autorizada — AUG-145: ampliar la guía de despliegue de servicios Apps Script
 
 **Estado: PENDIENTE.** Solicitud incorporada el 2026-11-24. La tarea consiste en actualizar `Services/DEPLOYMENT_GUIDE.md` para que un operador pueda desplegar los servicios Google Apps Script siguiendo un procedimiento completo, específico y ordenado.
@@ -68,7 +77,7 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - Mantener como fuente normativa `NORMAS_DESAROLLO.md` y respetar los requisitos Apps Script de su §12 y los apartados aplicables.
 - Conservar los seis proyectos activos y la matriz real de archivos fuente vigente. USERS y COORDINATOR no deben reintroducirse como servicios activos.
 - No alterar la arquitectura ni el comportamiento de los servicios para adaptar el manual. Si el análisis descubre una dependencia o ambigüedad técnica, documentarla con evidencia y separar cualquier corrección de código como tarea distinta.
-- AUG-144 permanece como la siguiente tarea de implementación; AUG-145 queda en cola para ejecutarse después de cerrar AUG-144, conforme al orden de continuidad del backlog.
+- AUG-144 está implementada y aprobada por CI; su comprobación visual queda pendiente en BETA-09. AUG-145 pasa a ser la siguiente tarea de implementación.
 
 ### Validación y cierre
 - Contrastar cada paso y el orden propuesto con los seis archivos fuente y sus dependencias reales, la configuración central y los workflows de salud/pruebas existentes.
@@ -96,6 +105,7 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Límites pendientes de Beta
 - No se desplegaron proyectos Apps Script ni se invocaron endpoints.
+- AUG-144: pendiente BETA-09 de comparar bounding boxes de los cuatro botones y validar visualmente offsets, altura, gap, alineación inferior, logos de distintas proporciones y nombres largos en escritorio/móvil.
 - No se modificaron PropertiesService, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos.
 - Pendientes: contexto activo en cada Web App, identidad/permisos efectivos, lectura/escritura, concurrencia entre deployments, revocación real, p50/p95 y limpieza física de propiedades legacy. Los resultados CI no prueban disponibilidad ni latencia de producción.
 
@@ -105,4 +115,4 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - El manifiesto de rotación conserva las referencias a las partes anteriores.
 
 ## Próxima acción
-Atender AUG-144: inspeccionar el encabezado real del modal de detalle, medir primero las posiciones de edición/impresión/compartir/cerrar y ajustar exclusivamente el bloque de marca/modelo. La posición de esos cuatro botones es un invariante. Validar escritorio y móvil, comparar límites antes/después y ejecutar regresión frontend. Después, ejecutar AUG-145: ampliar `Services/DEPLOYMENT_GUIDE.md` con el orden justificado y el procedimiento paso a paso de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Mantener cualquier despliegue real sujeto a autorización y Beta aislada.
+Ejecutar AUG-145: ampliar `Services/DEPLOYMENT_GUIDE.md` con el orden de despliegue justificado y el procedimiento paso a paso de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Mantener las pruebas visuales de AUG-144 en BETA-09; cualquier despliegue real Apps Script sigue sujeto a autorización y Beta aislada.

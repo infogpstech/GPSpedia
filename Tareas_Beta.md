@@ -4,7 +4,7 @@ Fecha de inicio: 2026-11-22
 Repositorio: `infogpstech/GPSpedia`
 Rama de trabajo: `GPSpedia2.2.5_work`
 Rama base: `GPSpedia2.2.5`
-HEAD de referencia: `f8df2c91f8408c311d47ec7c67091cf482cf5cb4`
+HEAD de referencia: `1d20ee06ac8c989deabea98a9ddd89d3928aa624`
 Alcance: pruebas Beta y registro de hallazgos. No realizar correcciones de código durante esta etapa.
 
 ## 0. Sincronización segura obligatoria
@@ -373,3 +373,16 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Confirmar que no existen llamadas HTTP Apps Script→Apps Script hacia servicios GPSpedia. Las llamadas a Drive API v3, YouTube Data API y descargas de imágenes externas se clasifican como integraciones externas, no como coordinación entre servicios.
 - Confirmar que Coordinator y SharedMutation no tienen deployments activos ni propiedades requeridas por versiones vigentes. Registrar el estado de versiones sin exponer URLs privadas, tokens o secretos.
 - Registrar HEAD, deployment, identidad efectiva, nombre de propiedad (sin valor), resultado y evidencia anonimizada. No desplegar a producción ni modificar propiedades/hojas productivas.
+
+
+## 18. Validación Beta diferida — AUG-144: encabezado del modal de detalle
+**Estado: PENDIENTE DE VALIDACIÓN VISUAL.** La implementación y los contratos locales/CI están aprobados en el commit `1d20ee06ac8c989deabea98a9ddd89d3928aa624`; no se ejecutó comparación de navegador ni se desplegó el frontend en Beta.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar un entorno frontend Beta autorizado y registros sintéticos de dispositivos; no usar datos personales ni vehículos productivos.
+- Antes de aplicar la versión nueva, registrar los límites x, y, width, height de cada botón de edición, impresión, compartir y cerrar mediante getBoundingClientRect(), en los mismos viewports que se usarán después. Identificar cada control por su etiqueta accesible, no por el orden visual únicamente.
+- Publicar únicamente la versión frontend autorizada que contiene el commit indicado. No desplegar ni modificar servicios Apps Script para esta prueba. Repetir la captura en exactamente los mismos tamaños de viewport y comparar los cuatro botones; la diferencia aceptada en cada coordenada y dimensión es 0 px (tolerancia máxima de medición: 0.5 px). Si algún botón cambia de posición o tamaño, registrar el fallo y no aceptar AUG-144.
+- Viewports mínimos: escritorio 1366×768; móvil 390×844, 360×800 y 320×700. Probar roles que muestren dos y cuatro botones cuando estén disponibles en Beta.
+- Verificar con el rectángulo del modal como referencia: logo de 66 px de alto, ancho automático y proporción natural; borde superior e izquierdo a 6 px; modelo a la derecha con gap horizontal de 6 px; bordes inferiores de los contenedores de logo/modelo alineados; borde superior de la línea azul a 6 px del borde inferior del conjunto.
+- Probar logotipos apaisados, cuadrados y verticales, nombres cortos y largos, y el modo de edición del modelo. Confirmar que los nombres largos pasan al fallback debajo del logo sin solaparse con los botones, que la línea azul mantiene el espacio requerido y que no aparece desplazamiento horizontal.
+- Registrar capturas antes/después, viewport, rol, dimensiones de cada botón, dimensiones del logo/modelo/línea y resultado por criterio en Hallazgos_Beta.md. Anonimizar las capturas y retirar cualquier dato del dispositivo.
+- Si no se dispone de un navegador/viewport o rol, marcar ese caso como NO EJECUTADO; no inferir aprobación a partir de CI ni de la revisión estática del CSS.
