@@ -929,3 +929,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se actualizó `Tareas_Beta.md` §21: consola Developer con altura útil 48% y ancho completo; pestaña seleccionada con etiqueta y no seleccionadas solo icono; endpoints solo en consola y botón **Actualizar Servicios**; desglose independiente de cortes, aportes registrados y vehículos por usuario.
 - Se corrigió la auditoría de duplicados en `Tareas_Activas.md`: las correcciones Dashboard y Developer están cerradas en código/CI, con verificación Beta pendiente.
 - No se desplegó Apps Script ni se modificaron recursos externos. El siguiente paso es validación Beta aislada §§21–25, condicionada a autorización expresa y recursos de prueba.
+
+
+### 2026-11-24 — Registro del plan exclusivo MIG-URL: migración de endpoints al frontend
+
+- Se creó `Migracion_URL_Servicios_Frontend.md` con ocho tareas ordenadas, dependencias y criterios de aceptación. Se registró en `Tareas_Activas.md` y `checkpoint.md` que no debe ejecutarse ninguna tarea ajena a MIG-URL-001..008 mientras el plan siga abierto.
+- Se cerró MIG-URL-001: normativa `NORMAS_DESAROLLO.md` §§17.1 y 18 ahora establece que las URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN se editan manualmente en el objeto único `API_ENDPOINTS` de `JS/Frontend/api-config.js`, siguiendo el mecanismo existente en la rama protegida `GPSpedia2.2.5`; `ACTION_TO_SERVICE_MAP` conserva el enrutamiento.
+- Se aclaró que no se reintroducen LEGACY/USERS ni se revierte el resto del código a la versión antigua. Se prohíbe administración de URLs desde Spreadsheet/AUTH/Developer, bootstrap remoto, tabla paralela y fallback remoto.
+- Próxima y única tarea autorizada: MIG-URL-002, inventario y verificación de las seis URLs vigentes.
+- Sin cambios de código productivo, deployments, endpoints reales, propiedades, permisos ni datos externos.

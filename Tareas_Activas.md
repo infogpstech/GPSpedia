@@ -5,6 +5,21 @@ Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.  
 Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 
+## Plan de trabajo exclusivo — migración de URLs al frontend
+
+**ÚNICO TRABAJO AUTORIZADO:** ejecutar exclusivamente MIG-URL-001 a MIG-URL-008, en el orden y con las dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. No seleccionar ni ejecutar tareas Beta, auditorías pendientes u otras tareas ajenas mientras este plan permanezca abierto. Los hallazgos externos al plan se registran sin ejecutarlos, salvo riesgo crítico de seguridad/integridad que impida continuar.
+
+- MIG-URL-001 — Alinear normativa y registrar el plan: **COMPLETADA — 2026-11-24**.
+- MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **PENDIENTE — SIGUIENTE**.
+- MIG-URL-003 — Implementar `API_ENDPOINTS` local y resolución: **PENDIENTE**.
+- MIG-URL-004 — Retirar configuración central de endpoints: **PENDIENTE**.
+- MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **PENDIENTE**.
+- MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet: **PENDIENTE**.
+- MIG-URL-007 — Pruebas locales, contratos y regresión: **PENDIENTE**.
+- MIG-URL-008 — Validación Beta aislada y cierre: **PENDIENTE**.
+
+La configuración local debe reproducir el patrón de la rama protegida `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` editado manualmente en `JS/Frontend/api-config.js`, con `ACTION_TO_SERVICE_MAP` para el enrutamiento. No usar `SERVICE_ENDPOINTS` como tabla paralela ni inventar otro administrador de URLs.
+
 ## Orden de ejecución
 
 Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el diff y actualizar este archivo, `checkpoint.md` y `ChangesLogs.txt`. No desplegar Apps Script ni modificar recursos externos sin autorización Beta expresa.
@@ -64,3 +79,13 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 ## Siguiente paso operativo
 
 Las tres tareas de esta solicitud están COMPLETADAS EN CÓDIGO Y CI. No queda una tarea de código activa en este registro. El siguiente trabajo pendiente corresponde a validaciones de integración en Beta aislada descritas en `Tareas_Beta.md` §§21–25. No ejecutar despliegues Apps Script, cambiar endpoints, propiedades, permisos, Spreadsheet, Drive, OAuth ni datos sin autorización Beta expresa y recursos aislados verificados.
+
+
+## Plan MIG-URL — registro de tareas y exclusividad — 2026-11-24
+
+Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tareas MIG-URL-001..008 son las únicas autorizadas hasta cerrar el plan.
+
+- **MIG-URL-001 COMPLETADA:** normativa §§17.1 y 18 alineada con el mecanismo de la rama protegida; plan completo creado; tareas y checkpoint actualizados.
+- **MIG-URL-002 PENDIENTE:** inventario y verificación de URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Siguiente y única tarea autorizada.
+- MIG-URL-003..008 permanecen pendientes y bloqueadas por sus dependencias.
+- No continuar tareas de Beta ni otros trabajos fuera de este plan.

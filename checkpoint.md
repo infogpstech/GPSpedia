@@ -460,3 +460,25 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Se actualizó `Tareas_Beta.md` §21 para reflejar la interfaz Developer actual (consola 48% de altura, ancho completo, pestaña activa expandida, endpoints solo en consola) y el desglose separado del Dashboard. Las validaciones operativas reales siguen pendientes.
 - **No hay otra tarea de código activa en `Tareas_Activas.md`.** Siguiente paso: ejecutar Beta §§21–25 únicamente cuando se disponga de deployments, Spreadsheet/Drive y cuentas de prueba aislados, y exista autorización expresa. No inferir aprobación remota desde CI.
 - HEAD de código funcional validado: `711ce5f5733dd0c48804c810af97ba6913cc1b0e`; rama base protegida `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+
+
+---
+
+# Continuidad prioritaria — Migración de URLs al frontend
+
+Fecha: 2026-11-24  
+Estado: **PLAN EN EJECUCIÓN — MIG-URL-001 COMPLETADA; MIG-URL-002 ES LA SIGUIENTE Y ÚNICA TAREA AUTORIZADA.**
+
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama autorizada: `GPSpedia2.2.5_work`.
+- Rama base protegida verificada: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no modificar.
+- HEAD de trabajo al iniciar este registro: `4e98f6cb429352bf9293039b825a9ebb24916295`. Este valor corresponde al estado previo al commit de registro; el SHA del commit que incorpora este checkpoint debe consultarse en GitHub.
+- Documento rector: `Migracion_URL_Servicios_Frontend.md`.
+- **Exclusividad:** no iniciar, retomar ni ejecutar ninguna tarea distinta de MIG-URL-001..008 mientras el plan siga abierto. No ejecutar las tareas Beta pendientes ni seleccionar tareas de otros registros. Registrar hallazgos ajenos sin ejecutarlos, salvo riesgo crítico de seguridad/integridad.
+- **Decisión técnica confirmada comparando con la rama protegida:** reproducir el mecanismo de `api-config.js` de `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` con una entrada por servicio, edición manual de la URL y resolución mediante `ACTION_TO_SERVICE_MAP`. En la rama de trabajo el archivo está en `JS/Frontend/api-config.js`. Adaptar a los seis servicios actuales AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. No reintroducir LEGACY/USERS ni revertir las mejoras posteriores del frontend.
+- No usar tabla paralela `SERVICE_ENDPOINTS`, Spreadsheet/AUTH como fuente de endpoints, bootstrap remoto, caché central de URLs ni fallback remoto.
+- MIG-URL-001 — **COMPLETADA:** §§17.1 y 18 de `NORMAS_DESAROLLO.md` actualizadas; plan de ocho tareas creado; `Tareas_Activas.md`, `ChangesLogs.txt` y este checkpoint actualizados.
+- MIG-URL-002 — **PENDIENTE / SIGUIENTE:** recuperar y verificar las seis URLs actuales contra la configuración activa, deployments/fuentes e identidades de salud. No inventar ni cambiar direcciones. Registrar evidencia y discrepancias.
+- MIG-URL-003..008 — PENDIENTES, sujetas a dependencias del documento.
+- Restricciones: no modificar endpoints/deployments reales, propiedades, permisos, Spreadsheet, Drive, OAuth ni datos externos; Beta solo con autorización expresa y recursos aislados. Preservar todas las funciones, contratos, RBAC, sesión y diagnóstico.
+- Al cerrar cada MIG-URL: pruebas locales pertinentes, revisión de diff y actualización de `Tareas_Activas.md`, `checkpoint.md` y `ChangesLogs.txt`. No declarar pruebas remotas sin evidencia.
