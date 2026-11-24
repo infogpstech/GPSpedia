@@ -591,3 +591,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - MIG-030 se actualizó a COMPLETADA CON VALIDACIÓN DIFERIDA conforme a NORMAS_DESAROLLO.md §§5 y 10. La matriz real BETA-01..08 y MIG-012/013/015/017/018/024/025/026 permanece pendiente en Tareas_Beta.md hasta contar con deployments y recursos sintéticos autorizados.
 - No se invocaron endpoints ni se modificaron deployments, propiedades Apps Script, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos.
 - El checkpoint activo excedía 180,000 caracteres Unicode. Se archivó íntegro como `Olds/Documentacion_Legacy/Checkpoint_Archive/checkpoint_2026-11-24_parte_006.md`; el blob SHA coincide con el original. Se actualizó el manifiesto y se creó un checkpoint activo resumido, sin alterar las partes históricas.
+
+
+### Rectificación de estado MIG-030 — 2026-11-24
+
+- La preparación local y CI de MIG-030 están aprobadas, pero la aceptación global no está satisfecha mientras MIG-026 conserve tres referencias locales `SPREADSHEET_ID/openById` en AUTH, CATALOG y UTILITIES.
+- La eliminación requiere comprobar el acceso Spreadsheet en el contexto real de las Web Apps; no se reemplazará por una simulación ni se retirarán IDs por inferencia.
+- Se rectifica el estado global de MIG-030 a EN PROGRESO. La entrada anterior que la marcó completada con validación diferida queda corregida por esta adenda; no se altera ni elimina el historial.
+- El checkpoint activo y TAREAS_MIGRACION_ARQUITECTURA.md reflejan la dependencia y la siguiente acción. No se modificó código funcional ni se invocaron servicios externos.
