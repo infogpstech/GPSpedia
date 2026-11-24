@@ -14,7 +14,7 @@ assert.equal((auth.match(/loadSpreadsheet: getAuthUsersSpreadsheet_/g) || []).le
     "Las cuatro rutas protegidas de AUTH inyectan su proveedor de identidad.");
 assert.match(admin, /loadSpreadsheet: getSpreadsheet/);
 assert.match(write, /loadSpreadsheet: getSpreadsheet/);
-assert.match(utilitiesSource, /loadSpreadsheet:\(\)=>SpreadsheetApp\.openById\(SPREADSHEET_ID\)/);
+assert.match(utilitiesSource, /loadSpreadsheet:\(\)=>spreadsheet/);
 const now = Date.UTC(2026, 10, 23, 12, 0, 0);
 const utilities = {
     DigestAlgorithm: { SHA_256: "SHA_256" },
@@ -41,7 +41,7 @@ const cache = {
 };
 const api = new Function("SpreadsheetApp","CacheService","Utilities","SPREADSHEET_ID",
     source + "\nreturn { loadSharedSessionActorFromSpreadsheet_, getCachedSharedSessionActor_, cacheSharedSessionActor_, handleSharedSessionActorCacheInvalidation_, getSharedSessionActorCacheKey_ };"
-)({openById:()=>makeSpreadsheet(validUsers,validSessions)},
+)({getActiveSpreadsheet:()=>makeSpreadsheet(validUsers,validSessions)},
 {getScriptCache:()=>cache},utilities,"isolated-spreadsheet-id");
 
 let reads = 0;
@@ -153,7 +153,7 @@ const catalogSpreadsheet = {
 };
 const catalogApi = new Function("SpreadsheetApp","CacheService","Utilities",
     catalog + "\nreturn {getCatalogSessionActor_,loadCatalogSessionActor_,invalidateCatalogSessionActorCache_};"
-)({openById:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
+)({getActiveSpreadsheet:()=>catalogSpreadsheet},{getScriptCache:()=>catalogCache},utilities);
 const catalogCold = catalogApi.getCatalogSessionActor_("U-1","opaque-session-token-0001");
 assert.equal(catalogCold.role,"tecnico");
 const catalogColdReads = catalogReads;
