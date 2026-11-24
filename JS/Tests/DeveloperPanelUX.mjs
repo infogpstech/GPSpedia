@@ -37,10 +37,10 @@ testCase("los botones Developer usan etiquetas breves y conservan nombre accesib
 
 testCase("la consola está sobre las pestañas y ocupa menos del 30% del modal en escritorio",()=>{
  assert.ok(html.indexOf('class="dev-console-shared"') < html.indexOf('class="dev-tools-tabs"'));
- const start=css.lastIndexOf("#dev-tools-modal .dev-console-shared {");
- const rule=css.slice(start,css.indexOf("}",start));
- assert.match(rule,/flex: 0 0 24%/);
- assert.match(rule,/max-height: 28%/);
+ const desktopStart=css.lastIndexOf("/* AUG-146 — consola compacta");
+ const desktopEnd=css.indexOf("@media (max-width: 760px)",desktopStart);
+ const desktop=css.slice(desktopStart,desktopEnd);
+ assert.match(desktop,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 24%[\s\S]*?max-height: 28%/);
  assert.match(css,/#dev-tools-modal \.dev-console-output \{[\s\S]*?flex: 1 1 0/);
 });
 testCase("en móvil la consola conserva una altura compacta y la barra de comandos es horizontal",()=>{
