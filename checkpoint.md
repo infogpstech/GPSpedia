@@ -436,3 +436,11 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Pruebas:** CI run `45507769616`: 517 suites, 6,156 pruebas, 0 fallos; `TutorialIntegrity` 48/48 PASS; `FeedbackTutorialLookupBoundedRead` 9/9 PASS; Chromium `Aug146ResponsiveBrowser` 216/216 PASS en 1366×768, 390×844, 360×800 y 320×700; Pages run `45507768695`: SUCCESS.
 - **Tarea 2 — Dashboard de actividad, desglose de aportes por usuario:** EN PROGRESO. Reutilizar `readActivityDashboardCutsSnapshot_()`, `buildActivityDashboardInsights_()` y `buildCutContributionSummary_()`; exponer `cortesAportados` por usuario en la tabla, separado de `aportesRegistrados` y `vehiculosConAportes`. No crear segunda fuente ni alterar hojas/datos.
 - El orden de trabajo sigue el archivo `Tareas_Activas.md`. No se asigna un ID nuevo.
+
+
+### Cierre de tarea activa 2 y comienzo de tarea activa 3 — 2026-11-24
+
+- **Tarea 2 — Dashboard de actividad, cortes aportados por usuario:** COMPLETADA. Se corrigió la normalización frontend para no confundir `cortesAportados` con `aportesRegistrados`; ambos se agrupan por separado y `vehiculosConAportes` conserva deduplicación por máximo de conteos agregados. La tabla presenta cuatro columnas: Usuario, Cortes aportados, Aportes registrados y Vehículos con aportes. El ranking superior muestra las mismas tres métricas con singular/plural correcto. Backend y datos almacenados no fueron modificados.
+- **Pruebas:** `ActivityDashboardContributions` 3/3 PASS, incluyendo agregación por identidad, aliases, forma histórica, render de cuatro columnas, estado vacío y ranking. CI run `45508470807`: 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 216/216 PASS; Pages run `45508470780`: SUCCESS.
+- **Tarea 3 — Modal Developer, disposición, consola y actualización de servicios:** EN PROGRESO. Seguir los requisitos de `Tareas_Activas.md`: pestañas debajo de la línea de comando, etiquetas solo en pestaña activa, consola con el doble de altura útil, compactación sin perder handlers, mensajes funcionales de Endpoints solo en consola y botón “Actualizar Servicios”. Añadir pruebas responsive de geometría y resultados individuales.
+- No asignar ID nuevo; seguir el orden de `Tareas_Activas.md`.
