@@ -101,7 +101,7 @@ test("handleAddLogo usa el destino canónico compartido con el organizador",()=>
  assert.doesNotMatch(fn,/getOrCreateSubFolder/);
 });
 test("handleAddLogo escribe el ID como valor y elimina la espera de fórmula",()=>{
- const fn=extract("handleAddLogo");assert.match(fn,/getNextLogoIdLocked_\(sheet\)/);assert.match(fn,/getRange\(newRow, 1\)\.setValue\(newId\)/);
+ const fn=extract("handleAddLogo");assert.match(fn,/getNextLogoIdLocked_\(sheet, logoIdSnapshot\)/);assert.match(fn,/getRange\(newRow, 1\)\.setValue\(newId\)/);
  assert.doesNotMatch(fn,/setFormula|Utilities\.sleep/);
 });
 
