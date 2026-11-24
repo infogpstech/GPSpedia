@@ -39,14 +39,14 @@ check("El frontend es el router y coordinador de secuencias multi-servicio", () 
     assert.match(ui, /getContributionCandidates/);
 });
 
-check("El mapa vigente conserva 123 acciones y seis servicios", () => {
+check("El mapa vigente conserva 125 acciones y seis servicios", () => {
     const match = api.match(/export\s+const\s+ACTION_TO_SERVICE_MAP\s*=\s*\{([\s\S]*?)\n\};/);
     assert.ok(match);
     const entries = [...match[1].matchAll(/['"]([^'"]+)['"]\s*:\s*['"]([A-Z]+)['"]/g)];
-    assert.equal(entries.length, 123);
+    assert.equal(entries.length, 125);
     const counts = {};
     entries.forEach(([, action, service]) => { counts[service] = (counts[service] || 0) + 1; });
-    assert.deepEqual(counts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
+    assert.deepEqual(counts, { AUTH: 21, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
 });
 
 check("La invalidación de cachés se coordina en paralelo desde el frontend sin transmitir tokens", () => {
