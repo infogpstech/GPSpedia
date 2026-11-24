@@ -542,3 +542,48 @@ git rev-parse HEAD
 12. Registrar evidencia anonimizada, nombre de carpeta, conteos y resultado en `Hallazgos_Beta.md`. Si no se dispone de Beta aislada, marcar los pasos como NO EJECUTADOS.
 
 **Límites:** no cargar imágenes reales de clientes, no almacenar Base64 en Spreadsheet, no alterar permisos, no usar cuentas/Drive/Spreadsheet productivos y no coordinar servicios Apps Script mediante URLs. La operación FEEDBACK escribe en su propia hoja y Drive; CATALOG solo lee la referencia existente.
+
+
+## 24. Validación Beta diferida — resolución de Tutorial en carga de vídeo YouTube
+
+**Estado: CORRECCIÓN LOCAL COMPLETADA; PENDIENTE DE REPRODUCCIÓN Y SUBIDA CONTROLADA EN YOUTUBE BETA.** CATALOG expone `referenceId` estable para tutoriales con ID físico y para tutoriales históricos sin ID. FEEDBACK acepta la identidad legacy y mantiene la resolución estricta para IDs canónicos.
+
+### Sincronización segura obligatoria
+
+Ejecutar desde el clon local del repositorio `infogpstech/GPSpedia`. No descarta cambios locales y detiene la secuencia si el repositorio, rama o árbol no coinciden:
+
+```bash
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+case "$(git remote get-url origin)" in *github.com/infogpstech/GPSpedia*) ;; *) echo "Origin no corresponde a infogpstech/GPSpedia"; exit 1 ;; esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; guardar o resolverlos antes de sincronizar"; exit 1; }
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+### Evidencia local aprobada
+
+- Commit de implementación: `4f300742fbf5c965f9a05722825a02b29ce7ccb5` (FEEDBACK), `2db86ad34a6c45307f9a5c8ee356bc52c5bd7ea6` (CATALOG), `e376ce69062969974a862f379a3038cdc051163e` (frontend).
+- CI run [45505972628](https://github.com/infogpstech/GPSpedia/actions/runs/45505972628): SUCCESS; 517 suites, 6,155 pruebas aprobadas, 0 fallos.
+- `FeedbackTutorialLookupBoundedRead`: 9/9 PASS; `TutorialIntegrity`: 48/48 PASS; FEEDBACK precondiciones de subida resumable: 9/9 PASS, incluida inicialización con Tutorial histórico y referencia legacy.
+- Chromium responsive: 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700.
+- GitHub Pages run [45505971953](https://github.com/infogpstech/GPSpedia/actions/runs/45505971953): SUCCESS.
+- No se usó OAuth real ni se subió vídeo a YouTube durante CI.
+
+### Pasos en Beta aislada
+
+1. Confirmar que CATALOG y FEEDBACK apuntan a la misma Spreadsheet Beta autorizada. Publicar únicamente las versiones aprobadas de CATALOG y FEEDBACK en sus deployments Beta existentes; no modificar producción.
+2. Preparar un tutorial histórico sintético en la Spreadsheet Beta con ID físico vacío y título conocido. No usar un registro real de cliente.
+3. Abrir/actualizar el catálogo desde la plataforma y confirmar que el objeto de ese tutorial incluye `referenceId` con formato `legacy-<64 caracteres hexadecimales>`, mientras `ID` permanece vacío.
+4. Abrir el detalle del tutorial y seleccionar la carga de vídeo. Confirmar en la solicitud frontend→FEEDBACK que se envía `referenceId` legacy; no copiar URLs de servicios ni introducir secretos en Apps Script.
+5. Solo con una cuenta YouTube Beta autorizada y un archivo sintético de prueba, iniciar una subida breve. Confirmar que `initYouTubeUpload` devuelve sesión válida y no `Tutorial no encontrado`.
+6. Completar la carga de prueba. Confirmar que se crea una solicitud de aprobación pendiente en FEEDBACK y que la columna `Tutorial.Video` permanece vacía antes de aprobar.
+7. Aprobar la solicitud como Desarrollador en Beta y confirmar que el vídeo se asocia a la fila correcta. Verificar que no se modifica otro tutorial con título parecido.
+8. Repetir el flujo con un tutorial nuevo cuyo ID físico sea `tut-...`; confirmar que `referenceId` coincide con `ID` y que la ruta canónica continúa funcionando.
+9. Renombrar un tutorial histórico mediante el flujo autorizado y confirmar que su `referenceId` legacy no cambia y que la carga sigue resolviendo la fila física original.
+10. Confirmar que una referencia `tut-...` inexistente falla de forma segura y no cae a una búsqueda por título.
+11. Si reaparece el error, registrar sin PII: `contentType`, formato de `referenceId` (no el token OAuth), si `ID` físico existe, existencia de la fila en Tutorial, versión de deployments CATALOG/FEEDBACK y etapa exacta (init o submit). No repetir la subida real sin revisar el estado de YouTube para evitar vídeos duplicados.
+12. Registrar resultado y evidencia anonimizada en `Hallazgos_Beta.md`. Si no existe entorno/cuenta YouTube Beta autorizados, marcar los pasos de subida como NO EJECUTADOS.
+
+**Límites:** no subir vídeos reales de clientes, no utilizar OAuth/cuentas productivas, no aprobar solicitudes en producción, no cambiar permisos ni datos productivos. No añadir llamadas entre servicios Apps Script: el frontend envía la referencia estable de CATALOG a FEEDBACK.
