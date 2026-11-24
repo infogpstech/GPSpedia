@@ -347,7 +347,7 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 
 
 ## 16. Validación Beta diferida — MIG-026 ADMIN: contador de IDs LogosMarca
-**Estado: PENDIENTE DE BETA.** La migración local utiliza LogoIdReservations y mantiene la propiedad legacy como solo lectura durante el baseline; falta validar el proyecto ADMIN y la Spreadsheet aislada.
+**Estado: PENDIENTE DE BETA.** CI run 45366702261 aprobó 499 suites y 5,886 pruebas con 0 fallos; LogoIdIntegrity 18/18, AdminLogoWriteLockNonBlocking 6/6 y LogoIdReservationLedger 10/10. La migración local utiliza LogoIdReservations y mantiene la propiedad legacy como solo lectura durante el baseline; falta validar el proyecto ADMIN y la Spreadsheet aislada.
 
 - Ejecutar primero la sincronización segura del apartado 0. Usar exclusivamente proyecto ADMIN y Spreadsheet Beta desechables; no usar producción.
 - Crear manualmente la hoja `LogoIdReservations` con estos cinco encabezados exactos en fila 1: `recordType`, `reservationId`, `logoId`, `createdAt`, `schemaVersion`. Dejar la fila 2 vacía para META/BASELINE; las reservas comienzan en fila 3. No crear el esquema automáticamente ni cambiar el orden.

@@ -1869,3 +1869,38 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificacione
 - Se actualizaron pruebas de integridad de IDs, contrato de lock no bloqueante y runner; se añadió suite LogoIdReservationLedger y preparación Beta §16.
 - Estado: EN PROGRESO. Pendiente publicar el conjunto, ejecutar CI, revisar resultados/diff y cerrar registros con el SHA final.
 ================================================================================
+
+
+================================================================================
+CIERRE LOCAL — MIG-026 ADMIN-05 — CONTADOR LOGOSMARCA — 2026-11-24
+HEAD final de trabajo: 626f303790fcf30a53f8bc6b1e3ae93b4cb5a730
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Commits del subtramo:
+- 98cd42f24d — implementación del ledger y preparación de Beta/registros.
+- 2590369b73 — alineación inicial de la expectativa de prueba.
+- 4837f1acbc — inyección de dependencias del ledger en el harness de alta.
+- 2b7ef78652 — proveedor UUID en el harness.
+- 5b230e89ae — aislamiento de Drive/telemetría fuera del lock y lectura O(1) de la última reserva.
+- ee9c2897b1 — ajuste intermedio del contrato de prueba.
+- 626f303790 — corrección final de quoting en las pruebas del lock.
+
+Resultado:
+- LOGOS_MARCA_ID_COUNTER migrado al ledger LogoIdReservations (5 columnas); fila 2 META/BASELINE y reservas desde fila 3.
+- Baseline reanudable: high-water = máximo entre propiedad legacy y LogosMarca. Valida encabezados, IDs duplicados/malformados, contador legacy y read-back. La propiedad solo se lee en baseline; no hay setProperty/deleteProperty.
+- Las reservas son monotónicas, identificadas por UUID y confirmadas por read-back. Un ID reservado no se reutiliza aunque falle la escritura posterior de la fila.
+- El escaneo de LogosMarca se ejecuta antes del lock. El flujo ordinario consulta únicamente la última reserva; no recorre todo el ledger. ScriptLock usa tryLock(0); no hay waitLock ni esperas temporizadas en ADMIN.
+- Drive, compensación de archivos y telemetría se ejecutan fuera de la sección crítica. El lock cubre únicamente baseline/reserva y escritura/confirmación de la fila.
+
+Validación local:
+- LogoIdIntegrity: 18/18 PASS.
+- AdminLogoWriteLockNonBlocking: 6/6 PASS.
+- LogoIdReservationLedger: 10/10 PASS.
+- CI run 45366702261: 499 suites, 5,886 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- GitHub Pages run 45366700363: SUCCESS.
+- HEAD remoto verificado: 626f303790fcf30a53f8bc6b1e3ae93b4cb5a730. HEAD base verificado sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Pendiente Beta: preparar LogoIdReservations con encabezados exactos, probar baseline/recuperación, concurrencia real, IDs manuales y respuesta perdida; no borrar LOGOS_MARCA_ID_COUNTER instalada sin autorización. Ver Tareas_Beta.md §16.
+
+Siguiente paso de MIG-026: búsqueda estática global final en backend, frontend, manifiestos y documentación; clasificar cada coincidencia y comprobar que no quede configuración local prohibida. No iniciar otra familia de estado ADMIN en paralelo.
+================================================================================

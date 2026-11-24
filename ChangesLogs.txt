@@ -488,3 +488,11 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Reservas monotónicas con UUID, read-back y high-water; los IDs reservados no se reutilizan si falla la escritura posterior de la fila de logotipo.
 - El escaneo de IDs se realiza antes del lock; el lock fail-fast protege solo la reserva/escritura de Spreadsheet. Las operaciones Drive permanecen fuera de la sección crítica.
 - Pruebas y runner actualizados; se añadió LogoIdReservationLedger y se amplió la cobertura de no bloqueo. CI pendiente al publicar.
+
+
+### 2026-11-24 — Cierre local MIG-026 ADMIN-05: contador LogosMarca
+- CI final run 45366702261: 499 suites, 5,886 pruebas aprobadas, 0 fallos; sintaxis PASS. Pages run 45366700363 SUCCESS.
+- LogoIdIntegrity 18/18, AdminLogoWriteLockNonBlocking 6/6 y LogoIdReservationLedger 10/10 PASS.
+- La sección crítica usa tryLock(0), sin espera; lectura del catálogo antes del lock y consulta O(1) de la última reserva en el flujo normal. Drive, compensaciones y telemetría fuera del lock.
+- La propiedad legacy solo se lee durante baseline; no se escribe ni elimina. No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas.
+- Resultado: MIG-026 ADMIN-05 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente paso: búsqueda estática global final de MIG-026.

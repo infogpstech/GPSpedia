@@ -365,4 +365,13 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - El baseline calcula el high-water como el máximo entre la propiedad legacy y los IDs válidos de LogosMarca, valida duplicados/formato, es reanudable y confirma el marcador `logo_id_counter_baseline_v1` por read-back. La propiedad legacy solo se lee durante el baseline; no se escribe ni elimina.
 - Las reservas usan IDs monotónicos, UUID de reserva, read-back y high-water persistente. Una reserva confirmada no se reutiliza aunque falle la escritura posterior de la fila de logotipo; los huecos son válidos.
 - El escaneo del catálogo se realiza antes de adquirir ScriptLock; si cambia la última fila, se recalcula. El lock protege baseline/reserva y escritura de la fila, usa exclusivamente `tryLock(0)` y se libera en finally. Drive se ejecuta antes o después de la sección crítica, nunca dentro de ella.
-- Estado local de implementación: código y suites añadidos; CI pendiente. No se creó la hoja real ni se desplegó Apps Script. La validación real, concurrencia, respuesta perdida y preservación de la propiedad legacy quedan pendientes de Beta.
+- CI run 45366702261: 499 suites, 5,886 pruebas aprobadas y 0 fallos; LogoIdIntegrity 18/18, AdminLogoWriteLockNonBlocking 6/6 y LogoIdReservationLedger 10/10. Pages run 45366700363 SUCCESS. No se creó la hoja real ni se desplegó Apps Script. La validación real, concurrencia, respuesta perdida y preservación de la propiedad legacy quedan pendientes de Beta.
+
+
+### Cierre MIG-026 ADMIN-05 — contador LogosMarca — 2026-11-24
+
+- Estado de familias operativas tras la migración: AUTH 0, WRITE 1, ADMIN 0 (1 familia operativa pendiente en el inventario actual). Las familias legacy migradas permanecen como lectores de baseline cuando corresponde.
+- El flujo ordinario de LogosMarca ya no consulta `PropertiesService`; solo el baseline inicial lee `LOGOS_MARCA_ID_COUNTER`. No se escribe ni elimina la propiedad legacy.
+- El ScriptLock se adquiere con `tryLock(0)`, sin esperas. El escaneo de IDs se hace antes del lock; el ledger consulta únicamente la última reserva en operación ordinaria. Drive, compensaciones y telemetría quedan fuera del lock.
+- CI run 45366702261: 499 suites, 5,886 pruebas aprobadas, 0 fallos; sintaxis PASS. GitHub Pages run 45366700363 SUCCESS.
+- La hoja LogoIdReservations, el baseline real y la concurrencia multi-ejecución permanecen pendientes de Beta aislada. No se modificaron propiedades, hojas, deployments ni datos instalados.
