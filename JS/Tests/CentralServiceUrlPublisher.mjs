@@ -13,6 +13,7 @@ assert.ok(start >= 0 && end > start, "No se encontró el publicador AUTH de endp
 const publisherSource = auth.slice(start, end);
 
 const keys = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+const editableKeys = ["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
 const headers = {
     ConfiguracionControl: ["control_key","schema_version","active_revision","publication_state","published_at","updated_by","change_reason"],
     Servicios: ["config_revision","service_key","endpoint_url","enabled","contract_version","min_client_version","health_action","updated_at","updated_by","change_reason"],
@@ -130,7 +131,7 @@ check("actualiza únicamente URL y metadatos de auditoría, conserva contrato y 
     assert.equal(fixture.sheets.Servicios.rows.find(item=>item[0]===""&&item[1]==="CATALOG")[2],changed.CATALOG);
 });
 
-check("no crea revisión cuando las seis URL ya coinciden",()=>{
+check("no crea revisión cuando las URL ya coinciden",()=>{
     const context=createContext(), urls=validUrls();
     context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
     const historyCount=fixture.sheets.ConfiguracionHistorial.rows.length;
@@ -190,7 +191,17 @@ check("AUTH exige sesión para consultar y actualizar endpoints y el frontend us
     assert.match(panel,/configurationRefreshPending/);
     assert.match(panel,/console\.warn/);
     assert.doesNotMatch(panel,/error\s*&&\s*error\.message/);
-    for(const key of keys) assert.match(html,new RegExp('central-service-url-'+key.toLowerCase()));
+    for(const key of editableKeys) assert.match(html,new RegExp('central-service-url-'+key.toLowerCase()));
+    assert.doesNotMatch(html,/id="central-service-url-auth"/);
+    assert.match(html,/AUTH no se modifica aquí|AUTH se administra directamente en el frontend/);
+    assert.match(ui,/const keys = \["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"\]/);
+    assert.match(api,/CENTRAL_EDITABLE_SERVICE_KEYS_ = Object\.freeze\(\["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"\]\)/);
+    assert.match(api,/únicamente las cinco URL editables/);
+    const getHandler=auth.slice(auth.indexOf("function handleGetCentralServiceUrls_"),auth.indexOf("function publishCentralConfigurationFromServiceUrlDraft"));
+    assert.match(getHandler,/var complete = \{ AUTH: current\.AUTH \}/);
+    assert.match(getHandler,/getAuthCentralServiceUrlMap_\(spreadsheet, false\)/);
+    assert.match(getHandler,/Object\.keys\(submitted\)\.sort\(\)\.join\(","\) !== editableKeys\.slice\(\)\.sort\(\)\.join\(","\)/);
+    assert.match(getHandler,/AUTH se administra directamente en el frontend/);
     assert.match(html,/btn-save-central-service-urls/);
 });
 
