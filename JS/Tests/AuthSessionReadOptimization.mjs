@@ -66,7 +66,7 @@ assert.ok(callbackAt >= 0 && clearAt > callbackAt,
 assert.match(revokeAll, /return \{ rows, tokens, revokedSessions, pendingRows/);
 
 const reconcile = block("reconcileRoleRevocationUnderLock_");
-assert.match(reconcile, /readTargetRows=\(\)=>Number\.isInteger\(knownRowIndex\)/);
+assert.match(reconcile, /readTargetRows\s*=\s*\(\)\s*=>\s*Number\.isInteger\(knownRowIndex\)/);
 assert.equal(count(reconcile, /\.getDataRange\(\)/g), 1,
     "La reconciliación con fila conocida debe evitar la segunda lectura completa de Users.");
 assert.match(reconcile, /revokeAllUserSessionsUnderLock_\(sessionsSheet,userId,[\s\S]*?revokeSharedUserSessionContexts_/);
