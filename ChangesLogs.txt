@@ -785,3 +785,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - GitHub Pages run `45486258242`: SUCCESS.
 - HEAD de trabajo: `465194319f7e1c8b21aff181afea3142ef8384a9`. Base protegida sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Validación visual de navegador y validación remota Beta pendientes. No se desplegaron Apps Script ni se modificaron recursos externos.
+
+
+### Addendum AUG-146 — procedimiento Beta — 2026-11-24
+
+- Se añadió Tareas_Beta.md §20 con la comprobación visual de AUG-146 en escritorio y móvil, ayuda contextual, controles, mensajes y criterios para registrar NO EJECUTADO cuando falte navegador/viewport.
+- La ejecución operativa de endpoints continúa bajo Tareas_Beta.md §19. No se desplegaron Apps Script ni se modificaron recursos externos.
+- Commit del procedimiento Beta: 09d5dc2bf73c21c99d71b16a94eed0b8c46f936b. HEAD de trabajo tras el registro: 09d5dc2bf73c21c99d71b16a94eed0b8c46f936b. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- CI run 45486734920: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages run 45486735045: SUCCESS.
