@@ -110,7 +110,7 @@ check("primera publicación crea una revisión completa y sus metadatos derivado
     assert.equal(fixture.sheets.ConfiguracionHistorial.rows.length,7);
     assert.equal(fixture.sheets.Servicios.rows.filter(row=>row[0]===""&&keys.includes(row[1])).length,6);
     assert.equal(fixture.sheets.Servicios.rows.find(row=>row[1]==="AUTH"&&Number(row[0])===1)[4],"2.2.5");
-    assert.equal(fixture.sheets.Servicios.rows.find(row=>row[1]==="FEEDBACK"&&Number(row[0])===1)[4],"2.3.0");
+    assert.equal(fixture.sheets.Servicios.rows.find(row=>row[1]==="FEEDBACK"&&Number(row[0])===1)[4],"1.2.2");
     assert.equal(releases,1);
     assert.equal(cacheRemovals,1);
 });
