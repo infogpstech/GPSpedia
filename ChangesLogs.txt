@@ -549,3 +549,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Comparación de IDs de la pantalla base: los 18 IDs heredados ausentes tienen sustituciones identificadas en las superficies activas; el inventario de pantallas conserva 335 declaraciones de controles.
 - CI run 45388156117: 511 suites, 6,035 pruebas aprobadas, 0 fallos; MIG027FunctionalParity 8/8 PASS; sintaxis PASS.
 - Validación de servicios reales y recursos externos no ejecutada; permanece en MIG-030/Beta.
+
+
+### 2026-11-24 — MIG-028 seguridad, rendimiento y regresión
+
+- Se creó `JS/Tests/MIG028SecurityPerformanceRegression.mjs` (9/9 PASS) y se integró el grupo 49 MIG028 en `JS/Tests/RunServiceTests.mjs`.
+- La suite verifica el router central sin revalidación por acción, caché central single-flight/stale/fail-closed, revocación e invalidación por servicio sin transmitir tokens, actor confiable y RBAC, locks no bloqueantes/idempotencia, tolerancia a fallos de HTTP/red/JSON/servicios, telemetría local y comparación responsable con MIG-005.
+- CI final run 45390513381, commit 8ccc2a761ebec3f03b2ddcb8ddc0390cac25d2ac: SUCCESS; 512 suites, 6,044 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- Comparación de CI: MIG-005 306 suites/3,581 pruebas/~30 s; MIG-028 512 suites/6,044 pruebas/~41 s. Esta duración corresponde al runner y no es latencia de la aplicación.
+- Las métricas de aplicación p50/p95, snapshot/delta, llamadas y operaciones reales Spreadsheet/Drive/YouTube siguen pendientes de Beta conforme a la línea base MIG-005. No se simularon mediciones reales.
+- No se desplegaron servicios Apps Script ni se alteraron propiedades, permisos, hojas, archivos o datos productivos.
