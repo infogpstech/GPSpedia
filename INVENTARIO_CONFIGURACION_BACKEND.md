@@ -220,3 +220,35 @@ Esta adenda prevalece sobre las ubicaciones y consumidores históricos descritos
 - Pruebas locales: `CentralConfigurationPublisherContract.mjs` 6/6 PASS; `RichTextGlobalPreference.mjs` 10/10 PASS; sintaxis de módulos modificados PASS en GitHub Actions.
 - No se verificó ni eliminó una propiedad instalada en Apps Script; la limpieza de propiedades antiguas y la prueba de publicación/lectura en deployments quedan para Beta autorizada.
 - La descripción histórica de la fila 10 y de la inspección inicial FEEDBACK (líneas anteriores) corresponde al estado previo a esta adenda; no representa el estado actual del código.
+
+
+### Adenda de reconciliación MIG-003 contra HEAD actual (2026-11-24)
+
+**Cobertura verificada:** se enumeró el árbol actual de JS/Services y se inspeccionaron los módulos existentes. Hay 9 archivos de servicio activos: Auth.js, write.js, catalog.js, feedback.js, admin.js, Utilities.js, InboxConversations.js, CentralConfigurationReader.js y SharedSessionActor.js. No existen como archivos activos independientes users.js, Coordinator.js ni SharedMutationClient.js; no deben seguir contándose como módulos vigentes. La funcionalidad de usuarios está integrada en el servicio AUTH y SharedSessionActor permanece como módulo común.
+
+**Uso actual de ScriptProperties:** 4 de los 9 módulos contienen accesos a PropertiesService.getScriptProperties(): AUTH (12 sitios), WRITE (2), CATALOG (1) y ADMIN (13). FEEDBACK, Utilities, InboxConversations, CentralConfigurationReader y SharedSessionActor no contienen acceso directo a ScriptProperties.
+
+**Familias vigentes identificadas por el código: 12**
+1. AUTH: secreto HMAC GPSpedia_PASSWORD_RECOVERY_SECRET_V1.
+2. AUTH: registros de idempotencia login_request_<requestId>.
+3. AUTH: marcadores role_revocation_pending_<userId>.
+4. WRITE: contador histórico GPSpedia_CORTES_LAST_ID.
+5. CATALOG: revisión GPSpedia_CATALOG_CHANGE_REVISION.
+6. CATALOG: eventos GPSpedia_CATALOG_CHANGE_EVENT_<revision>.
+7. ADMIN: auditoría GPSpedia_ADMIN_AUDIT_V1_<eventId>.
+8. ADMIN: ledger Safe Apply GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>.
+9. ADMIN: guardas temporales GPSpedia_ADMIN_LOCAL_OPERATION_GUARD_V1_<sha256(scope)>.
+10. ADMIN: estado reanudable de auditoría Drive GPSpedia_DRIVE_AUDIT_STATE_<auditId>.
+11. ADMIN: puntero por actor GPSpedia_DRIVE_AUDIT_LATEST_<hash(actor)>.
+12. ADMIN: contador LOGOS_MARCA_ID_COUNTER.
+
+Las familias de Coordinator/SharedMutation (secrets, URLs, leases, contexto/sesiones y telemetría) y la antigua preferencia FEEDBACK GPSpedia_RICH_TEXT_MODE_V1 ya no aparecen en el código activo revisado. Esto confirma ausencia de referencias en la rama, no limpieza de valores instalados en proyectos Apps Script.
+
+**IDs y apertura de Spreadsheet:**
+- AUTH, CATALOG y Utilities conservan la constante operativa SPREADSHEET_ID y usan openById para la base.
+- WRITE, ADMIN, FEEDBACK y CentralConfigurationReader usan getActiveSpreadsheet para la base operativa.
+- Las llamadas restantes a openById en WRITE/ADMIN corresponden a archivos de backup, copias o rollback, no al localizador de la base principal.
+- SharedSessionActor conserva un fallback condicional a SPREADSHEET_ID/openById si el consumidor no inyecta un proveedor. No se elimina porque exige adaptar y probar sus consumidores.
+- Las aperturas de Spreadsheet por ID en AUTH/CATALOG/Utilities y el fallback de SharedSessionActor siguen sujetos a la evidencia Beta de MIG-006/MIG-008; no se sustituyeron por getActiveSpreadsheet por inferencia.
+
+**Límites:** inspección estática de fuentes en GitHub; no se accedió a propiedades reales, deployments, hojas ni datos externos. Las 12 familias describen referencias de código, no garantizan que no existan claves huérfanas en proyectos desplegados.

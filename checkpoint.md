@@ -1508,3 +1508,20 @@ Siguiente paso:
 1. Continuar MIG-026 con la siguiente dependencia local segura, sin asumir que los proyectos Web App obtienen Spreadsheet activa hasta contar con evidencia.
 2. Mantener las verificaciones de deployments/PropertiesService para Beta.
 ================================================================================
+
+
+================================================================================
+RECONCILIACIÓN ESTÁTICA MIG-003 — MIG-026 — 2026-11-24
+Rama: GPSpedia2.2.5_work
+HEAD de partida: b943119269a7b9f7cd90eff6546cd279ec39ec76
+
+- Enumerados los archivos activos de JS/Services: 9 módulos; users.js, Coordinator.js y SharedMutationClient.js no están presentes como módulos independientes.
+- Confirmado acceso a ScriptProperties en 4 módulos: AUTH, WRITE, CATALOG y ADMIN. Se clasificaron 12 familias vigentes; las familias Coordinator/SharedMutation y rich_text_mode local no aparecen ya en el código activo.
+- AUTH/CATALOG/Utilities conservan SPREADSHEET_ID para su Spreadsheet operativa; WRITE/ADMIN/FEEDBACK/CentralConfigurationReader usan Spreadsheet activa. openById en WRITE/ADMIN se limita a backups/copias/rollback. SharedSessionActor conserva fallback condicional.
+- No se asumió que getActiveSpreadsheet funcione en Web Apps de AUTH/CATALOG/Utilities. MIG-006/MIG-008 requieren evidencia Beta real antes de cambiar esos accesos.
+- No se accedió a Apps Script desplegado, PropertiesService instalado, Spreadsheet ni Drive; tampoco se borraron valores externos.
+
+Resultado: reconciliación estática MIG-003 COMPLETADA; validación de valores huérfanos y contexto de ejecución diferida a Beta. MIG-026 sigue EN PROGRESO; no iniciar MIG-027.
+
+Siguiente paso: continuar con las dependencias locales de MIG-026 que no requieran asumir comportamiento de Web Apps ni migrar ledgers fuera de sus tareas específicas.
+================================================================================

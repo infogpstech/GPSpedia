@@ -375,3 +375,10 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Se añadieron/ajustaron contratos de publicación, caché global y pruebas Beta; se integró RichTextGlobalPreference en el runner MIG026.
 - Validación CI: sintaxis de módulos modificados PASS; CentralConfigurationPublisherContract 6/6 PASS; RichTextGlobalPreference 10/10 PASS; regresión 4,687 pruebas PASS con un fallo preexistente en GP-PERF FEEDBACK/Inbox (contrato que prohíbe locks en FEEDBACK, contradicho por el código existente). El mismo fallo exacto está presente en run 45291268637, anterior a estos cambios.
 - No se desplegaron proyectos Apps Script ni se accedió/modificó PropertiesService, Spreadsheet, Drive o datos externos. La eliminación física de una propiedad instalada y las verificaciones de deployment quedan para Beta.
+
+
+### 2026-11-24 — MIG-026: reconciliación estática del inventario MIG-003
+- Se verificó el árbol vigente de servicios: 9 módulos activos; users.js, Coordinator.js y SharedMutationClient.js no existen como módulos independientes.
+- Se confirmó que AUTH, WRITE, CATALOG y ADMIN son los cuatro módulos con referencias a ScriptProperties; se identificaron 12 familias vigentes de claves/estado. Las antiguas familias Coordinator/SharedMutation y la preferencia local rich_text_mode ya no aparecen en el código activo revisado.
+- Se actualizó la clasificación de acceso a Spreadsheet: AUTH/CATALOG/Utilities conservan el ID operativo; WRITE/ADMIN/FEEDBACK/CentralConfigurationReader usan Spreadsheet activa; las aperturas por ID de backup/rollback no se clasifican como IDs de base. SharedSessionActor conserva fallback condicional.
+- La inspección es estática: no se leyeron ni borraron propiedades instaladas ni se probaron deployments. MIG-006/MIG-008 siguen siendo dependencias Beta para validar contexto activo.
