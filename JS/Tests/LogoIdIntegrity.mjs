@@ -186,7 +186,12 @@ function addLogoHarness(options={}){
   LockService:{getScriptLock:()=>lock},
   SpreadsheetApp:{flush,CopyPasteType:{PASTE_FORMAT:"PASTE_FORMAT",PASTE_DATA_VALIDATION:"PASTE_DATA_VALIDATION"}},
   PropertiesService:{getScriptProperties:()=>properties},
-  LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER"
+  LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER",
+  LOGO_ID_RESERVATIONS_SHEET_NAME_:"LogoIdReservations",
+  LOGO_ID_RESERVATIONS_HEADERS_:["recordType","reservationId","logoId","createdAt","schemaVersion"],
+  LOGO_ID_RESERVATION_BASELINE_PENDING_:"pending",
+  LOGO_ID_RESERVATION_BASELINE_VERSION_:"logo_id_counter_baseline_v1",
+  LOGO_ID_RESERVATION_SCHEMA_VERSION_:1
  };
  const fn=new Function(...Object.keys(deps),ledgerHelpers.map(extract).join(String.fromCharCode(10))+String.fromCharCode(10)+extract("getLogoCategoryCandidatesFromCortesRows_")+String.fromCharCode(10)+extract("buildCanonicalLogoDestination_")+String.fromCharCode(10)+extract("copyAdminRowPresentationOnly_")+String.fromCharCode(10)+extract("validateLogoImagePayload_")+String.fromCharCode(10)+extract("handleAddLogo")+String.fromCharCode(10)+"return handleAddLogo;")(...Object.values(deps));
  return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"iVBORw0KGgo=",filename:options.filename||"logo.png",mimeType:options.mimeType||"image/png"},()=>{}),
