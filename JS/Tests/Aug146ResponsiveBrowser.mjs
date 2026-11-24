@@ -268,13 +268,13 @@ try {
       const label = developerModal.locator('label[for="dev-tab-' + tabId + '"]');
       await label.click();
       check(await radio.isChecked(), profile.name + ": pestaña " + tabId + " seleccionable");
-      const labelStates = await developerModal.locator(".dev-tab-link").evaluateAll(labels =>
+      const labelStates = await developerModal.locator(".dev-tab-link").evaluateAll((labels, activeTabId) =>
         labels.map(item => ({
-          active: item.htmlFor === "dev-tab-" + tabId,
+          active: item.htmlFor === "dev-tab-" + activeTabId,
           maxWidth: getComputedStyle(item.querySelector("span")).maxWidth,
           opacity: getComputedStyle(item.querySelector("span")).opacity,
           iconVisible: Boolean(item.querySelector("i") && getComputedStyle(item.querySelector("i")).display !== "none")
-        }))
+        })), tabId
       );
       check(labelStates.every(state => state.iconVisible &&
         (state.active ? state.opacity === "1" : state.opacity === "0")),
