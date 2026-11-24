@@ -1329,7 +1329,7 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 
 
 ### 22.1 Cierre de validación MIG-012 — 2026-11-23
-- El mapa canónico actual contiene 123 acciones y seis servicios: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
+- El mapa canónico actual contiene 125 acciones y seis servicios: AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
 - Las acciones de usuarios `getUsers`, `createUser` y `updateProfile` son propiedad de AUTH. El servicio independiente USERS fue retirado del código versionado.
 - El registro central y su caché pública requieren seis servicios. El lector ignora temporalmente la fila histórica USERS hasta el cutover Beta; no se alteró el registro remoto.
 - Regresión CI Node.js 22: run 45222509966 — 305 suites, 3,554 pruebas, 0 fallos. GitHub Pages build/deploy: run 45222508791 — SUCCESS.
@@ -1393,14 +1393,16 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 
 ### 22.3 Reconciliación actual del mapa frontend — 2026-11-24
 
-La revisión del objeto completo `ACTION_TO_SERVICE_MAP` en el HEAD vigente identifica **123 acciones** en seis servicios. La distribución actual es: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45. El conteo se obtiene de las entradas del objeto completo, no de las rutas auxiliares ni de las operaciones internas que no están en el mapa.
+La revisión del objeto completo `ACTION_TO_SERVICE_MAP` en el HEAD vigente identifica **125 acciones** en seis servicios. La distribución actual es: AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45. El conteo se obtiene de las entradas del objeto completo, no de las rutas auxiliares ni de las operaciones internas que no están en el mapa.
 
-Tres acciones vigentes no aparecían en la tabla histórica de §9 y se agregan aquí como adenda, sin reescribir la extracción original:
+Cinco acciones vigentes no aparecían en la tabla histórica de §9 y se agregan aquí como adenda, sin reescribir la extracción original:
 
 | Acción | Servicio | Handler / ejecución | Consumidor / finalidad |
 |---|---|---|---|
 | `getPublicConfiguration` | AUTH | Ruta pública de configuración en `doPost` | `api-config.js`; bootstrap de lectura de configuración central, sin credenciales de usuario. |
 | `publishCatalogReset` | CATALOG | `publishCatalogResetForActor_` | Coordinación desde `api-config.js` después de mutaciones que requieren reconciliación completa del catálogo. |
 | `invalidateRichTextModeCache` | FEEDBACK | Ruta de invalidación protegida para Desarrollador | `api-config.js`; invalidación de caché local después de publicar la preferencia global desde ADMIN. |
+| `getCentralServiceUrls` | AUTH | `handleGetCentralServiceUrls_`; sesión y rol Desarrollador obligatorios | Modal de endpoints; carga las seis URL directamente desde el bootstrap AUTH incluso antes de la primera publicación. |
+| `updateCentralServiceUrls` | AUTH | `handleUpdateCentralServiceUrls_`; sesión y rol Desarrollador obligatorios | Modal de endpoints; valida las seis URL y publica una revisión completa con historial desde AUTH. |
 
 Las tres acciones tienen ruta backend identificada y consumidor explícito. No representan controles de UI adicionales ni habilitan coordinación backend→backend: las secuencias de publicación e invalidación se ejecutan desde el frontend. La matriz de §§9–19 conserva su valor histórico; esta adenda es la referencia para el mapa vigente.
