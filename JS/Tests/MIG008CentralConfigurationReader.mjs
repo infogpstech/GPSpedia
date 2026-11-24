@@ -33,7 +33,7 @@ function makeDatabase() {
     ];
     const calls = {reads:0};
     const database = {
-        getId() { return "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3Os"; },
+        getId() { return "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os"; },
         getSheetByName(name) {
             if (!rows[name]) return null;
             return {getDataRange() { calls.reads++; return {getValues() { return rows[name].map(row => row.slice()); }}; }};
