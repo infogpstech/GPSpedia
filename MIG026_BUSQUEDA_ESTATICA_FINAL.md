@@ -89,3 +89,17 @@ Se añade `JS/Tests/MIG026StaticConfigSearch.mjs` para mantener como contrato la
 - CI run 45370448353: 499 suites, 5,889 pruebas aprobadas y 0 fallos; sintaxis PASS.
 - GitHub Pages run 45370445917: SUCCESS.
 - HEAD auditado: 5d297cca14bc00bc1238451c6bd3098cc40983b5. Rama base protegida sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+## Adenda — vinculación explícita de recursos — 2026-11-24
+
+La búsqueda estática y el contrato se actualizan para reflejar la decisión expresa del propietario. El estado vigente de la rama contiene dos IDs de recursos autorizados temporalmente; no son credenciales ni endpoints de interconexión.
+
+- Spreadsheet principal: `1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os`, declarada como `GPSpediaSpreadsheetId_`.
+- Carpeta raíz Drive Cortes: `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2`, declarada como `GPSpediaCortesRootFolderId_`.
+- Los seis servicios usan `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)`; WRITE, FEEDBACK y ADMIN resuelven además la carpeta raíz por ID y conservan las validaciones de nombre/jerarquía.
+- No se añadieron URLs de otros servicios, claves, tokens, secretos ni propiedades Apps Script. La excepción temporal queda documentada en NORMAS §17.1 y se retira cuando se eliminen los módulos Apps Script del repositorio.
+- Contrato MIG026StaticConfigSearch: 10/10 PASS. CI run 45444136611: 514 suites, 6,070 pruebas, 0 fallos; sintaxis PASS.
+- Las comprobaciones reales de permisos, identidad de ejecución, lectura/escritura y carpeta Drive quedan pendientes de Beta. No se desplegó ni modificó ningún recurso externo.
+
+Esta adenda prevalece sobre las secciones históricas de este informe que indicaban retirar los IDs y usar `getActiveSpreadsheet()`.
