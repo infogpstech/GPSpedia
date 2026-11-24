@@ -6323,3 +6323,279 @@ textarea.rich-text-source[hidden] { display:none !important; }
     min-height:32px;
     padding:0 0 1px;
 }
+
+
+/* AUG-146 — consola compacta, controles alineados y encabezado de ficha corregido. */
+#dev-tools-modal .dev-tools-modal-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-console-shared {
+    flex: 0 0 24%;
+    min-height: 136px;
+    max-height: 28%;
+}
+#dev-tools-modal .dev-console-shared .dev-card-heading {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 0;
+}
+#dev-tools-modal .dev-console-shared .dev-card-heading h4 {
+    flex: 0 0 auto;
+    margin: 0;
+    white-space: nowrap;
+}
+#dev-tools-modal #btn-clear-console-log,
+#dev-tools-modal #btn-copy-console-log {
+    display: inline-flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-width: 36px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    font-size: 0;
+}
+#dev-tools-modal #btn-clear-console-log i,
+#dev-tools-modal #btn-copy-console-log i {
+    font-size: .9rem;
+}
+#dev-tools-modal .dev-terminal-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+#dev-tools-modal .dev-terminal-input-shell {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 38px;
+    padding: 0 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg, var(--card-bg));
+}
+#dev-tools-modal .dev-terminal-input-shell:focus-within {
+    border-color: var(--accent-color);
+    outline: 2px solid color-mix(in srgb, var(--accent-color) 22%, transparent);
+}
+#dev-tools-modal .dev-terminal-input-shell .dev-terminal-prompt {
+    flex: 0 0 auto;
+    font-family: monospace;
+    font-weight: 800;
+}
+#dev-tools-modal .dev-terminal-input-shell .dev-input {
+    flex: 1 1 auto;
+    width: auto !important;
+    min-width: 0;
+    height: 36px;
+    min-height: 36px;
+    margin: 0;
+    padding: 5px 0;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    background: transparent;
+}
+#dev-tools-modal .dev-terminal-row #btn-terminal-send {
+    display: inline-flex;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    min-width: 40px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    font-family: monospace;
+    font-size: .9rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+#dev-tools-modal .dev-panel-heading-visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+@media (max-width: 760px) {
+    #dev-tools-modal .dev-console-shared {
+        flex-basis: 26%;
+        min-height: 128px;
+        max-height: 30%;
+    }
+    #dev-tools-modal .dev-console-shared .dev-card-heading {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
+    }
+    #dev-tools-modal .dev-console-shared .dev-card-heading h4 {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+    #dev-tools-modal .dev-console-shared .dev-console-output {
+        height: 64px;
+        min-height: 54px;
+    }
+    #dev-tools-modal .dev-terminal-row {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+    #dev-tools-modal .dev-terminal-input-shell {
+        flex: 1 1 auto;
+        width: auto;
+    }
+    #dev-tools-modal .dev-terminal-row #btn-terminal-send {
+        flex: 0 0 38px;
+        width: 38px;
+        min-width: 38px;
+    }
+}
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-console-shared {
+        flex-basis: 27%;
+        min-height: 124px;
+        max-height: 30%;
+    }
+    #dev-tools-modal .dev-console-shared .dev-card-heading {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+    #dev-tools-modal .dev-console-shared .dev-card-heading button {
+        flex: 0 0 34px;
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        min-height: 34px;
+        padding: 0;
+    }
+    #dev-tools-modal .dev-terminal-row,
+    #dev-tools-modal .dev-action-row,
+    #dev-tools-modal .dev-backup-id-row {
+        flex-direction: row;
+        align-items: center;
+    }
+    #dev-tools-modal .dev-terminal-row .dev-terminal-input-shell {
+        min-width: 0;
+    }
+    #dev-tools-modal .dev-terminal-row .dev-input {
+        width: auto !important;
+        min-width: 0;
+        flex-basis: auto;
+    }
+}
+
+/* AUG-146 — encabezado de detalle: márgenes simétricos, edición y estado de guardado. */
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
+    box-sizing: border-box;
+    padding: 6px 0 0 6px !important;
+    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-rows: 40px 48px auto;
+    column-gap: 6px;
+    row-gap: 0;
+    margin-bottom: 4px;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+    transform: none !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    line-height: 30px;
+    transform: none !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title-input {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    height: 32px;
+    min-height: 32px;
+    transform: none !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
+    grid-column: 2;
+    grid-row: 1;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-divider {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 6px 6px 2px !important;
+    transform: none !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-saving-indicator {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    justify-self: start;
+    min-height: 16px;
+    margin: 0;
+    padding: 0;
+    font-size: .76rem;
+    line-height: 1.1;
+    z-index: 1;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-meta {
+    margin-top: -8px;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] {
+    grid-template-rows: 40px 26px auto auto;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-text,
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-title-input {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    transform: none !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-divider {
+    grid-row: 4;
+    margin-top: 6px !important;
+    transform: none !important;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-saving-indicator {
+    grid-column: 2;
+    grid-row: 2;
+}
+@media (max-width: 560px) {
+    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
+        padding-left: 6px !important;
+        grid-template-columns: max-content minmax(0, 1fr);
+        grid-template-rows: 40px 48px auto;
+        column-gap: 6px;
+        margin-bottom: 4px;
+    }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-title,
+    #modalDetalle[data-modal-type="corte"] .detail-modal-title-text,
+    #modalDetalle[data-modal-type="corte"] .detail-modal-title-input,
+    #modalDetalle[data-modal-type="corte"] .detail-modal-divider {
+        transform: none !important;
+    }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-saving-indicator {
+        grid-column: 2;
+        grid-row: 2;
+    }
+}
