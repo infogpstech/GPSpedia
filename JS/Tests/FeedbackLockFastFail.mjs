@@ -11,7 +11,7 @@ assert.doesNotMatch(inbox,/\.waitLock\(/);
 assert.match(inbox,/LockService\.getScriptLock\(\)/);
 assert.match(inbox,/\.tryLock\(0\)/);
 assert.ok([...inbox.matchAll(/\.tryLock\(([^)]*)\)/g)].every(m=>m[1].trim()==="0"));
-assert.match(inbox,/function runInboxConversationAction_\(callback\)/);
+assert.match(inbox,/function runInboxConversationAction_\(callback, mutating\)/);
 const suggestYear=extract(feedback,"handleSuggestYear");
 assert.ok(!suggestYear.includes("LockService.getScriptLock()")&&!suggestYear.includes("acquireFeedbackScriptLock_("));
 assert.ok(!extract(feedback,"handleAddTutorial").includes("acquireFeedbackScriptLock_("),"El alta de tutoriales usa reservas append-only y no debe adquirir ScriptLock.");

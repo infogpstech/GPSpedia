@@ -120,6 +120,8 @@ assert.deepEqual(requestFromFrontend(payload, "OP-E2E-1", hashA), { status: "suc
 assert.equal(lockAcquires, 1, "Las reservas ordinarias no vuelven a adquirir ScriptLock.");
 assert.deepEqual(requestFromFrontend(payload, "OP-E2E-2", hashB), { status: "success", vehicleId: 5 }, "Una operación distinta debe recibir un ID nuevo con el contrato de respuesta actual.");
 assert.throws(() => requestFromFrontend(payload, "OP-E2E-1", hashB), /otro contenido/);
-assert.equal(ledger.rows.length, 3, "Debe existir una reserva canónica por operación");
-assert.deepEqual(ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+assert.equal(ledger.rows.length, 4, "Debe existir el encabezado, un baseline y una reserva canónica por operación.");
+assert.equal(ledger.rows[1][0], "OP-BASELINE-CORTES-LAST-ID-V1", "El baseline debe ser único y conservar el high-water mark histórico.");
+assert.equal(ledger.rows[1][2], 3);
+assert.deepEqual(ledger.rows.slice(2).map(row => row[2]), [4, 5]);
 console.log("VehicleIdAllocationEndToEnd: 1/1 PASS — frontend→WRITE, baseline fail-fast único, respuesta perdida y recuperación por opId");
