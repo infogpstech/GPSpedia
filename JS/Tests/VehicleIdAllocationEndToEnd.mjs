@@ -90,7 +90,7 @@ const allocateInWrite = new Function(
 )(
     { id: 1 }, { CORTES: "Cortes" },
     { getScriptProperties: () => properties },
-    { getScriptLock: () => ({ tryLock(timeout) { assert.equal(timeout, 0); lockAcquires++; if (lockHeld) return false; lockHeld = true; return true; }, releaseLock() { assert.equal(lockHeld, true); lockHeld = false; } }) },
+    { getScriptLock: () => ({ tryLock(timeout) { assert.equal(timeout, 0); lockAcquires++; if (lockHeld) return false; lockHeld = true; return true; }, hasLock() { return lockHeld; }, releaseLock() { assert.equal(lockHeld, true); lockHeld = false; } }) },
     { flush() { if (ledger) ledger.recalculate(); } },
     Utilities, () => spreadsheet,
     payload => {

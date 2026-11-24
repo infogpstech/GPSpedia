@@ -3,7 +3,7 @@ import {readFileSync} from "node:fs";
 const feedback=readFileSync(new URL("../Services/feedback.js",import.meta.url),"utf8");
 const inbox=readFileSync(new URL("../Services/InboxConversations.js",import.meta.url),"utf8");
 function extract(source,name,next){const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"Missing "+name);const end=next?source.indexOf("\nfunction "+next+"(",start+10):source.indexOf("\nfunction ",start+10);return source.slice(start,end>start?end:source.length);}
-assert.match(feedback,/function acquireFeedbackScriptLock_/);
+assert.match(feedback,/function withYouTubeUploadReservationLock_/);
 assert.match(feedback,/lock\.tryLock\(0\)/);
 assert.doesNotMatch(feedback,/\.waitLock\(/);
 assert.ok([...feedback.matchAll(/\.tryLock\(([^)]*)\)/g)].every(m=>m[1].trim()==="0"));
