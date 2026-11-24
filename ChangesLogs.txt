@@ -539,3 +539,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 - Publicación del refuerzo de privacidad en la rama de trabajo: commit de código/pruebas `9d489acaa308d12ff0b5ceff164bed146c14dfa9`; archivos afectados: `JS/Frontend/auth.js`, `JS/Frontend/ui.js` y `JS/Tests/AuthErrorPrivacy.mjs`. Se incorporó el requisito normativo §19 y se actualizaron los registros de continuidad.
+
+
+### 2026-11-24 — MIG-027 suite de paridad funcional
+
+- Se añadió `JS/Tests/MIG027FunctionalParity.mjs` con 8 verificaciones de mapa de acciones, trazabilidad documental, dispatchers/handlers/consumidores, RBAC, sustitución de controles e integración de suites.
+- El mapa vigente se verificó en 123 acciones: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
+- Se integró el grupo 48 MIG027 en `RunServiceTests.mjs`, incorporando pruebas de carga/aprobación YouTube (MIG-016), acciones Spreadsheet (MIG-022) y feed/caché/impresión de catálogo (MIG-023).
+- Comparación de IDs de la pantalla base: los 18 IDs heredados ausentes tienen sustituciones identificadas en las superficies activas; el inventario de pantallas conserva 335 declaraciones de controles.
+- CI run 45388156117: 511 suites, 6,035 pruebas aprobadas, 0 fallos; MIG027FunctionalParity 8/8 PASS; sintaxis PASS.
+- Validación de servicios reales y recursos externos no ejecutada; permanece en MIG-030/Beta.
