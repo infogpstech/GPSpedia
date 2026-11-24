@@ -1402,6 +1402,8 @@ Cinco acciones vigentes no aparecían en la tabla histórica de §9 y se agregan
 | `getPublicConfiguration` | AUTH | Ruta pública de configuración en `doPost` | `api-config.js`; bootstrap de lectura de configuración central, sin credenciales de usuario. |
 | `publishCatalogReset` | CATALOG | `publishCatalogResetForActor_` | Coordinación desde `api-config.js` después de mutaciones que requieren reconciliación completa del catálogo. |
 | `invalidateRichTextModeCache` | FEEDBACK | Ruta de invalidación protegida para Desarrollador | `api-config.js`; invalidación de caché local después de publicar la preferencia global desde ADMIN. |
+| `getCentralServiceUrls` | AUTH | `handleGetCentralServiceUrls_`; exige sesión y rol Desarrollador | Modal de endpoints; carga las seis URL directamente desde el bootstrap AUTH, incluso antes de la primera publicación. |
+| `updateCentralServiceUrls` | AUTH | `handleUpdateCentralServiceUrls_`; exige sesión y rol Desarrollador | Modal de endpoints; valida las seis URL y publica una revisión completa con historial desde AUTH. |
 | `getCentralServiceUrls` | AUTH | `handleGetCentralServiceUrls_`; sesión y rol Desarrollador obligatorios | Modal de endpoints; carga las seis URL directamente desde el bootstrap AUTH incluso antes de la primera publicación. |
 | `updateCentralServiceUrls` | AUTH | `handleUpdateCentralServiceUrls_`; sesión y rol Desarrollador obligatorios | Modal de endpoints; valida las seis URL y publica una revisión completa con historial desde AUTH. |
 
