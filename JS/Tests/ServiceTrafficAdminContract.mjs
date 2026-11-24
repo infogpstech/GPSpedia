@@ -11,7 +11,7 @@ assert.match(ui, /getBrowserServiceTrafficSnapshot/);
 assert.match(ui, /renderLocalServiceTrafficChart_/);
 assert.match(ui, /Solicitudes de este navegador/);
 assert.match(html, /Tráfico global coordinado · retirado/);
-assert.match(html, /No contaba todas las solicitudes HTTP/);
+assert.match(html, /No representa todas las solicitudes HTTP/);
 assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
 assert.doesNotMatch(html, /global-service-traffic-chart|btn-refresh-global-service-traffic/);
 assert.match(telemetry, /\["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"\]/);

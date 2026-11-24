@@ -69,7 +69,7 @@ const reconcile = block("reconcileRoleRevocationUnderLock_");
 assert.match(reconcile, /readTargetRows\s*=\s*\(\)\s*=>\s*Number\.isInteger\(knownRowIndex\)/);
 assert.equal(count(reconcile, /\.getDataRange\(\)/g), 1,
     "La reconciliación con fila conocida debe evitar la segunda lectura completa de Users.");
-assert.match(reconcile, /revokeAllUserSessionsUnderLock_\(sessionsSheet,userId,[\s\S]*?revokeSharedUserSessionContexts_/);
+assert.match(reconcile, /revokeAllUserSessionsUnderLock_\(\s*sessionsSheet\s*,\s*userId\s*,[\s\S]*?revokeSharedUserSessionContexts_/);
 assert.doesNotMatch(auth, /function getActiveSessionTokensForUserUnderLock_\(/,
     "El helper de escaneo duplicado debe permanecer eliminado.");
 

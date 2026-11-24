@@ -23,7 +23,7 @@ assert.doesNotMatch(telemetry, /COORDINATOR/);
 assert.doesNotMatch(invalidation, /COORDINATOR|UrlFetchApp|GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(ui, /Coordinator|globalServiceTraffic|getServiceTraffic/);
 assert.match(html, /Tráfico global coordinado · retirado/);
-assert.match(html, /No contaba todas las solicitudes HTTP/);
+assert.match(html, /No representa todas las solicitudes HTTP/);
 assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
 for (const source of activeServices) {
     assert.doesNotMatch(source, /GPSpedia_COORDINATOR_(?:URL|SECRET)|withSharedMutationLease_|createSharedMutationClient_/);

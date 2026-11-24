@@ -14,7 +14,7 @@ assert.match(ui, /renderLocalServiceTrafficChart_/);
 assert.doesNotMatch(main, /getServiceTraffic|getReplacedImages|getDriveStorage|getCortesImageFolders|auditDriveImagesInCortes/);
 assert.doesNotMatch(admin, /handleGetServiceTraffic_|getSharedServiceTraffic_/);
 assert.match(html, /Tráfico global coordinado · retirado/);
-assert.match(html, /No contaba todas las solicitudes HTTP/);
+assert.match(html, /No representa todas las solicitudes HTTP/);
 assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
 assert.doesNotMatch(html, /global-service-traffic-chart|btn-refresh-global-service-traffic/);
 console.log("AdminTrafficSurfaceContract: 12/12 PASS — salud directa y paridad de telemetría documentada");
