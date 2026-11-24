@@ -71,9 +71,9 @@ try {
       route.fulfill({ status: 204, contentType: "text/javascript", body: "" }));
     await page.route("https://cdnjs.cloudflare.com/**", route => route.abort());
     const fulfillSyntheticService = async route => {
-      let action = "";
-      try { action = String(route.request().postDataJSON()?.action || ""); } catch {}
-      if (action === "getActivityLogs") {
+      let requestBody = "";
+      try { requestBody = String(route.request().postData() || ""); } catch {}
+      if (requestBody.includes("getActivityLogs")) {
         return route.fulfill({ status: 200, contentType: "text/plain",
           body: JSON.stringify({
             status: "success",

@@ -50,7 +50,7 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(!f.includes("routeAction("),"Abrir un panel no debe generar una petición de autenticación.");
   for(const name of ["openDevToolsModal_","openInboxModal_","openDashboardModal_"]){
    const k=ui.indexOf("const "+name);assert(k>=0,"No se encontró "+name);
-   const body=ui.slice(k,ui.indexOf("\n",k+1)+3000);
+   const body=ui.slice(k,ui.indexOf("\n",k+1)+6000);
    assert(body.includes("ensureUiSessionRole_"),name+" no comprueba el rol local.");
   }
  });

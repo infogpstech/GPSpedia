@@ -6876,7 +6876,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
 @media (prefers-reduced-motion: reduce) {
     #dev-tools-modal .dev-tools-sidebar,
     #dev-tools-modal .dev-tab-link,
-    #dev-tools-modal .dev-tab-link span {
+    #dev-tools-modal .dev-tab-link span,
+    #audit-drive-modal .audit-drive-action-label {
         transition: none !important;
     }
 }

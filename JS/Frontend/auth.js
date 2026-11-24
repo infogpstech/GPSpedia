@@ -144,7 +144,7 @@ function reportCatalogFeedHeadError_(error) {
     if (alreadyReported) return;
     catalogFeedSetupNoticeLogged_ = true;
     try { sessionStorage.setItem(CATALOG_FEED_SETUP_NOTICE_KEY_, "1"); } catch (storageError) {}
-    console.info("[CATALOG] El feed incremental aún no está inicializado. Se continuará con una instantánea completa. En Beta, ejecuta initializeCatalogChangeFeedSheets() una sola vez en el proyecto CATALOG.");
+    console.info("[CATALOG] El feed incremental aún no está inicializado. Se continuará con una instantánea completa. En Beta, ejecuta una sola vez la función de inicialización de hojas del proyecto CATALOG.");
 }
 let catalogPollTimer_ = null;
 let catalogPollInterval_ = CATALOG_POLL_INTERVAL_MS;

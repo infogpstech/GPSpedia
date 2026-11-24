@@ -44,8 +44,9 @@ testCase("la consola está sobre las pestañas y ocupa menos del 30% del modal e
  assert.match(css,/#dev-tools-modal \.dev-console-output \{[\s\S]*?flex: 1 1 0/);
 });
 testCase("en móvil la consola conserva una altura compacta y la barra de comandos es horizontal",()=>{
- const start=css.lastIndexOf("@media (max-width: 520px)");
- const mobile=css.slice(start);
+ const consoleBase=css.indexOf("/* AUG-146 — consola compacta");
+ const start=css.indexOf("@media (max-width: 520px)",consoleBase);
+ const mobile=css.slice(start,css.indexOf("/* AUG-146 — navegación del desarrollador",start));
  assert.match(mobile,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex-basis: 27%[\s\S]*?max-height: 30%/);
  assert.match(mobile,/#dev-tools-modal \.dev-terminal-row \{[\s\S]*?flex-direction: row/);
  assert.match(css,/#dev-tools-modal \.dev-terminal-input-shell \{[\s\S]*?display: flex/);
