@@ -174,7 +174,7 @@ Si falta una URL, hay duplicados, un encabezado incompatible o un snapshot invá
 
 ### 7.3 Validación, rollback y bootstrap
 
-- La publicación crea una revisión completa, verifica la lectura de confirmación y agrega una entrada append-only por cada URL creada/modificada. Si falla la confirmación del snapshot o del historial, restaura el control a la revisión anterior.
+- La publicación crea una revisión completa, verifica la lectura de confirmación y agrega una entrada append-only por cada URL creada/modificada. Si falla la confirmación del snapshot o del historial, restaura el control a la revisión anterior. La conmutación de `active_revision` se realiza mediante el mecanismo controlado aprobado.
 - Para revertir una URL, publicar otra revisión que restaure el valor anterior; no editar ni borrar revisiones publicadas.
 - Si cambia una URL distinta de AUTH, no es necesario redesplegar frontend ni los otros cinco servicios por el solo cambio de URL.
 - \`CENTRAL_CONFIGURATION_BOOTSTRAP_URL\` continúa siendo el único localizador fijo de arranque en \`JS/Frontend/api-config.js\`. Cambiar la URL operativa de AUTH en \`Servicios\` no cambia automáticamente ese bootstrap. Si el deployment bootstrap anterior se retira, actualizar el localizador único y publicar el frontend correspondiente; mantener el bootstrap anterior disponible durante la transición. No crear un segundo bootstrap ni un fallback local.
