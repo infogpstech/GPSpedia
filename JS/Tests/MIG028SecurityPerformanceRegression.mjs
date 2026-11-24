@@ -36,7 +36,7 @@ testCase("El router usa únicamente el registro central y no revalida sesión po
  assert.match(route,/getConfiguredServiceEndpoint_\(service\)/);
  assert.match(cacheSource,/no se utilizarán endpoints locales/i);
 });
-testCase("La caché central es single-flight, limita stale y falla cerrada sin endpoints locales",async()=>{
+asyncCase("La caché central es single-flight, limita stale y falla cerrada sin endpoints locales",async()=>{
  const moduleUrl="data:text/javascript;base64,"+Buffer.from(cacheSource,"utf8").toString("base64");
  const {createCentralConfigurationCache,CENTRAL_CONFIG_FRESH_TTL_MS,CENTRAL_CONFIG_STALE_TTL_MS,resolveCentralServiceEndpoint}=await import(moduleUrl);
  const keys=["AUTH","CATALOG","WRITE","FEEDBACK","UTILITIES","ADMIN"];
