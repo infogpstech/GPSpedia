@@ -257,6 +257,11 @@ try {
     check(savingBox.x >= toolbarBox.x - 1 &&
       savingBox.x + savingBox.width <= toolbarBox.x + toolbarBox.width + 1,
       profile.name + ": indicador de guardado contenido");
+    console.log(profile.name + " detail header geometry: " + JSON.stringify({
+      model: modelBox, actions: actionsBox, toolbar: toolbarBox,
+      layout: await toolbar.getAttribute("data-model-title-layout"),
+      rows: await toolbar.evaluate(element => getComputedStyle(element).gridTemplateRows)
+    }));
     check(modelBox.y >= actionsBox.y + actionsBox.height - 1,
       profile.name + ": modelo debajo de la fila de acciones");
     check(dividerBox.y >= Math.max(modelBox.y + modelBox.height, savingBox.y + savingBox.height) - 1,
