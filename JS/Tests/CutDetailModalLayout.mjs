@@ -19,7 +19,7 @@ function testCase(name, fn) { fn(); passed++; console.log("PASS " + name); }
 
 testCase("la línea azul conserva márgenes laterales simétricos y no desborda el viewport", () => {
     const cutDivider = css.slice(css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-divider {'));
-    assert.ok(cutDivider.includes("width:auto !important;") && cutDivider.includes("justify-self:stretch;") && cutDivider.includes("margin:1px 6px 2px !important;"));
+    assert.ok(cutDivider.includes("width:auto !important;") && cutDivider.includes("justify-self:stretch;") && cutDivider.includes("margin:6px 6px 2px !important;") && cutDivider.includes("transform:translateY(-19px);"));
 });
 
 testCase("Problemas y Soluciones comparte el título azul y el cierre accesible de los demás modales", () => {

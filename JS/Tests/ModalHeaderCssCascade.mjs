@@ -11,8 +11,8 @@ assert.equal(css.split("BLOQUE ÚNICO — encabezados de detalle").length - 1, 1
 assert.ok(block.includes("GP-UX-MODAL-HEADER-TIGHTEN-03"), "la variante scoped queda dentro del bloque único");
 assert.ok(block.includes("#modalDetalle[data-modal-type=\"corte\"] #detalleCompleto"));
 assert.ok(block.includes("detail-modal-header-actions > .info-close-btn"), "el cierre debe seguir el DOM anidado actual");
-assert.ok(block.includes("max-width:min(30vw,120px)"), "el logo móvil debe tener un límite real");
-assert.ok(block.includes("max-width:100% !important"), "el logo debe respetar el ancho de su contenedor");
+assert.ok(block.includes("height:66px !important") && block.includes("width:auto !important"), "el logo debe conservar 66px y ancho automático");
+assert.ok(block.includes("max-width:none !important"), "el logo no debe forzar un ancho fijo ni limitar su proporción natural");
 assert.ok(block.includes("font-size:clamp(1rem,4vw,1.35rem)"), "el título móvil debe conservar tamaño compacto");
 assert.ok(block.includes("font-size:clamp(.95rem,3.8vw,1.2rem)"), "el input móvil debe conservar tamaño compacto");
 assert.ok(/grid-template-rows:\s*auto auto auto auto auto/.test(block), "el estado below-logo debe declarar cinco filas");
@@ -20,5 +20,5 @@ assert.ok(block.includes(".detail-modal-toolbar > .info-close-btn"), "Relay cons
 assert.ok(block.includes(".tutorial-detail-toolbar") === false, "no se alteran las reglas específicas de Tutorial");
 assert.ok(ui.includes('headerActions.appendChild(closeBtn)'), "el cierre del corte permanece dentro de las acciones");
 assert.ok(ui.includes('headerDiv.setAttribute("data-model-title-layout", "below-logo")'), "se conserva el ajuste dinámico del título");
-assert.ok(!block.includes("max-width:none !important"), "el logo móvil no puede volver a quedar sin límite");
+assert.ok(block.includes("grid-template-rows:40px 32px auto auto"), "la cuadrícula reserva las filas de acciones y modelo sin mover las acciones");
 console.log("ModalHeaderCssCascade: 14/14 PASS — cascada única, logo, título, input y cierre");
