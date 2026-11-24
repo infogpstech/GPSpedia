@@ -582,3 +582,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI Node.js 22 para HEAD cb794f1afe23d84845db046b4202c825691a6420 (run 45395676090): ServiceHealthContract 19/19 PASS en dos invocaciones; regresión 513 suites / 6,051 pruebas / 0 fallos.
 - La sonda remota no se ejecutó: workflow ausente en main y bootstrap de entorno fijo sin selector; aislamiento Beta no verificado. Se mantiene la precaución documentada en Tareas_Beta.md.
 - No se ejecutaron operaciones Apps Script/Spreadsheet/Drive/OAuth ni se modificó producción; Beta real continúa pendiente.
+
+
+### 2026-11-24 — Cierre local MIG-030 y rotación de checkpoint
+
+- El workflow `GPSpedia service regression tests`, run 45396084519, job 138452115396, sobre el commit 142b9057f57909c364a9726fd448f43d6e048cad terminó SUCCESS: Node.js 22, sintaxis PASS, 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- Se confirmó que los contratos de salud y de independencia funcional cubren errores parciales sin detener servicios/operaciones independientes. La evidencia es local/CI y no se presenta como disponibilidad Beta real.
+- MIG-030 se actualizó a COMPLETADA CON VALIDACIÓN DIFERIDA conforme a NORMAS_DESAROLLO.md §§5 y 10. La matriz real BETA-01..08 y MIG-012/013/015/017/018/024/025/026 permanece pendiente en Tareas_Beta.md hasta contar con deployments y recursos sintéticos autorizados.
+- No se invocaron endpoints ni se modificaron deployments, propiedades Apps Script, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos.
+- El checkpoint activo excedía 180,000 caracteres Unicode. Se archivó íntegro como `Olds/Documentacion_Legacy/Checkpoint_Archive/checkpoint_2026-11-24_parte_006.md`; el blob SHA coincide con el original. Se actualizó el manifiesto y se creó un checkpoint activo resumido, sin alterar las partes históricas.
