@@ -2007,3 +2007,22 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
 - MIG-027 queda COMPLETADA para la validación automatizada del repositorio. La validación Beta con recursos aislados y permisos reales permanece asignada a MIG-030.
 - Siguiente tarea local por prioridad: MIG-028 — seguridad, rendimiento y regresión.
 ================================================================================
+
+
+================================================================================
+MIG-028 — SEGURIDAD, RENDIMIENTO Y REGRESIÓN — 2026-11-24
+HEAD de suite validado: 8ccc2a761ebec3f03b2ddcb8ddc0390cac25d2ac
+CI: https://github.com/infogpstech/GPSpedia/actions/runs/45390513381
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+- Se creó JS/Tests/MIG028SecurityPerformanceRegression.mjs (9/9 PASS) y se integró el grupo 49 MIG028 en JS/Tests/RunServiceTests.mjs.
+- CI final: 512 suites, 6,044 pruebas aprobadas, 0 fallos; Node.js 22 y sintaxis PASS.
+- Se verificó el uso de configuración central sin fallback local, caché single-flight con stale limitado/fail-closed, revocación e invalidación de cachés sin transmitir tokens, actor confiable y RBAC de cinco roles.
+- Se verificaron operaciones concurrentes con locks fail-fast, idempotencia y append concurrente; no se introdujeron esperas globales ni llamadas de revalidación previas a cada acción.
+- Se cubrieron fallos de Spreadsheet en validación AUTH, caché/configuración central, IndexedDB, HTTP, red, JSON y servicios parcialmente disponibles mediante fixtures/contratos locales.
+- Comparación de la regresión: MIG-005 306 suites/3,581 pruebas/~30 s; MIG-028 512 suites/6,044 pruebas/~41 s. Es duración del workflow CI, no latencia de GPSpedia.
+- Las métricas de aplicación p50/p95, snapshot/deltas, número real de llamadas y tiempos de Spreadsheet/Drive/YouTube permanecen pendientes de Beta, según MIG-005. No se atribuyen valores de CI a la aplicación.
+- No se ejecutaron deployments Apps Script ni se modificaron propiedades, permisos, hojas, archivos o datos productivos.
+- MIG-028 queda COMPLETADA en su alcance local automatizado, con mediciones de aplicación diferidas a Beta.
+- Siguiente tarea por orden: MIG-029.
+================================================================================
