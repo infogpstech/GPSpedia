@@ -107,7 +107,7 @@ export async function setRichTextMode(mode, actorRole, session) {
 }
 
 // Único localizador de arranque para consultar AUTH; nunca es fallback de otras rutas.
-const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "https://script.google.com/macros/s/AKfycbxoSybH_LsnqfBXCcE-5f9DM5rxEh8IFVPUMb2KF_j8yYl68hxEvF034ogADXEdrXUG/exec";
+const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "https://script.google.com/macros/s/AKfycbwWiu06u8tejZWABUcBRPNmaPYjdKjAzUIC8fFJ1_tjCsU0UClaa5rTsyhIBWC38apVnQ/exec";
 export const CENTRAL_SERVICE_KEYS = Object.freeze([
     "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"
 ]);
