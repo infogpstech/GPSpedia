@@ -4733,7 +4733,7 @@ const TUTORIAL_IMAGE_EXTENSIONS = Object.freeze({
 function validateTutorialImageDataUrl_(value) {
     if (value === undefined || value === null || value === "") return null;
     if (typeof value !== "string") throw new Error("La imagen del tutorial debe enviarse como Data URL.");
-    const match = value.trim().match(/^data:(image\\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/i);
+    const match = value.trim().match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/i);
     if (!match) throw new Error("La imagen del tutorial debe ser JPEG, PNG o WebP en Base64.");
     const mimeType = match[1].toLowerCase(), base64 = match[2];
     if (base64.length > Math.ceil(TUTORIAL_IMAGE_MAX_BYTES / 3) * 4) {
@@ -4785,7 +4785,7 @@ function buildTutorialImageDescription_(operationId, image, state) {
         "contentHash=" + String(image.sha256),
         "mimeType=" + String(image.mimeType),
         "sizeBytes=" + String(image.sizeBytes)
-    ].join("\\n");
+    ].join("\n");
 }
 
 function verifyTutorialImageFile_(file, folder, operationId, image) {
@@ -4797,7 +4797,7 @@ function verifyTutorialImageFile_(file, folder, operationId, image) {
         throw new Error("El archivo de imagen del tutorial no coincide con la operación; requiere revisión.");
     }
     const description = String(file.getDescription() || "");
-    const lines = new Set(description.split(/\\r?\\n/));
+    const lines = new Set(description.split(/\r?\n/));
     if (!lines.has("GPSpedia Tutorial Image v1") ||
         !["state=pending", "state=linked"].some(value => lines.has(value)) ||
         !lines.has("operationId=" + String(operationId)) ||
@@ -4841,7 +4841,7 @@ function ensureTutorialImageFile_(operationId, image) {
 }
 
 function getTutorialImageFileByReference_(imageUrl, operationId, image) {
-    const match = String(imageUrl || "").trim().match(/^https:\\/\\/drive\\.google\\.com\\/file\\/d\\/([A-Za-z0-9_-]{10,110})\\/view$/i);
+    const match = String(imageUrl || "").trim().match(/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,110})\/view$/i);
     if (!match) throw new Error("La fila del tutorial no contiene una referencia de imagen Drive válida.");
     const folder = getTutorialImagesFolder_().folder;
     let file;
