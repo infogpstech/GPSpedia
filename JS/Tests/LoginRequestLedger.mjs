@@ -28,8 +28,8 @@ assert.doesNotMatch(loginSession, /PropertiesService|ScriptProperties|LEGACY_LOG
     "El flujo normal de login debe operar exclusivamente sobre LoginRequests.");
 assert.match(loginSession, /findLoginRequestEntry_\(loginRequestsSheet, requestId\)/);
 assert.match(loginSession, /saveLoginRequestRecord_\(loginRequestsSheet/);
-assert.equal(count(loginSession, /sessionsSheet\.getDataRange\(\)/g), 1,
-    "El login usa un solo snapshot de ActiveSessions en el camino normal.");
+assert.equal(count(loginSession, /sessionsSheet\.getDataRange\(\)/g), 2,
+    "El login usa un snapshot normal y solo relee ActiveSessions para reconciliar un append ambiguo.");
 assert.match(loginSession, /LOGIN_REQUEST_TTL_MS/);
 const cleanup = block(auth, "cleanupExpiredLoginRequestsBounded_");
 assert.match(cleanup, /start\+24/);
