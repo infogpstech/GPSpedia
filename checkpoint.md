@@ -389,3 +389,16 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Estado BETA-F005:** CORREGIDO EN RAMA Y VALIDADO EN CI; prueba con cuenta/Drive/Spreadsheet Beta aislados pendiente.
 - **Siguiente tarea:** investigar BETA-F007, error de carga de vídeo a YouTube «Tutorial no encontrado». No asumir que el tutorial no existe; revisar la resolución de identidad, operación y referencia entre el flujo de carga y el registro canónico.
 - **Rama:** `GPSpedia2.2.5_work`, HEAD `58e6ca989bc39d2fbc13a3ba5ae7c65f780370be`. Rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+### Estado de continuidad — cierre de correcciones reportadas — 2026-11-24
+
+- **Dashboard FEEDBACK:** corrección de arranque de `ActividadUsuario` completada en rama; si no hay patrón de ID se genera `ACT-<UUID>`, preservando fórmulas válidas y fallando cerrado ante patrones incompatibles. CI específico documentado arriba; validación Beta aislada pendiente.
+- **Imagen de tarjeta Tutorial:** selector y carga Drive implementados; columna `Imagen` conserva URL, no Base64. Validación binaria, permisos heredados, idempotencia y recuperación probados. CI específico documentado arriba; validación Beta aislada pendiente.
+- **YouTube Tutorial:** CATALOG expone `referenceId` físico o legacy estable; frontend lo pasa a FEEDBACK; `findTutorialRow_()` resuelve identidad legacy sin depender del título visible y conserva rechazo estricto para IDs canónicos inexistentes. CI run `45505972628`: SUCCESS, 517 suites, 6,155 pruebas, 0 fallos; `FeedbackTutorialLookupBoundedRead` 9/9, `TutorialIntegrity` 48/48 y FEEDBACK inicialización YouTube 9/9 PASS. Chromium 184/184 PASS. Pages run `45505971953`: SUCCESS. Validación con YouTube Beta real pendiente.
+- **Procedimientos Beta:** añadidas las secciones 22 (Dashboard), 23 (imagen Tutorial) y 24 (referencia YouTube) en `Tareas_Beta.md`, con comandos de sincronización segura, pasos y límites de no producción.
+- **Hallazgos:** BETA-F004 (Dashboard), BETA-F005 (imagen) y BETA-F007 (YouTube) conservan sus entradas originales y tienen adendas de implementación/evidencia. El reporte repetido de imagen permanece consolidado como un único hallazgo.
+- **Trazabilidad:** AUG-147, AUG-148, AUG-149 y AUG-150 fueron etiquetas no oficiales del asistente, no IDs del backlog; no se deben reutilizar. No se crearon nuevos IDs de tareas.
+- **Seguridad/alcance:** no se desplegó Apps Script, no se subió vídeo a YouTube y no se modificaron Spreadsheet, Drive, propiedades, permisos ni datos productivos. Las tres correcciones están en rama; las pruebas de integración Beta siguen pendientes.
+- **Rama de trabajo actual:** `GPSpedia2.2.5_work`, HEAD `5c537c8d6316d5c72a33610e6efea559806ea0b5`. **Rama base protegida:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1` (sin modificaciones).
+- **Siguiente paso operativo:** validar en Beta aislada las tres correcciones conforme a `Tareas_Beta.md` §§22–24. No se debe declarar resuelto en Beta hasta contar con esa evidencia.
