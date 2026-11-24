@@ -858,7 +858,8 @@ check("La limpieza de estados expirados elimina también páginas, respuestas y 
     h.cleanupExpiredDriveAuditServerStates_();
     assert.equal(h.properties.has(key),true,"La propiedad legacy se conserva después del baseline");
     assert.equal(h.driveAuditSheet.getLastRow(),2,"El estado vencido se retira de DriveAuditRuns");
-    assert.equal(h.properties.has(latestKey),false);
+    assert.equal(h.properties.has(latestKey),true,"El puntero latest legacy se conserva hasta completar su propio baseline");
+    assert.equal(h.driveAuditLatestSheet.getLastRow(),1,"No se escribe en DriveAuditLatest antes de su baseline");
     assert.equal(h.cache.has(pageKey),false);
     assert.equal(h.cache.has("audit-response"),false);
     assert.equal([...h.cache.keys()].some(item=>item.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
