@@ -333,17 +333,17 @@
 
             <div class="dev-tools-layout">
                 <div class="dev-tools-sidebar">
-                    <label class="dev-tab-link" for="dev-tab-diagnostics" title="Diagnóstico">
-                        <i class="fa-solid fa-stethoscope"></i><span>Diagnóstico</span>
+                    <label class="dev-tab-link" for="dev-tab-diagnostics" title="Diagnóstico" aria-label="Diagnóstico">
+                        <i class="fa-solid fa-stethoscope" aria-hidden="true"></i><span>Diagnóstico</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-database" title="Base de datos">
-                        <i class="fa-solid fa-database"></i><span>Base de datos</span>
+                    <label class="dev-tab-link" for="dev-tab-database" title="Base de datos" aria-label="Base de datos">
+                        <i class="fa-solid fa-database" aria-hidden="true"></i><span>Base de datos</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-images" title="Imágenes y Drive">
-                        <i class="fa-solid fa-images"></i><span>Imágenes y Drive</span>
+                    <label class="dev-tab-link" for="dev-tab-images" title="Imágenes y Drive" aria-label="Imágenes y Drive">
+                        <i class="fa-solid fa-images" aria-hidden="true"></i><span>Imágenes y Drive</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-system" title="Sistema">
-                        <i class="fa-solid fa-gears"></i><span>Sistema</span>
+                    <label class="dev-tab-link" for="dev-tab-system" title="Sistema" aria-label="Sistema">
+                        <i class="fa-solid fa-gears" aria-hidden="true"></i><span>Sistema</span>
                     </label>
                 </div>
 
@@ -578,8 +578,7 @@
                                 <div style="flex:1 1 260px;min-width:0;"><label for="central-service-url-utilities">UTILITIES</label><input type="url" id="central-service-url-utilities" class="dev-input" autocomplete="off" spellcheck="false" placeholder="URL del servicio UTILITIES" required></div>
                                 <div style="flex:1 1 260px;min-width:0;"><label for="central-service-url-admin">ADMIN</label><input type="url" id="central-service-url-admin" class="dev-input" autocomplete="off" spellcheck="false" placeholder="URL del servicio ADMIN" required></div>
                             </div>
-                            <button type="button" id="btn-save-central-service-urls" class="btn btn-primary dev-action-full"><i class="fa-solid fa-floppy-disk"></i> Validar y publicar endpoints</button>
-                            <p id="central-service-urls-status" class="dev-empty-state" role="status" aria-live="polite">Consultando endpoints centrales...</p>
+                            <button type="button" id="btn-save-central-service-urls" class="btn btn-primary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar Servicios</button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
