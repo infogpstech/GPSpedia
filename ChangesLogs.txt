@@ -639,3 +639,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Revisión del diff de la iteración desde `2bb7c0f8e27261c1edd8f6278779e978a2fbc30f`: 21 archivos modificados, sin archivos añadidos/eliminados ni cambios fuera de los tres servicios, sus fixtures/contratos y la documentación de MIG-026/verificación. No se detectaron cambios funcionales ajenos.
 - La rama protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no fue modificada.
 - Se cierra la verificación técnica integral local conforme a NORMAS_DESAROLLO.md §11. Las pruebas Beta reales, contexto Spreadsheet de Web Apps, permisos efectivos, concurrencia entre deployments, métricas p50/p95 y limpieza de propiedades legacy siguen pendientes en `Tareas_Beta.md`; no se presentan como validadas.
+
+
+### Registro de tarea AUG-144 — 2026-11-24
+
+- Se incorpora como pendiente la corrección del encabezado de marca/modelo del modal de detalle de dispositivos.
+- Requisitos registrados: logotipo de 66 px de alto y ancho automático; alineación izquierda; offsets superior e izquierdo de 6 px; nombre del modelo a la derecha con gap de 6 px; alineación inferior de logo y nombre; separación de 6 px respecto a la línea azul inferior.
+- Invariante explícita: los botones de edición, impresión, compartir y cierre deben conservar exactamente sus posiciones actuales. La implementación deberá medir y comparar sus posiciones antes/después en los mismos viewports; si se desplazan, se debe corregir la distribución del encabezado.
+- La tarea no implementa cambios de interfaz todavía. Queda pendiente la inspección del DOM/CSS real, implementación y validación visual/responsive.
