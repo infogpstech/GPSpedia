@@ -6720,3 +6720,27 @@ textarea.rich-text-source[hidden] { display:none !important; }
         transition: none !important;
     }
 }
+
+/* AUG-146 — encabezado de edición en pantallas muy estrechas.
+   Las acciones se envuelven sin invadir la columna del logo ni el campo del modelo. */
+@media (max-width: 340px) {
+    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
+        grid-template-rows: auto 48px auto auto;
+    }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
+        flex-wrap: wrap;
+        align-content: flex-start;
+        align-items: flex-start;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions .share-modal-btn,
+    #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions > .info-close-btn {
+        flex: 0 0 32px;
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        min-height: 32px;
+        padding: 0;
+    }
+}
