@@ -6367,6 +6367,31 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #dev-tools-modal #btn-copy-console-log i {
     font-size: .9rem;
 }
+#dev-tools-modal #btn-clear-console-log::after,
+#dev-tools-modal #btn-copy-console-log::after {
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    font-size: .76rem;
+    font-weight: 600;
+    transition: max-width .2s ease, opacity .16s ease;
+}
+#dev-tools-modal #btn-clear-console-log::after { content: "Limpiar consola"; }
+#dev-tools-modal #btn-copy-console-log::after { content: "Copiar registro"; }
+#dev-tools-modal #btn-clear-console-log:focus,
+#dev-tools-modal #btn-copy-console-log:focus {
+    flex-basis: 126px;
+    width: 126px;
+    min-width: 126px;
+    gap: 7px;
+    padding: 0 8px;
+}
+#dev-tools-modal #btn-clear-console-log:focus::after,
+#dev-tools-modal #btn-copy-console-log:focus::after {
+    max-width: 92px;
+    opacity: 1;
+}
 #dev-tools-modal .dev-terminal-row {
     display: flex;
     flex-direction: row;
