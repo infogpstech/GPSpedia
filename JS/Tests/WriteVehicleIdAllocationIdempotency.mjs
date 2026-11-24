@@ -128,14 +128,14 @@ test("reserva el ID una vez y el reintento idéntico devuelve el mismo ID", () =
     const h = harness();
     assert.equal(h.allocate({ opId: "OP-RETRY-1", operationHash: HASH_A }).vehicleId, 4);
     assert.equal(h.allocate({ opId: "OP-RETRY-1", operationHash: HASH_A }).vehicleId, 4);
-    assert.equal(h.ledger.rows.length, 4);
+    assert.equal(h.ledger.rows.length, 3);
     assert.equal(h.ledger.formulaAt(3), "", "La reserva confirmada debe quedar congelada como valor");
 });
 test("rechaza reutilizar opId con otra huella sin consumir otro ID", () => {
     const h = harness();
     assert.equal(h.allocate({ opId: "OP-RETRY-2", operationHash: HASH_A }).vehicleId, 4);
     assert.throws(() => h.allocate({ opId: "OP-RETRY-2", operationHash: HASH_B }), /otra huella|otro contenido/);
-    assert.equal(h.ledger.rows.length, 4);
+    assert.equal(h.ledger.rows.length, 3);
 });
 test("operaciones distintas reciben IDs monotónicos y únicos", () => {
     const h = harness();

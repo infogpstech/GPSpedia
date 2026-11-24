@@ -7,6 +7,8 @@ const end = source.indexOf("\nfunction ", start + 10);
 assert.ok(start >= 0 && end > start, "No se encontró getCortesVehicleIdHighWaterMark_");
 const code = source.slice(start, end);
 assert.doesNotMatch(code, /getDataRange\(/, "El asignador no debe descargar la tabla completa");
+assert.doesNotMatch(code, /PropertiesService|CORTES_ID_COUNTER_PROPERTY/,
+    "El high-water normal no debe consultar el contador legacy una vez migrado al ledger");
 
 function makeAllocator({ ids, formulas = [], rowDataByRow = {}, lastColumn = 4, storedValue = null }) {
     const calls = [], properties = { value: storedValue, sets: [] };
