@@ -6605,3 +6605,87 @@ textarea.rich-text-source[hidden] { display:none !important; }
         grid-row: 2;
     }
 }
+
+
+/* AUG-146 — navegación del desarrollador: iconos compactos con expansión de selección. */
+#dev-tools-modal .dev-tools-layout {
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 12px;
+}
+#dev-tools-modal .dev-tools-sidebar {
+    width: 62px;
+    box-sizing: border-box;
+    padding: 6px;
+    transition: width .22s ease;
+}
+#dev-tools-modal .dev-tab-link {
+    box-sizing: border-box;
+    justify-content: flex-start;
+    gap: 0;
+    width: 44px;
+    min-width: 44px;
+    min-height: 42px;
+    padding: 10px 12px;
+    overflow: hidden;
+    transition: width .22s ease, background-color .2s, color .2s, gap .22s ease;
+}
+#dev-tools-modal .dev-tab-link i {
+    flex: 0 0 20px;
+    width: 20px;
+    text-align: center;
+}
+#dev-tools-modal .dev-tab-link span {
+    display: inline-block;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    transition: max-width .22s ease, opacity .16s ease;
+}
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tab-link[for="dev-tab-system"] {
+    width: 190px;
+    gap: 10px;
+}
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tab-link[for="dev-tab-diagnostics"] span,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tab-link[for="dev-tab-database"] span,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tab-link[for="dev-tab-images"] span,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tab-link[for="dev-tab-system"] span {
+    max-width: 150px;
+    opacity: 1;
+}
+@media (max-width: 760px) {
+    #dev-tools-modal .dev-tools-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    #dev-tools-modal .dev-tools-sidebar {
+        width: auto;
+        min-width: 0;
+        flex-direction: row;
+        align-self: stretch;
+    }
+    #dev-tools-modal .dev-tab-link {
+        flex: 0 0 42px;
+        width: 42px;
+        min-width: 42px;
+        min-height: 40px;
+        padding: 9px 11px;
+    }
+    #dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tab-link[for="dev-tab-diagnostics"],
+    #dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tab-link[for="dev-tab-database"],
+    #dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tab-link[for="dev-tab-images"],
+    #dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tab-link[for="dev-tab-system"] {
+        flex-basis: 170px;
+        width: 170px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tools-sidebar,
+    #dev-tools-modal .dev-tab-link,
+    #dev-tools-modal .dev-tab-link span {
+        transition: none !important;
+    }
+}
