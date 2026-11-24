@@ -10,7 +10,7 @@ const sessionInvalidation = read("JS/Frontend/sessionCacheInvalidation.js");
 const api = read("JS/Frontend/api-config.js");
 const coordinatorPath = resolve(root, "JS/Services/Coordinator.js");
 assert.equal(existsSync(coordinatorPath), false);
-assert.match(auth, /function getCachedSharedSessionActor_/);
+assert.match(sessionActor, /function getCachedSharedSessionActor_/);
 assert.match(auth, /function isSharedMutationAction_\(action\)/);
 assert.doesNotMatch(auth, /UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(sessionActor, /UrlFetchApp|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|Coordinator/);
