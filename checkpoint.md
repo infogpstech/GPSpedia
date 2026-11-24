@@ -213,7 +213,7 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 
 ## Corrección solicitada — feed CATALOG, dashboard/aportes e Inbox — 2026-11-24
 
-**Estado: EN PROGRESO; cambios locales preparados, CI y revisión pendientes.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** Correcciones de código y regresión local/CI aprobadas; despliegue y verificación remota reservados para Beta aislada.
 
 - HEAD confirmado al iniciar: `ecf28f3d5c9dd485911a0051a34f6a8787dad244`; rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - CATALOG: `createCatalogChangeFeed_()` falla si faltan `CatalogChangeState` o `CatalogChangeEvents`. El contrato MIG-026 establece que las consultas ordinarias no crean hojas automáticamente. Se añade inicializador manual `initializeCatalogChangeFeedSheets()`, idempotente, con preflight de ambas hojas, validación de encabezados, read-back, lock no bloqueante y preservación de datos; no se conecta a HTTP GET/POST.
@@ -221,3 +221,9 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Cambios preparados: `JS/Services/feedback.js`, `JS/Services/catalog.js`, `JS/Tests/MIG013SessionActorLocalLookup.mjs`, nueva `JS/Tests/CatalogChangeFeedInitialization.mjs`, runner y procedimiento Beta.
 - La inicialización de hojas no se ejecutó sobre ninguna Spreadsheet. No se desplegaron Apps Script ni se modificaron endpoints, permisos, propiedades o datos externos.
 - Próximo paso: ejecutar CI, corregir cualquier fallo de prueba, revisar diff y publicar únicamente en `GPSpedia2.2.5_work`; después registrar SHA y resultados. Validación remota queda pendiente de Beta aislada/autorizada.
+
+- Implementación y contratos publicados en los commits `8f22fcfecba7411e640ceac9f7256e5c69a452b0`, `cfa62a769ecd3148c63dab0001b93ea20558a9e9`, `a86bce9edd6c3b50060aa07d6b79917b1c286553`, `3694cee14a6afa6fcfb933d9f43cbf6b06f55bad` y `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`.
+- CI run `45471714577`: SUCCESS; 516 suites, 6,105 pruebas aprobadas, 0 fallos. Sintaxis: 466 archivos verificados. `CatalogChangeFeedInitialization: 6/6 PASS`; `MIG013SessionActorLocalLookup: 22/22 PASS`; `InboxRoleContract: 22/22 PASS`; `SensitiveLogsTrustedActor: 7/7 PASS`.
+- GitHub Pages run `45471712477`: SUCCESS.
+- HEAD de código y pruebas: `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`. Rama base protegida sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Validación Beta pendiente: desplegar `catalog.js` y `feedback.js` en los proyectos Beta existentes; ejecutar manualmente `initializeCatalogChangeFeedSheets()` en CATALOG contra la Spreadsheet Beta aislada; probar GET del feed, dashboard, contribuciones e Inbox con usuario sintético y cache miss. No se ejecutó el inicializador ni se modificó ninguna Spreadsheet real desde esta tarea.

@@ -756,3 +756,9 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CATALOG incorpora `initializeCatalogChangeFeedSheets()`, función manual de editor Apps Script. Crea únicamente las hojas ausentes o escribe encabezados en hojas vacías; valida previamente las hojas existentes, conserva datos válidos, falla cerrado ante esquemas incompatibles y no se invoca desde GET/POST ni durante consultas ordinarias.
 - Se añadió `CatalogChangeFeedInitialization.mjs` y se reforzó `MIG013SessionActorLocalLookup.mjs` para exigir proveedor explícito en FEEDBACK.
 - Se actualizó el procedimiento Beta para ejecutar la inicialización en Spreadsheet aislada y verificar read-back. No se desplegaron servicios ni se modificaron hojas, propiedades, permisos o datos externos.
+
+### 2026-11-24 — Validación final de corrección CATALOG/FEEDBACK
+
+- CI run `45471714577`, HEAD `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`: SUCCESS; 516 suites, 6,105 pruebas aprobadas, 0 fallos; sintaxis PASS en 466 archivos. `CatalogChangeFeedInitialization` 6/6, `MIG013SessionActorLocalLookup` 22/22, `InboxRoleContract` 22/22 y `SensitiveLogsTrustedActor` 7/7 PASS.
+- GitHub Pages run `45471712477`: SUCCESS.
+- No se desplegaron proyectos Apps Script ni se ejecutó la inicialización de hojas. La operación manual y las pruebas con Spreadsheet/deployments Beta aislados siguen pendientes.

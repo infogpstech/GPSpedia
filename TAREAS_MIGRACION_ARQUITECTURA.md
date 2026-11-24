@@ -959,3 +959,6 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - Se añade inicializador manual para `CatalogChangeState`/`CatalogChangeEvents`, porque el feed de CATALOG requiere ambas hojas y el runtime deliberadamente no crea esquema durante GET/POST. El inicializador es idempotente, valida ambas hojas antes de escribir, preserva datos válidos y falla cerrado ante esquema incompatible.
 - Suites añadidas/reforzadas: `MIG013SessionActorLocalLookup` exige proveedor FEEDBACK; `CatalogChangeFeedInitialization` valida creación, read-back, idempotencia, preservación, preflight y lock no bloqueante.
 - Despliegue y operación del inicializador sobre Spreadsheet Beta aislada permanecen pendientes. No se modificaron hojas ni datos externos.
+
+
+- **Cierre de validación local — 2026-11-24:** CI run `45471714577`, commit `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`: SUCCESS; 516 suites, 6,105 pruebas aprobadas, 0 fallos; sintaxis PASS en 466 archivos. `CatalogChangeFeedInitialization` 6/6, `MIG013SessionActorLocalLookup` 22/22, `InboxRoleContract` 22/22 y `SensitiveLogsTrustedActor` 7/7 PASS. GitHub Pages run `45471712477`: SUCCESS. El código queda completado; el deployment FEEDBACK/CATALOG y la ejecución manual del inicializador sobre Spreadsheet Beta aislada quedan pendientes, sin bloquear el cierre local.
