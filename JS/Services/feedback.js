@@ -4723,8 +4723,145 @@ function appendTutorialEditEvent_(tutorialId, baseRow, snapshot) {
     return { operationId, tutorialId: id, snapshot: normalizedSnapshot };
 }
 
-function tutorialRowMatchesSubmission_(row, fields) {
+const TUTORIAL_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+const TUTORIAL_IMAGE_EXTENSIONS = Object.freeze({
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+});
+
+function validateTutorialImageDataUrl_(value) {
+    if (value === undefined || value === null || value === "") return null;
+    if (typeof value !== "string") throw new Error("La imagen del tutorial debe enviarse como Data URL.");
+    const match = value.trim().match(/^data:(image\\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/i);
+    if (!match) throw new Error("La imagen del tutorial debe ser JPEG, PNG o WebP en Base64.");
+    const mimeType = match[1].toLowerCase(), base64 = match[2];
+    if (base64.length > Math.ceil(TUTORIAL_IMAGE_MAX_BYTES / 3) * 4) {
+        throw new Error("La imagen del tutorial supera el máximo permitido de 3 MB.");
+    }
+    let bytes;
+    try { bytes = Utilities.base64Decode(base64); }
+    catch (error) { throw new Error("No se pudo decodificar la imagen del tutorial."); }
+    if (!bytes || !bytes.length || bytes.length > TUTORIAL_IMAGE_MAX_BYTES ||
+        Utilities.base64Encode(bytes) !== base64) {
+        throw new Error("La imagen del tutorial está vacía, supera 3 MB o tiene una codificación inválida.");
+    }
+    const byteAt = index => Number(bytes[index]) & 255;
+    const signatureValid =
+        (mimeType === "image/jpeg" && bytes.length >= 3 && byteAt(0) === 0xff && byteAt(1) === 0xd8 && byteAt(2) === 0xff) ||
+        (mimeType === "image/png" && bytes.length >= 8 && [137,80,78,71,13,10,26,10].every((value,index)=>byteAt(index)===value)) ||
+        (mimeType === "image/webp" && bytes.length >= 12 &&
+            String.fromCharCode(byteAt(0),byteAt(1),byteAt(2),byteAt(3)) === "RIFF" &&
+            String.fromCharCode(byteAt(8),byteAt(9),byteAt(10),byteAt(11)) === "WEBP");
+    if (!signatureValid) throw new Error("La firma binaria de la imagen no coincide con el formato declarado.");
+    const sha256 = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bytes)
+        .map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+    return { bytes, mimeType, extension: TUTORIAL_IMAGE_EXTENSIONS[mimeType], sizeBytes: bytes.length, sha256 };
+}
+
+function getTutorialImagesFolder_() {
+    const rootFolder = getCortesRootFolder();
+    const folder = findOrCreateSubFolder(rootFolder, "Tutoriales");
+    if (!folder || String(folder.getId()) === String(rootFolder.getId()) ||
+        getFolderCanonicalName(folder.getName()) !== getFolderCanonicalName("Tutoriales")) {
+        throw new Error("No se pudo verificar la carpeta Tutoriales dentro de la raíz autorizada de GPSpedia.");
+    }
+    const parents = folder.getParents();
+    let isDirectChild = false;
+    while (parents.hasNext()) if (String(parents.next().getId()) === String(rootFolder.getId())) isDirectChild = true;
+    if (!isDirectChild) throw new Error("La carpeta Tutoriales no pertenece directamente a la raíz autorizada.");
+    return { folder, rootFolder };
+}
+
+function buildTutorialImageFileName_(operationId, image) {
+    return "tutorial_" + String(operationId) + "_" + String(image.sha256).slice(0, 20) + "." + image.extension;
+}
+
+function buildTutorialImageDescription_(operationId, image, state) {
+    return [
+        "GPSpedia Tutorial Image v1",
+        "state=" + state,
+        "operationId=" + String(operationId),
+        "contentHash=" + String(image.sha256),
+        "mimeType=" + String(image.mimeType),
+        "sizeBytes=" + String(image.sizeBytes)
+    ].join("\\n");
+}
+
+function verifyTutorialImageFile_(file, folder, operationId, image) {
+    const expectedName = buildTutorialImageFileName_(operationId, image);
+    if (!file || (typeof file.isTrashed === "function" && file.isTrashed()) ||
+        String(file.getName() || "") !== expectedName ||
+        String(file.getMimeType() || "").toLowerCase() !== image.mimeType ||
+        Number(file.getSize()) !== image.sizeBytes) {
+        throw new Error("El archivo de imagen del tutorial no coincide con la operación; requiere revisión.");
+    }
+    const description = String(file.getDescription() || "");
+    const lines = new Set(description.split(/\\r?\\n/));
+    if (!lines.has("GPSpedia Tutorial Image v1") ||
+        !["state=pending", "state=linked"].some(value => lines.has(value)) ||
+        !lines.has("operationId=" + String(operationId)) ||
+        !lines.has("contentHash=" + image.sha256) ||
+        !lines.has("mimeType=" + image.mimeType) ||
+        !lines.has("sizeBytes=" + image.sizeBytes)) {
+        throw new Error("Los metadatos del archivo de imagen no permiten confirmar su asociación con el tutorial.");
+    }
+    const parents = file.getParents();
+    let direct = false;
+    while (parents.hasNext()) if (String(parents.next().getId()) === String(folder.getId())) direct = true;
+    if (!direct) throw new Error("La imagen del tutorial no pertenece a la carpeta autorizada.");
+    assertPysImageFolderPermissions_(file, folder);
+    const id = String(file.getId() || "").trim();
+    if (!/^[A-Za-z0-9_-]{10,110}$/.test(id)) throw new Error("Drive no devolvió un ID válido para la imagen del tutorial.");
+    return file;
+}
+
+function ensureTutorialImageFile_(operationId, image) {
+    const folder = getTutorialImagesFolder_().folder;
+    const fileName = buildTutorialImageFileName_(operationId, image);
+    const iterator = folder.getFilesByName(fileName), matches = [];
+    while (iterator.hasNext()) matches.push(iterator.next());
+    if (matches.length > 1) throw new Error("Hay archivos duplicados para la imagen de este tutorial; requiere revisión.");
+    let file = matches[0] || null;
+    if (file) {
+        verifyTutorialImageFile_(file, folder, operationId, image);
+    } else {
+        const blob = Utilities.newBlob(image.bytes, image.mimeType, fileName);
+        file = folder.createFile(blob);
+        if (!file) throw new Error("Drive no confirmó la creación de la imagen del tutorial.");
+        const description = buildTutorialImageDescription_(operationId, image, "pending");
+        file.setDescription(description);
+        if (String(file.getDescription() || "") !== description) {
+            throw new Error("Drive no confirmó los metadatos de la imagen del tutorial; el archivo quedó pendiente de revisión.");
+        }
+        verifyTutorialImageFile_(file, folder, operationId, image);
+    }
+    const fileId = String(file.getId());
+    return { file, url: "https://drive.google.com/file/d/" + fileId + "/view" };
+}
+
+function getTutorialImageFileByReference_(imageUrl, operationId, image) {
+    const match = String(imageUrl || "").trim().match(/^https:\\/\\/drive\\.google\\.com\\/file\\/d\\/([A-Za-z0-9_-]{10,110})\\/view$/i);
+    if (!match) throw new Error("La fila del tutorial no contiene una referencia de imagen Drive válida.");
+    const folder = getTutorialImagesFolder_().folder;
+    let file;
+    try { file = DriveApp.getFileById(match[1]); }
+    catch (error) { throw new Error("La imagen vinculada al tutorial no está disponible en Drive; requiere revisión."); }
+    verifyTutorialImageFile_(file, folder, operationId, image);
+    return file;
+}
+
+function markTutorialImageLinked_(file, operationId, image) {
+    const description = buildTutorialImageDescription_(operationId, image, "linked");
+    file.setDescription(description);
+    if (String(file.getDescription() || "") !== description) {
+        throw new Error("No se pudo confirmar el estado vinculado de la imagen del tutorial.");
+    }
+}
+
+function tutorialRowMatchesSubmission_(row, fields, imageUrl) {
     return String(row[1] || "").trim() === fields.title &&
+        (imageUrl === undefined || String(row[2] || "").trim() === String(imageUrl || "").trim()) &&
         String(row[3] || "").trim() === fields.comoIdentificarlo &&
         String(row[4] || "").trim() === fields.dondeEncontrarlo &&
         String(row[5] || "").trim() === fields.detalles &&
@@ -4744,11 +4881,13 @@ function handleAddTutorial(payload) {
     if (String(source.videoUrl || "").trim()) {
         throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
     }
-
+    const image = validateTutorialImageDataUrl_(source.imagenDataUrl);
     const tutorialId = "tut-" + operationId;
     const submission = { title, comoIdentificarlo, dondeEncontrarlo, detalles, collaborator };
     const createOperationId = "tutorial-create-" + operationId;
-    const createPayloadHash = buildTutorialContentHash_([tutorialId, submission]);
+    const createPayloadHash = image
+        ? buildTutorialContentHash_([tutorialId, submission, image.sha256])
+        : buildTutorialContentHash_([tutorialId, submission]);
     const titleEventsSheet = getTutorialTitleEventsSheet_(false);
     const existingReservation = titleEventsSheet
         ? readTutorialTitleEvents_(titleEventsSheet).operations.find(item => item.operationId === createOperationId)
@@ -4760,11 +4899,25 @@ function handleAddTutorial(payload) {
     const existing = findTutorialById_(sheet, tutorialId);
     if (existing) {
         if (existingReservation && existingReservation.payloadHash === createPayloadHash) {
+            const expectedImageUrl = image ? String(existing.row[2] || "").trim() : "";
+            if (!tutorialRowMatchesSubmission_(existing.row, submission, expectedImageUrl)) {
+                throw new Error("El registro existente del tutorial no coincide con la operación; requiere revisión.");
+            }
+            if (image) {
+                const file = getTutorialImageFileByReference_(expectedImageUrl, operationId, image);
+                try { markTutorialImageLinked_(file, operationId, image); }
+                catch (metadataError) { Logger.log("La imagen del tutorial quedó vinculada, pero no se pudo actualizar su metadata: " + String(metadataError.message || metadataError)); }
+            }
             return { status: "success", referenceId: String(existing.row[0] || tutorialId).trim(), alreadyCreated: true,
                 message: "El tutorial ya existía; se devolvió el registro original." };
         }
         if (!tutorialRowMatchesSubmission_(existing.row, submission)) {
             throw new Error("El identificador de operación ya pertenece a otro tutorial.");
+        }
+        if (image) {
+            const file = getTutorialImageFileByReference_(String(existing.row[2] || "").trim(), operationId, image);
+            try { markTutorialImageLinked_(file, operationId, image); }
+            catch (metadataError) { Logger.log("La imagen del tutorial quedó vinculada, pero no se pudo actualizar su metadata: " + String(metadataError.message || metadataError)); }
         }
         return { status: "success", referenceId: String(existing.row[0] || tutorialId).trim(), alreadyCreated: true,
             message: "El tutorial ya existía; se devolvió el registro original." };
@@ -4782,7 +4935,9 @@ function handleAddTutorial(payload) {
         throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
     }
 
-    const newRow = [tutorialId, title, "", comoIdentificarlo, dondeEncontrarlo, detalles, "", collaborator];
+    const imageUpload = image ? ensureTutorialImageFile_(operationId, image) : null;
+    const imageUrl = imageUpload ? imageUpload.url : "";
+    const newRow = [tutorialId, title, imageUrl, comoIdentificarlo, dondeEncontrarlo, detalles, "", collaborator];
     sheet.appendRow(newRow);
     try {
         SpreadsheetApp.flush();
@@ -4790,6 +4945,10 @@ function handleAddTutorial(payload) {
         const recovered = findTutorialById_(sheet, tutorialId);
         if (recovered && TUTORIAL_HEADERS.every((header, index) =>
             String(recovered.row[index] || "").trim() === String(newRow[index] || "").trim())) {
+            if (imageUpload) {
+                try { markTutorialImageLinked_(imageUpload.file, operationId, image); }
+                catch (metadataError) { Logger.log("El tutorial se guardó, pero la metadata de su imagen quedó pendiente: " + String(metadataError.message || metadataError)); }
+            }
             return { status: "success", referenceId: tutorialId, recovered: true,
                 message: "Tutorial registrado y verificado después de una respuesta de guardado incierta." };
         }
@@ -4800,6 +4959,10 @@ function handleAddTutorial(payload) {
     if (!saved || TUTORIAL_HEADERS.some((header, index) =>
         String(saved.row[index] || "").trim() !== String(newRow[index] || "").trim())) {
         throw new Error("La fila guardada del tutorial no coincide con los datos enviados.");
+    }
+    if (imageUpload) {
+        try { markTutorialImageLinked_(imageUpload.file, operationId, image); }
+        catch (metadataError) { Logger.log("El tutorial se guardó, pero la metadata de su imagen quedó pendiente: " + String(metadataError.message || metadataError)); }
     }
     return { status: "success", referenceId: tutorialId,
         message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
