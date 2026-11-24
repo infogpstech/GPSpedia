@@ -78,7 +78,7 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 
 ## Siguiente paso operativo
 
-Las tres tareas de esta solicitud están COMPLETADAS EN CÓDIGO Y CI. No queda una tarea de código activa en este registro. El siguiente trabajo pendiente corresponde a validaciones de integración en Beta aislada descritas en `Tareas_Beta.md` §§21–25. No ejecutar despliegues Apps Script, cambiar endpoints, propiedades, permisos, Spreadsheet, Drive, OAuth ni datos sin autorización Beta expresa y recursos aislados verificados.
+La única actividad autorizada es **MIG-URL-002 — Inventariar y verificar las seis URLs vigentes**, conforme a `Migracion_URL_Servicios_Frontend.md`. No ejecutar las validaciones Beta ni ninguna otra tarea fuera de MIG-URL-001..008 mientras este plan permanezca abierto.
 
 
 ## Plan MIG-URL — registro de tareas y exclusividad — 2026-11-24
