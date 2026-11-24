@@ -35,7 +35,7 @@ function runLastDeveloperProtectionTests(sources) {
         usersSheet.getParent=()=>spreadsheet;
         sessionsSheet.getParent=()=>spreadsheet;
         const context={
-            SPREADSHEET_ID:'TEST',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},
+            getAuthUsersSpreadsheet_:()=>spreadsheet,SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},
             ROLE_REVOCATION_SHARED_PREFIX:'__role_revocation_pending__:',
             COLS_USERS:userCols,COLS_ACTIVE_SESSIONS:sessionCols,
             normalizeUserId:v=>String(v===null||v===undefined?'':v).trim(),
@@ -63,7 +63,7 @@ function runLastDeveloperProtectionTests(sources) {
                 return {revokedSessions:0,pending:false,cleanupPending:false};
             },
             LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
-            SpreadsheetApp:{openById:()=>spreadsheet,flush:()=>{}},
+            SpreadsheetApp:{getActiveSpreadsheet:()=>spreadsheet,flush:()=>{}},
             PropertiesService:{getScriptProperties:()=>({getProperty:()=>null,setProperty:()=>{},deleteProperty:()=>{}})},
             Utilities:{getUuid:()=>'uuid-test'},logToSheet:(...args)=>logs.push(args),console:{error:()=>{}}
         };
