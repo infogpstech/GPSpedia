@@ -1873,7 +1873,7 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificacione
 
 ================================================================================
 CIERRE LOCAL — MIG-026 ADMIN-05 — CONTADOR LOGOSMARCA — 2026-11-24
-HEAD final de trabajo: 626f303790fcf30a53f8bc6b1e3ae93b4cb5a730
+HEAD de código y pruebas de ADMIN-05: 626f303790fcf30a53f8bc6b1e3ae93b4cb5a730
 Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
 
 Commits del subtramo:
@@ -1915,4 +1915,23 @@ MIG-026 — BÚSQUEDA ESTÁTICA GLOBAL — 2026-11-24
 - Coordinator/SharedMutation retirados. El token legacy __sharedMutationToken se elimina del payload permitido de WRITE. Documentos activos corregidos; listas Beta antiguas preservadas y marcadas históricas.
 - Se añade MIG026StaticConfigSearch.mjs para mantener los contratos de ausencia de URLs/secretos, seis servicios, única bootstrap y lecturas legacy de baseline.
 - Estado: AUDITORÍA LOCAL PREPARADA; pendiente CI. La configuración instalada y la retirada de SPREADSHEET_ID requieren validación Beta real.
+================================================================================
+
+
+================================================================================
+CIERRE LOCAL — MIG-026 BÚSQUEDA ESTÁTICA GLOBAL — 2026-11-24
+HEAD final de auditoría: 5d297cca14bc00bc1238451c6bd3098cc40983b5
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+- Se inspeccionaron 9 servicios Apps Script, 39 módulos frontend, 3 HTML, manifest, service worker, 3 workflows y 49 documentos activos.
+- No hay URLs de deployments GPSpedia, URLs de otros servicios ni secretos compartidos en los servicios activos. La única bootstrap estática es CENTRAL_CONFIGURATION_BOOTSTRAP_URL en frontend, limitada a getPublicConfiguration.
+- PropertiesService queda limitado a nueve puntos legacy dentro de baselines. No se encontraron setProperty/deleteProperty en los nueve servicios activos.
+- Se retiró __sharedMutationToken del allowlist de WRITE. Coordinator/SharedMutation están retirados; las listas Beta antiguas se conservan como archivos históricos.
+- Se corrigieron documentos obsoletos y se añadió MIG026_BUSQUEDA_ESTATICA_FINAL.md junto con MIG026StaticConfigSearch.mjs.
+- Excepción pendiente: SPREADSHEET_ID permanece en AUTH, CATALOG y UTILITIES hasta completar MIG-006 en Web Apps Beta reales. No se sustituyó openById() sin evidencia.
+
+CI: run 45370448353 — 499 suites, 5,889 pruebas aprobadas, 0 fallos; MIG026StaticConfigSearch 10/10; sintaxis PASS. Pages run 45370445917 SUCCESS.
+
+Estado: búsqueda estática local COMPLETADA; cierre total de MIG-026 pendiente de Beta (MIG-006 y lectura de propiedades instaladas). No se modificaron deployments, propiedades ni hojas productivas.
+Siguiente tarea local por prioridad: MIG-027 — suite de paridad funcional de las funciones existentes. MIG-006/Beta se mantiene como bloqueo externo para retirar los tres IDs locales.
 ================================================================================

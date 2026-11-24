@@ -386,3 +386,11 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - Excepción local pendiente: `SPREADSHEET_ID` en AUTH, CATALOG y UTILITIES. MIG-006 requiere probar el contexto Web App real antes de retirar `openById()`; no se modificó.
 - Se retiró el campo legacy `__sharedMutationToken` del payload permitido en WRITE. Los documentos activos que describían Coordinator/SharedMutation o ScriptProperties operativos fueron corregidos; las listas Beta antiguas se conservaron y marcaron como históricas.
 - Detalle y criterios automatizados: `MIG026_BUSQUEDA_ESTATICA_FINAL.md` y `JS/Tests/MIG026StaticConfigSearch.mjs`. Validación Beta de propiedades instaladas y de MIG-006 pendiente.
+
+
+### CI de MIG-026 búsqueda estática — 2026-11-24
+
+- `MIG026StaticConfigSearch`: 10/10 PASS.
+- CI run 45370448353: 499 suites, 5,889 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- Pages run 45370445917: SUCCESS.
+- La excepción `SPREADSHEET_ID` en AUTH/CATALOG/UTILITIES sigue pendiente de MIG-006/Beta y no se considera cerrada por la búsqueda estática.

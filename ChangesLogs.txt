@@ -505,3 +505,11 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Excepción pendiente MIG-006: SPREADSHEET_ID permanece en AUTH, CATALOG y UTILITIES hasta probar el contexto Web App real.
 - Se retiró __sharedMutationToken del allowlist WRITE, se actualizaron documentos obsoletos de Coordinator/SharedMutation y se marcaron listas Beta antiguas como históricas.
 - Se añadió suite MIG026StaticConfigSearch.mjs y auditoría MIG026_BUSQUEDA_ESTATICA_FINAL.md. CI pendiente.
+
+
+### 2026-11-24 — Cierre de búsqueda estática global MIG-026
+- MIG026StaticConfigSearch: 10/10 PASS.
+- CI run 45370448353: 499 suites, 5,889 pruebas aprobadas, 0 fallos; sintaxis PASS. Pages run 45370445917 SUCCESS.
+- Resultado: no quedan URLs de otros servicios ni secretos compartidos en servicios Apps Script. Se mantiene una única bootstrap pública frontend según MIG-009.
+- Pendiente Beta MIG-006: tres SPREADSHEET_ID locales en AUTH/CATALOG/UTILITIES; no se retiraron sin prueba Web App real.
+- MIG-026 queda COMPLETADA EN CÓDIGO Y CI, CON VALIDACIÓN BETA PENDIENTE.

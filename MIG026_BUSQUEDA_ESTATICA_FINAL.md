@@ -4,7 +4,7 @@
 **Repositorio:** infogpstech/GPSpedia  
 **Rama:** GPSpedia2.2.5_work  
 **Corte inicial de búsqueda:** d203a1dedce1fdcc382bed3c55ad280200f66a7d  
-**Estado:** revisión local; pendiente CI de esta suite y validación Beta de la configuración instalada.
+**Estado:** auditoría local y CI completadas; validación Beta de la configuración instalada pendiente.
 
 ## Alcance
 
@@ -81,3 +81,11 @@ La telemetría de navegador queda limitada a seis servicios, es efímera y no tr
 ## Suite de regresión
 
 Se añade `JS/Tests/MIG026StaticConfigSearch.mjs` para mantener como contrato la ausencia de URLs/secretos de interconexión en servicios, el único bootstrap frontend, la lista de seis servicios, los tres IDs Spreadsheet pendientes de MIG-006 y el carácter exclusivamente legacy de las lecturas PropertiesService.
+
+
+## Resultado de CI
+
+- Suite `MIG026StaticConfigSearch`: 10/10 PASS.
+- CI run 45370448353: 499 suites, 5,889 pruebas aprobadas y 0 fallos; sintaxis PASS.
+- GitHub Pages run 45370445917: SUCCESS.
+- HEAD auditado: 5d297cca14bc00bc1238451c6bd3098cc40983b5. Rama base protegida sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
