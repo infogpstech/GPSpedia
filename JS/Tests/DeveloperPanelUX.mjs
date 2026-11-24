@@ -35,12 +35,13 @@ testCase("los botones Developer usan etiquetas breves y conservan nombre accesib
  }
 });
 
-testCase("la consola está sobre las pestañas y ocupa menos del 30% del modal en escritorio",()=>{
- assert.ok(html.indexOf('class="dev-console-shared"') < html.indexOf('class="dev-tools-tabs"'));
- const desktopStart=css.lastIndexOf("/* AUG-146 — consola compacta");
- const desktopEnd=css.indexOf("@media (max-width: 760px)",desktopStart);
- const desktop=css.slice(desktopStart,desktopEnd);
- assert.match(desktop,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 24%[\s\S]*?max-height: 28%/);
+testCase("la consola y la línea de comandos preceden a la barra de pestañas y duplican su altura",()=>{
+ const consoleIndex=html.indexOf('class="dev-console-shared"');
+ const tabsIndex=html.indexOf('class="dev-tools-tabs"');
+ const commandIndex=html.indexOf('id="dev-terminal-input"');
+ assert.ok(consoleIndex >= 0 && commandIndex > consoleIndex && tabsIndex > commandIndex);
+ const nav=css.slice(css.lastIndexOf("/* REV-2026-11-24 — panel Developer"));
+ assert.match(nav,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex: 0 0 48%[\s\S]*?max-height: 52%/);
  assert.match(css,/#dev-tools-modal \.dev-console-output \{[\s\S]*?flex: 1 1 0/);
 });
 testCase("en móvil la consola conserva una altura compacta y la barra de comandos es horizontal",()=>{
@@ -78,20 +79,19 @@ testCase("limpiar y copiar expanden su etiqueta solo al recibir foco",()=>{
  assert.match(reduced,/#dev-tools-modal #btn-clear-console-log::after/);
  assert.match(reduced,/#dev-tools-modal #btn-copy-console-log::after/);
 });
-testCase("las cuatro secciones del desarrollador conservan una fila horizontal en todos los tamaños",()=>{
+testCase("las pestañas muestran icono siempre y etiqueta solo en la sección seleccionada",()=>{
  const start=css.lastIndexOf("/* REV-2026-11-24 — panel Developer");
  const nav=css.slice(start);
- assert.match(nav,/#dev-tools-modal \.dev-tools-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/);
- assert.match(nav,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
- assert.match(nav,/#dev-tools-modal \.dev-tab-link span \{[\s\S]*?max-width: none[\s\S]*?opacity: 1/);
- assert.match(nav,/@media \(max-width: 520px\)[\s\S]*?\.dev-tab-link span \{[\s\S]*?display: none/);
- assert.doesNotMatch(nav,/grid-template-columns: 62px/);
+ assert.match(nav,/#dev-tools-modal \.dev-tab-link span \{[\s\S]*?max-width: 0[\s\S]*?opacity: 0/);
+ assert.match(nav,/:has\(#dev-tab-diagnostics:checked\)[\s\S]*?\.dev-tab-link\[for="dev-tab-diagnostics"\] span[\s\S]*?max-width: 150px[\s\S]*?opacity: 1/);
+ assert.match(nav,/@media \(max-width: 520px\)[\s\S]*?\.dev-tab-link span \{[\s\S]*?display: inline-block/);
+ assert.doesNotMatch(nav,/display: none/);
 });
-testCase("la consola ocupa la mitad del ancho en escritorio y todo el ancho en móvil",()=>{
+testCase("consola de ancho completo, compactación y botones alineados",()=>{
  const start=css.lastIndexOf("/* REV-2026-11-24 — panel Developer");
  const nav=css.slice(start);
- assert.match(nav,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?width: 50%[\s\S]*?max-width: 50%/);
- assert.match(nav,/@media \(max-width: 760px\)[\s\S]*?\.dev-console-shared \{[\s\S]*?width: 100%[\s\S]*?max-width: 100%/);
+ assert.match(nav,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?width: 100%[\s\S]*?max-width: 100%/);
+ assert.match(nav,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?padding: 3px/);
  assert.match(nav,/\.dev-card-heading \.gp-help-trigger,[\s\S]*?#btn-clear-console-log,[\s\S]*?#btn-copy-console-log[\s\S]*?margin: 0 !important/);
 });
 console.log("DeveloperPanelUX: "+passed+"/"+passed+" PASS");

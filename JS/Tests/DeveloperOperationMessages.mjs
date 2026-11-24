@@ -82,4 +82,23 @@ testCase("inventario y organización conservan confirmación global y resultados
     assert.match(audit, /Sin cambios en Spreadsheet, Drive ni permisos/);
 });
 
+testCase("los endpoints informan exclusivamente en la consola Developer", () => {
+    const start = ui.indexOf("function initializeCentralServiceUrlsControl_()");
+    const end = ui.indexOf("/* TAREA 1.2:", start);
+    const control = ui.slice(start, end);
+    assert.match(control, /appendConsoleStatus\("Consultando endpoints registrados en AUTH/);
+    assert.match(control, /appendConsoleStatus\("Validando y actualizando endpoints/);
+    assert.match(control, /appendConsoleStatus\("Actualización completada/);
+    assert.match(control, /appendConsoleStatus\("ERROR: no se pudieron consultar los endpoints/);
+    assert.match(control, /appendConsoleStatus\("ERROR: completa la URL/);
+    assert.doesNotMatch(control, /status\.textContent/);
+});
+testCase("el botón de endpoints usa el nombre Actualizar Servicios", () => {
+    const html = readFileSync(resolve(root, "index.html"), "utf8");
+    const start = html.indexOf('id="btn-save-central-service-urls"');
+    const button = html.slice(start, html.indexOf("</button>", start));
+    assert.match(button, /Actualizar Servicios/);
+    assert.doesNotMatch(button, /validar y publicar endpoints/i);
+});
+
 console.log("DeveloperOperationMessages: " + passed + "/" + passed + " PASS");

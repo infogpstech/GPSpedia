@@ -5963,7 +5963,7 @@ function initializeCentralServiceUrlsControl_() {
     Object.values(fields).forEach(field => { if (field) field.disabled = !allowed; });
     if (saveButton) saveButton.disabled = !allowed;
     if (!allowed) {
-        if (status) status.textContent = "Esta configuración está disponible únicamente para usuarios Desarrollador.";
+        appendConsoleStatus("Acceso denegado: esta configuración está disponible únicamente para usuarios Desarrollador.");
         return;
     }
 
@@ -5973,16 +5973,16 @@ function initializeCentralServiceUrlsControl_() {
     };
     const load = async () => {
         setBusy(true);
-        if (status) status.textContent = "Consultando endpoints registrados en AUTH...";
+        appendConsoleStatus("Consultando endpoints registrados en AUTH...");
         try {
             const urls = await loadCentralServiceUrls(context);
             if (!isCurrentUiSessionContext_(context)) return;
             lastLoadedUrls = Object.fromEntries(keys.map(key => [key, String(urls[key] || "").trim()]));
             keys.forEach(key => { if (fields[key]) fields[key].value = urls[key] || ""; });
-            if (status) status.textContent = "Puedes modificar las URL. Los demás metadatos se completan y validan automáticamente al publicar.";
+            appendConsoleStatus("Endpoints cargados. Puedes editar las URL y seleccionar Actualizar Servicios.");
         } catch (error) {
             console.warn("No se pudieron consultar los endpoints centrales:", error);
-            if (status) status.textContent = "No se pudieron consultar los endpoints. Verifica la sesión y vuelve a intentarlo.";
+            appendConsoleStatus("ERROR: no se pudieron consultar los endpoints en AUTH. " + String(error && error.message || "Error no identificado"));
         } finally {
             if (isCurrentUiSessionContext_(context)) setBusy(false);
         }
@@ -5992,7 +5992,7 @@ function initializeCentralServiceUrlsControl_() {
         saveButton.addEventListener("click", async () => {
             const activeContext = getUiSessionContext_();
             if (!activeContext || activeContext.role !== "desarrollador" || !isCurrentUiSessionContext_(context)) {
-                if (status) status.textContent = "La sesión de desarrollador ya no está activa. Vuelve a iniciar sesión.";
+                appendConsoleStatus("ERROR: la sesión de desarrollador ya no está activa. Vuelve a iniciar sesión.");
                 return;
             }
             const urls = {};
@@ -6000,7 +6000,7 @@ function initializeCentralServiceUrlsControl_() {
                 const field = fields[key];
                 const value = String(field && field.value || "").trim();
                 if (!value) {
-                    if (status) status.textContent = "Completa la URL de " + key + " antes de guardar.";
+                    appendConsoleStatus("ERROR: completa la URL de " + key + " antes de actualizar servicios.");
                     if (field) field.focus();
                     return;
                 }
@@ -6008,7 +6008,7 @@ function initializeCentralServiceUrlsControl_() {
             }
             const changedByClient = keys.filter(key => String(lastLoadedUrls[key] || "") !== String(urls[key] || ""));
             setBusy(true);
-            if (status) status.textContent = "Validando y publicando una nueva revisión de endpoints...";
+            appendConsoleStatus("Validando y actualizando endpoints de servicios...");
             try {
                 const result = await saveCentralServiceUrls(urls, activeContext.role, activeContext);
                 if (!isCurrentUiSessionContext_(context)) return;
@@ -6030,18 +6030,18 @@ function initializeCentralServiceUrlsControl_() {
                 });
                 if (result.configurationRefreshPending) {
                     appendConsoleStatus("La revisión " + revision + " fue publicada, pero la lectura de configuración local debe reintentarse.");
-                    if (status) status.textContent = "Endpoints publicados; falta actualizar la configuración local.";
+                    appendConsoleStatus("AVISO: endpoints publicados; falta actualizar la configuración local.");
                     return;
                 }
-                if (status) status.textContent = result.unchanged
-                    ? "No había cambios en los endpoints."
-                    : "Cambios guardados. Revisión " + revision + ".";
+                appendConsoleStatus(result.unchanged || result.idempotent
+                    ? "Actualización completada sin cambios. Revisión " + revision + "."
+                    : "Actualización completada. Revisión " + revision + ".");
                 await load();
             } catch (error) {
                 console.warn("No se pudieron publicar los endpoints centrales:", error);
                 appendConsoleStatus("ERROR: no se pudo publicar la configuración de servicios. " + String(error && error.message || "Error no identificado"));
                 keys.forEach(key => appendConsoleStatus("El servidor de " + (serviceLabels[key] || key) + " no se actualizó."));
-                if (status) status.textContent = "No se pudieron guardar los cambios.";
+                appendConsoleStatus("La actualización de servicios no se completó.");
             } finally {
                 if (isCurrentUiSessionContext_(context)) setBusy(false);
             }
