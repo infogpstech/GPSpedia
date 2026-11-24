@@ -1061,14 +1061,22 @@ assert.ok(postMatch, "No se pudo extraer el dispatcher FEEDBACK.");
 const dispatchCalls = [];
 const trustedInboxActor = { userId:"U1", role:"tecnico", epoch:1, fullName:"Ana" };
 const dispatch = new Function(
-    "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "getCachedSharedSessionActor_",
+    "FEEDBACK_ACTION_PERMISSIONS", "FEEDBACK_PUBLIC_ACTIONS", "getCachedSharedSessionActor_", "getSpreadsheet",
     "withSharedSessionActor_", "doPostInternal_", "ContentService",
     "DIRECT_SERVICE_TRAFFIC_CONFIG_", "readDirectServiceTraffic_", "recordDirectServiceTraffic_",
     postMatch[0] + String.fromCharCode(10) + "return doPost;"
 )(
     { getInboxRecipients:null, getInboxConversations:null, getInboxMessages:null, createInboxConversation:null },
     new Set(),
-    (userId, sessionToken, options) => { dispatchCalls.push({userId,sessionToken,service:options && options.service}); return trustedInboxActor; },
+    (userId, sessionToken, options) => {
+        const spreadsheetProvider = options && typeof options.loadSpreadsheet === "function" ? options.loadSpreadsheet() : null;
+        dispatchCalls.push({
+            userId, sessionToken, service: options && options.service,
+            hasSpreadsheetProvider: Boolean(spreadsheetProvider && typeof spreadsheetProvider.getSheetByName === "function")
+        });
+        return trustedInboxActor;
+    },
+    () => ({ getSheetByName: () => null }),
     (event, actor) => {
         const request = JSON.parse(event.postData.contents);
         request.payload.__sharedSessionActor = actor;
@@ -1085,7 +1093,7 @@ for (const action of ["getInboxRecipients","getInboxConversations","getInboxMess
     dispatchCalls.length = 0;
     const event = { postData:{contents:JSON.stringify({action,payload:{userId:"U1",sessionToken:"token-a"}})} };
     const payload = dispatch(event);
-    assert.deepEqual(dispatchCalls,[{userId:"U1",sessionToken:"token-a",service:"FEEDBACK"}]);
+    assert.deepEqual(dispatchCalls,[{userId:"U1",sessionToken:"token-a",service:"FEEDBACK",hasSpreadsheetProvider:true}]);
     assert.equal(payload.__sharedSessionActor.userId,"U1");
     assert.equal(payload.__sharedSessionActor.epoch,1);
 }
