@@ -657,8 +657,27 @@ runGroup('47','MIG026',()=>{
  runCli('MIG026 ADMIN guardas temporales: baseline, exclusión por recurso y TTL sin bloqueo durante Drive','JS/Tests/AdminLocalOperationGuard.mjs');
 });
 
+
+runGroup('48','MIG027',()=>{
+ runCli('MIG027 paridad funcional: acciones, contratos, roles y controles','JS/Tests/MIG027FunctionalParity.mjs');
+ // MIG-016: cobertura explícita del ciclo de carga reanudable y aprobación de vídeos.
+ runCli('MIG016 cliente YouTube reanudable y persistencia local','JS/Tests/YouTubeUploadClientNode.mjs');
+ runCli('MIG016 contratos frontend/backend de aprobación de vídeo','JS/Tests/VideoApprovalClientContract.mjs');
+ runCli('MIG016 reserva idempotente y frontera de inicialización YouTube','JS/Tests/YouTubeInitIdempotencyBoundary.mjs');
+ runCli('MIG016 integridad XSS de carga de vídeo','JS/Tests/YouTubeUploadXssIntegrityCli.mjs');
+ runCli('MIG016 refresco de catálogo tras aprobación','JS/Tests/VideoApprovalCatalogRefreshFrontend.mjs');
+ // MIG-022: acciones administrativas de Spreadsheet.
+ runCli('MIG022 contratos de creación de hojas y columnas','JS/Tests/AdminSheetActionsContract.mjs');
+ // MIG-023: feed, reset, arranque del catálogo y salida imprimible.
+ runCli('MIG023 feed incremental y cursor del catálogo','JS/Tests/CatalogChangeFeed.mjs');
+ runCli('MIG023 reset de catálogo y recuperación de caché','JS/Tests/CatalogBrowserReset.mjs');
+ runCli('MIG023 integridad del arranque del catálogo','JS/Tests/CatalogStartupIntegrity.mjs');
+ runCli('MIG023 contrato de paginación de ficha imprimible','JS/Tests/PrintSheetPageContract.mjs');
+});
+
+
 if(selected){
- const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','MIG021','MIG026','39','41','42','43','44','45','47','31','32','33','34','35','36','38']);
+ const valid=new Set(['WRITE','ADMIN','FEEDBACK','CATALOG','UTILITIES','AUTH','INTEGRATION','MIG015','MIG017','MIG018','MIG019','MIG020','MIG021','MIG026','MIG027','48','39','41','42','43','44','45','47','31','32','33','34','35','36','38']);
  for(const item of selected) if(!valid.has(item)){failures.push({service:item,message:'Servicio/suite desconocido.'});totals.failed++;}
 }
 console.log('\nResultado de regresión de servicios: '+totals.suites+' suites; '+totals.passed+' pruebas aprobadas; '+totals.failed+' fallos de suite.');
