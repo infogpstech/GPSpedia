@@ -142,14 +142,14 @@ function makeHandlerHarness(options = {}) {
     const requestSource = extractFunction(authSource, "handleRequestPasswordRecovery");
     const completeSource = extractFunction(authSource, "handleCompletePasswordRecovery");
     const handlers = new Function(
-        "SpreadsheetApp","SPREADSHEET_ID","SHEET_NAMES","COLS_USERS","LockService",
+        "SpreadsheetApp","getAuthUsersSpreadsheet_","SHEET_NAMES","COLS_USERS","LockService",
         "getPasswordRecoveryManager_","isActiveAuthUserRecord","normalizeUserId","MailApp","logToSheet",
         "normalizePassword","createPasswordHash","revokeSharedUserSessionContexts_","getActiveSessionTokensForUserUnderLock_","revokeAllUserSessionsUnderLock_",
         "writePasswordHashAndVerifyUnderLock_","clearUserSessionPointerUnderLock_","deleteRevokedSessionRowsUnderLock_",
         "hasPendingRoleRevocation_","migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_","roleRevocationPropertyKey_","PropertiesService",
         requestSource + "\n" + completeSource + "\nreturn {handleRequestPasswordRecovery,handleCompletePasswordRecovery};"
     )(
-        {openById:()=>spreadsheet,flush(){}}, "TEST_DB",
+        {getActiveSpreadsheet:()=>spreadsheet,flush(){}}, ()=>spreadsheet,
         {USERS:"Users",ACTIVE_SESSIONS:"ActiveSessions"},
         {ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Correo_Electronico:6,SessionToken:8,TermsAcceptance:9},
         {getScriptLock:()=>lock}, ()=>manager,
