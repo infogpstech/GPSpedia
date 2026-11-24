@@ -201,3 +201,13 @@ _Aún no hay hallazgos confirmados._
 
 
 - **Ampliación de verificación — 2026-11-24:** se añadió cobertura directa de inicialización YouTube para ambos tipos de destino: Tutorial histórico con referencia `legacy-<SHA-256>` y Tutorial nuevo con ID canónico `tut-...`. FEEDBACK precondiciones de subida resumable: 10/10 PASS. CI run `45506352069`: SUCCESS; 517 suites, 6,156 pruebas, 0 fallos. Chromium 184/184 PASS; Pages run `45506351422`: SUCCESS. La carga real en YouTube Beta sigue sin ejecutarse.
+
+
+### Rectificación de trazabilidad de IDs — 2026-11-24
+
+La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquetas no oficiales asignadas por el asistente fue incorrecta y queda rectificada:
+
+- **AUG-147:** confirmado en `ChangesLogs.txt` con registro de inicio y cierre (caché Service Worker v76).
+- **AUG-150:** confirmado en `ChangesLogs.txt` con registro de corrección/cierre (constantes `INBOX_AUDIT_SHEET_NAME` y `INBOX_AUDIT_HEADERS`).
+- **AUG-148 y AUG-149:** constan como tareas pendientes en `checkpoint.md` y relacionadas con BETA-F004/BETA-F005; no se registra su cierre funcional en `ChangesLogs.txt`.
+- No se deben borrar los registros históricos ni reutilizar estos IDs para nuevas tareas. El orden actual de ejecución lo define `Tareas_Activas.md`, añadido en el commit `9442da203814be4891de82f93a1730700fb4b31d`.
