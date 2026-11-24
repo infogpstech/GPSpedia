@@ -569,3 +569,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se añadieron rollback por versión y rollback de URL mediante nueva revisión. Cambiar un endpoint no requiere redesplegar los otros servicios ni el frontend.
 - README enlaza la guía vigente. Se añadió `MIG029DeploymentGuideContract.mjs` al runner para validar vigencia, dependencias, registro central y rollback.
 - No se desplegaron proyectos Apps Script ni se modificaron propiedades, permisos, hojas o datos productivos. La ejecución del procedimiento real y su rollback permanecen pendientes de Beta aislada.
+
+
+### 2026-11-24 — MIG-030 preparación de pruebas Beta
+- Se verificó el bloque de sincronización segura al inicio de Tareas_Beta.md: remoto/rama exactos, árbol limpio, fetch + pull --ff-only y HEAD final; sin comandos destructivos.
+- Contrato estático del preflight: 8/8 PASS. Se confirmó la presencia de BETA-01 a BETA-08 y las secciones diferidas MIG-012/013/015/017/018/024/025/026.
+- Se actualizó el estado de preparación en TAREAS_MIGRACION_ARQUITECTURA.md y la continuidad en checkpoint.md.
+- No se ejecutaron pruebas Beta remotas ni se modificaron deployments, propiedades, permisos, Spreadsheet, Drive o datos productivos. Las pruebas reales permanecen pendientes de recursos Beta aislados.
