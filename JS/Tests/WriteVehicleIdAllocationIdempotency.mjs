@@ -18,8 +18,11 @@ function createSheet(initialRows, options = {}) {
         getLastColumn: () => Math.max(1, ...rows.map(row => row.length)),
         getRange(row, column, numRows = 1, numColumns = 1) {
             return {
-                getValues: () => Array.from({ length: numRows }, (_, r) =>
-                    Array.from({ length: numColumns }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] ?? "")),
+                getValues: () => {
+                    if (options.afterRead) { const callback = options.afterRead; options.afterRead = null; callback(); }
+                    return Array.from({ length: numRows }, (_, r) =>
+                        Array.from({ length: numColumns }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] ?? ""));
+                },
                 getValue: () => (rows[row - 1] || [])[column - 1] ?? "",
                 getFormulas: () => Array.from({ length: numRows }, (_, r) =>
                     Array.from({ length: numColumns }, (_, c) => formulas.get((row - 1 + r) + ":" + (column - 1 + c)) || "")),
@@ -77,22 +80,15 @@ function createSheet(initialRows, options = {}) {
 }
 
 function harness(options = {}) {
-    const cortes = createSheet([["id", "marca", "modelo"], [1, "Toyota", "Hilux"], [2, "Toyota", "RAV4"], [3, "Honda", "Civic"]]);
-    let ledger = null, onFirstCounterRead = options.onFirstCounterRead || null, counterRead = false;
-    const properties = {
-        value: options.counter === undefined ? "3" : String(options.counter),
-        getProperty() {
-            if (!counterRead) {
-                counterRead = true;
-                if (onFirstCounterRead) {
-                    const callback = onFirstCounterRead;
-                    onFirstCounterRead = null;
-                    callback();
-                }
-            }
-            return this.value;
-        }
-    };
+    let onFirstCounterRead = options.onFirstCounterRead || null;
+    const cortes = createSheet([["id", "marca", "modelo"], [1, "Toyota", "Hilux"], [2, "Toyota", "RAV4"], [3, "Honda", "Civic"]], {
+        afterRead() { if (onFirstCounterRead) { const callback = onFirstCounterRead; onFirstCounterRead = null; callback(); } }
+    });
+    let ledger = createSheet([
+        ["opId", "operationHash", "vehicleId", "createdAt"],
+        ["OP-BASELINE-CORTES-LAST-ID-V1", "71e6dae8fc9c7cb8ac468ac7be5f4044a2db6166baf0794c0d962dc859d8576c", 3, "baseline"]
+    ]);
+    const properties = { value: options.counter === undefined ? "3" : String(options.counter), getProperty() { return this.value; } };
     const ss = {
         getSheetByName(name) { if (name === "Cortes") return cortes; if (name === "CortesIdReservations") return ledger; return null; },
         insertSheet(name) {
@@ -132,20 +128,20 @@ test("reserva el ID una vez y el reintento idéntico devuelve el mismo ID", () =
     const h = harness();
     assert.equal(h.allocate({ opId: "OP-RETRY-1", operationHash: HASH_A }).vehicleId, 4);
     assert.equal(h.allocate({ opId: "OP-RETRY-1", operationHash: HASH_A }).vehicleId, 4);
-    assert.equal(h.ledger.rows.length, 2);
-    assert.equal(h.ledger.formulaAt(2), "", "La reserva confirmada debe quedar congelada como valor");
+    assert.equal(h.ledger.rows.length, 4);
+    assert.equal(h.ledger.formulaAt(3), "", "La reserva confirmada debe quedar congelada como valor");
 });
 test("rechaza reutilizar opId con otra huella sin consumir otro ID", () => {
     const h = harness();
     assert.equal(h.allocate({ opId: "OP-RETRY-2", operationHash: HASH_A }).vehicleId, 4);
     assert.throws(() => h.allocate({ opId: "OP-RETRY-2", operationHash: HASH_B }), /otra huella|otro contenido/);
-    assert.equal(h.ledger.rows.length, 2);
+    assert.equal(h.ledger.rows.length, 4);
 });
 test("operaciones distintas reciben IDs monotónicos y únicos", () => {
     const h = harness();
     assert.equal(h.allocate({ opId: "OP-A", operationHash: HASH_A }).vehicleId, 4);
     assert.equal(h.allocate({ opId: "OP-B", operationHash: HASH_B }).vehicleId, 5);
-    assert.equal(new Set(h.ledger.rows.slice(1).map(row => row[2])).size, 2);
+    assert.equal(new Set(h.ledger.rows.slice(2).map(row => row[2])).size, 2);
 });
 test("dos operaciones intercaladas anexan filas distintas y obtienen IDs consecutivos", () => {
     let secondResult;
@@ -155,7 +151,7 @@ test("dos operaciones intercaladas anexan filas distintas y obtienen IDs consecu
     const firstResult = h.allocate({ opId: "OP-CONCURRENT-A", operationHash: HASH_A });
     assert.equal(secondResult.vehicleId, 4);
     assert.equal(firstResult.vehicleId, 5);
-    assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+    assert.deepEqual(h.ledger.rows.slice(2).map(row => row[2]), [4, 5]);
 });
 test("dos altas simultáneas con el mismo opId y huella convergen a la primera reserva", () => {
     let secondResult;
@@ -165,8 +161,8 @@ test("dos altas simultáneas con el mismo opId y huella convergen a la primera r
     const firstResult = h.allocate({ opId: "OP-SAME", operationHash: HASH_A });
     assert.equal(secondResult.vehicleId, 4);
     assert.equal(firstResult.vehicleId, 4);
-    assert.equal(h.ledger.rows.length, 3);
-    assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+    assert.equal(h.ledger.rows.length, 4);
+    assert.deepEqual(h.ledger.rows.slice(2).map(row => row[2]), [4, 5]);
 });
 test("dos altas simultáneas con huellas distintas conservan first-write-wins", () => {
     let winningResult;
@@ -175,8 +171,8 @@ test("dos altas simultáneas con huellas distintas conservan first-write-wins", 
     }});
     assert.throws(() => h.allocate({ opId: "OP-CONFLICT", operationHash: HASH_A }), /otro contenido/);
     assert.equal(winningResult.vehicleId, 4);
-    assert.equal(h.ledger.rows.length, 3);
-    assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+    assert.equal(h.ledger.rows.length, 4);
+    assert.deepEqual(h.ledger.rows.slice(2).map(row => row[2]), [4, 5]);
     assert.equal(h.allocate({ opId: "OP-AFTER-CONFLICT", operationHash: HASH_A }).vehicleId, 6,
         "Un intento contradictorio consumido no debe bloquear futuras reservas");
 });
@@ -188,27 +184,27 @@ test("una fila duplicada consumida por una carrera no se reutiliza", () => {
     const firstResult = h.allocate({ opId: "OP-SAME-RACE", operationHash: HASH_A });
     assert.equal(secondResult.vehicleId, 4);
     assert.equal(firstResult.vehicleId, 4);
-    assert.deepEqual(h.ledger.rows.slice(1).map(row => row[2]), [4, 5]);
+    assert.deepEqual(h.ledger.rows.slice(2).map(row => row[2]), [4, 5]);
     assert.equal(h.allocate({ opId: "OP-NEXT", operationHash: HASH_B }).vehicleId, 6);
 });
 test("una llamada legacy genera una reserva única y mantiene compatibilidad", () => {
     const h = harness();
     assert.equal(h.allocate({}).vehicleId, 4);
     assert.equal(h.allocate({}).vehicleId, 5);
-    assert.equal(h.ledger.rows.length, 3);
+    assert.equal(h.ledger.rows.length, 4);
 });
 test("rechaza opId sin huella SHA-256 válida antes de crear reservas", () => {
     const h = harness();
     assert.throws(() => h.allocate({ opId: "OP-BAD", operationHash: "bad" }), /operationHash SHA-256/);
-    assert.equal(h.ledger, null);
+    assert.equal(h.ledger.rows.length, 2, "La validación debe rechazar antes de anexar una reserva");
 });
 test("rechaza IDs duplicados o desordenados en el ledger antes de asignar otro", () => {
     const h = harness();
     h.allocate({ opId: "OP-LEDGER-A", operationHash: HASH_A });
     h.allocate({ opId: "OP-LEDGER-B", operationHash: HASH_B });
-    h.ledger.rows[2][2] = 4;
+    h.ledger.rows[3][2] = 4;
     assert.throws(() => h.allocate({ opId: "OP-LEDGER-C", operationHash: "c".repeat(64) }), /secuencia estrictamente creciente y única/);
-    assert.equal(h.ledger.rows.length, 3, "No debe anexarse una reserva sobre un ledger corrupto");
+    assert.equal(h.ledger.rows.length, 4, "No debe anexarse una reserva sobre un ledger corrupto");
 });
 test("rechaza encabezados incompatibles en el ledger existente", () => {
     const h = harness();
@@ -221,6 +217,6 @@ test("rechaza IDs corruptos o duplicados en el historial de Cortes", () => {
     h.cortes.rows.push([3, "Mazda", "3"]);
     assert.throws(() => h.allocate({ opId: "OP-CORRUPT", operationHash: HASH_A }), /ID duplicado 3/);
     assert.ok(h.ledger, "El esquema puede inicializarse sin asignar un ID");
-    assert.equal(h.ledger.rows.length, 1, "No debe quedar ninguna reserva si Cortes contiene IDs corruptos");
+    assert.equal(h.ledger.rows.length, 2, "No debe quedar ninguna reserva si Cortes contiene IDs corruptos");
 });
 console.log("WriteVehicleIdAllocationIdempotency: " + passed + "/" + passed + " PASS — reserva append-only, reintentos, intercalado concurrente, first-write-wins y fail-closed");

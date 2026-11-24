@@ -74,14 +74,14 @@ test("ID decimal se rechaza", () => {
     const h = makeAllocator({ ids: ["1.5"], formulas: [""], lastColumn: 1 });
     assert.throws(() => h.run(), /entero numérico positivo seguro/);
 });
-test("contador almacenado mayor que la hoja mantiene el máximo histórico", () => {
+test("el high-water normal ignora la propiedad legacy después de migrar al ledger", () => {
     const h = makeAllocator({ ids: [1, 2, 3], formulas: ["", "", ""], lastColumn: 1, storedValue: "20" });
-    assert.equal(h.run(), 20);
+    assert.equal(h.run(), 3);
     assert.deepEqual(h.properties.sets, []);
 });
-test("contador almacenado inválido se rechaza", () => {
+test("un valor legacy inválido no afecta el asignador normal ya migrado", () => {
     const h = makeAllocator({ ids: [1], formulas: [""], lastColumn: 1, storedValue: "NaN" });
-    assert.throws(() => h.run(), /contador central de IDs.*inválido/);
+    assert.equal(h.run(), 1);
     assert.equal(h.properties.sets.length, 0);
 });
 test("candidatos contiguos se leen en un solo bloque", () => {

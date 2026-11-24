@@ -37,7 +37,7 @@ test("la migración consulta primero el marcador y solo lee la propiedad legacy 
     const markerCheck = baseline.indexOf("findCortesIdBaseline_(ledger)");
     const legacyRead = baseline.indexOf("getProperty(CORTES_ID_COUNTER_PROPERTY)");
     const append = baseline.indexOf("ledger.appendRow(");
-    const readBack = baseline.indexOf("findCortesIdBaseline_(ledger)", markerCheck + 1);
+    const readBack = baseline.indexOf("findCortesIdBaseline_(ledger)", append + 1);
     assert.ok(markerCheck >= 0 && legacyRead > markerCheck && append > legacyRead && readBack > append);
     assert.match(baseline, /lock\.tryLock\(0\)/);
     assert.match(baseline, /SpreadsheetApp\.flush\(\)/);

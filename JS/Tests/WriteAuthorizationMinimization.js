@@ -169,6 +169,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   for(const name of ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","handleFreezeCortesIds"]){
    let fn;
    if(name==="handleAddOrUpdateCutLocked"){const start=write.indexOf("function prepareAddOrUpdateCutRequest_"),end=write.indexOf("\nfunction handleAddOrUpdateCut(payload)",start);fn=write.slice(start,end);}
+   else if(name==="handleFreezeCortesIds"){const start=write.indexOf("function handleFreezeCortesIds("),end=write.indexOf("\\nfunction fingerprintValue_",start);fn=write.slice(start,end);}
    else fn=extract(write,name);
    assert(fn.includes("getAuthenticatedCollaborator")||fn.includes("assertDeveloperForIdMaintenance"),"Falta protección en "+name);
   }
