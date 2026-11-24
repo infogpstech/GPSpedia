@@ -375,3 +375,17 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - **Estado Dashboard:** COMPLETADA CON VALIDACIÓN DIFERIDA. La corrección local está probada; queda comprobar en Beta aislada el deployment FEEDBACK y la escritura/lectura de actividad en la Spreadsheet Beta. No se desplegó Apps Script ni se modificó Spreadsheet, Drive, propiedades, permisos o datos externos.
 - **Rama:** `GPSpedia2.2.5_work`, HEAD `a13dd84379e575d06f0a4e73bc1909cdad346f1d`. Rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - **Siguiente tarea:** revisar el contrato de Tutorial y los flujos de carga existentes para implementar la imagen de tarjeta sin almacenar binarios en Spreadsheet ni introducir URLs/secretos entre servicios Apps Script. Después investigar la subida YouTube.
+
+
+
+### Adenda de continuidad — imagen de tarjeta de Tutorial — 2026-11-24
+
+- **BETA-F005 corregido en rama:** el formulario de alta ahora permite seleccionar una imagen opcional JPEG, PNG o WebP, máximo 3 MB, y la envía como Data URL a la acción FEEDBACK `addTutorial`.
+- **Almacenamiento:** FEEDBACK valida MIME, codificación, tamaño y firma binaria; guarda el archivo en la carpeta Drive `Cortes/Tutoriales`, verifica que sea hija directa de la raíz autorizada y que conserve los permisos heredados de la carpeta. La hoja `Tutorial` guarda únicamente la referencia Drive en la columna C `Imagen`; no se almacenan binarios/Base64 en Spreadsheet.
+- **Integridad/reintentos:** el hash de la imagen forma parte del payload de creación cuando se adjunta imagen; el mismo `operationId` y contenido reutilizan el archivo, mientras que cambiar la imagen con el mismo ID se rechaza. Los archivos se nombran de forma determinista; un archivo pendiente con metadata ausente solo se recupera después de verificar su contenido binario, tamaño, MIME, nombre y ubicación. CATALOG normaliza la URL Drive al ID usado por las tarjetas.
+- **Pruebas:** `TutorialIntegrity` 47/47 PASS; incluye carga/columna Imagen, proyección CATALOG, reintento sin duplicar, rechazo de imagen distinta para el mismo ID, validación de formato/firma y recuperación de metadata pendiente.
+- **Validación completa:** CI run `45504362878`, HEAD `58e6ca989bc39d2fbc13a3ba5ae7c65f780370be`: SUCCESS; 517 suites, 6,147 pruebas, 0 fallos. Chromium responsive 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700. GitHub Pages run `45504362787`: SUCCESS.
+- **Límites:** no se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos. El código crea la carpeta/archivo únicamente cuando se ejecute una carga autorizada en el entorno objetivo; Beta aún no se ha probado.
+- **Estado BETA-F005:** CORREGIDO EN RAMA Y VALIDADO EN CI; prueba con cuenta/Drive/Spreadsheet Beta aislados pendiente.
+- **Siguiente tarea:** investigar BETA-F007, error de carga de vídeo a YouTube «Tutorial no encontrado». No asumir que el tutorial no existe; revisar la resolución de identidad, operación y referencia entre el flujo de carga y el registro canónico.
+- **Rama:** `GPSpedia2.2.5_work`, HEAD `58e6ca989bc39d2fbc13a3ba5ae7c65f780370be`. Rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
