@@ -4,9 +4,39 @@
 // ============================================================================
 
 // 1. CONFIGURACIÓN
+export const API_ENDPOINTS = Object.freeze({
+    AUTH: "https://script.google.com/macros/s/AKfycby0OcUfWsUmHHXwixDmtClz5E4rBrIBSpttjqdsbqKIdRg8U19kQKm5MH7gN1o627wm8w/exec",
+    CATALOG: "https://script.google.com/macros/s/AKfycbwskd8-pS5CioHU-vw6mkIW6XFA6tBF8CR5968PZ0qrZPf4AGWcVOJU--p8vv8lQIpz/exec",
+    WRITE: "https://script.google.com/macros/s/AKfycbyfXLAUUe-lGlXkDwRopGaXp--QJ4V96txM_5E604oHH5kN1qfV2xJYDsqesfbUHHgJ/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbwJmb_g4-Hb5iXpLdLwxfBQ44mQ9pHb1JYQ3vAwzafpPXiDDRgSAls2bkqKZ5QhnrYEcA/exec",
+    UTILITIES: "https://script.google.com/macros/s/AKfycbzUc402Sju0_ZU7PQST1Kma-qrgJs2v10Pi6hA62rWZZvsCefD6Mr6PCo5GEDA0dGRk/exec",
+    ADMIN: "https://script.google.com/macros/s/AKfycby779ceEVYBaZ8eAFueon4kDdedYeb1xuApUFjh0IdZ5ZQdy5DfVN3tWXQKE55QZtyb1g/exec"
+});
+
+const API_ENDPOINT_PATTERN_ = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+
+function resolveApiEndpoint_(serviceKey) {
+    const key = String(serviceKey || "").trim().toUpperCase();
+    if (!Object.prototype.hasOwnProperty.call(API_ENDPOINTS, key)) {
+        throw new Error("Servicio sin endpoint local configurado: " + key);
+    }
+    const endpoint = String(API_ENDPOINTS[key] || "").trim();
+    if (!API_ENDPOINT_PATTERN_.test(endpoint)) {
+        throw new Error("El endpoint local de " + key + " no cumple el formato HTTPS de Apps Script.");
+    }
+    const deploymentIds = Object.values(API_ENDPOINTS).map(value => {
+        const match = String(value || "").match(/\/s\/([^/]+)\/exec$/);
+        return match ? match[1] : "";
+    });
+    if (deploymentIds.some(id => !id) || new Set(deploymentIds).size !== Object.keys(API_ENDPOINTS).length) {
+        throw new Error("La configuración local contiene IDs de deployment vacíos o duplicados.");
+    }
+    return endpoint;
+}
+
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
 import { recordBrowserServiceTraffic } from './serviceTelemetry.js';
-import { createCentralConfigurationCache, resolveCentralServiceEndpoint } from './centralConfigurationCache.js';
+import { createCentralConfigurationCache } from './centralConfigurationCache.js';
 import { invalidateSessionActorCaches } from './sessionCacheInvalidation.js';
 
 const centralConfigurationCache_ = createCentralConfigurationCache();
@@ -234,8 +264,7 @@ function createRouteActionError_(message, options = {}) {
 }
 
 async function getConfiguredServiceEndpoint_(service) {
-    const snapshot = await loadCentralConfiguration();
-    return resolveCentralServiceEndpoint(snapshot, service);
+    return resolveApiEndpoint_(service);
 }
 
 // 2. LÓGICA DE RUTEO CENTRAL
@@ -841,8 +870,6 @@ export async function checkAllServicesHealth(options = {}) {
         ? new Set(settings.serviceKeys.filter(key => typeof key === "string")) : null;
     const serviceKeys = CENTRAL_SERVICE_KEYS.filter(serviceKey =>
         !requestedServiceKeys || requestedServiceKeys.has(serviceKey));
-    let routingSnapshot = null;
-    try { routingSnapshot = await loadCentralConfiguration(); } catch (configurationError) {}
     await Promise.all(serviceKeys.map(async serviceKey => {
         const startTime = now();
         const expectedIdentity = Object.prototype.hasOwnProperty.call(SERVICE_HEALTH_CONTRACTS, serviceKey)
@@ -851,7 +878,7 @@ export async function checkAllServicesHealth(options = {}) {
         let timeoutId = null;
         let result;
         let serviceEndpoint = null;
-        try { serviceEndpoint = resolveCentralServiceEndpoint(routingSnapshot, serviceKey); } catch (configurationError) {}
+        try { serviceEndpoint = resolveApiEndpoint_(serviceKey); } catch (configurationError) {}
 
         try {
             if (expectedIdentity === undefined || expectedIdentity === null) {
@@ -862,8 +889,8 @@ export async function checkAllServicesHealth(options = {}) {
             } else if (!serviceEndpoint) {
                 const checkedAtMs = now();
                 result = makeResult("unavailable", startTime, checkedAtMs, {
-                    errorCode: "CENTRAL_CONFIGURATION_UNAVAILABLE",
-                    error: "No hay un endpoint central vigente y habilitado para este servicio."
+                    errorCode: "LOCAL_ENDPOINT_UNAVAILABLE",
+                    error: "No hay un endpoint local válido configurado para este servicio."
                 });
             } else if (typeof fetchImpl !== "function") {
                 const checkedAtMs = now();
@@ -1047,7 +1074,7 @@ export async function checkAllServicesHealth(options = {}) {
 }
 export async function checkServiceHealth(serviceKey, options = {}) {
     const key = String(serviceKey || "").trim().toUpperCase();
-    if (!CENTRAL_SERVICE_KEYS.includes(key)) return null;
+    if (!Object.prototype.hasOwnProperty.call(API_ENDPOINTS, key)) return null;
     const results = await checkAllServicesHealth({
         ...(options && typeof options === "object" ? options : {}),
         serviceKeys: [key]
