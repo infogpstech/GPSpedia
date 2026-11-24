@@ -22,6 +22,32 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - MIG-029 y MIG-030: COMPLETADAS CON VALIDACIÓN DIFERIDA.
 - La matriz BETA-01..08 y pruebas de MIG-006/008/012/013/015/017/018/024/025/026 permanecen como procedimiento de campo en `Tareas_Beta.md`.
 
+## Nueva tarea autorizada — AUG-144: corregir encabezado de marca/modelo del modal de detalle
+
+**Estado: PENDIENTE.** Solicitud incorporada el 2026-11-24. Alcance limitado al encabezado visual del modal de detalle de dispositivos.
+
+### Requisitos de distribución
+- El logotipo de marca debe renderizarse con **66 px de alto** y **ancho automático**, conservando su proporción natural y sin reducirse para encajar de forma incorrecta.
+- El bloque de marca debe quedar alineado a la izquierda, con **6 px de separación respecto al borde izquierdo** del modal y **6 px respecto al borde superior**.
+- El nombre del modelo debe ubicarse a la derecha del logotipo, con **6 px de separación horizontal**.
+- El logotipo y el nombre del modelo deben quedar **alineados verticalmente por la parte inferior** dentro de sus respectivos contenedores.
+- La línea azul situada debajo del logotipo y del nombre debe conservarse y quedar a **6 px de separación vertical** del conjunto superior (logo + nombre).
+- El ancho del bloque de marca debe ser automático; no imponer un ancho fijo que reduzca el logotipo o provoque desbordamientos.
+
+### Invariante obligatoria: controles del modal
+- Los botones de **edición, impresión, compartir y cerrar** no deben modificarse.
+- Deben permanecer exactamente en sus posiciones actuales. No cambiar su ubicación, orden, tamaño, comportamiento ni estilos como efecto colateral de la redistribución del encabezado.
+- Antes de implementar, registrar sus posiciones actuales. Después, comparar sus límites/posiciones en los mismos tamaños de viewport.
+- Si el nuevo encabezado afecta la distribución o posición de cualquiera de esos botones, revisar y rehacer el layout del encabezado/contenedores hasta preservar las posiciones originales. No aceptar como solución desplazar los botones para acomodar el logo.
+
+### Validación y cierre
+- Inspeccionar el DOM/CSS real del modal y sus reglas responsive antes de modificar.
+- Validar el alto de 66 px, ancho automático, proporción del logo, offsets de 6 px, separación de 6 px con la línea azul y alineación inferior del logo/nombre.
+- Comparar las posiciones de los cuatro botones antes/después en los mismos viewports de escritorio y móvil; la comparación debe demostrar que no se desplazaron.
+- Probar nombres de modelo largos y logotipos de distintas proporciones para evitar solapamientos o deformaciones.
+- Ejecutar parsing/sintaxis y las pruebas de regresión frontend pertinentes. Si no hay navegador automatizado disponible, declarar la validación visual como no ejecutada y preparar el procedimiento Beta; no presentarla como aprobada.
+- No modificar funcionalidades ni controles ajenos al encabezado.
+
 ## MIG-026 — acceso Spreadsheet
 - AUTH usa `getAuthUsersSpreadsheet_()`; CATALOG usa `getSpreadsheet()`; UTILITIES usa `getUtilitiesSpreadsheet_()` y comparte un handle por petición entre carga de actor y operación.
 - La copia aislada `JS/Tests/Auth.js` conserva paridad exacta.
@@ -51,4 +77,4 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - El manifiesto de rotación conserva las referencias a las partes anteriores.
 
 ## Próxima acción
-Las 30 tareas de migración y la verificación técnica integral local están cerradas. Mantener la validación de campo como pendiente hasta disponer de proyectos Apps Script, Spreadsheet y datos sintéticos aislados con permisos autorizados. Antes de cualquier cambio de despliegue, ejecutar el preflight seguro de `Tareas_Beta.md` y el probe MIG-006 por proyecto. No iniciar mejoras funcionales nuevas sin un nuevo alcance aprobado.
+Atender AUG-144: inspeccionar el encabezado real del modal de detalle, medir primero las posiciones de edición/impresión/compartir/cerrar y ajustar exclusivamente el bloque de marca/modelo. La posición de esos cuatro botones es un invariante. Validar escritorio y móvil, comparar límites antes/después y ejecutar regresión frontend. Mantener las pruebas de campo Apps Script pendientes en `Tareas_Beta.md`; no mezclar ese alcance con AUG-144.
