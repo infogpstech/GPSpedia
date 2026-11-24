@@ -345,8 +345,8 @@ if (typeof window !== 'undefined') {
         const services = Array.from(new Set(event && event.detail && Array.isArray(event.detail.failedServices)
             ? event.detail.failedServices : []));
         if (!services.length) return;
-        showGlobalError('La sesión fue revocada, pero no se pudo confirmar la limpieza de caché en: ' +
-            services.join(', ') + '. Las cachés tienen un vencimiento máximo de 6 horas; revisa la disponibilidad de esos servicios.');
+        console.error('[AUTH] No se confirmó la limpieza de caché de sesión en los servicios:', services);
+        showGlobalError('Error en el inicio de sesión, intente otra vez');
     });
 }
 
@@ -480,7 +480,8 @@ function handleSessionStorageChange(event){
  if(!latest){
   if(current){
    setState({currentUser:null,searchHistory:[],viewedItems:[]});
-   showLoginScreen('La sesión se cerró en otra pestaña. Inicia sesión nuevamente.');
+   console.warn('[AUTH] La sesión local fue retirada desde otra pestaña; se requiere iniciar sesión nuevamente.');
+   showLoginScreen('Error en el inicio de sesión, intente otra vez');
   }
   return;
  }
@@ -882,7 +883,7 @@ export async function checkSession() {
         console.error("Sesión local inválida:", error);
         if (localStorage.getItem(SESSION_KEY) !== sessionData) return checkSession();
         localStorage.removeItem(SESSION_KEY); setState({ currentUser: null, searchHistory: [], viewedItems: [] });
-        showLoginScreen('La sesión local no es válida. Inicia sesión nuevamente.'); return;
+        showLoginScreen('Error en el inicio de sesión, intente otra vez'); return;
     }
     const latestSession = readStoredSession();
     if (!sameSession(latestSession, user)) {
@@ -907,7 +908,8 @@ export async function checkSession() {
     if (!["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"].includes(normalizedRole)) {
         if (localStorage.getItem(SESSION_KEY) === sessionData) localStorage.removeItem(SESSION_KEY);
         setState({ currentUser: null, searchHistory: [], viewedItems: [] });
-        showLoginScreen("La sesión no contiene un rol válido. Inicia sesión nuevamente.");
+        console.error('[AUTH] El perfil de sesión local contiene un rol no válido:', normalizedRole);
+        showLoginScreen('Error en el inicio de sesión, intente otra vez');
         return;
     }
     handleLoginSuccess(user, false);
@@ -927,7 +929,7 @@ export async function login(username, password) {
         // Los detalles técnicos se conservan únicamente en la consola del navegador.
         console.error('[AUTH] Fallo durante el inicio de sesión:', error);
         const message = String(error && error.code || "") === "INVALID_CREDENTIALS"
-            ? "Contraseña o usuario incorrecto"
+            ? "contraseña o usuario incorrecto"
             : "Error en el inicio de sesión, intente otra vez";
         showGlobalError(message);
     }
