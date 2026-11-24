@@ -658,13 +658,19 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 **Límite de validación:** las pruebas de esta tarea son contratos estáticos y fixtures aislados. No se invocaron deployments Apps Script, YouTube, Spreadsheet ni Drive productivos. La ejecución con recursos Beta desechables, permisos reales y verificación de efectos externos corresponde a MIG-030 y no se declara como realizada.
 
 ### MIG-028 — Seguridad, rendimiento y regresión
-**Estado: PENDIENTE**
-**Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
-- [ ] Ejecutar sintaxis, pruebas unitarias, contratos y regresión.
-- [ ] Probar sesiones/revocaciones, roles y operaciones concurrentes.
-- [ ] Comparar latencias contra MIG-005.
-- [ ] Probar fallos de Spreadsheet, caché, endpoint y servicios parciales.
-- [ ] Verificar que no se agregan revalidaciones o viajes de red a acciones ordinarias.
+**Estado: COMPLETADA EN VALIDACIÓN LOCAL — métricas de latencia de aplicación diferidas a Beta según la línea base MIG-005**
+**Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §18. No se añadieron secretos compartidos/manuales, URLs operativas locales en Apps Script ni coordinación funcional backend entre servicios.
+
+- [x] Ejecutar sintaxis, pruebas unitarias, contratos y regresión. Se creó `JS/Tests/MIG028SecurityPerformanceRegression.mjs` con 9 verificaciones; CI final: **512 suites, 6,044 pruebas aprobadas, 0 fallos** y sintaxis PASS.
+- [x] Probar sesiones/revocaciones, roles y operaciones concurrentes. Se integraron/confirmaron los contratos existentes de revocación, invalidación de cachés, actor confiable, cinco roles RBAC, locks fail-fast, idempotencia y append concurrente.
+- [x] Comparar la evidencia disponible con MIG-005: línea base 306 suites/3,581 pruebas y CI de ~30 s; corte actual 512 suites/6,044 pruebas y workflow de ~41 s. El tiempo CI mide el runner y su mayor volumen de pruebas, no la latencia de GPSpedia.
+- [x] Probar fallos de lectura Spreadsheet en validación AUTH, configuración/caché central, IndexedDB, endpoints HTTP, red, JSON y disponibilidad parcial de servicios mediante fixtures y contratos locales.
+- [x] Verificar que las acciones ordinarias no agregan validación interactiva, reautenticación ni viaje de red previo por clic; el router usa configuración central y la autorización backend conserva actor confiable/RBAC.
+
+**Validación diferida a Beta (no bloquea el cierre local):** p50/p95 de arranque, login, catálogo, Inbox y operaciones; bytes/tiempos de snapshot y deltas; llamadas reales y lecturas/escrituras Spreadsheet; latencia real de Drive/YouTube; y revocación con deployments/roles reales. La línea base MIG-005 ya declara estas mediciones como pendientes por falta de navegador, credenciales y recursos desechables. No se inventan ni se sustituyen por el tiempo de CI.
+
+**Evidencia:** workflow `GPSpedia service regression tests`, run 45390513381, commit `8ccc2a761ebec3f03b2ddcb8ddc0390cac25d2ac`, SUCCESS. `MIG028SecurityPerformanceRegression`: 9/9 PASS. No se desplegaron proyectos Apps Script ni se modificaron datos productivos.
+
 
 ### MIG-029 — Guía de despliegue simplificada
 **Estado: PENDIENTE**
