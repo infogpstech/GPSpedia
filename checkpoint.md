@@ -482,3 +482,20 @@ Estado: **PLAN EN EJECUCIÓN — MIG-URL-001 COMPLETADA; MIG-URL-002 ES LA SIGUI
 - MIG-URL-003..008 — PENDIENTES, sujetas a dependencias del documento.
 - Restricciones: no modificar endpoints/deployments reales, propiedades, permisos, Spreadsheet, Drive, OAuth ni datos externos; Beta solo con autorización expresa y recursos aislados. Preservar todas las funciones, contratos, RBAC, sesión y diagnóstico.
 - Al cerrar cada MIG-URL: pruebas locales pertinentes, revisión de diff y actualización de `Tareas_Activas.md`, `checkpoint.md` y `ChangesLogs.txt`. No declarar pruebas remotas sin evidencia.
+
+
+---
+
+# MIG-URL-002 — checkpoint parcial de inventario
+
+Fecha: 2026-11-24  
+Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
+
+- Se inspeccionaron `JS/Frontend/api-config.js`, `JS/Services/Auth.js`, `JS/Services/CentralConfigurationReader.js` y `Services/DEPLOYMENT_GUIDE.md`.
+- La fuente operativa vigente está en Google Spreadsheet: `ConfiguracionControl.active_revision` determina las filas activas de `Servicios.endpoint_url` para AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
+- Los seis valores actuales no están versionados en Git. El archivo `api-config.js` de `GPSpedia2.2.5` contiene URLs históricas, pero no evidencia que los deployments sigan vigentes; no copiarlas sin verificación.
+- `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` es solo el localizador para solicitar la configuración a AUTH; no se debe confundir con la URL operativa de AUTH.
+- El conector Google Drive/Sheets aparece deshabilitado por administración, por lo que no fue posible leer la revisión activa. Inventario y evidencia: `Inventario_URL_Servicios.md`.
+- No se ejecutaron GET de salud ni workflows remotos porque no está confirmado que el bootstrap apunte a un entorno Beta aislado. No se modificaron deployments, endpoints, Spreadsheet ni permisos.
+- **Única tarea activa:** MIG-URL-002. No iniciar MIG-URL-003 ni tareas externas al plan hasta recuperar el snapshot de solo lectura y verificar las seis identidades de salud.
+- Dato pendiente: export/snapshot de solo lectura de `ConfiguracionControl` y `Servicios`, incluyendo `active_revision`, `publication_state` y las seis filas de esa revisión. No hacen falta credenciales ni permisos de escritura.

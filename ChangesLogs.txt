@@ -938,3 +938,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se aclaró que no se reintroducen LEGACY/USERS ni se revierte el resto del código a la versión antigua. Se prohíbe administración de URLs desde Spreadsheet/AUTH/Developer, bootstrap remoto, tabla paralela y fallback remoto.
 - Próxima y única tarea autorizada: MIG-URL-002, inventario y verificación de las seis URLs vigentes.
 - Sin cambios de código productivo, deployments, endpoints reales, propiedades, permisos ni datos externos.
+
+
+### 2026-11-24 — MIG-URL-002: inventario documental de endpoints
+
+- Se inspeccionaron los archivos fuente y la guía de despliegue. La revisión activa se obtiene de `ConfiguracionControl.active_revision` y las seis URLs de `Servicios.endpoint_url`.
+- Se creó `Inventario_URL_Servicios.md` con fuentes, estado por servicio y criterios de verificación.
+- Los seis valores vigentes no están en Git. Las URLs del `api-config.js` de la rama protegida son históricas y no se han considerado deployments vigentes sin contraste.
+- El conector Google Drive/Sheets no está disponible (deshabilitado por administración). Se requiere un snapshot de solo lectura de la revisión activa para completar la tarea.
+- No se realizaron llamadas remotas ni cambios en deployments, Apps Script, Spreadsheet, permisos o endpoints.
+- MIG-URL-002 queda EN PROGRESO; no iniciar ninguna otra tarea hasta completar su evidencia.

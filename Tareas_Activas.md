@@ -10,7 +10,7 @@ Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 **ÚNICO TRABAJO AUTORIZADO:** ejecutar exclusivamente MIG-URL-001 a MIG-URL-008, en el orden y con las dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. No seleccionar ni ejecutar tareas Beta, auditorías pendientes u otras tareas ajenas mientras este plan permanezca abierto. Los hallazgos externos al plan se registran sin ejecutarlos, salvo riesgo crítico de seguridad/integridad que impida continuar.
 
 - MIG-URL-001 — Alinear normativa y registrar el plan: **COMPLETADA — 2026-11-24**.
-- MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **PENDIENTE — SIGUIENTE**.
+- MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **EN PROGRESO — VERIFICACIÓN DE DATOS EXTERNOS PENDIENTE**.
 - MIG-URL-003 — Implementar `API_ENDPOINTS` local y resolución: **PENDIENTE**.
 - MIG-URL-004 — Retirar configuración central de endpoints: **PENDIENTE**.
 - MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **PENDIENTE**.
@@ -89,3 +89,14 @@ Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tarea
 - **MIG-URL-002 PENDIENTE:** inventario y verificación de URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Siguiente y única tarea autorizada.
 - MIG-URL-003..008 permanecen pendientes y bloqueadas por sus dependencias.
 - No continuar tareas de Beta ni otros trabajos fuera de este plan.
+
+
+### MIG-URL-002 — avance de inventario — 2026-11-24
+
+- Inventario documental creado en `Inventario_URL_Servicios.md`.
+- Confirmado en código que las URLs activas proceden de `Servicios.endpoint_url` para la revisión indicada por `ConfiguracionControl.active_revision`.
+- Revisados `api-config.js`, `Auth.js`, `CentralConfigurationReader.js` y la guía de despliegue. Los seis valores activos no están en Git.
+- Las URLs del `api-config.js` de `GPSpedia2.2.5` se consideran históricas/no verificadas; no copiarlas a la nueva configuración.
+- Bloqueo de evidencia: Google Drive/Sheets connector no está disponible (deshabilitado por administración). Falta un snapshot de solo lectura de la revisión activa y las seis filas.
+- No se ejecutaron peticiones de salud remotas por falta de confirmación de entorno aislado. No se modificaron endpoints ni servicios.
+- MIG-URL-002 sigue activa. MIG-URL-003 y todas las demás tareas permanecen bloqueadas. Ninguna tarea ajena al plan está autorizada.
