@@ -4437,6 +4437,20 @@ function findTutorialRow_(sheet, reference, preferId) {
             ? projectTutorialTitle_(identity, projected.row[1]) : projected.row[1];
         return Object.assign({}, byId, { row: projected.row, appliedEditOperations: projected.appliedOperations });
     }
+    if (preferId && /^legacy-[a-f0-9]{64}$/i.test(key)) {
+        const legacyId = key.toLowerCase();
+        const byLegacyIdentity = findTutorialByIdentity_(sheet, legacyId);
+        if (byLegacyIdentity) {
+            const projected = projectTutorialEditFields_(legacyId, byLegacyIdentity.row);
+            projected.row[1] = typeof projectTutorialTitle_ === "function"
+                ? projectTutorialTitle_(legacyId, projected.row[1]) : projected.row[1];
+            return Object.assign({}, byLegacyIdentity, {
+                row: projected.row,
+                appliedEditOperations: projected.appliedOperations
+            });
+        }
+        throw new Error("Tutorial no encontrado.");
+    }
     if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) throw new Error("Tutorial no encontrado.");
     if (preferId) {
         const lastRow = sheet.getLastRow();
