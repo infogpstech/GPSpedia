@@ -12282,8 +12282,8 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             initialTitle: item.Tema || "Tutorial técnico",
             initialDescription: item.Detalles || item.Descripcion || "",
             contentType: "tutorial",
-            referenceId: item.ID || item.Tema,
-            metadata: { tutorialId: item.ID || "", tema: item.Tema || "" },
+            referenceId: item.ID || item.referenceId || item.Tema,
+            metadata: { tutorialId: item.ID || item.referenceId || "", tema: item.Tema || "" },
         });
         form.appendChild(uploadVideoBtn);
         cont.appendChild(form);
