@@ -838,3 +838,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI final: run `45500716073` SUCCESS, 517 suites / 6,125 pruebas aprobadas / 0 fallos; Chromium responsive SUCCESS en los cuatro viewports; Pages run `45500714866` SUCCESS.
 - HEAD validado `9d88477315700d5b87778ce17a2e96e5f95d2331`. Base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
 - Beta visual/PWA sigue pendiente de verificación de SHA servido. No hubo despliegues Apps Script ni cambios en Spreadsheet, Drive, propiedades, permisos o datos productivos.
+
+
+### 2026-11-24 — Corrección AUG-150: esquema de auditoría Inbox en FEEDBACK
+
+- `JS/Services/feedback.js` declara `INBOX_AUDIT_SHEET_NAME` y `INBOX_AUDIT_HEADERS` en el propio módulo, con el contrato `InboxAuditLog` y ocho columnas.
+- `JS/Tests/InboxAuditTrail.js` obtiene las declaraciones directamente del código del servicio; eliminada la inyección artificial de constantes en el harness. Se mantienen los controles de registro antes de mutar, confirmación de escritura, esquema incompatible y fallo cerrado.
+- CI final run `45501003318`: SUCCESS; 517 suites / 6,125 pruebas aprobadas / 0 fallos. FEEDBACK ledger Inbox 15/15 PASS y MIG020 auditoría Inbox 15/15 PASS. Chromium responsive y Pages run `45501002454`: SUCCESS.
+- HEAD probado `cdcce19101f3f39239f247c8506dd7fbbcd04e65`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Verificación Beta pendiente; no se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos productivos.
