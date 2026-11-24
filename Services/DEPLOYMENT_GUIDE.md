@@ -7,7 +7,7 @@
 
 ## 1. Arquitectura y proyectos activos
 
-Los seis servicios son proyectos Apps Script independientes. El frontend resuelve acción → servicio → endpoint usando `ACTION_TO_SERVICE_MAP` y la configuración central. AUTH ofrece la única operación de arranque `getPublicConfiguration`; lee la configuración central y permite al frontend conocer las seis URLs. El resto de los servicios no llama a AUTH ni a otros proyectos Apps Script: cada uno valida localmente su contexto y sus permisos.
+Los seis servicios son proyectos Apps Script independientes. El frontend resuelve acción → servicio → endpoint usando `ACTION_TO_SERVICE_MAP` y la configuración central. AUTH ofrece la operación pública de arranque `getPublicConfiguration` y dos acciones de mantenimiento protegidas (`getCentralServiceUrls` y `updateCentralServiceUrls`). El frontend usa el único localizador bootstrap para esas acciones administrativas; AUTH exige una sesión GPSpedia activa y el rol Desarrollador, y no depende de que la configuración central ya esté publicada para permitir la primera carga de URLs. El resto de los servicios no llama a AUTH ni a otros proyectos Apps Script: cada uno valida localmente su contexto y sus permisos.
 
 Flujo de enrutamiento:
 
@@ -143,22 +143,43 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 - No usar el workflow de health remoto hasta confirmar que su bootstrap fijo consulta exclusivamente Beta aislada y que `workflow_dispatch` está disponible desde la rama predeterminada. El workflow `.github/workflows/deployed-service-health.yml` hace solo GET a los seis servicios, pero toma `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` del código; no tiene selector de entorno. No ejecutarlo si ese bootstrap apunta a producción o si el aislamiento no está confirmado.
 - Si se autoriza y cumple la condición anterior, el workflow **GPSpedia deployed service health (read-only)** obtiene endpoints desde AUTH y consulta `?debug=true` en los seis servicios. No realiza escrituras. Su éxito no sustituye las pruebas funcionales Beta.
 
-## 7. Publicación de una URL nueva en la configuración central
+## 7. Actualización de endpoints en la configuración central
 
-Este procedimiento se usa únicamente cuando se creó un deployment nuevo y su URL `/exec` es distinta. La URL no se guarda en código Apps Script, propiedades de proyecto ni logs públicos.
+La administración de las seis URL está implementada en dos vías. Ambas publican mediante AUTH; ninguna guarda URL de otros servicios en el código Apps Script.
 
-1. Un operador autorizado lee `active_revision` y `schema_version` de la única fila `CONFIGURATION_ACTIVE` de `ConfiguracionControl`; confirmar `publication_state=READY`.
-2. Preparar la siguiente `config_revision` completa sin modificar la revisión activa. Copiar las seis filas de `Servicios` y todas las filas vigentes de `ConfiguracionParametros` y `ConfiguracionRecursos`, conservando el esquema actual.
-3. Cambiar únicamente la fila del servicio afectado: `endpoint_url`, `updated_at`, `updated_by` y `change_reason`. Mantener `service_key`, `enabled`, `contract_version`, `min_client_version` y `health_action`, salvo cambio de contrato aprobado.
-4. Validar HTTPS, host/patrón de deployment esperado, ausencia de credenciales/query secrets, seis claves únicas y compatibilidad del contrato.
-5. Añadir una entrada append-only en `ConfiguracionHistorial` con revisión, clave, operación, valor anterior/nuevo, actor, fecha y motivo. No editar ni borrar historial.
-6. Volver a leer la revisión candidata y comprobar encabezados, tipos, conteos, unicidad y consistencia de todas las tablas. No activar una revisión parcial ni asumir que un LockService de proyectos distintos es un lock distribuido.
-7. Como última operación, conmutar `ConfiguracionControl.active_revision` a la revisión candidata mediante el mecanismo controlado aprobado; conservar `publication_state=READY`.
-8. Leer de nuevo el control y una muestra de la revisión activa. Confirmar que el frontend resuelve la nueva URL y que su GET de salud identifica el servicio correcto.
+### 7.1 Desde la plataforma (vía habitual)
 
-Si el cambio afecta un servicio distinto de AUTH, no es necesario redesplegar frontend ni los otros cinco servicios por el solo cambio de URL. AUTH tiene una consideración adicional: `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en `JS/Frontend/api-config.js` es el único localizador fijo que permite arrancar la lectura de configuración. Si se conserva el deployment antiguo de AUTH como bootstrap compatible, se puede cambiar la URL operativa de AUTH en `Servicios` sin mover ese bootstrap. Si también se retira o cambia la URL bootstrap, actualizar ese único localizador y publicar el frontend correspondiente; mantener disponible el bootstrap anterior durante la transición. No crear un segundo bootstrap ni un fallback local.
+1. Iniciar sesión con una cuenta cuyo rol efectivo sea \`Desarrollador\`.
+2. Abrir el modal **Herramientas de desarrollador → Sistema → Endpoints de servicios**.
+3. El panel consulta las URL actuales mediante \`getCentralServiceUrls\`, directamente al localizador bootstrap AUTH. Esta lectura protegida también funciona antes de la primera publicación.
+4. Editar únicamente los seis campos AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
+5. Pulsar **Validar y publicar endpoints**. El frontend envía las URL y el contexto de sesión actual; no envía credenciales adicionales ni confía en el rol declarado por el navegador.
+6. AUTH vuelve a comprobar la sesión y el rol \`desarrollador\`, valida el conjunto completo de URLs HTTPS y la unicidad de deployments, prepara la siguiente revisión, copia los parámetros y recursos vigentes, registra historial append-only y solo conmuta \`active_revision\` después de que el lector central confirme el snapshot.
+7. El frontend invalida su caché central y vuelve a consultar AUTH. Si la nueva lectura falla, la publicación queda confirmada en servidor y el panel indica que la caché necesita refrescarse; no se usa un endpoint local como fallback.
 
-Si la publicación central no puede completarse con integridad verificable, conservar la revisión anterior activa y el deployment anterior. No forzar el cambio.
+El panel solo permite modificar las URL. \`enabled\`, \`contract_version\`, \`min_client_version\`, \`health_action\`, fechas, responsables y motivos son generados o conservados por AUTH. En la primera publicación, AUTH deriva \`contract_version\` de las versiones declaradas de los seis componentes; activa los servicios y deja vacíos los campos opcionales para los que no existe una política/acción de salud definida. El esquema y el valor inicial \`rich_text_mode=strict\` se generan desde las reglas actuales del lector. \`ConfiguracionRecursos\` permanece sin filas hasta que exista un recurso respaldado por un consumidor y una definición de esquema aprobada; no se inventan IDs.
+
+### 7.2 Desde el editor de Apps Script (inicialización o mantenimiento manual)
+
+Este flujo no requiere una sesión ni un rol de GPSpedia. Apps Script puede solicitar la autorización normal de Google para acceder a la Spreadsheet; esa autorización no es un login de la plataforma.
+
+1. Abrir el proyecto Apps Script **AUTH** con una identidad Google que tenga acceso autorizado a la Spreadsheet central.
+2. Ejecutar manualmente \`prepareCentralConfigurationServiceUrlInput()\`. La función inicializa/valida las seis pestañas y prepara seis filas de borrador en \`Servicios\`, identificadas por \`service_key\` y con \`config_revision\` vacío.
+3. En la pestaña \`Servicios\`, introducir o modificar únicamente la columna \`endpoint_url\` de esas seis filas de borrador. No editar filas con \`config_revision\` asignado ni completar manualmente otras columnas.
+4. Ejecutar \`publishCentralConfigurationFromServiceUrlDraft()\`.
+5. AUTH valida las seis URL y genera automáticamente los metadatos requeridos. Si no existe una revisión, crea la definición aprobada de \`rich_text_mode\`, el valor inicial \`strict\`, las seis filas de servicio y el control READY después de la validación. Si ya existe una revisión, conserva el esquema, parámetros y recursos vigentes y publica una nueva revisión completa.
+6. Revisar el resultado de la función y confirmar la revisión activa en \`ConfiguracionControl\`. Las filas de borrador no son parte de la revisión activa; AUTH las sincroniza con las URL publicadas para la siguiente edición.
+
+Si falta una URL, hay duplicados, un encabezado incompatible o un snapshot inválido, la función falla sin conmutar la revisión activa. Las revisiones previas y su historial se conservan. La función manual no usa \`UrlFetchApp\`, no llama a otros servicios y no requiere \`userId\`, contraseña ni \`sessionToken\` de GPSpedia.
+
+### 7.3 Validación, rollback y bootstrap
+
+- La publicación crea una revisión completa, verifica la lectura de confirmación y agrega una entrada append-only por cada URL creada/modificada. Si falla la confirmación del snapshot o del historial, restaura el control a la revisión anterior.
+- Para revertir una URL, publicar otra revisión que restaure el valor anterior; no editar ni borrar revisiones publicadas.
+- Si cambia una URL distinta de AUTH, no es necesario redesplegar frontend ni los otros cinco servicios por el solo cambio de URL.
+- \`CENTRAL_CONFIGURATION_BOOTSTRAP_URL\` continúa siendo el único localizador fijo de arranque en \`JS/Frontend/api-config.js\`. Cambiar la URL operativa de AUTH en \`Servicios\` no cambia automáticamente ese bootstrap. Si el deployment bootstrap anterior se retira, actualizar el localizador único y publicar el frontend correspondiente; mantener el bootstrap anterior disponible durante la transición. No crear un segundo bootstrap ni un fallback local.
+- El registro \`health_action\` es opcional. El health check documentado continúa siendo GET \`?debug=true\`; no se registra una acción de escritura ni se inventa una acción de salud.
+
 
 ## 8. Matriz de propagación de archivos compartidos
 
