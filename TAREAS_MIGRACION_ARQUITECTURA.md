@@ -578,7 +578,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 
 **Resultado:** MIG-025 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-026 — eliminar configuración local de todos los servicios.
 ### MIG-026 — Eliminar configuración local de todos los servicios
-**Estado: EN PROGRESO — BLOQUEADA PARCIALMENTE POR DEPENDENCIAS MIG-006/MIG-008 Y MIGRACIONES DE ESTADO.**
+**Estado: EN PROGRESO — quedan tres localizadores Spreadsheet locales; su retirada requiere validar el contexto real de ejecución Web App antes de cambiar el acceso a datos.**
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 
 #### Verificación de alcance en la rama (2026-11-23)
