@@ -287,7 +287,7 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 **Validación Beta diferida:** probar login/logout, expiración, revocación, cambio de rol, eliminación de usuario y accesos autorizados/no autorizados sobre deployments y hojas aisladas. La coordinación de invalidación remota desde frontend y la respuesta ante servicios no disponibles pertenecen a MIG-014.
 
 ### MIG-014 — Revocación y limpieza de caché desde frontend
-**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (código y pruebas dirigidas aprobados; CI global con fallos ajenos pendientes; Beta real pendiente)**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (coordinación e invalidación local aprobadas; validación de deployments reales pendiente de Beta)**
 
 **Requisito técnico transversal:** cumplir NORMAS_DESAROLLO.md §18: no claves, tokens ni secretos compartidos/manuales en propiedades Apps Script; no URLs ni coordinación funcional de otros servicios en Apps Script; coordinación frontend siempre que sea posible; llamadas directas solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor; URLs operativas desde registro central autoactualizable, sin fallback local.
 
@@ -310,6 +310,12 @@ Cada tarea debe registrar archivos, funciones/acciones afectadas, pruebas y evid
 - Sintaxis de módulos: PASS.
 - SessionInvalidationFlow: 15/15 PASS; fan-out MIG-014: seis servicios, reintento, fallo parcial y TTL 21,600 s PASS; contrato backend/cache MIG-014: 10/10 PASS; SessionActorCacheInvalidation: 6/6 PASS.
 - La regresión completa reportó 1,200 pruebas aprobadas y cuatro suites fallidas en grupos ADMIN, UTILITIES, AUTH e INTEGRATION. No corresponden a las suites dirigidas MIG-014; se dejan registradas como deuda de regresión general y no se atribuye causalidad sin análisis independiente.
+
+**Adenda de regresión global — 2026-11-24**
+- La deuda de regresión global anterior quedó superada por una ejecución completa posterior: run **45399766285**, job **138464973056**, commit `a894a402d3dbcae2c922bc815b8efc3e8cba4a1d`, SUCCESS.
+- Resultado: 513 suites, 6,051 pruebas aprobadas, 0 fallos; sintaxis PASS. SessionInvalidationFlow 15/15, fan-out de seis servicios PASS, SessionActorCacheInvalidation 6/6.
+- La aceptación local de MIG-014 queda completa. La validación de revocación en deployments y cachés reales permanece diferida a Beta.
+
 
 **Validación Beta diferida**
 - Aún deben ejecutarse logout, cambio/reset de contraseña, cambio de rol, reset global y eliminación contra deployments Apps Script y Spreadsheet aislados, con todos los servicios desplegados y sus permisos reales.
@@ -667,7 +673,7 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 **Límite de validación:** las pruebas de esta tarea son contratos estáticos y fixtures aislados. No se invocaron deployments Apps Script, YouTube, Spreadsheet ni Drive productivos. La ejecución con recursos Beta desechables, permisos reales y verificación de efectos externos corresponde a MIG-030 y no se declara como realizada.
 
 ### MIG-028 — Seguridad, rendimiento y regresión
-**Estado: COMPLETADA EN VALIDACIÓN LOCAL — métricas de latencia de aplicación diferidas a Beta según la línea base MIG-005**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — regresión local aprobada; métricas de latencia de aplicación pendientes de Beta según la línea base MIG-005**
 **Requisito técnico transversal:** cumplido conforme a NORMAS_DESAROLLO.md §18. No se añadieron secretos compartidos/manuales, URLs operativas locales en Apps Script ni coordinación funcional backend entre servicios.
 
 - [x] Ejecutar sintaxis, pruebas unitarias, contratos y regresión. Se creó `JS/Tests/MIG028SecurityPerformanceRegression.mjs` con 9 verificaciones; CI final: **512 suites, 6,044 pruebas aprobadas, 0 fallos** y sintaxis PASS.
@@ -679,6 +685,8 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 **Validación diferida a Beta (no bloquea el cierre local):** p50/p95 de arranque, login, catálogo, Inbox y operaciones; bytes/tiempos de snapshot y deltas; llamadas reales y lecturas/escrituras Spreadsheet; latencia real de Drive/YouTube; y revocación con deployments/roles reales. La línea base MIG-005 ya declara estas mediciones como pendientes por falta de navegador, credenciales y recursos desechables. No se inventan ni se sustituyen por el tiempo de CI.
 
 **Evidencia:** workflow `GPSpedia service regression tests`, run 45390513381, commit `8ccc2a761ebec3f03b2ddcb8ddc0390cac25d2ac`, SUCCESS. `MIG028SecurityPerformanceRegression`: 9/9 PASS. No se desplegaron proyectos Apps Script ni se modificaron datos productivos.
+
+**Adenda de regresión global — 2026-11-24:** run **45399766285**, job **138464973056**, commit `a894a402d3dbcae2c922bc815b8efc3e8cba4a1d`, SUCCESS; 513 suites, 6,051 pruebas aprobadas, 0 fallos y sintaxis PASS. El resultado confirma la regresión local global posterior a MIG-026. Las métricas de latencia real y pruebas con servicios desplegados siguen pendientes de Beta.
 
 
 ### MIG-029 — Guía de despliegue simplificada
