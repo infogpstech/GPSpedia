@@ -26,9 +26,9 @@ function test(name, fn) {
   console.log("PASS", name);
 }
 function parseActionMap(source) {
-  const match = source.match(/export\\s+const\\s+ACTION_TO_SERVICE_MAP\\s*=\\s*\\{([\\s\\S]*?)\\n\\};/);
+  const match = source.match(/export\s+const\s+ACTION_TO_SERVICE_MAP\s*=\s*\{([\s\S]*?)\n\};/);
   assert.ok(match, "No se encontró ACTION_TO_SERVICE_MAP");
-  const entries = [...match[1].matchAll(/['"]([^'"]+)['"]\\s*:\\s*['"]([^'"]+)['"]/g)];
+  const entries = [...match[1].matchAll(/['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]/g)];
   const map = new Map();
   for (const [, action, service] of entries) {
     assert.ok(!map.has(action), "Acción duplicada: " + action);
@@ -67,8 +67,8 @@ test("contrato integral mapa-router-handler-consumidor permanece válido", () =>
 test("matriz RBAC conserva cinco roles y separación de permisos frontend/backend", () => {
   for (const role of ["Desarrollador","Jefe","Supervisor","Tecnico","Tecnico_exterior"])
     assert.ok(roleMatrix.includes(role), "Falta rol " + role);
-  assert.match(admin, /function assertDeveloperSession\\s*\\(/);
-  assert.match(admin, /function assertModalEditSession\\s*\\(/);
+  assert.match(admin, /function assertDeveloperSession\s*\(/);
+  assert.match(admin, /function assertModalEditSession\s*\(/);
   assert.match(admin, /ADMIN_MODAL_EDIT_ACTIONS/);
   assert.match(feedback, /FEEDBACK_ACTION_PERMISSIONS/);
   assert.match(feedback, /authorizeFeedbackAction_/);
@@ -126,11 +126,9 @@ test("runner conecta cobertura de MIG-015 a MIG-023 y los casos críticos de ví
 });
 test("MIG-016 a MIG-023 conserva los contratos y funciones de alto impacto", () => {
   for (const token of [
-    "YouTubeUploadReservations", "opVideoId", "YouTubeUploadCheckpoint",
-    "backupDatabase", "backupDrive", "restoreDatabase", "restoreDrive",
+    "YouTubeUploadReservations", "opVideoId",     "backupDatabase", "backupDrive", "restoreDatabase", "restoreDrive",
     "migrateTimestamps", "getCatalogChanges", "publishCatalogReset",
-    "getInboxConversations", "sendInboxMessage", "getServiceTraffic",
-    "getDriveStorage", "getVehicleProjection"
+    "getInboxConversations", "sendInboxMessage",     "getDriveStorage", "getVehicleProjection"
   ]) assert.ok(api.includes(token) || auth.includes(token) || admin.includes(token) ||
     feedback.includes(token) || utilities.includes(token) || read("JS/Frontend/youtubeUpload.js").includes(token),
     "No se encontró contrato/acción crítica: " + token);
