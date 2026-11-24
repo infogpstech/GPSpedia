@@ -8,7 +8,7 @@ const fixture = fs.readFileSync('JS/Tests/Auth.js', 'utf8');
 const generic = 'Error en el inicio de sesión, intente otra vez';
 const invalid = 'Contraseña o usuario incorrecto';
 
-assert.match(frontend, /console\.error\("\[AUTH\] Fallo durante el inicio de sesión:", error\)/,
+assert.ok(frontend.includes("console.error('[AUTH] Fallo durante el inicio de sesión:', error)"),
   'Los detalles técnicos del login deben registrarse en la consola.');
 assert.ok(frontend.includes(generic), 'Debe existir el mensaje genérico de error de sesión.');
 assert.ok(frontend.includes(invalid), 'Las credenciales incorrectas deben usar el mensaje específico permitido.');

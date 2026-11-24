@@ -9,7 +9,7 @@ function runSessionUiRoleInvalidationTests(sources) {
   const f=slice(auth,"export function logout(","/**");
   assert(f.includes("setState({ currentUser: null"));
   assert(f.includes("localStorage.removeItem(SESSION_KEY)"));
-  assert(f.includes("showLoginScreen(reason)"));
+  assert(f.includes("showLoginScreen(reason ? 'Error en el inicio de sesión, intente otra vez' : undefined)"));
   assert(f.includes("routeAction('logout', { userId, sessionToken })"));
   assert(f.includes("logoutGeneration_")&&f.includes("sameSession"),"Debe proteger cierres obsoletos frente a otra sesión.");
  });

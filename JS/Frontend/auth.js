@@ -924,7 +924,12 @@ export async function login(username, password) {
             throw new Error("Respuesta de login inválida.");
         }
     } catch (error) {
-        showGlobalError(error.message || "Credenciales inválidas.");
+        // Los detalles técnicos se conservan únicamente en la consola del navegador.
+        console.error('[AUTH] Fallo durante el inicio de sesión:', error);
+        const message = String(error && error.code || "") === "INVALID_CREDENTIALS"
+            ? "Contraseña o usuario incorrecto"
+            : "Error en el inicio de sesión, intente otra vez";
+        showGlobalError(message);
     }
 }
 
@@ -956,7 +961,8 @@ export function logout(reason = null, expectedSession = null) {
     if (!sessionToken) return true;
     if (!userId) {
         console.warn('La sesión local se cerró, pero no se pudo solicitar la revocación remota porque falta userId.');
-        showGlobalError('La sesión local se cerró, pero no se pudo solicitar la revocación remota: falta la identidad de la cuenta.');
+        console.error('[AUTH] No se pudo solicitar la revocación remota: falta userId.');
+        showGlobalError('Error en el inicio de sesión, intente otra vez');
         return true;
     }
 
@@ -968,17 +974,20 @@ export function logout(reason = null, expectedSession = null) {
             if (result && (result.revoked === true || result.alreadyRevoked === true)) {
                 if (result.userSessionTokenMatched === true && result.userSessionTokenCleared !== true) {
                     console.warn('La sesión fue revocada, pero no se pudo limpiar Users.SessionToken.');
-                    showGlobalError('La sesión fue revocada, pero no se pudo limpiar el token de referencia en Users. Requiere revisión.');
+                    console.error('[AUTH] La sesión fue revocada, pero no se limpió el token de referencia en Users.');
+                    showGlobalError('Error en el inicio de sesión, intente otra vez');
                 }
                 return;
             }
             console.warn('La sesión local se cerró, pero AUTH no confirmó la revocación remota.');
-            showGlobalError('Cierre local completado, pero no se pudo confirmar la revocación en el servidor. La revocación queda pendiente.');
+            console.error('[AUTH] No se pudo confirmar la revocación remota de la sesión.');
+            showGlobalError('Error en el inicio de sesión, intente otra vez');
         })
         .catch(error => {
             if (!shouldReportLogoutResult()) return;
             console.warn('La sesión local se cerró; la revocación backend quedó pendiente:', error.message);
-            showGlobalError('La sesión se cerró en este dispositivo, pero no se pudo confirmar su revocación en el servidor. Puede seguir activa en otros dispositivos.');
+            console.error('[AUTH] No se pudo confirmar la revocación remota de la sesión:', error);
+            showGlobalError('Error en el inicio de sesión, intente otra vez');
         });
     return true;
 }
