@@ -4788,7 +4788,7 @@ function buildTutorialImageDescription_(operationId, image, state) {
     ].join("\n");
 }
 
-function verifyTutorialImageFile_(file, folder, operationId, image) {
+function verifyTutorialImageFile_(file, folder, operationId, image, allowInitializeMetadata) {
     const expectedName = buildTutorialImageFileName_(operationId, image);
     if (!file || (typeof file.isTrashed === "function" && file.isTrashed()) ||
         String(file.getName() || "") !== expectedName ||
@@ -4796,7 +4796,20 @@ function verifyTutorialImageFile_(file, folder, operationId, image) {
         Number(file.getSize()) !== image.sizeBytes) {
         throw new Error("El archivo de imagen del tutorial no coincide con la operación; requiere revisión.");
     }
-    const description = String(file.getDescription() || "");
+    let actualBytes;
+    try { actualBytes = file.getBlob().getBytes(); }
+    catch (error) { throw new Error("No se pudo verificar el contenido del archivo de imagen del tutorial."); }
+    const actualHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, actualBytes)
+        .map(byte => ((byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))).join("");
+    if (actualHash !== image.sha256) throw new Error("El contenido del archivo de imagen no coincide con la operación.");
+    let description = String(file.getDescription() || "");
+    if (!description && allowInitializeMetadata === true) {
+        description = buildTutorialImageDescription_(operationId, image, "pending");
+        file.setDescription(description);
+        if (String(file.getDescription() || "") !== description) {
+            throw new Error("Drive no confirmó la recuperación de metadata de la imagen del tutorial.");
+        }
+    }
     const lines = new Set(description.split(/\r?\n/));
     if (!lines.has("GPSpedia Tutorial Image v1") ||
         !["state=pending", "state=linked"].some(value => lines.has(value)) ||
@@ -4824,7 +4837,7 @@ function ensureTutorialImageFile_(operationId, image) {
     if (matches.length > 1) throw new Error("Hay archivos duplicados para la imagen de este tutorial; requiere revisión.");
     let file = matches[0] || null;
     if (file) {
-        verifyTutorialImageFile_(file, folder, operationId, image);
+        verifyTutorialImageFile_(file, folder, operationId, image, true);
     } else {
         const blob = Utilities.newBlob(image.bytes, image.mimeType, fileName);
         file = folder.createFile(blob);
