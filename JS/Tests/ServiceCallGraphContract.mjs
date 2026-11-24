@@ -7,11 +7,11 @@ const auth = read("Services/Auth.js");
 const write = read("Services/write.js");
 const feedback = read("Services/feedback.js");
 const utilities = read("Services/Utilities.js");
-const coordinator = read("Services/Coordinator.js");
-const client = read("Services/SharedMutationClient.js");
 const catalog = read("Services/catalog.js");
+const sharedActor = read("Services/SharedSessionActor.js");
 const api = read("Frontend/api-config.js");
 const ui = read("Frontend/ui.js");
+const invalidation = read("Frontend/sessionCacheInvalidation.js");
 const inventory = readFileSync(new URL("../../INVENTARIO_LLAMADAS_SERVICIOS.md", import.meta.url), "utf8");
 
 let passed = 0;
@@ -21,105 +21,82 @@ function check(name, run) {
     console.log("PASS " + name);
 }
 
-check("El inventario de MIG-004 existe y declara el grafo, reemplazos y pruebas", () => {
-    assert.match(inventory, /## 2\. Arquitectura de comunicación actual/);
-    assert.match(inventory, /## 3\. Dependencias ADMIN retiradas por MIG-010/);
-    assert.match(inventory, /## 4\. SharedMutationClient → COORDINATOR/);
-    assert.match(inventory, /## 5\. COORDINATOR → servicios/);
-    assert.match(inventory, /## 6\. Operaciones coordinables desde frontend/);
-    assert.match(inventory, /## 8\. Pruebas y trazabilidad de paridad/);
-});
-
-check("ADMIN no contiene URLs, secretos ni llamadas backend→backend a WRITE/CATALOG", () => {
-    for (const value of ["WRITE_SERVICE_URL","CATALOG_SERVICE_URL","AUTH_SERVICE_URL","CATALOG_TRAFFIC_SECRET_PROPERTY_","callWriteServiceAction","requestCortesIdFreezeFromWriteService","getAdminProjectedVehicleFieldSnapshot_","handleGetVehicleContributionCandidates_"]) assert.equal(admin.includes(value),false,value);
-    assert.equal(admin.includes("script.google.com/macros/s/"),false);
-    assert.ok(ui.includes("freezeCortesIds"));
-    assert.ok(inventory.includes("MIG-010"));
-});
-
-check("CATALOG valida sesión propia y frontend coordina proyección/candidatos", () => {
-    assert.ok(catalog.includes("verifyCatalogDeveloperSession_(payload)"));
-    assert.ok(catalog.includes("case 'getVehicleContributionCandidates'"));
-    assert.equal(catalog.includes("CATALOG_TRAFFIC_SECRET_PROPERTY_"),false);
-    assert.ok(ui.includes('routeAction("getVehicleProjection"'));
-    assert.ok(ui.includes("includeImageInventoryCandidates"));
-    assert.ok(inventory.includes("No se conserva secreto compartido ADMIN↔CATALOG"));
-});
-
-check("El frontend enruta directamente los servicios y acciones de reemplazo", () => {
-    for (const service of ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]) {
-        assert.match(api, new RegExp("\\b" + service + "\\s*:"));
+const services = [admin, auth, write, feedback, utilities, catalog];
+check("Los seis servicios no conservan URLs, secretos compartidos, leases ni esperas bloqueantes", () => {
+    for (const source of services) {
+        assert.doesNotMatch(source, /GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|GPSpedia_SERVICE_URL_|[A-Z]+_SERVICE_URL|withSharedMutationLease_|\.waitLock\(/);
     }
-    for (const [action, service] of [
-        ["getVehicleProjection", "CATALOG"],
-        ["getContributionCandidates", "CATALOG"],
-        ["getVehicleContributionCandidates", "CATALOG"],
-        ["allocateVehicleId", "WRITE"],
-        ["freezeCortesIds", "WRITE"],
-        ["getCatalogChanges", "FEEDBACK"]
-    ]) {
-        assert.match(api, new RegExp("'" + action + "'\\s*:\\s*'" + service + "'"));
-    }
+    assert.doesNotMatch(sharedActor, /GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET|UrlFetchApp/);
+});
+
+check("El frontend es el router y coordinador de secuencias multi-servicio", () => {
+    assert.match(api, /async function getConfiguredServiceEndpoint_\(service\)/);
+    assert.match(api, /const targetUrl = await getConfiguredServiceEndpoint_\(service\)/);
     assert.match(api, /response = await fetch\(targetUrl/);
+    assert.match(api, /async function publishCatalogResetAfterMutation_/);
+    assert.match(api, /routeActionInternal_\("publishCatalogReset"/);
+    assert.match(ui, /routeAction\("getVehicleProjection"/);
+    assert.match(ui, /getContributionCandidates/);
 });
 
-check("Las 13 operaciones internas están en cliente, dispatcher y documento", () => {
-    const actions = [
-        "acquire", "release", "validate", "publishCatalogChange", "publishCatalogChanges",
-        "getCatalogChanges", "registerSession", "syncUserSessions", "revokeSession",
-        "revokeUserSessions", "validateSessionContext", "invalidateSessionActorCaches",
-        "getServiceTraffic"
-    ];
-    for (const action of actions) {
-        assert.ok(coordinator.includes('action === "' + action + '"'), "Coordinator no despacha " + action);
-        assert.ok(inventory.includes("`" + action + "`"), "Inventario no documenta " + action);
+check("El mapa vigente conserva 123 acciones y seis servicios", () => {
+    const match = api.match(/export\s+const\s+ACTION_TO_SERVICE_MAP\s*=\s*\{([\s\S]*?)\n\};/);
+    assert.ok(match);
+    const entries = [...match[1].matchAll(/['"]([^'"]+)['"]\s*:\s*['"]([A-Z]+)['"]/g)];
+    assert.equal(entries.length, 123);
+    const counts = {};
+    entries.forEach(([, action, service]) => { counts[service] = (counts[service] || 0) + 1; });
+    assert.deepEqual(counts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
+});
+
+check("La invalidación de cachés se coordina en paralelo desde el frontend sin transmitir tokens", () => {
+    assert.match(invalidation, /SESSION_CACHE_SERVICES = Object\.freeze\(\[/);
+    for (const service of ["AUTH", "WRITE", "CATALOG", "FEEDBACK", "ADMIN", "UTILITIES"]) assert.ok(invalidation.includes('"' + service + '"'));
+    assert.match(invalidation, /Promise\.all\(SESSION_CACHE_SERVICES\.map/);
+    assert.match(invalidation, /retry\("__invalidateSessionActorCache"/);
+    assert.match(invalidation, /const payload = \{ userId, cacheKeys \}/);
+    assert.doesNotMatch(invalidation, /sessionToken|UrlFetchApp|GPSpedia_COORDINATOR_SECRET/);
+});
+
+check("SharedSessionActor exige proveedor Spreadsheet explícito y no tiene fallback global", () => {
+    assert.match(sharedActor, /function loadSharedSessionActorFromSpreadsheet_/);
+    assert.match(sharedActor, /deps\.loadSpreadsheet/);
+    assert.match(sharedActor, /typeof deps\.loadSpreadsheet === "function"/);
+    assert.doesNotMatch(sharedActor, /SPREADSHEET_ID|openById\(/);
+    for (const source of [auth, write, admin, utilities]) assert.match(source, /loadSpreadsheet:/);
+});
+
+check("CATALOG conserva autorización local y caché de actor propia", () => {
+    assert.match(catalog, /function getCatalogSessionActor_\(/);
+    assert.match(catalog, /function verifyCatalogDeveloperSession_\(/);
+    assert.match(catalog, /CacheService\.getScriptCache\(\)/);
+    assert.match(catalog, /case 'getVehicleContributionCandidates'/);
+    assert.doesNotMatch(catalog, /CATALOG_TRAFFIC_SECRET_PROPERTY_|GPSpedia_COORDINATOR_SECRET|withSharedMutationLease_/);
+});
+
+check("ADMIN no conserva llamadas funcionales backend→backend", () => {
+    for (const value of ["WRITE_SERVICE_URL", "CATALOG_SERVICE_URL", "AUTH_SERVICE_URL",
+        "CATALOG_TRAFFIC_SECRET_PROPERTY_", "callWriteServiceAction", "requestCortesIdFreezeFromWriteService"]) {
+        assert.equal(admin.includes(value), false, value);
     }
-    assert.match(client, /function withLease\(/);
-    assert.match(client, /function syncUserSessions\(/);
-    assert.match(client, /function revokeSession\(/);
-    assert.match(client, /function getServiceTraffic\(/);
-    assert.match(client, /catalogFeed=1/);
+    assert.doesNotMatch(admin, /script\.google\.com\/macros\/s\//);
+    assert.ok(ui.includes("freezeCortesIds"));
+    assert.ok(ui.includes("allocateVehicleId"));
 });
 
-check("El fan-out de Coordinator solo apunta a los cuatro servicios con caché de actor", () => {
-    assert.match(coordinator, /const targets = \["WRITE", "FEEDBACK", "ADMIN"\]/);
-    assert.match(coordinator, /action: "__invalidateSessionActorCache"/);
-    assert.match(coordinator, /action: "__primeSessionActorCache"/);
-    for (const source of [write, feedback, admin]) {
-        assert.match(source, /handleSharedSessionActorCacheInvalidation_\(/);
-        assert.match(source, /handleSharedSessionActorCachePriming_\(/);
-    }
-    assert.match(inventory, /lotes de hasta 25 tokens/);
-    assert.match(inventory, /grupos de hasta cinco tokens/);
-});
-
-check("Los callsites de leases están diferenciados de wrappers/ayudantes sin consumidor", () => {
-    assert.match(auth, /withSharedMutationLease_\("AUTH", action/);
-    assert.match(auth, /function migrateLegacyRoleRevocationMarkersToSharedState_\(/);
-    for (const action of ["getUsers", "createUser", "updateProfile"]) assert.ok(auth.includes("case '" + action + "'"));
-    assert.doesNotMatch(api, /USERS/);
-    assert.match(admin, /withSharedMutationLease_\("ADMIN", "saveUnusedImagesInventory"/);
-    assert.match(admin, /withSharedMutationLease_\("ADMIN", "createCortesImageFolder"/);
-    assert.match(admin, /withSharedMutationLease_\("ADMIN", "auditDriveImagesInCortes"/);
-    assert.match(utilities, /withSharedMutationLease_\("UTILITIES","migrateTimestamps"/);
-    assert.doesNotMatch(write.slice(write.indexOf("function doPost(e)"), write.indexOf("function doPostInternal_")), /withSharedMutationLease_/);
-    assert.doesNotMatch(feedback.slice(feedback.indexOf("function doPost(e)"), feedback.indexOf("const RICH_TEXT_MODE_PROPERTY_")), /withSharedMutationLease_/);
-    assert.match(inventory, /seis usos activos y un helper/);
-});
-
-check("Las llamadas externas a Drive, YouTube e imágenes no se clasifican como microservicios", () => {
+check("Las llamadas HTTP externas a Drive, YouTube e imágenes no se confunden con microservicios", () => {
     assert.match(feedback, /UrlFetchApp\.fetch\(youtubeEndpoint/);
     assert.match(admin, /drive\/v3\/about\?fields=storageQuota/);
     assert.match(admin, /UrlFetchApp\.fetch\(String\(imageData\)/);
     assert.match(write, /UrlFetchApp\.fetch\(String\(imageData\)/);
-    assert.match(inventory, /## 7\. Llamadas HTTP que NO son dependencias entre microservicios/);
 });
 
-check("Los riesgos de propiedad compartida están explícitos antes de retirar leases", () => {
-    assert.match(inventory, /Users \/ ActiveSessions/);
-    assert.match(inventory, /Cortes/);
-    assert.match(inventory, /Drive y referencias de archivos/);
-    assert.match(inventory, /ScriptLock de un proyecto Apps Script no constituye un lock global/);
+check("El inventario refleja la arquitectura actual y la secuencia MIG-026", () => {
+    assert.match(inventory, /No se conservan COORDINATOR ni SharedMutation/);
+    assert.match(inventory, /ACTION_TO_SERVICE_MAP contiene 123 acciones canónicas/);
+    assert.match(inventory, /## 3\.9 MIG-025/);
+    assert.match(inventory, /## 3\.10 MIG-026/);
+    assert.match(inventory, /primera familia de estado ADMIN, una familia por tarea/);
 });
 
 console.log("ServiceCallGraphContract: " + passed + "/" + passed + " PASS");

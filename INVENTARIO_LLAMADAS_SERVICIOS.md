@@ -27,7 +27,7 @@ Este documento describe el código versionado. No acredita que las URLs, secreto
 `JS/Frontend/api-config.js` es el router único de solicitudes de aplicación:
 
 - Declara seis destinos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Las acciones getUsers, createUser y updateProfile pertenecen ahora a AUTH.
-- `ACTION_TO_SERVICE_MAP` contiene 121 acciones canónicas y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
+- `ACTION_TO_SERVICE_MAP` contiene 123 acciones canónicas (AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45) y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
 - `routeAction` mide tráfico local del navegador y no envía esas métricas a un servicio de telemetría.
 - `getCatalogChanges` está mapeada actualmente a FEEDBACK.
 - Las acciones `allocateVehicleId` y `freezeCortesIds` ya están mapeadas a WRITE; `getVehicleProjection` y `getContributionCandidates` a CATALOG.
@@ -310,3 +310,20 @@ La implementación frontend de las secuencias identificadas en el inventario que
 - Roles se derivan de la sesión validada en FEEDBACK; approve/reject no confía en roles del navegador. No se usa Coordinator ni URL de otro servicio para el flujo de YouTube.
 - CI run 45238221817: 223/223 comprobaciones de vídeo PASS. Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera de vídeo (P4, UTILITIES, AUTH, INTEGRATION). Pages run 45238220816 SUCCESS para el commit funcional.
 - Validación Beta real de OAuth, YouTube, CacheService, Spreadsheet, RBAC, publicación y reproductores pendiente. MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+## 3.9 MIG-025 — retiro de Coordinator y SharedMutation — 2026-11-24
+
+- Los módulos Coordinator.js, SharedMutationClient.js y users.js ya no forman parte del árbol activo. No se conservan como intermediarios ni como orquestadores alternativos.
+- El frontend coordina las secuencias multi-servicio y resuelve cada destino mediante ACTION_TO_SERVICE_MAP y el registro central versionado. El único localizador estático restante en el frontend es el bootstrap explícito para consultar AUTH; no enruta acciones ordinarias.
+- La invalidación de cachés de actor se ejecuta desde sessionCacheInvalidation.js en paralelo hacia los seis servicios. Se transmiten userId y hashes de claves; no se transmiten tokens de sesión entre proyectos.
+- AUTH, WRITE, CATALOG, FEEDBACK, UTILITIES y ADMIN validan localmente su actor y permisos. SharedSessionActor exige que el consumidor inyecte su proveedor Spreadsheet; no mantiene fallback global a SPREADSHEET_ID/openById.
+- Los seis módulos de servicio no conservan URLs de otros servicios, secretos compartidos de coordinación, SharedMutation leases ni llamadas waitLock. Las adquisiciones de lock necesarias usan tryLock(0) y se limitan a secciones críticas locales.
+- La telemetría de tráfico global de Coordinator fue retirada; el frontend conserva solo métricas locales de solicitudes iniciadas por el navegador y no las presenta como tráfico HTTP global.
+
+## 3.10 MIG-026 — migraciones de estado persistente — 2026-11-24
+
+- CATALOG ya trasladó su feed incremental a CatalogChangeState/CatalogChangeEvents; WRITE trasladó el high-water mark a CortesIdReservations.
+- AUTH trasladó la idempotencia de login a LoginRequests, eliminó el secreto HMAC persistente de recuperación y trasladó role_revocation_pending_ al marcador compartido Users.SessionToken. Las propiedades antiguas solo se leen durante sus baselines; no se borran en deployments.
+- El siguiente subtramo local pendiente es la primera familia de estado ADMIN, una familia por tarea, conforme a INVENTARIO_CONFIGURACION_BACKEND.md. No iniciar familias ADMIN en paralelo.
+- Las validaciones que requieren proyectos Apps Script, Spreadsheet, propiedades instaladas o deployments permanecen diferidas a Beta; no se han ejecutado ni simulado aquí.
