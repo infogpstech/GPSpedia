@@ -129,7 +129,7 @@ function migrationHarness(actorRole="Desarrollador"){
         requireSharedAuthActor_:(payload,allowedRoles)=>{const actor=payload&&payload.__sharedSessionActor;const userId=String(actor&&actor.userId||"").trim(),role=String(actor&&actor.role||"").trim().toLowerCase();if(!userId||!Number.isSafeInteger(actor&&actor.epoch)||actor.epoch<1||!allowedRoles.includes(role))throw new Error("Acceso denegado.");return{userId,role,epoch:actor.epoch};},
         createPasswordHash:()=>{hashCounter++;return "pbkdf2-sha256$12000$"+String(hashCounter).padStart(32,"0")+"$"+"d".repeat(64);},
         LockService:{getScriptLock:()=>({tryLock:()=>{waits++;return true;},releaseLock:()=>{releases++;}})},
-        SpreadsheetApp:{getActiveSpreadsheet:()=>ss,flush:()=>{}},
+        SpreadsheetApp:{openById:id=>{assert.equal(id,"1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os");return ss;},flush:()=>{}},
         getAuthUsersSpreadsheet_:()=>ss,
         SHEET_NAMES:{USERS:"Users",ACTIVE_SESSIONS:"ActiveSessions"},
         COLS_USERS:{ID:1,Nombre_Usuario:2,Password:3,Privilegios:4},
