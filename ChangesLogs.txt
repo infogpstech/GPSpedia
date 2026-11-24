@@ -366,3 +366,12 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Se confirmó que FEEDBACK sigue leyendo/escribiendo `GPSpedia_RICH_TEXT_MODE_V1` y que el lector central no incorpora un mecanismo de publicación versionada. Se difiere su retirada hasta implementar y probar una vía autorizada con paridad.
 - El probe MIG006 local/simulado no prueba el comportamiento del deployment Web App real. La validación Beta sigue pendiente.
 - Se actualizaron `INVENTARIO_CONFIGURACION_BACKEND.md` y `TAREAS_MIGRACION_ARQUITECTURA.md`. No se modificó código funcional, Apps Script desplegado, PropertiesService instalado, Spreadsheet, Drive ni datos externos.
+
+
+### 2026-11-24 — MIG-026: publicación central de rich_text_mode y caché global
+- Se implementó publicación versionada en ADMIN con autorización Developer, lock, idempotencia, revisión incremental, historial y lectura de confirmación.
+- FEEDBACK consume la configuración central y admite invalidación de caché; el frontend coordina publicación, lectura e invalidación sin añadir secretos ni URLs interservicio en Apps Script.
+- La caché de navegador requiere revisión y metadatos y expira a los 5 minutos; caché ausente, inválida o vencida aplica modo estricto hasta la lectura central.
+- Se añadieron/ajustaron contratos de publicación, caché global y pruebas Beta; se integró RichTextGlobalPreference en el runner MIG026.
+- Validación CI: sintaxis de módulos modificados PASS; CentralConfigurationPublisherContract 6/6 PASS; RichTextGlobalPreference 10/10 PASS; regresión 4,687 pruebas PASS con un fallo preexistente en GP-PERF FEEDBACK/Inbox (contrato que prohíbe locks en FEEDBACK, contradicho por el código existente). El mismo fallo exacto está presente en run 45291268637, anterior a estos cambios.
+- No se desplegaron proyectos Apps Script ni se accedió/modificó PropertiesService, Spreadsheet, Drive o datos externos. La eliminación física de una propiedad instalada y las verificaciones de deployment quedan para Beta.

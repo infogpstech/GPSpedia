@@ -1473,3 +1473,38 @@ Siguiente acción:
 2. Mantener pendiente de Beta la comprobación real de getActiveSpreadsheet() para AUTH/CATALOG/UTILITIES y los consumidores SharedSessionActor.
 3. Migrar estados operativos únicamente en sus tareas específicas, con ledger, idempotencia y recuperación.
 ================================================================================
+
+
+================================================================================
+CIERRE DE SUBTRAMO — MIG-026 / rich_text_mode — 2026-11-24
+Rama: GPSpedia2.2.5_work
+HEAD verificado al iniciar el registro: 1d99f0ef16ba6746b82474677ca91f8e758d73ad
+
+Implementación:
+- ADMIN publica rich_text_mode en configuración central con RBAC Developer, lock, idempotencia, revisión, historial y read-back.
+- FEEDBACK lee la configuración central y expone invalidación; el frontend coordina las acciones por el registro central de rutas.
+- La caché local exige modo/revisión/metadatos y tiene TTL de 5 minutos; el fallback ante caché inválida/vencida es estricto.
+- Se actualizó la prueba Beta AUG-097: preferencia global, caché no autoritativa y sincronización segura antes de ejecutar pruebas.
+- Se registró la prueba RichTextGlobalPreference.mjs en el grupo MIG026 del runner de regresión.
+
+Validación comprobada en GitHub Actions:
+- Sintaxis de módulos JavaScript modificados: PASS.
+- CentralConfigurationPublisherContract: 6/6 PASS.
+- RichTextGlobalPreference: 10/10 PASS.
+- Regresión general: 4,687 pruebas PASS; 1 suite falla en GP-PERF FEEDBACK/Inbox porque una aserción prohíbe el uso de LockService en FEEDBACK. El fallo exacto también aparece en run 45291268637 (23-11-2026), anterior a esta implementación; no es una regresión de MIG-026. Se conserva como hallazgo previo, sin modificar código fuera de alcance.
+- Run de la rama para HEAD 1d99f0ef16ba6746b82474677ca91f8e758d73ad: service-tests FAILED únicamente por esa suite; revisar logs del run 45293812557.
+
+Límites:
+- No se desplegó Apps Script ni se modificaron proyectos, propiedades instaladas, hojas, Drive ni datos externos.
+- La limpieza de la propiedad física antigua, si existe en proyectos desplegados, y las pruebas con deployments reales quedan pendientes de Beta autorizada.
+- No se modificó la rama base GPSpedia2.2.5.
+
+Estado:
+- Subtramo de código rich_text_mode: COMPLETADO CON VALIDACIÓN DIFERIDA.
+- MIG-026 global: EN PROGRESO. Permanecen pendientes el acceso central de AUTH/CATALOG/UTILITIES, las migraciones específicas de estado/ledgers, la búsqueda estática final y la validación Beta.
+- No iniciar MIG-027.
+
+Siguiente paso:
+1. Continuar MIG-026 con la siguiente dependencia local segura, sin asumir que los proyectos Web App obtienen Spreadsheet activa hasta contar con evidencia.
+2. Mantener las verificaciones de deployments/PropertiesService para Beta.
+================================================================================

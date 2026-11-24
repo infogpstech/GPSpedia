@@ -209,3 +209,14 @@ Esta adenda prevalece sobre las ubicaciones y consumidores históricos descritos
 - No se accedió a Apps Script, PropertiesService instalado, Spreadsheet, Drive ni deployments. No se borró ni modificó ningún valor externo.
 
 **Resultado de esta reconciliación:** inventario estático actualizado. MIG-026 continúa EN PROGRESO; los siguientes tramos seguros son diseñar y probar el mecanismo de publicación central de parámetros sin desplegar, y resolver las dependencias de acceso real a Spreadsheet. No se autoriza iniciar MIG-027.
+
+
+### Adenda MIG-026 — migración de rich_text_mode (2026-11-24)
+
+- El flujo de preferencia dejó de usar la propiedad local `GPSpedia_RICH_TEXT_MODE_V1` en el código FEEDBACK. La fuente de verdad es `ConfiguracionParametros.rich_text_mode` mediante `CentralConfigurationReader`.
+- ADMIN expone publicación versionada restringida a rol Desarrollador; la operación usa lock, idempotencia, revisión incremental, historial y lectura de confirmación.
+- FEEDBACK lee la proyección pública central y ofrece invalidación de caché. El frontend coordina las acciones ADMIN/FEEDBACK y actualiza la preferencia en la aplicación.
+- La caché local del navegador ya no es fuente de verdad: exige modo válido, revisión positiva y metadatos; expira a los 5 minutos. Ante metadatos ausentes, inválidos o vencidos, el valor efectivo cae a estricto hasta una lectura central válida.
+- Pruebas locales: `CentralConfigurationPublisherContract.mjs` 6/6 PASS; `RichTextGlobalPreference.mjs` 10/10 PASS; sintaxis de módulos modificados PASS en GitHub Actions.
+- No se verificó ni eliminó una propiedad instalada en Apps Script; la limpieza de propiedades antiguas y la prueba de publicación/lectura en deployments quedan para Beta autorizada.
+- La descripción histórica de la fila 10 y de la inspección inicial FEEDBACK (líneas anteriores) corresponde al estado previo a esta adenda; no representa el estado actual del código.
