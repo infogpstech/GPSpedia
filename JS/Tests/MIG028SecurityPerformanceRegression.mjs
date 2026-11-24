@@ -78,7 +78,8 @@ testCase("Sesión y revocación mantienen cachés por servicio sin transmitir to
 });
 testCase("Los servicios consumen actor confiable y conservan RBAC backend",()=>{
  for(const [name,source] of Object.entries(services)){
-  assert.match(source,/getCachedSharedSessionActor_/,"Falta actor confiable en "+name);
+  if(name==="CATALOG") assert.match(source,/function getCatalogSessionActor_\(/,"CATALOG debe usar su actor local específico");
+  else assert.match(source,/getCachedSharedSessionActor_/,"Falta actor confiable en "+name);
   assert.doesNotMatch(source,/GPSpedia_COORDINATOR_SECRET|GPSpedia_COORDINATOR_URL|withSharedMutationLease_|\.waitLock\s*\(/,name+" introduce coordinación no permitida");
  }
  for(const role of ["Desarrollador","Jefe","Supervisor","Tecnico","Tecnico_exterior"])assert.ok(roles.includes(role),"Falta rol "+role);
