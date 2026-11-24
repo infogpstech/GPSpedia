@@ -604,8 +604,11 @@ function findCortesIdBaseline_(sheet) {
     if (matches.length !== 1) throw new Error("El ledger contiene más de un baseline de IDs; no se asignó otro ID.");
     const rowIndex = matches[0].getRow();
     const row = sheet.getRange(rowIndex, 1, 1, CORTES_ID_RESERVATIONS_HEADERS.length).getValues()[0] || [];
-    const vehicleId = Number(row[2]);
-    if (String(row[0] || "").trim() !== CORTES_ID_BASELINE_OP_ID ||
+    const rawVehicleId = row[2];
+    const vehicleId = typeof rawVehicleId === "number" ? rawVehicleId : Number(String(rawVehicleId).trim());
+    if (rawVehicleId === "" || rawVehicleId === null || rawVehicleId === undefined ||
+        String(rawVehicleId).trim() === "" ||
+        String(row[0] || "").trim() !== CORTES_ID_BASELINE_OP_ID ||
         String(row[1] || "").trim().toLowerCase() !== CORTES_ID_BASELINE_OPERATION_HASH ||
         !Number.isSafeInteger(vehicleId) || vehicleId < 0) {
         throw new Error("El baseline histórico de IDs está incompleto o corrupto; no se asignó otro ID.");
@@ -758,7 +761,8 @@ function getLastCortesIdReservation_(sheet) {
         const operationHash = String(row[1] || "").trim().toLowerCase();
         const vehicleId = Number(row[2]);
         if (opId === CORTES_ID_BASELINE_OP_ID) {
-            if (String(row[1] || "").trim().toLowerCase() !== CORTES_ID_BASELINE_OPERATION_HASH ||
+            if (row[2] === "" || row[2] === null || row[2] === undefined || String(row[2]).trim() === "" ||
+                String(row[1] || "").trim().toLowerCase() !== CORTES_ID_BASELINE_OPERATION_HASH ||
                 !Number.isSafeInteger(vehicleId) || vehicleId < 0 || seenIds.has(CORTES_ID_BASELINE_OP_ID) ||
                 vehicleId < previousId) {
                 throw new Error("El baseline del ledger de IDs está incompleto o fuera de secuencia.");

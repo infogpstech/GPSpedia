@@ -96,7 +96,7 @@ function createBaselineHarness({ highWater = 0, legacy = null, lockAvailable = t
         "CORTES_ID_RESERVATIONS_HEADERS", "CORTES_ID_COUNTER_PROPERTY",
         "LockService", "PropertiesService", "SpreadsheetApp",
         "getCortesVehicleIdHighWaterMark_", "freezeCortesIdReservationFormulaRows_",
-        finder + "\\n" + ledgerRead + "\\n" + baseline + "\\nreturn ensureCortesIdReservationBaseline_;"
+        finder + "\n" + ledgerRead + "\n" + baseline + "\nreturn ensureCortesIdReservationBaseline_;"
     )(
         "OP-BASELINE-CORTES-LAST-ID-V1",
         "71e6dae8fc9c7cb8ac468ac7be5f4044a2db6166baf0794c0d962dc859d8576c",
@@ -169,6 +169,15 @@ test("un append que no persiste no se acepta como baseline", () => {
     assert.throws(() => h.ensure(), /No se pudo verificar el baseline histórico/);
     assert.equal(h.ledger.rows.length, 1);
     assert.equal(h.stats().held, false);
+});
+
+test("un baseline sin vehicleId se considera corrupto y no se interpreta como cero", () => {
+    const h = createBaselineHarness({ initialRows: [
+        ["opId", "operationHash", "vehicleId", "createdAt"],
+        ["OP-BASELINE-CORTES-LAST-ID-V1", "71e6dae8fc9c7cb8ac468ac7be5f4044a2db6166baf0794c0d962dc859d8576c", "", "baseline"]
+    ]});
+    assert.throws(() => h.ensure(), /baseline histórico de IDs está incompleto o corrupto/);
+    assert.equal(h.stats().propertyReads, 0);
 });
 
 test("un baseline duplicado se rechaza antes de reservar", () => {
