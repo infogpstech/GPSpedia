@@ -16,29 +16,21 @@ const backendSources = {
 const contractsMatch = apiSource.match(/export const SERVICE_HEALTH_CONTRACTS = Object\.freeze\((\{[\s\S]*?\})\);/);
 assert.ok(contractsMatch, "No se encontró SERVICE_HEALTH_CONTRACTS.");
 const contracts = new Function("return (" + contractsMatch[1] + ");")();
-const functionMatch = apiSource.match(/export async function checkAllServicesHealth\([\s\S]*?\n\}/);
+const resolverMatch = apiSource.match(/function resolveApiEndpoint_\\([\\s\\S]*?\\n\\}/);
+assert.ok(resolverMatch, "No se encontró resolveApiEndpoint_.");
+const functionMatch = apiSource.match(/export async function checkAllServicesHealth\\([\\s\\S]*?\\n\\}/);
 assert.ok(functionMatch, "No se encontró checkAllServicesHealth.");
 const functionSource = functionMatch[0].replace("export async function", "async function");
 function buildChecker(endpoints, lastKnown = new Map()) {
     const keys = Object.keys(endpoints);
-    const snapshot = { status: "success", routingAvailable: true, services: Object.fromEntries(
-        Object.entries(endpoints).map(([key, endpointUrl]) => [key, { endpointUrl, enabled: true }])
-    ) };
-    const loadConfiguration = async () => snapshot;
-    const resolveEndpoint = (config, key) => {
-        if (!config || config.routingAvailable !== true || !config.services[key] || config.services[key].enabled !== true) throw new Error("No central route");
-        return config.services[key].endpointUrl;
-    };
     return new Function(
-        "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
+        "API_ENDPOINTS", "API_ENDPOINT_PATTERN_", "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
-        "loadCentralConfiguration", "resolveCentralServiceEndpoint",
-        functionSource + "\nreturn checkAllServicesHealth;"
+        resolverMatch[0] + "\\n" + functionSource + "\\nreturn checkAllServicesHealth;"
     )(
-        keys, contracts, 8000, 2000, 300000, lastKnown,
-        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date,
-        loadConfiguration, resolveEndpoint
+        endpoints, /^https:\\/\\/script\\.google\\.com\\/macros\\/s\\/[A-Za-z0-9_-]+\\/exec$/, keys, contracts,
+        8000, 2000, 300000, lastKnown, AbortController, globalThis.fetch, setTimeout, clearTimeout, Date
     );
 }
 function response(status, body, ok = status >= 200 && status < 300) {
@@ -191,22 +183,15 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
         ADMIN: "https://admin.invalid/exec"
     };
     const keys = Object.keys(endpoints);
-    const snapshot = { status: "success", routingAvailable: true, services: Object.fromEntries(
-        Object.entries(endpoints).map(([key, endpointUrl]) => [key, { endpointUrl, enabled: true }])
-    ) };
-    const loadConfiguration = async () => snapshot;
-    const resolveEndpoint = (config, key) => config.services[key].endpointUrl;
     const single = new Function(
-        "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
+        "API_ENDPOINTS", "API_ENDPOINT_PATTERN_", "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
-        "loadCentralConfiguration", "resolveCentralServiceEndpoint",
-        functionSource + "\n" + singleMatch[0].replace("export async function", "async function") +
-        "\nreturn checkServiceHealth;"
+        resolverMatch[0] + "\\n" + functionSource + "\\n" + singleMatch[0].replace("export async function", "async function") +
+        "\\nreturn checkServiceHealth;"
     )(
-        keys, contracts, 8000, 2000, 300000, new Map(),
-        AbortController, globalThis.fetch, setTimeout, clearTimeout, Date,
-        loadConfiguration, resolveEndpoint
+        endpoints, /^https:\\/\\/script\\.google\\.com\\/macros\\/s\\/[A-Za-z0-9_-]+\\/exec$/, keys, contracts,
+        8000, 2000, 300000, new Map(), AbortController, globalThis.fetch, setTimeout, clearTimeout, Date
     );
     const requested = [];
     const result = await single("CATALOG", {
