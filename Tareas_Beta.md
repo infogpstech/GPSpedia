@@ -61,6 +61,7 @@ No usar `reset --hard`, `clean`, force push ni comandos que descarten cambios lo
 - Aislamiento por rol y usuario.
 
 ### BETA-05 — ADMIN y mantenimiento
+- **Precaución de ejecución del health workflow:** .github/workflows/deployed-service-health.yml existe en la rama de trabajo, pero no en la rama predeterminada main; por tanto, el workflow_dispatch no está disponible desde GitHub mientras no exista también en main. Además, el script toma el bootstrap fijo de JS/Frontend/api-config.js y no ofrece selector de entorno. No intentar ejecutarlo hasta confirmar que ese bootstrap resuelve exclusivamente la configuración Beta aislada. La sonda consulta configuración pública y luego GET ?debug=true; no realiza escrituras.
 - Panel Developer: health individual de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; telemetría local del navegador claramente etiquetada. No existe agregado global de Coordinator.
 - Confirmar identidad, versión, latencia, estados online/slow/unavailable/error/unknown/stale, timeout y aislamiento de fallos entre endpoints.
 - Agregado global Coordinator: retirado en MIG-025 junto con su recopilador. No ejecutar pruebas de ventanas 1/6/24 horas, RBAC del endpoint getServiceTraffic, transición de buckets v1/v2 ni retención de ese agregado; esos contratos ya no pertenecen a los servicios activos. Los valores históricos que pudieran persistir en ScriptProperties no se borran automáticamente.
