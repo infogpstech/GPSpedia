@@ -13603,7 +13603,8 @@ function openAddCutForModelModal(item, options = {}) {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Agregar Corte";
             }
-            logDeveloperOperation_("[CORTES] Error al agregar corte: " + String(error && error.message ? error.message : error), "error");\n            showGlobalError("No se pudo agregar el corte. Inténtalo de nuevo.");
+            logDeveloperOperation_("[CORTES] Error al agregar corte: " + String(error && error.message ? error.message : error), "error");
+            showGlobalError("No se pudo agregar el corte. Inténtalo de nuevo.");
         } finally {
             submitInProgress = false;
             if (pendingOperation && !pendingOperationLoadFailed) submitBtn.disabled = false;
@@ -14681,7 +14682,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
             }
         } catch (err) {
             console.error("Error al vincular modelos:", err);
-            logDeveloperOperation_("[PYS] Error al vincular modelos: " + String(err && err.message || err), "error");\n            showGlobalError("No se pudieron vincular los modelos.");
+            logDeveloperOperation_("[PYS] Error al vincular modelos: " + String(err && err.message || err), "error");
+            showGlobalError("No se pudieron vincular los modelos.");
             saveBtn.disabled = false;
             saveBtn.innerText = "Vincular Seleccionados";
         }
