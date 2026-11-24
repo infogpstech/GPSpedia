@@ -128,7 +128,7 @@ function migrationHarness(actorRole="Desarrollador"){
         ensureActiveSessionsActivityColumn_:()=>{},
         requireSharedAuthActor_:(payload,allowedRoles)=>{const actor=payload&&payload.__sharedSessionActor;const userId=String(actor&&actor.userId||"").trim(),role=String(actor&&actor.role||"").trim().toLowerCase();if(!userId||!Number.isSafeInteger(actor&&actor.epoch)||actor.epoch<1||!allowedRoles.includes(role))throw new Error("Acceso denegado.");return{userId,role,epoch:actor.epoch};},
         createPasswordHash:()=>{hashCounter++;return "pbkdf2-sha256$12000$"+String(hashCounter).padStart(32,"0")+"$"+"d".repeat(64);},
-        LockService:{getScriptLock:()=>({waitLock:()=>{waits++;},releaseLock:()=>{releases++;}})},
+        LockService:{getScriptLock:()=>({tryLock:()=>{waits++;return true;},releaseLock:()=>{releases++;}})},
         SpreadsheetApp:{openById:()=>ss,flush:()=>{}},
         SPREADSHEET_ID:"ISOLATED",
         SHEET_NAMES:{USERS:"Users",ACTIVE_SESSIONS:"ActiveSessions"},
