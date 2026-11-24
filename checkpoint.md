@@ -2094,3 +2094,24 @@ Estado:
 
 Instrucción operativa reforzada: una limitación de una herramienta o runtime no detiene el trabajo global. Buscar logs/workflows alternativos, ejecutar el contrato en un runtime equivalente cuando proceda, inspeccionar resultados, adaptar el método de prueba sin debilitar criterios y continuar las actividades seguras. Diferenciar siempre la prueba exacta Node.js de una reproducción equivalente.
 ================================================================================
+
+
+================================================================================
+MIG-030 — PREPARACIÓN Y PREFLIGHT DE BETA — 2026-11-24
+
+HEAD confirmado antes de esta adenda: 91844e2bba59196dc2d96440290ccb2a6187a448
+Rama autorizada: GPSpedia2.2.5_work
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+- Se releyó NORMAS_DESAROLLO.md (44,178 caracteres) y se verificaron especialmente §§5, 6, 8, 10, 12, 13, 14, 17, 18 y 19; README.md, contexto_personal.md, checkpoint.md, TAREAS_MIGRACION_ARQUITECTURA.md y Tareas_Beta.md.
+- Estado Git comprobado: HEAD 91844e2bba59196dc2d96440290ccb2a6187a448; base d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se detecta modificación de la rama base.
+- Se inspeccionó la matriz completa de Tareas_Beta.md: BETA-01 a BETA-08, además de las validaciones diferidas MIG-012, MIG-013, MIG-015, MIG-017, MIG-018, MIG-024, MIG-025 y MIG-026.
+- Contrato estático del preflight (runtime JavaScript disponible): 8/8 PASS. Confirma que la primera sección es sincronización segura; verifica URL exacta del remoto y rama; aborta ante árbol sucio; ejecuta fetch + pull --ff-only; imprime rama y HEAD final; no incluye reset --hard, git clean ni force. La matriz contiene los ocho bloques BETA-01..08.
+- Este resultado es una validación del contenido de los comandos, no una ejecución real de Git ni una prueba Beta remota. No se presenta como tal.
+- Se marcó como completada únicamente la preparación de comandos en MIG-030. MIG-030 pasa a EN PROGRESO. Login, servicios, roles, Spreadsheet, Drive, YouTube/OAuth, UI, backups y restauración siguen PENDIENTES de invocación real en recursos Beta aislados.
+- No se desplegó Apps Script, no se invocaron endpoints desconocidos, no se escribieron hojas/archivos, no se cambiaron propiedades ni permisos y no se tocaron datos productivos.
+- No hay acciones/conectores disponibles en esta sesión para acceder a Apps Script, Spreadsheet, Drive o YouTube Beta. La ejecución remota no se sustituye por fixtures ni CI; se conserva como pendiente real. Se continuará con preflight y preparación local segura mientras se obtiene una vía autorizada a esos recursos.
+- El archivo TAREAS_MIGRACION_ARQUITECTURA.md registra el avance y la distinción entre validación estática y Beta real.
+
+Próxima acción: preparar una secuencia de ejecución por servicio que empiece con health/read-only de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; luego ejecutar BETA-01 y BETA-02 con cuentas/recursos sintéticos, y registrar solo observaciones reproducibles en Hallazgos_Beta.md. No ejecutar mutaciones hasta confirmar aislamiento, rol autorizado, previsualización y recuperación.
+================================================================================
