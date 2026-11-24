@@ -145,7 +145,7 @@ try {
       const invalidEmbeds = invalidVariants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
       ui.mostrarDetalleTutorialModal({
         Tema: "Tutorial sintético",
-        comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:20px" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
+        comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:1.5em" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
         dondeEncontrarlo: '<p style="text-align:right;color:#008000">Ubicación de prueba</p>',
         Detalles: '<ul><li>Detalle con formato</li></ul>',
         Video: "https://www.youtube.com/shorts/abcdefghijk"
@@ -183,7 +183,7 @@ try {
       profile.name + ": rechaza dominios de vídeo ajenos a YouTube");
     check(tutorialRender.validResult.color === "rgb(255, 0, 0)" &&
       tutorialRender.validResult.textAlign === "center" &&
-      tutorialRender.validResult.fontSize === "20px",
+      tutorialRender.validResult.fontSize === "24px",
       profile.name + ": conserva color, alineación y tamaño de texto en detalle de Tutorial");
     check(tutorialRender.validResult.unsafeMarkupRemoved,
       profile.name + ": elimina scripts, iframes y handlers del contenido enriquecido");
