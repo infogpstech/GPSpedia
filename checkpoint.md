@@ -2039,3 +2039,22 @@ Pruebas: JS/Tests/MIG029DeploymentGuideContract.mjs (7 verificaciones)
 - MIG-029: COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a CI final aprobado.
 - Siguiente tarea por orden: MIG-030.
 ================================================================================
+
+
+================================================================================
+CONTINUIDAD — SESIÓN 2026-11-24 — PREPARACIÓN MIG-030
+
+HEAD confirmado al iniciar: c1a5fbd025dc296353d8ae23ea1f102677418e4b
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+El checkpoint anterior no contenía el cierre de MIG-029 ni una entrada de MIG-030; se registra esta adenda sin reescribir el historial.
+
+- Se releen NORMAS_DESAROLLO.md completo (44,178 caracteres), README.md, contexto_personal.md, este checkpoint, TAREAS_MIGRACION_ARQUITECTURA.md, Tareas_Beta.md, Services/DEPLOYMENT_GUIDE.md y JS/Tests/MIG029DeploymentGuideContract.mjs.
+- La prioridad vigente es MIG-030 — Validación Beta integral. MIG-027 y MIG-028 constan cerradas con CI; MIG-029 dispone de guía y contrato de 7 verificaciones, pero su CI final no pudo confirmarse en esta sesión: el estado combinado de c1a5fbd025dc296353d8ae23ea1f102677418e4b devolvió una lista vacía y el endpoint de runs disponible solo devuelve ejecuciones disparadas por PR. No se declara CI aprobado ni se altera el estado de MIG-029 por inferencia.
+- HEAD real de la rama de trabajo: c1a5fbd025dc296353d8ae23ea1f102677418e4b (commit: docs(migration): add MIG-029 deployment guide report). La comparación con GPSpedia2.2.5 confirmó que la rama base está en d9acc68d889985c2e2f42fe3a02e502efc86ead1 y la rama de trabajo no está detrás. No se escribieron cambios en la rama base.
+- Se intentó clonar la rama para ejecutar el contrato localmente; el entorno de ejecución no pudo resolver github.com (error DNS), por lo que Node.js no se ejecutó. No se presenta la inspección del archivo como prueba ejecutada.
+- MIG-030: se revisó la matriz Beta y su sincronización segura obligatoria del apartado 0. No se ejecutó ninguna prueba contra servicios reales, deployments, Spreadsheet, Drive, YouTube ni cuentas porque no hay en esta sesión un conector/acción autorizado para Apps Script o Spreadsheet. La búsqueda de integración Google Drive/Sheets devolvió el conector Google Drive como DISABLED_BY_ADMIN / NOT_AVAILABLE. Tampoco está disponible una acción GitHub para dispatch manual de workflows.
+- No se hicieron despliegues, llamadas a endpoints, escrituras en hojas, cambios de permisos ni operaciones sobre datos reales. No se inventaron resultados.
+- Estado de continuidad: MIG-030 EN PROGRESO — preparación documental completada; ejecución Beta pendiente de acceso autorizado a los seis deployments y recursos aislados (Spreadsheet, Drive, cuentas y datos desechables). La verificación CI de MIG-029 también permanece sin evidencia confirmada.
+- Próximo paso: confirmar CI de MIG-029 desde una vía autorizada de GitHub Actions; después ejecutar MIG-030 con los recursos Beta aislados, comenzando por health/read-only y siguiendo la matriz de Tareas_Beta.md. Registrar únicamente resultados observados en Hallazgos_Beta.md. No modificar código durante MIG-030.
+================================================================================
