@@ -261,13 +261,13 @@ testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado
 
 testCase("el logo ocupa dos filas y su contenedor se alinea abajo junto al modelo", () => {
     const cutHeader = css.slice(css.indexOf("GP-UX-MODAL-HEADER-TIGHTEN-03"));
-    assert.match(cutHeader, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns:max-content minmax\(0,1fr\);[\s\S]*?grid-template-rows:auto auto auto auto/);
+    assert.match(cutHeader, /\.detail-modal-toolbar \{[\s\S]*?grid-template-columns:max-content minmax\(0,1fr\);[\s\S]*?grid-template-rows:40px 32px auto auto/);
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-column:1;[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?width:max-content;[\s\S]*?height:66px;[\s\S]*?align-items:flex-start/);
     assert.match(cutHeader, /\.detail-modal-title-text \{[\s\S]*?grid-column:2;[\s\S]*?grid-row:2/);
     assert.match(cutHeader, /\.detail-modal-header-actions \{[\s\S]*?justify-content:flex-end/);
-    assert.match(cutHeader, /\.detail-modal-divider \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:\s*1px 6px 2px\s*!important/);
+    assert.match(cutHeader, /\.detail-modal-divider \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:6px 6px 2px !important;[\s\S]*?transform:translateY\(-19px\)/);
     assert.match(cutHeader, /\.detail-modal-saving-indicator \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:4;/);
-    assert.match(cutHeader, /height:48px;[\s\S]*?min-height:48px;[\s\S]*?align-items:flex-start/);
+    assert.match(cutHeader, /height:66px;[\s\S]*?min-height:66px;[\s\S]*?align-items:flex-start/);
     assert.match(cutHeader, /grid-template-rows:auto auto auto auto;[\s\S]*?margin-bottom:6px/);
     assert.ok(css.includes("#detalleCompleto {") && css.includes("gap: 12px;"));
     const cutToolbarStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {');
@@ -345,7 +345,9 @@ testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grup
     assert.ok(cutHeader.includes("grid-template-rows:40px 32px auto auto"));
     assert.ok(cutHeader.includes("grid-column:2;") && cutHeader.includes("grid-row:1;") && cutHeader.includes("justify-content:flex-end"));
     assert.ok(detail.includes('const actionButtons = Array.from(headerActions.querySelectorAll("button"))'));
-    assert.ok(detail.includes("firstActionLeft - titleRect.left - 6"));
+    assert.ok(detail.includes("const logoRect = titleContainer.getBoundingClientRect()"));
+    assert.ok(detail.includes("logoRect.right + 6"));
+    assert.ok(detail.includes("firstActionLeft - titleStart"));
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");

@@ -2815,12 +2815,13 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         const naturalTitleWidth = measure.getBoundingClientRect().width;
         measure.remove();
 
-        const titleRect = titleNode.getBoundingClientRect();
+        const logoRect = titleContainer.getBoundingClientRect();
+        const titleStart = logoImg && logoImg.isConnected ? logoRect.right + 6 : headerDiv.getBoundingClientRect().left;
         const actionButtons = Array.from(headerActions.querySelectorAll("button"));
         const firstActionLeft = actionButtons.length
             ? Math.min(...actionButtons.map(button => button.getBoundingClientRect().left))
             : headerDiv.getBoundingClientRect().right;
-        const availableTitleWidth = Math.max(0, firstActionLeft - titleRect.left - 6);
+        const availableTitleWidth = Math.max(0, firstActionLeft - titleStart);
         if (naturalTitleWidth > availableTitleWidth + 0.5) {
             headerDiv.setAttribute("data-model-title-layout", "below-logo");
         } else {
