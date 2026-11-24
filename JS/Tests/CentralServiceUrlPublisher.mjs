@@ -159,9 +159,11 @@ check("no crea revisión cuando las URL ya coinciden",()=>{
     context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
     const historyCount=fixture.sheets.ConfiguracionHistorial.rows.length;
     const replay=context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
-    assert.equal(replay.idempotent,true);\n    assert.deepEqual(Array.from(replay.changedServices),keys);
+    assert.equal(replay.idempotent,true);
+    assert.deepEqual(Array.from(replay.changedServices),keys);
     const result=context.publishAuthCentralServiceUrls_(urls,{userId:"dev-2"},"no change","request-noop-000002");
-    assert.equal(result.unchanged,true);\n    assert.deepEqual(Array.from(result.changedServices),[]);
+    assert.equal(result.unchanged,true);
+    assert.deepEqual(Array.from(result.changedServices),[]);
     assert.equal(result.revision,1);
     assert.equal(fixture.sheets.ConfiguracionHistorial.rows.length,historyCount);
 });
@@ -213,7 +215,8 @@ check("AUTH exige sesión para consultar y actualizar endpoints y el frontend us
     const panel=ui.slice(panelStart,panelEnd);
     assert.match(panel,/configurationRefreshPending/);
     assert.match(panel,/console\.warn/);
-    assert.match(panel,/appendConsoleStatus\("ERROR: no se pudo publicar/);\n    assert.match(panel,/No se pudieron guardar los cambios/);
+    assert.match(panel,/appendConsoleStatus\("ERROR: no se pudo publicar/);
+    assert.match(panel,/No se pudieron guardar los cambios/);
     for(const key of editableKeys) assert.match(html,new RegExp('central-service-url-'+key.toLowerCase()));
     assert.doesNotMatch(html,/id="central-service-url-auth"/);
     assert.match(html,/AUTH no se modifica aquí|AUTH se administra directamente en el frontend/);
