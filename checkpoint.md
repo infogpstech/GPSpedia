@@ -1662,3 +1662,24 @@ Resultado:
 
 Siguiente subtramo pendiente por orden del backlog: estado de AUTH, con análisis específico del secreto HMAC y mecanismos de sesión/revocación antes de elegir almacenamiento. No iniciar ADMIN en paralelo.
 ================================================================================
+
+
+================================================================================
+MIG-026 — AUTH — RETIRADA DEL SECRETO HMAC DE RECUPERACIÓN — 2026-11-24
+Commit de código: 1cf831e2165793b19180de1c3474231b752ac061
+Commit de corrección del contrato: 233ba43f660b85a181528fe365cc511a2e4881a2
+
+Cambios:
+- getPasswordRecoveryManager_ ya no lee ni crea GPSpedia_PASSWORD_RECOVERY_SECRET_V1.
+- El código de recuperación pasa de 12 a 24 caracteres hexadecimales (96 bits aleatorios).
+- CacheService conserva digests SHA-256 y estados temporales; se mantienen expiración de 10 minutos, consumo único, cinco intentos y límite de tres solicitudes por hora.
+- Se actualizaron Auth.js, fixture JS/Tests/Auth.js, PasswordRecovery.mjs, index.html y Service Worker v75.
+
+Validación:
+- PasswordRecovery: 10/10 PASS; fixture/paridad AUTH PASS; sintaxis PASS.
+- CI run 45305099851: 337 suites, 3,882 pruebas aprobadas; tres fallos fuera de alcance: WriteCatalogPublicationIsolation (dos grupos) y GP-PERF FEEDBACK/Inbox.
+- GitHub Pages run 45305099649: SUCCESS.
+- No se desplegó Apps Script ni se accedió a PropertiesService instalado. La clave legacy no tiene consumidores en el código nuevo, pero su eliminación física queda para Beta.
+
+Siguiente tarea AUTH: migrar idempotencia de login (prefijo login_request_) a estado persistente recuperable sin ScriptProperties. Mantener después, como tarea separada, los marcadores de revocación de rol.
+================================================================================

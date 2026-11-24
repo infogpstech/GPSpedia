@@ -219,3 +219,15 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Forzar propiedad heredada inválida, baseline duplicado/corrupto/incompleto, lock de inicialización ocupado y fallo de append/read-back. Confirmar fail-closed, no asignación con estado corrupto y liberación del lock.
 - Confirmar que después de crear el baseline las asignaciones ordinarias no vuelven a consultar GPSpedia_CORTES_LAST_ID/ScriptProperties. Confirmar que freezeCortesIds conserva dry-run, requiere backup válido, convierte fórmulas con read-back y no escribe la propiedad legacy.
 - No borrar la propiedad instalada durante esta prueba. Su limpieza solo podrá realizarse después de comprobar paridad y obtener autorización Beta explícita. Registrar evidencia anonimizada y resultado por caso en Hallazgos_Beta.md.
+
+
+## 8. Validación Beta diferida — MIG-026 AUTH: recuperación sin secreto HMAC persistente
+**Estado: PENDIENTE.** Contratos locales aprobados; no se ha ejecutado en un deployment AUTH real.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar AUTH, Spreadsheet, cuenta y correo de prueba aislados.
+- Solicitar recuperación y comprobar que el correo contiene un código de exactamente 24 caracteres hexadecimales (96 bits), que el formulario acepta el formato y que el endpoint rechaza longitudes/caracteres inválidos.
+- Confirmar que CacheService solo conserva digests SHA-256 y estado temporal; no debe conservar el código en claro ni requerir una clave HMAC persistente. Verificar que los logs y respuestas no exponen código, correo, contraseña ni digest.
+- Verificar el límite de tres solicitudes por hora por usuario/correo/cuenta, expiración a los diez minutos, cinco intentos incorrectos, consumo único, invalidación del código anterior al emitir otro y respuesta genérica para cuentas existentes/inexistentes.
+- Forzar fallo de MailApp y confirmar que el desafío se invalida. Confirmar que una recuperación correcta actualiza la contraseña, revoca todas las sesiones y cierra el acceso anterior.
+- Verificar que la versión desplegada no consulta ni crea GPSpedia_PASSWORD_RECOVERY_SECRET_V1. Solo después de comprobar que no quedan deployments/versiones activas que dependan de ella, eliminar esa propiedad legacy del proyecto AUTH de prueba y confirmar que el flujo sigue funcionando. No modificar propiedades de producción sin autorización explícita.
+- Registrar commit, deployment, navegador, resultado y evidencia anonimizada en Hallazgos_Beta.md. La suite local PasswordRecovery 10/10 no sustituye esta validación.

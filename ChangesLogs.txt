@@ -441,3 +441,12 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - GitHub Pages run 45304344734: SUCCESS. No hubo despliegue Apps Script ni acceso a Spreadsheet/Drive/PropertiesService instalados.
 - Se agregó validación Beta diferida del baseline, lectura/escritura real, concurrencia, respuesta perdida, fail-closed y verificación de no relectura de la propiedad heredada.
 - Siguiente subtramo MIG-026: estado AUTH; estudiar tratamiento del secreto HMAC antes de migrar. ADMIN queda después, sin trabajo paralelo.
+
+
+### 2026-11-24 — MIG-026 AUTH: retirada de secreto HMAC de recuperación
+- Auth.js y su fixture ya no leen/crean GPSpedia_PASSWORD_RECOVERY_SECRET_V1. Los códigos pasan a 24 caracteres hexadecimales (96 bits); SHA-256 genera digests en CacheService.
+- Se conserva el contrato de recuperación: TTL 10 min, un solo uso, cinco intentos, tres solicitudes/hora, respuesta genérica e invalidación si MailApp falla.
+- Actualizados index.html y Service Worker v75; PasswordRecovery 10/10 PASS, fixture/paridad PASS y sintaxis PASS.
+- CI 45305099851: 337 suites; 3,882 pruebas aprobadas y 3 fallos ajenos al cambio (WriteCatalogPublicationIsolation duplicada en dos grupos y GP-PERF FEEDBACK/Inbox). Pages 45305099649 SUCCESS.
+- La propiedad HMAC legacy no se borró de proyectos instalados; limpieza física pendiente de Beta después de desplegar y verificar la nueva versión.
+- Próxima tarea: migrar login_request_ a un ledger/estado persistente; después marcadores de revocación AUTH.
