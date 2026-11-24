@@ -12,7 +12,7 @@ const main = read('JS/Frontend/main.js');
 const sw = read('service-worker.js');
 const css = read('style.css');
 const serviceAuth = read('JS/Services/Auth.js');
-const coordinator = read('JS/Services/Coordinator.js');
+
 let passed = 0;
 function test(name, callback) {
     callback();
@@ -145,8 +145,9 @@ test('AUTH registra la aceptación por dispositivo sin escribir la columna de ac
     const dispatchEnd = serviceAuth.indexOf('\nfunction ', dispatchStart + 10);
     const dispatcher = serviceAuth.slice(dispatchStart, dispatchEnd);
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
-    assert.match(coordinator, /acceptTerms: \{ read: \["SESSION_CONTEXTS"\], write: \["USERS"\], trackActivity: false \}/);
-    assert.match(coordinator, /policy\.trackActivity !== false/);
+    assert.match(handler, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"\]/);
+    assert.doesNotMatch(serviceAuth, /Coordinator|COORDINATOR|SESSION_CONTEXTS/);
+    assert.match(dispatcher, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/);
 });
 test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso padre', () => {
     const history = createFakeHistory();
