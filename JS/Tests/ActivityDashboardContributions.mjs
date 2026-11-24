@@ -69,8 +69,8 @@ assert.deepEqual(normalized,[
  {nombreUsuario:"Pablo Peña",cortesAportados:6,aportesRegistrados:10,vehiculosConAportes:2},
  {nombreUsuario:"Byron Lopez",cortesAportados:5,aportesRegistrados:7,vehiculosConAportes:2},
  {nombreUsuario:"Comunidad de técnicos",cortesAportados:3,aportesRegistrados:4,vehiculosConAportes:1},
- {nombreUsuario:"Jose Garcia",cortesAportados:1,aportesRegistrados:1,vehiculosConAportes:1},
- {nombreUsuario:"María López",cortesAportados:1,aportesRegistrados:2,vehiculosConAportes:1}
+ {nombreUsuario:"María López",cortesAportados:3,aportesRegistrados:6,vehiculosConAportes:1},
+ {nombreUsuario:"Jose Garcia",cortesAportados:1,aportesRegistrados:1,vehiculosConAportes:1}
 ]);
 class FakeElement {
  constructor(tag){this.tagName=tag;this.children=[];this.textContent="";this.ownerDocument=null;}
