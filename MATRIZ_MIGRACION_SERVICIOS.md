@@ -817,6 +817,17 @@ El README vigente describe el esquema objetivo de VIN en la columna AQ (43), con
 
 
 
+### 17.9 CATALOG — ledger del feed incremental (actualización MIG-026, 2026-11-24)
+
+El feed incremental de CATALOG dejó de persistirse en ScriptProperties y utiliza dos hojas privadas de la Spreadsheet operativa de CATALOG. El servicio valida los encabezados exactos y falla cerrado si falta una hoja o su esquema no coincide; no crea hojas automáticamente.
+
+| Hoja | Rango/columnas | Contrato |
+|---|---|---|
+| CatalogChangeState | A:D: schemaVersion, revision, minRevision, updatedAt | Una única fila de estado bajo encabezados; schemaVersion=1; revisión monotónica y primera revisión retenida. |
+| CatalogChangeEvents | A:J: revision, collection, recordId, operation, snapshotJson, createdAt, sourceService, sourceOperation, sourceRequestId, resetRequired | Ledger de eventos del feed; ventana activa de 100 eventos, append bajo ScriptLock, idempotencia por service+operation+requestId y reset para cursores obsoletos/huecos/corrupción. |
+
+El evento no guarda userId ni sessionToken. El snapshot se reconstruye en CATALOG desde la fuente canónica; el navegador solo envía la referencia del cambio. Tras cada append se confirma la revisión y el evento mediante lectura. Las hojas deben prepararse en Beta aislada antes de desplegar esta versión. Las claves históricas GPSpedia_CATALOG_CHANGE_REVISION y GPSpedia_CATALOG_CHANGE_EVENT_* pueden permanecer en ScriptProperties instaladas; no se eliminan automáticamente y su limpieza requiere autorización.
+
 ## 18. Mapa de datos FEEDBACK, CATALOG, ADMIN, UTILITIES e Inbox — primera pasada 2026-11-23
 
 Fuente: definiciones de hojas, mapas de columnas, encabezados versionados y accesos observados en los módulos de servicio de la rama. Como en §17, esto describe contratos del código; no es una lectura de datos reales de Spreadsheet.
