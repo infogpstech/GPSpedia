@@ -3174,10 +3174,21 @@ function getAuthCentralServiceUrlMap_(spreadsheet, allowDraft) {
         });
         activeRows.forEach(function(record) {
             var key = String(record.values[services.positions.service_key] || "");
-            if (AUTH_CENTRAL_SERVICE_KEYS_.indexOf(key) >= 0) {
-                if (result[key]) throw new Error("La revisión activa contiene un servicio duplicado: " + key + ".");
-                result[key] = String(record.values[services.positions.endpoint_url] || "");
+            if (AUTH_CENTRAL_SERVICE_KEYS_.indexOf(key) < 0) {
+                throw new Error("La revisión activa contiene un servicio desconocido: " + key + ".");
             }
+            if (Object.prototype.hasOwnProperty.call(result, key)) {
+                throw new Error("La revisión activa contiene un servicio duplicado: " + key + ".");
+            }
+            var endpointUrl = String(record.values[services.positions.endpoint_url] || "").trim();
+            var contractVersion = String(record.values[services.positions.contract_version] || "").trim();
+            if (!endpointUrl || !/^https:\/\/script\\.google\\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpointUrl)) {
+                throw new Error("La revisión activa contiene un endpoint inválido para " + key + ".");
+            }
+            if (!/^\\d+\\.\\d+\\.\\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(contractVersion)) {
+                throw new Error("La revisión activa no declara una versión de contrato válida para " + key + ".");
+            }
+            result[key] = endpointUrl;
         });
     } else if (allowDraft) {
         var drafts = getAuthCentralDraftRows_(services);
