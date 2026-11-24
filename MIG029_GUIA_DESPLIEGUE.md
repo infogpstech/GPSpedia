@@ -33,7 +33,7 @@ La actualización de endpoints ya cuenta con una interfaz en el modal del desarr
 
 ## Actualización de endpoints desde la plataforma
 
-- El modal **Herramientas de desarrollador → Sistema → Endpoints de servicios** permite modificar únicamente las seis URL.
+- El modal **Herramientas de desarrollador → Sistema → Endpoints de servicios** permite modificar únicamente las cinco URL de CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. AUTH no aparece en el modal: su URL se actualiza directamente en el frontend mediante CENTRAL_CONFIGURATION_BOOTSTRAP_URL.
 - AUTH valida sesión y rol Desarrollador en backend, no confía en el rol enviado por el navegador y genera los metadatos, revisión e historial.
 - Para el procedimiento manual, AUTH ofrece \`prepareCentralConfigurationServiceUrlInput()\` y \`publishCentralConfigurationFromServiceUrlDraft()\`. Solo se introducen URL en filas de borrador de \`Servicios\`; no se rellenan manualmente las demás columnas.
 - El procedimiento detallado y las condiciones del bootstrap AUTH están en \`Services/DEPLOYMENT_GUIDE.md\`, §7.
