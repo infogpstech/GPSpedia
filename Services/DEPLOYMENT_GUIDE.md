@@ -53,7 +53,7 @@ Si una publicación cambia un contrato compartido, confirmar antes que el fronte
 3. Ejecutar el workflow `GPSpedia service regression tests`. Sintaxis, contratos y regresión deben aprobar antes de abrir Apps Script.
 4. Identificar los servicios afectados mediante la matriz de archivos de §1 y la matriz de propagación de §8. No ampliar el despliegue a proyectos no afectados.
 5. Confirmar que el destino es Beta aislada o producción expresamente autorizada. Para Beta, ejecutar primero la sincronización segura y las precondiciones del apartado 0 de `Tareas_Beta.md`. Usar Spreadsheet, Drive, cuentas, endpoints y registros sintéticos desechables.
-6. En el proyecto existente, confirmar identidad de ejecución, permisos ya aprobados, deployment Web App y contexto de Spreadsheet. Los servicios que dependen de `SpreadsheetApp.getActiveSpreadsheet()` deben tener ese contexto disponible en el runtime Web App. Si falta, detener el despliegue; no restaurar `SPREADSHEET_ID`, `openById`, propiedades ni URLs locales como solución alternativa.
+6. En el proyecto existente, confirmar identidad de ejecución, permisos ya aprobados y deployment Web App. Los seis servicios abren la Spreadsheet compartida mediante `SpreadsheetApp.openById()` usando `GPSpediaSpreadsheetId_`: AUTH, WRITE, FEEDBACK y ADMIN reciben el valor desde `CentralConfigurationReader.js`; CATALOG y UTILITIES lo declaran en su módulo propietario. Confirmar que la identidad de ejecución del deployment tiene acceso de lectura/escritura a esa Spreadsheet. No añadir propiedades, credenciales ni URLs de otros servicios.
 7. Comparar los scopes/manifiesto existentes con las APIs realmente utilizadas. El repositorio no versiona `appsscript.json`: conservar el manifiesto del proyecto y no inventar scopes genéricos. Si Apps Script solicita autorización nueva, detenerse y revisar la causa antes de aprobarla.
 
 No añadir propiedades de URL, credenciales, tokens, API keys ni secretos compartidos. No introducir URLs de otros servicios en código Apps Script. Los endpoints operativos se obtienen del registro central; la única excepción es el localizador bootstrap documentado en §9.
@@ -219,7 +219,7 @@ Antes de cerrar: confirmar que los otros servicios independientes siguen disponi
 
 ## 11. Límites y pendientes Beta
 
-- La disponibilidad de `SpreadsheetApp.getActiveSpreadsheet()` y los permisos efectivos deben comprobarse en cada Web App del entorno Beta. Si el contexto falta, no desplegar esa versión ni sustituirlo por IDs locales o `openById`.
+- En cada Web App Beta, comprobar `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)`, la identidad devuelta y los permisos efectivos de lectura/escritura. WRITE, FEEDBACK y ADMIN también deben abrir `GPSpediaCortesRootFolderId_` desde `CentralConfigurationReader.js`; confirmar que corresponde a la carpeta `Cortes`, no está en papelera y es hija directa de la raíz de Drive. Los IDs son localizadores de recursos, no credenciales; no añadir propiedades, tokens ni secretos manuales.
 - Las pruebas GET de salud no demuestran login, RBAC, escrituras, concurrencia, revocación ni acceso real a Drive/YouTube. Ejecutar los casos correspondientes de `Tareas_Beta.md` con recursos desechables.
 - La guía no autoriza despliegues productivos, cambios de permisos, limpieza de propiedades legacy, eliminación de deployments anteriores ni operaciones destructivas.
 - La rama base protegida `GPSpedia2.2.5` no se modifica mediante este procedimiento.
