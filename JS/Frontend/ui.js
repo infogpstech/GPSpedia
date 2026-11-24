@@ -6033,15 +6033,17 @@ function initializeCentralServiceUrlsControl_() {
                     appendConsoleStatus("AVISO: endpoints publicados; falta actualizar la configuración local.");
                     return;
                 }
-                appendConsoleStatus(result.unchanged || result.idempotent
-                    ? "Actualización completada sin cambios. Revisión " + revision + "."
-                    : "Actualización completada. Revisión " + revision + ".");
+                if (result.unchanged || result.idempotent) {
+                    appendConsoleStatus("Actualización completada sin cambios. Revisión " + revision + ".");
+                } else {
+                    appendConsoleStatus("Actualización completada. Revisión " + revision + ".");
+                }
                 await load();
             } catch (error) {
                 console.warn("No se pudieron publicar los endpoints centrales:", error);
                 appendConsoleStatus("ERROR: no se pudo publicar la configuración de servicios. " + String(error && error.message || "Error no identificado"));
                 keys.forEach(key => appendConsoleStatus("El servidor de " + (serviceLabels[key] || key) + " no se actualizó."));
-                appendConsoleStatus("La actualización de servicios no se completó.");
+                appendConsoleStatus("No se pudieron guardar los cambios. La actualización de servicios no se completó.");
             } finally {
                 if (isCurrentUiSessionContext_(context)) setBusy(false);
             }

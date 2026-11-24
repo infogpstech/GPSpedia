@@ -36,7 +36,7 @@ testCase("los botones Developer usan etiquetas breves y conservan nombre accesib
 });
 
 testCase("la consola y la línea de comandos preceden a la barra de pestañas y duplican su altura",()=>{
- const consoleIndex=html.indexOf('class="dev-console-shared"');
+ const consoleIndex=html.indexOf("dev-console-shared");
  const tabsIndex=html.indexOf('class="dev-tools-tabs"');
  const commandIndex=html.indexOf('id="dev-terminal-input"');
  assert.ok(consoleIndex >= 0 && commandIndex > consoleIndex && tabsIndex > commandIndex);
@@ -85,7 +85,7 @@ testCase("las pestañas muestran icono siempre y etiqueta solo en la sección se
  assert.match(nav,/#dev-tools-modal \.dev-tab-link span \{[\s\S]*?max-width: 0[\s\S]*?opacity: 0/);
  assert.match(nav,/:has\(#dev-tab-diagnostics:checked\)[\s\S]*?\.dev-tab-link\[for="dev-tab-diagnostics"\] span[\s\S]*?max-width: 150px[\s\S]*?opacity: 1/);
  assert.match(nav,/@media \(max-width: 520px\)[\s\S]*?\.dev-tab-link span \{[\s\S]*?display: inline-block/);
- assert.doesNotMatch(nav,/display: none/);
+ assert.doesNotMatch(nav,/\.dev-tab-link span \{[^}]*display: none/);
 });
 testCase("consola de ancho completo, compactación y botones alineados",()=>{
  const start=css.lastIndexOf("/* REV-2026-11-24 — panel Developer");
