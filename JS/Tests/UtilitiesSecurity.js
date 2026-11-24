@@ -20,7 +20,7 @@ function runUtilitiesSecurityTests(){
    clearContents(){this.v=[];}getMaxRows(){return Math.max(100,this.v.length);}insertRowsAfter(){}
    copyTo(){if(this.failCopy)throw Error("incompatible target");const x=new Sheet("Copy of "+this.n,this.v);sheets[x.n]=x;return x;}
   }
-  const ss={getSheetByName:n=>sheets[n]||null,insertSheet:n=>{if(sheets[n])throw Error("duplicate");const x=new Sheet(n);sheets[n]=x;return x;},deleteSheet:s=>{delete sheets[s.getName()];},add:(n,v)=>{const x=new Sheet(n,v);sheets[n]=x;return x;}};
+  const ss={getId:()=>"1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os",getSheetByName:n=>sheets[n]||null,insertSheet:n=>{if(sheets[n])throw Error("duplicate");const x=new Sheet(n);sheets[n]=x;return x;},deleteSheet:s=>{delete sheets[s.getName()];},add:(n,v)=>{const x=new Sheet(n,v);sheets[n]=x;return x;}};
   const src=ss.add("Cortes",[["id","a","b","c","d","e","f","g","imagen"],["1","","","","","","","","https://drive.google.com/file/d/FILE_1234567890/view"],["2","","","","","","","",""]]);
   const dst=ss.add("Hoja 1",[["old timestamp"],["old data"]]),date=new Date(Date.now()-3600000);
   ss.add("ActiveSessions",[["ID","Usuario","Token","date","Logs","LastActivityAt"],["USR-1","dev","TOKEN-1",date,"",date]]);
