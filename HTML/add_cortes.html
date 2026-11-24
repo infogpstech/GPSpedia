@@ -193,8 +193,12 @@
                 hostUi = window.parent && window.parent !== window ? window.parent.ui : null;
             } catch (error) {}
             if (!hostUi && window.ui) hostUi = window.ui;
+            try {
+                const logger = window.parent && window.parent.gpsepediaDeveloperLog;
+                if (typeof logger === 'function') logger('[ALTA DE CORTE] ' + detail, 'error');
+            } catch (error) {}
             if (hostUi && typeof hostUi.showGlobalError === 'function') {
-                hostUi.showGlobalError(detail);
+                hostUi.showGlobalError(detail.length > 110 ? 'No se pudo completar la operación.' : detail);
                 return;
             }
             if (detail.length > 110) {
@@ -379,7 +383,7 @@
                 diagnostics.warn('cut-operation.source-report-resolution-failed', {
                     stage: 'source-report', errorCode: error && error.name || 'ReportResolutionError'
                 });
-                alert('El aporte se guardó, pero no se pudo cerrar el reporte de origen. Puedes marcarlo como resuelto desde el Inbox.');
+                alert('El aporte se guardó. El reporte sigue pendiente.');
                 return false;
             }
         }
@@ -567,7 +571,7 @@
                     for(const kind of ['opening','feed']){const id=String(expected[kind]||'');if(id&&!events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId))throw Error('SUPPLEMENTARY_RECOVERY_EVENT_UNCONFIRMED');}
                     const removed=await removeAddCutOperationPendingOperation(pendingOp.ownerId,pendingOp.id,pendingOp.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary-recovery.cleanup-unconfirmed',{stage:'recovery',opId:pendingOp.id});
                     try{await verifySupplementaryCatalogWrite_(result,pendingOp.requestData);}catch(error){diagnostics.error('supplementary-recovery.catalog-verification-failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'CatalogVerificationError'});}
-                    alert('Se recuperó correctamente el aporte suplementario pendiente.');window.location.href='../index.html';
+                    alert('Aporte recuperado correctamente.');window.location.href='../index.html';
                 }catch(error){diagnostics.warn('supplementary-recovery.failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'RecoveryError'});showConciseAlert_('Se detectó un aporte suplementario pendiente. Se conservaron sus datos y sus identificadores para reintentar sin duplicarlo.');}
                 finally{toggleLoading(false);}return;
             }
@@ -595,8 +599,8 @@
                     });
                     await resolveSourceInboxReport_(pendingOp.sourceInboxItemId || sourceInboxItemId, getCurrentSessionForOwner(pendingOp.ownerId), checkRes.candidateReviewPending === true);
                     alert(checkRes.candidateReviewPending === true
-                        ? "El aporte fue recuperado como candidato de revisión. El reporte de origen permanece pendiente."
-                        : "Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
+                        ? "Aporte recuperado para revisión."
+                        : "Operación recuperada correctamente.");
                     proceedToStage3(checkRes.vehicleId);
                 } else {
                     if (checkRes.pending === true && checkRes.operationHash !== pendingOp.operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
@@ -756,7 +760,7 @@
                     catch (error) { /* La caché es opcional; el formulario sigue funcionando sin persistencia local. */ }
                 }
             } catch (error) {
-                if (!hasCached) showConciseAlert_(`Error al cargar datos del formulario: ${error.message}`);
+                if (!hasCached) showConciseAlert_("No se pudieron cargar los datos del formulario.");
             } finally {
                 toggleLoading(false);
             }
@@ -984,7 +988,7 @@
                     proceedToStage2(null); // No matches, proceed to create new vehicle
                 }
             } catch (error) {
-                showConciseAlert_(`Error al verificar: ${error.message}`);
+                showConciseAlert_("No se pudo verificar el vehículo. Inténtalo de nuevo.");
             } finally {
                 isSubmittingStage1 = false;
                 if (btn) btn.classList.remove('btn-loading');
@@ -1327,8 +1331,8 @@
                         cutType: requestData.cutData && requestData.cutData.tipoCorte1
                     });
                     alert(checkRes.candidateReviewPending === true
-                        ? "El corte se conservó como candidato para revisión; no se sobrescribió ningún corte existente."
-                        : "Corte recuperado exitosamente."); proceedToStage3(checkRes.vehicleId); return;
+                        ? "Corte guardado para revisión."
+                        : "Corte recuperado correctamente."); proceedToStage3(checkRes.vehicleId); return;
                 }
                 if (checkRes.pending === true && checkRes.operationHash !== operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
                 const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
@@ -1354,8 +1358,8 @@
                 });
                 await resolveSourceInboxReport_(pendingOp.sourceInboxItemId || sourceInboxItemId, submitSession, result.candidateReviewPending === true);
                 alert(result.candidateReviewPending === true
-                    ? "El corte se conservó como candidato para revisión; el reporte de origen permanece pendiente."
-                    : "Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
+                    ? "Corte guardado para revisión. El reporte sigue pendiente."
+                    : "Corte agregado correctamente."); proceedToStage3(result.vehicleId);
             } catch (error) {
                 diagnostics.error('cut-operation.submit-failed', { stage: 'submit', opId: pendingOp && pendingOp.id, status: pendingOp && pendingOp.status, errorCode: error && error.name || 'OperationError' });
                 if (pendingOp && snapshotSaved) {
@@ -1565,7 +1569,7 @@
                 const expected=pending.requestData.contributionOpIds||{},events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
                 for(const kind of ['opening','feed']){const id=String(expected[kind]||'');if(id&&!events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId))throw Error('SUPPLEMENTARY_WRITE_EVENT_UNCONFIRMED');}
                 const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});
-                try{await verifySupplementaryCatalogWrite_(result,request);alert("Información guardada y verificada en el catálogo. Serás redirigido.");}
+                try{await verifySupplementaryCatalogWrite_(result,request);alert("Cambios guardados correctamente.");}
                 catch(error){diagnostics.error('supplementary.catalog-verification-failed',{stage:'supplementary',opId:pending.id,errorCode:error&&error.name||'CatalogVerificationError'});showConciseAlert_("WRITE confirmó el guardado, pero no se pudo verificar la proyección actualizada. No vuelvas a enviar el formulario; al volver se recargará la ficha.");}
                 window.location.href='../index.html';
             }catch(error){if(error&&error.name==='FileReadError')showConciseAlert_("No se pudo leer una de las imágenes. Los campos y archivos seleccionados permanecen en el formulario.");
