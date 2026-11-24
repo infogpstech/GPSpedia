@@ -847,3 +847,14 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI final run `45501003318`: SUCCESS; 517 suites / 6,125 pruebas aprobadas / 0 fallos. FEEDBACK ledger Inbox 15/15 PASS y MIG020 auditoría Inbox 15/15 PASS. Chromium responsive y Pages run `45501002454`: SUCCESS.
 - HEAD probado `cdcce19101f3f39239f247c8506dd7fbbcd04e65`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
 - Verificación Beta pendiente; no se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos productivos.
+
+
+
+### 2026-11-24 — FEEDBACK: inicialización del historial de actividad
+
+- Se corrigió `logUserActivity()`: mantiene la fórmula de ID cuando existe un patrón backend válido y utiliza un ID estático único `ACT-<UUID>` cuando `ActividadUsuario` aún no tiene patrón de fórmula/configuración o conserva únicamente IDs estáticos.
+- Los errores de esquema, encabezados o patrones incompatibles no activan el fallback y siguen deteniendo la escritura.
+- Se amplió `JS/Tests/ActivityLogAppendAtomic.mjs` para cubrir el primer registro en hoja vacía, continuación con IDs estáticos, conservación del patrón fórmula existente y rechazo de patrones incompatibles.
+- CI run `45502874404`, HEAD `a13dd84379e575d06f0a4e73bc1909cdad346f1d`: SUCCESS; 517 suites, 6,139 pruebas, 0 fallos. `ActivityLogAppendAtomic` 10/10 PASS y `ActivityLogsBoundedRead` 8/8 PASS.
+- Chromium responsive: 184/184 PASS en cuatro viewports; GitHub Pages run `45502874103`: SUCCESS.
+- No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos.
