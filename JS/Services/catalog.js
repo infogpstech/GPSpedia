@@ -1499,9 +1499,17 @@ function handleGetCatalogData(payload = {}) {
             renameEventRows = renameData.slice(1);
         }
         const projectedEditRows = projectTutorialCatalogRows_(data.slice(1), editEventRows);
+        const tutorialReferenceIds = projectedEditRows.map(row => {
+            const physicalId = String(row[0] || "").trim();
+            const physicalTitle = String(row[1] || "").trim();
+            return physicalId || (physicalTitle ? tutorialLegacyIdentity_(physicalTitle) : null);
+        });
         const projectedTitleRows = projectTutorialCatalogTitles_(projectedEditRows, renameEventRows);
-        tutorialesData = dedupeTutorialCatalogRows_(projectedTitleRows
-            .map(row => mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES)).filter(Boolean));
+        tutorialesData = dedupeTutorialCatalogRows_(projectedTitleRows.map((row, index) => {
+            const tutorial = mapRowToObject(row, COLS_TUTORIALES, IMAGE_FIELDS_TUTORIALES);
+            if (tutorial) tutorial.referenceId = tutorialReferenceIds[index] || tutorial.ID || null;
+            return tutorial;
+        }).filter(Boolean));
     }
     allData.tutoriales = tutorialesData;
 
