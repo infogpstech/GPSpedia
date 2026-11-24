@@ -147,7 +147,7 @@ test('AUTH registra la aceptación por dispositivo sin escribir la columna de ac
     assert.doesNotMatch(dispatcher, /touchProtectedAuthRequestSession_|validateAndTouchSession_|validateSessionReadOnly_/);
     assert.match(handler, /requireSharedAuthActor_\(payload, \["desarrollador", "jefe", "supervisor", "tecnico", "tecnico_exterior"\]/);
     assert.doesNotMatch(serviceAuth, /Coordinator|COORDINATOR|SESSION_CONTEXTS/);
-    assert.match(dispatcher, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/);
+    assert.match(serviceAuth, /getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken/);
 });
 test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso padre', () => {
     const history = createFakeHistory();
