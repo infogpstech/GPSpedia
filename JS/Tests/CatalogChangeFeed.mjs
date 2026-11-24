@@ -267,7 +267,8 @@ test("requiere ambas hojas y sus encabezados versionados", () => {
 });
 
 test("CATALOG no usa ScriptProperties para persistir el feed", () => {
-    assert.doesNotMatch(catalogSource, /PropertiesService\\.getScriptProperties/);
+    assert.equal(catalogSource.includes("PropertiesService.getScriptProperties"), false);
+    assert.doesNotMatch(catalogSource, /GPSpedia_CATALOG_CHANGE_(?:REVISION|EVENT_)/);
 });
 
 test("valida cursor y límite", () => {
