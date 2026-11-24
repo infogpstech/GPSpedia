@@ -255,6 +255,19 @@ test("el evento no persiste usuario ni token de sesión", () => {
     assert.equal(eventRow[8], basePayload.requestId);
 });
 
+test("feed sin ledger solicita reset hasta inicializar la revisión", () => {
+    const h = createHarness();
+    const empty = h.feed.getChanges({ cursor: 0, limit: 10 });
+    assert.equal(empty.resetRequired, true);
+    assert.equal(empty.currentRevision, 0);
+    assert.equal(empty.nextCursor, 0);
+    const seeded = runtime.publishCatalogResetForActor_(basePayload, jefe, h.feed);
+    assert.equal(seeded.revision, 1);
+    const initialized = h.feed.getChanges({ cursor: 0, limit: 10 });
+    assert.equal(initialized.resetRequired, true);
+    assert.equal(initialized.nextCursor, 1);
+});
+
 test("requiere ambas hojas y sus encabezados versionados", () => {
     assert.throws(() => runtime.createCatalogChangeFeed_({
         spreadsheet: { getSheetByName: () => null },
@@ -278,5 +291,5 @@ test("valida cursor y límite", () => {
     assert.throws(() => h.feed.getChanges({ cursor: 0, limit: 51 }));
 });
 
-console.log("CatalogChangeFeed: " + passed + "/18 PASS");
-assert.equal(passed, 18);
+console.log("CatalogChangeFeed: " + passed + "/19 PASS");
+assert.equal(passed, 19);

@@ -365,7 +365,7 @@ function createCatalogChangeFeed_(dependencies) {
                 return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
             };
             if (cursor > currentRevision || (events.length && cursor < minRevision - 1) ||
-                (!events.length && currentRevision > 0)) return resetPage();
+                !events.length) return resetPage();
 
             const byRevision = new Map(events.map(event => [event.revision, event]));
             const changes = [];
