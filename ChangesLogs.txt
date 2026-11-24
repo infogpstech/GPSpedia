@@ -948,3 +948,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - El conector Google Drive/Sheets no está disponible (deshabilitado por administración). Se requiere un snapshot de solo lectura de la revisión activa para completar la tarea.
 - No se realizaron llamadas remotas ni cambios en deployments, Apps Script, Spreadsheet, permisos o endpoints.
 - MIG-URL-002 queda EN PROGRESO; no iniciar ninguna otra tarea hasta completar su evidencia.
+
+
+### 2026-11-24 — Cierre MIG-URL-002: seis endpoints confirmados
+
+- El usuario proporcionó las seis URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; se registraron en `Inventario_URL_Servicios.md`.
+- Validación estructural: 6/6 HTTPS, dominio de Google Apps Script, ruta `/exec` y seis identificadores distintos.
+- La Spreadsheet central no pudo consultarse porque el conector Google Drive/Sheets está deshabilitado; se registra procedencia directa del usuario, sin afirmar lectura de revisión activa.
+- No se realizaron llamadas remotas. Verificación de identidad y salud de deployments diferida a MIG-URL-008, en Beta aislada y con autorización.
+- MIG-URL-002 COMPLETADA; MIG-URL-003 pasa a ser la única tarea activa. Sin cambios en Apps Script, deployments, Spreadsheet, permisos ni datos externos.
