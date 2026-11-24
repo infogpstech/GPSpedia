@@ -15326,6 +15326,11 @@ export function openAddTutorialModal() {
                 <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <div class="form-group">
+                <label for="tut-imagen">Imagen de tarjeta (opcional)</label>
+                <input type="file" id="tut-imagen" accept="image/jpeg,image/png,image/webp" style="width:100%; box-sizing:border-box;">
+                <small style="color:var(--text-disabled);">Formatos JPEG, PNG o WebP. Tamaño máximo: 3 MB.</small>
+            </div>
+            <div class="form-group">
                 <label for="tut-video-url">Enlace de YouTube (opcional)</label>
                 <input type="url" id="tut-video-url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; box-sizing:border-box;">
                 <small style="color:var(--text-disabled);">Pega un enlace de YouTube normal, corto, Shorts o directo.</small>
@@ -15344,6 +15349,7 @@ export function openAddTutorialModal() {
     attachContextualHelp_(content, "tut-como-identificarlo", "Describe señales visibles o características para reconocer el componente antes de intervenir.");
     attachContextualHelp_(content, "tut-donde-encontrarlo", "Indica su ubicación dentro del vehículo y las referencias de acceso.");
     attachContextualHelp_(content, "tut-desc", "Resume el procedimiento, las precauciones y los puntos que requieren atención.");
+    attachContextualHelp_(content, "tut-imagen", "Selecciona una imagen JPEG, PNG o WebP de hasta 3 MB. Se guardará en Drive y se asociará a la tarjeta del tutorial.");
     attachContextualHelp_(content, "tut-video-url", "Pega el enlace del vídeo de YouTube que ya está publicado. Si deseas transferir un archivo desde aquí, usa Subir archivo de vídeo.");
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -15353,11 +15359,13 @@ export function openAddTutorialModal() {
     const submitBtn = content.querySelector("#tut-save-btn");
     const uploadBtn = content.querySelector("#tut-upload-video-btn");
     const videoUrlInput = content.querySelector("#tut-video-url");
+    const imageInput = content.querySelector("#tut-imagen");
     const tutorialTextFields = [
         content.querySelector("#tut-tema"),
         content.querySelector("#tut-como-identificarlo"),
         content.querySelector("#tut-donde-encontrarlo"),
-        content.querySelector("#tut-desc")
+        content.querySelector("#tut-desc"),
+        imageInput
     ];
     let isSaving = false;
     let tutorialOperationId = "";
@@ -15399,6 +15407,19 @@ export function openAddTutorialModal() {
         }
         return null;
     };
+    const readTutorialImageFile = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = String(reader.result || "");
+            if (!/^data:image\\/(?:jpeg|png|webp);base64,/i.test(dataUrl)) {
+                reject(new Error("No se pudo leer la imagen seleccionada."));
+                return;
+            }
+            resolve(dataUrl);
+        };
+        reader.onerror = () => reject(new Error("No se pudo leer la imagen seleccionada."));
+        reader.readAsDataURL(file);
+    });
     const createOperationId = () => {
         if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
             throw new Error("Este navegador no permite generar un identificador seguro para el registro.");
@@ -15436,6 +15457,18 @@ export function openAddTutorialModal() {
         const detalles = content.querySelector("#tut-desc").value.trim();
         const rawVideoUrl = videoUrlInput.value.trim();
         const videoId = rawVideoUrl ? getValidatedYouTubeVideoId(rawVideoUrl) : null;
+        const selectedImageFile = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+        if (!createdTutorialId && selectedImageFile &&
+            !["image/jpeg", "image/png", "image/webp"].includes(String(selectedImageFile.type || "").toLowerCase())) {
+            showGlobalError("La imagen debe ser JPEG, PNG o WebP.");
+            imageInput.focus();
+            return;
+        }
+        if (!createdTutorialId && selectedImageFile && Number(selectedImageFile.size) > 3 * 1024 * 1024) {
+            showGlobalError("La imagen no puede superar 3 MB.");
+            imageInput.focus();
+            return;
+        }
 
         if (!createdTutorialId && (!tema || tema.length > 30 || comoIdentificarlo.length > 700 ||
             dondeEncontrarlo.length > 700 || detalles.length > 700)) {
@@ -15467,9 +15500,10 @@ export function openAddTutorialModal() {
         try {
             if (!createdTutorialId) {
                 if (!tutorialOperationId) tutorialOperationId = createOperationId();
+                const imagenDataUrl = selectedImageFile ? await readTutorialImageFile(selectedImageFile) : "";
                 const payload = {
                     operationId: tutorialOperationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
-                    videoUrl: "", ...getSessionPayload_()
+                    imagenDataUrl, videoUrl: "", ...getSessionPayload_()
                 };
                 const created = await addTutorial(payload);
                 if (!created || created.status !== "success" || !created.referenceId) {
