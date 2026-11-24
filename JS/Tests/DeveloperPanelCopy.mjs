@@ -37,7 +37,7 @@ testCase("las explicaciones secundarias se ocultan en ayudas accesibles", () => 
 });
 
 testCase("las explicaciones técnicas se conservan bajo demanda", () => {
-    for (const phrase of ["No representa todas las solicitudes HTTP", "fórmula original", "lotes confirmados", "no mueve archivos", "no solo la carpeta Cortes", "no existan referencias activas", "carpeta principal Cortes"]) {
+    for (const phrase of ["fórmula original", "lotes confirmados", "no mueve archivos", "no solo la carpeta Cortes", "no existan referencias activas", "carpeta principal Cortes"]) {
         assert.ok(developer.includes(phrase), phrase);
     }
 });
@@ -58,6 +58,18 @@ testCase("las ayudas estáticas funcionan con el controlador contextual y no inv
     const detailEnd = ui.indexOf("\nfunction ", detailStart + 10);
     assert.ok(detailStart >= 0 && detailEnd > detailStart);
     assert.doesNotMatch(ui.slice(detailStart, detailEnd), /attachContextualHelp_|gp-help-trigger/);
+});
+
+testCase("el apartado de tráfico global retirado no aparece en la interfaz", () => {
+    assert.doesNotMatch(developer, /Tráfico global coordinado|No representa todas las solicitudes HTTP|COORDINATOR/);
+});
+
+testCase("las pestañas conservan un único título visible y la consola usa controles compactos", () => {
+    assert.equal((developer.match(/class="dev-panel-heading dev-panel-heading-visually-hidden"/g) || []).length, 4);
+    assert.match(developer, /id="btn-clear-console-log"[^>]*aria-label="Limpiar consola"/);
+    assert.match(developer, /id="btn-copy-console-log"[^>]*aria-label="Copiar registro"/);
+    assert.match(developer, /class="dev-terminal-input-shell"[\\s\\S]*?class="dev-terminal-prompt"/);
+    assert.match(developer, /id="btn-terminal-send"[^>]*aria-label="Ejecutar comando">&gt;_/);
 });
 
 testCase("las ayudas del inventario y auditoría están asociadas a su modal correcto", () => {
