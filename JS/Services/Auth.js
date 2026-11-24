@@ -3161,7 +3161,9 @@ function handleGetCentralServiceUrls_(payload) {
     getAuthUserActor_(payload, ["desarrollador"], "consultar los endpoints centrales");
     var spreadsheet = getAuthUsersSpreadsheet_();
     var urls = getAuthCentralServiceUrlMap_(spreadsheet, true);
-    return { status: "success", services: urls };
+    var editable = {};
+    ["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"].forEach(function(key) { editable[key] = urls[key]; });
+    return { status: "success", services: editable };
 }
 
 function handleUpdateCentralServiceUrls_(payload) {
@@ -3169,7 +3171,18 @@ function handleUpdateCentralServiceUrls_(payload) {
     var requestId = String(payload && payload.requestId || "").trim();
     if (!/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) throw new Error("Identificador de actualización inválido.");
     var reason = String(payload && payload.changeReason || "Actualización de endpoints desde el panel de desarrollador").trim().slice(0, 300);
-    return publishAuthCentralServiceUrls_(payload && payload.services, actor, reason, requestId);
+    var submitted = payload && payload.services;
+    var editableKeys = ["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+    if (!submitted || typeof submitted !== "object" || Array.isArray(submitted) ||
+        Object.keys(submitted).sort().join(",") !== editableKeys.slice().sort().join(",")) {
+        throw new Error("El panel de desarrollador solo puede actualizar CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. AUTH se administra directamente en el frontend.");
+    }
+    var spreadsheet = getAuthUsersSpreadsheet_();
+    var current = getAuthCentralServiceUrlMap_(spreadsheet, false);
+    if (!current.AUTH) throw new Error("No existe una URL AUTH publicada. Debe inicializarse desde el frontend antes de editar los demás servicios.");
+    var complete = { AUTH: current.AUTH };
+    editableKeys.forEach(function(key) { complete[key] = submitted[key]; });
+    return publishAuthCentralServiceUrls_(complete, actor, reason, requestId);
 }
 
 function publishCentralConfigurationFromServiceUrlDraft() {
