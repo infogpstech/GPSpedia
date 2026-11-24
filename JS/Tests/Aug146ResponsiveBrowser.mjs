@@ -1,0 +1,282 @@
+import assert from "node:assert/strict";
+import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const MIME = {
+  ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8", ".svg": "image/svg+xml",
+  ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+  ".webp": "image/webp", ".ico": "image/x-icon", ".woff2": "font/woff2"
+};
+const server = http.createServer((request, response) => {
+  try {
+    const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
+    const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+    const target = path.resolve(ROOT, relative);
+    if (target !== ROOT && !target.startsWith(ROOT + path.sep)) {
+      response.writeHead(403).end("Forbidden"); return;
+    }
+    if (!fs.existsSync(target) || !fs.statSync(target).isFile()) {
+      response.writeHead(404).end("Not found"); return;
+    }
+    response.writeHead(200, {
+      "Content-Type": MIME[path.extname(target).toLowerCase()] || "application/octet-stream",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    });
+    fs.createReadStream(target).pipe(response);
+  } catch {
+    response.writeHead(400).end("Bad request");
+  }
+});
+await new Promise((resolve, reject) => {
+  server.once("error", reject);
+  server.listen(0, "127.0.0.1", resolve);
+});
+const address = server.address();
+const baseUrl = `http://127.0.0.1:${address.port}/`;
+const browser = await chromium.launch({ headless: true });
+const profiles = [
+  { name: "desktop", width: 1366, height: 768 },
+  { name: "mobile-390", width: 390, height: 844 },
+  { name: "mobile-360", width: 360, height: 800 },
+  { name: "mobile-320", width: 320, height: 700 }
+];
+const failures = [];
+let assertions = 0;
+const check = (condition, message) => {
+  assertions++;
+  assert.ok(condition, message);
+};
+const near = (a, b, tolerance = 2) => Math.abs(a - b) <= tolerance;
+
+try {
+  for (const profile of profiles) {
+    const context = await browser.newContext({
+      viewport: { width: profile.width, height: profile.height },
+      deviceScaleFactor: 1,
+      isMobile: profile.width <= 520,
+      hasTouch: profile.width <= 520,
+      reducedMotion: "reduce"
+    });
+    const page = await context.newPage();
+    const pageErrors = [];
+    page.on("pageerror", error => pageErrors.push(error.message));
+    await page.route("**/JS/Frontend/main.js", route =>
+      route.fulfill({ status: 204, contentType: "text/javascript", body: "" }));
+    await page.route("https://cdnjs.cloudflare.com/**", route => route.abort());
+    await page.route("https://script.google.com/**", route =>
+      route.fulfill({ status: 200, contentType: "application/json",
+        body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) }));
+    await page.route("https://script.googleusercontent.com/**", route =>
+      route.fulfill({ status: 200, contentType: "application/json",
+        body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) }));
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("#dev-tools-modal");
+    await page.evaluate(async () => {
+      const [ui, state, overlays] = await Promise.all([
+        import("/JS/Frontend/ui.js"),
+        import("/JS/Frontend/state.js"),
+        import("/JS/Frontend/overlayHistory.js")
+      ]);
+      window.__aug146Ui = ui;
+      window.overlayHistory = overlays.createOverlayHistoryManager(window.history);
+      window.addEventListener("popstate", event => window.overlayHistory.handlePopState(event.state));
+      state.setState({
+        currentUser: {
+          ID: "AUG146-BETA-SYNTHETIC",
+          SessionToken: "SYNTHETIC-NOT-A-REAL-CREDENTIAL",
+          Privilegios: "Desarrollador",
+          Nombre_Usuario: "Prueba visual"
+        },
+        catalogData: { cortes: [], tutoriales: [], relay: [], logos: [] }
+      });
+      await ui.openDevTools();
+    });
+
+    const developerModal = page.locator("#dev-tools-modal");
+    await developerModal.waitFor({ state: "visible" });
+    const developerBounds = await developerModal.boundingBox();
+    check(Boolean(developerBounds), profile.name + ": modal Developer visible");
+    check(developerBounds.x >= -1 && developerBounds.y >= -1,
+      profile.name + ": modal Developer no inicia fuera del viewport");
+    check(developerBounds.x + developerBounds.width <= profile.width + 1,
+      profile.name + ": modal Developer no excede el ancho del viewport");
+    check(developerBounds.y + developerBounds.height <= profile.height + 1,
+      profile.name + ": modal Developer no excede la altura del viewport");
+
+    const consoleHeading = developerModal.locator(".dev-console-shared .dev-card-heading");
+    const headingTitle = consoleHeading.locator("h4");
+    const clearButton = developerModal.locator("#btn-clear-console-log");
+    const copyButton = developerModal.locator("#btn-copy-console-log");
+    const [headingBox, titleBox, clearBox, copyBox] = await Promise.all([
+      consoleHeading.boundingBox(), headingTitle.boundingBox(),
+      clearButton.boundingBox(), copyButton.boundingBox()
+    ]);
+    check(Boolean(headingBox && titleBox && clearBox && copyBox),
+      profile.name + ": encabezado y controles de consola renderizados");
+    check(near(titleBox.y + titleBox.height / 2, clearBox.y + clearBox.height / 2, 4) &&
+      near(titleBox.y + titleBox.height / 2, copyBox.y + copyBox.height / 2, 4),
+      profile.name + ": título, limpiar y copiar alineados verticalmente");
+    check(titleBox.x + titleBox.width <= clearBox.x + 2 &&
+      clearBox.x + clearBox.width <= copyBox.x + 2 &&
+      copyBox.x + copyBox.width <= headingBox.x + headingBox.width + 1,
+      profile.name + ": controles de consola no se solapan ni desbordan");
+
+    const terminalRow = developerModal.locator(".dev-terminal-row");
+    const terminalInput = developerModal.locator("#dev-terminal-input");
+    const terminalButton = developerModal.locator("#btn-terminal-send");
+    const [terminalBox, inputBox, sendBox] = await Promise.all([
+      terminalRow.boundingBox(), terminalInput.boundingBox(), terminalButton.boundingBox()
+    ]);
+    check(Boolean(terminalBox && inputBox && sendBox), profile.name + ": terminal renderizada");
+    check(near(inputBox.y + inputBox.height / 2, sendBox.y + sendBox.height / 2, 4),
+      profile.name + ": campo y botón de ejecución en la misma fila");
+    check(inputBox.x >= terminalBox.x - 1 &&
+      sendBox.x + sendBox.width <= terminalBox.x + terminalBox.width + 1 &&
+      inputBox.x + inputBox.width <= sendBox.x + 2,
+      profile.name + ": terminal contenida y sin solapamientos");
+
+    for (const tabId of ["diagnostics", "database", "images", "system"]) {
+      const radio = developerModal.locator("#dev-tab-" + tabId);
+      const label = developerModal.locator('label[for="dev-tab-' + tabId + '"]');
+      await label.click();
+      check(await radio.isChecked(), profile.name + ": pestaña " + tabId + " seleccionable");
+    }
+
+    const helpButtons = developerModal.locator(".gp-help-trigger");
+    const helpCount = await helpButtons.count();
+    check(helpCount > 0, profile.name + ": ayudas contextuales disponibles");
+    const firstHelp = helpButtons.first();
+    const helpId = await firstHelp.getAttribute("aria-controls");
+    check(Boolean(helpId), profile.name + ": ayuda vinculada mediante aria-controls");
+    const helpPanel = developerModal.locator("#" + helpId);
+    check(await helpPanel.evaluate(element => element.hidden),
+      profile.name + ": ayuda oculta inicialmente");
+    await firstHelp.click({ force: true });
+    check(await helpPanel.evaluate(element => !element.hidden),
+      profile.name + ": ayuda se muestra al activarla");
+    check(await firstHelp.getAttribute("aria-expanded") === "true",
+      profile.name + ": aria-expanded se actualiza al abrir ayuda");
+    await page.keyboard.press("Escape");
+    check(await helpPanel.evaluate(element => element.hidden),
+      profile.name + ": Escape cierra ayuda contextual");
+
+    await page.screenshot({
+      path: path.join(ROOT, "artifacts", "aug-146-" + profile.name + "-developer.png"),
+      fullPage: false
+    });
+
+    await page.evaluate(() => {
+      const modal = document.getElementById("dev-tools-modal");
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+    });
+    await page.evaluate(() => {
+      const logo = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60" viewBox="0 0 120 60"><rect width="120" height="60" rx="8" fill="#1d4ed8"/><text x="60" y="39" text-anchor="middle" font-size="28" fill="white">T</text></svg>'
+      );
+      window.__aug146Fixture = {
+        id: "AUG146-BETA-VEHICLE-001",
+        marca: "Toyota",
+        modelo: "Modelo de prueba con nombre deliberadamente extenso",
+        categoria: "Autos",
+        versionesAplicables: "Versión sintética",
+        tipoEncendido: "Llave",
+        anoDesde: "2020",
+        anoHasta: "2025",
+        vin: "",
+        imagenVehiculo: "",
+        notaImportante: "",
+        apertura: "",
+        imgApertura: "",
+        colaboradorApertura: "",
+        cableAlimen: "",
+        imgCableAlimen: "",
+        cableAlimen2: "",
+        imgCableAlimen2: "",
+        cableAlimen3: "",
+        imgCableAlimen3: "",
+        colaboradorAlimen: "",
+        colaborador: "Prueba automatizada",
+        Video: ""
+      };
+    });
+    await page.evaluate(async () => {
+      const state = await import("/JS/Frontend/state.js");
+      const logo = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60" viewBox="0 0 120 60"><rect width="120" height="60" rx="8" fill="#1d4ed8"/><text x="60" y="39" text-anchor="middle" font-size="28" fill="white">T</text></svg>'
+      );
+      state.setState({
+        catalogData: {
+          cortes: [window.__aug146Fixture], tutoriales: [], relay: [],
+          logos: [{ nombreMarca: "Toyota", urlLogo: logo }]
+        }
+      });
+      window.__aug146Ui.mostrarDetalleModal(window.__aug146Fixture);
+      window.__aug146Ui.showSavingIndicator("saving", "Guardando…");
+    });
+
+    const detailModal = page.locator("#modalDetalle");
+    await detailModal.waitFor({ state: "visible" });
+    const logoImage = detailModal.locator(".brand-logo-modal");
+    await logoImage.waitFor({ state: "visible" });
+    await page.waitForFunction(() => {
+      const image = document.querySelector("#modalDetalle .brand-logo-modal");
+      return image && image.complete && image.naturalWidth > 0;
+    });
+    const toolbar = detailModal.locator(".detail-modal-toolbar");
+    const logoBox = await logoImage.boundingBox();
+    const toolbarBox = await toolbar.boundingBox();
+    const modelBox = await detailModal.locator(".detail-modal-title-text").boundingBox();
+    const actionsBox = await detailModal.locator(".detail-modal-header-actions").boundingBox();
+    const dividerBox = await detailModal.locator(".detail-modal-divider").boundingBox();
+    const savingBox = await detailModal.locator("#modal-saving-indicator").boundingBox();
+    check(Boolean(logoBox && toolbarBox && modelBox && actionsBox && dividerBox && savingBox),
+      profile.name + ": elementos del encabezado de detalle renderizados");
+    check(near(logoBox.x - toolbarBox.x, logoBox.y - toolbarBox.y, 2),
+      profile.name + ": margen superior e izquierdo del logo simétricos");
+    check(actionsBox.x >= toolbarBox.x - 1 &&
+      actionsBox.x + actionsBox.width <= toolbarBox.x + toolbarBox.width + 1,
+      profile.name + ": acciones del encabezado contenidas");
+    check(modelBox.x >= toolbarBox.x - 1 &&
+      modelBox.x + modelBox.width <= toolbarBox.x + toolbarBox.width + 1,
+      profile.name + ": nombre del modelo contenido");
+    check(dividerBox.x >= toolbarBox.x - 1 &&
+      dividerBox.x + dividerBox.width <= toolbarBox.x + toolbarBox.width + 1,
+      profile.name + ": divisor azul contenido");
+    check(savingBox.x >= toolbarBox.x - 1 &&
+      savingBox.x + savingBox.width <= toolbarBox.x + toolbarBox.width + 1,
+      profile.name + ": indicador de guardado contenido");
+    check(modelBox.y >= actionsBox.y + actionsBox.height - 1,
+      profile.name + ": modelo debajo de la fila de acciones");
+    check(dividerBox.y >= Math.max(modelBox.y + modelBox.height, savingBox.y + savingBox.height) - 1,
+      profile.name + ": divisor debajo del modelo y del estado de guardado");
+    check(toolbarBox.x >= -1 && toolbarBox.x + toolbarBox.width <= profile.width + 1,
+      profile.name + ": encabezado sin desbordamiento horizontal");
+
+    await page.screenshot({
+      path: path.join(ROOT, "artifacts", "aug-146-" + profile.name + "-detail.png"),
+      fullPage: false
+    });
+    check(pageErrors.length === 0,
+      profile.name + ": sin excepciones JavaScript en navegador (" + pageErrors.join("; ") + ")");
+    console.log("PASS " + profile.name + " (" + profile.width + "x" + profile.height + ")");
+    await context.close();
+  }
+  console.log("AUG-146 Playwright: " + assertions + "/" + assertions + " PASS; 4 viewports; 8 capturas.");
+} catch (error) {
+  failures.push(error);
+} finally {
+  await browser.close();
+  await new Promise(resolve => server.close(resolve));
+}
+if (failures.length) {
+  for (const failure of failures) console.error(failure && failure.stack || failure);
+  process.exitCode = 1;
+}
