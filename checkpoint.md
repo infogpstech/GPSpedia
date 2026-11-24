@@ -1525,3 +1525,34 @@ Resultado: reconciliación estática MIG-003 COMPLETADA; validación de valores 
 
 Siguiente paso: continuar con las dependencias locales de MIG-026 que no requieran asumir comportamiento de Web Apps ni migrar ledgers fuera de sus tareas específicas.
 ================================================================================
+
+
+================================================================================
+SUBTRAMO MIG-026 — PROVEEDOR EXPLÍCITO SharedSessionActor — 2026-11-24
+Rama: GPSpedia2.2.5_work
+HEAD de partida: 68630e978159d0344f55cd98d7a24486ef755340
+
+Implementación:
+- SharedSessionActor ya no lee SPREADSHEET_ID global ni contiene fallback a SpreadsheetApp.openById.
+- loadSharedSessionActorFromSpreadsheet_ exige deps.loadSpreadsheet y valida el contenedor recibido; si falta, falla cerrado.
+- AUTH inyecta getAuthUsersSpreadsheet_ en cuatro rutas; ADMIN y WRITE inyectan getSpreadsheet; UTILITIES inyecta su proveedor basado en SPREADSHEET_ID local.
+- Se actualizaron los contratos de WRITE, ADMIN, AUTH, UTILITIES, actividad de sesión, tráfico directo, KDF y fixtures de paridad AUTH.
+
+Validación:
+- Sintaxis de todos los módulos JavaScript modificados: PASS.
+- MIG013SessionActorLocalLookup: 22/22 PASS.
+- PasswordKdfBenchmark: 5/5 PASS.
+- Regresión CI: 4,688 pruebas aprobadas; 1 suite falla en FeedbackLockFastFail por una aserción estática que prohíbe LockService en FEEDBACK. El fallo exacto ya estaba presente en runs previos (45291268637 y 45289392165); no es causado por este cambio.
+- Run de evidencia: 45298104105 (commit previo a la última corrección de fixture AUTH) muestra que solo persistía la suite preexistente. El siguiente run debe confirmar el estado del HEAD actual.
+- No se desplegó Apps Script ni se modificaron PropertiesService, Spreadsheet, Drive o datos externos.
+
+Estado:
+- Retiro del fallback implícito de SharedSessionActor: COMPLETADO CON VALIDACIÓN DIFERIDA.
+- MIG-026 global: EN PROGRESO.
+- AUTH/CATALOG/Utilities conservan IDs operativos; su sustitución sigue sujeta a MIG-006/MIG-008 y prueba Beta real.
+- No iniciar MIG-027.
+
+Siguiente paso:
+1. Verificar el CI del HEAD actual y cerrar este subtramo documentalmente.
+2. Continuar MIG-026 únicamente con cambios locales que no requieran asumir el contexto de ejecución de Web Apps ni migrar ledgers fuera de sus tareas específicas.
+================================================================================

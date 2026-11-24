@@ -382,3 +382,11 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Se confirmó que AUTH, WRITE, CATALOG y ADMIN son los cuatro módulos con referencias a ScriptProperties; se identificaron 12 familias vigentes de claves/estado. Las antiguas familias Coordinator/SharedMutation y la preferencia local rich_text_mode ya no aparecen en el código activo revisado.
 - Se actualizó la clasificación de acceso a Spreadsheet: AUTH/CATALOG/Utilities conservan el ID operativo; WRITE/ADMIN/FEEDBACK/CentralConfigurationReader usan Spreadsheet activa; las aperturas por ID de backup/rollback no se clasifican como IDs de base. SharedSessionActor conserva fallback condicional.
 - La inspección es estática: no se leyeron ni borraron propiedades instaladas ni se probaron deployments. MIG-006/MIG-008 siguen siendo dependencias Beta para validar contexto activo.
+
+
+### 2026-11-24 — MIG-026: proveedores explícitos en SharedSessionActor
+- Se retiró el fallback global SPREADSHEET_ID/openById de SharedSessionActor. El helper requiere un proveedor loadSpreadsheet inyectado y valida el contenedor devuelto.
+- AUTH inyecta getAuthUsersSpreadsheet_; ADMIN y WRITE inyectan getSpreadsheet; UTILITIES inyecta su proveedor basado en el ID operativo local.
+- Se actualizaron los contratos/fixtures de AUTH, WRITE, ADMIN, UTILITIES y los tests de enrutamiento, sesión y KDF para reflejar la inyección explícita.
+- CI: sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; PasswordKdfBenchmark 5/5 PASS; regresión 4,688 pruebas PASS con un único fallo preexistente en FeedbackLockFastFail (prohibición estática de LockService en FEEDBACK, reproducida en runs anteriores al cambio). No se modificaron los locks de FEEDBACK.
+- No se desplegaron servicios ni se modificaron hojas, PropertiesService instaladas o datos externos.

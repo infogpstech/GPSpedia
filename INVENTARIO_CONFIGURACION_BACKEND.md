@@ -252,3 +252,13 @@ Las familias de Coordinator/SharedMutation (secrets, URLs, leases, contexto/sesi
 - Las aperturas de Spreadsheet por ID en AUTH/CATALOG/Utilities y el fallback de SharedSessionActor siguen sujetos a la evidencia Beta de MIG-006/MIG-008; no se sustituyeron por getActiveSpreadsheet por inferencia.
 
 **Límites:** inspección estática de fuentes en GitHub; no se accedió a propiedades reales, deployments, hojas ni datos externos. Las 12 familias describen referencias de código, no garantizan que no existan claves huérfanas en proyectos desplegados.
+
+
+### Adenda MIG-026 — proveedor explícito de Spreadsheet para SharedSessionActor (2026-11-24)
+
+- Se eliminó de SharedSessionActor la resolución implícita mediante la variable global SPREADSHEET_ID y su fallback interno a SpreadsheetApp.openById.
+- loadSharedSessionActorFromSpreadsheet_ exige ahora deps.loadSpreadsheet, comprueba que el proveedor devuelve un contenedor con getSheetByName y falla cerrado si falta o no es válido.
+- AUTH inyecta getAuthUsersSpreadsheet_ en sus cuatro rutas protegidas; ADMIN y WRITE inyectan getSpreadsheet; UTILITIES inyecta un proveedor que abre su Spreadsheet operativa por su constante local.
+- La inyección conserva la fuente de identidad Users/ActiveSessions y el comportamiento de caché; no cambia la política de roles ni la vigencia de sesiones.
+- MIG013SessionActorLocalLookup: 22/22 PASS; PasswordKdfBenchmark: 5/5 PASS; contratos de rutas, autorización, invalidación y actividad de sesión aprobados en la última regresión.
+- El fallback ya no existe en el helper común. Los IDs operativos que AUTH/CATALOG/Utilities mantienen siguen pendientes de la evidencia de contexto Web App de MIG-006/MIG-008; esta modificación no los elimina ni afirma que getActiveSpreadsheet funcione en dichos deployments.
