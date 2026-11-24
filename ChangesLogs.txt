@@ -878,3 +878,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Pruebas: `FeedbackTutorialLookupBoundedRead` 9/9 PASS; `TutorialIntegrity` 48/48 PASS; FEEDBACK inicialización YouTube 9/9 PASS.
 - CI run `45505972628`: 517 suites, 6,155 pruebas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45505971953`: SUCCESS.
 - No se realizó subida real a YouTube ni despliegue Apps Script; Beta queda pendiente para confirmar con un tutorial histórico y uno nuevo.
+
+
+### 2026-11-24 — YouTube Tutorial: verificación adicional de IDs canónicos y legacy
+
+- Se amplió `YouTubeApprovalInit.js` para comprobar la inicialización real del flujo con Tutorial histórico (referencia `legacy-<SHA-256>`) y Tutorial nuevo (ID `tut-...`).
+- FEEDBACK precondiciones de subida resumable: 10/10 PASS.
+- CI run `45506352069`: SUCCESS; 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45506351422`: SUCCESS.
+- No se ejecutó OAuth ni una subida real a YouTube; la validación externa queda en Beta aislada.
