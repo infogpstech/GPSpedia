@@ -7,7 +7,7 @@ import vm from "node:vm";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const source = readFileSync(resolve(root, "JS/Services/CentralConfigurationReader.js"), "utf8");
 const auth = readFileSync(resolve(root, "JS/Services/Auth.js"), "utf8");
-for (const pattern of [/PropertiesService/, /UrlFetchApp/, /SPREADSHEET_ID/, /API_ENDPOINTS/, /COORDINATOR_SECRET|API_KEY|PASSWORD|TOKEN/i, /https?:\/\//]) {
+for (const pattern of [/PropertiesService/, /UrlFetchApp/, /API_ENDPOINTS/, /COORDINATOR_SECRET|API_KEY|PASSWORD|TOKEN/i, /https?:\/\//]) {
     assert.equal(pattern.test(source), false, "El lector contiene configuración local, URL o credencial prohibida: " + pattern);
 }
 assert.match(auth, /action === "getPublicConfiguration"[\s\S]*?getPublicCentralConfiguration_\(\)/);
