@@ -527,3 +527,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - La primera ejecución de CI identificó dos fallos de contrato en las pruebas (formato de consola y expectativa de logout); se corrigieron las aserciones preservando el orden funcional de logout.
 - La ejecución final CI run 45383504489: 500 suites, 5,896 pruebas aprobadas, 0 fallos; sintaxis PASS; AuthErrorPrivacy 7/7 PASS.
 - Commit funcional final: 334c5b51a1ae7fd3b4a952b5038ffd874ff9431a.
+
+
+### 2026-11-24 — Refuerzo de privacidad AUTH/sesión
+
+- Se sanearon las rutas de sesión local inválida, rol local inválido, cierre desde otra pestaña y fallo de limpieza de caché.
+- `showLoginScreen` aplica una lista permitida para impedir que motivos técnicos lleguen al DOM.
+- Los detalles de invalidación/rol/errores permanecen en la consola del navegador; la UI muestra el mensaje genérico permitido.
+- Se normalizó literalmente el mensaje de credenciales a `contraseña o usuario incorrecto`.
+- Se amplió AuthErrorPrivacy para cubrir los límites de presentación.
