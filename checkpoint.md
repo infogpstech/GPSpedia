@@ -1566,3 +1566,6 @@ REVISIÓN PRELIMINAR DE INTERCONEXIÓN BACKEND — MIG-026 — 2026-11-24
 - AUTH conserva GPSpedia_PASSWORD_RECOVERY_SECRET_V1 como secreto HMAC propio de recuperación; no se clasifica como secreto compartido y su almacenamiento futuro requiere diseño de seguridad específico.
 - Esta es una revisión preliminar de JS/Services, no la búsqueda estática global final. MIG-026 continúa EN PROGRESO.
 ================================================================================
+
+
+- Se añadió Tareas_Beta.md §6.6 para las pruebas diferidas de MIG-026: acceso real a Spreadsheet, proveedor explícito de SharedSessionActor, publicación/lectura global de rich_text_mode, TTL/invalidation, sanitización y revisión de propiedad legacy. Incluye comandos seguros de sincronización al inicio; no se ejecutó ninguna prueba Beta ni se tocó un deployment.

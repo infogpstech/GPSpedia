@@ -174,3 +174,34 @@ Todos los bloques están **PENDIENTES** de ejecución Beta real. La CI y las pru
 - Revisar deployments, triggers y propiedades Apps Script existentes solo en proyectos Beta desechables; documentar recursos externos huérfanos para limpieza autorizada. No borrar proyectos, propiedades ni datos automáticamente.
 - Registrar HEAD, versiones de deployments, servicio, rol, navegador/dispositivo, resultado y evidencia anonimizada. No copiar secretos ni datos personales.
 - No desplegar ni ejecutar contra producción. CI local no sustituye esta validación Beta.
+
+
+## 6.6 Validación Beta diferida — MIG-026 configuración central y acceso a Spreadsheet
+**Estado: PENDIENTE DE EJECUCIÓN EN Beta aislada.**
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse --abbrev-ref HEAD
+git rev-parse HEAD
+```
+
+Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechables de Beta:
+
+1. **Acceso inicial a Spreadsheet (MIG-006/MIG-008):** probar cada deployment de AUTH, CATALOG y UTILITIES bajo su identidad real de ejecución. Registrar si getActiveSpreadsheet() devuelve el contenedor esperado, null o un contenedor distinto. Confirmar permisos de lectura/escritura sobre Users, ActiveSessions y las hojas que consume cada servicio. No sustituir SPREADSHEET_ID/openById hasta documentar el resultado y aprobar una alternativa sin bootstrap circular.
+2. **SharedSessionActor:** validar cache miss, cache hit, expiración, token revocado, cambio de rol y usuario desactivado. Confirmar que AUTH inyecta getAuthUsersSpreadsheet_, ADMIN/WRITE inyectan su Spreadsheet activa y UTILITIES su proveedor explícito; verificar que una llamada sin proveedor falla cerrado. Confirmar que el actor procede de Users/ActiveSessions y nunca del rol enviado por el navegador.
+3. **Publicación global rich_text_mode:** con una sesión Desarrollador, publicar strict y advanced desde ADMIN; verificar incremento de revisión, historial, idempotencia, read-back y lectura pública desde FEEDBACK. Repetir como Técnico y confirmar rechazo de publicación.
+4. **Caché frontend:** abrir dos navegadores/sesiones aisladas; cambiar el modo desde Developer y comprobar que ambos leen el mismo valor central. Verificar TTL máximo de 5 minutos, invalidación tras publicar, revisión válida y fallback estricto cuando la caché o la respuesta central sea inválida/vencida.
+5. **Seguridad de contenido:** en ambos modos probar HTML/SVG/eventos/scripts/iframes/URLs peligrosas y confirmar que el backend continúa sanitizando sin depender de la preferencia visual.
+6. **Propiedad legacy:** inspeccionar si GPSpedia_RICH_TEXT_MODE_V1 existe en cada proyecto desplegado y registrar su presencia/ausencia. No borrar ni modificar propiedades instaladas como parte de esta prueba sin autorización específica y sin confirmar paridad del deployment.
+7. **Arquitectura:** confirmar que las operaciones funcionales se coordinan desde el frontend, que no se han añadido URLs de otros servicios ni secretos compartidos en Apps Script y que cualquier llamada técnica directa tiene justificación y RBAC receptor.
+8. Registrar HEAD, deployment/versiones, identidad de ejecución, rol, navegador/dispositivo, resultado y evidencia anonimizada. No registrar tokens, secretos, datos personales ni contenido real.
+9. No desplegar ni ejecutar contra producción. CI local no sustituye esta validación Beta.
