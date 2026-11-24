@@ -68,4 +68,64 @@ check("La guía separa pruebas GET, validación Beta y límites de autorización
   assert.match(guide, /No se autoriza.*despliegue productivo/s);
   assert.match(guide, /no prueba login, RBAC, escrituras, concurrencia ni acceso a Drive/);
 });
-console.log("MIG029DeploymentGuideContract: " + passed + "/7 PASS");
+
+
+check("El orden completo es explícito y AUTH precede al enrutamiento de los demás", () => {
+  const order = ["AUTH","CATALOG","WRITE","FEEDBACK","UTILITIES","ADMIN"];
+  const positions = order.map(service => guide.indexOf("| " + service + " |"));
+  assert.ok(positions.every(position => position >= 0));
+  assert.ok(positions.every((position, index) => index === 0 || position > positions[index - 1]));
+  assert.match(guide, /orden operativo de liberación/i);
+  assert.match(guide, /no es una cadena de dependencias backend/i);
+  assert.match(guide, /no llama a AUTH ni a otros proyectos Apps Script/i);
+});
+check("Cada proyecto tiene identidad, archivos y pasos funcionales específicos", () => {
+  for (const [service, identity] of [["AUTH","GPSpedia-Auth"],["CATALOG","GPSpedia-Catalog"],["WRITE","GPSpedia-Write"],["FEEDBACK","GPSpedia-Feedback"],["UTILITIES","GPSpedia-Utilities"],["ADMIN","GPSpedia-Admin"]]) {
+    assert.ok(guide.includes(identity), "Falta identidad " + service);
+  }
+  for (const file of ["Auth.js","catalog.js","write.js","feedback.js","Utilities.js","admin.js","InboxConversations.js","SharedSessionActor.js","CentralConfigurationReader.js"])
+    assert.ok(guide.includes(file), "Falta archivo " + file);
+  for (const id of ["BETA-01","BETA-02","BETA-03","BETA-04","BETA-05"])
+    assert.ok(guide.includes(id), "Falta prueba " + id);
+});
+check("La propagación de helpers coincide con los consumidores reales", () => {
+  assert.match(guide, /SharedSessionActor\.js.*AUTH, WRITE, FEEDBACK, UTILITIES, ADMIN/);
+  assert.match(guide, /CentralConfigurationReader\.js.*AUTH, WRITE, FEEDBACK, ADMIN/);
+  assert.match(guide, /InboxConversations\.js.*FEEDBACK/);
+  assert.match(catalog, /function getCatalogSessionActor_/);
+  assert.doesNotMatch(catalog, /getCachedSharedSessionActor_/);
+});
+check("La publicación conserva la configuración central y trata el bootstrap AUTH como excepción única", () => {
+  assert.match(guide, /ConfiguracionControl/);
+  assert.match(guide, /ConfiguracionHistorial/);
+  assert.match(guide, /active_revision/);
+  assert.match(guide, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
+  assert.match(guide, /no es necesario redesplegar frontend/i);
+  assert.match(guide, /No crear un segundo bootstrap ni un fallback local/);
+  assert.match(guide, /conmutar.*active_revision/s);
+});
+check("La guía protege despliegues parciales y servicios independientes", () => {
+  assert.match(guide, /detener únicamente el servicio o grupo/i);
+  assert.match(guide, /Los otros servicios independientes pueden continuar/i);
+  assert.match(guide, /Si AUTH no supera salud.*detener la secuencia completa/s);
+  assert.match(guide, /No desplegar proyectos que no contienen ese archivo/);
+});
+check("El procedimiento exige contexto Spreadsheet y conserva rollback", () => {
+  assert.match(guide, /getActiveSpreadsheet\(\)/);
+  assert.match(guide, /no restaurar.*SPREADSHEET_ID.*openById/s);
+  assert.match(guide, /## 9\. Rollback/);
+  assert.match(guide, /Nunca editar una revisión publicada/);
+  assert.match(schema, /Flujo de publicación:/);
+});
+check("El health workflow solo se ejecuta con bootstrap Beta confirmado", () => {
+  assert.match(guide, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
+  assert.match(guide, /no tiene selector de entorno/);
+  assert.match(guide, /No ejecutarlo si ese bootstrap apunta a producción/);
+  assert.match(guide, /GET \?debug=true/);
+});
+check("La lista de evidencia registra SHA, versión, URL y resultado por servicio", () => {
+  for (const field of ["SHA fuente","Versión Apps Script","Deployment","URL","Salud","Pruebas funcionales","Resultado","Rollback","Evidencia"])
+    assert.ok(guide.includes(field), "Falta campo " + field);
+});
+
+console.log("MIG029DeploymentGuideContract: " + passed + "/15 PASS");

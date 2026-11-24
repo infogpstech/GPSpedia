@@ -1,99 +1,225 @@
 # Guía operativa de despliegue — GPSpedia
 
-**Vigencia:** MIG-029  
-**Rama de referencia:** `GPSpedia2.2.5_work`  
-**Fuente normativa:** `NORMAS_DESAROLLO.md`, especialmente §§4–10 y 18.  
-**Alcance:** publicación de los seis proyectos Apps Script activos. No autoriza cambios en producción ni sustituye las pruebas Beta.
+**Vigencia:** AUG-145 (ampliación de MIG-029)
+**Rama de referencia:** `GPSpedia2.2.5_work`
+**Fuente normativa:** `NORMAS_DESAROLLO.md`, §§4–5, 8–12, 16–18.
+**Alcance:** actualización de los seis proyectos Apps Script activos. Esta guía no autoriza despliegues productivos ni sustituye la validación Beta.
 
 ## 1. Arquitectura y proyectos activos
 
-Cada servicio es un proyecto Apps Script independiente y conserva su propio `doGet`, `doPost` y deployment. El frontend resuelve acción → servicio → endpoint usando la configuración central. No se configuran URLs de otros servicios dentro de Apps Script.
+Los seis servicios son proyectos Apps Script independientes. El frontend resuelve acción → servicio → endpoint usando `ACTION_TO_SERVICE_MAP` y la configuración central. AUTH ofrece la única operación de arranque `getPublicConfiguration`; lee la configuración central y permite al frontend conocer las seis URLs. El resto de los servicios no llama a AUTH ni a otros proyectos Apps Script: cada uno valida localmente su contexto y sus permisos.
 
-| Servicio | Archivos fuente que deben estar en su proyecto |
-|---|---|
-| AUTH | `JS/Services/Auth.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
-| CATALOG | `JS/Services/catalog.js` |
-| WRITE | `JS/Services/write.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
-| FEEDBACK | `JS/Services/feedback.js`, `JS/Services/InboxConversations.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
-| UTILITIES | `JS/Services/Utilities.js`, `JS/Services/SharedSessionActor.js` |
-| ADMIN | `JS/Services/admin.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
+Flujo de enrutamiento:
 
-CATALOG conserva su verificación local de actor y no incluye `SharedSessionActor.js`. FEEDBACK necesita `InboxConversations.js`. Los helpers compartidos se copian únicamente a los proyectos indicados; no se combinan servicios distintos en un mismo proyecto.
+1. El frontend consulta `getPublicConfiguration` en AUTH mediante el único localizador bootstrap definido en `JS/Frontend/api-config.js`.
+2. AUTH lee la revisión central activa y devuelve la proyección pública de servicios habilitados.
+3. El frontend enruta cada acción al endpoint del servicio propietario.
+4. Cuando una operación funcional requiere varios servicios, el frontend coordina la secuencia. No se debe introducir una llamada Apps Script→Apps Script para sustituir esa coordinación.
 
-**No son deployments activos:** USERS y COORDINATOR. No crear, actualizar ni conectar proyectos para ellos como parte de esta guía. Las instrucciones archivadas en `Olds/Documentacion_Legacy/Services/` son evidencia histórica y no deben ejecutarse.
+| Servicio | Identidad de salud esperada | Archivos fuente que deben estar en su proyecto |
+|---|---|---|
+| AUTH | `GPSpedia-Auth` | `JS/Services/Auth.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
+| CATALOG | `GPSpedia-Catalog` | `JS/Services/catalog.js` |
+| WRITE | `GPSpedia-Write` | `JS/Services/write.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
+| FEEDBACK | `GPSpedia-Feedback` | `JS/Services/feedback.js`, `JS/Services/InboxConversations.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
+| UTILITIES | `GPSpedia-Utilities` | `JS/Services/Utilities.js`, `JS/Services/SharedSessionActor.js` |
+| ADMIN | `GPSpedia-Admin` | `JS/Services/admin.js`, `JS/Services/SharedSessionActor.js`, `JS/Services/CentralConfigurationReader.js` |
 
-## 2. Antes de publicar
+CATALOG usa su verificación local de actor y no incluye `SharedSessionActor.js`. FEEDBACK necesita `InboxConversations.js`. Los helpers se copian solo a los proyectos indicados; no combinar servicios en un solo proyecto.
 
-1. Confirmar que el repositorio es `infogpstech/GPSpedia`, la rama es `GPSpedia2.2.5_work` y el árbol de trabajo está limpio.
-2. Anotar el SHA exacto que se pretende publicar. No copiar archivos desde otra rama, una descarga antigua o un deployment como fuente de verdad.
-3. Revisar el diff y ejecutar el workflow de regresión de servicios. La sintaxis y las pruebas locales deben aprobar antes de abrir Apps Script.
-4. Identificar el único servicio afectado y sus archivos de la tabla anterior. No actualizar los otros cinco por rutina.
-5. Confirmar que se trabaja en el entorno autorizado (Beta aislada o producción expresamente autorizada). Para Beta, seguir primero la sincronización segura y las precondiciones de `Tareas_Beta.md`; usar recursos desechables y no reutilizar Spreadsheet, Drive, cuentas ni endpoints productivos.
-6. Abrir el proyecto Apps Script existente del servicio. Confirmar identidad de ejecución, permisos sobre los recursos del entorno y configuración de acceso ya aprobada. No ampliar permisos ni cambiar el propietario para resolver un error de despliegue.
-7. Comparar el manifiesto y los permisos OAuth existentes con las APIs usadas. El repositorio no versiona manifiestos Apps Script: no inventar un `appsscript.json` ni añadir scopes genéricos.
+**No son proyectos activos:** USERS y COORDINATOR. No crear, actualizar ni conectar deployments para ellos. Las instrucciones archivadas en `Olds/Documentacion_Legacy/Services/` son históricas y no deben ejecutarse.
 
-No se requieren propiedades de proyecto para registrar URLs de servicios ni secretos compartidos/manuales para conectar proyectos. No añadir propiedades de URL, tokens, credenciales o coordinación entre servicios. Los valores de recursos que todavía están definidos en el código deben corresponder al entorno de destino y se validan según la tarea Beta aplicable; esta guía no autoriza cambiarlos.
+## 2. Orden global de despliegue
 
-## 3. Actualizar un servicio existente
+Cuando una publicación aprobada requiere actualizar los seis proyectos, usar este orden:
 
-1. En el proyecto Apps Script correspondiente, reemplazar únicamente los archivos de la tabla que hayan cambiado en el commit aprobado. Mantener los demás archivos auxiliares y el manifiesto existente.
-2. Guardar y revisar errores de sintaxis/compilación en el editor.
-3. Crear una versión nueva del proyecto.
-4. Abrir **Implementar → Gestionar implementaciones**, editar el deployment Web App ya utilizado por ese servicio y seleccionar la nueva versión. Mantener la identidad de ejecución y el nivel de acceso que ya fueron aprobados para ese entorno.
-5. Implementar y comprobar que el deployment conserva su URL `/exec`.
-6. Ejecutar la comprobación de salud de solo lectura y las pruebas Beta aplicables antes de considerar estable la versión.
+| Orden | Servicio | Motivo del orden |
+|---:|---|---|
+| 1 | AUTH | Es el bootstrap de configuración del frontend. Debe estar disponible y devolver una revisión íntegra antes de validar el enrutamiento de los demás servicios. |
+| 2 | CATALOG | Provee las lecturas del catálogo y es propietario del feed incremental. Se valida antes de los flujos que publican cambios desde el frontend. |
+| 3 | WRITE | Atiende altas y modificaciones de vehículos, cortes y VIN; sus flujos pueden coordinar después una publicación en CATALOG desde el frontend. |
+| 4 | FEEDBACK | Atiende reportes, likes, PyS, tutoriales, Inbox y aprobación de vídeos. |
+| 5 | UTILITIES | Servicio especializado de mantenimiento/migración; se publica después de los flujos ordinarios y se valida con recursos desechables. |
+| 6 | ADMIN | Contiene operaciones administrativas de mayor privilegio y mantenimiento de Drive/Spreadsheet; se deja al final para limitar el radio de impacto. |
 
-Al editar el deployment existente se conserva su URL. Si la URL no cambia, no hay que modificar la configuración central. No crear un deployment nuevo solo para publicar una versión de código.
+Este es un **orden operativo de liberación**, no una cadena de dependencias backend. Después de AUTH, los otros cinco servicios son independientes: no deben esperar llamadas entre sí. Si solo cambia un servicio, desplegar únicamente ese servicio. No publicar los seis por rutina.
 
-Si el servicio todavía no tiene un deployment en el entorno autorizado, crear **Implementar → Nueva implementación → Aplicación web** con la identidad y el acceso previamente aprobados para ese entorno. No elegir un acceso más amplio por conveniencia. Verificar la URL `/exec` y su respuesta de salud antes de registrarla.
+Si una publicación cambia un contrato compartido, confirmar antes que el frontend y todos los consumidores afectados sean compatibles con el despliegue escalonado. Si una operación falla, no bloquear servicios independientes; detener únicamente el servicio o grupo que dependa del contrato incompatible.
 
-## 4. Publicar una URL nueva en la configuración central
+## 3. Preparación obligatoria antes de cada despliegue
 
-Este paso solo aplica si se creó un deployment nuevo y su URL es distinta. La URL operativa no se guarda en código frontend, código Apps Script, propiedades de proyecto ni documentos del repositorio.
+1. Confirmar repositorio `infogpstech/GPSpedia`, rama `GPSpedia2.2.5_work` y árbol Git limpio. No copiar código desde otra rama, una descarga antigua ni desde un deployment.
+2. Anotar el SHA completo que se publicará. Revisar el diff y confirmar que solo contiene los cambios autorizados.
+3. Ejecutar el workflow `GPSpedia service regression tests`. Sintaxis, contratos y regresión deben aprobar antes de abrir Apps Script.
+4. Identificar los servicios afectados mediante la matriz de archivos de §1 y la matriz de propagación de §8. No ampliar el despliegue a proyectos no afectados.
+5. Confirmar que el destino es Beta aislada o producción expresamente autorizada. Para Beta, ejecutar primero la sincronización segura y las precondiciones del apartado 0 de `Tareas_Beta.md`. Usar Spreadsheet, Drive, cuentas, endpoints y registros sintéticos desechables.
+6. En el proyecto existente, confirmar identidad de ejecución, permisos ya aprobados, deployment Web App y contexto de Spreadsheet. Los servicios que dependen de `SpreadsheetApp.getActiveSpreadsheet()` deben tener ese contexto disponible en el runtime Web App. Si falta, detener el despliegue; no restaurar `SPREADSHEET_ID`, `openById`, propiedades ni URLs locales como solución alternativa.
+7. Comparar los scopes/manifiesto existentes con las APIs realmente utilizadas. El repositorio no versiona `appsscript.json`: conservar el manifiesto del proyecto y no inventar scopes genéricos. Si Apps Script solicita autorización nueva, detenerse y revisar la causa antes de aprobarla.
 
-La fuente vigente es la hoja `Servicios` de la Spreadsheet central privada. El registro activo contiene seis servicios: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. El código actual no ofrece una pantalla/acción administrativa genérica para editar endpoints; la publicación de una URL debe realizarla un operador autorizado de la configuración central, siguiendo el versionado de `ESQUEMA_CONFIGURACION_CENTRAL.md`. La acción de ADMIN para `rich_text_mode` no es un editor de endpoints.
+No añadir propiedades de URL, credenciales, tokens, API keys ni secretos compartidos. No introducir URLs de otros servicios en código Apps Script. Los endpoints operativos se obtienen del registro central; la única excepción es el localizador bootstrap documentado en §9.
 
-1. Leer `active_revision` y `schema_version` desde la única fila `CONFIGURATION_ACTIVE` de `ConfiguracionControl`. Confirmar `publication_state=READY`.
-2. Preparar la siguiente `config_revision` completa sin tocar la revisión activa. Copiar a la revisión candidata las seis filas de `Servicios` y todas las filas vigentes de `ConfiguracionParametros` y `ConfiguracionRecursos`; conservar el esquema admitido. No publicar un conjunto parcial.
-3. Cambiar únicamente la fila del servicio afectado: `endpoint_url`, `updated_at`, `updated_by` y `change_reason`. Conservar `service_key`, `enabled`, `contract_version`, `min_client_version` y `health_action`, salvo que un cambio de contrato aprobado requiera modificarlos.
-4. Validar la URL HTTPS completa, el host/patrón de deployment esperado, la ausencia de credenciales/query secrets, la unicidad de las seis claves y la compatibilidad de contrato. No copiar la URL a logs o registros públicos.
-5. Añadir a `ConfiguracionHistorial` una entrada append-only para el cambio del servicio, con revisión, clave, operación, valor anterior/nuevo, actor, fecha y motivo. No editar ni borrar historial.
-6. Volver a leer la revisión candidata y verificar que todas sus filas, encabezados, tipos y conteos estén completos. Si no puede garantizarse la publicación coherente mediante una conmutación final controlada, no activar la revisión.
-7. Como último paso, cambiar `ConfiguracionControl.active_revision` a la revisión candidata en una única operación controlada. Mantener `publication_state=READY`; no dejar activa una revisión parcial ni mezclar filas de revisiones.
-8. Leer nuevamente el control y una muestra de la revisión publicada. Confirmar que el frontend puede resolver el endpoint nuevo y que la comprobación de salud de solo lectura lo identifica como disponible.
+## 4. Procedimiento común en el editor de Apps Script
 
-La configuración pública se mantiene en caché por un TTL corto. Los clientes la actualizan al vencer ese TTL; para una comprobación inmediata, recargar la aplicación después de confirmar la revisión. No es necesario redesplegar el frontend ni los otros cinco servicios únicamente por cambiar una URL. Si cambia el contrato de acciones/payload, actualizar y validar solo los consumidores realmente afectados.
+Aplicar estos pasos dentro del proyecto existente de cada servicio. Las rutas `.js` del repositorio son la fuente de verdad; en el editor de Apps Script, el archivo de script puede mostrarse con extensión `.gs`. Copiar el contenido completo del archivo del SHA aprobado al archivo de script correspondiente, sin alterar el código ni crear proyectos duplicados.
 
-Si la publicación central no puede completarse con integridad verificable, mantener la revisión anterior activa y continuar usando el deployment anterior. No forzar el cambio ni añadir un endpoint local de respaldo.
+1. Abrir `script.google.com` e ingresar con la cuenta autorizada para el entorno destino.
+2. Seleccionar el proyecto Apps Script existente del servicio y comprobar su identidad mediante el `doGet` de salud indicado en §5. No elegir un proyecto solo por un nombre parecido.
+3. En el panel de archivos, abrir cada archivo de script que corresponda a la matriz del servicio. Sustituir su contenido completo por el archivo del repositorio en el SHA aprobado. Si falta un helper que la matriz exige, crearlo dentro de ese mismo proyecto; no copiar helpers a proyectos no listados. Evitar duplicar funciones globales.
+4. Guardar todos los archivos. Revisar errores de sintaxis y confirmar que los archivos auxiliares requeridos están presentes. No cambiar el manifiesto, la identidad de ejecución, permisos ni propiedades del proyecto.
+5. Abrir **Implementar → Gestionar implementaciones**. Editar con el icono de lápiz el deployment de tipo **Aplicación web** que ya utiliza el servicio.
+6. En el selector **Versión**, elegir **Nueva versión**. Añadir una descripción trazable, por ejemplo `GPSpedia AUTH <SHA completo>`, y comprobar que se publica el código del SHA aprobado.
+7. Mantener exactamente la identidad **Ejecutar como** y el nivel **Quién tiene acceso** que ya fueron aprobados para ese entorno. No ampliar el acceso por conveniencia.
+8. Pulsar **Implementar** y conservar la URL `/exec` existente. No crear una implementación nueva para una actualización ordinaria. Si el editor solicita permisos que no estaban aprobados, detenerse.
+9. Copiar la URL resultante solo al registro privado de despliegue/evidencia. Compararla con la URL que ya figura en `Servicios`; si no cambió, no modificar la configuración central.
+10. Ejecutar el GET de salud descrito en el paso específico del servicio. Solo después de aprobarlo continuar con sus pruebas Beta funcionales.
 
-## 5. Comprobación posterior
+Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, crear **Implementar → Nueva implementación → Aplicación web** usando la identidad y el acceso previamente aprobados. Registrar que la URL es nueva y seguir §9 antes de enrutar tráfico hacia ella. Nunca crear una implementación pública o más permisiva para resolver un error.
 
-- Confirmar la versión desplegada y la respuesta GET de salud del servicio afectado.
-- Ejecutar el workflow **GPSpedia deployed service health (read-only)** mediante `workflow_dispatch` cuando se tenga autorización para consultar los deployments del entorno. Es una consulta GET de los seis servicios; no realiza escrituras.
-- Ejecutar las pruebas Beta funcionales del servicio y de sus consumidores. Registrar el SHA probado, etiqueta del deployment, servicio, rol y evidencia anonimizada en `Hallazgos_Beta.md`.
-- Confirmar que los otros servicios independientes siguen disponibles. Una falla de salud de un servicio no debe ocultar el estado de los demás.
-- No considerar CI, pruebas estáticas ni una respuesta simulada como prueba de integración real con Apps Script, Spreadsheet, Drive, OAuth o YouTube.
+## 5. Despliegue paso a paso por servicio
 
-## 6. Rollback
+### 5.1 AUTH — primero
 
-**Si se actualizó el código conservando la misma URL:**
-1. En **Implementar → Gestionar implementaciones**, editar el deployment afectado.
-2. Seleccionar la versión anterior conocida como estable y volver a implementar.
-3. Confirmar la misma URL `/exec`, ejecutar la comprobación GET y repetir las pruebas Beta del flujo afectado.
-4. No revertir ni redesplegar servicios no relacionados.
+1. Abrir el proyecto existente cuya respuesta de salud identifica `GPSpedia-Auth`.
+2. Actualizar exactamente `Auth.js`, `SharedSessionActor.js` y `CentralConfigurationReader.js` desde el mismo SHA. AUTH necesita el lector central para publicar la configuración pública y el helper local de actor para sus operaciones de sesión.
+3. Guardar y confirmar que no hay funciones duplicadas ni archivos auxiliares omitidos.
+4. Seguir §4, pasos 5–9, para crear una versión y actualizar el deployment Web App existente. Mantener la URL bootstrap actual si no hay una migración de bootstrap expresamente aprobada.
+5. Consultar `GET <URL del deployment>/exec?debug=true`. La respuesta debe ser JSON con `service: GPSpedia-Auth`, `status: available` y una versión no vacía.
+6. Desde la aplicación Beta, comprobar que `getPublicConfiguration` devuelve `status=success`, `routingAvailable=true` y las seis claves AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN, con la revisión central íntegra en estado READY.
+7. Ejecutar BETA-01 con cuentas sintéticas: login, validación de sesión, logout y revocación. No usar usuarios ni credenciales productivos.
+8. Si AUTH no supera salud y configuración pública, detener la secuencia completa: el frontend no puede resolver el registro central. Restaurar AUTH según §11 antes de continuar.
+
+### 5.2 CATALOG — segundo
+
+1. Abrir el proyecto existente cuya respuesta de salud identifica `GPSpedia-Catalog`.
+2. Actualizar únicamente `catalog.js`. CATALOG conserva su verificación local de actor; no añadir `SharedSessionActor.js` ni `CentralConfigurationReader.js`.
+3. Guardar y confirmar que el proyecto no contiene helpers de servicios retirados.
+4. Seguir §4, pasos 5–9, manteniendo el deployment y la URL existentes.
+5. Consultar `GET <URL del deployment>/exec?debug=true`. Verificar `service: GPSpedia-Catalog`, `status: available` y versión no vacía.
+6. Ejecutar BETA-02: lectura de navegación, catálogo, proyección de vehículo, dropdowns y feed incremental. Probar reset/delta con registros sintéticos; la publicación que combine WRITE/FEEDBACK con CATALOG se coordina desde el frontend.
+
+### 5.3 WRITE — tercero
+
+1. Abrir el proyecto existente cuya respuesta de salud identifica `GPSpedia-Write`.
+2. Actualizar `write.js`, `SharedSessionActor.js` y `CentralConfigurationReader.js` desde el mismo SHA.
+3. Guardar y comprobar que los dos helpers están presentes una sola vez en el proyecto.
+4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
+5. Consultar `GET <URL del deployment>/exec?debug=true`. Verificar `service: GPSpedia-Write`, `status: available` y versión no vacía.
+6. Ejecutar BETA-03 con vehículos, cortes y VIN sintéticos: comprobación previa, alta/edición, append/read-back, reintento idempotente y recuperación de respuesta perdida. No escribir sobre hojas productivas.
+
+### 5.4 FEEDBACK — cuarto
+
+1. Abrir el proyecto existente cuya respuesta de salud identifica `GPSpedia-Feedback`.
+2. Actualizar `feedback.js`, `InboxConversations.js`, `SharedSessionActor.js` y `CentralConfigurationReader.js` desde el mismo SHA. `InboxConversations.js` pertenece a FEEDBACK y no se copia a otro servicio.
+3. Guardar y comprobar que los cuatro archivos están presentes y que las funciones globales no están duplicadas.
+4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
+5. Consultar `GET <URL del deployment>/exec?debug=true`. Verificar `service: GPSpedia-Feedback`, `status: available` y versión no vacía.
+6. Ejecutar BETA-04: reportes, sugerencias, likes, PyS, tutoriales e Inbox. Probar las operaciones de YouTube solo con recursos/cuentas Beta autorizados. El frontend coordina la publicación de cambios en CATALOG; FEEDBACK no debe llamar a otro servicio GPSpedia.
+
+### 5.5 UTILITIES — quinto
+
+1. Abrir el proyecto existente cuya respuesta de salud identifica `GPSpedia-Utilities`.
+2. Actualizar `Utilities.js` y `SharedSessionActor.js`. No añadir `CentralConfigurationReader.js`: no forma parte del proyecto UTILITIES.
+3. Guardar y confirmar que el proyecto conserva su acceso al Spreadsheet activo y el helper de actor local.
+4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
+5. Consultar `GET <URL del deployment>/exec?debug=true`. UTILITIES devuelve su identidad/estado en `doGet`; verificar `service: GPSpedia-Utilities`, `status: available` y versión no vacía.
+6. Ejecutar BETA-05 y las pruebas aplicables de MIG-026 con Spreadsheet desechable. La migración `migrateTimestamps` requiere rol Desarrollador y no debe ejecutarse sobre datos productivos.
+
+### 5.6 ADMIN — sexto y último
+
+1. Abrir el proyecto existente cuya respuesta de salud identifica `GPSpedia-Admin`.
+2. Actualizar `admin.js`, `SharedSessionActor.js` y `CentralConfigurationReader.js` desde el mismo SHA.
+3. Guardar y verificar que el lector central y el helper de actor están presentes una sola vez. No restaurar código de COORDINATOR ni SharedMutation.
+4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
+5. Consultar `GET <URL del deployment>/exec?debug=true`. Verificar `service: GPSpedia-Admin`, `status: available` y versión no vacía.
+6. Ejecutar BETA-05 y las pruebas administrativas aplicables: empezar por `ping` y lecturas no destructivas; probar backups, restauraciones, reorganización y operaciones Drive solo con recursos desechables, permisos autorizados y plan de recuperación. No probar eliminaciones permanentes ni restauraciones sobre datos reales.
+
+## 6. Verificación y decisión para continuar
+
+- Cada servicio se valida por separado con su identidad de salud, versión y estado. Un `GET ?debug=true` correcto demuestra que el Web App responde; no demuestra login, RBAC, escritura, concurrencia ni acceso a Drive/YouTube.
+- Después de AUTH, confirmar el registro central completo y luego validar cada servicio en el orden de §2. Registrar servicio, SHA, versión, deployment, entorno, rol de prueba, resultado y evidencia anonimizada.
+- Si falla AUTH o no se puede leer la configuración central íntegra, no continuar el cambio de enrutamiento. Mantener la revisión central anterior y restaurar AUTH.
+- Si falla CATALOG, WRITE, FEEDBACK, UTILITIES o ADMIN, mantener ese servicio en su versión/URL anterior o ejecutar su rollback individual. Los otros servicios independientes pueden continuar si no dependen del contrato que falló.
+- Si el cambio de contrato exige una combinación específica de versiones, detener únicamente ese grupo coordinado y no publicar la revisión central nueva hasta que todos sus consumidores sean compatibles.
+- No usar el workflow de health remoto hasta confirmar que su bootstrap fijo consulta exclusivamente Beta aislada y que `workflow_dispatch` está disponible desde la rama predeterminada. El workflow `.github/workflows/deployed-service-health.yml` hace solo GET a los seis servicios, pero toma `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` del código; no tiene selector de entorno. No ejecutarlo si ese bootstrap apunta a producción o si el aislamiento no está confirmado.
+- Si se autoriza y cumple la condición anterior, el workflow **GPSpedia deployed service health (read-only)** obtiene endpoints desde AUTH y consulta `?debug=true` en los seis servicios. No realiza escrituras. Su éxito no sustituye las pruebas funcionales Beta.
+
+## 7. Publicación de una URL nueva en la configuración central
+
+Este procedimiento se usa únicamente cuando se creó un deployment nuevo y su URL `/exec` es distinta. La URL no se guarda en código Apps Script, propiedades de proyecto ni logs públicos.
+
+1. Un operador autorizado lee `active_revision` y `schema_version` de la única fila `CONFIGURATION_ACTIVE` de `ConfiguracionControl`; confirmar `publication_state=READY`.
+2. Preparar la siguiente `config_revision` completa sin modificar la revisión activa. Copiar las seis filas de `Servicios` y todas las filas vigentes de `ConfiguracionParametros` y `ConfiguracionRecursos`, conservando el esquema actual.
+3. Cambiar únicamente la fila del servicio afectado: `endpoint_url`, `updated_at`, `updated_by` y `change_reason`. Mantener `service_key`, `enabled`, `contract_version`, `min_client_version` y `health_action`, salvo cambio de contrato aprobado.
+4. Validar HTTPS, host/patrón de deployment esperado, ausencia de credenciales/query secrets, seis claves únicas y compatibilidad del contrato.
+5. Añadir una entrada append-only en `ConfiguracionHistorial` con revisión, clave, operación, valor anterior/nuevo, actor, fecha y motivo. No editar ni borrar historial.
+6. Volver a leer la revisión candidata y comprobar encabezados, tipos, conteos, unicidad y consistencia de todas las tablas. No activar una revisión parcial ni asumir que un LockService de proyectos distintos es un lock distribuido.
+7. Como última operación, conmutar `ConfiguracionControl.active_revision` a la revisión candidata mediante el mecanismo controlado aprobado; conservar `publication_state=READY`.
+8. Leer de nuevo el control y una muestra de la revisión activa. Confirmar que el frontend resuelve la nueva URL y que su GET de salud identifica el servicio correcto.
+
+Si el cambio afecta un servicio distinto de AUTH, no es necesario redesplegar frontend ni los otros cinco servicios por el solo cambio de URL. AUTH tiene una consideración adicional: `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en `JS/Frontend/api-config.js` es el único localizador fijo que permite arrancar la lectura de configuración. Si se conserva el deployment antiguo de AUTH como bootstrap compatible, se puede cambiar la URL operativa de AUTH en `Servicios` sin mover ese bootstrap. Si también se retira o cambia la URL bootstrap, actualizar ese único localizador y publicar el frontend correspondiente; mantener disponible el bootstrap anterior durante la transición. No crear un segundo bootstrap ni un fallback local.
+
+Si la publicación central no puede completarse con integridad verificable, conservar la revisión anterior activa y el deployment anterior. No forzar el cambio.
+
+## 8. Matriz de propagación de archivos compartidos
+
+| Archivo modificado | Proyectos que deben recibir la actualización | Proyectos que no se actualizan por ese archivo |
+|---|---|---|
+| `SharedSessionActor.js` | AUTH, WRITE, FEEDBACK, UTILITIES, ADMIN | CATALOG |
+| `CentralConfigurationReader.js` | AUTH, WRITE, FEEDBACK, ADMIN | CATALOG, UTILITIES |
+| `InboxConversations.js` | FEEDBACK | AUTH, CATALOG, WRITE, UTILITIES, ADMIN |
+| `Auth.js` | AUTH | Los otros cinco, salvo cambio de contrato que los afecte |
+| `catalog.js` | CATALOG | Los otros cinco, salvo cambio de contrato que los afecte |
+| `write.js` | WRITE | Los otros cinco, salvo cambio de contrato que los afecte |
+| `feedback.js` | FEEDBACK | Los otros cinco, salvo cambio de contrato que los afecte |
+| `Utilities.js` | UTILITIES | Los otros cinco, salvo cambio de contrato que los afecte |
+| `admin.js` | ADMIN | Los otros cinco, salvo cambio de contrato que los afecte |
+
+Un archivo compartido debe copiarse desde el mismo SHA a todos los proyectos que lo incluyen. No desplegar proyectos que no contienen ese archivo. Si cambia el contrato de una acción, actualizar y validar solo el servicio propietario y los consumidores frontend realmente afectados; la matriz de acciones vigente está en `JS/Frontend/api-config.js`.
+
+## 9. Rollback
+
+**Si se actualizó código y se conservó la URL:**
+
+1. Abrir **Implementar → Gestionar implementaciones** del servicio afectado.
+2. Editar el deployment y seleccionar la versión anterior conocida como estable.
+3. Implementar conservando la misma identidad de ejecución, acceso y URL `/exec`.
+4. Repetir GET de salud y pruebas Beta del flujo afectado.
+5. No revertir ni redesplegar servicios no relacionados.
 
 **Si se publicó una URL nueva en la configuración central:**
+
 1. Mantener disponible el deployment anterior.
-2. Crear una nueva revisión completa de configuración, copiando la revisión activa y restaurando en `Servicios.endpoint_url` la URL anterior del servicio.
-3. Añadir una nueva entrada append-only en `ConfiguracionHistorial` que documente el rollback y la revisión revertida.
-4. Validar la revisión candidata y cambiar `active_revision` mediante la misma conmutación controlada. Nunca editar una revisión ya publicada.
-5. Confirmar read-back, salud y flujo funcional. Solo después de la validación y autorización correspondientes se puede retirar el deployment nuevo.
+2. Crear una nueva revisión completa de configuración copiando la revisión activa y restaurando la URL anterior en `Servicios.endpoint_url`.
+3. Añadir una nueva entrada append-only a `ConfiguracionHistorial` que describa el rollback y la revisión revertida.
+4. Validar la revisión candidata y conmutar `active_revision` con el mismo procedimiento controlado. Nunca editar una revisión publicada.
+5. Confirmar read-back, salud y flujo funcional antes de retirar el deployment nuevo, y solo con autorización.
 
-No usar cambios directos de la URL en el frontend, endpoints alternativos, propiedades locales, rollback destructivo de la Spreadsheet ni modificaciones de la rama base.
+Si el rollback cambia el localizador bootstrap de AUTH, restaurar también `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en el frontend y publicar la versión frontend correspondiente. Mantener el bootstrap previo accesible hasta comprobar que los clientes pueden cargar la configuración.
 
-## 7. Límites y pendientes Beta
+## 10. Lista de comprobación y evidencia
 
-- La lectura real de configuración central mediante el contexto de Spreadsheet del Web App y los permisos efectivos debe verificarse por deployment en Beta, según MIG-006 y `Tareas_Beta.md`.
-- La comprobación GET de salud no prueba login, RBAC, escrituras, concurrencia ni acceso a Drive.
-- No se autoriza con esta guía un despliegue productivo, cambios de permisos, limpieza de propiedades legacy ni eliminación de deployments anteriores.
-- La rama base protegida `GPSpedia2.2.5` no se modifica desde este procedimiento.
+Registrar una fila por servicio desplegado:
+
+| Campo | Valor que debe registrarse |
+|---|---|
+| Entorno | Beta aislada o producción autorizada |
+| Servicio / identidad | AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES o ADMIN y su identidad GET |
+| SHA fuente | SHA completo del commit publicado |
+| Archivos | Lista exacta de archivos actualizados en ese proyecto |
+| Versión Apps Script | Número/etiqueta de versión seleccionada |
+| Deployment | Identificador interno o etiqueta; no publicar la URL privada |
+| URL | `CONSERVADA` o `NUEVA`; si es nueva, revisión central publicada |
+| Salud | Resultado GET, identidad, versión y hora |
+| Pruebas funcionales | IDs de casos Beta ejecutados y rol utilizado |
+| Resultado | PASS, FAIL o NO EJECUTADO |
+| Rollback | Versión anterior disponible y decisión |
+| Evidencia | Referencia anonimizada en `Hallazgos_Beta.md` |
+
+Antes de cerrar: confirmar que los otros servicios independientes siguen disponibles, que el registro central no mezcla revisiones y que no se añadieron URLs locales, propiedades, secretos ni scopes no aprobados.
+
+## 11. Límites y pendientes Beta
+
+- La disponibilidad de `SpreadsheetApp.getActiveSpreadsheet()` y los permisos efectivos deben comprobarse en cada Web App del entorno Beta. Si el contexto falta, no desplegar esa versión ni sustituirlo por IDs locales o `openById`.
+- Las pruebas GET de salud no demuestran login, RBAC, escrituras, concurrencia, revocación ni acceso real a Drive/YouTube. Ejecutar los casos correspondientes de `Tareas_Beta.md` con recursos desechables.
+- La guía no autoriza despliegues productivos, cambios de permisos, limpieza de propiedades legacy, eliminación de deployments anteriores ni operaciones destructivas.
+- La rama base protegida `GPSpedia2.2.5` no se modifica mediante este procedimiento.
