@@ -69,6 +69,14 @@ testCase("la expansión de la pestaña activa desactiva transiciones con movimie
  assert.match(reducedMotion, /#dev-tools-modal \.dev-tools-sidebar,[\s\S]*?#dev-tools-modal \.dev-tab-link,[\s\S]*?#dev-tools-modal \.dev-tab-link span,[\s\S]*?#audit-drive-modal \.audit-drive-action-label\s*\{\s*transition: none !important;/);
  assert.match(reducedMotion, /#dev-tools-modal \.dev-tools-title\s*\{\s*animation: none;/);
 });
+testCase("limpiar y copiar expanden su etiqueta solo al recibir foco",()=>{
+ assert.match(css,/#dev-tools-modal #btn-clear-console-log::after \{ content: "Limpiar consola"; \}/);
+ assert.match(css,/#dev-tools-modal #btn-copy-console-log::after \{ content: "Copiar registro"; \}/);
+ assert.match(css,/#dev-tools-modal #btn-clear-console-log:focus,[\s\S]*?#dev-tools-modal #btn-copy-console-log:focus \{[\s\S]*?width: 126px/);
+ const reduced=css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+ assert.match(reduced,/#dev-tools-modal #btn-clear-console-log::after/);
+ assert.match(reduced,/#dev-tools-modal #btn-copy-console-log::after/);
+});
 testCase("la navegación usa iconos compactos y expande solo la pestaña seleccionada",()=>{
  const start=css.lastIndexOf("/* AUG-146 — navegación del desarrollador");
  const nav=css.slice(start);
