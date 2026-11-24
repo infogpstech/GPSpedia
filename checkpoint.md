@@ -1633,10 +1633,32 @@ Implementación:
 - Se añadió JS/Tests/WriteCortesIdLedgerBaseline.mjs y se registró en el grupo MIG026 del runner.
 
 Validación:
-- Pendiente de ejecutar CI del commit de esta tarea. No se afirma todavía aprobación de sintaxis ni regresión.
-- No se ejecutaron Apps Script, Spreadsheet, Drive ni deployments reales; la paridad del ledger en el contexto Beta queda diferida.
+- CI service regression run 45304345999 sobre este commit: sintaxis PASS; 337 suites procesadas; 3,882 pruebas aprobadas y 3 suites fallidas fuera del subtramo WRITE: WriteCatalogPublicationIsolation (registrada en dos grupos del runner) y FeedbackLockFastFail. No se atribuyen estos fallos a la migración del contador; el contrato de FeedbackLockFastFail ya constaba en ejecuciones anteriores.
+- Suites específicas: WriteCortesIdLedgerBaseline 13/13; WriteVehicleIdAllocationIdempotency 12/12; WriteVehicleIdAllocatorBoundedRead 11/11; WriteFreezeCortesIdsBackupOutsideLock 5/5; WriteAuthorizationMinimization 15/15; WriteIdAllocatorNonBlocking 7/7.
+- GitHub Pages build/deploy automático run 45304344734: SUCCESS. No se desplegó ningún proyecto Apps Script.
+- No se ejecutaron Apps Script, Spreadsheet, Drive ni pruebas Beta reales; la paridad del ledger y la limpieza de propiedades instaladas quedan diferidas a Beta.
 
 Estado:
-- Subtramo WRITE high-water: IMPLEMENTADO; cierre sujeto a CI local.
-- MIG-026 global: EN PROGRESO. Pendientes AUTH/ADMIN, acceso Spreadsheet de AUTH/CATALOG/UTILITIES, búsqueda estática global y validación Beta.
+- Subtramo WRITE high-water: COMPLETADO EN CÓDIGO Y CI ESPECÍFICA.
+- MIG-026 global: EN PROGRESO. Pendientes: migraciones de estado AUTH/ADMIN, acceso Spreadsheet de AUTH/CATALOG/UTILITIES, búsqueda estática global y validación Beta.
+================================================================================
+
+
+================================================================================
+CIERRE DEL SUBTRAMO WRITE — MIG-026 — 2026-11-24
+HEAD de trabajo: 60223d2943ec6d7f2ed4e3dd4b24830e32fcb08c
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Commits del subtramo:
+- 0a7e9acedd — implementación inicial del baseline WRITE.
+- 674aea392b / dd4db06843 / f6153d044a / 19ad6f2188 — correcciones de inicialización y lock, y contratos.
+- ff8ae0af42 / 50435ada11 / 95fa37a2bd / 3518ebf512 / 60223d2943 — actualización de regresiones, pruebas runtime del baseline y validación de integridad.
+
+Resultado:
+- El marcador OP-BASELINE-CORTES-LAST-ID-V1 es determinista, único y no consume un ID de vehículo.
+- La propiedad heredada solo se lee durante la siembra inicial; las asignaciones posteriores dependen de Cortes + CortesIdReservations.
+- freezeCortesIds conserva backup, dry-run y confirmación; no vuelve a escribir GPSpedia_CORTES_LAST_ID.
+- El código no ha sido desplegado en Apps Script. No borrar la propiedad instalada ni ejecutar la migración sobre datos productivos.
+
+Siguiente subtramo pendiente por orden del backlog: estado de AUTH, con análisis específico del secreto HMAC y mecanismos de sesión/revocación antes de elegir almacenamiento. No iniciar ADMIN en paralelo.
 ================================================================================

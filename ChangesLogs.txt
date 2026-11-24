@@ -432,3 +432,12 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Las reservas normales dejan de consultar ScriptProperties; freezeCortesIds deja de escribir el contador legacy y conserva dry-run/respaldo/conversión de fórmulas.
 - Se añadió WriteCortesIdLedgerBaseline.mjs y se registró en el grupo MIG026 del runner.
 - CI y pruebas Beta reales aún no ejecutadas para este cambio; no se modificaron deployments, hojas ni propiedades instaladas.
+
+
+### 2026-11-24 — MIG-026: cierre del subtramo WRITE high-water
+- HEAD: 60223d2943ec6d7f2ed4e3dd4b24830e32fcb08c; rama base protegida sin cambios.
+- CI run 45304345999: sintaxis PASS; 337 suites; 3,882 pruebas aprobadas. Tres fallos de suite fuera del subtramo: WriteCatalogPublicationIsolation (dos invocaciones del runner) y FeedbackLockFastFail.
+- Suites específicas PASS: WriteCortesIdLedgerBaseline 13/13; WriteVehicleIdAllocationIdempotency 12/12; WriteVehicleIdAllocatorBoundedRead 11/11; WriteFreezeCortesIdsBackupOutsideLock 5/5; WriteAuthorizationMinimization 15/15; WriteIdAllocatorNonBlocking 7/7.
+- GitHub Pages run 45304344734: SUCCESS. No hubo despliegue Apps Script ni acceso a Spreadsheet/Drive/PropertiesService instalados.
+- Se agregó validación Beta diferida del baseline, lectura/escritura real, concurrencia, respuesta perdida, fail-closed y verificación de no relectura de la propiedad heredada.
+- Siguiente subtramo MIG-026: estado AUTH; estudiar tratamiento del secreto HMAC antes de migrar. ADMIN queda después, sin trabajo paralelo.

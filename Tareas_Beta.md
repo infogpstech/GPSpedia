@@ -206,3 +206,16 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 8. **Arquitectura:** confirmar que las operaciones funcionales se coordinan desde el frontend, que no se han añadido URLs de otros servicios ni secretos compartidos en Apps Script y que cualquier llamada técnica directa tiene justificación y RBAC receptor.
 9. Registrar HEAD, deployment/versiones, identidad de ejecución, rol, navegador/dispositivo, resultado y evidencia anonimizada. No registrar tokens, secretos, datos personales ni contenido real.
 10. No desplegar ni ejecutar contra producción. CI local no sustituye esta validación Beta.
+
+
+## 7. Validación Beta diferida — MIG-026 WRITE: baseline del contador de IDs
+**Estado: PENDIENTE.** Implementación y contratos locales aprobados; no se ha ejecutado sobre Apps Script/Spreadsheet reales.
+
+- Antes de probar, ejecutar íntegramente la sincronización segura del apartado 0 y confirmar el commit 60223d2943ec6d7f2ed4e3dd4b24830e32fcb08c en la rama GPSpedia2.2.5_work. Usar exclusivamente proyectos, Spreadsheet y datos desechables.
+- Preparar Cortes con IDs históricos y CortesIdReservations vacío. Configurar el contador heredado con un valor superior al máximo físico; ejecutar la primera asignación y comprobar que el baseline OP-BASELINE-CORTES-LAST-ID-V1 conserva ese máximo y que el siguiente ID es máximo + 1, sin saltos.
+- Repetir con el máximo del ledger superior al de la hoja y con el máximo de la hoja superior al de la propiedad heredada. Confirmar que el high-water final nunca retrocede.
+- Probar hoja sin IDs y propiedad ausente: el baseline debe registrar cero y la primera reserva debe ser ID 1, sin consumir el cero.
+- Probar reintento, respuesta perdida y dos asignaciones concurrentes con opId distintos; comprobar IDs únicos, orden creciente, read-back y ausencia de duplicados. Repetir con el mismo opId/huella y con el mismo opId/huella distinta; confirmar idempotencia y rechazo de conflicto.
+- Forzar propiedad heredada inválida, baseline duplicado/corrupto/incompleto, lock de inicialización ocupado y fallo de append/read-back. Confirmar fail-closed, no asignación con estado corrupto y liberación del lock.
+- Confirmar que después de crear el baseline las asignaciones ordinarias no vuelven a consultar GPSpedia_CORTES_LAST_ID/ScriptProperties. Confirmar que freezeCortesIds conserva dry-run, requiere backup válido, convierte fórmulas con read-back y no escribe la propiedad legacy.
+- No borrar la propiedad instalada durante esta prueba. Su limpieza solo podrá realizarse después de comprobar paridad y obtener autorización Beta explícita. Registrar evidencia anonimizada y resultado por caso en Hallazgos_Beta.md.
