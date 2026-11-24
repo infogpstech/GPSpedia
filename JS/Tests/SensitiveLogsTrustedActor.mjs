@@ -144,6 +144,7 @@ function createDispatchHarness(source, service, extraBindings = {}) {
             return callback("coordinator-token", actor);
         },
         getAuthUsersSpreadsheet_() { return {}; },
+        migrateLegacyRoleRevocationMarkersToSharedState_() { return { status:"success" }; },
         getCachedSharedSessionActor_(userId, sessionToken) {
             actorLookups.push({ userId, sessionToken });
             if (userId !== actor.userId || sessionToken !== "trusted-session") throw new Error("Sesión inválida.");
