@@ -11,7 +11,7 @@ function helperBlock(source) {
     assert.ok(start >= 0 && end > start, "No se encontró el resolver central de carpeta Cortes.");
     return source.slice(start, end);
 }
-function makeDrive(folderId = "FOLDER_12345", folderName = "Cortes", parentId = "ROOT_12345") {
+function makeDrive(folderId = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2", folderName = "Cortes", parentId = "ROOT_12345") {
     const folder = {
         isTrashed: () => false, getId: () => folderId, getName: () => folderName,
         getParents: () => { let used = false; return { hasNext: () => !used, next: () => { used = true; return { getId: () => parentId }; } }; }
@@ -20,38 +20,29 @@ function makeDrive(folderId = "FOLDER_12345", folderName = "Cortes", parentId = 
 }
 for (const [filename, serviceKey] of Object.entries(serviceKeys)) {
     const source = sourceOf(filename);
-    check(serviceKey + " elimina IDs locales y usa Spreadsheet vinculada", () => {
-        assert.doesNotMatch(source, /\b(?:SPREADSHEET_ID|DRIVE_FOLDER_ID)\b/);
-        assert.doesNotMatch(source, /1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os|1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2/);
-        const start = source.indexOf("function getSpreadsheet()");
-        const end = source.indexOf("\n}", start) + 2;
-        const getter = source.slice(start, end);
-        assert.match(getter, /SpreadsheetApp\.getActiveSpreadsheet\(\)/);
-        assert.match(getter, /if \(!spreadsheet\) throw new Error/);
-        assert.ok(source.includes('getCentralConfigurationForService_("' + serviceKey + '")'));
+    check(serviceKey + " usa Spreadsheet y carpeta compartidas sin propiedades locales", () => {
+        assert.match(source, /SpreadsheetApp\\.openById\\(GPSpediaSpreadsheetId_\\)/);
+        assert.ok(source.includes("GPSpediaCortesRootFolderId_"));
+        assert.doesNotMatch(source, /PropertiesService|CORTES_IMAGES_ROOT_FOLDER_ID/);
     });
-    const block = helperBlock(source);
-    const makeApi = (snapshot, drive = makeDrive()) => new Function("getCentralConfigurationForService_", "DriveApp",
-        block + "\nreturn { getCortesRootFolderResource_, getCortesRootFolder, getCortesRootFolderId_ };")(
-            key => { assert.equal(key, serviceKey); return snapshot; }, drive);
-    check(serviceKey + " resuelve el recurso central y valida carpeta/jerarquía", () => {
-        const api = makeApi({ status: "success", stale: false, resources: { cortes_root_folder_id: {
-            resourceType: "drive_folder",resourceId: "FOLDER_12345",
-            expectedParentId: "ROOT_12345", expectedName: "Cortes"
-        } } });
-        assert.equal(api.getCortesRootFolder().getId(), "FOLDER_12345");
-        assert.equal(api.getCortesRootFolderId_(), "FOLDER_12345");
+    const resolver = helperBlock(source);
+    const makeApi = (drive = makeDrive()) => new Function("GPSpediaCortesRootFolderId_", "DriveApp",
+        resolver + "\\nreturn { getCortesRootFolderResource_, getCortesRootFolder, getCortesRootFolderId_ };")(
+            "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2", drive);
+    check(serviceKey + " abre y verifica la carpeta Cortes configurada", () => {
+        const api = makeApi();
+        assert.equal(api.getCortesRootFolder().getId(), "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2");
+        assert.equal(api.getCortesRootFolderId_(), "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2");
     });
-    check(serviceKey + " falla cerrado si falta o vence la configuración", () => {
-        assert.throws(() => makeApi({ status: "success", stale: false, resources: {} }).getCortesRootFolder(), /Falta el recurso central/);
-        assert.throws(() => makeApi({ status: "success", stale: true, resources: { cortes_root_folder_id: { resourceType: "drive_folder",resourceId: "FOLDER_12345" } } }).getCortesRootFolder(), /no está disponible o está vencida/);
+    check(serviceKey + " rechaza una carpeta Drive con nombre incorrecto", () => {
+        assert.throws(() => makeApi(makeDrive(undefined, "Otra carpeta")).getCortesRootFolder(), /no corresponde a la carpeta raíz/);
     });
-    check(serviceKey + " rechaza jerarquía de Drive discordante", () => {
-        const api = makeApi({ status: "success", stale: false, resources: { cortes_root_folder_id: {
-            resourceType: "drive_folder",resourceId: "FOLDER_12345",
-            expectedParentId: "OTHER_PARENT", expectedName: "Cortes"
-        } } });
-        assert.throws(() => api.getCortesRootFolder(), /no está ubicada directamente en el padre configurado/);
+    check(serviceKey + " rechaza una carpeta fuera de la raíz Drive", () => {
+        assert.throws(() => makeApi(makeDrive(undefined, "Cortes", "OTHER_PARENT")).getCortesRootFolder(), /no está ubicada directamente/);
+    });
+    check(serviceKey + " falla cerrado si no hay ID de carpeta", () => {
+        const api = new Function("GPSpediaCortesRootFolderId_", resolver + "\\nreturn getCortesRootFolderResource_;")("");
+        assert.throws(() => api(), /ID de la carpeta raíz Cortes no está configurado/);
     });
 }
 check("ADMIN ya no persiste Imagenes_Sin_Uso en ScriptProperties", () => {
@@ -65,9 +56,9 @@ check("ADMIN ya no persiste Imagenes_Sin_Uso en ScriptProperties", () => {
     assert.doesNotMatch(helper, /PropertiesService|GPSpedia_UNUSED_IMAGES_FOLDER_ID/);
 });
 const configReader = readFileSync(new URL("CentralConfigurationReader.js", root), "utf8");
-assert.match(configReader, /getCentralConfigurationForService_/);
+assert.match(configReader, /GPSpediaCortesRootFolderId_/);
 assert.match(configReader, /resourceType: item\.resourceType/);
 assert.match(configReader, /resourceId: item\.resourceId/);
 const schema = readFileSync(new URL("../../ESQUEMA_CONFIGURACION_CENTRAL.md", import.meta.url), "utf8");
 assert.match(schema, /cortes_root_folder_id/);
-console.log("MIG015ImageConfigurationContract: " + passed + "/" + passed + " PASS — configuración central, fail-closed, jerarquía Drive y ausencia de IDs/propiedades locales.");
+console.log("MIG015ImageConfigurationContract: " + passed + "/" + passed + " PASS — IDs compartidos, acceso Spreadsheet, carpeta Cortes y jerarquía Drive.");
