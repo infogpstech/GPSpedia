@@ -344,3 +344,18 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Ejecutar finalización de auditorías distintas de forma solapada. El lock debe ser tryLock(0), solo durante baseline/upsert/cleanup; nunca durante Drive. Contención retryable, sin waitLock ni cola.
 - Después de drive_audit_latest_baseline_v1, confirmar que getLatest, save y cleanup no vuelven a obtener ScriptProperties para esta familia. No borrar propiedades legacy durante Beta; limpieza física requiere autorización explícita.
 - Registrar owners, auditIds sintéticos, Spreadsheet, resultado y evidencia anonimizada en Hallazgos_Beta.md.
+
+
+## 16. Validación Beta diferida — MIG-026 ADMIN: contador de IDs LogosMarca
+**Estado: PENDIENTE DE BETA.** La migración local utiliza LogoIdReservations y mantiene la propiedad legacy como solo lectura durante el baseline; falta validar el proyecto ADMIN y la Spreadsheet aislada.
+
+- Ejecutar primero la sincronización segura del apartado 0. Usar exclusivamente proyecto ADMIN y Spreadsheet Beta desechables; no usar producción.
+- Crear manualmente la hoja `LogoIdReservations` con estos cinco encabezados exactos en fila 1: `recordType`, `reservationId`, `logoId`, `createdAt`, `schemaVersion`. Dejar la fila 2 vacía para META/BASELINE; las reservas comienzan en fila 3. No crear el esquema automáticamente ni cambiar el orden.
+- Preparar `LOGOS_MARCA_ID_COUNTER` con valores ausente, igual al máximo de LogosMarca y superior al máximo visible. Ejecutar el baseline y confirmar que el high-water inicial es el máximo entre la propiedad legacy y los IDs numéricos válidos de LogosMarca; el marcador final debe ser `logo_id_counter_baseline_v1` y cada escritura debe confirmarse por read-back.
+- Interrumpir después de escribir `pending` y antes de confirmar el marcador final. Repetir el baseline y verificar reanudación, idempotencia y ausencia de reservas duplicadas. El baseline nunca debe ejecutar `setProperty` ni `deleteProperty` sobre la propiedad legacy.
+- Después del baseline, crear varios logotipos y confirmar que cada ID queda reservado una sola vez, es estrictamente mayor que el high-water previo y se conserva aunque falle posteriormente la escritura de la fila LogosMarca. Los huecos por reservas fallidas son válidos; nunca se debe reutilizar un ID.
+- Inyectar contador legacy negativo/no numérico, encabezados incorrectos, hoja ausente, IDs de LogosMarca duplicados, no enteros, filas con datos sin ID, reservas duplicadas, reservationId vacío, schemaVersion desconocida y filas parcialmente escritas. Confirmar fallo cerrado sin sobrescribir ni eliminar datos.
+- Ejecutar dos altas simultáneas y comprobar IDs distintos, filas no duplicadas y recuperación ante respuesta perdida. La sección crítica usa exclusivamente `tryLock(0)`; la contención debe responder inmediatamente con `ADMIN_BUSY`, sin espera ni cola. Reintentar una solicitud que no obtuvo lock debe producir un nuevo intento seguro.
+- Mantener una carga/operación Drive activa y ejecutar otras acciones ADMIN independientes. Confirmar que Drive se ejecuta fuera del ScriptLock, que el escaneo inicial de LogosMarca ocurre antes del lock y que la sección crítica se limita a baseline/reserva y escritura breve en Spreadsheet. Ninguna función debe esperar por otra.
+- Tras `logo_id_counter_baseline_v1`, confirmar que las altas ordinarias no consultan `PropertiesService` para esta familia. No borrar `LOGOS_MARCA_ID_COUNTER` durante la prueba; su limpieza física requiere despliegue verificado y autorización Beta explícita.
+- Registrar deployment, Spreadsheet aislada, contador inicial, máximo visible, IDs reservados, concurrencia, evidencia anonimizada y resultados por caso en `Hallazgos_Beta.md`.

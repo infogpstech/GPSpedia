@@ -13,6 +13,11 @@ let spreadsheet = null;
 
 
 const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
+const LOGO_ID_RESERVATIONS_SHEET_NAME_ = "LogoIdReservations";
+const LOGO_ID_RESERVATIONS_HEADERS_ = Object.freeze(["recordType", "reservationId", "logoId", "createdAt", "schemaVersion"]);
+const LOGO_ID_RESERVATION_BASELINE_PENDING_ = "pending";
+const LOGO_ID_RESERVATION_BASELINE_VERSION_ = "logo_id_counter_baseline_v1";
+const LOGO_ID_RESERVATION_SCHEMA_VERSION_ = 1;
 
 function getSpreadsheet() {
   if (spreadsheet === null) {
@@ -6819,41 +6824,151 @@ function handleRollbackIdentifiers_(payload) {
 }
 
 
-function getNextLogoIdLocked_(sheet) {
+function inspectLogoIdHighWater_(sheet) {
     if (!sheet) throw new Error("No se encontró la hoja LogosMarca.");
     if (String(sheet.getRange(1, 1).getValue() || "").trim().toLowerCase() !== "id") {
         throw new Error("El encabezado de la primera columna de LogosMarca no es ID.");
     }
-    let maxId = 0;
-    const seen = new Set();
     const lastRow = sheet.getLastRow();
-    if (lastRow > 1) {
-        const lastColumn = Math.max(sheet.getLastColumn(), 4);
-        const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-        const formulas = sheet.getRange(2, 1, lastRow - 1, 1).getFormulas();
-        rows.forEach((row, index) => {
-            const rawId = row[0];
-            const idText = String(rawId === null || rawId === undefined ? "" : rawId).trim();
-            const hasData = row.slice(1).some(value => value !== "" && value !== null && value !== undefined);
-            const hasFormula = Boolean(formulas[index] && formulas[index][0]);
-            if (!hasData && !idText) return;
-            if (!idText) throw new Error("La fila " + (index + 2) + " de LogosMarca contiene datos pero no tiene ID.");
-            const id = Number(idText);
-            if (!Number.isSafeInteger(id) || id < 1) throw new Error("El ID de LogosMarca en la fila " + (index + 2) + " no es un entero positivo.");
-            if (seen.has(id)) throw new Error("Se detectó un ID duplicado en LogosMarca; no se asignó otro identificador.");
-            seen.add(id);
-            maxId = Math.max(maxId, id);
-            // Las fórmulas históricas se leen como valores y no se copian al registro nuevo.
-            void hasFormula;
-        });
+    const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, Math.max(sheet.getLastColumn(), 4)).getValues() : [];
+    const seen = new Set();
+    let maxId = 0;
+    rows.forEach((row, index) => {
+        const idText = String(row[0] === null || row[0] === undefined ? "" : row[0]).trim();
+        const hasData = row.slice(1).some(value => value !== "" && value !== null && value !== undefined);
+        if (!hasData && !idText) return;
+        if (!idText) throw new Error("La fila " + (index + 2) + " de LogosMarca contiene datos pero no tiene ID.");
+        const id = Number(idText);
+        if (!Number.isSafeInteger(id) || id < 1) throw new Error("El ID de LogosMarca en la fila " + (index + 2) + " no es un entero positivo.");
+        if (seen.has(id)) throw new Error("Se detectó un ID duplicado en LogosMarca; no se asignó otro identificador.");
+        seen.add(id);
+        maxId = Math.max(maxId, id);
+    });
+    return { maxId, count: seen.size, lastRow, rows };
+}
+
+function getLogoIdReservationsSheet_(spreadsheet) {
+    if (!spreadsheet || typeof spreadsheet.getSheetByName !== "function") throw new Error("No se pudo acceder a la Spreadsheet ADMIN.");
+    const sheet = spreadsheet.getSheetByName(LOGO_ID_RESERVATIONS_SHEET_NAME_);
+    if (!sheet) throw new Error("Falta la hoja operativa LogoIdReservations. Debe prepararse en Beta antes del despliegue.");
+    const headers = sheet.getRange(1, 1, 1, LOGO_ID_RESERVATIONS_HEADERS_.length).getValues()[0];
+    if (!LOGO_ID_RESERVATIONS_HEADERS_.every((header, index) => String(headers[index] || "").trim() === header)) {
+        throw new Error("Los encabezados de LogoIdReservations no coinciden con el esquema requerido.");
     }
-    const properties = PropertiesService.getScriptProperties();
-    const storedValue = properties.getProperty(LOGOS_MARCA_ID_COUNTER_PROPERTY);
-    const storedId = storedValue === null ? 0 : Number(storedValue);
-    if (!Number.isSafeInteger(storedId) || storedId < 0) throw new Error("El contador central de IDs de LogosMarca contiene un valor inválido.");
-    const nextId = Math.max(maxId, storedId) + 1;
+    return sheet;
+}
+
+function readLogoIdReservationLedger_(sheet) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 2) return { maxId: 0, count: 0, reservations: [] };
+    const rows = sheet.getRange(3, 1, lastRow - 2, LOGO_ID_RESERVATIONS_HEADERS_.length).getValues();
+    const ids = new Set(), reservationIds = new Set(), reservations = [];
+    let maxId = 0;
+    rows.forEach((row, index) => {
+        if (row.every(value => value === "" || value === null || value === undefined)) return;
+        const recordType = String(row[0] || "");
+        const reservationId = String(row[1] || "").trim();
+        const id = Number(row[2]);
+        const createdAt = Number(row[3]);
+        const schemaVersion = Number(row[4]);
+        if (recordType !== "RESERVATION" || !reservationId || !Number.isSafeInteger(id) || id < 1 ||
+            !Number.isFinite(createdAt) || createdAt < 0 || schemaVersion !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
+            throw new Error("La reserva de ID de logotipo en la fila " + (index + 3) + " está dañada.");
+        }
+        if (ids.has(id) || reservationIds.has(reservationId)) {
+            throw new Error("LogoIdReservations contiene IDs o identificadores de reserva duplicados.");
+        }
+        ids.add(id);
+        reservationIds.add(reservationId);
+        maxId = Math.max(maxId, id);
+        reservations.push({ reservationId, id, createdAt });
+    });
+    return { maxId, count: reservations.length, reservations };
+}
+
+function ensureLogoIdReservationBaselineUnderLock_(spreadsheet, logoSheet, ledgerSheet) {
+    const metaRange = ledgerSheet.getRange(2, 1, 1, LOGO_ID_RESERVATIONS_HEADERS_.length);
+    let meta = metaRange.getValues()[0];
+    const blank = meta.every(value => value === "" || value === null || value === undefined);
+    if (blank) {
+        metaRange.setValues([["META", LOGO_ID_RESERVATION_BASELINE_PENDING_, 0, Date.now(), LOGO_ID_RESERVATION_SCHEMA_VERSION_]]);
+        SpreadsheetApp.flush();
+        meta = metaRange.getValues()[0];
+        if (String(meta[0]) !== "META" || String(meta[1]) !== LOGO_ID_RESERVATION_BASELINE_PENDING_) {
+            throw new Error("No se pudo confirmar el inicio del baseline de IDs de LogosMarca.");
+        }
+    }
+    if (String(meta[0] || "") !== "META") throw new Error("La fila META de LogoIdReservations está dañada.");
+    if (String(meta[1] || "") === LOGO_ID_RESERVATION_BASELINE_VERSION_) {
+        const highWater = Number(meta[2]);
+        if (!Number.isSafeInteger(highWater) || highWater < 0 ||
+            Number(meta[4]) !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
+            throw new Error("El baseline de IDs de LogosMarca contiene un high-water inválido.");
+        }
+        return { highWater, alreadyComplete: true };
+    }
+    if (String(meta[1] || "") !== LOGO_ID_RESERVATION_BASELINE_PENDING_) {
+        throw new Error("El marcador de baseline de LogoIdReservations no es válido.");
+    }
+    if (readLogoIdReservationLedger_(ledgerSheet).count) {
+        throw new Error("LogoIdReservations contiene reservas antes de completar el baseline; se requiere revisión.");
+    }
+
+    // La propiedad antigua solo se lee durante el baseline; nunca se modifica ni elimina.
+    const legacyValue = PropertiesService.getScriptProperties().getProperty(LOGOS_MARCA_ID_COUNTER_PROPERTY);
+    const legacyHighWater = legacyValue === null ? 0 : Number(legacyValue);
+    if (!Number.isSafeInteger(legacyHighWater) || legacyHighWater < 0) {
+        throw new Error("El contador legacy de LogosMarca contiene un valor inválido.");
+    }
+    const sheetState = inspectLogoIdHighWater_(logoSheet);
+    const highWater = Math.max(legacyHighWater, sheetState.maxId);
+    metaRange.setValues([["META", LOGO_ID_RESERVATION_BASELINE_VERSION_, highWater, Date.now(), LOGO_ID_RESERVATION_SCHEMA_VERSION_]]);
+    SpreadsheetApp.flush();
+    const confirmed = metaRange.getValues()[0];
+    if (String(confirmed[0]) !== "META" || String(confirmed[1]) !== LOGO_ID_RESERVATION_BASELINE_VERSION_ ||
+        Number(confirmed[2]) !== highWater || Number(confirmed[4]) !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
+        throw new Error("No se pudo confirmar el baseline de IDs de LogosMarca.");
+    }
+    return { highWater, alreadyComplete: false };
+}
+
+function getNextLogoIdLocked_(sheet, observedLogoState) {
+    if (!sheet) throw new Error("No se encontró la hoja LogosMarca.");
+    const spreadsheet = getSpreadsheet();
+    const ledgerSheet = getLogoIdReservationsSheet_(spreadsheet);
+    const baseline = ensureLogoIdReservationBaselineUnderLock_(spreadsheet, sheet, ledgerSheet);
+    const logoState = observedLogoState && observedLogoState.lastRow === sheet.getLastRow()
+        ? observedLogoState : inspectLogoIdHighWater_(sheet);
+    const ledgerState = readLogoIdReservationLedger_(ledgerSheet);
+    const nextId = Math.max(logoState.maxId, baseline.highWater, ledgerState.maxId) + 1;
     if (!Number.isSafeInteger(nextId) || nextId < 1) throw new Error("Se alcanzó el límite seguro de IDs de LogosMarca.");
-    properties.setProperty(LOGOS_MARCA_ID_COUNTER_PROPERTY, String(nextId));
+
+    const reservationId = Utilities.getUuid();
+    const createdAt = Date.now();
+    const row = ledgerSheet.getLastRow() + 1;
+    const reservation = ["RESERVATION", reservationId, nextId, createdAt, LOGO_ID_RESERVATION_SCHEMA_VERSION_];
+    let writeError = null;
+    try { ledgerSheet.getRange(row, 1, 1, reservation.length).setValues([reservation]); }
+    catch (error) { writeError = error; }
+    try { SpreadsheetApp.flush(); } catch (error) { writeError = writeError || error; }
+
+    const lastRow = ledgerSheet.getLastRow();
+    const persisted = lastRow >= 3
+        ? ledgerSheet.getRange(3, 1, lastRow - 2, LOGO_ID_RESERVATIONS_HEADERS_.length).getValues()
+            .filter(item => String(item[1] || "") === reservationId)
+        : [];
+    if (persisted.length !== 1 || String(persisted[0][0]) !== "RESERVATION" ||
+        Number(persisted[0][2]) !== nextId || Number(persisted[0][4]) !== LOGO_ID_RESERVATION_SCHEMA_VERSION_) {
+        throw new Error("No se pudo confirmar la reserva del ID de logotipo." + (writeError ? " " + writeError.message : ""));
+    }
+
+    const metaRange = ledgerSheet.getRange(2, 3);
+    let metaWriteError = null;
+    try { metaRange.setValue(nextId); SpreadsheetApp.flush(); } catch (error) { metaWriteError = error; }
+    if (Number(metaRange.getValue()) !== nextId) {
+        throw new Error("La reserva quedó registrada, pero no se confirmó el high-water del ledger." +
+            (metaWriteError ? " " + metaWriteError.message : ""));
+    }
     return nextId;
 }
 
@@ -6948,8 +7063,9 @@ function handleAddLogo(payload, logMessage) {
     const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para resolver la categoría de la marca.");
     const brandKey = normalizeOrganizerSegment_(nombreMarca).toLowerCase();
-    const existingLogos = sheet.getDataRange().getValues();
-    if (existingLogos.slice(1).some(row => normalizeOrganizerSegment_(row && row[1]).toLowerCase() === brandKey)) {
+    // Una sola lectura obtiene duplicados y high-water antes del lock; se reconcilia si la hoja cambia.
+    const logoIdSnapshot = inspectLogoIdHighWater_(sheet);
+    if (logoIdSnapshot.rows.some(row => normalizeOrganizerSegment_(row && row[1]).toLowerCase() === brandKey)) {
         throw new Error("La marca ya tiene un registro de logotipo; no se creó una fila duplicada.");
     }
     const cortesLastRow = cortesSheet.getLastRow();
@@ -7012,7 +7128,7 @@ function handleAddLogo(payload, logMessage) {
         const lastRow = sheet.getLastRow();
         newRow = lastRow + 1;
         lastColumn = Math.max(sheet.getLastColumn(), 4);
-        newId = getNextLogoIdLocked_(sheet);
+        newId = getNextLogoIdLocked_(sheet, logoIdSnapshot);
         rowPrepared = true;
         if (lastRow > 1) {
             copyAdminRowPresentationOnly_(sheet, lastRow, newRow, lastColumn);

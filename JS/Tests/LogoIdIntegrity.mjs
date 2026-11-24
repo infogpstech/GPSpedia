@@ -21,20 +21,63 @@ function sheet(rows,formulas=[]){
  };
 }
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
-function generator(sheetValue,storedValue=null){
- let stored=storedValue;
- const fn=new Function("PropertiesService","LOGOS_MARCA_ID_COUNTER_PROPERTY",extract("getNextLogoIdLocked_")+"\nreturn getNextLogoIdLocked_;")(
-  {getScriptProperties:()=>({getProperty:()=>stored,setProperty:(key,value)=>{stored=value;}})},
-  "LOGOS_MARCA_ID_COUNTER"
- );
- return {next:()=>fn(sheetValue),stored:()=>stored};
+function makeLedgerMock(){
+ const rows=[["recordType","reservationId","logoId","createdAt","schemaVersion"],["","","","",""]];
+ const ledger={
+  getLastRow:()=>rows.length,
+  getRange:(row,col,nr=1,nc=1)=>({
+   getValues:()=>Array.from({length:nr},(_,r)=>Array.from({length:nc},(_,c)=>rows[row-1+r]?.[col-1+c]??"")),
+   getValue:()=>rows[row-1]?.[col-1]??"",
+   setValue:value=>{while(rows.length<row)rows.push(["","","","",""]);rows[row-1][col-1]=value;},
+   setValues:values=>{values.forEach((valuesRow,r)=>{while(rows.length<row+r)rows.push(["","","","",""]);for(let c=0;c<valuesRow.length;c++)rows[row-1+r][col-1+c]=valuesRow[c];});}
+  })
+ };
+ return {ledger,rows};
 }
+const ledgerHelpers=["inspectLogoIdHighWater_","getLogoIdReservationsSheet_","readLogoIdReservationLedger_","ensureLogoIdReservationBaselineUnderLock_","getNextLogoIdLocked_"];
+function generator(sheetValue,storedValue=null){
+ let stored=storedValue,propertyReads=0;
+ const {ledger,rows}=makeLedgerMock();
+ const deps={
+  getSpreadsheet:()=>({getSheetByName:name=>name==="LogoIdReservations"?ledger:null}),
+  PropertiesService:{getScriptProperties:()=>({getProperty:()=>{propertyReads++;return stored===null?null:String(stored);}})},
+  SpreadsheetApp:{flush:()=>{}},Utilities:{getUuid:()=>"reservation-"+rows.length},
+  LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER",
+  LOGO_ID_RESERVATIONS_SHEET_NAME_:"LogoIdReservations",
+  LOGO_ID_RESERVATIONS_HEADERS_:["recordType","reservationId","logoId","createdAt","schemaVersion"],
+  LOGO_ID_RESERVATION_BASELINE_PENDING_:"pending",
+  LOGO_ID_RESERVATION_BASELINE_VERSION_:"logo_id_counter_baseline_v1",
+  LOGO_ID_RESERVATION_SCHEMA_VERSION_:1,
+  LOGO_ID_RESERVATIONS_SHEET_NAME_:"LogoIdReservations",
+  LOGO_ID_RESERVATIONS_HEADERS_:["recordType","reservationId","logoId","createdAt","schemaVersion"],
+  LOGO_ID_RESERVATION_BASELINE_PENDING_:"pending",
+  LOGO_ID_RESERVATION_BASELINE_VERSION_:"logo_id_counter_baseline_v1",
+  LOGO_ID_RESERVATION_SCHEMA_VERSION_:1
+ };
+ const code=ledgerHelpers.map(extract).join("\n")+"\nreturn getNextLogoIdLocked_;";
+ const fn=new Function(...Object.keys(deps),code)(...Object.values(deps));
+ return {next:()=>fn(sheetValue),stored:()=>stored,propertyReads:()=>propertyReads,rows};
+}
+
 test("Asigna ID numérico posterior al máximo histórico y contador central",()=>{
  const h=generator(sheet([["id","nombre","url","marca"],[1,"A","u","A"],[3,"B","u","B"]]),2);
- assert.equal(h.next(),4);assert.equal(h.stored(),"4");
+ assert.equal(h.next(),4);assert.equal(h.stored(),2);assert.equal(h.rows[2][2],4);
+});
+test("El baseline conserva el high-water legacy sin modificar la propiedad",()=>{
+ const h=generator(sheet([["id","nombre"],[2,"A"]]),8);assert.equal(h.next(),9);assert.equal(h.propertyReads(),1);
+});
+test("Rechaza un contador legacy malformado sin emitir una reserva",()=>{
+ const h=generator(sheet([["id","nombre"],[1,"A"]]),"legacy-corrupto");
+ assert.throws(()=>h.next(),/contador legacy/);assert.equal(h.rows.length,2);
+});
+test("Una reserva confirmada actualiza el high-water del metadato",()=>{
+ const h=generator(sheet([["id","nombre"],[4,"A"]]),2);assert.equal(h.next(),5);assert.equal(Number(h.rows[1][2]),5);
+});
+test("El flujo normal deja de consultar PropertiesService después del baseline",()=>{
+ const h=generator(sheet([["id","nombre"],[1,"A"]]),1);assert.equal(h.next(),2);assert.equal(h.next(),3);assert.equal(h.propertyReads(),1);
 });
 test("Respeta contador central cuando está adelantado a la hoja",()=>{
- const h=generator(sheet([["id","nombre"],[2,"A"]]),8);assert.equal(h.next(),9);
+ const h=generator(sheet([["id","nombre"],[2,"A"]]),8);assert.equal(h.next(),9);assert.equal(h.stored(),8);
 });
 test("Rechaza IDs duplicados aunque uno tenga ceros a la izquierda",()=>{
  const h=generator(sheet([["id","nombre"],[1,"A"],["001","B"]]));assert.throws(()=>h.next(),/duplicado/);
@@ -115,6 +158,7 @@ function addLogoHarness(options={}){
   getDataRange:()=>({getValues:()=>cortesRows}),
   getRange:(row,col,nr,nc)=>({getValues:()=>Array.from({length:nr},(_,r)=>Array.from({length:nc},(_,c)=>cortesRows[row-1+r]?.[col-1+c]??""))})
  };
+ const ledgerMock=makeLedgerMock(),ledgerSheet=ledgerMock.ledger;
  const rootFolder={kind:"root"},categoryFolder={kind:"category"};
  const brandFolder={
   kind:"brand",
@@ -125,10 +169,10 @@ function addLogoHarness(options={}){
  const properties={getProperty:()=>String(counter),setProperty:(key,value)=>{counter=Number(value);}};
  const flush=()=>{
   flushCalls++;
-  if(options.failFlushOnce&&flushCalls===1){if(options.failReadAfterFlush)failReads=true;throw new Error("flush failure simulated");}
+  if(options.failFlushOnce&&flushCalls===5){if(options.failReadAfterFlush)failReads=true;throw new Error("flush failure simulated");}
  };
  const deps={
-  getSpreadsheet:()=>({getSheetByName:name=>name==="Cortes"?cortesSheet:sheetValue}),
+  getSpreadsheet:()=>({getSheetByName:name=>name==="Cortes"?cortesSheet:name==="LogoIdReservations"?ledgerSheet:sheetValue}),
   SHEET_NAMES:{LOGOS_MARCA:"LogosMarca",CORTES:"Cortes"},
   COLS_CORTES:{categoria:2,marca:3},
   getCortesRootFolder:()=>rootFolder,
@@ -144,7 +188,7 @@ function addLogoHarness(options={}){
   PropertiesService:{getScriptProperties:()=>properties},
   LOGOS_MARCA_ID_COUNTER_PROPERTY:"LOGOS_MARCA_ID_COUNTER"
  };
- const fn=new Function(...Object.keys(deps),extract("getLogoCategoryCandidatesFromCortesRows_")+String.fromCharCode(10)+extract("buildCanonicalLogoDestination_")+String.fromCharCode(10)+extract("copyAdminRowPresentationOnly_")+String.fromCharCode(10)+extract("getNextLogoIdLocked_")+String.fromCharCode(10)+extract("validateLogoImagePayload_")+String.fromCharCode(10)+extract("handleAddLogo")+String.fromCharCode(10)+"return handleAddLogo;")(...Object.values(deps));
+ const fn=new Function(...Object.keys(deps),ledgerHelpers.map(extract).join(String.fromCharCode(10))+String.fromCharCode(10)+extract("getLogoCategoryCandidatesFromCortesRows_")+String.fromCharCode(10)+extract("buildCanonicalLogoDestination_")+String.fromCharCode(10)+extract("copyAdminRowPresentationOnly_")+String.fromCharCode(10)+extract("validateLogoImagePayload_")+String.fromCharCode(10)+extract("handleAddLogo")+String.fromCharCode(10)+"return handleAddLogo;")(...Object.values(deps));
  return {run:()=>fn({nombreMarca:"Marca nueva",fileData:"iVBORw0KGgo=",filename:options.filename||"logo.png",mimeType:options.mimeType||"image/png"},()=>{}),
   rows,file,folderCalls,get createdFilename(){return createdFilename;},get trashed(){return trashed;},get description(){return description;}};
 }

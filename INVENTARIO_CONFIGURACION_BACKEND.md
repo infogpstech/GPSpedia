@@ -357,3 +357,12 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - CI run 45327887713: 496 suites, 5,856 pruebas aprobadas, 0 fallos; AdminReplacedImagesIntegrity 64/64. Pages run 45327886488 SUCCESS.
 - Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 1 (2 total). ADMIN conserva únicamente LOGOS_MARCA_ID_COUNTER; auditoría, Safe Apply, guardas, estado y latest quedan como lectores de baseline legacy.
 - Beta pendiente en Tareas_Beta.md §15.
+
+
+### Adenda MIG-026 ADMIN-05 — contador de IDs LogosMarca — 2026-11-24
+
+- La familia `LOGOS_MARCA_ID_COUNTER` se migra al ledger privado `LogoIdReservations` (5 columnas: recordType, reservationId, logoId, createdAt, schemaVersion). La fila 2 queda reservada para META/BASELINE; las reservas empiezan en fila 3.
+- El baseline calcula el high-water como el máximo entre la propiedad legacy y los IDs válidos de LogosMarca, valida duplicados/formato, es reanudable y confirma el marcador `logo_id_counter_baseline_v1` por read-back. La propiedad legacy solo se lee durante el baseline; no se escribe ni elimina.
+- Las reservas usan IDs monotónicos, UUID de reserva, read-back y high-water persistente. Una reserva confirmada no se reutiliza aunque falle la escritura posterior de la fila de logotipo; los huecos son válidos.
+- El escaneo del catálogo se realiza antes de adquirir ScriptLock; si cambia la última fila, se recalcula. El lock protege baseline/reserva y escritura de la fila, usa exclusivamente `tryLock(0)` y se libera en finally. Drive se ejecuta antes o después de la sección crítica, nunca dentro de ella.
+- Estado local de implementación: código y suites añadidos; CI pendiente. No se creó la hoja real ni se desplegó Apps Script. La validación real, concurrencia, respuesta perdida y preservación de la propiedad legacy quedan pendientes de Beta.

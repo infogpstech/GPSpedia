@@ -1855,3 +1855,17 @@ Commit de ajuste de contrato legacy: a7f8489861f1387027069b95b5fe73cfd60b6732
 
 Resultado: subtramo DriveAuditLatest COMPLETADO EN CÓDIGO Y CI; VALIDACIÓN BETA PENDIENTE. Estado de familias operativas: AUTH 0, WRITE 1, ADMIN 1 (2 total). Siguiente familia: LOGOS_MARCA_ID_COUNTER; luego búsqueda estática global.
 ================================================================================
+
+
+================================================================================
+MIG-026 ADMIN-05 — IMPLEMENTACIÓN DEL LEDGER LOGOSMARCA — 2026-11-24
+HEAD de inicio verificado: 60dbc949287969d55abeced4b9145fc125ac8291
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+- Siguiente familia confirmada por orden del inventario: LOGOS_MARCA_ID_COUNTER.
+- Se prepara la migración a LogoIdReservations con esquema fijo de cinco columnas, fila 2 META/BASELINE y reservas desde fila 3.
+- El baseline se calcula a partir del máximo entre la propiedad legacy y los IDs existentes en LogosMarca; es reanudable, verifica read-back y conserva la propiedad sin setProperty/deleteProperty.
+- El flujo ordinario usa reservas monotónicas y read-back. La inspección del catálogo se hace fuera del lock y se reconcilia si la hoja cambia. La sección crítica usa tryLock(0), no espera por otra ejecución y no incluye operaciones Drive.
+- Se actualizaron pruebas de integridad de IDs, contrato de lock no bloqueante y runner; se añadió suite LogoIdReservationLedger y preparación Beta §16.
+- Estado: EN PROGRESO. Pendiente publicar el conjunto, ejecutar CI, revisar resultados/diff y cerrar registros con el SHA final.
+================================================================================

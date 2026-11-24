@@ -150,6 +150,7 @@ runGroup('32','ADMIN',()=>{
   runCli('GP-IMG-DATA-01 aplicación aprobada, read-back y rollback','JS/Tests/CortesImageReconciliationApply.mjs');
  runCli('GP-IMG-DATA-01 UI de simulación y reporte de conciliación','JS/Tests/CortesImageReconciliationUI.mjs');
  runCli('P2 asignador backend de IDs LogosMarca','JS/Tests/LogoIdIntegrity.mjs');
+ runCli('ADMIN asignación de logotipos sin bloqueo de Drive','JS/Tests/AdminLogoWriteLockNonBlocking.mjs');
 });
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('JS/Services/feedback.js');
@@ -649,6 +650,8 @@ runGroup('47','MIG026',()=>{
  runCli('MIG026 publicación versionada de rich_text_mode','JS/Tests/CentralConfigurationPublisherContract.mjs');
  runCli('MIG026 preferencia global, caché con TTL y RBAC','JS/Tests/RichTextGlobalPreference.mjs');
  runCli('MIG026 baseline del contador WRITE en ledger append-only','JS/Tests/WriteCortesIdLedgerBaseline.mjs');
+ runCli('MIG026 ADMIN contador LogosMarca en ledger de reservas y lock no bloqueante','JS/Tests/LogoIdReservationLedger.mjs');
+ runCli('MIG026 ADMIN contador LogosMarca en ledger de reservas y lock no bloqueante','JS/Tests/LogoIdReservationLedger.mjs');
  runCli('MIG026 Safe Apply ADMIN: baseline Spreadsheet, ledger y no bloqueo entre operaciones','JS/Tests/CortesImageOrganizerLedger.mjs');
  runCli('MIG026 ADMIN guardas temporales: baseline, exclusión por recurso y TTL sin bloqueo durante Drive','JS/Tests/AdminLocalOperationGuard.mjs');
 });

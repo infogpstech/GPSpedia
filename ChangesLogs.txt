@@ -480,3 +480,11 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - CI run 45317266195: 495 suites, 5,799 pruebas aprobadas, 0 fallos; sintaxis 457 archivos y referencias 377 archivos PASS. GitHub Pages run 45317265579: SUCCESS.
 - No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas. Preparación de hoja real, concurrencia y limpieza legacy quedan pendientes de Beta (§11).
 - Siguiente familia ADMIN: Safe Apply `GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>`, una tarea a la vez.
+
+
+### 2026-11-24 — MIG-026 ADMIN-05: ledger de reservas de IDs LogosMarca
+- Sustitución del contador operativo LOGOS_MARCA_ID_COUNTER por el ledger LogoIdReservations (baseline en fila 2 y reservas desde fila 3).
+- Baseline reanudable: importa el high-water máximo entre contador legacy y hoja LogosMarca; valida IDs y confirma read-back. La propiedad legacy se conserva solo como fuente de baseline, sin setProperty/deleteProperty.
+- Reservas monotónicas con UUID, read-back y high-water; los IDs reservados no se reutilizan si falla la escritura posterior de la fila de logotipo.
+- El escaneo de IDs se realiza antes del lock; el lock fail-fast protege solo la reserva/escritura de Spreadsheet. Las operaciones Drive permanecen fuera de la sección crítica.
+- Pruebas y runner actualizados; se añadió LogoIdReservationLedger y se amplió la cobertura de no bloqueo. CI pendiente al publicar.

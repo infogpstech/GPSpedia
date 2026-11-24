@@ -27,8 +27,18 @@ test("si el lock está ocupado se retira el archivo no vinculado o se marca para
     assert.ok(busy.includes("ADMIN_BUSY"));
 });
 
+test("el escaneo del catálogo se hace antes del lock y se reconcilia por high-water", () => {
+    assert.ok(handler.indexOf("inspectLogoIdHighWater_(sheet)") < handler.indexOf("lock.tryLock(0)"));
+    assert.match(handler, /getNextLogoIdLocked_\(sheet, logoIdSnapshot\)/);
+});
+test("Drive no se ejecuta dentro de la sección crítica", () => {
+    const start = handler.indexOf("lock.tryLock(0)");
+    const end = handler.indexOf("finally {", start);
+    const critical = handler.slice(start, end);
+    assert.doesNotMatch(critical, /DriveApp|createFile\(|findOrCreateSubFolder\(|getCortesRootFolder\(/);
+});
 test("la secuencia y la fila se escriben bajo lock y se libera solo si fue adquirido", () => {
-    assert.ok(handler.indexOf("lock.tryLock(0)") < handler.indexOf("getNextLogoIdLocked_(sheet)"));
+    assert.ok(handler.indexOf("lock.tryLock(0)") < handler.indexOf("getNextLogoIdLocked_(sheet, logoIdSnapshot)"));
     assert.match(handler, /finally\s*\{\s*if \(lockAcquired && lock\.hasLock\(\)\) lock\.releaseLock\(\);\s*\}/);
 });
 
