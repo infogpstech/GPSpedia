@@ -296,3 +296,14 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - La ejecución operativa de endpoints continúa bajo Tareas_Beta.md §19. No se desplegaron Apps Script ni se modificaron recursos externos.
 - Commit del procedimiento Beta: 09d5dc2bf73c21c99d71b16a94eed0b8c46f936b. HEAD de trabajo tras el registro: 09d5dc2bf73c21c99d71b16a94eed0b8c46f936b. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
 - CI run 45486734920: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages run 45486735045: SUCCESS.
+
+
+### Cierre de validación visual automatizada AUG-146 — 2026-11-24
+
+- Se implementó `JS/Tests/Aug146ResponsiveBrowser.mjs` con Playwright/Chromium sobre el HTML, CSS y módulos UI reales. Se integró como job `responsive-browser` del workflow existente `.github/workflows/service-tests.yml`; se eliminó el workflow duplicado que no era necesario.
+- El harness usa sesión/vehículo sintéticos, intercepta solicitudes a Apps Script y no ejecuta despliegues, escrituras remotas ni operaciones productivas. Captura Developer, detalle y detalle en modo edición.
+- Se comprobó escritorio 1366×768 y móvil 390×844, 360×800 y 320×700: 148/148 aserciones PASS, 12 capturas. CI run `45494735181`, HEAD probado `665822fcd93752646c2e76416bcaa4f22fabc09b`: SUCCESS. Artefacto `14968421776`.
+- La prueba detectó que en 320 px las acciones de edición podían invadir el área del título. Se corrigió `style.css` para envolver los controles, reservar dos filas del encabezado cuando el título pasa debajo del logo y evitar solapamientos. La repetición completa quedó aprobada.
+- Regresión general del mismo CI: 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages run asociado al HEAD probado: SUCCESS.
+- `Tareas_Beta.md` §20 actualizado: validación automatizada completada; permanece pendiente la revisión manual en dispositivos físicos. La validación real de configuración central/endpoints continúa en §19, exclusivamente con Spreadsheet y deployments aislados.
+- Estado AUG-146: COMPLETADA CON VALIDACIÓN DIFERIDA. No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos productivos. Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.

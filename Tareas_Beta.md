@@ -406,7 +406,11 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 10. Registrar HEAD, revisiones, deployments, identidad Google efectiva, resultados, historial y evidencias anonimizadas en Hallazgos_Beta.md. No usar datos productivos ni desplegar a producción sin autorización expresa.
 
 ## 20. Validación Beta diferida — AUG-146: encabezado y panel Developer
-**Estado: PENDIENTE DE VALIDACIÓN VISUAL.** La implementación y los contratos locales están aprobados en CI; no se ejecutó navegador real ni comparación de viewports. Ejecutar primero la sincronización segura del apartado 0 y usar únicamente frontend Beta autorizado, cuentas sintéticas y recursos aislados.
+**Estado: VALIDACIÓN AUTOMATIZADA DE NAVEGADOR COMPLETADA; PENDIENTE DE VALIDACIÓN MANUAL EN DISPOSITIVOS FÍSICOS.** La suite Playwright ejecuta el frontend real del repositorio en Chromium con sesión y datos sintéticos; las solicitudes externas se aíslan y no se invocan deployments Apps Script ni recursos productivos.
+
+**Evidencia automatizada:** CI run [45494735181](https://github.com/infogpstech/GPSpedia/actions/runs/45494735181), commit `665822fcd93752646c2e76416bcaa4f22fabc09b`: SUCCESS; 148/148 aserciones, cuatro viewports (1366×768, 390×844, 360×800 y 320×700), modo de edición incluido y 12 capturas sintéticas. Artefacto: [aug-146-responsive-browser-evidence](https://github.com/infogpstech/GPSpedia/actions/runs/45494735181/artifacts/14968421776). Regresión general en el mismo run: 516 suites, 6,115 pruebas aprobadas y 0 fallos.
+
+La comprobación manual en dispositivos físicos/navegadores de campo permanece pendiente. Ejecutar primero la sincronización segura del apartado 0 y usar únicamente frontend Beta autorizado, cuentas sintéticas y recursos aislados.
 
 1. Registrar navegador, dispositivo, resolución y rol. Viewports mínimos: escritorio 1366×768; móvil 390×844, 360×800 y 320×700.
 2. Modal de detalle: probar logos apaisados, cuadrados y verticales; nombres cortos y largos; edición, guardado, deshacer y aceptar. Confirmar márgenes iguales del logo, cuadrícula estable, campo de edición sin solapamiento, estado «Guardando…» sobre el nombre y metadatos bajo la línea azul. Repetir la comparación de botones y límites descrita en el apartado 18; no aceptar desplazamientos de los controles.
@@ -415,5 +419,5 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 5. Operación: limpiar consola, copiar registro, ejecutar comandos y navegar entre pestañas; confirmar que los efectos existentes se conservan. Comprobar que no se muestra el apartado de tráfico global retirado ni títulos duplicados.
 6. Mensajes: ejecutar operaciones sintéticas exitosas y fallidas de cortes, modelos e imágenes. Confirmar que la interfaz muestra mensajes breves y que los detalles técnicos quedan únicamente en el logger interno autorizado. No incluir tokens, VIN, datos personales ni trazas en capturas.
 7. Endpoints: realizar las pruebas reales de publicación, revisión activa, RBAC, reintentos e idempotencia únicamente conforme al apartado 19, con Spreadsheet y deployments Beta aislados. No modificar revisiones históricas.
-8. Registrar capturas anonimizadas, viewport, rol y resultado por criterio en Hallazgos_Beta.md. Si no se dispone de navegador, viewport o rol, marcar NO EJECUTADO; CI y la inspección estática no sustituyen la validación visual.
+8. La evidencia automatizada de Chromium ya está archivada en el artefacto indicado arriba. Para la validación manual, registrar dispositivo físico, navegador, viewport, rol, capturas anonimizadas y resultado por criterio en Hallazgos_Beta.md. Si no se dispone de dispositivo, navegador, viewport o rol, marcar NO EJECUTADO; no inferir una prueba física a partir de CI.
 9. No desplegar Apps Script ni modificar endpoints, propiedades, Spreadsheet, Drive, permisos o datos productivos.
