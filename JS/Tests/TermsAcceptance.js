@@ -105,7 +105,7 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
     assert.doesNotMatch(authMutationActions, /validateSession|touchSession|acceptTerms/);
     assert.doesNotMatch(authMirrorMutationActions, /validateSession|touchSession|acceptTerms/);
     const authRouter = authSource.slice(authSource.indexOf('function doPost(e) {'), authSource.indexOf('function doPostInternal_(e)'));
-    assert.match(authRouter, /\["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile"\]\.includes\(action\)[\s\S]*?getCachedSharedSessionActor_/);
+    assert.match(authRouter, /\["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile", "benchmarkPasswordKdf", "getCentralServiceUrls", "updateCentralServiceUrls"\]\.includes\(action\)[\s\S]*?getCachedSharedSessionActor_/);
     assert.doesNotMatch(authRouter, /withSharedMutationLease_\("AUTH",\s*"acceptTerms"/);
     assert.match(authSource, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
     assert.match(authTestSource, /cacheSharedSessionActor_\(normalizedId, currentSessionToken/);
