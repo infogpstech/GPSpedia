@@ -1987,3 +1987,23 @@ Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Estado: implementación y comprobaciones estáticas publicadas; pendiente confirmar ejecución CI y validación visual en Beta.
 - Próximo paso: confirmar CI de este HEAD; después continuar MIG-027 (suite de paridad funcional), una tarea a la vez.
 ================================================================================
+
+
+================================================================================
+MIG-027 — SUITE DE PARIDAD FUNCIONAL — 2026-11-24
+HEAD de código y suite validado: ba5a987650f243219a31bc075e4730f5cdf15d86
+CI: https://github.com/infogpstech/GPSpedia/actions/runs/45388156117
+Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+- Se creó JS/Tests/MIG027FunctionalParity.mjs y se integró el grupo 48 MIG027 en JS/Tests/RunServiceTests.mjs.
+- El mapa actual ACTION_TO_SERVICE_MAP contiene 123 acciones: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
+- Las 123 acciones están documentadas en MATRIZ_MIGRACION_SERVICIOS.md y pasan el contrato mapa → servicio → dispatcher → handler → consumidor de ActionDispatchContract.
+- RBAC revisado contra los cinco roles canónicos y las políticas de AUTH, ADMIN, FEEDBACK e Inbox.
+- Los 18 IDs de controles heredados ausentes de index.html fueron clasificados con sus sustituciones actuales. Se contrastaron las superficies y el inventario de 335 declaraciones de controles.
+- MIG-016 recibió integración explícita de pruebas de cliente YouTube reanudable, reserva idempotente, aprobación, XSS y refresco de catálogo. MIG-022 incorporó contrato de createSheet/addColumn. MIG-023 incorporó feed, reset, arranque y contrato de impresión.
+- MIG027FunctionalParity: 8/8 PASS.
+- CI run 45388156117: 511 suites, 6,035 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- No se invocaron servicios Apps Script, YouTube, Spreadsheet o Drive reales; no se alteraron deployments, propiedades, hojas ni archivos externos.
+- MIG-027 queda COMPLETADA para la validación automatizada del repositorio. La validación Beta con recursos aislados y permisos reales permanece asignada a MIG-030.
+- Siguiente tarea local por prioridad: MIG-028 — seguridad, rendimiento y regresión.
+================================================================================
