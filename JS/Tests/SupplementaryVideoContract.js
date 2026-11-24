@@ -241,7 +241,7 @@ function runSupplementaryVideoContractTests(sources) {
         const start = addCortes.indexOf("const result=await routeAction('addSupplementaryInfo',request)");
         const confirmation = addCortes.indexOf("result.status!=='success'", start);
         const verification = addCortes.indexOf("verifySupplementaryCatalogWrite_(result,request)", start);
-        const alert = addCortes.indexOf('alert("Información guardada y verificada en el catálogo.');
+        const alert = addCortes.indexOf('alert("Cambios guardados correctamente.");
         assert_(start >= 0 && confirmation > start && verification > confirmation && alert > verification);
     });
 
