@@ -71,9 +71,17 @@ try {
       route.fulfill({ status: 204, contentType: "text/javascript", body: "" }));
     await page.route("https://cdnjs.cloudflare.com/**", route => route.abort());
     const fulfillSyntheticService = async route => {
-      let requestBody = "";
-      try { requestBody = String(route.request().postData() || ""); } catch {}
-      if (requestBody.includes("getActivityLogs")) {
+      let requestBody = "", request = {};
+      try { requestBody = String(route.request().postData() || ""); request = JSON.parse(requestBody || "{}"); } catch {}
+      if (request.action === "getPublicConfiguration") {
+        const services = Object.fromEntries(["AUTH","CATALOG","WRITE","FEEDBACK","UTILITIES","ADMIN"].map(key => [
+          key, { enabled: true, endpointUrl: "https://script.google.com/macros/s/TEST_" + key + "/exec", contractVersion: "2.2.5" }
+        ]));
+        return route.fulfill({ status: 200, contentType: "text/plain",
+          body: JSON.stringify({ status: "success", schemaVersion: 1, revision: 1,
+            routingAvailable: true, services, parameters: { rich_text_mode: "strict" } }) });
+      }
+      if (request.action === "getActivityLogs") {
         return route.fulfill({ status: 200, contentType: "text/plain",
           body: JSON.stringify({
             status: "success",
@@ -88,8 +96,8 @@ try {
               cortesSheetAvailable: true, cortesRowsAvailable: 1, contributionsAvailable: true }
           }) });
       }
-      return route.fulfill({ status: 200, contentType: "application/json",
-        body: JSON.stringify({ status: "success", data: [], services: [], revision: 1, urls: {} }) });
+      return route.fulfill({ status: 200, contentType: "text/plain",
+        body: JSON.stringify({ status: "success", data: [], services: {}, revision: 1, urls: {} }) });
     };
     await page.route("https://script.google.com/**", fulfillSyntheticService);
     await page.route("https://script.googleusercontent.com/**", fulfillSyntheticService);

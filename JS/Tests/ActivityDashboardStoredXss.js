@@ -27,12 +27,12 @@ function runActivityDashboardStoredXssTests() {
         assert(container.children.length===2&&container.children[0].children[0].textContent===""&&container.children[0].children[2].textContent==="7"&&container.children[0].children[3].textContent==="false","Fallback incorrecto.");
         assert(container.children[1].children.length===4,"Entrada nula incorrecta.");
     });
-    test("Una respuesta vacía limpia las filas anteriores",()=>{renderActivityLogs(container,[],doc);assert(container.children.length===0);renderActivityLogs(container,null,doc);assert(container.children.length===0);});
+    test("Una respuesta vacía muestra un estado vacío seguro y limpia filas anteriores",()=>{renderActivityLogs(container,[],doc);assert(container.children.length===1);assert(container.children[0].children[0].textContent==="Todavía no hay actividad registrada.");renderActivityLogs(container,null,doc);assert(container.children.length===1);assert(container.children[0].children[0].textContent==="Todavía no hay actividad registrada.");});
     test("El dashboard usa el renderer seguro y no interpola campos del log en HTML",()=>{
         const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8"),start=ui.indexOf("const openDashboardModal_"),end=ui.indexOf("export async function openDashboard",start);
         assert(start>=0&&end>start,"No se encontró el dashboard.");
         const block=ui.slice(start,end);
-        assert(block.includes("renderActivityLogs(logContainer, result.data)"),"No usa renderer seguro.");
+        assert(block.includes("renderActivityLogs(logContainer, logs)"),"No usa renderer seguro.");
         assert(!/tr\.innerHTML|\$\{log\.(?:nombreUsuario|tipoActividad|detalle)/.test(block),"Interpolación dinámica insegura.");
     });
     test("recordLike valida sesión y sustituye identidad cliente",()=>{

@@ -6872,11 +6872,21 @@ textarea.rich-text-source[hidden] { display:none !important; }
         flex: 0 0 18px;
         width: 18px;
     }
+    #dev-tools-modal .dev-action-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    #dev-tools-modal .dev-action-row button {
+        flex: 0 0 auto;
+        width: 100%;
+    }
 }
 @media (prefers-reduced-motion: reduce) {
     #dev-tools-modal .dev-tools-sidebar,
     #dev-tools-modal .dev-tab-link,
     #dev-tools-modal .dev-tab-link span,
+    #dev-tools-modal #btn-clear-console-log::after,
+    #dev-tools-modal #btn-copy-console-log::after,
     #audit-drive-modal .audit-drive-action-label {
         transition: none !important;
     }
