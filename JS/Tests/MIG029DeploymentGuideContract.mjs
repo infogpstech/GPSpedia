@@ -29,9 +29,9 @@ check("La guía identifica solo los seis proyectos activos y sus fuentes", () =>
 });
 check("La matriz de archivos coincide con dependencias reales", () => {
   assert.match(auth, /getPublicCentralConfiguration_/);
-  assert.match(write, /getCentralConfigurationForService_/);
-  assert.match(feedback, /getCentralConfigurationForService_/);
-  assert.match(admin, /getCentralConfigurationForService_/);
+  assert.match(write, /GPSpediaCortesRootFolderId_/);
+  assert.match(feedback, /GPSpediaCortesRootFolderId_/);
+  assert.match(admin, /GPSpediaCortesRootFolderId_/);
   assert.match(shared, /getCachedSharedSessionActor_/);
   assert.match(central, /function getCentralConfigurationForService_/);
   assert.match(catalog, /function getCatalogSessionActor_/);
@@ -111,8 +111,10 @@ check("La guía protege despliegues parciales y servicios independientes", () =>
   assert.match(guide, /No desplegar proyectos que no contienen ese archivo/);
 });
 check("El procedimiento exige contexto Spreadsheet y conserva rollback", () => {
-  assert.match(guide, /getActiveSpreadsheet\(\)/);
-  assert.match(guide, /no restaurar.*SPREADSHEET_ID.*openById/s);
+  assert.match(guide, /SpreadsheetApp\.openById\(\)/);
+  assert.match(guide, /GPSpediaSpreadsheetId_/);
+  assert.match(guide, /GPSpediaCortesRootFolderId_/);
+  assert.match(guide, /no añadir propiedades, tokens ni secretos manuales/i);
   assert.match(guide, /## 9\. Rollback/);
   assert.match(guide, /Nunca editar una revisión ya publicada/);
   assert.match(schema, /Flujo de publicación:/);
