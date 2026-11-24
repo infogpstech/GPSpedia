@@ -1,6 +1,8 @@
 // GPSpedia — lector central de configuración (MIG-008)
-// No contiene IDs, URLs de servicios, credenciales ni llamadas servicio-a-servicio.
-// Cada proyecto Apps Script lee únicamente su contenedor activo; si no existe, falla cerrado.
+// Recursos compartidos autorizados para los proyectos Apps Script independientes.
+// Los IDs no son credenciales; Google aplica los permisos del usuario de ejecución.
+var GPSpediaSpreadsheetId_ = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
+var GPSpediaCortesRootFolderId_ = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
 var GP_CONFIG_SCHEMA_VERSION_ = 1;
 var GP_CONFIG_FRESH_TTL_MS_ = 5 * 60 * 1000;
 var GP_CONFIG_STALE_TTL_MS_ = 15 * 60 * 1000;
@@ -95,8 +97,10 @@ function projectCentralConfiguration_(snapshot, visibility, serviceKey, stale, r
 }
 
 function readCentralConfigurationSnapshot_() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  if (!spreadsheet) throw centralConfigurationError_("NO_ACTIVE_SPREADSHEET", "No hay una Spreadsheet activa para leer la configuración central.");
+  var spreadsheet;
+  try { spreadsheet = SpreadsheetApp.openById(GPSpediaSpreadsheetId_); }
+  catch (error) { throw centralConfigurationError_("SPREADSHEET_ACCESS_DENIED", "No se pudo abrir la Spreadsheet central configurada."); }
+  if (!spreadsheet || String(spreadsheet.getId()) !== GPSpediaSpreadsheetId_) throw centralConfigurationError_("SPREADSHEET_ID_MISMATCH", "La Spreadsheet abierta no coincide con el recurso central configurado.");
   var controlHeaders = ["control_key", "schema_version", "active_revision", "publication_state", "published_at", "updated_by", "change_reason"];
   var controlFirst = readCentralConfigurationTable_(spreadsheet, "ConfiguracionControl", controlHeaders);
   var control = resolveCentralConfigurationControl_(controlFirst.rows);
