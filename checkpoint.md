@@ -2058,3 +2058,14 @@ El checkpoint anterior no contenía el cierre de MIG-029 ni una entrada de MIG-0
 - Estado de continuidad: MIG-030 EN PROGRESO — preparación documental completada; ejecución Beta pendiente de acceso autorizado a los seis deployments y recursos aislados (Spreadsheet, Drive, cuentas y datos desechables). La verificación CI de MIG-029 también permanece sin evidencia confirmada.
 - Próximo paso: confirmar CI de MIG-029 desde una vía autorizada de GitHub Actions; después ejecutar MIG-030 con los recursos Beta aislados, comenzando por health/read-only y siguiendo la matriz de Tareas_Beta.md. Registrar únicamente resultados observados en Hallazgos_Beta.md. No modificar código durante MIG-030.
 ================================================================================
+
+
+================================================================================
+RECTIFICACIÓN DE CONTINUIDAD — ORDEN DE TAREAS — 2026-11-24
+
+- MIG-029 no puede considerarse cerrada todavía: el contrato MIG029DeploymentGuideContract.mjs no se ejecutó en esta sesión y no hay evidencia de CI final para su HEAD. El estado documental previo que la marca completada con validación diferida queda sujeto a esa comprobación obligatoria; no se debe dar por satisfecha por inspección del código.
+- Por la regla de continuidad de NORMAS_DESAROLLO.md §2 y §10, MIG-030 no se inicia funcionalmente hasta completar la validación local y confirmar la publicación/CI aplicable de MIG-029.
+- La revisión de Tareas_Beta.md y la identificación de los accesos ausentes fueron preparación de continuidad, no ejecución ni avance funcional de MIG-030.
+- Estado correcto: MIG-029 EN PROGRESO — falta ejecutar MIG029DeploymentGuideContract.mjs y confirmar CI; MIG-030 PENDIENTE — no iniciar hasta cerrar MIG-029. No se ejecutaron pruebas Beta ni se alteraron recursos externos.
+- Próximo paso único: obtener un entorno con acceso a la rama (para ejecutar Node.js 22 y el runner) o una ejecución CI verificable de la rama de trabajo; validar MIG-029, corregir cualquier fallo y actualizar los registros. Solo entonces comenzar MIG-030.
+================================================================================
