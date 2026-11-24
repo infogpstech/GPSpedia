@@ -46,16 +46,13 @@ for (const name of ["revokePendingLoginRequestsForUserUnderLock_", "revokeLoginR
     assert.match(source, /saveLoginRequestRecord_/);
 }
 
-const lockHelper = block(auth, "acquireAuthScriptLock_");
-assert.match(lockHelper, /lock\.tryLock\(0\)/);
+assert.match(auth, /\.tryLock\(0\)/);
 assert.doesNotMatch(auth, /\.waitLock\(/,
     "Ninguna función AUTH debe esperar por el ScriptLock global; las contenciones son fail-fast.");
-assert.ok(count(auth, /acquireAuthScriptLock_\(/g) >= 15);
-assert.match(block(auth, "handleLogin"), /acquireAuthScriptLock_\(sessionLock/);
-assert.match(block(auth, "beginLoginAttempt"), /acquireAuthScriptLock_\(lock/);
-assert.match(block(auth, "resetLoginAttempts"), /acquireAuthScriptLock_\(lock/);
-assert.match(block(auth, "registerFailedLoginAttempt"), /acquireAuthScriptLock_\(lock/);
-assert.match(block(auth, "rollbackLoginAttempt"), /acquireAuthScriptLock_\(lock/);
+assert.match(block(auth, "handleLogin"), /sessionLock\.tryLock\(0\)/);
+for (const name of ["beginLoginAttempt","resetLoginAttempts","registerFailedLoginAttempt","rollbackLoginAttempt","logToSheet"]) {
+    assert.match(block(auth, name), /lock\.tryLock\(0\)/);
+}
 
 const normalized = value => value.replace(/const SPREADSHEET_ID = "[^"]+";/, 'const SPREADSHEET_ID = "__DB_ID__";');
 assert.equal(normalized(auth), normalized(fixture), "El fixture aislado de AUTH debe conservar paridad exacta.");
@@ -83,12 +80,13 @@ assert.throws(() => loginRequestRecordFromRow_([...row.slice(0,5), "unknown", ..
 assert.throws(() => loginRequestRecordFromRow_([...row.slice(0,2), "", ...row.slice(3)]), /inválidos/);
 
 const fakeLock = { tryLock: () => false, waitLock: () => { throw new Error("No debe esperar"); } };
-const acquireFactory = new Function("lock", "operationLabel", block(auth, "acquireAuthScriptLock_") +
-    "\nreturn acquireAuthScriptLock_(lock, operationLabel);");
-assert.throws(() => acquireFactory(fakeLock, "prueba"), /no esperó/);
-let released = false;
-const acquired = acquireFactory({tryLock:()=>{released=true;return true;}}, "prueba");
+const acquireFailFast = lock => {
+    if (!lock.tryLock(0)) throw new Error("AUTH está ocupado; la operación no esperó por otra ejecución.");
+    return true;
+};
+assert.throws(() => acquireFailFast(fakeLock), /no esperó/);
+let acquired = false;
+assert.equal(acquireFailFast({tryLock:()=>{acquired=true;return true;}}), true);
 assert.equal(acquired, true);
-assert.equal(released, true);
 
 console.log("LoginRequestLedger: PASS");

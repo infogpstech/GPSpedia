@@ -292,19 +292,12 @@ function removeLoginAttemptReservation_(state, attemptId) {
     state.pendingAttempts = state.pendingAttempts.filter(item => item.id !== attemptId);
 }
 
-function acquireAuthScriptLock_(lock, operationLabel) {
-    let acquired = false;
-    try { acquired = lock.tryLock(0); } catch (error) { acquired = false; }
-    if (!acquired) throw new Error('AUTH está ocupado; ' + String(operationLabel || 'la operación') + ' no esperó por otra ejecución. Intenta nuevamente.');
-    return true;
-}
-
 function beginLoginAttempt(username) {
     const cache = CacheService.getScriptCache();
     const key = getLoginAttemptCacheKey(username);
     const lock = LockService.getScriptLock();
     const attemptId = Utilities.getUuid();
-    acquireAuthScriptLock_(lock, 'la operación solicitada');
+    if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
     try {
         const now = Date.now();
         const state = readLoginAttemptState_(cache, key, now);
@@ -337,7 +330,7 @@ function resetLoginAttempts(username, attemptId) {
     const cache = CacheService.getScriptCache();
     const key = getLoginAttemptCacheKey(username);
     const lock = LockService.getScriptLock();
-    acquireAuthScriptLock_(lock, 'la operación solicitada');
+    if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
     try {
         const state = readLoginAttemptState_(cache, key, Date.now());
         removeLoginAttemptReservation_(state, attemptId);
@@ -356,7 +349,7 @@ function registerFailedLoginAttempt(username, attemptId) {
     const cache = CacheService.getScriptCache();
     const key = getLoginAttemptCacheKey(username);
     const lock = LockService.getScriptLock();
-    acquireAuthScriptLock_(lock, 'la operación solicitada');
+    if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
     try {
         const now = Date.now();
         const state = readLoginAttemptState_(cache, key, now);
@@ -383,7 +376,7 @@ function rollbackLoginAttempt(username, attemptId) {
     const cache = CacheService.getScriptCache();
     const key = getLoginAttemptCacheKey(username);
     const lock = LockService.getScriptLock();
-    acquireAuthScriptLock_(lock, 'la operación solicitada');
+    if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
     try {
         const state = readLoginAttemptState_(cache, key, Date.now());
         removeLoginAttemptReservation_(state, attemptId);
@@ -404,7 +397,7 @@ function logToSheet(level, message, details = {}) {
     const lock = LockService.getScriptLock();
     let lockAcquired = false;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         lockAcquired = true;
         const logSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.LOGS);
         if (!logSheet) throw new Error("Hoja Logs no encontrada.");
@@ -465,7 +458,7 @@ function handleClearSensitiveLogs(payload) {
     let deletionError = null;
 
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         lockAcquired = true;
 
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -1200,7 +1193,7 @@ function handleLogin(payload) {
         let sessionOperationError = null;
 
         try {
-            acquireAuthScriptLock_(sessionLock, 'la operación solicitada');
+            if (!sessionLock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
             sessionLockAcquired = true;
             ensureTermsAcceptanceColumn_(userSheet);
             const currentUserRowIndex = foundUserIndex + 2;
@@ -1533,7 +1526,7 @@ function migrateLegacyRoleRevocationMarkersToSharedState_() {
 function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_() {
  const lock=LockService.getScriptLock();let acquired=false;
  try {
-  acquireAuthScriptLock_(lock, 'la operación solicitada');acquired=true;const properties=PropertiesService.getScriptProperties(),all=properties.getProperties();
+  if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');acquired=true;const properties=PropertiesService.getScriptProperties(),all=properties.getProperties();
   const keys=Object.keys(all).filter(key=>key.startsWith(ROLE_REVOCATION_PROPERTY_PREFIX));
   const usersSheet=SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);if(!usersSheet)throw new Error('No se encontró la hoja Users.');
   let migrated=0;
@@ -1746,7 +1739,7 @@ function handleUpdateUser(payload) {
     let revokedSessions = 0;
     let targetUsername = '';
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
@@ -1876,7 +1869,7 @@ function ensureActiveSessionsActivityColumn_(sheet){const col=COLS_ACTIVE_SESSIO
 function validateAndTouchSession_(token, expectedUserId = null) {
     const lock = LockService.getScriptLock(); let acquired = false;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada'); acquired = true;
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.'); acquired = true;
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
@@ -1945,7 +1938,7 @@ function handleResetUserSessions(payload) {
     let cleanupPending = false;
     let operationError = null;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
@@ -2027,7 +2020,7 @@ function handleDeleteUser(payload) {
     let alreadyDeleted = false;
 
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         lockAcquired = true;
 
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -2302,7 +2295,7 @@ function handleRequestPasswordRecovery(payload){
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
             .filter(item=>isActiveAuthUserRecord(item.row)&&String(item.row[COLS_USERS.Nombre_Usuario-1]||"").trim().toLowerCase()===username&&
                 String(item.row[COLS_USERS.Correo_Electronico-1]||"").trim().toLowerCase()===email);
-        acquireAuthScriptLock_(lock, 'la operación solicitada');acquired=true;manager=getPasswordRecoveryManager_();
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');acquired=true;manager=getPasswordRecoveryManager_();
         userId=matches.length===1?normalizeUserId(matches[0].row[COLS_USERS.ID-1]):"";
         if(!manager.reserveRequest(username,email,userId)||matches.length!==1||!userId)return generic;
         const currentRow=usersSheet.getRange(matches[0].rowIndex,1,1,COLS_USERS.TermsAcceptance).getValues()[0];
@@ -2317,7 +2310,7 @@ function handleRequestPasswordRecovery(payload){
                 "\n\nEl código vence en 10 minutos y solo puede utilizarse una vez. Si no solicitaste este cambio, ignora este mensaje."});}
         catch(error){
             let cleanupAcquired=false;
-            try{acquireAuthScriptLock_(lock, 'la operación solicitada');cleanupAcquired=true;if(!manager)manager=getPasswordRecoveryManager_();manager.invalidate(delivery.userId,delivery.challengeId);}
+            try{if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');cleanupAcquired=true;if(!manager)manager=getPasswordRecoveryManager_();manager.invalidate(delivery.userId,delivery.challengeId);}
             catch(cleanupError){/* El TTL mantiene limitado el desafío no invalidado. */}
             finally{if(cleanupAcquired)lock.releaseLock();}
         }
@@ -2333,7 +2326,7 @@ function handleCompletePasswordRecovery(payload){
     if(newPassword.length<8||newPassword.length>256)return {status:"error",message:"La contraseña nueva debe tener entre 8 y 256 caracteres."};
     const lock=LockService.getScriptLock();let acquired=false,userId="",result=null;
     try{
-        acquireAuthScriptLock_(lock, 'la operación solicitada');acquired=true;
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');acquired=true;
         const ss=SpreadsheetApp.openById(SPREADSHEET_ID),usersSheet=ss.getSheetByName(SHEET_NAMES.USERS),sessionsSheet=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         if(!usersSheet||!sessionsSheet)throw new Error("No se encontraron las hojas Users y ActiveSessions.");
         const matches=usersSheet.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2}))
@@ -2376,7 +2369,7 @@ function handleChangePassword(payload) {
     let cleanupPending = false;
     let cleanupError = null;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
@@ -2441,7 +2434,7 @@ function handleResetUserPassword(payload) {
     let cleanupPending = false;
     let cleanupError = null;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
@@ -2511,7 +2504,7 @@ function handleAcceptTerms(payload) {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada'); acquired = true;
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.'); acquired = true;
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         if (!usersSheet) throw new Error('No se encontró la hoja Users.');
@@ -2558,7 +2551,7 @@ function handleMigrateLegacyPasswords(payload) {
     const lock = LockService.getScriptLock();
     let acquired = false;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
@@ -2677,7 +2670,7 @@ function handleLogout(payload) {
     let cleanupPending = false;
     let cleanupError = null;
     try {
-        acquireAuthScriptLock_(lock, 'la operación solicitada');
+        if (!lock.tryLock(0)) throw new Error('AUTH está ocupado; la operación solicitada no esperó por otra ejecución. Intenta nuevamente.');
         acquired = true;
         const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
