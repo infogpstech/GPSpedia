@@ -257,6 +257,14 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Simplificar los mensajes de éxito y error dirigidos al usuario: breves, claros y centrados en el resultado (por ejemplo, «Cambios guardados», «Modelo agregado», «Corte agregado»).
 - No exponer en producción trazas, detalles internos, nombres de funciones, estructura del repositorio ni mensajes técnicos extensos. Los detalles diagnósticos deben permanecer en los canales internos existentes, sin alterar la operación ni ocultar fallos al sistema.
 
+### E. Publicación de endpoints y selección de versiones
+
+- Mostrar en la consola del desarrollador un resultado individual por servicio: actualizado correctamente, sin cambios o error; no anunciar como actualizado un endpoint cuya URL permaneció igual.
+- Mantener intacta la operación de los controles y el flujo de publicación. El usuario debe recibir mensajes breves; la consola conserva el resultado técnico y el estado por servicio.
+- Verificar que todas las lecturas de endpoints seleccionen exclusivamente las filas cuya `config_revision` coincide con `ConfiguracionControl.active_revision`, y que cada servicio se resuelva por `service_key` + revisión activa, nunca por la primera URL encontrada ni por orden de filas.
+- Investigar la aparente duplicación de filas en `Servicios`. Preservar el modelo versionado y append-only: una nueva revisión debe contener una instantánea completa coherente de los seis servicios; el historial de cambios debe registrar únicamente los servicios cuyo endpoint realmente cambió. Las filas de borrador sin revisión no deben confundirse con endpoints activos ni utilizarse para enrutar.
+- Agregar pruebas para actualización parcial, endpoints sin cambios, reintento idempotente, selección de revisión activa, ausencia de duplicados dentro de una misma revisión y mensajes individuales. No borrar ni reescribir revisiones históricas.
+
 ### Orden y validación
 1. Inspeccionar HTML, CSS, JS y pruebas actuales de ambos modales antes de editar.
 2. Implementar primero el encabezado del modal de detalle y su regresión de edición/guardado.
