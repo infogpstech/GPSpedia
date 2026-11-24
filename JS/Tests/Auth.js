@@ -2199,7 +2199,7 @@ function createPasswordRecoveryManager_(dependencies) {
 function getPasswordRecoveryManager_(){
     const cache=CacheService.getScriptCache();
     // El código aleatorio tiene 96 bits; solo se conserva su digest SHA-256 en CacheService.
-    // No se necesita una clave HMAC ni un secreto persistente en PropertiesService.
+    // No se necesita una clave HMAC ni un secreto persistente de configuración.
     const hash=value=>digestToHex(Utilities.computeDigest(
         Utilities.DigestAlgorithm.SHA_256, String(value||""), Utilities.Charset.UTF_8));
     return createPasswordRecoveryManager_({get:key=>cache.get(key),put:(key,value,ttl)=>cache.put(key,value,ttl),remove:key=>cache.remove(key),
