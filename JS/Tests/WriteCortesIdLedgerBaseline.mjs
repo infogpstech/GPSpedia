@@ -53,7 +53,7 @@ test("la reserva moderna garantiza baseline antes de asignar y mantiene idempote
 
 test("freeze conserva dry-run y confirma baseline sin reescribir ScriptProperties", () => {
     assert.match(freeze, /if \(!payload \|\| payload\.confirm !== true\)/);
-    assert.match(freeze, /ensureCortesIdReservationBaseline_\(sheet\)/);
+    assert.match(freeze, /ensureCortesIdReservationBaseline_\(sheet, null, \\{ lockAlreadyHeld: true \\}\)/);
     assert.doesNotMatch(freeze, /setProperty\(|getProperty\(CORTES_ID_COUNTER_PROPERTY\)/);
 });
 

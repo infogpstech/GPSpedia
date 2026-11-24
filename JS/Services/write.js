@@ -663,11 +663,11 @@ function ensureCortesIdReservationBaseline_(cortesSheet, ledger, options) {
         }
         return { ledger, baseline: verified, highWaterMark: verifiedHighWater };
     } finally {
-        if (lock.hasLock()) lock.releaseLock();
+        if (lock && lock.hasLock()) lock.releaseLock();
     }
 }
 
-function getCortesIdReservationsSheet_() {
+function getCortesIdReservationsSheet_ {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(CORTES_ID_RESERVATIONS_SHEET_NAME);
     if (!sheet) {
