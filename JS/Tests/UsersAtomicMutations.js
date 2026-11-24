@@ -14,9 +14,9 @@ function runUsersAtomicMutationTests(authSource, coordinatorSource) {
         const start=source.indexOf("function doPost(e)"),end=source.indexOf("\nfunction handleGetPublicConfiguration_",start);
         const router=source.slice(start,end);
         assert(router.includes('"getUsers", "createUser", "updateProfile"'));
-        assert(router.includes('{ service: "AUTH" }'));
+        assert(router.includes('{ service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ }'));
         assert(!extract("isSharedMutationAction_").includes('"createUser"'));
-        assert(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH" })'));
+        assert(router.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ })'));
         for(const action of ["getUsers","createUser","updateProfile"]) assert(source.includes("case '"+action+"'"),"Falta dispatcher "+action);
         assert(source.includes("function getAuthUserActor_("));
         assert(source.includes("function requireSharedAuthActor_("));
