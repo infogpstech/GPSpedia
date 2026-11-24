@@ -39,7 +39,7 @@ test("ADMIN usa guardas locales de recurso, no leases remotas",()=>{
  assert.equal((admin.match(/withAdminLocalOperationGuard_\(/g)||[]).length,4);
 });
 test("UTILITIES obtiene actor local sin lease Coordinator",()=>{
- assert.match(utilities,/getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken,\{service:"UTILITIES",loadSpreadsheet:\(\)=>SpreadsheetApp\.openById\(SPREADSHEET_ID\)\}\)/);
+ assert.match(utilities,/getCachedSharedSessionActor_\(payload&&payload\.userId,payload&&payload\.sessionToken,\{service:"UTILITIES",loadSpreadsheet:\(\)=>spreadsheet\}\)/);
  assert.doesNotMatch(utilities,/withSharedMutationLease_\("UTILITIES"/);
 });
 test("Frontend mantiene el enrutamiento directo a cada servicio",()=>{
