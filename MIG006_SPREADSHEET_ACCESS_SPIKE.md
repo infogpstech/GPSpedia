@@ -103,7 +103,7 @@ No copiar el probe a un deployment productivo ni usar la Spreadsheet operativa. 
 ## 9. Criterio de decisión posterior
 
 - Si cada Web App devuelve un contenedor activo y supera lectura/escritura con los permisos requeridos, comparar el coste de mantener proyectos independientes vinculados frente a consolidar módulos.
-- Si el contexto activo devuelve null, la opción de proyecto vinculado no cumple el requisito en Web App. No reemplazar openById() ni improvisar un ID bootstrap. Evaluar consolidación u otra arquitectura y registrar la limitación antes de decidir.
+- Si el contexto activo devuelve null en Beta, no desplegar esa versión del servicio. No restaurar openById() con un ID local ni improvisar un bootstrap. Evaluar consolidación u otra arquitectura sin configuración local y resolver la limitación antes de publicar.
 - No declarar paridad de acceso hasta probar varios proyectos, permisos, concurrencia y lectura/escritura en Beta.
 
 ## 10. Resultado y estado
