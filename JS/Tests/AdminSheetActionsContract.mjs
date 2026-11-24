@@ -134,7 +134,7 @@ check("Ambas mutaciones exigen Desarrollador, actor cacheado y auditoría antes 
     const audit = dispatch.indexOf("beginAdminAuditEvent_(action, payload, developerContext, startTime)");
     const switchAt = dispatch.indexOf("switch (action)");
     assert.ok(auth >= 0 && auth < audit && audit < switchAt);
-    assert.ok(adminSource.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN" })'));
+    assert.ok(adminSource.includes('getCachedSharedSessionActor_(payload.userId, payload.sessionToken, { service: "ADMIN", loadSpreadsheet: getSpreadsheet })'));
     const auditStart = adminSource.indexOf("function handleAuditDriveImagesInCortes(");
     const auditEnd = adminSource.indexOf("function handleAuditDriveImagesInCortesCore_", auditStart);
     assert.ok(auditStart >= 0 && auditEnd > auditStart);

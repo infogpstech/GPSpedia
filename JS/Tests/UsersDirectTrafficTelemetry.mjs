@@ -14,7 +14,7 @@ test("getUsers/createUser/updateProfile se enrutan a AUTH",()=>{
  assert.match(api,/'getUsers': 'AUTH'/);assert.match(api,/'createUser': 'AUTH'/);assert.match(api,/'updateProfile': 'AUTH'/);
 });
 test("AUTH usa actor cacheado sin telemetría directa",()=>{
- assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH" \}\)/);
+ assert.match(router,/getCachedSharedSessionActor_\(payload\.userId, payload\.sessionToken, \{ service: "AUTH", loadSpreadsheet: getAuthUsersSpreadsheet_ \}\)/);
  assert.match(router,/getUsers", "createUser", "updateProfile/);
  assert.doesNotMatch(auth,/USERS_DIRECT_TRAFFIC_PREFIX_|recordUsersDirectTraffic_|USERS_TRAFFIC_SECRET_PROPERTY_/);
 });

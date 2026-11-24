@@ -143,6 +143,7 @@ function createDispatchHarness(source, service, extraBindings = {}) {
             calls.push({ service:requestedService, operation, sessionToken:options && options.session && options.session.sessionToken });
             return callback("coordinator-token", actor);
         },
+        getAuthUsersSpreadsheet_() { return {}; },
         getCachedSharedSessionActor_(userId, sessionToken) {
             actorLookups.push({ userId, sessionToken });
             if (userId !== actor.userId || sessionToken !== "trusted-session") throw new Error("Sesión inválida.");
