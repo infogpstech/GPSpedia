@@ -115,7 +115,7 @@ function buildHarness_(feedback, options = {}) {
             assert.equal(name, "Tutoriales");
             return tutorialFolder;
         },
-        getFolderCanonicalName: value => String(value || "").normalize("NFD").replace(/\\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, ""),
+        getFolderCanonicalName: value => String(value || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, ""),
         assertPysImageFolderPermissions_: (file, folder) => {
             if (file.getSharingAccess() !== folder.getSharingAccess() ||
                 file.getSharingPermission() !== folder.getSharingPermission()) throw new Error("sharing mismatch");
