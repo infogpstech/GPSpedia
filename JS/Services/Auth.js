@@ -3185,6 +3185,9 @@ function getAuthCentralServiceUrlMap_(spreadsheet, allowDraft) {
     }
     AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) {
         if (result[key] === undefined) result[key] = "";
+        if (state && !result[key]) {
+            throw new Error("La revisión activa no contiene un endpoint válido para " + key + ".");
+        }
     });
     return result;
 }
@@ -3311,7 +3314,15 @@ function publishAuthCentralServiceUrls_(sourceUrls, actor, reason, requestId) {
                         Number(row[history.positions.config_revision]) === currentRevision &&
                         String(row[history.positions.new_value_json] || "") === JSON.stringify(urls[key]);
                 });
-            if (sameRequest) return { status: "success", revision: currentRevision, services: urls, idempotent: true };
+            if (sameRequest) return {
+                status: "success",
+                revision: currentRevision,
+                services: urls,
+                changedServices: priorRequestRows.map(function(record) {
+                    return String(record.values[history.positions.entity_key] || "");
+                }),
+                idempotent: true
+            };
             throw new Error("El identificador de actualización ya fue utilizado para otra publicación.");
         }
         var changed = AUTH_CENTRAL_SERVICE_KEYS_.filter(function(key) {
@@ -3319,7 +3330,7 @@ function publishAuthCentralServiceUrls_(sourceUrls, actor, reason, requestId) {
         });
         if (!changed.length && state) {
             writeAuthCentralDraftRows_(services, urls);
-            return { status: "success", revision: currentRevision, unchanged: true, services: urls };
+            return { status: "success", revision: currentRevision, unchanged: true, changedServices: [], services: urls };
         }
 
         var maximumRevision = currentRevision;
