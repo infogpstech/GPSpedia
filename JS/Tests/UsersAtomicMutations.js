@@ -37,6 +37,7 @@ function runUsersAtomicMutationTests(authSource, coordinatorSource) {
     assert(constLine,"No existe matriz de roles para alta de usuarios.");
     const code=[
         "let authSpreadsheet = null;",
+        "var GPSpediaSpreadsheetId_ = \"1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os\";",
         constLine[0],
         extract("normalizePassword"),
         names.map(extract).join("\n")
@@ -69,7 +70,7 @@ function runUsersAtomicMutationTests(authSource, coordinatorSource) {
             "ISOLATED",{USERS:"Users"},{ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9},
             v=>String(v??"").trim(),
             (payload,roles)=>{if(!actor||!roles.includes(actor.role))throw new Error("Acceso denegado");return actor;},
-            {CopyPasteType:{PASTE_FORMAT:1,PASTE_DATA_VALIDATION:2},getActiveSpreadsheet:()=>({getSheetByName:n=>n==="Users"?sheet:null}),flush(){if(failFlush){failFlush=false;throw new Error("flush simulado");}}},
+            {CopyPasteType:{PASTE_FORMAT:1,PASTE_DATA_VALIDATION:2},openById:id=>{if(id!=="1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os")throw new Error("Spreadsheet ID inesperado");return {getSheetByName:n=>n==="Users"?sheet:null};},flush(){if(failFlush){failFlush=false;throw new Error("flush simulado");}}},
             {getScriptLock:()=>lock},p=>"HASH:"+p
         );
         return {api,sheet,stats};
