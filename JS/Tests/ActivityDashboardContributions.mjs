@@ -89,7 +89,7 @@ assert.equal(emptyTbody.children[0].children[0].colSpan,4);
 const insightContainer=new FakeElement("div");insightContainer.ownerDocument=doc;
 renderActivityInsights(insightContainer,{summary:{}},[{nombreUsuario:"Ana",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1}],doc);
 const collectText=node=>[node.textContent,...node.children.flatMap(collectText)];
-assert.ok(collectText(insightContainer).includes("2 cortes · 5 aportes registrados · 1 vehículos"),
+assert.ok(collectText(insightContainer).includes("2 cortes · 5 aportes registrados · 1 vehículo"),
     "El ranking debe mantener separados cortes, aportes registrados y vehículos.");
 
 const sharedContributors = normalizeContributionRows([
