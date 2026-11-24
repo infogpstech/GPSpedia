@@ -22,10 +22,10 @@ assert.match(reader, /GP_CONFIG_RETIRED_SERVICE_KEYS_ = \["USERS", "COORDINATOR"
 assert.doesNotMatch(telemetry, /COORDINATOR/);
 assert.doesNotMatch(invalidation, /COORDINATOR|UrlFetchApp|GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(ui, /Coordinator|globalServiceTraffic|getServiceTraffic/);
-assert.match(html, /Tráfico global coordinado · retirado/);
-assert.match(html, /No representa todas las solicitudes HTTP/);
-assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
+assert.doesNotMatch(html, /Tráfico global coordinado|COORDINATOR/);
+assert.doesNotMatch(html, /No representa todas las solicitudes HTTP/);
+assert.doesNotMatch(html, /no sustituyen ni permiten inferir el tráfico global/);
 for (const source of activeServices) {
     assert.doesNotMatch(source, /GPSpedia_COORDINATOR_(?:URL|SECRET)|withSharedMutationLease_|createSharedMutationClient_/);
 }
-console.log("CoordinatorRetirementContract: 13/13 PASS — fuente retirada, seis servicios y paridad documentada de telemetría");
+console.log("CoordinatorRetirementContract: 13/13 PASS — fuente retirada, seis servicios y sin explicaciones internas en UI");
