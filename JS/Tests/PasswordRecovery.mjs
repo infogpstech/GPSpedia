@@ -137,7 +137,7 @@ function makeHandlerHarness(options = {}) {
     const sessionsSheet = { getDataRange: () => ({ getValues: () => sessions.map(row=>row.slice()) }) };
     const spreadsheet = { getSheetByName: name => name === "Users" ? usersSheet : name === "ActiveSessions" ? sessionsSheet : null };
     const manager = createManager({code:"A1B2C3D4E5F6A1B2C3D4E5F6"});
-    const lock = { waitLock(){lockEvents.push("wait");}, releaseLock(){lockEvents.push("release");} };
+    const lock = { tryLock(){lockEvents.push("try");return true;}, releaseLock(){lockEvents.push("release");} };
     const properties = { deleteProperty(){} };
     const requestSource = extractFunction(authSource, "handleRequestPasswordRecovery");
     const completeSource = extractFunction(authSource, "handleCompletePasswordRecovery");
@@ -199,7 +199,7 @@ test("La finalización actualiza el hash, revoca sesiones y consume el código",
         username:"alice",email:"alice@example.com",code,newPassword:"NewPassword2026"
     });
     assert.equal(result.status, "success");
-    assert.deepEqual(h.lockEvents, ["wait", "release", "log"], "El logging debe ocurrir después de liberar ScriptLock.");
+    assert.deepEqual(h.lockEvents, ["try", "release", "log"], "El logging debe ocurrir después de liberar ScriptLock.");
     assert.match(h.users[1][2], /^pbkdf2-sha256\$/);
     assert.notEqual(h.users[1][2], "NewPassword2026");
     assert.equal(h.users[1][7], "");
