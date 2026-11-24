@@ -315,3 +315,17 @@ Este requisito aplica a todas las tareas MIG-001 a MIG-030, a sus análisis, imp
 - En cada tarea se debe comprobar el cumplimiento que corresponda al alcance y registrar expresamente cualquier validación que requiera un deployment real como pendiente de Beta, sin simularla.
 
 **Criterio de aceptación transversal:** cero nuevos secretos compartidos/manuales en propiedades Apps Script; cero nuevas URLs/configuración interservicio local en backend; coordinación funcional en frontend siempre que sea viable; llamadas técnicas directas justificadas y sin secreto compartido; URLs operativas obtenidas y actualizadas desde el registro central; ausencia de fallback local ante configuración no válida.
+
+
+## 19. Privacidad de errores de autenticación y sesión
+
+Los errores de autenticación y sesión no deben revelar información técnica ni detalles del estado de la cuenta o de la sesión en la interfaz.
+
+- Para errores de inicio de sesión, los únicos mensajes permitidos son `Error en el inicio de sesión, intente otra vez` y `contraseña o usuario incorrecto`. El segundo solo se muestra cuando AUTH clasifica explícitamente las credenciales como inválidas.
+- No mostrar excepciones, mensajes backend, códigos internos, nombres de funciones/servicios, trazas, motivos de revocación, roles inválidos, estado de cachés ni nombres de servicios afectados.
+- Los detalles diagnósticos se registran exclusivamente en la consola del navegador mediante `console.error` o `console.warn`; nunca se pasan sin sanitizar a `showLoginScreen`, `showGlobalError` ni a otro componente visible.
+- La capa de presentación debe aplicar una lista permitida como última defensa, incluso si un llamador entrega accidentalmente un motivo técnico.
+- Un cierre de sesión solicitado voluntariamente puede conservar el aviso neutral `Sesión terminada`; no es un mensaje de error ni debe incluir detalles técnicos.
+- La clasificación de credenciales inválidas debe proceder del código explícito de AUTH. Cualquier fallo distinto utiliza el mensaje genérico para evitar revelar si una cuenta existe o cuál es el estado interno de la sesión.
+
+**Criterio de aceptación:** ninguna ruta de login, restauración, expiración, invalidación, revocación o sincronización entre pestañas muestra detalles técnicos; la consola conserva el diagnóstico necesario y las funciones no relacionadas mantienen sus mensajes actuales.
