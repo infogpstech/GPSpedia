@@ -4646,6 +4646,9 @@ td, th {
     #audit-drive-modal .audit-drive-action-label {
         transition: none !important;
     }
+    #dev-tools-modal .dev-tools-title {
+        animation: none;
+    }
 }
 
 /* La ayuda acompaña al título de consola y copiar permanece al extremo derecho. */
