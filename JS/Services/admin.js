@@ -12695,21 +12695,175 @@ function getDriveAuditReferenceSnapshotConfig_() {
     return { maxLength: 750000, chunkSize: 75000, ttlSeconds: 21600,
         mimeType: "application/json; charset=utf-8", encoding: "utf-8", schemaVersion: 2 };
 }
+const DRIVE_AUDIT_STATE_PROPERTY_PREFIX_ = "GPSpedia_DRIVE_AUDIT_STATE_";
+const DRIVE_AUDIT_STATE_SHEET_NAME_ = "DriveAuditRuns";
+const DRIVE_AUDIT_STATE_BASELINE_PENDING_ = "pending";
+const DRIVE_AUDIT_STATE_BASELINE_VERSION_ = "drive_audit_state_baseline_v1";
+const DRIVE_AUDIT_STATE_HEADERS_ = Object.freeze([
+    "auditId","ownerId","status","createdAt","updatedAt","expiresAt","stateJson","schemaVersion"
+]);
+const DRIVE_AUDIT_STATE_TTL_MS_ = 21600000;
+const DRIVE_AUDIT_STATE_MAX_ROWS_ = 500;
+
+function getDriveAuditStateSheet_() {
+    const sheet=getSpreadsheet().getSheetByName(DRIVE_AUDIT_STATE_SHEET_NAME_);
+    if(!sheet)throw new Error("No existe la hoja DriveAuditRuns. Debe prepararse su esquema antes de habilitar la auditoría Drive.");
+    const header=sheet.getRange(1,1,1,DRIVE_AUDIT_STATE_HEADERS_.length).getValues()[0];
+    if(!DRIVE_AUDIT_STATE_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
+        throw new Error("El esquema de DriveAuditRuns no coincide con la versión esperada.");
+    return sheet;
+}
+function readDriveAuditStateBaselineState_(sheet) {
+    if(Number(sheet.getLastRow()||0)<2)return "";
+    const row=sheet.getRange(2,1,1,DRIVE_AUDIT_STATE_HEADERS_.length).getValues()[0];
+    const empty=row.every(value=>value===""||value===null);
+    if(!empty&&(String(row[0]||"")!=="META"||String(row[1]||"")!=="BASELINE"))
+        throw new Error("La fila reservada de baseline DriveAuditRuns está ocupada o dañada.");
+    return String(row[2]||"");
+}
+function writeDriveAuditStateBaselineState_(sheet,state) {
+    const row=new Array(DRIVE_AUDIT_STATE_HEADERS_.length).fill("");
+    row[0]="META";row[1]="BASELINE";row[2]=String(state||"");
+    let writeError=null;
+    try{sheet.getRange(2,1,1,row.length).setValues([row]);SpreadsheetApp.flush();}
+    catch(error){writeError=error;}
+    const saved=sheet.getRange(2,1,1,row.length).getValues()[0];
+    if(String(saved[0]||"")!=="META"||String(saved[1]||"")!=="BASELINE"||String(saved[2]||"")!==String(state||""))
+        throw new Error("No se confirmó el baseline DriveAuditRuns."+(writeError?" "+String(writeError.message||writeError):""));
+    return String(saved[2]||"");
+}
+function driveAuditStateToRow_(state) {
+    const value=state&&typeof state==="object"?state:{};
+    const auditId=String(value.auditId||"").trim(),ownerId=String(value.ownerId||"").trim();
+    const status=String(value.status||"").trim(),updatedAt=Number(value.updatedAt||0);
+    if(!/^[0-9a-f-]{36}$/i.test(auditId)||!ownerId||!status||!Number.isFinite(updatedAt)||updatedAt<=0)
+        throw new Error("El estado de auditoría carece de identidad, propietario, estado o fecha válida.");
+    const stateJson=JSON.stringify(value);
+    if(stateJson.length>8000)throw new Error("El estado de auditoría supera el límite seguro de persistencia.");
+    return [auditId,ownerId,status,Number(value.createdAt||updatedAt),updatedAt,updatedAt+DRIVE_AUDIT_STATE_TTL_MS_,stateJson,1];
+}
+function getDriveAuditStateRows_(sheet) {
+    const last=Number(sheet.getLastRow()||0);
+    if(last<3)return [];
+    return sheet.getRange(3,1,last-2,DRIVE_AUDIT_STATE_HEADERS_.length).getValues().map((row,index)=>{
+        if(!row.some(value=>value!==""&&value!==null))return null;
+        const auditId=String(row[0]||""),ownerId=String(row[1]||""),status=String(row[2]||"");
+        const createdAt=Number(row[3]||0),updatedAt=Number(row[4]||0),expiresAt=Number(row[5]||0);
+        const stateJson=String(row[6]||""),schemaVersion=Number(row[7]||0);
+        if(!/^[0-9a-f-]{36}$/i.test(auditId)||!ownerId||!status||
+            !Number.isFinite(createdAt)||!Number.isFinite(updatedAt)||updatedAt<=0||
+            !Number.isFinite(expiresAt)||expiresAt!==updatedAt+DRIVE_AUDIT_STATE_TTL_MS_||
+            !stateJson||stateJson.length>8000||schemaVersion!==1)
+            throw new Error("Existe una fila huérfana o inválida en DriveAuditRuns.");
+        let state;
+        try{state=JSON.parse(stateJson);}catch(error){throw new Error("Una fila de DriveAuditRuns contiene JSON corrupto.");}
+        if(!state||state.auditId!==auditId||state.ownerId!==ownerId||String(state.status||"")!==status||
+            Number(state.updatedAt)!==updatedAt)
+            throw new Error("La identidad de una fila DriveAuditRuns no coincide con su contenido.");
+        return {rowIndex:index+3,auditId,ownerId,status,createdAt,updatedAt,expiresAt,stateJson,state,schemaVersion};
+    }).filter(Boolean);
+}
+function findDriveAuditStateRow_(sheet,auditId) {
+    const matches=getDriveAuditStateRows_(sheet).filter(item=>item.auditId===String(auditId));
+    if(matches.length>1)throw new Error("DriveAuditRuns contiene auditId duplicados.");
+    return matches.length?matches[0]:null;
+}
+function ensureDriveAuditStateBaseline_() {
+    const sheet=getDriveAuditStateSheet_();
+    let baseline=readDriveAuditStateBaselineState_(sheet);
+    if(baseline===DRIVE_AUDIT_STATE_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
+    if(baseline&&baseline!==DRIVE_AUDIT_STATE_BASELINE_PENDING_)throw new Error("La versión del baseline DriveAuditRuns no es reconocida.");
+    const lock=LockService.getScriptLock();
+    if(!lock.tryLock(0)){
+        const error=new Error("El baseline de auditoría Drive está ocupado; no esperó por otra ejecución. Reintenta.");
+        error.code="DRIVE_AUDIT_STATE_BUSY";throw error;
+    }
+    const expiredStates=[];
+    let imported=0;
+    try{
+        baseline=readDriveAuditStateBaselineState_(sheet);
+        if(baseline===DRIVE_AUDIT_STATE_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
+        if(!baseline)writeDriveAuditStateBaselineState_(sheet,DRIVE_AUDIT_STATE_BASELINE_PENDING_);
+        const legacy=PropertiesService.getScriptProperties().getProperties();
+        const keys=Object.keys(legacy).filter(key=>key.startsWith(DRIVE_AUDIT_STATE_PROPERTY_PREFIX_));
+        const existing=getDriveAuditStateRows_(sheet),byId=new Map();
+        existing.forEach(item=>{
+            if(byId.has(item.auditId))throw new Error("Hay auditId duplicados durante el baseline DriveAuditRuns.");
+            byId.set(item.auditId,item);
+        });
+        const seen=new Set(),pending=[];
+        keys.forEach(key=>{
+            const auditId=key.slice(DRIVE_AUDIT_STATE_PROPERTY_PREFIX_.length);
+            if(!/^[0-9a-f-]{36}$/i.test(auditId)||seen.has(auditId))
+                throw new Error("Una clave legacy de auditoría Drive tiene un auditId inválido o duplicado.");
+            seen.add(auditId);
+            let state;
+            try{state=JSON.parse(String(legacy[key]||""));}
+            catch(error){throw new Error("Un estado legacy de auditoría Drive está corrupto; se conserva sin cambios.");}
+            if(!state||state.auditId!==auditId||!String(state.ownerId||"").trim()||
+                !String(state.status||"").trim()||!Number.isFinite(Number(state.updatedAt))||Number(state.updatedAt)<=0)
+                throw new Error("La identidad del estado legacy de auditoría Drive no es válida.");
+            const age=nowDriveAuditState_()-Number(state.updatedAt);
+            if(!Number.isFinite(age)||age < -60000)throw new Error("La fecha de un estado legacy de auditoría Drive no es válida.");
+            if(age>DRIVE_AUDIT_STATE_TTL_MS_){expiredStates.push(state);return;}
+            const row=driveAuditStateToRow_(state),current=byId.get(auditId);
+            if(current){
+                if(current.stateJson!==row[6]||current.ownerId!==row[1])
+                    throw new Error("El estado legacy y su copia en DriveAuditRuns no coinciden.");
+            }else pending.push(row);
+        });
+        if(pending.length){
+            imported=pending.length;
+            if(getDriveAuditStateRows_(sheet).length+pending.length>DRIVE_AUDIT_STATE_MAX_ROWS_)
+                throw new Error("El baseline DriveAuditRuns supera la capacidad segura de 500 estados.");
+            const first=Math.max(3,Number(sheet.getLastRow()||2)+1);
+            sheet.getRange(first,1,pending.length,DRIVE_AUDIT_STATE_HEADERS_.length).setValues(pending);
+            SpreadsheetApp.flush();
+            const verified=new Map(getDriveAuditStateRows_(sheet).map(item=>[item.auditId,item]));
+            pending.forEach(row=>{
+                const item=verified.get(row[0]);
+                if(!item||item.stateJson!==row[6]||item.ownerId!==row[1])
+                    throw new Error("El baseline DriveAuditRuns no superó la lectura de confirmación.");
+            });
+        }
+        writeDriveAuditStateBaselineState_(sheet,DRIVE_AUDIT_STATE_BASELINE_VERSION_);
+    }finally{if(lock.hasLock())lock.releaseLock();}
+    expiredStates.forEach(state=>clearExpiredDriveAuditCacheState_(state));
+    return {status:"success",imported,alreadyComplete:false};
+}
+function nowDriveAuditState_(){return Date.now();}
+// ScriptLock protege solo el baseline y las lecturas/escrituras breves del ledger; nunca se mantiene durante Drive.
+function withDriveAuditStateLock_(callback) {
+    const lock=LockService.getScriptLock();
+    if(!lock.tryLock(0)){
+        const error=new Error("DriveAuditRuns está ocupado; la operación no esperó y puede reintentarse.");
+        error.code="DRIVE_AUDIT_STATE_BUSY";throw error;
+    }
+    try{return callback();}
+    finally{if(lock.hasLock())lock.releaseLock();}
+}
+
 function cleanupExpiredDriveAuditServerStates_() {
-    const properties = PropertiesService.getScriptProperties();
-    const all = properties.getProperties();
-    const now = Date.now();
-    Object.keys(all).forEach(key => {
-        if (!key.startsWith("GPSpedia_DRIVE_AUDIT_STATE_")) return;
-        try {
-            const state = JSON.parse(all[key]);
-            const age = now - Number(state && state.updatedAt);
-            if (!Number.isFinite(age) || age > 21600000 || age < -60000) {
-                clearExpiredDriveAuditCacheState_(state);
-                properties.deleteProperty(key);
-            }
-        } catch (error) { properties.deleteProperty(key); }
+    ensureDriveAuditStateBaseline_();
+    const sheet=getDriveAuditStateSheet_(),now=Date.now(),expired=[];
+    withDriveAuditStateLock_(()=>{
+        const rows=getDriveAuditStateRows_(sheet);
+        const remove=rows.filter(item=>{
+            const age=now-item.updatedAt;
+            return !Number.isFinite(age)||age>DRIVE_AUDIT_STATE_TTL_MS_||age < -60000;
+        });
+        remove.forEach(item=>expired.push(item.state));
+        const indexes=remove.map(item=>item.rowIndex).sort((a,b)=>a-b),groups=[];
+        indexes.forEach(index=>{
+            const last=groups[groups.length-1];
+            if(last&&index===last.start+last.count)last.count++;
+            else groups.push({start:index,count:1});
+        });
+        groups.sort((a,b)=>b.start-a.start).forEach(group=>sheet.deleteRows(group.start,group.count));
+        if(remove.length)SpreadsheetApp.flush();
     });
+    expired.forEach(state=>clearExpiredDriveAuditCacheState_(state));
+    return {removed:expired.length};
 }
 function clearExpiredDriveAuditCacheState_(state) {
     if (!state || !/^[0-9a-f-]{36}$/i.test(String(state.auditId || ""))) return;
@@ -12762,26 +12916,32 @@ function hashDriveAuditFileIds_(files) {
     return hashDriveAuditValue_(JSON.stringify(normalizeDriveAuditFileIds_(files)));
 }
 function saveDriveAuditServerState_(state) {
-    if (!state || !state.auditId || !state.ownerId) throw new Error("No se puede guardar un estado de auditoría sin identidad.");
-    const stored = Object.assign({}, state, { updatedAt: Date.now() });
-    const serialized = JSON.stringify(stored);
-    if (serialized.length > 8000) throw new Error("El estado de auditoría supera el límite seguro de persistencia.");
-    const properties = PropertiesService.getScriptProperties();
-    const key = getDriveAuditServerStateKey_(stored.auditId);
-    properties.setProperty(key, serialized);
-    if (properties.getProperty(key) !== serialized) throw new Error("No se pudo verificar la persistencia del estado de auditoría.");
-    return stored;
+    if(!state||!state.auditId||!state.ownerId)throw new Error("No se puede guardar un estado de auditoría sin identidad.");
+    ensureDriveAuditStateBaseline_();
+    const stored=Object.assign({},state,{updatedAt:Date.now()});
+    const row=driveAuditStateToRow_(stored),sheet=getDriveAuditStateSheet_();
+    return withDriveAuditStateLock_(()=>{
+        const current=findDriveAuditStateRow_(sheet,stored.auditId);
+        if(!current&&getDriveAuditStateRows_(sheet).length>=DRIVE_AUDIT_STATE_MAX_ROWS_)
+            throw new Error("DriveAuditRuns alcanzó su capacidad segura de 500 estados activos.");
+        const target=current?current.rowIndex:Math.max(3,Number(sheet.getLastRow()||2)+1);
+        let writeError=null;
+        try{sheet.getRange(target,1,1,row.length).setValues([row]);SpreadsheetApp.flush();}
+        catch(error){writeError=error;}
+        const saved=sheet.getRange(target,1,1,row.length).getValues()[0];
+        if(JSON.stringify(saved)!==JSON.stringify(row))
+            throw new Error("No se pudo verificar la persistencia durable del estado Drive."+(writeError?" "+String(writeError.message||writeError):""));
+        return stored;
+    });
 }
 function loadDriveAuditServerState_(auditId) {
-    const raw = PropertiesService.getScriptProperties().getProperty(getDriveAuditServerStateKey_(auditId));
-    if (!raw) throw new Error("No existe un estado de auditoría vigente en el servidor. Inicia una auditoría nueva.");
-    let state;
-    try { state = JSON.parse(raw); } catch (error) { throw new Error("El estado de auditoría del servidor está corrupto."); }
-    const age = Date.now() - Number(state && state.updatedAt);
-    if (!state || state.auditId !== String(auditId) || !state.ownerId ||
-        !Number.isFinite(age) || age < -60000 || age > 21600000) {
+    ensureDriveAuditStateBaseline_();
+    const id=String(auditId||"").trim();
+    const found=findDriveAuditStateRow_(getDriveAuditStateSheet_(),id);
+    if(!found)throw new Error("No existe un estado de auditoría vigente en el servidor. Inicia una auditoría nueva.");
+    const state=found.state,age=Date.now()-Number(state.updatedAt);
+    if(state.auditId!==id||!state.ownerId||!Number.isFinite(age)||age < -60000||age>DRIVE_AUDIT_STATE_TTL_MS_)
         throw new Error("El estado de auditoría expiró o no cumple su identidad. Inicia una auditoría nueva.");
-    }
     return state;
 }
 function getDriveAuditPageResultCacheKey_(auditId, pageIndex) {
