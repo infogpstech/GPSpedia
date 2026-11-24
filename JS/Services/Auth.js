@@ -2982,7 +2982,7 @@ var AUTH_CENTRAL_SERVICE_CONTRACT_VERSIONS_ = {
     AUTH: "2.2.5",
     CATALOG: "2.4.0",
     WRITE: "2.3.1",
-    FEEDBACK: "2.3.0",
+    FEEDBACK: "1.2.2",
     UTILITIES: "1.5.0",
     ADMIN: "2.7.1"
 };
