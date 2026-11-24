@@ -424,7 +424,8 @@ export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
         assert.match(ui, /tema, comoIdentificarlo, dondeEncontrarlo, detalles/);
         assert.match(ui, /createdTutorialId = String\(created\.referenceId\)/);
         assert.match(ui, /referenceId: createdTutorialId/);
-        assert.match(ui, /referenceId: item\.ID \|\| item\.Tema/);
+        assert.match(ui, /referenceId: item\.ID \|\| item\.referenceId \|\| item\.Tema/);
+        assert.match(ui, /tutorialId: item\.ID \|\| item\.referenceId \|\| ""/);
         assert.match(ui, /id="tut-imagen"/);
         assert.match(ui, /accept="image\/jpeg,image\/png,image\/webp"/);
         assert.match(ui, /imagenDataUrl/);
@@ -713,8 +714,22 @@ test("el rename append-only libera el título anterior y reserva el nuevo", () =
         assert.equal(result.data.tutoriales.length, 1);
         assert.equal(JSON.stringify(result.data.tutoriales[0]), JSON.stringify({
             ID: row[0], Tema: row[1], Imagen: row[2], comoIdentificarlo: row[3],
-            dondeEncontrarlo: row[4], Detalles: row[5], Video: row[6], Colaborador: row[7]
+            dondeEncontrarlo: row[4], Detalles: row[5], Video: row[6], Colaborador: row[7],
+            referenceId: row[0]
         }));
+    });
+
+    test("CATALOG conserva la identidad legacy al proyectar un título renombrado", () => {
+        const originalTitle = "Tutorial histórico";
+        const legacyId = "legacy-" + crypto.createHash("sha256").update("tutorial historico").digest("hex");
+        const expectedTitleKey = "tutorial historico", title = "Tutorial actualizado";
+        const payloadHash = crypto.createHash("sha256").update(JSON.stringify([legacyId, expectedTitleKey, title])).digest("hex");
+        const event = ["tutorial-rename-" + payloadHash, payloadHash, legacyId, expectedTitleKey, title, "now"];
+        const row = ["", originalTitle, "imagen", "Cómo", "Dónde", "Detalle", "", "Autora"];
+        const result = readCatalogTutorials_(catalog, [headers, row], [], [event]);
+        assert.equal(result.data.tutoriales[0].Tema, title);
+        assert.equal(result.data.tutoriales[0].ID, null);
+        assert.equal(result.data.tutoriales[0].referenceId, legacyId);
     });
 
     test("CATALOG deduplica reintentos físicos idénticos por ID y rechaza copias contradictorias", () => {
@@ -733,6 +748,8 @@ test("el rename append-only libera el título anterior y reserva el nuevo", () =
         assert.equal(result.data.tutoriales.length, 1);
         assert.equal(result.data.tutoriales[0].ID, null);
         assert.equal(result.data.tutoriales[0].Tema, legacyRow[1]);
+        assert.equal(result.data.tutoriales[0].referenceId,
+            "legacy-" + crypto.createHash("sha256").update("tutorial historico").digest("hex"));
         assert.equal(result.data.tutoriales[0].Imagen, legacyRow[2]);
         assert.equal(result.data.tutoriales[0].Video, legacyRow[6]);
         assert.equal(result.data.tutoriales[0].Colaborador, null);
