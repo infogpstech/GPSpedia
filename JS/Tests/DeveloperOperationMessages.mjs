@@ -63,12 +63,12 @@ testCase("los errores de cortes y modelos son breves y los detalles quedan en la
     assert.doesNotMatch(ui, /showGlobalError\("No se pudo confirmar el agregado del corte: /);
     assert.doesNotMatch(ui, /showGlobalError\("Error al vincular modelos: /);
     assert.match(addCuts, /window\.parent\.gpsepediaDeveloperLog/);
-    assert.match(addCuts, /No se pudieron cargar los datos del formulario/);
-    assert.match(addCuts, /No se pudo verificar el vehículo/);
-    assert.match(addCuts, /Corte agregado correctamente/);
-    assert.match(addCuts, /Cambios guardados correctamente/);
-    assert.doesNotMatch(addCuts, /Error al verificar: \$\{error\.message\}/);
-    assert.doesNotMatch(addCuts, /Error al cargar datos del formulario: \$\{error\.message\}/);
+    assert.match(addCuts, /hostUi\.showGlobalError\('No se pudo completar la operación\.')/);
+    assert.match(addCuts, /window\.console\.error\('\[ALTA DE CORTE\]'/);
+    assert.match(addCuts, /Corte agregado; reporte pendiente\./);
+    assert.match(addCuts, /Cambios guardados\./);
+    assert.doesNotMatch(addCuts, /alert\(detail\)/);
+    assert.match(addCuts, /alert\('No se pudo completar la operación\.'\)/);
 });
 
 testCase("inventario y organización conservan confirmación global y resultados en consola de Cortes", () => {
