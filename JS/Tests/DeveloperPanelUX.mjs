@@ -47,7 +47,7 @@ testCase("en móvil la consola conserva una altura compacta y la barra de comand
  const start=css.lastIndexOf("@media (max-width: 520px)");
  const mobile=css.slice(start);
  assert.match(mobile,/#dev-tools-modal \.dev-console-shared \{[\s\S]*?flex-basis: 27%[\s\S]*?max-height: 30%/);
- assert.match(mobile,/#dev-tools-modal \.dev-terminal-row,[\s\S]*?flex-direction: row/);
+ assert.match(mobile,/#dev-tools-modal \.dev-terminal-row \{[\s\S]*?flex-direction: row/);
  assert.match(css,/#dev-tools-modal \.dev-terminal-input-shell \{[\s\S]*?display: flex/);
  assert.match(html,/class="dev-terminal-input-shell"[\s\S]*?id="dev-terminal-input"/);
  assert.match(html,/id="btn-terminal-send"[^>]*>&gt;_/);
