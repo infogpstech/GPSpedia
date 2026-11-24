@@ -112,6 +112,62 @@ export const CENTRAL_SERVICE_KEYS = Object.freeze([
     "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"
 ]);
 
+async function callCentralAuthBootstrapAction_(action, payload) {
+    const response = await fetch(CENTRAL_CONFIGURATION_BOOTSTRAP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action, payload }),
+        redirect: "follow"
+    });
+    const body = await response.text();
+    let result;
+    try { result = JSON.parse(body); }
+    catch (error) { throw new Error("AUTH devolvió una respuesta inválida al gestionar los endpoints."); }
+    if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") {
+        throw new Error(String(result && result.message || "AUTH no confirmó la operación de endpoints."));
+    }
+    return result;
+}
+
+export async function loadCentralServiceUrls(session) {
+    const sessionPayload = getRichTextSession_(session);
+    const result = await callCentralAuthBootstrapAction_("getCentralServiceUrls", sessionPayload);
+    const services = result.services;
+    if (!services || typeof services !== "object" || Array.isArray(services) ||
+        CENTRAL_SERVICE_KEYS.some(key => typeof services[key] !== "string")) {
+        throw new Error("AUTH no devolvió el conjunto completo de endpoints.");
+    }
+    return services;
+}
+
+export async function saveCentralServiceUrls(services, actorRole, session) {
+    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    if (normalizedRole !== "desarrollador") throw new Error("Solo un Desarrollador puede actualizar los endpoints.");
+    const sessionPayload = getRichTextSession_(session);
+    if (!services || typeof services !== "object" || Array.isArray(services) ||
+        CENTRAL_SERVICE_KEYS.some(key => typeof services[key] !== "string" || !services[key].trim())) {
+        throw new Error("Debes proporcionar las seis URL de servicios.");
+    }
+    const requestId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : "svc_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    const result = await callCentralAuthBootstrapAction_("updateCentralServiceUrls", {
+        ...sessionPayload,
+        services,
+        requestId,
+        changeReason: "Actualización de endpoints desde el panel de desarrollador"
+    });
+    centralConfigurationCache_.invalidate();
+    try {
+        await refreshCentralConfiguration();
+    } catch (error) {
+        console.warn("Los endpoints se publicaron, pero la caché local requiere una nueva lectura:", error);
+        result.configurationRefreshPending = true;
+    }
+    return result;
+}
+
+
 export const ACTION_TO_SERVICE_MAP = {
     'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
