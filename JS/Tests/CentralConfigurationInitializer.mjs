@@ -71,7 +71,7 @@ class FakeSpreadsheet {
 function createEnvironment(spreadsheet) {
     let flushed = 0;
     const context = { GPSpediaSpreadsheetId_: "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os", SpreadsheetApp: { openById: id => { assert.equal(id, "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os"); return spreadsheet; }, flush: () => { flushed++; } } };
-    context.getAuthUsersSpreadsheet_ = () => context.SpreadsheetApp.openById(context.GPSpediaSpreadsheetId_);
+    context.getAuthUsersSpreadsheet_ = () => { const spreadsheet = context.SpreadsheetApp.openById(context.GPSpediaSpreadsheetId_); if (!spreadsheet) throw new Error("No se pudo abrir la Spreadsheet central configurada para AUTH."); return spreadsheet; };
     vm.runInNewContext(executable, context);
     return { context, get flushed() { return flushed; } };
 }
