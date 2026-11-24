@@ -565,10 +565,10 @@ git rev-parse HEAD
 ### Evidencia local aprobada
 
 - Commit de implementación: `4f300742fbf5c965f9a05722825a02b29ce7ccb5` (FEEDBACK), `2db86ad34a6c45307f9a5c8ee356bc52c5bd7ea6` (CATALOG), `e376ce69062969974a862f379a3038cdc051163e` (frontend).
-- CI run [45505972628](https://github.com/infogpstech/GPSpedia/actions/runs/45505972628): SUCCESS; 517 suites, 6,155 pruebas aprobadas, 0 fallos.
-- `FeedbackTutorialLookupBoundedRead`: 9/9 PASS; `TutorialIntegrity`: 48/48 PASS; FEEDBACK precondiciones de subida resumable: 9/9 PASS, incluida inicialización con Tutorial histórico y referencia legacy.
+- CI run [45506352069](https://github.com/infogpstech/GPSpedia/actions/runs/45506352069): SUCCESS; 517 suites, 6,156 pruebas aprobadas, 0 fallos.
+- `FeedbackTutorialLookupBoundedRead`: 9/9 PASS; `TutorialIntegrity`: 48/48 PASS; FEEDBACK precondiciones de subida resumable: 10/10 PASS, incluida inicialización con Tutorial histórico (referencia legacy) y Tutorial nuevo (ID canónico).
 - Chromium responsive: 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700.
-- GitHub Pages run [45505971953](https://github.com/infogpstech/GPSpedia/actions/runs/45505971953): SUCCESS.
+- GitHub Pages run [45506351422](https://github.com/infogpstech/GPSpedia/actions/runs/45506351422): SUCCESS.
 - No se usó OAuth real ni se subió vídeo a YouTube durante CI.
 
 ### Pasos en Beta aislada
