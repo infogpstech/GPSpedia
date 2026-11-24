@@ -196,7 +196,6 @@
             try {
                 const logger = window.parent && window.parent.gpsepediaDeveloperLog;
                 if (typeof logger === 'function') logger('[ALTA DE CORTE] ' + detail, 'error');
-                else if (window.console && typeof window.console.error === 'function') window.console.error('[ALTA DE CORTE]', detail);
             } catch (error) {}
             if (hostUi && typeof hostUi.showGlobalError === 'function') {
                 hostUi.showGlobalError('No se pudo completar la operación.');
