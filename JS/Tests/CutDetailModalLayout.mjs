@@ -268,7 +268,7 @@ testCase("el logo ocupa dos filas y su contenedor se alinea abajo junto al model
     assert.match(cutHeader, /\.detail-modal-divider \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:3;[\s\S]*?width:auto !important;[\s\S]*?margin:6px 6px 2px !important;[\s\S]*?transform:translateY\(-19px\)/);
     assert.match(cutHeader, /\.detail-modal-saving-indicator \{[\s\S]*?grid-column:1 \/ -1;[\s\S]*?grid-row:4;/);
     assert.match(cutHeader, /height:66px;[\s\S]*?min-height:66px;[\s\S]*?align-items:flex-start/);
-    assert.match(cutHeader, /grid-template-rows:auto auto auto auto;[\s\S]*?margin-bottom:6px/);
+    assert.match(cutHeader, /grid-template-rows:40px 32px auto auto;[\s\S]*?margin-bottom:6px/);
     assert.ok(css.includes("#detalleCompleto {") && css.includes("gap: 12px;"));
     const cutToolbarStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {');
     const cutToolbarRule = css.slice(cutToolbarStart, css.indexOf("}", cutToolbarStart));
@@ -284,7 +284,7 @@ testCase("el detalle de corte no permite desplazamiento horizontal y el logo con
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \{[\s\S]*?width:max-content/);
     assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \.brand-logo-modal \{[\s\S]*?width:auto !important/);
     assert.match(css, /@media \(max-width:560px\)[\s\S]*?grid-template-columns:max-content minmax\(0,1fr\)/);
-    assert.match(css, /@media \(max-width:560px\)[\s\S]*?max-width:100% !important;[\s\S]*?object-fit:contain/);
+    assert.match(css, /@media \(max-width:560px\)[\s\S]*?max-width:none !important;[\s\S]*?object-fit:contain/);
 });
 
 
@@ -296,7 +296,7 @@ testCase("el nombre completo pasa debajo del logo solo cuando no cabe junto a é
     const fallbackStart = css.indexOf('data-model-title-layout="below-logo"');
     const fallbackCss = css.slice(fallbackStart - 180, fallbackStart + 1400);
     assert.match(fallbackCss, /grid-column:\s*1\s*\/\s*-1;[\s\S]*?grid-row:\s*3;/);
-    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-toolbar \{[\s\S]*?grid-template-rows:auto auto auto auto;/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-toolbar \{[\s\S]*?grid-template-rows:40px 32px auto auto;/);
     assert.match(fallbackCss, /grid-template-rows:\s*auto auto auto auto auto/);
     assert.match(fallbackCss, /grid-column:\s*1\s*\/\s*-1;[\s\S]*?grid-row:\s*3;/);
     assert.match(fallbackCss, /detail-modal-divider \{[\s\S]*?grid-row:\s*4;/);
