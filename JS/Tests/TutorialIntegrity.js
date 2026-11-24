@@ -218,6 +218,41 @@ export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
         assert.equal(h.sheet.data.length, 2);
     });
 
+    test("sube imagen opcional a Drive, la asocia a la columna Imagen y recupera el mismo archivo al reintentar", () => {
+        const pngBytes = Buffer.from([137,80,78,71,13,10,26,10,0,0,0,0,1,2,3,4]);
+        const imagenDataUrl = "data:image/png;base64," + pngBytes.toString("base64");
+        const h = buildHarness_(feedback, { missingSheet: true });
+        const result = h.api.add({ ...base, imagenDataUrl });
+        assert.equal(result.status, "success");
+        assert.equal(h.sheet.data[1][2], "https://drive.google.com/file/d/" + h.imageFiles[0].getId() + "/view");
+        assert.equal(h.imageFiles.length, 1);
+        assert.match(h.imageFiles[0].getDescription(), /state=linked/);
+        const retry = h.api.add({ ...base, imagenDataUrl });
+        assert.equal(retry.alreadyCreated, true);
+        assert.equal(h.imageFiles.length, 1, "El reintento debe reutilizar el archivo original.");
+        assert.equal(h.sheet.data.length, 2, "El reintento no debe duplicar la fila Tutorial.");
+    });
+
+    test("rechaza reutilizar operationId con otra imagen y no crea un segundo archivo", () => {
+        const firstImage = "data:image/png;base64," + Buffer.from([137,80,78,71,13,10,26,10,1,2,3,4]).toString("base64");
+        const otherImage = "data:image/png;base64," + Buffer.from([137,80,78,71,13,10,26,10,5,6,7,8]).toString("base64");
+        const h = buildHarness_(feedback, { missingSheet: true });
+        h.api.add({ ...base, imagenDataUrl: firstImage });
+        assert.throws(() => h.api.add({ ...base, imagenDataUrl: otherImage }), /ya pertenece a otro tutorial/);
+        assert.equal(h.imageFiles.length, 1);
+        assert.equal(h.sheet.data.length, 2);
+    });
+
+    test("valida formato y firma binaria antes de reservar el título o crear archivos", () => {
+        const h = buildHarness_(feedback, { missingSheet: true });
+        assert.throws(() => h.api.add({ ...base, imagenDataUrl: "data:image/gif;base64,R0lGODlh" }), /JPEG, PNG o WebP/);
+        const invalidPng = "data:image/png;base64," + Buffer.from([1,2,3,4,5,6,7,8,9]).toString("base64");
+        assert.throws(() => h.api.add({ ...base, imagenDataUrl: invalidPng }), /firma binaria/);
+        assert.equal(h.imageFiles.length, 0);
+        assert.equal(h.sheet.data.length, 0);
+        assert.equal(h.state.titleEventsSheet.data.length, 0);
+    });
+
     test("normaliza operationId a minúsculas para producir IDs tut canónicos", () => {
         const h = buildHarness_(feedback, { missingSheet: true });
         const result = h.api.add({ ...base, operationId: operationId.toUpperCase() });
@@ -368,6 +403,11 @@ export function runTutorialIntegrityTests({ feedback, ui, catalog }) {
         assert.match(ui, /createdTutorialId = String\(created\.referenceId\)/);
         assert.match(ui, /referenceId: createdTutorialId/);
         assert.match(ui, /referenceId: item\.ID \|\| item\.Tema/);
+        assert.match(ui, /id="tut-imagen"/);
+        assert.match(ui, /accept="image\\/jpeg,image\\/png,image\\/webp"/);
+        assert.match(ui, /imagenDataUrl/);
+        assert.match(ui, /readTutorialImageFile/);
+        assert.match(ui, /3 \\* 1024 \\* 1024/);
         assert.match(ui, /Colaborador/);
         assert.match(ui, /tutorialId: item\.ID \|\| ""/);
         assert.match(ui, /comoIdentificarlo: newComo/);
