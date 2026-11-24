@@ -810,3 +810,14 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI run `45494991186`: SUCCESS en ambos jobs. Regresión: 516 suites, 6,115 pruebas aprobadas, 0 fallos. Playwright/Chromium: 148/148 PASS, cuatro viewports (1366×768, 390×844, 360×800, 320×700) y 12 capturas.
 - Artefacto de evidencia: `14966794425`. GitHub Pages run `45494990388`: SUCCESS.
 - Rama de trabajo consolidada: `GPSpedia2.2.5_work`. Base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+
+
+### 2026-11-24 — revisión posterior a AUG-146: Developer, dashboard y CATALOG
+
+- Se recuperó la fila horizontal de las cuatro pestañas del panel Developer; la pestaña seleccionada ya no se expande ni desplaza a las demás en móvil.
+- La consola ocupa el 50% del ancho en escritorio y el 100% en móvil. Los botones de información, limpiar y copiar se agrupan a la izquierda y quedan alineados.
+- El dashboard muestra un estado vacío explícito y deja de ocultar fallos de FEEDBACK. La respuesta incluye disponibilidad y conteo de las fuentes ActividadUsuario, InboxAuditLog y Cortes, además del estado de contribuciones.
+- El feed CATALOG distingue la falta de hojas de inicialización de un error de red; conserva la carga por snapshot completo y sustituye la traza recurrente por un aviso informativo de inicialización pendiente.
+- CI run 45498897055: SUCCESS; 517 suites, 6,125 pruebas aprobadas, 0 fallos. Playwright/Chromium: 184/184 PASS, cuatro viewports y 16 capturas sintéticas. Artefacto 14970486726. GitHub Pages run 45498895792: SUCCESS.
+- Pendiente validar FEEDBACK y CATALOG contra Spreadsheet/deployments Beta aislados. No se desplegaron Apps Script ni se modificaron recursos externos o productivos.
+- HEAD funcional probado: 57b3aaa511b9a0ffd279e339dd82b5b38b0b87bf. Base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.

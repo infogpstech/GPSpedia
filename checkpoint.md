@@ -315,3 +315,16 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - CI run `45494991186`: SUCCESS en ambos jobs. Regresión: 516 suites, 6,115 pruebas aprobadas, 0 fallos. Playwright/Chromium: 148/148 PASS, cuatro viewports (1366×768, 390×844, 360×800, 320×700) y 12 capturas.
 - Artefacto de evidencia: `14966794425`. GitHub Pages run `45494990388`: SUCCESS.
 - Rama de trabajo consolidada: `GPSpedia2.2.5_work`. Base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+
+
+### Revisión posterior a AUG-146 — Developer, dashboard y CATALOG — 2026-11-24
+
+- Corregida la distribución del modal Developer: las cuatro secciones vuelven a una fila horizontal; la pestaña activa ya no se expande y desplaza las otras en móvil. La consola queda al 50% del ancho en escritorio y al 100% en móvil; información, limpiar y copiar quedan agrupados a la izquierda.
+- Dashboard: se agregó un estado vacío visible en la tabla de actividad, manejo explícito de respuestas FEEDBACK no exitosas y mensajes de diagnóstico para hojas ausentes. FEEDBACK devuelve disponibilidad y cantidad de filas de ActividadUsuario, InboxAuditLog y Cortes, además de indicar si existen contribuciones.
+- CATALOG: la ausencia de CatalogChangeState/CatalogChangeEvents se clasifica como feed incremental no inicializado. Se conserva el fallback a snapshot completo y se evita repetir la traza como error en la misma sesión; se muestra un aviso informativo de inicialización pendiente.
+- Pruebas ampliadas: respuesta FEEDBACK sintética y renderizado de dashboard, estado vacío, diagnóstico de fuentes, clasificación del feed CATALOG y geometría de pestañas/consola en cuatro viewports.
+- CI run `45498897055`: SUCCESS; 517 suites, 6,125 pruebas aprobadas, 0 fallos. Playwright/Chromium: 184/184 PASS en 1366×768, 390×844, 360×800 y 320×700; 16 capturas sintéticas. Artefacto `14970486726`.
+- GitHub Pages run `45498895792`: SUCCESS.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos productivos.
+- Pendiente Beta: publicar FEEDBACK en el deployment aislado y verificar sus hojas/contadores; ejecutar una vez `initializeCatalogChangeFeedSheets()` en el proyecto CATALOG Beta y comprobar el cursor real. Procedimiento detallado en `Tareas_Beta.md` §21.
+- HEAD funcional probado: `57b3aaa511b9a0ffd279e339dd82b5b38b0b87bf`. Base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
