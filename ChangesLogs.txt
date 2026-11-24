@@ -675,3 +675,14 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI run `45412598879`, job `138510122635`, commit `d8160863f3196c50598d1438019ae1b2135f07b7`: SUCCESS; 513 suites, 6,060 pruebas aprobadas, 0 fallos; sintaxis 463 archivos PASS.
 - GitHub Pages build/deploy run `45412598149`: SUCCESS; no corresponde a Apps Script.
 - No se ejecutaron despliegues Apps Script ni cambios de recursos reales. La ejecución del procedimiento queda pendiente de autorización y entorno Beta aislado.
+
+
+### 2026-11-24 — Inicializador manual de configuración central AUTH
+
+- Se añadió `initializeCentralConfigurationSheets()` a `JS/Services/Auth.js` y se mantuvo paridad exacta con `JS/Tests/Auth.js`. La función solo puede ejecutarse manualmente desde el editor del proyecto AUTH; no se agregó a las rutas HTTP ni al flujo de login.
+- La función usa el mismo acceso `getAuthUsersSpreadsheet_()` que AUTH utiliza para sus hojas operativas. No incorpora IDs, URLs, propiedades ni secretos. No usa ScriptLock, para evitar contención con login u otras operaciones; ante una carrera de creación de pestaña, vuelve a consultar y reutiliza la pestaña creada.
+- Se crean únicamente las pestañas que falten entre `ConfiguracionControl`, `ConfiguracionEsquema`, `Servicios`, `ConfiguracionParametros`, `ConfiguracionRecursos` y `ConfiguracionHistorial`. Las pestañas vacías reciben encabezados; las existentes se validan y preservan. Una estructura incompatible produce error sin sobrescribir datos.
+- No se unificaron las tablas en una sola pestaña: el lector central vigente busca cinco pestañas por nombre y el diseño versionado define Historial como tabla append-only independiente. Unificar requeriría rediseñar el lector, el esquema y sus contratos, fuera de esta inicialización.
+- La inicialización escribe únicamente encabezados. No crea filas operativas, no inventa URLs/IDs, no activa `READY` ni publica una revisión; la configuración queda cerrada hasta completar y validar los datos reales.
+- Prueba nueva `CentralConfigurationInitializer.mjs`: 7/7 PASS. CI run `45436552111`, job `138595813855`, commit `062e22eeafa792769ef20ed9e6bdbfbc2778b654`: SUCCESS; 514 suites, 6,067 pruebas aprobadas, 0 fallos; comprobación sintáctica PASS.
+- No se modificó ninguna Spreadsheet real ni se desplegó Apps Script. Quedan para Beta la comprobación del contexto activo de AUTH, la ejecución manual en la Spreadsheet correcta, el llenado/versionado de los valores reales y el despliegue autorizado de la nueva versión de AUTH.
