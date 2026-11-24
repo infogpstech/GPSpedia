@@ -6886,6 +6886,14 @@ ${elapsedSec}s
         };
     }
 
+    const btnClearConsoleLog = document.getElementById('btn-clear-console-log');
+    if (btnClearConsoleLog) {
+        btnClearConsoleLog.onclick = () => {
+            if (!isAdminPanelCurrent_()) return;
+            consoleLog.replaceChildren();
+        };
+    }
+
     // Respaldos y restauración: un único campo compartido para entrada y salida de enlaces.
     const backupResourceInput = document.getElementById('backup-resource-input');
     const backupResourceHint = document.getElementById('backup-resource-hint');
