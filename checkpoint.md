@@ -4,43 +4,53 @@ Fecha: 2026-11-24
 Repositorio: `infogpstech/GPSpedia`
 Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.
-HEAD de trabajo al iniciar esta continuidad: `142b9057f57909c364a9726fd448f43d6e048cad`
+HEAD de trabajo antes de este checkpoint: `085a40394501d83e0e36b83cc32652d1adc7bfc3`
 HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Reglas de continuidad
 - `NORMAS_DESAROLLO.md` es la única fuente normativa vigente; leerla antes de iniciar una sesión o cambiar código/documentación operativa.
 - Confirmar rama y HEAD antes de cada escritura. No forzar actualizaciones ni modificar la rama base.
 - No declarar pruebas ni efectos externos sin evidencia observada.
-- No detener trabajo independiente por limitaciones de una herramienta; buscar métodos alternativos y distinguir pruebas reales, fixtures y análisis estático.
-- Requisito transversal Apps Script: sin secretos compartidos/manuales ni URLs de otros servicios en propiedades; coordinación funcional entre servicios desde frontend cuando sea posible; llamadas backend directas solo si son necesarias y con autorización/RBAC del receptor; endpoints operativos desde registro central autoactualizable, sin fallback local.
-- Preservar la independencia funcional: un servicio o una operación fallida no debe impedir que continúen consultas/operaciones independientes.
+- Distinguir pruebas locales, fixtures y análisis estático de validaciones remotas.
+- Requisito Apps Script: sin secretos compartidos/manuales ni URLs/IDs locales de otros servicios; coordinación funcional frontend cuando sea posible; llamadas backend directas solo por necesidad técnica, con autorización/RBAC del receptor; endpoints operativos desde registro central autoactualizable, sin fallback local.
+- Un fallo de un servicio/operación no debe bloquear funciones independientes.
 
-## Estado de trabajo
-- MIG-029: COMPLETADA CON VALIDACIÓN DIFERIDA. Guía de despliegue en `Services/DEPLOYMENT_GUIDE.md`; contrato 7/7 y regresión CI verificados.
-- MIG-026: EN PROGRESO. Las migraciones locales de estado están cubiertas, pero permanecen tres `SPREADSHEET_ID/openById` en AUTH, CATALOG y UTILITIES. No retirarlos hasta demostrar el contexto real de acceso Spreadsheet en cada Web App; la prueba Beta correspondiente sigue pendiente.
-- MIG-030: COMPLETADA CON VALIDACIÓN DIFERIDA. Preparación de Beta, contratos y regresión local aprobados; las pruebas reales BETA-01..08 y validaciones de campo se reservan para Beta en `Tareas_Beta.md`.
-- MIG-026: EN PROGRESO por un defecto local conocido de arquitectura: AUTH, CATALOG y UTILITIES aún dependen de `SPREADSHEET_ID/openById`. No se reemplazará por `getActiveSpreadsheet()` sin evidencia porque una Web App puede carecer de Spreadsheet activa y dejar fuera de servicio las funciones dependientes. La solución debe eliminar la configuración local sin asumir un contexto no probado.
-- No se ejecutaron deployments, llamadas a endpoints, operaciones Apps Script, cambios de propiedades/permisos ni escrituras en Spreadsheet/Drive/OAuth/YouTube durante esta continuidad.
+## Estado de tareas MIG
+- MIG-001 a MIG-030: tareas de implementación cerradas localmente según sus criterios, con validaciones externas diferidas a Beta donde corresponde.
+- MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA; la regresión global actual ya no conserva la deuda de fallos ajenos documentada históricamente.
+- MIG-026: COMPLETADA CON VALIDACIÓN DIFERIDA. AUTH, CATALOG y UTILITIES ya no contienen `SPREADSHEET_ID` ni `openById(SPREADSHEET_ID)`; acceden mediante `SpreadsheetApp.getActiveSpreadsheet()` y fallan cerrado si falta contexto.
+- MIG-028: COMPLETADA CON VALIDACIÓN DIFERIDA; regresión local aprobada, mediciones de latencia real pendientes de Beta.
+- MIG-029 y MIG-030: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- La ejecución de campo BETA-01..08, validación de deployments/Spreadsheet/Drive/OAuth/YouTube, identidad/permisos reales y limpieza física de propiedades legacy sigue pendiente en `Tareas_Beta.md`. No se ha ejecutado ni simulado.
 
-## Evidencia CI más reciente
+## MIG-026 — acceso Spreadsheet sin localizadores
+- AUTH centraliza el handle mediante `getAuthUsersSpreadsheet_()`; CATALOG mediante `getSpreadsheet()`; UTILITIES mediante `getUtilitiesSpreadsheet_()`, reutilizando un handle por petición entre carga del actor y operación.
+- La copia aislada `JS/Tests/Auth.js` conserva paridad exacta.
+- No se añadió ID, URL, propiedad, secreto, endpoint bootstrap ni fallback local.
+- Si una Web App devuelve `NO_ACTIVE_SPREADSHEET` o carece de permisos, no restaurar IDs locales; mantener sin desplegar esa versión y resolver una alternativa sin configuración local antes de publicar.
+- El probe MIG-006 está preparado; la prueba de Web App real debe repetirse por proyecto e identidad efectiva sobre Spreadsheet desechable y aislada.
+
+## Evidencia de regresión integral — CI 2026-11-24
 - Workflow: `GPSpedia service regression tests`.
-- Run: `45396084519`; job: `138452115396`; commit: `142b9057f57909c364a9726fd448f43d6e048cad`.
-- Resultado: SUCCESS; Node.js v22.23.5; sintaxis PASS; 513 suites, 6,051 pruebas aprobadas, 0 fallos.
-- `ServiceHealthContract.mjs`: 19/19 PASS en las ejecuciones registradas del run `45395676090`.
-- Contratos MIG-028/MIG-014 verifican fallos parciales, fan-out e independencia de servicios; no sustituyen pruebas de disponibilidad remota.
-- La sonda remota no se ejecutó: el workflow `.github/workflows/deployed-service-health.yml` no existe en `main` y el bootstrap de `RemoteServiceHealth.mjs` no permite seleccionar/confirmar el entorno Beta.
+- Run: `45399766285`; job: `138464973056`; commit: `a894a402d3dbcae2c922bc815b8efc3e8cba4a1d`.
+- Resultado: SUCCESS; Node.js v22.23.5; sintaxis PASS; 513 suites; 6,051 pruebas aprobadas; 0 fallos.
+- `RepositoryJavaScriptSyntax`: 1/1; 463 archivos .js/.mjs verificados.
+- `RepositoryModuleReferences`: 1/1; 384 archivos inspeccionados y referencias relativas resueltas.
+- `MIG027FunctionalParity`: 8/8; `MIG028SecurityPerformanceRegression`: 9/9.
+- `MIG026StaticConfigSearch`: 10/10; `MIG013SessionActorLocalLookup`: 22/22; `CatalogChangeFeed`: 19/19; `UtilitiesSecurity`: 19/19.
+- `NonBlockingServiceLocks`: 27/27; `WriteContributionAppendConcurrency`: 9/9; `AdminDriveLockIsolation`: 9/9.
+- Otras suites dirigidas: `PasswordHashMigration` 16/16; `SensitiveLogsTrustedActor` 7/7; `SessionActivityLeaseMinimization` 6/6.
+- GitHub Pages build/deploy: run `45399765421`, job de build `138465371988`, deploy `138465666891`: SUCCESS. Esto no representa despliegue de proyectos Apps Script.
+
+## Límites de validación
+- No se desplegaron proyectos Apps Script ni se invocaron endpoints de servicios.
+- No se modificaron PropertiesService, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos.
+- La prueba real de `getActiveSpreadsheet()` en Web Apps y las mediciones p50/p95 siguen pendientes de Beta; los resultados CI no se extrapolan a disponibilidad ni latencia de producción.
 
 ## Rotación documental
 - El checkpoint anterior, de 187738 caracteres Unicode, se preservó íntegro en `Olds/Documentacion_Legacy/Checkpoint_Archive/checkpoint_2026-11-24_parte_006.md`.
-- El SHA del blob archivado coincide con el SHA del checkpoint original: `4a25fc4d0dc3ed6a71113e60b88623aa5f9b0504`.
-- El manifiesto de rotación conserva las referencias a todas las partes anteriores.
+- El blob SHA archivado coincide con el SHA del checkpoint original: `4a25fc4d0dc3ed6a71113e60b88623aa5f9b0504`.
+- El manifiesto de rotación conserva las referencias a las partes anteriores.
 
 ## Próxima acción
-Continuar MIG-026 con diseño y validación local de una arquitectura de acceso central sin IDs locales, preservando fail-closed y las funciones actuales. La prueba real de cada Web App queda diferida a Beta y no se debe usar como sustituto de una solución local segura. Mantener `Tareas_Beta.md` como procedimiento de campo. Antes de cualquier prueba remota, confirmar los seis deployments activos y el aislamiento de Spreadsheet, Drive, cuentas y datos sintéticos. Comenzar por health/read-only; no ejecutar mutaciones sin permisos, previsualización y recuperación confirmados. Registrar solo resultados observados en `Hallazgos_Beta.md`.
-
-
-## Continuidad — verificación posterior al ajuste documental
-- HEAD verificado antes de este registro: 8346fd1a324eb9190bb5f6f63e959c292cd8120a.
-- CI run 45397851823, job 138458289189, sobre ese HEAD: SUCCESS; checkout de rama autorizada; Node.js v22.23.5; sintaxis de módulos modificados PASS; regresión 513 suites, 6,051 pruebas aprobadas, 0 fallos.
-- MIG-026StaticConfigSearch: 10/10 PASS. El contrato confirma explícitamente que las referencias Spreadsheet locales permanecen confinadas al pendiente MIG-006 conocido; no certifica su eliminación.
-- MIG-030 se mantiene COMPLETADA CON VALIDACIÓN DIFERIDA; MIG-026 continúa EN PROGRESO por el problema local de arquitectura de acceso Spreadsheet.
+Continuar la fase de verificación técnica integral exigida por NORMAS_DESAROLLO.md §11: revisar el diff completo contra el HEAD base de esta iteración, confirmar que solo contiene cambios MIG-026 y sus contratos/documentación, comprobar que no hubo eliminaciones ni modificaciones ajenas, verificar nuevamente la rama base protegida y registrar el cierre de esta fase. Después, mantener Beta como procedimiento pendiente; no incorporar nuevas mejoras hasta terminar esa verificación.
