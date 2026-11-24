@@ -472,7 +472,7 @@ function handleAddOrUpdateCut(payload) {
     try {
         result = handleAddOrUpdateCutLocked(preparedRequest, lock, lockState);
     } finally {
-        if (lock && lock.hasLock()) lock.releaseLock();
+        if (lock.hasLock()) lock.releaseLock();
     }
     // La versión del feed se asigna después de confirmar y liberar la transacción física.
     if (result && result.status === "success" && result.vehicleId) {
@@ -560,6 +560,7 @@ function getCortesVehicleIdHighWaterMark_(sheet, options) {
 
     // El contador legacy solo se lee durante la siembra única del baseline.
     // Las asignaciones normales dependen exclusivamente de Cortes + ledger.
+    const storedId = 0;
     let minimumReservedId = options.minimumReservedId === undefined ? 0 : Number(options.minimumReservedId);
     if (!Number.isSafeInteger(minimumReservedId) || minimumReservedId < 0) {
         throw new Error("El último ID reservado contiene un valor inválido.");
@@ -616,17 +617,14 @@ function findCortesIdBaseline_(sheet) {
  * Migra una sola vez el high-water mark heredado al ledger append-only.
  * La fila de baseline es metadato reservado; no representa un vehículo.
  */
-function ensureCortesIdReservationBaseline_(cortesSheet, ledger, options) {
-    options = options && typeof options === "object" ? options : {};
+function ensureCortesIdReservationBaseline_(cortesSheet, ledger) {
     ledger = ledger || getCortesIdReservationsSheet_();
     let baseline = findCortesIdBaseline_(ledger);
     if (baseline) return { ledger, baseline, highWaterMark: getLastCortesIdReservation_(ledger) };
 
-    const lock = options.lockAlreadyHeld ? null : LockService.getScriptLock();
-    let acquired = options.lockAlreadyHeld === true;
-    if (!acquired) {
-        try { acquired = lock.tryLock(0); } catch (error) { acquired = false; }
-    }
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try { acquired = lock.tryLock(0); } catch (error) { acquired = false; }
     if (!acquired) {
         const error = new Error("WRITE está ocupado inicializando el ledger de IDs. Conserva el mismo opId y reintenta.");
         error.code = "WRITE_BUSY";
@@ -663,11 +661,11 @@ function ensureCortesIdReservationBaseline_(cortesSheet, ledger, options) {
         }
         return { ledger, baseline: verified, highWaterMark: verifiedHighWater };
     } finally {
-        if (lock && lock.hasLock()) lock.releaseLock();
+        if (lock.hasLock()) lock.releaseLock();
     }
 }
 
-function getCortesIdReservationsSheet_ {
+function getCortesIdReservationsSheet_() {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(CORTES_ID_RESERVATIONS_SHEET_NAME);
     if (!sheet) {
@@ -934,7 +932,7 @@ function handleFreezeCortesIds(payload) {
 
         // La misma migración idempotente se ejecuta al confirmar la estabilización.
         // No se vuelve a escribir la propiedad legacy; el ledger pasa a ser autoritativo.
-        ensureCortesIdReservationBaseline_(sheet, null, { lockAlreadyHeld: true });
+        ensureCortesIdReservationBaseline_(sheet);
 
         if (plan.finalValues.length) {
             const idRange = sheet.getRange(2, COLS_CORTES.id, plan.finalValues.length, 1);
