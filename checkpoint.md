@@ -1569,3 +1569,26 @@ REVISIÓN PRELIMINAR DE INTERCONEXIÓN BACKEND — MIG-026 — 2026-11-24
 
 
 - Se añadió Tareas_Beta.md §6.6 para las pruebas diferidas de MIG-026: acceso real a Spreadsheet, proveedor explícito de SharedSessionActor, publicación/lectura global de rich_text_mode, TTL/invalidation, sanitización y revisión de propiedad legacy. Incluye comandos seguros de sincronización al inicio; no se ejecutó ninguna prueba Beta ni se tocó un deployment.
+
+
+================================================================================
+SUBTRAMO MIG-026 — LEDGER DEL FEED CATALOG — 2026-11-24
+HEAD validado: c44728e851839540ba8d2489caa78bbff0dc80a6
+
+- Migrado el almacenamiento de revisión/eventos del feed CATALOG desde ScriptProperties a las hojas privadas CatalogChangeState y CatalogChangeEvents.
+- El esquema es obligatorio y versionado; no se crean hojas automáticamente. Esquema inválido/ausente produce fallo cerrado.
+- CatalogChangeState A:D: schemaVersion, revision, minRevision, updatedAt.
+- CatalogChangeEvents A:J: revision, collection, recordId, operation, snapshotJson, createdAt, sourceService, sourceOperation, sourceRequestId, resetRequired.
+- Se mantienen lock, idempotencia, revisión monotónica, retención activa 100, cursor, reset y lectura de confirmación. Los eventos no persisten identidad ni token.
+- CatalogChangeFeed.mjs 18/18 PASS; regresión 4,690 PASS con una única suite fallida preexistente FeedbackLockFastFail. Sintaxis modificada PASS.
+- CATALOG ya no contiene PropertiesService ni las claves GPSpedia_CATALOG_CHANGE_*.
+- No se crearon hojas reales, no se ejecutó deployment y no se borraron propiedades instaladas antiguas.
+
+Estado de MIG-026:
+- CATALOG feed ledger: COMPLETADO EN CÓDIGO; VALIDACIÓN DE HOJAS/DEPLOYMENT DIFERIDA A BETA.
+- Permanecen AUTH, WRITE y ADMIN con estado en ScriptProperties; además AUTH conserva secreto HMAC propio.
+- MIG-006/MIG-008 y acceso de AUTH/CATALOG/UTILITIES a Spreadsheet siguen sujetos a Beta.
+- No iniciar MIG-027.
+
+Siguiente paso: elegir la siguiente familia de estado de AUTH/WRITE/ADMIN y migrarla como subtramo independiente, con su contrato de recuperación e idempotencia. No borrar valores instalados sin autorización Beta.
+================================================================================

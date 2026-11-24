@@ -402,3 +402,12 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Revisión estática de los 9 módulos activos: no se encontraron URLs de Web Apps, constantes de URL de otros servicios ni secretos Coordinator/SharedMutation en backend.
 - Las llamadas UrlFetchApp restantes corresponden a operaciones de imagen, YouTube o APIs Google/Drive; no se identificó coordinación backend→backend entre servicios GPSpedia.
 - Se confirma que el secreto HMAC propio de recuperación de AUTH permanece como elemento de seguridad independiente, no como secreto compartido. La búsqueda global final sigue pendiente.
+
+
+### 2026-11-24 — MIG-026: CATALOG feed a ledger Spreadsheet
+- CATALOG deja de persistir revisión y eventos del feed incremental en ScriptProperties. Se introducen las hojas CatalogChangeState y CatalogChangeEvents con esquema versionado y validación estricta; el runtime no crea hojas automáticamente.
+- Se preservan lock, revisión monotónica, idempotencia por service/operation/requestId, snapshots canónicos, paginación, reset ante cursor obsoleto/corrupto y ventana activa de 100 eventos.
+- Se verifica read-back del evento y del estado. Los registros no contienen userId ni sessionToken.
+- CatalogChangeFeed: 18/18 PASS. CI: 4,690 pruebas aprobadas; una suite preexistente falla en FeedbackLockFastFail por contrato estático de LockService en FEEDBACK, reproducido antes de MIG-026.
+- CATALOG pasa a cero referencias a PropertiesService. El inventario queda en 3 módulos/10 familias restantes (AUTH, WRITE, ADMIN).
+- Las hojas y limpieza de propiedades instaladas se reservan para Beta aislada; no se accedió a Spreadsheet ni PropertiesService desplegado.
