@@ -3251,6 +3251,24 @@ function publishAuthCentralServiceUrls_(sourceUrls, actor, reason, requestId) {
         if (state && AUTH_CENTRAL_SERVICE_KEYS_.some(function(key) { return !previous[key]; })) {
             throw new Error("La revisión activa no contiene los seis servicios requeridos.");
         }
+        var priorRequestRows = history.rows.filter(function(record) {
+            return String(record.values[history.positions.history_id] || "").indexOf(requestId + "_") === 0;
+        });
+        if (priorRequestRows.length) {
+            var sameRequest = Boolean(state) &&
+                AUTH_CENTRAL_SERVICE_KEYS_.every(function(key) {
+                    return String(previous[key][services.positions.endpoint_url] || "").trim() === urls[key];
+                }) &&
+                priorRequestRows.every(function(record) {
+                    var row = record.values, key = String(row[history.positions.entity_key] || "");
+                    return String(row[history.positions.entity_type] || "") === "service" &&
+                        AUTH_CENTRAL_SERVICE_KEYS_.indexOf(key) >= 0 &&
+                        Number(row[history.positions.config_revision]) === currentRevision &&
+                        String(row[history.positions.new_value_json] || "") === JSON.stringify(urls[key]);
+                });
+            if (sameRequest) return { status: "success", revision: currentRevision, services: urls, idempotent: true };
+            throw new Error("El identificador de actualización ya fue utilizado para otra publicación.");
+        }
         var changed = AUTH_CENTRAL_SERVICE_KEYS_.filter(function(key) {
             return !previous[key] || String(previous[key][services.positions.endpoint_url] || "").trim() !== urls[key];
         });
