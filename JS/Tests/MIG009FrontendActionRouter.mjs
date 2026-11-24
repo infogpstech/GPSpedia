@@ -25,7 +25,7 @@ assert.doesNotMatch(api, /API_ENDPOINTS/);
 assert.equal((api.match(/https:\/\/script\.google\.com\/macros\/s\//g) || []).length, 1);
 assert.match(api, /resolveCentralServiceEndpoint\(snapshot, service\)/);
 assert.match(api, /resolveCentralServiceEndpoint\(routingSnapshot, serviceKey\)/);
-assert.match(api, /getConfiguredServiceEndpoint_\("FEEDBACK"\)/);
+assert.match(api, /getConfiguredServiceEndpoint_\("CATALOG"\)/);
 assert.doesNotMatch(api, /PropertiesService|COORDINATOR_SECRET|API_KEY/i);
 function makeSnapshot(revision = 1, deployment = "CURRENT") {
  const services = {};
