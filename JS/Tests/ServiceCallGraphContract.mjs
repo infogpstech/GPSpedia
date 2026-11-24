@@ -81,7 +81,7 @@ check("ADMIN no conserva llamadas funcionales backend→backend", () => {
     }
     assert.doesNotMatch(admin, /script\.google\.com\/macros\/s\//);
     assert.ok(ui.includes("freezeCortesIds"));
-    assert.ok(ui.includes("allocateVehicleId"));
+    assert.match(api, /'allocateVehicleId'\s*:\s*'WRITE'/);
 });
 
 check("Las llamadas HTTP externas a Drive, YouTube e imágenes no se confunden con microservicios", () => {
