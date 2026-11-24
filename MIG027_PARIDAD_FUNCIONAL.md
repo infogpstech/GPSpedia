@@ -7,7 +7,7 @@
 
 ## Alcance verificado
 
-- 123 acciones canónicas en seis servicios: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
+- 125 acciones canónicas en seis servicios: AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
 - Trazabilidad de todas las acciones en `MATRIZ_MIGRACION_SERVICIOS.md`.
 - Contrato de rutas frontend → servicio → dispatcher → handler → consumidor mediante `ActionDispatchContract.js`.
 - Políticas RBAC de Desarrollador, Jefe, Supervisor, Tecnico y Tecnico_exterior.
