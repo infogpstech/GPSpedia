@@ -1904,3 +1904,15 @@ Pendiente Beta: preparar LogoIdReservations con encabezados exactos, probar base
 
 Siguiente paso de MIG-026: búsqueda estática global final en backend, frontend, manifiestos y documentación; clasificar cada coincidencia y comprobar que no quede configuración local prohibida. No iniciar otra familia de estado ADMIN en paralelo.
 ================================================================================
+
+
+================================================================================
+MIG-026 — BÚSQUEDA ESTÁTICA GLOBAL — 2026-11-24
+
+- Se inició la auditoría estática global posterior a MIG-026 ADMIN-05.
+- Alcance inspeccionado: 9 servicios Apps Script, 39 módulos frontend, 3 HTML, manifest, service worker, 3 workflows y 49 documentos activos. Se excluyeron Olds/ y fixtures de pruebas como fuentes de ejecución.
+- Hallazgos: cero URLs de deployments GPSpedia y cero secretos compartidos operativos en servicios; único bootstrap público en api-config.js (MIG-009); nueve lecturas PropertiesService solo para baselines; SPREADSHEET_ID permanece en AUTH/CATALOG/UTILITIES como bloqueo conocido de MIG-006.
+- Coordinator/SharedMutation retirados. El token legacy __sharedMutationToken se elimina del payload permitido de WRITE. Documentos activos corregidos; listas Beta antiguas preservadas y marcadas históricas.
+- Se añade MIG026StaticConfigSearch.mjs para mantener los contratos de ausencia de URLs/secretos, seis servicios, única bootstrap y lecturas legacy de baseline.
+- Estado: AUDITORÍA LOCAL PREPARADA; pendiente CI. La configuración instalada y la retirada de SPREADSHEET_ID requieren validación Beta real.
+================================================================================

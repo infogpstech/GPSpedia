@@ -359,3 +359,16 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Mantener una carga/operación Drive activa y ejecutar otras acciones ADMIN independientes. Confirmar que Drive se ejecuta fuera del ScriptLock, que el escaneo inicial de LogosMarca ocurre antes del lock y que la sección crítica se limita a baseline/reserva y escritura breve en Spreadsheet. Ninguna función debe esperar por otra.
 - Tras `logo_id_counter_baseline_v1`, confirmar que las altas ordinarias no consultan `PropertiesService` para esta familia. No borrar `LOGOS_MARCA_ID_COUNTER` durante la prueba; su limpieza física requiere despliegue verificado y autorización Beta explícita.
 - Registrar deployment, Spreadsheet aislada, contador inicial, máximo visible, IDs reservados, concurrencia, evidencia anonimizada y resultados por caso en `Hallazgos_Beta.md`.
+
+
+## 17. Validación Beta diferida — MIG-026 búsqueda estática global de configuración
+**Estado: PENDIENTE DE BETA.** La auditoría local está registrada en `MIG026_BUSQUEDA_ESTATICA_FINAL.md`. No se modificaron deployments ni propiedades instaladas.
+
+- Ejecutar la sincronización segura del apartado 0 y utilizar únicamente deployments y Spreadsheet Beta aislados.
+- Para AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN, inspeccionar ScriptProperties en modo solo lectura. Registrar únicamente nombres de propiedades y clasificación; nunca copiar ni revelar valores. Confirmar que no existan claves, tokens manuales, secretos compartidos, URLs de otros servicios, IDs de recursos ajenos ni configuración de Coordinator/SharedMutation. No borrar propiedades legacy durante la inspección.
+- Verificar que las propiedades legacy de los baselines migrados no se consultan después de confirmar sus marcadores versionados. La prueba debe cubrir AUTH, WRITE y ADMIN con los ledgers/hojas indicados en los apartados anteriores.
+- Confirmar que el único localizador estático de deployment es `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en el frontend, limitado a `getPublicConfiguration` de AUTH. Confirmar que el resto de endpoints procede del registro central, sin fallback local.
+- Ejecutar MIG-006 por cada identidad/deployment de AUTH, CATALOG y UTILITIES: comprobar si `SpreadsheetApp.getActiveSpreadsheet()` devuelve un contenedor activo en Web App real, lectura/escritura limitada a la hoja desechable, permisos y concurrencia. No sustituir `openById()` ni retirar los tres `SPREADSHEET_ID` hasta tener evidencia real para cada proyecto.
+- Confirmar que no existen llamadas HTTP Apps Script→Apps Script hacia servicios GPSpedia. Las llamadas a Drive API v3, YouTube Data API y descargas de imágenes externas se clasifican como integraciones externas, no como coordinación entre servicios.
+- Confirmar que Coordinator y SharedMutation no tienen deployments activos ni propiedades requeridas por versiones vigentes. Registrar el estado de versiones sin exponer URLs privadas, tokens o secretos.
+- Registrar HEAD, deployment, identidad efectiva, nombre de propiedad (sin valor), resultado y evidencia anonimizada. No desplegar a producción ni modificar propiedades/hojas productivas.

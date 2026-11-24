@@ -651,7 +651,7 @@ runGroup('47','MIG026',()=>{
  runCli('MIG026 preferencia global, caché con TTL y RBAC','JS/Tests/RichTextGlobalPreference.mjs');
  runCli('MIG026 baseline del contador WRITE en ledger append-only','JS/Tests/WriteCortesIdLedgerBaseline.mjs');
  runCli('MIG026 ADMIN contador LogosMarca en ledger de reservas y lock no bloqueante','JS/Tests/LogoIdReservationLedger.mjs');
- runCli('MIG026 ADMIN contador LogosMarca en ledger de reservas y lock no bloqueante','JS/Tests/LogoIdReservationLedger.mjs');
+ runCli('MIG026 búsqueda estática de configuración local, URLs y secretos','JS/Tests/MIG026StaticConfigSearch.mjs');
  runCli('MIG026 Safe Apply ADMIN: baseline Spreadsheet, ledger y no bloqueo entre operaciones','JS/Tests/CortesImageOrganizerLedger.mjs');
  runCli('MIG026 ADMIN guardas temporales: baseline, exclusión por recurso y TTL sin bloqueo durante Drive','JS/Tests/AdminLocalOperationGuard.mjs');
 });

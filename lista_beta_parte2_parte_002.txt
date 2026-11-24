@@ -1,3 +1,9 @@
+AVISO DE ARCHIVO HISTÓRICO — NO EJECUTAR COMO CHECKLIST VIGENTE
+
+Este documento conserva casos de prueba y procedimientos de una etapa anterior de GPSpedia. Algunas secciones hacen referencia a Coordinator, SharedMutation, secretos compartidos o contadores locales que fueron retirados/migrados por MIG-024, MIG-025 y MIG-026. Se conserva para trazabilidad y no se elimina. Para pruebas actuales, utilizar exclusivamente `Tareas_Beta.md` y sus apartados vigentes; no crear ni configurar propiedades secretas legacy.
+
+================================================================================
+
 ================================================================================
 AUG-042 — INVALIDACIÓN DE SESIÓN, ROL Y ESTADO PRIVILEGIADO DEL CLIENTE
 Antes de cualquier prueba, confirmar repositorio/rama/limpieza y sincronizar sin descartar cambios:

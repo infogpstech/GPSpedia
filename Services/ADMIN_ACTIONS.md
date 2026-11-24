@@ -11,7 +11,7 @@ No es posible enumerar desde este repositorio scripts, integraciones o consumido
 ## Autorización y coordinación
 
 - `doPostInternal_` exige sesión activa de rol Desarrollador antes de despachar ambas acciones. El rol/actor se deriva de la sesión del servidor; no se confía en un rol suministrado por el cliente.
-- Ambas acciones están en `isSharedMutationAction_`: el wrapper `doPost` solicita la lease compartida ADMIN antes de ejecutar el handler.
+- Ambas acciones están en `isSharedMutationAction_` para incluirlas en la auditoría. `doPost` deriva el actor desde la caché de sesión del propio ADMIN para todas las acciones protegidas; no adquiere leases ni consulta Coordinator.
 - Ambas acciones generan auditoría persistente ADMIN STARTED/finalizada bajo AUG-021.
 - No existe un endpoint de lectura o bypass alternativo para estas operaciones.
 
@@ -72,12 +72,12 @@ Las acciones del gestor de imágenes se ejecutan únicamente desde ADMIN y requi
 
 ## Auditoría completa e inventario por operación (AUG-028)
 
-- `auditDriveImagesInCortes` emite un `auditId` y mantiene en ScriptProperties el propietario autenticado, estado, posición esperada y huella del cursor. La continuación exige el cursor emitido por ADMIN, una pila no vacía, contadores coherentes y carpetas dentro del árbol Cortes.
+- `auditDriveImagesInCortes` emite un `auditId` y mantiene el estado del escaneo en la hoja `DriveAuditRuns`; el puntero por propietario se conserva en `DriveAuditLatest` y los lotes temporales en `CacheService`. La continuación exige el cursor emitido por ADMIN, una pila no vacía, contadores coherentes y carpetas dentro del árbol Cortes. `ScriptProperties` solo se consulta en los baselines de migración legacy.
 - Los lotes conservan sus IDs de imágenes sin uso en CacheService. ADMIN emite el estado `complete` solo después de comprobar todas las páginas y calcular el resumen exacto de IDs únicos. El guardado exige ese estado y que la lista recibida coincida con el resumen; una lista parcial o alterada no puede marcar registros ausentes.
 - `saveUnusedImagesInventory` genera un `inventoryOperationId` independiente. Las filas confirmadas conservan `ultima_auditoria_id`, `ultima_operacion_inventario_id`, `resultado_inventario` y `detalle_resultado_inventario`. Los bloqueos y errores por archivo se registran en ActividadUsuario con ambos identificadores.
 - La validación es individual: referencias nuevas, referencias no interpretables, estados históricos no resueltos, IDs ambiguos y duplicados por Drive ID bloquean el archivo afectado sin cancelar el resto del lote. El inventario no sobrescribe `en_uso`, `requiere_revision`, `en_papelera` ni `eliminacion_pendiente`.
 - Las escrituras por fila se verifican por lectura posterior y se reintentan una vez. Si una escritura parcial no puede reconciliarse y la identidad sigue verificable, el registro queda en `requiere_revision`; el organizador exige coincidencia de auditId, inventoryOperationId y resultado `confirmado`.
-- Los estados de auditoría expiran a las seis horas; los cursores vencidos requieren un nuevo escaneo. No se ejecutan operaciones sobre Spreadsheet/Drive productivos. La integración real de CacheService, PropertiesService, permisos y concurrencia permanece diferida a Beta aislada.
+- Los estados de auditoría expiran a las seis horas; los cursores vencidos requieren un nuevo escaneo. El flujo ordinario usa `DriveAuditRuns`, `DriveAuditLatest` y `CacheService`; tras completar sus baselines no vuelve a consultar `ScriptProperties` para estas familias. No se ejecutan operaciones sobre Spreadsheet/Drive productivos. La integración real de CacheService, permisos y concurrencia permanece diferida a Beta aislada.
 
 
 ## Lectura de opciones del modal de detalle (GP-BETA-02)

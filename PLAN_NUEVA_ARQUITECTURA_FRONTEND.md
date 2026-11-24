@@ -133,11 +133,11 @@ El detalle accionable se encuentra en [TAREAS_MIGRACION_ARQUITECTURA.md](./TAREA
 | 1 | Demostrar acceso a Spreadsheet sin configuración local ni bootstrap circular | PRUEBA LOCAL PREPARADA; WEB APP BETA PENDIENTE |
 | 2 | Diseñar e implementar esquema central y caché frontend | MIG-007 y MIG-008 COMPLETADAS CON VALIDACIÓN DIFERIDA |
 | 3 | Implementar router/orquestador frontend sin cambiar contratos | MIG-009 ROUTER COMPLETADO CON VALIDACIÓN BETA PENDIENTE; MIG-010 PENDIENTE |
-| 4 | Mover coordinación funcional de ADMIN y otros servicios al frontend; conservar solo llamadas técnicas directas justificadas y sin secretos | PENDIENTE |
+| 4 | Mover coordinación funcional de ADMIN y otros servicios al frontend; conservar solo llamadas técnicas directas justificadas y sin secretos | MIG-011/MIG-013/MIG-024/MIG-025 COMPLETADAS LOCALMENTE; validación Beta pendiente |
 | 5 | Unificar AUTH/USERS y simplificar sesión sin claves compartidas | PENDIENTE |
 | 6 | Migrar cargas de imágenes, vídeos y operaciones Drive sin pérdida | PENDIENTE |
 | 7 | Migrar métricas, monitoreo, administración, Inbox, PyS y utilidades | PENDIENTE |
-| 8 | Retirar COORDINATOR, SharedMutation y configuración antigua | PENDIENTE |
+| 8 | Retirar COORDINATOR y SharedMutation | MIG-024/MIG-025 COMPLETADAS LOCALMENTE; validación Beta pendiente. La configuración local de Spreadsheet sigue pendiente de MIG-006. |
 | 9 | Pruebas de paridad funcional, seguridad, rendimiento y regresión | PENDIENTE |
 | 10 | Preparar despliegue simple y validación Beta | PENDIENTE |
 
@@ -151,7 +151,7 @@ La migración no se acepta hasta cumplir simultáneamente:
 - [ ] El frontend obtiene y actualiza automáticamente endpoints desde el registro central; sin fallback local vencido o inválido.
 - [ ] Llamadas directas servicio-a-servicio solo por necesidad técnica, sin secretos compartidos y con autorización/RBAC del receptor.
 - [ ] Ningún servicio realiza llamadas HTTP a otro servicio GPSpedia.
-- [ ] No existen dependencias funcionales de COORDINATOR ni SharedMutation.
+- [x] No existen dependencias funcionales activas de COORDINATOR ni SharedMutation en los servicios y el frontend versionados.
 - [ ] La configuración operativa está centralizada en Spreadsheet.
 - [ ] El frontend coordina todas las solicitudes y secuencias entre servicios.
 - [ ] AUTH/USERS conserva login, usuarios, perfiles, roles, recuperación y sesiones.

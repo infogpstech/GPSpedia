@@ -62,6 +62,7 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   });
  });
  run_("WRITE procesa aportes sin lease ni dependencia de Coordinator",function(){const source=String(sources.write||"");assert_(source.includes("getAuthenticatedCollaborator"));assert_(!/withSharedMutationLease_|GPSpedia_COORDINATOR_URL|GPSpedia_COORDINATOR_SECRET/.test(source));});
+ run_("WRITE no acepta el token legacy de SharedMutation en aportes",function(){assert_(!String(sources.write||"").includes("__sharedMutationToken"));});
  run_("UI no calcula slot desde item posiblemente obsoleto",function(){assert_(!String(sources.ui||"").includes("if (!item.cableAlimen)")&&String(sources.ui||"").includes("El servidor asigna el primer par"));});
 
  const authStart=String(sources.write).indexOf("function getAuthenticatedCollaborator(");

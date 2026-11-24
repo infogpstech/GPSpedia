@@ -12054,7 +12054,7 @@ function findMissingCortesDriveReferences_(references, seenFileIds, rootFolderId
 
 /**
  * Obtiene o crea la carpeta única Cortes/Imagenes_Sin_Uso.
- * La identidad se conserva en ScriptProperties y se vuelve a validar contra el árbol autorizado.
+ * La carpeta se localiza por nombre y se valida contra el árbol autorizado; no se conserva un ID en propiedades locales.
  */
 function getOrCreateUnusedImagesFolder(rootFolder) {
     if (!rootFolder || typeof rootFolder.getFoldersByName !== "function") throw new Error("No se recibió la carpeta raíz Cortes verificada.");
@@ -12802,7 +12802,7 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
         if (typeof lock.hasLock !== "function" || lock.hasLock()) lock.releaseLock();
     }
 
-    // Coordinator/actividad y logging no participan en el commit del inventario.
+    // La actividad y el logging no participan en el commit del inventario.
     // Ejecutarlos después de liberar ScriptLock evita retener ADMIN durante HTTP/hojas ajenas.
     if (postCommitActivity) {
         recordImageAdministrationActivity(postCommitActivity.developerContext, "admin_image_move",

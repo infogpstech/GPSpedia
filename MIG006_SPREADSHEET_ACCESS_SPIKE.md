@@ -115,8 +115,12 @@ La parte local quedó implementada y probada: probe reproducible, guardas de esc
 No se modificaron servicios funcionales, IDs actuales, propiedades instaladas, endpoints, deployments, hojas ni datos.
 
 
-## 11. Estado heredado de secretos entre servicios
+## 11. Cierre del mecanismo legacy Coordinator/SharedMutation (MIG-024/MIG-025)
 
-La inspección del código fuente confirma que todavía existen referencias heredadas a propiedades como GPSpedia_COORDINATOR_SECRET, GPSpedia_COORDINATOR_SECRET_<SERVICIO> y GPSpedia_CATALOG_TRAFFIC_SECRET en los componentes actuales de Coordinator/SharedMutation y en rutas de inventario ADMIN/CATALOG. Esas referencias describen la implementación anterior; no son una recomendación ni autorización para crear, reponer o configurar esas propiedades.
+La inspección posterior a MIG-024 y MIG-025 confirma que las dependencias operativas de SharedMutation y Coordinator fueron retiradas del código activo. Ya no se requiere ni se debe configurar `GPSpedia_COORDINATOR_URL`, `GPSpedia_COORDINATOR_SECRET`, `GPSpedia_COORDINATOR_SECRET_<SERVICIO>` ni `GPSpedia_CATALOG_TRAFFIC_SECRET`. No crear, reponer ni copiar esos valores.
 
-MIG-006 no retiró esos mecanismos porque su alcance es el acceso a Spreadsheet. Su eliminación y sustitución funcional corresponde a las tareas de migración de llamadas ADMIN (MIG-011), sesiones sin Coordinator (MIG-013), retirada de SharedMutation (MIG-024) y retirada de Coordinator (MIG-025). Hasta que esas tareas se ejecuten, el código fuente conserva dependencias legacy que deben eliminarse antes de adoptar el diseño objetivo; no se debe añadir ningún secreto nuevo ni copiar valores existentes a otro proyecto.
+Las menciones a esas propiedades en las secciones históricas de este spike y en listas Beta antiguas se conservan únicamente como registro de la arquitectura anterior. No describen la configuración actual. La coordinación funcional corresponde al frontend; cada servicio valida localmente sesión/RBAC. La comunicación directa entre servicios solo se permite cuando sea técnicamente necesaria y debe resolver cualquier endpoint desde la configuración central, sin secretos compartidos.
+
+El único localizador estático de arranque admitido es `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en el frontend, limitado a `getPublicConfiguration` de AUTH según MIG-009. No es un secreto ni un endpoint para acciones ordinarias.
+
+La única limitación de configuración local detectada en servicios Apps Script sigue siendo el ID de la Spreadsheet en AUTH, CATALOG y UTILITIES. Su retirada depende de la prueba Web App real de MIG-006; no sustituir `openById()` hasta demostrar el acceso activo en Beta.

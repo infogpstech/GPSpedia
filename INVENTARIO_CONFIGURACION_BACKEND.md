@@ -375,3 +375,14 @@ Se buscaron en los 9 módulos activos referencias a UrlFetchApp, URLs de Web App
 - El ScriptLock se adquiere con `tryLock(0)`, sin esperas. El escaneo de IDs se hace antes del lock; el ledger consulta únicamente la última reserva en operación ordinaria. Drive, compensaciones y telemetría quedan fuera del lock.
 - CI run 45366702261: 499 suites, 5,886 pruebas aprobadas, 0 fallos; sintaxis PASS. GitHub Pages run 45366700363 SUCCESS.
 - La hoja LogoIdReservations, el baseline real y la concurrencia multi-ejecución permanecen pendientes de Beta aislada. No se modificaron propiedades, hojas, deployments ni datos instalados.
+
+
+### MIG-026 — Resultado de búsqueda estática global — 2026-11-24
+
+- Se inspeccionaron 9 servicios Apps Script, 39 módulos frontend, 3 HTML, manifest, service worker, 3 workflows y 49 documentos activos.
+- Servicios Apps Script: cero URLs de deployments GPSpedia, cero constantes locales de endpoints de otros servicios y cero referencias operativas a secretos de Coordinator. No hay `setProperty` ni `deleteProperty` en los nueve servicios activos.
+- El único bootstrap estático es `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en frontend, permitido por MIG-009. Los seis servicios vigentes proceden del registro central; USERS/COORDINATOR se rechazan como claves retiradas.
+- PropertiesService: 8 lecturas directas y un proveedor lazy, todos limitados a baselines de importación legacy (AUTH 2, ADMIN 6, WRITE 1). No son accesos operativos después del baseline.
+- Excepción local pendiente: `SPREADSHEET_ID` en AUTH, CATALOG y UTILITIES. MIG-006 requiere probar el contexto Web App real antes de retirar `openById()`; no se modificó.
+- Se retiró el campo legacy `__sharedMutationToken` del payload permitido en WRITE. Los documentos activos que describían Coordinator/SharedMutation o ScriptProperties operativos fueron corregidos; las listas Beta antiguas se conservaron y marcaron como históricas.
+- Detalle y criterios automatizados: `MIG026_BUSQUEDA_ESTATICA_FINAL.md` y `JS/Tests/MIG026StaticConfigSearch.mjs`. Validación Beta de propiedades instaladas y de MIG-006 pendiente.

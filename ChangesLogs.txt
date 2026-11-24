@@ -496,3 +496,12 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - La sección crítica usa tryLock(0), sin espera; lectura del catálogo antes del lock y consulta O(1) de la última reserva en el flujo normal. Drive, compensaciones y telemetría fuera del lock.
 - La propiedad legacy solo se lee durante baseline; no se escribe ni elimina. No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas.
 - Resultado: MIG-026 ADMIN-05 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente paso: búsqueda estática global final de MIG-026.
+
+
+### 2026-11-24 — MIG-026 búsqueda estática global de configuración
+- Inspección de 9 servicios Apps Script, 39 módulos frontend, 3 HTML, manifest, service worker, 3 workflows y 49 documentos activos.
+- Cero URLs de deployments GPSpedia y cero secretos compartidos operativos en servicios. Única bootstrap pública en frontend según MIG-009.
+- PropertiesService restringido a nueve puntos de lectura legacy dentro de baselines; sin setProperty/deleteProperty en servicios activos.
+- Excepción pendiente MIG-006: SPREADSHEET_ID permanece en AUTH, CATALOG y UTILITIES hasta probar el contexto Web App real.
+- Se retiró __sharedMutationToken del allowlist WRITE, se actualizaron documentos obsoletos de Coordinator/SharedMutation y se marcaron listas Beta antiguas como históricas.
+- Se añadió suite MIG026StaticConfigSearch.mjs y auditoría MIG026_BUSQUEDA_ESTATICA_FINAL.md. CI pendiente.

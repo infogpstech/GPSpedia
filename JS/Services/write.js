@@ -1705,7 +1705,7 @@ function createSupplementaryInfoError_(code,message){const e=new Error(message);
 function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
 function hasSupplementaryRichTextContent_(value){const visible=String(value||"").replace(/<br\s*\/?>/gi," ").replace(/<img\b[^>]*>/gi," imagen ").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim();return visible!=="";}
 function assertSupplementaryInfoPayloadKeys_(payload){
- const allowed=new Set(["vehicleId","userId","sessionToken","__sharedMutationToken","timestamp","opId","contributionOpIds","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
+ const allowed=new Set(["vehicleId","userId","sessionToken","timestamp","opId","contributionOpIds","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
  const videoFields=new Set(["video","videoUrl","Video","videoGuiaUrl","videoGuiaDesarmeUrl","field","fieldName"]);
  const keys=Object.keys(payload||{}),videoField=keys.find(key=>videoFields.has(key));
  if(videoField)throw createSupplementaryInfoError_("SUPPLEMENTARY_VIDEO_APPROVAL_REQUIRED","El vídeo no se puede guardar mediante addSupplementaryInfo ni con un enlace directo. Utiliza el flujo de aprobación de YouTube.");
