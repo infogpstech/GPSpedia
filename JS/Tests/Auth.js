@@ -3188,6 +3188,9 @@ function getAuthCentralServiceUrlMap_(spreadsheet, allowDraft) {
             if (!/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(contractVersion)) {
                 throw new Error("La revisión activa no declara una versión de contrato válida para " + key + ".");
             }
+            if (contractVersion !== AUTH_CENTRAL_SERVICE_CONTRACT_VERSIONS_[key]) {
+                throw new Error("La versión publicada de " + key + " no coincide con la versión compatible de la plataforma.");
+            }
             result[key] = endpointUrl;
         });
     } else if (allowDraft) {
@@ -3363,9 +3366,11 @@ function publishAuthCentralServiceUrls_(sourceUrls, actor, reason, requestId) {
                 row = previous[key].slice();
                 row[services.positions.config_revision] = nextRevision;
                 row[services.positions.endpoint_url] = urls[key];
-                row[services.positions.updated_at] = now;
-                row[services.positions.updated_by] = actorId;
-                row[services.positions.change_reason] = reason;
+                if (changed.indexOf(key) >= 0) {
+                    row[services.positions.updated_at] = now;
+                    row[services.positions.updated_by] = actorId;
+                    row[services.positions.change_reason] = reason;
+                }
             } else {
                 row = makeAuthCentralRow_(services.headers, services.positions, {
                     config_revision: nextRevision, service_key: key, endpoint_url: urls[key], enabled: true,
