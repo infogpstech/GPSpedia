@@ -131,14 +131,37 @@ check("actualiza únicamente URL y metadatos de auditoría, conserva contrato y 
     assert.equal(fixture.sheets.Servicios.rows.find(item=>item[0]===""&&item[1]==="CATALOG")[2],changed.CATALOG);
 });
 
+check("cada revisión contiene una instantánea única y las lecturas usan solo active_revision",()=>{
+    const context=createContext(), first=validUrls("OLD");
+    context.publishAuthCentralServiceUrls_(first,{userId:"dev-1"},"initial","request-active-000001");
+    const changed={...first,CATALOG:validUrls("NEW").CATALOG};
+    const published=context.publishAuthCentralServiceUrls_(changed,{userId:"dev-2"},"update catalog","request-active-000002");
+    assert.deepEqual(Array.from(published.changedServices),["CATALOG"]);
+    const activeRows=fixture.sheets.Servicios.rows.slice(1).filter(row=>Number(row[0])===2);
+    assert.equal(activeRows.length,6);
+    assert.equal(new Set(activeRows.map(row=>row[1])).size,6);
+    const draft=fixture.sheets.Servicios.rows.find(row=>row[0]===""&&row[1]==="CATALOG");
+    draft[2]="https://script.google.com/macros/s/STALE_DRAFT/exec";
+    const activeMap=context.getAuthCentralServiceUrlMap_(fixture,false);
+    assert.equal(activeMap.CATALOG,changed.CATALOG);
+    assert.equal(activeMap.WRITE,first.WRITE);
+    const snapshot=context.readCentralConfigurationSnapshot_();
+    assert.equal(snapshot.revision,2);
+    assert.equal(snapshot.services.CATALOG.contractVersion,"2.4.0");
+    assert.equal(snapshot.services.FEEDBACK.contractVersion,"1.2.2");
+    const duplicate=activeRows[0].slice();
+    fixture.sheets.Servicios.rows.push(duplicate);
+    assert.throws(()=>context.getAuthCentralServiceUrlMap_(fixture,false),/servicio duplicado/);
+});
+
 check("no crea revisión cuando las URL ya coinciden",()=>{
     const context=createContext(), urls=validUrls();
     context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
     const historyCount=fixture.sheets.ConfiguracionHistorial.rows.length;
     const replay=context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
-    assert.equal(replay.idempotent,true);
+    assert.equal(replay.idempotent,true);\n    assert.deepEqual(Array.from(replay.changedServices),keys);
     const result=context.publishAuthCentralServiceUrls_(urls,{userId:"dev-2"},"no change","request-noop-000002");
-    assert.equal(result.unchanged,true);
+    assert.equal(result.unchanged,true);\n    assert.deepEqual(Array.from(result.changedServices),[]);
     assert.equal(result.revision,1);
     assert.equal(fixture.sheets.ConfiguracionHistorial.rows.length,historyCount);
 });
@@ -207,4 +230,4 @@ check("AUTH exige sesión para consultar y actualizar endpoints y el frontend us
 
 assert.doesNotMatch(publisherSource,/PropertiesService|UrlFetchApp|https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/,
     "AUTH no debe guardar URLs de servicios ni usar secretos o llamadas interservicio.");
-console.log("CentralServiceUrlPublisher: "+passed+"/7 PASS");
+console.log("CentralServiceUrlPublisher: "+passed+"/8 PASS");
