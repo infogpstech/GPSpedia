@@ -7,15 +7,36 @@ const runtimeFactory = new Function(
 );
 const runtime = runtimeFactory();
 
+function createSheet(headers) {
+    const rows = [headers.slice()];
+    return {
+        _rows: rows,
+        getLastRow: () => rows.length,
+        getLastColumn: () => headers.length,
+        getRange(row, column, rowCount, columnCount) {
+            return {
+                getValues: () => rows.slice(row - 1, row - 1 + rowCount)
+                    .map(values => values.slice(column - 1, column - 1 + columnCount)),
+                getDisplayValues: () => rows.slice(row - 1, row - 1 + rowCount)
+                    .map(values => values.slice(column - 1, column - 1 + columnCount).map(value => String(value ?? ""))),
+                setValues(values) {
+                    values.forEach((value, index) => { rows[row - 1 + index] = value.slice(); });
+                }
+            };
+        },
+        appendRow(row) { rows.push(row.slice()); },
+        deleteRows(start, count) { rows.splice(start - 1, count); }
+    };
+}
+
 function createHarness(maxEvents = 100) {
-    const store = Object.create(null);
+    const stateSheet = createSheet(runtime.CATALOG_FEED_STATE_HEADERS_);
+    const eventsSheet = createSheet(runtime.CATALOG_FEED_EVENT_HEADERS_);
+    const spreadsheet = { getSheetByName: name => ({
+        CatalogChangeState: stateSheet, CatalogChangeEvents: eventsSheet
+    })[name] || null };
     let busy = false;
     let held = false;
-    const properties = {
-        getProperties: () => Object.assign({}, store),
-        setProperty: (key, value) => { store[key] = String(value); },
-        deleteProperty: key => { delete store[key]; }
-    };
     const lock = {
         tryLock: () => {
             if (busy || held) return false;
@@ -25,13 +46,13 @@ function createHarness(maxEvents = 100) {
         releaseLock: () => { held = false; }
     };
     const feed = runtime.createCatalogChangeFeed_({
-        properties,
+        spreadsheet,
         lockService: { getScriptLock: () => lock },
         now: () => 1700000000000,
         maxEvents
     });
     return {
-        feed, store,
+        feed, stateSheet, eventsSheet, spreadsheet,
         setBusy: value => { busy = Boolean(value); },
         isHeld: () => held
     };
@@ -176,18 +197,18 @@ test("la retención acotada detecta cursores obsoletos", () => {
     assert.equal(page.resetRequired, true);
     assert.equal(page.minRevision, 2);
     assert.equal(page.nextCursor, 3);
-    assert.equal(Object.keys(h.store).filter(key => key.startsWith("GPSpedia_CATALOG_CHANGE_EVENT_")).length, 2);
+    assert.equal(h.eventsSheet.getLastRow() - 1, 2);
 });
 
 test("un evento ausente o corrupto solicita reconstrucción", () => {
     const missing = createHarness();
     runtime.publishCatalogResetForActor_(basePayload, jefe, missing.feed);
-    delete missing.store.GPSpedia_CATALOG_CHANGE_EVENT_1;
+    missing.eventsSheet.deleteRows(2, 1);
     assert.equal(missing.feed.getChanges({ cursor: 0, limit: 10 }).resetRequired, true);
 
     const corrupt = createHarness();
     runtime.publishCatalogResetForActor_(basePayload, jefe, corrupt.feed);
-    corrupt.store.GPSpedia_CATALOG_CHANGE_EVENT_1 = "{invalid";
+    corrupt.eventsSheet.getRange(2, 5, 1, 1).setValues([["{invalid"]]);
     assert.equal(corrupt.feed.getChanges({ cursor: 0, limit: 10 }).resetRequired, true);
 });
 
@@ -195,7 +216,7 @@ test("un lock ocupado falla cerrado sin escribir eventos", () => {
     const h = createHarness();
     h.setBusy(true);
     assert.throws(() => runtime.publishCatalogResetForActor_(basePayload, jefe, h.feed), /ocupado/);
-    assert.equal(Object.keys(h.store).length, 0);
+    assert.equal(h.eventsSheet.getLastRow(), 1);
     assert.equal(h.isHeld(), false);
 });
 
@@ -225,10 +246,25 @@ test("CATALOG reconstruye el snapshot PyS desde su hoja canónica", () => {
 test("el evento no persiste usuario ni token de sesión", () => {
     const h = createHarness();
     runtime.publishCatalogResetForActor_(basePayload, jefe, h.feed);
-    const event = JSON.parse(h.store.GPSpedia_CATALOG_CHANGE_EVENT_1);
+    const event = JSON.parse(h.eventsSheet.getRange(2, 5, 1, 1).getValues()[0][0]);
     assert.equal(Object.prototype.hasOwnProperty.call(event, "userId"), false);
     assert.equal(Object.prototype.hasOwnProperty.call(event, "sessionToken"), false);
-    assert.equal(JSON.stringify(event).includes("session-token-that-is-not-persisted"), false);
+    assert.equal(JSON.stringify(h.eventsSheet._rows[1]).includes("session-token-that-is-not-persisted"), false);
+});
+
+test("requiere ambas hojas y sus encabezados versionados", () => {
+    assert.throws(() => runtime.createCatalogChangeFeed_({
+        spreadsheet: { getSheetByName: () => null },
+        lockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) }
+    }), /Falta la hoja requerida/);
+    assert.throws(() => runtime.createCatalogChangeFeed_({
+        spreadsheet: { getSheetByName: name => createSheet(name === "CatalogChangeState" ? ["incorrecto"] : runtime.CATALOG_FEED_EVENT_HEADERS_) },
+        lockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) }
+    }), /no coincide con el contrato/);
+});
+
+test("CATALOG no usa ScriptProperties para persistir el feed", () => {
+    assert.doesNotMatch(catalogSource, /PropertiesService\\.getScriptProperties/);
 });
 
 test("valida cursor y límite", () => {
@@ -238,5 +274,5 @@ test("valida cursor y límite", () => {
     assert.throws(() => h.feed.getChanges({ cursor: 0, limit: 51 }));
 });
 
-console.log("CatalogChangeFeed: " + passed + "/16 PASS");
-assert.equal(passed, 16);
+console.log("CatalogChangeFeed: " + passed + "/18 PASS");
+assert.equal(passed, 18);

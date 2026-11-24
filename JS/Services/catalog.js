@@ -125,9 +125,40 @@ const CATALOG_FEED_ALLOWED_COLLECTIONS_ = Object.freeze({
     })
 });
 
+const CATALOG_FEED_STATE_SHEET_ = "CatalogChangeState";
+const CATALOG_FEED_EVENTS_SHEET_ = "CatalogChangeEvents";
+const CATALOG_FEED_SCHEMA_VERSION_ = 1;
+const CATALOG_FEED_STATE_HEADERS_ = Object.freeze(["schemaVersion", "revision", "minRevision", "updatedAt"]);
+const CATALOG_FEED_EVENT_HEADERS_ = Object.freeze([
+    "revision", "collection", "recordId", "operation", "snapshotJson",
+    "createdAt", "sourceService", "sourceOperation", "sourceRequestId", "resetRequired"
+]);
+
+function validateCatalogFeedSheet_(sheet, name, headers) {
+    if (!sheet || typeof sheet.getRange !== "function" || typeof sheet.getLastRow !== "function") {
+        throw new Error("Falta la hoja requerida del feed CATALOG: " + name + ".");
+    }
+    const actual = sheet.getRange(1, 1, 1, headers.length).getDisplayValues()[0]
+        .map(value => String(value || "").trim());
+    if (actual.length !== headers.length || headers.some((header, index) => actual[index] !== header)) {
+        throw new Error("El esquema de la hoja " + name + " no coincide con el contrato del feed CATALOG.");
+    }
+    return sheet;
+}
+
 function createCatalogChangeFeed_(dependencies) {
     const deps = dependencies || {};
-    const properties = deps.properties || PropertiesService.getScriptProperties();
+    const spreadsheet = deps.spreadsheet ||
+        (typeof deps.getSpreadsheet === "function" ? deps.getSpreadsheet() : getSpreadsheet());
+    if (!spreadsheet || typeof spreadsheet.getSheetByName !== "function") {
+        throw new Error("CATALOG no pudo resolver la Spreadsheet del feed.");
+    }
+    const stateSheet = validateCatalogFeedSheet_(
+        spreadsheet.getSheetByName(CATALOG_FEED_STATE_SHEET_), CATALOG_FEED_STATE_SHEET_, CATALOG_FEED_STATE_HEADERS_
+    );
+    const eventsSheet = validateCatalogFeedSheet_(
+        spreadsheet.getSheetByName(CATALOG_FEED_EVENTS_SHEET_), CATALOG_FEED_EVENTS_SHEET_, CATALOG_FEED_EVENT_HEADERS_
+    );
     const lockService = deps.lockService || LockService;
     const now = typeof deps.now === "function" ? deps.now : function() { return Date.now(); };
     const maxEvents = Number.isInteger(deps.maxEvents) && deps.maxEvents >= 1 && deps.maxEvents <= 100
@@ -143,12 +174,64 @@ function createCatalogChangeFeed_(dependencies) {
         finally { lock.releaseLock(); }
     }
 
-    function revisions_(snapshot) {
-        return Object.keys(snapshot || {})
-            .filter(key => key.indexOf(CATALOG_FEED_EVENT_PREFIX_) === 0)
-            .map(key => Number(key.slice(CATALOG_FEED_EVENT_PREFIX_.length)))
-            .filter(revision => Number.isSafeInteger(revision) && revision > 0)
-            .sort((a, b) => a - b);
+    function readState_() {
+        const lastRow = Number(stateSheet.getLastRow() || 0);
+        if (lastRow < 2) return { revision: 0, minRevision: 1 };
+        if (lastRow > 2) throw new Error("CatalogChangeState debe contener una única fila de estado.");
+        const row = stateSheet.getRange(2, 1, 1, CATALOG_FEED_STATE_HEADERS_.length).getValues()[0] || [];
+        const schemaVersion = Number(row[0]);
+        const revision = Number(row[1]);
+        const minRevision = Number(row[2]);
+        if (schemaVersion !== CATALOG_FEED_SCHEMA_VERSION_ ||
+            !Number.isSafeInteger(revision) || revision < 0 ||
+            !Number.isSafeInteger(minRevision) || minRevision < 1 || minRevision > revision + 1) {
+            throw new Error("La fila de estado de CatalogChangeState no es válida.");
+        }
+        return { revision, minRevision };
+    }
+
+    function readEvents_() {
+        const lastRow = Number(eventsSheet.getLastRow() || 0);
+        const count = Math.max(0, lastRow - 1);
+        if (!count) return [];
+        const readCount = Math.min(count, maxEvents);
+        const firstRow = lastRow - readCount + 1;
+        const rows = eventsSheet.getRange(firstRow, 1, readCount, CATALOG_FEED_EVENT_HEADERS_.length).getValues();
+        return rows.map(row => ({
+            revision: Number(row[0]),
+            collection: String(row[1] || ""),
+            recordId: String(row[2] || ""),
+            operation: String(row[3] || ""),
+            snapshotJson: String(row[4] === null || row[4] === undefined ? "" : row[4]),
+            createdAt: String(row[5] || ""),
+            sourceService: String(row[6] || ""),
+            sourceOperation: String(row[7] || ""),
+            sourceRequestId: String(row[8] || ""),
+            resetRequired: row[9] === true || String(row[9]).toLowerCase() === "true"
+        }));
+    }
+
+    function currentState_() {
+        const state = readState_();
+        const events = readEvents_();
+        const lastEventRevision = events.length && Number.isSafeInteger(events[events.length - 1].revision)
+            ? events[events.length - 1].revision : 0;
+        const currentRevision = Math.max(state.revision, lastEventRevision);
+        const minRevision = events.length && Number.isSafeInteger(events[0].revision)
+            ? events[0].revision : state.minRevision;
+        return { currentRevision, minRevision, events };
+    }
+
+    function writeState_(revision, minRevision) {
+        const lastRow = Number(stateSheet.getLastRow() || 0);
+        if (lastRow > 2) throw new Error("CatalogChangeState contiene filas inesperadas.");
+        stateSheet.getRange(2, 1, 1, CATALOG_FEED_STATE_HEADERS_.length).setValues([[
+            CATALOG_FEED_SCHEMA_VERSION_, revision, minRevision, new Date(now()).toISOString()
+        ]]);
+        const confirmed = readState_();
+        if (confirmed.revision !== revision || confirmed.minRevision !== minRevision) {
+            throw new Error("La escritura del estado del feed CATALOG no superó la lectura de confirmación.");
+        }
     }
 
     function validateSource_(source) {
@@ -162,32 +245,29 @@ function createCatalogChangeFeed_(dependencies) {
         return { service, operation, requestId };
     }
 
-    function findDuplicate_(snapshot, source) {
-        const revisions = revisions_(snapshot);
+    function findDuplicate_(events, source) {
         let first = null, last = null;
-        for (const revision of revisions) {
-            const raw = snapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
-            if (!raw) continue;
-            try {
-                const event = JSON.parse(raw);
-                if (event && event.sourceRequestId === source.requestId &&
-                    event.sourceService === source.service && event.sourceOperation === source.operation) {
-                    if (first === null) first = revision;
-                    last = revision;
-                }
-            } catch (error) {}
+        for (const event of events) {
+            if (event.sourceRequestId === source.requestId &&
+                event.sourceService === source.service && event.sourceOperation === source.operation) {
+                if (first === null) first = event.revision;
+                last = event.revision;
+            }
         }
         return first === null ? null : { firstRevision: first, lastRevision: last };
     }
 
     function appendEvent_(source, resolved) {
-        const propertySnapshot = properties.getProperties() || {};
-        const duplicate = findDuplicate_(propertySnapshot, source);
-        if (duplicate) return {
-            status: "success", revision: duplicate.lastRevision,
-            firstRevision: duplicate.firstRevision, lastRevision: duplicate.lastRevision,
-            resetRequired: false, duplicate: true
-        };
+        const current = currentState_();
+        const duplicate = findDuplicate_(current.events, source);
+        if (duplicate) {
+            writeState_(current.currentRevision, current.minRevision);
+            return {
+                status: "success", revision: duplicate.lastRevision,
+                firstRevision: duplicate.firstRevision, lastRevision: duplicate.lastRevision,
+                resetRequired: false, duplicate: true
+            };
+        }
 
         const collection = String(resolved.collection || "").trim().toLowerCase();
         const recordId = String(resolved.recordId || "").trim();
@@ -206,14 +286,8 @@ function createCatalogChangeFeed_(dependencies) {
             if (operation === "delete" && snapshot !== null) throw new Error("El evento delete no debe incluir snapshot.");
         }
 
-        const revisions = revisions_(propertySnapshot);
-        const storedRevision = Number(propertySnapshot[CATALOG_FEED_REVISION_PROPERTY_] || 0);
-        const currentRevision = Math.max(
-            Number.isSafeInteger(storedRevision) && storedRevision >= 0 ? storedRevision : 0,
-            revisions.length ? revisions[revisions.length - 1] : 0
-        );
-        if (!Number.isSafeInteger(currentRevision + 1)) throw new Error("La revisión del catálogo alcanzó su límite seguro.");
-        const revision = currentRevision + 1;
+        const revision = current.currentRevision + 1;
+        if (!Number.isSafeInteger(revision)) throw new Error("La revisión del catálogo alcanzó su límite seguro.");
         const event = {
             revision, collection, recordId, operation, snapshot,
             createdAt: new Date(now()).toISOString(),
@@ -224,10 +298,22 @@ function createCatalogChangeFeed_(dependencies) {
         };
         const serialized = JSON.stringify(event);
         if (serialized.length > CATALOG_FEED_MAX_EVENT_LENGTH_) throw new Error("El evento del catálogo excede el tamaño máximo permitido.");
-        properties.setProperty(CATALOG_FEED_EVENT_PREFIX_ + revision, serialized);
-        properties.setProperty(CATALOG_FEED_REVISION_PROPERTY_, String(revision));
-        const retained = revisions_(properties.getProperties() || propertySnapshot);
-        while (retained.length > maxEvents) properties.deleteProperty(CATALOG_FEED_EVENT_PREFIX_ + retained.shift());
+
+        eventsSheet.appendRow([
+            revision, collection, recordId, operation, JSON.stringify(snapshot),
+            event.createdAt, source.service, source.operation, source.requestId, event.resetRequired
+        ]);
+        const eventCount = Math.max(0, Number(eventsSheet.getLastRow() || 0) - 1);
+        if (eventCount > maxEvents) eventsSheet.deleteRows(2, eventCount - maxEvents);
+        const retained = readEvents_();
+        const minRevision = retained.length ? retained[0].revision : revision + 1;
+        writeState_(revision, minRevision);
+
+        const confirmed = currentState_();
+        if (confirmed.currentRevision !== revision ||
+            !confirmed.events.length || confirmed.events[confirmed.events.length - 1].revision !== revision) {
+            throw new Error("El evento del catálogo no superó la lectura de confirmación.");
+        }
         return {
             status: "success", revision, firstRevision: revision, lastRevision: revision,
             resetRequired: operation === "reset", duplicate: false
@@ -250,13 +336,16 @@ function createCatalogChangeFeed_(dependencies) {
         }
         if (typeof resolver !== "function") throw new Error("No existe un resolvedor canónico para el cambio.");
         return withLock_(function() {
-            const propertySnapshot = properties.getProperties() || {};
-            const duplicate = findDuplicate_(propertySnapshot, normalized);
-            if (duplicate) return {
-                status: "success", revision: duplicate.lastRevision,
-                firstRevision: duplicate.firstRevision, lastRevision: duplicate.lastRevision,
-                resetRequired: false, duplicate: true
-            };
+            const current = currentState_();
+            const duplicate = findDuplicate_(current.events, normalized);
+            if (duplicate) {
+                writeState_(current.currentRevision, current.minRevision);
+                return {
+                    status: "success", revision: duplicate.lastRevision,
+                    firstRevision: duplicate.firstRevision, lastRevision: duplicate.lastRevision,
+                    resetRequired: false, duplicate: true
+                };
+            }
             return appendEvent_(normalized, resolver(change));
         });
     }
@@ -270,28 +359,35 @@ function createCatalogChangeFeed_(dependencies) {
             throw new Error("El límite de cambios debe estar entre 1 y 50.");
         }
         return withLock_(function() {
-            const propertySnapshot = properties.getProperties() || {};
-            const revisions = revisions_(propertySnapshot);
-            const storedRevision = Number(propertySnapshot[CATALOG_FEED_REVISION_PROPERTY_] || 0);
-            const currentRevision = Math.max(
-                Number.isSafeInteger(storedRevision) && storedRevision >= 0 ? storedRevision : 0,
-                revisions.length ? revisions[revisions.length - 1] : 0
-            );
-            const minRevision = revisions.length ? revisions[0] : currentRevision + 1;
+            const current = currentState_();
+            const events = current.events;
+            const currentRevision = current.currentRevision;
+            const minRevision = events.length ? events[0].revision : current.minRevision;
             const resetPage = function() {
                 return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
             };
-            if (cursor > currentRevision || (revisions.length && cursor < minRevision - 1)) return resetPage();
+            if (cursor > currentRevision || (events.length && cursor < minRevision - 1) ||
+                (!events.length && currentRevision > 0)) return resetPage();
+
+            const byRevision = new Map(events.map(event => [event.revision, event]));
             const changes = [];
             const endRevision = Math.min(currentRevision, cursor + requestedLimit);
             for (let revision = cursor + 1; revision <= endRevision; revision++) {
-                const raw = propertySnapshot[CATALOG_FEED_EVENT_PREFIX_ + revision];
-                if (!raw) return resetPage();
-                let event;
-                try { event = JSON.parse(raw); } catch (error) { return resetPage(); }
-                if (!event || event.revision !== revision || !["reset", "upsert", "delete"].includes(event.operation)) return resetPage();
-                if (event.operation === "upsert" && (!event.snapshot || typeof event.snapshot !== "object")) return resetPage();
-                changes.push(event);
+                const row = byRevision.get(revision);
+                if (!row || !Number.isSafeInteger(row.revision) ||
+                    !["reset", "upsert", "delete"].includes(row.operation)) return resetPage();
+                let snapshot;
+                try { snapshot = JSON.parse(row.snapshotJson || "null"); }
+                catch (error) { return resetPage(); }
+                if (row.operation === "upsert" && (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot))) return resetPage();
+                if (row.operation !== "upsert" && snapshot !== null) return resetPage();
+                if (!row.createdAt || !row.sourceService || !row.sourceOperation || !row.sourceRequestId) return resetPage();
+                changes.push({
+                    revision: row.revision, collection: row.collection, recordId: row.recordId,
+                    operation: row.operation, snapshot, createdAt: row.createdAt,
+                    sourceService: row.sourceService, sourceOperation: row.sourceOperation,
+                    sourceRequestId: row.sourceRequestId, resetRequired: row.resetRequired
+                });
             }
             const nextCursor = changes.length ? changes[changes.length - 1].revision : cursor;
             return {
