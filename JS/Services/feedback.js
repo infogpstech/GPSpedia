@@ -11,8 +11,8 @@ let spreadsheet = null;
 
 function getSpreadsheet() {
   if (spreadsheet === null) {
-    spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    if (!spreadsheet) throw new Error("No hay una Spreadsheet activa vinculada al proyecto de servicio.");
+    spreadsheet = SpreadsheetApp.openById(GPSpediaSpreadsheetId_);
+    if (!spreadsheet) throw new Error("No se pudo abrir la Spreadsheet central configurada para el servicio.");
   }
   return spreadsheet;
 }
@@ -874,14 +874,9 @@ function extractDriveFileIds(value) {
 }
 
 function getCortesRootFolderResource_() {
-    const snapshot = getCentralConfigurationForService_("FEEDBACK");
-    if (!snapshot || snapshot.status !== "success" || snapshot.stale === true) throw new Error("La configuración central de recursos no está disponible o está vencida.");
-    const resource = snapshot.resources && snapshot.resources.cortes_root_folder_id;
-    if (!resource || resource.resourceType !== "drive_folder") throw new Error("Falta el recurso central habilitado cortes_root_folder_id.");
-    const id = String(resource.resourceId || "").trim();
-    const expectedName = String(resource.expectedName || "Cortes").trim();
-    if (!/^[A-Za-z0-9_-]{5,200}$/.test(id) || expectedName.toLowerCase() !== "cortes") throw new Error("La configuración central de la carpeta Cortes no cumple el contrato.");
-    return { id, expectedName, expectedParentId: String(resource.expectedParentId || "").trim() };
+    const id = String(GPSpediaCortesRootFolderId_ || "").trim();
+    if (!/^[A-Za-z0-9_-]{5,200}$/.test(id)) throw new Error("El ID de la carpeta raíz Cortes no está configurado.");
+    return { id, expectedName: "Cortes", expectedParentId: "" };
 }
 function getCortesRootFolder() {
     const resource = getCortesRootFolderResource_();
