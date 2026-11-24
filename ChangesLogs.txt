@@ -858,3 +858,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI run `45502874404`, HEAD `a13dd84379e575d06f0a4e73bc1909cdad346f1d`: SUCCESS; 517 suites, 6,139 pruebas, 0 fallos. `ActivityLogAppendAtomic` 10/10 PASS y `ActivityLogsBoundedRead` 8/8 PASS.
 - Chromium responsive: 184/184 PASS en cuatro viewports; GitHub Pages run `45502874103`: SUCCESS.
 - No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos.
+
+
+### 2026-11-24 — Tutoriales: carga de imagen de tarjeta
+
+- Se añadió al formulario de alta el selector opcional de imagen JPEG/PNG/WebP con límite de 3 MB y lectura Data URL en frontend.
+- FEEDBACK valida MIME, Base64, tamaño y firma binaria; guarda el archivo en `Cortes/Tutoriales`, verifica carpeta padre y permisos heredados, y escribe en `Tutorial!C:C` únicamente la referencia Drive.
+- El hash de imagen participa en la idempotencia del alta. El mismo `operationId` reutiliza el archivo; un contenido distinto con el mismo ID se rechaza. Los archivos pendientes se pueden recuperar solo después de verificar contenido, hash, MIME, tamaño, nombre, metadata y ubicación.
+- CATALOG normaliza la referencia Drive al ID de imagen que consumen las tarjetas.
+- Pruebas: `TutorialIntegrity` 47/47 PASS; CI run `45504362878`: 517 suites, 6,147 pruebas aprobadas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45504362787`: SUCCESS.
+- Sin despliegue Apps Script ni modificaciones a Spreadsheet, Drive, propiedades, permisos o datos externos. La prueba de integración Beta permanece pendiente.
