@@ -771,3 +771,17 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Las acciones de limpiar consola, copiar registro, ejecutar comandos y cambiar pestañas deben conservar su funcionamiento; los cambios solicitados para esos controles son visuales.
 - Las explicaciones extensas se mostrarán solo mediante el botón de información. Los mensajes de resultado visibles al usuario serán breves y no expondrán detalles internos en producción.
 - La tarea queda EN PROGRESO. Se ejecutará por bloques con pruebas de regresión; no se autorizan despliegues Apps Script ni cambios en recursos productivos.
+
+
+### 2026-11-24 — AUG-146: implementación de ajustes visuales, mensajes y endpoints
+
+- Encabezado del modal de detalle ajustado para márgenes simétricos del logo, cuadrícula más alta, metadatos más compactos, edición sin solapamientos y estado «Guardando…» sobre el nombre del modelo.
+- Modal de desarrollador reorganizado en escritorio y móvil: consola compacta, pestañas iconográficas con expansión al seleccionar, controles limpiar/copiar alineados y con etiquetas al recibir foco, comando en una sola línea y eliminación visual de títulos repetidos.
+- Retirado el apartado de tráfico global coordinado obsoleto. Las explicaciones extensas quedan en ayudas contextuales ocultas hasta activar el botón de información.
+- Alertas de operaciones de Cortes y páginas auxiliares acortadas; el detalle técnico se conserva mediante el logger de desarrollador autorizado.
+- AUTH ahora valida la versión de contrato compatible y enruta solo con la revisión activa. Las nuevas revisiones mantienen la instantánea completa, pero los metadatos de actualización y el historial identifican únicamente los servicios cuya URL cambió. Se conserva el historial append-only.
+- Pruebas de regresión actualizadas y ampliadas para encabezado, edición, escritorio/móvil, ayudas, mensajes, selección de revisión, versiones y actualización parcial de endpoints.
+- CI run `45486260447`: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos.
+- GitHub Pages run `45486258242`: SUCCESS.
+- HEAD de trabajo: `465194319f7e1c8b21aff181afea3142ef8384a9`. Base protegida sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Validación visual de navegador y validación remota Beta pendientes. No se desplegaron Apps Script ni se modificaron recursos externos.
