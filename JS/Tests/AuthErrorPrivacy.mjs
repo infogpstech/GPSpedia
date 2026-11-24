@@ -15,7 +15,7 @@ assert.ok(frontend.includes(generic), 'Debe existir el mensaje genérico de erro
 assert.ok(frontend.includes(invalid), 'Las credenciales incorrectas deben usar exactamente el mensaje permitido.');
 assert.ok(!frontend.includes('Contraseña o usuario incorrecto'),
   'No debe quedar una variante de texto distinta a la solicitada.');
-assert.match(frontend, /showGlobalError\\(message\\)/, 'La interfaz debe mostrar el mensaje saneado, no error.message.');
+assert.match(frontend, /showGlobalError\(message\)/, 'La interfaz debe mostrar el mensaje saneado, no error.message.');
 assert.ok(frontend.includes("console.error('[AUTH] No se confirmó la limpieza de caché de sesión en los servicios:', services)"),
   'Los servicios cuya caché no se limpió deben quedar solo en consola.');
 assert.ok(frontend.includes("showGlobalError('Error en el inicio de sesión, intente otra vez')"),
