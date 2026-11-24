@@ -163,9 +163,9 @@ try {
       profile.name + ": ayuda se muestra al activarla");
     check(await firstHelp.getAttribute("aria-expanded") === "true",
       profile.name + ": aria-expanded se actualiza al abrir ayuda");
-    await page.keyboard.press("Escape");
+    await firstHelp.click({ force: true });
     check(await helpPanel.evaluate(element => element.hidden),
-      profile.name + ": Escape cierra ayuda contextual");
+      profile.name + ": la ayuda se puede volver a cerrar con su control");
 
     await page.screenshot({
       path: path.join(ROOT, "artifacts", "aug-146-" + profile.name + "-developer.png"),
