@@ -1534,6 +1534,7 @@ function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.inv
 function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_(spreadsheet, usersSheet) {
     if (!spreadsheet || !usersSheet) throw new Error('No se pudo abrir Users para migrar los marcadores de revocación.');
     const loginRequestsSheet = ensureLoginRequestsSheet_(spreadsheet);
+    // Fila 2 es metadato del ledger AUTH; la columna H reserva el estado del baseline de revocación.
     const baselineCell = loginRequestsSheet.getRange(2, 8);
     let baselineState = String(baselineCell.getValue() || '');
     if (baselineState === ROLE_REVOCATION_BASELINE_VERSION_) return { status: 'success', markers: 0, migrated: 0, alreadyComplete: true };

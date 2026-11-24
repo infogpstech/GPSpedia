@@ -36,6 +36,7 @@ check(()=>assert.ok(login.indexOf("migrateLegacyRoleRevocationMarkersToSharedSta
 const validation=block(auth,"validateSessionReadOnly_");
 check(()=>assert.ok(validation.indexOf("migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_")<validation.indexOf("hasPendingRoleRevocation_")));
 check(()=>assert.match(block(auth,"handleLogout"),/migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_/));
+check(()=>assert.match(block(auth,"handleCompletePasswordRecovery"),/migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_/));
 check(()=>assert.match(block(auth,"migrateLegacyRoleRevocationMarkersToSharedState_"),/lock\.tryLock\(0\)/));
 check(()=>assert.doesNotMatch(auth,/\.waitLock\(/));
 const lockTimeouts=[...auth.matchAll(/\.tryLock\(([^)]*)\)/g)].map(m=>m[1].trim());
