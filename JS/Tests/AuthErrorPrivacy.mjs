@@ -30,8 +30,8 @@ assert.ok(ui.includes("const safeReason = reason === 'Sesión terminada'") &&
   'showLoginScreen debe aplicar una lista permitida y nunca renderizar directamente la razón recibida.');
 assert.ok(!ui.includes('loginError.textContent = reason'),
   'La interfaz no debe insertar motivos técnicos sin sanear.');
-assert.match(backend, /code: invalidCredentials \\? 'INVALID_CREDENTIALS' : 'LOGIN_FAILED'/,
+assert.match(backend, /code: invalidCredentials \? 'INVALID_CREDENTIALS' : 'LOGIN_FAILED'/,
   'AUTH debe clasificar credenciales incorrectas sin exponer el detalle en la UI.');
-assert.match(fixture, /code: invalidCredentials \\? 'INVALID_CREDENTIALS' : 'LOGIN_FAILED'/,
+assert.match(fixture, /code: invalidCredentials \? 'INVALID_CREDENTIALS' : 'LOGIN_FAILED'/,
   'El fixture AUTH debe conservar paridad con el servicio.');
 console.log('AuthErrorPrivacy: 13/13 PASS');
