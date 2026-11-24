@@ -75,13 +75,10 @@ function runActionDispatchContractTests(sources) {
 
     const api = String(input.apiConfig || "");
     let actionMap = {}, compatibility = {}, external = {}, dispatchers = {};
-    const serviceKeysBlock = api.match(/export\s+const\s+CENTRAL_SERVICE_KEYS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\);/);
-    assert_(!!serviceKeysBlock, "No se encontró CENTRAL_SERVICE_KEYS.");
-    const requiredEndpoints = [...serviceKeysBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]);
-    const optionalServicesBlock = String(input.centralConfigurationCache || "").match(/const OPTIONAL_SERVICES = \[([\s\S]*?)\];/);
-    const optionalEndpoints = optionalServicesBlock
-        ? [...optionalServicesBlock[1].matchAll(/["']([A-Z]+)["']/g)].map(x => x[1]) : [];
-    const endpoints = [...new Set([...requiredEndpoints, ...optionalEndpoints])];
+    const endpointBlock = api.match(/export\\s+const\\s+API_ENDPOINTS\\s*=\\s*Object\\.freeze\\(\\{([\\s\\S]*?)\\n\\}\\);/);
+    assert.ok(endpointBlock, "No se encontró API_ENDPOINTS local.");
+    const requiredEndpoints = [...endpointBlock[1].matchAll(/^\\s*([A-Z]+):/gm)].map(x => x[1]);
+    const endpoints = requiredEndpoints;
     const consumerActions = parseConsumers_(input.consumerSources || {});
 
     run_("lee mapas, routers y consumidores versionados", () => {
@@ -164,11 +161,15 @@ function runActionDispatchContractTests(sources) {
     run_("assignCollaborator no está expuesta por dispatcher", () => {
         for (const [service, dispatcher] of Object.entries(dispatchers)) assert_(!dispatcher.actions.includes("assignCollaborator"), service + " aún expone assignCollaborator.");
     });
-    run_("router y health checks resuelven endpoints centrales sin fallback local", () => {
-        assert_(/resolveCentralServiceEndpoint\(snapshot, service\)/.test(api), "El router no consulta el endpoint central.");
-        assert_(/resolveCentralServiceEndpoint\(routingSnapshot, serviceKey\)/.test(api), "Health checks no consultan el registro central.");
-        assert_(!/API_ENDPOINTS/.test(api), "Se conserva un mapa local de endpoints.");
-        assert_(!/targetUrl\s*=\s*CENTRAL_CONFIGURATION_BOOTSTRAP_URL/.test(api), "El bootstrap se usa como fallback.");
+    run_("router y health checks resuelven endpoints locales sin fallback remoto", () => {
+        assert_(/export\\s+const\\s+API_ENDPOINTS\\s*=\\s*Object\\.freeze/.test(api), "No existe el mapa local único API_ENDPOINTS.");
+        assert_(/return\\s+resolveApiEndpoint_\\(service\\)/.test(api), "El router no resuelve el endpoint local.");
+        const healthStart = api.indexOf("export async function checkAllServicesHealth");
+        const healthEnd = api.indexOf("export async function checkServiceHealth", healthStart);
+        const health = healthStart >= 0 && healthEnd > healthStart ? api.slice(healthStart, healthEnd) : "";
+        assert_(/resolveApiEndpoint_\\(serviceKey\\)/.test(health), "Health checks no consultan API_ENDPOINTS.");
+        assert_(!/loadCentralConfiguration|resolveCentralServiceEndpoint/.test(health), "Health checks aún dependen del registro central.");
+        assert_(!/targetUrl\\s*=\\s*CENTRAL_CONFIGURATION_BOOTSTRAP_URL/.test(api), "El bootstrap se usa como fallback del router.");
     });
     run_("ADMIN separa acciones de edición modal del resto de acciones exclusivas de Desarrollador", () => {
         const adminSource = String(input.ADMIN || "");
