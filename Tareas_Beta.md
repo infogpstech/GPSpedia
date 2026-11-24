@@ -280,7 +280,7 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 
 
 ## 12. Validación Beta diferida — MIG-026 ADMIN: ledger Safe Apply del organizador Cortes
-**Estado: PENDIENTE.** La migración local y los contratos deben aprobar CI; falta validar Apps Script, Spreadsheet y Drive reales en entorno aislado.
+**Estado: PENDIENTE DE BETA.** La migración local y sus contratos aprobaron CI (run 45324879054: 496 suites, 5,820 pruebas, 0 fallos); falta validar Apps Script, Spreadsheet y Drive reales en entorno aislado.
 
 - Ejecutar primero la sincronización segura del apartado 0. Usar exclusivamente proyecto ADMIN, Spreadsheet y Drive Beta desechables.
 - Crear manualmente \`CortesOrganizerOperations\` en la Spreadsheet vinculada a ADMIN. La fila 1 debe contener exactamente estos 20 encabezados, en este orden: \`operationId\`, \`ownerId\`, \`fileId\`, \`manifestDigest\`, \`auditId\`, \`status\`, \`attempts\`, \`sourceFolderPath\`, \`sourceName\`, \`targetFolderPath\`, \`targetName\`, \`currentFolderPath\`, \`currentName\`, \`createdAt\`, \`updatedAt\`, \`completedAt\`, \`rolledBackAt\`, \`error\`, \`recoveryError\`, \`schemaVersion\`. Dejar la fila 2 vacía; el código la reserva para \`META/BASELINE\`. Los eventos comienzan en fila 3. No crear el esquema automáticamente ni cambiar el orden.

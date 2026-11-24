@@ -1784,3 +1784,20 @@ HEAD anterior confirmado: b6efb93073ce3785f3ef9ba7bb10e72a0b940cc3
 
 Estado provisional: pendiente ejecutar CI sobre el commit publicado y revisar sus resultados antes de marcar el subtramo como completado. Beta diferida en Tareas_Beta.md §12.
 ================================================================================
+
+================================================================================
+CI Y CIERRE LOCAL — MIG-026 ADMIN SAFE APPLY — 2026-11-23
+HEAD de implementación y pruebas: dc00d522282de6b25a6596401f784c7b8353cc49
+Commit de implementación: 80faf4157e77974a5dbddb4c21963e3fb478ab19
+Commit de ajuste de contratos: dc00d522282de6b25a6596401f784c7b8353cc49
+
+- Primera ejecución CI del commit de implementación: detectó discrepancias en el contrato UI del historial y en el reloj de la prueba de retención. Se corrigieron las pruebas, sin cambiar la política de retención ni el comportamiento funcional.
+- CI final run 45324879054: sintaxis PASS; 496 suites, 5,820 pruebas aprobadas, 0 fallos.
+- Suites específicas: CortesImageOrganizerExecutor 20/20; CortesImageOrganizerLedger 9/9; CortesImageOrganizerUiContract 15/15.
+- La prueba de concurrencia ejecuta una segunda operación sobre otro archivo durante el trabajo Drive de la primera y confirma que el lock del ledger ya está liberado.
+- GitHub Pages build/deploy run 45324878517: SUCCESS.
+- Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+- No se desplegó Apps Script ni se creó/modificó Spreadsheet/Drive real. Las propiedades legacy instaladas permanecen intactas.
+
+Resultado del subtramo Safe Apply: COMPLETADO EN CÓDIGO Y CI; VALIDACIÓN DIFERIDA A BETA. MIG-026 global continúa EN PROGRESO. Siguiente familia por orden del inventario: GPSpedia_UNUSED_IMAGES_FOLDER_ID / recurso unused_images_folder_id o la siguiente familia ADMIN definida por el inventario actualizado; antes de elegirla, reconciliar el orden exacto y no ejecutar dos familias en paralelo.
+================================================================================
