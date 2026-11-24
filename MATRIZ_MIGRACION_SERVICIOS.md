@@ -1389,3 +1389,18 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - El panel Developer conserva una sección explícita de retirada y explica el alcance del agregado histórico. La telemetría local por navegador continúa disponible, temporal y no transmitida; solo representa solicitudes observadas por esa pestaña/dispositivo.
 - La limpieza de filas/configuración y propiedades históricas, deployments, proyectos y triggers instalados queda pendiente de inspección y autorización en Beta aislada. No borrar recursos externos automáticamente.
 - Pruebas locales/CI: ver cierre MIG-025 en `checkpoint.md` y `ChangesLogs.txt`; las pruebas Beta siguen diferidas conforme a `Tareas_Beta.md` §6.5.
+
+
+### 22.3 Reconciliación actual del mapa frontend — 2026-11-24
+
+La revisión del objeto completo `ACTION_TO_SERVICE_MAP` en el HEAD vigente identifica **123 acciones** en seis servicios. La distribución actual es: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45. El conteo se obtiene de las entradas del objeto completo, no de las rutas auxiliares ni de las operaciones internas que no están en el mapa.
+
+Tres acciones vigentes no aparecían en la tabla histórica de §9 y se agregan aquí como adenda, sin reescribir la extracción original:
+
+| Acción | Servicio | Handler / ejecución | Consumidor / finalidad |
+|---|---|---|---|
+| `getPublicConfiguration` | AUTH | Ruta pública de configuración en `doPost` | `api-config.js`; bootstrap de lectura de configuración central, sin credenciales de usuario. |
+| `publishCatalogReset` | CATALOG | `publishCatalogResetForActor_` | Coordinación desde `api-config.js` después de mutaciones que requieren reconciliación completa del catálogo. |
+| `invalidateRichTextModeCache` | FEEDBACK | Ruta de invalidación protegida para Desarrollador | `api-config.js`; invalidación de caché local después de publicar la preferencia global desde ADMIN. |
+
+Las tres acciones tienen ruta backend identificada y consumidor explícito. No representan controles de UI adicionales ni habilitan coordinación backend→backend: las secuencias de publicación e invalidación se ejecutan desde el frontend. La matriz de §§9–19 conserva su valor histórico; esta adenda es la referencia para el mapa vigente.

@@ -298,3 +298,10 @@ La lista Beta mantiene su secuencia de sincronización segura obligatoria al pri
 **Resultado:** MIG-002 queda **COMPLETADA CON VALIDACIÓN DIFERIDA**. El inventario de pantallas y controles, la trazabilidad de funciones y la matriz de pruebas existentes están documentados. Las validaciones de navegador real, despliegues, dispositivos, Apps Script, Spreadsheet/Drive, OAuth y YouTube se mantienen para Beta. Las brechas de pruebas visuales específicas descritas en §6.1 quedan registradas y no se presentan como aprobadas.
 
 **Archivos funcionales no modificados:** HTML, CSS, JS frontend, JS de servicios, endpoints, RBAC, datos y deployments.
+
+
+## Adenda de reconciliación de acciones — 2026-11-24
+
+El mapa vigente `ACTION_TO_SERVICE_MAP` contiene **123 acciones** distribuidas entre AUTH (19), CATALOG (9), WRITE (9), FEEDBACK (40), UTILITIES (1) y ADMIN (45). La cifra sustituye para el estado actual los recuentos históricos de 120/121 acciones mencionados en las secciones anteriores; no altera el inventario histórico de controles.
+
+Las tres rutas incorporadas que no estaban en la matriz histórica son `getPublicConfiguration` (lectura pública del registro central desde AUTH), `publishCatalogReset` (publicación de reset en CATALOG coordinada por frontend tras mutaciones) e `invalidateRichTextModeCache` (invalidación protegida en FEEDBACK después de publicar la preferencia desde ADMIN). Son acciones técnicas de configuración/sincronización y no agregan botones o pantallas.
