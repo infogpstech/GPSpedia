@@ -111,9 +111,9 @@ check("ADMIN conserva métricas locales y no consulta agregados globales", () =>
     assert.match(ui, /filter\(key => key !== "LEGACY"\)/);
     assert.match(ui, /Object\.keys\(serviceHealthResults\)\.filter\(key => key !== "LEGACY"\)/);
     assert.doesNotMatch(ui, /COORDINATOR|getServiceTraffic|globalServiceTraffic/);
-    assert.match(html, /Tráfico global coordinado · retirado/);
-    assert.match(html, /No representa todas las solicitudes HTTP/);
-    assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
+    assert.doesNotMatch(html, /Tráfico global coordinado|COORDINATOR/);
+    assert.doesNotMatch(html, /No representa todas las solicitudes HTTP/);
+    assert.doesNotMatch(html, /no sustituyen ni permiten inferir el tráfico global/);
     assert.doesNotMatch(ui, /globalServiceTraffic|getServiceTraffic/);
     assert.doesNotMatch(html, /global-service-traffic-chart|btn-refresh-global-service-traffic/);
 });
