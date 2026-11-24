@@ -594,7 +594,7 @@ function doPost(e) {
             .setMimeType(ContentService.MimeType.JSON);
     }
     const requiresSessionActor = action === "clearSensitiveLogs" ||
-        ["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile", "benchmarkPasswordKdf"].includes(action) ||
+        ["acceptTerms", "changePassword", "resetUserPassword", "resetUserSessions", "updateUser", "migrateLegacyPasswords", "getUsers", "createUser", "updateProfile", "benchmarkPasswordKdf", "getCentralServiceUrls", "updateCentralServiceUrls"].includes(action) ||
         isSharedMutationAction_(action);
     if (requiresSessionActor) {
         try { migrateLegacyRoleRevocationMarkersToSharedState_(); }
@@ -695,6 +695,12 @@ function doPostInternal_(e) {
         switch (request.action) {
             case 'getPublicConfiguration':
                 response = handleGetPublicConfiguration_();
+                break;
+            case 'getCentralServiceUrls':
+                response = handleGetCentralServiceUrls_(request.payload);
+                break;
+            case 'updateCentralServiceUrls':
+                response = handleUpdateCentralServiceUrls_(request.payload);
                 break;
             case 'login':
                 response = handleLogin(request.payload);
@@ -2961,6 +2967,414 @@ function initializeCentralConfigurationSheets() {
         publicationReady: false,
         message: "Estructura creada y verificada. Aún faltan los datos operativos y la publicación de una revisión válida."
     };
+}
+
+
+// ============================================================================
+// CONFIGURACIÓN CENTRAL: carga y publicación de endpoints desde AUTH
+// ============================================================================
+// Los únicos datos que el operador introduce son las seis URL. El resto de
+// metadatos se deriva del contrato versionado del código y de la configuración
+// ya publicada. No se almacenan URLs de servicios en este archivo.
+
+var AUTH_CENTRAL_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
+var AUTH_CENTRAL_SERVICE_CONTRACT_VERSIONS_ = {
+    AUTH: "2.2.5",
+    CATALOG: "2.4.0",
+    WRITE: "2.3.1",
+    FEEDBACK: "2.3.0",
+    UTILITIES: "1.5.0",
+    ADMIN: "2.7.1"
+};
+var AUTH_CENTRAL_SERVICE_HEADERS_ = ["config_revision", "service_key", "endpoint_url", "enabled", "contract_version", "min_client_version", "health_action", "updated_at", "updated_by", "change_reason"];
+var AUTH_CENTRAL_CONTROL_HEADERS_ = ["control_key", "schema_version", "active_revision", "publication_state", "published_at", "updated_by", "change_reason"];
+var AUTH_CENTRAL_SCHEMA_HEADERS_ = ["config_key", "entity_type", "value_type", "scope_allowed", "visibility_allowed", "required", "default_json", "validation_rule", "introduced_schema_version", "deprecated_schema_version", "replacement_key", "owner_service", "description"];
+var AUTH_CENTRAL_PARAMETER_HEADERS_ = ["config_revision", "config_key", "value_json", "value_type", "scope", "visibility", "enabled", "default_json", "validation_rule", "schema_version", "updated_at", "updated_by", "change_reason"];
+var AUTH_CENTRAL_RESOURCE_HEADERS_ = ["config_revision", "resource_key", "resource_type", "resource_id", "scope", "visibility", "enabled", "expected_parent_id", "expected_name", "updated_at", "updated_by", "change_reason"];
+var AUTH_CENTRAL_HISTORY_HEADERS_ = ["history_id", "config_revision", "entity_type", "entity_key", "operation", "previous_value_json", "new_value_json", "actor_id", "changed_at", "change_reason", "rollback_of_revision", "schema_version"];
+
+function readAuthCentralTable_(spreadsheet, name, requiredHeaders) {
+    var sheet = spreadsheet.getSheetByName(name);
+    if (!sheet) throw new Error("Falta la hoja central requerida: " + name + ".");
+    var values = sheet.getDataRange().getValues();
+    if (!Array.isArray(values) || !values.length || !Array.isArray(values[0])) {
+        throw new Error("La hoja " + name + " no contiene encabezados válidos.");
+    }
+    var headers = values[0].map(function(value) { return String(value === null || value === undefined ? "" : value).trim(); });
+    var positions = {};
+    headers.forEach(function(header, index) {
+        if (!header) return;
+        if (Object.prototype.hasOwnProperty.call(positions, header)) throw new Error("Hay encabezados duplicados en " + name + ".");
+        positions[header] = index;
+    });
+    requiredHeaders.forEach(function(header) {
+        if (!Object.prototype.hasOwnProperty.call(positions, header)) throw new Error("Falta el encabezado " + header + " en " + name + ".");
+    });
+    var rows = [];
+    values.slice(1).forEach(function(row, index) {
+        if (!row.some(function(value) { return value !== "" && value !== null && value !== undefined; })) return;
+        rows.push({ rowNumber: index + 2, values: row.slice() });
+    });
+    return { sheet: sheet, headers: headers, positions: positions, rows: rows };
+}
+
+function appendAuthCentralRows_(table, rows) {
+    if (!rows.length) return;
+    var first = table.sheet.getLastRow() + 1;
+    table.sheet.getRange(first, 1, rows.length, table.headers.length).setValues(rows);
+    var persisted = table.sheet.getRange(first, 1, rows.length, table.headers.length).getValues();
+    if (JSON.stringify(persisted) !== JSON.stringify(rows)) throw new Error("No se pudo verificar la escritura de " + table.sheet.getName() + ".");
+}
+
+function makeAuthCentralRow_(headers, positions, values) {
+    var row = new Array(headers.length).fill("");
+    Object.keys(values).forEach(function(key) {
+        if (!Object.prototype.hasOwnProperty.call(positions, key)) throw new Error("Campo desconocido en la tabla central: " + key + ".");
+        row[positions[key]] = values[key];
+    });
+    return row;
+}
+
+function normalizeAuthCentralServiceUrls_(source) {
+    if (!source || typeof source !== "object" || Array.isArray(source)) throw new Error("Debes proporcionar las seis URL de servicios.");
+    var keys = Object.keys(source).sort();
+    if (JSON.stringify(keys) !== JSON.stringify(AUTH_CENTRAL_SERVICE_KEYS_.slice().sort())) {
+        throw new Error("La actualización debe incluir exactamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.");
+    }
+    var result = {}, owners = {};
+    AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) {
+        var url = String(source[key] || "").trim();
+        if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)) {
+            throw new Error("La URL de " + key + " no tiene el formato de deployment HTTPS permitido.");
+        }
+        if (owners[url]) throw new Error("Dos servicios no pueden compartir la misma URL de deployment.");
+        owners[url] = key;
+        result[key] = url;
+    });
+    return result;
+}
+
+function getAuthCentralControlState_(controlTable) {
+    if (!controlTable.rows.length) return null;
+    if (controlTable.rows.length !== 1) throw new Error("ConfiguracionControl debe contener una sola fila activa.");
+    var row = controlTable.rows[0].values, p = controlTable.positions;
+    if (String(row[p.control_key] || "") !== "CONFIGURATION_ACTIVE" ||
+        Number(row[p.schema_version]) !== 1 ||
+        !Number.isSafeInteger(Number(row[p.active_revision])) ||
+        Number(row[p.active_revision]) < 1 ||
+        String(row[p.publication_state] || "") !== "READY") {
+        throw new Error("El control central existe, pero no contiene una revisión publicada válida. No se sobrescribió.");
+    }
+    return { row: row, rowNumber: controlTable.rows[0].rowNumber, revision: Number(row[p.active_revision]), schemaVersion: Number(row[p.schema_version]) };
+}
+
+function getAuthCentralDraftRows_(servicesTable) {
+    var p = servicesTable.positions, map = {};
+    servicesTable.rows.forEach(function(record) {
+        var row = record.values;
+        if (String(row[p.config_revision] || "").trim() !== "") return;
+        var key = String(row[p.service_key] || "").trim();
+        if (AUTH_CENTRAL_SERVICE_KEYS_.indexOf(key) < 0) return;
+        if (map[key]) throw new Error("Hay filas de borrador duplicadas para " + key + ".");
+        map[key] = { rowNumber: record.rowNumber, endpointUrl: String(row[p.endpoint_url] || "").trim() };
+    });
+    return map;
+}
+
+function writeAuthCentralDraftRows_(servicesTable, urls) {
+    var drafts = getAuthCentralDraftRows_(servicesTable), p = servicesTable.positions;
+    var missing = AUTH_CENTRAL_SERVICE_KEYS_.filter(function(key) { return !drafts[key]; });
+    if (missing.length) {
+        var rows = missing.map(function(key) {
+            return makeAuthCentralRow_(servicesTable.headers, p, { service_key: key, endpoint_url: urls[key] || "" });
+        });
+        appendAuthCentralRows_(servicesTable, rows);
+        servicesTable = readAuthCentralTable_(servicesTable.sheet.getParent(), "Servicios", AUTH_CENTRAL_SERVICE_HEADERS_);
+        drafts = getAuthCentralDraftRows_(servicesTable);
+        p = servicesTable.positions;
+    }
+    AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) {
+        var record = drafts[key];
+        var current = record.endpointUrl;
+        var value = urls[key] === undefined ? current : urls[key];
+        servicesTable.sheet.getRange(record.rowNumber, p.endpoint_url + 1, 1, 1).setValue(value);
+    });
+    SpreadsheetApp.flush();
+}
+
+function prepareCentralConfigurationServiceUrlInput() {
+    initializeCentralConfigurationSheets();
+    var spreadsheet = getAuthUsersSpreadsheet_();
+    var services = readAuthCentralTable_(spreadsheet, "Servicios", AUTH_CENTRAL_SERVICE_HEADERS_);
+    var control = readAuthCentralTable_(spreadsheet, "ConfiguracionControl", AUTH_CENTRAL_CONTROL_HEADERS_);
+    var state = getAuthCentralControlState_(control);
+    var seed = {};
+    if (state) {
+        var activeRows = services.rows.filter(function(record) {
+            return Number(record.values[services.positions.config_revision]) === state.revision;
+        });
+        activeRows.forEach(function(record) {
+            var key = String(record.values[services.positions.service_key] || "");
+            if (AUTH_CENTRAL_SERVICE_KEYS_.indexOf(key) >= 0) seed[key] = String(record.values[services.positions.endpoint_url] || "");
+        });
+    }
+    var drafts = getAuthCentralDraftRows_(services);
+    AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) {
+        if (drafts[key]) seed[key] = drafts[key].endpointUrl;
+    });
+    writeAuthCentralDraftRows_(services, seed);
+    return {
+        status: "success",
+        spreadsheetName: spreadsheet.getName(),
+        serviceKeys: AUTH_CENTRAL_SERVICE_KEYS_.slice(),
+        inputColumn: "endpoint_url",
+        message: "Borrador preparado. Introduce únicamente las seis URL en endpoint_url y ejecuta publishCentralConfigurationFromServiceUrlDraft()."
+    };
+}
+
+function getAuthCentralServiceUrlMap_(spreadsheet, allowDraft) {
+    var services = readAuthCentralTable_(spreadsheet, "Servicios", AUTH_CENTRAL_SERVICE_HEADERS_);
+    var control = readAuthCentralTable_(spreadsheet, "ConfiguracionControl", AUTH_CENTRAL_CONTROL_HEADERS_);
+    var state = getAuthCentralControlState_(control), result = {};
+    if (state) {
+        var activeRows = services.rows.filter(function(record) {
+            return Number(record.values[services.positions.config_revision]) === state.revision;
+        });
+        activeRows.forEach(function(record) {
+            var key = String(record.values[services.positions.service_key] || "");
+            if (AUTH_CENTRAL_SERVICE_KEYS_.indexOf(key) >= 0) {
+                if (result[key]) throw new Error("La revisión activa contiene un servicio duplicado: " + key + ".");
+                result[key] = String(record.values[services.positions.endpoint_url] || "");
+            }
+        });
+    } else if (allowDraft) {
+        var drafts = getAuthCentralDraftRows_(services);
+        AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) { result[key] = drafts[key] ? drafts[key].endpointUrl : ""; });
+    }
+    AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) {
+        if (result[key] === undefined) result[key] = "";
+    });
+    return result;
+}
+
+function handleGetCentralServiceUrls_(payload) {
+    getAuthUserActor_(payload, ["desarrollador"], "consultar los endpoints centrales");
+    var spreadsheet = getAuthUsersSpreadsheet_();
+    var urls = getAuthCentralServiceUrlMap_(spreadsheet, true);
+    return { status: "success", services: urls };
+}
+
+function handleUpdateCentralServiceUrls_(payload) {
+    var actor = getAuthUserActor_(payload, ["desarrollador"], "actualizar los endpoints centrales");
+    var requestId = String(payload && payload.requestId || "").trim();
+    if (!/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) throw new Error("Identificador de actualización inválido.");
+    var reason = String(payload && payload.changeReason || "Actualización de endpoints desde el panel de desarrollador").trim().slice(0, 300);
+    return publishAuthCentralServiceUrls_(payload && payload.services, actor, reason, requestId);
+}
+
+function publishCentralConfigurationFromServiceUrlDraft() {
+    initializeCentralConfigurationSheets();
+    var spreadsheet = getAuthUsersSpreadsheet_();
+    var table = readAuthCentralTable_(spreadsheet, "Servicios", AUTH_CENTRAL_SERVICE_HEADERS_);
+    var drafts = getAuthCentralDraftRows_(table), urls = {};
+    AUTH_CENTRAL_SERVICE_KEYS_.forEach(function(key) {
+        if (!drafts[key] || !drafts[key].endpointUrl) {
+            throw new Error("Falta la URL de " + key + " en la columna endpoint_url. No se publicó ninguna revisión.");
+        }
+        urls[key] = drafts[key].endpointUrl;
+    });
+    var actorId = "APPS_SCRIPT_EDITOR";
+    try {
+        if (typeof Session !== "undefined" && Session.getEffectiveUser) {
+            var email = String(Session.getEffectiveUser().getEmail() || "").trim();
+            if (email) actorId = email;
+        }
+    } catch (identityError) {}
+    var requestId = "manual_" + Utilities.getUuid().replace(/-/g, "");
+    return publishAuthCentralServiceUrls_(urls, { userId: actorId, role: "desarrollador" },
+        "Inicialización/actualización manual desde el editor de Apps Script", requestId);
+}
+
+function publishAuthCentralServiceUrls_(sourceUrls, actor, reason, requestId) {
+    var urls = normalizeAuthCentralServiceUrls_(sourceUrls);
+    var actorId = String(actor && actor.userId || "").trim();
+    if (!actorId) throw new Error("No se pudo identificar al operador que publica la configuración.");
+    var lock = LockService.getScriptLock();
+    if (!lock.tryLock(0)) {
+        var busy = new Error("La configuración central está siendo modificada; vuelve a intentar.");
+        busy.code = "CENTRAL_CONFIGURATION_BUSY";
+        throw busy;
+    }
+    try {
+        var spreadsheet = getAuthUsersSpreadsheet_();
+        var control = readAuthCentralTable_(spreadsheet, "ConfiguracionControl", AUTH_CENTRAL_CONTROL_HEADERS_);
+        var services = readAuthCentralTable_(spreadsheet, "Servicios", AUTH_CENTRAL_SERVICE_HEADERS_);
+        var schema = readAuthCentralTable_(spreadsheet, "ConfiguracionEsquema", AUTH_CENTRAL_SCHEMA_HEADERS_);
+        var parameters = readAuthCentralTable_(spreadsheet, "ConfiguracionParametros", AUTH_CENTRAL_PARAMETER_HEADERS_);
+        var resources = readAuthCentralTable_(spreadsheet, "ConfiguracionRecursos", AUTH_CENTRAL_RESOURCE_HEADERS_);
+        var history = readAuthCentralTable_(spreadsheet, "ConfiguracionHistorial", AUTH_CENTRAL_HISTORY_HEADERS_);
+        var state = getAuthCentralControlState_(control);
+        var currentRevision = state ? state.revision : 0;
+        var currentSnapshot = null;
+        if (state) {
+            currentSnapshot = readCentralConfigurationSnapshot_();
+            if (Number(currentSnapshot.revision) !== currentRevision) throw new Error("La revisión activa cambió durante la preparación.");
+        } else {
+            if (services.rows.some(function(r) { return String(r.values[services.positions.config_revision] || "").trim() !== ""; }) ||
+                parameters.rows.length || resources.rows.length) {
+                throw new Error("Hay datos versionados sin un control activo. Se requiere revisión manual; no se sobrescribió.");
+            }
+            if (schema.rows.length) {
+                // Se validará el esquema existente mediante el lector después de preparar el candidato.
+            } else {
+                var schemaRow = makeAuthCentralRow_(schema.headers, schema.positions, {
+                    config_key: "rich_text_mode", entity_type: "parameter", value_type: "enum",
+                    scope_allowed: "global", visibility_allowed: "public", required: false,
+                    default_json: JSON.stringify("strict"), validation_rule: "enum:strict|advanced",
+                    introduced_schema_version: 1, deprecated_schema_version: "", replacement_key: "",
+                    owner_service: "FEEDBACK", description: "Preferencia global de formato de texto enriquecido"
+                });
+                appendAuthCentralRows_(schema, [schemaRow]);
+                schema = readAuthCentralTable_(spreadsheet, "ConfiguracionEsquema", AUTH_CENTRAL_SCHEMA_HEADERS_);
+            }
+        }
+
+        var previous = {};
+        var activeServiceRows = state ? services.rows.filter(function(record) {
+            return Number(record.values[services.positions.config_revision]) === currentRevision;
+        }) : [];
+        activeServiceRows.forEach(function(record) {
+            var key = String(record.values[services.positions.service_key] || "");
+            if (previous[key]) throw new Error("La revisión activa contiene un servicio duplicado: " + key + ".");
+            previous[key] = record.values;
+        });
+        if (state && AUTH_CENTRAL_SERVICE_KEYS_.some(function(key) { return !previous[key]; })) {
+            throw new Error("La revisión activa no contiene los seis servicios requeridos.");
+        }
+        var changed = AUTH_CENTRAL_SERVICE_KEYS_.filter(function(key) {
+            return !previous[key] || String(previous[key][services.positions.endpoint_url] || "").trim() !== urls[key];
+        });
+        if (!changed.length && state) {
+            writeAuthCentralDraftRows_(services, urls);
+            return { status: "success", revision: currentRevision, unchanged: true, services: urls };
+        }
+
+        var maximumRevision = currentRevision;
+        [services, parameters, resources].forEach(function(table) {
+            table.rows.forEach(function(record) {
+                var value = String(record.values[table.positions.config_revision] || "").trim();
+                if (!value) return;
+                var revision = Number(value);
+                if (!Number.isSafeInteger(revision) || revision < 1) throw new Error("Hay una revisión inválida en " + table.sheet.getName() + ".");
+                maximumRevision = Math.max(maximumRevision, revision);
+            });
+        });
+        var nextRevision = maximumRevision + 1;
+        if (!Number.isSafeInteger(nextRevision) || nextRevision < 1) throw new Error("Se alcanzó el límite seguro de revisiones.");
+        var now = new Date().toISOString();
+        var serviceRows = AUTH_CENTRAL_SERVICE_KEYS_.map(function(key) {
+            var row;
+            if (state) {
+                row = previous[key].slice();
+                row[services.positions.config_revision] = nextRevision;
+                row[services.positions.endpoint_url] = urls[key];
+                row[services.positions.updated_at] = now;
+                row[services.positions.updated_by] = actorId;
+                row[services.positions.change_reason] = reason;
+            } else {
+                row = makeAuthCentralRow_(services.headers, services.positions, {
+                    config_revision: nextRevision, service_key: key, endpoint_url: urls[key], enabled: true,
+                    contract_version: AUTH_CENTRAL_SERVICE_CONTRACT_VERSIONS_[key],
+                    min_client_version: "", health_action: "", updated_at: now, updated_by: actorId,
+                    change_reason: reason
+                });
+            }
+            return row;
+        });
+        var parameterRows = state
+            ? parameters.rows.filter(function(record) { return Number(record.values[parameters.positions.config_revision]) === currentRevision; })
+                .map(function(record) { var row = record.values.slice(); row[parameters.positions.config_revision] = nextRevision; return row; })
+            : [makeAuthCentralRow_(parameters.headers, parameters.positions, {
+                config_revision: nextRevision, config_key: "rich_text_mode", value_json: JSON.stringify("strict"),
+                value_type: "enum", scope: "global", visibility: "public", enabled: true,
+                default_json: JSON.stringify("strict"), validation_rule: "enum:strict|advanced",
+                schema_version: 1, updated_at: now, updated_by: actorId, change_reason: "Valor inicial derivado del esquema"
+            })];
+        var resourceRows = state
+            ? resources.rows.filter(function(record) { return Number(record.values[resources.positions.config_revision]) === currentRevision; })
+                .map(function(record) { var row = record.values.slice(); row[resources.positions.config_revision] = nextRevision; return row; })
+            : [];
+
+        appendAuthCentralRows_(services, serviceRows);
+        appendAuthCentralRows_(parameters, parameterRows);
+        appendAuthCentralRows_(resources, resourceRows);
+
+        var originalControl = state ? state.row.slice() : null;
+        var controlValues = {
+            control_key: "CONFIGURATION_ACTIVE", schema_version: 1, active_revision: nextRevision,
+            publication_state: "READY", published_at: now, updated_by: actorId, change_reason: reason
+        };
+        var nextControl = makeAuthCentralRow_(control.headers, control.positions, controlValues);
+        function restoreControl() {
+            try {
+                if (originalControl) control.sheet.getRange(state.rowNumber, 1, 1, control.headers.length).setValues([originalControl]);
+                else if (control.sheet.getLastRow() >= 2) control.sheet.deleteRow(2);
+                SpreadsheetApp.flush();
+                if (originalControl) {
+                    var restored = readCentralConfigurationSnapshot_();
+                    if (Number(restored.revision) !== currentRevision) throw new Error("La revisión anterior no quedó activa.");
+                }
+            } catch (rollbackError) {
+                var fatal = new Error("Falló la publicación y no se pudo restaurar el control central.");
+                fatal.code = "CENTRAL_CONFIGURATION_ROLLBACK_FAILED";
+                throw fatal;
+            }
+        }
+        try {
+            if (state) control.sheet.getRange(state.rowNumber, 1, 1, control.headers.length).setValues([nextControl]);
+            else control.sheet.getRange(2, 1, 1, control.headers.length).setValues([nextControl]);
+            SpreadsheetApp.flush();
+            var published = readCentralConfigurationSnapshot_();
+            if (Number(published.revision) !== nextRevision ||
+                AUTH_CENTRAL_SERVICE_KEYS_.some(function(key) {
+                    return !published.services[key] || published.services[key].endpointUrl !== urls[key];
+                })) {
+                throw new Error("La revisión nueva no superó la lectura completa de confirmación.");
+            }
+        } catch (publishError) {
+            restoreControl();
+            throw publishError;
+        }
+
+        var historyRows = changed.map(function(key) {
+            return makeAuthCentralRow_(history.headers, history.positions, {
+                history_id: requestId + "_" + key, config_revision: nextRevision, entity_type: "service",
+                entity_key: key, operation: previous[key] ? "update" : "create",
+                previous_value_json: JSON.stringify(previous[key] ? String(previous[key][services.positions.endpoint_url] || "") : ""),
+                new_value_json: JSON.stringify(urls[key]), actor_id: actorId, changed_at: now,
+                change_reason: reason, rollback_of_revision: "", schema_version: 1
+            });
+        });
+        try {
+            appendAuthCentralRows_(history, historyRows);
+        } catch (historyError) {
+            restoreControl();
+            throw new Error("La revisión se restauró porque no se pudo confirmar su historial.");
+        }
+        try {
+            var cache = CacheService.getScriptCache();
+            cache.removeAll(["GP_CONFIG_V1_public"].concat(AUTH_CENTRAL_SERVICE_KEYS_.map(function(key) {
+                return "GP_CONFIG_V1_backend_" + key;
+            })));
+        } catch (cacheError) {}
+        try {
+            var refreshedServices = readAuthCentralTable_(spreadsheet, "Servicios", AUTH_CENTRAL_SERVICE_HEADERS_);
+            writeAuthCentralDraftRows_(refreshedServices, urls);
+        } catch (draftError) {}
+        return { status: "success", revision: nextRevision, services: urls, changedServices: changed };
+    } finally {
+        lock.releaseLock();
+    }
 }
 
 function getAuthUserActor_(payload,allowedRoles,actionLabel,requireUserRow){const actor=requireSharedAuthActor_(payload,allowedRoles,actionLabel),requestedUserId=normalizeUserId(payload&&payload.userId);if(!requestedUserId||requestedUserId!==actor.userId)throw new Error("Acceso no autorizado: el contexto de sesión no coincide con la identidad solicitada.");let userRowIndex=null;if(requireUserRow===true){const usersSheet=getAuthUsersSpreadsheet_().getSheetByName(SHEET_NAMES.USERS),matches=findUniqueRowsByExactValue_(usersSheet,COLS_USERS.ID,actor.userId,true);if(matches.length!==1)throw new Error("No se encontró una fila única para actualizar el perfil autenticado.");userRowIndex=matches[0].rowIndex;}return {userId:actor.userId,role:actor.role,userRowIndex,epoch:actor.epoch};}
