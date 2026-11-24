@@ -245,6 +245,6 @@ assert.ok(mainSource.includes("passwordRecoveryRequestForm.addEventListener('sub
 assert.ok(mainSource.includes("passwordRecoveryCompleteForm.addEventListener('submit'"));
 assert.ok(htmlSource.includes('id="password-recovery-request-form"'));
 assert.ok(htmlSource.includes('id="password-recovery-complete-form"') && htmlSource.includes('pattern="[A-Fa-f0-9]{24}"'));
-assert.ok(workerSource.includes("gpsepedia-cache-v75"));
+assert.ok(workerSource.includes("gpsepedia-cache-v76"));
 
 console.log("PasswordRecovery: " + passed + "/" + passed + " PASS");
