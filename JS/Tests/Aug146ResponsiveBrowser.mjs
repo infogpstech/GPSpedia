@@ -268,6 +268,40 @@ try {
       path: path.join(ROOT, "artifacts", "aug-146-" + profile.name + "-detail.png"),
       fullPage: false
     });
+
+    // Entrar al modo de edición sin guardar ni descartar: se valida la geometría
+    // real del input y de los controles, sin enviar escrituras al servicio.
+    const editButton = detailModal.locator('button[aria-label="Activar modo edición"]');
+    check(await editButton.count() === 1, profile.name + ": acción de edición disponible");
+    await editButton.click();
+    const editInput = detailModal.locator(".detail-modal-title-input");
+    await editInput.waitFor({ state: "visible" });
+    const editInputBox = await editInput.boundingBox();
+    const editToolbarBox = await detailModal.locator(".detail-modal-toolbar").boundingBox();
+    const editActionsBox = await detailModal.locator(".detail-modal-header-actions").boundingBox();
+    const saveButton = detailModal.locator('button[aria-label="Guardar cambios"]');
+    const discardButton = detailModal.locator('button[aria-label="Descartar cambios"]');
+    const saveBox = await saveButton.boundingBox();
+    const discardBox = await discardButton.boundingBox();
+    check(Boolean(editInputBox && editToolbarBox && editActionsBox && saveBox && discardBox),
+      profile.name + ": input y acciones del encabezado en modo edición");
+    check(editInputBox.x >= editToolbarBox.x - 1 &&
+      editInputBox.x + editInputBox.width <= editToolbarBox.x + editToolbarBox.width + 1,
+      profile.name + ": input de edición contenido en el encabezado");
+    check(editInputBox.x >= logoBox.x + logoBox.width - 1,
+      profile.name + ": input de edición no invade la columna del logo");
+    check(editInputBox.y >= editActionsBox.y + editActionsBox.height - 1,
+      profile.name + ": input de edición debajo de los controles superiores");
+    check(saveBox.x >= editActionsBox.x - 1 &&
+      saveBox.x + saveBox.width <= editActionsBox.x + editActionsBox.width + 1 &&
+      discardBox.x >= editActionsBox.x - 1 &&
+      discardBox.x + discardBox.width <= editActionsBox.x + editActionsBox.width + 1,
+      profile.name + ": guardar y descartar contenidos en la fila de acciones");
+    await page.screenshot({
+      path: path.join(ROOT, "artifacts", "aug-146-" + profile.name + "-detail-edit.png"),
+      fullPage: false
+    });
+
     check(pageErrors.length === 0,
       profile.name + ": sin excepciones JavaScript en navegador (" + pageErrors.join("; ") + ")");
     console.log("PASS " + profile.name + " (" + profile.width + "x" + profile.height + ")");
