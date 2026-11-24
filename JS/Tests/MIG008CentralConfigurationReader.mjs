@@ -122,7 +122,7 @@ function expectCode(fn, code) {
     assert.equal(stale.services,null);
     assert.equal(stale.parameters.rich_text_mode,"advanced");
     clock+=10*60*1000;
-    expectCode(()=>env.context.getPublicCentralConfiguration_(),"NO_ACTIVE_SPREADSHEET");
+    expectCode(()=>env.context.getPublicCentralConfiguration_(),"SPREADSHEET_ACCESS_DENIED");
 }
 {
     const fixture=makeDatabase();
