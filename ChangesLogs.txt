@@ -923,3 +923,9 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Endpoints comunica carga, validación, permisos/sesión, resultados por servicio, idempotencia/sin cambios y errores solo en consola Developer. Se eliminó el mensaje bajo el botón, renombrado a **Actualizar Servicios**.
 - Pruebas: `DeveloperPanelUX` 11/11 PASS; `DeveloperOperationMessages` 8/8 PASS. CI run `45509850708`: 517 suites, 6,160 pruebas, 0 fallos; Chromium 236/236 PASS en cuatro viewports; Pages run `45509849705`: SUCCESS.
 - No se modificaron Apps Script, endpoints reales, PropertiesService, OAuth, permisos, Spreadsheet, Drive ni datos.
+
+### 2026-11-24 — Actualización de plan de validación Beta tras cierre de las tareas solicitadas
+
+- Se actualizó `Tareas_Beta.md` §21: consola Developer con altura útil 48% y ancho completo; pestaña seleccionada con etiqueta y no seleccionadas solo icono; endpoints solo en consola y botón **Actualizar Servicios**; desglose independiente de cortes, aportes registrados y vehículos por usuario.
+- Se corrigió la auditoría de duplicados en `Tareas_Activas.md`: las correcciones Dashboard y Developer están cerradas en código/CI, con verificación Beta pendiente.
+- No se desplegó Apps Script ni se modificaron recursos externos. El siguiente paso es validación Beta aislada §§21–25, condicionada a autorización expresa y recursos de prueba.

@@ -453,3 +453,10 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - No se modificaron Apps Script, endpoints reales, PropertiesService, OAuth, permisos, Spreadsheet, Drive ni datos. No se desplegaron servicios backend.
 - **Rama de trabajo:** `GPSpedia2.2.5_work`; HEAD al cerrar esta tarea `711ce5f5733dd0c48804c810af97ba6913cc1b0e`. **Rama base protegida:** `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
 - **Siguiente paso:** revisar tareas activas y auditorías para seleccionar la siguiente actividad prioritaria.
+
+### Continuidad después del cierre de tareas solicitadas — 2026-11-24
+
+- Las tres tareas de la solicitud (detalle Tutorial, desglose Dashboard y modal Developer) están COMPLETADAS EN CÓDIGO Y CI. Evidencia final de Developer: CI `45509850708`, 517 suites / 6,160 pruebas / 0 fallos; Chromium 236/236 PASS; Pages `45509849705` SUCCESS.
+- Se actualizó `Tareas_Beta.md` §21 para reflejar la interfaz Developer actual (consola 48% de altura, ancho completo, pestaña activa expandida, endpoints solo en consola) y el desglose separado del Dashboard. Las validaciones operativas reales siguen pendientes.
+- **No hay otra tarea de código activa en `Tareas_Activas.md`.** Siguiente paso: ejecutar Beta §§21–25 únicamente cuando se disponga de deployments, Spreadsheet/Drive y cuentas de prueba aislados, y exista autorización expresa. No inferir aprobación remota desde CI.
+- HEAD de código funcional validado: `711ce5f5733dd0c48804c810af97ba6913cc1b0e`; rama base protegida `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.

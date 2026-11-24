@@ -427,26 +427,31 @@ La comprobación manual en dispositivos físicos/navegadores de campo permanece 
 
 **Estado: IMPLEMENTACIÓN Y CI COMPLETADOS; PENDIENTE DE VERIFICACIÓN OPERATIVA EN BETA AISLADA.** No se considera validada la lectura real de FEEDBACK ni la inicialización real de CATALOG hasta ejecutar los pasos siguientes en el entorno Beta autorizado.
 
-**Evidencia automatizada del frontend y los contratos locales:**
-- Commit probado: `57b3aaa511b9a0ffd279e339dd82b5b38b0b87bf`.
-- CI run [45498897055](https://github.com/infogpstech/GPSpedia/actions/runs/45498897055): SUCCESS. Regresión general: 517 suites, 6,125 pruebas aprobadas, 0 fallos.
-- Playwright/Chromium: 184/184 aserciones PASS en 1366×768, 390×844, 360×800 y 320×700; 16 capturas sintéticas. Artefacto: [aug-146-responsive-browser-evidence](https://github.com/infogpstech/GPSpedia/actions/runs/45498897055/artifacts/14970486726).
-- GitHub Pages run [45498895792](https://github.com/infogpstech/GPSpedia/actions/runs/45498895792): SUCCESS.
-- La prueba del dashboard utiliza una respuesta FEEDBACK sintética interceptada; no consulta datos reales ni demuestra que la Spreadsheet Beta contenga registros.
+**Evidencia automatizada actualizada:**
+- HEAD probado: `711ce5f5733dd0c48804c810af97ba6913cc1b0e`.
+- CI run [45509850708](https://github.com/infogpstech/GPSpedia/actions/runs/45509850708): SUCCESS; 517 suites, 6,160 pruebas aprobadas, 0 fallos.
+- Playwright/Chromium: 236/236 aserciones PASS en 1366×768, 390×844, 360×800 y 320×700.
+- GitHub Pages run [45509849705](https://github.com/infogpstech/GPSpedia/actions/runs/45509849705): SUCCESS.
+- `DeveloperPanelUX` 11/11 PASS; `DeveloperOperationMessages` 8/8 PASS.
+- El Dashboard y los endpoints usan respuestas sintéticas/contratos locales en CI. No se consulta una Spreadsheet Beta real ni se demuestra que los deployments remotos estén actualizados.
 
 **1. Panel Developer**
-1. Confirmar en Beta que Diagnóstico, Base de datos, Imágenes y Sistema permanecen en una sola fila horizontal en escritorio y móvil.
-2. Verificar que la consola ocupa aproximadamente 50% del ancho en escritorio y 100% en móvil.
-3. Verificar que el título, información, limpiar consola y copiar registros permanecen agrupados a la izquierda y alineados en una sola fila.
-4. Cambiar entre las cuatro pestañas y probar las acciones de consola sin modificar datos productivos.
+1. Confirmar que la consola y su línea de comandos aparecen antes de la barra de pestañas, tanto en escritorio como en móvil.
+2. Verificar que la consola ocupa aproximadamente 48% de la altura útil y todo el ancho disponible; comprobar que la salida conserva scroll.
+3. Cambiar entre Diagnóstico, Base de datos, Imágenes y Sistema. La pestaña seleccionada debe mostrar icono y etiqueta; las no seleccionadas, únicamente icono. Confirmar que no hay solapamientos ni desplazamientos inesperados.
+4. Verificar que título, ayuda, limpiar consola y copiar registro permanecen agrupados y alineados.
+5. En Endpoints de servicios, confirmar que carga, validación, publicación, resultado individual de cada servicio, idempotencia/sin cambios y errores aparecen únicamente en la consola Developer. No debe aparecer mensaje bajo el botón.
+6. Confirmar que el botón se llama **Actualizar Servicios**. En una configuración idéntica, verificar que cada endpoint se informa como sin cambios y que no se declara actualización donde la URL permanece igual.
+7. Ejecutar únicamente consultas/acciones read-only o cambios autorizados sobre endpoints Beta aislados. No actualizar endpoints productivos.
 
 **2. Dashboard de actividad / FEEDBACK**
-1. Publicar en el deployment FEEDBACK Beta el código fuente aprobado que incluye los diagnósticos de disponibilidad y conteo de fuentes. No publicar en producción.
-2. Confirmar que la Spreadsheet FEEDBACK Beta corresponde al ID autorizado y revisar las hojas `ActividadUsuario`, `InboxAuditLog`, `Cortes`, `Users`, `AportesVehiculo`, `Feedbacks` y `FeedbackYearApplications` según las funciones habilitadas en ese entorno.
+1. Publicar en el deployment FEEDBACK Beta el código fuente aprobado que incluye diagnósticos de disponibilidad, persistencia de actividad y contribuciones. No publicar en producción.
+2. Confirmar que la Spreadsheet FEEDBACK Beta corresponde al ID autorizado y revisar las hojas `ActividadUsuario`, `InboxAuditLog`, `Cortes`, `Users`, `AportesVehiculo`, `Feedbacks` y `FeedbackYearApplications` según las funciones habilitadas.
 3. Abrir Dashboard de actividad con una cuenta autorizada y registrar la respuesta de `getActivityLogs`: `diagnostics.activitySheetAvailable`, `activityRowsAvailable`, `inboxAuditSheetAvailable`, `inboxAuditRowsAvailable`, `cortesSheetAvailable` y `cortesRowsAvailable`.
 4. Si `activitySheetAvailable` o `cortesSheetAvailable` es `false`, detener la prueba y corregir el esquema en la Spreadsheet Beta aislada. No crear hojas ni alterar encabezados de forma improvisada.
-5. Si las hojas existen pero los contadores son cero, generar únicamente actividad sintética autorizada (por ejemplo, vistas de vehículos y aportes de prueba), volver a consultar y comprobar historial, contribuciones e indicadores.
-6. Verificar que la UI muestra un estado vacío cuando no hay registros y un diagnóstico explícito cuando FEEDBACK falla o falta una hoja. Registrar la respuesta y evidencia anonimizada en `Hallazgos_Beta.md`.
+5. Generar únicamente actividad y aportes sintéticos autorizados si las hojas están vacías. Comprobar por separado el historial, total de modelos/vehículos distintos, cortes, suma de utilidades/votos y contribuciones por usuario.
+6. En la tabla por usuario, comprobar que **Cortes aportados**, **Aportes registrados** y **Vehículos con aportes** son valores independientes; los aportes registrados pueden incluir apertura/alimentación y no deben presentarse como si fueran cortes.
+7. Verificar estado vacío cuando no hay registros y diagnóstico explícito cuando FEEDBACK falla o falta una hoja. Registrar respuesta y evidencia anonimizada en `Hallazgos_Beta.md`.
 
 **3. Feed incremental / CATALOG**
 1. Confirmar que el proyecto CATALOG Beta apunta a la Spreadsheet Beta autorizada; no asumir que el ID de otra implementación es el correcto.
@@ -455,8 +460,7 @@ La comprobación manual en dispositivos físicos/navegadores de campo permanece 
 4. Reiniciar la aplicación y comprobar que el cursor inicial se establece sin error y que las actualizaciones incrementales funcionan. Confirmar también el fallback a snapshot completo ante un fallo transitorio.
 5. La aplicación no crea estas hojas durante una lectura normal. El aviso informativo de inicialización pendiente no sustituye la ejecución manual ni declara disponible el feed.
 
-**Límites:** las pruebas CI no ejecutan Apps Script, no escriben en Spreadsheet/Drive y no validan deployments remotos. No se desplegaron servicios Apps Script ni se modificaron propiedades, permisos, hojas, archivos Drive o datos productivos. Registrar cualquier paso no disponible como NO EJECUTADO; no inferir aprobación a partir de la simulación.
-
+**Límites:** las pruebas CI no ejecutan Apps Script, no escriben en Spreadsheet/Drive y no validan deployments remotos. No desplegar servicios Apps Script ni modificar propiedades, permisos, hojas, archivos Drive o datos productivos. Registrar cualquier paso no disponible como NO EJECUTADO; no inferir aprobación a partir de la simulación.
 
 ## 22. Validación Beta diferida — FEEDBACK: inicialización y persistencia de actividad
 

@@ -51,8 +51,8 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 ## Auditoría de duplicados y estado previo
 
 - **BETA-F007 — carga YouTube de Tutorial histórico:** COMPLETADA EN CÓDIGO Y CI; prueba real Beta pendiente. CI 45506352069: 517 suites, 6,156 pruebas, 0 fallos; inicialización FEEDBACK 10/10 PASS para Tutorial legacy y canónico. Procedimiento en `Tareas_Beta.md` §24; evidencia en `Hallazgos_Beta.md`.
-- **Dashboard de actividad:** la agregación de modelos, cortes, utilidades y contribuciones ya existe y tiene pruebas (`ActivityDashboardContributions.mjs`, `ActivityDashboardInsights.mjs`, `ActivityDashboardStoredXss`). No duplicar el backend; falta mostrar `cortesAportados` como dato independiente en la tabla.
-- **Developer:** AUG-146/AUG-147 y REV-2026-11-24 corrigieron otros aspectos de accesibilidad, caché, navegación y ancho de consola. No repetir esas tareas; esta revisión cubre el orden solicitado, altura doble y salida exclusiva en consola.
+- **Dashboard de actividad:** corrección frontend completada; `cortesAportados`, `aportesRegistrados` y `vehiculosConAportes` se presentan por separado. No duplicar el backend. Validación de datos reales FEEDBACK pendiente en Beta aislada (§21–22 de `Tareas_Beta.md`).
+- **Developer:** AUG-146/AUG-147 y la revisión del 2026-11-24 están completadas en código y CI. La consola, orden de pestañas, etiquetas compactas y mensajería de Endpoints están cubiertos por `DeveloperPanelUX` y `DeveloperOperationMessages`. No repetir; validación visual/operativa Beta pendiente (§21 de `Tareas_Beta.md`).
 - **Modal Tutorial:** BETA-F007 trata la identidad de destino para la carga/aprobación; no cubre formato enriquecido ni render del vídeo en el modal de detalle. Es una tarea distinta.
 
 ## Requisitos transversales
@@ -60,3 +60,7 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 - Cumplir NORMAS_DESAROLLO.md §§17–19 y especialmente §18: no secretos compartidos/manuales en PropertiesService; no URLs/configuración de otros servicios dentro de Apps Script; coordinación funcional desde frontend siempre que sea viable; llamadas técnicas directas solo si son necesarias y sin secreto compartido.
 - No modificar `GPSpedia2.2.5`.
 - No desplegar Apps Script, cambiar endpoints, propiedades, permisos, Spreadsheet, Drive ni OAuth en esta ejecución.
+
+## Siguiente paso operativo
+
+Las tres tareas de esta solicitud están COMPLETADAS EN CÓDIGO Y CI. No queda una tarea de código activa en este registro. El siguiente trabajo pendiente corresponde a validaciones de integración en Beta aislada descritas en `Tareas_Beta.md` §§21–25. No ejecutar despliegues Apps Script, cambiar endpoints, propiedades, permisos, Spreadsheet, Drive, OAuth ni datos sin autorización Beta expresa y recursos aislados verificados.
