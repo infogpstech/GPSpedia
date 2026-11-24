@@ -8,13 +8,13 @@ const feedback = fs.readFileSync("JS/Services/feedback.js", "utf8");
 const admin = fs.readFileSync("JS/Services/admin.js", "utf8");
 const catalog = fs.readFileSync("JS/Services/catalog.js", "utf8");
 const utilitiesSource = fs.readFileSync("JS/Services/Utilities.js", "utf8");
-assert.doesNotMatch(source, /SPREADSHEET_ID|SpreadsheetApp\\.openById/,
+assert.doesNotMatch(source, /SPREADSHEET_ID|SpreadsheetApp\.openById/,
     "SharedSessionActor no debe resolver Spreadsheet mediante un ID global implícito.");
 assert.equal((auth.match(/loadSpreadsheet: getAuthUsersSpreadsheet_/g) || []).length, 4,
     "Las cuatro rutas protegidas de AUTH inyectan su proveedor de identidad.");
 assert.match(admin, /loadSpreadsheet: getSpreadsheet/);
 assert.match(write, /loadSpreadsheet: getSpreadsheet/);
-assert.match(utilitiesSource, /loadSpreadsheet:\(\)=>SpreadsheetApp\\.openById\(SPREADSHEET_ID\)/);
+assert.match(utilitiesSource, /loadSpreadsheet:\(\)=>SpreadsheetApp\.openById\(SPREADSHEET_ID\)/);
 const now = Date.UTC(2026, 10, 23, 12, 0, 0);
 const utilities = {
     DigestAlgorithm: { SHA_256: "SHA_256" },
