@@ -134,6 +134,8 @@ check("no crea revisión cuando las seis URL ya coinciden",()=>{
     const context=createContext(), urls=validUrls();
     context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
     const historyCount=fixture.sheets.ConfiguracionHistorial.rows.length;
+    const replay=context.publishAuthCentralServiceUrls_(urls,{userId:"dev-1"},"initial","request-noop-000001");
+    assert.equal(replay.idempotent,true);
     const result=context.publishAuthCentralServiceUrls_(urls,{userId:"dev-2"},"no change","request-noop-000002");
     assert.equal(result.unchanged,true);
     assert.equal(result.revision,1);
