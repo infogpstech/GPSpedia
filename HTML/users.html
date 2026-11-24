@@ -256,14 +256,16 @@
                 hostUi = window.parent && window.parent !== window ? window.parent.ui : null;
             } catch (error) {}
             if (!hostUi && window.ui) hostUi = window.ui;
+            try {
+                const logger = window.parent && window.parent.gpsepediaDeveloperLog;
+                if (typeof logger === 'function') logger('[USUARIOS] ' + detail, 'error');
+                else if (window.console && typeof window.console.error === 'function') window.console.error('[USUARIOS]', detail);
+            } catch (error) {}
             if (hostUi && typeof hostUi.showGlobalError === 'function') {
-                hostUi.showGlobalError(detail.length > 110 ? 'No se pudo completar la operación.' : detail);
+                hostUi.showGlobalError('No se pudo completar la operación.');
                 return;
             }
-            if (detail.length > 110) {
-                console.warn('[GPSpedia] ' + detail);
-                alert('No se pudo completar la operación.');
-            } else alert(detail);
+            alert('No se pudo completar la operación.');
         }
     </script>
 </head>
