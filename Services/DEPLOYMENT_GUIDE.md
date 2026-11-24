@@ -42,7 +42,7 @@ Cuando una publicación aprobada requiere actualizar los seis proyectos, usar es
 | 5 | UTILITIES | Servicio especializado de mantenimiento/migración; se publica después de los flujos ordinarios y se valida con recursos desechables. |
 | 6 | ADMIN | Contiene operaciones administrativas de mayor privilegio y mantenimiento de Drive/Spreadsheet; se deja al final para limitar el radio de impacto. |
 
-Este es un **orden operativo de liberación**, no una cadena de dependencias backend. Después de AUTH, los otros cinco servicios son independientes: no deben esperar llamadas entre sí. Si solo cambia un servicio, desplegar únicamente ese servicio. No publicar los seis por rutina.
+Este es un **orden operativo de liberación**, no una cadena de dependencias backend. Después de AUTH, los otros cinco servicios son independientes: no deben esperar llamadas entre sí. Si solo cambia un servicio, desplegar únicamente ese servicio. No actualizar los otros cinco por rutina ni publicar los seis por costumbre.
 
 Si una publicación cambia un contrato compartido, confirmar antes que el frontend y todos los consumidores afectados sean compatibles con el despliegue escalonado. Si una operación falla, no bloquear servicios independientes; detener únicamente el servicio o grupo que dependa del contrato incompatible.
 
@@ -113,7 +113,7 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 3. Guardar y comprobar que los cuatro archivos están presentes y que las funciones globales no están duplicadas.
 4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
 5. Consultar `GET <URL del deployment>/exec?debug=true`. Verificar `service: GPSpedia-Feedback`, `status: available` y versión no vacía.
-6. Ejecutar BETA-04: reportes, sugerencias, likes, PyS, tutoriales e Inbox. Probar las operaciones de YouTube solo con recursos/cuentas Beta autorizados. El frontend coordina la publicación de cambios en CATALOG; FEEDBACK no debe llamar a otro servicio GPSpedia.
+6. Ejecutar BETA-04: reportes, sugerencias, likes, PyS, tutoriales e Inbox. Para operaciones de YouTube, ejecutar además BETA-07 y usar solo recursos/cuentas Beta autorizados. El frontend coordina la publicación de cambios en CATALOG; FEEDBACK no debe llamar a otro servicio GPSpedia.
 
 ### 5.5 UTILITIES — quinto
 
@@ -122,7 +122,7 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 3. Guardar y confirmar que el proyecto conserva su acceso al Spreadsheet activo y el helper de actor local.
 4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
 5. Consultar `GET <URL del deployment>/exec?debug=true`. UTILITIES devuelve su identidad/estado en `doGet`; verificar `service: GPSpedia-Utilities`, `status: available` y versión no vacía.
-6. Ejecutar BETA-05 y las pruebas aplicables de MIG-026 con Spreadsheet desechable. La migración `migrateTimestamps` requiere rol Desarrollador y no debe ejecutarse sobre datos productivos.
+6. Ejecutar las pruebas de contexto y permisos de MIG-006/MIG-008 y MIG-026 (§6.6 de `Tareas_Beta.md`) con Spreadsheet desechable. Probar `migrateTimestamps` solo con rol Desarrollador y registros sintéticos; nunca ejecutarla sobre datos productivos.
 
 ### 5.6 ADMIN — sexto y último
 
@@ -131,7 +131,7 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 3. Guardar y verificar que el lector central y el helper de actor están presentes una sola vez. No restaurar código de COORDINATOR ni SharedMutation.
 4. Seguir §4, pasos 5–9, manteniendo identidad, acceso y URL.
 5. Consultar `GET <URL del deployment>/exec?debug=true`. Verificar `service: GPSpedia-Admin`, `status: available` y versión no vacía.
-6. Ejecutar BETA-05 y las pruebas administrativas aplicables: empezar por `ping` y lecturas no destructivas; probar backups, restauraciones, reorganización y operaciones Drive solo con recursos desechables, permisos autorizados y plan de recuperación. No probar eliminaciones permanentes ni restauraciones sobre datos reales.
+6. Ejecutar BETA-05 y BETA-06, además de las pruebas administrativas aplicables: empezar por `ping` y lecturas no destructivas; probar backups, restauraciones, reorganización y operaciones Drive solo con recursos desechables, permisos autorizados y plan de recuperación. No probar eliminaciones permanentes ni restauraciones sobre datos reales.
 
 ## 6. Verificación y decisión para continuar
 
@@ -191,7 +191,7 @@ Un archivo compartido debe copiarse desde el mismo SHA a todos los proyectos que
 1. Mantener disponible el deployment anterior.
 2. Crear una nueva revisión completa de configuración copiando la revisión activa y restaurando la URL anterior en `Servicios.endpoint_url`.
 3. Añadir una nueva entrada append-only a `ConfiguracionHistorial` que describa el rollback y la revisión revertida.
-4. Validar la revisión candidata y conmutar `active_revision` con el mismo procedimiento controlado. Nunca editar una revisión publicada.
+4. Validar la revisión candidata y conmutar `active_revision` con el mismo procedimiento controlado. Nunca editar una revisión ya publicada.
 5. Confirmar read-back, salud y flujo funcional antes de retirar el deployment nuevo, y solo con autorización.
 
 Si el rollback cambia el localizador bootstrap de AUTH, restaurar también `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` en el frontend y publicar la versión frontend correspondiente. Mantener el bootstrap previo accesible hasta comprobar que los clientes pueden cargar la configuración.

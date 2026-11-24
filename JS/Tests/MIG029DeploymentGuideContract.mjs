@@ -40,15 +40,15 @@ check("La matriz de archivos coincide con dependencias reales", () => {
 });
 check("La publicación de código preserva el deployment y limita el alcance", () => {
   assert.match(guide, /Gestionar implementaciones/);
-  assert.match(guide, /conserva su URL/);
+  assert.match(guide, /conserva la URL \/exec existente/);
   assert.match(guide, /No actualizar los otros cinco/);
-  assert.match(guide, /no es necesario redesplegar el frontend ni los otros cinco servicios/i);
+  assert.match(guide, /no es necesario redesplegar frontend ni los otros cinco servicios/i);
 });
 check("La nueva URL se publica mediante revisión central íntegra e historial", () => {
   for (const term of ["Servicios","ConfiguracionControl","active_revision","ConfiguracionHistorial","config_revision","publication_state=READY"])
     assert.ok(guide.includes(term), "Falta " + term);
   assert.match(schema, /Flujo de publicación:/);
-  assert.match(guide, /conmutación final controlada/);
+  assert.match(guide, /mecanismo controlado aprobado/);
 });
 check("El rollback conserva historial y no modifica revisiones publicadas", () => {
   assert.match(guide, /## 6\. Rollback/);
@@ -58,7 +58,7 @@ check("El rollback conserva historial y no modifica revisiones publicadas", () =
 check("La guía no revive secretos, propiedades ni rutas legacy", () => {
   for (const forbidden of ["GPSpedia_COORDINATOR_URL","GPSpedia_COORDINATOR_SECRET","GPSpedia_SERVICE_URL_","SharedMutationClient.js"])
     assert.equal(guide.includes(forbidden), false, "No debe reintroducir " + forbidden);
-  assert.match(guide, /No se requieren propiedades de proyecto/);
+  assert.match(guide, /No añadir propiedades de URL, credenciales, tokens, API keys ni secretos compartidos/);
   assert.match(readme, /Services\/DEPLOYMENT_GUIDE\.md/);
   assert.doesNotMatch(readme, /DEPLOYMENT_GUIDE\.md\]\(Olds/);
 });
@@ -66,7 +66,7 @@ check("La guía separa pruebas GET, validación Beta y límites de autorización
   assert.match(guide, /read-only/);
   assert.match(guide, /Tareas_Beta\.md/);
   assert.match(guide, /No se autoriza.*despliegue productivo/s);
-  assert.match(guide, /no prueba login, RBAC, escrituras, concurrencia ni acceso a Drive/);
+  assert.match(guide, /no demuestra login, RBAC, escritura, concurrencia ni acceso a Drive\/YouTube/);
 });
 
 
@@ -85,7 +85,7 @@ check("Cada proyecto tiene identidad, archivos y pasos funcionales específicos"
   }
   for (const file of ["Auth.js","catalog.js","write.js","feedback.js","Utilities.js","admin.js","InboxConversations.js","SharedSessionActor.js","CentralConfigurationReader.js"])
     assert.ok(guide.includes(file), "Falta archivo " + file);
-  for (const id of ["BETA-01","BETA-02","BETA-03","BETA-04","BETA-05"])
+  for (const id of ["BETA-01","BETA-02","BETA-03","BETA-04","BETA-05","BETA-06","BETA-07","MIG-006/MIG-008"])
     assert.ok(guide.includes(id), "Falta prueba " + id);
 });
 check("La propagación de helpers coincide con los consumidores reales", () => {
