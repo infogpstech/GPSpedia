@@ -113,3 +113,5 @@ Esta adenda prevalece sobre las secciones históricas de este informe que indica
 - AUTH sustituye la comparación JSON estricta del read-back de LoginRequests por una comparación tipada que normaliza fechas Date/ISO y equivalencias numéricas, sin relajar la igualdad de requestId, token, estado ni otros campos textuales. `LoginRequestLedger.mjs`: 47/47 PASS.
 - Regresión CI run `45466314443`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos; sintaxis PASS.
 - Los deployments y permisos reales siguen pendientes de validación Beta aislada. No se alteraron recursos productivos ni propiedades Apps Script.
+
+- Confirmación final CI run `45466859277`, HEAD `5e09578efce8fb3b0680809fd39b48f4dbcca6c8`: SUCCESS; 515 suites, 6,099 pruebas aprobadas, 0 fallos; LoginRequestLedger 47/47, MIG026StaticConfigSearch 10/10 y sintaxis PASS. GitHub Pages run `45466858354`: SUCCESS.

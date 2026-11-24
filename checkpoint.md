@@ -205,5 +205,7 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - No se desplegó Apps Script ni se modificaron recursos, permisos, propiedades o datos externos. La validación real de permisos/lectura/escritura continúa diferida a Beta aislada.
 - Commits: implementación `a6c7819fe82158109805f87d82cd33c3f257076d`; ajuste del escenario de read-back `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb`.
 - CI run `45466314443`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos. `LoginRequestLedger: 47/47 PASS`; `MIG026StaticConfigSearch: 10/10 PASS`; sintaxis PASS. GitHub Pages run `45466312293`: SUCCESS.
-- HEAD de cierre: `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb`. Rama base protegida confirmada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- HEAD de cierre de código y pruebas: `5e09578efce8fb3b0680809fd39b48f4dbcca6c8`. Rama base protegida confirmada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Validación diferida: desplegar los seis proyectos en Beta aislada, verificar permisos de Spreadsheet y carpeta Cortes y probar login/idempotencia con solicitudes sintéticas. No se desplegó Apps Script ni se modificaron datos, propiedades, permisos o recursos productivos.
+
+- Confirmación final CI en el HEAD de código/pruebas `5e09578efce8fb3b0680809fd39b48f4dbcca6c8`: run `45466859277` SUCCESS; 515 suites, 6,099 pruebas aprobadas, 0 fallos; `LoginRequestLedger: 47/47 PASS`, `MIG026StaticConfigSearch: 10/10 PASS`, sintaxis PASS. GitHub Pages run `45466858354`: SUCCESS.
