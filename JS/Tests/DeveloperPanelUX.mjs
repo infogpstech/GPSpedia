@@ -69,10 +69,14 @@ testCase("la expansión de la pestaña activa desactiva transiciones con movimie
  assert.match(reducedMotion, /#dev-tools-modal \.dev-tab-link,\s*#dev-tools-modal \.dev-tab-link span\s*\{\s*transition: none;/);
  assert.match(reducedMotion, /#dev-tools-modal \.dev-tools-title\s*\{\s*animation: none;/);
 });
-testCase("la navegación es horizontal, con icono compacto y expansión animada",()=>{
- assert.match(css,/#dev-tools-modal \.dev-tools-sidebar \{[\s\S]*?flex-direction: row/);
- assert.match(css,/#dev-tools-modal \.dev-tab-link \{[\s\S]*?flex-basis: 42px/);
- assert.match(css,/transition: width \.24s ease, flex-basis \.24s ease/);
- assert.match(css,/max-width: 180px;[\s\S]*?opacity: 1/);
+testCase("la navegación usa iconos compactos y expande solo la pestaña seleccionada",()=>{
+ const start=css.lastIndexOf("/* AUG-146 — navegación del desarrollador");
+ const nav=css.slice(start);
+ assert.match(nav,/#dev-tools-modal \.dev-tools-layout \{[\s\S]*?grid-template-columns: 62px minmax\(0, 1fr\)/);
+ assert.match(nav,/#dev-tools-modal \.dev-tab-link \{[\s\S]*?width: 44px[\s\S]*?overflow: hidden/);
+ assert.match(nav,/#dev-tools-modal \.dev-tab-link span \{[\s\S]*?max-width: 0[\s\S]*?opacity: 0/);
+ assert.match(nav,/#dev-tools-modal \.dev-tools-tabs:has\(#dev-tab-diagnostics:checked\)[\s\S]*?width: 190px/);
+ assert.match(nav,/@media \(max-width: 760px\)[\s\S]*?flex-basis: 170px/);
+ assert.match(nav,/@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none !important/);
 });
 console.log("DeveloperPanelUX: "+passed+"/"+passed+" PASS");
