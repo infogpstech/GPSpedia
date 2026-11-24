@@ -36,9 +36,13 @@ function createHarness() {
     };
     let lockAcquired = 0, lockReleased = 0, flushCount = 0;
     const logEntries = [];
+    const spreadsheet = { getSheetByName(name) {
+        requestedSheets.push(name);
+        return name === "Logs" ? logsSheet : null;
+    }};
     const handler = new Function(
-        "normalizeUserId", "normalizeRoleName", "LockService", "SpreadsheetApp",
-        "SHEET_NAMES", "SPREADSHEET_ID", "Utilities", "isSensitiveLogRecord_", "logToSheet",
+        "normalizeUserId", "normalizeRoleName", "LockService", "SpreadsheetApp", "getAuthUsersSpreadsheet_",
+        "SHEET_NAMES", "Utilities", "isSensitiveLogRecord_", "logToSheet",
         match[0] + "\nreturn handleClearSensitiveLogs;"
     )(
         value => String(value || "").trim(),
@@ -48,16 +52,11 @@ function createHarness() {
             releaseLock() { lockReleased++; }
         }) },
         {
-            openById: () => ({
-                getSheetByName(name) {
-                    requestedSheets.push(name);
-                    return name === "Logs" ? logsSheet : null;
-                }
-            }),
+            getActiveSpreadsheet: () => spreadsheet,
             flush() { flushCount++; }
         },
+        () => spreadsheet,
         { LOGS: "Logs" },
-        "SPREADSHEET_TEST",
         { formatDate: () => "2026-11-15 10:00:00" },
         row => String(row && row[0] || "") === "SECRET",
         (level, message, metadata) => logEntries.push({ level, message, metadata })
