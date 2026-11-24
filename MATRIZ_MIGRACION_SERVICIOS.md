@@ -1317,7 +1317,7 @@ La visibilidad public/backend/admin es filtrado de aplicación, no ACL de lectur
 
 El inventario inicial de §§1–19 describe la arquitectura antes de la unificación y se conserva como evidencia histórica. El estado vigente de la rama `GPSpedia2.2.5_work` es:
 
-- El mapa contiene 121 acciones y seis destinos: AUTH 19, CATALOG 6, WRITE 9, FEEDBACK 41, UTILITIES 1 y ADMIN 45. `getUsers`, `createUser` y `updateProfile` se asignan a AUTH.
+- En el corte inicial de este inventario, el mapa contenía 121 acciones y seis destinos. Esta cifra es histórica; la distribución vigente se actualiza en la adenda §22.
 - AUTH es el propietario único de las funciones de identidad/usuarios y mantiene las hojas `Users` y `ActiveSessions` sin migrar datos ni cambiar índices. Se conserva la columna G de ActiveSessions definida por AUTH.
 - `getUsers` conserva el filtrado jerárquico Desarrollador/Jefe/Supervisor; `createUser` conserva campos, validadores, hash PBKDF2, generación secuencial, snapshot, escritura atómica y rollback; `updateProfile` solo modifica `Nombre_Completo` del usuario autenticado.
 - La creación de usuarios usa ScriptLock local de AUTH. La eliminación de cuenta también usa ese mismo lock de proyecto, sustituyendo la lease cruzada AUTH↔USERS sin abrir una ventana de concurrencia entre altas y bajas.
@@ -1329,7 +1329,7 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 
 
 ### 22.1 Cierre de validación MIG-012 — 2026-11-23
-- El mapa canónico actual contiene 121 acciones y seis servicios: AUTH 19, CATALOG 6, WRITE 9, FEEDBACK 41, UTILITIES 1 y ADMIN 45.
+- El mapa canónico actual contiene 123 acciones y seis servicios: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
 - Las acciones de usuarios `getUsers`, `createUser` y `updateProfile` son propiedad de AUTH. El servicio independiente USERS fue retirado del código versionado.
 - El registro central y su caché pública requieren seis servicios. El lector ignora temporalmente la fila histórica USERS hasta el cutover Beta; no se alteró el registro remoto.
 - Regresión CI Node.js 22: run 45222509966 — 305 suites, 3,554 pruebas, 0 fallos. GitHub Pages build/deploy: run 45222508791 — SUCCESS.
