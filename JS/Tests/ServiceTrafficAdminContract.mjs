@@ -10,9 +10,9 @@ assert.doesNotMatch(ui, /Coordinator|coordinatorConfigured|globalServiceTraffic|
 assert.match(ui, /getBrowserServiceTrafficSnapshot/);
 assert.match(ui, /renderLocalServiceTrafficChart_/);
 assert.match(ui, /Solicitudes de este navegador/);
-assert.match(html, /Tráfico global coordinado · retirado/);
-assert.match(html, /No representa todas las solicitudes HTTP/);
-assert.match(html, /no sustituyen ni permiten inferir el tráfico global/);
+assert.doesNotMatch(html, /Tráfico global coordinado|COORDINATOR/);
+assert.doesNotMatch(html, /No representa todas las solicitudes HTTP/);
+assert.doesNotMatch(html, /no sustituyen ni permiten inferir el tráfico global/);
 assert.doesNotMatch(html, /global-service-traffic-chart|btn-refresh-global-service-traffic/);
 assert.match(telemetry, /\["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"\]/);
-console.log("ServiceTrafficAdminContract: 10/10 PASS — agregado legacy retirado y telemetría local diferenciada");
+console.log("ServiceTrafficAdminContract: 10/10 PASS — telemetría local diferenciada sin explicación interna retirada");
