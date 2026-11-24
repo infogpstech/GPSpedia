@@ -5927,7 +5927,8 @@ function initializeCentralServiceUrlsControl_() {
             keys.forEach(key => { if (fields[key]) fields[key].value = urls[key] || ""; });
             if (status) status.textContent = "Puedes modificar las URL. Los demás metadatos se completan y validan automáticamente al publicar.";
         } catch (error) {
-            if (status) status.textContent = error && error.message ? error.message : "No se pudieron consultar los endpoints.";
+            console.warn("No se pudieron consultar los endpoints centrales:", error);
+            if (status) status.textContent = "No se pudieron consultar los endpoints. Verifica la sesión y vuelve a intentarlo.";
         } finally {
             if (isCurrentUiSessionContext_(context)) setBusy(false);
         }
@@ -5958,12 +5959,17 @@ function initializeCentralServiceUrlsControl_() {
                 if (!isCurrentUiSessionContext_(context)) return;
                 const revision = Number(result && result.revision);
                 if (!Number.isSafeInteger(revision) || revision < 1) throw new Error("AUTH no confirmó una revisión válida.");
+                if (result.configurationRefreshPending) {
+                    if (status) status.textContent = "La revisión " + revision + " fue publicada, pero la caché local no se pudo actualizar. Vuelve a abrir el modal para consultar el estado.";
+                    return;
+                }
                 if (status) status.textContent = result.unchanged
                     ? "Las URL ya estaban actualizadas. No fue necesario crear otra revisión."
                     : "Endpoints actualizados y revisión " + revision + " publicada correctamente.";
                 await load();
             } catch (error) {
-                if (status) status.textContent = error && error.message ? error.message : "No se pudieron actualizar los endpoints.";
+                console.warn("No se pudieron publicar los endpoints centrales:", error);
+                if (status) status.textContent = "No se pudo completar la actualización. Verifica las URL y vuelve a intentarlo.";
             } finally {
                 if (isCurrentUiSessionContext_(context)) setBusy(false);
             }
