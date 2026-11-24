@@ -907,3 +907,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se reforzó `Aug146ResponsiveBrowser.mjs` para verificar énfasis, listas, estilos, XSS, protocolos/hosts/credenciales/puertos/parámetros inválidos y variantes YouTube válidas.
 - CI run `45507769616`: 517 suites, 6,156 pruebas, 0 fallos; Chromium responsive 216/216 PASS en cuatro viewports; Pages run `45507768695`: SUCCESS.
 - Se inicia la tarea activa 2: mostrar `cortesAportados` por usuario en el Dashboard, separado de aportes registrados y vehículos con aportes. El backend ya calcula el valor; revisar contrato/render del frontend antes de modificar.
+
+
+### 2026-11-24 — Cierre de tarea activa 2: desglose de aportes del Dashboard
+
+- `normalizeContributionRows()` ahora conserva `cortesAportados` y `aportesRegistrados` como métricas distintas; los aliases suman ambas por separado y los vehículos conservan la deduplicación existente.
+- La tabla muestra Usuario, Cortes aportados, Aportes registrados y Vehículos con aportes. El ranking superior presenta los tres valores; los estados vacío y error usan colspan 4.
+- `ActivityDashboardContributions`: 3/3 PASS. CI run `45508470807`: 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 216/216 PASS; Pages run `45508470780`: SUCCESS.
+- No se modificó el backend, Spreadsheet ni datos almacenados. Se inicia la tarea activa 3: ajustes responsive y funcionales del modal Developer según `Tareas_Activas.md`.
