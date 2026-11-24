@@ -135,17 +135,24 @@ try {
         "https://youtu.be/abcdefghijk",
         "https://www.youtube.com/shorts/abcdefghijk",
         "https://www.youtube.com/embed/abcdefghijk",
+        "https://www.youtube-nocookie.com/embed/abcdefghijk",
+        "https://www.youtube.com/live/abcdefghijk",
         "abcdefghijk"
       ];
       const invalidVariants = [
         "https://evil.example/watch?v=abcdefghijk",
-        "https://www.youtube.com.evil.example/watch?v=abcdefghijk"
+        "https://www.youtube.com.evil.example/watch?v=abcdefghijk",
+        "http://www.youtube.com/watch?v=abcdefghijk",
+        "https://youtube.com@evil.example/watch?v=abcdefghijk",
+        "https://www.youtube.com:8443/watch?v=abcdefghijk",
+        "https://www.youtube.com/watch?v=short",
+        "https://www.youtube.com/watch?v=abcdefghijk&v=zzzzzzzzzzz"
       ];
       const embeds = variants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
       const invalidEmbeds = invalidVariants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
       ui.mostrarDetalleTutorialModal({
         Tema: "Tutorial sintético",
-        comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:1.5em" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
+        comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:1.5em" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><a href="javascript:window.__tutorialXss=true">Enlace no confiable</a><img src="javascript:window.__tutorialXss=true" alt="Imagen no confiable" onerror="window.__tutorialXss=true"><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
         dondeEncontrarlo: '<p style="text-align:right;color:#008000">Ubicación de prueba</p>',
         Detalles: '<ul><li>Detalle con formato</li></ul>',
         Video: "https://www.youtube.com/shorts/abcdefghijk"
@@ -159,7 +166,9 @@ try {
         color: style ? style.color : "",
         textAlign: style ? style.textAlign : "",
         fontSize: style ? style.fontSize : "",
-        unsafeMarkupRemoved: Boolean(paragraph && !paragraph.querySelector("script,iframe,[onclick]")),
+        emphasisPreserved: Boolean(paragraph && paragraph.querySelector("strong")?.textContent === "Texto destacado"),
+        listPreserved: Boolean(detail.querySelector(".detail-rich-text-paragraph ul > li")?.textContent === "Detalle con formato"),
+        unsafeMarkupRemoved: Boolean(paragraph && !paragraph.querySelector("script,iframe,[onclick],[onerror],a[href^='javascript:'],img[src^='javascript:']")),
         iframeSrc: validIframe ? validIframe.src : "",
         iframeTitle: validIframe ? validIframe.title : ""
       };
@@ -176,17 +185,19 @@ try {
       if (modal) modal.classList.remove("visible");
       return { embeds, invalidEmbeds, validResult, invalidResult };
     });
-    check(tutorialRender.embeds.length === 5 &&
+    check(tutorialRender.embeds.length === 7 &&
       tutorialRender.embeds.every(value => value === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1"),
-      profile.name + ": acepta watch, youtu.be, shorts, embed e ID de YouTube");
+      profile.name + ": acepta watch, youtu.be, shorts, embed, nocookie, live e ID de YouTube");
     check(tutorialRender.invalidEmbeds.every(value => value === null),
       profile.name + ": rechaza dominios de vídeo ajenos a YouTube");
     check(tutorialRender.validResult.color === "rgb(255, 0, 0)" &&
       tutorialRender.validResult.textAlign === "center" &&
       tutorialRender.validResult.fontSize === "24px",
       profile.name + ": conserva color, alineación y tamaño de texto en detalle de Tutorial");
+    check(tutorialRender.validResult.emphasisPreserved && tutorialRender.validResult.listPreserved,
+      profile.name + ": conserva énfasis y listas del contenido enriquecido");
     check(tutorialRender.validResult.unsafeMarkupRemoved,
-      profile.name + ": elimina scripts, iframes y handlers del contenido enriquecido");
+      profile.name + ": elimina scripts, iframes, handlers y URLs activas del contenido enriquecido");
     check(tutorialRender.validResult.iframeSrc === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1" &&
       tutorialRender.validResult.iframeTitle.includes("Tutorial sintético"),
       profile.name + ": renderiza el vídeo validado como iframe de YouTube");
