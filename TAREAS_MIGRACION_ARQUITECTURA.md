@@ -696,7 +696,7 @@ La lista histórica `lista_beta_parte1.txt` contiene pruebas de rich text que es
 - [ ] Registrar evidencia, tiempos, recursos de prueba y resultados.
 - [ ] No declarar funciones probadas sin invocación real.
 
-**Avance de preparación — 2026-11-24:** se verificó que `Tareas_Beta.md` comienza con la sincronización segura obligatoria: remoto exacto, rama exacta, árbol limpio, `fetch` + `pull --ff-only`, HEAD final y ausencia de comandos destructivos. La matriz principal BETA-01 a BETA-08 está presente. La comprobación se ejecutó en el runtime JavaScript disponible (8/8 aserciones); no equivale a ejecutar los comandos en un clon Git ni a realizar pruebas Beta reales. Las pruebas remotas siguen pendientes de los recursos aislados y autorizados.
+**Avance de preparación — 2026-11-24:** se verificó que `Tareas_Beta.md` comienza con la sincronización segura obligatoria: remoto exacto, rama exacta, árbol limpio, `fetch` + `pull --ff-only`, HEAD final y ausencia de comandos destructivos. La matriz principal BETA-01 a BETA-08 está presente. La comprobación se ejecutó en el runtime JavaScript disponible (8/8 aserciones); no equivale a ejecutar los comandos en un clon Git ni a realizar pruebas Beta reales. Las pruebas remotas siguen pendientes de los recursos aislados y autorizados. Después se ejecutó la secuencia shell en un repositorio Git fixture aislado: fast-forward real v1→v2, detección de árbol sucio y detección de rama incorrecta, todos PASS. El remoto fue un bare local y no el repositorio GitHub; no se sincronizó la rama real.
 
 **Aceptación final:** las 30 tareas cerradas según sus criterios; ninguna función perdida; cero configuración local prohibida; despliegue simplificado y rendimiento no inferior a la línea base.
 
