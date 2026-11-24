@@ -234,7 +234,7 @@ test("CATALOG reconstruye el snapshot PyS desde su hoja canónica", () => {
     const spreadsheet = { getSheetByName: name => name === "pys" ? sheet : null };
     const buildRuntime = new Function("SpreadsheetApp", catalogSource +
         "\nreturn { buildCatalogPysSnapshot_, resolveCanonicalCatalogChange_ };");
-    const canonical = buildRuntime({ openById: () => spreadsheet });
+    const canonical = buildRuntime({ getActiveSpreadsheet: () => spreadsheet });
     const snapshot = canonical.buildCatalogPysSnapshot_("isue-12");
     assert.equal(snapshot.id_problem, "isue-12");
     assert.equal(snapshot.Imagen, "https://drive.google.com/file/d/FILEID1234567890/view");
