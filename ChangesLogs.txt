@@ -802,3 +802,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - La prueba detectó desbordamiento de acciones del encabezado en 320 px durante edición. `style.css` ahora envuelve los botones en pantallas de hasta 340 px y reserva altura suficiente antes del título cuando se aplica el diseño debajo del logo.
 - CI run `45494735181`: Playwright 148/148 PASS en 1366×768, 390×844, 360×800 y 320×700; 12 capturas. Regresión general: 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages SUCCESS.
 - El harness no invoca Apps Script ni servicios remotos reales. La validación física de campo queda en Tareas_Beta.md §20 y la publicación/lectura real de endpoints en §19.
+
+
+### Verificación final de AUG-146 en HEAD consolidado — 2026-11-24
+
+- HEAD consolidado `de833ce9d2575c276789542bdc45f2dbadcaa59f` incluye también el cambio concurrente de `JS/Frontend/api-config.js` sin alterarlo. La suite completa volvió a ejecutarse sobre este HEAD.
+- CI run `45494991186`: SUCCESS en ambos jobs. Regresión: 516 suites, 6,115 pruebas aprobadas, 0 fallos. Playwright/Chromium: 148/148 PASS, cuatro viewports (1366×768, 390×844, 360×800, 320×700) y 12 capturas.
+- Artefacto de evidencia: `14966794425`. GitHub Pages run `45494990388`: SUCCESS.
+- Rama de trabajo consolidada: `GPSpedia2.2.5_work`. Base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.

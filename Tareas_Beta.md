@@ -408,7 +408,7 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 ## 20. Validación Beta diferida — AUG-146: encabezado y panel Developer
 **Estado: VALIDACIÓN AUTOMATIZADA DE NAVEGADOR COMPLETADA; PENDIENTE DE VALIDACIÓN MANUAL EN DISPOSITIVOS FÍSICOS.** La suite Playwright ejecuta el frontend real del repositorio en Chromium con sesión y datos sintéticos; las solicitudes externas se aíslan y no se invocan deployments Apps Script ni recursos productivos.
 
-**Evidencia automatizada:** CI run [45494735181](https://github.com/infogpstech/GPSpedia/actions/runs/45494735181), commit `665822fcd93752646c2e76416bcaa4f22fabc09b`: SUCCESS; 148/148 aserciones, cuatro viewports (1366×768, 390×844, 360×800 y 320×700), modo de edición incluido y 12 capturas sintéticas. Artefacto: [aug-146-responsive-browser-evidence](https://github.com/infogpstech/GPSpedia/actions/runs/45494735181/artifacts/14968421776). Regresión general en el mismo run: 516 suites, 6,115 pruebas aprobadas y 0 fallos.
+**Evidencia automatizada:** CI run [45494991186](https://github.com/infogpstech/GPSpedia/actions/runs/45494991186), commit `de833ce9d2575c276789542bdc45f2dbadcaa59f`: SUCCESS; 148/148 aserciones, cuatro viewports (1366×768, 390×844, 360×800 y 320×700), modo de edición incluido y 12 capturas sintéticas. Artefacto: [aug-146-responsive-browser-evidence](https://github.com/infogpstech/GPSpedia/actions/runs/45494991186/artifacts/14966794425). Regresión general en el mismo run: 516 suites, 6,115 pruebas aprobadas y 0 fallos.
 
 La comprobación manual en dispositivos físicos/navegadores de campo permanece pendiente. Ejecutar primero la sincronización segura del apartado 0 y usar únicamente frontend Beta autorizado, cuentas sintéticas y recursos aislados.
 

@@ -307,3 +307,11 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Regresión general del mismo CI: 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages run asociado al HEAD probado: SUCCESS.
 - `Tareas_Beta.md` §20 actualizado: validación automatizada completada; permanece pendiente la revisión manual en dispositivos físicos. La validación real de configuración central/endpoints continúa en §19, exclusivamente con Spreadsheet y deployments aislados.
 - Estado AUG-146: COMPLETADA CON VALIDACIÓN DIFERIDA. No se desplegaron Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos productivos. Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+
+
+### Verificación final de AUG-146 en HEAD consolidado — 2026-11-24
+
+- HEAD consolidado `de833ce9d2575c276789542bdc45f2dbadcaa59f` incluye también el cambio concurrente de `JS/Frontend/api-config.js` sin alterarlo. La suite completa volvió a ejecutarse sobre este HEAD.
+- CI run `45494991186`: SUCCESS en ambos jobs. Regresión: 516 suites, 6,115 pruebas aprobadas, 0 fallos. Playwright/Chromium: 148/148 PASS, cuatro viewports (1366×768, 390×844, 360×800, 320×700) y 12 capturas.
+- Artefacto de evidencia: `14966794425`. GitHub Pages run `45494990388`: SUCCESS.
+- Rama de trabajo consolidada: `GPSpedia2.2.5_work`. Base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
