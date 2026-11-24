@@ -883,3 +883,5 @@ Se completó la reconciliación estática de todas las acciones, handlers, rutas
 - Los detalles diagnósticos se registran en la consola del navegador mediante `console.error`/`console.warn`; los motivos de cierre de sesión se sanitizan antes de llamar a `showLoginScreen`.
 - Implementación añadida en `JS/Frontend/auth.js`, clasificación `INVALID_CREDENTIALS` en `JS/Services/Auth.js` y fixture `JS/Tests/Auth.js`. Se añadió `JS/Tests/AuthErrorPrivacy.mjs` al runner MIG026.
 - Estado: implementado en código; pendiente CI del commit y revisión de resultados. No se ha desplegado AUTH ni se ha realizado validación Beta.
+
+- Cierre de validación 2026-11-24: tras ajustar el contrato de cierre de sesión y la aserción de consola, CI run 45383504489 terminó SUCCESS: 500 suites, 5,896 pruebas aprobadas, 0 fallos; sintaxis PASS. AuthErrorPrivacy 7/7 PASS y regresión SessionUiRoleInvalidation quedó aprobada. Commit funcional final: 334c5b51a1ae7fd3b4a952b5038ffd874ff9431a. Estado del requisito: COMPLETADO EN CÓDIGO Y CI; validación visual de navegador real diferida a Beta. No se desplegó AUTH.

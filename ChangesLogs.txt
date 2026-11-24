@@ -521,3 +521,9 @@ MIG-026 — auditoría de configuración local — 2026-11-23
 - Los motivos técnicos de cierre de sesión se registran en consola y se sustituyen por el mensaje genérico antes de mostrarlos en pantalla.
 - Se sincronizó el fixture de AUTH y se añadió la prueba estática `AuthErrorPrivacy.mjs` al runner.
 - Validación CI pendiente para el commit que contiene estos cambios; sin despliegue ni pruebas Beta.
+
+
+Adenda 2026-11-24 — validación y corrección de privacidad AUTH
+- La primera ejecución de CI identificó dos fallos de contrato en las pruebas (formato de consola y expectativa de logout); se corrigieron las aserciones preservando el orden funcional de logout.
+- La ejecución final CI run 45383504489: 500 suites, 5,896 pruebas aprobadas, 0 fallos; sintaxis PASS; AuthErrorPrivacy 7/7 PASS.
+- Commit funcional final: 334c5b51a1ae7fd3b4a952b5038ffd874ff9431a.

@@ -1947,3 +1947,11 @@ REQUISITO CRÍTICO — PRIVACIDAD DE ERRORES AUTH/SESIÓN — 2026-11-24
 - HEAD verificado antes de estos cambios: 39c02d165a26e194e97489847ec5c3c39f1d3c0f. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificar.
 - Próximo paso: publicar el conjunto en GPSpedia2.2.5_work con actualización condicionada al HEAD esperado, revisar CI y corregir cualquier regresión. No desplegar Apps Script ni modificar datos reales.
 ================================================================================
+
+
+ADENDA DE CIERRE — PRIVACIDAD AUTH/SESIÓN — 2026-11-24
+- Commit funcional final: 334c5b51a1ae7fd3b4a952b5038ffd874ff9431a.
+- CI run 45383504489: SUCCESS; 500 suites, 5,896 pruebas aprobadas, 0 fallos. Sintaxis PASS; AuthErrorPrivacy 7/7 PASS; pruebas de invalidación/cierre de sesión incluidas en regresión sin fallos.
+- La primera ejecución CI (45383116439) falló por dos expectativas de prueba no alineadas con el cambio. Se corrigieron y se repitió CI; la segunda ejecución aprobó íntegramente.
+- Rama de trabajo verificada en el commit funcional; rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se desplegó AUTH ni se modificaron recursos reales.
+- Requisito completado en código y CI. Pendiente únicamente validación visual en navegador real durante Beta.
