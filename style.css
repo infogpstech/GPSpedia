@@ -6727,6 +6727,12 @@ textarea.rich-text-source[hidden] { display:none !important; }
     #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
         grid-template-rows: auto 48px auto auto;
     }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] {
+        grid-template-rows: 40px 32px auto auto auto;
+    }
+    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] .detail-modal-header-actions {
+        grid-row: 1 / span 2;
+    }
     #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
         flex-wrap: wrap;
         align-content: flex-start;
