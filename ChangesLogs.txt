@@ -559,3 +559,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Comparación de CI: MIG-005 306 suites/3,581 pruebas/~30 s; MIG-028 512 suites/6,044 pruebas/~41 s. Esta duración corresponde al runner y no es latencia de la aplicación.
 - Las métricas de aplicación p50/p95, snapshot/delta, llamadas y operaciones reales Spreadsheet/Drive/YouTube siguen pendientes de Beta conforme a la línea base MIG-005. No se simularon mediciones reales.
 - No se desplegaron servicios Apps Script ni se alteraron propiedades, permisos, hojas, archivos o datos productivos.
+
+
+### 2026-11-24 — MIG-029 guía de despliegue simplificada
+
+- Se creó `Services/DEPLOYMENT_GUIDE.md` con los pasos reales para los seis proyectos Apps Script activos y su matriz de archivos fuente.
+- Se retiraron del procedimiento operativo las referencias a USERS, COORDINATOR, SharedMutation y propiedades/secretos de interconexión. Los documentos históricos siguen archivados y no ejecutables.
+- Se documentó actualización de versión en el deployment existente, publicación de URL nueva mediante revisión íntegra de `Servicios` + `ConfiguracionHistorial` + conmutación controlada de `active_revision`, sin fallback local.
+- Se añadieron rollback por versión y rollback de URL mediante nueva revisión. Cambiar un endpoint no requiere redesplegar los otros servicios ni el frontend.
+- README enlaza la guía vigente. Se añadió `MIG029DeploymentGuideContract.mjs` al runner para validar vigencia, dependencias, registro central y rollback.
+- No se desplegaron proyectos Apps Script ni se modificaron propiedades, permisos, hojas o datos productivos. La ejecución del procedimiento real y su rollback permanecen pendientes de Beta aislada.
