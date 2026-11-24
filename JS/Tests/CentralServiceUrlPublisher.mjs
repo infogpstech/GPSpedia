@@ -214,6 +214,8 @@ check("AUTH exige sesión para consultar y actualizar endpoints y el frontend us
     const panelEnd=ui.indexOf("/* TAREA 1.2:",panelStart);
     const panel=ui.slice(panelStart,panelEnd);
     assert.match(panel,/configurationRefreshPending/);
+    assert.match(panel,/changedByClient = keys\.filter/);
+    assert.match(panel,/result\.changedServices\) \? result\.changedServices : changedByClient/);
     assert.match(panel,/console\.warn/);
     assert.match(panel,/appendConsoleStatus\("ERROR: no se pudo publicar/);
     assert.match(panel,/No se pudieron guardar los cambios/);
