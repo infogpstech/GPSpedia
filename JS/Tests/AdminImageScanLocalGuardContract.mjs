@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
@@ -49,8 +49,8 @@ assert.ok(internal.includes("assertDeveloperSession(payload)"));
 assert.ok(internal.includes("beginAdminAuditEvent_(action, payload, developerContext, startTime)"));
 assert.ok(internal.includes("if (action !== \"ping\" && isSharedMutationAction_(action))"));
 
-assert.equal(existsSync(new URL("../Services/Coordinator.js", import.meta.url)), false,
-    "Coordinator ya debe estar retirado después de MIG-025.");
+assert.doesNotMatch(admin, /Coordinator|COORDINATOR/,
+    "ADMIN ya no debe conservar dependencias del servicio de coordinación retirado.");
 assert.doesNotMatch(ui, /COORDINATOR|getServiceTraffic|globalServiceTraffic/);
 
 assert.match(ui, /routeActionWithRetry\('auditDriveImagesInCortes'[\s\S]*?timeoutMs:\s*cursor\s*\?\s*45000\s*:\s*120000/);

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
 function extract(name) {
@@ -57,8 +57,8 @@ test("el registro sin actor no escribe", () => {
     assert.equal(calls, 0);
 });
 
-test("la fuente Coordinator queda retirada", () => {
-    assert.equal(existsSync(new URL("../Services/Coordinator.js", import.meta.url)), false);
+test("ADMIN no conserva referencias al servicio de coordinación retirado", () => {
+    assert.doesNotMatch(admin, /Coordinator|COORDINATOR/);
 });
 
 console.log("AdminImageActivityAppendAtomic: " + passed + "/" + passed + " PASS");
