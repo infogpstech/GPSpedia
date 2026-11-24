@@ -179,11 +179,14 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 
 ## Mejora autorizada — agrupación y navegación de modelos en búsqueda global (2026-11-24)
 
-**Estado: IMPLEMENTACIÓN PUBLICADA; validación automatizada pendiente.** Esta tarea se prioriza por instrucción expresa del usuario antes de continuar las validaciones Beta pendientes.
+**Estado: COMPLETADA.** Implementación publicada y validaciones locales/CI aprobadas; las validaciones Beta de otras tareas continúan pendientes. Esta tarea se prioriza por instrucción expresa del usuario antes de continuar las validaciones Beta pendientes.
 
 - `JS/Frontend/search-utils.js`: el resolver jerárquico distingue Trim Level, tipo de encendido y rangos de años; conserva opciones sin dato cuando coexisten con valores informados y no colapsa registros duplicados.
 - `JS/Frontend/ui.js`: las tarjetas de búsqueda muestran solo marca/modelo; las pantallas de selección usan «Versiones de equipamiento» y contemplan registros sin Trim Level o sin tipo de encendido. Una selección inequívoca con un único registro y rango abre el detalle directamente.
 - `JS/Tests/SearchModelGrouping.mjs`: se amplían pruebas de lógica y contratos UI para variantes vacías, filtros de selección, navegación directa y preservación de duplicados.
 - La implementación se limita a la búsqueda y navegación de Cortes. Relay, Tutoriales, PyS, VIN ambiguo, prioridades y orden de resultados permanecen fuera del cambio.
 - HEAD confirmado antes de publicar esta tarea: `ad649202033021b1386f9fe63f7280e653274734`. Rama base protegida: `GPSpedia2.2.5`; no modificar.
-- Próximo paso: ejecutar SearchModelGrouping y el conjunto de regresión CI; registrar SHA y resultados comprobados al cerrar. Las validaciones Beta quedan pospuestas hasta terminar esta tarea.
+- Commits de implementación: `60940409ccbaca5aac881146b11cd32b0d07bc1b` (resolver, UI, pruebas y registros) y `a1641afc3264d77fc9e2b5e1df349d437320f8e1` (mostrar exclusivamente el nombre del modelo).
+- CI run `45465653696`, job `138699734920`, HEAD `a1641afc3264d77fc9e2b5e1df349d437320f8e1`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos. `SearchModelGrouping: 28/28 PASS`; comprobación de sintaxis PASS.
+- Rama de trabajo verificada en `a1641afc3264d77fc9e2b5e1df349d437320f8e1`. Rama base protegida verificada sin cambios en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Próxima acción: continuar con las validaciones Beta pendientes, empezando por BETA-09. No se desplegó frontend ni Apps Script como parte de esta tarea.
