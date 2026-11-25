@@ -6929,26 +6929,24 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 
 
-/* GP-UX-CUT-HEADER-ALIGN-04: logo y nombre comparten la misma línea inferior y separación de la línea azul. */
+/* GP-UX-CUT-HEADER-ALIGN-04: logo y modelo comparten el borde inferior, justo antes de la separación de la línea azul. */
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title {
+    align-self: end;
     align-items: flex-end;
-    transform: translateY(-19px);
+    transform: none !important;
 }
-#modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title .brand-logo-modal {
     object-position: left bottom;
 }
-#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {
+#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title-text {
     align-self: end;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 32px;
+    transform: none !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-@media (max-width:560px) {
-    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title {
-        transform: translate(-13px,-19px);
-        align-items: flex-end;
-    }
 }
 
 /* GP-VIDEO-MODAL-02: el iframe Tutorial usa el mismo tamaño de referencia del vídeo guía de desarme. */
