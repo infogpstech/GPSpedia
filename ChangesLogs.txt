@@ -1130,3 +1130,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — GP-LIKE-REBUILD-01: confirmado idempotencia por actor+vehículo+corte, dedicated tests 10/10 + 4/4 PASS y syntax PASS. CI detectó contratos legacy de idempotencia global; tests se ajustan a la regla por corte. DeveloperConsoleRouting 5/5 PASS tras actualizar assertion del mensaje copy. CI follow-up pending. Sin despliegues Apps Script.
+
+
+2026-11-25 — GP-DASH-ACTIVITY-RECENT-01: corregido containment del listener de cierre de acordeón; el clic interno al dashboard no colapsa el detalle, el externo lo cierra. Añadida `ActivityDashboardRecentInteraction.mjs` al runner. CI pendiente.
