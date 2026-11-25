@@ -32,4 +32,7 @@ assert.ok(ui.includes("candidate.vehicleIds")&&ui.includes("candidate.rows"));
 assert.ok(admin.includes("buildCortesImageModelAssociationSuggestions_("));
 assert.ok(admin.includes('setField("asociacion_candidatos_json", JSON.stringify'));
 assert.ok(admin.includes('setField("asociacion_estado", association'));
-console.log("AdminDriveAuditAssociation: 13/13 PASS");
+assert.ok(admin.includes('asociacion_candidatos_json: valueAt(row, "asociacion_candidatos_json")'));
+assert.ok(ui.includes('JSON.parse(String(rep.asociacion_candidatos_json || "[]"))'));
+assert.ok(ui.includes('associationDetails.textContent = "Asociación: "'));
+console.log("AdminDriveAuditAssociation: 16/16 PASS");
