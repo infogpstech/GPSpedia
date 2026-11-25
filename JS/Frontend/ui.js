@@ -8778,7 +8778,7 @@ export async function openAuditDriveModal(options = {}) {
             name.title = file.fileName || 'Archivo sin nombre';
             const detailsEl = document.createElement('div');
             detailsEl.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            detailsEl.textContent = (file.folderPath || '') + ' | ' + String(file.format || (String(file.fileName || '').match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || file.mimeType || 'formato desconocido')).toUpperCase() + ' | ' +
+            detailsEl.textContent = (file.folderPath || '') + ' | ' + String(file.format || (String(file.fileName || '').match(/\.([A-Za-z0-9]{1,12})$/)?.[1] || file.mimeType || 'formato desconocido')).toUpperCase() + ' | ' +
                 ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
                 (file.lastUpdated || 'Fecha no disponible') + ' | Origen: ' + String(file.origin || 'Google Drive · árbol Cortes');
             info.appendChild(name);

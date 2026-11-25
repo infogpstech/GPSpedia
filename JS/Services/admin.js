@@ -13339,7 +13339,7 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMe
     const metadata = (Array.isArray(fileMetadata) ? fileMetadata : []).map(item => {
         const fileId = String(item && item.fileId || "").trim(), fileName = String(item && item.fileName || "");
         const mimeType = String(item && item.mimeType || "").toLowerCase();
-        const extension = fileName.match(/\\.([A-Za-z0-9]{1,12})$/);
+        const extension = fileName.match(/\.([A-Za-z0-9]{1,12})$/);
         return {
             fileId, fileName, mimeType, folderPath: String(item && item.folderPath || ""),
             folderId: String(item && item.folderId || ""), size: Math.max(0, Number(item && item.size) || 0),
@@ -13421,7 +13421,7 @@ function loadDriveAuditFileMetadata_(auditId, pageCount, refreshCache = true) {
             seen.add(fileId);
             const folderPath = String(item && item.folderPath || "");
             const folderId = String(item && item.folderId || ""), size = Math.max(0, Number(item && item.size) || 0);
-            const lastUpdated = String(item && item.lastUpdated || ""), format = String(item && item.format || (fileName.match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown")).toLowerCase();
+            const lastUpdated = String(item && item.lastUpdated || ""), format = String(item && item.format || (fileName.match(/\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown")).toLowerCase();
             const url = String(item && item.url || "https://drive.google.com/file/d/" + fileId + "/view");
             const origin = String(item && item.origin || "Google Drive · árbol Cortes");
             result.push({ fileId, fileName, mimeType, folderPath, folderId, size, lastUpdated, format, url, origin });
