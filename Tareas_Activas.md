@@ -113,7 +113,7 @@ Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tarea
 
 ## Próxima tarea en cola — Dashboard de actividad: Actividad reciente
 
-**Estado: REABIERTA — corregida la contención del listener global; pruebas CI en curso (2026-11-25).** La validación de datos reales FEEDBACK/Spreadsheet queda diferida a Beta.
+**Estado: COMPLETADA EN CÓDIGO Y PRUEBA CONTRACTUAL CI (2026-11-25).** Validación real de FEEDBACK/Spreadsheet diferida a Beta.
 
 ### Objetivo
 Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del Dashboard, transformando los datos recibidos de los servicios en información clara para el usuario.
@@ -319,3 +319,11 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Corrección frontend: el listener de cierre externo ahora ignora los clics que ocurren dentro de la tabla/contenedor y solo cierra cuando el evento es externo, conservando compatibilidad del fallback.
 - Prueba añadida `ActivityDashboardRecentInteraction.mjs`: apertura, clic interno, exclusividad de acordeón, cierre externo, estado aria y reemplazo del listener al renderizar nuevamente; registrada en runner.
 - CI pending. Solo frontend y pruebas; no se modifican servicios Apps Script ni datos.
+
+
+### GP-DASH-ACTIVITY-RECENT-01 — cierre de contención
+
+- Listener de cierre externo confinado al contenedor de la tabla. Los clics internos no colapsan; los externos sí.
+- `ActivityDashboardRecentInteraction.mjs`: 6/6 PASS en CI. Browser-responsive AUG-146 PASS en workflow; no es browser específico de esta pestaña.
+- CI suite 45611875173: 439 suites/5428 tests aprobados, tres suites fallidas (contract de FEEDBACK preflight corregido en 05fc4f2b; MIG021 configuración URL sigue pendiente de reconciliación). La tarea de interacción pasa.
+- Sin cambios de backend, payload, datos ni deployments.
