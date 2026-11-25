@@ -33,8 +33,8 @@ test("seis endpoints locales conviven temporalmente con el bootstrap de administ
     const api = read("JS/Frontend/api-config.js");
     const urls = frontendText.match(/https:\/\/script\.google\.com\/macros\/s\//g) || [];
     assert.equal(urls.length, 7, "Deben existir seis endpoints locales y un bootstrap transitorio.");
-    assert.equal((api.match(/CENTRAL_CONFIGURATION_BOOTSTRAP_URL\\s*=/g) || []).length, 1);
-    assert.match(api, /export const API_ENDPOINTS = Object\\.freeze/);
+    assert.equal((api.match(/CENTRAL_CONFIGURATION_BOOTSTRAP_URL\s*=/g) || []).length, 1);
+    assert.match(api, /export const API_ENDPOINTS = Object\.freeze/);
     assert.match(api, /resolveApiEndpoint_/);
     assert.doesNotMatch(backendText, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
 });
