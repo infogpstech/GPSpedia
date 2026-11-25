@@ -87,7 +87,7 @@ function makeHarness(seedRows = [], options = {}) {
         extract("handleRecordLike")
     ].join("\n");
     const api = new Function(...Object.keys(dependencies), code + "\nreturn handleRecordLike;")(...Object.values(dependencies));
-    return { run: api, state, ledgerRows };
+    return { run: api, state, ledgerRows, cutsRows };
 }
 const h = makeHarness();
 const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });

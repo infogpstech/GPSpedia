@@ -21,7 +21,7 @@ test("el replay existente se comprueba dentro del lock antes de insertar", () =>
         handler.indexOf('ledger.appendRow([actorKey, vehicleId, corteIndex, 0, 0, "event"'));
 });
 test("cualquier evento previo del mismo usuario y vehículo evita una nueva fila", () => {
-    assert.match(handler, /existingRows = findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId\)/);
+    assert.match(handler, /existingRows = findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, legacyActorKey\)/);
     assert.match(handler, /existingEvents\.length/);
     assert.doesNotMatch(handler, /existingRows\.length > 1/);
     assert.doesNotMatch(handler, /alreadyLiked:\s*true[^}]*message:/s);
