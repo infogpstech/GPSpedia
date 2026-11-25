@@ -4,7 +4,7 @@ function assert(condition, message) { if (!condition) throw new Error(message ||
 class FakeElement {
     constructor(tagName) { this.tagName = tagName; this.children = []; this.ownerDocument = null; this._textContent = ""; }
     set textContent(value) { this._textContent = String(value); this.children = []; }
-    get textContent() { return this._textContent; }
+    get textContent() { return this._textContent + this.children.map(child => child.textContent).join(""); }
     set innerHTML(_value) { throw new Error("No se debe asignar innerHTML durante el renderizado del dashboard."); }
     setAttribute(name, value) { this.attributes = this.attributes || {}; this.attributes[name] = String(value); }
     appendChild(child) { child.parentNode = this; this.children.push(child); return child; }
