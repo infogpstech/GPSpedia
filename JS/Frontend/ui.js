@@ -3980,8 +3980,11 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         // Optimistic UI for recordLike
         // Check if already liked in this session
         const { likedCortes, catalogData: catData } = getState();
-        const likeKey = `${vehicleId}-${cutData.index}`;
-        if (likedCortes && likedCortes.includes(likeKey)) {
+        const likeKey = String(vehicleId);
+        const alreadyLikedVehicle = Array.isArray(likedCortes) && likedCortes.some(key =>
+            String(key) === likeKey || String(key).startsWith(likeKey + "-")
+        );
+        if (alreadyLikedVehicle) {
             utilBtn.classList.add('liked');
             utilBtn.style.backgroundColor = '#28a745';
         }
@@ -12229,16 +12232,17 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             if (videoEmbedUrl) {
                 const videoContainer = document.createElement("div");
                 videoContainer.className = "tutorial-video-container";
-                videoContainer.style.cssText = "position:relative;display:block;flex:0 0 auto;width:100%;aspect-ratio:16/9;max-height:none;min-height:0;box-sizing:border-box;margin-bottom:12px;overflow:hidden;border-radius:8px;";
+                videoContainer.style.cssText = "position:relative;display:block;flex:0 0 auto;width:100%;height:315px;min-height:315px;box-sizing:border-box;margin-bottom:12px;overflow:hidden;border-radius:8px;";
                 const iframe = document.createElement("iframe");
                 iframe.className = "tutorial-youtube-embed";
                 iframe.src = videoEmbedUrl;
                 iframe.title = `Vídeo de YouTube: ${String(item.Tema || "Tutorial")}`;
-                iframe.loading = "lazy";
+                iframe.width = "100%";
+                iframe.height = "315";
                 iframe.referrerPolicy = "strict-origin-when-cross-origin";
                 iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
                 iframe.allowFullscreen = true;
-                iframe.style.cssText = "display:block;width:100%;height:100%;border:0;border-radius:8px;";
+                iframe.style.cssText = "display:block;width:100%;height:315px;min-height:315px;border:0;border-radius:8px;margin-top:10px;";
                 videoContainer.appendChild(iframe);
                 cont.appendChild(videoContainer);
             } else {
