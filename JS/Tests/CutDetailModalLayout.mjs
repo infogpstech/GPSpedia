@@ -388,7 +388,7 @@ testCase("logo y nombre del modelo comparten la línea inferior y el nombre móv
     assert.match(alignment, /\.detail-modal-title \{[\s\S]*?align-items: flex-end;[\s\S]*?transform: translateY\(-19px\)/);
     assert.match(alignment, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-position: left bottom/);
     assert.match(alignment, /\.detail-modal-title-text \{[\s\S]*?align-self: end;[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
-    assert.match(css, /font-size:calc\(clamp\(1rem,4vw,1.35rem\) \+ 2px\)/);
+    assert.match(css, /font-size:\s*calc\(clamp\(1rem,4vw,1.35rem\)\s*\+\s*2px\)/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
