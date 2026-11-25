@@ -118,3 +118,12 @@
 
 2026-11-25 | Incidencia #130 — verificación integral de esta iteración
 - CI `45721749765` SUCCESS: 542 suites, 6,447 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Commit `bdb201ab0c6c2c76264a7c083bd5625cc6a1172b`.
+
+
+2026-11-25 | Incidencia #130 — verificación integrada final
+- Se amplió `UsefulButtonState` para ejecutar las funciones reales de proyección/estado optimista/confirmado y conectarlas con un DOM simulado. Comprueba índice físico frente a posición visual, título recomendado/alternativo y conservación del icono del botón. Resultado 10/10.
+- Se amplió el fixture del harness `AdminReplacedImagesIntegrity` con `referenceLocationsById` para comprobar el round-trip real del snapshot serializado por manifiesto y bloques de caché. Resultado 64/64.
+- Revisión del diff desde el checkpoint anterior: solo dos archivos de pruebas modificados en esa última fase.
+- CI `45722568761` SUCCESS: 542 suites, 6,448 pruebas, 0 fallos; responsive-browser SUCCESS. Pages `45722568303` SUCCESS.
+- La validación real de Apps Script/Drive/Spreadsheet no se ejecutó; permanece pendiente de despliegue y autorización Beta.
+

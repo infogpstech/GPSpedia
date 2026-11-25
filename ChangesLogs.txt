@@ -1327,3 +1327,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - ReferenceSnapshot 14/14; ReferenceLocations 6/6; CursorRecovery 23/23; MetadataPersistence 11/11; ScanIntegrity 18/18; IncrementalInventory 35/35; ReplacedImagesIntegrity 64/64; UsefulButtonState 9/9.
 - CI `45721749765`: 542 suites, 6,447 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS.
 - Cambios solo en fuente y pruebas de la rama de trabajo. Sin despliegues Apps Script ni operaciones reales sobre Drive/Spreadsheet.
+
+
+2026-11-25 — Pruebas integradas de útiles y snapshot Drive
+- `UsefulButtonState.mjs` amplía cobertura a 10/10: funciones reales de estado optimista/confirmado, traducción de índice físico a visual, sincronización de encabezados y conservación del icono del botón útil.
+- `AdminReplacedImagesIntegrity.mjs` mantiene 64/64 e incorpora ubicaciones de referencia en el snapshot de prueba para verificar serialización/recuperación.
+- Revisión de diff: únicamente archivos de prueba en esta última iteración.
+- CI `45722568761`: 542 suites, 6,448 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages `45722568303` SUCCESS.
+- Sin despliegues Apps Script ni operaciones reales en Drive/Spreadsheet.

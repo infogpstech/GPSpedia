@@ -1115,3 +1115,14 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - CI final `45721749765` SUCCESS en commit `bdb201ab0c6c2c76264a7c083bd5625cc6a1172b`: 542 suites, 6,447 pruebas aprobadas, 0 fallos. Jobs `service-tests` y `responsive-browser` SUCCESS.
 - Incidencias de CI durante la iteración fueron diagnosticadas y corregidas: aserción antigua del estado de inventario; harnesses que no inyectaban `ADMIN_SERVICE_VERSION`; fixtures completos que no incluían versión/esquema; y precedencia de error para auditoría aún no confirmada. No se desactivaron guardas ni se maquillaron resultados.
 - Pendiente de #130: revisión final del diff completo; completar verificación integrada del contador proyectado CATALOG ↔ estado local ↔ título DOM; revisar persistencia/reanudación con los escenarios disponibles y actualizar cierre. Las pruebas reales que requieren Apps Script/Drive/Spreadsheet permanecen PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA y no se simularon.
+
+
+## Verificación integrada final de contador y snapshot — incidencia #130 (2026-11-25)
+
+- HEAD de trabajo: `056f54243557a139221c41d92bcbdadd4530a983`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios. Comparación de ramas: trabajo ahead, 0 behind.
+- Revisión final del diff desde el checkpoint anterior `837e421fcc875d07c8117f6cd9a1a9ec78d1408c`: 5 commits; únicamente se modificaron `JS/Tests/AdminReplacedImagesIntegrity.mjs` y `JS/Tests/UsefulButtonState.mjs` después de ese checkpoint. Cambios limitados a ampliar el round-trip del snapshot con ubicaciones y probar estado optimista/confirmado hasta DOM. No se detectaron archivos ajenos en esa revisión.
+- `UsefulButtonState` ahora usa las funciones reales `resolveUsefulDisplayCutIndex`, `applyOptimisticUsefulState` y `applyConfirmedUsefulState`; comprueba que el índice físico se proyecta al corte visual correcto y que `syncUsefulCount_` actualiza encabezados sin tocar el botón ni su icono. Resultado: 10/10.
+- `AdminReplacedImagesIntegrity` ahora incluye `referenceLocationsById` en fixtures del snapshot y valida su serialización/recuperación mediante el manifiesto y los bloques CacheService. Resultado: 64/64.
+- CI final `45722568761` SUCCESS: 542 suites, 6,448 pruebas aprobadas, 0 fallos; jobs `service-tests` y `responsive-browser` SUCCESS. Build/deployment de Pages `45722568303` SUCCESS.
+- Estado local de #130: correcciones y validaciones automatizadas cubiertas; no cerrar como validación integral real hasta completar la comprobación Beta autorizada de Apps Script, Drive y Spreadsheet. No hubo despliegues ni operaciones remotas sobre esos recursos.
+- Próximo paso: esperar confirmación/autorización de entorno Beta aislado; ejecutar las pruebas de útiles FEEDBACK/CATALOG y auditoría/persistencia ADMIN; registrar evidencia y entonces decidir cierre de #130. MIG-URL-008 sigue siendo una tarea independiente pendiente de autorización.

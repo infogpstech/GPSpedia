@@ -599,3 +599,13 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **Completado:** protecciones por errores del escaneo (ScanIntegrity 18/18), inventario incremental 35/35, historial de imágenes 64/64 y útiles 9/9.
 - **CI confirmada:** run `45721749765`, commit `bdb201ab0c6c2c76264a7c083bd5625cc6a1172b`: 542 suites, 6,447 pruebas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS.
 - **Siguientes pasos:** (1) terminar revisión del diff completo; (2) verificar de forma integrada contador CATALOG, estado local, título recomendado/alternativo y botón DOM; (3) documentar y cerrar #130 tras revisión. Pruebas que requieran deployment Apps Script/Drive/Spreadsheet real siguen PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA. No desplegar sin autorización.
+
+
+## Incidencia #130 — revisión final local (2026-11-25)
+**Estado: IMPLEMENTACIÓN LOCAL Y CI COMPLETADAS; VALIDACIÓN BETA PENDIENTE.**
+
+- Revisión del diff desde checkpoint anterior: solo se ampliaron dos archivos de pruebas (`AdminReplacedImagesIntegrity.mjs`, `UsefulButtonState.mjs)); sin cambios de producción adicionales en esa última revisión.
+- `UsefulButtonState` 10/10: estado optimista, confirmación, índice físico/visual y DOM; el icono del botón útil permanece intacto.
+- `AdminReplacedImagesIntegrity` 64/64: round-trip de snapshot que incluye ubicaciones de referencia serializadas.
+- CI final `45722568761`: 542 suites, 6,448 pruebas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. Pages `45722568303` SUCCESS.
+- No se despliegan servicios ni se ejecutan escrituras/lecturas reales en Drive o Spreadsheet sin autorización. Para cerrar #130 falta la validación Beta aislada de FEEDBACK/CATALOG y ADMIN/Drive/Spreadsheet, registrar evidencia y actualizar el issue. MIG-URL-008 sigue independiente y pendiente de autorización.
