@@ -13550,6 +13550,8 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         throw new Error("Faltan columnas para verificar la operación de inventario.");
     }
     const readBack = () => sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
+    const metadataColumns = ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"]
+        .map(name => headers.indexOf(name)).filter(index => index >= 0);
     const matches = persisted => String(persisted[0] || "") === String(row[0] || "") &&
         extractDriveFileId(persisted[5]) === fileId &&
         String(persisted[auditColumn - 1] || "") === auditId &&
@@ -13557,7 +13559,8 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         String(persisted[resultColumn - 1] || "") === expectedResult &&
         String(persisted[10] || "") === expectedStatus &&
         (expectedOrganizationState === undefined || String(persisted[organizationColumn - 1] || "") === String(expectedOrganizationState)) &&
-        (expectedLocation === undefined || String(persisted[locationColumn - 1] || "") === String(expectedLocation));
+        (expectedLocation === undefined || String(persisted[locationColumn - 1] || "") === String(expectedLocation)) &&
+        metadataColumns.every(index => String(persisted[index] || "") === String(row[index] || ""));
     const writeAndVerify = () => {
         sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
         SpreadsheetApp.flush();
