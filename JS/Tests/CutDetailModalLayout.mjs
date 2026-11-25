@@ -375,7 +375,7 @@ testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grup
     assert.ok(actionsRule.includes("justify-content: flex-end;") && actionsRule.includes("gap: 6px;") && actionsRule.includes("padding-right: 48px"));
     assert.ok(cutHeader.includes("grid-template-rows:40px 32px auto auto"));
     assert.ok(cutHeader.includes("grid-column:2;") && cutHeader.includes("grid-row:1;") && cutHeader.includes("justify-content:flex-end"));
-    assert.ok(detail.includes('const actionButtons = Array.from(headerActions.querySelectorAll("button"))'));
+    assert.ok(detail.includes("headerDiv.getBoundingClientRect().right - titleStart"), "El ancho del título debe excluir únicamente el espacio ocupado por el logo, no las acciones de la primera fila.");
     assert.ok(detail.includes("const logoRect = titleContainer.getBoundingClientRect()"));
     assert.ok(detail.includes("titleLayoutObserver.observe(titleContainer)") && detail.includes("titleLayoutObserver.observe(logoImg)"));
     assert.ok(detail.includes("logoRect.right + 6"));
