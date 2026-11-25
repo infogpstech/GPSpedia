@@ -70,3 +70,11 @@
 - `handleGetReplacedImages` expone los campos nuevos y la biblioteca visual los muestra. Los resultados de auditoría muestran fileId y folderId.
 - Asociación: `buildCortesImageModelAssociationSuggestions_` incluye vehicleIds y row numbers. Modelos que corresponden a varios vehículos se marcan ambiguos; la UI muestra IDs/filas y mantiene revisión manual sin aplicar asociaciones automáticamente.
 - Pruebas añadidas/ampliadas: AdminIncrementalInventory, AdminReplacedImagesIntegrity, AdminDriveScanModal y AdminDriveAuditAssociation. Runner aislado: schema migration 32 columnas PASS; asociación única/ambigua PASS; parser JS PASS. Node/CI pendiente.
+
+
+2026-11-25 | Incidencia #130 — persistencia de asociación por vehículo
+- El preview de asociación ya proponía modelos por nombre/ruta, pero la hoja de inventario no conservaba candidatos ni la confianza después de cerrar el modal.
+- Se agregaron columnas asociacion_estado, asociacion_confianza y asociacion_candidatos_json. Durante el guardado incremental ADMIN calcula sugerencias sobre metadatos del snapshot y la hoja Cortes; persiste vehicleIds, rows, modelo, marca, categoría, score y señales.
+- Si un modelo coincide con varios IDs de vehículo, el estado se marca ambiguous y se mantiene revisión manual; no se asigna automáticamente.
+- La lectura de inventario expone los campos y la UI muestra asociación, confianza, IDs y filas; el filtro admite folderId, formato y candidatos.
+- El verificador read-back compara los ocho campos de metadata/asociación. Esquema simulado 35 columnas PASS; pruebas de persistencia y asociación añadidas. Node/CI pendiente.
