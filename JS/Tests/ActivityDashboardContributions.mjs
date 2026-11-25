@@ -110,9 +110,8 @@ const byIdentity=normalizeContributionRows([
  {userId:"U2",nombreUsuario:"Pablo Peña",cortesAportados:4,aportesRegistrados:8,vehiculosConAportes:1}
 ]);
 assert.deepEqual(byIdentity,[
- {nombreUsuario:"Pablo Peña",cortesAportados:5,aportesRegistrados:12,vehiculosConAportes:2},
- {nombreUsuario:"Pablo Peña",cortesAportados:4,aportesRegistrados:8,vehiculosConAportes:1}
-]);
+ {nombreUsuario:"Pablo Peña",cortesAportados:9,aportesRegistrados:20,vehiculosConAportes:2}
+],"Los registros con el mismo nombre visible se consolidan aunque el servicio entregue IDs históricos distintos.");
 const legacyShape=normalizeContributionRows([{nombreUsuario:"Usuario antiguo",aportesRegistrados:3,vehiculosConAportes:1}]);
 assert.deepEqual(legacyShape,[{nombreUsuario:"Usuario Antiguo",cortesAportados:3,aportesRegistrados:3,vehiculosConAportes:1}]);
 const ambiguousUsers=[Array(8).fill("header"),["U1","ana","","","","","Ana",""],["U4","ana-dos","","","","","Ana",""]];
