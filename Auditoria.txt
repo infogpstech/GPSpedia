@@ -42,7 +42,7 @@
 - Impacto: ReferenceError interrumpe el lote antes de persistir/responder resultados; no hay cursor de continuación útil para ese lote.
 - Corrección: quitar propiedad duplicada fuera de ámbito y mantener mapeo de ubicaciones del snapshot. Regresión aislada añadida; CI pendiente.
 
-2026-11-25 | GP-UTIL-TOGGLE-02 — proyección al reactivar
+2026-11-25 | Incidencia #130 — proyección al reactivar útil
 - Severidad: media; secuencia event → withdrawn → event para el mismo actor/vehículo/corte podía proyectar delta incorrecto.
 - Ubicación: JS/Services/catalog.js, readFeedbackLikeEventCounts_.
 - Evidencia: el acumulador dejaba completed=true después de una retirada completada y no lo restablecía al encontrar un nuevo evento activo.
