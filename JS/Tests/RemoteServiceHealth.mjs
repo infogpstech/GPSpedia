@@ -3,25 +3,19 @@ import { performance } from "node:perf_hooks";
 const targetCommit = String(process.env.TARGET_COMMIT || "").trim();
 if (!/^[a-f0-9]{40}$/i.test(targetCommit)) throw new Error("TARGET_COMMIT debe ser un SHA completo.");
 const source = execFileSync("git", ["show", targetCommit + ":JS/Frontend/api-config.js"], { encoding:"utf8", maxBuffer:4*1024*1024 });
-const bootstrapMatch = source.match(/const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "([^"]+)"/);
-if (!bootstrapMatch) throw new Error("No se encontró el localizador bootstrap central.");
-const keysMatch = source.match(/export const CENTRAL_SERVICE_KEYS = Object\.freeze\(\[([\s\S]*?)\]\);/);
-if (!keysMatch) throw new Error("No se encontró CENTRAL_SERVICE_KEYS.");
-const serviceKeys = [...keysMatch[1].matchAll(/["']([A-Z]+)["']/g)].map(x=>x[1]);
+if (String(process.env.GPSPEDIA_HEALTH_ENV || "") !== "BETA_ISOLATED" ||
+ String(process.env.GPSPEDIA_CONFIRM_BETA_ENDPOINTS || "") !== "I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA") {
+ throw new Error("La comprobación remota exige confirmar que las seis URLs locales apuntan a una Beta aislada.");
+}
 function parseObject(name) {
  const match=source.match(new RegExp("export const "+name+" = (?:Object\\.freeze\\()?\\{([\\s\\S]*?)\\n\\}\\)?;"));
  if(!match)throw new Error("No se encontró "+name+".");
- const values={}; for(const line of match[1].split(/\r?\n/)){const item=line.match(/^\s*([A-Z]+):\s*"([^"]+)"\s*,?\s*$/);if(item)values[item[1]]=item[2];}
+ const values={};for(const line of match[1].split(/\r?\n/)){const item=line.match(/^\s*([A-Z]+):\s*"([^"]+)"\s*,?\s*$/);if(item)values[item[1]]=item[2];}
  return values;
 }
-const identities=parseObject("SERVICE_HEALTH_CONTRACTS"), keys=Object.keys(identities).sort();
-if(serviceKeys.length!==6||serviceKeys.slice().sort().join(",")!==keys.join(","))throw new Error("El inventario central y los contratos de salud no coinciden.");
-const bootstrapResponse=await fetch(bootstrapMatch[1],{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"getPublicConfiguration",payload:{}}),redirect:"follow",signal:AbortSignal.timeout(12000)});
-if(!bootstrapResponse.ok)throw new Error("AUTH bootstrap respondió HTTP "+bootstrapResponse.status+".");
-const config=await bootstrapResponse.json();
-if(!config||config.status!=="success"||config.routingAvailable!==true||!config.services)throw new Error("AUTH no publicó configuración central vigente; no se usarán URLs locales.");
-const endpoints={};
-for(const key of serviceKeys){const item=config.services[key];if(!item||item.enabled!==true||!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(item.endpointUrl||"")))throw new Error("Endpoint central inválido/deshabilitado: "+key);endpoints[key]=item.endpointUrl;}
+const endpoints=parseObject("API_ENDPOINTS"),identities=parseObject("SERVICE_HEALTH_CONTRACTS"),keys=Object.keys(identities).sort(),serviceKeys=Object.keys(endpoints).sort();
+if(serviceKeys.length!==6||serviceKeys.join(",")!==keys.join(","))throw new Error("API_ENDPOINTS y los contratos de salud no contienen los mismos seis servicios.");
+for(const key of serviceKeys)if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(endpoints[key]||"")))throw Error("Endpoint local inválido: "+key);
 const forbidden=/secret|token|password|spreadsheet.?id|drive.?folder.?id|sheets.?accessed|cache.?key|stack|exception/i;
 function inspect(value,path="response"){if(!value||typeof value!=="object")return;for(const [key,child] of Object.entries(value)){if(forbidden.test(key))throw new Error("Campo de diagnóstico no permitido: "+path+"."+key);inspect(child,path+"."+key);}}
 function transient(error){const message=String(error&&error.message||error||""),name=String(error&&error.name||"");return name==="TimeoutError"||name==="AbortError"||/timed? ?out|timeout|fetch failed|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up/i.test(message);}
@@ -42,7 +36,7 @@ async function probe(service){
 }
 async function run(services,concurrency=2){const results=new Array(services.length);let next=0;async function worker(){while(true){const i=next++;if(i>=services.length)return;results[i]=await probe(services[i]);}}await Promise.all(Array.from({length:Math.min(concurrency,services.length)},worker));return results;}
 console.log("GPSpedia remote service health — target "+targetCommit);
-console.log("Bootstrap central + GET ?debug=true; sin escrituras ni cambios remotos.");
+console.log("API_ENDPOINTS local + GET ?debug=true; Beta aislada confirmada; sin escrituras ni cambios remotos.");
 const results=await run(keys,2);
 for(const r of results){if(r.status==="PASS")console.log("PASS "+r.service+" v"+r.version+" — "+r.latencyMs+" ms (intento "+r.attempts+"/3; total "+r.totalMs+" ms)");else console.error("FAIL "+r.service+" — "+r.error+" (3 intentos; total "+r.totalMs+" ms)");}
 const passed=results.filter(x=>x.status==="PASS").length;console.log("Resultado: "+passed+"/"+results.length+" servicios disponibles.");if(passed!==results.length)process.exitCode=1;

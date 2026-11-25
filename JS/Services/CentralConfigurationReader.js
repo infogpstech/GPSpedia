@@ -7,9 +7,7 @@ var GP_CONFIG_SCHEMA_VERSION_ = 1;
 var GP_CONFIG_FRESH_TTL_MS_ = 5 * 60 * 1000;
 var GP_CONFIG_STALE_TTL_MS_ = 15 * 60 * 1000;
 var GP_CONFIG_CACHE_TTL_SECONDS_ = 900;
-var GP_CONFIG_REQUIRED_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
-var GP_CONFIG_RETIRED_SERVICE_KEYS_ = ["USERS", "COORDINATOR"];
-var GP_CONFIG_SERVICE_KEYS_ = GP_CONFIG_REQUIRED_SERVICE_KEYS_.slice();
+var GP_CONFIG_PARAMETER_SERVICE_KEYS_ = ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
 var GP_CONFIG_PARAMETER_RULES_ = {
   rich_text_mode: { valueType: "enum", values: ["strict", "advanced"], scope: "global", visibility: "public", owner: "FEEDBACK" }
 };
@@ -20,7 +18,7 @@ function getPublicCentralConfiguration_() {
 
 function getCentralConfigurationForService_(serviceKey) {
   var key = String(serviceKey || "").trim().toUpperCase();
-  if (GP_CONFIG_SERVICE_KEYS_.indexOf(key) < 0) throw centralConfigurationError_("UNKNOWN_SERVICE", "Servicio de configuración desconocido.");
+  if (GP_CONFIG_PARAMETER_SERVICE_KEYS_.indexOf(key) < 0) throw centralConfigurationError_("UNKNOWN_SERVICE", "Servicio de configuración desconocido.");
   return getCentralConfigurationSnapshot_("backend", key);
 }
 
@@ -38,7 +36,7 @@ function getCentralConfigurationSnapshot_(visibility, serviceKey) {
     }
   } catch (cacheReadError) { cached = null; }
   if (cached && now - Number(cached.fetchedAtMs) <= GP_CONFIG_FRESH_TTL_MS_) {
-    return projectCentralConfiguration_(cached.snapshot, visibility, serviceKey, false, true);
+    return projectCentralConfiguration_(cached.snapshot, visibility, serviceKey, false);
   }
   try {
     var snapshot = readCentralConfigurationSnapshot_();
@@ -46,26 +44,25 @@ function getCentralConfigurationSnapshot_(visibility, serviceKey) {
     try {
       if (cache) cache.put(cacheKey, JSON.stringify(record), GP_CONFIG_CACHE_TTL_SECONDS_);
     } catch (cacheWriteError) {}
-    return projectCentralConfiguration_(snapshot, visibility, serviceKey, false, true);
+    return projectCentralConfiguration_(snapshot, visibility, serviceKey, false);
   } catch (readError) {
     var age = cached ? now - Number(cached.fetchedAtMs) : Infinity;
     if (cached && age <= GP_CONFIG_STALE_TTL_MS_) {
       // Los parámetros pueden tolerar stale-if-error hasta 15 min.
       // El registro de endpoints deja de ser utilizable al superar 5 min.
-      return projectCentralConfiguration_(cached.snapshot, visibility, serviceKey, true, age <= GP_CONFIG_FRESH_TTL_MS_);
+      return projectCentralConfiguration_(cached.snapshot, visibility, serviceKey, true);
     }
     throw readError;
   }
 }
 
-function projectCentralConfiguration_(snapshot, visibility, serviceKey, stale, routingAvailable) {
+function projectCentralConfiguration_(snapshot, visibility, serviceKey, stale) {
   var result = {
     status: "success",
     schemaVersion: snapshot.schemaVersion,
     revision: snapshot.revision,
     generatedAt: snapshot.generatedAt,
     stale: Boolean(stale),
-    routingAvailable: visibility === "public" && Boolean(routingAvailable),
     parameters: {}
   };
   Object.keys(snapshot.parameters).forEach(function(key) {
@@ -75,10 +72,7 @@ function projectCentralConfiguration_(snapshot, visibility, serviceKey, stale, r
     if (visibility === "backend" && item.visibility === "backend" &&
         (item.scope === "global" || item.scope === "service:" + serviceKey)) result.parameters[key] = item.value;
   });
-  if (visibility === "public") {
-    result.services = routingAvailable ? snapshot.services : null;
-    return result;
-  }
+  if (visibility === "public") return result;
   result.resources = {};
   Object.keys(snapshot.resources).forEach(function(key) {
     var item = snapshot.resources[key];
@@ -107,9 +101,6 @@ function readCentralConfigurationSnapshot_() {
   var schemaHeaders = ["config_key", "entity_type", "value_type", "scope_allowed", "visibility_allowed", "required", "default_json", "validation_rule", "introduced_schema_version", "deprecated_schema_version", "replacement_key", "owner_service", "description"];
   var schemaTable = readCentralConfigurationTable_(spreadsheet, "ConfiguracionEsquema", schemaHeaders);
   var schema = validateCentralConfigurationSchema_(schemaTable.rows, control.schemaVersion);
-  var serviceHeaders = ["config_revision", "service_key", "endpoint_url", "enabled", "contract_version", "min_client_version", "health_action", "updated_at", "updated_by", "change_reason"];
-  var servicesTable = readCentralConfigurationTable_(spreadsheet, "Servicios", serviceHeaders);
-  var services = validateCentralConfigurationServices_(servicesTable.rows, control.activeRevision);
   var parameterHeaders = ["config_revision", "config_key", "value_json", "value_type", "scope", "visibility", "enabled", "default_json", "validation_rule", "schema_version", "updated_at", "updated_by", "change_reason"];
   var parameterTable = readCentralConfigurationTable_(spreadsheet, "ConfiguracionParametros", parameterHeaders);
   var parameters = validateCentralConfigurationParameters_(parameterTable.rows, control.activeRevision, control.schemaVersion, schema);
@@ -128,7 +119,6 @@ function readCentralConfigurationSnapshot_() {
     schemaVersion: control.schemaVersion,
     revision: control.activeRevision,
     generatedAt: new Date().toISOString(),
-    services: services,
     parameters: parameters,
     resources: resources
   };
@@ -187,7 +177,7 @@ function validateCentralConfigurationSchema_(rows, schemaVersion) {
     var introduced = Number(row.introduced_schema_version);
     if (!key || !/^[a-z][a-z0-9_.-]{1,100}$/.test(key) ||
         ["parameter", "resource"].indexOf(entity) < 0 ||
-        GP_CONFIG_SERVICE_KEYS_.indexOf(owner) < 0 ||
+        GP_CONFIG_PARAMETER_SERVICE_KEYS_.indexOf(owner) < 0 ||
         !Number.isSafeInteger(introduced) || introduced < 1 || introduced > schemaVersion) {
       throw centralConfigurationError_("CONFIGURATION_SCHEMA_INVALID", "Hay una definición de esquema desconocida o incompatible.");
     }
@@ -218,36 +208,6 @@ function validateCentralConfigurationSchema_(rows, schemaVersion) {
     }
   });
   return map;
-}
-
-function validateCentralConfigurationServices_(rows, revision) {
-  // USERS es un registro heredado; se ignora mientras el registro central conserva la fila histórica.
-  var active = rows.filter(function(row) { return Number(row.config_revision) === revision && GP_CONFIG_RETIRED_SERVICE_KEYS_.indexOf(String(row.service_key || "").trim().toUpperCase()) < 0; });
-  var result = {}, endpointOwners = {};
-  active.forEach(function(row) {
-    var key = String(row.service_key || "").trim().toUpperCase();
-    var endpoint = String(row.endpoint_url || "").trim();
-    var contract = String(row.contract_version || "").trim();
-    var minClient = String(row.min_client_version || "").trim();
-    if (GP_CONFIG_SERVICE_KEYS_.indexOf(key) < 0 || String(row.service_key || "").trim() !== key || result[key] || endpointOwners[endpoint] ||
-        typeof row.enabled !== "boolean" ||
-        !/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint) ||
-        !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(contract) ||
-        (minClient && !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(minClient))) {
-      throw centralConfigurationError_("CONFIGURATION_SERVICE_INVALID", "El registro de servicios contiene una clave, endpoint o contrato inválido.");
-    }
-    endpointOwners[endpoint] = key;
-    result[key] = {
-      endpointUrl: endpoint,
-      enabled: row.enabled,
-      contractVersion: contract,
-      minClientVersion: minClient || null
-    };
-  });
-  if (GP_CONFIG_REQUIRED_SERVICE_KEYS_.some(function(key) { return !result[key]; })) {
-    throw centralConfigurationError_("CONFIGURATION_SERVICES_INCOMPLETE", "La revisión no contiene los seis servicios requeridos.");
-  }
-  return result;
 }
 
 function parseCentralConfigurationJson_(value, label) {

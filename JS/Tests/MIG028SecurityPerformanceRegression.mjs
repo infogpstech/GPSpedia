@@ -38,36 +38,16 @@ testCase("El router usa API_ENDPOINTS local y no revalida sesión por acción",(
  const health=block(api,"export async function checkAllServicesHealth","export async function checkServiceHealth");
  assert.match(health,/resolveApiEndpoint_\(serviceKey\)/);
  assert.doesNotMatch(health,/loadCentralConfiguration|resolveCentralServiceEndpoint/);
- assert.match(cacheSource,/no se utilizarán endpoints locales/i);
+ assert.doesNotMatch(cacheSource,/endpointUrl|endpoint_url|resolveCentralServiceEndpoint|routingAvailable|services/i);
 });
-await asyncCase("La caché central es single-flight, limita stale y falla cerrada sin endpoints locales",async()=>{
- const moduleUrl="data:text/javascript;base64,"+Buffer.from(cacheSource,"utf8").toString("base64");
- const {createCentralConfigurationCache,CENTRAL_CONFIG_FRESH_TTL_MS,CENTRAL_CONFIG_STALE_TTL_MS,resolveCentralServiceEndpoint}=await import(moduleUrl);
- const keys=["AUTH","CATALOG","WRITE","FEEDBACK","UTILITIES","ADMIN"];
- const services=Object.fromEntries(keys.map(key=>[key,{endpointUrl:"https://script.google.com/macros/s/TEST_"+key+"_123456789/exec",enabled:true,contractVersion:"2.2.5",minClientVersion:"2.2.5"}]));
- const valid={status:"success",schemaVersion:1,revision:7,routingAvailable:true,services,parameters:{}};
- let now=1000000,calls=0;
- const cache=createCentralConfigurationCache({now:()=>now});
- const first=await cache.load(async()=>{calls++;return valid;});
- assert.equal(first.routingAvailable,true);
- await cache.load(async()=>{calls++;throw new Error("No debe recargar una configuración fresca");});
- assert.equal(calls,1);
- let release;
- const pending=cache.load(()=>new Promise(resolve=>{release=resolve;}),{force:true});
- const concurrent=cache.load(async()=>{calls++;return valid;},{force:true});
- release(valid);
- const results=await Promise.all([pending,concurrent]);
- assert.equal(results[0].revision,7);assert.equal(results[1].revision,7);assert.equal(calls,1);
- now+=CENTRAL_CONFIG_FRESH_TTL_MS+1;
- const stale=await cache.load(async()=>{throw new Error("AUTH temporalmente no disponible");});
- assert.equal(stale.stale,true);assert.equal(stale.routingAvailable,false);assert.equal(stale.services,null);
- assert.throws(()=>resolveCentralServiceEndpoint(stale,"WRITE"),/no permite enrutar|endpoints locales/i);
- now+=CENTRAL_CONFIG_STALE_TTL_MS+1;
- await assert.rejects(()=>cache.load(async()=>{throw new Error("fuera de ventana stale");}),/fuera de ventana stale/);
- assert.equal(cache.peek(),null);
- const partial=createCentralConfigurationCache();
- const invalid={...valid,services:{AUTH:services.AUTH}};
- await assert.rejects(()=>partial.load(async()=>invalid),/servicios requeridos|no está disponible/i);
+await asyncCase("La caché de parámetros es single-flight y limita stale sin intervenir en el enrutamiento",async()=>{
+ const u="data:text/javascript;base64,"+Buffer.from(cacheSource,"utf8").toString("base64"),{createCentralConfigurationCache,CENTRAL_CONFIG_FRESH_TTL_MS,CENTRAL_CONFIG_STALE_TTL_MS}=await import(u);
+ const valid={status:"success",schemaVersion:1,revision:7,parameters:{rich_text_mode:"strict"}};let now=1000000,calls=0;const c=createCentralConfigurationCache({now:()=>now});
+ const first=await c.load(async()=>{calls++;return valid;});assert.equal(first.parameters.rich_text_mode,"strict");await c.load(async()=>{calls++;throw Error("No debe recargar");});assert.equal(calls,1);
+ let release;const a=c.load(()=>new Promise(r=>{release=r;}),{force:true}),b=c.load(async()=>{calls++;return valid;},{force:true});release(valid);const both=await Promise.all([a,b]);assert.equal(both[0].revision,7);assert.equal(both[1].revision,7);
+ now+=CENTRAL_CONFIG_FRESH_TTL_MS+1;const stale=await c.load(async()=>{throw Error("AUTH temporalmente no disponible");});assert.equal(stale.stale,true);assert.equal(stale.parameters.rich_text_mode,"strict");
+ now+=CENTRAL_CONFIG_STALE_TTL_MS+1;await assert.rejects(()=>c.load(async()=>{throw Error("fuera de ventana stale");}),/fuera de ventana stale/);assert.equal(c.peek(),null);
+ const bad=createCentralConfigurationCache();await assert.rejects(()=>bad.load(async()=>({...valid,parameters:{rich_text_mode:"unsafe"}})),/parámetro desconocido o inválido/);
 });
 testCase("Sesión y revocación mantienen cachés por servicio sin transmitir tokens",()=>{
  assert.match(authClient,/window\.addEventListener\('gpsepedia:session-invalid'/);

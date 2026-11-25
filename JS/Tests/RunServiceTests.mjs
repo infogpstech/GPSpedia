@@ -269,7 +269,6 @@ runGroup('35','UTILITIES',()=>{
 });
 runGroup('36','AUTH',()=>{
  runCli('AUTH inicializador idempotente de configuración central','JS/Tests/CentralConfigurationInitializer.mjs');
- runCli('AUTH publicación central de endpoints y editor Developer','JS/Tests/CentralServiceUrlPublisher.mjs');
  runCli('AUTH aceptación de términos por usuario y dispositivo','JS/Tests/TermsAcceptance.js');
   runCli('AUTH aceptación local y sincronización asíncrona por sesión/dispositivo','JS/Tests/TermsAsyncSync.mjs');
  runCli('AUTH purga de Logs usando actor confiable sin revalidación por acción','JS/Tests/SensitiveLogsTrustedActor.mjs');
@@ -310,6 +309,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('GP-UX-SEARCH-MODEL-GROUPING-01 agrupación y jerarquía de vehículos','JS/Tests/SearchModelGrouping.mjs');
  runCli('AUG-022 eliminación asíncrona de caché IndexedDB ADMIN','JS/Tests/AdminClientCacheDeletion.mjs');
  runCli('MIG-008 registro central ignora servicios retirados','JS/Tests/MIG008CentralConfigurationReader.mjs');
+ runCli('MIG-URL-004 retiro de administración central de URLs y preservación de parámetros','JS/Tests/MIGURL004CentralEndpointRetirement.mjs');
  runCli('AUG-024 contrato de salud, identidad y clasificación de servicios','JS/Tests/ServiceHealthContract.mjs');
  runCli('BETA-043 contrato de telemetría global coordinada','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('BETA-043 telemetría local por servicio y navegador móvil','JS/Tests/ServiceBrowserTrafficContract.mjs');

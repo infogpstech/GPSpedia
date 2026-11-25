@@ -38,11 +38,11 @@ function parseActionMap(source) {
 }
 
 const actionMap = parseActionMap(api);
-test("mapa canónico conserva 125 acciones y seis servicios", () => {
-  assert.equal(actionMap.size, 125, "El número de acciones cambió; actualizar inventario con evidencia");
+test("mapa canónico conserva 123 acciones y seis servicios", () => {
+  assert.equal(actionMap.size, 123, "El número de acciones cambió; actualizar inventario con evidencia");
   assert.deepEqual([...new Set(actionMap.values())].sort(), ["ADMIN","AUTH","CATALOG","FEEDBACK","UTILITIES","WRITE"]);
 });
-test("las 125 acciones están trazadas en la matriz de migración", () => {
+test("las 123 acciones están trazadas en la matriz de migración", () => {
   const missing = [...actionMap.keys()].filter(action => !matrix.includes("`" + action + "`"));
   assert.deepEqual(missing, [], "Acciones sin trazabilidad documental: " + missing.join(", "));
 });

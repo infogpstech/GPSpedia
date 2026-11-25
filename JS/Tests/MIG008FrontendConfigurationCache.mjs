@@ -1,61 +1,11 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-const cacheModuleSource = readFileSync(new URL("../Frontend/centralConfigurationCache.js", import.meta.url), "utf8");
-const { createCentralConfigurationCache, CENTRAL_CONFIG_FRESH_TTL_MS, CENTRAL_CONFIG_STALE_TTL_MS } =
-    await import("data:text/javascript;base64," + Buffer.from(cacheModuleSource, "utf8").toString("base64"));
-
-const services = {};
-for (const key of ["AUTH","CATALOG","WRITE","FEEDBACK","UTILITIES","ADMIN"]) {
-    services[key] = {endpointUrl:"https://script.google.com/macros/s/FAKE_DEPLOYMENT_"+key+"_123456789/exec",enabled:true,contractVersion:"2.2.5",minClientVersion:"2.2.5"};
-}
-const valid = {status:"success",schemaVersion:1,revision:7,generatedAt:"2026-11-23T00:00:00.000Z",stale:false,routingAvailable:true,services,parameters:{rich_text_mode:"strict"}};
-let clock=5000000;
-const cache=createCentralConfigurationCache({now:()=>clock});
-let calls=0;
-const fetcher=async()=>{calls++;return valid;};
-
-{
-    const first=await cache.load(fetcher);
-    assert.equal(first.routingAvailable,true);
-    assert.equal(first.services.AUTH.enabled,true);
-    const second=await cache.load(async()=>{throw new Error("no debe consultar");});
-    assert.equal(second.revision,7);
-    assert.equal(calls,1);
-}
-{
-    clock+=CENTRAL_CONFIG_FRESH_TTL_MS+1;
-    const stale=await cache.load(async()=>{throw new Error("offline");});
-    assert.equal(stale.stale,true);
-    assert.equal(stale.routingAvailable,false);
-    assert.equal(stale.services,null);
-    assert.equal(stale.parameters.rich_text_mode,"strict");
-}
-{
-    clock+=CENTRAL_CONFIG_STALE_TTL_MS;
-    await assert.rejects(()=>cache.load(async()=>{throw new Error("offline");}),/offline/);
-    assert.equal(cache.peek(),null);
-}
-{
-    clock+=100;
-    let release;
-    const pending=cache.load(()=>new Promise(resolve=>{release=resolve;}));
-    const concurrent=cache.load(()=>{throw new Error("single-flight falló");});
-    release(valid);
-    const results=await Promise.all([pending,concurrent]);
-    assert.equal(results[0].revision,7);
-    assert.equal(results[1].revision,7);
-}
-{
-    const broken=JSON.parse(JSON.stringify(valid));
-    broken.services.AUTH.endpointUrl="https://attacker.example/exec";
-    const retained=await cache.load(async()=>broken,{force:true});
-    assert.equal(retained.stale,true);
-    assert.equal(retained.services.AUTH.enabled,true);
-    assert.equal(retained.revision,7);
-}
-{
-    cache.invalidate();
-    assert.equal(cache.peek(),null);
-    await assert.rejects(()=>cache.load(async()=>{throw new Error("sin fuente");}),/sin fuente/);
-}
-console.log("MIG008FrontendConfigurationCache: 6/6 PASS — cache-first, single-flight, expiración, stale limitado, invalidación y rechazo de endpoints.");
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";
+const s=readFileSync(new URL("../Frontend/centralConfigurationCache.js",import.meta.url),"utf8");assert.doesNotMatch(s,/endpointUrl|endpoint_url|resolveCentralServiceEndpoint|routingAvailable|services/i);
+const{createCentralConfigurationCache,CENTRAL_CONFIG_FRESH_TTL_MS,CENTRAL_CONFIG_STALE_TTL_MS}=await import("data:text/javascript;base64,"+Buffer.from(s,"utf8").toString("base64"));
+const valid={status:"success",schemaVersion:1,revision:7,parameters:{rich_text_mode:"strict"}};let now=5000000,calls=0;const c=createCentralConfigurationCache({now:()=>now}),fetcher=async()=>{calls++;return valid;};
+{const a=await c.load(fetcher);assert.equal(a.parameters.rich_text_mode,"strict");assert.equal(Object.hasOwn(a,"services"),false);const b=await c.load(async()=>{throw Error("no debe consultar");});assert.equal(b.revision,7);assert.equal(calls,1);}
+{now+=CENTRAL_CONFIG_FRESH_TTL_MS+1;const a=await c.load(async()=>{throw Error("offline");});assert.equal(a.stale,true);assert.equal(a.parameters.rich_text_mode,"strict");}
+{now+=CENTRAL_CONFIG_STALE_TTL_MS;await assert.rejects(()=>c.load(async()=>{throw Error("fuera de ventana");}),/fuera de ventana/);assert.equal(c.peek(),null);}
+{now+=100;let release;const a=c.load(()=>new Promise(r=>{release=r;})),b=c.load(async()=>{throw Error("single-flight falló");});release(valid);const both=await Promise.all([a,b]);assert.equal(both[0].revision,7);assert.equal(both[1].revision,7);}
+{const bad={...valid,parameters:{rich_text_mode:"unsafe"}},a=await c.load(async()=>bad,{force:true});assert.equal(a.stale,true);assert.equal(a.parameters.rich_text_mode,"strict");}
+{c.invalidate();assert.equal(c.peek(),null);await assert.rejects(()=>c.load(async()=>{throw Error("sin fuente");}),/sin fuente/);}
+console.log("MIG008FrontendConfigurationCache: 6/6 PASS — caché de parámetros, single-flight, stale limitado, invalidación y ausencia de endpoints.");

@@ -10,7 +10,7 @@ const fixture = readFileSync(resolve(root, "JS/Tests/Auth.js"), "utf8");
 assert.equal(auth, fixture, "La copia aislada de AUTH debe conservar paridad exacta.");
 
 const functionStart = auth.indexOf("function initializeCentralConfigurationSheets()");
-const functionEnd = auth.indexOf("// ============================================================================\n// CONFIGURACIÓN CENTRAL:", functionStart);
+const functionEnd = auth.indexOf("function getAuthUserActor_(", functionStart);
 assert.ok(functionStart >= 0 && functionEnd > functionStart, "No se encontró el inicializador aislado de AUTH.");
 const executable = auth.slice(functionStart, functionEnd);
 assert.equal((auth.match(/\bfunction\s+initializeCentralConfigurationSheets\s*\(/g) || []).length, 1,
@@ -22,7 +22,6 @@ for (const forbidden of [/PropertiesService/, /UrlFetchApp/, /SPREADSHEET_ID/, /
 const expected = {
     ConfiguracionControl: ["control_key","schema_version","active_revision","publication_state","published_at","updated_by","change_reason"],
     ConfiguracionEsquema: ["config_key","entity_type","value_type","scope_allowed","visibility_allowed","required","default_json","validation_rule","introduced_schema_version","deprecated_schema_version","replacement_key","owner_service","description"],
-    Servicios: ["config_revision","service_key","endpoint_url","enabled","contract_version","min_client_version","health_action","updated_at","updated_by","change_reason"],
     ConfiguracionParametros: ["config_revision","config_key","value_json","value_type","scope","visibility","enabled","default_json","validation_rule","schema_version","updated_at","updated_by","change_reason"],
     ConfiguracionRecursos: ["config_revision","resource_key","resource_type","resource_id","scope","visibility","enabled","expected_parent_id","expected_name","updated_at","updated_by","change_reason"],
     ConfiguracionHistorial: ["history_id","config_revision","entity_type","entity_key","operation","previous_value_json","new_value_json","actor_id","changed_at","change_reason","rollback_of_revision","schema_version"]
@@ -84,13 +83,14 @@ function check(name, fn) {
     catch (error) { console.error("FAIL " + name + ": " + (error && error.stack || error)); throw error; }
 }
 
-check("crea únicamente las seis pestañas de contrato y sus encabezados", () => {
+check("crea únicamente las cinco pestañas de parámetros y recursos, no Servicios", () => {
     const spreadsheet = new FakeSpreadsheet();
     const env = createEnvironment(spreadsheet);
     const result = env.context.initializeCentralConfigurationSheets();
     assert.equal(result.status, "success");
     assert.equal(result.publicationReady, false);
     assert.deepEqual(Array.from(result.createdSheets), Object.keys(expected));
+    assert.equal(spreadsheet.getSheetByName("Servicios"), null, "No debe crear la hoja histórica de endpoints.");
     assert.deepEqual(Array.from(result.initializedSheets), Object.keys(expected));
     for (const [name, headers] of Object.entries(expected)) {
         assert.deepEqual(headersFor(spreadsheet.getSheetByName(name)), headers);
@@ -149,4 +149,9 @@ check("no publica ni inventa filas operativas", () => {
     for (const sheet of spreadsheet.sheets.values()) assert.equal(sheet.getLastRow(), 1);
 });
 
-console.log("CentralConfigurationInitializer: " + passed + "/7 PASS — idempotencia, preservación, encabezados, creación concurrente, contexto AUTH y no publicación automática.");
+check("preserva una hoja Servicios histórica sin leerla ni modificarla", () => {
+ const legacy=new FakeSheet("Servicios",[["service_key","endpoint_url"],["AUTH","legacy-value"]]),spreadsheet=new FakeSpreadsheet([legacy]),before=JSON.stringify(legacy.rows),env=createEnvironment(spreadsheet);
+ env.context.initializeCentralConfigurationSheets();assert.equal(JSON.stringify(legacy.rows),before);assert.equal(legacy.writes,0);
+});
+console.log("CentralConfigurationInitializer: "+passed+"/8 PASS — cinco hojas funcionales, preservación de Servicios históricos y no publicación.");
+

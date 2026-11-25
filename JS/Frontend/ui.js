@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, markInboxUnread, deleteInboxConversation, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, loadCentralServiceUrls, saveCentralServiceUrls, routeActionWithRetry } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, markInboxUnread, deleteInboxConversation, archiveInboxConversation, closeInboxConversation as apiCloseInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, checkServiceHealth, getActivityLogs, recordVehicleView, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, loadRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import { getBrowserServiceTrafficSnapshot } from './serviceTelemetry.js';
 import * as offline from './offline.js';
@@ -5935,124 +5935,6 @@ function initializeRichTextModeControl_() {
 }
 
 
-function initializeCentralServiceUrlsControl_() {
-    const card = document.getElementById("central-service-urls-card");
-    if (!card) return;
-    const status = document.getElementById("central-service-urls-status");
-    const saveButton = document.getElementById("btn-save-central-service-urls");
-    const keys = ["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"];
-    const serviceLabels = {
-        CATALOG: "Catálogo",
-        WRITE: "Escritura",
-        FEEDBACK: "Feedback",
-        UTILITIES: "Utilidades",
-        ADMIN: "Administración"
-    };
-    const appendConsoleStatus = message => {
-        const output = document.getElementById("dev-console-log");
-        if (!output) return;
-        const line = document.createElement("div");
-        line.textContent = "[SERVICIOS] " + message;
-        output.appendChild(line);
-        output.scrollTop = output.scrollHeight;
-    };
-    const fields = Object.fromEntries(keys.map(key => [key, document.getElementById("central-service-url-" + key.toLowerCase())]));
-    let lastLoadedUrls = {};
-    const context = getUiSessionContext_();
-    const allowed = Boolean(context && context.role === "desarrollador");
-    Object.values(fields).forEach(field => { if (field) field.disabled = !allowed; });
-    if (saveButton) saveButton.disabled = !allowed;
-    if (!allowed) {
-        appendConsoleStatus("Acceso denegado: esta configuración está disponible únicamente para usuarios Desarrollador.");
-        return;
-    }
-
-    const setBusy = busy => {
-        Object.values(fields).forEach(field => { if (field) field.disabled = busy; });
-        if (saveButton) saveButton.disabled = busy;
-    };
-    const load = async () => {
-        setBusy(true);
-        appendConsoleStatus("Consultando endpoints registrados en AUTH...");
-        try {
-            const urls = await loadCentralServiceUrls(context);
-            if (!isCurrentUiSessionContext_(context)) return;
-            lastLoadedUrls = Object.fromEntries(keys.map(key => [key, String(urls[key] || "").trim()]));
-            keys.forEach(key => { if (fields[key]) fields[key].value = urls[key] || ""; });
-            appendConsoleStatus("Endpoints cargados. Puedes editar las URL y seleccionar Actualizar Servicios.");
-        } catch (error) {
-            console.warn("No se pudieron consultar los endpoints centrales:", error);
-            appendConsoleStatus("ERROR: no se pudieron consultar los endpoints en AUTH. " + String(error && error.message || "Error no identificado"));
-        } finally {
-            if (isCurrentUiSessionContext_(context)) setBusy(false);
-        }
-    };
-
-    if (saveButton && saveButton.dataset.centralServiceUrlsBound !== "true") {
-        saveButton.addEventListener("click", async () => {
-            const activeContext = getUiSessionContext_();
-            if (!activeContext || activeContext.role !== "desarrollador" || !isCurrentUiSessionContext_(context)) {
-                appendConsoleStatus("ERROR: la sesión de desarrollador ya no está activa. Vuelve a iniciar sesión.");
-                return;
-            }
-            const urls = {};
-            for (const key of keys) {
-                const field = fields[key];
-                const value = String(field && field.value || "").trim();
-                if (!value) {
-                    appendConsoleStatus("ERROR: completa la URL de " + key + " antes de actualizar servicios.");
-                    if (field) field.focus();
-                    return;
-                }
-                urls[key] = value;
-            }
-            const changedByClient = keys.filter(key => String(lastLoadedUrls[key] || "") !== String(urls[key] || ""));
-            setBusy(true);
-            appendConsoleStatus("Validando y actualizando endpoints de servicios...");
-            try {
-                const result = await saveCentralServiceUrls(urls, activeContext.role, activeContext);
-                if (!isCurrentUiSessionContext_(context)) return;
-                const revision = Number(result && result.revision);
-                if (!Number.isSafeInteger(revision) || revision < 1) throw new Error("AUTH no confirmó una revisión válida.");
-                const changedServices = new Set(Array.isArray(result.changedServices) ? result.changedServices : changedByClient);
-                if (!Array.isArray(result.changedServices)) {
-                    appendConsoleStatus("El servicio de configuración no devolvió el detalle individual; se compararon las URL cargadas con las nuevas.");
-                }
-                keys.forEach(key => {
-                    const label = serviceLabels[key] || key;
-                    if (changedServices.has(key)) {
-                        appendConsoleStatus("El servidor de " + label + " se actualizó con éxito. Revisión " + revision + ".");
-                    } else if (result.unchanged || result.idempotent) {
-                        appendConsoleStatus("El servidor de " + label + " no requirió cambios.");
-                    } else {
-                        appendConsoleStatus("El servidor de " + label + " conserva su URL; no necesitó actualización.");
-                    }
-                });
-                if (result.configurationRefreshPending) {
-                    appendConsoleStatus("La revisión " + revision + " fue publicada, pero la lectura de configuración local debe reintentarse.");
-                    appendConsoleStatus("AVISO: endpoints publicados; falta actualizar la configuración local.");
-                    return;
-                }
-                if (result.unchanged || result.idempotent) {
-                    appendConsoleStatus("Actualización completada sin cambios. Revisión " + revision + ".");
-                } else {
-                    appendConsoleStatus("Actualización completada. Revisión " + revision + ".");
-                }
-                await load();
-            } catch (error) {
-                console.warn("No se pudieron publicar los endpoints centrales:", error);
-                appendConsoleStatus("ERROR: no se pudo publicar la configuración de servicios. " + String(error && error.message || "Error no identificado"));
-                keys.forEach(key => appendConsoleStatus("El servidor de " + (serviceLabels[key] || key) + " no se actualizó."));
-                appendConsoleStatus("No se pudieron guardar los cambios. La actualización de servicios no se completó.");
-            } finally {
-                if (isCurrentUiSessionContext_(context)) setBusy(false);
-            }
-        });
-        saveButton.dataset.centralServiceUrlsBound = "true";
-    }
-    load();
-}
-
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
     const modal = document.getElementById('dev-tools-modal');
@@ -6080,7 +5962,6 @@ const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
         }
     });
     initializeRichTextModeControl_();
-    initializeCentralServiceUrlsControl_();
     initAdminPanelListeners();
     if (window.triggerAdminPanelPing) {
         window.triggerAdminPanelPing();

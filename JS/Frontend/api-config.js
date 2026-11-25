@@ -136,73 +136,8 @@ export async function setRichTextMode(mode, actorRole, session) {
     return confirmedMode;
 }
 
-// Único localizador de arranque para consultar AUTH; nunca es fallback de otras rutas.
-const CENTRAL_CONFIGURATION_BOOTSTRAP_URL = "https://script.google.com/macros/s/AKfycbynML5z_vuwJghSJ-IAJLsn2HN3B_zgKv_OGjodNdX9rksE9_hkV8nOhhxCv_WCdpQhNA/exec";
-export const CENTRAL_SERVICE_KEYS = Object.freeze([
-    "AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"
-]);
-
-async function callCentralAuthBootstrapAction_(action, payload) {
-    const response = await fetch(CENTRAL_CONFIGURATION_BOOTSTRAP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action, payload }),
-        redirect: "follow"
-    });
-    const body = await response.text();
-    let result;
-    try { result = JSON.parse(body); }
-    catch (error) { throw new Error("AUTH devolvió una respuesta inválida al gestionar los endpoints."); }
-    if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") {
-        throw new Error(String(result && result.message || "AUTH no confirmó la operación de endpoints."));
-    }
-    return result;
-}
-
-const CENTRAL_EDITABLE_SERVICE_KEYS_ = Object.freeze(["CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]);
-
-export async function loadCentralServiceUrls(session) {
-    const sessionPayload = getRichTextSession_(session);
-    const result = await callCentralAuthBootstrapAction_("getCentralServiceUrls", sessionPayload);
-    const services = result.services;
-    if (!services || typeof services !== "object" || Array.isArray(services) ||
-        CENTRAL_EDITABLE_SERVICE_KEYS_.some(key => typeof services[key] !== "string")) {
-        throw new Error("AUTH no devolvió los cinco endpoints editables.");
-    }
-    return Object.fromEntries(CENTRAL_EDITABLE_SERVICE_KEYS_.map(key => [key, services[key]]));
-}
-
-export async function saveCentralServiceUrls(services, actorRole, session) {
-    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    if (normalizedRole !== "desarrollador") throw new Error("Solo un Desarrollador puede actualizar los endpoints.");
-    const sessionPayload = getRichTextSession_(session);
-    if (!services || typeof services !== "object" || Array.isArray(services) ||
-        Object.keys(services).sort().join(",") !== CENTRAL_EDITABLE_SERVICE_KEYS_.slice().sort().join(",") ||
-        CENTRAL_EDITABLE_SERVICE_KEYS_.some(key => typeof services[key] !== "string" || !services[key].trim())) {
-        throw new Error("Debes proporcionar únicamente las cinco URL editables: CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. AUTH se actualiza directamente en el frontend.");
-    }
-    const requestId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : "svc_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    const result = await callCentralAuthBootstrapAction_("updateCentralServiceUrls", {
-        ...sessionPayload,
-        services,
-        requestId,
-        changeReason: "Actualización de endpoints desde el panel de desarrollador"
-    });
-    centralConfigurationCache_.invalidate();
-    try {
-        await refreshCentralConfiguration();
-    } catch (error) {
-        console.warn("Los endpoints se publicaron, pero la caché local requiere una nueva lectura:", error);
-        result.configurationRefreshPending = true;
-    }
-    return result;
-}
-
-
 export const ACTION_TO_SERVICE_MAP = {
-    'getPublicConfiguration': 'AUTH', 'getCentralServiceUrls': 'AUTH', 'updateCentralServiceUrls': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
+    'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'publishCatalogReset': 'CATALOG', 'publishCatalogChange': 'CATALOG',
@@ -868,7 +803,7 @@ export async function checkAllServicesHealth(options = {}) {
 
     const requestedServiceKeys = Array.isArray(settings.serviceKeys)
         ? new Set(settings.serviceKeys.filter(key => typeof key === "string")) : null;
-    const serviceKeys = CENTRAL_SERVICE_KEYS.filter(serviceKey =>
+    const serviceKeys = Object.keys(API_ENDPOINTS).filter(serviceKey =>
         !requestedServiceKeys || requestedServiceKeys.has(serviceKey));
     await Promise.all(serviceKeys.map(async serviceKey => {
         const startTime = now();
@@ -1172,41 +1107,19 @@ export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload =
     }
 }
 
-// El bootstrap consulta AUTH para obtener el registro central; no enruta otras acciones.
-async function fetchCentralConfigurationBootstrap_() {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    let response;
-    try {
-        response = await fetch(CENTRAL_CONFIGURATION_BOOTSTRAP_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({ action: "getPublicConfiguration", payload: {} }),
-            redirect: "follow",
-            signal: controller.signal
-        });
-    } finally {
-        clearTimeout(timeoutId);
-    }
-    if (!response || !response.ok) {
-        const status = Number(response && response.status);
-        const error = new Error("No se pudo consultar la configuración central de servicios.");
-        error.kind = "http";
-        error.httpStatus = Number.isInteger(status) ? status : null;
-        throw error;
-    }
-    const body = await response.text();
-    let result;
-    try { result = JSON.parse(body); }
-    catch (error) { throw new Error("AUTH devolvió una configuración central con formato inválido."); }
-    if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") {
-        throw new Error("AUTH no confirmó una configuración central válida.");
-    }
-    return result;
+// La configuración pública restante contiene parámetros funcionales, nunca endpoints.
+async function fetchPublicConfiguration_() {
+ const controller=new AbortController(),timeoutId=setTimeout(()=>controller.abort(),6000);let response;
+ try { response=await fetch(resolveApiEndpoint_("AUTH"),{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"getPublicConfiguration",payload:{}}),redirect:"follow",signal:controller.signal}); }
+ finally { clearTimeout(timeoutId); }
+ if(!response||!response.ok){const status=Number(response&&response.status),error=new Error("No se pudo consultar la configuración pública.");error.kind="http";error.httpStatus=Number.isInteger(status)?status:null;throw error;}
+ const body=await response.text();let result;try{result=JSON.parse(body);}catch(error){throw new Error("AUTH devolvió una configuración pública con formato inválido.");}
+ if(!result||typeof result!=="object"||Array.isArray(result)||result.status!=="success")throw new Error("AUTH no confirmó una configuración pública válida.");
+ return result;
 }
 
 export async function loadCentralConfiguration(options = {}) {
-    return centralConfigurationCache_.load(fetchCentralConfigurationBootstrap_, options);
+    return centralConfigurationCache_.load(fetchPublicConfiguration_, options);
 }
 
 export async function refreshCentralConfiguration() {
