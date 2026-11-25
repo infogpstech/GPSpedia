@@ -359,3 +359,15 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - No se modificaron servicios Apps Script, endpoints, PropertiesService, Spreadsheet, Drive, permisos ni datos externos. Pages build/deployment automático SUCCESS; no es un despliegue Apps Script.
 - Avisos no bloqueantes del runner: dependencias/acciones de GitHub reportan deprecación de Node.js 20 y uso de `punycode`; no se alteró infraestructura por no ser necesario para esta verificación.
 - La validación Beta real permanece separada. MIG-URL-008 continúa pendiente de confirmación de entorno Beta aislado y autorización expresa para GET de salud; no se hicieron peticiones remotas.
+
+
+## 2026-11-25 — Actualización de endpoints CATALOG y FEEDBACK
+
+**Estado: COMPLETADA EN CÓDIGO Y CI. Validación remota de Apps Script diferida a Beta.**
+
+- Se actualizó exclusivamente `API_ENDPOINTS.CATALOG` y `API_ENDPOINTS.FEEDBACK` en `JS/Frontend/api-config.js` con los deployment URLs proporcionados expresamente por el usuario.
+- Se actualizaron las expectativas exactas de `JS/Tests/LocalApiEndpoints.mjs`; no se cambiaron AUTH, WRITE, UTILITIES ni ADMIN.
+- CI sobre HEAD `5a0b26f23e4ac83c18d14779e0ef5e03df145090`: run 45619392380 SUCCESS; 528 suites, 6,263 pruebas aprobadas, 0 fallos. `LocalApiEndpoints` 10/10 PASS. AUG-146 Playwright 264/264 PASS en cuatro viewports.
+- GitHub Pages build/deployment run 45619392374 SUCCESS.
+- No se invocaron los endpoints, no se desplegaron proyectos Apps Script y no se modificaron PropertiesService, Spreadsheet, Drive, permisos ni datos externos. La disponibilidad y compatibilidad real de los dos deployments quedan pendientes de validación Beta.
+- MIG-URL-008 (comprobación GET de salud) sigue separada y pendiente de confirmación de entorno Beta aislado y autorización expresa; esta actualización no implica autorización para consultar endpoints.
