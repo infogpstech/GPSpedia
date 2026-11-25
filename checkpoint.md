@@ -1078,3 +1078,15 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 - `UsefulButtonState.mjs` verifica que el botón de útil queda deshabilitado hasta completar la hidratación de estado FEEDBACK cuando no existe caché local, y que la UI conserva el índice físico original del corte al ordenar por popularidad. Runner JavaScript aislado: 8/8 PASS. Commits `4f71aad685dc36cc5d956a02e63f0a5ed2f0c16b` y `5fa71b0a59821e684988ffd2e09ec240a0f6cc7a`.
 - Registros de tareas, auditoría y cambios actualizados; Node/CI sigue pendiente de evidencia. No se ejecutaron deployments ni escrituras reales en Drive/Spreadsheet.
+
+
+## Validación local y corrección de fixtures — incidencia #130 (2026-11-25)
+
+- HEAD de código probado: `b7a8fbbf8615be14e3166f9119291a2db08ac856`. Se trabajó únicamente en `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` verificada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Lectura normativa: `NORMAS_DESAROLLO.md` completa. Aplicado §20: al no poder clonar por DNS del entorno, se recuperaron fuentes exactas vía GitHub API y se ejecutaron pruebas deterministas en runner JavaScript aislado. No se atribuyó a esta simulación el resultado del runner Node original.
+- Primera ejecución CI `45718729264`: 429 suites, 5,036 pruebas aprobadas y 2 fallos. Responsive-browser SUCCESS. Fallos diagnosticados en fixtures: `CortesImageModelAssociationSuggestions.mjs` omitía un ID de vehículo, por lo que el algoritmo correctamente clasificaba la sugerencia como ambigua; `LocalApiEndpoints.mjs` esperaba IDs CATALOG/ADMIN anteriores a los de `API_ENDPOINTS` vigente. No se detectó defecto productivo en esos dos casos.
+- También se corrigió `AdminDriveAuditItemReference.mjs`: el objeto extraído usa `fileName` y `classification`, pero el constructor de prueba no los inyectaba. La regresión quedó en 3/3 PASS.
+- Fixtures corregidos: identidad única `V-100` en el helper de filas de asociación y valores CATALOG/ADMIN sincronizados con `API_ENDPOINTS`; no se modificaron endpoints, servicios ni deployments. Commit de corrección: `7f8e18814ad4cdc9f7696472a2b3c8b27b5eae2d`; alineación de endpoints: `b7a8fbbf8615be14e3166f9119291a2db08ac856`.
+- Runner aislado con fuentes exactas de rama: `AdminDriveAuditItemReference` 3/3; `CatalogLikeProjectionReadScale` 9/9; `FeedbackUsefulToggle` 6/6; `UsefulButtonState` 8/8; `UsefulSyncQueue` 4/4; `CortesImageModelAssociationSuggestions` 8/8; `LocalApiEndpoints` PASS (10 comprobaciones contractuales). La adaptación de runner no se presenta como Node CLI local.
+- CI final `45718949366` SUCCESS: 539 suites, 6,385 pruebas aprobadas, 0 fallos. Jobs `service-tests` y `responsive-browser` SUCCESS; sintaxis y AUG-146 real-browser completados.
+- Próximo paso de #130: auditar contador proyectado/estado local/título DOM y completar scanner incremental (cursor, fallos parciales, reanudación y persistencia) con pruebas locales. Beta real de Apps Script/Drive/Spreadsheet sigue diferida; no hubo llamadas, despliegues ni escrituras externas.

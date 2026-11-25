@@ -569,3 +569,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Validaciones aisladas: migración simulada del esquema 35/35 columnas y lectura lista; read-back de los ocho campos nuevos de metadata/asociación; motor de asociación produce sugerencia única y marca como ambigua una coincidencia de dos vehículos; parser JavaScript PASS. Node/CI y Beta externa pendientes.
 
 - `UsefulButtonState.mjs` ampliada para comprobar que el botón permanece deshabilitado hasta hidratar el estado FEEDBACK y que las acciones conservan el índice físico original. Runner aislado: 8/8 PASS. Commits `4f71aad685dc36cc5d956a02e63f0a5ed2f0c16b` y `5fa71b0a59821e684988ffd2e09ec240a0f6cc7a`.
+
+
+## Incidencia #130 — validación y fixtures (2026-11-25)
+- **Validación local/CI de útiles y regresiones focales: COMPLETADA.** CI `45718949366` SUCCESS: 539 suites, 6,385 pruebas, 0 fallos; responsive-browser SUCCESS.
+- Se corrigieron tres fixtures, sin alterar código productivo: `AdminDriveAuditItemReference.mjs` ahora inyecta `fileName` y `classification`; `CortesImageModelAssociationSuggestions.mjs` proporciona ID de vehículo válido para que la sugerencia única sea realmente inequívoca; `LocalApiEndpoints.mjs` refleja los IDs CATALOG y ADMIN presentes en `API_ENDPOINTS` vigente.
+- Pruebas focales aisladas con fuentes exactas de la rama: AdminDriveAuditItemReference 3/3, CatalogLikeProjectionReadScale 9/9, FeedbackUsefulToggle 6/6, UsefulButtonState 8/8, UsefulSyncQueue 4/4, CortesImageModelAssociationSuggestions 8/8 y LocalApiEndpoints PASS.
+- Commits: `d1822ac9c9e52b2e8c292a061e2bbf681840588f`, `7f8e18814ad4cdc9f7696472a2b3c8b27b5eae2d`, `b7a8fbbf8615be14e3166f9119291a2db08ac856`.
+- **Siguientes pasos vigentes:** (1) auditoría de contador proyectado/estado local/título DOM; (2) pruebas integrales de scanner, cursor, fallos parciales, reanudación y persistencia; (3) revisión del diff y cierre de #130. Apps Script/Drive/Spreadsheet real permanece diferido a Beta aislada y autorizada.

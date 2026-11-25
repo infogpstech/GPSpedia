@@ -83,3 +83,9 @@
 2026-11-25 | Incidencia #130 — validación del estado visual de útiles
 - Se amplió UsefulButtonState.mjs: el botón queda deshabilitado hasta hidratar el estado de usuario desde FEEDBACK y el frontend conserva el índice físico original del corte al ordenarlo por popularidad.
 - Ejecución aislada de las ocho comprobaciones del test: 8/8 PASS. Node/CI sigue pendiente.
+
+
+2026-11-25 | Incidencia #130 — fallos CI por fixtures desactualizados
+- CI `45718729264` reportó dos fallos: `CortesImageModelAssociationSuggestions.mjs:30` (esperaba sugerencia única pero el fixture no asignaba ID de vehículo; el algoritmo correctamente devolvía ambiguous) y `LocalApiEndpoints.mjs` (esperaba deployments CATALOG/ADMIN anteriores a los valores ya presentes en `API_ENDPOINTS`).
+- Se verificó que no era un defecto del motor de asociación ni de resolución de endpoints. Se corrigieron únicamente los datos esperados de las pruebas. Además, la regresión `AdminDriveAuditItemReference` requería inyectar `fileName` y `classification` al evaluar el objeto extraído; corregido el fixture.
+- Evidencia posterior: CI `45718949366` SUCCESS, 539 suites / 6,385 pruebas / 0 fallos; responsive-browser SUCCESS. Pruebas focales asociadas aprobadas. Sin llamadas a servicios ni cambios de deployments.

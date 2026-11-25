@@ -1293,3 +1293,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-25 — Incidencia #130 — validación de hidratación de útil
 - UsefulButtonState.mjs comprueba que los botones se deshabilitan hasta cargar el estado del usuario desde FEEDBACK y que el índice original del corte se conserva en la UI. Ocho comprobaciones aisladas PASS; Node/CI pendiente.
+
+
+2026-11-25 — Incidencia #130 — corrección de fixtures y validación
+- Corregidos los fixtures de AdminDriveAuditItemReference, CortesImageModelAssociationSuggestions y LocalApiEndpoints; no se modificó código productivo en esta corrección.
+- Pruebas focales aisladas: 3/3, 9/9, 6/6, 8/8, 4/4, 8/8 y LocalApiEndpoints PASS.
+- CI `45718949366`: 539 suites, 6,385 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS.
+- Próxima validación local: contrato contador/DOM y escenarios de cursor, fallos parciales y reanudación del inventario Drive. Beta real sigue pendiente de autorización.
