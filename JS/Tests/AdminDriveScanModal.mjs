@@ -14,8 +14,10 @@ assert.match(modal,/id="audit-drive-scan-console"[^>]*role="log"[^>]*aria-live="
 assert.match(modal,/id="audit-drive-results-container"/);
 assert.match(ui,/const appendAuditConsole = \(message, level = 'info'\) =>[\s\S]*?logDeveloperOperation_\('\[AUDITORÍA DRIVE\] ' \+ text, normalizedLevel\)[\s\S]*?scanConsole\.appendChild\(entry\)/);
 assert.match(ui,/const appendFiles = \(files\) =>[\s\S]*?container\.appendChild\(row\)/);
+assert.ok(ui.includes("ID: '+ fileId + ' | Carpeta ID: ' + String(file.folderId"));
+assert.ok(ui.includes("file.folderPath") && ui.includes("file.format") && ui.includes("file.size") && ui.includes("file.lastUpdated"));
 assert.match(ui,/while \(scanConsole\.childElementCount > 250\) scanConsole\.firstElementChild\.remove\(\)/);
 assert.match(css,/#audit-drive-scan-workspace[\s\S]*?max-height:30vh/);
 assert.match(css,/@media\s*\(max-width:600px\)[\s\S]*?#audit-drive-scan-workspace[\s\S]*?max-height:26vh/);
 assert.match(css,/#audit-drive-results-container \{ min-height:120px; max-height:40vh !important; overflow:auto; \}/);
-console.log("DriveScanModal: 7/7 PASS");
+console.log("DriveScanModal: 9/9 PASS");
