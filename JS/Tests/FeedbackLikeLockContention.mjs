@@ -29,4 +29,4 @@ assert.equal(released, 1, "El lock adquirido se libera al completar la operació
 
 assert.throws(() => withAcquiredLock(() => { throw new Error("append failed"); }), /append failed/);
 assert.equal(released, 2, "El lock se libera incluso si la escritura falla.");
-console.log("FeedbackLikeLockContention: 3/3 PASS — espera acotada, contención explícita y liberación segura");
+console.log("FeedbackLikeLockContention: 3/3 PASS — rechazo inmediato ante contención y liberación segura");
