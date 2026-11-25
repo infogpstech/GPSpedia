@@ -998,3 +998,16 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Archivos modificados: `JS/Frontend/ui.js`, `style.css`. Se añadió la prueba de contrato `JS/Tests/TutorialVideoModalLayout.mjs`.
 - La corrección es exclusivamente frontend; no modifica URLs guardadas, registros de tutoriales, servicios Apps Script ni contratos.
 - Validación visual en navegador y reproducción de cada vídeo real: pendiente de ejecución en el entorno visual/Beta; no se considera aprobada por las pruebas estáticas.
+
+
+## 2026-11-25 — Útiles idempotentes, Dashboard y modales de detalle
+
+- FEEDBACK: el registro de útil ahora se protege con un lock acotado no bloqueante durante la consulta por usuario/vehículo y la inserción. La identidad se normaliza a una clave estable segura; el handler reconoce eventos existentes en cualquier corte del mismo vehículo y no añade otra fila. La recuperación de un registro pending reutiliza la fila existente. La actividad se registra fuera del lock.
+- CATALOG: la proyección de FeedbackLikes deduplica por identidad y vehículo, no suma repeticiones del mismo usuario aunque aparezcan en distintos cortes y atribuye el útil al primer corte registrado. Los nuevos eventos se validan en FEEDBACK antes de escribirse para respetar el contrato de CATALOG.
+- Frontend: el estado del botón útil se conserva por vehículo y la respuesta idempotente no incluye texto que notifique al usuario que ya había votado.
+- Dashboard: se agrupan filas por nombre visible normalizado aunque tengan IDs históricos distintos; se suman cortes y aportes registrados.
+- Tutoriales: iframe YouTube validado, carga inmediata, ancho 100 % y alto 315 px, siguiendo el tamaño del vídeo guía de desarme del modal de corte; el contenedor no se contrae.
+- Encabezado: títulos de corte/tutorial sin saltos innecesarios; alineación inferior del logo y nombre con la línea azul; nombre del modelo móvil +2 px.
+- Pruebas añadidas/actualizadas: `FeedbackLikeIdempotency.mjs`, suites de likes, `ActivityDashboardContributions.mjs`, `TutorialVideoModalLayout.mjs`, `CutDetailModalLayout.mjs` y `ModalHeaderCssCascade.mjs`. CI pendiente de resultado al registrar esta entrada.
+- Sin cambios a deployments, endpoints, propiedades, permisos, Spreadsheet, Drive ni datos externos. Sin llamadas entre servicios Apps Script; el lock solo protege la operación dentro de FEEDBACK.
+- Prioridad de continuidad: 1) útiles/CATALOG, 2) unificación de aportes Dashboard, 3) iframe tutorial, 4) encabezados. Mantener esta secuencia en los próximos trabajos.
