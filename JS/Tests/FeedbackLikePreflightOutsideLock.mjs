@@ -57,21 +57,26 @@ test("rechaza IDs duplicados después de normalizar espacios", () => {
 test("rechaza vehículos inexistentes sin descargar Cortes completo", () => {
     assert.throws(() => findVehicle(makeSheet(["101", "202"]), "303"), /No se encontró el vehículo/);
 });
-test("el handler de likes usa append-only sin lock global", () => {
-    const handler = extract("handleRecordLike", "findReportByReportId_");
-    assert.match(handler, /findFeedbackVehicleRowForLike_\(cuts, vehicleId\)/);
-    assert.match(handler, /findLikeEventReplayNoop_/);
-    assert.match(handler, /ledger\.appendRow\(/);
-    assert.doesNotMatch(handler, /LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\(/);
-    assert.doesNotMatch(handler, /getDataRange\(/, "El handler no debe descargar toda la hoja Cortes ni FeedbackLikes");
-});
 
-test("el ledger consulta solo likes del actor y registra actividad después del append", () => {
-    const handler = extract("handleRecordLike", "findReportByReportId_");
-    assert.match(handler, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, corteIndex\)/);
-    assert.match(handler, /logLikeActivityAfterAppend_\(userId, userName, vehicleId, corteIndex/);
-    const activity = extract("logLikeActivityAfterAppend_");
-    assert.match(activity, /logUserActivity\(/);
-    assert.doesNotMatch(activity, /LockService|getScriptLock/);
+const handler = extract("handleRecordLike", "findFeedbackRowById_");
+test("el handler serializa la búsqueda de duplicados y la inserción", () => {
+    assert.match(handler, /withFeedbackLikeLock_\(\(\) =>/);
+    assert.match(handler, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId\)/);
+    assert.match(extract("withFeedbackLikeLock_"), /waitLock\(10000\)/);
+    assert.match(extract("withFeedbackLikeLock_"), /finally[\s\S]*releaseLock/);
 });
-console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — lectura dirigida y append-only sin lock");
+test("la unicidad se comprueba por actor y vehículo, no por corte", () => {
+    const rows = extract("findFeedbackLikeRowsForActor_");
+    assert.match(rows, /String\(row\[1\] \|\| ""\)\.trim\(\) !== String\(vehicleId\)/);
+    assert.doesNotMatch(rows, /Number\(row\[2\]\) !== Number\(corteIndex\)/);
+});
+test("la telemetría se registra después de liberar el lock", () => {
+    assert.ok(handler.indexOf("const outcome = withFeedbackLikeLock_") < handler.indexOf("if (outcome.created)"));
+    assert.match(handler, /logLikeActivityAfterAppend_\(userId, userName, vehicleId/);
+    assert.match(extract("logLikeActivityAfterAppend_"), /logUserActivity\(/);
+});
+test("la ruta no descarga la hoja completa y valida el ID de vehículo antes de escribir", () => {
+    assert.doesNotMatch(handler, /getDataRange\(/);
+    assert.match(handler, /!\/\^\[1-9\]\\d\{0,14\}\$\//);
+});
+console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — unicidad por usuario/vehículo con sección crítica breve");
