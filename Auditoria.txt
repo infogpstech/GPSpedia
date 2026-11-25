@@ -19,3 +19,8 @@
 - Validación local/CI pendiente.
 
 - CI intermedio detectó dos problemas de test (contrato LocalApiEndpoints aún refería al ADMIN anterior, y UsefulButtonState reportaba 5 tests pese a incorporar el sexto). Se alineó el endpoint esperado con la URL confirmada y se corrigió el resumen del test. CI del HEAD actual en ejecución; no marcar aprobación antes del resultado.
+2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01
+- Hallazgo: handleSaveUnusedImagesInventory() solo admite auditorías completas, valida expectedUnusedCount/digest final y mantiene una operación de inventario global. El frontend acumula lotes, persiste localmente y deja el registro para una acción manual al terminar; por tanto, la biblioteca no recibe imágenes durante el recorrido.
+- Impacto: imágenes clasificadas «Sin uso detectado» no se registran en la biblioteca hasta que termina la auditoría y el usuario ejecuta el guardado manual. Un corte/expiración del recorrido retrasa o impide el registro.
+- Corrección requerida: habilitar registro incremental por lotes a partir de resultados autenticados y persistidos por ADMIN, propietario y auditoría; validar IDs contra el contenido emitido por ADMIN; revalidar referencias activas y el archivo Drive en cada lote; idempotencia por auditoría/lote/archivo; conservar protecciones de historial, ambigüedad y estado manual; no mover/eliminar archivos ni marcar el scan como completo anticipadamente.
+- Criterios de aceptación: registro al recibir cada lote, biblioteca refleja resultados sin botón manual, reintentos seguros, reanudación y reconciliación, operación manual final compatible, tests de contrato/seguridad/idempotencia/resiliencia. No validar servicios reales ni modificar recursos externos en esta fase.
