@@ -1137,9 +1137,11 @@ check("Las escrituras parciales se reintentan y las no reconciliables quedan req
 check("El esquema del inventario conserva las columnas nuevas de trazabilidad de forma idempotente",()=>{
     const ensure=fnSource(admin,"ensureReplacedImagesInventoryColumns");
     const readSchema=fnSource(admin,"getReplacedImagesReadSchema_");
+    const readInventory=fnSource(admin,"handleGetReplacedImages");
     for(const field of ["ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"]){
         assert.ok(ensure.includes(field));
         assert.ok(readSchema.includes(field));
+        if (["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"].includes(field)) assert.ok(readInventory.includes(field));
     }
 });
 
