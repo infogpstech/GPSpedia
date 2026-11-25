@@ -42,7 +42,7 @@ const usefulStart=source.indexOf("export async function setCutUseful(");
 const usefulEnd=source.indexOf("\nexport async function getMyUsefulCuts(",usefulStart);
 assert.ok(usefulStart>=0&&usefulEnd>usefulStart,"No se encontró setCutUseful.");
 const usefulSource=source.slice(usefulStart,usefulEnd).replace("export async function","async function");
-const setUseful=new Function("routeAction","setTimeout",usefulSource+"\\nreturn setCutUseful;")(
+const setUseful=new Function("routeAction","setTimeout",usefulSource+"\nreturn setCutUseful;")(
  async(action,payload)=>{assert.equal(action,"setCutUseful");assert.equal(payload.isUseful,true);const error=new Error("lock ocupado");error.code="USEFUL_LOCK_BUSY";throw error;},
  (callback,delay)=>{delays.push(delay);callback();return delays.length;}
 );
