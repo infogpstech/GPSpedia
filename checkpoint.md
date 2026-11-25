@@ -14,6 +14,14 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 - Apps Script: sin secretos compartidos/manuales ni URLs/endpoints de otros servicios; coordinación funcional frontend cuando sea posible; llamadas backend directas solo por necesidad técnica, con autorización/RBAC del receptor. Excepción temporal autorizada para los IDs de Spreadsheet y carpeta Cortes suministrados por el propietario, documentada en NORMAS §17.1.
 - Un fallo de servicio u operación no debe bloquear funciones independientes.
 
+## Migración de URLs de servicios — estado vigente (2026-11-25)
+
+- Plan exclusivo: `Migracion_URL_Servicios_Frontend.md`; única tarea activa: MIG-URL-004.
+- MIG-URL-001..003 cerradas. El propietario confirmó seis URLs; `API_ENDPOINTS` local ya alimenta router y health scan. Seis endpoints estructuralmente válidos, IDs únicos; disponibilidad/identidad remota no comprobada y diferida a MIG-URL-008.
+- CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos; LocalApiEndpoints 10/10, ServiceHealthContract 19/19, MIG009FrontendActionRouter 5/5.
+- MIG-URL-004 debe retirar exclusivamente la administración/lectura/publicación central de URLs. Preservar la configuración central de parámetros no relacionados (por ejemplo `rich_text_mode`), las funciones Developer ajenas y los datos/hojas históricos. No borrar pestañas ni registros de Spreadsheet.
+- Rama de trabajo HEAD al registrar: `40da3c075929979861babe01b4fc1d5e2b41ddfe`; rama base protegida no modificar. No desplegar Apps Script ni invocar endpoints reales.
+
 ## Estado de tareas
 - MIG-001 a MIG-030: implementación y validación local cerradas según sus criterios. Las validaciones externas se marcan como diferidas a Beta cuando requieren recursos/despliegues reales.
 - MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA; CI global posterior aprobado.
