@@ -14,7 +14,7 @@ assert.ok(admin.includes('setField("formato_archivo", String(auditedMetadata.for
 assert.ok(admin.includes('setField("tamano_bytes", Math.max(0, Number(auditedMetadata.size)'));
 assert.ok(admin.includes('setField("fecha_modificacion_drive", String(auditedMetadata.lastUpdated'));
 assert.ok(admin.includes('setField("referencias_catalogo_json", JSON.stringify'));
-assert.ok(admin.includes('metadataById.get(fileId)'));
+assert.ok(admin.includes('auditMetadataById.get(fileId)'));
 assert.ok(admin.includes('state.ownerId !== String(ownerId || "").trim()'));
 assert.ok(admin.includes('if (submitted.some(id => !candidates.has(id))'));
 assert.ok(admin.includes('incremental ? validateDriveAuditInventoryBatch_'));
