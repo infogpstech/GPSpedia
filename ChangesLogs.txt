@@ -1206,3 +1206,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — CI run 45637878671: sintaxis, suites focales de likes/catalog y Chromium responsive aprobaron; 2 fallos de regresión provenían de assertion obsoleta que inspeccionaba la regex anterior. Se alinea `FeedbackLikePreflightOutsideLock.mjs` al validador explícito y al rango seguro.
+
+
+2026-11-25 — Cierre GP-LIKE-VALIDATION-16DIGIT-01 y GP-CATALOG-REQUEST-BUDGET-01
+- FEEDBACK valida IDs de vehículo mediante enteros positivos seguros, coherente con el asignador de WRITE; `FeedbackLikeIdempotency` 10/10 y `FeedbackLikePreflightOutsideLock` 8/8 PASS.
+- CATALOG elimina el timeout exterior de 8 s que cancelaba los reintentos; conserva timeout interno de 5 s por intento, dos reintentos y cancelación del padre. `CatalogFeedRetry` 11/11, `CatalogRequestRetry` 8/8, `CatalogStartupIntegrity` 25/25 y `CatalogTransientFeedFallback` 2/2 PASS.
+- CI `45638162735` SUCCESS: 529 suites, 6,272 pruebas, 0 fallos; sintaxis PASS; Playwright 264/264 PASS en cuatro viewports. GitHub Pages `45638162526` SUCCESS.
+- Commits: `311b09e4b1db19699d4325c81cb55d43920f076e`, `62cef81afde6b5ccd6a0dd0146d1d7be995fd0fb` y este cierre documental. Sin llamadas a endpoints ni deployments Apps Script; Beta pendiente de autorización.

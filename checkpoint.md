@@ -924,8 +924,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Hallazgo: `auth.js` cancelaba cada consulta a los 8 s, mientras `getCatalogChanges` gestiona hasta tres intentos de 5 s cada uno y backoff. El presupuesto externo impedía completar los reintentos y convertía el fallo en `AbortError`.
 - Cambio preparado: `requestCatalogFeedPage_` delega el timeout por intento y reintentos a `getCatalogChanges`/`catalogRequest.js`; mantiene propagación de cancelación del ciclo padre. No añade viajes de red ni toca el servicio remoto.
 - No se invocaron endpoints CATALOG/FEEDBACK, no se desplegaron Apps Script ni se modificaron Spreadsheet/Drive/PropertiesService/permisos/datos externos.
-- Validaciones locales/CI y publicación de este cambio: pendientes de ejecutar/verificar.
-- Siguiente acción: ejecutar suites `FeedbackLikeIdempotency`, `CatalogFeedRetry`, `CatalogRequestRetry`, sintaxis y CI; revisar diff y verificar HEAD remoto. Validación real de deployments permanece diferida a Beta aislada autorizada.
+- CI final `45638162735` SUCCESS: 529 suites, 6,272 pruebas, 0 fallos; sintaxis PASS; `AUG-146` Playwright 264/264 PASS en cuatro viewports. Pages `45638162526` SUCCESS. Commits `311b09e4b1db19699d4325c81cb55d43920f076e` y `62cef81afde6b5ccd6a0dd0146d1d7be995fd0fb`.
+- La validación real de deployments FEEDBACK/CATALOG y Spreadsheet continúa diferida a Beta aislada autorizada; no se invocaron endpoints ni se desplegaron Apps Script.
 
 
 - CI run `45637878671` (commit `311b09e4b1db19699d4325c81cb55d43920f076e`): sintaxis PASS; `FeedbackLikeIdempotency` PASS; `CatalogFeedRetry` 11/11 PASS; `CatalogRequestRetry` 8/8 PASS; Chromium responsive PASS. Suite global: 470 suites, 5,644 pruebas PASS y 2 suites fallidas por una assertion legacy que exigía la expresión regex anterior (`FeedbackLikePreflightOutsideLock`, también invocada bajo MIG019). No es fallo del nuevo comportamiento; se actualiza el contrato para comprobar el helper y el límite `Number.isSafeInteger`.
+
+
+**Cierre de implementación local (2026-11-25):** ambos trabajos `GP-LIKE-VALIDATION-16DIGIT-01` y `GP-CATALOG-REQUEST-BUDGET-01` quedan **COMPLETADOS CON VALIDACIÓN DIFERIDA**. CI `45638162735` SUCCESS (529 suites, 6,272 pruebas, 0 fallos); `AUG-146` 264/264 PASS en cuatro viewports; Pages `45638162526` SUCCESS. La rama de trabajo quedó verificada y la rama base protegida no fue modificada. Próximo paso: validación Beta de FEEDBACK/CATALOG/Spreadsheet con autorización y deployment correspondiente; no hacer llamadas remotas antes de esa autorización.
