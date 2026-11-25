@@ -71,6 +71,7 @@ runGroup('31','WRITE',()=>{
 runGroup('32','ADMIN',()=>{
  runCli('ADMIN modal de auditoría Drive con consola de progreso incremental y responsive','JS/Tests/AdminDriveScanModal.mjs');
  runCli('ADMIN asociación de imágenes por nombre/ruta con candidatos y ambigüedad','JS/Tests/AdminDriveAuditAssociation.mjs');
+ runCli('ADMIN verifica metadata completa de imagen en read-back de Spreadsheet','JS/Tests/AdminDriveAuditMetadataPersistence.mjs');
  runCli('ADMIN evita referencia item fuera de ámbito al construir resultados de auditoría','JS/Tests/AdminDriveAuditItemReference.mjs');
  const a=read('JS/Services/admin.js');
  runCli('ADMIN consulta candidatos append-only de aportes en modo solo lectura','JS/Tests/AdminVehicleContributionCandidates.mjs');
