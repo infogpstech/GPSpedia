@@ -2034,7 +2034,9 @@ function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
                 !Number.isInteger(eventCutIndex) || eventCutIndex < 1 || eventCutIndex > 3) {
                 throw new Error("referencia de vehículo o corte inválida");
             }
-            const cutKey = String(vehicleId) + "|" + eventCutIndex;\n            if (!actorsByCut.has(cutKey)) actorsByCut.set(cutKey, new Set());\n            actorsByCut.get(cutKey).add(actorKey);
+            const cutKey = eventVehicleId + "|" + eventCutIndex;
+            if (!actorsByCut.has(cutKey)) actorsByCut.set(cutKey, new Set());
+            actorsByCut.get(cutKey).add(actorKey);
         } catch (invalidEventError) {
             if (typeof console !== "undefined" && typeof console.warn === "function") {
                 console.warn("FeedbackLikes: evento inválido ignorado en fila " + rowIndex + ": " +
@@ -2042,11 +2044,9 @@ function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
             }
         }
     });
-    let count = 0;
-    firstCutByActor.forEach(firstCut => { if (firstCut === Number(corteIndex)) count++; });
-    return count;
+    const targetKey = String(vehicleId) + "|" + Number(corteIndex);
+    return actorsByCut.has(targetKey) ? actorsByCut.get(targetKey).size : 0;
 }
-
 function getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol) {
     const raw = cuts.getRange(vehicle.rowIndex, utilCol).getValue();
     const base = raw === "" || raw === null || raw === undefined ? 0 : Number(raw);
