@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const offlineSource = readFileSync(new URL('../Frontend/offline.js', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+const adminSource = readFileSync(new URL('../Services/admin.js', import.meta.url), 'utf8');
 
 class FakeRequest {
     constructor() { this.result = undefined; this.error = null; this.onsuccess = null; this.onerror = null; }
@@ -312,4 +313,7 @@ console.log('AdminDriveAuditIndexedDB: ' + passed + '/' + passed + ' PASS');
 assert.match(uiSource,/referenceLocations/,"La UI muestra relación de referencia por imagen.");
 assert.match(uiSource,/sourceLink\.href/,"La UI ofrece enlace al archivo original.");
 assert.match(uiSource,/classification === 'Sin uso detectado'/,"La UI indica cuándo falta una asociación confirmada.");
-console.log("AdminDriveAuditVisualContract: 3/3 PASS");
+assert.match(adminSource,/vehicleContext/,"La auditoría obtiene contexto de vehículo en la lectura de referencias.");
+assert.match(adminSource,/vehicleId: String\(context\[0\]/,"El inventario relaciona cada imagen con el ID del vehículo.");
+assert.match(adminSource,/model: String\(context\[3\]/,"El inventario conserva el modelo relacionado.");
+console.log("AdminDriveAuditVisualContract: 6/6 PASS");
