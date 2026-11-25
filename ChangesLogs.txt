@@ -957,3 +957,14 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - La Spreadsheet central no pudo consultarse porque el conector Google Drive/Sheets está deshabilitado; se registra procedencia directa del usuario, sin afirmar lectura de revisión activa.
 - No se realizaron llamadas remotas. Verificación de identidad y salud de deployments diferida a MIG-URL-008, en Beta aislada y con autorización.
 - MIG-URL-002 COMPLETADA; MIG-URL-003 pasa a ser la única tarea activa. Sin cambios en Apps Script, deployments, Spreadsheet, permisos ni datos externos.
+
+
+## 2026-11-25 — MIG-URL-002 y MIG-URL-003: URLs confirmadas y resolución local
+
+- El propietario confirmó directamente las seis URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Se copiaron sin modificaciones al único objeto `API_ENDPOINTS` de `JS/Frontend/api-config.js`.
+- Validación estructural: seis claves exactas, seis URLs HTTPS con formato Web App Apps Script y seis IDs de deployment distintos. No se consultaron deployments remotos ni se afirma su disponibilidad/identidad; eso queda diferido a MIG-URL-008.
+- El router de acciones y el health scan usan el resolvedor local y no consultan el registro central para descubrir endpoints. Se conserva `ACTION_TO_SERVICE_MAP` con 125 acciones.
+- Se adaptaron las pruebas heredadas del router, health scan y paridad para el patrón local, manteniendo las verificaciones de handlers y cobertura funcional.
+- Evidencia CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos; `LocalApiEndpoints` 10/10, `ServiceHealthContract` 19/19 y `MIG009FrontendActionRouter` 5/5.
+- MIG-URL-003 cerrada. Se inicia MIG-URL-004: retirar las acciones/lectores/publicadores centrales dedicados a URLs sin eliminar la configuración central de parámetros no relacionados (incluido `rich_text_mode`).
+- No se modificaron deployments Apps Script, URLs reales, propiedades, permisos, Spreadsheet ni datos externos.
