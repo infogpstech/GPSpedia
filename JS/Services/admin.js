@@ -13299,6 +13299,30 @@ function normalizeDriveAuditFileIds_(files) {
 function hashDriveAuditFileIds_(files) {
     return hashDriveAuditValue_(JSON.stringify(normalizeDriveAuditFileIds_(files)));
 }
+
+function normalizeDriveAuditReferenceLocations_(locations) {
+    if (!Array.isArray(locations)) throw new Error("Las ubicaciones de referencia Drive no tienen una lista válida.");
+    return locations.map(location => {
+        if (!location || typeof location !== "object" || Array.isArray(location)) {
+            throw new Error("Una ubicación de referencia Drive tiene una estructura inválida.");
+        }
+        const sheet = String(location.sheet || "").trim();
+        const row = Number(location.row), column = Number(location.column);
+        if (!sheet || !Number.isSafeInteger(row) || row < 0 ||
+            !Number.isSafeInteger(column) || column < 0) {
+            throw new Error("Una ubicación de referencia Drive carece de hoja, fila o columna verificable.");
+        }
+        return {
+            sheet, row, column,
+            field: String(location.field || ""),
+            vehicleId: String(location.vehicleId || ""),
+            category: String(location.category || ""),
+            brand: String(location.brand || ""),
+            model: String(location.model || "")
+        };
+    });
+}
+
 function saveDriveAuditServerState_(state) {
     if(!state||!state.auditId||!state.ownerId)throw new Error("No se puede guardar un estado de auditoría sin identidad.");
     ensureDriveAuditStateBaseline_();
@@ -13360,7 +13384,8 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMe
             lastUpdated: String(item && item.lastUpdated || ""),
             format: extension ? extension[1].toLowerCase() : (mimeType.split("/")[1] || "unknown"),
             url: fileId ? "https://drive.google.com/file/d/" + fileId + "/view" : "",
-            origin: "Google Drive · árbol Cortes"
+            origin: "Google Drive · árbol Cortes",
+            referenceLocations: normalizeDriveAuditReferenceLocations_(item && item.referenceLocations || [])
         };
     });
     const payload = {
@@ -13438,7 +13463,8 @@ function loadDriveAuditFileMetadata_(auditId, pageCount, refreshCache = true) {
             const lastUpdated = String(item && item.lastUpdated || ""), format = String(item && item.format || (fileName.match(/\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown")).toLowerCase();
             const url = String(item && item.url || "https://drive.google.com/file/d/" + fileId + "/view");
             const origin = String(item && item.origin || "Google Drive · árbol Cortes");
-            result.push({ fileId, fileName, mimeType, folderPath, folderId, size, lastUpdated, format, url, origin, referenceLocations: Array.isArray(item.referenceLocations) ? item.referenceLocations : [] });
+            result.push({ fileId, fileName, mimeType, folderPath, folderId, size, lastUpdated, format, url, origin,
+                referenceLocations: normalizeDriveAuditReferenceLocations_(item.referenceLocations || []) });
         });
         if (refreshCache) {
             cache.put(key, raw, 21600);
@@ -13619,6 +13645,16 @@ function validateAuditDriveReferenceSnapshot_(snapshot) {
     if (snapshot.protectedDriveIds !== undefined) {
         if (!Array.isArray(snapshot.protectedDriveIds)) throw new Error("La lista de referencias protegidas no es válida.");
         normalizeDriveAuditFileIds_(snapshot.protectedDriveIds);
+    }
+    if (snapshot.referenceLocationsById !== undefined) {
+        const locationsById = snapshot.referenceLocationsById;
+        if (!locationsById || typeof locationsById !== "object" || Array.isArray(locationsById)) {
+            throw new Error("El mapa de ubicaciones de referencia Drive no es válido.");
+        }
+        Object.keys(locationsById).forEach(fileId => {
+            if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) throw new Error("El mapa de ubicaciones contiene un ID Drive inválido.");
+            normalizeDriveAuditReferenceLocations_(locationsById[fileId]);
+        });
     }
     return true;
 }
@@ -14537,7 +14573,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         state = { auditId, ownerId, status: "running", scanVersion: ADMIN_SERVICE_VERSION, createdAt: Date.now(),
             pageCount: 0, totalDiscovered: 0, totalAnalyzed: 0, foldersVisited: 1, errorCount: 0, duplicateFileCount: 0, duplicateFolderCount: 0 };
         const referenceCaptureStartedAt = Date.now();
-        const references = collectActiveDriveReferences(false);
+        const references = collectActiveDriveReferences(true);
         referenceCaptureMs = Date.now() - referenceCaptureStartedAt;
         cortesScanMetrics = references.metrics && references.metrics.cortes || null;
         state.cortesRowsRead = Number(cortesScanMetrics && cortesScanMetrics.rows) || 0;
@@ -14563,8 +14599,15 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
             }
         }
         historyCaptureMs = Date.now() - historyCaptureStartedAt;
+        const referenceLocationsById = {};
+        references.references.forEach((locations, fileId) => {
+            const cortesLocations = normalizeDriveAuditReferenceLocations_(Array.isArray(locations) ? locations : [])
+                .filter(location => location.sheet === SHEET_NAMES.CORTES);
+            if (cortesLocations.length) referenceLocationsById[String(fileId)] = cortesLocations;
+        });
         referenceSnapshot = { activeDriveIds: Array.from(references.references.keys()), historicalDriveIds: Array.from(historicalDriveIds),
-            protectedDriveIds: Array.from(protectedDriveIds), unverifiableReferenceCount: references.unverifiableReferenceCount };
+            protectedDriveIds: Array.from(protectedDriveIds), referenceLocationsById,
+            unverifiableReferenceCount: references.unverifiableReferenceCount };
         const snapshotPersistStartedAt = Date.now();
         snapshotManifest = storeAuditDriveReferenceSnapshot(auditId, referenceSnapshot);
         snapshotPersistMs = Date.now() - snapshotPersistStartedAt;
@@ -14614,7 +14657,9 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     else if (referenceSnapshot.unverifiableReferenceCount > 0) classification = "No verificable";
                     else classification = "Sin uso detectado";
                 } catch (fileError) { classification = "No verificable"; errorCount++; }
-                const referenceLocations = referenceSnapshot.references instanceof Map ? (referenceSnapshot.references.get(fileId) || []) : [];
+                const referenceLocations = referenceSnapshot.referenceLocationsById &&
+                    Array.isArray(referenceSnapshot.referenceLocationsById[fileId])
+                    ? normalizeDriveAuditReferenceLocations_(referenceSnapshot.referenceLocationsById[fileId]) : [];
                 const fileFormat = String(fileName.match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown").toLowerCase();
                 auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, format: fileFormat, url: "https://drive.google.com/file/d/" + fileId + "/view", origin: "Google Drive · árbol Cortes",
             size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || ""), vehicleId: String(location.vehicleId || ""), category: String(location.category || ""), brand: String(location.brand || ""), model: String(location.model || "") })) });
