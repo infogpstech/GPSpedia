@@ -564,20 +564,20 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - **Dashboard:** el normalizador frontend agrupa por nombre visible normalizado, sin separar filas por IDs históricos diferentes; suma cortes y aportes.
 - **Vídeo:** iframe del modal tutorial con URL validada, ancho 100 %, alto 315 px, carga no diferida y contenedor no contraíble, siguiendo el tamaño del vídeo guía de desarme.
 - **Encabezado:** título de corte/tutorial sin salto innecesario; logo y nombre alineados abajo respecto de la línea azul; nombre móvil incrementado 2 px.
-- Se añadieron/actualizaron pruebas de regresión de idempotencia, proyección de likes, dashboard, vídeo y encabezado. CI de la revisión final aún debe confirmar el resultado; no declarar aprobadas las pruebas hasta que el workflow termine.
+- Se añadieron/actualizaron pruebas de regresión de idempotencia, proyección de likes, dashboard, vídeo y encabezado. En el momento de esta anotación inicial, CI estaba pendiente; el cierre posterior registra CI 45535275807 aprobado: 523 suites y 6,206 pruebas, 0 fallos, además de navegador 260/260.
 - No se modificaron deployments Apps Script, URLs, PropertiesService, permisos, hojas ni datos externos. No se realizaron peticiones remotas.
 
 ### Archivos principales
 - `JS/Services/feedback.js`, `JS/Services/catalog.js`
 - `JS/Frontend/likeState.js`, `JS/Frontend/ui.js`, `JS/Frontend/activityDashboard.js`, `style.css`
-- `JS/Tests/FeedbackLikeIdempotency.mjs` y suites de likes existentes
-- `JS/Tests/TutorialVideoModalLayout.mjs`, `JS/Tests/CutDetailModalLayout.mjs`, `JS/Tests/ModalHeaderCssCascade.mjs`, `JS/Tests/ActivityDashboardContributions.mjs`
+- `JS/Tests/FeedbackLikeIdempotency.mjs`, `FeedbackLikeClientRetry.mjs`, `FeedbackLikeLockContention.mjs` y suites de likes existentes
+- `JS/Tests/TutorialVideoModalLayout.mjs`, `JS/Tests/CutDetailModalLayout.mjs`, `JS/Tests/ModalHeaderCssCascade.mjs`, `JS/Tests/ActivityDashboardContributions.mjs`, `JS/Tests/Aug146ResponsiveBrowser.mjs`
 - `JS/Tests/RunServiceTests.mjs`
 
 ### Condiciones de continuidad
-- Las cuatro prioridades anteriores deben retomarse en el siguiente trabajo si el CI o la validación visual siguen pendientes.
-- No cerrar el arreglo de útiles hasta comprobar deduplicación de llamadas repetidas y simultáneas, lectura de CATALOG con más de un evento del mismo actor/vehículo y respuesta sin mensaje visible.
-- La validación de vídeo debe comprobar al menos un tutorial con URL YouTube normal y uno con URL corta/variante, además de verificar el alto efectivo del iframe en escritorio y móvil.
+- La implementación local de las cuatro prioridades quedó validada; el siguiente trabajo debe continuar con las validaciones Beta diferidas en el orden registrado en el cierre posterior.
+- No cerrar la validación Beta de útiles hasta comprobar deduplicación de llamadas repetidas y simultáneas, lectura de CATALOG con más de un evento del mismo actor/vehículo y respuesta sin mensaje visible.
+- En Beta, comprobar reproducción real de al menos un tutorial con URL YouTube normal y uno con URL corta/variante; las dimensiones y visibilidad del iframe ya aprobaron la prueba de navegador local.
 - MIG-URL-008 continúa pendiente de autorización y entorno Beta aislado; no ejecutar GET remotos ni desplegar servicios.
 - La tarea separada **Actividad reciente** permanece en cola y conserva su límite de solo frontend/presentación.
 - Rama: `GPSpedia2.2.5_work`. Rama protegida `GPSpedia2.2.5`: sin cambios.
