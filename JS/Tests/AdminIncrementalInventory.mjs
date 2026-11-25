@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const admin=readFileSync(new URL('../Services/admin.js',import.meta.url),'utf8');
+const ui=readFileSync(new URL('../Frontend/ui.js',import.meta.url),'utf8');
+assert.ok(admin.includes('function validateDriveAuditInventoryBatch_'));
+assert.ok(admin.includes('state.ownerId !== String(ownerId || "").trim()'));
+assert.ok(admin.includes('if (submitted.some(id => !candidates.has(id))'));
+assert.ok(admin.includes('incremental ? validateDriveAuditInventoryBatch_'));
+assert.ok(admin.includes("incremental ? ('AUD-' + auditId + '-' + submissionDigest)"));
+assert.ok(admin.includes('if (!incremental && auditState.unverifiableReferenceCount'));
+assert.ok(admin.includes('if (!incremental && auditState.unverifiableReferenceCount === 0'));
+assert.ok(ui.includes('files: unusedBatchIds, incremental: true'));
+assert.ok(ui.includes('routeActionWithRetry(\'saveUnusedImagesInventory\''));
+assert.ok(ui.includes('Inventario automático: '));
+console.log('AdminIncrementalInventory: 10/10 PASS');
