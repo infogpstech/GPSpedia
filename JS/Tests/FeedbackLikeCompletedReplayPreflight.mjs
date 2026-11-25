@@ -34,7 +34,7 @@ test("los registros legacy completed y pending conservan reconciliación sin dup
 });
 test("la respuesta idempotente no devuelve mensajes al usuario", () => {
     assert.doesNotMatch(handler, /message:/);
-    assert.match(handler, /status: "success", alreadyLiked: true/);
+    assert.match(handler, /alreadyLiked: !outcome\.created/);
 });
 test("la proyección usa identidad normalizada y deduplica una vez por vehículo", () => {
     assert.match(extract("normalizeFeedbackLikeActorKey_"), /computeDigest/);
