@@ -29,4 +29,7 @@ assert.equal(ambiguous.status,"ambiguous");
 assert.deepEqual(ambiguous.candidates[0].vehicleIds,["V-1","V-2"]);
 assert.deepEqual(ambiguous.candidates[0].rows,[2,3]);
 assert.ok(ui.includes("candidate.vehicleIds")&&ui.includes("candidate.rows"));
-console.log("AdminDriveAuditAssociation: 10/10 PASS");
+assert.ok(admin.includes("buildCortesImageModelAssociationSuggestions_("));
+assert.ok(admin.includes('setField("asociacion_candidatos_json", JSON.stringify'));
+assert.ok(admin.includes('setField("asociacion_estado", association'));
+console.log("AdminDriveAuditAssociation: 13/13 PASS");
