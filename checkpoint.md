@@ -738,3 +738,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - La unicidad ahora se verifica por usuario+vehículo+corte, y los duplicados del corte exacto retornan éxito silencioso sin cálculo del contador ni actividad. Frontend registra estado vehículo+corte.
 - Pruebas FeedbackLikeIdempotency y FeedbackLikeAppendOnly ejecutadas en runner aislado contra los fuentes de rama: ambas PASS. Sintaxis FEEDBACK y CATALOG PASS. CI remoto no fue confirmado; despliegue Apps Script no se requiere. Task cerrada; Beta Apps Script no es requisito para cierre local.
 - Iniciar GP-DEV-LOG-ERRORS-01 inmediatamente.
+
+
+## GP-DEV-LOG-ERRORS-01 — 2026-11-25
+
+- Implementado en `JS/Frontend/ui.js`: el botón de copiar selecciona únicamente `div.log-error`, excluye warnings/informativos, elimina entradas vacías y copia texto separado por líneas.
+- Añadida `JS/Tests/DeveloperConsoleErrors.mjs`.
+- Contrato estático y simulación aislada de selección ejecutados: PASS. Ejecución Node real/CI no disponible en el entorno actual; CI remoto pendiente, sin bloquear cierre local. No se alteró backend ni recursos.
+- Próxima tarea: GP-ADMIN-DRIVE-AUDIT-SCHEMA-01.
