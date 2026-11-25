@@ -1251,3 +1251,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 (auditoría de arquitectura)
 Se documentó la condición de guardado completo-only y el requisito de registro incremental de resultados por lote. Implementación pendiente; no se declara prueba.
+
+2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 — implementación parcial
+Se añadieron validación incremental ADMIN, registro frontend al recibir lotes y consolidación automática final. Se añadió prueba contractual y simulación del validador; se reforzó la confirmación del conjunto final y el estado UI. CI de una iteración previa (fcc5db4) SUCCESS; cambios posteriores de validación final están pendientes de CI. Sin despliegue ni operaciones sobre Drive/Spreadsheet reales.
