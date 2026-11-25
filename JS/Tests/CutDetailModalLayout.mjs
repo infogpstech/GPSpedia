@@ -385,9 +385,9 @@ testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grup
 
 testCase("logo y nombre del modelo comparten la línea inferior y el nombre móvil aumenta 2px", () => {
     const alignment = css.slice(css.indexOf("GP-UX-CUT-HEADER-ALIGN-04"));
-    assert.match(alignment, /\.detail-modal-title \{[\s\S]*?align-items: flex-end;[\s\S]*?transform: translateY\(-19px\)/);
+    assert.match(alignment, /\.detail-modal-toolbar > \.detail-modal-title \{[\s\S]*?align-self: end;[\s\S]*?align-items: flex-end;[\s\S]*?transform: none !important/);
     assert.match(alignment, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-position: left bottom/);
-    assert.match(alignment, /\.detail-modal-title-text \{[\s\S]*?align-self: end;[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
+    assert.match(alignment, /\.detail-modal-toolbar > \.detail-modal-title-text \{[\s\S]*?align-self: end;[\s\S]*?line-height: 32px;[\s\S]*?transform: none !important;[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
     assert.match(css, /font-size:\s*calc\(clamp\(1rem,4vw,1.35rem\)\s*\+\s*2px\)/);
 });
 
