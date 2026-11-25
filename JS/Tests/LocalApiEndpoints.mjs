@@ -3,12 +3,12 @@ import { readFileSync } from "node:fs";
 const root = new URL("../../", import.meta.url);
 const api = readFileSync(new URL("JS/Frontend/api-config.js", root), "utf8");
 const expected = {
-AUTH:"https://script.google.com/macros/s/AKfycby0OcUfWsUmHHXwixDmtClz5E4rBrIBSpttjqdsbqKIdRg8U19kQKm5MH7gN1o627wm8w/exec",
+AUTH:"https://script.google.com/macros/s/AKfycbxRq_zdWqp6khThDkl4S3Z_nT6VibHDHNBaoQAXHal7hMHJ46N9IZel7CRk7w974kqFvw/exec",
 CATALOG:"https://script.google.com/macros/s/AKfycbwskd8-pS5CioHU-vw6mkIW6XFA6tBF8CR5968PZ0qrZPf4AGWcVOJU--p8vv8lQIpz/exec",
-WRITE:"https://script.google.com/macros/s/AKfycbyfXLAUUe-lGlXkDwRopGaXp--QJ4V96txM_5E604oHH5kN1qfV2xJYDsqesfbUHHgJ/exec",
-FEEDBACK:"https://script.google.com/macros/s/AKfycbwJmb_g4-Hb5iXpLdLwxfBQ44mQ9pHb1JYQ3vAwzafpPXiDDRgSAls2bkqKZ5QhnrYEcA/exec",
+WRITE:"https://script.google.com/macros/s/AKfycbx3niOqzZiDxRCkohemVWyrkDBktIYkGyqTecR25xd_VeP_BK-VGNOMbFA_ZSXhU7FtBA/exec",
+FEEDBACK:"https://script.google.com/macros/s/AKfycbxJtuFDOMmnTkstL4kUeKBBKS-FH4vQc8YmGEYJuiYq-YLEe4YirHVSfWqrOJjMwsl2Dw/exec",
 UTILITIES:"https://script.google.com/macros/s/AKfycbzUc402Sju0_ZU7PQST1Kma-qrgJs2v10Pi6hA62rWZZvsCefD6Mr6PCo5GEDA0dGRk/exec",
-ADMIN:"https://script.google.com/macros/s/AKfycby779ceEVYBaZ8eAFueon4kDdedYeb1xuApUFjh0IdZ5ZQdy5DfVN3tWXQKE55QZtyb1g/exec"
+ADMIN:"https://script.google.com/macros/s/AKfycbz4MhX-UuhUU6aBgHRs8esb6GDc--DsE37P6SglkgKFC1WG1G2pjd-oIjYKSrBonMVfug/exec"
 };
 const block = api.match(/export const API_ENDPOINTS = Object\.freeze\((\{[\s\S]*?\})\);/);
 assert.ok(block, "API_ENDPOINTS debe existir como mapa único e inmutable.");
