@@ -815,3 +815,9 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 ## GP-LIKE-REBUILD-01 — CI final 25-11-2026
 
 - CI run 45612250526 SUCCESS: 525 suites, 6,239 tests, 0 fallos; responsive-browser SUCCESS. Contracts FEEDBACK preflight/replay y LocalApiEndpoints reconciliados. Cierre local y CI.
+
+
+## Cierre GP-CATALOG-LIKE-PROJECTION-READ-01 — 25-11-2026
+
+- CATALOG reduce la transferencia del ledger FeedbackLikes a A:C y F. Prueba `CatalogLikeProjectionReadScale` 6/6 PASS. CI run 45612534877 SUCCESS: 526 suites, 6,245 pruebas, 0 fallos; responsive-browser SUCCESS.
+- Sin caché adicional ni backend coordination; no se alteran datos ni deployment.
