@@ -530,6 +530,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ### Alcance y aceptación — útiles
 - Corregir el contador del título del corte para reflejar el total confirmado y cambiar inmediatamente por transición optimista (+1 al activar, -1 al retirar), sin incrementar por clics duplicados.
+- Conservar el índice físico original de cada corte al ordenar la proyección CATALOG por útiles; los eventos FEEDBACK, el estado local y los contadores deben apuntar al mismo corte original.
 - Hidratar el estado activo del usuario al cargar el vehículo y aplicar el estado visual del botón antes de permitir nuevas interacciones.
 - Mantener persistencia local por usuario y debounce de 1.8 s; coalescer interacciones y enviar solo el último estado, serializar solicitudes por usuario/vehículo/corte, idempotencia y reintentos silenciosos ante lock ocupado o clics repetidos.
 - Auditar la semántica de estados `event`/`withdrawn`/`completed` en FEEDBACK y CATALOG; preservar el indicador `completed` cuando el evento ya está materializado en el contador base para evitar doble conteo. Añadir pruebas para transiciones pendientes y completadas.
