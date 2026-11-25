@@ -15129,7 +15129,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
                 openSearchVehicleForPysAssociationModal(problemId, (updatedList) => {
                     item.modelosAsociados = updatedList;
                     openPysDetailModal(item, navOptions);
-                }, item.modelosAsociados || []);
+                }, modelosAsociadosIds);
             };
             addCard.onclick = openAssociationForm;
             addCard.onkeydown = event => {

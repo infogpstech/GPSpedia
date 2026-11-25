@@ -51,6 +51,7 @@ test('tarjeta de vinculación conserva dimensiones exactas y reutiliza el formul
  assert.ok(card.includes("height: 120px"));
  assert.ok(card.includes("min-height: 120px"));
  assert.ok(card.includes("openSearchVehicleForPysAssociationModal(problemId,"));
+ assert.ok(card.includes("}, modelosAsociadosIds);"), "el formulario recibe IDs normalizados aunque el backend entregue una cadena");
  assert.ok(card.includes("item.id_problem"));
  assert.ok(card.includes("item.id;"));
  assert.ok(ui.includes('export function openSearchVehicleForPysAssociationModal(problemId, onAssociated, alreadyAssociatedIds = [])'));
