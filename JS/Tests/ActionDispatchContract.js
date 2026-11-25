@@ -10,7 +10,7 @@ function runActionDispatchContractTests(sources) {
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     }
     function parseObject_(source, declaration) {
-        const match = String(source || "").match(new RegExp("export\s+const\s+" + declaration + "\s*=\s*\{([\s\\S]*?)\n\};"));
+        const match = String(source || "").match(new RegExp("export\\s+const\\s+" + declaration + "\\s*=\\s*\\{([\\s\\S]*?)\\n\\};"));
         assert_(!!match, "No se encontró " + declaration + ".");
         return match[1];
     }
