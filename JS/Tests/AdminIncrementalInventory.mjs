@@ -14,6 +14,10 @@ assert.ok(admin.includes('setField("formato_archivo", String(auditedMetadata.for
 assert.ok(admin.includes('setField("tamano_bytes", Math.max(0, Number(auditedMetadata.size)'));
 assert.ok(admin.includes('setField("fecha_modificacion_drive", String(auditedMetadata.lastUpdated'));
 assert.ok(admin.includes('setField("referencias_catalogo_json", JSON.stringify'));
+assert.ok(admin.includes('buildCortesImageModelAssociationSuggestions_('));
+assert.ok(admin.includes('setField("asociacion_estado", association'));
+assert.ok(admin.includes('setField("asociacion_confianza", association'));
+assert.ok(admin.includes('setField("asociacion_candidatos_json", JSON.stringify'));
 assert.ok(admin.includes('auditMetadataById.get(fileId)'));
 assert.ok(admin.includes('metadataColumns.every(index => String(persisted[index] || "") === String(row[index] || ""))'));
 assert.ok(admin.includes('state.ownerId !== String(ownerId || "").trim()'));
@@ -44,4 +48,4 @@ state.status='complete';
 assert.equal(validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]).status,'complete');
 state.updatedAt=Date.now()-21600001;
 assert.throws(()=>validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]),/expiró/);
-console.log('AdminIncrementalInventory: 31/31 PASS');
+console.log('AdminIncrementalInventory: 35/35 PASS');
