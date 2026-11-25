@@ -13,7 +13,7 @@ assert.ok(block.includes("#modalDetalle[data-modal-type=\"corte\"] #detalleCompl
 assert.ok(block.includes("detail-modal-header-actions > .info-close-btn"), "el cierre debe seguir el DOM anidado actual");
 assert.ok(block.includes("height:66px !important") && block.includes("width:auto !important"), "el logo debe conservar 66px y ancho automático");
 assert.ok(block.includes("max-width:none !important"), "el logo no debe forzar un ancho fijo ni limitar su proporción natural");
-assert.ok(block.includes("font-size:clamp(1rem,4vw,1.35rem)"), "el título móvil debe conservar tamaño compacto");
+assert.ok(block.includes("font-size:calc(clamp(1rem,4vw,1.35rem) + 2px)"), "el título móvil debe aumentar 2px sin perder el ajuste responsive");
 assert.ok(block.includes("font-size:clamp(.95rem,3.8vw,1.2rem)"), "el input móvil debe conservar tamaño compacto");
 assert.ok(/grid-template-rows:\s*auto auto auto auto auto/.test(block), "el estado below-logo debe declarar cinco filas");
 assert.ok(block.includes(".detail-modal-toolbar > .info-close-btn"), "Relay conserva el cierre directo compartido");
