@@ -15,7 +15,7 @@ assert.ok(endpointMatch, "No se encontró API_ENDPOINTS.");
 const endpoints = Function("return (" + endpointMatch[1] + ");")();
 const serviceKeys = Object.keys(endpoints);
 assert.deepEqual(serviceKeys, ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]);
-assert.equal(Object.keys(actionMap).length, 123, "Cambió el total de acciones sin revisar inventario.");
+assert.equal(Object.keys(actionMap).length, 125, "Cambió el total de acciones sin revisar inventario.");
 const actionCounts = Object.fromEntries(serviceKeys.map(key => [key, Object.values(actionMap).filter(service => service === key).length]));
 assert.deepEqual(actionCounts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
 assert.equal(actionMap.getPublicConfiguration, "AUTH");
@@ -67,4 +67,4 @@ assert.throws(()=>resolveLocal("UNKNOWN"),/sin endpoint local/);
  clock+=CENTRAL_CONFIG_FRESH_TTL_MS+1;revision=2;mode="advanced";const second=await cache.load(loader);
  assert.equal(second.revision,2);assert.equal(second.parameters.rich_text_mode,"advanced");assert.equal(Object.hasOwn(second,"services"),false);
 }
-console.log("MIG009FrontendActionRouter: 5/5 PASS — 123 acciones, seis endpoints locales, router/health locales y caché independiente de URLs.");
+console.log("MIG009FrontendActionRouter: 5/5 PASS — 125 acciones, seis endpoints locales, router/health locales y caché independiente de URLs.");

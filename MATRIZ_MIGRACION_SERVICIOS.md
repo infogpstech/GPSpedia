@@ -1404,3 +1404,11 @@ Cinco acciones vigentes no aparecían en la tabla histórica de §9 y se agregan
 | `invalidateRichTextModeCache` | FEEDBACK | Ruta de invalidación protegida para Desarrollador | `api-config.js`; invalidación de caché local después de publicar la preferencia global desde ADMIN. |
 
 Las tres acciones tienen ruta backend identificada y consumidor explícito. No representan controles de UI adicionales ni habilitan coordinación backend→backend: las secuencias de publicación e invalidación se ejecutan desde el frontend. La matriz de §§9–19 conserva su valor histórico; esta adenda es la referencia para el mapa vigente.
+
+
+## Acciones FEEDBACK — útiles por corte (2026-11-25)
+
+| Acción | Servicio | Propósito |
+|---|---|---|
+| `setCutUseful` | FEEDBACK | Establece el estado deseado del útil por usuario y corte; registra transiciones idempotentes de activación y retirada. |
+| `getMyUsefulCuts` | FEEDBACK | Recupera los cortes que el usuario mantiene marcados como útiles para hidratar la interfaz. |

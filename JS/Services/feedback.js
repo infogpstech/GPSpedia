@@ -2046,19 +2046,19 @@ function isValidFeedbackLikeVehicleId_(value) {
 
 function getFeedbackLikeEventCount_(ledger,vehicleId,corteIndex){
  if(!ledger||ledger.getLastRow()<2)return 0;
- const matches=ledger.getRange(2,2,ledger.getLastRow()-1,1).createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll(),states=new Map();
+ const matches=ledger.getRange(2,2,ledger.getLastRow()-1,1).createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll(),actorsByCut=new Map();
  matches.forEach(match=>{
   const rowIndex=match.getRow(),row=ledger.getRange(rowIndex,1,1,6).getValues()[0],status=String(row[5]||"");
   if(!["event","withdrawn","completed"].includes(status))return;
   try{
    const actor=normalizeFeedbackLikeActorKey_(row[0]),id=String(row[1]||"").trim(),cut=Number(row[2]);
    if(!isValidFeedbackLikeVehicleId_(id)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
-   const key=actor+"|"+id+"|"+cut,state=states.get(key)||{vehicleId:id,cut,completed:false,status:""};
-   if(status==="completed")state.completed=true;state.status=status;states.set(key,state);
+   const key=actor+"|"+id+"|"+cut,state=actorsByCut.get(key)||{vehicleId:id,cut,completed:false,status:""};
+   if(status==="completed")state.completed=true;state.status=status;actorsByCut.set(key,state);
   }catch(error){if(typeof console!=="undefined"&&console.warn)console.warn("FeedbackLikes: evento inválido ignorado en fila "+rowIndex+": "+String(error&&error.message||"datos incompatibles"));}
  });
  const target=String(vehicleId)+"|"+Number(corteIndex);let delta=0;
- states.forEach(state=>{if(state.vehicleId+"|"+state.cut!==target)return;if(state.status==="event"&&!state.completed)delta++;else if(state.status==="withdrawn"&&state.completed)delta--;});
+ actorsByCut.forEach(state=>{if(state.vehicleId+"|"+state.cut!==target)return;if(state.status==="event"&&!state.completed)delta++;else if(state.status==="withdrawn"&&state.completed)delta--;});
  return delta;
 }
 function getFeedbackLikeCountWithEvents_(cuts,vehicle,ledger,vehicleId,corteIndex,utilCol){
