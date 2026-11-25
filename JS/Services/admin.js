@@ -12394,11 +12394,33 @@ const ADMIN_LOCAL_GUARD_HEADERS_ = Object.freeze(["scopeHash","requestId","expir
 const ADMIN_LOCAL_GUARD_MAX_ACTIVE_ = 500;
 
 function getAdminLocalGuardSheet_(sheetOverride) {
-    const sheet = sheetOverride || getSpreadsheet().getSheetByName(ADMIN_LOCAL_GUARD_SHEET_NAME_);
-    if (!sheet) throw new Error("No existe la hoja AdminOperationGuards. Debe prepararse su esquema antes de habilitar las guardas ADMIN.");
-    const header = sheet.getRange(1,1,1,ADMIN_LOCAL_GUARD_HEADERS_.length).getValues()[0];
-    if (!ADMIN_LOCAL_GUARD_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
+    if (sheetOverride) {
+        const header = sheetOverride.getRange(1,1,1,ADMIN_LOCAL_GUARD_HEADERS_.length).getValues()[0];
+        if (!ADMIN_LOCAL_GUARD_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
+            throw new Error("El esquema de AdminOperationGuards no coincide con la versión esperada.");
+        return sheetOverride;
+    }
+    const spreadsheetRef = getSpreadsheet();
+    let sheet = spreadsheetRef.getSheetByName(ADMIN_LOCAL_GUARD_SHEET_NAME_);
+    if (!sheet) {
+        try {
+            sheet = spreadsheetRef.insertSheet(ADMIN_LOCAL_GUARD_SHEET_NAME_);
+        } catch (creationError) {
+            sheet = spreadsheetRef.getSheetByName(ADMIN_LOCAL_GUARD_SHEET_NAME_);
+            if (!sheet) throw creationError;
+        }
+    }
+    const headerRange = sheet.getRange(1,1,1,ADMIN_LOCAL_GUARD_HEADERS_.length);
+    const header = headerRange.getValues()[0];
+    if (header.every(value=>value===""||value===null)) {
+        headerRange.setValues([ADMIN_LOCAL_GUARD_HEADERS_.slice()]);
+        SpreadsheetApp.flush();
+    } else if (!ADMIN_LOCAL_GUARD_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name)) {
         throw new Error("El esquema de AdminOperationGuards no coincide con la versión esperada.");
+    }
+    const confirmed = sheet.getRange(1,1,1,ADMIN_LOCAL_GUARD_HEADERS_.length).getValues()[0];
+    if (!ADMIN_LOCAL_GUARD_HEADERS_.every((name,index)=>String(confirmed[index]||"").trim()===name))
+        throw new Error("No se confirmó el esquema de AdminOperationGuards.");
     return sheet;
 }
 function readAdminLocalGuardBaselineState_(sheet) {
