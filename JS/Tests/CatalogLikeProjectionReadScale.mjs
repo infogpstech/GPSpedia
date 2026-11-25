@@ -9,6 +9,7 @@ const rows=[
  ["actorA","100","1",0,0,"event","x"],["actorA","100","1",0,0,"event","y"],["actorB","100","1",0,0,"event","z"],
  ["actorA","100","2",0,0,"event","q"],["actorB","100","3",0,0,"completed","r"],
  ["actorA","100","1",0,0,"withdrawn","s"],["actorB","100","3",0,0,"withdrawn","t"],
+ ["actorA","100","1",0,0,"event","reactivated"],
  ["actorB","V-105","1",0,0,"event","u"],["actorC","9007199254740991","1",0,0,"event","v"]
 ];
 const calls=[];
