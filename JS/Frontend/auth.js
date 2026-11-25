@@ -11,20 +11,11 @@ import * as offline from './offline.js';
 import { loadPysData, applyPysCatalogChanges, getPysDataCursor, setPysDataCursor, getPysDataFreshness } from './pys-data.js';
 
 async function requestCatalogFeedPage_(cursor, limit, sessionPayload, parentSignal) {
-    if (typeof AbortController !== "function") throw new Error("AbortController no está disponible para limitar el feed.");
-    const controller = new AbortController();
-    const abortFromParent = () => controller.abort();
-    if (parentSignal) {
-        if (parentSignal.aborted) controller.abort();
-        else parentSignal.addEventListener("abort", abortFromParent, { once: true });
-    }
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    try {
-        return await getCatalogChanges(cursor, limit, sessionPayload, { signal: controller.signal });
-    } finally {
-        clearTimeout(timeoutId);
-        if (parentSignal) parentSignal.removeEventListener("abort", abortFromParent);
-    }
+    // getCatalogChanges ya limita cada intento y administra sus reintentos.
+    // No imponer un timeout externo más corto que el presupuesto completo.
+    return await getCatalogChanges(cursor, limit, sessionPayload, {
+        signal: parentSignal || undefined
+    });
 }
 
 async function getCatalogFeedHead_(user, signal) {

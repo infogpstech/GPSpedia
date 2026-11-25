@@ -909,3 +909,20 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - No se cambió frontend, endpoint, Spreadsheet ID, permisos ni deployment. No se ejecutaron escrituras ni llamadas remotas. Próximo paso: revisar CI y mantener pendiente la validación Beta de identidad/versión del deployment FEEDBACK.
 
 - CI `45632826674` ejecutó sintaxis y `FeedbackLikeIdempotency` 10/10 PASS; navegador responsive SUCCESS. Detectó un fallo adicional del fixture `JS/Tests/LocalApiEndpoints.mjs`: esperaba el deployment FEEDBACK anterior mientras `api-config.js` ya contenía la URL nueva confirmada por el propietario. Se corrigió solo la expectativa FEEDBACK; commit `8b20c64b2947dd8827c67a2fb3966492fdf1695e`. CI final `45633091113` SUCCESS: 529 suites, 6,270 pruebas PASS, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. El health/versión del deployment y la escritura real en `FeedbackLikes` siguen pendientes de Beta aislada.
+
+
+## 2026-11-25 — Corrección de útiles y presupuesto de reintentos CATALOG
+
+**HEAD de partida confirmado:** `55194d229420e48e4a8bf9de936061a61df82b3e` en `GPSpedia2.2.5_work`. **Base protegida:** `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin escritura.
+
+### GP-LIKE-VALIDATION-16DIGIT-01
+- Hallazgo: el asignador de IDs de WRITE acepta enteros positivos seguros (`Number.isSafeInteger`), pero FEEDBACK limitaba `vehicleId` a 15 dígitos. Un ID válido de 16 dígitos podía activar el error genérico «Faltan datos verificados para registrar el útil» antes de localizar el vehículo.
+- Cambio preparado: validador común para útiles que acepta únicamente representaciones canónicas de enteros positivos seguros (hasta `9007199254740991`); se aplica al request y a la validación de eventos para que el conteo no descarte los nuevos IDs válidos.
+- Pruebas añadidas: registro y conteo con `9007199254740991`; rechazo sin escritura de `9007199254740992`; se conserva actor confiable, corte y ledger append-only.
+
+### GP-CATALOG-REQUEST-BUDGET-01
+- Hallazgo: `auth.js` cancelaba cada consulta a los 8 s, mientras `getCatalogChanges` gestiona hasta tres intentos de 5 s cada uno y backoff. El presupuesto externo impedía completar los reintentos y convertía el fallo en `AbortError`.
+- Cambio preparado: `requestCatalogFeedPage_` delega el timeout por intento y reintentos a `getCatalogChanges`/`catalogRequest.js`; mantiene propagación de cancelación del ciclo padre. No añade viajes de red ni toca el servicio remoto.
+- No se invocaron endpoints CATALOG/FEEDBACK, no se desplegaron Apps Script ni se modificaron Spreadsheet/Drive/PropertiesService/permisos/datos externos.
+- Validaciones locales/CI y publicación de este cambio: pendientes de ejecutar/verificar.
+- Siguiente acción: ejecutar suites `FeedbackLikeIdempotency`, `CatalogFeedRetry`, `CatalogRequestRetry`, sintaxis y CI; revisar diff y verificar HEAD remoto. Validación real de deployments permanece diferida a Beta aislada autorizada.

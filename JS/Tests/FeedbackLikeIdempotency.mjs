@@ -80,6 +80,7 @@ function makeHarness(seedRows = [], options = {}) {
         extract("buildFeedbackLikeActorKey_"),
         extract("withFeedbackLikeLock_"),
         extract("findFeedbackLikeRowsForActor_"),
+        extract("isValidFeedbackLikeVehicleId_"),
         extract("getFeedbackLikeEventCount_"),
         extract("getFeedbackLikeCountWithEvents_"),
         extract("logLikeActivityAfterAppend_"),
@@ -111,6 +112,17 @@ forgedIdentity.run(
 );
 assert.equal(forgedIdentity.ledgerRows[1][0], "user:7", "Los campos de identidad del navegador no deben reemplazar al actor verificado.");
 assert.equal(forgedIdentity.state.activities, 1, "La actividad solo se atribuye al actor verificado.");
+
+const maxSafeVehicleId = "9007199254740991";
+const largeVehicleId = makeHarness();
+largeVehicleId.cutsRows[1][0] = maxSafeVehicleId;
+const largeVehicleResult = largeVehicleId.run({ vehicleId:maxSafeVehicleId, corteIndex:1, userId:"7", userName:"Pablo Peña" });
+assert.deepEqual(largeVehicleResult, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 }, "Los IDs enteros seguros de 16 dígitos deben aceptar útiles.");
+assert.equal(largeVehicleId.ledgerRows[1][1], maxSafeVehicleId);
+const unsafeVehicleId = makeHarness();
+unsafeVehicleId.cutsRows[1][0] = "9007199254740992";
+assert.throws(() => unsafeVehicleId.run({ vehicleId:"9007199254740992", corteIndex:1, userId:"7", userName:"Pablo Peña" }), /Faltan datos verificados/);
+assert.equal(unsafeVehicleId.ledgerRows.length, 1, "Un ID fuera del rango entero seguro no debe escribir.");
 const h = makeHarness();
 const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
 assert.deepEqual(first, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });

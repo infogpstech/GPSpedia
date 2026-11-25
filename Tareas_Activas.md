@@ -412,3 +412,16 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Validación Beta pendiente: confirmar health, identidad y versión del deployment FEEDBACK antes de cualquier invocación de escritura; después ejecutar el caso sintético y verificar la fila en `FeedbackLikes`. No se desplegó Apps Script ni se modificaron hojas/datos externos.
 
 - CI inicial `45632826674` detectó el fixture FEEDBACK desactualizado. Tras alinear `LocalApiEndpoints.mjs`, CI final `45633091113` SUCCESS: 529 suites, 6,270 pruebas PASS, 0 fallos; `FeedbackLikeIdempotency` 10/10, `LocalApiEndpoints` 10/10, `service-tests` y `responsive-browser` SUCCESS. No se invocó Apps Script ni se desplegó FEEDBACK; health/versión y prueba de escritura en `FeedbackLikes` permanecen pendientes de Beta.
+
+
+## GP-LIKE-VALIDATION-16DIGIT-01 — compatibilidad con el asignador de IDs
+**Estado: EN PROGRESO.**
+- El asignador de IDs de WRITE admite enteros positivos seguros de JavaScript; FEEDBACK restringía los útiles a 15 dígitos, un contrato más estrecho que `Number.isSafeInteger` y capaz de rechazar IDs válidos de 16 dígitos.
+- Corrección en curso: alinear la validación del vehículo en el registro y conteo de útiles con el rango de enteros positivos seguros, sin aceptar IDs fuera de ese rango.
+- Validación: primer útil con `Number.MAX_SAFE_INTEGER`, rechazo de `Number.MAX_SAFE_INTEGER + 1`, idempotencia, conteo y sintaxis. La prueba remota FEEDBACK/Spreadsheet continúa sujeta a Beta autorizada.
+
+## GP-CATALOG-REQUEST-BUDGET-01 — cancelación prematura del feed inicial
+**Estado: EN PROGRESO.**
+- `requestCatalogFeedPage_` imponía un timeout externo de 8 s mientras `getCatalogChanges` ejecutaba hasta tres intentos de 5 s más backoff. El timeout exterior abortaba el ciclo antes de agotar los reintentos y producía el `AbortError` observado.
+- Corrección en curso: delegar el límite por intento y los reintentos a `catalogRequest.js`, conservando únicamente la señal de cancelación del ciclo de carga. No se elimina la cancelación explícita ni los límites internos.
+- Validación: contratos de presupuesto de tiempo, reintentos, cancelación del padre y recuperación. La latencia/compatibilidad del deployment CATALOG queda pendiente de Beta autorizada.

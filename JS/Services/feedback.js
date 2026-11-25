@@ -2019,6 +2019,13 @@ function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex, 
     });
     return Array.from(rowsByIndex.values()).sort((a, b) => a.rowIndex - b.rowIndex);
 }
+function isValidFeedbackLikeVehicleId_(value) {
+    const id = String(value === null || value === undefined ? "" : value).trim();
+    if (!/^[1-9]\d{0,15}$/.test(id)) return false;
+    const numericId = Number(id);
+    return Number.isSafeInteger(numericId) && numericId > 0 && String(numericId) === id;
+}
+
 function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
     if (!ledger || ledger.getLastRow() < 2) return 0;
     const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1)
@@ -2032,7 +2039,7 @@ function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
             const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
             const eventVehicleId = String(row[1] || "").trim();
             const eventCutIndex = Number(row[2]);
-            if (!/^[1-9]\d{0,14}$/.test(eventVehicleId) ||
+            if (!isValidFeedbackLikeVehicleId_(eventVehicleId) ||
                 !Number.isInteger(eventCutIndex) || eventCutIndex < 1 || eventCutIndex > 3) {
                 throw new Error("referencia de vehículo o corte inválida");
             }
@@ -2098,7 +2105,7 @@ function handleRecordLike(payload) {
     const actor = payload && payload.__feedbackActor;
     const userId = String(actor && actor.userId || "").trim();
     const userName = String(actor && actor.userName || "").trim();
-    if (!/^[1-9]\d{0,14}$/.test(vehicleId) || !userId || !userName ||
+    if (!isValidFeedbackLikeVehicleId_(vehicleId) || !userId || !userName ||
         !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
         throw new Error("Faltan datos verificados para registrar el útil.");
     }
