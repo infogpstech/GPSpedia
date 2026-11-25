@@ -379,7 +379,7 @@ testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grup
     assert.ok(detail.includes("const logoRect = titleContainer.getBoundingClientRect()"));
     assert.ok(detail.includes("titleLayoutObserver.observe(titleContainer)") && detail.includes("titleLayoutObserver.observe(logoImg)"));
     assert.ok(detail.includes("logoRect.right + 6"));
-    assert.ok(detail.includes("firstActionLeft - titleStart"));
+    assert.ok(detail.includes("headerDiv.getBoundingClientRect().right - titleStart"), "El título de la segunda fila debe medir el ancho libre completo después del logo.");
 });
 
 
