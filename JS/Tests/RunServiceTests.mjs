@@ -615,6 +615,7 @@ runGroup('44','MIG020',()=>{
 
 runGroup('45','MIG021',()=>{
  runCli('MIG021 salud, identidad y clasificación de endpoints','JS/Tests/ServiceHealthContract.mjs');
+ runCli('MIG-URL-003 configuración local de seis endpoints y resolución','JS/Tests/LocalApiEndpoints.mjs');
  runCli('MIG021 telemetría local ADMIN','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('MIG021 telemetría local de servicios y navegador','JS/Tests/ServiceBrowserTrafficContract.mjs');
  runCli('MIG021 telemetría directa de servicios','JS/Tests/DirectServiceTrafficTelemetry.mjs');
