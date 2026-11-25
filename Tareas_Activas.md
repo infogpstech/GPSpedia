@@ -5,9 +5,9 @@ Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.  
 Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 
-## Plan de trabajo exclusivo — migración de URLs al frontend
+## Plan de migración de URLs al frontend
 
-**ÚNICO TRABAJO AUTORIZADO:** ejecutar exclusivamente MIG-URL-001 a MIG-URL-008, en el orden y con las dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. No seleccionar ni ejecutar tareas Beta, auditorías pendientes u otras tareas ajenas mientras este plan permanezca abierto. Los hallazgos externos al plan se registran sin ejecutarlos, salvo riesgo crítico de seguridad/integridad que impida continuar.
+El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. MIG-URL-008 es la única tarea restante de ese plan y requiere autorización para validar los endpoints Beta aislados. Mientras esa autorización no exista, se continúa el trabajo local ya solicitado y priorizado en la sección de continuidad, sin llamadas remotas ni despliegues.
 
 - MIG-URL-001 — Alinear normativa y registrar el plan: **COMPLETADA — 2026-11-24**.
 - MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **COMPLETADA — 2026-11-24**; seis valores confirmados directamente por el usuario y validados estructuralmente. Salud/identidad remota diferida a MIG-URL-008.
@@ -16,7 +16,7 @@ Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 - MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **COMPLETADA — 2026-11-25**; editor retirado, health local conservado.
 - MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet: **COMPLETADA — 2026-11-25**; hoja histórica preservada sin lectura/escritura.
 - MIG-URL-007 — Pruebas locales, contratos y regresión: **COMPLETADA — CI 45519738860; 519 suites, 6,181 pruebas, 0 fallos; responsive-browser SUCCESS**.
-- MIG-URL-008 — Validación Beta aislada y cierre: **PENDIENTE DE AUTORIZACIÓN — ÚNICA TAREA RESTANTE**.
+- MIG-URL-008 — Validación Beta aislada y cierre: **PENDIENTE DE AUTORIZACIÓN — ÚNICA TAREA RESTANTE DEL PLAN MIG-URL**.
 
 La configuración local debe reproducir el patrón de la rama protegida `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` editado manualmente en `JS/Frontend/api-config.js`, con `ACTION_TO_SERVICE_MAP` para el enrutamiento. No usar `SERVICE_ENDPOINTS` como tabla paralela ni inventar otro administrador de URLs.
 
