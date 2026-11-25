@@ -501,3 +501,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Se revisó el contrato local de health, mapa API_ENDPOINTS, resolver fail-closed, seis endpoints e IDs únicos y test `LocalApiEndpoints` (10/10 PASS en CI previo). No se ejecutó GET.
 - Se preparó protocolo en Tareas_Beta.md §25: seis health checks, prueba de login/catálogo/WRITE/FEEDBACK/ADMIN/UTILITIES, latencia, aislamiento, failover, identificación del deployment, controles de sesión/RBAC y no escritura en producción.
 - Antes de ejecución, confirmar entorno Beta aislado, versión desplegada y autorización explícita. No copiar tokens, secrets, payloads PII ni credenciales a registros.
+
+
+### GP-ADMIN-AUDIT-REFMAP-01 — Error de inicialización auditoría Drive
+**Estado: CORRECCIÓN IMPLEMENTADA; VALIDACIÓN LOCAL/CI PENDIENTE.** El snapshot inicial no contiene Map de ubicaciones porque captura referencias en modo IDs-only; el escáner ya protege la lectura opcional. Test de regresión dedicado añadido.
+
+### GP-UTIL-VISUAL-02 — Feedback visual inmediato del voto útil
+**Estado: IMPLEMENTADO; VALIDACIÓN LOCAL/CI PENDIENTE.** Refuerzo del toggle visual inmediato en botón, aria-pressed, clase liked, color y estilo CSS frente a hover; se mantiene sincronización/contador optimista existente.
