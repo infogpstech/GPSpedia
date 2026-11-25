@@ -713,9 +713,17 @@ export async function recordVehicleView(vehicleId, utilityCounters = {}, session
 
 export async function recordLike(vehicleId, corteIndex, sessionPayload = {}) {
     const payload = { ...sessionPayload, vehicleId, corteIndex };
-    // FEEDBACK espera hasta 10 s por su lock compartido; no repetir la mutación
-    // desde el navegador tras un timeout de lock, para evitar respuestas ambiguas.
-    return routeAction("recordLike", payload);
+    // LIKE_LOCK_BUSY confirma que el backend no entró en la sección crítica ni escribió.
+    // El reintento acotado solo cubre esa contención explícita; no repite otros errores.
+    for (let attempt = 1; attempt <= 12; attempt++) {
+        try {
+            return await routeAction("recordLike", payload);
+        } catch (error) {
+            if (!error || error.code !== "LIKE_LOCK_BUSY" || attempt === 12) throw error;
+            await new Promise(resolve => setTimeout(resolve, 150 * attempt));
+        }
+    }
+    throw new Error("No se pudo confirmar el registro del útil.");
 }
 
 export async function reportProblem(vehicleId, problemDescription, reportContext = {}, sessionPayload = {}, imageAttachment = null) {
