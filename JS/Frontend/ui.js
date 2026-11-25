@@ -8706,6 +8706,15 @@ export async function openAuditDriveModal() {
         const allowed = ['info', 'progress', 'success', 'warning', 'error'];
         const normalizedLevel = allowed.includes(level) ? level : 'info';
         logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel);
+        const scanConsole = document.getElementById('audit-drive-scan-console');
+        if (scanConsole && isCurrentRequest()) {
+            const entry = document.createElement('div');
+            entry.className = 'audit-drive-scan-log-entry audit-drive-scan-log-' + normalizedLevel;
+            entry.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
+            scanConsole.appendChild(entry);
+            while (scanConsole.childElementCount > 250) scanConsole.firstElementChild.remove();
+            scanConsole.scrollTop = scanConsole.scrollHeight;
+        }
     };
 
     const appendFiles = (files) => {
