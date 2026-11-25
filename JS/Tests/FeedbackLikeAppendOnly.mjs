@@ -47,5 +47,5 @@ test("rechaza eventos con actor o vehículo inválido",()=>{
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
  assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/actor de usuario inválido/);
 });
-test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/tryLock\(10000\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\\s\\S]*releaseLock/);});
+test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/tryLock\(10000\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\s\S]*releaseLock/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");
