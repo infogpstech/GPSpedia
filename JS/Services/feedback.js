@@ -2052,7 +2052,9 @@ function getFeedbackLikeEventCount_(ledger,vehicleId,corteIndex){
   if(!["event","withdrawn","completed"].includes(status))return;
   try{
    const actor=normalizeFeedbackLikeActorKey_(row[0]),id=String(row[1]||"").trim(),cut=Number(row[2]);
-   if(!isValidFeedbackLikeVehicleId_(id)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
+   const part=id.startsWith("V-")?id.slice(2):id,number=Number(part);
+   if(!/^[1-9]\d{0,15}$/.test(part)||!Number.isSafeInteger(number)||String(number)!==part||
+      (id!==part&&id!=="V-"+part)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
    const key=actor+"|"+id+"|"+cut,state=actorsByCut.get(key)||{vehicleId:id,cut,completed:false,status:""};
    if(status==="completed")state.completed=true;state.status=status;actorsByCut.set(key,state);
   }catch(error){if(typeof console!=="undefined"&&console.warn)console.warn("FeedbackLikes: evento inválido ignorado en fila "+rowIndex+": "+String(error&&error.message||"datos incompatibles"));}

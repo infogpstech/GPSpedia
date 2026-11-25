@@ -17,7 +17,7 @@ const serviceKeys = Object.keys(endpoints);
 assert.deepEqual(serviceKeys, ["AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"]);
 assert.equal(Object.keys(actionMap).length, 125, "Cambió el total de acciones sin revisar inventario.");
 const actionCounts = Object.fromEntries(serviceKeys.map(key => [key, Object.values(actionMap).filter(service => service === key).length]));
-assert.deepEqual(actionCounts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
+assert.deepEqual(actionCounts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 42, UTILITIES: 1, ADMIN: 45 });
 assert.equal(actionMap.getPublicConfiguration, "AUTH");
 assert.equal(actionMap.publishCatalogReset, "CATALOG");
 assert.equal(actionMap.invalidateRichTextModeCache, "FEEDBACK");
