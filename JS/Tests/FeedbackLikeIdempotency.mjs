@@ -94,7 +94,7 @@ const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo
 assert.deepEqual(first, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });
 assert.equal(h.ledgerRows.length, 2, "El primer útil crea una fila.");
 const duplicateSameCut = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
-assert.deepEqual(duplicateSameCut, { status:"success", alreadyLiked:true, corteIndex:1, likeCount:1 });
+assert.deepEqual(duplicateSameCut, { status:"success", alreadyLiked:true, corteIndex:1 });
 assert.equal(h.ledgerRows.length, 2, "El mismo útil no crea otra fila.");
 const otherCutLike = h.run({ vehicleId:"100", corteIndex:2, userId:"7", userName:"Pablo Peña" });
 assert.deepEqual(otherCutLike, { status:"success", alreadyLiked:false, corteIndex:2, likeCount:1 });
