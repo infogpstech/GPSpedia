@@ -8496,13 +8496,21 @@ export async function openReplacedImagesModal() {
             const typeLabel = document.createElement("span"); typeLabel.className = "replaced-image-type " + (isCandidate ? "is-candidate" : isUnused ? "is-unused" : "is-replaced"); typeLabel.textContent = isCandidate ? "Candidato de aporte" : isUnused ? "Sin uso detectado" : "Reemplazada";
             const details = document.createElement("span"); details.className = "replaced-image-details"; details.textContent = (rep.tipo_mime || "Imagen") + " · Formato: " + (rep.formato_archivo || "No disponible") + " · Tamaño: " + (Number(rep.tamano_bytes) || 0) + " bytes · ID: " + (rep.archivo_drive_id || "No disponible") + " · Carpeta ID: " + (rep.drive_folder_id || "No disponible") + (rep.campo ? " · Campo: " + rep.campo : "");
             const location = document.createElement("span"); location.className = "replaced-image-details"; location.textContent = "Ubicación: " + (rep.ubicacion_actual || rep.ubicacion_original || "No disponible") + (rep.fecha_modificacion_drive ? " · Modificada: " + rep.fecha_modificacion_drive : "");
+            const associationDetails = document.createElement("span"); associationDetails.className = "replaced-image-details";
+            let associationCandidates = []; try { const parsed = JSON.parse(String(rep.asociacion_candidatos_json || "[]")); if (Array.isArray(parsed)) associationCandidates = parsed; } catch (associationError) {}
+            const associationLabels = { suggested: "Sugerencia", ambiguous: "Revisión manual", no_verificada: "No verificada", sin_coincidencia: "Sin coincidencia" };
+            associationDetails.textContent = "Asociación: " + (associationLabels[String(rep.asociacion_estado || "")] || String(rep.asociacion_estado || "No registrada")) +
+                (rep.asociacion_confianza ? " · Confianza: " + rep.asociacion_confianza : "") +
+                (associationCandidates.length ? " · " + associationCandidates.map(candidate => [candidate.category, candidate.brand, candidate.model].filter(Boolean).join(" / ") +
+                    " · vehículo(s): " + (Array.isArray(candidate.vehicleIds) ? candidate.vehicleIds.join(", ") : "No determinado") +
+                    " · fila(s): " + (Array.isArray(candidate.rows) ? candidate.rows.join(", ") : "No determinada")).join(" | ") : "");
             const dateDetails = document.createElement("span"); dateDetails.className = "replaced-image-details"; dateDetails.textContent = (isUnused ? "Detectada: " + (rep.fecha_deteccion || "Fecha no disponible") : "Reemplazada: " + (rep.fecha_reemplazo || "Fecha no disponible"));
             const statusText = document.createElement("span"); statusText.className = "replaced-image-status"; statusText.textContent = "Estado: " + statusLabel;
             const organizationDetails = document.createElement("span"); organizationDetails.className = "replaced-image-details";
             const organizationStatus = String(rep.estado_organizacion || ""), organizationError = String(rep.error_organizacion || "");
             const organizationLabels = { organizada: "Organizada en Imagenes_Sin_Uso", movida_manual: "Movida manualmente", pendiente: "Pendiente de organización", error: "Error de organización", bloqueada: "Organización bloqueada", no_confirmada: "No confirmada" };
             organizationDetails.textContent = "Organización: " + (organizationLabels[organizationStatus] || organizationStatus || "No registrada") + (organizationError ? " · " + organizationError : ""); if (organizationError) statusText.title = organizationError;
-            if (currentView === "list") info.append(title, typeLabel, location, dateDetails, statusText); else info.append(title, typeLabel, details, location, dateDetails, statusText);
+            if (currentView === "list") info.append(title, typeLabel, location, associationDetails, dateDetails, statusText); else info.append(title, typeLabel, details, location, associationDetails, dateDetails, statusText);
             if (isUnused && (currentView === "grid" || organizationError)) info.append(organizationDetails);
             card.appendChild(info); listContainer.appendChild(card);
         });
