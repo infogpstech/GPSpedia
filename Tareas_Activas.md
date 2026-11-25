@@ -532,7 +532,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Corregir el contador del título del corte para reflejar el total confirmado y cambiar inmediatamente por transición optimista (+1 al activar, -1 al retirar), sin incrementar por clics duplicados.
 - Hidratar el estado activo del usuario al cargar el vehículo y aplicar el estado visual del botón antes de permitir nuevas interacciones.
 - Mantener persistencia local por usuario y debounce de 1.8 s; coalescer interacciones y enviar solo el último estado, serializar solicitudes por usuario/vehículo/corte, idempotencia y reintentos silenciosos ante lock ocupado o clics repetidos.
-- Corregir proyección CATALOG para que una reactivación posterior a una retirada vuelva a contar como útil activo.
+- Auditar la semántica de estados `event`/`withdrawn`/`completed` en FEEDBACK y CATALOG; preservar el indicador `completed` cuando el evento ya está materializado en el contador base para evitar doble conteo. Añadir pruebas para transiciones pendientes y completadas.
 - Verificar estado, contador, títulos del recomendado y alternativos, cambios rápidos, concurrencia, reintentos y regresiones. No desplegar Apps Script ni tocar datos externos.
 
 ### Alcance y aceptación — auditoría Drive
