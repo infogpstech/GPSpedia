@@ -143,7 +143,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'publishCatalogReset': 'CATALOG', 'publishCatalogChange': 'CATALOG',
     'getCatalogChanges': 'CATALOG',
     'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
-    'recordLike': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
+    'recordLike': 'FEEDBACK', 'setCutUseful': 'FEEDBACK', 'getMyUsefulCuts': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
     'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
     'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
@@ -725,6 +725,13 @@ export async function recordLike(vehicleId, corteIndex, sessionPayload = {}) {
     }
     throw new Error("No se pudo confirmar el registro del útil.");
 }
+
+export async function setCutUseful(vehicleId,corteIndex,isUseful,sessionPayload={}){
+ const payload={...sessionPayload,vehicleId,corteIndex,isUseful:Boolean(isUseful)};
+ for(let attempt=1;attempt<=12;attempt++){try{return await routeAction("setCutUseful",payload);}catch(error){if(!error||!["USEFUL_LOCK_BUSY","LIKE_LOCK_BUSY"].includes(error.code)||attempt===12)throw error;await new Promise(resolve=>setTimeout(resolve,150*attempt));}}
+ throw new Error("No se pudo confirmar el estado del útil.");
+}
+export async function getMyUsefulCuts(sessionPayload={}){return await routeAction("getMyUsefulCuts",sessionPayload);}
 
 export async function reportProblem(vehicleId, problemDescription, reportContext = {}, sessionPayload = {}, imageAttachment = null) {
     const context = reportContext && typeof reportContext === "object" ? reportContext : {};

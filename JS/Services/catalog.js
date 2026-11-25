@@ -1224,49 +1224,25 @@ function normalizeFeedbackLikeActorKey_(value) {
     return "user:" + digest.map(value => (value & 255).toString(16).padStart(2, "0")).join("");
 }
 
-function readFeedbackLikeEventCounts_(spreadsheetRef) {
-    const spreadsheet = spreadsheetRef || getSpreadsheet();
-    const sheet = spreadsheet.getSheetByName("FeedbackLikes");
-    const counts = new Map();
-    if (!sheet || sheet.getLastRow() < 2) return counts;
-    const expected = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
-    const headers = sheet.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
-    if (expected.some((header, index) => headers[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
-
-    // Solo se recuperan los campos necesarios para la proyección (A:C y F).
-    // Evita transferir las columnas de conteos y timestamps de todo el ledger.
-    const rowCount = sheet.getLastRow() - 1;
-    const identityRows = sheet.getRange(2, 1, rowCount, 3).getValues();
-    const statusRows = sheet.getRange(2, 6, rowCount, 1).getValues();
-    const actorsByVehicleCut = new Map();
-    identityRows.forEach((row, index) => {
-        if (String(statusRows[index] && statusRows[index][0] || "") !== "event") return;
-        try {
-            const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
-            const vehicleId = String(row[1] || "").trim();
-            const corteIndex = Number(row[2]);
-            if (!/^[1-9]\d{0,14}$/.test(vehicleId) ||
-                !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
-                throw new Error("referencia de vehículo o corte inválida");
-            }
-            const uniqueActorCut = vehicleId + "|" + corteIndex + "|" + actorKey;
-            actorsByVehicleCut.set(uniqueActorCut, { vehicleId, actorKey, corteIndex });
-        } catch (invalidEventError) {
-            if (typeof console !== "undefined" && typeof console.warn === "function") {
-                console.warn("FeedbackLikes: evento inválido ignorado en fila " + (index + 2) + ": " +
-                    String(invalidEventError && invalidEventError.message || "datos incompatibles"));
-            }
-        }
-    });
-    const actorsByVehicleCutCount = new Map();
-    actorsByVehicleCut.forEach(event => {
-        const key = event.vehicleId + "|" + event.corteIndex;
-        if (!actorsByVehicleCutCount.has(key)) actorsByVehicleCutCount.set(key, new Set());
-        actorsByVehicleCutCount.get(key).add(event.actorKey);
-    });
-    actorsByVehicleCutCount.forEach((actors, key) => counts.set(key, actors.size));
-    return counts;
+function isValidFeedbackLikeVehicleId_(value){
+ const id=String(value===null||value===undefined?"":value).trim(),part=id.startsWith("V-")?id.slice(2):id;
+ if(!/^[1-9]\d{0,15}$/.test(part))return false;const n=Number(part);
+ return Number.isSafeInteger(n)&&n>0&&String(n)===part&&(id===part||id==="V-"+part);
 }
+function readFeedbackLikeEventCounts_(spreadsheetRef){
+ const ss=spreadsheetRef||getSpreadsheet(),sheet=ss.getSheetByName("FeedbackLikes"),counts=new Map();if(!sheet||sheet.getLastRow()<2)return counts;
+ const expected=["actorKey","vehicleId","corteIndex","previousCount","targetCount","status","createdAt"],headers=sheet.getRange(1,1,1,7).getValues()[0].map(v=>String(v||"").trim());
+ if(expected.some((v,i)=>headers[i]!==v))throw Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
+ const n=sheet.getLastRow()-1,ids=sheet.getRange(2,1,n,3).getValues(),statuses=sheet.getRange(2,6,n,1).getValues(),states=new Map();
+ ids.forEach((row,i)=>{const status=String(statuses[i]&&statuses[i][0]||"");if(!["event","withdrawn","completed"].includes(status))return;
+  try{const actor=normalizeFeedbackLikeActorKey_(row[0]),vehicle=String(row[1]||"").trim(),cut=Number(row[2]);if(!isValidFeedbackLikeVehicleId_(vehicle)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
+   const key=vehicle+"|"+cut+"|"+actor,state=states.get(key)||{vehicle,cut,completed:false,status:""};if(status==="completed")state.completed=true;state.status=status;states.set(key,state);
+  }catch(e){if(typeof console!=="undefined"&&console.warn)console.warn("FeedbackLikes: evento inválido ignorado en fila "+(i+2)+": "+String(e&&e.message||"datos incompatibles"));}
+ });
+ states.forEach(s=>{const key=s.vehicle+"|"+s.cut,delta=s.status==="event"&&!s.completed?1:(s.status==="withdrawn"&&s.completed?-1:0);if(delta)counts.set(key,(counts.get(key)||0)+delta);});
+ return counts;
+}
+
 
 function tutorialEditFieldsHash_(values) {
     const payload = JSON.stringify((values || []).map(value => String(value || "")));
@@ -1384,7 +1360,7 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
     if (!vehicle) return null;
     for (let index = 1; index <= 3; index++) {
         const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
-        if (eventCount) vehicle["utilCorte" + index] = (parseInt(vehicle["utilCorte" + index], 10) || 0) + eventCount;
+        if (eventCount) vehicle["utilCorte" + index] = Math.max(0, (parseInt(vehicle["utilCorte" + index], 10) || 0) + eventCount);
     }
     if (vehicle.categoria) categoryCounts[vehicle.categoria] = (categoryCounts[vehicle.categoria] || 0) + 1;
     if (vehicle.videoGuiaDesarmeUrl) {

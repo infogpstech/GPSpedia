@@ -462,3 +462,20 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - `requestCatalogFeedPage_` imponía un timeout externo de 8 s mientras `getCatalogChanges` ejecutaba hasta tres intentos de 5 s más backoff. El timeout exterior abortaba el ciclo antes de agotar los reintentos y producía el `AbortError` observado.
 - Corrección aplicada: delegar el límite por intento y los reintentos a `catalogRequest.js`, conservando únicamente la señal de cancelación del ciclo de carga. No se elimina la cancelación explícita ni los límites internos.
 - Validación CI: `CatalogFeedRetry` 11/11 PASS; `CatalogRequestRetry` 8/8 PASS; `CatalogStartupIntegrity` 25/25 PASS y `CatalogTransientFeedFallback` 2/2 PASS. La suite completa pasó con 529 suites, 6,272 pruebas y 0 fallos. La latencia/compatibilidad del deployment CATALOG queda pendiente de Beta autorizada.
+
+
+## GP-UTIL-TOGGLE-01 — Estado reversible de útil por corte
+- Prioridad: alta
+- Estado: En ejecución
+- Marcar y retirar útil por corte; hidratar el estado por usuario; actualizar el contador inmediatamente.
+- Consolidar clics rápidos localmente y enviar solo el estado final tras un periodo de inactividad; transiciones idempotentes y silenciosas.
+- La interfaz y los eventos nuevos usan "útil", no "like".
+- Validar transiciones, deduplicación, proyección CATALOG, estado por usuario y contador.
+
+## GP-DRIVE-AUDIT-VISUAL-01 — Auditoría visual y asociación de imágenes de cortes
+- Prioridad: alta, después de GP-UTIL-TOGGLE-01
+- Estado: Pendiente
+- Mostrar miniaturas, estado de auditoría y relación propuesta con vehículo/modelo.
+- Persistir URL, carpeta/ID/ruta, nombre, formato, MIME, origen y estado.
+- Construir asociación con catálogo; mostrar ID, categoría, marca y modelo; las coincidencias ambiguas requieren revisión manual.
+- Validar persistencia, miniaturas, asociación y regresiones.

@@ -975,3 +975,13 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - GP-PYS-VEHICLE-ASSOCIATION-CARD-01: el carrusel PyS ya no se oculta con `originModal === 'vehicle'`; la tarjeta final usa 140 × 120 px, abre el formulario existente y conserva navegación/actualización del detalle. El formulario de asociación y Agregar Problema comparten la búsqueda de catálogo por marca/modelo/versión y exclusión de IDs. El formulario recibe los IDs asociados normalizados. `PysModalNavigation` 13/13 PASS. CI run `45646432576`: 530 suites, 6,285 pruebas PASS, 0 fallos; service-tests, responsive-browser y Pages SUCCESS.
 - Ambas tareas quedan COMPLETADAS CON VALIDACIÓN DIFERIDA. Pendiente de Beta: confirmar creación real de hojas/encabezados y permisos ADMIN/Drive/Spreadsheet; revisar visualmente tarjeta/carrusel y ejecutar la asociación con catálogo/datos reales. No se invocaron servicios, no se desplegaron Apps Script ni se modificaron recursos externos.
 - La rama avanzó también por una actualización del propietario en `JS/Frontend/api-config.js` (ADMIN endpoint); se alineó solo el fixture `JS/Tests/LocalApiEndpoints.mjs` con la URL ya configurada. No se cambió ni consultó el endpoint.
+
+
+## Continuidad 2026-11-25 — Nuevas tareas solicitadas
+- Rama de trabajo verificada: GPSpedia2.2.5_work. HEAD previo a esta implementación: a096657e8dbee7e896e350d7fc9c3628866a9884.
+- Rama base protegida GPSpedia2.2.5: sin modificaciones.
+- Documentación obligatoria consultada: NORMAS_DESAROLLO.md, README.md, contexto_personal.md, checkpoint.md, Tareas_Activas.md y ChangesLogs.txt.
+- Prioridad 1: GP-UTIL-TOGGLE-01. Alternancia útil por corte, hidratación por usuario, contador optimista, persistencia local y consolidación anti-spam.
+- Prioridad 2: GP-DRIVE-AUDIT-VISUAL-01. Interfaz visual de auditoría y persistencia de metadatos con relación al catálogo.
+- Diagnóstico inicial: la proyección CATALOG anterior descartaba IDs canónicos V-<n>; corregir esa validación forma parte de GP-UTIL-TOGGLE-01.
+- Estado: código y pruebas en preparación; CI pendiente.

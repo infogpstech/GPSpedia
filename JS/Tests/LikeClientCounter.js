@@ -1,33 +1,11 @@
 import assert from "node:assert/strict";
-import { applyConfirmedLikeState } from "../Frontend/likeState.js";
-let passed = 0;
-function test(name, callback) { callback(); passed++; console.log("PASS " + name); }
-function fixture(count = 4) {
-    return { likedCortes: [], catalogData: { cortes: [{ id: "VEH-1", utilCorte1: count }, { id: "VEH-2", utilCorte1: 9 }] } };
-}
-test("usa el contador confirmado en un like nuevo", () => {
-    const next = applyConfirmedLikeState(fixture(4), "VEH-1", 1, { status: "success", alreadyLiked: false, likeCount: 5 });
-    assert.equal(next.catalogData.cortes[0].utilCorte1, 5); assert.deepEqual(next.likedCortes, ["VEH-1|1"]);
-});
-test("un reintento idempotente no vuelve a incrementar el contador", () => {
-    const next = applyConfirmedLikeState(fixture(5), "VEH-1", 1, { status: "success", alreadyLiked: true, likeCount: 5 });
-    assert.equal(next.catalogData.cortes[0].utilCorte1, 5);
-});
-test("una recuperación pendiente sincroniza el valor final del servidor", () => {
-    const next = applyConfirmedLikeState(fixture(4), "VEH-1", 1, { status: "success", recovered: true, likeCount: 5 });
-    assert.equal(next.catalogData.cortes[0].utilCorte1, 5);
-});
-test("no duplica la marca local de un like ya registrado", () => {
-    const state = fixture(5); state.likedCortes = ["VEH-1|1"];
-    const next = applyConfirmedLikeState(state, "VEH-1", 1, { status: "success", alreadyLiked: true, likeCount: 5 });
-    assert.deepEqual(next.likedCortes, ["VEH-1|1"]);
-});
-test("no modifica el contador si la respuesta no contiene un entero válido", () => {
-    const next = applyConfirmedLikeState(fixture(4), "VEH-1", 1, { status: "success", alreadyLiked: true });
-    assert.equal(next.catalogData.cortes[0].utilCorte1, 4);
-});
-test("actualiza solo el vehículo y corte solicitados", () => {
-    const next = applyConfirmedLikeState(fixture(4), "VEH-1", 1, { status: "success", likeCount: 5 });
-    assert.equal(next.catalogData.cortes[1].utilCorte1, 9);
-});
-console.log(`Like client counter synchronization: ${passed}/6 PASS`);
+import {applyConfirmedUsefulState,applyOptimisticUsefulState,applyConfirmedLikeState} from "../Frontend/likeState.js";
+let passed=0;function test(n,f){f();passed++;console.log("PASS "+n);}function fixture(n=4){return{likedCortes:[],catalogData:{cortes:[{id:"VEH-1",utilCorte1:n},{id:"VEH-2",utilCorte1:9}]}};}
+test("marca útil y actualiza contador",()=>{const x=applyOptimisticUsefulState(fixture(4),"VEH-1",1,true);assert.equal(x.catalogData.cortes[0].utilCorte1,5);assert.deepEqual(x.likedCortes,["VEH-1|1"]);});
+test("retira útil y descuenta contador",()=>{const s=fixture(5);s.likedCortes=["VEH-1|1"];const x=applyOptimisticUsefulState(s,"VEH-1",1,false);assert.equal(x.catalogData.cortes[0].utilCorte1,4);assert.deepEqual(x.likedCortes,[]);});
+test("sincroniza contador confirmado",()=>{const s=applyOptimisticUsefulState(fixture(4),"VEH-1",1,true),x=applyConfirmedUsefulState(s,"VEH-1",1,{isUseful:true,usefulCount:7});assert.equal(x.catalogData.cortes[0].utilCorte1,7);});
+test("respuesta antigua preserva intención posterior",()=>{const on=applyOptimisticUsefulState(fixture(4),"VEH-1",1,true),off=applyOptimisticUsefulState(on,"VEH-1",1,false),x=applyConfirmedUsefulState(off,"VEH-1",1,{isUseful:true,usefulCount:5});assert.equal(x.catalogData.cortes[0].utilCorte1,4);assert.deepEqual(x.likedCortes,[]);});
+test("replay idempotente no incrementa",()=>{const s=fixture(5);s.likedCortes=["VEH-1|1"];const x=applyConfirmedUsefulState(s,"VEH-1",1,{isUseful:true,changed:false,usefulCount:5});assert.equal(x.catalogData.cortes[0].utilCorte1,5);});
+test("wrapper legacy conserva estado útil",()=>{const x=applyConfirmedLikeState(fixture(4),"VEH-1",1,{likeCount:5});assert.equal(x.catalogData.cortes[0].utilCorte1,5);assert.deepEqual(x.likedCortes,["VEH-1|1"]);});
+test("solo cambia vehículo solicitado",()=>{const x=applyOptimisticUsefulState(fixture(4),"VEH-1",1,true);assert.equal(x.catalogData.cortes[1].utilCorte1,9);});
+console.log(`Useful client counter synchronization: ${passed}/7 PASS`);
