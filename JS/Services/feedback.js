@@ -1991,13 +1991,17 @@ function withFeedbackLikeLock_(operation) {
 
 function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex) {
     if (!ledger || ledger.getLastRow() < 2) return [];
-    const matches = ledger.getRange(2, 1, ledger.getLastRow() - 1, 1)
-        .createTextFinder(String(actorKey)).matchCase(true).findAll();
+    const canonicalActorKey = normalizeFeedbackLikeActorKey_(actorKey);
+    const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1)
+        .createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll();
     const rows = [];
     matches.forEach(match => {
         const rowIndex = match.getRow(), row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
-        if (String(row[0] || "").trim() !== String(actorKey) ||
-            String(row[1] || "").trim() !== String(vehicleId)) return;
+        if (String(row[1] || "").trim() !== String(vehicleId)) return;
+        let storedActorKey;
+        try { storedActorKey = normalizeFeedbackLikeActorKey_(row[0]); }
+        catch (identityError) { return; }
+        if (storedActorKey !== canonicalActorKey) return;
         if (corteIndex !== undefined && corteIndex !== null && Number(row[2]) !== Number(corteIndex)) return;
         rows.push({ row, rowIndex });
     });
