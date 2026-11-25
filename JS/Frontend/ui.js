@@ -9447,7 +9447,8 @@ export async function openAuditDriveModal(options = {}) {
                         ...getDeveloperSessionPayload(), auditId: auditId, files: finalUnusedFiles
                     }, { timeoutMs: 90000, maxAttempts: 3, retryDelayMs: 900, shouldContinue: isCurrentRequest });
                     if (finalInventory && finalInventory.status === 'success' && finalInventory.auditId === auditId &&
-                        Array.isArray(finalInventory.results)) {
+                        Array.isArray(finalInventory.results) &&
+                        finalInventory.results.filter(item => item && item.status === 'confirmado').length === finalUnusedFiles.length) {
                         inventoryAuditId = auditId;
                         inventoryOperationId = String(finalInventory.inventoryOperationId || '');
                         appendAuditConsole('Consolidación final del inventario: ' + Number(finalInventory.savedCount || 0) + ' registros verificados.', 'success');
