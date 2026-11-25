@@ -8747,7 +8747,7 @@ export async function openAuditDriveModal(options = {}) {
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || renderedFileIds.has(fileId)) return;
             renderedFileIds.add(fileId);
             const classification = String(file.classification || 'No verificable');
-            if (classification !== 'Histórica' && classification !== 'Sin uso detectado') return;
+            if (!['En uso', 'Histórica', 'Sin uso detectado', 'No verificable'].includes(classification)) return;
 
             const row = document.createElement('div');
             row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
@@ -8778,9 +8778,9 @@ export async function openAuditDriveModal(options = {}) {
             name.title = file.fileName || 'Archivo sin nombre';
             const detailsEl = document.createElement('div');
             detailsEl.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            detailsEl.textContent = (file.folderPath || '') + ' | ' +
+            detailsEl.textContent = (file.folderPath || '') + ' | ' + String(file.format || (String(file.fileName || '').match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || file.mimeType || 'formato desconocido')).toUpperCase() + ' | ' +
                 ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
-                (file.lastUpdated || 'Fecha no disponible');
+                (file.lastUpdated || 'Fecha no disponible') + ' | Origen: ' + String(file.origin || 'Google Drive · árbol Cortes');
             info.appendChild(name);
             info.appendChild(detailsEl);
             const badge = document.createElement('span');

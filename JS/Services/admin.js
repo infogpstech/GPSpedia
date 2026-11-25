@@ -13336,12 +13336,19 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMe
             Array.isArray(previous.files) && Array.isArray(previous.folders)) unused = previous.unused;
         else throw new Error("La página de resultados contiene una estructura incompleta; no se sobrescribió.");
     }
-    const metadata = (Array.isArray(fileMetadata) ? fileMetadata : []).map(item => ({
-        fileId: String(item && item.fileId || "").trim(),
-        fileName: String(item && item.fileName || ""),
-        mimeType: String(item && item.mimeType || "").toLowerCase(),
-        folderPath: String(item && item.folderPath || "")
-    }));
+    const metadata = (Array.isArray(fileMetadata) ? fileMetadata : []).map(item => {
+        const fileId = String(item && item.fileId || "").trim(), fileName = String(item && item.fileName || "");
+        const mimeType = String(item && item.mimeType || "").toLowerCase();
+        const extension = fileName.match(/\\.([A-Za-z0-9]{1,12})$/);
+        return {
+            fileId, fileName, mimeType, folderPath: String(item && item.folderPath || ""),
+            folderId: String(item && item.folderId || ""), size: Math.max(0, Number(item && item.size) || 0),
+            lastUpdated: String(item && item.lastUpdated || ""),
+            format: extension ? extension[1].toLowerCase() : (mimeType.split("/")[1] || "unknown"),
+            url: fileId ? "https://drive.google.com/file/d/" + fileId + "/view" : "",
+            origin: "Google Drive · árbol Cortes"
+        };
+    });
     const payload = {
         unused: normalizeDriveAuditFileIds_(unused),
         files: normalizeDriveAuditFileIds_(fileIds),
@@ -13413,7 +13420,11 @@ function loadDriveAuditFileMetadata_(auditId, pageCount, refreshCache = true) {
             }
             seen.add(fileId);
             const folderPath = String(item && item.folderPath || "");
-            result.push({ fileId, fileName, mimeType, folderPath });
+            const folderId = String(item && item.folderId || ""), size = Math.max(0, Number(item && item.size) || 0);
+            const lastUpdated = String(item && item.lastUpdated || ""), format = String(item && item.format || (fileName.match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown")).toLowerCase();
+            const url = String(item && item.url || "https://drive.google.com/file/d/" + fileId + "/view");
+            const origin = String(item && item.origin || "Google Drive · árbol Cortes");
+            result.push({ fileId, fileName, mimeType, folderPath, folderId, size, lastUpdated, format, url, origin });
         });
         if (refreshCache) {
             cache.put(key, raw, 21600);
@@ -14568,7 +14579,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
     const cachePersistenceStartedAt = Date.now();
     storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
-    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType, folderPath: item.folderPath })));
+    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType, folderPath: item.folderPath, folderId: item.folderId, size: item.size, lastUpdated: item.lastUpdated })));
     const cachePersistenceMs = Date.now() - cachePersistenceStartedAt;
     const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
     const metrics = {
