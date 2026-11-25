@@ -857,3 +857,14 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - No se hicieron solicitudes a los endpoints, deployments Apps Script ni cambios a proyectos Apps Script, PropertiesService, Spreadsheet, Drive, permisos o datos. La disponibilidad real y el comportamiento de los deployments nuevos quedan pendientes de validación Beta.
 - `MIG-URL-008` sigue pendiente de confirmación de que las URLs son de un entorno Beta aislado y de autorización expresa para GET de salud; no se interpreta esta solicitud de actualizar endpoints como autorización para invocarlos.
 - Rama base `GPSpedia2.2.5` verificada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+---
+
+## 2026-11-25 — GP-LIKE-REBUILD-01: contención de lock
+
+- Diagnóstico fuente: `withFeedbackLikeLock_` conserva `tryLock(0)` por el requisito de no bloquear ejecuciones FEEDBACK. El cliente tenía solo cinco intentos y 1 s de espera acumulada, por lo que una contención temporal podía rechazar el primer like.
+- Cambio: `recordLike` reintenta hasta 12 veces únicamente ante `LIKE_LOCK_BUSY`, con esperas 150, 300, ... 1650 ms (9.9 s acumulados). No repite fallos de red, sesión, validación ni otros errores. Se mantiene el lock del backend no bloqueante y la sección crítica de idempotencia + append.
+- Pruebas: `FeedbackLikeClientRetry`, `FeedbackLikeLockContention` y `FeedbackLikePreflightOutsideLock` actualizadas. CI run `45624279054` SUCCESS: 528 suites, 6,264 pruebas, 0 fallos; responsive-browser SUCCESS; AUG-146 264/264 PASS en cuatro viewports.
+- HEAD de código: `8279f2ee44d347433e683c3b36a70c2917ca95e2`. Rama base `GPSpedia2.2.5` confirmada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+- No se invocó FEEDBACK remoto ni se desplegó Apps Script. La disponibilidad del arreglo en el servidor requiere actualizar el deployment FEEDBACK y verificarlo en Beta; no se declara resuelto remotamente hasta esa comprobación.
