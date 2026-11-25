@@ -1246,3 +1246,5 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - ADMIN: protege acceso a ubicaciones de referencia del snapshot IDs-only, eliminando la causa identificada de la excepción `.get` durante el inicio de auditoría.
 - Frontend: reforzado estado visual inmediato del botón útil (clase, color, transform, título y aria-pressed); CSS activo persistente y hover no lo oculta.
 - Pruebas dedicadas añadidas/actualizadas; validación local y CI aún por verificar.
+
+- CI intermedio detectó dos problemas de test (contrato LocalApiEndpoints aún refería al ADMIN anterior, y UsefulButtonState reportaba 5 tests pese a incorporar el sexto). Se alineó el endpoint esperado con la URL confirmada y se corrigió el resumen del test. CI del HEAD actual en ejecución; no marcar aprobación antes del resultado.
