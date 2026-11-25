@@ -9459,9 +9459,11 @@ export async function openAuditDriveModal(options = {}) {
                 }
                 if (!isCurrentRequest()) return;
             }
-            inventoryStatus = hasUnusedImages ? 'not_saved' : 'saved';
+            inventoryStatus = hasUnusedImages ? (inventoryOperationId ? 'saved' : 'not_saved') : 'saved';
             inventoryMessage = hasUnusedImages
-                ? 'Auditoría completa. El inventario no se ha escrito en Spreadsheet. Usa «Registrar inventario» solo si deseas guardar estas imágenes.'
+                ? (inventoryOperationId
+                    ? 'Auditoría completa. Las imágenes sin uso fueron registradas automáticamente en la biblioteca.'
+                    : 'Auditoría completa. El inventario no se confirmó automáticamente; el registro manual sigue disponible.')
                 : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.';
             await persistState('complete');
             if (!isCurrentRequest()) return;
