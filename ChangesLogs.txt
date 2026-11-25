@@ -1240,3 +1240,9 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 2026-11-25 — MIG-URL-008 (preparación)
 - Preparada checklist Beta aislada en Tareas_Beta.md §25 para salud/identidad de seis servicios, funciones sintéticas, RBAC, failover y evidencia anonimizada. Sin llamadas remotas ni modificaciones de endpoints/deployments/recursos externos.
+
+
+2026-11-25 — GP-ADMIN-AUDIT-REFMAP-01 / GP-UTIL-VISUAL-02
+- ADMIN: protege acceso a ubicaciones de referencia del snapshot IDs-only, eliminando la causa identificada de la excepción `.get` durante el inicio de auditoría.
+- Frontend: reforzado estado visual inmediato del botón útil (clase, color, transform, título y aria-pressed); CSS activo persistente y hover no lo oculta.
+- Pruebas dedicadas añadidas/actualizadas; validación local y CI aún por verificar.
