@@ -257,3 +257,31 @@ Se agrega regresión de contención simulada: lock ocupado no escribe; lock libr
 La revisión confirma que readFeedbackLikeEventCounts_ en CATALOG todavía ejecuta getRange(2, 1, lastRow - 1, 7).getValues() sobre toda la hoja FeedbackLikes cuando se reconstruye el catálogo sin caché y también desde la proyección de un vehículo. La agrupación por usuario+vehículo elimina duplicados en memoria, pero no reduce el volumen de filas transferidas desde Spreadsheet. Esto no impide el append de FEEDBACK ni provoca por sí mismo el mensaje de rechazo del botón; sí mantiene un riesgo independiente de latencia/límite de lectura de getCatalogData cuando crezca el ledger.
 
 Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el ledger append-only, sin reintroducir locks globales/esperas en operaciones ordinarias y sin coordinación backend entre servicios. Mantener los útiles ya registrados y la regla de un voto por usuario+vehículo.
+
+
+## Tareas recién registradas — 2026-11-25
+
+### GP-DEV-LOG-ERRORS-01 — Copiar solo errores de consola
+**Estado: PENDIENTE.**
+- El botón «Copiar registros» debe exportar exclusivamente mensajes clasificados como errores, no el log completo de consola ni mensajes informativos, progreso, advertencias o resúmenes.
+- Aplicar clasificación fiable, evitando falsos positivos en mensajes informativos y progreso.
+- Validar selección de errores, consola vacía/sin errores, formato y deduplicación cuando corresponda.
+
+### GP-ADMIN-DRIVE-AUDIT-SCHEMA-01 — Resolver esquema de AdminOperationGuards
+**Estado: PENDIENTE DE DIAGNÓSTICO.**
+- La auditoría Drive informa repetidamente que falta la hoja AdminOperationGuards o que su esquema no coincide con la versión esperada, dejando la auditoría parcial sin cursor.
+- Investigar contrato/esquema requerido y preparación/validación de guardas ADMIN; no habilitar guardas ni ejecutar cambios reales sin autorización.
+
+### GP-ADMIN-DRIVE-SCAN-MODAL-01 — Transformar modal de auditoría de cortes a modo escaneo
+**Estado: PENDIENTE DE IMPLEMENTACIÓN.**
+- Al seleccionar «Auditar cortes», no abrir un modal adicional: transformar el modal de auditoría en un espacio de escaneo.
+- Mostrar incrementalmente las imágenes encontradas mientras la consola Developer presenta el avance, sin cerrar el modal para consultar la consola.
+- Validar estados inicial, escaneo, resultados parciales, completado, error, cancelación si existe, scroll y responsive; evitar bloqueo de interfaz.
+
+### GP-LIKE-REBUILD-01 — Reconstruir recordLike ante fallo persistente
+**Estado: PENDIENTE DE IMPLEMENTACIÓN; PRIORIDAD ALTA.**
+- El error de registro de útil continúa tras la corrección previa. Reanalizar el flujo y reconstruirlo con estrategia distinta si procede.
+- Revisar frontend→FEEDBACK→append/idempotencia→respuesta→actualización CATALOG, contención, timeout, resultado ambiguo y publicación. No convertir un voto confirmado en error aparente ni permitir duplicados actor+vehículo.
+- Mantener un útil por usuario y vehículo, independientemente del corte pulsado; usuarios distintos pueden votar.
+- Añadir pruebas de contrato, simulación de integración, fallos parciales, concurrencia/idempotencia, regresión y UI. Resolver causa, no añadir fallback superficial.
+- No invocar servicios reales ni desplegar Apps Script sin autorización Beta explícita.
