@@ -11022,7 +11022,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
         const baseHeaders = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
         const actualBaseHeaders = sheet.getRange(1,1,1,baseHeaders.length).getDisplayValues()[0].map(value=>String(value||"").trim());
         if (baseHeaders.some((header,index)=>actualBaseHeaders[index]!==header)) throw new Error("La estructura base de «Imagenes_Reemplazadas» no coincide con el esquema esperado. No se modificó el inventario.");
-        const requiredHeaders = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario"];
+        const requiredHeaders = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"];
         let headers = sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),baseHeaders.length)).getDisplayValues()[0].map(value=>String(value||"").trim());
         const duplicateRequiredHeaders=requiredHeaders.filter(header=>headers.filter(value=>value===header).length>1);
         if(duplicateRequiredHeaders.length)throw new Error("Hay encabezados dinámicos duplicados; se detuvo la migración: "+duplicateRequiredHeaders.join(", "));
@@ -11072,7 +11072,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
 }
 function getReplacedImagesReadSchema_(){
     const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-    const requiredHeaders=["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario"];
+    const requiredHeaders=["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"];
     if(!sheet)return {sheet:null,headers:[],missingHeaders:requiredHeaders};
     const baseHeaders=["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
     const headers=sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),baseHeaders.length)).getDisplayValues()[0].map(value=>String(value||"").trim());
@@ -13830,6 +13830,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
 
     {
         const auditState = incremental ? validateDriveAuditInventoryBatch_(auditId, ownerId, uniqueFiles) : validateCompletedDriveAudit_(auditId, ownerId, uniqueFiles);
+        const auditMetadata = loadDriveAuditFileMetadata_(auditId, Number(auditState.pageCount), false);
+        const auditMetadataById = new Map(auditMetadata.map(metadata => [String(metadata.fileId), metadata]));
         const submissionDigest = hashDriveAuditFileIds_(uniqueFiles);
         if (!incremental && auditState.inventorySubmissionDigest && auditState.inventorySubmissionDigest !== submissionDigest) {
             throw new Error("La operación de inventario ya está vinculada a otra lista de archivos.");
@@ -13949,11 +13951,19 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 }
 
                 const file = DriveApp.getFileById(fileId);
+                const auditedMetadata = auditMetadataById.get(fileId);
+                if (!auditedMetadata) throw Object.assign(new Error("No existen metadatos persistidos de auditoría para esta imagen."), { inventoryStatus: "blocked" });
                 if (file.isTrashed()) throw Object.assign(new Error("El archivo está en la papelera de Google Drive."), { inventoryStatus: "blocked" });
                 const mimeType = String(file.getMimeType() || "");
                 if (!mimeType.startsWith("image/")) throw Object.assign(new Error("El archivo ya no es una imagen."), { inventoryStatus: "blocked" });
                 const sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
                 const folderPath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
+                if (String(auditedMetadata.fileName || "") !== String(file.getName() || "") ||
+                    String(auditedMetadata.mimeType || "").toLowerCase() !== mimeType.toLowerCase() ||
+                    String(auditedMetadata.folderId || "") !== String(sourceFolder.getId()) ||
+                    String(auditedMetadata.folderPath || "") !== folderPath) {
+                    throw Object.assign(new Error("Los metadatos o la ubicación de la imagen cambiaron desde la auditoría; se requiere un nuevo escaneo."), { inventoryStatus: "blocked" });
+                }
                 let createdAt = "";
                 try {
                     const createdDate = file.getDateCreated();
@@ -13990,6 +14000,11 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 setField("error_organizacion", "");
                 setField("ultima_operacion_inventario_id", inventoryOperationId);
                 setField("resultado_inventario", "confirmado");
+                setField("drive_folder_id", String(auditedMetadata.folderId || sourceFolder.getId()));
+                setField("formato_archivo", String(auditedMetadata.format || "").toLowerCase());
+                setField("tamano_bytes", Math.max(0, Number(auditedMetadata.size) || 0));
+                setField("fecha_modificacion_drive", String(auditedMetadata.lastUpdated || ""));
+                setField("referencias_catalogo_json", JSON.stringify(Array.isArray(auditedMetadata.referenceLocations) ? auditedMetadata.referenceLocations : []));
                 setField("detalle_resultado_inventario", previousOrganizationState === "movida_manual"
                     ? "Ubicación manual conservada: " + (previousManualLocation || folderPath || "No disponible") +
                         (previousManualLocation && previousManualLocation !== folderPath ? "; ubicación observada en Drive: " + folderPath : "")
