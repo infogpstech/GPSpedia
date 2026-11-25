@@ -1119,3 +1119,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Archivos: `index.html`, `JS/Frontend/ui.js`, `style.css`, `JS/Tests/AdminDriveScanModal.mjs`, `Tareas_Activas.md`.
 - Publicado exclusivamente en `GPSpedia2.2.5_work`; no se invocaron Apps Script, Drive ni Spreadsheet. La rama base permanece sin escritura.
 - Próxima acción: verificar workflow CI y ejecutar/ajustar la suite; inspeccionar resultados y estados persistidos/reanudación en navegador real Beta cuando esté disponible.
+
+
+2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01: panel de progreso integrado y CSS responsive; CI inicial confirmó AdminDriveScanModal 7/7 PASS y navegador responsive ajeno al modal PASS. CI detectó una assertion de compatibilidad textual en AdminDriveAuditGlobalConsole; se restauró el prefijo compatible ampliándolo para aclarar panel simultáneo. Commit fd2c54d12ae11f7770863257ca5039408bb2e055; nueva validación CI en curso. No hubo invocaciones Apps Script/Drive/Spreadsheet.
