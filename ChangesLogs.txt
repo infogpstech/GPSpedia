@@ -1274,3 +1274,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Prueba UsefulOriginalCutIndex.mjs integrada en RunServiceTests.mjs; runner JavaScript aislado PASS para proyección, activación, confirmación y retirada del corte físico original.
 - Rectificación: la modificación experimental que restablecía completed=false en CATALOG fue revertida porque completed representa un evento ya materializado en el contador base; restablecerlo duplicaría el conteo. Se ampliaron las pruebas para evento pendiente y materializado.
 - CI/Node runner pendiente de evidencia. No deployments Apps Script ni escrituras externas.
+
+
+2026-11-25 — Incidencia #130 — inventario completo de metadatos y asociación de imágenes
+- Imagenes_Reemplazadas conserva esquema histórico y añade folderId, formato, tamaño bytes, fecha de modificación y referencias JSON; ADMIN valida el snapshot de auditoría frente a Drive y confirma escritura con read-back.
+- Lectura de inventario expone los nuevos campos; biblioteca y resultados de auditoría muestran ID de archivo/carpeta y metadatos.
+- Asociación por nombre/ruta incluye vehicleIds y filas; coincidencias con varios vehículos se marcan ambiguas y requieren revisión manual.
+- Pruebas añadidas/ampliadas AdminIncrementalInventory, AdminReplacedImagesIntegrity, AdminDriveScanModal y AdminDriveAuditAssociation; schema simulado 32 columnas PASS, asociación única/ambigua PASS, parsing de módulos PASS. Node/CI pendiente de evidencia.
