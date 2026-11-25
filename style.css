@@ -6938,6 +6938,9 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title .brand-logo-modal {
     object-position: left bottom;
 }
+#modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
+    object-position: left bottom;
+}
 #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title-text {
     align-self: end;
     margin: 0 !important;
