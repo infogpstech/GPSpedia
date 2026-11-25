@@ -35,7 +35,7 @@ globalThis.document = {
   getElementById(id) { return id === 'audit-drive-scan-console' ? mockScanConsole : null; },
   createElement() { return { className: '', textContent: '' }; }
 };
-\nconst logged = [];
+const logged = [];
 const append = new Function("isCurrentRequest", "logDeveloperOperation_",
     appendSource + "\nreturn appendAuditConsole;"
 )(() => true, (message, level) => logged.push({ message, level }));
