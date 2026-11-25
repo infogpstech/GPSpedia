@@ -581,6 +581,7 @@ try {
     });
     const dashboard = page.locator("#dashboard-modal");
     await dashboard.waitFor({ state: "visible" });
+    await dashboard.locator('[data-activity-tab="logs"]').click();
     const activityRows = dashboard.locator("#activity-logs tr");
     const contributionRows = dashboard.locator("#activity-contributions tr");
     check(await activityRows.count() === 2, profile.name + ": dashboard muestra la fila resumida y su acordeón");
