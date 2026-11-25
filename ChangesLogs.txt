@@ -1153,3 +1153,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - AUG-146 Chromium: 264/264 PASS en cuatro viewports; RepositoryJavaScriptSyntax 478 archivos PASS; RepositoryModuleReferences 398 archivos PASS; ServiceCallGraphContract 9/9 PASS; MIG028SecurityPerformanceRegression 9/9 PASS.
 - Sin cambios a Apps Script, deployments, endpoints, PropertiesService, Spreadsheet, Drive, permisos ni datos externos. Pages build/deployment automático SUCCESS.
 - MIG-URL-008 permanece pendiente de autorización y confirmación de Beta aislada; no se ejecutaron GET remotos.
+
+
+2026-11-25 — Actualización de endpoints Apps Script
+- JS/Frontend/api-config.js: reemplazados únicamente CATALOG y FEEDBACK por las URLs nuevas proporcionadas por el usuario; AUTH, WRITE, UTILITIES y ADMIN preservados.
+- JS/Tests/LocalApiEndpoints.mjs: fixture contractual actualizado con los mismos valores.
+- CI run 45619392380 SUCCESS: 528 suites, 6,263 pruebas, 0 fallos; LocalApiEndpoints 10/10 PASS; AUG-146 264/264 PASS. GitHub Pages run 45619392374 SUCCESS.
+- Solo cambios de configuración frontend y prueba local. No se invocaron URLs ni hubo deployments Apps Script o cambios en recursos externos. Validación remota diferida a Beta.
