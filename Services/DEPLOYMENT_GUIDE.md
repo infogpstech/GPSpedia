@@ -86,7 +86,7 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 5. Consultar `GET <URL del deployment>/exec?debug=true`. La respuesta debe ser JSON con `service: GPSpedia-Auth`, `status: available` y una versión no vacía.
 6. Desde la aplicación Beta, comprobar que `getPublicConfiguration` devuelve `status=success`, `routingAvailable=true` y las seis claves AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN, con la revisión central íntegra en estado READY.
 7. Ejecutar BETA-01 con cuentas sintéticas: login, validación de sesión, logout y revocación. No usar usuarios ni credenciales productivos.
-8. Si AUTH no supera salud y configuración pública, detener la secuencia completa: el frontend no puede resolver el registro central. Restaurar AUTH según §11 antes de continuar.
+8. Si AUTH no supera salud y configuración pública, detener las pruebas que dependan de AUTH. Los demás servicios conservan sus destinos locales y pueden validarse de forma independiente según su contrato. No existe un registro central de endpoints que restaurar.
 
 ### 5.2 CATALOG — segundo
 
@@ -139,7 +139,7 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 - Validar cada servicio en el orden de §2 usando su URL local en `API_ENDPOINTS`. Registrar servicio, SHA, versión, deployment, entorno, rol de prueba, resultado y evidencia anonimizada.
 - Si falla AUTH, detener las pruebas que dependan de AUTH; los servicios independientes pueden continuar conforme a sus contratos. No existe una revisión central de endpoints que restaurar.
 - Si falla CATALOG, WRITE, FEEDBACK, UTILITIES o ADMIN, mantener ese servicio en su versión/URL anterior o ejecutar su rollback individual. Los otros servicios independientes pueden continuar si no dependen del contrato que falló.
-- Si el cambio de contrato exige una combinación específica de versiones, detener únicamente ese grupo coordinado y no publicar la revisión central nueva hasta que todos sus consumidores sean compatibles.
+- Si el cambio de contrato exige una combinación específica de versiones, detener únicamente ese grupo coordinado. Actualizar el frontend solo cuando los consumidores compatibles estén listos; no conmutar revisiones centrales de endpoints.
 - La comprobación remota `JS/Tests/RemoteServiceHealth.mjs` lee las seis direcciones desde `API_ENDPOINTS` del commit indicado y consulta únicamente GET `?debug=true` en modo read-only. Exige `GPSPEDIA_HEALTH_ENV=BETA_ISOLATED` y `GPSPEDIA_CONFIRM_BETA_ENDPOINTS=I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA`. No ejecutarla con URLs productivas ni sin autorización expresa.
 - El éxito del health check no sustituye las pruebas funcionales Beta.
 

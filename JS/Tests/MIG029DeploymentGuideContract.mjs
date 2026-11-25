@@ -70,7 +70,7 @@ check("La guía separa pruebas GET, validación Beta y límites de autorización
   assert.match(guide, /read-only/);
   assert.match(guide, /Tareas_Beta\.md/);
   assert.match(guide, /no autoriza despliegues productivos/i);
-  assert.match(guide, /no demuestra login, RBAC, escritura, concurrencia ni acceso a Drive\/YouTube/);
+  assert.match(guide, /no demuestran login, RBAC, escrituras?, concurrencia.*acceso real a Drive\/YouTube/i);
 });
 
 
@@ -101,7 +101,7 @@ check("La propagación de helpers coincide con los consumidores reales", () => {
 });
 check("La lectura pública de parámetros usa el endpoint AUTH local sin bootstrap separado", () => {
   assert.match(api, /fetch\(resolveApiEndpoint_\("AUTH"\)/);
-  assert.match(api, /action: "getPublicConfiguration"/);
+  assert.match(api, /action\s*:\s*"getPublicConfiguration"/);
   assert.doesNotMatch(api, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
   assert.match(guide, /No existe un bootstrap alternativo/);
   assert.match(guide, /rich_text_mode/);
