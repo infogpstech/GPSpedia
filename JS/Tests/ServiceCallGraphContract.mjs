@@ -39,11 +39,11 @@ check("El frontend es el router y coordinador de secuencias multi-servicio", () 
     assert.match(ui, /getContributionCandidates/);
 });
 
-check("El mapa vigente conserva 123 acciones y seis servicios", () => {
+check("El mapa vigente conserva 125 acciones y seis servicios", () => {
     const match = api.match(/export\s+const\s+ACTION_TO_SERVICE_MAP\s*=\s*\{([\s\S]*?)\n\};/);
     assert.ok(match);
     const entries = [...match[1].matchAll(/['"]([^'"]+)['"]\s*:\s*['"]([A-Z]+)['"]/g)];
-    assert.equal(entries.length, 123);
+    assert.equal(entries.length, 125);
     const counts = {};
     entries.forEach(([, action, service]) => { counts[service] = (counts[service] || 0) + 1; });
     assert.deepEqual(counts, { AUTH: 19, CATALOG: 9, WRITE: 9, FEEDBACK: 40, UTILITIES: 1, ADMIN: 45 });
@@ -93,7 +93,7 @@ check("Las llamadas HTTP externas a Drive, YouTube e imágenes no se confunden c
 
 check("El inventario refleja la arquitectura actual y la secuencia MIG-026", () => {
     assert.match(inventory, /No se conservan COORDINATOR ni SharedMutation/);
-    assert.match(inventory, /123 acciones canónicas \(AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45\)/);
+    assert.match(inventory, /125 acciones canónicas \(AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45\)/);
     assert.match(inventory, /## 3\.9 MIG-025/);
     assert.match(inventory, /## 3\.10 MIG-026/);
     assert.match(inventory, /la siguiente pendiente por orden es.*GPSpedia_CORTES_ORGANIZER_OP_V1/);

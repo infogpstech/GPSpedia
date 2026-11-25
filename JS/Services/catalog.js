@@ -1235,7 +1235,9 @@ function readFeedbackLikeEventCounts_(spreadsheetRef){
  if(expected.some((v,i)=>headers[i]!==v))throw Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
  const n=sheet.getLastRow()-1,ids=sheet.getRange(2,1,n,3).getValues(),statuses=sheet.getRange(2,6,n,1).getValues(),states=new Map();
  ids.forEach((row,i)=>{const status=String(statuses[i]&&statuses[i][0]||"");if(!["event","withdrawn","completed"].includes(status))return;
-  try{const actor=normalizeFeedbackLikeActorKey_(row[0]),vehicle=String(row[1]||"").trim(),cut=Number(row[2]);if(!isValidFeedbackLikeVehicleId_(vehicle)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
+  try{const actor=normalizeFeedbackLikeActorKey_(row[0]),vehicle=String(row[1]||"").trim(),cut=Number(row[2]);const part=vehicle.startsWith("V-")?vehicle.slice(2):vehicle,numeric=Number(part);
+   if(!/^[1-9]\d{0,15}$/.test(part)||!Number.isSafeInteger(numeric)||String(numeric)!==part||
+      (vehicle!==part&&vehicle!=="V-"+part)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
    const key=vehicle+"|"+cut+"|"+actor,state=states.get(key)||{vehicle,cut,completed:false,status:""};if(status==="completed")state.completed=true;state.status=status;states.set(key,state);
   }catch(e){if(typeof console!=="undefined"&&console.warn)console.warn("FeedbackLikes: evento inválido ignorado en fila "+(i+2)+": "+String(e&&e.message||"datos incompatibles"));}
  });
