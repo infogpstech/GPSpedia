@@ -93,9 +93,9 @@ test("el frontend reintenta únicamente la contención de idempotencia y conserv
     const recordLikeStart = frontend.indexOf("export async function recordLike(");
     const recordLikeEnd = frontend.indexOf("\n}", recordLikeStart) + 2;
     const recordLike = frontend.slice(recordLikeStart, recordLikeEnd);
-    assert.match(recordLike, /attempt <= 5/);
+    assert.match(recordLike, /attempt <= 12/);
     assert.match(recordLike, /error\.code !== "LIKE_LOCK_BUSY"/);
-    assert.match(recordLike, /setTimeout\(resolve, 100 \* attempt\)/);
+    assert.match(recordLike, /setTimeout\(resolve, 150 \* attempt\)/);
     assert.match(frontend, /code: String\(result\.code \|\| "API_ERROR"\)/);
 });
 console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — preflight fuera del lock y sección crítica mínima");
