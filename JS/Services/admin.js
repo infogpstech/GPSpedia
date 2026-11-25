@@ -11026,7 +11026,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
         const baseHeaders = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
         const actualBaseHeaders = sheet.getRange(1,1,1,baseHeaders.length).getDisplayValues()[0].map(value=>String(value||"").trim());
         if (baseHeaders.some((header,index)=>actualBaseHeaders[index]!==header)) throw new Error("La estructura base de «Imagenes_Reemplazadas» no coincide con el esquema esperado. No se modificó el inventario.");
-        const requiredHeaders = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"];
+        const requiredHeaders = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"];
         let headers = sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),baseHeaders.length)).getDisplayValues()[0].map(value=>String(value||"").trim());
         const duplicateRequiredHeaders=requiredHeaders.filter(header=>headers.filter(value=>value===header).length>1);
         if(duplicateRequiredHeaders.length)throw new Error("Hay encabezados dinámicos duplicados; se detuvo la migración: "+duplicateRequiredHeaders.join(", "));
@@ -11076,7 +11076,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
 }
 function getReplacedImagesReadSchema_(){
     const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-    const requiredHeaders=["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"];
+    const requiredHeaders=["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"];
     if(!sheet)return {sheet:null,headers:[],missingHeaders:requiredHeaders};
     const baseHeaders=["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
     const headers=sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),baseHeaders.length)).getDisplayValues()[0].map(value=>String(value||"").trim());
@@ -11724,7 +11724,9 @@ function handleGetReplacedImages(payload, logMessage) {
             fecha_organizacion: valueAt(row, "fecha_organizacion"),
             drive_folder_id: valueAt(row, "drive_folder_id"), formato_archivo: valueAt(row, "formato_archivo"),
             tamano_bytes: Number(valueAt(row, "tamano_bytes") || 0), fecha_modificacion_drive: valueAt(row, "fecha_modificacion_drive"),
-            referencias_catalogo_json: valueAt(row, "referencias_catalogo_json"), reference_check_status: referenceCheckStatus,
+            referencias_catalogo_json: valueAt(row, "referencias_catalogo_json"),
+            asociacion_estado: valueAt(row, "asociacion_estado"), asociacion_confianza: valueAt(row, "asociacion_confianza"),
+            asociacion_candidatos_json: valueAt(row, "asociacion_candidatos_json"), reference_check_status: referenceCheckStatus,
             active_reference_count: Array.isArray(activeReferences) ? activeReferences.length : activeReferences ? 1 : 0 });
     }
     const warnings = [];
@@ -13550,7 +13552,7 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         throw new Error("Faltan columnas para verificar la operación de inventario.");
     }
     const readBack = () => sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
-    const metadataColumns = ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"]
+    const metadataColumns = ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"]
         .map(name => headers.indexOf(name)).filter(index => index >= 0);
     const matches = persisted => String(persisted[0] || "") === String(row[0] || "") &&
         extractDriveFileId(persisted[5]) === fileId &&
@@ -13918,6 +13920,20 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
             if (records.length > 1) duplicateDriveIds.add(fileId);
         });
 
+        const associationByFileId = new Map();
+        let associationBuildError = "";
+        try {
+            const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+            if (cortesSheet) {
+                const associationMetadata = uniqueFiles.map(entry => auditMetadataById.get(entry.fileId)).filter(Boolean);
+                const associationResult = buildCortesImageModelAssociationSuggestions_(
+                    associationMetadata, cortesSheet.getDataRange().getValues(), new Map(), historicalDriveIds,
+                    CORTES_IMAGE_MODEL_ALIASES_, COLS_CORTES
+                );
+                associationResult.suggestions.forEach(suggestion => associationByFileId.set(String(suggestion.fileId), suggestion));
+            } else associationBuildError = "No se encontró la hoja Cortes para proponer asociaciones.";
+        } catch (associationError) { associationBuildError = String(associationError && associationError.message || associationError); }
+
         let insertedCount = 0, updatedCount = 0, staleCount = 0;
         let confirmedCount = 0, blockedCount = 0, errorCount = 0, loggingErrorCount = 0;
         const results = [];
@@ -14015,6 +14031,10 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 setField("tamano_bytes", Math.max(0, Number(auditedMetadata.size) || 0));
                 setField("fecha_modificacion_drive", String(auditedMetadata.lastUpdated || ""));
                 setField("referencias_catalogo_json", JSON.stringify(Array.isArray(auditedMetadata.referenceLocations) ? auditedMetadata.referenceLocations : []));
+                const association = associationByFileId.get(fileId);
+                setField("asociacion_estado", association ? association.status : (associationBuildError ? "no_verificada" : "sin_coincidencia"));
+                setField("asociacion_confianza", association ? association.confidence : "");
+                setField("asociacion_candidatos_json", JSON.stringify(association && Array.isArray(association.candidates) ? association.candidates : []));
                 setField("detalle_resultado_inventario", previousOrganizationState === "movida_manual"
                     ? "Ubicación manual conservada: " + (previousManualLocation || folderPath || "No disponible") +
                         (previousManualLocation && previousManualLocation !== folderPath ? "; ubicación observada en Drive: " + folderPath : "")
