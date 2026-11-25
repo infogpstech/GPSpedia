@@ -870,7 +870,7 @@ check("La limpieza de estados expirados elimina también páginas, respuestas y 
     assert.equal([...h.cache.keys()].some(item=>item.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
 });
 check("La UI acepta la versión semántica publicada por ADMIN sin fijar una versión obsoleta",()=>{
-    assert.ok(admin.includes('const ADMIN_SERVICE_VERSION = "2.7.1"'));
+    assert.ok(admin.includes('const ADMIN_SERVICE_VERSION = "2.7.2"'));
     assert.ok(ui.includes("!/^[0-9]+\\.[0-9]+\\.[0-9]+$/.test(String(response.serviceVersion || ''))"));
     assert.equal(ui.includes("!== '2.6.1'"),false);
 });

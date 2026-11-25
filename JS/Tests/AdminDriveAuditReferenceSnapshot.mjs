@@ -51,4 +51,4 @@ assert.match(admin,/referenceLocationsById\[String\(fileId\)\] = cortesLocations
 assert.match(admin,/referenceSnapshot\.referenceLocationsById\[fileId\]/);
 assert.match(admin,/referenceLocations: normalizeDriveAuditReferenceLocations_\(item && item\.referenceLocations \|\| \[\]\)/);
 assert.match(admin,/referencias_catalogo_json", JSON\.stringify\(Array\.isArray\(auditedMetadata\.referenceLocations\)/);
-console.log("AdminDriveAuditReferenceSnapshot: 12/12 PASS");
+console.log("AdminDriveAuditReferenceSnapshot: 14/14 PASS");
