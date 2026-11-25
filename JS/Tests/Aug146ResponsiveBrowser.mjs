@@ -298,7 +298,19 @@ try {
       (profile.width > 520 || cutHeaderRender.modelFontSize >= 18),
       profile.name + ": nombre del modelo sin saltos y +2px en móvil");
 
-    await page.evaluate(() => window.__aug146Ui.openDevTools());
+    await page.evaluate(() => {
+      // El render de detalle puede actualizar el estado de sesión en pruebas aisladas;
+      // restablecer el usuario sintético antes de medir el panel Developer.
+      window.__aug146State.setState({
+        currentUser: {
+          ID: "AUG146-BETA-SYNTHETIC",
+          SessionToken: "SYNTHETIC-NOT-A-REAL-CREDENTIAL",
+          Privilegios: "Desarrollador",
+          Nombre_Usuario: "Prueba visual"
+        }
+      });
+      return window.__aug146Ui.openDevTools();
+    });
     const developerModal = page.locator("#dev-tools-modal");
     await developerModal.waitFor({ state: "visible" });
     const developerBounds = await developerModal.boundingBox();
