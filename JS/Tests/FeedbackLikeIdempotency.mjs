@@ -60,7 +60,7 @@ function makeHarness(seedRows = []) {
     const cuts = sheet(cutsRows), ledger = sheet(ledgerRows);
     const dependencies = {
         LockService: { getScriptLock: () => ({
-            waitLock(ms) { assert.equal(ms, 10000); state.waits++; },
+            tryLock(ms) { assert.equal(ms, 10000); state.waits++; return true; },
             releaseLock() { state.releases++; }
         }) },
         Utilities: { DigestAlgorithm: { SHA_256: "SHA_256" }, Charset: { UTF_8: "UTF_8" },
