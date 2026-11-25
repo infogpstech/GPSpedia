@@ -8,4 +8,4 @@ assert.doesNotMatch(cache,/endpointUrl|endpoint_url|resolveCentralServiceEndpoin
 assert.doesNotMatch(ui,/loadCentralServiceUrls|saveCentralServiceUrls|initializeCentralServiceUrlsControl_|central-service-urls-card/);assert.doesNotMatch(html,/central-service-urls-card|central-service-url-|btn-save-central-service-urls|Endpoints de servicios/);
 assert.match(ui,/initializeRichTextModeControl_/);assert.match(html,/rich-text-mode-select/);
 assert.match(health,/parseObject\("API_ENDPOINTS"\)/);assert.match(health,/BETA_ISOLATED/);assert.doesNotMatch(health,/CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
-console.log("MIGURL004CentralEndpointRetirement: PASS — URLs locales; gestión central retirada; configuración de parámetros y recursos conservada.");
+console.log("MIGURL004CentralEndpointRetirement: 10/10 PASS — URLs locales; gestión central retirada; configuración de parámetros y recursos conservada.");

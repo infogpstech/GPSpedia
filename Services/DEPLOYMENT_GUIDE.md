@@ -140,7 +140,7 @@ Si el servicio todavía no tiene un deployment en el entorno Beta autorizado, cr
 - Si falla AUTH, detener las pruebas que dependan de AUTH; los servicios independientes pueden continuar conforme a sus contratos. No existe una revisión central de endpoints que restaurar.
 - Si falla CATALOG, WRITE, FEEDBACK, UTILITIES o ADMIN, mantener ese servicio en su versión/URL anterior o ejecutar su rollback individual. Los otros servicios independientes pueden continuar si no dependen del contrato que falló.
 - Si el cambio de contrato exige una combinación específica de versiones, detener únicamente ese grupo coordinado y no publicar la revisión central nueva hasta que todos sus consumidores sean compatibles.
-- La comprobación remota `JS/Tests/RemoteServiceHealth.mjs` lee las seis direcciones desde `API_ENDPOINTS` del commit indicado y consulta únicamente GET `?debug=true`. Exige `GPSPEDIA_HEALTH_ENV=BETA_ISOLATED` y `GPSPEDIA_CONFIRM_BETA_ENDPOINTS=I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA`. No ejecutarla con URLs productivas ni sin autorización expresa.
+- La comprobación remota `JS/Tests/RemoteServiceHealth.mjs` lee las seis direcciones desde `API_ENDPOINTS` del commit indicado y consulta únicamente GET `?debug=true` en modo read-only. Exige `GPSPEDIA_HEALTH_ENV=BETA_ISOLATED` y `GPSPEDIA_CONFIRM_BETA_ENDPOINTS=I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA`. No ejecutarla con URLs productivas ni sin autorización expresa.
 - El éxito del health check no sustituye las pruebas funcionales Beta.
 
 ## 7. Actualización manual de URLs en el frontend
