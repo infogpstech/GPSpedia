@@ -16,9 +16,11 @@ const activeServices = ["Auth.js","catalog.js","write.js","feedback.js","admin.j
     .map(name => read("JS/Services/" + name));
 assert.equal(existsSync(coordinatorPath), false, "Coordinator.js debe estar retirado.");
 assert.doesNotMatch(api, /COORDINATOR|getServiceTraffic/);
-assert.match(api, /CENTRAL_SERVICE_KEYS = Object\.freeze\(\[\s*"AUTH", "CATALOG", "WRITE", "FEEDBACK", "UTILITIES", "ADMIN"/);
+assert.match(api, /export const API_ENDPOINTS = Object\.freeze/);
+assert.doesNotMatch(api, /CENTRAL_SERVICE_KEYS|CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
 assert.doesNotMatch(cache, /OPTIONAL_SERVICES|COORDINATOR/);
-assert.match(reader, /GP_CONFIG_RETIRED_SERVICE_KEYS_ = \["USERS", "COORDINATOR"\]/);
+assert.match(reader, /GP_CONFIG_PARAMETER_SERVICE_KEYS_/);
+assert.doesNotMatch(reader, /Servicios|endpoint_url|routingAvailable/);
 assert.doesNotMatch(telemetry, /COORDINATOR/);
 assert.doesNotMatch(invalidation, /COORDINATOR|UrlFetchApp|GPSpedia_COORDINATOR_SECRET/);
 assert.doesNotMatch(ui, /Coordinator|globalServiceTraffic|getServiceTraffic/);

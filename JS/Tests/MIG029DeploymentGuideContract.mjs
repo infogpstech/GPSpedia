@@ -47,16 +47,17 @@ check("La publicación de código preserva el deployment y limita el alcance", (
   assert.match(guide, /No actualizar los otros cinco/);
   assert.match(guide, /no es necesario redesplegar frontend ni los otros cinco servicios/i);
 });
-check("La nueva URL se publica mediante revisión central íntegra e historial", () => {
-  for (const term of ["Servicios","ConfiguracionControl","active_revision","ConfiguracionHistorial","config_revision","publication_state=READY"])
-    assert.ok(guide.includes(term), "Falta " + term);
-  assert.match(schema, /Flujo de publicación:/);
-  assert.match(guide, /mecanismo controlado aprobado/);
+check("Las URLs se mantienen en API_ENDPOINTS y el lector central conserva solo parámetros/recursos", () => {
+  assert.match(guide, /API_ENDPOINTS/);
+  assert.match(guide, /no la lee ni la escribe para resolver URLs/);
+  assert.match(api, /export const API_ENDPOINTS = Object\.freeze/);
+  assert.doesNotMatch(auth, /getCentralServiceUrls|updateCentralServiceUrls|endpoint_url/);
+  assert.doesNotMatch(central, /Servicios|endpoint_url|routingAvailable/);
 });
-check("El rollback conserva historial y no modifica revisiones publicadas", () => {
+check("El rollback de URLs restaura el valor local sin tocar Spreadsheet", () => {
   assert.match(guide, /## 9\. Rollback/);
-  assert.match(guide, /nueva revisión completa/);
-  assert.match(guide, /Nunca editar una revisión ya publicada/);
+  assert.match(guide, /restaurar la URL anterior en la entrada correspondiente de `API_ENDPOINTS`/);
+  assert.match(guide, /No existe rollback de endpoints mediante/);
 });
 check("La guía no revive secretos, propiedades ni rutas legacy", () => {
   for (const forbidden of ["GPSpedia_COORDINATOR_URL","GPSpedia_COORDINATOR_SECRET","GPSpedia_SERVICE_URL_","SharedMutationClient.js"])
@@ -98,14 +99,12 @@ check("La propagación de helpers coincide con los consumidores reales", () => {
   assert.match(catalog, /function getCatalogSessionActor_/);
   assert.doesNotMatch(catalog, /getCachedSharedSessionActor_/);
 });
-check("La publicación conserva la configuración central y trata el bootstrap AUTH como excepción única", () => {
-  assert.match(guide, /ConfiguracionControl/);
-  assert.match(guide, /ConfiguracionHistorial/);
-  assert.match(guide, /active_revision/);
-  assert.match(guide, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
-  assert.match(guide, /no es necesario redesplegar frontend/i);
-  assert.match(guide, /No crear un segundo bootstrap ni un fallback local/);
-  assert.match(guide, /conmutar.*active_revision/s);
+check("La lectura pública de parámetros usa el endpoint AUTH local sin bootstrap separado", () => {
+  assert.match(api, /fetch\(resolveApiEndpoint_\("AUTH"\)/);
+  assert.match(api, /action: "getPublicConfiguration"/);
+  assert.doesNotMatch(api, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
+  assert.match(guide, /No existe un bootstrap alternativo/);
+  assert.match(guide, /rich_text_mode/);
 });
 check("La guía protege despliegues parciales y servicios independientes", () => {
   assert.match(guide, /detener únicamente el servicio o grupo/i);
@@ -122,27 +121,26 @@ check("El procedimiento exige contexto Spreadsheet y conserva rollback", () => {
   assert.match(guide, /Nunca editar una revisión ya publicada/);
   assert.match(schema, /Flujo de publicación:/);
 });
-check("El health workflow solo se ejecuta con bootstrap Beta confirmado", () => {
-  assert.match(guide, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
-  assert.match(guide, /no tiene selector de entorno/);
-  assert.match(guide, /No ejecutarlo si ese bootstrap apunta a producción/);
+check("El health remoto usa API_ENDPOINTS y exige confirmación de Beta aislada", () => {
+  assert.match(guide, /GPSPEDIA_HEALTH_ENV=BETA_ISOLATED/);
+  assert.match(guide, /GPSPEDIA_CONFIRM_BETA_ENDPOINTS/);
   assert.match(guide, /GET \?debug=true/);
+  const health = read("JS/Tests/RemoteServiceHealth.mjs");
+  assert.match(health, /parseObject\("API_ENDPOINTS"\)/);
+  assert.match(health, /BETA_ISOLATED/);
+  assert.doesNotMatch(health, /CENTRAL_CONFIGURATION_BOOTSTRAP_URL/);
 });
 check("La lista de evidencia registra SHA, versión, URL y resultado por servicio", () => {
   for (const field of ["SHA fuente","Versión Apps Script","Deployment","URL","Salud","Pruebas funcionales","Resultado","Rollback","Evidencia"])
     assert.ok(guide.includes(field), "Falta campo " + field);
 });
 
-check("La guía incluye el modal Developer y el flujo manual sin sesión GPSpedia", () => {
-  assert.match(guide, /7\.1 Desde la plataforma/);
-  assert.match(guide, /7\.2 Desde el editor de Apps Script/);
-  assert.match(guide, /prepareCentralConfigurationServiceUrlInput\(\)/);
-  assert.match(guide, /publishCentralConfigurationFromServiceUrlDraft\(\)/);
-  assert.match(guide, /no requiere una sesión ni un rol de GPSpedia/i);
-  assert.match(auth, /function handleUpdateCentralServiceUrls_/);
-  assert.match(auth, /function publishCentralConfigurationFromServiceUrlDraft\(/);
-  assert.match(ui, /initializeCentralServiceUrlsControl_/);
-  assert.match(api, /callCentralAuthBootstrapAction_/);
-  assert.match(html, /id="central-service-urls-card"/);
+check("La guía documenta actualización manual local y el editor Developer fue retirado", () => {
+  assert.match(guide, /7\.1 Actualizar una URL/);
+  assert.match(guide, /API_ENDPOINTS/);
+  assert.doesNotMatch(auth, /handleUpdateCentralServiceUrls_|publishCentralConfigurationFromServiceUrlDraft/);
+  assert.doesNotMatch(ui, /initializeCentralServiceUrlsControl_/);
+  assert.doesNotMatch(api, /callCentralAuthBootstrapAction_/);
+  assert.doesNotMatch(html, /central-service-urls-card/);
 });
 console.log("MIG029DeploymentGuideContract: " + passed + "/16 PASS");

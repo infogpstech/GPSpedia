@@ -310,6 +310,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-022 eliminación asíncrona de caché IndexedDB ADMIN','JS/Tests/AdminClientCacheDeletion.mjs');
  runCli('MIG-008 registro central ignora servicios retirados','JS/Tests/MIG008CentralConfigurationReader.mjs');
  runCli('MIG-URL-004 retiro de administración central de URLs y preservación de parámetros','JS/Tests/MIGURL004CentralEndpointRetirement.mjs');
+ runCli('MIG-URL-004 retiro de administración central de URLs y preservación de parámetros','JS/Tests/MIGURL004CentralEndpointRetirement.mjs');
  runCli('AUG-024 contrato de salud, identidad y clasificación de servicios','JS/Tests/ServiceHealthContract.mjs');
  runCli('BETA-043 contrato de telemetría global coordinada','JS/Tests/ServiceTrafficAdminContract.mjs');
  runCli('BETA-043 telemetría local por servicio y navegador móvil','JS/Tests/ServiceBrowserTrafficContract.mjs');
