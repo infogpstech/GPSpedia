@@ -1,6 +1,6 @@
 export function applyConfirmedLikeState(currentState, vehicleId, corteIndex, response) {
     const state = currentState && typeof currentState === "object" ? currentState : {};
-    const likeKey = String(vehicleId);
+    const likeKey = String(vehicleId) + "|" + String(corteIndex);
     const previousLikes = Array.isArray(state.likedCortes) ? state.likedCortes : [];
     const likedCortes = previousLikes.includes(likeKey) ? previousLikes : [...previousLikes, likeKey];
     const catalogData = state.catalogData && typeof state.catalogData === "object" ? state.catalogData : {};
