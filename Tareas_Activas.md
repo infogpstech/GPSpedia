@@ -494,3 +494,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Preview de asociación del organizador añade miniaturas y candidatos, confianza y ambigüedad, sin aplicar asociaciones automáticamente.
 - CI run 45680455995: 533 suites, 6,311 pruebas, 0 fallos; AdminDriveAuditIndexedDB 13/13, AdminDriveAuditVisualContract 6/6, AdminReplacedImagesIntegrity 64/64; AUG-146 264/264 PASS. Pages run 45680455638 SUCCESS.
 - Pruebas locales no ejecutan Drive/Spreadsheet ni Apps Script; validación Beta aislada pendiente.
+
+
+## MIG-URL-008 — preparación de validación Beta (2026-11-25)
+**Estado: PREPARACIÓN COMPLETADA; VALIDACIÓN REMOTA PENDIENTE DE CONFIRMACIÓN/AUTORIZACIÓN.**
+- Se revisó el contrato local de health, mapa API_ENDPOINTS, resolver fail-closed, seis endpoints e IDs únicos y test `LocalApiEndpoints` (10/10 PASS en CI previo). No se ejecutó GET.
+- Se preparó protocolo en Tareas_Beta.md §25: seis health checks, prueba de login/catálogo/WRITE/FEEDBACK/ADMIN/UTILITIES, latencia, aislamiento, failover, identificación del deployment, controles de sesión/RBAC y no escritura en producción.
+- Antes de ejecución, confirmar entorno Beta aislado, versión desplegada y autorización explícita. No copiar tokens, secrets, payloads PII ni credenciales a registros.

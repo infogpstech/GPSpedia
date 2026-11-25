@@ -996,3 +996,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Pruebas focales: `FeedbackUsefulToggle` 6/6, `UsefulButtonState` 5/5, `UsefulSyncQueue` 4/4, `FeedbackLikeClientRetry` 2/2 + 1 prueba de setCutUseful, `AdminDriveAuditIndexedDB` 13/13, `AdminDriveAuditVisualContract` 6/6, `AdminReplacedImagesIntegrity` 64/64.
 - Validación local/CI no ejecuta Apps Script, Drive ni Spreadsheet real; queda pendiente Beta aislada. No hubo despliegues ni modificaciones de recursos externos.
 - Próxima tarea: preparar MIG-URL-008, validación de salud de los seis endpoints, estrictamente pendiente de confirmación de entorno Beta aislado y autorización expresa para las solicitudes GET. No invocar endpoints hasta confirmar.
+
+
+## Inicio de MIG-URL-008 — preparación Beta (2026-11-25)
+- MIG-URL-001..007 están cerradas; se inicia preparación de MIG-URL-008, sin consultas HTTP.
+- Preparada lista de verificación para seis endpoints: confirmar entorno Beta aislado, identidad/version health `GPSpedia-*`, status, latencia y comportamiento de endpoint no disponible; prueba funcional por servicio y control de fallos; comparación de configuración local y prohibición de llamadas backend→backend.
+- Requisito previo aún pendiente: el propietario debe confirmar explícitamente que los recursos son Beta aislada y autorizar GET health y pruebas funcionales. No ejecutar peticiones hasta esa confirmación.
+- Estado: preparación documental completada; validación remota NO EJECUTADA.

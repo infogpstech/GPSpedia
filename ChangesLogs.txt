@@ -1236,3 +1236,7 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - GP-UTIL: frontend toggle reversible, estado hidratado/local, debounce 1.8 s, cola de sync serializada, contador optimista y reintentos; backend FEEDBACK mantiene append-only e idempotencia por actor/vehículo/corte.
 - Auditoría visual: miniaturas para todas las clasificaciones, enlaces/metadatos de Drive, referencia a fila/vehículo/modelo, miniaturas y candidatos en preview de asociación.
 - Validación CI: 533 suites, 6,311 pruebas PASS; AUG-146 264/264; Pages SUCCESS. Validación Apps Script/Drive/Spreadsheet real queda diferida a Beta aislada.
+
+
+2026-11-25 — MIG-URL-008 (preparación)
+- Preparada checklist Beta aislada en Tareas_Beta.md §25 para salud/identidad de seis servicios, funciones sintéticas, RBAC, failover y evidencia anonimizada. Sin llamadas remotas ni modificaciones de endpoints/deployments/recursos externos.

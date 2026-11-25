@@ -102,3 +102,9 @@ MIG-URL-001 a MIG-URL-007 están cerradas. MIG-URL-008 es la única tarea restan
 ## Adenda 2026-11-24 — rotación de CATALOG y FEEDBACK
 
 El propietario confirmó nuevas URLs para CATALOG y FEEDBACK después del cierre de MIG-URL-007. La configuración local y el fixture contractual se actualizaron en la rama de trabajo, sin alterar el diseño MIG-URL ni los demás endpoints. MIG-URL-008 continúa pendiente: no se consultaron deployments ni se validó su identidad remota; la comprobación queda reservada a Beta aislada y autorizada.
+
+
+### MIG-URL-008 — preparación operativa (2026-11-25)
+- Se prepara la checklist de validación aislada en `Tareas_Beta.md` §25 y se confirma la cobertura local de `LocalApiEndpoints` y `ServiceHealthContract`.
+- No se realizaron GET, health scan, login, escritura, deployments ni modificaciones externas.
+- Prerequisito de ejecución: confirmación explícita de Beta aislada y autorización para GET y pruebas funcionales. Estado de ejecución: PENDIENTE.

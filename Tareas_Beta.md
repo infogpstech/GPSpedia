@@ -591,3 +591,33 @@ git rev-parse HEAD
 12. Registrar resultado y evidencia anonimizada en `Hallazgos_Beta.md`. Si no existe entorno/cuenta YouTube Beta autorizados, marcar los pasos de subida como NO EJECUTADOS.
 
 **Límites:** no subir vídeos reales de clientes, no utilizar OAuth/cuentas productivas, no aprobar solicitudes en producción, no cambiar permisos ni datos productivos. No añadir llamadas entre servicios Apps Script: el frontend envía la referencia estable de CATALOG a FEEDBACK.
+
+
+## 25. MIG-URL-008 — Validación de salud y funciones en Beta aislada
+**Estado: PREPARACIÓN COMPLETADA — NO EJECUTADA.**
+
+### Sincronización obligatoria
+Ejecutar desde un clon local de GPSpedia. No descarta cambios y detiene la secuencia si repositorio/rama/árbol no coinciden:
+
+```bash
+test "$(basename "$(git rev-parse --show-toplevel)")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+case "$(git remote get-url origin)" in *github.com/infogpstech/GPSpedia*) ;; *) echo "Origin incorrecto"; exit 1 ;; esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; guardar antes de sincronizar"; exit 1; }
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+### Precondiciones de seguridad
+1. Confirmar explícitamente con el propietario que los seis deployments y Spreadsheet son un entorno Beta aislado, no producción, y recibir autorización para GET y pruebas funcionales.
+2. Registrar únicamente alias de entorno, versión/identidad esperada y evidencia anonimizada; no copiar tokens, secretos, PII ni URLs sensibles a Logs.
+3. Verificar que API_ENDPOINTS local corresponde al conjunto autorizado. No editar endpoints, PropertiesService, permisos ni configuración remota durante las pruebas.
+4. Ejecutar el escaneo health desde Developer y confirmar seis respuestas `GPSpedia-*`, status, versión, tiempo de respuesta y errores, sin interpretar un 200 genérico como identidad validada.
+5. Ejecutar casos sintéticos aislados por servicio: AUTH login/session/RBAC; CATALOG snapshot/feed y fallback; WRITE asignación/idempotencia con IDs sintéticos; FEEDBACK útiles/retiro, Inbox y append-only; UTILITIES RBAC y staging; ADMIN guardas/auditoría/preview de solo lectura.
+6. Ejecutar failover desconectando o simulando una única dependencia de Beta (sin afectar recursos productivos): confirmar estado parcial, timeout/reintento acotado y recuperación. No cambiar endpoints remotos ni configurar proxy.
+7. Confirmar que el frontend coordina los flujos multi-servicio, que no existen llamadas backend→backend y que no se exponen secretos.
+8. Registrar cada caso como PASS/FAIL/NO EJECUTADO, servicio, deployment/version, timestamp aproximado, evidencia anonimizada y acción correctiva. No incluir credenciales ni payloads personales.
+9. Si no se dispone de Beta aislada/autorizada, dejar todas las pruebas remotas como NO EJECUTADAS y conservar esta checklist.
+
+**Límites:** No ejecutar sobre producción. No desplegar Apps Script ni alterar Spreadsheet, Drive, PropertiesService, permisos, datos o OAuth sin autorización explícita adicional. El estado del plan no se cerrará como validación remota hasta contar con evidencia real.
