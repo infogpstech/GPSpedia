@@ -20,4 +20,4 @@ const copied=sample.filter(row=>row.cls==="log-error").map(row=>row.text).filter
 assert.equal(copied,"Error de escritura\nError de lectura");
 assert.equal(sample.filter(row=>row.cls==="log-error").length,3);
 assert.equal(["log-warning","log-info"].includes("log-error"),false);
-console.log("DeveloperConsoleErrors: 6 assertions PASS");
+console.log("DeveloperConsoleErrors: 8/8 PASS");
