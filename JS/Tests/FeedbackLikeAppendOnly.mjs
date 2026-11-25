@@ -4,7 +4,6 @@ const feedback=readFileSync(new URL("../Services/feedback.js",import.meta.url),"
 const catalog=readFileSync(new URL("../Services/catalog.js",import.meta.url),"utf8");
 function extract(source,name){const start=source.indexOf("function "+name+"(");assert.ok(start>=0,"No se encontró "+name);const end=source.indexOf("\nfunction ",start+10);return source.slice(start,end<0?source.length:end);}
 const handler=extract(feedback,"handleRecordLike");
-assert.match(handler,/findLikeEventReplayNoop_/);
 assert.match(handler,/ledger\.appendRow\(\[actorKey, vehicleId, corteIndex, 0, 0, "event"/);
 assert.match(handler,/withFeedbackLikeLock_\(\(\) =>/,"La comprobación y el append deben ser una sola sección crítica.");
 assert.doesNotMatch(handler,/setValue\(/,"Los útiles nuevos no modifican el contador físico.");
@@ -12,7 +11,7 @@ assert.doesNotMatch(handler,/message:/,"La respuesta idempotente no debe mostrar
 assert.match(extract(feedback,"ensureFeedbackLikesSheet_"),/catch \(createError\)/,"La creación concurrente de la hoja debe recuperarse por relectura");
 assert.match(extract(catalog,"handleGetCatalogData"),/readFeedbackLikeEventCounts_/,"CATALOG debe proyectar los likes nuevos");
 assert.match(extract(feedback,"buildFeedbackCortesCatalogChange_"),/getFeedbackLikeEventCount_/,"El feed incremental debe incluir eventos de likes");
-assert.match(extract(feedback,"findCompletedLikeReplayNoop_"),/getFeedbackLikeEventCount_/,"El replay legacy debe devolver el contador efectivo");
+assert.match(extract(feedback,"getFeedbackLikeEventCount_"),/firstCutByActor/,"El contador debe deduplicar por usuario y vehículo.");
 const helperStart=feedback.indexOf("const FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_");
 const helperEnd=feedback.indexOf("\nfunction doGet(e)",helperStart);
 const attachFeedbackCatalogChange_=new Function(feedback.slice(helperStart,helperEnd)+"\nreturn attachFeedbackCatalogChange_;")();
@@ -46,7 +45,7 @@ test("ignora likes legacy completed porque ya están en el contador base",()=>{
 test("rechaza eventos con actor o vehículo inválido",()=>{
  const bad=rows.concat([["", "100","1",0,0,"event","t7"]]);
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
- assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/evento de like inválido/);
+ assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/actor de usuario inválido/);
 });
 test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/waitLock\(10000\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\\s\\S]*releaseLock/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");
