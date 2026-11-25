@@ -1003,3 +1003,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Preparada lista de verificación para seis endpoints: confirmar entorno Beta aislado, identidad/version health `GPSpedia-*`, status, latencia y comportamiento de endpoint no disponible; prueba funcional por servicio y control de fallos; comparación de configuración local y prohibición de llamadas backend→backend.
 - Requisito previo aún pendiente: el propietario debe confirmar explícitamente que los recursos son Beta aislada y autorizar GET health y pruebas funcionales. No ejecutar peticiones hasta esa confirmación.
 - Estado: preparación documental completada; validación remota NO EJECUTADA.
+
+
+## Corrección GP-ADMIN-AUDIT-REFMAP-01 y GP-UTIL-VISUAL-02 (2026-11-25)
+- Hallazgo confirmado en auditoría: el snapshot inicial se crea con `collectActiveDriveReferences(false)` y conserva listas de IDs, pero no la propiedad `references` (Map). El escáner luego accedía sin guardia a `referenceSnapshot.references.get(fileId)`, causando exactamente `Cannot read properties of undefined (reading 'get')` antes del primer lote. Corrección: lectura de ubicaciones opcional y protegida si el snapshot no contiene Map.
+- Útiles: refuerzo del estado visual inmediato al clic (clase liked, color, aria-pressed, título y feedback de escala), y CSS de persistencia del estado activo incluso hover.
+- Commits individuales en rama autorizada: admin `3b86bb1fdc6ef74d32c4c616b501152e051867dd`; UI `535fb539270c2d59acb9bdd9f97dd43d22361ee0`; CSS `3c3a5cc3e6b0f3cd64bc2f1afbb3e74e2d2cc99c`; prueba útiles `0fe5adac5e1cfb01acf2428b078e5bbdcc679ae1`; test guard auditoría `e3d536b4717370c3cdf6884c28ac961b19544b64`.
+- Validación automatizada y CI pendientes de comprobación posterior. La prueba real en deployment ADMIN/FEEDBACK y Drive/Spreadsheet no se ejecutó; requiere entorno Beta aislado.
