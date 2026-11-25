@@ -405,10 +405,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 
 ## GP-LIKE-TRUSTED-ACTOR-01 — identidad autenticada en útiles (2026-11-25)
-**Estado: EN PROGRESO — corrección publicada en código; CI pendiente. Validación remota diferida a Beta.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45633091113 SUCCESS. Validación remota FEEDBACK/CATALOG pendiente en Beta aislada.**
 - Hallazgo: `handleRecordLike()` validaba `userId` y `userName` leyendo copias del payload, aunque FEEDBACK ya había autenticado la sesión e inyectado el actor confiable en `payload.__feedbackActor`.
 - Corrección: la identidad y el nombre usados para deduplicación y actividad se obtienen exclusivamente de `__feedbackActor`; no se solicita al frontend enviar el nombre ni se confía en campos de identidad aportados por el navegador.
 - Regresión añadida: el voto funciona sin `userId/userName` duplicados en el payload y rechaza la suplantación de esos campos cuando contradicen al actor verificado.
 - Pendiente: CI del commit de prueba y comprobación Beta de health/versión del deployment FEEDBACK antes de cualquier invocación de escritura. No se desplegó Apps Script ni se modificaron hojas/datos externos.
 
-- CI inicial `45632826674`: `FeedbackLikeIdempotency` 10/10 PASS y `responsive-browser` SUCCESS; detectó además que `LocalApiEndpoints.mjs` conservaba la URL FEEDBACK anterior. Se alineó el fixture con la URL nueva ya presente en `API_ENDPOINTS.FEEDBACK` (commit `8b20c64b2947dd8827c67a2fb3966492fdf1695e`). Nueva CI pendiente.
+- CI inicial `45632826674` detectó el fixture FEEDBACK desactualizado. Tras alinear `LocalApiEndpoints.mjs`, CI final `45633091113` SUCCESS: 529 suites, 6,270 pruebas PASS, 0 fallos; `FeedbackLikeIdempotency` 10/10, `LocalApiEndpoints` 10/10, `service-tests` y `responsive-browser` SUCCESS. No se invocó Apps Script ni se desplegó FEEDBACK; health/versión y prueba de escritura en `FeedbackLikes` permanecen pendientes de Beta.
