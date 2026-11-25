@@ -37,7 +37,7 @@ function runActionDispatchContractTests(sources) {
         return result;
     }
     function hasFunction_(source, name) {
-        return new RegExp("\\bfunction\s+" + name + "\s*\\(").test(String(source || ""));
+        return new RegExp("\\bfunction\\s+" + name + "\\s*\\(").test(String(source || ""));
     }
     function parseDispatcher_(source, name) {
         const match = String(source || "").match(/switch\s*\(\s*(?:request\.action|action)\s*\)\s*\{([\s\S]*?)\n\s*default\s*:/);
