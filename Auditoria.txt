@@ -33,3 +33,17 @@
 - Corrección: registro automático de imágenes sin uso por lote y consolidación final desde UI; ADMIN valida owner, TTL, estado y allowlist emitida/persistida; revalidación de referencia/Drive e idempotencia por lote; no mover archivos en registro. Reconciliación stale solo en consolidación final.
 - CI 45705928487 SUCCESS: syntax, service regression runner y responsive-browser PASS; test contractual/simulado de owner, allowlist, estados y TTL.
 - Beta real (Drive/Spreadsheet/deployment) pendiente. No hubo cambios en recursos externos.
+
+
+2026-11-25 | GP-DRIVE-AUDIT-RECOVERY-01 — error item fuera de ámbito
+- Severidad: alta; la auditoría aborta al construir el primer resultado y devuelve cero resultados conservados.
+- Ubicación: JS/Services/admin.js, handleAuditDriveImagesInCortesCore_, objeto agregado a auditResults.
+- Evidencia: referenceLocations: Array.isArray(item && item.referenceLocations) evalúa item sin declarar en ese ámbito; el objeto ya recibe la variable referenceLocations válida y repite esa propiedad.
+- Impacto: ReferenceError interrumpe el lote antes de persistir/responder resultados; no hay cursor de continuación útil para ese lote.
+- Corrección: quitar propiedad duplicada fuera de ámbito y mantener mapeo de ubicaciones del snapshot. Regresión aislada añadida; CI pendiente.
+
+2026-11-25 | GP-UTIL-TOGGLE-02 — proyección al reactivar
+- Severidad: media; secuencia event → withdrawn → event para el mismo actor/vehículo/corte podía proyectar delta incorrecto.
+- Ubicación: JS/Services/catalog.js, readFeedbackLikeEventCounts_.
+- Evidencia: el acumulador dejaba completed=true después de una retirada completada y no lo restablecía al encontrar un nuevo evento activo.
+- Corrección: un nuevo estado event restablece completed=false; regresión de secuencia añadida. CI pendiente.
