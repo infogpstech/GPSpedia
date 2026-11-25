@@ -1059,3 +1059,8 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CATALOG: una fila inválida de FeedbackLikes ya no interrumpe la proyección de todos los vehículos; se conserva la fila y se emite advertencia técnica sin exponer identidad.
 - Pruebas de regresión: primer voto con filas inválidas, evento de corte fuera de rango, deduplicación segura del mismo actor y proyección CATALOG con datos mixtos.
 - Validación CI pendiente. Sin llamadas remotas, despliegues Apps Script ni cambios de datos externos.
+
+
+2026-11-25 — Cierre GP-LIKE-FIRST-VOTE-01
+- CI 45541840409: service-tests y responsive-browser SUCCESS. Pages 45541840034: build y deploy SUCCESS.
+- La tarea queda COMPLETADA EN CÓDIGO Y CI. La verificación funcional FEEDBACK/CATALOG en Spreadsheet Beta queda pendiente de entorno aislado y autorización expresa.

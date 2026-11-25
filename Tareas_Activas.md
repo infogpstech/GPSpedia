@@ -230,10 +230,12 @@ Las tareas de implementación frontend se ejecutan antes de retomar las validaci
 
 ## Incidencia GP-LIKE-FIRST-VOTE-01 — error al registrar el primer útil
 
-**Estado: EN PROGRESO — implementación local preparada; CI pendiente.**
+**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-25.**
 
 - Síntoma reportado: al pulsar el botón útil aparece «No se pudo registrar tu reacción. Reintenta», incluso en modelos que no muestran votos útiles.
 - Hallazgo reproducible en el código: FEEDBACK insertaba/confirmaba el evento y después volvía a leer el ledger para calcular el contador. Un evento histórico inválido del mismo vehículo podía hacer fallar ese cálculo y devolver error después de guardar el voto. CATALOG también rechazaba la proyección completa por una sola fila histórica inválida.
 - Corrección: aislar filas históricas inválidas en los conteos de FEEDBACK/CATALOG, conservarlas sin modificarlas y emitir advertencia técnica sin datos personales; calcular el contador antes de la escritura y devolver el valor confirmado esperado tras el append. La deduplicación del mismo actor/vehículo permanece estricta: un evento corrupto que coincide con el actor actual no provoca una segunda inserción.
 - Pruebas añadidas: primer voto con actor histórico inválido, evento con corte inválido de otro actor, rechazo seguro cuando la fila corrupta pertenece al mismo actor y proyección CATALOG con filas inválidas mezcladas con eventos válidos.
-- No se realizan llamadas remotas ni cambios en hojas, datos, deployments, PropertiesService o permisos. La validación de los deployments FEEDBACK/CATALOG permanece pendiente de Beta aislada y autorización expresa.
+- **Evidencia CI:** workflow `45541840409` (service-tests y responsive-browser) SUCCESS; workflow Pages `45541840034` (build y deploy) SUCCESS. Las suites de regresión añadidas y las comprobaciones de navegador finalizaron sin fallos.
+- La validación funcional contra los deployments FEEDBACK/CATALOG y la Spreadsheet Beta sigue diferida; no se realizaron llamadas remotas ni despliegues Apps Script.
+- No se realizaron cambios en hojas, datos, deployments, PropertiesService o permisos.

@@ -674,6 +674,8 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - El propietario reportó que el botón útil falla con «No se pudo registrar tu reacción. Reintenta», incluso cuando el modelo no muestra votos útiles.
 - Hallazgo de código: el handler `handleRecordLike` escribía el evento antes de recalcular el contador. Una fila histórica `event` inválida del mismo vehículo podía provocar una excepción posterior al append; la interfaz mostraba error aunque la escritura ya estuviera confirmada. Además, `readFeedbackLikeEventCounts_` en CATALOG propagaba una fila inválida y podía interrumpir la proyección completa.
 - Corrección preparada en `feedback.js` y `catalog.js`: conteo tolerante a eventos históricos inválidos (se conservan, se omiten de la proyección y se advierte en log); el contador se calcula antes de escribir y se devuelve como valor precomputado + 1 después de confirmar el append. Si la fila inválida coincide con el mismo actor/vehículo, se conserva el rechazo seguro para impedir duplicados.
-- Pruebas de regresión añadidas a `FeedbackLikeIdempotency.mjs` y `FeedbackLikeAppendOnly.mjs`. CI pendiente de ejecución tras publicar el commit.
+- Pruebas de regresión añadidas a `FeedbackLikeIdempotency.mjs` y `FeedbackLikeAppendOnly.mjs`. CI `45541840409`: service-tests y responsive-browser SUCCESS. Pages `45541840034`: build y deploy SUCCESS.
 - Sin llamadas a FEEDBACK/CATALOG remotos, sin despliegues Apps Script y sin modificaciones de Spreadsheet, Drive, PropertiesService, permisos o datos externos.
 - Rama autorizada: `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` sin cambios.
+
+- Cierre local: commit `694ceaf278c2e6410904c7458a8016375a2a29cb` (código y pruebas); CI y Pages aprobados. La rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
