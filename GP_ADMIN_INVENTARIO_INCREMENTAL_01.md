@@ -16,4 +16,10 @@
 7. CI, revisión diff y actualización de registros/checkpoint. Validación Beta real Drive/Spreadsheet/Apps Script diferida; no deployment ni escritura externa durante esta iteración.
 
 ## Estado
-EN PROGRESO — hallazgos documentados; implementación y pruebas aún no verificadas.
+EN PROGRESO — hallazgos documentados y código inicial implementado; CI y revisión de seguridad aún pendientes.
+
+## Implementación inicial (sin cierre)
+- ADMIN admite modo incremental: valida ownership, estado running/complete, TTL y allowlist de IDs de páginas persistidas; operación identificada por auditId + digest del lote. Reconciliación de registros obsoletos y summary de inventario final solo en modo no incremental.
+- Frontend intenta registro por lote inmediatamente tras recibir/persistir cada lote y consolida automáticamente al finalizar. Errores del guardado por lote se informan sin abortar el recorrido; se conserva fallback manual.
+- Test `AdminIncrementalInventory.mjs` integrado al runner, cubre contratos y simulación del validator (ownership, allowlist, estado running/complete, TTL). CI en curso; no afirmar aprobación hasta verificar resultado.
+- Riesgo pendiente de revisión: verificar concurrencia/reintentos de escritura de filas, compatibilidad de resultados/operación global con el organizador, comportamiento de inventario parcial y assertions ejecutadas.
