@@ -1103,3 +1103,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — GP-LIKE-REBUILD-01 CERRADA: pruebas aisladas FeedbackLikeIdempotency y FeedbackLikeAppendOnly ejecutadas contra fuentes recuperadas de la rama y ambas PASS. FEEDBACK y CATALOG pasan compilación sintáctica. Se corrigió el fast path duplicado (sin contador), validación de eventos de corte corrupto y proyección actor+corte. CI remoto no confirmado; no es necesario desplegar Apps Script para cierre. Inicia siguiente tarea GP-DEV-LOG-ERRORS-01.
+
+
+2026-11-25 — GP-DEV-LOG-ERRORS-01: el botón copiar se restringió a mensajes explícitamente clasificados `.log-error`, excluye warning/info/texto falso positivo y entradas vacías. Añadida prueba `DeveloperConsoleErrors.mjs`; contrato estático y selección simulada PASS. CI remoto/runner Node no disponible para ejecución directa; pendiente CI. No se modificaron servicios ni recursos externos.
