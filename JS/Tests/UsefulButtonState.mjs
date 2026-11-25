@@ -2,7 +2,7 @@ import assert from "node:assert/strict";import{readFileSync}from"node:fs";const 
  const start=ui.indexOf("function syncUsefulCount_"),end=ui.indexOf("\n",start);
  assert.ok(start>=0);
  const source=ui.slice(start,end>start?end:ui.indexOf("const usefulQueue_",start));
- const logic=new Function(state.replace(/^export\\s+/gm,"")+"\\nreturn {resolveUsefulDisplayCutIndex,applyOptimisticUsefulState,applyConfirmedUsefulState};")();
+ const logic=new Function(state.replace(/^export\s+/gm,"")+"\nreturn {resolveUsefulDisplayCutIndex,applyOptimisticUsefulState,applyConfirmedUsefulState};")();
  const vehicle={id:"V-1",sourceCorteIndex1:2,sourceCorteIndex2:1,utilCorte1:3,utilCorte2:7};
  assert.equal(logic.resolveUsefulDisplayCutIndex(vehicle,1),2);
  const optimistic=logic.applyOptimisticUsefulState({likedCortes:[],catalogData:{cortes:[vehicle]}},"V-1",1,true);
@@ -15,7 +15,7 @@ import assert from "node:assert/strict";import{readFileSync}from"node:fs";const 
  const usefulButton={textContent:"thumb",icon:"thumb",classList:{contains:()=>false}};
  let selector="";
  const document={querySelectorAll(value){selector=value;return [title,accordion];}};
- const sync=new Function("getState","resolveUsefulDisplayCutIndex","document",source+"\\nreturn syncUsefulCount_;")(
+ const sync=new Function("getState","resolveUsefulDisplayCutIndex","document",source+"\nreturn syncUsefulCount_;")(
   ()=>confirmed,logic.resolveUsefulDisplayCutIndex,document);
  sync("V-1",1);
  assert.ok(selector.includes(".accordion-btn[data-useful-vehicle-id]"));
