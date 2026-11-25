@@ -274,10 +274,10 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Pruebas de contrato y simulaciones de creación, encabezado válido, esquema incompatible y carrera de inserción PASS; `AdminLocalOperationGuard.mjs` PASS. No se activaron guardas adicionales ni se modificaron recursos reales.
 
 ### GP-ADMIN-DRIVE-SCAN-MODAL-01 — Transformar modal de auditoría de cortes a modo escaneo
-**Estado: PENDIENTE DE IMPLEMENTACIÓN.**
-- Al seleccionar «Auditar cortes», no abrir un modal adicional: transformar el modal de auditoría en un espacio de escaneo.
-- Mostrar incrementalmente las imágenes encontradas mientras la consola Developer presenta el avance, sin cerrar el modal para consultar la consola.
-- Validar estados inicial, escaneo, resultados parciales, completado, error, cancelación si existe, scroll y responsive; evitar bloqueo de interfaz.
+**Estado: IMPLEMENTACIÓN PUBLICADA; VALIDACIÓN AUTOMATIZADA PENDIENTE.**
+- Modal de auditoría: se agregó una consola de progreso integrada con estados visuales, aria-live y scroll automático limitado a 250 entradas, reflejando en simultáneo los mensajes enviados a la consola Developer.
+- Los resultados incrementales de imágenes existentes permanecen en la lista complementaria; se delimitó el scroll del resumen/progreso y resultados, y se ajustó el layout a móvil.
+- Prueba contractual nueva: `JS/Tests/AdminDriveScanModal.mjs`. No se ha ejecutado Node ni CI todavía en esta intervención; la validación automatizada queda pendiente de workflow. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
 
 ### GP-LIKE-REBUILD-01 — Reconstruir recordLike ante fallo persistente
 **Estado: PENDIENTE DE IMPLEMENTACIÓN; PRIORIDAD ALTA.**
