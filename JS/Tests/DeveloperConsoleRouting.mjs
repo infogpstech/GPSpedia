@@ -40,7 +40,7 @@ testCase("éxitos, advertencias y errores del panel comparten el mismo registro"
 });
 
 testCase("la copia del registro no abre alertas nativas", () => {
-    assert.ok(copyBlock.includes('log("No se encontraron errores ni advertencias críticas para copiar.")'));
+    assert.ok(copyBlock.includes('log("No se encontraron errores para copiar.")'));
     assert.ok(copyBlock.includes('log("No se pudo copiar el registro: " + err, false, true)'));
     assert.doesNotMatch(copyBlock, /alert\(/);
 });
