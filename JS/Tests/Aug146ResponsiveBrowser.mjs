@@ -308,9 +308,13 @@ try {
       } else if (detailModal) {
         detailModal.classList.remove("visible");
       }
-      // Quitar el display inline del cierre para que mostrarDetalleModal pueda reabrirlo
-      // en la siguiente fase del mismo viewport.
-      if (detailModal) detailModal.style.removeProperty("display");
+      // Dejar el modal realmente cerrado sin un display inline que impida
+      // que mostrarDetalleModal lo vuelva a abrir en la siguiente fase.
+      if (detailModal) {
+        detailModal.classList.remove("visible");
+        detailModal.style.removeProperty("display");
+        detailModal.setAttribute("aria-hidden", "true");
+      }
       // Restablecer el usuario sintético antes de medir el panel Developer.
       window.__aug146State.setState({
         currentUser: {
