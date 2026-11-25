@@ -1136,3 +1136,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — GP-DASH-ACTIVITY-RECENT-01: contención del listener global corregida y prueba `ActivityDashboardRecentInteraction` 6/6 PASS en CI run 45611875173; responsive-browser PASS. Cierre de tarea. Sin backend ni datos externos.
+
+
+2026-11-25 — GP-CATALOG-LIKE-PROJECTION-READ-01: reduce CATALOG lectura del ledger FeedbackLikes a A:C + F, con deduplicación por actor/corte; añadida prueba simulada compact-read. CI pendiente.
