@@ -545,3 +545,39 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - **Alcance:** frontend únicamente. Sin cambios en Apps Script, servicios, datos, registros, URLs ni payloads.
 - **Validación:** la inspección de código confirma la causa y la corrección. La prueba automatizada local/CI y la comprobación visual de dimensiones/reproducción deben quedar registradas según su ejecución; no afirmar validación visual sin navegador real.
 - **Rama:** `GPSpedia2.2.5_work`. La rama protegida `GPSpedia2.2.5` permanece intacta.
+
+
+---
+
+## 2026-11-25 — Prioridades de continuidad solicitadas por el propietario
+
+**Orden obligatorio para los próximos trabajos:**
+
+1. **Útiles FEEDBACK/CATALOG:** garantizar idempotencia por usuario y vehículo, deduplicar eventos históricos, no insertar una segunda fila, no mostrar mensajes de útil repetido y evitar que un evento válido interrumpa la lectura de CATALOG.
+2. **Dashboard de aportes:** unificar filas con el mismo nombre visible aunque los IDs históricos difieran; ejemplo Pablo Peña: 365 + 15 = 380 cortes.
+3. **Vídeo de tutoriales:** utilizar la misma estrategia del iframe del vídeo guía de desarme del modal de corte, ancho completo y alto de 315 px, carga inmediata.
+4. **Encabezado de detalle:** títulos sin saltos innecesarios, logo y modelo alineados por el borde inferior con la misma separación de la línea azul, nombre del modelo móvil +2 px.
+
+### Avance de implementación en la rama de trabajo
+
+- **Útiles:** FEEDBACK ahora valida la identidad y el ID del vehículo antes de escribir; normaliza identidades heredadas; protege la comprobación+append con lock acotado no bloqueante; busca eventos existentes por usuario/vehículo sin distinguir corte; reutiliza la fila pendiente en recuperación; no devuelve texto al usuario en el caso idempotente. CATALOG deduplica por usuario/vehículo y atribuye el primer evento al corte original. Frontend mantiene el estado de útil por vehículo.
+- **Dashboard:** el normalizador frontend agrupa por nombre visible normalizado, sin separar filas por IDs históricos diferentes; suma cortes y aportes.
+- **Vídeo:** iframe del modal tutorial con URL validada, ancho 100 %, alto 315 px, carga no diferida y contenedor no contraíble, siguiendo el tamaño del vídeo guía de desarme.
+- **Encabezado:** título de corte/tutorial sin salto innecesario; logo y nombre alineados abajo respecto de la línea azul; nombre móvil incrementado 2 px.
+- Se añadieron/actualizaron pruebas de regresión de idempotencia, proyección de likes, dashboard, vídeo y encabezado. CI de la revisión final aún debe confirmar el resultado; no declarar aprobadas las pruebas hasta que el workflow termine.
+- No se modificaron deployments Apps Script, URLs, PropertiesService, permisos, hojas ni datos externos. No se realizaron peticiones remotas.
+
+### Archivos principales
+- `JS/Services/feedback.js`, `JS/Services/catalog.js`
+- `JS/Frontend/likeState.js`, `JS/Frontend/ui.js`, `JS/Frontend/activityDashboard.js`, `style.css`
+- `JS/Tests/FeedbackLikeIdempotency.mjs` y suites de likes existentes
+- `JS/Tests/TutorialVideoModalLayout.mjs`, `JS/Tests/CutDetailModalLayout.mjs`, `JS/Tests/ModalHeaderCssCascade.mjs`, `JS/Tests/ActivityDashboardContributions.mjs`
+- `JS/Tests/RunServiceTests.mjs`
+
+### Condiciones de continuidad
+- Las cuatro prioridades anteriores deben retomarse en el siguiente trabajo si el CI o la validación visual siguen pendientes.
+- No cerrar el arreglo de útiles hasta comprobar deduplicación de llamadas repetidas y simultáneas, lectura de CATALOG con más de un evento del mismo actor/vehículo y respuesta sin mensaje visible.
+- La validación de vídeo debe comprobar al menos un tutorial con URL YouTube normal y uno con URL corta/variante, además de verificar el alto efectivo del iframe en escritorio y móvil.
+- MIG-URL-008 continúa pendiente de autorización y entorno Beta aislado; no ejecutar GET remotos ni desplegar servicios.
+- La tarea separada **Actividad reciente** permanece en cola y conserva su límite de solo frontend/presentación.
+- Rama: `GPSpedia2.2.5_work`. Rama protegida `GPSpedia2.2.5`: sin cambios.
