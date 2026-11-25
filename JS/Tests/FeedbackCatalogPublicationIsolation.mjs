@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+const frontendApi = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
+
 const feedback = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
 const helperStart = feedback.indexOf("const FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_");
 const helperEnd = feedback.indexOf("\nfunction doGet(e)", helperStart);
@@ -105,3 +107,32 @@ test("el frontend puede enviar el cambio sin transportar datos arbitrarios", () 
 
 console.log("FeedbackCatalogPublicationIsolation: " + passed + "/14 PASS");
 assert.equal(passed, 14);
+
+
+// Un fallo al publicar el delta de CATALOG no debe invalidar un útil ya confirmado por FEEDBACK.
+const publicationStart = frontendApi.indexOf("async function publishCatalogChangeAfterMutation_(");
+const publicationEnd = frontendApi.indexOf("\nfunction ", publicationStart + 10);
+assert.ok(publicationStart >= 0 && publicationEnd > publicationStart, "Debe existir el publicador frontend de cambios CATALOG.");
+const publicationSource = frontendApi.slice(publicationStart, publicationEnd);
+const makePublisher = routeActionInternal => new Function(
+    "routeActionInternal_", "createCatalogPublicationNonce_", "window", "CustomEvent",
+    publicationSource + "\nreturn publishCatalogChangeAfterMutation_;"
+)(routeActionInternal, () => "test-nonce", undefined, undefined);
+const committedLike = {
+    status: "success", alreadyLiked: false, corteIndex: 1, likeCount: 1,
+    catalogChange: { collection: "cortes", recordId: "100", operation: "upsert" }
+};
+const publishWithCatalogFailure = makePublisher(async () => { throw new Error("CATALOG no disponible"); });
+const preservedLike = await publishWithCatalogFailure(
+    "FEEDBACK", "recordLike", { vehicleId: "100", userId: "7", sessionToken: "synthetic" }, committedLike
+);
+assert.equal(preservedLike.status, "success");
+assert.equal(preservedLike.alreadyLiked, false);
+assert.equal(preservedLike.likeCount, 1);
+assert.equal(preservedLike.catalogSyncPending, true);
+const publishWithCatalogSuccess = makePublisher(async () => ({ status: "success" }));
+const normalLike = await publishWithCatalogSuccess(
+    "FEEDBACK", "recordLike", { vehicleId: "100", userId: "7", sessionToken: "synthetic" }, committedLike
+);
+assert.equal(normalLike, committedLike);
+console.log("FeedbackLikeCatalogFailureIsolation: 2/2 PASS — fallo CATALOG no revierte ni oculta un útil confirmado por FEEDBACK");
