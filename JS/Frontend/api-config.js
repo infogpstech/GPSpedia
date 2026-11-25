@@ -712,7 +712,16 @@ export async function recordVehicleView(vehicleId, utilityCounters = {}, session
 }
 
 export async function recordLike(vehicleId, corteIndex, sessionPayload = {}) {
-    return await routeAction("recordLike", { ...sessionPayload, vehicleId, corteIndex });
+    const payload = { ...sessionPayload, vehicleId, corteIndex };
+    for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+            return await routeAction("recordLike", payload);
+        } catch (error) {
+            if (!error || error.code !== "LIKE_LOCK_BUSY" || attempt === 5) throw error;
+            await new Promise(resolve => setTimeout(resolve, 100 * attempt));
+        }
+    }
+    throw new Error("No se pudo confirmar el registro del útil.");
 }
 
 export async function reportProblem(vehicleId, problemDescription, reportContext = {}, sessionPayload = {}, imageAttachment = null) {
