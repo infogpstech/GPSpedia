@@ -1142,3 +1142,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — GP-LIKE-REBUILD-01: CI run 45612250526 SUCCESS, 525 suites/6239 pruebas/0 fallos; responsive-browser SUCCESS. Contract tests per-cut y URLs corregidos. No despliegues Beta.
+
+
+2026-11-25 — GP-CATALOG-LIKE-PROJECTION-READ-01 completada: CATALOG read-scale reducido a A:C + F. Test 6/6 PASS; CI run 45612534877: 526 suites, 6245 tests, 0 fallos; responsive-browser SUCCESS.
