@@ -8600,12 +8600,17 @@ export async function openAuditDriveModal(options = {}) {
     const modal = document.getElementById('audit-drive-modal');
     if (!modal || !isCurrentRequest()) return;
     const auditOverlayId = 'ui-modal:audit-drive-modal';
-    modal.dataset.gpOverlayHistoryId = auditOverlayId;
-    modal.__gpOverlayClose = () => {
-        auditDriveModalGeneration_ += 1;
+    if (showModal) {
+        modal.dataset.gpOverlayHistoryId = auditOverlayId;
+        modal.__gpOverlayClose = () => {
+            auditDriveModalGeneration_ += 1;
+            modal.style.display = 'none';
+        };
+        modal.style.display = 'flex';
+    } else {
+        // Se conserva el DOM de soporte para el escáner, pero nunca se presenta ni se registra como overlay.
         modal.style.display = 'none';
-    };
-    modal.style.display = 'flex';
+    }
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
     const summaryEl = document.getElementById('audit-drive-summary');

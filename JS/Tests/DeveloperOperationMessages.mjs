@@ -7,7 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const ui = readFileSync(resolve(root, "JS/Frontend/ui.js"), "utf8");
 const addCuts = readFileSync(resolve(root, "HTML/add_cortes.html"), "utf8");
 const replacedStart = ui.indexOf("export async function openReplacedImagesModal()");
-const auditStart = ui.indexOf("export async function openAuditDriveModal()", replacedStart);
+const auditStart = ui.indexOf("export async function openAuditDriveModal(options = {})", replacedStart);
 const auditEnd = ui.indexOf("\nexport const openAboutUs", auditStart);
 const replaced = ui.slice(replacedStart, auditStart);
 const audit = ui.slice(auditStart, auditEnd);
@@ -40,7 +40,7 @@ testCase("el borrado, restauración, movimiento y acciones masivas informan resu
     assert.match(replaced, /fallidas|requieren revisión/);
 });
 
-testCase("la auditoría registra inicio, avance, resultados y errores en la consola del modal", () => {
+testCase("la auditoría registra inicio, avance, resultados y errores en la consola Developer", () => {
     assert.doesNotMatch(audit, /mostrarNotificacion\(|alert\(/);
     const start = audit.indexOf("const runAudit = async (resume) =>");
     const end = audit.indexOf("if (startButton) startButton.onclick", start);

@@ -958,3 +958,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Registrada GP-PYS-VEHICLE-ASSOCIATION-CARD-01: asegurar tarjeta de vinculación al final del carrusel PyS en todos los contextos; tamaño 140×120; reutilizar `openSearchVehicleForPysAssociationModal` y la búsqueda del formulario Agregar Problema.
 - Orden de ejecución: primero auditoría Drive (UI + FindOrCreate + pruebas); después tarjeta PyS. Inspección inicial: la auditoría abre `audit-drive-modal`; `getDriveAuditStateSheet_()` y `getDriveAuditLatestSheet_()` fallan si faltan sus hojas. En PyS la tarjeta ya está implementada para el contexto normal, pero todo el carrusel se oculta cuando `originModal === 'vehicle'`; corregir esa condición y validar tamaño.
 - Sin llamadas a ADMIN, Apps Script, Drive ni Spreadsheet; sin despliegues ni cambios externos.
+
+ 
+## Rectificación CI — GP-ADMIN-DRIVE-AUDIT-HEADLESS-01 (2026-11-25)
+
+- Primer CI del cambio `eb41de7bc1e165e4132a7e9b5114ca618726f9d5`: `AdminDriveAuditSheetsFindOrCreate` 7/7 PASS; responsive-browser PASS.
+- Fallos contractuales detectados: el fixture `AdminDriveAuditGlobalConsole.mjs` asumía una asignación simple de display; se cambia a ramas explícitas visible/headless. `DeveloperOperationMessages.mjs` aún buscaba la firma sin opciones de `openAuditDriveModal`; se alinea al nuevo contrato.
+- MIG021 falló porque el propietario actualizó `API_ENDPOINTS.FEEDBACK` a un deployment nuevo y `LocalApiEndpoints.mjs` conservaba la URL previa. Se actualiza únicamente la expectativa; no se altera ni consulta el endpoint.
+- La prueba de FindOrCreate confirmó 7/7 PASS; el resto de las validaciones locales queda pendiente de CI de seguimiento.
