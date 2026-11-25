@@ -516,3 +516,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Preservar revalidación de referencias, ownership, Drive, historial y controles anti-duplicación; no organizar ni mover archivos durante el registro automático.
 - Reanudación y reintentos idempotentes; registro de resultados/fallos recuperables; reconciliación stale solo cuando la auditoría esté completa.
 - Plan y hallazgos: `GP_ADMIN_INVENTARIO_INCREMENTAL_01.md`. Tests de contrato, seguridad, resiliencia y CI pendientes.
+
+
+## GP-ADMIN-INVENTARIO-INCREMENTAL-01 — cierre local (2026-11-25)
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
+- Registro incremental automático por lote y consolidación final; el frontend mantiene el recorrido y expone estado/fallback si un lote no se confirma.
+- CI run 45705928487 SUCCESS; syntax, regression runner y responsive-browser PASS. Prueba AdminIncrementalInventory integrada.
+- Beta real ADMIN/Drive/Spreadsheet aislada pendiente; sin deployments ni escrituras externas.
