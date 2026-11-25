@@ -279,10 +279,14 @@ try {
         modelBottom: modelRect ? modelRect.bottom : 0,
         dividerTop: dividerRect ? dividerRect.top : 0,
         logoObjectPosition: logo ? getComputedStyle(logo).objectPosition : "",
+        logoTransform: logo ? getComputedStyle(logo).transform : "",
+        logoContainerTransform: logo ? getComputedStyle(logo.parentElement).transform : "",
+        modelTransform: model ? getComputedStyle(model).transform : "",
         modelWhiteSpace: model ? getComputedStyle(model).whiteSpace : "",
         modelFontSize: model ? parseFloat(getComputedStyle(model).fontSize) : 0
       };
     });
+    console.log("CUT_HEADER_GEOMETRY " + profile.name + " " + JSON.stringify(cutHeaderRender));
     check(cutHeaderRender.hasLogo && cutHeaderRender.hasModel && cutHeaderRender.hasDivider,
       profile.name + ": encabezado de corte renderiza logo, modelo y línea azul");
     check(Math.abs(cutHeaderRender.logoBottom - cutHeaderRender.modelBottom) <= 3 &&
