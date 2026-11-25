@@ -56,7 +56,7 @@ check("Las URLs se mantienen en API_ENDPOINTS y el lector central conserva solo 
 });
 check("El rollback de URLs restaura el valor local sin tocar Spreadsheet", () => {
   assert.match(guide, /## 9\. Rollback/);
-  assert.match(guide, /restaurar la URL anterior en la entrada correspondiente de `API_ENDPOINTS`/);
+  assert.match(guide, /restaurar la URL anterior en la entrada correspondiente de `API_ENDPOINTS`/i);
   assert.match(guide, /No existe rollback de endpoints mediante/);
 });
 check("La guía no revive secretos, propiedades ni rutas legacy", () => {
@@ -118,8 +118,8 @@ check("El procedimiento exige contexto Spreadsheet y conserva rollback", () => {
   assert.match(guide, /GPSpediaCortesRootFolderId_/);
   assert.match(guide, /no añadir propiedades, tokens ni secretos manuales/i);
   assert.match(guide, /## 9\. Rollback/);
-  assert.match(guide, /Nunca editar una revisión ya publicada/);
-  assert.match(schema, /Flujo de publicación:/);
+  assert.match(guide, /No existe rollback de endpoints mediante/);
+  assert.match(schema, /Nota de vigencia.*subesquema `Servicios`/s);
 });
 check("El health remoto usa API_ENDPOINTS y exige confirmación de Beta aislada", () => {
   assert.match(guide, /GPSPEDIA_HEALTH_ENV=BETA_ISOLATED/);

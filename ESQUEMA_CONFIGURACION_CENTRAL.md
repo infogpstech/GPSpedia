@@ -1,5 +1,8 @@
 # MIG-007 — Esquema central de configuración de GPSpedia
 
+> **Nota de vigencia (2026-11-25):** este documento conserva el diseño histórico de MIG-007. El subesquema `Servicios`/`endpoint_url` y su publicación central quedaron retirados por MIG-URL. No usar estas secciones para administrar URLs. La fuente operativa de los seis endpoints es `API_ENDPOINTS` en `JS/Frontend/api-config.js`. El lector central activo conserva únicamente parámetros funcionales y recursos; no lee la hoja histórica `Servicios`. Las hojas y registros históricos no se eliminan como parte de esta migración.
+
+
 **Estado:** DISEÑO COMPLETADO — pendiente de implementación en MIG-008  
 **Repositorio:** infogpstech/GPSpedia  
 **Rama de diseño:** GPSpedia2.2.5_work  
