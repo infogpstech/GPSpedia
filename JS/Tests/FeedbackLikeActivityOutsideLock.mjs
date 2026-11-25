@@ -13,7 +13,7 @@ assert.match(handler,/if \(outcome\.created\)[\s\S]*?logLikeActivityAfterAppend_
 const lockStart=source.indexOf("function withFeedbackLikeLock_");
 const lockEnd=source.indexOf("\nfunction ",lockStart+10);
 const lock=source.slice(lockStart,lockEnd);
-assert.match(lock,/lock\.waitLock\(10000\)/);
+assert.match(lock,/lock\.tryLock\(0\)/);
 assert.match(lock,/finally\s*\{\s*lock\.releaseLock\(\)/);
 const activityStart=source.indexOf("function logLikeActivityAfterAppend_");
 const activityEnd=source.indexOf("\nfunction ",activityStart+10);
