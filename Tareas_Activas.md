@@ -282,6 +282,17 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 **Estado: PENDIENTE DE IMPLEMENTACIÓN; PRIORIDAD ALTA.**
 - El error de registro de útil continúa tras la corrección previa. Reanalizar el flujo y reconstruirlo con estrategia distinta si procede.
 - Revisar frontend→FEEDBACK→append/idempotencia→respuesta→actualización CATALOG, contención, timeout, resultado ambiguo y publicación. No convertir un voto confirmado en error aparente ni permitir duplicados actor+vehículo.
-- Mantener un útil por usuario y vehículo, independientemente del corte pulsado; usuarios distintos pueden votar.
+- Mantener un útil por usuario y corte; el mismo usuario puede votar en cortes distintos del vehículo.
 - Añadir pruebas de contrato, simulación de integración, fallos parciales, concurrencia/idempotencia, regresión y UI. Resolver causa, no añadir fallback superficial.
 - No invocar servicios reales ni desplegar Apps Script sin autorización Beta explícita.
+
+
+### Rectificación GP-LIKE-REBUILD-01 — regla funcional por corte (2026-11-25)
+
+- Un usuario puede registrar un útil en cada corte individual del vehículo. Los cortes 1, 2 y 3 son aportes independientes.
+- Repetir el útil en el mismo corte por el mismo usuario debe ser idempotente y silencioso: no insertar otra fila, no mostrar notificación, no emitir mensajes en consola ni advertencias/rechazos visibles.
+- Repetir el útil en un corte diferente del mismo vehículo sí debe registrar el aporte.
+- Solo debe mostrarse el mensaje de error al usuario cuando un útil que aún no está registrado no pueda guardarse por una falla real.
+- El frontend debe mantener estado por clave vehículo+corte y el backend FEEDBACK debe validar unicidad por actor+vehículo+corte bajo concurrencia. CATALOG debe proyectar y contar por corte, preservando votos distintos de un mismo usuario en el mismo vehículo.
+- Se rectifica la regla anterior actor+vehículo global: queda obsoleta y no debe utilizarse como criterio de deduplicación.
+- Estado: EN PROGRESO; implementación y pruebas pendientes. No se ejecutaron deployments ni operaciones con datos Beta.
