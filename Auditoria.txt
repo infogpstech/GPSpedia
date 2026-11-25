@@ -47,3 +47,10 @@
 - Ubicación: JS/Services/catalog.js, readFeedbackLikeEventCounts_.
 - Evidencia: el acumulador dejaba completed=true después de una retirada completada y no lo restablecía al encontrar un nuevo evento activo.
 - Corrección: un nuevo estado event restablece completed=false; regresión de secuencia añadida. CI pendiente.
+
+
+2026-11-25 | Rectificación de análisis — semántica completed en proyección de útiles
+- La hipótesis inicial de que CATALOG debía restablecer completed=false al recibir un nuevo event después de withdrawn fue incorrecta.
+- completed indica que el evento ya fue materializado en el contador base de Cortes. Tras retirar, el ledger aplica -1 sobre ese valor base; al reactivar el mismo evento materializado, debe dejar de aplicar el delta negativo, no sumar un nuevo +1. Restablecer completed causaría doble conteo.
+- El cambio experimental de CATALOG fue revertido; el blob volvió al contenido previo. Commit de reversión: 1ebe3e1ea26a8f3f095b15c98f45935c482fb817.
+- Se conserva la prueba añadida para el caso event → withdrawn → event sin materialización previa; se ampliará cobertura para la secuencia completed → withdrawn → event y el contador base.
