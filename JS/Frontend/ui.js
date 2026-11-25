@@ -9440,6 +9440,25 @@ export async function openAuditDriveModal(options = {}) {
                 appendAuditConsole('No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».', 'success');
             }
             const hasUnusedImages = allFiles.some(file => file.classification === 'Sin uso detectado');
+            if (complete && hasUnusedImages) {
+                try {
+                    const finalUnusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado').map(file => ({ fileId: String(file.fileId) }));
+                    const finalInventory = await routeActionWithRetry('saveUnusedImagesInventory', {
+                        ...getDeveloperSessionPayload(), auditId: auditId, files: finalUnusedFiles
+                    }, { timeoutMs: 90000, maxAttempts: 3, retryDelayMs: 900, shouldContinue: isCurrentRequest });
+                    if (finalInventory && finalInventory.status === 'success' && finalInventory.auditId === auditId &&
+                        Array.isArray(finalInventory.results)) {
+                        inventoryAuditId = auditId;
+                        inventoryOperationId = String(finalInventory.inventoryOperationId || '');
+                        appendAuditConsole('Consolidación final del inventario: ' + Number(finalInventory.savedCount || 0) + ' registros verificados.', 'success');
+                    } else {
+                        appendAuditConsole('No se confirmó la consolidación final automática; los registros por lote se conservan y el proceso manual sigue disponible.', 'warning');
+                    }
+                } catch (finalInventoryError) {
+                    appendAuditConsole('Falló la consolidación final: ' + (finalInventoryError.message || finalInventoryError) + '. Los registros incrementales se conservan.', 'warning');
+                }
+                if (!isCurrentRequest()) return;
+            }
             inventoryStatus = hasUnusedImages ? 'not_saved' : 'saved';
             inventoryMessage = hasUnusedImages
                 ? 'Auditoría completa. El inventario no se ha escrito en Spreadsheet. Usa «Registrar inventario» solo si deseas guardar estas imágenes.'
