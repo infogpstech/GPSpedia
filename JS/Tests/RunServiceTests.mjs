@@ -355,6 +355,7 @@ runGroup('38','INTEGRATION',()=>{
  runCli('P3.1c precarga e invalidación de cachés de actor en WRITE/FEEDBACK/ADMIN','JS/Tests/SessionActorCacheInvalidation.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','JS/Tests/InboxUi.mjs');
  runCli('Dashboard y aportes de cortes por usuario','JS/Tests/ActivityDashboardContributions.mjs');
+ runCli('GP-DASH Actividad reciente: contención de clics y acordeones','JS/Tests/ActivityDashboardRecentInteraction.mjs');
  runCli('GP-DASH-INSIGHTS-01 indicadores, rankings y render seguro','JS/Tests/ActivityDashboardInsights.mjs');
  runCli('Carrusel de vistos recientes optimista','JS/Tests/RecentlyViewedCarousel.mjs');
   runCli('AUG-116 caché de páginas y paginación de Inbox','JS/Tests/InboxCachePagination.js');
