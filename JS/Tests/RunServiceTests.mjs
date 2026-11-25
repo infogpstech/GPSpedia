@@ -586,6 +586,8 @@ runGroup('43','MIG019',()=>{
  runCli('MIG019 idempotencia de útiles por usuario y vehículo','JS/Tests/FeedbackLikeIdempotency.mjs');
  runCli('Frontend sincroniza contador de útil con el módulo activo','JS/Tests/LikeClientCounter.js');
  runCli('Útiles alternan estado de forma idempotente en FEEDBACK','JS/Tests/FeedbackUsefulToggle.mjs');
+ runCli('UI de útiles hidrata estado, contador y terminología','JS/Tests/UsefulButtonState.mjs');
+ runCli('Útiles consolidan cambios rápidos en una sola petición','JS/Tests/UsefulSyncQueue.mjs');
  runCli('MIG019 reintento silencioso de útiles concurrentes','JS/Tests/FeedbackLikeClientRetry.mjs');
   runCli('MIG019 contención del lock de útiles','JS/Tests/FeedbackLikeLockContention.mjs');
  runCli('MIG019 replay de likes completados','JS/Tests/FeedbackLikeCompletedReplayPreflight.mjs');

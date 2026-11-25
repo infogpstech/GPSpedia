@@ -1,6 +1,8 @@
 const activityOutsideHandlers = new WeakMap();
 const ACTIVITY_ACTION_LABELS = Object.freeze({
     like: "Marcó como útil",
+    useful: "Marcó como útil",
+    useful_removed: "Retiró el útil",
     view_vehicle: "Visitó un vehículo",
     suggest_year: "Sugirió un año",
     suggest_year_range_review: "Solicitó revisar los años",
