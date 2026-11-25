@@ -78,3 +78,8 @@
 - Si un modelo coincide con varios IDs de vehículo, el estado se marca ambiguous y se mantiene revisión manual; no se asigna automáticamente.
 - La lectura de inventario expone los campos y la UI muestra asociación, confianza, IDs y filas; el filtro admite folderId, formato y candidatos.
 - El verificador read-back compara los ocho campos de metadata/asociación. Esquema simulado 35 columnas PASS; pruebas de persistencia y asociación añadidas. Node/CI pendiente.
+
+
+2026-11-25 | Incidencia #130 — validación del estado visual de útiles
+- Se amplió UsefulButtonState.mjs: el botón queda deshabilitado hasta hidratar el estado de usuario desde FEEDBACK y el frontend conserva el índice físico original del corte al ordenarlo por popularidad.
+- Ejecución aislada de las ocho comprobaciones del test: 8/8 PASS. Node/CI sigue pendiente.
