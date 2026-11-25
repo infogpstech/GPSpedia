@@ -250,6 +250,7 @@ runGroup('34','CATALOG',()=>{
  runCli('ADMIN guardas temporales de inventario, auditoría y carpeta Cortes','JS/Tests/AdminLocalOperationGuard.mjs');
  runCli('ADMIN inicialización y validación fail-safe del esquema AdminOperationGuards','JS/Tests/AdminOperationGuardsSchema.mjs');
   runCli('ADMIN crea y completa esquemas de auditoría Drive con FindOrCreate seguro','JS/Tests/AdminDriveAuditSheetsFindOrCreate.mjs');
+  runCli('ADMIN registro automático incremental de imágenes sin uso','JS/Tests/AdminIncrementalInventory.mjs');
   runCli('ADMIN reconciliación del journal de imágenes','JS/Tests/AdminImageUploadEventReconciliation.mjs');
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
