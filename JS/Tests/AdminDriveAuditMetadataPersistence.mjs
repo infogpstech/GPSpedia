@@ -7,7 +7,7 @@ assert.ok(start>=0&&end>start,"No se encontró el escritor verificado del invent
 const source=admin.slice(start,end);
 const headers=["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado",
  "origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario",
- "drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"];
+ "drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"];
 const fileId="image-file-id-123456789012345";
 const row=Array(headers.length).fill("");
 const put=(name,value)=>{row[headers.indexOf(name)]=value;};
@@ -25,7 +25,7 @@ let flushes=0;
 const write=new Function("extractDriveFileId","SpreadsheetApp",source+"\nreturn writeDriveInventoryRowVerified_;")(
  value=>String(value||"").replace(/^.*\/d\//,"").replace(/\/view.*$/,""),{flush(){flushes++;}});
 const saved=write(sheet,2,row,headers,fileId,"audit-123","operation-123","sin_uso_detectado","confirmado","pendiente","Cortes/Honda/Civic");
-for(const name of ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"])
+for(const name of ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"])
  assert.equal(saved[headers.indexOf(name)],row[headers.indexOf(name)],name+" no se confirmó en read-back");
 assert.equal(flushes,1);
-console.log("AdminDriveAuditMetadataPersistence: 7/7 PASS");
+console.log("AdminDriveAuditMetadataPersistence: 10/10 PASS");
