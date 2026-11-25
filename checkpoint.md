@@ -560,7 +560,7 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 
 ### Avance de implementación en la rama de trabajo
 
-- **Útiles:** FEEDBACK ahora valida la identidad y el ID del vehículo antes de escribir; normaliza identidades heredadas; protege la comprobación+append con lock acotado no bloqueante; busca eventos existentes por usuario/vehículo sin distinguir corte; reutiliza la fila pendiente en recuperación; no devuelve texto al usuario en el caso idempotente. CATALOG deduplica por usuario/vehículo y atribuye el primer evento al corte original. Frontend mantiene el estado de útil por vehículo.
+- **Útiles:** FEEDBACK ahora valida la identidad y el ID del vehículo antes de escribir; normaliza identidades heredadas; protege la comprobación+append con `tryLock(0)` no bloqueante y el frontend reintenta silenciosamente ante `LIKE_LOCK_BUSY`; busca eventos existentes por usuario/vehículo sin distinguir corte; reutiliza la fila pendiente en recuperación; no devuelve texto al usuario en el caso idempotente. CATALOG deduplica por usuario/vehículo y atribuye el primer evento al corte original. Frontend mantiene el estado de útil por vehículo.
 - **Dashboard:** el normalizador frontend agrupa por nombre visible normalizado, sin separar filas por IDs históricos diferentes; suma cortes y aportes.
 - **Vídeo:** iframe del modal tutorial con URL validada, ancho 100 %, alto 315 px, carga no diferida y contenedor no contraíble, siguiendo el tamaño del vídeo guía de desarme.
 - **Encabezado:** título de corte/tutorial sin salto innecesario; logo y nombre alineados abajo respecto de la línea azul; nombre móvil incrementado 2 px.
