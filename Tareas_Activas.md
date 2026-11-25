@@ -296,3 +296,8 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - El frontend debe mantener estado por clave vehículo+corte y el backend FEEDBACK debe validar unicidad por actor+vehículo+corte bajo concurrencia. CATALOG debe proyectar y contar por corte, preservando votos distintos de un mismo usuario en el mismo vehículo.
 - Se rectifica la regla anterior actor+vehículo global: queda obsoleta y no debe utilizarse como criterio de deduplicación.
 - Estado: EN PROGRESO; implementación y pruebas pendientes. No se ejecutaron deployments ni operaciones con datos Beta.
+
+
+## 4. GP-LIKE-REBUILD-01 — Idempotencia de útiles por corte
+
+**Estado: IMPLEMENTACIÓN EN CÓDIGO; VALIDACIÓN LOCAL/CI PENDIENTE.** Se corrigió la clave de idempotencia para actor+vehículo+corte. Los votos de cortes distintos son independientes; duplicados del mismo corte retornan silenciosamente sin refrescar conteos ni telemetría. CATALOG agrega actor único por corte. Pruebas actualizadas para cubrir segundo corte y duplicado silencioso. La revisión y pruebas reproducibles aún deben completarse antes del cierre. No se desplegaron servicios Apps Script.
