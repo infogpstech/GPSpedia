@@ -1100,3 +1100,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - FEEDBACK filtra eventos y estados previos por corte en la búsqueda de idempotencia; los duplicados del mismo corte retornan sin contador ni telemetría. CATALOG cuenta actores únicos por vehículo+corte. Estado frontend también usa clave vehículo+corte.
 - Tests ajustados para registrar aportes en cortes distintos y repetir silenciosamente un mismo corte. Validación y cierre pendientes de revisión/CI.
 - No se desplegaron Apps Script ni se modificaron recursos externos.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01 CERRADA: pruebas aisladas FeedbackLikeIdempotency y FeedbackLikeAppendOnly ejecutadas contra fuentes recuperadas de la rama y ambas PASS. FEEDBACK y CATALOG pasan compilación sintáctica. Se corrigió el fast path duplicado (sin contador), validación de eventos de corte corrupto y proyección actor+corte. CI remoto no confirmado; no es necesario desplegar Apps Script para cierre. Inicia siguiente tarea GP-DEV-LOG-ERRORS-01.
