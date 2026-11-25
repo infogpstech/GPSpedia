@@ -8783,6 +8783,20 @@ export async function openAuditDriveModal(options = {}) {
                 (file.lastUpdated || 'Fecha no disponible') + ' | Origen: ' + String(file.origin || 'Google Drive · árbol Cortes');
             info.appendChild(name);
             info.appendChild(detailsEl);
+            const relationship = document.createElement('div');
+            relationship.style.cssText = "font-size:0.75rem; color:var(--text-disabled); overflow-wrap:anywhere;";
+            const locations = Array.isArray(file.referenceLocations) ? file.referenceLocations : [];
+            relationship.textContent = locations.length
+                ? "Relación verificada: " + locations.map(location => String(location.sheet || "Hoja") + " · fila " + (Number(location.row) || "?") + " · " + String(location.field || "campo de imagen")).join("; ")
+                : (classification === 'Sin uso detectado' ? "Sin referencia actual; requiere asociación por modelo o revisión." : "Relación de catálogo no detallada en esta pasada.");
+            info.appendChild(relationship);
+            const sourceLink = document.createElement('a');
+            sourceLink.href = String(file.url || ("https://drive.google.com/file/d/" + fileId + "/view"));
+            sourceLink.target = "_blank";
+            sourceLink.rel = "noopener noreferrer";
+            sourceLink.textContent = "Abrir archivo";
+            sourceLink.style.cssText = "font-size:0.75rem;";
+            info.appendChild(sourceLink);
             const badge = document.createElement('span');
             badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
             const badgeColors = {
