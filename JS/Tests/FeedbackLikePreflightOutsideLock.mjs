@@ -69,16 +69,16 @@ test("el lock solo cubre la búsqueda de idempotencia y el append", () => {
     assert.ok(handler.indexOf("findFeedbackVehicleRowForLike_") < lockStart);
     assert.ok(handler.indexOf("ensureFeedbackLikesSheet_") < lockStart);
     assert.doesNotMatch(critical, /findFeedbackVehicleRowForLike_|getFeedbackLikeCountWithEvents_|getSafeSheet/);
-    assert.match(critical, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, legacyActorKey\)/);
+    assert.match(critical, /findFeedbackLikeRowsForActor_\\(ledger, actorKey, vehicleId, corteIndex, legacyActorKey\\)/);
     assert.match(critical, /ledger\.appendRow\(/);
     assert.ok(handler.indexOf("getFeedbackLikeCountWithEvents_") > lockEnd);
     assert.match(extract("withFeedbackLikeLock_"), /tryLock\(0\)/);
     assert.match(extract("withFeedbackLikeLock_"), /finally[\s\S]*releaseLock/);
 });
-test("la unicidad se comprueba por actor y vehículo, no por corte", () => {
+test("la unicidad se comprueba por actor, vehículo y corte", () => {
     const rows = extract("findFeedbackLikeRowsForActor_");
     assert.match(rows, /String\(row\[1\] \|\| ""\)\.trim\(\) !== String\(vehicleId\)/);
-    assert.doesNotMatch(rows, /Number\(row\[2\]\) !== Number\(corteIndex\)/);
+    assert.match(rows, /Number\(row\[2\]\) !== Number\(corteIndex\)/);
 });
 test("la telemetría se registra después de liberar el lock", () => {
     assert.ok(handler.indexOf("const outcome = withFeedbackLikeLock_") < handler.indexOf("if (outcome.created)"));
