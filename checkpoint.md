@@ -297,8 +297,7 @@ Preparar Beta aislada y ejecutar Tareas_Beta.md §19. Primero ejecutar el flujo 
 - Endpoints: el frontend registra por servicio si la URL cambió o permaneció igual. AUTH ahora selecciona exclusivamente la revisión activa, valida la versión de contrato contra el mapa compatible y falla cerrado ante servicios duplicados/faltantes o versión incompatible. En nuevas revisiones se conserva la metadata de auditoría de servicios sin cambios; el historial solo registra los servicios realmente modificados. La instantánea versionada completa de seis servicios y el historial append-only se mantienen.
 - Pruebas: se reforzaron `DeveloperPanelCopy`, `DeveloperPanelUX`, `CutDetailModalLayout`, `DeveloperOperationMessages`, `CentralServiceUrlPublisher`, `DevToolsModalAccessibility`, `SupplementaryVideoContract`, `CortesImageReconciliationUI`, `AdminReplacedImagesIntegrity` y el fixture AUTH.
 - CI run `45486260447`, HEAD `465194319f7e1c8b21aff181afea3142ef8384a9`: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos.
-- GitHub Pages run `45486258242`: SUCCESS sobre el mismo HEAD.
-- Código funcional validado en `465194319f7e1c8b21aff181afea3142ef8384a9` sobre `GPSpedia2.2.5_work`. Los registros de cierre se actualizaron después en `checkpoint.md` y `ChangesLogs.txt`. La rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- GitHub Pages run `45486258242`: SUCCESS sobre el mismo HEAD.- Código funcional validado en `465194319f7e1c8b21aff181afea3142ef8384a9` sobre `GPSpedia2.2.5_work`. Los registros de cierre se actualizaron después en `checkpoint.md` y `ChangesLogs.txt`. La rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
 - No se desplegaron servicios Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos.
 - Pendiente exclusivamente: validación visual con navegador en viewports reales (móvil y escritorio) y prueba de publicación de endpoints en Beta aislada. Sin esa comprobación no se declara validación visual ni remota completada.
 
@@ -598,7 +597,6 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - TutorialVideoModalLayout.mjs: 9/9.
 - CutDetailModalLayout.mjs: 32/32.
 - GitHub Pages workflow 45535275662: build y deploy automáticos SUCCESS para el HEAD de la rama de trabajo. No se ejecutó ningún despliegue Apps Script.
-
 ### Estado por prioridad
 
 1. **Útiles:** implementación local y regresión completadas; validación de comportamiento contra FEEDBACK/CATALOG y Spreadsheet Beta diferida.
@@ -897,8 +895,7 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Corrección: el resultado idempotente de FEEDBACK ahora incluye el contador confirmado, calculado fuera del lock. No agrega otra fila ni repite actividad/telemetría.
 - Se conectó al runner la prueba frontend real `LikeClientCounter.js`, que ahora importa `JS/Frontend/likeState.js`; 6/6 PASS. `FeedbackLikeIdempotency` 10/10 PASS y `FeedbackLikeAppendOnly` 4/4 PASS.
 - CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas aprobadas, 0 fallos; ambos jobs `service-tests` y `responsive-browser` SUCCESS. Pages run `45628972138` SUCCESS.
-- Rama de trabajo HEAD de código: `9ba85463697d91f8a3534836c84bcfad7979e27d`. No se desplegó Apps Script ni se invocó FEEDBACK/CATALOG. La verificación de la Spreadsheet y deployments reales queda pendiente de Beta autorizada.
-- Hallazgo de compatibilidad importante: el contador físico de `Cortes.utilCorteN` no se incrementa en la arquitectura vigente; los eventos se guardan en `FeedbackLikes` y CATALOG proyecta los totales. La versión base sí incrementaba directamente la celda de `Cortes`. Los servicios de la rama de trabajo usan la Spreadsheet proporcionada por el propietario el 2026-11-24, distinta de la que referenciaba la rama base; no se cambió porque está autorizada en NORMAS §17.1. Confirmar que el usuario consulta la Spreadsheet/pestaña correctas en Beta.
+- Rama de trabajo HEAD de código: `9ba85463697d91f8a3534836c84bcfad7979e27d`. No se desplegó Apps Script ni se invocó FEEDBACK/CATALOG. La verificación de la Spreadsheet y deployments reales queda pendiente de Beta autorizada.- Hallazgo de compatibilidad importante: el contador físico de `Cortes.utilCorteN` no se incrementa en la arquitectura vigente; los eventos se guardan en `FeedbackLikes` y CATALOG proyecta los totales. La versión base sí incrementaba directamente la celda de `Cortes`. Los servicios de la rama de trabajo usan la Spreadsheet proporcionada por el propietario el 2026-11-24, distinta de la que referenciaba la rama base; no se cambió porque está autorizada en NORMAS §17.1. Confirmar que el usuario consulta la Spreadsheet/pestaña correctas en Beta.
 
 
 ### GP-LIKE-TRUSTED-ACTOR-01 — 2026-11-25
@@ -1034,3 +1031,13 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - CI run `45705928487` SUCCESS, commit validado `3fd3d34c14cb9af33982273531ff6b59392a934b`: syntax-check, regression service runner y responsive-browser SUCCESS. Test AdminIncrementalInventory integrado.
 - HEAD de rama de trabajo actual en este checkpoint: `37cb3a160771b9a6deae2ca6eca8d514842145c6`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` intacta.
 - Pendiente Beta aislada: deployment ADMIN actualizado, ver biblioteca visible por lote, reintentos idempotentes, fallos parciales/reanudación, referencias cambiantes y organizador. Sin despliegue ni modificación Drive/Spreadsheet real.
+
+## Continuidad — incidencia #130 (2026-11-25)
+
+- El acceso a GitHub se recuperó usando la API de repositorio conforme a NORMAS_DESAROLLO.md §20; no se requiere cambio de configuración del propietario. Se confirmó permiso push en infogpstech/GPSpedia y rama GPSpedia2.2.5_work. La base protegida GPSpedia2.2.5 no fue modificada.
+- Se inspeccionó el escáner ADMIN y se confirmó el ReferenceError `item is not defined` en el objeto de `auditResults` de `handleAuditDriveImagesInCortesCore_`: una propiedad duplicada intentaba leer `item.referenceLocations` fuera de ámbito. Se eliminó esa expresión, conservando el mapeo de `referenceLocations`.
+- Se añadió `JS/Tests/AdminDriveAuditItemReference.mjs` (construcción del resultado con ubicaciones y sin ellas) y se integró en `JS/Tests/RunServiceTests.mjs`.
+- Se detectó que `readFeedbackLikeEventCounts_` en CATALOG no restablecía `completed` cuando el mismo actor reactivaba un útil después de retirarlo. Se corrigió el estado y se amplió `CatalogLikeProjectionReadScale.mjs` con event → withdrawn → event.
+- Commits de código/pruebas: `f740da0e98d40082d6753f6fd3670b0ad113e9f2`, `e1f04981ab99d770b31bdbe4cafefc782b5e173a`, `e4e0e0218e16cdc5ce89d641d81ad38cdbe26590`, `fd629d599197d16705f418edda1f94784c5d5976`, `22850449c06f3e7d6d620c55c48f154481aef509`.
+- Registros actualizados: `Tareas_Activas.md`, `Auditoria.txt`, `ChangesLogs.txt`; issue de seguimiento: https://github.com/infogpstech/GPSpedia/issues/130.
+- CI de los nuevos commits todavía no confirmada; no se presentan como pruebas ejecutadas. Continúa revisión del contador DOM/estado local y auditoría integral de scanner, UI, metadatos y registro incremental. Apps Script/Drive/Spreadsheet real permanece pendiente de Beta aislada; no hubo despliegues ni escrituras externas.
