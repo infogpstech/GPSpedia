@@ -78,4 +78,5 @@ assert.ok(auditUi.includes("if (resumeButton) resumeButton.onclick = () => runAu
 assert.ok(auditUi.includes("const hasResumableCursor = !complete && !!cursor && !resumeUnavailable"),
     "el botón de reanudación sigue dependiendo del cursor válido");
 assert.ok(auditUi.includes("cursor = response.cursor || null"), "se conserva el cursor del servidor");
-if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;\nconsole.log("AdminDriveAuditGlobalConsole: 1/1 PASS — logger global, resultados y reanudación conservados");
+if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;
+console.log("AdminDriveAuditGlobalConsole: 1/1 PASS — logger global, resultados y reanudación conservados");
