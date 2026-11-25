@@ -199,3 +199,30 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 - Por instrucción expresa del propietario, se sustituyeron las URLs locales de CATALOG y FEEDBACK en `JS/Frontend/api-config.js`; las otras cuatro entradas permanecen intactas.
 - Se actualizó el fixture `JS/Tests/LocalApiEndpoints.mjs` para exigir los nuevos valores.
 - Esta actualización no modifica deployments Apps Script. La verificación HTTP de identidad/salud de los seis servicios sigue pendiente de MIG-URL-008 y de la autorización/confirmación de Beta aislada.
+
+---
+
+## Prioridad de implementación solicitada — 2026-11-25
+
+Las tareas de implementación frontend se ejecutan antes de retomar las validaciones Beta diferidas. Las validaciones de deployments, Spreadsheet/Drive reales, reproducción externa y dispositivos físicos se conservan pendientes y no bloquean la implementación local.
+
+### GP-TUTORIAL-DETAIL-COMPACT-01 — Presentación del modal de detalle de tutoriales
+**Estado: EN IMPLEMENTACIÓN. Prioridad inmediata.**
+- Corregir el ancho del título: completo en una línea cuando quepa y máximo dos líneas cuando sea necesario, sin truncar palabras prematuramente.
+- Reducir la imagen aproximadamente al 50 % de su tamaño actual, conservando proporción y centrado.
+- Eliminar el espacio vacío entre título e imagen; reducir la separación entre imagen y vídeo.
+- Compactar «Cómo identificarlo», «Dónde encontrarlo» y «Detalles», separándolos con una línea azul como en los modales de corte y Problemas y Soluciones.
+- Mantener contenido enriquecido seguro, vídeo validado, permisos, edición, guardado y cierre.
+- Alcance exclusivamente frontend/estilos; sin cambios en Apps Script, URLs, contratos, datos ni registros.
+- Añadir pruebas locales. Reproducción real y dispositivos físicos quedan diferidos a Beta.
+
+### GP-DASH-ACTIVITY-RECENT-01 — Presentación de Actividad reciente
+**Estado: PENDIENTE DE IMPLEMENTACIÓN. Siguiente tarea local.**
+- Tabla inicial Fecha/Usuario/Acción; fecha compacta; nombre legible; acciones comprensibles.
+- Sin objetos vacíos ni fragmentos técnicos en el resumen.
+- Acordeón contextual por registro, máximo uno abierto y cierre al hacer clic fuera.
+- Responsive sin scroll horizontal.
+- Solo frontend; preservar orden, límites, filtros y datos recibidos. Sin cambios Apps Script/contratos/payloads.
+- Añadir pruebas locales de normalización, datos incompletos, acordeón y responsive.
+
+**Después de ambas implementaciones:** retomar las validaciones Beta diferidas de útiles FEEDBACK/CATALOG, vídeo YouTube real y MIG-URL-008. No realizar llamadas remotas ni despliegues sin autorización y entorno Beta aislado.

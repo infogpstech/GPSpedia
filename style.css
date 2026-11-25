@@ -6972,3 +6972,21 @@ textarea.rich-text-source[hidden] { display:none !important; }
     min-height: 315px;
     border: 0;
 }
+
+/* GP-TUTORIAL-DETAIL-COMPACT-01 — título completo, imagen reducida y secciones compactas. */
+#modalDetalle[data-modal-type="tutorial"] #detalleCompleto > .tutorial-detail-toolbar {
+ display:flex;align-items:flex-start;gap:8px;box-sizing:border-box;width:100%;min-width:0;padding:0 46px 0 0;margin:0 0 2px;
+}
+#modalDetalle[data-modal-type="tutorial"] .tutorial-detail-title {
+ flex:1 1 0;width:0;min-width:0;max-width:none;margin:0;padding:0;white-space:normal;overflow:hidden;text-overflow:clip;overflow-wrap:normal;word-break:normal;
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;font-size:clamp(1.15rem, 3.5vw, 1.7rem);line-height:1.2;
+}
+#modalDetalle[data-modal-type="tutorial"] .tutorial-detail-header-actions {flex:0 0 auto;margin:0;padding:0;}
+#modalDetalle[data-modal-type="tutorial"] #detalleCompleto > .tutorial-detail-image {
+ display:block;width:50%;max-width:50%;max-height:160px;margin:0 auto 4px;object-fit:contain;
+}
+#modalDetalle[data-modal-type="tutorial"] #detalleCompleto .tutorial-video-container {margin:0 0 4px !important;}
+#modalDetalle[data-modal-type="tutorial"] #detalleCompleto .tutorial-detail-section {
+ margin:6px 0 !important;padding:0 0 6px;border-bottom:2px solid var(--gp-color-accent, #007bff);line-height:1.4;
+}
+#modalDetalle[data-modal-type="tutorial"] #detalleCompleto .tutorial-detail-section:last-child {margin-bottom:0 !important;}

@@ -12220,7 +12220,8 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             const image = document.createElement("img");
             image.alt = item.Tema || "Imagen del tutorial";
             image.loading = "lazy";
-            image.style.cssText = "display:block; width:100%; max-height:320px; object-fit:contain; border-radius:8px; margin-bottom:12px;";
+            image.className = "tutorial-detail-image";
+            image.style.cssText = "display:block; width:50%; max-width:50%; max-height:160px; object-fit:contain; border-radius:8px; margin:0 auto 4px;";
             setOptimizedImage(image, item.Imagen, IMG_SIZE_LARGE);
             cont.appendChild(image);
         }
@@ -12230,7 +12231,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             if (videoEmbedUrl) {
                 const videoContainer = document.createElement("div");
                 videoContainer.className = "tutorial-video-container";
-                videoContainer.style.cssText = "position:relative;display:block;flex:0 0 auto;width:100%;height:315px;min-height:315px;box-sizing:border-box;margin-bottom:12px;overflow:hidden;border-radius:8px;";
+                videoContainer.style.cssText = "position:relative;display:block;flex:0 0 auto;width:100%;height:315px;min-height:315px;box-sizing:border-box;margin:0 0 4px;overflow:hidden;border-radius:8px;";
                 const iframe = document.createElement("iframe");
                 iframe.className = "tutorial-youtube-embed";
                 iframe.src = videoEmbedUrl;
@@ -12251,15 +12252,21 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             }
         }
 
+        const appendTutorialSection = detail => {
+            if (!detail) return;
+            detail.classList.add("tutorial-detail-section");
+            detail.style.margin = "6px 0";
+            cont.appendChild(detail);
+        };
         [
             createDetailParagraph("Cómo Identificarlo", item.comoIdentificarlo, "advanced"),
             createDetailParagraph("Dónde Encontrarlo", item.dondeEncontrarlo, "advanced"),
             createDetailParagraph("Detalles", item.Detalles || item.Descripcion, "advanced")
-        ].forEach(detail => { if (detail) cont.appendChild(detail); });
+        ].forEach(appendTutorialSection);
 
         if (item.Colaborador) {
             const collaborator = createDetailParagraph("Colaborador", item.Colaborador, "advanced");
-            if (collaborator) cont.appendChild(collaborator);
+            appendTutorialSection(collaborator);
         }
     }
 

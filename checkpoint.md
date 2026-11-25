@@ -625,3 +625,12 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - Validación estructural previa a publicación: las seis URLs cumplen HTTPS + `/exec` y sus IDs de deployment son distintos. La prueba automatizada contractual se ejecutará/confirmará después de publicar.
 - No se realizaron solicitudes HTTP, no se modificaron deployments Apps Script ni recursos externos. La identidad y salud remota continúan pendientes de MIG-URL-008, con Beta aislada y autorización expresa.
 - HEAD confirmado antes de esta actualización: `8ee4083aa3561201ce3e0a82be6678d6ee5bcf8c`; rama base protegida sin cambios.
+
+---
+
+## 2026-11-25 — Nueva prioridad de implementación: modal de tutoriales y Actividad reciente
+
+- Nueva tarea GP-TUTORIAL-DETAIL-COMPACT-01: título de tutorial completo en una o dos líneas, imagen a la mitad, espacios compactos y divisores azules.
+- GP-DASH-ACTIVITY-RECENT-01 se establece como siguiente implementación frontend; conserva su alcance sin cambios backend.
+- Por instrucción del propietario, se completan primero las implementaciones locales y después las validaciones Beta diferidas (útiles FEEDBACK/CATALOG, reproducción real y MIG-URL-008).
+- Rama autorizada GPSpedia2.2.5_work; HEAD de partida 7f288008ad29e6e8dd126abeed12fd9408c6c8df. La rama base GPSpedia2.2.5 permanece intacta.

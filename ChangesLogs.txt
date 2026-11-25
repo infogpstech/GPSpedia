@@ -1032,3 +1032,9 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - AUTH, WRITE, UTILITIES y ADMIN, el mapa de acciones y el mecanismo de resolución permanecen sin cambios.
 - Validación estructural: seis endpoints HTTPS de Apps Script con ruta `/exec` y seis IDs únicos.
 - No se realizaron llamadas HTTP ni cambios en deployments, Apps Script, Spreadsheet, permisos o datos externos. La identidad y disponibilidad reales quedan pendientes de MIG-URL-008 en Beta aislada y autorizada.
+
+## 2026-11-25 — Registro de GP-TUTORIAL-DETAIL-COMPACT-01 y reordenamiento
+
+- Se registró la corrección visual del modal de tutoriales: título sin truncamiento prematuro (una línea o máximo dos), imagen al 50 %, espacios compactos y divisores azules.
+- Se registró Actividad reciente del Dashboard como siguiente implementación frontend.
+- Las validaciones Beta diferidas se posponen hasta cerrar las implementaciones locales pendientes.
