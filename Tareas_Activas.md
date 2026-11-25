@@ -525,7 +525,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Beta real ADMIN/Drive/Spreadsheet aislada pendiente; sin deployments ni escrituras externas.
 
 
-## GP-UTIL-TOGGLE-02 + GP-DRIVE-AUDIT-RECOVERY-01 — correcciones observadas por el propietario (2026-11-25)
+## Incidencia #130 — discrepancia de útiles y recuperación de auditoría Drive (2026-11-25)
 **Estado: EN PROGRESO.** Seguimiento: GitHub Issue #130.
 
 ### Alcance y aceptación — útiles
