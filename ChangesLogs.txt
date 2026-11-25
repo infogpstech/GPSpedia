@@ -1197,3 +1197,5 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - `JS/Tests/FeedbackLikeIdempotency.mjs`: añadida cobertura para payload sin campos de identidad duplicados y para campos de identidad falsificados que no deben reemplazar al actor verificado.
 - Commits: `54e9931c6ce5231f33fbcac4d1e592c9c13f9417` (código) y `f33fefc5f554b193a21a981622a732c541b50c18` (prueba).
 - CI y validación remota pendientes. Sin cambios a frontend, endpoints, propiedades Apps Script, permisos, deployments, Spreadsheet, Drive ni datos externos.
+
+- CI inicial `45632826674`: sintaxis PASS, `FeedbackLikeIdempotency` 10/10 PASS y `responsive-browser` SUCCESS; el runner falló únicamente en `LocalApiEndpoints` porque su fixture FEEDBACK conservaba la URL anterior. Se actualizó la expectativa al endpoint ya configurado y autorizado en `api-config.js`. Commit `8b20c64b2947dd8827c67a2fb3966492fdf1695e`; nueva CI pendiente.
