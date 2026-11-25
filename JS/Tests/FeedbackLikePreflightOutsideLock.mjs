@@ -62,7 +62,7 @@ const handler = extract("handleRecordLike", "findFeedbackRowById_");
 test("el handler serializa la búsqueda de duplicados y la inserción", () => {
     assert.match(handler, /withFeedbackLikeLock_\(\(\) =>/);
     assert.match(handler, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId\)/);
-    assert.match(extract("withFeedbackLikeLock_"), /waitLock\(10000\)/);
+    assert.match(extract("withFeedbackLikeLock_"), /tryLock\(0\)/);
     assert.match(extract("withFeedbackLikeLock_"), /finally[\s\S]*releaseLock/);
 });
 test("la unicidad se comprueba por actor y vehículo, no por corte", () => {
