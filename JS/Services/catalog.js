@@ -1232,20 +1232,25 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     const expected = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
     const headers = sheet.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
     if (expected.some((header, index) => headers[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
-    const actorKeysByVehicleCut = new Map();
-    rows.forEach((row, index) => {
-        if (String(row[5] || "") !== "event") return;
+
+    // Solo se recuperan los campos necesarios para la proyección (A:C y F).
+    // Evita transferir las columnas de conteos y timestamps de todo el ledger.
+    const rowCount = sheet.getLastRow() - 1;
+    const identityRows = sheet.getRange(2, 1, rowCount, 3).getValues();
+    const statusRows = sheet.getRange(2, 6, rowCount, 1).getValues();
+    const actorsByVehicleCut = new Map();
+    identityRows.forEach((row, index) => {
+        if (String(statusRows[index] && statusRows[index][0] || "") !== "event") return;
         try {
             const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
             const vehicleId = String(row[1] || "").trim();
             const corteIndex = Number(row[2]);
-            if (!/^[1-9]\d{0,14}$/.test(vehicleId) ||
+            if (!/^[1-9]\\d{0,14}$/.test(vehicleId) ||
                 !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
                 throw new Error("referencia de vehículo o corte inválida");
             }
             const uniqueActorCut = vehicleId + "|" + corteIndex + "|" + actorKey;
-            actorKeysByVehicleCut.set(uniqueActorCut, { vehicleId, actorKey, corteIndex });
+            actorsByVehicleCut.set(uniqueActorCut, { vehicleId, actorKey, corteIndex });
         } catch (invalidEventError) {
             if (typeof console !== "undefined" && typeof console.warn === "function") {
                 console.warn("FeedbackLikes: evento inválido ignorado en fila " + (index + 2) + ": " +
@@ -1253,13 +1258,13 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
             }
         }
     });
-    const actorsByVehicleCut = new Map();
-    actorKeysByVehicleCut.forEach(event => {
+    const actorsByVehicleCutCount = new Map();
+    actorsByVehicleCut.forEach(event => {
         const key = event.vehicleId + "|" + event.corteIndex;
-        if (!actorsByVehicleCut.has(key)) actorsByVehicleCut.set(key, new Set());
-        actorsByVehicleCut.get(key).add(event.actorKey);
+        if (!actorsByVehicleCutCount.has(key)) actorsByVehicleCutCount.set(key, new Set());
+        actorsByVehicleCutCount.get(key).add(event.actorKey);
     });
-    actorsByVehicleCut.forEach((actors, key) => counts.set(key, actors.size));
+    actorsByVehicleCutCount.forEach((actors, key) => counts.set(key, actors.size));
     return counts;
 }
 
