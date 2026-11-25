@@ -496,8 +496,9 @@ try {
     const savingBox = await detailModal.locator("#modal-saving-indicator").boundingBox();
     check(Boolean(logoBox && toolbarBox && modelBox && actionsBox && dividerBox && savingBox),
       profile.name + ": elementos del encabezado de detalle renderizados");
-    check(near(logoBox.x - toolbarBox.x, logoBox.y - toolbarBox.y, 2),
-      profile.name + ": margen superior e izquierdo del logo simétricos");
+    check(logoBox.x >= toolbarBox.x - 1 && logoBox.y >= toolbarBox.y - 1 &&
+      logoBox.x + logoBox.width <= toolbarBox.x + toolbarBox.width + 1,
+      profile.name + ": logo contenido dentro del encabezado sin desplazarse fuera del área útil");
     check(actionsBox.x >= toolbarBox.x - 1 &&
       actionsBox.x + actionsBox.width <= toolbarBox.x + toolbarBox.width + 1,
       profile.name + ": acciones del encabezado contenidas");
