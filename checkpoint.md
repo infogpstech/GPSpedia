@@ -926,3 +926,6 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - No se invocaron endpoints CATALOG/FEEDBACK, no se desplegaron Apps Script ni se modificaron Spreadsheet/Drive/PropertiesService/permisos/datos externos.
 - Validaciones locales/CI y publicación de este cambio: pendientes de ejecutar/verificar.
 - Siguiente acción: ejecutar suites `FeedbackLikeIdempotency`, `CatalogFeedRetry`, `CatalogRequestRetry`, sintaxis y CI; revisar diff y verificar HEAD remoto. Validación real de deployments permanece diferida a Beta aislada autorizada.
+
+
+- CI run `45637878671` (commit `311b09e4b1db19699d4325c81cb55d43920f076e`): sintaxis PASS; `FeedbackLikeIdempotency` PASS; `CatalogFeedRetry` 11/11 PASS; `CatalogRequestRetry` 8/8 PASS; Chromium responsive PASS. Suite global: 470 suites, 5,644 pruebas PASS y 2 suites fallidas por una assertion legacy que exigía la expresión regex anterior (`FeedbackLikePreflightOutsideLock`, también invocada bajo MIG019). No es fallo del nuevo comportamiento; se actualiza el contrato para comprobar el helper y el límite `Number.isSafeInteger`.

@@ -1203,3 +1203,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 2026-11-25 — GP-LIKE-VALIDATION-16DIGIT-01: se alinea el validador FEEDBACK de IDs de vehículo con el rango de enteros positivos seguros permitido por el asignador de WRITE; se añaden pruebas de ID máximo seguro y rechazo fuera de rango.
 2026-11-25 — GP-CATALOG-REQUEST-BUDGET-01: se elimina el timeout exterior de 8 s que interrumpía los tres intentos internos del feed; la cancelación del ciclo sigue propagándose y los timeouts por intento permanecen en catalogRequest.js.
+
+
+2026-11-25 — CI run 45637878671: sintaxis, suites focales de likes/catalog y Chromium responsive aprobaron; 2 fallos de regresión provenían de assertion obsoleta que inspeccionaba la regex anterior. Se alinea `FeedbackLikePreflightOutsideLock.mjs` al validador explícito y al rango seguro.
