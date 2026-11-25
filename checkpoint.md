@@ -774,3 +774,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Estrategia normativa §20: recuperación vía GitHub API cuando CLI/network local falla; runners CI para test reproducible; runner aislado/mock si el runner original falla, evitando declarar CI PASS ficticio. No bloquear tarea por CI si pruebas locales aisladas pertinentes aprobadas; no omitir fallos reproducibles.
 
 - CI posterior (45610558471): DriveScanModal 7/7 PASS; contrato histórico falló por `document` no definido en runner Node (fixture no modelaba el panel agregado). Se ajustó `AdminDriveAuditGlobalConsole.mjs` con DOM mock mínimo para verificar el mirror sin navegador. Commit 4acae1e078c55aa56721c741c551d962fec7557c. Otras cuatro fallas del suite no relacionadas: FEEDBACK/CATALOG/MIG019 assertions de patrón de like y MIG021 URLs; siguen identificadas aparte.
+
+
+## Cierre GP-ADMIN-DRIVE-SCAN-MODAL-01 — 25-11-2026
+
+- Validación CI run 45611120099: AdminDriveScanModal 7/7 PASS; AdminDriveAuditGlobalConsole 1/1 PASS; browser-responsive AUG-146 PASS (no es browser test específico del modal). Cierre de contrato local/CI.
+- Regresión global: 378 suites, 4693 tests aprobados, cinco suites fallidas: FEEDBACK preflight/CATALOG replay y MIG019 con patrones de idempotencia actor+vehículo obsoletos frente a corte-index; BETA-032 DeveloperConsoleRouting con assertion obsoleta de copy log; MIG021 URL contract. Aislar y actualizar pruebas contractuales coherentes, no cambiar producto para satisfacer expectativas obsoletas.
+- Modal: panel integrado aria-live, mirror Developer, entradas seguras, límite 250, resultados incrementalmente visibles y scroll responsive. No Apps Script/Beta.
+- Siguiente trabajo: reconciliar/validar GP-LIKE-REBUILD-01 y rectificación por corte; actualizar contratos obsoletos (ya identificados por CI).
