@@ -34,7 +34,7 @@ La configuración local debe reproducir el patrón de la rama protegida `GPSpedi
 ## Nuevas solicitudes del propietario — 2026-11-25
 
 ### GP-ADMIN-DRIVE-AUDIT-HEADLESS-01 — Ejecutar auditoría desde Developer sin abrir modal
-**Estado: EN PROGRESO.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45644997410 SUCCESS.**
 - El botón **Auditar Cortes** del modal Desarrollador debe iniciar el escaneo directamente, sin mostrar ni abrir el modal independiente `audit-drive-modal`.
 - Todo el avance, lotes, conteos, advertencias y errores deben enviarse a la consola global Developer con el prefijo `[AUDITORÍA DRIVE]`. No depender de que el modal de auditoría esté visible.
 - Conservar el escaneo recursivo, la paginación/cursor, la persistencia local, la reanudación, los resultados y las restricciones existentes. No convertir el proceso en una operación destructiva.
@@ -43,9 +43,10 @@ La configuración local debe reproducir el patrón de la rama protegida `GPSpedi
 - Pruebas: creación de ambas hojas, inicialización de hojas vacías, reparación de encabezados faltantes sin pérdida de datos, rechazo de encabezado incompatible/datos bajo columna sin nombre, carrera de creación, logger global con modal oculto, auto-inicio y conservación de cursor/reanudación.
 - Archivos previstos: `JS/Services/admin.js`, `JS/Frontend/ui.js`, `JS/Tests/AdminDriveAuditGlobalConsole.mjs`, nuevas pruebas de esquema/FindOrCreate y `JS/Tests/RunServiceTests.mjs`; registros operativos.
 - No ejecutar ADMIN remoto, Apps Script, Drive ni Spreadsheet real. Validación de permisos y creación real de hojas queda pendiente de Beta autorizada.
+- **Cierre local:** `JS/Frontend/ui.js` ejecuta la auditoría en modo headless desde Developer; la consola global conserva avance/resultados/errores y el escáner mantiene la reanudación por cursor. `JS/Services/admin.js` crea `DriveAuditRuns` y `DriveAuditLatest`, completa encabezados solo cuando las celdas están vacías y rechaza esquemas incompatibles o datos sin encabezado. `AdminDriveAuditSheetsFindOrCreate` 7/7 PASS. CI run `45644997410`: 530 suites, 6,279 pruebas PASS, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. Validación real de ADMIN/Drive/Spreadsheet y permisos queda pendiente de Beta autorizada.
 
 ### GP-PYS-VEHICLE-ASSOCIATION-CARD-01 — Mostrar tarjeta para vincular vehículos en detalle PyS
-**Estado: PENDIENTE (siguiente tarea, tras cerrar GP-ADMIN-DRIVE-AUDIT-HEADLESS-01).**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45646432576 SUCCESS.**
 - En el modal de detalle de Problemas y Soluciones debe mostrarse al final del carrusel de vehículos relacionados una tarjeta para vincular otro vehículo, también cuando el detalle se abre desde un modal de vehículo.
 - La tarjeta debe tener exactamente las mismas dimensiones que las tarjetas relacionadas (140 × 120 px conforme al contrato CSS actual), alineación y comportamiento horizontal del carrusel.
 - Al pulsarla debe abrir el formulario existente `openSearchVehicleForPysAssociationModal`; no reconstruirlo ni duplicar su lógica. Conservar la búsqueda por marca/modelo/versión, selección múltiple, exclusión de relaciones ya existentes, confirmación y acción backend `addVehicleToProblem`.
@@ -54,6 +55,7 @@ La configuración local debe reproducir el patrón de la rama protegida `GPSpedi
 - Pruebas: tarjeta visible en detalle normal y cuando `originModal === 'vehicle'`, posición final, dimensiones exactas, llamada al formulario existente, exclusión de vehículos ya vinculados, búsqueda reutilizada y retorno/actualización de contexto.
 - Archivos previstos: `JS/Frontend/ui.js`, estilos solo si hacen falta, `JS/Tests/PysModalNavigation.js` y prueba específica si procede, runner y registros.
 - No modificar backend ni contratos si la ruta existente satisface el flujo. Validación visual de navegador real puede diferirse a Beta; contratos y regresión local son obligatorios.
+- **Cierre local:** se retiró la condición que ocultaba el carrusel al abrir PyS desde un vehículo; la tarjeta final **Vincular vehículo** tiene dimensiones explícitas 140 × 120 px y abre `openSearchVehicleForPysAssociationModal`, con fallback de ID `id_problem`/`id`. El formulario reutiliza la búsqueda compartida `filterPysVehicleCatalog_` del formulario Agregar Problema y recibe IDs relacionados normalizados para evitar errores si llegan como texto. `PysModalNavigation` 13/13 PASS. CI run `45646432576`: 530 suites, 6,285 pruebas PASS, 0 fallos; `service-tests`, `responsive-browser` y Pages SUCCESS. La comprobación visual funcional con datos Beta queda pendiente.
 
 ## Orden de ejecución
 
