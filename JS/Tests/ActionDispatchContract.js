@@ -76,7 +76,7 @@ function runActionDispatchContractTests(sources) {
     const api = String(input.apiConfig || "");
     let actionMap = {}, compatibility = {}, external = {}, dispatchers = {};
     const endpointBlock = api.match(/export\s+const\s+API_ENDPOINTS\s*=\s*Object\.freeze\(\{([\s\S]*?)\n\}\);/);
-    assert.ok(endpointBlock, "No se encontró API_ENDPOINTS local.");
+    assert_(!!endpointBlock, "No se encontró API_ENDPOINTS local.");
     const requiredEndpoints = [...endpointBlock[1].matchAll(/^\s*([A-Z]+):/gm)].map(x => x[1]);
     const endpoints = requiredEndpoints;
     const consumerActions = parseConsumers_(input.consumerSources || {});
