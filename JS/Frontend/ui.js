@@ -8494,8 +8494,8 @@ export async function openReplacedImagesModal() {
             const info = document.createElement("div"); info.className = "replaced-image-info";
             const title = document.createElement("strong"); title.className = "replaced-image-name"; title.textContent = rep.nombre_archivo || (isCandidate ? "Imagen candidata de aporte" : isUnused ? "Imagen sin uso detectado" : (rep.referencia_texto || "Imagen reemplazada"));
             const typeLabel = document.createElement("span"); typeLabel.className = "replaced-image-type " + (isCandidate ? "is-candidate" : isUnused ? "is-unused" : "is-replaced"); typeLabel.textContent = isCandidate ? "Candidato de aporte" : isUnused ? "Sin uso detectado" : "Reemplazada";
-            const details = document.createElement("span"); details.className = "replaced-image-details"; details.textContent = (rep.tipo_mime || "Imagen") + " · ID: " + (rep.archivo_drive_id || "No disponible") + (rep.campo ? " · Campo: " + rep.campo : "");
-            const location = document.createElement("span"); location.className = "replaced-image-details"; location.textContent = "Ubicación: " + (rep.ubicacion_actual || rep.ubicacion_original || "No disponible");
+            const details = document.createElement("span"); details.className = "replaced-image-details"; details.textContent = (rep.tipo_mime || "Imagen") + " · Formato: " + (rep.formato_archivo || "No disponible") + " · Tamaño: " + (Number(rep.tamano_bytes) || 0) + " bytes · ID: " + (rep.archivo_drive_id || "No disponible") + " · Carpeta ID: " + (rep.drive_folder_id || "No disponible") + (rep.campo ? " · Campo: " + rep.campo : "");
+            const location = document.createElement("span"); location.className = "replaced-image-details"; location.textContent = "Ubicación: " + (rep.ubicacion_actual || rep.ubicacion_original || "No disponible") + (rep.fecha_modificacion_drive ? " · Modificada: " + rep.fecha_modificacion_drive : "");
             const dateDetails = document.createElement("span"); dateDetails.className = "replaced-image-details"; dateDetails.textContent = (isUnused ? "Detectada: " + (rep.fecha_deteccion || "Fecha no disponible") : "Reemplazada: " + (rep.fecha_reemplazo || "Fecha no disponible"));
             const statusText = document.createElement("span"); statusText.className = "replaced-image-status"; statusText.textContent = "Estado: " + statusLabel;
             const organizationDetails = document.createElement("span"); organizationDetails.className = "replaced-image-details";
@@ -10158,7 +10158,9 @@ export async function openAuditDriveModal(options = {}) {
                     (Array.isArray(item.candidates) ? item.candidates : []).forEach(candidate => {
                         const line = document.createElement("p");
                         line.textContent = String(candidate.category || "") + " / " + String(candidate.brand || "") + " / " +
-                            String(candidate.model || "") + " · señales: " + (Array.isArray(candidate.signals) ? candidate.signals.join(", ") : "");
+                            String(candidate.model || "") + " · vehículo(s): " + (Array.isArray(candidate.vehicleIds) ? candidate.vehicleIds.join(", ") : "No determinado") +
+                            " · fila(s): " + (Array.isArray(candidate.rows) ? candidate.rows.join(", ") : "No determinada") +
+                            " · señales: " + (Array.isArray(candidate.signals) ? candidate.signals.join(", ") : "");
                         card.appendChild(line);
                     });
                     const note = document.createElement("p");
