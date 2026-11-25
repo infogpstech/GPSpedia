@@ -1233,7 +1233,7 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     const headers = sheet.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
     if (expected.some((header, index) => headers[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
-    const firstCutByVehicleActor = new Map();
+    const actorKeysByVehicleCut = new Map();
     rows.forEach((row, index) => {
         if (String(row[5] || "") !== "event") return;
         try {
@@ -1244,10 +1244,8 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
                 !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
                 throw new Error("referencia de vehículo o corte inválida");
             }
-            const uniqueActorVehicle = vehicleId + "|" + actorKey;
-            if (!firstCutByVehicleActor.has(uniqueActorVehicle)) {
-                firstCutByVehicleActor.set(uniqueActorVehicle, { vehicleId, actorKey, corteIndex });
-            }
+            const uniqueActorCut = vehicleId + "|" + corteIndex + "|" + actorKey;
+            actorKeysByVehicleCut.set(uniqueActorCut, { vehicleId, actorKey, corteIndex });
         } catch (invalidEventError) {
             if (typeof console !== "undefined" && typeof console.warn === "function") {
                 console.warn("FeedbackLikes: evento inválido ignorado en fila " + (index + 2) + ": " +
@@ -1256,7 +1254,7 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
         }
     });
     const actorsByVehicleCut = new Map();
-    firstCutByVehicleActor.forEach(event => {
+    actorKeysByVehicleCut.forEach(event => {
         const key = event.vehicleId + "|" + event.corteIndex;
         if (!actorsByVehicleCut.has(key)) actorsByVehicleCut.set(key, new Set());
         actorsByVehicleCut.get(key).add(event.actorKey);
