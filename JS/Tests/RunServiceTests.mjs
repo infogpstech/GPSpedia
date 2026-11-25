@@ -248,6 +248,7 @@ runGroup('34','CATALOG',()=>{
  runCli('FEEDBACK snapshots versionados y publicación fuera del ScriptLock','JS/Tests/FeedbackCatalogPublicationIsolation.mjs');
  runCli('ADMIN snapshots de catálogo versionados y publicación fuera del ScriptLock','JS/Tests/AdminCatalogPublicationIsolation.mjs');
  runCli('ADMIN guardas temporales de inventario, auditoría y carpeta Cortes','JS/Tests/AdminLocalOperationGuard.mjs');
+ runCli('ADMIN inicialización y validación fail-safe del esquema AdminOperationGuards','JS/Tests/AdminOperationGuardsSchema.mjs');
   runCli('ADMIN reconciliación del journal de imágenes','JS/Tests/AdminImageUploadEventReconciliation.mjs');
  runCli('CATALOG telemetría local no bloqueante y segura','JS/Tests/CatalogTrafficTelemetry.mjs');
  runCli('CATALOG proyección determinista del ledger de aportes por vehículo','JS/Tests/VehicleContributionProjection.mjs');
@@ -371,6 +372,7 @@ runGroup('38','INTEGRATION',()=>{
   runCli('Modal Tutorial: iframe YouTube y dimensiones del vídeo guía','JS/Tests/TutorialVideoModalLayout.mjs');
  runCli('CSS modales informativos: base única, cierre y variantes de tema','JS/Tests/InfoModalStyleCascade.mjs');
  runCli('CSS encabezados Inbox y Developer Tools agrupados','JS/Tests/ModalHeaderCascade.mjs');
+ runCli('Developer Console copia únicamente errores clasificados','JS/Tests/DeveloperConsoleErrors.mjs');
  runCli('BETA-032 enrutamiento central de mensajes Developer','JS/Tests/DeveloperConsoleRouting.mjs');
  runCli('BETA-033 confirmaciones normalizadas en consola Developer','JS/Tests/DeveloperConsoleConfirmation.mjs');
  runCli('BETA-034 mensajes de operaciones Developer centralizados','JS/Tests/DeveloperOperationMessages.mjs');
