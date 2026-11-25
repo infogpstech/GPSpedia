@@ -150,7 +150,7 @@ Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del
 
 ## Solicitudes del propietario — prioridades de continuidad (25-11-2026)
 
-Esta sección consolida el estado vigente y prevalece sobre los apuntes históricos anteriores que todavía indiquen MIG-URL-002 o MIG-URL-003 como tarea activa. MIG-URL-001..007 están cerradas; MIG-URL-008 permanece pendiente de autorización para validar endpoints Beta aislados. La corrección de integridad de útiles se atiende como prioridad crítica sin realizar llamadas ni cambios en deployments externos.
+Esta sección consolida el estado vigente y prevalece sobre los apuntes históricos anteriores que todavía indiquen MIG-URL-002 o MIG-URL-003 como tarea activa. MIG-URL-001..007 están cerradas; MIG-URL-008 permanece pendiente de autorización para validar endpoints Beta aislados. La corrección de integridad de útiles se atiende como prioridad crítica sin realizar llamadas ni cambios en deployments Apps Script externos.
 
 ### Prioridad 1 — Útiles: idempotencia por usuario/vehículo y estabilidad de CATALOG
 **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — CI 45535275807: 523 suites, 6,206 pruebas, 0 fallos. Validación funcional de los deployments Apps Script/Spreadsheet Beta pendiente.
