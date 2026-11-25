@@ -679,3 +679,16 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - Rama autorizada: `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` sin cambios.
 
 - Cierre local: commit `694ceaf278c2e6410904c7458a8016375a2a29cb` (código y pruebas); CI y Pages aprobados. La rama base continúa en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+---
+
+## Rectificación de diagnóstico — GP-LIKE-FIRST-VOTE-01 (2026-11-25)
+
+La hipótesis de eventos históricos inválidos no era suficiente para explicar el síntoma reportado. La revisión de historial identificó el cambio `ac8c6e8a374c75038f93970face78b8d99bdda69`: `withFeedbackLikeLock_` pasó de `tryLock(10000)` a `tryLock(0)`. El backend devuelve `LIKE_LOCK_BUSY` si otra ejecución que comparte el ScriptLock de FEEDBACK lo mantiene; el frontend realiza cinco reintentos de 100, 200, 300 y 400 ms. Si la contención supera esa ventana, el voto no llega a consultar ni insertar en `FeedbackLikes` y la interfaz presenta el error genérico. El mismo ScriptLock se comparte con `withYouTubeUploadReservationLock_`.
+
+La implementación anterior además mantenía dentro de la sección crítica la localización del vehículo, lecturas de contador, búsqueda de eventos y confirmación de lectura posterior, ampliando la contención. La agrupación/deduplicación de eventos en CATALOG es una proyección de lectura separada: no es el mecanismo que rechaza el append de FEEDBACK. Sin embargo, CATALOG todavía carga la hoja `FeedbackLikes` completa en cada lectura de catálogo sin caché; la agrupación en memoria no elimina ese coste de lectura y debe evaluarse por separado para el límite de escala.
+
+Se prepara la corrección para sacar del lock la localización/preparación y el conteo, dejando dentro únicamente la búsqueda idempotente actor+vehículo y el append/flush. El conteo y telemetría se ejecutan después; un fallo de lectura no convierte un append confirmado en error. Se amplían pruebas para simular lock ocupado y verificar que no se escribe, así como primer voto, repetición mismo usuario/vehículo y usuarios distintos. CI pendiente de la corrección.
+
+La corrección previa `694ceaf` permanece como endurecimiento de tolerancia a eventos históricos, pero no se considera evidencia suficiente de que se haya resuelto la causa principal de contención. No se han invocado servicios remotos ni desplegado Apps Script.

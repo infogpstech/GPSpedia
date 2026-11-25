@@ -1064,3 +1064,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 2026-11-25 — Cierre GP-LIKE-FIRST-VOTE-01
 - CI 45541840409: service-tests y responsive-browser SUCCESS. Pages 45541840034: build y deploy SUCCESS.
 - La tarea queda COMPLETADA EN CÓDIGO Y CI. La verificación funcional FEEDBACK/CATALOG en Spreadsheet Beta queda pendiente de entorno aislado y autorización expresa.
+
+
+2026-11-25 — Rectificación GP-LIKE-FIRST-VOTE-01: contención de idempotencia
+- Hallazgo: el ScriptLock global de FEEDBACK se adquiere con tryLock(0); si otra ejecución lo mantiene, el voto se rechaza antes de leer/escribir FeedbackLikes. El frontend solo reintenta cinco veces durante una ventana aproximada de un segundo. La sección crítica anterior también incluía localización del vehículo, preparación del ledger y conteo.
+- Corrección en curso: preflight y conteo fuera del lock; dentro quedan búsqueda autoritativa actor+vehículo, recuperación mínima de pendientes y append/flush. El conteo/telemetría posteriores no convierten un append confirmado en error.
+- Se añade prueba de contención simulada y cobertura de primer voto, duplicado y usuario distinto. CI pendiente.
+- La lectura completa de FeedbackLikes en CATALOG sigue siendo un coste de escala separado; la agrupación en memoria no reduce el volumen leído.

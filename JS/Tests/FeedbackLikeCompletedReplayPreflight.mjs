@@ -17,7 +17,7 @@ function test(name, callback) { callback(); passed++; console.log("PASS " + name
 
 test("el replay existente se comprueba dentro del lock antes de insertar", () => {
     assert.match(handler, /withFeedbackLikeLock_\(\(\) =>/);
-    assert.ok(handler.indexOf("findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId)") <
+    assert.ok(handler.indexOf("findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, legacyActorKey)") <
         handler.indexOf('ledger.appendRow([actorKey, vehicleId, corteIndex, 0, 0, "event"'));
 });
 test("cualquier evento previo del mismo usuario y vehículo evita una nueva fila", () => {

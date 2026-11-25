@@ -9,7 +9,7 @@ function extract(name) {
     return source.slice(start, end);
 }
 const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
-function makeHarness(seedRows = []) {
+function makeHarness(seedRows = [], options = {}) {
     const cutsRows = [Array(42).fill("header"), Array(42).fill("")];
     cutsRows[1][0] = "100";
     cutsRows[1][11] = "Corte de ignición";
@@ -17,7 +17,8 @@ function makeHarness(seedRows = []) {
     cutsRows[1][18] = "Corte de bomba";
     cutsRows[1][23] = 0;
     const ledgerRows = [headers.slice(), ...seedRows.map(row => row.slice())];
-    const state = { waits: 0, releases: 0, activities: 0, flushes: 0 };
+    const state = { waits: 0, releases: 0, activities: 0, flushes: 0, lockHeld: false };
+    const lockAvailable = options.lockAvailable !== false;
     function sheet(rows) {
         return {
             getLastRow: () => rows.length,
@@ -60,16 +61,16 @@ function makeHarness(seedRows = []) {
     const cuts = sheet(cutsRows), ledger = sheet(ledgerRows);
     const dependencies = {
         LockService: { getScriptLock: () => ({
-            tryLock(ms) { assert.equal(ms, 0); state.waits++; return true; },
-            releaseLock() { state.releases++; }
+            tryLock(ms) { assert.equal(ms, 0); state.waits++; if (!lockAvailable) return false; state.lockHeld = true; return true; },
+            releaseLock() { state.lockHeld = false; state.releases++; }
         }) },
         Utilities: { DigestAlgorithm: { SHA_256: "SHA_256" }, Charset: { UTF_8: "UTF_8" },
             computeDigest: (_algorithm, value) => Array.from(Buffer.from(String(value)).subarray(0, 32)) },
         SpreadsheetApp: { flush() { state.flushes++; } },
         SHEET_NAMES: { CORTES: "Cortes" },
         COLS_CORTES: { id:1, tipoCorte1:12, utilCorte1:17, tipoCorte2:19, utilCorte2:24, tipoCorte3:26, utilCorte3:31 },
-        getSafeSheet: () => cuts,
-        getSpreadsheet: () => ({ getSheetByName: name => name === "FeedbackLikes" ? ledger : null }),
+        getSafeSheet: () => { assert.equal(state.lockHeld, false, "La localización del vehículo debe quedar fuera del lock."); return cuts; },
+        getSpreadsheet: () => { assert.equal(state.lockHeld, false, "La preparación del ledger debe quedar fuera del lock."); return { getSheetByName: name => name === "FeedbackLikes" ? ledger : null }; },
         logUserActivity() { state.activities++; },
         state, cutsRows, ledgerRows
     };
@@ -105,6 +106,16 @@ assert.equal(h.state.waits, 4);
 assert.equal(h.state.releases, 4);
 assert.equal(h.state.activities, 2, "Solo los útiles nuevos generan actividad.");
 assert.ok(h.ledgerRows.slice(1).every(row => row[5] === "event"));
+const busy = makeHarness([], { lockAvailable: false });
+assert.throws(() => busy.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" }),
+    error => error && error.code === "LIKE_LOCK_BUSY");
+assert.equal(busy.ledgerRows.length, 1, "La contención no debe insertar un voto sin comprobar idempotencia.");
+const countReadFailure = makeHarness();
+countReadFailure.cutsRows[1][16] = "contador-no-numérico";
+const savedDespiteCountReadFailure = countReadFailure.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
+assert.equal(savedDespiteCountReadFailure.status, "success", "El error posterior de conteo no debe falsear un append confirmado.");
+assert.equal(countReadFailure.ledgerRows.length, 2, "El primer voto debe permanecer guardado.");
+assert.equal(Object.hasOwn(savedDespiteCountReadFailure, "likeCount"), false);
 const invalidOtherActor = makeHarness([["", "100", "1", 0, 0, "event", "legacy-invalid-actor"]]);
 const validAfterInvalid = invalidOtherActor.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
 assert.deepEqual(validAfterInvalid, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });
@@ -121,4 +132,4 @@ const legacyDuplicate = legacyActor.run({ vehicleId:"100", corteIndex:2, userId:
 assert.equal(legacyDuplicate.alreadyLiked, true);
 assert.equal(legacyActor.ledgerRows.length, 2, "La identidad histórica no crea una fila adicional al normalizarse.");
 assert.equal(legacyActor.state.activities, 0);
-console.log("FeedbackLikeIdempotency: 8/8 PASS — duplicados, legacy, eventos corruptos y sección crítica");
+console.log("FeedbackLikeIdempotency: PASS — duplicados, legacy, contención, conteo posterior y eventos históricos");

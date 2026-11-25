@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
+const frontend = readFileSync(new URL("../Frontend/api-config.js", import.meta.url), "utf8");
 function extract(name, nextName) {
     const start = source.indexOf("function " + name + "(");
     assert.ok(start >= 0, "No se encontró " + name);
@@ -59,9 +60,18 @@ test("rechaza vehículos inexistentes sin descargar Cortes completo", () => {
 });
 
 const handler = extract("handleRecordLike", "findFeedbackRowById_");
-test("el handler serializa la búsqueda de duplicados y la inserción", () => {
-    assert.match(handler, /withFeedbackLikeLock_\(\(\) =>/);
-    assert.match(handler, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId\)/);
+test("el lock solo cubre la búsqueda de idempotencia y el append", () => {
+    const lockStart = handler.indexOf("const outcome = withFeedbackLikeLock_");
+    const lockBodyStart = handler.indexOf("() => {", lockStart);
+    const lockEnd = handler.indexOf("\n    });", lockBodyStart);
+    assert.ok(lockStart > 0 && lockBodyStart > lockStart && lockEnd > lockBodyStart);
+    const critical = handler.slice(lockBodyStart, lockEnd);
+    assert.ok(handler.indexOf("findFeedbackVehicleRowForLike_") < lockStart);
+    assert.ok(handler.indexOf("ensureFeedbackLikesSheet_") < lockStart);
+    assert.doesNotMatch(critical, /findFeedbackVehicleRowForLike_|getFeedbackLikeCountWithEvents_|getSafeSheet/);
+    assert.match(critical, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, legacyActorKey\)/);
+    assert.match(critical, /ledger\.appendRow\(/);
+    assert.ok(handler.indexOf("getFeedbackLikeCountWithEvents_") > lockEnd);
     assert.match(extract("withFeedbackLikeLock_"), /tryLock\(0\)/);
     assert.match(extract("withFeedbackLikeLock_"), /finally[\s\S]*releaseLock/);
 });
@@ -79,4 +89,13 @@ test("la ruta no descarga la hoja completa y valida el ID de vehículo antes de 
     assert.doesNotMatch(handler, /getDataRange\(/);
     assert.match(handler, /!\/\^\[1-9\]\\d\{0,14\}\$\//);
 });
-console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — unicidad por usuario/vehículo con sección crítica breve");
+test("el frontend reintenta únicamente la contención de idempotencia y conserva el código del backend", () => {
+    const recordLikeStart = frontend.indexOf("export async function recordLike(");
+    const recordLikeEnd = frontend.indexOf("\n}", recordLikeStart) + 2;
+    const recordLike = frontend.slice(recordLikeStart, recordLikeEnd);
+    assert.match(recordLike, /attempt <= 5/);
+    assert.match(recordLike, /error\.code !== "LIKE_LOCK_BUSY"/);
+    assert.match(recordLike, /setTimeout\(resolve, 100 \* attempt\)/);
+    assert.match(frontend, /code: String\(result\.code \|\| "API_ERROR"\)/);
+});
+console.log("FeedbackLikePreflightOutsideLock: " + passed + "/" + passed + " PASS — preflight fuera del lock y sección crítica mínima");

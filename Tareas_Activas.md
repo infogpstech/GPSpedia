@@ -113,7 +113,7 @@ Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tarea
 
 ## Próxima tarea en cola — Dashboard de actividad: Actividad reciente
 
-**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-25.** La validación de datos reales FEEDBACK/Spreadsheet queda diferida a Beta.
+**Estado: REABIERTA — corrección de contención en curso (2026-11-25).** La validación de datos reales FEEDBACK/Spreadsheet queda diferida a Beta.
 
 ### Objetivo
 Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del Dashboard, transformando los datos recibidos de los servicios en información clara para el usuario.
@@ -239,3 +239,12 @@ Las tareas de implementación frontend se ejecutan antes de retomar las validaci
 - **Evidencia CI:** workflow `45541840409` (service-tests y responsive-browser) SUCCESS; workflow Pages `45541840034` (build y deploy) SUCCESS. Las suites de regresión añadidas y las comprobaciones de navegador finalizaron sin fallos.
 - La validación funcional contra los deployments FEEDBACK/CATALOG y la Spreadsheet Beta sigue diferida; no se realizaron llamadas remotas ni despliegues Apps Script.
 - No se realizaron cambios en hojas, datos, deployments, PropertiesService o permisos.
+
+
+### Rectificación GP-LIKE-FIRST-VOTE-01 — alcance del lock
+
+La validación posterior al cierre identificó una causa adicional directamente relacionada con el cambio de idempotencia: `withFeedbackLikeLock_` usa `getScriptLock().tryLock(0)` y el frontend solo reintenta cinco veces con esperas breves. Si otra operación del mismo proyecto FEEDBACK mantiene el ScriptLock, el primer voto se rechaza antes de consultar el ledger o insertar una fila. La implementación anterior mantenía localización del vehículo, lecturas y conteo dentro del lock, ampliando la ventana de contención. El lock también es compartido con la reserva de inicialización de vídeos.
+
+Se ajusta el diseño para dejar fuera del lock la localización del vehículo, preparación del ledger y cálculo del contador. La sección crítica conserva únicamente la comprobación autoritativa de idempotencia (actor+vehículo), la reconciliación mínima de un pendiente y el append/flush. La lectura del contador y telemetría pasan después de liberar el lock; un fallo de conteo no transforma un append confirmado en rechazo. La búsqueda de duplicados prioriza la columna actorKey y conserva compatibilidad con la identidad legacy.
+
+Se agrega regresión de contención simulada: lock ocupado no escribe; lock libre registra el primer voto; mismo actor/vehículo no crea otra fila; usuarios distintos sí registran. CI pendiente.

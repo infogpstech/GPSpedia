@@ -1993,24 +1993,30 @@ function withFeedbackLikeLock_(operation) {
     }
 }
 
-function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId) {
+function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, legacyActorKey) {
     if (!ledger || ledger.getLastRow() < 2) return [];
     const canonicalActorKey = normalizeFeedbackLikeActorKey_(actorKey);
-    const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1)
-        .createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll();
-    const rows = [];
-    matches.forEach(match => {
-        const rowIndex = match.getRow(), row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
-        if (String(row[1] || "").trim() !== String(vehicleId)) return;
-        let storedActorKey;
-        try { storedActorKey = normalizeFeedbackLikeActorKey_(row[0]); }
-        catch (identityError) { return; }
-        if (storedActorKey !== canonicalActorKey) return;
-        rows.push({ row, rowIndex });
+    const candidateKeys = Array.from(new Set([
+        canonicalActorKey,
+        String(legacyActorKey || "").trim()
+    ].filter(Boolean)));
+    const rowsByIndex = new Map();
+    candidateKeys.forEach(candidateKey => {
+        const matches = ledger.getRange(2, 1, ledger.getLastRow() - 1, 1)
+            .createTextFinder(candidateKey).matchCase(true).matchEntireCell(true).findAll();
+        matches.forEach(match => {
+            const rowIndex = match.getRow();
+            const row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
+            if (String(row[1] || "").trim() !== String(vehicleId)) return;
+            let storedActorKey;
+            try { storedActorKey = normalizeFeedbackLikeActorKey_(row[0]); }
+            catch (identityError) { return; }
+            if (storedActorKey !== canonicalActorKey) return;
+            rowsByIndex.set(rowIndex, { row, rowIndex });
+        });
     });
-    return rows.sort((a, b) => a.rowIndex - b.rowIndex);
+    return Array.from(rowsByIndex.values()).sort((a, b) => a.rowIndex - b.rowIndex);
 }
-
 function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
     if (!ledger || ledger.getLastRow() < 2) return 0;
     const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1)
@@ -2052,10 +2058,12 @@ function getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corte
 
 
 function logLikeActivityAfterAppend_(userId, userName, vehicleId, corteIndex, likeCount) {
-    try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + likeCount); }
+    const details = Number.isSafeInteger(likeCount) && likeCount >= 0
+        ? "Útil en corte " + corteIndex + ". Nuevo total: " + likeCount
+        : "Útil en corte " + corteIndex + ".";
+    try { logUserActivity(userId, userName, "like", vehicleId, details); }
     catch (logError) { console.error(logError); }
 }
-
 function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
     const id = String(vehicleId || "").trim();
     if (!sheet || !id) throw new Error("No se pudo localizar el vehículo para registrar el like.");
@@ -2089,55 +2097,48 @@ function handleRecordLike(payload) {
         !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
         throw new Error("Faltan datos verificados para registrar el útil.");
     }
-    const actorKey = buildFeedbackLikeActorKey_(userId);
-    const outcome = withFeedbackLikeLock_(() => {
-        const cuts = getSafeSheet(SHEET_NAMES.CORTES);
-        if (!cuts) throw new Error("Hoja Cortes no encontrada.");
-        const typeCol = COLS_CORTES["tipoCorte" + corteIndex];
-        const utilCol = COLS_CORTES["utilCorte" + corteIndex];
-        const vehicle = findFeedbackVehicleRowForLike_(cuts, vehicleId);
-        if (!typeCol || !utilCol || !String(vehicle.row[typeCol - 1] || "").trim()) {
-            throw new Error("El corte seleccionado no existe en el vehículo.");
-        }
 
-        const ledger = ensureFeedbackLikesSheet_();
-        const existingRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId);
+    const actorKey = buildFeedbackLikeActorKey_(userId);
+    const legacyActorKey = "user:" + userId;
+
+    // Las lecturas de vehículo y preparación del ledger no necesitan serializarse.
+    // El lock queda reservado para comprobar la unicidad y confirmar el append.
+    const cuts = getSafeSheet(SHEET_NAMES.CORTES);
+    if (!cuts) throw new Error("Hoja Cortes no encontrada.");
+    const typeCol = COLS_CORTES["tipoCorte" + corteIndex];
+    const utilCol = COLS_CORTES["utilCorte" + corteIndex];
+    const vehicle = findFeedbackVehicleRowForLike_(cuts, vehicleId);
+    if (!typeCol || !utilCol || !String(vehicle.row[typeCol - 1] || "").trim()) {
+        throw new Error("El corte seleccionado no existe en el vehículo.");
+    }
+    const ledger = ensureFeedbackLikesSheet_();
+
+    const outcome = withFeedbackLikeLock_(() => {
+        // Comprobación autoritativa: otra petición del mismo usuario/vehículo,
+        // incluso desde otro corte, observa el primer evento y no anexa otra fila.
+        const existingRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, legacyActorKey);
         const existingEvents = existingRows.filter(item => String(item.row[5] || "") === "event");
         if (existingEvents.length) {
-            const canonical = existingEvents[0];
-            const canonicalCut = Number(canonical.row[2]);
-            const canonicalUtilCol = COLS_CORTES["utilCorte" + canonicalCut];
-            if (!canonicalUtilCol || canonicalCut < 1 || canonicalCut > 3) {
+            const canonicalCut = Number(existingEvents[0].row[2]);
+            if (!COLS_CORTES["utilCorte" + canonicalCut] || canonicalCut < 1 || canonicalCut > 3) {
                 throw new Error("El útil existente tiene una referencia de corte inválida.");
             }
-            return {
-                created: false,
-                response: {
-                    status: "success", alreadyLiked: true, corteIndex: canonicalCut,
-                    likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, canonicalCut, canonicalUtilCol)
-                }
-            };
+            return { created: false, corteIndex: canonicalCut };
         }
 
         const completedRows = existingRows.filter(item => String(item.row[5] || "") === "completed");
         if (completedRows.length) {
-            const canonical = completedRows[0], canonicalCut = Number(canonical.row[2]);
-            const canonicalUtilCol = COLS_CORTES["utilCorte" + canonicalCut];
-            if (!canonicalUtilCol || canonicalCut < 1 || canonicalCut > 3) {
+            const canonicalCut = Number(completedRows[0].row[2]);
+            if (!COLS_CORTES["utilCorte" + canonicalCut] || canonicalCut < 1 || canonicalCut > 3) {
                 throw new Error("El útil existente tiene una referencia de corte inválida.");
             }
-            return {
-                created: false,
-                response: {
-                    status: "success", alreadyLiked: true, corteIndex: canonicalCut,
-                    likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, canonicalCut, canonicalUtilCol)
-                }
-            };
+            return { created: false, corteIndex: canonicalCut };
         }
 
         const pendingRows = existingRows.filter(item => String(item.row[5] || "") === "pending");
         if (pendingRows.length) {
-            const pending = pendingRows[0], pendingRow = pending.row;
+            const pending = pendingRows[0];
+            const pendingRow = pending.row;
             const pendingCut = Number(pendingRow[2]);
             const pendingUtilCol = COLS_CORTES["utilCorte" + pendingCut];
             if (!pendingUtilCol || pendingCut < 1 || pendingCut > 3) {
@@ -2151,58 +2152,55 @@ function handleRecordLike(payload) {
                 !Number.isSafeInteger(target) || target !== previous + 1) {
                 throw new Error("El registro pendiente del útil requiere revisión de consistencia.");
             }
-            if (currentCount === target) {
-                return {
-                    created: false,
-                    response: {
-                        status: "success", alreadyLiked: true, corteIndex: pendingCut,
-                        likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, pendingCut, pendingUtilCol)
-                    }
-                };
-            }
+            if (currentCount === target) return { created: false, corteIndex: pendingCut };
             if (currentCount !== previous) {
                 throw new Error("El contador cambió fuera del intento pendiente; requiere reconciliación manual.");
             }
-            const currentLikeCount = getFeedbackLikeCountWithEvents_(
-                cuts, vehicle, ledger, vehicleId, pendingCut, pendingUtilCol
-            );
-            // Reutiliza la fila pendiente existente; no crea una segunda fila para el mismo usuario/vehículo.
             const recoveredRow = pendingRow.slice();
             recoveredRow[3] = 0;
             recoveredRow[4] = 0;
             recoveredRow[5] = "event";
             ledger.getRange(pending.rowIndex, 1, 1, 7).setValues([recoveredRow]);
             SpreadsheetApp.flush();
-            return {
-                created: true,
-                response: { status: "success", alreadyLiked: false, recovered: true, corteIndex: pendingCut, likeCount: currentLikeCount + 1 }
-            };
+            return { created: true, corteIndex: pendingCut };
         }
 
-        const unknownRows = existingRows.filter(item => !["event", "completed", "pending"].includes(String(item.row[5] || "")));
+        const unknownRows = existingRows.filter(item =>
+            !["event", "completed", "pending"].includes(String(item.row[5] || ""))
+        );
         if (unknownRows.length) throw new Error("El registro previo del útil tiene un estado desconocido.");
-        const currentLikeCount = getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol);
+
         ledger.appendRow([actorKey, vehicleId, corteIndex, 0, 0, "event", new Date().toISOString()]);
         SpreadsheetApp.flush();
-        const confirmedRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId);
-        const committed = confirmedRows.find(item => String(item.row[5] || "") === "event");
-        if (!committed) throw new Error("No se pudo confirmar el registro del útil.");
-        return {
-            created: true,
-            response: {
-                status: "success", alreadyLiked: false, corteIndex,
-                likeCount: currentLikeCount + 1
-            }
-        };
+        return { created: true, corteIndex };
     });
 
-    // La telemetría se escribe fuera de la sección crítica y nunca decide el éxito del útil.
-    if (outcome.created) {
-        logLikeActivityAfterAppend_(userId, userName, vehicleId, Number(outcome.response.corteIndex || corteIndex), outcome.response.likeCount);
+    // El conteo y la telemetría se ejecutan después de liberar el lock. Un fallo de
+    // lectura nunca convierte un append confirmado en un falso rechazo del voto.
+    let likeCount = null;
+    try {
+        likeCount = getFeedbackLikeCountWithEvents_(
+            cuts, vehicle, ledger, vehicleId, outcome.corteIndex, COLS_CORTES["utilCorte" + outcome.corteIndex]
+        );
+    } catch (countError) {
+        if (typeof console !== "undefined" && typeof console.warn === "function") {
+            console.warn("FeedbackLikes: el evento se confirmó, pero no se pudo actualizar el contador de respuesta: " +
+                String(countError && countError.message || "fallo de lectura"));
+        }
     }
-    return outcome.response;
-}
 
+    if (outcome.created) {
+        logLikeActivityAfterAppend_(userId, userName, vehicleId, outcome.corteIndex, likeCount);
+    }
+
+    const response = {
+        status: "success",
+        alreadyLiked: !outcome.created,
+        corteIndex: outcome.corteIndex
+    };
+    if (Number.isSafeInteger(likeCount) && likeCount >= 0) response.likeCount = likeCount;
+    return response;
+}
 function findFeedbackRowById_(sheet, feedbackId, lastColumn) {
     const id = String(feedbackId || "").trim();
     const lastRow = sheet ? sheet.getLastRow() : 0;
