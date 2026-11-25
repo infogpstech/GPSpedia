@@ -327,3 +327,10 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - `ActivityDashboardRecentInteraction.mjs`: 6/6 PASS en CI. Browser-responsive AUG-146 PASS en workflow; no es browser específico de esta pestaña.
 - CI suite 45611875173: 439 suites/5428 tests aprobados, tres suites fallidas (contract de FEEDBACK preflight corregido en 05fc4f2b; MIG021 configuración URL sigue pendiente de reconciliación). La tarea de interacción pasa.
 - Sin cambios de backend, payload, datos ni deployments.
+
+
+### GP-CATALOG-LIKE-PROJECTION-READ-01 — Reducir lectura del ledger de útiles
+**Estado: IMPLEMENTACIÓN EN CURSO — CI pendiente.**
+- La reconstrucción de CATALOG leía siete columnas de FeedbackLikes completas. Se reemplazó por lecturas A:C y F, que contienen actor/vehículo/corte y status; se mantiene deduplicación por actor+corte y tolerancia a eventos inválidos.
+- Test aislado `CatalogLikeProjectionReadScale.mjs` 6 assertions: conteo por corte y lectura compacta; registrado en runner.
+- No se introduce cache/TTL ni riesgo de proyección obsoleta, ni locks globales o coordinación entre servicios.
