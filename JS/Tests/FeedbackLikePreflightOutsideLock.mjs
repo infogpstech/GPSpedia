@@ -78,7 +78,7 @@ test("el lock solo cubre la búsqueda de idempotencia y el append", () => {
 test("la unicidad se comprueba por actor, vehículo y corte", () => {
     const rows = extract("findFeedbackLikeRowsForActor_");
     assert.match(rows, /String\(row\[1\] \|\| ""\)\.trim\(\) !== String\(vehicleId\)/);
-    assert.match(rows, /storedCut !== Number(corteIndex)/);
+    assert.match(rows, /storedCut !== Number\\(corteIndex\\)/);
 });
 test("la telemetría se registra después de liberar el lock", () => {
     assert.ok(handler.indexOf("const outcome = withFeedbackLikeLock_") < handler.indexOf("if (outcome.created)"));
