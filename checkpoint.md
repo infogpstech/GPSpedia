@@ -710,3 +710,12 @@ La corrección previa `694ceaf` permanece como endurecimiento de tolerancia a ev
 ### Riesgo separado pendiente
 
 readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de FeedbackLikes para construir la agrupación, incluso en la proyección dirigida de un vehículo. La agrupación elimina duplicados lógicos, pero no reduce I/O. Se registra como trabajo de optimización independiente; no se modifica en esta incidencia para evitar mezclar el arreglo de escritura FEEDBACK con un rediseño de proyección CATALOG.
+
+
+## 2026-11-25 — Nuevas tareas registradas
+
+- GP-DEV-LOG-ERRORS-01: botón Copiar registros debe exportar solo errores clasificados.
+- GP-ADMIN-DRIVE-AUDIT-SCHEMA-01: resolver discrepancia/falta de esquema AdminOperationGuards que impide avanzar auditoría Drive.
+- GP-ADMIN-DRIVE-SCAN-MODAL-01: convertir el modal existente a espacio de escaneo; resultados de imágenes incrementales y progreso Developer simultáneo, sin modal extra.
+- GP-LIKE-REBUILD-01: incidencia persistente de útiles; reanalizar y reconstruir el flujo completo recordLike, con prioridad alta, sin superficial fallback y con idempotencia actor+vehículo.
+- Estas tareas están registradas; aún no se implementaron ni se ejecutaron pruebas para ellas. No se realizaron acciones en servicios o datos externos.
