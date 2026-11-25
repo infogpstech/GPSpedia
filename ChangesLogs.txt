@@ -1257,3 +1257,12 @@ Se añadieron validación incremental ADMIN, registro frontend al recibir lotes 
 
 2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 — cierre local
 ADMIN permite registro incremental de resultados «Sin uso detectado» por lote, revalidando referencias y Drive; frontend registra automáticamente al recibir cada lote y consolida el inventario al completar la auditoría. La operación incremental es idempotente por digest de lote, preserva guardas y evita reconciliar stale durante batches. CI 45705928487 SUCCESS: syntax, service regression runner y responsive-browser PASS. Beta real pendiente, sin deployments ni operaciones Drive/Spreadsheet.
+
+
+2026-11-25 — Incidencia #130 — corrección de auditoría Drive y proyección de útiles
+- ADMIN: corregido el ReferenceError por referencia a item fuera de ámbito al construir resultados de auditoría; se conserva el arreglo referenceLocations del snapshot.
+- Prueba nueva AdminDriveAuditItemReference.mjs integrada en RunServiceTests.mjs.
+- CATALOG: la proyección de FeedbackLikes ahora reinicia completed al recibir una nueva transición event después de withdrawn, para reflejar reactivación.
+- CatalogLikeProjectionReadScale.mjs ampliada con secuencia de reactivación.
+- Commits: f740da0e98d40082d6753f6fd3670b0ad113e9f2; e1f04981ab99d770b31bdbe4cafefc782b5e173a; e4e0e0218e16cdc5ce89d641d81ad38cdbe26590; fd629d599197d16705f418edda1f94784c5d5976; 22850449c06f3e7d6d620c55c48f154481aef509.
+- Estado de CI aún no verificado al registrar esta entrada. No se ejecutaron deployments Apps Script, Drive ni Spreadsheet reales; Beta pendiente.
