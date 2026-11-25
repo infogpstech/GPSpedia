@@ -577,6 +577,7 @@ runGroup('43','MIG019',()=>{
  runCli('MIG019 contacto con reserva de ID y append','JS/Tests/FeedbackContactWriteNoGlobalLock.mjs');
  runCli('MIG019 likes append-only','JS/Tests/FeedbackLikeAppendOnly.mjs');
  runCli('MIG019 idempotencia de útiles por usuario y vehículo','JS/Tests/FeedbackLikeIdempotency.mjs');
+ runCli('MIG019 reintento silencioso de útiles concurrentes','JS/Tests/FeedbackLikeClientRetry.mjs');
  runCli('MIG019 replay de likes completados','JS/Tests/FeedbackLikeCompletedReplayPreflight.mjs');
  runCli('MIG019 unicidad de likes bajo lock acotado','JS/Tests/FeedbackLikePreflightOutsideLock.mjs');
  runCli('MIG019 actividad de likes post-commit','JS/Tests/FeedbackLikeActivityOutsideLock.mjs');
