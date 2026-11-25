@@ -262,10 +262,10 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 ## Tareas recién registradas — 2026-11-25
 
 ### GP-DEV-LOG-ERRORS-01 — Copiar solo errores de consola
-**Estado: PENDIENTE.**
-- El botón «Copiar registros» debe exportar exclusivamente mensajes clasificados como errores, no el log completo de consola ni mensajes informativos, progreso, advertencias o resúmenes.
-- Aplicar clasificación fiable, evitando falsos positivos en mensajes informativos y progreso.
-- Validar selección de errores, consola vacía/sin errores, formato y deduplicación cuando corresponda.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (CI remoto pendiente).**
+- El botón usa únicamente elementos `div.log-error`; excluye advertencias, información y falsos positivos por texto.
+- Se descartan entradas vacías y se mantiene el formato de líneas con salto de línea.
+- Prueba `DeveloperConsoleErrors.mjs` añadida con contrato estático y selección simulada.
 
 ### GP-ADMIN-DRIVE-AUDIT-SCHEMA-01 — Resolver esquema de AdminOperationGuards
 **Estado: PENDIENTE DE DIAGNÓSTICO.**
