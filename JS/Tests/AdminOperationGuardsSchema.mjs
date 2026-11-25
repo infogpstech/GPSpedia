@@ -15,4 +15,4 @@ assert.match(source,/No se confirmó el esquema de AdminOperationGuards/);
 assert.match(source,/if \(sheetOverride\)/);
 assert.doesNotMatch(source,/deleteSheet|clear\(/);
 assert.ok(names.every(name=>admin.includes(name)));
-console.log("AdminOperationGuardsSchema: contract PASS");
+console.log("AdminOperationGuardsSchema: 10/10 PASS");
