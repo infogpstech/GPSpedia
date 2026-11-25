@@ -35,7 +35,7 @@
 - Beta real (Drive/Spreadsheet/deployment) pendiente. No hubo cambios en recursos externos.
 
 
-2026-11-25 | GP-DRIVE-AUDIT-RECOVERY-01 — error item fuera de ámbito
+2026-11-25 | Incidencia #130 — error item fuera de ámbito
 - Severidad: alta; la auditoría aborta al construir el primer resultado y devuelve cero resultados conservados.
 - Ubicación: JS/Services/admin.js, handleAuditDriveImagesInCortesCore_, objeto agregado a auditResults.
 - Evidencia: referenceLocations: Array.isArray(item && item.referenceLocations) evalúa item sin declarar en ese ámbito; el objeto ya recibe la variable referenceLocations válida y repite esa propiedad.
