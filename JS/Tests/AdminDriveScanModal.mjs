@@ -16,6 +16,6 @@ assert.match(ui,/const appendAuditConsole = \(message, level = 'info'\) =>[\s\S]
 assert.match(ui,/const appendFiles = \(files\) =>[\s\S]*?container\.appendChild\(row\)/);
 assert.match(ui,/while \(scanConsole\.childElementCount > 250\) scanConsole\.firstElementChild\.remove\(\)/);
 assert.match(css,/#audit-drive-scan-workspace[\s\S]*?max-height:30vh/);
-assert.match(css,/@media\(max-width:600px\)[\s\S]*?#audit-drive-scan-workspace[\s\S]*?max-height:26vh/);
+assert.match(css,/@media\\s*\\(max-width:600px\\)[\s\S]*?#audit-drive-scan-workspace[\s\S]*?max-height:26vh/);
 assert.match(css,/#audit-drive-results-container \{ min-height:120px; max-height:40vh !important; overflow:auto; \}/);
 console.log("DriveScanModal: 7/7 PASS");
