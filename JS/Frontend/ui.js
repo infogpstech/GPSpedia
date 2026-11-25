@@ -12229,7 +12229,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             if (videoEmbedUrl) {
                 const videoContainer = document.createElement("div");
                 videoContainer.className = "tutorial-video-container";
-                videoContainer.style.cssText = "position:relative;width:100%;aspect-ratio:16/9;max-height:315px;margin-bottom:12px;overflow:hidden;border-radius:8px;";
+                videoContainer.style.cssText = "position:relative;display:block;flex:0 0 auto;width:100%;aspect-ratio:16/9;max-height:none;min-height:0;box-sizing:border-box;margin-bottom:12px;overflow:hidden;border-radius:8px;";
                 const iframe = document.createElement("iframe");
                 iframe.className = "tutorial-youtube-embed";
                 iframe.src = videoEmbedUrl;
