@@ -69,6 +69,7 @@ runGroup('31','WRITE',()=>{
 
 });
 runGroup('32','ADMIN',()=>{
+ runCli('ADMIN modal de auditoría Drive con consola de progreso incremental y responsive','JS/Tests/AdminDriveScanModal.mjs');
  const a=read('JS/Services/admin.js');
  runCli('ADMIN consulta candidatos append-only de aportes en modo solo lectura','JS/Tests/AdminVehicleContributionCandidates.mjs');
  runCli('ADMIN carga de imagen valida tamaño y MIME antes de Base64','JS/Tests/AdminImageUploadPreflight.mjs');
