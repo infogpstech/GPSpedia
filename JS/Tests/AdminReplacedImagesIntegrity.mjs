@@ -720,9 +720,9 @@ function auditHarness() {
         if (matches.length) return Array.from(new Set(matches));
         return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? [text] : [];
     };
-    const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds","LockService","SpreadsheetApp","getSpreadsheet",auditHelperSource+
+    const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds","LockService","SpreadsheetApp","getSpreadsheet","ADMIN_SERVICE_VERSION",auditHelperSource+
         "\nreturn {cleanupExpiredDriveAuditServerStates_,clearExpiredDriveAuditCacheState_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditStateSheet_,getDriveAuditStateRows_,findDriveAuditStateRow_,ensureDriveAuditStateBaseline_,getDriveAuditLatestSheet_,getDriveAuditLatestRows_,findDriveAuditLatestRow_,ensureDriveAuditLatestBaseline_,saveDriveAuditLatestPointer_,clearDriveAuditLatestPointer_,clearDriveAuditLatestPointerIfMigrated_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getDriveAuditReferenceSnapshotConfig_,validateAuditDriveReferenceSnapshot_,removeAuditDriveReferenceSnapshotCache_,storeAuditDriveReferenceSnapshot,loadAuditDriveReferenceSnapshot,refreshAuditDriveReferenceSnapshot_,clearAuditDriveReferenceSnapshot};")(
-            PropertiesService,CacheService,Utilities,extractDriveFileIds,lock.LockService,SpreadsheetApp,getSpreadsheet);
+            PropertiesService,CacheService,Utilities,extractDriveFileIds,lock.LockService,SpreadsheetApp,getSpreadsheet,"2.7.2");
     function getStateRecord(auditId){const item=api.findDriveAuditStateRow_(driveAuditSheet,auditId);return item?item.state:null;}
     function setStateUpdatedAt(auditId,updatedAt){
         const item=api.findDriveAuditStateRow_(driveAuditSheet,auditId);
@@ -929,7 +929,7 @@ check("La reserva del estado usa lock fail-fast y no espera por otra función",(
 });
 check("El baseline latest importa punteros válidos por propietario sin modificar propiedades",()=>{
     const h=auditHarness();
-    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",createdAt:Date.now()-1000});
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",scanVersion:"2.7.2",imageMetadataVersion:1,createdAt:Date.now()-1000});
     const key="GPSpedia_DRIVE_AUDIT_LATEST_"+h.hashDriveAuditValue_(AUDIT_OWNER).slice(0,32);
     h.properties.set(key,AUDIT_ID);
     const baseline=h.ensureDriveAuditLatestBaseline_();
@@ -992,7 +992,7 @@ check("El marcador completo exige todas las páginas y coincide con la lista exa
     h.storeDriveAuditPageResults_(AUDIT_ID,1,[FILE_B,FILE_A]);
     assert.deepEqual(h.loadDriveAuditUnusedFileIds_(AUDIT_ID,2),ids);
     const digest=h.hashDriveAuditFileIds_(ids);
-    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",scanVersion:"2.7.2",imageMetadataVersion:1,
         completedAt:Date.now(),expectedUnusedCount:2,expectedUnusedDigest:digest});
     assert.equal(h.validateCompletedDriveAudit_(AUDIT_ID,AUDIT_OWNER,[{fileId:FILE_A},{fileId:FILE_B}]).auditId,AUDIT_ID);
     assert.throws(()=>h.validateCompletedDriveAudit_(AUDIT_ID,"USR-OTHER",[FILE_A,FILE_B]),/otra sesión/);

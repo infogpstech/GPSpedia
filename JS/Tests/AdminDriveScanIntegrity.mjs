@@ -45,4 +45,4 @@ assert.match(ui, /reconcileButton\.disabled =[^;]*errorCount > 0[^;]*unverifiabl
 assert.match(ui, /if \(complete && hasUnusedImages && !scanHasErrors\)/);
 assert.match(ui, /Los resultados parciales se conservaron, pero no se confirmó el inventario/);
 assert.match(admin, /function handleApplyCortesImageReconciliation_[\s\S]*?Number\(auditState\.errorCount\s*\|\|\s*0\)\s*>\s*0/);
-console.log("AdminDriveScanIntegrity: 20/20 PASS");
+console.log("AdminDriveScanIntegrity: 18/18 PASS");

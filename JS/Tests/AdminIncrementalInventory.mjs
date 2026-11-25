@@ -36,9 +36,10 @@ assert.ok(ui.includes('finalInventory.results.filter(item => item && item.status
 const start=admin.indexOf('function validateDriveAuditInventoryBatch_');
 const end=admin.indexOf('function handleSaveUnusedImagesInventory',start);
 const helper=admin.slice(start,end);
-let state={auditId:'audit-1',ownerId:'owner-1',status:'running',updatedAt:Date.now(),pageCount:1};
+let state={auditId:'audit-1',ownerId:'owner-1',status:'running',scanVersion:'2.7.2',updatedAt:Date.now(),pageCount:1};
 const cache=new Map([['page-0',JSON.stringify(['valid-image-id-123456789012345'])]]);
-const validate=new Function('loadDriveAuditServerState_','normalizeDriveAuditFileIds_','CacheService','getDriveAuditPageResultCacheKey_',helper+'return validateDriveAuditInventoryBatch_;')(
+const validate=new Function('ADMIN_SERVICE_VERSION','loadDriveAuditServerState_','normalizeDriveAuditFileIds_','CacheService','getDriveAuditPageResultCacheKey_',helper+'return validateDriveAuditInventoryBatch_;')(
+ '2.7.2',
  id=>state,
  files=>Array.from(new Set(files.map(x=>typeof x==='object'?x.fileId:x))),
  {getScriptCache:()=>({get:key=>cache.get(key)??null})}, (id,page)=>'page-'+page);
