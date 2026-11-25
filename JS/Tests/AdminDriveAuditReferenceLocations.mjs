@@ -1,0 +1,1 @@
+import assert from "node:assert/strict";import{readFileSync}from"node:fs";const src=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");assert.ok(src.includes("referenceSnapshot.references instanceof Map ? (referenceSnapshot.references.get(fileId) || []) : []"));console.log("AdminDriveAuditReferenceLocations: 1/1 PASS");
