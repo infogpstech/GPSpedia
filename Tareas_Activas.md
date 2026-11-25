@@ -540,8 +540,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Reparar error reproducido ReferenceError: item is not defined en handleAuditDriveImagesInCortesCore_, preservar referenceLocations del snapshot y no perder lotes confirmados.
 - Mantener escaneo recursivo de Cortes, paginación/cursor, deduplicación, reanudación y resultados incrementales.
 - Consola Developer debe mostrar etapas, lotes, conteos, progreso, cursor, fallos y estado de continuación.
-- Interfaz visual con miniaturas y enlace original; nombre, fileId, URL, folderId, ruta, MIME, formato, tamaño, fecha, origen, clasificación y referencias a vehículo (ID/categoría/marca/modelo/fila/campo).
-- Relacionar candidatos por nombre/ruta/catálogo; mostrar confianza y ambigüedad; revisión manual sin aplicar asociaciones ambiguas.
+- Interfaz visual con miniaturas y enlace original; nombre, fileId, URL, folderId, ruta, MIME, formato, tamaño, fecha de modificación, origen, clasificación y referencias a vehículo (ID/categoría/marca/modelo/fila/campo).
+- Persistir en Imagenes_Reemplazadas fileId, folderId, ruta, nombre, URL, MIME, formato, tamaño en bytes, fecha de creación/modificación/detección, origen, auditId, estado y ubicaciones de referencia verificadas.
+- Relacionar candidatos por nombre/ruta/catálogo; mostrar confianza, IDs de vehículo y filas de Cortes, ambigüedad y revisión manual sin aplicar asociaciones ambiguas.
 - Registrar resultados clasificados sin uso/reemplazados en Imagenes_Reemplazadas, por lote e idempotentemente, conservando revalidación, ownership, historial y no-destructividad. Reconciliar stale solo al completar el scan.
 
 ### Hallazgos y avance comprobado
@@ -556,3 +557,13 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 2. Auditar el vínculo exacto entre contador proyectado, estado local y título DOM; corregir solo tras confirmar el contrato y añadir regresión.
 3. Auditar scanner completo, respuesta incremental, metadatos, UI y guardado en Imagenes_Reemplazadas; completar pruebas de cursor, fallos parciales y reanudación.
 4. Revisar diff, actualizar registros y checkpoint, verificar HEAD de rama de trabajo y que la base protegida siga intacta.
+
+
+### Avance de metadatos y asociación — Incidencia #130 (2026-11-25)
+- ADMIN amplió el esquema de Imagenes_Reemplazadas de 27 a 32 columnas, preservando las 11 históricas y las 16 columnas dinámicas previas; se añadieron `drive_folder_id`, `formato_archivo`, `tamano_bytes`, `fecha_modificacion_drive` y `referencias_catalogo_json`.
+- `handleSaveUnusedImagesInventory` ahora recupera metadatos del snapshot persistido de auditoría, exige que nombre/MIME/carpeta ID/ruta sigan coincidiendo con Drive y registra los campos adicionales por fila con read-back verificado.
+- `handleGetReplacedImages` devuelve los nuevos campos; UI de biblioteca muestra formato, tamaño, ID de carpeta y fecha de modificación. La consola y resultados de auditoría muestran fileId y folderId.
+- La asociación por nombre/ruta ahora devuelve IDs de vehículo y números de fila; cuando un modelo coincide con más de un vehículo, la sugerencia queda marcada ambigua y requiere revisión manual.
+- Pruebas ampliadas: `AdminIncrementalInventory.mjs`, `AdminReplacedImagesIntegrity.mjs`, `AdminDriveScanModal.mjs` y nueva `AdminDriveAuditAssociation.mjs`.
+- Commits: `7c89c7dff029747e60795daedace2f490b2daaad`, `be61d6af5d83c6162f982d842ab4946f3e47c590`, `26cdf9e505e554b247cb391b18f016551ff09786`, `79cf8ae1410b3d9c9cd00f925638e8a744c18721`, `2791a686ec76cb7910c7c2d904e936ceab44e4de`, `22d9ca3dff752d231a7dc3739e34c8ae7ddbec23`, `38267ac3a04e4a0639e750eca5e7b8c4acc38eed`, `252eb3e859849c4e703060fa47c005f4ec3f388b`, `fb46dc831921e9b62032f2eae03e8eba54d304db`, `c169b5a3804301fd252cfad28799e304781ffe7e`, `5936b0199987e0fd9ccde0a63a0c596f61bdc44d`, `9faffb29a10d3df93fa18a48585b8f521edf29f5`, `4e9ee24309841ca9a27f612de1369c4ada942c72`, `7e68789231ee320b96a6a164de670f04bee0d1bf`, `28e2ee915e0a1709b8d4d841987ea3f2f940d925`.
+- Validaciones aisladas: migración simulada del esquema 32/32 columnas y lectura lista; motor de asociación produce sugerencia única y marca como ambigua una coincidencia de dos vehículos; parser JavaScript PASS. Node/CI y Beta externa pendientes.
