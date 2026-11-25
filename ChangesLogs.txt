@@ -1011,3 +1011,15 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Pruebas añadidas/actualizadas: `FeedbackLikeIdempotency.mjs`, suites de likes, `ActivityDashboardContributions.mjs`, `TutorialVideoModalLayout.mjs`, `CutDetailModalLayout.mjs` y `ModalHeaderCssCascade.mjs`. CI pendiente de resultado al registrar esta entrada.
 - Sin cambios a deployments, endpoints, propiedades, permisos, Spreadsheet, Drive ni datos externos. Sin llamadas entre servicios Apps Script; el lock solo protege la operación dentro de FEEDBACK.
 - Prioridad de continuidad: 1) útiles/CATALOG, 2) unificación de aportes Dashboard, 3) iframe tutorial, 4) encabezados. Mantener esta secuencia en los próximos trabajos.
+
+
+## 2026-11-25 — Cierre de pruebas locales: útiles, Dashboard y modales
+
+- CI 45535275807: 523 suites, 6,206 pruebas aprobadas, 0 fallos.
+- Navegador AUG-146: 260/260 PASS en cuatro viewports. La prueba confirma título de tutorial en una línea, iframe visible de 315 px, y alineación del logo/modelo con la línea azul.
+- Likes: idempotencia 5/5, reintento silencioso ante contención 2/2 y lock acotado 2/2. FEEDBACK busca por usuario/vehículo sin distinguir corte; CATALOG proyecta una contribución por actor/vehículo.
+- Dashboard: ActivityDashboardContributions 3/3; nombres visibles equivalentes se consolidan aunque IDs históricos difieran.
+- Vídeo: TutorialVideoModalLayout 9/9; iframe ancho completo, alto 315 px, carga inmediata y sin margen interno que recorte el reproductor.
+- Encabezado: CutDetailModalLayout 32/32; el cálculo del ancho del modelo utiliza toda la segunda fila, sin reservar espacio de los botones ubicados en la primera. En pantallas de 320 px, la segunda fila de 32 px conserva el margen y la alineación.
+- Pages run 45535275662: build y deploy automáticos SUCCESS para GPSpedia2.2.5_work. No se publicó Apps Script ni se alteraron hojas, datos, permisos, PropertiesService o endpoints.
+- Próxima continuidad: validación Beta autorizada de útiles FEEDBACK/CATALOG y reproducción real de vídeos YouTube. MIG-URL-008 sigue pendiente de autorización. La tarea separada Actividad reciente permanece en cola.
