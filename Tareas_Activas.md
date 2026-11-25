@@ -508,3 +508,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ### GP-UTIL-VISUAL-02 — Feedback visual inmediato del voto útil
 **Estado: IMPLEMENTADO; VALIDACIÓN LOCAL/CI PENDIENTE.** Refuerzo del toggle visual inmediato en botón, aria-pressed, clase liked, color y estilo CSS frente a hover; se mantiene sincronización/contador optimista existente.
+
+
+## GP-ADMIN-INVENTARIO-INCREMENTAL-01 — Registro automático de auditoría por lotes
+**Estado: EN PROGRESO.**
+- Al clasificar imágenes «Sin uso detectado», ADMIN debe registrar cada lote inmediatamente en la biblioteca de reemplazadas/sin uso, sin depender del botón manual al completar el scan.
+- Preservar revalidación de referencias, ownership, Drive, historial y controles anti-duplicación; no organizar ni mover archivos durante el registro automático.
+- Reanudación y reintentos idempotentes; registro de resultados/fallos recuperables; reconciliación stale solo cuando la auditoría esté completa.
+- Plan y hallazgos: `GP_ADMIN_INVENTARIO_INCREMENTAL_01.md`. Tests de contrato, seguridad, resiliencia y CI pendientes.
