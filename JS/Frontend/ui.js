@@ -4624,7 +4624,10 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
         const logs = Array.isArray(result.data) ? result.data : [];
         const contributions = Array.isArray(result.contributions) ? result.contributions : [];
         const insights = result.insights && typeof result.insights === 'object' ? result.insights : {};
-        if (logContainer) renderActivityLogs(logContainer, logs);
+        if (logContainer) {
+            const catalog = getState().catalogData || {};
+            renderActivityLogs(logContainer, logs, undefined, { vehicles: Array.isArray(catalog.cortes) ? catalog.cortes : [] });
+        }
         if (contributionContainer) renderActivityContributions(contributionContainer, contributions);
         if (insightContainer) renderActivityInsights(insightContainer, insights, contributions);
         if (statusContainer) {

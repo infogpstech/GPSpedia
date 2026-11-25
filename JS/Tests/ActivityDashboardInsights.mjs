@@ -35,18 +35,56 @@ assert.equal(insights.topUseful[0].brand,"Toyota");assert.deepEqual(insights.top
 assert.deepEqual(insights.years,{confirmations:1,suggestions:1,verified:3,anonymous:1,applied:1});
 assert.equal(insights.windowLimited,false);
 assert.match(ui,/renderActivityInsights\(insightContainer/);assert.match(ui,/activity-dashboard-status/);assert.match(ui,/result\.status !== 'success'/);assert.match(feedback,/activitySheetAvailable/);assert.match(html,/id="activity-insights"/);assert.match(html,/id="activity-dashboard-status"/);assert.match(html,/data-activity-tab="insights"/);assert.match(css,/GP-DASH-INSIGHTS-01/);
-class FakeElement{constructor(tag){this.tagName=tag;this.children=[];this.className="";this.style={};this._textContent="";}set textContent(v){this._textContent=String(v);this.children=[];}get textContent(){return this._textContent;}set innerHTML(_v){throw new Error("No usar innerHTML.");}appendChild(c){this.children.push(c);return c;}replaceChildren(){this.children=[];}}
+class FakeElement{
+ constructor(tag){this.tagName=tag;this.children=[];this.className="";this.style={};this.attributes={};this.hidden=false;this._textContent="";this.parentNode=null;this.classList={add:name=>{const names=this.className.split(" ").filter(Boolean);if(!names.includes(name))names.push(name);this.className=names.join(" ");}};}
+ set textContent(v){this._textContent=String(v);this.children=[];}
+ get textContent(){return this._textContent+this.children.map(child=>child.textContent).join("");}
+ set innerHTML(_v){throw new Error("No usar innerHTML.");}
+ appendChild(c){c.parentNode=this;this.children.push(c);return c;}
+ append(...nodes){nodes.forEach(node=>this.appendChild(node));}
+ replaceChildren(){this.children.forEach(child=>child.parentNode=null);this.children=[];}
+ setAttribute(name,value){this.attributes[name]=String(value);}
+ getAttribute(name){return this.attributes[name]??null;}
+ contains(target){return this===target||this.children.some(child=>child.contains(target));}
+ closest(selector){return selector===".activity-log-toggle"&&this.className.split(" ").includes("activity-log-toggle")?this:null;}
+}
 const doc={createElement:tag=>new FakeElement(tag)},container=doc.createElement("div");
 renderActivityInsights(container,{summary:{vehicles:2,cuts:2,usefulVotes:9,notUseful:1},topUseful:[{brand:"<img onerror=alert(1)>",model:"Hilux",cutType:"Corte",usefulVotes:9}],years:{confirmations:1,suggestions:1,applied:1,verified:3,anonymous:1}},[],doc);
 const collect=node=>[node.textContent,...node.children.flatMap(collect)].join(" ");
 assert.ok(collect(container).includes("<img onerror=alert(1)>"));assert.equal(container.children.length,4);assert.equal(container.children[0].children.length,5);
+const documentHandlers={};
+doc.addEventListener=(name,handler)=>{documentHandlers[name]=handler;};
+doc.removeEventListener=(name,handler)=>{if(documentHandlers[name]===handler)delete documentHandlers[name];};
 const logContainer=doc.createElement("tbody");
-renderActivityLogs(logContainer,[{timestamp:"2026-11-17T10:00:00Z",nombreUsuario:"Técnico",tipoActividad:"like",detalle:"Valoración enviada",idElementoAsociado:"VEH-01"}],doc);
-assert.match(logContainer.children[0].children[3].textContent,/Referencia: VEH-01/);
+renderActivityLogs(logContainer,[
+ {timestamp:"2026-11-17T10:00:00Z",nombreUsuario:"Técnico",tipoActividad:"like",detalle:"{} • referencia V-105",idElementoAsociado:"V1"},
+ {timestamp:"2026-11-16T10:00:00Z",nombreUsuario:"",tipoActividad:"view_vehicle",detalle:"{}"}
+],doc,{vehicles:[{id:"V1",marca:"Chevrolet",modelo:"Suburban",anoDesde:2021,anoHasta:2026}]});
+assert.equal(logContainer.children[0].children.length,3);
+assert.equal(logContainer.children[0].children[0].textContent,"17/11/26");
+assert.equal(logContainer.children[0].children[1].textContent,"Técnico");
+assert.equal(logContainer.children[0].children[2].children[0].textContent,"Marcó como útil");
+const firstDetail=logContainer.children[1],firstToggle=logContainer.children[0].children[2].children[0];
+firstToggle.onclick();
+assert.equal(firstDetail.hidden,false);
+assert.equal(firstToggle.getAttribute("aria-expanded"),"true");
+assert.match(firstDetail.textContent,/Chevrolet · Suburban · 2021–2026/);
+assert.ok(!firstDetail.textContent.includes("referencia")&&!firstDetail.textContent.includes("{}"));
+const secondDetail=logContainer.children[3],secondToggle=logContainer.children[2].children[2].children[0];
+secondToggle.onclick();
+assert.equal(firstDetail.hidden,true);
+assert.equal(secondDetail.hidden,false);
+documentHandlers.click({target:doc.createElement("aside")});
+assert.equal(secondDetail.hidden,true);
+assert.equal(secondToggle.getAttribute("aria-expanded"),"false");
 const emptyLogContainer=doc.createElement("tbody");
 renderActivityLogs(emptyLogContainer,[],doc);
 assert.equal(emptyLogContainer.children.length,1);
-assert.equal(emptyLogContainer.children[0].children[0].colSpan,4);
+assert.equal(emptyLogContainer.children[0].children[0].colSpan,3);
 assert.match(emptyLogContainer.children[0].children[0].textContent,/Todavía no hay actividad registrada/);
+assert.ok(html.includes('class="activity-log-table"'));
+assert.ok(!html.includes("<th scope=\\"col\\">Descripción</th>"));
+assert.ok(css.includes("GP-DASH-ACTIVITY-RECENT-01"));
+assert.ok(ui.includes("renderActivityLogs(logContainer, logs, undefined, { vehicles:"));
 
-console.log("1/1 PASS — GP-DASH-INSIGHTS-01 agregación, ranking, años, ventana acotada y render seguro");
+console.log("1/1 PASS — GP-DASH-INSIGHTS-01 y GP-DASH-ACTIVITY-RECENT-01");

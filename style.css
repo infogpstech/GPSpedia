@@ -6990,3 +6990,26 @@ textarea.rich-text-source[hidden] { display:none !important; }
  margin:6px 0 !important;padding:0 0 6px;border-bottom:2px solid var(--gp-color-accent, #007bff);line-height:1.4;
 }
 #modalDetalle[data-modal-type="tutorial"] #detalleCompleto .tutorial-detail-section:last-child {margin-bottom:0 !important;}
+
+/* GP-DASH-ACTIVITY-RECENT-01 — resumen de tres columnas y acordeón contextual. */
+#dashboard-modal .activity-log-table-wrap {width:100%;min-width:0;overflow-x:hidden;}
+#dashboard-modal .activity-log-table {width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin-top:8px;}
+#dashboard-modal .activity-log-table th,
+#dashboard-modal .activity-log-table td {padding:8px 6px;border-bottom:1px solid var(--border-color,#d6dce3);text-align:left;vertical-align:top;overflow-wrap:anywhere;}
+#dashboard-modal .activity-log-table th:first-child,
+#dashboard-modal .activity-log-table td.activity-log-date {width:78px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+#dashboard-modal .activity-log-table th:nth-child(2) {width:26%;}
+#dashboard-modal .activity-log-toggle {display:block;width:100%;min-width:0;padding:0;border:0;background:transparent;color:var(--gp-color-accent,var(--accent-color,#007bff));font:inherit;font-weight:600;text-align:left;white-space:normal;overflow-wrap:anywhere;cursor:pointer;}
+#dashboard-modal .activity-log-toggle:focus-visible {outline:2px solid var(--gp-color-accent,#007bff);outline-offset:2px;border-radius:3px;}
+#dashboard-modal .activity-log-detail-row[hidden] {display:none !important;}
+#dashboard-modal .activity-log-detail-cell {padding:8px 10px;background:var(--card-bg,var(--surface-color,transparent));}
+#dashboard-modal .activity-log-detail {display:flex;flex-direction:column;gap:5px;min-width:0;font-size:.9rem;line-height:1.4;}
+#dashboard-modal .activity-log-vehicle {font-weight:700;color:var(--text-color,inherit);}
+#dashboard-modal .activity-log-description {color:var(--text-muted,var(--text-medium,#666));overflow-wrap:anywhere;}
+#dashboard-modal .activity-log-empty-detail {color:var(--text-muted,var(--text-medium,#666));font-style:italic;}
+@media (max-width:560px) {
+ #dashboard-modal .activity-log-table th,#dashboard-modal .activity-log-table td {padding:6px 4px;font-size:.86rem;}
+ #dashboard-modal .activity-log-table th:first-child,#dashboard-modal .activity-log-table td.activity-log-date {width:66px;}
+ #dashboard-modal .activity-log-table th:nth-child(2) {width:27%;}
+ #dashboard-modal .activity-log-detail-cell {padding:7px 6px;}
+}

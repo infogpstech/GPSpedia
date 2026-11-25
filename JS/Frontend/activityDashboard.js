@@ -1,35 +1,167 @@
+const activityOutsideHandlers = new WeakMap();
+const ACTIVITY_ACTION_LABELS = Object.freeze({
+    like: "Marcó como útil",
+    view_vehicle: "Visitó un vehículo",
+    suggest_year: "Sugirió un año",
+    suggest_year_range_review: "Solicitó revisar los años",
+    suggest_year_collision: "Reportó un cruce de años",
+    suggest_cut_change: "Sugirió un cambio en el corte",
+    report_problem: "Reportó un problema",
+    add_problem: "Agregó un problema",
+    add_solution: "Agregó una solución",
+    add_prevention: "Agregó una prevención",
+    add_tutorial: "Agregó un tutorial",
+    add_cut: "Agregó un corte",
+    update_cut: "Actualizó un corte",
+    inbox_reply: "Respondió un mensaje",
+    inbox_resolve: "Marcó un reporte como resuelto",
+    inbox_delete: "Eliminó un registro de Inbox"
+});
+
+function activityDateLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return [String(date.getDate()).padStart(2, "0"), String(date.getMonth() + 1).padStart(2, "0"), String(date.getFullYear()).slice(-2)].join("/");
+}
+function activityActionLabel(value) {
+    const key = value === null || value === undefined ? "" : String(value).trim().toLowerCase();
+    if (ACTIVITY_ACTION_LABELS[key]) return ACTIVITY_ACTION_LABELS[key];
+    if (key.startsWith("inbox_")) return "Actividad de Inbox";
+    return key ? key.replace(/[_-]+/g, " ").replace(/^./u, letter => letter.toLocaleUpperCase("es")) : "Actividad registrada";
+}
+function activityDetailText(value) {
+    if (value === null || value === undefined || typeof value === "object") return "";
+    const source = String(value).trim();
+    if (!source || /^\{\s*\}$/.test(source)) return "";
+    try {
+        const parsed = JSON.parse(source);
+        if (parsed && typeof parsed === "object") return "";
+    } catch (_error) {}
+    return source
+        .replace(/\s*[•·]\s*referencia\s+[^\s,;]+/gi, "")
+        .replace(/\s*\{\s*\}/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+function activityVehicleContext(entry, vehicles) {
+    const id = entry && entry.idElementoAsociado !== null && entry.idElementoAsociado !== undefined
+        ? String(entry.idElementoAsociado).trim() : "";
+    if (!id || !Array.isArray(vehicles)) return "";
+    const vehicle = vehicles.find(item => item && String(item.id === undefined ? item.ID : item.id).trim() === id);
+    if (!vehicle) return "";
+    const start = String(vehicle.anoDesde || "").trim(), end = String(vehicle.anoHasta || "").trim();
+    const year = start && end && start !== end ? start + "–" + end : start || end;
+    return [vehicle.marca, vehicle.modelo, year].map(value => value == null ? "" : String(value).trim()).filter(Boolean).join(" · ");
+}
+
 /**
- * Renderiza el historial de actividad como texto plano.
- * Los valores almacenados se consideran datos no confiables, incluidos registros históricos.
+ * Renderiza el historial de actividad con resumen compacto y detalle desplegable.
+ * Solo transforma los datos ya recibidos; no realiza consultas ni modifica registros.
  */
-export function renderActivityLogs(container, logs, doc = container && container.ownerDocument) {
+export function renderActivityLogs(container, logs, doc = container && container.ownerDocument, options = {}) {
     if (!container || typeof container.replaceChildren !== "function" || !doc || typeof doc.createElement !== "function") {
         throw new TypeError("Se requiere un contenedor DOM y un documento válido.");
     }
+    const previous = activityOutsideHandlers.get(container);
+    if (previous && previous.doc && typeof previous.doc.removeEventListener === "function") {
+        previous.doc.removeEventListener("click", previous.handler);
+    }
     container.replaceChildren();
     const entries = Array.isArray(logs) ? logs : [];
-    const toPlainText = value => value === null || value === undefined || !["string", "number", "boolean"].includes(typeof value) ? "" : String(value);
-    entries.forEach(log => {
+    let openDetailRow = null, openToggle = null;
+    const closeOpenDetail = () => {
+        if (openDetailRow) openDetailRow.hidden = true;
+        if (openToggle) openToggle.setAttribute("aria-expanded", "false");
+        openDetailRow = null;
+        openToggle = null;
+    };
+    entries.forEach((log, index) => {
         const entry = log && typeof log === "object" ? log : {};
-        const timestamp = new Date(entry.timestamp);
-        const timestampText = Number.isNaN(timestamp.getTime()) ? "" : timestamp.toLocaleString();
         const row = doc.createElement("tr");
-        const rawType = toPlainText(entry.tipoActividad);
-        const labels = {like:"Valoración útil",suggest_year:"Aporte sobre años",suggest_year_range_review:"Revisión de rango de años",add_cut:"Nuevo corte agregado",update_cut:"Corte actualizado",add_tutorial:"Tutorial agregado"};
-        const friendlyType = labels[rawType] || (rawType.startsWith("inbox_") ? "Actividad de Inbox" : rawType.replace(/[_-]+/g," "));
-        const detailText = toPlainText(entry.detalle), relatedId = toPlainText(entry.idElementoAsociado);
-        const relatedText = relatedId ? (detailText ? detailText + " · Referencia: " + relatedId : "Referencia: " + relatedId) : detailText;
-        const values = [timestampText, toPlainText(entry.nombreUsuario), friendlyType, relatedText];
-        values.forEach(value => { const cell = doc.createElement("td"); cell.textContent = value; row.appendChild(cell); });
+        row.className = "activity-log-row";
+        const dateCell = doc.createElement("td");
+        dateCell.className = "activity-log-date";
+        dateCell.textContent = activityDateLabel(entry.timestamp);
+        const userCell = doc.createElement("td");
+        userCell.className = "activity-log-user";
+        userCell.textContent = entry.nombreUsuario && String(entry.nombreUsuario).trim() ? String(entry.nombreUsuario).trim() : "Usuario";
+        const actionCell = doc.createElement("td");
+        actionCell.className = "activity-log-action";
+        const toggle = doc.createElement("button");
+        toggle.type = "button";
+        toggle.className = "activity-log-toggle";
+        toggle.textContent = activityActionLabel(entry.tipoActividad);
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-controls", "activity-log-detail-" + index);
+        actionCell.appendChild(toggle);
+        row.appendChild(dateCell);
+        row.appendChild(userCell);
+        row.appendChild(actionCell);
         container.appendChild(row);
+
+        const detailRow = doc.createElement("tr");
+        detailRow.className = "activity-log-detail-row";
+        detailRow.hidden = true;
+        detailRow.id = "activity-log-detail-" + index;
+        const detailCell = doc.createElement("td");
+        detailCell.className = "activity-log-detail-cell";
+        detailCell.colSpan = 3;
+        const panel = doc.createElement("div");
+        panel.className = "activity-log-detail";
+        const vehicle = activityVehicleContext(entry, options && options.vehicles);
+        const detail = activityDetailText(entry.detalle);
+        if (vehicle) {
+            const vehicleNode = doc.createElement("div");
+            vehicleNode.className = "activity-log-vehicle";
+            vehicleNode.textContent = vehicle;
+            panel.appendChild(vehicleNode);
+        }
+        if (detail) {
+            const detailNode = doc.createElement("div");
+            detailNode.className = "activity-log-description";
+            detailNode.textContent = detail;
+            panel.appendChild(detailNode);
+        }
+        if (!vehicle && !detail) {
+            const empty = doc.createElement("span");
+            empty.className = "activity-log-empty-detail";
+            empty.textContent = "No hay información adicional disponible.";
+            panel.appendChild(empty);
+        }
+        detailCell.appendChild(panel);
+        detailRow.appendChild(detailCell);
+        container.appendChild(detailRow);
+
+        toggle.onclick = () => {
+            if (openDetailRow === detailRow) {
+                closeOpenDetail();
+                return;
+            }
+            closeOpenDetail();
+            detailRow.hidden = false;
+            toggle.setAttribute("aria-expanded", "true");
+            openDetailRow = detailRow;
+            openToggle = toggle;
+        };
     });
     if (!entries.length) {
         const row = doc.createElement("tr");
         const cell = doc.createElement("td");
-        cell.colSpan = 4;
+        cell.colSpan = 3;
         cell.textContent = "Todavía no hay actividad registrada.";
         row.appendChild(cell);
         container.appendChild(row);
+    }
+    if (typeof doc.addEventListener === "function") {
+        const outsideHandler = event => {
+            if (!openDetailRow) return;
+            const target = event && event.target;
+            const insidePanel = target && typeof openDetailRow.contains === "function" && openDetailRow.contains(target);
+            const clickedToggle = target && typeof target.closest === "function" && target.closest(".activity-log-toggle");
+            if (!insidePanel && !clickedToggle) closeOpenDetail();
+        };
+        doc.addEventListener("click", outsideHandler);
+        activityOutsideHandlers.set(container, { doc, handler: outsideHandler });
     }
     return container;
 }

@@ -1038,3 +1038,9 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se registró la corrección visual del modal de tutoriales: título sin truncamiento prematuro (una línea o máximo dos), imagen al 50 %, espacios compactos y divisores azules.
 - Se registró Actividad reciente del Dashboard como siguiente implementación frontend.
 - Las validaciones Beta diferidas se posponen hasta cerrar las implementaciones locales pendientes.
+
+## 2026-11-25 — Inicio de GP-DASH-ACTIVITY-RECENT-01
+
+- Se inició la mejora de Actividad reciente en el frontend: resumen Fecha/Usuario/Acción, etiquetas legibles y acordeón contextual.
+- El vehículo se relaciona con el catálogo local ya cargado; se preservan los datos y el orden entregados por FEEDBACK.
+- No se modifican Apps Script, contratos, payloads, hojas ni registros.

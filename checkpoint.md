@@ -634,3 +634,13 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - GP-DASH-ACTIVITY-RECENT-01 se establece como siguiente implementación frontend; conserva su alcance sin cambios backend.
 - Por instrucción del propietario, se completan primero las implementaciones locales y después las validaciones Beta diferidas (útiles FEEDBACK/CATALOG, reproducción real y MIG-URL-008).
 - Rama autorizada GPSpedia2.2.5_work; HEAD de partida 7f288008ad29e6e8dd126abeed12fd9408c6c8df. La rama base GPSpedia2.2.5 permanece intacta.
+
+---
+
+## 2026-11-25 — Inicio de implementación GP-DASH-ACTIVITY-RECENT-01
+
+- Se inició la presentación de Actividad reciente únicamente desde frontend.
+- Se verificó el contrato existente: timestamp, nombreUsuario, tipoActividad, idElementoAsociado y detalle; los eventos Inbox comparten la misma estructura y llevan prefijo inbox_.
+- Se confirmó que FEEDBACK entrega hasta 100 eventos ordenados por fecha descendente. La implementación conserva ese límite y orden; no se modifica el servicio.
+- El contexto del vehículo se resuelve localmente contra catalogData.cortes ya disponible en el navegador. No se solicitan datos nuevos ni se muestran IDs internos como descripción.
+- La tabla pasa a tres columnas; los detalles se expanden por fila, con un único acordeón abierto y cierre por clic externo. No se modifican backend, contratos ni payloads.

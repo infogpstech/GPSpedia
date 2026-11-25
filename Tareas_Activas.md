@@ -217,7 +217,7 @@ Las tareas de implementación frontend se ejecutan antes de retomar las validaci
 - Añadir pruebas locales. Reproducción real y dispositivos físicos quedan diferidos a Beta.
 
 ### GP-DASH-ACTIVITY-RECENT-01 — Presentación de Actividad reciente
-**Estado: PENDIENTE DE IMPLEMENTACIÓN. Siguiente tarea local.**
+**Estado: EN IMPLEMENTACIÓN.**
 - Tabla inicial Fecha/Usuario/Acción; fecha compacta; nombre legible; acciones comprensibles.
 - Sin objetos vacíos ni fragmentos técnicos en el resumen.
 - Acordeón contextual por registro, máximo uno abierto y cierre al hacer clic fuera.
