@@ -85,7 +85,7 @@ const EXT_HEADERS = ["origen_registro","tipo_mime","ubicacion_original","fecha_c
     "url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion",
     "error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id",
     "resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes",
-    "fecha_modificacion_drive","referencias_catalogo_json"];
+    "fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"];
 const HEADERS = [...BASE_HEADERS, ...EXT_HEADERS];
 const FILE_A = "abcdefghij1234567890";
 const FILE_B = "bcdefghij12345678901";
@@ -135,7 +135,7 @@ check("Las operaciones del gestor validan referencias globales y no solo Cortes"
     assert.match(scanner,/SHEET_NAMES\.IMAGENES_REEMPLAZADAS/);
 });
 
-check("Los 21 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
+check("Los 24 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
     const row=["REP-LEGACY",new Date(),"vehiculo","VEH-1","imagenVehiculo",FILE_A,"old.jpg",
         "https://drive.google.com/file/d/"+FILE_A+"/view","new-url","VEH-1","historica"];
     const sheet=createSheet([BASE_HEADERS,row]);
@@ -1138,7 +1138,7 @@ check("El esquema del inventario conserva las columnas nuevas de trazabilidad de
     const ensure=fnSource(admin,"ensureReplacedImagesInventoryColumns");
     const readSchema=fnSource(admin,"getReplacedImagesReadSchema_");
     const readInventory=fnSource(admin,"handleGetReplacedImages");
-    for(const field of ["ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"]){
+    for(const field of ["ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"]){
         assert.ok(ensure.includes(field));
         assert.ok(readSchema.includes(field));
         if (["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"].includes(field)) assert.ok(readInventory.includes(field));
