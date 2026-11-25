@@ -144,3 +144,50 @@ Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del
 - Validar escritorio y móvil y comprobar que no exista desplazamiento horizontal en la vista principal.
 - Ejecutar pruebas de regresión y sintaxis de los archivos modificados.
 - Confirmar mediante revisión del diff que no se modificó ningún servicio Apps Script ni contrato backend.
+
+
+---
+
+## Solicitudes del propietario — prioridades de continuidad (25-11-2026)
+
+Esta sección consolida el estado vigente y prevalece sobre los apuntes históricos anteriores que todavía indiquen MIG-URL-002 o MIG-URL-003 como tarea activa. MIG-URL-001..007 están cerradas; MIG-URL-008 permanece pendiente de autorización para validar endpoints Beta aislados. La corrección de integridad de útiles se atiende como prioridad crítica sin realizar llamadas ni cambios en deployments externos.
+
+### Prioridad 1 — Útiles: idempotencia por usuario/vehículo y estabilidad de CATALOG
+**Estado:** IMPLEMENTACIÓN LOCAL APLICADA; CI/regresión y validación Beta pendientes.
+
+- Un usuario puede registrar un útil una sola vez por vehículo, independientemente del corte en el que vuelva a pulsar.
+- La consulta de duplicados y el append se ejecutan dentro de una sección crítica breve con `tryLock(10000)`; el log de actividad queda fuera del lock.
+- Se reconocen filas históricas repetidas o con identidad heredada normalizable; no se crea una nueva fila si ya existe un evento del mismo usuario y vehículo.
+- CATALOG proyecta una sola contribución por usuario/vehículo, incluso si el ledger contiene filas repetidas o eventos asociados a cortes distintos; se conserva el primer corte registrado como atribución.
+- Los nuevos eventos validan el ID numérico del vehículo, corte 1–3 e identidad del usuario antes de escribir. Identificadores de usuario fuera del alfabeto seguro se convierten a una clave estable SHA-256 compartida por FEEDBACK y CATALOG.
+- La respuesta idempotente es exitosa, devuelve el contador confirmado y no incluye un mensaje de “ya dio útil”. La interfaz marca el vehículo como útil, no cada corte por separado.
+- No se modifica el contador físico de Cortes para los eventos nuevos; CATALOG proyecta los actores únicos desde FeedbackLikes.
+
+### Prioridad 2 — Dashboard: consolidar aportes de nombres idénticos
+**Estado:** IMPLEMENTACIÓN LOCAL APLICADA; pruebas/regresión pendientes.
+
+- Consolidar registros del mismo nombre visible normalizado aunque los servicios entreguen distintos IDs históricos.
+- Sumar los cortes y aportes registrados de las filas agrupadas. No duplicar el mismo nombre en la tabla.
+- Ejemplo de aceptación: `Pablo Peña — 365 cortes` y `Pablo Peña — 15 cortes` deben mostrarse como una sola fila con `380 cortes`.
+- No cambiar servicios Apps Script ni el contrato de datos. Los conteos de vehículos se conservan con la regla actual de agregación porque el frontend no dispone de la identidad de cada vehículo para sumar sin riesgo de duplicarlos.
+
+### Prioridad 3 — Modal de detalle de tutoriales: vídeo YouTube visible
+**Estado:** IMPLEMENTACIÓN LOCAL APLICADA; CI y reproducción visual real pendientes.
+
+- Usar el mismo tamaño/estrategia del iframe del vídeo guía de desarme del modal de detalle de corte: ancho 100 % y alto fijo de 315 px.
+- Cargar el iframe de inmediato (sin lazy loading), mantener URL de embed validada, permisos de reproducción y pantalla completa.
+- El contenedor no puede contraerse dentro del modal. No cambiar URLs ni datos guardados de tutoriales.
+
+### Prioridad 4 — Encabezado de detalle de cortes/tutoriales
+**Estado:** AJUSTE CSS LOCAL APLICADO; validación responsive pendiente.
+
+- Mantener el título en una sola línea cuando quepa; si excede el ancho disponible, truncar de forma legible en lugar de partir palabras o generar saltos innecesarios.
+- Alinear el borde inferior del logo y del nombre del modelo y conservar la misma separación visual respecto de la línea azul.
+- Aumentar 2 px el tamaño del nombre del modelo en móvil.
+- Confirmar en escritorio y móvil que el cierre y las acciones del modal no se desplacen ni se solapen.
+
+### Continuidad obligatoria
+- En el siguiente trabajo continuar desde estas cuatro prioridades, en el orden indicado; no volver a registrar tareas duplicadas.
+- No cerrar ninguna prioridad hasta que pasen sus pruebas específicas, la regresión de servicios y la revisión responsive correspondiente.
+- La reproducción real de vídeos y la comprobación funcional contra Apps Script/Spreadsheet quedan para Beta aislada y autorizada. No desplegar Apps Script ni modificar hojas, datos, permisos o endpoints durante las pruebas locales.
+- La tarea previa **Actividad reciente** del Dashboard (tabla Fecha/Usuario/Acción con acordeón de detalle) sigue en cola separada; no se sustituye por la consolidación de aportes de esta solicitud.
