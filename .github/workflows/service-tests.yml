@@ -36,6 +36,7 @@ jobs:
           git rev-parse HEAD
       - name: Check syntax of modified JavaScript modules
         run: |
+          node --experimental-default-type=module --check JS/Frontend/api-config.js
           node --check JS/Frontend/main.js
           node --check JS/Frontend/auth.js
           node --check JS/Frontend/ui.js
