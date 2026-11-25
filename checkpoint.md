@@ -782,3 +782,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Regresión global: 378 suites, 4693 tests aprobados, cinco suites fallidas: FEEDBACK preflight/CATALOG replay y MIG019 con patrones de idempotencia actor+vehículo obsoletos frente a corte-index; BETA-032 DeveloperConsoleRouting con assertion obsoleta de copy log; MIG021 URL contract. Aislar y actualizar pruebas contractuales coherentes, no cambiar producto para satisfacer expectativas obsoletas.
 - Modal: panel integrado aria-live, mirror Developer, entradas seguras, límite 250, resultados incrementalmente visibles y scroll responsive. No Apps Script/Beta.
 - Siguiente trabajo: reconciliar/validar GP-LIKE-REBUILD-01 y rectificación por corte; actualizar contratos obsoletos (ya identificados por CI).
+
+
+## GP-LIKE-REBUILD-01 — reconciliación 25-11-2026
+
+- Regla vigente corte individual: actor+vehículo+corte. FEEDBACK append-only event, lock reducido al preflight+append; CATALOG dedup por actor y corte. Duplicados silenciosos. Dedicadas `FeedbackLikeIdempotency` 10/10 PASS, `FeedbackLikeAppendOnly` 4/4 PASS; sintaxis PASS.
+- Corregidas assertions de contratos obsoletos en preflight/replay y copy-console; DeveloperConsoleRouting 5/5 PASS. CI run 45611423533 encontró 427 suites/5314 tests PASS con 4 fallos: los 2 contracts likes, MIG019 reutilizando el contract, y MIG021. Se actualizaron los contracts likes y DeveloperConsoleRouting. CI siguiente pendiente.
+- No se desplegó FEEDBACK/CATALOG ni se alteraron recursos Beta. Cierre local; la validación real de útiles permanece pendiente de Beta.
+- Siguiente tarea independiente: GP-DASH-ACTIVITY-RECENT-01 (Actividad reciente, frontend solamente).
