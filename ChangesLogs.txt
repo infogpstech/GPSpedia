@@ -1002,7 +1002,7 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 ## 2026-11-25 — Útiles idempotentes, Dashboard y modales de detalle
 
-- FEEDBACK: el registro de útil ahora se protege con un lock acotado no bloqueante durante la consulta por usuario/vehículo y la inserción. La identidad se normaliza a una clave estable segura; el handler reconoce eventos existentes en cualquier corte del mismo vehículo y no añade otra fila. La recuperación de un registro pending reutiliza la fila existente. La actividad se registra fuera del lock.
+- FEEDBACK: el registro de útil ahora se protege con `tryLock(0)` no bloqueante durante la consulta por usuario/vehículo y la inserción; el frontend reintenta silenciosamente ante contención. La identidad se normaliza a una clave estable segura; el handler reconoce eventos existentes en cualquier corte del mismo vehículo y no añade otra fila. La recuperación de un registro pending reutiliza la fila existente. La actividad se registra fuera del lock.
 - CATALOG: la proyección de FeedbackLikes deduplica por identidad y vehículo, no suma repeticiones del mismo usuario aunque aparezcan en distintos cortes y atribuye el útil al primer corte registrado. Los nuevos eventos se validan en FEEDBACK antes de escribirse para respetar el contrato de CATALOG.
 - Frontend: el estado del botón útil se conserva por vehículo y la respuesta idempotente no incluye texto que notifique al usuario que ya había votado.
 - Dashboard: se agrupan filas por nombre visible normalizado aunque tengan IDs históricos distintos; se suman cortes y aportes registrados.
