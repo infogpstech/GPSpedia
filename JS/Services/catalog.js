@@ -1245,7 +1245,7 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
             const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
             const vehicleId = String(row[1] || "").trim();
             const corteIndex = Number(row[2]);
-            if (!/^[1-9]\\d{0,14}$/.test(vehicleId) ||
+            if (!/^[1-9]\d{0,14}$/.test(vehicleId) ||
                 !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
                 throw new Error("referencia de vehículo o corte inválida");
             }
