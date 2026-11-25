@@ -2007,7 +2007,9 @@ function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex, 
         matches.forEach(match => {
             const rowIndex = match.getRow();
             const row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
-            if (String(row[1] || "").trim() !== String(vehicleId)) return;\n            const storedCut = Number(row[2]);\n            if (Number.isInteger(storedCut) && storedCut >= 1 && storedCut <= 3 && storedCut !== Number(corteIndex)) return;
+            if (String(row[1] || "").trim() !== String(vehicleId)) return;
+            const storedCut = Number(row[2]);
+            if (Number.isInteger(storedCut) && storedCut >= 1 && storedCut <= 3 && storedCut !== Number(corteIndex)) return;
             let storedActorKey;
             try { storedActorKey = normalizeFeedbackLikeActorKey_(row[0]); }
             catch (identityError) { return; }
