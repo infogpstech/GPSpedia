@@ -1,11 +1,12 @@
 export function applyConfirmedLikeState(currentState, vehicleId, corteIndex, response) {
     const state = currentState && typeof currentState === "object" ? currentState : {};
-    const likeKey = String(vehicleId) + "-" + String(corteIndex);
+    const likeKey = String(vehicleId);
     const previousLikes = Array.isArray(state.likedCortes) ? state.likedCortes : [];
     const likedCortes = previousLikes.includes(likeKey) ? previousLikes : [...previousLikes, likeKey];
     const catalogData = state.catalogData && typeof state.catalogData === "object" ? state.catalogData : {};
     const cortes = Array.isArray(catalogData.cortes) ? catalogData.cortes : [];
-    const countKey = "utilCorte" + String(corteIndex);
+    const confirmedCorteIndex = Number(response && response.corteIndex) || Number(corteIndex);
+    const countKey = "utilCorte" + String(confirmedCorteIndex);
     const likeCount = response && response.likeCount;
     const nextCortes = Number.isSafeInteger(likeCount) && likeCount >= 0
         ? cortes.map(vehicle => String(vehicle && vehicle.id) === String(vehicleId)
