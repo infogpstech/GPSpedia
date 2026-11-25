@@ -24,3 +24,7 @@
 - Impacto: imágenes clasificadas «Sin uso detectado» no se registran en la biblioteca hasta que termina la auditoría y el usuario ejecuta el guardado manual. Un corte/expiración del recorrido retrasa o impide el registro.
 - Corrección requerida: habilitar registro incremental por lotes a partir de resultados autenticados y persistidos por ADMIN, propietario y auditoría; validar IDs contra el contenido emitido por ADMIN; revalidar referencias activas y el archivo Drive en cada lote; idempotencia por auditoría/lote/archivo; conservar protecciones de historial, ambigüedad y estado manual; no mover/eliminar archivos ni marcar el scan como completo anticipadamente.
 - Criterios de aceptación: registro al recibir cada lote, biblioteca refleja resultados sin botón manual, reintentos seguros, reanudación y reconciliación, operación manual final compatible, tests de contrato/seguridad/idempotencia/resiliencia. No validar servicios reales ni modificar recursos externos en esta fase.
+
+2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01 — revisión adicional
+- Implementación en curso: modo incremental con operación por digest de lote; el flujo final consolida/reconcilia cuando ADMIN confirma estado completo. Frontend registra por lote y consolida al finalizar; no organiza/mueve Drive.
+- Riesgo que sigue bajo revisión: estado de resultado global y operaciones del organizador tras consolidación; reintentos/errores parciales y concurrencia. CI focal aún en ejecución para la última revisión.
