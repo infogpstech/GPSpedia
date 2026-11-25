@@ -746,3 +746,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Añadida `JS/Tests/DeveloperConsoleErrors.mjs`.
 - Contrato estático y simulación aislada de selección ejecutados: PASS. Ejecución Node real/CI no disponible en el entorno actual; CI remoto pendiente, sin bloquear cierre local. No se alteró backend ni recursos.
 - Próxima tarea: GP-ADMIN-DRIVE-AUDIT-SCHEMA-01.
+
+
+## GP-ADMIN-DRIVE-AUDIT-SCHEMA-01 — 2026-11-25
+
+- Diagnóstico: `getAdminLocalGuardSheet_` asumía hoja existente; ante ausencia abortaba antes del baseline/operación. No había inicializador de encabezados.
+- Implementado: creación de hoja y encabezado si faltan; confirmación de escritura; lectura posterior; carrera de creación recuperada; esquema incompatible no se sobrescribe.
+- `AdminLocalOperationGuard.mjs` PASS en runner aislado; `AdminOperationGuardsSchema.mjs` contrato PASS; simulaciones de creación, existente válido, mismatch y carrera PASS; sintaxis ADMIN PASS. CI remoto pendiente, sin habilitar guardas adicionales ni modificar recursos externos.
+- Siguiente tarea: GP-ADMIN-DRIVE-SCAN-MODAL-01.
