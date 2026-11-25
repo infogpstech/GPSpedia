@@ -54,3 +54,11 @@
 - completed indica que el evento ya fue materializado en el contador base de Cortes. Tras retirar, el ledger aplica -1 sobre ese valor base; al reactivar el mismo evento materializado, debe dejar de aplicar el delta negativo, no sumar un nuevo +1. Restablecer completed causaría doble conteo.
 - El cambio experimental de CATALOG fue revertido; el blob volvió al contenido previo. Commit de reversión: 1ebe3e1ea26a8f3f095b15c98f45935c482fb817.
 - Se conserva la prueba añadida para el caso event → withdrawn → event sin materialización previa; se ampliará cobertura para la secuencia completed → withdrawn → event y el contador base.
+
+
+2026-11-25 | Incidencia #130 — índice original perdido al ordenar cortes
+- Severidad: alta; el índice visual del corte podía ser enviado a FEEDBACK como si fuera el índice físico de la hoja Cortes.
+- Evidencia: CATALOG mapCatalogVehicleRowForProjection_ ordena los tres grupos tipoCorte/utilCorte por número de útiles y reasigna sus campos a slots 1..3, pero no conservaba el índice de origen. UI mostrarDetalleModal vuelve a iterar slots 1..3 y asigna ese índice a cutData.index; FEEDBACK interpreta corteIndex como columna física.
+- Impacto: después de que los cortes se ordenan por popularidad, marcar/retirar útil puede modificar el corte físico equivocado y el contador/title puede no coincidir con el elemento mostrado.
+- Corrección: CATALOG añade sourceCorteIndex1..3 por slot visual; UI conserva ese índice para el evento; likeState y syncUsefulCount_ resuelven el slot de presentación al actualizar conteos optimistas/confirmados.
+- Prueba aislada ejecutada con proyección real y funciones reales de estado: PASS para orden 2,3,1, activar, confirmar y retirar sobre el corte original 2. Suite Node/CI aún pendiente.
