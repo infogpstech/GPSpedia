@@ -38,6 +38,6 @@ test("la respuesta idempotente no devuelve mensajes al usuario", () => {
 });
 test("la proyección usa identidad normalizada y deduplica una vez por vehículo", () => {
     assert.match(extract("normalizeFeedbackLikeActorKey_"), /computeDigest/);
-    assert.match(extract("getFeedbackLikeEventCount_"), /firstCutByActor/);
+    assert.match(extract("getFeedbackLikeEventCount_"), /actorsByCut/);
 });
 console.log("FeedbackLikeCompletedReplayPreflight: " + passed + "/" + passed + " PASS");
