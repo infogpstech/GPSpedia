@@ -345,3 +345,17 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 - CI run 45612534877 SUCCESS: 526 suites, 6,245 pruebas, 0 fallos; responsive-browser SUCCESS. `CatalogLikeProjectionReadScale.mjs` 6/6 PASS.
 - Proyección del ledger transferida solo con A:C + F (cuatro campos), en lugar de A:G; mantiene deduplicación actor+vehículo+corte, esquema validado y event filtering. Sin caché adicional, locks ni coordinación entre servicios.
+
+
+## 2026-11-25 — Verificación técnica integral local
+
+**Estado: COMPLETADA EN EL ALCANCE LOCAL.**
+
+- CI final sobre el código y runner revisados: run 45613697548 SUCCESS; 528 suites, 6,263 pruebas aprobadas y 0 fallos. Jobs `service-tests` y `responsive-browser` SUCCESS.
+- Chromium/AUG-146: 264/264 PASS en 1366×768, 390×844, 360×800 y 320×700; 16 capturas sintéticas.
+- Parsing: `RepositoryJavaScriptSyntax` 1/1 PASS sobre 478 archivos .js/.mjs. Referencias: `RepositoryModuleReferences` 1/1 PASS sobre 398 archivos.
+- Integración: `ServiceCallGraphContract` 9/9 PASS; `MIG028SecurityPerformanceRegression` 9/9 PASS; regresiones de útiles, CATALOG, ADMIN, Developer, Dashboard y tutoriales incluidas en las 528 suites.
+- Hallazgo corregido durante la verificación: `AdminOperationGuardsSchema.mjs` y `DeveloperConsoleErrors.mjs` existían pero no estaban conectadas al runner general. Se registraron en `RunServiceTests.mjs` y se alinearon sus resúmenes con el contrato del runner. CI final confirma 10/10 y 8/8 PASS, respectivamente.
+- No se modificaron servicios Apps Script, endpoints, PropertiesService, Spreadsheet, Drive, permisos ni datos externos. Pages build/deployment automático SUCCESS; no es un despliegue Apps Script.
+- Avisos no bloqueantes del runner: dependencias/acciones de GitHub reportan deprecación de Node.js 20 y uso de `punycode`; no se alteró infraestructura por no ser necesario para esta verificación.
+- La validación Beta real permanece separada. MIG-URL-008 continúa pendiente de confirmación de entorno Beta aislado y autorización expresa para GET de salud; no se hicieron peticiones remotas.
