@@ -1981,7 +1981,7 @@ function buildFeedbackLikeActorKey_(userId) {
 function withFeedbackLikeLock_(operation) {
     if (typeof operation !== "function") throw new TypeError("La operación de útil no es válida.");
     const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
+    if (!lock.tryLock(10000)) throw new Error("El registro de útiles está ocupado; inténtalo de nuevo.");
     try {
         return operation();
     } finally {
@@ -1989,7 +1989,7 @@ function withFeedbackLikeLock_(operation) {
     }
 }
 
-function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex) {
+function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId) {
     if (!ledger || ledger.getLastRow() < 2) return [];
     const canonicalActorKey = normalizeFeedbackLikeActorKey_(actorKey);
     const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1)
@@ -2002,7 +2002,6 @@ function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex) 
         try { storedActorKey = normalizeFeedbackLikeActorKey_(row[0]); }
         catch (identityError) { return; }
         if (storedActorKey !== canonicalActorKey) return;
-        if (corteIndex !== undefined && corteIndex !== null && Number(row[2]) !== Number(corteIndex)) return;
         rows.push({ row, rowIndex });
     });
     return rows.sort((a, b) => a.rowIndex - b.rowIndex);
