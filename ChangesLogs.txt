@@ -1215,3 +1215,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Commits: `311b09e4b1db19699d4325c81cb55d43920f076e`, `62cef81afde6b5ccd6a0dd0146d1d7be995fd0fb` y este cierre documental. Sin llamadas a endpoints ni deployments Apps Script; Beta pendiente de autorización.
 
 2026-11-25 — Rectificación de precisión documental: se actualiza el estado de ambas tareas a cambios aplicados y se aclara que el error del útil no incluía el ID/corte en la consola, por lo que la causa concreta del caso Beta no se da por demostrada hasta reproducirla con datos de prueba. Se registra CI documental `45638460585` y Pages `45638457300`, ambos SUCCESS.
+
+
+2026-11-25 — Corrección GP-LIKE-VEHICLE-ID-PREFIX-01: se identifica que FEEDBACK rechazaba `V-105` porque el validador de útiles solo admitía IDs numéricos; se amplía el contrato para aceptar el formato canónico `V-<n>` manteniendo el rango entero seguro y la comparación exacta en `Cortes`. Se añaden regresiones para `V-105` y `V-0`. Validación y CI pendientes de ejecución.

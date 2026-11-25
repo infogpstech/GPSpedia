@@ -88,7 +88,8 @@ test("la telemetría se registra después de liberar el lock", () => {
 test("la ruta no descarga la hoja completa y valida el ID de vehículo antes de escribir", () => {
     assert.doesNotMatch(handler, /getDataRange\(/);
     assert.match(handler, /!isValidFeedbackLikeVehicleId_\(vehicleId\)/);
-    assert.match(extract("isValidFeedbackLikeVehicleId_"), /Number\.isSafeInteger\(numericId\)/, "El ID debe permanecer dentro del rango entero seguro.");
+    assert.match(extract("isValidFeedbackLikeVehicleId_"), /Number\.isSafeInteger\(numericId\)/, "El componente numérico debe permanecer dentro del rango entero seguro.");
+    assert.match(extract("isValidFeedbackLikeVehicleId_"), /id === "V-" \+ numericPart/, "Debe aceptar el formato canónico V-<n> sin alterar su identidad.");
 });
 test("el frontend reintenta únicamente la contención de idempotencia y conserva el código del backend", () => {
     const recordLikeStart = frontend.indexOf("export async function recordLike(");

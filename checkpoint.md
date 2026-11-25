@@ -936,3 +936,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 
 **Revalidación documental posterior:** el commit documental `ffbeb0bca57d77c7eabd262f20c621174032fa19` también pasó CI `45638460585` (529 suites, 6,272 pruebas, 0 fallos; Playwright 264/264) y Pages `45638457300` SUCCESS. HEAD confirmado al iniciar esta rectificación documental: `ffbeb0bca57d77c7eabd262f20c621174032fa19`.
+
+
+## Continuidad — GP-LIKE-VEHICLE-ID-PREFIX-01 (2026-11-25)
+- Confirmación del propietario: el valor `V-105` aparece exactamente así en la columna `id` de la hoja `Cortes`.
+- Diagnóstico: `isValidFeedbackLikeVehicleId_()` en `JS/Services/feedback.js` solo aceptaba dígitos, por lo que rechazaba `V-105` antes de consultar la fila. `corteIndex: 1` sí satisface el rango permitido.
+- Corrección preparada: aceptar IDs numéricos históricos y `V-<n>` canónicos con componente numérico positivo/seguro; conservar identidad exacta en el ledger y búsqueda exacta en `Cortes`.
+- Pruebas añadidas para `V-105` válido y `V-0` inválido. Pendiente ejecutar suites/CI y verificar publicación. No se llamó a FEEDBACK ni se modificaron datos o deployments.

@@ -20,6 +20,16 @@ El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en 
 
 La configuración local debe reproducir el patrón de la rama protegida `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` editado manualmente en `JS/Frontend/api-config.js`, con `ACTION_TO_SERVICE_MAP` para el enrutamiento. No usar `SERVICE_ENDPOINTS` como tabla paralela ni inventar otro administrador de URLs.
 
+
+### Corrección GP-LIKE-VEHICLE-ID-PREFIX-01 — compatibilidad con IDs V-<n>
+
+**Estado: EN IMPLEMENTACIÓN.** El caso Beta reportó `vehicleId: V-105` y `corteIndex: 1`. La fila de la hoja `Cortes` contiene el ID exactamente como `V-105`. El validador de FEEDBACK solo admitía enteros decimales, por lo que rechazaba el ID antes de localizar la fila.
+
+- Corregir exclusivamente el validador de `recordLike` para conservar IDs numéricos históricos y aceptar IDs canónicos `V-<n>` con componente numérico positivo y entero seguro.
+- Mantener la comparación exacta contra la columna `id` de `Cortes`, la detección de duplicados y la identidad autenticada inyectada por FEEDBACK.
+- Añadir regresión de éxito para `V-105` y rechazo para `V-0`; comprobar que el ledger conserva el ID exacto.
+- No cambiar WRITE, el esquema de Spreadsheet ni IDs almacenados. No invocar el deployment ni escribir datos Beta desde esta tarea.
+
 ## Orden de ejecución
 
 Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el diff y actualizar este archivo, `checkpoint.md` y `ChangesLogs.txt`. No desplegar Apps Script ni modificar recursos externos sin autorización Beta expresa.

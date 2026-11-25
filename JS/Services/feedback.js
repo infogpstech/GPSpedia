@@ -2021,9 +2021,13 @@ function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex, 
 }
 function isValidFeedbackLikeVehicleId_(value) {
     const id = String(value === null || value === undefined ? "" : value).trim();
-    if (!/^[1-9]\d{0,15}$/.test(id)) return false;
-    const numericId = Number(id);
-    return Number.isSafeInteger(numericId) && numericId > 0 && String(numericId) === id;
+    // Compatibilidad con IDs numéricos históricos y el formato canónico V-<n>
+    // utilizado por los registros existentes de Cortes.
+    const numericPart = id.startsWith("V-") ? id.slice(2) : id;
+    if (!/^[1-9]\d{0,15}$/.test(numericPart)) return false;
+    const numericId = Number(numericPart);
+    if (!Number.isSafeInteger(numericId) || numericId <= 0 || String(numericId) !== numericPart) return false;
+    return id === numericPart || id === "V-" + numericPart;
 }
 
 function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {

@@ -11,7 +11,7 @@ function extract(name) {
 const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
 function makeHarness(seedRows = [], options = {}) {
     const cutsRows = [Array(42).fill("header"), Array(42).fill("")];
-    cutsRows[1][0] = "100";
+    cutsRows[1][0] = String(options.vehicleId || "100");
     cutsRows[1][11] = "Corte de ignición";
     cutsRows[1][16] = 0;
     cutsRows[1][18] = "Corte de bomba";
@@ -123,6 +123,18 @@ const unsafeVehicleId = makeHarness();
 unsafeVehicleId.cutsRows[1][0] = "9007199254740992";
 assert.throws(() => unsafeVehicleId.run({ vehicleId:"9007199254740992", corteIndex:1, userId:"7", userName:"Pablo Peña" }), /Faltan datos verificados/);
 assert.equal(unsafeVehicleId.ledgerRows.length, 1, "Un ID fuera del rango entero seguro no debe escribir.");
+const prefixedVehicleId = makeHarness([], { vehicleId:"V-105" });
+const prefixedVehicleResult = prefixedVehicleId.run(
+    { vehicleId:"V-105", corteIndex:1 },
+    { userId:"7", userName:"Pablo Peña", role:"Tecnico" }
+);
+assert.deepEqual(prefixedVehicleResult, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 },
+    "Los IDs canónicos V-<n> existentes en Cortes deben admitir útiles.");
+assert.equal(prefixedVehicleId.ledgerRows[1][1], "V-105", "El ledger debe conservar el ID alfanumérico exacto.");
+const invalidPrefixedVehicleId = makeHarness([], { vehicleId:"V-0" });
+assert.throws(() => invalidPrefixedVehicleId.run({ vehicleId:"V-0", corteIndex:1, userId:"7", userName:"Pablo Peña" }),
+    /Faltan datos verificados/);
+assert.equal(invalidPrefixedVehicleId.ledgerRows.length, 1, "Un ID V-0 no debe insertar eventos.");
 const h = makeHarness();
 const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
 assert.deepEqual(first, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });
