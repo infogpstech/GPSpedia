@@ -1993,7 +1993,7 @@ function withFeedbackLikeLock_(operation) {
     }
 }
 
-function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, legacyActorKey) {
+function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex, legacyActorKey) {
     if (!ledger || ledger.getLastRow() < 2) return [];
     const canonicalActorKey = normalizeFeedbackLikeActorKey_(actorKey);
     const candidateKeys = Array.from(new Set([
@@ -2007,7 +2007,7 @@ function findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, legacyActorK
         matches.forEach(match => {
             const rowIndex = match.getRow();
             const row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
-            if (String(row[1] || "").trim() !== String(vehicleId)) return;
+            if (String(row[1] || "").trim() !== String(vehicleId) || Number(row[2]) !== Number(corteIndex)) return;
             let storedActorKey;
             try { storedActorKey = normalizeFeedbackLikeActorKey_(row[0]); }
             catch (identityError) { return; }
@@ -2021,7 +2021,7 @@ function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
     if (!ledger || ledger.getLastRow() < 2) return 0;
     const matches = ledger.getRange(2, 2, ledger.getLastRow() - 1, 1)
         .createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll();
-    const firstCutByActor = new Map();
+    const actorsByCut = new Map();
     matches.forEach(match => {
         const rowIndex = match.getRow();
         const row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
@@ -2034,7 +2034,7 @@ function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
                 !Number.isInteger(eventCutIndex) || eventCutIndex < 1 || eventCutIndex > 3) {
                 throw new Error("referencia de vehículo o corte inválida");
             }
-            if (!firstCutByActor.has(actorKey)) firstCutByActor.set(actorKey, eventCutIndex);
+            const cutKey = String(vehicleId) + "|" + eventCutIndex;\n            if (!actorsByCut.has(cutKey)) actorsByCut.set(cutKey, new Set());\n            actorsByCut.get(cutKey).add(actorKey);
         } catch (invalidEventError) {
             if (typeof console !== "undefined" && typeof console.warn === "function") {
                 console.warn("FeedbackLikes: evento inválido ignorado en fila " + rowIndex + ": " +
@@ -2114,9 +2114,8 @@ function handleRecordLike(payload) {
     const ledger = ensureFeedbackLikesSheet_();
 
     const outcome = withFeedbackLikeLock_(() => {
-        // Comprobación autoritativa: otra petición del mismo usuario/vehículo,
-        // incluso desde otro corte, observa el primer evento y no anexa otra fila.
-        const existingRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, legacyActorKey);
+        // Comprobación autoritativa de unicidad por actor, vehículo y corte.
+        const existingRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId, corteIndex, legacyActorKey);
         const existingEvents = existingRows.filter(item => String(item.row[5] || "") === "event");
         if (existingEvents.length) {
             const canonicalCut = Number(existingEvents[0].row[2]);
@@ -2174,6 +2173,8 @@ function handleRecordLike(payload) {
         SpreadsheetApp.flush();
         return { created: true, corteIndex };
     });
+
+    if (!outcome.created) return { status: "success", alreadyLiked: true, corteIndex: outcome.corteIndex };
 
     // El conteo y la telemetría se ejecutan después de liberar el lock. Un fallo de
     // lectura nunca convierte un append confirmado en un falso rechazo del voto.
