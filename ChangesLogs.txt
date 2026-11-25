@@ -1166,4 +1166,4 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - `JS/Frontend/api-config.js` amplía el reintento de `recordLike` a 12 intentos con backoff lineal de 150 ms (9.9 s acumulados), solo para `LIKE_LOCK_BUSY`; no reintenta errores ambiguos ni de escritura.
 - Tests `FeedbackLikeClientRetry.mjs`, `FeedbackLikeLockContention.mjs` y `FeedbackLikePreflightOutsideLock.mjs` actualizados.
 - CI run 45624279054 SUCCESS: 528 suites, 6,264 pruebas, 0 fallos; AUG-146 264/264 PASS.
-- El backend conserva `tryLock(0)` y la sección crítica mínima conforme al contrato no bloqueante. Sin invocaciones ni despliegues Apps Script; el deployment FEEDBACK debe actualizarse para aplicar el cambio.
+- El backend conserva `tryLock(0)` y la sección crítica mínima conforme al contrato no bloqueante. El cambio frontend se publica mediante GitHub Pages (workflow pendiente al registrar este cambio). Sin invocaciones ni despliegues Apps Script; el deployment FEEDBACK debe devolver `LIKE_LOCK_BUSY` para activar los reintentos, contrato presente en el fuente de la rama pero no verificado en el deployment remoto.
