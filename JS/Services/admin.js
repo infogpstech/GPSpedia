@@ -599,6 +599,7 @@ function collectCortesImageReferences(includeLocations = true) {
             const range = sheet.getRange(2 + offset, group.start, chunkRows, group.width);
             let stageStartedAt = Date.now();
             const values = range.getDisplayValues();
+            const vehicleContext = sheet.getRange(2 + offset, 1, chunkRows, 4).getDisplayValues();
             displayReadMs += Date.now() - stageStartedAt;
             stageStartedAt = Date.now();
             const rawValues = range.getValues();
@@ -641,7 +642,8 @@ function collectCortesImageReferences(includeLocations = true) {
                     cellIds.forEach(id => {
                         if (includeLocations) {
                             if (!references.has(id)) references.set(id, []);
-                            references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + offset + 2, column: item.column, field: item.field });
+                            const context = vehicleContext[r] || [];
+                            references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + offset + 2, column: item.column, field: item.field, vehicleId: String(context[0] || ""), category: String(context[1] || ""), brand: String(context[2] || ""), model: String(context[3] || "") });
                         } else references.set(id, true);
                     });
                     if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
@@ -14547,7 +14549,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                 const referenceLocations = referenceSnapshot.references.get(fileId) || [];
                 const fileFormat = String(fileName.match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown").toLowerCase();
                 auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, format: fileFormat, url: "https://drive.google.com/file/d/" + fileId + "/view", origin: "Google Drive · árbol Cortes",
-            referenceLocations: Array.isArray(item && item.referenceLocations) ? item.referenceLocations : [], size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || "") })) });
+            referenceLocations: Array.isArray(item && item.referenceLocations) ? item.referenceLocations : [], size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || ""), vehicleId: String(location.vehicleId || ""), category: String(location.category || ""), brand: String(location.brand || ""), model: String(location.model || "") })) });
                 batchFiles++; totalAnalyzed++;
             }
             if (files.hasNext()) { current.fileToken = files.getContinuationToken(); break; }
