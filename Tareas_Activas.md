@@ -274,10 +274,10 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Pruebas de contrato y simulaciones de creación, encabezado válido, esquema incompatible y carrera de inserción PASS; `AdminLocalOperationGuard.mjs` PASS. No se activaron guardas adicionales ni se modificaron recursos reales.
 
 ### GP-ADMIN-DRIVE-SCAN-MODAL-01 — Transformar modal de auditoría de cortes a modo escaneo
-**Estado: EN PROGRESO — pruebas específicas en ajuste de fixture; regresión CI pendiente.**
+**Estado: COMPLETADA EN CÓDIGO Y VALIDACIÓN CONTRACTUAL CI.**
 - Modal de auditoría: se agregó una consola de progreso integrada con estados visuales, aria-live y scroll automático limitado a 250 entradas, reflejando en simultáneo los mensajes enviados a la consola Developer.
 - Los resultados incrementales de imágenes existentes permanecen en la lista complementaria; se delimitó el scroll del resumen/progreso y resultados, y se ajustó el layout a móvil.
-- Prueba `AdminDriveScanModal.mjs`: 7/7 PASS en CI. El workflow detectó además incompatibilidad textual con contrato histórico `AdminDriveAuditGlobalConsole.mjs`; se ajustó el texto para preservar la expectativa histórica y describir el panel simultáneo. Reejecución CI pendiente. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
+- Pruebas `AdminDriveScanModal.mjs` 7/7 PASS y `AdminDriveAuditGlobalConsole.mjs` 1/1 PASS en CI run 45611120099. La suite global tuvo cinco suites fallidas, pero ninguna correspondió al modal: contratos FEEDBACK/CATALOG con expectativas de deduplicación antiguas, DeveloperConsoleRouting con assertion de copia obsoleta y MIG021 de URLs. No se desplegaron servicios Apps Script ni se accedió a Drive/Spreadsheet. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
 
 ### GP-LIKE-REBUILD-01 — Reconstruir recordLike ante fallo persistente
 **Estado: PENDIENTE DE IMPLEMENTACIÓN; PRIORIDAD ALTA.**
