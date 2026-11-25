@@ -810,3 +810,8 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 - CATALOG `readFeedbackLikeEventCounts_` ahora lee columnas A:C (identidad/vehículo/corte) y F (status), no la fila completa A:G. Deduplicación actor+corte, filtrado event, validation y warnings conservados. Sin caché adicional ni comunicación FEEDBACK→CATALOG.
 - Test `CatalogLikeProjectionReadScale.mjs` añadido y registrado (6 assertions) para validar lecturas, conteos y corte independiente. CI pendiente.
+
+
+## GP-LIKE-REBUILD-01 — CI final 25-11-2026
+
+- CI run 45612250526 SUCCESS: 525 suites, 6,239 tests, 0 fallos; responsive-browser SUCCESS. Contracts FEEDBACK preflight/replay y LocalApiEndpoints reconciliados. Cierre local y CI.
