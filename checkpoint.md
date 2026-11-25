@@ -1072,3 +1072,9 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Pruebas integradas en runner: `AdminDriveAuditAssociation.mjs`, `AdminDriveAuditMetadataPersistence.mjs`, `AdminIncrementalInventory.mjs`, `AdminReplacedImagesIntegrity.mjs`, `AdminDriveScanModal.mjs`. Runner JavaScript aislado: migración de esquema 35 columnas PASS; read-back de ocho campos PASS; asociación única/ambigua PASS; parsing de 14 archivos PASS.
 - Commits de esta ampliación están registrados en `Tareas_Activas.md`, `Auditoria.txt`, `ChangesLogs.txt` y Issue #130. Último commit de checkpoint anterior: `0ad7599b8a6b94432d232d1e9e6999bebc59755e`.
 - Estado pendiente: ejecución de la suite Node/CI y validación Beta aislada de ADMIN/Drive/Spreadsheet; no se hicieron deployments ni escrituras externas. La base protegida conserva SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; la comparación remota muestra `GPSpedia2.2.5_work` ahead 8845 / behind 0. El archivo creado accidentalmente en `main` fue eliminado inmediatamente; no existe en esa rama.
+
+
+## Continuidad — verificación de hidratación de útiles (2026-11-25)
+
+- `UsefulButtonState.mjs` verifica que el botón de útil queda deshabilitado hasta completar la hidratación de estado FEEDBACK cuando no existe caché local, y que la UI conserva el índice físico original del corte al ordenar por popularidad. Runner JavaScript aislado: 8/8 PASS. Commits `4f71aad685dc36cc5d956a02e63f0a5ed2f0c16b` y `5fa71b0a59821e684988ffd2e09ec240a0f6cc7a`.
+- Registros de tareas, auditoría y cambios actualizados; Node/CI sigue pendiente de evidencia. No se ejecutaron deployments ni escrituras reales en Drive/Spreadsheet.
