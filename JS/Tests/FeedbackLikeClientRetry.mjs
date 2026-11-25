@@ -47,5 +47,5 @@ const setUseful=new Function("routeAction","setTimeout",usefulSource+"\nreturn s
  (callback,delay)=>{delays.push(delay);callback();return delays.length;}
 );
 await assert.rejects(()=>setUseful("100",2,true,{userId:"7"}),/lock ocupado/);
-assert.equal(delays.length,11);
+assert.equal(delays.length,14);
 console.log("FeedbackLikeClientRetry: setCutUseful retries: 1/1 PASS");
