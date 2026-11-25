@@ -12,4 +12,5 @@ assert.ok(admin.includes('if (!incremental && auditState.unverifiableReferenceCo
 assert.ok(ui.includes('files: unusedBatchIds, incremental: true'));
 assert.ok(ui.includes('routeActionWithRetry(\'saveUnusedImagesInventory\''));
 assert.ok(ui.includes('Inventario automático: '));
-console.log('AdminIncrementalInventory: 10/10 PASS');
+assert.ok(ui.includes('const finalInventory = await routeActionWithRetry(\\'saveUnusedImagesInventory\\''));
+console.log('AdminIncrementalInventory: 11/11 PASS');
