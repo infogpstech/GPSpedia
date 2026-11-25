@@ -299,8 +299,17 @@ try {
       profile.name + ": nombre del modelo sin saltos y +2px en móvil");
 
     await page.evaluate(() => {
-      // El render de detalle puede actualizar el estado de sesión en pruebas aisladas;
-      // restablecer el usuario sintético antes de medir el panel Developer.
+      // Cerrar el modal de corte antes de medir Developer: ambas capas no forman
+      // parte de la misma vista y no deben competir por el foco/stack de overlays.
+      const detailModal = document.getElementById("modalDetalle");
+      const detailOverlayId = detailModal && detailModal.dataset.gpOverlayHistoryId;
+      if (detailOverlayId && window.overlayHistory && window.overlayHistory.has(detailOverlayId)) {
+        window.overlayHistory.close(detailOverlayId);
+      } else if (detailModal) {
+        detailModal.classList.remove("visible");
+        detailModal.style.display = "none";
+      }
+      // Restablecer el usuario sintético antes de medir el panel Developer.
       window.__aug146State.setState({
         currentUser: {
           ID: "AUG146-BETA-SYNTHETIC",
