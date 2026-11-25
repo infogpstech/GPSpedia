@@ -3978,10 +3978,8 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         // Optimistic UI for recordLike
         // Check if already liked in this session
         const { likedCortes, catalogData: catData } = getState();
-        const likeKey = String(vehicleId);
-        const alreadyLikedVehicle = Array.isArray(likedCortes) && likedCortes.some(key =>
-            String(key) === likeKey || String(key).startsWith(likeKey + "-")
-        );
+        const likeKey = String(vehicleId) + "|" + String(cutData.index);
+        const alreadyLikedVehicle = Array.isArray(likedCortes) && likedCortes.includes(likeKey);
         if (alreadyLikedVehicle) {
             utilBtn.classList.add('liked');
             utilBtn.style.backgroundColor = '#28a745';
