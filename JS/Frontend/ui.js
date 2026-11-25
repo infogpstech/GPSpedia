@@ -12242,7 +12242,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
                 iframe.referrerPolicy = "strict-origin-when-cross-origin";
                 iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
                 iframe.allowFullscreen = true;
-                iframe.style.cssText = "display:block;width:100%;height:315px;min-height:315px;border:0;border-radius:8px;margin-top:10px;";
+                iframe.style.cssText = "display:block;width:100%;height:315px;min-height:315px;border:0;border-radius:8px;margin:0;";
                 videoContainer.appendChild(iframe);
                 cont.appendChild(videoContainer);
             } else {
