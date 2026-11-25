@@ -110,4 +110,4 @@ const legacyDuplicate = legacyActor.run({ vehicleId:"100", corteIndex:2, userId:
 assert.equal(legacyDuplicate.alreadyLiked, true);
 assert.equal(legacyActor.ledgerRows.length, 2, "La identidad histórica no crea una fila adicional al normalizarse.");
 assert.equal(legacyActor.state.activities, 0);
-console.log("FeedbackLikeIdempotency: 12/12 PASS — duplicados same-cut/cross-cut, legacy y sección crítica");
+console.log("FeedbackLikeIdempotency: 5/5 PASS — duplicados same-cut/cross-cut, legacy y sección crítica");
