@@ -719,3 +719,14 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - GP-ADMIN-DRIVE-SCAN-MODAL-01: convertir el modal existente a espacio de escaneo; resultados de imágenes incrementales y progreso Developer simultáneo, sin modal extra.
 - GP-LIKE-REBUILD-01: incidencia persistente de útiles; reanalizar y reconstruir el flujo completo recordLike, con prioridad alta, sin superficial fallback y con idempotencia actor+vehículo.
 - Estas tareas están registradas; aún no se implementaron ni se ejecutaron pruebas para ellas. No se realizaron acciones en servicios o datos externos.
+
+
+### Rectificación GP-LIKE-REBUILD-01 — regla funcional por corte (2026-11-25)
+
+- Un usuario puede registrar un útil en cada corte individual del vehículo. Los cortes 1, 2 y 3 son aportes independientes.
+- Repetir el útil en el mismo corte por el mismo usuario debe ser idempotente y silencioso: no insertar otra fila, no mostrar notificación, no emitir mensajes en consola ni advertencias/rechazos visibles.
+- Repetir el útil en un corte diferente del mismo vehículo sí debe registrar el aporte.
+- Solo debe mostrarse el mensaje de error al usuario cuando un útil que aún no está registrado no pueda guardarse por una falla real.
+- El frontend debe mantener estado por clave vehículo+corte y el backend FEEDBACK debe validar unicidad por actor+vehículo+corte bajo concurrencia. CATALOG debe proyectar y contar por corte, preservando votos distintos de un mismo usuario en el mismo vehículo.
+- Se rectifica la regla anterior actor+vehículo global: queda obsoleta y no debe utilizarse como criterio de deduplicación.
+- Estado: EN PROGRESO; implementación y pruebas pendientes. No se ejecutaron deployments ni operaciones con datos Beta.
