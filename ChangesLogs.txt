@@ -980,3 +980,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI run `45519738860`, commit `1d25c64a798fb343b15e61658946243314ffbe91`: 519 suites, 6,181 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Sintaxis 469 archivos JS/MJS y referencias relativas de 389 archivos aprobadas.
 - MIG-URL-004, 005, 006 y 007 cerradas. MIG-URL-008 permanece pendiente de autorización y confirmación de Beta aislada. No se ejecutó ninguna petición a los seis deployments reales.
 - GitHub Pages build/deployment se ejecutó automáticamente por el push y finalizó SUCCESS; no se ejecutó ningún despliegue Apps Script.
+
+
+### 2026-11-24 — Registro en cola: mejora de Actividad reciente del Dashboard
+
+- Se registró en `Tareas_Activas.md` una tarea pendiente para reformatear la pestaña Actividad reciente desde el frontend: fecha compacta, nombre legible, acciones en lenguaje claro y vista principal de tres columnas (Fecha, Usuario, Acción), sin scroll horizontal.
+- El detalle contextual del vehículo se abrirá en un acordeón por fila; solo uno podrá estar abierto y se cerrará al seleccionar otra fila o hacer clic fuera.
+- Alcance expresamente limitado a presentación frontend de los datos ya recibidos. No modificar Apps Script, servicios, handlers, contratos, payloads, hojas ni datos.
+- La tarea queda en cola después de MIG-URL-008; no se inició implementación. MIG-URL-008 continúa pendiente de autorización Beta aislada.
+- Durante esta conversación el usuario informó que eliminó manualmente el único registro inválido de like de `FeedbackLikes` y que `handleGetCatalogData` volvió a funcionar. No se hicieron cambios de código ni de datos externos en esta intervención.
