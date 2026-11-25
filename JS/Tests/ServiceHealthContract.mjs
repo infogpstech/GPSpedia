@@ -16,9 +16,9 @@ const backendSources = {
 const contractsMatch = apiSource.match(/export const SERVICE_HEALTH_CONTRACTS = Object\.freeze\((\{[\s\S]*?\})\);/);
 assert.ok(contractsMatch, "No se encontró SERVICE_HEALTH_CONTRACTS.");
 const contracts = new Function("return (" + contractsMatch[1] + ");")();
-const resolverMatch = apiSource.match(/function resolveApiEndpoint_\\([\\s\\S]*?\\n\\}/);
+const resolverMatch = apiSource.match(/function resolveApiEndpoint_\([\s\\S]*?\n\}/);
 assert.ok(resolverMatch, "No se encontró resolveApiEndpoint_.");
-const functionMatch = apiSource.match(/export async function checkAllServicesHealth\\([\\s\\S]*?\\n\\}/);
+const functionMatch = apiSource.match(/export async function checkAllServicesHealth\([\s\\S]*?\n\}/);
 assert.ok(functionMatch, "No se encontró checkAllServicesHealth.");
 const functionSource = functionMatch[0].replace("export async function", "async function");
 function buildChecker(endpoints, lastKnown = new Map()) {
@@ -27,7 +27,7 @@ function buildChecker(endpoints, lastKnown = new Map()) {
         "API_ENDPOINTS", "API_ENDPOINT_PATTERN_", "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
-        resolverMatch[0] + "\\n" + functionSource + "\\nreturn checkAllServicesHealth;"
+        resolverMatch[0] + "\n" + functionSource + "\\nreturn checkAllServicesHealth;"
     )(
         endpoints, /^https:\\/\\/script\\.google\\.com\\/macros\\/s\\/[A-Za-z0-9_-]+\\/exec$/, keys, contracts,
         8000, 2000, 300000, lastKnown, AbortController, globalThis.fetch, setTimeout, clearTimeout, Date
@@ -187,7 +187,7 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
         "API_ENDPOINTS", "API_ENDPOINT_PATTERN_", "CENTRAL_SERVICE_KEYS", "SERVICE_HEALTH_CONTRACTS", "SERVICE_HEALTH_TIMEOUT_MS",
         "SERVICE_HEALTH_SLOW_THRESHOLD_MS", "SERVICE_HEALTH_STALE_AFTER_MS",
         "serviceHealthLastKnown", "AbortController", "fetch", "setTimeout", "clearTimeout", "Date",
-        resolverMatch[0] + "\\n" + functionSource + "\\n" + singleMatch[0].replace("export async function", "async function") +
+        resolverMatch[0] + "\n" + functionSource + "\n" + singleMatch[0].replace("export async function", "async function") +
         "\\nreturn checkServiceHealth;"
     )(
         endpoints, /^https:\\/\\/script\\.google\\.com\\/macros\\/s\\/[A-Za-z0-9_-]+\\/exec$/, keys, contracts,
