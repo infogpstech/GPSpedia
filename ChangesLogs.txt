@@ -1139,3 +1139,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — GP-CATALOG-LIKE-PROJECTION-READ-01: reduce CATALOG lectura del ledger FeedbackLikes a A:C + F, con deduplicación por actor/corte; añadida prueba simulada compact-read. CI pendiente.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01: CI run 45612250526 SUCCESS, 525 suites/6239 pruebas/0 fallos; responsive-browser SUCCESS. Contract tests per-cut y URLs corregidos. No despliegues Beta.
