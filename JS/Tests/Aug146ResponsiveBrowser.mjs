@@ -222,9 +222,9 @@ try {
       tutorialRender.validResult.iframeLoading !== "lazy",
       profile.name + ": el iframe permanece visible y no usa carga diferida");
     check(tutorialRender.validResult.titleText === "Corte de ignición" &&
-      tutorialRender.validResult.titleWhiteSpace === "nowrap" &&
+      tutorialRender.validResult.titleWhiteSpace === "normal" &&
       tutorialRender.validResult.titleHeight <= tutorialRender.validResult.titleLineHeight + 12,
-      profile.name + ": el título «Corte de ignición» permanece en una sola línea");
+      profile.name + ": el título «Corte de ignición» cabe completo en una sola línea aunque el título admita dos");
     check(tutorialRender.invalidResult.iframeCount === 0 &&
       tutorialRender.invalidResult.notice.includes("URL válida de YouTube"),
       profile.name + ": no renderiza iframe para una URL de vídeo no confiable");
