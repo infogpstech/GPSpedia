@@ -280,7 +280,7 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Pruebas `AdminDriveScanModal.mjs` 7/7 PASS y `AdminDriveAuditGlobalConsole.mjs` 1/1 PASS en CI run 45611120099. La suite global tuvo cinco suites fallidas, pero ninguna correspondió al modal: contratos FEEDBACK/CATALOG con expectativas de deduplicación antiguas, DeveloperConsoleRouting con assertion de copia obsoleta y MIG021 de URLs. No se desplegaron servicios Apps Script ni se accedió a Drive/Spreadsheet. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
 
 ### GP-LIKE-REBUILD-01 — Reconstruir recordLike ante fallo persistente
-**Estado: PENDIENTE DE IMPLEMENTACIÓN; PRIORIDAD ALTA.**
+**Estado: IMPLEMENTADA Y CERRADA LOCALMENTE; VALIDACIÓN BETA DIFERIDA.**
 - El error de registro de útil continúa tras la corrección previa. Reanalizar el flujo y reconstruirlo con estrategia distinta si procede.
 - Revisar frontend→FEEDBACK→append/idempotencia→respuesta→actualización CATALOG, contención, timeout, resultado ambiguo y publicación. No convertir un voto confirmado en error aparente ni permitir duplicados actor+vehículo.
 - Mantener un útil por usuario y corte; el mismo usuario puede votar en cortes distintos del vehículo.
