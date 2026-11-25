@@ -37,7 +37,7 @@ function response(status, body, ok = status >= 200 && status < 300) {
     return { status, ok, text: async () => typeof body === "string" ? body : JSON.stringify(body) };
 }
 async function scanOne(key, result, options = {}) {
-    const checker = buildChecker({ [key]: "https://health.invalid/exec" }, options.lastKnown || new Map());
+    const checker = buildChecker({ [key]: "https://script.google.com/macros/s/HEALTH_TEST/exec" }, options.lastKnown || new Map());
     const fetchImpl = typeof result === "function" ? result : async () => result;
     const values = await checker(Object.assign({ fetchImpl }, options));
     return values[key];
@@ -135,7 +135,7 @@ await check("LEGACY está retirado del registro, documentación activa y red", a
     assert.match(healthDoc, /no genera solicitudes/);
 });
 await check("Un servicio sin contrato configurado queda unknown sin consultar un endpoint", async () => {
-    const checker = buildChecker({ UNVERIFIED: "https://unverified.invalid/exec" });
+    const checker = buildChecker({ UNVERIFIED: "https://script.google.com/macros/s/UNVERIFIED_TEST/exec" });
     let requested = false;
     const result = await checker({ fetchImpl: async () => { requested = true; return response(200, {}); } });
     assert.equal(result.UNVERIFIED.status, "unknown");
@@ -145,7 +145,7 @@ await check("Un servicio sin contrato configurado queda unknown sin consultar un
 await check("Resultado anterior válido pasa a stale tras superar el TTL y fallar la consulta", async () => {
     const lastKnown = new Map();
     let clock = 1000;
-    const checker = buildChecker({ AUTH: "https://health.invalid/exec" }, lastKnown);
+    const checker = buildChecker({ AUTH: "https://script.google.com/macros/s/HEALTH_TEST/exec" }, lastKnown);
     const success = await checker({ fetchImpl: async () => response(200, { service: "GPSpedia-Auth", status: "available", version: "2.2.5" }), now: () => clock });
     assert.equal(success.AUTH.status, "online");
     clock = 10000;
@@ -155,9 +155,9 @@ await check("Resultado anterior válido pasa a stale tras superar el TTL y falla
     assert.equal(stale.AUTH.lastSuccessfulAt, new Date(1000).toISOString());
 });
 await check("Un fallo de un servicio no bloquea la comprobación de los demás", async () => {
-    const checker = buildChecker({ AUTH: "https://auth.invalid", CATALOG: "https://catalog.invalid" });
+    const checker = buildChecker({ AUTH: "https://script.google.com/macros/s/AUTH_TEST/exec", CATALOG: "https://script.google.com/macros/s/CATALOG_TEST/exec" });
     const result = await checker({ fetchImpl: async url => {
-        if (url.includes("auth.invalid")) throw new TypeError("offline");
+        if (url.includes("AUTH_TEST")) throw new TypeError("offline");
         return response(200, { service: "GPSpedia-Catalog", status: "available", version: "2.4.0" });
     }});
     assert.equal(result.AUTH.status, "unavailable");
@@ -177,10 +177,10 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
     const singleMatch = apiSource.match(/export async function checkServiceHealth\([\s\S]*?\n\}/);
     assert.ok(singleMatch, "No se encontró checkServiceHealth.");
     const endpoints = {
-        AUTH: "https://auth.invalid/exec", CATALOG: "https://catalog.invalid/exec",
-        WRITE: "https://write.invalid/exec",
-        FEEDBACK: "https://feedback.invalid/exec", UTILITIES: "https://utilities.invalid/exec",
-        ADMIN: "https://admin.invalid/exec"
+        AUTH: "https://script.google.com/macros/s/AUTH_TEST/exec/exec", CATALOG: "https://script.google.com/macros/s/CATALOG_TEST/exec/exec",
+        WRITE: "https://script.google.com/macros/s/WRITE_TEST/exec/exec",
+        FEEDBACK: "https://script.google.com/macros/s/FEEDBACK_TEST/exec", UTILITIES: "https://script.google.com/macros/s/UTILITIES_TEST/exec",
+        ADMIN: "https://script.google.com/macros/s/ADMIN_TEST/exec"
     };
     const keys = Object.keys(endpoints);
     const single = new Function(
@@ -201,7 +201,7 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
         }
     });
     assert.equal(result.status, "online");
-    assert.deepEqual(requested, ["https://catalog.invalid/exec?debug=true"]);
+    assert.deepEqual(requested, ["https://script.google.com/macros/s/CATALOG_TEST/exec/exec?debug=true"]);
     assert.equal(await single("NOT_A_SERVICE"), null);
 });
 await check("Seleccionar una tarjeta refresca solo el servicio seleccionado y no inicia el escaneo global", async () => {
