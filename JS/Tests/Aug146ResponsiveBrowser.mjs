@@ -181,14 +181,7 @@ try {
         titleText: detail.querySelector(".tutorial-detail-title")?.textContent || "",
         titleWhiteSpace: detail.querySelector(".tutorial-detail-title") ? getComputedStyle(detail.querySelector(".tutorial-detail-title")).whiteSpace : "",
         titleHeight: detail.querySelector(".tutorial-detail-title") ? detail.querySelector(".tutorial-detail-title").getBoundingClientRect().height : 0,
-        titleLineHeight: detail.querySelector(".tutorial-detail-title") ? parseFloat(getComputedStyle(detail.querySelector(".tutorial-detail-title")).lineHeight) : 0,
-        titleLineCount: (() => {
-          const title = detail.querySelector(".tutorial-detail-title");
-          if (!title) return 0;
-          const range = document.createRange();
-          range.selectNodeContents(title);
-          return range.getClientRects().length;
-        })()
+        titleLineHeight: detail.querySelector(".tutorial-detail-title") ? parseFloat(getComputedStyle(detail.querySelector(".tutorial-detail-title")).lineHeight) : 0 
       };
       ui.mostrarDetalleTutorialModal({
         Tema: "Tutorial con URL inválida",
@@ -228,12 +221,6 @@ try {
       tutorialRender.validResult.iframeVisibility === "visible" &&
       tutorialRender.validResult.iframeLoading !== "lazy",
       profile.name + ": el iframe permanece visible y no usa carga diferida");
-    console.log("TUTORIAL_TITLE_GEOMETRY " + profile.name + " " + JSON.stringify({
-      height: tutorialRender.validResult.titleHeight,
-      lineHeight: tutorialRender.validResult.titleLineHeight,
-      whiteSpace: tutorialRender.validResult.titleWhiteSpace,
-      lineCount: tutorialRender.validResult.titleLineCount
-    }));
     check(tutorialRender.validResult.titleText === "Corte de ignición" &&
       tutorialRender.validResult.titleWhiteSpace === "nowrap" &&
       tutorialRender.validResult.titleHeight <= tutorialRender.validResult.titleLineHeight + 12,
