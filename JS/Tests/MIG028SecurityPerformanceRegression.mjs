@@ -28,12 +28,16 @@ function block(source,startMarker,endMarker){
  return source.slice(start,end);
 }
 
-testCase("El router usa únicamente el registro central y no revalida sesión por acción",()=>{
- assert.equal((api.match(/const CENTRAL_CONFIGURATION_BOOTSTRAP_URL\s*=/g)||[]).length,1);
- assert.match(api,/async function getConfiguredServiceEndpoint_\(service\)\s*\{\s*const snapshot = await loadCentralConfiguration\(\);\s*return resolveCentralServiceEndpoint\(snapshot, service\);/);
+testCase("El router usa API_ENDPOINTS local y no revalida sesión por acción",()=>{
+ assert.match(api,/export const API_ENDPOINTS = Object\.freeze/);
+ assert.match(api,/function resolveApiEndpoint_\(serviceKey\)/);
  const route=block(api,"async function routeActionInternal_(","\n}\n");
  assert.doesNotMatch(route,/validateSession|touchSession|apiValidateSession|checkSession/);
  assert.match(route,/getConfiguredServiceEndpoint_\(service\)/);
+ assert.doesNotMatch(route,/loadCentralConfiguration|CENTRAL_CONFIGURATION_BOOTSTRAP_URL|resolveCentralServiceEndpoint/);
+ const health=block(api,"export async function checkAllServicesHealth","export async function checkServiceHealth");
+ assert.match(health,/resolveApiEndpoint_\(serviceKey\)/);
+ assert.doesNotMatch(health,/loadCentralConfiguration|resolveCentralServiceEndpoint/);
  assert.match(cacheSource,/no se utilizarán endpoints locales/i);
 });
 await asyncCase("La caché central es single-flight, limita stale y falla cerrada sin endpoints locales",async()=>{
