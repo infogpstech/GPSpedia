@@ -156,6 +156,8 @@ export function renderActivityLogs(container, logs, doc = container && container
         const outsideHandler = event => {
             if (!openDetailRow) return;
             const target = event && event.target;
+            const insideContainer = target && typeof container.contains === "function" && container.contains(target);
+            if (insideContainer) return;
             const insidePanel = target && typeof openDetailRow.contains === "function" && openDetailRow.contains(target);
             const clickedToggle = target && typeof target.closest === "function" && target.closest(".activity-log-toggle");
             if (!insidePanel && !clickedToggle) closeOpenDetail();
