@@ -9,14 +9,14 @@ function extract(name) {
     return source.slice(start, end);
 }
 const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
-function makeHarness() {
+function makeHarness(seedRows = []) {
     const cutsRows = [Array(42).fill("header"), Array(42).fill("")];
     cutsRows[1][0] = "100";
     cutsRows[1][11] = "Corte de ignición";
     cutsRows[1][16] = 0;
     cutsRows[1][18] = "Corte de bomba";
     cutsRows[1][23] = 0;
-    const ledgerRows = [headers.slice()];
+    const ledgerRows = [headers.slice(), ...seedRows.map(row => row.slice())];
     const state = { waits: 0, releases: 0, activities: 0, flushes: 0 };
     function sheet(rows) {
         return {
@@ -105,4 +105,9 @@ assert.equal(h.state.waits, 4);
 assert.equal(h.state.releases, 4);
 assert.equal(h.state.activities, 2, "Solo los útiles nuevos generan actividad.");
 assert.ok(h.ledgerRows.slice(1).every(row => row[5] === "event"));
-console.log("FeedbackLikeIdempotency: 9/9 PASS — duplicados same-cut/cross-cut, conteo y sección crítica");
+const legacyActor = makeHarness([["user:user:7","100","1",0,0,"event","legacy"]]);
+const legacyDuplicate = legacyActor.run({ vehicleId:"100", corteIndex:2, userId:"user:7", userName:"Pablo Peña" });
+assert.equal(legacyDuplicate.alreadyLiked, true);
+assert.equal(legacyActor.ledgerRows.length, 2, "La identidad histórica no crea una fila adicional al normalizarse.");
+assert.equal(legacyActor.state.activities, 0);
+console.log("FeedbackLikeIdempotency: 12/12 PASS — duplicados same-cut/cross-cut, legacy y sección crítica");
