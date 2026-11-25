@@ -1218,3 +1218,5 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — Corrección GP-LIKE-VEHICLE-ID-PREFIX-01: se identifica que FEEDBACK rechazaba `V-105` porque el validador de útiles solo admitía IDs numéricos; se amplía el contrato para aceptar el formato canónico `V-<n>` manteniendo el rango entero seguro y la comparación exacta en `Cortes`. Se añaden regresiones para `V-105` y `V-0`. Validación y CI pendientes de ejecución.
+
+2026-11-25 — Se alinea `JS/Tests/LocalApiEndpoints.mjs` con la nueva URL FEEDBACK que el propietario ya incorporó en `API_ENDPOINTS`. CI del commit `99cff3d` había fallado únicamente porque el fixture conservaba el deployment anterior; el test responsive del mismo run pasó. No se cambió la URL ni se invocó el deployment.

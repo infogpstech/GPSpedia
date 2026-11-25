@@ -943,3 +943,8 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Diagnóstico: `isValidFeedbackLikeVehicleId_()` en `JS/Services/feedback.js` solo aceptaba dígitos, por lo que rechazaba `V-105` antes de consultar la fila. `corteIndex: 1` sí satisface el rango permitido.
 - Corrección preparada: aceptar IDs numéricos históricos y `V-<n>` canónicos con componente numérico positivo/seguro; conservar identidad exacta en el ledger y búsqueda exacta en `Cortes`.
 - Pruebas añadidas para `V-105` válido y `V-0` inválido. Pendiente ejecutar suites/CI y verificar publicación. No se llamó a FEEDBACK ni se modificaron datos o deployments.
+
+
+## Rectificación de CI — endpoint FEEDBACK
+- El run `45639453381` del commit `99cff3d` falló en `LocalApiEndpoints.mjs` porque el fixture esperaba la URL FEEDBACK anterior; el propietario había actualizado `API_ENDPOINTS` al deployment nuevo. La suite responsive del mismo run pasó.
+- Se actualizó el valor esperado del fixture para reflejar el endpoint que ya está en la rama; no se modificó el endpoint configurado ni se hizo una llamada remota.
