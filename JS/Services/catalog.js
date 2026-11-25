@@ -1214,6 +1214,16 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
     });
 }
 
+function normalizeFeedbackLikeActorKey_(value) {
+    const actorKey = String(value == null ? "" : value).trim();
+    if (!actorKey.startsWith("user:")) throw new Error("FeedbackLikes contiene un actor de usuario inválido.");
+    const userId = actorKey.slice(5);
+    if (!userId || userId.length > 1024) throw new Error("FeedbackLikes contiene un actor de usuario inválido.");
+    if (/^[A-Za-z0-9._@-]{1,200}$/.test(userId)) return "user:" + userId;
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, userId, Utilities.Charset.UTF_8);
+    return "user:" + digest.map(value => (value & 255).toString(16).padStart(2, "0")).join("");
+}
+
 function readFeedbackLikeEventCounts_(spreadsheetRef) {
     const spreadsheet = spreadsheetRef || getSpreadsheet();
     const sheet = spreadsheet.getSheetByName("FeedbackLikes");
@@ -1223,18 +1233,29 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     const headers = sheet.getRange(1, 1, 1, 7).getValues()[0].map(value => String(value || "").trim());
     if (expected.some((header, index) => headers[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+    const firstCutByVehicleActor = new Map();
     rows.forEach(row => {
         if (String(row[5] || "") !== "event") return;
-        const actorKey = String(row[0] || "").trim(), vehicleId = String(row[1] || "").trim(), corteIndex = Number(row[2]);
-        if (!/^user:[A-Za-z0-9._@-]{1,200}$/.test(actorKey) || !/^[1-9]\d{0,14}$/.test(vehicleId) ||
-            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("FeedbackLikes contiene un evento de like inválido.");
-        const key = vehicleId + "|" + corteIndex;
-        if (!counts.has(key)) counts.set(key, new Set());
-        counts.get(key).add(actorKey);
+        const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
+        const vehicleId = String(row[1] || "").trim();
+        const corteIndex = Number(row[2]);
+        if (!/^[1-9]\d{0,14}$/.test(vehicleId) ||
+            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
+            throw new Error("FeedbackLikes contiene un evento de like con referencia de vehículo o corte inválida.");
+        }
+        const uniqueActorVehicle = vehicleId + "|" + actorKey;
+        if (!firstCutByVehicleActor.has(uniqueActorVehicle)) {
+            firstCutByVehicleActor.set(uniqueActorVehicle, { vehicleId, actorKey, corteIndex });
+        }
     });
-    const result = new Map();
-    counts.forEach((actors, key) => result.set(key, actors.size));
-    return result;
+    const actorsByVehicleCut = new Map();
+    firstCutByVehicleActor.forEach(event => {
+        const key = event.vehicleId + "|" + event.corteIndex;
+        if (!actorsByVehicleCut.has(key)) actorsByVehicleCut.set(key, new Set());
+        actorsByVehicleCut.get(key).add(event.actorKey);
+    });
+    actorsByVehicleCut.forEach((actors, key) => counts.set(key, actors.size));
+    return counts;
 }
 
 function tutorialEditFieldsHash_(values) {
