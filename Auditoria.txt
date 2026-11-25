@@ -89,3 +89,17 @@
 - CI `45718729264` reportó dos fallos: `CortesImageModelAssociationSuggestions.mjs:30` (esperaba sugerencia única pero el fixture no asignaba ID de vehículo; el algoritmo correctamente devolvía ambiguous) y `LocalApiEndpoints.mjs` (esperaba deployments CATALOG/ADMIN anteriores a los valores ya presentes en `API_ENDPOINTS`).
 - Se verificó que no era un defecto del motor de asociación ni de resolución de endpoints. Se corrigieron únicamente los datos esperados de las pruebas. Además, la regresión `AdminDriveAuditItemReference` requería inyectar `fileName` y `classification` al evaluar el objeto extraído; corregido el fixture.
 - Evidencia posterior: CI `45718949366` SUCCESS, 539 suites / 6,385 pruebas / 0 fallos; responsive-browser SUCCESS. Pruebas focales asociadas aprobadas. Sin llamadas a servicios ni cambios de deployments.
+
+
+2026-11-25 | Incidencia #130 — escaneo Drive finalizado con errores podía habilitar inventario
+- Severidad: alta (integridad de inventario y reconciliación).
+- Ubicación: JS/Services/admin.js, getLatestDriveAuditIdForUser_, validateCompletedDriveAudit_, validateDriveAuditInventoryBatch_, handlePreviewCortesImageOrganizer_, handleApplyCortesImageReconciliation_, handleOrganizeUnusedImagesBatch; JS/Frontend/ui.js, controles y consolidación de openAuditDriveModal.
+- Evidencia: el recorrido podía terminar con stack vacío y `status=complete`, aun con `errorCount>0` por fallos de lectura de archivos o IDs no verificables. Las validaciones finales solo exigían status/fecha/digest, no ausencia de errores.
+- Impacto: se podía tratar un inventario parcial como completo y permitir preview, reconciliación u organización con archivos no verificados.
+- Corrección: backend bloquea las operaciones finales/incrementales si hay errores o referencias no interpretables; frontend deshabilita acciones, omite consolidación final y conserva resultados parciales con advertencia. Regresión `AdminDriveScanIntegrity.mjs` 15/15; CI `45719961761` SUCCESS, 540 suites / 6,401 pruebas / 0 fallos.
+
+2026-11-25 | Incidencia #130 — contador de útiles podía reemplazar el icono del botón
+- Severidad: media (interfaz y accesibilidad de acción).
+- Ubicación: JS/Frontend/ui.js, syncUsefulCount_.
+- Evidencia: el selector genérico `[data-useful-vehicle-id][data-useful-cut-index]` incluía tanto encabezados como botones `.util-btn`; el fallback asignaba `textContent` y eliminaba el icono del botón.
+- Corrección: limitar la selección a encabezados `.accordion-btn` y `.detail-section-heading`. Regresión `UsefulButtonState.mjs` 9/9; CI `45719961761` SUCCESS.

@@ -577,3 +577,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Pruebas focales aisladas con fuentes exactas de la rama: AdminDriveAuditItemReference 3/3, CatalogLikeProjectionReadScale 9/9, FeedbackUsefulToggle 6/6, UsefulButtonState 8/8, UsefulSyncQueue 4/4, CortesImageModelAssociationSuggestions 8/8 y LocalApiEndpoints PASS.
 - Commits: `d1822ac9c9e52b2e8c292a061e2bbf681840588f`, `7f8e18814ad4cdc9f7696472a2b3c8b27b5eae2d`, `b7a8fbbf8615be14e3166f9119291a2db08ac856`.
 - **Siguientes pasos vigentes:** (1) auditoría de contador proyectado/estado local/título DOM; (2) pruebas integrales de scanner, cursor, fallos parciales, reanudación y persistencia; (3) revisión del diff y cierre de #130. Apps Script/Drive/Spreadsheet real permanece diferido a Beta aislada y autorizada.
+
+
+## Incidencia #130 — integridad del escaneo y sincronización del contador (2026-11-25)
+**Estado: EN PROGRESO.**
+
+- **Completado:** CI de regresiones de útiles y correcciones previas: 540 suites / 6,401 pruebas / 0 fallos, run `45719961761`, commit `6824868691bf901109f8e62e6517d0f50101fa22`.
+- **Completado:** guardas backend para impedir inventario incremental/final, latest, preview, reconciliación y organización cuando el escaneo termina con errores de lectura o referencias no interpretables. El frontend conserva resultados parciales, bloquea acciones finales y solicita un nuevo escaneo.
+- **Completado:** corrección de `syncUsefulCount_` para actualizar únicamente títulos de cortes y no reemplazar el icono/ contenido del botón útil.
+- **Regresiones:** `AdminDriveScanIntegrity.mjs` 15/15; `AdminIncrementalInventory.mjs` 35/35; `UsefulButtonState.mjs` 9/9. Todas integradas en `RunServiceTests.mjs`.
+- **Recuperación de CI:** la ejecución `45719860942` detectó una expectativa obsoleta en `AdminIncrementalInventory.mjs`; se actualizó el test para el contrato nuevo. La ejecución posterior `45719961761` terminó SUCCESS.
+- **Siguientes pasos vigentes:** (1) ampliar pruebas deterministas del cursor/replay y de la persistencia de páginas; (2) cubrir fallos parciales y reanudación del scanner; (3) revisar contador/DOM y diff completo; (4) cerrar #130 y registros. La validación real Apps Script/Drive/Spreadsheet permanece diferida a Beta aislada y autorizada.
