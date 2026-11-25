@@ -1394,6 +1394,7 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
         orderedVehicle["utilCorte" + newIndex] = tempCortes[oldIndex].util;
         orderedVehicle["activaTestigo" + newIndex] = tempCortes[oldIndex].activaTestigo;
         orderedVehicle["colaboradorCorte" + newIndex] = tempCortes[oldIndex].colaborador;
+        orderedVehicle["sourceCorteIndex" + newIndex] = oldIndex;
     });
     return orderedVehicle;
 }
