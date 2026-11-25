@@ -524,3 +524,12 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - No se realizaron peticiones remotas. Identidad `GPSpedia-*` y salud funcional quedan diferidas a MIG-URL-008, en Beta aislada y con autorización expresa.
 - **MIG-URL-002 COMPLETADA. MIG-URL-003 es la única tarea activa.** Implementar el objeto único `API_ENDPOINTS` en `JS/Frontend/api-config.js`, preservando el mapa de acciones y los contratos actuales. No iniciar tareas ajenas a MIG-URL-001..008.
 - Rama de trabajo: `GPSpedia2.2.5_work`. Rama protegida `GPSpedia2.2.5`: no modificar.
+
+
+## Actualización de continuidad — 2026-11-24
+
+- **Incidencia de catálogo:** el usuario eliminó manualmente el único registro inválido de tipo like en la hoja `FeedbackLikes`. Después de esa eliminación, `handleGetCatalogData` volvió a funcionar. No se realizaron cambios de código ni modificaciones de datos por parte del asistente. La causa inmediata observada fue el registro inválido que disparaba `readFeedbackLikeEventCounts_`; queda como antecedente para evitar que registros inválidos vuelvan a interrumpir la lectura completa del catálogo.
+- **Nueva tarea registrada en cola:** mejorar la pestaña **Actividad reciente** del Dashboard. La tarea está detallada en `Tareas_Activas.md`: mostrar inicialmente Fecha, Usuario y Acción; fechas/nombres/acciones legibles; acordeón de detalle por fila con información del vehículo; un solo acordeón abierto y cierre al hacer clic fuera; vista responsive sin scroll horizontal.
+- **Límite expreso de esa tarea:** solo frontend y presentación de los datos ya entregados por los servicios. No modificar Apps Script, servicios, handlers, contratos, payloads, hojas ni datos.
+- **Orden:** la nueva tarea queda en cola después de MIG-URL-008. La validación Beta MIG-URL-008 sigue siendo la única tarea activa del plan actual y requiere autorización expresa y confirmación de entorno Beta aislado. No se ha iniciado la nueva tarea ni se ha modificado código para ella.
+- Rama autorizada: `GPSpedia2.2.5_work`. HEAD confirmado antes de registrar esta adenda: `f2613111bfcc2687544459efea49665d2f09bedc`. Rama base protegida `GPSpedia2.2.5`: no modificar.
