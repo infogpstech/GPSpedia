@@ -156,7 +156,7 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 **Estado:** IMPLEMENTACIÓN LOCAL APLICADA; CI/regresión y validación Beta pendientes.
 
 - Un usuario puede registrar un útil una sola vez por vehículo, independientemente del corte en el que vuelva a pulsar.
-- La consulta de duplicados y el append se ejecutan dentro de una sección crítica breve con `tryLock(10000)`; el log de actividad queda fuera del lock.
+- La consulta de duplicados y el append se ejecutan dentro de una sección crítica breve con `tryLock(0)`; si hay contención, el frontend reintenta silenciosamente hasta cinco veces (100–400 ms). El log de actividad queda fuera del lock.
 - Se reconocen filas históricas repetidas o con identidad heredada normalizable; no se crea una nueva fila si ya existe un evento del mismo usuario y vehículo.
 - CATALOG proyecta una sola contribución por usuario/vehículo, incluso si el ledger contiene filas repetidas o eventos asociados a cortes distintos; se conserva el primer corte registrado como atribución.
 - Los nuevos eventos validan el ID numérico del vehículo, corte 1–3 e identidad del usuario antes de escribir. Identificadores de usuario fuera del alfabeto seguro se convierten a una clave estable SHA-256 compartida por FEEDBACK y CATALOG.
