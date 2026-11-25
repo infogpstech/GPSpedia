@@ -890,3 +890,12 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - La prueba `JS/Tests/LikeClientCounter.js` importaba una ruta raíz inexistente y no estaba registrada en el runner; se corrigió para probar el módulo frontend real y se incorporó a `RunServiceTests.mjs`.
 - Diferencia de Spreadsheet: la rama base usa un ID anterior; los servicios de la rama de trabajo comparten el ID proporcionado por el propietario el 2026-11-24 y autorizado en NORMAS §17.1. No se cambió ese localizador ni se intentó copiar datos. Debe confirmarse en Beta que los deployments FEEDBACK/CATALOG apuntan al mismo recurso esperado.
 - No se hicieron llamadas a Apps Script ni modificaciones a Spreadsheet/Drive/datos. CI y validación remota quedan pendientes.
+
+
+### Cierre GP-LIKE-REPLAY-COUNT-01 — 2026-11-25
+
+- Corrección: el resultado idempotente de FEEDBACK ahora incluye el contador confirmado, calculado fuera del lock. No agrega otra fila ni repite actividad/telemetría.
+- Se conectó al runner la prueba frontend real `LikeClientCounter.js`, que ahora importa `JS/Frontend/likeState.js`; 6/6 PASS. `FeedbackLikeIdempotency` 10/10 PASS y `FeedbackLikeAppendOnly` 4/4 PASS.
+- CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas aprobadas, 0 fallos; ambos jobs `service-tests` y `responsive-browser` SUCCESS. Pages run `45628972138` SUCCESS.
+- Rama de trabajo HEAD de código: `9ba85463697d91f8a3534836c84bcfad7979e27d`. No se desplegó Apps Script ni se invocó FEEDBACK/CATALOG. La verificación de la Spreadsheet y deployments reales queda pendiente de Beta autorizada.
+- Hallazgo de compatibilidad importante: el contador físico de `Cortes.utilCorteN` no se incrementa en la arquitectura vigente; los eventos se guardan en `FeedbackLikes` y CATALOG proyecta los totales. La versión base sí incrementaba directamente la celda de `Cortes`. Los servicios de la rama de trabajo usan la Spreadsheet proporcionada por el propietario el 2026-11-24, distinta de la que referenciaba la rama base; no se cambió porque está autorizada en NORMAS §17.1. Confirmar que el usuario consulta la Spreadsheet/pestaña correctas en Beta.

@@ -395,9 +395,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 
 ## GP-LIKE-REPLAY-COUNT-01 — contador confirmado en respuestas idempotentes (2026-11-25)
-**Estado: EN PROGRESO — corrección local preparada; CI y validación Beta pendientes.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45628974357 SUCCESS.**
 - Comparación con la rama base: la versión base incrementaba directamente `Cortes.utilCorteN`. La arquitectura vigente conserva los votos nuevos en `FeedbackLikes` y CATALOG los proyecta; no modifica el contador físico de `Cortes`. Esta diferencia está documentada como decisión vigente y no debe revertirse sin migración del contrato.
 - Hallazgo reproducible: cuando FEEDBACK detecta que el mismo actor ya registró el voto, el fast-path devolvía `alreadyLiked:true` sin `likeCount`. El frontend actualiza el modal solo con un contador entero confirmado, por lo que el botón podía quedar marcado como útil sin reflejar el total.
 - Corrección: las respuestas idempotentes también calculan y devuelven el contador confirmado, fuera del lock; no insertan otra fila ni generan otra actividad. Se mantiene unicidad actor+vehículo+corte.
 - Se corrigió y registró la prueba del módulo frontend real `JS/Frontend/likeState.js`; antes importaba una ruta raíz inexistente y no estaba conectada al runner.
-- Validación Beta pendiente: comprobar que el deployment FEEDBACK nuevo y CATALOG leen la misma Spreadsheet central autorizada, revisar la hoja `FeedbackLikes` y confirmar la proyección del contador. No invocar servicios ni modificar datos externos sin autorización de entorno Beta.
+- CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas aprobadas, 0 fallos; `FeedbackLikeIdempotency` 10/10, `FeedbackLikeAppendOnly` 4/4, `LikeClientCounter` 6/6; `service-tests` y `responsive-browser` SUCCESS. Pages run `45628972138` SUCCESS.
+- Validación Beta pendiente: comprobar que los deployments FEEDBACK y CATALOG leen la Spreadsheet central autorizada, revisar `FeedbackLikes` y confirmar la proyección real. No se invocaron servicios ni se modificaron datos externos.

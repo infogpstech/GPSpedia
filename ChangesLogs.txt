@@ -1181,3 +1181,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se corrigió el fast-path idempotente de `handleRecordLike`: ahora devuelve también `likeCount` confirmado, sin crear otra fila ni repetir telemetría/actividad. Se ajustó `FeedbackLikeIdempotency.mjs`.
 - Se corrigió `LikeClientCounter.js` para importar `JS/Frontend/likeState.js` (módulo realmente consumido por `ui.js`), se alineó la clave vehículo+corte y se registró en `RunServiceTests.mjs`.
 - Sin cambios a endpoints, IDs de Spreadsheet, datos, permisos ni deployments. Validación CI y Beta pendientes.
+
+
+### Cierre — GP-LIKE-REPLAY-COUNT-01 (2026-11-25)
+
+- FEEDBACK ahora devuelve `likeCount` también en respuestas idempotentes; no inserta eventos duplicados ni repite actividad. Prueba `FeedbackLikeIdempotency` 10/10 PASS.
+- `LikeClientCounter.js` ahora prueba el módulo frontend activo y quedó registrado en `RunServiceTests.mjs`: 6/6 PASS. `FeedbackLikeAppendOnly` 4/4 PASS.
+- CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas, 0 fallos; responsive-browser SUCCESS. Pages run `45628972138` SUCCESS.
+- No se invocaron servicios Apps Script ni se modificaron datos/hojas externas. La verificación Beta sigue pendiente.
