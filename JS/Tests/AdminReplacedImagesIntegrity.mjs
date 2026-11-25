@@ -474,8 +474,9 @@ check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmu
         getRange(row,col,numRows,numCols){
             calls.push({row,col,numRows,numCols});
             const at=(source,r,c)=>source[col+c]&&source[col+c][r]!==undefined?source[col+c][r]:"";
+            const context=col===1&&numCols===4;
             return {
-                getDisplayValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(display,r,c))),
+                getDisplayValues:()=>context?Array.from({length:numRows},()=>["V-105","Categoria","Marca","Modelo"]):Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(display,r,c))),
                 getValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(raw,r,c))),
                 getFormulas:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(formulas,r,c))),
                 getRichTextValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(rich,r,c)))
@@ -491,8 +492,10 @@ check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmu
     assert.equal(result.metrics.columns,8);
     assert.equal(result.metrics.cells,16);
     assert.equal(result.metrics.ranges,1);
-    assert.equal(calls.reduce((sum,item)=>sum+item.numCols,0),17);
-    assert.equal(calls.length,1);
+    assert.equal(calls.reduce((sum,item)=>sum+item.numCols,0),21);
+    assert.equal(calls.length,2);
+    assert.equal(result.references.get(FILE_C)[0].vehicleId,"V-105");
+    assert.equal(result.references.get(FILE_C)[0].model,"Modelo");
     assert.ok(calls.every(item=>item.row===2&&item.numRows===2&&item.col>0));
     assert.equal(result.references.get(FILE_C)[0].row,2);
     assert.equal(result.references.get(FILE_C)[0].column,7);
@@ -508,11 +511,12 @@ check("La captura de Cortes limita memoria por bloques y conserva filas posterio
         getLastRow:()=>502,
         getRange(row,col,numRows,numCols){
             calls.push({row,col,numRows,numCols});
+            const context=col===1&&numCols===4;
             const make=(kind)=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{
                 if(kind==="display"&&row+r===502&&col+c===9)return "https://drive.google.com/file/d/"+targetId+"/view";
                 return "";
             }));
-            return {getDisplayValues:()=>make("display"),getValues:()=>make("raw"),
+            return {getDisplayValues:()=>context?Array.from({length:numRows},()=>["V-502","Categoria","Marca","Modelo"]):make("display"),getValues:()=>make("raw"),
                 getFormulas:()=>make("formula"),getRichTextValues:()=>make("rich")};
         }
     };
@@ -532,7 +536,7 @@ check("La captura de Cortes limita memoria por bloques y conserva filas posterio
     assert.equal(result.metrics.targetChunkMs,1500);
     assert.equal(result.metrics.chunks,2);
     assert.equal(result.metrics.ranges,2);
-    assert.equal(calls.length,2);
+    assert.equal(calls.length,3);
     assert.ok(calls.every(item=>item.numRows<=500));
     for(const metric of ["displayReadMs","rawReadMs","formulaReadMs","richTextReadMs","referenceParseMs","maxChunkElapsedMs","adaptiveChunkChanges"]) {
         assert.ok(Number.isFinite(result.metrics[metric]),"Métrica ausente o inválida: "+metric);
