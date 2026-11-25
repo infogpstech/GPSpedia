@@ -310,6 +310,6 @@ await check('Recupera un marcador de limpieza interrumpida y evita dos limpiador
 console.log('AdminDriveAuditIndexedDB: ' + passed + '/' + passed + ' PASS');
 
 assert.match(uiSource,/referenceLocations/,"La UI muestra relación de referencia por imagen.");
-assert.match(uiSource,/drive\.google\.com\/file\/d\/\+ fileId/,"La UI ofrece enlace al archivo original.");
+assert.match(uiSource,/sourceLink\.href/,"La UI ofrece enlace al archivo original.");
 assert.match(uiSource,/classification === 'Sin uso detectado'/,"La UI indica cuándo falta una asociación confirmada.");
 console.log("AdminDriveAuditVisualContract: 3/3 PASS");
