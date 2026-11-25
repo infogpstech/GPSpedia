@@ -6,11 +6,10 @@ function extract(source,name){const start=source.indexOf("function "+name+"(");a
 const handler=extract(feedback,"handleRecordLike");
 assert.match(handler,/findLikeEventReplayNoop_/);
 assert.match(handler,/ledger\.appendRow\(\[actorKey, vehicleId, corteIndex, 0, 0, "event"/);
-assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_|setValue\(/,"Ninguna ruta de like debe usar lock o modificar el contador físico");
-const eventPath=handler.slice(handler.indexOf("const eventReplay"),handler.indexOf("const ledger = ensureFeedbackLikesSheet_"));
-assert.doesNotMatch(eventPath,/LockService|setValue\(/);
+assert.match(handler,/withFeedbackLikeLock_\(\(\) =>/,"La comprobación y el append deben ser una sola sección crítica.");
+assert.doesNotMatch(handler,/setValue\(/,"Los útiles nuevos no modifican el contador físico.");
+assert.doesNotMatch(handler,/message:/,"La respuesta idempotente no debe mostrar mensajes de útil duplicado.");
 assert.match(extract(feedback,"ensureFeedbackLikesSheet_"),/catch \(createError\)/,"La creación concurrente de la hoja debe recuperarse por relectura");
-assert.doesNotMatch(extract(feedback,"findLikeEventReplayNoop_"),/LockService|setValue\(/);
 assert.match(extract(catalog,"handleGetCatalogData"),/readFeedbackLikeEventCounts_/,"CATALOG debe proyectar los likes nuevos");
 assert.match(extract(feedback,"buildFeedbackCortesCatalogChange_"),/getFeedbackLikeEventCount_/,"El feed incremental debe incluir eventos de likes");
 assert.match(extract(feedback,"findCompletedLikeReplayNoop_"),/getFeedbackLikeEventCount_/,"El replay legacy debe devolver el contador efectivo");
@@ -37,9 +36,9 @@ const rows=[
 ];
 const sheet={getLastRow:()=>rows.length+1,getRange(r,c,h,w){return{getValues(){if(r===1)return[headers];return rows.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
-test("deduplica actores y separa vehículo/corte",()=>{
+test("deduplica por usuario y vehículo aunque existan filas repetidas o cortes distintos",()=>{
  const result=readCounts({getSheetByName:()=>sheet});
- assert.equal(result.get("100|1"),2);assert.equal(result.get("100|2"),1);assert.equal(result.get("200|1"),1);
+ assert.equal(result.get("100|1"),2);assert.equal(result.get("100|2") || 0,0);assert.equal(result.get("200|1"),1);
 });
 test("ignora likes legacy completed porque ya están en el contador base",()=>{
  const result=readCounts({getSheetByName:()=>sheet});assert.equal(result.get("100|1"),2);
@@ -49,5 +48,5 @@ test("rechaza eventos con actor o vehículo inválido",()=>{
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
  assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/evento de like inválido/);
 });
-test("el contrato de likes nuevos es append-only y sin lock",()=>{assert.ok(handler.includes('"event"'));assert.doesNotMatch(handler,/LockService|getScriptLock|acquireFeedbackScriptLock_/);});
+test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/waitLock\(10000\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\\s\\S]*releaseLock/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");
