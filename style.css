@@ -6727,7 +6727,9 @@ textarea.rich-text-source[hidden] { display:none !important; }
    Las acciones se envuelven sin invadir la columna del logo ni el campo del modelo. */
 @media (max-width: 340px) {
     #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar {
-        grid-template-rows: auto 48px auto auto;
+        /* 40px + 32px deja el logo con 6px de margen superior y permite
+           dos filas de acciones táctiles de 32px en la segunda fila. */
+        grid-template-rows: auto 32px auto auto;
     }
     #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar[data-model-title-layout="below-logo"] {
         grid-template-rows: 40px 32px auto auto auto;
