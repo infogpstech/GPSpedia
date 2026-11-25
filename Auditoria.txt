@@ -28,3 +28,8 @@
 2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01 — revisión adicional
 - Implementación en curso: modo incremental con operación por digest de lote; el flujo final consolida/reconcilia cuando ADMIN confirma estado completo. Frontend registra por lote y consolida al finalizar; no organiza/mueve Drive.
 - Riesgo que sigue bajo revisión: estado de resultado global y operaciones del organizador tras consolidación; reintentos/errores parciales y concurrencia. CI focal aún en ejecución para la última revisión.
+
+2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01 — cierre local
+- Corrección: registro automático de imágenes sin uso por lote y consolidación final desde UI; ADMIN valida owner, TTL, estado y allowlist emitida/persistida; revalidación de referencia/Drive e idempotencia por lote; no mover archivos en registro. Reconciliación stale solo en consolidación final.
+- CI 45705928487 SUCCESS: syntax, service regression runner y responsive-browser PASS; test contractual/simulado de owner, allowlist, estados y TTL.
+- Beta real (Drive/Spreadsheet/deployment) pendiente. No hubo cambios en recursos externos.
