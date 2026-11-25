@@ -10095,11 +10095,16 @@ export async function openAuditDriveModal(options = {}) {
                 suggestions.forEach(item => {
                     const card = document.createElement("article");
                     card.className = "audit-drive-result-row";
+                    const preview = document.createElement("img");
+                    preview.src = getImageUrl(String(item.fileId || ""), 120);
+                    preview.alt = "Miniatura de " + String(item.fileName || "imagen");
+                    preview.loading = "lazy";
+                    preview.style.cssText = "width:72px;height:72px;object-fit:contain;border-radius:6px;float:left;margin:0 10px 8px 0;";
                     const heading = document.createElement("strong");
                     heading.textContent = (item.status === "ambiguous" ? "Revisión manual · " : "Sugerencia · ") + String(item.fileName || item.fileId || "Archivo");
                     const detail = document.createElement("p");
                     detail.textContent = String(item.folderPath || "Ruta no disponible") + " · confianza " + String(item.confidence || "no determinada");
-                    card.append(heading, detail);
+                    card.append(preview, heading, detail);
                     (Array.isArray(item.candidates) ? item.candidates : []).forEach(candidate => {
                         const line = document.createElement("p");
                         line.textContent = String(candidate.category || "") + " / " + String(candidate.brand || "") + " / " +
