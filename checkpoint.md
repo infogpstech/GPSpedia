@@ -581,3 +581,35 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - MIG-URL-008 continúa pendiente de autorización y entorno Beta aislado; no ejecutar GET remotos ni desplegar servicios.
 - La tarea separada **Actividad reciente** permanece en cola y conserva su límite de solo frontend/presentación.
 - Rama: `GPSpedia2.2.5_work`. Rama protegida `GPSpedia2.2.5`: sin cambios.
+
+
+---
+
+## 2026-11-25 — Cierre de validación local de las cuatro prioridades
+
+**HEAD verificado:** 5cc1cf90bdab8e4ff73e01d361cf2b7d04255abd en GPSpedia2.2.5_work.
+
+### Evidencia CI
+
+- Workflow 45535275807: **523 suites, 6,206 pruebas aprobadas, 0 fallos**.
+- Navegador AUG-146: **260/260 PASS**, en 1366×768, 390×844, 360×800 y 320×700.
+- FeedbackLikeIdempotency.mjs: 5/5; FeedbackLikeClientRetry.mjs: 2/2; FeedbackLikeLockContention.mjs: 2/2.
+- ActivityDashboardContributions.mjs: 3/3.
+- TutorialVideoModalLayout.mjs: 9/9.
+- CutDetailModalLayout.mjs: 32/32.
+- GitHub Pages workflow 45535275662: build y deploy automáticos SUCCESS para el HEAD de la rama de trabajo. No se ejecutó ningún despliegue Apps Script.
+
+### Estado por prioridad
+
+1. **Útiles:** implementación local y regresión completadas; validación de comportamiento contra FEEDBACK/CATALOG y Spreadsheet Beta diferida.
+2. **Dashboard:** consolidación por nombre visible completada y probada; el caso de aceptación devuelve una sola fila con 380 cortes.
+3. **Vídeo tutoriales:** implementación local y pruebas de geometría/URL completadas; reproducción real de YouTube diferida a Beta.
+4. **Encabezados:** implementación y comprobación responsive completadas en los cuatro viewports; título sin saltos cuando cabe, alineación inferior de logo/modelo y aumento móvil de 2 px.
+
+### Continuidad para próximos trabajos
+
+- Retomar primero la validación Beta de útiles: dos usuarios diferentes deben contar por separado; un mismo usuario en el mismo vehículo, incluso desde otro corte, debe contar una sola vez, sin nueva fila ni mensaje de útil repetido; CATALOG debe seguir entregando el catálogo.
+- Después validar reproducción real de vídeos de tutoriales con enlaces YouTube watch y cortos/shorts.
+- MIG-URL-008 sigue pendiente de autorización Beta aislada. No se hicieron llamadas a deployments Apps Script ni cambios en Spreadsheet, Drive, PropertiesService, permisos o endpoints.
+- La tarea independiente **Actividad reciente** del Dashboard continúa en cola.
+- No se modificó la rama base GPSpedia2.2.5.
