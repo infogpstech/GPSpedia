@@ -44,8 +44,8 @@ check("La matriz de archivos coincide con dependencias reales", () => {
 check("La publicación de código preserva el deployment y limita el alcance", () => {
   assert.match(guide, /Gestionar implementaciones/);
   assert.match(guide, /conservar la URL/);
-  assert.match(guide, /No actualizar los otros cinco/);
-  assert.match(guide, /no es necesario redesplegar frontend ni los otros cinco servicios/i);
+  assert.match(guide, /No revertir ni redesplegar servicios no relacionados/);
+  assert.match(guide, /Cambiar una URL no exige redesplegar Apps Script si el código del servicio no cambió/i);
 });
 check("Las URLs se mantienen en API_ENDPOINTS y el lector central conserva solo parámetros/recursos", () => {
   assert.match(guide, /API_ENDPOINTS/);
