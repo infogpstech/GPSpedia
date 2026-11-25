@@ -25,4 +25,8 @@ const validate=new Function('loadDriveAuditServerState_','normalizeDriveAuditFil
 assert.equal(validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]).status,'running');
 assert.throws(()=>validate('audit-1','wrong-owner',[{fileId:'valid-image-id-123456789012345'}]),/otra sesión/);
 assert.throws(()=>validate('audit-1','owner-1',[{fileId:'attacker-image-id-123456789'}]),/no emitió/);
-console.log('AdminIncrementalInventory: 14/14 PASS');
+state.status='complete';
+assert.equal(validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]).status,'complete');
+state.updatedAt=Date.now()-21600001;
+assert.throws(()=>validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]),/expiró/);
+console.log('AdminIncrementalInventory: 16/16 PASS');
