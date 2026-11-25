@@ -280,7 +280,7 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Pruebas `AdminDriveScanModal.mjs` 7/7 PASS y `AdminDriveAuditGlobalConsole.mjs` 1/1 PASS en CI run 45611120099. La suite global tuvo cinco suites fallidas, pero ninguna correspondió al modal: contratos FEEDBACK/CATALOG con expectativas de deduplicación antiguas, DeveloperConsoleRouting con assertion de copia obsoleta y MIG021 de URLs. No se desplegaron servicios Apps Script ni se accedió a Drive/Spreadsheet. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
 
 ### GP-LIKE-REBUILD-01 — Reconstruir recordLike ante fallo persistente
-**Estado: IMPLEMENTADA Y CERRADA LOCALMENTE; VALIDACIÓN BETA DIFERIDA.**
+**Estado: COMPLETADA EN CÓDIGO Y CI — run 45612250526 (525 suites, 6,239 pruebas, 0 fallos). Validación Beta diferida.**
 - El error de registro de útil continúa tras la corrección previa. Reanalizar el flujo y reconstruirlo con estrategia distinta si procede.
 - Revisar frontend→FEEDBACK→append/idempotencia→respuesta→actualización CATALOG, contención, timeout, resultado ambiguo y publicación. No convertir un voto confirmado en error aparente ni permitir duplicados actor+vehículo.
 - Mantener un útil por usuario y corte; el mismo usuario puede votar en cortes distintos del vehículo.
@@ -334,3 +334,9 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - La reconstrucción de CATALOG leía siete columnas de FeedbackLikes completas. Se reemplazó por lecturas A:C y F, que contienen actor/vehículo/corte y status; se mantiene deduplicación por actor+corte y tolerancia a eventos inválidos.
 - Test aislado `CatalogLikeProjectionReadScale.mjs` 6 assertions: conteo por corte y lectura compacta; registrado en runner.
 - No se introduce cache/TTL ni riesgo de proyección obsoleta, ni locks globales o coordinación entre servicios.
+
+
+### GP-LIKE-REBUILD-01 — confirmación de cierre CI
+
+- CI run 45612250526: 525 suites, 6,239 pruebas, 0 fallos; responsive-browser SUCCESS. Los contratos legacy de deduplicación se reconciliaron con actor+vehículo+corte; las seis URLs contractuales local se alinearon con el conjunto vigente de la rama.
+- Validación de servicios Beta real diferida; no hubo deployment.
