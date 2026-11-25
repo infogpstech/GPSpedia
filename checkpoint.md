@@ -1012,3 +1012,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Validación automatizada y CI pendientes de comprobación posterior. La prueba real en deployment ADMIN/FEEDBACK y Drive/Spreadsheet no se ejecutó; requiere entorno Beta aislado.
 
 - CI intermedio detectó dos problemas de test (contrato LocalApiEndpoints aún refería al ADMIN anterior, y UsefulButtonState reportaba 5 tests pese a incorporar el sexto). Se alineó el endpoint esperado con la URL confirmada y se corrigió el resumen del test. CI del HEAD actual en ejecución; no marcar aprobación antes del resultado.
+
+
+## Nueva tarea — GP-ADMIN-INVENTARIO-INCREMENTAL-01 (2026-11-25)
+- HEAD verificado antes del registro: `64daf658f24ab88f53d1239d0ce7e349bbc40416`; rama base protegida permanece intacta.
+- Hallazgo: handler de inventario requiere estado completo/digest final; frontend no guarda por lote, solo ofrece registro manual al finalizar. Se documentó en `Auditoria.txt`.
+- Plan de implementación: `GP_ADMIN_INVENTARIO_INCREMENTAL_01.md`; se creó commit de documentación `835388abeb8f293c33fb934c7746805fc970e753` y hallazgo `7ba039dbeffa24b88d32bec15386e5a66c0e50f6`. (Registro de ChangesLogs en `25cef196c5f8080dd04bbcefa49f5acbb6c52b3e`).
+- La implementación y las pruebas todavía no se han ejecutado; continúa inmediatamente con el handler incremental seguro, frontend, pruebas y CI. No deployment ni cambios a Drive/Spreadsheet real.
