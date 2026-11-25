@@ -1124,3 +1124,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01: panel de progreso integrado y CSS responsive; CI inicial confirmó AdminDriveScanModal 7/7 PASS y navegador responsive ajeno al modal PASS. CI detectó una assertion de compatibilidad textual en AdminDriveAuditGlobalConsole; se restauró el prefijo compatible ampliándolo para aclarar panel simultáneo. Commit fd2c54d12ae11f7770863257ca5039408bb2e055; nueva validación CI en curso. No hubo invocaciones Apps Script/Drive/Spreadsheet.
 
 2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01: segunda CI confirmó que el contrato histórico AdminDriveAuditGlobalConsole requiere DOM simulado para el nuevo espejo; no es fallo productivo, sino fixture desactualizado. Se adaptó la prueba con mock DOM mínimo, conservando la validación logger global/resultados/reanudación. Commit 4acae1e078c55aa56721c741c551d962fec7557c. CI nuevo pendiente.
+
+
+2026-11-25 — Cierre GP-ADMIN-DRIVE-SCAN-MODAL-01: CI run 45611120099 confirmó `AdminDriveScanModal` 7/7 PASS y `AdminDriveAuditGlobalConsole` 1/1 PASS. La tarea queda cerrada en código y contrato. Fallos globales restantes aislados a suites de FEEDBACK/CATALOG/MIG019, BETA-032 DeveloperConsoleRouting y MIG021; en investigación para las tareas siguientes. Sin despliegues ni recursos externos.
