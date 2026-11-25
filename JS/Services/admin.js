@@ -14545,7 +14545,8 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     else classification = "Sin uso detectado";
                 } catch (fileError) { classification = "No verificable"; errorCount++; }
                 const referenceLocations = referenceSnapshot.references.get(fileId) || [];
-                auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || "") })) });
+                const fileFormat = String(fileName.match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown").toLowerCase();
+                auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, format: fileFormat, url: "https://drive.google.com/file/d/" + fileId + "/view", origin: "Google Drive · árbol Cortes", size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || "") })) });
                 batchFiles++; totalAnalyzed++;
             }
             if (files.hasNext()) { current.fileToken = files.getContinuationToken(); break; }
