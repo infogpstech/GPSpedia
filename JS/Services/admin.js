@@ -12871,13 +12871,46 @@ const DRIVE_AUDIT_STATE_HEADERS_ = Object.freeze([
 const DRIVE_AUDIT_STATE_TTL_MS_ = 21600000;
 const DRIVE_AUDIT_STATE_MAX_ROWS_ = 500;
 
-function getDriveAuditStateSheet_() {
-    const sheet=getSpreadsheet().getSheetByName(DRIVE_AUDIT_STATE_SHEET_NAME_);
-    if(!sheet)throw new Error("No existe la hoja DriveAuditRuns. Debe prepararse su esquema antes de habilitar la auditoría Drive.");
-    const header=sheet.getRange(1,1,1,DRIVE_AUDIT_STATE_HEADERS_.length).getValues()[0];
-    if(!DRIVE_AUDIT_STATE_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
-        throw new Error("El esquema de DriveAuditRuns no coincide con la versión esperada.");
+function getOrCreateDriveAuditSchemaSheet_(sheetName,headers) {
+    const spreadsheet=getSpreadsheet();
+    let sheet=spreadsheet.getSheetByName(sheetName);
+    if(!sheet){
+        try{sheet=spreadsheet.insertSheet(sheetName);}
+        catch(creationError){
+            // Otra ejecución pudo crearla entre getSheetByName e insertSheet.
+            sheet=spreadsheet.getSheetByName(sheetName);
+            if(!sheet)throw creationError;
+        }
+    }
+    const expected=Array.isArray(headers)?headers.map(value=>String(value)):[],
+        maxColumns=typeof sheet.getMaxColumns==="function"?Number(sheet.getMaxColumns()||0):expected.length;
+    if(maxColumns<expected.length)sheet.insertColumnsAfter(maxColumns,expected.length-maxColumns);
+    const lastRow=Number(sheet.getLastRow()||0);
+    const current=sheet.getRange(1,1,1,expected.length).getValues()[0];
+    const missing=[];
+    expected.forEach((name,index)=>{
+        const actual=String(current[index]===null||current[index]===undefined?"":current[index]).trim();
+        if(actual&&actual!==name)throw new Error("El esquema de "+sheetName+" no coincide en la columna "+(index+1)+". No se modificó la hoja.");
+        if(!actual){
+            if(lastRow>1){
+                const values=sheet.getRange(2,index+1,lastRow-1,1).getValues();
+                if(values.some(row=>row[0]!==""&&row[0]!==null&&row[0]!==undefined))
+                    throw new Error("La columna "+(index+1)+" de "+sheetName+" contiene datos sin encabezado. No se sobrescribió.");
+            }
+            missing.push(index);
+        }
+    });
+    if(missing.length){
+        missing.forEach(index=>sheet.getRange(1,index+1).setValue(expected[index]));
+        SpreadsheetApp.flush();
+    }
+    const confirmed=sheet.getRange(1,1,1,expected.length).getValues()[0];
+    if(!expected.every((name,index)=>String(confirmed[index]||"").trim()===name))
+        throw new Error("No se pudo confirmar el esquema de "+sheetName+".");
     return sheet;
+}
+function getDriveAuditStateSheet_() {
+    return getOrCreateDriveAuditSchemaSheet_(DRIVE_AUDIT_STATE_SHEET_NAME_,DRIVE_AUDIT_STATE_HEADERS_);
 }
 function readDriveAuditStateBaselineState_(sheet) {
     if(Number(sheet.getLastRow()||0)<2)return "";
@@ -13017,12 +13050,7 @@ const DRIVE_AUDIT_LATEST_HEADERS_ = Object.freeze(["ownerHash","ownerId","latest
 const DRIVE_AUDIT_LATEST_MAX_ = 500;
 
 function getDriveAuditLatestSheet_() {
-    const sheet=getSpreadsheet().getSheetByName(DRIVE_AUDIT_LATEST_SHEET_NAME_);
-    if(!sheet)throw new Error("No existe la hoja DriveAuditLatest. Debe prepararse su esquema antes de habilitar el puntero latest.");
-    const header=sheet.getRange(1,1,1,DRIVE_AUDIT_LATEST_HEADERS_.length).getValues()[0];
-    if(!DRIVE_AUDIT_LATEST_HEADERS_.every((name,index)=>String(header[index]||"").trim()===name))
-        throw new Error("El esquema de DriveAuditLatest no coincide con la versión esperada.");
-    return sheet;
+    return getOrCreateDriveAuditSchemaSheet_(DRIVE_AUDIT_LATEST_SHEET_NAME_,DRIVE_AUDIT_LATEST_HEADERS_);
 }
 function readDriveAuditLatestBaselineState_(sheet) {
     if(Number(sheet.getLastRow()||0)<2)return "";

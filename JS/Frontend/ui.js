@@ -7981,7 +7981,7 @@ ${elapsedSec}s
     }
 
     const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
-    if (auditDriveBtn) auditDriveBtn.onclick = () => openAuditDriveModal();
+    if (auditDriveBtn) auditDriveBtn.onclick = () => openAuditDriveModal({ showModal: false, startImmediately: true });
 
     const driveStorageRefreshBtn = document.getElementById('btn-admin-refresh-drive-storage');
     const driveStorageStatus = document.getElementById('drive-storage-monitor-status');
@@ -8166,7 +8166,7 @@ export async function openReplacedImagesModal() {
         if (list) list.replaceChildren();
         modal.style.display = 'none';
     };
-    modal.style.display = 'flex';
+    modal.style.display = showModal ? 'flex' : 'none';
 
     const closeBtn = document.getElementById('close-replaced-images-modal');
     const listContainer = document.getElementById('replaced-images-list-container');
@@ -8574,7 +8574,9 @@ export async function openReplacedImagesModal() {
 /**
  * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
  */
-export async function openAuditDriveModal() {
+export async function openAuditDriveModal(options = {}) {
+    const showModal = !(options && options.showModal === false);
+    const startImmediately = Boolean(options && options.startImmediately === true);
     const requestContext = ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
     const cleared = await processPendingDriveAuditClears_(requestContext.userId);
@@ -8664,7 +8666,9 @@ export async function openAuditDriveModal() {
 
     const scanConsole = document.getElementById('audit-drive-scan-console');
     if (scanConsole) scanConsole.replaceChildren();
-    summaryEl.textContent = "La salida y el progreso se registran en la consola global Developer y simultáneamente en este panel. Los resultados detallados aparecen incrementalmente.";
+    summaryEl.textContent = showModal
+        ? "La salida y el progreso se registran en la consola global Developer y simultáneamente en este panel. Los resultados detallados aparecen incrementalmente."
+        : "La auditoría se ejecuta sin abrir otro modal. El avance, los lotes y los resultados se registran en la consola global Developer.";
     const allFiles = [];
     const seenFileIds = new Set();
     const renderedFileIds = new Set();
@@ -10322,7 +10326,14 @@ export async function openAuditDriveModal() {
     } else {
         if (!isCurrentRequest()) return;
         container.innerHTML = '';
-        updateSummary('No existe un inventario local guardado. Iniciando auditoría nueva...');
+        updateSummary(startImmediately
+            ? 'Preparando auditoría desde la consola Developer...'
+            : 'No existe un inventario local guardado. Iniciando auditoría nueva...');
+    }
+    if (startImmediately && isCurrentRequest()) {
+        const canResume = Boolean(savedState && !complete && cursor && !resumeUnavailable);
+        await runAudit(canResume);
+    } else if (!savedState && isCurrentRequest()) {
         await runAudit(false);
     }
 }

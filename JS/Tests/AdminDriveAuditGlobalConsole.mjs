@@ -3,15 +3,22 @@ import { readFileSync } from "node:fs";
 
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
-const start = ui.indexOf("export async function openAuditDriveModal()");
+const start = ui.indexOf("export async function openAuditDriveModal(options = {})");
 const end = ui.indexOf("\nexport ", start + 20);
 assert.ok(start >= 0 && end > start, "debe existir el modal de auditoría de Drive");
 const auditUi = ui.slice(start, end);
 assert.ok(!auditUi.includes("audit-drive-console-output"), "el modal ya no debe crear una consola local");
 assert.ok(!auditUi.includes("auditConsoleOutput") && !auditUi.includes("auditConsoleStatus"),
     "la salida no debe depender de nodos locales del modal");
-assert.ok(auditUi.includes('summaryEl.textContent = "La salida y el progreso se registran en la consola global'),
-    "el modal debe indicar dónde consultar el progreso");
+assert.ok(auditUi.includes("const showModal = !(options && options.showModal === false);"));
+assert.ok(auditUi.includes("modal.style.display = showModal ? 'flex' : 'none';"),
+    "el modo Developer no debe mostrar el modal independiente");
+assert.ok(auditUi.includes("if (startImmediately && isCurrentRequest())"));
+assert.ok(auditUi.includes("await runAudit(canResume);"), "la acción Developer debe iniciar o reanudar el escaneo");
+assert.ok(ui.includes("openAuditDriveModal({ showModal: false, startImmediately: true })"),
+    "Auditar Cortes debe ejecutar el escaneo sin abrir otro modal");
+assert.ok(auditUi.includes("El avance, los lotes y los resultados se registran en la consola global Developer"),
+    "el modo headless anuncia el destino del progreso");
 assert.ok(html.includes('id="dev-console-log"'), "debe existir la consola global del panel Desarrollador");
 assert.ok(ui.includes("window.gpsepediaDeveloperLog = (message, level = 'info') =>"),
     "el panel debe exponer el logger global");
