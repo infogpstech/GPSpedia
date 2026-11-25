@@ -221,6 +221,11 @@ try {
       tutorialRender.validResult.iframeVisibility === "visible" &&
       tutorialRender.validResult.iframeLoading !== "lazy",
       profile.name + ": el iframe permanece visible y no usa carga diferida");
+    console.log("TUTORIAL_TITLE_GEOMETRY " + profile.name + " " + JSON.stringify({
+      height: tutorialRender.validResult.titleHeight,
+      lineHeight: tutorialRender.validResult.titleLineHeight,
+      whiteSpace: tutorialRender.validResult.titleWhiteSpace
+    }));
     check(tutorialRender.validResult.titleText === "Corte de ignición" &&
       tutorialRender.validResult.titleWhiteSpace === "nowrap" &&
       tutorialRender.validResult.titleHeight <= tutorialRender.validResult.titleLineHeight + 2,
