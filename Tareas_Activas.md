@@ -268,9 +268,10 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Prueba `DeveloperConsoleErrors.mjs` añadida con contrato estático y selección simulada.
 
 ### GP-ADMIN-DRIVE-AUDIT-SCHEMA-01 — Resolver esquema de AdminOperationGuards
-**Estado: PENDIENTE DE DIAGNÓSTICO.**
-- La auditoría Drive informa repetidamente que falta la hoja AdminOperationGuards o que su esquema no coincide con la versión esperada, dejando la auditoría parcial sin cursor.
-- Investigar contrato/esquema requerido y preparación/validación de guardas ADMIN; no habilitar guardas ni ejecutar cambios reales sin autorización.
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (CI remoto pendiente).**
+- `getAdminLocalGuardSheet_` ahora crea la hoja ausente, inicializa el encabezado únicamente si está vacío, verifica la escritura y recupera la carrera de creación por relectura.
+- Hoja existente con encabezado incompatible no se sobrescribe; se rechaza fail-safe.
+- Pruebas de contrato y simulaciones de creación, encabezado válido, esquema incompatible y carrera de inserción PASS; `AdminLocalOperationGuard.mjs` PASS. No se activaron guardas adicionales ni se modificaron recursos reales.
 
 ### GP-ADMIN-DRIVE-SCAN-MODAL-01 — Transformar modal de auditoría de cortes a modo escaneo
 **Estado: PENDIENTE DE IMPLEMENTACIÓN.**
