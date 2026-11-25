@@ -8,7 +8,7 @@ export const API_ENDPOINTS = Object.freeze({
     AUTH: "https://script.google.com/macros/s/AKfycbxRq_zdWqp6khThDkl4S3Z_nT6VibHDHNBaoQAXHal7hMHJ46N9IZel7CRk7w974kqFvw/exec",
     CATALOG: "https://script.google.com/macros/s/AKfycbwKrIEtWAwuQc-eYHHfl4B6bpLP3ej00ejCN-dF-OBBLI-VNikj8E9kmbNIb7hUeG43/exec",
     WRITE: "https://script.google.com/macros/s/AKfycbx3niOqzZiDxRCkohemVWyrkDBktIYkGyqTecR25xd_VeP_BK-VGNOMbFA_ZSXhU7FtBA/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbw-icnbBFBAD4Xcm3O1IFi6R_xprAxLfKdJW43eIsfc9DAOHVLJVSwc0vy6USbIHdyUuQ/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbysE6r7pvIYbRaNx8kKzzcQeesj0DPfr6JEe9m8lL7-uHuqA3uHYYFJgrfwsqQy-ezGBQ/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzUc402Sju0_ZU7PQST1Kma-qrgJs2v10Pi6hA62rWZZvsCefD6Mr6PCo5GEDA0dGRk/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycbz4MhX-UuhUU6aBgHRs8esb6GDc--DsE37P6SglkgKFC1WG1G2pjd-oIjYKSrBonMVfug/exec"
 });
