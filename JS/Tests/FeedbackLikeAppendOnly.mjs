@@ -11,7 +11,7 @@ assert.doesNotMatch(handler,/message:/,"La respuesta idempotente no debe mostrar
 assert.match(extract(feedback,"ensureFeedbackLikesSheet_"),/catch \(createError\)/,"La creación concurrente de la hoja debe recuperarse por relectura");
 assert.match(extract(catalog,"handleGetCatalogData"),/readFeedbackLikeEventCounts_/,"CATALOG debe proyectar los likes nuevos");
 assert.match(extract(feedback,"buildFeedbackCortesCatalogChange_"),/getFeedbackLikeEventCount_/,"El feed incremental debe incluir eventos de likes");
-assert.match(extract(feedback,"getFeedbackLikeEventCount_"),/firstCutByActor/,"El contador debe deduplicar por usuario y vehículo.");
+assert.match(extract(feedback,"getFeedbackLikeEventCount_"),/actorsByCut/,"El contador debe deduplicar por actor y corte.");
 const helperStart=feedback.indexOf("const FEEDBACK_CATALOG_PYS_CHANGE_ACTIONS_");
 const helperEnd=feedback.indexOf("\nfunction doGet(e)",helperStart);
 const attachFeedbackCatalogChange_=new Function(feedback.slice(helperStart,helperEnd)+"\nreturn attachFeedbackCatalogChange_;")();
@@ -35,9 +35,9 @@ const rows=[
 ];
 const sheet={getLastRow:()=>rows.length+1,getRange(r,c,h,w){return{getValues(){if(r===1)return[headers];return rows.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
 let passed=0;function test(name,fn){fn();passed++;console.log("PASS "+name);}
-test("deduplica por usuario y vehículo aunque existan filas repetidas o cortes distintos",()=>{
+test("deduplica actor por corte y permite aportes en cortes distintos",()=>{
  const result=readCounts({getSheetByName:()=>sheet});
- assert.equal(result.get("100|1"),2);assert.equal(result.get("100|2") || 0,0);assert.equal(result.get("200|1"),1);
+ assert.equal(result.get("100|1"),2);assert.equal(result.get("100|2"),1);assert.equal(result.get("200|1"),1);
 });
 test("ignora likes legacy completed porque ya están en el contador base",()=>{
  const result=readCounts({getSheetByName:()=>sheet});assert.equal(result.get("100|1"),2);
@@ -52,7 +52,7 @@ test("ignora eventos históricos inválidos sin interrumpir la proyección",()=>
  const result=readCounts({getSheetByName:()=>badSheet});
  assert.equal(result.get("100|1"),2,"Los votos válidos conservan su conteo.");
  assert.equal(result.get("200|1"),1,"Los eventos de otros vehículos siguen proyectándose.");
- assert.equal(result.get("100|2") || 0,0,"Los eventos inválidos no se atribuyen a un corte.");
+ assert.equal(result.get("100|2"),1,"Los eventos inválidos no alteran aportes válidos de otro corte.");
  assert.equal(result.has("not-a-vehicle|1"),false);
 });
 test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/tryLock\(0\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\s\S]*releaseLock/);});
