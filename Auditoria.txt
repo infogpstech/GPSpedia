@@ -62,3 +62,11 @@
 - Impacto: después de que los cortes se ordenan por popularidad, marcar/retirar útil puede modificar el corte físico equivocado y el contador/title puede no coincidir con el elemento mostrado.
 - Corrección: CATALOG añade sourceCorteIndex1..3 por slot visual; UI conserva ese índice para el evento; likeState y syncUsefulCount_ resuelven el slot de presentación al actualizar conteos optimistas/confirmados.
 - Prueba aislada ejecutada con proyección real y funciones reales de estado: PASS para orden 2,3,1, activar, confirmar y retirar sobre el corte original 2. Suite Node/CI aún pendiente.
+
+
+2026-11-25 | Incidencia #130 — persistencia ampliada de metadatos de imágenes
+- Hallazgo: el inventario existente guardaba nombre, fileId, URL, MIME, ruta/origen y estado, pero no persistía folderId, formato, tamaño, fecha de modificación ni el array de referencias del snapshot.
+- Corrección: esquema Imagenes_Reemplazadas agrega cinco columnas dinámicas sin alterar las once históricas ni las dieciséis columnas dinámicas existentes. `handleSaveUnusedImagesInventory` lee el metadata snapshot por auditId/páginas, revalida fileName/MIME/folderId/folderPath contra Drive y registra folderId, formato, tamaño bytes, fecha modificación y referencias JSON con escritura/read-back verificado.
+- `handleGetReplacedImages` expone los campos nuevos y la biblioteca visual los muestra. Los resultados de auditoría muestran fileId y folderId.
+- Asociación: `buildCortesImageModelAssociationSuggestions_` incluye vehicleIds y row numbers. Modelos que corresponden a varios vehículos se marcan ambiguos; la UI muestra IDs/filas y mantiene revisión manual sin aplicar asociaciones automáticamente.
+- Pruebas añadidas/ampliadas: AdminIncrementalInventory, AdminReplacedImagesIntegrity, AdminDriveScanModal y AdminDriveAuditAssociation. Runner aislado: schema migration 32 columnas PASS; asociación única/ambigua PASS; parser JS PASS. Node/CI pendiente.
