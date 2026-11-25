@@ -1025,3 +1025,12 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Código implementado parcialmente: validator incremental de ADMIN, registro por lote desde frontend y consolidación automática final. Se agregó test contractual/simulado y runner integración.
 - CI run `45705785866` SUCCESS para SHA `fcc5db4f8f9ed54d31356173d2edf91dd0d451ea` (antes de las últimas assertions de resultado final). CI posterior a SHA `3fd3d34c14cb9af33982273531ff6b59392a934b` aún en ejecución.
 - Revisión adicional pendiente: confirmar operación global del organizador, idempotencia/reintentos concurrentes, fallos parciales, diff, suites posteriores y registrar resultado. No despliegue Apps Script ni escrituras externas.
+
+
+## Cierre local — GP-ADMIN-INVENTARIO-INCREMENTAL-01 (2026-11-25)
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA a Beta.
+- ADMIN registra batches de IDs no usados verificados en páginas cacheadas/persistidas; valida owner, estado/TTL, revalidación de referencias y Drive; digest idempotente por lote. El modo incremental no modifica resumen global ni reconcilia stale; el handler final completa la reconciliación.
+- Frontend registra cada lote automáticamente, conserva el scan si hay error de inventario, consolida al completar y exige resultados confirmados para marcar guardado.
+- CI run `45705928487` SUCCESS, commit validado `3fd3d34c14cb9af33982273531ff6b59392a934b`: syntax-check, regression service runner y responsive-browser SUCCESS. Test AdminIncrementalInventory integrado.
+- HEAD de rama de trabajo actual en este checkpoint: `37cb3a160771b9a6deae2ca6eca8d514842145c6`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` intacta.
+- Pendiente Beta aislada: deployment ADMIN actualizado, ver biblioteca visible por lote, reintentos idempotentes, fallos parciales/reanudación, referencias cambiantes y organizador. Sin despliegue ni modificación Drive/Spreadsheet real.
