@@ -177,8 +177,8 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
     const singleMatch = apiSource.match(/export async function checkServiceHealth\([\s\S]*?\n\}/);
     assert.ok(singleMatch, "No se encontró checkServiceHealth.");
     const endpoints = {
-        AUTH: "https://script.google.com/macros/s/AUTH_TEST/exec/exec", CATALOG: "https://script.google.com/macros/s/CATALOG_TEST/exec/exec",
-        WRITE: "https://script.google.com/macros/s/WRITE_TEST/exec/exec",
+        AUTH: "https://script.google.com/macros/s/AUTH_TEST/exec", CATALOG: "https://script.google.com/macros/s/CATALOG_TEST/exec",
+        WRITE: "https://script.google.com/macros/s/WRITE_TEST/exec",
         FEEDBACK: "https://script.google.com/macros/s/FEEDBACK_TEST/exec", UTILITIES: "https://script.google.com/macros/s/UTILITIES_TEST/exec",
         ADMIN: "https://script.google.com/macros/s/ADMIN_TEST/exec"
     };
@@ -201,7 +201,7 @@ await check("checkServiceHealth consulta únicamente el servicio solicitado", as
         }
     });
     assert.equal(result.status, "online");
-    assert.deepEqual(requested, ["https://script.google.com/macros/s/CATALOG_TEST/exec/exec?debug=true"]);
+    assert.deepEqual(requested, ["https://script.google.com/macros/s/CATALOG_TEST/exec?debug=true"]);
     assert.equal(await single("NOT_A_SERVICE"), null);
 });
 await check("Seleccionar una tarjeta refresca solo el servicio seleccionado y no inicia el escaneo global", async () => {
