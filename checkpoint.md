@@ -533,3 +533,15 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - **Límite expreso de esa tarea:** solo frontend y presentación de los datos ya entregados por los servicios. No modificar Apps Script, servicios, handlers, contratos, payloads, hojas ni datos.
 - **Orden:** la nueva tarea queda en cola después de MIG-URL-008. La validación Beta MIG-URL-008 sigue siendo la única tarea activa del plan actual y requiere autorización expresa y confirmación de entorno Beta aislado. No se ha iniciado la nueva tarea ni se ha modificado código para ella.
 - Rama autorizada: `GPSpedia2.2.5_work`. HEAD confirmado antes de registrar esta adenda: `f2613111bfcc2687544459efea49665d2f09bedc`. Rama base protegida `GPSpedia2.2.5`: no modificar.
+
+
+---
+
+## 2026-11-25 — Incidencia visual de vídeos en el modal de tutoriales (GP-VIDEO-MODAL-01)
+
+- **Hallazgo confirmado en código:** el contenedor del reproductor se insertaba dentro de `#detalleCompleto`, un flex vertical con altura máxima y scroll, sin impedir la contracción del elemento. Esto permitía que el bloque de vídeo se encogiera o colapsara cuando el tutorial acumulaba contenido. El límite fijo de 315 px también restringía innecesariamente la altura.
+- **Corrección aplicada:** el bloque del reproductor se declara no contraíble (`flex: 0 0 auto`), ancho completo, relación 16:9 y sin máximo fijo de altura; el iframe ocupa el contenedor. Se añade prueba de contrato frontend.
+- **Archivos:** `JS/Frontend/ui.js`, `style.css`, `JS/Tests/TutorialVideoModalLayout.mjs`, `ChangesLogs.txt`.
+- **Alcance:** frontend únicamente. Sin cambios en Apps Script, servicios, datos, registros, URLs ni payloads.
+- **Validación:** la inspección de código confirma la causa y la corrección. La prueba automatizada local/CI y la comprobación visual de dimensiones/reproducción deben quedar registradas según su ejecución; no afirmar validación visual sin navegador real.
+- **Rama:** `GPSpedia2.2.5_work`. La rama protegida `GPSpedia2.2.5` permanece intacta.
