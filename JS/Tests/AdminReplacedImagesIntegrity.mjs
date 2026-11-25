@@ -953,7 +953,7 @@ check("El baseline latest omite punteros huérfanos sin borrar propiedades legac
 });
 check("El puntero latest mantiene aislamiento por owner y se puede limpiar por expiración",()=>{
     const h=auditHarness();
-    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete"});
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",scanVersion:"2.7.2",imageMetadataVersion:1});
     h.ensureDriveAuditLatestBaseline_();
     h.saveDriveAuditLatestPointer_(AUDIT_OWNER,AUDIT_ID);
     assert.equal(h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),AUDIT_ID);
@@ -967,12 +967,12 @@ check("El puntero de una auditoría aún running no se entrega como última audi
     h.ensureDriveAuditLatestBaseline_();
     h.saveDriveAuditLatestPointer_(AUDIT_OWNER,AUDIT_ID);
     assert.throws(()=>h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),/auditoría completa/i);
-    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete"});
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",scanVersion:"2.7.2",imageMetadataVersion:1});
     assert.equal(h.getLatestDriveAuditIdForUser_(AUDIT_OWNER),AUDIT_ID);
 });
 check("La escritura del puntero latest usa lock fail-fast y no espera",()=>{
     const h=auditHarness();
-    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete"});
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",scanVersion:"2.7.2",imageMetadataVersion:1});
     h.ensureDriveAuditLatestBaseline_();
     h.setLockBusy(true);
     assert.throws(()=>h.saveDriveAuditLatestPointer_(AUDIT_OWNER,AUDIT_ID),error=>error&&error.code==="DRIVE_AUDIT_LATEST_BUSY");
