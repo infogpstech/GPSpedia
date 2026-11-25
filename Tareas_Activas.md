@@ -479,3 +479,18 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Persistir URL, carpeta/ID/ruta, nombre, formato, MIME, origen y estado.
 - Construir asociación con catálogo; mostrar ID, categoría, marca y modelo; las coincidencias ambiguas requieren revisión manual.
 - Validar persistencia, miniaturas, asociación y regresiones.
+
+
+## GP-UTIL-TOGGLE-01 — cierre (2026-11-25)
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
+- Estado por usuario/vehículo/corte, toggle reversible y contador optimista; se hidrata en carga del vehículo; persistencia local y consolidación tras 1.8 s de inactividad. La cola serializa requests, evita duplicar solicitudes y conserva la intención más reciente. Reintentos acotados para lock ocupado y fallos silenciosos durante cambios repetidos.
+- Backend append-only/idempotente por corte; estado activo/retirado, identidad actor autenticado. Actividad terminológica útil/retirada de útil.
+- CI run 45680455995: 533 suites, 6,311 pruebas, 0 fallos; UsefulToggle 6/6, UI state 5/5, Queue 4/4, Client retry 2/2 + setCutUseful 1/1; responsive-browser SUCCESS.
+- Validación real de FEEDBACK/CATALOG y Spreadsheet Beta permanece pendiente.
+
+## GP-DRIVE-AUDIT-VISUAL-01 — cierre (2026-11-25)
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
+- Resultados incrementales incluyen miniaturas, todas las clasificaciones y metadatos de origen/archivo/folder/format/MIME. Las referencias de Cortes conservan vehículo ID, categoría, marca, modelo, fila/campo; los resultados enlazan al archivo original.
+- Preview de asociación del organizador añade miniaturas y candidatos, confianza y ambigüedad, sin aplicar asociaciones automáticamente.
+- CI run 45680455995: 533 suites, 6,311 pruebas, 0 fallos; AdminDriveAuditIndexedDB 13/13, AdminDriveAuditVisualContract 6/6, AdminReplacedImagesIntegrity 64/64; AUG-146 264/264 PASS. Pages run 45680455638 SUCCESS.
+- Pruebas locales no ejecutan Drive/Spreadsheet ni Apps Script; validación Beta aislada pendiente.

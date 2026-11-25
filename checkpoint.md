@@ -985,3 +985,14 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Prioridad 2: GP-DRIVE-AUDIT-VISUAL-01. Interfaz visual de auditoría y persistencia de metadatos con relación al catálogo.
 - Diagnóstico inicial: la proyección CATALOG anterior descartaba IDs canónicos V-<n>; corregir esa validación forma parte de GP-UTIL-TOGGLE-01.
 - Estado: código y pruebas en preparación; CI pendiente.
+
+
+## Cierre local — GP-UTIL-TOGGLE-01 y GP-DRIVE-AUDIT-VISUAL-01 (2026-11-25)
+
+- HEAD de validación: `d722efdff93ca69b2025788bbe4ba67a9567a35d`. Rama base protegida: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+- GP-UTIL-TOGGLE-01: alternancia activa/retirada por usuario+vehículo+corte, hidratación desde FEEDBACK, estado optimista local, contador inmediato, cache local por sesión/usuario y consolidación debounce (1.8 s) en cola serializada; reintentos silenciosos para cambios coalescidos y errores de lock acotados. Terminología de UI/actividad "útil".
+- GP-DRIVE-AUDIT-VISUAL-01: inventario muestra miniaturas y todas las clasificaciones, URL de origen, nombre, carpeta/ruta/ID, formato/MIME, tamaño/fecha, origen y ubicación de referencia. Las ubicaciones de Cortes incluyen ID, categoría, marca y modelo; preview de asociación visual incluye miniatura, candidatos, confianza y estado ambiguo, sin asociación automática.
+- CI run `45680455995` SUCCESS: 533 suites, 6,311 pruebas PASS, 0 fallos; service-tests y responsive-browser SUCCESS. AUG-146 Playwright 264/264 en 4 viewports y 16 capturas. Pages run `45680455638` SUCCESS.
+- Pruebas focales: `FeedbackUsefulToggle` 6/6, `UsefulButtonState` 5/5, `UsefulSyncQueue` 4/4, `FeedbackLikeClientRetry` 2/2 + 1 prueba de setCutUseful, `AdminDriveAuditIndexedDB` 13/13, `AdminDriveAuditVisualContract` 6/6, `AdminReplacedImagesIntegrity` 64/64.
+- Validación local/CI no ejecuta Apps Script, Drive ni Spreadsheet real; queda pendiente Beta aislada. No hubo despliegues ni modificaciones de recursos externos.
+- Próxima tarea: preparar MIG-URL-008, validación de salud de los seis endpoints, estrictamente pendiente de confirmación de entorno Beta aislado y autorización expresa para las solicitudes GET. No invocar endpoints hasta confirmar.

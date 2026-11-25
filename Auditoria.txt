@@ -1,0 +1,10 @@
+2026-11-25 | GP-UTIL-TOGGLE-01
+- Hallazgo: estado del útil no se hidrataba en la carga, contador y retiro no tenían UI consistente y las interacciones rápidas podían emitir requests redundantes.
+- Corrección: estado local por usuario y vehículo/corte, hidratación FEEDBACK, toggle, debounce, queue serialization, contador optimista y reintentos acotados.
+- Evidencia: CI 45680455995 SUCCESS, 533 suites/6,311 pruebas; UsefulToggle 6/6, UI state 5/5, queue 4/4 y client retry.
+
+2026-11-25 | GP-DRIVE-AUDIT-VISUAL-01
+- Hallazgo: lista de auditoría filtraba clasificaciones y metadatos; faltaba presentar miniatura y relación visible con vehículo/modelo.
+- Corrección: lista visual ampliada, metadatos persistidos, ubicación en Cortes con vehículo ID/categoría/marca/modelo y preview de asociación con miniaturas y estado ambiguo.
+- Evidencia: CI 45680455995 SUCCESS; AdminDriveAuditIndexedDB 13/13, visual contract 6/6, AdminReplacedImagesIntegrity 64/64.
+- Validación real con Drive/Spreadsheet/Apps Script no ejecutada; pendiente Beta aislada.
