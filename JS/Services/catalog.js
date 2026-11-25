@@ -1238,7 +1238,7 @@ function readFeedbackLikeEventCounts_(spreadsheetRef){
   try{const actor=normalizeFeedbackLikeActorKey_(row[0]),vehicle=String(row[1]||"").trim(),cut=Number(row[2]);const part=vehicle.startsWith("V-")?vehicle.slice(2):vehicle,numeric=Number(part);
    if(!/^[1-9]\d{0,15}$/.test(part)||!Number.isSafeInteger(numeric)||String(numeric)!==part||
       (vehicle!==part&&vehicle!=="V-"+part)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
-   const key=vehicle+"|"+cut+"|"+actor,state=states.get(key)||{vehicle,cut,completed:false,status:""};if(status==="completed")state.completed=true;else if(status==="event")state.completed=false;state.status=status;states.set(key,state);
+   const key=vehicle+"|"+cut+"|"+actor,state=states.get(key)||{vehicle,cut,completed:false,status:""};if(status==="completed")state.completed=true;state.status=status;states.set(key,state);
   }catch(e){if(typeof console!=="undefined"&&console.warn)console.warn("FeedbackLikes: evento inválido ignorado en fila "+(i+2)+": "+String(e&&e.message||"datos incompatibles"));}
  });
  states.forEach(s=>{const key=s.vehicle+"|"+s.cut,delta=s.status==="event"&&!s.completed?1:(s.status==="withdrawn"&&s.completed?-1:0);if(delta)counts.set(key,(counts.get(key)||0)+delta);});
