@@ -15,6 +15,7 @@ assert.ok(admin.includes('setField("tamano_bytes", Math.max(0, Number(auditedMet
 assert.ok(admin.includes('setField("fecha_modificacion_drive", String(auditedMetadata.lastUpdated'));
 assert.ok(admin.includes('setField("referencias_catalogo_json", JSON.stringify'));
 assert.ok(admin.includes('auditMetadataById.get(fileId)'));
+assert.ok(admin.includes('metadataColumns.every(index => String(persisted[index] || "") === String(row[index] || ""))'));
 assert.ok(admin.includes('state.ownerId !== String(ownerId || "").trim()'));
 assert.ok(admin.includes('if (submitted.some(id => !candidates.has(id))'));
 assert.ok(admin.includes('incremental ? validateDriveAuditInventoryBatch_'));
@@ -43,4 +44,4 @@ state.status='complete';
 assert.equal(validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]).status,'complete');
 state.updatedAt=Date.now()-21600001;
 assert.throws(()=>validate('audit-1','owner-1',[{fileId:'valid-image-id-123456789012345'}]),/expiró/);
-console.log('AdminIncrementalInventory: 30/30 PASS');
+console.log('AdminIncrementalInventory: 31/31 PASS');
