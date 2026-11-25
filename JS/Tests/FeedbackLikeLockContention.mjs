@@ -9,18 +9,18 @@ const implementation = source.slice(start, end);
 
 let operationExecuted = false;
 let released = 0;
-const busyLock = { tryLock(timeout) { assert.equal(timeout, 10000); return false; }, releaseLock() { released++; } };
+const busyLock = { tryLock(timeout) { assert.equal(timeout, 0); return false; }, releaseLock() { released++; } };
 const withBusyLock = new Function("LockService", implementation + "\nreturn withFeedbackLikeLock_;")({
     getScriptLock: () => busyLock
 });
 assert.throws(
     () => withBusyLock(() => { operationExecuted = true; }),
-    error => error && error.code === "LIKE_LOCK_BUSY" && /10 segundos/.test(error.message)
+    error => error && error.code === "LIKE_LOCK_BUSY" && /en curso/.test(error.message)
 );
 assert.equal(operationExecuted, false, "La operación no debe ejecutarse si el lock sigue ocupado.");
 assert.equal(released, 0, "No se libera un lock que no se obtuvo.");
 
-const acquiredLock = { tryLock(timeout) { assert.equal(timeout, 10000); return true; }, releaseLock() { released++; } };
+const acquiredLock = { tryLock(timeout) { assert.equal(timeout, 0); return true; }, releaseLock() { released++; } };
 const withAcquiredLock = new Function("LockService", implementation + "\nreturn withFeedbackLikeLock_;")({
     getScriptLock: () => acquiredLock
 });
