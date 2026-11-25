@@ -8664,7 +8664,7 @@ export async function openAuditDriveModal() {
 
     const scanConsole = document.getElementById('audit-drive-scan-console');
     if (scanConsole) scanConsole.replaceChildren();
-    summaryEl.textContent = "La salida y el progreso se registran simultáneamente en la consola Developer y aquí. Los resultados detallados aparecen incrementalmente.";
+    summaryEl.textContent = "La salida y el progreso se registran en la consola global Developer y simultáneamente en este panel. Los resultados detallados aparecen incrementalmente.";
     const allFiles = [];
     const seenFileIds = new Set();
     const renderedFileIds = new Set();
