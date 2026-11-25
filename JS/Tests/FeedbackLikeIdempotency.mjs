@@ -87,8 +87,30 @@ function makeHarness(seedRows = [], options = {}) {
         extract("handleRecordLike")
     ].join("\n");
     const api = new Function(...Object.keys(dependencies), code + "\nreturn handleRecordLike;")(...Object.values(dependencies));
-    return { run: api, state, ledgerRows, cutsRows };
+    const run = (payload, trustedActor = null) => api({
+        ...payload,
+        __feedbackActor: trustedActor || {
+            userId: String(payload && payload.userId || ""),
+            userName: String(payload && payload.userName || ""),
+            role: "Tecnico"
+        }
+    });
+    return { run, state, ledgerRows, cutsRows };
 }
+const trustedIdentity = makeHarness();
+const trustedIdentityResult = trustedIdentity.run(
+    { vehicleId:"100", corteIndex:1 },
+    { userId:"7", userName:"Pablo Peña", role:"Tecnico" }
+);
+assert.equal(trustedIdentityResult.status, "success", "El útil no debe depender de userId/userName duplicados en el payload.");
+assert.equal(trustedIdentity.ledgerRows[1][0], "user:7", "La identidad persistida debe proceder del actor autenticado.");
+const forgedIdentity = makeHarness();
+forgedIdentity.run(
+    { vehicleId:"100", corteIndex:1, userId:"999", userName:"Identidad falsa" },
+    { userId:"7", userName:"Pablo Peña", role:"Tecnico" }
+);
+assert.equal(forgedIdentity.ledgerRows[1][0], "user:7", "Los campos de identidad del navegador no deben reemplazar al actor verificado.");
+assert.equal(forgedIdentity.state.activities, 1, "La actividad solo se atribuye al actor verificado.");
 const h = makeHarness();
 const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
 assert.deepEqual(first, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });
