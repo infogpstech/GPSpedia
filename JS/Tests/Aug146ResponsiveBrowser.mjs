@@ -307,8 +307,10 @@ try {
         window.overlayHistory.close(detailOverlayId);
       } else if (detailModal) {
         detailModal.classList.remove("visible");
-        detailModal.style.display = "none";
       }
+      // Quitar el display inline del cierre para que mostrarDetalleModal pueda reabrirlo
+      // en la siguiente fase del mismo viewport.
+      if (detailModal) detailModal.style.removeProperty("display");
       // Restablecer el usuario sintético antes de medir el panel Developer.
       window.__aug146State.setState({
         currentUser: {
