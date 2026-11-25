@@ -989,3 +989,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Alcance expresamente limitado a presentación frontend de los datos ya recibidos. No modificar Apps Script, servicios, handlers, contratos, payloads, hojas ni datos.
 - La tarea queda en cola después de MIG-URL-008; no se inició implementación. MIG-URL-008 continúa pendiente de autorización Beta aislada.
 - Durante esta conversación el usuario informó que eliminó manualmente el único registro inválido de like de `FeedbackLikes` y que `handleGetCatalogData` volvió a funcionar. No se hicieron cambios de código ni de datos externos en esta intervención.
+
+
+## 2026-11-25 — Corrección de tamaño del vídeo en el modal de tutoriales (GP-VIDEO-MODAL-01)
+
+- Se identificó que el bloque del reproductor era un elemento flexible dentro de `#detalleCompleto`, que tiene altura máxima y desplazamiento. Al conservar el valor predeterminado de contracción de Flexbox, el vídeo podía reducirse según la cantidad de contenido del tutorial.
+- Se eliminó el límite fijo de 315 px y se fijó el bloque del vídeo como elemento no contraíble (`flex: 0 0 auto`), con ancho completo y proporción 16:9. El iframe ocupa el contenedor sin alterar la relación de aspecto.
+- Archivos modificados: `JS/Frontend/ui.js`, `style.css`. Se añadió la prueba de contrato `JS/Tests/TutorialVideoModalLayout.mjs`.
+- La corrección es exclusivamente frontend; no modifica URLs guardadas, registros de tutoriales, servicios Apps Script ni contratos.
+- Validación visual en navegador y reproducción de cada vídeo real: pendiente de ejecución en el entorno visual/Beta; no se considera aprobada por las pruebas estáticas.
