@@ -82,7 +82,7 @@ export function normalizeContributionRows(contributions) {
         parseNames(entry.nombreUsuario).forEach(name => {
             const key = normalizeKey(name);
             if (!key) return;
-            const canonicalKey = String(entry.userId || "").trim() ? "user:" + String(entry.userId).trim() : (isCommunityName(key) ? "comunidad de tecnicos" : key);
+            const canonicalKey = isCommunityName(key) ? "comunidad de tecnicos" : key;
             if (!namesByKey.has(canonicalKey)) namesByKey.set(canonicalKey, { key: canonicalKey, name: canonicalName(name) });
         });
         const names = Array.from(namesByKey.values());
