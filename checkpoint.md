@@ -948,3 +948,13 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 ## Rectificación de CI — endpoint FEEDBACK
 - El run `45639453381` del commit `99cff3d` falló en `LocalApiEndpoints.mjs` porque el fixture esperaba la URL FEEDBACK anterior; el propietario había actualizado `API_ENDPOINTS` al deployment nuevo. La suite responsive del mismo run pasó.
 - Se actualizó el valor esperado del fixture para reflejar el endpoint que ya está en la rama; no se modificó el endpoint configurado ni se hizo una llamada remota.
+
+ 
+## Continuidad — nuevas tareas de auditoría Drive y vinculación PyS (2026-11-25)
+
+- HEAD confirmado al registrar: `6c045604f8c3f58af5a2f1b995493e85645743ef` (incluye actualización independiente de `API_ENDPOINTS.FEEDBACK`); HEAD anterior de implementación `be31dea824bf5b6686f5b2be82dd89c9326082a5`. Rama base protegida `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- Se cerró GP-LIKE-VEHICLE-ID-PREFIX-01: CI run `45642190006` SUCCESS, 529 suites, 6,272 pruebas, 0 fallos; AUG-146 264/264 PASS.
+- Registrada GP-ADMIN-DRIVE-AUDIT-HEADLESS-01: el botón Developer debe iniciar auditoría sin abrir modal; salida global en consola; ADMIN debe crear de forma segura DriveAuditRuns/DriveAuditLatest y completar encabezados ausentes sin sobrescribir datos incompatibles.
+- Registrada GP-PYS-VEHICLE-ASSOCIATION-CARD-01: asegurar tarjeta de vinculación al final del carrusel PyS en todos los contextos; tamaño 140×120; reutilizar `openSearchVehicleForPysAssociationModal` y la búsqueda del formulario Agregar Problema.
+- Orden de ejecución: primero auditoría Drive (UI + FindOrCreate + pruebas); después tarjeta PyS. Inspección inicial: la auditoría abre `audit-drive-modal`; `getDriveAuditStateSheet_()` y `getDriveAuditLatestSheet_()` fallan si faltan sus hojas. En PyS la tarjeta ya está implementada para el contexto normal, pero todo el carrusel se oculta cuando `originModal === 'vehicle'`; corregir esa condición y validar tamaño.
+- Sin llamadas a ADMIN, Apps Script, Drive ni Spreadsheet; sin despliegues ni cambios externos.
