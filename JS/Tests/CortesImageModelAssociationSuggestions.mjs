@@ -16,7 +16,7 @@ const build = new Function("columns", "aliases", source + "\nreturn (metadata, r
 const fileId = n => "drive_file_id_" + String(n).padStart(16, "0");
 const row = (category, brand, model) => {
     const values = Array(48).fill("");
-    values[1] = category; values[2] = brand; values[3] = model;
+    values[0] = "V-100"; values[1] = category; values[2] = brand; values[3] = model;
     return values;
 };
 const metadata = (id, fileName, folderPath) => ({
