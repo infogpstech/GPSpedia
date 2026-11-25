@@ -83,7 +83,7 @@ assert.equal(emptyLogContainer.children.length,1);
 assert.equal(emptyLogContainer.children[0].children[0].colSpan,3);
 assert.match(emptyLogContainer.children[0].children[0].textContent,/Todavía no hay actividad registrada/);
 assert.ok(html.includes('class="activity-log-table"'));
-assert.ok(!html.includes("<th scope=\\"col\\">Descripción</th>"));
+assert.ok(!html.includes("Descripción</th>"));
 assert.ok(css.includes("GP-DASH-ACTIVITY-RECENT-01"));
 assert.ok(ui.includes("renderActivityLogs(logContainer, logs, undefined, { vehicles:"));
 

@@ -583,9 +583,14 @@ try {
     await dashboard.waitFor({ state: "visible" });
     const activityRows = dashboard.locator("#activity-logs tr");
     const contributionRows = dashboard.locator("#activity-contributions tr");
-    check(await activityRows.count() === 1, profile.name + ": dashboard muestra la actividad sintética");
-    check((await activityRows.first().innerText()).includes("Actividad de prueba"),
-      profile.name + ": descripción de actividad visible");
+    check(await activityRows.count() === 2, profile.name + ": dashboard muestra la fila resumida y su acordeón");
+    check((await activityRows.first().innerText()).includes("Marcó como útil") &&
+      !(await activityRows.first().innerText()).includes("Actividad de prueba"),
+      profile.name + ": resumen muestra la acción sin adelantar la descripción");
+    await activityRows.first().locator(".activity-log-toggle").click();
+    check(await activityRows.nth(1).isVisible() &&
+      (await activityRows.nth(1).innerText()).includes("Actividad de prueba"),
+      profile.name + ": acordeón despliega el detalle al seleccionar la fila");
     check(await contributionRows.count() === 1, profile.name + ": dashboard muestra el aporte sintético");
     check((await dashboard.locator("#activity-insights").innerText()).includes("3"),
       profile.name + ": dashboard muestra métricas sintéticas");
