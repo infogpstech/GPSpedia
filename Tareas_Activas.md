@@ -385,9 +385,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 
 ### GP-API-FEEDBACK-ENDPOINT-UPDATE-01 — Actualizar URL local de FEEDBACK
-**Estado: IMPLEMENTADO EN CÓDIGO; validación local y CI pendiente de ejecución. Validación remota diferida a Beta.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45625740950 SUCCESS.**
 - Actualizar exclusivamente `API_ENDPOINTS.FEEDBACK` en `JS/Frontend/api-config.js` con la URL confirmada por el propietario el 2026-11-25.
 - Alinear la expectativa exacta de `JS/Tests/LocalApiEndpoints.mjs`.
 - Preservar los otros cinco endpoints y el mecanismo único de configuración local establecido en NORMAS §§17–18.
 - No invocar el endpoint, desplegar Apps Script ni modificar propiedades, permisos, Spreadsheet, Drive o datos externos.
-- Validar sintaxis y contrato local; comprobar CI. Disponibilidad/contrato real del deployment: pendiente de Beta con autorización expresa.
+- CI run `45625740950` SUCCESS: 528 suites, 6,264 pruebas aprobadas, 0 fallos; jobs `service-tests` y `responsive-browser` SUCCESS. Parsing de módulos modificados PASS. Pages run `45625739647` SUCCESS.
+- La disponibilidad y compatibilidad real del deployment FEEDBACK quedan pendientes de validación Beta con autorización expresa; no se invocó el endpoint ni se desplegó Apps Script.

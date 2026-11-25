@@ -877,4 +877,7 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Archivos afectados: `JS/Frontend/api-config.js` y `JS/Tests/LocalApiEndpoints.mjs`; registros: `ChangesLogs.txt` y `Tareas_Activas.md`.
 - Solo cambia la entrada FEEDBACK y su expectativa contractual. AUTH, CATALOG, WRITE, UTILITIES y ADMIN permanecen intactos.
 - No se realizan llamadas remotas ni despliegues Apps Script. La validación real del deployment queda pendiente de Beta y autorización expresa.
-- Siguiente paso: ejecutar la suite de servicios/contrato y revisar el diff; confirmar workflow CI. Si CI aprueba, cerrar como COMPLETADA CON VALIDACIÓN DIFERIDA.
+- CI run `45625740950` SUCCESS: 528 suites, 6,264 pruebas aprobadas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. El parsing de los módulos comprobados pasó. Pages run `45625739647` SUCCESS.
+- Diff revisado: únicamente FEEDBACK en la configuración y su expectativa de prueba; los otros cinco endpoints no cambiaron. Rama base protegida verificada intacta.
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**. No se invocó el endpoint ni se desplegó Apps Script. La compatibilidad y disponibilidad del deployment FEEDBACK quedan pendientes de Beta autorizada.
+- Próximo paso: continuar con la siguiente tarea pendiente priorizada del backlog, manteniendo MIG-URL-008 como validación Beta separada.
