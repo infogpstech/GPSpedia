@@ -8787,7 +8787,7 @@ export async function openAuditDriveModal(options = {}) {
             relationship.style.cssText = "font-size:0.75rem; color:var(--text-disabled); overflow-wrap:anywhere;";
             const locations = Array.isArray(file.referenceLocations) ? file.referenceLocations : [];
             relationship.textContent = locations.length
-                ? "Relación verificada: " + locations.map(location => String(location.sheet || "Hoja") + " · fila " + (Number(location.row) || "?") + " · " + String(location.field || "campo de imagen")).join("; ")
+                ? "Relación verificada: " + locations.map(location => [String(location.category || ""), String(location.brand || ""), String(location.model || ""), String(location.vehicleId || "")].filter(Boolean).join(" · ") + " (" + String(location.sheet || "Hoja") + " · fila " + (Number(location.row) || "?") + " · " + String(location.field || "campo de imagen") + ")").join("; ")
                 : (classification === 'Sin uso detectado' ? "Sin referencia actual; requiere asociación por modelo o revisión." : "Relación de catálogo no detallada en esta pasada.");
             info.appendChild(relationship);
             const sourceLink = document.createElement('a');
