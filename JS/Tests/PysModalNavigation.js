@@ -30,6 +30,34 @@ test('tarjeta Agregar Modelo conserva las dimensiones de las tarjetas del carrus
  assert.ok(css.includes("height: 120px;"));
  assert.ok(css.includes("min-height: 120px;"));
 });
+test('carrusel y tarjeta de vinculación se muestran también cuando PyS se abre desde un vehículo',()=>{
+ const detailStart=ui.indexOf('export function openPysDetailModal(');
+ const carouselStart=ui.indexOf('/* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE',detailStart);
+ const carouselEnd=ui.indexOf('if (item.Colaborador)',carouselStart);
+ const carousel=ui.slice(carouselStart,carouselEnd);
+ assert.ok(carouselStart>detailStart&&carouselEnd>carouselStart);
+ assert.doesNotMatch(carousel,/originModal\\s*===\\s*['"]vehicle['"]/);
+ assert.match(carousel,/track\\.appendChild\\(addCard\\);[\\s\\S]*?carouselSection\\.appendChild\\(track\\);[\\s\\S]*?cont\\.appendChild\\(carouselSection\\);/);
+});
+test('tarjeta de vinculación conserva dimensiones exactas y reutiliza el formulario existente',()=>{
+ const detailStart=ui.indexOf('export function openPysDetailModal(');
+ const cardStart=ui.indexOf('const addCard = document.createElement("div");',detailStart);
+ const cardEnd=ui.indexOf('track.appendChild(addCard);',cardStart);
+ const card=ui.slice(cardStart,cardEnd);
+ assert.match(card,/width:\\s*140px/);assert.match(card,/height:\\s*120px/);
+ assert.match(card,/min-width:\\s*140px/);assert.match(card,/min-height:\\s*120px/);
+ assert.match(card,/openSearchVehicleForPysAssociationModal\\(problemId/);
+ assert.match(card,/item\\.id_problem[\\s\\S]*?item\\.id/);
+ assert.match(card,/track\\.appendChild/);
+ assert.match(ui,/export function openSearchVehicleForPysAssociationModal\\(problemId, onAssociated, alreadyAssociatedIds = \\[\\]\\)/);
+});
+test('formularios Agregar Problema y Vincular Vehículo comparten la misma búsqueda de catálogo',()=>{
+ assert.match(ui,/function filterPysVehicleCatalog_\\(cortes, query, excludedIds = new Set\\(\\), limit = 8\\)/);
+ assert.match(ui,/filterPysVehicleCatalog_\\(cortes, query, selectedVehicleIds, 8\\)/);
+ assert.match(ui,/filterPysVehicleCatalog_\\(cortes, query, excludedIds, 10\\)/);
+ assert.match(ui,/const excludedIds = new Set\\(\\[\\.\\.\\.alreadySet, \\.\\.\\.newlySelectedIds\\]\\)/);
+ assert.doesNotMatch(ui,/\\$\\{c\\.marca\\} \\$\\{c\\.modelo\\} \\$\\{c\\.versionesAplicables \\|\\| ""\\} \\$\\{c\\.tipoEncendido/);
+});
 test('captures modal scroll, active accordion and both horizontal carousels',()=>{const m=modal();m.detail.scrollTop=420;const s=captureModalViewState(m);assert.equal(s.scrollTop,420);assert.equal(s.accordion.label,'Posibles problemas');assert.deepEqual(s.horizontalScrolls.map(x=>x.scrollLeft),[180,95]);});
 test('restores modal scroll, accordion state and carousel positions',()=>{const m=modal();m.detail.scrollTop=0;m.detail.tracks.forEach(x=>x.scrollLeft=0);m.detail.buttons[1].classList.remove('active');const s={scrollTop:350,accordion:{index:1,label:'Posibles problemas'},horizontalScrolls:[{className:'carousel-track',index:0,scrollLeft:160},{className:'pys-models-track',index:1,scrollLeft:80}]};const r=restoreModalViewState(m,s);assert.equal(r.accordionRestored,true);assert.equal(m.detail.scrollTop,350);assert.equal(m.detail.buttons[1].classList.contains('active'),true);assert.equal(m.detail.buttons[1].arrow.textContent,'▲');assert.equal(m.detail.buttons[1].panel.style.maxHeight,'240px');assert.deepEqual(m.detail.tracks.map(x=>x.scrollLeft),[160,80]);});
 test('deferred restoration does not reset vertical scroll after asynchronous content arrives',()=>{
@@ -63,4 +91,4 @@ test('nested PyS–vehicle navigation restores exactly one LIFO context at a tim
 test('keeps navigation options when vehicle and PyS modals are opened from one another',()=>{assert.match(ui,/function createPysCard\([\s\S]*?navigationOptions = \{\}/);assert.match(ui,/navOptions: navigationOptions \|\| \{\}/);assert.match(ui,/createPysCard\(relatedProblems\[0\], 'vehicle',[\s\S]*?\}, navOptions\)/);assert.match(ui,/fromOriginModal:\s*\{\s*type:\s*'pys',[\s\S]*?navOptions: navOptions \|\| \{\}/);});
 test('does not push duplicate stack entries when rerendering or editing the same modal',()=>{assert.match(ui,/shouldRecordModalTransition\(targetType,currentType,modalWasVisible,navOptions\)/);assert.match(ui,/if\(navOptions\._restoreFromStack\)return/);assert.match(ui,/mostrarDetalleModal\(editedItemBuffer, true, navOptions\)/);assert.match(ui,/exitModalEditMode\(saveChanges, vehicleId, skipReopen = false, navOptions = \{\}\)/);});
 test('manual close and browser popstate share one-level context restoration',()=>{assert.match(ui,/function closeModalToPreviousContext_\(\)/);assert.match(ui,/closeModalToPreviousContext_\(\)/);assert.match(ui,/export function restoreModalNavigationContext\(\)/);assert.match(main,/if\s*\(ui\.restoreModalNavigationContext\(\)\)\s*return/);assert.doesNotMatch(main,/const prevContext = navStack\.pop\(\)/);});
-console.log('PysModalNavigation:',passed+'/10 PASS');
+assert.equal(passed,13); console.log('PysModalNavigation:',passed+'/13 PASS');

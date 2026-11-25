@@ -14014,6 +14014,17 @@ export async function renderPysSection() {
 }
 
 /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
+function filterPysVehicleCatalog_(cortes, query, excludedIds = new Set(), limit = 8) {
+    const normalizedQuery = String(query || "").toLowerCase().trim();
+    if (!normalizedQuery) return [];
+    const excluded = excludedIds instanceof Set ? excludedIds : new Set(excludedIds || []);
+    return (Array.isArray(cortes) ? cortes : []).filter(vehicle => {
+        if (!vehicle || excluded.has(String(vehicle.id))) return false;
+        return `${vehicle.marca || ""} ${vehicle.modelo || ""} ${vehicle.versionesAplicables || ""}`
+            .toLowerCase().includes(normalizedQuery);
+    }).slice(0, limit);
+}
+
 export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}) {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
@@ -14155,10 +14166,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
         const { catalogData } = getState();
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
         // Tarea 9.1: Excluir vehículos que ya están seleccionados
-        const matches = cortes.filter(c => {
-            if (selectedVehicleIds.has(String(c.id))) return false;
-            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query);
-        }).slice(0, 8);
+        const matches = filterPysVehicleCatalog_(cortes, query, selectedVehicleIds, 8);
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
@@ -14544,11 +14552,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
         // Excluir vehículos ya asociados previamente y los que ya estén seleccionados en esta tanda.
-        const matches = cortes.filter(c => {
-            const cId = String(c.id);
-            if (alreadySet.has(cId) || newlySelectedIds.has(cId)) return false;
-            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ""} ${c.tipoEncendido || ""}`.toLowerCase().includes(query);
-        }).slice(0, 10);
+        const excludedIds = new Set([...alreadySet, ...newlySelectedIds]);
+        const matches = filterPysVehicleCatalog_(cortes, query, excludedIds, 10);
 
         if (matches.length === 0) {
             const empty = document.createElement("div");
@@ -15017,11 +15022,8 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
     }
 
     /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
-    // Carrusel de Modelos de Vehículos Relacionados
-    // Tarea 9.3 (Requisito 8.2): Si el modal del problema se abrió desde un vehículo, ocultar en ese contexto el carrusel de modelos para evitar ciclos
-    const isFromVehicle = navOptions && navOptions.originModal === 'vehicle';
-    if (!isFromVehicle) {
-        const carouselSection = document.createElement("div");
+    // El carrusel y la tarjeta de vinculación permanecen disponibles aunque el detalle se abra desde un vehículo.
+    const carouselSection = document.createElement("div");
         carouselSection.id = "pys-models-carousel-section";
         carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
         carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
@@ -15111,13 +15113,30 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
             // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
             const addCard = document.createElement("div");
             addCard.className = "card card-create-vehicle-assoc";
-            addCard.style.cssText = "flex: 0 0 140px; box-sizing: border-box; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
-            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
-            addCard.onclick = () => {
-                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+            addCard.style.cssText = "width: 140px; min-width: 140px; max-width: 140px; height: 120px; min-height: 120px; flex: 0 0 140px; box-sizing: border-box; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
+            addCard.setAttribute("role", "button");
+            addCard.tabIndex = 0;
+            addCard.setAttribute("aria-label", "Vincular vehículo al problema");
+            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Vincular vehículo</span>`;
+            const openAssociationForm = () => {
+                const problemId = item.id_problem !== undefined && item.id_problem !== null && String(item.id_problem).trim()
+                    ? item.id_problem
+                    : item.id;
+                if (problemId === undefined || problemId === null || !String(problemId).trim()) {
+                    showGlobalError("No se pudo identificar el problema que deseas actualizar.");
+                    return;
+                }
+                openSearchVehicleForPysAssociationModal(problemId, (updatedList) => {
                     item.modelosAsociados = updatedList;
                     openPysDetailModal(item, navOptions);
                 }, item.modelosAsociados || []);
+            };
+            addCard.onclick = openAssociationForm;
+            addCard.onkeydown = event => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openAssociationForm();
+                }
             };
             track.appendChild(addCard);
         };
@@ -15136,9 +15155,8 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
             }).catch(e => console.warn("Error precargando cortes para carrusel PyS:", e));
         }
 
-        carouselSection.appendChild(track);
-        cont.appendChild(carouselSection);
-    }
+    carouselSection.appendChild(track);
+    cont.appendChild(carouselSection);
 
     if (item.Colaborador) {
         const colDiv = document.createElement("div");
