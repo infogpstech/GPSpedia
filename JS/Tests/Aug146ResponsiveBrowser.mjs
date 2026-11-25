@@ -154,7 +154,7 @@ try {
         Tema: "Tutorial sintético",
         comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:1.5em" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><a href="javascript:window.__tutorialXss=true">Enlace no confiable</a><img src="javascript:window.__tutorialXss=true" alt="Imagen no confiable" onerror="window.__tutorialXss=true"><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
         dondeEncontrarlo: '<p style="text-align:right;color:#008000">Ubicación de prueba</p>',
-        Detalles: '<ul><li>Detalle con formato</li></ul>',
+        Detalles: '<ul><li>Detalle con formato</li></ul>' + Array.from({ length: 60 }, (_, index) => '<p>Detalle extenso de prueba ' + index + ' para verificar que el contenido no reduzca el alto del reproductor.</p>').join(""),
         Video: "https://www.youtube.com/shorts/abcdefghijk"
       }, false);
       const detail = document.getElementById("detalleCompleto");
@@ -170,7 +170,13 @@ try {
         listPreserved: Boolean(Array.from(detail.querySelectorAll(".detail-rich-text-paragraph ul li")).some(node => node.textContent.trim() === "Detalle con formato")),
         unsafeMarkupRemoved: Boolean(paragraph && !paragraph.querySelector("script,iframe,[onclick],[onerror],a[href^='javascript:'],img[src^='javascript:']")),
         iframeSrc: validIframe ? validIframe.src : "",
-        iframeTitle: validIframe ? validIframe.title : ""
+        iframeTitle: validIframe ? validIframe.title : "",
+        iframeWidth: validIframe ? validIframe.getBoundingClientRect().width : 0,
+        iframeHeight: validIframe ? validIframe.getBoundingClientRect().height : 0,
+        iframeDisplay: validIframe ? getComputedStyle(validIframe).display : "none",
+        iframeVisibility: validIframe ? getComputedStyle(validIframe).visibility : "hidden",
+        iframeLoading: validIframe ? validIframe.loading : "missing",
+        containerHeight: validIframe && validIframe.parentElement ? validIframe.parentElement.getBoundingClientRect().height : 0
       };
       ui.mostrarDetalleTutorialModal({
         Tema: "Tutorial con URL inválida",
@@ -203,6 +209,13 @@ try {
     check(tutorialRender.validResult.iframeSrc === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1" &&
       tutorialRender.validResult.iframeTitle.includes("Tutorial sintético"),
       profile.name + ": renderiza el vídeo validado como iframe de YouTube");
+    check(tutorialRender.validResult.iframeWidth > 0 && tutorialRender.validResult.iframeHeight >= 314 &&
+      tutorialRender.validResult.iframeHeight <= 316 && tutorialRender.validResult.containerHeight >= 314,
+      profile.name + ": el iframe mantiene 315 px de alto y no se contrae con contenido extenso");
+    check(tutorialRender.validResult.iframeDisplay !== "none" &&
+      tutorialRender.validResult.iframeVisibility === "visible" &&
+      tutorialRender.validResult.iframeLoading !== "lazy",
+      profile.name + ": el iframe permanece visible y no usa carga diferida");
     check(tutorialRender.invalidResult.iframeCount === 0 &&
       tutorialRender.invalidResult.notice.includes("URL válida de YouTube"),
       profile.name + ": no renderiza iframe para una URL de vídeo no confiable");
