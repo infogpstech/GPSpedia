@@ -1071,3 +1071,12 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Corrección en curso: preflight y conteo fuera del lock; dentro quedan búsqueda autoritativa actor+vehículo, recuperación mínima de pendientes y append/flush. El conteo/telemetría posteriores no convierten un append confirmado en error.
 - Se añade prueba de contención simulada y cobertura de primer voto, duplicado y usuario distinto. CI pendiente.
 - La lectura completa de FeedbackLikes en CATALOG sigue siendo un coste de escala separado; la agrupación en memoria no reduce el volumen leído.
+
+
+2026-11-25 — Cierre local GP-LIKE-FIRST-VOTE-01
+- FEEDBACK: se redujo la sección crítica del ScriptLock; localización/preparación y conteo quedaron fuera. La búsqueda idempotente por actor+vehículo y append/flush siguen serializados para evitar filas duplicadas.
+- Se añadió cobertura de lock ocupado, primer voto, voto repetido mismo vehículo en otro corte, usuarios distintos y fallo de conteo después de confirmar append.
+- Se verificó que la pérdida de publicación del delta en CATALOG se convierte en catalogSyncPending y no en rechazo del útil ya confirmado por FEEDBACK.
+- CI 45544697384 SUCCESS: 523 suites, 6,226 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages 45544697351 SUCCESS.
+- Validación FEEDBACK/CATALOG con deployments y Spreadsheet Beta permanece pendiente; no hubo llamadas remotas ni despliegues Apps Script.
+- Observación separada: CATALOG aún lee la hoja FeedbackLikes completa al agrupar eventos; el volumen de lectura sigue siendo un riesgo de escala y se mantiene como pendiente independiente.

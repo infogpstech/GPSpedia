@@ -692,3 +692,21 @@ La implementación anterior además mantenía dentro de la sección crítica la 
 Se prepara la corrección para sacar del lock la localización/preparación y el conteo, dejando dentro únicamente la búsqueda idempotente actor+vehículo y el append/flush. El conteo y telemetría se ejecutan después; un fallo de lectura no convierte un append confirmado en error. Se amplían pruebas para simular lock ocupado y verificar que no se escribe, así como primer voto, repetición mismo usuario/vehículo y usuarios distintos. CI pendiente de la corrección.
 
 La corrección previa `694ceaf` permanece como endurecimiento de tolerancia a eventos históricos, pero no se considera evidencia suficiente de que se haya resuelto la causa principal de contención. No se han invocado servicios remotos ni desplegado Apps Script.
+
+
+---
+
+## Cierre local — GP-LIKE-FIRST-VOTE-01 (2026-11-25)
+
+- Se corrigió el diseño del handler FEEDBACK: localización del vehículo y preparación de la hoja fuera del ScriptLock; dentro quedan la comprobación autoritativa por actor+vehículo, recuperación de un pendiente y append/flush. El contador y la telemetría se calculan después de liberar el lock. Un fallo al leer el contador ya no devuelve un rechazo cuando el evento quedó confirmado.
+- La búsqueda de idempotencia se optimizó para buscar por actorKey en la columna A y filtrar vehículo, conservando la normalización de identidades legacy.
+- Se añadió prueba de contención: si el lock está ocupado no se escribe; cuando está libre se registra; el mismo usuario/vehículo no crea otra fila; usuarios distintos sí pueden registrar. También se prueba que un fallo de conteo posterior al append devuelve éxito sin contador.
+- Se añadió prueba de integración del publicador frontend: cuando CATALOG no confirma el delta, FEEDBACK conserva la respuesta exitosa del útil y devuelve catalogSyncPending; la pérdida de conexión CATALOG no se propaga como error de registro.
+- CI final commit bad7f6893a4012b710bc1e1935bea9b2ceba1d65: workflow 45544697384 SUCCESS, 523 suites, 6,226 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages workflow 45544697351 SUCCESS (build y deploy).
+- Los primeros intentos CI detectaron únicamente fixtures/assertions obsoletos tras el cambio de contrato; se corrigieron y la ejecución final completa aprobó.
+- Sin invocaciones a FEEDBACK/CATALOG reales, sin cambios en Spreadsheet/Drive, sin despliegues Apps Script ni modificaciones de PropertiesService/permisos. Validación funcional Beta pendiente.
+- Rama de trabajo HEAD: bad7f6893a4012b710bc1e1935bea9b2ceba1d65; rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+
+### Riesgo separado pendiente
+
+readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de FeedbackLikes para construir la agrupación, incluso en la proyección dirigida de un vehículo. La agrupación elimina duplicados lógicos, pero no reduce I/O. Se registra como trabajo de optimización independiente; no se modifica en esta incidencia para evitar mezclar el arreglo de escritura FEEDBACK con un rediseño de proyección CATALOG.

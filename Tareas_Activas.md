@@ -206,7 +206,7 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 Las tareas de implementación frontend se ejecutan antes de retomar las validaciones Beta diferidas. Las validaciones de deployments, Spreadsheet/Drive reales, reproducción externa y dispositivos físicos se conservan pendientes y no bloquean la implementación local.
 
 ### GP-TUTORIAL-DETAIL-COMPACT-01 — Presentación del modal de detalle de tutoriales
-**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-25.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-25.**
 - Corregir el ancho del título: completo en una línea cuando quepa y máximo dos líneas cuando sea necesario, sin truncar palabras prematuramente.
 - Reducir la imagen aproximadamente al 50 % de su tamaño actual, conservando proporción y centrado.
 - Eliminar el espacio vacío entre título e imagen; reducir la separación entre imagen y vídeo.
@@ -247,4 +247,13 @@ La validación posterior al cierre identificó una causa adicional directamente 
 
 Se ajusta el diseño para dejar fuera del lock la localización del vehículo, preparación del ledger y cálculo del contador. La sección crítica conserva únicamente la comprobación autoritativa de idempotencia (actor+vehículo), la reconciliación mínima de un pendiente y el append/flush. La lectura del contador y telemetría pasan después de liberar el lock; un fallo de conteo no transforma un append confirmado en rechazo. La búsqueda de duplicados prioriza la columna actorKey y conserva compatibilidad con la identidad legacy.
 
-Se agrega regresión de contención simulada: lock ocupado no escribe; lock libre registra el primer voto; mismo actor/vehículo no crea otra fila; usuarios distintos sí registran. CI pendiente.
+Se agrega regresión de contención simulada: lock ocupado no escribe; lock libre registra el primer voto; mismo actor/vehículo no crea otra fila; usuarios distintos sí registran. CI final 45544697384: 523 suites, 6,226 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages 45544697351: build y deploy SUCCESS.
+
+
+## Hallazgo independiente — escala de lectura de útiles en CATALOG
+
+**Estado: PENDIENTE DE IMPLEMENTACIÓN.**
+
+La revisión confirma que readFeedbackLikeEventCounts_ en CATALOG todavía ejecuta getRange(2, 1, lastRow - 1, 7).getValues() sobre toda la hoja FeedbackLikes cuando se reconstruye el catálogo sin caché y también desde la proyección de un vehículo. La agrupación por usuario+vehículo elimina duplicados en memoria, pero no reduce el volumen de filas transferidas desde Spreadsheet. Esto no impide el append de FEEDBACK ni provoca por sí mismo el mensaje de rechazo del botón; sí mantiene un riesgo independiente de latencia/límite de lectura de getCatalogData cuando crezca el ledger.
+
+Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el ledger append-only, sin reintroducir locks globales/esperas en operaciones ordinarias y sin coordinación backend entre servicios. Mantener los útiles ya registrados y la regla de un voto por usuario+vehículo.
