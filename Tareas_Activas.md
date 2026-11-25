@@ -109,3 +109,38 @@ Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tarea
 - La procedencia queda registrada como confirmación directa del usuario; no se afirma que se haya leído la Spreadsheet ni su revisión activa porque el conector sigue deshabilitado.
 - No se hicieron solicitudes HTTP remotas. La comprobación de identidad de salud se difiere a MIG-URL-008 en Beta aislada y autorizada.
 - MIG-URL-002 COMPLETADA. La única tarea activa pasa a ser MIG-URL-003. No iniciar tareas ajenas al plan.
+
+
+## Próxima tarea en cola — Dashboard de actividad: Actividad reciente
+
+**Estado: PENDIENTE — registrada por solicitud expresa del usuario el 2026-11-24.**  
+**Orden:** ejecutar después de cerrar MIG-URL-008 y la fase actualmente prioritaria. No altera ni sustituye la tarea MIG-URL-008, que continúa siendo la única tarea activa mientras no se autorice y complete la validación Beta.
+
+### Objetivo
+Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del Dashboard, transformando los datos recibidos de los servicios en información clara para el usuario.
+
+### Requisitos funcionales y visuales
+- Presentar inicialmente solo las columnas **Fecha**, **Usuario** y **Acción**; eliminar la necesidad de desplazamiento horizontal para consultar la lista.
+- Formatear fechas en un formato compacto y legible, por ejemplo `24/11/26`.
+- Mostrar el nombre legible del usuario cuando esté disponible, por ejemplo `Pablo Peña`, en lugar de identificadores o nombres parciales.
+- Traducir/normalizar los códigos de acción a expresiones comprensibles y consistentes, por ejemplo `View vehicle` → `visitó`.
+- No mostrar objetos serializados vacíos ni fragmentos técnicos como `{}` o `• referencia V-105` en la descripción resumida.
+- Al seleccionar una fila, desplegar un acordeón asociado a esa fila con la información contextual del evento y del vehículo, usando los datos ya recibidos. Ejemplo: `Chevrolet - Suburban 2021 - 2026`.
+- Mantener como máximo un acordeón abierto: al seleccionar otra fila, cerrar el anterior y abrir el nuevo.
+- Cerrar el acordeón al hacer clic fuera de él.
+- El diseño debe adaptarse a escritorio y móvil, sin scroll horizontal en la vista principal.
+
+### Límites técnicos obligatorios
+- **Solo frontend/presentación. No modificar servicios Apps Script**, sus handlers, hojas, datos, contratos ni payloads.
+- Consumir la información que ya proporcionan los servicios; resolver el formato, las etiquetas, la composición de la descripción y la interacción en la interfaz.
+- No inventar datos ausentes. Si no existe un nombre legible o detalle de vehículo, mostrar un fallback discreto y comprensible.
+- Preservar el orden, la paginación/límites, los filtros y las capacidades actuales del registro de actividad.
+- No alterar la captura ni el almacenamiento de eventos.
+
+### Validación y cierre
+- Inspeccionar primero el componente frontend, los datos reales disponibles en su contrato y los estilos responsive.
+- Añadir pruebas de formato de fecha, resolución de usuario, traducción de acciones, descripción de vehículo, eventos con datos incompletos y apertura/cierre del acordeón.
+- Verificar que solo una fila pueda permanecer expandida y que el clic fuera cierre el detalle.
+- Validar escritorio y móvil y comprobar que no exista desplazamiento horizontal en la vista principal.
+- Ejecutar pruebas de regresión y sintaxis de los archivos modificados.
+- Confirmar mediante revisión del diff que no se modificó ningún servicio Apps Script ni contrato backend.
