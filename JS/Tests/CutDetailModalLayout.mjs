@@ -113,7 +113,7 @@ testCase("el modelo y el campo de edición son nodos independientes del contened
     assert.match(css, /\.detail-modal-title-text \{[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
     const cutTitleStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {');
     const cutTitleRule = css.slice(cutTitleStart, css.indexOf("}", cutTitleStart));
-    assert.match(cutTitleRule, /white-space:normal;[\s\S]*?overflow:visible;[\s\S]*?text-overflow:clip;[\s\S]*?overflow-wrap:normal;[\s\S]*?word-break:normal;/);
+    assert.match(cutTitleRule, /white-space:nowrap;[\s\S]*?overflow:hidden;[\s\S]*?text-overflow:ellipsis;[\s\S]*?overflow-wrap:normal;[\s\S]*?word-break:normal;/);
 });
 
 testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 6px", () => {
@@ -130,7 +130,7 @@ testCase("el tamaño del logo se conserva y móvil usa ancho natural con gap de 
     const mobileLogoContainer = mobileLogoRules.slice(mobileLogoContainerStart, mobileLogoContainerEnd);
     assert.ok(mobileLogoContainer.includes("grid-row:1 / span 2;") && mobileLogoContainer.includes("align-self:end;") && mobileLogoContainer.includes("height:66px;"));
     assert.match(cutHeader, /\.detail-modal-title \{[\s\S]*?grid-row:1 \/ span 2;[\s\S]*?align-self:end;[\s\S]*?align-items:flex-start;[\s\S]*?transform:translate\(-13px,-19px\)/);
-    assert.match(mobileLogoRules, /object-position:left top/);
+    assert.match(css, /#modalDetalle\[data-modal-type="corte"\] \.detail-modal-title \.brand-logo-modal \{\s*object-position: left bottom;/);
     assert.match(mobileLogoRules, /\.detail-modal-title-text \{[\s\S]*?height:auto;[\s\S]*?min-height:0;[\s\S]*?display:flex;[\s\S]*?align-items:flex-end;[\s\S]*?align-self:end;[\s\S]*?margin:0 !important;[\s\S]*?transform:translate\(-13px,-19px\) !important/);
 });
 
@@ -262,7 +262,7 @@ testCase("el divisor azul ocupa el ancho del encabezado y la sombra del logo no 
     assert.match(css, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-fit: contain/);
     const desktopLogoStart = css.indexOf('#modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {');
     const desktopLogoRule = css.slice(desktopLogoStart, css.indexOf("}", desktopLogoStart));
-    assert.ok(desktopLogoStart >= 0 && desktopLogoRule.includes("object-position:left top;"));
+    assert.ok(desktopLogoStart >= 0 && desktopLogoRule.includes("object-position:left bottom;"));
 });
 
 testCase("el nombre del modelo recibe sombra sin modificar la imagen ni la jerarquía del encabezado", () => {
@@ -286,7 +286,7 @@ testCase("el título tutorial se ajusta entre palabras y el cierre queda anclado
     assert.match(tutorial, /controlsContainer\.className = "tutorial-detail-header-actions"/);
     assert.match(tutorial, /tutorial-detail-close/);
     assert.doesNotMatch(tutorial, /closeBtn\.style\.cssText = "position:static/);
-    assert.match(css, /\.tutorial-detail-title \{[\s\S]*?white-space: normal;[\s\S]*?overflow-wrap: normal;[\s\S]*?word-break: normal;[\s\S]*?hyphens: none/);
+    assert.match(css, /\.tutorial-detail-title \{[\s\S]*?white-space: nowrap;[\s\S]*?overflow: hidden;[\s\S]*?text-overflow: ellipsis;[\s\S]*?overflow-wrap: normal;[\s\S]*?word-break: normal;[\s\S]*?hyphens: none/);
     assert.match(css, /\.tutorial-detail-toolbar > \.tutorial-detail-header-actions > \.tutorial-detail-close \{[\s\S]*?position: absolute !important;[\s\S]*?right: 0 !important/);
 });
 
@@ -380,6 +380,15 @@ testCase("AUG-144 conserva la geometría de acciones y separa el modelo del grup
     assert.ok(detail.includes("titleLayoutObserver.observe(titleContainer)") && detail.includes("titleLayoutObserver.observe(logoImg)"));
     assert.ok(detail.includes("logoRect.right + 6"));
     assert.ok(detail.includes("firstActionLeft - titleStart"));
+});
+
+
+testCase("logo y nombre del modelo comparten la línea inferior y el nombre móvil aumenta 2px", () => {
+    const alignment = css.slice(css.indexOf("GP-UX-CUT-HEADER-ALIGN-04"));
+    assert.match(alignment, /\.detail-modal-title \{[\s\S]*?align-items: flex-end;[\s\S]*?transform: translateY\(-19px\)/);
+    assert.match(alignment, /\.detail-modal-title \.brand-logo-modal \{[\s\S]*?object-position: left bottom/);
+    assert.match(alignment, /\.detail-modal-title-text \{[\s\S]*?align-self: end;[\s\S]*?white-space: nowrap;[\s\S]*?text-overflow: ellipsis/);
+    assert.match(alignment, /font-size:calc\(clamp\(1rem,4vw,1.35rem\) \+ 2px\)/);
 });
 
 console.log("CutDetailModalLayout: " + passed + "/" + passed + " PASS");
