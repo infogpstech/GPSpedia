@@ -6025,7 +6025,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     margin:0 !important;
     padding:0 !important;
     object-fit:contain;
-    object-position:left top;
+    object-position:left bottom;
 }
 #modalDetalle[data-modal-type="corte"] .detail-modal-header-actions {
     grid-column:2;
@@ -6928,6 +6928,21 @@ textarea.rich-text-source[hidden] { display:none !important; }
     }
 }
 
+
+/* GP-UX-CUT-HEADER-ALIGN-04: logo y nombre comparten la misma línea inferior y separación de la línea azul. */
+#modalDetalle[data-modal-type="corte"] .detail-modal-title {
+    align-items: flex-end;
+    transform: translateY(-19px);
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title .brand-logo-modal {
+    object-position: left bottom;
+}
+#modalDetalle[data-modal-type="corte"] .detail-modal-title-text {
+    align-self: end;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 /* GP-VIDEO-MODAL-02: el iframe Tutorial usa el mismo tamaño de referencia del vídeo guía de desarme. */
 #modalDetalle[data-modal-type="tutorial"] #detalleCompleto .tutorial-video-container {
