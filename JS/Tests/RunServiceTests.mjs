@@ -594,7 +594,7 @@ runGroup('43','MIG019',()=>{
  runCli('Frontend sincroniza contador de útil con el módulo activo','JS/Tests/LikeClientCounter.js');
  runCli('Útiles alternan estado de forma idempotente en FEEDBACK','JS/Tests/FeedbackUsefulToggle.mjs');
  runCli('UI de útiles hidrata estado, contador y terminología','JS/Tests/UsefulButtonState.mjs');
- runCli('ADMIN evita lectura de ubicaciones cuando snapshot no contiene Map','JS/Tests/AdminDriveAuditReferenceLocations.mjs');
+ runCli('ADMIN recupera ubicaciones de referencia desde snapshot serializable','JS/Tests/AdminDriveAuditReferenceLocations.mjs');
  runCli('Útiles consolidan cambios rápidos en una sola petición','JS/Tests/UsefulSyncQueue.mjs');
  runCli('MIG019 reintento silencioso de útiles concurrentes','JS/Tests/FeedbackLikeClientRetry.mjs');
   runCli('MIG019 contención del lock de útiles','JS/Tests/FeedbackLikeLockContention.mjs');
