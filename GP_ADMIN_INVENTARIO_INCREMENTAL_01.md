@@ -23,3 +23,12 @@ EN PROGRESO — hallazgos documentados y código inicial implementado; CI y revi
 - Frontend intenta registro por lote inmediatamente tras recibir/persistir cada lote y consolida automáticamente al finalizar. Errores del guardado por lote se informan sin abortar el recorrido; se conserva fallback manual.
 - Test `AdminIncrementalInventory.mjs` integrado al runner, cubre contratos y simulación del validator (ownership, allowlist, estado running/complete, TTL). CI en curso; no afirmar aprobación hasta verificar resultado.
 - Riesgo pendiente de revisión: verificar concurrencia/reintentos de escritura de filas, compatibilidad de resultados/operación global con el organizador, comportamiento de inventario parcial y assertions ejecutadas.
+
+
+## Resultado de validación de código (2026-11-25)
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA**, sujeto a Beta real.
+- Código: guardado incremental basado en allowlist de páginas cacheadas/emitidas; revalidación de referencias y Drive conservada en el handler; idempotencia por digest de lote; stale reconciliation solamente en consolidación final.
+- Frontend: registra lotes automáticamente, no aborta recorrido si un registro incremental falla, consolida automáticamente al terminar y valida que todas las imágenes tengan resultados confirmados para marcar el estado guardado.
+- CI run 45705928487 SUCCESS (commit 3fd3d34c14cb9af33982273531ff6b59392a934b): syntax-check y runner de regresión de servicios PASS; responsive-browser/AUG-146 PASS. Test AdminIncrementalInventory incluido.
+- Diff revisado respecto a 64daf658f24ab88f53d1239d0ce7e349bbc40416: cambios limitados a ADMIN, UI, prueba/runner y registros de esta tarea.
+- Beta pendiente: invocar deployment ADMIN en Spreadsheet/Drive aislados para comprobar escritura visible por lote, reintentos/duplicados, referencias nuevas entre lotes, resumir cursor y organizador. No se desplegó Apps Script ni se modificó Drive/Spreadsheet real.
