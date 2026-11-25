@@ -274,7 +274,7 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Pruebas de contrato y simulaciones de creación, encabezado válido, esquema incompatible y carrera de inserción PASS; `AdminLocalOperationGuard.mjs` PASS. No se activaron guardas adicionales ni se modificaron recursos reales.
 
 ### GP-ADMIN-DRIVE-SCAN-MODAL-01 — Transformar modal de auditoría de cortes a modo escaneo
-**Estado: EN PROGRESO — prueba contractual específica PASS; regresión CI requiere reejecución tras corrección.**
+**Estado: EN PROGRESO — pruebas específicas en ajuste de fixture; regresión CI pendiente.**
 - Modal de auditoría: se agregó una consola de progreso integrada con estados visuales, aria-live y scroll automático limitado a 250 entradas, reflejando en simultáneo los mensajes enviados a la consola Developer.
 - Los resultados incrementales de imágenes existentes permanecen en la lista complementaria; se delimitó el scroll del resumen/progreso y resultados, y se ajustó el layout a móvil.
 - Prueba `AdminDriveScanModal.mjs`: 7/7 PASS en CI. El workflow detectó además incompatibilidad textual con contrato histórico `AdminDriveAuditGlobalConsole.mjs`; se ajustó el texto para preservar la expectativa histórica y describir el panel simultáneo. Reejecución CI pendiente. No se invocaron servicios Apps Script, Drive ni Spreadsheet.
