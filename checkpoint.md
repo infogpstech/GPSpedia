@@ -868,3 +868,13 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Pruebas: `FeedbackLikeClientRetry`, `FeedbackLikeLockContention` y `FeedbackLikePreflightOutsideLock` actualizadas. CI run `45624279054` SUCCESS: 528 suites, 6,264 pruebas, 0 fallos; responsive-browser SUCCESS; AUG-146 264/264 PASS en cuatro viewports.
 - HEAD de código: `8279f2ee44d347433e683c3b36a70c2917ca95e2`. Rama base `GPSpedia2.2.5` confirmada en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
 - No se invocó FEEDBACK remoto ni se desplegó Apps Script. El cambio es frontend y depende del workflow GitHub Pages; el deployment FEEDBACK debe devolver `LIKE_LOCK_BUSY` para que el reintento se active, pero esa versión remota no se verificó. No se declara resuelto remotamente hasta comprobar el comportamiento en Beta.
+
+
+## 2026-11-25 — Actualización de endpoint FEEDBACK
+
+- HEAD confirmado antes del cambio: `a5c668101c79e3fdf484b658b1c14839f1072d92`; rama autorizada `GPSpedia2.2.5_work`. Rama base protegida `GPSpedia2.2.5` sin modificaciones.
+- Solicitud: sustituir el endpoint FEEDBACK por el deployment URL proporcionado expresamente por el propietario.
+- Archivos afectados: `JS/Frontend/api-config.js` y `JS/Tests/LocalApiEndpoints.mjs`; registros: `ChangesLogs.txt` y `Tareas_Activas.md`.
+- Solo cambia la entrada FEEDBACK y su expectativa contractual. AUTH, CATALOG, WRITE, UTILITIES y ADMIN permanecen intactos.
+- No se realizan llamadas remotas ni despliegues Apps Script. La validación real del deployment queda pendiente de Beta y autorización expresa.
+- Siguiente paso: ejecutar la suite de servicios/contrato y revisar el diff; confirmar workflow CI. Si CI aprueba, cerrar como COMPLETADA CON VALIDACIÓN DIFERIDA.

@@ -382,3 +382,12 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - CI run `45624279054` SUCCESS: 528 suites, 6,264 pruebas aprobadas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. AUG-146: 264/264 PASS en cuatro viewports.
 - La causa concreta del error observado en la ejecución remota no se puede confirmar sin consultar el registro de ejecución de FEEDBACK. El cambio realizado es frontend y entra en vigor con la publicación GitHub Pages; ese workflow está pendiente. No se invocó el endpoint ni se desplegó Apps Script. La FEEDBACK desplegada debe conservar el contrato que devuelve `LIKE_LOCK_BUSY`; si el deployment no contiene ese contrato, deberá actualizarse por separado con autorización.
 - Estado: **COMPLETADA EN CÓDIGO Y CI; VALIDACIÓN DEL DEPLOYMENT FEEDBACK PENDIENTE DE BETA**. Se mantiene la idempotencia actor+vehículo+corte y los duplicados no se reenvían salvo rechazo explícito `LIKE_LOCK_BUSY`.
+
+
+### GP-API-FEEDBACK-ENDPOINT-UPDATE-01 — Actualizar URL local de FEEDBACK
+**Estado: IMPLEMENTADO EN CÓDIGO; validación local y CI pendiente de ejecución. Validación remota diferida a Beta.**
+- Actualizar exclusivamente `API_ENDPOINTS.FEEDBACK` en `JS/Frontend/api-config.js` con la URL confirmada por el propietario el 2026-11-25.
+- Alinear la expectativa exacta de `JS/Tests/LocalApiEndpoints.mjs`.
+- Preservar los otros cinco endpoints y el mecanismo único de configuración local establecido en NORMAS §§17–18.
+- No invocar el endpoint, desplegar Apps Script ni modificar propiedades, permisos, Spreadsheet, Drive o datos externos.
+- Validar sintaxis y contrato local; comprobar CI. Disponibilidad/contrato real del deployment: pendiente de Beta con autorización expresa.

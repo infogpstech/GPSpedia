@@ -1167,3 +1167,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Tests `FeedbackLikeClientRetry.mjs`, `FeedbackLikeLockContention.mjs` y `FeedbackLikePreflightOutsideLock.mjs` actualizados.
 - CI run 45624279054 SUCCESS: 528 suites, 6,264 pruebas, 0 fallos; AUG-146 264/264 PASS.
 - El backend conserva `tryLock(0)` y la sección crítica mínima conforme al contrato no bloqueante. El cambio frontend se publica mediante GitHub Pages (workflow pendiente al registrar este cambio). Sin invocaciones ni despliegues Apps Script; el deployment FEEDBACK debe devolver `LIKE_LOCK_BUSY` para activar los reintentos, contrato presente en el fuente de la rama pero no verificado en el deployment remoto.
+
+
+### 2026-11-25 — Actualización del endpoint FEEDBACK
+
+- Se sustituyó únicamente la URL de `API_ENDPOINTS.FEEDBACK` en `JS/Frontend/api-config.js` por el deployment proporcionado expresamente por el propietario.
+- Se actualizó la expectativa correspondiente en `JS/Tests/LocalApiEndpoints.mjs`; AUTH, CATALOG, WRITE, UTILITIES y ADMIN permanecen sin cambios.
+- No se invocó el endpoint ni se desplegó Apps Script. La disponibilidad y compatibilidad del deployment quedan pendientes de validación Beta autorizada.
