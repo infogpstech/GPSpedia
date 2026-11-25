@@ -917,12 +917,13 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 ### GP-LIKE-VALIDATION-16DIGIT-01
 - Hallazgo: el asignador de IDs de WRITE acepta enteros positivos seguros (`Number.isSafeInteger`), pero FEEDBACK limitaba `vehicleId` a 15 dígitos. Un ID válido de 16 dígitos podía activar el error genérico «Faltan datos verificados para registrar el útil» antes de localizar el vehículo.
-- Cambio preparado: validador común para útiles que acepta únicamente representaciones canónicas de enteros positivos seguros (hasta `9007199254740991`); se aplica al request y a la validación de eventos para que el conteo no descarte los nuevos IDs válidos.
+- Cambio aplicado: validador común para útiles que acepta únicamente representaciones canónicas de enteros positivos seguros (hasta `9007199254740991`); se aplica al request y a la validación de eventos para que el conteo no descarte los nuevos IDs válidos.
+- Límite de evidencia: el log del navegador no expone el ID/corte enviado, así que no se afirma que el caso concreto reportado usara 16 dígitos. Sí se comprobó por prueba que el contrato anterior rechazaba IDs admitidos por WRITE y se corrigió esa discrepancia.
 - Pruebas añadidas: registro y conteo con `9007199254740991`; rechazo sin escritura de `9007199254740992`; se conserva actor confiable, corte y ledger append-only.
 
 ### GP-CATALOG-REQUEST-BUDGET-01
 - Hallazgo: `auth.js` cancelaba cada consulta a los 8 s, mientras `getCatalogChanges` gestiona hasta tres intentos de 5 s cada uno y backoff. El presupuesto externo impedía completar los reintentos y convertía el fallo en `AbortError`.
-- Cambio preparado: `requestCatalogFeedPage_` delega el timeout por intento y reintentos a `getCatalogChanges`/`catalogRequest.js`; mantiene propagación de cancelación del ciclo padre. No añade viajes de red ni toca el servicio remoto.
+- Cambio aplicado: `requestCatalogFeedPage_` delega el timeout por intento y reintentos a `getCatalogChanges`/`catalogRequest.js`; mantiene propagación de cancelación del ciclo padre. No añade viajes de red ni toca el servicio remoto.
 - No se invocaron endpoints CATALOG/FEEDBACK, no se desplegaron Apps Script ni se modificaron Spreadsheet/Drive/PropertiesService/permisos/datos externos.
 - CI final `45638162735` SUCCESS: 529 suites, 6,272 pruebas, 0 fallos; sintaxis PASS; `AUG-146` Playwright 264/264 PASS en cuatro viewports. Pages `45638162526` SUCCESS. Commits `311b09e4b1db19699d4325c81cb55d43920f076e` y `62cef81afde6b5ccd6a0dd0146d1d7be995fd0fb`.
 - La validación real de deployments FEEDBACK/CATALOG y Spreadsheet continúa diferida a Beta aislada autorizada; no se invocaron endpoints ni se desplegaron Apps Script.
@@ -932,3 +933,6 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 
 **Cierre de implementación local (2026-11-25):** ambos trabajos `GP-LIKE-VALIDATION-16DIGIT-01` y `GP-CATALOG-REQUEST-BUDGET-01` quedan **COMPLETADOS CON VALIDACIÓN DIFERIDA**. CI `45638162735` SUCCESS (529 suites, 6,272 pruebas, 0 fallos); `AUG-146` 264/264 PASS en cuatro viewports; Pages `45638162526` SUCCESS. La rama de trabajo quedó verificada y la rama base protegida no fue modificada. Próximo paso: validación Beta de FEEDBACK/CATALOG/Spreadsheet con autorización y deployment correspondiente; no hacer llamadas remotas antes de esa autorización.
+
+
+**Revalidación documental posterior:** el commit documental `ffbeb0bca57d77c7eabd262f20c621174032fa19` también pasó CI `45638460585` (529 suites, 6,272 pruebas, 0 fallos; Playwright 264/264) y Pages `45638457300` SUCCESS. HEAD confirmado al iniciar esta rectificación documental: `ffbeb0bca57d77c7eabd262f20c621174032fa19`.

@@ -1213,3 +1213,5 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CATALOG elimina el timeout exterior de 8 s que cancelaba los reintentos; conserva timeout interno de 5 s por intento, dos reintentos y cancelación del padre. `CatalogFeedRetry` 11/11, `CatalogRequestRetry` 8/8, `CatalogStartupIntegrity` 25/25 y `CatalogTransientFeedFallback` 2/2 PASS.
 - CI `45638162735` SUCCESS: 529 suites, 6,272 pruebas, 0 fallos; sintaxis PASS; Playwright 264/264 PASS en cuatro viewports. GitHub Pages `45638162526` SUCCESS.
 - Commits: `311b09e4b1db19699d4325c81cb55d43920f076e`, `62cef81afde6b5ccd6a0dd0146d1d7be995fd0fb` y este cierre documental. Sin llamadas a endpoints ni deployments Apps Script; Beta pendiente de autorización.
+
+2026-11-25 — Rectificación de precisión documental: se actualiza el estado de ambas tareas a cambios aplicados y se aclara que el error del útil no incluía el ID/corte en la consola, por lo que la causa concreta del caso Beta no se da por demostrada hasta reproducirla con datos de prueba. Se registra CI documental `45638460585` y Pages `45638457300`, ambos SUCCESS.

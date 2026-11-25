@@ -417,11 +417,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ## GP-LIKE-VALIDATION-16DIGIT-01 — compatibilidad con el asignador de IDs
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45638162735 SUCCESS.**
 - El asignador de IDs de WRITE admite enteros positivos seguros de JavaScript; FEEDBACK restringía los útiles a 15 dígitos, un contrato más estrecho que `Number.isSafeInteger` y capaz de rechazar IDs válidos de 16 dígitos.
-- Corrección en curso: alinear la validación del vehículo en el registro y conteo de útiles con el rango de enteros positivos seguros, sin aceptar IDs fuera de ese rango.
+- Corrección aplicada: FEEDBACK alinea la validación del vehículo en el registro y conteo de útiles con el rango de enteros positivos seguros, sin aceptar IDs fuera de ese rango. El log del navegador no incluye el ID/corte enviado, por lo que no permite afirmar que el caso reportado correspondiera a un ID de 16 dígitos; la incompatibilidad del contrato sí quedó reproducida y corregida.
 - Validación CI: `FeedbackLikeIdempotency` 10/10 PASS; `FeedbackLikePreflightOutsideLock` 8/8 PASS; suites completas 529/529, 6,272 pruebas PASS, 0 fallos. Se cubre `Number.MAX_SAFE_INTEGER`, rechazo de `Number.MAX_SAFE_INTEGER + 1`, idempotencia y conteo. La prueba remota FEEDBACK/Spreadsheet continúa sujeta a Beta autorizada.
 
 ## GP-CATALOG-REQUEST-BUDGET-01 — cancelación prematura del feed inicial
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — CI run 45638162735 SUCCESS.**
 - `requestCatalogFeedPage_` imponía un timeout externo de 8 s mientras `getCatalogChanges` ejecutaba hasta tres intentos de 5 s más backoff. El timeout exterior abortaba el ciclo antes de agotar los reintentos y producía el `AbortError` observado.
-- Corrección en curso: delegar el límite por intento y los reintentos a `catalogRequest.js`, conservando únicamente la señal de cancelación del ciclo de carga. No se elimina la cancelación explícita ni los límites internos.
+- Corrección aplicada: delegar el límite por intento y los reintentos a `catalogRequest.js`, conservando únicamente la señal de cancelación del ciclo de carga. No se elimina la cancelación explícita ni los límites internos.
 - Validación CI: `CatalogFeedRetry` 11/11 PASS; `CatalogRequestRetry` 8/8 PASS; `CatalogStartupIntegrity` 25/25 PASS y `CatalogTransientFeedFallback` 2/2 PASS. La suite completa pasó con 529 suites, 6,272 pruebas y 0 fallos. La latencia/compatibilidad del deployment CATALOG queda pendiente de Beta autorizada.
