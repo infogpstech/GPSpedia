@@ -1,0 +1,108 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const source = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
+function extract(name) {
+    const start = source.indexOf("function " + name + "(");
+    const end = source.indexOf("\nfunction ", start + 10);
+    assert.ok(start >= 0 && end > start, "No se encontró " + name);
+    return source.slice(start, end);
+}
+const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+function makeHarness() {
+    const cutsRows = [Array(42).fill("header"), Array(42).fill("")];
+    cutsRows[1][0] = "100";
+    cutsRows[1][11] = "Corte de ignición";
+    cutsRows[1][16] = 0;
+    cutsRows[1][18] = "Corte de bomba";
+    cutsRows[1][23] = 0;
+    const ledgerRows = [headers.slice()];
+    const state = { waits: 0, releases: 0, activities: 0, flushes: 0 };
+    function sheet(rows) {
+        return {
+            getLastRow: () => rows.length,
+            getLastColumn: () => rows[0].length,
+            getRange(row, col, rowCount = 1, colCount = 1) {
+                return {
+                    getValue: () => rows[row - 1]?.[col - 1] ?? "",
+                    getValues: () => rows.slice(row - 1, row - 1 + rowCount)
+                        .map(line => line.slice(col - 1, col - 1 + colCount)),
+                    setValues(values) {
+                        values.forEach((line, offset) => {
+                            rows[row - 1 + offset] = rows[row - 1 + offset] || [];
+                            line.forEach((value, index) => { rows[row - 1 + offset][col - 1 + index] = value; });
+                        });
+                    },
+                    createTextFinder(query) {
+                        let caseSensitive = false;
+                        return {
+                            matchCase() { caseSensitive = true; return this; },
+                            matchEntireCell() { return this; },
+                            findAll() {
+                                const expected = String(query);
+                                const matches = [];
+                                for (let index = row - 1; index < Math.min(rows.length, row - 1 + rowCount); index++) {
+                                    const value = String(rows[index]?.[col - 1] ?? "");
+                                    if ((caseSensitive ? value : value.toLowerCase()) ===
+                                        (caseSensitive ? expected : expected.toLowerCase())) {
+                                        matches.push({ getRow: () => index + 1 });
+                                    }
+                                }
+                                return matches;
+                            }
+                        };
+                    }
+                };
+            },
+            appendRow(row) { rows.push(row.slice()); }
+        };
+    }
+    const cuts = sheet(cutsRows), ledger = sheet(ledgerRows);
+    const dependencies = {
+        LockService: { getScriptLock: () => ({
+            waitLock(ms) { assert.equal(ms, 10000); state.waits++; },
+            releaseLock() { state.releases++; }
+        }) },
+        Utilities: { DigestAlgorithm: { SHA_256: "SHA_256" }, Charset: { UTF_8: "UTF_8" },
+            computeDigest: (_algorithm, value) => Array.from(Buffer.from(String(value)).subarray(0, 32)) },
+        SpreadsheetApp: { flush() { state.flushes++; } },
+        SHEET_NAMES: { CORTES: "Cortes" },
+        COLS_CORTES: { id:1, tipoCorte1:12, utilCorte1:17, tipoCorte2:19, utilCorte2:24, tipoCorte3:26, utilCorte3:31 },
+        getSafeSheet: () => cuts,
+        getSpreadsheet: () => ({ getSheetByName: name => name === "FeedbackLikes" ? ledger : null }),
+        logUserActivity() { state.activities++; },
+        state, cutsRows, ledgerRows
+    };
+    const code = [
+        "function ensureFeedbackLikesSheet_(){const sheet=getSpreadsheet().getSheetByName('FeedbackLikes');const expected=" + JSON.stringify(headers) + ";const actual=sheet.getRange(1,1,1,7).getValues()[0];if(expected.some((value,index)=>String(actual[index]||'').trim()!==value))throw new Error('bad headers');return sheet;}",
+        extract("normalizeFeedbackLikeActorKey_"),
+        extract("buildFeedbackLikeActorKey_"),
+        extract("withFeedbackLikeLock_"),
+        extract("findFeedbackLikeRowsForActor_"),
+        extract("getFeedbackLikeEventCount_"),
+        extract("getFeedbackLikeCountWithEvents_"),
+        extract("logLikeActivityAfterAppend_"),
+        extract("findFeedbackVehicleRowForLike_"),
+        extract("handleRecordLike")
+    ].join("\n");
+    const api = new Function(...Object.keys(dependencies), code + "\nreturn handleRecordLike;")(...Object.values(dependencies));
+    return { run: api, state, ledgerRows };
+}
+const h = makeHarness();
+const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
+assert.deepEqual(first, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });
+assert.equal(h.ledgerRows.length, 2, "El primer útil crea una fila.");
+const duplicateSameCut = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
+assert.deepEqual(duplicateSameCut, { status:"success", alreadyLiked:true, corteIndex:1, likeCount:1 });
+assert.equal(h.ledgerRows.length, 2, "El mismo útil no crea otra fila.");
+const duplicateOtherCut = h.run({ vehicleId:"100", corteIndex:2, userId:"7", userName:"Pablo Peña" });
+assert.deepEqual(duplicateOtherCut, { status:"success", alreadyLiked:true, corteIndex:1, likeCount:1 });
+assert.equal(h.ledgerRows.length, 2, "El mismo usuario no puede crear un segundo útil en el mismo vehículo.");
+const otherUser = h.run({ vehicleId:"100", corteIndex:1, userId:"8", userName:"Ana" });
+assert.deepEqual(otherUser, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:2 });
+assert.equal(h.ledgerRows.length, 3);
+assert.equal(h.state.waits, 4);
+assert.equal(h.state.releases, 4);
+assert.equal(h.state.activities, 2, "Solo los útiles nuevos generan actividad.");
+assert.ok(h.ledgerRows.slice(1).every(row => row[5] === "event"));
+console.log("FeedbackLikeIdempotency: 9/9 PASS — duplicados same-cut/cross-cut, conteo y sección crítica");
