@@ -42,10 +42,18 @@ test("deduplica por usuario y vehículo aunque existan filas repetidas o cortes 
 test("ignora likes legacy completed porque ya están en el contador base",()=>{
  const result=readCounts({getSheetByName:()=>sheet});assert.equal(result.get("100|1"),2);
 });
-test("rechaza eventos con actor o vehículo inválido",()=>{
- const bad=rows.concat([["", "100","1",0,0,"event","t7"]]);
+test("ignora eventos históricos inválidos sin interrumpir la proyección",()=>{
+ const bad=rows.concat([
+  ["", "100","1",0,0,"event","t7"],
+  ["user:5", "100","9",0,0,"event","t8"],
+  ["user:6", "not-a-vehicle","1",0,0,"event","t9"]
+ ]);
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
- assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/actor de usuario inválido/);
+ const result=readCounts({getSheetByName:()=>badSheet});
+ assert.equal(result.get("100|1"),2,"Los votos válidos conservan su conteo.");
+ assert.equal(result.get("200|1"),1,"Los eventos de otros vehículos siguen proyectándose.");
+ assert.equal(result.get("100|2") || 0,0,"Los eventos inválidos no se atribuyen a un corte.");
+ assert.equal(result.has("not-a-vehicle|1"),false);
 });
 test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/tryLock\(0\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\s\S]*releaseLock/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");

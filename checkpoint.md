@@ -665,3 +665,15 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 **Alcance:** solo frontend, estilos, pruebas y registros. Sin modificaciones de servicios Apps Script, endpoints, contratos, payloads, hojas, datos, permisos ni deployments.
 
 **Continuidad:** no quedan implementaciones locales pendientes identificadas. Las validaciones Beta de útiles FEEDBACK/CATALOG, reproducción real YouTube y MIG-URL-008 permanecen pendientes para después, según la instrucción del propietario. No se ejecutaron peticiones remotas ni pruebas Beta.
+
+
+---
+
+## 2026-11-25 — Incidencia GP-LIKE-FIRST-VOTE-01
+
+- El propietario reportó que el botón útil falla con «No se pudo registrar tu reacción. Reintenta», incluso cuando el modelo no muestra votos útiles.
+- Hallazgo de código: el handler `handleRecordLike` escribía el evento antes de recalcular el contador. Una fila histórica `event` inválida del mismo vehículo podía provocar una excepción posterior al append; la interfaz mostraba error aunque la escritura ya estuviera confirmada. Además, `readFeedbackLikeEventCounts_` en CATALOG propagaba una fila inválida y podía interrumpir la proyección completa.
+- Corrección preparada en `feedback.js` y `catalog.js`: conteo tolerante a eventos históricos inválidos (se conservan, se omiten de la proyección y se advierte en log); el contador se calcula antes de escribir y se devuelve como valor precomputado + 1 después de confirmar el append. Si la fila inválida coincide con el mismo actor/vehículo, se conserva el rechazo seguro para impedir duplicados.
+- Pruebas de regresión añadidas a `FeedbackLikeIdempotency.mjs` y `FeedbackLikeAppendOnly.mjs`. CI pendiente de ejecución tras publicar el commit.
+- Sin llamadas a FEEDBACK/CATALOG remotos, sin despliegues Apps Script y sin modificaciones de Spreadsheet, Drive, PropertiesService, permisos o datos externos.
+- Rama autorizada: `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` sin cambios.

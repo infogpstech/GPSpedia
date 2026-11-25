@@ -1052,3 +1052,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI 45540225703: 523 suites, 6,215 pruebas aprobadas, 0 fallos; ActivityDashboardStoredXss 6/6 PASS; navegador Chromium 264/264 PASS en cuatro viewports. Pages 45540224992: SUCCESS.
 - Solo se modificaron frontend, HTML, CSS, pruebas y registros. Sin cambios a Apps Script, contratos, payloads, endpoints, datos ni deployments.
 - Las validaciones Beta pendientes se mantienen pospuestas por instrucción del propietario.
+
+
+2026-11-25 — GP-LIKE-FIRST-VOTE-01 (corrección en curso)
+- FEEDBACK: los conteos omiten filas históricas de FeedbackLikes inválidas sin alterar el ledger; el contador se calcula antes del append para evitar informar un falso fallo después de confirmar el voto.
+- CATALOG: una fila inválida de FeedbackLikes ya no interrumpe la proyección de todos los vehículos; se conserva la fila y se emite advertencia técnica sin exponer identidad.
+- Pruebas de regresión: primer voto con filas inválidas, evento de corte fuera de rango, deduplicación segura del mismo actor y proyección CATALOG con datos mixtos.
+- Validación CI pendiente. Sin llamadas remotas, despliegues Apps Script ni cambios de datos externos.

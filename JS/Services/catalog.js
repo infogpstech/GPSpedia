@@ -1234,18 +1234,25 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     if (expected.some((header, index) => headers[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
     const firstCutByVehicleActor = new Map();
-    rows.forEach(row => {
+    rows.forEach((row, index) => {
         if (String(row[5] || "") !== "event") return;
-        const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
-        const vehicleId = String(row[1] || "").trim();
-        const corteIndex = Number(row[2]);
-        if (!/^[1-9]\d{0,14}$/.test(vehicleId) ||
-            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
-            throw new Error("FeedbackLikes contiene un evento de like con referencia de vehículo o corte inválida.");
-        }
-        const uniqueActorVehicle = vehicleId + "|" + actorKey;
-        if (!firstCutByVehicleActor.has(uniqueActorVehicle)) {
-            firstCutByVehicleActor.set(uniqueActorVehicle, { vehicleId, actorKey, corteIndex });
+        try {
+            const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
+            const vehicleId = String(row[1] || "").trim();
+            const corteIndex = Number(row[2]);
+            if (!/^[1-9]\d{0,14}$/.test(vehicleId) ||
+                !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
+                throw new Error("referencia de vehículo o corte inválida");
+            }
+            const uniqueActorVehicle = vehicleId + "|" + actorKey;
+            if (!firstCutByVehicleActor.has(uniqueActorVehicle)) {
+                firstCutByVehicleActor.set(uniqueActorVehicle, { vehicleId, actorKey, corteIndex });
+            }
+        } catch (invalidEventError) {
+            if (typeof console !== "undefined" && typeof console.warn === "function") {
+                console.warn("FeedbackLikes: evento inválido ignorado en fila " + (index + 2) + ": " +
+                    String(invalidEventError && invalidEventError.message || "datos incompatibles"));
+            }
         }
     });
     const actorsByVehicleCut = new Map();

@@ -2017,16 +2017,24 @@ function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
         .createTextFinder(String(vehicleId)).matchCase(true).matchEntireCell(true).findAll();
     const firstCutByActor = new Map();
     matches.forEach(match => {
-        const row = ledger.getRange(match.getRow(), 1, 1, 7).getValues()[0];
+        const rowIndex = match.getRow();
+        const row = ledger.getRange(rowIndex, 1, 1, 7).getValues()[0];
         if (String(row[5] || "") !== "event" || String(row[1] || "").trim() !== String(vehicleId)) return;
-        const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
-        const eventVehicleId = String(row[1] || "").trim();
-        const eventCutIndex = Number(row[2]);
-        if (!/^[1-9]\d{0,14}$/.test(eventVehicleId) ||
-            !Number.isInteger(eventCutIndex) || eventCutIndex < 1 || eventCutIndex > 3) {
-            throw new Error("FeedbackLikes contiene un evento de like con referencia de vehículo o corte inválida.");
+        try {
+            const actorKey = normalizeFeedbackLikeActorKey_(row[0]);
+            const eventVehicleId = String(row[1] || "").trim();
+            const eventCutIndex = Number(row[2]);
+            if (!/^[1-9]\d{0,14}$/.test(eventVehicleId) ||
+                !Number.isInteger(eventCutIndex) || eventCutIndex < 1 || eventCutIndex > 3) {
+                throw new Error("referencia de vehículo o corte inválida");
+            }
+            if (!firstCutByActor.has(actorKey)) firstCutByActor.set(actorKey, eventCutIndex);
+        } catch (invalidEventError) {
+            if (typeof console !== "undefined" && typeof console.warn === "function") {
+                console.warn("FeedbackLikes: evento inválido ignorado en fila " + rowIndex + ": " +
+                    String(invalidEventError && invalidEventError.message || "datos incompatibles"));
+            }
         }
-        if (!firstCutByActor.has(actorKey)) firstCutByActor.set(actorKey, eventCutIndex);
     });
     let count = 0;
     firstCutByActor.forEach(firstCut => { if (firstCut === Number(corteIndex)) count++; });
@@ -2155,6 +2163,9 @@ function handleRecordLike(payload) {
             if (currentCount !== previous) {
                 throw new Error("El contador cambió fuera del intento pendiente; requiere reconciliación manual.");
             }
+            const currentLikeCount = getFeedbackLikeCountWithEvents_(
+                cuts, vehicle, ledger, vehicleId, pendingCut, pendingUtilCol
+            );
             // Reutiliza la fila pendiente existente; no crea una segunda fila para el mismo usuario/vehículo.
             const recoveredRow = pendingRow.slice();
             recoveredRow[3] = 0;
@@ -2162,15 +2173,15 @@ function handleRecordLike(payload) {
             recoveredRow[5] = "event";
             ledger.getRange(pending.rowIndex, 1, 1, 7).setValues([recoveredRow]);
             SpreadsheetApp.flush();
-            const count = getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, pendingCut, pendingUtilCol);
             return {
                 created: true,
-                response: { status: "success", alreadyLiked: false, recovered: true, corteIndex: pendingCut, likeCount: count }
+                response: { status: "success", alreadyLiked: false, recovered: true, corteIndex: pendingCut, likeCount: currentLikeCount + 1 }
             };
         }
 
         const unknownRows = existingRows.filter(item => !["event", "completed", "pending"].includes(String(item.row[5] || "")));
         if (unknownRows.length) throw new Error("El registro previo del útil tiene un estado desconocido.");
+        const currentLikeCount = getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol);
         ledger.appendRow([actorKey, vehicleId, corteIndex, 0, 0, "event", new Date().toISOString()]);
         SpreadsheetApp.flush();
         const confirmedRows = findFeedbackLikeRowsForActor_(ledger, actorKey, vehicleId);
@@ -2180,7 +2191,7 @@ function handleRecordLike(payload) {
             created: true,
             response: {
                 status: "success", alreadyLiked: false, corteIndex,
-                likeCount: getFeedbackLikeCountWithEvents_(cuts, vehicle, ledger, vehicleId, corteIndex, utilCol)
+                likeCount: currentLikeCount + 1
             }
         };
     });
