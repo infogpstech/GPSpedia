@@ -410,3 +410,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Corrección: la identidad y el nombre usados para deduplicación y actividad se obtienen exclusivamente de `__feedbackActor`; no se solicita al frontend enviar el nombre ni se confía en campos de identidad aportados por el navegador.
 - Regresión añadida: el voto funciona sin `userId/userName` duplicados en el payload y rechaza la suplantación de esos campos cuando contradicen al actor verificado.
 - Pendiente: CI del commit de prueba y comprobación Beta de health/versión del deployment FEEDBACK antes de cualquier invocación de escritura. No se desplegó Apps Script ni se modificaron hojas/datos externos.
+
+- CI inicial `45632826674`: `FeedbackLikeIdempotency` 10/10 PASS y `responsive-browser` SUCCESS; detectó además que `LocalApiEndpoints.mjs` conservaba la URL FEEDBACK anterior. Se alineó el fixture con la URL nueva ya presente en `API_ENDPOINTS.FEEDBACK` (commit `8b20c64b2947dd8827c67a2fb3966492fdf1695e`). Nueva CI pendiente.
