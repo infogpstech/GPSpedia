@@ -296,9 +296,18 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - Solo debe mostrarse el mensaje de error al usuario cuando un útil que aún no está registrado no pueda guardarse por una falla real.
 - El frontend debe mantener estado por clave vehículo+corte y el backend FEEDBACK debe validar unicidad por actor+vehículo+corte bajo concurrencia. CATALOG debe proyectar y contar por corte, preservando votos distintos de un mismo usuario en el mismo vehículo.
 - Se rectifica la regla anterior actor+vehículo global: queda obsoleta y no debe utilizarse como criterio de deduplicación.
-- Estado: EN PROGRESO; implementación y pruebas pendientes. No se ejecutaron deployments ni operaciones con datos Beta.
+- Estado: CÓDIGO IMPLEMENTADO Y PRUEBAS AISLADAS PASS; contratos CI antiguos ajustados a corte-index. No se ejecutaron deployments ni operaciones con datos Beta.
 
 
 ## 4. GP-LIKE-REBUILD-01 — Idempotencia de útiles por corte
 
 **Estado: CERRADA — validación automatizada ejecutada en runner aislado.** Se corrigió la clave de idempotencia para actor+vehículo+corte. Los votos de cortes distintos son independientes; duplicados del mismo corte retornan silenciosamente sin refrescar conteos ni telemetría. CATALOG agrega actor único por corte. Pruebas FeedbackLikeIdempotency y FeedbackLikeAppendOnly ejecutadas mediante runner aislado contra los archivos recuperados de la rama; ambas pasan. FEEDBACK y CATALOG también pasan compilación sintáctica. No se desplegaron servicios Apps Script.
+
+
+### GP-LIKE-REBUILD-01 — cierre de rectificación por corte
+
+- Se confirma la implementación existente: FEEDBACK valida unicidad actor+vehículo+corte bajo lock; la repetición del mismo corte responde silenciosamente; cortes distintos son independientes; conteo CATALOG se proyecta por actor/corte.
+- Runner aislado: `FeedbackLikeIdempotency` 10/10 PASS y `FeedbackLikeAppendOnly` 4/4 PASS. FEEDBACK/CATALOG sintaxis PASS.
+- CI detectó tests contractuales legacy que aún exigían deduplicación global actor+vehículo y proyección anterior. Se ajustaron `FeedbackLikePreflightOutsideLock.mjs` y `FeedbackLikeCompletedReplayPreflight.mjs` al contrato actor+vehículo+corte. La suite de copy log Developer también se alineó con el texto vigente; `DeveloperConsoleRouting` 5/5 PASS.
+- Regresión run 45611423533: 427 suites/5314 tests aprobados; 4 fallos (2 contratos likes que ya se ajustan, MIG019 repetición del contrato likes, MIG021 URL endpoints). CI más reciente de las correcciones pendiente.
+- Cierre local de implementación; validación real Beta diferida. Siguiente: GP-DASH-ACTIVITY-RECENT-01.
