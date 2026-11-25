@@ -84,14 +84,15 @@ const BASE_HEADERS = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registr
 const EXT_HEADERS = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion",
     "url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion",
     "error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id",
-    "resultado_inventario","detalle_resultado_inventario"];
+    "resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes",
+    "fecha_modificacion_drive","referencias_catalogo_json"];
 const HEADERS = [...BASE_HEADERS, ...EXT_HEADERS];
 const FILE_A = "abcdefghij1234567890";
 const FILE_B = "bcdefghij12345678901";
 function makeRow({id="REP-1", status="historica", type="reemplazada", fileId=FILE_A,
     originalId=fileId, visualId=fileId, origin=type === "reemplazada" ? "reemplazo" : "auditoria_drive",
     contentType=type === "reemplazada" ? "vehiculo" : "inventario_sin_uso", name="imagen.jpg"} = {}) {
-    const row = Array(27).fill("");
+    const row = Array(HEADERS.length).fill("");
     row[0]=id; row[1]=new Date("2026-01-01T00:00:00Z"); row[2]=contentType;
     row[3]="VEH-1"; row[4]="imagenVehiculo"; row[5]=fileId; row[6]=name;
     row[7]="https://drive.google.com/file/d/"+originalId+"/view"; row[8]="https://drive.google.com/file/d/REPLACED00000000000000/view";
@@ -140,7 +141,7 @@ check("Los 16 encabezados dinámicos se migran de forma idempotente y se verific
     const sheet=createSheet([BASE_HEADERS,row]);
     const lock=lockHarness(),api=buildHelpers({sheet,lock});
     const headers=api.ensureReplacedImagesInventoryColumns(sheet);
-    assert.equal(headers.length,27);
+    assert.equal(headers.length,HEADERS.length);
     assert.deepEqual(headers.slice(11),EXT_HEADERS);
     assert.equal(sheet.cells[1][19],"reemplazada");
     assert.equal(sheet.cells[1][16],"https://lh3.googleusercontent.com/d/"+FILE_A);
@@ -178,7 +179,7 @@ check("La consulta del esquema no crea ni modifica la hoja cuando no existe",()=
     const api=buildHelpers({spreadsheet});
     const schema=api.getReplacedImagesReadSchema_();
     assert.equal(schema.sheet,null);
-    assert.equal(schema.missingHeaders.length,16);
+    assert.equal(schema.missingHeaders.length,EXT_HEADERS.length);
     assert.equal(insertCalls,0);
 });
 
@@ -200,7 +201,7 @@ check("El buscador de historial rechaza IDs duplicados y devuelve el ancho compl
     const uniqueSheet=createSheet([HEADERS,makeRow({id:"UNIQUE"})]);
     const result=api.findReplacedImageRecordById(uniqueSheet,"UNIQUE");
     assert.equal(result.rowIndex,2);
-    assert.equal(result.values.length,27);
+    assert.equal(result.values.length,HEADERS.length);
 });
 
 check("La marca manual en uso requiere revisión, identidad y verificación del archivo",()=>{
@@ -434,7 +435,7 @@ check("La acción de migración coordina el lock, ejecuta el esquema y devuelve 
     assert.equal(result.status,"success");
     assert.equal(result.migrated,true);
     assert.equal(result.rowCount,3);
-    assert.equal(result.columnCount,27);
+    assert.equal(result.columnCount,HEADERS.length);
     assert.equal(creates,1);
     assert.equal(migrations,1);
     assert.equal(waits,1);
@@ -1136,7 +1137,7 @@ check("Las escrituras parciales se reintentan y las no reconciliables quedan req
 check("El esquema del inventario conserva las columnas nuevas de trazabilidad de forma idempotente",()=>{
     const ensure=fnSource(admin,"ensureReplacedImagesInventoryColumns");
     const readSchema=fnSource(admin,"getReplacedImagesReadSchema_");
-    for(const field of ["ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario"]){
+    for(const field of ["ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario","drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json"]){
         assert.ok(ensure.includes(field));
         assert.ok(readSchema.includes(field));
     }
