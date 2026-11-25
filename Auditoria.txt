@@ -8,3 +8,12 @@
 - Corrección: lista visual ampliada, metadatos persistidos, ubicación en Cortes con vehículo ID/categoría/marca/modelo y preview de asociación con miniaturas y estado ambiguo.
 - Evidencia: CI 45680455995 SUCCESS; AdminDriveAuditIndexedDB 13/13, visual contract 6/6, AdminReplacedImagesIntegrity 64/64.
 - Validación real con Drive/Spreadsheet/Apps Script no ejecutada; pendiente Beta aislada.
+
+
+2026-11-25 | GP-ADMIN-AUDIT-REFMAP-01
+- Hallazgo reproducible por inspección de código: el snapshot generado con `collectActiveDriveReferences(false)` no contiene `references` Map, pero la iteración del escáner llamaba `.get(fileId)` sobre esa propiedad ausente. Coincide con el error de inicialización informado. Corrección defensiva: ubicaciones opcionales cuando no hay Map.
+- Validación local/CI pendiente.
+
+2026-11-25 | GP-UTIL-VISUAL-02
+- Se reforzó feedback visual inmediato, aria-pressed y persistencia CSS de botón activo; prueba de contrato visual ampliada.
+- Validación local/CI pendiente.
