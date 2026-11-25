@@ -13800,6 +13800,22 @@ function clearAuditDriveReferenceSnapshot(auditId) {
  */
 
 
+function validateDriveAuditInventoryBatch_(auditId, ownerId, files) {
+    const state = loadDriveAuditServerState_(auditId);
+    if (state.ownerId !== String(ownerId || "").trim()) throw new Error("La auditoría pertenece a otra sesión Desarrollador.");
+    if (!["running", "complete"].includes(String(state.status || ""))) throw new Error("La auditoría no está activa o no ha sido confirmada.");
+    const age = Date.now() - Number(state.updatedAt || state.createdAt || 0);
+    if (!Number.isFinite(age) || age < -60000 || age > 21600000) throw new Error("La auditoría incremental expiró.");
+    const submitted = normalizeDriveAuditFileIds_(files), candidates = new Set(), pageCount = Number(state.pageCount || 0);
+    for (let page = 0; page < pageCount; page++) {
+        const raw = CacheService.getScriptCache().get(getDriveAuditPageResultCacheKey_(auditId, page));
+        if (raw === null) throw new Error("Falta una página persistida de resultados; no se aceptó el lote incremental.");
+        let ids; try { ids = JSON.parse(raw); } catch (error) { throw new Error("La página incremental está corrupta."); }
+        normalizeDriveAuditFileIds_(ids).forEach(id => candidates.add(id));
+    }
+    if (submitted.some(id => !candidates.has(id))) throw new Error("El lote contiene IDs que ADMIN no emitió como imágenes sin uso.");
+    return state;
+}
 function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) {
     if (payload && payload.mode === "organize") {
         return handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext);
@@ -13810,27 +13826,27 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
     const uniqueIds = normalizeDriveAuditFileIds_(submittedFiles);
     const uniqueFiles = uniqueIds.map(fileId => ({ fileId: fileId }));
     const auditId = String(payload && payload.auditId || getLatestDriveAuditIdForUser_(ownerId)).trim();
+    const incremental = payload && payload.incremental === true;
 
     {
-        const auditState = validateCompletedDriveAudit_(auditId, ownerId, uniqueFiles);
+        const auditState = incremental ? validateDriveAuditInventoryBatch_(auditId, ownerId, uniqueFiles) : validateCompletedDriveAudit_(auditId, ownerId, uniqueFiles);
         const submissionDigest = hashDriveAuditFileIds_(uniqueFiles);
-        if (auditState.inventorySubmissionDigest && auditState.inventorySubmissionDigest !== submissionDigest) {
+        if (!incremental && auditState.inventorySubmissionDigest && auditState.inventorySubmissionDigest !== submissionDigest) {
             throw new Error("La operación de inventario ya está vinculada a otra lista de archivos.");
         }
-        if (!auditState.inventoryOperationId) {
+        if (!incremental && !auditState.inventoryOperationId) {
             auditState.inventoryOperationId = Utilities.getUuid();
             auditState.inventorySubmissionDigest = submissionDigest;
             auditState.inventoryStatus = "processing";
             auditState.inventoryStartedAt = Date.now();
             saveDriveAuditServerState_(auditState);
         }
-        const inventoryOperationId = auditState.inventoryOperationId;
-        if (auditState.inventoryStatus === "complete" && auditState.inventorySummary) {
+        const inventoryOperationId = incremental ? ('AUD-' + auditId + '-' + submissionDigest) : auditState.inventoryOperationId;
+        if (!incremental && auditState.inventoryStatus === "complete" && auditState.inventorySummary) {
             return Object.assign({ status: "success", alreadyProcessed: true, auditId: auditId,
                 inventoryOperationId: inventoryOperationId }, auditState.inventorySummary);
         }
-        auditState.inventoryStatus = "processing";
-        saveDriveAuditServerState_(auditState);
+        if (!incremental) { auditState.inventoryStatus = "processing"; saveDriveAuditServerState_(auditState); }
 
         let references = null, referenceScanError = "";
         try { references = collectActiveDriveReferences(false); }
@@ -13993,7 +14009,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
             }
         });
 
-        if (auditState.unverifiableReferenceCount === 0 && !referenceScanError &&
+        if (!incremental && auditState.unverifiableReferenceCount === 0 && !referenceScanError &&
             references && references.unverifiableReferenceCount === 0 && !historyIntegrityUncertain) {
             inventoryRowsByDriveId.forEach((records, fileId) => {
                 if (currentIds.has(fileId) || records.length !== 1 || duplicateDriveIds.has(fileId) || ambiguousDriveIds.has(fileId)) return;
@@ -14031,10 +14047,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 historyIntegrityUncertain || auditState.unverifiableReferenceCount > 0 ||
                 !!referenceScanError || !!(references && references.unverifiableReferenceCount > 0)
         };
-        auditState.inventoryStatus = summary.partial ? "partial" : "complete";
-        auditState.inventorySummary = summary;
-        auditState.inventoryCompletedAt = Date.now();
-        saveDriveAuditServerState_(auditState);
+        if (!incremental) { auditState.inventoryStatus = summary.partial ? "partial" : "complete"; auditState.inventorySummary = summary; auditState.inventoryCompletedAt = Date.now(); saveDriveAuditServerState_(auditState); }
         logMessage && logMessage("Inventario de imágenes",
             "Operación " + inventoryOperationId + ": " + confirmedCount + " confirmadas, " +
             blockedCount + " bloqueadas, " + errorCount + " con error y " + staleCount + " no confirmadas.");
