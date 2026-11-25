@@ -644,3 +644,24 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - Se confirmó que FEEDBACK entrega hasta 100 eventos ordenados por fecha descendente. La implementación conserva ese límite y orden; no se modifica el servicio.
 - El contexto del vehículo se resuelve localmente contra catalogData.cortes ya disponible en el navegador. No se solicitan datos nuevos ni se muestran IDs internos como descripción.
 - La tabla pasa a tres columnas; los detalles se expanden por fila, con un único acordeón abierto y cierre por clic externo. No se modifican backend, contratos ni payloads.
+
+---
+
+## 2026-11-25 — Cierre de implementaciones frontend solicitadas
+
+**GP-TUTORIAL-DETAIL-COMPACT-01 — COMPLETADA EN CÓDIGO Y CI**
+- Título de tutorial: una línea cuando cabe y hasta dos líneas si es necesario, sin truncamiento prematuro de palabras.
+- Imagen limitada al 50 % del ancho y 160 px de alto máximo; márgenes entre título, imagen y vídeo compactados.
+- Segmentos informativos compactos con divisores azules.
+- Prueba TutorialVideoModalLayout: 18/18 PASS.
+
+**GP-DASH-ACTIVITY-RECENT-01 — COMPLETADA EN CÓDIGO Y CI**
+- Tabla Fecha/Usuario/Acción; fecha compacta; nombre legible y acciones traducidas.
+- Detalle contextual del vehículo desde el catálogo local; un solo acordeón abierto y cierre al hacer clic fuera.
+- Objetos JSON técnicos y referencias internas no se exponen en el resumen.
+- CI 45540225703: 523 suites, 6,215 pruebas aprobadas, 0 fallos. ActivityDashboardStoredXss 6/6 PASS. Chromium 264/264 PASS en 1366×768, 390×844, 360×800 y 320×700.
+- Pages workflow 45540224992: SUCCESS.
+
+**Alcance:** solo frontend, estilos, pruebas y registros. Sin modificaciones de servicios Apps Script, endpoints, contratos, payloads, hojas, datos, permisos ni deployments.
+
+**Continuidad:** no quedan implementaciones locales pendientes identificadas. Las validaciones Beta de útiles FEEDBACK/CATALOG, reproducción real YouTube y MIG-URL-008 permanecen pendientes para después, según la instrucción del propietario. No se ejecutaron peticiones remotas ni pruebas Beta.

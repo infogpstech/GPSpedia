@@ -1044,3 +1044,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se inició la mejora de Actividad reciente en el frontend: resumen Fecha/Usuario/Acción, etiquetas legibles y acordeón contextual.
 - El vehículo se relaciona con el catálogo local ya cargado; se preservan los datos y el orden entregados por FEEDBACK.
 - No se modifican Apps Script, contratos, payloads, hojas ni registros.
+
+## 2026-11-25 — Cierre GP-TUTORIAL-DETAIL-COMPACT-01 y GP-DASH-ACTIVITY-RECENT-01
+
+- Tutoriales: título en una o dos líneas según el ancho disponible, imagen al 50 %, separación compacta y divisores azules entre segmentos. Prueba TutorialVideoModalLayout 18/18 PASS.
+- Actividad reciente: tabla Fecha/Usuario/Acción, fecha compacta, nombres y acciones legibles, detalle contextual mediante acordeón de apertura única y cierre externo. Datos del vehículo obtenidos del catálogo local.
+- CI 45540225703: 523 suites, 6,215 pruebas aprobadas, 0 fallos; ActivityDashboardStoredXss 6/6 PASS; navegador Chromium 264/264 PASS en cuatro viewports. Pages 45540224992: SUCCESS.
+- Solo se modificaron frontend, HTML, CSS, pruebas y registros. Sin cambios a Apps Script, contratos, payloads, endpoints, datos ni deployments.
+- Las validaciones Beta pendientes se mantienen pospuestas por instrucción del propietario.

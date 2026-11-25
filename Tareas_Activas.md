@@ -113,8 +113,7 @@ Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tarea
 
 ## Próxima tarea en cola — Dashboard de actividad: Actividad reciente
 
-**Estado: PENDIENTE — registrada por solicitud expresa del usuario el 2026-11-24.**  
-**Orden:** ejecutar después de cerrar MIG-URL-008 y la fase actualmente prioritaria. No altera ni sustituye la tarea MIG-URL-008, que continúa siendo la única tarea activa mientras no se autorice y complete la validación Beta.
+**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-25.** La validación de datos reales FEEDBACK/Spreadsheet queda diferida a Beta.
 
 ### Objetivo
 Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del Dashboard, transformando los datos recibidos de los servicios en información clara para el usuario.
@@ -207,17 +206,18 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 Las tareas de implementación frontend se ejecutan antes de retomar las validaciones Beta diferidas. Las validaciones de deployments, Spreadsheet/Drive reales, reproducción externa y dispositivos físicos se conservan pendientes y no bloquean la implementación local.
 
 ### GP-TUTORIAL-DETAIL-COMPACT-01 — Presentación del modal de detalle de tutoriales
-**Estado: EN IMPLEMENTACIÓN. Prioridad inmediata.**
+**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-25.**
 - Corregir el ancho del título: completo en una línea cuando quepa y máximo dos líneas cuando sea necesario, sin truncar palabras prematuramente.
 - Reducir la imagen aproximadamente al 50 % de su tamaño actual, conservando proporción y centrado.
 - Eliminar el espacio vacío entre título e imagen; reducir la separación entre imagen y vídeo.
 - Compactar «Cómo identificarlo», «Dónde encontrarlo» y «Detalles», separándolos con una línea azul como en los modales de corte y Problemas y Soluciones.
 - Mantener contenido enriquecido seguro, vídeo validado, permisos, edición, guardado y cierre.
 - Alcance exclusivamente frontend/estilos; sin cambios en Apps Script, URLs, contratos, datos ni registros.
-- Añadir pruebas locales. Reproducción real y dispositivos físicos quedan diferidos a Beta.
+- **Evidencia de cierre:** TutorialVideoModalLayout 18/18 PASS; CI 45540225703 aprobada y navegador Chromium 264/264 PASS en cuatro viewports. El título cabe en una línea cuando es posible y admite hasta dos; imagen al 50 %, espacios compactos y divisores azules.
+- La reproducción real del vídeo y la inspección física quedan diferidas a Beta.
 
 ### GP-DASH-ACTIVITY-RECENT-01 — Presentación de Actividad reciente
-**Estado: EN IMPLEMENTACIÓN.**
+**Estado: COMPLETADA EN CÓDIGO Y CI — 2026-11-25.**
 - Tabla inicial Fecha/Usuario/Acción; fecha compacta; nombre legible; acciones comprensibles.
 - Sin objetos vacíos ni fragmentos técnicos en el resumen.
 - Acordeón contextual por registro, máximo uno abierto y cierre al hacer clic fuera.
