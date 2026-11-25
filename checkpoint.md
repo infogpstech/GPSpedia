@@ -821,3 +821,24 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 - CATALOG reduce la transferencia del ledger FeedbackLikes a A:C y F. Prueba `CatalogLikeProjectionReadScale` 6/6 PASS. CI run 45612534877 SUCCESS: 526 suites, 6,245 pruebas, 0 fallos; responsive-browser SUCCESS.
 - Sin caché adicional ni backend coordination; no se alteran datos ni deployment.
+
+
+---
+
+## 2026-11-25 — Cierre de verificación técnica integral local
+
+**HEAD de código y pruebas verificado:** `f93d001603d25c8da9df03552fba082b3b270738`.
+
+- CI run `45613697548`: **SUCCESS**, 528 suites, 6,263 pruebas aprobadas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS.
+- AUG-146/Chromium: **264/264 PASS**, cuatro viewports (1366×768, 390×844, 360×800 y 320×700), 16 capturas sintéticas.
+- `RepositoryJavaScriptSyntax`: 478 archivos .js/.mjs; PASS. `RepositoryModuleReferences`: 398 archivos; PASS.
+- `ServiceCallGraphContract`: 9/9 PASS. `MIG028SecurityPerformanceRegression`: 9/9 PASS.
+- Hallazgo de integración de pruebas corregido: `AdminOperationGuardsSchema.mjs` y `DeveloperConsoleErrors.mjs` no estaban registrados en `RunServiceTests.mjs`. Se registraron; CI final confirmó 10/10 y 8/8 PASS. El primer intento detectó un desacuerdo de formato de resumen del runner, no un defecto funcional; se corrigió y la ejecución final quedó verde.
+- Pages build/deployment automático SUCCESS para el código probado. No hubo despliegues Apps Script ni invocaciones a servicios remotos. No se modificaron Spreadsheet, Drive, PropertiesService, permisos, endpoints ni datos externos.
+- Avisos del entorno CI: deprecación de Node.js 20 en acciones de GitHub y módulo `punycode`; no afectan la ejecución aprobada y no se modificó infraestructura.
+
+### Continuidad
+- La fase de verificación local integral queda **COMPLETADA**.
+- La única tarea restante del plan MIG-URL es `MIG-URL-008`, que requiere confirmación del propietario de que las seis URLs corresponden a un entorno Beta aislado y autorización expresa para ejecutar GET de salud. No realizar esas peticiones sin esa confirmación.
+- Validaciones de Apps Script/Spreadsheet, YouTube real, Drive y pruebas de campo continúan diferidas a Beta según `Tareas_Beta.md`; no bloquean el cierre local.
+- Rama base `GPSpedia2.2.5` verificada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
