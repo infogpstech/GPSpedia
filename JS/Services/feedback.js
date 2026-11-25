@@ -2093,8 +2093,11 @@ function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
 function handleRecordLike(payload) {
     const vehicleId = String(payload && payload.vehicleId || "").trim();
     const corteIndex = Number(payload && payload.corteIndex);
-    const userId = String(payload && payload.userId || "").trim();
-    const userName = String(payload && payload.userName || "").trim();
+    // La identidad procede exclusivamente del actor que inyectó el middleware
+    // después de validar la sesión; no depende de copias del payload del navegador.
+    const actor = payload && payload.__feedbackActor;
+    const userId = String(actor && actor.userId || "").trim();
+    const userName = String(actor && actor.userName || "").trim();
     if (!/^[1-9]\d{0,14}$/.test(vehicleId) || !userId || !userName ||
         !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
         throw new Error("Faltan datos verificados para registrar el útil.");
