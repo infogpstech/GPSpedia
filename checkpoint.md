@@ -730,3 +730,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - El frontend debe mantener estado por clave vehículo+corte y el backend FEEDBACK debe validar unicidad por actor+vehículo+corte bajo concurrencia. CATALOG debe proyectar y contar por corte, preservando votos distintos de un mismo usuario en el mismo vehículo.
 - Se rectifica la regla anterior actor+vehículo global: queda obsoleta y no debe utilizarse como criterio de deduplicación.
 - Estado: EN PROGRESO; implementación y pruebas pendientes. No se ejecutaron deployments ni operaciones con datos Beta.
+
+
+## Continuidad — GP-LIKE-REBUILD-01 (actualización de código)
+
+- Commits de implementación: FEEDBACK `dbb66024926c055c641be2c2dc17b4ef1587b004`; CATALOG `09470ca8b116ffd1e79d78be0cefa1a163ab6cae`; likeState `6b7bb489a36d6656db91b9c5991c35e48f28448e`; UI `8030b1c48adc048f4529206cf75a2eaec16e8489`; tests idempotencia `7dfafa38aea7df575488eafde8616068076f6631`; append-only `f50d77067003f2734946a2e449736c5038a40400`.
+- La unicidad ahora se verifica por usuario+vehículo+corte, y los duplicados del corte exacto retornan éxito silencioso sin cálculo del contador ni actividad. Frontend registra estado vehículo+corte.
+- Pruebas aún no ejecutadas/confirmadas. Task permanece abierta hasta revisar diff y CI; Beta Apps Script no es requisito para cierre local.
+- Continuar con test/CI, reparar fallos, actualizar docs y cerrar GP-LIKE-REBUILD-01. Luego iniciar GP-DEV-LOG-ERRORS-01.
