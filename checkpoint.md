@@ -797,3 +797,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Se aisló el comportamiento del listener global: anteriormente las excepciones a cierre estaban ligadas al panel y a cualquier toggle global, no al contenedor del dashboard. Ahora el clic dentro del contenedor mantiene el acordeón y el clic externo lo cierra.
 - Prueba `ActivityDashboardRecentInteraction.mjs` añadida y registrada: interacción dentro, apertura exclusiva, cierre externo, aria-expanded y reemplazo del listener en rerender. CI pendiente.
 - No se modifica backend ni payloads; se conserva catálogo local para contexto.
+
+
+## Cierre GP-DASH-ACTIVITY-RECENT-01 — 25-11-2026
+
+- Listener fuera de tabla: ahora se limita el cierre de acordeón a clic fuera del contenedor, no a toggles globales o eventos de panel.
+- CI run 45611875173: `ActivityDashboardRecentInteraction` 6/6 PASS; responsive-browser AUG-146 PASS. La regresión completa reportó 439 suites/5428 pruebas PASS y 3 fallos de suites ajenas al dashboard (contract FEEDBACK preflight corregido en commit 05fc4f2b; MIG021 URL pendiente).
+- Actividad reciente cerrada en código y contrato; datos reales FEEDBACK Beta diferidos.
