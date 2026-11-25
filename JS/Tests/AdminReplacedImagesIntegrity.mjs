@@ -645,7 +645,7 @@ const auditHelperNames = [
     "getDriveAuditSeenPageCacheKey_", "storeDriveAuditSeenPage_", "loadDriveAuditSeenIds_",
     "getDuplicateDriveImageRows_", "getReplacedImageReconciliationUrl_", "buildVerifiedDriveVisualizationUrl_",
     "storeDriveAuditPageResults_", "loadDriveAuditUnusedFileIds_", "getLatestDriveAuditIdForUser_",
-    "validateCompletedDriveAudit_", "validateAuditDriveReferenceSnapshot_",
+    "validateCompletedDriveAudit_", "normalizeDriveAuditReferenceLocations_", "validateAuditDriveReferenceSnapshot_",
     "removeAuditDriveReferenceSnapshotCache_", "storeAuditDriveReferenceSnapshot", "loadAuditDriveReferenceSnapshot",
     "refreshAuditDriveReferenceSnapshot_", "clearAuditDriveReferenceSnapshot"
 ];
@@ -744,8 +744,12 @@ const AUDIT_OWNER = "USR-DEVELOPER-1";
 
 function makeReferenceSnapshot(count = 2) {
     const ids = Array.from({ length: count }, (_, i) => "drive-file-id-" + String(i).padStart(12, "0"));
+    const referenceLocationsById = count ? { [ids[0]]: [{
+        sheet: "Cortes", row: 5, column: 16, field: "imgCorte1",
+        vehicleId: "V-TEST", category: "Motocicleta", brand: "Yamaha", model: "MTN155"
+    }] } : {};
     return { activeDriveIds: ids, historicalDriveIds: [], protectedDriveIds: [],
-        unverifiableReferenceCount: 0 };
+        referenceLocationsById, unverifiableReferenceCount: 0 };
 }
 check("El snapshot de referencias usa manifiesto versionado, MIME JSON, límites por bloque y SHA-256",()=>{
     const h=auditHarness(), config=h.getDriveAuditReferenceSnapshotConfig_(), snapshot=makeReferenceSnapshot(2500);
