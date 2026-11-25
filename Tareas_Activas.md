@@ -252,23 +252,22 @@ Se agrega regresión de contención simulada: lock ocupado no escribe; lock libr
 
 ## Hallazgo independiente — escala de lectura de útiles en CATALOG
 
-**Estado: PENDIENTE DE IMPLEMENTACIÓN.**
+**Estado: RESUELTO — GP-CATALOG-LIKE-PROJECTION-READ-01; CI 45612534877.**
 
-La revisión confirma que readFeedbackLikeEventCounts_ en CATALOG todavía ejecuta getRange(2, 1, lastRow - 1, 7).getValues() sobre toda la hoja FeedbackLikes cuando se reconstruye el catálogo sin caché y también desde la proyección de un vehículo. La agrupación por usuario+vehículo elimina duplicados en memoria, pero no reduce el volumen de filas transferidas desde Spreadsheet. Esto no impide el append de FEEDBACK ni provoca por sí mismo el mensaje de rechazo del botón; sí mantiene un riesgo independiente de latencia/límite de lectura de getCatalogData cuando crezca el ledger.
+La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor/vehículo/corte/status, filtrado `event`, esquema, deduplicación y tolerancia a eventos inválidos. Prueba 6/6 PASS; regresión 526 suites, 6,245 pruebas, 0 fallos. Sin caché adicional ni coordinación backend.
 
-Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el ledger append-only, sin reintroducir locks globales/esperas en operaciones ordinarias y sin coordinación backend entre servicios. Mantener los útiles ya registrados y la regla de un voto por usuario+vehículo.
 
 
 ## Tareas recién registradas — 2026-11-25
 
 ### GP-DEV-LOG-ERRORS-01 — Copiar solo errores de consola
-**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (CI remoto pendiente).**
+**Estado: COMPLETADA — CI run 45612534877 PASS; regresión 526 suites, 6,245 pruebas, 0 fallos.**
 - El botón usa únicamente elementos `div.log-error`; excluye advertencias, información y falsos positivos por texto.
 - Se descartan entradas vacías y se mantiene el formato de líneas con salto de línea.
 - Prueba `DeveloperConsoleErrors.mjs` añadida con contrato estático y selección simulada.
 
 ### GP-ADMIN-DRIVE-AUDIT-SCHEMA-01 — Resolver esquema de AdminOperationGuards
-**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (CI remoto pendiente).**
+**Estado: COMPLETADA — CI run 45612534877 PASS; regresión 526 suites, 6,245 pruebas, 0 fallos.**
 - `getAdminLocalGuardSheet_` ahora crea la hoja ausente, inicializa el encabezado únicamente si está vacío, verifica la escritura y recupera la carrera de creación por relectura.
 - Hoja existente con encabezado incompatible no se sobrescribe; se rechaza fail-safe.
 - Pruebas de contrato y simulaciones de creación, encabezado válido, esquema incompatible y carrera de inserción PASS; `AdminLocalOperationGuard.mjs` PASS. No se activaron guardas adicionales ni se modificaron recursos reales.
