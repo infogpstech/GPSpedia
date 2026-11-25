@@ -6900,30 +6900,19 @@ ${elapsedSec}s
         };
     }
 
-    // Botón Copiar Registro de errores y advertencias críticas
+    // Copiar únicamente mensajes clasificados explícitamente como errores.
     const btnCopyLog = document.getElementById('btn-copy-console-log');
     if (btnCopyLog) {
         btnCopyLog.onclick = () => {
-            const divs = consoleLog.querySelectorAll('div');
-            const filteredTexts = [];
-            divs.forEach(div => {
-                const text = div.textContent || div.innerText;
-                const isErr = div.classList.contains('log-error') || div.classList.contains('log-warning');
-                const hasPatterns = /🚨|error|advertencia|falla|excepción|exception|stack|trace|fallo/i.test(text);
-                const isExcluded = /sistema administrativo iniciado|comprobando disponibilidad|microservicio activo|comunicación establecida|tiempo de respuesta/i.test(text);
-                if ((isErr || hasPatterns) && !isExcluded) {
-                    filteredTexts.push(text);
-                }
-            });
-
-            if (filteredTexts.length === 0) {
-                log("No se encontraron errores ni advertencias críticas para copiar.");
+            const errorTexts = Array.from(consoleLog.querySelectorAll('div.log-error'))
+                .map(div => div.textContent || div.innerText || '')
+                .filter(text => text.trim());
+            if (errorTexts.length === 0) {
+                log("No se encontraron errores para copiar.");
                 return;
             }
-
-            const rawText = filteredTexts.join('\n');
-            navigator.clipboard.writeText(rawText).then(() => {
-                log("[SISTEMA] Registro filtrado de errores copiado al portapapeles.");
+            navigator.clipboard.writeText(errorTexts.join('\n')).then(() => {
+                log("[SISTEMA] Registro de errores copiado al portapapeles.");
             }).catch(err => {
                 log("No se pudo copiar el registro: " + err, false, true);
             });
