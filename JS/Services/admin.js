@@ -11717,7 +11717,10 @@ function handleGetReplacedImages(payload, logMessage) {
             url_visualizacion: valueAt(row, "url_visualizacion"), ubicacion_actual: valueAt(row, "ubicacion_actual"),
             ultima_auditoria_id: valueAt(row, "ultima_auditoria_id"), estado_previo_papelera: valueAt(row, "estado_previo_papelera"),
             estado_organizacion: valueAt(row, "estado_organizacion"), error_organizacion: valueAt(row, "error_organizacion"),
-            fecha_organizacion: valueAt(row, "fecha_organizacion"), reference_check_status: referenceCheckStatus,
+            fecha_organizacion: valueAt(row, "fecha_organizacion"),
+            drive_folder_id: valueAt(row, "drive_folder_id"), formato_archivo: valueAt(row, "formato_archivo"),
+            tamano_bytes: Number(valueAt(row, "tamano_bytes") || 0), fecha_modificacion_drive: valueAt(row, "fecha_modificacion_drive"),
+            referencias_catalogo_json: valueAt(row, "referencias_catalogo_json"), reference_check_status: referenceCheckStatus,
             active_reference_count: Array.isArray(activeReferences) ? activeReferences.length : activeReferences ? 1 : 0 });
     }
     const warnings = [];
