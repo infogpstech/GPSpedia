@@ -1266,3 +1266,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - CatalogLikeProjectionReadScale.mjs ampliada con secuencia de reactivación.
 - Commits: f740da0e98d40082d6753f6fd3670b0ad113e9f2; e1f04981ab99d770b31bdbe4cafefc782b5e173a; e4e0e0218e16cdc5ce89d641d81ad38cdbe26590; fd629d599197d16705f418edda1f94784c5d5976; 22850449c06f3e7d6d620c55c48f154481aef509.
 - Estado de CI aún no verificado al registrar esta entrada. No se ejecutaron deployments Apps Script, Drive ni Spreadsheet reales; Beta pendiente.
+
+
+2026-11-25 — Incidencia #130 — identidad original del corte y rectificación de proyección
+- CATALOG conserva sourceCorteIndex1..3 al ordenar los cortes por útiles.
+- Frontend usa el índice original para las operaciones FEEDBACK y resuelve el slot visual al actualizar el contador optimista/confirmado.
+- Prueba UsefulOriginalCutIndex.mjs integrada en RunServiceTests.mjs; runner JavaScript aislado PASS para proyección, activación, confirmación y retirada del corte físico original.
+- Rectificación: la modificación experimental que restablecía completed=false en CATALOG fue revertida porque completed representa un evento ya materializado en el contador base; restablecerlo duplicaría el conteo. Se ampliaron las pruebas para evento pendiente y materializado.
+- CI/Node runner pendiente de evidencia. No deployments Apps Script ni escrituras externas.
