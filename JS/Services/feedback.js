@@ -1981,8 +1981,11 @@ function buildFeedbackLikeActorKey_(userId) {
 function withFeedbackLikeLock_(operation) {
     if (typeof operation !== "function") throw new TypeError("La operación de útil no es válida.");
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(0)) {
-        const busyError = new Error("El registro de útiles está en curso.");
+    // El lock es compartido por las operaciones del proyecto FEEDBACK. Como la sección
+    // crítica ya se limita a idempotencia + append, esperar evita rechazar votos válidos
+    // por una contención transitoria de otra solicitud.
+    if (!lock.tryLock(10000)) {
+        const busyError = new Error("No fue posible obtener el bloqueo para registrar el útil dentro de 10 segundos.");
         busyError.code = "LIKE_LOCK_BUSY";
         throw busyError;
     }
