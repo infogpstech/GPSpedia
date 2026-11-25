@@ -13556,11 +13556,11 @@ function getLatestDriveAuditIdForUser_(ownerId) {
 function validateCompletedDriveAudit_(auditId, ownerId, files) {
     const state = loadDriveAuditServerState_(auditId);
     if (state.ownerId !== String(ownerId || "").trim()) throw new Error("La auditoría pertenece a otra sesión Desarrollador.");
-    if (state.scanVersion !== ADMIN_SERVICE_VERSION || state.imageMetadataVersion !== 1) {
-        throw new Error("La auditoría fue creada con otra versión o no conserva el esquema completo de metadatos. Ejecuta una auditoría nueva.");
-    }
     if (state.status !== "complete" || !Number.isFinite(Number(state.completedAt))) {
         throw new Error("ADMIN no ha confirmado que la auditoría esté completa. No se modificó el inventario.");
+    }
+    if (state.scanVersion !== ADMIN_SERVICE_VERSION || state.imageMetadataVersion !== 1) {
+        throw new Error("La auditoría fue creada con otra versión o no conserva el esquema completo de metadatos. Ejecuta una auditoría nueva.");
     }
     if (Number(state.errorCount || 0) > 0 || Number(state.unverifiableReferenceCount || 0) > 0) {
         throw new Error("La auditoría terminó con errores o referencias no interpretables. No se permite consolidar ni reconciliar el inventario; ejecuta una auditoría nueva.");
