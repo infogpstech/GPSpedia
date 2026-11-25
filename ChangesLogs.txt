@@ -1189,3 +1189,11 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - `LikeClientCounter.js` ahora prueba el módulo frontend activo y quedó registrado en `RunServiceTests.mjs`: 6/6 PASS. `FeedbackLikeAppendOnly` 4/4 PASS.
 - CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas, 0 fallos; responsive-browser SUCCESS. Pages run `45628972138` SUCCESS.
 - No se invocaron servicios Apps Script ni se modificaron datos/hojas externas. La verificación Beta sigue pendiente.
+
+
+### 2026-11-25 — GP-LIKE-TRUSTED-ACTOR-01
+
+- `JS/Services/feedback.js`: `handleRecordLike()` toma la identidad y el nombre exclusivamente de `payload.__feedbackActor`, contexto creado por el middleware de sesión validada. Se elimina la dependencia de que el navegador duplique `userId` y `userName` en el payload de la acción.
+- `JS/Tests/FeedbackLikeIdempotency.mjs`: añadida cobertura para payload sin campos de identidad duplicados y para campos de identidad falsificados que no deben reemplazar al actor verificado.
+- Commits: `54e9931c6ce5231f33fbcac4d1e592c9c13f9417` (código) y `f33fefc5f554b193a21a981622a732c541b50c18` (prueba).
+- CI y validación remota pendientes. Sin cambios a frontend, endpoints, propiedades Apps Script, permisos, deployments, Spreadsheet, Drive ni datos externos.
