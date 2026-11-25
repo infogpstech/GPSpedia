@@ -1080,3 +1080,6 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - CI 45544697384 SUCCESS: 523 suites, 6,226 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages 45544697351 SUCCESS.
 - Validación FEEDBACK/CATALOG con deployments y Spreadsheet Beta permanece pendiente; no hubo llamadas remotas ni despliegues Apps Script.
 - Observación separada: CATALOG aún lee la hoja FeedbackLikes completa al agrupar eventos; el volumen de lectura sigue siendo un riesgo de escala y se mantiene como pendiente independiente.
+
+
+2026-11-25 — Registro de tareas: copiar solo errores de consola (GP-DEV-LOG-ERRORS-01); resolver esquema AdminOperationGuards en auditoría Drive (GP-ADMIN-DRIVE-AUDIT-SCHEMA-01); modal de auditoría de cortes pasa a modo escaneo con imágenes incrementales y consola de progreso simultánea (GP-ADMIN-DRIVE-SCAN-MODAL-01); reconstrucción prioritaria de recordLike ante error persistente (GP-LIKE-REBUILD-01). Registro documental; implementación pendiente.
