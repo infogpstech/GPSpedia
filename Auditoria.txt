@@ -17,3 +17,5 @@
 2026-11-25 | GP-UTIL-VISUAL-02
 - Se reforzó feedback visual inmediato, aria-pressed y persistencia CSS de botón activo; prueba de contrato visual ampliada.
 - Validación local/CI pendiente.
+
+- CI intermedio detectó dos problemas de test (contrato LocalApiEndpoints aún refería al ADMIN anterior, y UsefulButtonState reportaba 5 tests pese a incorporar el sexto). Se alineó el endpoint esperado con la URL confirmada y se corrigió el resumen del test. CI del HEAD actual en ejecución; no marcar aprobación antes del resultado.
