@@ -9178,13 +9178,14 @@ export async function openAuditDriveModal(options = {}) {
             resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
         }
         if (auditButton) auditButton.disabled = isRunning || isDriveAuditRunning;
-        const canSaveInventory = complete && inventoryStatus !== 'saved' && inventoryStatus !== 'organized' &&
+        const canSaveInventory = complete && errorCount === 0 && unverifiableReferences === 0 &&
+            inventoryStatus !== 'saved' && inventoryStatus !== 'organized' &&
             allFiles.some(file => file.classification === 'Sin uso detectado');
         if (saveInventoryButton) {
             saveInventoryButton.hidden = !canSaveInventory;
             saveInventoryButton.disabled = isRunning || isDriveAuditRunning || !canSaveInventory;
         }
-        const canOrganize = complete && inventoryStatus === 'saved' &&
+        const canOrganize = complete && errorCount === 0 && unverifiableReferences === 0 && inventoryStatus === 'saved' &&
             !!inventoryAuditId && !!inventoryOperationId && inventoryConfirmedFileIds.length > 0;
         if (organizeButton) {
             organizeButton.hidden = !canOrganize;
@@ -9192,12 +9193,12 @@ export async function openAuditDriveModal(options = {}) {
         }
         if (reconcileButton) {
             reconcileButton.hidden = !complete;
-            reconcileButton.disabled = isRunning || isDriveAuditRunning || isReconciling || !complete;
+            reconcileButton.disabled = isRunning || isDriveAuditRunning || isReconciling || !complete || errorCount > 0 || unverifiableReferences > 0;
         }
         if (organizerPreviewButton) {
             organizerPreviewButton.hidden = !complete;
             organizerPreviewButton.disabled = isRunning || isDriveAuditRunning || isReconciling ||
-                isOrganizerPreviewRunning || !complete || !auditId;
+                isOrganizerPreviewRunning || !complete || errorCount > 0 || unverifiableReferences > 0 || !auditId;
         }
         updateReconciliationApprovalControls_();
         if (organizerHistoryButton) organizerHistoryButton.disabled = isRunning;
@@ -9448,7 +9449,8 @@ export async function openAuditDriveModal(options = {}) {
                 appendAuditConsole('No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».', 'success');
             }
             const hasUnusedImages = allFiles.some(file => file.classification === 'Sin uso detectado');
-            if (complete && hasUnusedImages) {
+            const scanHasErrors = errorCount > 0 || unverifiableReferences > 0;
+            if (complete && hasUnusedImages && !scanHasErrors) {
                 try {
                     const finalUnusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado').map(file => ({ fileId: String(file.fileId) }));
                     const finalInventory = await routeActionWithRetry('saveUnusedImagesInventory', {
@@ -9468,16 +9470,18 @@ export async function openAuditDriveModal(options = {}) {
                 }
                 if (!isCurrentRequest()) return;
             }
-            inventoryStatus = hasUnusedImages ? (inventoryOperationId ? 'saved' : 'not_saved') : 'saved';
-            inventoryMessage = hasUnusedImages
-                ? (inventoryOperationId
-                    ? 'Auditoría completa. Las imágenes sin uso fueron registradas automáticamente en la biblioteca.'
-                    : 'Auditoría completa. El inventario no se confirmó automáticamente; el registro manual sigue disponible.')
-                : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.';
+            inventoryStatus = scanHasErrors ? 'not_saved' : (hasUnusedImages ? (inventoryOperationId ? 'saved' : 'not_saved') : 'saved');
+            inventoryMessage = scanHasErrors
+                ? 'El recorrido terminó con ' + errorCount + ' errores y ' + unverifiableReferences +
+                    ' referencias no interpretables. Los resultados parciales se conservaron, pero no se confirmó el inventario ni se permite organizar o reconciliar imágenes. Inicia una auditoría nueva para verificar los elementos que no pudieron leerse.'
+                : (hasUnusedImages
+                    ? (inventoryOperationId
+                        ? 'Auditoría completa. Las imágenes sin uso fueron registradas automáticamente en la biblioteca.'
+                        : 'Auditoría completa. El inventario no se confirmó automáticamente; el registro manual sigue disponible.')
+                    : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.');
             await persistState('complete');
             if (!isCurrentRequest()) return;
-            updateSummary(inventoryMessage,
-                errorCount || unverifiableReferences ? "warning" : "success");
+            updateSummary(inventoryMessage, scanHasErrors ? "warning" : "success");
         } catch (error) {
             if (!isCurrentRequest()) return;
             const errorMessage = error && error.message ? error.message : String(error);

@@ -4976,6 +4976,7 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
     if (!/^[0-9a-f-]{36}$/i.test(auditId)) throw new Error("Ejecuta primero una auditoría Drive completa y envía su auditId.");
     const auditState = loadDriveAuditServerState_(auditId);
     if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
+        Number(auditState.errorCount || 0) > 0 || Number(auditState.unverifiableReferenceCount || 0) > 0 ||
         auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
         !Number.isFinite(Number(auditState.completedAt)) || Date.now() - Number(auditState.completedAt) > 21600000 ||
         getLatestDriveAuditIdForUser_(ownerId) !== auditId) {
@@ -5283,6 +5284,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
         );
         const auditState = loadDriveAuditServerState_(auditId);
         if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
+            Number(auditState.errorCount || 0) > 0 || Number(auditState.unverifiableReferenceCount || 0) > 0 ||
             auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
             !Number.isFinite(Number(auditState.completedAt)) || Date.now() - Number(auditState.completedAt) > 21600000 ||
             getLatestDriveAuditIdForUser_(ownerId) !== auditId) {
@@ -13520,8 +13522,8 @@ function getLatestDriveAuditIdForUser_(ownerId) {
     const row=findDriveAuditLatestRow_(getDriveAuditLatestSheet_(),hashDriveAuditValue_(owner));
     if(!row||row.ownerId!==owner)throw new Error("No existe una auditoría completa reciente para esta sesión. Ejecuta una auditoría nueva.");
     const state=loadDriveAuditServerState_(row.latestAuditId);
-    if(state.ownerId!==owner||state.status!=="complete")
-        throw new Error("El puntero latest no coincide con una auditoría completa de esta sesión.");
+    if(state.ownerId!==owner||state.status!=="complete"||Number(state.errorCount||0)>0||Number(state.unverifiableReferenceCount||0)>0)
+        throw new Error("El puntero latest no coincide con una auditoría completa y sin errores de esta sesión.");
     return row.latestAuditId;
 }
 function validateCompletedDriveAudit_(auditId, ownerId, files) {
@@ -13529,6 +13531,9 @@ function validateCompletedDriveAudit_(auditId, ownerId, files) {
     if (state.ownerId !== String(ownerId || "").trim()) throw new Error("La auditoría pertenece a otra sesión Desarrollador.");
     if (state.status !== "complete" || !Number.isFinite(Number(state.completedAt))) {
         throw new Error("ADMIN no ha confirmado que la auditoría esté completa. No se modificó el inventario.");
+    }
+    if (Number(state.errorCount || 0) > 0 || Number(state.unverifiableReferenceCount || 0) > 0) {
+        throw new Error("La auditoría terminó con errores o referencias no interpretables. No se permite consolidar ni reconciliar el inventario; ejecuta una auditoría nueva.");
     }
     if (Date.now() - Number(state.completedAt) > 21600000) throw new Error("La confirmación de auditoría expiró. Ejecuta una auditoría nueva.");
     const submittedIds = normalizeDriveAuditFileIds_(files);
@@ -13815,6 +13820,9 @@ function clearAuditDriveReferenceSnapshot(auditId) {
 function validateDriveAuditInventoryBatch_(auditId, ownerId, files) {
     const state = loadDriveAuditServerState_(auditId);
     if (state.ownerId !== String(ownerId || "").trim()) throw new Error("La auditoría pertenece a otra sesión Desarrollador.");
+    if (Number(state.errorCount || 0) > 0 || Number(state.unverifiableReferenceCount || 0) > 0) {
+        throw new Error("La auditoría ya registró errores o referencias no interpretables; se detuvo el registro incremental para evitar confirmar un inventario incompleto.");
+    }
     if (!["running", "complete"].includes(String(state.status || ""))) throw new Error("La auditoría no está activa o no ha sido confirmada.");
     const age = Date.now() - Number(state.updatedAt || state.createdAt || 0);
     if (!Number.isFinite(age) || age < -60000 || age > 21600000) throw new Error("La auditoría incremental expiró.");
@@ -14108,6 +14116,7 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     const auditState = loadDriveAuditServerState_(auditId);
     if (!ownerId || auditState.ownerId !== ownerId || auditState.status !== "complete" ||
+        Number(auditState.errorCount || 0) > 0 || Number(auditState.unverifiableReferenceCount || 0) > 0 ||
         !auditState.inventoryOperationId || !["partial", "complete"].includes(String(auditState.inventoryStatus || ""))) {
         throw new Error("La organización requiere una auditoría completa y una operación de inventario confirmada por ADMIN.");
     }
