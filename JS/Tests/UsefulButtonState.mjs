@@ -2,20 +2,27 @@ import assert from "node:assert/strict";import{readFileSync}from"node:fs";const 
  const start=ui.indexOf("function syncUsefulCount_"),end=ui.indexOf("\n",start);
  assert.ok(start>=0);
  const source=ui.slice(start,end>start?end:ui.indexOf("const usefulQueue_",start));
- const title={dataset:{usefulVehicleId:"V-1",usefulCutIndex:"2",usefulTitlePrefix:"Corte 2"},classList:{contains:()=>false},textContent:""};
+ const logic=new Function(state.replace(/^export\\s+/gm,"")+"\\nreturn {resolveUsefulDisplayCutIndex,applyOptimisticUsefulState,applyConfirmedUsefulState};")();
+ const vehicle={id:"V-1",sourceCorteIndex1:2,sourceCorteIndex2:1,utilCorte1:3,utilCorte2:7};
+ assert.equal(logic.resolveUsefulDisplayCutIndex(vehicle,1),2);
+ const optimistic=logic.applyOptimisticUsefulState({likedCortes:[],catalogData:{cortes:[vehicle]}},"V-1",1,true);
+ assert.equal(optimistic.catalogData.cortes[0].utilCorte2,8);
+ const confirmed=logic.applyConfirmedUsefulState(optimistic,"V-1",1,{isUseful:true,usefulCount:9,corteIndex:1});
+ assert.equal(confirmed.catalogData.cortes[0].utilCorte2,9);
+ const title={dataset:{usefulVehicleId:"V-1",usefulCutIndex:"1",usefulTitlePrefix:"Corte 2"},classList:{contains:()=>false},textContent:""};
  const textNode={nodeType:3,textContent:"old"},iconNode={nodeType:1,textContent:"thumb"};
- const accordion={dataset:{usefulVehicleId:"V-1",usefulCutIndex:"2",usefulTitlePrefix:"Corte 2"},classList:{contains:name=>name==="accordion-btn"},childNodes:[textNode,iconNode]};
+ const accordion={dataset:{usefulVehicleId:"V-1",usefulCutIndex:"1",usefulTitlePrefix:"Corte 2"},classList:{contains:name=>name==="accordion-btn"},childNodes:[textNode,iconNode]};
  const usefulButton={textContent:"thumb",icon:"thumb",classList:{contains:()=>false}};
  let selector="";
  const document={querySelectorAll(value){selector=value;return [title,accordion];}};
- const sync=new Function("getState","resolveUsefulDisplayCutIndex","document",source+"\nreturn syncUsefulCount_;")(
-  ()=>({catalogData:{cortes:[{id:"V-1",utilCorte2:7}]}}),()=>2,document);
- sync("V-1",2);
+ const sync=new Function("getState","resolveUsefulDisplayCutIndex","document",source+"\\nreturn syncUsefulCount_;")(
+  ()=>confirmed,logic.resolveUsefulDisplayCutIndex,document);
+ sync("V-1",1);
  assert.ok(selector.includes(".accordion-btn[data-useful-vehicle-id]"));
  assert.ok(selector.includes(".detail-section-heading[data-useful-vehicle-id]"));
  assert.ok(!selector.includes(".util-btn"));
- assert.equal(title.textContent,"Corte 2 · Útiles: 7");
- assert.equal(textNode.textContent,"Corte 2 (Útiles: 7) ");
+ assert.equal(title.textContent,"Corte 2 · Útiles: 9");
+ assert.equal(textNode.textContent,"Corte 2 (Útiles: 9) ");
  assert.equal(iconNode.textContent,"thumb");
  assert.equal(usefulButton.textContent,"thumb");
 });
