@@ -2821,11 +2821,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
         const logoRect = titleContainer.getBoundingClientRect();
         const titleStart = logoImg && logoImg.isConnected ? logoRect.right + 6 : headerDiv.getBoundingClientRect().left;
-        const actionButtons = Array.from(headerActions.querySelectorAll("button"));
-        const firstActionLeft = actionButtons.length
-            ? Math.min(...actionButtons.map(button => button.getBoundingClientRect().left))
-            : headerDiv.getBoundingClientRect().right;
-        const availableTitleWidth = Math.max(0, firstActionLeft - titleStart);
+        // Las acciones están en la primera fila; el título ocupa la segunda
+        // y puede utilizar todo el ancho restante después del logo.
+        const availableTitleWidth = Math.max(0, headerDiv.getBoundingClientRect().right - titleStart);
         if (naturalTitleWidth > availableTitleWidth + 0.5) {
             headerDiv.setAttribute("data-model-title-layout", "below-logo");
         } else {
