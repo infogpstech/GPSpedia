@@ -968,3 +968,15 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Evidencia CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos; `LocalApiEndpoints` 10/10, `ServiceHealthContract` 19/19 y `MIG009FrontendActionRouter` 5/5.
 - MIG-URL-003 cerrada. Se inicia MIG-URL-004: retirar las acciones/lectores/publicadores centrales dedicados a URLs sin eliminar la configuración central de parámetros no relacionados (incluido `rich_text_mode`).
 - No se modificaron deployments Apps Script, URLs reales, propiedades, permisos, Spreadsheet ni datos externos.
+
+
+## 2026-11-25 — MIG-URL-004..007: retiro de registro central y regresión completa
+
+- Retiradas las acciones AUTH `getCentralServiceUrls` y `updateCentralServiceUrls`, handlers, publicador de URLs y borrador de publicación. Eliminado `CENTRAL_CONFIGURATION_BOOTSTRAP_URL`; la lectura pública de parámetros funcionales usa la URL AUTH local en `API_ENDPOINTS`.
+- `CentralConfigurationReader` ya no lee la hoja `Servicios` ni devuelve endpoints. Se mantiene la lectura de parámetros funcionales y recursos. La caché frontend solo almacena parámetros públicos; no conoce servicios ni URLs.
+- Retirada la tarjeta/editor de endpoints del panel Developer y sus ayudas contextuales. Se conserva el resto de herramientas y el health scan usa directamente `API_ENDPOINTS`. El script remoto `RemoteServiceHealth.mjs` exige confirmación explícita de Beta aislada antes de realizar GET.
+- `initializeCentralConfigurationSheets` ya no crea la hoja `Servicios`; una prueba verifica que si existe como legado se conserva sin leerla ni escribirla. No se borró ninguna hoja, fila ni deployment.
+- Mapa de acciones actualizado: 123 acciones (AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1, ADMIN 45).
+- CI run `45519738860`, commit `1d25c64a798fb343b15e61658946243314ffbe91`: 519 suites, 6,181 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Sintaxis 469 archivos JS/MJS y referencias relativas de 389 archivos aprobadas.
+- MIG-URL-004, 005, 006 y 007 cerradas. MIG-URL-008 permanece pendiente de autorización y confirmación de Beta aislada. No se ejecutó ninguna petición a los seis deployments reales.
+- GitHub Pages build/deployment se ejecutó automáticamente por el push y finalizó SUCCESS; no se ejecutó ningún despliegue Apps Script.

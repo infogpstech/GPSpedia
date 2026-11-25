@@ -4,7 +4,7 @@ Fecha de registro: 2026-11-24
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5` — no modificar.  
-Estado global: **EN PROGRESO**  
+Estado global: **EN PROGRESO — MIG-URL-008 pendiente de autorización Beta**  
 Alcance exclusivo: tareas MIG-URL-001 a MIG-URL-008 de este documento.
 
 ## Objetivo y decisión arquitectónica
@@ -45,33 +45,37 @@ Se actualizó `NORMAS_DESAROLLO.md` §§17.1 y 18 para establecer el patrón de 
 **Estado: COMPLETADA — 2026-11-25.**  
 **Dependencia:** MIG-URL-002.  
 **Alcance:** establecer en `JS/Frontend/api-config.js` el objeto único `API_ENDPOINTS` con las seis URLs verificadas; adaptar la resolución de acciones conservando `ACTION_TO_SERVICE_MAP`, contratos, métodos, parámetros, manejo de errores, timeout y cancelación. Validar URLs al iniciar/resolver, con fallo explícito y controlado ante configuración ausente o inválida; no fallback remoto.  
-**Implementación:** `API_ENDPOINTS` contiene únicamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN con los seis valores confirmados por el propietario. El router y el health scan resuelven el endpoint local; el bootstrap remoto no interviene en el enrutamiento. `ACTION_TO_SERVICE_MAP` conserva las 125 acciones.
-**Evidencia:** `LocalApiEndpoints.mjs` 10/10 PASS; `ServiceHealthContract.mjs` 19/19 PASS; `MIG009FrontendActionRouter.mjs` 5/5 PASS; regresión CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos. Se corrigieron contratos heredados para comprobar la nueva resolución local, sin eliminar comprobaciones de handlers ni cobertura funcional. La caché/consulta de configuración central se mantiene temporalmente solo para parámetros no relacionados con URLs (por ejemplo, `rich_text_mode`); su separación y retiro de toda gestión de URLs corresponde a MIG-URL-004.
+**Implementación:** `API_ENDPOINTS` contiene únicamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN con los seis valores confirmados por el propietario. El router y el health scan resuelven el endpoint local; el bootstrap remoto no interviene en el enrutamiento. `ACTION_TO_SERVICE_MAP` conserva las 123 acciones vigentes.
+**Evidencia:** `LocalApiEndpoints.mjs` 10/10 PASS; `ServiceHealthContract.mjs` 19/19 PASS; `MIG009FrontendActionRouter.mjs` 5/5 PASS; regresión CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos. Se corrigieron contratos heredados para comprobar la nueva resolución local, sin eliminar comprobaciones de handlers ni cobertura funcional. La caché/consulta central se conserva solo para parámetros no relacionados con URLs (por ejemplo, `rich_text_mode`), consultados a través de `API_ENDPOINTS.AUTH`.
 **Criterio de cierre:** cada acción mapeada resuelve el servicio local correcto; no hay fallback remoto ni consulta central para obtener URLs; las pruebas locales y regresión quedaron aprobadas.
 
 ### MIG-URL-004 — Retirar el sistema central de configuración de endpoints
-**Estado: EN PROGRESO — 2026-11-25.**  
+**Estado: COMPLETADA — 2026-11-25.**  
 **Dependencia:** MIG-URL-003.  
-**Alcance:** inventariar consumidores y retirar únicamente las rutas/funciones/lectores/escritores/cache/bootstrap de URLs centrales que hayan quedado sin uso. Revisar frontend, Apps Script y pruebas. Mantener cualquier configuración central no relacionada con URLs de servicios. No borrar acciones/archivos con consumidores vigentes.  
-**Criterio de cierre:** cero consumidores activos del registro central de URLs, bootstrap, publicación o actualización; no se retira funcionalidad ajena.
+**Implementación:** eliminadas las acciones AUTH `getCentralServiceUrls`/`updateCentralServiceUrls`, sus handlers y el publicador/borrador de URLs; retirado `CENTRAL_CONFIGURATION_BOOTSTRAP_URL` y las funciones frontend de carga/guardado de endpoints. `CentralConfigurationReader` ya no lee `Servicios` ni proyecta endpoints. La lectura pública de parámetros continúa usando la URL AUTH de `API_ENDPOINTS`; la caché conserva solo parámetros públicos.
+**Evidencia:** `MIGURL004CentralEndpointRetirement` 10/10 PASS; `MIG008CentralConfigurationReader` 10/10 PASS; paridad exacta `Auth.js`/fixture. La funcionalidad de parámetros y recursos se mantuvo.
+**Criterio de cierre:** cero consumidores activos del registro central de URLs, bootstrap, publicación o actualización; cumplido.
 
 ### MIG-URL-005 — Adaptar panel Developer y diagnóstico de salud
-**Estado: PENDIENTE.**  
-**Dependencia:** MIG-URL-003; MIG-URL-004 cuando retire el contrato de publicación.  
-**Alcance:** retirar interfaz, handlers y mensajes para editar/publicar URLs; conservar escaneo de salud, latencia, estado individual, errores y demás herramientas Developer. El escaneo debe consultar directamente las URLs locales.  
+**Estado: COMPLETADA — 2026-11-25.**  
+**Dependencia:** MIG-URL-003 y MIG-URL-004.  
+**Implementación:** retirados la tarjeta de endpoints, su editor, handlers frontend y ayudas contextuales. Se conservaron las demás herramientas Developer y el escaneo de salud; router y health scan resuelven las seis direcciones desde `API_ENDPOINTS`. `RemoteServiceHealth.mjs` también lee el mapa local y exige confirmación explícita de Beta aislada antes de realizar GET.
+**Evidencia:** `DeveloperPanelCopy` 9/9 PASS; `ServiceHealthContract` 19/19 PASS; `LocalApiEndpoints` 10/10 PASS; `MIG009FrontendActionRouter` 5/5 PASS. No se ejecutó health remoto.
 **Criterio de cierre:** no existe edición/publicación de endpoints desde la plataforma; diagnóstico de los seis servicios sigue disponible y probado.
 
 ### MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet
-**Estado: PENDIENTE.**  
+**Estado: COMPLETADA — 2026-11-25.**  
 **Dependencia:** MIG-URL-004 y MIG-URL-005.  
-**Alcance:** localizar hojas, encabezados, revisiones, historial y escrituras dedicadas a URLs; confirmar que no quedan consumidores ni procesos operativos. Retirar solo código consumidor/documentación obsoleta. No eliminar físicamente hojas, registros o datos sin autorización expresa y evidencia de paridad.  
-**Criterio de cierre:** la plataforma no lee ni escribe URLs en Spreadsheet; cualquier dato histórico se conserva hasta autorización de purga.
+**Implementación:** el lector central no accede a la hoja `Servicios`; el inicializador AUTH ya no la crea ni la requiere. No quedan funciones de publicación/escritura de URLs. La hoja y sus registros existentes se conservaron intactos; no se realizó purga física.
+**Evidencia:** `MIG008CentralConfigurationReader` 10/10 PASS; `CentralConfigurationInitializer` 8/8 PASS, incluida la preservación de una hoja histórica `Servicios` sin escritura.
+**Criterio de cierre:** la plataforma no lee ni escribe URLs en Spreadsheet; cumplido, datos históricos preservados.
 
 ### MIG-URL-007 — Pruebas locales, contratos y regresión
-**Estado: PENDIENTE.**  
+**Estado: COMPLETADA — 2026-11-25.**  
 **Dependencia:** MIG-URL-003..006.  
-**Alcance:** pruebas de resolución de seis URLs, cobertura del mapa de acciones, ausencia de bootstrap/consultas centrales/fallback, escaneo de salud, errores de configuración, login, catálogo, operaciones multi-servicio, Developer y suites de regresión pertinentes. Inspeccionar seguridad, contratos y diff.  
-**Criterio de cierre:** pruebas locales pertinentes aprobadas y cobertura de regresión sin pérdida de funciones. Las pruebas que requieran servicios desplegados quedan explícitamente diferidas a Beta.
+**Evidencia principal:** CI run `45519738860`, commit `1d25c64a798fb343b15e61658946243314ffbe91`: **519 suites, 6,181 pruebas aprobadas, 0 fallos**; responsive-browser SUCCESS. Sintaxis: 469 archivos JS/MJS; referencias relativas: 389 archivos inspeccionados y resueltos. Contratos relevantes: `MIGURL004CentralEndpointRetirement` 10/10, `LocalApiEndpoints` 10/10, `ServiceHealthContract` 19/19, `DeveloperPanelCopy` 9/9, `MIG029DeploymentGuideContract` 16/16 y `ServiceCallGraphContract` 9/9.
+**Alcance de evidencia:** la regresión local cubre mapa de 123 acciones, router, health scan, parámetros centrales, RBAC, login, catálogo, operaciones multi-servicio y Developer. No se realizaron llamadas a deployments reales; esas comprobaciones permanecen diferidas a Beta.
+**Criterio de cierre:** pruebas locales pertinentes aprobadas y cobertura de regresión sin pérdida de funciones; cumplido.
 
 ### MIG-URL-008 — Validación Beta aislada y cierre del plan
 **Estado: PENDIENTE.**  
@@ -92,4 +96,4 @@ Se actualizó `NORMAS_DESAROLLO.md` §§17.1 y 18 para establecer el patrón de 
 
 ## Estado y continuidad
 
-MIG-URL-001, MIG-URL-002 y MIG-URL-003 están cerradas. MIG-URL-004 es la única tarea activa. La comprobación de identidad/health de deployments queda diferida a MIG-URL-008; no ejecutar llamadas remotas antes de Beta aislada autorizada. El orden obligatorio es MIG-URL-001 → MIG-URL-002 → MIG-URL-003 → MIG-URL-004 → MIG-URL-005 → MIG-URL-006 → MIG-URL-007 → MIG-URL-008, respetando dependencias explícitas. No adelantar eliminaciones que dependan de una configuración local probada. El checkpoint vigente determina el punto exacto de continuidad.
+MIG-URL-001 a MIG-URL-007 están cerradas. MIG-URL-008 es la única tarea restante y está pendiente de autorización/confirmación de Beta aislada. No ejecutar GET remotos ni pruebas funcionales sobre las seis URLs hasta recibir esa confirmación. El orden obligatorio es MIG-URL-001 → MIG-URL-002 → MIG-URL-003 → MIG-URL-004 → MIG-URL-005 → MIG-URL-006 → MIG-URL-007 → MIG-URL-008, respetando dependencias explícitas. No adelantar eliminaciones que dependan de una configuración local probada. El checkpoint vigente determina el punto exacto de continuidad.

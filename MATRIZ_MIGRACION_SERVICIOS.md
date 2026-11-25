@@ -1399,7 +1399,7 @@ Cinco acciones vigentes no aparecían en la tabla histórica de §9 y se agregan
 
 | Acción | Servicio | Handler / ejecución | Consumidor / finalidad |
 |---|---|---|---|
-| `getPublicConfiguration` | AUTH | Ruta pública de configuración en `doPost` | `api-config.js`; bootstrap de lectura de configuración central, sin credenciales de usuario. |
+| `getPublicConfiguration` | AUTH | Ruta pública de configuración en `doPost` | `api-config.js`; consulta parámetros públicos mediante `API_ENDPOINTS.AUTH`, sin bootstrap separado. |
 | `publishCatalogReset` | CATALOG | `publishCatalogResetForActor_` | Coordinación desde `api-config.js` después de mutaciones que requieren reconciliación completa del catálogo. |
 | `invalidateRichTextModeCache` | FEEDBACK | Ruta de invalidación protegida para Desarrollador | `api-config.js`; invalidación de caché local después de publicar la preferencia global desde ADMIN. |
 

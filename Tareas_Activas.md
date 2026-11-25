@@ -11,13 +11,12 @@ Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 
 - MIG-URL-001 — Alinear normativa y registrar el plan: **COMPLETADA — 2026-11-24**.
 - MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **COMPLETADA — 2026-11-24**; seis valores confirmados directamente por el usuario y validados estructuralmente. Salud/identidad remota diferida a MIG-URL-008.
-- MIG-URL-003 — Implementar `API_ENDPOINTS` local y resolución: **COMPLETADA — 2026-11-25**; seis URLs del propietario, router/health locales; CI 45515563540, 518 suites y 6,170 pruebas, 0 fallos.
-- MIG-URL-004 — Retirar configuración central de endpoints: **EN PROGRESO — ÚNICA TAREA ACTIVA**.
-- MIG-URL-004 — Retirar configuración central de endpoints: **PENDIENTE**.
-- MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **PENDIENTE**.
-- MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet: **PENDIENTE**.
-- MIG-URL-007 — Pruebas locales, contratos y regresión: **PENDIENTE**.
-- MIG-URL-008 — Validación Beta aislada y cierre: **PENDIENTE**.
+- MIG-URL-003 — Implementar `API_ENDPOINTS` local y resolución: **COMPLETADA — 2026-11-25**; seis URLs locales, 123 acciones y router/health locales.
+- MIG-URL-004 — Retirar configuración central de endpoints: **COMPLETADA — 2026-11-25**; sin bootstrap, lector ni publicador central de URLs.
+- MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **COMPLETADA — 2026-11-25**; editor retirado, health local conservado.
+- MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet: **COMPLETADA — 2026-11-25**; hoja histórica preservada sin lectura/escritura.
+- MIG-URL-007 — Pruebas locales, contratos y regresión: **COMPLETADA — CI 45519738860; 519 suites, 6,181 pruebas, 0 fallos; responsive-browser SUCCESS**.
+- MIG-URL-008 — Validación Beta aislada y cierre: **PENDIENTE DE AUTORIZACIÓN — ÚNICA TAREA RESTANTE**.
 
 La configuración local debe reproducir el patrón de la rama protegida `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` editado manualmente en `JS/Frontend/api-config.js`, con `ACTION_TO_SERVICE_MAP` para el enrutamiento. No usar `SERVICE_ENDPOINTS` como tabla paralela ni inventar otro administrador de URLs.
 
@@ -79,7 +78,7 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 
 ## Siguiente paso operativo
 
-La única actividad autorizada es **MIG-URL-004 — Retirar el sistema central de configuración de endpoints**, conforme a `Migracion_URL_Servicios_Frontend.md`. No ejecutar las validaciones Beta ni ninguna otra tarea fuera de MIG-URL-001..008 mientras este plan permanezca abierto.
+La única tarea restante del plan es **MIG-URL-008 — Validación Beta aislada y cierre**, pendiente de que el propietario confirme que las seis URLs corresponden a una Beta aislada y autorice las peticiones GET de salud. No ejecutar validaciones remotas sobre producción ni tareas ajenas al plan.
 
 
 ## Plan MIG-URL — registro de tareas y exclusividad — 2026-11-24

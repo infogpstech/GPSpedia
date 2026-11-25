@@ -16,10 +16,14 @@ La integración Google Drive/Sheets sigue sin estar disponible, por lo que no se
 
 | Fuente | Evidencia | Resultado |
 |---|---|---|
-| `JS/Frontend/api-config.js` | SHA `0c521c2726ef3961d70cd111d6022d79553bdcbc` | Contiene las seis URLs en `API_ENDPOINTS`; el bootstrap separado fue retirado. La lectura de parámetros públicos usa la misma URL local de AUTH. |
-| `JS/Services/Auth.js` | SHA `b6d3cc91ee772a151b8cee9a9bf8f8b3758c5a30` | Define seis claves y el esquema de publicación/lectura de endpoints en Spreadsheet; no contiene valores operativos de deployments. |
-| `JS/Services/CentralConfigurationReader.js` | SHA `d7e77e60b41c6d8bde924281e9ba31780b9f9086` | Lee parámetros funcionales y recursos; no consulta la hoja histórica Servicios ni proyecta URLs. |
-| `Services/DEPLOYMENT_GUIDE.md` | SHA `26ad298f019ac96f3dc5cd0b9f9f551f1f5591c9` | Confirma el flujo de configuración central y el procedimiento de actualización; no registra las URLs concretas. |
+| `JS/Frontend/api-config.js` | SHA `875e1f5117a8901352d62d112b583f3feccf0a2f` | Contiene las seis URLs en `API_ENDPOINTS`; el bootstrap separado fue retirado. La lectura de parámetros públicos usa la misma URL local de AUTH. |
+| `JS/Services/Auth.js` | SHA `2a0a779a8f8a2cf8ba644218176fa6b9929073c1` | Conserva getPublicConfiguration para parámetros funcionales; ya no administra endpoints ni crea/lee la hoja Servicios. |
+| `JS/Services/CentralConfigurationReader.js` | SHA `f8e99730ee7c5a3dec8e37d1f8bd2c1368c72fac` | Lee parámetros funcionales y recursos; no consulta la hoja histórica Servicios ni proyecta URLs. |
+| `Services/DEPLOYMENT_GUIDE.md` | SHA `40d071dbf2a139d71a79072f043b0db6057a988c` | Documenta actualización manual en API_ENDPOINTS, ausencia de bootstrap/editor central y health remoto protegido para Beta. |
+| `JS/Frontend/centralConfigurationCache.js` | SHA `3f6e77b79fc5a24c3d24559e55dbcae1b582d364` | Caché de parámetros públicos únicamente; no almacena endpoints. |
+| `JS/Frontend/ui.js` | SHA `4db0659531b16a1f37510105e664aa68a91763ed` | Sin editor de URLs; conserva herramientas Developer y health scan local. |
+| `index.html` | SHA `de6826cb5f5cc7ad936cba5278c5da14eaa56768` | Se retiró la tarjeta de administración de endpoints. |
+| `JS/Tests/RemoteServiceHealth.mjs` | SHA `8e01e515d9407e28dbdbe449f975970c58a087d9` | Lee API_ENDPOINTS y exige confirmación de Beta aislada antes de GET. |
 | `GPSpedia2.2.5:api-config.js` | SHA `f70f4703945caf225fd2e5952f479950e4297f36` | Contiene URLs estáticas históricas para AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN, pero también rutas LEGACY/USERS y un mapa de acciones antiguo. No demuestra que los seis deployments sigan vigentes. |
 | Google Spreadsheet central | Requerida para leer la revisión activa | No accesible desde las herramientas disponibles en esta sesión; el conector Google Drive/Sheets está deshabilitado por administración. |
 

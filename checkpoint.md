@@ -1,10 +1,10 @@
 # GPSpedia — Checkpoint de continuidad
 
-Fecha: 2026-11-24
+Fecha: 2026-11-25
 Repositorio: `infogpstech/GPSpedia`
 Rama autorizada: `GPSpedia2.2.5_work`
 Rama base protegida: `GPSpedia2.2.5` — no modificar.
-HEAD de trabajo antes del commit de checkpoint: `47173fafc9bfa3b109175fbb9b10331a2df1eb0d`
+HEAD de trabajo revisado antes de esta actualización: `1d25c64a798fb343b15e61658946243314ffbe91`
 HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Reglas de continuidad
@@ -16,11 +16,16 @@ HEAD de rama base verificado: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`
 
 ## Migración de URLs de servicios — estado vigente (2026-11-25)
 
-- Plan exclusivo: `Migracion_URL_Servicios_Frontend.md`; única tarea activa: MIG-URL-004.
-- MIG-URL-001..003 cerradas. El propietario confirmó seis URLs; `API_ENDPOINTS` local ya alimenta router y health scan. Seis endpoints estructuralmente válidos, IDs únicos; disponibilidad/identidad remota no comprobada y diferida a MIG-URL-008.
-- CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos; LocalApiEndpoints 10/10, ServiceHealthContract 19/19, MIG009FrontendActionRouter 5/5.
-- MIG-URL-004 debe retirar exclusivamente la administración/lectura/publicación central de URLs. Preservar la configuración central de parámetros no relacionados (por ejemplo `rich_text_mode`), las funciones Developer ajenas y los datos/hojas históricos. No borrar pestañas ni registros de Spreadsheet.
-- Rama de trabajo HEAD al registrar: `40da3c075929979861babe01b4fc1d5e2b41ddfe`; rama base protegida no modificar. No desplegar Apps Script ni invocar endpoints reales.
+- Plan exclusivo: `Migracion_URL_Servicios_Frontend.md`; única tarea restante: MIG-URL-008, pendiente de autorización Beta aislada.
+- MIG-URL-001..007 cerradas. Seis URLs confirmadas directamente por el propietario en `API_ENDPOINTS`; router, health scan y coordinación frontend usan configuración local. Mapa vigente: 123 acciones.
+- Retirados: bootstrap separado, acciones/handlers de administración de URLs en AUTH, publicador, lector de `Servicios`, editor Developer y caché de endpoints. La configuración central de parámetros/recursos permanece; la consulta pública usa `API_ENDPOINTS.AUTH`.
+- Spreadsheet: el código no lee ni escribe la hoja histórica `Servicios`; el inicializador no la crea. La hoja y registros existentes no se borraron ni modificaron.
+- CI run `45519738860`, commit `1d25c64a798fb343b15e61658946243314ffbe91`: 519 suites, 6,181 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Sintaxis 469 archivos JS/MJS; referencias relativas 389 archivos.
+- Contratos destacados: MIGURL004 10/10; LocalApiEndpoints 10/10; ServiceHealthContract 19/19; DeveloperPanelCopy 9/9; MIG029 16/16; ServiceCallGraph 9/9.
+- No se hicieron GET a los seis deployments, no se desplegaron proyectos Apps Script y no se escribieron/eliminaron datos Spreadsheet. El script RemoteServiceHealth exige confirmación explícita de Beta aislada.
+- El workflow GitHub Pages build/deployment se disparó automáticamente por los commits y finalizó SUCCESS; es independiente de Apps Script.
+- Rama base protegida `GPSpedia2.2.5` permanece sin cambios; SHA conocido: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
 
 ## Estado de tareas
 - MIG-001 a MIG-030: implementación y validación local cerradas según sus criterios. Las validaciones externas se marcan como diferidas a Beta cuando requieren recursos/despliegues reales.
