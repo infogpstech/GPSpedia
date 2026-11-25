@@ -7027,3 +7027,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #audit-drive-results-container { min-height:120px; max-height:40vh !important; overflow:auto; }
 @media (max-width:600px) { #audit-drive-scan-workspace,#audit-drive-scan-console { max-height:26vh; } #audit-drive-results-container { max-height:34vh !important; } }
 @media (prefers-reduced-motion:reduce) { #audit-drive-scan-console { scroll-behavior:auto; } }
+
+/* Feedback visual inmediato y persistente del estado útil */
+.feedback-btn-overlay.util-btn { transition: background-color .2s ease, transform .18s ease, box-shadow .18s ease; }
+.feedback-btn-overlay.util-btn.liked, .feedback-btn-overlay.util-btn.liked:hover { background-color: var(--gp-color-success) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gp-color-success) 35%, transparent); }
+.feedback-btn-overlay.util-btn.liked:active { transform: scale(.94); }
