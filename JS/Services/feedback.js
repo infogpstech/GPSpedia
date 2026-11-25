@@ -853,7 +853,7 @@ function doPostInternal_(e) {
 
         response = attachFeedbackCatalogChange_(action, payload, response);
     } catch (error) {
-        response = { status: 'error', message: error.message };
+        response = { status: 'error', message: error.message, ...(error && error.code === 'LIKE_LOCK_BUSY' ? { code: 'LIKE_LOCK_BUSY' } : {}) };
     }
     return ContentService.createTextOutput(JSON.stringify(response))
         .setMimeType(ContentService.MimeType.TEXT);
@@ -1981,7 +1981,11 @@ function buildFeedbackLikeActorKey_(userId) {
 function withFeedbackLikeLock_(operation) {
     if (typeof operation !== "function") throw new TypeError("La operación de útil no es válida.");
     const lock = LockService.getScriptLock();
-    if (!lock.tryLock(10000)) throw new Error("El registro de útiles está ocupado; inténtalo de nuevo.");
+    if (!lock.tryLock(0)) {
+        const busyError = new Error("El registro de útiles está en curso.");
+        busyError.code = "LIKE_LOCK_BUSY";
+        throw busyError;
+    }
     try {
         return operation();
     } finally {
