@@ -20,7 +20,22 @@ const appendStart = auditUi.indexOf("const appendAuditConsole =");
 const appendEnd = auditUi.indexOf("\n\n    const appendFiles", appendStart);
 assert.ok(appendStart >= 0 && appendEnd > appendStart, "debe existir el adaptador de salida del escáner");
 const appendSource = auditUi.slice(appendStart, appendEnd);
-const logged = [];
+// Mock DOM mínimo para el espejo integrado; la prueba no requiere navegador real.
+const previousDocument = globalThis.document;
+const logEntries = [];
+const mockScanConsole = {
+  appendChild(entry) { logEntries.push(entry); },
+  get childElementCount() { return logEntries.length; },
+  get firstElementChild() { return logEntries[0] || null; },
+  scrollHeight: 100,
+  scrollTop: 0
+};
+Object.defineProperty(mockScanConsole.firstElementChild || {}, 'remove', { value: () => {} });
+globalThis.document = {
+  getElementById(id) { return id === 'audit-drive-scan-console' ? mockScanConsole : null; },
+  createElement() { return { className: '', textContent: '' }; }
+};
+\nconst logged = [];
 const append = new Function("isCurrentRequest", "logDeveloperOperation_",
     appendSource + "\nreturn appendAuditConsole;"
 )(() => true, (message, level) => logged.push({ message, level }));
@@ -63,4 +78,4 @@ assert.ok(auditUi.includes("if (resumeButton) resumeButton.onclick = () => runAu
 assert.ok(auditUi.includes("const hasResumableCursor = !complete && !!cursor && !resumeUnavailable"),
     "el botón de reanudación sigue dependiendo del cursor válido");
 assert.ok(auditUi.includes("cursor = response.cursor || null"), "se conserva el cursor del servidor");
-console.log("AdminDriveAuditGlobalConsole: 1/1 PASS — logger global, resultados y reanudación conservados");
+if (previousDocument === undefined) delete globalThis.document; else globalThis.document = previousDocument;\nconsole.log("AdminDriveAuditGlobalConsole: 1/1 PASS — logger global, resultados y reanudación conservados");
