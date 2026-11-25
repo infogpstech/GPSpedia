@@ -103,3 +103,18 @@
 - Ubicación: JS/Frontend/ui.js, syncUsefulCount_.
 - Evidencia: el selector genérico `[data-useful-vehicle-id][data-useful-cut-index]` incluía tanto encabezados como botones `.util-btn`; el fallback asignaba `textContent` y eliminaba el icono del botón.
 - Corrección: limitar la selección a encabezados `.accordion-btn` y `.detail-section-heading`. Regresión `UsefulButtonState.mjs` 9/9; CI `45719961761` SUCCESS.
+
+
+2026-11-25 | Incidencia #130 — snapshot Drive sin ubicaciones de referencia persistidas
+- Severidad: media-alta (trazabilidad de imágenes y calidad del inventario).
+- Ubicación: JS/Services/admin.js, handleAuditDriveImagesInCortesCore_, validateAuditDriveReferenceSnapshot_, storeDriveAuditSeenPage_, loadDriveAuditFileMetadata_.
+- Evidencia: la captura inicial usaba `collectActiveDriveReferences(false)`; el snapshot guardaba solo IDs. El escáner buscaba un Map no serializado y la página de metadatos descartaba `referenceLocations`. La UI esperaba ubicaciones para mostrar vehículo, fila y campo.
+- Corrección: captura detallada; snapshot JSON `referenceLocationsById` limitado a `Cortes`; normalización/validación de ubicación; persistencia y read-back de referencias en páginas y `referencias_catalogo_json`. Regresiones: ReferenceSnapshot 14/14, ReferenceLocations 6/6, MetadataPersistence 11/11.
+- Compatibilidad: se elevó ADMIN fuente a 2.7.2; estados/cursor 2.7.1 no se usan para continuar ni para operaciones finales. Se requiere auditoría nueva. No hubo despliegue.
+
+2026-11-25 | Incidencia #130 — cobertura de cursor y reanudación
+- Se añadieron pruebas de fingerprint de cursor, rechazo de cursor incompleto/antiguo, deduplicación global de IDs por páginas, renovación/validación de cache, detección de página ausente/corrupta, replay idempotente y orden de persistencia de respuesta/estado.
+- Evidencia: `AdminDriveAuditCursorRecovery` 23/23 y `AdminDriveAuditClientRetry` (reintentos, payload estable, cancelación y timeout).
+
+2026-11-25 | Incidencia #130 — verificación integral de esta iteración
+- CI `45721749765` SUCCESS: 542 suites, 6,447 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Commit `bdb201ab0c6c2c76264a7c083bd5625cc6a1172b`.

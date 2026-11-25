@@ -1315,3 +1315,15 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 2026-11-25 — Validación CI de integridad #130
 - Run `45719961761`, commit `6824868691bf901109f8e62e6517d0f50101fa22`: 540 suites, 6,401 pruebas aprobadas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS.
 - No hubo despliegues Apps Script ni operaciones reales sobre Drive/Spreadsheet.
+
+
+2026-11-25 — Incidencia #130 — referencias Drive y cursor
+- El escáner captura ubicaciones de referencias de `Cortes` en un snapshot serializable `referenceLocationsById`; las páginas de metadatos conservan `referenceLocations` y el inventario puede escribir `referencias_catalogo_json` con datos de vehículo, fila y campo.
+- Se añadió normalización/validación de ubicaciones y pruebas de snapshot, carga, persistencia y read-back.
+- Se elevó `ADMIN_SERVICE_VERSION` a `2.7.2`; auditorías/cursor previos se rechazan para operaciones finales y requieren nueva auditoría.
+- Se añadieron pruebas de cursor/fingerprint, deduplicación global, cache TTL, páginas faltantes/corruptas, replay y orden de persistencia.
+
+2026-11-25 — Incidencia #130 — regresión final
+- ReferenceSnapshot 14/14; ReferenceLocations 6/6; CursorRecovery 23/23; MetadataPersistence 11/11; ScanIntegrity 18/18; IncrementalInventory 35/35; ReplacedImagesIntegrity 64/64; UsefulButtonState 9/9.
+- CI `45721749765`: 542 suites, 6,447 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS.
+- Cambios solo en fuente y pruebas de la rama de trabajo. Sin despliegues Apps Script ni operaciones reales sobre Drive/Spreadsheet.

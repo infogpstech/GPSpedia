@@ -588,3 +588,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **Regresiones:** `AdminDriveScanIntegrity.mjs` 15/15; `AdminIncrementalInventory.mjs` 35/35; `UsefulButtonState.mjs` 9/9. Todas integradas en `RunServiceTests.mjs`.
 - **Recuperación de CI:** la ejecución `45719860942` detectó una expectativa obsoleta en `AdminIncrementalInventory.mjs`; se actualizó el test para el contrato nuevo. La ejecución posterior `45719961761` terminó SUCCESS.
 - **Siguientes pasos vigentes:** (1) ampliar pruebas deterministas del cursor/replay y de la persistencia de páginas; (2) cubrir fallos parciales y reanudación del scanner; (3) revisar contador/DOM y diff completo; (4) cerrar #130 y registros. La validación real Apps Script/Drive/Spreadsheet permanece diferida a Beta aislada y autorizada.
+
+
+## Incidencia #130 — referencias de Drive, cursor y versión de auditoría (2026-11-25)
+**Estado: EN PROGRESO.**
+
+- **Completado:** captura y persistencia de ubicaciones de referencia por vehículo desde snapshot hasta metadatos del inventario. Se conserva hoja, fila, columna, campo, ID, categoría, marca y modelo. Se serializa solo el mapa de ubicaciones de `Cortes`.
+- **Completado:** versión de servicio ADMIN fuente `2.7.2`. Los estados/cursor de versión anterior quedan rechazados para reanudación y operaciones finales; deben iniciar auditoría nueva.
+- **Completado:** regresiones de snapshot, metadatos, cursor y páginas: ReferenceSnapshot 14/14; ReferenceLocations 6/6; CursorRecovery 23/23; MetadataPersistence 11/11.
+- **Completado:** protecciones por errores del escaneo (ScanIntegrity 18/18), inventario incremental 35/35, historial de imágenes 64/64 y útiles 9/9.
+- **CI confirmada:** run `45721749765`, commit `bdb201ab0c6c2c76264a7c083bd5625cc6a1172b`: 542 suites, 6,447 pruebas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS.
+- **Siguientes pasos:** (1) terminar revisión del diff completo; (2) verificar de forma integrada contador CATALOG, estado local, título recomendado/alternativo y botón DOM; (3) documentar y cerrar #130 tras revisión. Pruebas que requieran deployment Apps Script/Drive/Spreadsheet real siguen PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA. No desplegar sin autorización.
