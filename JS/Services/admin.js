@@ -599,7 +599,6 @@ function collectCortesImageReferences(includeLocations = true) {
             const range = sheet.getRange(2 + offset, group.start, chunkRows, group.width);
             let stageStartedAt = Date.now();
             const values = range.getDisplayValues();
-            const vehicleContext = sheet.getRange(2 + offset, 1, chunkRows, 4).getDisplayValues();
             displayReadMs += Date.now() - stageStartedAt;
             stageStartedAt = Date.now();
             const rawValues = range.getValues();
@@ -612,6 +611,7 @@ function collectCortesImageReferences(includeLocations = true) {
             richTextReadMs += Date.now() - stageStartedAt;
             rangesRead++; chunksRead++;
             stageStartedAt = Date.now();
+            let vehicleContext = null;
             group.items.forEach(item => {
                 const c = item.column - group.start;
                 for (let r = 0; r < values.length; r++) {
@@ -642,6 +642,7 @@ function collectCortesImageReferences(includeLocations = true) {
                     cellIds.forEach(id => {
                         if (includeLocations) {
                             if (!references.has(id)) references.set(id, []);
+                            if (!vehicleContext) vehicleContext = sheet.getRange(2 + offset, 1, chunkRows, 4).getDisplayValues();
                             const context = vehicleContext[r] || [];
                             references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + offset + 2, column: item.column, field: item.field, vehicleId: String(context[0] || ""), category: String(context[1] || ""), brand: String(context[2] || ""), model: String(context[3] || "") });
                         } else references.set(id, true);
