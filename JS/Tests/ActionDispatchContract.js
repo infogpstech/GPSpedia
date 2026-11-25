@@ -10,7 +10,7 @@ function runActionDispatchContractTests(sources) {
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     }
     function parseObject_(source, declaration) {
-        const match = String(source || "").match(new RegExp("export\\s+const\\s+" + declaration + "\\s*=\\s*\\{([\\s\\S]*?)\\n\\};"));
+        const match = String(source || "").match(new RegExp("export\s+const\s+" + declaration + "\s*=\s*\{([\s\\S]*?)\n\};"));
         assert_(!!match, "No se encontró " + declaration + ".");
         return match[1];
     }
@@ -37,7 +37,7 @@ function runActionDispatchContractTests(sources) {
         return result;
     }
     function hasFunction_(source, name) {
-        return new RegExp("\\bfunction\\s+" + name + "\\s*\\(").test(String(source || ""));
+        return new RegExp("\\bfunction\s+" + name + "\s*\\(").test(String(source || ""));
     }
     function parseDispatcher_(source, name) {
         const match = String(source || "").match(/switch\s*\(\s*(?:request\.action|action)\s*\)\s*\{([\s\S]*?)\n\s*default\s*:/);
@@ -75,9 +75,9 @@ function runActionDispatchContractTests(sources) {
 
     const api = String(input.apiConfig || "");
     let actionMap = {}, compatibility = {}, external = {}, dispatchers = {};
-    const endpointBlock = api.match(/export\\s+const\\s+API_ENDPOINTS\\s*=\\s*Object\\.freeze\\(\\{([\\s\\S]*?)\\n\\}\\);/);
+    const endpointBlock = api.match(/export\s+const\s+API_ENDPOINTS\s*=\s*Object\.freeze\(\{([\s\\S]*?)\n\}\\);/);
     assert.ok(endpointBlock, "No se encontró API_ENDPOINTS local.");
-    const requiredEndpoints = [...endpointBlock[1].matchAll(/^\\s*([A-Z]+):/gm)].map(x => x[1]);
+    const requiredEndpoints = [...endpointBlock[1].matchAll(/^\s*([A-Z]+):/gm)].map(x => x[1]);
     const endpoints = requiredEndpoints;
     const consumerActions = parseConsumers_(input.consumerSources || {});
 
@@ -162,14 +162,14 @@ function runActionDispatchContractTests(sources) {
         for (const [service, dispatcher] of Object.entries(dispatchers)) assert_(!dispatcher.actions.includes("assignCollaborator"), service + " aún expone assignCollaborator.");
     });
     run_("router y health checks resuelven endpoints locales sin fallback remoto", () => {
-        assert_(/export\\s+const\\s+API_ENDPOINTS\\s*=\\s*Object\\.freeze/.test(api), "No existe el mapa local único API_ENDPOINTS.");
-        assert_(/return\\s+resolveApiEndpoint_\\(service\\)/.test(api), "El router no resuelve el endpoint local.");
+        assert_(/export\s+const\s+API_ENDPOINTS\s*=\s*Object\.freeze/.test(api), "No existe el mapa local único API_ENDPOINTS.");
+        assert_(/return\s+resolveApiEndpoint_\(service\)/.test(api), "El router no resuelve el endpoint local.");
         const healthStart = api.indexOf("export async function checkAllServicesHealth");
         const healthEnd = api.indexOf("export async function checkServiceHealth", healthStart);
         const health = healthStart >= 0 && healthEnd > healthStart ? api.slice(healthStart, healthEnd) : "";
-        assert_(/resolveApiEndpoint_\\(serviceKey\\)/.test(health), "Health checks no consultan API_ENDPOINTS.");
+        assert_(/resolveApiEndpoint_\(serviceKey\)/.test(health), "Health checks no consultan API_ENDPOINTS.");
         assert_(!/loadCentralConfiguration|resolveCentralServiceEndpoint/.test(health), "Health checks aún dependen del registro central.");
-        assert_(!/targetUrl\\s*=\\s*CENTRAL_CONFIGURATION_BOOTSTRAP_URL/.test(api), "El bootstrap se usa como fallback del router.");
+        assert_(!/targetUrl\s*=\s*CENTRAL_CONFIGURATION_BOOTSTRAP_URL/.test(api), "El bootstrap se usa como fallback del router.");
     });
     run_("ADMIN separa acciones de edición modal del resto de acciones exclusivas de Desarrollador", () => {
         const adminSource = String(input.ADMIN || "");
