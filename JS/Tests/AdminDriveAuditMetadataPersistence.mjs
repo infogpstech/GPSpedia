@@ -15,7 +15,9 @@ put("id_reemplazo","INV-"+fileId);put("archivo_drive_id",fileId);put("estado","s
 put("ultima_auditoria_id","audit-123");put("ultima_operacion_inventario_id","operation-123");
 put("resultado_inventario","confirmado");put("estado_organizacion","pendiente");put("ubicacion_actual","Cortes/Honda/Civic");
 put("drive_folder_id","folder-12345678901234567890");put("formato_archivo","jpg");put("tamano_bytes",5120);
-put("fecha_modificacion_drive","2026-11-25 10:00:00");put("referencias_catalogo_json","[]");
+put("fecha_modificacion_drive","2026-11-25 10:00:00");
+const referenceLocations=[{sheet:"Cortes",row:18,column:16,field:"imgCorte2",vehicleId:"V-205",category:"Motocicleta",brand:"Yamaha",model:"MTN155"}];
+put("referencias_catalogo_json",JSON.stringify(referenceLocations));
 const cells=[headers,row.slice()];
 const sheet={getRange(r,c,n=1,w=1){return{
  getValues(){return Array.from({length:n},(_,i)=>Array.from({length:w},(_,j)=>cells[r-1+i]?.[c-1+j]??""));},
@@ -27,5 +29,6 @@ const write=new Function("extractDriveFileId","SpreadsheetApp",source+"\nreturn 
 const saved=write(sheet,2,row,headers,fileId,"audit-123","operation-123","sin_uso_detectado","confirmado","pendiente","Cortes/Honda/Civic");
 for(const name of ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"])
  assert.equal(saved[headers.indexOf(name)],row[headers.indexOf(name)],name+" no se confirmó en read-back");
+assert.equal(saved[headers.indexOf("referencias_catalogo_json")],JSON.stringify(referenceLocations));
 assert.equal(flushes,1);
-console.log("AdminDriveAuditMetadataPersistence: 10/10 PASS");
+console.log("AdminDriveAuditMetadataPersistence: 11/11 PASS");

@@ -68,4 +68,4 @@ assert.ok(responseCacheWrite >= 0 && pageCountAdvance > responseCacheWrite && st
 assert.ok(scanner.includes("state.scanVersion !== ADMIN_SERVICE_VERSION"));
 assert.ok(scanner.includes("storeDriveAuditPageResults_(auditId, pageIndex"));
 assert.ok(scanner.includes("storeDriveAuditSeenPage_(auditId, pageIndex"));
-console.log("AdminDriveAuditCursorRecovery: 20/20 PASS");
+console.log("AdminDriveAuditCursorRecovery: 23/23 PASS");
