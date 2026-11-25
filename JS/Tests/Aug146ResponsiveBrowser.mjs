@@ -111,6 +111,7 @@ try {
         import("/JS/Frontend/overlayHistory.js")
       ]);
       window.__aug146Ui = ui;
+      window.__aug146State = state;
       window.overlayHistory = overlays.createOverlayHistoryManager(window.history);
       window.addEventListener("popstate", event => window.overlayHistory.handlePopState(event.state));
       state.setState({
@@ -151,7 +152,7 @@ try {
       const embeds = variants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
       const invalidEmbeds = invalidVariants.map(value => ui.getValidatedYouTubeVideoEmbedUrl(value));
       ui.mostrarDetalleTutorialModal({
-        Tema: "Tutorial sintético",
+        Tema: "Corte de ignición",
         comoIdentificarlo: '<div style="text-align:center;color:#ff0000;font-size:1.5em" onclick="window.__tutorialXss = true"><strong>Texto destacado</strong><a href="javascript:window.__tutorialXss=true">Enlace no confiable</a><img src="javascript:window.__tutorialXss=true" alt="Imagen no confiable" onerror="window.__tutorialXss=true"><script>window.__tutorialXss = true</script><iframe src="https://evil.example/embed"></iframe></div>',
         dondeEncontrarlo: '<p style="text-align:right;color:#008000">Ubicación de prueba</p>',
         Detalles: '<ul><li>Detalle con formato</li></ul>' + Array.from({ length: 60 }, (_, index) => '<p>Detalle extenso de prueba ' + index + ' para verificar que el contenido no reduzca el alto del reproductor.</p>').join(""),
@@ -176,7 +177,11 @@ try {
         iframeDisplay: validIframe ? getComputedStyle(validIframe).display : "none",
         iframeVisibility: validIframe ? getComputedStyle(validIframe).visibility : "hidden",
         iframeLoading: validIframe ? validIframe.loading : "missing",
-        containerHeight: validIframe && validIframe.parentElement ? validIframe.parentElement.getBoundingClientRect().height : 0
+        containerHeight: validIframe && validIframe.parentElement ? validIframe.parentElement.getBoundingClientRect().height : 0,
+        titleText: detail.querySelector(".tutorial-detail-title")?.textContent || "",
+        titleWhiteSpace: detail.querySelector(".tutorial-detail-title") ? getComputedStyle(detail.querySelector(".tutorial-detail-title")).whiteSpace : "",
+        titleHeight: detail.querySelector(".tutorial-detail-title") ? detail.querySelector(".tutorial-detail-title").getBoundingClientRect().height : 0,
+        titleLineHeight: detail.querySelector(".tutorial-detail-title") ? parseFloat(getComputedStyle(detail.querySelector(".tutorial-detail-title")).lineHeight) : 0
       };
       ui.mostrarDetalleTutorialModal({
         Tema: "Tutorial con URL inválida",
@@ -207,7 +212,7 @@ try {
     check(tutorialRender.validResult.unsafeMarkupRemoved,
       profile.name + ": elimina scripts, iframes, handlers y URLs activas del contenido enriquecido");
     check(tutorialRender.validResult.iframeSrc === "https://www.youtube.com/embed/abcdefghijk?enablejsapi=1" &&
-      tutorialRender.validResult.iframeTitle.includes("Tutorial sintético"),
+      tutorialRender.validResult.iframeTitle.includes("Corte de ignición"),
       profile.name + ": renderiza el vídeo validado como iframe de YouTube");
     check(tutorialRender.validResult.iframeWidth > 0 && tutorialRender.validResult.iframeHeight >= 314 &&
       tutorialRender.validResult.iframeHeight <= 316 && tutorialRender.validResult.containerHeight >= 314,
@@ -216,9 +221,78 @@ try {
       tutorialRender.validResult.iframeVisibility === "visible" &&
       tutorialRender.validResult.iframeLoading !== "lazy",
       profile.name + ": el iframe permanece visible y no usa carga diferida");
+    check(tutorialRender.validResult.titleText === "Corte de ignición" &&
+      tutorialRender.validResult.titleWhiteSpace === "nowrap" &&
+      tutorialRender.validResult.titleHeight <= tutorialRender.validResult.titleLineHeight + 2,
+      profile.name + ": el título «Corte de ignición» permanece en una sola línea");
     check(tutorialRender.invalidResult.iframeCount === 0 &&
       tutorialRender.invalidResult.notice.includes("URL válida de YouTube"),
       profile.name + ": no renderiza iframe para una URL de vídeo no confiable");
+
+    const cutHeaderRender = await page.evaluate(async () => {
+      const ui = window.__aug146Ui;
+      const state = window.__aug146State;
+      const item = {
+        id: "VEH-HEADER-SYNTHETIC",
+        categoria: "Carros",
+        marca: "Chevrolet",
+        modelo: "Suburban",
+        versionesAplicables: "Todas",
+        anoDesde: "2021",
+        anoHasta: "2026",
+        tipoEncendido: "Llave",
+        imagenVehiculo: "",
+        videoGuiaDesarmeUrl: "",
+        contadorBusqueda: 0,
+        tipoCorte1: "Corte de ignición",
+        ubicacionCorte1: "Zona de prueba",
+        colorCableCorte1: "Azul",
+        configRelay1: "",
+        imgCorte1: "",
+        utilCorte1: 365,
+        colaboradorCorte1: "Pablo Peña",
+        tipoCorte2: "",
+        tipoCorte3: ""
+      };
+      state.setState({
+        currentUser: { ID: "AUG146-HEADER-SYNTHETIC", SessionToken: "SYNTHETIC-NOT-A-REAL-CREDENTIAL",
+          Privilegios: "Usuario", Nombre_Usuario: "Prueba visual" },
+        catalogData: {
+          cortes: [item], tutoriales: [], relay: [],
+          logos: [{ nombreMarca: "Chevrolet", urlLogo: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Crect width='120' height='60' fill='%23ffffff'/%3E%3C/svg%3E" }]
+        }
+      });
+      ui.mostrarDetalleModal(item, false, {});
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const modal = document.getElementById("modalDetalle");
+      const logo = modal.querySelector(".detail-modal-title .brand-logo-modal");
+      const model = modal.querySelector(".detail-modal-title-text");
+      const divider = modal.querySelector(".detail-modal-divider");
+      const logoRect = logo ? logo.getBoundingClientRect() : null;
+      const modelRect = model ? model.getBoundingClientRect() : null;
+      const dividerRect = divider ? divider.getBoundingClientRect() : null;
+      return {
+        hasLogo: Boolean(logo),
+        hasModel: Boolean(model),
+        hasDivider: Boolean(divider),
+        logoBottom: logoRect ? logoRect.bottom : 0,
+        modelBottom: modelRect ? modelRect.bottom : 0,
+        dividerTop: dividerRect ? dividerRect.top : 0,
+        logoObjectPosition: logo ? getComputedStyle(logo).objectPosition : "",
+        modelWhiteSpace: model ? getComputedStyle(model).whiteSpace : "",
+        modelFontSize: model ? parseFloat(getComputedStyle(model).fontSize) : 0
+      };
+    });
+    check(cutHeaderRender.hasLogo && cutHeaderRender.hasModel && cutHeaderRender.hasDivider,
+      profile.name + ": encabezado de corte renderiza logo, modelo y línea azul");
+    check(Math.abs(cutHeaderRender.logoBottom - cutHeaderRender.modelBottom) <= 3 &&
+      Math.abs((cutHeaderRender.dividerTop - cutHeaderRender.logoBottom) -
+        (cutHeaderRender.dividerTop - cutHeaderRender.modelBottom)) <= 3 &&
+      cutHeaderRender.logoObjectPosition.includes("bottom"),
+      profile.name + ": logo y modelo alineados abajo con igual separación de la línea azul");
+    check(cutHeaderRender.modelWhiteSpace === "nowrap" &&
+      (profile.width > 520 || cutHeaderRender.modelFontSize >= 18),
+      profile.name + ": nombre del modelo sin saltos y +2px en móvil");
 
     await page.evaluate(() => window.__aug146Ui.openDevTools());
     const developerModal = page.locator("#dev-tools-modal");
