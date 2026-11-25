@@ -523,3 +523,35 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Registro incremental automático por lote y consolidación final; el frontend mantiene el recorrido y expone estado/fallback si un lote no se confirma.
 - CI run 45705928487 SUCCESS; syntax, regression runner y responsive-browser PASS. Prueba AdminIncrementalInventory integrada.
 - Beta real ADMIN/Drive/Spreadsheet aislada pendiente; sin deployments ni escrituras externas.
+
+
+## GP-UTIL-TOGGLE-02 + GP-DRIVE-AUDIT-RECOVERY-01 — correcciones observadas por el propietario (2026-11-25)
+**Estado: EN PROGRESO.** Seguimiento: GitHub Issue #130.
+
+### Alcance y aceptación — útiles
+- Corregir el contador del título del corte para reflejar el total confirmado y cambiar inmediatamente por transición optimista (+1 al activar, -1 al retirar), sin incrementar por clics duplicados.
+- Hidratar el estado activo del usuario al cargar el vehículo y aplicar el estado visual del botón antes de permitir nuevas interacciones.
+- Mantener persistencia local por usuario y debounce de 1.8 s; coalescer interacciones y enviar solo el último estado, serializar solicitudes por usuario/vehículo/corte, idempotencia y reintentos silenciosos ante lock ocupado o clics repetidos.
+- Corregir proyección CATALOG para que una reactivación posterior a una retirada vuelva a contar como útil activo.
+- Verificar estado, contador, títulos del recomendado y alternativos, cambios rápidos, concurrencia, reintentos y regresiones. No desplegar Apps Script ni tocar datos externos.
+
+### Alcance y aceptación — auditoría Drive
+- Reparar error reproducido ReferenceError: item is not defined en handleAuditDriveImagesInCortesCore_, preservar referenceLocations del snapshot y no perder lotes confirmados.
+- Mantener escaneo recursivo de Cortes, paginación/cursor, deduplicación, reanudación y resultados incrementales.
+- Consola Developer debe mostrar etapas, lotes, conteos, progreso, cursor, fallos y estado de continuación.
+- Interfaz visual con miniaturas y enlace original; nombre, fileId, URL, folderId, ruta, MIME, formato, tamaño, fecha, origen, clasificación y referencias a vehículo (ID/categoría/marca/modelo/fila/campo).
+- Relacionar candidatos por nombre/ruta/catálogo; mostrar confianza y ambigüedad; revisión manual sin aplicar asociaciones ambiguas.
+- Registrar resultados clasificados sin uso/reemplazados en Imagenes_Reemplazadas, por lote e idempotentemente, conservando revalidación, ownership, historial y no-destructividad. Reconciliar stale solo al completar el scan.
+
+### Hallazgos y avance comprobado
+- JS/Services/admin.js: el objeto de resultado contenía Array.isArray(item && item.referenceLocations) fuera de un callback y además duplicaba la propiedad. Se eliminó esa expresión; se conserva referenceLocations.map(...) desde el snapshot. Commit f740da0e98d40082d6753f6fd3670b0ad113e9f2.
+- Regresión JS/Tests/AdminDriveAuditItemReference.mjs añadida e integrada en JS/Tests/RunServiceTests.mjs. Commits e1f04981ab99d770b31bdbe4cafefc782b5e173a y e4e0e0218e16cdc5ce89d641d81ad38cdbe26590.
+- JS/Services/catalog.js: al reactivar después de retirar, el agregador conservaba completed=true; ahora un nuevo estado event reinicia esa marca. Commit fd629d599197d16705f418edda1f94784c5d5976.
+- JS/Tests/CatalogLikeProjectionReadScale.mjs ampliada con secuencia event → withdrawn → event. Commit 22850449c06f3e7d6d620c55c48f154481aef509.
+- CI de los commits nuevos aún no confirmada al registrar esta adenda. Validación Apps Script/Drive/Spreadsheet real queda pendiente de Beta aislada; no se ejecutaron llamadas ni escrituras externas.
+
+### Siguientes pasos
+1. Verificar CI y ejecutar pruebas focales AdminDriveAuditItemReference, CatalogLikeProjectionReadScale, FeedbackUsefulToggle, UsefulButtonState y UsefulSyncQueue.
+2. Auditar el vínculo exacto entre contador proyectado, estado local y título DOM; corregir solo tras confirmar el contrato y añadir regresión.
+3. Auditar scanner completo, respuesta incremental, metadatos, UI y guardado en Imagenes_Reemplazadas; completar pruebas de cursor, fallos parciales y reanudación.
+4. Revisar diff, actualizar registros y checkpoint, verificar HEAD de rama de trabajo y que la base protegida siga intacta.
