@@ -69,7 +69,7 @@ test("el lock solo cubre la búsqueda de idempotencia y el append", () => {
     assert.ok(handler.indexOf("findFeedbackVehicleRowForLike_") < lockStart);
     assert.ok(handler.indexOf("ensureFeedbackLikesSheet_") < lockStart);
     assert.doesNotMatch(critical, /findFeedbackVehicleRowForLike_|getFeedbackLikeCountWithEvents_|getSafeSheet/);
-    assert.match(critical, /findFeedbackLikeRowsForActor_\\(ledger, actorKey, vehicleId, corteIndex, legacyActorKey\\)/);
+    assert.match(critical, /findFeedbackLikeRowsForActor_\(ledger, actorKey, vehicleId, corteIndex, legacyActorKey\)/);
     assert.match(critical, /ledger\.appendRow\(/);
     assert.ok(handler.indexOf("getFeedbackLikeCountWithEvents_") > lockEnd);
     assert.match(extract("withFeedbackLikeLock_"), /tryLock\(0\)/);
