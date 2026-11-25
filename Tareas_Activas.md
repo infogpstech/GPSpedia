@@ -113,7 +113,7 @@ Documento rector de ejecución: `Migracion_URL_Servicios_Frontend.md`. Las tarea
 
 ## Próxima tarea en cola — Dashboard de actividad: Actividad reciente
 
-**Estado: REABIERTA — corrección de contención en curso (2026-11-25).** La validación de datos reales FEEDBACK/Spreadsheet queda diferida a Beta.
+**Estado: REABIERTA — corregida la contención del listener global; pruebas CI en curso (2026-11-25).** La validación de datos reales FEEDBACK/Spreadsheet queda diferida a Beta.
 
 ### Objetivo
 Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del Dashboard, transformando los datos recibidos de los servicios en información clara para el usuario.
@@ -311,3 +311,11 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 - CI detectó tests contractuales legacy que aún exigían deduplicación global actor+vehículo y proyección anterior. Se ajustaron `FeedbackLikePreflightOutsideLock.mjs` y `FeedbackLikeCompletedReplayPreflight.mjs` al contrato actor+vehículo+corte. La suite de copy log Developer también se alineó con el texto vigente; `DeveloperConsoleRouting` 5/5 PASS.
 - Regresión run 45611423533: 427 suites/5314 tests aprobados; 4 fallos (2 contratos likes que ya se ajustan, MIG019 repetición del contrato likes, MIG021 URL endpoints). CI más reciente de las correcciones pendiente.
 - Cierre local de implementación; validación real Beta diferida. Siguiente: GP-DASH-ACTIVITY-RECENT-01.
+
+
+### GP-DASH-ACTIVITY-RECENT-01 — corrección de contención
+
+- Hallazgo: el handler global de clics trataba toggles externos a la tabla como excepciones y no confinaba la detección al contenedor del dashboard.
+- Corrección frontend: el listener de cierre externo ahora ignora los clics que ocurren dentro de la tabla/contenedor y solo cierra cuando el evento es externo, conservando compatibilidad del fallback.
+- Prueba añadida `ActivityDashboardRecentInteraction.mjs`: apertura, clic interno, exclusividad de acordeón, cierre externo, estado aria y reemplazo del listener al renderizar nuevamente; registrada en runner.
+- CI pending. Solo frontend y pruebas; no se modifican servicios Apps Script ni datos.
