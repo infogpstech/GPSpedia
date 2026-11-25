@@ -10,6 +10,7 @@ const rows=[
  ["actorA","100","2",0,0,"event","q"],["actorB","100","3",0,0,"completed","r"],
  ["actorA","100","1",0,0,"withdrawn","s"],["actorB","100","3",0,0,"withdrawn","t"],
  ["actorA","100","1",0,0,"event","reactivated"],
+ ["actorD","200","1",0,1,"completed","m"],["actorD","200","1",0,1,"withdrawn","n"],["actorD","200","1",0,1,"event","o"],
  ["actorB","V-105","1",0,0,"event","u"],["actorC","9007199254740991","1",0,0,"event","v"]
 ];
 const calls=[];
@@ -17,9 +18,10 @@ const sheet={getLastRow:()=>rows.length+1,getRange(row,col,n=1,width=1){calls.pu
 const validVehicleId=value=>{const id=String(value||"").trim(),part=id.startsWith("V-")?id.slice(2):id,n=Number(part);return /^[1-9]\d{0,15}$/.test(part)&&Number.isSafeInteger(n)&&String(n)===part&&(id===part||id==="V-"+part);};
 const counts=new Function("getSpreadsheet","normalizeFeedbackLikeActorKey_","isValidFeedbackLikeVehicleId_",code+"\nreturn readFeedbackLikeEventCounts_;")(()=>({getSheetByName:()=>sheet}),key=>String(key),validVehicleId);
 const result=counts();
-assert.equal(result.get("100|1"),1);
+assert.equal(result.get("100|1"),2);
 assert.equal(result.get("100|2"),1);
 assert.equal(result.get("100|3"),-1);
+assert.equal(result.get("200|1")||0,0,"Reactivar un evento ya materializado no debe duplicar el contador base.");
 assert.equal(result.get("V-105|1"),1);
 assert.equal(result.get("9007199254740991|1"),1);
 assert.deepEqual(calls.filter(c=>c.row>1).map(c=>c.width),[3,1],"Solo se transfieren tres columnas de identidad y una de estado.");
