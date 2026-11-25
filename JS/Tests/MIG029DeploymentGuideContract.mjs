@@ -109,7 +109,8 @@ check("La lectura pública de parámetros usa el endpoint AUTH local sin bootstr
 check("La guía protege despliegues parciales y servicios independientes", () => {
   assert.match(guide, /detener únicamente el servicio o grupo/i);
   assert.match(guide, /Los otros servicios independientes pueden continuar/i);
-  assert.match(guide, /Si AUTH no supera salud.*detener la secuencia completa/s);
+  assert.match(guide, /Si AUTH no supera salud y configuración pública, detener las pruebas que dependan de AUTH/s);
+  assert.match(guide, /Los demás servicios conservan sus destinos locales/);
   assert.match(guide, /No desplegar proyectos que no contienen ese archivo/);
 });
 check("El procedimiento exige contexto Spreadsheet y conserva rollback", () => {
