@@ -135,7 +135,7 @@ check("Las operaciones del gestor validan referencias globales y no solo Cortes"
     assert.match(scanner,/SHEET_NAMES\.IMAGENES_REEMPLAZADAS/);
 });
 
-check("Los 16 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
+check("Los 21 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
     const row=["REP-LEGACY",new Date(),"vehiculo","VEH-1","imagenVehiculo",FILE_A,"old.jpg",
         "https://drive.google.com/file/d/"+FILE_A+"/view","new-url","VEH-1","historica"];
     const sheet=createSheet([BASE_HEADERS,row]);
