@@ -6930,7 +6930,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 
 
 /* GP-UX-CUT-HEADER-ALIGN-04: logo y nombre comparten la misma línea inferior y separación de la línea azul. */
-#modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title {
+#modalDetalle[data-modal-type="corte"] #detalleCompleto > .detail-modal-title {
     align-items: flex-end;
     transform: translateY(-19px);
 }
@@ -6945,7 +6945,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 
 @media (max-width:560px) {
-    #modalDetalle[data-modal-type="corte"] .detail-modal-toolbar > .detail-modal-title {
+    #modalDetalle[data-modal-type="corte"] #detalleCompleto > .detail-modal-title {
         transform: translate(-13px,-19px);
         align-items: flex-end;
     }
