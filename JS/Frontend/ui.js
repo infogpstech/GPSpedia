@@ -9411,6 +9411,29 @@ export async function openAuditDriveModal(options = {}) {
 
                 await persistState(complete ? 'complete' : 'running');
                 if (!isCurrentRequest()) return;
+                const unusedBatchIds = uniqueResponseFiles.filter(file => file.classification === 'Sin uso detectado').map(file => ({ fileId: String(file.fileId) }));
+                if (unusedBatchIds.length) {
+                    try {
+                        const batchInventory = await routeActionWithRetry('saveUnusedImagesInventory', {
+                            ...getDeveloperSessionPayload(), auditId: auditId, files: unusedBatchIds, incremental: true
+                        }, { timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 700, shouldContinue: isCurrentRequest });
+                        const batchConfirmed = new Set((batchInventory && Array.isArray(batchInventory.results) ? batchInventory.results : [])
+                            .filter(item => item && item.status === 'confirmado').map(item => String(item.fileId || '')));
+                        if (batchInventory && batchInventory.status === 'success' && batchInventory.auditId === auditId &&
+                            batchConfirmed.size === unusedBatchIds.length) {
+                            appendAuditConsole('Inventario automático: ' + batchConfirmed.size + ' imágenes confirmadas en biblioteca.', 'success');
+                            inventoryConfirmedFileIds = Array.from(new Set(inventoryConfirmedFileIds.concat(Array.from(batchConfirmed))));
+                            inventoryStatus = 'saved_incrementally';
+                            inventoryMessage = 'Registro automático por lotes activo; ' + inventoryConfirmedFileIds.length + ' imágenes confirmadas.';
+                        } else {
+                            appendAuditConsole('El inventario de este lote quedó parcial; se conserva el resultado y podrá reintentarse.', 'warning');
+                        }
+                    } catch (inventoryBatchError) {
+                        appendAuditConsole('No se pudo registrar automáticamente este lote: ' + (inventoryBatchError.message || inventoryBatchError) + '. La auditoría continúa; el lote requiere reintento.', 'warning');
+                    }
+                    await persistState(complete ? 'complete' : 'running');
+                    if (!isCurrentRequest()) return;
+                }
             }
 
             if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
