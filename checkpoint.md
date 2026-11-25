@@ -842,3 +842,18 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - La única tarea restante del plan MIG-URL es `MIG-URL-008`, que requiere confirmación del propietario de que las seis URLs corresponden a un entorno Beta aislado y autorización expresa para ejecutar GET de salud. No realizar esas peticiones sin esa confirmación.
 - Validaciones de Apps Script/Spreadsheet, YouTube real, Drive y pruebas de campo continúan diferidas a Beta según `Tareas_Beta.md`; no bloquean el cierre local.
 - Rama base `GPSpedia2.2.5` verificada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+---
+
+## 2026-11-25 — Actualización de endpoints CATALOG y FEEDBACK
+
+**Implementación local y CI: COMPLETADAS.**
+
+- En `JS/Frontend/api-config.js`, `CATALOG` ahora apunta al deployment comunicado por el usuario y `FEEDBACK` al deployment comunicado por el usuario. Se preservaron AUTH, WRITE, UTILITIES y ADMIN.
+- `JS/Tests/LocalApiEndpoints.mjs` actualizado para validar los dos nuevos valores. Confirmado un solo uso de cada URL nueva en la fuente de configuración y en el contrato.
+- CI run `45619392380`: SUCCESS; 528 suites, 6,263 pruebas aprobadas, 0 fallos; `LocalApiEndpoints` 10/10 PASS; `service-tests` y `responsive-browser` SUCCESS. AUG-146: 264/264 PASS en cuatro viewports.
+- GitHub Pages run `45619392374`: SUCCESS.
+- No se hicieron solicitudes a los endpoints, deployments Apps Script ni cambios a proyectos Apps Script, PropertiesService, Spreadsheet, Drive, permisos o datos. La disponibilidad real y el comportamiento de los deployments nuevos quedan pendientes de validación Beta.
+- `MIG-URL-008` sigue pendiente de confirmación de que las URLs son de un entorno Beta aislado y de autorización expresa para GET de salud; no se interpreta esta solicitud de actualizar endpoints como autorización para invocarlos.
+- Rama base `GPSpedia2.2.5` verificada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
