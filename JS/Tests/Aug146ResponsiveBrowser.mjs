@@ -231,7 +231,8 @@ try {
     console.log("TUTORIAL_TITLE_GEOMETRY " + profile.name + " " + JSON.stringify({
       height: tutorialRender.validResult.titleHeight,
       lineHeight: tutorialRender.validResult.titleLineHeight,
-      whiteSpace: tutorialRender.validResult.titleWhiteSpace
+      whiteSpace: tutorialRender.validResult.titleWhiteSpace,
+      lineCount: tutorialRender.validResult.titleLineCount
     }));
     check(tutorialRender.validResult.titleText === "Corte de ignición" &&
       tutorialRender.validResult.titleWhiteSpace === "nowrap" &&
