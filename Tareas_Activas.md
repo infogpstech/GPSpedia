@@ -330,7 +330,7 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 
 
 ### GP-CATALOG-LIKE-PROJECTION-READ-01 — Reducir lectura del ledger de útiles
-**Estado: IMPLEMENTACIÓN EN CURSO — CI pendiente.**
+**Estado: COMPLETADA EN CÓDIGO Y CI — run 45612534877 (526 suites, 6,245 pruebas, 0 fallos).**
 - La reconstrucción de CATALOG leía siete columnas de FeedbackLikes completas. Se reemplazó por lecturas A:C y F, que contienen actor/vehículo/corte y status; se mantiene deduplicación por actor+corte y tolerancia a eventos inválidos.
 - Test aislado `CatalogLikeProjectionReadScale.mjs` 6 assertions: conteo por corte y lectura compacta; registrado en runner.
 - No se introduce cache/TTL ni riesgo de proyección obsoleta, ni locks globales o coordinación entre servicios.
@@ -340,3 +340,9 @@ Próximo diseño: reducir la lectura de la proyección CATALOG sin modificar el 
 
 - CI run 45612250526: 525 suites, 6,239 pruebas, 0 fallos; responsive-browser SUCCESS. Los contratos legacy de deduplicación se reconciliaron con actor+vehículo+corte; las seis URLs contractuales local se alinearon con el conjunto vigente de la rama.
 - Validación de servicios Beta real diferida; no hubo deployment.
+
+
+### GP-CATALOG-LIKE-PROJECTION-READ-01 — cierre
+
+- CI run 45612534877 SUCCESS: 526 suites, 6,245 pruebas, 0 fallos; responsive-browser SUCCESS. `CatalogLikeProjectionReadScale.mjs` 6/6 PASS.
+- Proyección del ledger transferida solo con A:C + F (cuatro campos), en lugar de A:G; mantiene deduplicación actor+vehículo+corte, esquema validado y event filtering. Sin caché adicional, locks ni coordinación entre servicios.
