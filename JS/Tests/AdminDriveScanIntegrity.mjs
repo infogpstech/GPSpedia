@@ -38,4 +38,5 @@ assert.match(ui, /const canOrganize = complete && errorCount === 0 && unverifiab
 assert.match(ui, /reconcileButton\.disabled =[^;]*errorCount > 0[^;]*unverifiableReferences > 0/);
 assert.match(ui, /if \(complete && hasUnusedImages && !scanHasErrors\)/);
 assert.match(ui, /Los resultados parciales se conservaron, pero no se confirmó el inventario/);
-console.log("AdminDriveScanIntegrity: 12/12 PASS");
+assert.match(admin, /function handleApplyCortesImageReconciliation_[\s\S]*?Number\(auditState\.errorCount\s*\|\|\s*0\)\s*>\s*0/);
+console.log("AdminDriveScanIntegrity: 15/15 PASS");
