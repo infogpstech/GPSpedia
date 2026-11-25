@@ -899,3 +899,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas aprobadas, 0 fallos; ambos jobs `service-tests` y `responsive-browser` SUCCESS. Pages run `45628972138` SUCCESS.
 - Rama de trabajo HEAD de código: `9ba85463697d91f8a3534836c84bcfad7979e27d`. No se desplegó Apps Script ni se invocó FEEDBACK/CATALOG. La verificación de la Spreadsheet y deployments reales queda pendiente de Beta autorizada.
 - Hallazgo de compatibilidad importante: el contador físico de `Cortes.utilCorteN` no se incrementa en la arquitectura vigente; los eventos se guardan en `FeedbackLikes` y CATALOG proyecta los totales. La versión base sí incrementaba directamente la celda de `Cortes`. Los servicios de la rama de trabajo usan la Spreadsheet proporcionada por el propietario el 2026-11-24, distinta de la que referenciaba la rama base; no se cambió porque está autorizada en NORMAS §17.1. Confirmar que el usuario consulta la Spreadsheet/pestaña correctas en Beta.
+
+
+### GP-LIKE-TRUSTED-ACTOR-01 — 2026-11-25
+
+- Se corrigió `JS/Services/feedback.js`: `handleRecordLike()` obtiene `userId` y `userName` desde `payload.__feedbackActor`, inyectado por `authorizeFeedbackAction_()` tras validar la sesión compartida. Los campos homónimos del navegador ya no determinan la identidad del útil ni su actividad.
+- Se amplió `JS/Tests/FeedbackLikeIdempotency.mjs` con casos de payload sin identidad duplicada y de intento de suplantación; la prueba conserva actor confiable distinto del enviado por el cliente.
+- Commits de código/prueba: `54e9931c6ce5231f33fbcac4d1e592c9c13f9417` y `f33fefc5f554b193a21a981622a732c541b50c18`. CI pendiente de confirmación.
+- No se cambió frontend, endpoint, Spreadsheet ID, permisos ni deployment. No se ejecutaron escrituras ni llamadas remotas. Próximo paso: revisar CI y mantener pendiente la validación Beta de identidad/versión del deployment FEEDBACK.
