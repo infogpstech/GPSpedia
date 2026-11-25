@@ -14,7 +14,7 @@ assert.match(modal,/id="audit-drive-scan-console"[^>]*role="log"[^>]*aria-live="
 assert.match(modal,/id="audit-drive-results-container"/);
 assert.match(ui,/const appendAuditConsole = \(message, level = 'info'\) =>[\s\S]*?logDeveloperOperation_\('\[AUDITORÍA DRIVE\] ' \+ text, normalizedLevel\)[\s\S]*?scanConsole\.appendChild\(entry\)/);
 assert.match(ui,/const appendFiles = \(files\) =>[\s\S]*?container\.appendChild\(row\)/);
-assert.ok(ui.includes("ID: '+ fileId + ' | Carpeta ID: ' + String(file.folderId"));
+assert.ok(ui.includes("ID: ' + fileId + ' | Carpeta ID: ' + String(file.folderId"));
 assert.ok(ui.includes("file.folderPath") && ui.includes("file.format") && ui.includes("file.size") && ui.includes("file.lastUpdated"));
 assert.match(ui,/while \(scanConsole\.childElementCount > 250\) scanConsole\.firstElementChild\.remove\(\)/);
 assert.match(css,/#audit-drive-scan-workspace[\s\S]*?max-height:30vh/);
