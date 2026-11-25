@@ -1109,3 +1109,13 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 
 
 2026-11-25 — GP-ADMIN-DRIVE-AUDIT-SCHEMA-01: corregido inicializador `AdminOperationGuards`: crear hoja/esquema si faltan, escribir/confirmar encabezado, recuperación de carrera por relectura, preservar fail-safe ante encabezado incompatible. Tests aislados `AdminLocalOperationGuard` y contrato `AdminOperationGuardsSchema`, más simulaciones de escenarios, PASS. No se modificaron recursos reales ni se habilitaron guardas adicionales. CI remoto pendiente.
+
+
+## 2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01 (implementación)
+
+- Integrada una consola de progreso en el modal existente de Auditoría de Cortes, sin crear un modal adicional. Los mensajes de auditoría se reflejan en Developer y en el panel integrado, con nivel, hora y texto seguro; scroll automático y límite de 250 entradas.
+- Conservada la representación incremental de resultados y se ajustaron límites de altura/scroll para escritorio y móvil.
+- Añadida prueba contractual `JS/Tests/AdminDriveScanModal.mjs` (7 aserciones). No se ejecutó Node local ni se confirmó CI en esta intervención; validación automatizada pendiente.
+- Archivos: `index.html`, `JS/Frontend/ui.js`, `style.css`, `JS/Tests/AdminDriveScanModal.mjs`, `Tareas_Activas.md`.
+- Publicado exclusivamente en `GPSpedia2.2.5_work`; no se invocaron Apps Script, Drive ni Spreadsheet. La rama base permanece sin escritura.
+- Próxima acción: verificar workflow CI y ejecutar/ajustar la suite; inspeccionar resultados y estados persistidos/reanudación en navegador real Beta cuando esté disponible.
