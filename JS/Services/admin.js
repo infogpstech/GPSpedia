@@ -4898,11 +4898,15 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
     const containsPhrase = (haystack, phrase) => (" " + normalize(haystack) + " ").includes(" " + normalize(phrase) + " ") && normalize(phrase).length > 0;
     const tokenSetKey = value => tokens(value).sort().join(" ");
     const modelsByKey = new Map();
-    rows.slice(1).forEach(row => {
+    rows.slice(1).forEach((row, index) => {
         const category = read(row, "categoria"), brand = read(row, "marca"), model = read(row, "modelo");
         if (!category || !brand || !model) return;
         const key = [category, brand, model].map(normalize).join("|");
-        if (!modelsByKey.has(key)) modelsByKey.set(key, { category, brand, model, key, aliases: [] });
+        const entry = modelsByKey.get(key) || { category, brand, model, key, aliases: [], vehicleIds: [], rows: [] };
+        const vehicleId = read(row, "id");
+        if (vehicleId && !entry.vehicleIds.includes(vehicleId)) entry.vehicleIds.push(vehicleId);
+        entry.rows.push(index + 2);
+        modelsByKey.set(key, entry);
     });
     aliasRows.forEach(entry => {
         if (!entry || !Array.isArray(entry.aliases)) return;
@@ -4943,13 +4947,13 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             if (!score) return;
             if (brandInPath) { score += 15; signals.push("brand_context"); }
             if (categoryInPath) { score += 5; signals.push("category_context"); }
-            scored.push({ category: model.category, brand: model.brand, model: model.model, score, signals: Array.from(new Set(signals)) });
+            scored.push({ category: model.category, brand: model.brand, model: model.model, vehicleIds: model.vehicleIds.slice(), rows: model.rows.slice(), score, signals: Array.from(new Set(signals)) });
         });
         if (!scored.length) return;
         scored.sort((left, right) => right.score - left.score || left.category.localeCompare(right.category) ||
             left.brand.localeCompare(right.brand) || left.model.localeCompare(right.model));
         const bestScore = scored[0].score, best = scored.filter(item => item.score === bestScore);
-        const ambiguous = best.length > 1 || (scored.length > 1 && bestScore - scored[1].score < 15);
+        const ambiguous = best.length > 1 || best.some(candidate => candidate.vehicleIds.length !== 1) || (scored.length > 1 && bestScore - scored[1].score < 15);
         suggestions.push({
             fileId, fileName, folderPath, status: ambiguous ? "ambiguous" : "suggested",
             confidence: bestScore >= 110 ? "high" : (bestScore >= 85 ? "medium" : "low"),
