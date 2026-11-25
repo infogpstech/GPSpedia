@@ -105,13 +105,12 @@ const ledgerOnly=ledgerOnlyDashboard.buildCutContributionSummary_({sheet:null,co
 assert.equal(ledgerOnly.length,2,"El ledger debe aportar datos aunque Cortes esté vacío.");
 assert.equal(ledgerOnly.find(row=>row.userId==="U1").aportesRegistrados,1);
 const byIdentity=normalizeContributionRows([
- {userId:"U1",nombreUsuario:"Pablo Peña",cortesAportados:2,aportesRegistrados:5,vehiculosConAportes:1},
- {userId:"U1",nombreUsuario:"PABLO PENA",cortesAportados:3,aportesRegistrados:7,vehiculosConAportes:2},
- {userId:"U2",nombreUsuario:"Pablo Peña",cortesAportados:4,aportesRegistrados:8,vehiculosConAportes:1}
+ {userId:"U1",nombreUsuario:"Pablo Peña",cortesAportados:365,aportesRegistrados:365,vehiculosConAportes:2},
+ {userId:"U2",nombreUsuario:"Pablo Peña",cortesAportados:15,aportesRegistrados:15,vehiculosConAportes:1}
 ]);
 assert.deepEqual(byIdentity,[
- {nombreUsuario:"Pablo Peña",cortesAportados:9,aportesRegistrados:20,vehiculosConAportes:2}
-],"Los registros con el mismo nombre visible se consolidan aunque el servicio entregue IDs históricos distintos.");
+ {nombreUsuario:"Pablo Peña",cortesAportados:380,aportesRegistrados:380,vehiculosConAportes:2}
+],"Pablo Peña debe consolidarse en 380 cortes (365 + 15) aunque el servicio entregue IDs distintos.");
 const legacyShape=normalizeContributionRows([{nombreUsuario:"Usuario antiguo",aportesRegistrados:3,vehiculosConAportes:1}]);
 assert.deepEqual(legacyShape,[{nombreUsuario:"Usuario Antiguo",cortesAportados:3,aportesRegistrados:3,vehiculosConAportes:1}]);
 const ambiguousUsers=[Array(8).fill("header"),["U1","ana","","","","","Ana",""],["U4","ana-dos","","","","","Ana",""]];
