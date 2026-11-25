@@ -907,3 +907,5 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Se amplió `JS/Tests/FeedbackLikeIdempotency.mjs` con casos de payload sin identidad duplicada y de intento de suplantación; la prueba conserva actor confiable distinto del enviado por el cliente.
 - Commits de código/prueba: `54e9931c6ce5231f33fbcac4d1e592c9c13f9417` y `f33fefc5f554b193a21a981622a732c541b50c18`. CI pendiente de confirmación.
 - No se cambió frontend, endpoint, Spreadsheet ID, permisos ni deployment. No se ejecutaron escrituras ni llamadas remotas. Próximo paso: revisar CI y mantener pendiente la validación Beta de identidad/versión del deployment FEEDBACK.
+
+- CI `45632826674` ejecutó sintaxis y `FeedbackLikeIdempotency` 10/10 PASS; navegador responsive SUCCESS. Detectó un fallo adicional del fixture `JS/Tests/LocalApiEndpoints.mjs`: esperaba el deployment FEEDBACK anterior mientras `api-config.js` ya contenía la URL nueva confirmada por el propietario. Se corrigió solo la expectativa FEEDBACK; commit `8b20c64b2947dd8827c67a2fb3966492fdf1695e`. CI de seguimiento pendiente.
