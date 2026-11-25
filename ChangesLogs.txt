@@ -1254,3 +1254,6 @@ Se documentó la condición de guardado completo-only y el requisito de registro
 
 2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 — implementación parcial
 Se añadieron validación incremental ADMIN, registro frontend al recibir lotes y consolidación automática final. Se añadió prueba contractual y simulación del validador; se reforzó la confirmación del conjunto final y el estado UI. CI de una iteración previa (fcc5db4) SUCCESS; cambios posteriores de validación final están pendientes de CI. Sin despliegue ni operaciones sobre Drive/Spreadsheet reales.
+
+2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 — cierre local
+ADMIN permite registro incremental de resultados «Sin uso detectado» por lote, revalidando referencias y Drive; frontend registra automáticamente al recibir cada lote y consolida el inventario al completar la auditoría. La operación incremental es idempotente por digest de lote, preserva guardas y evita reconciliar stale durante batches. CI 45705928487 SUCCESS: syntax, service regression runner y responsive-browser PASS. Beta real pendiente, sin deployments ni operaciones Drive/Spreadsheet.
