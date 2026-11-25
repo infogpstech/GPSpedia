@@ -1281,3 +1281,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Lectura de inventario expone los nuevos campos; biblioteca y resultados de auditoría muestran ID de archivo/carpeta y metadatos.
 - Asociación por nombre/ruta incluye vehicleIds y filas; coincidencias con varios vehículos se marcan ambiguas y requieren revisión manual.
 - Pruebas añadidas/ampliadas AdminIncrementalInventory, AdminReplacedImagesIntegrity, AdminDriveScanModal y AdminDriveAuditAssociation; schema simulado 32 columnas PASS, asociación única/ambigua PASS, parsing de módulos PASS. Node/CI pendiente de evidencia.
+
+
+2026-11-25 — Incidencia #130 — asociación persistente de imágenes a vehículos
+- Inventario Imagenes_Reemplazadas amplía esquema a 35 columnas: 11 históricas y 24 de inventario, metadata y asociación.
+- ADMIN calcula sugerencias por nombre/ruta, persiste estado, confianza y candidatos con IDs de vehículo y filas; ambigüedad queda en revisión manual, sin asociación automática.
+- `handleGetReplacedImages` expone la asociación; UI muestra candidato, confianza, ID(s) y fila(s), y permite filtrar por carpeta/formato/candidatos.
+- `writeDriveInventoryRowVerified_` confirma en read-back los ocho campos nuevos de metadata/asociación.
+- Pruebas añadidas/ampliadas: AdminDriveAuditMetadataPersistence, AdminDriveAuditAssociation, AdminIncrementalInventory, AdminReplacedImagesIntegrity y RunServiceTests. Runner JavaScript aislado PASS para migración 35 columnas y motor de asociación; CI/Node pendiente.
