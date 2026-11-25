@@ -21,7 +21,7 @@ assert.deepEqual(likeDelta.catalogChange,{collection:"cortes",recordId:"100",ope
 assert.equal(duplicateLike.catalogChange,undefined);
 assert.match(feedback,/response = attachFeedbackCatalogChange_\(action, payload, response\)/);
 assert.doesNotMatch(feedback,/publishSharedCatalogChange_/, "FEEDBACK no debe llamar a Coordinator para publicar likes.");
-const helper=extract(catalog,"readFeedbackLikeEventCounts_");
+const helper=extract(catalog,"normalizeFeedbackLikeActorKey_")+"\n"+extract(catalog,"readFeedbackLikeEventCounts_");
 const code=helper+"\nreturn readFeedbackLikeEventCounts_;";
 const readCounts=new Function("getSpreadsheet",code)(()=>{throw new Error("No debe resolver spreadsheet global si se pasa argumento");});
 const headers=["actorKey","vehicleId","corteIndex","previousCount","targetCount","status","createdAt"];
@@ -47,5 +47,5 @@ test("rechaza eventos con actor o vehículo inválido",()=>{
  const badSheet={getLastRow:()=>bad.length+1,getRange(r,c,h,w){return{getValues(){return r===1?[headers]:bad.slice(r-2,r-2+h).map(row=>row.slice(c-1,c-1+w));}};}};
  assert.throws(()=>readCounts({getSheetByName:()=>badSheet}),/actor de usuario inválido/);
 });
-test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/waitLock\(10000\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\\s\\S]*releaseLock/);});
+test("el contrato de likes nuevos serializa la comprobación y el append",()=>{assert.ok(handler.includes('"event"'));assert.match(handler,/withFeedbackLikeLock_/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/tryLock\(10000\)/);assert.match(extract(feedback,"withFeedbackLikeLock_"),/finally[\\s\\S]*releaseLock/);});
 console.log("FeedbackLikeAppendOnly: "+passed+"/"+passed+" PASS");
