@@ -13424,7 +13424,7 @@ function loadDriveAuditFileMetadata_(auditId, pageCount, refreshCache = true) {
             const lastUpdated = String(item && item.lastUpdated || ""), format = String(item && item.format || (fileName.match(/\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown")).toLowerCase();
             const url = String(item && item.url || "https://drive.google.com/file/d/" + fileId + "/view");
             const origin = String(item && item.origin || "Google Drive · árbol Cortes");
-            result.push({ fileId, fileName, mimeType, folderPath, folderId, size, lastUpdated, format, url, origin });
+            result.push({ fileId, fileName, mimeType, folderPath, folderId, size, lastUpdated, format, url, origin, referenceLocations: Array.isArray(item.referenceLocations) ? item.referenceLocations : [] });
         });
         if (refreshCache) {
             cache.put(key, raw, 21600);
@@ -14544,7 +14544,8 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     else if (referenceSnapshot.unverifiableReferenceCount > 0) classification = "No verificable";
                     else classification = "Sin uso detectado";
                 } catch (fileError) { classification = "No verificable"; errorCount++; }
-                auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, size, lastUpdated, classification });
+                const referenceLocations = referenceSnapshot.references.get(fileId) || [];
+                auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || "") })) });
                 batchFiles++; totalAnalyzed++;
             }
             if (files.hasNext()) { current.fileToken = files.getContinuationToken(); break; }
@@ -14579,7 +14580,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
     const cachePersistenceStartedAt = Date.now();
     storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
-    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType, folderPath: item.folderPath, folderId: item.folderId, size: item.size, lastUpdated: item.lastUpdated })));
+    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType, folderPath: item.folderPath, folderId: item.folderId, size: item.size, lastUpdated: item.lastUpdated, referenceLocations: item.referenceLocations })));
     const cachePersistenceMs = Date.now() - cachePersistenceStartedAt;
     const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
     const metrics = {
