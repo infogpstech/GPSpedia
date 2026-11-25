@@ -1289,3 +1289,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `handleGetReplacedImages` expone la asociación; UI muestra candidato, confianza, ID(s) y fila(s), y permite filtrar por carpeta/formato/candidatos.
 - `writeDriveInventoryRowVerified_` confirma en read-back los ocho campos nuevos de metadata/asociación.
 - Pruebas añadidas/ampliadas: AdminDriveAuditMetadataPersistence, AdminDriveAuditAssociation, AdminIncrementalInventory, AdminReplacedImagesIntegrity y RunServiceTests. Runner JavaScript aislado PASS para migración 35 columnas y motor de asociación; CI/Node pendiente.
+
+
+2026-11-25 — Incidencia #130 — validación de hidratación de útil
+- UsefulButtonState.mjs comprueba que los botones se deshabilitan hasta cargar el estado del usuario desde FEEDBACK y que el índice original del corte se conserva en la UI. Ocho comprobaciones aisladas PASS; Node/CI pendiente.
