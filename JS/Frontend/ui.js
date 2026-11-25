@@ -3999,6 +3999,11 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             if (!context || !usefulReady_(user)) return;
             const desired = !(Array.isArray(latest.likedCortes) && latest.likedCortes.includes(initialKey));
             setState(applyOptimisticUsefulState(latest, vehicleId, cutData.index, desired));
+            utilBtn.classList.toggle("liked", desired);
+            utilBtn.style.backgroundColor = desired ? "var(--gp-color-success)" : "";
+            utilBtn.style.transform = desired ? "scale(1.08)" : "";
+            utilBtn.setAttribute("aria-pressed", String(desired));
+            utilBtn.title = desired ? "Retirar útil" : "Marcar como útil";
             syncUsefulControls_(); syncUsefulCount_(vehicleId, cutData.index);
             scheduleUseful_(context.userId, context.sessionToken, vehicleId, cutData.index, desired);
         };
