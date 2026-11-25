@@ -1174,3 +1174,10 @@ Adenda 2026-11-24 — validación y corrección de privacidad AUTH
 - Se sustituyó únicamente la URL de `API_ENDPOINTS.FEEDBACK` en `JS/Frontend/api-config.js` por el deployment proporcionado expresamente por el propietario.
 - Se actualizó la expectativa correspondiente en `JS/Tests/LocalApiEndpoints.mjs`; AUTH, CATALOG, WRITE, UTILITIES y ADMIN permanecen sin cambios.
 - No se invocó el endpoint ni se desplegó Apps Script. La disponibilidad y compatibilidad del deployment quedan pendientes de validación Beta autorizada.
+
+
+### 2026-11-25 — GP-LIKE-REPLAY-COUNT-01
+
+- Se corrigió el fast-path idempotente de `handleRecordLike`: ahora devuelve también `likeCount` confirmado, sin crear otra fila ni repetir telemetría/actividad. Se ajustó `FeedbackLikeIdempotency.mjs`.
+- Se corrigió `LikeClientCounter.js` para importar `JS/Frontend/likeState.js` (módulo realmente consumido por `ui.js`), se alineó la clave vehículo+corte y se registró en `RunServiceTests.mjs`.
+- Sin cambios a endpoints, IDs de Spreadsheet, datos, permisos ni deployments. Validación CI y Beta pendientes.

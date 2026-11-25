@@ -2176,8 +2176,8 @@ function handleRecordLike(payload) {
         return { created: true, corteIndex };
     });
 
-    if (!outcome.created) return { status: "success", alreadyLiked: true, corteIndex: outcome.corteIndex };
-
+    // También se calcula el contador para un voto idempotente ya existente: el
+    // frontend necesita el valor confirmado para sincronizar el modal tras recargar.
     // El conteo y la telemetría se ejecutan después de liberar el lock. Un fallo de
     // lectura nunca convierte un append confirmado en un falso rechazo del voto.
     let likeCount = null;

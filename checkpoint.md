@@ -881,3 +881,12 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Diff revisado: únicamente FEEDBACK en la configuración y su expectativa de prueba; los otros cinco endpoints no cambiaron. Rama base protegida verificada intacta.
 - Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**. No se invocó el endpoint ni se desplegó Apps Script. La compatibilidad y disponibilidad del deployment FEEDBACK quedan pendientes de Beta autorizada.
 - Próximo paso: continuar con la siguiente tarea pendiente priorizada del backlog, manteniendo MIG-URL-008 como validación Beta separada.
+
+
+## 2026-11-25 — GP-LIKE-REPLAY-COUNT-01
+
+- Comparación con la rama base: la implementación antigua incrementaba directamente `Cortes.utilCorteN`; la implementación actual registra eventos append-only en `FeedbackLikes` y CATALOG los proyecta sobre el catálogo. El contador físico de `Cortes` no se modifica por diseño vigente; no se revirtió esta arquitectura porque la idempotencia y el contrato de proyección dependen del ledger.
+- Hallazgo: el fast-path de voto duplicado devolvía `alreadyLiked:true` sin `likeCount`. El frontend activo `JS/Frontend/likeState.js` solo actualiza el contador cuando recibe un entero confirmado. Se corrige para calcular el total también en la respuesta idempotente, sin insertar ni duplicar actividad.
+- La prueba `JS/Tests/LikeClientCounter.js` importaba una ruta raíz inexistente y no estaba registrada en el runner; se corrigió para probar el módulo frontend real y se incorporó a `RunServiceTests.mjs`.
+- Diferencia de Spreadsheet: la rama base usa un ID anterior; los servicios de la rama de trabajo comparten el ID proporcionado por el propietario el 2026-11-24 y autorizado en NORMAS §17.1. No se cambió ese localizador ni se intentó copiar datos. Debe confirmarse en Beta que los deployments FEEDBACK/CATALOG apuntan al mismo recurso esperado.
+- No se hicieron llamadas a Apps Script ni modificaciones a Spreadsheet/Drive/datos. CI y validación remota quedan pendientes.

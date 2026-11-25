@@ -94,13 +94,13 @@ const first = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo
 assert.deepEqual(first, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:1 });
 assert.equal(h.ledgerRows.length, 2, "El primer útil crea una fila.");
 const duplicateSameCut = h.run({ vehicleId:"100", corteIndex:1, userId:"7", userName:"Pablo Peña" });
-assert.deepEqual(duplicateSameCut, { status:"success", alreadyLiked:true, corteIndex:1 });
+assert.deepEqual(duplicateSameCut, { status:"success", alreadyLiked:true, corteIndex:1, likeCount:1 });
 assert.equal(h.ledgerRows.length, 2, "El mismo útil no crea otra fila.");
 const otherCutLike = h.run({ vehicleId:"100", corteIndex:2, userId:"7", userName:"Pablo Peña" });
 assert.deepEqual(otherCutLike, { status:"success", alreadyLiked:false, corteIndex:2, likeCount:1 });
 assert.equal(h.ledgerRows.length, 3, "El mismo usuario puede aportar en cortes diferentes.");
 const duplicateOtherCut = h.run({ vehicleId:"100", corteIndex:2, userId:"7", userName:"Pablo Peña" });
-assert.deepEqual(duplicateOtherCut, { status:"success", alreadyLiked:true, corteIndex:2 });
+assert.deepEqual(duplicateOtherCut, { status:"success", alreadyLiked:true, corteIndex:2, likeCount:1 });
 assert.equal(h.ledgerRows.length, 3, "El duplicado de corte 2 no agrega filas ni refresca conteos.");
 const otherUser = h.run({ vehicleId:"100", corteIndex:1, userId:"8", userName:"Ana" });
 assert.deepEqual(otherUser, { status:"success", alreadyLiked:false, corteIndex:1, likeCount:2 });
@@ -133,6 +133,7 @@ assert.equal(invalidSameActor.ledgerRows.length, 2, "No se inserta otra fila si 
 const legacyActor = makeHarness([["user:user:7","100","1",0,0,"event","legacy"]]);
 const legacyDuplicate = legacyActor.run({ vehicleId:"100", corteIndex:1, userId:"user:7", userName:"Pablo Peña" });
 assert.equal(legacyDuplicate.alreadyLiked, true);
+assert.equal(legacyDuplicate.likeCount, 1, "La respuesta idempotente también devuelve el contador confirmado.");
 assert.equal(legacyActor.ledgerRows.length, 2, "La identidad histórica no crea una fila adicional al normalizarse.");
 assert.equal(legacyActor.state.activities, 0);
 console.log("FeedbackLikeIdempotency: 10/10 PASS — duplicados, legacy, contención, conteo posterior y eventos históricos");
