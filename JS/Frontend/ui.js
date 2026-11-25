@@ -8423,7 +8423,7 @@ export async function openReplacedImagesModal() {
             }
         }
         const query = String(filterText || "").toLowerCase().trim();
-        const filtered = cachedReplaced.filter(item => !query || [item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id, item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro, item.estado, item.estado_organizacion, item.error_organizacion].some(value => String(value || "").toLowerCase().includes(query)));
+        const filtered = cachedReplaced.filter(item => !query || [item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id, item.drive_folder_id, item.formato_archivo, item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro, item.estado, item.estado_organizacion, item.error_organizacion, item.asociacion_candidatos_json].some(value => String(value || "").toLowerCase().includes(query)));
         visibleItems = filtered;
         const visibleIds = new Set(filtered.map(item => String(item.id_reemplazo || "")));
         selectedIds.forEach(id => { if (!visibleIds.has(id)) selectedIds.delete(id); });
