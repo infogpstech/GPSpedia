@@ -153,7 +153,7 @@ Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del
 Esta sección consolida el estado vigente y prevalece sobre los apuntes históricos anteriores que todavía indiquen MIG-URL-002 o MIG-URL-003 como tarea activa. MIG-URL-001..007 están cerradas; MIG-URL-008 permanece pendiente de autorización para validar endpoints Beta aislados. La corrección de integridad de útiles se atiende como prioridad crítica sin realizar llamadas ni cambios en deployments externos.
 
 ### Prioridad 1 — Útiles: idempotencia por usuario/vehículo y estabilidad de CATALOG
-**Estado:** IMPLEMENTACIÓN LOCAL APLICADA; CI/regresión y validación Beta pendientes.
+**Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — CI 45535275807: 523 suites, 6,206 pruebas, 0 fallos. Validación funcional de los deployments Apps Script/Spreadsheet Beta pendiente.
 
 - Un usuario puede registrar un útil una sola vez por vehículo, independientemente del corte en el que vuelva a pulsar.
 - La consulta de duplicados y el append se ejecutan dentro de una sección crítica breve con `tryLock(0)`; si hay contención, el frontend reintenta silenciosamente hasta cinco veces (100–400 ms). El log de actividad queda fuera del lock.
@@ -164,7 +164,7 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 - No se modifica el contador físico de Cortes para los eventos nuevos; CATALOG proyecta los actores únicos desde FeedbackLikes.
 
 ### Prioridad 2 — Dashboard: consolidar aportes de nombres idénticos
-**Estado:** IMPLEMENTACIÓN LOCAL APLICADA; pruebas/regresión pendientes.
+**Estado:** COMPLETADA — ActivityDashboardContributions 3/3 PASS y regresión CI aprobada. La consolidación Pablo Peña 365 + 15 = 380 está cubierta.
 
 - Consolidar registros del mismo nombre visible normalizado aunque los servicios entreguen distintos IDs históricos.
 - Sumar los cortes y aportes registrados de las filas agrupadas. No duplicar el mismo nombre en la tabla.
@@ -172,14 +172,14 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 - No cambiar servicios Apps Script ni el contrato de datos. Los conteos de vehículos se conservan con la regla actual de agregación porque el frontend no dispone de la identidad de cada vehículo para sumar sin riesgo de duplicarlos.
 
 ### Prioridad 3 — Modal de detalle de tutoriales: vídeo YouTube visible
-**Estado:** IMPLEMENTACIÓN LOCAL APLICADA; CI y reproducción visual real pendientes.
+**Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — TutorialVideoModalLayout 9/9 PASS y navegador 260/260 PASS. La reproducción real de vídeos queda pendiente de Beta.
 
 - Usar el mismo tamaño/estrategia del iframe del vídeo guía de desarme del modal de detalle de corte: ancho 100 % y alto fijo de 315 px.
 - Cargar el iframe de inmediato (sin lazy loading), mantener URL de embed validada, permisos de reproducción y pantalla completa.
 - El contenedor no puede contraerse dentro del modal. No cambiar URLs ni datos guardados de tutoriales.
 
 ### Prioridad 4 — Encabezado de detalle de cortes/tutoriales
-**Estado:** AJUSTE CSS LOCAL APLICADO; validación responsive pendiente.
+**Estado:** COMPLETADA — CutDetailModalLayout 32/32 PASS y navegador 260/260 PASS en cuatro tamaños.
 
 - Mantener el título en una sola línea cuando quepa; si excede el ancho disponible, truncar de forma legible en lugar de partir palabras o generar saltos innecesarios.
 - Alinear el borde inferior del logo y del nombre del modelo y conservar la misma separación visual respecto de la línea azul.
@@ -187,7 +187,8 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 - Confirmar en escritorio y móvil que el cierre y las acciones del modal no se desplacen ni se solapen.
 
 ### Continuidad obligatoria
-- En el siguiente trabajo continuar desde estas cuatro prioridades, en el orden indicado; no volver a registrar tareas duplicadas.
-- No cerrar ninguna prioridad hasta que pasen sus pruebas específicas, la regresión de servicios y la revisión responsive correspondiente.
-- La reproducción real de vídeos y la comprobación funcional contra Apps Script/Spreadsheet quedan para Beta aislada y autorizada. No desplegar Apps Script ni modificar hojas, datos, permisos o endpoints durante las pruebas locales.
+- En los próximos trabajos continuar con las validaciones Beta diferidas, en este orden: (1) útiles FEEDBACK/CATALOG, (2) reproducción real de vídeos de tutoriales. No reabrir ni duplicar las implementaciones locales ya aprobadas.
+- Beta de útiles: comprobar que dos usuarios distintos suman dos útiles; el mismo usuario, al repetir en el mismo vehículo o en otro corte, conserva un solo útil y no genera una segunda fila; CATALOG debe devolver el snapshot sin error.
+- Beta de vídeo: comprobar reproducción real de al menos un tutorial con URL watch y otro con URL corta/shorts, tanto en escritorio como en móvil.
+- No desplegar Apps Script ni modificar hojas, datos, permisos o endpoints durante las pruebas locales. MIG-URL-008 continúa pendiente de autorización y entorno Beta aislado.
 - La tarea previa **Actividad reciente** del Dashboard (tabla Fecha/Usuario/Acción con acordeón de detalle) sigue en cola separada; no se sustituye por la consolidación de aportes de esta solicitud.
