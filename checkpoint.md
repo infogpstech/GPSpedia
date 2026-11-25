@@ -754,3 +754,13 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Implementado: creación de hoja y encabezado si faltan; confirmación de escritura; lectura posterior; carrera de creación recuperada; esquema incompatible no se sobrescribe.
 - `AdminLocalOperationGuard.mjs` PASS en runner aislado; `AdminOperationGuardsSchema.mjs` contrato PASS; simulaciones de creación, existente válido, mismatch y carrera PASS; sintaxis ADMIN PASS. CI remoto pendiente, sin habilitar guardas adicionales ni modificar recursos externos.
 - Siguiente tarea: GP-ADMIN-DRIVE-SCAN-MODAL-01.
+
+
+## 2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01 (implementación)
+
+- Integrada una consola de progreso en el modal existente de Auditoría de Cortes, sin crear un modal adicional. Los mensajes de auditoría se reflejan en Developer y en el panel integrado, con nivel, hora y texto seguro; scroll automático y límite de 250 entradas.
+- Conservada la representación incremental de resultados y se ajustaron límites de altura/scroll para escritorio y móvil.
+- Añadida prueba contractual `JS/Tests/AdminDriveScanModal.mjs` (7 aserciones). No se ejecutó Node local ni se confirmó CI en esta intervención; validación automatizada pendiente.
+- Archivos: `index.html`, `JS/Frontend/ui.js`, `style.css`, `JS/Tests/AdminDriveScanModal.mjs`, `Tareas_Activas.md`.
+- Publicado exclusivamente en `GPSpedia2.2.5_work`; no se invocaron Apps Script, Drive ni Spreadsheet. La rama base permanece sin escritura.
+- Próxima acción: verificar workflow CI y ejecutar/ajustar la suite; inspeccionar resultados y estados persistidos/reanudación en navegador real Beta cuando esté disponible.
