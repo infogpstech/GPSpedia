@@ -292,7 +292,7 @@ try {
     check(Math.abs(cutHeaderRender.logoBottom - cutHeaderRender.modelBottom) <= 3 &&
       Math.abs((cutHeaderRender.dividerTop - cutHeaderRender.logoBottom) -
         (cutHeaderRender.dividerTop - cutHeaderRender.modelBottom)) <= 3 &&
-      cutHeaderRender.logoObjectPosition.includes("bottom"),
+      (cutHeaderRender.logoObjectPosition.includes("bottom") || cutHeaderRender.logoObjectPosition.includes("100%")),
       profile.name + ": logo y modelo alineados abajo con igual separación de la línea azul");
     check(cutHeaderRender.modelWhiteSpace === "nowrap" &&
       (profile.width > 520 || cutHeaderRender.modelFontSize >= 18),
