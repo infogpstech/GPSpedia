@@ -371,3 +371,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - GitHub Pages build/deployment run 45619392374 SUCCESS.
 - No se invocaron los endpoints, no se desplegaron proyectos Apps Script y no se modificaron PropertiesService, Spreadsheet, Drive, permisos ni datos externos. La disponibilidad y compatibilidad real de los dos deployments quedan pendientes de validación Beta.
 - MIG-URL-008 (comprobación GET de salud) sigue separada y pendiente de confirmación de entorno Beta aislado y autorización expresa; esta actualización no implica autorización para consultar endpoints.
+
+
+### GP-LIKE-REBUILD-01 — incidencia posterior: contención de lock (2026-11-25)
+
+- Se identificó una ruta de rechazo reproducible en FEEDBACK: `withFeedbackLikeLock_` usaba `tryLock(0)` y el cliente agotaba cinco intentos con esperas de 100–400 ms (1 s acumulado). Cualquier contención temporal del ScriptLock compartido por las operaciones FEEDBACK podía rechazar un like nuevo antes de consultar idempotencia o escribir.
+- Se conserva el requisito normativo de locks no bloqueantes en Apps Script. No se aumentó el tiempo de espera del servidor ni se amplió la sección crítica.
+- `recordLike` amplió a 12 intentos, con espera incremental de 150 ms por intento (9.9 s acumulados como máximo), exclusivamente cuando el servidor devuelve `LIKE_LOCK_BUSY`. Los errores de sesión, validación, escritura y demás no se reintentan. Como el backend rechaza con ese código antes de entrar en la sección crítica, el reintento no repite una escritura.
+- Se actualizaron `FeedbackLikeClientRetry.mjs`, `FeedbackLikeLockContention.mjs` y `FeedbackLikePreflightOutsideLock.mjs`.
+- CI run `45624279054` SUCCESS: 528 suites, 6,264 pruebas aprobadas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. AUG-146: 264/264 PASS en cuatro viewports.
+- La causa concreta del error observado en la ejecución remota no se puede confirmar sin consultar el registro de ejecución del deployment FEEDBACK. No se invocó el endpoint ni se desplegó Apps Script; la corrección está en la rama fuente y requiere actualizar el deployment FEEDBACK para entrar en vigor.
+- Estado: **COMPLETADA EN CÓDIGO Y CI; VALIDACIÓN DEL DEPLOYMENT FEEDBACK PENDIENTE DE BETA**. Se mantiene la idempotencia actor+vehículo+corte y los duplicados no se reenvían salvo rechazo explícito `LIKE_LOCK_BUSY`.
