@@ -764,3 +764,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Archivos: `index.html`, `JS/Frontend/ui.js`, `style.css`, `JS/Tests/AdminDriveScanModal.mjs`, `Tareas_Activas.md`.
 - Publicado exclusivamente en `GPSpedia2.2.5_work`; no se invocaron Apps Script, Drive ni Spreadsheet. La rama base permanece sin escritura.
 - Próxima acción: verificar workflow CI y ejecutar/ajustar la suite; inspeccionar resultados y estados persistidos/reanudación en navegador real Beta cuando esté disponible.
+
+
+## Continuidad — GP-ADMIN-DRIVE-SCAN-MODAL-01
+
+- Modal de auditoría integrado con panel de progreso, nivel/hora/texto seguro, aria-live, scroll y límite 250. Resultados incrementalmente visibles y estilos responsive.
+- CI run 45610016210: `AdminDriveScanModal.mjs` 7/7 PASS; responsive-browser PASS (AUG-146, no prueba de este modal). Suite global 331 suites/4016 tests aprobados, cinco suites fallaron: dos contratos FEEDBACK/CATALOG y MIG019 por assertion de patrón de likes; un contrato INTEGRATION AdminDriveAuditGlobalConsole por texto de resumen; MIG021 LocalApiEndpoints assertion. Errores de tests preexistentes/ajenos salvo integración modal. Se corrigió el texto para satisfacer contrato legacy sin eliminar el panel simultáneo.
+- Commit de corrección: fd2c54d12ae11f7770863257ca5039408bb2e055; HEAD rama verificado. Reejecutar CI. No se ejecutó Apps Script ni se alteraron recursos Beta.
+- Estrategia normativa §20: recuperación vía GitHub API cuando CLI/network local falla; runners CI para test reproducible; runner aislado/mock si el runner original falla, evitando declarar CI PASS ficticio. No bloquear tarea por CI si pruebas locales aisladas pertinentes aprobadas; no omitir fallos reproducibles.
