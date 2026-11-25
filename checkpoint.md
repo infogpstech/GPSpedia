@@ -613,3 +613,15 @@ Estado: **EN PROGRESO — falta evidencia de los endpoints activos.**
 - MIG-URL-008 sigue pendiente de autorización Beta aislada. No se hicieron llamadas a deployments Apps Script ni cambios en Spreadsheet, Drive, PropertiesService, permisos o endpoints.
 - La tarea independiente **Actividad reciente** del Dashboard continúa en cola.
 - No se modificó la rama base GPSpedia2.2.5.
+
+
+---
+
+## 2026-11-24 — Actualización local de endpoints CATALOG y FEEDBACK
+
+- Solicitud expresa del propietario: sustituir las URLs de CATALOG y FEEDBACK en la configuración frontend.
+- Archivos de implementación: `JS/Frontend/api-config.js`; fixture contractual: `JS/Tests/LocalApiEndpoints.mjs`.
+- Se mantienen intactas las entradas AUTH, WRITE, UTILITIES y ADMIN, el objeto único `API_ENDPOINTS`, `ACTION_TO_SERVICE_MAP` y el resolvedor local.
+- Validación estructural previa a publicación: las seis URLs cumplen HTTPS + `/exec` y sus IDs de deployment son distintos. La prueba automatizada contractual se ejecutará/confirmará después de publicar.
+- No se realizaron solicitudes HTTP, no se modificaron deployments Apps Script ni recursos externos. La identidad y salud remota continúan pendientes de MIG-URL-008, con Beta aislada y autorización expresa.
+- HEAD confirmado antes de esta actualización: `8ee4083aa3561201ce3e0a82be6678d6ee5bcf8c`; rama base protegida sin cambios.

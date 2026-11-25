@@ -60,3 +60,14 @@ Las seis URLs operativas se mantienen en el único objeto `API_ENDPOINTS` de `JS
 - No se ejecutaron GET remotos ni workflows de salud: la guía advierte que el bootstrap no tiene selector de entorno y podría apuntar a producción.
 - MIG-URL-002 se cerró con los seis valores proporcionados directamente por el propietario. MIG-URL-003 quedó completada con router y health locales; identidad/disponibilidad remota queda diferida a MIG-URL-008.
 
+
+
+## Adenda 2026-11-24 — actualización de endpoints CATALOG y FEEDBACK
+
+El propietario proporcionó expresamente nuevas direcciones para los servicios CATALOG y FEEDBACK. Se actualizaron únicamente esas dos entradas de `API_ENDPOINTS` en `JS/Frontend/api-config.js`; AUTH, WRITE, UTILITIES y ADMIN permanecen sin cambios.
+
+- CATALOG: `https://script.google.com/macros/s/AKfycbzq5ax7tpZOYVcMYtT8LOYjZLaIRPN9__ePAG8SknlkGfMs823CTcPh2TCrR0E90wH1/exec`
+- FEEDBACK: `https://script.google.com/macros/s/AKfycbxlVtAhtYvSGvwvjeVZ-kz0X6dtsCz_ITycUkGJ4JTKtW1fLjGpspwmGlXx6kqd2Jd7bg/exec`
+- Validación estructural: HTTPS, dominio `script.google.com`, ruta `/exec` e identificadores distintos de los otros cuatro servicios y entre sí.
+- La identidad, disponibilidad y funcionamiento de los deployments no se comprobaron mediante HTTP. Permanecen pendientes de MIG-URL-008, únicamente en Beta aislada y con autorización expresa.
+- Las direcciones anteriores permanecen arriba como antecedente histórico de MIG-URL-002; esta adenda identifica los valores vigentes posteriores.

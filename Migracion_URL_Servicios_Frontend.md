@@ -97,3 +97,8 @@ Se actualizó `NORMAS_DESAROLLO.md` §§17.1 y 18 para establecer el patrón de 
 ## Estado y continuidad
 
 MIG-URL-001 a MIG-URL-007 están cerradas. MIG-URL-008 es la única tarea restante y está pendiente de autorización/confirmación de Beta aislada. No ejecutar GET remotos ni pruebas funcionales sobre las seis URLs hasta recibir esa confirmación. El orden obligatorio es MIG-URL-001 → MIG-URL-002 → MIG-URL-003 → MIG-URL-004 → MIG-URL-005 → MIG-URL-006 → MIG-URL-007 → MIG-URL-008, respetando dependencias explícitas. No adelantar eliminaciones que dependan de una configuración local probada. El checkpoint vigente determina el punto exacto de continuidad.
+
+
+## Adenda 2026-11-24 — rotación de CATALOG y FEEDBACK
+
+El propietario confirmó nuevas URLs para CATALOG y FEEDBACK después del cierre de MIG-URL-007. La configuración local y el fixture contractual se actualizaron en la rama de trabajo, sin alterar el diseño MIG-URL ni los demás endpoints. MIG-URL-008 continúa pendiente: no se consultaron deployments ni se validó su identidad remota; la comprobación queda reservada a Beta aislada y autorizada.

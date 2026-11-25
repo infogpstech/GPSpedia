@@ -192,3 +192,10 @@ Esta sección consolida el estado vigente y prevalece sobre los apuntes históri
 - Beta de vídeo: comprobar reproducción real de al menos un tutorial con URL watch y otro con URL corta/shorts, tanto en escritorio como en móvil.
 - No desplegar Apps Script ni modificar hojas, datos, permisos o endpoints durante las pruebas locales. MIG-URL-008 continúa pendiente de autorización y entorno Beta aislado.
 - La tarea previa **Actividad reciente** del Dashboard (tabla Fecha/Usuario/Acción con acordeón de detalle) sigue en cola separada; no se sustituye por la consolidación de aportes de esta solicitud.
+
+
+### Actualización de endpoints — 2026-11-24
+
+- Por instrucción expresa del propietario, se sustituyeron las URLs locales de CATALOG y FEEDBACK en `JS/Frontend/api-config.js`; las otras cuatro entradas permanecen intactas.
+- Se actualizó el fixture `JS/Tests/LocalApiEndpoints.mjs` para exigir los nuevos valores.
+- Esta actualización no modifica deployments Apps Script. La verificación HTTP de identidad/salud de los seis servicios sigue pendiente de MIG-URL-008 y de la autorización/confirmación de Beta aislada.
