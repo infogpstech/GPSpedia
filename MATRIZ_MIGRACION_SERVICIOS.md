@@ -1241,7 +1241,7 @@ El inventario detallado de configuración y persistencia está en [INVENTARIO_CO
 
 ### 20.2 Criterios de clasificación y destino
 
-- URLs/IDs y parámetros funcionales: registro central `Servicios`, `ConfiguracionRecursos` y `ConfiguracionParametros`, sujetos al bootstrap MIG-006 y esquema/caché MIG-007.
+- URLs/IDs: `API_ENDPOINTS` local en frontend. Parámetros funcionales y recursos: `ConfiguracionParametros` y `ConfiguracionRecursos`; no dependen de un registro central de endpoints.
 - Login idempotente, auditoría ADMIN, Safe Apply, auditoría Drive, feed incremental y telemetría: hojas/ledgers operativos específicos, no la hoja de parámetros.
 - Contadores de IDs: reconciliar con los ledgers de reservas existentes; no mantener contadores duplicados.
 - Secretos de interconexión Coordinator/Catalog: retirar con sus consumidores; no copiar a Spreadsheet.
@@ -1301,7 +1301,7 @@ Se agregó `JS/Tests/ServiceCallGraphContract.mjs` al runner. La matriz de prueb
 
 El diseño versionado de las seis tablas lógicas, columnas, validación, defaults, publicación atómica por revisión, historial append-only, rollback, separación de visibilidad y política de caché está en [ESQUEMA_CONFIGURACION_CENTRAL.md](./ESQUEMA_CONFIGURACION_CENTRAL.md). La trazabilidad de las 26 familias MIG-003 y de los siete endpoints se incluye en §6 del documento.
 
-- Servicios: endpoints públicos de entrada, una fila por service_key.
+- Servicios: hoja histórica de endpoints, retirada como fuente operativa; no se lee ni se escribe y no se elimina durante esta migración.
 - ConfiguracionParametros: parámetros funcionales/operativos validados; sin contratos criptográficos ni RBAC editable.
 - ConfiguracionRecursos: IDs no secretos de Drive, con validación del recurso y jerarquía.
 - ConfiguracionControl: schema_version, active_revision y estado de publicación.
@@ -1323,15 +1323,15 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 - La creación de usuarios usa ScriptLock local de AUTH. La eliminación de cuenta también usa ese mismo lock de proyecto, sustituyendo la lease cruzada AUTH↔USERS sin abrir una ventana de concurrencia entre altas y bajas.
 - La caché del actor AUTH se precalienta durante login en el propio proyecto. Coordinator ya no dirige precarga ni invalidación a USERS; los destinos remotos restantes son WRITE, FEEDBACK y ADMIN.
 - `JS/Services/users.js`, `JS/Tests/users.js` y la clave de health USERS fueron retiradas del código versionado. No quedan acciones frontend ni políticas de servicio que requieran un endpoint USERS.
-- No se ha borrado ni alterado un deployment Apps Script remoto ni su fila heredada en el registro central. Su deshabilitación se hará tras verificar el despliegue AUTH en Beta y confirmar ausencia de consumidores externos.
+- No se ha borrado ni alterado ningún deployment remoto ni las filas históricas de Servicios. El código no consume esas filas; cualquier purga física requerirá autorización específica.
 
 **Pruebas:** `UsersAtomicMutations.js` — 15/15 PASS. GitHub Actions Node.js 22 SUCCESS — run `45222509966`: 305 suites, 3,554 pruebas aprobadas, 0 fallos. Sintaxis 445 archivos PASS; referencias de módulos 347 archivos PASS. La verificación real de sesiones, roles y permisos sobre recursos aislados permanece pendiente de Beta.
 
 
 ### 22.1 Cierre de validación MIG-012 — 2026-11-23
-- El mapa canónico actual contiene 125 acciones y seis servicios: AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
+- El mapa canónico vigente contiene 123 acciones y seis servicios: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
 - Las acciones de usuarios `getUsers`, `createUser` y `updateProfile` son propiedad de AUTH. El servicio independiente USERS fue retirado del código versionado.
-- El registro central y su caché pública requieren seis servicios. El lector ignora temporalmente la fila histórica USERS hasta el cutover Beta; no se alteró el registro remoto.
+- La caché pública conserva parámetros funcionales; no contiene endpoints. La hoja histórica Servicios se conserva sin consumidores.
 - Regresión CI Node.js 22: run 45222509966 — 305 suites, 3,554 pruebas, 0 fallos. GitHub Pages build/deploy: run 45222508791 — SUCCESS.
 - MIG-012: código completado. Despliegue AUTH, verificación de recursos/permisos y retiro del deployment USERS siguen como validación Beta.
 
@@ -1393,7 +1393,7 @@ El inventario inicial de §§1–19 describe la arquitectura antes de la unifica
 
 ### 22.3 Reconciliación actual del mapa frontend — 2026-11-24
 
-La revisión del objeto completo `ACTION_TO_SERVICE_MAP` en el HEAD vigente identifica **125 acciones** en seis servicios. La distribución actual es: AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45. El conteo se obtiene de las entradas del objeto completo, no de las rutas auxiliares ni de las operaciones internas que no están en el mapa.
+La revisión del objeto completo `ACTION_TO_SERVICE_MAP` en el HEAD vigente identifica **123 acciones** en seis servicios. La distribución actual es: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45. El conteo se obtiene de las entradas del objeto completo, no de las rutas auxiliares ni de las operaciones internas que no están en el mapa.
 
 Cinco acciones vigentes no aparecían en la tabla histórica de §9 y se agregan aquí como adenda, sin reescribir la extracción original:
 
@@ -1402,9 +1402,5 @@ Cinco acciones vigentes no aparecían en la tabla histórica de §9 y se agregan
 | `getPublicConfiguration` | AUTH | Ruta pública de configuración en `doPost` | `api-config.js`; bootstrap de lectura de configuración central, sin credenciales de usuario. |
 | `publishCatalogReset` | CATALOG | `publishCatalogResetForActor_` | Coordinación desde `api-config.js` después de mutaciones que requieren reconciliación completa del catálogo. |
 | `invalidateRichTextModeCache` | FEEDBACK | Ruta de invalidación protegida para Desarrollador | `api-config.js`; invalidación de caché local después de publicar la preferencia global desde ADMIN. |
-| `getCentralServiceUrls` | AUTH | `handleGetCentralServiceUrls_`; exige sesión y rol Desarrollador | Modal de endpoints; carga las seis URL directamente desde el bootstrap AUTH, incluso antes de la primera publicación. |
-| `updateCentralServiceUrls` | AUTH | `handleUpdateCentralServiceUrls_`; exige sesión y rol Desarrollador | Modal de endpoints; valida las seis URL y publica una revisión completa con historial desde AUTH. |
-| `getCentralServiceUrls` | AUTH | `handleGetCentralServiceUrls_`; sesión y rol Desarrollador obligatorios | Modal de endpoints; carga las seis URL directamente desde el bootstrap AUTH incluso antes de la primera publicación. |
-| `updateCentralServiceUrls` | AUTH | `handleUpdateCentralServiceUrls_`; sesión y rol Desarrollador obligatorios | Modal de endpoints; valida las seis URL y publica una revisión completa con historial desde AUTH. |
 
 Las tres acciones tienen ruta backend identificada y consumidor explícito. No representan controles de UI adicionales ni habilitan coordinación backend→backend: las secuencias de publicación e invalidación se ejecutan desde el frontend. La matriz de §§9–19 conserva su valor histórico; esta adenda es la referencia para el mapa vigente.

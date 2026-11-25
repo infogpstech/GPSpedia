@@ -27,7 +27,7 @@ Este documento describe el código versionado. No acredita que las URLs, secreto
 `JS/Frontend/api-config.js` es el router único de solicitudes de aplicación:
 
 - Declara seis destinos: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Las acciones getUsers, createUser y updateProfile pertenecen ahora a AUTH.
-- `ACTION_TO_SERVICE_MAP` contiene 125 acciones canónicas (AUTH 21, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45) y `routeActionInternal_` realiza POST directamente al endpoint del servicio elegido.
+- `ACTION_TO_SERVICE_MAP` contiene 123 acciones canónicas (AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45) y `routeActionInternal_` realiza POST al endpoint local `API_ENDPOINTS[service]`.
 - `routeAction` mide tráfico local del navegador y no envía esas métricas a un servicio de telemetría.
 - `getCatalogChanges` está mapeada actualmente a FEEDBACK.
 - Las acciones `allocateVehicleId` y `freezeCortesIds` ya están mapeadas a WRITE; `getVehicleProjection` y `getContributionCandidates` a CATALOG.
@@ -246,7 +246,7 @@ La implementación frontend de las secuencias identificadas en el inventario que
 ### Salvaguardas implementadas
 
 - ADMIN no contiene destinos de servicios Apps Script ni wrappers de coordinación funcional hacia WRITE/CATALOG.
-- El router frontend resuelve los servicios por el mapa de acciones y el registro central de endpoints; no se añadieron URLs locales.
+- El router frontend resuelve los servicios por el mapa de acciones y `API_ENDPOINTS` local; no consulta un registro central de endpoints.
 - La reorganización persiste un operationId antes de pedir el respaldo. ADMIN asocia el identificador al usuario y al origen en el manifiesto privado; un reintento del mismo usuario verifica y reutiliza la copia existente. Un identificador de otro usuario, una copia incompleta, ambigua o movida fuera de la raíz se rechaza.
 - `getVehicleProjection` exige sesión activa y conserva la matriz de edición del modal: Desarrollador, Jefe y Supervisor. `getContributionCandidates` mantiene el requisito de Desarrollador.
 - El navegador transmite el contexto de sesión, pero no decide permisos ni recibe secretos de servicio. Cada backend valida la sesión y el rol que le corresponde.
@@ -315,7 +315,7 @@ La implementación frontend de las secuencias identificadas en el inventario que
 ## 3.9 MIG-025 — retiro de Coordinator y SharedMutation — 2026-11-24
 
 - Los módulos Coordinator.js, SharedMutationClient.js y users.js ya no forman parte del árbol activo. No se conservan como intermediarios ni como orquestadores alternativos.
-- El frontend coordina las secuencias multi-servicio y resuelve cada destino mediante ACTION_TO_SERVICE_MAP y el registro central versionado. El único localizador estático restante en el frontend es el bootstrap explícito para consultar AUTH; no enruta acciones ordinarias.
+- El frontend coordina las secuencias multi-servicio y resuelve cada destino mediante `ACTION_TO_SERVICE_MAP` y `API_ENDPOINTS`. La lectura pública de parámetros usa la URL local de AUTH; no existe bootstrap separado ni consulta central de URLs.
 - La invalidación de cachés de actor se ejecuta desde sessionCacheInvalidation.js en paralelo hacia los seis servicios. Se transmiten userId y hashes de claves; no se transmiten tokens de sesión entre proyectos.
 - AUTH, WRITE, CATALOG, FEEDBACK, UTILITIES y ADMIN validan localmente su actor y permisos. SharedSessionActor exige que el consumidor inyecte su proveedor Spreadsheet; no mantiene fallback global a SPREADSHEET_ID/openById.
 - Los seis módulos de servicio no conservan URLs de otros servicios, secretos compartidos de coordinación, SharedMutation leases ni llamadas waitLock. Las adquisiciones de lock necesarias usan tryLock(0) y se limitan a secciones críticas locales.
