@@ -6,11 +6,11 @@
 // 1. CONFIGURACIÓN
 export const API_ENDPOINTS = Object.freeze({
     AUTH: "https://script.google.com/macros/s/AKfycby6Bv8WLYBP32m5jHtCcqSxe-u_tYyKZe7-nqmH7eEjz9a3gVLROs5II0CwxKUOlscizg/exec",
-    CATALOG: "https://script.google.com/macros/s/AKfycby7_W_Jopd24oKdy_BBNUCOK31i78wvjpwy2PLPfDJbhspJjRHYxnR6NBVn0B6kgaED/exec",
+    CATALOG: "https://script.google.com/macros/s/AKfycbwnqkZvp7OQGbtn4tlotgISdZh_DCBoL94Kie76J166Kkq3RJsqO4Sda5lDcUiWhsmr/exec",
     WRITE: "https://script.google.com/macros/s/AKfycbx3niOqzZiDxRCkohemVWyrkDBktIYkGyqTecR25xd_VeP_BK-VGNOMbFA_ZSXhU7FtBA/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbz99W30jHo6qdZsUymjN_zaGZ-jFqCe_-hbVb8aGGsuNtt5Bvo21SvaibPkxeSC8_aPyA/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbwGtM7KWpDjxM84ZzErw3zJryGhhTmrHU2bM-aXNOOQsMyk3OFEY3wgoH-bbIQzFrW-uw/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzUc402Sju0_ZU7PQST1Kma-qrgJs2v10Pi6hA62rWZZvsCefD6Mr6PCo5GEDA0dGRk/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbymuqCTpNJUeDvsGE3MIN_7WT1Bjgkg7AtgFKxL9hlyR6ZwGppla6o9QnMhTtMl7EwsxA/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbxvRHGodrhXxs3BnfDr0cccQHgCwMIFQWD3V2qVci-8-NcBJ_XT4IQ6B3BVWhR2lh_zNA/exec"
 });
 
 const API_ENDPOINT_PATTERN_ = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
