@@ -1017,3 +1017,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - La misma presentación se conserva al recibir la respuesta de persistencia y al cargar la tarjeta desde el resultado inicial.
 - Prueba aislada de render: sugerencia Toyota Hilux => muestra confianza alta, señales de carpeta/marca/versión/encendido/años y vehículo VH-02; bloques de UI compilan. PASS.
 - Commit: `8d63c5943f18fa2e6b36003ef8b829846d9a3bf2`.
+
+
+### Biblioteca — guarda compartida aplicada a todas las mutaciones (2026-11-26)
+- Se amplió la serialización global más allá del registro de inventario. Las rutas de aplicar/revertir organizador, aplicar conciliación, migrar esquema, resolver aportes, recuperar, papelera, restaurar, eliminar definitivamente, marcar en uso y mover ahora usan `withSharedReplacedImagesInventoryGuard_` con el mismo alcance compartido.
+- La sincronización de candidatos que ocurre al consultar la biblioteca también se ejecuta dentro de esa guarda; si está ocupada, el GET conserva la lectura y devuelve el error de sincronización como advertencia, sin escribir en paralelo.
+- Verificación estática: 12 rutas mutables comparten la guarda; sincronización de candidatos también protegida; `admin.js` compila. PASS.
+- Commit: `d778cc086e603307a1567bf3a933983e258cae89`.
+- La coordinación concurrente real entre solicitudes sigue sin probarse en Apps Script; la implementación local y el harness de exclusión están verificados.
