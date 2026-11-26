@@ -4205,6 +4205,22 @@ function syncUsefulCount_(v,c){
   else el.textContent=prefix+" · Útiles: "+n;
  });
 }
+function refreshUsefulCatalogProjection_(userId,vehicleId){
+ routeAction("getCatalogData",{forceRefresh:true}).then(result=>{
+  if(!result||result.status!=="success"||!result.data||!Array.isArray(result.data.cortes))throw Error("CATALOG no devolvió la proyección actualizada de útiles.");
+  const context=getUiSessionContext_();
+  if(!context||String(context.userId)!==String(userId))return;
+  const state=getState(),catalog=state.catalogData&&typeof state.catalogData==="object"?state.catalogData:{};
+  const freshVehicle=result.data.cortes.find(v=>String(v&&v.id)===String(vehicleId));
+  if(!freshVehicle)return;
+  const currentCortes=Array.isArray(catalog.cortes)?catalog.cortes:[];
+  const found=currentCortes.some(v=>String(v&&v.id)===String(vehicleId));
+  const cortes=found?currentCortes.map(v=>String(v&&v.id)===String(vehicleId)?freshVehicle:v):[...currentCortes,freshVehicle];
+  setState({catalogData:{...catalog,...result.data,cortes}});
+  [1,2,3].forEach(index=>syncUsefulCount_(vehicleId,index));
+  syncUsefulControls_();
+ }).catch(error=>console.error("No se pudo actualizar la proyección CATALOG de útiles:",error));
+}
 const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
  send:p=>setCutUseful(p.vehicleId,p.corteIndex,p.isUseful,{userId:p.userId,sessionToken:p.sessionToken}),
  onSuccess:(r,p,m)=>{
@@ -4218,6 +4234,7 @@ const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
   }
   if(m.latest)usefulPending_.delete(usefulActorKey_(p.userId,p.vehicleId,p.corteIndex));
   saveUsefulCache_(p.userId);
+  if(m.latest)refreshUsefulCatalogProjection_(p.userId,p.vehicleId);
  },
  onFailure:(error,p,m)=>{
   if(!m.latest)return;
