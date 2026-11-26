@@ -14168,8 +14168,21 @@ function validateDriveAuditInventoryBatch_(auditId, ownerId, files) {
     for (let page = 0; page < pageCount; page++) {
         const raw = CacheService.getScriptCache().get(getDriveAuditPageResultCacheKey_(auditId, page));
         if (raw === null) throw new Error("Falta una página persistida de resultados; no se aceptó el lote incremental.");
-        let ids; try { ids = JSON.parse(raw); } catch (error) { throw new Error("La página incremental está corrupta."); }
-        normalizeDriveAuditFileIds_(ids).forEach(id => candidates.add(id));
+        let pageData;
+        try { pageData = JSON.parse(raw); }
+        catch (error) { throw new Error("La página incremental está corrupta."); }
+        // Las páginas se guardan en formato combinado por storeDriveAuditSeenPage_:
+        // unused + IDs procesados + metadatos. Se admite el array legado para
+        // compatibilidad, pero nunca se confunde el objeto completo con una lista.
+        const unusedIds = Array.isArray(pageData) ? pageData :
+            (pageData && typeof pageData === "object" &&
+                Array.isArray(pageData.unused) &&
+                Array.isArray(pageData.files) &&
+                Array.isArray(pageData.folders) &&
+                Array.isArray(pageData.metadata)
+                ? pageData.unused : null);
+        if (!unusedIds) throw new Error("La página incremental no contiene una lista íntegra de imágenes sin uso.");
+        normalizeDriveAuditFileIds_(unusedIds).forEach(id => candidates.add(id));
     }
     if (submitted.some(id => !candidates.has(id))) throw new Error("El lote contiene IDs que ADMIN no emitió como imágenes sin uso.");
     return state;
