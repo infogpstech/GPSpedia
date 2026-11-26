@@ -1096,3 +1096,19 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Archivos de código: `HTML/add_cortes.html` únicamente.
 - Commits: `6671241ebd2c75044280cf8a41d847377fdcac7f`, `aca1182f734d282f224d5e8a989e8979ececd773`.
 - Límite: no se realizó una sesión Beta/navegador en esta ejecución; la validación visual real permanece pendiente.
+
+## GP-WRITE-CUT-CATALOG-01 — Alinear validación de alta de cortes con CATALOG (2026-11-26)
+
+- [x] Auditar el envío de etapa 2 en `HTML/add_cortes.html`, ruteo de `JS/Frontend/api-config.js`, validación de `JS/Services/write.js` y allowlist de `JS/Frontend/diagnosticLogger.js`.
+- [x] Registrar los hallazgos en `Auditoria.txt` antes de editar y crear respaldos exactos de los archivos afectados.
+- [x] Alinear las cuatro listas de validación de WRITE con CATALOG: Cortes col. 2 (categoría), col. 8 (encendido), cols. 12/19/26 (tipo de corte) y cols. 15/22/29 (configuración Relay).
+- [x] Retirar la dependencia obligatoria de la hoja Relay de la validación de alta, sin alterar su uso como fuente de diagramas/detalles en CATALOG.
+- [x] Mejorar el diagnóstico de submit para registrar el código normalizado de error del servicio/ruteador, conservando la política allowlist-only y sin registrar payloads, mensajes libres, tokens, VIN ni imágenes.
+- [x] Harness estático/fixture: unión de los tres slots, categorías, encendido, tipos de corte y configuraciones Relay; comparación de contrato con CATALOG. PASS.
+- [x] Comparación de los tres archivos contra respaldos exactos: únicamente los bloques auditados fueron modificados. PASS.
+- [x] Code Review estático: cambios limitados a listas oficiales de WRITE y observabilidad segura; persistencia, actor, VIN, fingerprint, ID, ledger, lock/rollback, Drive, idempotencia y recuperación permanecen sin cambios.
+- [ ] Validar en entorno desplegado con una identidad y datos de prueba autorizados: alta de vehículo nuevo y aporte a vehículo existente; comprobar resultado en Cortes/AportesVehiculo, Idempotencia y Drive según corresponda.
+- [ ] Confirmar en consola que `cut-operation.submit-failed` muestra códigos de WRITE/API permitidos si se produce un rechazo.
+- Límite: no se ejecutó Apps Script, Spreadsheet, Drive, navegador ni una alta real desde esta sesión; deployment y Beta siguen pendientes.
+- Archivos: `JS/Services/write.js`, `JS/Frontend/diagnosticLogger.js`, `HTML/add_cortes.html`.
+- Commits: `ad84cb3e95ba48528c9c9ba729aecfafc3f46b69`, `2b6924142eef4a38b713b3321fcd813740df506f`, `eeecec8ad5a3f28d0ffdff2dc4b798da13c41b31`, `035041b445c5f6a785d19705aec3b254c9359bde`, `bc5a9313d09726b9926dc844f8dd42d81cab982f`.
