@@ -850,3 +850,13 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Incidencia #130: implementación local y validaciones CI completas; estado **COMPLETADA CON VALIDACIÓN DIFERIDA**. Evidencia adicional en run `45811468299`: 542 suites/6,453 pruebas, 0 fallos; pruebas focales de útiles y auditoría ADMIN/Drive PASS. La validación real Beta FEEDBACK/CATALOG y ADMIN/Drive/Spreadsheet permanece separada y no se simula.
 - Próxima prioridad Beta según orden del propietario: útiles FEEDBACK/CATALOG con identidad sintética y recursos aislados; después reproducción real de tutoriales. El primer caso no se ejecuta hasta tener identidad sintética, dataset aislado y cleanup comprobable; no se crean eventos de prueba sobre datos sin esos controles.
 - TutorialVideoModalLayout 18/18 PASS en CI; reproducción real sigue pendiente.
+
+
+## GP-UTIL-BUTTON-STATE-REVERT-03 — revisión de entrega de código mediante Service Worker (2026-11-26)
+
+**Estado: CAMBIO EN RAMA; publicación/validación pendiente.**
+
+- Nueva hipótesis/causa potencial: el Service Worker anterior usaba cache-first para documentos y recursos ejecutables. Una respuesta obsoleta podía ser entregada al navegador mientras la versión nueva se actualizaba en segundo plano, impidiendo que el usuario ejecutara de inmediato el código publicado.
+- Cambio: `service-worker.js` actualizado a caché `gpsepedia-cache-v78` y estrategia network-first para documentos, scripts, estilos y fuentes del mismo origen; fallback a caché para continuidad offline. Recursos no ejecutables conservan cache-first.
+- Commit: `d715e1693b8d340cd829608fabc628c79c223dbf`.
+- Aún no se verificó Pages, ni la respuesta real FEEDBACK/CATALOG, ni un navegador físico. No se considera resuelta la incidencia.
