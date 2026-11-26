@@ -481,7 +481,7 @@ function collectCatalogSheetImageReferences_(sheet, spec, includeLocations) {
                 if (!candidate) return;
                 const ids = extractDriveFileIds(candidate);
                 ids.forEach(id => cellIds.add(id));
-                if (!ids.length && /drive\.google\\.com\\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
+                                if (!ids.length && (candidate.indexOf("drive.google.com/uc") >= 0 || candidate.indexOf("drive.google.com/thumbnail") >= 0 || candidate.indexOf("drive.google.com/file") >= 0 || candidate.indexOf("drive.google.com/open") >= 0 || candidate.indexOf("googleusercontent.com") >= 0)) {
                     hasUnverifiableDriveLink = true;
                 }
             });
