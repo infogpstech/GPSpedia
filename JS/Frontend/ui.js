@@ -3985,7 +3985,8 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         utilBtn.setAttribute("aria-label", "Marcar corte como útil");
         const userForUseful = getState().currentUser;
         utilBtn.disabled = Boolean(userForUseful && !getUiSessionContext_(userForUseful));
-        utilBtn.setAttribute("aria-busy", String(Boolean(getUiSessionContext_(userForUseful) && !usefulReady_(userForUseful))));
+        const usefulContextForButton = getUiSessionContext_(userForUseful);
+        utilBtn.setAttribute("aria-busy", String(Boolean(usefulContextForButton && usefulLoadingSessions_.has(usefulContextForButton.userId + "|" + usefulContextForButton.sessionToken))));
         const initialKey = usefulKey_(vehicleId, cutData.index);
         const active = Array.isArray(getState().likedCortes) && getState().likedCortes.includes(initialKey);
         utilBtn.classList.toggle("liked", active);
@@ -4184,13 +4185,13 @@ function saveUsefulCache_(u){try{const old=readUsefulCache_(u)||{},active=String
 function usefulReady_(user){const c=getUiSessionContext_(user);return Boolean(c&&usefulReadySessions_.has(c.userId+"|"+c.sessionToken));}
 function syncUsefulControls_(){
  if(typeof document==="undefined")return;
- const s=getState(),context=getUiSessionContext_(s.currentUser),ready=Boolean(context&&usefulReadySessions_.has(context.userId+"|"+context.sessionToken)),liked=new Set(s.likedCortes||[]);
+ const s=getState(),context=getUiSessionContext_(s.currentUser),sessionKey=context?context.userId+"|"+context.sessionToken:"",ready=Boolean(context&&usefulReadySessions_.has(sessionKey)),loading=Boolean(context&&!ready&&usefulLoadingSessions_.has(sessionKey)),liked=new Set(s.likedCortes||[]);
  document.querySelectorAll(".util-btn[data-useful-vehicle-id][data-useful-cut-index]").forEach(b=>{
   const on=liked.has(usefulKey_(b.dataset.usefulVehicleId,b.dataset.usefulCutIndex));
   b.classList.toggle("liked",on);b.style.backgroundColor=on?"#28a745":"";
-  b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-busy",String(Boolean(context&&!ready)));
+  b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-busy",String(loading));
   b.disabled=Boolean(s.currentUser&&!context);
-  b.title=!s.currentUser?"Inicia sesión para marcar este corte como útil":!context?"La sesión no está disponible":ready?(on?"Retirar útil":"Marcar como útil"):"Cargando estado de útil…";
+  b.title=!s.currentUser?"Inicia sesión para marcar este corte como útil":!context?"La sesión no está disponible":ready?(on?"Retirar útil":"Marcar como útil") :loading?"Cargando estado de útil…":"No se pudo cargar el estado; pulsa para reintentar";
  });
 }
 function syncUsefulCount_(v,c){

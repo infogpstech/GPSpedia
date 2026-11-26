@@ -1531,3 +1531,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01: se corrigió en frontend la espera/hidratación de útiles, los errores silenciosos, el rollback al estado confirmado y la cancelación de pendientes fallidos; se reparó la expresión del contador de acordeón. Archivos: JS/Frontend/ui.js, JS/Frontend/usefulSyncQueue.js. Parse sintáctico y comprobaciones efímeras de lógica PASS; sin archivos de prueba, sin invocaciones remotas ni despliegues Apps Script. Rama base intacta.
+
+[2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01 — revisión de estado de carga: aria-busy se limita a la hidratación realmente en curso; tras un error, el control muestra que puede reintentarse. Sintaxis UI verificada; sin llamadas remotas ni pruebas Beta.
