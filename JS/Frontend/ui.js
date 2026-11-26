@@ -8783,6 +8783,9 @@ export async function openAuditDriveModal(options = {}) {
     const closeBtn = document.getElementById('close-audit-drive-modal');
     const summaryEl = document.getElementById('audit-drive-summary');
     const container = document.getElementById('audit-drive-results-container');
+    const folderBreadcrumb = document.getElementById('audit-drive-folder-breadcrumb');
+    const viewGridButton = document.getElementById('btn-audit-drive-view-grid');
+    const viewListButton = document.getElementById('btn-audit-drive-view-list');
     const auditButton = document.getElementById('btn-admin-audit-drive-images');
     const startButton = document.getElementById('btn-audit-drive-start');
     const resumeButton = document.getElementById('btn-audit-drive-resume');
@@ -8841,6 +8844,10 @@ export async function openAuditDriveModal(options = {}) {
     const allFiles = [];
     const seenFileIds = new Set();
     const renderedFileIds = new Set();
+    const folderGroups = new Map();
+    const auditFileCardsById = new Map();
+    let retrySingleInventory = null;
+    let currentAuditView = 'grid';
     let cursor = null;
     let complete = false;
     let totalDiscovered = 0;
@@ -8883,6 +8890,55 @@ export async function openAuditDriveModal(options = {}) {
         logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel);
     };
 
+    const setAuditView = view => {
+        currentAuditView = view === 'list' ? 'list' : 'grid';
+        if (container) {
+            container.classList.toggle('view-grid', currentAuditView === 'grid');
+            container.classList.toggle('view-list', currentAuditView === 'list');
+        }
+        if (viewGridButton) viewGridButton.setAttribute('aria-pressed', String(currentAuditView === 'grid'));
+        if (viewListButton) viewListButton.setAttribute('aria-pressed', String(currentAuditView === 'list'));
+    };
+    if (viewGridButton) viewGridButton.onclick = () => setAuditView('grid');
+    if (viewListButton) viewListButton.onclick = () => setAuditView('list');
+    setAuditView('grid');
+
+    const updateInventoryCardState = (fileId, status, message = '') => {
+        const file = allFiles.find(item => String(item && item.fileId || '') === String(fileId));
+        if (file) {
+            file.inventoryStatus = status;
+            file.inventoryMessage = String(message || '');
+        }
+        const entry = auditFileCardsById.get(String(fileId));
+        if (!entry) return;
+        const labels = {
+            pending: 'Pendiente de registro',
+            confirmado: 'Registrado y verificado',
+            bloqueado: 'Bloqueado · requiere revisión',
+            error: 'Error · reintento disponible',
+            no_confirmada: 'No confirmado',
+            not_applicable: 'No requiere registro'
+        };
+        entry.status.textContent = labels[status] || 'Estado de registro no disponible';
+        entry.status.title = String(message || '');
+        entry.card.classList.remove('is-pending', 'is-registered', 'is-blocked', 'is-error');
+        if (status === 'pending') entry.card.classList.add('is-pending');
+        if (status === 'confirmado') entry.card.classList.add('is-registered');
+        if (status === 'bloqueado') entry.card.classList.add('is-blocked');
+        if (status === 'error' || status === 'no_confirmada') entry.card.classList.add('is-error');
+        entry.retry.hidden = !['bloqueado', 'error', 'no_confirmada'].includes(status);
+        entry.retry.disabled = !complete || errorCount > 0 || unverifiableReferences > 0 || isRunning || isDriveAuditRunning;
+    };
+
+    const updateRetryButtons = () => {
+        auditFileCardsById.forEach((entry, fileId) => {
+            const file = allFiles.find(item => String(item && item.fileId || '') === fileId);
+            const status = String(file && file.inventoryStatus || 'pending');
+            entry.retry.hidden = !['bloqueado', 'error', 'no_confirmada'].includes(status);
+            entry.retry.disabled = !complete || errorCount > 0 || unverifiableReferences > 0 || isRunning || isDriveAuditRunning;
+        });
+    };
+
     const appendFiles = (files) => {
         if (!isCurrentRequest()) return;
         files.forEach(file => {
@@ -8892,67 +8948,123 @@ export async function openAuditDriveModal(options = {}) {
             const classification = String(file.classification || 'No verificable');
             if (!['En uso', 'Histórica', 'Sin uso detectado', 'No verificable'].includes(classification)) return;
 
-            const row = document.createElement('div');
-            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
-            if (String(file.mimeType || '').startsWith('image/')) {
-                const preview = document.createElement('img');
-                preview.style.cssText = "width:58px; height:58px; flex:0 0 58px; object-fit:contain; border-radius:4px; background:var(--surface-bg);";
-                preview.loading = 'lazy';
-                preview.alt = 'Vista previa de ' + (file.fileName || 'imagen');
-                preview.dataset.drivePreviewVerification = 'pending';
-                preview.onload = () => {
-                    preview.dataset.drivePreviewVerification = 'loaded';
-                    preview.title = 'Miniatura cargada en la sesión autorizada actual';
-                };
-                preview.onerror = () => {
-                    preview.dataset.drivePreviewVerification = 'unavailable';
-                    preview.onerror = null;
-                    preview.src = 'https://placehold.co/120x120/cccccc/333333?text=Sin+vista';
-                    preview.title = 'No se pudo cargar la miniatura con la sesión actual';
-                };
-                preview.src = getImageUrl(file.fileId, 120);
-                row.appendChild(preview);
+            const folderPath = String(file.folderPath || rootFolderName || 'Cortes');
+            let folderGroup = folderGroups.get(folderPath);
+            if (!folderGroup) {
+                folderGroup = document.createElement('section');
+                folderGroup.className = 'audit-drive-folder-group';
+                const heading = document.createElement('h4');
+                heading.className = 'audit-drive-folder-heading';
+                const icon = document.createElement('i');
+                icon.className = 'fa-solid fa-folder';
+                icon.setAttribute('aria-hidden', 'true');
+                const label = document.createElement('span');
+                label.textContent = folderPath;
+                heading.append(icon, label);
+                const fileGrid = document.createElement('div');
+                fileGrid.className = 'audit-drive-folder-files';
+                folderGroup.append(heading, fileGrid);
+                container.appendChild(folderGroup);
+                folderGroup = { section: folderGroup, files: fileGrid };
+                folderGroups.set(folderPath, folderGroup);
             }
+
+            const card = document.createElement('article');
+            card.className = 'audit-drive-file-card';
+            card.dataset.fileId = fileId;
+            const preview = document.createElement('div');
+            preview.className = 'audit-drive-file-preview';
+            if (String(file.mimeType || '').startsWith('image/')) {
+                const image = document.createElement('img');
+                image.loading = 'lazy';
+                image.decoding = 'async';
+                image.alt = 'Vista previa de ' + (file.fileName || 'imagen');
+                image.dataset.drivePreviewVerification = 'pending';
+                image.onload = () => { image.dataset.drivePreviewVerification = 'loaded'; };
+                image.onerror = () => {
+                    image.dataset.drivePreviewVerification = 'unavailable';
+                    image.onerror = null;
+                    image.src = 'https://placehold.co/240x180/cccccc/333333?text=Sin+vista';
+                };
+                image.src = getImageUrl(file.fileId, 240);
+                preview.appendChild(image);
+            } else {
+                const fileIcon = document.createElement('i');
+                fileIcon.className = 'fa-regular fa-file';
+                fileIcon.setAttribute('aria-hidden', 'true');
+                preview.appendChild(fileIcon);
+            }
+            card.appendChild(preview);
+
             const info = document.createElement('div');
-            info.style.cssText = "min-width:0; flex:1;";
-            const name = document.createElement('div');
-            name.style.cssText = "font-weight:600; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.3;";
+            info.className = 'audit-drive-file-info';
+            const name = document.createElement('strong');
+            name.className = 'audit-drive-file-name';
             name.textContent = file.fileName || 'Archivo sin nombre';
             name.title = file.fileName || 'Archivo sin nombre';
-            const detailsEl = document.createElement('div');
-            detailsEl.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            detailsEl.textContent = 'ID: ' + fileId + ' | Carpeta ID: ' + String(file.folderId || 'No disponible') + ' | Ruta: ' + (file.folderPath || '') + ' | ' + String(file.format || (String(file.fileName || '').match(/\.([A-Za-z0-9]{1,12})$/)?.[1] || file.mimeType || 'formato desconocido')).toUpperCase() + ' | ' +
-                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
-                (file.lastUpdated || 'Fecha no disponible') + ' | Origen: ' + String(file.origin || 'Google Drive · árbol Cortes');
-            info.appendChild(name);
-            info.appendChild(detailsEl);
-            const relationship = document.createElement('div');
-            relationship.style.cssText = "font-size:0.75rem; color:var(--text-disabled); overflow-wrap:anywhere;";
+            const details = document.createElement('small');
+            details.className = 'audit-drive-file-metadata';
+            details.textContent = 'ID: ' + fileId + ' · Carpeta: ' + String(file.folderId || 'No disponible') +
+                ' · ' + String(file.mimeType || 'MIME no disponible') + ' · ' +
+                String(file.format || 'Formato desconocido').toUpperCase() + ' · ' +
+                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB · ' +
+                (file.lastUpdated || 'Fecha no disponible');
+            const relationship = document.createElement('small');
+            relationship.className = 'audit-drive-file-association';
             const locations = Array.isArray(file.referenceLocations) ? file.referenceLocations : [];
+            const association = file.association && typeof file.association === 'object' ? file.association : null;
+            const candidates = association && Array.isArray(association.candidates) ? association.candidates : [];
+            const associationText = candidates.map(candidate => {
+                const years = Array.isArray(candidate.yearRanges) ? candidate.yearRanges.map(range =>
+                    (range.from || '?') + '–' + (range.to || '?')).join(', ') : '';
+                return [candidate.category, candidate.brand, candidate.model,
+                    Array.isArray(candidate.versions) && candidate.versions.length ? 'Versión: ' + candidate.versions.join(', ') : '',
+                    Array.isArray(candidate.ignitionTypes) && candidate.ignitionTypes.length ? 'Encendido: ' + candidate.ignitionTypes.join(', ') : '',
+                    years ? 'Años: ' + years : '',
+                    Array.isArray(candidate.vehicleIds) && candidate.vehicleIds.length ? 'Vehículo: ' + candidate.vehicleIds.join(', ') : 'Vehículo sin ID']
+                    .filter(Boolean).join(' · ');
+            }).join(' | ');
             relationship.textContent = locations.length
-                ? "Relación verificada: " + locations.map(location => [String(location.category || ""), String(location.brand || ""), String(location.model || ""), String(location.vehicleId || "")].filter(Boolean).join(" · ") + " (" + String(location.sheet || "Hoja") + " · fila " + (Number(location.row) || "?") + " · " + String(location.field || "campo de imagen") + ")").join("; ")
-                : (classification === 'Sin uso detectado' ? "Sin referencia actual; requiere asociación por modelo o revisión." : "Relación de catálogo no detallada en esta pasada.");
-            info.appendChild(relationship);
+                ? 'Referencia: ' + locations.map(location => [location.category, location.brand, location.model, location.vehicleId].filter(Boolean).join(' · ') +
+                    ' (' + String(location.sheet || 'Hoja') + ' · fila ' + (Number(location.row) || '?') + ' · ' + String(location.field || 'imagen') + ')').join('; ')
+                : (associationText
+                    ? (association.status === 'ambiguous' ? 'Asociación ambigua: ' : 'Vehículo sugerido: ') + associationText
+                    : (classification === 'Sin uso detectado'
+                        ? 'Asociación pendiente de verificación; no se asignó un vehículo automáticamente.'
+                        : 'Sin asociación de vehículo en esta clasificación.'));
             const sourceLink = document.createElement('a');
-            sourceLink.href = String(file.url || ("https://drive.google.com/file/d/" + fileId + "/view"));
-            sourceLink.target = "_blank";
-            sourceLink.rel = "noopener noreferrer";
-            sourceLink.textContent = "Abrir archivo";
-            sourceLink.style.cssText = "font-size:0.75rem;";
-            info.appendChild(sourceLink);
-            const badge = document.createElement('span');
-            badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
-            const badgeColors = {
-                'En uso': '#28a745', 'Histórica': '#007bff',
-                'Sin uso detectado': '#e0a800', 'No verificable': '#dc3545'
-            };
-            badge.style.backgroundColor = badgeColors[classification] || '#6c757d';
-            badge.style.color = '#fff';
-            badge.textContent = classification;
-            row.appendChild(info);
-            row.appendChild(badge);
-            container.appendChild(row);
+            sourceLink.className = 'audit-drive-file-link';
+            sourceLink.href = String(file.url || ('https://drive.google.com/file/d/' + fileId + '/view'));
+            sourceLink.target = '_blank';
+            sourceLink.rel = 'noopener noreferrer';
+            sourceLink.textContent = 'Abrir en Drive';
+            info.append(name, details, relationship, sourceLink);
+            card.appendChild(info);
+
+            const footer = document.createElement('div');
+            footer.className = 'audit-drive-file-footer';
+            const classificationBadge = document.createElement('span');
+            classificationBadge.className = 'audit-drive-classification';
+            classificationBadge.textContent = classification;
+            const persistenceStatus = document.createElement('span');
+            persistenceStatus.className = 'audit-drive-persistence-status';
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'btn btn-secondary audit-drive-retry';
+            retry.innerHTML = '<i class="fa-solid fa-rotate" aria-hidden="true"></i><span>Reintentar registro</span>';
+            retry.setAttribute('aria-label', 'Reintentar registro de ' + String(file.fileName || fileId));
+            retry.title = 'Reintentar el registro de esta imagen en la biblioteca';
+            retry.hidden = classification !== 'Sin uso detectado';
+            retry.onclick = () => { if (typeof retrySingleInventory === 'function') void retrySingleInventory(fileId); };
+            footer.append(classificationBadge, persistenceStatus, retry);
+            card.appendChild(footer);
+            folderGroup.files.appendChild(card);
+            auditFileCardsById.set(fileId, { card, status: persistenceStatus, retry });
+            const initialInventoryStatus = file.inventoryStatus ||
+                (classification === 'Sin uso detectado' ? 'pending' : 'not_applicable');
+            updateInventoryCardState(fileId, initialInventoryStatus, file.inventoryMessage || '');
         });
+        updateRetryButtons();
     };
 
     const appendAuditBatchSummary = (response, files) => {
