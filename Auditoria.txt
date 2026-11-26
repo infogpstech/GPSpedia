@@ -252,3 +252,43 @@
 - Inspección inicial de JS/Services/admin.js: el scanner y el inventario incremental ya existen parcialmente; collectActiveDriveReferences() actualmente excluye hojas operativas enumeradas, pero recorre por defecto todas las demás hojas en lugar de aplicar una allowlist explícita de hojas de catálogo. Debe validarse el contrato exacto antes de modificar.
 - Bloqueo de cumplimiento: NORMAS_DESAROLLO.md no está presente en el árbol de GPSpedia2.2.5_work ni en GPSpedia2.2.5; tampoco README.md/contexto_personal.md en la rama de trabajo (README sí existe en base). No se modificó código hasta localizar la fuente normativa vigente y leerla completa.
 - Sin operaciones remotas de Drive/Sheets, sin cambios de permisos/RBAC/auth y sin deployment.
+
+2026-11-26 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / GP-ADMIN-TAB-ACTIONS-UX-01 — auditoría técnica ampliada (sin cambios funcionales)
+
+Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; button-system.css; JS/Frontend/ui.js; JS/Services/admin.js; JS/Services/catalog.js; contratos de hojas y esquemas de ADMIN/CATALOG; plan y backlog activos.
+
+1. Referencias de catálogo y clasificación
+- collectActiveDriveReferences(includeLocations) recorre todas las hojas de la Spreadsheet salvo una lista negativa limitada (Imagenes_Reemplazadas, Logs, ActividadUsuario, ActiveSessions, Users, AdminState e Idempotencia/Idempotencia_Cortes). No aplica una allowlist positiva de catálogo. Por tanto, hojas operativas/eventos no enumeradas —incluida FeedbackLikes y otros ledgers— pueden marcar una imagen como «En uso» si contienen una URL/ID de Drive.
+- Para las hojas distintas de Cortes, el colector examina todas las celdas, valores, fórmulas, rich text y objetos de imagen; esto amplía el riesgo de falsos positivos frente al contrato solicitado de campos de imagen del catálogo.
+- Los nombres físicos confirmados por los contratos de código son: Cortes, Tutorial, Relay y pys. Corresponden a las secciones visibles Cortes, Tutoriales, Diagramas/Configuración Relay y Problemas y Soluciones. ADMIN_RESTORE_REQUIRED_SCHEMA_ define sus encabezados; CATALOG confirma Tutorial/Relay y el contrato PyS (columna Imagen). No debe suponerse que los rótulos visibles son los nombres físicos de las hojas.
+- collectCortesImageReferences lee ocho columnas de imagen específicas de Cortes. Tutorial tiene campo Imagen; Relay, imagen; pys, Imagen. Estos campos permiten construir una allowlist precisa por hoja/columna sin leer hojas de actividad.
+- El escáner filtra las ubicaciones de referencia guardadas para detalle visual a SHEET_NAMES.CORTES, aunque activeDriveIds se construye con referencias del conjunto más amplio. La clasificación puede quedar influida por hojas no catálogo sin que su ubicación aparezca en la tarjeta.
+
+2. Scanner, cursor y persistencia de resultados
+- handleAuditDriveImagesInCortesCore_ valida sesión Desarrollador, raíz Cortes y pertenencia de carpetas; usa cursor firmado por estado de servidor, deduplicación, snapshot de referencias, límites por lote/tiempo y caché de páginas. Persiste estado/cursor en el estado ADMIN y resultados/metadata temporales en CacheService; el escaneo por sí solo no crea una fila individual en Imagenes_Reemplazadas.
+- Cada resultado contiene fileId, nombre, folderId/path, MIME, formato, URL Drive de vista, tamaño, fecha de modificación, clasificación y ubicaciones disponibles. La URL de vista/miniatura no concede acceso público ni modifica ACL; no se debe cambiar permisos para cumplir el campo URL.
+- Las referencias no interpretables bloquean la confirmación del inventario; esto es conservador y evita declarar sin uso cuando el escaneo de referencias está incompleto.
+
+3. Inventario compartido y asociación
+- La hoja compartida es Imagenes_Reemplazadas. ensureReplacedImagesInventoryColumns mantiene las once columnas históricas y añade campos para origen/tipo/MIME/ubicación/URL/Drive ID/formato/tamaño/fecha/referencias/asociación/estado.
+- handleSaveUnusedImagesInventory recorre cada ID por separado dentro del lote, vuelve a validar referencias y metadatos de Drive, evita duplicados por ID de archivo y crea/actualiza la fila correspondiente. writeDriveInventoryRowVerified_ realiza escritura, flush y read-back; reintenta una vez y marca requiere_revision/error si no puede reconciliar la escritura. El backend ya tiene una base de persistencia individual e idempotente; no debe duplicarse ni reemplazarse sin necesidad.
+- El frontend envía lotes incrementales y recibe resultados por archivo (confirmado/bloqueado/error/no_confirmada), pero solo escribe un mensaje agregado cuando todo el lote confirma. Las tarjetas de auditoría no reflejan el estado de persistencia individual ni ofrecen un reintento por elemento. La consolidación final también hace una solicitud agregada; no sustituye la necesidad de reflejar el resultado de cada ID.
+- La asociación existente buildCortesImageModelAssociationSuggestions_ utiliza modelos de Cortes, filename, segmentos de carpeta y alias; conserva candidatos ambiguos. Los criterios actuales puntúan coincidencias de modelo/alias/marca/categoría, pero no incorporan de forma explícita versión, tipo de encendido ni rango de años solicitados. El inventario solo construye estas sugerencias desde filas Cortes; la relación ausente/ambigua debe permanecer explícita, nunca inventarse.
+- La biblioteca existente ya consulta Imagenes_Reemplazadas y presenta cuadrícula/lista, miniaturas, datos de archivo, ubicación, asociación y acciones condicionadas por capacidades. Las operaciones de mover/restaurar/papelera/eliminación tienen confirmación y validaciones en ADMIN; conviene reutilizar este contrato y no crear una segunda biblioteca.
+
+4. UI de auditoría y consola
+- index.html contiene audit-drive-modal separado. El botón Auditar Cortes llama openAuditDriveModal({showModal:false,startImmediately:true}); ui.js mantiene el modal oculto, pero el contenedor audit-drive-results-container y su consola secundaria están dentro de ese modal. Por ello los resultados de auditoría no se muestran en la sección activa del panel Developer.
+- La función appendAuditConsole sí remite los mensajes a la consola global Developer, además de escribir en la consola secundaria oculta. La consola global está fuera de dev-tools-tabs, lo que permite mantenerla compartida.
+- La estructura actual coloca dev-console-shared y dev-tools-tabs como bloques hermanos en columna. Las reglas vigentes de style.css fijan la consola a 100% de ancho y aproximadamente 48% de altura; en móvil mantienen 100% de ancho y altura parcial. No existe reparto horizontal 50/50 entre consola y explorador, ni en escritorio ni en móvil.
+- Para cumplir el requisito, el explorador debe renderizarse dentro del área de contenido de la pestaña Imágenes y Drive, sin overlay/modal nuevo; el contenedor global debe organizar consola y área de pestañas/contenido en dos columnas persistentes, manteniendo ambos utilizables también en viewport móvil.
+
+5. GP-ADMIN-TAB-ACTIONS-UX-01
+- button-system.css define estilos globales de .btn y estados, pero no el patrón compacto/expansión solicitado para acciones internas.
+- style.css contiene AUG-146 para los botones de navegación entre pestañas (Diagnóstico/Base de datos/Imágenes/Sistema); ese patrón no se aplica a los botones de acción dentro de cada panel.
+- Los botones internos ya tienen IDs, handlers y estados existentes en ui.js. La mayoría conserva icono más etiqueta y algunos usan .dev-action-full (ancho completo). La implementación debe limitarse a clases/estructura visual de esos botones, conservar IDs, type, disabled/hidden, aria-label/title y asignaciones onclick; excluir la barra de navegación de pestañas y controles de ayuda.
+
+6. Riesgos y límites
+- El cambio de alcance de referencias puede alterar la clasificación de archivos: debe usarse exclusivamente el conjunto físico Cortes/Tutorial/Relay/pys y sus columnas de imagen contractuales, con tratamiento conservador ante esquemas inesperados o referencias no verificables.
+- Los archivos de código directamente involucrados para una implementación mínima son JS/Services/admin.js, JS/Frontend/ui.js, index.html y style.css. button-system.css fue auditado y no requiere necesariamente modificación.
+- No se ejecutaron llamadas a Drive/Spreadsheet, no se mutaron datos externos, no se cambiaron permisos/RBAC/auth/endpoints/deployments y no se modificó código en esta fase de auditoría.
+- La auditoría de código queda registrada antes de preparar respaldos e iniciar la implementación. Cualquier hallazgo adicional fuera de alcance se registrará como tarea separada.
