@@ -882,3 +882,14 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - **PENDIENTE — WRITE/ADMIN real:** alta, edición, upload, rollback y auditoría Drive con recursos desechables; no se ejecutó ninguna escritura remota.
 - **PENDIENTE — YouTube real:** reproducir tutoriales en sesión autorizada o dispositivo físico para separar el challenge de GitHub Actions del comportamiento del usuario final. No considerar el test de parser como prueba de playback.
 - No se modificaron servicios Apps Script, deployments, PropertiesService, OAuth, Spreadsheet o Drive. El único POST remoto fue lectura de CATALOG sin mutación.
+
+
+## 16. Seguridad de sesión WRITE/ADMIN y continuidad Beta (2026-11-26)
+- CI `45821888314`: 546 suites, 6,485 pruebas aprobadas, 0 fallos; Pages `45821887626` SUCCESS.
+- Nuevo `WriteAdminTrustedActorBoundary` 10/10 PASS: actor autenticado, spoofing de nombre/rol/claims, ausencia de sesión, userId discordante, separación de roles y verificación estática de los routers WRITE/ADMIN. Se confirmó que no contienen URLs de otros Apps Script ni llamadas de coordinación entre servicios; el frontend conserva la coordinación.
+- Nuevo `InboxTrustedActorBoundary` 7/7 PASS; FEEDBACK boundary 7/7 PASS. InboxConversations 70/70 y InboxUi 89/89 PASS.
+- Browser AUG-146 264/264; login y recuperación 200 en 4 viewports; PWA 49/49 CORE + 4/4 OPTIONAL; 0 pageErrors, 0 módulos faltantes, sin solicitudes no-GET ni llamadas Apps Script en el smoke test. Font Awesome CDN sigue como residual visual solo en cold offline.
+- Health remoto GET-only: 6/6 servicios disponibles; CATALOG feed 5 páginas/5 eventos/3 reset y límites/cursor PASS. ADMIN presenta latencia SLOW variable (mediana reciente 1887 ms; 1/5 >=2 s, 0 fallidas); UTILITIES mediana 826 ms.
+- YouTube: catálogo CATALOG leído con POST `getCatalogData` read-only, `forceRefresh:true`: 10 tutoriales, 7 URLs válidas, 3 IDs únicos. El navegador automatizado recibe `Sign in to confirm` de YouTube tanto en embed como en watch; sin fallos de red. No se usaron credenciales ni bypass. Playback real pendiente de sesión autorizada o dispositivo físico.
+- **Pendiente real:** FEEDBACK/CATALOG/Inbox con dos identidades sintéticas, dataset aislado, idempotencia y cleanup; WRITE/ADMIN con Spreadsheet/Drive desechables y cleanup. No se ejecutaron mutaciones remotas.
+- No se modificaron Apps Script, deployments, PropertiesService, Spreadsheet, Drive, OAuth ni datos remotos. Cambios solo en tests, workflow y documentación.
