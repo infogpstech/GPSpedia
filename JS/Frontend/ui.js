@@ -9282,27 +9282,27 @@ export async function openAuditDriveModal(options = {}) {
                 }
                 const submittedIds = new Set(unusedFiles.map(item => String(item.fileId || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id)));
                 const resultsBySubmittedId = new Map();
+                const allResultsById = new Map();
                 inventoryResult.results.forEach(item => {
                     const fileId = String(item && item.fileId || '');
-                    if (!item || !submittedIds.has(fileId)) {
-                        throw new Error('ADMIN devolvió un resultado vacío o no solicitado para el inventario.');
+                    if (!item || !/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || allResultsById.has(fileId) ||
+                        !['confirmado', 'bloqueado', 'error', 'no_confirmada'].includes(String(item.status || ''))) {
+                        throw new Error('ADMIN devolvió un resultado vacío, duplicado o con estado no reconocido.');
                     }
-                    if (resultsBySubmittedId.has(fileId)) {
-                        throw new Error('ADMIN devolvió resultados duplicados para una imagen; revisa el inventario antes de organizar.');
+                    allResultsById.set(fileId, item);
+                    if (submittedIds.has(fileId)) resultsBySubmittedId.set(fileId, item);
+                    else if (item.status !== 'no_confirmada') {
+                        throw new Error('ADMIN devolvió un resultado no solicitado que no corresponde a un registro histórico obsoleto.');
                     }
-                    if (!['confirmado', 'bloqueado', 'error', 'no_confirmada'].includes(String(item.status || ''))) {
-                        throw new Error('ADMIN devolvió un estado de inventario no reconocido para una imagen.');
-                    }
-                    resultsBySubmittedId.set(fileId, item);
                 });
                 if (resultsBySubmittedId.size !== submittedIds.size) {
                     throw new Error('ADMIN no devolvió un resultado individual para cada imagen enviada; no se habilitará la organización.');
                 }
-                const countStatus = status => Array.from(resultsBySubmittedId.values())
+                const countStatus = status => Array.from(allResultsById.values())
                     .filter(item => item.status === status).length;
-                const confirmedCount = countStatus('confirmado');
-                const blockedCount = countStatus('bloqueado');
-                const errorCount = countStatus('error');
+                const confirmedCount = Array.from(resultsBySubmittedId.values()).filter(item => item.status === 'confirmado').length;
+                const blockedCount = Array.from(resultsBySubmittedId.values()).filter(item => item.status === 'bloqueado').length;
+                const errorCount = Array.from(resultsBySubmittedId.values()).filter(item => item.status === 'error').length;
                 const noLongerConfirmedCount = countStatus('no_confirmada');
                 const serverCounts = {
                     saved: Number(inventoryResult.savedCount),
@@ -9310,29 +9310,37 @@ export async function openAuditDriveModal(options = {}) {
                     errors: Number(inventoryResult.errorCount),
                     stale: Number(inventoryResult.noLongerConfirmedCount)
                 };
-                if (!Number.isInteger(serverCounts.saved) || serverCounts.saved !== confirmedCount ||
-                    !Number.isInteger(serverCounts.blocked) || serverCounts.blocked !== blockedCount ||
-                    !Number.isInteger(serverCounts.errors) || serverCounts.errors !== errorCount ||
+                if (!Number.isInteger(serverCounts.saved) || serverCounts.saved !== countStatus('confirmado') ||
+                    !Number.isInteger(serverCounts.blocked) || serverCounts.blocked !== countStatus('bloqueado') ||
+                    !Number.isInteger(serverCounts.errors) || serverCounts.errors !== countStatus('error') ||
                     !Number.isInteger(serverCounts.stale) || serverCounts.stale !== noLongerConfirmedCount) {
                     throw new Error('Los conteos del resumen ADMIN no coinciden con los resultados individuales. No se habilitará la organización.');
                 }
-                inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId => resultsBySubmittedId.get(fileId).status === 'confirmado');
+                inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId =>
+                    resultsBySubmittedId.get(fileId).status === 'confirmado');
                 resultsBySubmittedId.forEach((item, fileId) => {
                     const file = allFiles.find(candidate => String(candidate.fileId) === fileId);
+                    if (file) file.association = item.association || file.association || null;
+                    updateInventoryCardState(fileId, item.status, item.message || '');
                     const level = item.status === 'error' ? 'error' :
                         (item.status === 'bloqueado' ? 'warning' : (item.status === 'confirmado' ? 'success' : 'info'));
                     appendAuditConsole('Inventario — ' + String(file && file.fileName || fileId) + ' (' + fileId + '): ' +
                         item.status + (item.message ? ' — ' + item.message : ''), level);
                 });
-                inventoryStatus = 'saved';
-                inventoryMessage = 'Inventario verificado: ' + confirmedCount + ' imágenes guardadas y confirmadas para organización explícita; ' +
-                    blockedCount + ' bloqueadas, ' + errorCount + ' con error y ' + noLongerConfirmedCount +
-                    ' que ya no estaban confirmadas. No se movió ningún archivo.';
+                inventoryStatus = confirmedCount === submittedIds.size ? 'saved' : 'partial';
+                if (inventoryStatus !== 'saved') inventoryOperationId = '';
+                inventoryMessage = 'Inventario individual: ' + confirmedCount + ' de ' + submittedIds.size +
+                    ' imágenes confirmadas; ' + blockedCount + ' bloqueadas, ' + errorCount + ' con error y ' +
+                    noLongerConfirmedCount + ' registros históricos ya no confirmados. No se movió ningún archivo.';
             } catch (inventoryError) {
                 if (!isCurrentRequest()) return;
                 inventoryStatus = 'error';
+                inventoryOperationId = '';
+                allFiles.filter(file => file.classification === 'Sin uso detectado' &&
+                    String(file.inventoryStatus || '') !== 'confirmado').forEach(file =>
+                    updateInventoryCardState(file.fileId, 'error', String(inventoryError && inventoryError.message || inventoryError)));
                 inventoryMessage = 'El inventario no pudo confirmarse: ' + inventoryError.message +
-                    '. No se movió ningún archivo; puedes revisar el resultado y reintentar explícitamente.';
+                    '. No se movió ningún archivo; cada imagen conserva su estado y permite reintentar al finalizar la auditoría.';
             }
 
             try {
