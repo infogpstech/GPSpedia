@@ -87,6 +87,10 @@ jobs:
         run: |
           mkdir -p artifacts
           node JS/Tests/Aug146ResponsiveBrowser.mjs
+      - name: Smoke test deployed Beta Pages login surface (GET-only)
+        run: node JS/Tests/BetaDeployedPageSmoke.mjs
+        env:
+          BETA_PAGES_URL: https://infogpstech.github.io/GPSpedia/
       - name: Upload anonymized synthetic screenshots
         if: always()
         uses: actions/upload-artifact@v4
