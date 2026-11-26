@@ -1656,3 +1656,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No se modificó el contrato de IndexedDB, la lógica de recuperación, el modal, WRITE/Apps Script, Spreadsheet ni Drive. No se ejecutó una alta real ni prueba runtime de navegador/IndexedDB.
 
 - `README.md`: las referencias de arquitectura a las vistas se actualizaron de `add_cortes.html` y `users.html` en raíz a `HTML/add_cortes.html` y `HTML/users.html`.
+
+- Code Review GP-CUT-DEEP-AUDIT-03 completado; los respaldos temporales de ui.js, Service Worker y README se retiraron después de comparar los cambios. Commits de limpieza: `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`.
