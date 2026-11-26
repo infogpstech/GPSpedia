@@ -1671,36 +1671,37 @@ function handleGetDropdownData() {
         const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
         const relaySheet = spreadsheet.getSheetByName(SHEET_NAMES.RELAY);
         if (!cortesSheet) throw new Error(`Sheet "${SHEET_NAMES.CORTES}" not found.`);
-        if (!relaySheet) throw new Error(`Sheet "${SHEET_NAMES.RELAY}" not found.`);
-        const categoryRule = cortesSheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
-        let categorias = [];
-        if (categoryRule) {
-            const criteriaValues = categoryRule.getCriteriaValues()[0];
-            if (criteriaValues && typeof criteriaValues.getValues === "function") categorias = criteriaValues.getValues().flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
-            else if (Array.isArray(criteriaValues)) categorias = criteriaValues.flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
-        }
+
         const uniqueSorted = values => Array.from(new Set(values
             .map(value => String(value == null ? "" : value).trim())
-            .filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-        const cortesColumns = [COLS_CORTES.marca, COLS_CORTES.tipoCorte1, COLS_CORTES.tipoCorte2,
-            COLS_CORTES.tipoCorte3, COLS_CORTES.tipoEncendido];
-        const firstCortesColumn = Math.min(...cortesColumns), lastCortesColumn = Math.max(...cortesColumns);
-        const cortesLastRow = Number(cortesSheet.getLastRow()) || 0;
-        const cortesRows = cortesLastRow >= 2
-            ? cortesSheet.getRange(2, firstCortesColumn, cortesLastRow - 1, lastCortesColumn - firstCortesColumn + 1).getValues()
+            .filter(Boolean))).sort((a, b) => a.localeCompare(b));
+        const lastRow = Math.max(0, Number(cortesSheet.getLastRow()) || 0);
+        const readColumn = column => lastRow >= 2
+            ? cortesSheet.getRange(2, column, lastRow - 1, 1).getValues().flat()
             : [];
-        const valuesForCortesColumn = column => cortesRows.map(row => row[column - firstCortesColumn]);
-        const marcas = valuesForCortesColumn(COLS_CORTES.marca);
+
+        // Derivar catálogos de los valores reales en Cortes, sin depender
+        // de reglas de validación que pueden no estar aplicadas uniformemente.
+        const categorias = uniqueSorted(readColumn(COLS_CORTES.categoria));
+        const marcas = readColumn(COLS_CORTES.marca);
         const tiposCorte = [
-            ...valuesForCortesColumn(COLS_CORTES.tipoCorte1),
-            ...valuesForCortesColumn(COLS_CORTES.tipoCorte2),
-            ...valuesForCortesColumn(COLS_CORTES.tipoCorte3)
+            ...readColumn(COLS_CORTES.tipoCorte1),
+            ...readColumn(COLS_CORTES.tipoCorte2),
+            ...readColumn(COLS_CORTES.tipoCorte3)
         ];
-        const tiposEncendido = valuesForCortesColumn(COLS_CORTES.tipoEncendido);
-        const relayLastRow = Number(relaySheet.getLastRow()) || 0;
+        const tiposEncendido = readColumn(COLS_CORTES.tipoEncendido);
+
+        // Mantener Relay como fuente cuando contiene catálogo; recurrir a las
+        // configuraciones de Cortes (flujo de la rama base) si está ausente/vacía.
+        const relayLastRow = relaySheet ? Math.max(0, Number(relaySheet.getLastRow()) || 0) : 0;
         const configuracionesRelay = relayLastRow >= 2
-            ? relaySheet.getRange(2, COLS_RELAY.configuracion, relayLastRow - 1, 1).getValues().map(row => row[0])
-            : [];
+            ? relaySheet.getRange(2, COLS_RELAY.configuracion, relayLastRow - 1, 1).getValues().flat()
+            : [
+                ...readColumn(COLS_CORTES.configRelay1),
+                ...readColumn(COLS_CORTES.configRelay2),
+                ...readColumn(COLS_CORTES.configRelay3)
+            ];
+
         return {status:"success",dropdowns:{
             categoria:categorias,
             marca:uniqueSorted(marcas),
