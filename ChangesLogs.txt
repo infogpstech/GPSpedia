@@ -1639,3 +1639,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No se modificó la ruta remota `addOrUpdateCut`, WRITE, el contrato de Sheets ni la política de idempotencia. El formulario sigue sin enviar si la persistencia local no queda confirmada.
 - Validación estática con fixture: 7/7 casos PASS para IDs null/undefined/vacío/espacios y IDs existentes string/número; el snapshot incoherente sigue siendo rechazado. Comparación contra respaldos: solo los dos bloques previstos en `HTML/add_cortes.html` y la versión de caché en `service-worker.js` cambiaron.
 - No se ejecutó navegador/IndexedDB real, Apps Script, Spreadsheet, Drive ni una alta Beta. GitHub no reportó status checks ni workflow runs asociados al commit de Service Worker; despliegue y validación real quedan pendientes.
+
+
+- Code Review GP-CUT-FORM-SNAPSHOT-02: reconstrucción inversa de los dos bloques modificados en `HTML/add_cortes.html` coincidió exactamente con el respaldo; `service-worker.js` coincidió al revertir v81 a v80. Los módulos de persistencia y logger no fueron modificados. No se detectaron cambios fuera del alcance.
+- Safety & Side Effects: se mantienen la barrera de snapshot, el rechazo de conflicto y la recuperación/idempotencia. No se realizó escritura remota ni se borraron operaciones pendientes.
+- Los respaldos temporales se retiraron después de completar la comparación y revisión. La prueba real en navegador móvil/IndexedDB y la escritura controlada en backend/Sheets/Drive continúan pendientes.
