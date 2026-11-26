@@ -234,3 +234,12 @@
 - Límites: sin cambios en endpoints, ACTION_TO_SERVICE_MAP, autorización, RBAC, sesiones, coordinación entre servicios o datos externos. No se habilita JSONP para el feed CATALOG.
 - Validación local efímera: sintaxis frontend y seis Apps Script PASS; simulación JSONP cliente/servidor, POST, reconstrucción de body, respuesta iframe, limpieza y health ADMIN PASS. Sin archivos de prueba persistentes.
 - Pendiente: publicar todos los servicios y frontend y validar navegador/health/ADMIN/Drive. No se ejecutó deployment ni operaciones reales. Severidad alta por bloqueo del panel administrativo.
+
+
+2026-11-26 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Revisión de requisitos y flujo de registro
+- Requisito confirmado por el propietario: inventario visual individual de cada imagen sin uso en el árbol Cortes; datos individualizados (ID, nombre, tamaño, formato, ubicación/directorio, URL y vehículo/modelo asociado), estado de registro persistente, vista previa por elemento y biblioteca unificada con imágenes históricas.
+- La asociación debe inferirse por filename y árbol estructurado de directorios (marca/modelo/versión/tipo de encendido/años), con incertidumbre explícita cuando no exista evidencia.
+- El uso debe determinarse exclusivamente por hojas de catálogo relevantes: Cortes, Tutoriales, Diagramas de Relay, Problemas y soluciones. Hojas de eventos, registros, Feedback/reacciones y otras hojas operativas no deben contar como referencia de uso.
+- Revisión parcial de código ADMIN: la auditoría por cursor guarda metadata del escaneo en estado servidor y clasifica por referencias/historial; el handler de guardado permite modo incremental, pero el flujo UI señalado previamente acumula lotes y usa almacenamiento local de auditoría, por lo que la persistencia individual y el estado visible requieren revisión/ajuste integral. No se considera cumplimiento demostrado.
+- Falta completar auditoría de normativa, UI, asociación, schema, handlers de biblioteca y scanner. El archivo normativo no pudo recuperarse en esta consulta; no se inició edición funcional ni operación remota.
+- Plan registrado en PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md.
