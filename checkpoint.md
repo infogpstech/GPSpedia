@@ -334,3 +334,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Harness con algoritmo real + mock de hoja: Toyota Hilux 2.8/Botón/2021 => VH-02 high; sin coincidencia y fallo de lectura diferenciados; resumen consola y texto de tarjeta PASS.
 - Commits: backend `75170cd6db7b4bcc00ab98689f04837b9efa5945`, mapa `091a939902132e11383cb9f9b16ec1c93d197c3a`, UI `bdd9273caee75cea60b65b081a6a0e0302ed9b9b`, consola `eec4cd899179b7dc2ba24d97817e42a9a78e9635`; registros: tareas `0cfe2f2737bc1c44792715b1bad01242fb58c2ed`, auditoría `b0312a1c21bb31190bdc946543fec1b65ba07f28`, changelog `d25d31344066136a56c50c0e13c7fe4f78962f93`.
 - La tarea sigue abierta: verificar el rendimiento con volúmenes reales, integración de hoja y revisión visual. No deployment ni Beta.
+
+
+## Continuidad 2026-11-26 — confianza y criterios visibles de asociación
+- Las tarjetas ahora presentan confianza alta/media/baja y criterios legibles derivados de señales de asociación (modelo en carpeta/nombre, alias, marca, categoría, versión, encendido, años), además de vehículo y contexto. Aplica tanto al primer render como tras persistencia.
+- Harness de render: Toyota Hilux muestra confianza alta, criterios y vehículo VH-02; sintaxis UI PASS.
+- Commit UI: `8d63c5943f18fa2e6b36003ef8b829846d9a3bf2`; registros: tareas `e55636df2614aeabf5a843e7d19934cffeb5d68d`, auditoría `cc1b2030de78092b12332423a68806a3005f3841`, changelog `b4557f866b55af044b2cff02ad1c20e9aee7063f`.
