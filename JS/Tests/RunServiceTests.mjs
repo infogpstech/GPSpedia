@@ -650,6 +650,7 @@ runGroup('43','MIG019',()=>{
 runGroup('44','MIG020',()=>{
  const feedback=read('JS/Services/feedback.js'),inbox=read('JS/Services/InboxConversations.js');
  runCli('MIG020 conversaciones, participantes, idempotencia y auditoría','JS/Tests/InboxConversations.mjs');
+ runCli('MIG020 frontera de actor confiable Inbox desde dispatcher FEEDBACK','JS/Tests/InboxTrustedActorBoundary.mjs');
  runCli('MIG020 interfaz Inbox, accesibilidad, borradores, búsqueda y sincronización','JS/Tests/InboxUi.mjs');
  runCli('MIG020 caché por sesión y paginación de conversaciones/mensajes','JS/Tests/InboxCachePagination.js');
  runCli('MIG020 lectura agrupada de eventos de imágenes de reportes','JS/Tests/FeedbackInboxImageEventBatchRead.mjs');
