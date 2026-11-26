@@ -212,3 +212,18 @@
 - El propietario establece que el usuario nunca debe ver mensajes de error de la reacción útil. Registrar fallos exclusivamente en consola del navegador.
 - Se eliminaron `showGlobalError` de los caminos de hidratación, sesión y sincronización; se eliminó el texto de error del botón. El rollback al estado confirmado es silencioso.
 - No confundir el registro interno en consola con notificación de interfaz. Requisito aplicable a futuros cambios de este flujo.
+
+2026-11-26 | GP-UTIL-FEEDBACK-STATE-AND-COUNTER-03
+- Hallazgo: el ledger append-only FeedbackLikes no representaba una fila canónica por usuario/vehículo/corte y la acción no sincronizaba los campos físicos Cortes.utilCorte1/2/3. CATALOG sumaba eventos sobre el valor físico, pero el dashboard que lee Cortes directamente no recibía el cambio.
+- Impacto: dos usuarios podían tener reacciones persistidas y el contador de cortes continuar en cero; los toggles repetidos creaban filas por interacción y el estado por corte no era explícito.
+- Corrección: nuevo esquema actorKey/vehicleId/corteId/isUseful/createdAt/updatedAt; actualización de la fila del usuario, recuento de estados activos, sincronización y verificación de la celda utilCorteN. Migración conservadora del contrato antiguo, copia histórica de la hoja y rechazo seguro de estados pending/esquema desconocido. CATALOG conserva lectura de ambos esquemas sin doble conteo.
+- Validación: sintaxis de FEEDBACK/CATALOG PASS; simulación dos usuarios/toggle repetido/retiro/reactivación PASS (2 filas y contador físico 2); simulación de migración y preservación de backup PASS. Integración real/Spreadsheet/deployment diferidos a Beta.
+- Severidad: alta — inconsistencia funcional del contador y del dashboard; corrección fuente aplicada.
+
+2026-11-26 | GP-ADMIN-DRIVE-LIBRARY-AUDIT-02
+- Hallazgo A: openReplacedImagesModal() consumía showModal sin declararlo, interrumpiendo la apertura de la biblioteca con ReferenceError.
+- Hallazgo B: storeAuditDriveReferenceSnapshot dividía por caracteres y verificaba bytes UTF-8; cadenas con caracteres multibyte podían exceder el límite de 75,000 bytes por bloque y anular la conservación de resultados.
+- Corrección A: parámetro options por defecto y apertura visible por defecto, conservando la llamada existente sin argumentos.
+- Corrección B: partición por bytes UTF-8 sin separar pares sustitutos, manifiesto schema 3 y compatibilidad de lectura/renovación schema 2/legado.
+- Validación: parsing de ADMIN/UI PASS; prueba simulada de snapshot 189,078 bytes con bloques máximos de 74,999 bytes y reconstrucción exacta; renovación/lectura schema 3, schema 2 y legado PASS. No se ejecutaron Drive, ADMIN remoto ni navegador.
+- Severidad: media — biblioteca inaccesible y auditoría Drive parcial; corrección fuente aplicada, validación Beta diferida.
