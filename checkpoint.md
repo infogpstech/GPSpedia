@@ -1203,3 +1203,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Prueba aislada Node 22 de clasificación HTTP y formato: 8/8 PASS. No se ejecutó red ni servicio Apps Script.
 - Implementación: `71ebb84c8011e4a1e04a5e2050ac061145205de6`; hallazgo registrado en `Hallazgos_Beta.md`.
 - Pendiente relevante conservado: el probe valida que la versión exista, pero aún no la compara con la versión esperada de cada servicio; revisar cómo integrar el contrato versionado sin duplicar una fuente de verdad.
+
+
+## Continuidad — comparación de versión de deployment (2026-11-25)
+- El probe remoto ahora carga `Services/SERVICE_HEALTH.md` del mismo `TARGET_COMMIT`, extrae las seis versiones esperadas y compara exactamente la versión del JSON de cada deployment. La fuente documental versionada evita duplicar números en el runner.
+- Diferencia de versión provoca FAIL e informa deployment vs fuente esperada. El workflow ya incluye el documento como path de activación.
+- Código publicado: `a74d35cc13ddc44b9820dc426012b8d07998497b`; hallazgo F013 documentado.
+- Validación Node 22 del parser y ejecución remota aún pendientes. La versión del documento expresa versión fuente, no certifica deployment.
