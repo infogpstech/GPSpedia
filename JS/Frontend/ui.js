@@ -2250,7 +2250,7 @@ function showValidationBanner(item, isOldModel) {
     const showStep3Fail = (isFromOld = false) => {
         const msg = document.createElement('div');
         msg.className = 'validation-message';
-        msg.innerHTML = `Muchas gracias por confirmarlo.<br>Recuerda que puedes agregar el nuevo corte de este modelo <a href="add_cortes.html" style="color: var(--accent-color); font-weight: bold;">aquí</a>.`;
+        msg.innerHTML = `Muchas gracias por confirmarlo.<br>Recuerda que puedes agregar el nuevo corte de este modelo <a href="HTML/add_cortes.html" style="color: var(--accent-color); font-weight: bold;">aquí</a>.`;
 
         const actions = document.createElement('div');
         actions.className = 'validation-actions';
@@ -8084,7 +8084,7 @@ ${elapsedSec}s
     const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
     if (silentCutBtn) {
         silentCutBtn.onclick = () => {
-            window.location.href = 'add_cortes.html?silent=true';
+            window.location.href = 'HTML/add_cortes.html?silent=true';
         };
     }
 
