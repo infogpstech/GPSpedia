@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const root = new URL("../../", import.meta.url);
 const read = path => readFileSync(new URL(path, root), "utf8");
 const apiSource = read("JS/Frontend/api-config.js");
+const remoteHealthSource = read("JS/Tests/RemoteServiceHealth.mjs");
 const uiSource = read("JS/Frontend/ui.js");
 const backendSources = {
     AUTH: read("JS/Services/Auth.js"),
@@ -258,5 +259,10 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
         }
     }
 
+});
+await check("El probe remoto normaliza estados y compara la versión contra el contrato versionado", async () => {
+    assert.match(remoteHealthSource, /typeof body\.status===\"string\"\?body\.status\.trim\(\)\.toLowerCase\(\):\"\"/);
+    assert.match(remoteHealthSource, /body\.version\.trim\(\)!==expectedVersions\[service\]/);
+    assert.match(remoteHealthSource, /git\", \[\"show\", targetCommit \+ \":Services\/SERVICE_HEALTH\.md\"/);
 });
 console.log("ServiceHealthContract: " + passed + "/" + passed + " PASS");
