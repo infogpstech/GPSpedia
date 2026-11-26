@@ -134,51 +134,99 @@ async function tryPlayback(video, viewport, attempt) {
     try {
         const page = await context.newPage();
         page.setDefaultNavigationTimeout(30000);
-        await page.setExtraHTTPHeaders({ Referer: "https://infogpstech.github.io/GPSpedia/" });
-        const embedUrl = new URL(youtube.getValidatedYouTubeVideoEmbedUrl(video.raw));
-        embedUrl.searchParams.set("origin", "https://infogpstech.github.io");
-        embedUrl.searchParams.set("playsinline", "1");
-        const response = await page.goto(embedUrl.toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
-        if (!response || response.status() >= 400) throw new Error("HTTP del reproductor no válido.");
-        await page.waitForFunction(() => {
+        await page.goto("https://infogpstech.github.io/GPSpedia/", {
+            waitUntil: "domcontentloaded", timeout: 30000
+        });
+        const embedUrl = youtube.getValidatedYouTubeVideoEmbedUrl(video.raw);
+        if (!embedUrl) throw new Error("URL de tutorial dejó de ser válida.");
+        await page.evaluate(src => {
+            const container = document.createElement("div");
+            container.className = "tutorial-video-container";
+            container.style.cssText = "position:fixed;z-index:2147483647;inset:12px 12px auto;width:calc(100vw - 24px);height:315px;min-height:315px;overflow:hidden;background:#000;";
+            const iframe = document.createElement("iframe");
+            iframe.className = "tutorial-youtube-embed";
+            iframe.src = src;
+            iframe.title = "Vídeo de tutorial Beta";
+            iframe.width = "100%";
+            iframe.height = "315";
+            iframe.referrerPolicy = "strict-origin-when-cross-origin";
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+            iframe.allowFullscreen = true;
+            iframe.style.cssText = "display:block;width:100%;height:315px;border:0;";
+            container.appendChild(iframe);
+            document.body.appendChild(container);
+        }, embedUrl);
+        await page.waitForFunction(() =>
+            Array.from(document.querySelectorAll("iframe"))
+                .some(iframe => /youtube\\.com\\/embed\\//.test(iframe.src)),
+            null, { timeout: 15000 }
+        );
+        let frame = page.frames().find(candidate => /youtube\\.com\\/embed\\//.test(candidate.url()));
+        const frameDeadline = Date.now() + 15000;
+        while (!frame && Date.now() < frameDeadline) {
+            await page.waitForTimeout(250);
+            frame = page.frames().find(candidate => /youtube\\.com\\/embed\\//.test(candidate.url()));
+        }
+        if (!frame) throw new Error("El iframe YouTube no creó un frame navegable.");
+        await frame.waitForFunction(() => {
             const player = document.getElementById("movie_player");
             return player && typeof player.getPlayerState === "function" &&
                 typeof player.playVideo === "function";
         }, null, { timeout: 15000 });
 
-        const playButton = page.locator(".ytp-large-play-button");
+        const playButton = frame.locator(".ytp-large-play-button");
         if (await playButton.isVisible().catch(() => false)) {
             await playButton.click({ timeout: 3000 }).catch(() => {});
         } else {
-            await page.locator("#movie_player").click({ timeout: 3000 }).catch(() => {});
+            await frame.locator("#movie_player").click({ timeout: 3000 }).catch(() => {});
         }
-        await page.evaluate(() => {
+        await frame.evaluate(() => {
             const player = document.getElementById("movie_player");
             if (player && typeof player.mute === "function") player.mute();
             if (player && typeof player.playVideo === "function") player.playVideo();
         });
         try {
-            await page.waitForFunction(() => {
+            await frame.waitForFunction(() => {
                 const player = document.getElementById("movie_player");
                 return player && player.getPlayerState() === 1;
-            }, null, { timeout: 12000 });
+            }, null, { timeout: 15000 });
         } catch (error) {
-            const diagnostics = await inspectPlayer(page);
+            const diagnostics = await frame.evaluate(() => {
+                const player = document.getElementById("movie_player");
+                let state = null, hasVideoData = false;
+                try {
+                    if (player && typeof player.getPlayerState === "function") state = player.getPlayerState();
+                    if (player && typeof player.getVideoData === "function") {
+                        const data = player.getVideoData();
+                        hasVideoData = Boolean(data && data.video_id);
+                    }
+                } catch (ignored) {}
+                const errorNode = document.querySelector(".ytp-error-content-wrap, .ytp-error");
+                const video = document.querySelector("video");
+                return {
+                    state,
+                    hasVideoData,
+                    errorText: errorNode ? String(errorNode.innerText || "").trim().slice(0, 180) : "",
+                    videoReadyState: video ? video.readyState : null,
+                    videoPaused: video ? video.paused : null,
+                    videoErrorCode: video && video.error ? video.error.code : null
+                };
+            });
             console.log("DIAGNOSTIC playback attempt " + attempt + " " + viewport.name + ": " +
                 JSON.stringify(diagnostics));
             return false;
         }
-        await page.waitForTimeout(1000);
-        const playing = await page.evaluate(() => {
+        await frame.waitForTimeout(1000);
+        const playing = await frame.evaluate(() => {
             const player = document.getElementById("movie_player");
             return Boolean(player && player.getPlayerState() === 1);
         });
         if (!playing) {
-            console.log("DIAGNOSTIC playback attempt " + attempt + " " + viewport.name + ": " +
-                JSON.stringify(await inspectPlayer(page)));
+            console.log("DIAGNOSTIC playback attempt " + attempt + " " + viewport.name +
+                ": player left playing state.");
             return false;
         }
-        await page.evaluate(() => document.getElementById("movie_player").pauseVideo());
+        await frame.evaluate(() => document.getElementById("movie_player").pauseVideo());
         console.log("PASS YouTube playback attempt " + attempt + " " + video.kind +
             " " + viewport.name + " (" + viewport.width + "x" + viewport.height + ")");
         return true;
@@ -190,7 +238,6 @@ async function tryPlayback(video, viewport, attempt) {
         await context.close();
     }
 }
-
 let successfulVideo = null;
 try {
     for (let index = 0; index < uniqueVideos.length; index++) {
