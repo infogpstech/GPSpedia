@@ -4428,7 +4428,7 @@ let replacedImagesModalGeneration_ = 0;
 let auditDriveModalGeneration_ = 0;
 let replacedImagesLightboxKeyHandler_ = null;
 let privilegedModalTemplates_ = null;
-const PRIVILEGED_MODAL_IDS_ = ['dev-tools-modal', 'replaced-images-modal', 'inbox-modal', 'dashboard-modal', 'audit-drive-modal'];
+const PRIVILEGED_MODAL_IDS_ = ['dev-tools-modal', 'replaced-images-modal', 'inbox-modal', 'dashboard-modal'];
 
 function capturePrivilegedModalTemplates_() {
     if (privilegedModalTemplates_) return;
@@ -4524,6 +4524,11 @@ function resetSessionUi_() {
     closeReplacedImagesLightbox_(true);
     resetRoleScopedViews_();
     closeSideMenu(true);
+
+    const auditWorkspace = document.getElementById('audit-drive-workspace');
+    const imagesOverview = document.getElementById('dev-images-overview');
+    if (auditWorkspace) auditWorkspace.hidden = true;
+    if (imagesOverview) imagesOverview.hidden = false;
 
     document.querySelectorAll('.info-modal').forEach(modal => {
         deactivateLegalModalFocus_(modal, false);
@@ -8748,7 +8753,6 @@ export async function openReplacedImagesModal(options = {}) {
  * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
  */
 export async function openAuditDriveModal(options = {}) {
-    const showModal = !(options && options.showModal === false);
     const startImmediately = Boolean(options && options.startImmediately === true);
     const requestContext = ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
@@ -8770,20 +8774,11 @@ export async function openAuditDriveModal(options = {}) {
     const panelGeneration = adminPanelGeneration_;
     const isCurrentRequest = () => generation === auditDriveModalGeneration_ &&
         panelGeneration === adminPanelGeneration_ && isCurrentUiSessionContext_(requestContext);
-    const modal = document.getElementById('audit-drive-modal');
-    if (!modal || !isCurrentRequest()) return;
-    const auditOverlayId = 'ui-modal:audit-drive-modal';
-    if (showModal) {
-        modal.dataset.gpOverlayHistoryId = auditOverlayId;
-        modal.__gpOverlayClose = () => {
-            auditDriveModalGeneration_ += 1;
-            modal.style.display = 'none';
-        };
-        modal.style.display = 'flex';
-    } else {
-        // Se conserva el DOM de soporte para el escáner, pero nunca se presenta ni se registra como overlay.
-        modal.style.display = 'none';
-    }
+    const workspace = document.getElementById('audit-drive-workspace');
+    const overview = document.getElementById('dev-images-overview');
+    if (!workspace || !isCurrentRequest()) return;
+    workspace.hidden = false;
+    if (overview) overview.hidden = true;
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
     const summaryEl = document.getElementById('audit-drive-summary');
@@ -8837,16 +8832,12 @@ export async function openAuditDriveModal(options = {}) {
     let isOrganizerRollbackRunning = false;
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
-        const historyManager = window.overlayHistory;
-        if (historyManager && historyManager.has(auditOverlayId)) historyManager.close(auditOverlayId);
-        else { auditDriveModalGeneration_ += 1; modal.style.display = 'none'; }
+        auditDriveModalGeneration_ += 1;
+        workspace.hidden = true;
+        if (overview) overview.hidden = false;
     };
 
-    const scanConsole = document.getElementById('audit-drive-scan-console');
-    if (scanConsole) scanConsole.replaceChildren();
-    summaryEl.textContent = showModal
-        ? "La salida y el progreso se registran en la consola global Developer y simultáneamente en este panel. Los resultados detallados aparecen incrementalmente."
-        : "La auditoría se ejecuta sin abrir otro modal. El avance, los lotes y los resultados se registran en la consola global Developer.";
+    summaryEl.textContent = "La auditoría se ejecuta dentro de esta sección. El avance, los lotes, los resultados y los estados individuales se registran en la consola global Developer.";
     const allFiles = [];
     const seenFileIds = new Set();
     const renderedFileIds = new Set();
@@ -8890,15 +8881,6 @@ export async function openAuditDriveModal(options = {}) {
         const allowed = ['info', 'progress', 'success', 'warning', 'error'];
         const normalizedLevel = allowed.includes(level) ? level : 'info';
         logDeveloperOperation_('[AUDITORÍA DRIVE] ' + text, normalizedLevel);
-        const scanConsole = document.getElementById('audit-drive-scan-console');
-        if (scanConsole && isCurrentRequest()) {
-            const entry = document.createElement('div');
-            entry.className = 'audit-drive-scan-log-entry audit-drive-scan-log-' + normalizedLevel;
-            entry.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
-            scanConsole.appendChild(entry);
-            while (scanConsole.childElementCount > 250) scanConsole.firstElementChild.remove();
-            scanConsole.scrollTop = scanConsole.scrollHeight;
-        }
     };
 
     const appendFiles = (files) => {
