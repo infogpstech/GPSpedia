@@ -8496,15 +8496,15 @@ export async function openReplacedImagesModal(options = {}) {
         const capabilities = selected.map(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role));
         const allCanMove = selected.length > 0 && capabilities.every(item => item.canMove);
         const allCanTrash = selected.length > 0 && capabilities.every(item => item.canTrash);
-        const allCanRestoreFromTrash = selected.length > 0 && capabilities.every(item => item.canRestoreFromTrash);
-        const allCanRecover = selected.length > 0 && capabilities.every(item => item.canRecover);
+        const allCanRestore = selected.length > 0 &&
+            capabilities.every(item => item.canRestoreFromTrash || item.canRecover);
         const allVisibleSelected = visibleItems.length > 0 && visibleItems.every(item => selectedIds.has(String(item.id_reemplazo || "")));
         const someVisibleSelected = visibleItems.some(item => selectedIds.has(String(item.id_reemplazo || "")));
         if (selectionCount) selectionCount.textContent = selected.length + (selected.length === 1 ? " seleccionada" : " seleccionadas");
         if (selectAllCheckbox) { selectAllCheckbox.checked = allVisibleSelected; selectAllCheckbox.indeterminate = someVisibleSelected && !allVisibleSelected; selectAllCheckbox.disabled = visibleItems.length === 0; }
         if (bulkMoveButton) { bulkMoveButton.hidden = !allCanMove; bulkMoveButton.disabled = !folderSelect || !folderSelect.value; }
         if (bulkTrashButton) { bulkTrashButton.hidden = !allCanTrash; bulkTrashButton.disabled = false; }
-        if (bulkRestoreButton) { bulkRestoreButton.hidden = !(allCanRestoreFromTrash || allCanRecover); bulkRestoreButton.disabled = false; }
+        if (bulkRestoreButton) { bulkRestoreButton.hidden = !allCanRestore; bulkRestoreButton.disabled = false; }
         if (clearSelectionButton) clearSelectionButton.hidden = selected.length === 0;
     };
 
