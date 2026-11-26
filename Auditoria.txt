@@ -345,3 +345,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Corrección: el botón se habilita cuando cada elemento seleccionado tiene `canRestoreFromTrash` o `canRecover`; los demás tipos de mezcla siguen bloqueados. El handler muestra los conteos separados y despacha a `restoreReplacedImageFromTrash` o `recoverReplacedImage` según cada registro.
 - Harness aislado: mezcla papelera + histórica => restaurar visible; mover y enviar a papelera ocultos. PASS.
 - Commit: 78d91c41e45f6fe673395849e947a5572ff1f8b4.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — concurrencia entre auditorías en inventario compartido
+- Hallazgo: el router protegía `saveUnusedImagesInventory` con `withAdminLocalOperationGuard_("drive-inventory:" + auditId)`. La guarda serializa el mismo auditId, pero no serializa auditorías diferentes que escriben en la misma hoja `Imagenes_Reemplazadas`. Dos ejecuciones podían leer simultáneamente `getLastRow()+1` y competir por la misma fila nueva.
+- Corrección: clave global `drive-inventory:shared-inventory-sheet` para registro incremental, consolidación y organización. La guarda durable compartida serializa las operaciones que pasan por este endpoint sin depender del auditId. Se corrigió el comentario de código: la exclusión proviene de la guarda local durable, no de un ScriptLock mantenido durante el callback.
+- Harness aislado del helper: la misma clave bloquea una segunda ejecución; otro scope puede ejecutarse. Se verificó que el router usa la clave global. PASS.
+- Commit: f64cb5346c5fb28886db0e19485f893ceb755961.
+- Límite: no se ha probado concurrencia entre este endpoint y los demás endpoints de mutación de biblioteca, que usan sus propios ScriptLock. Requiere una prueba integrada de coordinación; no se afirma protección global entre todos los endpoints.
