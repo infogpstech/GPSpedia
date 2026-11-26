@@ -4231,7 +4231,8 @@ const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
  send:p=>setCutUseful(p.vehicleId,p.corteIndex,p.isUseful,{userId:p.userId,sessionToken:p.sessionToken}),
  onSuccess:(r,p,m)=>{
   if(!r||r.status!=="success"||typeof r.isUseful!=="boolean")throw Error("FEEDBACK no confirmó el estado del útil.");
-  const userId=String(p.userId),key=usefulKey_(p.vehicleId,p.corteIndex),set=new Set(usefulConfirmed_.get(userId)||[]);
+  const userId=String(p.userId),key=usefulKey_(p.vehicleId,p.corteIndex),actorKey=usefulActorKey_(userId,p.vehicleId,p.corteIndex),set=new Set(usefulConfirmed_.get(userId)||[]);
+  usefulMutationRevision_.set(actorKey,(usefulMutationRevision_.get(actorKey)||0)+1);
   if(r.isUseful)set.add(key);else set.delete(key);
   usefulConfirmed_.set(userId,Array.from(set));
   if(Number.isSafeInteger(r.usefulCount)&&r.usefulCount>=0)usefulConfirmedCounts_.set(usefulActorKey_(userId,p.vehicleId,p.corteIndex),r.usefulCount);
