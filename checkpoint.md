@@ -1314,3 +1314,12 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - El smoke bloqueó todas las solicitudes no-GET y los hosts Apps Script: 0 solicitudes no-GET, 0 llamadas a Apps Script, 0 errores JS, credenciales no enviadas y escrituras backend deshabilitadas.
 - Service regression run del mismo commit: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por la misma aserción AUTH (`sessionAuthority`) duplicada en AUG-024/MIG021. La falla permanece visible; no se marcó PASS.
 - No se modificó código de servicios, endpoints, deployments, permisos, Spreadsheet o Drive. El smoke solo consultó recursos estáticos de Pages.
+
+
+## Continuidad — UI de recuperación de contraseña sin envío (2026-11-26)
+
+- HEAD de trabajo: `a44d6adaa4731ec11473dcf975efa0aae051c28c`; Pages run `45748060216` SUCCESS.
+- Browser job del run `45748061081`: AUG-146 264/264 PASS; smoke Pages PASS en 1366x768, 390x844 y 320x800. Se abrió el panel de recuperación, se verificaron usuario/correo y el botón de solicitud; formulario de finalización oculto y retorno al login correcto.
+- No se envió la solicitud de recuperación: `recoveryRequestSubmitted=false`; no se introdujeron credenciales; 0 solicitudes no-GET, 0 llamadas Apps Script, 0 errores JS. No se modificó Logs, Users, ActiveSessions, Spreadsheet ni Drive.
+- Service regression del mismo commit: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por AUTH `sessionAuthority` (duplicado AUG-024/MIG021). El fallo continúa visible y no se ha corregido en esta fase.
+- La UI de recuperación queda validada visualmente; la entrega de correo, creación/uso/expiración del código y cambio de contraseña siguen NO EJECUTADOS por ser operaciones mutables.

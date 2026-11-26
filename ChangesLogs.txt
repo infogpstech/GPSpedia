@@ -1398,3 +1398,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Verifica login público de Pages en desktop/móvil y bloquea solicitudes no-GET y llamadas a Apps Script para evitar escrituras.
 - Run `45747844794`: HTTP 200, tres viewports PASS, cero errores JS, cero POST/no-GET y cero llamadas Apps Script. AUG-146 264/264 PASS.
 - Pages run `45747843657`: SUCCESS. No se enviaron credenciales ni se modificaron datos remotos.
+
+
+## 2026-11-26 — cobertura visual de recuperación de contraseña en Pages Beta
+- `JS/Tests/BetaDeployedPageSmoke.mjs` ahora abre/cierra el panel de recuperación y valida campos de usuario/correo, botón de solicitud y estado oculto del formulario de finalización.
+- No envía la solicitud ni introduce credenciales; bloquea métodos no-GET y llamadas Apps Script.
+- Run `45748061081`: AUG-146 264/264 y smoke de Pages PASS; Pages deployment `45748060216` SUCCESS.
+- Flujo de correo/código/cambio de contraseña no ejecutado; sin escrituras remotas.

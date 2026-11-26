@@ -663,3 +663,10 @@ git rev-parse HEAD
 - El script bloqueó solicitudes no-GET y llamadas a Apps Script: 0 no-GET, 0 llamadas backend, 0 credenciales y 0 escrituras.
 - AUG-146 264/264 PASS; 16 capturas sintéticas.
 - Esta prueba valida la superficie estática/login desplegada; no sustituye autenticación real ni prueba manual en dispositivo físico.
+
+
+### BETA-01 / BETA-08 — UI de recuperación de contraseña (2026-11-26)
+- En Pages Beta se abrió el panel de recuperación, se validaron los campos usuario/correo y el formulario de solicitud, y se regresó al login.
+- El formulario de finalización permanece oculto; no se envió la solicitud ni se generó código. 0 POST/no-GET, 0 llamadas Apps Script, 0 credenciales y 0 escrituras.
+- Run `45748061081`: AUG-146 264/264 PASS y smoke UI PASS. Pages run `45748060216` SUCCESS.
+- Entrega de correo, códigos de recuperación, expiración y cambio de contraseña permanecen NO EJECUTADOS hasta disponer de identidad sintética y cleanup verificable.

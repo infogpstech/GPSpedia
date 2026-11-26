@@ -471,3 +471,9 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Cero errores JavaScript, cero solicitudes no-GET y cero llamadas a Apps Script durante la prueba. No se introdujeron credenciales ni se inició sesión.
 - AUG-146: 264/264 PASS en cuatro viewports y 16 capturas sintéticas.
 - La prueba bloquea explícitamente métodos distintos de GET y hosts Apps Script; no escribe en servicios, Spreadsheet o Drive.
+
+
+## BETA-08 — recuperación de contraseña, solo interfaz (2026-11-26)
+- Se amplió el smoke test de Pages para abrir el panel **¿Olvidaste tu contraseña?**, comprobar los campos de usuario/correo y el formulario de solicitud, y regresar al login.
+- Run `45748061081`: PASS; formulario de recuperación visible, formulario de finalización permanece oculto, no se envió solicitud, no se introdujeron credenciales y no hubo solicitudes no-GET ni llamadas Apps Script.
+- La prueba cubre únicamente navegación de interfaz; no valida entrega de correo, creación de código, expiración ni recuperación real de cuenta.

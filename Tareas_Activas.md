@@ -652,3 +652,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-08 — Pages desplegado, smoke read-only (2026-11-26)
 **Estado: SMOKE DE PÁGINA DESPLEGADA COMPLETADO.** Pages respondió HTTP 200; formulario login visible sin overflow en 1366x768, 390x844 y 320x800; 0 errores JS, 0 solicitudes no-GET, 0 llamadas Apps Script y ninguna credencial. AUG-146 264/264 PASS. No sustituye validación manual en dispositivo físico ni login real.
+
+
+## BETA-01 — panel de recuperación, UI solamente (2026-11-26)
+**Estado: INTERFAZ VALIDADA; FLUJO REAL PENDIENTE.** Pages smoke abre el panel, valida usuario/correo, confirma que el formulario de finalización permanece oculto y regresa al login. No envía solicitud, no crea código ni cambia contraseña. 0 llamadas Apps Script y 0 escrituras.
