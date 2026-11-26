@@ -1625,3 +1625,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `service-worker.js`: versión de caché actualizada de `gpsepedia-cache-v79` a `gpsepedia-cache-v80` para que el frontend reciba el módulo actualizado.
 - Pruebas estáticas: comparación estructural con claves reordenadas y normalización de valores indefinidos en arrays, 2/2 PASS; revisión de diffs contra respaldos exactos confirma que cada archivo contiene solo los cambios descritos.
 - No se ejecutó IndexedDB real en navegador, ni se realizó una escritura remota en Apps Script/Spreadsheet/Drive. El código específico que falla en el dispositivo del usuario quedará identificado por el nuevo `errorCode` en el siguiente intento; no se declara resuelta la alta Beta.
+
+[2026-11-26] GP-CUT-PENDING-SNAPSHOT-01 — cierre de revisión
+- Se comparó `offline.js` reconstruyendo el original a partir del respaldo y aplicando inversamente únicamente los cambios auditados; coincidencia exacta. HTML, logger y Service Worker también coinciden exactamente al revertir los cambios previstos.
+- Los cuatro respaldos temporales se retiraron tras Code Review: `12eb7a82109a4a1dfdf5eeaf959f16430d7f61bd`, `93b760c7ed9aed051591874d6c75de40edd5fbea`, `608db06ca73665186578225d1cce61640f43655a`, `8e4b9e0d47a4a6d9c02ac1f3c8b95e6ff79e484d`.
+- El flujo sigue bloqueando el envío remoto cuando el snapshot local no queda confirmado. La prueba runtime en navegador y el alta Beta continúan pendientes.
