@@ -1058,3 +1058,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Archivos de código: `JS/Services/catalog.js`, `JS/Frontend/ui.js`, `HTML/add_cortes.html`.
 - Commits de código: `3525c772c8bd51db235aba89b72a85a3ce17c0db`, `d45580124aa1834851665f235e14f4ea5a000f57`, `e500d6f670dc57d58607f73c56f4dd6a679af530`, `631d7e66eec4802220c2debd048016a35c1247b7`, `4bc6e6d4a1b9bb3d55fd4e1cfb3eeeb7cf460abf`.
 - Respaldos exactos comparados contra los cambios y retirados después del Code Review: commits de limpieza `9e573ad542ebdb4c1ec47f20d9257d1184ad2632`, `3f5d95123f7e1dc06921a9fa4cf7d4ebc7523a36`, `3f3f967d785d7406fcac92a51fe9101d6a1ef55b`.
+
+
+### GP-FORM-DROPDOWNS-02 — verificación de no regresión del diagrama Relay
+- [x] Confirmar que `Relay` sigue leyéndose en `handleGetCatalogData()` y que se devuelve `allData.relay` con su campo `imagen`.
+- [x] Confirmar que el enlace de configuración en el detalle resuelve `datosRelay` por nombre y abre `renderRelayInfoModal()`.
+- [x] Confirmar que el modal conserva `relayInfo.imagen` y el lightbox `window.abrirLightbox()`. Harness estático 9/9 PASS.
+- [x] No se eliminó ni cambió el flujo del diagrama Relay; se cambió únicamente la fuente de opciones del dropdown a la hoja Cortes.
