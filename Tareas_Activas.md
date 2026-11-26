@@ -722,3 +722,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-F022 — recurso iOS Drive sustituido por asset local (2026-11-26)
 **Estado: CORRECCIÓN LOCAL PUBLICADA; VALIDACIÓN BROWSER PENDIENTE.** `index.html` ahora usa `Images/icon-v3-512x512.png` en el modal de instalación iOS. `OfflineBrandAssets.mjs` comprueba que no exista dependencia de Drive. La dependencia Font Awesome CDN sigue pendiente.
+
+
+## Revisión normativa de Tareas_Beta §19 (2026-11-26)
+**Estado: SUPERSEDIDA — NO EJECUTAR.** La tarea de configuración centralizada de endpoints contradice `NORMAS_DESAROLLO.md` §§17.1/18: las seis URLs deben residir únicamente en `API_ENDPOINTS` del frontend; no Spreadsheet, bootstrap remoto ni controles Developer para modificarlas. La validación de health y endpoints se mantiene por §25.
+
+## BETA-F022 — resultado del fallback iOS (2026-11-26)
+- `index.html` usa logo local; `OfflineBrandAssets` 5/5 PASS.
+- Run `45757156335`: PWA offline frío/caliente PASS; login visible, 49 core + 4 opcionales HTTP 200, 0 módulos faltantes y 0 pageErrors. El recurso `/thumbnail` sigue fallando por referencia residual en `HTML/add_cortes.html`; Font Awesome CDN también falla offline. F022 sigue no bloqueante.

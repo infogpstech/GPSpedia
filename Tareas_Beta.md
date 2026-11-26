@@ -392,7 +392,7 @@ Ejecutar únicamente con cuentas, deployments, Spreadsheet y recursos desechable
 - Si no se dispone de un navegador/viewport o rol, marcar ese caso como NO EJECUTADO; no inferir aprobación a partir de CI ni de la revisión estática del CSS.
 
 ## 19. Validación Beta diferida — configuración central y actualización de endpoints AUTH
-**Estado: PENDIENTE DE EJECUCIÓN OPERATIVA.** La inicialización, publicación versionada, modal Developer y flujo manual están implementados y aprobados en CI. No se ejecutaron contra la Spreadsheet real ni se desplegó Apps Script.
+**Estado: SUPERSEDIDA POR NORMAS §§17.1 Y 18 — NO EJECUTAR.** La propuesta de centralizar endpoints en Spreadsheet/AUTH y permitir su actualización desde Developer contradice la fuente normativa vigente. Las seis URLs deben permanecer exclusivamente en API_ENDPOINTS del frontend; no usar bootstrap remoto, Spreadsheet ni UI para distribuir o modificar endpoints. Se conserva el plan como antecedente, pero no ejecutar los pasos 1–10. La validación correcta de endpoints/health se rige por §25 y usa API_ENDPOINTS local.
 
 1. Preparar una copia aislada de la Spreadsheet central y los seis proyectos/deployments Beta. Confirmar que el único localizador CENTRAL_CONFIGURATION_BOOTSTRAP_URL apunta al deployment AUTH Beta.
 2. Desplegar en AUTH Beta la versión que contiene initializeCentralConfigurationSheets(), prepareCentralConfigurationServiceUrlInput() y publishCentralConfigurationFromServiceUrlDraft(). Autorizar el acceso Google normal a la Spreadsheet aislada.
@@ -780,3 +780,11 @@ Se añadieron los seis archivos fuente Apps Script al filtro de activación del 
 ### BETA-08 / BETA-F022 — fallback local del modal iOS
 - El thumbnail Drive del modal de instalación iOS se reemplazó por `Images/icon-v3-512x512.png`, incluido en el precache.
 - `OfflineBrandAssets.mjs` comprueba el uso del asset local y la ausencia de Drive. Pendiente confirmar en browser que desaparece el fallo `/thumbnail` offline. Font Awesome CDN continúa como residual visual.
+
+
+### BETA-08 / BETA-F022 — verificación posterior del modal iOS
+Run `45757156335`: `OfflineBrandAssets` 5/5; PWA cold/warm PASS; login visible, 49/49 CORE y 4/4 OPTIONAL HTTP 200, cero módulos faltantes, cero pageErrors. Cold failedRequests conserva Font Awesome CDN y `/thumbnail`; el residual Drive corresponde a `HTML/add_cortes.html` (testigo motor). F022 permanece como deuda visual no bloqueante.
+
+
+### Precedencia normativa — sección 19
+La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §§17.1 y 18. Las URLs de los seis servicios se administran exclusivamente en `JS/Frontend/api-config.js` mediante `API_ENDPOINTS`; no centralizarlas en Spreadsheet/AUTH ni habilitar publicación desde Developer. Conservar este aviso al consultar el plan histórico.

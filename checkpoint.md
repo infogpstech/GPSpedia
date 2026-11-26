@@ -1469,3 +1469,11 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - HEAD de partida: `3e728ee3bef83e99cb84988da11919bba043a18a`.
 - `index.html`: se reemplazó la imagen remota Drive del modal iOS por `Images/icon-v3-512x512.png`, ya presente en CORE_ASSETS. `OfflineBrandAssets.mjs` ahora comprueba el fallback local y ausencia de Drive en ese modal.
 - Pendiente: Pages/browser smoke debe confirmar que `/thumbnail` ya no falla offline. Font Awesome CSS de cdnjs sigue siendo el único recurso externo no cacheado observado; no afecta al login, pero puede dejar iconos sin estilo offline.
+
+
+## Continuidad — BETA-F022 y precedencia normativa de Tareas_Beta §19 (2026-11-26)
+- HEAD de partida: `3191b604bb381cb54710f4aa3e84504d5e1c572c`.
+- Run `45757156335`: regression SUCCESS; `OfflineBrandAssets` 5/5; 542 suites/6,453 pruebas/0 fallos; responsive 264/264; PWA offline frío/caliente PASS con login visible, 49 core + 4 opcionales HTTP 200, sin imports faltantes ni pageErrors.
+- El fallback iOS local eliminó su dependencia Drive, pero cold failedRequests todavía registra Font Awesome CDN y `/thumbnail`. La referencia Drive restante se localiza en `HTML/add_cortes.html` (testigo del motor). F022 continúa como deuda visual no bloqueante; no reabre F020.
+- Tareas_Beta §19 proponía centralizar endpoints en Spreadsheet/AUTH/Developer, lo que contradice `NORMAS_DESAROLLO.md` §§17.1/18. Se marcó SUPERSEDIDA/NO EJECUTAR; mantener las seis URLs solo en `API_ENDPOINTS` del frontend. La validación health continúa en §25.
+- No se desplegaron Apps Script ni se modificaron Spreadsheet/Drive/datos.
