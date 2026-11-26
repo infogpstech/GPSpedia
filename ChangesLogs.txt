@@ -1606,3 +1606,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - HTML/add_cortes.html — los acordeones de etapa 3 abren su contenido como Grid; la distribución usa una columna y controles a ancho completo; colorCableCorte1 queda a ancho completo sin desbordamiento.
 - No se modificaron JS/Services/write.js, JS/Frontend/ui.js, JS/Frontend/rich-text.js, los contratos de servicios, la lógica de coincidencias, el guardado, adjuntos, operaciones pendientes ni idempotencia.
 - Validación estática: conversor de imágenes 10/10 fixtures; sincronización rich editor/textarea, lectura de campos de envío, layout Grid, anchos móviles y comparación contra respaldo PASS. No se ejecutó navegador móvil ni se verificaron permisos de imágenes reales.
+
+[2026-11-26] GP-WRITE-CUT-CATALOG-01
+- `JS/Services/write.js`: `prepareAddOrUpdateCutRequest_` dejó de solicitar la hoja Relay para validar altas; `getAddCutPayloadValidationOptions_` obtiene Categoría (col. 2), Tipo de encendido (col. 8), Tipos de corte (cols. 12/19/26) y Configuración Relay (cols. 15/22/29) desde `Cortes`, mediante valores visibles, deduplicación y ordenamiento.
+- `JS/Frontend/diagnosticLogger.js`: ampliada la allowlist de códigos de error seguros para errores de API, servicio, transporte y WRITE.
+- `HTML/add_cortes.html`: el diagnóstico `cut-operation.submit-failed` registra el código normalizado de error del servicio/ruteador en lugar de registrar únicamente el nombre genérico de la excepción.
+- Validación documentada: comparación exacta contra respaldos y harness estático con fixture de columnas/slots. No se ejecutaron pruebas runtime de Apps Script, Spreadsheet, Drive ni navegador.
