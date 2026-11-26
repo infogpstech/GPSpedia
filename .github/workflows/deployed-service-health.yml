@@ -44,9 +44,11 @@ jobs:
           git cat-file -e "$TARGET_COMMIT^{commit}"
           test "$(git show "$TARGET_COMMIT:JS/Frontend/api-config.js" | grep -c 'GPSpedia-')" -eq 6
       - name: Validate local service health contracts
+        id: local_contract
         run: node --experimental-default-type=module JS/Tests/ServiceHealthContract.mjs
       - name: Probe all six deployed services (GET only)
         id: health
+        if: always()
         run: node JS/Tests/RemoteServiceHealth.mjs
       - name: Probe CATALOG feed cursors (GET only)
         id: catalog_feed
@@ -73,6 +75,7 @@ jobs:
       - name: Summarize independent read-only probe outcomes
         if: always()
         env:
+          CONTRACT_OUTCOME: ${{ steps.local_contract.outcome }}
           HEALTH_OUTCOME: ${{ steps.health.outcome }}
           FEED_OUTCOME: ${{ steps.catalog_feed.outcome }}
           BOUNDARIES_OUTCOME: ${{ steps.catalog_boundaries.outcome }}
@@ -81,12 +84,14 @@ jobs:
           PAGINATION_OUTCOME: ${{ steps.catalog_pagination.outcome }}
         run: |
           printf '%s\n' \
+            "Local contract: $CONTRACT_OUTCOME" \
             "Health: $HEALTH_OUTCOME" \
             "Feed: $FEED_OUTCOME" \
             "Boundaries: $BOUNDARIES_OUTCOME" \
             "ADMIN latency: $ADMIN_LATENCY_OUTCOME" \
             "CATALOG matrix: $MATRIX_OUTCOME" \
             "CATALOG pagination: $PAGINATION_OUTCOME"
+          if [ "$CONTRACT_OUTCOME" = success ] &&
           if [ "$HEALTH_OUTCOME" = success ] &&
              [ "$FEED_OUTCOME" = success ] &&
              [ "$BOUNDARIES_OUTCOME" = success ] &&
