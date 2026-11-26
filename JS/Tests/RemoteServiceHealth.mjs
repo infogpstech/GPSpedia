@@ -23,9 +23,9 @@ async function probe(service){
  const startedTotal=performance.now();let lastError=null,attempts=0;
  for(let retry=0;retry<3;retry++){attempts++;const started=performance.now();try{
   const response=await fetch(endpoints[service]+"?debug=true",{method:"GET",redirect:"follow",signal:AbortSignal.timeout(8000),headers:{accept:"application/json"}});
-  const latencyMs=Math.round(performance.now()-started);
   if(!response.ok){const error=new Error("HTTP "+response.status);if((response.status===429||response.status>=500)&&retry<2){lastError=error;await new Promise(r=>setTimeout(r,(retry+1)*750));continue;}throw error;}
   const bodyText=await response.text();let body;try{body=JSON.parse(bodyText);}catch{throw new Error("Respuesta no JSON (HTTP "+response.status+")");}
+  const latencyMs=Math.round(performance.now()-started);
   if(!body||typeof body!=="object"||Array.isArray(body))throw new Error("La respuesta no es un objeto JSON.");
   inspect(body);if(body.service!==identities[service])throw new Error("Identidad incorrecta: "+String(body.service));
   if(!["available","online"].includes(String(body.status||"").toLowerCase()))throw new Error("Estado backend no disponible: "+String(body.status));
