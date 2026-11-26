@@ -220,3 +220,30 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Inspección de fuente en branch: ambas acciones están declaradas en `FEEDBACK_ACTION_PERMISSIONS`, tienen handlers y dispatcher, y están mapeadas desde frontend al servicio FEEDBACK.
 - Conclusión: probable deployment FEEDBACK obsoleto o discrepante del source configurado; es necesario confirmar el deployment activo y publicar/actualizar FEEDBACK. No hay evidencia de error en la policy del source actual.
 - No se desplegó Apps Script ni se mutó la Spreadsheet. Limitación: no dispongo aquí de autorización/tool de deployment Apps Script. Incidencia abierta.
+## 26. GP-UTIL-FEEDBACK-STATE-AND-COUNTER-03 — estado y contador por corte (2026-11-26)
+
+- El propietario confirma que FEEDBACK ya acepta las acciones de útiles y guarda registros en Spreadsheet; la antigua incidencia de rechazo de policy ya no es el síntoma actual. No se verificó la versión ni el deployment exacto.
+- Nuevo diagnóstico: el ledger antiguo era append-only y no sincronizaba las columnas físicas Cortes.utilCorte1/2/3. Se sustituye por una fila por actorKey + vehicleId + corteId, con corteId e isUseful; activar/desactivar actualiza la misma fila.
+- FEEDBACK cuenta los usuarios activos para el vehículo/corte y escribe/verifica el contador físico. Si la escritura no puede confirmarse, intenta revertir el cambio en ledger y celda. El lock breve protege la unicidad de la fila y la consistencia del contador compartido.
+- En el primer acceso tras desplegar el nuevo FEEDBACK, ensureFeedbackLikesSheet_() migra el ledger antiguo de siete columnas, consolida el último estado por usuario/corte, crea una copia FeedbackLikes_Legacy_<timestamp> y actualiza los contadores físicos sumando los útiles activos al valor base. Si detecta estado pending o un esquema no reconocido, no migra ni sobrescribe datos y requiere reconciliación.
+- CATALOG lee ambos contratos para permitir una transición segura y evita sumar dos veces los estados del nuevo ledger sobre el contador físico.
+- **Orden de publicación requerido:** 1) publicar CATALOG actualizado (acepta tanto el formato antiguo como el nuevo); 2) publicar FEEDBACK actualizado (ejecuta la migración al primer acceso); 3) validar con dos cuentas distintas, los tres cortes, FeedbackLikes, columnas físicas de Cortes, dashboard y recarga. No publicar FEEDBACK antes de CATALOG, pues el CATALOG antiguo no reconoce el nuevo esquema.
+- Validación local: sintaxis FEEDBACK/CATALOG/ADMIN PASS; UI parser PASS con imports/exports retirados; simulación de dos cuentas/toggle idempotente/retiro/reactivación PASS (dos filas, contador 2); simulación de migración PASS con backup y sumatoria sobre base previa.
+- Validación remota/Spreadsheet: NO EJECUTADA. No se ha desplegado Apps Script ni se ha leído/modificado la Spreadsheet real. Fase Beta cerrada; las comprobaciones de integración quedan diferidas al deployment autorizado.
+- Commits de código: 4463324416ee1d3c35b5c26c45ceb3f4785034f3, 223cf468a3a0abe2284a2b20ea93a9a7c9043686, 35641402b8f31b4659050a45688b6ae5937f6671, 9099f4fb4f88c4630d5a5825e6567e52da1c30d0, a0dbfa587d0efa1241d1787a640926f4d9b4b38c; correcciones adicionales FEEDBACK a30ad5d952f272f75cf62d17e1ac22a77bfd14e1, da331a14683c828791be3046fdce4bb2a481fbcd, e265b09c8658625c22fbc5e9e6c99ccf0cb4f3, 24c29376d74c2c0cf32a77d1d8fc6ee7dbb7490c.
+
+## 27. GP-ADMIN-DRIVE-LIBRARY-AUDIT-02 — biblioteca y bloques UTF-8 (2026-11-26)
+
+- openReplacedImagesModal(options = {}) establece showModal de forma definida y abre por defecto; se conserva el caller sin argumentos.
+- Snapshot ADMIN cambia a schema 3 y corta el JSON según bytes UTF-8, evitando bloques mayores a 75,000 bytes por caracteres multibyte. No separa pares sustitutos.
+- Load y refresh mantienen compatibilidad con schema 2 y manifests legados sin versión; la renovación conserva su encoding/formato para no inutilizar snapshots antiguos.
+- Validaciones aisladas: snapshot Unicode de 189,078 bytes guardado/recuperado en tres bloques (74,999/74,999/39,080 bytes); round-trip exacto; refresh/load PASS para schema 3, schema 2 y legado. Parsing ADMIN/UI PASS.
+- No se ejecutó Drive, servicio ADMIN desplegado ni navegador. Pendiente Beta: abrir Biblioteca, iniciar auditoría, conservar resultados, continuar con cursor y comprobar resultados completos.
+- Commits ADMIN/UI: 9099f4fb4f88c4630d5a5825e6567e52da1c30d0, a0dbfa587d0efa1241d1787a640926f4d9b4b38c, 35641402b8f31b4659050a45688b6ae5937f6671.
+
+## Estado Git después de las correcciones fuente (antes de actualizar este checkpoint)
+
+- HEAD de trabajo: a0dbfa587d0efa1241d1787a640926f4d9b4b38c; luego se actualizaron los registros Tareas_Activas.md (3a76328ccb5f876dfae0311d3b05f7eff857e6e3), Auditoria.txt (6cd4b01a1c9332f50aeb4f800f4c47d9bda4a29d) y ChangesLogs.txt (4fc259853a05d47a0666f0cc5797a13e8ab2f116).
+- HEAD verificado antes de este checkpoint: 4fc259853a05d47a0666f0cc5797a13e8ab2f116.
+- Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificar.
+- No se crearon pruebas persistentes, suites, fixtures ni workflows. Las simulaciones se ejecutaron en memoria con fuentes leídas de la rama.
