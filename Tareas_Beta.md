@@ -744,3 +744,16 @@ Run `45750124457`: cold offline FAIL inmediatamente tras instalar SW; warm offli
 
 ### BETA-F021 — gobernanza de rama
 `GPSpedia2.2.5` devuelve `protected=false`; consulta de rulesets vacía. La lectura detallada de protección fue denegada (403). No se modificó configuración. Requiere administrador para activar protección de rama y checks obligatorios antes de integrar cambios.
+
+
+### BETA-08 / BETA-F020 — resultado final offline frío (run 45755902520)
+- **PASS:** Service Worker v77 activo/controlador; 49/49 CORE_ASSETS y 4/4 OPTIONAL_ASSETS HTTP 200; 0 módulos estáticos omitidos del grafo recursivo .js/.mjs.
+- Offline frío: reload HTTP 200, `navigator.onLine=false`, login visible. Offline caliente: reload HTTP 200, login visible, `warmMissingPrecacheModules=[]`.
+- AUG-146 264/264 en 4 viewports; Pages login/recuperación PASS; 0 no-GET, 0 llamadas Apps Script, 0 pageErrors. F020 cerrado.
+- Residuales no bloqueantes: Font Awesome CDN y thumbnail Drive fallan offline (F022).
+
+### BETA-01 / BETA-F019 — resultado de fuente AUTH
+Run `45755902520`: `ServiceHealthContract` 21/21 y regresión global 542 suites / 6,452 pruebas / 0 fallos. `JS/Services/Auth.js` y fixture no exponen `sessionAuthority`. El endpoint remoto sigue pendiente de deployment autorizado; no se afirma health remoto corregido.
+
+### BETA-08 / BETA-F022 — recursos visuales externos offline
+En el smoke frío fallan CSS Font Awesome CDN y `/thumbnail` de Drive. No afectan al login ni producen pageErrors; revisar fallback local como tarea de baja prioridad, sin reabrir F020.

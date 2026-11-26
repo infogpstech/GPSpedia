@@ -156,3 +156,15 @@
 - `GET /branches/GPSpedia2.2.5` devuelve `protected=false`; `GET /rulesets?includes_parents=true` devuelve `[]`.
 - El endpoint de protección detallada devuelve 403 por permisos de integración. No se cambiaron settings ni se escribió en la rama base.
 - Riesgo: ausencia de protección GitHub verificable para la rama que el flujo declara protegida. Requiere acción administrativa del propietario.
+
+
+2026-11-26 | BETA-F020 — cierre por prueba offline frío
+- Run `45755902520` SUCCESS: `missingPrecacheModules=[]`, `missingCoreAssets=[]`, 49 recursos core y 4 opcionales verificados HTTP 200; login visible inmediatamente offline frío y también tras warm-up.
+- AUG-146 264/264, Pages login/recuperación UI PASS, cero solicitudes no-GET, cero llamadas Apps Script y cero pageErrors. Se cierra la causa de dependencias JS omitidas.
+- Hallazgo residual no bloqueante BETA-F022: CDN Font Awesome y thumbnail Drive no disponibles offline; no impiden el login.
+
+2026-11-26 | BETA-F019 — resultado local
+- Run `45755902520`: ServiceHealthContract 21/21; suite global 542/6,452/0. Fuente Auth.js y fixture sin `sessionAuthority`. Deployment remoto aún no actualizado; no se despliega Apps Script.
+
+2026-11-26 | BETA-F021 — comprobación de protección
+- La rama base sigue reportando `protected=false` y no se observan rulesets; requiere administración del repositorio. No se modificó la rama base.

@@ -550,3 +550,14 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - La lectura detallada de branch protection responde 403 `Resource not accessible by integration`; no se modificó configuración administrativa.
 - Impacto: la rama base no presenta protección efectiva confirmada desde los metadatos accesibles. El flujo de trabajo siguió escribiendo exclusivamente en `GPSpedia2.2.5_work`; el SHA base permanece intacto.
 - Acción necesaria: un administrador del repositorio debe configurar protección/ruleset que impida pushes directos, force-push y borrado, y exigir revisión/controles antes de integrar. No se puede resolver desde la conexión actual.
+
+
+## Cierre BETA-F020 — offline frío validado (run 45755902520)
+- El Service Worker v77 instaló 49/49 recursos core y 4/4 opcionales HTTP 200; el scanner recursivo de imports .js/.mjs no encontró dependencias fuera de CORE_ASSETS (`missingPrecacheModules=[]`).
+- Primera recarga sin conexión: HTTP 200, `navigator.onLine=false`, Service Worker controlador y login visible (`offlineLoginVisible=true`). Segunda recarga offline tras warm-up: también PASS. `warmMissingPrecacheModules=[]`.
+- Browser: AUG-146 264/264 en cuatro viewports; Pages login/recuperación UI PASS; 0 no-GET, 0 Apps Script, 0 pageErrors. F020 queda cerrado.
+
+## BETA-F022 — recursos externos no disponibles offline (2026-11-26)
+- En la misma prueba fría fallan dos recursos no core: CSS Font Awesome de cdnjs (`/ajax/libs/font-awesome/6.4.0/css/all.min.css`) y `/thumbnail` de Drive.
+- No bloquean el arranque: login visible, HTTP 200, cero errores JavaScript. El thumbnail corresponde a la imagen del modal informativo iOS en `index.html`; Font Awesome puede dejar iconos sin estilo offline.
+- Severidad baja/no bloqueante para el arranque; registrar como deuda de disponibilidad visual offline. Evaluar assets locales/fallbacks en la priorización existente, sin reabrir F020.

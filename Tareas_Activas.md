@@ -695,3 +695,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **BETA-F020:** corrección de precarga validada por regresiones locales (`ServiceWorkerCache` 12/12; `PWAStartupScenarios` 16/16) y sintaxis; Pages build/deploy SUCCESS. Estado **COMPLETADA CON VALIDACIÓN DIFERIDA** para código local; offline frío en navegador real sigue pendiente.
 - Run `45755702144`: 542 suites, 6,452 pruebas, 0 fallos. Responsive-browser sigue en `Install Chromium`; no se afirma resultado de navegador.
 - **BETA-F021:** protección de `GPSpedia2.2.5` no confirmada: `protected=false`, sin rulesets visibles; requiere acción administrativa. La rama base no fue modificada.
+
+
+## Cierre de BETA-F020 y validación local BETA-F019 (2026-11-26)
+- **BETA-F020: COMPLETADA.** Run `45755902520`: 49/49 core + 4/4 opcionales HTTP 200, grafo .js/.mjs completo, login visible en offline frío y caliente, 0 pageErrors. AUG-146 264/264 y Pages smoke PASS.
+- **BETA-F019: COMPLETADA CON VALIDACIÓN DIFERIDA.** Fuente AUTH y fixture corregidos; ServiceHealthContract 21/21 y regresión global PASS. El deployment remoto sigue pendiente de actualización/autorización y GET de confirmación.
+- **BETA-F022: PENDIENTE / BAJA.** Font Awesome CDN y thumbnail Drive fallan offline; no impiden el arranque. Mantener separado de F020.
+- **BETA-F021: PENDIENTE ADMINISTRATIVO.** Rama base `protected=false`, rulesets vacíos; necesita intervención del administrador del repositorio.

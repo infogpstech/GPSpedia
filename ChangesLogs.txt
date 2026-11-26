@@ -1462,3 +1462,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - CI `45755702144`: 542 suites, 6,452 pruebas, 0 fallos; ServiceHealthContract 21/21, PasswordRecovery 10/10 y ServiceWorkerCache 12/12.
 - Pages build/deploy `45755701403`: SUCCESS. Browser job de `45755702144` seguía en `Install Chromium`; no se declara validación offline real.
 - Inspección de rama base: API `protected=false`, rulesets `[]`; detalle de branch protection denegado por 403. Sin cambios administrativos ni escrituras en base.
+
+
+## 2026-11-26 — cierre de precarga PWA y estado AUTH
+- Run `45755902520`: Pages build/deploy y browser SUCCESS; PWA offline frío/caliente PASS, 49/49 core y 4/4 opcionales HTTP 200, imports faltantes 0; AUG-146 264/264.
+- Regresión global: 542 suites, 6,452 pruebas, 0 fallos; ServiceHealthContract 21/21; PasswordRecovery 10/10; ServiceWorkerCache 12/12.
+- F020 cerrado. Se registra F022 por CDN Font Awesome y thumbnail Drive fallidos offline, no bloqueantes del login.

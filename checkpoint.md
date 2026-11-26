@@ -1428,3 +1428,14 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - BETA-F020: código/regresión local validada; smoke PWA real pendiente por job browser.
 - BETA-F021: API de rama devuelve `protected=false` para la base y rulesets `[]`; branch protection detallada responde 403 a la integración. No se tocó la rama base; requiere administrador para protección efectiva.
 - No se ejecutaron operaciones POST, login real, mutaciones, despliegues Apps Script ni cambios de datos Drive/Spreadsheet.
+
+
+## Continuidad — resultado confirmado PWA offline y regresión global (2026-11-26)
+- Run `45755902520` COMPLETED SUCCESS en ambos jobs: `service-tests` y `responsive-browser`.
+- Regresión: 542 suites, 6,452 pruebas, 0 fallos. `ServiceHealthContract` 21/21, `PasswordRecovery` 10/10, `ServiceWorkerCache` 12/12. Sintaxis de archivos modificados PASS.
+- Browser: AUG-146 264/264 en 1366x768, 390x844, 360x800 y 320x700; Pages login/recuperación UI PASS; 0 no-GET, 0 Apps Script, 0 pageErrors.
+- PWA v77: 49/49 recursos CORE y 4/4 OPTIONAL HTTP 200; grafo recursivo .js/.mjs completo (`missingPrecacheModules=[]`); `missingCoreAssets=[]`; offline frío y caliente HTTP 200 con login visible, SW controlador y `warmMissingPrecacheModules=[]`. BETA-F020 CERRADA.
+- Residuales: Font Awesome CDN y `/thumbnail` de Drive fallan offline, pero no bloquean el login ni generan errores JS; BETA-F022 baja prioridad.
+- BETA-F019: fuente/fixture AUTH sin `sessionAuthority`, contrato local 21/21 y suite global PASS. Deployment remoto no actualizado ni validado; pendiente autorización de deployment y GET posterior.
+- BETA-F021: base `GPSpedia2.2.5` reporta `protected=false`; rulesets vacíos; API de protección detallada 403. No se modificó la base. Requiere acción administrativa.
+- Head de trabajo antes de este checkpoint: `b53ce257923197035d377b0c913a1ab0241d7a44`; base sigue `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
