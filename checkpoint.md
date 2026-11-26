@@ -182,3 +182,18 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se añadió una adenda a `Tareas_Beta.md` para que el resumen de cierre refleje la corrección local de GP-UTIL-BUTTON-NO-REACTION-01 y mantenga explícita la validación remota diferida.
 - Commit documental: `22f4b8108aff9a2ca4aad97ffdea6cf83a006855`. No se modificó código ni se reabrió Beta.
 
+
+
+## 23. GP-UTIL-BUTTON-STATE-REVERT-02 — corrección de reconciliación tardía (2026-11-26)
+
+- El propietario confirmó que el botón cambia de color y el contador aumenta al pulsar, pero ambos regresan al valor anterior unos segundos después.
+- Causa identificada en frontend: `ensureUsefulState_` inicia una lectura `getMyUsefulCuts` asíncrona aunque haya copia local. Si la respuesta de esa lectura, iniciada antes de la escritura, termina después de FEEDBACK, podía reemplazar el estado confirmado con el estado remoto anterior. `applyConfirmedUsefulState` además calculaba un ajuste del contador a partir de `likedCortes` (posiblemente sobrescrito), aunque la respuesta ya contenía el contador autoritativo `usefulCount`.
+- Se añadió versionado por clave usuario/vehículo/corte. La hidratación conserva las mutaciones confirmadas después del inicio de su solicitud; las escrituras confirmadas incrementan la revisión y se mantienen por encima de lecturas antiguas.
+- `applyConfirmedUsefulState` ahora sincroniza el estado visual exactamente con `isUseful` y el contador exactamente con `usefulCount`; no vuelve a sumar/restar un delta sobre un valor ya confirmado.
+- Las respuestas de CATALOG que se iniciaron antes de una interacción más reciente se descartan. Si CATALOG devuelve una proyección anterior, el contador confirmado por FEEDBACK prevalece al fusionar el vehículo.
+- Cambios frontend: `ui.js` y `likeState.js`. No se modificó FEEDBACK, CATALOG, sus deployments, endpoints ni Spreadsheet. No hay llamadas servicio-a-servicio.
+- Commits: `29414137134370d25b57286e047ea082854c7413`, `2d0b44a3631ca02cdc886fa1ce81768b795fbed8`, `e663bffad986cc584efc4c913325d977a7a43b91`, `9348557df146daa1f4df7216acef68b5728f7606`, `000f1115202af8c5f7bd704da914d71598c4b8a3`; registro de tareas `0cd3b94139c655e7a519f7eff730e4d208aa425b`.
+- Actions Pages build/deploy del SHA `9348557` estaba pendiente al documentar; el último SHA `000f111` tiene una ejecución Pages pendiente independiente. Se debe verificar que el deployment más reciente termine SUCCESS antes de afirmar que la corrección está publicada en el sitio.
+- Pruebas remotas y persistencia real: NO EJECUTADAS. No se escribió Spreadsheet ni se desplegaron Apps Script. Validación pendiente: navegador desplegado, estado FEEDBACK tras recarga, contador CATALOG tras recarga y repetición de doble clic/cambios rápidos.
+- La fase Beta permanece cerrada. Próximo paso: confirmar Pages SUCCESS del HEAD documental/código; después prueba funcional real con usuario y vehículo/corte autorizados, verificando antes/después en FEEDBACK y CATALOG.
+
