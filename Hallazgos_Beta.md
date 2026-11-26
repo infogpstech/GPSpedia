@@ -366,3 +366,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se eliminó esa suposición: ahora se valida el cursor de continuación acotado por la revisión de cada respuesta, la solicitud de reset cuando cursor queda por debajo de minRevision, y respuesta sin eventos cuando resetRequired está activo. La repetición se compara como contradictoria solo cuando las revisiones y condiciones observadas permanecen estables. Se informa indicador de concurrencia.
 - Simulación offline de la lógica de aserciones: 5/5 escenarios PASS (caso normal, cambio concurrente, nextCursor fuera de rango, reset omitido bajo retención y reset con eventos). No es ejecución contra Apps Script Beta.
 - Commit de corrección: `49fce769cc0844cca3b518482411ebca4babed16`.
+
+
+## BETA-F010 — medición de latencia parcial en probe de salud (2026-11-25)
+- `RemoteServiceHealth.mjs` capturaba la latencia inmediatamente después de recibir headers HTTP y antes de consumir/parsing el body JSON. La métrica podía subestimar el tiempo total de respuesta y compararse incorrectamente con el umbral SLOW.
+- Se movió la medición a después de leer y parsear la respuesta JSON; el tiempo ahora incluye lectura del body. Sigue excluyendo validaciones posteriores del contrato y no es medición de render/frontend.
+- Validación de fragmento con Node 22 y body simulado con demora de 25 ms: PASS; latencia medida incluyó lectura del body (25 ms observados). No fue prueba remota de servicio.
+- Cambio publicado en commit `c77c4d09db185883851635a6b4f7c0a69c7fb755`.
