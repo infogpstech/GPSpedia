@@ -1572,3 +1572,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se centralizó la guarda compartida del inventario y se aplicó a todas las mutaciones de biblioteca: aplicar/revertir organización, conciliación, migración de esquema, resolución de candidatos, recuperar, papelera, restaurar, eliminación definitiva, marcar en uso y mover. La sincronización de candidatos del GET biblioteca también se protege. Revisión estática: 12 rutas y sincronización guardadas; admin.js compila. Commit: d778cc086e603307a1567bf3a933983e258cae89.
+
+
+[2026-11-26] GP-FORM-DROPDOWNS-01 — `getDropdownData` ya no depende de la validación de Categoría para construir el catálogo: deriva opciones desde la columna de Cortes. Relay mantiene catálogo dedicado y fallback a columnas de Cortes. `HTML/add_cortes.html` dejó de cachear catálogos localmente y valida la respuesta del servicio antes de renderizar. Auditoría estática de los demás formularios activos completada; deployment/Beta pendiente de comprobación en runtime. Commits: `71c7ba9f2c0022eee91772f1e450b5b3d0c8f250`, `c16f4f24ff01d6513e5814d723dadee3cdf1f413`.
