@@ -9158,6 +9158,21 @@ export async function openAuditDriveModal(options = {}) {
             ' carpetas duplicadas omitidas; ' + (Number(response && response.unverifiableReferenceCount) || 0) +
             ' referencias no interpretables.', Number(response && response.errorCount) > 0 ||
                 Number(response && response.unverifiableReferenceCount) > 0 ? 'warning' : 'progress');
+        const associationFiles = (Array.isArray(files) ? files : [])
+            .filter(file => file && file.classification === 'Sin uso detectado');
+        if (associationFiles.length) {
+            const associationCounts = { suggested: 0, ambiguous: 0, sin_coincidencia: 0, no_verificada: 0 };
+            associationFiles.forEach(file => {
+                const status = String(file.association && file.association.status || 'no_verificada');
+                if (Object.prototype.hasOwnProperty.call(associationCounts, status)) associationCounts[status]++;
+                else associationCounts.no_verificada++;
+            });
+            appendAuditConsole('Asociación de vehículos en el lote: ' + associationCounts.suggested +
+                ' sugeridas, ' + associationCounts.ambiguous + ' ambiguas, ' +
+                associationCounts.sin_coincidencia + ' sin coincidencia y ' +
+                associationCounts.no_verificada + ' no verificadas.',
+                associationCounts.ambiguous || associationCounts.no_verificada ? 'warning' : 'info');
+        }
     };
 
     const updateSummary = (statusText, statusLevel) => {
