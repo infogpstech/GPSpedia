@@ -338,3 +338,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 [2026-11-26] GP-ADMIN-TAB-ACTIONS-UX-01 — verificación estática
 - Revisión de las cuatro pestañas Developer: los botones de acción ordinarios llevan `dev-panel-action` y `dev-action-label`; CSS aplica icono compacto y expansión de etiqueta al foco, con reglas responsive. Los selectores de vista y controles especializados de auditoría mantienen sus estilos específicos. No se modificó la navegación entre pestañas.
 - La implementación local se considera completa; la inspección visual real queda reservada a Beta.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — elegibilidad de restauración masiva mixta
+- Se detectó que el toolbar ocultaba restauración cuando la selección mezclaba registros restaurables desde papelera e imágenes históricas, aunque el handler ya sabía elegir la acción correcta por registro. Esto impedía usar la función de confirmación diferenciada para selecciones mixtas.
+- Corrección: el botón se habilita cuando cada elemento seleccionado tiene `canRestoreFromTrash` o `canRecover`; los demás tipos de mezcla siguen bloqueados. El handler muestra los conteos separados y despacha a `restoreReplacedImageFromTrash` o `recoverReplacedImage` según cada registro.
+- Harness aislado: mezcla papelera + histórica => restaurar visible; mover y enviar a papelera ocultos. PASS.
+- Commit: 78d91c41e45f6fe673395849e947a5572ff1f8b4.
