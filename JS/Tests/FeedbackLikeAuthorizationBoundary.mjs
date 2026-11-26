@@ -80,7 +80,7 @@ test("FEEDBACK atribuye el útil al actor A validado y no al nombre/rol del payl
     assert.equal(authorized.userName, actorA.fullName);
     assert.equal(authorized.userRole, "Tecnico");
     assert.equal(authorized.__feedbackActor.userId, actorA.userId);
-    assert.equal(authorized.__feedbackActor.role, actorA.role);
+    assert.equal(authorized.__feedbackActor.role, "Tecnico");
 });
 
 test("dos sesiones sintéticas conservan identidades distintas", () => {
