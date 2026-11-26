@@ -3,6 +3,14 @@ import { performance } from "node:perf_hooks";
 const targetCommit = String(process.env.TARGET_COMMIT || "").trim();
 if (!/^[a-f0-9]{40}$/i.test(targetCommit)) throw new Error("TARGET_COMMIT debe ser un SHA completo.");
 const source = execFileSync("git", ["show", targetCommit + ":JS/Frontend/api-config.js"], { encoding:"utf8", maxBuffer:4*1024*1024 });
+const healthDoc = execFileSync("git", ["show", targetCommit + ":Services/SERVICE_HEALTH.md"], { encoding:"utf8", maxBuffer:2*1024*1024 });
+function parseExpectedVersions(document) {
+ const rows=[...document.matchAll(/^\|\s*(AUTH|CATALOG|WRITE|FEEDBACK|UTILITIES|ADMIN)\s*\|\s*`[^\n`]+`\s*\|\s*([0-9]+\.[0-9]+\.[0-9]+)\s*\|/gm)];
+ const versions=Object.fromEntries(rows.map(match=>[match[1],match[2]]));
+ if(Object.keys(versions).length!==6)throw new Error("SERVICE_HEALTH.md no contiene las seis versiones esperadas.");
+ return versions;
+}
+const expectedVersions=parseExpectedVersions(healthDoc);
 if (String(process.env.GPSPEDIA_HEALTH_ENV || "") !== "BETA_ISOLATED" ||
  String(process.env.GPSPEDIA_CONFIRM_BETA_ENDPOINTS || "") !== "I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA") {
  throw new Error("La comprobación remota exige confirmar que las seis URLs locales apuntan a una Beta aislada.");
@@ -30,6 +38,7 @@ async function probe(service){
   inspect(body);if(body.service!==identities[service])throw new Error("Identidad incorrecta: "+String(body.service));
   if(!["available","online"].includes(String(body.status||"").toLowerCase()))throw new Error("Estado backend no disponible: "+String(body.status));
   if(typeof body.version!=="string"||!body.version.trim())throw new Error("Falta la versión del servicio.");
+  if(body.version.trim()!==expectedVersions[service])throw new Error("Versión desactualizada: deployment "+body.version+"; fuente esperada "+expectedVersions[service]);
   return {service,status:latencyMs>=2000?"SLOW":"PASS",version:body.version,latencyMs,attempts,totalMs:Math.round(performance.now()-startedTotal)};
  }catch(error){lastError=error;if(!transient(error)||retry===2)break;await new Promise(r=>setTimeout(r,(retry+1)*750));}}
  return {service,status:"FAIL",error:String(lastError&&lastError.message||lastError),attempts,totalMs:Math.round(performance.now()-startedTotal)};
