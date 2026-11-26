@@ -1654,3 +1654,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Code Review: comparación contra respaldos confirma exclusivamente las dos rutas y la versión de caché; imports y recursos locales del formulario existen en el árbol actual.
 - Pages build/deploy: run `45913010737`, SUCCESS sobre commit `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
 - No se modificó el contrato de IndexedDB, la lógica de recuperación, el modal, WRITE/Apps Script, Spreadsheet ni Drive. No se ejecutó una alta real ni prueba runtime de navegador/IndexedDB.
+
+- `README.md`: las referencias de arquitectura a las vistas se actualizaron de `add_cortes.html` y `users.html` en raíz a `HTML/add_cortes.html` y `HTML/users.html`.
