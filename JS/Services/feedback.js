@@ -2129,7 +2129,7 @@ function countFeedbackLikeStates_(ledger, vehicleId, corteIndex) {
 function isValidFeedbackLikeVehicleId_(value) {
     const id = String(value === null || value === undefined ? "" : value).trim();
     const numericPart = id.startsWith("V-") ? id.slice(2) : id;
-    if (!/^[1-9]\\d{0,15}$/.test(numericPart)) return false;
+    if (!/^[1-9]\d{0,15}$/.test(numericPart)) return false;
     const numericId = Number(numericPart);
     if (!Number.isSafeInteger(numericId) || numericId <= 0 || String(numericId) !== numericPart) return false;
     return id === numericPart || id === "V-" + numericPart;
