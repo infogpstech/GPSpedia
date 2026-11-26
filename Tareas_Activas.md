@@ -702,3 +702,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **BETA-F019: COMPLETADA CON VALIDACIÓN DIFERIDA.** Fuente AUTH y fixture corregidos; ServiceHealthContract 21/21 y regresión global PASS. El deployment remoto sigue pendiente de actualización/autorización y GET de confirmación.
 - **BETA-F022: PENDIENTE / BAJA.** Font Awesome CDN y thumbnail Drive fallan offline; no impiden el arranque. Mantener separado de F020.
 - **BETA-F021: PENDIENTE ADMINISTRATIVO.** Rama base `protected=false`, rulesets vacíos; necesita intervención del administrador del repositorio.
+
+
+## MIG-URL-008 — disparo de health ante cambios de fuentes Apps Script (2026-11-26)
+**Estado: IMPLEMENTACIÓN PUBLICADA; EJECUCIÓN REMOTA PENDIENTE.** `deployed-service-health.yml` ahora vigila los seis archivos fuente activos de Apps Script. El push dispara probes GET-only de los seis deployments y pruebas CATALOG independientes; no publica Apps Script ni escribe datos.

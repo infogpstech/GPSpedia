@@ -1439,3 +1439,10 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - BETA-F019: fuente/fixture AUTH sin `sessionAuthority`, contrato local 21/21 y suite global PASS. Deployment remoto no actualizado ni validado; pendiente autorización de deployment y GET posterior.
 - BETA-F021: base `GPSpedia2.2.5` reporta `protected=false`; rulesets vacíos; API de protección detallada 403. No se modificó la base. Requiere acción administrativa.
 - Head de trabajo antes de este checkpoint: `b53ce257923197035d377b0c913a1ab0241d7a44`; base sigue `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## Continuidad — activación de health remoto por cambios de servicio (2026-11-26)
+- HEAD de partida: 8e77f0ed0681972072c503b73e81b42a959e2306; rama base intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Se detectó que `deployed-service-health.yml` no vigilaba los seis archivos fuente Apps Script; por ello, el cambio local AUTH no activó por sí mismo el probe remoto.
+- Se añadieron Auth.js, catalog.js, write.js, feedback.js, Utilities.js y admin.js al filtro `paths`. Al publicar, el workflow ejecutará contrato local y probes GET-only; no despliega ni modifica datos.
+- Objetivo de la siguiente validación: confirmar contrato local, estado real de los seis deployments, CATALOG read-only y latencia ADMIN sobre el HEAD actualizado. Se esperan los fallos de AUTH/ADMIN mientras no se actualicen deployments.

@@ -757,3 +757,7 @@ Run `45755902520`: `ServiceHealthContract` 21/21 y regresión global 542 suites 
 
 ### BETA-08 / BETA-F022 — recursos visuales externos offline
 En el smoke frío fallan CSS Font Awesome CDN y `/thumbnail` de Drive. No afectan al login ni producen pageErrors; revisar fallback local como tarea de baja prioridad, sin reabrir F020.
+
+
+### MIG-URL-008 — health remoto al cambiar fuentes de servicio
+Se añadieron los seis archivos fuente Apps Script al filtro de activación del workflow. Los cambios futuros en AUTH/CATALOG/WRITE/FEEDBACK/UTILITIES/ADMIN ejecutarán el contrato local y health GET-only de los seis deployments. No equivale a despliegue ni ejecuta mutaciones.
