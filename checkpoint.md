@@ -135,3 +135,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Validación local: parse sintáctico de los cuerpos de módulo UI y cola PASS; comprobaciones efímeras sin archivos: corte físico remapeado, contador optimista/confirmado/retirada PASS y cancelación de cola PASS. Cero archivos de prueba creados.
 - No se invocaron servicios remotos ni se desplegaron proyectos Apps Script; no se ejecutó navegador real. La fase Beta sigue cerrada. Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
 - Siguiente paso: conservar la corrección en frontend; la confirmación en deployment real queda fuera de la fase Beta cerrada y requiere una instrucción futura para reabrirla.
+
+
+## 20. Requisito de errores silenciosos para útiles — 2026-11-26
+- El propietario aclara que todos los errores de la reacción útil se registran únicamente en la consola del navegador; no deben aparecer mensajes, alertas, toasts, banners ni textos de error para el usuario.
+- Se retiraron las llamadas a `showGlobalError` del flujo de útil, incluyendo errores de sesión, hidratación y escritura. Se eliminó el texto visible de error/reintento del botón; queda una etiqueta neutral y el botón puede volver a intentarse.
+- Los errores continúan en `console.error`/`console.warn`; el fallo de escritura revierte silenciosamente el estado y contador al último valor confirmado.
+- Sintaxis validada. No se realizaron llamadas remotas ni despliegues Apps Script.

@@ -206,3 +206,9 @@
 - Impacto: botón aparentemente inerte cuando la hidratación no concluía; errores de carga sin aviso/reintento claro; contador de acordeón podía acumular textos; posible estado visual falso tras error de escritura.
 - Corrección: hidratación awaitable/compartida, error visible, botón habilitado durante carga con aria-busy, rollback y cancelación de pendiente al fallar, regex de contador corregido. Archivos `JS/Frontend/ui.js`, `JS/Frontend/usefulSyncQueue.js`.
 - Severidad: alta (función de útil inutilizable o incoherente en fallo de hidratación/escritura). Validación local sintáctica y comprobaciones efímeras PASS. No hubo integración remota ni deployment; no afirmar persistencia real confirmada.
+
+
+2026-11-26 | GP-UTIL-BUTTON-NO-REACTION-01 — aclaración UX obligatoria
+- El propietario establece que el usuario nunca debe ver mensajes de error de la reacción útil. Registrar fallos exclusivamente en consola del navegador.
+- Se eliminaron `showGlobalError` de los caminos de hidratación, sesión y sincronización; se eliminó el texto de error del botón. El rollback al estado confirmado es silencioso.
+- No confundir el registro interno en consola con notificación de interfaz. Requisito aplicable a futuros cambios de este flujo.

@@ -3996,13 +3996,13 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         utilBtn.onclick = async event => {
             event.preventDefault(); event.stopPropagation();
             const user = getState().currentUser;
-            if (!user) { showGlobalError("Debes estar conectado para indicar que un corte te ha sido útil."); return; }
+            if (!user) {  return; }
             const context = getUiSessionContext_(user);
-            if (!context) { showGlobalError("La sesión no está disponible. Vuelve a iniciar sesión."); return; }
+            if (!context) {  return; }
             const ready = await ensureUsefulState_(user);
             if (!ready) return;
             if (!isCurrentUiSessionContext_(context)) {
-                showGlobalError("La sesión cambió. Vuelve a abrir el detalle e inténtalo nuevamente.");
+                
                 return;
             }
             const latest = getState();
@@ -4191,7 +4191,7 @@ function syncUsefulControls_(){
   b.classList.toggle("liked",on);b.style.backgroundColor=on?"#28a745":"";
   b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-busy",String(loading));
   b.disabled=Boolean(s.currentUser&&!context);
-  b.title=!s.currentUser?"Inicia sesión para marcar este corte como útil":!context?"La sesión no está disponible":ready?(on?"Retirar útil":"Marcar como útil") :loading?"Cargando estado de útil…":"No se pudo cargar el estado; pulsa para reintentar";
+  b.title=!s.currentUser?"Inicia sesión para marcar este corte como útil":!context?"La sesión no está disponible":ready?(on?"Retirar útil":"Marcar como útil") :loading?"Cargando estado de útil…":"Marcar como útil";
  });
 }
 function syncUsefulCount_(v,c){
@@ -4229,7 +4229,7 @@ const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
    setState(applyOptimisticUsefulState(getState(),p.vehicleId,p.corteIndex,confirmed.has(key)));
    syncUsefulCount_(p.vehicleId,p.corteIndex);syncUsefulControls_();
    console.error("No se pudo sincronizar el útil:",error);
-   showGlobalError("No se pudo actualizar el útil. Intenta nuevamente.");
+   
   }
   saveUsefulCache_(p.userId);
  }
@@ -4269,7 +4269,7 @@ function ensureUsefulState_(user){
  }).catch(error=>{
   if(!local){
    console.error("No se pudo recuperar el estado de útiles:",error);
-   showGlobalError("No se pudo cargar el estado de los útiles. Vuelve a intentarlo.");
+   
    return false;
   }
   console.warn("No se pudo actualizar el estado remoto de útiles; se conserva la copia local:",error);

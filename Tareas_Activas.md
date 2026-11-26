@@ -13,6 +13,8 @@
 - No se registra la reacción en FEEDBACK.
 - La cantidad de útiles no se actualiza en el modal.
 
+**Requisito de UX obligatorio — errores silenciosos:** cualquier error de carga, escritura, sincronización o sesión del botón de útil se registra exclusivamente en la consola del navegador (`console.error`/`console.warn`). Está prohibido mostrar al usuario alertas, `showGlobalError`, toast, banners, diálogos, textos de error o estados visibles que anuncien el fallo. La UI debe revertir silenciosamente al último estado confirmado y permitir reintentar sin notificar el error.
+
 **Diagnóstico confirmado por inspección de código:**
 - La hidratación de útiles deshabilitaba los botones hasta que `getMyUsefulCuts` terminara. Si FEEDBACK rechazaba o no respondía, el `.catch()` anterior solo registraba el error y el botón permanecía deshabilitado; el handler también tenía salidas silenciosas cuando faltaba contexto de sesión o el estado no estaba listo.
 - El texto de los acordeones utilizaba una expresión regular con barras invertidas duplicadas. No retiraba el contador anterior del título y podía concatenar el total nuevo en lugar de reemplazarlo.
