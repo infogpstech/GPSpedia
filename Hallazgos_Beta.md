@@ -338,3 +338,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - El fuente de trabajo declara ADMIN 2.7.2 (const ADMIN_SERVICE_VERSION), deployment aún devuelve 2.7.1. Confirmada discrepancia, no se desplegó.
 - Latencia variable, la mediana del probe enfocado queda bajo 2s; no evidencia causal sobre Spreadsheet/Drive ni atribución de bottleneck.
 - Sin mutaciones ni despliegues.
+
+
+## 2026-11-25 — Ampliación de matriz de lectura CATALOG
+- Se añadió `JS/Tests/RemoteCatalogFeedMatrix.mjs`, probe GET-only que toma revision/minRevision de la respuesta inicial y examina cursor actual, borde de retención, cursor intermedio, límite pequeño y repetición del cursor actual.
+- El runner compara estabilidad de campos estructurales entre dos lecturas del cursor actual y valida contrato, límites de respuesta y tiempos; no guarda payloads de eventos ni efectúa escrituras.
+- Integración en `.github/workflows/deployed-service-health.yml`; el push de ambos archivos activa el workflow restringido a la rama de trabajo. Commit de integración: `52386ae0b6fdf0e593c9b9e53e8ec45d7af877a5`; commit previo que añadió el probe: `4fef0a34000b0e830bbf2ac383f29b3305f0073e`.
+- La referencia de la rama fue verificada en ese SHA. La consulta de status inmediatamente posterior devolvió `pending` sin checks asociados; el resultado de Actions aún no está disponible mediante las consultas GET permitidas. No se afirma que el probe haya ejecutado.
+- Alcance: ampliar evidencia de cursor/retención/repetibilidad sin mutar datos Beta. Los escenarios que exigen crear/limpiar registros o Drive siguen fuera de esta prueba read-only.
