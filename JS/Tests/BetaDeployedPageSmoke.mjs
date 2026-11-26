@@ -42,6 +42,29 @@ try {
         return modal && getComputedStyle(modal).display === "flex";
     }, null, { timeout: 20000 });
 
+    await page.locator("#forgot-password-link").click();
+    await page.waitForFunction(() => {
+        const panel = document.getElementById("password-recovery-panel");
+        const requestForm = document.getElementById("password-recovery-request-form");
+        return panel && !panel.hidden && requestForm && !requestForm.hidden;
+    }, null, { timeout: 5000 });
+    const recoveryUi = await page.evaluate(() => ({
+        usernameVisible: Boolean(document.getElementById("password-recovery-username")?.offsetWidth),
+        emailVisible: Boolean(document.getElementById("password-recovery-email")?.offsetWidth),
+        submitVisible: Boolean(document.querySelector("#password-recovery-request-form button[type='submit']")?.offsetWidth),
+        completionFormHidden: document.getElementById("password-recovery-complete-form").hidden
+    }));
+    if (!recoveryUi.usernameVisible || !recoveryUi.emailVisible ||
+        !recoveryUi.submitVisible || !recoveryUi.completionFormHidden) {
+        throw new Error("La pantalla de solicitud de recuperación no se mostró correctamente.");
+    }
+    await page.locator("#password-recovery-back").click();
+    await page.waitForFunction(() => {
+        const form = document.getElementById("login-form");
+        const panel = document.getElementById("password-recovery-panel");
+        return form && !form.hidden && panel && panel.hidden;
+    }, null, { timeout: 5000 });
+
     const viewports = [{ width: 1366, height: 768 }, { width: 390, height: 844 }, { width: 320, height: 800 }];
     const layouts = [];
     for (const viewport of viewports) {
@@ -84,6 +107,8 @@ try {
         blockedAppsScriptGets,
         nonGetRequests: nonGetRequests.length,
         pageErrors: pageErrors.length,
+        passwordRecoveryUi: recoveryUi,
+        recoveryRequestSubmitted: false,
         credentialsSubmitted: false,
         backendWritesAllowed: false
     }));
