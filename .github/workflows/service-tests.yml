@@ -91,6 +91,11 @@ jobs:
         run: node JS/Tests/BetaDeployedPageSmoke.mjs
         env:
           BETA_PAGES_URL: https://infogpstech.github.io/GPSpedia/
+
+      - name: Validate deployed Beta PWA manifest and offline navigation (GET only)
+        run: node JS/Tests/BetaPwaOfflineSmoke.mjs
+        env:
+          BETA_PAGES_URL: https://infogpstech.github.io/GPSpedia/
       - name: Upload anonymized synthetic screenshots
         if: always()
         uses: actions/upload-artifact@v4
