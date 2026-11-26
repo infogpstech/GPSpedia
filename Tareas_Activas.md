@@ -69,7 +69,7 @@ Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 
 ## Plan de migración de URLs al frontend
 
-El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. MIG-URL-008 es la única tarea restante. La autorización de Beta aislada permitió completar la fase GET-only (health 6/6 y CATALOG feed/boundaries/matrix/pagination PASS); quedan las validaciones funcionales autenticadas o mutables, sujetas a identidad sintética, recursos aislados y cleanup verificable. No se ejecutan escrituras ni despliegues Apps Script desde esta fase.
+El plan MIG-URL-001 a MIG-URL-008 conserva su trazabilidad histórica. MIG-URL-008 queda cerrada como fase de validación Beta por instrucción del propietario el 2026-11-26. La fase GET-only terminó con health 6/6 y CATALOG feed/boundaries/matrix/pagination PASS. Las operaciones mutables que no se ejecutaron se registran como NO VERIFICADAS; no se programarán nuevas rondas Beta sin una instrucción posterior.
 
 - MIG-URL-001 — Alinear normativa y registrar el plan: **COMPLETADA — 2026-11-24**.
 - MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **COMPLETADA — 2026-11-24**; seis valores confirmados directamente por el usuario y validados estructuralmente. Salud/identidad remota diferida a MIG-URL-008.
@@ -248,7 +248,7 @@ Mejorar la legibilidad y presentación de la pestaña **Actividad reciente** del
 
 ## Solicitudes del propietario — prioridades de continuidad (25-11-2026)
 
-Esta sección consolida el estado vigente y prevalece sobre los apuntes históricos anteriores que todavía indiquen MIG-URL-002 o MIG-URL-003 como tarea activa. MIG-URL-001..007 están cerradas; MIG-URL-008 permanece pendiente de autorización para validar endpoints Beta aislados. La corrección de integridad de útiles se atiende como prioridad crítica sin realizar llamadas ni cambios en deployments Apps Script externos.
+Esta sección consolida el estado vigente y prevalece sobre los apuntes históricos anteriores que todavía indiquen MIG-URL-002 o MIG-URL-003 como tarea activa. MIG-URL-001..007 están cerradas y MIG-URL-008 queda cerrada como fase Beta. Las tareas derivadas de hallazgos y el nuevo reporte del botón de útil se priorizan en el plan de ejecución situado al inicio de este backlog.
 
 ### Prioridad 1 — Útiles: idempotencia por usuario/vehículo y estabilidad de CATALOG
 **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — CI 45535275807: 523 suites, 6,206 pruebas, 0 fallos. Validación funcional de los deployments Apps Script/Spreadsheet Beta pendiente.
@@ -324,7 +324,7 @@ Las tareas de implementación frontend se ejecutan antes de retomar las validaci
 - Solo frontend; preservar orden, límites, filtros y datos recibidos. Sin cambios Apps Script/contratos/payloads.
 - Añadir pruebas locales de normalización, datos incompletos, acordeón y responsive.
 
-**Después de ambas implementaciones:** retomar las validaciones Beta diferidas de útiles FEEDBACK/CATALOG, vídeo YouTube real y MIG-URL-008. No realizar llamadas remotas ni despliegues sin autorización y entorno Beta aislado.
+**Después de las implementaciones vigentes:** no reabrir la fase de pruebas Beta ni crear suites de prueba. Las validaciones remotas que no se ejecutaron permanecen expresamente NO VERIFICADAS.
 
 
 ## Incidencia GP-LIKE-FIRST-VOTE-01 — error al registrar el primer útil
