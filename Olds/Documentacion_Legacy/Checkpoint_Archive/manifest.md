@@ -65,3 +65,12 @@ Para reconstruir el checkpoint previo a la nueva entrada de continuidad, concate
 - Blob SHA archivado: `4a25fc4d0dc3ed6a71113e60b88623aa5f9b0504`, coincidente con el SHA del checkpoint original; la lectura posterior del archivo archivado devolvió el mismo blob SHA.
 - Continuidad activa: `checkpoint.md`, resumida después de archivar el historial completo.
 - Las partes anteriores permanecen intactas.
+
+
+## Rotación del checkpoint — 2026-11-26
+
+- Parte archivada: `Checkpoint_Archive/checkpoint_2026-11-26_parte_007.md`.
+- Contenido: copia íntegra del checkpoint previo a esta rotación.
+- Blob SHA: `5be5e08597d2a354bcde6f5699cbf48387196804`; comparación de contenido recuperado: exacta.
+- Continuidad activa: `checkpoint.md`, resumida y actualizada tras el archivado.
+- Las partes anteriores permanecen intactas.
