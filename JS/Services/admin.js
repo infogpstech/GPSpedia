@@ -4968,20 +4968,30 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
         const category = read(row, "categoria"), brand = read(row, "marca"), model = read(row, "modelo");
         if (!category || !brand || !model) return;
         const key = [category, brand, model].map(normalize).join("|");
-        const entry = modelsByKey.get(key) || { category, brand, model, key, aliases: [], vehicleIds: [], rows: [], versions: [], ignitionTypes: [], yearRanges: [] };
+        const entry = modelsByKey.get(key) || { category, brand, model, key, aliases: [], vehicleIds: [], rows: [], versions: [], ignitionTypes: [], yearRanges: [], records: [] };
         const vehicleId = read(row, "id");
         if (vehicleId && !entry.vehicleIds.includes(vehicleId)) entry.vehicleIds.push(vehicleId);
         const versionText = read(row, "versionesAplicables");
-        versionText.split(/[,;|/]+/).map(value => value.trim()).filter(Boolean).forEach(value => {
+        const rowVersions = versionText.split(/[,;|/]+/).map(value => value.trim()).filter(Boolean);
+        rowVersions.forEach(value => {
             if (!entry.versions.some(item => normalize(item) === normalize(value))) entry.versions.push(value);
         });
         const ignitionType = read(row, "tipoEncendido");
         if (ignitionType && !entry.ignitionTypes.some(item => normalize(item) === normalize(ignitionType))) entry.ignitionTypes.push(ignitionType);
-        const yearFrom = Number(read(row, "anoDesde")), yearTo = Number(read(row, "anoHasta"));
-        if (Number.isInteger(yearFrom) || Number.isInteger(yearTo)) {
-            const range = { from: Number.isInteger(yearFrom) ? yearFrom : null, to: Number.isInteger(yearTo) ? yearTo : null };
-            if (!entry.yearRanges.some(item => item.from === range.from && item.to === range.to)) entry.yearRanges.push(range);
+        const yearFromText = read(row, "anoDesde"), yearToText = read(row, "anoHasta");
+        const yearFrom = yearFromText ? Number(yearFromText) : NaN;
+        const yearTo = yearToText ? Number(yearToText) : NaN;
+        const yearRange = {
+            from: Number.isInteger(yearFrom) ? yearFrom : null,
+            to: Number.isInteger(yearTo) ? yearTo : null
+        };
+        if (yearRange.from !== null || yearRange.to !== null) {
+            if (!entry.yearRanges.some(item => item.from === yearRange.from && item.to === yearRange.to)) entry.yearRanges.push(yearRange);
         }
+        entry.records.push({
+            vehicleId, row: index + 2, versions: rowVersions, ignitionType,
+            yearFrom: yearRange.from, yearTo: yearRange.to
+        });
         entry.rows.push(index + 2);
         modelsByKey.set(key, entry);
     });
@@ -5019,6 +5029,21 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             const fileYears = Array.from(new Set((fileContext.match(/(?:19|20)\d{2}/g) || []).map(Number)));
             const yearMatches = model.yearRanges.filter(range => fileYears.some(year =>
                 (range.from === null || year >= range.from) && (range.to === null || year <= range.to)));
+            const matchingRecords = model.records.filter(record => {
+                const versionOk = !versionMatches.length || record.versions.some(value =>
+                    versionMatches.some(match => normalize(match) === normalize(value)));
+                const ignitionOk = !ignitionMatches.length || ignitionMatches.some(match =>
+                    normalize(match) === normalize(record.ignitionType));
+                const yearOk = !yearMatches.length || fileYears.some(year =>
+                    (record.yearFrom === null || year >= record.yearFrom) &&
+                    (record.yearTo === null || year <= record.yearTo));
+                return versionOk && ignitionOk && yearOk;
+            });
+            const contextConflict = (versionMatches.length > 0 || ignitionMatches.length > 0 || yearMatches.length > 0) &&
+                matchingRecords.length === 0;
+            const selectedRecords = matchingRecords.length ? matchingRecords : model.records;
+            const selectedVehicleIds = Array.from(new Set(selectedRecords.map(record => record.vehicleId).filter(Boolean)));
+            const selectedRows = Array.from(new Set(selectedRecords.map(record => record.row)));
             let score = 0;
             const signals = [];
             if (exactFolder) { score = Math.max(score, 100); signals.push("folder_model_exact"); }
@@ -5035,16 +5060,18 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             if (yearMatches.length) { score += 2; signals.push("year_range_context"); }
             scored.push({
                 category: model.category, brand: model.brand, model: model.model,
-                vehicleIds: model.vehicleIds.slice(), rows: model.rows.slice(),
+                vehicleIds: selectedVehicleIds, rows: selectedRows,
                 versions: versionMatches, ignitionTypes: ignitionMatches, yearRanges: yearMatches,
-                score, signals: Array.from(new Set(signals))
+                contextConflict, score, signals: Array.from(new Set(signals))
             });
         });
         if (!scored.length) return;
         scored.sort((left, right) => right.score - left.score || left.category.localeCompare(right.category) ||
             left.brand.localeCompare(right.brand) || left.model.localeCompare(right.model));
         const bestScore = scored[0].score, best = scored.filter(item => item.score === bestScore);
-        const ambiguous = best.length > 1 || best.some(candidate => candidate.vehicleIds.length !== 1) || (scored.length > 1 && bestScore - scored[1].score < 15);
+        const ambiguous = best.length > 1 || best.some(candidate =>
+            candidate.contextConflict || candidate.vehicleIds.length !== 1) ||
+            (scored.length > 1 && bestScore - scored[1].score < 15);
         suggestions.push({
             fileId, fileName, folderPath, status: ambiguous ? "ambiguous" : "suggested",
             confidence: bestScore >= 110 ? "high" : (bestScore >= 85 ? "medium" : "low"),
