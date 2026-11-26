@@ -455,3 +455,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commits: auditoría `45cc06ad5546a8daa5e632961356d52cf270fece`; formulario `694510237016bbbe1464311ba7221760f0fe48e7`; Service Worker `12b24c09a4be6b2f3da631cd345d34b2af1e6075`.
 - Validación: fixture de normalización y contrato 7/7 PASS; diff contra respaldos limitado a los cambios descritos; logger contiene los códigos específicos existentes. No se ejecutó navegador/IndexedDB, Apps Script, Spreadsheet, Drive ni alta real. GitHub no devolvió status checks ni workflow runs asociados al último commit consultado.
 - Pendiente: confirmar que la versión v81 se publica/activa en el sitio, probar en navegador móvil la persistencia y completar altas reales para vehículo nuevo y existente. No se afirma resuelto el registro Beta sin esas pruebas.
+
+
+### Cierre de Code Review — GP-CUT-FORM-SNAPSHOT-02
+- Reconstrucción inversa de los dos bloques modificados de `HTML/add_cortes.html` y de la versión de caché en `service-worker.js`: coincidencia exacta con los respaldos originales. `offline.js`, `diagnosticLogger.js` y el modal `ui.js` no fueron modificados.
+- Safety & Side Effects: la persistencia verificada sigue siendo obligatoria; las operaciones previas con otro ID/hash siguen bloqueando el reemplazo; no se eliminan datos pendientes ni se omite el preflight.
+- Fixture de contrato: 7/7 PASS. No hay prueba de navegador móvil/IndexedDB ni escritura real en Apps Script/Spreadsheet/Drive; la validación Beta permanece abierta.
+- Respaldos temporales eliminados después de Code Review. Commits de código: `694510237016bbbe1464311ba7221760f0fe48e7` y `12b24c09a4be6b2f3da631cd345d34b2af1e6075`.
