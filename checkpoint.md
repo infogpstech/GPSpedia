@@ -1463,3 +1463,9 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - UTILITIES 5 GET: 1090/691/868/778/639 ms; mediana 778, máximo 1090, 0/5 >=2 s. El pico aislado 7916 ms no se reprodujo; BETA-F024 cerrado como transitorio.
 - Regresión general run `45756765620`: SUCCESS; 542 suites, 6452 pruebas, 0 fallos; browser responsive PASS; PWA offline PASS; `ServiceHealthContract` 21/21, `ServiceWorkerCache` 12/12, `PWAStartupScenarios` 16/16.
 - No se desplegaron Apps Script ni se alteraron datos. AUTH y ADMIN remotos siguen pendientes de deployment autorizado.
+
+
+## Continuidad — BETA-F022: imagen del modal iOS local (2026-11-26)
+- HEAD de partida: `3e728ee3bef83e99cb84988da11919bba043a18a`.
+- `index.html`: se reemplazó la imagen remota Drive del modal iOS por `Images/icon-v3-512x512.png`, ya presente en CORE_ASSETS. `OfflineBrandAssets.mjs` ahora comprueba el fallback local y ausencia de Drive en ese modal.
+- Pendiente: Pages/browser smoke debe confirmar que `/thumbnail` ya no falla offline. Font Awesome CSS de cdnjs sigue siendo el único recurso externo no cacheado observado; no afecta al login, pero puede dejar iconos sin estilo offline.

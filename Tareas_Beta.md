@@ -775,3 +775,8 @@ Se añadieron los seis archivos fuente Apps Script al filtro de activación del 
 - ADMIN latencia: 2241/5022/1465/2358/1631 ms; mediana 2241, máximo 5022, 3/5 SLOW.
 - UTILITIES latencia: 1090/691/868/778/639 ms; mediana 778, máximo 1090, 0/5 SLOW. El pico previo de 7916 ms no se reprodujo; F024 se cierra como transitorio.
 - F023 cerrado; no se ejecutaron escrituras ni deployments.
+
+
+### BETA-08 / BETA-F022 — fallback local del modal iOS
+- El thumbnail Drive del modal de instalación iOS se reemplazó por `Images/icon-v3-512x512.png`, incluido en el precache.
+- `OfflineBrandAssets.mjs` comprueba el uso del asset local y la ausencia de Drive. Pendiente confirmar en browser que desaparece el fallo `/thumbnail` offline. Font Awesome CDN continúa como residual visual.

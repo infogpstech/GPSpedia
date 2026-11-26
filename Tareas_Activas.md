@@ -718,3 +718,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **BETA-F024: CERRADA COMO ANOMALÍA TRANSITORIA.** UTILITIES 5/5 GET entre 639 y 1,090 ms; mediana 778 ms. No se reprodujo el pico aislado de 7,916 ms.
 - **ADMIN: SLOW CONFIRMADO.** 5 muestras; mediana 2,241 ms, máximo 5,022 ms, 3/5 >=2 s. Deployment 2.7.1 frente a fuente 2.7.2.
 - Health remoto: AUTH FAIL por sessionAuthority; ADMIN FAIL por versión; CATALOG/FEEDBACK/UTILITIES/WRITE PASS. CATALOG feed, boundaries, matrix y pagination PASS.
+
+
+## BETA-F022 — recurso iOS Drive sustituido por asset local (2026-11-26)
+**Estado: CORRECCIÓN LOCAL PUBLICADA; VALIDACIÓN BROWSER PENDIENTE.** `index.html` ahora usa `Images/icon-v3-512x512.png` en el modal de instalación iOS. `OfflineBrandAssets.mjs` comprueba que no exista dependencia de Drive. La dependencia Font Awesome CDN sigue pendiente.
