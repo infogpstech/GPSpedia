@@ -431,3 +431,12 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - ADMIN responde con identidad/estado válidos, pero el deployment expone v2.7.1 frente a v2.7.2 esperada por la fuente. El health global clasifica 5/6 compatibles; no se atribuye a falta de conectividad.
 - Medición repetida ADMIN: 1761, 2059, 1658, 2359 y 1353 ms; mediana 1761 ms, máximo 2359 ms y dos muestras >=2000 ms. Variabilidad observada; no se atribuye causa.
 - La discrepancia y latencia quedan pendientes de revisión/despliegue Beta autorizado. No se desplegó Apps Script ni se modificaron endpoints, propiedades, permisos o datos.
+
+
+## Resultados Beta GET-only — paginación secuencial CATALOG (2026-11-26)
+- Se añadió `JS/Tests/RemoteCatalogFeedPagination.mjs` para recorrer el feed con cursor incremental y límite 1, sin guardar ni imprimir snapshots, IDs de registros o payloads.
+- Run `45746282852`, commit `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`: PASS. Cinco páginas, cinco eventos, tres eventos reset, cursor 0→5, currentRevision 5, minRevision 1; sin cambios concurrentes de revisión durante la secuencia.
+- En el mismo run: feed básico, límites/boundaries y matriz CATALOG PASS; health global FAIL exclusivamente por ADMIN deployment 2.7.1 vs fuente 2.7.2.
+- ADMIN latencia en esta muestra: 2620/1317/1555/1588/1765 ms; mediana 1588 ms, máximo 2620 ms, una muestra >=2 s. La variación entre ejecuciones impide atribuir una causa solo con estas medidas.
+- CI run `45746282716`: 542 suites, 6,452 pruebas, 0 fallos; Playwright 264/264 en cuatro viewports. Pages run `45746281761` SUCCESS.
+- No se ejecutaron POST, escrituras, despliegues ni cambios en Spreadsheet/Drive/OAuth.

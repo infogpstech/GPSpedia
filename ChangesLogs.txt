@@ -1365,3 +1365,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Beta GET-only run `45745832696`: contrato 21/21, CATALOG feed/boundaries/matrix PASS, ADMIN latency medida; health global FAIL por ADMIN deployment 2.7.1 vs 2.7.2.
 - CI run `45745832547`: 542 suites, 6,452 pruebas, 0 fallos; Playwright 264/264 en cuatro viewports. Pages run `45745831839` SUCCESS.
 - Sin cambios en fuentes de servicios Apps Script, endpoints, deployments, permisos, PropertiesService, Spreadsheet, Drive u OAuth.
+
+
+## 2026-11-26 — Paginación secuencial remota del feed CATALOG
+- Añadido `JS/Tests/RemoteCatalogFeedPagination.mjs`, GET-only, con avance de cursor página a página, continuidad de revisiones, detección de duplicados, semántica de reset y límite de páginas.
+- Integrado al workflow `.github/workflows/deployed-service-health.yml` con ejecución independiente y resumen agregado.
+- Commit `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`. Run `45746282852`: 5 páginas, 5 eventos, 3 eventos reset, cursor 0→5, sin cambios concurrentes; PASS.
+- Health mantiene FAIL por ADMIN v2.7.1 vs fuente 2.7.2; feed básico, boundaries, matriz y paginación PASS. No hubo escrituras ni despliegues.

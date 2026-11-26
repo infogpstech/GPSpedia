@@ -636,3 +636,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## MIG-URL-008 — primera fase Beta GET-only (2026-11-26)
 **Estado: EN PROGRESO.** La fase de health, feed CATALOG, boundaries, matriz y latencia ADMIN ya tiene evidencia real de Actions. El contrato health pasó 21/21; cinco servicios coinciden con la versión esperada y ADMIN permanece en 2.7.1 frente a 2.7.2. El job global mantiene FAIL sin ocultar la discrepancia. Las pruebas de feed, límites y matriz CATALOG pasaron; no hubo escrituras ni despliegues. Próximo: continuar pruebas independientes y preparar los flujos autenticados/mutables con datos sintéticos y limpieza verificable.
+
+
+## MIG-URL-008 — CATALOG paginación secuencial Beta (2026-11-26)
+**Estado: FASE GET-ONLY COMPLETADA; VALIDACIÓN BETA GLOBAL EN PROGRESO.** Run 45746282852: feed, boundaries, matriz y paginación secuencial PASS (5 páginas/5 eventos; cursor 0→5; sin cambios concurrentes). Health sigue FAIL por versión ADMIN 2.7.1 vs 2.7.2. CI 542 suites/6,452 pruebas y Playwright 264/264 PASS. Próximo: ampliar cobertura contractual local y preparar flujos autenticados/mutables con identidad sintética y limpieza verificable.

@@ -1259,3 +1259,16 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 
 ### Próxima acción
 Continuar la matriz Beta en orden, empezando por validaciones read-only adicionales de CATALOG y health/UI; preparar pruebas autenticadas/mutables solo con identidades sintéticas, ownership y cleanup verificables. La validación que requiera despliegue ADMIN permanece pendiente; no desplegar Apps Script ni alterar datos/propiedades/permisos sin autorización específica.
+
+
+## Continuidad — CATALOG paginación secuencial Beta GET-only (2026-11-26)
+
+- Commit de harness: `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`; nuevo probe `JS/Tests/RemoteCatalogFeedPagination.mjs`, integrado al workflow read-only.
+- Actions run `45746282852`: feed básico PASS, boundaries PASS, matriz PASS y paginación secuencial PASS. La paginación recorrió 5 páginas/5 eventos desde cursor 0 hasta 5, currentRevision 5, minRevision 1; identificó 3 eventos reset y no observó cambios concurrentes de revisión. No se registraron contenidos de eventos.
+- Health 21/21 PASS; cinco servicios coinciden con versión esperada. ADMIN sigue exponiendo v2.7.1 frente a v2.7.2 esperada; resultado global 5/6 y FAIL correcto.
+- ADMIN latency: 2620/1317/1555/1588/1765 ms; mediana 1588 ms, máximo 2620 ms, 1/5 muestras >=2 s. La ejecución anterior observó mediana 1761 ms y 2/5 lentas; variabilidad persistente sin causa atribuida.
+- CI run `45746282716`: 542 suites, 6,452 pruebas, 0 fallos; Playwright AUG-146 264/264 PASS (1366x768, 390x844, 360x800, 320x700). Pages run `45746281761` SUCCESS.
+- No hubo escrituras, despliegues, cambios en propiedades, permisos, Spreadsheet, Drive ni OAuth.
+
+### Siguiente fase
+La superficie GET pública de los seis servicios y el feed CATALOG ya está cubierta por los probes disponibles. Continuar con revisión de contratos y casos locales de AUTH/WRITE/FEEDBACK/UTILITIES/ADMIN; los flujos Beta autenticados o mutables requieren una identidad sintética de prueba y un mecanismo de limpieza/ownership verificable. No usar credenciales ni datos de usuarios reales ni desplegar servicios para resolver la discrepancia ADMIN sin autorización específica.

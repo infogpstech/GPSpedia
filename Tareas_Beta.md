@@ -630,3 +630,10 @@ git rev-parse HEAD
 - ADMIN latency: cinco muestras, mediana 1761 ms, máximo 2359 ms, dos muestras >=2 s.
 - El job global conserva FAIL por discrepancia ADMIN; las pruebas independientes se ejecutaron y sus resultados se conservaron.
 - Sin POST funcional, despliegue, escritura ni modificación de recursos remotos. Los flujos AUTH autenticados, WRITE, FEEDBACK, UTILITIES y ADMIN mutables continúan PENDIENTES de fixtures sintéticos, credenciales de prueba y ownership/cleanup comprobables.
+
+
+### Evidencia adicional — paginación secuencial CATALOG (2026-11-26)
+- Probe `RemoteCatalogFeedPagination.mjs` integrado al workflow y ejecutado en run `45746282852`: PASS, 5 páginas, 5 eventos, 3 eventos reset, cursor final 5, currentRevision 5, minRevision 1, sin cambios concurrentes observados.
+- El test valida orden/continuidad de revisiones, ausencia de duplicados entre páginas, cursor de continuación, semántica de reset y límite máximo de páginas. Solo GET; no registra snapshots ni datos de registros.
+- CI de commit `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`: 542 suites/6,452 pruebas PASS; Playwright 264/264; Pages SUCCESS.
+- Se considera completada la fase pública GET-only de CATALOG. AUTH autenticado, WRITE, FEEDBACK, UTILITIES funcional y ADMIN mutable siguen pendientes de fixtures/cuentas de prueba y cleanup verificable. ADMIN health sigue FAIL por v2.7.1 vs 2.7.2.
