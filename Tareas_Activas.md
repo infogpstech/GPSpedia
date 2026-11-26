@@ -4,6 +4,20 @@
 
 **Estado de la fase Beta: CERRADA.** No se programarán nuevas rondas de pruebas Beta ni se conservarán suites automatizadas. Los resultados históricos útiles quedan resumidos en `Tareas_Beta.md`; los hallazgos que requieren trabajo se trasladan a este backlog. Las pruebas automatizadas y workflows de pruebas se eliminarán por solicitud expresa del propietario. No crear nuevas suites ni archivos de prueba.
 
+
+## Prioridad P0 — GP-CORS-APPS-SCRIPT-TRANSPORT-01: transporte compatible con Apps Script sin CORS
+
+**Estado: CORRECCIÓN DE FUENTE COMPLETADA; publicación y validación remota pendientes.**
+
+- **Síntoma:** el panel de desarrollador no puede completar el health check ni las acciones POST de ADMIN desde `https://infogpstech.github.io`. La consola informa CORS aunque Apps Script responde HTTP 200.
+- **Causa:** `api-config.js` utilizaba `fetch` directo contra `script.google.com`; las respuestas `ContentService` de Apps Script no proporcionan el encabezado CORS requerido por el navegador.
+- **Frontend:** el health check utiliza JSONP con callback aleatorio y timeout; el callback del servidor solo se admite para `debug=true`. Las acciones POST usan un formulario URL-encoded dirigido a un iframe oculto y recuperan el JSON mediante `postMessage`; se correlaciona la respuesta con un request ID y se limpian listeners/elementos al terminar. Se conserva la inyección `fetchImpl` para pruebas existentes, sin usar fetch de red por defecto.
+- **Servicios:** AUTH, CATALOG, WRITE, FEEDBACK, ADMIN y UTILITIES mantienen sus dispatchers, validación de actor y permisos. Sus entrypoints envuelven la petición de transporte, reconstruyen `e.postData.contents` para el handler original y devuelven el resultado mediante HtmlService solo para las peticiones iframe. Las llamadas antiguas continúan recibiendo su respuesta ContentService.
+- **Seguridad y arquitectura:** JSONP expone únicamente identidad/versión/estado de `debug=true`; no habilita el feed CATALOG ni datos de usuario. No se añadieron URLs, tokens, secretos ni llamadas servicio-a-servicio. La autorización sigue residiendo en cada servicio.
+- **Validación local:** parsing de `api-config.js` y seis fuentes Apps Script PASS; simulaciones efímeras de JSONP, envío del formulario, reconstrucción exacta del JSON, respuesta `postMessage`, limpieza de recursos y health ADMIN PASS. No se crearon archivos/suites de pruebas.
+- **Pendiente obligatorio:** publicar la nueva versión de los seis proyectos Apps Script y el frontend; después comprobar health 6/6, ping/lectura ADMIN/Drive desde navegador. No se hizo deployment, petición remota ni modificación de Drive/Spreadsheet en esta tarea.
+- **Base protegida:** no modificar `GPSpedia2.2.5`. La fase Beta permanece cerrada; la validación de integración queda diferida hasta autorización del propietario.
+
 ## GP-UTIL-BUTTON-STATE-REVERT-02 — reconciliación tardía del estado (2026-11-26)
 
 **Estado: CORRECCIÓN FRONTEND PUBLICADA EN RAMA; BUILD DE PAGES PENDIENTE. VALIDACIÓN REAL PENDIENTE.**

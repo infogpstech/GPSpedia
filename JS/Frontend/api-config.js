@@ -202,13 +202,113 @@ async function getConfiguredServiceEndpoint_(service) {
     return resolveApiEndpoint_(service);
 }
 
+
+function createAppsScriptTransportRequestId_() {
+    try {
+        if (typeof crypto !== "undefined" && crypto && typeof crypto.randomUUID === "function") return "gp_" + crypto.randomUUID().replace(/[^A-Za-z0-9_]/g, "");
+        if (typeof crypto !== "undefined" && crypto && typeof crypto.getRandomValues === "function") {
+            const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
+            return "gp_" + Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+        }
+    } catch (error) {}
+    return "gp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 18);
+}
+function requestAppsScriptJsonp_(endpoint, options = {}) {
+    return new Promise((resolve, reject) => {
+        const targetWindow = typeof window !== "undefined" ? window : null, targetDocument = typeof document !== "undefined" ? document : null;
+        if (!targetWindow || !targetDocument || typeof targetDocument.createElement !== "function") {
+            const unavailable = new Error("JSONP no está disponible en este entorno."); unavailable.code = "JSONP_UNAVAILABLE"; reject(unavailable); return;
+        }
+        const signal = options && options.signal ? options.signal : null;
+        if (signal && signal.aborted) { const aborted = new Error("La comprobación de salud fue cancelada."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; reject(aborted); return; }
+        const requestId = createAppsScriptTransportRequestId_(), callbackName = "cb_" + requestId;
+        let registry = targetWindow.__gpsepediaHealthCallbacks;
+        if (!registry || typeof registry !== "object") {
+            registry = Object.create(null);
+            try { targetWindow.__gpsepediaHealthCallbacks = registry; }
+            catch (error) { const unavailable = new Error("No se pudo registrar el callback JSONP."); unavailable.code = "JSONP_UNAVAILABLE"; reject(unavailable); return; }
+        }
+        const script = targetDocument.createElement("script");
+        const parent = targetDocument.head || targetDocument.body || targetDocument.documentElement;
+        if (!parent || typeof parent.appendChild !== "function") { const unavailable = new Error("No existe un contenedor para cargar el estado del servicio."); unavailable.code = "JSONP_UNAVAILABLE"; reject(unavailable); return; }
+        let settled = false, timeoutId = null;
+        function cleanup() {
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            if (signal && typeof signal.removeEventListener === "function") signal.removeEventListener("abort", onAbort);
+            try { delete registry[callbackName]; } catch (error) { registry[callbackName] = undefined; }
+            script.onerror = null; script.onload = null;
+            if (typeof script.remove === "function") script.remove(); else if (script.parentNode) script.parentNode.removeChild(script);
+        }
+        function finish(error, value) { if (settled) return; settled = true; cleanup(); if (error) reject(error); else resolve(value); }
+        function onAbort() { const aborted = new Error("La comprobación de salud fue cancelada."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; finish(aborted); }
+        registry[callbackName] = data => finish(null, data);
+        script.async = true;
+        script.onerror = () => { const failure = new Error("No se pudo cargar el estado del servicio mediante JSONP."); failure.code = "JSONP_NETWORK_ERROR"; finish(failure); };
+        script.onload = () => { if (!settled) { const invalid = new Error("El servicio no devolvió un callback JSONP válido."); invalid.code = "INVALID_JSONP_RESPONSE"; finish(invalid); } };
+        try {
+            const url = new URL(endpoint);
+            url.searchParams.set("debug", "true");
+            url.searchParams.set("callback", "window.__gpsepediaHealthCallbacks." + callbackName);
+            script.src = url.toString();
+            if (signal && typeof signal.addEventListener === "function") signal.addEventListener("abort", onAbort, { once: true });
+            const timeoutMs = Number(options && options.timeoutMs);
+            if (Number.isFinite(timeoutMs) && timeoutMs > 0) timeoutId = setTimeout(() => { const timeout = new Error("Tiempo de espera agotado al consultar el servicio."); timeout.name = "AbortError"; timeout.code = "REQUEST_ABORTED"; finish(timeout); }, Math.max(1, Math.round(timeoutMs)));
+            parent.appendChild(script);
+        } catch (error) { finish(error); }
+    });
+}
+function isAppsScriptTransportOrigin_(origin) {
+    try { const url = new URL(String(origin || "")), host = url.hostname.toLowerCase(); return url.protocol === "https:" && (host === "script.google.com" || host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")); }
+    catch (error) { return false; }
+}
+function requestAppsScriptViaIframe_(endpoint, requestBody, options = {}) {
+    return new Promise((resolve, reject) => {
+        const targetWindow = typeof window !== "undefined" ? window : null, targetDocument = typeof document !== "undefined" ? document : null;
+        if (!targetWindow || !targetDocument || !targetDocument.body || typeof targetDocument.createElement !== "function") {
+            const unavailable = new Error("El transporte de Apps Script no está disponible en este entorno."); unavailable.code = "IFRAME_TRANSPORT_UNAVAILABLE"; reject(unavailable); return;
+        }
+        const signal = options && options.signal ? options.signal : null;
+        if (signal && signal.aborted) { const aborted = new Error("La solicitud fue cancelada."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; reject(aborted); return; }
+        const requestId = createAppsScriptTransportRequestId_(), frame = targetDocument.createElement("iframe"), form = targetDocument.createElement("form"), input = targetDocument.createElement("input");
+        const frameName = "gpsepedia_api_" + requestId;
+        frame.name = frameName; frame.title = "Respuesta del servicio GPSpedia"; frame.setAttribute("aria-hidden", "true"); frame.setAttribute("tabindex", "-1"); frame.style.display = "none";
+        form.method = "POST"; form.enctype = "application/x-www-form-urlencoded"; form.acceptCharset = "UTF-8"; form.target = frameName; form.style.display = "none";
+        input.type = "hidden"; input.name = "__gpsepedia_body"; input.value = String(requestBody == null ? "" : requestBody); form.appendChild(input);
+        const url = new URL(endpoint); url.searchParams.set("__gpsepedia_transport", "iframe"); url.searchParams.set("__gpsepedia_request_id", requestId); form.action = url.toString();
+        let settled = false, timeoutId = null;
+        function cleanup() {
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            targetWindow.removeEventListener("message", onMessage);
+            if (signal && typeof signal.removeEventListener === "function") signal.removeEventListener("abort", onAbort);
+            if (typeof form.remove === "function") form.remove(); else if (form.parentNode) form.parentNode.removeChild(form);
+            if (typeof frame.remove === "function") frame.remove(); else if (frame.parentNode) frame.parentNode.removeChild(frame);
+        }
+        function finish(error, value) { if (settled) return; settled = true; cleanup(); if (error) reject(error); else resolve(value); }
+        function onAbort() { const aborted = new Error("La solicitud fue cancelada o agotó el tiempo de espera."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; finish(aborted); }
+        function onMessage(event) {
+            const message = event && event.data;
+            if (!message || message.channel !== "gpsepedia-api-response" || message.requestId !== requestId) return;
+            const sameFrame = event.source === frame.contentWindow;
+            if (!sameFrame && !isAppsScriptTransportOrigin_(event.origin)) return;
+            if (typeof message.body !== "string") { const invalid = new Error("El servicio devolvió una respuesta de transporte inválida."); invalid.code = "INVALID_TRANSPORT_RESPONSE"; finish(invalid); return; }
+            finish(null, message.body);
+        }
+        targetWindow.addEventListener("message", onMessage);
+        if (signal && typeof signal.addEventListener === "function") signal.addEventListener("abort", onAbort, { once: true });
+        const timeoutMs = Number(options && options.timeoutMs), waitMs = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.max(1, Math.round(timeoutMs)) : 120000;
+        timeoutId = setTimeout(() => { const timeout = new Error("Tiempo de espera agotado al esperar la respuesta de Apps Script."); timeout.name = "AbortError"; timeout.code = "REQUEST_ABORTED"; finish(timeout); }, waitMs);
+        try { targetDocument.body.appendChild(frame); targetDocument.body.appendChild(form); form.submit(); }
+        catch (error) { finish(error); }
+    });
+}
+
 // 2. LÓGICA DE RUTEO CENTRAL
 async function routeActionInternal_(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);
     const targetUrl = await getConfiguredServiceEndpoint_(service);
     let httpStatus = null;
-    let response;
+    let text;
     const requestBody = JSON.stringify({ action, payload });
     const measureBytes = value => {
         const text = String(value == null ? "" : value);
@@ -221,49 +321,22 @@ async function routeActionInternal_(action, payload = {}, serviceOverride = null
         requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: null });
     }
     try {
-            response = await fetch(targetUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: requestBody,
-                redirect: 'follow',
-                signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
-            });
-        } catch (fetchError) {
-            const aborted = Boolean(requestOptions && requestOptions.signal && requestOptions.signal.aborted) ||
-                Boolean(fetchError && fetchError.name === "AbortError");
-            throw createRouteActionError_(
-                aborted ? "La solicitud fue cancelada o agotó el tiempo de espera." :
-                    "No se recibió respuesta del servidor: " + String(fetchError && fetchError.message || "fallo de conexión."),
-                { kind: aborted ? "abort" : "network", code: aborted ? "REQUEST_ABORTED" : "NETWORK_ERROR", httpStatus: null, cause: fetchError }
-            );
-        }
-        const receivedStatus = Number(response && response.status);
-        httpStatus = Number.isInteger(receivedStatus) && receivedStatus >= 100 && receivedStatus <= 599
-            ? receivedStatus : null;
-        if (!response || httpStatus === null) {
-            throw createRouteActionError_("No se recibió una respuesta HTTP válida del servidor.", {
-                kind: "network", code: "NO_HTTP_RESPONSE", httpStatus: null
-            });
-        }
-        if (!response.ok) {
-            const statusText = String(response.statusText || "").trim();
-            throw createRouteActionError_(
-                "Error HTTP " + httpStatus + (statusText ? ": " + statusText : "."),
-                { kind: "http", code: "HTTP_ERROR", httpStatus }
-            );
-        }
-        let text;
-        try {
-            text = await response.text();
-        } catch (readError) {
-            throw createRouteActionError_("No se pudo leer el cuerpo de la respuesta del servidor.", {
-                kind: "invalid_response", code: "RESPONSE_READ_ERROR", httpStatus, cause: readError
-            });
-        }
-        let result;
-        if (typeof requestOptions.onTrafficMetrics === "function") {
-            requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: measureBytes(text) });
-        }
+        text = await requestAppsScriptViaIframe_(targetUrl, requestBody, {
+            signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
+        });
+    } catch (transportError) {
+        const aborted = Boolean(requestOptions && requestOptions.signal && requestOptions.signal.aborted) ||
+            Boolean(transportError && transportError.name === "AbortError");
+        throw createRouteActionError_(
+            aborted ? "La solicitud fue cancelada o agotó el tiempo de espera." :
+                "No se recibió respuesta del servidor: " + String(transportError && transportError.message || "fallo de conexión."),
+            { kind: aborted ? "abort" : "network", code: aborted ? "REQUEST_ABORTED" : "NETWORK_ERROR", httpStatus: null, cause: transportError }
+        );
+    }
+    if (typeof requestOptions.onTrafficMetrics === "function") {
+        requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: measureBytes(text) });
+    }
+    let result;
         try {
             result = JSON.parse(text);
         } catch (parseError) {
@@ -789,7 +862,8 @@ export async function checkAllServicesHealth(options = {}) {
         ? settings.slowThresholdMs : SERVICE_HEALTH_SLOW_THRESHOLD_MS;
     const staleAfterMs = Number.isFinite(settings.staleAfterMs) && settings.staleAfterMs >= 0
         ? settings.staleAfterMs : SERVICE_HEALTH_STALE_AFTER_MS;
-    const fetchImpl = typeof settings.fetchImpl === "function" ? settings.fetchImpl : (typeof fetch === "function" ? fetch : null);
+    const fetchImpl = typeof settings.fetchImpl === "function" ? settings.fetchImpl : null;
+    const jsonpImpl = typeof settings.jsonpImpl === "function" ? settings.jsonpImpl : requestAppsScriptJsonp_;
     const now = typeof settings.now === "function" ? settings.now : Date.now;
     const lastKnown = settings.lastKnown instanceof Map ? settings.lastKnown : serviceHealthLastKnown;
     const results = {};
@@ -845,7 +919,7 @@ export async function checkAllServicesHealth(options = {}) {
                     errorCode: "LOCAL_ENDPOINT_UNAVAILABLE",
                     error: "No hay un endpoint local válido configurado para este servicio."
                 });
-            } else if (typeof fetchImpl !== "function") {
+            } else if (typeof fetchImpl !== "function" && typeof jsonpImpl !== "function") {
                 const checkedAtMs = now();
                 result = makeResult("error", startTime, checkedAtMs, {
                     errorCode: "FETCH_UNAVAILABLE",
@@ -860,11 +934,20 @@ export async function checkAllServicesHealth(options = {}) {
             } else {
                 controller = new AbortController();
                 timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-                const response = await fetchImpl(serviceEndpoint + "?debug=true", {
-                    method: "GET",
-                    redirect: "follow",
-                    signal: controller.signal
-                });
+                const response = typeof fetchImpl === "function"
+                    ? await fetchImpl(serviceEndpoint + "?debug=true", {
+                        method: "GET",
+                        redirect: "follow",
+                        signal: controller.signal
+                    })
+                    : {
+                        status: null,
+                        ok: true,
+                        text: async () => {
+                            const body = await jsonpImpl(serviceEndpoint, { signal: controller.signal, timeoutMs });
+                            return typeof body === "string" ? body : JSON.stringify(body);
+                        }
+                    };
                 const httpStatus = response && Number.isInteger(response.status) ? response.status : null;
                 let checkedAtMs = now();
                 let latency = Math.max(0, checkedAtMs - startTime);
@@ -1007,10 +1090,12 @@ export async function checkAllServicesHealth(options = {}) {
             }
         } catch (error) {
             const checkedAtMs = now();
-            const timedOut = Boolean(controller && controller.signal.aborted);
-            const networkFailure = timedOut || (error && (error.name === "TypeError" || error.name === "AbortError"));
+            const timedOut = Boolean(controller && controller.signal.aborted) ||
+                Boolean(error && (error.name === "AbortError" || error.name === "TimeoutError"));
+            const networkFailure = timedOut || (error && (error.name === "TypeError" || error.kind === "network" ||
+                ["JSONP_UNAVAILABLE", "JSONP_NETWORK_ERROR", "IFRAME_TRANSPORT_UNAVAILABLE"].includes(error.code)));
             result = makeResult(networkFailure ? "unavailable" : "error", startTime, checkedAtMs, {
-                errorCode: timedOut ? "TIMEOUT" : networkFailure ? "NETWORK_ERROR" : "HEALTH_CHECK_ERROR",
+                errorCode: timedOut ? "TIMEOUT" : error && error.code ? String(error.code) : networkFailure ? "NETWORK_ERROR" : "HEALTH_CHECK_ERROR",
                 error: timedOut ? "Tiempo de espera agotado (" + timeoutMs + " ms)." :
                     networkFailure ? "No se recibió una respuesta de red del servicio." :
                         "No se pudo completar la comprobación de salud."

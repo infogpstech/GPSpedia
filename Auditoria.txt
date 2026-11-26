@@ -227,3 +227,10 @@
 - Corrección B: partición por bytes UTF-8 sin separar pares sustitutos, manifiesto schema 3 y compatibilidad de lectura/renovación schema 2/legado.
 - Validación: parsing de ADMIN/UI PASS; prueba simulada de snapshot 189,078 bytes con bloques máximos de 74,999 bytes y reconstrucción exacta; renovación/lectura schema 3, schema 2 y legado PASS. No se ejecutaron Drive, ADMIN remoto ni navegador.
 - Severidad: media — biblioteca inaccesible y auditoría Drive parcial; corrección fuente aplicada, validación Beta diferida.
+
+2026-11-26 | GP-CORS-APPS-SCRIPT-TRANSPORT-01
+- Hallazgo: `api-config.js` realizaba GET health y POST directamente con fetch a Web Apps Apps Script. El navegador bloqueaba la lectura por CORS aunque el servidor devolvía 200; afecta al health scan y acciones ADMIN/Drive, y al mismo transporte de los seis servicios.
+- Corrección fuente: health GET mediante JSONP limitado a `debug=true`; POST mediante form-urlencoded + iframe oculto y respuesta HtmlService/`postMessage` con request ID. Los seis servicios convierten de forma reversible el evento de formulario a `postData.contents` JSON para reutilizar sus handlers actuales.
+- Límites: sin cambios en endpoints, ACTION_TO_SERVICE_MAP, autorización, RBAC, sesiones, coordinación entre servicios o datos externos. No se habilita JSONP para el feed CATALOG.
+- Validación local efímera: sintaxis frontend y seis Apps Script PASS; simulación JSONP cliente/servidor, POST, reconstrucción de body, respuesta iframe, limpieza y health ADMIN PASS. Sin archivos de prueba persistentes.
+- Pendiente: publicar todos los servicios y frontend y validar navegador/health/ADMIN/Drive. No se ejecutó deployment ni operaciones reales. Severidad alta por bloqueo del panel administrativo.

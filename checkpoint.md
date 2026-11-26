@@ -247,3 +247,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - HEAD verificado antes de este checkpoint: 4fc259853a05d47a0666f0cc5797a13e8ab2f116.
 - Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificar.
 - No se crearon pruebas persistentes, suites, fixtures ni workflows. Las simulaciones se ejecutaron en memoria con fuentes leídas de la rama.
+
+## Continuidad 2026-11-26 — GP-CORS-APPS-SCRIPT-TRANSPORT-01
+
+- HEAD previo verificado por GitHub: `be01820a935a36f8f256fc7fb2e8366dfe541a16` en `GPSpedia2.2.5_work`. La rama base `GPSpedia2.2.5` estaba en `d9acc68d889985c2e2f42fe3a02e502efc86ead1` y no se modificó.
+- Causa: las llamadas GET health y POST de `api-config.js` usaban fetch directo contra Apps Script, cuyos `ContentService` no entregaban CORS al navegador.
+- Código actualizado en `JS/Frontend/api-config.js` y los seis entrypoints `JS/Services/{Auth,catalog,write,feedback,admin,Utilities}.js`. GET health usa JSONP restringido a `debug=true`; POST usa formulario URL-encoded, iframe oculto y `postMessage`. Cada servicio reconstruye `postData.contents` y delega en su handler anterior.
+- No se cambiaron las seis URLs, `ACTION_TO_SERVICE_MAP`, lógica de negocio, autenticación, RBAC ni coordinación frontend/backend. La respuesta JSONP no permite consultar el feed CATALOG.
+- Validación local: sintaxis del módulo frontend y seis fuentes Apps Script PASS; pruebas efímeras simuladas de JSONP, POST iframe, preservación del JSON, respuesta, limpieza y health ADMIN PASS. No se escribieron archivos de pruebas.
+- **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** No se publicó Apps Script ni frontend, no se hizo llamada real a servicios, navegador, Drive o Spreadsheet. La fase Beta permanece cerrada.
+- Siguiente paso autorizado: publicar las seis fuentes Apps Script en sus deployments correspondientes y el frontend; después verificar health 6/6, ping y refreshDriveStorage ADMIN desde el navegador. No desplegar sin autorización expresa del propietario.

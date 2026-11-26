@@ -10,8 +10,62 @@ function getUtilitiesSpreadsheet_() {
 }
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
 const SOURCE_COLS={imagenVehiculo:9};
-function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"available",service:"GPSpedia-Utilities",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
-function doPost(e){
+
+
+function gpsepediaTransportJsonpGet_(e, output) {
+    const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
+    const callback = String(parameters.callback || "");
+    if (String(parameters.debug || "") !== "true" ||
+        !/^window\.__gpsepediaHealthCallbacks\.cb_[A-Za-z0-9_]{12,128}$/.test(callback) ||
+        !output || typeof output.getContent !== "function") return output;
+    let data;
+    try { data = JSON.parse(output.getContent()); } catch (error) { return output; }
+    const javascript = callback + "(" + JSON.stringify(data).replace(/</g, "\\u003c") + ");";
+    return ContentService.createTextOutput(javascript).setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+function gpsepediaTransportReadPostEvent_(e) {
+    const parameters = e && e.parameter && typeof e.parameter === "object" ? e.parameter : {};
+    const requestId = String(parameters.__gpsepedia_request_id || "");
+    if (String(parameters.__gpsepedia_transport || "") !== "iframe" || !/^[A-Za-z0-9_]{12,128}$/.test(requestId)) return { event: e, requestId: "" };
+    const body = typeof parameters.__gpsepedia_body === "string" ? parameters.__gpsepedia_body : "{}";
+    const cleanParameters = Object.assign({}, parameters);
+    const cleanParameterLists = Object.assign({}, e && e.parameters && typeof e.parameters === "object" ? e.parameters : {});
+    ["__gpsepedia_transport", "__gpsepedia_request_id", "__gpsepedia_body"].forEach(function(key) {
+        delete cleanParameters[key]; delete cleanParameterLists[key];
+    });
+    const requestEvent = Object.assign({}, e, {
+        parameter: cleanParameters, parameters: cleanParameterLists,
+        postData: { contents: body, type: "application/json", length: body.length }
+    });
+    return { event: requestEvent, requestId: requestId };
+}
+function gpsepediaTransportCreatePostResponse_(requestId, output) {
+    let body = "";
+    try { body = output && typeof output.getContent === "function" ? String(output.getContent()) : JSON.stringify({status:"error",code:"INVALID_SERVICE_RESPONSE"}); }
+    catch (error) { body = JSON.stringify({status:"error",code:"INVALID_SERVICE_RESPONSE"}); }
+    const message = JSON.stringify({channel:"gpsepedia-api-response",requestId:String(requestId||""),body:body})
+        .replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+    const html = "<!doctype html><html><head><meta charset=\"utf-8\"></head><body>" +
+        "<script>(function(){var response=" + message + ";window.top.postMessage(response,\"*\");})();</script></body></html>";
+    return HtmlService.createHtmlOutput(html).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function doGet(e) { return gpsepediaTransportJsonpGet_(e, doGetRequest_(e)); }
+function doPost(e) {
+    const transport = gpsepediaTransportReadPostEvent_(e);
+    if (!transport.requestId) return doPostRequest_(e);
+    let response;
+    try { response = doPostRequest_(transport.event); }
+    catch (error) {
+        response = ContentService.createTextOutput(JSON.stringify({
+            status: "error", code: "SERVICE_ERROR", message: "No se pudo ejecutar la solicitud."
+        })).setMimeType(ContentService.MimeType.TEXT);
+    }
+    return gpsepediaTransportCreatePostResponse_(transport.requestId, response);
+}
+
+function doGetRequest_(){return ContentService.createTextOutput(JSON.stringify({status:"available",service:"GPSpedia-Utilities",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
+function doPostRequest_(e){
  let response;
  try{
   const raw=e&&e.postData&&typeof e.postData.contents==="string"?e.postData.contents:"{}";
