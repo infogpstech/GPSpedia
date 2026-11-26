@@ -40,10 +40,14 @@ const rolesStart = inbox.indexOf("const INBOX_ACTIVE_ROLES_ = new Set(");
 const rolesEnd = inbox.indexOf(");", rolesStart) + 2;
 assert.ok(rolesStart >= 0 && rolesEnd > rolesStart, "No se encontró la lista de roles Inbox.");
 const inboxRoles = new Function(inbox.slice(rolesStart, rolesEnd) + "\nreturn INBOX_ACTIVE_ROLES_;")();
+const assertFeedbackSession = new Function(
+    extractFunction(feedback, "normalizeFeedbackRole") + "\n" +
+    extractFunction(feedback, "assertFeedbackSession") + "\nreturn assertFeedbackSession;"
+)();
 const inboxConversationActor = new Function(
-    "normalizeFeedbackRole", "INBOX_ACTIVE_ROLES_",
+    "normalizeFeedbackRole", "INBOX_ACTIVE_ROLES_", "assertFeedbackSession",
     extractFunction(inbox, "inboxConversationActor_") + "\nreturn inboxConversationActor_;"
-)(normalizeFeedbackRole, inboxRoles);
+)(normalizeFeedbackRole, inboxRoles, assertFeedbackSession);
 
 function makeEvent(payload) {
     return { postData: { contents: JSON.stringify({ action: "inbox", payload }) } };
@@ -120,7 +124,7 @@ test("Inbox falla cerrado si el dispatcher no adjunta actor validado", () => {
     assert.equal(Object.hasOwn(payload, "__feedbackActor"), false);
     assert.equal(Object.hasOwn(payload, "__sharedSessionActor"), false);
     assert.throws(() => authorizeFeedbackAction("getInboxConversations", payload), /falta el contexto de sesión compartido/);
-    assert.throws(() => inboxConversationActor(payload), /no contiene una identidad válida/);
+    assert.throws(() => inboxConversationActor(payload), /falta el contexto de sesión compartido/);
 });
 
 test("Inbox rechaza un rol que no pertenece a los roles activos", () => {
