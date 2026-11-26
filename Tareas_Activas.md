@@ -947,3 +947,13 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Corrección aplicada en `JS/Services/admin.js` (commit `e61e82f4258e96f81c1b2e23693d27f2b96fb536`): el validador extrae `unused` del objeto combinado, comprueba la estructura de la página y conserva compatibilidad con arrays legados.
 - Pruebas aisladas del validador: página combinada aceptada; ID no emitido rechazado; objeto sin estructura completa rechazado; array legado aceptado.
 - **Estado de la tarea:** corrección puntual implementada; auditoría integral del flujo y pruebas de integración ADMIN/Drive/Spreadsheet aún pendientes. No se declara completada la tarea.
+
+
+### Avance de implementación — registro incremental por lotes (2026-11-26)
+- Se comprobó que el guardado inicial todavía enviaba todas las imágenes sin uso en una única llamada no incremental, pese a que ADMIN ya admitía `incremental: true` y la UI solo utilizaba esa modalidad para reintentos individuales.
+- Se modificó `JS/Frontend/ui.js`: el registro inicial ahora procesa lotes de hasta 20 imágenes, exige una respuesta única y válida por cada ID del lote, actualiza cada tarjeta al recibir confirmación, persiste el avance local tras cada lote y continúa con los lotes restantes cuando uno falla.
+- Solo cuando todos los archivos tienen estado `confirmado` se ejecuta la consolidación final no incremental. Si queda algún error/bloqueo, no se habilita la organización y se conservan las tarjetas para reintento individual. La consolidación también valida IDs, estados y conteos del servidor.
+- Se endureció la validación del frontend: un archivo sin ID Drive válido ya no se descarta silenciosamente; detiene el registro y muestra error en su tarjeta.
+- Pruebas aisladas del flujo frontend con mocks: 21 imágenes => dos lotes incrementales (20 + 1) y una consolidación final, 21 tarjetas confirmadas; escenario parcial => 20 confirmadas y una con error, sin consolidación; sintaxis del bloque modificada PASS.
+- Commit de implementación: `dad3fe7c2c886ef9fb65dbf56f58abbaccdd1954` (el primer commit de la modificación fue `7bb822207e7217b019cc638589f221aabdb0f118`; luego se endureció la validación de IDs).
+- **Estado:** registro incremental inicial implementado y probado con harness aislado. La tarea global sigue abierta para auditoría de acciones de biblioteca, asociaciones, persistencia integrada y revisión visual/responsive. No se ejecutaron Apps Script desplegados, Drive ni Spreadsheet reales; esa validación queda para Beta.
