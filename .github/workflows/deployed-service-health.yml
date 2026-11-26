@@ -21,6 +21,7 @@ on:
       - "JS/Tests/RemoteCatalogFeedMatrix.mjs"
       - "JS/Tests/RemoteCatalogFeedPagination.mjs"
   workflow_dispatch:
+  # Revalidación manual tras actualizar deployments Beta: todas las sondas de este workflow son GET-only.
 permissions:
   contents: read
 concurrency:
