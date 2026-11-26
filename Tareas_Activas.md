@@ -16,16 +16,17 @@
 **Requisito de UX obligatorio — errores silenciosos:** cualquier error de carga, escritura, sincronización o sesión del botón de útil se registra exclusivamente en la consola del navegador (`console.error`/`console.warn`). Está prohibido mostrar al usuario alertas, `showGlobalError`, toast, banners, diálogos, textos de error o estados visibles que anuncien el fallo. La UI debe revertir silenciosamente al último estado confirmado y permitir reintentar sin notificar el error.
 
 **Diagnóstico confirmado por inspección de código:**
-- La hidratación de útiles deshabilitaba los botones hasta que `getMyUsefulCuts` terminara. Si FEEDBACK rechazaba o no respondía, el `.catch()` anterior solo registraba el error y el botón permanecía deshabilitado; el handler también tenía salidas silenciosas cuando faltaba contexto de sesión o el estado no estaba listo.
-- El texto de los acordeones utilizaba una expresión regular con barras invertidas duplicadas. No retiraba el contador anterior del título y podía concatenar el total nuevo en lugar de reemplazarlo.
-- Ante un fallo de escritura, la UI conservaba el estado optimista y la operación quedaba pendiente en la cola, sin rollback inmediato al último estado confirmado.
+- La hidratación inicial de `getMyUsefulCuts` podía fallar cuando no había caché local. En ese caso `ensureUsefulState_()` devolvía `false`; el manejador del clic terminaba con `if (!ready) return` y no llegaba a aplicar el estado optimista ni a enviar `setCutUseful`. La lectura fallida bloqueaba la escritura.
+- El texto de los acordeones utilizaba una expresión regular con barras invertidas duplicadas, por lo que no sustituía correctamente el contador anterior.
+- Un fallo de escritura podía dejar una operación optimista pendiente y no restaurar inmediatamente el último estado confirmado.
 
 **Corrección aplicada:**
-- La hidratación ahora devuelve una promesa compartida por sesión. El clic espera a que se conozca el estado del usuario antes de calcular el toggle; la carga ya no deja el botón bloqueado sin salida silenciosa. Los errores de hidratación se comunican y permiten reintentar.
-- Los botones reflejan la carga mediante `aria-busy`; solo quedan deshabilitados si existe un usuario local sin contexto de sesión válido.
-- La cola incorpora cancelación de una operación fallida. Si FEEDBACK no confirma, se elimina el pendiente más reciente y la UI/contador vuelven al estado confirmado, con mensaje visible.
+- El estado se hidrata mediante una promesa compartida por sesión. Si la lectura falla sin caché, se conserva el último estado confirmado conocido (o vacío), se permite continuar con la operación idempotente y FEEDBACK determina el estado real.
+- La UI aplica el cambio optimista, confirma color y contador con la respuesta del backend y revierte silenciosamente si la escritura falla.
+- La cola puede cancelar la operación fallida y retirar el pendiente más reciente.
 - Se corrigió el patrón del título de acordeón para sustituir el contador en lugar de acumularlo.
-- Se conservó el contrato existente: el frontend envía userId/sessionToken a FEEDBACK; el servicio deriva el actor autenticado, registra en `FeedbackLikes` y devuelve el contador. No se añadieron URLs, secretos ni coordinación backend→backend.
+- Los errores del flujo de útiles se registran exclusivamente en la consola; no se muestran mensajes, alertas, toast ni banners al usuario.
+- Se conserva el contrato: frontend envía userId/sessionToken a FEEDBACK; el servicio deriva el actor autenticado, registra en `FeedbackLikes` y devuelve `isUseful`/contador. No se añadieron URLs, secretos ni coordinación backend→backend.
 
 **Validación local ejecutada:** parsing sintáctico de `ui.js` y `usefulSyncQueue.js`; comprobaciones efímeras sin archivos de prueba para mapeo de corte físico, incremento confirmado, retirada/rollback del contador y cancelación de la cola. Todas aprobaron. No se crearon suites ni archivos de prueba.
 
