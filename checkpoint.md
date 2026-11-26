@@ -31,3 +31,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Regression CI de run 45809263608 aprobada en SHA cbe5e8a6adecb1359475d711810677650fbe4fba: 542 suites, 6453 pruebas, 0 fallos.
 - Responsive-browser, login surface smoke GET-only, manifest PWA y offline navigation PASS.
 - Continuar validaciones Beta no mutables y preparar pendientes diferidos; no ejecutar operaciones mutables sin preflight de recursos sintéticos y cleanup.
+
+
+## Validación CI/browser 2026-11-26 — run 45810553448
+- SHA de ejecución: `adb69eeb2edb5cd28b370194eac49956298115a` (commit documental previo); jobs `service-tests` y `responsive-browser` SUCCESS.
+- 542 suites, 6,453 tests, 0 fallos. AUG-146, login GET-only, PWA manifest/offline y browser checks PASS; screenshots sintéticas artifact 15113495824 (16 imágenes).
+- PWA: core 49/49 y optional 4/4 HTTP 200, warm offline login visible, cero módulos precache faltantes, pageErrors 0, no GETs Apps Script ni non-GET, credenciales no enviadas y backend writes deshabilitadas.
+- Cold scenario mantiene fallo residual de Font Awesome CDN sin impacto funcional; deprecaciones de Actions/runtime registradas.
+- Mutaciones remotas de servicios siguen sin ejecutar por falta de entorno sintético aislado/cleanup comprobado.
