@@ -319,3 +319,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Revisión estática de cinco operaciones backend de biblioteca y siete casos de capacidades frontend: PASS para controles de estado, MIME, árbol Cortes, referencias, unicidad y compensaciones. Sin Drive/Sheets reales ni navegador.
 - Commits de registros: tareas `0ca65cf70eef57a7480ba9f911fa17e2468bb7f2`, auditoría `c2883ec12ada91449a8b822893dc525aa9bc50c2`, changelog `7988e04edf42aa483c1c315c80a7c7dc2a236ea5`.
 - Pendiente: verificar si los nombres físicos de hojas coinciden con los nombres funcionales descritos en el plan mediante validación Beta; pruebas integradas de operaciones y concurrencia entre endpoints distintos; inspección visual de consola/explorador. No cerrar la tarea principal.
+
+
+## Nota de alcance — detección vs. operaciones destructivas
+- Se confirmó que `collectCatalogImageReferences()` clasifica imágenes sin uso solo contra las hojas de catálogo allowlist.
+- `collectActiveDriveReferences()` mantiene alcance amplio para proteger acciones destructivas: recorre referencias de otras hojas (incluyendo Feedback/eventos/reacciones y demás datos) e imágenes sobre cuadrícula, salvo hojas internas/logs/usuarios/sesión/idempotencia e historial de imágenes. Las referencias operativas no cambian la clasificación de auditoría, pero sí bloquean mover/papelera/eliminar. Preservar esta distinción.
+- Registro de auditoría actualizado en commit `99924646d24e3438de89fe9322dd20b29b8b8b96`.
