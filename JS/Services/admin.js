@@ -15019,6 +15019,46 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         if (subFolders.hasNext()) { current.folderToken = subFolders.getContinuationToken(); current.foldersDone = false; break; }
         current.folderToken = null; current.foldersDone = true; stack.pop();
     }
+    let associationBuildMs = 0, associationBuildError = "";
+    const unusedAuditFiles = auditResults.filter(item => item.classification === "Sin uso detectado");
+    if (unusedAuditFiles.length) {
+        const associationStartedAt = Date.now();
+        const associationByFileId = new Map();
+        try {
+            const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+            if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para asociar imágenes con vehículos.");
+            const lastCortesRow = Math.max(1, Number(cortesSheet.getLastRow()) || 1);
+            const cortesAssociationRows = cortesSheet.getRange(1, 1, lastCortesRow, 8).getValues();
+            const activeReferenceMap = new Map(activeDriveIds.values().map(fileId => [fileId, true]));
+            const associationResult = buildCortesImageModelAssociationSuggestions_(
+                unusedAuditFiles.map(item => ({
+                    fileId: item.fileId, fileName: item.fileName,
+                    mimeType: item.mimeType, folderPath: item.folderPath
+                })),
+                cortesAssociationRows, activeReferenceMap, historicalDriveIds,
+                CORTES_IMAGE_MODEL_ALIASES_, COLS_CORTES
+            );
+            associationResult.suggestions.forEach(suggestion => {
+                associationByFileId.set(String(suggestion.fileId), suggestion);
+            });
+        } catch (associationError) {
+            associationBuildError = String(associationError && associationError.message || associationError);
+        }
+        associationBuildMs = Date.now() - associationStartedAt;
+        unusedAuditFiles.forEach(item => {
+            const suggestion = associationByFileId.get(String(item.fileId));
+            item.association = suggestion ? {
+                status: suggestion.status,
+                confidence: suggestion.confidence,
+                candidates: Array.isArray(suggestion.candidates) ? suggestion.candidates : []
+            } : {
+                status: associationBuildError ? "no_verificada" : "sin_coincidencia",
+                confidence: "",
+                candidates: [],
+                message: associationBuildError
+            };
+        });
+    }
     const driveTraversalMs = Date.now() - batchStartedAt;
     const budgetExhausted = stack.length > 0 && driveTraversalMs >= batchBudgetMs;
     const complete = stack.length === 0;
@@ -15030,6 +15070,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
     const metrics = {
         rootValidationMs, referenceCaptureMs, historyCaptureMs, snapshotLoadMs, snapshotPersistMs,
+        associationBuildMs, associationBuildFailed: !!associationBuildError,
         cursorValidationMs, deduplicationLoadMs, driveTraversalMs, cachePersistenceMs,
         totalMs: Date.now() - requestStartedAt, batchBudgetMs, budgetExhausted,
         batchFiles, batchFolders, batchFileEntries, batchFolderEntries, stackDepth: stack.length,
