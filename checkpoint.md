@@ -1226,3 +1226,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Validación independiente de esa lógica sobre los archivos de la rama: 6/6 PASS. Diferencias conceptuales observadas: FEEDBACK comentario COMPONENT VERSION 2.3.0 vs health 1.2.2; ADMIN comentario 2.7.1 vs health constant 2.7.2. No se alteraron esos comentarios porque no representan el valor que valida el endpoint.
 - Pendiente: confirmar la ejecución Node 22 del suite en GitHub Actions para el commit actualizado y confirmar ejecución del workflow Beta GET-only. No se ha certificado deployment remoto en esta sesión.
 - Commits: contrato `2e889ce1b63d6959d032006fd6e6b14b4ee6998e`; test corregido `09152e11cc188ecc1ebb1fcaef46e37092f630ab`; Hallazgos `147fe5b2de62777b663130fd167cead0f1146d67`.
+
+
+## Continuidad — activación de suite de contrato por cambios propios (2026-11-25)
+- Se agregó `JS/Tests/ServiceHealthContract.mjs` a los paths de activación de `deployed-service-health.yml`, de modo que modificar la suite que sirve como gate también dispara el workflow. Hallazgo F016.
+- Suite de contrato ya contiene cotejo de las seis versiones de salud documentadas contra el campo `version` del `doGet`; validación equivalente con fuentes recuperadas: 6/6 PASS.
+- El run PR asociado a HEAD previo `3c82d31cbbfc6565d4aae65972948cf0dc15db2d` se observó en progreso (build, service-tests y responsive-browser); no se debe atribuir su resultado al commit posterior. Confirmar el nuevo run/estado tras este cambio.
+- Workflow trigger: `e958c94904b7a0d87369f92a467b83e4b90c0c87`; Hallazgos F016: `5ce8d210fe787af91c97a29dcd52176d4bc14a95`.
