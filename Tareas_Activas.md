@@ -1001,3 +1001,12 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Se probaron fixtures de asociación: coincidencia única con versión/encendido/año => vehículo correcto; conflicto contextual => ambiguo; dos vehículos del mismo modelo sin contexto suficiente => ambiguo; archivo ya referenciado => omitido. PASS.
 - Se revisaron estáticamente las salvaguardas backend de recuperar, enviar a papelera, mover, restaurar desde papelera y eliminación definitiva; se verificaron controles de tipo/estado, MIME, árbol Cortes, referencias, unicidad y compensaciones. Matriz de capacidades frontend: siete casos PASS.
 - La tarea continúa abierta para pruebas integradas, validación de hojas reales, auditoría de concurrencia entre endpoints distintos y revisión visual del explorador.
+
+
+### Auditoría visual — asociación de vehículo durante el escaneo (2026-11-26)
+- Se comprobó que el algoritmo de asociación solo se ejecutaba al guardar el inventario. Las tarjetas aparecían durante el escaneo sin sugerencia de vehículo, incumpliendo el requisito de mostrar la relación mientras avanza la auditoría.
+- ADMIN ahora calcula sugerencias para las imágenes clasificadas `Sin uso detectado` en cada lote, leyendo solo las primeras ocho columnas de `Cortes` (ID, categoría, marca, modelo, versiones, años y encendido). Usa el mismo algoritmo y alias del inventario; respeta IDs activos e históricos y devuelve estado `suggested`, `ambiguous`, `sin_coincidencia` o `no_verificada` con candidatos/criterios.
+- La UI muestra la sugerencia desde la primera aparición de la tarjeta y distingue explícitamente asociación no verificada de ausencia de coincidencia. La consola informa conteos de sugeridas, ambiguas, sin coincidencia y no verificadas por lote.
+- Pruebas aisladas: fixture Toyota Hilux 2.8/Botón/2021 => VH-02, confianza alta y señales de modelo/marca/versión/encendido/año; sin coincidencia => estado sin_coincidencia; error de lectura => no_verificada con mensaje; resumen de consola reporta conteos y alerta; bloques frontend/backend compilan. PASS.
+- Commits: backend `75170cd6db7b4bcc00ab98689f04837b9efa5945`, corrección de mapa `091a939902132e11383cb9f9b16ec1c93d197c3a`, UI `bdd9273caee75cea60b65b081a6a0e0302ed9b9b`, resumen consola `eec4cd899179b7dc2ba24d97817e42a9a78e9635`.
+- Tarea sigue abierta para pruebas integradas y verificación visual; no se ejecutaron hojas reales ni Apps Script desplegado.
