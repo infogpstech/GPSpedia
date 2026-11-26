@@ -1981,8 +1981,19 @@ function ensureFeedbackLikesSheet_() {
     const actual = sheet.getRange(1, 1, 1, width).getValues()[0].map(value => String(value || "").trim());
     if (headers.every((header, index) => actual[index] === header)) return sheet;
     if (legacyHeaders.every((header, index) => actual[index] === header)) {
-        migrateFeedbackLikesEventRows_(sheet, ss);
-        return sheet;
+        return withFeedbackLikeLock_(() => {
+            const current = ss.getSheetByName("FeedbackLikes");
+            if (!current) throw new Error("La hoja FeedbackLikes desapareció durante la migración.");
+            const currentWidth = Math.max(headers.length, current.getLastColumn());
+            const currentHeaders = current.getRange(1, 1, 1, currentWidth)
+                .getValues()[0].map(value => String(value || "").trim());
+            if (headers.every((header, index) => currentHeaders[index] === header)) return current;
+            if (!legacyHeaders.every((header, index) => currentHeaders[index] === header)) {
+                throw new Error("El esquema de FeedbackLikes cambió durante la migración; no se modificó la hoja.");
+            }
+            migrateFeedbackLikesEventRows_(current, ss);
+            return current;
+        });
     }
     throw new Error("El esquema de FeedbackLikes no coincide con el contrato por usuario, vehículo y corte. No se modificó la hoja.");
 }
