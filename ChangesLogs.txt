@@ -1598,3 +1598,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Code Review: el diff de HTML/add_cortes.html contiene únicamente la eliminación del import repetido; el diff de service-worker.js contiene únicamente el cambio de versión y la incorporación del módulo requerido.
 - Comprobaciones estáticas: no quedan bindings importados duplicados; todas las rutas de módulos del formulario existen; la ruta de acceso desde index.html y la entrada de caché del formulario apuntan a HTML/add_cortes.html; la secuencia init/populateAllDropdowns/getDropdownData/render permanece; el modal + de ui.js y el ruteo CATALOG no se modificaron.
 - Limitación de validación: no se abrió la aplicación en navegador ni se ejecutó una llamada POST real al servicio Apps Script. La comprobación de producción/Beta permanece pendiente.
+
+[2026-11-26] GP-ADD-CORTES-UX-01 — imágenes de coincidencias y distribución móvil de add_cortes
+- HTML/add_cortes.html — helper getImageUrl: extracción de IDs desde valores directos, URLs Drive ?id=, /file/d/ID/view y /d/ID; preservación de URL externa HTTP(S) y fuentes blob/data; fallback SVG local cuando no hay ID interpretable.
+- HTML/add_cortes.html — imágenes de vehículo y cortes en coincidencias: alt, loading="lazy", decoding="async" y fallback local en error.
+- HTML/add_cortes.html — se añadieron estilos locales para rich-editor-toolbar-compact y rich-text-visual-editor (ancho, borde, relleno, fondo, foco y altura mínima responsive). No se enlazó style.css para evitar reglas globales ajenas a la página independiente.
+- HTML/add_cortes.html — los acordeones de etapa 3 abren su contenido como Grid; la distribución usa una columna y controles a ancho completo; colorCableCorte1 queda a ancho completo sin desbordamiento.
+- No se modificaron JS/Services/write.js, JS/Frontend/ui.js, JS/Frontend/rich-text.js, los contratos de servicios, la lógica de coincidencias, el guardado, adjuntos, operaciones pendientes ni idempotencia.
+- Validación estática: conversor de imágenes 10/10 fixtures; sincronización rich editor/textarea, lectura de campos de envío, layout Grid, anchos móviles y comparación contra respaldo PASS. No se ejecutó navegador móvil ni se verificaron permisos de imágenes reales.

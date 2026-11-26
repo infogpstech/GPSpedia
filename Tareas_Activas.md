@@ -1081,3 +1081,18 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Commits de código: 61fa107909fa0f7b511550771c79bafe6e56cae3 (HTML/add_cortes.html), 98decb8834feb272d93cf8f5370c7e278806cae3 (service-worker.js).
 - Limitación: no se realizó deployment, prueba Beta, ejecución de navegador ni POST real de Apps Script en esta sesión. La publicación CATALOG 2.4.1 y su comprobación POST read-only permanecen abiertas en GP-FORM-DROPDOWNS-02.
 - La rama base protegida GPSpedia2.2.5 permanece sin cambios.
+
+## GP-ADD-CORTES-UX-01 — Imágenes de coincidencias y distribución móvil (2026-11-26)
+
+- [x] Auditar `HTML/add_cortes.html`, `JS/Services/write.js`, `JS/Frontend/ui.js`, `JS/Frontend/rich-text.js`, CSS local/global, navegación y envío de etapas 2/3.
+- [x] Registrar los hallazgos antes de editar y crear respaldo exacto de `HTML/add_cortes.html`.
+- [x] Corregir la conversión local de imágenes para IDs y enlaces Drive `?id=`, `/file/d/ID/view`, `/d/ID`; conservar URL externa y fuentes blob/data válidas; mostrar fallback SVG local para valores inválidos.
+- [x] Aplicar la conversión a imágenes del vehículo y de los cortes existentes en coincidencias, con carga diferida y fallback al fallar.
+- [x] Añadir estilos locales para toolbar y editor visual, ya que la página independiente no carga `style.css`; ancho completo, borde, relleno y espacio editable suficiente en escritorio/móvil.
+- [x] Corregir la apertura de acordeones de etapa 3 para preservar CSS Grid; asegurar ancho de controles y campo de color del cable en etapa 2.
+- [x] Ejecutar 10 casos estáticos de conversión de imágenes; revisar sincronización editor/textarea y lecturas del guardado; comprobar campos de color, acordeones, catálogos, `No recomendado` y operaciones pendientes.
+- [x] Comparar el archivo final contra el respaldo exacto; Code Review estático PASS. Retirar respaldo temporal.
+- [ ] Verificar visualmente en navegador móvil/escritorio tras publicar la rama y comprobar que imágenes reales de Drive se abren con los permisos de usuario previstos.
+- Archivos de código: `HTML/add_cortes.html` únicamente.
+- Commits: `6671241ebd2c75044280cf8a41d847377fdcac7f`, `aca1182f734d282f224d5e8a989e8979ececd773`.
+- Límite: no se realizó una sesión Beta/navegador en esta ejecución; la validación visual real permanece pendiente.
