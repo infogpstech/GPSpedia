@@ -420,3 +420,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Registros: `Auditoria.txt`, `ChangesLogs.txt`, `Tareas_Activas.md` actualizados.
 - Limitaciones: no fue posible clonar GitHub desde el entorno para ejecutar `node --check`; no se ejecutó Apps Script, Spreadsheet, Drive, navegador ni una alta real. No se desplegaron servicios ni se modificaron datos remotos. La prueba Beta de alta nueva y aporte a vehículo existente sigue pendiente.
 - Próximo paso: cerrar revisión final de diffs/respaldos, retirar los respaldos temporales, comprobar CI disponible y dejar la validación de escritura real para entorno controlado autorizado.
+
+
+### Cierre de revisión y respaldos — GP-WRITE-CUT-CATALOG-01
+- Code Review estático final: diffs de WRITE, formulario y logger coinciden exactamente con los bloques auditados; los fixtures de catálogo de tres slots y las aserciones de paridad con CATALOG pasan.
+- Los seis respaldos temporales se eliminaron después de la comparación y revisión. Commits de limpieza: `42cc0262d68bfba702cf2f9606423fbb21ededda`, `14d7a84128bf917b15db73e3b870ca4cb199a8c5`, `0b9e24da3bd54b0246b61e1eed3308146d9abebe`, `4130fd046a0a1716af455b9d66098e59d24b69f0`, `5ee31a04025ebb59bf687daaf28c429dcc89a19a`, `8d7110ce85f87684889afd7d8defdae682d11321`.
+- Pages build asociado al último commit de limpieza: run `45907521640`, estado pendiente al momento de este registro. Las ejecuciones Pages de commits intermedios fueron canceladas por pushes posteriores; no se interpreta como fallo de código.
+- No existe evidencia de ejecución del workflow completo de regresión para esta modificación. La sintaxis Node no pudo verificarse localmente porque el entorno no resolvió github.com durante el intento de clonado.
+- Rama base protegida sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. No se modificó.
