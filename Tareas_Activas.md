@@ -609,3 +609,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - `AdminReplacedImagesIntegrity` 64/64: round-trip de snapshot que incluye ubicaciones de referencia serializadas.
 - CI final `45722568761`: 542 suites, 6,448 pruebas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS. Pages `45722568303` SUCCESS.
 - No se despliegan servicios ni se ejecutan escrituras/lecturas reales en Drive o Spreadsheet sin autorización. Para cerrar #130 falta la validación Beta aislada de FEEDBACK/CATALOG y ADMIN/Drive/Spreadsheet, registrar evidencia y actualizar el issue. MIG-URL-008 sigue independiente y pendiente de autorización.
+
+
+## Preparación runner de health Beta — 2026-11-25
+- Hallazgos BETA-PLAN-F001..008 documentados en Hallazgos_Beta.md.
+- Workflow de health limitado a push en GPSpedia2.2.5_work; gates Beta configurados; checker GET-only alineado a timeout 8 s y umbral SLOW 2 s.
+- Pendiente confirmar Actions y ejecutar probe remoto antes de ampliar funcionalidad.
