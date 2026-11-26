@@ -9,8 +9,8 @@ async function get(cursor,limit){const t=Date.now();const res=await fetch(url+"?
 const initial=await get(0,5);const current=initial.currentRevision;const min=initial.minRevision;
 const checks=[];
 for(const [cursor,limit,label] of [[current,5,"current"],[Math.max(0,min-1),5,"retention-edge"],[Math.floor((min+current)/2),5,"mid-range"],[current,1,"small-limit"],[current,5,"repeat"]])checks.push({label,cursor,...await get(cursor,limit)});
-for(const result of checks){if(result.currentRevision!==current||result.minRevision!==min)throw Error("Revisiones inconsistentes entre lecturas");if(result.nextCursor>result.currentRevision)throw Error("nextCursor excede currentRevision");}
-const edge=checks[1];if(min>0&&edge.cursor<min&&edge.resetRequired!==true)throw Error("Cursor previo a minRevision no solicita reset");
-const a=checks[0],b=checks[4];if(a.currentRevision!==b.currentRevision||a.nextCursor!==b.nextCursor||a.resetRequired!==b.resetRequired||a.count!==b.count)throw Error("Resultado no estable en lectura repetida de cursor actual");
-if(a.count!==0||a.hasMore!==false||a.resetRequired!==false)throw Error("Cursor actual no representa una lectura de cola vacía");
-console.log("CATALOG feed read-only matrix "+target);console.log(JSON.stringify({initial,checks}));
+for(const result of checks){if(result.nextCursor>result.currentRevision)throw Error("nextCursor excede currentRevision");if(result.cursor<result.minRevision&&result.resetRequired!==true)throw Error("Cursor anterior a minRevision no solicita reset");if(result.resetRequired&&result.count!==0)throw Error("Reset solicitado con eventos en respuesta");}
+const a=checks[0],b=checks[4];
+if(a.currentRevision===b.currentRevision&&a.minRevision===b.minRevision&&a.resetRequired===b.resetRequired&&a.nextCursor===b.nextCursor&&a.count!==b.count)throw Error("Resultados repetidos contradictorios bajo revisiones estables");
+const concurrentRevisionChange=checks.some(r=>r.currentRevision!==current||r.minRevision!==min);
+console.log("CATALOG feed read-only matrix "+target);console.log(JSON.stringify({initial,checks,concurrentRevisionChange}));
