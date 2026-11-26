@@ -986,3 +986,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - La confirmación ya diferencia los dos grupos y el handler despacha cada registro a su acción correspondiente. No se habilita para registros que no puedan restaurarse por ninguna de las dos vías.
 - Harness aislado de capacidades + toolbar: mezcla de un archivo en papelera y una imagen histórica => acción masiva visible; mover y enviar a papelera permanecen ocultos para la mezcla. PASS.
 - Commit: `78d91c41e45f6fe673395849e947a5572ff1f8b4`.
+
+
+### Biblioteca — serialización de escrituras compartidas (2026-11-26)
+- Se confirmó que el endpoint `saveUnusedImagesInventory` usaba `withAdminLocalOperationGuard_` con clave `drive-inventory:<auditId>`. La guarda protege solicitudes de una misma auditoría, pero dos auditorías distintas podían reservarse en paralelo aunque escriben en la misma hoja `Imagenes_Reemplazadas`.
+- Se cambió la clave a `drive-inventory:shared-inventory-sheet`, compartida por registro incremental, consolidación y organización. Así las operaciones de inventario/organización no pueden ejecutar callbacks simultáneos sobre la misma hoja, incluso si sus auditId difieren. Se corrigió el comentario que atribuía esa protección a ScriptLock.
+- Harness aislado de `withAdminLocalOperationGuard_`: una segunda ejecución con la misma clave se bloquea; un alcance distinto se permite. La ruta del endpoint usa la clave compartida. PASS.
+- Commit: `f64cb5346c5fb28886db0e19485f893ceb755961`.
+- Nota: esta guarda serializa operaciones que pasan por `saveUnusedImagesInventory`; no reemplaza los ScriptLock propios de las demás acciones de administración. La auditoría de concurrencia entre endpoints distintos queda pendiente de una prueba integral.
