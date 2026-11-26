@@ -299,6 +299,7 @@
         <button type="button" class="info-close-btn" aria-label="Cerrar opciones de desarrollador">&times;</button>
         <h2 id="dev-tools-title" class="dev-tools-title" tabindex="-1"><i class="fa-solid fa-screwdriver-wrench"></i> Desarrollador</h2>
 
+            <div id="dev-tools-workspace" class="dev-tools-workspace">
             <div class="dev-card dev-tools-card dev-console-shared" aria-label="Consola de desarrollador">
                 <div class="dev-card-heading dev-heading-with-help">
                     <h4><i class="fa-solid fa-terminal"></i> Consola</h4>
@@ -498,6 +499,7 @@
 
                     <!-- Imágenes y Drive -->
                     <section id="dev-panel-images" class="dev-tab-panel dev-panel-images" role="region" aria-labelledby="dev-panel-title-images">
+                        <div id="dev-images-overview">
                         <div class="dev-panel-heading dev-panel-heading-visually-hidden">
                             <h3 id="dev-panel-title-images"><i class="fa-solid fa-images"></i> Imágenes y Drive</h3>
                             <p>Imágenes, logotipos e historial.</p>
@@ -549,6 +551,63 @@
                                 <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Cortes</button>
                             </div>
                         </div>
+                        <section id="audit-drive-workspace" class="dev-audit-explorer" hidden aria-labelledby="audit-drive-title">
+                            <header class="dev-audit-explorer-header">
+                                <div class="dev-audit-explorer-heading">
+                                    <h3 id="audit-drive-title"><i class="fa-brands fa-google-drive" aria-hidden="true"></i> Explorador de Cortes</h3>
+                                    <p>Resultados de auditoría y estado de registro por imagen</p>
+                                </div>
+                                <button type="button" id="close-audit-drive-modal" class="btn btn-secondary audit-drive-back" aria-label="Volver a Imágenes y Drive" title="Volver a Imágenes y Drive"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>Volver</span></button>
+                            </header>
+                            <div id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar" aria-label="Herramientas de auditoría de Cortes" aria-orientation="horizontal">
+                                <button type="button" id="btn-audit-drive-toolbar-toggle" class="btn btn-secondary audit-drive-toolbar-toggle" aria-label="Expandir etiquetas de acciones" title="Expandir acciones" aria-expanded="false" aria-controls="audit-drive-toolbar-actions">
+                                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <div id="audit-drive-toolbar-actions" class="audit-drive-toolbar-actions">
+                                    <button type="button" id="btn-audit-drive-start" class="btn btn-primary audit-drive-action" aria-label="Iniciar nueva auditoría" title="Iniciar nueva auditoría"><i class="fa-solid fa-rotate" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Iniciar nueva auditoría</span></button>
+                                    <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary audit-drive-action" aria-label="Continuar auditoría" title="Continuar auditoría" hidden disabled><i class="fa-solid fa-play" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Continuar auditoría</span></button>
+                                    <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary audit-drive-action" aria-label="Organizar imágenes confirmadas" title="Organizar imágenes confirmadas" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Organizar imágenes confirmadas</span></button>
+                                    <button type="button" id="btn-audit-drive-save-inventory" class="btn btn-secondary audit-drive-action" aria-label="Registrar inventario sin uso" title="Registrar inventario sin uso" hidden disabled><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Registrar inventario sin uso</span></button>
+                                    <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary audit-drive-action" aria-label="Simular conciliación con Cortes" title="Simular conciliación con Cortes" hidden disabled><i class="fa-solid fa-link" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Simular conciliación con Cortes</span></button>
+                                    <button type="button" id="btn-audit-drive-organizer-preview" class="btn btn-secondary audit-drive-action" aria-label="Previsualizar organización completa" title="Previsualizar organización completa" hidden disabled><i class="fa-solid fa-folder-tree" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Previsualizar organización</span></button>
+                                </div>
+                                <div class="audit-drive-view-switch" role="group" aria-label="Vista de archivos">
+                                    <button type="button" id="btn-audit-drive-view-grid" class="btn btn-secondary" aria-label="Vista de cuadrícula" title="Cuadrícula" aria-pressed="true"><i class="fa-solid fa-grip" aria-hidden="true"></i></button>
+                                    <button type="button" id="btn-audit-drive-view-list" class="btn btn-secondary" aria-label="Vista de lista" title="Lista" aria-pressed="false"><i class="fa-solid fa-list" aria-hidden="true"></i></button>
+                                </div>
+                            </div>
+                            <div id="audit-drive-summary" class="audit-drive-summary" role="status" aria-live="polite">La auditoría y los resultados aparecerán aquí.</div>
+                            <nav id="audit-drive-folder-breadcrumb" class="audit-drive-folder-breadcrumb" aria-label="Ubicación actual"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>Cortes</span></nav>
+                            <div id="audit-drive-results-container" class="audit-drive-results view-grid" aria-live="polite" aria-label="Resultados de auditoría"></div>
+                            <section id="audit-drive-reconciliation-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+                                <h3>Conciliación Drive ↔ Cortes</h3>
+                                <p id="audit-drive-reconciliation-status">La simulación no modifica Spreadsheet, Drive ni permisos.</p>
+                                <div id="audit-drive-reconciliation-counts" class="audit-drive-reconciliation-counts"></div>
+                                <div id="audit-drive-reconciliation-results" class="audit-drive-reconciliation-results"></div>
+                                <button type="button" id="btn-audit-drive-apply-reconciliation" class="btn btn-primary" hidden disabled>Aplicar propuestas seleccionadas</button>
+                            </section>
+                            <section id="audit-drive-organizer-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+                                <div class="dev-heading-with-help">
+                                    <h3>Preview de organización Cortes / LogosMarca</h3>
+                                    <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre la organización de imágenes" title="Ayuda" aria-controls="dev-help-audit-organizer" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
+                                    <span id="dev-help-audit-organizer" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>La simulación compara rutas, nombres, extensiones y referencias sin modificar Drive ni Spreadsheet. Las coincidencias por nombre, carpeta o alias son orientativas; las ambiguas requieren revisión manual y no asignan imágenes automáticamente. La aplicación requiere aprobación explícita del Desarrollador.</span>
+                                </div>
+                                <p id="audit-drive-organizer-status">Pendiente.</p>
+                                <div id="audit-drive-organizer-counts" class="audit-drive-reconciliation-counts"></div>
+                                <div id="audit-drive-organizer-results" class="audit-drive-reconciliation-results"></div>
+                                <section id="audit-drive-model-association-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+                                    <h4>Sugerencias de asociación por modelo</h4>
+                                    <p id="audit-drive-model-association-summary"></p>
+                                    <div id="audit-drive-model-association-results" class="audit-drive-reconciliation-results"></div>
+                                </section>
+                                <div class="audit-drive-reconciliation-actions">
+                                    <button type="button" id="btn-audit-drive-apply-organizer" class="btn btn-primary" hidden disabled>Aplicar selección aprobada</button>
+                                    <button type="button" id="btn-audit-drive-rollback-organizer" class="btn btn-secondary" hidden disabled>Revertir lote seleccionado</button>
+                                    <button type="button" id="btn-audit-drive-organizer-history" class="btn btn-secondary">Ver operaciones anteriores</button>
+                                </div>
+                                <div id="audit-drive-organizer-history" class="audit-drive-reconciliation-results" hidden></div>
+                            </section>
+                        </section>
                     </section>
 
                     <!-- Sistema -->
@@ -576,6 +635,7 @@
                     </section>
                 </div>
             </div>
+        </div>
 
 
         </div>
@@ -632,68 +692,6 @@
         <span class="replaced-image-lightbox-hint">Pulsa la imagen para acercar o alejar. Pulsa fuera o Esc para cerrar.</span>
     </div>
 </div>
-
-<!-- MODAL DE AUDITORÍA DE ARCHIVOS EN CARPETA CORTES (TAREA 2) -->
-<div id="audit-drive-modal" class="info-modal" style="display: none; z-index: 2600;" role="dialog" aria-modal="true" aria-labelledby="audit-drive-title">
-    <div class="info-modal-content" style="max-width: 900px; width: 95%;">
-        <button type="button" class="info-close-btn" id="close-audit-drive-modal" aria-label="Cerrar auditoría">&times;</button>
-        <div class="dev-heading-with-help"><h2 id="audit-drive-title"><i class="fa-brands fa-google-drive"></i> Auditoría de Cortes</h2><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre alcance de auditoría" title="Ayuda" aria-controls="dev-help-audit-scope" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-scope" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Explora recursivamente la carpeta principal Cortes. El progreso y los resultados parciales se conservan localmente. La auditoría no mueve archivos; cada traslado requiere una acción explícita y confirmación del Desarrollador.</span></div>
-        <div class="dev-heading-with-help dev-audit-scope-row">
-            
-            <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre categorías del resumen" title="Ayuda" aria-controls="dev-help-audit-categories" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-categories" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Descubiertos: archivos únicos con ID válido. Analizados: archivos cuya clasificación se intentó, incluidos errores. Pendientes: carpetas aún por recorrer. Errores: IDs o metadatos que no pudieron leerse. La consola registra todos los archivos y resultados; la lista complementaria muestra vistas previas de imágenes históricas y sin uso detectado. Las miniaturas se verifican con la sesión autorizada. Los duplicados se omiten y contabilizan por separado.</span></div>
-        <div id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar" aria-label="Herramientas de auditoría de Cortes" aria-orientation="horizontal">
-            <button type="button" id="btn-audit-drive-toolbar-toggle" class="btn btn-secondary audit-drive-toolbar-toggle" aria-label="Expandir etiquetas de acciones" title="Expandir acciones" aria-expanded="false" aria-controls="audit-drive-toolbar-actions">
-                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-            </button>
-            <div id="audit-drive-toolbar-actions" class="audit-drive-toolbar-actions">
-                <button type="button" id="btn-audit-drive-start" class="btn btn-primary audit-drive-action" aria-label="Iniciar nueva auditoría" title="Iniciar nueva auditoría"><i class="fa-solid fa-rotate" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Iniciar nueva auditoría</span></button>
-                <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary audit-drive-action" aria-label="Continuar auditoría" title="Continuar auditoría" hidden disabled><i class="fa-solid fa-play" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Continuar auditoría</span></button>
-                <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary audit-drive-action" aria-label="Organizar imágenes confirmadas" title="Organizar imágenes confirmadas" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Organizar imágenes confirmadas</span></button>
-                <button type="button" id="btn-audit-drive-save-inventory" class="btn btn-secondary audit-drive-action" aria-label="Registrar inventario sin uso" title="Registrar inventario sin uso" hidden disabled><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Registrar inventario sin uso</span></button>
-                <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary audit-drive-action" aria-label="Simular conciliación con Cortes" title="Simular conciliación con Cortes" hidden disabled><i class="fa-solid fa-link" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Simular conciliación con Cortes</span></button>
-                <button type="button" id="btn-audit-drive-organizer-preview" class="btn btn-secondary audit-drive-action" aria-label="Previsualizar organización completa" title="Previsualizar organización completa" hidden disabled><i class="fa-solid fa-folder-tree" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Previsualizar organización</span></button>
-            </div>
-        </div>
-        <div id="audit-drive-summary" style="margin-bottom: 10px;"></div>
-        <section id="audit-drive-scan-workspace" aria-label="Progreso y resultados de auditoría">
-            <div id="audit-drive-scan-console" role="log" aria-live="polite" aria-relevant="additions" aria-label="Progreso de escaneo"></div>
-        </section>
-        <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
-            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>
-        </div>
-        <section id="audit-drive-reconciliation-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
-            <h3>Conciliación Drive ↔ Cortes</h3>
-            <p id="audit-drive-reconciliation-status">La simulación no modifica Spreadsheet, Drive ni permisos.</p>
-            <div id="audit-drive-reconciliation-counts" class="audit-drive-reconciliation-counts"></div>
-            <div id="audit-drive-reconciliation-results" class="audit-drive-reconciliation-results"></div>
-            <button type="button" id="btn-audit-drive-apply-reconciliation" class="btn btn-primary" hidden disabled>Aplicar propuestas seleccionadas</button>
-        </section>
-        <section id="audit-drive-organizer-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
-            <div class="dev-heading-with-help">
-                <h3>Preview de organización Cortes / LogosMarca</h3>
-                <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre la organización de imágenes" title="Ayuda" aria-controls="dev-help-audit-organizer" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
-                <span id="dev-help-audit-organizer" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>La simulación compara rutas, nombres, extensiones y referencias sin modificar Drive ni Spreadsheet. Las coincidencias por nombre, carpeta o alias son orientativas; las ambiguas requieren revisión manual y no asignan imágenes automáticamente. La aplicación requiere aprobación explícita del Desarrollador. Selecciona entre 1 y 10 imágenes de una misma página; cada lote se vuelve a validar en el servidor.</span>
-            </div>
-            <p id="audit-drive-organizer-status">Pendiente.</p>
-            <div id="audit-drive-organizer-counts" class="audit-drive-reconciliation-counts"></div>
-            <div id="audit-drive-organizer-results" class="audit-drive-reconciliation-results"></div>
-            <section id="audit-drive-model-association-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
-                <h4>Sugerencias de asociación por modelo</h4>
-                <p id="audit-drive-model-association-summary"></p>
-                <div id="audit-drive-model-association-results" class="audit-drive-reconciliation-results"></div>
-                
-            </section>
-            
-            <div class="audit-drive-reconciliation-actions">
-                <button type="button" id="btn-audit-drive-apply-organizer" class="btn btn-primary" hidden disabled>Aplicar selección aprobada</button>
-                <button type="button" id="btn-audit-drive-rollback-organizer" class="btn btn-secondary" hidden disabled>Revertir lote seleccionado</button>
-                <button type="button" id="btn-audit-drive-organizer-history" class="btn btn-secondary">Ver operaciones anteriores</button>
-            </div>
-            <div id="audit-drive-organizer-history" class="audit-drive-reconciliation-results" hidden></div>
-        </section>
-    </div>
-</div>
-
 
 <!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->
 <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE -->
