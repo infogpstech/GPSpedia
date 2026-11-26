@@ -802,3 +802,13 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - Browser responsive, GET-only login surface smoke, manifest PWA y navegación offline PASS.
 - Pages deployment run 45809262461 SUCCESS.
 - No se ejecutaron operaciones mutables remotas; se mantienen las condiciones de aislamiento, identidad sintética y cleanup verificable.
+
+
+## 10. Continuidad — verificación CI/browser 2026-11-26 (SHA 2796cdee78ee95c151a9525a44133cdcf6d9a721)
+
+- Run regression `45809570650`: `service-tests` SUCCESS; 542 suites, 6,453 pruebas, 0 fallos. `responsive-browser` SUCCESS.
+- Browser job completó AUG-146 real-browser checks, smoke GET-only de login en Pages, validación manifest/PWA y navegación offline, además de carga de screenshots sintéticas.
+- Pages build/deploy run `45809571054`: build y deploy SUCCESS.
+- Los jobs y sus pasos fueron inspeccionados desde GitHub Actions. No se extrapola este resultado a operaciones mutables de Apps Script, Drive, Spreadsheet o YouTube.
+- Mutaciones de BETA-01/03/04/05/06/07 continúan diferidas por falta de preflight verificable de entorno aislado, identidad sintética y cleanup. No se efectuaron escrituras ni deployments Apps Script en esta continuidad.
+- Próxima prioridad: validar de forma GET-only los contratos y estados de servicios cuando el runner pueda verificar configuración Beta explícitamente aislada; mantener Android físico y F022 como pendientes separados.
