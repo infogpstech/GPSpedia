@@ -1177,3 +1177,9 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Node.js 22 local: `node --check` sobre `RemoteCatalogFeedMatrix.mjs`, PASS (solo sintaxis).
 - Consulta status/checks del commit: pending sin checks. El conector no permite recuperar workflow runs push; entorno shell no resuelve api.github.com (DNS). Ejecución real Beta no verificada; no se presentan simulaciones como resultados remotos.
 - Hallazgos actualizados en commit `973b6e1751327f08f90324376e5f819488ba0065`. No mutaciones ni deployment.
+
+
+## Continuidad — endurecimiento de matriz CATALOG read-only (2026-11-25)
+- Ref branch verificada antes del cambio: `1a24cfac60508be7cb3a4e86a76bc55f0bbdaa2f`. Actualización publicada en `JS/Tests/RemoteCatalogFeedMatrix.mjs`, commit `3b02731294ef62f2b640dd89d0305982bc0ed06e`.
+- La matriz ahora exige consistencia de currentRevision/minRevision, cursor de continuación no superior a currentRevision, reset en cursor pre-retención (minRevision>0) y cola vacía en cursor actual; conserva comprobación de repetibilidad. Todas las lecturas siguen siendo GET.
+- Parsing local Node 22 `node --check` PASS sobre la fuente exacta reconstruida. No equivale a ejecutar probe contra Beta; Actions aún no verificadas. No se realizaron escrituras ni deployments.
