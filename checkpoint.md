@@ -1183,3 +1183,9 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Ref branch verificada antes del cambio: `1a24cfac60508be7cb3a4e86a76bc55f0bbdaa2f`. Actualización publicada en `JS/Tests/RemoteCatalogFeedMatrix.mjs`, commit `3b02731294ef62f2b640dd89d0305982bc0ed06e`.
 - La matriz ahora exige consistencia de currentRevision/minRevision, cursor de continuación no superior a currentRevision, reset en cursor pre-retención (minRevision>0) y cola vacía en cursor actual; conserva comprobación de repetibilidad. Todas las lecturas siguen siendo GET.
 - Parsing local Node 22 `node --check` PASS sobre la fuente exacta reconstruida. No equivale a ejecutar probe contra Beta; Actions aún no verificadas. No se realizaron escrituras ni deployments.
+
+
+## Continuidad — revisión de concurrencia en matriz CATALOG (2026-11-25)
+- Se corrigió la matriz para evitar falsos fallos cuando ocurren cambios legítimos del catálogo durante la prueba. Validación de lógica offline con escenarios simulados: 5/5 PASS. Incluye cursor acotado, reset por retención, reset sin eventos y repetibilidad condicional bajo snapshot estable.
+- Implementación publicada: `49fce769cc0844cca3b518482411ebca4babed16`; adenda en Hallazgos Beta.
+- El test offline no valida el deployment; las pruebas remotas siguen diferidas a Beta.
