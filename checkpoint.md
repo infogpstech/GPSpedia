@@ -1142,3 +1142,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Versiones observadas: AUTH 2.2.5, CATALOG 2.4.0, WRITE 2.3.1, FEEDBACK 1.2.2, UTILITIES 1.5.0, ADMIN 2.7.1. ADMIN SLOW: 2.431s y 2.701s. Fuente ADMIN 2.7.2, deployment 2.7.1: desfase registrado F009. Latencia persistente F010.
 - Pruebas GET no verifican Sheets/Drive, auth transaccional, acciones ni navegador. No se mutaron recursos remotos.
 - Próximo paso: diseñar/implementar suite GET read-only CATALOG feed/cursor y contratos; investigar ADMIN slow y discrepancia antes de deploy; mantener operaciones mutables para fase posterior.
+
+
+## Continuidad — CATALOG feed read-only (2026-11-26)
+- Runner de feed integrado al workflow y probado: Actions run 45729926589 SUCCESS, commit a8a46da383caa1b70bbc95d18faf909a03d94a4c.
+- Feed CATALOG cursor0/limit1: revision5, minRevision1, 1 cambio, hasMore=true; cursor5/limit1: 0 cambios, hasMore=false. No se registró contenido del evento ni se hicieron mutaciones.
+- Latencias feed 2.374/2.381s; F011 documentado. Aún faltan pruebas de reset, cursor fuera de rango, retención y paginación multievento.
+- Health en run adicional: ADMIN 2.488s SLOW, versión deployment 2.7.1; se confirma recurrencia F009/F010. Otros cinco servicios PASS.
