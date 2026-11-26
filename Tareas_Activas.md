@@ -648,3 +648,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## MIG-URL-008 — repetición de contrato y estado Beta (2026-11-26)
 **Estado: VALIDACIÓN GET-ONLY COMPLETADA; DOS FALLOS PENDIENTES.** AUTH expone `sessionAuthority` (20/21 contrato local; confirmado por probe remoto) y ADMIN sigue en v2.7.1 frente a v2.7.2. CATALOG feed/boundaries/matriz/paginación PASS; FEEDBACK/CATALOG/WRITE/UTILITIES PASS. CI 542 suites, 6,450 pruebas PASS y 2 fallos de suite por la misma aserción AUTH; Playwright 264/264. Próximo: corrección AUTH y actualización ADMIN en fase autorizada separada; no ejecutar operaciones mutables sin identidad sintética y cleanup verificable.
+
+
+## BETA-08 — Pages desplegado, smoke read-only (2026-11-26)
+**Estado: SMOKE DE PÁGINA DESPLEGADA COMPLETADO.** Pages respondió HTTP 200; formulario login visible sin overflow en 1366x768, 390x844 y 320x800; 0 errores JS, 0 solicitudes no-GET, 0 llamadas Apps Script y ninguna credencial. AUG-146 264/264 PASS. No sustituye validación manual en dispositivo físico ni login real.

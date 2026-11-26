@@ -655,3 +655,11 @@ git rev-parse HEAD
 - Run `45747463460`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite (la misma aserción AUTH en AUG-024 y MIG021); Playwright 264/264; Pages SUCCESS.
 - El runner ahora ejecuta todas las suites y reporta todos los checks de contrato antes de devolver FAIL. La cobertura GET pública disponible quedó agotada; los casos restantes son autenticados o mutables.
 - No se ejecutó login ni POST: `handleLogin` registra fallos en Logs y no existe acceso a Drive/Sheets para verificar y limpiar esa escritura. Google Drive está deshabilitado por el administrador en el entorno de conectores.
+
+
+### Evidencia adicional BETA-08 — Pages desplegado, sin acceso al backend (2026-11-26)
+- Pages URL `https://infogpstech.github.io/GPSpedia/`, deployment run `45747843657` SUCCESS.
+- Browser run `45747844794`: HTTP 200; login visible y sin overflow en 1366x768, 390x844 y 320x800; cero errores JS.
+- El script bloqueó solicitudes no-GET y llamadas a Apps Script: 0 no-GET, 0 llamadas backend, 0 credenciales y 0 escrituras.
+- AUG-146 264/264 PASS; 16 capturas sintéticas.
+- Esta prueba valida la superficie estática/login desplegada; no sustituye autenticación real ni prueba manual en dispositivo físico.

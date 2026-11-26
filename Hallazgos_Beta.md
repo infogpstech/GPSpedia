@@ -462,3 +462,12 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - ADMIN cinco muestras: 1898/2301/1779/1350/1558 ms; mediana 1779 ms, máximo 2301 ms, una muestra >=2 s.
 - CATALOG feed/boundaries/matriz/paginación PASS; revisión 5, minRevision 1, cinco eventos, tres eventos reset; cursor 0→5 y sin cambios concurrentes.
 - No hubo POST ni escrituras remotas. Esta ejecución confirma que las dos fallas persistentes son de contrato/versionado y no de conectividad general.
+
+
+## Resultado BETA-08 — smoke test de Pages desplegado (2026-11-26)
+- Sitio: `https://infogpstech.github.io/GPSpedia/`, deployment Pages de la rama de trabajo; run Pages `45747843657` SUCCESS.
+- Run de browser `45747844794`: `BetaDeployedPageSmoke.mjs` PASS; HTTP 200; título GPSpedia v2.2.5.
+- Login visible y dentro del viewport en 1366x768, 390x844 y 320x800; documentWidth coincide con cada viewport.
+- Cero errores JavaScript, cero solicitudes no-GET y cero llamadas a Apps Script durante la prueba. No se introdujeron credenciales ni se inició sesión.
+- AUG-146: 264/264 PASS en cuatro viewports y 16 capturas sintéticas.
+- La prueba bloquea explícitamente métodos distintos de GET y hosts Apps Script; no escribe en servicios, Spreadsheet o Drive.

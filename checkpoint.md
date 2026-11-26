@@ -1304,3 +1304,13 @@ Mantener la validación Beta en modo no destructivo: continuar cobertura contrac
 
 ### Siguiente acción
 Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección separada de AUTH para retirar `sessionAuthority` y procedimiento autorizado para actualizar ADMIN a 2.7.2; repetir health después de esas correcciones. No iniciar login, WRITE, FEEDBACK, Drive, YouTube ni operaciones de Spreadsheet mutables hasta tener cuenta sintética y limpieza verificable.
+
+
+## Continuidad — smoke test de Pages Beta con backend bloqueado (2026-11-26)
+
+- Commit de test: `aa61768a477f4c6d18dd494909b09b5deebd7edf`; nuevo script `JS/Tests/BetaDeployedPageSmoke.mjs`, integrado al job responsive-browser.
+- Pages run `45747843657`: SUCCESS; deployment URL `https://infogpstech.github.io/GPSpedia/`.
+- Browser run `45747844794`: AUG-146 264/264 PASS (4 viewports, 16 capturas) y smoke de Pages PASS: HTTP 200, título GPSpedia v2.2.5, formulario login visible en 1366x768, 390x844 y 320x800, sin overflow horizontal.
+- El smoke bloqueó todas las solicitudes no-GET y los hosts Apps Script: 0 solicitudes no-GET, 0 llamadas a Apps Script, 0 errores JS, credenciales no enviadas y escrituras backend deshabilitadas.
+- Service regression run del mismo commit: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por la misma aserción AUTH (`sessionAuthority`) duplicada en AUG-024/MIG021. La falla permanece visible; no se marcó PASS.
+- No se modificó código de servicios, endpoints, deployments, permisos, Spreadsheet o Drive. El smoke solo consultó recursos estáticos de Pages.

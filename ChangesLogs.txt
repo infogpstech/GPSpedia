@@ -1391,3 +1391,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Run `45747463436`: AUTH y ADMIN FAIL por metadato interno y versión de deployment; FEEDBACK/CATALOG/WRITE/UTILITIES PASS; todos los probes CATALOG read-only PASS.
 - Run `45747463460`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite duplicados por AUTH; Playwright 264/264; Pages run `45747462135` SUCCESS.
 - Sin modificaciones de servicios Apps Script, deployments, endpoints ni datos remotos.
+
+
+## 2026-11-26 — smoke test de la página Beta desplegada
+- Añadido `JS/Tests/BetaDeployedPageSmoke.mjs` y paso en `.github/workflows/service-tests.yml`.
+- Verifica login público de Pages en desktop/móvil y bloquea solicitudes no-GET y llamadas a Apps Script para evitar escrituras.
+- Run `45747844794`: HTTP 200, tres viewports PASS, cero errores JS, cero POST/no-GET y cero llamadas Apps Script. AUG-146 264/264 PASS.
+- Pages run `45747843657`: SUCCESS. No se enviaron credenciales ni se modificaron datos remotos.
