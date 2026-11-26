@@ -8,7 +8,7 @@ Rama base protegida: GPSpedia2.2.5 (no modificar)
 El checkpoint previo completo se archivó, sin alteración, en `Olds/Documentacion_Legacy/Checkpoint_Archive/checkpoint_2026-11-26_parte_007.md`. Verificación Git: blob archivado `5be5e08597d2a354bcde6f5699cbf48387196804`, contenido recuperado igual al original. Las partes previas de archivo permanecen intactas.
 
 ## Estado de Git
-- HEAD de continuidad verificado: `2796cdee78ee95c151a9525a44133cdcf6d9a721` (commit de progreso Beta; confirmado por Actions).
+- HEAD CI verificado: `2796cdee78ee95c151a9525a44133cdcf6d9a721`; commits documentales posteriores registran la evidencia y no alteran código.
 - Base: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificar.
 - Commit posterior de mantenimiento de prueba: `dd85ed5705f9d29fc3a3a94d4074124cbc08e35a`, alinear contrato LocalApiEndpoints con endpoints actualizados.
 
