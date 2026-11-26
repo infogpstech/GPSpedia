@@ -1010,3 +1010,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Pruebas aisladas: fixture Toyota Hilux 2.8/Botón/2021 => VH-02, confianza alta y señales de modelo/marca/versión/encendido/año; sin coincidencia => estado sin_coincidencia; error de lectura => no_verificada con mensaje; resumen de consola reporta conteos y alerta; bloques frontend/backend compilan. PASS.
 - Commits: backend `75170cd6db7b4bcc00ab98689f04837b9efa5945`, corrección de mapa `091a939902132e11383cb9f9b16ec1c93d197c3a`, UI `bdd9273caee75cea60b65b081a6a0e0302ed9b9b`, resumen consola `eec4cd899179b7dc2ba24d97817e42a9a78e9635`.
 - Tarea sigue abierta para pruebas integradas y verificación visual; no se ejecutaron hojas reales ni Apps Script desplegado.
+
+
+### Asociación visual — confianza y criterios de coincidencia (2026-11-26)
+- Se amplió el texto de asociación en las tarjetas para mostrar nivel de confianza (alta/media/baja) y criterios que sustentan la coincidencia (modelo en carpeta/nombre, alias, marca, categoría, versión, encendido y rango de años), además de vehículo, versión, encendido y años aplicables.
+- La misma presentación se conserva al recibir la respuesta de persistencia y al cargar la tarjeta desde el resultado inicial.
+- Prueba aislada de render: sugerencia Toyota Hilux => muestra confianza alta, señales de carpeta/marca/versión/encendido/años y vehículo VH-02; bloques de UI compilan. PASS.
+- Commit: `8d63c5943f18fa2e6b36003ef8b829846d9a3bf2`.
