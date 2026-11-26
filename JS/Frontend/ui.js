@@ -8960,7 +8960,12 @@ export async function openAuditDriveModal(options = {}) {
             }).join(' | ');
             entry.relationship.textContent = details
                 ? (association.status === 'ambiguous' ? 'Asociación ambigua: ' : 'Vehículo sugerido: ') + details
-                : 'Sin coincidencia de modelo; no se asignó un vehículo automáticamente.';
+                : (association.status === 'no_verificada'
+                    ? 'Asociación no verificada; no se asignó un vehículo automáticamente.' +
+                        (association.message ? ' ' + String(association.message) : '')
+                    : (association.status === 'ambiguous'
+                        ? 'Asociación ambigua; no se asignó un vehículo automáticamente.'
+                        : 'Sin coincidencia de modelo; no se asignó un vehículo automáticamente.'));
         }
         entry.card.classList.remove('is-pending', 'is-registered', 'is-blocked', 'is-error');
         if (status === 'pending') entry.card.classList.add('is-pending');
@@ -9070,9 +9075,16 @@ export async function openAuditDriveModal(options = {}) {
                     ' (' + String(location.sheet || 'Hoja') + ' · fila ' + (Number(location.row) || '?') + ' · ' + String(location.field || 'imagen') + ')').join('; ')
                 : (associationText
                     ? (association.status === 'ambiguous' ? 'Asociación ambigua: ' : 'Vehículo sugerido: ') + associationText
-                    : (classification === 'Sin uso detectado'
-                        ? 'Asociación pendiente de verificación; no se asignó un vehículo automáticamente.'
-                        : 'Sin asociación de vehículo en esta clasificación.'));
+                    : (association
+                        ? (association.status === 'no_verificada'
+                            ? 'Asociación no verificada; no se asignó un vehículo automáticamente.' +
+                                (association.message ? ' ' + String(association.message) : '')
+                            : (association.status === 'ambiguous'
+                                ? 'Asociación ambigua; no se asignó un vehículo automáticamente.'
+                                : 'Sin coincidencia de modelo; no se asignó un vehículo automáticamente.'))
+                        : (classification === 'Sin uso detectado'
+                            ? 'Asociación pendiente de verificación; no se asignó un vehículo automáticamente.'
+                            : 'Sin asociación de vehículo en esta clasificación.')));
             const sourceLink = document.createElement('a');
             sourceLink.className = 'audit-drive-file-link';
             sourceLink.href = String(file.url || ('https://drive.google.com/file/d/' + fileId + '/view'));
