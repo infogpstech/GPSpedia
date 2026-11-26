@@ -26,4 +26,6 @@ El checkpoint previo completo se archivó, sin alteración, en `Olds/Documentaci
 Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMIN/Drive, imágenes y YouTube siguen diferidas hasta disponer de identidad sintética, recursos aislados y limpieza verificable. Android físico pendiente. F022 es deuda visual offline no bloqueante. BETA-F021 (protección de rama) pendiente administrativa.
 
 ## Siguiente acción
-Esperar/verificar Actions del commit `dd85ed5705f9d29fc3a3a94d4074124cbc08e35a`. Si regresión PASS, continuar con pruebas Beta GET-only y pruebas no mutables preparadas; mantener mutaciones sin ejecutar hasta preflight de aislamiento y limpieza. Revisar diff y actualizar registros con evidencia.
+- Regression CI de run 45809263608 aprobada en SHA cbe5e8a6adecb1359475d711810677650fbe4fba: 542 suites, 6453 pruebas, 0 fallos.
+- Responsive-browser, login surface smoke GET-only, manifest PWA y offline navigation PASS.
+- Continuar validaciones Beta no mutables y preparar pendientes diferidos; no ejecutar operaciones mutables sin preflight de recursos sintéticos y cleanup.
