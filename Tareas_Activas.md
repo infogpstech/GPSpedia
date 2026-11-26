@@ -706,3 +706,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## MIG-URL-008 — disparo de health ante cambios de fuentes Apps Script (2026-11-26)
 **Estado: IMPLEMENTACIÓN PUBLICADA; EJECUCIÓN REMOTA PENDIENTE.** `deployed-service-health.yml` ahora vigila los seis archivos fuente activos de Apps Script. El push dispara probes GET-only de los seis deployments y pruebas CATALOG independientes; no publica Apps Script ni escribe datos.
+
+
+## MIG-URL-008 — diagnóstico y corrección del runner health (2026-11-26)
+- **BETA-F023:** corregido el `if` duplicado del resumen shell; nueva ejecución pendiente.
+- **BETA-F024:** UTILITIES respondió SLOW a 7,916 ms en una muestra; el runner ahora mide cinco muestras GET-only en ADMIN y UTILITIES, con timeout de 8 s por muestra.

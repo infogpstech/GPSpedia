@@ -761,3 +761,9 @@ En el smoke frío fallan CSS Font Awesome CDN y `/thumbnail` de Drive. No afecta
 
 ### MIG-URL-008 — health remoto al cambiar fuentes de servicio
 Se añadieron los seis archivos fuente Apps Script al filtro de activación del workflow. Los cambios futuros en AUTH/CATALOG/WRITE/FEEDBACK/UTILITIES/ADMIN ejecutarán el contrato local y health GET-only de los seis deployments. No equivale a despliegue ni ejecuta mutaciones.
+
+
+### MIG-URL-008 — BETA-F023 / BETA-F024
+- Run `45756293382`: contrato local 21/21 PASS; health remoto 4/6 disponibles (AUTH y ADMIN FAIL); CATALOG feed, boundaries, matriz y paginación PASS; ADMIN mediana 1,976 ms (2/5 >=2 s). UTILITIES respondió 7,916 ms y se marcó SLOW.
+- El resumen del workflow falló por `if` duplicado. Corregido en commit `5496c88c`.
+- `RemoteAdminLatency.mjs` se generalizó mediante `SERVICE_KEY` para cinco muestras de ADMIN y UTILITIES; nueva medición pendiente.
