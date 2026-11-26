@@ -8,7 +8,7 @@ El endpoint de diagnóstico es una superficie pública de solo lectura. Su respu
 
 ## Contratos versionados
 
-| Clave | Identidad JSON | Versión del código fuente | Estado esperado |
+| Clave | Identidad JSON | Versión declarada por el endpoint de salud | Estado esperado |
 |---|---|---:|---|
 | AUTH | `GPSpedia-Auth` | 2.2.5 | `available` |
 | CATALOG | `GPSpedia-Catalog` | 2.4.0 | `available` |
@@ -17,7 +17,7 @@ El endpoint de diagnóstico es una superficie pública de solo lectura. Su respu
 | UTILITIES | `GPSpedia-Utilities` | 1.5.0 | `available` |
 | ADMIN | `GPSpedia-Admin` | 2.7.2 | `available` |
 
-La versión se informa cuando está disponible; no reemplaza la validación de identidad. Los deployments externos no se consideran verificados solo porque exista código fuente con el contrato esperado.
+La versión de esta tabla corresponde exclusivamente al campo `version` que devuelve el endpoint `GET ?debug=true` en el código fuente. No representa necesariamente el comentario `COMPONENT VERSION` ni una versión general del archivo Apps Script. El runner Beta compara el valor del deployment con esta versión de contrato. Los deployments externos no se consideran verificados solo porque exista código fuente con el contrato esperado.
 
 ## Servicios retirados
 
@@ -60,3 +60,8 @@ La revisión local cubre los seis servicios activos: AUTH, CATALOG, WRITE, FEEDB
 ## Revisión de versiones fuente — 2026-11-19
 
 Las versiones de FEEDBACK (1.2.2) y ADMIN (2.7.2) se cotejaron con los objetos JSON de salud de `JS/Services/feedback.js` y `JS/Services/admin.js`, respectivamente. Las versiones documentadas describen la rama fuente; no certifican que los deployments externos estén actualizados.
+
+
+## Distinción entre versión de salud y versión del componente
+
+La versión utilizada para identificar el deployment es la que devuelve `doGet` cuando recibe `?debug=true`. Los comentarios `COMPONENT VERSION` pueden seguir una numeración independiente y no deben usarse para validar el deployment de salud. Cualquier cambio de la versión del endpoint debe actualizar la tabla de contratos y la prueba `ServiceHealthContract.mjs` en el mismo cambio.
