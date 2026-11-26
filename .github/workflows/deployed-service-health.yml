@@ -20,6 +20,9 @@ on:
       - "JS/Tests/RemoteAdminLatency.mjs"
       - "JS/Tests/RemoteCatalogFeedMatrix.mjs"
       - "JS/Tests/RemoteCatalogFeedPagination.mjs"
+      - "JS/Tests/TutorialYouTubePlaybackBeta.mjs"
+      - "JS/Frontend/ui.js"
+      - "JS/Services/catalog.js"
   workflow_dispatch:
   # Revalidación manual tras actualizar deployments Beta: todas las sondas de este workflow son GET-only.
 permissions:
@@ -117,3 +120,33 @@ jobs:
             exit 0
           fi
           exit 1
+
+  tutorial-playback-beta:
+    name: Beta tutorial YouTube playback (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    needs: deployed-service-health
+    env:
+      GPSPEDIA_HEALTH_ENV: BETA_ISOLATED
+      GPSPEDIA_CONFIRM_BETA_ENDPOINTS: I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA
+      TARGET_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: GPSpedia2.2.5_work
+          fetch-depth: 1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch exact source from this workflow run
+        run: |
+          git fetch --no-tags --depth=1 origin "$TARGET_COMMIT"
+          git cat-file -e "$TARGET_COMMIT^{commit}"
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Read public tutorial catalog and verify real YouTube playback
+        run: node JS/Tests/TutorialYouTubePlaybackBeta.mjs
