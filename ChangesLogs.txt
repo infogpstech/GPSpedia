@@ -1349,3 +1349,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Runner health GET-only ejecutado en Actions (runs 45729426765 y 45729430374); 6/6 servicios responden con identidad/JSON/estado válidos.
 - ADMIN se clasifica SLOW (2.431 y 2.701 s) y reporta deployment v2.7.1, frente a fuente 2.7.2; se registra discrepancia para seguimiento, sin despliegue.
 - Cinco servicios PASS; no se ejecutaron operaciones mutables ni probes de dependencias.
+
+
+## 2026-11-26 — Probe read-only del feed CATALOG
+- Añadido `JS/Tests/RemoteCatalogFeedReadOnly.mjs` e integrado al workflow de health.
+- Run 45729926589 SUCCESS. Lecturas cursor 0 y cursor 5/limit 1; contrato, cursors y flags validados, sin escrituras. Latencias 2.374 y 2.381 s; hallazgo F011.
