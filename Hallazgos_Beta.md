@@ -440,3 +440,17 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - ADMIN latencia en esta muestra: 2620/1317/1555/1588/1765 ms; mediana 1588 ms, máximo 2620 ms, una muestra >=2 s. La variación entre ejecuciones impide atribuir una causa solo con estas medidas.
 - CI run `45746282716`: 542 suites, 6,452 pruebas, 0 fallos; Playwright 264/264 en cuatro viewports. Pages run `45746281761` SUCCESS.
 - No se ejecutaron POST, escrituras, despliegues ni cambios en Spreadsheet/Drive/OAuth.
+
+
+## BETA-F019 — AUTH expone metadatos internos en el diagnóstico público (2026-11-26)
+- `Services/SERVICE_HEALTH.md` limita expresamente la respuesta pública de diagnóstico a identidad, versión y estado; prohíbe nombres de hojas y estructura interna.
+- `JS/Services/Auth.js`, `doGet(debug=true)`, incluye el campo adicional `sessionAuthority`, contrario al contrato.
+- Se amplió `ServiceHealthContract.mjs` para rechazar `sessionAuthority`, `sheetName` y `spreadsheetName`; se amplió el filtro del runner remoto para detectar esos campos en la respuesta.
+- Evidencia local: run `45746770345`, las suites AUG-024 y MIG021 fallan por `AUTH expone sessionAuthority`. El runner completó 542 suites; 6,410 pruebas aprobadas y 2 fallos de suite (ambos corresponden a la misma aserción duplicada).
+- Evidencia remota: run `45746770426`, AUTH falla con `Campo de diagnóstico no permitido: response.sessionAuthority`; el deployment real reproduce la exposición.
+- No se modificó `Auth.js` ni el deployment durante la fase de validación. La corrección de servicio queda pendiente y no se debe marcar AUTH como PASS hasta retirar el campo y volver a ejecutar.
+
+## Confirmación Beta — salud y rendimiento (2026-11-26)
+- Run `45746770426`: ADMIN falla por deployment 2.7.1 vs fuente 2.7.2; AUTH falla por `sessionAuthority`; FEEDBACK responde v1.2.2 en estado SLOW (2128 ms); CATALOG 2.4.0, WRITE 2.3.1 y UTILITIES 1.5.0 responden PASS. Resultado: 4/6 disponibles, con dos fallos de contrato.
+- ADMIN cinco muestras: 5570/2016/2182/1757/2031 ms; mediana 2031 ms, máximo 5570 ms, cuatro muestras >=2 s. Variabilidad alta, sin causa atribuida.
+- En la misma ejecución, CATALOG feed, boundaries, matriz y paginación secuencial permanecen PASS. No hubo escrituras ni despliegues.

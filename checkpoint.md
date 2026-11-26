@@ -1272,3 +1272,19 @@ Continuar la matriz Beta en orden, empezando por validaciones read-only adiciona
 
 ### Siguiente fase
 La superficie GET pública de los seis servicios y el feed CATALOG ya está cubierta por los probes disponibles. Continuar con revisión de contratos y casos locales de AUTH/WRITE/FEEDBACK/UTILITIES/ADMIN; los flujos Beta autenticados o mutables requieren una identidad sintética de prueba y un mecanismo de limpieza/ownership verificable. No usar credenciales ni datos de usuarios reales ni desplegar servicios para resolver la discrepancia ADMIN sin autorización específica.
+
+
+## Continuidad — detección de metadatos AUTH y consolidación de fallos (2026-11-26)
+
+- Commit de tests: `1a1625eb64be58d0ad38a1aec22a8a6800dfd621`; se endureció `ServiceHealthContract.mjs` y el runner remoto para rechazar `sessionAuthority`, `sheetName` y `spreadsheetName` en el diagnóstico público.
+- Contrato normativo: `Services/SERVICE_HEALTH.md` exige solo identidad, versión y estado; prohíbe nombres de hojas/estructura interna. La fuente AUTH `doGet(debug=true)` incluye `sessionAuthority`. Hallazgo BETA-F019.
+- Run remoto `45746770426`: el gate local falla por AUTH y el probe remoto, ejecutado de todas formas tras ajustar workflow, confirma `response.sessionAuthority` en el deployment. AUTH FAIL. ADMIN también FAIL por v2.7.1 vs v2.7.2. FEEDBACK SLOW 2128 ms; CATALOG/WRITE/UTILITIES PASS. Resultado 4/6 disponibles, dos fallos de contrato.
+- ADMIN repeated latency: 5570/2016/2182/1757/2031 ms; mediana 2031 ms, máximo 5570 ms, 4/5 muestras >=2 s.
+- CATALOG en el mismo run: feed básico, límites, matriz y paginación secuencial PASS; cursor 0→5, 5 eventos, 3 reset, sin cambios concurrentes de revisión.
+- Se ajustó `RunServiceTests.mjs` en commit `3b77c59fde1ee83d2810e61ba673cdfd3741dc26` para que un test fallido no detenga las demás suites del grupo; el job sigue fallando al final si hay fallos. Run `45747008507`: 542 suites, 6,410 pruebas aprobadas, 2 fallos (misma aserción AUTH duplicada en AUG-024 y MIG021). Playwright 264/264 PASS; Pages SUCCESS.
+- El usuario autorizó pruebas avanzadas sobre Beta aislada, pero no se hicieron POST ni escrituras. Revisión de `handleLogin`: incluso un login inválido escribe una entrada de error en la hoja Logs y reserva/actualiza CacheService; no se ejecutó porque no hay mecanismo disponible para inspeccionar y limpiar esa evidencia después. El conector Google Drive aparece deshabilitado por administrador, por lo que no se puede verificar/limpiar directamente Spreadsheet/Drive desde esta sesión.
+- No se modificó código de servicios, endpoints, deployments, permisos, PropertiesService, Spreadsheet, Drive ni OAuth. La carpeta y Spreadsheet de prueba no recibieron escrituras desde estos probes.
+- GitHub API sigue devolviendo `protected=false` para la rama base y la lista de rulesets está vacía; no se modificó esa configuración ni la rama base.
+
+### Próxima acción
+Mantener la validación Beta en modo no destructivo: continuar cobertura contractual local y revisar flujos de CATALOG/WRITE/FEEDBACK/UTILITIES/ADMIN. Para AUTH/usuarios y demás casos mutables, no emitir solicitudes remotas hasta disponer de identidad sintética y mecanismo verificable de limpieza de Logs/ActiveSessions/Drive/Spreadsheet. Corregir `sessionAuthority` en una tarea de implementación separada y volver a ejecutar el contrato; resolver ADMIN deployment por procedimiento autorizado, no desde esta fase.

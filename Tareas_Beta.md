@@ -637,3 +637,12 @@ git rev-parse HEAD
 - El test valida orden/continuidad de revisiones, ausencia de duplicados entre páginas, cursor de continuación, semántica de reset y límite máximo de páginas. Solo GET; no registra snapshots ni datos de registros.
 - CI de commit `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`: 542 suites/6,452 pruebas PASS; Playwright 264/264; Pages SUCCESS.
 - Se considera completada la fase pública GET-only de CATALOG. AUTH autenticado, WRITE, FEEDBACK, UTILITIES funcional y ADMIN mutable siguen pendientes de fixtures/cuentas de prueba y cleanup verificable. ADMIN health sigue FAIL por v2.7.1 vs 2.7.2.
+
+
+### Evidencia — diagnóstico AUTH y límites de seguridad de pruebas (2026-11-26)
+- Hallazgo BETA-F019: AUTH `doGet(debug=true)` devuelve `sessionAuthority`, prohibido por `Services/SERVICE_HEALTH.md`. El test local y el probe remoto lo detectan. No se modificó servicio/deployment.
+- Run `45746770426`: AUTH FAIL por metadato interno; ADMIN FAIL por v2.7.1 vs v2.7.2; FEEDBACK SLOW 2128 ms; CATALOG/WRITE/UTILITIES PASS. Feed, boundaries, matriz y paginación CATALOG PASS.
+- ADMIN repeated latency: mediana 2031 ms, máximo 5570 ms, 4/5 muestras >=2 s.
+- Run `45747008507`: 542 suites, 6,410 pruebas aprobadas, 2 fallos de suite (la misma aserción AUTH duplicada); Playwright 264/264 PASS. El runner ahora continúa todas las suites y conserva fallo agregado.
+- **AUTH login negativo no ejecutado remotamente:** `handleLogin` escribe un registro en Logs incluso cuando rechaza credenciales; sin acceso a lectura/limpieza no se puede garantizar la integridad del Spreadsheet tras el caso. El conector Google Drive figura deshabilitado por administrador; no hay acceso directo a Drive/Sheets desde esta sesión.
+- No se ejecutaron POST, escrituras, despliegues ni cambios remotos. Las pruebas funcionales mutables quedan NO EJECUTADAS hasta que la identidad sintética y el cleanup sean verificables.

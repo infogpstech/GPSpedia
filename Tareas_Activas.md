@@ -640,3 +640,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## MIG-URL-008 — CATALOG paginación secuencial Beta (2026-11-26)
 **Estado: FASE GET-ONLY COMPLETADA; VALIDACIÓN BETA GLOBAL EN PROGRESO.** Run 45746282852: feed, boundaries, matriz y paginación secuencial PASS (5 páginas/5 eventos; cursor 0→5; sin cambios concurrentes). Health sigue FAIL por versión ADMIN 2.7.1 vs 2.7.2. CI 542 suites/6,452 pruebas y Playwright 264/264 PASS. Próximo: ampliar cobertura contractual local y preparar flujos autenticados/mutables con identidad sintética y limpieza verificable.
+
+
+## MIG-URL-008 — contrato de diagnóstico AUTH (2026-11-26)
+**Estado: HALLAZGO CONFIRMADO; CORRECCIÓN PENDIENTE.** El endpoint público AUTH incluye `sessionAuthority`, contrario al contrato de salud; test local y probe remoto lo reproducen. No se modificó servicio ni deployment. ADMIN mantiene v2.7.1 frente a 2.7.2. CATALOG feed/boundaries/matriz/paginación siguen PASS. Próximo: mantener pruebas no destructivas, registrar corrección de AUTH para una fase de implementación separada y continuar la cobertura local de los demás servicios.

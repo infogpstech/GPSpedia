@@ -1372,3 +1372,14 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Integrado al workflow `.github/workflows/deployed-service-health.yml` con ejecución independiente y resumen agregado.
 - Commit `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`. Run `45746282852`: 5 páginas, 5 eventos, 3 eventos reset, cursor 0→5, sin cambios concurrentes; PASS.
 - Health mantiene FAIL por ADMIN v2.7.1 vs fuente 2.7.2; feed básico, boundaries, matriz y paginación PASS. No hubo escrituras ni despliegues.
+
+
+## 2026-11-26 — endurecimiento del contrato AUTH y resiliencia del runner
+- `JS/Tests/ServiceHealthContract.mjs` ahora rechaza `sessionAuthority`, `sheetName` y `spreadsheetName` en la respuesta de diagnóstico; `JS/Tests/RemoteServiceHealth.mjs` aplica el mismo filtro al probe remoto.
+- Evidencia: AUTH `doGet(debug=true)` expone `sessionAuthority`, contrario a `Services/SERVICE_HEALTH.md`. No se modificó código de servicio ni deployment.
+- `.github/workflows/deployed-service-health.yml` ejecuta probes remotos aunque falle el contrato local y conserva el resultado agregado FAIL.
+- `JS/Tests/RunServiceTests.mjs` ahora captura fallos individuales de suites y continúa ejecutando las demás; el proceso sigue devolviendo error al final si hay fallos.
+- Commits: contrato `1a1625eb64be58d0ad38a1aec22a8a6800dfd621`, workflow `9df7fe091d2854d8c81c2156665e3c01cc33f0bd`, runner `3b77c59fde1ee83d2810e61ba673cdfd3741dc26`.
+- Run `45746770426`: AUTH FAIL por metadato interno, ADMIN FAIL por versión, FEEDBACK SLOW; feed CATALOG y pruebas independientes PASS.
+- Run `45747008507`: 542 suites, 6,410 pruebas aprobadas, 2 fallos de suite (misma aserción AUTH duplicada); Playwright 264/264 PASS.
+- Sin escrituras ni despliegues remotos.
