@@ -1952,40 +1952,40 @@ function doPostInternal_(e) {
                 response = handleGetCortesImageOrganizerOperations_(payload, developerContext);
                 break;
             case 'applyCortesImageOrganizer':
-                response = handleApplyCortesImageOrganizer_(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleApplyCortesImageOrganizer_(payload, logMessage, developerContext));
                 break;
             case 'rollbackCortesImageOrganizer':
-                response = handleRollbackCortesImageOrganizer_(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleRollbackCortesImageOrganizer_(payload, logMessage, developerContext));
                 break;
             case 'applyCortesImageReconciliation':
-                response = handleApplyCortesImageReconciliation_(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleApplyCortesImageReconciliation_(payload, logMessage, developerContext));
                 break;
             case 'migrateReplacedImagesSchema':
-                response = handleMigrateReplacedImagesSchema(payload, logMessage);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleMigrateReplacedImagesSchema(payload, logMessage));
                 break;
             case 'migrateVehicleContributionsSchema':
                 response = handleMigrateVehicleContributionsSchema(payload, logMessage);
                 break;
             case 'resolveVehicleContributionCandidate':
-                response = handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleResolveVehicleContributionCandidate_(payload, developerContext, logMessage));
                 break;
             case 'getDriveStorage':
                 response = handleGetDriveStorage(payload, logMessage);
                 break;
             case 'recoverReplacedImage':
-                response = handleRecoverReplacedImage(payload, logMessage);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleRecoverReplacedImage(payload, logMessage));
                 break;
             case 'deleteReplacedImage':
-                response = handleDeleteReplacedImage(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleDeleteReplacedImage(payload, logMessage, developerContext));
                 break;
             case 'restoreReplacedImageFromTrash':
-                response = handleRestoreReplacedImageFromTrash(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleRestoreReplacedImageFromTrash(payload, logMessage, developerContext));
                 break;
             case 'permanentlyDeleteReplacedImage':
-                response = handlePermanentlyDeleteReplacedImage(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handlePermanentlyDeleteReplacedImage(payload, logMessage, developerContext));
                 break;
             case 'markReplacedImageInUse':
-                response = handleMarkReplacedImageInUse(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleMarkReplacedImageInUse(payload, logMessage, developerContext));
                 break;
             case 'auditDriveImagesInCortes':
                 response = handleAuditDriveImagesInCortes(payload, logMessage, developerContext);
@@ -1993,13 +1993,10 @@ function doPostInternal_(e) {
             case 'saveUnusedImagesInventory':
                 // Todas las auditorías escriben en la misma hoja Imagenes_Reemplazadas.
                 // La guarda debe ser global para evitar que dos auditId reserven la misma fila.
-                response = withAdminLocalOperationGuard_(
-                    "drive-inventory:shared-inventory-sheet",
-                    function() {
-                        return payload && payload.mode === "organize"
-                            ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
-                            : handleSaveUnusedImagesInventory(payload, logMessage, developerContext);
-                    }, 420);
+                response = withSharedReplacedImagesInventoryGuard_(() =>
+                    payload && payload.mode === "organize"
+                        ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
+                        : handleSaveUnusedImagesInventory(payload, logMessage, developerContext));
                 break;
             case 'getCortesImageFolders':
                 response = handleGetCortesImageFolders(payload, logMessage);
@@ -2014,7 +2011,7 @@ function doPostInternal_(e) {
                     function() { return handleCreateCortesImageFolder(payload, logMessage, developerContext); }, 120);
                 break;
             case 'moveReplacedImage':
-                response = handleMoveReplacedImage(payload, logMessage, developerContext);
+                response = withSharedReplacedImagesInventoryGuard_(() => handleMoveReplacedImage(payload, logMessage, developerContext));
                 break;
             case 'getReplacedImageDownloadUrl':
                 response = handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext);
@@ -11901,7 +11898,8 @@ function handleGetReplacedImages(payload, logMessage) {
     let candidateInventorySync = { status: "skipped", created: 0, updated: 0, skipped: 0 };
     if (!schema.missingHeaders.length && Array.isArray(payload && payload.imageInventoryCandidates)) {
         try {
-            candidateInventorySync = syncContributionCandidateImageInventory_(payload.imageInventoryCandidates);
+            candidateInventorySync = withSharedReplacedImagesInventoryGuard_(() =>
+                syncContributionCandidateImageInventory_(payload.imageInventoryCandidates));
         } catch (candidateSyncError) {
             candidateInventorySync = { status: "error", message: String(candidateSyncError && candidateSyncError.message || candidateSyncError) };
         }
@@ -12796,6 +12794,10 @@ function releaseAdminLocalGuard_(sheet,scopeHash,requestId) {
     if(findAdminLocalGuardRow_(sheet,scopeHash))throw new Error("No se confirmó la liberación de la guarda ADMIN.");
     return true;
 }
+function withSharedReplacedImagesInventoryGuard_(callback) {
+    return withAdminLocalOperationGuard_("drive-inventory:shared-inventory-sheet", callback, 420);
+}
+
 function withAdminLocalOperationGuard_(scope,callback,ttlSeconds,dependencies) {
     const scopeValue=String(scope||"").trim();
     if(!scopeValue||typeof callback!=="function")throw new Error("La guarda local requiere un alcance y una función válidos.");
