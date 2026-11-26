@@ -14205,7 +14205,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
         if (!incremental) { auditState.inventoryStatus = "processing"; saveDriveAuditServerState_(auditState); }
 
         let references = null, referenceScanError = "";
-        try { references = collectActiveDriveReferences(false); }
+        try { references = collectCatalogImageReferences(false); }
         catch (error) { referenceScanError = error.message || String(error); }
 
         const rootFolder = getCortesRootFolder();
@@ -14882,7 +14882,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         state = { auditId, ownerId, status: "running", scanVersion: ADMIN_SERVICE_VERSION, createdAt: Date.now(),
             pageCount: 0, totalDiscovered: 0, totalAnalyzed: 0, foldersVisited: 1, errorCount: 0, duplicateFileCount: 0, duplicateFolderCount: 0 };
         const referenceCaptureStartedAt = Date.now();
-        const references = collectActiveDriveReferences(true);
+        const references = collectCatalogImageReferences(true);
         referenceCaptureMs = Date.now() - referenceCaptureStartedAt;
         cortesScanMetrics = references.metrics && references.metrics.cortes || null;
         state.cortesRowsRead = Number(cortesScanMetrics && cortesScanMetrics.rows) || 0;
