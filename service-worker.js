@@ -1,4 +1,4 @@
-const CACHE_NAME='gpsepedia-cache-v77';
+const CACHE_NAME='gpsepedia-cache-v78';
 const CORE_ASSETS=['./','./index.html','./HTML/add_cortes.html','./HTML/users.html','./JS/Frontend/main.js','./JS/Frontend/clientInteractionPolicy.js','./JS/Frontend/auth.js','./JS/Frontend/ui.js','./JS/Frontend/activityDashboard.js','./JS/Frontend/termsDeviceAcceptance.js','./JS/Frontend/rich-text.js','./JS/Frontend/state.js','./JS/Frontend/navigation.js','./JS/Frontend/offline.js','./JS/Frontend/lightbox.js','./JS/Frontend/api-config.js','./JS/Frontend/serviceTelemetry.js','./JS/Frontend/VinDifferentialEngine.js','./JS/Frontend/search-utils.js','./JS/Frontend/share-utils.js','./JS/Frontend/catalogStatus.js','./JS/Frontend/catalogRequest.js','./JS/Frontend/pys-data.js','./JS/Frontend/validationSubmission.js','./JS/Frontend/likeState.js','./JS/Frontend/youtubeUpload.js','./JS/Frontend/imageObjectUrlCache.js','./JS/Frontend/thumbnailCompressionQueue.js','./JS/Frontend/modalNavigation.js','./JS/Frontend/overlayHistory.js','./JS/Frontend/navigationHistory.js','./JS/Frontend/centralConfigurationCache.js','./JS/Frontend/sessionCacheInvalidation.js','./JS/Frontend/printQr.js','./JS/Frontend/qrcode-generator.mjs','./JS/Frontend/editBackupStore.js','./JS/Frontend/adminImageUploadIsolation.js','./JS/Frontend/validationBannerLifecycle.js','./JS/Frontend/usefulSyncQueue.js','./JS/Frontend/inboxPageCache.js','./JS/Frontend/driveStorageAlerts.js','./JS/Frontend/developerConsoleConfirmation.js','./style.css','./contextual-help.css','./button-system.css','./manifest.json','./Images/Logo_TemaOscuro.png','./Images/icon-v3-512x512.png','./Images/tracklink_logo.png'];
 const OPTIONAL_ASSETS=['./Images/icon-v3-192x192.png','./Images/icon-v3-512x512.png','./Images/icon-pwa-192x192.png','./Images/icon-pwa-512x512.png'];
 function isQuotaExceeded(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.code===22));}
@@ -103,11 +103,30 @@ self.addEventListener('fetch', event => {
  const updatePromise = fetchAndCache_(request);
  event.waitUntil(updatePromise.then(result => result.cacheWrite).catch(() => undefined));
 
- event.respondWith(cachedResponse.then(cached => {
-  if (cached) return cached;
-  return updatePromise.then(result => result.response);
- }).catch(error => {
-  if (request.mode === 'navigate') return offlineNavigationFallback_(request);
-  throw error;
- }));
+ // Para documentos y código del mismo origen, priorizar red: evita que una
+ // versión obsoleta de la aplicación se ejecute tras una publicación. Cache fallback
+ // conserva el funcionamiento offline.
+ const url = new URL(request.url, self.location.href);
+ const networkFirst = url.origin === self.location.origin &&
+  (request.mode === 'navigate' || request.destination === 'document' ||
+   request.destination === 'script' || request.destination === 'style' ||
+   request.destination === 'font');
+ if (networkFirst) {
+  event.respondWith(updatePromise.then(result => result.response).then(response => {
+   if (response && response.status === 200) return response;
+   return cachedResponse.then(cached => cached || response);
+  }).catch(() => cachedResponse.then(cached => {
+   if (cached) return cached;
+   if (request.mode === 'navigate') return offlineNavigationFallback_(request);
+   throw new Error('No se pudo recuperar el recurso desde red ni caché.');
+  })));
+ } else {
+  event.respondWith(cachedResponse.then(cached => {
+   if (cached) return cached;
+   return updatePromise.then(result => result.response);
+  }).catch(error => {
+   if (request.mode === 'navigate') return offlineNavigationFallback_(request);
+   throw error;
+  }));
+ }
 });
