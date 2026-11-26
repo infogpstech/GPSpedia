@@ -32,6 +32,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deployed-service-health:
+    outputs:
+      contract_outcome: ${{ steps.local_contract.outcome }}
+      health_outcome: ${{ steps.health.outcome }}
+      feed_outcome: ${{ steps.catalog_feed.outcome }}
+      boundaries_outcome: ${{ steps.catalog_boundaries.outcome }}
+      matrix_outcome: ${{ steps.catalog_matrix.outcome }}
+      pagination_outcome: ${{ steps.catalog_pagination.outcome }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
@@ -123,6 +130,7 @@ jobs:
 
   tutorial-playback-beta:
     name: Beta tutorial YouTube playback (read-only)
+    if: ${{ always() && needs.deployed-service-health.outputs.contract_outcome == 'success' && needs.deployed-service-health.outputs.health_outcome == 'success' && needs.deployed-service-health.outputs.feed_outcome == 'success' && needs.deployed-service-health.outputs.boundaries_outcome == 'success' && needs.deployed-service-health.outputs.matrix_outcome == 'success' && needs.deployed-service-health.outputs.pagination_outcome == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     needs: deployed-service-health
