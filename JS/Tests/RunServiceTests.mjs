@@ -38,13 +38,16 @@ function runCli(label, path) {
  try {
   const r = spawnSync(process.execPath, ['--experimental-default-type=module', path], {cwd:ROOT,encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
   if (r.stdout) process.stdout.write(r.stdout); if (r.stderr) process.stderr.write(r.stderr);
-  if (r.error) throw r.error; if (r.status !== 0) throw new Error(label + ': Node CLI terminó con código ' + r.status);
+  if (r.error) throw r.error;
   const summaries = [...String(r.stdout || '').matchAll(/(\d+)\/(\d+)\s+PASS/g)];
   if (!summaries.length) throw new Error(label + ': no publicó resumen verificable.');
+  let partial = false;
   for (const m of summaries) {
    totals.passed += Number(m[1]);
-   if (m[1] !== m[2]) throw new Error(label + ': resumen parcial o fallido.');
+   if (m[1] !== m[2]) partial = true;
   }
+  if (r.status !== 0) throw new Error(label + ': Node CLI terminó con código ' + r.status);
+  if (partial) throw new Error(label + ': resumen parcial o fallido.');
   totals.suites++;
  } catch (error) {
   totals.suites++;
