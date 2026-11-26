@@ -1240,3 +1240,22 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Run PR `45734353707` asociado al HEAD: jobs `service-tests` y `responsive-browser` observados en progreso; en la última consulta, checkout completado y setup Node aún ejecutándose. No hay conclusión disponible todavía.
 - No se ha obtenido evidencia verificable de ejecución de `deployed-service-health.yml` ni de lecturas Beta asociadas a este HEAD. No afirmar validación remota completada.
 - El suite MIG021 ejecuta `JS/Tests/ServiceHealthContract.mjs`; el workflow Beta también incluye el mismo suite como gate antes de probes remotos y ahora observa su ruta en `paths`.
+
+
+## Continuidad — primera ronda de validación Beta GET-only (2026-11-26)
+
+**Estado:** primera fase read-only ejecutada; MIG-URL-008 continúa EN PROGRESO. No se realizaron escrituras, despliegues ni cambios en recursos remotos.
+
+- HEAD de trabajo verificado al cierre de esta fase: `41673965804ef6e272d56e864aa0f7a51e5a9d80`. Rama base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- La API de GitHub devuelve `protected=false` para la rama base. No se modificó su configuración; queda como observación de administración del repositorio, pese a que el flujo de trabajo mantiene la instrucción de no escribir en esa rama.
+- CI del commit: run `45745832547` SUCCESS; 542 suites, 6,452 pruebas aprobadas, 0 fallos. Playwright AUG-146: 264/264 PASS en 1366x768, 390x844, 360x800 y 320x700; 16 capturas sintéticas. Pages build/deploy run `45745831839` SUCCESS.
+- Health Beta: run `45745832696`; contrato local `ServiceHealthContract` 21/21 PASS. AUTH 2.2.5, CATALOG 2.4.0, WRITE 2.3.1, FEEDBACK 1.2.2 y UTILITIES 1.5.0 responden PASS. ADMIN devuelve identidad/estado válidos, pero deployment 2.7.1 vs fuente esperada 2.7.2; resultado global 5/6 y FAIL correcto.
+- CATALOG feed GET-only: cursor 0/limit 1 devuelve 1 evento, currentRevision 5, minRevision 1, hasMore=true, nextCursor 1 (1733 ms); cursor 5/limit 1 devuelve 0 eventos, hasMore=false, nextCursor 5 (1706 ms).
+- CATALOG boundaries: cursor futuro solicita reset, devuelve cero eventos y cursor actual 5; cursor negativo, malformado y límites 0/51 son rechazados. PASS.
+- ADMIN repeated latency: v2.7.1; muestras 1761/2059/1658/2359/1353 ms; mediana 1761 ms, máximo 2359 ms, dos muestras >=2 s. No se atribuye causa.
+- CATALOG matrix: PASS. currentRevision 5/minRevision 1; cursor actual devuelve cola vacía; cursor pre-retención y rango intermedio exponen eventos reset con `resetRequired=true`. Se corrigió una aserción de test que confundía evento reset con página vacía de reconstrucción.
+- El workflow ahora continúa ejecutando probes GET-only independientes tras un fallo de health y conserva el FAIL agregado. Runs anteriores documentan la corrección incremental: workflow `5dd0de24`, resumen shell-safe `a10d2bb2`, ajuste semántico matrix `51436be4` y validación completa `41673965`.
+- La evidencia de esta fase se registró en `Hallazgos_Beta.md`, `Tareas_Beta.md`, `Tareas_Activas.md` y `ChangesLogs.txt`. No se registraron payloads ni contenido de eventos.
+
+### Próxima acción
+Continuar la matriz Beta en orden, empezando por validaciones read-only adicionales de CATALOG y health/UI; preparar pruebas autenticadas/mutables solo con identidades sintéticas, ownership y cleanup verificables. La validación que requiera despliegue ADMIN permanece pendiente; no desplegar Apps Script ni alterar datos/propiedades/permisos sin autorización específica.

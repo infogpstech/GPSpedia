@@ -594,7 +594,7 @@ git rev-parse HEAD
 
 
 ## 25. MIG-URL-008 — Validación de salud y funciones en Beta aislada
-**Estado: PREPARACIÓN COMPLETADA — NO EJECUTADA.**
+**Estado: EN PROGRESO — FASE READ-ONLY EJECUTADA; PRUEBAS FUNCIONALES PENDIENTES.**
 
 ### Sincronización obligatoria
 Ejecutar desde un clon local de GPSpedia. No descarta cambios y detiene la secuencia si repositorio/rama/árbol no coinciden:
@@ -621,3 +621,12 @@ git rev-parse HEAD
 9. Si no se dispone de Beta aislada/autorizada, dejar todas las pruebas remotas como NO EJECUTADAS y conservar esta checklist.
 
 **Límites:** No ejecutar sobre producción. No desplegar Apps Script ni alterar Spreadsheet, Drive, PropertiesService, permisos, datos o OAuth sin autorización explícita adicional. El estado del plan no se cerrará como validación remota hasta contar con evidencia real.
+
+
+### Evidencia de ejecución — primera fase GET-only (2026-11-26)
+- El propietario confirmó que la ejecución corresponde a entorno Beta aislado y autorizó pruebas avanzadas sobre recursos de prueba. Se mantuvieron fuera del alcance producción, deployments Apps Script, permisos, PropertiesService, OAuth y escrituras Drive/Spreadsheet.
+- Run `45745832696`, commit `41673965804ef6e272d56e864aa0f7a51e5a9d80`: contrato health 21/21 PASS; cinco servicios coinciden con versión esperada; ADMIN reporta 2.7.1 frente a 2.7.2.
+- CATALOG feed cursor 0/1 y cursor 5/1: PASS. Boundaries de cursor futuro, negativo, malformado y límites 0/51: PASS. Matriz de retención/cursor intermedio/repetibilidad: PASS.
+- ADMIN latency: cinco muestras, mediana 1761 ms, máximo 2359 ms, dos muestras >=2 s.
+- El job global conserva FAIL por discrepancia ADMIN; las pruebas independientes se ejecutaron y sus resultados se conservaron.
+- Sin POST funcional, despliegue, escritura ni modificación de recursos remotos. Los flujos AUTH autenticados, WRITE, FEEDBACK, UTILITIES y ADMIN mutables continúan PENDIENTES de fixtures sintéticos, credenciales de prueba y ownership/cleanup comprobables.

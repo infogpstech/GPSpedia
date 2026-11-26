@@ -1356,3 +1356,12 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Run 45729926589 SUCCESS. Lecturas cursor 0 y cursor 5/limit 1; contrato, cursors y flags validados, sin escrituras. Latencias 2.374 y 2.381 s; hallazgo F011.
 
 2026-11-26 — GPSpedia Beta: agregado `JS/Tests/RemoteAdminLatency.mjs` y paso read-only en workflow para cinco mediciones ADMIN; documentados resultados y diferencia de versión en Hallazgos_Beta.md/checkpoint.md.
+
+
+## 2026-11-26 — Ajustes del runner y primera ronda Beta read-only
+- `.github/workflows/deployed-service-health.yml`: los probes GET-only independientes continúan tras fallos previos; un paso final consolida outcomes y conserva FAIL global si alguna validación falla.
+- `JS/Tests/RemoteCatalogFeedMatrix.mjs`: se corrigió la interpretación de `resetRequired`; ahora distingue eventos reset incluidos en `changes` de páginas vacías que solicitan reconstrucción.
+- Commits de harness: `5dd0de24bb580b06d713c47d87f7327a12070454`, `a10d2bb242bf6a88120873c753acb3ab5211bace`, `51436be42a373a55b6484bc19e510ee2207f7fb1`, `41673965804ef6e272d56e864aa0f7a51e5a9d80`.
+- Beta GET-only run `45745832696`: contrato 21/21, CATALOG feed/boundaries/matrix PASS, ADMIN latency medida; health global FAIL por ADMIN deployment 2.7.1 vs 2.7.2.
+- CI run `45745832547`: 542 suites, 6,452 pruebas, 0 fallos; Playwright 264/264 en cuatro viewports. Pages run `45745831839` SUCCESS.
+- Sin cambios en fuentes de servicios Apps Script, endpoints, deployments, permisos, PropertiesService, Spreadsheet, Drive u OAuth.

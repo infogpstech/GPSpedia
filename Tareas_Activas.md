@@ -632,3 +632,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **ADMIN repeated latency probe:** implementado, integrado y probado SUCCESS. Mediana de 5 muestras 1622 ms; deployment v2.7.1 vs fuente 2.7.2, pendiente decisión de despliegue y comprobaciones funcionales antes de despliegue.
 - **CATALOG feed read-only boundaries:** PASS (cursor tail/futuro/invalid/malformed y límites invalid).
 - **Pendiente:** AUTH lectura/contrato y pruebas de sesión sintética con fixture aislado y cleanup verificable; ampliar WRITE/FEEDBACK según contrato.
+
+
+## MIG-URL-008 — primera fase Beta GET-only (2026-11-26)
+**Estado: EN PROGRESO.** La fase de health, feed CATALOG, boundaries, matriz y latencia ADMIN ya tiene evidencia real de Actions. El contrato health pasó 21/21; cinco servicios coinciden con la versión esperada y ADMIN permanece en 2.7.1 frente a 2.7.2. El job global mantiene FAIL sin ocultar la discrepancia. Las pruebas de feed, límites y matriz CATALOG pasaron; no hubo escrituras ni despliegues. Próximo: continuar pruebas independientes y preparar los flujos autenticados/mutables con datos sintéticos y limpieza verificable.

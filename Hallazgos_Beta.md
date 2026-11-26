@@ -411,3 +411,23 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - La suite `ServiceHealthContract.mjs` se añadió como gate previo a los probes Beta, pero su ruta no estaba en la lista `paths` del workflow. Un cambio futuro solo en esa suite no habría disparado la validación remota.
 - Se agregó `JS/Tests/ServiceHealthContract.mjs` a los paths de activación de `deployed-service-health.yml`. El workflow también vigila la tabla versionada y el runner remoto.
 - Cambio publicado en `e958c94904b7a0d87369f92a467b83e4b90c0c87`. Pendiente confirmar resultado Actions para HEAD actualizado.
+
+
+## BETA-F017 — la matriz de CATALOG interpretaba incorrectamente resetRequired (2026-11-26)
+- La matriz GET-only suponía que cualquier respuesta con `resetRequired=true` debía tener `changes=[]`. El contrato real permite que una página incluya eventos `operation=reset` y, por tanto, que `resetRequired=true` conviva con eventos.
+- Evidencia del contrato: `JS/Services/catalog.js`, función `getChanges`, deriva `resetRequired` de los eventos incluidos; `JS/Tests/CatalogChangeFeed.mjs` valida expresamente un reset con un evento en `changes`.
+- La primera ejecución de la matriz detectó la aserción demasiado estricta. Se corrigió `JS/Tests/RemoteCatalogFeedMatrix.mjs` para validar los metadatos de eventos, distinguir un evento reset de una página vacía de reconstrucción y comprobar que esta última avance al cursor actual.
+- Ejecución Beta GET-only: run `45745832696`, commit probado `41673965804ef6e272d56e864aa0f7a51e5a9d80`; matriz PASS. La muestra observó revisión 5, minRevision 1, cinco eventos retenidos y tres eventos reset; no se registró contenido de eventos.
+- No se modificó código de servicio ni datos remotos. Corrección de harness publicada en `51436be42a373a55b6484bc19e510ee2207f7fb1` y `41673965804ef6e272d56e864aa0f7a51e5a9d80`.
+
+## BETA-F018 — el primer fallo de health impedía ejecutar probes independientes (2026-11-26)
+- El workflow ejecutaba health, feed, límites, latencia ADMIN y matriz en secuencia; el FAIL de health por versión ADMIN detenía las siguientes pruebas aunque fueran GET-only e independientes.
+- Se ajustó `.github/workflows/deployed-service-health.yml` para ejecutar los probes restantes con `if: always()` y consolidar sus resultados al final. El job conserva conclusión FAIL si cualquiera de las comprobaciones falla; no convierte fallos en PASS.
+- Verificado en run `45745832696`: health FAIL por ADMIN; feed, límites, latencia ADMIN y matriz ejecutados y PASS; el resumen mantuvo FAIL global.
+- Cambios de workflow: `5dd0de24bb580b06d713c47d87f7327a12070454` y corrección del resumen shell-safe `a10d2bb242bf6a88120873c753acb3ab5211bace`.
+
+## Confirmación Beta — discrepancia de versión ADMIN (2026-11-26)
+- Run `45745832696`, commit `41673965804ef6e272d56e864aa0f7a51e5a9d80`: AUTH 2.2.5, CATALOG 2.4.0, WRITE 2.3.1, FEEDBACK 1.2.2 y UTILITIES 1.5.0 coinciden con el contrato y responden PASS.
+- ADMIN responde con identidad/estado válidos, pero el deployment expone v2.7.1 frente a v2.7.2 esperada por la fuente. El health global clasifica 5/6 compatibles; no se atribuye a falta de conectividad.
+- Medición repetida ADMIN: 1761, 2059, 1658, 2359 y 1353 ms; mediana 1761 ms, máximo 2359 ms y dos muestras >=2000 ms. Variabilidad observada; no se atribuye causa.
+- La discrepancia y latencia quedan pendientes de revisión/despliegue Beta autorizado. No se desplegó Apps Script ni se modificaron endpoints, propiedades, permisos o datos.
