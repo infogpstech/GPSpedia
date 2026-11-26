@@ -1151,3 +1151,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Archivos: `HTML/add_cortes.html`, `service-worker.js`; no se modificó el modal ni el backend.
 - Commits: auditoría `45cc06ad5546a8daa5e632961356d52cf270fece`; formulario `694510237016bbbe1464311ba7221760f0fe48e7`; caché `12b24c09a4be6b2f3da631cd345d34b2af1e6075`.
 - Límite: no se declara resuelta la alta Beta hasta ejecutar IndexedDB real y comprobar escritura remota; no hubo status checks ni workflow runs asociados al último commit consultado.
+
+
+- [x] Code Review estático: reconstrucción inversa de los dos bloques de formulario y del cambio de caché coincide exactamente con los respaldos; persistencia, logger y modal permanecen sin cambios.
+- [x] Safety & Side Effects: no se relajó la persistencia ni se sobrescriben/borran operaciones pendientes.
+- [x] Retirar respaldos temporales después de Code Review.
