@@ -320,3 +320,12 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Latencia feed: 2.374 s (cursor inicial) y 2.381 s (cursor final). **BETA-PLAN-F011 (media, rendimiento):** el feed CATALOG supera 2 s en ambas lecturas; requiere investigación/medición adicional, no atribuir aún causa.
 - La revisión del cursor 0 mostró un evento disponible en el feed; se evitó registrar IDs, snapshots o contenido del evento.
 - Esta prueba no cubrió paginación con múltiples eventos, cursor fuera de rango/antiguo, reset requerido, retención ni reconstrucción snapshot.
+
+
+### BETA — CATALOG feed boundaries (2026-11-26)
+- Run 45730637687 SUCCESS; commit probado d529d8ee0dd6e5d31589450471b5733ec7647930.
+- GET-only: cursor futuro 999999 solicitó reset (currentRevision=5, nextCursor=5, sin eventos); cursor negativo y malformado rechazados; límites 0 y 51 rechazados. Cursor tail sin cambios y válido.
+- Feed cursor probe: cursor 0 devuelve 1 evento metadata, revision 5, nextCursor 1, hasMore true; cursor tail 5 devuelve vacío. No se registraron payloads/event IDs.
+- Latencias de boundary: tail 3285 ms, futuro 2890 ms, límite 0 1134 ms, límite 51 1443 ms; inicial 3254 ms, tail anterior 1902 ms. Variabilidad visible, no atribuible aún a causa específica.
+- Health en mismo run: 6/6 disponibles; ADMIN SLOW 2628 ms; AUTH 2003 ms; CATALOG 1267 ms; FEEDBACK 1723 ms; UTILITIES 1221 ms; WRITE 1541 ms.
+- Sin escrituras remotas, deploys ni cambios Spreadsheet.
