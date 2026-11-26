@@ -1354,3 +1354,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — Probe read-only del feed CATALOG
 - Añadido `JS/Tests/RemoteCatalogFeedReadOnly.mjs` e integrado al workflow de health.
 - Run 45729926589 SUCCESS. Lecturas cursor 0 y cursor 5/limit 1; contrato, cursors y flags validados, sin escrituras. Latencias 2.374 y 2.381 s; hallazgo F011.
+
+2026-11-26 — GPSpedia Beta: agregado `JS/Tests/RemoteAdminLatency.mjs` y paso read-only en workflow para cinco mediciones ADMIN; documentados resultados y diferencia de versión en Hallazgos_Beta.md/checkpoint.md.
