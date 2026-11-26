@@ -33,3 +33,23 @@
 ## Estado
 - Requisitos funcionales y de UX registrados.
 - Ejecución de código pendiente de auditoría completa de fuente y normativa; no declarar completado ni validar Drive/Sheets real hasta contar con evidencia.
+
+
+## Estado de ejecución actualizado — 2026-11-26
+
+| Paso | Estado local | Evidencia / pendiente real |
+|---|---|---|
+| 1. Auditoría de fuente y normativa | Completado para el alcance actual | Normativa y fuentes revisadas; continuar actualizando la auditoría si aparecen nuevas rutas. |
+| 2. Contratos de referencia y asociación | Implementado y probado con fixtures | Allowlist física actual: Cortes, Tutorial (col. 3, Imagen), Relay (col. 10, imagen), pys (col. 7, Imagen); ocho columnas de imagen en Cortes. La asociación ya usa versión, encendido y años y se calcula durante cada lote. La equivalencia de nombres físicos con las etiquetas funcionales del requisito debe confirmarse con la hoja real en Beta. |
+| 3. Registro individual incremental | Implementado; pruebas aisladas PASS | Lotes de 20, confirmación individual, reintentos idempotentes, consolidación solo tras confirmación total y guarda compartida para mutaciones de biblioteca. Falta concurrencia real en Apps Script. |
+| 4. Presentación de auditoría | Implementación local completada; revisión visual pendiente | Explorador en la misma sección, resultados progresivos, miniaturas, metadatos, asociación/confianza/criterios, estados y reintento individual; consola y explorador comparten workspace de dos columnas. Sin prueba de navegador real. |
+| 5. Biblioteca unificada | Base implementada y salvaguardas revisadas | Grid/list, historial y sin uso, selección/acciones masivas; restauración mixta habilitada; rutas backend protegidas por guarda común. Pruebas de integración remota pendientes. |
+| 6. Verificación | Parcial, con harnesses aislados | PASS de allowlist, asociación, lotes, parcialidad, reintento, capacidades y operaciones. No se ejecutó suite completa ni navegador/Drive/Spreadsheet real. |
+| 7. Botones internos | Implementación local completada | `GP-ADMIN-TAB-ACTIONS-UX-01` cerrada en implementación; revisión visual de escritorio/móvil para Beta. |
+| 8. Documentación/cierre | En curso | Tareas, auditoría, changelog y checkpoint se actualizan en cada avance. La tarea principal permanece abierta hasta completar la revisión local restante. |
+
+### Próxima secuencia de implementación
+1. Terminar pruebas aisladas de persistencia por ID, idempotencia y recuperación de estado después de recarga; comprobar que el estado de cada tarjeta nunca se derive de IndexedDB como fuente autoritativa.
+2. Revisar contratos y errores de la biblioteca unificada, incluyendo fallos parciales de operaciones masivas y sincronización de candidatos.
+3. Revisar el flujo de reconciliación/organización y rollback con fixtures, sin mutar Drive real.
+4. Hacer revisión estática final de cambios, comparación contra rama base y registros. Las publicaciones de Apps Script y pruebas Beta se excluyen de los pendientes de implementación y se reservan para esa fase.
