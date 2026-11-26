@@ -939,3 +939,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Reorganizar con iconografía consistente, diseño elegante y responsive para escritorio/móvil.
 - Botones compactos inicialmente con icono; al seleccionar uno, expandirlo para mostrar su etiqueta. Conservar handlers, accesibilidad y estados de acción.
 - Validar que la consola y la vista de biblioteca/auditoría conserven espacio y usabilidad.
+
+
+### Hallazgo funcional confirmado — validación del inventario incremental
+- El backend guarda inicialmente los IDs sin uso como array, pero después `storeDriveAuditSeenPage_` sustituye esa misma clave de caché por un objeto combinado `{unused, files, folders, metadata}`.
+- `validateDriveAuditInventoryBatch_` seguía interpretando la página como array. Por tanto, el registro incremental y los reintentos individuales rechazaban el objeto combinado con «La lista de imágenes de auditoría no es válida», aunque el escaneo hubiera guardado correctamente la página.
+- Corrección aplicada en `JS/Services/admin.js` (commit `e61e82f4258e96f81c1b2e23693d27f2b96fb536`): el validador extrae `unused` del objeto combinado, comprueba la estructura de la página y conserva compatibilidad con arrays legados.
+- Pruebas aisladas del validador: página combinada aceptada; ID no emitido rechazado; objeto sin estructura completa rechazado; array legado aceptado.
+- **Estado de la tarea:** corrección puntual implementada; auditoría integral del flujo y pruebas de integración ADMIN/Drive/Spreadsheet aún pendientes. No se declara completada la tarea.
