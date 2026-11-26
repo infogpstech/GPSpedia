@@ -201,3 +201,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 
 - Registro de tareas sincronizado: `Tareas_Activas.md` incluye la incidencia `GP-UTIL-BUTTON-STATE-REVERT-02` y su causa/corrección. Commit documental: `db4afdf06967b7f69fe5242305711cf101cb5b02`. Se mantiene la validación de navegador/FEEDBACK/CATALOG como pendiente; no se abrió Beta.
 
+
+
+- Validación local posterior: compilación sintáctica de `ui.js` (imports/exports retirados solo para el parser) y `likeState.js`: PASS. Prueba aislada de `applyConfirmedUsefulState`: 4/4 casos PASS (marcar, retirar y conservar contador autoritativo sin delta duplicado).
+- Pages build/deploy `45843872204`: SUCCESS sobre `7e9ff0ba209e9096aed2c90a3d5b9b90407770f9`, que contiene el código de la corrección `000f111`. Los commits posteriores `db4afdf`, `37082ea` y `be8f894` son documentales. La publicación de Pages está confirmada; la interacción real y persistencia remota aún no.
+- `Tareas_Activas.md` actualizado para reflejar Pages SUCCESS; commit `be8f894fa5d459863e832e7aac1912b4923ceede`.
+
