@@ -481,7 +481,7 @@ function collectCatalogSheetImageReferences_(sheet, spec, includeLocations) {
                 if (!candidate) return;
                 const ids = extractDriveFileIds(candidate);
                 ids.forEach(id => cellIds.add(id));
-                if (!ids.length && /drive\\.google\\.com\\/(?:uc|thumbnail|file|open)|googleusercontent\\.com/i.test(candidate)) {
+                if (!ids.length && /drive\.google\\.com\\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
                     hasUnverifiableDriveLink = true;
                 }
             });
@@ -5016,7 +5016,7 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             const fileContext = folderPath + " " + nameWithoutExtension;
             const versionMatches = model.versions.filter(version => containsPhrase(fileContext, version));
             const ignitionMatches = model.ignitionTypes.filter(type => containsPhrase(fileContext, type));
-            const fileYears = Array.from(new Set((fileContext.match(/(?:19|20)\\d{2}/g) || []).map(Number)));
+            const fileYears = Array.from(new Set((fileContext.match(/(?:19|20)\d{2}/g) || []).map(Number)));
             const yearMatches = model.yearRanges.filter(range => fileYears.some(year =>
                 (range.from === null || year >= range.from) && (range.to === null || year <= range.to)));
             let score = 0;
