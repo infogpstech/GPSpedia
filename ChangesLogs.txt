@@ -1343,3 +1343,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Documentación de contrato actualizada para ADMIN fuente 2.7.2. No se invocaron aún URLs remotas; las pruebas de salud permanecen pendientes de resultado de Actions.
 - Commits de cambios publicados: ac031f5a (hallazgos), 0e017286 (checker), 312c1d78 (workflow), 762308d7 (documentación de versión).
 - Próximo paso: validar parsing del checker, verificar ejecución Actions y ejecutar/interpretar probe remoto; ampliar suite read-only de contratos/feed.
+
+
+## 2026-11-26 — Primer probe Beta remoto
+- Runner health GET-only ejecutado en Actions (runs 45729426765 y 45729430374); 6/6 servicios responden con identidad/JSON/estado válidos.
+- ADMIN se clasifica SLOW (2.431 y 2.701 s) y reporta deployment v2.7.1, frente a fuente 2.7.2; se registra discrepancia para seguimiento, sin despliegue.
+- Cinco servicios PASS; no se ejecutaron operaciones mutables ni probes de dependencias.
