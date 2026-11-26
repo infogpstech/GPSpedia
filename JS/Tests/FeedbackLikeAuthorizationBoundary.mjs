@@ -28,7 +28,7 @@ const authorizeFeedbackAction = new Function([
     "return authorizeFeedbackAction_;"
 ].join("\n"))();
 
-const withSharedSessionActor = new Function(
+const withSharedSessionActor_ = new Function(
     extractFunction(shared, "withSharedSessionActor_") + "\nreturn withSharedSessionActor_;"
 )();
 
