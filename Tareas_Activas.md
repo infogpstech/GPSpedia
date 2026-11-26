@@ -1037,3 +1037,24 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Alcance de auditoría: `HTML/add_cortes.html`, `HTML/users.html`, `index.html`, `JS/Frontend/api-config.js`, `JS/Services/catalog.js`. No se encontraron otros formularios HTML activos que soliciten catálogos mediante `getDropdownData`; users.html e index.html usan otros flujos, revisados estáticamente sin evidencia de fallo de listas en este incidente.
 - Cambios: commits `71c7ba9f2c0022eee91772f1e450b5b3d0c8f250` y `c16f4f24ff01d6513e5814d723dadee3cdf1f413`.
 - Pendiente de deployment real: no se declara éxito funcional en producción/Beta sin respuesta comprobada del servicio Apps Script.
+
+
+## GP-FORM-DROPDOWNS-02 — Corrección integral de catálogos y formularios (2026-11-26)
+
+- [x] Reabrir la incidencia tras confirmarse que el formulario sigue sin cargar opciones.
+- [x] Ampliar la auditoría a `JS/Frontend/ui.js`: editor in-modal, sugerencia de cambio y modal `+`; conservar `HTML/add_cortes.html` como formulario de alta independiente.
+- [x] Registrar hallazgos en `Auditoria.txt` antes de la implementación y crear respaldos exactos de los tres archivos de código modificados.
+- [x] Unificar en CATALOG los cuatro catálogos requeridos exclusivamente desde la hoja `Cortes`: Categoría, Tipo de encendido, Tipo de corte (columnas 1/2/3) y Configuración de relay (columnas 1/2/3). La hoja `Relay` ya no es la fuente de las listas de configuración del formulario.
+- [x] Invalidar respuestas incompletas/antiguas; validar los cuatro arrays, metadatos de fuente `Cortes` y versión CATALOG `2.4.1`; usar caché temporal de cinco minutos solo después de validar completamente la respuesta.
+- [x] Eliminar las listas manuales de respaldo del modal de sugerencias; cargar sus tipos de corte y configuraciones relay desde el mismo catálogo oficial y bloquear el envío si no están disponibles.
+- [x] Corregir el editor in-modal: las opciones editables proceden únicamente del catálogo oficial; un valor histórico no presente en Cortes se conserva visible como opción deshabilitada, sin convertirse en una opción de catálogo.
+- [x] Endurecer `HTML/add_cortes.html`: validar los cuatro catálogos, vaciar/bloquear selectores cuando la respuesta falle y crear opciones con nodos DOM/`textContent`.
+- [x] Harness de CATALOG con Spreadsheet simulada: confirma lectura exclusiva de `Cortes`, mapeo de las nueve columnas relevantes, deduplicación, recorte de espacios, orden y metadatos. PASS.
+- [x] Harness de frontend: caché válida y TTL, rechazo de versión antigua, rechazo de listas vacías, normalizadores de modal + y alta independiente, preservación de valor anterior y bloqueo del valor legado, render seguro con `textContent`, caso `No recomendado`. PASS.
+- [x] Revisión de diferencias de código contra los respaldos y commits: los cambios quedan limitados a la carga/validación/render de catálogos y al manejo de error del editor; no se modificaron la persistencia de cortes, restauración de operaciones pendientes, rutas de sugerencias ni lógica de adjuntos.
+- [ ] Publicar CATALOG Apps Script con versión `2.4.1` y asegurar que el deployment activo incorpore el adaptador POST iframe/`postMessage`. El checkpoint documenta que no se publicó Apps Script tras esa migración; el health GET histórico no valida POST. No se ejecutó deployment en esta sesión.
+- [ ] Ejecutar una lectura POST real `getDropdownData` y comprobar los valores reales de la Spreadsheet, seguido de verificación en navegador/Beta de los cuatro flujos. Sin acceso de deployment ni ejecución de Apps Script/Spreadsheet desde esta sesión no se declara resuelto el entorno publicado.
+- Alcance no aplicable: Tutoriales y Problemas/Soluciones no consumen los cuatro catálogos de corte mediante `getDropdownData`; mantienen sus campos/catálogos propios y no se cambiaron en esta tarea.
+- Archivos de código: `JS/Services/catalog.js`, `JS/Frontend/ui.js`, `HTML/add_cortes.html`.
+- Commits de código: `3525c772c8bd51db235aba89b72a85a3ce17c0db`, `d45580124aa1834851665f235e14f4ea5a000f57`, `e500d6f670dc57d58607f73c56f4dd6a679af530`, `631d7e66eec4802220c2debd048016a35c1247b7`, `4bc6e6d4a1b9bb3d55fd4e1cfb3eeeb7cf460abf`.
+- Respaldo: guardado en `__task_backups__/GP-FORM-DROPDOWNS-02/pre-edit/`; retirar únicamente después del cierre del Code Review.
