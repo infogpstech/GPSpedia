@@ -1133,3 +1133,21 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Límite: no se ejecutó navegador/IndexedDB real ni Apps Script, Spreadsheet o Drive. La causa runtime concreta y el registro real siguen pendientes de Beta.
 
 - Cierre de Code Review y respaldos: se reconstruyó el archivo original de `offline.js` aplicando inversamente los cambios previstos y coincidió exactamente con el respaldo; HTML, logger y Service Worker también coincidieron exactamente al revertir sus cambios autorizados. Respaldos temporales eliminados después de esta revisión (commits `12eb7a82109a4a1dfdf5eeaf959f16430d7f61bd`, `93b760c7ed9aed051591874d6c75de40edd5fbea`, `608db06ca73665186578225d1cce61640f43655a`, `8e4b9e0d47a4a6d9c02ac1f3c8b95e6ff79e484d`).
+
+
+## GP-CUT-FORM-SNAPSHOT-02 — Normalización y diagnóstico de alta desde add_cortes.html (2026-11-26)
+
+- [x] Auditar el flujo de etapa 2, la persistencia durable, el modal de detalle y sus diferencias de contrato antes de editar.
+- [x] Registrar hallazgos en `Auditoria.txt` antes de modificar código.
+- [x] Crear respaldos exactos previos en `Olds/Backups/GP-CUT-FORM-SNAPSHOT-02-20261126/` para los archivos de código y registros afectados.
+- [x] Normalizar `selectedVehicleId` una sola vez para que null, undefined y cadena vacía produzcan un payload coherente de vehículo nuevo, evitando el rechazo local por discrepancia entre `vehicleId` y `vehicleData`.
+- [x] Mostrar mensajes útiles en el formulario cuando falle la persistencia, sin eliminar ni sobrescribir operaciones pendientes.
+- [x] Incrementar la caché PWA a v81.
+- [x] Fixture estático de normalización/validador: 7/7 PASS.
+- [x] Comparación post-edición con respaldos: cambios limitados a los bloques auditados.
+- [ ] Ejecutar el formulario actualizado en navegador móvil y confirmar que IndexedDB persiste y verifica el snapshot.
+- [ ] Ejecutar alta controlada para vehículo nuevo y para vehículo existente; verificar resultado en catálogo/Sheets, ledger de idempotencia y Drive cuando corresponda.
+- [ ] Probar recuperación después de interrupción y confirmar ausencia de duplicados.
+- Archivos: `HTML/add_cortes.html`, `service-worker.js`; no se modificó el modal ni el backend.
+- Commits: auditoría `45cc06ad5546a8daa5e632961356d52cf270fece`; formulario `694510237016bbbe1464311ba7221760f0fe48e7`; caché `12b24c09a4be6b2f3da631cd345d34b2af1e6075`.
+- Límite: no se declara resuelta la alta Beta hasta ejecutar IndexedDB real y comprobar escritura remota; no hubo status checks ni workflow runs asociados al último commit consultado.
