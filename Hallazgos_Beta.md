@@ -514,3 +514,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Runtime offline: Cache Storage contiene exactamente los 36 recursos core. El Service Worker controla la página; la recarga devuelve el HTML, pero el login no aparece.
 - Solicitudes fallidas offline que bloquean o afectan el arranque: `overlayHistory.js`, `navigationHistory.js`, `centralConfigurationCache.js`, `sessionCacheInvalidation.js`, `adminImageUploadIsolation.js`; también CSS externo Font Awesome y `/thumbnail`.
 - No-GET 0, pageErrors 0, Apps Script 0. La falla se debe a módulos estáticos no precargados y recursos externos no disponibles offline, no a archivos ausentes del repositorio.
+
+
+## BETA-F020 — distinción entre offline frío y offline templado (run 45750124457)
+- El test ahora ejecuta dos escenarios: offline inmediatamente después de instalar/activar el Service Worker y offline después de una recarga online bajo control del Service Worker.
+- **Cold offline: FAIL.** Login no visible; faltan en Cache Storage 12 imports que no están en CORE_ASSETS. Fallan 5 módulos JS, CSS Font Awesome y `/thumbnail`.
+- **Warm offline: PASS.** Una recarga online adicional carga/cacha los 12 módulos (`warmMissingPrecacheModules=[]`); la siguiente recarga offline muestra login correctamente (`warmOfflineLoginVisible=true`).
+- Todos los 36 CORE_ASSETS y 4 OPTIONAL_ASSETS responden 200. Service Worker activo/controlador; no-GET 0; pageErrors 0; Apps Script 0.
+- Alcance: PWA queda offline funcional después de una recarga online controlada, pero no garantiza disponibilidad offline inmediata al terminar la primera instalación. La corrección preferida es incluir las dependencias esenciales en CORE_ASSETS para eliminar el requisito de calentamiento manual. No se modificó el Service Worker.

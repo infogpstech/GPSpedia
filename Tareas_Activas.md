@@ -672,3 +672,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-F020 — precache PWA incompleto (2026-11-26)
 **Estado: CAUSA CONFIRMADA; CORRECCIÓN PENDIENTE.** Todos los recursos listados existen y responden HTTP 200, pero 12 imports JS no están en CORE_ASSETS. El offline runtime falla al cargar 5 módulos (4 críticos de arranque/login). Añadir dependencias esenciales al precache y revisar CSS/CDN y thumbnail en tarea de implementación separada; luego repetir PWA offline.
+
+
+## BETA-F020 — alcance cold/warm PWA (2026-11-26)
+**Estado: FALLA DE PREPARACIÓN OFFLINE INICIAL; OFFLINE TEMPLADO PASS.** Una recarga online después de activar el SW cachea los 12 módulos; la siguiente navegación offline funciona. Pendiente precargar dependencias esenciales para que la primera sesión offline funcione sin recarga adicional. No se modificó código de aplicación.

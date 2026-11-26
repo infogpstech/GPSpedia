@@ -1385,3 +1385,14 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Offline: HTML recuperado, `navigator.onLine=false`, SW controla, título GPSpedia; login no visible. Requests fallidas: overlayHistory.js, navigationHistory.js, centralConfigurationCache.js, sessionCacheInvalidation.js, adminImageUploadIsolation.js, Font Awesome CSS externo y `/thumbnail`. Cero solicitudes no-GET, cero llamadas Apps Script, cero pageErrors.
 - Causa confirmada: precache incompleto para dependencias JS; además recursos externos no están garantizados offline. Hallazgo BETA-F020. No se modificó Service Worker ni frontend.
 - Run `45749892912` (HEAD documental `4f83934c`) estaba en ejecución al checkpoint; el run `45749807870` ya ofrece el resultado completo de la misma versión del harness.
+
+
+## Continuidad — PWA cold/warm offline (2026-11-26)
+
+- Run `45750124457` confirma el alcance de BETA-F020:
+  - Cold offline tras instalar/activar el SW: FAIL; HTML recuperado pero login no visible.
+  - Warm-up: una recarga adicional online bajo control del SW carga las dependencias faltantes.
+  - Warm offline: PASS; login visible sin conexión, `warmMissingPrecacheModules=[]`.
+- Los 12 módulos ausentes de CORE_ASSETS se cachean dinámicamente en la recarga online; por tanto, la función offline sí opera después de ese calentamiento. El problema es la falta de precarga inicial.
+- 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS HTTP 200; 0 no-GET, 0 Apps Script, 0 pageErrors. En warm offline queda un fallo no crítico de `/thumbnail`; la pantalla login funciona.
+- El test mantiene FAIL global porque el escenario cold offline no cumple. No se modificó `service-worker.js` ni código de aplicación.

@@ -1434,3 +1434,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Run `45749807870`: 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS HTTP 200; manifest y SW PASS; offline login FAIL.
 - Cache Storage contiene los 36 core, no los 12 módulos importados omitidos; fallan 5 módulos JS, Font Awesome CSS y `/thumbnail`.
 - No-GET 0, Apps Script 0, pageErrors 0. No se modificó código de aplicación.
+
+
+## 2026-11-26 — prueba PWA cold/warm
+- `BetaPwaOfflineSmoke.mjs` compara offline inmediato tras instalar el SW con offline después de una recarga online controlada.
+- Run `45750124457`: cold offline FAIL; warm online reload cachea 12 módulos; warm offline PASS y login visible. 36 CORE y 4 OPTIONAL assets HTTP 200.
+- No se modificó Service Worker ni frontend; 0 no-GET y 0 llamadas Apps Script.

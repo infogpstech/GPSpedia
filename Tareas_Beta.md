@@ -715,3 +715,7 @@ El árbol recursivo contiene 673 archivos; los 36 recursos CORE y los 4 OPTIONAL
 
 ### BETA-08 — resultado PWA offline con inventario completo
 Run `45749807870`: 36/36 CORE y 4/4 OPTIONAL assets HTTP 200; manifest/iconos/SW PASS. Offline FAIL: 12 imports ausentes de CORE_ASSETS; Cache Storage contiene solo 36 core y no contiene los módulos importados. Runtime falla en cinco módulos JS, Font Awesome CSS y `/thumbnail`; login no visible. 0 no-GET, 0 Apps Script, 0 pageErrors. F020 confirmado.
+
+
+### BETA-08 — alcance preciso del PWA offline
+Run `45750124457`: cold offline FAIL inmediatamente tras instalar SW; warm offline PASS después de una recarga online controlada que cachea los 12 módulos. Todos los recursos declarados existen y responden 200. La disponibilidad offline no debe depender de una recarga manual posterior; se recomienda precargar las 12 dependencias en CORE_ASSETS. `/thumbnail` sigue fallando offline pero no impide mostrar login.
