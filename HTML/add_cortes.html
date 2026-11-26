@@ -720,44 +720,27 @@
             await checkAndRecoverPendingOperation();
         }
 
-        function addCutDropdownCacheKey_() {
-            const owner = String(state.userId || '').trim();
-            const token = String(state.sessionToken || '');
-            if (!owner || !token) return '';
-            let fingerprint = 2166136261;
-            for (let i = 0; i < token.length; i++) fingerprint = Math.imul(fingerprint ^ token.charCodeAt(i), 16777619);
-            return 'gpsepedia_addcut_dropdowns_v1:' + encodeURIComponent(owner) + ':' + (fingerprint >>> 0).toString(36);
-        }
         function renderAddCutDropdowns_(dropdowns) {
             if (!dropdowns || typeof dropdowns !== 'object') throw new Error('La respuesta de listas desplegables no es válida.');
-            populateSelect('categoria', dropdowns.categoria || []);
-            populateSelect('tipoEncendido', dropdowns.tipoDeEncendido || []);
-            populateSelect('tipoCorte1', dropdowns.tipoDeCorte || []);
-            populateSelect('configRelay1', dropdowns.configRelay || [], "Corte a ignición");
+            populateSelect('categoria', Array.isArray(dropdowns.categoria) ? dropdowns.categoria : []);
+            populateSelect('tipoEncendido', Array.isArray(dropdowns.tipoDeEncendido) ? dropdowns.tipoDeEncendido : []);
+            populateSelect('tipoCorte1', Array.isArray(dropdowns.tipoDeCorte) ? dropdowns.tipoDeCorte : []);
+            populateSelect('configRelay1', Array.isArray(dropdowns.configRelay) ? dropdowns.configRelay : []);
         }
         async function populateAllDropdowns() {
-            const key = addCutDropdownCacheKey_();
-            let hasCached = false;
-            if (key) {
-                try {
-                    const cached = JSON.parse(sessionStorage.getItem(key) || 'null');
-                    if (cached && cached.dropdowns && Date.now() - Number(cached.savedAt || 0) < 10 * 60 * 1000) {
-                        renderAddCutDropdowns_(cached.dropdowns);
-                        hasCached = true;
-                    }
-                } catch (error) { /* La caché es opcional; continuar con la fuente remota. */ }
-            }
-            toggleLoading(!hasCached);
+            toggleLoading(true);
             try {
                 const response = await routeAction('getDropdownData');
-                if (!response || !response.dropdowns) throw new Error('El servicio no devolvió las listas del formulario.');
-                renderAddCutDropdowns_(response.dropdowns);
-                if (key) {
-                    try { sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), dropdowns: response.dropdowns })); }
-                    catch (error) { /* La caché es opcional; el formulario sigue funcionando sin persistencia local. */ }
+                if (!response || response.status !== 'success' || !response.dropdowns) {
+                    throw new Error(response && response.details && response.details.errorMessage
+                        ? response.details.errorMessage
+                        : 'CATALOG no devolvió una respuesta válida.');
                 }
+                renderAddCutDropdowns_(response.dropdowns);
             } catch (error) {
-                if (!hasCached) showConciseAlert_("No se pudieron cargar los datos del formulario.");
+                renderAddCutDropdowns_({});
+                showConciseAlert_("No se pudieron cargar los datos del formulario. Comprueba la conexión con CATALOG e inténtalo nuevamente.");
+                diagnostics.error('add-cut-dropdowns.load-failed', { stage: 'dropdown-loading', errorCode: String(error && error.message || 'CatalogDropdownLoadFailed') });
             } finally {
                 toggleLoading(false);
             }
