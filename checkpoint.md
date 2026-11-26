@@ -340,3 +340,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Las tarjetas ahora presentan confianza alta/media/baja y criterios legibles derivados de señales de asociación (modelo en carpeta/nombre, alias, marca, categoría, versión, encendido, años), además de vehículo y contexto. Aplica tanto al primer render como tras persistencia.
 - Harness de render: Toyota Hilux muestra confianza alta, criterios y vehículo VH-02; sintaxis UI PASS.
 - Commit UI: `8d63c5943f18fa2e6b36003ef8b829846d9a3bf2`; registros: tareas `e55636df2614aeabf5a843e7d19934cffeb5d68d`, auditoría `cc1b2030de78092b12332423a68806a3005f3841`, changelog `b4557f866b55af044b2cff02ad1c20e9aee7063f`.
+
+
+## Continuidad 2026-11-26 — guarda compartida para mutaciones de biblioteca
+- Se creó `withSharedReplacedImagesInventoryGuard_` con alcance `drive-inventory:shared-inventory-sheet` y se aplicó a todas las rutas de mutación de biblioteca/organización/conciliación, migración de esquema y resolución de candidatos. La sincronización de candidatos invocada en GET biblioteca también se protege.
+- Rutas verificadas: 12 mutaciones + candidate sync. `admin.js` compila; el harness del helper verifica exclusión para la misma clave.
+- Commit: `d778cc086e603307a1567bf3a933983e258cae89`; registros: tareas `58c2eb1fe6e46a3b9dd5c470baa4757b9e05423c`, auditoría `ecbe145db1901d60d58880ec3d39bc7f87beb8f1`, changelog `33805dde939ca807d82e925a6939f3697500ef01`.
+- Pendiente: concurrencia real entre solicitudes en Apps Script (no ejecutada); el guard local está verificado con harness. Seguir con UI/explorador y auditoría integral.
