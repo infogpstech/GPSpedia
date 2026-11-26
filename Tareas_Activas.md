@@ -4,6 +4,19 @@
 
 **Estado de la fase Beta: CERRADA.** No se programarán nuevas rondas de pruebas Beta ni se conservarán suites automatizadas. Los resultados históricos útiles quedan resumidos en `Tareas_Beta.md`; los hallazgos que requieren trabajo se trasladan a este backlog. Las pruebas automatizadas y workflows de pruebas se eliminarán por solicitud expresa del propietario. No crear nuevas suites ni archivos de prueba.
 
+## GP-UTIL-BUTTON-STATE-REVERT-02 — reconciliación tardía del estado (2026-11-26)
+
+**Estado: CORRECCIÓN FRONTEND PUBLICADA EN RAMA; BUILD DE PAGES PENDIENTE. VALIDACIÓN REAL PENDIENTE.**
+
+- Síntoma confirmado por el propietario: el botón cambia de color y el contador aumenta inmediatamente, pero ambos regresan al estado anterior unos segundos después.
+- Causa de código identificada: la hidratación inicial `getMyUsefulCuts` se ejecuta en segundo plano cuando existe caché local. Una respuesta de lectura iniciada antes de la escritura podía terminar después de la confirmación de FEEDBACK y sobrescribir `likedCortes/usefulConfirmed_` con el estado anterior. Además, `applyConfirmedUsefulState` aplicaba un delta compensatorio según el estado visual potencialmente obsoleto, aunque FEEDBACK ya entregaba `usefulCount` autoritativo.
+- Corrección en `JS/Frontend/ui.js`: versionado de mutaciones por usuario/vehículo/corte; hidratación combina el estado remoto con confirmaciones posteriores al inicio de la lectura; una lectura CATALOG iniciada antes de una interacción nueva se descarta.
+- Corrección en `JS/Frontend/likeState.js`: el estado visual y el contador se establecen exactamente con `isUseful` y `usefulCount` confirmados por FEEDBACK, sin sumar/restar un segundo delta. Si CATALOG devuelve una proyección anterior, prevalece el contador confirmado por FEEDBACK.
+- No se modificaron FEEDBACK, CATALOG, sus deployments, endpoints ni Spreadsheet. La coordinación entre servicios continúa exclusivamente en el frontend.
+- Commits de código: `29414137134370d25b57286e047ea082854c7413`, `2d0b44a3631ca02cdc886fa1ce81768b795fbed8`, `e663bffad986cc584efc4c913325d977a7a43b91`, `9348557df146daa1f4df7216acef68b5728f7606`, `000f1115202af8c5f7bd704da914d71598c4b8a3`.
+- Pages build/deploy para el HEAD `7e9ff0b` está en cola; confirmar SUCCESS antes de afirmar disponibilidad en el sitio.
+- No se ejecutaron escrituras ni lecturas remotas en Spreadsheet ni pruebas de navegador real. Falta validar FEEDBACK tras recarga y contador CATALOG tras recarga. La fase Beta permanece cerrada.
+
 ### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
 
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — correcciones frontend publicadas y validación local aprobada; integración real/browser pendiente para una futura Beta autorizada. La fase Beta actual permanece cerrada.**
