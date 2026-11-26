@@ -1417,3 +1417,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Tests/BetaPwaOfflineSmoke.mjs` ahora inspecciona manifest, iconos, Service Worker, grafo recursivo de imports, Cache Storage y errores de navegación offline.
 - Run `45749201690`: manifest/iconos/SW PASS; offline login FAIL. Detectados 12 módulos importados ausentes de `CORE_ASSETS`; solicitudes offline fallidas en módulos JS y recursos externos.
 - No se modificó `service-worker.js` ni código de aplicación. 0 POST/no-GET, 0 llamadas Apps Script, 0 escrituras remotas.
+
+
+## 2026-11-26 — inventario HTTP de recursos PWA
+- `JS/Tests/BetaPwaOfflineSmoke.mjs` ahora consulta todos los recursos de `CORE_ASSETS` y `OPTIONAL_ASSETS` y registra los faltantes antes de validar offline.
+- Commit `cc80ed49f3aacbbc541bd89e11139fe97043deec`; run `45749473444` pendiente en responsive-browser al momento del checkpoint.
+- Sin cambios en `service-worker.js` ni en módulos de aplicación.

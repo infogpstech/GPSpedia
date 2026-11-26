@@ -703,3 +703,7 @@ Run `45748620437`: PASS en 1366x768, 390x844, 360x800 y 320x700; usuario/correo/
 - 12 módulos importados por el grafo de `main.js` no están en `CORE_ASSETS`; el runtime confirma que no están cacheados. También fallan recursos externos Font Awesome y `/thumbnail`.
 - No-GET 0, Apps Script 0, escrituras 0. Hallazgo BETA-F020.
 - Corrección de `service-worker.js` queda fuera de la fase de validación; requiere completar precache y repetir el smoke offline.
+
+
+### Verificación de recursos precache PWA — ejecución pendiente
+El harness `cc80ed49` amplió el smoke para consultar todos los recursos de `CORE_ASSETS` y `OPTIONAL_ASSETS`. Run `45749473444`: responsive-browser aún en Install Chromium al último checkpoint; no se registra resultado hasta que termine. El hallazgo BETA-F020 sigue confirmado por el run anterior.

@@ -1358,3 +1358,11 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Estado observado: offline, Service Worker controla, título GPSpedia, login no visible. No-GET 0; llamadas Apps Script 0; escrituras 0.
 - El hallazgo BETA-F020 queda pendiente para una tarea de implementación. No se modificó `service-worker.js` ni módulos de aplicación durante esta fase.
 - El mismo run mantiene AUG-146 y Pages login/recovery smoke PASS; la PWA offline es el único fallo del job responsive-browser.
+
+
+## Continuidad — verificación de disponibilidad de recursos PWA (2026-11-26)
+
+- Commit de harness `cc80ed49f3aacbbc541bd89e11139fe97043deec`: `BetaPwaOfflineSmoke.mjs` ahora verifica HTTP/status de todos los recursos declarados en `CORE_ASSETS` y `OPTIONAL_ASSETS`, además del grafo de imports y la navegación offline.
+- Run `45749473444`: service-tests falló por AUTH `sessionAuthority`; responsive-browser seguía en `Install Chromium` al registrar este checkpoint. El resultado del nuevo inventario de recursos queda PENDIENTE; no se declara PASS.
+- El fallo offline anterior `45749201690` ya confirmó 12 módulos fuera de `CORE_ASSETS`, Service Worker activo, 36 rutas cacheadas y login no visible sin red.
+- No se modificó el Service Worker ni código de aplicación. El inventario ampliado es diagnóstico GET-only y no escribe datos.
