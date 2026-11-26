@@ -854,3 +854,16 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - CATALOG feed GET-only: 5 páginas, 5 eventos, 3 reset, revisión 5, cursor 0→5, sin cambio concurrente. Cursor negativo/malformado y límites inválidos rechazados; cursor futuro activa reset. Sin escrituras.
 - No se ejecutaron útiles, login autenticado, Inbox, WRITE, Drive/Spreadsheet, OAuth ni YouTube: continúan pendientes de identidades sintéticas, recursos aislados inequívocos y cleanup verificable. Orden siguiente: útiles con dos identidades; luego playback real watch/short/shorts desktop/móvil. Android físico pendiente.
 - No se modificaron deployments Apps Script ni recursos remotos. F022 conserva el fallo visual offline de Font Awesome como residual no bloqueante.
+
+
+## 14. Revalidación local/CI de útiles y formatos YouTube — 2026-11-26
+- HEAD validado: `401d1923b5bbffe3dbf3399d35203ae0ac28344c` en `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` confirmada sin cambios.
+- FEEDBACK: nuevo `FeedbackLikeAuthorizationBoundary.mjs`, conectado al runner MIG019. Resultado 7/7 PASS: middleware elimina `__sharedSessionActor`/`__feedbackActor` aportados por navegador; inyecta el actor validado; la autorización usa identidad y rol confiables; dos sesiones sintéticas no se mezclan; mismatch de userId y escalamiento a Desarrollador se rechazan; ausencia de actor falla cerrado. Junto con `FeedbackLikeIdempotency` 10/10 y `FeedbackLikeAppendOnly` 4/4, amplía cobertura local sin mutar datos remotos.
+- Tutoriales: nuevo `TutorialYouTubeUrlFormats.mjs`, conectado al runner INTEGRATION. Resultado 8/8 PASS para watch, youtu.be, shorts, embed, live, móvil, youtube-nocookie, IDs puros, rechazo de URLs inseguras/dominios falsos y normalización al embed canónico. `TutorialVideoModalLayout` permanece 18/18 PASS. Esto no equivale a playback real.
+- CI `45815829936` SUCCESS: 544 suites, 6,468 pruebas aprobadas, 0 fallos; `ServiceHealthContract` 21/21. Browser: AUG-146 264/264; login/recuperación HTTP 200 en cuatro viewports; 0 pageErrors, 0 non-GET y 0 Apps Script GET. PWA offline frío/caliente: 49/49 CORE + 4/4 OPTIONAL, 0 módulos faltantes, login visible; residual Font Awesome CDN en cold offline.
+- Pages build/deployment `45815828996` SUCCESS.
+- El health remoto GET-only de seis servicios y feed CATALOG permanece con evidencia en `45812643014`; no hubo cambios de endpoints ni código Apps Script en estos commits.
+- **PENDIENTE BETA REAL — útiles FEEDBACK/CATALOG:** ejecutar con dos identidades sintéticas autorizadas, Spreadsheet/vehículo de prueba aislado, operación de alta/retirada y read-back; comprobar separación de actor, conteo, delta CATALOG y cleanup final. No se ejecutó por falta de identidades, dataset aislado y cleanup verificable.
+- **PENDIENTE BETA REAL — playback YouTube:** reproducir tutoriales reales con URLs watch y short/shorts en escritorio y móvil; confirmar carga, reproducción, controles, orientación/responsive y errores de iframe. No se encontraron URLs de tutorial de prueba en registros/fixtures consultados; no se usó un video externo arbitrario.
+- Después de esos bloques: Inbox, WRITE y ADMIN/Drive con recursos desechables. No se ejecutaron login real, POST, OAuth, escrituras Spreadsheet/Drive ni YouTube API.
+- La sección 0 de sincronización segura obligatoria permanece al inicio de esta lista; no usar reset/clean/force.
