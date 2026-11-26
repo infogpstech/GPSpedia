@@ -11,6 +11,7 @@ on:
       - "JS/Tests/RemoteCatalogFeedReadOnly.mjs"
       - "JS/Tests/RemoteCatalogFeedBoundaries.mjs"
       - "JS/Tests/RemoteAdminLatency.mjs"
+      - "JS/Tests/RemoteCatalogFeedMatrix.mjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -48,3 +49,5 @@ jobs:
         run: node JS/Tests/RemoteCatalogFeedBoundaries.mjs
       - name: Measure ADMIN latency repeatedly (GET only)
         run: node JS/Tests/RemoteAdminLatency.mjs
+      - name: Probe CATALOG feed matrix and repeatability (GET only)
+        run: node JS/Tests/RemoteCatalogFeedMatrix.mjs
