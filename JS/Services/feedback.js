@@ -2291,8 +2291,12 @@ function handleSetCutUseful(payload) {
     });
 
     if (result.changed) {
-        logUserActivity(userId, userName, result.isUseful ? "useful" : "useful_removed",
-            vehicleId, (result.isUseful ? "Marcó como útil" : "Retiró el útil") + " del corte " + corte + ".");
+        try {
+            logUserActivity(userId, userName, result.isUseful ? "useful" : "useful_removed",
+                vehicleId, (result.isUseful ? "Marcó como útil" : "Retiró el útil") + " del corte " + corte + ".");
+        } catch (activityError) {
+            console.error("El útil quedó guardado, pero no se pudo registrar su actividad:", activityError);
+        }
     }
     return {
         status: "success", isUseful: result.isUseful, changed: result.changed,
