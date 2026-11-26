@@ -73,10 +73,17 @@ jobs:
           ADMIN_LATENCY_OUTCOME: ${{ steps.admin_latency.outcome }}
           MATRIX_OUTCOME: ${{ steps.catalog_matrix.outcome }}
         run: |
-          printf 'Health: %s\\nFeed: %s\\nBoundaries: %s\\nADMIN latency: %s\\nCATALOG matrix: %s\\n' \\
-            "$HEALTH_OUTCOME" "$FEED_OUTCOME" "$BOUNDARIES_OUTCOME" "$ADMIN_LATENCY_OUTCOME" "$MATRIX_OUTCOME"
-          test "$HEALTH_OUTCOME" = success && \\
-          test "$FEED_OUTCOME" = success && \\
-          test "$BOUNDARIES_OUTCOME" = success && \\
-          test "$ADMIN_LATENCY_OUTCOME" = success && \\
-          test "$MATRIX_OUTCOME" = success
+          printf '%s\n' \
+            "Health: $HEALTH_OUTCOME" \
+            "Feed: $FEED_OUTCOME" \
+            "Boundaries: $BOUNDARIES_OUTCOME" \
+            "ADMIN latency: $ADMIN_LATENCY_OUTCOME" \
+            "CATALOG matrix: $MATRIX_OUTCOME"
+          if [ "$HEALTH_OUTCOME" = success ] &&
+             [ "$FEED_OUTCOME" = success ] &&
+             [ "$BOUNDARIES_OUTCOME" = success ] &&
+             [ "$ADMIN_LATENCY_OUTCOME" = success ] &&
+             [ "$MATRIX_OUTCOME" = success ]; then
+            exit 0
+          fi
+          exit 1
