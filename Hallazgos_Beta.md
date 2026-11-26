@@ -373,3 +373,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se movió la medición a después de leer y parsear la respuesta JSON; el tiempo ahora incluye lectura del body. Sigue excluyendo validaciones posteriores del contrato y no es medición de render/frontend.
 - Validación de fragmento con Node 22 y body simulado con demora de 25 ms: PASS; latencia medida incluyó lectura del body (25 ms observados). No fue prueba remota de servicio.
 - Cambio publicado en commit `c77c4d09db185883851635a6b4f7c0a69c7fb755`.
+
+
+## BETA-F012 — política de reintentos y conteo reportado (2026-11-25)
+- El probe de salud reintentaba 429 y 5xx, pero no HTTP 408 (Request Timeout) ni 425 (Too Early), que son respuestas transitorias aptas para reintento acotado en este GET idempotente.
+- La salida FAIL indicaba siempre “3 intentos” aunque el bucle podía terminar antes; ahora informa el valor real de `attempts`.
+- Corregido en `JS/Tests/RemoteServiceHealth.mjs`: reintenta 408, 425, 429 y 5xx dentro del máximo de tres intentos; los demás 4xx no se reintentan.
+- Prueba aislada Node 22 de clasificación HTTP y formato de reporte: 8/8 PASS. No es una prueba de red ni de Apps Script.
+- Commit de implementación: `71ebb84c8011e4a1e04a5e2050ac061145205de6`.
