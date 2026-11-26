@@ -527,6 +527,116 @@ function appendCatalogOverGridImageReferences_(sheet, references, includeLocatio
 }
 
 function collectActiveDriveReferences(includeLocations = true) {
+    const excludedSheets = new Set([
+        SHEET_NAMES.IMAGENES_REEMPLAZADAS, "Logs", "ActividadUsuario", "ActiveSessions", "Users",
+        SHEET_NAMES.ADMIN_STATE, SHEET_NAMES.IDEMPOTENCIA, SHEET_NAMES.IDEMPOTENCIA_FALLBACK
+    ]);
+    const references = new Map();
+    let unverifiableReferenceCount = 0, cortesScanMetrics = null;
+
+    getSpreadsheet().getSheets().forEach(sheet => {
+        if (excludedSheets.has(sheet.getName())) return;
+        if (sheet.getName() === SHEET_NAMES.CORTES) {
+            const cortesReferences = collectCortesImageReferences(includeLocations);
+            cortesScanMetrics = cortesReferences.metrics || null;
+            cortesReferences.references.forEach((locations, id) => {
+                if (includeLocations) {
+                    if (!references.has(id)) references.set(id, []);
+                    references.get(id).push.apply(references.get(id), locations);
+                } else references.set(id, true);
+            });
+            unverifiableReferenceCount += cortesReferences.unverifiableReferenceCount;
+        } else {
+            const range = sheet.getDataRange();
+            const values = range.getDisplayValues();
+            const rawValues = range.getValues();
+            const formulas = range.getFormulas();
+            const richTextValues = range.getRichTextValues();
+
+            for (let r = 0; r < values.length; r++) {
+                for (let c = 0; c < values[r].length; c++) {
+                    const candidates = [
+                        String(values[r][c] || ""),
+                        String((formulas[r] && formulas[r][c]) || "")
+                    ];
+                    const rawValue = rawValues[r] && rawValues[r][c];
+                    let cellHasUnverifiableDriveLink = false;
+                    if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+                        try {
+                            const contentUrl = String(rawValue.getContentUrl() || "");
+                            if (contentUrl) candidates.push(contentUrl);
+                            else cellHasUnverifiableDriveLink = true;
+                        } catch (imageValueError) {
+                            cellHasUnverifiableDriveLink = true;
+                        }
+                    }
+                    const richText = richTextValues[r] && richTextValues[r][c];
+                    if (richText) {
+                        const wholeCellLink = richText.getLinkUrl();
+                        if (wholeCellLink) candidates.push(wholeCellLink);
+                        const runs = richText.getRuns ? richText.getRuns() : [];
+                        runs.forEach(run => {
+                            const runLink = run.getLinkUrl();
+                            if (runLink) candidates.push(runLink);
+                        });
+                    }
+
+                    const cellIds = new Set();
+                    candidates.forEach(candidate => {
+                        if (!candidate) return;
+                        const ids = extractDriveFileIds(candidate);
+                        ids.forEach(id => cellIds.add(id));
+                        if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
+                            cellHasUnverifiableDriveLink = true;
+                        }
+                    });
+
+                    cellIds.forEach(id => {
+                        if (includeLocations) {
+                            if (!references.has(id)) references.set(id, []);
+                            references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
+                        } else references.set(id, true);
+                    });
+                    if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
+                }
+            }
+        }
+
+        if (typeof sheet.getImages === "function") {
+            const overGridImages = sheet.getImages();
+            overGridImages.forEach(image => {
+                let imageUrl = "";
+                try {
+                    if (image && typeof image.getUrl === "function") imageUrl = String(image.getUrl() || "");
+                    else if (image && typeof image.getSourceUrl === "function") imageUrl = String(image.getSourceUrl() || "");
+                } catch (imageUrlError) {
+                    imageUrl = "";
+                }
+                const ids = extractDriveFileIds(imageUrl);
+                if (ids.length) {
+                    let anchor = null;
+                    try { anchor = image && typeof image.getAnchorCell === "function" ? image.getAnchorCell() : null; }
+                    catch (anchorError) { anchor = null; }
+                    ids.forEach(id => {
+                        if (includeLocations) {
+                            if (!references.has(id)) references.set(id, []);
+                            references.get(id).push({
+                                sheet: sheet.getName(),
+                                row: anchor && typeof anchor.getRow === "function" ? anchor.getRow() : 0,
+                                column: anchor && typeof anchor.getColumn === "function" ? anchor.getColumn() : 0
+                            });
+                        } else references.set(id, true);
+                    });
+                } else {
+                    unverifiableReferenceCount++;
+                }
+            });
+        }
+    });
+
+    return { references, unverifiableReferenceCount, metrics: { cortes: cortesScanMetrics } };
+}
+function collectCatalogImageReferences(includeLocations = true) {
     // Allowlist positiva: solo las hojas y columnas que forman parte del catálogo visual.
     // Las hojas de eventos, registros, reacciones, Feedback y administración nunca se recorren.
     const catalogSheets = [
