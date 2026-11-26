@@ -1554,3 +1554,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se corrigió la confirmación de restauración masiva cuando la selección combina archivos en papelera e imágenes históricas. El diálogo ahora distingue ambos grupos y deja claro que restaurar desde papelera no reasocia el archivo a campos del Spreadsheet; cada registro conserva su endpoint correcto. Harness mixto PASS. Commits: 616d6bb5f5662d0a6e79a5ce5f122758301b109b, 271276a077f2ad81adf00a66b4a8ffa28dd05d99.
 [2026-11-26] GP-ADMIN-TAB-ACTIONS-UX-01 — verificación estática de botones de acción en las cuatro pestañas Developer. La clase compacta, iconos, etiquetas expandibles y reglas responsive ya están implementados; tarea cerrada en implementación, revisión visual para Beta.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se habilitó la restauración masiva para selecciones mixtas de imágenes históricas y archivos en papelera, siempre que cada elemento tenga una acción de restauración permitida. Se conserva el endpoint específico por registro y la confirmación distingue los dos grupos. Harness de capacidades/toolbar PASS. Commit: 78d91c41e45f6fe673395849e947a5572ff1f8b4.
