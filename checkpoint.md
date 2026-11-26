@@ -462,3 +462,16 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Safety & Side Effects: la persistencia verificada sigue siendo obligatoria; las operaciones previas con otro ID/hash siguen bloqueando el reemplazo; no se eliminan datos pendientes ni se omite el preflight.
 - Fixture de contrato: 7/7 PASS. No hay prueba de navegador móvil/IndexedDB ni escritura real en Apps Script/Spreadsheet/Drive; la validación Beta permanece abierta.
 - Respaldos temporales eliminados después de Code Review. Commits de código: `694510237016bbbe1464311ba7221760f0fe48e7` y `12b24c09a4be6b2f3da631cd345d34b2af1e6075`.
+
+
+## Continuidad 2026-11-26 — GP-CUT-DEEP-AUDIT-03
+
+- Rama de trabajo: `GPSpedia2.2.5_work`. HEAD de código `02eb7fa35159416ed4451b75b810b1a98c0184ba`. Rama base protegida `GPSpedia2.2.5` se mantiene en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no se modificó.
+- Auditoría ampliada: el árbol contiene `HTML/add_cortes.html`, no existe el archivo en la raíz. `index.html`, Service Worker e imports del formulario ya usaban la ruta correcta. Se encontraron dos referencias obsoletas en `JS/Frontend/ui.js` (aviso «No funciona» y botón de registro silencioso); ambas se corrigieron a `HTML/add_cortes.html`.
+- Persistencia: no se relajó el contrato de snapshot ni la barrera previa a WRITE. Una operación previa inválida o pendiente puede bloquear una nueva alta; no se borra ni sustituye automáticamente. Se requiere identificar el código concreto y recuperar con el mismo opId/hash cuando sea posible.
+- Contrato remoto revisado estáticamente: `routeAction` mapea `checkOperation` y `addOrUpdateCut` a WRITE; WRITE enruta ambas acciones. ADMIN rechaza esas acciones como `ACTION_MOVED_TO_WRITE`. No se modificó Apps Script.
+- Service Worker: caché v82.
+- Respaldos exactos previos: `Olds/Backups/GP-CUT-DEEP-AUDIT-03-20261126/` (ui.js y service-worker.js), pendientes de eliminación tras la revisión final registrada.
+- Code Review: diff ui.js limitado a dos sustituciones; diff service-worker.js limitado a v81→v82. Imports del formulario y recursos locales revisados resuelven contra el árbol Git.
+- Pages build/deploy run `45913010737` SUCCESS sobre HEAD `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
+- Pendiente: confirmar que el dominio usado desde el móvil sirve el mismo HEAD; prueba real de navegador/IndexedDB y alta controlada; resolver cualquier snapshot previo inválido sin pérdida de idempotencia. El build/deploy no demuestra por sí solo que la escritura remota funcione.
