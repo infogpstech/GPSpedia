@@ -1590,3 +1590,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 [2026-11-26] GP-FORM-DROPDOWNS-02 — regresión Relay verificada
 - Se comprobó que la corrección de catálogos no eliminó ni alteró la funcionalidad de diagramas Relay. `handleGetCatalogData()` sigue leyendo la hoja `Relay`, mapeando `imagen` mediante `IMAGE_FIELDS_RELAY` y devolviendo `allData.relay`. El detalle de corte continúa buscando `datosRelay` por `configuracion`, abriendo `renderRelayInfoModal()`, mostrando `relayInfo.imagen` y abriendo el lightbox mediante `window.abrirLightbox`.
 - Harness estático de invariantes de Relay: 9/9 PASS. Los cambios de dropdowns solo cambian la fuente de opciones de configuración en `getDropdownData`; Relay conserva su función como catálogo de esquemas e imágenes.
+
+
+[2026-11-26] GP-FORM-DROPDOWNS-03 — corrección del formulario independiente
+- HTML/add_cortes.html: se eliminó una declaración import duplicada de getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation y removeAddCutOperationPendingOperation (1 línea removida en la zona de imports).
+- service-worker.js: se actualizó CACHE_NAME de gpsepedia-cache-v78 a gpsepedia-cache-v79 y se añadió ./JS/Frontend/diagnosticLogger.js a CORE_ASSETS.
+- Code Review: el diff de HTML/add_cortes.html contiene únicamente la eliminación del import repetido; el diff de service-worker.js contiene únicamente el cambio de versión y la incorporación del módulo requerido.
+- Comprobaciones estáticas: no quedan bindings importados duplicados; todas las rutas de módulos del formulario existen; la ruta de acceso desde index.html y la entrada de caché del formulario apuntan a HTML/add_cortes.html; la secuencia init/populateAllDropdowns/getDropdownData/render permanece; el modal + de ui.js y el ruteo CATALOG no se modificaron.
+- Limitación de validación: no se abrió la aplicación en navegador ni se ejecutó una llamada POST real al servicio Apps Script. La comprobación de producción/Beta permanece pendiente.

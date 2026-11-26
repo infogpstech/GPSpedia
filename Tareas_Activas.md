@@ -1065,3 +1065,19 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Confirmar que el enlace de configuración en el detalle resuelve `datosRelay` por nombre y abre `renderRelayInfoModal()`.
 - [x] Confirmar que el modal conserva `relayInfo.imagen` y el lightbox `window.abrirLightbox()`. Harness estático 9/9 PASS.
 - [x] No se eliminó ni cambió el flujo del diagrama Relay; se cambió únicamente la fuente de opciones del dropdown a la hoja Cortes.
+
+
+## GP-FORM-DROPDOWNS-03 — Corregir bloqueo del formulario independiente (2026-11-26)
+
+- [x] Auditar HTML/add_cortes.html, los imports, el inicializador, la carga de catálogos, index.html, api-config.js, ui.js y service-worker.js.
+- [x] Confirmar si el traslado a HTML/ rompió rutas: el menú, el Service Worker y las rutas relativas actuales están adaptados a la ubicación y los módulos importados existen.
+- [x] Registrar el hallazgo en Auditoria.txt y crear respaldo exacto previo a la edición.
+- [x] Eliminar el import duplicado de los tres bindings de offline.js que bloqueaba el análisis del módulo ES antes de init().
+- [x] Añadir diagnosticLogger.js a CORE_ASSETS y subir la caché PWA a v79.
+- [x] Comparar ambos archivos modificados contra los respaldos: únicamente se retiró una línea duplicada y se aplicaron los dos cambios planificados del Service Worker.
+- [x] Validación estática: imports únicos; rutas resueltas; navegación al formulario; listener, init(), populateAllDropdowns(), getDropdownData, renderizado y ruta de error preservados; modal + y ruteo CATALOG sin cambios.
+- [ ] Validar el formulario en navegador después de actualizar/publicar la rama y confirmar los cuatro selectores con respuesta real de CATALOG.
+- [ ] Validar primera apertura offline de add_cortes.html con la caché PWA v79 instalada.
+- Commits de código: 61fa107909fa0f7b511550771c79bafe6e56cae3 (HTML/add_cortes.html), 98decb8834feb272d93cf8f5370c7e278806cae3 (service-worker.js).
+- Limitación: no se realizó deployment, prueba Beta, ejecución de navegador ni POST real de Apps Script en esta sesión. La publicación CATALOG 2.4.1 y su comprobación POST read-only permanecen abiertas en GP-FORM-DROPDOWNS-02.
+- La rama base protegida GPSpedia2.2.5 permanece sin cambios.

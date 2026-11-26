@@ -383,3 +383,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se comprobó expresamente que la hoja `Relay` mantiene su función independiente como fuente de detalles e imágenes/diagramas. `handleGetCatalogData()` sigue leyendo la hoja, mapeando la columna 10 `imagen` y retornando `allData.relay`.
 - En el frontend no se alteraron `renderCutContent()` ni `renderRelayInfoModal()`: el botón sigue resolviendo `datosRelay` por `configuracion`, el modal muestra `relayInfo.imagen` y el clic en la imagen abre `window.abrirLightbox()`.
 - Nueve verificaciones estáticas de esta cadena: PASS. El cambio a Cortes como fuente de selectores no elimina ni sustituye Relay en la visualización del diagrama.
+
+
+## Continuidad 2026-11-26 — GP-FORM-DROPDOWNS-03
+
+- Rama de trabajo: GPSpedia2.2.5_work. HEAD antes de esta actualización documental: 387182736fb787c2a771ac11cb01d0273df5fc90. Rama base protegida GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificada.
+- Causa encontrada para el fallo exclusivo del formulario standalone: HTML/add_cortes.html declaraba dos veces los mismos tres bindings importados desde JS/Frontend/offline.js. El error de módulo impedía ejecutar cualquier inicialización y, por tanto, nunca se alcanzaba la lectura getDropdownData. El formulario + de ui.js tiene un flujo independiente y no depende de ese módulo.
+- Revisión de ubicación: HTML/add_cortes.html está en HTML/. index.html enlaza HTML/add_cortes.html; service-worker.js precarga ./HTML/add_cortes.html; enlaces, manifest, hojas de estilo e imports usan ../ para resolver desde la subcarpeta. No se encontró una ruta relativa rota en las dependencias examinadas.
+- Corrección: se retiró una única línea de import duplicado. Se agregó JS/Frontend/diagnosticLogger.js a CORE_ASSETS y se incrementó CACHE_NAME a gpsepedia-cache-v79.
+- Code Review estático PASS: el diff de HTML coincide exactamente con el respaldo menos la segunda línea de import repetida; el diff del Service Worker contiene únicamente la versión de caché y la dependencia añadida. No quedan nombres importados duplicados; todos los módulos importados existen.
+- No regresión PASS: la navegación al formulario, el listener DOMContentLoaded, init(), populateAllDropdowns(), routeAction('getDropdownData'), normalización/render/error, el flujo del modal + y el ruteo CATALOG permanecen presentes. No se modificaron los flujos de persistencia, recuperación, adjuntos ni Relay.
+- Commits de código: 61fa107909fa0f7b511550771c79bafe6e56cae3 y 98decb8834feb272d93cf8f5370c7e278806cae3. El respaldo previo se retiró después del Code Review (commit 387182736fb787c2a771ac11cb01d0273df5fc90).
+- Estado: corrección implementada en la rama de trabajo y revisión estática completada. No se ejecutó navegador real, deployment ni POST real a Apps Script; quedan pendientes la comprobación del sitio tras publicar, la respuesta real de CATALOG y la prueba offline con caché v79 instalada.
