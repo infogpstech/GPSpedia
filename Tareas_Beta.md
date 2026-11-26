@@ -767,3 +767,11 @@ Se añadieron los seis archivos fuente Apps Script al filtro de activación del 
 - Run `45756293382`: contrato local 21/21 PASS; health remoto 4/6 disponibles (AUTH y ADMIN FAIL); CATALOG feed, boundaries, matriz y paginación PASS; ADMIN mediana 1,976 ms (2/5 >=2 s). UTILITIES respondió 7,916 ms y se marcó SLOW.
 - El resumen del workflow falló por `if` duplicado. Corregido en commit `5496c88c`.
 - `RemoteAdminLatency.mjs` se generalizó mediante `SERVICE_KEY` para cinco muestras de ADMIN y UTILITIES; nueva medición pendiente.
+
+
+### MIG-URL-008 — resultado del runner corregido (run 45756725304)
+- Contrato local 21/21 PASS. Health remoto: AUTH FAIL por `sessionAuthority`; ADMIN FAIL por 2.7.1 vs 2.7.2; CATALOG 1133 ms, FEEDBACK 1506 ms, UTILITIES 987 ms y WRITE 1566 ms PASS.
+- CATALOG feed, boundaries, matrix y pagination PASS; resumen final del workflow ejecutado correctamente.
+- ADMIN latencia: 2241/5022/1465/2358/1631 ms; mediana 2241, máximo 5022, 3/5 SLOW.
+- UTILITIES latencia: 1090/691/868/778/639 ms; mediana 778, máximo 1090, 0/5 SLOW. El pico previo de 7916 ms no se reprodujo; F024 se cierra como transitorio.
+- F023 cerrado; no se ejecutaron escrituras ni deployments.

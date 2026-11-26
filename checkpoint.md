@@ -1454,3 +1454,12 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - El resumen del workflow falló por un `if` duplicado (`unexpected end of file`), aunque los probes independientes se completaron. Se corrigió el bloque y se añadió repetición de latencia UTILITIES.
 - `RemoteAdminLatency.mjs` ahora acepta SERVICE_KEY ADMIN/UTILITIES, valida identidad/estado/versión, ejecuta cinco GET con timeout 8 s y registra errores por muestra.
 - Pendiente nueva ejecución del workflow health para verificar el resumen y obtener cinco muestras de UTILITIES. No se desplegaron Apps Script ni se modificaron datos.
+
+
+## Continuidad — health remoto corregido y repetición de latencia (2026-11-26)
+- Run `45756725304`, commit `5496c88c`: contrato local 21/21 PASS. Health remoto: AUTH FAIL por `sessionAuthority`; ADMIN FAIL por deployment 2.7.1 vs fuente 2.7.2; CATALOG 1133 ms PASS, FEEDBACK 1506 ms PASS, UTILITIES 987 ms PASS, WRITE 1566 ms PASS.
+- CATALOG feed, boundaries, matriz y paginación PASS. El resumen final del workflow se ejecutó correctamente y devolvió FAIL solo por health remoto; BETA-F023 cerrado.
+- ADMIN 5 GET: 2241/5022/1465/2358/1631 ms; mediana 2241, máximo 5022, 3/5 >=2 s. SLOW confirmado y deployment desactualizado.
+- UTILITIES 5 GET: 1090/691/868/778/639 ms; mediana 778, máximo 1090, 0/5 >=2 s. El pico aislado 7916 ms no se reprodujo; BETA-F024 cerrado como transitorio.
+- Regresión general run `45756765620`: SUCCESS; 542 suites, 6452 pruebas, 0 fallos; browser responsive PASS; PWA offline PASS; `ServiceHealthContract` 21/21, `ServiceWorkerCache` 12/12, `PWAStartupScenarios` 16/16.
+- No se desplegaron Apps Script ni se alteraron datos. AUTH y ADMIN remotos siguen pendientes de deployment autorizado.

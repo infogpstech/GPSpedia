@@ -711,3 +711,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ## MIG-URL-008 — diagnóstico y corrección del runner health (2026-11-26)
 - **BETA-F023:** corregido el `if` duplicado del resumen shell; nueva ejecución pendiente.
 - **BETA-F024:** UTILITIES respondió SLOW a 7,916 ms en una muestra; el runner ahora mide cinco muestras GET-only en ADMIN y UTILITIES, con timeout de 8 s por muestra.
+
+
+## MIG-URL-008 — repetición health y latencia (2026-11-26)
+- **BETA-F023: CERRADA.** El resumen shell ya ejecuta correctamente y devuelve FAIL por AUTH/ADMIN remotos, no por sintaxis.
+- **BETA-F024: CERRADA COMO ANOMALÍA TRANSITORIA.** UTILITIES 5/5 GET entre 639 y 1,090 ms; mediana 778 ms. No se reprodujo el pico aislado de 7,916 ms.
+- **ADMIN: SLOW CONFIRMADO.** 5 muestras; mediana 2,241 ms, máximo 5,022 ms, 3/5 >=2 s. Deployment 2.7.1 frente a fuente 2.7.2.
+- Health remoto: AUTH FAIL por sessionAuthority; ADMIN FAIL por versión; CATALOG/FEEDBACK/UTILITIES/WRITE PASS. CATALOG feed, boundaries, matrix y pagination PASS.
