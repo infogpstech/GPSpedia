@@ -129,3 +129,5 @@
 
 
 2026-11-25 | Revisión runner Beta: ocho hallazgos de inspección estática registrados (BETA-PLAN-F001..008). Ajustes publicados al checker health (timeout 8s, estado SLOW >=2s, intentos exactos) y workflow restringido a GPSpedia2.2.5_work con gates Beta. No se ejecutaron endpoints remotos todavía.
+
+2026-11-26 | Beta health real: Actions runs 45729426765/45729430374 SUCCESS; GET-only 6/6 endpoints disponibles. ADMIN deployment v2.7.1 (fuente 2.7.2) y latencia 2.431/2.701s, SLOW; F009 desfase de versión, F010 latencia alta. Los otros servicios PASS (1.105–1.612ms). Sin escrituras.
