@@ -1644,3 +1644,13 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Code Review GP-CUT-FORM-SNAPSHOT-02: reconstrucción inversa de los dos bloques modificados en `HTML/add_cortes.html` coincidió exactamente con el respaldo; `service-worker.js` coincidió al revertir v81 a v80. Los módulos de persistencia y logger no fueron modificados. No se detectaron cambios fuera del alcance.
 - Safety & Side Effects: se mantienen la barrera de snapshot, el rechazo de conflicto y la recuperación/idempotencia. No se realizó escritura remota ni se borraron operaciones pendientes.
 - Los respaldos temporales se retiraron después de completar la comparación y revisión. La prueba real en navegador móvil/IndexedDB y la escritura controlada en backend/Sheets/Drive continúan pendientes.
+
+
+[2026-11-26] GP-CUT-DEEP-AUDIT-03 — corrección de rutas del formulario de alta
+- `JS/Frontend/ui.js`: el enlace dinámico del aviso de corte no funcional ahora apunta a `HTML/add_cortes.html` en lugar de la raíz.
+- `JS/Frontend/ui.js`: el botón de registro silencioso ahora navega a `HTML/add_cortes.html?silent=true`.
+- `service-worker.js`: `CACHE_NAME` actualizado de `gpsepedia-cache-v81` a `gpsepedia-cache-v82` para invalidar los recursos anteriores.
+- Respaldos exactos previos: `Olds/Backups/GP-CUT-DEEP-AUDIT-03-20261126/JS__Frontend__ui.js` y `service-worker.js`.
+- Code Review: comparación contra respaldos confirma exclusivamente las dos rutas y la versión de caché; imports y recursos locales del formulario existen en el árbol actual.
+- Pages build/deploy: run `45913010737`, SUCCESS sobre commit `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
+- No se modificó el contrato de IndexedDB, la lógica de recuperación, el modal, WRITE/Apps Script, Spreadsheet ni Drive. No se ejecutó una alta real ni prueba runtime de navegador/IndexedDB.
