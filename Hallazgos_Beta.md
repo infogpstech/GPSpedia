@@ -311,3 +311,12 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - La primera ejecución (run 45729426765) también reportó ADMIN SLOW 2431 ms y los otros cinco PASS; confirma persistencia de latencia alta en dos observaciones breves, no medición estadística.
 - Evidencia: https://github.com/infogpstech/GPSpedia/actions/runs/45729430374
 - Alcance: únicamente GET; no se verificaron Sheets/Drive, acciones autenticadas, operaciones funcionales ni UI.
+
+
+## Validación Beta — CATALOG feed read-only (2026-11-26)
+- Run Actions `45729926589`, job SUCCESS, commit `a8a46da383caa1b70bbc95d18faf909a03d94a4c`. URL de evidencia: https://github.com/infogpstech/GPSpedia/actions/runs/45729926589
+- GET `catalogFeed=1` sin mutaciones, cursor 0/limit 1: status success, resetRequired=false, currentRevision=5, minRevision=1, hasMore=true, changeCount=1, nextCursor=1. Solo se registraron metadatos de prueba; no se reprodujo ni almacenó contenido de eventos.
+- GET en cursor 5/limit 1: success, changeCount=0, hasMore=false, nextCursor=5. Estructura de respuesta y cursor final válidos.
+- Latencia feed: 2.374 s (cursor inicial) y 2.381 s (cursor final). **BETA-PLAN-F011 (media, rendimiento):** el feed CATALOG supera 2 s en ambas lecturas; requiere investigación/medición adicional, no atribuir aún causa.
+- La revisión del cursor 0 mostró un evento disponible en el feed; se evitó registrar IDs, snapshots o contenido del evento.
+- Esta prueba no cubrió paginación con múltiples eventos, cursor fuera de rango/antiguo, reset requerido, retención ni reconstrucción snapshot.
