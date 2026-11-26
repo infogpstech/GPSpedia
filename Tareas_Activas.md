@@ -14,7 +14,7 @@
 - Corrección en `JS/Frontend/likeState.js`: el estado visual y el contador se establecen exactamente con `isUseful` y `usefulCount` confirmados por FEEDBACK, sin sumar/restar un segundo delta. Si CATALOG devuelve una proyección anterior, prevalece el contador confirmado por FEEDBACK.
 - No se modificaron FEEDBACK, CATALOG, sus deployments, endpoints ni Spreadsheet. La coordinación entre servicios continúa exclusivamente en el frontend.
 - Commits de código: `29414137134370d25b57286e047ea082854c7413`, `2d0b44a3631ca02cdc886fa1ce81768b795fbed8`, `e663bffad986cc584efc4c913325d977a7a43b91`, `9348557df146daa1f4df7216acef68b5728f7606`, `000f1115202af8c5f7bd704da914d71598c4b8a3`.
-- Pages build/deploy para el HEAD `7e9ff0b` está en cola; confirmar SUCCESS antes de afirmar disponibilidad en el sitio.
+- Pages build/deploy `45843872204` terminó SUCCESS sobre `7e9ff0ba209e9096aed2c90a3d5b9b90407770f9`, que ya contiene el código de la corrección (`000f111`); los commits posteriores solo actualizan registros. Se confirma build/deploy de Pages para la fuente corregida.
 - No se ejecutaron escrituras ni lecturas remotas en Spreadsheet ni pruebas de navegador real. Falta validar FEEDBACK tras recarga y contador CATALOG tras recarga. La fase Beta permanece cerrada.
 
 ### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
