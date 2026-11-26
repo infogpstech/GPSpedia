@@ -158,14 +158,14 @@ async function tryPlayback(video, viewport, attempt) {
         }, embedUrl);
         await page.waitForFunction(() =>
             Array.from(document.querySelectorAll("iframe"))
-                .some(iframe => /youtube\\.com\\/embed\\//.test(iframe.src)),
+                .some(iframe => /youtube\.com\/embed\//.test(iframe.src)),
             null, { timeout: 15000 }
         );
-        let frame = page.frames().find(candidate => /youtube\\.com\\/embed\\//.test(candidate.url()));
+        let frame = page.frames().find(candidate => /youtube\.com\/embed\//.test(candidate.url()));
         const frameDeadline = Date.now() + 15000;
         while (!frame && Date.now() < frameDeadline) {
             await page.waitForTimeout(250);
-            frame = page.frames().find(candidate => /youtube\\.com\\/embed\\//.test(candidate.url()));
+            frame = page.frames().find(candidate => /youtube\.com\/embed\//.test(candidate.url()));
         }
         if (!frame) throw new Error("El iframe YouTube no creó un frame navegable.");
         await frame.waitForFunction(() => {
