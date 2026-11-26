@@ -7081,23 +7081,6 @@ textarea.rich-text-source[hidden] { display:none !important; }
     gap: 8px;
     overflow: hidden;
 }
-#dev-tools-modal .dev-tools-sidebar {
-    display: grid;
-    flex: 0 0 auto;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    flex-direction: row;
-    min-width: 0;
-    align-self: stretch;
-    gap: 5px;
-    padding: 5px;
-}
-#dev-tools-modal .dev-tab-link {
-    justify-content: center;
-    min-width: 0;
-    gap: 5px;
-    padding: 7px 4px;
-    text-align: center;
-}
 #dev-tools-modal .dev-tools-panels {
     display: flex;
     flex: 1 1 auto;
