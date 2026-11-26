@@ -327,3 +327,14 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Corrección en `JS/Frontend/ui.js`: validación de IDs válidos y únicos; los resultados extra solo se admiten con estado `no_confirmada`; se exige confirmación individual para cada ID solicitado, `partial !== true` y correspondencia exacta de los conteos saved/blocked/errors/stale. Si el resumen no coincide, la UI conserva estado parcial y no habilita organización.
 - Harness aislado: consolidación válida tras reintento => estado saved; conteo inconsistente => estado parcial y sin operación habilitada. PASS.
 - Commit: `52a3d7143f9810e68f9be5e9c495270c0c35068a`. No se ejecutaron servicios desplegados ni operaciones reales en Drive/Spreadsheet.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — restauración masiva de biblioteca
+- Hallazgo UX: una selección masiva mixta ejecutaba correctamente el endpoint específico por tipo de registro, pero la confirmación describía todos los elementos como restauraciones históricas, aunque los elementos en papelera solo vuelven a Drive y no se reasocian a celdas.
+- Corrección: el frontend separa cantidades de archivos que se restaurarán desde papelera y de imágenes históricas que volverán a sus campos; confirma explícitamente que los archivos desde papelera no se reasocian automáticamente. Se corrigió singular/plural.
+- Harness aislado: selección mixta => confirmación diferenciada y rutas correctas (`restoreReplacedImageFromTrash` para papelera y `recoverReplacedImage` para historial). PASS.
+- Commits: 616d6bb5f5662d0a6e79a5ce5f122758301b109b y 271276a077f2ad81adf00a66b4a8ffa28dd05d99.
+
+[2026-11-26] GP-ADMIN-TAB-ACTIONS-UX-01 — verificación estática
+- Revisión de las cuatro pestañas Developer: los botones de acción ordinarios llevan `dev-panel-action` y `dev-action-label`; CSS aplica icono compacto y expansión de etiqueta al foco, con reglas responsive. Los selectores de vista y controles especializados de auditoría mantienen sus estilos específicos. No se modificó la navegación entre pestañas.
+- La implementación local se considera completa; la inspección visual real queda reservada a Beta.
