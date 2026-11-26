@@ -994,3 +994,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Harness aislado de `withAdminLocalOperationGuard_`: una segunda ejecución con la misma clave se bloquea; un alcance distinto se permite. La ruta del endpoint usa la clave compartida. PASS.
 - Commit: `f64cb5346c5fb28886db0e19485f893ceb755961`.
 - Nota: esta guarda serializa operaciones que pasan por `saveUnusedImagesInventory`; no reemplaza los ScriptLock propios de las demás acciones de administración. La auditoría de concurrencia entre endpoints distintos queda pendiente de una prueba integral.
+
+
+### Auditoría de alcance y asociación — pruebas aisladas completadas (2026-11-26)
+- Se comprobó el allowlist de `collectCatalogImageReferences()`: solo recorre `Cortes`, `Tutorial`, `Relay` y `pys`; los nombres físicos proceden de `SHEET_NAMES`. Las tres hojas opcionales usan contratos de columna: `Tutorial` columna 3 encabezado `Imagen`; `Relay` columna 10 encabezado `imagen`; `pys` columna 7 encabezado `Imagen`. En `Cortes` se validan las ocho columnas de imagen configuradas. Las imágenes sobre la cuadrícula de esas hojas también se consideran referencias de catálogo. Harness con mocks confirmó que el escáner solo solicita esas cuatro hojas.
+- Se probaron fixtures de asociación: coincidencia única con versión/encendido/año => vehículo correcto; conflicto contextual => ambiguo; dos vehículos del mismo modelo sin contexto suficiente => ambiguo; archivo ya referenciado => omitido. PASS.
+- Se revisaron estáticamente las salvaguardas backend de recuperar, enviar a papelera, mover, restaurar desde papelera y eliminación definitiva; se verificaron controles de tipo/estado, MIME, árbol Cortes, referencias, unicidad y compensaciones. Matriz de capacidades frontend: siete casos PASS.
+- La tarea continúa abierta para pruebas integradas, validación de hojas reales, auditoría de concurrencia entre endpoints distintos y revisión visual del explorador.
