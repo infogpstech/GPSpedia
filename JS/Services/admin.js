@@ -641,9 +641,9 @@ function collectCatalogImageReferences(includeLocations = true) {
     // Las hojas de eventos, registros, reacciones, Feedback y administración nunca se recorren.
     const catalogSheets = [
         { name: SHEET_NAMES.CORTES, kind: "cortes" },
-        { name: SHEET_NAMES.TUTORIALES, field: "Imagen", column: 3 },
-        { name: SHEET_NAMES.RELAY, field: "imagen", column: 10 },
-        { name: SHEET_NAMES.PYS, field: "Imagen", column: 7 }
+        { name: SHEET_NAMES.TUTORIALES, field: "Imagen", header: "Imagen", column: 3 },
+        { name: SHEET_NAMES.RELAY, field: "imagen", header: "imagen", column: 10 },
+        { name: SHEET_NAMES.PYS, field: "Imagen", header: "Imagen", column: 7 }
     ];
     const references = new Map();
     let unverifiableReferenceCount = 0;
