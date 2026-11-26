@@ -13,6 +13,7 @@ on:
       - "JS/Tests/RemoteCatalogFeedBoundaries.mjs"
       - "JS/Tests/RemoteAdminLatency.mjs"
       - "JS/Tests/RemoteCatalogFeedMatrix.mjs"
+      - "JS/Tests/RemoteCatalogFeedPagination.mjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -64,6 +65,11 @@ jobs:
         if: always()
         run: node JS/Tests/RemoteCatalogFeedMatrix.mjs
 
+      - name: Verify CATALOG feed page-by-page cursor progression (GET only)
+        id: catalog_pagination
+        if: always()
+        run: node JS/Tests/RemoteCatalogFeedPagination.mjs
+
       - name: Summarize independent read-only probe outcomes
         if: always()
         env:
@@ -72,18 +78,21 @@ jobs:
           BOUNDARIES_OUTCOME: ${{ steps.catalog_boundaries.outcome }}
           ADMIN_LATENCY_OUTCOME: ${{ steps.admin_latency.outcome }}
           MATRIX_OUTCOME: ${{ steps.catalog_matrix.outcome }}
+          PAGINATION_OUTCOME: ${{ steps.catalog_pagination.outcome }}
         run: |
           printf '%s\n' \
             "Health: $HEALTH_OUTCOME" \
             "Feed: $FEED_OUTCOME" \
             "Boundaries: $BOUNDARIES_OUTCOME" \
             "ADMIN latency: $ADMIN_LATENCY_OUTCOME" \
-            "CATALOG matrix: $MATRIX_OUTCOME"
+            "CATALOG matrix: $MATRIX_OUTCOME" \
+            "CATALOG pagination: $PAGINATION_OUTCOME"
           if [ "$HEALTH_OUTCOME" = success ] &&
              [ "$FEED_OUTCOME" = success ] &&
              [ "$BOUNDARIES_OUTCOME" = success ] &&
              [ "$ADMIN_LATENCY_OUTCOME" = success ] &&
-             [ "$MATRIX_OUTCOME" = success ]; then
+             [ "$MATRIX_OUTCOME" = success ] &&
+             [ "$PAGINATION_OUTCOME" = success ]; then
             exit 0
           fi
           exit 1
