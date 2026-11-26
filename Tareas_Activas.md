@@ -680,3 +680,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-F020 — precarga PWA (2026-11-26)
 **Estado: CORRECCIÓN LOCAL PUBLICADA; VALIDACIÓN BETA PENDIENTE.** Se agregaron 12 imports JS y `qrcode-generator.mjs` a CORE_ASSETS, con caché v77; el scanner recorre también .mjs. Cerrar únicamente cuando Actions valide instalación, inventario HTTP, login offline frío y regresión responsive. Recursos externos CDN/Drive no forman parte del precache core.
+
+
+### BETA-F020 — corrección de harness (2026-11-26)
+**Estado: AJUSTE LOCAL PUBLICADO; NUEVA CI PENDIENTE.** Run 45755284614 confirmó dos referencias de test obsoletas a v76, no defectos funcionales: PasswordRecovery y ServiceWorkerCache. Se actualizaron a una aserción de versión genérica y se añadieron checks de las 13 rutas. El run mantiene dos fallos AUTH independientes por sessionAuthority.

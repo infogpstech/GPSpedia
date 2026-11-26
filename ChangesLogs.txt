@@ -1445,3 +1445,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — BETA-F020: precarga PWA
 - `service-worker.js`: caché v77 y precarga de 13 módulos estáticos del grafo de main.js omitidos en v76 (12 JS y qrcode-generator.mjs).
 - `JS/Tests/BetaPwaOfflineSmoke.mjs`: scanner recursivo de imports ahora reconoce .js y .mjs.
+
+
+## 2026-11-26 — alineación de regresiones PWA con caché versionada
+- JS/Tests/PasswordRecovery.mjs y JS/Tests/ServiceWorkerCache.js: aceptan cualquier versión gpsepedia-cache-vN en vez de fijar v76.
+- ServiceWorkerCache.js: comprueba explícitamente las 13 dependencias agregadas al precache.

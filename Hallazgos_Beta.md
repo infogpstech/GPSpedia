@@ -530,3 +530,9 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se amplió el scanner de `BetaPwaOfflineSmoke.mjs` para recorrer imports relativos tanto `.js` como `.mjs`; evita que una dependencia ESM con extensión distinta quede fuera del inventario.
 - Pendiente de ejecutar Actions: comprobar HTTP 200 de todos los recursos, instalación atómica del SW, login en offline frío y regresión responsive. No se afirma aún que F020 esté cerrado.
 - Font Awesome CDN y miniaturas de Drive siguen siendo recursos externos opcionales/no críticos para el arranque del login; no se añadieron como recursos core por su naturaleza externa/dinámica.
+
+
+## BETA-F020 — ajuste de regresiones por rotación de caché (2026-11-26)
+- La primera CI de v77 encontró dos expectativas obsoletas en pruebas locales: PasswordRecovery.mjs y ServiceWorkerCache.js exigían el literal gpsepedia-cache-v76.
+- Se sustituyó la comparación rígida por el patrón versionado gpsepedia-cache-vN y se añadieron aserciones explícitas de las 13 dependencias nuevas en ServiceWorkerCache.js.
+- No es un defecto funcional de PWA: son fixtures de prueba que no acompañaron la rotación de caché. La nueva ejecución debe confirmar el harness y mantener visible el fallo AUTH independiente.

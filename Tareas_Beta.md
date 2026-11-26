@@ -724,3 +724,9 @@ Run `45750124457`: cold offline FAIL inmediatamente tras instalar SW; warm offli
 ### BETA-08 / BETA-F020 — corrección de precarga
 - Cambio local: CORE_ASSETS incluye las 13 dependencias estáticas que faltaban en el grafo recursivo de main.js (12 .js + qrcode-generator.mjs); caché v77.
 - El harness recorre imports .js y .mjs. Validación de despliegue Pages/Service Worker y offline frío: PENDIENTE de Actions sobre el commit de corrección. No confundir publicación Pages con la validación real del Service Worker en navegador.
+
+
+### BETA-08 / BETA-F020 — alineación de pruebas locales
+- Run 45755284614: sintaxis modificada PASS; ServiceWorkerCache y PasswordRecovery fallan por expectativa obsoleta gpsepedia-cache-v76 tras migrar a v77. Se corrigieron para aceptar gpsepedia-cache-vN; la suite de caché ahora afirma las 13 rutas nuevas.
+- AUTH conserva 2 fallos de suite por sessionAuthority; no se atribuyen a PWA.
+- La ejecución browser del mismo run continúa pendiente; no se declara offline frío PASS hasta leer sus logs.

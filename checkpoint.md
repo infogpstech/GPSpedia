@@ -1404,3 +1404,10 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Cambios preparados en un commit lógico: `service-worker.js` agrega 12 módulos JS + `qrcode-generator.mjs`, y cambia cache v76→v77; `BetaPwaOfflineSmoke.mjs` analiza imports .js/.mjs.
 - Pendiente: Actions debe validar HTTP 200, cobertura completa del grafo, install/activate, login offline frío, warm offline y responsive. No cerrar F020 antes de esa evidencia.
 - Recursos Font Awesome CDN y miniaturas Drive se mantienen como dependencias externas no esenciales para mostrar login; se documentan fuera del alcance de la corrección core.
+
+
+## Continuidad — regresiones del harness v77 (2026-11-26)
+- Commit de corrección PWA: b65be43f53a35e56b341a5da7349718eeb0dd3b6; Pages build/deploy PASS en run 45755284172.
+- CI de regresión 45755284614: sintaxis de archivos modificados PASS; 4 suites fallidas: 2 por AUTH sessionAuthority (conocido), 2 por aserciones rígidas de gpsepedia-cache-v76 en PasswordRecovery y ServiceWorkerCache. Los checks funcionales PWAStartupScenarios 16/16 PASS; PasswordRecovery pasó sus escenarios pero falló el resumen por esa expectativa.
+- Corregido el harness: las dos pruebas aceptan gpsepedia-cache-vN; ServiceWorkerCache comprueba además las 13 dependencias nuevas.
+- El job responsive/browser del run 45755284614 estaba ejecutando Install Chromium; offline frío aún no verificado. Nueva CI pendiente sobre este ajuste.

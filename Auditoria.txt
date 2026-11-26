@@ -139,3 +139,8 @@
 - Evidencia previa: 12 módulos JS importados por el grafo de main.js no estaban en CORE_ASSETS; el login fallaba offline frío y funcionaba tras warm-up online.
 - Cambio focalizado: 12 módulos JS y qrcode-generator.mjs agregados a CORE_ASSETS; cache version v76→v77. El scanner de imports ahora incluye .mjs.
 - Criterio de cierre: Actions debe confirmar todos los recursos HTTP 200, cero dependencias estáticas omitidas, login visible inmediatamente offline y regresión responsive sin fallos. No se modifica el backend ni datos remotos.
+
+
+2026-11-26 | BETA-F020 — regresiones de harness por versión de caché
+- CI 45755284614 detectó dos tests con versión fija v76 tras la actualización legítima a v77: PasswordRecovery.mjs y ServiceWorkerCache.js.
+- Se reemplaza el literal por una expresión versionada y se refuerza la suite ServiceWorkerCache con las 13 rutas añadidas. No afecta al comportamiento de producción.
