@@ -1478,3 +1478,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — robustez del workflow health y latencia UTILITIES
 - `.github/workflows/deployed-service-health.yml`: corregido el bloque `if` duplicado del resumen y añadido step de cinco muestras de latencia UTILITIES.
 - `JS/Tests/RemoteAdminLatency.mjs`: acepta SERVICE_KEY ADMIN/UTILITIES, valida identidad/estado/versión y conserva errores por muestra sin ocultarlos.
+
+
+## 2026-11-26 — cierre BETA-F023/F024 y repetición health
+- Run `45756725304`: resumen health corregido; contrato local 21/21; AUTH/ADMIN son los únicos FAIL remotos; otros cuatro servicios PASS.
+- UTILITIES 5 muestras: mediana 778 ms, máximo 1090 ms, sin muestras SLOW; 7,916 ms no se reprodujo.
+- ADMIN 5 muestras: mediana 2241 ms, máximo 5022 ms, 3/5 SLOW; deployment sigue 2.7.1 vs fuente 2.7.2.
+- CATALOG feed, límites, matriz y paginación PASS.

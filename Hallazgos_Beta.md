@@ -570,3 +570,19 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 ## BETA-F024 — latencia UTILITIES bajo observación (2026-11-26)
 - En run `45756293382`, UTILITIES v1.5.0 respondió `available` en 7,916 ms frente a un timeout de 8,000 ms.
 - Se extendió el probe repetido para ejecutar cinco GET secuenciales tanto en ADMIN como en UTILITIES, validando identidad, estado y versión, y conservando errores por muestra. Tendencia pendiente.
+
+
+## BETA-F023 — CERRADO: resumen health workflow corregido (run 45756725304)
+- El nuevo run completó el step de resumen sin error de sintaxis. La condición final devolvió FAIL correctamente por los dos servicios remotos no conformes (AUTH y ADMIN), sin enmascarar los resultados independientes.
+
+## BETA-F024 — CERRADO COMO ANOMALÍA TRANSITORIA: latencia UTILITIES
+- Cinco muestras GET-only de UTILITIES v1.5.0: 1090, 691, 868, 778 y 639 ms; mediana 778 ms, máximo 1090 ms, 0/5 >=2 s y cero errores.
+- La observación aislada de 7,916 ms del run `45756293382` no se reprodujo; probable latencia puntual/cold start, sin atribuir causa.
+
+## ADMIN — actualización de tendencia remota (run 45756725304)
+- Cinco muestras: 2241, 5022, 1465, 2358 y 1631 ms; mediana 2241 ms, máximo 5022 ms, 3/5 >=2 s.
+- Health sigue FAIL por deployment 2.7.1 frente a fuente esperada 2.7.2. La latencia repetida confirma variabilidad y tendencia SLOW; no se atribuye causa ni se despliega.
+
+## MIG-URL-008 — repetición GET-only de los seis servicios (run 45756725304)
+- Contrato local 21/21 PASS. Remoto: AUTH FAIL por `sessionAuthority`; ADMIN FAIL por versión; CATALOG 1133 ms PASS, FEEDBACK 1506 ms PASS, UTILITIES 987 ms PASS, WRITE 1566 ms PASS.
+- CATALOG feed, boundaries, matriz y paginación PASS. El resumen final del workflow se ejecutó correctamente y marcó FAIL solo por health remoto.

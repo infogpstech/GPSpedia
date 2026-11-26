@@ -175,3 +175,16 @@
 
 2026-11-26 | BETA-F024 — UTILITIES SLOW
 - Run `45756293382`: health UTILITIES v1.5.0 `available`, 7,916 ms. Se incorporó medición repetida de cinco muestras para determinar variabilidad; no se atribuye causa con una sola observación.
+
+
+2026-11-26 | BETA-F023 — cierre
+- Run `45756725304`: resumen final ejecutado sin error shell; el resultado agregado FAIL refleja únicamente AUTH y ADMIN remotos. Defecto del workflow corregido.
+
+2026-11-26 | BETA-F024 — latencia UTILITIES no reproducida
+- Cinco GET: 1090/691/868/778/639 ms; mediana 778, máximo 1090, 0/5 lentas. La muestra aislada 7,916 ms no se reprodujo; se cierra como anomalía transitoria.
+
+2026-11-26 | ADMIN — latencia y deployment
+- Cinco GET: 2241/5022/1465/2358/1631 ms; mediana 2241, máximo 5022, 3/5 >=2 s. Deployment continúa 2.7.1 frente a fuente 2.7.2; no se desplegó.
+
+2026-11-26 | Health Beta — run `45756725304`
+- Contrato local 21/21 PASS. AUTH FAIL por sessionAuthority remoto; ADMIN FAIL por versión. CATALOG/FEEDBACK/UTILITIES/WRITE PASS. CATALOG feed, boundaries, matrix y pagination PASS. Cero mutaciones.
