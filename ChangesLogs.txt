@@ -1495,3 +1495,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — fallback de imagen del modal iOS
 - `index.html`: el modal de instalación iOS utiliza el icono local del App Shell en vez del thumbnail de Drive.
 - `OfflineBrandAssets.mjs`: aserción nueva; 5/5 PASS en run `45757156335`.
+
+
+## 2026-11-26 — actualización endpoints AUTH/ADMIN y health Beta
+- El commit `fb96cc841a60cd2852e4578c300332cf4557d26b` actualizó URLs de AUTH/ADMIN en `JS/Frontend/api-config.js`.
+- Health GET-only run `45808869604`: 6/6 servicios PASS; AUTH v2.2.5 (1463 ms), ADMIN v2.7.2 (2698 ms SLOW), CATALOG v2.4.0 (993 ms), FEEDBACK v1.2.2 (1892 ms), UTILITIES v1.5.0 (1323 ms), WRITE v2.3.1 (1617 ms). CATALOG feed/boundaries/matrix/pagination PASS.
+- ADMIN 5 GET: mediana 1861 ms, 1/5 SLOW. UTILITIES 5 GET: mediana 907 ms, 0/5 SLOW.
+- CI service-tests del endpoint commit falló una suite por URLs esperadas obsoletas en `LocalApiEndpoints.mjs` (6443 pruebas aprobadas). Se ajustó el fixture, sin cambiar endpoints, en `dd85ed5705f9d29fc3a3a94d4074124cbc08e35a`; nueva CI pendiente.
