@@ -366,3 +366,12 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 [2026-11-26] Aclaración de alcance — detección frente a protección destructiva
 - `collectCatalogImageReferences()` limita la clasificación de «sin uso» a las cuatro hojas de catálogo físicas autorizadas.
 - `collectActiveDriveReferences()` tiene deliberadamente un alcance más amplio para operaciones destructivas: recorre las demás hojas del Spreadsheet (incluyendo Feedback/reacciones/eventos y datos operativos) y también imágenes sobre cuadrícula, excluyendo únicamente historial de imágenes y hojas internas/logs/usuarios/sesión/idempotencia. Esto no convierte una referencia operativa en «en uso» durante la auditoría; sí bloquea mover/enviar a papelera/eliminar una imagen si cualquier hoja la sigue referenciando. Esta separación es correcta y debe preservarse.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — asociación de vehículo añadida al resultado de cada lote
+- Hallazgo: el scanner no incluía asociaciones en `auditResults`; la UI solo recibía sugerencias después de registrar el inventario. Durante el recorrido las tarjetas mostraban asociación pendiente aunque el algoritmo existía.
+- Corrección ADMIN: tras recorrer cada lote, toma las imágenes `Sin uso detectado`, lee las primeras ocho columnas de Cortes y ejecuta `buildCortesImageModelAssociationSuggestions_` con el snapshot de referencias activas/históricas. Adjunta `association` a cada archivo. Errores de lectura producen `no_verificada` con mensaje, no se convierten en ausencia de coincidencia. Se incluye tiempo/fallo de asociación en métricas.
+- Corrección UI: la tarjeta muestra vehículo sugerido/ambiguo desde el lote inicial; diferencia no verificada de sin coincidencia; la consola registra conteos por lote.
+- Harness integrado de bloque (mock de hoja + algoritmo real): Toyota Hilux 2.8/Botón/2021 => VH-02, confianza high, señales exactas de modelo, marca, versión, encendido y año; sin coincidencia produce `sin_coincidencia`; hoja ausente produce `no_verificada`. UI de estado no verificado y resumen de consola probados. PASS.
+- Commits: 75170cd6db7b4bcc00ab98689f04837b9efa5945, 091a939902132e11383cb9f9b16ec1c93d197c3a, bdd9273caee75cea60b65b081a6a0e0302ed9b9b, eec4cd899179b7dc2ba24d97817e42a9a78e9635.
+- Límite: mocks y fixtures, no Spreadsheet real ni navegador.
