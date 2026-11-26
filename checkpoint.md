@@ -1446,3 +1446,11 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Se detectó que `deployed-service-health.yml` no vigilaba los seis archivos fuente Apps Script; por ello, el cambio local AUTH no activó por sí mismo el probe remoto.
 - Se añadieron Auth.js, catalog.js, write.js, feedback.js, Utilities.js y admin.js al filtro `paths`. Al publicar, el workflow ejecutará contrato local y probes GET-only; no despliega ni modifica datos.
 - Objetivo de la siguiente validación: confirmar contrato local, estado real de los seis deployments, CATALOG read-only y latencia ADMIN sobre el HEAD actualizado. Se esperan los fallos de AUTH/ADMIN mientras no se actualicen deployments.
+
+
+## Continuidad — BETA-F023 / BETA-F024 (2026-11-26)
+- Run health `45756293382`, commit `47757a03`: contrato local 21/21 PASS; AUTH FAIL por `response.sessionAuthority` aún en deployment; ADMIN FAIL por deployment 2.7.1 vs fuente 2.7.2; CATALOG 940 ms PASS, FEEDBACK 1,760 ms PASS, WRITE 828 ms PASS, UTILITIES 7,916 ms SLOW.
+- CATALOG feed, boundaries, matriz y paginación secuencial PASS. ADMIN repeated latency: 1,976 ms mediana, 2/5 muestras >=2 s.
+- El resumen del workflow falló por un `if` duplicado (`unexpected end of file`), aunque los probes independientes se completaron. Se corrigió el bloque y se añadió repetición de latencia UTILITIES.
+- `RemoteAdminLatency.mjs` ahora acepta SERVICE_KEY ADMIN/UTILITIES, valida identidad/estado/versión, ejecuta cinco GET con timeout 8 s y registra errores por muestra.
+- Pendiente nueva ejecución del workflow health para verificar el resumen y obtener cinco muestras de UTILITIES. No se desplegaron Apps Script ni se modificaron datos.

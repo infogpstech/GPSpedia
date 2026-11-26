@@ -68,6 +68,12 @@ jobs:
         id: admin_latency
         if: always()
         run: node JS/Tests/RemoteAdminLatency.mjs
+      - name: Measure UTILITIES latency repeatedly (GET only)
+        id: utilities_latency
+        if: always()
+        env:
+          SERVICE_KEY: UTILITIES
+        run: node JS/Tests/RemoteAdminLatency.mjs
       - name: Probe CATALOG feed matrix and repeatability (GET only)
         id: catalog_matrix
         if: always()
@@ -86,6 +92,7 @@ jobs:
           FEED_OUTCOME: ${{ steps.catalog_feed.outcome }}
           BOUNDARIES_OUTCOME: ${{ steps.catalog_boundaries.outcome }}
           ADMIN_LATENCY_OUTCOME: ${{ steps.admin_latency.outcome }}
+          UTILITIES_LATENCY_OUTCOME: ${{ steps.utilities_latency.outcome }}
           MATRIX_OUTCOME: ${{ steps.catalog_matrix.outcome }}
           PAGINATION_OUTCOME: ${{ steps.catalog_pagination.outcome }}
         run: |
@@ -95,13 +102,15 @@ jobs:
             "Feed: $FEED_OUTCOME" \
             "Boundaries: $BOUNDARIES_OUTCOME" \
             "ADMIN latency: $ADMIN_LATENCY_OUTCOME" \
+            "UTILITIES latency: $UTILITIES_LATENCY_OUTCOME" \
             "CATALOG matrix: $MATRIX_OUTCOME" \
             "CATALOG pagination: $PAGINATION_OUTCOME"
           if [ "$CONTRACT_OUTCOME" = success ] &&
-          if [ "$HEALTH_OUTCOME" = success ] &&
+             [ "$HEALTH_OUTCOME" = success ] &&
              [ "$FEED_OUTCOME" = success ] &&
              [ "$BOUNDARIES_OUTCOME" = success ] &&
              [ "$ADMIN_LATENCY_OUTCOME" = success ] &&
+             [ "$UTILITIES_LATENCY_OUTCOME" = success ] &&
              [ "$MATRIX_OUTCOME" = success ] &&
              [ "$PAGINATION_OUTCOME" = success ]; then
             exit 0
