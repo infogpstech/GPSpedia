@@ -325,3 +325,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se confirmó que `collectCatalogImageReferences()` clasifica imágenes sin uso solo contra las hojas de catálogo allowlist.
 - `collectActiveDriveReferences()` mantiene alcance amplio para proteger acciones destructivas: recorre referencias de otras hojas (incluyendo Feedback/eventos/reacciones y demás datos) e imágenes sobre cuadrícula, salvo hojas internas/logs/usuarios/sesión/idempotencia e historial de imágenes. Las referencias operativas no cambian la clasificación de auditoría, pero sí bloquean mover/papelera/eliminar. Preservar esta distinción.
 - Registro de auditoría actualizado en commit `99924646d24e3438de89fe9322dd20b29b8b8b96`.
+
+
+## Continuidad 2026-11-26 — asociación de vehículo durante el escaneo
+- Hallazgo: las sugerencias de vehículo solo se calculaban al guardar inventario, no durante los lotes de auditoría.
+- ADMIN ahora adjunta asociación a cada imagen `Sin uso detectado` en el resultado del lote, leyendo las primeras ocho columnas de Cortes y reutilizando el algoritmo/alias, snapshot de referencias activas e histórico. Estados: suggested, ambiguous, sin_coincidencia, no_verificada. Error de lectura no se presenta como falta de coincidencia.
+- UI muestra la sugerencia y criterios desde la primera tarjeta; diferencia no verificada/sin coincidencia y reporta conteos de asociación en consola.
+- Harness con algoritmo real + mock de hoja: Toyota Hilux 2.8/Botón/2021 => VH-02 high; sin coincidencia y fallo de lectura diferenciados; resumen consola y texto de tarjeta PASS.
+- Commits: backend `75170cd6db7b4bcc00ab98689f04837b9efa5945`, mapa `091a939902132e11383cb9f9b16ec1c93d197c3a`, UI `bdd9273caee75cea60b65b081a6a0e0302ed9b9b`, consola `eec4cd899179b7dc2ba24d97817e42a9a78e9635`; registros: tareas `0cfe2f2737bc1c44792715b1bad01242fb58c2ed`, auditoría `b0312a1c21bb31190bdc946543fec1b65ba07f28`, changelog `d25d31344066136a56c50c0e13c7fe4f78962f93`.
+- La tarea sigue abierta: verificar el rendimiento con volúmenes reales, integración de hoja y revisión visual. No deployment ni Beta.
