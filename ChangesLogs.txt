@@ -1405,3 +1405,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No envía la solicitud ni introduce credenciales; bloquea métodos no-GET y llamadas Apps Script.
 - Run `45748061081`: AUG-146 264/264 y smoke de Pages PASS; Pages deployment `45748060216` SUCCESS.
 - Flujo de correo/código/cambio de contraseña no ejecutado; sin escrituras remotas.
+
+
+## 2026-11-26 — smoke de recuperación responsive
+- `JS/Tests/BetaDeployedPageSmoke.mjs` valida el panel de recuperación en cuatro viewports (1366x768, 390x844, 360x800, 320x700), además del login.
+- No envía solicitud ni código; bloquea no-GET y Apps Script.
+- Run `45748620437`: smoke PASS, AUG-146 264/264; Pages run `45748620501` SUCCESS.

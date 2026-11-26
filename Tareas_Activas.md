@@ -660,3 +660,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## MIG-URL-008 — mapa de cobertura BETA-01..08 (2026-11-26)
 **Estado: COBERTURA LOCAL DOCUMENTADA; BETA REMOTA GET-ONLY COMPLETADA.** Se mapearon suites sintéticas por área en Tareas_Beta.md. Remote GET cubre health, CATALOG feed/boundaries/matriz/paginación y Pages login/recuperación UI sin backend. AUTH y ADMIN conservan hallazgos; mutaciones y pruebas OAuth/Drive permanecen NO EJECUTADAS por falta de mecanismo verificable de identidad y cleanup.
+
+
+## BETA-08 — recuperación UI cuatro viewports (2026-11-26)
+**Estado: INTERFAZ VALIDADA.** Login y recuperación UI PASS en 1366x768, 390x844, 360x800 y 320x700. No se envió solicitud ni se generó código; 0 llamadas Apps Script y 0 escrituras. El flujo real de recuperación sigue pendiente.

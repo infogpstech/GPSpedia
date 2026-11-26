@@ -485,3 +485,9 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Mediana: 1898 ms; media: 2108.8 ms; mínimo: 1350 ms; máximo: 5570 ms; 7/15 (46.7%) muestras >= 2000 ms.
 - El umbral del probe clasifica respuestas >=2000 ms como SLOW. La dispersión es alta; estas medidas no identifican por sí solas la causa ni justifican cambiar timeout o deployment.
 - ADMIN sigue reportando deployment 2.7.1 frente a fuente 2.7.2. No se desplegó ni se modificó el servicio.
+
+
+## BETA-08 — recuperación UI ampliada a cuatro viewports (2026-11-26)
+- Run `45748620437`: el formulario de recuperación se abrió y cerró sin enviar la solicitud en 1366x768, 390x844, 360x800 y 320x700.
+- Los campos usuario/correo y el botón de solicitud permanecen visibles; el formulario de finalización permanece oculto. No hubo overflow horizontal.
+- 0 solicitudes no-GET, 0 llamadas Apps Script, 0 errores JS, 0 credenciales y 0 escrituras. AUG-146 264/264 PASS; Pages run `45748620501` SUCCESS.

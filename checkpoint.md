@@ -1339,3 +1339,11 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - 15 muestras GET-only de runs `45745832696`, `45746770426` y `45747463436`: mediana 1898 ms, media 2108.8 ms, mínimo 1350 ms, máximo 5570 ms; 7/15 >=2 s.
 - Se conserva el umbral de SLOW del probe; no se infiere causa ni se modifica timeout. ADMIN continúa v2.7.1 vs fuente 2.7.2.
 - Última repetición CI de HEAD `e6fb00650162719967479fc9654471af2fecfceb`: Pages `45748423404` SUCCESS; browser `45748424224` AUG-146 264/264 y Pages smoke PASS; service-tests 542 suites/6,450 PASS/2 fallos por AUTH `sessionAuthority`.
+
+
+## Continuidad — recuperación UI en cuatro viewports (2026-11-26)
+
+- Commit de smoke ampliado: `eaf065412dc3c39e7ae2ca3b4d24c19aba12dc61`.
+- Run `45748620437`: AUG-146 264/264 PASS; Pages login/recuperación UI PASS en 1366x768, 390x844, 360x800 y 320x700. Campos usuario/correo y botón visibles, formulario de finalización oculto, sin overflow horizontal.
+- El flujo no envió solicitud ni código: 0 solicitudes no-GET, 0 llamadas Apps Script, 0 errores JS, 0 credenciales y 0 escrituras.
+- Pages run `45748620501`: SUCCESS. Service-tests run `45748620437`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por AUTH `sessionAuthority` (AUG-024/MIG021).

@@ -691,3 +691,7 @@ git rev-parse HEAD
 
 ### Consolidado de latencia ADMIN
 Quince muestras de tres runs Beta GET-only: mediana 1898 ms, media 2108.8 ms, máximo 5570 ms y 7/15 muestras en SLOW (>=2 s). La variación no permite atribuir causa. ADMIN sigue en deployment 2.7.1 frente a fuente 2.7.2; no desplegar desde esta fase.
+
+
+### BETA-08 — recuperación UI, cuatro viewports
+Run `45748620437`: PASS en 1366x768, 390x844, 360x800 y 320x700; usuario/correo/botón visibles, formulario de finalización oculto, sin overflow. No se envió solicitud ni código; 0 llamadas Apps Script y 0 escrituras. AUG-146 264/264; Pages `45748620501` SUCCESS.
