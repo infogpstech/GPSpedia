@@ -1189,3 +1189,9 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Se corrigió la matriz para evitar falsos fallos cuando ocurren cambios legítimos del catálogo durante la prueba. Validación de lógica offline con escenarios simulados: 5/5 PASS. Incluye cursor acotado, reset por retención, reset sin eventos y repetibilidad condicional bajo snapshot estable.
 - Implementación publicada: `49fce769cc0844cca3b518482411ebca4babed16`; adenda en Hallazgos Beta.
 - El test offline no valida el deployment; las pruebas remotas siguen diferidas a Beta.
+
+
+## Continuidad — medición de latencia de health probe (2026-11-25)
+- Detectado y corregido: latencia del probe se medía antes de leer el body JSON, subestimando potencialmente la respuesta. Ahora la marca de latencia se toma tras leer/parsing, antes de validaciones contractuales.
+- Fragmento comprobado con Node 22, body simulado y demora 25 ms: PASS (métrica incluye lectura). No se ha ejecutado el probe remoto.
+- Implementación commit `c77c4d09db185883851635a6b4f7c0a69c7fb755`; hallazgo añadido en `Hallazgos_Beta.md`.
