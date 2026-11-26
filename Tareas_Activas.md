@@ -910,3 +910,16 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - **Pendiente Beta:** validar desde el navegador la apertura de la biblioteca y ejecutar una auditoría Drive completa/continuada en el deployment ADMIN autorizado. No se llamó Drive/Apps Script remoto ni se modificaron archivos externos.
 
 **Commits de código:** \`4463324416ee1d3c35b5c26c45ceb3f4785034f3\`, \`223cf468a3a0abe2284a2b20ea93a9a7c9043686\`, \`35641402b8f31b4659050a45688b6ae5937f6671\`, \`9099f4fb4f88c4630d5a5825e6567e52da1c30d0\`, \`a0dbfa587d0efa1241d1787a640926f4d9b4b38c\` (más correcciones locales de validación de identidad y actividad en FEEDBACK).
+
+
+## GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Auditoría e inventario individual/biblioteca unificada
+
+**Estado: requisitos registrados; auditoría de fuente en curso.**
+
+- Detectar imágenes sin uso en carpeta Cortes, individualmente; capturar ID, nombre, tamaño, MIME/formato, ruta/directorio, URL pública y asociación de vehículo.
+- Relacionar por nombre y árbol de carpetas estructurado (marca/modelo/versión/tipo de encendido/rango de años); mostrar grado de confianza o ausencia de coincidencia.
+- Referencias de uso limitadas a hojas de catálogo (Cortes, Tutoriales, Diagramas de Relay, Problemas y soluciones); excluir hojas de eventos, registro, reacciones/Feedback y demás hojas operativas.
+- Persistir automáticamente cada imagen en su fila independiente en el inventario compartido de imágenes reemplazadas, con idempotencia, escritura verificada, reintentos y estados por imagen; no usar caché local como autoridad.
+- Mostrar miniaturas, metadatos, relación y estado de registro durante la auditoría.
+- Unificar en biblioteca imágenes reemplazadas e imágenes sin uso: grid/lista y acciones recupera, mueve y elimina con confirmación y validación backend.
+- Plan y requisitos registrados en PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md; hallazgos iniciales registrados en Auditoria.txt. Revisión de código y normativa aún incompleta; no se realizan mutaciones de Drive/Sheets ni despliegues.
