@@ -1195,3 +1195,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Detectado y corregido: latencia del probe se medía antes de leer el body JSON, subestimando potencialmente la respuesta. Ahora la marca de latencia se toma tras leer/parsing, antes de validaciones contractuales.
 - Fragmento comprobado con Node 22, body simulado y demora 25 ms: PASS (métrica incluye lectura). No se ha ejecutado el probe remoto.
 - Implementación commit `c77c4d09db185883851635a6b4f7c0a69c7fb755`; hallazgo añadido en `Hallazgos_Beta.md`.
+
+
+## Continuidad — reintentos y reporte del probe de salud (2026-11-25)
+- `RemoteServiceHealth.mjs` amplía reintentos GET transitorios a HTTP 408, 425, 429 y 5xx, con máximo de tres intentos; otros 4xx no se reintentan.
+- El resultado FAIL informa ahora el número real de intentos y no el máximo fijo.
+- Prueba aislada Node 22 de clasificación HTTP y formato: 8/8 PASS. No se ejecutó red ni servicio Apps Script.
+- Implementación: `71ebb84c8011e4a1e04a5e2050ac061145205de6`; hallazgo registrado en `Hallazgos_Beta.md`.
+- Pendiente relevante conservado: el probe valida que la versión exista, pero aún no la compara con la versión esperada de cada servicio; revisar cómo integrar el contrato versionado sin duplicar una fuente de verdad.
