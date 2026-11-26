@@ -44,10 +44,18 @@ async function scanOne(key, result, options = {}) {
     return values[key];
 }
 let passed = 0;
+let failed = 0;
+const failures = [];
 async function check(name, fn) {
-    await fn();
-    passed++;
-    console.log("PASS " + name);
+    try {
+        await fn();
+        passed++;
+        console.log("PASS " + name);
+    } catch (error) {
+        failed++;
+        failures.push({ name, message: String(error && error.message || error) });
+        console.error("FAIL " + name + ": " + String(error && error.message || error));
+    }
 }
 
 await check("Contrato válido exige identidad y estado y clasifica online", async () => {
@@ -286,4 +294,5 @@ await check("El probe remoto normaliza estados y compara la versión contra el c
     assert.match(remoteHealthSource, /body\.version\.trim\(\)!==expectedVersions\[service\]/);
     assert.match(remoteHealthSource, /git\", \[\"show\", targetCommit \+ \":Services\/SERVICE_HEALTH\.md\"/);
 });
-console.log("ServiceHealthContract: " + passed + "/" + passed + " PASS");
+console.log("ServiceHealthContract: " + passed + "/" + (passed + failed) + " PASS; " + failed + " FAIL");
+if (failed) process.exitCode = 1;
