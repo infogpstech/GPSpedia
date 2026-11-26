@@ -39,3 +39,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - PWA: core 49/49 y optional 4/4 HTTP 200, warm offline login visible, cero módulos precache faltantes, pageErrors 0, no GETs Apps Script ni non-GET, credenciales no enviadas y backend writes deshabilitadas.
 - Cold scenario mantiene fallo residual de Font Awesome CDN sin impacto funcional; deprecaciones de Actions/runtime registradas.
 - Mutaciones remotas de servicios siguen sin ejecutar por falta de entorno sintético aislado/cleanup comprobado.
+
+
+## Rectificación de estado Git — 2026-11-26
+- HEAD de la rama de trabajo verificado por API GitHub: `bf03985d5e078e62a90d78058ff076d939545522` (último commit documental); base `GPSpedia2.2.5` se mantiene en SHA previamente verificado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Los resultados CI/browser de run `45810553448` fueron ejecutados en el SHA `adb69eeb2edb5cd28b370194eac49956298115a`, antes de las dos actualizaciones documentales que registran resultados.
+- Confirmado branch ref apuntando al HEAD documental, sin cambios de código en estas ediciones.
