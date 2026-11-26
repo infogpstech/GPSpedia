@@ -299,3 +299,15 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 7. Preparar Playwright E2E contra frontend Beta, con registro de viewport/navegador y sin sustituir la suite local.
 8. Al finalizar cada fase, documentar evidencia, resultado, regresiones, recursos eliminados y pruebas pendientes.
 
+
+
+## Validación remota GET — primera ejecución (2026-11-26)
+- Workflow: `deployed-service-health.yml`; runs `45729426765` y `45729430374`, ambos SUCCESS. La segunda ejecución probó commit `762308d7cf80e840177d9ed5cc15714de87d3414` y fue posterior a la actualización de documentación.
+- Probe real GET `?debug=true`, seis endpoints Beta configurados localmente, sin escrituras. Resultado 6/6 disponibles.
+- Versiones reportadas por los deployments: AUTH 2.2.5; CATALOG 2.4.0; WRITE 2.3.1; FEEDBACK 1.2.2; UTILITIES 1.5.0; ADMIN 2.7.1.
+- Latencias del run 45729430374: AUTH 1575 ms; CATALOG 1117 ms; WRITE 1460 ms; FEEDBACK 1612 ms; UTILITIES 1105 ms; ADMIN 2701 ms. ADMIN se clasifica SLOW (>=2,000 ms); los otros cinco PASS.
+- **Hallazgo confirmado BETA-PLAN-F009 (media):** deployment ADMIN Beta informa versión 2.7.1, mientras la fuente de trabajo declara 2.7.2. El deployment está atrasado respecto a la fuente revisada; no se ha desplegado ni alterado el servicio. El probe confirma disponibilidad e identidad, no equivalencia del código desplegado.
+- **Hallazgo confirmado BETA-PLAN-F010 (media, rendimiento):** ADMIN supera el umbral de 2 s en ambas ejecuciones (2431 y 2701 ms). Debe investigarse antes de atribuirlo a una causa; el probe GET no identifica origen.
+- La primera ejecución (run 45729426765) también reportó ADMIN SLOW 2431 ms y los otros cinco PASS; confirma persistencia de latencia alta en dos observaciones breves, no medición estadística.
+- Evidencia: https://github.com/infogpstech/GPSpedia/actions/runs/45729430374
+- Alcance: únicamente GET; no se verificaron Sheets/Drive, acciones autenticadas, operaciones funcionales ni UI.
