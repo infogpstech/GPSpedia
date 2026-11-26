@@ -12,8 +12,8 @@ El repositorio actual contiene el **App Shell** y la lógica del cliente (Fronte
 
 ### Archivos Principales y Vistas
 - **index.html:** Puerta de entrada principal. Contiene el contenedor maestro, el sistema de modales dinámicos y la estructura base del catálogo, tutoriales y sección de relay.
-- **add_cortes.html:** Interfaz para el registro colaborativo de nuevos vehículos y cortes, con asistente de registro guiado de instalación.
-- **users.html:** Panel de gestión de usuarios y perfiles, que permite la personalización de datos personales y visualización de la red de técnicos.
+- **HTML/add_cortes.html:** Interfaz para el registro colaborativo de nuevos vehículos y cortes, con asistente de registro guiado de instalación.
+- **HTML/users.html:** Panel de gestión de usuarios y perfiles, que permite la personalización de datos personales y visualización de la red de técnicos.
 
 ### Módulos de Lógica (JavaScript ES6)
 - **main.js:** Orquestador principal. Gestiona la inicialización de la app, listeners globales, validación de sesión y el sistema de navegación por historial de navegación del navegador (History API).
