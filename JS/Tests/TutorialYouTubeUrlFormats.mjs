@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const ui = readFileSync("JS/Frontend/ui.js", "utf8");
-const start = ui.indexOf("function getValidatedYouTubeVideoId(");
-const end = ui.indexOf("\nfunction getValidatedYouTubeVideoEmbedUrl(", start);
+const start = ui.indexOf("export function getValidatedYouTubeVideoId(");
+const end = ui.indexOf("\nexport function getValidatedYouTubeVideoEmbedUrl(", start);
 assert.ok(start >= 0 && end > start, "No se encontró el validador de IDs YouTube.");
 const parser = ui.slice(start, end);
 const embedStart = ui.indexOf("export function getValidatedYouTubeVideoEmbedUrl(", end);
