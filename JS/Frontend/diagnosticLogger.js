@@ -1,7 +1,7 @@
 const LEVEL_PRIORITY=Object.freeze({debug:10,info:20,warn:30,error:40});
 const ALLOWED_STAGES=new Set(['recovery','submit','vin-validation','catalog-refresh','image-preview','supplementary']);
 const ALLOWED_STATUSES=new Set(['processing','failed','completed','offline','visible','write-confirmed','restored','confirmed']);
-const SAFE_ERROR_CODES=new Set(['StorageError','RecoveryError','OperationError','ValidationError','SuggestionError','CatalogRefreshError','QuotaExceededError','FileReadError','FileReadAborted','CatalogVerificationError','NetworkError','TypeError','Error','SecurityError','AbortError','NotAllowedError','InvalidStateError','UnknownError','EmptyFile']);
+const SAFE_ERROR_CODES=new Set(['StorageError','RecoveryError','OperationError','ValidationError','SuggestionError','CatalogRefreshError','QuotaExceededError','FileReadError','FileReadAborted','CatalogVerificationError','NetworkError','TypeError','Error','SecurityError','AbortError','NotAllowedError','InvalidStateError','UnknownError','EmptyFile','API_ERROR','SERVICE_ERROR','WRITE_BUSY','WRITE_OP_ID_REQUIRED','WRITE_LOCK_REACQUIRE_PENDING','CONTRIBUTION_OP_ID_CONFLICT','REQUEST_ABORTED','INVALID_JSON','INVALID_RESPONSE']);
 const SAFE_EVENT=/^[a-z][a-z0-9.-]{0,63}$/;
 const SAFE_OPERATION_ID=/^OP-[A-Za-z0-9_-]{1,100}$/;
 /** En producción solo warn/error; ?gpDebug=1 habilita debug/info. Lista permitida, nunca objetos/payloads. */
