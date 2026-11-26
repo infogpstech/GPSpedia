@@ -284,6 +284,11 @@ let editedItemBuffer = null;
 let adminModalFieldVersions = new Map();
 let dropdownOptions = null;
 let dropdownOptionsPromise = null;
+let dropdownOptionsLoadedAt = 0;
+const DROPDOWN_OPTIONS_TTL_MS = 5 * 60 * 1000;
+const REQUIRED_DROPDOWN_OPTION_KEYS_ = Object.freeze([
+    "categoria", "tipoDeEncendido", "tipoDeCorte", "configRelay"
+]);
 const ADMIN_IMAGE_UPLOAD_FIELDS = [
     "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
     "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
@@ -343,20 +348,62 @@ function closeModalToPreviousContext_(){
 }
 window.inEditMode = false;
 
-async function precargarDropdownOptions() {
-    if (dropdownOptions) return dropdownOptions;
-    if (dropdownOptionsPromise) return dropdownOptionsPromise;
-    dropdownOptionsPromise = (async () => {
-        try {
-            const res = await routeAction('getDropdownData');
-            if (res && res.dropdowns) dropdownOptions = res.dropdowns;
-        } catch (e) {
-            console.error("Error precargando dropdowns para edición:", e && e.name || "DropdownError");
-        } finally {
-            dropdownOptionsPromise = null;
-        }
+function normalizeDropdownOptionValues_(value, key) {
+    if (!Array.isArray(value)) {
+        throw new Error("CATALOG no devolvió una lista válida para " + key + ".");
+    }
+    const normalized = Array.from(new Set(value
+        .map(item => String(item == null ? "" : item).trim())
+        .filter(Boolean))).sort((a, b) => a.localeCompare(b));
+    if (!normalized.length) {
+        throw new Error("La lista oficial de " + key + " está vacía en la hoja Cortes.");
+    }
+    return normalized;
+}
+
+async function precargarDropdownOptions(options = {}) {
+    const forceRefresh = options && options.forceRefresh === true;
+    const now = Date.now();
+    if (!forceRefresh && dropdownOptions && now - dropdownOptionsLoadedAt < DROPDOWN_OPTIONS_TTL_MS) {
         return dropdownOptions;
-    })();
+    }
+    if (dropdownOptionsPromise) return dropdownOptionsPromise;
+
+    dropdownOptionsPromise = (async () => {
+        const response = await routeAction("getDropdownData");
+        if (!response || response.status !== "success" || !response.dropdowns ||
+            typeof response.dropdowns !== "object" || Array.isArray(response.dropdowns)) {
+            const reason = response && response.details && response.details.errorMessage
+                ? response.details.errorMessage
+                : response && response.message ? response.message : "Respuesta de CATALOG no válida.";
+            throw new Error(reason);
+        }
+        if (response.source !== "Cortes" || response.serviceVersion !== "2.4.1") {
+            throw new Error("El servicio CATALOG está desactualizado. Se requiere la versión 2.4.1 con catálogos provenientes de la hoja Cortes.");
+        }
+
+        const normalized = {};
+        REQUIRED_DROPDOWN_OPTION_KEYS_.forEach(key => {
+            normalized[key] = normalizeDropdownOptionValues_(response.dropdowns[key], key);
+        });
+        if (Array.isArray(response.dropdowns.marca)) {
+            normalized.marca = Array.from(new Set(response.dropdowns.marca
+                .map(value => String(value == null ? "" : value).trim())
+                .filter(Boolean))).sort((a, b) => a.localeCompare(b));
+        }
+
+        dropdownOptions = normalized;
+        dropdownOptionsLoadedAt = Date.now();
+        if (typeof window !== "undefined") window.dropdownOptions = normalized;
+        return normalized;
+    })().catch(error => {
+        dropdownOptions = null;
+        dropdownOptionsLoadedAt = 0;
+        throw error;
+    }).finally(() => {
+        dropdownOptionsPromise = null;
+    });
+
     return dropdownOptionsPromise;
 }
 
@@ -13369,16 +13416,6 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     content.className = "info-modal-content";
     content.style.maxWidth = "520px";
 
-    const safeDropdowns = (typeof dropdownOptions !== "undefined" && dropdownOptions)
-        || (typeof window !== "undefined" && window.dropdownOptions)
-        || (typeof getState === "function" && getState() && getState().dropdownOptions)
-        || null;
-    const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
-    const tiposCorteOptions = (safeDropdowns && safeDropdowns.tipoDeCorte && safeDropdowns.tipoDeCorte.length > 0)
-        ? safeDropdowns.tipoDeCorte : defaultTipos;
-    const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
-    const relayOptions = (safeDropdowns && safeDropdowns.configRelay && safeDropdowns.configRelay.length > 0)
-        ? safeDropdowns.configRelay : defaultRelays;
     const currentTestigoValue = typeof reportActivaTestigo === "boolean"
         ? reportActivaTestigo : normalizeActivaTestigoValue(currentCutData.activaTestigo);
 
@@ -13389,15 +13426,17 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label for="sug-tipo">Tipo de Corte</label>
-                <select id="sug-tipo" class="dev-input" style="padding:6px;">
-                    <option value="">-- Conservar / Seleccionar Tipo --</option>
+                <select id="sug-tipo" class="dev-input" style="padding:6px;" disabled>
+                    <option value="">Cargando opciones oficiales...</option>
                 </select>
             </div>
             <div class="form-group">
                 <label for="sug-relay">Configuración de Relay</label>
-                <select id="sug-relay" class="dev-input" style="padding:6px;">
-                    <option value="">-- Conservar / Seleccionar Relay --</option>
+                <select id="sug-relay" class="dev-input" style="padding:6px;" disabled>
+                    <option value="">Cargando opciones oficiales...</option>
                 </select>
+                <p id="sug-dropdown-status" role="status" aria-live="polite" style="font-size:0.82em; margin:4px 0; color:var(--text-disabled);">Cargando catálogos oficiales desde Cortes...</p>
+                <button type="button" id="sug-dropdown-retry" class="btn btn-secondary" style="display:none;">Reintentar carga de opciones</button>
             </div>
             <div class="form-group">
                 <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
@@ -13424,7 +13463,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
                 <div class="rich-editor-toolbar" data-rich-target="sug-detalles"></div>
                 <textarea id="sug-detalles" rows="3" maxlength="2000" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
+            <button type="submit" class="btn btn-primary" style="margin-top:8px;" disabled>Enviar Sugerencia</button>
         </form>
     `;
 
@@ -13447,19 +13486,23 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         document.createTextNode(' | Vehículo: '), vehicleStrong
     );
 
-    const appendOptions = (select, options, currentValue) => {
-        const normalizedCurrent = String(currentValue || '').toLowerCase();
+    const appendOptions = (select, options, currentValue, placeholder) => {
+        select.replaceChildren();
+        const placeholderOption = document.createElement("option");
+        placeholderOption.value = "";
+        placeholderOption.textContent = placeholder;
+        placeholderOption.selected = true;
+        select.appendChild(placeholderOption);
         options.forEach(optionValue => {
-            const option = document.createElement('option');
-            const value = String(optionValue == null ? '' : optionValue);
-            option.value = value;
-            option.textContent = value;
-            if (normalizedCurrent && value.toLowerCase() === normalizedCurrent) option.selected = true;
+            const option = document.createElement("option");
+            option.value = String(optionValue);
+            option.textContent = String(optionValue);
             select.appendChild(option);
         });
+        const current = String(currentValue || "");
+        if (current && options.includes(current)) select.value = current;
+        select.disabled = false;
     };
-    appendOptions(content.querySelector("#sug-tipo"), tiposCorteOptions, currentCutData.tipo);
-    appendOptions(content.querySelector("#sug-relay"), relayOptions, currentCutData.configRelay);
     content.querySelector("#sug-ubicacion").value = String(currentCutData.ubicacion || '');
     content.querySelector("#sug-color").value = String(currentCutData.colorCable || '');
     content.querySelector("#sug-check-engine").value = currentTestigoValue === null ? 'unspecified' : String(currentTestigoValue);
@@ -13472,10 +13515,61 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     closeBtn.onclick = () => modal.remove();
 
     const form = content.querySelector("#suggest-cut-form");
+    const suggestedTypeSelect = content.querySelector("#sug-tipo");
+    const suggestedRelaySelect = content.querySelector("#sug-relay");
+    const dropdownStatus = content.querySelector("#sug-dropdown-status");
+    const retryDropdownsButton = content.querySelector("#sug-dropdown-retry");
+    const submitButton = form.querySelector('button[type="submit"]');
+    let suggestedDropdownsReady = false;
+
+    const loadSuggestedDropdowns = async () => {
+        suggestedDropdownsReady = false;
+        submitButton.disabled = true;
+        suggestedTypeSelect.disabled = true;
+        suggestedRelaySelect.disabled = true;
+        retryDropdownsButton.style.display = "none";
+        dropdownStatus.textContent = "Cargando catálogos oficiales desde Cortes...";
+        try {
+            const officialDropdowns = await precargarDropdownOptions();
+            const cutOptions = normalizeCutDropdownResponse_({
+                status: "success",
+                source: "Cortes",
+                serviceVersion: "2.4.1",
+                dropdowns: officialDropdowns
+            });
+            appendOptions(suggestedTypeSelect, cutOptions.tipoDeCorte, currentCutData.tipo, "-- Conservar / Seleccionar Tipo --");
+            appendOptions(suggestedRelaySelect, cutOptions.configRelay, currentCutData.configRelay, "-- Conservar / Seleccionar Relay --");
+            suggestedDropdownsReady = true;
+            dropdownStatus.textContent = "Opciones oficiales cargadas desde la hoja Cortes.";
+            submitButton.disabled = false;
+        } catch (error) {
+            suggestedTypeSelect.replaceChildren();
+            suggestedRelaySelect.replaceChildren();
+            [suggestedTypeSelect, suggestedRelaySelect].forEach(select => {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Opciones no disponibles";
+                option.disabled = true;
+                option.selected = true;
+                select.appendChild(option);
+                select.disabled = true;
+            });
+            dropdownStatus.textContent = "No se pudieron cargar las listas desde Cortes. Comprueba que CATALOG esté desplegado en la versión 2.4.1 y vuelve a intentarlo.";
+            retryDropdownsButton.style.display = "inline-block";
+            console.error("Error cargando listas oficiales para sugerencia de corte:", error);
+        }
+    };
+    retryDropdownsButton.onclick = () => { loadSuggestedDropdowns(); };
+    loadSuggestedDropdowns();
+
     let lastSuggestionSubmissionSignature = "";
     let suggestionOperationId = "";
     form.onsubmit = async (e) => {
         e.preventDefault();
+        if (!suggestedDropdownsReady) {
+            showGlobalError("Las listas oficiales de Cortes aún no están disponibles. Reintenta su carga antes de enviar la sugerencia.");
+            return;
+        }
         const { currentUser } = getState();
         if (!currentUser) {
             showGlobalError("Debes estar conectado para sugerir un cambio.");
@@ -13870,11 +13964,21 @@ export function openAddVinModal(item) {
 
 /* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function normalizeCutDropdownResponse_(response) {
-    if (!response || response.status !== "success" || !response.dropdowns || typeof response.dropdowns !== "object") throw new Error("El servicio no devolvió las listas oficiales de cortes.");
-    const normalizeList = value => Array.isArray(value) ? Array.from(new Set(value.map(item => String(item == null ? "" : item).trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b)) : [];
-    const tipoDeCorte = normalizeList(response.dropdowns.tipoDeCorte), configRelay = normalizeList(response.dropdowns.configRelay);
-    if (!tipoDeCorte.length) throw new Error("La lista oficial de tipos de corte está vacía o no disponible.");
-    if (!configRelay.length) throw new Error("La lista oficial de configuraciones relay está vacía o no disponible.");
+    if (!response || response.status !== "success" || !response.dropdowns ||
+        typeof response.dropdowns !== "object" || Array.isArray(response.dropdowns)) {
+        throw new Error("El servicio no devolvió las listas oficiales de cortes.");
+    }
+    if (response.source !== "Cortes" || response.serviceVersion !== "2.4.1") {
+        throw new Error("CATALOG debe estar actualizado a la versión 2.4.1 y leer las opciones desde Cortes.");
+    }
+    const normalizeList = value => Array.isArray(value)
+        ? Array.from(new Set(value.map(item => String(item == null ? "" : item).trim()).filter(Boolean)))
+            .sort((a, b) => a.localeCompare(b))
+        : [];
+    const tipoDeCorte = normalizeList(response.dropdowns.tipoDeCorte);
+    const configRelay = normalizeList(response.dropdowns.configRelay);
+    if (!tipoDeCorte.length) throw new Error("La lista oficial de tipos de corte está vacía en Cortes.");
+    if (!configRelay.length) throw new Error("La lista oficial de configuraciones relay está vacía en Cortes.");
     return { tipoDeCorte, configRelay };
 }
 function isCutDropdownValueAllowed_(value, options) {
