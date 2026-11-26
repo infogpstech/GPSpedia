@@ -5,11 +5,11 @@
 
 // 1. CONFIGURACIÓN
 export const API_ENDPOINTS = Object.freeze({
-    AUTH: "https://script.google.com/macros/s/AKfycby6Bv8WLYBP32m5jHtCcqSxe-u_tYyKZe7-nqmH7eEjz9a3gVLROs5II0CwxKUOlscizg/exec",
-    CATALOG: "https://script.google.com/macros/s/AKfycbwnqkZvp7OQGbtn4tlotgISdZh_DCBoL94Kie76J166Kkq3RJsqO4Sda5lDcUiWhsmr/exec",
-    WRITE: "https://script.google.com/macros/s/AKfycbx3niOqzZiDxRCkohemVWyrkDBktIYkGyqTecR25xd_VeP_BK-VGNOMbFA_ZSXhU7FtBA/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbwGtM7KWpDjxM84ZzErw3zJryGhhTmrHU2bM-aXNOOQsMyk3OFEY3wgoH-bbIQzFrW-uw/exec",
-    UTILITIES: "https://script.google.com/macros/s/AKfycbzUc402Sju0_ZU7PQST1Kma-qrgJs2v10Pi6hA62rWZZvsCefD6Mr6PCo5GEDA0dGRk/exec",
+    AUTH: "https://script.google.com/macros/s/AKfycbw9Z4NjtjBk8CYRA9OGcjxzR3D5QBxvS9i05k3lE-n2pnvZy9-w98G1vUCwxlDQ27XZZA/exec",
+    CATALOG: "https://script.google.com/macros/s/AKfycbyLShy4_rfkULkrat04mEKMpVO4T1x-qHN525_JShvFxrmIvvUixYrUJUPHpCMFDuif/exec",
+    WRITE: "https://script.google.com/macros/s/AKfycbz38eJhWx2-dq00EV82jegb9LbtTNnIY3CCgGPgrwNlQNczCidsABueJG0gbaNq2lNKvA/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbx5LbCTWVTOQ6FvWXImDwG_7AGdtyqd9c8ODwhlFxEqO7osPp2-buIlqr0UdjNubmnXEw/exec",
+    UTILITIES: "https://script.google.com/macros/s/AKfycbz4o70pO45BHIFKCWyM3i3JtfVrYPUVzEEsCwdnn4GzFntcypt9R_7ottZ_yXgLUL5V/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycbw3uL3w9Ehu9SR3kfbRUabKiGRzRqXGks4TzT2rARaUNyrx1YzgexETcPIDGexgKSMd6g/exec"
 });
 
