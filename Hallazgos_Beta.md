@@ -389,3 +389,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Una versión diferente produce FAIL con versión del deployment y versión esperada. La versión documentada describe fuente esperada y no certifica deployment hasta ejecutar el probe remoto.
 - Integración publicada en `JS/Tests/RemoteServiceHealth.mjs`, commit `a74d35cc13ddc44b9820dc426012b8d07998497b`. El workflow ya vigila `Services/SERVICE_HEALTH.md` como ruta de activación.
 - Pendiente: validar parser de tabla con Node 22 y ejecutar el workflow sobre Beta; no se ha afirmado ejecución remota.
+
+
+## BETA-F014 — normalización distinta del estado en el probe remoto (2026-11-25)
+- El frontend normaliza `status` con `trim().toLowerCase()`, pero el runner remoto solo aplicaba minúsculas. Una respuesta con espacios exteriores podía clasificarse de forma distinta entre el panel y la validación Beta.
+- El runner ahora exige que `status` sea string y normaliza espacios/capitalización antes de validar `available` o `online`.
+- Se amplió `ServiceHealthContract.mjs` con una aserción de alineación del runner: normalización, comparación exacta de versión y lectura de la tabla versionada desde el commit objetivo. El workflow ejecutará esta suite local antes de consultar Beta.
+- Validación disponible en esta sesión: seis comprobaciones estáticas de integración 6/6 PASS (fuente, aserciones y workflow recuperados de la rama). No equivale a ejecutar Node 22 ni el workflow; esa evidencia queda pendiente.
+- Commits: runner `a6c4cbdd1ecd71a5644f76e31556bc77f34e3892`; test `b282123316079cb70fd78b77c4191fc788a085c1`; workflow `d21fff9b2faace448194db94f4d54fc3a1130ac4`.
