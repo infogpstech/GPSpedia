@@ -1516,3 +1516,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Se documentaron resultados focales de FEEDBACK/CATALOG, UsefulButtonState, cola de útiles y auditoría ADMIN/Drive; TutorialVideoModalLayout 18/18.
 - Se actualizó el estado de continuidad de la incidencia #130 como completada localmente con validación Beta diferida y se conservó el orden de pruebas Beta.
 - No se modificó código funcional, deployments Apps Script ni recursos remotos.
+
+
+## 2026-11-26 — revalidación GET-only posterior a actualización AUTH/ADMIN
+- Se ajustó un comentario de contexto en `.github/workflows/deployed-service-health.yml` para identificar la revalidación manual; comportamiento del workflow sin cambios.
+- Commit de ejecución `18bfd3c04fdd0016c531a24c9a070705725fbc49`: health GET-only `45812643014` SUCCESS, ServiceHealthContract 21/21 y 6/6 servicios con versiones esperadas. ADMIN 2288 ms (SLOW); los otros cinco entre 1045 y 1923 ms.
+- CATALOG feed, boundaries, matrix y pagination PASS. Regresión `45812642942`: 542 suites / 6,453 pruebas / 0 fallos; AUG-146 264/264. Pages `45812641695` SUCCESS.
+- No se ejecutaron POST, escrituras, despliegues Apps Script, cambios Drive/Spreadsheet, OAuth ni YouTube.

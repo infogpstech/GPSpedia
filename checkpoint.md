@@ -55,3 +55,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Capturas sintéticas artifact `15112547683`. Único residual offline frío: CSS Font Awesome CDN; no pageErrors.
 - Siguiente Beta: (1) útiles FEEDBACK/CATALOG con dos identidades sintéticas y cleanup verificable; (2) reproducción real tutorial watch y short/shorts en desktop/móvil. Ninguna mutación FEEDBACK/Spreadsheet se ejecutó: faltan identidad/dataset sintético y cleanup verificable en el flujo. Playback remoto no se declara por el test contractual local.
 - Incidencia #130: cierre local con validación Beta diferida; no se han ejecutado mutaciones ni despliegues Apps Script.
+
+
+## Revalidación Beta tras deployments — 2026-11-26
+- HEAD previo a esta actualización: `18bfd3c04fdd0016c531a24c9a070705725fbc49`; workflow health `45812643014` SUCCESS: contrato 21/21; seis servicios disponibles y versiones esperadas. ADMIN 2288 ms (SLOW); AUTH 1923, CATALOG 1197, WRITE 1365, FEEDBACK 1380 y UTILITIES 1045 ms.
+- CATALOG feed/boundaries/matrix/pagination PASS, GET-only. Sin POST ni cambios de datos remotos.
+- Regresión `45812642942`: 542 suites, 6,453 pruebas, 0 fallos; responsive-browser SUCCESS, AUG-146 264/264. Pages `45812641695` SUCCESS.
+- PWA cold/warm PASS: 49 core + 4 opcionales, login offline visible, 0 módulos faltantes, 0 pageErrors; Font Awesome CDN falla solo en cold offline. Sin llamadas Apps Script, non-GET, credenciales ni escrituras.
+- Siguiente: útiles FEEDBACK/CATALOG con dos identidades sintéticas y cleanup verificable; luego playback real YouTube watch/short/shorts en escritorio/móvil. Mutaciones siguen NO EJECUTADAS.
+- Rama base verificada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.

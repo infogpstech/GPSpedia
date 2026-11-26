@@ -834,3 +834,13 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - **Siguiente orden Beta conservado:** (1) útil FEEDBACK/CATALOG con dos identidades sintéticas y datos aislados; (2) reproducción real de tutoriales con URL watch y short/shorts en escritorio y móvil.
 - **NO EJECUTADO:** el flujo de útiles escribe eventos append-only y requiere identidad sintética válida, datos de prueba inequívocos y una estrategia de comprobación/limpieza autorizada. No se realizó POST ni escritura FEEDBACK/Spreadsheet. Reproducción real de tutoriales tampoco se declara ejecutada; la suite local no sustituye el playback remoto.
 - No se modificaron deployments Apps Script, permisos, PropertiesService, Drive, Spreadsheet, OAuth ni YouTube. MIG-URL-008 remoto mutante sigue pendiente de preflight/credenciales/cleanup verificables.
+
+
+## 13. Revalidación tras actualización de deployments — 2026-11-26
+- Commit de ejecución: `18bfd3c04fdd0016c531a24c9a070705725fbc49`; workflow `45812643014` SUCCESS.
+- Contrato local `ServiceHealthContract`: 21/21 PASS. Probe remoto GET-only: 6/6 servicios disponibles y con versión esperada: AUTH 2.2.5 (1923 ms), CATALOG 2.4.0 (1197 ms), WRITE 2.3.1 (1365 ms), FEEDBACK 1.2.2 (1380 ms), UTILITIES 1.5.0 (1045 ms), ADMIN 2.7.2 (2288 ms, SLOW por superar 2000 ms).
+- CATALOG feed, cursor boundaries, matriz, paginación secuencial y repetibilidad: workflow completo SUCCESS; solo GET, sin cambios remotos.
+- Regresión simultánea `45812642942`: 542 suites, 6,453 pruebas, 0 fallos; `responsive-browser` y `service-tests` SUCCESS. AUG-146 264/264 en cuatro viewports. Pages `45812641695` build/deploy SUCCESS.
+- PWA cold/warm: 49/49 core y 4/4 opcionales HTTP 200, login visible offline, 0 módulos faltantes, 0 pageErrors; único fallo de recurso en cold offline: CSS Font Awesome CDN. 0 llamadas Apps Script, 0 solicitudes no-GET, sin credenciales ni escrituras.
+- No se ejecutaron POST, login real, útiles FEEDBACK, escrituras Spreadsheet/Drive, OAuth ni YouTube. Se mantiene la prioridad: útiles con dos identidades sintéticas y cleanup verificable; después playback real watch/short/shorts en desktop/móvil.
+- ADMIN permanece disponible pero SLOW en la muestra individual; no se interpreta esta medición única como regresión sostenida. Seguimiento mediante muestras repetidas si vuelve a superar el umbral.

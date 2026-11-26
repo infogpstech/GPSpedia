@@ -7,7 +7,7 @@ Normativa: `NORMAS_DESAROLLO.md` (única fuente normativa).
 
 ## Plan de migración de URLs al frontend
 
-El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. MIG-URL-008 es la única tarea restante de ese plan y requiere autorización para validar los endpoints Beta aislados. Mientras esa autorización no exista, se continúa el trabajo local ya solicitado y priorizado en la sección de continuidad, sin llamadas remotas ni despliegues.
+El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en `Migracion_URL_Servicios_Frontend.md`. MIG-URL-008 es la única tarea restante. La autorización de Beta aislada permitió completar la fase GET-only (health 6/6 y CATALOG feed/boundaries/matrix/pagination PASS); quedan las validaciones funcionales autenticadas o mutables, sujetas a identidad sintética, recursos aislados y cleanup verificable. No se ejecutan escrituras ni despliegues Apps Script desde esta fase.
 
 - MIG-URL-001 — Alinear normativa y registrar el plan: **COMPLETADA — 2026-11-24**.
 - MIG-URL-002 — Inventariar y verificar las seis URLs vigentes: **COMPLETADA — 2026-11-24**; seis valores confirmados directamente por el usuario y validados estructuralmente. Salud/identidad remota diferida a MIG-URL-008.
@@ -16,7 +16,7 @@ El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en 
 - MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **COMPLETADA — 2026-11-25**; editor retirado, health local conservado.
 - MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet: **COMPLETADA — 2026-11-25**; hoja histórica preservada sin lectura/escritura.
 - MIG-URL-007 — Pruebas locales, contratos y regresión: **COMPLETADA — CI 45519738860; 519 suites, 6,181 pruebas, 0 fallos; responsive-browser SUCCESS**.
-- MIG-URL-008 — Validación Beta aislada y cierre: **PENDIENTE DE AUTORIZACIÓN — ÚNICA TAREA RESTANTE DEL PLAN MIG-URL**.
+- MIG-URL-008 — Validación Beta aislada y cierre: **EN PROGRESO — fase GET-only completada; validaciones funcionales diferidas**.
 
 La configuración local debe reproducir el patrón de la rama protegida `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` editado manualmente en `JS/Frontend/api-config.js`, con `ACTION_TO_SERVICE_MAP` para el enrutamiento. No usar `SERVICE_ENDPOINTS` como tabla paralela ni inventar otro administrador de URLs.
 
