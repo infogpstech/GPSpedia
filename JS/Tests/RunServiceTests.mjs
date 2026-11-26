@@ -618,6 +618,7 @@ runGroup('43','MIG019',()=>{
  runCli('MIG019 contacto con reserva de ID y append','JS/Tests/FeedbackContactWriteNoGlobalLock.mjs');
  runCli('MIG019 likes append-only','JS/Tests/FeedbackLikeAppendOnly.mjs');
  runCli('MIG019 idempotencia de útiles por usuario y vehículo','JS/Tests/FeedbackLikeIdempotency.mjs');
+ runCli('MIG019 frontera de autorización e identidad confiable de útiles','JS/Tests/FeedbackLikeAuthorizationBoundary.mjs');
  runCli('Frontend sincroniza contador de útil con el módulo activo','JS/Tests/LikeClientCounter.js');
  runCli('Útiles alternan estado de forma idempotente en FEEDBACK','JS/Tests/FeedbackUsefulToggle.mjs');
  runCli('UI de útiles hidrata estado, contador y terminología','JS/Tests/UsefulButtonState.mjs');
