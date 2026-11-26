@@ -311,3 +311,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Harness aislado: misma clave bloquea segundo callback; scope distinto permitido; el endpoint usa la clave global. PASS.
 - Commit: `f64cb5346c5fb28886db0e19485f893ceb755961`; registros: tareas `6fd92defedf5ed3d0a9348fd5d79a4ec6020edd5`, auditoría `f0880bdc8c258926bc6e28bdc4f906cc2e22b97c`, changelog `9dd215da7fd6140a522b4778a75c11a5e6167e00`.
 - Límite: falta probar concurrencia entre el endpoint de inventario y los demás endpoints de mutación de biblioteca. La tarea principal permanece abierta.
+
+
+## Continuidad 2026-11-26 — alcance de scanner, asociación y salvaguardas biblioteca
+- Scanner allowlist verificado por harness: `Cortes`, `Tutorial`, `Relay`, `pys`; columnas opcionales físicas: Tutorial col. 3 `Imagen`, Relay col. 10 `imagen`, pys col. 7 `Imagen`; Cortes valida ocho columnas de imagen. También considera imágenes sobre cuadrícula en esas hojas.
+- Asociación con fixtures: coincidencia única por modelo+versión+encendido+año; conflicto contextual y varios vehículos sin contexto quedan ambiguos; referencias activas se omiten. PASS.
+- Revisión estática de cinco operaciones backend de biblioteca y siete casos de capacidades frontend: PASS para controles de estado, MIME, árbol Cortes, referencias, unicidad y compensaciones. Sin Drive/Sheets reales ni navegador.
+- Commits de registros: tareas `0ca65cf70eef57a7480ba9f911fa17e2468bb7f2`, auditoría `c2883ec12ada91449a8b822893dc525aa9bc50c2`, changelog `7988e04edf42aa483c1c315c80a7c7dc2a236ea5`.
+- Pendiente: verificar si los nombres físicos de hojas coinciden con los nombres funcionales descritos en el plan mediante validación Beta; pruebas integradas de operaciones y concurrencia entre endpoints distintos; inspección visual de consola/explorador. No cerrar la tarea principal.
