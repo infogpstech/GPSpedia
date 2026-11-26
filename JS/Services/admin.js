@@ -5193,7 +5193,11 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
     const summary = { total: suggestions.length, suggested: suggestions.filter(item => item.status === "suggested").length,
         ambiguous: suggestions.filter(item => item.status === "ambiguous").length, truncated: suggestions.length > limit };
     const digestEntries = suggestions.map(item => [item.fileId, item.status, item.confidence,
-        item.candidates.map(candidate => [candidate.category, candidate.brand, candidate.model, candidate.score, candidate.signals])]);
+        item.candidates.map(candidate => [
+            candidate.category, candidate.brand, candidate.model, candidate.vehicleIds, candidate.rows,
+            candidate.versions, candidate.ignitionTypes, candidate.yearRanges, candidate.contextConflict,
+            candidate.score, candidate.signals
+        ])]);
     return { summary, suggestions: suggestions.slice(0, limit), digestEntries };
 }
 
