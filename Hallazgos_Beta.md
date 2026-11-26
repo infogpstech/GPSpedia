@@ -353,3 +353,9 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se intentó consultar el status/checks del commit de integración; el status devolvió `pending`, sin checks asociados. El conector GitHub disponible no expone la consulta de workflow runs para pushes y sus fetches están restringidos a endpoints autorizados. El entorno shell local tampoco resuelve `api.github.com` (error DNS), por lo que no puede consultar Actions ni invocar Apps Script directamente desde aquí.
 - La nueva prueba sigue integrada en el workflow por push y `workflow_dispatch`; el resultado remoto permanece sin verificar. No se manipularon datos ni se intentó un deployment.
 - Continuar ampliando tests read-only sin inventar resultados; evitar workflows que requieran endpoint externo hasta que se obtenga evidencia verificable.
+
+
+## BETA-PLAN-F009 — matriz CATALOG: comprobaciones insuficientes de coherencia (2026-11-25)
+- La matriz GET-only anterior comparaba repetición de cursor actual, pero no verificaba coherencia de revisiones/minRevision entre muestras, nextCursor acotado por currentRevision, reset en cursor bajo retención ni semántica de cola vacía.
+- Se amplió `RemoteCatalogFeedMatrix.mjs` con esas aserciones y un requisito de reset para cursor previo a minRevision cuando esta sea positiva. Los probes permanecen GET-only, sin payloads de eventos ni mutaciones.
+- Validación: `node --check` PASS sobre la fuente reconstruida exacta. Ejecución remota y prueba funcional de las aserciones en deployment Beta no verificadas; pendiente Actions.
