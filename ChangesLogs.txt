@@ -1566,3 +1566,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — la auditoría Drive ahora adjunta asociaciones de vehículo a las imágenes sin uso detectado desde cada lote, usando el algoritmo existente, alias y las columnas de Cortes. Se muestran candidatos, versión, encendido, años y estado ambiguo/no verificado desde la primera aparición. La consola resume conteos de asociación por lote. Fixtures: Toyota Hilux 2.8/Botón/2021 => VH-02; sin coincidencia y fallo de lectura diferenciados. PASS. Commits: 75170cd6db7b4bcc00ab98689f04837b9efa5945, 091a939902132e11383cb9f9b16ec1c93d197c3a, bdd9273caee75cea60b65b081a6a0e0302ed9b9b, eec4cd899179b7dc2ba24d97817e42a9a78e9635.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — tarjetas de auditoría y biblioteca ahora muestran nivel de confianza y criterios legibles de asociación (modelo/alias en ruta o nombre, marca, categoría, versión, encendido y rango de años), además de vehículo y contexto aplicable. Harness de render Toyota Hilux PASS. Commit: 8d63c5943f18fa2e6b36003ef8b829846d9a3bf2.
