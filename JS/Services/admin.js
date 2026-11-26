@@ -1991,8 +1991,10 @@ function doPostInternal_(e) {
                 response = handleAuditDriveImagesInCortes(payload, logMessage, developerContext);
                 break;
             case 'saveUnusedImagesInventory':
+                // Todas las auditorías escriben en la misma hoja Imagenes_Reemplazadas.
+                // La guarda debe ser global para evitar que dos auditId reserven la misma fila.
                 response = withAdminLocalOperationGuard_(
-                    "drive-inventory:" + String(payload && payload.auditId || developerContext && developerContext.userId || "current"),
+                    "drive-inventory:shared-inventory-sheet",
                     function() {
                         return payload && payload.mode === "organize"
                             ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
@@ -14528,8 +14530,8 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             } catch (error) { return "Ubicación no verificable dentro de Cortes"; }
         };
 
-        // Los IDs del lote ya están deduplicados y el ScriptLock protege el inventario
-        // ADMIN durante la operación. Reutilizar esta lectura para resolver identidades;
+        // La guarda durable compartida del endpoint serializa las operaciones que
+        // escriben este inventario. Reutilizar esta lectura para resolver identidades;
         // la relectura completa inmediatamente anterior a cada movimiento se conserva.
         const currentRows = sheet.getDataRange().getValues();
         const duplicateIds = getDuplicateReplacedImageIds_(currentRows);
