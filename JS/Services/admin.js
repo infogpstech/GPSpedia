@@ -443,115 +443,126 @@ function verifyImageReconciliationBackupSource_(verifiedBackup) {
     return true;
 }
 
-function collectActiveDriveReferences(includeLocations = true) {
-    const excludedSheets = new Set([
-        SHEET_NAMES.IMAGENES_REEMPLAZADAS, "Logs", "ActividadUsuario", "ActiveSessions", "Users",
-        SHEET_NAMES.ADMIN_STATE, SHEET_NAMES.IDEMPOTENCIA, SHEET_NAMES.IDEMPOTENCIA_FALLBACK
-    ]);
+function collectCatalogSheetImageReferences_(sheet, spec, includeLocations) {
+    const sheetName = sheet.getName();
+    const lastColumn = Number(sheet.getLastColumn()) || 0;
+    if (lastColumn < spec.column) throw new Error("La hoja de catálogo «" + sheetName + "» no contiene la columna de imagen contractual «" + spec.header + "».");
+    const header = String(sheet.getRange(1, spec.column).getDisplayValue() || "").trim();
+    if (header !== spec.header) throw new Error("La columna de imagen de «" + sheetName + "» no coincide con el contrato esperado («" + spec.header + "»). No se clasificaron archivos.");
     const references = new Map();
-    let unverifiableReferenceCount = 0, cortesScanMetrics = null;
-
-    getSpreadsheet().getSheets().forEach(sheet => {
-        if (excludedSheets.has(sheet.getName())) return;
-        if (sheet.getName() === SHEET_NAMES.CORTES) {
-            const cortesReferences = collectCortesImageReferences(includeLocations);
-            cortesScanMetrics = cortesReferences.metrics || null;
-            cortesReferences.references.forEach((locations, id) => {
+    let unverifiableReferenceCount = 0;
+    const lastRow = Number(sheet.getLastRow()) || 0;
+    if (lastRow >= 2) {
+        const range = sheet.getRange(2, spec.column, lastRow - 1, 1);
+        const values = range.getDisplayValues();
+        const rawValues = range.getValues();
+        const formulas = range.getFormulas();
+        const richTextValues = range.getRichTextValues();
+        for (let r = 0; r < values.length; r++) {
+            const candidates = [String(values[r][0] || ""), String((formulas[r] && formulas[r][0]) || "")];
+            const rawValue = rawValues[r] && rawValues[r][0];
+            let hasUnverifiableDriveLink = false;
+            if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+                try {
+                    const contentUrl = String(rawValue.getContentUrl() || "");
+                    if (contentUrl) candidates.push(contentUrl);
+                    else hasUnverifiableDriveLink = true;
+                } catch (imageValueError) { hasUnverifiableDriveLink = true; }
+            }
+            const richText = richTextValues[r] && richTextValues[r][0];
+            if (richText) {
+                const wholeCellLink = richText.getLinkUrl();
+                if (wholeCellLink) candidates.push(wholeCellLink);
+                const runs = richText.getRuns ? richText.getRuns() : [];
+                runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
+            }
+            const cellIds = new Set();
+            candidates.forEach(candidate => {
+                if (!candidate) return;
+                const ids = extractDriveFileIds(candidate);
+                ids.forEach(id => cellIds.add(id));
+                if (!ids.length && /drive\\.google\\.com\\/(?:uc|thumbnail|file|open)|googleusercontent\\.com/i.test(candidate)) {
+                    hasUnverifiableDriveLink = true;
+                }
+            });
+            cellIds.forEach(id => {
                 if (includeLocations) {
                     if (!references.has(id)) references.set(id, []);
-                    references.get(id).push.apply(references.get(id), locations);
+                    references.get(id).push({ sheet: sheetName, row: r + 2, column: spec.column, field: spec.field });
                 } else references.set(id, true);
             });
-            unverifiableReferenceCount += cortesReferences.unverifiableReferenceCount;
-        } else {
-            const range = sheet.getDataRange();
-            const values = range.getDisplayValues();
-            const rawValues = range.getValues();
-            const formulas = range.getFormulas();
-            const richTextValues = range.getRichTextValues();
-
-            for (let r = 0; r < values.length; r++) {
-                for (let c = 0; c < values[r].length; c++) {
-                    const candidates = [
-                        String(values[r][c] || ""),
-                        String((formulas[r] && formulas[r][c]) || "")
-                    ];
-                    const rawValue = rawValues[r] && rawValues[r][c];
-                    let cellHasUnverifiableDriveLink = false;
-                    if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
-                        try {
-                            const contentUrl = String(rawValue.getContentUrl() || "");
-                            if (contentUrl) candidates.push(contentUrl);
-                            else cellHasUnverifiableDriveLink = true;
-                        } catch (imageValueError) {
-                            cellHasUnverifiableDriveLink = true;
-                        }
-                    }
-                    const richText = richTextValues[r] && richTextValues[r][c];
-                    if (richText) {
-                        const wholeCellLink = richText.getLinkUrl();
-                        if (wholeCellLink) candidates.push(wholeCellLink);
-                        const runs = richText.getRuns ? richText.getRuns() : [];
-                        runs.forEach(run => {
-                            const runLink = run.getLinkUrl();
-                            if (runLink) candidates.push(runLink);
-                        });
-                    }
-
-                    const cellIds = new Set();
-                    candidates.forEach(candidate => {
-                        if (!candidate) return;
-                        const ids = extractDriveFileIds(candidate);
-                        ids.forEach(id => cellIds.add(id));
-                        if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
-                            cellHasUnverifiableDriveLink = true;
-                        }
-                    });
-
-                    cellIds.forEach(id => {
-                        if (includeLocations) {
-                            if (!references.has(id)) references.set(id, []);
-                            references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
-                        } else references.set(id, true);
-                    });
-                    if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
-                }
-            }
+            if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
         }
+    }
+    return { references, unverifiableReferenceCount, metrics: { rows: Math.max(0, lastRow - 1), columns: 1, cells: Math.max(0, lastRow - 1) } };
+}
 
-        if (typeof sheet.getImages === "function") {
-            const overGridImages = sheet.getImages();
-            overGridImages.forEach(image => {
-                let imageUrl = "";
-                try {
-                    if (image && typeof image.getUrl === "function") imageUrl = String(image.getUrl() || "");
-                    else if (image && typeof image.getSourceUrl === "function") imageUrl = String(image.getSourceUrl() || "");
-                } catch (imageUrlError) {
-                    imageUrl = "";
-                }
-                const ids = extractDriveFileIds(imageUrl);
-                if (ids.length) {
-                    let anchor = null;
-                    try { anchor = image && typeof image.getAnchorCell === "function" ? image.getAnchorCell() : null; }
-                    catch (anchorError) { anchor = null; }
-                    ids.forEach(id => {
-                        if (includeLocations) {
-                            if (!references.has(id)) references.set(id, []);
-                            references.get(id).push({
-                                sheet: sheet.getName(),
-                                row: anchor && typeof anchor.getRow === "function" ? anchor.getRow() : 0,
-                                column: anchor && typeof anchor.getColumn === "function" ? anchor.getColumn() : 0
-                            });
-                        } else references.set(id, true);
-                    });
-                } else {
-                    unverifiableReferenceCount++;
-                }
-            });
-        }
+function appendCatalogOverGridImageReferences_(sheet, references, includeLocations) {
+    let unverifiableReferenceCount = 0;
+    if (typeof sheet.getImages !== "function") return unverifiableReferenceCount;
+    sheet.getImages().forEach(image => {
+        let imageUrl = "";
+        try {
+            if (image && typeof image.getUrl === "function") imageUrl = String(image.getUrl() || "");
+            else if (image && typeof image.getSourceUrl === "function") imageUrl = String(image.getSourceUrl() || "");
+        } catch (imageUrlError) { imageUrl = ""; }
+        const ids = extractDriveFileIds(imageUrl);
+        if (!ids.length) { unverifiableReferenceCount++; return; }
+        let anchor = null;
+        try { anchor = image && typeof image.getAnchorCell === "function" ? image.getAnchorCell() : null; }
+        catch (anchorError) { anchor = null; }
+        ids.forEach(id => {
+            if (includeLocations) {
+                if (!references.has(id)) references.set(id, []);
+                references.get(id).push({
+                    sheet: sheet.getName(),
+                    row: anchor && typeof anchor.getRow === "function" ? anchor.getRow() : 0,
+                    column: anchor && typeof anchor.getColumn === "function" ? anchor.getColumn() : 0,
+                    field: "overGridImage"
+                });
+            } else references.set(id, true);
+        });
     });
+    return unverifiableReferenceCount;
+}
 
-    return { references, unverifiableReferenceCount, metrics: { cortes: cortesScanMetrics } };
+function collectActiveDriveReferences(includeLocations = true) {
+    // Allowlist positiva: solo las hojas y columnas que forman parte del catálogo visual.
+    // Las hojas de eventos, registros, reacciones, Feedback y administración nunca se recorren.
+    const catalogSheets = [
+        { name: SHEET_NAMES.CORTES, kind: "cortes" },
+        { name: SHEET_NAMES.TUTORIALES, field: "Imagen", column: 3 },
+        { name: SHEET_NAMES.RELAY, field: "imagen", column: 10 },
+        { name: SHEET_NAMES.PYS, field: "Imagen", column: 7 }
+    ];
+    const references = new Map();
+    let unverifiableReferenceCount = 0;
+    const metrics = { cortes: null, catalog: {} };
+    catalogSheets.forEach(spec => {
+        const sheet = getSpreadsheet().getSheetByName(spec.name);
+        if (!sheet) {
+            if (spec.kind === "cortes") throw new Error("No se encontró la hoja «Cortes» para verificar las referencias de imágenes.");
+            metrics.catalog[spec.name] = { skipped: true, reason: "optional_sheet_missing" };
+            return;
+        }
+        let result;
+        if (spec.kind === "cortes") {
+            result = collectCortesImageReferences(includeLocations);
+            metrics.cortes = result.metrics || null;
+        } else {
+            result = collectCatalogSheetImageReferences_(sheet, spec, includeLocations);
+            metrics.catalog[spec.name] = result.metrics || null;
+        }
+        result.references.forEach((locations, id) => {
+            if (includeLocations) {
+                if (!references.has(id)) references.set(id, []);
+                references.get(id).push.apply(references.get(id), Array.isArray(locations) ? locations : []);
+            } else references.set(id, true);
+        });
+        unverifiableReferenceCount += Number(result.unverifiableReferenceCount) || 0;
+        unverifiableReferenceCount += appendCatalogOverGridImageReferences_(sheet, references, includeLocations);
+    });
+    return { references, unverifiableReferenceCount, metrics };
 }
 function collectCortesImageReferences(includeLocations = true) {
     const startedAt = Date.now();
@@ -760,6 +771,7 @@ const SHEET_NAMES = {
     LOGOS_MARCA: "LogosMarca",
     TUTORIALES: "Tutorial",
     RELAY: "Relay",
+    PYS: "pys",
     ADMIN_STATE: "AdminState",
     IDEMPOTENCIA: "Idempotencia",
     IDEMPOTENCIA_FALLBACK: "Idempotencia_Cortes",
@@ -4956,9 +4968,20 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
         const category = read(row, "categoria"), brand = read(row, "marca"), model = read(row, "modelo");
         if (!category || !brand || !model) return;
         const key = [category, brand, model].map(normalize).join("|");
-        const entry = modelsByKey.get(key) || { category, brand, model, key, aliases: [], vehicleIds: [], rows: [] };
+        const entry = modelsByKey.get(key) || { category, brand, model, key, aliases: [], vehicleIds: [], rows: [], versions: [], ignitionTypes: [], yearRanges: [] };
         const vehicleId = read(row, "id");
         if (vehicleId && !entry.vehicleIds.includes(vehicleId)) entry.vehicleIds.push(vehicleId);
+        const versionText = read(row, "versionesAplicables");
+        versionText.split(/[,;|/]+/).map(value => value.trim()).filter(Boolean).forEach(value => {
+            if (!entry.versions.some(item => normalize(item) === normalize(value))) entry.versions.push(value);
+        });
+        const ignitionType = read(row, "tipoEncendido");
+        if (ignitionType && !entry.ignitionTypes.some(item => normalize(item) === normalize(ignitionType))) entry.ignitionTypes.push(ignitionType);
+        const yearFrom = Number(read(row, "anoDesde")), yearTo = Number(read(row, "anoHasta"));
+        if (Number.isInteger(yearFrom) || Number.isInteger(yearTo)) {
+            const range = { from: Number.isInteger(yearFrom) ? yearFrom : null, to: Number.isInteger(yearTo) ? yearTo : null };
+            if (!entry.yearRanges.some(item => item.from === range.from && item.to === range.to)) entry.yearRanges.push(range);
+        }
         entry.rows.push(index + 2);
         modelsByKey.set(key, entry);
     });
@@ -4990,6 +5013,12 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             const reorderedFolder = modelTokens.length > 1 && folderSegments.some(segment => tokenSetKey(segment) === tokenSetKey(model.model));
             const brandInPath = folderSegments.includes(normalize(model.brand)) || containsPhrase(nameWithoutExtension, model.brand);
             const categoryInPath = folderSegments.includes(normalize(model.category));
+            const fileContext = folderPath + " " + nameWithoutExtension;
+            const versionMatches = model.versions.filter(version => containsPhrase(fileContext, version));
+            const ignitionMatches = model.ignitionTypes.filter(type => containsPhrase(fileContext, type));
+            const fileYears = Array.from(new Set((fileContext.match(/(?:19|20)\\d{2}/g) || []).map(Number)));
+            const yearMatches = model.yearRanges.filter(range => fileYears.some(year =>
+                (range.from === null || year >= range.from) && (range.to === null || year <= range.to)));
             let score = 0;
             const signals = [];
             if (exactFolder) { score = Math.max(score, 100); signals.push("folder_model_exact"); }
@@ -5001,7 +5030,15 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             if (!score) return;
             if (brandInPath) { score += 15; signals.push("brand_context"); }
             if (categoryInPath) { score += 5; signals.push("category_context"); }
-            scored.push({ category: model.category, brand: model.brand, model: model.model, vehicleIds: model.vehicleIds.slice(), rows: model.rows.slice(), score, signals: Array.from(new Set(signals)) });
+            if (versionMatches.length) { score += 5; signals.push("version_context"); }
+            if (ignitionMatches.length) { score += 3; signals.push("ignition_type_context"); }
+            if (yearMatches.length) { score += 2; signals.push("year_range_context"); }
+            scored.push({
+                category: model.category, brand: model.brand, model: model.model,
+                vehicleIds: model.vehicleIds.slice(), rows: model.rows.slice(),
+                versions: versionMatches, ignitionTypes: ignitionMatches, yearRanges: yearMatches,
+                score, signals: Array.from(new Set(signals))
+            });
         });
         if (!scored.length) return;
         scored.sort((left, right) => right.score - left.score || left.category.localeCompare(right.category) ||
