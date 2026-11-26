@@ -477,3 +477,5 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pendiente: confirmar que el dominio usado desde el móvil sirve el mismo HEAD; prueba real de navegador/IndexedDB y alta controlada; resolver cualquier snapshot previo inválido sin pérdida de idempotencia. El build/deploy no demuestra por sí solo que la escritura remota funcione.
 
 - Documentación: `README.md` actualizado para reflejar `HTML/add_cortes.html` y `HTML/users.html`; sin cambios adicionales en la descripción de arquitectura.
+
+- Cierre GP-CUT-DEEP-AUDIT-03: Code Review estático aprobado; respaldos temporales retirados después de la comparación exacta (commits `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`). Pendiente únicamente validación móvil/IndexedDB y confirmación de qué deployment usa el dispositivo.
