@@ -8951,7 +8951,25 @@ export async function openAuditDriveModal(options = {}) {
             const details = candidates.map(candidate => {
                 const years = Array.isArray(candidate.yearRanges) ? candidate.yearRanges.map(range =>
                     (range.from || '?') + '–' + (range.to || '?')).join(', ') : '';
-                return [candidate.category, candidate.brand, candidate.model,
+                const signalLabels = {
+                    folder_model_exact: 'carpeta coincide con modelo',
+                    filename_model_exact: 'nombre coincide con modelo',
+                    folder_alias: 'alias en carpeta',
+                    filename_alias: 'alias en nombre',
+                    folder_model_token_alias: 'tokens de modelo en carpeta',
+                    filename_model_token_alias: 'tokens de modelo en nombre',
+                    brand_context: 'marca',
+                    category_context: 'categoría',
+                    version_context: 'versión',
+                    ignition_type_context: 'tipo de encendido',
+                    year_range_context: 'rango de años'
+                };
+                const signals = Array.isArray(candidate.signals)
+                    ? candidate.signals.map(signal => signalLabels[signal] || String(signal).replace(/_/g, ' ')) : [];
+                const confidence = association.confidence
+                    ? 'Confianza: ' + ({ high: 'alta', medium: 'media', low: 'baja' }[association.confidence] || association.confidence) : '';
+                return [candidate.category, candidate.brand, candidate.model, confidence,
+                    signals.length ? 'Criterios: ' + signals.join(', ') : '',
                     Array.isArray(candidate.versions) && candidate.versions.length ? 'Versión: ' + candidate.versions.join(', ') : '',
                     Array.isArray(candidate.ignitionTypes) && candidate.ignitionTypes.length ? 'Encendido: ' + candidate.ignitionTypes.join(', ') : '',
                     years ? 'Años: ' + years : '',
@@ -9063,7 +9081,25 @@ export async function openAuditDriveModal(options = {}) {
             const associationText = candidates.map(candidate => {
                 const years = Array.isArray(candidate.yearRanges) ? candidate.yearRanges.map(range =>
                     (range.from || '?') + '–' + (range.to || '?')).join(', ') : '';
-                return [candidate.category, candidate.brand, candidate.model,
+                const signalLabels = {
+                    folder_model_exact: 'carpeta coincide con modelo',
+                    filename_model_exact: 'nombre coincide con modelo',
+                    folder_alias: 'alias en carpeta',
+                    filename_alias: 'alias en nombre',
+                    folder_model_token_alias: 'tokens de modelo en carpeta',
+                    filename_model_token_alias: 'tokens de modelo en nombre',
+                    brand_context: 'marca',
+                    category_context: 'categoría',
+                    version_context: 'versión',
+                    ignition_type_context: 'tipo de encendido',
+                    year_range_context: 'rango de años'
+                };
+                const signals = Array.isArray(candidate.signals)
+                    ? candidate.signals.map(signal => signalLabels[signal] || String(signal).replace(/_/g, ' ')) : [];
+                const confidence = association.confidence
+                    ? 'Confianza: ' + ({ high: 'alta', medium: 'media', low: 'baja' }[association.confidence] || association.confidence) : '';
+                return [candidate.category, candidate.brand, candidate.model, confidence,
+                    signals.length ? 'Criterios: ' + signals.join(', ') : '',
                     Array.isArray(candidate.versions) && candidate.versions.length ? 'Versión: ' + candidate.versions.join(', ') : '',
                     Array.isArray(candidate.ignitionTypes) && candidate.ignitionTypes.length ? 'Encendido: ' + candidate.ignitionTypes.join(', ') : '',
                     years ? 'Años: ' + years : '',
