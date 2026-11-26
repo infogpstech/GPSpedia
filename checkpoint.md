@@ -1164,3 +1164,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Run 45731465785 SUCCESS: ADMIN v2.7.1, 5 muestras 2556/2206/1390/1480/1622 ms; mediana 1622; 2 muestras >=2s. Fuente en branch declara 2.7.2, diferencia de deployment confirmada.
 - No deploy. Variabilidad observable, sin atribución de causa. Feed CATALOG y límites siguen PASS en este run.
 - Próximo: plan de pruebas AUTH read-only y preparar fixture aislado para sesión sintética solo tras confirmar los mecanismos de creación/limpieza y roles.
+
+
+## Continuidad — ampliación de matriz Beta CATALOG (2026-11-25)
+- Rama de trabajo verificada en commit `52386ae0b6fdf0e593c9b9e53e8ec45d7af877a5`; se añadió probe read-only de matriz para cursor actual, borde de retención, cursor intermedio, límite pequeño y repetición, e integración al workflow restringido de health.
+- Probe: `4fef0a34000b0e830bbf2ac383f29b3305f0073e`; integración workflow: `52386ae0b6fdf0e593c9b9e53e8ec45d7af877a5`; registro de hallazgos: `8ec3b435554a1b84e72b8a7938666ad00fd397d2`.
+- Se verificó el SHA de la rama tras la integración; el status consultado quedó pending sin checks asociados. Ejecución/resultados Actions de este probe no verificados aún; no se declara prueba ejecutada.
+- No hubo escrituras ni deployment. Pendiente obtener evidencia de ejecución y ampliar pruebas de flujos mutables con fixtures/ownership/cleanup seguros; base protegida no modificada.
