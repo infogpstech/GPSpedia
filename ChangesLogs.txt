@@ -1585,3 +1585,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Code Review por diffs de commits contra respaldos: cambios limitados a la carga/render de catálogos y al manejo de error del editor. No se alteró la persistencia del corte, operaciones pendientes, lógica de sugerencias/adjuntos ni el flujo de recuperación.
 - Pendiente crítico de entorno: el checkpoint de `GP-CORS-APPS-SCRIPT-TRANSPORT-01` registra que los entrypoints Apps Script no fueron publicados tras cambiar a POST iframe/`postMessage`. El health GET no valida el POST de `getDropdownData`. No se desplegó Apps Script ni se leyó la Spreadsheet real; queda pendiente publicar CATALOG 2.4.1 y comprobar POST/browser/Beta antes de declarar resuelto el sitio publicado.
 - Commits de código: `3525c772c8bd51db235aba89b72a85a3ce17c0db`, `d45580124aa1834851665f235e14f4ea5a000f57`, `e500d6f670dc57d58607f73c56f4dd6a679af530`, `631d7e66eec4802220c2debd048016a35c1247b7`, `4bc6e6d4a1b9bb3d55fd4e1cfb3eeeb7cf460abf`.
+
+
+[2026-11-26] GP-FORM-DROPDOWNS-02 — regresión Relay verificada
+- Se comprobó que la corrección de catálogos no eliminó ni alteró la funcionalidad de diagramas Relay. `handleGetCatalogData()` sigue leyendo la hoja `Relay`, mapeando `imagen` mediante `IMAGE_FIELDS_RELAY` y devolviendo `allData.relay`. El detalle de corte continúa buscando `datosRelay` por `configuracion`, abriendo `renderRelayInfoModal()`, mostrando `relayInfo.imagen` y abriendo el lightbox mediante `window.abrirLightbox`.
+- Harness estático de invariantes de Relay: 9/9 PASS. Los cambios de dropdowns solo cambian la fuente de opciones de configuración en `getDropdownData`; Relay conserva su función como catálogo de esquemas e imágenes.
