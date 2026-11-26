@@ -555,3 +555,5 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Validación automatizada disponible: Pages build/deploy run `45913010737` SUCCESS sobre `02eb7fa35159416ed4451b75b810b1a98c0184ba`. No hay evidencia de una suite funcional de alta ni ejecución de IndexedDB real; la prueba de alta sigue pendiente. La rama base permanece intacta.
 
 - Hallazgo F-10 — documentación de arquitectura desactualizada: `README.md` seguía describiendo `add_cortes.html` y `users.html` como archivos de raíz, aunque el árbol actual los ubica en `HTML/`. Se actualizarán únicamente esas dos rutas documentales para que la arquitectura descrita coincida con el repositorio.
+
+- Code Review documental F-10: comparación de `README.md` contra su respaldo confirma únicamente dos ajustes de rutas: `add_cortes.html` → `HTML/add_cortes.html` y `users.html` → `HTML/users.html`. No se modificó la descripción funcional ni la arquitectura.
