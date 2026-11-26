@@ -329,3 +329,12 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Latencias de boundary: tail 3285 ms, futuro 2890 ms, límite 0 1134 ms, límite 51 1443 ms; inicial 3254 ms, tail anterior 1902 ms. Variabilidad visible, no atribuible aún a causa específica.
 - Health en mismo run: 6/6 disponibles; ADMIN SLOW 2628 ms; AUTH 2003 ms; CATALOG 1267 ms; FEEDBACK 1723 ms; UTILITIES 1221 ms; WRITE 1541 ms.
 - Sin escrituras remotas, deploys ni cambios Spreadsheet.
+
+
+### BETA — ADMIN repeated latency probe (2026-11-26)
+- Run 45731465785 SUCCESS sobre commit 0401d81d8964a967aa95da00003d1e4275cbdb9b.
+- Probe GET-only ejecutó 5 lecturas consecutivas del health ADMIN; deployment respondió versión 2.7.1. Tiempos: 2556, 2206, 1390, 1480, 1622 ms; mediana 1622 ms, mínimo 1390, máximo 2556; 2/5 >= 2000 ms.
+- Mismo run: health global 6/6. ADMIN 3050 ms en probe general; AUTH 1418; CATALOG 1075; FEEDBACK 1712; UTILITIES 1023; WRITE 1168.
+- El fuente de trabajo declara ADMIN 2.7.2 (const ADMIN_SERVICE_VERSION), deployment aún devuelve 2.7.1. Confirmada discrepancia, no se desplegó.
+- Latencia variable, la mediana del probe enfocado queda bajo 2s; no evidencia causal sobre Spreadsheet/Drive ni atribución de bottleneck.
+- Sin mutaciones ni despliegues.
