@@ -1612,3 +1612,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Frontend/diagnosticLogger.js`: ampliada la allowlist de códigos de error seguros para errores de API, servicio, transporte y WRITE.
 - `HTML/add_cortes.html`: el diagnóstico `cut-operation.submit-failed` registra el código normalizado de error del servicio/ruteador en lugar de registrar únicamente el nombre genérico de la excepción.
 - Validación documentada: comparación exacta contra respaldos y harness estático con fixture de columnas/slots. No se ejecutaron pruebas runtime de Apps Script, Spreadsheet, Drive ni navegador.
+
+- `HTML/add_cortes.html`: el diagnóstico de envío también reconoce identificadores internos estáticos de error (p. ej. validación de respuesta, mismatch y limpieza pendiente) y los entrega al logger solo si coinciden con el patrón técnico permitido; los mensajes libres siguen excluidos.
+- `JS/Frontend/diagnosticLogger.js`: allowlist ampliada con códigos internos de submit/recuperación y códigos de transporte/API. No se incorporan campos de texto libre.
