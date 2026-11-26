@@ -1210,3 +1210,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Diferencia de versión provoca FAIL e informa deployment vs fuente esperada. El workflow ya incluye el documento como path de activación.
 - Código publicado: `a74d35cc13ddc44b9820dc426012b8d07998497b`; hallazgo F013 documentado.
 - Validación Node 22 del parser y ejecución remota aún pendientes. La versión del documento expresa versión fuente, no certifica deployment.
+
+
+## Continuidad — alineación de estado y pruebas locales de salud (2026-11-25)
+- Se alineó el runner remoto con el frontend: ahora exige `status` string y aplica `trim().toLowerCase()` antes de aceptar `available`/`online`. Hallazgo F014.
+- `ServiceHealthContract.mjs` incorpora una aserción sobre normalización, comparación de versión del deployment y lectura de `Services/SERVICE_HEALTH.md` desde el commit objetivo.
+- El workflow de health ejecuta la suite local con Node 22 antes de las consultas GET remotas; cambios en test, runner y contrato ya disparan la ejecución mediante push.
+- Se verificaron estáticamente 6/6 condiciones de integración en la fuente actual. No se ejecutó Node 22 ni se obtuvo resultado de Actions en esta sesión; prueba completa pendiente.
+- Commits: runner `a6c4cbdd1ecd71a5644f76e31556bc77f34e3892`, test `b282123316079cb70fd78b77c4191fc788a085c1`, workflow `d21fff9b2faace448194db94f4d54fc3a1130ac4`, registro F014 `8e533bbe8c44b7b5abcda6ded4122d4db4d75300`.
