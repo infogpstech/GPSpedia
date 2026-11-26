@@ -23,7 +23,7 @@ async function probe(service){
  const startedTotal=performance.now();let lastError=null,attempts=0;
  for(let retry=0;retry<3;retry++){attempts++;const started=performance.now();try{
   const response=await fetch(endpoints[service]+"?debug=true",{method:"GET",redirect:"follow",signal:AbortSignal.timeout(8000),headers:{accept:"application/json"}});
-  if(!response.ok){const error=new Error("HTTP "+response.status);if((response.status===429||response.status>=500)&&retry<2){lastError=error;await new Promise(r=>setTimeout(r,(retry+1)*750));continue;}throw error;}
+  if(!response.ok){const error=new Error("HTTP "+response.status);if(([408,425,429].includes(response.status)||response.status>=500)&&retry<2){lastError=error;await new Promise(r=>setTimeout(r,(retry+1)*750));continue;}throw error;}
   const bodyText=await response.text();let body;try{body=JSON.parse(bodyText);}catch{throw new Error("Respuesta no JSON (HTTP "+response.status+")");}
   const latencyMs=Math.round(performance.now()-started);
   if(!body||typeof body!=="object"||Array.isArray(body))throw new Error("La respuesta no es un objeto JSON.");
@@ -38,5 +38,5 @@ async function run(services,concurrency=2){const results=new Array(services.leng
 console.log("GPSpedia remote service health — target "+targetCommit);
 console.log("API_ENDPOINTS local + GET ?debug=true; Beta aislada confirmada; sin escrituras ni cambios remotos.");
 const results=await run(keys,2);
-for(const r of results){if(["PASS","SLOW"].includes(r.status))console.log(r.status+" "+r.service+" v"+r.version+" — "+r.latencyMs+" ms (intento "+r.attempts+"/3; total "+r.totalMs+" ms)");else console.error("FAIL "+r.service+" — "+r.error+" (3 intentos; total "+r.totalMs+" ms)");}
+for(const r of results){if(["PASS","SLOW"].includes(r.status))console.log(r.status+" "+r.service+" v"+r.version+" — "+r.latencyMs+" ms (intento "+r.attempts+"/3; total "+r.totalMs+" ms)");else console.error("FAIL "+r.service+" — "+r.error+" ("+r.attempts+"/3 intentos; total "+r.totalMs+" ms)");}
 const passed=results.filter(x=>["PASS","SLOW"].includes(x.status)).length;console.log("Resultado: "+passed+"/"+results.length+" servicios disponibles (SLOW indica latencia >= 2000 ms).");if(passed!==results.length)process.exitCode=1;
