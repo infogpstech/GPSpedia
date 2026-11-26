@@ -1569,3 +1569,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — tarjetas de auditoría y biblioteca ahora muestran nivel de confianza y criterios legibles de asociación (modelo/alias en ruta o nombre, marca, categoría, versión, encendido y rango de años), además de vehículo y contexto aplicable. Harness de render Toyota Hilux PASS. Commit: 8d63c5943f18fa2e6b36003ef8b829846d9a3bf2.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se centralizó la guarda compartida del inventario y se aplicó a todas las mutaciones de biblioteca: aplicar/revertir organización, conciliación, migración de esquema, resolución de candidatos, recuperar, papelera, restaurar, eliminación definitiva, marcar en uso y mover. La sincronización de candidatos del GET biblioteca también se protege. Revisión estática: 12 rutas y sincronización guardadas; admin.js compila. Commit: d778cc086e603307a1567bf3a933983e258cae89.
