@@ -9600,18 +9600,32 @@ export async function openAuditDriveModal(options = {}) {
                     if (!isCurrentRequest()) return;
                     const submitted = new Set(unusedFiles.map(file => String(file.fileId)));
                     const byId = new Map();
+                    const allById = new Map();
                     if (!final || final.status !== 'success' || final.auditId !== auditId ||
                         !final.inventoryOperationId || !Array.isArray(final.results)) {
                         throw new Error(final && final.message ? final.message : 'No se confirmó la consolidación del inventario.');
                     }
                     final.results.forEach(item => {
                         const id = String(item && item.fileId || '');
-                        if (!submitted.has(id)) return;
-                        if (byId.has(id)) throw new Error('ADMIN devolvió un resultado duplicado durante la consolidación.');
-                        byId.set(id, item);
+                        const status = String(item && item.status || '');
+                        if (!item || !/^[a-zA-Z0-9_-]{20,}$/.test(id) || allById.has(id) ||
+                            !['confirmado', 'bloqueado', 'error', 'no_confirmada'].includes(status)) {
+                            throw new Error('ADMIN devolvió resultados vacíos, duplicados o con estados no reconocidos durante la consolidación.');
+                        }
+                        allById.set(id, item);
+                        if (submitted.has(id)) byId.set(id, item);
+                        else if (status !== 'no_confirmada') {
+                            throw new Error('ADMIN devolvió un resultado no solicitado que no corresponde a un registro histórico obsoleto.');
+                        }
                     });
-                    if (byId.size !== submitted.size || final.partial === true || Array.from(byId.values()).some(item => item.status !== 'confirmado')) {
-                        throw new Error('La consolidación no confirmó todas las imágenes individualmente.');
+                    const countStatus = status => Array.from(allById.values()).filter(item => item.status === status).length;
+                    if (byId.size !== submitted.size || final.partial === true ||
+                        Array.from(submitted).some(id => !byId.has(id) || byId.get(id).status !== 'confirmado') ||
+                        Number(final.savedCount) !== countStatus('confirmado') ||
+                        Number(final.blockedCount) !== countStatus('bloqueado') ||
+                        Number(final.errorCount) !== countStatus('error') ||
+                        Number(final.noLongerConfirmedCount) !== countStatus('no_confirmada')) {
+                        throw new Error('La consolidación no confirmó todas las imágenes individualmente o sus conteos no coinciden.');
                     }
                     byId.forEach((item, id) => {
                         const file = unusedFiles.find(candidate => String(candidate.fileId) === id);
