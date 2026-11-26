@@ -1218,3 +1218,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - El workflow de health ejecuta la suite local con Node 22 antes de las consultas GET remotas; cambios en test, runner y contrato ya disparan la ejecución mediante push.
 - Se verificaron estáticamente 6/6 condiciones de integración en la fuente actual. No se ejecutó Node 22 ni se obtuvo resultado de Actions en esta sesión; prueba completa pendiente.
 - Commits: runner `a6c4cbdd1ecd71a5644f76e31556bc77f34e3892`, test `b282123316079cb70fd78b77c4191fc788a085c1`, workflow `d21fff9b2faace448194db94f4d54fc3a1130ac4`, registro F014 `8e533bbe8c44b7b5abcda6ded4122d4db4d75300`.
+
+
+## Continuidad — aclaración y cotejo de versiones de salud (2026-11-25)
+- Se aclaró en `Services/SERVICE_HEALTH.md` que la versión comparada por Beta es exclusivamente el campo `version` del endpoint `GET ?debug=true`, no el comentario `COMPONENT VERSION` del archivo Apps Script. Hallazgo F015.
+- `ServiceHealthContract.mjs` ahora coteja la versión documentada con el campo expuesto por el `doGet` de cada uno de los seis servicios; para ADMIN resuelve `ADMIN_SERVICE_VERSION`.
+- Validación independiente de esa lógica sobre los archivos de la rama: 6/6 PASS. Diferencias conceptuales observadas: FEEDBACK comentario COMPONENT VERSION 2.3.0 vs health 1.2.2; ADMIN comentario 2.7.1 vs health constant 2.7.2. No se alteraron esos comentarios porque no representan el valor que valida el endpoint.
+- Pendiente: confirmar la ejecución Node 22 del suite en GitHub Actions para el commit actualizado y confirmar ejecución del workflow Beta GET-only. No se ha certificado deployment remoto en esta sesión.
+- Commits: contrato `2e889ce1b63d6959d032006fd6e6b14b4ee6998e`; test corregido `09152e11cc188ecc1ebb1fcaef46e37092f630ab`; Hallazgos `147fe5b2de62777b663130fd167cead0f1146d67`.
