@@ -30,6 +30,14 @@ test("el encabezado y el Splash claro usan el logo oficial local", () => {
     assert.match(main, /const splashUrl = isDark \? 'Images\/Logo_TemaOscuro\.png' : 'Images\/icon-v3-512x512\.png'/);
 });
 
+test("el modal de instalación iOS usa un logo local disponible offline", () => {
+    const start = html.indexOf('<div id="ios-install-modal"');
+    const end = html.indexOf("</div>", start);
+    const modal = html.slice(start, end);
+    assert.match(modal, /src="Images\/icon-v3-512x512\.png"/);
+    assert.doesNotMatch(modal, /drive\.google\.com/);
+});
+
 test("el logo oscuro permanece asignado al Splash cuando el tema oscuro está activo", () => {
     assert.match(main, /const splashUrl = isDark \? 'Images\/Logo_TemaOscuro\.png'/);
     assert.ok(worker.includes("'./Images/Logo_TemaOscuro.png'"));
