@@ -1233,3 +1233,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Suite de contrato ya contiene cotejo de las seis versiones de salud documentadas contra el campo `version` del `doGet`; validación equivalente con fuentes recuperadas: 6/6 PASS.
 - El run PR asociado a HEAD previo `3c82d31cbbfc6565d4aae65972948cf0dc15db2d` se observó en progreso (build, service-tests y responsive-browser); no se debe atribuir su resultado al commit posterior. Confirmar el nuevo run/estado tras este cambio.
 - Workflow trigger: `e958c94904b7a0d87369f92a467b83e4b90c0c87`; Hallazgos F016: `5ce8d210fe787af91c97a29dcd52176d4bc14a95`.
+
+
+## Estado de validación GitHub — HEAD 524926b (2026-11-25)
+- HEAD de `GPSpedia2.2.5_work` verificado: `524926b337581bfed22d17c96297d251e77e149b`.
+- Run PR `45734353707` asociado al HEAD: jobs `service-tests` y `responsive-browser` observados en progreso; en la última consulta, checkout completado y setup Node aún ejecutándose. No hay conclusión disponible todavía.
+- No se ha obtenido evidencia verificable de ejecución de `deployed-service-health.yml` ni de lecturas Beta asociadas a este HEAD. No afirmar validación remota completada.
+- El suite MIG021 ejecuta `JS/Tests/ServiceHealthContract.mjs`; el workflow Beta también incluye el mismo suite como gate antes de probes remotos y ahora observa su ruta en `paths`.
