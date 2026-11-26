@@ -168,3 +168,10 @@
 
 2026-11-26 | BETA-F021 — comprobación de protección
 - La rama base sigue reportando `protected=false` y no se observan rulesets; requiere administración del repositorio. No se modificó la rama base.
+
+
+2026-11-26 | BETA-F023 — resumen health workflow
+- Run `45756293382`: step de resumen shell falló por doble `if` y `unexpected end of file`; los probes independientes sí se completaron. Bloque corregido en commit `5496c88c`.
+
+2026-11-26 | BETA-F024 — UTILITIES SLOW
+- Run `45756293382`: health UTILITIES v1.5.0 `available`, 7,916 ms. Se incorporó medición repetida de cinco muestras para determinar variabilidad; no se atribuye causa con una sola observación.

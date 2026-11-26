@@ -561,3 +561,12 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - En la misma prueba fría fallan dos recursos no core: CSS Font Awesome de cdnjs (`/ajax/libs/font-awesome/6.4.0/css/all.min.css`) y `/thumbnail` de Drive.
 - No bloquean el arranque: login visible, HTTP 200, cero errores JavaScript. El thumbnail corresponde a la imagen del modal informativo iOS en `index.html`; Font Awesome puede dejar iconos sin estilo offline.
 - Severidad baja/no bloqueante para el arranque; registrar como deuda de disponibilidad visual offline. Evaluar assets locales/fallbacks en la priorización existente, sin reabrir F020.
+
+
+## BETA-F023 — resumen shell del workflow corregido (2026-11-26)
+- Run `45756293382` completó los probes, pero el resumen falló con `syntax error: unexpected end of file` por un `if` duplicado.
+- Se corrigió el bloque condicional en `.github/workflows/deployed-service-health.yml`. La siguiente ejecución debe confirmar el resumen y devolver FAIL solo por hallazgos reales remotos.
+
+## BETA-F024 — latencia UTILITIES bajo observación (2026-11-26)
+- En run `45756293382`, UTILITIES v1.5.0 respondió `available` en 7,916 ms frente a un timeout de 8,000 ms.
+- Se extendió el probe repetido para ejecutar cinco GET secuenciales tanto en ADMIN como en UTILITIES, validando identidad, estado y versión, y conservando errores por muestra. Tendencia pendiente.

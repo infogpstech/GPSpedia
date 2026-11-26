@@ -1473,3 +1473,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — health remoto activado ante cambios de fuente Apps Script
 - `.github/workflows/deployed-service-health.yml`: se añadieron las seis fuentes activas (AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN) al filtro de paths.
 - Cada cambio de fuente en la rama Beta disparará el contrato local y los probes GET-only de los seis deployments; no ejecuta POST ni despliegues.
+
+
+## 2026-11-26 — robustez del workflow health y latencia UTILITIES
+- `.github/workflows/deployed-service-health.yml`: corregido el bloque `if` duplicado del resumen y añadido step de cinco muestras de latencia UTILITIES.
+- `JS/Tests/RemoteAdminLatency.mjs`: acepta SERVICE_KEY ADMIN/UTILITIES, valida identidad/estado/versión y conserva errores por muestra sin ocultarlos.
