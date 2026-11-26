@@ -9132,6 +9132,10 @@ export async function openAuditDriveModal(options = {}) {
             unused: allFiles.filter(file => file.classification === 'Sin uso detectado').length,
             unverified: allFiles.filter(file => file.classification === 'No verificable').length
         };
+        if (folderBreadcrumb) {
+            const label = folderBreadcrumb.querySelector('span');
+            if (label) label.textContent = rootFolderName + ' · ' + allFiles.length + ' archivos';
+        }
         if (statusText) {
             const lower = String(statusText).toLowerCase();
             const inferredLevel = /error|fall|detuvo|no se pudo|no disponible|bloquead|parcial/.test(lower)
@@ -9444,8 +9448,12 @@ export async function openAuditDriveModal(options = {}) {
             saveInventoryButton.hidden = !canSaveInventory;
             saveInventoryButton.disabled = isRunning || isDriveAuditRunning || !canSaveInventory;
         }
+        const unusedForOrganization = allFiles.filter(file => file.classification === 'Sin uso detectado');
+        const allUnusedRegistered = unusedForOrganization.length > 0 &&
+            unusedForOrganization.every(file => String(file.inventoryStatus || '') === 'confirmado');
         const canOrganize = complete && errorCount === 0 && unverifiableReferences === 0 && inventoryStatus === 'saved' &&
-            !!inventoryAuditId && !!inventoryOperationId && inventoryConfirmedFileIds.length > 0;
+            !!inventoryAuditId && !!inventoryOperationId && allUnusedRegistered &&
+            inventoryConfirmedFileIds.length === unusedForOrganization.length;
         if (organizeButton) {
             organizeButton.hidden = !canOrganize;
             organizeButton.disabled = isRunning || isDriveAuditRunning || !canOrganize;
@@ -9462,6 +9470,7 @@ export async function openAuditDriveModal(options = {}) {
         updateReconciliationApprovalControls_();
         if (organizerHistoryButton) organizerHistoryButton.disabled = isRunning;
         updateOrganizerApplyControls_();
+        updateRetryButtons();
     };
 
     const restoreState = (state) => {
@@ -9469,6 +9478,8 @@ export async function openAuditDriveModal(options = {}) {
         allFiles.length = 0;
         seenFileIds.clear();
         renderedFileIds.clear();
+        folderGroups.clear();
+        auditFileCardsById.clear();
         uiDuplicateFileCount = 0;
         if (Array.isArray(state.files)) state.files.forEach(file => {
             const fileId = String(file && file.fileId || '').trim();
@@ -9539,7 +9550,10 @@ export async function openAuditDriveModal(options = {}) {
                 allFiles.length = 0;
                 seenFileIds.clear();
                 renderedFileIds.clear();
-                container.innerHTML = '';
+                folderGroups.clear();
+                auditFileCardsById.clear();
+                container.replaceChildren();
+                setAuditView('grid');
                 cursor = null;
                 complete = false;
                 totalDiscovered = 0;
@@ -10677,14 +10691,17 @@ export async function openAuditDriveModal(options = {}) {
         if (isDriveAuditRunning) {
             updateSummary('La auditoría continúa ejecutándose en esta sesión; no inicies otra solicitud.');
         } else if (complete && inventoryStatus !== 'saved' && inventoryStatus !== 'organized') {
-            const pendingCount = allFiles.filter(file => file.classification === 'Sin uso detectado').length;
+            const pendingCount = allFiles.filter(file => file.classification === 'Sin uso detectado' &&
+                String(file.inventoryStatus || 'pending') !== 'confirmado').length;
             updateSummary(pendingCount
-                ? 'Auditoría completa recuperada. ' + pendingCount + ' imágenes están pendientes de registro explícito; no se ha escrito en Spreadsheet.'
-                : 'Auditoría completa recuperada. No hay imágenes sin uso para registrar.');
+                ? 'Auditoría completa recuperada. ' + pendingCount + ' imágenes siguen pendientes, bloqueadas o con error de registro; consulta cada tarjeta para reintentar.'
+                : 'Auditoría completa recuperada. Todas las imágenes sin uso tienen registro individual confirmado.');
         }
     } else {
         if (!isCurrentRequest()) return;
-        container.innerHTML = '';
+        folderGroups.clear();
+        auditFileCardsById.clear();
+        container.replaceChildren();
         updateSummary(startImmediately
             ? 'Preparando auditoría desde la consola Developer...'
             : 'No existe un inventario local guardado. Iniciando auditoría nueva...');
