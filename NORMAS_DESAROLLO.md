@@ -461,3 +461,18 @@ Toda modificación sobre una Zona Segura requerirá:
 Cuando una sección sea declarada como Zona Segura deberá agregarse al inicio del bloque de código un comentario visible dirigido al desarrollador.
 
 Este comentario deberá advertir que el bloque pertenece a una Zona Segura y que cualquier modificación requiere seguir estrictamente el procedimiento descrito en este documento.
+
+---
+
+# VALIDACIÓN OBLIGATORIA DE REGRESIONES Y EFECTOS COLATERALES
+
+Toda modificación deberá comprobar que no perjudique, altere ni deshabilite funciones ajenas al requerimiento solicitado.
+
+- Antes de editar, identificar las funciones existentes, dependencias y flujos que podrían verse afectados directa o indirectamente por el cambio.
+- Después de editar, validar tanto el comportamiento objetivo como las funciones no relacionadas que compartan archivos, componentes, rutas, estado, datos, eventos o dependencias con la modificación.
+- No se deberá considerar suficiente una prueba limitada al nuevo comportamiento: también se deberán verificar las funciones preexistentes que razonablemente puedan verse afectadas y comparar su comportamiento con el estado anterior.
+- Si una función o flujo está relacionado con el requerimiento, deberá adaptarse de forma consistente al nuevo requisito; no deberá conservarse un comportamiento incompatible únicamente por evitar modificarlo.
+- Si una función no está relacionada, se deberá preservar su comportamiento y evitar cambios incidentales. Ante la detección de regresiones, se deberá corregirlas y repetir las validaciones pertinentes antes de concluir.
+- Documentar qué se comprobó, cómo se comprobó, los resultados y cualquier limitación (por ejemplo, validaciones que requieran despliegue, acceso a datos reales o pruebas beta). No afirmar que una prueba se realizó si no se ejecutó.
+
+Esta validación de regresiones y adaptación de funciones relacionadas forma parte obligatoria de la auditoría, implementación, revisión y cierre de toda tarea.
