@@ -1171,3 +1171,9 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Probe: `4fef0a34000b0e830bbf2ac383f29b3305f0073e`; integración workflow: `52386ae0b6fdf0e593c9b9e53e8ec45d7af877a5`; registro de hallazgos: `8ec3b435554a1b84e72b8a7938666ad00fd397d2`.
 - Se verificó el SHA de la rama tras la integración; el status consultado quedó pending sin checks asociados. Ejecución/resultados Actions de este probe no verificados aún; no se declara prueba ejecutada.
 - No hubo escrituras ni deployment. Pendiente obtener evidencia de ejecución y ampliar pruebas de flujos mutables con fixtures/ownership/cleanup seguros; base protegida no modificada.
+
+
+## Continuidad — matrix CATALOG (2026-11-25)
+- Node.js 22 local: `node --check` sobre `RemoteCatalogFeedMatrix.mjs`, PASS (solo sintaxis).
+- Consulta status/checks del commit: pending sin checks. El conector no permite recuperar workflow runs push; entorno shell no resuelve api.github.com (DNS). Ejecución real Beta no verificada; no se presentan simulaciones como resultados remotos.
+- Hallazgos actualizados en commit `973b6e1751327f08f90324376e5f819488ba0065`. No mutaciones ni deployment.
