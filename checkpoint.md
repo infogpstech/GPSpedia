@@ -1126,3 +1126,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - CI final `45722568761` SUCCESS: 542 suites, 6,448 pruebas aprobadas, 0 fallos; jobs `service-tests` y `responsive-browser` SUCCESS. Build/deployment de Pages `45722568303` SUCCESS.
 - Estado local de #130: correcciones y validaciones automatizadas cubiertas; no cerrar como validación integral real hasta completar la comprobación Beta autorizada de Apps Script, Drive y Spreadsheet. No hubo despliegues ni operaciones remotas sobre esos recursos.
 - Próximo paso: esperar confirmación/autorización de entorno Beta aislado; ejecutar las pruebas de útiles FEEDBACK/CATALOG y auditoría/persistencia ADMIN; registrar evidencia y entonces decidir cierre de #130. MIG-URL-008 sigue siendo una tarea independiente pendiente de autorización.
+
+
+## 2026-11-25 — Preparación del runner de pruebas Beta
+- Se registraron ocho hallazgos de revisión estática en Hallazgos_Beta.md (BETA-PLAN-F001..008), distinguiéndolos de defectos de runtime aún no comprobados.
+- Workflow de health ahora permite trigger por push restringido a GPSpedia2.2.5_work y configura los gates Beta aislada. El checker usa timeout 8 s, clasifica latencia >=2 s como SLOW y reporta intentos reales. Sigue siendo GET-only.
+- Documentación de contrato actualizada para ADMIN fuente 2.7.2. No se invocaron aún URLs remotas; las pruebas de salud permanecen pendientes de resultado de Actions.
+- Commits de cambios publicados: ac031f5a (hallazgos), 0e017286 (checker), 312c1d78 (workflow), 762308d7 (documentación de versión).
+- Próximo paso: validar parsing del checker, verificar ejecución Actions y ejecutar/interpretar probe remoto; ampliar suite read-only de contratos/feed.
