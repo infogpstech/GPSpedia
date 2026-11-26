@@ -9860,28 +9860,64 @@ export async function openAuditDriveModal(options = {}) {
                     const finalInventory = await routeActionWithRetry('saveUnusedImagesInventory', {
                         ...getDeveloperSessionPayload(), auditId: auditId, files: finalUnusedFiles
                     }, { timeoutMs: 90000, maxAttempts: 3, retryDelayMs: 900, shouldContinue: isCurrentRequest });
-                    if (finalInventory && finalInventory.status === 'success' && finalInventory.auditId === auditId &&
-                        Array.isArray(finalInventory.results) &&
-                        finalInventory.results.filter(item => item && item.status === 'confirmado').length === finalUnusedFiles.length) {
+                    const submittedFinalIds = new Set(finalUnusedFiles.map(item => String(item.fileId || '')));
+                    const finalResultsById = new Map();
+                    if (!finalInventory || finalInventory.status !== 'success' || finalInventory.auditId !== auditId ||
+                        !Array.isArray(finalInventory.results) || !finalInventory.inventoryOperationId) {
+                        throw new Error(finalInventory && finalInventory.message ? finalInventory.message : 'ADMIN no confirmó la consolidación final.');
+                    }
+                    finalInventory.results.forEach(item => {
+                        const fileId = String(item && item.fileId || '');
+                        if (!submittedFinalIds.has(fileId)) return;
+                        if (finalResultsById.has(fileId) ||
+                            !['confirmado', 'bloqueado', 'error', 'no_confirmada'].includes(String(item.status || ''))) {
+                            throw new Error('ADMIN devolvió resultados duplicados o inválidos durante la consolidación final.');
+                        }
+                        finalResultsById.set(fileId, item);
+                    });
+                    if (finalResultsById.size !== submittedFinalIds.size) {
+                        throw new Error('ADMIN no devolvió un resultado para cada imagen durante la consolidación final.');
+                    }
+                    finalResultsById.forEach((item, fileId) => {
+                        const file = allFiles.find(candidate => String(candidate.fileId) === fileId);
+                        if (file) file.association = item.association || file.association || null;
+                        updateInventoryCardState(fileId, item.status, item.message || '');
+                    });
+                    const finalConfirmed = Array.from(finalResultsById.values()).filter(item => item.status === 'confirmado').length;
+                    inventoryConfirmedFileIds = Array.from(submittedFinalIds).filter(fileId =>
+                        finalResultsById.get(fileId).status === 'confirmado');
+                    if (finalConfirmed === submittedFinalIds.size) {
                         inventoryAuditId = auditId;
-                        inventoryOperationId = String(finalInventory.inventoryOperationId || '');
-                        appendAuditConsole('Consolidación final del inventario: ' + Number(finalInventory.savedCount || 0) + ' registros verificados.', 'success');
+                        inventoryOperationId = String(finalInventory.inventoryOperationId);
+                        appendAuditConsole('Consolidación final: ' + finalConfirmed + ' filas individuales leídas y verificadas en biblioteca.', 'success');
                     } else {
-                        appendAuditConsole('No se confirmó la consolidación final automática; los registros por lote se conservan y el proceso manual sigue disponible.', 'warning');
+                        inventoryOperationId = '';
+                        inventoryStatus = 'partial';
+                        appendAuditConsole('Consolidación parcial: ' + finalConfirmed + ' de ' + submittedFinalIds.size +
+                            ' imágenes confirmadas. Los estados restantes se muestran por archivo y admiten reintento individual.', 'warning');
                     }
                 } catch (finalInventoryError) {
-                    appendAuditConsole('Falló la consolidación final: ' + (finalInventoryError.message || finalInventoryError) + '. Los registros incrementales se conservan.', 'warning');
+                    inventoryOperationId = '';
+                    inventoryStatus = 'partial';
+                    appendAuditConsole('Falló la consolidación final: ' + (finalInventoryError.message || finalInventoryError) +
+                        '. Los registros incrementales y sus estados individuales se conservan; podrás reintentar los que lo necesiten.', 'warning');
                 }
                 if (!isCurrentRequest()) return;
             }
-            inventoryStatus = scanHasErrors ? 'not_saved' : (hasUnusedImages ? (inventoryOperationId ? 'saved' : 'not_saved') : 'saved');
+            const allUnusedRegistered = hasUnusedImages && allFiles
+                .filter(file => file.classification === 'Sin uso detectado')
+                .every(file => String(file.inventoryStatus || '') === 'confirmado');
+            inventoryStatus = scanHasErrors ? 'not_saved' : (hasUnusedImages
+                ? (inventoryOperationId && allUnusedRegistered ? 'saved' : 'partial') : 'saved');
+            const unregisteredCount = allFiles.filter(file => file.classification === 'Sin uso detectado' &&
+                String(file.inventoryStatus || '') !== 'confirmado').length;
             inventoryMessage = scanHasErrors
                 ? 'El recorrido terminó con ' + errorCount + ' errores y ' + unverifiableReferences +
-                    ' referencias no interpretables. Los resultados parciales se conservaron, pero no se confirmó el inventario ni se permite organizar o reconciliar imágenes. Inicia una auditoría nueva para verificar los elementos que no pudieron leerse.'
+                    ' referencias no interpretables. Los resultados individuales ya confirmados se conservan, pero no se habilitan reintentos ni organización hasta completar una auditoría válida.'
                 : (hasUnusedImages
-                    ? (inventoryOperationId
-                        ? 'Auditoría completa. Las imágenes sin uso fueron registradas automáticamente en la biblioteca.'
-                        : 'Auditoría completa. El inventario no se confirmó automáticamente; el registro manual sigue disponible.')
+                    ? (inventoryStatus === 'saved'
+                        ? 'Auditoría completa. Todas las imágenes sin uso tienen una fila individual registrada y verificada en la biblioteca.'
+                        : 'Auditoría completa. ' + unregisteredCount + ' imágenes requieren revisión o reintento individual; las confirmadas se conservan en la biblioteca.')
                     : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.');
             await persistState('complete');
             if (!isCurrentRequest()) return;
