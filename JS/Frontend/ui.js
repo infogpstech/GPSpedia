@@ -8290,7 +8290,8 @@ function getReplacedImageCapabilities_(rep, schemaReady, referenceCheckStatus, r
     return { type, displayType, isUnused, isCandidate, status, referenceSafe, canManage, canMove: canManage, canTrash, canRestoreFromTrash, canPermanentlyDelete, canRecover, canDownload, canMarkInUse };
 }
 
-export async function openReplacedImagesModal() {
+export async function openReplacedImagesModal(options = {}) {
+    const showModal = !(options && options.showModal === false);
     const requestContext = ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
     const generation = ++replacedImagesModalGeneration_;
