@@ -288,3 +288,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commit de código: `52a3d7143f9810e68f9be5e9c495270c0c35068a`; registros: tareas `f2c10badcaca2997136f3e322452616a60961b9a`, auditoría `0f19a32f4341fb55ca11ac411ada1c904af9a264`, changelog `972a8ff256fff8d6209253e2da59794eba9838c7`.
 - Próximo paso: continuar la auditoría de los contratos frontend/backend para recuperar, mover, enviar a papelera, restaurar y eliminar definitivamente; después verificar la asociación y la experiencia visual/responsive. No declarar cerrada la tarea principal.
 - No se ejecutaron operaciones remotas ni deployment; la verificación Beta sigue diferida.
+
+
+## Continuidad 2026-11-26 — biblioteca: restauración masiva y acciones Developer
+- Se corrigió la confirmación de restauración masiva mixta: ahora distingue archivos en papelera (restauración solo en Drive, sin reasociación automática) e imágenes históricas (restauración a campo). Las rutas por elemento ya eran distintas y se conservaron. Harness aislado verificó texto y endpoints.
+- Commits de UI: `616d6bb5f5662d0a6e79a5ce5f122758301b109b`, `271276a077f2ad81adf00a66b4a8ffa28dd05d99`.
+- `GP-ADMIN-TAB-ACTIONS-UX-01`: revisión estática de las cuatro pestañas confirma iconos, etiquetas compactas/expandibles y CSS responsive; se cierra implementación local. La revisión visual real queda para Beta.
+- Registros: tareas `1a50d39fc2e4a7d1371b9ca4312f05479ce82c14`, auditoría `ebbf4a4d6931363db3103ae9211525d52076bff0`, changelog `58b3d43b7c535a5caf9389fc9f8f9990717b3e68`.
+- Continuar con auditoría de las acciones de biblioteca y su integridad. No declarar completa `GP-ADMIN-DRIVE-UNUSED-IMAGES-02` hasta cerrar las revisiones pendientes y las pruebas locales pertinentes. Validación remota/Beta diferida.
