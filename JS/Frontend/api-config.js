@@ -10,7 +10,7 @@ export const API_ENDPOINTS = Object.freeze({
     WRITE: "https://script.google.com/macros/s/AKfycbz38eJhWx2-dq00EV82jegb9LbtTNnIY3CCgGPgrwNlQNczCidsABueJG0gbaNq2lNKvA/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbx5LbCTWVTOQ6FvWXImDwG_7AGdtyqd9c8ODwhlFxEqO7osPp2-buIlqr0UdjNubmnXEw/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbz4o70pO45BHIFKCWyM3i3JtfVrYPUVzEEsCwdnn4GzFntcypt9R_7ottZ_yXgLUL5V/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbw3uL3w9Ehu9SR3kfbRUabKiGRzRqXGks4TzT2rARaUNyrx1YzgexETcPIDGexgKSMd6g/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbwqunP20f9qvxNyYZW8wNyuMIF28uzDaoPKhIFaO-CPjjPKY7gd6cfv2Qjr5aIrznALjw/exec"
 });
 
 const API_ENDPOINT_PATTERN_ = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
