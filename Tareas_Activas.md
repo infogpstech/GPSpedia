@@ -615,3 +615,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Hallazgos BETA-PLAN-F001..008 documentados en Hallazgos_Beta.md.
 - Workflow de health limitado a push en GPSpedia2.2.5_work; gates Beta configurados; checker GET-only alineado a timeout 8 s y umbral SLOW 2 s.
 - Pendiente confirmar Actions y ejecutar probe remoto antes de ampliar funcionalidad.
+
+
+## Beta Health real — 2026-11-26
+- Runs 45729426765 y 45729430374 SUCCESS; 6/6 endpoints disponibles por GET.
+- ADMIN v2.7.1 deployment vs 2.7.2 fuente, SLOW 2.431/2.701s: seguimiento F009/F010.
+- Próximo: contratos/feed read-only, revisión de rendimiento ADMIN, antes de pruebas mutables.
