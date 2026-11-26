@@ -9,6 +9,7 @@ on:
       - "JS/Frontend/api-config.js"
       - "Services/SERVICE_HEALTH.md"
       - "JS/Tests/RemoteCatalogFeedReadOnly.mjs"
+      - "JS/Tests/RemoteCatalogFeedBoundaries.mjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -42,3 +43,5 @@ jobs:
         run: node JS/Tests/RemoteServiceHealth.mjs
       - name: Probe CATALOG feed cursors (GET only)
         run: node JS/Tests/RemoteCatalogFeedReadOnly.mjs
+      - name: Probe CATALOG feed cursor boundaries (GET only)
+        run: node JS/Tests/RemoteCatalogFeedBoundaries.mjs
