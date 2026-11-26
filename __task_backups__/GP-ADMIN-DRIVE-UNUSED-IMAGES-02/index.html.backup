@@ -1,0 +1,1186 @@
+<!-- GPSpedia Frontend Component | Version: 2.2.5 -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GPSpedia v2.2.5</title>
+<link rel="icon" type="image/png" sizes="512x512" href="Images/icon-v3-512x512.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="Images/icon-pwa-192x192.png" sizes="192x192">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GPSpedia">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="contextual-help.css">
+<link rel="stylesheet" href="button-system.css">
+</head>
+<body>
+<!-- Notificación Toast -->
+<div id="notification-toast"></div>
+
+<!-- Notificación de Error Global -->
+<div id="error-toast"></div>
+
+<!-- Side Menu (Hamburger) -->
+<div id="menu-overlay"></div>
+<div id="side-menu">
+    <div style="padding: 20px; border-bottom: 1px solid #eee; text-align: center;">
+        <h3 id="menu-username" style="margin: 0; color: #007bff;"></h3>
+    </div>
+    <nav>
+        <a href="#" id="menu-cortes" class="menu-link"><i class="fa-solid fa-car-on"></i> Cortes</a>
+        <a href="HTML/add_cortes.html" class="menu-link"><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo</a>
+        <a href="#" id="menu-tutoriales" class="menu-link"><i class="fa-solid fa-book-open"></i> Tutoriales</a>
+        <a href="#" id="menu-relay" class="menu-link"><i class="fa-solid fa-microchip"></i> Configuración Relay</a>
+        <a href="HTML/users.html" class="menu-link"><i class="fa-solid fa-users-cog"></i> Mi Perfil / Usuarios</a>
+        <a href="#" id="inbox-btn" class="menu-link" style="display: none;"><i class="fa-solid fa-inbox"></i> Inbox</a>
+        <a href="#" id="dashboard-btn" class="menu-link" style="display: none;"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a href="#" id="dev-tools-btn" class="menu-link" style="display: none;"><i class="fa-solid fa-code"></i> Desarrollador</a>
+    </nav>
+    <div class="theme-switch-wrapper">
+        <label style="margin-right: 10px;">Modo Oscuro</label>
+        <label class="theme-switch" for="dark-mode-toggle">
+            <input type="checkbox" id="dark-mode-toggle" />
+            <div class="slider round"></div>
+        </label>
+    </div>
+    <div style="text-align: center; margin: 10px 0;">
+        <a id="side-menu-changelog-link" class="side-menu-changelog-a">Registro de cambios</a>
+    </div>
+    <div style="padding: 20px;">
+        <button id="side-menu-logout-button" class="btn btn-danger btn-block">Cerrar Sesión</button>
+    </div>
+</div>
+
+<!-- Splash Screen -->
+<div id="splash-screen">
+    <img src="Images/icon-v3-512x512.png" alt="Logo de GPSpedia">
+</div>
+
+<!-- Login Modal -->
+<div id="login-modal" style="display: none;">
+    <div class="modal-content">
+        <img src="Images/icon-v3-512x512.png" alt="Logo de GPSpedia">
+        <h2>Iniciar Sesión</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Acceder</button>
+            <p id="login-error" role="alert" aria-live="assertive" style="display: none;"></p>
+            <div style="text-align: center; margin-top: 20px;">
+                <small style="color: var(--text-disabled);">v2.2.5</small>
+            </div>
+        </form>
+        <a href="#" id="forgot-password-link" style="color: var(--accent-color); text-decoration: none; margin-top: 15px; display: inline-block;" aria-controls="password-recovery-panel">¿Olvidaste tu contraseña?</a>
+
+        <section id="password-recovery-panel" hidden aria-labelledby="password-recovery-title">
+            <h2 id="password-recovery-title">Recuperar contraseña</h2>
+            <p id="password-recovery-status" class="password-recovery-status" role="status" aria-live="polite"></p>
+            <form id="password-recovery-request-form">
+                <div class="form-group">
+                    <label for="password-recovery-username">Usuario</label>
+                    <input type="text" id="password-recovery-username" name="username" required maxlength="80" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="password-recovery-email">Correo electrónico registrado</label>
+                    <input type="email" id="password-recovery-email" name="email" required maxlength="254" autocomplete="email">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Enviar código</button>
+            </form>
+            <form id="password-recovery-complete-form" hidden>
+                <input type="hidden" id="password-recovery-complete-username" name="username">
+                <input type="hidden" id="password-recovery-complete-email" name="email">
+                <div class="form-group">
+                    <label for="password-recovery-code">Código de recuperación</label>
+                    <input type="text" id="password-recovery-code" name="code" required minlength="24" maxlength="24" pattern="[A-Fa-f0-9]{24}" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label for="password-recovery-new-password">Nueva contraseña</label>
+                    <input type="password" id="password-recovery-new-password" name="newPassword" required minlength="8" maxlength="256" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="password-recovery-confirm-password">Confirmar nueva contraseña</label>
+                    <input type="password" id="password-recovery-confirm-password" name="confirmPassword" required minlength="8" maxlength="256" autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Actualizar contraseña</button>
+            </form>
+            <button type="button" id="password-recovery-back" class="btn btn-secondary btn-block" style="margin-top: 12px;">Volver a iniciar sesión</button>
+        </section>
+
+        <div class="footer-links" style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; justify-content: center; text-align: center;">
+            <a id="login-about-link" style="font-size: 0.8em; cursor: pointer;">Sobre Nosotros</a>
+            <a id="login-contact-link" style="font-size: 0.8em; cursor: pointer;">Contáctanos</a>
+            <a id="login-faq-link" style="font-size: 0.8em; cursor: pointer;">Preguntas Frecuentes</a>
+            <a id="login-terms-link" style="font-size: 0.8em; cursor: pointer;">Términos y Condiciones</a>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="display: none;">
+
+  <!-- RECONSTRUCCIÓN EXTREMA DEL HEADER: Contenedor Maestro Único -->
+  <header class="main-header">
+      <!-- Fila 1: Branding y Controles -->
+      <div class="header-top">
+          <div class="header-branding">
+              <img src="Images/icon-v3-512x512.png" alt="Logo de GPSpedia" class="app-logo">
+              <div class="title-welcome-group">
+                  <h1 class="app-title">GPSpedia</h1>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                      <span id="welcome-message" style="display: none;"></span>
+                      <div id="connection-status" class="online" role="status" aria-live="polite" aria-atomic="true" title="El navegador indica que hay conexión de red; esto no confirma que los servicios de GPSpedia estén disponibles."><span id="connection-status-label" class="connection-status-sr-only">El navegador indica que hay conexión de red; esto no confirma que los servicios de GPSpedia estén disponibles.</span></div>
+                  </div>
+              </div>
+          </div>
+          <div class="header-controls">
+              <!-- TAREA 20: Texto exacto 'Instala la app' -->
+              <button id="install-button" class="btn btn-success btn-compact" style="display: none;">Instala la app</button>
+              <button id="logout-button" class="btn btn-danger btn-compact" style="display: none;">Cerrar Sesión</button>
+          </div>
+      </div>
+
+      <!-- Fila 2: Búsqueda y Navegación Principal -->
+      <div class="header-bottom">
+          <div class="search-wrapper">
+              <!-- TAREA 1.6: Búsqueda directa sin barras ni botones de filtros rápidos -->
+              <div class="search-container" style="display: flex; align-items: center; width: 100%;">
+                  <div class="search-input-box" style="position: relative; flex: 1; display: flex; align-items: center;">
+                      <input type="text" id="searchInput" placeholder="Buscar Corte..." style="width: 100%; padding-right: 34px;">
+                      <button id="clear-search-btn" title="Limpiar búsqueda" type="button">&times;</button>
+                  </div>
+              </div>
+              <button id="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
+          </div>
+
+          <nav class="section-selector">
+              <button id="btn-cortes" class="section-btn active">Cortes</button>
+              <button id="btn-tutoriales" class="section-btn">Tutoriales</button>
+              <button id="btn-relay" class="section-btn">Relay</button>
+              <!-- TAREA 10 (5.1): SECCIÓN PROBLEMAS Y SOLUCIONES EN LA PÁGINA PRINCIPAL -->
+              <button id="btn-pys" class="section-btn">Problemas / Soluciones</button>
+          </nav>
+      </div>
+  </header>
+
+  <div id="contenido" class="content-section"></div>
+  <div id="contenido-tutoriales" class="content-section" style="display: none;"></div>
+  <div id="contenido-relay" class="content-section" style="display: none;"></div>
+  <div id="contenido-pys" class="content-section" style="display: none;"></div>
+
+  <div id="footer-sentinel"></div>
+</div>
+
+<footer class="footer">
+  GPSpedia v2.2.5 © 2026 todos los derechos reservados.
+  <div class="footer-links">
+      <a id="footer-about-link">Sobre Nosotros</a>
+      <a id="footer-contact-link">Contáctanos</a>
+      <a id="footer-faq-link">Preguntas Frecuentes</a>
+      <a id="footer-terms-link">Términos y Condiciones</a>
+  </div>
+</footer>
+
+<div id="modalDetalle">
+  <div id="detalleCompleto"></div>
+</div>
+
+<div id="lightbox" class="lightbox">
+  <button id="lightboxPrevBtn" class="lightbox-nav-btn prev" type="button" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+  <img id="lightboxImg" src="" alt="Vista ampliada">
+  <button id="lightboxNextBtn" class="lightbox-nav-btn next" type="button" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<!-- ========= MODAL DE INBOX ========= -->
+<div id="inbox-modal" class="info-modal" aria-hidden="true">
+    <section class="info-modal-content inbox-modal-content" id="inbox-modal-content" role="dialog" aria-modal="true" aria-labelledby="inbox-modal-title" tabindex="-1">
+        <button class="info-close-btn inbox-close-button" type="button" aria-label="Cerrar bandeja de entrada">&times;</button>
+        <header class="inbox-modal-header">
+            <div class="inbox-heading-block">
+                <button id="inbox-sidebar-toggle" class="inbox-menu-toggle" type="button" aria-label="Mostrar secciones" aria-expanded="true" aria-controls="inbox-section-nav"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+                <h2 class="inbox-modal-title" id="inbox-modal-title">Bandeja de entrada</h2>
+                <span id="inbox-notification-count" class="inbox-notification-count" role="status" aria-live="polite" hidden>0</span>
+            </div>
+            <div class="inbox-header-actions">
+<button id="inbox-conversation-refresh" class="inbox-secondary-button inbox-icon-action" type="button" aria-label="Actualizar bandeja" title="Actualizar"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
+            </div>
+        </header>
+        <nav id="inbox-view-tabs" class="inbox-view-tabs" aria-label="Acciones de bandeja">
+            <button type="button" id="inbox-new-message" class="inbox-primary-button inbox-new-message-action" aria-label="Nuevo mensaje" title="Nuevo mensaje"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Nuevo mensaje</span></button>
+        </nav>
+        <div id="inbox-workspace" class="inbox-workspace">
+          <nav id="inbox-section-nav" class="inbox-section-nav" aria-label="Carpetas de la bandeja">
+            <button type="button" data-inbox-section="general" aria-pressed="true"><i class="fa-solid fa-inbox" aria-hidden="true"></i><span>General</span></button>
+            <button type="button" data-inbox-section="soporte" aria-pressed="false"><i class="fa-solid fa-headset" aria-hidden="true"></i><span>Soporte</span></button>
+            <button type="button" data-inbox-section="contact" aria-pressed="false"><i class="fa-regular fa-envelope" aria-hidden="true"></i><span>Contáctanos</span></button>
+            <button type="button" data-inbox-section="reports" aria-pressed="false"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>Reportes</span></button>
+            <button type="button" id="inbox-contributions-section" data-inbox-section="contributions" aria-pressed="false" hidden><i class="fa-brands fa-youtube" aria-hidden="true"></i><span>Aportaciones</span></button>
+          </nav>
+          <div class="inbox-workspace-content">
+        <section id="inbox-conversations-view" class="inbox-conversations-view">
+            <aside class="inbox-conversation-sidebar" aria-label="Lista de conversaciones">
+                <nav id="inbox-folder-nav" class="inbox-folder-nav" aria-label="Carpetas de conversaciones">
+                    <button type="button" data-inbox-folder="received" aria-pressed="true" aria-label="Recibidos" title="Recibidos"><i class="fa-solid fa-inbox" aria-hidden="true"></i><span>Recibidos</span></button>
+                    <button type="button" data-inbox-folder="sent" aria-pressed="false" aria-label="Enviados" title="Enviados"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Enviados</span></button>
+                    <button type="button" data-inbox-folder="archived" aria-pressed="false" aria-label="Archivados" title="Archivados"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>Archivados</span></button>
+                    <button id="inbox-search-toggle" class="inbox-secondary-button inbox-icon-action inbox-folder-action" type="button" aria-label="Mostrar búsqueda" aria-controls="inbox-conversation-search-form" aria-expanded="false" title="Buscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Buscar</span></button>
+                </nav>
+                <form id="inbox-conversation-search-form" class="inbox-search-form" role="search" hidden>
+                    <label for="inbox-conversation-search">Buscar conversaciones</label>
+                    <div class="inbox-search-row">
+                        <input id="inbox-conversation-search" type="search" maxlength="80" autocomplete="off" placeholder="Asunto, persona o mensaje">
+                        <button class="inbox-secondary-button" type="submit" aria-label="Ejecutar búsqueda"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+                    </div>
+                </form>
+                <div id="inbox-conversation-list" class="inbox-conversation-list" aria-live="polite" aria-relevant="additions text"></div>
+
+            </aside>
+            <section id="inbox-conversation-detail" class="inbox-conversation-detail" aria-label="Detalle de conversación" aria-live="polite">
+                <p class="inbox-state-message">Selecciona una conversación para consultar sus mensajes.</p>
+            </section>
+        </section>
+        <section id="inbox-requests-view" class="inbox-requests-view" hidden aria-hidden="true">
+            <div class="inbox-layout-wrapper">
+                <div id="inbox-list"><!-- Solicitudes históricas --></div>
+                <div id="inbox-detail"><!-- Detalle de solicitudes --></div>
+            </div>
+        </section>
+          </div>
+        </div>
+        <nav id="inbox-pagination" class="inbox-pagination" aria-label="Paginación de la bandeja" hidden>
+            <button id="inbox-page-previous" class="inbox-secondary-button" type="button" aria-label="Página anterior" disabled>←</button>
+            <span id="inbox-page-label" aria-live="polite">1/1</span>
+            <button id="inbox-page-next" class="inbox-secondary-button" type="button" aria-label="Página siguiente" disabled>→</button>
+        </nav>
+        <p id="inbox-conversation-status" class="inbox-status" role="status" aria-live="polite"></p>
+    </section>
+</div>
+
+<!-- ========= MODAL DE DASHBOARD ========= -->
+<div id="dashboard-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-modal-title">
+    <div class="info-modal-content" style="max-width: 900px;">
+        <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
+        <h2 id="dashboard-modal-title" class="inbox-modal-title"><i class="fa-solid fa-chart-line"></i> Panel de Actividad</h2>
+        <div class="activity-dashboard-tabs" role="tablist" aria-label="Vistas del panel de actividad">
+            <button type="button" class="active" data-activity-tab="insights" role="tab" aria-selected="true" aria-controls="activity-panel-insights">Resumen</button>
+            <button type="button" data-activity-tab="contributions" role="tab" aria-selected="false" aria-controls="activity-panel-contributions">Aportes</button>
+            <button type="button" data-activity-tab="logs" role="tab" aria-selected="false" aria-controls="activity-panel-logs">Actividad reciente</button>
+        </div>
+        <p id="activity-dashboard-status" class="activity-dashboard-status" role="status" aria-live="polite" hidden></p>
+        <section id="activity-panel-insights" data-activity-panel="insights" role="tabpanel">
+            <div id="activity-insights" class="activity-insights" aria-live="polite">Preparando indicadores...</div>
+        </section>
+        <section id="activity-panel-logs" data-activity-panel="logs" role="tabpanel" hidden>
+            <div class="activity-log-table-wrap"><table class="activity-log-table" aria-label="Actividad reciente">
+                <thead><tr><th scope="col">Fecha</th><th scope="col">Usuario</th><th scope="col">Acción</th></tr></thead>
+                <tbody id="activity-logs"></tbody>
+            </table></div>
+        </section>
+        <section id="activity-panel-contributions" data-activity-panel="contributions" role="tabpanel" hidden>
+            <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:15px;">
+                <thead><tr style="border-bottom:2px solid #eee;text-align:left;"><th style="padding:10px;">Usuario</th><th style="padding:10px;">Cortes aportados</th><th style="padding:10px;">Aportes registrados</th><th style="padding:10px;">Vehículos con aportes</th></tr></thead>
+                <tbody id="activity-contributions"></tbody>
+            </table></div>
+        </section>
+    </div>
+</div>
+
+<!-- ========= MODAL DE DESARROLLADOR ========= -->
+<div id="dev-tools-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="dev-tools-title">
+    <div class="info-modal-content dev-tools-modal-content">
+        <button type="button" class="info-close-btn" aria-label="Cerrar opciones de desarrollador">&times;</button>
+        <h2 id="dev-tools-title" class="dev-tools-title" tabindex="-1"><i class="fa-solid fa-screwdriver-wrench"></i> Desarrollador</h2>
+
+            <div class="dev-card dev-tools-card dev-console-shared" aria-label="Consola de desarrollador">
+                <div class="dev-card-heading dev-heading-with-help">
+                    <h4><i class="fa-solid fa-terminal"></i> Consola</h4>
+                    <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre comandos de consola" title="Ayuda" aria-controls="dev-help-console" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-console" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Ejecuta dir, cd, mkdir, tree y move para explorar y organizar Cortes. Para mover un archivo: move &lt;ID_ARCHIVO&gt; &lt;ID_CARPETA_DESTINO&gt;. Usa dir para consultar los IDs.</span>
+                    <button type="button" id="btn-clear-console-log" class="btn btn-secondary" aria-label="Limpiar consola" title="Limpiar consola"><i class="fa-solid fa-eraser" aria-hidden="true"></i></button>
+                    <button type="button" id="btn-copy-console-log" class="btn btn-secondary" aria-label="Copiar registro" title="Copiar registro"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>
+                </div>
+                <div id="dev-console-log" class="dev-console-output" role="log" aria-live="polite" aria-relevant="additions text">
+                    [SISTEMA] Consola lista.
+                </div>
+                <div class="dev-terminal-row">
+                    <div class="dev-terminal-input-shell">
+                        <span class="dev-terminal-prompt" aria-hidden="true">&gt;</span>
+                        <input type="text" id="dev-terminal-input" placeholder="Comando..." class="dev-input" aria-label="Comando de consola">
+                    </div>
+                    <button type="button" id="btn-terminal-send" class="btn btn-primary" aria-label="Ejecutar comando" title="Ejecutar comando">&gt;_</button>
+                </div>
+                <div id="dev-progress-container" class="dev-progress-container">
+                    <div id="dev-progress-bar" class="dev-progress-bar"></div>
+                    <span id="dev-progress-text" class="dev-progress-text">0%</span>
+                </div>
+            </div>
+
+        <div class="dev-tools-tabs">
+            <fieldset class="dev-tools-tab-options">
+                <legend>Secciones</legend>
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" aria-controls="dev-panel-diagnostics" checked>
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-database" aria-controls="dev-panel-database">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-images" aria-controls="dev-panel-images">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-system" aria-controls="dev-panel-system">
+            </fieldset>
+
+            <div class="dev-tools-layout">
+                <div class="dev-tools-sidebar">
+                    <label class="dev-tab-link" for="dev-tab-diagnostics" title="Diagnóstico" aria-label="Diagnóstico">
+                        <i class="fa-solid fa-stethoscope" aria-hidden="true"></i><span>Diagnóstico</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-database" title="Base de datos" aria-label="Base de datos">
+                        <i class="fa-solid fa-database" aria-hidden="true"></i><span>Base de datos</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-images" title="Imágenes y Drive" aria-label="Imágenes y Drive">
+                        <i class="fa-solid fa-images" aria-hidden="true"></i><span>Imágenes y Drive</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-system" title="Sistema" aria-label="Sistema">
+                        <i class="fa-solid fa-gears" aria-hidden="true"></i><span>Sistema</span>
+                    </label>
+                </div>
+
+                <div class="dev-tools-panels">
+                    <!-- Diagnóstico -->
+                    <section id="dev-panel-diagnostics" class="dev-tab-panel dev-panel-diagnostics" role="region" aria-labelledby="dev-panel-title-diagnostics">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
+                            <h3 id="dev-panel-title-diagnostics"><i class="fa-solid fa-stethoscope"></i> Diagnóstico</h3>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-card-heading">
+                                <strong><i class="fa-solid fa-server"></i> Servicios</strong>
+                                <button id="btn-check-services-health" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Escanear</button>
+                            </div>
+                            <div id="services-health-grid" class="dev-services-health-grid">
+                                <span class="dev-empty-state">Iniciando diagnóstico...</span>
+                            </div>
+                            <section id="service-health-detail" class="dev-service-detail" aria-live="polite">
+                                <p class="dev-empty-state">Selecciona una tarjeta para consultar sus parámetros.</p>
+                            </section>
+                        </div>
+                    </section>
+
+                    <!-- Base de datos -->
+                    <section id="dev-panel-database" class="dev-tab-panel dev-panel-database" role="region" aria-labelledby="dev-panel-title-database">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
+                            <h3 id="dev-panel-title-database"><i class="fa-solid fa-database"></i> Datos y respaldos</h3>
+                            <p>Respaldos y mantenimiento.</p>
+                        </div>
+
+                        <div id="backup-management-panel" class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-shield-halved"></i> Respaldos</strong>
+                            <div class="dev-backup-resource-field">
+                                <label for="backup-resource-input">Enlace del respaldo</label>
+                                <input type="text" id="backup-resource-input" class="dev-input" placeholder="Enlace de Spreadsheet o carpeta de Drive" autocomplete="off" spellcheck="false" aria-describedby="backup-resource-hint">
+                                <p id="backup-resource-hint" class="dev-empty-state" aria-live="polite">Spreadsheet o carpeta de Drive.</p>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Respaldar Spreadsheet</button>
+                                <button type="button" id="btn-admin-backup-drive" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Respaldar Drive</button>
+                                <button type="button" id="btn-admin-resume-drive-backup" class="btn btn-secondary" disabled><i class="fa-solid fa-rotate"></i> Continuar respaldo</button>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-restore-db" class="btn btn-warning"><i class="fa-solid fa-table"></i> Restaurar Spreadsheet</button>
+                                <button type="button" id="btn-admin-restore-drive" class="btn btn-warning"><i class="fa-solid fa-folder-closed"></i> Restaurar carpeta</button>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-copy-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar enlace</button>
+                                <button type="button" id="btn-open-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir enlace</button>
+                            </div>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-right-left"></i> Migración VIN</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre migración VIN" title="Ayuda" aria-controls="dev-help-vin-migration" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-vin-migration" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Traslada los identificadores VIN y los datos de idempotencia. Crea y verifica un respaldo, ejecuta la simulación y revisa sus resultados antes de confirmar.</span></div>
+                            <p>Requiere respaldo previo.</p>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-preview-vin-migration" class="btn btn-secondary" disabled><i class="fa-solid fa-magnifying-glass"></i> Simular migración</button>
+                                <button type="button" id="btn-admin-confirm-vin-migration" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Confirmar migración</button>
+                            </div>
+                            <p id="vin-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Se requiere un respaldo de Spreadsheet verificado antes de simular.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-fingerprint"></i> Auditoría de IDs</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre auditoría de IDs" title="Ayuda" aria-controls="dev-help-id-audit" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-id-audit" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Revisa las columnas identificadoras de todas las hojas y compara el valor calculado con la fórmula original. No modifica datos.</span></div>
+                            <p>Compara valores y fórmulas sin modificar datos.</p>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-audit-identifiers" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Auditar IDs</button>
+                                <button type="button" id="btn-admin-preview-id-freeze" class="btn btn-secondary"><i class="fa-solid fa-list-check"></i> Simular migración</button>
+                                <button type="button" id="btn-admin-confirm-id-freeze" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Migrar lote</button>
+                            </div>
+                            <p id="identifier-audit-status" class="dev-empty-state" role="status" aria-live="polite">Auditoría pendiente.</p>
+                            <div id="identifier-audit-results" class="dev-empty-state" aria-live="polite"></div>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-lock"></i> Migración de contraseñas</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre migración de contraseñas" title="Ayuda" aria-controls="dev-help-password-migration" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-password-migration" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Convierte contraseñas heredadas elegibles a hash. La simulación no escribe datos; la migración procesa lotes confirmados de hasta cinco cuentas.</span></div>
+                            <p>Convierte contraseñas heredadas a hash.</p>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-preview-password-migration" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Simular</button>
+                                <button type="button" id="btn-admin-confirm-password-migration" class="btn btn-warning" disabled><i class="fa-solid fa-shield-halved"></i> Migrar lote</button>
+                            </div>
+                            <p id="password-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Revisa primero la simulación.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-barcode"></i> Firmas de VIN</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre firmas de VIN" title="Ayuda" aria-controls="dev-help-vin-signatures" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-vin-signatures" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Recalcular actualiza las firmas almacenadas localmente. Diagnóstico muestra disponibilidad y distribución sin modificar datos.</span></div>
+                            <div class="dev-maintenance-options">
+                                <label class="dev-maintenance-option" for="recalculate-vin-signatures-checkbox">
+                                    <input type="checkbox" id="recalculate-vin-signatures-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Recalcular firmas</strong>
+                                    </span>
+                                </label>
+                                <label class="dev-maintenance-option" for="diagnose-vin-signatures-checkbox">
+                                    <input type="checkbox" id="diagnose-vin-signatures-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Diagnóstico de firmas</strong>
+                                    </span>
+                                </label>
+                            </div>
+                            <button type="button" id="btn-admin-run-vin-actions" class="btn btn-primary dev-action-full">
+                                <i class="fa-solid fa-play"></i> Ejecutar acciones
+                            </button>
+                            <p id="vin-actions-progress" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna acción en esta sesión.</p>
+                            <div class="dev-vin-action-status">
+                                <p id="vin-recalculate-status" role="status" aria-live="polite">Recalcular firmas: pendiente.</p>
+                                <p id="vin-diagnostic-status" role="status" aria-live="polite">Diagnóstico de firmas: pendiente.</p>
+                            </div>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-list-ol"></i> Orden de registros</strong>
+                            <button id="btn-admin-reorganize-db" class="btn btn-warning dev-action-full" title="Reorganizar la base de datos alfabéticamente por marca" aria-label="Reorganizar la base de datos alfabéticamente por marca"><i class="fa-solid fa-sort-alpha-down"></i> Ordenar por marca</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-broom"></i> Limpieza de registros</strong>
+                            <div class="dev-maintenance-options">
+                                <label class="dev-maintenance-option" for="clear-activity-logs-checkbox">
+                                    <input type="checkbox" id="clear-activity-logs-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Actividad de usuarios</strong>
+                                        
+                                    </span>
+                                </label>
+                                <div class="dev-maintenance-retention">
+                                    <label for="clear-logs-option-select">Retención</label>
+                                    <select id="clear-logs-option-select" class="dev-input dev-control-compact" aria-label="Retención de registros">
+                                        <option value="week">Últimos 7 días</option>
+                                        <option value="all">Todos (conservar encabezados)</option>
+                                    </select>
+                                </div>
+                                <label class="dev-maintenance-option" for="clear-sensitive-logs-checkbox">
+                                    <input type="checkbox" id="clear-sensitive-logs-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Logs</strong>
+                                    </span>
+                                </label>
+                            </div>
+                            <button type="button" id="btn-admin-clear-selected-logs" class="btn btn-danger dev-action-full">
+                                <i class="fa-solid fa-trash-can"></i> Limpiar selección
+                            </button>
+                            <p id="clear-selected-logs-status" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna limpieza en esta sesión.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-eye-slash"></i> Cortes silenciosos</strong>
+                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte silencioso</button>
+                        </div>
+                    </section>
+
+                    <!-- Imágenes y Drive -->
+                    <section id="dev-panel-images" class="dev-tab-panel dev-panel-images" role="region" aria-labelledby="dev-panel-title-images">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
+                            <h3 id="dev-panel-title-images"><i class="fa-solid fa-images"></i> Imágenes y Drive</h3>
+                            <p>Imágenes, logotipos e historial.</p>
+                        </div>
+
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-brands fa-google-drive"></i> Uso de Drive</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre uso de Drive" title="Ayuda" aria-controls="dev-help-drive-quota" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-drive-quota" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>El indicador muestra el almacenamiento global de la cuenta. Incluye todos los archivos, no solo la carpeta Cortes.</span></div>
+                            <p id="drive-storage-monitor-status" aria-live="polite">Uso global de Drive.</p>
+                            <div class="dev-action-row">
+                                <span>Usado en Drive: <strong id="drive-storage-used">No disponible</strong></span>
+                                <span>Cuota usada: <strong id="drive-storage-account-used">No disponible</strong></span>
+                                <span>Cuota total: <strong id="drive-storage-limit">Consultando...</strong></span>
+                                <span>Disponible: <strong id="drive-storage-remaining">No disponible</strong></span>
+                                <span>Uso: <strong id="drive-storage-percent">No disponible</strong></span>
+                            </div>
+                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-images"></i> Organización de imágenes</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre acciones de imágenes" title="Ayuda" aria-controls="dev-help-image-actions" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-image-actions" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Normalizar corrige nombres y retira duplicados. Organizar mueve imágenes principales a sus carpetas. Revisar papelera permite recuperar archivos eliminados.</span></div>
+                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full" aria-label="Normalizar nombres y quitar duplicados"><i class="fa-solid fa-images"></i> Normalizar imágenes</button>
+                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full" aria-label="Organizar imágenes principales de vehículos"><i class="fa-solid fa-folder-tree"></i> Organizar imágenes</button>
+                            <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;" aria-label="Revisar y recuperar imágenes de la papelera"><i class="fa-solid fa-trash-arrow-up"></i> Revisar papelera</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-square-poll-horizontal"></i> Logotipos de fabricante</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre registro de logotipos" title="Ayuda" aria-controls="dev-help-logo" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-logo" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Selecciona la marca, carga un archivo PNG, SVG o WEBP y registra el logotipo asociado.</span></div>
+                            <div class="dev-action-row">
+                                <input type="text" id="logo-brand-name-input" placeholder="Marca (ej. Toyota)" class="dev-input">
+                                <input type="file" id="logo-file-input" accept="image/png, image/svg+xml, image/webp" style="display: none;">
+                                <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary">Seleccionar imagen</button>
+                            </div>
+                            <span id="selected-logo-file-name" class="dev-empty-state">Sin archivo. Formatos: PNG, SVG o WEBP</span>
+                            <button id="btn-admin-register-logo" class="btn btn-primary dev-action-full"><i class="fa-solid fa-upload"></i> Registrar logotipo</button>
+                        </div>
+
+
+                        <div class="dev-card dev-tools-card" id="vehicle-contribution-review-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-clipboard-check"></i> Aportes vehiculares pendientes</strong><span class="dev-empty-state">Revisión auditada; los eventos originales no se editan.</span></div>
+                            <button type="button" id="btn-admin-refresh-contribution-candidates" class="btn btn-primary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Consultar candidatos</button>
+                            <p id="admin-contribution-review-status" role="status" aria-live="polite">La consulta se ejecuta únicamente cuando la solicitas.</p>
+                            <div id="admin-contribution-candidates" class="dev-action-full" aria-live="polite"></div>
+                        </div>
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-clock-rotate-left"></i> Inventario e historial</strong>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Abrir biblioteca</button>
+                                <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Cortes</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sistema -->
+                    <section id="dev-panel-system" class="dev-tab-panel dev-panel-system" role="region" aria-labelledby="dev-panel-title-system">
+                        <div class="dev-panel-heading dev-panel-heading-visually-hidden">
+                            <h3 id="dev-panel-title-system"><i class="fa-solid fa-gears"></i> Sistema</h3>
+                            <p>Preferencias y caché local.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-heading-with-help"><strong><i class="fa-solid fa-text-height"></i> Formato de texto</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre formato de texto" title="Ayuda" aria-controls="dev-help-rich-text" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-rich-text" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>El modo estricto limita el formato disponible. El modo avanzado permite herramientas adicionales. El ajuste se aplica a todos los usuarios.</span></div>
+                            <label for="rich-text-mode-select">Formato</label>
+                            <select id="rich-text-mode-select" class="dev-input">
+                                <option value="strict">Estricto (recomendado)</option>
+                                <option value="advanced">Avanzado</option>
+                            </select>
+                            <p id="rich-text-mode-status" class="dev-empty-state" role="status" aria-live="polite">Consultando configuración global...</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-database"></i> Caché local</strong>
+                            <p class="dev-warning-copy">Borra IndexedDB y Storage; luego recarga.</p>
+                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Limpiar caché y recargar</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE GESTIÓN DEL INVENTARIO E HISTORIAL DE IMÁGENES -->
+<div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;" role="dialog" aria-modal="true" aria-labelledby="replaced-images-title">
+    <div class="info-modal-content replaced-images-modal-content">
+        <button type="button" class="info-close-btn" id="close-replaced-images-modal" aria-label="Cerrar biblioteca de imágenes">&times;</button>
+        <div class="dev-heading-with-help"><h2 id="replaced-images-title"><i class="fa-solid fa-images"></i> Biblioteca</h2><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre biblioteca de imágenes" title="Ayuda" aria-controls="dev-help-library" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-library" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Incluye el historial de imágenes reemplazadas y los archivos sin uso detectado. Las acciones se habilitan solo después de validar que no existan referencias activas.</span></div>
+        <p class="replaced-images-description">Historial y archivos sin uso detectado.</p>
+        <div class="replaced-images-toolbar" role="toolbar" aria-label="Herramientas de biblioteca">
+            <div class="replaced-images-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="text" id="filter-replaced-images-input" placeholder="Buscar por nombre, ubicación o ID..." class="dev-input" aria-label="Buscar imágenes">
+            </div>
+            <div class="replaced-images-toolbar-actions">
+                <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary replaced-images-icon-button" aria-label="Actualizar biblioteca" title="Actualizar"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-folders-toggle" class="btn btn-secondary replaced-images-icon-button" aria-label="Mostrar herramientas de carpetas" title="Organizar carpetas" aria-expanded="false" aria-controls="replaced-images-folder-toolbar"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i></button>
+                <div class="replaced-images-view-switch" role="group" aria-label="Vista de imágenes">
+                    <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-label="Vista de cuadrícula" aria-pressed="true" title="Cuadrícula"><i class="fa-solid fa-grip" aria-hidden="true"></i></button>
+                    <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-label="Vista de lista" aria-pressed="false" title="Lista"><i class="fa-solid fa-list" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="replaced-images-selection-toolbar" id="replaced-images-selection-toolbar" role="toolbar" aria-label="Acciones de selección">
+            <label class="replaced-images-select-all"><input type="checkbox" id="replaced-images-select-all" aria-label="Seleccionar todas las imágenes visibles"><span>Seleccionar visibles</span></label>
+            <span id="replaced-images-selection-count" class="replaced-images-selection-count" aria-live="polite">0 seleccionadas</span>
+            <div class="replaced-images-selection-actions">
+                <button type="button" id="btn-replaced-bulk-move" class="btn btn-secondary replaced-images-icon-button" aria-label="Mover seleccionadas" title="Mover" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-bulk-restore" class="btn btn-primary replaced-images-icon-button" aria-label="Restaurar seleccionadas" title="Restaurar" hidden disabled><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-bulk-trash" class="btn btn-danger replaced-images-icon-button" aria-label="Enviar seleccionadas a papelera" title="Papelera" hidden disabled><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button type="button" id="btn-replaced-clear-selection" class="btn btn-secondary replaced-images-icon-button" aria-label="Limpiar selección" title="Limpiar selección" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+        </div>
+        <div class="replaced-images-folder-toolbar" id="replaced-images-folder-toolbar" role="toolbar" aria-label="Organización de carpetas" hidden>
+            <label for="replaced-images-target-folder">Destino:</label>
+            <select id="replaced-images-target-folder" class="dev-input"><option value="">Cargando carpetas...</option></select>
+            <input type="text" id="replaced-images-new-folder-name" class="dev-input" placeholder="Nueva carpeta" aria-label="Nombre de nueva carpeta">
+            <button type="button" id="btn-create-replaced-images-folder" class="btn btn-primary"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i> Crear carpeta</button>
+        </div>
+        <div id="replaced-images-folder-status" class="replaced-images-folder-status" aria-live="polite"></div>
+        <div id="replaced-images-list-container" class="replaced-images-list view-grid" aria-live="polite" aria-label="Archivos de imágenes">
+            <div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Cargando inventario e historial...</div>
+        </div>
+    </div>
+</div>
+<div id="replaced-image-lightbox" class="replaced-image-lightbox" style="display: none;" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
+    <div id="replaced-image-lightbox-content" class="replaced-image-lightbox-content">
+        <button type="button" id="replaced-image-lightbox-close" class="info-close-btn replaced-image-lightbox-close" aria-label="Cerrar vista ampliada">&times;</button>
+        <img id="replaced-image-lightbox-image" src="" alt="Imagen ampliada">
+        <p id="replaced-image-lightbox-title"></p>
+        <span class="replaced-image-lightbox-hint">Pulsa la imagen para acercar o alejar. Pulsa fuera o Esc para cerrar.</span>
+    </div>
+</div>
+
+<!-- MODAL DE AUDITORÍA DE ARCHIVOS EN CARPETA CORTES (TAREA 2) -->
+<div id="audit-drive-modal" class="info-modal" style="display: none; z-index: 2600;" role="dialog" aria-modal="true" aria-labelledby="audit-drive-title">
+    <div class="info-modal-content" style="max-width: 900px; width: 95%;">
+        <button type="button" class="info-close-btn" id="close-audit-drive-modal" aria-label="Cerrar auditoría">&times;</button>
+        <div class="dev-heading-with-help"><h2 id="audit-drive-title"><i class="fa-brands fa-google-drive"></i> Auditoría de Cortes</h2><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre alcance de auditoría" title="Ayuda" aria-controls="dev-help-audit-scope" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-scope" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Explora recursivamente la carpeta principal Cortes. El progreso y los resultados parciales se conservan localmente. La auditoría no mueve archivos; cada traslado requiere una acción explícita y confirmación del Desarrollador.</span></div>
+        <div class="dev-heading-with-help dev-audit-scope-row">
+            
+            <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre categorías del resumen" title="Ayuda" aria-controls="dev-help-audit-categories" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-audit-categories" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Descubiertos: archivos únicos con ID válido. Analizados: archivos cuya clasificación se intentó, incluidos errores. Pendientes: carpetas aún por recorrer. Errores: IDs o metadatos que no pudieron leerse. La consola registra todos los archivos y resultados; la lista complementaria muestra vistas previas de imágenes históricas y sin uso detectado. Las miniaturas se verifican con la sesión autorizada. Los duplicados se omiten y contabilizan por separado.</span></div>
+        <div id="audit-drive-toolbar" class="audit-drive-toolbar" role="toolbar" aria-label="Herramientas de auditoría de Cortes" aria-orientation="horizontal">
+            <button type="button" id="btn-audit-drive-toolbar-toggle" class="btn btn-secondary audit-drive-toolbar-toggle" aria-label="Expandir etiquetas de acciones" title="Expandir acciones" aria-expanded="false" aria-controls="audit-drive-toolbar-actions">
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="audit-drive-toolbar-actions" class="audit-drive-toolbar-actions">
+                <button type="button" id="btn-audit-drive-start" class="btn btn-primary audit-drive-action" aria-label="Iniciar nueva auditoría" title="Iniciar nueva auditoría"><i class="fa-solid fa-rotate" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Iniciar nueva auditoría</span></button>
+                <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary audit-drive-action" aria-label="Continuar auditoría" title="Continuar auditoría" hidden disabled><i class="fa-solid fa-play" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Continuar auditoría</span></button>
+                <button type="button" id="btn-audit-drive-organize" class="btn btn-secondary audit-drive-action" aria-label="Organizar imágenes confirmadas" title="Organizar imágenes confirmadas" hidden disabled><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Organizar imágenes confirmadas</span></button>
+                <button type="button" id="btn-audit-drive-save-inventory" class="btn btn-secondary audit-drive-action" aria-label="Registrar inventario sin uso" title="Registrar inventario sin uso" hidden disabled><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Registrar inventario sin uso</span></button>
+                <button type="button" id="btn-audit-drive-reconcile" class="btn btn-secondary audit-drive-action" aria-label="Simular conciliación con Cortes" title="Simular conciliación con Cortes" hidden disabled><i class="fa-solid fa-link" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Simular conciliación con Cortes</span></button>
+                <button type="button" id="btn-audit-drive-organizer-preview" class="btn btn-secondary audit-drive-action" aria-label="Previsualizar organización completa" title="Previsualizar organización completa" hidden disabled><i class="fa-solid fa-folder-tree" aria-hidden="true"></i><span class="audit-drive-action-label" aria-hidden="true">Previsualizar organización</span></button>
+            </div>
+        </div>
+        <div id="audit-drive-summary" style="margin-bottom: 10px;"></div>
+        <section id="audit-drive-scan-workspace" aria-label="Progreso y resultados de auditoría">
+            <div id="audit-drive-scan-console" role="log" aria-live="polite" aria-relevant="additions" aria-label="Progreso de escaneo"></div>
+        </section>
+        <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
+            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>
+        </div>
+        <section id="audit-drive-reconciliation-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+            <h3>Conciliación Drive ↔ Cortes</h3>
+            <p id="audit-drive-reconciliation-status">La simulación no modifica Spreadsheet, Drive ni permisos.</p>
+            <div id="audit-drive-reconciliation-counts" class="audit-drive-reconciliation-counts"></div>
+            <div id="audit-drive-reconciliation-results" class="audit-drive-reconciliation-results"></div>
+            <button type="button" id="btn-audit-drive-apply-reconciliation" class="btn btn-primary" hidden disabled>Aplicar propuestas seleccionadas</button>
+        </section>
+        <section id="audit-drive-organizer-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+            <div class="dev-heading-with-help">
+                <h3>Preview de organización Cortes / LogosMarca</h3>
+                <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre la organización de imágenes" title="Ayuda" aria-controls="dev-help-audit-organizer" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
+                <span id="dev-help-audit-organizer" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>La simulación compara rutas, nombres, extensiones y referencias sin modificar Drive ni Spreadsheet. Las coincidencias por nombre, carpeta o alias son orientativas; las ambiguas requieren revisión manual y no asignan imágenes automáticamente. La aplicación requiere aprobación explícita del Desarrollador. Selecciona entre 1 y 10 imágenes de una misma página; cada lote se vuelve a validar en el servidor.</span>
+            </div>
+            <p id="audit-drive-organizer-status">Pendiente.</p>
+            <div id="audit-drive-organizer-counts" class="audit-drive-reconciliation-counts"></div>
+            <div id="audit-drive-organizer-results" class="audit-drive-reconciliation-results"></div>
+            <section id="audit-drive-model-association-panel" class="audit-drive-reconciliation-panel" hidden aria-live="polite">
+                <h4>Sugerencias de asociación por modelo</h4>
+                <p id="audit-drive-model-association-summary"></p>
+                <div id="audit-drive-model-association-results" class="audit-drive-reconciliation-results"></div>
+                
+            </section>
+            
+            <div class="audit-drive-reconciliation-actions">
+                <button type="button" id="btn-audit-drive-apply-organizer" class="btn btn-primary" hidden disabled>Aplicar selección aprobada</button>
+                <button type="button" id="btn-audit-drive-rollback-organizer" class="btn btn-secondary" hidden disabled>Revertir lote seleccionado</button>
+                <button type="button" id="btn-audit-drive-organizer-history" class="btn btn-secondary">Ver operaciones anteriores</button>
+            </div>
+            <div id="audit-drive-organizer-history" class="audit-drive-reconciliation-results" hidden></div>
+        </section>
+    </div>
+</div>
+
+
+<!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->
+<!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE -->
+<div id="terms-modal" class="terms-overlay" data-terms-version="2026-07" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title" aria-describedby="terms-modal-description" style="display: none;">
+    <div class="terms-modal-content">
+        <div class="terms-header">
+            <img src="Images/icon-v3-512x512.png" alt="Logo de GPSpedia" class="terms-logo">
+            <h2 id="terms-modal-title" tabindex="-1">Aviso Importante</h2>
+        </div>
+        <div class="terms-body">
+            <p id="terms-modal-description">La información de GPSpedia es únicamente de referencia y puede contener errores, omisiones o no aplicar a todos los vehículos. Antes de realizar cualquier intervención, verifique la información y siga los procedimientos y medidas de seguridad correspondientes.</p>
+            <p>El uso de este catálogo es bajo su propia responsabilidad. GPSpedia no se hace responsable por daños, fallas o pérdidas derivadas del uso de la información, ni por malas prácticas, procedimientos incorrectos o la falta de precauciones de seguridad durante el trabajo en el vehículo.</p>
+            <p>Al continuar, usted acepta los <a href="#" id="terms-link-in-modal" style="color: var(--accent-color); text-decoration: underline; font-weight: bold;">Términos y Condiciones</a>.</p>
+        </div>
+        <div class="terms-footer">
+            <p id="terms-error" role="alert" aria-live="polite"></p>
+            <button id="btn-accept-terms" class="btn btn-primary btn-block">Aceptar Términos</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL DEL ACUERDO DE USO, PRIVACIDAD Y DESLINDE DE RESPONSABILIDAD ========= -->
+<div id="terms-agreement-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="terms-agreement-title" aria-describedby="terms-agreement-description">
+  <div class="info-modal-content">
+    <button type="button" class="info-close-btn" aria-label="Cerrar términos y condiciones">&times;</button>
+    <img src="Images/icon-v3-512x512.png" alt="Logo de GPSpedia" class="terms-agreement-logo gpsepedia-logo">
+    <h2 id="terms-agreement-title" tabindex="-1">Acuerdo de uso, términos y condiciones</h2>
+    <p style="text-align: center; font-weight: bold; margin-bottom: 20px;">Julio, 2026</p>
+    <p id="terms-agreement-description">Al acceder, registrarse o utilizar la plataforma GPSpedia, el usuario declara haber leído, comprendido y aceptado los presentes términos y condiciones de uso.</p>
+    <p>Este acuerdo establece las condiciones bajo las cuales los usuarios autorizados podrán acceder y utilizar la información, herramientas y recursos disponibles dentro de la plataforma.</p>
+    <hr>
+
+    <h4>1. Naturaleza y propósito de GPSpedia</h4>
+    <p>GPSpedia es una plataforma privada de consulta técnica desarrollada para apoyar los procesos de instalación, diagnóstico y documentación técnica relacionados con el sector automotriz.</p>
+    <p>La plataforma está orientada exclusivamente a técnicos, instaladores y personal autorizado de Motorlink S.A., proporcionando información de referencia para facilitar la ejecución de trabajos técnicos.</p>
+    <p>La información disponible en GPSpedia tiene carácter orientativo y complementario. No sustituye los manuales oficiales de los fabricantes, procedimientos certificados, documentación técnica oficial ni el criterio profesional del técnico responsable.</p>
+    <hr>
+
+    <h4>2. Perfil y responsabilidad del usuario</h4>
+    <p>El acceso a GPSpedia está destinado a usuarios con conocimientos técnicos y experiencia en el área automotriz.</p>
+    <p>El usuario es responsable de:</p>
+    <ul>
+      <li>Interpretar correctamente la información consultada.</li>
+      <li>Aplicar criterios técnicos antes de realizar cualquier procedimiento.</li>
+      <li>Utilizar herramientas adecuadas.</li>
+      <li>Seguir las normas de seguridad correspondientes.</li>
+      <li>Verificar las condiciones particulares de cada vehículo antes de intervenir.</li>
+    </ul>
+    <p>Toda instalación, diagnóstico o modificación realizada utilizando información de GPSpedia será ejecutada bajo la responsabilidad exclusiva del técnico que realiza el trabajo.</p>
+    <hr>
+
+    <h4>3. Uso autorizado de la cuenta</h4>
+    <p>GPSpedia es una plataforma de acceso privado y restringido exclusivamente a usuarios autorizados por Motorlink S.A.</p>
+    <p>Las cuentas asignadas tienen como único propósito facilitar la ejecución de trabajos, instalaciones y actividades técnicas realizadas en representación de Motorlink S.A.</p>
+    <p>El uso de la cuenta está limitado exclusivamente a:</p>
+    <ul>
+      <li>Trabajos asignados por Motorlink S.A.</li>
+      <li>Instalaciones realizadas para clientes de Motorlink S.A.</li>
+      <li>Actividades técnicas relacionadas con las funciones laborales del usuario.</li>
+    </ul>
+    <p>Queda estrictamente prohibido utilizar una cuenta de GPSpedia para:</p>
+    <ul>
+      <li>Trabajos personales o particulares.</li>
+      <li>Servicios independientes.</li>
+      <li>Instalaciones realizadas para otras empresas.</li>
+      <li>Actividades ajenas a Motorlink S.A.</li>
+      <li>Beneficio propio utilizando información obtenida mediante la plataforma.</li>
+    </ul>
+    <p>Las cuentas son personales e intransferibles.</p>
+    <p>Está prohibido:</p>
+    <ul>
+      <li>Compartir credenciales.</li>
+      <li>Prestar accesos.</li>
+      <li>Permitir que terceros utilicen una cuenta asignada.</li>
+    </ul>
+    <hr>
+
+    <h4>4. Vigencia y cancelación del acceso</h4>
+    <p>El acceso a GPSpedia se concede mientras exista una relación laboral activa o autorización vigente por parte de Motorlink S.A.</p>
+    <p>En caso de:</p>
+    <ul>
+      <li>Terminación de contrato laboral.</li>
+      <li>Finalización de relación profesional.</li>
+      <li>Retiro del usuario de la empresa.</li>
+      <li>Incumplimiento de estos términos.</li>
+    </ul>
+    <p>Motorlink S.A. y GPSpedia se reservan el derecho de suspender, cancelar o retirar el acceso del usuario a la plataforma.</p>
+    <p>La cuenta asignada pertenece a Motorlink S.A. y no constituye un derecho permanente del usuario.</p>
+    <hr>
+
+    <h4>5. Exactitud y actualización de la información</h4>
+    <p>GPSpedia realiza esfuerzos para mantener la información organizada, actualizada y disponible para consulta.</p>
+    <p>Sin embargo, debido a la variedad de fabricantes, versiones, mercados, configuraciones y modificaciones existentes en los vehículos, no se garantiza que toda la información sea completamente exacta, vigente o aplicable a todos los casos.</p>
+    <p>El usuario debe validar la información antes de realizar cualquier intervención técnica.</p>
+    <hr>
+
+    <h4>6. Origen y recopilación de la información</h4>
+    <p>La información disponible en GPSpedia proviene de la recopilación, organización y estructuración de diversas fuentes de conocimiento técnico.</p>
+    <p>Entre estas fuentes se incluyen:</p>
+    <ul>
+      <li>Experiencias obtenidas en trabajos reales de campo.</li>
+      <li>Procedimientos realizados por técnicos de Motorlink S.A.</li>
+      <li>Aportes y observaciones realizadas por usuarios autorizados.</li>
+      <li>Documentación técnica disponible públicamente.</li>
+      <li>Blogs especializados.</li>
+      <li>Comunidades técnicas.</li>
+      <li>Información publicada en Internet.</li>
+    </ul>
+    <p>El principal valor de GPSpedia proviene de la recopilación del conocimiento generado durante instalaciones reales y la organización de experiencias técnicas acumuladas.</p>
+    <p>Los aportes realizados por usuarios autorizados podrán ser revisados, modificados, organizados e incorporados dentro de la plataforma como parte del conocimiento técnico interno de Motorlink S.A.</p>
+    <hr>
+
+    <h4>7. Deslinde de responsabilidad</h4>
+    <p>El uso de la información contenida en GPSpedia es responsabilidad exclusiva del usuario.</p>
+    <p>Motorlink S.A. y GPSpedia no serán responsables por:</p>
+    <ul>
+      <li>Daños eléctricos o mecánicos ocasionados durante una instalación.</li>
+      <li>Fallas derivadas de procedimientos incorrectos.</li>
+      <li>Daños causados por malas prácticas técnicas.</li>
+      <li>Uso incorrecto de herramientas.</li>
+      <li>Falta de medidas de seguridad.</li>
+      <li>Interpretación errónea de la información.</li>
+      <li>Modificaciones realizadas sin considerar las especificaciones del fabricante.</li>
+    </ul>
+    <p>El usuario reconoce que toda intervención sobre un vehículo implica riesgos técnicos y acepta asumir la responsabilidad correspondiente por sus decisiones y acciones.</p>
+    <hr>
+
+    <h4>8. Normas de seguridad técnica</h4>
+    <p>El usuario debe realizar cualquier intervención respetando las buenas prácticas profesionales y medidas de seguridad necesarias.</p>
+    <p>GPSpedia no sustituye la capacitación técnica, experiencia profesional ni los procedimientos de seguridad requeridos para trabajar sobre vehículos.</p>
+    <p>El usuario debe considerar factores como:</p>
+    <ul>
+      <li>Riesgos eléctricos.</li>
+      <li>Sistemas electrónicos sensibles.</li>
+      <li>Procedimientos específicos del fabricante.</li>
+      <li>Uso correcto de herramientas.</li>
+      <li>Protección del vehículo y sus componentes.</li>
+    </ul>
+    <hr>
+
+    <h4>9. Propiedad intelectual y protección del contenido</h4>
+    <p>Todo el contenido organizado dentro de GPSpedia constituye un recurso privado destinado exclusivamente a usuarios autorizados.</p>
+    <p>Esto incluye:</p>
+    <ul>
+      <li>Textos.</li>
+      <li>Fotografías.</li>
+      <li>Diagramas.</li>
+      <li>Tablas.</li>
+      <li>Procedimientos.</li>
+      <li>Estructuras de información.</li>
+      <li>Organización del catálogo.</li>
+      <li>Material generado internamente.</li>
+    </ul>
+    <p>Queda prohibida la reproducción, copia, extracción, distribución, publicación, modificación, comercialización o divulgación total o parcial del contenido de GPSpedia por cualquier medio físico o digital sin autorización previa y escrita de Motorlink S.A.</p>
+    <hr>
+
+    <h4>10. Confidencialidad de la información</h4>
+    <p>El usuario se compromete a mantener confidencial toda información obtenida mediante GPSpedia.</p>
+    <p>Está prohibido:</p>
+    <ul>
+      <li>Compartir capturas de pantalla.</li>
+      <li>Publicar información en redes sociales.</li>
+      <li>Distribuir procedimientos internos.</li>
+      <li>Compartir información con terceros.</li>
+      <li>Utilizar el conocimiento obtenido fuera del propósito autorizado.</li>
+    </ul>
+    <p>La información disponible en GPSpedia debe considerarse parte del conocimiento operativo interno de Motorlink S.A.</p>
+    <hr>
+
+    <h4>11. Prohibición de extracción y uso indebido</h4>
+    <p>Está prohibido realizar acciones destinadas a obtener información masiva de la plataforma, incluyendo:</p>
+    <ul>
+      <li>Copia completa del catálogo.</li>
+      <li>Extracción automatizada de datos.</li>
+      <li>Creación de bases de datos externas.</li>
+      <li>Uso de herramientas para replicar el contenido.</li>
+      <li>Creación de sistemas derivados basados en la información de GPSpedia.</li>
+    </ul>
+    <p>Cualquier intento de extracción o reproducción no autorizada podrá resultar en la cancelación inmediata del acceso y las acciones correspondientes.</p>
+    <hr>
+
+    <h4>12. Registro y auditoría de actividad</h4>
+    <p>Para garantizar la seguridad, funcionamiento y mejora continua de la plataforma, GPSpedia podrá registrar información relacionada con el uso del sistema.</p>
+    <p>Esto puede incluir:</p>
+    <ul>
+      <li>Usuario utilizado.</li>
+      <li>Fecha y hora de acceso.</li>
+      <li>Actividad dentro de la plataforma.</li>
+      <li>Aportes realizados.</li>
+      <li>Acciones relacionadas con la seguridad del sistema.</li>
+    </ul>
+    <p>Estos registros serán utilizados exclusivamente para fines administrativos, operativos y de protección de la plataforma.</p>
+    <hr>
+
+    <h4>13. Privacidad y manejo de información personal</h4>
+    <p>Motorlink S.A. podrá recopilar información necesaria para:</p>
+    <ul>
+      <li>Crear y administrar cuentas.</li>
+      <li>Controlar accesos.</li>
+      <li>Mantener la seguridad del sistema.</li>
+      <li>Mejorar el funcionamiento de la plataforma.</li>
+    </ul>
+    <p>La información recopilada será utilizada únicamente para fines relacionados con la operación de GPSpedia y no será comercializada con terceros.</p>
+    <p>La información podrá ser compartida únicamente cuando exista una obligación legal o autorización correspondiente.</p>
+    <hr>
+
+    <h4>14. Disponibilidad y modificaciones del servicio</h4>
+    <p>Motorlink S.A. podrá realizar modificaciones, actualizaciones, mantenimientos o mejoras en GPSpedia con el objetivo de mejorar la calidad del servicio.</p>
+    <p>La plataforma puede experimentar interrupciones temporales por mantenimiento, actualización o causas técnicas.</p>
+    <hr>
+
+    <h4>15. Modificación de los términos y condiciones</h4>
+    <p>Motorlink S.A. se reserva el derecho de actualizar o modificar estos términos cuando sea necesario para mejorar la seguridad, funcionamiento o alcance de la plataforma.</p>
+    <p>Los usuarios serán responsables de mantenerse informados sobre las condiciones vigentes.</p>
+    <hr>
+
+    <h4>16. Aceptación de términos</h4>
+    <p>El acceso y uso de GPSpedia representa la aceptación expresa de estos términos y condiciones.</p>
+    <p>El usuario declara comprender que:</p>
+    <ul>
+      <li>La información es una herramienta de apoyo técnico.</li>
+      <li>El uso de la plataforma requiere responsabilidad profesional.</li>
+      <li>El acceso es privado y limitado a fines laborales autorizados.</li>
+      <li>El incumplimiento de estas condiciones puede ocasionar la suspensión o cancelación del acceso.</li>
+    </ul>
+    <p>Al utilizar GPSpedia, el usuario acepta utilizar la plataforma de manera responsable, profesional y conforme a las normas establecidas por Motorlink S.A.</p>
+
+    <img src="Images/tracklink_logo.png" alt="Logo de TRACKLINK" class="terms-agreement-logo tracklink-logo">
+  </div>
+</div>
+
+<!-- ========= MODALES DE INFORMACIÓN ========= -->
+<!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) -->
+<div id="about-us-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="about-us-title">
+  <div class="info-modal-content">
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
+    <h2 id="about-us-title">Sobre Nosotros</h2>
+    <p>GPSpedia es una plataforma especializada en la consulta técnica y estandarizada de información vehicular, diseñada para técnicos, instaladores y profesionales que trabajan con sistemas de rastreo, seguridad y control vehicular.</p>
+    <p>Nuestro objetivo es facilitar el acceso rápido y organizado a información técnica de utilidad práctica, ayudando a reducir errores durante los procesos de instalación y optimizando los tiempos de trabajo mediante una base de conocimiento estructurada, visual y en constante evolución.</p>
+    <p>La información técnica disponible en GPSpedia ha sido recopilada a partir de diversas fuentes públicas, documentación disponible en Internet, publicaciones técnicas, experiencias de campo y aportes realizados por profesionales del sector.</p>
+    <p>GPSpedia no busca atribuirse derechos sobre la información técnica original perteneciente a fabricantes, autores o fuentes externas.</p>
+    <p>El valor de GPSpedia se encuentra en el proceso de recopilación, análisis, clasificación, organización y presentación de dicha información dentro de una plataforma diseñada para facilitar la consulta técnica.</p>
+    <p>La estructura del catálogo, la forma de organización del contenido, los recursos visuales, los procedimientos recopilados y la plataforma desarrollada forman parte del trabajo realizado para ofrecer una herramienta práctica y eficiente para los usuarios autorizados.</p>
+
+    <h1>¿Qué ofrece GPSpedia?</h1>
+    <h2>Información de cortes vehiculares</h2>
+    <p>Identificación de puntos de corte eléctrico e ignición, con detalles sobre ubicación, color de cable y recomendaciones generales para facilitar los procesos de instalación.</p>
+
+    <h2>Tipos de cortes disponibles</h2>
+    <p>Información organizada sobre diferentes métodos de corte, incluyendo bomba de combustible, señal de ignición, botón de encendido y apertura de puertas.</p>
+
+    <h2>Configuraciones de Relay</h2>
+    <p>GPSpedia cuenta con una sección dedicada a configuraciones de relay, donde se explican de manera visual las funciones de cada pin, sus aplicaciones más comunes y diagramas de referencia para facilitar la comprensión de las conexiones.</p>
+
+    <h2>Tutoriales y guías visuales</h2>
+    <p>La plataforma incluye tutoriales paso a paso y material visual de apoyo para la ubicación de módulos, identificación de componentes, desmontaje básico de interiores y reconocimiento de cableado vehicular.</p>
+
+    <h1>Enfoque colaborativo y mejora continua</h1>
+    <p>GPSpedia evoluciona constantemente mediante la experiencia acumulada en trabajos de campo y la retroalimentación de sus usuarios autorizados.</p>
+    <p>Estos aportes permiten mejorar la organización del contenido, ampliar la cobertura de vehículos y mantener una herramienta cada vez más útil para los profesionales técnicos.</p>
+    <p>GPSpedia representa un esfuerzo de recopilación y organización del conocimiento técnico con el propósito de facilitar el trabajo de los usuarios y promover procesos de instalación más eficientes y ordenados.</p>
+  </div>
+</div>
+
+<div id="contact-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+  <div class="info-modal-content">
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
+    <h2 id="contact-modal-title">Contáctanos</h2>
+    <p>Si tienes sugerencias, problemas con la plataforma o necesitas soporte técnico, por favor utiliza este formulario. Tu feedback es importante para nosotros.</p>
+    <form id="contact-form">
+      <div class="form-group">
+        <label for="contact-name">Nombre</label>
+        <input type="text" id="contact-name" required>
+      </div>
+      <div class="form-group">
+        <label for="contact-email">Correo Electrónico</label>
+        <input type="email" id="contact-email" required>
+      </div>
+      <div class="form-group">
+        <label for="contact-message">Mensaje</label>
+        <!-- TAREA 3.5: Barra de enriquecimiento para Contáctanos -->
+<div id="contact-message-toolbar" class="rich-editor-toolbar"></div>
+        <textarea id="contact-message" rows="4" required></textarea>
+      </div>
+      <button type="submit" class="btn">Enviar Mensaje</button>
+    </form>
+  </div>
+</div>
+
+<div id="faq-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="faq-modal-title">
+  <div class="info-modal-content">
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
+    <h2 id="faq-modal-title">Preguntas Frecuentes (FAQ)</h2>
+    <div class="accordion">
+      <div class="accordion-item"><div class="accordion-header">¿GPSpedia es un sistema de rastreo GPS?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>No. GPSpedia no rastrea vehículos ni gestiona dispositivos. Es una plataforma informativa y de consulta técnica.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿La información tiene derechos de autor?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>La información técnica presentada es una compilación de datos de libre acceso y conocimiento práctico, organizada con fines educativos y profesionales. GPSpedia no reclama autoría exclusiva sobre dicha información.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Puedo usar esta información en instalaciones reales?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Sí. El contenido está pensado para apoyo técnico, pero siempre se recomienda que las instalaciones sean realizadas por personal capacitado y siguiendo buenas prácticas de seguridad eléctrica.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Incluye información para diferentes tipos de vehículos?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Sí. La plataforma contempla distintas categorías vehiculares, como automóviles, camiones, motocicletas y equipos especiales, según disponibilidad de información.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿La información se actualiza?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Sí. GPSpedia está diseñada para crecer y mejorar continuamente, incorporando nuevos datos, correcciones y ampliaciones conforme se valida su uso en campo.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿GPSpedia enseña cómo instalar dispositivos?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>GPSpedia no sustituye la capacitación profesional, pero ofrece referencias técnicas, diagramas y guías que facilitan el trabajo de técnicos con experiencia.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Cómo obtengo una cuenta?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Para solicitar acceso, completa el formulario disponible en la sección “Contáctanos”. Nuestro equipo revisará la solicitud y te brindará seguimiento conforme al uso profesional de la plataforma.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Qué hacer si no está la información de un vehículo?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Si un vehículo no cuenta aún con información específica, GPSpedia ofrece tutoriales descriptivos y material audiovisual que facilitan la identificación de cables de corte, puntos de ignición y configuraciones comunes.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="changelog-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="changelog-modal-title">
+  <div class="info-modal-content">
+    <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
+    <h2 id="changelog-modal-title" style="margin-bottom: 15px;"><i class="fa-solid fa-history"></i> Registro de Cambios</h2>
+    <p style="margin-bottom: 25px; color: var(--text-disabled, #777); font-size: 0.9em; line-height: 1.4;">Descubre la evolución y mejoras incorporadas en la plataforma de forma cronológica.</p>
+
+    <div class="changelog-list" style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- Versión 2.2.5 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.5 (Actual)</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Ficha técnica de impresión optimizada:</strong> Ajuste inteligente de escala y diagramación adaptativa para asegurar que la ficha vehicular completa encaje con nitidez en una sola página de formato Carta.</li>
+          <li><strong>Visualización de problemas y soluciones:</strong> Reorganización de contenidos para una lectura más clara y armoniosa, con encabezados visualmente diferenciados y detención inmediata de vídeos al cerrar la ficha.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.2.4 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.4</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Subida de vídeos al canal oficial:</strong> Posibilidad de cargar directamente vídeos demostrativos y guías de desarme al canal oficial de la plataforma mediante un proceso guiado con barra de progreso en tiempo real.</li>
+          <li><strong>Validación y aprobación de contenidos audiovisuales:</strong> Flujo de revisión previa para vídeos aportados por la comunidad técnica antes de su integración definitiva al catálogo.</li>
+          <li><strong>Propuestas automáticas de información:</strong> Generación sugerida de títulos y descripciones contextuales basadas en la marca, modelo, equipamiento y año del vehículo para agilizar el registro audiovisual.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.2.3 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.3</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Vinculación bidireccional entre problemas y modelos:</strong> Posibilidad de relacionar incidencias técnicas con uno o varios modelos de vehículos simultáneamente, facilitando su consulta desde ambas perspectivas.</li>
+          <li><strong>Búsqueda especializada para vinculación:</strong> Buscador predictivo que excluye automáticamente vehículos ya vinculados y agiliza la asociación mediante vista previa de imágenes y rangos de años.</li>
+          <li><strong>Navegación fluida entre fichas:</strong> Transición optimizada entre el detalle de problemas y el catálogo de vehículos relacionados evitando bucles de navegación.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.2.2 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.2</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Sección de Problemas y Soluciones:</strong> Nuevo espacio dedicado para consultar y registrar dificultades habituales durante la instalación, acompañadas de sus métodos de resolución y medidas preventivas.</li>
+          <li><strong>Biblioteca técnica de Tutoriales:</strong> Catálogo interactivo de procedimientos paso a paso, guías de conexión y mejores prácticas operativas con soporte de imágenes y vídeos.</li>
+          <li><strong>Editor enriquecido de descripciones:</strong> Herramientas tipográficas en los campos descriptivos para dar formato, listas y realce de texto a las explicaciones técnicas.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.2.1 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.1</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Menú de ampliación técnica (+):</strong> Botón interactivo dentro de la ficha de detalle para incorporar información técnica adicional sin necesidad de reiniciar el registro del vehículo.</li>
+          <li><strong>Incorporación ágil de datos complementarios:</strong> Formularios directos para añadir nuevos puntos de corte, señales de apertura de seguros y cables de alimentación secundaria.</li>
+          <li><strong>Diseño compacto y accesible:</strong> Botones y diálogos optimizados para pantallas táctiles y dispositivos móviles, facilitando el trabajo directo en talleres.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.2.0 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.0</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Identificación vehicular por número de chasis (VIN):</strong> Registro y consulta estructurada de identificadores VIN para distinguir con total exactitud las versiones de equipamiento de un mismo modelo.</li>
+          <li><strong>Búsqueda global por VIN:</strong> Detección instantánea de números de chasis en el buscador principal para acceder directamente a la ficha técnica correspondiente.</li>
+          <li><strong>Prevención de duplicidad:</strong> Validación automática durante el registro de vehículos para alertar sobre números de chasis previamente registrados y enlazar al modelo existente.</li>
+          <li><strong>Diferenciación selectiva en catálogo:</strong> Visualización de dígitos distintivos de chasis junto a cada variante de equipamiento para orientar con precisión la selección del técnico.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.2.5 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.2.5</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Múltiples cables de alimentación:</strong> Ahora es posible registrar más de un cable de alimentación para un mismo modelo. Los cables registrados se muestran mediante un carrusel, que en dispositivos móviles permite navegar entre ellos mediante gestos horizontales.</li>
+          <li><strong>Mejora en el formulario de registro de nuevos cortes:</strong> El formulario ahora permite registrar modelos para los cuales no se recomienda realizar un corte de apagado remoto. Para estos casos, basta con seleccionar «No recomendado» en el campo «Tipo de corte».</li>
+          <li><strong>Persistencia y recuperación ante fallos de red:</strong> Se mejoró el manejo de errores durante el registro de información. El sistema ahora puede detectar registros incompletos o inconsistentes ocasionados por fallos de conexión, incluyendo errores de tipo «Failed to fetch», permitiendo una recuperación más segura de la información.</li>
+          <li><strong>Botón de instalación de la aplicación:</strong> Se corrigió el problema que impedía mostrar correctamente el botón «Instalar app». Además, se incorporó soporte informativo para orientar al usuario sobre el proceso de instalación en dispositivos iOS.</li>
+          <li><strong>Mejora en los enlaces para compartir cortes:</strong> Se corrigió un problema de precisión en los enlaces compartidos desde el modal de detalles. Anteriormente, al compartir un vehículo, el enlace podía redirigir a la lista completa de generaciones en lugar de abrir directamente el modelo específico seleccionado. Ahora, los enlaces compartidos dirigen directamente al modelo correspondiente.</li>
+          <li><strong>Mejora de identidad visual:</strong> Se actualizaron y corrigieron los tamaños y variantes del logotipo institucional de la aplicación. La identidad visual ahora cuenta con un comportamiento completamente responsivo, adaptándose al contexto y tamaño de pantalla del usuario.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.1.5 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1.5</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Mejoras de navegación:</strong> Transiciones fluidas por niveles con retroceso inteligente sin perder el contexto de visualización.</li>
+          <li><strong>Mejoras de búsqueda:</strong> Buscador inteligente y predictivo en tiempo real con historial dinámico de términos consultados.</li>
+          <li><strong>Mejoras de rendimiento:</strong> Estructura basada en App Shell optimizada para cargas inmediatas y bajo consumo de recursos.</li>
+          <li><strong>Mejoras de estabilidad:</strong> Prevención de bloqueos táctiles, cierres prematuros de pantallas y optimización de flujos de navegación.</li>
+          <li><strong>Mejoras de seguridad:</strong> Bloqueos de selección accidental y protección del código técnico para mayor resguardo operativo.</li>
+          <li><strong>Mejoras para dispositivos móviles:</strong> Layout táctil adaptativo optimizado para uso dinámico en campo y talleres.</li>
+          <li><strong>Mejoras para PWA:</strong> Soporte de instalación nativa directa y configuración robusta de manifiesto móvil.</li>
+          <li><strong>Mejoras del sistema de caché:</strong> Persistencia offline avanzada mediante IndexedDB para navegación segura en zonas de baja cobertura.</li>
+          <li><strong>Mejoras de sincronización:</strong> Reconciliación silenciosa y reactiva en segundo plano para mantener los datos al día sin interrumpir al usuario.</li>
+          <li><strong>Mejoras en imágenes:</strong> Carga diferida e inteligente (lazy load) de miniaturas para un ahorro garantizado de datos móviles.</li>
+          <li><strong>Mejoras del sistema de compartición:</strong> Integración directa con Web Share API para compartir fichas técnicas con un solo clic.</li>
+          <li><strong>Mejoras visuales:</strong> Modo oscuro persistente y pie de página (footer) dinámico controlado por sensores de pantalla.</li>
+          <li><strong>Mejoras de compatibilidad:</strong> Normalizador de variantes de equipamiento y soporte avanzado para avisos de testigo de motor.</li>
+          <li><strong>Mejoras de experiencia de usuario:</strong> Navegación ágil por gestos táctiles de retroceso y flechas cronológicas entre generaciones de vehículos.</li>
+          <li><strong>Mejoras de confiabilidad:</strong> Banners informativos integrados y validación colaborativa de la comunidad para la exactitud de los datos.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.1 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Robustecimiento y mayor velocidad de respuesta del sistema en condiciones de nula o baja conectividad offline.</li>
+          <li>Almacenamiento local inteligente y carga optimizada de miniaturas de vehículos para agilizar la navegación en caché.</li>
+          <li>Indicador visual de estado de red ultra-minimalista perfectamente integrado en el saludo de bienvenida.</li>
+          <li>Implementación del sistema colaborativo para sugerencia de rangos de años de vehículos con validación de la comunidad.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.0 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.0</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Lanzamiento oficial de la plataforma con arquitectura moderna basada en microservicios modulares de alto rendimiento.</li>
+          <li>Control de acceso basado en roles (RBAC) y perfiles independientes para técnicos, supervisores y administradores.</li>
+          <li>Modo Oscuro nativo persistente para reducir la fatiga visual, con realce dinámico de logotipos de marcas.</li>
+          <li>Sección interactiva de Preguntas Frecuentes (FAQ) y Sobre Nosotros con terminología técnica unificada.</li>
+          <li>Implementación de sistemas globales de protección del código y prevención de ingeniería inversa en el frontend.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 1.5 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 1.5 (Legacy)</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Carga inicial híbrida con prioridad a la red y respaldo local ante fallos de conexión.</li>
+          <li>Formularios interactivos en etapas para el registro guiado de nuevos esquemas de instalación.</li>
+          <li>Biblioteca visual ampliada de diagramas técnicos y configuraciones físicas de relay.</li>
+          <li>Sincronización automatizada bidireccional con hojas de datos centrales.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 1.0 -->
+      <div class="changelog-item">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 1.0</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Lanzamiento del catálogo digital especializado en cortes eléctricos vehiculares para profesionales.</li>
+          <li>Buscador básico en tiempo real por marcas y categorización general de modelos.</li>
+          <li>Primeras fichas descriptivas de cableados e indicaciones de instalación física en campo.</li>
+          <li>Persistencia de sesión segura y base de datos local inicial en el dispositivo del usuario.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========= MODAL DE INSTALACIÓN PARA iOS ========= -->
+<div id="ios-install-modal" class="info-modal" style="display: none; z-index: 2100;" role="dialog" aria-modal="true" aria-labelledby="ios-install-title">
+    <div class="info-modal-content" style="max-width: 400px; padding: 20px; border-radius: 15px; text-align: center;">
+        <button type="button" class="info-close-btn" id="ios-install-close" aria-label="Cerrar ventana">&times;</button>
+        <img src="Images/icon-v3-512x512.png" alt="Logo de GPSpedia" style="max-width: 80px; margin-bottom: 15px; filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.15));">
+        <h3 id="ios-install-title" style="margin-top: 0; margin-bottom: 10px; color: var(--accent-color);">Instala GPSpedia en tu iPhone o iPad</h3>
+        <p style="font-size: 0.95em; color: var(--text-color); margin-bottom: 20px; line-height: 1.5;">Instala esta aplicación en tu dispositivo para acceder de forma rápida y usarla offline en cualquier momento.</p>
+
+        <div style="text-align: left; background: var(--bg-color); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                <div style="background: var(--accent-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85em; flex-shrink: 0; margin-top: 2px;">1</div>
+                <div style="font-size: 0.9em; line-height: 1.4; color: var(--text-color);">
+                    Pulsa el botón de <strong>Compartir</strong> <i class="fa-solid fa-arrow-up-from-bracket" style="color: var(--accent-color); margin-left: 2px;"></i> en la barra de navegación o en el menú de tu navegador.
+                </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: var(--accent-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85em; flex-shrink: 0; margin-top: 2px;">2</div>
+                <div style="font-size: 0.9em; line-height: 1.4; color: var(--text-color);">
+                    Selecciona la opción <strong>Añadir a la pantalla de inicio</strong> <i class="fa-solid fa-square-plus" style="color: var(--accent-color); margin-left: 2px;"></i> en el menú desplegable.
+                </div>
+            </div>
+        </div>
+
+        <button id="ios-install-btn-ok" class="btn btn-primary btn-block">Entendido</button>
+    </div>
+</div>
+
+<script type="module" src="JS/Frontend/main.js"></script>
+
+
+</body>
+</html>
