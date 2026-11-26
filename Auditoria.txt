@@ -375,3 +375,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Harness integrado de bloque (mock de hoja + algoritmo real): Toyota Hilux 2.8/Botón/2021 => VH-02, confianza high, señales exactas de modelo, marca, versión, encendido y año; sin coincidencia produce `sin_coincidencia`; hoja ausente produce `no_verificada`. UI de estado no verificado y resumen de consola probados. PASS.
 - Commits: 75170cd6db7b4bcc00ab98689f04837b9efa5945, 091a939902132e11383cb9f9b16ec1c93d197c3a, bdd9273caee75cea60b65b081a6a0e0302ed9b9b, eec4cd899179b7dc2ba24d97817e42a9a78e9635.
 - Límite: mocks y fixtures, no Spreadsheet real ni navegador.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — transparencia de confianza y criterios en asociación visual
+- Se verificó que el objeto de sugerencia ya transporta `confidence` y `signals`, pero la UI no los mostraba. Se actualizó la relación de tarjeta tanto en la aparición inicial como después de la respuesta de inventario.
+- Ahora muestra confianza alta/media/baja y traduce las señales técnicas a criterios legibles: modelo en carpeta/nombre, alias, marca, categoría, versión, encendido y rango de años; también muestra vehículo, versión, encendido y años aplicables.
+- Harness de render: Toyota Hilux => confianza alta, criterios de carpeta/marca/versión/encendido/años y vehículo VH-02. Sintaxis de los bloques de tarjeta PASS.
+- Commit: 8d63c5943f18fa2e6b36003ef8b829846d9a3bf2.
