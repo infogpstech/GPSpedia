@@ -1485,3 +1485,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - UTILITIES 5 muestras: mediana 778 ms, máximo 1090 ms, sin muestras SLOW; 7,916 ms no se reprodujo.
 - ADMIN 5 muestras: mediana 2241 ms, máximo 5022 ms, 3/5 SLOW; deployment sigue 2.7.1 vs fuente 2.7.2.
 - CATALOG feed, límites, matriz y paginación PASS.
+
+
+## 2026-11-26 — eliminar thumbnail Drive del modal iOS
+- `index.html`: reemplazado el thumbnail remoto de Drive por `Images/icon-v3-512x512.png`, recurso local ya cacheado por PWA.
+- `JS/Tests/OfflineBrandAssets.mjs`: verificación de fallback local y ausencia de Drive en el modal iOS.

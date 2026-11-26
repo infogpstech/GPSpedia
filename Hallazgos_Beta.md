@@ -586,3 +586,9 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 ## MIG-URL-008 — repetición GET-only de los seis servicios (run 45756725304)
 - Contrato local 21/21 PASS. Remoto: AUTH FAIL por `sessionAuthority`; ADMIN FAIL por versión; CATALOG 1133 ms PASS, FEEDBACK 1506 ms PASS, UTILITIES 987 ms PASS, WRITE 1566 ms PASS.
 - CATALOG feed, boundaries, matriz y paginación PASS. El resumen final del workflow se ejecutó correctamente y marcó FAIL solo por health remoto.
+
+
+## BETA-F022 — corrección parcial del recurso Drive offline (2026-11-26)
+- Se sustituyó el thumbnail remoto de Drive del modal de instalación iOS en `index.html` por `Images/icon-v3-512x512.png`, ya incluido en CORE_ASSETS.
+- `OfflineBrandAssets.mjs` ahora exige que el modal use el recurso local y no referencie Drive.
+- La validación browser posterior debe confirmar que desaparece `/thumbnail` del listado de solicitudes fallidas offline. La hoja de estilos Font Awesome de cdnjs sigue siendo externa y puede dejar iconos sin estilo sin conexión.

@@ -188,3 +188,8 @@
 
 2026-11-26 | Health Beta — run `45756725304`
 - Contrato local 21/21 PASS. AUTH FAIL por sessionAuthority remoto; ADMIN FAIL por versión. CATALOG/FEEDBACK/UTILITIES/WRITE PASS. CATALOG feed, boundaries, matrix y pagination PASS. Cero mutaciones.
+
+
+2026-11-26 | BETA-F022 — recurso de imagen local
+- `index.html`: imagen del modal iOS ahora usa `Images/icon-v3-512x512.png` ya precargado por SW, en lugar de `/thumbnail` de Drive.
+- `OfflineBrandAssets.mjs` agrega una aserción para impedir que el modal dependa de Drive. Pendiente Actions/browser para confirmar desaparición de la solicitud offline.
