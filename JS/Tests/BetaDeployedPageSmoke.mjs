@@ -48,16 +48,45 @@ try {
         const requestForm = document.getElementById("password-recovery-request-form");
         return panel && !panel.hidden && requestForm && !requestForm.hidden;
     }, null, { timeout: 5000 });
-    const recoveryUi = await page.evaluate(() => ({
-        usernameVisible: Boolean(document.getElementById("password-recovery-username")?.offsetWidth),
-        emailVisible: Boolean(document.getElementById("password-recovery-email")?.offsetWidth),
-        submitVisible: Boolean(document.querySelector("#password-recovery-request-form button[type='submit']")?.offsetWidth),
-        completionFormHidden: document.getElementById("password-recovery-complete-form").hidden
-    }));
-    if (!recoveryUi.usernameVisible || !recoveryUi.emailVisible ||
-        !recoveryUi.submitVisible || !recoveryUi.completionFormHidden) {
-        throw new Error("La pantalla de solicitud de recuperación no se mostró correctamente.");
+    const viewports = [
+        { width: 1366, height: 768 },
+        { width: 390, height: 844 },
+        { width: 360, height: 800 },
+        { width: 320, height: 700 }
+    ];
+    const recoveryLayouts = [];
+    for (const viewport of viewports) {
+        await page.setViewportSize(viewport);
+        const layout = await page.evaluate(() => {
+            const panel = document.getElementById("password-recovery-panel");
+            const form = document.getElementById("password-recovery-request-form");
+            const username = document.getElementById("password-recovery-username");
+            const email = document.getElementById("password-recovery-email");
+            const submit = form.querySelector("button[type='submit']");
+            const panelRect = panel.getBoundingClientRect();
+            const formRect = form.getBoundingClientRect();
+            return {
+                panelVisible: !panel.hidden && Boolean(panel.offsetWidth && panel.offsetHeight),
+                formVisible: !form.hidden && Boolean(form.offsetWidth && form.offsetHeight),
+                usernameVisible: Boolean(username.offsetWidth && username.offsetHeight),
+                emailVisible: Boolean(email.offsetWidth && email.offsetHeight),
+                submitVisible: Boolean(submit && submit.offsetWidth && submit.offsetHeight),
+                completionFormHidden: document.getElementById("password-recovery-complete-form").hidden,
+                panelWithinViewport: panelRect.left >= -1 && panelRect.right <= innerWidth + 1,
+                formWithinViewport: formRect.left >= -1 && formRect.right <= innerWidth + 1,
+                documentWidth: document.documentElement.scrollWidth,
+                viewportWidth: innerWidth
+            };
+        });
+        if (!layout.panelVisible || !layout.formVisible || !layout.usernameVisible ||
+            !layout.emailVisible || !layout.submitVisible || !layout.completionFormHidden ||
+            !layout.panelWithinViewport || !layout.formWithinViewport ||
+            layout.documentWidth > layout.viewportWidth + 1) {
+            throw new Error("La pantalla de recuperación no cumple el layout en " + viewport.width + "x" + viewport.height + ".");
+        }
+        recoveryLayouts.push({ width: viewport.width, height: viewport.height, documentWidth: layout.documentWidth });
     }
+
     await page.locator("#password-recovery-back").click();
     await page.waitForFunction(() => {
         const form = document.getElementById("login-form");
@@ -65,7 +94,6 @@ try {
         return form && !form.hidden && panel && panel.hidden;
     }, null, { timeout: 5000 });
 
-    const viewports = [{ width: 1366, height: 768 }, { width: 390, height: 844 }, { width: 320, height: 800 }];
     const layouts = [];
     for (const viewport of viewports) {
         await page.setViewportSize(viewport);
@@ -107,7 +135,7 @@ try {
         blockedAppsScriptGets,
         nonGetRequests: nonGetRequests.length,
         pageErrors: pageErrors.length,
-        passwordRecoveryUi: recoveryUi,
+        passwordRecoveryUi: recoveryLayouts,
         recoveryRequestSubmitted: false,
         credentialsSubmitted: false,
         backendWritesAllowed: false
