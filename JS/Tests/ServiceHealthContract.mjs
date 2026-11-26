@@ -260,6 +260,27 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
     }
 
 });
+await check("Las seis versiones del contrato coinciden con el campo version de cada endpoint fuente", async () => {
+    const healthDoc = read("Services/SERVICE_HEALTH.md");
+    const rows = [...healthDoc.matchAll(/^\\|\\s*(AUTH|CATALOG|WRITE|FEEDBACK|UTILITIES|ADMIN)\\s*\\|\\s*`[^\\n`]+`\\s*\\|\\s*([0-9]+\\.[0-9]+\\.[0-9]+)\\s*\\|\\s*`available`\\s*\\|/gm)];
+    const expected = Object.fromEntries(rows.map(match => [match[1], match[2]]));
+    assert.equal(Object.keys(expected).length, 6, "El contrato debe definir exactamente seis versiones de salud.");
+    for (const [key, source] of Object.entries(backendSources)) {
+        const start = source.indexOf("function doGet");
+        assert.ok(start >= 0, key + " no define doGet.");
+        const end = source.indexOf("\\nfunction ", start + 10);
+        const block = source.slice(start, end > start ? end : source.length);
+        const versionMatch = block.match(/\\bversion\\s*:\\s*(?:['"]([^'"]+)['"]|([A-Z][A-Z0-9_]*))/);
+        assert.ok(versionMatch, key + " no expone versión en el endpoint de salud.");
+        let actual = versionMatch[1];
+        if (!actual && versionMatch[2]) {
+            const declaration = source.match(new RegExp("\\\\bconst\\\\s+" + versionMatch[2] + "\\\\s*=\\\\s*['"]([^'"]+)['"]"));
+            assert.ok(declaration, key + " no define la constante de versión " + versionMatch[2] + ".");
+            actual = declaration[1];
+        }
+        assert.equal(actual, expected[key], key + " no coincide con SERVICE_HEALTH.md.");
+    }
+});
 await check("El probe remoto normaliza estados y compara la versión contra el contrato versionado", async () => {
     assert.match(remoteHealthSource, /typeof body\.status===\"string\"\?body\.status\.trim\(\)\.toLowerCase\(\):\"\"/);
     assert.match(remoteHealthSource, /body\.version\.trim\(\)!==expectedVersions\[service\]/);
