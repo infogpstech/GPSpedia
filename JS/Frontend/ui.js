@@ -9331,7 +9331,7 @@ export async function openAuditDriveModal(options = {}) {
                     appendAuditConsole('Inventario — ' + String(file && file.fileName || fileId) + ' (' + fileId + '): ' +
                         item.status + (item.message ? ' — ' + item.message : ''), level);
                 });
-                inventoryStatus = confirmedCount === submittedIds.size ? 'saved' : 'partial';
+                inventoryStatus = confirmedCount === submittedIds.size && inventoryResult.partial !== true ? 'saved' : 'partial';
                 if (inventoryStatus !== 'saved') inventoryOperationId = '';
                 inventoryMessage = 'Inventario individual: ' + confirmedCount + ' de ' + submittedIds.size +
                     ' imágenes confirmadas; ' + blockedCount + ' bloqueadas, ' + errorCount + ' con error y ' +
@@ -9541,7 +9541,7 @@ export async function openAuditDriveModal(options = {}) {
                         if (byId.has(id)) throw new Error('ADMIN devolvió un resultado duplicado durante la consolidación.');
                         byId.set(id, item);
                     });
-                    if (byId.size !== submitted.size || Array.from(byId.values()).some(item => item.status !== 'confirmado')) {
+                    if (byId.size !== submitted.size || final.partial === true || Array.from(byId.values()).some(item => item.status !== 'confirmado')) {
                         throw new Error('La consolidación no confirmó todas las imágenes individualmente.');
                     }
                     byId.forEach((item, id) => {
@@ -9898,7 +9898,7 @@ export async function openAuditDriveModal(options = {}) {
                     const finalConfirmed = Array.from(finalResultsById.values()).filter(item => item.status === 'confirmado').length;
                     inventoryConfirmedFileIds = Array.from(submittedFinalIds).filter(fileId =>
                         finalResultsById.get(fileId).status === 'confirmado');
-                    if (finalConfirmed === submittedFinalIds.size) {
+                    if (finalConfirmed === submittedFinalIds.size && finalInventory.partial !== true) {
                         inventoryAuditId = auditId;
                         inventoryOperationId = String(finalInventory.inventoryOperationId);
                         appendAuditConsole('Consolidación final: ' + finalConfirmed + ' filas individuales leídas y verificadas en biblioteca.', 'success');
