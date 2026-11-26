@@ -347,3 +347,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Rutas verificadas: 12 mutaciones + candidate sync. `admin.js` compila; el harness del helper verifica exclusión para la misma clave.
 - Commit: `d778cc086e603307a1567bf3a933983e258cae89`; registros: tareas `58c2eb1fe6e46a3b9dd5c470baa4757b9e05423c`, auditoría `ecbe145db1901d60d58880ec3d39bc7f87beb8f1`, changelog `33805dde939ca807d82e925a6939f3697500ef01`.
 - Pendiente: concurrencia real entre solicitudes en Apps Script (no ejecutada); el guard local está verificado con harness. Seguir con UI/explorador y auditoría integral.
+
+
+## Continuidad — GP-FORM-DROPDOWNS-01 (2026-11-26)
+- Problema investigado: opciones de los selectores de alta de corte no cargaban.
+- Diagnóstico de código: el handler de work dependía de la validación de la columna Categoría y de la hoja Relay. Comparado con la rama base, que extraía valores de Cortes, se debilitó la dependencia de fuente para categorías y el handler completo podía fallar si Relay faltaba.
+- Corrección: `JS/Services/catalog.js` extrae categoría desde valores de la columna de Cortes, marcas, tipos de corte de las tres columnas y tipo de encendido. Relay se consulta si tiene contenido; si no, usa configuraciones Relay desde Cortes. `HTML/add_cortes.html` elimina cache de sesión, valida status y estructura y muestra un error conciso/diagnóstico ante fallos.
+- Auditoría estática: formularios activos revisados: `HTML/add_cortes.html`, `HTML/users.html`, `index.html`; los dos últimos no usan `getDropdownData` para este formulario y no se detectó fallo adicional relacionado.
+- Commits en `GPSpedia2.2.5_work`: `71c7ba9f2c0022eee91772f1e450b5b3d0c8f250` backend, `c16f4f24ff01d6513e5814d723dadee3cdf1f413` frontend.
+- Verificación: estática, sin deployment runtime de Apps Script ni acceso real a Spreadsheet en esta sesión. Pendiente de prueba Beta: valores reales, despliegue y carga de todos los formularios.
+- Siguiente paso: validar en deployment CATALOG activo y probar selectores de Categoría, tipo de encendido, tipos de corte y configuración de relay; si falla, revisar configuración endpoint/hoja y logs diagnósticos del navegador.
