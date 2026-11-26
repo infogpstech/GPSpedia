@@ -269,3 +269,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - HEAD de trabajo después de los registros: `e2353869158fe7fd8819b0f4a007812128a18f68`. Rama base protegida `GPSpedia2.2.5` sin modificar.
 - No se ejecutaron servicios Apps Script desplegados, navegador, Drive ni Spreadsheet reales; no se movieron archivos ni se mutaron datos externos. No se hizo deployment.
 - **Estado:** corrección puntual implementada y probada de forma aislada; GP-ADMIN-DRIVE-UNUSED-IMAGES-02 sigue abierta. Siguiente paso: revisar los contratos de biblioteca y organización y completar pruebas de integración del flujo completo; la validación Beta remota requiere deployment autorizado.
+
+
+## Continuidad 2026-11-26 — registro incremental inicial por lotes
+- Rama de trabajo: `GPSpedia2.2.5_work`. La rama base protegida `GPSpedia2.2.5` no se modifica.
+- Se verificó que el HEAD anterior era `34eb2f8840d2db4e4ab2b22bce2b0f14a2cf6e04`.
+- Hallazgo: el guardado inicial del inventario enviaba todos los archivos en una sola solicitud no incremental, aunque ADMIN ya soportaba validación y escritura incremental; solo el botón de reintento individual usaba esa modalidad.
+- Implementación en `JS/Frontend/ui.js`: lotes de máximo 20; confirmación individual por ID; actualización progresiva de tarjetas; persistencia local tras cada lote; continuación de los lotes posteriores aunque uno falle; consolidación final solo si todos los archivos fueron confirmados; verificación de resultados y conteos finales; IDs inválidos se reportan y no se omiten silenciosamente.
+- Pruebas aisladas con harness: 21 imágenes => dos solicitudes incrementales (20 + 1), luego una consolidación no incremental; 21 tarjetas confirmadas. Caso parcial => 20 confirmadas, una con error y ninguna consolidación. El bloque editado pasa compilación sintáctica.
+- Commits: implementación inicial `7bb822207e7217b019cc638589f221aabdb0f118`; validación de IDs `dad3fe7c2c886ef9fb65dbf56f58abbaccdd1954`; registros en backlog `151885d0667b101b4546012675ea1eafcf1a9b41`, auditoría `4dc125f1cc7b1b26ff6544b8d3eb1018d7de47c1`, changelog `9d4f34039d3ee9fdc2e50ce6aff1e9b325b5acc8`.
+- La tarea `GP-ADMIN-DRIVE-UNUSED-IMAGES-02` continúa abierta. Siguiente trabajo: revisar el flujo de reintento individual tras fallos parciales/consolidación; terminar la auditoría de recuperar, mover, papelera, restaurar y eliminación definitiva; revisar asociaciones y comportamiento visual del espacio consola/explorador. Continuar después con `GP-ADMIN-TAB-ACTIONS-UX-01` si queda trabajo real.
+- No se ejecutó el Apps Script desplegado, no se consultó ni modificó Drive/Spreadsheet y no se hizo deployment. Las pruebas reales de servicios y Beta se reservan para esa fase; no bloquean la implementación local.
