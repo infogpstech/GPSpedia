@@ -399,6 +399,7 @@ async function precargarDropdownOptions(options = {}) {
     })().catch(error => {
         dropdownOptions = null;
         dropdownOptionsLoadedAt = 0;
+        if (typeof window !== "undefined") window.dropdownOptions = null;
         throw error;
     }).finally(() => {
         dropdownOptionsPromise = null;
@@ -413,16 +414,27 @@ function populateModalDropdown_(select, optionKey, currentValue) {
         ? dropdownOptions[optionKey].map(value => String(value))
         : [];
     const current = String(currentValue ?? select.dataset.currentValue ?? "");
-    if (current && !available.includes(current)) available.unshift(current);
+    const currentIsOfficial = current && available.includes(current);
     select.replaceChildren();
 
-    if (available.length === 0) {
-        const placeholder = document.createElement("option");
-        placeholder.value = current;
-        placeholder.textContent = dropdownOptionsPromise ? "Cargando opciones..." : "Opciones no disponibles";
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        select.appendChild(placeholder);
+    if (current && !currentIsOfficial) {
+        const legacyOption = document.createElement("option");
+        legacyOption.value = current;
+        legacyOption.textContent = "Valor actual fuera del catálogo: " + current;
+        legacyOption.disabled = true;
+        legacyOption.selected = true;
+        select.appendChild(legacyOption);
+    }
+
+    if (!available.length) {
+        if (!current) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = dropdownOptionsPromise ? "Cargando opciones..." : "Opciones no disponibles";
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            select.appendChild(placeholder);
+        }
         select.disabled = true;
         select.dataset.currentValue = current;
         return;
@@ -436,8 +448,10 @@ function populateModalDropdown_(select, optionKey, currentValue) {
         select.appendChild(option);
     });
     select.disabled = false;
-    if (current) select.value = current;
-    select.dataset.currentValue = select.value;
+    if (currentIsOfficial) select.value = current;
+    else if (current) select.value = current;
+    else if (select.options.length > 0) select.selectedIndex = 0;
+    select.dataset.currentValue = current || select.value;
 }
 
 function refreshModalEditDropdownOptions_() {
@@ -13505,7 +13519,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             select.appendChild(option);
         });
         const current = String(currentValue || "");
-        if (current && options.includes(current)) select.value = current;
+        const matchingOption = options.find(value => String(value).toLocaleLowerCase() === current.toLocaleLowerCase());
+        if (matchingOption) select.value = matchingOption;
         select.disabled = false;
     };
     content.querySelector("#sug-ubicacion").value = String(currentCutData.ubicacion || '');
