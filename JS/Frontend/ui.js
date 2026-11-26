@@ -8921,6 +8921,23 @@ export async function openAuditDriveModal(options = {}) {
         };
         entry.status.textContent = labels[status] || 'Estado de registro no disponible';
         entry.status.title = String(message || '');
+        const association = file && file.association && typeof file.association === 'object' ? file.association : null;
+        const candidates = association && Array.isArray(association.candidates) ? association.candidates : [];
+        if (entry.relationship && association) {
+            const details = candidates.map(candidate => {
+                const years = Array.isArray(candidate.yearRanges) ? candidate.yearRanges.map(range =>
+                    (range.from || '?') + '–' + (range.to || '?')).join(', ') : '';
+                return [candidate.category, candidate.brand, candidate.model,
+                    Array.isArray(candidate.versions) && candidate.versions.length ? 'Versión: ' + candidate.versions.join(', ') : '',
+                    Array.isArray(candidate.ignitionTypes) && candidate.ignitionTypes.length ? 'Encendido: ' + candidate.ignitionTypes.join(', ') : '',
+                    years ? 'Años: ' + years : '',
+                    Array.isArray(candidate.vehicleIds) && candidate.vehicleIds.length ? 'Vehículo: ' + candidate.vehicleIds.join(', ') : 'Vehículo sin ID']
+                    .filter(Boolean).join(' · ');
+            }).join(' | ');
+            entry.relationship.textContent = details
+                ? (association.status === 'ambiguous' ? 'Asociación ambigua: ' : 'Vehículo sugerido: ') + details
+                : 'Sin coincidencia de modelo; no se asignó un vehículo automáticamente.';
+        }
         entry.card.classList.remove('is-pending', 'is-registered', 'is-blocked', 'is-error');
         if (status === 'pending') entry.card.classList.add('is-pending');
         if (status === 'confirmado') entry.card.classList.add('is-registered');
@@ -9059,7 +9076,7 @@ export async function openAuditDriveModal(options = {}) {
             footer.append(classificationBadge, persistenceStatus, retry);
             card.appendChild(footer);
             folderGroup.files.appendChild(card);
-            auditFileCardsById.set(fileId, { card, status: persistenceStatus, retry });
+            auditFileCardsById.set(fileId, { card, status: persistenceStatus, retry, relationship });
             const initialInventoryStatus = file.inventoryStatus ||
                 (classification === 'Sin uso detectado' ? 'pending' : 'not_applicable');
             updateInventoryCardState(fileId, initialInventoryStatus, file.inventoryMessage || '');
