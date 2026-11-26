@@ -7038,12 +7038,15 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #dev-tools-modal .dev-tools-modal-content {
     display: flex;
     flex-direction: column;
+    height: 90vh;
+    max-height: 90vh;
     min-height: 0;
     overflow: hidden;
 }
 #dev-tools-modal .dev-tools-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     gap: 12px;
     flex: 1 1 auto;
     width: 100%;
@@ -7423,8 +7426,13 @@ textarea.rich-text-source[hidden] { display:none !important; }
     flex-basis: auto;
 }
 @media (max-width: 760px) {
+    #dev-tools-modal .dev-tools-modal-content {
+        height: 92dvh;
+        max-height: 92dvh;
+    }
     #dev-tools-modal .dev-tools-workspace {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         gap: 6px;
     }
     #dev-tools-modal .dev-console-shared {
