@@ -359,3 +359,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - La matriz GET-only anterior comparaba repetición de cursor actual, pero no verificaba coherencia de revisiones/minRevision entre muestras, nextCursor acotado por currentRevision, reset en cursor bajo retención ni semántica de cola vacía.
 - Se amplió `RemoteCatalogFeedMatrix.mjs` con esas aserciones y un requisito de reset para cursor previo a minRevision cuando esta sea positiva. Los probes permanecen GET-only, sin payloads de eventos ni mutaciones.
 - Validación: `node --check` PASS sobre la fuente reconstruida exacta. Ejecución remota y prueba funcional de las aserciones en deployment Beta no verificadas; pendiente Actions.
+
+
+## Adenda BETA-F009 — ajuste de estabilidad ante concurrencia (2026-11-25)
+- La versión endurecida de la matriz asumía que currentRevision/minRevision permanecían idénticas durante todas las lecturas y que una consulta a la revisión inicial siempre devolvía cola vacía. Esto podía producir falsos fallos si el catálogo recibía cambios legítimos durante la prueba.
+- Se eliminó esa suposición: ahora se valida el cursor de continuación acotado por la revisión de cada respuesta, la solicitud de reset cuando cursor queda por debajo de minRevision, y respuesta sin eventos cuando resetRequired está activo. La repetición se compara como contradictoria solo cuando las revisiones y condiciones observadas permanecen estables. Se informa indicador de concurrencia.
+- Simulación offline de la lógica de aserciones: 5/5 escenarios PASS (caso normal, cambio concurrente, nextCursor fuera de rango, reset omitido bajo retención y reset con eventos). No es ejecución contra Apps Script Beta.
+- Commit de corrección: `49fce769cc0844cca3b518482411ebca4babed16`.
