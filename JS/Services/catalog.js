@@ -1229,22 +1229,83 @@ function isValidFeedbackLikeVehicleId_(value){
  if(!/^[1-9]\d{0,15}$/.test(part))return false;const n=Number(part);
  return Number.isSafeInteger(n)&&n>0&&String(n)===part&&(id===part||id==="V-"+part);
 }
-function readFeedbackLikeEventCounts_(spreadsheetRef){
- const ss=spreadsheetRef||getSpreadsheet(),sheet=ss.getSheetByName("FeedbackLikes"),counts=new Map();if(!sheet||sheet.getLastRow()<2)return counts;
- const expected=["actorKey","vehicleId","corteIndex","previousCount","targetCount","status","createdAt"],headers=sheet.getRange(1,1,1,7).getValues()[0].map(v=>String(v||"").trim());
- if(expected.some((v,i)=>headers[i]!==v))throw Error("El esquema de FeedbackLikes no coincide con el contrato de eventos.");
- const n=sheet.getLastRow()-1,ids=sheet.getRange(2,1,n,3).getValues(),statuses=sheet.getRange(2,6,n,1).getValues(),states=new Map();
- ids.forEach((row,i)=>{const status=String(statuses[i]&&statuses[i][0]||"");if(!["event","withdrawn","completed"].includes(status))return;
-  try{const actor=normalizeFeedbackLikeActorKey_(row[0]),vehicle=String(row[1]||"").trim(),cut=Number(row[2]);const part=vehicle.startsWith("V-")?vehicle.slice(2):vehicle,numeric=Number(part);
-   if(!/^[1-9]\d{0,15}$/.test(part)||!Number.isSafeInteger(numeric)||String(numeric)!==part||
-      (vehicle!==part&&vehicle!=="V-"+part)||!Number.isInteger(cut)||cut<1||cut>3)throw Error("referencia inválida");
-   const key=vehicle+"|"+cut+"|"+actor,state=states.get(key)||{vehicle,cut,completed:false,status:""};if(status==="completed")state.completed=true;state.status=status;states.set(key,state);
-  }catch(e){if(typeof console!=="undefined"&&console.warn)console.warn("FeedbackLikes: evento inválido ignorado en fila "+(i+2)+": "+String(e&&e.message||"datos incompatibles"));}
- });
- states.forEach(s=>{const key=s.vehicle+"|"+s.cut,delta=s.status==="event"&&!s.completed?1:(s.status==="withdrawn"&&s.completed?-1:0);if(delta)counts.set(key,(counts.get(key)||0)+delta);});
- return counts;
-}
+function readFeedbackLikeEventCounts_(spreadsheetRef) {
+    const ss = spreadsheetRef || getSpreadsheet();
+    const sheet = ss.getSheetByName("FeedbackLikes");
+    const counts = new Map();
+    counts.schema = "legacy-events";
+    if (!sheet || sheet.getLastRow() < 2) return counts;
 
+    const headers = sheet.getRange(1, 1, 1, Math.max(7, sheet.getLastColumn()))
+        .getValues()[0].map(value => String(value || "").trim());
+    const stateHeaders = ["actorKey", "vehicleId", "corteId", "isUseful", "createdAt", "updatedAt"];
+    const legacyHeaders = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+    const isStateSchema = stateHeaders.every((value, index) => headers[index] === value);
+    const isLegacySchema = legacyHeaders.every((value, index) => headers[index] === value);
+    if (!isStateSchema && !isLegacySchema) {
+        throw new Error("El esquema de FeedbackLikes no coincide con ningún contrato compatible de CATALOG.");
+    }
+
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, isStateSchema ? 6 : 7).getValues();
+    const states = new Map();
+    rows.forEach((row, index) => {
+        try {
+            const actor = normalizeFeedbackLikeActorKey_(row[0]);
+            const vehicle = String(row[1] || "").trim();
+            const cut = isStateSchema
+                ? Number(String(row[2] || "").trim().replace(/^corte/i, ""))
+                : Number(row[2]);
+            const part = vehicle.startsWith("V-") ? vehicle.slice(2) : vehicle;
+            const numeric = Number(part);
+            if (!/^[1-9]\d{0,15}$/.test(part) || !Number.isSafeInteger(numeric) ||
+                String(numeric) !== part || (vehicle !== part && vehicle !== "V-" + part) ||
+                !Number.isInteger(cut) || cut < 1 || cut > 3) {
+                throw new Error("referencia inválida");
+            }
+            let active;
+            if (isStateSchema) {
+                const value = row[3];
+                active = value === true || value === 1 ||
+                    String(value == null ? "" : value).trim().toLowerCase() === "true" ||
+                    String(value == null ? "" : value).trim() === "1";
+            } else {
+                const status = String(row[5] || "");
+                if (!["event", "withdrawn", "completed"].includes(status)) return;
+                const previous = states.get(vehicle + "|" + cut + "|" + actor);
+                const state = previous || { vehicle, cut, actor, completed: false, status: "" };
+                if (status === "completed") state.completed = true;
+                state.status = status;
+                states.set(vehicle + "|" + cut + "|" + actor, state);
+                return;
+            }
+            states.set(vehicle + "|" + cut + "|" + actor, { vehicle, cut, actor, active });
+        } catch (error) {
+            if (typeof console !== "undefined" && console.warn) {
+                console.warn("FeedbackLikes: fila incompatible ignorada en CATALOG, fila " + (index + 2) + ": " +
+                    String(error && error.message || "datos incompatibles"));
+            }
+        }
+    });
+
+    if (isStateSchema) {
+        counts.schema = "user-cut-state";
+        states.forEach(state => {
+            if (state.active) {
+                const key = state.vehicle + "|" + state.cut;
+                counts.set(key, (counts.get(key) || 0) + 1);
+            }
+        });
+        return counts;
+    }
+
+    states.forEach(state => {
+        const key = state.vehicle + "|" + state.cut;
+        const delta = state.status === "event" && !state.completed ? 1 :
+            (state.status === "withdrawn" && state.completed ? -1 : 0);
+        if (delta) counts.set(key, (counts.get(key) || 0) + delta);
+    });
+    return counts;
+}
 
 function tutorialEditFieldsHash_(values) {
     const payload = JSON.stringify((values || []).map(value => String(value || "")));
@@ -1362,7 +1423,12 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
     if (!vehicle) return null;
     for (let index = 1; index <= 3; index++) {
         const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
-        if (eventCount) vehicle["utilCorte" + index] = Math.max(0, (parseInt(vehicle["utilCorte" + index], 10) || 0) + eventCount);
+        if (eventCount) {
+            const storedCount = Math.max(0, parseInt(vehicle["utilCorte" + index], 10) || 0);
+            vehicle["utilCorte" + index] = feedbackLikeEventCounts.schema === "user-cut-state"
+                ? Math.max(storedCount, eventCount)
+                : storedCount + eventCount;
+        }
     }
     if (vehicle.categoria) categoryCounts[vehicle.categoria] = (categoryCounts[vehicle.categoria] || 0) + 1;
     if (vehicle.videoGuiaDesarmeUrl) {
