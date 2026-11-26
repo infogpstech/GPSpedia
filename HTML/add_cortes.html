@@ -1544,11 +1544,15 @@
                     ? "Corte guardado; reporte pendiente."
                     : "Corte agregado correctamente."); proceedToStage3(result.vehicleId);
             } catch (error) {
+                const errorMessageCode = String(error && error.message || '');
+                const diagnosticErrorCode = String(error && error.code ||
+                    (/^[A-Z][A-Z0-9_]{2,80}$/.test(errorMessageCode) ? errorMessageCode : error && error.name) ||
+                    'OperationError');
                 diagnostics.error('cut-operation.submit-failed', {
                     stage: 'submit',
                     opId: pendingOp && pendingOp.id,
                     status: pendingOp && pendingOp.status,
-                    errorCode: String(error && (error.code || error.name) || 'OperationError')
+                    errorCode: diagnosticErrorCode
                 });
                 if (pendingOp && snapshotSaved) {
                     pendingOp.status = serverConfirmed ? 'completed' : 'failed';
