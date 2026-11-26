@@ -390,3 +390,13 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Verificación estática: 12 rutas mutables comparten el helper; candidate sync está protegido; `admin.js` compila. Harness previo confirmó que la misma clave bloquea la ejecución simultánea y scopes diferentes se permiten.
 - Commit: d778cc086e603307a1567bf3a933983e258cae89.
 - Límite: no se ejecutó concurrencia real en Apps Script. El alcance se refiere a las rutas de mutación de biblioteca enumeradas; no se afirma que todas las escrituras ajenas a la biblioteca usen esta guarda.
+
+
+[2026-11-26] GP-FORM-DROPDOWNS-01 — Auditoría y corrección de selectores del formulario de alta de cortes
+- Comparación con el handler de la rama base: en la base, el catálogo se obtiene desde columnas de `Cortes`, incluyendo `configRelay1`; en la rama work, el handler dependía de la regla de validación de Categoría y de la hoja Relay existente para entregar catálogos. Esa dependencia podía dejar categorías vacías o hacer fallar toda la solicitud si Relay no estaba presente.
+- `JS/Services/catalog.js`: categorías ahora se derivan de los valores de la columna Categoría de `Cortes`, no de la regla de validación. Marcas, tipos de corte (columnas 1/2/3) y tipo de encendido también se leen de esa hoja. Relay conserva su hoja dedicada cuando hay valores, con fallback a columnas de configuración en Cortes.
+- `HTML/add_cortes.html`: eliminada caché de sesión que podía servir opciones desactualizadas; el frontend valida `status === success`, arrays y contrato, y limpia selectores al fallar, con aviso y registro diagnóstico sin exponer datos sensibles.
+- Auditoría estática de formularios activos: `HTML/add_cortes.html` es el formulario activo de alta de cortes. `HTML/users.html` no consume getDropdownData ni contiene catálogos de alta de cortes; `index.html` depende de la proyección/navigation catalog, flujo distinto. No se identificó evidencia estática de una avería adicional en esos formularios.
+- Validación de código estática: revisado el contrato de respuesta y el ruteo `getDropdownData` -> CATALOG. No se dispone de ejecución de Apps Script ni acceso a Spreadsheet en runtime desde esta sesión; la prueba Beta/deployment queda abierta.
+- Respaldo: los commits previos a la modificación preservan el contenido original en la historia de la rama de trabajo.
+- Commits: `71c7ba9f2c0022eee91772f1e450b5b3d0c8f250`, `c16f4f24ff01d6513e5814d723dadee3cdf1f413`.
