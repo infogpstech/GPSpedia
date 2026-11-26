@@ -1560,3 +1560,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — la guarda del endpoint `saveUnusedImagesInventory` ahora usa el alcance compartido `drive-inventory:shared-inventory-sheet` en vez de separar por auditId. Esto serializa registro incremental, consolidación y organización entre auditorías distintas que escriben la misma hoja. Se actualizó comentario técnico. Harness de la guarda: misma clave bloquea concurrencia; scope distinto permitido. Commit: f64cb5346c5fb28886db0e19485f893ceb755961.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — revisión del allowlist de referencias: el scanner usa solo Cortes, Tutorial (columna 3, encabezado Imagen), Relay (columna 10, encabezado imagen) y pys (columna 7, encabezado Imagen); Cortes valida sus ocho columnas de imagen. También inspecciona imágenes sobre cuadrícula en esas hojas. Harness PASS. Asociación con fixtures: versión/encendido/año selecciona vehículo único; conflicto y duplicidad sin contexto quedan ambiguous; referencias activas excluidas de sugerencias. PASS. Se revisaron salvaguardas backend de recuperar, mover, papelera, restaurar y eliminación definitiva y siete casos de capacidades frontend. Sin ejecución remota.
