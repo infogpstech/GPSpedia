@@ -788,6 +788,29 @@ function sanitizeAddCutOperation_(value) {
     });
     return clean;
 }
+function stableSerializeAddCutOperationValue_(value) {
+    if (value === null || typeof value !== 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) {
+        return '[' + value.map(item => {
+            const serialized = stableSerializeAddCutOperationValue_(item);
+            return serialized === undefined ? 'null' : serialized;
+        }).join(',') + ']';
+    }
+    const keys = Object.keys(value).filter(key => {
+        const item = value[key];
+        return item !== undefined && typeof item !== 'function' && typeof item !== 'symbol';
+    }).sort();
+    return '{' + keys.map(key =>
+        JSON.stringify(key) + ':' + stableSerializeAddCutOperationValue_(value[key])
+    ).join(',') + '}';
+}
+function getAddCutPendingStorageErrorCode_(error) {
+    const name = String(error && error.name || '');
+    if (name === 'QuotaExceededError' || Number(error && error.code) === 22) return 'PENDING_STORAGE_QUOTA_EXCEEDED';
+    if (name === 'DataCloneError') return 'PENDING_STORAGE_CLONE_FAILED';
+    if (name === 'InvalidStateError' || name === 'NotFoundError') return 'PENDING_STORAGE_UNAVAILABLE';
+    return 'PENDING_STORAGE_WRITE_FAILED';
+}
 function isValidAddCutOperationSnapshot_(operation,ownerId){
  if(!operation||typeof operation!=="object"||Array.isArray(operation))return false;
  const owner=String(ownerId||"").trim(),id=String(operation.id||"").trim();
@@ -835,14 +858,14 @@ export async function saveAddCutOperationPendingOperation(operation) {
     if (!operation || typeof operation !== 'object') return { saved: false, error: true };
     const owner = String(operation.ownerId || '').trim(), key = getAddCutOperationKey_(owner);
     const snapshot = sanitizeAddCutOperation_(operation);
-    if (!key || !isValidAddCutOperationSnapshot_(snapshot, owner)) return { saved: false, error: true, reason: 'invalid-snapshot' };
+    if (!key || !isValidAddCutOperationSnapshot_(snapshot, owner)) return { saved: false, error: true, code: 'PENDING_SNAPSHOT_INVALID' };
     try {
         const database = await initDB();
         return await new Promise((resolve, reject) => {
             const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
             const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
             let result = null, operationError = null;
-            transaction.oncomplete = () => resolve(result || { saved: false, error: true });
+            transaction.oncomplete = () => resolve(result || { saved: false, error: true, code: 'PENDING_SNAPSHOT_NO_RESULT' });
             transaction.onerror = () => reject(transaction.error || operationError || new Error('Escritura IndexedDB fallida.'));
             transaction.onabort = () => reject(transaction.error || operationError || new Error('Escritura IndexedDB abortada.'));
             const get = store.get(key);
@@ -852,7 +875,7 @@ export async function saveAddCutOperationPendingOperation(operation) {
                     String(previous.operation.id || '').trim() !== snapshot.id ||
                     String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase() ||
                     (previous.operation.status === 'completed' && snapshot.status !== 'completed'))) {
-                    result = { saved: false, conflict: true };
+                    result = { saved: false, conflict: true, code: 'PENDING_SNAPSHOT_CONFLICT' };
                     return;
                 }
                 const put = store.put({ key, operation: snapshot, updatedAt: Date.now() });
@@ -864,9 +887,9 @@ export async function saveAddCutOperationPendingOperation(operation) {
                         const saved = verify.result && verify.result.operation;
                         result = saved && isValidAddCutOperationSnapshot_(saved, owner) &&
                             saved.id === snapshot.id && saved.operationHash === snapshot.operationHash &&
-                            JSON.stringify(saved) === JSON.stringify(snapshot)
+                            stableSerializeAddCutOperationValue_(saved) === stableSerializeAddCutOperationValue_(snapshot)
                             ? { saved: true, key, operation: saved }
-                            : { saved: false, verificationFailed: true };
+                            : { saved: false, verificationFailed: true, code: 'PENDING_SNAPSHOT_VERIFY_MISMATCH' };
                     };
                 };
             };
@@ -874,7 +897,7 @@ export async function saveAddCutOperationPendingOperation(operation) {
         });
     } catch (error) {
         console.error('No se pudo persistir la operación durable de cortes:', error && error.name || 'StorageError');
-        return { saved: false, error: true };
+        return { saved: false, error: true, code: getAddCutPendingStorageErrorCode_(error) };
     }
 }
 export async function removeAddCutOperationPendingOperation(ownerId, operationId, operationHash) {
