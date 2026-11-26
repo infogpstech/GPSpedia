@@ -670,3 +670,20 @@ git rev-parse HEAD
 - El formulario de finalización permanece oculto; no se envió la solicitud ni se generó código. 0 POST/no-GET, 0 llamadas Apps Script, 0 credenciales y 0 escrituras.
 - Run `45748061081`: AUG-146 264/264 PASS y smoke UI PASS. Pages run `45748060216` SUCCESS.
 - Entrega de correo, códigos de recuperación, expiración y cambio de contraseña permanecen NO EJECUTADOS hasta disponer de identidad sintética y cleanup verificable.
+
+
+## Mapa de cobertura CI local por área Beta (run 45748061081; 2026-11-26)
+**Importante:** todos los resultados siguientes son pruebas locales con fixtures/mocks sintéticos. No equivalen a ejecución remota en Apps Script, Drive, Spreadsheet, OAuth o YouTube.
+
+| Área | Evidencia local CI | Estado remoto Beta |
+|---|---|---|
+| BETA-01 AUTH/USERS | `AuthSessionReadOptimization` 9/9; `AuthErrorPrivacy` 13/13; pruebas de actor, RBAC y revocación PASS | Health AUTH FAIL por `sessionAuthority`; login/sesiones reales NO EJECUTADOS |
+| BETA-02 CATALOG | `CatalogChangeFeed` 19/19; `CatalogBrowserReset` 11/11; `CatalogStartupIntegrity` 25/25; `CatalogTransientFeedFallback` 2/2 | Feed GET, boundaries, matriz y paginación PASS; snapshot/cache real y UI autenticada pendientes |
+| BETA-03 WRITE | `WritePhysicalTransactionContract` 7/7; `WriteOpIdLegacyLookup` 9/9; `WriteIdempotencySnapshotReuse` 9/9; `WriteVehicleIdAllocationIdempotency` 12/12 | Escrituras, concurrencia y recuperación remotas NO EJECUTADAS |
+| BETA-04 FEEDBACK/Inbox | `InboxUi` 89/89; `FeedbackInboxImageEventBatchRead` 7/7; `InboxAuditTrail` 16/16; `InboxRoleContract` 22/22; `InboxStoredXss` 30/30 | Health FEEDBACK PASS/SLOW según muestra; reportes, likes, mensajes y tutoriales remotos NO EJECUTADOS |
+| BETA-05 ADMIN | `AdminDriveScanIntegrity` 18/18; `AdminDriveAuditReferenceSnapshot` 14/14; `AdminDriveAuditCursorRecovery` 23/23; `AdminDriveAuditAssociation` 16/16; `AdminDriveAuditMetadataPersistence` 11/11; `AdminAuditTrail` 27/27 | Health ADMIN FAIL por deployment 2.7.1 vs 2.7.2; Drive remoto NO EJECUTADO |
+| BETA-06 imágenes/Drive | `AdminImageUploadPreflight` 6/6; `AdminImageUploadLedgerReadOnly` 5/5; `AdminImageUploadDriveIsolation` 7/7; `AdminImageUploadLinkedRecoveryIsolation` 6/6; `AdminImageUploadCompensationIsolation` 8/8 | Inventario, alta, permisos y cleanup Drive remotos NO EJECUTADOS |
+| BETA-07 YouTube | `YouTubeUploadClient` 12/12; `YouTubeInitIdempotencyBoundary` 14/14; `YouTubeUploadXssIntegrity` 5/5; `VideoApprovalCatalogRefreshFrontend` 6/6 | OAuth, carga, pausa/reanudación y aprobación real NO EJECUTADOS |
+| BETA-08 UI | AUG-146 264/264; Pages login y recuperación UI PASS en 1366x768, 390x844 y 320x800 | Dispositivo físico Android/PWA y roles reales NO EJECUTADOS |
+
+**Regresión global:** run `45748061081`, 542 suites, 6,450 pruebas aprobadas y 2 fallos de suite; ambos corresponden a la misma aserción AUTH `sessionAuthority` ejecutada en AUG-024 y MIG021.

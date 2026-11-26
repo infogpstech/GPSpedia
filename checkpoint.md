@@ -1323,3 +1323,13 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - No se envió la solicitud de recuperación: `recoveryRequestSubmitted=false`; no se introdujeron credenciales; 0 solicitudes no-GET, 0 llamadas Apps Script, 0 errores JS. No se modificó Logs, Users, ActiveSessions, Spreadsheet ni Drive.
 - Service regression del mismo commit: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por AUTH `sessionAuthority` (duplicado AUG-024/MIG021). El fallo continúa visible y no se ha corregido en esta fase.
 - La UI de recuperación queda validada visualmente; la entrega de correo, creación/uso/expiración del código y cambio de contraseña siguen NO EJECUTADOS por ser operaciones mutables.
+
+
+## Continuidad — mapa de cobertura local y estado de la matriz Beta (2026-11-26)
+
+- Se consolidó en `Tareas_Beta.md` la cobertura local por BETA-01..08 con nombres y conteos de suites sintéticas. Esta evidencia no se presenta como prueba remota.
+- CI run `45748061081`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por AUTH `sessionAuthority`. Playwright AUG-146 264/264 PASS y Pages smoke login/recuperación PASS (HTTP 200, 3 viewports, sin llamadas Apps Script ni POST).
+- Pages run `45748060216`: SUCCESS. Docs checkpoint run `45748213051`: Pages SUCCESS. Service-tests run `45748213813`: 542 suites, 6,450 PASS, 2 fallos AUTH; el job responsive-browser seguía en ejecución al registrar este checkpoint.
+- Las áreas remotas GET-only disponibles quedaron cubiertas: health, CATALOG feed, cursor boundaries, matriz, paginación secuencial y smoke de Pages sin backend.
+- No se ejecutaron login real, recuperación con envío, mutaciones WRITE/FEEDBACK/ADMIN, operaciones Drive/Spreadsheet ni YouTube OAuth. Los motivos de seguridad/cleanup están registrados en la sección 25.
+- El mapa local por área está en `Tareas_Beta.md`; no sustituye pruebas reales ni habilita despliegues.

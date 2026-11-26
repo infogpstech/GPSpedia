@@ -656,3 +656,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-01 — panel de recuperación, UI solamente (2026-11-26)
 **Estado: INTERFAZ VALIDADA; FLUJO REAL PENDIENTE.** Pages smoke abre el panel, valida usuario/correo, confirma que el formulario de finalización permanece oculto y regresa al login. No envía solicitud, no crea código ni cambia contraseña. 0 llamadas Apps Script y 0 escrituras.
+
+
+## MIG-URL-008 — mapa de cobertura BETA-01..08 (2026-11-26)
+**Estado: COBERTURA LOCAL DOCUMENTADA; BETA REMOTA GET-ONLY COMPLETADA.** Se mapearon suites sintéticas por área en Tareas_Beta.md. Remote GET cubre health, CATALOG feed/boundaries/matriz/paginación y Pages login/recuperación UI sin backend. AUTH y ADMIN conservan hallazgos; mutaciones y pruebas OAuth/Drive permanecen NO EJECUTADAS por falta de mecanismo verificable de identidad y cleanup.
