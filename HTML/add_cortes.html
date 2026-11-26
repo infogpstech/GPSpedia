@@ -182,6 +182,164 @@
  .image-upload-group { gap: 8px; }
 }
 @media (max-height: 520px) and (orientation: landscape) { #lightbox img { max-height: 88vh; }}
+
+
+        /* GP-ADD-CORTES-UX-01: estilos locales para editores enriquecidos y campos en móvil.
+           Esta página es independiente y no carga style.css; no importar la hoja global evita
+           aplicar reglas de modales y componentes que no pertenecen a este formulario. */
+        #stage-2 .rich-editor-toolbar,
+        #stage-3 .rich-editor-toolbar {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            margin: 0 0 6px;
+        }
+        .rich-editor-toolbar-compact {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+        }
+        .rich-editor-toolbar-compact > .rich-toolbar-icon-button,
+        .rich-editor-toolbar-compact > .rich-toolbar-dropdown,
+        .rich-editor-toolbar-compact > .rich-toolbar-color-group {
+            flex: 0 0 32px;
+            width: 32px;
+            min-width: 32px;
+            max-width: 32px;
+        }
+        .rich-editor-toolbar-compact .rich-toolbar-icon-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            min-width: 32px;
+            max-width: 32px;
+            height: 32px;
+            min-height: 32px;
+            padding: 0;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: var(--text-color);
+            background: transparent;
+            cursor: pointer;
+        }
+        .rich-editor-toolbar-compact .rich-toolbar-icon-button:hover {
+            border-color: var(--border-color);
+            background: var(--gp-color-button-bg);
+        }
+        .rich-editor-toolbar-compact .rich-toolbar-color-group,
+        .rich-editor-toolbar-compact .rich-toolbar-dropdown { position: relative; }
+        .rich-editor-toolbar-compact .rich-toolbar-color-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .rich-editor-toolbar-compact .rich-toolbar-menu {
+            position: absolute;
+            z-index: 2001;
+            top: calc(100% + 5px);
+            left: 0;
+            min-width: 150px;
+            max-width: calc(100vw - 24px);
+            max-height: min(220px, calc(100dvh - 16px));
+            overflow: auto;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            box-shadow: 0 8px 24px rgba(0,0,0,.18);
+        }
+        .rich-editor-toolbar-compact .rich-toolbar-menu[hidden] { display: none !important; }
+        .rich-editor-toolbar-compact .rich-toolbar-menu-item {
+            display: block;
+            width: 100%;
+            min-height: 34px;
+            padding: 6px 9px;
+            border: 0;
+            border-radius: 5px;
+            color: var(--text-color);
+            background: transparent;
+            text-align: left;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .rich-editor-toolbar-compact .rich-toolbar-menu-item:hover { background: var(--gp-color-button-bg); }
+        .rich-text-visual-editor {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            min-height: 128px !important;
+            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            background: var(--card-bg);
+            font: inherit;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            cursor: text;
+        }
+        .rich-text-visual-editor:empty::before {
+            content: attr(data-placeholder);
+            color: var(--gp-color-text-muted);
+            pointer-events: none;
+        }
+        .rich-text-visual-editor:focus-visible {
+            border-color: var(--gp-color-focus);
+            outline: 2px solid var(--gp-color-focus);
+            outline-offset: 1px;
+        }
+        textarea.rich-text-source[hidden] { display: none !important; }
+
+        #stage-2 .form-grid > .form-group.full-width {
+            grid-column: 1 / -1;
+            width: 100%;
+            min-width: 0;
+        }
+        #stage-2 #colorCableCorte1 {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        #stage-3 .accordion-content.form-grid {
+            grid-template-columns: minmax(0, 1fr);
+            align-items: start;
+            gap: 14px;
+        }
+        #stage-3 .accordion-content.form-grid > *,
+        #stage-3 .accordion-content.form-grid .form-group {
+            grid-column: 1 / -1;
+            width: 100%;
+            min-width: 0;
+        }
+        #stage-3 .form-group textarea { width: 100%; min-width: 0; }
+
+        @media (max-width: 760px) {
+            #stage-2 .form-grid > .form-group.full-width,
+            #stage-3 .accordion-content.form-grid > *,
+            #stage-3 .accordion-content.form-grid .form-group {
+                width: 100%;
+                min-width: 0;
+            }
+            .rich-editor-toolbar-compact { gap: 3px; padding: 3px; }
+            .rich-text-visual-editor { min-height: 140px !important; padding: 12px; }
+        }
     </style>
     <link rel="stylesheet" href="../contextual-help.css">
     <link rel="stylesheet" href="../button-system.css">
@@ -964,7 +1122,7 @@
                     const item = header.parentElement;
                     item.classList.toggle('active');
                     const content = header.nextElementSibling;
-                    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                    content.style.display = item.classList.contains('active') ? 'grid' : 'none';
                 });
             });
         }
@@ -1036,11 +1194,24 @@
         window.applySuggestion = applySuggestion;
 
         // --- STAGE 1.5: DISPLAY MATCHES ---
-        function getImageUrl(url, size = 1000) {
-            if (!url) return '';
-            const match = url.match(/id=([^&]+)/);
-            const fileId = match ? match[1] : url;
-            if (fileId.length > 50 || fileId.includes('/')) return url;
+        const IMAGE_FALLBACK_DATA_URL_ = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#eef0f2"/><path d="M150 170l35-38 28 29 22-23 40 48H125z" fill="#c2c8ce"/><circle cx="175" cy="100" r="17" fill="#c2c8ce"/><text x="200" y="225" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#68717a">Imagen no disponible</text></svg>'
+        );
+
+        function getImageUrl(value, size = 1000) {
+            if (typeof value !== 'string' || !value.trim()) return IMAGE_FALLBACK_DATA_URL_;
+            const source = value.trim();
+            if (/^(?:blob:|data:image\/)/i.test(source)) return source;
+            let fileId = source;
+            if (/^https?:\/\//i.test(source)) {
+                const isDriveUrl = /^https?:\/\/(?:drive\.google\.com|drive\.usercontent\.google\.com)(?:[:/])/i.test(source);
+                if (!isDriveUrl) return source;
+                const queryMatch = source.match(/[?&]id=([A-Za-z0-9_-]+)/i);
+                const pathMatch = source.match(/\/(?:file\/)?d\/([A-Za-z0-9_-]+)/i);
+                fileId = queryMatch ? queryMatch[1] : (pathMatch ? pathMatch[1] : '');
+                if (!fileId) return IMAGE_FALLBACK_DATA_URL_;
+            }
+            if (!/^[A-Za-z0-9_-]+$/.test(fileId)) return IMAGE_FALLBACK_DATA_URL_;
             return `https://lh3.googleusercontent.com/d/${fileId}`;
         }
 
@@ -1056,7 +1227,7 @@
                                 <i class="fas fa-check-circle"></i>
                                 <span>Corte ${i}: ${type}</span>
                             </div>
-                            ${imgUrl ? `<img src="${getImageUrl(imgUrl, 400)}" class="cut-item-img" onclick="window.abrirLightbox('${getImageUrl(imgUrl, 1000)}', 'lightbox-img')" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">` : ''}
+                            ${imgUrl ? `<img src="${getImageUrl(imgUrl, 400)}" class="cut-item-img" alt="Imagen del corte ${i}" loading="lazy" decoding="async" onclick="window.abrirLightbox('${getImageUrl(imgUrl, 1000)}', 'lightbox-img')" onerror="this.onerror=null;this.src='${IMAGE_FALLBACK_DATA_URL_}'">` : ''}
                         </div>`;
                 }
             }
@@ -1130,7 +1301,7 @@
 
                 card.innerHTML = `
                     <div class="match-card-header">
-                        <img src="${vehicleImg}" class="match-card-img" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">
+                        <img src="${vehicleImg}" class="match-card-img" alt="Imagen del vehículo ${match.marca} ${match.modelo}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${IMAGE_FALLBACK_DATA_URL_}'">
                         <div class="match-card-info">
                             <h4>${match.marca} ${match.modelo} (${yearRange})</h4>
                             <p><strong>Encendido:</strong> ${match.tipoEncendido}</p>
