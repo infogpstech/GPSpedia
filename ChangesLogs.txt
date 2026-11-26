@@ -1490,3 +1490,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — eliminar thumbnail Drive del modal iOS
 - `index.html`: reemplazado el thumbnail remoto de Drive por `Images/icon-v3-512x512.png`, recurso local ya cacheado por PWA.
 - `JS/Tests/OfflineBrandAssets.mjs`: verificación de fallback local y ausencia de Drive en el modal iOS.
+
+
+## 2026-11-26 — fallback de imagen del modal iOS
+- `index.html`: el modal de instalación iOS utiliza el icono local del App Shell en vez del thumbnail de Drive.
+- `OfflineBrandAssets.mjs`: aserción nueva; 5/5 PASS en run `45757156335`.

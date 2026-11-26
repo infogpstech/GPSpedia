@@ -592,3 +592,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se sustituyó el thumbnail remoto de Drive del modal de instalación iOS en `index.html` por `Images/icon-v3-512x512.png`, ya incluido en CORE_ASSETS.
 - `OfflineBrandAssets.mjs` ahora exige que el modal use el recurso local y no referencie Drive.
 - La validación browser posterior debe confirmar que desaparece `/thumbnail` del listado de solicitudes fallidas offline. La hoja de estilos Font Awesome de cdnjs sigue siendo externa y puede dejar iconos sin estilo sin conexión.
+
+
+## BETA-F022 — resultado tras fallback local del modal iOS (run 45757156335)
+- `index.html` ya no solicita el thumbnail Drive del modal iOS; `OfflineBrandAssets` pasó 5/5 y el archivo usa `Images/icon-v3-512x512.png` del precache.
+- El smoke offline frío aún registra `/thumbnail` y Font Awesome CDN como solicitudes fallidas. La búsqueda en la rama identifica otra referencia a `drive.google.com/thumbnail` en `HTML/add_cortes.html` (HTML de aviso del testigo del motor, línea 1261); ese es el residual Drive que queda por revisar.
+- Offline frío y caliente continúan PASS para login: HTTP 200, SW controlador, login visible, `missingPrecacheModules=[]`, `missingCoreAssets=[]`, 49 core + 4 opcionales HTTP 200, 0 pageErrors, 0 no-GET y 0 llamadas Apps Script. En el escenario caliente no quedan solicitudes fallidas.
+- F022 permanece abierto como deuda visual no bloqueante: recurso ilustrativo de testigo en `HTML/add_cortes.html` y CSS Font Awesome CDN no están disponibles en la primera desconexión. No reabre F020.

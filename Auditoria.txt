@@ -193,3 +193,9 @@
 2026-11-26 | BETA-F022 — recurso de imagen local
 - `index.html`: imagen del modal iOS ahora usa `Images/icon-v3-512x512.png` ya precargado por SW, en lugar de `/thumbnail` de Drive.
 - `OfflineBrandAssets.mjs` agrega una aserción para impedir que el modal dependa de Drive. Pendiente Actions/browser para confirmar desaparición de la solicitud offline.
+
+
+2026-11-26 | BETA-F022 — verificación posterior del fallback iOS
+- `OfflineBrandAssets.mjs` 5/5 PASS; el modal iOS usa el logo local cacheado.
+- Run `45757156335`: PWA cold/warm PASS, 49/49 core + 4/4 opcionales HTTP 200, login visible offline frío/caliente, 0 pageErrors/no-GET/Apps Script. Cold failedRequests conserva Font Awesome CDN y `/thumbnail`; warm failedRequests vacío.
+- La referencia restante de Drive se localiza en `HTML/add_cortes.html` (testigo motor). F022 sigue como residual visual no bloqueante.
