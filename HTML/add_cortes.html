@@ -1488,7 +1488,7 @@
                     requestData, sourceInboxItemId, status: 'processing'
                 };
                 const saved = await saveAddCutOperationPendingOperation(pendingOp);
-                if (!saved || saved.saved !== true) throw new Error('PENDING_SNAPSHOT_NOT_VERIFIED');
+                if (!saved || saved.saved !== true) throw new Error(saved && saved.code || 'PENDING_SNAPSHOT_NOT_VERIFIED');
                 snapshotSaved = true;
                 const activeSession = getCurrentSessionForOwner(pendingOp.ownerId);
                 const checkRes = state.opIdRequiresServerCheck === false
