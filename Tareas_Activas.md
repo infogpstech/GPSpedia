@@ -1025,3 +1025,15 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Verificación estática: 12 rutas mutables comparten la guarda; sincronización de candidatos también protegida; `admin.js` compila. PASS.
 - Commit: `d778cc086e603307a1567bf3a933983e258cae89`.
 - La coordinación concurrente real entre solicitudes sigue sin probarse en Apps Script; la implementación local y el harness de exclusión están verificados.
+
+
+## GP-FORM-DROPDOWNS-01 — Reparar y auditar catálogos de formularios (2026-11-26)
+- [x] Auditar `HTML/add_cortes.html` frente al flujo de `add_cortes.html` en la rama base.
+- [x] Auditar lectura de catálogos en CATALOG: categoría, marca, tipo de corte, encendido y configuración de relay.
+- [x] Corregir `handleGetDropdownData` para leer categorías directamente desde la columna Categoría de `Cortes` y mantener lectura de los demás valores de la hoja; permitir fallback a las configuraciones de relay almacenadas en `Cortes` si Relay está ausente/vacía.
+- [x] Eliminar caché local de catálogos del formulario de alta, validar el contrato de respuesta y limpiar selectores/avisar en error.
+- [ ] Validar el servicio desplegado y la carga de valores en Beta (requiere acceso al deployment/entorno real).
+- [ ] Confirmar lectura de la Spreadsheet en ejecución y verificar todos los demás formularios tras la validación Beta.
+- Alcance de auditoría: `HTML/add_cortes.html`, `HTML/users.html`, `index.html`, `JS/Frontend/api-config.js`, `JS/Services/catalog.js`. No se encontraron otros formularios HTML activos que soliciten catálogos mediante `getDropdownData`; users.html e index.html usan otros flujos, revisados estáticamente sin evidencia de fallo de listas en este incidente.
+- Cambios: commits `71c7ba9f2c0022eee91772f1e450b5b3d0c8f250` y `c16f4f24ff01d6513e5814d723dadee3cdf1f413`.
+- Pendiente de deployment real: no se declara éxito funcional en producción/Beta sin respuesta comprobada del servicio Apps Script.
