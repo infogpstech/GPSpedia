@@ -1149,3 +1149,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Feed CATALOG cursor0/limit1: revision5, minRevision1, 1 cambio, hasMore=true; cursor5/limit1: 0 cambios, hasMore=false. No se registró contenido del evento ni se hicieron mutaciones.
 - Latencias feed 2.374/2.381s; F011 documentado. Aún faltan pruebas de reset, cursor fuera de rango, retención y paginación multievento.
 - Health en run adicional: ADMIN 2.488s SLOW, versión deployment 2.7.1; se confirma recurrencia F009/F010. Otros cinco servicios PASS.
+
+
+## Beta read-only — CATALOG boundaries (2026-11-26)
+- Implementado e integrado probe de cursor boundaries `JS/Tests/RemoteCatalogFeedBoundaries.mjs`; workflow health actualizado.
+- Run 45730637687 SUCCESS sobre commit d529d8ee0dd6e5d31589450471b5733ec7647930: seis servicios disponibles; CATALOG tail/futuro/negativo/malformed/limit edge validado mediante GET.
+- Cursor futuro genera resetRequired y cursor actual; cursor inválido y límites 0/51 rechazados. Sin escrituras ni deployment.
+- ADMIN 2.7.1 continúa SLOW (2628 ms); AUTH también superó 2 s en esta muestra (2003 ms). F009/F010 y seguimiento latencia permanecen.
+- Siguiente: análisis performance/contrato ADMIN, revisar Feed reset/retención con escenarios controlados adicionales; luego iniciar flujo AUTH y otras operaciones únicamente con fixtures Beta aisladas y estrategia ownership/cleanup.
