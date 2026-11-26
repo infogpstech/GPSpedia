@@ -346,3 +346,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Integración en `.github/workflows/deployed-service-health.yml`; el push de ambos archivos activa el workflow restringido a la rama de trabajo. Commit de integración: `52386ae0b6fdf0e593c9b9e53e8ec45d7af877a5`; commit previo que añadió el probe: `4fef0a34000b0e830bbf2ac383f29b3305f0073e`.
 - La referencia de la rama fue verificada en ese SHA. La consulta de status inmediatamente posterior devolvió `pending` sin checks asociados; el resultado de Actions aún no está disponible mediante las consultas GET permitidas. No se afirma que el probe haya ejecutado.
 - Alcance: ampliar evidencia de cursor/retención/repetibilidad sin mutar datos Beta. Los escenarios que exigen crear/limpiar registros o Drive siguen fuera de esta prueba read-only.
+
+
+## 2026-11-25 — Validación estática del runner matrix y obstáculo de ejecución
+- Se recuperó la fuente publicada de `RemoteCatalogFeedMatrix.mjs` y se verificó su sintaxis con Node.js 22 local (`node --check`): PASS. Esto no ejecuta el probe ni representa una lectura remota.
+- Se intentó consultar el status/checks del commit de integración; el status devolvió `pending`, sin checks asociados. El conector GitHub disponible no expone la consulta de workflow runs para pushes y sus fetches están restringidos a endpoints autorizados. El entorno shell local tampoco resuelve `api.github.com` (error DNS), por lo que no puede consultar Actions ni invocar Apps Script directamente desde aquí.
+- La nueva prueba sigue integrada en el workflow por push y `workflow_dispatch`; el resultado remoto permanece sin verificar. No se manipularon datos ni se intentó un deployment.
+- Continuar ampliando tests read-only sin inventar resultados; evitar workflows que requieran endpoint externo hasta que se obtenga evidencia verificable.
