@@ -4269,8 +4269,21 @@ function ensureUsefulState_(user){
  }).catch(error=>{
   if(!local){
    console.error("No se pudo recuperar el estado de útiles:",error);
-   
-   return false;
+   // La lectura no debe bloquear una escritura idempotente. Si el estado remoto
+   // no está disponible, se usa el último estado confirmado conocido (o vacío)
+   // y se permite enviar el estado deseado; FEEDBACK resolverá el estado real.
+   const confirmed=usefulConfirmed_.get(c.userId)||[];
+   usefulConfirmed_.set(c.userId,confirmed.slice());
+   setState({likedCortes:confirmed.slice()});
+   usefulPending_.forEach(p=>{
+    if(String(p.userId)===c.userId)setState(applyOptimisticUsefulState(getState(),p.vehicleId,p.corteIndex,p.isUseful));
+   });
+   usefulReadySessions_.add(session);
+   saveUsefulCache_(c.userId);
+   syncUsefulControls_();
+   const ids=new Set(Array.from(document.querySelectorAll(".util-btn[data-useful-vehicle-id]")).map(b=>b.dataset.usefulVehicleId));
+   ids.forEach(v=>[1,2,3].forEach(i=>syncUsefulCount_(v,i)));
+   return true;
   }
   console.warn("No se pudo actualizar el estado remoto de útiles; se conserva la copia local:",error);
   return true;
