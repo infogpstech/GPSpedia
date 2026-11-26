@@ -197,3 +197,7 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pruebas remotas y persistencia real: NO EJECUTADAS. No se escribió Spreadsheet ni se desplegaron Apps Script. Validación pendiente: navegador desplegado, estado FEEDBACK tras recarga, contador CATALOG tras recarga y repetición de doble clic/cambios rápidos.
 - La fase Beta permanece cerrada. Próximo paso: confirmar Pages SUCCESS del HEAD documental/código; después prueba funcional real con usuario y vehículo/corte autorizados, verificando antes/después en FEEDBACK y CATALOG.
 
+
+
+- Registro de tareas sincronizado: `Tareas_Activas.md` incluye la incidencia `GP-UTIL-BUTTON-STATE-REVERT-02` y su causa/corrección. Commit documental: `db4afdf06967b7f69fe5242305711cf101cb5b02`. Se mantiene la validación de navegador/FEEDBACK/CATALOG como pendiente; no se abrió Beta.
+
