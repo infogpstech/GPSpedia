@@ -51,7 +51,7 @@ const helpersSource = uiSource.slice(parserStart, embedEnd).replace(/export func
 const youtube = new Function("URL", helpersSource +
     "\nreturn { getValidatedYouTubeVideoId, getValidatedYouTubeVideoEmbedUrl };")(URL);
 
-console.log("CATALOG tutorial snapshot: POST getCatalogData read-only; forceRefresh=true para evitar caché heredada.");
+console.log("CATALOG tutorial snapshot: POST getCatalogData read-only; forceRefresh=true.");
 const response = await fetch(catalogUrl, {
     method: "POST",
     redirect: "follow",
@@ -70,8 +70,7 @@ if (!catalog || catalog.status !== "success" || !catalog.data || !Array.isArray(
 function classify(raw) {
     try {
         const url = new URL(raw);
-        const host = url.hostname.toLowerCase();
-        if (host === "youtu.be") return "short";
+        if (url.hostname.toLowerCase() === "youtu.be") return "short";
         if (url.pathname.startsWith("/shorts/")) return "shorts";
         if (url.pathname === "/watch") return "watch";
         return "other";
@@ -99,31 +98,66 @@ const viewports = [
     { name: "mobile", width: 390, height: 844, isMobile: true }
 ];
 
-async function inspectPlayer(page) {
-    return page.evaluate(() => {
+async function collectNetwork(page) {
+    const failed = new Set();
+    const badResponses = new Set();
+    const isMediaHost = host => /youtube|googlevideo|ytimg|googleusercontent/.test(host);
+    page.on("requestfailed", request => {
+        try {
+            const host = new URL(request.url()).hostname;
+            if (isMediaHost(host)) failed.add(host);
+        } catch (ignored) {}
+    });
+    page.on("response", response => {
+        try {
+            const host = new URL(response.url()).hostname;
+            if (isMediaHost(host) && response.status() >= 400) badResponses.add(host + ":" + response.status());
+        } catch (ignored) {}
+    });
+    return { failed, badResponses };
+}
+
+async function playerDiagnostics(frame, network) {
+    const data = await frame.evaluate(() => {
         const player = document.getElementById("movie_player");
         let state = null, hasVideoData = false;
         try {
             if (player && typeof player.getPlayerState === "function") state = player.getPlayerState();
             if (player && typeof player.getVideoData === "function") {
-                const data = player.getVideoData();
-                hasVideoData = Boolean(data && data.video_id);
+                const videoData = player.getVideoData();
+                hasVideoData = Boolean(videoData && videoData.video_id);
             }
-        } catch (error) {}
-        const errorNode = document.querySelector(".ytp-error-content-wrap, .ytp-error");
+        } catch (ignored) {}
+        const errorSelectors = [
+            ".ytp-error-content-wrap", ".ytp-error-message",
+            ".ytp-error-message-container", "#player-unavailable"
+        ];
+        const errorText = errorSelectors.map(selector => {
+            const element = document.querySelector(selector);
+            return element ? String(element.innerText || "").trim() : "";
+        }).filter(Boolean).join(" | ").slice(0, 220);
+        const bodyText = String(document.body ? document.body.innerText : "");
+        const errorMatch = bodyText.match(/video unavailable|private video|embedding disabled|playback on other websites|sign in to confirm|player configuration error|error 153|error 101|error 150/i);
         const video = document.querySelector("video");
+        const playButton = document.querySelector(".ytp-large-play-button");
         return {
             state,
             hasVideoData,
-            errorText: errorNode ? String(errorNode.innerText || "").trim().slice(0, 180) : "",
+            errorText,
+            bodyErrorText: errorMatch ? errorMatch[0] : "",
+            playButtonCount: document.querySelectorAll(".ytp-large-play-button").length,
+            playButtonVisible: Boolean(playButton && playButton.getClientRects().length),
             videoReadyState: video ? video.readyState : null,
             videoPaused: video ? video.paused : null,
             videoErrorCode: video && video.error ? video.error.code : null
         };
     });
+    data.failedRequestHosts = Array.from(network.failed);
+    data.badResponseHosts = Array.from(network.badResponses);
+    return data;
 }
 
-async function tryPlayback(video, viewport, attempt) {
+async function tryEmbedPlayback(video, viewport, attempt) {
     const context = await browser.newContext({
         viewport: { width: viewport.width, height: viewport.height },
         deviceScaleFactor: 1,
@@ -134,6 +168,7 @@ async function tryPlayback(video, viewport, attempt) {
     try {
         const page = await context.newPage();
         page.setDefaultNavigationTimeout(30000);
+        const network = await collectNetwork(page);
         await page.goto("https://infogpstech.github.io/GPSpedia/", {
             waitUntil: "domcontentloaded", timeout: 30000
         });
@@ -158,14 +193,14 @@ async function tryPlayback(video, viewport, attempt) {
         }, embedUrl);
         await page.waitForFunction(() =>
             Array.from(document.querySelectorAll("iframe"))
-                .some(iframe => /youtube\.com\/embed\//.test(iframe.src)),
+                .some(iframe => iframe.src.includes("youtube.com/embed/")),
             null, { timeout: 15000 }
         );
-        let frame = page.frames().find(candidate => /youtube\.com\/embed\//.test(candidate.url()));
+        let frame = page.frames().find(candidate => candidate.url().includes("youtube.com/embed/"));
         const frameDeadline = Date.now() + 15000;
         while (!frame && Date.now() < frameDeadline) {
             await page.waitForTimeout(250);
-            frame = page.frames().find(candidate => /youtube\.com\/embed\//.test(candidate.url()));
+            frame = page.frames().find(candidate => candidate.url().includes("youtube.com/embed/"));
         }
         if (!frame) throw new Error("El iframe YouTube no creó un frame navegable.");
         await frame.waitForFunction(() => {
@@ -182,6 +217,11 @@ async function tryPlayback(video, viewport, attempt) {
         }
         await frame.evaluate(() => {
             const player = document.getElementById("movie_player");
+            const videoData = player && typeof player.getVideoData === "function" ? player.getVideoData() : null;
+            if (player && player.getPlayerState() === -1 && videoData && videoData.video_id &&
+                typeof player.loadVideoById === "function") {
+                player.loadVideoById(videoData.video_id);
+            }
             if (player && typeof player.mute === "function") player.mute();
             if (player && typeof player.playVideo === "function") player.playVideo();
         });
@@ -189,31 +229,10 @@ async function tryPlayback(video, viewport, attempt) {
             await frame.waitForFunction(() => {
                 const player = document.getElementById("movie_player");
                 return player && player.getPlayerState() === 1;
-            }, null, { timeout: 15000 });
+            }, null, { timeout: 18000 });
         } catch (error) {
-            const diagnostics = await frame.evaluate(() => {
-                const player = document.getElementById("movie_player");
-                let state = null, hasVideoData = false;
-                try {
-                    if (player && typeof player.getPlayerState === "function") state = player.getPlayerState();
-                    if (player && typeof player.getVideoData === "function") {
-                        const data = player.getVideoData();
-                        hasVideoData = Boolean(data && data.video_id);
-                    }
-                } catch (ignored) {}
-                const errorNode = document.querySelector(".ytp-error-content-wrap, .ytp-error");
-                const video = document.querySelector("video");
-                return {
-                    state,
-                    hasVideoData,
-                    errorText: errorNode ? String(errorNode.innerText || "").trim().slice(0, 180) : "",
-                    videoReadyState: video ? video.readyState : null,
-                    videoPaused: video ? video.paused : null,
-                    videoErrorCode: video && video.error ? video.error.code : null
-                };
-            });
-            console.log("DIAGNOSTIC playback attempt " + attempt + " " + viewport.name + ": " +
-                JSON.stringify(diagnostics));
+            console.log("DIAGNOSTIC embed attempt " + attempt + " " + viewport.name + ": " +
+                JSON.stringify(await playerDiagnostics(frame, network)));
             return false;
         }
         await frame.waitForTimeout(1000);
@@ -222,30 +241,78 @@ async function tryPlayback(video, viewport, attempt) {
             return Boolean(player && player.getPlayerState() === 1);
         });
         if (!playing) {
-            console.log("DIAGNOSTIC playback attempt " + attempt + " " + viewport.name +
-                ": player left playing state.");
+            console.log("DIAGNOSTIC embed attempt " + attempt + " " + viewport.name + ": " +
+                JSON.stringify(await playerDiagnostics(frame, network)));
             return false;
         }
         await frame.evaluate(() => document.getElementById("movie_player").pauseVideo());
-        console.log("PASS YouTube playback attempt " + attempt + " " + video.kind +
+        console.log("PASS YouTube embed playback attempt " + attempt + " " + video.kind +
             " " + viewport.name + " (" + viewport.width + "x" + viewport.height + ")");
         return true;
     } catch (error) {
         const message = String(error && error.message || error).split("\n")[0].slice(0, 180);
-        console.log("DIAGNOSTIC navigation/player attempt " + attempt + " " + viewport.name + ": " + message);
+        console.log("DIAGNOSTIC embed navigation attempt " + attempt + " " + viewport.name + ": " + message);
         return false;
     } finally {
         await context.close();
     }
 }
+
+async function tryDirectWatch(video, viewport, attempt) {
+    const context = await browser.newContext({
+        viewport: { width: viewport.width, height: viewport.height },
+        deviceScaleFactor: 1,
+        isMobile: viewport.isMobile,
+        hasTouch: viewport.isMobile,
+        locale: "en-US"
+    });
+    try {
+        const page = await context.newPage();
+        page.setDefaultNavigationTimeout(30000);
+        const network = await collectNetwork(page);
+        await page.goto("https://www.youtube.com/watch?v=" + video.videoId, {
+            waitUntil: "domcontentloaded", timeout: 30000
+        });
+        await page.waitForFunction(() => {
+            const player = document.getElementById("movie_player");
+            return player && typeof player.getPlayerState === "function" &&
+                typeof player.playVideo === "function";
+        }, null, { timeout: 15000 });
+        const playButton = page.locator(".ytp-large-play-button");
+        if (await playButton.isVisible().catch(() => false)) {
+            await playButton.click({ timeout: 3000 }).catch(() => {});
+        }
+        await page.evaluate(() => {
+            const player = document.getElementById("movie_player");
+            if (player && typeof player.mute === "function") player.mute();
+            if (player && typeof player.playVideo === "function") player.playVideo();
+        });
+        await page.waitForFunction(() => {
+            const player = document.getElementById("movie_player");
+            return player && player.getPlayerState() === 1;
+        }, null, { timeout: 15000 });
+        console.log("PASS direct YouTube watch playback attempt " + attempt + " " + viewport.name);
+        return true;
+    } catch (error) {
+        const message = String(error && error.message || error).split("\n")[0].slice(0, 160);
+        console.log("DIAGNOSTIC direct watch attempt " + attempt + " " + viewport.name + ": " + message);
+        return false;
+    } finally {
+        await context.close();
+    }
+}
+
 let successfulVideo = null;
 try {
     for (let index = 0; index < uniqueVideos.length; index++) {
         const video = uniqueVideos[index];
         const attempt = index + 1;
-        const desktopPass = await tryPlayback(video, viewports[0], attempt);
-        if (!desktopPass) continue;
-        const mobilePass = await tryPlayback(video, viewports[1], attempt);
+        const desktopPass = await tryEmbedPlayback(video, viewports[0], attempt);
+        if (!desktopPass) {
+            if (index === 0) await tryDirectWatch(video, viewports[0], attempt);
+            continue;
+        }
+        const mobilePass = await tryEmbedPlayback(video, viewports[1], attempt);
         if (mobilePass) {
             successfulVideo = video;
             break;
@@ -255,7 +322,7 @@ try {
     await browser.close();
 }
 if (!successfulVideo) {
-    console.error("Resultado YouTube playback: 0 videos confirmados en escritorio y móvil; revisar diagnóstico del reproductor/embebido.");
+    console.error("Resultado YouTube playback: no se confirmó reproducción embebida en escritorio y móvil; revisar permisos del vídeo, player y restricciones del entorno.");
     process.exitCode = 1;
 } else {
     const id = successfulVideo.videoId;
@@ -268,5 +335,5 @@ if (!successfulVideo) {
     if (normalized.some(value => value !== normalized[0] || !value)) {
         throw new Error("Las variantes watch/short/shorts no convergen al mismo embed.");
     }
-    console.log("PASS reproducción real en desktop y móvil; watch/short/shorts convergen al mismo embed canónico.");
+    console.log("PASS reproducción real embebida en desktop y móvil; watch/short/shorts convergen al mismo embed canónico.");
 }
