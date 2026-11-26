@@ -8725,7 +8725,25 @@ export async function openReplacedImagesModal(options = {}) {
     if (folderSelect) folderSelect.onchange = updateSelectionToolbar;
     if (bulkMoveButton) bulkMoveButton.onclick = () => { const items = getSelectedItems(); if (!folderSelect || !folderSelect.value) { logDeveloperOperation_("[IMÁGENES] Selecciona una carpeta destino.", "warning"); return; } const option = folderSelect.options[folderSelect.selectedIndex], targetName = option ? option.textContent : "la carpeta seleccionada"; void runBulkOperation(bulkMoveButton, "Moviendo...", items, "¿Mover " + items.length + " imágenes a " + targetName + "? El servidor validará cada archivo por separado.", async item => { await routeAction("moveReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo, targetFolderId: folderSelect.value }); }); };
     if (bulkTrashButton) bulkTrashButton.onclick = () => { const items = getSelectedItems(); void runBulkOperation(bulkTrashButton, "Enviando...", items, "¿Enviar " + items.length + " imágenes a la papelera de Google Drive? Cada archivo se volverá a validar antes del movimiento.", async item => { await routeAction("deleteReplacedImage", { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo }); }); };
-    if (bulkRestoreButton) bulkRestoreButton.onclick = () => { const items = getSelectedItems(); const allFromTrash = items.length > 0 && items.every(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRestoreFromTrash); const confirmation = allFromTrash ? "¿Restaurar " + items.length + " archivos desde la papelera de Drive? No se asociarán automáticamente a campos del Spreadsheet." : "¿Restaurar " + items.length + " imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial."; void runBulkOperation(bulkRestoreButton, "Restaurando...", items, confirmation, async item => { const capabilities = getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role); const action = capabilities.canRestoreFromTrash ? "restoreReplacedImageFromTrash" : "recoverReplacedImage"; await routeAction(action, { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo }); }); };
+    if (bulkRestoreButton) bulkRestoreButton.onclick = () => {
+        const items = getSelectedItems();
+        const trashItems = items.filter(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRestoreFromTrash);
+        const historicalItems = items.filter(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRecover);
+        let confirmation = '';
+        if (trashItems.length && historicalItems.length) {
+            confirmation = '¿Restaurar ' + trashItems.length + ' archivos desde la papelera de Drive (sin reasociarlos a campos) y ' +
+                historicalItems.length + ' imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial.';
+        } else if (trashItems.length) {
+            confirmation = '¿Restaurar ' + trashItems.length + ' archivos desde la papelera de Drive? No se asociarán automáticamente a campos del Spreadsheet.';
+        } else {
+            confirmation = '¿Restaurar ' + historicalItems.length + ' imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial.';
+        }
+        void runBulkOperation(bulkRestoreButton, "Restaurando...", items, confirmation, async item => {
+            const capabilities = getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role);
+            const action = capabilities.canRestoreFromTrash ? "restoreReplacedImageFromTrash" : "recoverReplacedImage";
+            await routeAction(action, { ...getDeveloperSessionPayload(), id_reemplazo: item.id_reemplazo });
+        });
+    };
 
     if (createFolderBtn) createFolderBtn.onclick = async () => {
         const name = newFolderInput ? newFolderInput.value.trim() : '';
