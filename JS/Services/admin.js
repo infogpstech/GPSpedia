@@ -758,7 +758,7 @@ function collectCortesImageReferences(includeLocations = true) {
                         if (!candidate) return;
                         const ids = extractDriveFileIds(candidate);
                         ids.forEach(id => cellIds.add(id));
-                        if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
+                if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
                     });
                     cellIds.forEach(id => {
                         if (includeLocations) {
