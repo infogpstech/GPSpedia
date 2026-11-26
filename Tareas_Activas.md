@@ -1176,3 +1176,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Límite: Pages build/deploy no equivale a una prueba de alta; no se ejecutó Apps Script, Spreadsheet, Drive, ni navegador/IndexedDB real.
 
 - [x] Actualizar `README.md` para reflejar las rutas reales `HTML/add_cortes.html` y `HTML/users.html`; comparación contra respaldo confirma solo esas dos rutas.
+
+- [x] Code Review completado y respaldos temporales retirados tras comparar cada archivo. Commits de limpieza: `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`.
