@@ -1157,3 +1157,10 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Cursor futuro genera resetRequired y cursor actual; cursor inválido y límites 0/51 rechazados. Sin escrituras ni deployment.
 - ADMIN 2.7.1 continúa SLOW (2628 ms); AUTH también superó 2 s en esta muestra (2003 ms). F009/F010 y seguimiento latencia permanecen.
 - Siguiente: análisis performance/contrato ADMIN, revisar Feed reset/retención con escenarios controlados adicionales; luego iniciar flujo AUTH y otras operaciones únicamente con fixtures Beta aisladas y estrategia ownership/cleanup.
+
+
+## Continuidad Beta — ADMIN latencia
+- Nuevo probe repetido read-only `JS/Tests/RemoteAdminLatency.mjs` integrado al workflow.
+- Run 45731465785 SUCCESS: ADMIN v2.7.1, 5 muestras 2556/2206/1390/1480/1622 ms; mediana 1622; 2 muestras >=2s. Fuente en branch declara 2.7.2, diferencia de deployment confirmada.
+- No deploy. Variabilidad observable, sin atribución de causa. Feed CATALOG y límites siguen PASS en este run.
+- Próximo: plan de pruebas AUTH read-only y preparar fixture aislado para sesión sintética solo tras confirmar los mecanismos de creación/limpieza y roles.
