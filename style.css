@@ -7014,20 +7014,6 @@ textarea.rich-text-source[hidden] { display:none !important; }
  #dashboard-modal .activity-log-detail-cell {padding:7px 6px;}
 }
 
-/* GP-ADMIN-DRIVE-SCAN-MODAL-01 — consola de progreso paralela dentro del modal de escaneo. */
-#audit-drive-workspace .info-modal-content { display:flex; flex-direction:column; min-height:0; max-height:calc(100dvh - 24px); overflow-y:auto; }
-#audit-drive-scan-workspace { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; min-height:100px; max-height:30vh; margin:8px 0 12px; border:1px solid var(--border-color); border-radius:9px; background:var(--card-bg); overflow:hidden; }
-#audit-drive-scan-console { min-height:100px; max-height:30vh; overflow:auto; padding:8px 10px; font:.78rem/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; overflow-wrap:anywhere; color:var(--text-color); }
-.audit-drive-scan-log-entry { padding:2px 0; border-bottom:1px solid color-mix(in srgb,var(--border-color) 55%,transparent); }
-.audit-drive-scan-log-progress { color:var(--text-medium); }
-.audit-drive-scan-log-info { color:var(--text-color); }
-.audit-drive-scan-log-success { color:#23865b; }
-.audit-drive-scan-log-warning { color:#a36c00; }
-.audit-drive-scan-log-error { color:#c33; }
-#audit-drive-results-container { min-height:120px; max-height:40vh !important; overflow:auto; }
-@media (max-width:600px) { #audit-drive-scan-workspace,#audit-drive-scan-console { max-height:26vh; } #audit-drive-results-container { max-height:34vh !important; } }
-@media (prefers-reduced-motion:reduce) { #audit-drive-scan-console { scroll-behavior:auto; } }
-
 /* Feedback visual inmediato y persistente del estado útil */
 .feedback-btn-overlay.util-btn { transition: background-color .2s ease, transform .18s ease, box-shadow .18s ease; }
 .feedback-btn-overlay.util-btn.liked, .feedback-btn-overlay.util-btn.liked:hover { background-color: var(--gp-color-success) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gp-color-success) 35%, transparent); }
