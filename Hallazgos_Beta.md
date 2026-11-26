@@ -211,3 +211,91 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - **AUG-150:** confirmado en `ChangesLogs.txt` con registro de corrección/cierre (constantes `INBOX_AUDIT_SHEET_NAME` y `INBOX_AUDIT_HEADERS`).
 - **AUG-148 y AUG-149:** constan como tareas pendientes en `checkpoint.md` y relacionadas con BETA-F004/BETA-F005; no se registra su cierre funcional en `ChangesLogs.txt`.
 - No se deben borrar los registros históricos ni reutilizar estos IDs para nuevas tareas. El orden actual de ejecución lo define `Tareas_Activas.md`, añadido en el commit `9442da203814be4891de82f93a1730700fb4b31d`.
+
+
+## Revisión de automatización Beta desde GitHub Actions — 2026-11-25
+
+> Estos hallazgos proceden de inspección estática del repositorio y del workflow. No son defectos confirmados de los deployments remotos: aún no se ha ejecutado una prueba de salud contra las seis URLs. La revisión se realizó sobre la rama `GPSpedia2.2.5_work`; no se modificó la rama base.
+
+### BETA-PLAN-F001 — Workflow de salud no activable manualmente desde la rama de trabajo
+- **Fecha:** 2026-11-25.
+- **Servicio / módulo:** GitHub Actions, `.github/workflows/deployed-service-health.yml`.
+- **Evidencia:** workflow presente en la rama de trabajo, ausente en la rama predeterminada `main`; solo declara `workflow_dispatch`. No se identificaron ejecuciones del workflow.
+- **Impacto:** no se dispone de un mecanismo de activación manual utilizable desde la rama de trabajo mientras el workflow no esté disponible en la default branch.
+- **Severidad:** ALTA (infraestructura de prueba).
+- **Estado:** CONFIRMADO por inspección del repositorio.
+- **Corrección prevista:** habilitar un trigger restringido a push en la rama de trabajo, sin modificar main/base.
+
+### BETA-PLAN-F002 — Gate de aislamiento Beta no configurado en el workflow
+- **Fecha:** 2026-11-25.
+- **Módulo:** workflow de health / `RemoteServiceHealth.mjs`.
+- **Evidencia:** el script exige `GPSPEDIA_HEALTH_ENV=BETA_ISOLATED` y `GPSPEDIA_CONFIRM_BETA_ENDPOINTS=I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA`; el workflow no proporciona dichos valores.
+- **Impacto:** el runner aborta antes de consultar los endpoints.
+- **Severidad:** ALTA (control de ejecución).
+- **Estado:** CONFIRMADO por inspección.
+- **Corrección prevista:** declarar los valores de gate en el job y mantener el alcance limitado a los endpoints Beta confirmados; credenciales de pruebas futuras se gestionarán mediante GitHub Actions Secrets/Environment, no en código ni propiedades Apps Script.
+
+### BETA-PLAN-F003 — Health checker no verifica una versión de deployment esperada
+- **Fecha:** 2026-11-25.
+- **Módulo:** `JS/Tests/RemoteServiceHealth.mjs`.
+- **Evidencia:** se valida que la versión sea una cadena no vacía, sin comparación con una matriz esperada.
+- **Impacto:** deployment desactualizado podría pasar el probe de salud.
+- **Severidad:** MEDIA.
+- **Estado:** CONFIRMADO por inspección.
+- **Corrección prevista:** contrato de versión esperado explícito y registro de versión remota observada, sin asumir que la versión fuente implica versión desplegada.
+
+### BETA-PLAN-F004 — Umbrales del probe difieren del contrato de salud
+- **Fecha:** 2026-11-25.
+- **Módulo:** `RemoteServiceHealth.mjs` y `Services/SERVICE_HEALTH.md`.
+- **Evidencia:** contrato documenta timeout 8 s y umbral lento 2 s; probe usa timeout 12 s y clasifica toda respuesta válida como PASS.
+- **Impacto:** reporte no alineado con los estados/umbrales documentados.
+- **Severidad:** MEDIA.
+- **Estado:** CONFIRMADO por inspección.
+- **Corrección prevista:** timeout y clasificación de latencia alineados, con PASS/SLOW/FAIL.
+
+### BETA-PLAN-F005 — Número de intentos de fallo no refleja intentos reales
+- **Fecha:** 2026-11-25.
+- **Módulo:** `RemoteServiceHealth.mjs`.
+- **Evidencia:** el resultado de error indica tres intentos aunque algunos errores no transitorios abortan antes.
+- **Impacto:** reporte de diagnóstico inexacto.
+- **Severidad:** BAJA.
+- **Estado:** CONFIRMADO por inspección.
+- **Corrección prevista:** contador real de intentos y reintentos.
+
+### BETA-PLAN-F006 — AUTH health añade metadata no contemplada en contrato
+- **Fecha:** 2026-11-25.
+- **Módulo:** `JS/Services/Auth.js`, contrato `Services/SERVICE_HEALTH.md`.
+- **Evidencia:** respuesta incluye `sessionAuthority` además de service/version/status, contrario al contrato público mínimo documentado.
+- **Impacto:** desviación de contrato; no se considera exposición de secreto por esta inspección.
+- **Severidad:** BAJA.
+- **Estado:** CONFIRMADO por inspección estática.
+- **Corrección prevista:** revisar y armonizar contrato público de los seis servicios, evitando metadata adicional.
+
+### BETA-PLAN-F007 — Versión ADMIN documentada desactualizada
+- **Fecha:** 2026-11-25.
+- **Módulo:** `Services/SERVICE_HEALTH.md`.
+- **Evidencia:** documento señala ADMIN 2.7.1; fuente `JS/Services/admin.js` declara 2.7.2.
+- **Impacto:** referencia documental inconsistente; la versión del deployment no está verificada.
+- **Severidad:** BAJA.
+- **Estado:** CONFIRMADO por inspección fuente/documentación.
+- **Corrección prevista:** actualizar documentación a la versión fuente vigente y distinguirla de la versión remota.
+
+### BETA-PLAN-F008 — Browser tests no validan el frontend Beta desplegado
+- **Fecha:** 2026-11-25.
+- **Módulo:** `JS/Tests/Aug146ResponsiveBrowser.mjs` y estrategia E2E.
+- **Evidencia:** tests existentes utilizan servidor local y respuestas interceptadas/sintéticas de servicios; no verifican la interacción contra el frontend Beta real.
+- **Impacto:** la cobertura local no acredita funcionamiento integral con deployments Beta.
+- **Severidad:** MEDIA (brecha de cobertura).
+- **Estado:** CONFIRMADO por inspección.
+- **Corrección prevista:** suite Playwright separada para frontend Beta real, con preflight de aislamiento y sin mezclar pruebas sintéticas con evidencia remota.
+
+## Plan de solución y ejecución
+1. Habilitar y endurecer el runner de salud GET en GitHub Actions, restringido a la rama de trabajo y con gates explícitos de entorno Beta.
+2. Corregir el contrato del checker: timeout, latencia lenta, reintentos, versiones esperadas, identidad y campos permitidos.
+3. Ejecutar el primer probe remoto de los seis servicios; registrar identidades/versiones/latencias de manera anonimizada. El resultado no certificará dependencias Sheets/Drive.
+4. Diseñar e implementar probes funcionales read-only y de contrato, incluyendo CATALOG feed/cursor.
+5. Preparar pruebas mutables con fixtures sintéticos, read-back, idempotencia, concurrencia, rollback y cleanup restringido a recursos creados por el runner.
+6. Separar pruebas ADMIN/Drive, multimedia y YouTube (OAuth/API real) de los probes simples.
+7. Preparar Playwright E2E contra frontend Beta, con registro de viewport/navegador y sin sustituir la suite local.
+8. Al finalizar cada fase, documentar evidencia, resultado, regresiones, recursos eliminados y pruebas pendientes.
+
