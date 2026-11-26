@@ -405,3 +405,9 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se amplió `ServiceHealthContract.mjs` para extraer las seis versiones documentadas y cotejarlas con el campo de versión real dentro de cada `doGet`, resolviendo también la constante `ADMIN_SERVICE_VERSION`.
 - Validación de la misma lógica contra archivos recuperados de la rama: 6/6 PASS (AUTH 2.2.5, CATALOG 2.4.0, WRITE 2.3.1, FEEDBACK 1.2.2, UTILITIES 1.5.0, ADMIN 2.7.2). La ejecución del runner Node 22 de GitHub Actions aún debe confirmarse.
 - Cambios: contrato `2e889ce1b63d6959d032006fd6e6b14b4ee6998e`; test inicial `0d0bd422658987e5709e8a667ea85fb1568b727c`; ajuste de regex `09152e11cc188ecc1ebb1fcaef46e37092f630ab`.
+
+
+## BETA-F016 — el workflow no vigilaba cambios aislados de la suite de contrato (2026-11-25)
+- La suite `ServiceHealthContract.mjs` se añadió como gate previo a los probes Beta, pero su ruta no estaba en la lista `paths` del workflow. Un cambio futuro solo en esa suite no habría disparado la validación remota.
+- Se agregó `JS/Tests/ServiceHealthContract.mjs` a los paths de activación de `deployed-service-health.yml`. El workflow también vigila la tabla versionada y el runner remoto.
+- Cambio publicado en `e958c94904b7a0d87369f92a467b83e4b90c0c87`. Pendiente confirmar resultado Actions para HEAD actualizado.
