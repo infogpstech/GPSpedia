@@ -2293,7 +2293,7 @@ function handleSetCutUseful(payload) {
     if (result.changed) {
         try {
             logUserActivity(userId, userName, result.isUseful ? "useful" : "useful_removed",
-                vehicleId, (result.isUseful ? "Marcó como útil" : "Retiró el útil") + " del corte " + corte + ".");
+                vehicleId, (result.isUseful ? "Marcó como útil" : "Retiró el útil") + " del corte " + cut + ".");
         } catch (activityError) {
             console.error("El útil quedó guardado, pero no se pudo registrar su actividad:", activityError);
         }
