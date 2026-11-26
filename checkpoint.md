@@ -113,3 +113,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - No se modificaron servicios Apps Script ni deployments, PropertiesService, Spreadsheet, Drive, OAuth o datos remotos. Solo cambios en tests, workflow de validación y documentación.
 - Estado Beta: health GET-only 6/6 servicios; CATALOG feed y límites PASS. Playback YouTube sigue bloqueado por challenge `Sign in to confirm` del entorno GitHub Actions. Mutaciones reales FEEDBACK/CATALOG/Inbox/WRITE/ADMIN permanecen pendientes de identidades sintéticas y recursos aislados con cleanup verificable.
 - Próxima actividad al habilitar recursos: FEEDBACK/CATALOG e Inbox con dos identidades sintéticas, validar aislamiento, idempotencia y cleanup; luego WRITE/ADMIN con registros y archivos desechables. Playback se valida en navegador autorizado o Android físico, sin eludir la protección de YouTube.
+
+
+## 18. Cierre de fase Beta y limpieza solicitada — 2026-11-26
+- El propietario ordenó cerrar la fase de pruebas Beta, consolidar hallazgos y eliminar todos los archivos de pruebas, incluidas suites de regresión y anti-regresión.
+- HEAD verificado antes de esta operación: `7904a45f4f19907a3436948de49f0e767311b519` en `GPSpedia2.2.5_work`. Rama base de referencia: `GPSpedia2.2.5`; no se escribirá en ella.
+- Evidencia histórica final consultada: CI `45821888314` SUCCESS (546 suites, 6,485 pruebas, 0 fallos); AUG-146 264/264; PWA 49/49 CORE + 4/4 OPTIONAL; health GET-only 6/6 en run `45819572315`; CATALOG feed read-only 5 páginas/5 eventos/3 reset. No hubo mutaciones remotas de Spreadsheet/Drive/FEEDBACK/WRITE/Inbox/OAuth/YouTube API.
+- La reproducción real YouTube no quedó acreditada: Actions recibió `Sign in to confirm`. El residual visual offline Font Awesome CDN no bloquea el login. La protección de la rama base no quedó confirmada por la API (`protected=false`, sin rulesets visibles).
+- Se consolida el resultado en `Tareas_Beta.md` y las acciones pendientes en `Tareas_Activas.md`. Nueva prioridad P0: GP-UTIL-BUTTON-NO-REACTION-01 por reporte del propietario: botón sin reacción visual, sin evento FEEDBACK y sin actualización del contador del modal.
+- Se eliminan las suites y harnesses de `JS/Tests`, además de los workflows que los ejecutaban. No crear nuevos archivos de prueba. Los resultados CI anteriores quedan como evidencia histórica en los backlogs; no son reproducibles tras la purga.
+- Limpieza Markdown solicitada: conservar solo los backlogs vigentes (`Tareas_Activas.md`, `Tareas_Beta.md`, `TAREAS_MIGRACION_ARQUITECTURA.md`) y este `checkpoint.md`; eliminar los demás .md, incluidos checkpoints archivados. Esta purga documental fue solicitada expresamente por el propietario.
+- Siguiente paso de desarrollo: investigar y corregir GP-UTIL-BUTTON-NO-REACTION-01 siguiendo el plan de `Tareas_Activas.md`; no reanudar pruebas Beta.

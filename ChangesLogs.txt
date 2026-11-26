@@ -1523,3 +1523,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Commit de ejecución `18bfd3c04fdd0016c531a24c9a070705725fbc49`: health GET-only `45812643014` SUCCESS, ServiceHealthContract 21/21 y 6/6 servicios con versiones esperadas. ADMIN 2288 ms (SLOW); los otros cinco entre 1045 y 1923 ms.
 - CATALOG feed, boundaries, matrix y pagination PASS. Regresión `45812642942`: 542 suites / 6,453 pruebas / 0 fallos; AUG-146 264/264. Pages `45812641695` SUCCESS.
 - No se ejecutaron POST, escrituras, despliegues Apps Script, cambios Drive/Spreadsheet, OAuth ni YouTube.
+
+
+[2026-11-26] Cierre de validación Beta y limpieza solicitada en GPSpedia2.2.5_work (HEAD previo 7904a45f4f19907a3436948de49f0e767311b519): consolidación de resultados en Tareas_Beta.md y tareas pendientes en Tareas_Activas.md; purga de suites/harnesses de prueba y workflows asociados; limpieza de documentación Markdown conservando únicamente backlogs vigentes y checkpoint.md. Nueva prioridad P0: botón de útil sin reacción, sin registro FEEDBACK y sin actualización del contador del modal. No se modificaron deployments Apps Script, datos remotos ni rama base.

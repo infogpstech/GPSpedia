@@ -1,5 +1,67 @@
 # Tareas activas — GPSpedia
 
+## Cierre de validación Beta y plan de ejecución — 2026-11-26
+
+**Estado de la fase Beta: CERRADA.** No se programarán nuevas rondas de pruebas Beta ni se conservarán suites automatizadas. Los resultados históricos útiles quedan resumidos en `Tareas_Beta.md`; los hallazgos que requieren trabajo se trasladan a este backlog. Las pruebas automatizadas y workflows de pruebas se eliminarán por solicitud expresa del propietario. No crear nuevas suites ni archivos de prueba.
+
+### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
+
+**Estado: PENDIENTE — incidencia reportada por el propietario el 2026-11-26.**
+
+**Síntomas observados:**
+- Al pulsar el botón de útil no se produce reacción visual.
+- No se registra la reacción en FEEDBACK.
+- La cantidad de útiles no se actualiza en el modal.
+
+**Plan de ejecución:**
+1. Inspeccionar el botón real en el DOM del modal, sus selectores, atributos, listeners y ciclo de apertura/cierre; confirmar que el evento click llega al handler y que no queda interceptado por overlay, propagación, estado disabled o listeners duplicados.
+2. Seguir el flujo completo en frontend: hidratación de estado por usuario, toggle optimista, `likeState.js`, cola `usefulSyncQueue.js`, debounce/reintento y resolución de acción mediante `ACTION_TO_SERVICE_MAP`/`API_ENDPOINTS`.
+3. Verificar el contrato de FEEDBACK para alta y retirada: identidad autenticada, vehicleId, corte físico, estado de transición, idempotencia, respuesta y errores. No confiar en claims del navegador.
+4. Comprobar si FEEDBACK confirma el append/retirada y si la respuesta contiene el contador autoritativo; identificar si la petición no sale, se rechaza, queda pendiente o se confirma sin que la UI procese la respuesta.
+5. Revisar la proyección CATALOG y la actualización del contador del título del modal. Mantener alineados el corte físico original, el estado por usuario, el evento persistido y el total mostrado; no sumar dos veces ni reemplazar el icono/contenido del botón.
+6. Resolver la causa raíz y restaurar la reacción visual, el registro persistente y el contador. Los fallos deben dejar el estado coherente y permitir reintentar sin duplicar eventos.
+7. Validar mediante inspección de flujo, análisis estático y comprobaciones manuales disponibles. No crear archivos de pruebas, fixtures, suites de regresión ni workflows de pruebas.
+
+**Criterios de aceptación:**
+- Un clic válido muestra inmediatamente el estado de útil correspondiente.
+- La operación queda registrada/retirada en FEEDBACK con la identidad autenticada y semántica de corte vigente.
+- El contador del modal cambia al valor confirmado y permanece correcto al reabrir/recargar el detalle.
+- Clics repetidos no duplican eventos; los errores no dejan un estado visual falso ni un contador desincronizado.
+- No se introducen URLs, secretos ni coordinación backend→backend; la coordinación entre servicios permanece en frontend.
+
+### Prioridad P1 — GP-YOUTUBE-PLAYBACK-01: reproducción real de tutoriales
+
+**Estado: PENDIENTE DE CONFIRMACIÓN EN USO NORMAL.** El parser y el layout tuvieron validación local; la reproducción remota no quedó acreditada porque GitHub Actions recibió el challenge de YouTube `Sign in to confirm`. No se usarán credenciales automatizadas ni bypass. Confirmar el funcionamiento desde una sesión de usuario autorizada/dispositivo habitual cuando se retome el trabajo de tutoriales.
+
+### Prioridad P2 — GP-PWA-OFFLINE-ICONS-01: recursos visuales offline
+
+**Estado: PENDIENTE / BAJA.** El arranque offline frío y caliente quedó aprobado; permanece el fallo de carga de la hoja CSS Font Awesome CDN en desconexión fría, que puede dejar iconos sin estilo. Evaluar fallback local compatible sin afectar el arranque ni añadir dependencias innecesarias.
+
+### Prioridad P2 — GP-REPO-BRANCH-PROTECTION-01: protección de rama base
+
+**Estado: PENDIENTE ADMINISTRATIVO.** La API reportó `protected=false` y no mostró rulesets para `GPSpedia2.2.5`; la conexión no permitió leer la configuración detallada (403). Un administrador debe configurar protección contra push directo, force-push y borrado. No intentar modificarla desde esta tarea.
+
+### Hallazgos cerrados o sin defecto reproducible
+
+- BETA-F020: precarga PWA; corrección confirmada, 49/49 recursos core y 4/4 opcionales, login visible offline frío/caliente.
+- BETA-F023: resumen shell del workflow de health corregido.
+- BETA-F024: pico aislado de latencia UTILITIES no reproducido; cerrado como anomalía transitoria.
+- BETA-F019: corrección del contrato de diagnóstico AUTH incorporada en fuente; la evidencia posterior de health informó 6/6 servicios disponibles y versiones esperadas.
+- CATALOG feed GET-only: paginación secuencial, límites, cursores y reset aprobados en las ejecuciones registradas.
+- Las fronteras locales de actor FEEDBACK/Inbox/WRITE/ADMIN y los contratos locales de útil quedaron cubiertos por la CI histórica; no sustituyen el síntoma funcional nuevo reportado arriba.
+
+### Validaciones Beta no ejecutadas — no convertir en fallos confirmados
+
+No se realizaron mutaciones remotas de AUTH/USERS, FEEDBACK/útiles, Inbox, WRITE, ADMIN/Drive/Spreadsheet, OAuth ni YouTube API. Faltaron identidades sintéticas, recursos desechables inequívocos y limpieza verificable. Se registra esta limitación como alcance no comprobado, no como aprobación ni como defecto confirmado. La fase de pruebas Beta queda cerrada por decisión del propietario; no reabrirla automáticamente.
+
+### Orden de ejecución
+
+1. GP-UTIL-BUTTON-NO-REACTION-01.
+2. GP-YOUTUBE-PLAYBACK-01 cuando se retome la función de tutoriales.
+3. GP-PWA-OFFLINE-ICONS-01.
+4. GP-REPO-BRANCH-PROTECTION-01 por administración del repositorio.
+5. Mantener como no verificados los flujos mutables remotos; no afirmar su aprobación.
+
 Repositorio: `infogpstech/GPSpedia`  
 Rama autorizada: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5` — no modificar.  
@@ -16,7 +78,7 @@ El plan MIG-URL-001 a MIG-URL-008 conserva su orden y dependencias definidos en 
 - MIG-URL-005 — Adaptar Developer y diagnóstico de salud: **COMPLETADA — 2026-11-25**; editor retirado, health local conservado.
 - MIG-URL-006 — Desvincular estructuras de endpoints en Spreadsheet: **COMPLETADA — 2026-11-25**; hoja histórica preservada sin lectura/escritura.
 - MIG-URL-007 — Pruebas locales, contratos y regresión: **COMPLETADA — CI 45519738860; 519 suites, 6,181 pruebas, 0 fallos; responsive-browser SUCCESS**.
-- MIG-URL-008 — Validación Beta aislada y cierre: **EN PROGRESO — fase GET-only completada; validaciones funcionales diferidas**.
+- MIG-URL-008 — Validación Beta aislada y cierre: **FASE DE PRUEBAS CERRADA POR EL PROPIETARIO — 2026-11-26**. Las operaciones mutables no ejecutadas se registran como no verificadas; no se continuará con nuevas rondas Beta.
 
 La configuración local debe reproducir el patrón de la rama protegida `GPSpedia2.2.5`: objeto único `API_ENDPOINTS` editado manualmente en `JS/Frontend/api-config.js`, con `ACTION_TO_SERVICE_MAP` para el enrutamiento. No usar `SERVICE_ENDPOINTS` como tabla paralela ni inventar otro administrador de URLs.
 
@@ -115,7 +177,7 @@ Trabajar una tarea a la vez. Al cerrar cada tarea, ejecutar pruebas, revisar el 
 
 ## Siguiente paso operativo
 
-La única tarea restante del plan es **MIG-URL-008 — Validación Beta aislada y cierre**, pendiente de que el propietario confirme que las seis URLs corresponden a una Beta aislada y autorice las peticiones GET de salud. No ejecutar validaciones remotas sobre producción ni tareas ajenas al plan.
+La fase de validación Beta fue cerrada por instrucción del propietario el 2026-11-26. La siguiente tarea de implementación es **GP-UTIL-BUTTON-NO-REACTION-01**, registrada al inicio de este backlog.
 
 
 ## Plan MIG-URL — registro de tareas y exclusividad — 2026-11-24
