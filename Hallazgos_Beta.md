@@ -397,3 +397,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se amplió `ServiceHealthContract.mjs` con una aserción de alineación del runner: normalización, comparación exacta de versión y lectura de la tabla versionada desde el commit objetivo. El workflow ejecutará esta suite local antes de consultar Beta.
 - Validación disponible en esta sesión: seis comprobaciones estáticas de integración 6/6 PASS (fuente, aserciones y workflow recuperados de la rama). No equivale a ejecutar Node 22 ni el workflow; esa evidencia queda pendiente.
 - Commits: runner `a6c4cbdd1ecd71a5644f76e31556bc77f34e3892`; test `b282123316079cb70fd78b77c4191fc788a085c1`; workflow `d21fff9b2faace448194db94f4d54fc3a1130ac4`.
+
+
+## BETA-F015 — ambigüedad entre versión de salud y versión del componente (2026-11-25)
+- La tabla del contrato describía las versiones como “Versión del código fuente”, pero ese rótulo podía confundirse con el comentario `COMPONENT VERSION` de cada archivo Apps Script. FEEDBACK, por ejemplo, tiene comentario de componente 2.3.0 y devuelve 1.2.2 en su endpoint de salud; la versión usada para comparar deployments es la segunda.
+- Se aclaró `Services/SERVICE_HEALTH.md`: la tabla representa exclusivamente el campo `version` de `GET ?debug=true`; los comentarios de componente pueden usar numeración independiente.
+- Se amplió `ServiceHealthContract.mjs` para extraer las seis versiones documentadas y cotejarlas con el campo de versión real dentro de cada `doGet`, resolviendo también la constante `ADMIN_SERVICE_VERSION`.
+- Validación de la misma lógica contra archivos recuperados de la rama: 6/6 PASS (AUTH 2.2.5, CATALOG 2.4.0, WRITE 2.3.1, FEEDBACK 1.2.2, UTILITIES 1.5.0, ADMIN 2.7.2). La ejecución del runner Node 22 de GitHub Actions aún debe confirmarse.
+- Cambios: contrato `2e889ce1b63d6959d032006fd6e6b14b4ee6998e`; test inicial `0d0bd422658987e5709e8a667ea85fb1568b727c`; ajuste de regex `09152e11cc188ecc1ebb1fcaef46e37092f630ab`.
