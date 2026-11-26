@@ -71,7 +71,7 @@ while (moduleQueue.length) {
     const moduleSource = await moduleResponse.text();
     const specifiers = [...moduleSource.matchAll(/(?:import\s+(?:[^'"]*?\s+from\s+)?|export\s+[^'"]*?\s+from\s+)['"]([^'"]+)['"]/g)]
         .map(match => match[1])
-        .filter(specifier => specifier.startsWith("./") && specifier.endsWith(".js"));
+        .filter(specifier => specifier.startsWith("./") && (specifier.endsWith(".js") || specifier.endsWith(".mjs")));
     for (const specifier of specifiers) {
         const resolved = new URL(specifier, moduleUrl);
         if (resolved.origin !== base.origin || !resolved.pathname.startsWith(base.pathname)) continue;

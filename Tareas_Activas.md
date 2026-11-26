@@ -676,3 +676,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-F020 — alcance cold/warm PWA (2026-11-26)
 **Estado: FALLA DE PREPARACIÓN OFFLINE INICIAL; OFFLINE TEMPLADO PASS.** Una recarga online después de activar el SW cachea los 12 módulos; la siguiente navegación offline funciona. Pendiente precargar dependencias esenciales para que la primera sesión offline funcione sin recarga adicional. No se modificó código de aplicación.
+
+
+## BETA-F020 — precarga PWA (2026-11-26)
+**Estado: CORRECCIÓN LOCAL PUBLICADA; VALIDACIÓN BETA PENDIENTE.** Se agregaron 12 imports JS y `qrcode-generator.mjs` a CORE_ASSETS, con caché v77; el scanner recorre también .mjs. Cerrar únicamente cuando Actions valide instalación, inventario HTTP, login offline frío y regresión responsive. Recursos externos CDN/Drive no forman parte del precache core.

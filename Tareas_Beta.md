@@ -719,3 +719,8 @@ Run `45749807870`: 36/36 CORE y 4/4 OPTIONAL assets HTTP 200; manifest/iconos/SW
 
 ### BETA-08 — alcance preciso del PWA offline
 Run `45750124457`: cold offline FAIL inmediatamente tras instalar SW; warm offline PASS después de una recarga online controlada que cachea los 12 módulos. Todos los recursos declarados existen y responden 200. La disponibilidad offline no debe depender de una recarga manual posterior; se recomienda precargar las 12 dependencias en CORE_ASSETS. `/thumbnail` sigue fallando offline pero no impide mostrar login.
+
+
+### BETA-08 / BETA-F020 — corrección de precarga
+- Cambio local: CORE_ASSETS incluye las 13 dependencias estáticas que faltaban en el grafo recursivo de main.js (12 .js + qrcode-generator.mjs); caché v77.
+- El harness recorre imports .js y .mjs. Validación de despliegue Pages/Service Worker y offline frío: PENDIENTE de Actions sobre el commit de corrección. No confundir publicación Pages con la validación real del Service Worker en navegador.

@@ -522,3 +522,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - **Warm offline: PASS.** Una recarga online adicional carga/cacha los 12 módulos (`warmMissingPrecacheModules=[]`); la siguiente recarga offline muestra login correctamente (`warmOfflineLoginVisible=true`).
 - Todos los 36 CORE_ASSETS y 4 OPTIONAL_ASSETS responden 200. Service Worker activo/controlador; no-GET 0; pageErrors 0; Apps Script 0.
 - Alcance: PWA queda offline funcional después de una recarga online controlada, pero no garantiza disponibilidad offline inmediata al terminar la primera instalación. La corrección preferida es incluir las dependencias esenciales en CORE_ASSETS para eliminar el requisito de calentamiento manual. No se modificó el Service Worker.
+
+
+## BETA-F020 — corrección local de precarga inicial (2026-11-26)
+- Se añadió a `CORE_ASSETS` el conjunto de dependencias estáticas del grafo de `main.js` que faltaba: 12 módulos `.js` y su dependencia transitiva `qrcode-generator.mjs`.
+- Se incrementó el nombre de caché de `gpsepedia-cache-v76` a `gpsepedia-cache-v77` para instalar el inventario completo como una caché nueva.
+- Se amplió el scanner de `BetaPwaOfflineSmoke.mjs` para recorrer imports relativos tanto `.js` como `.mjs`; evita que una dependencia ESM con extensión distinta quede fuera del inventario.
+- Pendiente de ejecutar Actions: comprobar HTTP 200 de todos los recursos, instalación atómica del SW, login en offline frío y regresión responsive. No se afirma aún que F020 esté cerrado.
+- Font Awesome CDN y miniaturas de Drive siguen siendo recursos externos opcionales/no críticos para el arranque del login; no se añadieron como recursos core por su naturaleza externa/dinámica.

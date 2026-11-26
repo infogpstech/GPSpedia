@@ -1440,3 +1440,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `BetaPwaOfflineSmoke.mjs` compara offline inmediato tras instalar el SW con offline después de una recarga online controlada.
 - Run `45750124457`: cold offline FAIL; warm online reload cachea 12 módulos; warm offline PASS y login visible. 36 CORE y 4 OPTIONAL assets HTTP 200.
 - No se modificó Service Worker ni frontend; 0 no-GET y 0 llamadas Apps Script.
+
+
+## 2026-11-26 — BETA-F020: precarga PWA
+- `service-worker.js`: caché v77 y precarga de 13 módulos estáticos del grafo de main.js omitidos en v76 (12 JS y qrcode-generator.mjs).
+- `JS/Tests/BetaPwaOfflineSmoke.mjs`: scanner recursivo de imports ahora reconoce .js y .mjs.

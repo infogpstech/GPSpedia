@@ -133,3 +133,9 @@
 2026-11-26 | Beta health real: Actions runs 45729426765/45729430374 SUCCESS; GET-only 6/6 endpoints disponibles. ADMIN deployment v2.7.1 (fuente 2.7.2) y latencia 2.431/2.701s, SLOW; F009 desfase de versión, F010 latencia alta. Los otros servicios PASS (1.105–1.612ms). Sin escrituras.
 
 2026-11-26 | CATALOG feed read-only real (run 45729926589): cursor 0/limit1 => revision5, minRevision1, changeCount1, hasMore; cursor5 => 0 eventos, hasMore false. Latencias 2374/2381ms. F011 performance observada. Sin mutaciones ni contenido de eventos registrado.
+
+
+2026-11-26 | BETA-F020 — corrección de precache
+- Evidencia previa: 12 módulos JS importados por el grafo de main.js no estaban en CORE_ASSETS; el login fallaba offline frío y funcionaba tras warm-up online.
+- Cambio focalizado: 12 módulos JS y qrcode-generator.mjs agregados a CORE_ASSETS; cache version v76→v77. El scanner de imports ahora incluye .mjs.
+- Criterio de cierre: Actions debe confirmar todos los recursos HTTP 200, cero dependencias estáticas omitidas, login visible inmediatamente offline y regresión responsive sin fallos. No se modifica el backend ni datos remotos.

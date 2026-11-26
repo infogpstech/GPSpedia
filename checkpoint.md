@@ -1396,3 +1396,11 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Los 12 módulos ausentes de CORE_ASSETS se cachean dinámicamente en la recarga online; por tanto, la función offline sí opera después de ese calentamiento. El problema es la falta de precarga inicial.
 - 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS HTTP 200; 0 no-GET, 0 Apps Script, 0 pageErrors. En warm offline queda un fallo no crítico de `/thumbnail`; la pantalla login funciona.
 - El test mantiene FAIL global porque el escenario cold offline no cumple. No se modificó `service-worker.js` ni código de aplicación.
+
+
+## Continuidad — corrección local BETA-F020 (2026-11-26)
+- HEAD de partida verificado: `42b7abe6ae27a725763eb9ce01c25f3772f7dc5b`; rama autorizada `GPSpedia2.2.5_work`. Rama base no modificada.
+- Causa ya reproducida: offline frío falla porque dependencias estáticas del grafo recursivo de `main.js` no estaban en CORE_ASSETS; warm-up online las almacenaba dinámicamente.
+- Cambios preparados en un commit lógico: `service-worker.js` agrega 12 módulos JS + `qrcode-generator.mjs`, y cambia cache v76→v77; `BetaPwaOfflineSmoke.mjs` analiza imports .js/.mjs.
+- Pendiente: Actions debe validar HTTP 200, cobertura completa del grafo, install/activate, login offline frío, warm offline y responsive. No cerrar F020 antes de esa evidencia.
+- Recursos Font Awesome CDN y miniaturas Drive se mantienen como dependencias externas no esenciales para mostrar login; se documentan fuera del alcance de la corrección core.
