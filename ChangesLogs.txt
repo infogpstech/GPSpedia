@@ -1630,3 +1630,12 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Se comparó `offline.js` reconstruyendo el original a partir del respaldo y aplicando inversamente únicamente los cambios auditados; coincidencia exacta. HTML, logger y Service Worker también coinciden exactamente al revertir los cambios previstos.
 - Los cuatro respaldos temporales se retiraron tras Code Review: `12eb7a82109a4a1dfdf5eeaf959f16430d7f61bd`, `93b760c7ed9aed051591874d6c75de40edd5fbea`, `608db06ca73665186578225d1cce61640f43655a`, `8e4b9e0d47a4a6d9c02ac1f3c8b95e6ff79e484d`.
 - El flujo sigue bloqueando el envío remoto cuando el snapshot local no queda confirmado. La prueba runtime en navegador y el alta Beta continúan pendientes.
+
+
+[2026-11-26] GP-CUT-FORM-SNAPSHOT-02 — normalización y diagnóstico del formulario independiente
+- `HTML/add_cortes.html`: el submit de etapa 2 normaliza una sola vez `state.selectedVehicleId`; `null`, `undefined` y cadena vacía se representan como `vehicleId: null` y producen `vehicleData` como objeto de vehículo nuevo. Para un ID existente se conserva `vehicleData: null`.
+- `HTML/add_cortes.html`: el tratamiento de errores locales muestra mensajes diferenciados para snapshot inválido, conflicto con operación pendiente, discrepancia/no resultado de verificación, cuota, clonación y disponibilidad/escritura IndexedDB. Los diagnósticos continúan usando códigos estáticos allowlist-only.
+- `service-worker.js`: versión de caché cambiada de `gpsepedia-cache-v80` a `gpsepedia-cache-v81` para invalidar los recursos frontend de la versión anterior.
+- No se modificó la ruta remota `addOrUpdateCut`, WRITE, el contrato de Sheets ni la política de idempotencia. El formulario sigue sin enviar si la persistencia local no queda confirmada.
+- Validación estática con fixture: 7/7 casos PASS para IDs null/undefined/vacío/espacios y IDs existentes string/número; el snapshot incoherente sigue siendo rechazado. Comparación contra respaldos: solo los dos bloques previstos en `HTML/add_cortes.html` y la versión de caché en `service-worker.js` cambiaron.
+- No se ejecutó navegador/IndexedDB real, Apps Script, Spreadsheet, Drive ni una alta Beta. GitHub no reportó status checks ni workflow runs asociados al commit de Service Worker; despliegue y validación real quedan pendientes.
