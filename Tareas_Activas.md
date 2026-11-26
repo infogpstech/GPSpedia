@@ -965,3 +965,17 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Harness aislado: reintento que devuelve todas las confirmaciones y conteos coherentes => inventario `saved`; respuesta con conteo de servidor inconsistente => no habilita organización y conserva estado parcial. Ambos casos se probaron con mocks.
 - Commit: `52a3d7143f9810e68f9be5e9c495270c0c35068a`.
 - La tarea principal sigue abierta; la validación de acciones de biblioteca y pruebas integradas continúan pendientes.
+
+
+### GP-ADMIN-TAB-ACTIONS-UX-01 — cierre de implementación
+**Estado: implementación completada; revisión visual final reservada para Beta.**
+- La revisión del HTML confirmó que los botones de acción normales de las cuatro pestañas Developer usan `dev-panel-action`, con icono, etiqueta accesible y texto expandible al recibir foco/selección. Los controles especializados del explorador de auditoría y selectores de vista conservan sus estilos/funciones propios y no se convierten en botones genéricos.
+- El CSS existente establece formato compacto de 42 px, expande la etiqueta al enfocar y adapta tamaño/espaciado en móvil. No se alteró la barra de navegación entre pestañas.
+- No se requiere otra implementación local para esta tarea. La comprobación visual real en navegador se realizará en Beta.
+
+### Avance de biblioteca — confirmación de restauración masiva mixta (2026-11-26)
+- Se encontró que una selección masiva mixta (archivos en papelera y reemplazos históricos) ejecutaba correctamente la acción correspondiente a cada registro, pero mostraba una confirmación incorrecta que describía todos los elementos como restauraciones históricas.
+- Se corrigió el mensaje: ahora separa cantidades de archivos que regresan desde papelera (sin reasociación automática) y de imágenes históricas que se restauran a sus campos; se ajustó singular/plural.
+- Harness aislado: selección mixta de un archivo en papelera y una imagen histórica => se muestran ambas cantidades y se envían las acciones `restoreReplacedImageFromTrash` y `recoverReplacedImage` respectivamente.
+- Commits: handler `616d6bb5f5662d0a6e79a5ce5f122758301b109b`; corrección singular/plural `271276a077f2ad81adf00a66b4a8ffa28dd05d99`.
+- La auditoría integral de la biblioteca continúa abierta.
