@@ -730,3 +730,8 @@ Run `45750124457`: cold offline FAIL inmediatamente tras instalar SW; warm offli
 - Run 45755284614: sintaxis modificada PASS; ServiceWorkerCache y PasswordRecovery fallan por expectativa obsoleta gpsepedia-cache-v76 tras migrar a v77. Se corrigieron para aceptar gpsepedia-cache-vN; la suite de caché ahora afirma las 13 rutas nuevas.
 - AUTH conserva 2 fallos de suite por sessionAuthority; no se atribuyen a PWA.
 - La ejecución browser del mismo run continúa pendiente; no se declara offline frío PASS hasta leer sus logs.
+
+
+### BETA-01 / BETA-F019 — diagnóstico público AUTH
+- Fuente `JS/Services/Auth.js`: `doGet(debug=true)` ya no incluye `sessionAuthority`; fixture `JS/Tests/Auth.js` sincronizado.
+- No se desplegó Apps Script. La validación remota queda pendiente hasta deployment autorizado; no atribuir la corrección de fuente al endpoint actualmente publicado.

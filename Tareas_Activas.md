@@ -684,3 +684,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ### BETA-F020 — corrección de harness (2026-11-26)
 **Estado: AJUSTE LOCAL PUBLICADO; NUEVA CI PENDIENTE.** Run 45755284614 confirmó dos referencias de test obsoletas a v76, no defectos funcionales: PasswordRecovery y ServiceWorkerCache. Se actualizaron a una aserción de versión genérica y se añadieron checks de las 13 rutas. El run mantiene dos fallos AUTH independientes por sessionAuthority.
+
+
+## BETA-F019 — privacidad del diagnóstico AUTH (2026-11-26)
+**Estado: CORRECCIÓN DE FUENTE PUBLICADA; VALIDACIÓN LOCAL Y BETA PENDIENTES.** Retirado `sessionAuthority` de `JS/Services/Auth.js` y sincronizado fixture. No se desplegó Apps Script. Cerrar localmente tras ServiceHealthContract 21/21 y regresión; el endpoint remoto requiere deployment autorizado y repetición GET.

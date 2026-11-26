@@ -144,3 +144,9 @@
 2026-11-26 | BETA-F020 — regresiones de harness por versión de caché
 - CI 45755284614 detectó dos tests con versión fija v76 tras la actualización legítima a v77: PasswordRecovery.mjs y ServiceWorkerCache.js.
 - Se reemplaza el literal por una expresión versionada y se refuerza la suite ServiceWorkerCache con las 13 rutas añadidas. No afecta al comportamiento de producción.
+
+
+2026-11-26 | BETA-F019 — corrección local de diagnóstico AUTH
+- Se retiró `sessionAuthority: Users/ActiveSessions` de `doGet(debug=true)` en `JS/Services/Auth.js` y se sincronizó el fixture `JS/Tests/Auth.js`.
+- La respuesta fuente ahora se limita a identidad, versión y estado. No se desplegó Apps Script ni se alteró el endpoint remoto.
+- Criterio de cierre local: ServiceHealthContract 21/21 y regresión AUTH/paridad PASS. Cierre Beta remoto requiere deployment autorizado y GET health sin metadatos internos.

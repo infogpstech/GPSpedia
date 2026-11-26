@@ -1450,3 +1450,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — alineación de regresiones PWA con caché versionada
 - JS/Tests/PasswordRecovery.mjs y JS/Tests/ServiceWorkerCache.js: aceptan cualquier versión gpsepedia-cache-vN en vez de fijar v76.
 - ServiceWorkerCache.js: comprueba explícitamente las 13 dependencias agregadas al precache.
+
+
+## 2026-11-26 — corrección de privacidad en diagnóstico AUTH
+- `JS/Services/Auth.js`: se eliminó `sessionAuthority` de la respuesta pública `doGet(debug=true)`.
+- `JS/Tests/Auth.js`: fixture sincronizado con el bloque `doGet` fuente.
+- Sin despliegue Apps Script ni cambios de endpoints/datos.

@@ -545,8 +545,7 @@ function doGet(e) {
         const serviceState = {
             service: 'GPSpedia-Auth',
             version: '2.2.5',
-            status: 'available',
-            sessionAuthority: 'Users/ActiveSessions'
+            status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.JSON);

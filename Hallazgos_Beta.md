@@ -536,3 +536,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - La primera CI de v77 encontró dos expectativas obsoletas en pruebas locales: PasswordRecovery.mjs y ServiceWorkerCache.js exigían el literal gpsepedia-cache-v76.
 - Se sustituyó la comparación rígida por el patrón versionado gpsepedia-cache-vN y se añadieron aserciones explícitas de las 13 dependencias nuevas en ServiceWorkerCache.js.
 - No es un defecto funcional de PWA: son fixtures de prueba que no acompañaron la rotación de caché. La nueva ejecución debe confirmar el harness y mantener visible el fallo AUTH independiente.
+
+
+## BETA-F019 — corrección de fuente AUTH (2026-11-26)
+- Se retiró el campo sessionAuthority de la respuesta pública GET ?debug=true en JS/Services/Auth.js. El endpoint conserva únicamente identidad, versión y estado conforme al contrato.
+- Se sincronizó el fixture JS/Tests/Auth.js; ambos bloques doGet quedan idénticos.
+- No se desplegó Apps Script. La URL Beta puede seguir mostrando el deployment anterior hasta una publicación autorizada; el probe remoto previo ya confirmó esa exposición.
+- Pendiente: regresión local completa y, en Beta, repetir GET health después del deployment autorizado. No se considera corregida la respuesta remota todavía.

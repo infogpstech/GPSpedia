@@ -1411,3 +1411,10 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - CI de regresión 45755284614: sintaxis de archivos modificados PASS; 4 suites fallidas: 2 por AUTH sessionAuthority (conocido), 2 por aserciones rígidas de gpsepedia-cache-v76 en PasswordRecovery y ServiceWorkerCache. Los checks funcionales PWAStartupScenarios 16/16 PASS; PasswordRecovery pasó sus escenarios pero falló el resumen por esa expectativa.
 - Corregido el harness: las dos pruebas aceptan gpsepedia-cache-vN; ServiceWorkerCache comprueba además las 13 dependencias nuevas.
 - El job responsive/browser del run 45755284614 estaba ejecutando Install Chromium; offline frío aún no verificado. Nueva CI pendiente sobre este ajuste.
+
+
+## Continuidad — corrección local BETA-F019 (2026-11-26)
+- HEAD de partida: c9a0231baca9072d82e2ca57ab037d2bd04aa3f1 en `GPSpedia2.2.5_work`.
+- `JS/Services/Auth.js` ya no devuelve `sessionAuthority` en `doGet(debug=true)`; `JS/Tests/Auth.js` actualizado con el mismo bloque. El cambio es mínimo y no altera login ni sesiones.
+- No se desplegó Apps Script ni se modificó el endpoint Beta. La exposición remota permanece hasta una publicación autorizada; se validará después mediante GET health.
+- Pendiente Actions: ServiceHealthContract debe pasar 21/21, regresión AUTH/paridad y suite global. Mantener el resto de fallos visibles.
