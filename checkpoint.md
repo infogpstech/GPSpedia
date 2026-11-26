@@ -475,3 +475,5 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Code Review: diff ui.js limitado a dos sustituciones; diff service-worker.js limitado a v81→v82. Imports del formulario y recursos locales revisados resuelven contra el árbol Git.
 - Pages build/deploy run `45913010737` SUCCESS sobre HEAD `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
 - Pendiente: confirmar que el dominio usado desde el móvil sirve el mismo HEAD; prueba real de navegador/IndexedDB y alta controlada; resolver cualquier snapshot previo inválido sin pérdida de idempotencia. El build/deploy no demuestra por sí solo que la escritura remota funcione.
+
+- Documentación: `README.md` actualizado para reflejar `HTML/add_cortes.html` y `HTML/users.html`; sin cambios adicionales en la descripción de arquitectura.
