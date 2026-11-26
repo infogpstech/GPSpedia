@@ -711,3 +711,7 @@ El harness `cc80ed49` amplió el smoke para consultar todos los recursos de `COR
 
 ### Inventario PWA en Git
 El árbol recursivo contiene 673 archivos; los 36 recursos CORE y los 4 OPTIONAL declarados existen. Los 12 módulos faltantes de la precarga también existen en el repositorio: la causa es que no están listados en `CORE_ASSETS`, no que falten físicamente.
+
+
+### BETA-08 — resultado PWA offline con inventario completo
+Run `45749807870`: 36/36 CORE y 4/4 OPTIONAL assets HTTP 200; manifest/iconos/SW PASS. Offline FAIL: 12 imports ausentes de CORE_ASSETS; Cache Storage contiene solo 36 core y no contiene los módulos importados. Runtime falla en cinco módulos JS, Font Awesome CSS y `/thumbnail`; login no visible. 0 no-GET, 0 Apps Script, 0 pageErrors. F020 confirmado.

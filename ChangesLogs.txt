@@ -1428,3 +1428,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ## 2026-11-26 — verificación estática de rutas PWA
 - Consultado el Git tree recursivo (673 archivos, no truncado): 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS existen; los 12 módulos ausentes de la precarga también existen.
 - Confirma omisión en `CORE_ASSETS`, no pérdida de archivos. Sin cambios en el Service Worker ni recursos de aplicación.
+
+
+## 2026-11-26 — confirmación runtime del precache PWA
+- Run `45749807870`: 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS HTTP 200; manifest y SW PASS; offline login FAIL.
+- Cache Storage contiene los 36 core, no los 12 módulos importados omitidos; fallan 5 módulos JS, Font Awesome CSS y `/thumbnail`.
+- No-GET 0, Apps Script 0, pageErrors 0. No se modificó código de aplicación.

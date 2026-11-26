@@ -1374,3 +1374,14 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Los 36 `CORE_ASSETS` y los 4 `OPTIONAL_ASSETS` existen en el árbol del repositorio; las 12 dependencias faltantes también existen como archivos JS. Esto confirma que el problema es la lista incompleta de precache, no archivos eliminados o rutas inexistentes en Git.
 - Commit de probe ampliado `cc80ed49f3aacbbc541bd89e11139fe97043deec`; run `45749473444` sigue con responsive-browser en `Install Chromium` al momento de este checkpoint. La ejecución anterior `45749201690` ya confirmó el fallo offline y enumeró las 12 dependencias ausentes.
 - Sin cambios en `service-worker.js` ni en recursos de aplicación; solo se consultó el árbol Git.
+
+
+## Continuidad — resultado definitivo del inventario PWA y runtime offline (2026-11-26)
+
+- Run `45749807870` completó responsive-browser: AUG-146 PASS, Pages login/recovery smoke PASS, PWA offline FAIL.
+- Manifest, iconos 192/512, start_url/scope y registro/activación/control del Service Worker PASS.
+- HTTP inventory: 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS responden 200. No hay archivos faltantes en Git ni en URLs declaradas.
+- El grafo de imports de `main.js` tiene 12 módulos ausentes de CORE_ASSETS. Cache Storage contiene los 36 core, pero no esos 12 módulos.
+- Offline: HTML recuperado, `navigator.onLine=false`, SW controla, título GPSpedia; login no visible. Requests fallidas: overlayHistory.js, navigationHistory.js, centralConfigurationCache.js, sessionCacheInvalidation.js, adminImageUploadIsolation.js, Font Awesome CSS externo y `/thumbnail`. Cero solicitudes no-GET, cero llamadas Apps Script, cero pageErrors.
+- Causa confirmada: precache incompleto para dependencias JS; además recursos externos no están garantizados offline. Hallazgo BETA-F020. No se modificó Service Worker ni frontend.
+- Run `45749892912` (HEAD documental `4f83934c`) estaba en ejecución al checkpoint; el run `45749807870` ya ofrece el resultado completo de la misma versión del harness.

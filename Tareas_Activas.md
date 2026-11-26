@@ -668,3 +668,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-08 — PWA offline (2026-11-26)
 **Estado: FAIL CONFIRMADO; CORRECCIÓN PENDIENTE.** Service Worker activo, manifest/iconos válidos, pero 12 módulos estáticos importados no están en CORE_ASSETS; la recarga offline recupera HTML sin inicializar login. Sin escrituras ni llamadas Apps Script. Corregir precarga esencial en fase de implementación separada y repetir.
+
+
+## BETA-F020 — precache PWA incompleto (2026-11-26)
+**Estado: CAUSA CONFIRMADA; CORRECCIÓN PENDIENTE.** Todos los recursos listados existen y responden HTTP 200, pero 12 imports JS no están en CORE_ASSETS. El offline runtime falla al cargar 5 módulos (4 críticos de arranque/login). Añadir dependencias esenciales al precache y revisar CSS/CDN y thumbnail en tarea de implementación separada; luego repetir PWA offline.

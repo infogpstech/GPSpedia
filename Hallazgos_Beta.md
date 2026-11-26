@@ -506,3 +506,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Los 36 recursos declarados en `CORE_ASSETS` existen en el repositorio; los 4 `OPTIONAL_ASSETS` también existen. No se detectaron rutas faltantes ni archivos eliminados.
 - Los 12 módulos faltantes identificados por el grafo de imports también existen en `JS/Frontend`; el defecto es su omisión de la lista de precarga esencial, no la ausencia de archivos.
 - El probe ampliado de HTTP/Pages (`cc80ed49`) está pendiente de finalización en Actions; el diagnóstico anterior ya confirma la falla offline.
+
+
+## Confirmación runtime BETA-F020 — recursos PWA presentes, precache incompleto (run 45749807870)
+- El inventario HTTP confirmó 36/36 `CORE_ASSETS` y 4/4 `OPTIONAL_ASSETS` con HTTP 200. No hay rutas declaradas rotas.
+- El grafo de imports contiene 12 módulos que no están en `CORE_ASSETS`; los archivos existen en Git, pero no quedan precargados.
+- Runtime offline: Cache Storage contiene exactamente los 36 recursos core. El Service Worker controla la página; la recarga devuelve el HTML, pero el login no aparece.
+- Solicitudes fallidas offline que bloquean o afectan el arranque: `overlayHistory.js`, `navigationHistory.js`, `centralConfigurationCache.js`, `sessionCacheInvalidation.js`, `adminImageUploadIsolation.js`; también CSS externo Font Awesome y `/thumbnail`.
+- No-GET 0, pageErrors 0, Apps Script 0. La falla se debe a módulos estáticos no precargados y recursos externos no disponibles offline, no a archivos ausentes del repositorio.
