@@ -844,3 +844,13 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - PWA cold/warm: 49/49 core y 4/4 opcionales HTTP 200, login visible offline, 0 módulos faltantes, 0 pageErrors; único fallo de recurso en cold offline: CSS Font Awesome CDN. 0 llamadas Apps Script, 0 solicitudes no-GET, sin credenciales ni escrituras.
 - No se ejecutaron POST, login real, útiles FEEDBACK, escrituras Spreadsheet/Drive, OAuth ni YouTube. Se mantiene la prioridad: útiles con dos identidades sintéticas y cleanup verificable; después playback real watch/short/shorts en desktop/móvil.
 - ADMIN permanece disponible pero SLOW en la muestra individual; no se interpreta esta medición única como regresión sostenida. Seguimiento mediante muestras repetidas si vuelve a superar el umbral.
+
+
+### Evidencia adicional — revalidación GET-only y navegador sobre HEAD 0861215 (2026-11-26)
+- Regression/browser run `45813003467`, HEAD `0861215251ab5cba5bfae5eb97361c8ee1b24615`: SUCCESS en ambos jobs; 542 suites, 6,453 pruebas aprobadas, 0 fallos; `ServiceHealthContract` 21/21; AUG-146 264/264 en cuatro viewports.
+- Pages run `45813002541`: SUCCESS. Login y recuperación UI PASS en 1366×768, 390×844, 360×800 y 320×700; 0 pageErrors, 0 solicitudes no-GET y 0 GET a Apps Script; no se enviaron credenciales ni se permitieron escrituras.
+- PWA offline frío/caliente PASS: 49/49 CORE y 4/4 OPTIONAL HTTP 200, 0 imports omitidos, login visible sin conexión y Service Worker controlador. Único residual: CSS Font Awesome CDN no disponible en cold offline; no afecta el login.
+- Health remoto GET-only run `45812643014` sobre fuente `18bfd3c04fdd0016c531a24c9a070705725fbc49`: seis servicios disponibles con versión esperada. ADMIN 2.7.2; probe individual 2288 ms y cinco muestras mediana 1634 ms (1/5 >=2 s). UTILITIES mediana 1063 ms (0/5 >=2 s).
+- CATALOG feed GET-only: 5 páginas, 5 eventos, 3 reset, revisión 5, cursor 0→5, sin cambio concurrente. Cursor negativo/malformado y límites inválidos rechazados; cursor futuro activa reset. Sin escrituras.
+- No se ejecutaron útiles, login autenticado, Inbox, WRITE, Drive/Spreadsheet, OAuth ni YouTube: continúan pendientes de identidades sintéticas, recursos aislados inequívocos y cleanup verificable. Orden siguiente: útiles con dos identidades; luego playback real watch/short/shorts desktop/móvil. Android físico pendiente.
+- No se modificaron deployments Apps Script ni recursos remotos. F022 conserva el fallo visual offline de Font Awesome como residual no bloqueante.

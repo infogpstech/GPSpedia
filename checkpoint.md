@@ -64,3 +64,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - PWA cold/warm PASS: 49 core + 4 opcionales, login offline visible, 0 módulos faltantes, 0 pageErrors; Font Awesome CDN falla solo en cold offline. Sin llamadas Apps Script, non-GET, credenciales ni escrituras.
 - Siguiente: útiles FEEDBACK/CATALOG con dos identidades sintéticas y cleanup verificable; luego playback real YouTube watch/short/shorts en escritorio/móvil. Mutaciones siguen NO EJECUTADAS.
 - Rama base verificada sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## 14. Continuidad Beta — validación posterior a actualización de deployments (2026-11-26)
+- HEAD de trabajo al iniciar: `0861215251ab5cba5bfae5eb97361c8ee1b24615`; rama base verificada: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificación.
+- Run regression/browser `45813003467` sobre el HEAD actual: ambos jobs SUCCESS. Regresión: 542 suites, 6,453 pruebas aprobadas, 0 fallos; contrato health local 21/21. AUG-146 264/264 en cuatro viewports.
+- Pages deployment `45813002541`: SUCCESS. Smoke Pages login/recuperación: HTTP 200 en 1366×768, 390×844, 360×800 y 320×700; 0 errores JS, 0 solicitudes no-GET, 0 GET a Apps Script, sin envío de credenciales ni escrituras.
+- PWA cold/warm: Service Worker controlando; 49/49 recursos core y 4/4 opcionales HTTP 200; 0 módulos precache faltantes; login visible offline frío y caliente; 0 pageErrors. Residual visual offline frío: CSS Font Awesome CDN (no bloquea login).
+- Health remoto GET-only run `45812643014` (commit fuente `18bfd3c04fdd0016c531a24c9a070705725fbc49`): 6/6 servicios disponibles y versiones esperadas; AUTH 2.2.5, CATALOG 2.4.0, FEEDBACK 1.2.2, UTILITIES 1.5.0, WRITE 2.3.1, ADMIN 2.7.2. ADMIN probe individual 2288 ms (SLOW); cinco muestras 2756/1959/1469/1634/1593 ms, mediana 1634, 1/5 >=2 s. UTILITIES cinco muestras 1199/1333/932/1063/597 ms, mediana 1063, 0/5 lentas.
+- CATALOG feed GET-only: revisión 5, cursor inicial 0 y final 5, 5 eventos recuperados (3 reset), paginación de 5 páginas sin cambio concurrente. Límites de cursor negativo/malformado y límites 0/51 rechazados; cursor futuro requiere reset. Sin POST ni mutaciones.
+- Próximas validaciones funcionales conservadas: útiles FEEDBACK/CATALOG con dos identidades sintéticas, dataset aislado y cleanup verificable; después reproducción real de tutoriales watch/short/shorts en escritorio y móvil. No se ejecutaron por requerir identidades/recursos de prueba y control de limpieza; no simular resultados.
+- No se modificaron Apps Script, deployments, Spreadsheet, Drive, OAuth, permisos ni datos remotos. BETA-F022 permanece como residual visual no bloqueante; Android físico y pruebas mutables siguen pendientes.
