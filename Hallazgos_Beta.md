@@ -491,3 +491,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Run `45748620437`: el formulario de recuperación se abrió y cerró sin enviar la solicitud en 1366x768, 390x844, 360x800 y 320x700.
 - Los campos usuario/correo y el botón de solicitud permanecen visibles; el formulario de finalización permanece oculto. No hubo overflow horizontal.
 - 0 solicitudes no-GET, 0 llamadas Apps Script, 0 errores JS, 0 credenciales y 0 escrituras. AUG-146 264/264 PASS; Pages run `45748620501` SUCCESS.
+
+
+## BETA-F020 — PWA offline incompleta por dependencias JS fuera de CORE_ASSETS (2026-11-26)
+- Manifest PWA e iconos 192x192/512x512 responden HTTP 200; `display=standalone`, `start_url` y `scope` válidos. Service Worker se registra, activa y controla la página.
+- Run `45749201690`, commit `f3c6cf68e23c4d20f7d5784bf9d83e81eb20431f`: al desconectar la red y recargar, el documento HTML vuelve desde Cache Storage, pero el login no se inicializa.
+- El análisis recursivo del grafo estático de imports de `JS/Frontend/main.js` encontró 12 módulos ausentes de `CORE_ASSETS`: `overlayHistory.js`, `navigationHistory.js`, `centralConfigurationCache.js`, `sessionCacheInvalidation.js`, `printQr.js`, `editBackupStore.js`, `adminImageUploadIsolation.js`, `validationBannerLifecycle.js`, `usefulSyncQueue.js`, `inboxPageCache.js`, `driveStorageAlerts.js` y `developerConsoleConfirmation.js`.
+- Evidencia runtime: cache activa con 36 rutas, ninguna de esas 12 dependencias; solicitudes offline fallidas para `overlayHistory.js`, `navigationHistory.js`, `centralConfigurationCache.js`, `sessionCacheInvalidation.js`, CSS externo Font Awesome y `/thumbnail`. Estado offline: `navigator.onLine=false`, Service Worker controla la página, título GPSpedia, login no visible.
+- No hubo solicitudes no-GET ni llamadas Apps Script. No se modificó `service-worker.js` ni los módulos de frontend. La corrección pendiente es completar la precarga esencial y validar de nuevo el arranque offline.

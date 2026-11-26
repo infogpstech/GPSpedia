@@ -664,3 +664,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-08 — recuperación UI cuatro viewports (2026-11-26)
 **Estado: INTERFAZ VALIDADA.** Login y recuperación UI PASS en 1366x768, 390x844, 360x800 y 320x700. No se envió solicitud ni se generó código; 0 llamadas Apps Script y 0 escrituras. El flujo real de recuperación sigue pendiente.
+
+
+## BETA-08 — PWA offline (2026-11-26)
+**Estado: FAIL CONFIRMADO; CORRECCIÓN PENDIENTE.** Service Worker activo, manifest/iconos válidos, pero 12 módulos estáticos importados no están en CORE_ASSETS; la recarga offline recupera HTML sin inicializar login. Sin escrituras ni llamadas Apps Script. Corregir precarga esencial en fase de implementación separada y repetir.

@@ -1411,3 +1411,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Tests/BetaDeployedPageSmoke.mjs` valida el panel de recuperación en cuatro viewports (1366x768, 390x844, 360x800, 320x700), además del login.
 - No envía solicitud ni código; bloquea no-GET y Apps Script.
 - Run `45748620437`: smoke PASS, AUG-146 264/264; Pages run `45748620501` SUCCESS.
+
+
+## 2026-11-26 — diagnóstico de PWA offline
+- `JS/Tests/BetaPwaOfflineSmoke.mjs` ahora inspecciona manifest, iconos, Service Worker, grafo recursivo de imports, Cache Storage y errores de navegación offline.
+- Run `45749201690`: manifest/iconos/SW PASS; offline login FAIL. Detectados 12 módulos importados ausentes de `CORE_ASSETS`; solicitudes offline fallidas en módulos JS y recursos externos.
+- No se modificó `service-worker.js` ni código de aplicación. 0 POST/no-GET, 0 llamadas Apps Script, 0 escrituras remotas.

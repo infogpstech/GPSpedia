@@ -695,3 +695,11 @@ Quince muestras de tres runs Beta GET-only: mediana 1898 ms, media 2108.8 ms, m�
 
 ### BETA-08 — recuperación UI, cuatro viewports
 Run `45748620437`: PASS en 1366x768, 390x844, 360x800 y 320x700; usuario/correo/botón visibles, formulario de finalización oculto, sin overflow. No se envió solicitud ni código; 0 llamadas Apps Script y 0 escrituras. AUG-146 264/264; Pages `45748620501` SUCCESS.
+
+
+### BETA-08 — PWA offline: FAIL confirmado (2026-11-26)
+- Manifest, scope, start_url, iconos 192/512 y registro/activación del Service Worker: PASS.
+- Recarga offline: FAIL; HTML disponible desde cache, login no visible.
+- 12 módulos importados por el grafo de `main.js` no están en `CORE_ASSETS`; el runtime confirma que no están cacheados. También fallan recursos externos Font Awesome y `/thumbnail`.
+- No-GET 0, Apps Script 0, escrituras 0. Hallazgo BETA-F020.
+- Corrección de `service-worker.js` queda fuera de la fase de validación; requiere completar precache y repetir el smoke offline.

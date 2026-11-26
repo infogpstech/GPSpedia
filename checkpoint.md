@@ -1347,3 +1347,14 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Run `45748620437`: AUG-146 264/264 PASS; Pages login/recuperación UI PASS en 1366x768, 390x844, 360x800 y 320x700. Campos usuario/correo y botón visibles, formulario de finalización oculto, sin overflow horizontal.
 - El flujo no envió solicitud ni código: 0 solicitudes no-GET, 0 llamadas Apps Script, 0 errores JS, 0 credenciales y 0 escrituras.
 - Pages run `45748620501`: SUCCESS. Service-tests run `45748620437`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite por AUTH `sessionAuthority` (AUG-024/MIG021).
+
+
+## Continuidad — diagnóstico confirmado de PWA offline (2026-11-26)
+
+- Commit de diagnóstico: `f3c6cf68e23c4d20f7d5784bf9d83e81eb20431f`; run `45749201690`.
+- Manifest e iconos PWA 192/512 PASS; Service Worker activo y controlador PASS. Navegación offline FAIL: HTML se recupera de Cache Storage, pero el login no se inicializa.
+- Grafo recursivo de imports de `main.js`: 12 dependencias no están en `CORE_ASSETS`: overlayHistory, navigationHistory, centralConfigurationCache, sessionCacheInvalidation, printQr, editBackupStore, adminImageUploadIsolation, validationBannerLifecycle, usefulSyncQueue, inboxPageCache, driveStorageAlerts y developerConsoleConfirmation.
+- Cache Storage contenía 36 rutas, sin esos módulos. Solicitudes fallidas offline: overlayHistory.js, navigationHistory.js, centralConfigurationCache.js, sessionCacheInvalidation.js, CSS Font Awesome y `/thumbnail`.
+- Estado observado: offline, Service Worker controla, título GPSpedia, login no visible. No-GET 0; llamadas Apps Script 0; escrituras 0.
+- El hallazgo BETA-F020 queda pendiente para una tarea de implementación. No se modificó `service-worker.js` ni módulos de aplicación durante esta fase.
+- El mismo run mantiene AUG-146 y Pages login/recovery smoke PASS; la PWA offline es el único fallo del job responsive-browser.
