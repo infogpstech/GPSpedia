@@ -626,3 +626,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ## Beta — Feed CATALOG read-only (2026-11-26)
 - Run 45729926589 SUCCESS. Cursor 0/1 y cursor 5/1, contrato validado; sin escrituras. Latencias 2.374/2.381s; F011 seguimiento.
 - Próximo: cursors/reset/retención/paginación y continuar matriz Beta.
+
+
+### Validación Beta — seguimiento (2026-11-26)
+- **ADMIN repeated latency probe:** implementado, integrado y probado SUCCESS. Mediana de 5 muestras 1622 ms; deployment v2.7.1 vs fuente 2.7.2, pendiente decisión de despliegue y comprobaciones funcionales antes de despliegue.
+- **CATALOG feed read-only boundaries:** PASS (cursor tail/futuro/invalid/malformed y límites invalid).
+- **Pendiente:** AUTH lectura/contrato y pruebas de sesión sintética con fixture aislado y cleanup verificable; ampliar WRITE/FEEDBACK según contrato.
