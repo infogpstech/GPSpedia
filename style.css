@@ -4640,10 +4640,10 @@ td, th {
         transition: none;
     }
 
-    #audit-drive-modal .audit-drive-toolbar-toggle,
-    #audit-drive-modal .audit-drive-toolbar-toggle i,
-    #audit-drive-modal .audit-drive-toolbar-actions > .audit-drive-action,
-    #audit-drive-modal .audit-drive-action-label {
+    #audit-drive-workspace .audit-drive-toolbar-toggle,
+    #audit-drive-workspace .audit-drive-toolbar-toggle i,
+    #audit-drive-workspace .audit-drive-toolbar-actions > .audit-drive-action,
+    #audit-drive-workspace .audit-drive-action-label {
         transition: none !important;
     }
     #dev-tools-modal .dev-tools-title {
@@ -5634,7 +5634,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 
 
 /* GP-DEV-CUT-AUDIT-TOOLBAR-01: acciones compactas y etiquetas expandibles. */
-#audit-drive-modal .audit-drive-toolbar {
+#audit-drive-workspace .audit-drive-toolbar {
     display: flex;
     align-items: center;
     gap: 7px;
@@ -5646,8 +5646,8 @@ textarea.rich-text-source[hidden] { display:none !important; }
     border-radius: 10px;
     background: var(--gp-color-surface,var(--card-bg,#fff));
 }
-#audit-drive-modal .audit-drive-toolbar-toggle,
-#audit-drive-modal .audit-drive-toolbar-actions > .audit-drive-action {
+#audit-drive-workspace .audit-drive-toolbar-toggle,
+#audit-drive-workspace .audit-drive-toolbar-actions > .audit-drive-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -5661,10 +5661,10 @@ textarea.rich-text-source[hidden] { display:none !important; }
     white-space: nowrap;
     transition: width .2s ease, flex-basis .2s ease, padding .2s ease, background-color .18s ease;
 }
-#audit-drive-modal .audit-drive-toolbar-toggle i {
+#audit-drive-workspace .audit-drive-toolbar-toggle i {
     transition: transform .2s ease;
 }
-#audit-drive-modal .audit-drive-toolbar-actions {
+#audit-drive-workspace .audit-drive-toolbar-actions {
     display: flex;
     align-items: center;
     flex: 1 1 auto;
@@ -5672,10 +5672,10 @@ textarea.rich-text-source[hidden] { display:none !important; }
     min-width: 0;
     gap: 6px;
 }
-#audit-drive-modal .audit-drive-toolbar-actions > .audit-drive-action[hidden] {
+#audit-drive-workspace .audit-drive-toolbar-actions > .audit-drive-action[hidden] {
     display: none !important;
 }
-#audit-drive-modal .audit-drive-action-label {
+#audit-drive-workspace .audit-drive-action-label {
     display: inline-block;
     max-width: 0;
     margin-inline-start: 0;
@@ -5684,30 +5684,30 @@ textarea.rich-text-source[hidden] { display:none !important; }
     white-space: nowrap;
     transition: max-width .2s ease, margin-inline-start .2s ease, opacity .16s ease, clip-path .2s ease;
 }
-#audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-toolbar-toggle i {
+#audit-drive-workspace .audit-drive-toolbar.is-expanded .audit-drive-toolbar-toggle i {
     transform: rotate(180deg);
 }
-#audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-toolbar-actions > .audit-drive-action {
+#audit-drive-workspace .audit-drive-toolbar.is-expanded .audit-drive-toolbar-actions > .audit-drive-action {
     flex: 0 1 auto;
     width: auto;
     min-width: 40px;
     padding-inline: 11px;
     gap: 7px;
 }
-#audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-action-label {
+#audit-drive-workspace .audit-drive-toolbar.is-expanded .audit-drive-action-label {
     max-width: 260px;
     margin-inline-start: 1px;
     clip-path: inset(0);
     opacity: 1;
 }
-#audit-drive-modal .audit-drive-toolbar-toggle[aria-expanded="true"] {
+#audit-drive-workspace .audit-drive-toolbar-toggle[aria-expanded="true"] {
     color: var(--gp-color-accent,var(--accent-color,#1769aa));
     border-color: var(--gp-color-accent,var(--accent-color,#1769aa));
 }
 @media (max-width: 600px) {
-    #audit-drive-modal .audit-drive-toolbar { align-items: flex-start; }
-    #audit-drive-modal .audit-drive-toolbar-actions { gap: 5px; }
-    #audit-drive-modal .audit-drive-toolbar.is-expanded .audit-drive-toolbar-actions > .audit-drive-action {
+    #audit-drive-workspace .audit-drive-toolbar { align-items: flex-start; }
+    #audit-drive-workspace .audit-drive-toolbar-actions { gap: 5px; }
+    #audit-drive-workspace .audit-drive-toolbar.is-expanded .audit-drive-toolbar-actions > .audit-drive-action {
         flex: 1 1 auto;
         justify-content: flex-start;
         max-width: 100%;
@@ -5760,7 +5760,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 
 
 
-#audit-drive-modal #audit-drive-results-container[hidden] { display: none !important; }
+#audit-drive-workspace #audit-drive-results-container[hidden] { display: none !important; }
 
 /* ========================================================================
    BLOQUE CONSOLIDADO — encabezados de detalle
@@ -6718,7 +6718,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     #dev-tools-modal .dev-tab-link span,
     #dev-tools-modal #btn-clear-console-log::after,
     #dev-tools-modal #btn-copy-console-log::after,
-    #audit-drive-modal .audit-drive-action-label {
+    #audit-drive-workspace .audit-drive-action-label {
         transition: none !important;
     }
 }
@@ -6925,7 +6925,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
     #dev-tools-modal .dev-tab-link span,
     #dev-tools-modal #btn-clear-console-log::after,
     #dev-tools-modal #btn-copy-console-log::after,
-    #audit-drive-modal .audit-drive-action-label {
+    #audit-drive-workspace .audit-drive-action-label {
         transition: none !important;
     }
 }
@@ -7015,7 +7015,7 @@ textarea.rich-text-source[hidden] { display:none !important; }
 }
 
 /* GP-ADMIN-DRIVE-SCAN-MODAL-01 — consola de progreso paralela dentro del modal de escaneo. */
-#audit-drive-modal .info-modal-content { display:flex; flex-direction:column; min-height:0; max-height:calc(100dvh - 24px); overflow-y:auto; }
+#audit-drive-workspace .info-modal-content { display:flex; flex-direction:column; min-height:0; max-height:calc(100dvh - 24px); overflow-y:auto; }
 #audit-drive-scan-workspace { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; min-height:100px; max-height:30vh; margin:8px 0 12px; border:1px solid var(--border-color); border-radius:9px; background:var(--card-bg); overflow:hidden; }
 #audit-drive-scan-console { min-height:100px; max-height:30vh; overflow:auto; padding:8px 10px; font:.78rem/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; overflow-wrap:anywhere; color:var(--text-color); }
 .audit-drive-scan-log-entry { padding:2px 0; border-bottom:1px solid color-mix(in srgb,var(--border-color) 55%,transparent); }
@@ -7032,3 +7032,490 @@ textarea.rich-text-source[hidden] { display:none !important; }
 .feedback-btn-overlay.util-btn { transition: background-color .2s ease, transform .18s ease, box-shadow .18s ease; }
 .feedback-btn-overlay.util-btn.liked, .feedback-btn-overlay.util-btn.liked:hover { background-color: var(--gp-color-success) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--gp-color-success) 35%, transparent); }
 .feedback-btn-overlay.util-btn.liked:active { transform: scale(.94); }
+
+/* GP-ADMIN-DRIVE-UNUSED-IMAGES-02 + GP-ADMIN-TAB-ACTIONS-UX-01
+   Consola persistente y área de contenido en columnas iguales; también en móvil. */
+#dev-tools-modal .dev-tools-modal-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-tools-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-console-shared {
+    display: flex;
+    flex: 1 1 50%;
+    flex-direction: column;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+}
+#dev-tools-modal .dev-console-shared .dev-console-output {
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 100px;
+    max-height: none;
+    overflow: auto;
+}
+#dev-tools-modal .dev-tools-tabs {
+    display: flex;
+    flex: 1 1 50%;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-tools-layout {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    gap: 8px;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-tools-sidebar {
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    flex-direction: row;
+    min-width: 0;
+    align-self: stretch;
+    gap: 5px;
+    padding: 5px;
+}
+#dev-tools-modal .dev-tab-link {
+    justify-content: center;
+    min-width: 0;
+    gap: 5px;
+    padding: 7px 4px;
+    text-align: center;
+}
+#dev-tools-modal .dev-tools-panels {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-tab-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+#dev-tools-modal .dev-panel-images:has(#audit-drive-workspace:not([hidden])) {
+    overflow: hidden;
+}
+#dev-tools-modal #dev-images-overview {
+    min-width: 0;
+}
+#dev-tools-modal .dev-audit-explorer {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+#dev-tools-modal .dev-audit-explorer[hidden] {
+    display: none !important;
+}
+#dev-tools-modal .dev-audit-explorer-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+#dev-tools-modal .dev-audit-explorer-heading {
+    min-width: 0;
+}
+#dev-tools-modal .dev-audit-explorer-heading h3 {
+    margin: 0;
+    font-size: .98rem;
+    overflow-wrap: anywhere;
+}
+#dev-tools-modal .dev-audit-explorer-heading p {
+    margin: 3px 0 0;
+    color: var(--text-disabled);
+    font-size: .72rem;
+}
+#dev-tools-modal .audit-drive-back {
+    flex: 0 0 auto;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 6px 9px;
+}
+#dev-tools-modal .audit-drive-summary {
+    flex: 0 0 auto;
+    max-height: 70px;
+    overflow: auto;
+    padding: 7px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    font-size: .76rem;
+}
+#dev-tools-modal .audit-drive-folder-breadcrumb {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: var(--button-bg);
+    font-size: .75rem;
+    overflow-wrap: anywhere;
+}
+#dev-tools-modal #audit-drive-results-container {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    min-height: 0;
+    max-height: none !important;
+    padding: 0 2px 4px 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+#dev-tools-modal .audit-drive-folder-group {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 7px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    background: var(--card-bg);
+}
+#dev-tools-modal .audit-drive-folder-heading {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 7px;
+    color: var(--text-color);
+    font-size: .76rem;
+    overflow-wrap: anywhere;
+}
+#dev-tools-modal .audit-drive-folder-heading i {
+    flex: 0 0 auto;
+    color: var(--accent-color);
+}
+#dev-tools-modal .audit-drive-folder-files {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    min-width: 0;
+}
+#dev-tools-modal .audit-drive-results.view-list .audit-drive-folder-files {
+    display: flex;
+    flex-direction: column;
+}
+#dev-tools-modal .audit-drive-file-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 7px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface-bg, var(--card-bg));
+}
+#dev-tools-modal .audit-drive-results.view-list .audit-drive-file-card {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 9px;
+}
+#dev-tools-modal .audit-drive-file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 94px;
+    min-height: 70px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--button-bg);
+}
+#dev-tools-modal .audit-drive-file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+#dev-tools-modal .audit-drive-file-preview > i {
+    font-size: 1.6rem;
+    color: var(--text-disabled);
+}
+#dev-tools-modal .audit-drive-results.view-list .audit-drive-file-preview {
+    grid-row: span 2;
+    width: 76px;
+    height: 64px;
+}
+#dev-tools-modal .audit-drive-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+#dev-tools-modal .audit-drive-file-name {
+    font-size: .75rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+#dev-tools-modal .audit-drive-file-metadata,
+#dev-tools-modal .audit-drive-file-association {
+    display: block;
+    color: var(--text-disabled);
+    font-size: .66rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+#dev-tools-modal .audit-drive-file-association {
+    color: var(--text-color);
+}
+#dev-tools-modal .audit-drive-file-link {
+    width: fit-content;
+    font-size: .68rem;
+}
+#dev-tools-modal .audit-drive-file-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+#dev-tools-modal .audit-drive-classification,
+#dev-tools-modal .audit-drive-persistence-status {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: var(--button-bg);
+    font-size: .64rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+#dev-tools-modal .audit-drive-persistence-status {
+    color: var(--text-disabled);
+}
+#dev-tools-modal .audit-drive-file-card.is-registered .audit-drive-persistence-status {
+    color: var(--success-color, #198754);
+}
+#dev-tools-modal .audit-drive-file-card.is-error .audit-drive-persistence-status,
+#dev-tools-modal .audit-drive-file-card.is-blocked .audit-drive-persistence-status {
+    color: var(--danger-color, #dc3545);
+}
+#dev-tools-modal .audit-drive-retry {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 4px 7px;
+    font-size: .66rem;
+}
+#dev-tools-modal .audit-drive-retry[hidden] {
+    display: none !important;
+}
+#dev-tools-modal .audit-drive-view-switch {
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 4px;
+}
+#dev-tools-modal .audit-drive-view-switch .btn {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 4px;
+}
+#dev-tools-modal .audit-drive-view-switch .btn[aria-pressed="true"] {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 1px;
+}
+
+/* Acciones dentro de las pestañas: icono compacto y etiqueta al recibir foco. */
+#dev-tools-modal .dev-tab-panel .dev-panel-action {
+    display: inline-flex;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: flex-start;
+    width: 42px !important;
+    min-width: 42px;
+    max-width: 100%;
+    min-height: 42px;
+    padding: 0 10px;
+    gap: 0;
+    overflow: hidden;
+    text-align: left;
+    white-space: nowrap;
+}
+#dev-tools-modal .dev-tab-panel .dev-panel-action > i {
+    display: inline-flex;
+    flex: 0 0 20px;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    font-size: .95rem;
+}
+#dev-tools-modal .dev-tab-panel .dev-panel-action .dev-action-label {
+    display: inline-block;
+    flex: 0 1 auto;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    white-space: nowrap;
+    font-size: .78rem;
+    transition: max-width .18s ease, opacity .16s ease;
+}
+#dev-tools-modal .dev-tab-panel .dev-panel-action:focus,
+#dev-tools-modal .dev-tab-panel .dev-panel-action:focus-visible {
+    flex: 0 1 auto;
+    width: auto !important;
+    min-width: 42px;
+    max-width: 100%;
+    gap: 8px;
+    padding: 0 11px;
+    overflow: visible;
+    z-index: 2;
+}
+#dev-tools-modal .dev-tab-panel .dev-panel-action:focus .dev-action-label,
+#dev-tools-modal .dev-tab-panel .dev-panel-action:focus-visible .dev-action-label {
+    max-width: 220px;
+    opacity: 1;
+}
+#dev-tools-modal .dev-tab-panel .dev-action-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+}
+#dev-tools-modal .dev-tab-panel .dev-action-row .dev-panel-action {
+    flex: 0 0 42px;
+}
+#dev-tools-modal .dev-tab-panel .dev-action-row .dev-panel-action:focus,
+#dev-tools-modal .dev-tab-panel .dev-action-row .dev-panel-action:focus-visible {
+    flex-basis: auto;
+}
+@media (max-width: 760px) {
+    #dev-tools-modal .dev-tools-workspace {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 6px;
+    }
+    #dev-tools-modal .dev-console-shared {
+        padding: 7px;
+        min-height: 0;
+    }
+    #dev-tools-modal .dev-console-shared .dev-console-output {
+        min-height: 90px;
+        padding: 7px;
+        font-size: .68rem;
+    }
+    #dev-tools-modal .dev-tools-sidebar {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 3px;
+        padding: 3px;
+    }
+    #dev-tools-modal .dev-tab-link {
+        min-height: 34px;
+        padding: 4px 2px;
+        font-size: .68rem;
+    }
+    #dev-tools-modal .audit-drive-folder-files {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    #dev-tools-modal .audit-drive-file-preview {
+        height: 76px;
+    }
+    #dev-tools-modal .audit-drive-results.view-list .audit-drive-file-card {
+        grid-template-columns: 58px minmax(0, 1fr);
+    }
+    #dev-tools-modal .audit-drive-results.view-list .audit-drive-file-preview {
+        width: 58px;
+        height: 58px;
+    }
+}
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-tools-workspace {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 5px;
+    }
+    #dev-tools-modal .dev-console-shared {
+        padding: 5px;
+    }
+    #dev-tools-modal .dev-console-shared .dev-card-heading h4 {
+        font-size: .75rem;
+        white-space: normal;
+    }
+    #dev-tools-modal .dev-console-shared .dev-console-output {
+        min-height: 80px;
+        font-size: .62rem;
+    }
+    #dev-tools-modal .dev-terminal-row {
+        gap: 3px;
+    }
+    #dev-tools-modal .dev-terminal-row #btn-terminal-send {
+        flex-basis: 30px;
+        width: 30px;
+        min-width: 30px;
+        height: 32px;
+        min-height: 32px;
+    }
+    #dev-tools-modal .dev-audit-explorer-heading h3 {
+        font-size: .82rem;
+    }
+    #dev-tools-modal .dev-audit-explorer-heading p {
+        font-size: .62rem;
+    }
+    #dev-tools-modal .audit-drive-back {
+        min-width: 32px;
+        min-height: 32px;
+        padding: 4px 6px;
+        font-size: .68rem;
+    }
+    #dev-tools-modal .audit-drive-file-card {
+        padding: 5px;
+    }
+    #dev-tools-modal .dev-tab-panel .dev-panel-action {
+        flex-basis: 38px;
+        width: 38px !important;
+        min-width: 38px;
+        min-height: 38px;
+        padding: 0 8px;
+    }
+    #dev-tools-modal .dev-tab-panel .dev-panel-action:focus,
+    #dev-tools-modal .dev-tab-panel .dev-panel-action:focus-visible {
+        width: auto !important;
+        min-width: 38px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tab-panel .dev-panel-action .dev-action-label {
+        transition: none !important;
+    }
+}
