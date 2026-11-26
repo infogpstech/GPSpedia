@@ -1,5 +1,13 @@
 name: GPSpedia deployed service health (read-only)
 on:
+  push:
+    branches:
+      - GPSpedia2.2.5_work
+    paths:
+      - ".github/workflows/deployed-service-health.yml"
+      - "JS/Tests/RemoteServiceHealth.mjs"
+      - "JS/Frontend/api-config.js"
+      - "Services/SERVICE_HEALTH.md"
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
+      GPSPEDIA_HEALTH_ENV: BETA_ISOLATED
+      GPSPEDIA_CONFIRM_BETA_ENDPOINTS: I_HAVE_VERIFIED_THE_SIX_ENDPOINTS_ARE_BETA
       TARGET_COMMIT: ${{ github.sha }}
     steps:
       - name: Checkout working branch
