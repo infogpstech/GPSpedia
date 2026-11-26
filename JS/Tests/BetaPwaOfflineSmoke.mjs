@@ -36,9 +36,40 @@ for (const expected of [192, 512]) {
     iconResults.push({ size: expected, status: iconResponse.status, bytes: bytes.length });
 }
 
+const serviceWorkerUrl = new URL("service-worker.js", base);
+const serviceWorkerResponse = await fetch(serviceWorkerUrl, { signal: AbortSignal.timeout(15000) });
+if (!serviceWorkerResponse.ok) throw new Error("service-worker.js no responde HTTP 200.");
+const serviceWorkerSource = await serviceWorkerResponse.text();
+const coreBlock = serviceWorkerSource.match(/const CORE_ASSETS=\[([\s\S]*?)\];/);
+if (!coreBlock) throw new Error("No se encontró CORE_ASSETS en service-worker.js.");
+const coreAssets = new Set([...coreBlock[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]));
+const moduleQueue = ["./JS/Frontend/main.js"];
+const visitedModules = new Set();
+while (moduleQueue.length) {
+    const modulePath = moduleQueue.shift();
+    if (visitedModules.has(modulePath)) continue;
+    visitedModules.add(modulePath);
+    const moduleUrl = new URL(modulePath, base);
+    const moduleResponse = await fetch(moduleUrl, { signal: AbortSignal.timeout(15000) });
+    if (!moduleResponse.ok) throw new Error("Módulo frontend no disponible: " + modulePath);
+    const moduleSource = await moduleResponse.text();
+    const specifiers = [...moduleSource.matchAll(/(?:import\s+(?:[^'"]*?\s+from\s+)?|export\s+[^'"]*?\s+from\s+)['"]([^'"]+)['"]/g)]
+        .map(match => match[1])
+        .filter(specifier => specifier.startsWith("./") && specifier.endsWith(".js"));
+    for (const specifier of specifiers) {
+        const resolved = new URL(specifier, moduleUrl);
+        if (resolved.origin !== base.origin || !resolved.pathname.startsWith(base.pathname)) continue;
+        const relative = "./" + resolved.pathname.slice(base.pathname.length);
+        if (!visitedModules.has(relative)) moduleQueue.push(relative);
+    }
+}
+const missingPrecacheModules = [...visitedModules].filter(modulePath => !coreAssets.has(modulePath));
+
 const browser = await chromium.launch({ headless: true });
 const nonGetRequests = [];
 const pageErrors = [];
+const failedRequests = [];
+const consoleErrors = [];
 let blockedAppsScriptGets = 0;
 try {
     const context = await browser.newContext({
@@ -61,6 +92,13 @@ try {
         if (request.method() !== "GET") nonGetRequests.push(request.method());
     });
     page.on("pageerror", error => pageErrors.push(String(error && error.message || error)));
+    page.on("requestfailed", request => failedRequests.push({
+        path: new URL(request.url()).pathname,
+        error: request.failure() && request.failure().errorText
+    }));
+    page.on("console", message => {
+        if (message.type() === "error") consoleErrors.push(message.text());
+    });
 
     const onlineResponse = await page.goto(target, { waitUntil: "domcontentloaded", timeout: 45000 });
     if (!onlineResponse || onlineResponse.status() !== 200) throw new Error("Pages no carga online.");
@@ -79,22 +117,58 @@ try {
     }
 
     await context.setOffline(true);
-    const offlineResponse = await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForFunction(() => {
-        const modal = document.getElementById("login-modal");
-        return modal && getComputedStyle(modal).display === "flex";
-    }, null, { timeout: 15000 });
-    const offlineState = await page.evaluate(() => ({
-        online: navigator.onLine,
-        title: document.title,
-        loginVisible: getComputedStyle(document.getElementById("login-modal")).display === "flex"
-    }));
-    if (offlineState.online || !offlineState.loginVisible ||
-        !offlineState.title.includes("GPSpedia")) {
-        throw new Error("La navegación offline no conservó la pantalla de login.");
+    let offlineResponse = null;
+    let offlineReloadError = null;
+    try {
+        offlineResponse = await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 });
+    } catch (error) {
+        offlineReloadError = String(error && error.message || error);
     }
-    if (nonGetRequests.length || pageErrors.length) {
-        throw new Error("El smoke PWA produjo solicitudes no-GET o errores JavaScript.");
+    let offlineLoginVisible = false;
+    let offlineWaitError = null;
+    try {
+        await page.waitForFunction(() => {
+            const modal = document.getElementById("login-modal");
+            return modal && getComputedStyle(modal).display === "flex";
+        }, null, { timeout: 15000 });
+        offlineLoginVisible = true;
+    } catch (error) {
+        offlineWaitError = String(error && error.message || error);
+    }
+    const offlineState = await page.evaluate(async () => {
+        const modal = document.getElementById("login-modal");
+        const names = await caches.keys();
+        const cachedPaths = [];
+        for (const name of names) {
+            const cache = await caches.open(name);
+            for (const request of await cache.keys()) {
+                cachedPaths.push(new URL(request.url).pathname);
+            }
+        }
+        return {
+            online: navigator.onLine,
+            title: document.title,
+            loginVisible: Boolean(modal && getComputedStyle(modal).display === "flex"),
+            serviceWorkerControlled: Boolean(navigator.serviceWorker && navigator.serviceWorker.controller),
+            cachedPaths
+        };
+    });
+    const diagnostics = {
+        missingPrecacheModules,
+        offlineReloadError,
+        offlineWaitError,
+        offlineState,
+        failedRequests,
+        consoleErrors,
+        nonGetRequests,
+        pageErrors
+    };
+    console.log("Beta PWA offline diagnostics");
+    console.log(JSON.stringify(diagnostics));
+    if (missingPrecacheModules.length || offlineReloadError || !offlineLoginVisible ||
+        offlineState.online || !offlineState.loginVisible || !offlineState.title.includes("GPSpedia") ||
+        nonGetRequests.length || pageErrors.length) {
+        throw new Error("La navegación offline no conservó la pantalla de login; revisar missingPrecacheModules y diagnósticos.");
     }
 
     console.log("Beta PWA manifest and offline navigation — PASS");
