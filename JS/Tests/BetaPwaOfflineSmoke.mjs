@@ -42,7 +42,23 @@ if (!serviceWorkerResponse.ok) throw new Error("service-worker.js no responde HT
 const serviceWorkerSource = await serviceWorkerResponse.text();
 const coreBlock = serviceWorkerSource.match(/const CORE_ASSETS=\[([\s\S]*?)\];/);
 if (!coreBlock) throw new Error("No se encontró CORE_ASSETS en service-worker.js.");
-const coreAssets = new Set([...coreBlock[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]));
+const coreAssetList = [...coreBlock[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]);
+const coreAssets = new Set(coreAssetList);
+const optionalBlock = serviceWorkerSource.match(/const OPTIONAL_ASSETS=\[([\s\S]*?)\];/);
+const optionalAssets = optionalBlock
+    ? [...optionalBlock[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1])
+    : [];
+async function checkStaticAsset(asset) {
+    try {
+        const response = await fetch(new URL(asset, base), { signal: AbortSignal.timeout(12000) });
+        return { asset, status: response.status, ok: response.ok };
+    } catch (error) {
+        return { asset, status: null, ok: false, error: String(error && error.message || error) };
+    }
+}
+const coreAssetResults = await Promise.all(coreAssetList.map(checkStaticAsset));
+const optionalAssetResults = await Promise.all(optionalAssets.map(checkStaticAsset));
+const missingCoreAssets = coreAssetResults.filter(result => !result.ok);
 const moduleQueue = ["./JS/Frontend/main.js"];
 const visitedModules = new Set();
 while (moduleQueue.length) {
@@ -155,6 +171,8 @@ try {
     });
     const diagnostics = {
         missingPrecacheModules,
+        missingCoreAssets,
+        optionalAssetResults,
         offlineReloadError,
         offlineWaitError,
         offlineState,
@@ -165,7 +183,7 @@ try {
     };
     console.log("Beta PWA offline diagnostics");
     console.log(JSON.stringify(diagnostics));
-    if (missingPrecacheModules.length || offlineReloadError || !offlineLoginVisible ||
+    if (missingPrecacheModules.length || missingCoreAssets.length || offlineReloadError || !offlineLoginVisible ||
         offlineState.online || !offlineState.loginVisible || !offlineState.title.includes("GPSpedia") ||
         nonGetRequests.length || pageErrors.length) {
         throw new Error("La navegación offline no conservó la pantalla de login; revisar missingPrecacheModules y diagnósticos.");
@@ -180,6 +198,9 @@ try {
             icons: iconResults
         },
         serviceWorker: registration,
+        coreAssetsChecked: coreAssetResults.length,
+        optionalAssetsChecked: optionalAssetResults.length,
+        missingCoreAssets,
         onlineHttpStatus: onlineResponse.status(),
         offlineHttpStatus: offlineResponse ? offlineResponse.status() : null,
         offlineLoginVisible: offlineState.loginVisible,
