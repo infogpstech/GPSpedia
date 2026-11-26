@@ -13873,9 +13873,11 @@ function refreshAuditDriveReferenceSnapshot_(auditId, snapshot) {
         cachedChunks.push(cachedChunk);
     }
     const now = Date.now();
-    const renewedManifest = {
-        schemaVersion: schemaVersion >= 3 ? 3 : (schemaVersion || config.schemaVersion),
-        chunking: byteAware ? config.chunking : undefined,
+    const renewedManifest = legacy ? {
+        encoding: "json", chunkCount, length, chunkSize,
+        createdAt: Number(manifest.createdAt) || now, updatedAt: now, ttlSeconds: config.ttlSeconds
+    } : {
+        schemaVersion, chunking: byteAware ? config.chunking : undefined,
         chunkCount, length, byteLength, chunkSize,
         encoding: config.encoding, mimeType: config.mimeType,
         sha256: hashDriveAuditValue_(serialized),
