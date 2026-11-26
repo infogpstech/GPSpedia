@@ -812,3 +812,13 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - Los jobs y sus pasos fueron inspeccionados desde GitHub Actions. No se extrapola este resultado a operaciones mutables de Apps Script, Drive, Spreadsheet o YouTube.
 - Mutaciones de BETA-01/03/04/05/06/07 continúan diferidas por falta de preflight verificable de entorno aislado, identidad sintética y cleanup. No se efectuaron escrituras ni deployments Apps Script en esta continuidad.
 - Próxima prioridad: validar de forma GET-only los contratos y estados de servicios cuando el runner pueda verificar configuración Beta explícitamente aislada; mantener Android físico y F022 como pendientes separados.
+
+
+## 11. Continuidad Beta — CI 2026-11-26 (run 45810553448)
+- Run `45810553448` en SHA `adb69eeb2edb5cd28b370194eac49956298115a`: ambos jobs `service-tests` y `responsive-browser` SUCCESS.
+- Regresión: 542 suites, 6,453 pruebas aprobadas, 0 fallos.
+- Browser: instalación Chromium, AUG-146 responsive browser, smoke login GET-only, manifest/PWA y navegación offline completados PASS; screenshots sintéticas (16 archivos) cargadas como artifact `15113495824` (retención hasta 2026-12-10).
+- Evidencia PWA: 49/49 core y 4/4 optional assets verificados; online/offline HTTP 200, login visible en warm offline, módulos precache faltantes 0, `pageErrors` 0, GET no autorizados a Apps Script 0, solicitudes no GET 0, credenciales enviadas false, backend writes permitidas false.
+- En el escenario cold se detectó como residual visual la carga de Font Awesome CDN fallida; no afectó login ni pageErrors. Warm diagnostics sin fallos de requests/console/pageErrors.
+- Advertencias del runner: dependencias `punycode` y `url.parse` deprecadas y Actions basadas en Node 20 en transición; sin fallo de tests.
+- No se ejecutaron mutaciones de backend, Drive, Spreadsheet, OAuth ni YouTube.
