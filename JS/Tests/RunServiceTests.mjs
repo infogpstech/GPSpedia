@@ -6,6 +6,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const onlyArg = process.argv.find(value => value.startsWith('--only='));
 const selected = onlyArg ? new Set(onlyArg.slice(7).split(',').map(value => value.trim().toUpperCase()).filter(Boolean)) : null;
 const totals = { passed: 0, failed: 0, suites: 0 }, failures = [];
+let currentGroup = { id: "?", service: "?" };
+function recordFailure(label, error) {
+ const message = String(error && error.stack || error);
+ totals.failed++;
+ failures.push({ id: currentGroup.id, service: currentGroup.service, label, message });
+ console.error('FAIL [' + currentGroup.id + '] ' + currentGroup.service + ' / ' + label + ': ' + String(error && error.message || error));
+}
 function read(path) { return readFileSync(resolve(ROOT, path), 'utf8'); }
 function loadFunction(path, name, stopMarker) {
  let source = read(path);
@@ -13,29 +20,45 @@ function loadFunction(path, name, stopMarker) {
  return new Function(source + '\nreturn ' + name + ';')();
 }
 function recordResult(label, result) {
- if (!result || typeof result !== 'object') throw new Error(label + ': sin resultado.');
- const passed = Number(result.passed || 0), failed = Number(result.failed || 0);
- const total = Number(result.total === undefined ? passed + failed : result.total);
- if (failed || result.status === 'FAIL' || passed !== total) {
-  const detail = (result.results || []).filter(x => x.status === 'FAIL').map(x => x.name + ': ' + (x.message || 'falló')).join('; ');
-  throw new Error(label + ': ' + passed + '/' + total + ' PASS' + (detail ? ' — ' + detail : ''));
+ try {
+  if (!result || typeof result !== 'object') throw new Error(label + ': sin resultado.');
+  const passed = Number(result.passed || 0), failed = Number(result.failed || 0);
+  const total = Number(result.total === undefined ? passed + failed : result.total);
+  if (failed || result.status === 'FAIL' || passed !== total) {
+   const detail = (result.results || []).filter(x => x.status === 'FAIL').map(x => x.name + ': ' + (x.message || 'falló')).join('; ');
+   throw new Error(label + ': ' + passed + '/' + total + ' PASS' + (detail ? ' — ' + detail : ''));
+  }
+  totals.passed += passed; totals.suites++; console.log('PASS ' + label + ': ' + passed + '/' + total);
+ } catch (error) {
+  totals.suites++;
+  recordFailure(label, error);
  }
- totals.passed += passed; totals.suites++; console.log('PASS ' + label + ': ' + passed + '/' + total);
 }
 function runCli(label, path) {
- const r = spawnSync(process.execPath, ['--experimental-default-type=module', path], {cwd:ROOT,encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
- if (r.stdout) process.stdout.write(r.stdout); if (r.stderr) process.stderr.write(r.stderr);
- if (r.error) throw r.error; if (r.status !== 0) throw new Error(label + ': Node CLI terminó con código ' + r.status);
- const summaries = [...String(r.stdout || '').matchAll(/(\d+)\/(\d+)\s+PASS/g)];
- if (!summaries.length) throw new Error(label + ': no publicó resumen verificable.');
- for (const m of summaries) { totals.passed += Number(m[1]); if (m[1] !== m[2]) throw new Error(label + ': resumen parcial o fallido.'); }
- totals.suites++;
+ try {
+  const r = spawnSync(process.execPath, ['--experimental-default-type=module', path], {cwd:ROOT,encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
+  if (r.stdout) process.stdout.write(r.stdout); if (r.stderr) process.stderr.write(r.stderr);
+  if (r.error) throw r.error; if (r.status !== 0) throw new Error(label + ': Node CLI terminó con código ' + r.status);
+  const summaries = [...String(r.stdout || '').matchAll(/(\d+)\/(\d+)\s+PASS/g)];
+  if (!summaries.length) throw new Error(label + ': no publicó resumen verificable.');
+  for (const m of summaries) {
+   totals.passed += Number(m[1]);
+   if (m[1] !== m[2]) throw new Error(label + ': resumen parcial o fallido.');
+  }
+  totals.suites++;
+ } catch (error) {
+  totals.suites++;
+  recordFailure(label, error);
+ }
 }
 
 function runGroup(id, service, fn) {
  if (selected && !selected.has(service) && !selected.has(id)) return;
+ const previousGroup = currentGroup;
+ currentGroup = { id, service };
  console.log('\n[' + id + '] ' + service);
- try { fn(); } catch (e) { totals.failed++; failures.push({id,service,message:String(e && e.stack || e)}); console.error('FAIL ['+id+'] '+service+': '+String(e && e.message || e)); }
+ try { fn(); } catch (error) { recordFailure('grupo', error); }
+ finally { currentGroup = previousGroup; }
 }
 function normalizedCopy(s) { return String(s).replace(/(const\s+SPREADSHEET_ID\s*=\s*)["'][^"']+["']/,'$1"__ISOLATED_TEST_SPREADSHEET__"'); }
 runGroup('31','WRITE',()=>{
