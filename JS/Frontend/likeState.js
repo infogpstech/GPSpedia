@@ -11,11 +11,13 @@ export function applyOptimisticUsefulState(current,vehicleId,cut,isUseful){
  return{...s,likedCortes,catalogData:{...catalog,cortes}};
 }
 export function applyConfirmedUsefulState(current,vehicleId,cut,response){
- const s=current&&typeof current==="object"?current:{},liked=Array.isArray(s.likedCortes)?s.likedCortes:[],desired=liked.includes(key_(vehicleId,cut)),server=response&&typeof response.isUseful==="boolean"?response.isUseful:desired;
+ const s=current&&typeof current==="object"?current:{},liked=Array.isArray(s.likedCortes)?s.likedCortes:[],key=key_(vehicleId,cut);
+ const server=response&&typeof response.isUseful==="boolean"?response.isUseful:liked.includes(key);
+ const nextLiked=server?(liked.includes(key)?liked:[...liked,key]):liked.filter(value=>value!==key);
  const count=response&&Number.isSafeInteger(response.usefulCount)&&response.usefulCount>=0?response.usefulCount:(response&&Number.isSafeInteger(response.likeCount)&&response.likeCount>=0?response.likeCount:null);
  const catalog=s.catalogData&&typeof s.catalogData==="object"?s.catalogData:{},vehicles=Array.isArray(catalog.cortes)?catalog.cortes:[];
- const cortes=count===null?vehicles:vehicles.map(v=>{if(String(v&&v.id)!==String(vehicleId))return v;const source=Number(response&&response.corteIndex)||Number(cut),display=resolveUsefulDisplayCutIndex(v,source),field="utilCorte"+display,adjusted=Math.max(0,count+(desired===server?0:(desired?1:-1)));return{...v,[field]:adjusted};});
- return{...s,likedCortes:liked,catalogData:{...catalog,cortes}};
+ const cortes=count===null?vehicles:vehicles.map(v=>{if(String(v&&v.id)!==String(vehicleId))return v;const source=Number(response&&response.corteIndex)||Number(cut),display=resolveUsefulDisplayCutIndex(v,source),field="utilCorte"+display;return{...v,[field]:count};});
+ return{...s,likedCortes:nextLiked,catalogData:{...catalog,cortes}};
 }
 export function applyConfirmedLikeState(current,vehicleId,cut,response){
  const s=current&&typeof current==="object"?current:{},old=Array.isArray(s.likedCortes)?s.likedCortes:[],key=key_(vehicleId,cut),intended=old.includes(key)?s:{...s,likedCortes:[...old,key]};
