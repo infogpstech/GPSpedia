@@ -187,8 +187,8 @@
         /* GP-ADD-CORTES-UX-01: estilos locales para editores enriquecidos y campos en móvil.
            Esta página es independiente y no carga style.css; no importar la hoja global evita
            aplicar reglas de modales y componentes que no pertenecen a este formulario. */
-        #stage-2 .rich-editor-toolbar,
-        #stage-3 .rich-editor-toolbar {
+        #stage-2 .rich-editor-toolbar:not([data-rich-target-id]),
+        #stage-3 .rich-editor-toolbar:not([data-rich-target-id]) {
             display: block;
             width: 100%;
             min-width: 0;
@@ -1204,7 +1204,7 @@
             if (/^(?:blob:|data:image\/)/i.test(source)) return source;
             let fileId = source;
             if (/^https?:\/\//i.test(source)) {
-                const isDriveUrl = /^https?:\/\/(?:drive\.google\.com|drive\.usercontent\.google\.com)(?:[:/])/i.test(source);
+                const isDriveUrl = /^https?:\/\/(?:drive\.google\.com|drive\.usercontent\.google\.com)(?:[:/?#])/i.test(source);
                 if (!isDriveUrl) return source;
                 const queryMatch = source.match(/[?&]id=([A-Za-z0-9_-]+)/i);
                 const pathMatch = source.match(/\/(?:file\/)?d\/([A-Za-z0-9_-]+)/i);
