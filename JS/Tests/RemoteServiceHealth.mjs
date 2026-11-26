@@ -20,23 +20,23 @@ const forbidden=/secret|token|password|spreadsheet.?id|drive.?folder.?id|sheets.
 function inspect(value,path="response"){if(!value||typeof value!=="object")return;for(const [key,child] of Object.entries(value)){if(forbidden.test(key))throw new Error("Campo de diagnóstico no permitido: "+path+"."+key);inspect(child,path+"."+key);}}
 function transient(error){const message=String(error&&error.message||error||""),name=String(error&&error.name||"");return name==="TimeoutError"||name==="AbortError"||/timed? ?out|timeout|fetch failed|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up/i.test(message);}
 async function probe(service){
- const startedTotal=performance.now();let lastError=null;
- for(let attempt=1;attempt<=3;attempt++){const started=performance.now();try{
-  const response=await fetch(endpoints[service]+"?debug=true",{method:"GET",redirect:"follow",signal:AbortSignal.timeout(12000),headers:{accept:"application/json"}});
+ const startedTotal=performance.now();let lastError=null,attempts=0;
+ for(let retry=0;retry<3;retry++){attempts++;const started=performance.now();try{
+  const response=await fetch(endpoints[service]+"?debug=true",{method:"GET",redirect:"follow",signal:AbortSignal.timeout(8000),headers:{accept:"application/json"}});
   const latencyMs=Math.round(performance.now()-started);
-  if(!response.ok){const error=new Error("HTTP "+response.status);if((response.status===429||response.status>=500)&&attempt<3){lastError=error;await new Promise(r=>setTimeout(r,attempt*750));continue;}throw error;}
+  if(!response.ok){const error=new Error("HTTP "+response.status);if((response.status===429||response.status>=500)&&retry<2){lastError=error;await new Promise(r=>setTimeout(r,(retry+1)*750));continue;}throw error;}
   const bodyText=await response.text();let body;try{body=JSON.parse(bodyText);}catch{throw new Error("Respuesta no JSON (HTTP "+response.status+")");}
   if(!body||typeof body!=="object"||Array.isArray(body))throw new Error("La respuesta no es un objeto JSON.");
   inspect(body);if(body.service!==identities[service])throw new Error("Identidad incorrecta: "+String(body.service));
   if(!["available","online"].includes(String(body.status||"").toLowerCase()))throw new Error("Estado backend no disponible: "+String(body.status));
   if(typeof body.version!=="string"||!body.version.trim())throw new Error("Falta la versión del servicio.");
-  return {service,status:"PASS",version:body.version,latencyMs,attempts:attempt,totalMs:Math.round(performance.now()-startedTotal)};
- }catch(error){lastError=error;if(!transient(error)||attempt===3)break;await new Promise(r=>setTimeout(r,attempt*750));}}
- return {service,status:"FAIL",error:String(lastError&&lastError.message||lastError),attempts:3,totalMs:Math.round(performance.now()-startedTotal)};
+  return {service,status:latencyMs>=2000?"SLOW":"PASS",version:body.version,latencyMs,attempts,totalMs:Math.round(performance.now()-startedTotal)};
+ }catch(error){lastError=error;if(!transient(error)||retry===2)break;await new Promise(r=>setTimeout(r,(retry+1)*750));}}
+ return {service,status:"FAIL",error:String(lastError&&lastError.message||lastError),attempts,totalMs:Math.round(performance.now()-startedTotal)};
 }
 async function run(services,concurrency=2){const results=new Array(services.length);let next=0;async function worker(){while(true){const i=next++;if(i>=services.length)return;results[i]=await probe(services[i]);}}await Promise.all(Array.from({length:Math.min(concurrency,services.length)},worker));return results;}
 console.log("GPSpedia remote service health — target "+targetCommit);
 console.log("API_ENDPOINTS local + GET ?debug=true; Beta aislada confirmada; sin escrituras ni cambios remotos.");
 const results=await run(keys,2);
-for(const r of results){if(r.status==="PASS")console.log("PASS "+r.service+" v"+r.version+" — "+r.latencyMs+" ms (intento "+r.attempts+"/3; total "+r.totalMs+" ms)");else console.error("FAIL "+r.service+" — "+r.error+" (3 intentos; total "+r.totalMs+" ms)");}
-const passed=results.filter(x=>x.status==="PASS").length;console.log("Resultado: "+passed+"/"+results.length+" servicios disponibles.");if(passed!==results.length)process.exitCode=1;
+for(const r of results){if(["PASS","SLOW"].includes(r.status))console.log(r.status+" "+r.service+" v"+r.version+" — "+r.latencyMs+" ms (intento "+r.attempts+"/3; total "+r.totalMs+" ms)");else console.error("FAIL "+r.service+" — "+r.error+" (3 intentos; total "+r.totalMs+" ms)");}
+const passed=results.filter(x=>["PASS","SLOW"].includes(x.status)).length;console.log("Resultado: "+passed+"/"+results.length+" servicios disponibles (SLOW indica latencia >= 2000 ms).");if(passed!==results.length)process.exitCode=1;
