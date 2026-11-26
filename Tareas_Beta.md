@@ -36,3 +36,13 @@ Los reportes históricos que ya tienen corrección registrada no se reabren sin 
 Las pruebas locales/CI no equivalen a pruebas de escritura real. Los flujos mutables que no se ejecutaron quedan **NO VERIFICADOS**, no aprobados ni declarados defectuosos. La fase Beta se considera cerrada por decisión del propietario y no se reabre automáticamente.
 
 El detalle técnico y el orden de implementación se mantienen en `Tareas_Activas.md`.
+
+
+## Adenda — GP-UTIL-BUTTON-NO-REACTION-01 (2026-11-26)
+
+- La corrección frontend P0 se publicó en `6628fda16ad534aa2a2ccfae3807ed2c892ea717` y `aec0f21f0a49febd5e96303ca55b84fca2dbcae8`: una lectura fallida de útiles ya no bloquea una escritura idempotente; tras confirmar FEEDBACK, el frontend sincroniza la proyección de CATALOG.
+- La revisión estática posterior comprobó el handler DOM, contexto de sesión, ruteo FEEDBACK, actor confiable, ledger `FeedbackLikes`, publicación de delta y lectura CATALOG con `forceRefresh:true`; no se detectó otro defecto reproducible en las fuentes inspeccionadas.
+- Pages build/deploy `45833214660` SUCCESS sobre HEAD `d0dae570935401e8147a178e73dbcb71a1b4776c`, que contiene ambas correcciones. No equivale a prueba HTTP/browser del sitio.
+- Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA** en código local. Persistencia real FEEDBACK/Spreadsheet, contador después de recarga e interacción de navegador permanecen **NO VERIFICADOS** para una futura Beta autorizada.
+- La fase Beta sigue **CERRADA**. No se añadieron suites, fixtures ni workflows; no se invocaron servicios remotos ni se escribieron datos.
+
