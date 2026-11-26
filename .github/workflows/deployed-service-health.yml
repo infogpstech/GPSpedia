@@ -45,12 +45,38 @@ jobs:
       - name: Validate local service health contracts
         run: node --experimental-default-type=module JS/Tests/ServiceHealthContract.mjs
       - name: Probe all six deployed services (GET only)
+        id: health
         run: node JS/Tests/RemoteServiceHealth.mjs
       - name: Probe CATALOG feed cursors (GET only)
+        id: catalog_feed
+        if: always()
         run: node JS/Tests/RemoteCatalogFeedReadOnly.mjs
       - name: Probe CATALOG feed cursor boundaries (GET only)
+        id: catalog_boundaries
+        if: always()
         run: node JS/Tests/RemoteCatalogFeedBoundaries.mjs
       - name: Measure ADMIN latency repeatedly (GET only)
+        id: admin_latency
+        if: always()
         run: node JS/Tests/RemoteAdminLatency.mjs
       - name: Probe CATALOG feed matrix and repeatability (GET only)
+        id: catalog_matrix
+        if: always()
         run: node JS/Tests/RemoteCatalogFeedMatrix.mjs
+
+      - name: Summarize independent read-only probe outcomes
+        if: always()
+        env:
+          HEALTH_OUTCOME: ${{ steps.health.outcome }}
+          FEED_OUTCOME: ${{ steps.catalog_feed.outcome }}
+          BOUNDARIES_OUTCOME: ${{ steps.catalog_boundaries.outcome }}
+          ADMIN_LATENCY_OUTCOME: ${{ steps.admin_latency.outcome }}
+          MATRIX_OUTCOME: ${{ steps.catalog_matrix.outcome }}
+        run: |
+          printf 'Health: %s\\nFeed: %s\\nBoundaries: %s\\nADMIN latency: %s\\nCATALOG matrix: %s\\n' \\
+            "$HEALTH_OUTCOME" "$FEED_OUTCOME" "$BOUNDARIES_OUTCOME" "$ADMIN_LATENCY_OUTCOME" "$MATRIX_OUTCOME"
+          test "$HEALTH_OUTCOME" = success && \\
+          test "$FEED_OUTCOME" = success && \\
+          test "$BOUNDARIES_OUTCOME" = success && \\
+          test "$ADMIN_LATENCY_OUTCOME" = success && \\
+          test "$MATRIX_OUTCOME" = success
