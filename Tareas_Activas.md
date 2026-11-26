@@ -1114,3 +1114,20 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Commits: `ad84cb3e95ba48528c9c9ba729aecfafc3f46b69`, `2b6924142eef4a38b713b3321fcd813740df506f`, `eeecec8ad5a3f28d0ffdff2dc4b798da13c41b31`, `035041b445c5f6a785d19705aec3b254c9359bde`, `bc5a9313d09726b9926dc844f8dd42d81cab982f`.
 
 - [x] Refinar diagnóstico: registrar `error.code` o, en su ausencia, solo identificadores técnicos estáticos del mensaje; el logger filtra contra allowlist. Los mensajes libres y payloads siguen excluidos.
+
+
+## GP-CUT-PENDING-SNAPSHOT-01 — Diagnóstico de snapshot local antes del alta (2026-11-26)
+
+- [x] Auditar `HTML/add_cortes.html`, `JS/Frontend/offline.js`, `JS/Frontend/diagnosticLogger.js` y la caché PWA antes de modificar.
+- [x] Registrar el hallazgo en `Auditoria.txt` y crear respaldos exactos de los archivos afectados antes de editar.
+- [x] Reemplazar la comparación JSON dependiente del orden de propiedades por una serialización estructural determinista en la verificación del snapshot IndexedDB.
+- [x] Propagar motivos de fallo locales como códigos estáticos seguros: snapshot inválido/conflictivo, verificación discrepante, cuota, DataCloneError y disponibilidad/escritura IndexedDB.
+- [x] Mantener la barrera de seguridad: no llamar a `checkOperation` ni a `addOrUpdateCut` si el snapshot durable no se confirma; no sobrescribir operaciones pendientes con otro ID/hash.
+- [x] Ampliar allowlist de diagnóstico sin registrar mensajes libres, payloads, tokens, VIN ni imágenes.
+- [x] Incrementar caché PWA a v80 para actualizar el módulo de persistencia.
+- [x] Code Review estático: diffs comparados con respaldos; fixture de serialización estable 2/2 PASS.
+- [ ] Confirmar en navegador el código específico devuelto por IndexedDB y completar una alta controlada; verificar Cortes/AportesVehiculo, Idempotencia y Drive cuando corresponda.
+- [ ] Ejecutar pruebas de recuperación/reintento y confirmar ausencia de duplicados tras interrupción.
+- Archivos: `JS/Frontend/offline.js`, `HTML/add_cortes.html`, `JS/Frontend/diagnosticLogger.js`, `service-worker.js`.
+- Commits de código: `f4b2590cd73ae3198f9ac14e8c669379352dd967`, `a9f6cef04314a87c3799bb7557ac0e069fe5916f`, `2bf8d785ae6d27bb83e0ec86347d3fc85f89354c`, `6370c9e5586305529c1772fa097e65327476c5b5`.
+- Límite: no se ejecutó navegador/IndexedDB real ni Apps Script, Spreadsheet o Drive. La causa runtime concreta y el registro real siguen pendientes de Beta.
