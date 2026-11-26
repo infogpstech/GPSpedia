@@ -1462,9 +1462,14 @@
                     else if (state.savedFiles.imgCorte1) base64Corte = state.savedFiles.imgCorte1;
                     else if (state.restoredFiles.imgCorte1) { base64Corte = state.restoredFiles.imgCorte1; state.savedFiles.imgCorte1 = base64Corte; }
                 }
+                // Normaliza una sola vez el selector: null, undefined y cadena vacía
+                // representan alta de vehículo nuevo tanto en el payload como en el snapshot.
+                const selectedVehicleId = state.selectedVehicleId == null ||
+                    String(state.selectedVehicleId).trim() === '' ? null : state.selectedVehicleId;
+                state.selectedVehicleId = selectedVehicleId;
                 const requestData = {
-                    vehicleId: state.selectedVehicleId == null ? null : state.selectedVehicleId,
-                    vehicleData: state.selectedVehicleId == null ? { ...state.vehicleInfo, imagenVehiculo: base64Veh } : null,
+                    vehicleId: selectedVehicleId,
+                    vehicleData: selectedVehicleId === null ? { ...state.vehicleInfo, imagenVehiculo: base64Veh } : null,
                     cutData: {
                         tipoCorte1: document.getElementById('tipoCorte1').value,
                         configRelay1: document.getElementById('configRelay1').value,
@@ -1567,6 +1572,16 @@
                     showConciseAlert_("Cada imagen debe pesar como máximo 10 MB. Reduce el tamaño y vuelve a seleccionarla; no se envió la solicitud y los demás datos permanecen conservados.");
                 } else if (error && error.name === 'FileReadError') {
                     showConciseAlert_("No se pudo leer una de las imágenes. No se envió la solicitud. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
+                } else if (diagnosticErrorCode === 'PENDING_SNAPSHOT_INVALID') {
+                    showConciseAlert_("Los datos del corte no superaron la validación local. No se envió al servidor. Revisa si seleccionaste un vehículo existente o estás registrando uno nuevo e inténtalo otra vez.");
+                } else if (diagnosticErrorCode === 'PENDING_SNAPSHOT_CONFLICT') {
+                    showConciseAlert_("Hay una operación anterior pendiente para esta cuenta. Se conservó para evitar duplicados y no se envió un corte nuevo. Primero debe recuperarse o confirmarse esa operación.");
+                } else if (diagnosticErrorCode === 'PENDING_SNAPSHOT_VERIFY_MISMATCH' || diagnosticErrorCode === 'PENDING_SNAPSHOT_NO_RESULT') {
+                    showConciseAlert_("El almacenamiento local no pudo verificar la operación. No se envió al servidor y no se eliminó el registro pendiente. Inténtalo nuevamente cuando el almacenamiento esté disponible.");
+                } else if (diagnosticErrorCode === 'PENDING_STORAGE_QUOTA_EXCEEDED') {
+                    showConciseAlert_("El almacenamiento del navegador está lleno. No se envió el corte y se conservó cualquier operación pendiente. Libera espacio del dispositivo sin borrar los datos del sitio y vuelve a intentarlo.");
+                } else if (diagnosticErrorCode === 'PENDING_STORAGE_CLONE_FAILED' || diagnosticErrorCode === 'PENDING_STORAGE_UNAVAILABLE' || diagnosticErrorCode === 'PENDING_STORAGE_WRITE_FAILED') {
+                    showConciseAlert_("El navegador no pudo guardar la operación de forma segura. No se envió el corte. Comprueba el espacio disponible y que el navegador permita el almacenamiento del sitio.");
                 } else showConciseAlert_("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
             } finally {
                 isSubmittingStage2 = false;
