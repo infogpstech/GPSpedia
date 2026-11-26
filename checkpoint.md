@@ -45,3 +45,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - HEAD de la rama de trabajo verificado por API GitHub: `bf03985d5e078e62a90d78058ff076d939545522` (último commit documental); base `GPSpedia2.2.5` se mantiene en SHA previamente verificado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
 - Los resultados CI/browser de run `45810553448` fueron ejecutados en el SHA `adb69eeb2edb5cd28b370194eac49956298115a`, antes de las dos actualizaciones documentales que registran resultados.
 - Confirmado branch ref apuntando al HEAD documental, sin cambios de código en estas ediciones.
+
+
+## Continuidad CI/browser — 2026-11-26 (último run verificado)
+- HEAD previo a este registro: `85ffaace4e73b2b0b74f25591f834f85d44dc6a6`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` sin cambios.
+- Run `45811468299`: `service-tests` + `responsive-browser` SUCCESS; 542 suites, 6,453 pruebas, 0 fallos. Pages `45811467538` SUCCESS en el mismo SHA.
+- Browser: AUG-146 264/264 en cuatro viewports; Pages login/recuperación UI PASS; PWA cold/warm 49/49 CORE + 4/4 OPTIONAL, login visible, 0 módulos faltantes, 0 pageErrors, 0 Apps Script GET, 0 non-GET, sin credenciales ni escrituras.
+- Focales verificadas: útiles FEEDBACK/CATALOG (idempotencia 10/10, append-only 4/4, preflight 8/8, activity 7/7, lock 3/3, retry 2/2, aislamiento CATALOG 2/2, estado botón 10/10, cola 4/4, proyección 9/9); ADMIN/Drive (snapshot 14/14, cursor 23/23, asociación 16/16, metadata 11/11, item reference 3/3, FindOrCreate 7/7, inventario 35/35, IndexedDB 13/13, visual 6/6, retry 7/7, consola 1/1, locations 6/6); tutorial vídeo modal 18/18.
+- Capturas sintéticas artifact `15112547683`. Único residual offline frío: CSS Font Awesome CDN; no pageErrors.
+- Siguiente Beta: (1) útiles FEEDBACK/CATALOG con dos identidades sintéticas y cleanup verificable; (2) reproducción real tutorial watch y short/shorts en desktop/móvil. Ninguna mutación FEEDBACK/Spreadsheet se ejecutó: faltan identidad/dataset sintético y cleanup verificable en el flujo. Playback remoto no se declara por el test contractual local.
+- Incidencia #130: cierre local con validación Beta diferida; no se han ejecutado mutaciones ni despliegues Apps Script.

@@ -822,3 +822,15 @@ La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §�
 - En el escenario cold se detectó como residual visual la carga de Font Awesome CDN fallida; no afectó login ni pageErrors. Warm diagnostics sin fallos de requests/console/pageErrors.
 - Advertencias del runner: dependencias `punycode` y `url.parse` deprecadas y Actions basadas en Node 20 en transición; sin fallo de tests.
 - No se ejecutaron mutaciones de backend, Drive, Spreadsheet, OAuth ni YouTube.
+
+
+## 12. Continuidad Beta — regresión y Pages sobre HEAD documental (2026-11-26)
+- Run de regresión `45811468299`, SHA `85ffaace4e73b2b0b74f25591f834f85d44dc6a6`: `service-tests` y `responsive-browser` SUCCESS; 542 suites, 6,453 pruebas aprobadas, 0 fallos.
+- Pruebas focales útiles/FEEDBACK/CATALOG: `FeedbackLikeIdempotency` 10/10, `FeedbackLikeAppendOnly` 4/4, `FeedbackLikePreflightOutsideLock` 8/8, `FeedbackLikeActivityOutsideLock` 7/7, `FeedbackLikeLockContention` 3/3, `FeedbackLikeClientRetry` 2/2, `FeedbackLikeCatalogFailureIsolation` 2/2, `UsefulButtonState` 10/10, `UsefulSyncQueue` 4/4, `CatalogLikeProjectionReadScale` 9/9.
+- Pruebas focales ADMIN/Drive: `AdminDriveAuditReferenceSnapshot` 14/14, `AdminDriveAuditCursorRecovery` 23/23, `AdminDriveAuditAssociation` 16/16, `AdminDriveAuditMetadataPersistence` 11/11, `AdminDriveAuditItemReference` 3/3, `AdminDriveAuditSheetsFindOrCreate` 7/7, `AdminIncrementalInventory` 35/35, `AdminDriveAuditIndexedDB` 13/13, `AdminDriveAuditVisualContract` 6/6, `AdminDriveAuditClientRetry` 7/7, `AdminDriveAuditGlobalConsole` 1/1, `AdminDriveAuditReferenceLocations` 6/6.
+- Tutorial video local contract: `TutorialVideoModalLayout` 18/18 PASS. Esto valida layout/contrato local; no acredita reproducción real de un tutorial remoto.
+- Browser: AUG-146 264/264 en 4 viewports; Pages login/recuperación UI PASS; 0 errores de página, 0 llamadas Apps Script, 0 solicitudes no-GET, credenciales no enviadas, escrituras backend deshabilitadas. PWA frío/caliente PASS: 49/49 CORE y 4/4 OPTIONAL, login visible, 0 módulos precache faltantes. Residual visual cold: Font Awesome CDN.
+- Artifact de capturas: `15112547683`. Pages build/deploy run `45811467538` SUCCESS sobre el mismo SHA.
+- **Siguiente orden Beta conservado:** (1) útil FEEDBACK/CATALOG con dos identidades sintéticas y datos aislados; (2) reproducción real de tutoriales con URL watch y short/shorts en escritorio y móvil.
+- **NO EJECUTADO:** el flujo de útiles escribe eventos append-only y requiere identidad sintética válida, datos de prueba inequívocos y una estrategia de comprobación/limpieza autorizada. No se realizó POST ni escritura FEEDBACK/Spreadsheet. Reproducción real de tutoriales tampoco se declara ejecutada; la suite local no sustituye el playback remoto.
+- No se modificaron deployments Apps Script, permisos, PropertiesService, Drive, Spreadsheet, OAuth ni YouTube. MIG-URL-008 remoto mutante sigue pendiente de preflight/credenciales/cleanup verificables.

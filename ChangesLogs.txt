@@ -1509,3 +1509,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - responsive-browser PASS; smoke GET-only de login surface y validación manifest PWA/offline navigation PASS.
 - Pages deployment run 45809262461: SUCCESS.
 - La validación confirma CI y superficie desplegada read-only; no acredita login real ni mutaciones de servicios. AUTH/WRITE/FEEDBACK/ADMIN/Drive/OAuth/YouTube funcionales y Android físico siguen diferidos a Beta aislada.
+
+
+### 2026-11-26 — Continuidad CI/browser y registro Beta
+- Se registró en `Tareas_Beta.md` la evidencia del run `45811468299` (542 suites, 6,453 pruebas, 0 fallos) y Pages `45811467538` SUCCESS sobre HEAD `85ffaace4e73b2b0b74f25591f834f85d44dc6a6`.
+- Se documentaron resultados focales de FEEDBACK/CATALOG, UsefulButtonState, cola de útiles y auditoría ADMIN/Drive; TutorialVideoModalLayout 18/18.
+- Se actualizó el estado de continuidad de la incidencia #130 como completada localmente con validación Beta diferida y se conservó el orden de pruebas Beta.
+- No se modificó código funcional, deployments Apps Script ni recursos remotos.
