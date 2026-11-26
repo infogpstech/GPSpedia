@@ -169,24 +169,93 @@ try {
             cachedPaths
         };
     });
-    const diagnostics = {
-        missingPrecacheModules,
-        missingCoreAssets,
-        optionalAssetResults,
+    const coldFailedRequests = [...failedRequests];
+    const coldConsoleErrors = [...consoleErrors];
+    const coldPageErrors = [...pageErrors];
+    const coldDiagnostics = {
         offlineReloadError,
         offlineWaitError,
         offlineState,
-        failedRequests,
-        consoleErrors,
-        nonGetRequests,
-        pageErrors
+        failedRequests: coldFailedRequests,
+        consoleErrors: coldConsoleErrors,
+        pageErrors: coldPageErrors
     };
-    console.log("Beta PWA offline diagnostics");
-    console.log(JSON.stringify(diagnostics));
-    if (missingPrecacheModules.length || missingCoreAssets.length || offlineReloadError || !offlineLoginVisible ||
-        offlineState.online || !offlineState.loginVisible || !offlineState.title.includes("GPSpedia") ||
-        nonGetRequests.length || pageErrors.length) {
-        throw new Error("La navegación offline no conservó la pantalla de login; revisar missingPrecacheModules y diagnósticos.");
+
+    await context.setOffline(false);
+    let warmOnlineLoginVisible = false;
+    let warmOnlineReloadError = null;
+    try {
+        await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 });
+        await page.waitForFunction(() => {
+            const modal = document.getElementById("login-modal");
+            return modal && getComputedStyle(modal).display === "flex";
+        }, null, { timeout: 15000 });
+        warmOnlineLoginVisible = true;
+    } catch (error) {
+        warmOnlineReloadError = String(error && error.message || error);
+    }
+    const warmCachePaths = await page.evaluate(async () => {
+        const paths = [];
+        for (const name of await caches.keys()) {
+            const cache = await caches.open(name);
+            for (const request of await cache.keys()) paths.push(new URL(request.url).pathname);
+        }
+        return paths;
+    });
+    const warmMissingPrecacheModules = missingPrecacheModules.filter(modulePath =>
+        !warmCachePaths.includes(new URL(modulePath, base).pathname));
+
+    await context.setOffline(true);
+    let warmOfflineResponse = null;
+    let warmOfflineReloadError = null;
+    try {
+        warmOfflineResponse = await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 });
+    } catch (error) {
+        warmOfflineReloadError = String(error && error.message || error);
+    }
+    let warmOfflineLoginVisible = false;
+    let warmOfflineWaitError = null;
+    try {
+        await page.waitForFunction(() => {
+            const modal = document.getElementById("login-modal");
+            return modal && getComputedStyle(modal).display === "flex";
+        }, null, { timeout: 15000 });
+        warmOfflineLoginVisible = true;
+    } catch (error) {
+        warmOfflineWaitError = String(error && error.message || error);
+    }
+    const warmOfflineState = await page.evaluate(() => ({
+        online: navigator.onLine,
+        title: document.title,
+        loginVisible: Boolean(document.getElementById("login-modal") &&
+            getComputedStyle(document.getElementById("login-modal")).display === "flex"),
+        serviceWorkerControlled: Boolean(navigator.serviceWorker && navigator.serviceWorker.controller)
+    }));
+    const warmDiagnostics = {
+        warmOnlineLoginVisible,
+        warmOnlineReloadError,
+        warmMissingPrecacheModules,
+        warmOfflineReloadError,
+        warmOfflineWaitError,
+        warmOfflineLoginVisible,
+        warmOfflineState,
+        failedRequests: failedRequests.slice(coldFailedRequests.length),
+        consoleErrors: consoleErrors.slice(coldConsoleErrors.length),
+        pageErrors: pageErrors.slice(coldPageErrors.length),
+        nonGetRequests
+    };
+    console.log("Beta PWA cold/warm offline diagnostics");
+    console.log(JSON.stringify({
+        missingPrecacheModules,
+        missingCoreAssets,
+        optionalAssetResults,
+        coldDiagnostics,
+        warmDiagnostics
+    }));
+    if (missingPrecacheModules.length || missingCoreAssets.length || offlineReloadError ||
+        !offlineLoginVisible || offlineState.online || !offlineState.loginVisible ||
+        !offlineState.title.includes("GPSpedia") || nonGetRequests.length || pageErrors.length) {
+        throw new Error("La navegación offline en primera carga no conservó la pantalla de login; revisar diagnósticos cold/warm.");
     }
 
     console.log("Beta PWA manifest and offline navigation — PASS");
@@ -204,6 +273,10 @@ try {
         onlineHttpStatus: onlineResponse.status(),
         offlineHttpStatus: offlineResponse ? offlineResponse.status() : null,
         offlineLoginVisible: offlineState.loginVisible,
+        warmOnlineLoginVisible,
+        warmOfflineHttpStatus: warmOfflineResponse ? warmOfflineResponse.status() : null,
+        warmOfflineLoginVisible,
+        warmMissingPrecacheModules,
         blockedAppsScriptGets,
         nonGetRequests: nonGetRequests.length,
         pageErrors: pageErrors.length,
