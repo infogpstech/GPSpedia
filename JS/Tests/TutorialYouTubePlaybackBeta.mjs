@@ -113,6 +113,8 @@ try {
             const context = await browser.newContext({
                 viewport: { width: viewport.width, height: viewport.height },
                 deviceScaleFactor: 1,
+                isMobile: viewport.name === "mobile",
+                hasTouch: viewport.name === "mobile",
                 locale: "en-US"
             });
             try {

@@ -24,7 +24,7 @@ on:
       - "JS/Frontend/ui.js"
       - "JS/Services/catalog.js"
   workflow_dispatch:
-  # Revalidación manual tras actualizar deployments Beta: todas las sondas de este workflow son GET-only.
+  # Health/feed son GET-only; el job de playback usa POST getCatalogData de solo lectura, sin escrituras.
 permissions:
   contents: read
 concurrency:
