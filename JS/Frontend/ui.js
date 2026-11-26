@@ -4214,10 +4214,13 @@ function refreshUsefulCatalogProjection_(userId,vehicleId,corteIndex,feedbackCou
   const state=getState(),catalog=state.catalogData&&typeof state.catalogData==="object"?state.catalogData:{};
   const projected=result.data.cortes.find(v=>String(v&&v.id)===String(vehicleId));
   if(!projected)return;
+  const countKey=usefulActorKey_(userId,vehicleId,corteIndex);
+  const confirmedCount=Number.isSafeInteger(feedbackCount)&&feedbackCount>=0
+   ?feedbackCount:usefulConfirmedCounts_.get(countKey);
   let freshVehicle=projected;
-  if(Number.isSafeInteger(feedbackCount)&&feedbackCount>=0&&Number.isInteger(Number(corteIndex))){
+  if(Number.isSafeInteger(confirmedCount)&&confirmedCount>=0&&Number.isInteger(Number(corteIndex))){
    const displayCut=resolveUsefulDisplayCutIndex(projected,Number(corteIndex));
-   freshVehicle={...projected,["utilCorte"+displayCut]:feedbackCount};
+   freshVehicle={...projected,["utilCorte"+displayCut]:confirmedCount};
   }
   const currentCortes=Array.isArray(catalog.cortes)?catalog.cortes:[];
   const found=currentCortes.some(v=>String(v&&v.id)===String(vehicleId));
