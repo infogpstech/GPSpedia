@@ -2743,12 +2743,17 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                         return false;
                     });
                 mostrarDetalleModal(editedItemBuffer, true, navOptions);
-                dropdownOptionsReady.then(() => {
+                const refreshDropdownControls = () => {
                     const currentModal = document.getElementById("modalDetalle");
                     if (!isCurrentUiSessionContext_(editSession) || !inEditMode ||
                         originalItemBackupVehicleId !== cleanVehicleId ||
                         !currentModal || String(currentModal.dataset.vehicleId || "") !== cleanVehicleId) return;
                     refreshModalEditDropdownOptions_();
+                };
+                dropdownOptionsReady.then(refreshDropdownControls).catch(error => {
+                    refreshDropdownControls();
+                    showSavingIndicator("warning", "No se pudieron cargar las listas oficiales desde Cortes. Los selectores permanecerán bloqueados hasta recuperar la conexión con CATALOG.");
+                    console.warn("No se pudieron preparar listas oficiales para la edición:", error && error.message || "DropdownLoadError");
                 });
                 pendingImagesPromise.then(pendingImagesLoaded => {
                     if (!pendingImagesLoaded && isCurrentUiSessionContext_(editSession) &&
