@@ -41,6 +41,8 @@ jobs:
           git fetch --no-tags --depth=1 origin "$TARGET_COMMIT"
           git cat-file -e "$TARGET_COMMIT^{commit}"
           test "$(git show "$TARGET_COMMIT:JS/Frontend/api-config.js" | grep -c 'GPSpedia-')" -eq 6
+      - name: Validate local service health contracts
+        run: node --experimental-default-type=module JS/Tests/ServiceHealthContract.mjs
       - name: Probe all six deployed services (GET only)
         run: node JS/Tests/RemoteServiceHealth.mjs
       - name: Probe CATALOG feed cursors (GET only)
