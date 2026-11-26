@@ -207,3 +207,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pages build/deploy `45843872204`: SUCCESS sobre `7e9ff0ba209e9096aed2c90a3d5b9b90407770f9`, que contiene el código de la corrección `000f111`. Los commits posteriores `db4afdf`, `37082ea` y `be8f894` son documentales. La publicación de Pages está confirmada; la interacción real y persistencia remota aún no.
 - `Tareas_Activas.md` actualizado para reflejar Pages SUCCESS; commit `be8f894fa5d459863e832e7aac1912b4923ceede`.
 
+
+
+## 24. Reapertura de útil — sospecha de entrega de código obsoleto (2026-11-26)
+- Se añadió cambio de estrategia Service Worker: caché v78, network-first para documentos/scripts/estilos/fuentes del mismo origen, fallback offline a caché. Commit de código: d715e1693b8d340cd829608fabc628c79c223dbf.
+- La hipótesis es que cache-first estaba entregando código frontend obsoleto mientras actualizaba caché en segundo plano. Este cambio no demuestra todavía la causa del comportamiento del botón.
+- Validación Pages/browser/FEEDBACK/CATALOG real pendiente; estado del incidente abierto. No declarar resolución.
