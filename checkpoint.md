@@ -377,3 +377,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Revisión de comportamiento con mocks: handler CATALOG, normalizadores, TTL, estado No recomendado, preservación de valores históricos deshabilitados y render DOM seguro. PASS.
 - Comparación de los commits de implementación contra los respaldos pre-edición: cambios limitados a las zonas autorizadas. Respaldos retirados después de la revisión.
 - No se ejecutaron llamadas a Apps Script ni Spreadsheet reales; no se desplegó servicio. La incidencia de entorno publicado permanece abierta hasta CATALOG 2.4.1 desplegado y prueba POST read-only satisfactoria.
+
+
+## Aclaración y regresión protegida — diagramas de configuración Relay (2026-11-26)
+- Se comprobó expresamente que la hoja `Relay` mantiene su función independiente como fuente de detalles e imágenes/diagramas. `handleGetCatalogData()` sigue leyendo la hoja, mapeando la columna 10 `imagen` y retornando `allData.relay`.
+- En el frontend no se alteraron `renderCutContent()` ni `renderRelayInfoModal()`: el botón sigue resolviendo `datosRelay` por `configuracion`, el modal muestra `relayInfo.imagen` y el clic en la imagen abre `window.abrirLightbox()`.
+- Nueve verificaciones estáticas de esta cadena: PASS. El cambio a Cortes como fuente de selectores no elimina ni sustituye Relay en la visualización del diagrama.
