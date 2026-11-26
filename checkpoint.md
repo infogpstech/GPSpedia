@@ -1490,3 +1490,12 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Tareas_Beta §19 quedó marcada SUPERSEDIDA por NORMAS §§17.1/18; endpoints solo en `API_ENDPOINTS` del frontend.
 - Google Drive/Sheets connector está `DISABLED_BY_ADMIN`; no se hicieron POST funcionales, login real, escrituras, despliegues Apps Script, cambios de Spreadsheet/Drive, permisos ni OAuth. Las validaciones remotas mutables quedan NO EJECUTADAS hasta contar con identidad sintética y limpieza verificable.
 - Siguiente paso: continuar con validaciones Beta que no requieran mutación ni deployment; la comprobación remota AUTH/ADMIN requiere deployments autorizados y GET posterior. Las pruebas FEEDBACK/WRITE/ADMIN/Drive/YouTube operativas quedan diferidas conforme a NORMAS §5/§12.
+
+
+## Verificación del HEAD de checkpoint (2026-11-26)
+- HEAD anterior: `b4db41b9155c76003398eb87377883304190fc28`; sin cambios de código desde el commit `2ca60a7175ab76158669ed65d6eabdbd4cb28de2` (fallback local del modal iOS).
+- CI del HEAD anterior: run `45757624386` SUCCESS (service-tests y responsive-browser); Pages `45757623885` SUCCESS.
+- Regresión: 542 suites, 6,453 pruebas, 0 fallos; `OfflineBrandAssets` 5/5; responsive 264/264; PWA cold/warm PASS, login visible y sin módulos faltantes.
+- `LocalApiEndpoints` 10/10 y `CatalogFeedInitializationFallback` 7/7 PASS; contrato health local 21/21.
+- La validación remota más reciente sigue siendo run `45756725304`: AUTH/ADMIN no conformes en deployments; los otros cuatro servicios y pruebas CATALOG read-only PASS. Latencia ADMIN SLOW; UTILITIES normalizada en cinco muestras.
+- Sin despliegues Apps Script, operaciones POST, escrituras de datos, cambios de Drive/Spreadsheet ni modificaciones a la rama base.
