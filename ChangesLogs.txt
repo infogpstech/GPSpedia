@@ -1456,3 +1456,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Services/Auth.js`: se eliminó `sessionAuthority` de la respuesta pública `doGet(debug=true)`.
 - `JS/Tests/Auth.js`: fixture sincronizado con el bloque `doGet` fuente.
 - Sin despliegue Apps Script ni cambios de endpoints/datos.
+
+
+## 2026-11-26 — checkpoint de validación y gobernanza Beta
+- CI `45755702144`: 542 suites, 6,452 pruebas, 0 fallos; ServiceHealthContract 21/21, PasswordRecovery 10/10 y ServiceWorkerCache 12/12.
+- Pages build/deploy `45755701403`: SUCCESS. Browser job de `45755702144` seguía en `Install Chromium`; no se declara validación offline real.
+- Inspección de rama base: API `protected=false`, rulesets `[]`; detalle de branch protection denegado por 403. Sin cambios administrativos ni escrituras en base.

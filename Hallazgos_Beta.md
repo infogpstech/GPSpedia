@@ -543,3 +543,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se sincronizó el fixture JS/Tests/Auth.js; ambos bloques doGet quedan idénticos.
 - No se desplegó Apps Script. La URL Beta puede seguir mostrando el deployment anterior hasta una publicación autorizada; el probe remoto previo ya confirmó esa exposición.
 - Pendiente: regresión local completa y, en Beta, repetir GET health después del deployment autorizado. No se considera corregida la respuesta remota todavía.
+
+
+## BETA-F021 — rama base sin protección GitHub verificable (2026-11-26)
+- La API de ramas reporta `protected=false` para `GPSpedia2.2.5`; la consulta de rulesets del repositorio devuelve una lista vacía.
+- La lectura detallada de branch protection responde 403 `Resource not accessible by integration`; no se modificó configuración administrativa.
+- Impacto: la rama base no presenta protección efectiva confirmada desde los metadatos accesibles. El flujo de trabajo siguió escribiendo exclusivamente en `GPSpedia2.2.5_work`; el SHA base permanece intacto.
+- Acción necesaria: un administrador del repositorio debe configurar protección/ruleset que impida pushes directos, force-push y borrado, y exigir revisión/controles antes de integrar. No se puede resolver desde la conexión actual.

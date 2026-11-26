@@ -1418,3 +1418,13 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - `JS/Services/Auth.js` ya no devuelve `sessionAuthority` en `doGet(debug=true)`; `JS/Tests/Auth.js` actualizado con el mismo bloque. El cambio es mínimo y no altera login ni sesiones.
 - No se desplegó Apps Script ni se modificó el endpoint Beta. La exposición remota permanece hasta una publicación autorizada; se validará después mediante GET health.
 - Pendiente Actions: ServiceHealthContract debe pasar 21/21, regresión AUTH/paridad y suite global. Mantener el resto de fallos visibles.
+
+
+## Continuidad — correcciones locales y control de rama (2026-11-26)
+- HEAD verificado antes de este checkpoint: `a7c9ae10f13595235cb02fd8ffd648bfe06e1ae2`; rama base `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Run `45755702144`: `service-tests` SUCCESS, 542 suites / 6,452 pruebas / 0 fallos. `ServiceHealthContract` 21/21; `PasswordRecovery` 10/10; `ServiceWorkerCache` 12/12. La corrección local AUTH elimina `sessionAuthority` y conserva fixture; PWA cache v77 incluye 13 módulos omitidos y el scanner cubre .js/.mjs.
+- Pages run `45755701403`: build/deploy SUCCESS. El job responsive/browser `45755702144` seguía en `Install Chromium`; offline frío aún no confirmado. No presentar como PASS hasta que el step browser lo ejecute y sus logs lo acrediten.
+- BETA-F019: fuente local validada; deployment Apps Script no realizado. Validación remota diferida.
+- BETA-F020: código/regresión local validada; smoke PWA real pendiente por job browser.
+- BETA-F021: API de rama devuelve `protected=false` para la base y rulesets `[]`; branch protection detallada responde 403 a la integración. No se tocó la rama base; requiere administrador para protección efectiva.
+- No se ejecutaron operaciones POST, login real, mutaciones, despliegues Apps Script ni cambios de datos Drive/Spreadsheet.

@@ -735,3 +735,12 @@ Run `45750124457`: cold offline FAIL inmediatamente tras instalar SW; warm offli
 ### BETA-01 / BETA-F019 — diagnóstico público AUTH
 - Fuente `JS/Services/Auth.js`: `doGet(debug=true)` ya no incluye `sessionAuthority`; fixture `JS/Tests/Auth.js` sincronizado.
 - No se desplegó Apps Script. La validación remota queda pendiente hasta deployment autorizado; no atribuir la corrección de fuente al endpoint actualmente publicado.
+
+
+### Consolidado tras correcciones locales — run 45755702144
+- `service-tests`: SUCCESS; 542 suites, 6,452 pruebas aprobadas, 0 fallos. `ServiceHealthContract` 21/21, `PasswordRecovery` 10/10, `ServiceWorkerCache` 12/12. AUTH fuente corregida y fixture paritario; PWA cache v77 y grafo .js/.mjs incluido.
+- Pages build/deploy `45755701403`: SUCCESS. El job responsive/browser permanece en instalación de Chromium; la prueba PWA offline frío no está aún ejecutada/confirmada.
+- AUTH deployment remoto y health GET post-deployment: PENDIENTES DE DESPLIEGUE / VALIDACIÓN BETA.
+
+### BETA-F021 — gobernanza de rama
+`GPSpedia2.2.5` devuelve `protected=false`; consulta de rulesets vacía. La lectura detallada de protección fue denegada (403). No se modificó configuración. Requiere administrador para activar protección de rama y checks obligatorios antes de integrar cambios.

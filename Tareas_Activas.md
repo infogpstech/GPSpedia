@@ -688,3 +688,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## BETA-F019 — privacidad del diagnóstico AUTH (2026-11-26)
 **Estado: CORRECCIÓN DE FUENTE PUBLICADA; VALIDACIÓN LOCAL Y BETA PENDIENTES.** Retirado `sessionAuthority` de `JS/Services/Auth.js` y sincronizado fixture. No se desplegó Apps Script. Cerrar localmente tras ServiceHealthContract 21/21 y regresión; el endpoint remoto requiere deployment autorizado y repetición GET.
+
+
+## Resultado local BETA-F019 / BETA-F020 (2026-11-26)
+- **BETA-F019:** corrección fuente AUTH validada localmente; `ServiceHealthContract` 21/21. Estado **COMPLETADA CON VALIDACIÓN DIFERIDA**; endpoint remoto aún requiere deployment autorizado y GET de confirmación.
+- **BETA-F020:** corrección de precarga validada por regresiones locales (`ServiceWorkerCache` 12/12; `PWAStartupScenarios` 16/16) y sintaxis; Pages build/deploy SUCCESS. Estado **COMPLETADA CON VALIDACIÓN DIFERIDA** para código local; offline frío en navegador real sigue pendiente.
+- Run `45755702144`: 542 suites, 6,452 pruebas, 0 fallos. Responsive-browser sigue en `Install Chromium`; no se afirma resultado de navegador.
+- **BETA-F021:** protección de `GPSpedia2.2.5` no confirmada: `protected=false`, sin rulesets visibles; requiere acción administrativa. La rama base no fue modificada.

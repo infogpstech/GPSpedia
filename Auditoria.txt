@@ -150,3 +150,9 @@
 - Se retiró `sessionAuthority: Users/ActiveSessions` de `doGet(debug=true)` en `JS/Services/Auth.js` y se sincronizó el fixture `JS/Tests/Auth.js`.
 - La respuesta fuente ahora se limita a identidad, versión y estado. No se desplegó Apps Script ni se alteró el endpoint remoto.
 - Criterio de cierre local: ServiceHealthContract 21/21 y regresión AUTH/paridad PASS. Cierre Beta remoto requiere deployment autorizado y GET health sin metadatos internos.
+
+
+2026-11-26 | BETA-F021 — protección de rama base
+- `GET /branches/GPSpedia2.2.5` devuelve `protected=false`; `GET /rulesets?includes_parents=true` devuelve `[]`.
+- El endpoint de protección detallada devuelve 403 por permisos de integración. No se cambiaron settings ni se escribió en la rama base.
+- Riesgo: ausencia de protección GitHub verificable para la rama que el flujo declara protegida. Requiere acción administrativa del propietario.
