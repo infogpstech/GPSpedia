@@ -8730,13 +8730,15 @@ export async function openReplacedImagesModal(options = {}) {
         const trashItems = items.filter(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRestoreFromTrash);
         const historicalItems = items.filter(item => getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role).canRecover);
         let confirmation = '';
+        const trashNoun = trashItems.length === 1 ? 'archivo' : 'archivos';
+        const historicalNoun = historicalItems.length === 1 ? 'imagen histórica' : 'imágenes históricas';
         if (trashItems.length && historicalItems.length) {
-            confirmation = '¿Restaurar ' + trashItems.length + ' archivos desde la papelera de Drive (sin reasociarlos a campos) y ' +
-                historicalItems.length + ' imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial.';
+            confirmation = '¿Restaurar ' + trashItems.length + ' ' + trashNoun + ' desde la papelera de Drive (sin reasociarlos a campos) y ' +
+                historicalItems.length + ' ' + historicalNoun + ' en sus campos? Las imágenes actualmente activas pasarán al historial.';
         } else if (trashItems.length) {
-            confirmation = '¿Restaurar ' + trashItems.length + ' archivos desde la papelera de Drive? No se asociarán automáticamente a campos del Spreadsheet.';
+            confirmation = '¿Restaurar ' + trashItems.length + ' ' + trashNoun + ' desde la papelera de Drive? No se asociarán automáticamente a campos del Spreadsheet.';
         } else {
-            confirmation = '¿Restaurar ' + historicalItems.length + ' imágenes históricas en sus campos? Las imágenes actualmente activas pasarán al historial.';
+            confirmation = '¿Restaurar ' + historicalItems.length + ' ' + historicalNoun + ' en sus campos? Las imágenes actualmente activas pasarán al historial.';
         }
         void runBulkOperation(bulkRestoreButton, "Restaurando...", items, confirmation, async item => {
             const capabilities = getReplacedImageCapabilities_(item, schemaReady, referenceCheckStatus, getUiSessionContext_()?.role);
