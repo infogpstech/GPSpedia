@@ -152,3 +152,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - `likeState.js` aplica el contador autoritativo recibido de FEEDBACK y conserva el mapeo entre corte físico y corte visible. La corrección nueva no cambia el contrato de FEEDBACK ni introduce llamadas entre servicios.
 - No se ejecutó una sesión real de navegador ni el Apps Script desplegado; no se leyó ni escribió la Spreadsheet real. La confirmación de persistencia remota sigue pendiente. Se observó que el agregado retornado por FEEDBACK se aplica al estado local; su persistencia al recargar depende del dato proyectado por CATALOG y no se declara confirmada.
 - No se crearon archivos de prueba, suites, fixtures ni workflows. La fase Beta permanece cerrada. No se modificó código Apps Script ni deployment.
+
+
+## 22. Sincronización del contador de útiles con CATALOG — 2026-11-26
+- Nueva revisión del flujo confirmó que CATALOG ya calcula el agregado de útiles leyendo `FeedbackLikes` mediante `readFeedbackLikeEventCounts_` y lo aplica en `mapCatalogVehicleRowForProjection_`. La proyección `getCatalogData` admite `forceRefresh:true` para evitar datos de caché.
+- Hallazgo: el flujo `setCutUseful` actualizaba el contador visible con `usefulCount` de FEEDBACK, pero no coordinaba una lectura nueva de CATALOG. Por ello, el catálogo local podía conservar una proyección anterior a la última reacción.
+- Corrección publicada en `aec0f21f0a49febd5e96303ca55b84fca2dbcae8`: tras la confirmación de escritura, el frontend llama `routeAction("getCatalogData",{forceRefresh:true})`, reemplaza la proyección del vehículo afectado y sincroniza los títulos/controles. El error de esta actualización secundaria se registra únicamente en consola; el contador confirmado por FEEDBACK se conserva.
+- La coordinación FEEDBACK→CATALOG se realiza exclusivamente en el frontend. No se modificó el servicio FEEDBACK, el servicio CATALOG, sus deployments, endpoints ni la Spreadsheet.
+- Parsing con `node --check` aprobado para los fragmentos modificados de hidratación y sincronización de proyección, extraídos de `ui.js` y ejecutados como archivos temporales fuera del repositorio. No se crearon suites ni archivos de prueba en el repositorio.
+- La escritura remota, lectura real de Spreadsheet, interacción en navegador y despliegue del frontend siguen sin verificarse. La tarea permanece EN PROGRESO hasta confirmar el flujo desplegado; la fase Beta continúa cerrada.
