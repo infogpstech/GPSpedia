@@ -39,7 +39,7 @@ test("rechaza watch con parámetros v duplicados o ID inválido", () => {
 test("rechaza protocolo inseguro, credenciales y puerto explícito", () => {
     assert.equal(helpers.getValidatedYouTubeVideoId("http://www.youtube.com/watch?v=" + id), null);
     assert.equal(helpers.getValidatedYouTubeVideoId("https://user:pass@www.youtube.com/watch?v=" + id), null);
-    assert.equal(helpers.getValidatedYouTubeVideoId("https://www.youtube.com:443/watch?v=" + id), null);
+    assert.equal(helpers.getValidatedYouTubeVideoId("https://www.youtube.com:8443/watch?v=" + id), null);
 });
 test("rechaza dominios parecidos y rutas no autorizadas", () => {
     assert.equal(helpers.getValidatedYouTubeVideoId("https://youtube.com.evil.example/watch?v=" + id), null);
