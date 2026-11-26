@@ -1156,3 +1156,21 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Code Review estático: reconstrucción inversa de los dos bloques de formulario y del cambio de caché coincide exactamente con los respaldos; persistencia, logger y modal permanecen sin cambios.
 - [x] Safety & Side Effects: no se relajó la persistencia ni se sobrescriben/borran operaciones pendientes.
 - [x] Retirar respaldos temporales después de Code Review.
+
+
+## GP-CUT-DEEP-AUDIT-03 — Auditoría ampliada y rutas de alta (2026-11-26)
+
+- [x] Revisar la ubicación real de `HTML/add_cortes.html`, navegación desde `index.html`, Service Worker e imports del formulario.
+- [x] Auditar funciones de etapa 2, fingerprint, snapshot, persistencia IndexedDB, recuperación, ruteo frontend y contrato estático de WRITE.
+- [x] Registrar hallazgos F-05 a F-09 en `Auditoria.txt` antes de editar.
+- [x] Crear respaldos exactos de `JS/Frontend/ui.js` y `service-worker.js`.
+- [x] Corregir los dos accesos antiguos a la raíz en `ui.js`.
+- [x] Incrementar Service Worker a caché v82.
+- [x] Comparar los archivos modificados contra sus respaldos; únicamente dos destinos y la versión de caché cambiaron.
+- [x] Verificar que los seis imports del formulario y los recursos locales revisados existen en el árbol del repositorio.
+- [x] Pages build/deploy run `45913010737` SUCCESS en commit `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
+- [ ] Confirmar desde el móvil que el sitio servido está usando esta rama/versión y que se abre el formulario por las rutas corregidas.
+- [ ] Confirmar el código de error específico si la persistencia sigue fallando; ejecutar IndexedDB real y alta controlada con identidad/datos autorizados.
+- [ ] Recuperar de forma segura cualquier operación previa inválida/pendiente; no borrar ni sobrescribir registros locales sin verificar su estado remoto.
+- Commits de código: ui.js `431a3a5d5b0099cc0f37af31e87a89cb319d485a`; Service Worker `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
+- Límite: Pages build/deploy no equivale a una prueba de alta; no se ejecutó Apps Script, Spreadsheet, Drive, ni navegador/IndexedDB real.
