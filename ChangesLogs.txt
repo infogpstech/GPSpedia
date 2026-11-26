@@ -1550,3 +1550,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se endureció la validación de la consolidación final ejecutada después de un reintento individual. La UI ahora valida identidad y unicidad de todos los resultados, solo admite resultados adicionales no solicitados con estado no_confirmada, exige todos los IDs solicitados confirmados y contrasta los conteos ADMIN. Harness: consolidación coherente PASS; resumen inconsistente rechazado y no habilita organización. Commit: 52a3d7143f9810e68f9be5e9c495270c0c35068a.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se corrigió la confirmación de restauración masiva cuando la selección combina archivos en papelera e imágenes históricas. El diálogo ahora distingue ambos grupos y deja claro que restaurar desde papelera no reasocia el archivo a campos del Spreadsheet; cada registro conserva su endpoint correcto. Harness mixto PASS. Commits: 616d6bb5f5662d0a6e79a5ce5f122758301b109b, 271276a077f2ad81adf00a66b4a8ffa28dd05d99.
+[2026-11-26] GP-ADMIN-TAB-ACTIONS-UX-01 — verificación estática de botones de acción en las cuatro pestañas Developer. La clase compacta, iconos, etiquetas expandibles y reglas responsive ya están implementados; tarea cerrada en implementación, revisión visual para Beta.
