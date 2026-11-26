@@ -4207,8 +4207,10 @@ function syncUsefulCount_(v,c){
  });
 }
 function refreshUsefulCatalogProjection_(userId,vehicleId,corteIndex,feedbackCount){
+ const actorKey=usefulActorKey_(userId,vehicleId,corteIndex),revisionAtRequest=usefulMutationRevision_.get(actorKey)||0;
  routeAction("getCatalogData",{forceRefresh:true}).then(result=>{
   if(!result||result.status!=="success"||!result.data||!Array.isArray(result.data.cortes))throw Error("CATALOG no devolvió la proyección actualizada de útiles.");
+  if((usefulMutationRevision_.get(actorKey)||0)!==revisionAtRequest)return;
   const context=getUiSessionContext_();
   if(!context||String(context.userId)!==String(userId))return;
   const state=getState(),catalog=state.catalogData&&typeof state.catalogData==="object"?state.catalogData:{};
