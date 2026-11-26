@@ -9,7 +9,14 @@ async function get(cursor,limit){const t=Date.now();const res=await fetch(url+"?
 const initial=await get(0,5);const current=initial.currentRevision;const min=initial.minRevision;
 const checks=[];
 for(const [cursor,limit,label] of [[current,5,"current"],[Math.max(0,min-1),5,"retention-edge"],[Math.floor((min+current)/2),5,"mid-range"],[current,1,"small-limit"],[current,5,"repeat"]])checks.push({label,cursor,...await get(cursor,limit)});
-for(const result of checks){if(result.nextCursor>result.currentRevision)throw Error("nextCursor excede currentRevision");if(result.cursor<result.minRevision&&result.resetRequired!==true)throw Error("Cursor anterior a minRevision no solicita reset");if(result.resetRequired&&result.count!==0)throw Error("Reset solicitado con eventos en respuesta");}
+for(const result of checks){
+ if(result.nextCursor>result.currentRevision)throw Error("nextCursor excede currentRevision");
+ if(result.cursor<result.minRevision&&result.resetRequired!==true)throw Error("Cursor anterior a minRevision no solicita reset");
+ const hasResetEvent=result.changes.some(change=>change.operation==="reset"||change.resetRequired===true);
+ if(hasResetEvent&&!result.resetRequired)throw Error("El feed contiene un evento reset sin marcar resetRequired");
+ if(result.resetRequired&&result.count===0&&(result.nextCursor!==result.currentRevision||result.hasMore))throw Error("La página de reconstrucción sin eventos no avanza al cursor actual");
+ if(result.resetRequired&&result.count>0&&!hasResetEvent)throw Error("resetRequired con eventos no contiene un evento reset");
+}
 const a=checks[0],b=checks[4];
 if(a.currentRevision===b.currentRevision&&a.minRevision===b.minRevision&&a.resetRequired===b.resetRequired&&a.nextCursor===b.nextCursor&&a.count!==b.count)throw Error("Resultados repetidos contradictorios bajo revisiones estables");
 const concurrentRevisionChange=checks.some(r=>r.currentRevision!==current||r.minRevision!==min);
