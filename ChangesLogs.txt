@@ -1615,3 +1615,13 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 - `HTML/add_cortes.html`: el diagnóstico de envío también reconoce identificadores internos estáticos de error (p. ej. validación de respuesta, mismatch y limpieza pendiente) y los entrega al logger solo si coinciden con el patrón técnico permitido; los mensajes libres siguen excluidos.
 - `JS/Frontend/diagnosticLogger.js`: allowlist ampliada con códigos internos de submit/recuperación y códigos de transporte/API. No se incorporan campos de texto libre.
+
+
+[2026-11-26] GP-CUT-PENDING-SNAPSHOT-01 — diagnóstico y verificación de persistencia local
+- `JS/Frontend/offline.js`: se incorporó serialización estructural determinista para comparar el snapshot recuperado de IndexedDB sin depender del orden de propiedades de objetos anidados.
+- `JS/Frontend/offline.js`: los rechazos de persistencia ahora devuelven códigos estáticos diferenciados para snapshot inválido, conflicto de operación previa, discrepancia de verificación, ausencia de resultado, cuota agotada, fallo de clonación y fallos/disponibilidad de IndexedDB.
+- `HTML/add_cortes.html`: el envío conserva y propaga el código seguro devuelto por la persistencia local en lugar de sustituirlo siempre por `PENDING_SNAPSHOT_NOT_VERIFIED`.
+- `JS/Frontend/diagnosticLogger.js`: allowlist ampliada únicamente con los nuevos identificadores técnicos estáticos; no se registran mensajes libres, payloads, tokens, VIN ni imágenes.
+- `service-worker.js`: versión de caché actualizada de `gpsepedia-cache-v79` a `gpsepedia-cache-v80` para que el frontend reciba el módulo actualizado.
+- Pruebas estáticas: comparación estructural con claves reordenadas y normalización de valores indefinidos en arrays, 2/2 PASS; revisión de diffs contra respaldos exactos confirma que cada archivo contiene solo los cambios descritos.
+- No se ejecutó IndexedDB real en navegador, ni se realizó una escritura remota en Apps Script/Spreadsheet/Drive. El código específico que falla en el dispositivo del usuario quedará identificado por el nuevo `errorCode` en el siguiente intento; no se declara resuelta la alta Beta.
