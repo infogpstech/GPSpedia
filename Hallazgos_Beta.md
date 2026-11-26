@@ -381,3 +381,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Corregido en `JS/Tests/RemoteServiceHealth.mjs`: reintenta 408, 425, 429 y 5xx dentro del máximo de tres intentos; los demás 4xx no se reintentan.
 - Prueba aislada Node 22 de clasificación HTTP y formato de reporte: 8/8 PASS. No es una prueba de red ni de Apps Script.
 - Commit de implementación: `71ebb84c8011e4a1e04a5e2050ac061145205de6`.
+
+
+## BETA-F013 — el probe no detectaba deployments con versión obsoleta (2026-11-25)
+- El health probe solo exigía que `body.version` fuera una cadena no vacía; un deployment antiguo podía aprobar identidad/estado y aparecer como PASS/SLOW.
+- Se añadió comparación exacta contra las seis versiones de la tabla `Servicios/SERVICE_HEALTH.md` del mismo `TARGET_COMMIT`. Este documento es la fuente del contrato versionado; no se duplican números en el runner ni se modifica la configuración de endpoints del frontend.
+- Una versión diferente produce FAIL con versión del deployment y versión esperada. La versión documentada describe fuente esperada y no certifica deployment hasta ejecutar el probe remoto.
+- Integración publicada en `JS/Tests/RemoteServiceHealth.mjs`, commit `a74d35cc13ddc44b9820dc426012b8d07998497b`. El workflow ya vigila `Services/SERVICE_HEALTH.md` como ruta de activación.
+- Pendiente: validar parser de tabla con Node 22 y ejecutar el workflow sobre Beta; no se ha afirmado ejecución remota.
