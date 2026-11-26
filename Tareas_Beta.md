@@ -788,3 +788,10 @@ Run `45757156335`: `OfflineBrandAssets` 5/5; PWA cold/warm PASS; login visible, 
 
 ### Precedencia normativa — sección 19
 La sección 19 queda **SUPERSEDIDA / NO EJECUTAR** por `NORMAS_DESAROLLO.md` §§17.1 y 18. Las URLs de los seis servicios se administran exclusivamente en `JS/Frontend/api-config.js` mediante `API_ENDPOINTS`; no centralizarlas en Spreadsheet/AUTH ni habilitar publicación desde Developer. Conservar este aviso al consultar el plan histórico.
+
+
+## 2026-11-26 — health AUTH/ADMIN actualizado
+- Run `45808869604` (SHA `fb96cc841a60cd2852e4578c300332cf4557d26b`): health GET-only 6/6 PASS; AUTH 2.2.5, ADMIN 2.7.2. ADMIN 2698 ms SLOW en el probe individual, pero repetición de 5 muestras median 1861 ms con 1/5 SLOW.
+- CATALOG feed/boundaries/matrix/pagination read-only PASS. UTILITIES 5 muestras mediana 907 ms.
+- No se ejecutaron mutaciones ni operaciones Drive/Spreadsheet/OAuth.
+- Regresión en dicho commit falló únicamente por fixture de endpoints desactualizado (MIG-URL-003), corregido en `dd85ed5705f9d29fc3a3a94d4074124cbc08e35a`; CI de corrección pendiente.
