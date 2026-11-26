@@ -128,8 +128,10 @@ test("Inbox rechaza un rol que no pertenece a los roles activos", () => {
     const payload = inject({
         userId: invalidActor.userId, sessionToken: "synthetic-viewer-session"
     }, invalidActor);
-    const authorized = authorizeFeedbackAction("getInboxConversations", payload);
-    assert.throws(() => inboxConversationActor(authorized), /no contiene una identidad válida/);
+    assert.throws(() => authorizeFeedbackAction("getInboxConversations", payload), /sesión no autorizada/);
+    assert.throws(() => inboxConversationActor({
+        __feedbackActor: { userId: invalidActor.userId, userName: invalidActor.fullName, role: invalidActor.role }
+    }), /no contiene una identidad válida/);
 });
 
 test("Inbox no acepta userId discordante aunque el token corresponda a una sesión válida", () => {
