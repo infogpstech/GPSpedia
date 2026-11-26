@@ -124,3 +124,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se eliminan las suites y harnesses de `JS/Tests`, los cuatro segmentos/índices históricos `lista_beta*.txt` y los workflows que los ejecutaban. No crear nuevos archivos de prueba. Los resultados CI anteriores quedan como evidencia histórica en los backlogs; no son reproducibles tras la purga.
 - Limpieza Markdown solicitada: conservar solo los backlogs vigentes (`Tareas_Activas.md`, `Tareas_Beta.md`, `TAREAS_MIGRACION_ARQUITECTURA.md`) y este `checkpoint.md`; eliminar los demás .md, incluidos checkpoints archivados. Esta purga documental fue solicitada expresamente por el propietario.
 - Siguiente paso de desarrollo: investigar y corregir GP-UTIL-BUTTON-NO-REACTION-01 siguiendo el plan de `Tareas_Activas.md`; no reanudar pruebas Beta.
+
+
+## 19. Corrección local del botón de útil — 2026-11-26
+- Continuidad verificada en `GPSpedia2.2.5_work`, HEAD previo `ce03f41878b88e1bce5b28b3b3dc575e9445d04c`; base `GPSpedia2.2.5` `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta.
+- Se recuperó la normativa histórica completa desde el commit previo a la purga `7904a45f4f19907a3436948de49f0e767311b519`; `NORMAS_DESAROLLO.md` y `contexto_personal.md` siguen eliminados en la rama actual por la limpieza solicitada y no se restauraron. README se consultó en la rama base.
+- Diagnóstico: la carga de `getMyUsefulCuts` dejaba los botones deshabilitados si fallaba sin caché local; el handler tenía retornos silenciosos por contexto/estado no listo. El regex del título de acordeón estaba doblemente escapado, y un fallo de envío no revertía el estado optimista ni limpiaba el pendiente.
+- Cambios: `JS/Frontend/ui.js` ahora comparte/espera la hidratación antes de alternar, comunica errores, conserva el control disponible durante la carga y revierte al estado confirmado ante fallo; `JS/Frontend/usefulSyncQueue.js` expone `cancel` para retirar el pendiente fallido. Se corrigió el regex de contador del acordeón.
+- Contrato backend no modificado: `setCutUseful` sigue en FEEDBACK; el backend deriva el actor desde sesión, persiste en `FeedbackLikes` y devuelve `usefulCount`. No se añadieron endpoints, secretos ni llamadas entre servicios.
+- Validación local: parse sintáctico de los cuerpos de módulo UI y cola PASS; comprobaciones efímeras sin archivos: corte físico remapeado, contador optimista/confirmado/retirada PASS y cancelación de cola PASS. Cero archivos de prueba creados.
+- No se invocaron servicios remotos ni se desplegaron proyectos Apps Script; no se ejecutó navegador real. La fase Beta sigue cerrada. Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**.
+- Siguiente paso: conservar la corrección en frontend; la confirmación en deployment real queda fuera de la fase Beta cerrada y requiere una instrucción futura para reabrirla.

@@ -6,12 +6,28 @@
 
 ### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
 
-**Estado: PENDIENTE — incidencia reportada por el propietario el 2026-11-26.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — corrección local publicada el 2026-11-26; no se reabre la fase Beta.**
 
 **Síntomas observados:**
 - Al pulsar el botón de útil no se produce reacción visual.
 - No se registra la reacción en FEEDBACK.
 - La cantidad de útiles no se actualiza en el modal.
+
+**Diagnóstico confirmado por inspección de código:**
+- La hidratación de útiles deshabilitaba los botones hasta que `getMyUsefulCuts` terminara. Si FEEDBACK rechazaba o no respondía, el `.catch()` anterior solo registraba el error y el botón permanecía deshabilitado; el handler también tenía salidas silenciosas cuando faltaba contexto de sesión o el estado no estaba listo.
+- El texto de los acordeones utilizaba una expresión regular con barras invertidas duplicadas. No retiraba el contador anterior del título y podía concatenar el total nuevo en lugar de reemplazarlo.
+- Ante un fallo de escritura, la UI conservaba el estado optimista y la operación quedaba pendiente en la cola, sin rollback inmediato al último estado confirmado.
+
+**Corrección aplicada:**
+- La hidratación ahora devuelve una promesa compartida por sesión. El clic espera a que se conozca el estado del usuario antes de calcular el toggle; la carga ya no deja el botón bloqueado sin salida silenciosa. Los errores de hidratación se comunican y permiten reintentar.
+- Los botones reflejan la carga mediante `aria-busy`; solo quedan deshabilitados si existe un usuario local sin contexto de sesión válido.
+- La cola incorpora cancelación de una operación fallida. Si FEEDBACK no confirma, se elimina el pendiente más reciente y la UI/contador vuelven al estado confirmado, con mensaje visible.
+- Se corrigió el patrón del título de acordeón para sustituir el contador en lugar de acumularlo.
+- Se conservó el contrato existente: el frontend envía userId/sessionToken a FEEDBACK; el servicio deriva el actor autenticado, registra en `FeedbackLikes` y devuelve el contador. No se añadieron URLs, secretos ni coordinación backend→backend.
+
+**Validación local ejecutada:** parsing sintáctico de `ui.js` y `usefulSyncQueue.js`; comprobaciones efímeras sin archivos de prueba para mapeo de corte físico, incremento confirmado, retirada/rollback del contador y cancelación de la cola. Todas aprobaron. No se crearon suites ni archivos de prueba.
+
+**Validación diferida:** no se invocó FEEDBACK/CATALOG remoto, no se modificó ni desplegó Apps Script y no se ejecutó navegador real. La fase Beta permanece cerrada por instrucción del propietario; esta limitación no se presenta como integración aprobada.
 
 **Plan de ejecución:**
 1. Inspeccionar el botón real en el DOM del modal, sus selectores, atributos, listeners y ciclo de apertura/cierre; confirmar que el evento click llega al handler y que no queda interceptado por overlay, propagación, estado disabled o listeners duplicados.

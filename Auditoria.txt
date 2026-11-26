@@ -199,3 +199,10 @@
 - `OfflineBrandAssets.mjs` 5/5 PASS; el modal iOS usa el logo local cacheado.
 - Run `45757156335`: PWA cold/warm PASS, 49/49 core + 4/4 opcionales HTTP 200, login visible offline frío/caliente, 0 pageErrors/no-GET/Apps Script. Cold failedRequests conserva Font Awesome CDN y `/thumbnail`; warm failedRequests vacío.
 - La referencia restante de Drive se localiza en `HTML/add_cortes.html` (testigo motor). F022 sigue como residual visual no bloqueante.
+
+
+2026-11-26 | GP-UTIL-BUTTON-NO-REACTION-01 — hallazgo y corrección
+- Evidencia de código: `JS/Frontend/ui.js`, hidratación `ensureUsefulState_` y handler `.util-btn`: si `getMyUsefulCuts` fallaba sin caché local, el catch solo escribía consola y el control seguía disabled; el handler retornaba silenciosamente si no había contexto o estado listo. El título del acordeón usaba regex doblemente escapado y no retiraba el contador previo. En fallo de envío, la UI mantenía el toggle optimista y la cola no cancelaba el pendiente.
+- Impacto: botón aparentemente inerte cuando la hidratación no concluía; errores de carga sin aviso/reintento claro; contador de acordeón podía acumular textos; posible estado visual falso tras error de escritura.
+- Corrección: hidratación awaitable/compartida, error visible, botón habilitado durante carga con aria-busy, rollback y cancelación de pendiente al fallar, regex de contador corregido. Archivos `JS/Frontend/ui.js`, `JS/Frontend/usefulSyncQueue.js`.
+- Severidad: alta (función de útil inutilizable o incoherente en fallo de hidratación/escritura). Validación local sintáctica y comprobaciones efímeras PASS. No hubo integración remota ni deployment; no afirmar persistencia real confirmada.

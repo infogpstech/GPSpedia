@@ -3984,27 +3984,31 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         utilBtn.dataset.usefulCutIndex = String(cutData.index);
         utilBtn.setAttribute("aria-label", "Marcar corte como útil");
         const userForUseful = getState().currentUser;
-        utilBtn.disabled = Boolean(userForUseful && !usefulReady_(userForUseful));
+        utilBtn.disabled = Boolean(userForUseful && !getUiSessionContext_(userForUseful));
+        utilBtn.setAttribute("aria-busy", String(Boolean(getUiSessionContext_(userForUseful) && !usefulReady_(userForUseful))));
         const initialKey = usefulKey_(vehicleId, cutData.index);
         const active = Array.isArray(getState().likedCortes) && getState().likedCortes.includes(initialKey);
         utilBtn.classList.toggle("liked", active);
         utilBtn.style.backgroundColor = active ? "#28a745" : "";
         utilBtn.setAttribute("aria-pressed", String(active));
         utilBtn.title = active ? "Retirar útil" : "Marcar como útil";
-        utilBtn.onclick = event => {
+        utilBtn.onclick = async event => {
             event.preventDefault(); event.stopPropagation();
-            const latest = getState(), user = latest.currentUser;
+            const user = getState().currentUser;
             if (!user) { showGlobalError("Debes estar conectado para indicar que un corte te ha sido útil."); return; }
             const context = getUiSessionContext_(user);
-            if (!context || !usefulReady_(user)) return;
+            if (!context) { showGlobalError("La sesión no está disponible. Vuelve a iniciar sesión."); return; }
+            const ready = await ensureUsefulState_(user);
+            if (!ready) return;
+            if (!isCurrentUiSessionContext_(context)) {
+                showGlobalError("La sesión cambió. Vuelve a abrir el detalle e inténtalo nuevamente.");
+                return;
+            }
+            const latest = getState();
             const desired = !(Array.isArray(latest.likedCortes) && latest.likedCortes.includes(initialKey));
             setState(applyOptimisticUsefulState(latest, vehicleId, cutData.index, desired));
-            utilBtn.classList.toggle("liked", desired);
-            utilBtn.style.backgroundColor = desired ? "var(--gp-color-success)" : "";
-            utilBtn.style.transform = desired ? "scale(1.08)" : "";
-            utilBtn.setAttribute("aria-pressed", String(desired));
-            utilBtn.title = desired ? "Retirar útil" : "Marcar como útil";
-            syncUsefulControls_(); syncUsefulCount_(vehicleId, cutData.index);
+            syncUsefulControls_();
+            syncUsefulCount_(vehicleId, cutData.index);
             scheduleUseful_(context.userId, context.sessionToken, vehicleId, cutData.index, desired);
         };
         feedbackOverlay.appendChild(utilBtn);
@@ -4177,18 +4181,102 @@ function usefulActorKey_(u,v,c){return String(u)+"|"+usefulKey_(v,c);}
 function usefulStorageKey_(u){return "gpsepedia_useful_state_v1:"+encodeURIComponent(String(u||""));}
 function readUsefulCache_(u){try{const x=JSON.parse(localStorage.getItem(usefulStorageKey_(u))||"null");return x&&x.version===1&&Array.isArray(x.likedCortes)?x:null;}catch(_e){return null;}}
 function saveUsefulCache_(u){try{const old=readUsefulCache_(u)||{},active=String(getUiSessionContext_()?.userId||""),liked=active===String(u)?(getState().likedCortes||[]):(old.likedCortes||[]),confirmed=usefulConfirmed_.get(String(u))||old.confirmedCortes||liked,pending=Array.from(usefulPending_.values()).filter(x=>String(x.userId)===String(u)).map(x=>({vehicleId:x.vehicleId,corteIndex:x.corteIndex,isUseful:x.isUseful}));localStorage.setItem(usefulStorageKey_(u),JSON.stringify({version:1,likedCortes:liked,confirmedCortes:confirmed,pending}));}catch(_e){}}
-function usefulReady_(user){const c=getUiSessionContext_(user);return !c||usefulReadySessions_.has(c.userId+"|"+c.sessionToken);}
-function syncUsefulControls_(){if(typeof document==="undefined")return;const s=getState(),ready=usefulReady_(s.currentUser),liked=new Set(s.likedCortes||[]);document.querySelectorAll(".util-btn[data-useful-vehicle-id][data-useful-cut-index]").forEach(b=>{const on=liked.has(usefulKey_(b.dataset.usefulVehicleId,b.dataset.usefulCutIndex));b.classList.toggle("liked",on);b.style.backgroundColor=on?"#28a745":"";b.setAttribute("aria-pressed",String(on));b.disabled=Boolean(s.currentUser&&!ready);b.title=ready?(on?"Retirar útil":"Marcar como útil"):"Cargando estado de útil…";});}
-function syncUsefulCount_(v,c){const s=getState(),vehicle=(s.catalogData?.cortes||[]).find(x=>String(x.id)===String(v));if(!vehicle||typeof document==="undefined")return;const displayCut=resolveUsefulDisplayCutIndex(vehicle,c),n=Math.max(0,Number.parseInt(vehicle["utilCorte"+displayCut],10)||0);document.querySelectorAll(".accordion-btn[data-useful-vehicle-id][data-useful-cut-index], .detail-section-heading[data-useful-vehicle-id][data-useful-cut-index]").forEach(el=>{if(String(el.dataset.usefulVehicleId)!==String(v)||String(el.dataset.usefulCutIndex)!==String(c))return;const prefix=el.dataset.usefulTitlePrefix||"Corte";if(el.classList.contains("accordion-btn")){const node=Array.from(el.childNodes).find(x=>x.nodeType===3);if(node)node.textContent=prefix+" (Útiles: "+n+") ";}else el.textContent=prefix+" · Útiles: "+n;});}
+function usefulReady_(user){const c=getUiSessionContext_(user);return Boolean(c&&usefulReadySessions_.has(c.userId+"|"+c.sessionToken));}
+function syncUsefulControls_(){
+ if(typeof document==="undefined")return;
+ const s=getState(),context=getUiSessionContext_(s.currentUser),ready=Boolean(context&&usefulReadySessions_.has(context.userId+"|"+context.sessionToken)),liked=new Set(s.likedCortes||[]);
+ document.querySelectorAll(".util-btn[data-useful-vehicle-id][data-useful-cut-index]").forEach(b=>{
+  const on=liked.has(usefulKey_(b.dataset.usefulVehicleId,b.dataset.usefulCutIndex));
+  b.classList.toggle("liked",on);b.style.backgroundColor=on?"#28a745":"";
+  b.setAttribute("aria-pressed",String(on));b.setAttribute("aria-busy",String(Boolean(context&&!ready)));
+  b.disabled=Boolean(s.currentUser&&!context);
+  b.title=!s.currentUser?"Inicia sesión para marcar este corte como útil":!context?"La sesión no está disponible":ready?(on?"Retirar útil":"Marcar como útil"):"Cargando estado de útil…";
+ });
+}
+function syncUsefulCount_(v,c){
+ const s=getState(),vehicle=(s.catalogData?.cortes||[]).find(x=>String(x.id)===String(v));
+ if(!vehicle||typeof document==="undefined")return;
+ const displayCut=resolveUsefulDisplayCutIndex(vehicle,c),n=Math.max(0,Number.parseInt(vehicle["utilCorte"+displayCut],10)||0);
+ document.querySelectorAll(".accordion-btn[data-useful-vehicle-id][data-useful-cut-index], .detail-section-heading[data-useful-vehicle-id][data-useful-cut-index]").forEach(el=>{
+  if(String(el.dataset.usefulVehicleId)!==String(v)||String(el.dataset.usefulCutIndex)!==String(c))return;
+  const prefix=el.dataset.usefulTitlePrefix||"Corte";
+  if(el.classList.contains("accordion-btn")){const node=Array.from(el.childNodes).find(x=>x.nodeType===3);if(node)node.textContent=prefix+" (Útiles: "+n+") ";}
+  else el.textContent=prefix+" · Útiles: "+n;
+ });
+}
 const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
  send:p=>setCutUseful(p.vehicleId,p.corteIndex,p.isUseful,{userId:p.userId,sessionToken:p.sessionToken}),
- onSuccess:(r,p,m)=>{if(!r||r.status!=="success"||typeof r.isUseful!=="boolean")throw Error("FEEDBACK no confirmó el estado del útil.");const set=new Set(usefulConfirmed_.get(String(p.userId))||[]),key=usefulKey_(p.vehicleId,p.corteIndex);if(r.isUseful)set.add(key);else set.delete(key);usefulConfirmed_.set(String(p.userId),Array.from(set));if(String(getUiSessionContext_()?.userId||"")===String(p.userId)){setState(applyConfirmedUsefulState(getState(),p.vehicleId,p.corteIndex,r));syncUsefulCount_(p.vehicleId,p.corteIndex);syncUsefulControls_();}if(m.latest)usefulPending_.delete(usefulActorKey_(p.userId,p.vehicleId,p.corteIndex));saveUsefulCache_(p.userId);},
- onFailure:(e,p,m)=>{if(m.latest&&m.interactionCount===1&&String(getUiSessionContext_()?.userId||"")===String(p.userId)){console.error("No se pudo sincronizar el útil:",e);showGlobalError("No se pudo actualizar el útil. Intenta nuevamente.");}}
+ onSuccess:(r,p,m)=>{
+  if(!r||r.status!=="success"||typeof r.isUseful!=="boolean")throw Error("FEEDBACK no confirmó el estado del útil.");
+  const set=new Set(usefulConfirmed_.get(String(p.userId))||[]),key=usefulKey_(p.vehicleId,p.corteIndex);
+  if(r.isUseful)set.add(key);else set.delete(key);
+  usefulConfirmed_.set(String(p.userId),Array.from(set));
+  if(String(getUiSessionContext_()?.userId||"")===String(p.userId)){
+   setState(applyConfirmedUsefulState(getState(),p.vehicleId,p.corteIndex,r));
+   syncUsefulCount_(p.vehicleId,p.corteIndex);syncUsefulControls_();
+  }
+  if(m.latest)usefulPending_.delete(usefulActorKey_(p.userId,p.vehicleId,p.corteIndex));
+  saveUsefulCache_(p.userId);
+ },
+ onFailure:(error,p,m)=>{
+  if(!m.latest)return;
+  const key=usefulKey_(p.vehicleId,p.corteIndex),queueKey=usefulActorKey_(p.userId,p.vehicleId,p.corteIndex);
+  usefulQueue_.cancel(queueKey);usefulPending_.delete(queueKey);
+  const context=getUiSessionContext_();
+  if(context&&String(context.userId)===String(p.userId)){
+   const confirmed=new Set(usefulConfirmed_.get(String(p.userId))||[]);
+   setState(applyOptimisticUsefulState(getState(),p.vehicleId,p.corteIndex,confirmed.has(key)));
+   syncUsefulCount_(p.vehicleId,p.corteIndex);syncUsefulControls_();
+   console.error("No se pudo sincronizar el útil:",error);
+   showGlobalError("No se pudo actualizar el útil. Intenta nuevamente.");
+  }
+  saveUsefulCache_(p.userId);
+ }
 });
-function scheduleUseful_(u,t,v,c,on){const key=usefulActorKey_(u,v,c),p={userId:String(u),sessionToken:t,vehicleId:String(v),corteIndex:Number(c),isUseful:Boolean(on)};usefulPending_.set(key,p);usefulQueue_.schedule(key,p);saveUsefulCache_(u);}
-function ensureUsefulState_(user){const c=getUiSessionContext_(user);if(!c)return;const session=c.userId+"|"+c.sessionToken;if(usefulReadySessions_.has(session)||usefulLoadingSessions_.has(session))return;const local=readUsefulCache_(c.userId);
- if(local){const confirmed=local.confirmedCortes||local.likedCortes;usefulConfirmed_.set(c.userId,confirmed.slice());setState({likedCortes:confirmed.slice()});(local.pending||[]).forEach(x=>{const v=String(x.vehicleId||""),cut=Number(x.corteIndex);if(!v||!Number.isInteger(cut)||cut<1||cut>3||typeof x.isUseful!=="boolean")return;const key=usefulActorKey_(c.userId,v,cut),p={userId:c.userId,sessionToken:c.sessionToken,vehicleId:v,corteIndex:cut,isUseful:x.isUseful};usefulPending_.set(key,p);setState(applyOptimisticUsefulState(getState(),v,cut,x.isUseful));usefulQueue_.schedule(key,p,{silent:true});});usefulReadySessions_.add(session);}else setState({likedCortes:[]});
- syncUsefulControls_();const request=getMyUsefulCuts({userId:c.userId,sessionToken:c.sessionToken}).then(r=>{if(!r||r.status!=="success"||!Array.isArray(r.usefulCortes))throw Error("FEEDBACK no devolvió el estado de útiles.");const confirmed=r.usefulCortes.map(x=>usefulKey_(x.vehicleId,x.corteIndex));usefulConfirmed_.set(c.userId,confirmed);setState({likedCortes:confirmed.slice()});usefulPending_.forEach(p=>{if(String(p.userId)===c.userId)setState(applyOptimisticUsefulState(getState(),p.vehicleId,p.corteIndex,p.isUseful));});usefulReadySessions_.add(session);saveUsefulCache_(c.userId);syncUsefulControls_();const ids=new Set(Array.from(document.querySelectorAll(".util-btn[data-useful-vehicle-id]")).map(b=>b.dataset.usefulVehicleId));ids.forEach(v=>[1,2,3].forEach(i=>syncUsefulCount_(v,i)));}).catch(e=>{if(!local)console.warn("No se pudo recuperar el estado de útiles:",e);}).finally(()=>{usefulLoadingSessions_.delete(session);syncUsefulControls_();});usefulLoadingSessions_.set(session,request);}
+function scheduleUseful_(u,t,v,c,on){
+ const key=usefulActorKey_(u,v,c),p={userId:String(u),sessionToken:t,vehicleId:String(v),corteIndex:Number(c),isUseful:Boolean(on)};
+ usefulPending_.set(key,p);usefulQueue_.schedule(key,p);saveUsefulCache_(u);
+}
+function ensureUsefulState_(user){
+ const c=getUiSessionContext_(user);if(!c)return Promise.resolve(false);
+ const session=c.userId+"|"+c.sessionToken;
+ if(usefulReadySessions_.has(session))return Promise.resolve(true);
+ const existing=usefulLoadingSessions_.get(session);if(existing)return existing;
+ const local=readUsefulCache_(c.userId);
+ if(local){
+  const confirmed=local.confirmedCortes||local.likedCortes;
+  usefulConfirmed_.set(c.userId,confirmed.slice());setState({likedCortes:confirmed.slice()});
+  (local.pending||[]).forEach(x=>{
+   const v=String(x.vehicleId||""),cut=Number(x.corteIndex);
+   if(!v||!Number.isInteger(cut)||cut<1||cut>3||typeof x.isUseful!=="boolean")return;
+   const key=usefulActorKey_(c.userId,v,cut),p={userId:c.userId,sessionToken:c.sessionToken,vehicleId:v,corteIndex:cut,isUseful:x.isUseful};
+   usefulPending_.set(key,p);setState(applyOptimisticUsefulState(getState(),v,cut,x.isUseful));usefulQueue_.schedule(key,p,{silent:true});
+  });
+  usefulReadySessions_.add(session);
+ }else setState({likedCortes:[]});
+ syncUsefulControls_();
+ const request=getMyUsefulCuts({userId:c.userId,sessionToken:c.sessionToken}).then(r=>{
+  if(!isCurrentUiSessionContext_(c))return false;
+  if(!r||r.status!=="success"||!Array.isArray(r.usefulCortes))throw Error("FEEDBACK no devolvió el estado de útiles.");
+  const confirmed=r.usefulCortes.map(x=>usefulKey_(x.vehicleId,x.corteIndex));
+  usefulConfirmed_.set(c.userId,confirmed);setState({likedCortes:confirmed.slice()});
+  usefulPending_.forEach(p=>{if(String(p.userId)===c.userId)setState(applyOptimisticUsefulState(getState(),p.vehicleId,p.corteIndex,p.isUseful));});
+  usefulReadySessions_.add(session);saveUsefulCache_(c.userId);syncUsefulControls_();
+  const ids=new Set(Array.from(document.querySelectorAll(".util-btn[data-useful-vehicle-id]")).map(b=>b.dataset.usefulVehicleId));
+  ids.forEach(v=>[1,2,3].forEach(i=>syncUsefulCount_(v,i)));
+  return true;
+ }).catch(error=>{
+  if(!local){
+   console.error("No se pudo recuperar el estado de útiles:",error);
+   showGlobalError("No se pudo cargar el estado de los útiles. Vuelve a intentarlo.");
+   return false;
+  }
+  console.warn("No se pudo actualizar el estado remoto de útiles; se conserva la copia local:",error);
+  return true;
+ }).finally(()=>{usefulLoadingSessions_.delete(session);syncUsefulControls_();});
+ usefulLoadingSessions_.set(session,request);
+ return local?Promise.resolve(true):request;
+}
 if(typeof window!=="undefined")window.addEventListener("online",()=>usefulQueue_.retryPending());
 
 function invalidateInboxCache_(context = getUiSessionContext_()) {
@@ -11115,7 +11203,7 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
         const cutIndex = sec.corteIndex || (sec.data && sec.data.index) || 2;
         btn.dataset.usefulVehicleId = String(vehicleId || "");
         btn.dataset.usefulCutIndex = String(cutIndex);
-        btn.dataset.usefulTitlePrefix = String(title).replace(/\\s*\\(Útiles:\\s*\\d+\\)\\s*$/, "");
+        btn.dataset.usefulTitlePrefix = String(title).replace(/\s*\(Útiles:\s*\d+\)\s*$/, "");
     }
 
     const panel = document.createElement("div");
