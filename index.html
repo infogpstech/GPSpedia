@@ -358,7 +358,7 @@
                         <div class="dev-card dev-tools-card">
                             <div class="dev-card-heading">
                                 <strong><i class="fa-solid fa-server"></i> Servicios</strong>
-                                <button id="btn-check-services-health" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Escanear</button>
+                                <button id="btn-check-services-health" class="btn btn-secondary dev-panel-action" aria-label="Escanear" title="Escanear"><i class="fa-solid fa-arrows-rotate"></i><span class="dev-action-label">Escanear</span></button>
                             </div>
                             <div id="services-health-grid" class="dev-services-health-grid">
                                 <span class="dev-empty-state">Iniciando diagnóstico...</span>
@@ -384,17 +384,17 @@
                                 <p id="backup-resource-hint" class="dev-empty-state" aria-live="polite">Spreadsheet o carpeta de Drive.</p>
                             </div>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Respaldar Spreadsheet</button>
-                                <button type="button" id="btn-admin-backup-drive" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Respaldar Drive</button>
-                                <button type="button" id="btn-admin-resume-drive-backup" class="btn btn-secondary" disabled><i class="fa-solid fa-rotate"></i> Continuar respaldo</button>
+                                <button type="button" id="btn-admin-backup-db" class="btn btn-primary dev-panel-action" aria-label="Respaldar Spreadsheet" title="Respaldar Spreadsheet"><i class="fa-solid fa-database"></i><span class="dev-action-label">Respaldar Spreadsheet</span></button>
+                                <button type="button" id="btn-admin-backup-drive" class="btn btn-primary dev-panel-action" aria-label="Respaldar Drive" title="Respaldar Drive"><i class="fa-brands fa-google-drive"></i><span class="dev-action-label">Respaldar Drive</span></button>
+                                <button type="button" id="btn-admin-resume-drive-backup" class="btn btn-secondary dev-panel-action" disabled aria-label="Continuar respaldo" title="Continuar respaldo"><i class="fa-solid fa-rotate"></i><span class="dev-action-label">Continuar respaldo</span></button>
                             </div>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-restore-db" class="btn btn-warning"><i class="fa-solid fa-table"></i> Restaurar Spreadsheet</button>
-                                <button type="button" id="btn-admin-restore-drive" class="btn btn-warning"><i class="fa-solid fa-folder-closed"></i> Restaurar carpeta</button>
+                                <button type="button" id="btn-admin-restore-db" class="btn btn-warning dev-panel-action" aria-label="Restaurar Spreadsheet" title="Restaurar Spreadsheet"><i class="fa-solid fa-table"></i><span class="dev-action-label">Restaurar Spreadsheet</span></button>
+                                <button type="button" id="btn-admin-restore-drive" class="btn btn-warning dev-panel-action" aria-label="Restaurar carpeta" title="Restaurar carpeta"><i class="fa-solid fa-folder-closed"></i><span class="dev-action-label">Restaurar carpeta</span></button>
                             </div>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-copy-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar enlace</button>
-                                <button type="button" id="btn-open-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir enlace</button>
+                                <button type="button" id="btn-copy-backup-resource-link" class="btn btn-secondary dev-panel-action" aria-label="Copiar enlace" title="Copiar enlace"><i class="fa-solid fa-copy"></i><span class="dev-action-label">Copiar enlace</span></button>
+                                <button type="button" id="btn-open-backup-resource-link" class="btn btn-secondary dev-panel-action" aria-label="Abrir enlace" title="Abrir enlace"><i class="fa-solid fa-arrow-up-right-from-square"></i><span class="dev-action-label">Abrir enlace</span></button>
                             </div>
                         </div>
 
@@ -402,8 +402,8 @@
                             <div class="dev-heading-with-help"><strong><i class="fa-solid fa-right-left"></i> Migración VIN</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre migración VIN" title="Ayuda" aria-controls="dev-help-vin-migration" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-vin-migration" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Traslada los identificadores VIN y los datos de idempotencia. Crea y verifica un respaldo, ejecuta la simulación y revisa sus resultados antes de confirmar.</span></div>
                             <p>Requiere respaldo previo.</p>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-preview-vin-migration" class="btn btn-secondary" disabled><i class="fa-solid fa-magnifying-glass"></i> Simular migración</button>
-                                <button type="button" id="btn-admin-confirm-vin-migration" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Confirmar migración</button>
+                                <button type="button" id="btn-admin-preview-vin-migration" class="btn btn-secondary dev-panel-action" disabled aria-label="Simular migración" title="Simular migración"><i class="fa-solid fa-magnifying-glass"></i><span class="dev-action-label">Simular migración</span></button>
+                                <button type="button" id="btn-admin-confirm-vin-migration" class="btn btn-warning dev-panel-action" disabled aria-label="Confirmar migración" title="Confirmar migración"><i class="fa-solid fa-database"></i><span class="dev-action-label">Confirmar migración</span></button>
                             </div>
                             <p id="vin-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Se requiere un respaldo de Spreadsheet verificado antes de simular.</p>
                         </div>
@@ -412,9 +412,9 @@
                             <div class="dev-heading-with-help"><strong><i class="fa-solid fa-fingerprint"></i> Auditoría de IDs</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre auditoría de IDs" title="Ayuda" aria-controls="dev-help-id-audit" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-id-audit" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Revisa las columnas identificadoras de todas las hojas y compara el valor calculado con la fórmula original. No modifica datos.</span></div>
                             <p>Compara valores y fórmulas sin modificar datos.</p>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-audit-identifiers" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Auditar IDs</button>
-                                <button type="button" id="btn-admin-preview-id-freeze" class="btn btn-secondary"><i class="fa-solid fa-list-check"></i> Simular migración</button>
-                                <button type="button" id="btn-admin-confirm-id-freeze" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Migrar lote</button>
+                                <button type="button" id="btn-admin-audit-identifiers" class="btn btn-secondary dev-panel-action" aria-label="Auditar IDs" title="Auditar IDs"><i class="fa-solid fa-magnifying-glass"></i><span class="dev-action-label">Auditar IDs</span></button>
+                                <button type="button" id="btn-admin-preview-id-freeze" class="btn btn-secondary dev-panel-action" aria-label="Simular migración" title="Simular migración"><i class="fa-solid fa-list-check"></i><span class="dev-action-label">Simular migración</span></button>
+                                <button type="button" id="btn-admin-confirm-id-freeze" class="btn btn-warning dev-panel-action" disabled aria-label="Migrar lote" title="Migrar lote"><i class="fa-solid fa-database"></i><span class="dev-action-label">Migrar lote</span></button>
                             </div>
                             <p id="identifier-audit-status" class="dev-empty-state" role="status" aria-live="polite">Auditoría pendiente.</p>
                             <div id="identifier-audit-results" class="dev-empty-state" aria-live="polite"></div>
@@ -424,8 +424,8 @@
                             <div class="dev-heading-with-help"><strong><i class="fa-solid fa-lock"></i> Migración de contraseñas</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre migración de contraseñas" title="Ayuda" aria-controls="dev-help-password-migration" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-password-migration" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Convierte contraseñas heredadas elegibles a hash. La simulación no escribe datos; la migración procesa lotes confirmados de hasta cinco cuentas.</span></div>
                             <p>Convierte contraseñas heredadas a hash.</p>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-preview-password-migration" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Simular</button>
-                                <button type="button" id="btn-admin-confirm-password-migration" class="btn btn-warning" disabled><i class="fa-solid fa-shield-halved"></i> Migrar lote</button>
+                                <button type="button" id="btn-admin-preview-password-migration" class="btn btn-secondary dev-panel-action" aria-label="Simular" title="Simular"><i class="fa-solid fa-magnifying-glass"></i><span class="dev-action-label">Simular</span></button>
+                                <button type="button" id="btn-admin-confirm-password-migration" class="btn btn-warning dev-panel-action" disabled aria-label="Migrar lote" title="Migrar lote"><i class="fa-solid fa-shield-halved"></i><span class="dev-action-label">Migrar lote</span></button>
                             </div>
                             <p id="password-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Revisa primero la simulación.</p>
                         </div>
@@ -446,9 +446,7 @@
                                     </span>
                                 </label>
                             </div>
-                            <button type="button" id="btn-admin-run-vin-actions" class="btn btn-primary dev-action-full">
-                                <i class="fa-solid fa-play"></i> Ejecutar acciones
-                            </button>
+                            <button type="button" id="btn-admin-run-vin-actions" class="btn btn-primary dev-action-full dev-panel-action" aria-label="Ejecutar acciones" title="Ejecutar acciones"><i class="fa-solid fa-play"></i><span class="dev-action-label">Ejecutar acciones</span></button>
                             <p id="vin-actions-progress" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna acción en esta sesión.</p>
                             <div class="dev-vin-action-status">
                                 <p id="vin-recalculate-status" role="status" aria-live="polite">Recalcular firmas: pendiente.</p>
@@ -458,7 +456,7 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-list-ol"></i> Orden de registros</strong>
-                            <button id="btn-admin-reorganize-db" class="btn btn-warning dev-action-full" title="Reorganizar la base de datos alfabéticamente por marca" aria-label="Reorganizar la base de datos alfabéticamente por marca"><i class="fa-solid fa-sort-alpha-down"></i> Ordenar por marca</button>
+                            <button id="btn-admin-reorganize-db" class="btn btn-warning dev-action-full dev-panel-action" title="Reorganizar la base de datos alfabéticamente por marca" aria-label="Reorganizar la base de datos alfabéticamente por marca"><i class="fa-solid fa-sort-alpha-down"></i><span class="dev-action-label">Ordenar por marca</span></button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
@@ -485,15 +483,13 @@
                                     </span>
                                 </label>
                             </div>
-                            <button type="button" id="btn-admin-clear-selected-logs" class="btn btn-danger dev-action-full">
-                                <i class="fa-solid fa-trash-can"></i> Limpiar selección
-                            </button>
+                            <button type="button" id="btn-admin-clear-selected-logs" class="btn btn-danger dev-action-full dev-panel-action" aria-label="Limpiar selección" title="Limpiar selección"><i class="fa-solid fa-trash-can"></i><span class="dev-action-label">Limpiar selección</span></button>
                             <p id="clear-selected-logs-status" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna limpieza en esta sesión.</p>
                         </div>
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-eye-slash"></i> Cortes silenciosos</strong>
-                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte silencioso</button>
+                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full dev-panel-action" aria-label="Agregar corte silencioso" title="Agregar corte silencioso"><i class="fa-solid fa-eye-slash"></i><span class="dev-action-label">Agregar corte silencioso</span></button>
                         </div>
                     </section>
 
@@ -516,14 +512,14 @@
                                 <span>Disponible: <strong id="drive-storage-remaining">No disponible</strong></span>
                                 <span>Uso: <strong id="drive-storage-percent">No disponible</strong></span>
                             </div>
-                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full dev-panel-action" aria-label="Actualizar" title="Actualizar"><i class="fa-solid fa-arrows-rotate"></i><span class="dev-action-label">Actualizar</span></button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
                             <div class="dev-heading-with-help"><strong><i class="fa-solid fa-images"></i> Organización de imágenes</strong><button type="button" class="gp-help-trigger" aria-label="Ayuda sobre acciones de imágenes" title="Ayuda" aria-controls="dev-help-image-actions" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button><span id="dev-help-image-actions" class="gp-help-popover dev-heading-help-popover" role="tooltip" hidden>Normalizar corrige nombres y retira duplicados. Organizar mueve imágenes principales a sus carpetas. Revisar papelera permite recuperar archivos eliminados.</span></div>
-                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full" aria-label="Normalizar nombres y quitar duplicados"><i class="fa-solid fa-images"></i> Normalizar imágenes</button>
-                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full" aria-label="Organizar imágenes principales de vehículos"><i class="fa-solid fa-folder-tree"></i> Organizar imágenes</button>
-                            <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;" aria-label="Revisar y recuperar imágenes de la papelera"><i class="fa-solid fa-trash-arrow-up"></i> Revisar papelera</button>
+                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full dev-panel-action" aria-label="Normalizar nombres y quitar duplicados" title="Normalizar imágenes"><i class="fa-solid fa-images"></i><span class="dev-action-label">Normalizar imágenes</span></button>
+                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full dev-panel-action" aria-label="Organizar imágenes principales de vehículos" title="Organizar imágenes"><i class="fa-solid fa-folder-tree"></i><span class="dev-action-label">Organizar imágenes</span></button>
+                            <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full dev-panel-action" style="display: none;" aria-label="Revisar y recuperar imágenes de la papelera" title="Revisar papelera"><i class="fa-solid fa-trash-arrow-up"></i><span class="dev-action-label">Revisar papelera</span></button>
                         </div>
 
                         <div class="dev-card dev-tools-card">
@@ -531,23 +527,23 @@
                             <div class="dev-action-row">
                                 <input type="text" id="logo-brand-name-input" placeholder="Marca (ej. Toyota)" class="dev-input">
                                 <input type="file" id="logo-file-input" accept="image/png, image/svg+xml, image/webp" style="display: none;">
-                                <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary">Seleccionar imagen</button>
+                                <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary dev-panel-action" aria-label="Seleccionar imagen" title="Seleccionar imagen"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span class="dev-action-label">Seleccionar imagen</span></button>
                             </div>
                             <span id="selected-logo-file-name" class="dev-empty-state">Sin archivo. Formatos: PNG, SVG o WEBP</span>
-                            <button id="btn-admin-register-logo" class="btn btn-primary dev-action-full"><i class="fa-solid fa-upload"></i> Registrar logotipo</button>
+                            <button id="btn-admin-register-logo" class="btn btn-primary dev-action-full dev-panel-action" aria-label="Registrar logotipo" title="Registrar logotipo"><i class="fa-solid fa-upload"></i><span class="dev-action-label">Registrar logotipo</span></button>
                         </div>
 
 
                         <div class="dev-card dev-tools-card" id="vehicle-contribution-review-card">
                             <div class="dev-heading-with-help"><strong><i class="fa-solid fa-clipboard-check"></i> Aportes vehiculares pendientes</strong><span class="dev-empty-state">Revisión auditada; los eventos originales no se editan.</span></div>
-                            <button type="button" id="btn-admin-refresh-contribution-candidates" class="btn btn-primary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Consultar candidatos</button>
+                            <button type="button" id="btn-admin-refresh-contribution-candidates" class="btn btn-primary dev-action-full dev-panel-action" aria-label="Consultar candidatos" title="Consultar candidatos"><i class="fa-solid fa-arrows-rotate"></i><span class="dev-action-label">Consultar candidatos</span></button>
                             <p id="admin-contribution-review-status" role="status" aria-live="polite">La consulta se ejecuta únicamente cuando la solicitas.</p>
                             <div id="admin-contribution-candidates" class="dev-action-full" aria-live="polite"></div>
                         </div>
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-clock-rotate-left"></i> Inventario e historial</strong>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Abrir biblioteca</button>
+                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary dev-panel-action" aria-label="Abrir biblioteca" title="Abrir biblioteca"><i class="fa-solid fa-images"></i><span class="dev-action-label">Abrir biblioteca</span></button>
                                 <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Cortes</button>
                             </div>
                         </div>
@@ -630,7 +626,7 @@
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-database"></i> Caché local</strong>
                             <p class="dev-warning-copy">Borra IndexedDB y Storage; luego recarga.</p>
-                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Limpiar caché y recargar</button>
+                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full dev-panel-action" aria-label="Limpiar caché y recargar" title="Limpiar caché y recargar"><i class="fa-solid fa-database"></i><span class="dev-action-label">Limpiar caché y recargar</span></button>
                         </div>
                     </section>
                 </div>
