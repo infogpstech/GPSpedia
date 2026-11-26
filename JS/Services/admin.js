@@ -14144,7 +14144,17 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
         const results = [];
         const currentIds = new Set(uniqueIds);
         const recordOutcome = (fileId, status, message) => {
-            results.push({ fileId: fileId, status: status, message: String(message || "") });
+            const association = associationByFileId.get(fileId);
+            results.push({
+                fileId: fileId, status: status, message: String(message || ""),
+                association: association ? {
+                    status: association.status, confidence: association.confidence,
+                    candidates: Array.isArray(association.candidates) ? association.candidates : []
+                } : {
+                    status: associationBuildError ? "no_verificada" : "sin_coincidencia",
+                    confidence: "", candidates: []
+                }
+            });
             if (status !== "confirmado") {
                 const logged = recordImageAdministrationActivity(developerContext, "admin_image_inventory_result",
                     fileId, "Operación " + inventoryOperationId + "; auditoría " + auditId +
