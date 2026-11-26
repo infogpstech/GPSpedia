@@ -1112,3 +1112,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Límite: no se ejecutó Apps Script, Spreadsheet, Drive, navegador ni una alta real desde esta sesión; deployment y Beta siguen pendientes.
 - Archivos: `JS/Services/write.js`, `JS/Frontend/diagnosticLogger.js`, `HTML/add_cortes.html`.
 - Commits: `ad84cb3e95ba48528c9c9ba729aecfafc3f46b69`, `2b6924142eef4a38b713b3321fcd813740df506f`, `eeecec8ad5a3f28d0ffdff2dc4b798da13c41b31`, `035041b445c5f6a785d19705aec3b254c9359bde`, `bc5a9313d09726b9926dc844f8dd42d81cab982f`.
+
+- [x] Refinar diagnóstico: registrar `error.code` o, en su ausencia, solo identificadores técnicos estáticos del mensaje; el logger filtra contra allowlist. Los mensajes libres y payloads siguen excluidos.
