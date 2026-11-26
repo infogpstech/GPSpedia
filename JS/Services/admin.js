@@ -12873,7 +12873,8 @@ function handleGetReplacedImageDownloadUrl(payload,logMessage,developerContext){
 
 function getDriveAuditReferenceSnapshotConfig_() {
     return { maxLength: 750000, chunkSize: 75000, ttlSeconds: 21600,
-        mimeType: "application/json; charset=utf-8", encoding: "utf-8", schemaVersion: 2 };
+        mimeType: "application/json; charset=utf-8", encoding: "utf-8", schemaVersion: 3,
+        chunking: "utf8-bytes" };
 }
 const DRIVE_AUDIT_STATE_PROPERTY_PREFIX_ = "GPSpedia_DRIVE_AUDIT_STATE_";
 const DRIVE_AUDIT_STATE_SHEET_NAME_ = "DriveAuditRuns";
@@ -13669,6 +13670,41 @@ function removeAuditDriveReferenceSnapshotCache_(auditId) {
     keys.push(prefix + "_manifest");
     cache.removeAll(keys);
 }
+function splitDriveAuditUtf8Chunks_(value, maxBytes) {
+    const source = String(value == null ? "" : value);
+    const limit = Number(maxBytes);
+    if (!Number.isSafeInteger(limit) || limit < 4) throw new Error("El tamaño máximo del bloque UTF-8 no es válido.");
+    const chunks = [];
+    let chunkStart = 0, chunkBytes = 0, index = 0;
+    while (index < source.length) {
+        const first = source.charCodeAt(index);
+        let units = 1, bytes;
+        if (first >= 0xD800 && first <= 0xDBFF &&
+            index + 1 < source.length &&
+            source.charCodeAt(index + 1) >= 0xDC00 &&
+            source.charCodeAt(index + 1) <= 0xDFFF) {
+            units = 2;
+            bytes = 4;
+        } else if (first <= 0x7F) {
+            bytes = 1;
+        } else if (first <= 0x7FF) {
+            bytes = 2;
+        } else {
+            bytes = 3;
+        }
+        if (chunkBytes > 0 && chunkBytes + bytes > limit) {
+            chunks.push(source.slice(chunkStart, index));
+            chunkStart = index;
+            chunkBytes = 0;
+        }
+        if (bytes > limit) throw new Error("Un carácter supera el tamaño máximo del bloque UTF-8.");
+        chunkBytes += bytes;
+        index += units;
+    }
+    if (chunkStart < source.length) chunks.push(source.slice(chunkStart));
+    return chunks;
+}
+
 function storeAuditDriveReferenceSnapshot(auditId, snapshot, options) {
     const cache = CacheService.getScriptCache(), config = getDriveAuditReferenceSnapshotConfig_();
     const cachePrefix = "gp_audit_refs_" + String(auditId), manifestKey = cachePrefix + "_manifest", cacheKeys = [];
@@ -13682,30 +13718,36 @@ function storeAuditDriveReferenceSnapshot(auditId, snapshot, options) {
         if (!serialized || serialized.length > config.maxLength || byteLength > config.maxLength) {
             throw new Error("El conjunto de referencias supera la capacidad temporal de 750,000 caracteres/bytes. No se clasificaron archivos.");
         }
-        const chunkCount = Math.ceil(serialized.length / config.chunkSize);
+        const chunks = splitDriveAuditUtf8Chunks_(serialized, config.chunkSize);
+        const chunkCount = chunks.length;
         if (chunkCount < 1 || chunkCount > 10) throw new Error("La cantidad de bloques supera la capacidad temporal admitida.");
         const chunkHashes = [];
         writeStarted = true;
         for (let i = 0; i < chunkCount; i++) {
-            const key = cachePrefix + "_" + i, chunk = serialized.slice(i * config.chunkSize, (i + 1) * config.chunkSize);
+            const key = cachePrefix + "_" + i, chunk = chunks[i];
             const chunkBytes = Utilities.newBlob(chunk, config.mimeType).getBytes().length;
-            if (!chunk || chunk.length > config.chunkSize || chunkBytes > config.chunkSize) throw new Error("El bloque temporal " + i + " supera el tamaño seguro de 75,000 bytes.");
+            if (!chunk || chunkBytes > config.chunkSize) {
+                throw new Error("El bloque temporal " + i + " supera el tamaño seguro de 75,000 bytes.");
+            }
             cache.put(key, chunk, config.ttlSeconds);
             if (cache.get(key) !== chunk) throw new Error("Google Apps Script no conservó íntegro el bloque temporal " + i + ".");
             cacheKeys.push(key);
             chunkHashes.push(hashDriveAuditValue_(chunk));
         }
         const now = Date.now(), createdAt = Number(options && options.createdAt) || now;
-        const manifest = { schemaVersion: config.schemaVersion, chunkCount, length: serialized.length, byteLength,
+        const manifest = {
+            schemaVersion: config.schemaVersion, chunking: config.chunking,
+            chunkCount, length: serialized.length, byteLength,
             chunkSize: config.chunkSize, encoding: config.encoding, mimeType: config.mimeType,
-            sha256: hashDriveAuditValue_(serialized), chunkHashes, createdAt, updatedAt: now, ttlSeconds: config.ttlSeconds };
+            sha256: hashDriveAuditValue_(serialized), chunkHashes,
+            createdAt, updatedAt: now, ttlSeconds: config.ttlSeconds
+        };
         const manifestText = JSON.stringify(manifest);
         cache.put(manifestKey, manifestText, config.ttlSeconds);
         cacheKeys.push(manifestKey);
         if (cache.get(manifestKey) !== manifestText) throw new Error("No se pudo verificar el manifiesto temporal de auditoría.");
         for (let i = 0; i < chunkCount; i++) {
-            const expectedChunk = serialized.slice(i * config.chunkSize, (i + 1) * config.chunkSize);
-            if (cache.get(cachePrefix + "_" + i) !== expectedChunk) {
+            if (cache.get(cachePrefix + "_" + i) !== chunks[i]) {
                 throw new Error("Una página temporal fue desalojada al confirmar el manifiesto; el snapshot no quedó completo.");
             }
         }
@@ -13716,6 +13758,7 @@ function storeAuditDriveReferenceSnapshot(auditId, snapshot, options) {
         throw new Error("No se pudo conservar el estado temporal de la auditoría: " + error.message);
     }
 }
+
 function loadAuditDriveReferenceSnapshot(auditId) {
     const cache = CacheService.getScriptCache(), config = getDriveAuditReferenceSnapshotConfig_();
     const cachePrefix = "gp_audit_refs_" + String(auditId);
@@ -13724,8 +13767,11 @@ function loadAuditDriveReferenceSnapshot(auditId) {
         const manifestText = cache.get(cachePrefix + "_manifest");
         if (!manifestText) throw new Error("El manifiesto expiró o dejó de estar disponible.");
         const manifest = JSON.parse(manifestText), now = Date.now();
-        const legacy = !!manifest && !manifest.schemaVersion && manifest.encoding === "json";
+        const schemaVersion = Number(manifest && manifest.schemaVersion) || 0;
+        const legacy = schemaVersion === 0 && !!manifest && manifest.encoding === "json";
+        const byteAware = schemaVersion >= 3 && manifest.chunking === "utf8-bytes";
         const chunkSize = legacy ? config.chunkSize : Number(manifest && manifest.chunkSize);
+
         if (legacy) {
             if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1 || manifest.chunkCount > 10 ||
                 !Number.isInteger(manifest.length) || manifest.length < 1 || manifest.length > config.maxLength) {
@@ -13733,7 +13779,8 @@ function loadAuditDriveReferenceSnapshot(auditId) {
             }
         } else {
             const age = now - Number(manifest && manifest.updatedAt);
-            if (!manifest || manifest.schemaVersion !== config.schemaVersion ||
+            if (!manifest || ![2, 3].includes(schemaVersion) ||
+                (schemaVersion === 3 && !byteAware) ||
                 !Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1 || manifest.chunkCount > 10 ||
                 !Number.isInteger(manifest.length) || manifest.length < 1 || manifest.length > config.maxLength ||
                 !Number.isInteger(manifest.byteLength) || manifest.byteLength < 1 || manifest.byteLength > config.maxLength ||
@@ -13747,16 +13794,17 @@ function loadAuditDriveReferenceSnapshot(auditId) {
             }
         }
         if (!Number.isInteger(chunkSize) || chunkSize !== config.chunkSize ||
-            Math.ceil(manifest.length / chunkSize) !== manifest.chunkCount) {
+            (!byteAware && Math.ceil(manifest.length / chunkSize) !== manifest.chunkCount)) {
             throw new Error("La cantidad de bloques no coincide con la longitud declarada.");
         }
+
         let serialized = "", actualBytes = 0;
         for (let i = 0; i < manifest.chunkCount; i++) {
             const chunk = cache.get(cachePrefix + "_" + i);
             if (chunk === null || typeof chunk !== "string") throw new Error("Falta el bloque temporal " + i + ".");
             const expectedLength = Math.min(chunkSize, manifest.length - i * chunkSize);
             const chunkBytes = Utilities.newBlob(chunk, config.mimeType).getBytes().length;
-            if (chunk.length !== expectedLength || chunkBytes > chunkSize ||
+            if ((!byteAware && chunk.length !== expectedLength) || chunkBytes < 1 || chunkBytes > chunkSize ||
                 (!legacy && hashDriveAuditValue_(chunk) !== manifest.chunkHashes[i])) {
                 throw new Error("El bloque temporal " + i + " no coincide con su tamaño o firma.");
             }
@@ -13775,6 +13823,7 @@ function loadAuditDriveReferenceSnapshot(auditId) {
         throw new Error("El estado temporal de la auditoría dejó de estar disponible: " + error.message + ". Inicia una auditoría nueva.");
     }
 }
+
 function refreshAuditDriveReferenceSnapshot_(auditId, snapshot) {
     const cache = CacheService.getScriptCache(), config = getDriveAuditReferenceSnapshotConfig_();
     const prefix = "gp_audit_refs_" + String(auditId), manifestKey = prefix + "_manifest";
@@ -13783,56 +13832,70 @@ function refreshAuditDriveReferenceSnapshot_(auditId, snapshot) {
     let manifest;
     try { manifest = JSON.parse(previousManifestText); }
     catch (error) { throw new Error("El manifiesto está corrupto; inicia una auditoría nueva."); }
-    const legacy = !!manifest && !manifest.schemaVersion && manifest.encoding === "json";
+
+    const schemaVersion = Number(manifest && manifest.schemaVersion) || 0;
+    const legacy = schemaVersion === 0 && !!manifest && manifest.encoding === "json";
+    const byteAware = schemaVersion >= 3 && manifest.chunking === "utf8-bytes";
     const chunkSize = legacy ? config.chunkSize : Number(manifest && manifest.chunkSize);
     const chunkCount = Number(manifest && manifest.chunkCount), length = Number(manifest && manifest.length);
     const serialized = JSON.stringify(snapshot);
     const byteLength = Utilities.newBlob(serialized, config.mimeType).getBytes().length;
     validateAuditDriveReferenceSnapshot_(snapshot);
+
+    const chunks = byteAware
+        ? splitDriveAuditUtf8Chunks_(serialized, chunkSize)
+        : Array.from({ length: chunkCount }, (_, index) => serialized.slice(index * chunkSize, (index + 1) * chunkSize));
     if (!Number.isInteger(chunkSize) || chunkSize !== config.chunkSize ||
         !Number.isInteger(chunkCount) || chunkCount < 1 || chunkCount > 10 ||
         !Number.isInteger(length) || length !== serialized.length || byteLength > config.maxLength ||
-        Math.ceil(length / chunkSize) !== chunkCount) {
+        (!byteAware && Math.ceil(length / chunkSize) !== chunkCount) ||
+        (byteAware && chunks.length !== chunkCount)) {
         throw new Error("El snapshot no coincide con el contenido o la capacidad guardada.");
     }
-    if (!legacy && (manifest.schemaVersion !== config.schemaVersion ||
+    if (!legacy && (![2, 3].includes(schemaVersion) ||
+        (schemaVersion === 3 && !byteAware) ||
         manifest.byteLength !== byteLength || manifest.encoding !== config.encoding ||
         manifest.mimeType !== config.mimeType || manifest.ttlSeconds !== config.ttlSeconds ||
         hashDriveAuditValue_(serialized) !== manifest.sha256 ||
         !Array.isArray(manifest.chunkHashes) || manifest.chunkHashes.length !== chunkCount)) {
         throw new Error("La integridad del manifiesto no permite renovar el snapshot.");
     }
-    const chunks = [];
+
+    const cachedChunks = [];
     for (let i = 0; i < chunkCount; i++) {
-        const expectedChunk = serialized.slice(i * chunkSize, (i + 1) * chunkSize);
+        const expectedChunk = chunks[i];
         const cachedChunk = cache.get(prefix + "_" + i);
-        if (cachedChunk !== expectedChunk || (!legacy && hashDriveAuditValue_(cachedChunk) !== manifest.chunkHashes[i])) {
+        const cachedBytes = cachedChunk === null ? 0 : Utilities.newBlob(cachedChunk, config.mimeType).getBytes().length;
+        if (cachedChunk !== expectedChunk || cachedBytes < 1 || cachedBytes > chunkSize ||
+            (!legacy && hashDriveAuditValue_(cachedChunk) !== manifest.chunkHashes[i])) {
             throw new Error("El bloque temporal " + i + " cambió antes de renovar su TTL.");
         }
-        chunks.push(cachedChunk);
+        cachedChunks.push(cachedChunk);
     }
     const now = Date.now();
     const renewedManifest = {
-        schemaVersion: config.schemaVersion, chunkCount, length, byteLength, chunkSize,
+        schemaVersion: schemaVersion >= 3 ? 3 : (schemaVersion || config.schemaVersion),
+        chunking: byteAware ? config.chunking : undefined,
+        chunkCount, length, byteLength, chunkSize,
         encoding: config.encoding, mimeType: config.mimeType,
         sha256: hashDriveAuditValue_(serialized),
-        chunkHashes: chunks.map(chunk => hashDriveAuditValue_(chunk)),
+        chunkHashes: cachedChunks.map(chunk => hashDriveAuditValue_(chunk)),
         createdAt: Number(manifest.createdAt) || now, updatedAt: now, ttlSeconds: config.ttlSeconds
     };
     let manifestChanged = false;
     try {
-        for (let i = 0; i < chunks.length; i++) {
+        for (let i = 0; i < cachedChunks.length; i++) {
             const key = prefix + "_" + i;
-            cache.put(key, chunks[i], config.ttlSeconds);
-            if (cache.get(key) !== chunks[i]) throw new Error("No se pudo renovar el bloque temporal " + i + ".");
+            cache.put(key, cachedChunks[i], config.ttlSeconds);
+            if (cache.get(key) !== cachedChunks[i]) throw new Error("No se pudo renovar el bloque temporal " + i + ".");
         }
         if (cache.get(manifestKey) !== previousManifestText) throw new Error("El manifiesto cambió durante la renovación.");
         const renewedText = JSON.stringify(renewedManifest);
         cache.put(manifestKey, renewedText, config.ttlSeconds);
         if (cache.get(manifestKey) !== renewedText) throw new Error("No se pudo renovar el TTL del manifiesto.");
         manifestChanged = true;
-        for (let i = 0; i < chunks.length; i++) {
-            if (cache.get(prefix + "_" + i) !== chunks[i]) throw new Error("Una página expiró durante la renovación del snapshot.");
+        for (let i = 0; i < cachedChunks.length; i++) {
+            if (cache.get(prefix + "_" + i) !== cachedChunks[i]) throw new Error("Una página expiró durante la renovación del snapshot.");
         }
         return renewedManifest;
     } catch (error) {
