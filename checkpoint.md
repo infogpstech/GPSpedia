@@ -303,3 +303,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Harness aislado: mezcla de un registro en papelera y uno histórico => restaurar visible; mover/papelera ocultos. PASS.
 - Commit UI: `78d91c41e45f6fe673395849e947a5572ff1f8b4`; registros: tareas `4d566d4bae0a22116828dd3dfbdcd95eacd50075`, auditoría `35500b936d8ded0c7023e23670845c51e43ec7b6`, changelog `38649f03cacdeb838eae09729a8d605ce61bc51b`.
 - Siguiente: completar auditoría de los estados de recuperación, papelera y eliminación definitiva; revisar persistencia y concurrencia del inventario y luego la UI del explorador. La tarea principal sigue abierta.
+
+
+## Continuidad 2026-11-26 — guarda compartida del inventario
+- Hallazgo: la guarda local del endpoint `saveUnusedImagesInventory` usaba auditId como alcance. Distintas auditorías podían escribir en paralelo en `Imagenes_Reemplazadas` y competir por la misma fila de inserción.
+- Corrección en router ADMIN: alcance global `drive-inventory:shared-inventory-sheet` para registro, consolidación y organización. Se corrigió el comentario que atribuía la protección a ScriptLock.
+- Harness aislado: misma clave bloquea segundo callback; scope distinto permitido; el endpoint usa la clave global. PASS.
+- Commit: `f64cb5346c5fb28886db0e19485f893ceb755961`; registros: tareas `6fd92defedf5ed3d0a9348fd5d79a4ec6020edd5`, auditoría `f0880bdc8c258926bc6e28bdc4f906cc2e22b97c`, changelog `9dd215da7fd6140a522b4778a75c11a5e6167e00`.
+- Límite: falta probar concurrencia entre el endpoint de inventario y los demás endpoints de mutación de biblioteca. La tarea principal permanece abierta.
