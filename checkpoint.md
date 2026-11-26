@@ -213,3 +213,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se añadió cambio de estrategia Service Worker: caché v78, network-first para documentos/scripts/estilos/fuentes del mismo origen, fallback offline a caché. Commit de código: d715e1693b8d340cd829608fabc628c79c223dbf.
 - La hipótesis es que cache-first estaba entregando código frontend obsoleto mientras actualizaba caché en segundo plano. Este cambio no demuestra todavía la causa del comportamiento del botón.
 - Validación Pages/browser/FEEDBACK/CATALOG real pendiente; estado del incidente abierto. No declarar resolución.
+
+
+## 25. Útiles FEEDBACK — policy fuente vs endpoint (2026-11-26)
+- Consola real aportada por usuario: el endpoint FEEDBACK rechaza `getMyUsefulCuts` y `setCutUseful` como acciones no declaradas.
+- Inspección de fuente en branch: ambas acciones están declaradas en `FEEDBACK_ACTION_PERMISSIONS`, tienen handlers y dispatcher, y están mapeadas desde frontend al servicio FEEDBACK.
+- Conclusión: probable deployment FEEDBACK obsoleto o discrepante del source configurado; es necesario confirmar el deployment activo y publicar/actualizar FEEDBACK. No hay evidencia de error en la policy del source actual.
+- No se desplegó Apps Script ni se mutó la Spreadsheet. Limitación: no dispongo aquí de autorización/tool de deployment Apps Script. Incidencia abierta.
