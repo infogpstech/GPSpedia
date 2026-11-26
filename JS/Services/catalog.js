@@ -1,7 +1,7 @@
 // ============================================================================
 // GPSPEDIA-CATALOG SERVICE (COMPATIBLE WITH DB V2.0)
 // ============================================================================
-// COMPONENT VERSION: 2.4.0
+// COMPONENT VERSION: 2.4.1
 
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
@@ -764,7 +764,7 @@ function doGetRequest_(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Catalog',
-            version: '2.4.0',
+            version: '2.4.1',
             status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState))
@@ -1669,7 +1669,6 @@ function handleGetDropdownData() {
     try {
         const spreadsheet = getSpreadsheet();
         const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
-        const relaySheet = spreadsheet.getSheetByName(SHEET_NAMES.RELAY);
         if (!cortesSheet) throw new Error(`Sheet "${SHEET_NAMES.CORTES}" not found.`);
 
         const uniqueSorted = values => Array.from(new Set(values
@@ -1677,40 +1676,43 @@ function handleGetDropdownData() {
             .filter(Boolean))).sort((a, b) => a.localeCompare(b));
         const lastRow = Math.max(0, Number(cortesSheet.getLastRow()) || 0);
         const readColumn = column => lastRow >= 2
-            ? cortesSheet.getRange(2, column, lastRow - 1, 1).getValues().flat()
+            ? cortesSheet.getRange(2, column, lastRow - 1, 1).getDisplayValues().flat()
             : [];
 
-        // Derivar catálogos de los valores reales en Cortes, sin depender
-        // de reglas de validación que pueden no estar aplicadas uniformemente.
+        // Los cuatro catálogos de formularios tienen una única fuente de verdad:
+        // las columnas correspondientes de la hoja Cortes.
         const categorias = uniqueSorted(readColumn(COLS_CORTES.categoria));
-        const marcas = readColumn(COLS_CORTES.marca);
-        const tiposCorte = [
+        const marcas = uniqueSorted(readColumn(COLS_CORTES.marca));
+        const tiposCorte = uniqueSorted([
             ...readColumn(COLS_CORTES.tipoCorte1),
             ...readColumn(COLS_CORTES.tipoCorte2),
             ...readColumn(COLS_CORTES.tipoCorte3)
-        ];
-        const tiposEncendido = readColumn(COLS_CORTES.tipoEncendido);
+        ]);
+        const tiposEncendido = uniqueSorted(readColumn(COLS_CORTES.tipoEncendido));
+        const configuracionesRelay = uniqueSorted([
+            ...readColumn(COLS_CORTES.configRelay1),
+            ...readColumn(COLS_CORTES.configRelay2),
+            ...readColumn(COLS_CORTES.configRelay3)
+        ]);
 
-        // Mantener Relay como fuente cuando contiene catálogo; recurrir a las
-        // configuraciones de Cortes (flujo de la rama base) si está ausente/vacía.
-        const relayLastRow = relaySheet ? Math.max(0, Number(relaySheet.getLastRow()) || 0) : 0;
-        const configuracionesRelay = relayLastRow >= 2
-            ? relaySheet.getRange(2, COLS_RELAY.configuracion, relayLastRow - 1, 1).getValues().flat()
-            : [
-                ...readColumn(COLS_CORTES.configRelay1),
-                ...readColumn(COLS_CORTES.configRelay2),
-                ...readColumn(COLS_CORTES.configRelay3)
-            ];
-
-        return {status:"success",dropdowns:{
-            categoria:categorias,
-            marca:uniqueSorted(marcas),
-            tipoDeCorte:uniqueSorted(tiposCorte),
-            tipoDeEncendido:uniqueSorted(tiposEncendido),
-            configRelay:uniqueSorted(configuracionesRelay)
-        }};
+        return {
+            status: "success",
+            source: SHEET_NAMES.CORTES,
+            serviceVersion: "2.4.1",
+            dropdowns: {
+                categoria: categorias,
+                marca: marcas,
+                tipoDeCorte: tiposCorte,
+                tipoDeEncendido: tiposEncendido,
+                configRelay: configuracionesRelay
+            }
+        };
     } catch (error) {
-        return {status:"error",message:"Failed to get dropdown data.",details:{errorMessage:error&&error.message?error.message:String(error)}};
+        return {
+            status: "error",
+            message: "Failed to get dropdown data.",
+            details: { errorMessage: error && error.message ? error.message : String(error) }
+        };
     }
 }
 
