@@ -1174,3 +1174,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Recuperar de forma segura cualquier operación previa inválida/pendiente; no borrar ni sobrescribir registros locales sin verificar su estado remoto.
 - Commits de código: ui.js `431a3a5d5b0099cc0f37af31e87a89cb319d485a`; Service Worker `02eb7fa35159416ed4451b75b810b1a98c0184ba`.
 - Límite: Pages build/deploy no equivale a una prueba de alta; no se ejecutó Apps Script, Spreadsheet, Drive, ni navegador/IndexedDB real.
+
+- [x] Actualizar `README.md` para reflejar las rutas reales `HTML/add_cortes.html` y `HTML/users.html`; comparación contra respaldo confirma solo esas dos rutas.
