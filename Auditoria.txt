@@ -557,3 +557,5 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Hallazgo F-10 — documentación de arquitectura desactualizada: `README.md` seguía describiendo `add_cortes.html` y `users.html` como archivos de raíz, aunque el árbol actual los ubica en `HTML/`. Se actualizarán únicamente esas dos rutas documentales para que la arquitectura descrita coincida con el repositorio.
 
 - Code Review documental F-10: comparación de `README.md` contra su respaldo confirma únicamente dos ajustes de rutas: `add_cortes.html` → `HTML/add_cortes.html` y `users.html` → `HTML/users.html`. No se modificó la descripción funcional ni la arquitectura.
+
+- Cierre de Code Review y limpieza GP-CUT-DEEP-AUDIT-03: los tres respaldos temporales (ui.js, service-worker.js y README.md) se eliminaron únicamente después de comprobar las diferencias exactas. Commits de eliminación: `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`. No quedan respaldos de esta tarea.
