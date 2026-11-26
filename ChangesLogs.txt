@@ -1535,3 +1535,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 [2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01 — revisión de estado de carga: aria-busy se limita a la hidratación realmente en curso; tras un error, el control muestra que puede reintentarse. Sintaxis UI verificada; sin llamadas remotas ni pruebas Beta.
 
 [2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01 — requisito aclarado: errores de útil exclusivamente en consola; eliminados mensajes visibles de error para sesión, hidratación y escritura. Rollback visual y de contador silencioso; botón conserva etiqueta neutral y posibilidad de reintento. Parse sintáctico PASS.
+
+[2026-11-26] GP-UTIL-FEEDBACK-STATE-AND-COUNTER-03: FEEDBACK cambia FeedbackLikes a estado único por actor/vehículo/corte (corteId + isUseful), actualiza la fila existente y sincroniza Cortes.utilCorte1/2/3. Incluye migración conservadora del ledger anterior con copia histórica y compatibilidad de lectura en CATALOG para ambos esquemas. Validación local simulada de dos usuarios, toggles idempotentes, contador y migración PASS; Spreadsheet/deployments reales pendientes de Beta.
+
+[2026-11-26] GP-ADMIN-DRIVE-LIBRARY-AUDIT-02: openReplacedImagesModal ahora recibe options y abre por defecto, evitando showModal indefinido. ADMIN segmenta snapshots por bytes UTF-8 (schema 3) y mantiene lectura/renovación de manifests schema 2 y legado. Simulaciones locales de round-trip multibyte, límites por bloque y compatibilidad histórica PASS; navegador/Drive/ADMIN remoto pendientes de Beta.
