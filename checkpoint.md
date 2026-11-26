@@ -442,3 +442,16 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Estado: corrección de comparación y diagnóstico implementada; el registro real sigue bloqueado hasta observar el nuevo código de motivo en Beta y validar una operación controlada con recuperación/idempotencia.
 
 - Cierre de Code Review y respaldos: se reconstruyó el archivo original de `offline.js` aplicando inversamente los cambios previstos y coincidió exactamente con el respaldo; HTML, logger y Service Worker también coincidieron exactamente al revertir sus cambios autorizados. Respaldos temporales eliminados después de esta revisión (commits `12eb7a82109a4a1dfdf5eeaf959f16430d7f61bd`, `93b760c7ed9aed051591874d6c75de40edd5fbea`, `608db06ca73665186578225d1cce61640f43655a`, `8e4b9e0d47a4a6d9c02ac1f3c8b95e6ff79e484d`).
+
+
+## Continuidad 2026-11-26 — GP-CUT-FORM-SNAPSHOT-02
+
+- Rama de trabajo: `GPSpedia2.2.5_work`; base protegida: `GPSpedia2.2.5`. No se editó la base.
+- Se completó auditoría comparativa entre el modal de detalle (`ui.js` + API local antigua `saveAddCutPendingOperation`) y `HTML/add_cortes.html` (snapshot durable por cuenta + fingerprint SHA-256 + recuperación). Los contratos no son iguales y no deben considerarse intercambiables.
+- Hallazgo reproducible por fixture: el constructor de etapa 2 distinguía vehículo nuevo solo con `== null`, mientras el validador trata también `""` como null. Si el estado llegaba vacío, el payload llevaba `vehicleId: ""` y `vehicleData: null`; tras normalización del validador se exigía un objeto de vehículo nuevo y el snapshot era rechazado. Se corrigió normalizando una vez antes de construir ambos campos.
+- Hallazgo adicional documentado: existe un único snapshot durable por usuario compartido por altas y aportes suplementarios. Los conflictos con una operación anterior son una protección intencional contra duplicación; no borrar ni reemplazar registros sin consultar estado remoto mediante el mismo opId/hash.
+- Cambios: `HTML/add_cortes.html` normaliza el identificador y presenta mensajes de usuario diferenciados para errores locales; `service-worker.js` pasa de caché v80 a v81.
+- Respaldos exactos: `Olds/Backups/GP-CUT-FORM-SNAPSHOT-02-20261126/` (Auditoria.txt, HTML/add_cortes.html, offline.js, diagnosticLogger.js, service-worker.js, Tareas_Activas.md, ChangesLogs.txt y checkpoint.md). Se conservan hasta completar Code Review y la comparación final.
+- Commits: auditoría `45cc06ad5546a8daa5e632961356d52cf270fece`; formulario `694510237016bbbe1464311ba7221760f0fe48e7`; Service Worker `12b24c09a4be6b2f3da631cd345d34b2af1e6075`.
+- Validación: fixture de normalización y contrato 7/7 PASS; diff contra respaldos limitado a los cambios descritos; logger contiene los códigos específicos existentes. No se ejecutó navegador/IndexedDB, Apps Script, Spreadsheet, Drive ni alta real. GitHub no devolvió status checks ni workflow runs asociados al último commit consultado.
+- Pendiente: confirmar que la versión v81 se publica/activa en el sitio, probar en navegador móvil la persistencia y completar altas reales para vehículo nuevo y existente. No se afirma resuelto el registro Beta sin esas pruebas.
