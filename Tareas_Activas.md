@@ -860,3 +860,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Cambio: `service-worker.js` actualizado a caché `gpsepedia-cache-v78` y estrategia network-first para documentos, scripts, estilos y fuentes del mismo origen; fallback a caché para continuidad offline. Recursos no ejecutables conservan cache-first.
 - Commit: `d715e1693b8d340cd829608fabc628c79c223dbf`.
 - Aún no se verificó Pages, ni la respuesta real FEEDBACK/CATALOG, ni un navegador físico. No se considera resuelta la incidencia.
+
+
+## GP-UTIL-BUTTON-FEEDBACK-POLICY-DEPLOY-01 — rechazo de acciones en FEEDBACK (2026-11-26)
+
+**Estado: CAUSA PROBABLE CONFIRMADA POR EVIDENCIA; DEPLOYMENT FEEDBACK PENDIENTE.**
+
+- Consola del usuario: FEEDBACK rechaza tanto `getMyUsefulCuts` como `setCutUseful` con `Acción no declarada en la política de FEEDBACK`.
+- Revisión del código en `GPSpedia2.2.5_work`: ambas acciones existen en `FEEDBACK_ACTION_PERMISSIONS`, con permiso de sesión `null`; están implementadas en el dispatcher `doPostInternal_` y en handlers; el frontend `ACTION_TO_SERVICE_MAP` las enruta a FEEDBACK.
+- Diferencia entre source y endpoint desplegado: el error de producción indica que FEEDBACK está ejecutando una versión que no contiene esta política/dispatcher actualizados (o no es el deployment configurado). No reañadir entradas en frontend ni duplicar handlers.
+- Solución necesaria: verificar el deployment Apps Script FEEDBACK realmente configurado y publicar la versión del archivo `JS/Services/feedback.js` de esta rama en ese deployment; después comprobar debug/version y llamadas reales de ambas acciones. No desplegar otros servicios ni alterar Spreadsheet.
+- Restricción: no se efectuó deployment de Apps Script ni escritura de datos; esta interfaz no dispone de control autorizado de deployment Apps Script. La base protegida permanece intacta.
