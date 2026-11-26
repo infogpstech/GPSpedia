@@ -8655,6 +8655,10 @@ export async function openReplacedImagesModal(options = {}) {
             associationDetails.textContent = "Asociación: " + (associationLabels[String(rep.asociacion_estado || "")] || String(rep.asociacion_estado || "No registrada")) +
                 (rep.asociacion_confianza ? " · Confianza: " + rep.asociacion_confianza : "") +
                 (associationCandidates.length ? " · " + associationCandidates.map(candidate => [candidate.category, candidate.brand, candidate.model].filter(Boolean).join(" / ") +
+                    (Array.isArray(candidate.versions) && candidate.versions.length ? " · versión: " + candidate.versions.join(", ") : "") +
+                    (Array.isArray(candidate.ignitionTypes) && candidate.ignitionTypes.length ? " · encendido: " + candidate.ignitionTypes.join(", ") : "") +
+                    (Array.isArray(candidate.yearRanges) && candidate.yearRanges.length ? " · años: " + candidate.yearRanges.map(range =>
+                        (range.from || "?") + "–" + (range.to || "?")).join(", ") : "") +
                     " · vehículo(s): " + (Array.isArray(candidate.vehicleIds) ? candidate.vehicleIds.join(", ") : "No determinado") +
                     " · fila(s): " + (Array.isArray(candidate.rows) ? candidate.rows.join(", ") : "No determinada")).join(" | ") : "");
             const dateDetails = document.createElement("span"); dateDetails.className = "replaced-image-details"; dateDetails.textContent = (isUnused ? "Detectada: " + (rep.fecha_deteccion || "Fecha no disponible") : "Reemplazada: " + (rep.fecha_reemplazo || "Fecha no disponible"));
@@ -10618,7 +10622,12 @@ export async function openAuditDriveModal(options = {}) {
                     (Array.isArray(item.candidates) ? item.candidates : []).forEach(candidate => {
                         const line = document.createElement("p");
                         line.textContent = String(candidate.category || "") + " / " + String(candidate.brand || "") + " / " +
-                            String(candidate.model || "") + " · vehículo(s): " + (Array.isArray(candidate.vehicleIds) ? candidate.vehicleIds.join(", ") : "No determinado") +
+                            String(candidate.model || "") +
+                            (Array.isArray(candidate.versions) && candidate.versions.length ? " · versión: " + candidate.versions.join(", ") : "") +
+                            (Array.isArray(candidate.ignitionTypes) && candidate.ignitionTypes.length ? " · encendido: " + candidate.ignitionTypes.join(", ") : "") +
+                            (Array.isArray(candidate.yearRanges) && candidate.yearRanges.length ? " · años: " + candidate.yearRanges.map(range =>
+                                (range.from || "?") + "–" + (range.to || "?")).join(", ") : "") +
+                            " · vehículo(s): " + (Array.isArray(candidate.vehicleIds) ? candidate.vehicleIds.join(", ") : "No determinado") +
                             " · fila(s): " + (Array.isArray(candidate.rows) ? candidate.rows.join(", ") : "No determinada") +
                             " · señales: " + (Array.isArray(candidate.signals) ? candidate.signals.join(", ") : "");
                         card.appendChild(line);
