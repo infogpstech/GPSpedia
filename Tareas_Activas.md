@@ -6,7 +6,7 @@
 
 ### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
 
-**Estado: CORRECCIÓN FRONTEND ADICIONAL PUBLICADA — confirmación de integración pendiente; la fase Beta permanece cerrada.**
+**Estado: EN PROGRESO — corrección frontend publicada; confirmación de integración pendiente. La fase Beta permanece cerrada.**
 
 **Síntomas observados:**
 - Al pulsar el botón de útil no se produce reacción visual.
