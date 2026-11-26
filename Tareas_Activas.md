@@ -923,3 +923,19 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Mostrar miniaturas, metadatos, relación y estado de registro durante la auditoría.
 - Unificar en biblioteca imágenes reemplazadas e imágenes sin uso: grid/lista y acciones recupera, mueve y elimina con confirmación y validación backend.
 - Plan y requisitos registrados en PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md; hallazgos iniciales registrados en Auditoria.txt. Revisión de código y normativa aún incompleta; no se realizan mutaciones de Drive/Sheets ni despliegues.
+
+
+## GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — auditoría incremental y biblioteca de imágenes
+**Estado: requisitos ampliados; auditoría normativa y técnica en curso.**
+- Auditoría individual e incremental de imágenes sin uso en Cortes; registro idempotente y verificado por archivo en el inventario compartido con imágenes reemplazadas.
+- UI de auditoría integrada en la sección actual: «Auditar cortes» transforma el contenido en explorador tipo Google Drive, sin abrir otro modal.
+- Consola siempre accesible y no bloqueada; todos los mensajes de avance/alerta/diagnóstico se muestran allí. Distribución objetivo: consola ~50 % del ancho del modal y explorador ~50 %, adaptable a escritorio y móvil.
+- Resultados progresivos con miniatura, metadatos, estado individual y vehículo relacionado; biblioteca unificada en grid/lista.
+- Mantener exclusión de hojas operativas/eventos/reacciones y alcance de hojas de catálogo por verificar contra normativa y código. Sin cambios de permisos/RBAC/auth ni operaciones remotas mutables/deployment sin autorización.
+
+## GP-ADMIN-TAB-ACTIONS-UX-01 — organización de botones internos de pestañas
+**Estado: requisitos registrados; implementación pendiente.**
+- Alcance: botones de acción dentro del contenido de las pestañas del panel desarrollador; excluir expresamente la barra de botones de navegación entre pestañas.
+- Reorganizar con iconografía consistente, diseño elegante y responsive para escritorio/móvil.
+- Botones compactos inicialmente con icono; al seleccionar uno, expandirlo para mostrar su etiqueta. Conservar handlers, accesibilidad y estados de acción.
+- Validar que la consola y la vista de biblioteca/auditoría conserven espacio y usabilidad.
