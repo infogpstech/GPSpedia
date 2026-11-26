@@ -720,27 +720,60 @@
             await checkAndRecoverPendingOperation();
         }
 
+        function normalizeAddCutDropdownResponse_(response) {
+            if (!response || response.status !== 'success' || !response.dropdowns ||
+                typeof response.dropdowns !== 'object' || Array.isArray(response.dropdowns)) {
+                throw new Error(response && response.details && response.details.errorMessage
+                    ? response.details.errorMessage
+                    : 'CATALOG no devolvió un objeto de listas válido.');
+            }
+            if (response.source !== 'Cortes' || response.serviceVersion !== '2.4.1') {
+                throw new Error('CATALOG debe estar actualizado a la versión 2.4.1 y leer los catálogos desde la hoja Cortes.');
+            }
+
+            const normalized = {};
+            const requiredKeys = ['categoria', 'tipoDeEncendido', 'tipoDeCorte', 'configRelay'];
+            requiredKeys.forEach(key => {
+                const values = response.dropdowns[key];
+                if (!Array.isArray(values)) throw new Error('CATALOG no devolvió una lista válida para ' + key + '.');
+                normalized[key] = Array.from(new Set(values
+                    .map(value => String(value == null ? '' : value).trim())
+                    .filter(Boolean))).sort((a, b) => a.localeCompare(b));
+                if (!normalized[key].length) throw new Error('La lista oficial de ' + key + ' está vacía en la hoja Cortes.');
+            });
+            return normalized;
+        }
+
+        function clearAddCutDropdowns_() {
+            ['categoria', 'tipoEncendido', 'tipoCorte1', 'configRelay1'].forEach(id => {
+                populateSelect(id, []);
+                const select = document.getElementById(id);
+                if (select) select.disabled = true;
+            });
+        }
+
         function renderAddCutDropdowns_(dropdowns) {
             if (!dropdowns || typeof dropdowns !== 'object') throw new Error('La respuesta de listas desplegables no es válida.');
-            populateSelect('categoria', Array.isArray(dropdowns.categoria) ? dropdowns.categoria : []);
-            populateSelect('tipoEncendido', Array.isArray(dropdowns.tipoDeEncendido) ? dropdowns.tipoDeEncendido : []);
-            populateSelect('tipoCorte1', Array.isArray(dropdowns.tipoDeCorte) ? dropdowns.tipoDeCorte : []);
-            populateSelect('configRelay1', Array.isArray(dropdowns.configRelay) ? dropdowns.configRelay : []);
+            populateSelect('categoria', dropdowns.categoria);
+            populateSelect('tipoEncendido', dropdowns.tipoDeEncendido);
+            populateSelect('tipoCorte1', dropdowns.tipoDeCorte);
+            populateSelect('configRelay1', dropdowns.configRelay);
         }
+
         async function populateAllDropdowns() {
             toggleLoading(true);
+            clearAddCutDropdowns_();
             try {
                 const response = await routeAction('getDropdownData');
-                if (!response || response.status !== 'success' || !response.dropdowns) {
-                    throw new Error(response && response.details && response.details.errorMessage
-                        ? response.details.errorMessage
-                        : 'CATALOG no devolvió una respuesta válida.');
-                }
-                renderAddCutDropdowns_(response.dropdowns);
+                const dropdowns = normalizeAddCutDropdownResponse_(response);
+                renderAddCutDropdowns_(dropdowns);
             } catch (error) {
-                renderAddCutDropdowns_({});
-                showConciseAlert_("No se pudieron cargar los datos del formulario. Comprueba la conexión con CATALOG e inténtalo nuevamente.");
-                diagnostics.error('add-cut-dropdowns.load-failed', { stage: 'dropdown-loading', errorCode: String(error && error.message || 'CatalogDropdownLoadFailed') });
+                clearAddCutDropdowns_();
+                showConciseAlert_("No se pudieron cargar los catálogos oficiales desde la hoja Cortes. Comprueba que CATALOG esté actualizado y vuelve a intentarlo.");
+                diagnostics.error('add-cut-dropdowns.load-failed', {
+                    stage: 'dropdown-loading',
+                    errorCode: String(error && error.message || 'CatalogDropdownLoadFailed')
+                });
             } finally {
                 toggleLoading(false);
             }
@@ -1574,11 +1607,25 @@
         function populateSelect(id, options, defaultValue = "") {
             const select = document.getElementById(id);
             if (!select) return;
-            select.innerHTML = '<option value="">Selecciona...</option>';
-            if (options) {
-                options.forEach(opt => select.innerHTML += `<option value="${opt}">${opt}</option>`);
-            }
-            if (defaultValue) select.value = defaultValue;
+            select.replaceChildren();
+
+            const placeholder = document.createElement('option');
+            placeholder.value = "";
+            placeholder.textContent = "Selecciona...";
+            placeholder.selected = true;
+            select.appendChild(placeholder);
+
+            (Array.isArray(options) ? options : []).forEach(value => {
+                const optionValue = String(value == null ? "" : value).trim();
+                if (!optionValue) return;
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                select.appendChild(option);
+            });
+
+            select.disabled = select.options.length <= 1;
+            if (defaultValue) select.value = String(defaultValue);
         }
 
         function setupImagePreview(inputId, previewId) {
