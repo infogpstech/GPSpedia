@@ -175,3 +175,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Documentación de continuidad recuperada: `NORMAS_DESAROLLO.md` y `contexto_personal.md` ya no existen en la rama de trabajo por la purga documental registrada; se leyeron íntegros desde el commit histórico `7904a45f4f19907a3436948de49f0e767311b519`. `README.md` no existe en la rama de trabajo y se leyó desde la rama base protegida, solo en lectura. `Tareas_Beta.md` es el resumen vigente; la lista histórica de pruebas Beta fue eliminada según el registro de cambios.
 - Siguiente acción: no modificar más el flujo sin evidencia nueva. Mantener la fase Beta cerrada; cuando el propietario autorice la validación de campo y existan identidad/dataset aislados con limpieza verificable, comprobar el botón y registrar evidencia real.
 
+
+
+## Adenda de sincronización documental Beta — 2026-11-26
+
+- Se añadió una adenda a `Tareas_Beta.md` para que el resumen de cierre refleje la corrección local de GP-UTIL-BUTTON-NO-REACTION-01 y mantenga explícita la validación remota diferida.
+- Commit documental: `22f4b8108aff9a2ca4aad97ffdea6cf83a006855`. No se modificó código ni se reabrió Beta.
+
