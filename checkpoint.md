@@ -428,3 +428,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pages build asociado al último commit de limpieza: run `45907521640`, estado pendiente al momento de este registro. Las ejecuciones Pages de commits intermedios fueron canceladas por pushes posteriores; no se interpreta como fallo de código.
 - No existe evidencia de ejecución del workflow completo de regresión para esta modificación. La sintaxis Node no pudo verificarse localmente porque el entorno no resolvió github.com durante el intento de clonado.
 - Rama base protegida sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. No se modificó.
+
+
+## Continuidad 2026-11-26 — GP-CUT-PENDING-SNAPSHOT-01
+
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1` sin modificaciones.
+- Nuevo síntoma: `cut-operation.submit-failed`, etapa `submit`, estado `processing`, código `PENDING_SNAPSHOT_NOT_VERIFIED`. La línea se ejecuta inmediatamente después de `saveAddCutOperationPendingOperation`; no se llega a `checkOperation` ni al POST de `addOrUpdateCut`.
+- Auditoría de `offline.js`: el guardado en `adminLocalState` valida el snapshot, comprueba conflictos de identidad/hash/estado, escribe, vuelve a leer dentro de la transacción y compara el objeto recuperado. El llamador anterior convertía todos los rechazos en un solo código genérico.
+- Cambios implementados: comparación de snapshot mediante serialización estructural determinista (claves de objetos ordenadas, arrays conservados); motivos de error diferenciados para snapshot inválido/conflictivo, discrepancia, ausencia de resultado, cuota, DataCloneError y fallos de IndexedDB; propagación del código desde `offline.js` hasta el logger de `add_cortes.html`; allowlist segura ampliada; caché PWA v80.
+- Respaldos exactos previos: `Olds/Backups/GP-CUT-PENDING-SNAPSHOT-20261126/offline.js`, `HTML__add_cortes.html`, `JS__Frontend__diagnosticLogger.js`, `service-worker.js`. Se conservarán hasta cerrar Code Review y luego se retirarán.
+- Commits de implementación: `f4b2590cd73ae3198f9ac14e8c669379352dd967` (offline), `a9f6cef04314a87c3799bb7557ac0e069fe5916f` (formulario), `2bf8d785ae6d27bb83e0ec86347d3fc85f89354c` (logger), `6370c9e5586305529c1772fa097e65327476c5b5` (Service Worker/cache).
+- Validación: diffs individuales frente a respaldos confirmaron cambios limitados a las zonas auditadas; fixture de serialización estable 2/2 PASS. No se ejecutó navegador/IndexedDB real ni servicios Apps Script/Spreadsheet/Drive.
+- Estado: corrección de comparación y diagnóstico implementada; el registro real sigue bloqueado hasta observar el nuevo código de motivo en Beta y validar una operación controlada con recuperación/idempotencia.
