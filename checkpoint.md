@@ -142,3 +142,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se retiraron las llamadas a `showGlobalError` del flujo de útil, incluyendo errores de sesión, hidratación y escritura. Se eliminó el texto visible de error/reintento del botón; queda una etiqueta neutral y el botón puede volver a intentarse.
 - Los errores continúan en `console.error`/`console.warn`; el fallo de escritura revierte silenciosamente el estado y contador al último valor confirmado.
 - Sintaxis validada. No se realizaron llamadas remotas ni despliegues Apps Script.
+
+
+## 21. Diagnóstico y corrección adicional de reacción útil — 2026-11-26
+- Rama de trabajo: `GPSpedia2.2.5_work`. Corrección frontend publicada en commit `6628fda16ad534aa2a2ccfae3807ed2c892ea717`; registro actualizado en `Tareas_Activas.md`. La rama base `GPSpedia2.2.5` no se modificó.
+- Causa concreta: `ensureUsefulState_()` devolvía `false` cuando `getMyUsefulCuts` fallaba sin caché local. El manejador del clic salía con `if (!ready) return`, por lo que no aplicaba el estado optimista ni enviaba `setCutUseful`. Una lectura fallida impedía incluso intentar la escritura.
+- Corrección: ante fallo de hidratación sin caché, el frontend conserva el último estado confirmado conocido (o vacío), marca la sesión como lista para permitir la acción idempotente y continúa. FEEDBACK determina el estado real; el callback de éxito confirma color/contador y el callback de fallo revierte silenciosamente. Los errores siguen limitados a consola.
+- Revisión de ruta backend: `ACTION_TO_SERVICE_MAP` asigna `setCutUseful` a FEEDBACK; `FEEDBACK_ACTION_PERMISSIONS` declara la acción; `doPost` valida y adjunta el actor compartido; `doPostInternal_` la enruta a `handleSetCutUseful`. El handler valida identidad, ID de vehículo y corte, usa lock, crea/actualiza el registro en `FeedbackLikes` y devuelve `isUseful`/ `usefulCount`. La lectura `getMyUsefulCuts` recupera el último estado por usuario, vehículo y corte.
+- `likeState.js` aplica el contador autoritativo recibido de FEEDBACK y conserva el mapeo entre corte físico y corte visible. La corrección nueva no cambia el contrato de FEEDBACK ni introduce llamadas entre servicios.
+- No se ejecutó una sesión real de navegador ni el Apps Script desplegado; no se leyó ni escribió la Spreadsheet real. La confirmación de persistencia remota sigue pendiente. Se observó que el agregado retornado por FEEDBACK se aplica al estado local; su persistencia al recargar depende del dato proyectado por CATALOG y no se declara confirmada.
+- No se crearon archivos de prueba, suites, fixtures ni workflows. La fase Beta permanece cerrada. No se modificó código Apps Script ni deployment.
