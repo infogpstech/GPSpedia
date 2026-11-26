@@ -477,3 +477,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Se amplió el smoke test de Pages para abrir el panel **¿Olvidaste tu contraseña?**, comprobar los campos de usuario/correo y el formulario de solicitud, y regresar al login.
 - Run `45748061081`: PASS; formulario de recuperación visible, formulario de finalización permanece oculto, no se envió solicitud, no se introdujeron credenciales y no hubo solicitudes no-GET ni llamadas Apps Script.
 - La prueba cubre únicamente navegación de interfaz; no valida entrega de correo, creación de código, expiración ni recuperación real de cuenta.
+
+
+## Tendencia ADMIN — 15 muestras de latencia Beta (2026-11-26)
+- Tres ejecuciones GET-only, cinco muestras por ejecución: `45745832696`, `45746770426`, `45747463436`.
+- Muestras combinadas (ms): 1761, 2059, 1658, 2359, 1353, 5570, 2016, 2182, 1757, 2031, 1898, 2301, 1779, 1350, 1558.
+- Mediana: 1898 ms; media: 2108.8 ms; mínimo: 1350 ms; máximo: 5570 ms; 7/15 (46.7%) muestras >= 2000 ms.
+- El umbral del probe clasifica respuestas >=2000 ms como SLOW. La dispersión es alta; estas medidas no identifican por sí solas la causa ni justifican cambiar timeout o deployment.
+- ADMIN sigue reportando deployment 2.7.1 frente a fuente 2.7.2. No se desplegó ni se modificó el servicio.

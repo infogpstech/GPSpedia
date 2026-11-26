@@ -687,3 +687,7 @@ git rev-parse HEAD
 | BETA-08 UI | AUG-146 264/264; Pages login y recuperación UI PASS en 1366x768, 390x844 y 320x800 | Dispositivo físico Android/PWA y roles reales NO EJECUTADOS |
 
 **Regresión global:** run `45748061081`, 542 suites, 6,450 pruebas aprobadas y 2 fallos de suite; ambos corresponden a la misma aserción AUTH `sessionAuthority` ejecutada en AUG-024 y MIG021.
+
+
+### Consolidado de latencia ADMIN
+Quince muestras de tres runs Beta GET-only: mediana 1898 ms, media 2108.8 ms, máximo 5570 ms y 7/15 muestras en SLOW (>=2 s). La variación no permite atribuir causa. ADMIN sigue en deployment 2.7.1 frente a fuente 2.7.2; no desplegar desde esta fase.

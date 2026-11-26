@@ -1333,3 +1333,9 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Las áreas remotas GET-only disponibles quedaron cubiertas: health, CATALOG feed, cursor boundaries, matriz, paginación secuencial y smoke de Pages sin backend.
 - No se ejecutaron login real, recuperación con envío, mutaciones WRITE/FEEDBACK/ADMIN, operaciones Drive/Spreadsheet ni YouTube OAuth. Los motivos de seguridad/cleanup están registrados en la sección 25.
 - El mapa local por área está en `Tareas_Beta.md`; no sustituye pruebas reales ni habilita despliegues.
+
+
+## Tendencia ADMIN — consolidado de latencia (2026-11-26)
+- 15 muestras GET-only de runs `45745832696`, `45746770426` y `45747463436`: mediana 1898 ms, media 2108.8 ms, mínimo 1350 ms, máximo 5570 ms; 7/15 >=2 s.
+- Se conserva el umbral de SLOW del probe; no se infiere causa ni se modifica timeout. ADMIN continúa v2.7.1 vs fuente 2.7.2.
+- Última repetición CI de HEAD `e6fb00650162719967479fc9654471af2fecfceb`: Pages `45748423404` SUCCESS; browser `45748424224` AUG-146 264/264 y Pages smoke PASS; service-tests 542 suites/6,450 PASS/2 fallos por AUTH `sessionAuthority`.
