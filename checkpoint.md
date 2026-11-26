@@ -1134,3 +1134,11 @@ readFeedbackLikeEventCounts_ en CATALOG sigue leyendo todas las filas A:G de Fee
 - Documentación de contrato actualizada para ADMIN fuente 2.7.2. No se invocaron aún URLs remotas; las pruebas de salud permanecen pendientes de resultado de Actions.
 - Commits de cambios publicados: ac031f5a (hallazgos), 0e017286 (checker), 312c1d78 (workflow), 762308d7 (documentación de versión).
 - Próximo paso: validar parsing del checker, verificar ejecución Actions y ejecutar/interpretar probe remoto; ampliar suite read-only de contratos/feed.
+
+
+## Continuidad — Validación Beta inicial health (2026-11-26)
+- Normativa NORMAS_DESAROLLO.md consultada para esta continuación. Rama autorizada GPSpedia2.2.5_work; no se modificó base.
+- Se habilitó runner GET-only y se ejecutó real en Actions: runs 45729426765 y 45729430374 SUCCESS, segunda sobre commit 762308d7cf80e840177d9ed5cc15714de87d3414. Resultado: seis servicios disponibles.
+- Versiones observadas: AUTH 2.2.5, CATALOG 2.4.0, WRITE 2.3.1, FEEDBACK 1.2.2, UTILITIES 1.5.0, ADMIN 2.7.1. ADMIN SLOW: 2.431s y 2.701s. Fuente ADMIN 2.7.2, deployment 2.7.1: desfase registrado F009. Latencia persistente F010.
+- Pruebas GET no verifican Sheets/Drive, auth transaccional, acciones ni navegador. No se mutaron recursos remotos.
+- Próximo paso: diseñar/implementar suite GET read-only CATALOG feed/cursor y contratos; investigar ADMIN slow y discrepancia antes de deploy; mantener operaciones mutables para fase posterior.
