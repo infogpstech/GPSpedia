@@ -280,3 +280,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commits: implementación inicial `7bb822207e7217b019cc638589f221aabdb0f118`; validación de IDs `dad3fe7c2c886ef9fb65dbf56f58abbaccdd1954`; registros en backlog `151885d0667b101b4546012675ea1eafcf1a9b41`, auditoría `4dc125f1cc7b1b26ff6544b8d3eb1018d7de47c1`, changelog `9d4f34039d3ee9fdc2e50ce6aff1e9b325b5acc8`.
 - La tarea `GP-ADMIN-DRIVE-UNUSED-IMAGES-02` continúa abierta. Siguiente trabajo: revisar el flujo de reintento individual tras fallos parciales/consolidación; terminar la auditoría de recuperar, mover, papelera, restaurar y eliminación definitiva; revisar asociaciones y comportamiento visual del espacio consola/explorador. Continuar después con `GP-ADMIN-TAB-ACTIONS-UX-01` si queda trabajo real.
 - No se ejecutó el Apps Script desplegado, no se consultó ni modificó Drive/Spreadsheet y no se hizo deployment. Las pruebas reales de servicios y Beta se reservan para esa fase; no bloquean la implementación local.
+
+
+## Continuidad 2026-11-26 — consolidación tras reintento individual
+- Se reforzó la verificación de la respuesta final ADMIN en `retrySingleInventory`: identidad/duplicidad de resultados, tratamiento explícito de filas históricas adicionales `no_confirmada`, confirmación de cada archivo solicitado, rechazo de `partial` y comparación de los conteos del servidor.
+- Pruebas aisladas: respuesta correcta => estado `saved`; conteo de servidor inconsistente => permanece `partial` y no habilita organización.
+- Commit de código: `52a3d7143f9810e68f9be5e9c495270c0c35068a`; registros: tareas `f2c10badcaca2997136f3e322452616a60961b9a`, auditoría `0f19a32f4341fb55ca11ac411ada1c904af9a264`, changelog `972a8ff256fff8d6209253e2da59794eba9838c7`.
+- Próximo paso: continuar la auditoría de los contratos frontend/backend para recuperar, mover, enviar a papelera, restaurar y eliminar definitivamente; después verificar la asociación y la experiencia visual/responsive. No declarar cerrada la tarea principal.
+- No se ejecutaron operaciones remotas ni deployment; la verificación Beta sigue diferida.
