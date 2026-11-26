@@ -382,3 +382,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Ahora muestra confianza alta/media/baja y traduce las señales técnicas a criterios legibles: modelo en carpeta/nombre, alias, marca, categoría, versión, encendido y rango de años; también muestra vehículo, versión, encendido y años aplicables.
 - Harness de render: Toyota Hilux => confianza alta, criterios de carpeta/marca/versión/encendido/años y vehículo VH-02. Sintaxis de los bloques de tarjeta PASS.
 - Commit: 8d63c5943f18fa2e6b36003ef8b829846d9a3bf2.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — ampliación de guarda a todas las mutaciones de biblioteca
+- Para evitar carreras entre registro de inventario y operaciones de gestión, se creó `withSharedReplacedImagesInventoryGuard_` y se aplicó al router de: aplicar/revertir organizador, aplicar conciliación, migrar esquema de imágenes, resolver candidato de aporte, recuperar, enviar a papelera, restaurar desde papelera, eliminar definitivamente, marcar en uso, mover y registrar/consolidar/organizar inventario.
+- La sincronización de candidatos invocada durante `getReplacedImages` también usa la guarda; el GET sigue devolviendo los datos y captura el conflicto como estado de sincronización, no ejecuta la escritura en paralelo.
+- Verificación estática: 12 rutas mutables comparten el helper; candidate sync está protegido; `admin.js` compila. Harness previo confirmó que la misma clave bloquea la ejecución simultánea y scopes diferentes se permiten.
+- Commit: d778cc086e603307a1567bf3a933983e258cae89.
+- Límite: no se ejecutó concurrencia real en Apps Script. El alcance se refiere a las rutas de mutación de biblioteca enumeradas; no se afirma que todas las escrituras ajenas a la biblioteca usen esta guarda.
