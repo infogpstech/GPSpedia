@@ -6,7 +6,7 @@
 
 ### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
 
-**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — corrección local publicada el 2026-11-26; no se reabre la fase Beta.**
+**Estado: CORRECCIÓN FRONTEND ADICIONAL PUBLICADA — confirmación de integración pendiente; la fase Beta permanece cerrada.**
 
 **Síntomas observados:**
 - Al pulsar el botón de útil no se produce reacción visual.
@@ -28,6 +28,14 @@
 - Se conservó el contrato existente: el frontend envía userId/sessionToken a FEEDBACK; el servicio deriva el actor autenticado, registra en `FeedbackLikes` y devuelve el contador. No se añadieron URLs, secretos ni coordinación backend→backend.
 
 **Validación local ejecutada:** parsing sintáctico de `ui.js` y `usefulSyncQueue.js`; comprobaciones efímeras sin archivos de prueba para mapeo de corte físico, incremento confirmado, retirada/rollback del contador y cancelación de la cola. Todas aprobaron. No se crearon suites ni archivos de prueba.
+
+**Reapertura de implementación por persistencia del síntoma — 2026-11-26:**
+- El propietario confirmó que el botón continúa sin cambiar de color, sin registrar la reacción y sin actualizar el contador.
+- Se identificó una causa concreta en `ensureUsefulState_()`: cuando no había caché local y `getMyUsefulCuts` fallaba, el `.catch()` devolvía `false`. El handler del clic ejecuta `if (!ready) return`, por lo que nunca llegaba a aplicar el estado optimista ni a programar `setCutUseful`. El fallo de lectura bloqueaba también la escritura.
+- Corrección publicada en `6628fda16ad534aa2a2ccfae3807ed2c892ea717`: ante un fallo de lectura sin caché, conservar el último estado confirmado conocido (o una lista vacía), marcar la hidratación como resuelta para esa sesión y permitir el intento de escritura idempotente. FEEDBACK sigue siendo autoridad: confirma el estado real y el frontend revierte silenciosamente si la escritura falla.
+- Revisión backend: `setCutUseful` está declarado en `FEEDBACK_ACTION_PERMISSIONS`, se enruta en `doPostInternal_`, valida el actor confiable, valida vehículo/corte, registra el evento en `FeedbackLikes` y devuelve `isUseful` y `usefulCount`. La respuesta del contador se aplica mediante `likeState.js`. No se detectó en el handler una omisión que impida por sí misma el append.
+- Límite de verificación: no se ejecutó el Apps Script desplegado ni se inspeccionó la Spreadsheet real; no se afirma que el append remoto haya quedado confirmado. El código FEEDBACK no se modificó ni desplegó. La actualización inmediata del contador depende de que FEEDBACK confirme y devuelva `usefulCount`; la persistencia del agregado al recargar sigue pendiente de confirmar en el flujo real CATALOG.
+- No se crearon pruebas ni archivos auxiliares y no se reabrió la fase Beta.
 
 **Validación diferida:** no se invocó FEEDBACK/CATALOG remoto, no se modificó ni desplegó Apps Script y no se ejecutó navegador real. La fase Beta permanece cerrada por instrucción del propietario; esta limitación no se presenta como integración aprobada.
 
