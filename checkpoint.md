@@ -296,3 +296,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - `GP-ADMIN-TAB-ACTIONS-UX-01`: revisión estática de las cuatro pestañas confirma iconos, etiquetas compactas/expandibles y CSS responsive; se cierra implementación local. La revisión visual real queda para Beta.
 - Registros: tareas `1a50d39fc2e4a7d1371b9ca4312f05479ce82c14`, auditoría `ebbf4a4d6931363db3103ae9211525d52076bff0`, changelog `58b3d43b7c535a5caf9389fc9f8f9990717b3e68`.
 - Continuar con auditoría de las acciones de biblioteca y su integridad. No declarar completa `GP-ADMIN-DRIVE-UNUSED-IMAGES-02` hasta cerrar las revisiones pendientes y las pruebas locales pertinentes. Validación remota/Beta diferida.
+
+
+## Continuidad 2026-11-26 — restauración masiva mixta
+- La toolbar de biblioteca ahora permite restaurar selecciones mixtas solo cuando cada elemento puede restaurarse desde papelera o recuperar su campo histórico. La confirmación muestra ambos grupos y el handler utiliza el endpoint correcto por registro.
+- Harness aislado: mezcla de un registro en papelera y uno histórico => restaurar visible; mover/papelera ocultos. PASS.
+- Commit UI: `78d91c41e45f6fe673395849e947a5572ff1f8b4`; registros: tareas `4d566d4bae0a22116828dd3dfbdcd95eacd50075`, auditoría `35500b936d8ded0c7023e23670845c51e43ec7b6`, changelog `38649f03cacdeb838eae09729a8d605ce61bc51b`.
+- Siguiente: completar auditoría de los estados de recuperación, papelera y eliminación definitiva; revisar persistencia y concurrencia del inventario y luego la UI del explorador. La tarea principal sigue abierta.
