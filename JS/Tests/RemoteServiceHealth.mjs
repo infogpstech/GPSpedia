@@ -24,7 +24,7 @@ function parseObject(name) {
 const endpoints=parseObject("API_ENDPOINTS"),identities=parseObject("SERVICE_HEALTH_CONTRACTS"),keys=Object.keys(identities).sort(),serviceKeys=Object.keys(endpoints).sort();
 if(serviceKeys.length!==6||serviceKeys.join(",")!==keys.join(","))throw new Error("API_ENDPOINTS y los contratos de salud no contienen los mismos seis servicios.");
 for(const key of serviceKeys)if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(String(endpoints[key]||"")))throw Error("Endpoint local inválido: "+key);
-const forbidden=/secret|token|password|spreadsheet.?id|drive.?folder.?id|sheets.?accessed|cache.?key|stack|exception/i;
+const forbidden=/secret|token|password|spreadsheet.?id|drive.?folder.?id|sheets.?accessed|session.?authority|sheet.?name|spreadsheet.?name|cache.?key|stack|exception/i;
 function inspect(value,path="response"){if(!value||typeof value!=="object")return;for(const [key,child] of Object.entries(value)){if(forbidden.test(key))throw new Error("Campo de diagnóstico no permitido: "+path+"."+key);inspect(child,path+"."+key);}}
 function transient(error){const message=String(error&&error.message||error||""),name=String(error&&error.name||"");return name==="TimeoutError"||name==="AbortError"||/timed? ?out|timeout|fetch failed|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up/i.test(message);}
 async function probe(service){

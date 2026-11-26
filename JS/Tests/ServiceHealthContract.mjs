@@ -254,7 +254,7 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
         const start = source.indexOf("function doGet");
         const end = source.indexOf("\nfunction ", start + 10);
         const debugBlock = source.slice(start, end > start ? end : source.length);
-        for (const secret of ["spreadsheetId", "driveFolderId", "sheetsAccessed", "cacheKey", "stack", "token", "password"]) {
+        for (const secret of ["spreadsheetId", "driveFolderId", "sheetsAccessed", "sessionAuthority", "sheetName", "spreadsheetName", "cacheKey", "stack", "token", "password"]) {
             assert.ok(!debugBlock.includes(secret), key + " expone " + secret);
         }
     }
