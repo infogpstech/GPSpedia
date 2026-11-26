@@ -257,3 +257,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Validación local: sintaxis del módulo frontend y seis fuentes Apps Script PASS; pruebas efímeras simuladas de JSONP, POST iframe, preservación del JSON, respuesta, limpieza y health ADMIN PASS. No se escribieron archivos de pruebas.
 - **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** No se publicó Apps Script ni frontend, no se hizo llamada real a servicios, navegador, Drive o Spreadsheet. La fase Beta permanece cerrada.
 - Siguiente paso autorizado: publicar las seis fuentes Apps Script en sus deployments correspondientes y el frontend; después verificar health 6/6, ping y refreshDriveStorage ADMIN desde el navegador. No desplegar sin autorización expresa del propietario.
+
+
+## Continuidad 2026-11-26 — GP-ADMIN-DRIVE-UNUSED-IMAGES-02: corrección de lote incremental
+- Revisión de fuente confirmó un defecto de contrato de caché: `storeDriveAuditPageResults_` y `storeDriveAuditSeenPage_` comparten la clave. La primera escribe temporalmente un array; la segunda conserva los IDs sin uso y reemplaza el valor por un objeto `{unused, files, folders, metadata}`.
+- `validateDriveAuditInventoryBatch_` no seguía ese contrato y pasaba el objeto completo al normalizador de arrays. Se reprodujo el fallo con una página combinada representativa: «La lista de imágenes de auditoría no es válida». El fallo bloqueaba el guardado incremental y los reintentos individuales.
+- Corrección en `JS/Services/admin.js`: leer `pageData.unused` cuando la página tiene el formato combinado completo; validar que existan arrays `unused/files/folders/metadata`; mantener compatibilidad con arrays legados. No se cambió el esquema ni la clave de caché.
+- Validación aislada post-fix: objeto combinado aceptado; ID ajeno al conjunto unused rechazado; objeto sin campos estructurales rechazado; array legado aceptado.
+- Commit de código: `e61e82f4258e96f81c1b2e23693d27f2b96fb536`.
+- Registros actualizados: `Tareas_Activas.md` commit `25f66cdb8246370cf47b245a3195e56801f75b4b`; `Auditoria.txt` commit `dd22fb64310797c154ca9a19a942e3423971b954`; `ChangesLogs.txt` commit `e2353869158fe7fd8819b0f4a007812128a18f68`.
+- HEAD de trabajo después de los registros: `e2353869158fe7fd8819b0f4a007812128a18f68`. Rama base protegida `GPSpedia2.2.5` sin modificar.
+- No se ejecutaron servicios Apps Script desplegados, navegador, Drive ni Spreadsheet reales; no se movieron archivos ni se mutaron datos externos. No se hizo deployment.
+- **Estado:** corrección puntual implementada y probada de forma aislada; GP-ADMIN-DRIVE-UNUSED-IMAGES-02 sigue abierta. Siguiente paso: revisar los contratos de biblioteca y organización y completar pruebas de integración del flujo completo; la validación Beta remota requiere deployment autorizado.
