@@ -1057,4 +1057,4 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Alcance no aplicable: Tutoriales y Problemas/Soluciones no consumen los cuatro catálogos de corte mediante `getDropdownData`; mantienen sus campos/catálogos propios y no se cambiaron en esta tarea.
 - Archivos de código: `JS/Services/catalog.js`, `JS/Frontend/ui.js`, `HTML/add_cortes.html`.
 - Commits de código: `3525c772c8bd51db235aba89b72a85a3ce17c0db`, `d45580124aa1834851665f235e14f4ea5a000f57`, `e500d6f670dc57d58607f73c56f4dd6a679af530`, `631d7e66eec4802220c2debd048016a35c1247b7`, `4bc6e6d4a1b9bb3d55fd4e1cfb3eeeb7cf460abf`.
-- Respaldo: guardado en `__task_backups__/GP-FORM-DROPDOWNS-02/pre-edit/`; retirar únicamente después del cierre del Code Review.
+- Respaldos exactos comparados contra los cambios y retirados después del Code Review: commits de limpieza `9e573ad542ebdb4c1ec47f20d9257d1184ad2632`, `3f5d95123f7e1dc06921a9fa4cf7d4ebc7523a36`, `3f3f967d785d7406fcac92a51fe9101d6a1ef55b`.
