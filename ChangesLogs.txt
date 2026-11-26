@@ -1557,3 +1557,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 
 [2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — se habilitó la restauración masiva para selecciones mixtas de imágenes históricas y archivos en papelera, siempre que cada elemento tenga una acción de restauración permitida. Se conserva el endpoint específico por registro y la confirmación distingue los dos grupos. Harness de capacidades/toolbar PASS. Commit: 78d91c41e45f6fe673395849e947a5572ff1f8b4.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — la guarda del endpoint `saveUnusedImagesInventory` ahora usa el alcance compartido `drive-inventory:shared-inventory-sheet` en vez de separar por auditId. Esto serializa registro incremental, consolidación y organización entre auditorías distintas que escriben la misma hoja. Se actualizó comentario técnico. Harness de la guarda: misma clave bloquea concurrencia; scope distinto permitido. Commit: f64cb5346c5fb28886db0e19485f893ceb755961.
