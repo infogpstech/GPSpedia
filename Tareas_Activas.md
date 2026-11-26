@@ -871,3 +871,28 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Diferencia entre source y endpoint desplegado: el error de producción indica que FEEDBACK está ejecutando una versión que no contiene esta política/dispatcher actualizados (o no es el deployment configurado). No reañadir entradas en frontend ni duplicar handlers.
 - Solución necesaria: verificar el deployment Apps Script FEEDBACK realmente configurado y publicar la versión del archivo `JS/Services/feedback.js` de esta rama en ese deployment; después comprobar debug/version y llamadas reales de ambas acciones. No desplegar otros servicios ni alterar Spreadsheet.
 - Restricción: no se efectuó deployment de Apps Script ni escritura de datos; esta interfaz no dispone de control autorizado de deployment Apps Script. La base protegida permanece intacta.
+
+## GP-UTIL-FEEDBACK-STATE-AND-COUNTER-03 — estado por usuario/corte y contador físico (2026-11-26)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.** El propietario confirmó que FEEDBACK ya registra útiles y persiste en Spreadsheet; el problema pendiente era la discrepancia del contador y la ausencia de un estado explícito por corte.
+
+- **Causa:** \`FeedbackLikes\` utilizaba un ledger de eventos que generaba filas por interacción. La escritura no actualizaba las columnas físicas \`Cortes.utilCorte1\`, \`utilCorte2\` y \`utilCorte3\`; por ello CATALOG/dashboard podía mostrar cero aunque las reacciones estuvieran registradas.
+- **Nuevo contrato:** una fila por \`actorKey + vehicleId + corteId\`, con \`corteId\` (\`corte1\`, \`corte2\` o \`corte3\`) y \`isUseful\`. El toggle actualiza la fila existente; una activación inicial crea la fila y retirar/repetir el útil modifica su estado, no agrega eventos duplicados.
+- **Contador:** FEEDBACK cuenta los estados activos de los usuarios para el vehículo/corte y sincroniza el valor físico en la columna \`utilCorteN\` correspondiente. La escritura usa una sección crítica breve para conservar unicidad y evitar perder incrementos concurrentes; verifica el resultado y revierte la fila/celda si la sincronización falla.
+- **Migración:** al encontrar el esquema anterior de siete columnas, FEEDBACK consolida los últimos estados por usuario/vehículo/corte, conserva una copia \`FeedbackLikes_Legacy_<timestamp>\` y actualiza las columnas físicas con los útiles activos. La migración se serializa; si detecta una operación antigua \`pending\`, se niega a migrar para no asumir su resultado. Un esquema desconocido también se rechaza sin sobrescribirlo.
+- **CATALOG:** \`readFeedbackLikeEventCounts_\` ahora reconoce ambos formatos. Para el ledger nuevo usa el total de usuarios activos sin sumar dos veces el contador ya persistido en \`Cortes\`; mantiene la proyección compatible con los eventos anteriores mientras FEEDBACK no migra la hoja.
+- **Actividad:** el registro secundario de actividad no convierte una escritura de útil ya confirmada en una respuesta API fallida si el log de actividad no puede escribirse.
+- **Validación local ejecutada:** parsing de \`feedback.js\`, \`catalog.js\` y \`admin.js\` PASS; parsing de \`ui.js\` PASS retirando únicamente imports/exports para el parser aislado. Simulación de toggles con dos usuarios: 2 filas activas, repetir el clic no duplica ni suma, retirar y volver a marcar actualiza la misma fila y el contador físico termina en 2. Simulación de migración antigua: consolida por usuario/corte, mantiene la copia histórica y añade los útiles activos al valor base físico.
+- **Pendiente Beta:** publicar la fuente FEEDBACK y CATALOG en los deployments autorizados y validar la migración sobre la hoja real, dos cuentas distintas, contador \`Cortes\` y dashboard después de recargar. No se ejecutó deployment ni se modificó Spreadsheet real en esta iteración.
+
+## GP-ADMIN-DRIVE-LIBRARY-AUDIT-02 — biblioteca y persistencia de auditoría (2026-11-26)
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.**
+
+- **Biblioteca:** \`openReplacedImagesModal()\` referenciaba \`showModal\` sin declararlo. Se añadió \`options = {}\` y la visibilidad predeterminada es abierta; el botón existente sigue llamando sin argumentos.
+- **Auditoría Drive:** el almacenamiento cortaba el JSON por caracteres, pero verificaba tamaño en bytes UTF-8. Los caracteres multibyte podían superar el límite de 75,000 bytes por bloque y detener la auditoría antes de conservar resultados.
+- **Corrección:** nueva segmentación por bytes UTF-8 (sin cortar pares sustitutos), manifiesto schema 3 y validación de tamaño por bloque. La lectura y renovación siguen aceptando manifests schema 2 y el formato legado sin versión; la renovación conserva el formato antiguo para no invalidar snapshots activos.
+- **Validación local ejecutada:** parsing de \`admin.js\` y \`ui.js\` PASS. Simulación UTF-8 con acentos y emoji: round-trip exacto, sin pares sustitutos partidos y máximo 31 bytes en la prueba reducida. Simulación de snapshot de 189,078 bytes: tres bloques de 74,999 / 74,999 / 39,080 bytes y reconstrucción exacta. Renovación y lectura PASS para schema 3, schema 2 y manifiesto legado.
+- **Pendiente Beta:** validar desde el navegador la apertura de la biblioteca y ejecutar una auditoría Drive completa/continuada en el deployment ADMIN autorizado. No se llamó Drive/Apps Script remoto ni se modificaron archivos externos.
+
+**Commits de código:** \`4463324416ee1d3c35b5c26c45ceb3f4785034f3\`, \`223cf468a3a0abe2284a2b20ea93a9a7c9043686\`, \`35641402b8f31b4659050a45688b6ae5937f6671\`, \`9099f4fb4f88c4630d5a5825e6567e52da1c30d0\`, \`a0dbfa587d0efa1241d1787a640926f4d9b4b38c\` (más correcciones locales de validación de identidad y actividad en FEEDBACK).
