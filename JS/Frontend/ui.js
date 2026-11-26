@@ -4176,6 +4176,7 @@ function getSessionPayload_() {
 }
 
 const usefulReadySessions_=new Set(),usefulLoadingSessions_=new Map(),usefulPending_=new Map(),usefulConfirmed_=new Map();
+const usefulMutationRevision_=new Map(),usefulConfirmedCounts_=new Map();
 const USEFUL_SYNC_DELAY_MS=1800;
 function usefulKey_(v,c){return String(v)+"|"+String(c);}
 function usefulActorKey_(u,v,c){return String(u)+"|"+usefulKey_(v,c);}
@@ -4205,14 +4206,19 @@ function syncUsefulCount_(v,c){
   else el.textContent=prefix+" · Útiles: "+n;
  });
 }
-function refreshUsefulCatalogProjection_(userId,vehicleId){
+function refreshUsefulCatalogProjection_(userId,vehicleId,corteIndex,feedbackCount){
  routeAction("getCatalogData",{forceRefresh:true}).then(result=>{
   if(!result||result.status!=="success"||!result.data||!Array.isArray(result.data.cortes))throw Error("CATALOG no devolvió la proyección actualizada de útiles.");
   const context=getUiSessionContext_();
   if(!context||String(context.userId)!==String(userId))return;
   const state=getState(),catalog=state.catalogData&&typeof state.catalogData==="object"?state.catalogData:{};
-  const freshVehicle=result.data.cortes.find(v=>String(v&&v.id)===String(vehicleId));
-  if(!freshVehicle)return;
+  const projected=result.data.cortes.find(v=>String(v&&v.id)===String(vehicleId));
+  if(!projected)return;
+  let freshVehicle=projected;
+  if(Number.isSafeInteger(feedbackCount)&&feedbackCount>=0&&Number.isInteger(Number(corteIndex))){
+   const displayCut=resolveUsefulDisplayCutIndex(projected,Number(corteIndex));
+   freshVehicle={...projected,["utilCorte"+displayCut]:feedbackCount};
+  }
   const currentCortes=Array.isArray(catalog.cortes)?catalog.cortes:[];
   const found=currentCortes.some(v=>String(v&&v.id)===String(vehicleId));
   const cortes=found?currentCortes.map(v=>String(v&&v.id)===String(vehicleId)?freshVehicle:v):[...currentCortes,freshVehicle];
@@ -4225,16 +4231,22 @@ const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
  send:p=>setCutUseful(p.vehicleId,p.corteIndex,p.isUseful,{userId:p.userId,sessionToken:p.sessionToken}),
  onSuccess:(r,p,m)=>{
   if(!r||r.status!=="success"||typeof r.isUseful!=="boolean")throw Error("FEEDBACK no confirmó el estado del útil.");
-  const set=new Set(usefulConfirmed_.get(String(p.userId))||[]),key=usefulKey_(p.vehicleId,p.corteIndex);
+  const userId=String(p.userId),key=usefulKey_(p.vehicleId,p.corteIndex),set=new Set(usefulConfirmed_.get(userId)||[]);
   if(r.isUseful)set.add(key);else set.delete(key);
-  usefulConfirmed_.set(String(p.userId),Array.from(set));
-  if(String(getUiSessionContext_()?.userId||"")===String(p.userId)){
-   setState(applyConfirmedUsefulState(getState(),p.vehicleId,p.corteIndex,r));
+  usefulConfirmed_.set(userId,Array.from(set));
+  if(Number.isSafeInteger(r.usefulCount)&&r.usefulCount>=0)usefulConfirmedCounts_.set(usefulActorKey_(userId,p.vehicleId,p.corteIndex),r.usefulCount);
+  if(String(getUiSessionContext_()?.userId||"")===userId){
+   let next=applyConfirmedUsefulState(getState(),p.vehicleId,p.corteIndex,r);
+   if(!m.latest){
+    const newer=usefulPending_.get(usefulActorKey_(userId,p.vehicleId,p.corteIndex));
+    if(newer)next=applyOptimisticUsefulState(next,p.vehicleId,p.corteIndex,newer.isUseful);
+   }
+   setState(next);
    syncUsefulCount_(p.vehicleId,p.corteIndex);syncUsefulControls_();
   }
-  if(m.latest)usefulPending_.delete(usefulActorKey_(p.userId,p.vehicleId,p.corteIndex));
-  saveUsefulCache_(p.userId);
-  if(m.latest)refreshUsefulCatalogProjection_(p.userId,p.vehicleId);
+  if(m.latest)usefulPending_.delete(usefulActorKey_(userId,p.vehicleId,p.corteIndex));
+  saveUsefulCache_(userId);
+  if(m.latest)refreshUsefulCatalogProjection_(userId,p.vehicleId,p.corteIndex,r.usefulCount);
  },
  onFailure:(error,p,m)=>{
   if(!m.latest)return;
@@ -4253,6 +4265,7 @@ const usefulQueue_=createUsefulSyncQueue({delayMs:USEFUL_SYNC_DELAY_MS,
 });
 function scheduleUseful_(u,t,v,c,on){
  const key=usefulActorKey_(u,v,c),p={userId:String(u),sessionToken:t,vehicleId:String(v),corteIndex:Number(c),isUseful:Boolean(on)};
+ usefulMutationRevision_.set(key,(usefulMutationRevision_.get(key)||0)+1);
  usefulPending_.set(key,p);usefulQueue_.schedule(key,p);saveUsefulCache_(u);
 }
 function ensureUsefulState_(user){
@@ -4273,10 +4286,19 @@ function ensureUsefulState_(user){
   usefulReadySessions_.add(session);
  }else setState({likedCortes:[]});
  syncUsefulControls_();
+ const revisionsAtRequest=new Map();
+ usefulMutationRevision_.forEach((revision,key)=>{if(key.startsWith(c.userId+"|"))revisionsAtRequest.set(key,revision);});
  const request=getMyUsefulCuts({userId:c.userId,sessionToken:c.sessionToken}).then(r=>{
   if(!isCurrentUiSessionContext_(c))return false;
   if(!r||r.status!=="success"||!Array.isArray(r.usefulCortes))throw Error("FEEDBACK no devolvió el estado de útiles.");
-  const confirmed=r.usefulCortes.map(x=>usefulKey_(x.vehicleId,x.corteIndex));
+  const merged=new Set(r.usefulCortes.map(x=>usefulKey_(x.vehicleId,x.corteIndex)));
+  const knownConfirmed=new Set(usefulConfirmed_.get(c.userId)||[]);
+  usefulMutationRevision_.forEach((revision,actorKey)=>{
+   if(!actorKey.startsWith(c.userId+"|")||revision<=(revisionsAtRequest.get(actorKey)||0))return;
+   const key=actorKey.slice(c.userId.length+1);
+   if(knownConfirmed.has(key))merged.add(key);else merged.delete(key);
+  });
+  const confirmed=Array.from(merged);
   usefulConfirmed_.set(c.userId,confirmed);setState({likedCortes:confirmed.slice()});
   usefulPending_.forEach(p=>{if(String(p.userId)===c.userId)setState(applyOptimisticUsefulState(getState(),p.vehicleId,p.corteIndex,p.isUseful));});
   usefulReadySessions_.add(session);saveUsefulCache_(c.userId);syncUsefulControls_();
