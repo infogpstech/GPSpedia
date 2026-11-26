@@ -292,3 +292,12 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Los archivos de código directamente involucrados para una implementación mínima son JS/Services/admin.js, JS/Frontend/ui.js, index.html y style.css. button-system.css fue auditado y no requiere necesariamente modificación.
 - No se ejecutaron llamadas a Drive/Spreadsheet, no se mutaron datos externos, no se cambiaron permisos/RBAC/auth/endpoints/deployments y no se modificó código en esta fase de auditoría.
 - La auditoría de código queda registrada antes de preparar respaldos e iniciar la implementación. Cualquier hallazgo adicional fuera de alcance se registrará como tarea separada.
+
+
+2026-11-26 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Code Review: contrato de hojas de catálogo
+- Hallazgo: collectCatalogImageReferences() define las hojas Tutorial, Relay y pys con field/column, pero omite la propiedad header que collectCatalogSheetImageReferences_() compara obligatoriamente con la fila 1. El colector compara el encabezado real contra undefined y lanza error; por tanto, la captura del snapshot de referencias falla antes de iniciar el recorrido Drive si esas hojas existen.
+- Impacto: la auditoría y el registro individual pueden quedar bloqueados aunque Cortes sea válido; el error se produce por contrato incompleto, no por un fallo de Drive ni de permisos.
+- Corrección prevista: completar header con los nombres físicos confirmados por ADMIN_RESTORE_REQUIRED_SCHEMA_ y CATALOG: Tutorial/Imagen, Relay/imagen y pys/Imagen. No ampliar hojas ni columnas leídas.
+- Respaldo previo a la corrección: JS/Services/admin.js blob 075cf11643f0d3f47bfea161fc265dbd0015af45; Auditoria.txt blob 4efd00c07c2c7a3122de36016905a35da59f59be. Copias exactas temporales en __task_backups__/GP-ADMIN-DRIVE-UNUSED-IMAGES-02/review-20261126/.
+- Revisión de alcance: el scanner y el guardado usan collectCatalogImageReferences(); los flujos de organización/otros módulos conservan collectActiveDriveReferences() como comprobación global de seguridad. La allowlist se limita a la clasificación y persistencia de imágenes auditadas, sin relajar protecciones de otras acciones.
+- Sin llamadas a Drive/Spreadsheet, sin mutaciones remotas, sin cambios de permisos/RBAC/auth ni deployment.
