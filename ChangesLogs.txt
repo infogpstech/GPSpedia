@@ -1383,3 +1383,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Run `45746770426`: AUTH FAIL por metadato interno, ADMIN FAIL por versión, FEEDBACK SLOW; feed CATALOG y pruebas independientes PASS.
 - Run `45747008507`: 542 suites, 6,410 pruebas aprobadas, 2 fallos de suite (misma aserción AUTH duplicada); Playwright 264/264 PASS.
 - Sin escrituras ni despliegues remotos.
+
+
+## 2026-11-26 — consolidación de resultados del contrato de salud
+- `ServiceHealthContract.mjs` acumula fallos y publica el total de aserciones aunque una falle; resultado actual 20/21 por `AUTH expone sessionAuthority`.
+- `RunServiceTests.mjs` contabiliza las aserciones PASS de suites con salida no cero y continúa las demás suites; el proceso conserva código final de error si hay fallos.
+- Run `45747463436`: AUTH y ADMIN FAIL por metadato interno y versión de deployment; FEEDBACK/CATALOG/WRITE/UTILITIES PASS; todos los probes CATALOG read-only PASS.
+- Run `45747463460`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite duplicados por AUTH; Playwright 264/264; Pages run `45747462135` SUCCESS.
+- Sin modificaciones de servicios Apps Script, deployments, endpoints ni datos remotos.

@@ -454,3 +454,11 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - Run `45746770426`: ADMIN falla por deployment 2.7.1 vs fuente 2.7.2; AUTH falla por `sessionAuthority`; FEEDBACK responde v1.2.2 en estado SLOW (2128 ms); CATALOG 2.4.0, WRITE 2.3.1 y UTILITIES 1.5.0 responden PASS. Resultado: 4/6 disponibles, con dos fallos de contrato.
 - ADMIN cinco muestras: 5570/2016/2182/1757/2031 ms; mediana 2031 ms, máximo 5570 ms, cuatro muestras >=2 s. Variabilidad alta, sin causa atribuida.
 - En la misma ejecución, CATALOG feed, boundaries, matriz y paginación secuencial permanecen PASS. No hubo escrituras ni despliegues.
+
+
+## Confirmación BETA-F019 y estabilidad CATALOG — run 45747463436 (2026-11-26)
+- `ServiceHealthContract`: 20/21 PASS; única falla: AUTH expone `sessionAuthority`.
+- Probe remoto: AUTH FAIL por `response.sessionAuthority`; ADMIN FAIL por deployment v2.7.1 vs fuente v2.7.2. FEEDBACK v1.2.2, 1790 ms, PASS; CATALOG 2.4.0, WRITE 2.3.1 y UTILITIES 1.5.0 PASS. Resultado 4/6 disponibles con dos fallos de contrato.
+- ADMIN cinco muestras: 1898/2301/1779/1350/1558 ms; mediana 1779 ms, máximo 2301 ms, una muestra >=2 s.
+- CATALOG feed/boundaries/matriz/paginación PASS; revisión 5, minRevision 1, cinco eventos, tres eventos reset; cursor 0→5 y sin cambios concurrentes.
+- No hubo POST ni escrituras remotas. Esta ejecución confirma que las dos fallas persistentes son de contrato/versionado y no de conectividad general.

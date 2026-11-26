@@ -644,3 +644,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## MIG-URL-008 — contrato de diagnóstico AUTH (2026-11-26)
 **Estado: HALLAZGO CONFIRMADO; CORRECCIÓN PENDIENTE.** El endpoint público AUTH incluye `sessionAuthority`, contrario al contrato de salud; test local y probe remoto lo reproducen. No se modificó servicio ni deployment. ADMIN mantiene v2.7.1 frente a 2.7.2. CATALOG feed/boundaries/matriz/paginación siguen PASS. Próximo: mantener pruebas no destructivas, registrar corrección de AUTH para una fase de implementación separada y continuar la cobertura local de los demás servicios.
+
+
+## MIG-URL-008 — repetición de contrato y estado Beta (2026-11-26)
+**Estado: VALIDACIÓN GET-ONLY COMPLETADA; DOS FALLOS PENDIENTES.** AUTH expone `sessionAuthority` (20/21 contrato local; confirmado por probe remoto) y ADMIN sigue en v2.7.1 frente a v2.7.2. CATALOG feed/boundaries/matriz/paginación PASS; FEEDBACK/CATALOG/WRITE/UTILITIES PASS. CI 542 suites, 6,450 pruebas PASS y 2 fallos de suite por la misma aserción AUTH; Playwright 264/264. Próximo: corrección AUTH y actualización ADMIN en fase autorizada separada; no ejecutar operaciones mutables sin identidad sintética y cleanup verificable.

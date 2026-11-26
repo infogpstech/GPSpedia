@@ -1288,3 +1288,19 @@ La superficie GET pública de los seis servicios y el feed CATALOG ya está cubi
 
 ### Próxima acción
 Mantener la validación Beta en modo no destructivo: continuar cobertura contractual local y revisar flujos de CATALOG/WRITE/FEEDBACK/UTILITIES/ADMIN. Para AUTH/usuarios y demás casos mutables, no emitir solicitudes remotas hasta disponer de identidad sintética y mecanismo verificable de limpieza de Logs/ActiveSessions/Drive/Spreadsheet. Corregir `sessionAuthority` en una tarea de implementación separada y volver a ejecutar el contrato; resolver ADMIN deployment por procedimiento autorizado, no desde esta fase.
+
+
+## Continuidad — repetición Beta y runner de pruebas resiliente (2026-11-26)
+
+- HEAD de trabajo verificado: `e69b977c13d2b2c9496d40f5049536718ed42051`; base `GPSpedia2.2.5`: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- `ServiceHealthContract` ahora reporta todas las aserciones sin abortar al primer fallo: 20/21 PASS; la única falla es AUTH exponiendo `sessionAuthority`.
+- Run remoto `45747463436`: AUTH FAIL por `response.sessionAuthority`; ADMIN FAIL por deployment v2.7.1 vs fuente v2.7.2; FEEDBACK 1.2.2 PASS (1790 ms); CATALOG 2.4.0, WRITE 2.3.1 y UTILITIES 1.5.0 PASS. 4/6 servicios disponibles y dos fallos de contrato.
+- ADMIN repeated latency: 1898/2301/1779/1350/1558 ms; mediana 1779 ms, máximo 2301 ms, 1/5 muestras >=2 s.
+- CATALOG feed, boundaries, matriz y paginación secuencial PASS; cinco páginas/cinco eventos/tres eventos reset, cursor 0→5, currentRevision 5/minRevision 1, sin cambios concurrentes.
+- Run service-tests `45747463460`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite (la misma aserción AUTH repetida en AUG-024 y MIG021). Playwright AUG-146 264/264 PASS; Pages run `45747462135` SUCCESS.
+- El runner `RunServiceTests.mjs` ahora continúa suites y cuenta las aserciones PASS publicadas por una suite que termina con error. `ServiceHealthContract.mjs` también completa sus 21 checks antes de fallar al final.
+- El conector Google Drive sigue deshabilitado por administrador; no hay acceso directo a Spreadsheet/Drive para inspeccionar o limpiar efectos de pruebas. Se confirmó en fuente que un login inválido registra una entrada en Logs, por lo que no se ejecutó ningún POST de login sin cleanup verificable.
+- Sin escrituras ni despliegues. No se modificaron servicios Apps Script ni datos remotos.
+
+### Siguiente acción
+Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección separada de AUTH para retirar `sessionAuthority` y procedimiento autorizado para actualizar ADMIN a 2.7.2; repetir health después de esas correcciones. No iniciar login, WRITE, FEEDBACK, Drive, YouTube ni operaciones de Spreadsheet mutables hasta tener cuenta sintética y limpieza verificable.

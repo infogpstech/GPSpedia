@@ -646,3 +646,12 @@ git rev-parse HEAD
 - Run `45747008507`: 542 suites, 6,410 pruebas aprobadas, 2 fallos de suite (la misma aserción AUTH duplicada); Playwright 264/264 PASS. El runner ahora continúa todas las suites y conserva fallo agregado.
 - **AUTH login negativo no ejecutado remotamente:** `handleLogin` escribe un registro en Logs incluso cuando rechaza credenciales; sin acceso a lectura/limpieza no se puede garantizar la integridad del Spreadsheet tras el caso. El conector Google Drive figura deshabilitado por administrador; no hay acceso directo a Drive/Sheets desde esta sesión.
 - No se ejecutaron POST, escrituras, despliegues ni cambios remotos. Las pruebas funcionales mutables quedan NO EJECUTADAS hasta que la identidad sintética y el cleanup sean verificables.
+
+
+### Repetición de health y cierre de cobertura pública GET-only (2026-11-26)
+- Run `45747463436`: `ServiceHealthContract` 20/21 PASS; AUTH FAIL por `sessionAuthority`, ADMIN FAIL por v2.7.1 vs v2.7.2. FEEDBACK/CATALOG/WRITE/UTILITIES PASS.
+- CATALOG feed, boundaries, matriz y paginación secuencial PASS; 5 páginas, 5 eventos, 3 reset, cursor 0→5, revisión 5, sin cambios concurrentes.
+- ADMIN latency: mediana 1779 ms, máximo 2301 ms, 1/5 muestras >=2 s.
+- Run `45747463460`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite (la misma aserción AUTH en AUG-024 y MIG021); Playwright 264/264; Pages SUCCESS.
+- El runner ahora ejecuta todas las suites y reporta todos los checks de contrato antes de devolver FAIL. La cobertura GET pública disponible quedó agotada; los casos restantes son autenticados o mutables.
+- No se ejecutó login ni POST: `handleLogin` registra fallos en Logs y no existe acceso a Drive/Sheets para verificar y limpiar esa escritura. Google Drive está deshabilitado por el administrador en el entorno de conectores.
