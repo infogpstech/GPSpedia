@@ -9473,6 +9473,106 @@ export async function openAuditDriveModal(options = {}) {
         updateRetryButtons();
     };
 
+    retrySingleInventory = async fileId => {
+        const target = allFiles.find(file => String(file && file.fileId || '') === String(fileId));
+        if (!isCurrentRequest() || !complete || !target || target.classification !== 'Sin uso detectado' ||
+            isRunning || isDriveAuditRunning || errorCount > 0 || unverifiableReferences > 0) return;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        updateInventoryCardState(fileId, 'pending', 'Reintentando escritura y verificación individual en Spreadsheet…');
+        updateControls();
+        try {
+            const response = await routeActionWithRetry('saveUnusedImagesInventory', {
+                ...getDeveloperSessionPayload(), auditId, files: [{ fileId: String(fileId) }], incremental: true
+            }, { timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 700, shouldContinue: isCurrentRequest });
+            if (!isCurrentRequest()) return;
+            if (!response || response.status !== 'success' || response.auditId !== auditId ||
+                !Array.isArray(response.results) || response.results.length !== 1 ||
+                String(response.results[0] && response.results[0].fileId || '') !== String(fileId) ||
+                !['confirmado', 'bloqueado', 'error', 'no_confirmada'].includes(String(response.results[0].status || ''))) {
+                throw new Error(response && response.message ? response.message : 'ADMIN no devolvió una confirmación individual válida.');
+            }
+            const result = response.results[0];
+            target.association = result.association || target.association || null;
+            updateInventoryCardState(fileId, result.status, result.message || '');
+            if (result.status === 'confirmado') {
+                inventoryConfirmedFileIds = Array.from(new Set(inventoryConfirmedFileIds.concat([String(fileId)])));
+                appendAuditConsole('Reintento individual confirmado: ' + String(target.fileName || fileId) + ' (' + fileId + ').', 'success');
+            } else {
+                inventoryConfirmedFileIds = inventoryConfirmedFileIds.filter(id => id !== String(fileId));
+                appendAuditConsole('Reintento individual ' + result.status + ': ' + String(target.fileName || fileId) +
+                    ' (' + fileId + ')' + (result.message ? ' — ' + result.message : ''), result.status === 'error' ? 'error' : 'warning');
+            }
+
+            const unusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado');
+            const allConfirmed = unusedFiles.length > 0 &&
+                unusedFiles.every(file => String(file.inventoryStatus || '') === 'confirmado');
+            inventoryStatus = allConfirmed ? 'saved_incrementally' : 'partial';
+            inventoryOperationId = '';
+            if (allConfirmed) {
+                appendAuditConsole('Todas las imágenes tienen escritura individual confirmada. Consolidando la operación para habilitar acciones posteriores…', 'progress');
+                try {
+                    const final = await routeActionWithRetry('saveUnusedImagesInventory', {
+                        ...getDeveloperSessionPayload(), auditId,
+                        files: unusedFiles.map(file => ({ fileId: String(file.fileId) }))
+                    }, { timeoutMs: 90000, maxAttempts: 3, retryDelayMs: 900, shouldContinue: isCurrentRequest });
+                    if (!isCurrentRequest()) return;
+                    const submitted = new Set(unusedFiles.map(file => String(file.fileId)));
+                    const byId = new Map();
+                    if (!final || final.status !== 'success' || final.auditId !== auditId ||
+                        !final.inventoryOperationId || !Array.isArray(final.results)) {
+                        throw new Error(final && final.message ? final.message : 'No se confirmó la consolidación del inventario.');
+                    }
+                    final.results.forEach(item => {
+                        const id = String(item && item.fileId || '');
+                        if (!submitted.has(id)) return;
+                        if (byId.has(id)) throw new Error('ADMIN devolvió un resultado duplicado durante la consolidación.');
+                        byId.set(id, item);
+                    });
+                    if (byId.size !== submitted.size || Array.from(byId.values()).some(item => item.status !== 'confirmado')) {
+                        throw new Error('La consolidación no confirmó todas las imágenes individualmente.');
+                    }
+                    byId.forEach((item, id) => {
+                        const file = unusedFiles.find(candidate => String(candidate.fileId) === id);
+                        if (file) file.association = item.association || file.association || null;
+                        updateInventoryCardState(id, item.status, item.message || '');
+                    });
+                    inventoryAuditId = auditId;
+                    inventoryOperationId = String(final.inventoryOperationId);
+                    inventoryConfirmedFileIds = Array.from(submitted);
+                    inventoryStatus = 'saved';
+                    appendAuditConsole('Consolidación completada: ' + submitted.size + ' filas individuales verificadas.', 'success');
+                } catch (consolidationError) {
+                    inventoryStatus = 'partial';
+                    inventoryOperationId = '';
+                    appendAuditConsole('Las filas individuales están confirmadas, pero falta consolidar la operación: ' +
+                        String(consolidationError && consolidationError.message || consolidationError), 'warning');
+                }
+            }
+            inventoryMessage = inventoryStatus === 'saved'
+                ? 'Inventario completo: cada imagen tiene una fila individual verificada.'
+                : 'Registro individual actualizado. ' + unusedFiles.filter(file => String(file.inventoryStatus || '') !== 'confirmado').length +
+                    ' imágenes todavía requieren revisión o reintento.';
+            try { await persistState('complete'); }
+            catch (storageError) { appendAuditConsole('El registro de Spreadsheet se confirmó, pero el estado local no pudo actualizarse: ' + storageError.message, 'warning'); }
+            updateSummary(inventoryMessage, inventoryStatus === 'saved' ? 'success' : 'warning');
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            updateInventoryCardState(fileId, 'error', String(error && error.message || error));
+            inventoryConfirmedFileIds = inventoryConfirmedFileIds.filter(id => id !== String(fileId));
+            inventoryStatus = 'partial';
+            inventoryOperationId = '';
+            appendAuditConsole('Error al reintentar ' + String(target.fileName || fileId) + ': ' +
+                String(error && error.message || error), 'error');
+            try { await persistState('complete', { lastError: String(error && error.message || error) }); }
+            catch (storageError) {}
+        } finally {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
+        }
+    };
+
     const restoreState = (state) => {
         if (!isCurrentRequest()) return;
         allFiles.length = 0;
