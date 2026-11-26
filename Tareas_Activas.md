@@ -957,3 +957,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Pruebas aisladas del flujo frontend con mocks: 21 imágenes => dos lotes incrementales (20 + 1) y una consolidación final, 21 tarjetas confirmadas; escenario parcial => 20 confirmadas y una con error, sin consolidación; sintaxis del bloque modificada PASS.
 - Commit de implementación: `dad3fe7c2c886ef9fb65dbf56f58abbaccdd1954` (el primer commit de la modificación fue `7bb822207e7217b019cc638589f221aabdb0f118`; luego se endureció la validación de IDs).
 - **Estado:** registro incremental inicial implementado y probado con harness aislado. La tarea global sigue abierta para auditoría de acciones de biblioteca, asociaciones, persistencia integrada y revisión visual/responsive. No se ejecutaron Apps Script desplegados, Drive ni Spreadsheet reales; esa validación queda para Beta.
+
+
+### Avance de implementación — validación del reintento y consolidación (2026-11-26)
+- Se detectó que la consolidación posterior a un reintento individual validaba que existieran resultados para los IDs solicitados, pero ignoraba resultados extra distintos de `no_confirmada` y no contrastaba los conteos del resumen ADMIN.
+- Se reforzó `retrySingleInventory`: rechaza IDs/resultados duplicados o inválidos, permite resultados adicionales únicamente cuando representan registros históricos `no_confirmada`, exige confirmación de todos los archivos solicitados, comprueba `partial` y compara los conteos del servidor con los resultados individuales.
+- Harness aislado: reintento que devuelve todas las confirmaciones y conteos coherentes => inventario `saved`; respuesta con conteo de servidor inconsistente => no habilita organización y conserva estado parcial. Ambos casos se probaron con mocks.
+- Commit: `52a3d7143f9810e68f9be5e9c495270c0c35068a`.
+- La tarea principal sigue abierta; la validación de acciones de biblioteca y pruebas integradas continúan pendientes.
