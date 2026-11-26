@@ -707,3 +707,7 @@ Run `45748620437`: PASS en 1366x768, 390x844, 360x800 y 320x700; usuario/correo/
 
 ### Verificación de recursos precache PWA — ejecución pendiente
 El harness `cc80ed49` amplió el smoke para consultar todos los recursos de `CORE_ASSETS` y `OPTIONAL_ASSETS`. Run `45749473444`: responsive-browser aún en Install Chromium al último checkpoint; no se registra resultado hasta que termine. El hallazgo BETA-F020 sigue confirmado por el run anterior.
+
+
+### Inventario PWA en Git
+El árbol recursivo contiene 673 archivos; los 36 recursos CORE y los 4 OPTIONAL declarados existen. Los 12 módulos faltantes de la precarga también existen en el repositorio: la causa es que no están listados en `CORE_ASSETS`, no que falten físicamente.

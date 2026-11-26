@@ -499,3 +499,10 @@ La adenda previa que clasificó AUG-147, AUG-148, AUG-149 y AUG-150 como etiquet
 - El análisis recursivo del grafo estático de imports de `JS/Frontend/main.js` encontró 12 módulos ausentes de `CORE_ASSETS`: `overlayHistory.js`, `navigationHistory.js`, `centralConfigurationCache.js`, `sessionCacheInvalidation.js`, `printQr.js`, `editBackupStore.js`, `adminImageUploadIsolation.js`, `validationBannerLifecycle.js`, `usefulSyncQueue.js`, `inboxPageCache.js`, `driveStorageAlerts.js` y `developerConsoleConfirmation.js`.
 - Evidencia runtime: cache activa con 36 rutas, ninguna de esas 12 dependencias; solicitudes offline fallidas para `overlayHistory.js`, `navigationHistory.js`, `centralConfigurationCache.js`, `sessionCacheInvalidation.js`, CSS externo Font Awesome y `/thumbnail`. Estado offline: `navigator.onLine=false`, Service Worker controla la página, título GPSpedia, login no visible.
 - No hubo solicitudes no-GET ni llamadas Apps Script. No se modificó `service-worker.js` ni los módulos de frontend. La corrección pendiente es completar la precarga esencial y validar de nuevo el arranque offline.
+
+
+## BETA-F020 — verificación estática del inventario PWA (2026-11-26)
+- Git tree recursivo de la rama: 673 archivos, sin truncamiento.
+- Los 36 recursos declarados en `CORE_ASSETS` existen en el repositorio; los 4 `OPTIONAL_ASSETS` también existen. No se detectaron rutas faltantes ni archivos eliminados.
+- Los 12 módulos faltantes identificados por el grafo de imports también existen en `JS/Frontend`; el defecto es su omisión de la lista de precarga esencial, no la ausencia de archivos.
+- El probe ampliado de HTTP/Pages (`cc80ed49`) está pendiente de finalización en Actions; el diagnóstico anterior ya confirma la falla offline.

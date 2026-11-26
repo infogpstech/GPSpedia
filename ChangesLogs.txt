@@ -1423,3 +1423,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Tests/BetaPwaOfflineSmoke.mjs` ahora consulta todos los recursos de `CORE_ASSETS` y `OPTIONAL_ASSETS` y registra los faltantes antes de validar offline.
 - Commit `cc80ed49f3aacbbc541bd89e11139fe97043deec`; run `45749473444` pendiente en responsive-browser al momento del checkpoint.
 - Sin cambios en `service-worker.js` ni en módulos de aplicación.
+
+
+## 2026-11-26 — verificación estática de rutas PWA
+- Consultado el Git tree recursivo (673 archivos, no truncado): 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS existen; los 12 módulos ausentes de la precarga también existen.
+- Confirma omisión en `CORE_ASSETS`, no pérdida de archivos. Sin cambios en el Service Worker ni recursos de aplicación.

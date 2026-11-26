@@ -1366,3 +1366,11 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - Run `45749473444`: service-tests falló por AUTH `sessionAuthority`; responsive-browser seguía en `Install Chromium` al registrar este checkpoint. El resultado del nuevo inventario de recursos queda PENDIENTE; no se declara PASS.
 - El fallo offline anterior `45749201690` ya confirmó 12 módulos fuera de `CORE_ASSETS`, Service Worker activo, 36 rutas cacheadas y login no visible sin red.
 - No se modificó el Service Worker ni código de aplicación. El inventario ampliado es diagnóstico GET-only y no escribe datos.
+
+
+## Continuidad — comprobación del árbol de archivos PWA (2026-11-26)
+
+- Git tree recursivo de `GPSpedia2.2.5_work`: 673 archivos, no truncado.
+- Los 36 `CORE_ASSETS` y los 4 `OPTIONAL_ASSETS` existen en el árbol del repositorio; las 12 dependencias faltantes también existen como archivos JS. Esto confirma que el problema es la lista incompleta de precache, no archivos eliminados o rutas inexistentes en Git.
+- Commit de probe ampliado `cc80ed49f3aacbbc541bd89e11139fe97043deec`; run `45749473444` sigue con responsive-browser en `Install Chromium` al momento de este checkpoint. La ejecución anterior `45749201690` ya confirmó el fallo offline y enumeró las 12 dependencias ausentes.
+- Sin cambios en `service-worker.js` ni en recursos de aplicación; solo se consultó el árbol Git.
