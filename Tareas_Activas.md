@@ -621,3 +621,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Runs 45729426765 y 45729430374 SUCCESS; 6/6 endpoints disponibles por GET.
 - ADMIN v2.7.1 deployment vs 2.7.2 fuente, SLOW 2.431/2.701s: seguimiento F009/F010.
 - Próximo: contratos/feed read-only, revisión de rendimiento ADMIN, antes de pruebas mutables.
+
+
+## Beta — Feed CATALOG read-only (2026-11-26)
+- Run 45729926589 SUCCESS. Cursor 0/1 y cursor 5/1, contrato validado; sin escrituras. Latencias 2.374/2.381s; F011 seguimiento.
+- Próximo: cursors/reset/retención/paginación y continuar matriz Beta.
