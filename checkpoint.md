@@ -1477,3 +1477,16 @@ Mantener las pruebas remotas GET-only y la cobertura local. Preparar corrección
 - El fallback iOS local eliminó su dependencia Drive, pero cold failedRequests todavía registra Font Awesome CDN y `/thumbnail`. La referencia Drive restante se localiza en `HTML/add_cortes.html` (testigo del motor). F022 continúa como deuda visual no bloqueante; no reabre F020.
 - Tareas_Beta §19 proponía centralizar endpoints en Spreadsheet/AUTH/Developer, lo que contradice `NORMAS_DESAROLLO.md` §§17.1/18. Se marcó SUPERSEDIDA/NO EJECUTAR; mantener las seis URLs solo en `API_ENDPOINTS` del frontend. La validación health continúa en §25.
 - No se desplegaron Apps Script ni se modificaron Spreadsheet/Drive/datos.
+
+
+## Checkpoint vigente — estado de continuidad (2026-11-26)
+- HEAD de trabajo antes de este checkpoint: `1d5e481a50fd8ad8b13c9c6a17144c0d89e23c56`; repositorio `infogpstech/GPSpedia`, rama `GPSpedia2.2.5_work`.
+- Última regresión general: run `45757490150` SUCCESS; 542 suites, 6,453 pruebas, 0 fallos. `OfflineBrandAssets` 5/5; responsive-browser PASS (AUG-146 264/264); Pages login y PWA cold/warm PASS. Pages build/deploy `45757489578` SUCCESS.
+- BETA-F020 cerrada: Service Worker v77 precarga 49 core + 4 opcionales; offline frío/caliente muestra login, sin imports faltantes.
+- BETA-F019: fuente AUTH y fixture corregidos localmente; ServiceHealthContract 21/21. El deployment remoto aún devuelve `sessionAuthority`; no se desplegó Apps Script.
+- ADMIN remoto continúa 2.7.1 vs fuente 2.7.2. Cinco muestras recientes: mediana 2,241 ms, máximo 5,022 ms, 3/5 SLOW. UTILITIES: mediana 778 ms, máximo 1,090 ms, el pico de 7,916 ms no se reprodujo. CATALOG/FEEDBACK/WRITE y probes CATALOG read-only PASS.
+- BETA-F022: imagen del modal iOS local; queda CDN Font Awesome y thumbnail de testigo en `HTML/add_cortes.html` como deuda visual offline no bloqueante.
+- BETA-F021: rama base `GPSpedia2.2.5` reporta `protected=false`, sin rulesets visibles; requiere acción administrativa. La base permanece en SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1` y no fue modificada.
+- Tareas_Beta §19 quedó marcada SUPERSEDIDA por NORMAS §§17.1/18; endpoints solo en `API_ENDPOINTS` del frontend.
+- Google Drive/Sheets connector está `DISABLED_BY_ADMIN`; no se hicieron POST funcionales, login real, escrituras, despliegues Apps Script, cambios de Spreadsheet/Drive, permisos ni OAuth. Las validaciones remotas mutables quedan NO EJECUTADAS hasta contar con identidad sintética y limpieza verificable.
+- Siguiente paso: continuar con validaciones Beta que no requieran mutación ni deployment; la comprobación remota AUTH/ADMIN requiere deployments autorizados y GET posterior. Las pruebas FEEDBACK/WRITE/ADMIN/Drive/YouTube operativas quedan diferidas conforme a NORMAS §5/§12.
