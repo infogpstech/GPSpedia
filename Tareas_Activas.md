@@ -6,7 +6,7 @@
 
 ### Prioridad P0 — GP-UTIL-BUTTON-NO-REACTION-01: botón de útil sin reacción ni actualización del contador
 
-**Estado: EN PROGRESO — corrección frontend publicada; confirmación de integración pendiente. La fase Beta permanece cerrada.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — correcciones frontend publicadas y validación local aprobada; integración real/browser pendiente para una futura Beta autorizada. La fase Beta actual permanece cerrada.**
 
 **Síntomas observados:**
 - Al pulsar el botón de útil no se produce reacción visual.
@@ -41,6 +41,16 @@
 - No se crearon pruebas ni archivos auxiliares y no se reabrió la fase Beta.
 
 **Validación diferida:** no se invocó FEEDBACK/CATALOG remoto, no se modificó ni desplegó Apps Script y no se ejecutó navegador real. La fase Beta permanece cerrada por instrucción del propietario; esta limitación no se presenta como integración aprobada.
+
+**Revisión de continuidad 2026-11-26 — contraste del flujo publicado:**
+- HEAD confirmado al revisar: `d0dae570935401e8147a178e73dbcb71a1b4776c`; correcciones de código: `6628fda16ad534aa2a2ccfae3807ed2c892ea717` (hidratación) y `aec0f21f0a49febd5e96303ca55b84fca2dbcae8` (proyección CATALOG). Los cuatro commits posteriores a `aec0f21` modifican únicamente `Tareas_Activas.md` y `checkpoint.md`; no alteran el código.
+- DOM/UI: `.util-btn` se crea como botón `type=button`, conserva `data-useful-vehicle-id` y `data-useful-cut-index`, y recibe un handler `onclick` directo que detiene propagación, hidrata, aplica estado optimista, actualiza contador y programa la cola. La capa CSS `.feedback-overlay` se posiciona sobre la imagen; no se encontró una regla de `pointer-events` que bloquee el botón. No se detectó una omisión estática del listener.
+- Sesión/ruteo: `getUiSessionContext_` consume `ID/id` y `SessionToken`, coincidentes con el formato de sesión restaurado por AUTH. `ACTION_TO_SERVICE_MAP` dirige `setCutUseful` y `getMyUsefulCuts` a FEEDBACK; el payload incluye actor de sesión y el backend deriva la identidad confiable.
+- FEEDBACK: la acción está declarada, autorizada por actor confiable y despachada a `handleSetCutUseful`; la escritura usa el ledger `FeedbackLikes`, semántica idempotente `isUseful` y respuesta con `isUseful/usefulCount`. Cuando cambia el estado, FEEDBACK adjunta `catalogChange`.
+- CATALOG: el frontend publica el delta mediante `publishCatalogChange` y después solicita `getCatalogData(forceRefresh:true)`; CATALOG omite la caché y vuelve a proyectar los eventos `FeedbackLikes`, conservando el índice físico del corte en `sourceCorteIndex1..3`. No se encontró una llamada servicio-a-servicio ni una dependencia de backend que impida el flujo por diseño.
+- Pages: workflow `45833214660` terminó SUCCESS sobre el HEAD actual `d0dae570935401e8147a178e73dbcb71a1b4776c`, que contiene los cambios frontend de `aec0f21). El build/deploy de Pages queda confirmado por Actions; no se comprobó una solicitud HTTP al sitio publicado ni interacción real.
+- No existe workflow de regresión ni directorio de suites de pruebas en el árbol actual. La última regresión histórica (`45822167347`) es anterior a `6628fda`/`aec0f21`; no se atribuye cobertura CI a estas dos correcciones. No se crearon suites, fixtures ni workflows, conforme al cierre Beta.
+- No se ejecutaron navegador real, FEEDBACK/CATALOG remoto, escritura/lectura de Spreadsheet ni despliegues Apps Script. Esas comprobaciones permanecen **PENDIENTES DE VALIDACIÓN BETA**, no son fallos confirmados ni bloquean el cierre local según `NORMAS_DESAROLLO.md` §§5 y 10.
 
 **Plan de ejecución:**
 1. Inspeccionar el botón real en el DOM del modal, sus selectores, atributos, listeners y ciclo de apertura/cierre; confirmar que el evento click llega al handler y que no queda interceptado por overlay, propagación, estado disabled o listeners duplicados.
