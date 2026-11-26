@@ -320,3 +320,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Commits: UI inicial `7bb822207e7217b019cc638589f221aabdb0f118`; validación de ID `dad3fe7c2c886ef9fb65dbf56f58abbaccdd1954`.
 - Limitación: las pruebas son aisladas con mocks, no una integración real. No se ejecutó el servicio Apps Script desplegado, ni se consultó o modificó Drive/Spreadsheet; tampoco se hizo deployment.
 - Pendiente de implementación/auditoría: probar reintentos individuales después de fallos de lote y de consolidación; completar revisión de las acciones recuperar/mover/enviar a papelera/restaurar/eliminar definitivamente; validar el comportamiento de asociaciones con casos reales o fixtures; inspeccionar la interfaz en navegador/escritorio/móvil y comprobar que consola y explorador permanezcan utilizables.
+
+
+[2026-11-26] GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — validación reforzada de consolidación tras reintento individual
+- Hallazgo: el reintento individual verificaba presencia/estado de los IDs solicitados, pero omitía validar resultados extra no solicitados y no contrastaba los conteos de ADMIN con el conjunto de resultados.
+- Corrección en `JS/Frontend/ui.js`: validación de IDs válidos y únicos; los resultados extra solo se admiten con estado `no_confirmada`; se exige confirmación individual para cada ID solicitado, `partial !== true` y correspondencia exacta de los conteos saved/blocked/errors/stale. Si el resumen no coincide, la UI conserva estado parcial y no habilita organización.
+- Harness aislado: consolidación válida tras reintento => estado saved; conteo inconsistente => estado parcial y sin operación habilitada. PASS.
+- Commit: `52a3d7143f9810e68f9be5e9c495270c0c35068a`. No se ejecutaron servicios desplegados ni operaciones reales en Drive/Spreadsheet.
