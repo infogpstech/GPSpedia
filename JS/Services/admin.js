@@ -15029,7 +15029,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
             if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para asociar imágenes con vehículos.");
             const lastCortesRow = Math.max(1, Number(cortesSheet.getLastRow()) || 1);
             const cortesAssociationRows = cortesSheet.getRange(1, 1, lastCortesRow, 8).getValues();
-            const activeReferenceMap = new Map(activeDriveIds.values().map(fileId => [fileId, true]));
+            const activeReferenceMap = new Map(Array.from(activeDriveIds, fileId => [fileId, true]));
             const associationResult = buildCortesImageModelAssociationSuggestions_(
                 unusedAuditFiles.map(item => ({
                     fileId: item.fileId, fileName: item.fileName,
