@@ -9229,8 +9229,16 @@ export async function openAuditDriveModal(options = {}) {
         if (!isCurrentRequest() || inventoryStatus === 'saved' || inventoryStatus === 'organized') return;
         if (isRunning || isDriveAuditRunning) return;
         const unusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado')
-            .map(file => ({ fileId: String(file.fileId || ''), folderId: String(file.folderId || '') }))
-            .filter(file => /^[a-zA-Z0-9_-]{20,}$/.test(file.fileId));
+            .map(file => ({ fileId: String(file.fileId || ''), folderId: String(file.folderId || '') }));
+        const invalidFiles = unusedFiles.filter(file => !/^[a-zA-Z0-9_-]{20,}$/.test(file.fileId));
+        if (invalidFiles.length) {
+            invalidFiles.forEach(file => updateInventoryCardState(file.fileId, 'error', 'La auditoría no proporcionó un ID de Drive válido; no se enviará al inventario.'));
+            inventoryStatus = 'error';
+            inventoryMessage = 'Se encontraron ' + invalidFiles.length + ' imágenes sin un ID de Drive válido. No se registró el inventario.';
+            updateSummary(inventoryMessage, 'error');
+            updateControls();
+            return;
+        }
         if (!unusedFiles.length) {
             inventoryStatus = 'saved';
             inventoryConfirmedFileIds = [];
