@@ -36,7 +36,8 @@ async function probe(service){
   const latencyMs=Math.round(performance.now()-started);
   if(!body||typeof body!=="object"||Array.isArray(body))throw new Error("La respuesta no es un objeto JSON.");
   inspect(body);if(body.service!==identities[service])throw new Error("Identidad incorrecta: "+String(body.service));
-  if(!["available","online"].includes(String(body.status||"").toLowerCase()))throw new Error("Estado backend no disponible: "+String(body.status));
+  const reportedStatus=typeof body.status==="string"?body.status.trim().toLowerCase():"";
+  if(!["available","online"].includes(reportedStatus))throw new Error("Estado backend no disponible: "+String(body.status));
   if(typeof body.version!=="string"||!body.version.trim())throw new Error("Falta la versión del servicio.");
   if(body.version.trim()!==expectedVersions[service])throw new Error("Versión desactualizada: deployment "+body.version+"; fuente esperada "+expectedVersions[service]);
   return {service,status:latencyMs>=2000?"SLOW":"PASS",version:body.version,latencyMs,attempts,totalMs:Math.round(performance.now()-startedTotal)};
