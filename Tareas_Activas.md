@@ -979,3 +979,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Harness aislado: selección mixta de un archivo en papelera y una imagen histórica => se muestran ambas cantidades y se envían las acciones `restoreReplacedImageFromTrash` y `recoverReplacedImage` respectivamente.
 - Commits: handler `616d6bb5f5662d0a6e79a5ce5f122758301b109b`; corrección singular/plural `271276a077f2ad81adf00a66b4a8ffa28dd05d99`.
 - La auditoría integral de la biblioteca continúa abierta.
+
+
+### Biblioteca — restauración masiva mixta habilitada y probada (2026-11-26)
+- La barra de selección solo mostraba «Restaurar» cuando todos los elementos eran de papelera o todos eran imágenes históricas. Se amplió la condición para permitir una selección mixta siempre que cada elemento tenga una de esas dos capacidades seguras.
+- La confirmación ya diferencia los dos grupos y el handler despacha cada registro a su acción correspondiente. No se habilita para registros que no puedan restaurarse por ninguna de las dos vías.
+- Harness aislado de capacidades + toolbar: mezcla de un archivo en papelera y una imagen histórica => acción masiva visible; mover y enviar a papelera permanecen ocultos para la mezcla. PASS.
+- Commit: `78d91c41e45f6fe673395849e947a5572ff1f8b4`.
