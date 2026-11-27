@@ -1011,3 +1011,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Firma y llamadas existentes preservadas; el cambio funcional se limita al cuerpo del writer. Backup exacto: Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-03-IMPLEMENTACION-20261127/admin.js.backup (blob original 7689cf426af57c2d8d10f8a72d943a3c4f65bc61).
 - Code Review/comparación: PASS; solo cambió writeDriveInventoryRowVerified_(). Parsing completo de admin.js PASS. Pruebas en memoria 5/5 PASS: éxito normal, recuperación tras lectura transitoria, discrepancia persistente con columna nombrada y estado requiere_revision, error persistente de lectura y excepción de escritura no estándar.
 - No se ejecutaron Apps Script, navegador, Drive/Sheets reales, POST ni deployment. La causa exacta en la hoja remota sigue sin confirmarse; ejecutar nuevamente la auditoría/inventario en entorno autorizado para obtener el diagnóstico de campo/etapa y validar la persistencia. Beta continúa cerrada.
+
+
+## Continuidad — GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 (2026-11-27)
+- HEAD observado antes de esta tarea: e1ed135e9c128b09ffc427b423efb696d1f39d5f, rama GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5 no se modificará.
+- F-52 registrado en Auditoria.txt antes de editar. Backups exactos previos de admin.js, ui.js, Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md, checkpoint.md y PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md creados en Olds/Backups/GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01-20261127/.
+- Diagnóstico: extractor de IDs no decodifica HTML entities/encoding; referencias allowlist: Cortes, LogosMarca, Tutoriales, Relay, PyS; ubicación detallada se filtra a Cortes/LogosMarca. La clasificación de Drive se realiza por ID contra activeDriveIds/protectedDriveIds/historicalDriveIds.
+- Implementación, pruebas estáticas y Code Review por completar; sin acceso a runtime real Google Sheets/Drive ni navegador conectado en esta sesión.
+- Beta sigue cerrada; no desplegar ni realizar escrituras/movimientos remotos.
