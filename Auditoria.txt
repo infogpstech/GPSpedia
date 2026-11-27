@@ -1154,3 +1154,20 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - La rama base GPSpedia2.2.5 se mantiene en SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Los respaldos exactos se eliminaron tras Code Review: HTML/users.html SHA 5a7576f6d8eda5e52c12aea968311e55bf51e177; respaldos documentales también verificados.
 - Limitación: no se ejecutó navegador ni AUTH remoto, por lo que no se afirma todavía que la lista haya cargado en producción. El comportamiento de acciones de escritura no fue modificado; sus contratos AUTH requieren confirmación separada antes de ajustar campos ambiguos de actor/objetivo.
+
+#### F-51 — GP-CUT-TESTIGO-NOTA-02 (2026-11-27)
+
+**Incidencia reportada:** después de marcar «Este corte activa el testigo del motor» y guardar, no aparecen la imagen del testigo ni la nota en el modal de detalle.
+
+**Auditoría del flujo completo (sin editar código):**
+- JS/Frontend/ui.js openAddCutForModelModal() (aprox. 14128–14551): el checkbox #add-cut-testigo se lee en testigoInput.checked y se guarda en cutData.activaTestigo1; el objeto pendiente conserva el booleano y se envía sin transformación en routeAction("addOrUpdateCut").
+- JS/Services/write.js: validateAddOrUpdateCutPayload_() exige booleano; la escritura para corte existente escribe activaTestigo${slotIndex} y la creación de vehículo escribe activaTestigo1. Las rutas de materialización también incluyen el indicador.
+- JS/Services/catalog.js: getCortesColumnMap() recupera los encabezados activaTestigo1..3; la proyección de eventos copia payload.activaTestigo al slot y el reordenamiento conserva activaTestigo junto al corte. No se encontró pérdida del booleano en el contrato WRITE/CATALOG.
+- JS/Frontend/ui.js getActivaTestigoValue() normaliza booleanos y cadenas true/false; mostrarDetalleModal() construye cada cutData.activaTestigo desde el slot físico. La condición visual estaba en if (cutData.activaTestigo && !inEditMode).
+- Hallazgo bloqueante: completeVehicleExpansionSave_() llama refreshVehicleDetailAfterExpansion_() después de guardar el corte desde el botón +. La función de refresco tiene como renderizador predeterminado mostrarDetalleModal(vehicle, true), que abre el detalle en modo edición. Por tanto inEditMode es true en el flujo real inmediatamente después del alta y la condición !inEditMode suprime simultáneamente imagen y nota, aunque el indicador se haya guardado y recuperado correctamente.
+- renderCutContent() en modo edición agrega los controles de tipo, relay, ubicación y color dentro de editCutsWrapper; luego agrega la nota y después el contenedor de imagen. Al quitar solo la exclusión de modo edición, el bloque queda después del control de color y antes de la imagen también en este flujo, sin alterar el modo de edición ni el renderizado de los demás campos.
+- La miniatura debe conservar exactamente el src solicitado por el usuario. No hay evidencia de que la URL esté rota: la imagen y el texto se suprimen juntos por la misma condición antes de que el navegador intente cargarla. No se dispone de acceso de navegador/Drive para comprobar permisos externos.
+- service-worker.js usa cache v91 y estrategia network-first para scripts del mismo origen; no se identifica una causa de caché que explique esta condición. No se modificará.
+- Alcance: modificar exclusivamente la condición de renderizado en JS/Frontend/ui.js para que el bloque dependa del booleano, no del modo de edición. No modificar WRITE/CATALOG, formularios, payloads, CSS, URL ni estructura DOM del fragmento.
+
+**Respaldo previo:** se creará copia exacta de JS/Frontend/ui.js y de los registros documentales antes de editar. La rama base protegida no se modificará. Validación prevista: prueba aislada de render con inEditMode=true/false y activaTestigo=true/false, comprobando que ambos nodos (imagen y nota) se insertan solo cuando el booleano es true, además de parseo, diff exacto y revisión de flujos de persistencia.
