@@ -922,3 +922,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Code Review estático PASS. No se modificaron CSS, contratos de servicios, persistencia, imagen del corte ni rama base.
 - No se ejecutó navegador, Apps Script, Google Sheets/Drive, POST ni deployment. Pendiente validación visual autorizada de ambos formularios, carga real de miniatura y estado marcado/desmarcado. No reabrir Beta ni crear suites.
 - Siguiente paso: validar visualmente en navegador los flujos de alta de `HTML/add_cortes.html` y del botón + del modal de detalle; si no hay entorno/autorización, mantenerlo explícitamente como pendiente.
+
+
+## Continuidad — GP-USERS-SESSION-CONTEXT-01 (2026-11-27)
+
+- Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work. HEAD inicial de esta tarea: 9da89e08559ddc38b7a0306fa01a0ea6f71ac75f. Rama base protegida GPSpedia2.2.5 sin cambios.
+- Incidencia: HTML/users.html no carga la lista; getUsers responde «La sesión requiere userId y sessionToken».
+- Causa localizada: fetchUsers() construía sessionSnapshot.id y token, pero enviaba solo sessionToken. postToAction/routeAction no agregan automáticamente userId; getUsers se enruta a AUTH.
+- Cambio aplicado: el payload de getUsers ahora contiene userId: sessionSnapshot.id y sessionToken: sessionSnapshot.token. No se tocaron acciones de edición, creación, eliminación, restablecimiento, perfil, roles, caché ni UI.
+- Auditoría F-50 registrada antes del cambio. Backups exactos creados para HTML/users.html, Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md y checkpoint.md en Olds/Backups/GP-USERS-SESSION-CONTEXT-01-20261127/.
+- Pruebas locales: parse del módulo inline PASS; harness aislado ejecutó fetchUsers y comprobó action=getUsers con userId y sessionToken del mismo snapshot. Comparación exacta contra backup y Code Review pendientes de cierre.
+- No se ejecutó navegador ni AUTH remoto. Beta permanece cerrada. context_personal.md no existe en la rama; Tareas.txt tampoco, se usa Tareas_Activas.md como registro operativo existente.
+- Siguiente paso: completar diff/Code Review, eliminar backups tras revisión y dejar pendiente la prueba integrada con usuario Desarrollador en navegador conectado.
