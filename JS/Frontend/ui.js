@@ -3763,14 +3763,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
     const updateAccordion = (rawPysData) => {
         wrapper.innerHTML = "";
         const allPys = Array.isArray(rawPysData) ? rawPysData : [];
-        const freshness = getPysDataFreshness();
-        if (freshness.hasCache && freshness.stale) {
-            const staleNotice = document.createElement("p");
-            staleNotice.className = "pys-stale-notice";
-            staleNotice.textContent = "Los datos PyS guardados podrían estar desactualizados.";
-            staleNotice.style.cssText = "font-size:0.78rem;color:var(--text-disabled);margin:4px 0 8px;";
-            wrapper.appendChild(staleNotice);
-        }
+
 
         // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
         const seenIds = new Set();
