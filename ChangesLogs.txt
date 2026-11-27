@@ -1967,3 +1967,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Se conservaron la escritura, SpreadsheetApp.flush(), lectura posterior, reintento, validaciones de identidad/estado/metadatos y bloqueo de organización ante discrepancias reales.
 - Respaldo exacto previo: Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-02-20261127/admin.js.backup; blob SHA 163e167b6544a59966c40b3b825e6e5a3ffb72b5.
 - Verificación aislada en memoria: fecha equivalente Date/texto aceptada; fecha distinta rechazada e identificada como fecha_modificacion_drive; discrepancia de tamano_bytes rechazada e identificada. Parse sintáctico completo de admin.js PASS. No se ejecutó Apps Script/Drive/Sheets real, navegador, POST ni deployment.
+
+2026-11-27 | GP-ADMIN-DRIVE-REGISTRO-ERROR-02 — Code Review y limpieza
+- Revisión del diff de admin.js contra el respaldo exacto: única modificación en writeDriveInventoryRowVerified_; prefijo/sufijo idénticos y sin cambios fuera del bloque.
+- Se verificó que la rama base GPSpedia2.2.5 conserva el SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Tras Code Review estático y comparación, se eliminó el respaldo temporal admin.js.backup conforme a NORMAS_DESAROLLO.md. SHA del blob revisado: 163e167b6544a59966c40b3b825e6e5a3ffb72b5.
+- No se modificaron UI, CSS, HTML ni servicios remotos. La persistencia real sigue pendiente de validación autorizada.
