@@ -1720,3 +1720,17 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Sintaxis V8 5/5; fixtures de CATALOG/FEEDBACK/ADMIN, Inbox, útiles, sugerencias de año, proyección de eventos y PyS: PASS. Code Review contra respaldos: PASS.
 - Commits: CATALOG `7945e406075461d9af3a2bf209a4493eecb09027`; FEEDBACK `20e5e09313d99858eb11e9fa1b01a9f51f7d7201`, `fb1ff8608b84a49f7b4d137e82cc25bded1224b8`, `4e60ce927a48b44907ff4bb4b93ea091689021aa`, `f3e283157e5746ab8cb5db3da4ca854e2d9f4237`, `412d21236d817fd2586c48519fe80d35465ad80c`; ADMIN `adad4b9313092774f3aa90a1ce4da4f708aff84e`.
 - No se desplegaron servicios Apps Script ni se consultaron/escribieron hojas productivas; validación remota pendiente.
+
+
+[2026-11-26] GP-CUT-SAME-ROW-08 — materialización de aportes en la fila física del vehículo
+- `JS/Services/write.js`: corte existente materializa tipo, ubicación/detalle, color de cable, configuración Relay, testigo, imagen y colaborador autenticado en el slot libre de la misma fila `Cortes`; no inserta otra fila de vehículo. Se reconcilian eventos aceptados anteriores y se conservan conflictos/capacidad como candidatos.
+- `JS/Services/write.js`: apertura y alimentación modernas escriben directamente las columnas disponibles de la fila única; la ruta heredada también queda protegida por ScriptLock. VIN se escribe en la columna encontrada por encabezado, verifica lectura posterior, detecta conflictos en eventos de VIN de otros vehículos y reconcilia registros anteriores antes de aplicar una nueva versión.
+- `JS/Services/catalog.js`: identifica slots ya materializados por contenido/actor y los enlaza a sus eventos sin duplicar la proyección; apertura, alimentación y VIN reconocen replays ya escritos.
+- `JS/Frontend/ui.js`: los modales de apertura/alimentación guardan snapshots durables por cuenta, usan opId y contributionOpIds independientes, restauran el intento original y verifican el evento confirmado por WRITE.
+- `JS/Frontend/offline.js`: permite reemplazar un snapshot de corte `completed` por una nueva operación suplementaria en procesamiento cuando la limpieza local anterior no pudo completarse; la operación confirmada no bloquea etapa 3.
+- `HTML/add_cortes.html`: la confirmación de WRITE ya no depende de que IndexedDB limpie inmediatamente; una limpieza pendiente no detiene `proceedToStage3()`. La recuperación restaura requisitos de imagen usando también `restoredFiles`, evitando que la validación nativa del input file bloquee «Continuar» aunque la imagen esté recuperada en memoria.
+- `service-worker.js`: caché incrementada a `gpsepedia-cache-v89` para actualizar los módulos frontend.
+- Vídeo guía: sin cambios; revisión confirmó que FEEDBACK resuelve una fila única existente y rechaza reemplazar una URL distinta.
+- Validación estática: delimitadores balanceados en los seis archivos modificados, sin nombres de funciones duplicados, 11 invariantes comprobadas y simulaciones efímeras de asignación/replay/no sobrescritura PASS. No se añadieron suites ni workflows.
+- Commits: `8809015aa41e2d55064eedeb056a21588a90fe10`, `773312621da5bceb6ad5bad7cdd94ea06286bb49`.
+- Pendiente: despliegue WRITE/CATALOG y prueba integrada autorizada en Spreadsheet/Drive aislado; navegador/IndexedDB real no verificados. No se ejecutaron POST ni escrituras remotas.

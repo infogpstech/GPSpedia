@@ -1290,18 +1290,24 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## GP-CUT-SAME-ROW-08 — aportes sobre la fila existente del vehículo (2026-11-26)
 
-**Estado: AUDITORÍA COMPLETADA; IMPLEMENTACIÓN PENDIENTE.**
+**Estado: IMPLEMENTACIÓN COMPLETADA EN RAMA; VALIDACIÓN ESTÁTICA PASS; DESPLIEGUE PENDIENTE.**
 
 - [x] Confirmar rama GPSpedia2.2.5_work y HEAD; verificar que GPSpedia2.2.5 permanece intacta.
 - [x] Leer NORMAS_DESAROLLO.md, README.md, checkpoint.md, Tareas_Activas.md, Tareas_Beta.md y Auditoria.txt. contexto_personal.md no existe en la rama.
 - [x] Auditar flujos de corte, apertura, alimentación, VIN y vídeo; revisar persistencia física en Cortes, ledger AportesVehiculo, proyección CATALOG y recuperación local.
 - [x] Registrar hallazgos F-29 a F-35 en Auditoria.txt.
 - [x] Crear respaldos exactos en Olds/Backups/GP-CUT-SAME-ROW-08-20261126/ (WRITE, CATALOG, ui.js, offline.js, add_cortes.html, Service Worker y registros). Commit: d8b3e58005263d6f1e71e3b37449abcf893272c9.
-- [ ] Materializar corte, apertura, VIN y alimentación en las columnas libres de la fila única del vehículo en Cortes, conservando AportesVehiculo como historial append-only e idempotente.
-- [ ] Para corte, guardar tipo, configuración Relay, detalle/ubicación, color, testigo, imagen y colaborador autenticado en el slot asignado; no sobrescribir datos existentes ni insertar una nueva fila de vehículo.
-- [ ] Adaptar CATALOG para reconocer eventos ya materializados, reconciliar eventos históricos y conservar candidatos/conflictos.
-- [ ] Unificar el modal de apertura/alimentación con la operación durable por cuenta, opId estable y contributionOpIds; mantener la misma fila del vehículo.
-- [ ] Corregir alta/recuperación para que una escritura WRITE confirmada permita avanzar a etapa 3 aunque la limpieza IndexedDB quede pendiente; conservar el snapshot completed para limpieza posterior con el mismo opId.
-- [ ] Verificar el flujo de VIN sobre la columna VIN existente y confirmar que vídeo guía sigue actualizando únicamente la fila destino existente.
-- [ ] Validación estática/local y fixtures efímeros fuera del repositorio; comparación contra respaldos; Code Review y actualización de ChangesLogs.txt/checkpoint.md.
-- [ ] No ejecutar POST de Apps Script, escrituras reales en Sheets/Drive ni despliegues. Tareas_Beta.md mantiene cerrada la fase Beta; no crear nuevas suites ni workflows.
+- [x] Materializar corte, apertura, VIN y alimentación en las columnas libres de la fila única del vehículo en Cortes; AportesVehiculo conserva el historial append-only e idempotente.
+- [x] Para corte, guardar tipo, configuración Relay, detalle/ubicación, color, testigo, imagen y colaborador autenticado en el slot asignado; no sobrescribir datos existentes ni insertar una nueva fila de vehículo.
+- [x] Adaptar CATALOG para reconocer eventos ya materializados y evitar duplicarlos en la proyección; WRITE reconcilia eventos históricos aceptados antes de asignar nuevos slots.
+- [x] Unificar el modal de apertura/alimentación con la operación durable por cuenta, opId estable y contributionOpIds; mantener la misma fila del vehículo.
+- [x] Corregir alta/recuperación para que una escritura WRITE confirmada permita avanzar a etapa 3 aunque la limpieza IndexedDB quede pendiente; un snapshot de corte completed puede reemplazarse por la siguiente operación suplementaria sin reutilizar su opId.
+- [x] Verificar el flujo de VIN sobre la columna VIN existente; el vídeo guía ya actualizaba únicamente la fila destino existente y no requirió cambios.
+- [x] Validación estática/local y fixtures efímeros fuera del repositorio; comparación contra respaldos; revisión del diff y actualización de ChangesLogs.txt/checkpoint.md.
+- [x] No ejecutar POST de Apps Script, escrituras reales en Sheets/Drive ni despliegues. Tareas_Beta.md mantiene cerrada la fase Beta; no se crearon nuevas suites ni workflows.
+
+
+### Cierre de implementación — GP-CUT-SAME-ROW-08
+- Commits: `8809015aa41e2d55064eedeb056a21588a90fe10` (materialización de aportes y recuperación) y `773312621da5bceb6ad5bad7cdd94ea06286bb49` (reconciliación VIN, reemplazo seguro de snapshot completado y caché v89).
+- HEAD actual: `773312621da5bceb6ad5bad7cdd94ea06286bb49`. PR #128 continúa abierto y mergeable hacia `GPSpedia2.2.5`.
+- Pendiente exclusivamente: despliegue autorizado de WRITE/CATALOG y validación integrada en Spreadsheet/Drive aislado; comprobar también el navegador/IndexedDB. No declarar producción validada antes de esas pruebas.

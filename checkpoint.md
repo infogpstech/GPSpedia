@@ -548,3 +548,17 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Backups en `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/` (incluye respaldo adicional de FEEDBACK previo a corregir hallazgo de revisión).
 - Validación local: sintaxis V8 5/5; canonicalización CATALOG/FEEDBACK/ADMIN; contador de útiles con IDs alias; detección de duplicados lógicos; sugerencias/años y eventos AportesVehiculo; Inbox/reportes; PyS; auditoría ADMIN 9 referencias coincidentes, cero huérfanas/malformadas/mismatches. Code Review final PASS.
 - **Pendiente crítico:** no se desplegaron los servicios Apps Script ni se ejecutaron pruebas reales contra Sheets/Drive. Desplegar WRITE/CATALOG/FEEDBACK/ADMIN y ejecutar health y prueba integrada aislada antes de declarar validado en producción. Mantener respaldos hasta cerrar la validación remota.
+
+
+## Continuidad — GP-CUT-SAME-ROW-08 (2026-11-26)
+
+- Estado: implementación terminada en `GPSpedia2.2.5_work`; validaciones estáticas y simulaciones efímeras PASS. No desplegado ni validado contra Sheets/Drive reales.
+- Rama base protegida `GPSpedia2.2.5`: HEAD comprobado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. Rama de trabajo HEAD: `773312621da5bceb6ad5bad7cdd94ea06286bb49`. PR #128 abierto, mergeable.
+- Commits de implementación: `8809015aa41e2d55064eedeb056a21588a90fe10`; refinamiento `773312621da5bceb6ad5bad7cdd94ea06286bb49`. Respaldo previo: `d8b3e58005263d6f1e71e3b37449abcf893272c9` en `Olds/Backups/GP-CUT-SAME-ROW-08-20261126/`.
+- WRITE localiza una única fila física por vehicleId mediante `readSupplementaryVehicleSnapshot_()`/`findUniqueCortesVehicleRow_()`. Los aportes existentes no insertan filas en `Cortes`: corte, apertura, alimentación y VIN se materializan en columnas libres de esa fila; las escrituras verifican contenido y no sobrescriben celdas ocupadas. `AportesVehiculo` permanece como historial append-only e idempotente.
+- Corte materializa tipo, ubicación/detalle, color, configuración Relay, testigo, imagen y nombre del colaborador autenticado. VIN se escribe en la columna localizada por encabezado, con validación de duplicados/capacidad y replay. La reconciliación procesa eventos aceptados anteriores antes de asignar nuevos slots.
+- CATALOG reconoce los slots ya materializados y evita proyectar duplicados; los eventos con conflicto/capacidad continúan como candidatos. Los modales de apertura/alimentación usan snapshots durables, IDs OP- independientes y recuperación con el mismo identificador.
+- Alta/recuperación: una confirmación WRITE ya no queda bloqueada por la limpieza IndexedDB. Si permanece un snapshot de corte `completed`, puede retirarse o reemplazarse de forma segura por la siguiente operación suplementaria; no se reutiliza el opId anterior.
+- Vídeo guía: sin cambios; la aprobación ya localiza una fila única existente y rechaza sobrescribir otra URL.
+- Validación: balance estático de delimitadores en los seis archivos modificados; sin nombres de funciones duplicados; 11 invariantes de integración comprobadas; simulaciones efímeras de slots de corte 1/2/3, replay, slot de alimentación y no sobrescritura PASS. No se agregaron suites/workflows; Tareas_Beta.md sigue cerrada.
+- Próximo paso: despliegue explícitamente autorizado de WRITE/CATALOG y prueba integrada controlada en Spreadsheet/Drive aislado, más verificación de navegador/IndexedDB. No se ejecutaron POST remotos, escrituras productivas ni despliegues; no afirmar validación de producción.
