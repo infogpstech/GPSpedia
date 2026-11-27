@@ -1255,3 +1255,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Retirar respaldo temporal después de la validación remota y revisión final.
 - Commits de código: `994a4aeff118b7827962219f7c67a872940be866`, `21a2d1c5724111fca3550b3bf7b60d0459c0da49`.
 - No se ejecutaron escrituras remotas ni despliegues Apps Script; no declarar la operación resuelta en producción.
+
+- [x] Forzar formato de celda texto plano en la columna ID antes de escribir el valor estático. Commit adicional: `f50ed98c2b890ed0b91aff46af3a90ab99c37bc5`.
