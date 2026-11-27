@@ -1197,3 +1197,19 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Probar recuperación de operación silenciosa y reintento sin duplicados con dataset/identidad aislados.
 - Limitación: no se ejecutaron POST de Apps Script, escrituras en Sheets/Drive ni pruebas reales de navegador/IndexedDB. No se recrearon suites eliminadas por solicitud anterior.
 - Commits: `7483a76f912ac27cd1c6133df7a67aa0b7f55f30`, `1d8b0a30f2c4f45a937def2342307f86d65ca113`, `8e8994d573d4ba6caa1421f1e3308e583b6837d1`.
+
+
+### Cierre de implementación GP-CUT-FUNCTIONAL-AUDIT-04 (2026-11-26)
+
+- [x] Mostrar el motivo específico de error del formulario; no sustituirlo por el aviso genérico.
+- [x] Dirigir recuperación de operaciones silenciosas a WRITE.
+- [x] Ampliar allowlist para todos los códigos explícitos de WRITE (11/11).
+- [x] Alinear ubicación requerida: opcional para «No recomendado», obligatoria para corte normal.
+- [x] Alinear MIME de frontend, validador WRITE y cargador Drive (16/16 tipos compatibles; máximo 10 MB).
+- [x] Corregir regex SVG/ICO tras hallazgo de Code Review (F-24) y verificar la expresión extraída del fuente.
+- [x] Verificar diffs contra respaldos: solo cambios autorizados en HTML, WRITE, logger y Service Worker.
+- [x] Pages build/deploy `45914970548` SUCCESS en HEAD `dd93b63977d059d7d27cd44006a3a5265d3c69fe`.
+- [ ] Desplegar/confirmar `JS/Services/write.js` en el endpoint actual y ejecutar health GET-only sobre los IDs vigentes de `api-config.js`.
+- [ ] Confirmar dominio/instalación móvil en HEAD publicado; probar IndexedDB real y altas controladas de vehículo nuevo/existente, además de recuperación silenciosa.
+- [ ] Verificar Sheets/Drive solo con identidad y recursos de prueba aislados y limpieza autorizada.
+- No se ejecutaron escrituras remotas ni se recrearon suites eliminadas por solicitud previa.
