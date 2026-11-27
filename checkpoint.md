@@ -1028,3 +1028,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pruebas aisladas del extractor 8/8 PASS. Revisión estática de diff: cambios dentro de las funciones del extractor/snapshot y auditoría UI.
 - No se validó parse de archivos completos, navegador, Google Sheets/Drive real ni deployment; no se ejecutaron escrituras/movimientos remotos. Beta permanece cerrada.
 - Siguiente: realizar parse/validación de JS completos y Code Review, verificar el control de pausa con cursor y revisar el criterio de clasificación en hojas reales mediante sesión autorizada; entonces retirar respaldos.
+
+
+### GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — Code Review estático
+- Comparación del diff y revisión estática: PASS con limitación de no parse completo ni runtime; extractor 8/8 casos aislados PASS.
+- Backups temporales retirados después de Code Review; archivos originales están en commits anteriores.
+- Próximo paso pendiente: prueba integrada autorizada en navegador y Sheets/Drive para confirmar clasificación, pausa, reanudación y reinicio; no desplegar ni reabrir Beta.
