@@ -1472,9 +1472,25 @@ function dedupeTutorialCatalogRows_(records) {
 }
 
 
+function normalizeCatalogVehicleId_(value, context) {
+    const raw = String(value === null || value === undefined ? "" : value).trim();
+    const prefixed = /^V-(\d{3,15})$/i.exec(raw);
+    const legacy = /^([1-9]\d{0,14})$/.exec(raw);
+    const sequence = prefixed ? Number(prefixed[1]) : legacy ? Number(legacy[1]) : null;
+    if (!Number.isSafeInteger(sequence) || sequence < 1) {
+        throw new Error((context || "CATALOG") + ": se requiere un ID V-### válido.");
+    }
+    return "V-" + String(sequence).padStart(3, "0");
+}
+function sameCatalogVehicleId_(left, right) {
+    try { return normalizeCatalogVehicleId_(left) === normalizeCatalogVehicleId_(right); }
+    catch (error) { return false; }
+}
+
 function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCounts, categoryCounts) {
     const vehicle = mapRowToObject(row, columnMap, IMAGE_FIELDS_CORTES);
     if (!vehicle) return null;
+    vehicle.id = normalizeCatalogVehicleId_(vehicle.id, "Fila de Cortes");
     for (let index = 1; index <= 3; index++) {
         const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
         if (eventCount) {
@@ -1729,10 +1745,7 @@ function handleGetDropdownData() {
  */
 
 function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
-    const requestedId = String(vehicleId || "").trim();
-    if (!/^[1-9]\d{0,14}$/.test(requestedId)) {
-        throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
-    }
+    const requestedId = normalizeCatalogVehicleId_(vehicleId, "Consulta de proyección dirigida");
     const spreadsheet = spreadsheetRef || getSpreadsheet();
     const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
     const lastRow = cortesSheet ? Number(cortesSheet.getLastRow()) || 0 : 0;
@@ -1747,7 +1760,7 @@ function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
     const ids = cortesSheet.getRange(2, idColumn, rowCount, 1).getValues();
     const matches = [];
     ids.forEach((row, index) => {
-        if (String(row && row[0] || "").trim() === requestedId) matches.push(index);
+        if (sameCatalogVehicleId_(row && row[0], requestedId)) matches.push(index);
     });
     if (matches.length > 1) {
         throw new Error("El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua.");
@@ -1765,13 +1778,14 @@ function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
     const targetVehicle = mapCatalogVehicleRowForProjection_(fullRow, columnMap, feedbackLikeEventCounts, {});
     if (!targetVehicle) throw new Error("No se pudo leer la fila vigente del vehículo solicitado.");
     const vehicles = ids.map((row, index) => {
-        const id = String(row && row[0] || "").trim();
-        if (!id) return null;
+        const rawId = row && row[0];
+        if (rawId === "" || rawId === null || rawId === undefined) return null;
+        const id = normalizeCatalogVehicleId_(rawId, "Fila de Cortes");
         if (index === targetIndex) return targetVehicle;
         return { id, vin: vinRows[index] ? vinRows[index][0] : null };
     }).filter(Boolean);
     const projected = projectVehicleContributionEvents_(vehicles, readVehicleContributionEvents_(spreadsheet));
-    const targetMatches = projected.filter(vehicle => vehicle && String(vehicle.id || "").trim() === requestedId);
+    const targetMatches = projected.filter(vehicle => vehicle && sameCatalogVehicleId_(vehicle.id, requestedId));
     if (targetMatches.length !== 1) {
         throw new Error(targetMatches.length
             ? "El ID del vehículo aparece duplicado en CATALOG; no se devolvió una proyección ambigua."
@@ -1782,12 +1796,9 @@ function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
 
 function handleGetVehicleProjection_(payload = {}) {
     verifyCatalogModalEditSession_(payload);
-    const vehicleId = String(payload && payload.vehicleId || "").trim();
-    if (!/^[1-9]\d{0,14}$/.test(vehicleId)) {
-        throw new Error("Se requiere un ID de vehículo válido para consultar la proyección dirigida.");
-    }
+    const vehicleId = normalizeCatalogVehicleId_(payload && payload.vehicleId, "Consulta de proyección dirigida");
     const vehicle = readCatalogVehicleProjection_(vehicleId);
-    if (!vehicle || String(vehicle.id || "").trim() !== vehicleId) {
+    if (!vehicle || !sameCatalogVehicleId_(vehicle.id, vehicleId)) {
         throw new Error("El vehículo solicitado no existe en la proyección vigente de CATALOG.");
     }
     const matches = [vehicle];
