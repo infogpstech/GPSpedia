@@ -9492,6 +9492,22 @@ export async function openAuditDriveModal(options = {}) {
                     updateSummary(inventoryMessage + localPersistenceWarning, 'progress');
                 } catch (batchError) {
                     if (!isCurrentRequest()) return;
+                    const batchErrorDetails = {
+                        subsystem: 'drive-unused-image-inventory',
+                        action: 'saveUnusedImagesInventory',
+                        stage: 'incremental-batch-request-or-response-validation',
+                        auditId: auditId,
+                        batchNumber: Math.floor(offset / batchSize) + 1,
+                        offset: offset,
+                        batchSize: batch.length,
+                        fileIds: batch.map(file => String(file.fileId || '')),
+                        errorName: String(batchError && batchError.name || 'Error'),
+                        errorMessage: String(batchError && batchError.message || batchError),
+                        errorCode: String(batchError && batchError.code || ''),
+                        stack: String(batchError && batchError.stack || '')
+                    };
+                    console.error('[GPSpedia][AUDITORÍA DRIVE][ERROR REGISTRO INCREMENTAL]', batchErrorDetails, batchError);
+                    appendAuditConsole('Diagnóstico técnico del lote fallido: ' + JSON.stringify(batchErrorDetails), 'error');
                     batch.forEach(file => {
                         if (resultsById.has(file.fileId)) return;
                         const message = String(batchError && batchError.message || batchError);
