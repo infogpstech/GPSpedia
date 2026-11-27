@@ -15218,7 +15218,14 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         auditId = String(cursor.referenceCacheId || "").trim();
         state = loadDriveAuditServerState_(auditId);
         if (state.ownerId !== ownerId) throw new Error("El cursor pertenece a otra sesión Desarrollador.");
-        if (state.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || String(cursor.scanVersion || "") !== DRIVE_AUDIT_SCAN_VERSION_) throw new Error("La auditoría fue creada con otra versión del servicio; inicia una auditoría nueva para aplicar la deduplicación global.");
+        if (state.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || String(cursor.scanVersion || "") !== DRIVE_AUDIT_SCAN_VERSION_) {
+            // Los iteradores de Drive no se reutilizan entre versiones del recorrido.
+            // Reiniciar el escaneo de forma controlada evita el error terminal de cursor
+            // y deja intactas las páginas/resultados del auditId anterior para consulta.
+            logMessage && logMessage("Continuidad de auditoría Drive",
+                "El cursor pertenece a una versión anterior del recorrido. Se inicia una auditoría nueva; los resultados persistidos del recorrido anterior no se sobrescriben.", 0, 0, true, false);
+            return handleAuditDriveImagesInCortesCore_(Object.assign({}, payload, { cursor: null }), logMessage, developerContext);
+        }
         inputFingerprint = getDriveAuditCursorFingerprint_(cursor);
         if (state.lastRequestFingerprint === inputFingerprint && state.lastResponseCacheKey) {
             if (Number(cursor.totalAnalyzed) !== Number(state.lastRequestTotalAnalyzed) ||
