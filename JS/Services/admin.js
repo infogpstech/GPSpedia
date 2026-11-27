@@ -13875,20 +13875,42 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
     const readBack = () => sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
     const metadataColumns = ["drive_folder_id","formato_archivo","tamano_bytes","fecha_modificacion_drive","referencias_catalogo_json","asociacion_estado","asociacion_confianza","asociacion_candidatos_json"]
         .map(name => headers.indexOf(name)).filter(index => index >= 0);
-    const matches = persisted => String(persisted[0] || "") === String(row[0] || "") &&
-        extractDriveFileId(persisted[5]) === fileId &&
-        String(persisted[auditColumn - 1] || "") === auditId &&
-        String(persisted[operationColumn - 1] || "") === operationId &&
-        String(persisted[resultColumn - 1] || "") === expectedResult &&
-        String(persisted[10] || "") === expectedStatus &&
-        (expectedOrganizationState === undefined || String(persisted[organizationColumn - 1] || "") === String(expectedOrganizationState)) &&
-        (expectedLocation === undefined || String(persisted[locationColumn - 1] || "") === String(expectedLocation)) &&
-        metadataColumns.every(index => String(persisted[index] || "") === String(row[index] || ""));
+    const normalizeVerifiedCell = (value, index) => {
+        if (headers[index] === "fecha_modificacion_drive" &&
+            Object.prototype.toString.call(value) === "[object Date]" &&
+            Number.isFinite(value.getTime())) {
+            return Utilities.formatDate(value, "GMT-6", "yyyy-MM-dd HH:mm:ss");
+        }
+        return String(value == null ? "" : value);
+    };
+    const getMismatchedColumns = persisted => {
+        const mismatches = [];
+        const compare = (index, expected, label) => {
+            if (normalizeVerifiedCell(persisted[index], index) !== normalizeVerifiedCell(expected, index)) {
+                mismatches.push(label || headers[index] || ("columna_" + (index + 1)));
+            }
+        };
+        compare(0, row[0], "id_reemplazo");
+        if (extractDriveFileId(persisted[5]) !== fileId) mismatches.push("archivo_drive_id");
+        compare(auditColumn - 1, auditId, "ultima_auditoria_id");
+        compare(operationColumn - 1, operationId, "ultima_operacion_inventario_id");
+        compare(resultColumn - 1, expectedResult, "resultado_inventario");
+        compare(10, expectedStatus, "estado");
+        if (expectedOrganizationState !== undefined) compare(organizationColumn - 1, expectedOrganizationState, "estado_organizacion");
+        if (expectedLocation !== undefined) compare(locationColumn - 1, expectedLocation, "ubicacion_actual");
+        metadataColumns.forEach(index => compare(index, row[index], headers[index]));
+        return Array.from(new Set(mismatches));
+    };
+    const matches = persisted => getMismatchedColumns(persisted).length === 0;
     const writeAndVerify = () => {
         sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
         SpreadsheetApp.flush();
         const persisted = readBack();
-        if (!matches(persisted)) throw new Error("La lectura posterior no coincide con la escritura solicitada.");
+        const mismatches = getMismatchedColumns(persisted);
+        if (mismatches.length) {
+            throw new Error("La lectura posterior no coincide con la escritura solicitada. Columnas discrepantes: " +
+                mismatches.join(", ") + ".");
+        }
         return persisted;
     };
     try { return writeAndVerify(); }
