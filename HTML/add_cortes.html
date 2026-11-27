@@ -1654,7 +1654,7 @@
             }
 
             if (match) {
-                if (match.apertura || match.imgApertura) {
+                if (warningContainer && (match.apertura || match.imgApertura)) {
                     warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con información de apertura.</div>`;
                 }
 
@@ -1672,13 +1672,13 @@
                     cableSlot = 1;
                 }
 
-                if (hasCable1) {
+                if (warningContainer && hasCable1) {
                     warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con el cable de alimentación 1.</div>`;
                 }
-                if (hasCable2) {
+                if (warningContainer && hasCable2) {
                     warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con el cable de alimentación 2.</div>`;
                 }
-                if (hasCable3) {
+                if (warningContainer && hasCable3) {
                     warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con el cable de alimentación 3.</div>`;
                 }
             }
@@ -1694,7 +1694,7 @@
                     uploadBtn.style.pointerEvents = 'none';
                     uploadBtn.style.opacity = '0.5';
                 }
-                warningContainer.innerHTML += `<div class="info-msg" style="background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;"><i class="fas fa-exclamation-triangle"></i> Límite de 3 cables de alimentación alcanzado para este modelo.</div>`;
+                if (warningContainer) warningContainer.innerHTML += `<div class="info-msg" style="background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;"><i class="fas fa-exclamation-triangle"></i> Límite de 3 cables de alimentación alcanzado para este modelo.</div>`;
             } else if (cableSlot > 1) {
                 if (alimentacionHeader) alimentacionHeader.textContent = `Cable de Alimentación ${cableSlot}`;
                 if (alimentacionLabel) alimentacionLabel.textContent = `Detalle de Alimentación ${cableSlot}`;
