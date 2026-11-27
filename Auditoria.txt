@@ -1044,3 +1044,10 @@ Límites: los harnesses son simulaciones en memoria; no se ejecutó Apps Script 
 - Pruebas adicionales: asociación sin coincidencia -> sin_coincidencia y candidatos vacíos (1/1); metadatos insuficientes -> no_verificada y candidatos previos conservados (1/1); URL visual válida preservada (1/1). validateCompletedDriveAudit_ acepta lista vacía cuando expectedUnusedCount=0 y el digest coincide (1/1).
 - Commits adicionales admin.js: 72b5ed0dc49b7f947c39fa727bf49ce9cc291692 (ubicaciones solo en consolidación final), 44dd569822dd1d384916d2ae8c172b3830f5c9b8 (asociación sin coincidencia en históricos), 3e16f1150ae42c5289112db93d47cc24c6f9473f (preservar URL visual válida; reparar solo si falta).
 - No se modificaron estilos ni la rama base. Pruebas remotas, navegador y Beta siguen pendientes.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-AUDIT-REVIEW-04 — Confirmación de registro incremental ya integrado
+- Revisión de JS/Frontend/ui.js: cada respuesta de página de auditoría desencadena saveUnusedImagesInventory con incremental:true para sus imágenes clasificadas Sin uso detectado, valida resultados por ID/estado y persiste el estado local antes de continuar.
+- JS/Services/admin.js: página y metadatos se guardan en Cache y pageCount se actualiza en estado ADMIN antes de responder; el validador incremental verifica que los IDs hayan sido emitidos como candidatos.
+- La consolidación final conserva su propósito de reconciliación histórica; el registro incremental por página no está pendiente de implementación. Se documentó el ajuste de estado y el pendiente real: navegador y Apps Script/Drive/Sheets autorizados.
+- No runtime, browser, Drive/Sheets remoto ni deployment en esta revisión.
