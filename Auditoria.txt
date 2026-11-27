@@ -1070,3 +1070,13 @@ Límites: los harnesses son simulaciones en memoria; no se ejecutó Apps Script 
 ### GP-ADMIN-DRIVE-REGISTRO-ERROR-01 — 2026-11-27
 - Añadido contexto estructurado en el catch de lotes del frontend para el registro incremental: auditId, lote, offset, IDs, stack y campos del error. El diagnóstico se emite a consola de desarrollador y al registro de auditoría.
 - Commit `261b7c4`. La causa raíz del aviso amarillo no se considera identificada sin reproducir el error y observar el nuevo diagnóstico; no se ejecutó prueba remota ni despliegue.
+
+
+## F-48 — GP-ADMIN-DRIVE-REGISTRO-ERROR-02 (2026-11-27)
+
+- Síntoma reportado: varios archivos clasificados «Sin uso detectado» fallan en `ADMIN.saveUnusedImagesInventory`, etapa «escritura y lectura de confirmación en Imagenes_Reemplazadas», con `IMAGE_INVENTORY_WRITE_FAILED` y mensaje «La lectura posterior no coincide con la escritura solicitada».
+- Inspección focal de `JS/Services/admin.js`: `writeDriveInventoryRowVerified_()` valida ID, estado, auditoría, operación, resultado, organización, ubicación y ocho columnas de metadatos mediante comparaciones estrictas con `String()`. La discrepancia no identifica actualmente qué columna falla.
+- Candidato técnico a verificar: `fecha_modificacion_drive` se genera como texto `yyyy-MM-dd HH:mm:ss` mediante `Utilities.formatDate`, y el verificador compara su representación textual sin normalizar el tipo de dato devuelto por Sheets. La posible coerción a Date puede provocar una discrepancia de representación aunque la fecha sea equivalente; no se considera causa confirmada sin observar el valor leído real.
+- Otros campos que deben quedar diagnosticables individualmente: `drive_folder_id`, `formato_archivo`, `tamano_bytes`, `referencias_catalogo_json`, `asociacion_estado`, `asociacion_confianza` y `asociacion_candidatos_json`, además de los campos de identidad/estado.
+- Riesgo: una verificación demasiado permisiva podría confirmar una fila incompleta o distinta; no se debe eliminar la lectura posterior ni omitir columnas de integridad. La organización debe continuar bloqueada ante cualquier discrepancia real.
+- Acción prevista: instrumentar la comparación por nombre de columna, normalizar únicamente valores Date para la comparación semántica en la zona horaria contractual GMT-6, mantener estrictas las demás comparaciones y probar casos equivalentes/no equivalentes en un harness efímero en memoria. Sin Apps Script remoto, Drive/Sheets real, POST ni deployment; Beta permanece cerrada.
