@@ -1388,3 +1388,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Actualizar registros y checkpoint.
 - [ ] Inspeccionar la fila/eventos del último registro en Spreadsheet aislada o con autorización; verificar si evento accepted de AportesVehiculo lo vuelve a materializar tras borrado manual.
 - [ ] Validación browser/Pages diferida; Beta permanece cerrada.
+
+
+### GP-CUT-DETAIL-LEDGER-MODAL-01 — separación de fuente modal (2026-11-27)
+- [x] Copias previas de `JS/Services/catalog.js` y `JS/Frontend/ui.js`.
+- [x] Separar la colección física antes de proyectar ledger, conservando el catálogo general.
+- [x] Modal consume colección física independiente.
+- [ ] Revisión estática de diffs y simulaciones; validación real diferida.
+- No modificar escritura AportesVehiculo ni desplegar.
