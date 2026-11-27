@@ -167,7 +167,8 @@ function applyRichTextInlineFormat_(editor,format,value=null){
     }
    };
    Array.from(fragment.childNodes).forEach(unwrapMatching);
-   range.insertNode(fragment);range.setStartAfter(range.endContainer.nodeType===1?range.endContainer:range.endContainer);
+   const lastInserted=fragment.lastChild;range.insertNode(fragment);
+   if(lastInserted){range.setStartAfter(lastInserted);range.collapse(true);}
    state[format]=false;
   }else{
    range=getRichTextSavedRange_(editor);if(!range)return false;state[format]=true;
