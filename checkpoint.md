@@ -515,3 +515,5 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - GitHub Pages build/deploy run `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`.
 - **Pendiente crítico:** el código Apps Script aún no está desplegado/verificado en los endpoints activos. No se consultó el Spreadsheet productivo ni se ejecutaron escrituras en Sheets/Drive; no se probó IndexedDB real. Antes de cerrar la incidencia: health GET-only a endpoints actuales, desplegar WRITE y CATALOG, probar alta nueva y aporte existente desde formulario y modal con datos aislados, verificar proyección y reintento del mismo `opId`, y confirmar limpieza local. No afirmar resuelto hasta pasar estas pruebas.
 - Próximo paso: continuar con despliegue/health y validación controlada; conservar respaldos hasta finalizar revisión remota y Code Review.
+
+- Actualización de CI documental: Pages build/deploy run `45918026216` SUCCESS en HEAD `8017e1109092901e21101c18b80b37173901fe49`; el código probado corresponde al HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e` y los commits posteriores solo actualizaron registros/checkpoint.
