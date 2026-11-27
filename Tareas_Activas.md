@@ -1233,3 +1233,25 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Probar replay del mismo `opId` tras respuesta perdida y confirmar que no crea fila/evento duplicado; comprobar limpieza local real en IndexedDB.
 - [ ] Tras validación remota satisfactoria y Code Review final, retirar respaldos temporales de `Olds/Backups/GP-CUT-ID-FORMAT-REBUILD-05-20261126/` según NORMAS_DESAROLLO.md.
 - Estado: corrección de código y pruebas estáticas completadas; incidencia operativa pendiente de despliegue y validación real. No se han ejecutado escrituras remotas ni cambios de deployments Apps Script.
+
+
+## GP-CUT-ID-SEQUENCE-06 — IDs V-00000 e inserción de registros (2026-11-26)
+
+**Estado: CÓDIGO IMPLEMENTADO Y REVISIÓN ESTÁTICA COMPLETADA; VALIDACIÓN REMOTA PENDIENTE.**
+
+- [x] Auditar WRITE y registrar hallazgos antes de editar.
+- [x] Crear respaldo exacto de `JS/Services/write.js`.
+- [x] Cambiar el formato canónico a cinco dígitos mínimos: `V-00001`, `V-00002`, …, `V-99999`, `V-100000` y siguientes.
+- [x] Mantener compatibilidad de lectura con IDs históricos `V-###` y números heredados.
+- [x] Eliminar la generación de nuevas fórmulas en el ledger de reservas; calcular el siguiente número desde el máximo de `Cortes` y reservas existentes, guardar valor estático y proteger lectura/incremento/append con ScriptLock.
+- [x] Mantener idempotencia: el mismo `opId` y hash recuperan el mismo ID; contenido diferente se rechaza.
+- [x] Insertar una fila física al final de `Cortes`, copiar formato y validaciones/listas desplegables, limpiar contenidos heredados y escribir toda la información del vehículo y primer corte.
+- [x] Registrar el índice de fila insertada para rollback seguro.
+- [x] Validar sintaxis, parser/formatter, secuencia 99999→100000, reserva/replay/conflicto y 13 invariantes estáticas.
+- [x] Revisar diff contra respaldo; cambios limitados al alcance solicitado.
+- [ ] Desplegar la versión actual de WRITE en el endpoint Apps Script configurado y verificar health/version.
+- [ ] Ejecutar alta controlada en una Spreadsheet aislada y confirmar ID consecutivo, nueva fila, listas desplegables intactas y todos los campos guardados.
+- [ ] Probar reintento con el mismo `opId` y confirmar que no se duplica la fila.
+- [ ] Retirar respaldo temporal después de la validación remota y revisión final.
+- Commits de código: `994a4aeff118b7827962219f7c67a872940be866`, `21a2d1c5724111fca3550b3bf7b60d0459c0da49`.
+- No se ejecutaron escrituras remotas ni despliegues Apps Script; no declarar la operación resuelta en producción.
