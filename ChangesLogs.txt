@@ -1892,3 +1892,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - JS/Frontend/ui.js, líneas 10231–10280: el botón de reinicio ejecuta reconciliación previa paginada antes de limpiar el progreso local; el mensaje de confirmación indica que no se borran filas ni archivos.
 - JS/Frontend/ui.js, líneas 10116–10190 aprox.: la consolidación final también se ejecuta cuando la auditoría completa no encuentra imágenes sin uso, para reconciliar registros anteriores.
 - La escritura incremental automática por lote existente se conserva. No se modificaron CSS, HTML ni estilos de pestañas.
+
+
+2026-11-27 | Ajuste de memoria en inventario GP-ADMIN-DRIVE-UNUSED-IMAGES-03
+- JS/Services/admin.js: collectCatalogImageReferences recibe includeLocations=false durante lotes incrementales y true durante la consolidación final. Se conservan ubicaciones detalladas cuando se reconcilian filas históricas, sin materializar esos arreglos en cada lote automático.
