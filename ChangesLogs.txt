@@ -1822,3 +1822,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Corrección de selectores de pestañas
 - style.css, bloque GP-ADMIN-TAB-ACTIONS-UX-02: selectores activos anclados en .dev-tools-tab-options:has(#dev-tab-*:checked), respetando la estructura HTML real.
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Verificación estática
+- Se verificó balance de llaves CSS, selectores de estado para cuatro pestañas, compatibilidad de movimiento reducido y espera/liberación del bloqueo baseline. Validación limitada a inspección estática.

@@ -680,3 +680,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se actualiza el bloque CSS para consultar el radio seleccionado dentro de .dev-tools-tab-options mediante :has(), sin modificar HTML.
 - Backup exacto style.css previo: 7855e1dd950ccdcdbfe7b27963f11ddf92964fdf.
 - Pendiente: comparación, sintaxis y verificación visual.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / verificación estática
+
+- Verificación estática posterior al commit 83b911c1bd90a7f9e3fe3af556ec9cd4bcdb708e: balance de llaves CSS PASS; selectores activos y reglas de etiqueta para las cuatro pestañas PASS; prefers-reduced-motion PASS; baseline ADMIN contiene tryLock(3000) y liberación en finally PASS.
+- Comparación Git desde 84f0e3dbe586104a24ce286ba53c9d453136a47f hasta 83b911c1bd90a7f9e3fe3af556ec9cd4bcdb708e: únicamente Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md, checkpoint.md, JS/Services/admin.js y style.css.
+- Sin pruebas navegador, runtime Apps Script, concurrencia real, Drive/Sheets ni deployment. Los resultados PASS anteriores son estáticos y no equivalen a validación funcional.
+- HEAD verificado: 83b911c1bd90a7f9e3fe3af556ec9cd4bcdb708e.
+- Siguiente paso: pruebas aisladas de pestañas y guarda; después navegador y Apps Script/Drive/Sheets autorizado, Code Review y cierre.

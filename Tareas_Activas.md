@@ -1456,4 +1456,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ### GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Revisión de selectores CSS (27-11-2026)
 - [x] Detectar que los radios están dentro del fieldset y no son hermanos del layout.
 - [x] Corregir selectores de estado activo con :has() sobre .dev-tools-tab-options.
-- [ ] Verificar diff y sintaxis CSS; validación visual en navegador pendiente.
+- [x] Verificar diff y sintaxis CSS mediante balance de llaves y presencia de selectores para las cuatro pestañas.
+- [ ] Validación visual en navegador pendiente.

@@ -886,3 +886,9 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Se corrige el anclaje de selectores mediante .dev-tools-tab-options:has(input:checked) ~ .dev-tools-layout.
 - Respaldo exacto previo de style.css: 7855e1dd950ccdcdbfe7b27963f11ddf92964fdf.
 - Falta validar el diff y probar el comportamiento en navegador.
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Verificación estática posterior
+
+- Verificación estática posterior al commit 83b911c1bd90a7f9e3fe3af556ec9cd4bcdb708e: balance de llaves CSS PASS; selectores activos y reglas de etiqueta para las cuatro pestañas PASS; prefers-reduced-motion PASS; baseline ADMIN contiene tryLock(3000) y liberación en finally PASS.
+- Comparación Git desde 84f0e3dbe586104a24ce286ba53c9d453136a47f hasta 83b911c1bd90a7f9e3fe3af556ec9cd4bcdb708e: únicamente Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md, checkpoint.md, JS/Services/admin.js y style.css.
+- Sin pruebas navegador, runtime Apps Script, concurrencia real, Drive/Sheets ni deployment. Los resultados PASS anteriores son estáticos y no equivalen a validación funcional.
