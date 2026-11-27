@@ -1767,3 +1767,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 ### GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — implementación fuente
 - `JS/Services/catalog.js`: `mapCatalogVehicleRowForProjection_` ahora construye el orden de proyección desde slots ocupados, compacta los espacios y limpia slots restantes; ordena por votos útiles cuando existen y desempata por índice físico. Sin pruebas de navegador, Apps Script remoto, POST ni deployment.
+
+
+### 2026-11-26 — GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 (implementación)
+- JS/Frontend/ui.js: mostrarDetalleModal omite slots cuyo sourceCorteIndex referencia un origen físico ya consumido, evitando renderizar repetidamente la misma referencia de slot.
+- JS/Frontend/ui.js: orden de cortes por útiles descendentes con desempate por índice físico; los slots vacíos se omiten. No se deduplican cortes físicamente distintos por contenido.
+- Validación: simulaciones efímeras de referencia duplicada, datos idénticos en slots distintos, empate y slot vacío PASS; revisión de diff delimitada al bloque de construcción de cortes del modal.
+- Limitación: no se pudo acceder al registro de Spreadsheet del caso ni validar materialización persistente de eventos AportesVehiculo. No hubo browser, Apps Script, POST, escritura remota ni deployment.
