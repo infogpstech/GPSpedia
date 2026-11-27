@@ -960,3 +960,14 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Segunda pasada estática: 17/17 invariantes PASS, balance de delimitadores en admin.js/ui.js PASS, botón reset HTML único PASS, respaldos originales idénticos PASS. La simulación lógica previa de URL Drive y barreras incrementales/globales obtuvo 19/19 PASS.
 - No se dispone de parser JS completo ni harness de ejecución del repositorio (package.json, JS/Tests y rutas esperadas consultadas no existen en esta rama). El intento de clonar para ejecutar Node fue impedido por falta de resolución de github.com en el entorno.
 - No se ejecutó Apps Script runtime, navegador, POST, Drive/Spreadsheet real, mutaciones ni deployment. Beta permanece cerrada; los casos de prueba enumerados en PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md siguen pendientes.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — revisión aislada de continuidad
+
+- Auditoría focal de los contratos actuales en JS/Services/admin.js (collector LogosMarca, validación incremental, persistencia/lectura de confirmación), JS/Frontend/ui.js (filtro de tarjetas, reintentos, reset), JS/Frontend/offline.js (limpieza por usuario), index.html y style.css (workspace y pestañas).
+- Harness efímero en memoria, sin archivos de prueba ni suites: collector LogosMarca 5/5 PASS para URL directa, fórmula IMAGE(), Rich Text, CellImage y enlace Drive no interpretable; esquema sin encabezado ID 1/1 PASS (falla cerrada).
+- Validador incremental aislado 3/3 PASS: permite candidato emitido con error aislado en el escaneo, bloquea referencias no interpretables y rechaza IDs no emitidos. Se confirmó que la validación global conserva el bloqueo cuando errorCount o unverifiableReferenceCount son mayores que cero.
+- writeDriveInventoryRowVerified_ ejecutado con hoja simulada: 2/2 PASS para escritura/lectura posterior normal y persistencia seguida de excepción; la lectura posterior reconoce la fila confirmada y evita una segunda escritura.
+- UI/CSS: 6/6 comprobaciones estáticas PASS para filtro exacto «Sin uso detectado», ocultamiento de reintento para otras clasificaciones, selectores activos de cuatro pestañas, expansión móvil de pestaña seleccionada, movimiento reducido y orden limpieza IndexedDB→runAudit(false).
+- Límite de cobertura: no se ejecutó el flujo completo handleSaveUnusedImagesInventory con archivo A fallido y archivo B válido; tampoco se ejecutó IndexedDB en navegador, UI visual escritorio/móvil, Apps Script real, Drive/Spreadsheet, POST ni deployment. No se afirma validación de esos escenarios.
+- No se modificó código funcional ni se crearon archivos/suites de prueba. La fase Beta permanece cerrada. Se conservan respaldos exactos previos a la actualización documental en Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/REVIEW-MOCKS-20261127/.
