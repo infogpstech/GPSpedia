@@ -934,3 +934,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pruebas locales: parse del módulo inline PASS; harness aislado ejecutó fetchUsers y comprobó action=getUsers con userId y sessionToken del mismo snapshot. Comparación exacta contra backup y Code Review pendientes de cierre.
 - No se ejecutó navegador ni AUTH remoto. Beta permanece cerrada. context_personal.md no existe en la rama; Tareas.txt tampoco, se usa Tareas_Activas.md como registro operativo existente.
 - Siguiente paso: completar diff/Code Review, eliminar backups tras revisión y dejar pendiente la prueba integrada con usuario Desarrollador en navegador conectado.
+
+
+### Code Review y limpieza — GP-USERS-SESSION-CONTEXT-01
+- Code Review estático PASS; diff exacto contra respaldo: única modificación es el payload de getUsers en HTML/users.html.
+- Módulo inline parseado sin errores; harness aislado confirmó userId y sessionToken tomados del mismo snapshot.
+- Commit de código: a3fbb3943e09adc5df07a192484cf76acd990663. Commits de limpieza de backups: 9eedfdd, 159e01e, 00ed9b2, f701659, c7c7422.
+- Respaldos exactos eliminados tras Code Review. Rama base GPSpedia2.2.5 sin cambios (SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+- Siguiente paso: probar en navegador conectado con sesión Desarrollador y respuesta real AUTH. Revisar contratos de acciones mutables de gestión por separado antes de cambiar sus payloads. Beta permanece cerrada.
