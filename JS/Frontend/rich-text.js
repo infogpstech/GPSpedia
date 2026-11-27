@@ -152,9 +152,27 @@ function applyRichTextInlineFormat_(editor,format,value=null){
   restoreRichTextSelection_(editor);let applied=false;
   try{applied=typeof document.execCommand==="function"&&document.execCommand(command,false,null)===true;}catch(_){}
   if(applied){state[format]=!active;range=getRichTextSavedRange_(editor);if(range?.collapsed)createRichTextTypingAnchor_(editor,range,state);rememberRichTextSelection_(editor);editor.dispatchEvent(new Event("input",{bubbles:true}));return true;}
-  if(active){state[format]=false;return false;}
-  range=getRichTextSavedRange_(editor);if(!range)return false;state[format]=true;
-  const wrapper=document.createElement(tags[format]);wrapper.appendChild(range.extractContents());range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
+  if(active){
+   // Fallback determinista cuando execCommand no retira el formato: extrae
+   // el contenido seleccionado y elimina únicamente las etiquetas del formato.
+   range=getRichTextSavedRange_(editor);if(!range)return false;
+   const fragment=range.extractContents(),tagNames=selector.split(",").map(tag=>tag.trim().toLowerCase());
+   const unwrapMatching=node=>{
+    if(node.nodeType!==1)return;
+    Array.from(node.children||[]).forEach(unwrapMatching);
+    if(tagNames.includes(node.tagName.toLowerCase())){
+     const parent=node.parentNode;if(!parent)return;
+     while(node.firstChild)parent.insertBefore(node.firstChild,node);
+     parent.removeChild(node);
+    }
+   };
+   Array.from(fragment.childNodes).forEach(unwrapMatching);
+   range.insertNode(fragment);range.setStartAfter(range.endContainer.nodeType===1?range.endContainer:range.endContainer);
+   state[format]=false;
+  }else{
+   range=getRichTextSavedRange_(editor);if(!range)return false;state[format]=true;
+   const wrapper=document.createElement(tags[format]);wrapper.appendChild(range.extractContents());range.insertNode(wrapper);range.setStartAfter(wrapper);range.collapse(true);
+  }
  }else{
   const property=format==="color"?"color":format==="font"?"font-family":"font-size",safeValue=format==="color"?value:format==="font"?SAFE_FONTS.get(value):value;
   if(!["color","font","size"].includes(format)||!safeValue)return false;
