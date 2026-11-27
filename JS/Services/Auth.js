@@ -3176,7 +3176,7 @@ function getUserIdSequencePattern_(userSheet, snapshot) {
             const lastRow = userSheet.getLastRow();
             return lastRow > 1 ? userSheet.getRange(2, COLS_USERS.ID, lastRow - 1, 1).getFormulas().flat().filter(Boolean) : [];
         })();
-    if (!formulas.length) return { prefix: "USR-", padding: 4, formula: "" };
+    if (!formulas.length) return { prefix: "U-", padding: 3, formula: "" };
     const patterns = formulas.map(parseUserIdSequenceFormula_);
     if (patterns.some(pattern => !pattern)) throw new Error("La fórmula histórica de Users.ID no es compatible con un generador backend seguro.");
     const first = patterns[0];
