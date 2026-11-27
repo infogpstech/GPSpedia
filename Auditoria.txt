@@ -1333,3 +1333,11 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Pruebas aisladas del extractor: 8/8 casos PASS (URL file/d, uc query, HTML &amp;, googleusercontent /d/, URL percent-encoded, slash escapado, ID directo y rechazo de atributo HTML ajeno).
 - Revisión estática del compare: cambios funcionales confinados a extractDriveFileIds()/scan version/snapshot location filter en admin.js y controles de pausa/loop/persistencia de ui.js. No se ejecutó parser de archivos completos ni navegador/Apps Script/Sheets/Drive remoto; pausa/reanudación y clasificación real siguen pendientes de validación integrada.
 - HEAD protegido GPSpedia2.2.5 confirmado sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1. No deployment ni mutaciones remotas.
+
+
+### F-52 — Code Review estático y comparación
+- PASS (estático): cambios funcionales limitados al extractor central/version/snapshot de ubicaciones en admin.js y al loop/estado/control de pausa en ui.js.
+- PASS: el extractor limita coincidencia de ID al parámetro URL id y rutas /d/, /file/d/, /folders/ o ID directo; HTML/URL encoding se normaliza antes de la búsqueda.
+- PASS: pausa solicita salida en frontera de lote, persiste partial/cursor y evita el bloque de consolidación completa; el botón se recrea sin duplicación. Reinicio no fue modificado.
+- PASS: pruebas aisladas 8/8. No parse de los archivos completos, navegador, Sheets/Drive real ni deployment. Code Review estático no sustituye prueba integrada.
+- Respaldos exactos eliminados después de esta revisión estática; el commit inicial y blobs originales permanecen disponibles en Git para comparación.
