@@ -1680,11 +1680,18 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 
 #### GP-ADMIN-DRIVE-REGISTRO-ERROR-03 — conservar diagnóstico de reintentos (2026-11-27)
-**Estado: HALLAZGO CONFIRMADO; IMPLEMENTACIÓN PENDIENTE.**
+**Estado: IMPLEMENTACIÓN DE DIAGNÓSTICO COMPLETADA; VALIDACIÓN REAL PENDIENTE.**
 
 - Nueva reproducción reportada después de la corrección GP-ADMIN-DRIVE-REGISTRO-ERROR-02: las imágenes siguen fallando al confirmar la escritura individual en Imagenes_Reemplazadas; el mensaje recibido no identifica columnas.
 - La fuente actual ya compara columnas y construye el detalle «Columnas discrepantes». Sin embargo, writeDriveInventoryRowVerified_() descarta silenciosamente readError en la lectura de reconciliación posterior al primer fallo (catch de readError vacío).
 - Próxima corrección: conservar firstError, readError y retryError con su etapa; diferenciar error de lectura, error de escritura y discrepancia de contenido; no exponer valores sensibles; mantener las verificaciones estrictas, reintento idempotente y bloqueo de organización hasta confirmación.
 - Dependencias auditadas parcialmente: writer, llamada desde handleSaveUnusedImagesInventory, wrapper withDriveAuditErrorContext_, construcción de lastUpdated y propagación a la consola frontend. Completar revisión de dependencias y riesgos antes de editar.
-- No se ejecutaron escrituras remotas ni despliegues. La fase Beta continúa cerrada; no crear suites ni archivos de prueba. Las pruebas locales permitidas deberán ser efímeras/en memoria.
-- GP-ADMIN-DRIVE-REGISTRO-ERROR-02 permanece con validación real pendiente; esta incidencia no declara resuelta la causa original.
+- [x] Completar auditoría de dependencias y registrar hallazgos antes de editar.
+- [x] Crear backup exacto de admin.js y de los registros documentales.
+- [x] Implementar diagnóstico acumulado de firstError/readError/retryError y nombres de columnas discrepantes, sin valores de celdas.
+- [x] Mantener el bloqueo de organización y estado requiere_revision cuando no se confirma la escritura.
+- [x] Code Review y comparación exacta contra backup: PASS; solo cambió writeDriveInventoryRowVerified_().
+- [x] Parsing completo y pruebas aisladas en memoria: 5/5 PASS.
+- [ ] Ejecutar de nuevo la auditoría/inventario en entorno autorizado y usar el nuevo mensaje para identificar y corregir la causa real en Google Sheets; validar la persistencia antes de cerrar.
+- No se ejecutaron escrituras remotas ni despliegues. Beta permanece cerrada; no crear suites ni archivos de prueba.
+- GP-ADMIN-DRIVE-REGISTRO-ERROR-02 y la causa de persistencia remota permanecen pendientes de validación real.
