@@ -64,3 +64,14 @@
 ## Verificación de integración (2026-11-27)
 - Invariantes estáticos: 12 PASS; revisión de colector allowlist positiva (Cortes, Tutoriales, Relay, Problemas y Soluciones) e imágenes flotantes. Integración asociada a IDs sin uso detectado; revisión parcial de revalidación de guardado individual.
 - Pruebas runtime/fixture real pendientes. No se cierra la tarea.
+
+
+## Addendum — GP-ADMIN-DRIVE-UNUSED-IMAGES-03 (2026-11-27)
+
+- Se amplía la allowlist física para incluir LogosMarca. El contrato actual de handleAddLogo() escribe la URL en la columna 3; validar encabezado ID, URL/imagen y ubicaciones. Si falta la hoja o la referencia no puede interpretarse, el escaneo no debe declarar archivos sin uso.
+- El registro automático incremental se realiza por candidato emitido por ADMIN y revalidado en servidor. Errores aislados al leer otros archivos no deben bloquear candidatos íntegros; referencias no interpretables sí deben bloquearlos.
+- Mantener separación de seguridad: persistencia individual permitida para candidatos íntegros, pero consolidación global, reconciliación y organización requieren auditoría completa sin errores.
+- La UI debe permitir reintento individual cuando no existan referencias no interpretables, mostrar fase/código/detalle, reflejar estado parcial y permitir reiniciar con confirmación, limpiar solo el estado local del usuario y crear auditId nuevo. No borrar filas confirmadas ni archivos Drive.
+- Contrato FindOrCreate existente: getOrCreateReplacedImagesSheet() y ensureReplacedImagesInventoryColumns(); no duplicar. Si el esquema base existente es incompatible, detenerse sin sobrescribir.
+- Casos obligatorios para el próximo harness: (1) logo Drive ID en col. 3 => «En uso»; (2) logo por fórmula/hipervínculo/CellImage; (3) LogosMarca ausente o encabezado ID inválido => escaneo detenido sin falsos «Sin uso»; (4) error de metadatos de archivo A y candidato B íntegro => B se registra; (5) unverifiableReferenceCount > 0 => ningún registro nuevo; (6) errorCount > 0 => consolidación/organización siguen bloqueadas; (7) escritura individual duplicada/reintento => idempotencia y lectura de confirmación; (8) reinicio limpia IndexedDB y genera auditId nuevo sin borrar Imagenes_Reemplazadas.
+- Estado al 2026-11-27: implementación fuente y verificación estática parcial PASS; runtime/mocks, navegador y Beta autorizada pendientes. No despliegue.
