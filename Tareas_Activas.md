@@ -1732,3 +1732,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Extender extractor para URLs de miniaturas, variantes thumbnail/thumb, googleusercontent y parámetros alternativos de ID.
 - [x] Versionar el scan para invalidar snapshots y cursor anteriores.
 - [ ] Ejecutar pruebas aisladas, parsing y revisión estática del cambio; validar en Sheets/Drive real sin deployment.
+
+
+#### GP-ADMIN-IMAGE-REFERENCE-THUMBNAIL-URLS-02 — validación
+- [x] Pruebas aisladas de 7 formatos URL: PASS.
+- [x] Corrección del escape de regex identificada durante la prueba.
+- [ ] Parsing completo y validación integrada autorizada.
