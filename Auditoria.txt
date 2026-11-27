@@ -1341,3 +1341,9 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - PASS: pausa solicita salida en frontera de lote, persiste partial/cursor y evita el bloque de consolidación completa; el botón se recrea sin duplicación. Reinicio no fue modificado.
 - PASS: pruebas aisladas 8/8. No parse de los archivos completos, navegador, Sheets/Drive real ni deployment. Code Review estático no sustituye prueba integrada.
 - Respaldos exactos eliminados después de esta revisión estática; el commit inicial y blobs originales permanecen disponibles en Git para comparación.
+
+
+### F-53 — variantes de URL de miniaturas Drive (2026-11-27)
+- Se amplió el extractor central para cubrir variantes de URL de thumbnail/miniatura, rutas thumbnail/thumb, googleusercontent y parámetros alternativos de identificador (id/docid/fileid), además de enlaces redimensionados que añaden parámetros sz, s, w o h.
+- La identificación continúa por ID del archivo original; parámetros de tamaño o presentación no se tratan como recursos distintos. Se versionó el escaneo a drive-audit-reference-normalization-v3-thumbnail-urls.
+- Validación de la modificación: revisión de patrón estática; aún falta ejecutar pruebas aisladas y parsing/integración. Sin runtime Sheets/Drive ni deployment.
