@@ -536,3 +536,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Robustez adicional: la primera alta también funciona si `Cortes` solo contiene encabezados; la fila 2 se conserva como plantilla al desplazarla y copiar sus validaciones a la nueva fila 2. Commit `5fd150497861893f7762c6616cd61b2e8781451c`.
 
 - Prueba efímera del bloque de inserción completada: con datos existentes crea la fila siguiente; con solo encabezados crea la fila 2 copiando la plantilla desplazada; con grilla de una fila la amplía y conserva la plantilla. Los tres escenarios PASS. Compilación V8 final PASS.
+
+
+## Continuidad — GP-CUT-ID-CROSS-SERVICE-07 (2026-11-26)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`; rama base `GPSpedia2.2.5` permanece sin modificaciones.
+- Hallazgos: CATALOG devolvía `V-00001` como `V-001` y rechazaba ceros iniciales en FeedbackLikes; FEEDBACK bloqueaba IDs prefijados en sugerencias de año/útiles y comparaba IDs históricos literalmente; ADMIN auditaba IDs como números.
+- Implementación: CATALOG y FEEDBACK canonicalizan a `V-` + mínimo cinco dígitos, extienden a seis o más y reconocen aliases históricos; ADMIN normaliza el diagnóstico de referencias; otros servicios revisados no requerían cambios.
+- Servicios backend revisados: WRITE, CATALOG, FEEDBACK, ADMIN, Auth, Utilities, CentralConfigurationReader, InboxConversations y SharedSessionActor. Frontend: offline, ui/modal, formulario y api-config.
+- Commits CATALOG `7945e406075461d9af3a2bf209a4493eecb09027`; FEEDBACK `20e5e09313d99858eb11e9fa1b01a9f51f7d7201`, `fb1ff8608b84a49f7b4d137e82cc25bded1224b8`, `4e60ce927a48b44907ff4bb4b93ea091689021aa`, `f3e283157e5746ab8cb5db3da4ca854e2d9f4237`, `412d21236d817fd2586c48519fe80d35465ad80c`; ADMIN `adad4b9313092774f3aa90a1ce4da4f708aff84e`.
+- Backups en `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/` (incluye respaldo adicional de FEEDBACK previo a corregir hallazgo de revisión).
+- Validación local: sintaxis V8 5/5; canonicalización CATALOG/FEEDBACK/ADMIN; contador de útiles con IDs alias; detección de duplicados lógicos; sugerencias/años y eventos AportesVehiculo; Inbox/reportes; PyS; auditoría ADMIN 9 referencias coincidentes, cero huérfanas/malformadas/mismatches. Code Review final PASS.
+- **Pendiente crítico:** no se desplegaron los servicios Apps Script ni se ejecutaron pruebas reales contra Sheets/Drive. Desplegar WRITE/CATALOG/FEEDBACK/ADMIN y ejecutar health y prueba integrada aislada antes de declarar validado en producción. Mantener respaldos hasta cerrar la validación remota.
