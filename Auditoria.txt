@@ -816,3 +816,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Code review de diff contra respaldo exacto: el cambio de código está delimitado al bloque de construcción/orden de cortes de mostrarDetalleModal; no se modificaron CATALOG, mapping, renderCutContent ni otros flujos.
 - Límite: sin Spreadsheet aislada/real disponible, no se pudo identificar el registro más reciente ni comprobar si un event accepted de AportesVehiculo recrea el corte eliminado manualmente. No se atribuye la duplicación real a una causa única.
 - No se ejecutaron Apps Script, POST, escrituras remotas, navegador, deployment ni pruebas Beta. No se agregaron suites/workflows. Backup retirado tras revisión.
+
+
+2026-11-27 | GP-CUT-DETAIL-LEDGER-MODAL-01 — aislamiento de fuente del modal
+- Hallazgo confirmado por usuario: al eliminar una fila de AportesVehiculo desaparece el corte duplicado, evidenciando que la proyección ledger materializa cortes en la vista.
+- La respuesta de CATALOG combina cortes físicos de Cortes con eventos aceptados de AportesVehiculo; modal seleccionar catálogo combinado provoca que el ledger se trate como fuente de cortes.
+- Solución: conservar cortes físicos mapeados antes de aplicar proyección ledger y exponerlos como cortesPhysical; modal selecciona esta colección exclusivamente. La colección cortes general mantiene la proyección existente.
+- No se modifican escrituras, aceptación, registro ni esquema de AportesVehiculo. Sin deployment, ejecución de Apps Script ni escrituras de datos de producción.
+- Validación pendiente de navegador/servicios reales; revisión estática y simulación local posterior a la edición.
