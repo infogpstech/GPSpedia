@@ -602,3 +602,7 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 
 - Revisión adicional en etapa 3: si WRITE confirma aporte suplementario con vehicleId concordante, fallos de confirmación secundaria de eventos o cleanup local se registran en consola y no bloquean el redirect al catálogo.
 - Aportes desde modal de detalle: se eliminó la concatenación de alerta de cleanup pendiente al mensaje de éxito; postcommit refresh falla en consola sin alerta global extra. Notificaciones legítimas de éxito/candidato conservadas.
+
+- Code Review estático concluido: `HTML/add_cortes.html` comparado bloque por bloque contra backup exacto (12 bloques de delta revisados); cambios en `JS/Frontend/ui.js` aislados a historial de detalle y mensajes de suplementarios; `JS/Frontend/main.js` sin cambios byte a byte.
+- Backups temporales HTML/ui/main eliminados tras revisión. Logs de auditoría/ChangesLog/task register actualizados.
+- Validación no incluye parsing, browser real, Android, despliegue ni operaciones remotas; quedan pruebas integradas pendientes.
