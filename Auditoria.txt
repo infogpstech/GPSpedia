@@ -840,3 +840,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Requisito: asociación estructurada usando metadatos, nombre y árbol de carpetas; reconocer Brand/Model/Version-or-ignition-or-equipment/Year, permitiendo fallback Brand/Model si los niveles posteriores no existen. Contradicciones y coincidencias múltiples deben permanecer ambiguas, sin asignación automática.
 - Protección: mantener exclusión por referencias activas y por IDs históricos; la sugerencia se calcula exclusivamente para imágenes previamente clasificadas Sin uso detectado. No alterar la clasificación, el scanner, permisos, auth, servicios externos ni deployment.
 - Plan: corregir exclusivamente algoritmo de asociación, pruebas efímeras de estructura completa/fallback/conflicto/múltiples modelos/filename/metadata, revisión de diff y documentación. No se realizan operaciones mutables Drive/Sheets ni deployment.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Revisión de implementación de asociación
+- Se sustituyó únicamente buildCortesImageModelAssociationSuggestions_ en JS/Services/admin.js. El algoritmo valida la ruta marca seguida de modelo; el filename corroborado por marca y modelo/alias se mantiene como fallback, sin elevarlo a match estructural.
+- Contexto version/encendido/años se aplica a registros. Si el contexto contradice registros disponibles, se marca conflicto; IDs múltiples y candidatos próximos mantienen estado ambiguo. Confianza alta requiere match jerárquico.
+- Revisión de diff: archivo respaldo exacto temporal; prefijo y sufijo idénticos, función aislada. No se alteraron scanner, clasificación, referencias activas, historial, permisos, auth ni servicios ajenos.
+- Validación: inspección estática del código y del diff. No se ejecutó harness runtime, Apps Script, Drive/Sheets real, navegador ni deployment; por tanto casos de fixture y verificación funcional permanecen pendientes.
+- Riesgo/limitación: parser trata segmentos de carpeta normalizados; la señal de versión/encendido/año es contextualmente interpretada desde nombre y ruta, no confirma esquema real del árbol Drive. Debe validar con fixtures y datos reales autorizados antes de cerrar.
