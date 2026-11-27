@@ -562,3 +562,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Vídeo guía: sin cambios; la aprobación ya localiza una fila única existente y rechaza sobrescribir otra URL.
 - Validación: balance estático de delimitadores en los seis archivos modificados; sin nombres de funciones duplicados; 11 invariantes de integración comprobadas; simulaciones efímeras de slots de corte 1/2/3, replay, slot de alimentación y no sobrescritura PASS. No se agregaron suites/workflows; Tareas_Beta.md sigue cerrada.
 - Próximo paso: despliegue explícitamente autorizado de WRITE/CATALOG y prueba integrada controlada en Spreadsheet/Drive aislado, más verificación de navegador/IndexedDB. No se ejecutaron POST remotos, escrituras productivas ni despliegues; no afirmar validación de producción.
+
+
+## 20. GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01 — corrección de validación de actor (2026-11-26)
+- Hallazgo auditado: `assertSupplementaryInfoPayloadKeys_` rechazaba las claves del actor compartido interno, provocando error previo al guardado de apertura/alimentación desde el botón `+`.
+- Corrección de código: `JS/Services/write.js` allow-list admite `__sharedSessionActor` y `_sharedSessionActor` como claves de contexto interno. El handler de autenticación sigue usando exclusivamente `payload.__sharedSessionActor`, insertado por `withSharedSessionActor_` después de validar sesión; el alias de un underscore no es fuente de identidad.
+- Code review/diff: backup exacto confirma que el único cambio de código es la expansión de la allow-list. Handler, ledger, idempotencia, persistencia y materialización de fila existente permanecen intactos.
+- Registros añadidos en Auditoria.txt, ChangesLogs.txt y Tareas_Activas.md.
+- Validación realizada: revisión estática de dispatcher, helper actor, handler, validator y frontend; comparación exacta con respaldo PASS. No se agregaron suites, archivos de prueba ni workflows (Beta cerrada).
+- Límite: no se ejecutó Apps Script remoto, Sheets/Drive, browser real ni deployment; integración queda no verificada.
+- Commit de implementación: `54c18271945fcb68342eba213285d9628c2e845b`; commits documentales posteriores: `7063b3f7ff49bbb4303c9f6e77e19dffb1879e1b` y `d07ceee653eba01ecd1f1901f0fa8cbdda4066c3`.
+- Backup temporal exacto conservado en Olds/Backups durante revisión; será retirado tras la revisión final.
+- Siguiente paso: revisar y limpiar backup temporal, verificar HEAD/base y registrar cierre.
