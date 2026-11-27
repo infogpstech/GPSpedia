@@ -916,3 +916,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — Code Review de fuente Brands
 - La revisión del mapeo Unicode detectó que el punto de prueba de Font Awesome Brands correspondía a un icono Free, no a una marca. Se reemplazó por U+F167 (YouTube Brands), que corresponde a la familia Brands usada por la aplicación.
 - El cambio evita activar el fallback por una consulta de glifo inexistente en la fuente Brands. Validación limitada a correspondencia del código fuente; no se ejecutó navegador.
+
+
+2026-11-27 | GP-ADD-CUT-WIZARD-UX-NAV-01 — auditoría de favicon y document.write
+- Se inspeccionaron las tres páginas HTML: index.html y HTML/add_cortes.html declaran un icono PNG local; HTML/users.html no declara favicon y tampoco existe un archivo favicon.ico en el árbol del repositorio. La ausencia del enlace en users.html es un origen reproducible de la solicitud automática /favicon.ico y del 404 observado.
+- Se inspeccionó la única llamada document.write localizada en los módulos principales: JS/Frontend/ui.js, línea aproximada 16557, dentro de la generación de la ficha técnica en una ventana de impresión. El documento escrito contiene HTML/CSS estático; no incluye etiquetas script ni URLs externas. Esta llamada no coincide con la advertencia de Chrome sobre un script parser-blocking de origen cruzado insertado por document.write.
+- La advertencia mencionada se clasifica como procedente probablemente del runtime externo HtmlService de Google; no se modifica el runtime ni se elimina la llamada propia de impresión, que tiene un propósito distinto y no inyecta scripts externos.
+- Alcance de corrección: añadir en HTML/users.html el mismo icono PNG local ya usado por las otras páginas. No se crea un favicon.ico binario inexistente ni se cambia el flujo de impresión.
+- No se ejecutó navegador ni se confirmó la desaparición del 404; validación visual/Network pendiente.
