@@ -1531,7 +1531,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Parse completo admin.js y ui.js, bloques runAudit/reset parseados y comprobaciones estáticas de orden de reinicio/consolidación/guardado automático.
 - [ ] Probar en navegador real el botón de reinicio, varias páginas de inventario, estados en_uso/no_confirmada, asociaciones visibles y continuidad de auditoría.
 - [ ] Validar con Apps Script, Drive y Google Sheets reales en Beta autorizada; confirmar contenido real de LogosMarca y persistencia/lectura de asociaciones. No ejecutar sin autorización.
-- [ ] Revisión visual escritorio/móvil y Code Review final. No modificar estilos/animaciones de pestañas.
+- [x] Code Review estático final de los commits admin.js/UI: revisados los parches de implementación y los ajustes finales; cambios funcionales limitados a JS/Services/admin.js y JS/Frontend/ui.js, sin cambios en HTML/CSS ni en la rama base.
+- [ ] Revisión visual escritorio/móvil y flujo completo en navegador. No modificar estilos/animaciones de pestañas.
 - Sin POST ni deployment; Beta permanece cerrada. No se crearon suites permanentes ni se borraron filas/archivos remotos.
 
 
