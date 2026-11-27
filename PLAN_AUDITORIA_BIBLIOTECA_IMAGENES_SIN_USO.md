@@ -94,3 +94,9 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - PASS 1/1: se ejecutó el bloque real de procesamiento por archivo de handleSaveUnusedImagesInventory con A fallido y B válido; el resultado individual de A no interrumpió la confirmación e inserción de B.
 - PASS 1/1: clearDriveAuditState ejecutado con IndexedDB transaccional simulado; se eliminaron solo las claves de auditoría de la cuenta solicitante, se conservaron claves de otra cuenta y el inventario persistente, y se incrementó la generación local.
 - Pendiente: prueba en navegador real y revisión visual escritorio/móvil. Las simulaciones no acreditan Apps Script/Drive/Spreadsheet productivo. No deployment ni reactivación de Beta.
+
+
+### Revisión estática de diff — 2026-11-27
+- Comparación GitHub desde b59bcdd123f10dd4ac82062120dd99fcfe373971 hasta c08c82236cc9543dc9cb1a990860663ea79bfc01: código funcional limitado a admin.js (+171/-32), ui.js (+45/-6) e index.html (+1).
+- Parches de implementación inspeccionados. Respaldos exactos de los tres archivos verificados por SHA contra el baseline de la tarea. No se identificaron cambios funcionales ajenos al alcance.
+- Revisión visual en navegador escritorio/móvil pendiente; no hay evidencia de UI real. No Apps Script/Drive/Sheets, POST ni deployment.
