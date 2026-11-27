@@ -1670,8 +1670,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## GP-USERS-ID-SEQUENCE-MISMATCH-01 — ID existente incompatible con formato backend (2026-11-27)
 
-**Estado: PENDIENTE DE EVIDENCIA DE GOOGLE SHEETS.**
+**Estado: CORRECCIÓN DE FUENTE IMPLEMENTADA Y CODE REVIEW PASS; VALIDACIÓN INTEGRADA PENDIENTE.**
 
 - AUTH rechaza la creación porque el ID de la fila 2 de Users no coincide con el patrón configurado por getUserIdSequencePattern_().
-- No relajar validación, cambiar el prefijo, renumerar ni sobrescribir IDs existentes sin verificar el valor exacto de A2, su fórmula (si existe) y la fila de Users en __IdentifierSequenceConfig__.
-- Solicitar al propietario el valor/formula de A2 y la configuración de prefijo/padding/fórmula de la fila correspondiente. La hoja no fue leída ni modificada desde esta sesión.
+- Se confirmó que no existe una hoja __IdentifierSequenceConfig__; la tabla compartida contiene reservas de sufijos de Feedbacks y no es la configuración de Users.
+- AUTH ahora utiliza U- y 3 dígitos como fallback únicamente cuando no hay configuración central ni fórmulas históricas en Users.ID. Si hay fórmulas reconocibles, se sigue derivando el patrón desde ellas.
+- Diff exacto de Auth.js, parsing y harness aislado PASS: U-001/U-002 producen U-003; las protecciones de duplicados y formatos incompatibles siguen activas.
+- No se consultó la fórmula real de A2 ni se ejecutó Sheets/AUTH remoto. Validar la creación de un usuario de prueba autorizado en navegador conectado; no ejecutar deployment sin autorización separada.
