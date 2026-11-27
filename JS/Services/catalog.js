@@ -1645,10 +1645,12 @@ function handleGetCatalogData(payload = {}) {
           .map(row => mapCatalogVehicleRowForProjection_(row, cortesColumnMap, feedbackLikeEventCounts, categoryCounts))
           .filter(Boolean);
     }
-    // Los aportes append-only se proyectan sobre el contrato heredado de la ficha.
-    // La hoja ausente es compatible durante la migración gradual; un esquema presente pero inválido falla de forma segura.
+    // Copia física independiente; no contiene cortes reconstruidos desde AportesVehiculo.
+    const cortesPhysicalData = cortesData.map(vehicle => ({ ...vehicle }));
+    // La proyección ledger se conserva para el catálogo general.
     cortesData = projectVehicleContributionEvents_(cortesData, readVehicleContributionEvents_(spreadsheet));
     allData.cortes = cortesData;
+    allData.cortesPhysical = cortesPhysicalData;
     allData.categoryCounts = categoryCounts;
 
     // Crear y añadir la lista de categorías ordenada por popularidad
