@@ -606,3 +606,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Code Review estático concluido: `HTML/add_cortes.html` comparado bloque por bloque contra backup exacto (12 bloques de delta revisados); cambios en `JS/Frontend/ui.js` aislados a historial de detalle y mensajes de suplementarios; `JS/Frontend/main.js` sin cambios byte a byte.
 - Backups temporales HTML/ui/main eliminados tras revisión. Logs de auditoría/ChangesLog/task register actualizados.
 - Validación no incluye parsing, browser real, Android, despliegue ni operaciones remotas; quedan pruebas integradas pendientes.
+
+
+## GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — continuidad (2026-11-26)
+- Auditoría focal documentada en `Auditoria.txt`; tarea registrada en `Tareas_Activas.md`.
+- `JS/Services/catalog.js`: proyección de cortes ajustada para considerar únicamente tipos registrados, compactar slots, ordenar por útiles positivos (descendente; empate por posición física) y conservar orden físico si no hay útiles positivos; limpia campos de slots vacíos proyectados.
+- Revisión de `JS/Frontend/ui.js` preliminar: modal filtra por tipo registrado, consume slots proyectados y conserva índice físico para acciones. No se modificó UI porque no se ha aislado evidencia suficiente de un defecto adicional de contenido repetido. La asociación testigo requiere validar el contrato de proyección.
+- Pruebas simuladas conceptuales/estáticas; no se ejecutó runtime browser, Apps Script, POST, escrituras remotas ni deployment. Causa única del contenido duplicado aún no confirmada; tarea abierta.
