@@ -14280,6 +14280,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
     }
     const eligible = [];
     const associationMetadata = [];
+    const associationMetadataReady = new Set();
     let skippedCount = 0;
     for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
         const row = rows[rowNumber - 1] || [];
@@ -14305,7 +14306,10 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             folderPath: String(row[column("ubicacion_original")] || row[9] || row[column("ubicacion_actual")] || "")
         };
         eligible.push({ rowNumber, fileId, row, metadata });
-        if (metadata.fileName && metadata.mimeType.toLowerCase().startsWith("image/")) associationMetadata.push(metadata);
+        if (metadata.fileName && metadata.mimeType.toLowerCase().startsWith("image/") && metadata.folderPath) {
+            associationMetadata.push(metadata);
+            associationMetadataReady.add(fileId);
+        }
     }
     const associationByFileId = new Map();
     let associationBuildError = "";
@@ -14329,7 +14333,6 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
         while (row.length < headers.length) row.push("");
         const previousStatus = String(row[10] || "");
         const previousResult = String(row[column("resultado_inventario")] || "");
-        const nextStatus = previousStatus;
         const activeLocations = references.references.get(fileId);
         const isActive = references.references.has(fileId);
         const normalizedLocations = normalizeDriveAuditReferenceLocations_(
@@ -14364,7 +14367,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             set("asociacion_confianza", association.confidence);
             set("asociacion_candidatos_json", JSON.stringify(Array.isArray(association.candidates) ? association.candidates : []));
             associationVerifiedCount++;
-        } else if (associationBuildError) {
+        } else if (associationBuildError || !associationMetadataReady.has(fileId)) {
             set("asociacion_estado", "no_verificada");
         } else {
             set("asociacion_estado", "sin_coincidencia");
@@ -14705,12 +14708,21 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 const previousStatus = String(row[10] || "");
                 const previousResult = String(row[column("resultado_inventario") - 1] || "");
                 const autoReferenced = previousStatus === "en_uso" && previousResult === "referencia_activa_catalogo";
+                const manuallyProtected = previousStatus === "en_uso" && !autoReferenced;
                 const activeLocations = references.references.get(fileId);
                 const activelyReferenced = references.references.has(fileId);
-                if (!activelyReferenced && (currentIds.has(fileId) ||
-                    (!["sin_uso_detectado", "no_confirmada_en_ultima_auditoria"].includes(previousStatus) && !autoReferenced))) return;
+                if (manuallyProtected || (!activelyReferenced && (currentIds.has(fileId) ||
+                    (!["sin_uso_detectado", "no_confirmada_en_ultima_auditoria"].includes(previousStatus) && !autoReferenced)))) return;
                 try {
                     const reconciledRow = row.slice(0, headers.length);
+                    const association = associationByFileId.get(fileId);
+                    if (association) {
+                        reconciledRow[column("asociacion_estado") - 1] = association.status;
+                        reconciledRow[column("asociacion_confianza") - 1] = association.confidence;
+                        reconciledRow[column("asociacion_candidatos_json") - 1] = JSON.stringify(Array.isArray(association.candidates) ? association.candidates : []);
+                    } else if (associationBuildError) {
+                        reconciledRow[column("asociacion_estado") - 1] = "no_verificada";
+                    }
                     if (activelyReferenced) {
                         reconciledRow[column("estado") - 1] = "en_uso";
                         reconciledRow[column("resultado_inventario") - 1] = "referencia_activa_catalogo";
@@ -14719,7 +14731,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                         reconciledRow[column("detalle_resultado_inventario") - 1] = "Referencia activa detectada en el catálogo: " +
                             locations.map(location => location.sheet + (location.row ? " · fila " + location.row : "")).join("; ");
                         reconciledRow[column("error_organizacion") - 1] = "";
-                        if (previousStatus !== "en_uso" || previousResult !== "referencia_activa_catalogo") {
+                        const changed = reconciledRow.some((value, index) => String(value == null ? "" : value) !== String(row[index] == null ? "" : row[index]));
+                        if (changed) {
                             writeDriveInventoryRowVerified_(sheet, record.rowNumber, reconciledRow, headers, fileId,
                                 auditId, inventoryOperationId, "en_uso", "referencia_activa_catalogo");
                             results.push({ fileId, status: "en_uso", message: "Se encontró una referencia activa del catálogo." });
