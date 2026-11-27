@@ -1205,3 +1205,17 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Code Review del commit 02537a06538851b4f011c9b764775cf750a8f880: PASS. El diff contiene únicamente el payload de createUser.
 - Parsing de los dos bloques script inline: PASS. Verificación estática de actor/token del mismo snapshot, conservación de newUser y payload updateUser sin cambios: PASS.
 - No se ejecutó navegador, mutación AUTH real ni deployment. La creación requiere confirmación integrada del usuario; el comportamiento de edición se mantiene pendiente de prueba separada si continúa fallando.
+
+
+### F-53 — GP-USERS-UPDATE-ACTOR-TARGET-01 (2026-11-27)
+
+**Incidencia reportada:** el formulario de HTML/users.html también presenta fallos al editar información de una cuenta.
+
+**Auditoría estática previa a cambios:**
+- HTML/users.html, handleUserFormSubmit(): la rama updateUser envía userId como ID de la cuenta objetivo y sessionToken de submittingSession.
+- JS/Services/Auth.js: el middleware doPost recupera el actor de sesión para updateUser llamando getCachedSharedSessionActor_(payload.userId, payload.sessionToken).
+- JS/Services/SharedSessionActor.js: getCachedSharedSessionActor_ valida que el userId suministrado coincida con la identidad asociada al token; loadSharedSessionActorFromSpreadsheet_ rechaza explícitamente cuando la identidad no corresponde al token.
+- JS/Services/Auth.js, handleUpdateUser(): obtiene el actor autenticado desde __sharedSessionActor, pero también utiliza payload.userId como ID objetivo. El contrato actual mezcla actor y objetivo; al editar una cuenta distinta, el ID objetivo no coincide con el token del administrador.
+- El flujo requiere dos campos separados: userId para el actor autenticado y targetUserId para la cuenta objetivo. La mutación conserva el control RBAC de handleUpdateUser() y el objetivo no se deriva de datos de sesión.
+- Alcance: actualizar únicamente el payload de updateUser en HTML/users.html y la lectura del ID objetivo en handleUpdateUser() en JS/Services/Auth.js. No modificar permisos, roles, controles de sesión, cambios de contraseña ni otras acciones.
+- No se ejecutará AUTH remoto ni deployment; el cambio de fuente requiere validación integrada posterior y actualización coordinada del servicio AUTH antes de uso real.
