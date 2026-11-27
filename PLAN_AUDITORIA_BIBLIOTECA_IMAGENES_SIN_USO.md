@@ -135,3 +135,18 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - La URL visual derivada se completa solo si falta; las URLs válidas se conservan.
 - Los lotes incrementales capturan solo IDs de referencia; la consolidación final captura ubicaciones para actualizar las filas históricas sin aumentar memoria en cada lote.
 - PASS adicional: cero candidatos con digest correcto (1/1), asociación sin coincidencia/no verificada (2/2), URL visual válida preservada (1/1).
+
+
+## Revisión de continuidad y registro incremental — 2026-11-27
+
+### Incidencias incorporadas
+- La auditoría Drive debe registrar cada imagen individual sin uso en el inventario durante el recorrido, no limitarse a guardar un aviso de registro pendiente.
+- Las continuaciones con cursor de versión anterior fallan por una validación de `scanVersion`; debe diseñarse una recuperación segura que preserve resultados acumulados y evite reutilizar tokens incompatibles.
+- Revisar el editor rich-text: la desactivación de negrita debe retirar el formato, sin producir un estilo visual más pesado.
+- Revisar el flujo `add_cortes`: mensajes de éxito duplicados y transición de etapa, verificando que se ejecuten una sola vez tras confirmar el guardado.
+
+### Ejecución y controles
+- Implementar por separado y con cambios acotados, sin desplegar producción.
+- Mantener idempotencia, deduplicación global, validación de referencias activas, protección de archivos históricos y guardado reanudable.
+- Registrar evidencia de validación; no afirmar pruebas ejecutadas si no se ejecutaron.
+- Rama objetivo: `GPSpedia2.2.5_work`; nunca modificar `main`.
