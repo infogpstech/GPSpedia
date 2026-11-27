@@ -1549,3 +1549,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Confirmar persistencia de página/metadata y pageCount de ADMIN previa a la respuesta que consume el frontend.
 - [x] Actualizar plan, auditoría, ChangesLogs y checkpoint; corregir el pendiente desactualizado.
 - [ ] Verificar navegador, IndexedDB real, error/reintento y runtime Apps Script/Drive/Sheets Beta autorizada. Sin despliegue ni escritura remota no autorizada.
+
+
+### GP-ADMIN-DRIVE-AUDIT-REVIEW-05
+- [x] Revisión estática de fallback rich-text: registrar riesgo de selección mixta/cross-wrapper y necesidad de browser.
+- [x] Revisión estática add_cortes: confirmar guarda por opId y controles complementarios; browser recovery pendiente.
+- [ ] Validación real de selecciones parciales/múltiples, toggling bold y flujo add_cortes con recuperación en navegador. No se dispone de navegador conectado ni Apps Script remoto autorizado en esta sesión.
