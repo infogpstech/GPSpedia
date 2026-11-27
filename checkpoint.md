@@ -648,3 +648,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - 12 invariantes estáticos PASS; allowlist positiva y collector de referencias flotantes inspeccionados. Asociación e inventario siguen limitados a clasificación Sin uso detectado.
 - Integración revisada parcialmente: resultados asociación adjuntos por ID; revalidación individual incluye controles de referencias, protección, historial y estado de auditabilidad.
 - No ejecutar Apps Script real, fixture runtime, UI/browser o Drive/Sheets en esta sesión. Tarea abierta.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / correcciones UI y contención ADMIN
+- Frontend: el explorador renderiza tarjetas exclusivamente para archivos clasificados «Sin uso detectado», evitando que archivos «En uso», históricos o no verificables se muestren en la galería de imágenes sin uso.
+- ADMIN: reserva de ScriptLock espera hasta 3 segundos; limpieza hasta 1.5 segundos, conservando el mecanismo de guarda y TTL.
+- CSS móvil: workspace vertical; consola ~25%, contenido de pestañas ~75%, ambas áreas a ancho completo; línea de comando sin contenedor visual independiente. Pestañas mantienen estilo/transiciones base, botones en cuadrícula compacta.
+- Revisión estática y simulaciones pendientes; sin runtime Apps Script/Drive/Sheets, navegador ni deployment.

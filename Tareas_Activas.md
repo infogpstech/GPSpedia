@@ -1425,3 +1425,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Verificar allowlist positiva de referencias de catálogo (Cortes/Tutoriales/Relay/PYS) y captura de imágenes flotantes.
 - [x] Revisar integración: asociación se calcula exclusivamente sobre clasificados Sin uso detectado; resultado adjunto por fileId.
 - [ ] Pruebas unitarias/runtime con fixtures y ejecución en Apps Script real pendientes.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / correcciones UI y contención ADMIN
+- Frontend: el explorador renderiza tarjetas exclusivamente para archivos clasificados «Sin uso detectado», evitando que archivos «En uso», históricos o no verificables se muestren en la galería de imágenes sin uso.
+- ADMIN: reserva de ScriptLock espera hasta 3 segundos; limpieza hasta 1.5 segundos, conservando el mecanismo de guarda y TTL.
+- CSS móvil: workspace vertical; consola ~25%, contenido de pestañas ~75%, ambas áreas a ancho completo; línea de comando sin contenedor visual independiente. Pestañas mantienen estilo/transiciones base, botones en cuadrícula compacta.
+- Revisión estática y simulaciones pendientes; sin runtime Apps Script/Drive/Sheets, navegador ni deployment.

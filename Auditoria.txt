@@ -855,3 +855,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Inspección del colector collectCatalogImageReferences(): aplica allowlist positiva de hojas Cortes, Tutoriales, Relay y Problemas y Soluciones, y agrega referencias de imágenes flotantes. No recorre hojas operativas para el inventario de uso. collectActiveDriveReferences() mantiene una implementación distinta de escaneo amplio, pero no es el colector invocado por el flujo principal de auditoría de imágenes.
 - Integración: la asociación se calcula para unusedAuditFiles y se adjunta por fileId al resultado; la revalidación del registro individual comprueba referencia activa, estado de protección, historial y auditoría no verificable antes de confirmar.
 - Pruebas de Apps Script/runtime con datos reales aún no ejecutadas. Las 12 comprobaciones son verificaciones estáticas de invariantes del código, no casos unitarios que ejecuten el algoritmo.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / correcciones UI y contención ADMIN
+- Frontend: el explorador renderiza tarjetas exclusivamente para archivos clasificados «Sin uso detectado», evitando que archivos «En uso», históricos o no verificables se muestren en la galería de imágenes sin uso.
+- ADMIN: reserva de ScriptLock espera hasta 3 segundos; limpieza hasta 1.5 segundos, conservando el mecanismo de guarda y TTL.
+- CSS móvil: workspace vertical; consola ~25%, contenido de pestañas ~75%, ambas áreas a ancho completo; línea de comando sin contenedor visual independiente. Pestañas mantienen estilo/transiciones base, botones en cuadrícula compacta.
+- Revisión estática y simulaciones pendientes; sin runtime Apps Script/Drive/Sheets, navegador ni deployment.
