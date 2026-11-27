@@ -1490,7 +1490,6 @@ function sameCatalogVehicleId_(left, right) {
 function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCounts, categoryCounts) {
     const vehicle = mapRowToObject(row, columnMap, IMAGE_FIELDS_CORTES);
     if (!vehicle) return null;
-    vehicle.id = normalizeCatalogVehicleId_(vehicle.id, "Fila de Cortes");
     for (let index = 1; index <= 3; index++) {
         const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
         if (eventCount) {
@@ -1777,12 +1776,12 @@ function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
     const feedbackLikeEventCounts = readFeedbackLikeEventCounts_(spreadsheet);
     const targetVehicle = mapCatalogVehicleRowForProjection_(fullRow, columnMap, feedbackLikeEventCounts, {});
     if (!targetVehicle) throw new Error("No se pudo leer la fila vigente del vehículo solicitado.");
+    targetVehicle.id = requestedId;
     const vehicles = ids.map((row, index) => {
-        const rawId = row && row[0];
-        if (rawId === "" || rawId === null || rawId === undefined) return null;
-        const id = normalizeCatalogVehicleId_(rawId, "Fila de Cortes");
+        const rawId = String(row && row[0] == null ? "" : row[0]).trim();
+        if (!rawId) return null;
         if (index === targetIndex) return targetVehicle;
-        return { id, vin: vinRows[index] ? vinRows[index][0] : null };
+        return { id: rawId, vin: vinRows[index] ? vinRows[index][0] : null };
     }).filter(Boolean);
     const projected = projectVehicleContributionEvents_(vehicles, readVehicleContributionEvents_(spreadsheet));
     const targetMatches = projected.filter(vehicle => vehicle && sameCatalogVehicleId_(vehicle.id, requestedId));
