@@ -1364,7 +1364,7 @@ function getPreparedExistingVehicleRow_(sheet, vehicleId, snapshot) {
     const rowValues = snapshot.rowValues.length === lastColumn
         ? snapshot.rowValues.slice()
         : sheet.getRange(snapshot.rowIndex, 1, 1, lastColumn).getValues()[0];
-    if (String(rowValues[COLS_CORTES.id - 1] == null ? "" : rowValues[COLS_CORTES.id - 1]).trim() !== String(vehicleId).trim()) {
+    if (!sameCortesVehicleId_(rowValues[COLS_CORTES.id - 1], vehicleId)) {
         throw new Error("El vehículo cambió después de su localización; no se realizó ninguna modificación.");
     }
     return { rowIndex: snapshot.rowIndex, rowValues: rowValues };
@@ -2731,8 +2731,8 @@ function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentV
 
 function appendVehicleContributionEvent_(options) {
     options = options && typeof options === "object" ? options : {};
-    const vehicleId = String(options.vehicleId || "").trim();
-    const canonicalVehicleId = normalizeCortesVehicleId_(vehicleId, "Aporte append-only");
+    const vehicleId = normalizeCortesVehicleId_(options.vehicleId, "Aporte append-only");
+    const canonicalVehicleId = vehicleId;
     const opId = String(options.opId || "").trim();
     const kind = String(options.kind || "").trim().toLowerCase();
     const payload = options.payload;
@@ -3979,7 +3979,7 @@ function findExistingVinRegistrationNoop_(payload) {
     const ids = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues().flat();
     const matches = [];
     ids.forEach((id, index) => {
-        if (String(id == null ? "" : id).trim() === vehicleId) matches.push(index + 2);
+        if (sameCortesVehicleId_(id, vehicleId)) matches.push(index + 2);
     });
     // Una fila ambigua debe continuar por la ruta protegida, nunca producir un falso replay.
     if (matches.length !== 1) return null;
@@ -4025,7 +4025,7 @@ function handleAddVinToVehicleLocked(payload, collaboratorName) {
     const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
     const matches = [];
     for (let i = 0; i < data.length; i++) {
-        if (String(data[i][COLS_CORTES.id - 1] == null ? "" : data[i][COLS_CORTES.id - 1]).trim() === vehicleId) matches.push(i);
+        if (sameCortesVehicleId_(data[i][COLS_CORTES.id - 1], vehicleId)) matches.push(i);
     }
     if (matches.length !== 1) return { status: "error", message: matches.length ? "El ID del vehículo está duplicado." : "Vehículo no encontrado." };
     const row = data[matches[0]];
