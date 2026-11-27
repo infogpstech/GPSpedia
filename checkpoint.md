@@ -983,3 +983,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - El correo se guarda sin flujo de verificación de propiedad. Publicar frontend y AUTH coordinadamente y validar después.
 - Error de creación pendiente: ID en Users fila 2 no coincide con patrón backend. No cambiar IDs ni validación hasta recibir valor exacto de A2, fórmula si existe y configuración de __IdentifierSequenceConfig__ (prefijo/padding/fórmula). Hoja no consultada ni modificada.
 - Tareas_Activas.md es el registro operativo disponible; Tareas.txt no existe en esta rama.
+
+
+## Continuidad — GP-USERS-ID-SEQUENCE-MISMATCH-01 (2026-11-27)
+- Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5 no fue modificada; las operaciones de escritura de esta tarea se dirigieron explícitamente a la rama de trabajo.
+- El propietario confirmó que no existe una hoja independiente __IdentifierSequenceConfig__. La tabla compartida corresponde a reservas (reservationId, sheet, column, reservedSuffix, baseSuffix, createdAt), con un registro de Feedbacks; no configura el formato de Users.
+- Auditoría de Auth.js: si no hay configuración central ni fórmulas históricas en Users.ID, getUserIdSequencePattern_() usaba fallback USR-/4. Se cambió únicamente a U-/3. Si hay fórmulas históricas compatibles, el backend conserva la derivación original desde esas fórmulas.
+- Commit funcional: 5e336153ea8bc791ab441d60e4e7ad323a744801. Diff: una sola línea de JS/Services/Auth.js.
+- Backups exactos previos: Olds/Backups/GP-USERS-ID-SEQUENCE-MISMATCH-01-20261127/ (Auth.js, Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md y checkpoint.md); pendientes de eliminación tras el cierre documental y Code Review.
+- Validación local: parsing completo de Auth.js PASS; comparación exacta contra backup PASS; harness sin archivos: U-001/U-002 → U-003, duplicado rechazado, formato inválido rechazado y patrón histórico de fórmula preservado. Code Review estático PASS.
+- No se consultó la fórmula real de A2 ni se ejecutó navegador, POST AUTH, lectura/escritura de Google Sheets ni deployment. La validación integrada de alta de usuario queda pendiente en entorno conectado. No modificar IDs existentes.
