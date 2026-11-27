@@ -1475,7 +1475,7 @@ function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
     const events = rows.map((row, index) => {
         const event = {
             rowIndex: index + 2, eventId: String(row[0] || "").trim(), opId: String(row[1] || "").trim(),
-            vehicleId: String(row[2] || "").trim(), operationHash: String(row[3] || "").trim().toLowerCase(),
+            vehicleId: normalizeFeedbackVehicleId_(row[2], "AportesVehiculo"), operationHash: String(row[3] || "").trim().toLowerCase(),
             kind: String(row[4] || "").trim(), payloadJson: String(row[5] || ""),
             actorId: String(row[6] || "").trim(), createdAt: String(row[8] || "").trim(),
             status: String(row[9] || "").trim().toLowerCase(), supersedesEventId: String(row[10] || "").trim()
@@ -5310,7 +5310,7 @@ function findUniqueCortesVehicleForPys_(value) {
     if (matches.length !== 1) {
         throw new Error("vehicleId debe corresponder a exactamente un registro de Cortes.");
     }
-    return matches[0].id;
+    return requestedId;
 }
 
 function persistModelosAsociados_(sheet, rowNumber, values) {
