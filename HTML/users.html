@@ -280,8 +280,9 @@
             <p><strong>Nombre de Usuario:</strong> <span id="profile-username"></span></p>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <p style="margin: 0;"><strong>Nombre Completo:</strong> <span id="profile-fullname"></span></p>
-                <button id="edit-name-btn" class="btn btn-warning btn-sm">Editar</button>
+                <button id="edit-name-btn" class="btn btn-warning btn-sm">Editar información</button>
             </div>
+            <p><strong>Correo Electrónico:</strong> <span id="profile-email"></span></p>
             <p><strong>Rol:</strong> <span id="profile-role"></span></p>
             <button id="change-password-btn" class="btn btn-primary">Cambiar Contraseña</button>
         </div>
@@ -320,6 +321,10 @@
                     <label for="fullname">Nombre Completo</label>
                     <input type="text" id="fullname" required>
                 </div>
+                <div class="form-group" id="user-email-group">
+                    <label for="user-email">Correo Electrónico (opcional)</label>
+                    <input type="email" id="user-email" maxlength="254" autocomplete="email">
+                </div>
                 <div class="form-group">
                     <label for="username-modal">Nombre de Usuario</label>
                     <input type="text" id="username-modal" required>
@@ -345,7 +350,11 @@
             <form id="name-form">
                 <div class="form-group">
                     <label for="new-fullname">Nombre Completo</label>
-                    <input type="text" id="new-fullname" required>
+                    <input type="text" id="new-fullname" maxlength="120" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-email">Correo Electrónico (opcional)</label>
+                    <input type="email" id="new-email" maxlength="254" autocomplete="email">
                 </div>
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             </form>
@@ -457,7 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function displayProfile() {
     document.getElementById('profile-username').textContent = currentUser.Nombre_Usuario;
-    document.getElementById('profile-fullname').textContent = currentUser.Nombre_Completo; // Corregido
+    document.getElementById('profile-fullname').textContent = currentUser.Nombre_Completo || '';
+    document.getElementById('profile-email').textContent = currentUser.Correo_Electronico || 'No registrado';
     document.getElementById('profile-role').textContent = normalizeUserRoleName(currentUser.Privilegios);
 }
 
@@ -593,7 +603,8 @@ function setupEventListeners() {
         window.registerUserModalOverlay(passwordModal);
     });
     document.getElementById('edit-name-btn').addEventListener('click', () => {
-        document.getElementById('new-fullname').value = currentUser.Nombre_Completo;
+        document.getElementById('new-fullname').value = currentUser.Nombre_Completo || '';
+        document.getElementById('new-email').value = currentUser.Correo_Electronico || '';
         const nameModal = document.getElementById('name-modal');
         nameModal.style.display = 'block';
         window.registerUserModalOverlay(nameModal);
@@ -638,11 +649,15 @@ function openUserModal(user = null) {
             title.textContent = 'Editar Usuario';
             document.getElementById('user-id').value = user.ID;
             document.getElementById('fullname').value = user.Nombre_Completo;
+            document.getElementById('user-email').value = user.Correo_Electronico || '';
+            document.getElementById('user-email-group').style.display = 'none';
             document.getElementById('username-modal').value = user.Nombre_Usuario;
             document.getElementById('username-modal').disabled = true; // PROHIBIDO cambiar username
         } else {
             title.textContent = 'Crear Nuevo Usuario';
             document.getElementById('user-id').value = '';
+            document.getElementById('user-email').value = '';
+            document.getElementById('user-email-group').style.display = 'block';
             document.getElementById('username-modal').disabled = false;
         }
 
@@ -680,6 +695,7 @@ async function handleUserFormSubmit(e) {
         Privilegios: document.getElementById('role').value,
         Password: document.getElementById('user-password').value,
     };
+    if (!userId) userData.Correo_Electronico = document.getElementById('user-email').value.trim();
     const submittingSession = currentUser ? {
         userId: String(currentUser.ID || currentUser.id || ''),
         sessionToken: String(currentUser.SessionToken || '')
@@ -973,17 +989,22 @@ async function handleEditNameSubmit(e) {
         submitBtn.disabled = true;
 
         const userId = currentUser.ID || currentUser.id;
+        const newEmail = document.getElementById('new-email').value.trim();
         await postToAction('updateProfile', {
             userId: userId,
-            updates: { Nombre_Completo: newFullname },
+            updates: {
+                Nombre_Completo: newFullname,
+                Correo_Electronico: newEmail
+            },
             sessionToken: currentUser.SessionToken
         });
 
         currentUser.Nombre_Completo = newFullname;
+        currentUser.Correo_Electronico = newEmail;
         localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
         displayProfile();
 
-        alert('Nombre actualizado correctamente.');
+        alert('Información del perfil actualizada correctamente.');
         if (window.closeUserModalOverlay) window.closeUserModalOverlay('name-modal');
         else document.getElementById('name-modal').style.display = 'none';
     } catch (error) {
