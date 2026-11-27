@@ -73,7 +73,7 @@ function extractDriveFileIds(value) {
     const candidates = [source, decoded];
     const ids = new Set();
     const patterns = [
-        /(?:[?&]|\b)id\s*=\s*["']?([a-zA-Z0-9_-]{20,})/gi,
+        \s*=\s*["']?([a-zA-Z0-9_-]{20,})/gi,
         /(?:\/d\/|\/file\/d\/|\/folders\/)([a-zA-Z0-9_-]{20,})/gi
     ];
     candidates.forEach(text => {
