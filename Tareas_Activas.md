@@ -1695,3 +1695,15 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Ejecutar de nuevo la auditoría/inventario en entorno autorizado y usar el nuevo mensaje para identificar y corregir la causa real en Google Sheets; validar la persistencia antes de cerrar.
 - No se ejecutaron escrituras remotas ni despliegues. Beta permanece cerrada; no crear suites ni archivos de prueba.
 - GP-ADMIN-DRIVE-REGISTRO-ERROR-02 y la causa de persistencia remota permanecen pendientes de validación real.
+
+
+### GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — falso positivo en auditoría Drive (2026-11-27)
+**Estado: IMPLEMENTACIÓN EN CURSO; runtime Google Sheets/Drive y navegador pendiente.**
+- [x] Auditar allowlist, extracción de IDs, snapshots, clasificación por ID y controles de ejecución; registrar F-52.
+- [x] Respaldos exactos previos de los archivos funcionales y registros documentales.
+- [ ] Normalizar URL/HTML entities/encoding para reconocer ID de recurso en variantes públicas y HTML.
+- [ ] Completar las ubicaciones de referencia de Tutoriales, Relay y PyS, además de Cortes y LogosMarca.
+- [ ] Versionar snapshot/cursor para invalidar capturas previas a la corrección.
+- [ ] Añadir pausa reanudable en frontera de lote, sin descartar cursor, y preservar reinicio desde cero.
+- [ ] Pruebas aisladas del extractor, parsing, diff contra backups y Code Review.
+- [ ] Validación integrada de hojas reales, runtime Drive/Sheets y navegador autorizados; Beta permanece cerrada.
