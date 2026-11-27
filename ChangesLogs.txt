@@ -2059,3 +2059,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Comparación estática del diff: admin.js limitado a extractDriveFileIds(), versión del escaneo y mapa de ubicaciones de referencia; ui.js limitado al control de pausa y estado de frontera de lote.
 - Pruebas aisladas del extractor 8/8 PASS; sin parser completo ni prueba de navegador/runtime.
 - Backups temporales eliminados tras revisión estática; no se modificó la rama base. Validación integrada pendiente.
+
+
+2026-11-27 | GP-ADMIN-IMAGE-REFERENCE-THUMBNAIL-URLS-02 — ampliación de formatos
+- JS/Services/admin.js: extracción ampliada para parámetros id/docid/fileid, rutas thumbnail/thumb y variantes Googleusercontent/Drive; se conserva la normalización HTML y percent-encoding. Scan version v3-thumbnail-urls para invalidar referencias previas.
+- Los modificadores de tamaño/redimensionado (sz, s, w, h) no cambian el ID base de la imagen. Pruebas integradas aún pendientes.
