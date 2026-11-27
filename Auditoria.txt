@@ -1277,3 +1277,13 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Respaldos exactos creados para Auth.js y los cuatro registros documentales en Olds/Backups/GP-USERS-ID-SEQUENCE-MISMATCH-01-20261127/. Se eliminarán tras finalizar Code Review y la actualización documental.
 - No se ejecutó navegador, POST AUTH, escritura/lectura real de Google Sheets ni deployment. No se confirmó la fórmula de A2 en la hoja remota; si existen fórmulas reconocibles, la función conserva su comportamiento histórico y usa el patrón de esas fórmulas en vez del fallback.
 - La rama base GPSpedia2.2.5 no fue objetivo de ninguna operación de escritura; todos los cambios se dirigieron explícitamente a GPSpedia2.2.5_work.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-REGISTRO-ERROR-03 — pérdida de diagnóstico en reintento de lectura
+- Nueva evidencia del propietario: el registro individual vuelve a fallar en la fase «escritura y lectura de confirmación en Imagenes_Reemplazadas» con IMAGE_INVENTORY_WRITE_FAILED; el mensaje recibido no identifica columnas discrepantes.
+- Auditoría enfocada de JS/Services/admin.js: writeDriveInventoryRowVerified_() compara identidad, auditoría, operación, estado, ubicación y ocho campos de metadatos. La comparación por columnas ya existe en la fuente actual.
+- Hallazgo adicional: después del primer fallo de writeAndVerify(), la lectura de reconciliación se ejecuta dentro de try/catch y el catch(readError) está vacío. Si esa lectura falla, su causa se descarta; el siguiente intento no conserva el diagnóstico del primer read-back.
+- Se inspeccionó el wrapper withDriveAuditErrorContext_(), el catch individual de handleSaveUnusedImagesInventory(), la generación de metadatos lastUpdated en handleAuditDriveImagesInCortesCore_() y la propagación del resultado en JS/Frontend/ui.js. El procesamiento continúa por archivo y el frontend muestra item.message; no se identificó una truncación demostrable.
+- No se atribuye la causa a una versión desactualizada del despliegue: el propietario confirmó que publicó la última versión de ADMIN del repositorio.
+- Decisión: no relajar comparaciones ni marcar como confirmada una escritura no verificada. Hace falta conservar y exponer por separado firstError, readError y retryError, además de identificar el campo/etapa cuando el fallo sea de lectura y no una discrepancia de valores.
+- Alcance pendiente: completar auditoría de dependencias del bloque, implementar el diagnóstico acumulado con respaldo exacto de admin.js, realizar Code Review y pruebas aisladas en memoria. No se ejecutó Apps Script/Sheets/Drive remoto ni deployment; Beta permanece cerrada.
