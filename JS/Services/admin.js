@@ -2051,7 +2051,8 @@ function doPostInternal_(e) {
                 // Todas las auditorías escriben en la misma hoja Imagenes_Reemplazadas.
                 // La guarda debe ser global para evitar que dos auditId reserven la misma fila.
                 response = withDriveAuditErrorContext_("saveUnusedImagesInventory",
-                    payload && payload.mode === "organize" ? "organización de archivos" : "validación y persistencia individual",
+                    payload && payload.mode === "organize" ? "organización de archivos" :
+                    payload && payload.mode === "reconcile_existing" ? "reconciliación previa del inventario" : "validación y persistencia individual",
                     () => withSharedReplacedImagesInventoryGuard_(() =>
                         payload && payload.mode === "organize"
                             ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
@@ -14298,7 +14299,8 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
         const status = String(row[10] || "");
         const result = String(row[column("resultado_inventario")] || "");
         const autoInUse = status === "en_uso" && result === "referencia_activa_catalogo";
-        if (!["sin_uso_detectado", "no_confirmada_en_ultima_auditoria"].includes(status) && !autoInUse) continue;
+        const manualInUse = status === "en_uso" && !autoInUse;
+        if (!["sin_uso_detectado", "no_confirmada_en_ultima_auditoria"].includes(status) && !autoInUse && !manualInUse) continue;
         const metadata = {
             fileId,
             fileName: String(row[6] || ""),
@@ -14347,14 +14349,17 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
                 changed = true;
             }
         };
+        const manualInUse = previousStatus === "en_uso" && previousResult !== "referencia_activa_catalogo";
         if (isActive) {
-            set("estado", "en_uso");
-            set("resultado_inventario", "referencia_activa_catalogo");
-            set("detalle_resultado_inventario", "Referencia activa detectada en el catálogo: " +
-                normalizedLocations.map(location => location.sheet + (location.row ? " · fila " + location.row : "")).join("; "));
-            set("error_organizacion", "");
+            if (!manualInUse) {
+                set("estado", "en_uso");
+                set("resultado_inventario", "referencia_activa_catalogo");
+                set("detalle_resultado_inventario", "Referencia activa detectada en el catálogo: " +
+                    normalizedLocations.map(location => location.sheet + (location.row ? " · fila " + location.row : "")).join("; "));
+                set("error_organizacion", "");
+            }
             activeReferenceCount++;
-        } else {
+        } else if (!manualInUse) {
             set("estado", "no_confirmada_en_ultima_auditoria");
             set("resultado_inventario", "pendiente_revalidacion");
             set("detalle_resultado_inventario", "No se encontró una referencia activa en el catálogo. Pendiente de confirmar la existencia y clasificación mediante el nuevo recorrido de Drive.");
