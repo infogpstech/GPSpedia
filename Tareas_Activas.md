@@ -1323,3 +1323,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Code review: comparación contra backup confirmó que el único delta de código es la allow-list de la validación. Sin cambios en frontend, AUTH, ADMIN, ledger o persistencia.
 - Validación: inspección estática del flujo actor confiable/handler y comparación exacta; no se añadieron suites ni pruebas al repositorio (fase Beta cerrada). Apps Script remoto, Sheets/Drive y navegador real no ejecutados.
 - No se realizó deployment.
+
+
+### Cierre — GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01
+- **Estado:** COMPLETADA EN FUENTE; validación de integración diferida.
+- Code review: el diff de `JS/Services/write.js` contiene únicamente los dos nombres de clave agregados a la allow-list. Actor autenticado continúa derivándose de la sesión y consumiéndose únicamente desde `__sharedSessionActor`; identidad, epoch, rol y concordancia userId permanecen comprobados.
+- Validación estática: 17 claves de allow-list verificadas; ambas variantes de actor admitidas como campos, alias simple no utilizado como identidad; protección de vídeo y checks de actor preservados.
+- Backup exacto comparado y eliminado tras revisión. No se crearon tests ni workflows, no hubo POST remoto ni deployment.
+- Rama base no modificada.
