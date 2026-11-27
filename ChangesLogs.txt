@@ -2016,3 +2016,14 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No se alteraron permisos, roles ni la validación del actor confiable __sharedSessionActor.
 - Code Review: comparación exacta contra respaldos, parsing de HTML/scripts inline y Auth.js, y verificaciones estáticas PASS.
 - No se ejecutó navegador, POST AUTH real ni deployment.
+
+
+2026-11-27 | GP-USERS-PROFILE-EMAIL-01 — registro y actualización de correo electrónico
+- HTML/users.html (aprox. líneas 283–285, 324–326, 349–357, 467–470, 607, 652–660, 698 y 980–1007): se muestra el correo en Mi Perfil; el diálogo de edición permite actualizar nombre y correo; el formulario de creación agrega el campo opcional Correo Electrónico y lo envía en newUser.Correo_Electronico. El campo del modal administrativo permanece oculto al editar una cuenta existente.
+- JS/Services/Auth.js (aprox. líneas 3317–3344, 3430–3455 y 3505–3528): el normalizador de perfil permite Correo_Electronico con validación de texto, formato y longitud máxima de 254 caracteres; se agrega escritura verificada en COLS_USERS.Correo_Electronico; updateProfile conserva la autorización para editar únicamente el perfil del actor.
+- La normalización y persistencia de Correo_Electronico en createUser ya existían en AUTH; el formulario frontend ahora envía el campo.
+- No se agregó verificación de propiedad del correo ni se alteró el flujo de recuperación de contraseña.
+- No se ejecutaron POST, escrituras remotas ni deployment.
+
+2026-11-27 | GP-USERS-ID-SEQUENCE-MISMATCH-01 — ID existente incompatible con formato configurado
+- AUTH rechaza createUser porque el valor de ID en Users fila 2 no coincide con el prefijo/secuencia configurados. La resolución se mantiene pendiente de confirmar el valor y fórmula de A2 y la fila de Users en __IdentifierSequenceConfig__. No se relajó la validación ni se modificaron IDs.
