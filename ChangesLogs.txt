@@ -1741,3 +1741,13 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Modificación: se agregaron `__sharedSessionActor` y `_sharedSessionActor` a la allow-list de propiedades para que la estructura interna de sesión no sea rechazada.
 - La derivación y validación del actor confiable, la persistencia, el ledger, los IDs idempotentes y la materialización de la fila del vehículo no fueron modificados.
 - Validación: comparación con respaldo exacto y revisión estática de la autorización; integración remota/deployment no ejecutados.
+
+
+### 2026-11-26 — GP-ADD-CUT-WIZARD-UX-NAV-01 (implementación parcial)
+- `HTML/add_cortes.html`: mensajes de confirmación de registro unificados en «Corte agregado con éxito»; los fallos de registro muestran «No se pudo agregar el corte, intenta más tarde». Errores detallados del submit se registran en consola.
+- `HTML/add_cortes.html`: la limpieza local no condiciona el avance a etapa 3; si WRITE confirma y la gestión postcommit falla, se registra la incidencia y se avanza a etapa suplementaria.
+- `HTML/add_cortes.html`: se eliminaron notificaciones de verificación de proyección tras confirmar suplementos; envío exitoso redirige al catálogo. Mensajes de recuperación suplementaria redundantes suprimidos; errores de reconciliación se registran.
+- `HTML/add_cortes.html`: retorno desde etapa suplementaria a etapa 2 limpia campos e imágenes guardadas de etapa de corte; las otras rutas de retroceso mantienen datos.
+- `HTML/add_cortes.html`: favicon explícito con icono PNG existente del proyecto para evitar fallback de solicitud favicon.ico desde esta página.
+- `JS/Frontend/ui.js`: al abrir modal de detalle desde vista no-modal, se añade una entrada de historial browser modalOpen para que back/gesto cierre la ficha en lugar de abandonar la aplicación.
+- No se ha ejecutado browser real, POST, escritura remota, deployment ni suite de pruebas; Beta cerrada.
