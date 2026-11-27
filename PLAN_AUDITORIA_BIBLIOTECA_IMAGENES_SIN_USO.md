@@ -128,3 +128,10 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 ### Pendiente / límites
 - Prueba de navegador e IndexedDB real, revisión visual escritorio/móvil y ejecución autorizada de Apps Script/Drive/Sheets en Beta. Las pruebas realizadas usan mocks en memoria y no prueban persistencia remota.
 - No se borran filas de Imagenes_Reemplazadas ni archivos Drive. No POST ni deployment. Beta sigue cerrada.
+
+
+### Ajustes finales — 2026-11-27
+- La asociación histórica queda diferenciada: sin_coincidencia si hay metadatos pero no hay candidato; no_verificada si faltan metadatos. En el segundo caso no se destruyen candidatos previos.
+- La URL visual derivada se completa solo si falta; las URLs válidas se conservan.
+- Los lotes incrementales capturan solo IDs de referencia; la consolidación final captura ubicaciones para actualizar las filas históricas sin aumentar memoria en cada lote.
+- PASS adicional: cero candidatos con digest correcto (1/1), asociación sin coincidencia/no verificada (2/2), URL visual válida preservada (1/1).
