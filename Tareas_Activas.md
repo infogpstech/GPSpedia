@@ -1719,3 +1719,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Pruebas aisladas de extractor: 8/8 PASS.
 - [x] Comparación estática del diff: cambios funcionales confinados al extractor/snapshot y control de pausa.
 - [ ] Validar sintaxis de archivos completos, navegador y referencias reales en Sheets/Drive; confirmar pausa y reinicio/reanudación integrados. No desplegar ni reabrir Beta.
+
+
+#### GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — Code Review estático
+- [x] Comparación de diff funcional: cambios limitados al extractor/version/snapshot y control de pausa/persistencia de ui.js.
+- [x] Revisión estática de la lógica y pruebas aisladas 8/8 PASS.
+- [x] Backups temporales retirados tras la revisión estática.
+- [ ] Validación de sintaxis completa, browser y Sheets/Drive real; pendiente por falta de runtime autorizado.
