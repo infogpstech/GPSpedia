@@ -1603,3 +1603,16 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Code Review estático y comprobaciones de flujo/contenido: 11/11 PASS.
 - [ ] Validación visual en navegador de ambos formularios, con checkbox marcado y desmarcado; confirmar carga de miniatura Drive y posición del bloque.
 - No ejecutar POST, escrituras remotas ni deployment. Beta permanece cerrada; no crear suites ni workflows.
+
+
+### GP-USERS-SESSION-CONTEXT-01 — carga de lista de usuarios (2026-11-27)
+**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; validación aislada PASS; navegador/AUTH real pendiente.**
+- [x] Auditar HTML/users.html y JS/Frontend/api-config.js, incluyendo sesión, fetchUsers, routeAction y llamadas de gestión.
+- [x] Registrar F-50 en Auditoria.txt antes de modificar código.
+- [x] Crear respaldos exactos de users.html y registros que se actualizarían.
+- [x] Corregir payload de getUsers: enviar userId autenticado junto con sessionToken, ambos tomados del mismo sessionSnapshot.
+- [x] Parse sintáctico del módulo y harness aislado: getUsers recibe los dos campos esperados.
+- [ ] Validar en navegador con sesión Desarrollador y respuesta real AUTH; comprobar renderizado de la lista.
+- [ ] Revisar contratos remotos de createUser/resetUserSessions/resetUserPassword antes de cualquier cambio adicional; no inferir el significado de userId cuando puede representar la cuenta objetivo.
+- [ ] Code Review final, comparación exacta contra backup y limpieza de respaldos.
+- Sin cambios en backend, RBAC, estilos, caché ni mutaciones de usuarios; Beta permanece cerrada.
