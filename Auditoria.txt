@@ -824,3 +824,9 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Solución: conservar cortes físicos mapeados antes de aplicar proyección ledger y exponerlos como cortesPhysical; modal selecciona esta colección exclusivamente. La colección cortes general mantiene la proyección existente.
 - No se modifican escrituras, aceptación, registro ni esquema de AportesVehiculo. Sin deployment, ejecución de Apps Script ni escrituras de datos de producción.
 - Validación pendiente de navegador/servicios reales; revisión estática y simulación local posterior a la edición.
+
+2026-11-27 | GP-CUT-DETAIL-PYS-STALE-NOTICE-01 — ajuste visual del modal de corte
+- Se identificó en `renderPosiblesProblemasAccordion` el aviso de frescura que se inserta cuando PyS se sirve desde caché marcada stale.
+- Alcance: retirar únicamente el aviso visible dentro del acordeón de problemas relacionados en el modal de detalle del vehículo; no cambiar lectura, cache, refresh, asociación ni avisos de otras vistas.
+- Respaldo exacto previo de `JS/Frontend/ui.js` creado en `__task_backups__/GP-CUT-DETAIL-PYS-STALE-NOTICE-01/`.
+- Implementación aplicada; verificación estática de diff pendiente.
