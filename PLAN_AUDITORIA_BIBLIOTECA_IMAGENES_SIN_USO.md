@@ -59,3 +59,8 @@
 - Implementación fuente aplicada a buildCortesImageModelAssociationSuggestions_ en ADMIN: jerarquía marca seguida de modelo como señal fuerte; filename corroborado por marca/modelo o alias como fallback; contexto de versiones, encendido y años filtrado sobre registros.
 - Conflictos de contexto, IDs múltiples y candidatos próximos permanecen ambiguos. Alta confianza requiere match estructural.
 - Diff revisado con backup temporal: prefix/suffix idénticos; edición localizada. La ejecución de pruebas y validación con Drive/Sheets real permanece pendiente. No hubo deployment ni mutaciones remotas.
+
+
+## Verificación de integración (2026-11-27)
+- Invariantes estáticos: 12 PASS; revisión de colector allowlist positiva (Cortes, Tutoriales, Relay, Problemas y Soluciones) e imágenes flotantes. Integración asociada a IDs sin uso detectado; revisión parcial de revalidación de guardado individual.
+- Pruebas runtime/fixture real pendientes. No se cierra la tarea.
