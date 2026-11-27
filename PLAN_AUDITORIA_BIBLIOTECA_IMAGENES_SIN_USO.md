@@ -172,3 +172,11 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - Rich-text: la ruta fallback extrae el fragmento seleccionado y desenvuelve etiquetas matching en descendientes, conserva etiquetas de otros formatos y recoloca selección al final del fragmento. Riesgo que requiere prueba de navegador: selección mixta (parcialmente formateada o que cruza varios wrappers) cuando execCommand falla; la detección active depende del ancestro del punto inicial de selección.
 - add_cortes: la transición central evita repetir mensaje y paso para un mismo opId dentro de la página; la guarda isSubmittingStage2 y recuperación pendiente siguen siendo controles adicionales. Requiere navegador para validar reintentos y retorno tras errores.
 - No se hicieron cambios funcionales en esta revisión ni pruebas runtime; la cobertura de selección mixta y recovery real queda pendiente.
+
+
+### GP-ADMIN-ADD-CORTES-ETAPA3-01 — corrección enfocada en avance de etapa (2026-11-27)
+- El fallo reportado es que tras WRITE exitoso se mostraba «Corte agregado con éxito», pero el formulario permanecía en Etapa 2 en vez de mostrar Etapa 3 (información suplementaria: alimentación, apertura, nota y video).
+- En `HTML/add_cortes.html`, `proceedToStage3()` ahora activa `showPhase(3)` al inicio, antes de actualizar controles y advertencias; los controles y contenedor de advertencias faltantes se manejan con guardas null.
+- `finishConfirmedCutTransition_()` intenta completar la transición antes de mostrar el alert y no marca el opId como transicionado si la rutina falla. La alerta de éxito queda posterior al avance, evitando que un fallo de configuración auxiliar deje la Etapa 2 como destino.
+- Se conserva el opId y el guardado/idempotencia de WRITE. Se registran errores de transición.
+- Revisión estática del bloque: PASS (transición prioritaria y referencias opcionales protegidas). Prueba real de navegador/formulario pendiente; no se ejecutó Apps Script ni deployment.
