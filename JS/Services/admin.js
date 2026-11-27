@@ -2109,7 +2109,11 @@ function doPostInternal_(e) {
         if (auditWarning) response.auditWarning = auditWarning;
 
     } catch (error) {
-        logMessage("Falla Crítica", `Error: ${error.message}`, 0, 0, false, true);
+        const errorTrace = getDriveAuditErrorTrace_(error);
+        logMessage("Falla Crítica",
+            "Acción " + catalogAction + " [" + String(error && error.stage || auditStage) + "] — " +
+            String(error && error.message || error) + " [código: " + String(error && error.code || "SERVICE_ERROR") + "]" +
+            (errorTrace ? " Traza: " + errorTrace : ""), 0, 0, false, true);
 
         // Calcular tiempo acumulado
         const errorEndTime = new Date();
@@ -2138,6 +2142,7 @@ function doPostInternal_(e) {
             estado: "error",
             message: responseMessage,
             mensaje: responseMessage,
+            details: errorTrace || responseMessage,
             tiempoTranscurrido: `${durationSec}s`,
             logs: logs
         };
@@ -14484,8 +14489,10 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 const status = error && error.inventoryStatus === "blocked" ? "bloqueado" : "error";
                 if (status === "bloqueado") blockedCount++; else errorCount++;
                 const errorCode = String(error && error.code || (status === "bloqueado" ? "IMAGE_INVENTORY_BLOCKED" : "IMAGE_INVENTORY_WRITE_FAILED"));
+                const trace = getDriveAuditErrorTrace_(error);
                 const errorMessage = "ADMIN.saveUnusedImagesInventory [" + imageStage + "] " +
-                    String(error && error.message || error) + " (código: " + errorCode + ").";
+                    String(error && error.message || error) + " (código: " + errorCode + ")." +
+                    (trace ? " Traza: " + trace : "");
                 recordOutcome(fileId, status, errorMessage, { errorCode: errorCode, errorStage: imageStage });
             }
         });
@@ -14896,12 +14903,19 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             failedCount: failedCount, blockedCount: blockedCount, loggingErrorCount: loggingErrorCount };
     }
 }
+function getDriveAuditErrorTrace_(error) {
+    const stack = String(error && error.stack || "");
+    return stack.split(/\r?\n/).slice(1, 5).map(line => line.trim()).filter(Boolean).join(" <- ");
+}
+
 function withDriveAuditErrorContext_(operation, stage, callback) {
     try { return callback(); }
     catch (error) {
         const originalMessage = String(error && error.message || error || "Error sin detalle.");
         const code = String(error && error.code || "DRIVE_AUDIT_OPERATION_FAILED");
-        const wrapped = new Error("ADMIN." + operation + " [" + stage + "] falló: " + originalMessage + " (código: " + code + ").");
+        const trace = getDriveAuditErrorTrace_(error);
+        const wrapped = new Error("ADMIN." + operation + " [" + stage + "] falló: " + originalMessage +
+            " (código: " + code + ")." + (trace ? " Traza: " + trace : ""));
         wrapped.code = code;
         wrapped.stage = stage;
         if (error && error.stack) wrapped.stack = error.stack;
