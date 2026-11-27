@@ -660,3 +660,5 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 
 - Ajuste de robustez de primera alta: si `Cortes` solo contiene encabezados, WRITE ahora conserva la fila 2 como plantilla, inserta la fila nueva en la posición 2 y copia formato/validaciones desde la plantilla desplazada a la fila 3. Si ya existen vehículos, inserta después del último registro. Así no se exige que exista previamente un vehículo para poder crear el primero.
 - Validación estática posterior: la rama con registros inserta tras `lastRow`; la rama solo-encabezado expande la hoja si es necesario, inserta en fila 2 y usa fila 3 como plantilla. Commit: `5fd150497861893f7762c6616cd61b2e8781451c`.
+
+- Prueba efímera del bloque real de inserción: con registros existentes (lastRow=10) inserta fila 11 y copia formato/validaciones desde fila 10; con solo encabezados (lastRow=1) inserta fila 2 y copia la plantilla desplazada en fila 3; con grilla inicial de una sola fila amplía la hoja antes de insertar. Los tres escenarios PASS. Se compiló nuevamente el archivo completo con V8 después de este ajuste: PASS.
