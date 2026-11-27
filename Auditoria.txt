@@ -832,3 +832,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Implementación aplicada; verificación estática de diff pendiente.
 
 - Revisión posterior: comparación exacta contra respaldo confirmó que el único delta en ui.js es la eliminación de ese bloque de 7 líneas; la función, filtrado de problemas y lógica de cache/refresh permanecen intactos. Se retiró el respaldo temporal tras revisión. Sin validación en navegador ni prueba de red.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Corrección de asociación estructurada imagen/modelo
+- Auditoría inicial de buildCortesImageModelAssociationSuggestions_ en JS/Services/admin.js: la versión existente puntúa coincidencias aisladas de modelo, nombre, segmentos de carpeta y contextos de versión/encendido/año; no valida la estructura Brand/Model como relación jerárquica consistente.
+- Hallazgo: una coincidencia textual independiente o señales combinadas no garantizan que la carpeta represente el modelo esperado. Los criterios no aplican de forma estricta la jerarquía marca/modelo y su fallback requerido.
+- Requisito: asociación estructurada usando metadatos, nombre y árbol de carpetas; reconocer Brand/Model/Version-or-ignition-or-equipment/Year, permitiendo fallback Brand/Model si los niveles posteriores no existen. Contradicciones y coincidencias múltiples deben permanecer ambiguas, sin asignación automática.
+- Protección: mantener exclusión por referencias activas y por IDs históricos; la sugerencia se calcula exclusivamente para imágenes previamente clasificadas Sin uso detectado. No alterar la clasificación, el scanner, permisos, auth, servicios externos ni deployment.
+- Plan: corregir exclusivamente algoritmo de asociación, pruebas efímeras de estructura completa/fallback/conflicto/múltiples modelos/filename/metadata, revisión de diff y documentación. No se realizan operaciones mutables Drive/Sheets ni deployment.
