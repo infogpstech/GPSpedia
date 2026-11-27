@@ -971,3 +971,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - UI/CSS: 6/6 comprobaciones estáticas PASS para filtro exacto «Sin uso detectado», ocultamiento de reintento para otras clasificaciones, selectores activos de cuatro pestañas, expansión móvil de pestaña seleccionada, movimiento reducido y orden limpieza IndexedDB→runAudit(false).
 - Límite de cobertura: no se ejecutó el flujo completo handleSaveUnusedImagesInventory con archivo A fallido y archivo B válido; tampoco se ejecutó IndexedDB en navegador, UI visual escritorio/móvil, Apps Script real, Drive/Spreadsheet, POST ni deployment. No se afirma validación de esos escenarios.
 - No se modificó código funcional ni se crearon archivos/suites de prueba. La fase Beta permanece cerrada. Se conservan respaldos exactos previos a la actualización documental en Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/REVIEW-MOCKS-20261127/.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — simulación integrada por archivo y limpieza IndexedDB
+
+- Se ejecutó el bloque real uniqueFiles.forEach de handleSaveUnusedImagesInventory, extraído de la fuente actual y aislado con mocks de Drive/Spreadsheet/Utilities. El archivo A falla al obtener su recurso; el archivo B dispone de metadatos y recurso verificables. Resultado: A=error, B=confirmado, confirmedCount=1, errorCount=1, insertedCount=1. PASS 1/1: el error individual no interrumpe el procesamiento del siguiente candidato.
+- Se ejecutó la función real clearDriveAuditState de offline.js con localStorage y transacción IndexedDB simulados. PASS 1/1: elimina estado/latest/meta/page/confirmed de userA, conserva las claves de userB y el inventario persistente, elimina el marcador pendiente y aumenta la generación de 7 a 8.
+- La ejecución sigue siendo simulada: no equivale a Apps Script real ni a IndexedDB de navegador. La validación visual escritorio/móvil continúa pendiente.
+- No se modificó código funcional ni se crearon archivos/suites de prueba. La fase Beta permanece cerrada.
