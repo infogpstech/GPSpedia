@@ -5137,10 +5137,10 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             const matchingRecords=model.records.filter(record=>{
                 const vOk=!versionMatches.length||record.versions.some(v=>versionMatches.some(m=>normalize(v)===normalize(m)));
                 const iOk=!ignitionMatches.length||ignitionMatches.some(m=>normalize(m)===normalize(record.ignitionType));
-                const yOk=!yearMatches.length||fileYears.some(year=>(record.yearFrom===null||year>=record.yearFrom)&&(record.yearTo===null||year<=record.yearTo));
+                const yOk=!fileYears.length||(record.yearFrom===null&&record.yearTo===null)||fileYears.some(year=>(record.yearFrom===null||year>=record.yearFrom)&&(record.yearTo===null||year<=record.yearTo));
                 return vOk&&iOk&&yOk;
             });
-            const contextConflict=(versionMatches.length||ignitionMatches.length||fileYears.length)&&!matchingRecords.length;
+            const contextConflict=(versionMatches.length||ignitionMatches.length||(fileYears.length&&model.yearRanges.length))&&!matchingRecords.length;
             const selectedRecords=matchingRecords.length?matchingRecords:model.records;
             const vehicleIds=Array.from(new Set(selectedRecords.map(r=>r.vehicleId).filter(Boolean)));
             const selectedRows=Array.from(new Set(selectedRecords.map(r=>r.row)));
