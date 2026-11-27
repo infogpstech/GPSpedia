@@ -867,3 +867,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - rich-text: fallback de retirada extrae fragmento y desenvuelve etiquetas del formato seleccionado en nodos descendientes; preserva otros wrappers. Riesgo de selección mixta/cruzada si execCommand falla, porque active se determina por ancestro del punto inicial; queda validación en navegador.
 - add_cortes: finishConfirmedCutTransition_ protege la transición y alerta por opId durante la sesión de página; isSubmittingStage2 y recuperación de operación complementan la guarda. Reintentos y retorno recovery real siguen sin validación de navegador.
 - No se aplicó parche funcional ni runtime en este checkpoint.
+
+
+### GP-ADMIN-ADD-CORTES-ETAPA3-01 — corrección enfocada en avance de etapa (2026-11-27)
+- El fallo reportado es que tras WRITE exitoso se mostraba «Corte agregado con éxito», pero el formulario permanecía en Etapa 2 en vez de mostrar Etapa 3 (información suplementaria: alimentación, apertura, nota y video).
+- En `HTML/add_cortes.html`, `proceedToStage3()` ahora activa `showPhase(3)` al inicio, antes de actualizar controles y advertencias; los controles y contenedor de advertencias faltantes se manejan con guardas null.
+- `finishConfirmedCutTransition_()` intenta completar la transición antes de mostrar el alert y no marca el opId como transicionado si la rutina falla. La alerta de éxito queda posterior al avance, evitando que un fallo de configuración auxiliar deje la Etapa 2 como destino.
+- Se conserva el opId y el guardado/idempotencia de WRITE. Se registran errores de transición.
+- Revisión estática del bloque: PASS (transición prioritaria y referencias opcionales protegidas). Prueba real de navegador/formulario pendiente; no se ejecutó Apps Script ni deployment.
