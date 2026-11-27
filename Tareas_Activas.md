@@ -1418,3 +1418,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Incorporar contextos de versión, encendido y año en selección de registros y ambigüedad.
 - [x] Revisar diff contra backup exacto: prefijo y sufijo del archivo sin cambios; función de asociación delimitada.
 - [ ] Pruebas de ejecución aisladas y validación real de Drive/Sheets pendientes por limitaciones de entorno. No deployment ni mutaciones remotas.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Verificación estática (27-11-2026)
+- [x] 12 invariantes de código PASS mediante inspección automatizada estática.
+- [x] Verificar allowlist positiva de referencias de catálogo (Cortes/Tutoriales/Relay/PYS) y captura de imágenes flotantes.
+- [x] Revisar integración: asociación se calcula exclusivamente sobre clasificados Sin uso detectado; resultado adjunto por fileId.
+- [ ] Pruebas unitarias/runtime con fixtures y ejecución en Apps Script real pendientes.
