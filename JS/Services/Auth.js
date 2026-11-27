@@ -3336,7 +3336,7 @@ function normalizeUserProfileUpdates_(updates) {
         if (typeof updates.Correo_Electronico !== 'string') throw new Error('El correo electrónico debe ser texto.');
         const email = updates.Correo_Electronico.trim();
         if (email.length > 254) throw new Error('El correo electrónico no puede superar 254 caracteres.');
-        if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             throw new Error('El correo electrónico no tiene un formato válido.');
         }
         normalized.Correo_Electronico = email;
