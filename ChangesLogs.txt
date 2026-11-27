@@ -1995,3 +1995,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Parsing del módulo inline PASS; harness aislado de fetchUsers comprobó que la solicitud getUsers contiene ambos campos.
 - Los cinco respaldos temporales fueron eliminados tras revisión; blobs originales verificados antes de su eliminación.
 - La validación integrada en navegador/AUTH real queda pendiente; no se ejecutó POST ni se reabrió Beta.
+
+2026-11-27 | GP-CUT-TESTIGO-NOTA-02 — corrección de visibilidad del aviso
+- Archivo: JS/Frontend/ui.js, función renderCutContent() (aprox. línea 4016). Se eliminó la restricción !inEditMode de la condición del bloque de imagen/nota; ahora se renderiza cuando cutData.activaTestigo === true, tanto en modo lectura como en modo edición.
+- Se conserva sin cambios el src de Drive, los estilos de la imagen, la etiqueta NOTA roja, el texto y la posición posterior al color del cable y anterior a la imagen del corte.
+- Causa: completeVehicleExpansionSave_() refresca el detalle con mostrarDetalleModal(vehicle, true), por lo que el modal posterior al alta desde + queda en modo edición; la condición anterior suprimía la imagen y la nota juntas.
+- Comparación exacta contra respaldo: una única línea de condición modificada. Prueba aislada de condición 4/4 PASS. Persistencia y proyección del booleano WRITE/CATALOG verificadas estáticamente; navegador/Drive real no ejecutados.
