@@ -1019,3 +1019,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Diagnóstico: extractor de IDs no decodifica HTML entities/encoding; referencias allowlist: Cortes, LogosMarca, Tutoriales, Relay, PyS; ubicación detallada se filtra a Cortes/LogosMarca. La clasificación de Drive se realiza por ID contra activeDriveIds/protectedDriveIds/historicalDriveIds.
 - Implementación, pruebas estáticas y Code Review por completar; sin acceso a runtime real Google Sheets/Drive ni navegador conectado en esta sesión.
 - Beta sigue cerrada; no desplegar ni realizar escrituras/movimientos remotos.
+
+
+### GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — implementación parcial y siguiente paso (2026-11-27)
+- HEAD de trabajo: 16865d248d469523fb6d2a41ef4807b3cca6e910. Rama base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- JS/Services/admin.js: extractor central normaliza entidades HTML/URL encoding y reconoce IDs en parámetros y rutas Drive. Scan version: drive-audit-reference-normalization-v2. Snapshot de ubicaciones incluye Cortes, LogosMarca, Tutoriales, Relay y PyS.
+- JS/Frontend/ui.js: se añadió botón «Pausar» que espera frontera de lote, persiste estado parcial/cursor y permite usar el flujo existente de Reanudar; evita duplicar el botón al volver a abrir el panel.
+- Pruebas aisladas del extractor 8/8 PASS. Revisión estática de diff: cambios dentro de las funciones del extractor/snapshot y auditoría UI.
+- No se validó parse de archivos completos, navegador, Google Sheets/Drive real ni deployment; no se ejecutaron escrituras/movimientos remotos. Beta permanece cerrada.
+- Siguiente: realizar parse/validación de JS completos y Code Review, verificar el control de pausa con cursor y revisar el criterio de clasificación en hojas reales mediante sesión autorizada; entonces retirar respaldos.
