@@ -232,3 +232,9 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - Snapshot de ubicación detallada ampliado a Tutoriales, Relay y PyS, además de Cortes/LogosMarca.
 - UI: control «Pausar» detiene el loop tras el lote que ya se está procesando y guarda estado parcial/cursor; la reanudación usa el botón existente. Reinicio sigue limpiando el estado local después de reconciliar inventario previo.
 - Prueba aislada extractor 8/8 PASS. No parse completo, navegador, Apps Script/Drive/Sheets real ni deployment; Beta cerrada.
+
+
+### Code Review estático
+- Comparación del diff funcional y revisión estática PASS; extractor probado aislado 8/8.
+- No se ejecutó parser de archivos completos ni prueba navegador/runtime Sheets/Drive. Integración sigue pendiente.
+- Backups retirados después de la revisión estática.
