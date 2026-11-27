@@ -1228,3 +1228,21 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Code Review de los commits e20d8860e84959df207deb8bfcbbd95157feeea5, 7bc789a8c88c5e05aa85656360382e7defdde52d y ee01ddd5f4432795b32ab48f4d8c8cee0eb02459: PASS. Parsing de scripts inline y Auth.js: PASS. Verificaciones estáticas de actor/objetivo y RBAC: PASS.
 - Hallazgo fuera del alcance: resetUserSessions también figura entre las acciones que requieren contexto de sesión en el middleware, pero su payload de HTML/users.html solo envía targetUserId y sessionToken. Se registra como GP-USERS-RESET-SESSIONS-ACTOR-01 para una tarea separada; no se modificó.
 - No se ejecutó navegador, POST AUTH real ni deployment. La corrección de fuente requiere publicar frontend y AUTH coordinadamente antes de validar las mutaciones reales.
+
+
+### F-54 — GP-USERS-PROFILE-EMAIL-01 / GP-USERS-ID-SEQUENCE-MISMATCH-01 (2026-11-27)
+
+**Solicitudes/incidencias:**
+1. Al crear un usuario, AUTH rechaza la operación porque el ID existente en la fila 2 de Users no coincide con el formato de secuencia configurado.
+2. El usuario debe poder registrar/actualizar su correo electrónico desde su panel de perfil; el formulario de creación de usuarios también debe incluir correo electrónico.
+
+**Auditoría inicial — archivos y dependencias:**
+- `JS/Services/Auth.js`: `getUserIdSequencePattern_()` obtiene el patrón desde `__IdentifierSequenceConfig__` o desde las fórmulas históricas de `Users.ID`. `generateNextUserId_()` valida cada ID existente antes de crear una cuenta y rechaza cualquier valor que no tenga el prefijo configurado seguido únicamente de dígitos. El error de fila 2 se produce antes de escribir la cuenta; no se debe relajar la validación ni normalizar IDs sin conocer el valor y fórmula reales de A2 y la configuración central.
+- La hoja real de Google Sheets no está disponible para lectura en este contexto. Se solicita al propietario el valor exacto de A2 y, si es fórmula, su fórmula. La resolución del formato queda separada y pendiente de evidencia remota.
+- El esquema de Users ya contempla `Correo_Electronico` en la columna 6. El login, validateSession y getUsers ya incluyen el correo en sus perfiles; el flujo de recuperación de contraseña lo usa como identificador y requiere una coincidencia única.
+- `normalizeNewUserInput_()` ya acepta, valida sintácticamente y persiste `Correo_Electronico` al crear usuarios. El formulario HTML no tenía campo de correo y por ello no lo enviaba.
+- `normalizeUserProfileUpdates_()` solo permitía `Nombre_Completo`; `handleUpdateProfile()` solo persistía el nombre. El formulario de perfil existente permite editar el nombre y usa `updateProfile`; se ampliará para permitir también correo, conservando la validación de actor propio y roles actuales.
+- El correo se utiliza en recuperación de contraseña; se deberá impedir que el nuevo valor no vacío se duplique entre cuentas, para mantener una correspondencia inequívoca. Se validará formato y longitud de hasta 254 caracteres. El campo será opcional para no bloquear altas de cuentas que aún no dispongan de correo.
+- El formulario administrativo de creación agregará el campo correo y lo enviará como `Correo_Electronico`. No se cambiará el contrato de edición administrativa de cuentas existentes, ni roles, username, contraseña o permisos.
+- Archivos previstos para la función de correo: `HTML/users.html` y `JS/Services/Auth.js`. No se modificará `api-config.js`, la ruta AUTH ni el esquema de columnas.
+- No se realizarán escrituras en Sheets, POST remotos, cambios de IDs ni deployments. La validación integrada de perfil/creación queda pendiente de publicación autorizada.
