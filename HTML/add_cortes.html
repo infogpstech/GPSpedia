@@ -1406,10 +1406,21 @@
         let lastConfirmedCutTransitionOpId = "";
         function finishConfirmedCutTransition_(opId, vehicleId) {
             const confirmedOpId = String(opId || "").trim();
-            if (!confirmedOpId || confirmedOpId === lastConfirmedCutTransitionOpId) return false;
-            lastConfirmedCutTransitionOpId = confirmedOpId;
-            alert("Corte agregado con éxito");
-            proceedToStage3(vehicleId);
+            if (!confirmedOpId) return false;
+            // Avanzar primero; una alerta no debe bloquear el cambio de etapa.
+            try { proceedToStage3(vehicleId); }
+            catch (transitionError) {
+                diagnostics.error('cut-operation.stage3-transition-failed', {
+                    stage: 'stage3-transition', opId: confirmedOpId,
+                    errorCode: transitionError && transitionError.name || 'TransitionError'
+                });
+                try { showPhase(3); } catch (_) {}
+                return false;
+            }
+            if (confirmedOpId !== lastConfirmedCutTransitionOpId) {
+                lastConfirmedCutTransitionOpId = confirmedOpId;
+                alert("Corte agregado con éxito");
+            }
             return true;
         }
 
@@ -1614,6 +1625,8 @@
         // --- STAGE 3: SUPPLEMENTARY INFO ---
         /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */
         function proceedToStage3(vehicleId) {
+            // Activar la etapa destino antes de configurar controles auxiliares.
+            showPhase(3);
             state.selectedVehicleId = vehicleId;
             const match = (state.matches || []).find(item => String(item.id) === String(vehicleId));
             const cutAvailability = getCutAvailability(match);
@@ -1622,7 +1635,7 @@
             const videoAccordion = document.getElementById('video-accordion');
             if (videoAccordion) videoAccordion.style.display = canAddVideoGuide(match) ? 'block' : 'none';
             const warningContainer = document.getElementById('supplementary-warnings');
-            warningContainer.innerHTML = '';
+            if (warningContainer) warningContainer.innerHTML = '';
 
             let cableSlot = 1;
 
@@ -1633,8 +1646,8 @@
             const uploadBtn = document.querySelector('#alimentacion-accordion label.btn');
 
             // Reset disabled states
-            textareaCable.disabled = false;
-            fileCable.disabled = false;
+            if (textareaCable) textareaCable.disabled = false;
+            if (fileCable) fileCable.disabled = false;
             if (uploadBtn) {
                 uploadBtn.style.pointerEvents = 'auto';
                 uploadBtn.style.opacity = '1';
@@ -1673,24 +1686,25 @@
             state.cableSlotToRegister = cableSlot;
 
             if (cableSlot === 4) {
-                alimentacionHeader.textContent = "Cable de Alimentación (Límite de 3 alcanzado)";
-                alimentacionLabel.textContent = "Límite alcanzado";
-                textareaCable.disabled = true;
-                fileCable.disabled = true;
+                if (alimentacionHeader) alimentacionHeader.textContent = "Cable de Alimentación (Límite de 3 alcanzado)";
+                if (alimentacionLabel) alimentacionLabel.textContent = "Límite alcanzado";
+                if (textareaCable) textareaCable.disabled = true;
+                if (fileCable) fileCable.disabled = true;
                 if (uploadBtn) {
                     uploadBtn.style.pointerEvents = 'none';
                     uploadBtn.style.opacity = '0.5';
                 }
                 warningContainer.innerHTML += `<div class="info-msg" style="background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;"><i class="fas fa-exclamation-triangle"></i> Límite de 3 cables de alimentación alcanzado para este modelo.</div>`;
             } else if (cableSlot > 1) {
-                alimentacionHeader.textContent = `Cable de Alimentación ${cableSlot}`;
-                alimentacionLabel.textContent = `Detalle de Alimentación ${cableSlot}`;
+                if (alimentacionHeader) alimentacionHeader.textContent = `Cable de Alimentación ${cableSlot}`;
+                if (alimentacionLabel) alimentacionLabel.textContent = `Detalle de Alimentación ${cableSlot}`;
             } else {
-                alimentacionHeader.textContent = "Cable de Alimentación";
-                alimentacionLabel.textContent = "Detalle de Alimentación";
+                if (alimentacionHeader) alimentacionHeader.textContent = "Cable de Alimentación";
+                if (alimentacionLabel) alimentacionLabel.textContent = "Detalle de Alimentación";
             }
 
-            document.getElementById('form-stage-3').reset();
+            const stage3Form = document.getElementById('form-stage-3');
+            if (stage3Form) stage3Form.reset();
             resetImagePreviews();
 
             // Configurar botón de subida directa a YouTube en Etapa 3
@@ -1750,7 +1764,6 @@
                 };
             }
 
-            showPhase(3);
         }
 
         async function verifySupplementaryCatalogWrite_(writeResult, payload, fetchProjection) {
