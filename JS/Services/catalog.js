@@ -1474,8 +1474,8 @@ function dedupeTutorialCatalogRows_(records) {
 
 function normalizeCatalogVehicleId_(value, context) {
     const raw = String(value === null || value === undefined ? "" : value).trim();
-    const prefixed = /^V-(\d{3,15})$/i.exec(raw);
-    const legacy = /^([1-9]\d{0,14})$/.exec(raw);
+    const prefixed = /^V-(\d{3,16})$/i.exec(raw);
+    const legacy = /^([1-9]\d{0,15})$/.exec(raw);
     const sequence = prefixed ? Number(prefixed[1]) : legacy ? Number(legacy[1]) : null;
     if (!Number.isSafeInteger(sequence) || sequence < 1) {
         throw new Error((context || "CATALOG") + ": se requiere un ID V-### válido.");
