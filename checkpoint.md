@@ -642,3 +642,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Exclusiones por referencias activas e histórico preservadas; la asociación sigue aplicándose al conjunto clasificado como Sin uso detectado.
 - Diff revisado frente a backup temporal: prefijo y sufijo sin cambio, función delimitada. Pruebas runtime, navegador y Drive/Sheets real pendientes. Sin deployment ni mutaciones remotas.
 - Tarea no cerrada; falta ejecutar pruebas aisladas reproducibles y review final de UI/consumidores.
+
+
+## Continuidad — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 (verificación 2026-11-27)
+- 12 invariantes estáticos PASS; allowlist positiva y collector de referencias flotantes inspeccionados. Asociación e inventario siguen limitados a clasificación Sin uso detectado.
+- Integración revisada parcialmente: resultados asociación adjuntos por ID; revalidación individual incluye controles de referencias, protección, historial y estado de auditabilidad.
+- No ejecutar Apps Script real, fixture runtime, UI/browser o Drive/Sheets en esta sesión. Tarea abierta.
