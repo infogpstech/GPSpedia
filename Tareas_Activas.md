@@ -1484,15 +1484,18 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 
 ### GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — corrección de registro automático y LogosMarca (2026-11-27)
-**Estado: AUDITORÍA COMPLETADA; implementación pendiente.**
+**Estado: IMPLEMENTACIÓN LOCAL PARCIAL; revisión estática PASS; runtime/Beta pendiente.**
 - [x] Auditar colector de referencias, registro incremental, esquema de inventario, UI, persistencia local y controles de escaneo.
 - [x] Registrar hallazgos F-36 a F-41 en Auditoria.txt antes de editar.
-- [ ] Incorporar LogosMarca (URL en columna 3) a las referencias activas y ubicaciones verificables.
-- [ ] Permitir persistencia/reintento individual cuando hay errores aislados de archivos, sin permitir consolidación u organización si la auditoría no es íntegra.
-- [ ] Corregir estado visual de registro parcial y habilitar reintentos seguros.
-- [ ] Agregar reinicio explícito del escaneo con limpieza confirmada de IndexedDB y nuevo auditId.
-- [ ] Exponer errores con etapa, archivo, código y detalle; conservar trazabilidad en consola.
-- [ ] Verificar FindOrCreate existente de Imagenes_Reemplazadas y columnas, sin duplicar funciones.
-- [ ] Crear respaldos exactos antes de editar, comparar diffs, ejecutar pruebas aisladas y Code Review.
-- [ ] Actualizar ChangesLogs.txt, Auditoria.txt, Tareas_Activas.md y checkpoint.md.
+- [x] Incorporar LogosMarca (URL en columna 3) a referencias activas y ubicaciones verificables; la hoja y su encabezado ID son obligatorios para clasificar.
+- [x] Permitir persistencia/reintento individual pese a errores aislados de archivos, siempre que las referencias del catálogo sean verificables.
+- [x] Mantener bloqueadas consolidación global, reconciliación y organización si la auditoría tiene errores o referencias no interpretables.
+- [x] Corregir estado visual parcial y habilitar reintentos seguros; los errores individuales incluyen etapa y código.
+- [x] Agregar reinicio explícito: confirmación en consola, limpieza IndexedDB de la cuenta actual y nuevo auditId; no borra filas de inventario ni archivos de Drive.
+- [x] Exponer errores de lectura de ID/metadatos, asociación, persistencia y operación ADMIN con etapa/código/detalle.
+- [x] Verificar FindOrCreate existente: getOrCreateReplacedImagesSheet() crea Imagenes_Reemplazadas y ensureReplacedImagesInventoryColumns() incorpora/valida columnas sin duplicar encabezados.
+- [x] Crear respaldos exactos antes de editar; blobs de admin.js, ui.js e index.html coinciden con los SHA originales.
+- [x] Revisión estática de invariantes, balance delimitadores y diffs de commits; no se alteró la rama base.
+- [ ] Ejecutar pruebas aisladas reproducibles con mocks/fixtures de LogosMarca, registro incremental con error aislado, referencias no interpretables, idempotencia y reinicio.
+- [ ] Ejecutar revisión visual en navegador escritorio/móvil y pruebas autorizadas de Apps Script/Drive/Spreadsheet en Beta.
 - Sin POST, escrituras reales en Sheets/Drive ni deployment; fase Beta permanece cerrada.
