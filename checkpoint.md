@@ -500,3 +500,5 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pages build/deploy run `45914970548` SUCCESS en HEAD de trabajo.
 - Límite: el éxito de Pages no despliega el código Apps Script. `JS/Services/write.js` actualizado solo en el repositorio; no se ejecutó health GET-only sobre los IDs actuales de `API_ENDPOINTS` ni se verificó la versión del endpoint remoto. El último health disponible consultó endpoints anteriores. No se ejecutaron POST de alta, IndexedDB real, Sheets ni Drive.
 - Pendiente: despliegue/health del WRITE actual; confirmar el HEAD servido por el dominio/móvil; prueba controlada de vehículo nuevo y existente y recuperación/idempotencia con datos sintéticos y cleanup verificable.
+
+- Code Review finalizado; los 12 respaldos temporales de las iteraciones 04B/04C/04D fueron retirados después de comparar los diffs. Commit de limpieza `df36935c16bf86f7b61c383b4a8af5c71d9e31a9`; no quedan respaldos de esta auditoría.
