@@ -951,3 +951,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Verificación: diff exacto contra respaldo confirma solo una línea modificada; 12 comprobaciones estáticas PASS y tabla de condición 4/4 PASS; Code Review estático PASS. Se verificó que checkbox, WRITE, CATALOG y reordenamiento conservan el indicador.
 - No se ejecutó navegador, Apps Script, Google Sheets ni acceso real a Drive; no se puede afirmar todavía que el recurso externo se haya cargado en una sesión publicada. service-worker.js permanece sin cambios (cache v91, scripts same-origin network-first).
 - Siguiente paso: actualizar la aplicación y probar ambos flujos en navegador, marcando/desmarcando el checkbox. Si la nota aparece pero la imagen no carga, investigar por separado el acceso público/validez del archivo Drive sin cambiar la URL exacta solicitada sin autorización.
+
+## Continuidad — GP-USERS-CREATE-SESSION-CONTEXT-01 (2026-11-27)
+
+- Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5 sin modificar.
+- Hallazgo: handleUserFormSubmit() enviaba createUser con newUser y sessionToken, omitiendo userId requerido por el middleware AUTH para recuperar el actor autenticado.
+- Corrección en `HTML/users.html`: se agregó userId: submittingSession.userId al payload createUser; newUser y sessionToken permanecen intactos.
+- Commit funcional: 02537a06538851b4f011c9b764775cf750a8f880.
+- Code Review: PASS; diff único en payload createUser. Parsing inline PASS; verificaciones estáticas de snapshot PASS.
+- Backups exactos creados en Olds/Backups/GP-USERS-CREATE-SESSION-CONTEXT-01-20261127/ para HTML/users.html y registros; se eliminarán tras esta revisión.
+- No se ejecutó navegador, POST AUTH real ni deployment. Validación integrada pendiente. Si updateUser sigue fallando, inspeccionar el error/action específico sin alterar aún su contrato.
