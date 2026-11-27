@@ -1508,8 +1508,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Verificar validador incremental: error aislado no bloquea candidato emitido; referencias no interpretables bloquean; IDs ajenos se rechazan (3/3 PASS).
 - [x] Ejecutar writeDriveInventoryRowVerified_ con hoja simulada: escritura/lectura normal y persistencia seguida de excepción reconocida mediante lectura posterior (2/2 PASS).
 - [x] Comprobar estáticamente filtro de clasificación, reintentos, cuatro pestañas, expansión móvil, movimiento reducido y orden de limpieza antes de reinicio (6/6 PASS).
-- [ ] Ejecutar el flujo completo de inventario con archivo A fallido y archivo B verificable en una simulación aislada del handler; comprobar que B se confirma sin desbloquear consolidación global.
-- [ ] Ejecutar limpieza/reinicio IndexedDB en navegador y verificar aislamiento por usuario, nuevo auditId y conservación del inventario persistente.
+- [x] Ejecutar el bloque real de procesamiento individual de handleSaveUnusedImagesInventory con archivo A fallido y archivo B verificable: A=error y B=confirmado (1/1 PASS); el error individual no interrumpió el siguiente candidato.
+- [x] Ejecutar clearDriveAuditState con transacción IndexedDB simulada: aislamiento por usuario, conservación del inventario persistente, limpieza del marcador pendiente e incremento de generación (1/1 PASS). La ejecución en navegador real sigue pendiente.
 - [ ] Revisar visualmente escritorio/móvil: pestañas, workspace, consola y galería; no alterar apariencia ni animaciones existentes.
 - [ ] Revisión final de diff contra respaldos y cierre documental. No ejecutar Apps Script remoto, Drive/Sheets, POST ni deployment; Beta permanece cerrada.
 - Los harnesses se ejecutaron en memoria; no se crearon suites ni archivos de prueba.
