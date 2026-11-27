@@ -206,3 +206,21 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - PASS: reintento, reconciliación posterior y bloqueo de organización se conservan.
 - PASS: backup exacto verificado y eliminado tras revisión.
 - Pendiente: confirmar comportamiento en la hoja real. La corrección no está desplegada y no se ha realizado una escritura remota de prueba.
+
+
+## GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 (2026-11-27)
+
+### Auditoría
+- Se revisó el extractor central y las hojas de catálogo que captura la allowlist: Cortes, LogosMarca, Tutoriales, Relay y PyS.
+- El clasificador usa IDs de Drive en el snapshot, pero el extractor no decodifica HTML entities ni URL encoding; las ubicaciones detalladas se filtran actualmente a Cortes/LogosMarca.
+- Reinicio ya existente realiza preflight de reconciliación y limpia progreso local antes de iniciar de nuevo; no existe pausa reanudable explícita.
+
+### Implementación propuesta
+1. Normalizar entidades HTML y encoding, extraer ID de Drive de URL/HTML/variantes de publicación.
+2. Conservar ubicación de todas las hojas allowlist.
+3. Versionar recorrido para que cursor/snapshot viejo no reutilice criterios anteriores.
+4. Agregar pausa en frontera de lote; estado/cursor se conserva y reanudación sigue disponible. Reinicio conserva el comportamiento existente de limpiar y arrancar desde cero.
+5. Probar extractor en casos aislados y revisar diff; no ejecutar escrituras remotas ni reabrir Beta.
+
+### Limitaciones
+- Las referencias reales de Google Sheets/Drive, ejecución navegador y despliegue no pueden validarse en este entorno; requerirán prueba autorizada.
