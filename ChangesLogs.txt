@@ -1785,3 +1785,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Frontend/ui.js`, `renderPosiblesProblemasAccordion`: se retiró el párrafo de aviso de datos PyS posiblemente desactualizados que se mostraba dentro del modal de detalle del corte. No se modificó la lógica de cache ni carga de PyS.
 
 - Code review: comparación exacta contra respaldo; delta limitado al bloque del aviso (7 líneas). El resto de `renderPosiblesProblemasAccordion` y las demás referencias a frescura en otras vistas no fueron modificadas. Respaldo temporal eliminado.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Ajuste de asociación de imágenes sin uso
+- Archivo: JS/Services/admin.js; se reemplazó buildCortesImageModelAssociationSuggestions_ para validar coincidencia estructurada de carpeta marca seguida por modelo, con fallback por nombre de archivo corroborado por marca y modelo.
+- Incorporó contexto de versión, encendido y años al filtrar registros; conflictos y candidatos múltiples se conservan como ambiguos. La confianza alta exige coincidencia de jerarquía marca/modelo.
+- Se mantiene la exclusión de IDs en referencias activas e históricas y el requisito MIME de imagen.
+- Revisión de diff: el prefijo y sufijo del archivo coinciden exactamente con el respaldo; el cambio queda confinado a la función de asociación. Validación runtime no ejecutada.
