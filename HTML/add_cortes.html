@@ -397,7 +397,7 @@
                         <div class="image-upload-group">
                              <img id="imagenVehiculo_preview" class="image-preview" onclick="this.nextElementSibling.click()">
                              <label for="imagenVehiculo" class="upload-label btn btn-secondary">Subir Imagen</label>
-                             <input type="file" id="imagenVehiculo" style="display:none;" accept="image/*">
+                             <input type="file" id="imagenVehiculo" style="display:none;" accept="image/jpeg,image/jpg,image/pjpeg,image/png,image/x-png,image/gif,image/webp,image/svg+xml,image/bmp,image/x-ms-bmp,image/tiff,image/heic,image/heif,image/avif,image/x-icon,image/vnd.microsoft.icon">
                         </div>
                     </div>
 
@@ -426,7 +426,7 @@
                         <div class="image-upload-group">
                            <img id="imgCorte1_preview" class="image-preview" onclick="this.nextElementSibling.click()">
                            <label for="imgCorte1" class="upload-label btn btn-secondary">Subir Imagen</label>
-                           <input type="file" id="imgCorte1" style="display:none;" accept="image/*" required>
+                           <input type="file" id="imgCorte1" style="display:none;" accept="image/jpeg,image/jpg,image/pjpeg,image/png,image/x-png,image/gif,image/webp,image/svg+xml,image/bmp,image/x-ms-bmp,image/tiff,image/heic,image/heif,image/avif,image/x-icon,image/vnd.microsoft.icon" required>
                         </div>
                     </div>
                     <!-- TAREA 3.2: Campo VIN reubicado debajo de la imagen del corte con altura igual a Color del cable -->
@@ -987,7 +987,7 @@
                 }
                 if (ubicacionCorteTextarea) {
                     ubicacionCorteTextarea.disabled = false;
-                    ubicacionCorteTextarea.required = false;
+                    ubicacionCorteTextarea.required = true;
                 }
                 if (colorCableCorteInput) {
                     colorCableCorteInput.disabled = false;
@@ -1564,6 +1564,8 @@
                     showConciseAlert_("Otro colaborador ocupó el último espacio disponible para cortes. Tus datos y archivos permanecen conservados en el formulario y en la operación pendiente; no se sobrescribió ningún corte.");
                 } else if (error && error.name === 'ImageSizeError') {
                     showConciseAlert_("Cada imagen debe pesar como máximo 10 MB. Reduce el tamaño y vuelve a seleccionarla; no se envió la solicitud y los demás datos permanecen conservados.");
+                } else if (error && error.name === 'ImageMimeError') {
+                    showConciseAlert_("El formato de imagen no es compatible. Utiliza JPG, PNG, GIF, WebP, BMP, SVG, TIFF, HEIC, HEIF, AVIF o ICO.");
                 } else if (error && error.name === 'FileReadError') {
                     showConciseAlert_("No se pudo leer una de las imágenes. No se envió la solicitud. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
                 } else if (diagnosticErrorCode === 'PENDING_SNAPSHOT_INVALID') {
