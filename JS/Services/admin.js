@@ -5146,7 +5146,7 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             const selectedRows=Array.from(new Set(selectedRecords.map(r=>r.row)));
             let score=0; const signals=[];
             if(structuredPathMatch){score=120;signals.push("hierarchy_brand_model");}
-            if(modelFolderMatch){score=Math.max(score,90);signals.push("folder_model_exact");}
+            if(structuredPathMatch&&modelFolderMatch){score=Math.max(score,90);signals.push("folder_model_exact");}
             if(filenameModelTokenMatch||modelInName){score=Math.max(score,75);signals.push("filename_model_match");}
             if(aliasPathMatch){score=Math.max(score,85);signals.push("brand_alias_folder");}
             if(aliasName){score=Math.max(score,65);signals.push("filename_alias");}
