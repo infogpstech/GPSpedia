@@ -2540,8 +2540,10 @@ function createDetailParagraph(label, text, modeOverride = null) {
 
 export function mostrarDetalleModal(item, isNavigation = false, navOptions = {}) {
     const { catalogData, currentUser } = getState();
-    const activeItem = (catalogData && catalogData.cortes)
-        ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
+    // El modal consume la copia física de Cortes, separada del ledger de contribuciones.
+    const modalSource = catalogData && Array.isArray(catalogData.cortesPhysical) ? catalogData.cortesPhysical : null;
+    const activeItem = modalSource
+        ? modalSource.find(c => String(c.id) === String(item.id)) || item
         : item;
     // Preparar listas de edición mientras el usuario consulta el detalle, sin bloquear su apertura.
     if (!dropdownOptions && !dropdownOptionsPromise) precargarDropdownOptions().catch(() => {});
