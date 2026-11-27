@@ -772,3 +772,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - favicon: la solicitud GET /favicon.ico devuelve 404; preliminarmente corresponde a ausencia de favicon en la raíz publicada o referencia/ubicación incorrecta. Se verificará inventario y paths antes de corregir.
 - document.write: la traza muestra runtime generado de HtmlService de Google Apps Script (archivo mae_html_*_user__es_419.js), no una llamada identificada en fuentes GPSpedia. Advertencia de compatibilidad de runtime externo; no se atribuye a código de GPSpedia sin evidencia.
 - Revisión inicial sin editar código; implementación aún no iniciada. La fase Beta permanece cerrada y no se crearán nuevas suites/workflows ni se ejecutarán POST, escrituras remotas o despliegues.
+
+
+2026-11-26 | GP-ADD-CUT-WIZARD-UX-NAV-01 — auditoría complementaria por duplicación
+- El flujo de handleStage2Submit puede alcanzar confirmación WRITE, pero el tratamiento de snapshot/cleanup y excepciones posteriores al commit dejaba el formulario visible con notificaciones que no describían el estado del commit; el usuario podía reintentar desde etapa 2.
+- La segunda solicitud desde etapa 2 es peligrosa para la integridad: la lógica de WRITE admite materialización de slots disponibles en la misma fila, por lo que repetir el alta puede asignar otro slot y parecer una duplicación de corte. La transición a etapa 3 debe ser inmediata después de confirmación de WRITE, sin condicionar a cleanup local ni verificación de proyección.
+- Se documenta como criterio: etapa 3 tras commit confirmado, operación idempotente y cleanup best-effort; una excepción postcommit no puede presentarse como rechazo de alta.
+- El envío de suplementarios verificado termina redirigiendo al catálogo; la verificación de proyección no debe emitir alertas adicionales si WRITE ya confirmó.
