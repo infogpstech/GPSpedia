@@ -53,3 +53,9 @@
 2. Revisar contratos y errores de la biblioteca unificada, incluyendo fallos parciales de operaciones masivas y sincronización de candidatos.
 3. Revisar el flujo de reconciliación/organización y rollback con fixtures, sin mutar Drive real.
 4. Hacer revisión estática final de cambios, comparación contra rama base y registros. Las publicaciones de Apps Script y pruebas Beta se excluyen de los pendientes de implementación y se reservan para esa fase.
+
+
+## Corrección de asociación — 2026-11-27
+- Implementación fuente aplicada a buildCortesImageModelAssociationSuggestions_ en ADMIN: jerarquía marca seguida de modelo como señal fuerte; filename corroborado por marca/modelo o alias como fallback; contexto de versiones, encendido y años filtrado sobre registros.
+- Conflictos de contexto, IDs múltiples y candidatos próximos permanecen ambiguos. Alta confianza requiere match estructural.
+- Diff revisado con backup temporal: prefix/suffix idénticos; edición localizada. La ejecución de pruebas y validación con Drive/Sheets real permanece pendiente. No hubo deployment ni mutaciones remotas.
