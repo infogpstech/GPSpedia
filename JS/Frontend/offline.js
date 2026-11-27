@@ -817,7 +817,7 @@ function isValidAddCutOperationSnapshot_(operation,ownerId){
  if(!owner||String(operation.ownerId||"").trim()!==owner||!/^OP-[A-Za-z0-9_-]{1,100}$/.test(id)||!/^[a-f0-9]{64}$/i.test(String(operation.operationHash||""))||!operation.requestData||typeof operation.requestData!=="object"||Array.isArray(operation.requestData))return false;
  if(operation.operationType==="addSupplementaryInfo"){
   const r=operation.requestData,vehicleId=String(operation.vehicleId||"").trim();
-  if(operation.stage!==3||operation.status!=="processing"||!/^[1-9]\d{0,14}$/.test(vehicleId)||String(r.vehicleId||"").trim()!==vehicleId||String(r.opId||"").trim()!==id||Object.prototype.hasOwnProperty.call(r,"userId")||Object.keys(r).some(k=>/token|password|credential|authorization/i.test(k)))return false;
+  if(operation.stage!==3||operation.status!=="processing"||!/^(?:V-\d{3,15}|[1-9]\d{0,14})$/i.test(vehicleId)||String(r.vehicleId||"").trim()!==vehicleId||String(r.opId||"").trim()!==id||Object.prototype.hasOwnProperty.call(r,"userId")||Object.keys(r).some(k=>/token|password|credential|authorization/i.test(k)))return false;
   const ids=r.contributionOpIds;if(!ids||typeof ids!=="object"||Array.isArray(ids)||Object.keys(ids).some(k=>!["opening","feed"].includes(k)))return false;
   const all=[id,...Object.values(ids).map(x=>String(x||"").trim())];if(all.slice(1).some(x=>!/^OP-[A-Za-z0-9_-]{1,100}$/.test(x))||new Set(all).size!==all.length)return false;return true;
  }
