@@ -1492,7 +1492,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Mantener bloqueadas consolidación global, reconciliación y organización si la auditoría tiene errores o referencias no interpretables.
 - [x] Corregir estado visual parcial y habilitar reintentos seguros; los errores individuales incluyen etapa y código.
 - [x] Agregar reinicio explícito: confirmación en consola, limpieza IndexedDB de la cuenta actual y nuevo auditId; no borra filas de inventario ni archivos de Drive.
-- [x] Exponer errores de lectura de ID/metadatos, asociación, persistencia y operación ADMIN con etapa/código/detalle.
+- [x] Exponer errores de lectura de ID/metadatos, asociación, persistencia y operación ADMIN con etapa/código/detalle y traza de funciones cuando está disponible.
 - [x] Verificar FindOrCreate existente: getOrCreateReplacedImagesSheet() crea Imagenes_Reemplazadas y ensureReplacedImagesInventoryColumns() incorpora/valida columnas sin duplicar encabezados.
 - [x] Crear respaldos exactos antes de editar; blobs de admin.js, ui.js e index.html coinciden con los SHA originales.
 - [x] Revisión estática de invariantes, balance delimitadores y diffs de commits; no se alteró la rama base.
