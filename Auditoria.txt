@@ -1080,3 +1080,12 @@ Límites: los harnesses son simulaciones en memoria; no se ejecutó Apps Script 
 - Otros campos que deben quedar diagnosticables individualmente: `drive_folder_id`, `formato_archivo`, `tamano_bytes`, `referencias_catalogo_json`, `asociacion_estado`, `asociacion_confianza` y `asociacion_candidatos_json`, además de los campos de identidad/estado.
 - Riesgo: una verificación demasiado permisiva podría confirmar una fila incompleta o distinta; no se debe eliminar la lectura posterior ni omitir columnas de integridad. La organización debe continuar bloqueada ante cualquier discrepancia real.
 - Acción prevista: instrumentar la comparación por nombre de columna, normalizar únicamente valores Date para la comparación semántica en la zona horaria contractual GMT-6, mantener estrictas las demás comparaciones y probar casos equivalentes/no equivalentes en un harness efímero en memoria. Sin Apps Script remoto, Drive/Sheets real, POST ni deployment; Beta permanece cerrada.
+
+
+### F-48 — resultado de implementación y pruebas aisladas (2026-11-27)
+- Respaldo exacto previo a la edición creado en Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-02-20261127/admin.js.backup; su blob SHA coincide con el archivo admin.js anterior a la modificación: 163e167b6544a59966c40b3b825e6e5a3ffb72b5.
+- En writeDriveInventoryRowVerified_ se normaliza únicamente fecha_modificacion_drive cuando la lectura devuelve Date, usando GMT-6 y el formato contractual yyyy-MM-dd HH:mm:ss. Las demás comparaciones siguen estrictas.
+- La verificación ahora informa los nombres de columnas discrepantes. No incluye valores de datos en el error.
+- Harness efímero en memoria: Date equivalente (19:06:05Z frente a texto 13:06:05 GMT-6) aceptado (1/1 PASS); fecha desplazada un minuto rechazada y reportada como fecha_modificacion_drive (1/1 PASS); tamano_bytes alterado rechazado y reportado como tamano_bytes (1/1 PASS).
+- Parsing sintáctico de admin.js completo PASS (15,539 líneas). Diff contra respaldo: el prefijo y sufijo del archivo son idénticos; el único bloque modificado es writeDriveInventoryRowVerified_.
+- Límite: no se observó aún el tipo/valor real que devuelve la hoja Imagenes_Reemplazadas; la coerción de fecha continúa como hipótesis explicativa hasta ejecutar en el runtime autorizado. No se realizaron escrituras remotas, POST ni deployment; Beta permanece cerrada.
