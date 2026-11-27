@@ -1088,7 +1088,7 @@ function validateAddCutText_(value, field, required, maxLength, preserveWhitespa
 function validateAddCutImage_(value, field) {
     if (value === undefined || value === null || value === "") return "";
     if (typeof value !== "string") throw new Error("La imagen " + field + " debe enviarse como texto Base64.");
-    const match = value.match(/^data:(image\/(?:jpeg|png|gif|webp|bmp|avif|heic|heif));base64,([A-Za-z0-9+/]+={0,2})$/i);
+    const match = value.match(/^data:(image\/(?:jpeg|jpg|pjpeg|png|x-png|gif|webp|svg\\+xml|bmp|x-ms-bmp|tiff|heic|heif|avif|x-icon|vnd\\.microsoft\\.icon));base64,([A-Za-z0-9+/]+={0,2})$/i);
     if (!match || !match[2] || match[2].length % 4 !== 0) throw new Error("La imagen " + field + " no tiene un formato Base64 de imagen permitido.");
     const estimatedBytes = Math.floor(match[2].length * 3 / 4) - (match[2].endsWith("==") ? 2 : match[2].endsWith("=") ? 1 : 0);
     if (estimatedBytes < 1) throw new Error("La imagen " + field + " está vacía.");
@@ -1125,10 +1125,12 @@ function validateAddOrUpdateCutPayload_(payload, options) {
     const cut = payload.cutData;
     const cutKeys = new Set(["tipoCorte1","configRelay1","ubicacionCorte1","colorCableCorte1","activaTestigo1","imgCorte1","vin"]);
     Object.keys(cut).forEach(key => { if (!cutKeys.has(key)) throw new Error("El campo de corte " + key + " no está permitido."); });
+    const tipoCorte1 = validateAddCutText_(cut.tipoCorte1, "tipoCorte1", true, 100);
+    const noRecommended = /^no recomendado$/i.test(tipoCorte1.trim());
     const cutData = {
-        tipoCorte1: validateAddCutText_(cut.tipoCorte1, "tipoCorte1", true, 100),
+        tipoCorte1,
         configRelay1: validateAddCutText_(cut.configRelay1, "configRelay1", false, 200),
-        ubicacionCorte1: validateAddCutText_(cut.ubicacionCorte1, "ubicacionCorte1", true, 10000, true),
+        ubicacionCorte1: validateAddCutText_(cut.ubicacionCorte1, "ubicacionCorte1", !noRecommended, 10000, true),
         colorCableCorte1: validateAddCutText_(cut.colorCableCorte1, "colorCableCorte1", false, 200, true),
         activaTestigo1: cut.activaTestigo1,
         imgCorte1: validateAddCutImage_(cut.imgCorte1, "imgCorte1"),
@@ -1136,7 +1138,6 @@ function validateAddOrUpdateCutPayload_(payload, options) {
     };
     if (typeof cutData.activaTestigo1 !== "boolean") throw new Error("El campo activaTestigo1 debe ser booleano.");
     allowed(options.tipoDeCorte, cutData.tipoCorte1, "tipoCorte1");
-    const noRecommended = /^no recomendado$/i.test(cutData.tipoCorte1.trim());
     if (!noRecommended) {
         if (!cutData.configRelay1.trim()) throw new Error("La configuración Relay es obligatoria para este tipo de corte.");
         allowed(options.configRelay, cutData.configRelay1, "configRelay1");
