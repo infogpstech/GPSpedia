@@ -1511,5 +1511,6 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Ejecutar el bloque real de procesamiento individual de handleSaveUnusedImagesInventory con archivo A fallido y archivo B verificable: A=error y B=confirmado (1/1 PASS); el error individual no interrumpió el siguiente candidato.
 - [x] Ejecutar clearDriveAuditState con transacción IndexedDB simulada: aislamiento por usuario, conservación del inventario persistente, limpieza del marcador pendiente e incremento de generación (1/1 PASS). La ejecución en navegador real sigue pendiente.
 - [ ] Revisar visualmente escritorio/móvil: pestañas, workspace, consola y galería; no alterar apariencia ni animaciones existentes.
-- [ ] Revisión final de diff contra respaldos y cierre documental. No ejecutar Apps Script remoto, Drive/Sheets, POST ni deployment; Beta permanece cerrada.
+- [x] Revisión estática del diff funcional y parches de implementación contra los respaldos exactos: código limitado a admin.js, ui.js e index.html; SHA originales verificados; sin cambios funcionales ajenos al alcance.
+- [ ] Revisión visual escritorio/móvil en navegador y cierre final. No ejecutar Apps Script remoto, Drive/Sheets, POST ni deployment; Beta permanece cerrada.
 - Los harnesses se ejecutaron en memoria; no se crearon suites ni archivos de prueba.
