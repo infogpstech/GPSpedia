@@ -10220,7 +10220,8 @@ export async function openAuditDriveModal(options = {}) {
         if (!isCurrentRequest() || isRunning || isDriveAuditRunning) return;
         const accepted = await requestAuditConsoleConfirmation(
             "¿Reiniciar el escaneo de imágenes? Se eliminará únicamente el progreso local de auditoría de esta cuenta. " +
-            "Los registros confirmados en Imagenes_Reemplazadas y los archivos de Drive no se eliminarán ni modificarán."
+            "Los registros confirmados en Imagenes_Reemplazadas y los archivos de Drive no se eliminarán ni modificarán. " +
+            "Una solicitud que ya esté ejecutándose en otra pestaña no se cancela automáticamente."
         );
         if (!accepted || !isCurrentRequest()) return;
         isRunning = true;
