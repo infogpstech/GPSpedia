@@ -150,3 +150,10 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - Mantener idempotencia, deduplicación global, validación de referencias activas, protección de archivos históricos y guardado reanudable.
 - Registrar evidencia de validación; no afirmar pruebas ejecutadas si no se ejecutaron.
 - Rama objetivo: `GPSpedia2.2.5_work`; nunca modificar `main`.
+
+
+### Implementaciones iniciales (2026-11-27)
+- **Cursor desfasado:** el backend inicia un recorrido nuevo al detectar versión de cursor incompatible; no reutiliza iteradores antiguos ni modifica páginas previas.
+- **Rich-text:** fallback para desactivar formato inline cuando el comando del navegador no lo retira, desenvuelve la etiqueta correspondiente en el fragmento seleccionado y recupera el punto de inserción.
+- **add_cortes:** helper centralizado para mensaje y transición de éxito, con protección por ID de operación para evitar repetición de la notificación/transición por la misma operación.
+- **Registro individual de imágenes:** sigue pendiente. El handler actual `handleSaveUnusedImagesInventory` procesa un lote incremental, pero el recorrido Drive aún no lo invoca por archivo detectado; requiere integración segura tras persistir metadatos de lote y páginas.
