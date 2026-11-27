@@ -224,3 +224,11 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 
 ### Limitaciones
 - Las referencias reales de Google Sheets/Drive, ejecución navegador y despliegue no pueden validarse en este entorno; requerirán prueba autorizada.
+
+
+### Implementación estática — GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01
+- Extractor normaliza entidades HTML y URL encoding y reconoce IDs mediante query `id`, rutas `/d/`, `/file/d/`, `/folders/` y texto de ID aislado.
+- Scan version cambiado a `drive-audit-reference-normalization-v2` para invalidar snapshots/cursor con criterio anterior.
+- Snapshot de ubicación detallada ampliado a Tutoriales, Relay y PyS, además de Cortes/LogosMarca.
+- UI: control «Pausar» detiene el loop tras el lote que ya se está procesando y guarda estado parcial/cursor; la reanudación usa el botón existente. Reinicio sigue limpiando el estado local después de reconciliar inventario previo.
+- Prueba aislada extractor 8/8 PASS. No parse completo, navegador, Apps Script/Drive/Sheets real ni deployment; Beta cerrada.
