@@ -1792,3 +1792,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Incorporó contexto de versión, encendido y años al filtrar registros; conflictos y candidatos múltiples se conservan como ambiguos. La confianza alta exige coincidencia de jerarquía marca/modelo.
 - Se mantiene la exclusión de IDs en referencias activas e históricas y el requisito MIME de imagen.
 - Revisión de diff: el prefijo y sufijo del archivo coinciden exactamente con el respaldo; el cambio queda confinado a la función de asociación. Validación runtime no ejecutada.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Verificación estática de integración
+- 12 invariantes estáticos PASS (exclusión por uso/historial, MIME, asociación jerárquica, fallback, contextos, ambigüedad/confianza y límites de persistencia).
+- Revisión de colector: flujo principal emplea allowlist positiva Cortes/Tutoriales/Relay/PYS; imágenes flotantes también capturadas. Asociación y registro limitados a imágenes clasificadas «Sin uso detectado».
+- No se ejecutaron pruebas runtime ni Apps Script real; el PASS es estático, no unitario.
