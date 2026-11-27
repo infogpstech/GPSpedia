@@ -1274,6 +1274,8 @@ function clearAdminState(action) {
 // ============================================================================
 /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
 const ADMIN_SERVICE_VERSION = "2.7.2";
+// Cambia cuando se modifica la captura/clasificación de referencias Drive; invalida cursores anteriores.
+const DRIVE_AUDIT_SCAN_VERSION_ = "drive-audit-logosmarca-v1";
 
 
 function gpsepediaTransportJsonpGet_(e, output) {
@@ -5241,7 +5243,7 @@ function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContex
     const auditState = loadDriveAuditServerState_(auditId);
     if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
         Number(auditState.errorCount || 0) > 0 || Number(auditState.unverifiableReferenceCount || 0) > 0 ||
-        auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
+        auditState.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || auditState.imageMetadataVersion !== 1 ||
         !Number.isFinite(Number(auditState.completedAt)) || Date.now() - Number(auditState.completedAt) > 21600000 ||
         getLatestDriveAuditIdForUser_(ownerId) !== auditId) {
         throw new Error("La auditoría Drive no está completa, vigente o no corresponde a esta sesión. Ejecuta una auditoría nueva.");
@@ -5455,7 +5457,7 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
         try {
             const auditState = loadDriveAuditServerState_(requestedAuditId);
             const auditValid = auditState.ownerId === ownerId && auditState.status === "complete" &&
-                auditState.scanVersion === ADMIN_SERVICE_VERSION && auditState.imageMetadataVersion === 1 &&
+                auditState.scanVersion === DRIVE_AUDIT_SCAN_VERSION_ && auditState.imageMetadataVersion === 1 &&
                 Number.isFinite(Number(auditState.completedAt)) && Date.now() - Number(auditState.completedAt) <= 21600000 &&
                 getLatestDriveAuditIdForUser_(ownerId) === requestedAuditId;
             if (auditValid) {
@@ -5549,7 +5551,7 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
         const auditState = loadDriveAuditServerState_(auditId);
         if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
             Number(auditState.errorCount || 0) > 0 || Number(auditState.unverifiableReferenceCount || 0) > 0 ||
-            auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
+            auditState.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || auditState.imageMetadataVersion !== 1 ||
             !Number.isFinite(Number(auditState.completedAt)) || Date.now() - Number(auditState.completedAt) > 21600000 ||
             getLatestDriveAuditIdForUser_(ownerId) !== auditId) {
             throw new Error("La auditoría Drive no está completa, vigente o no corresponde a esta sesión. Ejecuta una auditoría nueva.");
@@ -13825,7 +13827,7 @@ function getLatestDriveAuditIdForUser_(ownerId) {
     const row=findDriveAuditLatestRow_(getDriveAuditLatestSheet_(),hashDriveAuditValue_(owner));
     if(!row||row.ownerId!==owner)throw new Error("No existe una auditoría completa reciente para esta sesión. Ejecuta una auditoría nueva.");
     const state=loadDriveAuditServerState_(row.latestAuditId);
-    if(state.ownerId!==owner||state.status!=="complete"||state.scanVersion!==ADMIN_SERVICE_VERSION||state.imageMetadataVersion!==1||
+    if(state.ownerId!==owner||state.status!=="complete"||state.scanVersion!==DRIVE_AUDIT_SCAN_VERSION_||state.imageMetadataVersion!==1||
         Number(state.errorCount||0)>0||Number(state.unverifiableReferenceCount||0)>0)
         throw new Error("El puntero latest no coincide con una auditoría completa, íntegra y vigente de esta sesión.");
     return row.latestAuditId;
@@ -13836,7 +13838,7 @@ function validateCompletedDriveAudit_(auditId, ownerId, files) {
     if (state.status !== "complete" || !Number.isFinite(Number(state.completedAt))) {
         throw new Error("ADMIN no ha confirmado que la auditoría esté completa. No se modificó el inventario.");
     }
-    if (state.scanVersion !== ADMIN_SERVICE_VERSION || state.imageMetadataVersion !== 1) {
+    if (state.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || state.imageMetadataVersion !== 1) {
         throw new Error("La auditoría fue creada con otra versión o no conserva el esquema completo de metadatos. Ejecuta una auditoría nueva.");
     }
     if (Number(state.errorCount || 0) > 0 || Number(state.unverifiableReferenceCount || 0) > 0) {
@@ -14201,7 +14203,7 @@ function clearAuditDriveReferenceSnapshot(auditId) {
 function validateDriveAuditInventoryBatch_(auditId, ownerId, files) {
     const state = loadDriveAuditServerState_(auditId);
     if (state.ownerId !== String(ownerId || "").trim()) throw new Error("La auditoría pertenece a otra sesión Desarrollador.");
-    if (state.scanVersion !== ADMIN_SERVICE_VERSION) throw new Error("La auditoría incremental fue creada con otra versión de ADMIN; inicia una auditoría nueva.");
+    if (state.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_) throw new Error("La auditoría incremental fue creada con otra versión de ADMIN; inicia una auditoría nueva.");
     if (Number(state.unverifiableReferenceCount || 0) > 0) {
         throw new Error("La auditoría contiene referencias de catálogo no interpretables; no se permite registrar imágenes hasta completar una captura de referencias verificable.");
     }
@@ -14529,7 +14531,7 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     const auditState = loadDriveAuditServerState_(auditId);
     if (!ownerId || auditState.ownerId !== ownerId || auditState.status !== "complete" ||
-        auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
+        auditState.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || auditState.imageMetadataVersion !== 1 ||
         Number(auditState.errorCount || 0) > 0 || Number(auditState.unverifiableReferenceCount || 0) > 0 ||
         !auditState.inventoryOperationId || !["partial", "complete"].includes(String(auditState.inventoryStatus || ""))) {
         throw new Error("La organización requiere una auditoría completa y una operación de inventario confirmada por ADMIN.");
@@ -14930,7 +14932,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         auditId = String(cursor.referenceCacheId || "").trim();
         state = loadDriveAuditServerState_(auditId);
         if (state.ownerId !== ownerId) throw new Error("El cursor pertenece a otra sesión Desarrollador.");
-        if (state.scanVersion !== ADMIN_SERVICE_VERSION || String(cursor.scanVersion || "") !== ADMIN_SERVICE_VERSION) throw new Error("La auditoría fue creada con otra versión del servicio; inicia una auditoría nueva para aplicar la deduplicación global.");
+        if (state.scanVersion !== DRIVE_AUDIT_SCAN_VERSION_ || String(cursor.scanVersion || "") !== DRIVE_AUDIT_SCAN_VERSION_) throw new Error("La auditoría fue creada con otra versión del servicio; inicia una auditoría nueva para aplicar la deduplicación global.");
         inputFingerprint = getDriveAuditCursorFingerprint_(cursor);
         if (state.lastRequestFingerprint === inputFingerprint && state.lastResponseCacheKey) {
             if (Number(cursor.totalAnalyzed) !== Number(state.lastRequestTotalAnalyzed) ||
@@ -14963,7 +14965,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     } else {
         cleanupExpiredDriveAuditServerStates_();
         auditId = Utilities.getUuid(); inputFingerprint = "START";
-        state = { auditId, ownerId, status: "running", scanVersion: ADMIN_SERVICE_VERSION, createdAt: Date.now(),
+        state = { auditId, ownerId, status: "running", scanVersion: DRIVE_AUDIT_SCAN_VERSION_, createdAt: Date.now(),
             pageCount: 0, totalDiscovered: 0, totalAnalyzed: 0, foldersVisited: 1, errorCount: 0, duplicateFileCount: 0, duplicateFolderCount: 0 };
         const referenceCaptureStartedAt = Date.now();
         const references = collectCatalogImageReferences(true);
@@ -15145,7 +15147,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
     const driveTraversalMs = Date.now() - batchStartedAt;
     const budgetExhausted = stack.length > 0 && driveTraversalMs >= batchBudgetMs;
     const complete = stack.length === 0;
-    const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
+    const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: DRIVE_AUDIT_SCAN_VERSION_ };
     const cachePersistenceStartedAt = Date.now();
     storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
     storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType, folderPath: item.folderPath, folderId: item.folderId, size: item.size, lastUpdated: item.lastUpdated, referenceLocations: item.referenceLocations })));
