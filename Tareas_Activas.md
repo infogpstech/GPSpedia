@@ -1533,3 +1533,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Validar con Apps Script, Drive y Google Sheets reales en Beta autorizada; confirmar contenido real de LogosMarca y persistencia/lectura de asociaciones. No ejecutar sin autorización.
 - [ ] Revisión visual escritorio/móvil y Code Review final. No modificar estilos/animaciones de pestañas.
 - Sin POST ni deployment; Beta permanece cerrada. No se crearon suites permanentes ni se borraron filas/archivos remotos.
+
+
+#### Verificación final adicional — 2026-11-27
+- [x] Distinguir asociación sin coincidencia (metadatos disponibles, sin modelo candidato) de asociación no verificada (metadatos insuficientes); conservar candidatos previos cuando no hay datos para recalcular.
+- [x] Conservar una URL visual válida; reparar únicamente si falta.
+- [x] Optimizar captura de ubicaciones: sin detalle por lote incremental y con detalle en consolidación final.
+- [x] Verificar validateCompletedDriveAudit_ con cero candidatos y digest correcto (1/1 PASS).
+- [x] Verificar sin_coincidencia, no_verificada y conservación de URL visual válida (3/3 PASS).
