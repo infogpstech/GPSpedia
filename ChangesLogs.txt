@@ -1861,3 +1861,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Verificación estática final: 17/17 invariantes PASS; delimitadores JS balanceados en admin.js/ui.js; ID del botón de reinicio único; respaldos exactos PASS. Simulación lógica de formatos URL de Drive y separación entre registro individual y consolidación global: 19/19 PASS en la revisión anterior.
 - No parser JS completo, runtime, harness Apps Script, navegador, Drive/Spreadsheet real, POST ni deployment. Beta sigue cerrada.
 - Commits de trazas: 4b8f0582a5a6c03870cb7f8ee71152d7cedf3d2a, e3eaa6e6d11e05f3a5bf4b81e1fe97863515c2e6.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — registro de revisión aislada
+- Auditoria.txt: añadido el resultado del harness efímero de LogosMarca (5/5), validación de esquema (1/1), validador incremental (3/3), escritura/lectura de confirmación (2/2) y comprobaciones estáticas UI/CSS (6/6), con límites explícitos.
+- Tareas_Activas.md: actualizado el avance de las comprobaciones aisladas y conservados los pendientes de flujo integrado y navegador.
+- PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md: añadido el estado de revisión del 2026-11-27 y la cobertura pendiente.
+- checkpoint.md: añadido el punto de continuidad, respaldos y resultados de esta revisión.
+- No se modificaron archivos funcionales ni se ejecutaron operaciones remotas.
