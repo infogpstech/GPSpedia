@@ -1755,3 +1755,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Frontend/ui.js`: los aportes suplementarios desde modal de detalle no concatenan alerta de cleanup local pendiente al mensaje de éxito; cleanup se informa por consola. La falla de refresh postcommit se registra en consola, sin segunda notificación global.
 
 - `HTML/add_cortes.html`: etapa suplementaria, una vez WRITE devuelve success y vehicleId concordante, los eventos contribución no confirmados y errores de cleanup se registran en consola; no impiden redirigir al catálogo. Cleanup local permanece best-effort.
+
+
+### Code Review estático — GP-ADD-CUT-WIZARD-UX-NAV-01
+- Diff de `HTML/add_cortes.html` revisado bloque por bloque contra backup exacto: 12 bloques delimitados, todos correspondientes al icono, mensajes, recuperación, retroceso, transición postcommit, redirect y errores solicitados.
+- `JS/Frontend/ui.js`: modificaciones aisladas a entrada de historial del modal de detalle y comportamiento de mensajes/cleanup/refresh postcommit suplementario.
+- `JS/Frontend/main.js`: sin modificaciones (comparación byte a byte con backup).
+- Backups temporales de HTML, ui.js y main.js retirados después de revisión.
+- Verificación limitada a comparación estática de diffs y lectura de bloques afectados; no se ejecutó parsing JavaScript, navegador real, Android, Pages, deployment, POST ni escritura remota.
