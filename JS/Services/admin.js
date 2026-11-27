@@ -13902,6 +13902,12 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         return Array.from(new Set(mismatches));
     };
     const matches = persisted => getMismatchedColumns(persisted).length === 0;
+    const annotateError = (error, stage) => {
+        const wrapped = new Error(String(error && error.message || error || "Error sin detalle."));
+        wrapped.stage = String(error && error.stage || stage);
+        if (Array.isArray(error && error.mismatchedColumns)) wrapped.mismatchedColumns = error.mismatchedColumns.slice();
+        return wrapped;
+    };
     const describeError = (error, fallbackStage) => {
         const stage = String(error && error.stage || fallbackStage || "etapa desconocida");
         const message = String(error && error.message || error || "Error sin detalle.").replace(/[\r\n]+/g, " ").slice(0, 700);
@@ -13913,21 +13919,18 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         try {
             sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
         } catch (error) {
-            error.stage = error.stage || attempt + " — escritura setValues";
-            throw error;
+            throw annotateError(error, attempt + " — escritura setValues");
         }
         try {
             SpreadsheetApp.flush();
         } catch (error) {
-            error.stage = error.stage || attempt + " — SpreadsheetApp.flush";
-            throw error;
+            throw annotateError(error, attempt + " — SpreadsheetApp.flush");
         }
         let persisted;
         try {
             persisted = readBack();
         } catch (error) {
-            error.stage = error.stage || attempt + " — lectura posterior";
-            throw error;
+            throw annotateError(error, attempt + " — lectura posterior");
         }
         const mismatches = getMismatchedColumns(persisted);
         if (mismatches.length) {
@@ -13953,8 +13956,7 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         reconciliationMismatch = getMismatchedColumns(persisted);
         if (!reconciliationMismatch.length) return persisted;
     } catch (error) {
-        readError = error;
-        readError.stage = readError.stage || "lectura de reconciliación";
+        readError = annotateError(error, "lectura de reconciliación");
     }
 
     let retryError = null;
