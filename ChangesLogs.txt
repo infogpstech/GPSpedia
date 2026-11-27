@@ -1751,3 +1751,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `HTML/add_cortes.html`: favicon explícito con icono PNG existente del proyecto para evitar fallback de solicitud favicon.ico desde esta página.
 - `JS/Frontend/ui.js`: al abrir modal de detalle desde vista no-modal, se añade una entrada de historial browser modalOpen para que back/gesto cierre la ficha en lugar de abandonar la aplicación.
 - No se ha ejecutado browser real, POST, escritura remota, deployment ni suite de pruebas; Beta cerrada.
+
+- `JS/Frontend/ui.js`: los aportes suplementarios desde modal de detalle no concatenan alerta de cleanup local pendiente al mensaje de éxito; cleanup se informa por consola. La falla de refresh postcommit se registra en consola, sin segunda notificación global.
