@@ -1034,3 +1034,8 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Comparación del diff y revisión estática: PASS con limitación de no parse completo ni runtime; extractor 8/8 casos aislados PASS.
 - Backups temporales retirados después de Code Review; archivos originales están en commits anteriores.
 - Próximo paso pendiente: prueba integrada autorizada en navegador y Sheets/Drive para confirmar clasificación, pausa, reanudación y reinicio; no desplegar ni reabrir Beta.
+
+
+## Continuidad — ampliación del extractor de referencias Drive (2026-11-27)
+- Se amplió `extractDriveFileIds()` para variantes thumbnail/thumb, URL googleusercontent y parámetros id/docid/fileid, manteniendo normalización HTML/encoding. Se versionó a `drive-audit-reference-normalization-v3-thumbnail-urls`.
+- Aún no se ejecutaron pruebas aisladas/parsing completo ni validación de referencia real en Sheets/Drive; sin deployment ni cambios a rama protegida.
