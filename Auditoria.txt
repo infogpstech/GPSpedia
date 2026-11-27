@@ -1325,3 +1325,11 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Backups exactos de los archivos a editar creados en `Olds/Backups/GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01-20261127/` antes de la implementación.
 
 **Plan de corrección:** normalizar URL y HTML antes de extraer IDs; aceptar patrones de IDs de Drive en URLs publicadas, links de thumbnail/uc/file/open y atributos HTML; incluir todas las hojas allowlist en el snapshot de ubicaciones; versionar el scan para descartar cursor/snapshot antiguo; incorporar pausa de frontera de lote con persistencia local, y mantener el reinicio existente desde cero. Ejecutar pruebas aisladas del extractor y revisión estática; runtime Drive/Sheets/Beta queda pendiente.
+
+
+### F-52 — implementación y revisión estática (2026-11-27)
+- JS/Services/admin.js: se ajustó el extractor para decodificar entidades HTML y URL encoding y reconocer IDs en parámetros id y rutas de Drive. Se amplió la lista de hojas admitidas para las ubicaciones del snapshot y se versionó el recorrido.
+- JS/Frontend/ui.js: control «Pausar» solicita detener el recorrido al terminar el lote actual; persiste el cursor/progreso y retorna estado parcial, sin completar la consolidación final. El botón se oculta y el control Reanudar existente permite continuar. Se elimina un botón previo al recrearlo para evitar duplicados.
+- Pruebas aisladas del extractor: 8/8 casos PASS (URL file/d, uc query, HTML &amp;, googleusercontent /d/, URL percent-encoded, slash escapado, ID directo y rechazo de atributo HTML ajeno).
+- Revisión estática del compare: cambios funcionales confinados a extractDriveFileIds()/scan version/snapshot location filter en admin.js y controles de pausa/loop/persistencia de ui.js. No se ejecutó parser de archivos completos ni navegador/Apps Script/Sheets/Drive remoto; pausa/reanudación y clasificación real siguen pendientes de validación integrada.
+- HEAD protegido GPSpedia2.2.5 confirmado sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1. No deployment ni mutaciones remotas.
