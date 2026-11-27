@@ -1034,3 +1034,13 @@ Verificación aislada ejecutada en memoria sobre funciones fuente reales con moc
 - Parse sintáctico completo de admin.js y ui.js (retirando imports/exports estáticos para el wrapper V8) PASS; bloques runAudit y resetScanButton parseados (2/2 PASS). Comprobaciones UI: preflight antes de clearDriveAuditState, limpieza antes de runAudit(false), consolidación incluso con cero candidatos y guardado incremental automático conservado (4/4 PASS).
 
 Límites: los harnesses son simulaciones en memoria; no se ejecutó Apps Script real, Google Sheets/Drive real, navegador, IndexedDB real, POST ni deployment. La verificación visual y Beta autorizada siguen pendientes. No se borraron filas ni archivos remotos; no se reabrió Beta.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — ajustes finales de asociaciones y memoria
+
+- La reconciliación de asociaciones distingue tres resultados: suggested/ambiguous cuando hay candidatos actuales; sin_coincidencia cuando existe metadato utilizable pero el modelo no coincide; no_verificada cuando los metadatos son insuficientes o el cálculo no puede verificarse. No se borran candidatos existentes cuando no hay datos suficientes.
+- La URL de visualización derivada se repara solo si está vacía; una URL visual válida existente se conserva.
+- En la consolidación, includeLocations=false se usa para lotes incrementales y includeLocations=true para la operación final; las ubicaciones detalladas se materializan solo donde son necesarias para reconciliar filas históricas.
+- Pruebas adicionales: asociación sin coincidencia -> sin_coincidencia y candidatos vacíos (1/1); metadatos insuficientes -> no_verificada y candidatos previos conservados (1/1); URL visual válida preservada (1/1). validateCompletedDriveAudit_ acepta lista vacía cuando expectedUnusedCount=0 y el digest coincide (1/1).
+- Commits adicionales admin.js: 72b5ed0dc49b7f947c39fa727bf49ce9cc291692 (ubicaciones solo en consolidación final), 44dd569822dd1d384916d2ae8c172b3830f5c9b8 (asociación sin coincidencia en históricos), 3e16f1150ae42c5289112db93d47cc24c6f9473f (preservar URL visual válida; reparar solo si falta).
+- No se modificaron estilos ni la rama base. Pruebas remotas, navegador y Beta siguen pendientes.
