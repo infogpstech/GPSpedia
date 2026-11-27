@@ -14452,7 +14452,7 @@ async function completeVehicleExpansionSave_(writeResult,vehicleId,successMessag
  if(!cleanVehicleId||!writeResult||writeResult.status!=="success"||String(writeResult.vehicleId==null?"":writeResult.vehicleId).trim()!==cleanVehicleId)throw new Error("El servidor no confirmó el guardado de la información para el vehículo solicitado.");
  if(!modal||typeof modal.remove!=="function")throw new Error("No se pudo cerrar el formulario después de confirmar el guardado.");
  const notifySuccess=dependencies.notifySuccess||(message=>alert(message));
- const notifyRefreshFailure=dependencies.notifyRefreshFailure||(message=>showGlobalError(message));
+ const notifyRefreshFailure=dependencies.notifyRefreshFailure||(message=>console.error("[GPSpedia] "+message));
  modal.remove();
  try{
   const updatedItem=await refreshVehicleDetailAfterExpansion_(cleanVehicleId,dependencies);
