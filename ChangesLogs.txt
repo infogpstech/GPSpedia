@@ -1958,3 +1958,12 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 ### GP-ADMIN-DRIVE-REGISTRO-ERROR-01 — 2026-11-27
 - Añadido diagnóstico estructurado para fallos de registro incremental de inventario Drive (consola desarrollador y consola de auditoría), commit `261b7c4`.
 - La reproducción real y corrección de causa raíz permanecen pendientes; esta modificación mejora la observabilidad, no confirma que la persistencia funcione.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-REGISTRO-ERROR-02 — verificación de escritura del inventario
+- Archivo: JS/Services/admin.js, función writeDriveInventoryRowVerified_ (aprox. líneas 13864–13930).
+- Se añadió normalización semántica para el campo fecha_modificacion_drive cuando Google Sheets devuelve un objeto Date: se convierte a yyyy-MM-dd HH:mm:ss en GMT-6 antes de compararlo con el valor solicitado.
+- Se sustituyó la comprobación booleana opaca por una lista de columnas discrepantes. Los errores de lectura posterior identifican los nombres de los campos que no coinciden, sin exponer sus valores.
+- Se conservaron la escritura, SpreadsheetApp.flush(), lectura posterior, reintento, validaciones de identidad/estado/metadatos y bloqueo de organización ante discrepancias reales.
+- Respaldo exacto previo: Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-02-20261127/admin.js.backup; blob SHA 163e167b6544a59966c40b3b825e6e5a3ffb72b5.
+- Verificación aislada en memoria: fecha equivalente Date/texto aceptada; fecha distinta rechazada e identificada como fecha_modificacion_drive; discrepancia de tamano_bytes rechazada e identificada. Parse sintáctico completo de admin.js PASS. No se ejecutó Apps Script/Drive/Sheets real, navegador, POST ni deployment.
