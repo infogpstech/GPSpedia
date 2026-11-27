@@ -759,7 +759,12 @@ async function handleUserFormSubmit(e) {
                 return;
             }
             if(administrativePassword){
-                await postToAction('resetUserPassword',{targetUserId:userId,newPassword:administrativePassword,sessionToken:submittingSession.sessionToken});
+                await postToAction('resetUserPassword', {
+                    userId: submittingSession.userId,
+                    targetUserId: userId,
+                    newPassword: administrativePassword,
+                    sessionToken: submittingSession.sessionToken
+                });
                 if (!isSubmittingSessionCurrent()) return;
                 alert('Usuario actualizado y contraseña restablecida. Todas sus sesiones fueron cerradas.');
             }else alert(updateResult.message || 'Usuario actualizado');
