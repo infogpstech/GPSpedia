@@ -630,3 +630,8 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - El caso de la última ficha aún no se puede confirmar contra Sheets: un event accepted append-only en AportesVehiculo podría materializarse nuevamente tras borrado manual, pero no se ha consultado la hoja real. No afirmar causa raíz confirmada.
 - Sin browser, Apps Script, POST, writes remotos ni deployment; Beta cerrada.
 - Siguiente paso: consulta de datos en Spreadsheet aislada/autorizada para determinar si persiste un evento de corte duplicado/replay; si es confirmado, auditar y corregir ledger/materialización por ciclo completo.
+
+## 2026-11-27 — GP-CUT-DETAIL-PYS-STALE-NOTICE-01
+- `JS/Frontend/ui.js`: se retiró el aviso de datos PyS potencialmente desactualizados dentro de `renderPosiblesProblemasAccordion`, en el modal de detalle de corte.
+- Code review: comparación exacta contra respaldo confirmó únicamente la eliminación del bloque del aviso (7 líneas); no se alteró la lógica cache/refresh, filtrado, asociación ni avisos en otras vistas. Backup retirado tras revisión.
+- Sin prueba navegador/runtime. Commit de código `b58d1435d88fba0a1ba630a698720cd06754432f`.
