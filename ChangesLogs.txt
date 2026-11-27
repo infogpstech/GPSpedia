@@ -1980,3 +1980,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Archivo: JS/Frontend/ui.js, función renderCutContent() (aprox. líneas 4016–4031). Se reemplazó el párrafo genérico por nodos DOM con la miniatura Drive indicada, estilo de imagen height:50px; width:auto; float:right; margin-left:10px;, etiqueta NOTA en rojo y el texto «Este corte activa el testigo del motor». El bloque se inserta después del color de cable y antes de la imagen del corte, solo cuando activaTestigo es verdadero.
 - No se modificaron contratos de servicios, persistencia, CSS ni otros elementos de los formularios.
 - Comparación contra respaldos exactos: solo los dos bloques funcionales descritos cambiaron. Comprobaciones estáticas de flujo y contenido: 11/11 PASS. No se ejecutaron pruebas de navegador, Apps Script/Drive/Sheets, POST ni deployment; Beta continúa cerrada.
+
+
+2026-11-27 | GP-USERS-SESSION-CONTEXT-01 — contexto de sesión en consulta de usuarios
+- Archivo: HTML/users.html, función fetchUsers(), llamada postToAction('getUsers') (aprox. líneas 492–495 después del cambio).
+- Se agregó userId: sessionSnapshot.id al payload de getUsers. Se conserva sessionToken: sessionSnapshot.token y la captura/validación de sesión existente.
+- No se modificaron api-config.js, el mapeo AUTH, los controles RBAC, caché, renderizado, estilos ni acciones de escritura.
+- La auditoría estática de las demás llamadas de gestión detectó contratos distintos; no se cambiaron sin confirmar la firma del servicio AUTH remoto.
+- Parsing del módulo inline PASS; harness aislado de fetchUsers confirmó que getUsers recibe userId y sessionToken. No se ejecutó navegador ni servicio AUTH real; validación integrada pendiente.
