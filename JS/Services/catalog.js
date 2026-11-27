@@ -1279,9 +1279,8 @@ function normalizeFeedbackLikeActorKey_(value) {
 }
 
 function isValidFeedbackLikeVehicleId_(value){
- const id=String(value===null||value===undefined?"":value).trim(),part=id.startsWith("V-")?id.slice(2):id;
- if(!/^[1-9]\d{0,15}$/.test(part))return false;const n=Number(part);
- return Number.isSafeInteger(n)&&n>0&&String(n)===part&&(id===part||id==="V-"+part);
+ try { normalizeCatalogVehicleId_(value, "FeedbackLikes"); return true; }
+ catch (error) { return false; }
 }
 function readFeedbackLikeEventCounts_(spreadsheetRef) {
     const ss = spreadsheetRef || getSpreadsheet();
@@ -1305,15 +1304,11 @@ function readFeedbackLikeEventCounts_(spreadsheetRef) {
     rows.forEach((row, index) => {
         try {
             const actor = normalizeFeedbackLikeActorKey_(row[0]);
-            const vehicle = String(row[1] || "").trim();
+            const vehicle = normalizeCatalogVehicleId_(row[1], "FeedbackLikes");
             const cut = isStateSchema
                 ? Number(String(row[2] || "").trim().replace(/^corte/i, ""))
                 : Number(row[2]);
-            const part = vehicle.startsWith("V-") ? vehicle.slice(2) : vehicle;
-            const numeric = Number(part);
-            if (!/^[1-9]\d{0,15}$/.test(part) || !Number.isSafeInteger(numeric) ||
-                String(numeric) !== part || (vehicle !== part && vehicle !== "V-" + part) ||
-                !Number.isInteger(cut) || cut < 1 || cut > 3) {
+            if (!Number.isInteger(cut) || cut < 1 || cut > 3) {
                 throw new Error("referencia inválida");
             }
             let active;
@@ -1480,7 +1475,7 @@ function normalizeCatalogVehicleId_(value, context) {
     if (!Number.isSafeInteger(sequence) || sequence < 1) {
         throw new Error((context || "CATALOG") + ": se requiere un ID V-### válido.");
     }
-    return "V-" + String(sequence).padStart(3, "0");
+    return "V-" + String(sequence).padStart(5, "0");
 }
 function sameCatalogVehicleId_(left, right) {
     try { return normalizeCatalogVehicleId_(left) === normalizeCatalogVehicleId_(right); }
@@ -1490,6 +1485,10 @@ function sameCatalogVehicleId_(left, right) {
 function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCounts, categoryCounts) {
     const vehicle = mapRowToObject(row, columnMap, IMAGE_FIELDS_CORTES);
     if (!vehicle) return null;
+    if (vehicle.id !== null && vehicle.id !== undefined && String(vehicle.id).trim()) {
+        try { vehicle.id = normalizeCatalogVehicleId_(vehicle.id, "Proyección de vehículo"); }
+        catch (error) { /* conservar el dato original para no ocultar filas históricas inválidas */ }
+    }
     for (let index = 1; index <= 3; index++) {
         const eventCount = feedbackLikeEventCounts.get(String(vehicle.id || "").trim() + "|" + index) || 0;
         if (eventCount) {
