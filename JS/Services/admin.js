@@ -5114,7 +5114,7 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
             const modelKey=normalize(model.model), brandKey=normalize(model.brand), modelTokens=tokens(model.model);
             if (!modelKey || !brandKey || !modelTokens.length) return;
             const brandSegmentIndexes=normalizedSegments.map((v,i)=>v===brandKey?i:-1).filter(i=>i>=0);
-            const modelSegmentIndexes=normalizedSegments.map((v,i)=>v===modelKey || (modelTokens.length>1&&tokenSetKey(v)===tokenSetKey(model.model))?-1:i).filter(i=>i>=0);
+            const modelSegmentIndexes=normalizedSegments.map((v,i)=>(v===modelKey || (modelTokens.length>1&&tokenSetKey(v)===tokenSetKey(model.model)))?i:-1).filter(i=>i>=0);
             // Explicit folder structure requires Brand preceding Model. Brand/model may also be corroborated by filename when folders are absent.
             const brandBeforeModel=brandSegmentIndexes.some(bi=>modelSegmentIndexes.some(mi=>mi>bi));
             const exactModelFolder=normalizedSegments.includes(modelKey);
