@@ -2053,3 +2053,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 2026-11-27 | GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — normalización de referencias y pausa
 - JS/Services/admin.js: extractDriveFileIds() normaliza entidades HTML y URL percent-encoding, reconoce parámetros id y rutas /d/, /file/d/ y /folders/; la versión del escaneo se cambió a drive-audit-reference-normalization-v2. El snapshot de ubicaciones ahora incluye Cortes, LogosMarca, Tutoriales, Relay y PyS.
 - JS/Frontend/ui.js: se añadió control de pausa de la auditoría que termina el lote en curso, persiste el estado parcial y cursor, y permite reanudar. Se evita duplicar el botón al abrir nuevamente el panel.
+
+
+2026-11-27 | GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — Code Review estático
+- Comparación estática del diff: admin.js limitado a extractDriveFileIds(), versión del escaneo y mapa de ubicaciones de referencia; ui.js limitado al control de pausa y estado de frontera de lote.
+- Pruebas aisladas del extractor 8/8 PASS; sin parser completo ni prueba de navegador/runtime.
+- Backups temporales eliminados tras revisión estática; no se modificó la rama base. Validación integrada pendiente.
