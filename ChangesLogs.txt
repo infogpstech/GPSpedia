@@ -2039,3 +2039,12 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Auditoria.txt: se añadió el hallazgo de pérdida silenciosa de readError durante la lectura de reconciliación del writer de inventario.
 - Tareas_Activas.md: se registró GP-ADMIN-DRIVE-REGISTRO-ERROR-03 con el alcance de diagnóstico acumulado de firstError/readError/retryError.
 - No se modificó código funcional ni se alteró el contrato de persistencia. No se ejecutaron pruebas remotas ni deployment.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-REGISTRO-ERROR-03 — diagnóstico acumulado de inventario Drive
+- Archivo modificado: JS/Services/admin.js, función writeDriveInventoryRowVerified_(). Se agregaron etapas explícitas para setValues, flush, lectura posterior y comparación en ambos intentos.
+- Se conservan firstError, readError y retryError, junto con las columnas discrepantes de la lectura de reconciliación; los mensajes no incluyen valores de celdas. Se normalizan errores lanzados como Error o como valores no estándar.
+- Cuando no hay confirmación inequívoca, se mantiene IMAGE_INVENTORY_WRITE_FAILED y se intenta persistir estado requiere_revision/resultado_inventario=error con el diagnóstico acumulado. No se considera confirmado ni organizable el archivo.
+- Se preservaron la firma del writer y los call sites; no se modificaron esquema, reglas de elegibilidad, estados de éxito ni organización.
+- Comparación exacta contra backup: solo cambió el bloque writeDriveInventoryRowVerified_(). Parsing completo PASS; pruebas simuladas en memoria 5/5 PASS.
+- No se ejecutaron escrituras reales en Google Sheets/Drive, Apps Script, POST ni deployment. La causa remota exacta y validación integrada permanecen pendientes.
