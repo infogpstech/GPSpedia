@@ -680,3 +680,9 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Revisión ampliada de `JS/Services/admin.js`: `auditVehicleIdReferences_` (líneas aproximadas 6266-6279) convierte la columna ID de `Cortes` a Number y normaliza las referencias con Number. El nuevo valor `V-00001` produce NaN, por lo que la herramienta administrativa de integridad marcaría los IDs de vehículo como referencias malformadas y todas sus referencias como huérfanas. Debe cambiarse a una normalización canónica textual `V-00000` que acepte también IDs históricos numéricos y `V-###`, sin convertir el ID público a número.
 - Las búsquedas de fila de ADMIN y sus contratos de Idempotencia aceptan el ID como texto y no aplican validación numérica ni límites de cinco dígitos; para IDs nuevos exactos no requieren modificación. No se identificó otro validador numérico del ID público en ADMIN.
 - Archivo adicional que requiere adaptación: `JS/Services/admin.js`, exclusivamente el normalizador y el escaneo de referencias del diagnóstico de integridad. Respaldo previo a edición queda pendiente de creación en esta misma tarea.
+
+
+[2026-11-26] GP-CUT-ID-CROSS-SERVICE-07 — observación de Code Review y reinicio de corrección FEEDBACK
+- La revisión del diff detectó un defecto en `parseReportMetadata`: la variable `vehicleId` se usa para construir `defaultSubject` antes de declararse/normalizarse. La función captura el ReferenceError y devuelve metadata nula, lo que podría ocultar reportes válidos del Inbox.
+- La representación canónica también debe propagarse a los objetos del Inbox: `parseCutSuggestionRecord` y `mapInboxFeedbackRow_` no deben devolver IDs históricos `V-###` cuando el catálogo ya opera con `V-00000`.
+- Se reinicia el procedimiento para corregir el hallazgo: auditoría focalizada de las tres funciones y sus consumidores, respaldo exacto del estado actual de `JS/Services/feedback.js`, corrección limitada y nueva validación/Code Review.
