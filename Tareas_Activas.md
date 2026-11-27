@@ -1335,7 +1335,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ## GP-ADD-CUT-WIZARD-UX-NAV-01 — mensajes, etapas y retroceso de detalle
 
-**Estado: EN IMPLEMENTACIÓN.**
+**Estado: IMPLEMENTACIÓN FUENTE COMPLETADA; validación en navegador pendiente.**
 
 - [x] Suprimir notificaciones redundantes de confirmación/limpieza local tras WRITE; permitir exclusivamente «Corte agregado con éxito» o «No se pudo agregar el corte, intenta más tarde» en el flujo de alta y mantener errores técnicos en consola (implementado, pendiente prueba integrada).
 - [x] Transición etapa 2→3 tras confirmación WRITE sin depender de limpieza IndexedDB; conservar recuperación e idempotencia (implementado, pendiente prueba integrada).
@@ -1343,8 +1343,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Retroceso etapa 3→2 reinicia campos/imágenes locales del corte; otras rutas de retroceso preservan datos (implementado, pendiente prueba integrada).
 - [x] Desde etapa 2 regresar a etapa 1.5 si hay coincidencias, o etapa 1 sin coincidencias; la lógica existente preserva datos/resultados.
 - [x] Entrada modalOpen añadida al historial al abrir detalle desde estado no-modal, para retroceso/gesto (implementado, pendiente browser real).
-- [ ] Diagnosticar /favicon.ico 404; corregir ruta o asset si el defecto está confirmado en el alcance.
-- [ ] Clasificar la advertencia document.write de runtime HtmlService de Google: corregir solo si existe callsite propio GPSpedia comprobado, sin modificar runtime externo.
+- [x] Diagnosticar /favicon.ico 404; HTML/users.html no declaraba icono y ahora apunta al PNG local existente. Verificación de Network pendiente.
+- [x] Clasificar la advertencia document.write: la única llamada propia genera HTML/CSS estático de impresión sin scripts externos; la advertencia parser-blocking corresponde probablemente al runtime HtmlService. No modificar runtime externo.
 - [x] Comparación de diffs y Code Review estático completados; solo cambios solicitados, backups eliminados tras revisión. (No se hizo parsing/runtime browser.)
 - [x] Actualizar ChangesLogs.txt, Auditoria.txt y checkpoint.md; GPSpedia2.2.5 permanece intacta.
 
