@@ -14308,7 +14308,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             folderPath: String(row[column("ubicacion_original")] || row[9] || row[column("ubicacion_actual")] || "")
         };
         eligible.push({ rowNumber, fileId, row, metadata });
-        if (metadata.fileName && metadata.mimeType.toLowerCase().startsWith("image/")) {
+        if ((metadata.fileName || metadata.folderPath) && metadata.mimeType.toLowerCase().startsWith("image/")) {
             associationMetadata.push(metadata);
             associationMetadataReady.add(fileId);
         }
@@ -14534,7 +14534,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                     const fileName = String(row[6] || "");
                     const mimeType = String(row[column("tipo_mime") - 1] || "");
                     const folderPath = String(row[column("ubicacion_original") - 1] || row[9] || row[column("ubicacion_actual") - 1] || "");
-                    if (fileName && mimeType.toLowerCase().startsWith("image/")) {
+                    if ((fileName || folderPath) && mimeType.toLowerCase().startsWith("image/")) {
                         associationMetadataById.set(fileId, { fileId, fileName, mimeType, folderPath });
                     }
                 });
