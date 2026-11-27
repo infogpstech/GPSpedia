@@ -8989,6 +8989,8 @@ export async function openAuditDriveModal(options = {}) {
     let isReconciling = false;
     let auditPauseRequested = false;
     let auditRunActive = false;
+    const previousAuditPauseButton = document.getElementById('btn-audit-drive-pause');
+    if (previousAuditPauseButton) previousAuditPauseButton.remove();
     const auditPauseButton = document.createElement('button');
     auditPauseButton.type = 'button';
     auditPauseButton.id = 'btn-audit-drive-pause';
