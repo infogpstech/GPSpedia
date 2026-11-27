@@ -942,3 +942,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commit de código: a3fbb3943e09adc5df07a192484cf76acd990663. Commits de limpieza de backups: 9eedfdd, 159e01e, 00ed9b2, f701659, c7c7422.
 - Respaldos exactos eliminados tras Code Review. Rama base GPSpedia2.2.5 sin cambios (SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1).
 - Siguiente paso: probar en navegador conectado con sesión Desarrollador y respuesta real AUTH. Revisar contratos de acciones mutables de gestión por separado antes de cambiar sus payloads. Beta permanece cerrada.
+
+## Continuidad — GP-CUT-TESTIGO-NOTA-02 (2026-11-27)
+- Incidencia: no se veían ni la imagen del testigo ni la nota después de registrar el corte.
+- Causa confirmada: el flujo openAddCutForModelModal() guarda el booleano; WRITE lo persiste; CATALOG lo proyecta y UI lo recupera. Después del guardado, completeVehicleExpansionSave_() llama refreshVehicleDetailAfterExpansion_(), cuyo renderizador predeterminado ejecuta mostrarDetalleModal(vehicle, true). Esto activa inEditMode. renderCutContent() condicionaba el bloque a activaTestigo && !inEditMode, ocultando imagen y nota juntas.
+- Corrección aplicada: en JS/Frontend/ui.js, renderCutContent(), condición ahora cutData.activaTestigo === true. El bloque DOM existente, con URL, estilos y texto exactos, se muestra también en modo edición. No se modificó la posición ni otros elementos.
+- Commit funcional: fd4d0f0b48b8a96471dada4eaa7d063d38a43576. SHA de ui.js: f32a08a40039bafae8be45cab6df792b11b3c307. Auditoría F-51 registrada antes del cambio.
+- Verificación: diff exacto contra respaldo confirma solo una línea modificada; 12 comprobaciones estáticas PASS y tabla de condición 4/4 PASS; Code Review estático PASS. Se verificó que checkbox, WRITE, CATALOG y reordenamiento conservan el indicador.
+- No se ejecutó navegador, Apps Script, Google Sheets ni acceso real a Drive; no se puede afirmar todavía que el recurso externo se haya cargado en una sesión publicada. service-worker.js permanece sin cambios (cache v91, scripts same-origin network-first).
+- Siguiente paso: actualizar la aplicación y probar ambos flujos en navegador, marcando/desmarcando el checkbox. Si la nota aparece pero la imagen no carga, investigar por separado el acceso público/validez del archivo Drive sin cambiar la URL exacta solicitada sin autorización.
