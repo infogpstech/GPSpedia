@@ -803,3 +803,32 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commits de registro de revisión: Auditoria.txt 195f2186b4d285455f3092a3ecd9e627ec3f6274; ChangesLogs.txt 19d38cfac2e453cae9944d7a242d6572085ed119; Tareas_Activas.md 8fada08623a4c81c9fa83c2de0eab56dd0101ee3; PLAN 3519c8e7e711384aa7f7a266ce905e09cca49dfb.
 - Revisión visual escritorio/móvil sigue pendiente por falta de navegador interactivo en este entorno. No se ejecutaron Apps Script, Drive/Spreadsheet real, POST ni deployment; Beta permanece cerrada.
 - Siguiente paso: validación visual en navegador sin cambiar el diseño ni las transiciones de pestañas; después cierre de la tarea con los límites de validación claramente registrados.
+
+
+## Continuidad — GP-ADMIN-DRIVE-UNUSED-IMAGES-03 / reconciliación histórica (2026-11-27)
+
+### Requisito actualizado
+- Reiniciar auditoría no elimina filas de Imagenes_Reemplazadas ni archivos de Drive. Antes de limpiar IndexedDB y empezar un auditId nuevo, se reconcilian por páginas los registros de auditoría existentes contra referencias activas del catálogo, incluida LogosMarca.
+- Una referencia activa convierte el registro automático a en_uso; sin referencia activa queda pendiente de revalidación hasta que el nuevo recorrido Drive confirme que sigue en el árbol y sin uso. El estado en_uso manual se preserva.
+- Se verifica/completa asociación con el modelo por jerarquía de carpetas, nombre y metadatos. La consolidación final corre incluso con cero imágenes nuevas sin uso. El guardado automático por lote se mantiene.
+
+### Implementación
+- JS/Services/admin.js: nueva handleReconcileExistingDriveInventory_() y modo reconcile_existing bajo la guarda compartida del inventario; captura de referencias con ubicaciones, asociación de filas existentes, distinción del marcador automático referencia_activa_catalogo y conciliación final de filas activas/obsoletas.
+- JS/Frontend/ui.js: preflight paginado en el botón reset antes de clearDriveAuditState; el nuevo recorrido solo comienza tras confirmar el preflight. Consolidación final al completar una auditoría sin errores aunque la lista de candidatos sea vacía.
+- LogosMarca ya estaba en la allowlist de la rama y se verificó con harness integrado; no se duplicó la entrada.
+- No se modificó CSS, HTML, animaciones ni apariencia de pestañas.
+
+### Evidencia aislada
+- LogosMarca URL columna 3 -> referencia activa/En uso: 1/1 PASS.
+- Preflight A activo en LogosMarca, B sin referencia, C en_uso manual: 3/3 PASS; asociaciones Toyota/RAV4 completadas; manual preservado.
+- URL visual faltante reparada: 1/1 PASS. Repetición del preflight: 0 escrituras adicionales.
+- Paginación 3 lotes; fail-closed para referencias no interpretables y hoja Cortes ausente: 5/5 PASS.
+- Asociación por directorio sin nombre: 1/1 PASS.
+- Consolidación con files=[]: registro activo a en_uso y sin referencia a no_confirmada: 2/2 PASS.
+- Parse completo ADMIN/UI PASS; bloques runAudit/reset PASS; invariantes UI/reset/consolidación/guardado automático 11/11 PASS.
+- Respaldos exactos funcionales verificados: admin.js blob 715ba0c13d09cbd406668cbb4ba164ff2540a255; ui.js blob 3983abadbb901f483b4cc577b1daf25b7ed3e988. Ubicación: Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/REVISION-RECONCILIACION-20261127/.
+- Commits funcionales admin.js: a39492fb82db400c82a02f11fd20e286a6c13570, 8adbbbdfd1ff557d8bbb4be1d71acb59cbf48d24, 2689849e3c6e5c779e4f7a87cf4b5f6aad7e0a2b, 2bdfe641d8a46cb2eba1e9c3a8012a3c487a7468, cca57416ba7c089fd07f8d1b85a6639ca7e61bc3, a12a14e9d36c3afa96a22c280a78c279c6573b80, c471f875b8d8706fa2ed4f304555eee016b42c9c, 6ce5a3ebb725ea349eb1028ae38e4d25b7d01f94. UI: 64539fa8614fa2bfc727895f5b935e56797f573b, 8eaa0d2c29de198c7d9e81316a13a3b543418514.
+
+### Límites y siguiente paso
+- No se ejecutaron Apps Script, Drive/Sheets reales, POST, navegador, IndexedDB real ni deployment. Beta sigue cerrada.
+- Pendiente: prueba visual y flujo de reinicio en navegador; después, Beta autorizada para comprobar filas y asociaciones reales. No cerrar la tarea hasta validar esos escenarios.
