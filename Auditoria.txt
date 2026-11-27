@@ -1255,3 +1255,15 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - El correo se almacena tal como lo registra el usuario; no se incorporó un flujo de verificación de propiedad por correo. La recuperación de contraseña ya consulta el correo registrado junto al nombre de usuario.
 - No se ejecutó navegador real, POST AUTH, escritura en Google Sheets ni deployment. La integración requiere publicar frontend y AUTH coordinadamente y validación posterior autorizada.
 - Incidencia independiente GP-USERS-ID-SEQUENCE-MISMATCH-01 permanece pendiente: la fila 2 de Users contiene un ID que no coincide con el patrón que AUTH tiene configurado. Sin el valor/fórmula real de A2 y la fila correspondiente de `__IdentifierSequenceConfig__` no se modifica la validación ni los IDs existentes.
+
+
+2026-11-27 | GP-USERS-ID-SEQUENCE-MISMATCH-01 — auditoría de formato predeterminado
+- Archivo auditado: JS/Services/Auth.js, funciones parseUserIdSequenceFormula_(), getUserIdSequencePattern_() y generateNextUserId_(). Se revisó el flujo desde la obtención de la configuración hasta la validación de cada ID existente y la generación del siguiente.
+- No existe la hoja __IdentifierSequenceConfig__ según la confirmación del propietario. La tabla compartida contiene campos de reservas (reservationId, sheet, column, reservedSuffix, baseSuffix, createdAt) y no corresponde al esquema de configuración central esperado.
+- Cuando no existe configuración central y la columna Users.ID no contiene fórmulas reconocibles, getUserIdSequencePattern_() aplica actualmente el fallback {prefix:"USR-", padding:4}. Los IDs existentes compartidos por el propietario usan U-001 y U-002, por lo que el fallback no coincide y generateNextUserId_() rechaza la fila 2.
+- Si existen fórmulas históricas reconocibles en Users.ID, el backend deriva el prefijo y el relleno de esas fórmulas; esa ruta se conservará sin cambios. La fórmula real de A2 no fue consultada directamente en Google Sheets, por lo que no se afirma que la hoja carezca de fórmulas.
+- Cambio autorizado y acotado: ajustar exclusivamente el fallback sin configuración/fórmulas a prefijo U- y relleno de 3 dígitos, manteniendo intactos parseUserIdSequenceFormula_(), la lectura de configuración central, las validaciones de encabezados, fórmulas, duplicados, sufijos y generación secuencial.
+- Resultado esperado para los valores existentes U-001 y U-002: siguiente identificador U-003. No se renumerarán usuarios ni se modificarán datos de Google Sheets.
+- Dependencias/riesgos revisados: creación de usuarios llama generateNextUserId_() bajo withUsersMutationLock_(); findNextUserRow_() conserva su selección de fila. No se modifica el payload, RBAC, sesión, escritura de otras columnas ni secuencia de reservas de otras hojas.
+- Respaldo exacto previo: Olds/Backups/GP-USERS-ID-SEQUENCE-MISMATCH-01-20261127/Auth.js.backup (blob original 65955526f939a36071638662202359406115f568). También se respaldan los cuatro registros documentales antes de editarlos.
+- No se consultó ni modificó Google Sheets real, no se ejecutó POST AUTH ni deployment. La validación integrada queda pendiente.
