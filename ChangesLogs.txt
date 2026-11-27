@@ -1939,3 +1939,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - JS/Services/admin.js: página y metadatos se guardan en Cache y pageCount se actualiza en estado ADMIN antes de responder; el validador incremental verifica que los IDs hayan sido emitidos como candidatos.
 - La consolidación final conserva su propósito de reconciliación histórica; el registro incremental por página no está pendiente de implementación. Se documentó el ajuste de estado y el pendiente real: navegador y Apps Script/Drive/Sheets autorizados.
 - No runtime, browser, Drive/Sheets remoto ni deployment en esta revisión.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-AUDIT-REVIEW-05 — revisión estática rich-text/add_cortes
+- rich-text: fallback de retirada extrae fragmento y desenvuelve etiquetas del formato seleccionado en nodos descendientes; preserva otros wrappers. Riesgo de selección mixta/cruzada si execCommand falla, porque active se determina por ancestro del punto inicial; queda validación en navegador.
+- add_cortes: finishConfirmedCutTransition_ protege la transición y alerta por opId durante la sesión de página; isSubmittingStage2 y recuperación de operación complementan la guarda. Reintentos y retorno recovery real siguen sin validación de navegador.
+- No se aplicó parche funcional ni runtime en este checkpoint.
