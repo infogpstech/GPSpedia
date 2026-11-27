@@ -1918,3 +1918,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Confirmado el rechazo de cursores cuando scanVersion no coincide con la versión del servicio; la recuperación debe evitar reutilizar iteradores incompatibles.
 - Revisión de código inicial, sin despliegue ni ejecución de pruebas en entorno Apps Script.
 - Estado: plan documentado; cambios funcionales pendientes de implementación y validación.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-AUDIT-REVIEW-02
+
+- `JS/Frontend/rich-text.js`: se agregó una ruta fallback para retirar el formato inline seleccionado cuando `execCommand` no logra desactivarlo; el contenido seleccionado se extrae, se desenvuelven las etiquetas del formato y se restaura el punto de inserción.
+- `JS/Services/admin.js`: los cursores de auditoría de una versión anterior ahora disparan un nuevo recorrido controlado en lugar de lanzar el error terminal. Se conservan los datos del auditId previo; no se reutilizan iteradores de Drive incompatibles.
+- Validación pendiente: ejecución en navegador y Apps Script; el cambio de rich-text necesita probar selecciones parciales/múltiples y la auditoría reiniciada necesita confirmar respuesta de frontend y persistencia.
