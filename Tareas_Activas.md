@@ -1375,3 +1375,16 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Code Review y eliminar backup temporal tras revisión.
 - [ ] Registrar cambios y checkpoint.
 - No ejecutar POST, escrituras remotas ni deployment; Beta cerrada.
+
+
+### GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — implementación de contención modal (2026-11-26)
+**Estado: CORRECCIÓN DE PROYECCIÓN VISUAL IMPLEMENTADA; causa del registro real pendiente de confirmación de datos.**
+- [x] Auditoría, hallazgos y plan documentados antes de editar.
+- [x] Respaldo exacto ui.js y registros creado y accesible en la rama.
+- [x] Modal omite referencias repetidas al mismo slot físico de origen.
+- [x] Slots vacíos omitidos; cortes distintos con contenido coincidente no se deduplican.
+- [x] Orden útil descendente; desempate por slot físico.
+- [x] Simulaciones efímeras de cuatro escenarios PASS; diff comparado contra backup exacto y Code Review estático.
+- [x] Actualizar registros y checkpoint.
+- [ ] Inspeccionar la fila/eventos del último registro en Spreadsheet aislada o con autorización; verificar si evento accepted de AportesVehiculo lo vuelve a materializar tras borrado manual.
+- [ ] Validación browser/Pages diferida; Beta permanece cerrada.
