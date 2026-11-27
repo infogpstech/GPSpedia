@@ -238,3 +238,8 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - Comparación del diff funcional y revisión estática PASS; extractor probado aislado 8/8.
 - No se ejecutó parser de archivos completos ni prueba navegador/runtime Sheets/Drive. Integración sigue pendiente.
 - Backups retirados después de la revisión estática.
+
+
+### Ampliación de referencias — miniaturas y URLs redimensionadas
+- El extractor ahora intenta reconocer formatos thumbnail/thumb, rutas de googleusercontent y parámetros id/docid/fileid. Parámetros de tamaño (sz/s/w/h) no cambian la identidad del recurso.
+- Scan version v3-thumbnail-urls. Pendientes pruebas aisladas y revisión estática, y validación autorizada real; no desplegar.
