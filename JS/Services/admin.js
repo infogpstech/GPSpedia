@@ -14428,7 +14428,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                     logMessage && logMessage("Fecha de creación Drive",
                         "No se pudo leer la fecha de creación de " + fileId + ": " +
                         String(dateError && dateError.message || dateError) +
-                        " [código: " + String(dateError && dateError.code || "DRIVE_FILE_CREATED_AT_UNAVAILABLE") + "]",
+                        " [código: " + String(dateError && dateError.code || "DRIVE_FILE_CREATED_AT_UNAVAILABLE") + "]" +
+                        (getDriveAuditErrorTrace_(dateError) ? " Traza: " + getDriveAuditErrorTrace_(dateError) : ""),
                         0, 0, true, false);
                 }
 
@@ -15072,7 +15073,9 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     logMessage && logMessage("Lectura de ID Drive",
                         "No se pudo obtener el ID de un archivo dentro de «" + String(current.path || "Cortes") +
                         "»: " + String(idError && idError.message || idError) +
-                        " [código: " + String(idError && idError.code || "DRIVE_FILE_ID_READ_FAILED") + "]", 0, 0, true, true);
+                        " [código: " + String(idError && idError.code || "DRIVE_FILE_ID_READ_FAILED") + "]" +
+                        (getDriveAuditErrorTrace_(idError) ? " Traza: " + getDriveAuditErrorTrace_(idError) : ""),
+                        0, 0, true, true);
                     continue;
                 }
                 if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) {
@@ -15101,7 +15104,9 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     fileErrorCode = String(fileError && fileError.code || "DRIVE_FILE_METADATA_READ_FAILED");
                     logMessage && logMessage("Metadatos de archivo",
                         "Archivo " + fileName + " (" + fileId + "): " + fileErrorMessage +
-                        " [código: " + fileErrorCode + "]", 0, 0, true, true);
+                        " [código: " + fileErrorCode + "]" +
+                        (getDriveAuditErrorTrace_(fileError) ? " Traza: " + getDriveAuditErrorTrace_(fileError) : ""),
+                        0, 0, true, true);
                 }
                 const referenceLocations = referenceSnapshot.referenceLocationsById &&
                     Array.isArray(referenceSnapshot.referenceLocationsById[fileId])
