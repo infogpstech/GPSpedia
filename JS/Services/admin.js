@@ -14367,7 +14367,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             pendingRevalidationCount++;
         }
         set("referencias_catalogo_json", JSON.stringify(normalizedLocations));
-        set("url_visualizacion", buildVerifiedDriveVisualizationUrl_(fileId));
+        if (!String(row[column("url_visualizacion")] || "").trim()) set("url_visualizacion", buildVerifiedDriveVisualizationUrl_(fileId));
         const association = associationByFileId.get(fileId);
         if (association) {
             set("asociacion_estado", association.status);
