@@ -1580,7 +1580,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Harness efímero: fecha equivalente aceptada; fecha distinta y tamano_bytes alterado rechazados con diagnóstico correcto (3/3 PASS).
 - [x] Parse sintáctico completo y comparación contra respaldo; único bloque funcional modificado: writeDriveInventoryRowVerified_.
 - [ ] Reproducir en Apps Script/Sheets autorizado para confirmar el tipo real devuelto por fecha_modificacion_drive y validar que las imágenes se registren correctamente.
-- [ ] Code Review posterior y limpieza del respaldo temporal tras revisión.
+- [x] Code Review posterior y limpieza del respaldo temporal tras revisión.
 - No se ejecutó navegador, Apps Script/Drive/Sheets remoto, POST ni deployment. Beta permanece cerrada; no crear suites ni archivos de prueba.
 
 #### GP-ADMIN-DRIVE-REGISTRO-ERROR-02 — revisión final (2026-11-27)
