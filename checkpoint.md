@@ -755,3 +755,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 2. Revisar diff completo contra respaldos y probar UI en navegador escritorio/móvil, manteniendo el diseño actual de las pestañas.
 3. Solo en Beta autorizada, validar que la hoja real LogosMarca tiene ID en A y URL de logo en C, probar registro real controlado y comprobar filas/estados. No desplegar Apps Script hasta autorización explícita.
 4. Mantener GP-ADMIN-DRIVE-UNUSED-IMAGES-03 abierta hasta terminar los puntos anteriores.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-UNUSED-IMAGES-03 / última revisión de errores
+- Se añadieron trazas de función a los errores generales e individuales mediante getDriveAuditErrorTrace_(); doPostInternal_ expone stage, code, details y logs. La UI conserva el mensaje completo del error contextualizado.
+- Verificación estática final: 17/17 invariantes PASS; balance de delimitadores JS en admin.js/ui.js PASS; botón reset HTML único PASS; respaldos exactos PASS. Simulación lógica de formatos URL de Drive y de barreras de registro individual/consolidación: 19/19 PASS.
+- No existe package.json ni los paths esperados JS/Tests/LocalApiEndpoints.mjs, JS/Tests/DriveAuditHarness.mjs o tests/admin-drive-audit.test.js en esta rama. GitHub commit status no reporta checks asociados. El intento de clonar para ejecutar Node falló porque el entorno no resolvió github.com; no se declara ejecución de parser ni runtime.
+- Nuevos commits de código: 4b8f0582a5a6c03870cb7f8ee71152d7cedf3d2a y e3eaa6e6d11e05f3a5bf4b81e1fe97863515c2e6.
+- Nuevos commits de documentación: 9e69a8fd7aade8813e5ad00f412d40f92a976199, d4bafbb28cfa63ca87a6af16b7ba2b961ff858d7, c08c82236cc9543dc9cb1a990860663ea79bfc01.
+- HEAD antes de esta actualización del checkpoint: c08c82236cc9543dc9cb1a990860663ea79bfc01.
+- Pendiente: harnesses de mocks/fixtures descritos en el plan, revisión visual escritorio/móvil y Beta autorizada para comprobar la hoja LogosMarca real, registro por archivo e idempotencia. No deployment ni mutaciones remotas.
