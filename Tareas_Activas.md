@@ -1589,3 +1589,17 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Eliminar el respaldo temporal después de Code Review.
 - [ ] Confirmar en Apps Script/Sheets real el tipo devuelto por fecha_modificacion_drive y el registro correcto de imágenes; pendiente de entorno/ejecución Beta autorizada.
 - **Estado:** ciclo local completado; validación remota pendiente. No afirmar cierre funcional hasta comprobar persistencia real.
+
+
+### GP-CUT-TESTIGO-NOTA-01 — nota visual del testigo en modal (2026-11-27)
+**Estado: IMPLEMENTACIÓN LOCAL COMPLETADA; validación visual real pendiente.**
+- [x] Auditar checkbox, payload, fingerprint, snapshot, recuperación, proyección física y renderizado del modal en ambos formularios.
+- [x] Registrar F-49 en Auditoria.txt antes de modificar código.
+- [x] Crear respaldos exactos de los dos archivos funcionales y de los registros que se actualizarían.
+- [x] Eliminar la inserción del HTML del testigo en el textarea de ubicación de HTML/add_cortes.html; conservar el booleano activaTestigo1.
+- [x] Renderizar en JS/Frontend/ui.js la imagen y nota exactas solicitadas, después del color de cable y antes de la imagen del corte, solo cuando activaTestigo sea true.
+- [x] Confirmar que el formulario del botón + mantiene el booleano en cutData, operación pendiente, recuperación y envío.
+- [x] Comparar byte a byte ambos archivos contra sus respaldos, aplicando únicamente los reemplazos previstos; no se detectaron cambios ajenos.
+- [x] Code Review estático y comprobaciones de flujo/contenido: 11/11 PASS.
+- [ ] Validación visual en navegador de ambos formularios, con checkbox marcado y desmarcado; confirmar carga de miniatura Drive y posición del bloque.
+- No ejecutar POST, escrituras remotas ni deployment. Beta permanece cerrada; no crear suites ni workflows.
