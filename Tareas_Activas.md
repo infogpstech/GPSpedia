@@ -1215,3 +1215,21 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - No se ejecutaron escrituras remotas ni se recrearon suites eliminadas por solicitud previa.
 
 - [x] Code Review aprobado y 12 respaldos temporales retirados después de la comparación exacta; commit `df36935c16bf86f7b61c383b4a8af5c71d9e31a9`.
+
+
+### GP-CUT-ID-FORMAT-REBUILD-05 — reconstrucción del contrato de ID y registro de cortes (2026-11-26)
+
+- [x] Auditar la lectura del último ID, las fórmulas de Cortes, el ledger de reservas, alta nueva y append de corte existente.
+- [x] Separar el contador interno numérico del ID persistente `V-###`; mantener tres dígitos mínimos y permitir extensión a 4+ dígitos (hasta el entero seguro de 16 dígitos).
+- [x] Corregir high-water mark, estabilización de fórmulas, alta estática, validación de vehículo existente, ledger append-only, recuperación idempotente, comparación VIN y versionado de catálogo.
+- [x] Corregir proyección dirigida CATALOG para IDs `V-###` y snapshots offline suplementarios.
+- [x] Preservar el modal de detalle: se revisó contra respaldo y no requirió cambios; mantiene persistencia local, mismo `opId`, validación de respuesta y actualización de ficha.
+- [x] Respaldar WRITE, CATALOG, offline.js, ui.js y Service Worker antes de editar; revisar diferencias exactas contra los respaldos.
+- [x] Fixtures de ID, fórmula/high-water, freeze-plan, payload existente, ledger append/replay/conflicto, proyección CATALOG y snapshots offline: PASS.
+- [x] Compilación sintáctica V8 de WRITE, CATALOG, offline.js y Service Worker: PASS.
+- [x] GitHub Pages build/deploy `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`.
+- [ ] Desplegar y verificar el código actual de WRITE y CATALOG en los endpoints Apps Script configurados; ejecutar health GET-only y confirmar versión activa.
+- [ ] Prueba real controlada en Spreadsheet/Drive con ID `V-###`: registrar vehículo nuevo, agregar corte a vehículo existente desde formulario y modal de detalle, confirmar proyección CATALOG y actualización de UI.
+- [ ] Probar replay del mismo `opId` tras respuesta perdida y confirmar que no crea fila/evento duplicado; comprobar limpieza local real en IndexedDB.
+- [ ] Tras validación remota satisfactoria y Code Review final, retirar respaldos temporales de `Olds/Backups/GP-CUT-ID-FORMAT-REBUILD-05-20261126/` según NORMAS_DESAROLLO.md.
+- Estado: corrección de código y pruebas estáticas completadas; incidencia operativa pendiente de despliegue y validación real. No se han ejecutado escrituras remotas ni cambios de deployments Apps Script.
