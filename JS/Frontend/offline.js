@@ -874,13 +874,14 @@ export async function saveAddCutOperationPendingOperation(operation) {
                 const replaceConfirmedCutSnapshot = Boolean(previous && previous.operation &&
                     previous.operation.operationType === 'addOrUpdateCut' && previous.operation.status === 'completed' &&
                     snapshot.operationType === 'addSupplementaryInfo' && snapshot.status === 'processing');
+                const previousIdentityMismatch = Boolean(previous && previous.operation &&
+                    (String(previous.operation.id || '').trim() !== snapshot.id ||
+                     String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase()));
+                const completedSnapshotRegression = Boolean(previous && previous.operation &&
+                    previous.operation.status === 'completed' && snapshot.status !== 'completed');
                 if (previous && (!isValidAddCutOperationSnapshot_(previous.operation, owner) ||
-                    String(previous.operation.id || '').trim() !== snapshot.id &&
-                        !replaceConfirmedCutSnapshot ||
-                    String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase() &&
-                        !replaceConfirmedCutSnapshot ||
-                    (previous.operation.status === 'completed' && snapshot.status !== 'completed' &&
-                        !replaceConfirmedCutSnapshot))) {
+                    (previousIdentityMismatch && !replaceConfirmedCutSnapshot) ||
+                    (completedSnapshotRegression && !replaceConfirmedCutSnapshot))) {
                     result = { saved: false, conflict: true, code: 'PENDING_SNAPSHOT_CONFLICT' };
                     return;
                 }

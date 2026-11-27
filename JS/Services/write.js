@@ -4014,12 +4014,15 @@ function handleAddVinToVehicleLocked(payload, collaboratorName) {
     const lock=LockService.getScriptLock();
     if(!lock.tryLock(0))throw new Error("WRITE_BUSY");
     try{
+        const contributionLedger=getVehicleContributionLedgerSheet_(getSpreadsheet());
+        const priorContributionRows=readVehicleContributionLedgerRows_(contributionLedger);
+        materializeVehicleContributionEventsForVehicle_(getSpreadsheet(),sheet,vehicleId,priorContributionRows,[]);
         const latest=readSupplementaryVehicleSnapshot_(sheet,vehicleId);
         const latestVersions=String(latest.vehicle.versionesAplicables||"").trim();
         const latestVin=parseVinCollection(sheet.getRange(latest.rowIndex,vinColumnIndex).getValue());
         const expectedVin=JSON.stringify(existingCollection),latestVinJson=JSON.stringify(latestVin);
         const nextVinJson=JSON.stringify(update.collection);
-        if(latestVersions===updatedVersionsStr&&latestVinJson===nextVinJson)return{status:"success",alreadyPresent:true,message:"El VIN ya está registrado para esta versión de equipamiento.",vehicleId,vinPrefix:prefix,vinCollection:update.collection,versionesAplicables:updatedVersionsStr};
+        if(latestVersions===updatedVersionsStr&&latestVinJson===nextVinJson)return{status:"success",alreadyPresent:true,message:"El VIN ya está registrado para esta versión de equipamiento.",vehicleId,vinPrefix:prefix,vinCollection:update.collection,versionesAplicables:updatedVersionsStr,catalogResetRequired:true};
         if(latestVersions!==currentVersionsStr||latestVinJson!==expectedVin)throw new Error("El registro del vehículo cambió durante el aporte VIN. Actualiza la ficha y vuelve a intentarlo; no se sobrescribieron datos.");
         const event=appendVehicleContributionEvent_({spreadsheet:getSpreadsheet(),vehicleId,opId,kind:"vehicle_update",payload:eventPayload,operationHash,actorId,actorName:collaboratorName});
         sheet.getRange(latest.rowIndex,COLS_CORTES.versionesAplicables).setValue(updatedVersionsStr);
