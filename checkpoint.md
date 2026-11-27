@@ -902,3 +902,23 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Backup exacto admin.js (blob SHA 163e167b6544a59966c40b3b825e6e5a3ffb72b5) eliminado después de la revisión, conforme a normativa.
 - Commit de limpieza: 9dcd0a3cf458a72309e7e574ff4fc1b169aa1eca.
 - Pendiente real: ejecución autorizada en Apps Script/Google Sheets para observar la lectura y confirmar registro. No hubo POST, Drive/Sheets remoto ni deployment.
+
+
+## Continuidad — GP-CUT-TESTIGO-NOTA-01 (2026-11-27)
+
+### Estado Git y alcance
+- Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5, sin modificaciones; SHA comprobado d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- HEAD antes de la tarea: 87da4ae4fa359b60940d2929cfe823162d7aafc8. Commits de respaldo: e8fb812, cabad91, 6a459f9, e19ad51, 1236582 y 0368b66. Registro de auditoría: edaf8cbb58a57ef8ee2030b7015df53961c419ee. Cambios funcionales: 31a852e (HTML/add_cortes.html) y 912a4f7 (JS/Frontend/ui.js).
+- `contexto_personal.md` no existe en la rama (404); no se creó un sustituto. README, NORMAS_DESAROLLO, checkpoint, Tareas_Activas, Tareas_Beta y Auditoria.txt fueron consultados. Beta continúa cerrada.
+
+### GP-CUT-TESTIGO-NOTA-01 — implementación
+- En `HTML/add_cortes.html`, `handleStage2Submit()`, se retiró la inserción del HTML de testigo en los textareas. El checkbox `testigoMotor` permanece y `cutData.activaTestigo1` sigue siendo booleano para fingerprint, snapshot, recuperación y WRITE.
+- En `JS/Frontend/ui.js`, `renderCutContent()`, se reemplazó el aviso genérico por el bloque DOM equivalente al fragmento solicitado: imagen Drive con URL/estilo exactos, «NOTA:» rojo y texto «Este corte activa el testigo del motor». Se inserta únicamente con `cutData.activaTestigo` verdadero, tras el color y antes de la imagen del corte.
+- Respaldos exactos: `Olds/Backups/GP-CUT-TESTIGO-NOTA-01-20261127/` para HTML/add_cortes.html, JS/Frontend/ui.js, Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md y checkpoint.md.
+
+### Verificación y límites
+- Comparación byte a byte contra respaldos: PASS para ambos archivos funcionales; solo se aplicaron los dos reemplazos auditados.
+- Comprobaciones estáticas: ausencia de inyección HTML en textarea; conservación de checkbox/payload/fingerprint; conservación del booleano en modal +, operación pendiente y recuperación; condición de renderizado, URL, estilos, texto y orden DOM verificados (11/11 PASS).
+- Code Review estático PASS. No se modificaron CSS, contratos de servicios, persistencia, imagen del corte ni rama base.
+- No se ejecutó navegador, Apps Script, Google Sheets/Drive, POST ni deployment. Pendiente validación visual autorizada de ambos formularios, carga real de miniatura y estado marcado/desmarcado. No reabrir Beta ni crear suites.
+- Siguiente paso: validar visualmente en navegador los flujos de alta de `HTML/add_cortes.html` y del botón + del modal de detalle; si no hay entorno/autorización, mantenerlo explícitamente como pendiente.
