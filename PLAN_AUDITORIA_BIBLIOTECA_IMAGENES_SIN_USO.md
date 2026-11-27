@@ -166,3 +166,9 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - La consolidación final separada continúa siendo necesaria para reconciliar registros históricos y ubicaciones. La doble pasada incremental/final es intencional: la primera registra durante el recorrido, la segunda reconcilia el conjunto completo.
 - Se corrigió el estado documental: esta integración no está pendiente en el código actual; el pendiente de esta revisión es validar el ciclo completo en navegador y runtime Apps Script autorizado, incluyendo respuesta parcial/error y reintento idempotente.
 - No se ejecutaron pruebas runtime ni navegador en esta revisión; no se desplegó ni se escribió en Drive/Sheets.
+
+
+### GP-ADMIN-DRIVE-AUDIT-REVIEW-05 — Revisión estática de cambios previos
+- Rich-text: la ruta fallback extrae el fragmento seleccionado y desenvuelve etiquetas matching en descendientes, conserva etiquetas de otros formatos y recoloca selección al final del fragmento. Riesgo que requiere prueba de navegador: selección mixta (parcialmente formateada o que cruza varios wrappers) cuando execCommand falla; la detección active depende del ancestro del punto inicial de selección.
+- add_cortes: la transición central evita repetir mensaje y paso para un mismo opId dentro de la página; la guarda isSubmittingStage2 y recuperación pendiente siguen siendo controles adicionales. Requiere navegador para validar reintentos y retorno tras errores.
+- No se hicieron cambios funcionales en esta revisión ni pruebas runtime; la cobertura de selección mixta y recovery real queda pendiente.
