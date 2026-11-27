@@ -1658,3 +1658,13 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `README.md`: las referencias de arquitectura a las vistas se actualizaron de `add_cortes.html` y `users.html` en raíz a `HTML/add_cortes.html` y `HTML/users.html`.
 
 - Code Review GP-CUT-DEEP-AUDIT-03 completado; los respaldos temporales de ui.js, Service Worker y README se retiraron después de comparar los cambios. Commits de limpieza: `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`.
+
+
+[2026-11-26] GP-CUT-FUNCTIONAL-AUDIT-04 — corrección de diagnóstico y recuperación del formulario
+- `HTML/add_cortes.html:347-356`: `showConciseAlert_(message)` deja de sustituir el mensaje recibido por un texto genérico; registra el aviso en el logger del host cuando está disponible y muestra el motivo concreto mediante `alert(detail)`.
+- `HTML/add_cortes.html:729-733`: la recuperación de operaciones silenciosas llama `checkOperation` sin override de servicio; el mapeo central la dirige a WRITE.
+- `JS/Frontend/diagnosticLogger.js:4`: ampliada la allowlist con códigos internos de persistencia, sesión, recuperación, aportes append-only, ledger, transporte y validación de imagen. No se registran mensajes libres ni payloads.
+- `service-worker.js:1`: caché PWA incrementada de v82 a v83.
+- No se modificó `JS/Services/write.js`, el contrato de IndexedDB, la lógica de idempotencia, los datos remotos ni los deployments de Apps Script.
+- Commits de código: formulario `7483a76f912ac27cd1c6133df7a67aa0b7f55f30`; logger `1d8b0a30f2c4f45a937def2342307f86d65ca113`; Service Worker `8e8994d573d4ba6caa1421f1e3308e583b6837d1`.
+- Respaldos exactos previos: `Olds/Backups/GP-CUT-FUNCTIONAL-AUDIT-04-20261126/`.
