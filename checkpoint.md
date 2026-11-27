@@ -517,3 +517,16 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Próximo paso: continuar con despliegue/health y validación controlada; conservar respaldos hasta finalizar revisión remota y Code Review.
 
 - Actualización de CI: Pages build/deploy run `45918026216` SUCCESS en HEAD `8017e1109092901e21101c18b80b37173901fe49`; build final `45918204547` SUCCESS en HEAD `038be9e98b91a4f85decf8b559eb641bf527171a`. El código probado corresponde al HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`; commits posteriores solo actualizaron documentación.
+
+
+## Continuidad — GP-CUT-ID-SEQUENCE-06 (2026-11-26)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`; base protegida `GPSpedia2.2.5` sin modificaciones.
+- Código WRITE: commits `994a4aeff118b7827962219f7c67a872940be866` y `21a2d1c5724111fca3550b3bf7b60d0459c0da49`.
+- ID público nuevo: texto estático `V-` con mínimo cinco dígitos. Ejemplos verificados: 1→`V-00001`, 2→`V-00002`, 99999→`V-99999`, 100000→`V-100000`, 100001→`V-100001`. Se mantiene lectura de IDs históricos.
+- WRITE calcula el siguiente número a partir del máximo de la hoja `Cortes` y del ledger de reservas; las reservas nuevas se guardan como valores estáticos bajo ScriptLock, no como fórmulas. Se conserva append-only y replay idempotente por `opId`/hash.
+- Alta nueva: inserta fila física, copia formato y validaciones de la fila anterior, limpia valores/fórmulas heredados y escribe ID, datos base, primer corte, VIN, colaborador, fecha y testigo. El rollback identifica la fila insertada.
+- Respaldo exacto: `Olds/Backups/GP-CUT-ID-SEQUENCE-06-20261126/JS__Services__write.js.backup`.
+- Validación local: sintaxis V8 PASS; parser/formatter PASS; reserva simulada 99999→100000, replay, conflicto y lock PASS; 13 invariantes estáticas PASS; Code Review del diff limitado al alcance PASS.
+- Pendiente: publicar WRITE Apps Script, verificar endpoint activo y ejecutar una prueba controlada de alta nueva en Spreadsheet aislada para confirmar fila, validaciones desplegables y contenido completo. No se ha ejecutado escritura remota ni se afirma resuelto en producción.
+- El checkpoint previo GP-CUT-ID-FORMAT-REBUILD-05 permanece vigente para los pendientes de despliegue CATALOG/offline y validación del modal/formulario.
