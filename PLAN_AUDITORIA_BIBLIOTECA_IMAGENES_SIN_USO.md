@@ -100,3 +100,31 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - Comparación GitHub desde b59bcdd123f10dd4ac82062120dd99fcfe373971 hasta c08c82236cc9543dc9cb1a990860663ea79bfc01: código funcional limitado a admin.js (+171/-32), ui.js (+45/-6) e index.html (+1).
 - Parches de implementación inspeccionados. Respaldos exactos de los tres archivos verificados por SHA contra el baseline de la tarea. No se identificaron cambios funcionales ajenos al alcance.
 - Revisión visual en navegador escritorio/móvil pendiente; no hay evidencia de UI real. No Apps Script/Drive/Sheets, POST ni deployment.
+
+
+## GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — reconciliación histórica y asociaciones (2026-11-27)
+
+### Comportamiento implementado
+- Al pulsar reiniciar, ADMIN recorre por páginas las filas de origen auditoria_drive antes de borrar el progreso local. Compara IDs con las referencias activas de Cortes, LogosMarca, Tutorial, Relay y PYS.
+- Si existe referencia activa, el registro se marca en_uso con resultado_inventario=referencia_activa_catalogo y ubicaciones actuales. Si no existe referencia activa, queda no_confirmada_en_ultima_auditoria/pendiente_revalidacion hasta que el nuevo escaneo de Drive confirme el estado.
+- Se conservan las filas. Los estados en_uso manuales no se sobrescriben. El marcador automático permite que una referencia que desaparezca en auditorías futuras vuelva a evaluarse.
+- Las asociaciones históricas se recalculan con directorio, nombre, MIME y datos de Cortes; se actualizan estado/confianza/candidatos y se repara url_visualizacion derivada cuando falta.
+- La consolidación final corre incluso si no hay candidatos nuevos sin uso. El guardado incremental automático por lote continúa activo.
+
+### Evidencia aislada
+| Caso | Resultado |
+|---|---:|
+| LogosMarca: ID de URL col. 3 entra al snapshot y clasifica En uso | 1/1 PASS |
+| Preflight: activo, no referenciado y estado manual | 3/3 PASS |
+| Asociación de modelo y reparación de URL visual faltante | 2/2 PASS |
+| Idempotencia: repetir preflight no genera escrituras | 0 escrituras repetidas |
+| Paginación con límite 1 sobre tres registros | 3/3 PASS |
+| Referencias no interpretables / hoja Cortes ausente | 2/2 PASS fail-closed |
+| Asociación por directorio sin nombre de archivo | 1/1 PASS |
+| Consolidación con lista vacía: fila activa pasa a en_uso | 1/1 PASS |
+| Consolidación con lista vacía: fila sin referencia pasa a no_confirmada | 1/1 PASS |
+| Parse ADMIN/UI y controles de orden del reset/consolidación | 11/11 PASS |
+
+### Pendiente / límites
+- Prueba de navegador e IndexedDB real, revisión visual escritorio/móvil y ejecución autorizada de Apps Script/Drive/Sheets en Beta. Las pruebas realizadas usan mocks en memoria y no prueban persistencia remota.
+- No se borran filas de Imagenes_Reemplazadas ni archivos Drive. No POST ni deployment. Beta sigue cerrada.
