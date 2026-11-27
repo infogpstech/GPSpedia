@@ -1639,3 +1639,20 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Diff exacto, parsing de scripts inline y verificaciones estáticas PASS. No se ejecutó POST real ni deployment.
 - El flujo updateUser no se modificó; comprobarlo por separado si la edición continúa mostrando un error.
 - Siguiente paso: probar creación de una cuenta de prueba autorizada en el entorno real y reportar el resultado; si edición falla, capturar el error/action actualizado antes de tocar su contrato.
+
+
+## GP-USERS-UPDATE-ACTOR-TARGET-01 — separar actor y cuenta objetivo (2026-11-27)
+
+**Estado: CORRECCIÓN DE FUENTE COMPLETADA Y CODE REVIEW PASS; VALIDACIÓN INTEGRADA PENDIENTE.**
+
+- `updateUser` recibía en userId el ID de la cuenta editada, pero el middleware AUTH usa ese campo para recuperar el actor asociado al sessionToken.
+- HTML/users.html ahora envía userId del actor autenticado y targetUserId de la cuenta objetivo. JS/Services/Auth.js consume targetUserId para localizar la fila que se edita.
+- La acción resetUserPassword también recibe userId del actor y conserva targetUserId como cuenta destino.
+- Parsing y verificaciones estáticas PASS; no se ejecutó AUTH remoto ni deployment. Publicar frontend y AUTH de forma coordinada y validar en navegador.
+
+## GP-USERS-RESET-SESSIONS-ACTOR-01 — contexto de actor en cierre remoto de sesiones (2026-11-27)
+
+**Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN.**
+
+- Hallazgo durante revisión de acciones relacionadas: resetUserSessions está incluida en el middleware AUTH que exige userId/sessionToken, pero HTML/users.html envía targetUserId/sessionToken sin userId del actor.
+- Mantener separados el actor autenticado y la cuenta objetivo. Auditar contrato completo y RBAC antes de modificar.
