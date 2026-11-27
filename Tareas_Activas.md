@@ -1345,6 +1345,6 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Entrada modalOpen añadida al historial al abrir detalle desde estado no-modal, para retroceso/gesto (implementado, pendiente browser real).
 - [ ] Diagnosticar /favicon.ico 404; corregir ruta o asset si el defecto está confirmado en el alcance.
 - [ ] Clasificar la advertencia document.write de runtime HtmlService de Google: corregir solo si existe callsite propio GPSpedia comprobado, sin modificar runtime externo.
-- [ ] Validar estáticamente y por simulación efímera sin crear suites ni workflows (Beta cerrada); comparar diff y realizar Code Review.
-- [ ] Actualizar ChangesLogs.txt, Auditoria.txt y checkpoint.md; conservar GPSpedia2.2.5 intacta.
+- [x] Comparación de diffs y Code Review estático completados; solo cambios solicitados, backups eliminados tras revisión. (No se hizo parsing/runtime browser.)
+- [x] Actualizar ChangesLogs.txt, Auditoria.txt y checkpoint.md; GPSpedia2.2.5 permanece intacta.
 
