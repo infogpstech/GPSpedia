@@ -1693,3 +1693,12 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Pruebas: IDs V-001/V-999/V-1000 y 16 dígitos seguros; números legacy; formatos inválidos/no seguros; high-water mock con fórmula V-1000; freeze-plan; validación de payload; append ledger alta/replay/conflicto; proyección CATALOG V/legacy; snapshots offline V/legacy; sintaxis V8 de los cuatro archivos modificados: PASS.
 - GitHub Pages build/deploy run `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`.
 - Pendiente: deploy/health GET-only de Apps Script WRITE y CATALOG, prueba real aislada de Spreadsheet/Drive, modal de detalle y IndexedDB. No se ejecutaron POST ni escrituras remotas. El código en GitHub no implica que los servicios Apps Script desplegados ya estén actualizados.
+
+
+[2026-11-26] GP-CUT-ID-SEQUENCE-06
+- `JS/Services/write.js`: formato canónico de ID actualizado a `V-` + secuencia con cinco dígitos mínimos y extensión natural; IDs nuevos de seis o más dígitos no se truncan.
+- `JS/Services/write.js`: reserva de ID del ledger cambiada de fórmula a valor numérico estático; lectura del high-water mark, incremento y append protegidos por ScriptLock; se mantiene replay por `opId`/hash y secuencia append-only.
+- `JS/Services/write.js`: alta nueva inserta una fila física, copia formato y validaciones de la fila anterior, limpia valores/fórmulas heredados, y escribe ID/datos del vehículo y primer corte. El rollback elimina la fila insertada cuando la operación falla antes de liberar el lock.
+- `JS/Services/write.js`: liberación del lock del baseline protegida cuando el llamador ya posee el lock.
+- No se modificaron CATALOG, offline, formulario, modal ni contratos de servicios.
+- Commits: `994a4aeff118b7827962219f7c67a872940be866`, `21a2d1c5724111fca3550b3bf7b60d0459c0da49`.
