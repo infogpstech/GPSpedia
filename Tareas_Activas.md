@@ -1213,3 +1213,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Confirmar dominio/instalación móvil en HEAD publicado; probar IndexedDB real y altas controladas de vehículo nuevo/existente, además de recuperación silenciosa.
 - [ ] Verificar Sheets/Drive solo con identidad y recursos de prueba aislados y limpieza autorizada.
 - No se ejecutaron escrituras remotas ni se recrearon suites eliminadas por solicitud previa.
+
+- [x] Code Review aprobado y 12 respaldos temporales retirados después de la comparación exacta; commit `df36935c16bf86f7b61c383b4a8af5c71d9e31a9`.
