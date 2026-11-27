@@ -14519,6 +14519,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
         });
 
         const associationByFileId = new Map();
+        const associationMetadataReady = new Set();
         let associationBuildError = "";
         try {
             const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
@@ -14526,7 +14527,12 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 const associationMetadataById = new Map();
                 uniqueFiles.forEach(entry => {
                     const metadata = auditMetadataById.get(entry.fileId);
-                    if (metadata) associationMetadataById.set(entry.fileId, metadata);
+                    if (metadata) {
+                        associationMetadataById.set(entry.fileId, metadata);
+                        if ((metadata.fileName || metadata.folderPath) && String(metadata.mimeType || "").toLowerCase().startsWith("image/")) {
+                            associationMetadataReady.add(entry.fileId);
+                        }
+                    }
                 });
                 inventoryRowsByDriveId.forEach((records, fileId) => {
                     if (associationMetadataById.has(fileId) || records.length !== 1) return;
@@ -14536,6 +14542,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                     const folderPath = String(row[column("ubicacion_original") - 1] || row[9] || row[column("ubicacion_actual") - 1] || "");
                     if ((fileName || folderPath) && mimeType.toLowerCase().startsWith("image/")) {
                         associationMetadataById.set(fileId, { fileId, fileName, mimeType, folderPath });
+                        associationMetadataReady.add(fileId);
                     }
                 });
                 const associationMetadata = Array.from(associationMetadataById.values());
@@ -14729,6 +14736,10 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                         reconciledRow[column("asociacion_candidatos_json") - 1] = JSON.stringify(Array.isArray(association.candidates) ? association.candidates : []);
                     } else if (associationBuildError) {
                         reconciledRow[column("asociacion_estado") - 1] = "no_verificada";
+                    } else if (associationMetadataReady.has(fileId)) {
+                        reconciledRow[column("asociacion_estado") - 1] = "sin_coincidencia";
+                        reconciledRow[column("asociacion_confianza") - 1] = "";
+                        reconciledRow[column("asociacion_candidatos_json") - 1] = "[]";
                     }
                     if (activelyReferenced) {
                         reconciledRow[column("estado") - 1] = "en_uso";
