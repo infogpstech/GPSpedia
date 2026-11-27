@@ -1146,3 +1146,11 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - `ChangesLogs.txt`, `Tareas_Activas.md` y `checkpoint.md`: respaldos exactos creados en el mismo directorio antes de modificarlos.
 
 **Corrección prevista:** enviar `userId: sessionSnapshot.id` junto a `sessionToken: sessionSnapshot.token` en `getUsers`, manteniendo el snapshot y la protección de sesión vigente.
+
+#### F-50 — revisión final (2026-11-27)
+- Cambio aplicado en HTML/users.html: getUsers recibe userId: sessionSnapshot.id y sessionToken: sessionSnapshot.token.
+- Code Review del diff: PASS; la comparación exacta contra el respaldo demuestra que el único cambio es la ampliación del payload de getUsers.
+- Parsing del módulo inline: PASS. Harness aislado de fetchUsers: PASS; capturó action=getUsers y los dos campos esperados, provenientes del mismo snapshot de sesión.
+- La rama base GPSpedia2.2.5 se mantiene en SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Los respaldos exactos se eliminaron tras Code Review: HTML/users.html SHA 5a7576f6d8eda5e52c12aea968311e55bf51e177; respaldos documentales también verificados.
+- Limitación: no se ejecutó navegador ni AUTH remoto, por lo que no se afirma todavía que la lista haya cargado en producción. El comportamiento de acciones de escritura no fue modificado; sus contratos AUTH requieren confirmación separada antes de ajustar campos ambiguos de actor/objetivo.
