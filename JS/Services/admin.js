@@ -58,7 +58,7 @@ function isAdminModalEditField_(fieldName){
  return ADMIN_MODAL_EDIT_FIELDS.has(field)||/^(tipoCorte|configRelay|ubicacionCorte|colorCableCorte)[1-3]$/.test(field);
 }
 function extractDriveFileIds(value) {
-    // Normaliza URLs de Drive, HTML, miniaturas y variantes redimensionadas (sz, w, h, s).
+    // Normaliza URL de Drive, HTML, miniaturas y parámetros de tamaño.
     let source = String(value == null ? "" : value);
     const decodeHtmlEntities = text => String(text || "")
         .replace(/&amp;/gi, "&").replace(/&#0*38;/gi, "&").replace(/&#x0*26;/gi, "&")
@@ -74,8 +74,8 @@ function extractDriveFileIds(value) {
     const patterns = [
         /[?&](?:id|docid|fileid)\s*=\s*["']?([a-zA-Z0-9_-]{20,})/gi,
         /(?:\/d\/|\/file\/d\/|\/folders\/|\/thumbnail\/|\/thumb\/)([a-zA-Z0-9_-]{20,})/gi,
-        /(?:drive|docs)\.google\.com\/(?:[^"'<>\\s]*?\/)?(?:d|thumbnail)\/([a-zA-Z0-9_-]{20,})/gi,
-        /googleusercontent\.com\/(?:[^"'<>\\s]*?\/)?d\/([a-zA-Z0-9_-]{20,})/gi
+        /(?:drive|docs)\.google\.com\/(?:[^"'<> \t\r\n]*?\/)?(?:d|thumbnail)\/([a-zA-Z0-9_-]{20,})/gi,
+        /googleusercontent\.com\/(?:[^"'<> \t\r\n]*?\/)?d\/([a-zA-Z0-9_-]{20,})/gi
     ];
     candidates.forEach(text => {
         patterns.forEach(pattern => { pattern.lastIndex = 0; let match; while ((match = pattern.exec(text)) !== null) ids.add(match[1]); });
