@@ -1656,3 +1656,22 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 - Hallazgo durante revisión de acciones relacionadas: resetUserSessions está incluida en el middleware AUTH que exige userId/sessionToken, pero HTML/users.html envía targetUserId/sessionToken sin userId del actor.
 - Mantener separados el actor autenticado y la cuenta objetivo. Auditar contrato completo y RBAC antes de modificar.
+
+
+## GP-USERS-PROFILE-EMAIL-01 — registrar y actualizar correo electrónico (2026-11-27)
+
+**Estado: CAMBIOS DE FUENTE COMPLETADOS Y CODE REVIEW PASS; VALIDACIÓN INTEGRADA PENDIENTE.**
+
+- Mi Perfil muestra el correo registrado y permite actualizarlo desde el diálogo de edición de información, junto con el nombre completo.
+- AUTH acepta Correo_Electronico en updateProfile, valida tipo, formato y máximo de 254 caracteres, y confirma la escritura en la columna 6 de Users. La autorización continúa limitada al perfil del actor autenticado.
+- El formulario de creación incluye Correo Electrónico opcional y lo envía a createUser; AUTH ya aceptaba y persistía ese campo.
+- Comparación exacta con backups, parsing, normalizador (7 escenarios), harness de escritura, IDs HTML únicos y revisión de actor/token: PASS.
+- No se ejecutaron navegador real, POST AUTH, Sheets ni deployment. El correo se guarda sin verificación de propiedad. Publicar frontend y AUTH coordinadamente antes de validar.
+
+## GP-USERS-ID-SEQUENCE-MISMATCH-01 — ID existente incompatible con formato backend (2026-11-27)
+
+**Estado: PENDIENTE DE EVIDENCIA DE GOOGLE SHEETS.**
+
+- AUTH rechaza la creación porque el ID de la fila 2 de Users no coincide con el patrón configurado por getUserIdSequencePattern_().
+- No relajar validación, cambiar el prefijo, renumerar ni sobrescribir IDs existentes sin verificar el valor exacto de A2, su fórmula (si existe) y la fila de Users en __IdentifierSequenceConfig__.
+- Solicitar al propietario el valor/formula de A2 y la configuración de prefijo/padding/fórmula de la fila correspondiente. La hoja no fue leída ni modificada desde esta sesión.
