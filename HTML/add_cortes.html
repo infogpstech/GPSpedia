@@ -346,20 +346,13 @@
     <script>
         function showConciseAlert_(message) {
             const detail = String(message || 'No se pudo completar la operación.');
-            let hostUi = null;
-            try {
-                hostUi = window.parent && window.parent !== window ? window.parent.ui : null;
-            } catch (error) {}
-            if (!hostUi && window.ui) hostUi = window.ui;
             try {
                 const logger = window.parent && window.parent.gpsepediaDeveloperLog;
                 if (typeof logger === 'function') logger('[ALTA DE CORTE] ' + detail, 'error');
             } catch (error) {}
-            if (hostUi && typeof hostUi.showGlobalError === 'function') {
-                hostUi.showGlobalError('No se pudo completar la operación.');
-                return;
-            }
-            alert('No se pudo completar la operación.');
+            // No reemplazar el motivo concreto por un aviso genérico: el formulario
+            // es independiente y el usuario necesita distinguir los bloqueos de guardado.
+            alert(detail);
         }
     </script>
 </head>
@@ -733,10 +726,11 @@
             toggleLoading(true);
             try {
                 const session = getCurrentSessionForOwner(pendingOp.ownerId);
+                // checkOperation pertenece a WRITE también para registros silenciosos.
                 const checkRes = await routeAction('checkOperation', {
                     opId: pendingOp.id, operationHash: pendingOp.operationHash,
                     userId: session.userId, sessionToken: session.sessionToken
-                }, pendingOp.requestData.silent === true ? 'ADMIN' : null);
+                });
                 getCurrentSessionForOwner(pendingOp.ownerId);
                 if (!checkRes || checkRes.status !== 'success') throw new Error('INVALID_CHECK_OPERATION_RESPONSE');
                 if (checkRes.exists === true) {
