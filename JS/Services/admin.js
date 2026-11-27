@@ -14308,7 +14308,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             folderPath: String(row[column("ubicacion_original")] || row[9] || row[column("ubicacion_actual")] || "")
         };
         eligible.push({ rowNumber, fileId, row, metadata });
-        if (metadata.fileName && metadata.mimeType.toLowerCase().startsWith("image/") && metadata.folderPath) {
+        if (metadata.fileName && metadata.mimeType.toLowerCase().startsWith("image/")) {
             associationMetadata.push(metadata);
             associationMetadataReady.add(fileId);
         }
@@ -14326,6 +14326,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
     } catch (associationError) {
         associationBuildError = String(associationError && associationError.message || associationError);
     }
+    if (associationBuildError) throw new Error("No se pudo verificar la asociación de modelos del inventario existente: " + associationBuildError);
     let existingRecordsCheckedCount = 0, activeReferenceCount = 0, pendingRevalidationCount = 0;
     let associationUpdatedCount = 0, associationVerifiedCount = 0, errorCount = 0;
     const results = [];
@@ -14372,7 +14373,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             set("asociacion_confianza", association.confidence);
             set("asociacion_candidatos_json", JSON.stringify(Array.isArray(association.candidates) ? association.candidates : []));
             associationVerifiedCount++;
-        } else if (associationBuildError || !associationMetadataReady.has(fileId)) {
+        } else if (!associationMetadataReady.has(fileId)) {
             set("asociacion_estado", "no_verificada");
         } else {
             set("asociacion_estado", "sin_coincidencia");
