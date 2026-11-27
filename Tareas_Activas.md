@@ -1451,3 +1451,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Validar visualmente en navegador y validar Apps Script/Drive/Sheets en entorno autorizado.
 - [ ] Code Review final, comparación contra respaldos y cierre documental.
 - No deployment ni escrituras remotas de Drive/Sheets.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Revisión de selectores CSS (27-11-2026)
+- [x] Detectar que los radios están dentro del fieldset y no son hermanos del layout.
+- [x] Corregir selectores de estado activo con :has() sobre .dev-tools-tab-options.
+- [ ] Verificar diff y sintaxis CSS; validación visual en navegador pendiente.

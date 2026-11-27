@@ -879,3 +879,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - ADMIN: ensureAdminLocalGuardBaseline_ usaba tryLock(0), causando fallo inmediato ante contención transitoria. Se modifica únicamente esa reserva a espera acotada de 3000 ms; el lock se libera en finally. No se cambian otros usos de ScriptLock.
 - Respaldos Git blob previos: admin.js 8cc9ecf6c42c4a1eff20dde3e97bf8390402717e; style.css 44e785cb9710d88401fb816caf7e17f5486f0a13.
 - Validación estática posterior y comparación exacta pendientes. No se ejecutó navegador, Apps Script, Drive/Sheets real ni deployment.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Revisión de selectores de pestaña
+- Code Review detectó que los radios están anidados dentro de fieldset.dev-tools-tab-options; el combinador desde el input no alcanza .dev-tools-layout.
+- Se corrige el anclaje de selectores mediante .dev-tools-tab-options:has(input:checked) ~ .dev-tools-layout.
+- Respaldo exacto previo de style.css: 7855e1dd950ccdcdbfe7b27963f11ddf92964fdf.
+- Falta validar el diff y probar el comportamiento en navegador.

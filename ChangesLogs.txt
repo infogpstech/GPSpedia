@@ -1818,3 +1818,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Ajuste de pestañas y espera de baseline
 - JS/Services/admin.js, ensureAdminLocalGuardBaseline_ (aprox. líneas 12692-12700): tryLock(0) sustituido por tryLock(3000); mensaje de contención actualizado para indicar espera máxima de 3 segundos.
 - style.css, bloque final GP-ADMIN-TAB-ACTIONS-UX-02: pestañas móviles no seleccionadas conservan formato compacto; la pestaña activa expande su ancho y muestra su etiqueta con transición; se respeta prefers-reduced-motion.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Corrección de selectores de pestañas
+- style.css, bloque GP-ADMIN-TAB-ACTIONS-UX-02: selectores activos anclados en .dev-tools-tab-options:has(#dev-tab-*:checked), respetando la estructura HTML real.

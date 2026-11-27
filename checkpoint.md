@@ -673,3 +673,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - CSS: en móvil solo la pestaña seleccionada expande su botón y muestra su etiqueta; las demás quedan compactas. Se mantienen estilos de selección y transiciones existentes, con soporte de movimiento reducido.
 - Respaldos previos almacenados como Git blobs: admin.js 8cc9ecf6c42c4a1eff20dde3e97bf8390402717e; style.css 44e785cb9710d88401fb816caf7e17f5486f0a13.
 - Pendiente: validar estáticamente diff exacto, ejecutar pruebas aisladas, revisar interacciones y Code Review. No browser, Apps Script, Drive/Sheets real ni deployment.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / ajuste de selectores activos
+- Revisión del commit c1c992dfb3f527fa428d827ecac10f5895bb7949 detectó que el selector inicial asumía incorrectamente que los inputs radio eran hermanos del layout.
+- Se actualiza el bloque CSS para consultar el radio seleccionado dentro de .dev-tools-tab-options mediante :has(), sin modificar HTML.
+- Backup exacto style.css previo: 7855e1dd950ccdcdbfe7b27963f11ddf92964fdf.
+- Pendiente: comparación, sintaxis y verificación visual.
