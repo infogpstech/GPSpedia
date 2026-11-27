@@ -993,3 +993,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Backups exactos previos: Olds/Backups/GP-USERS-ID-SEQUENCE-MISMATCH-01-20261127/ (Auth.js, Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md y checkpoint.md); pendientes de eliminación tras el cierre documental y Code Review.
 - Validación local: parsing completo de Auth.js PASS; comparación exacta contra backup PASS; harness sin archivos: U-001/U-002 → U-003, duplicado rechazado, formato inválido rechazado y patrón histórico de fórmula preservado. Code Review estático PASS.
 - No se consultó la fórmula real de A2 ni se ejecutó navegador, POST AUTH, lectura/escritura de Google Sheets ni deployment. La validación integrada de alta de usuario queda pendiente en entorno conectado. No modificar IDs existentes.
+
+
+## Continuidad — GP-ADMIN-DRIVE-REGISTRO-ERROR-03 (2026-11-27)
+- El propietario reportó nuevos fallos de confirmación individual del inventario en Imagenes_Reemplazadas tras la corrección GP-ADMIN-DRIVE-REGISTRO-ERROR-02; el mensaje de runtime no muestra columnas discrepantes. El propietario confirmó que la versión desplegada corresponde a la última versión de ADMIN del repositorio; no se insiste en despliegue desactualizado como hipótesis.
+- Auditoría de fuente: writeDriveInventoryRowVerified_() ya compara columnas y construye diagnóstico nominal. Se detectó que el error de readBack() usado para reconciliar el primer fallo se descarta mediante catch(readError) {}. El writer luego reintenta sin conservar el motivo de esa lectura fallida.
+- Se revisaron el writer, el caller individual handleSaveUnusedImagesInventory(), el wrapper withDriveAuditErrorContext_(), la creación de lastUpdated en el escáner y la propagación del mensaje en JS/Frontend/ui.js. Los errores individuales siguen aislados por archivo; no se demostró truncamiento frontend.
+- Se documentó el hallazgo en Auditoria.txt y la nueva tarea GP-ADMIN-DRIVE-REGISTRO-ERROR-03 en Tareas_Activas.md. Backups exactos previos creados en Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-03-20261127/.
+- No se modificó código funcional, no se ejecutaron pruebas nuevas, Apps Script/Sheets/Drive remoto, POST ni deployment. Beta permanece cerrada y no se crearán suites ni archivos de prueba.
+- Siguiente paso: completar auditoría de dependencias, conservar firstError/readError/retryError con etapas y diagnóstico sin valores sensibles, validar localmente en memoria y realizar Code Review antes de retirar respaldos. No declarar resuelto el registro de imágenes hasta validación remota autorizada.
