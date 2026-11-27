@@ -1726,3 +1726,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Revisión estática de la lógica y pruebas aisladas 8/8 PASS.
 - [x] Backups temporales retirados tras la revisión estática.
 - [ ] Validación de sintaxis completa, browser y Sheets/Drive real; pendiente por falta de runtime autorizado.
+
+
+#### GP-ADMIN-IMAGE-REFERENCE-THUMBNAIL-URLS-02 (2026-11-27)
+- [x] Extender extractor para URLs de miniaturas, variantes thumbnail/thumb, googleusercontent y parámetros alternativos de ID.
+- [x] Versionar el scan para invalidar snapshots y cursor anteriores.
+- [ ] Ejecutar pruebas aisladas, parsing y revisión estática del cambio; validar en Sheets/Drive real sin deployment.
