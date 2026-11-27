@@ -581,3 +581,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Backup temporal comparado y eliminado conforme a normativa.
 - Estado: corrección local en rama de trabajo, sin deployment; no hay prueba remota ni de navegador. No se reabrió Beta ni se crearon suites.
 - Commit de eliminación de backup: `c3da623f41023fdd8d1755b4bb37bec457b69c27`.
+
+
+### Verificación final de continuidad
+- Último HEAD de trabajo verificado antes del cierre documental: `30ca3cabfc059d0eea0f8c2b746e5f3417157cfd`; los commits de cierre posteriores actualizan únicamente registros.
+- Rama base `GPSpedia2.2.5`: SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, no modificada.
+- Incidencia GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01: fuente corregida y revisión local cerrada; pendiente deployment/integración autorizada.
