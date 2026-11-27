@@ -636,11 +636,61 @@ function collectActiveDriveReferences(includeLocations = true) {
 
     return { references, unverifiableReferenceCount, metrics: { cortes: cortesScanMetrics } };
 }
+function collectLogoSheetImageReferences_(sheet, includeLocations = true) {
+    if (!sheet) throw new Error("No se encontró la hoja «LogosMarca» para verificar referencias de logotipos.");
+    const lastColumn = Number(sheet.getLastColumn()) || 0;
+    const idHeader = String(sheet.getRange(1, 1).getDisplayValue() || "").trim().toLowerCase();
+    if (lastColumn < 3 || idHeader !== "id") {
+        throw new Error("El esquema de «LogosMarca» no permite verificar la URL de la columna 3; se esperaba el encabezado ID y la columna de URL.");
+    }
+    const references = new Map();
+    let unverifiableReferenceCount = 0;
+    const lastRow = Number(sheet.getLastRow()) || 0;
+    if (lastRow < 2) return { references, unverifiableReferenceCount, metrics: { rows: 0, columns: 1, cells: 0 } };
+    const range = sheet.getRange(2, 1, lastRow - 1, 3);
+    const values = range.getDisplayValues(), rawValues = range.getValues();
+    const formulas = range.getFormulas(), richTextValues = range.getRichTextValues();
+    for (let r = 0; r < values.length; r++) {
+        const candidates = [String(values[r][2] || ""), String(formulas[r] && formulas[r][2] || "")];
+        const rawValue = rawValues[r] && rawValues[r][2];
+        let hasUnverifiableDriveLink = false;
+        if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+            try { const url = String(rawValue.getContentUrl() || ""); if (url) candidates.push(url); else hasUnverifiableDriveLink = true; }
+            catch (imageValueError) { hasUnverifiableDriveLink = true; }
+        }
+        const richText = richTextValues[r] && richTextValues[r][2];
+        if (richText) {
+            const wholeCellLink = richText.getLinkUrl();
+            if (wholeCellLink) candidates.push(wholeCellLink);
+            const runs = richText.getRuns ? richText.getRuns() : [];
+            runs.forEach(run => { const url = run.getLinkUrl(); if (url) candidates.push(url); });
+        }
+        const cellIds = new Set();
+        candidates.forEach(candidate => {
+            if (!candidate) return;
+            const ids = extractDriveFileIds(candidate);
+            ids.forEach(id => cellIds.add(id));
+            if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
+        });
+        cellIds.forEach(id => {
+            if (includeLocations) {
+                if (!references.has(id)) references.set(id, []);
+                references.get(id).push({ sheet: SHEET_NAMES.LOGOS_MARCA, row: r + 2, column: 3,
+                    field: "logoUrl", brand: String(values[r][1] || "") });
+            } else references.set(id, true);
+        });
+        if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
+    }
+    return { references, unverifiableReferenceCount,
+        metrics: { rows: Math.max(0, lastRow - 1), columns: 1, cells: Math.max(0, lastRow - 1) } };
+}
+
 function collectCatalogImageReferences(includeLocations = true) {
     // Allowlist positiva: solo las hojas y columnas que forman parte del catálogo visual.
     // Las hojas de eventos, registros, reacciones, Feedback y administración nunca se recorren.
     const catalogSheets = [
         { name: SHEET_NAMES.CORTES, kind: "cortes" },
+        { name: SHEET_NAMES.LOGOS_MARCA, kind: "logos" },
         { name: SHEET_NAMES.TUTORIALES, field: "Imagen", header: "Imagen", column: 3 },
         { name: SHEET_NAMES.RELAY, field: "imagen", header: "imagen", column: 10 },
         { name: SHEET_NAMES.PYS, field: "Imagen", header: "Imagen", column: 7 }
@@ -659,6 +709,9 @@ function collectCatalogImageReferences(includeLocations = true) {
         if (spec.kind === "cortes") {
             result = collectCortesImageReferences(includeLocations);
             metrics.cortes = result.metrics || null;
+        } else if (spec.kind === "logos") {
+            result = collectLogoSheetImageReferences_(sheet, includeLocations);
+            metrics.catalog[spec.name] = result.metrics || null;
         } else {
             result = collectCatalogSheetImageReferences_(sheet, spec, includeLocations);
             metrics.catalog[spec.name] = result.metrics || null;
@@ -14145,8 +14198,8 @@ function validateDriveAuditInventoryBatch_(auditId, ownerId, files) {
     const state = loadDriveAuditServerState_(auditId);
     if (state.ownerId !== String(ownerId || "").trim()) throw new Error("La auditoría pertenece a otra sesión Desarrollador.");
     if (state.scanVersion !== ADMIN_SERVICE_VERSION) throw new Error("La auditoría incremental fue creada con otra versión de ADMIN; inicia una auditoría nueva.");
-    if (Number(state.errorCount || 0) > 0 || Number(state.unverifiableReferenceCount || 0) > 0) {
-        throw new Error("La auditoría ya registró errores o referencias no interpretables; se detuvo el registro incremental para evitar confirmar un inventario incompleto.");
+    if (Number(state.unverifiableReferenceCount || 0) > 0) {
+        throw new Error("La auditoría contiene referencias de catálogo no interpretables; no se permite registrar imágenes hasta completar una captura de referencias verificable.");
     }
     if (!["running", "complete"].includes(String(state.status || ""))) throw new Error("La auditoría no está activa o no ha sido confirmada.");
     const age = Date.now() - Number(state.updatedAt || state.createdAt || 0);
@@ -14284,16 +14337,18 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
         let confirmedCount = 0, blockedCount = 0, errorCount = 0, loggingErrorCount = 0;
         const results = [];
         const currentIds = new Set(uniqueIds);
-        const recordOutcome = (fileId, status, message) => {
+        const recordOutcome = (fileId, status, message, errorDetails) => {
             const association = associationByFileId.get(fileId);
             results.push({
                 fileId: fileId, status: status, message: String(message || ""),
+                errorCode: String(errorDetails && errorDetails.errorCode || ""),
+                errorStage: String(errorDetails && errorDetails.errorStage || ""),
                 association: association ? {
                     status: association.status, confidence: association.confidence,
                     candidates: Array.isArray(association.candidates) ? association.candidates : []
                 } : {
                     status: associationBuildError ? "no_verificada" : "sin_coincidencia",
-                    confidence: "", candidates: []
+                    confidence: "", candidates: [], message: associationBuildError
                 }
             });
             if (status !== "confirmado") {
@@ -14306,6 +14361,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
 
         uniqueFiles.forEach(item => {
             const fileId = item.fileId;
+            let imageStage = "validación de referencias y protecciones";
             try {
                 if (auditState.unverifiableReferenceCount > 0) throw Object.assign(new Error("La auditoría detectó referencias no interpretables; el archivo no puede confirmarse como sin uso."), { inventoryStatus: "blocked" });
                 if (referenceScanError) throw Object.assign(new Error("No se pudo revalidar el Spreadsheet: " + referenceScanError), { inventoryStatus: "blocked" });
@@ -14332,6 +14388,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                     return;
                 }
 
+                imageStage = "lectura y validación del archivo en Drive";
                 const file = DriveApp.getFileById(fileId);
                 const auditedMetadata = auditMetadataById.get(fileId);
                 if (!auditedMetadata) throw Object.assign(new Error("No existen metadatos persistidos de auditoría para esta imagen."), { inventoryStatus: "blocked" });
@@ -14397,6 +14454,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                     : "");
 
                 const targetRow = rowNumber || sheet.getLastRow() + 1;
+                imageStage = "escritura y lectura de confirmación en Imagenes_Reemplazadas";
                 const persisted = writeDriveInventoryRowVerified_(sheet, targetRow, row, headers, fileId,
                     auditId, inventoryOperationId, "sin_uso_detectado", "confirmado");
                 if (rowNumber) updatedCount++; else insertedCount++;
@@ -14406,7 +14464,10 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
             } catch (error) {
                 const status = error && error.inventoryStatus === "blocked" ? "bloqueado" : "error";
                 if (status === "bloqueado") blockedCount++; else errorCount++;
-                recordOutcome(fileId, status, error.message || String(error));
+                const errorCode = String(error && error.code || (status === "bloqueado" ? "IMAGE_INVENTORY_BLOCKED" : "IMAGE_INVENTORY_WRITE_FAILED"));
+                const errorMessage = "ADMIN.saveUnusedImagesInventory [" + imageStage + "] " +
+                    String(error && error.message || error) + " (código: " + errorCode + ").";
+                recordOutcome(fileId, status, errorMessage, { errorCode: errorCode, errorStage: imageStage });
             }
         });
 
@@ -14816,13 +14877,28 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             failedCount: failedCount, blockedCount: blockedCount, loggingErrorCount: loggingErrorCount };
     }
 }
+function withDriveAuditErrorContext_(operation, stage, callback) {
+    try { return callback(); }
+    catch (error) {
+        const originalMessage = String(error && error.message || error || "Error sin detalle.");
+        const code = String(error && error.code || "DRIVE_AUDIT_OPERATION_FAILED");
+        const wrapped = new Error("ADMIN." + operation + " [" + stage + "] falló: " + originalMessage + " (código: " + code + ").");
+        wrapped.code = code;
+        wrapped.stage = stage;
+        if (error && error.stack) wrapped.stack = error.stack;
+        throw wrapped;
+    }
+}
+
 function handleAuditDriveImagesInCortes(payload, logMessage, developerContext) {
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     const cursor = payload && payload.cursor ? payload.cursor : null;
     const auditId = cursor ? String(cursor.referenceCacheId || "invalid-cursor") : ("new:" + ownerId);
-    return withAdminLocalOperationGuard_("drive-audit:" + auditId, function() {
-        return handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext);
-    }, 420);
+    return withDriveAuditErrorContext_("auditDriveImagesInCortes", "validación, referencias y recorrido Drive", function() {
+        return withAdminLocalOperationGuard_("drive-audit:" + auditId, function() {
+            return handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext);
+        }, 420);
+    });
 }
 function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerContext) {
     const requestStartedAt = Date.now();
@@ -14914,9 +14990,9 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         historyCaptureMs = Date.now() - historyCaptureStartedAt;
         const referenceLocationsById = {};
         references.references.forEach((locations, fileId) => {
-            const cortesLocations = normalizeDriveAuditReferenceLocations_(Array.isArray(locations) ? locations : [])
-                .filter(location => location.sheet === SHEET_NAMES.CORTES);
-            if (cortesLocations.length) referenceLocationsById[String(fileId)] = cortesLocations;
+            const catalogLocations = normalizeDriveAuditReferenceLocations_(Array.isArray(locations) ? locations : [])
+                .filter(location => location.sheet === SHEET_NAMES.CORTES || location.sheet === SHEET_NAMES.LOGOS_MARCA);
+            if (catalogLocations.length) referenceLocationsById[String(fileId)] = catalogLocations;
         });
         referenceSnapshot = { activeDriveIds: Array.from(references.references.keys()), historicalDriveIds: Array.from(historicalDriveIds),
             protectedDriveIds: Array.from(protectedDriveIds), referenceLocationsById,
@@ -14956,11 +15032,20 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
             while (files.hasNext() && batchFiles < batchFilesLimit && batchFileEntries < batchFileEntriesLimit &&
                 Date.now() - batchStartedAt < batchBudgetMs) {
                 const file = files.next(); batchFileEntries++;
-                let fileId = ""; try { fileId = String(file.getId() || "").trim(); } catch (idError) { errorCount++; continue; }
+                let fileId = "";
+                try { fileId = String(file.getId() || "").trim(); }
+                catch (idError) {
+                    errorCount++;
+                    logMessage && logMessage("Lectura de ID Drive",
+                        "No se pudo obtener el ID de un archivo dentro de «" + String(current.path || "Cortes") +
+                        "»: " + String(idError && idError.message || idError), 0, 0, true, true);
+                    continue;
+                }
                 if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { errorCount++; continue; }
                 if (seenFileIds.has(fileId)) { duplicateFileCount++; continue; }
                 seenFileIds.add(fileId); pageFileIds.push(fileId); totalDiscovered++;
                 let fileName = "Archivo no verificable", mimeType = "", size = 0, lastUpdated = "", classification = "No verificable";
+                let fileErrorMessage = "", fileErrorCode = "";
                 try {
                     fileName = file.getName(); mimeType = file.getMimeType(); size = file.getSize();
                     lastUpdated = Utilities.formatDate(file.getLastUpdated(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
@@ -14969,13 +15054,22 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     else if (!String(mimeType).startsWith("image/")) classification = "No verificable";
                     else if (referenceSnapshot.unverifiableReferenceCount > 0) classification = "No verificable";
                     else classification = "Sin uso detectado";
-                } catch (fileError) { classification = "No verificable"; errorCount++; }
+                } catch (fileError) {
+                    classification = "No verificable";
+                    errorCount++;
+                    fileErrorMessage = "Lectura de metadatos Drive: " + String(fileError && fileError.message || fileError);
+                    fileErrorCode = String(fileError && fileError.code || "DRIVE_FILE_METADATA_READ_FAILED");
+                    logMessage && logMessage("Metadatos de archivo",
+                        "Archivo " + fileName + " (" + fileId + "): " + fileErrorMessage +
+                        " [código: " + fileErrorCode + "]", 0, 0, true, true);
+                }
                 const referenceLocations = referenceSnapshot.referenceLocationsById &&
                     Array.isArray(referenceSnapshot.referenceLocationsById[fileId])
                     ? normalizeDriveAuditReferenceLocations_(referenceSnapshot.referenceLocationsById[fileId]) : [];
                 const fileFormat = String(fileName.match(/\\.([A-Za-z0-9]{1,12})$/)?.[1] || mimeType.split("/")[1] || "unknown").toLowerCase();
                 auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, format: fileFormat, url: "https://drive.google.com/file/d/" + fileId + "/view", origin: "Google Drive · árbol Cortes",
-            size, lastUpdated, classification, referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || ""), vehicleId: String(location.vehicleId || ""), category: String(location.category || ""), brand: String(location.brand || ""), model: String(location.model || "") })) });
+            size, lastUpdated, classification, errorMessage: fileErrorMessage, errorCode: fileErrorCode,
+            referenceLocations: referenceLocations.map(location => ({ sheet: String(location.sheet || ""), row: Number(location.row) || 0, column: Number(location.column) || 0, field: String(location.field || ""), vehicleId: String(location.vehicleId || ""), category: String(location.category || ""), brand: String(location.brand || ""), model: String(location.model || "") })) });
                 batchFiles++; totalAnalyzed++;
             }
             if (files.hasNext()) { current.fileToken = files.getContinuationToken(); break; }
