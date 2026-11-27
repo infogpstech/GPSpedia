@@ -7496,3 +7496,22 @@ textarea.rich-text-source[hidden] { display:none !important; }
         transition: none !important;
     }
 }
+
+/* GP-ADMIN-DRIVE-UNUSED-IMAGES-02: distribución móvil compacta, preservando pestañas y transiciones. */
+@media (max-width:760px){
+#dev-tools-modal .dev-tools-workspace{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:6px;width:100%;height:100%;min-height:0;overflow:hidden}
+#dev-tools-modal .dev-console-shared{flex:0 0 25%;width:100%;min-height:0;max-height:25%;height:25%;overflow:hidden}
+#dev-tools-modal .dev-console-shared .dev-console-output{flex:1 1 auto;min-height:0;height:auto;padding:5px;overflow:auto}
+#dev-tools-modal .dev-terminal-row{flex-wrap:nowrap;flex:0 0 auto;width:100%;min-width:0;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+#dev-tools-modal .dev-terminal-input-shell{flex:1 1 auto;min-width:0;padding:0;margin:0;border:0;background:transparent;box-shadow:none}
+#dev-tools-modal .dev-terminal-row .dev-input{flex:1 1 auto;min-width:0;width:100%!important}
+#dev-tools-modal .dev-terminal-row #btn-terminal-send{flex:0 0 34px;width:34px;min-width:34px}
+#dev-tools-modal .dev-tools-tabs{flex:1 1 75%;width:100%;min-width:0;min-height:0;height:75%;overflow:hidden}
+#dev-tools-modal .dev-tools-layout{flex:1 1 auto;display:flex;flex-direction:column;flex-wrap:nowrap;width:100%;min-width:0;min-height:0;height:100%;gap:5px;overflow:hidden}
+#dev-tools-modal .dev-tools-sidebar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;width:100%;min-width:0;gap:3px;padding:3px;margin:0}
+#dev-tools-modal .dev-tools-sidebar .dev-tab-link{min-width:0;max-width:100%;min-height:34px;padding:4px 2px;justify-content:center;gap:4px;overflow-wrap:anywhere;text-align:center}
+#dev-tools-modal .dev-tools-panels{flex:1 1 auto;width:100%;min-width:0;min-height:0;height:100%;overflow:hidden}
+#dev-tools-modal .dev-tab-panel{width:100%;min-width:0;min-height:0;height:100%;max-height:none;overflow-y:auto}
+#dev-tools-modal .dev-panel-images:has(#audit-drive-workspace:not([hidden])){min-height:0;height:100%;overflow:hidden}
+}
+@media(max-width:520px){#dev-tools-modal .dev-console-shared{flex-basis:25%;height:25%;max-height:25%;padding:4px}#dev-tools-modal .dev-tools-sidebar .dev-tab-link{font-size:.66rem;line-height:1.1}#dev-tools-modal .dev-tools-sidebar .dev-tab-link span{display:inline;min-width:0;overflow-wrap:anywhere}}

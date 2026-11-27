@@ -12801,7 +12801,7 @@ function withAdminLocalOperationGuard_(scope,callback,ttlSeconds,dependencies) {
     const marker={requestId:String(uuid()||"").trim(),expiresAt:now()+ttl*1000};
     if(!marker.requestId)throw new Error("No se pudo identificar la guarda local de operación.");
     const reserveLock=lockService.getScriptLock();
-    if(!reserveLock.tryLock(0)){
+    if(!reserveLock.tryLock(3000)){
         const error=new Error("El registro local de operaciones ADMIN está ocupado; vuelve a intentar.");
         error.code="ADMIN_LOCAL_GUARD_BUSY";throw error;
     }
@@ -12810,7 +12810,7 @@ function withAdminLocalOperationGuard_(scope,callback,ttlSeconds,dependencies) {
     try{return callback();}
     finally{
         const cleanupLock=lockService.getScriptLock();
-        if(cleanupLock.tryLock(0)){
+        if(cleanupLock.tryLock(1500)){
             try{
                 try{releaseAdminLocalGuard_(sheet,scopeHash,marker.requestId);}
                 catch(cleanupError){console.error("No se pudo limpiar la guarda temporal ADMIN; expirará por TTL:",String(cleanupError&&cleanupError.message||cleanupError));}

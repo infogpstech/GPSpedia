@@ -9078,11 +9078,11 @@ export async function openAuditDriveModal(options = {}) {
     const appendFiles = (files) => {
         if (!isCurrentRequest()) return;
         files.forEach(file => {
+            if (String(file && file.classification || '') !== 'Sin uso detectado') return;
             const fileId = String(file && file.fileId || '').trim();
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || renderedFileIds.has(fileId)) return;
             renderedFileIds.add(fileId);
-            const classification = String(file.classification || 'No verificable');
-            if (!['En uso', 'Histórica', 'Sin uso detectado', 'No verificable'].includes(classification)) return;
+            const classification = 'Sin uso detectado';
 
             const folderPath = String(file.folderPath || rootFolderName || 'Cortes');
             let folderGroup = folderGroups.get(folderPath);
