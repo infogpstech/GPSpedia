@@ -530,3 +530,5 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Validación local: sintaxis V8 PASS; parser/formatter PASS; reserva simulada 99999→100000, replay, conflicto y lock PASS; 13 invariantes estáticas PASS; Code Review del diff limitado al alcance PASS.
 - Pendiente: publicar WRITE Apps Script, verificar endpoint activo y ejecutar una prueba controlada de alta nueva en Spreadsheet aislada para confirmar fila, validaciones desplegables y contenido completo. No se ha ejecutado escritura remota ni se afirma resuelto en producción.
 - El checkpoint previo GP-CUT-ID-FORMAT-REBUILD-05 permanece vigente para los pendientes de despliegue CATALOG/offline y validación del modal/formulario.
+
+- Ajuste final: la celda ID de la fila nueva se configura como texto plano (`@`) antes de escribir `V-00000`; commit `f50ed98c2b890ed0b91aff46af3a90ab99c37bc5`. La sintaxis y las invariantes estáticas se revalidaron después del ajuste.
