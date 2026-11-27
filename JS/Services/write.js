@@ -545,6 +545,45 @@ function handleAddOrUpdateCut(payload) {
 
 
 const CORTES_ID_COUNTER_PROPERTY = "GPSpedia_CORTES_LAST_ID";
+
+// El contador interno conserva una secuencia numérica; el ID persistente siempre
+// se representa como V-### (tres dígitos mínimos, sin límite artificial de 999).
+function parseCortesVehicleIdSequence_(value, context) {
+    const raw = String(value === null || value === undefined ? "" : value).trim();
+    let sequence = null;
+    if (typeof value === "number") {
+        sequence = value;
+    } else {
+        const prefixed = /^V-(\\d{3,15})$/i.exec(raw);
+        const legacy = /^([1-9]\\d{0,14})$/.exec(raw);
+        if (prefixed) sequence = Number(prefixed[1]);
+        else if (legacy) sequence = Number(legacy[1]);
+    }
+    if (!Number.isSafeInteger(sequence) || sequence < 1) {
+        throw new Error((context || "ID de vehículo") + ": se esperaba un ID V-### válido.");
+    }
+    return sequence;
+}
+
+function formatCortesVehicleId_(sequence, context) {
+    const numeric = Number(sequence);
+    if (!Number.isSafeInteger(numeric) || numeric < 1) {
+        throw new Error((context || "Asignación de ID") + ": la secuencia debe ser un entero positivo seguro.");
+    }
+    return "V-" + String(numeric).padStart(3, "0");
+}
+
+function normalizeCortesVehicleId_(value, context) {
+    return formatCortesVehicleId_(parseCortesVehicleIdSequence_(value, context), context);
+}
+
+function sameCortesVehicleId_(left, right) {
+    try {
+        return normalizeCortesVehicleId_(left) === normalizeCortesVehicleId_(right);
+    } catch (error) {
+        return false;
+    }
+}
 const CORTES_ID_BASELINE_OP_ID = "OP-BASELINE-CORTES-LAST-ID-V1";
 const CORTES_ID_BASELINE_OPERATION_HASH = "71e6dae8fc9c7cb8ac468ac7be5f4044a2db6166baf0794c0d962dc859d8576c";
 
@@ -606,11 +645,8 @@ function getCortesVehicleIdHighWaterMark_(sheet, options) {
             if (!hasData && !hasId) continue;
             if (!hasId) throw new Error("La fila " + (offset + 2) + " contiene datos, pero no tiene ID.");
 
-            const id = typeof rawId === "number" ? rawId : Number(String(rawId).trim());
-            if (!Number.isSafeInteger(id) || id < 1) {
-                throw new Error("El ID de la fila " + (offset + 2) + " no es un entero numérico positivo seguro.");
-            }
-            if (seenIds.has(id)) throw new Error("Se detectó el ID duplicado " + id + " en «Cortes»; no se asignó otro ID.");
+            const id = parseCortesVehicleIdSequence_(rawId, "Cortes fila " + (offset + 2));
+            if (seenIds.has(id)) throw new Error("Se detectó el ID duplicado " + formatCortesVehicleId_(id) + " en «Cortes»; no se asignó otro ID.");
             seenIds.add(id);
             maxSheetId = Math.max(maxSheetId, id);
         }
@@ -894,7 +930,7 @@ function handleAllocateVehicleId(payload) {
     assertDeveloperForIdMaintenance(payload);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const request = normalizeCortesIdAllocationRequest_(payload) || buildLegacyCortesIdAllocationRequest_();
-    const vehicleId = reserveCortesVehicleIdForOperation_(sheet, request);
+    const vehicleId = formatCortesVehicleId_(reserveCortesVehicleIdForOperation_(sheet, request));
     return { status: "success", vehicleId };
 }
 
@@ -954,9 +990,8 @@ function buildCortesIdFreezePlan(sheet) {
             return;
         }
         if (hasId) {
-            const id = typeof rawId === "number" ? rawId : Number(String(rawId).trim());
-            if (!Number.isSafeInteger(id) || id < 1) throw new Error(`El ID de la fila ${index + 2} no es un entero numérico positivo seguro.`);
-            if (seenIds.has(id)) throw new Error(`Se detectó el ID duplicado ${id}; no se modificó ninguna fórmula.`);
+            const id = parseCortesVehicleIdSequence_(rawId, "Cortes fila " + (index + 2));
+            if (seenIds.has(id)) throw new Error(`Se detectó el ID duplicado ${formatCortesVehicleId_(id)}; no se modificó ninguna fórmula.`);
             seenIds.add(id);
             maxId = Math.max(maxId, id);
         }
@@ -1244,7 +1279,7 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
     if (vehicleId) {
         const ids = lastRowBefore > 1 ? sheet.getRange(2, COLS_CORTES.id, lastRowBefore - 1, 1).getValues().flat() : [];
         const matches = [];
-        ids.forEach((id, index) => { if (String(id == null ? "" : id).trim() === vehicleId) matches.push(index + 2); });
+        ids.forEach((id, index) => { if (sameCortesVehicleId_(id, vehicleId)) matches.push(index + 2); });
         if (matches.length !== 1) throw new Error(matches.length ? "El ID del vehículo aparece duplicado; no se realizó ninguna modificación." : "El ID del vehículo no fue encontrado.");
         existingRowIndex = matches[0];
         existingRowValues = sheet.getRange(existingRowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -1579,14 +1614,14 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         vehicleData.versionesAplicables = resolveAndNormalizeEntity(vehicleData.versionesAplicables, entities.versions, true);
 
         if (Number.isSafeInteger(preallocatedVehicleId) && preallocatedVehicleId > 0) {
-            newId = preallocatedVehicleId;
+            newId = formatCortesVehicleId_(preallocatedVehicleId, "Alta de vehículo nuevo");
         } else {
             const reservationRequest = {
                 opId: opId || ("OP-WRITE-LEGACY-" + Utilities.getUuid()),
                 operationHash: operationHash || computeCutOperationFingerprint_(payload)
             };
             // Compatibilidad legacy: reservar bajo el lock porque el cliente no envía opId estable.
-            newId = reserveCortesVehicleIdForOperation_(sheet, reservationRequest);
+            newId = formatCortesVehicleId_(reserveCortesVehicleIdForOperation_(sheet, reservationRequest), "Alta de vehículo nuevo");
         }
 
         const lastRow = sheet.getLastRow();
@@ -1608,7 +1643,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         // El ID ya está reservado de forma append-only y no se reutiliza si falla la fila.
         sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
         SpreadsheetApp.flush();
-        if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
+        if (!sameCortesVehicleId_(sheet.getRange(rowIndex, COLS_CORTES.id).getValue(), newId)) {
             removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
             throw new Error("No se pudo verificar el ID estático del nuevo vehículo; no se guardó el corte.");
         }
@@ -1672,7 +1707,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
                 String(verified.vehicleId) !== String(newId) ||
                 verified.slotIndex !== 1 ||
                 verified.operationHash !== operationHash ||
-                Number(verified.rowValues[COLS_CORTES.id - 1]) !== Number(newId)) {
+                !sameCortesVehicleId_(verified.rowValues[COLS_CORTES.id - 1], newId)) {
                 throw new Error("La reserva del vehículo cambió durante la carga de Drive; se conserva la operación pendiente para recuperación segura.");
             }
         }
@@ -1818,7 +1853,7 @@ function readSupplementaryVehicleSnapshot_(sheet, vehicleId) {
     if (sheet.getLastColumn() < COLS_CORTES.imgCableAlimen3) throw createSupplementaryInfoError_("SUPPLEMENTARY_SCHEMA_INVALID", "La hoja Cortes no contiene todas las columnas de información suplementaria.");
     const ids = sheet.getRange(2, COLS_CORTES.id, sheet.getLastRow() - 1, 1).getValues().flat();
     const matches = [];
-    ids.forEach((id, index) => { if (String(id == null ? "" : id).trim() === String(vehicleId).trim()) matches.push(index + 2); });
+    ids.forEach((id, index) => { if (sameCortesVehicleId_(id, vehicleId)) matches.push(index + 2); });
     if (!matches.length) throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND", "El vehículo indicado no existe en el registro.");
     if (matches.length > 1) throw createSupplementaryInfoError_("VEHICLE_ID_AMBIGUOUS", "El ID del vehículo aparece más de una vez. No se realizó ninguna modificación.");
     const rowIndex = matches[0];
@@ -2708,13 +2743,13 @@ function appendVehicleContributionEvent_(options) {
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("El payload del aporte debe ser un objeto.");
     const payloadJson = JSON.stringify(payload);
     if (!payloadJson || payloadJson.length > 45000) throw new Error("El payload del aporte excede el tamaño permitido.");
-    const operationHash = String(options.operationHash || computeVehicleContributionHash_(vehicleId, kind, payload)).trim().toLowerCase();
+    const operationHash = String(options.operationHash || computeVehicleContributionHash_(canonicalVehicleId, kind, payload)).trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("La huella del aporte debe ser SHA-256.");
     const sheet = options.ledgerSheet || getVehicleContributionLedgerSheet_(options.spreadsheet);
     const existing = findVehicleContributionEventsByOpId_(sheet, opId);
     for (const entry of existing) {
         const values = entry.values;
-        if (String(values[2] || "") !== vehicleId || String(values[3] || "").toLowerCase() !== operationHash ||
+        if (!sameCortesVehicleId_(values[2], canonicalVehicleId) || String(values[3] || "").toLowerCase() !== operationHash ||
             String(values[4] || "").toLowerCase() !== kind || String(values[5] || "") !== payloadJson) {
             const conflict = new Error("El opId ya está asociado a otro vehículo, tipo o contenido. El aporte quedó en conflicto y no se confirmó.");
             conflict.code = "CONTRIBUTION_OP_ID_CONFLICT";
@@ -3452,7 +3487,7 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
 }
 function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
     if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
-    const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
+    const cleanVehicleId = normalizeCortesVehicleId_(vehicleId, "Recuperación " + opId);
     const lastRow = cortesSheet.getLastRow();
     const idRows = lastRow > 1
         ? cortesSheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues()
@@ -3462,7 +3497,7 @@ function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
         const rawId = idRows[offset][0];
         if (isBlankIdempotenciaValue_(rawId)) continue;
         const rowIndex = offset + 2;
-        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + rowIndex) === cleanVehicleId) {
+        if (sameCortesVehicleId_(rawId, cleanVehicleId)) {
             matches.push(rowIndex);
         }
     }
@@ -3890,7 +3925,7 @@ function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId, rowsSnapsh
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     const rowId = row[COLS_CORTES.id - 1];
-    if (currentVehicleId && String(rowId) === String(currentVehicleId)) continue;
+    if (currentVehicleId && sameCortesVehicleId_(rowId, currentVehicleId)) continue;
 
     const rowVinRaw = row[vinColumnIndex - 1];
     const vinList = parseVinCollection(rowVinRaw);
