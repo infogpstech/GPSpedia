@@ -1708,3 +1708,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 - `JS/Services/write.js`: la inserción de alta nueva contempla también una hoja con solo encabezados; conserva la fila 2 como plantilla de validaciones y crea la primera fila de datos en la posición 2.
 - Commit: `5fd150497861893f7762c6616cd61b2e8781451c`.
+
+- Validación estática adicional de `JS/Services/write.js`: inserción después del último vehículo, primera alta con solo encabezados y expansión de una hoja con una sola fila; las tres rutas copian formato y validaciones desde la fila plantilla.
