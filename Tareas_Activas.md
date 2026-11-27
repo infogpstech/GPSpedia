@@ -1331,3 +1331,20 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Validación estática: 17 claves de allow-list verificadas; ambas variantes de actor admitidas como campos, alias simple no utilizado como identidad; protección de vídeo y checks de actor preservados.
 - Backup exacto comparado y eliminado tras revisión. No se crearon tests ni workflows, no hubo POST remoto ni deployment.
 - Rama base no modificada.
+
+
+## GP-ADD-CUT-WIZARD-UX-NAV-01 — mensajes, etapas y retroceso de detalle
+
+**Estado: EN IMPLEMENTACIÓN.**
+
+- [ ] Suprimir notificaciones redundantes de confirmación/limpieza local tras WRITE; permitir exclusivamente «Corte agregado con éxito» o «No se pudo agregar el corte, intenta más tarde» en el flujo de alta y mantener errores técnicos en consola.
+- [ ] Transición fiable etapa 2→3 tras confirmación WRITE, sin depender de limpieza IndexedDB; mantener recuperación e idempotencia.
+- [ ] Revisar mensajes de etapa 3 y formularios suplementarios/modal detalle; no mostrar alertas innecesarias desde modal de ficha.
+- [ ] Retroceso etapa 3→2 reinicia campos de corte y selección/imagen; retroceso entre otras etapas preserva el formulario anterior.
+- [ ] Desde etapa 2 regresar a etapa 1.5 si se encontraron coincidencias pertinentes; de lo contrario etapa 1, con resultados y datos preservados según corresponda.
+- [ ] Auditar y corregir navegación atrás/gesto desde detalle de vehículo abierto desde carruseles en el estado inicial de la aplicación, restaurando estado anterior sin cerrar la app.
+- [ ] Diagnosticar /favicon.ico 404; corregir ruta o asset si el defecto está confirmado en el alcance.
+- [ ] Clasificar la advertencia document.write de runtime HtmlService de Google: corregir solo si existe callsite propio GPSpedia comprobado, sin modificar runtime externo.
+- [ ] Validar estáticamente y por simulación efímera sin crear suites ni workflows (Beta cerrada); comparar diff y realizar Code Review.
+- [ ] Actualizar ChangesLogs.txt, Auditoria.txt y checkpoint.md; conservar GPSpedia2.2.5 intacta.
+
