@@ -1668,3 +1668,13 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No se modificó `JS/Services/write.js`, el contrato de IndexedDB, la lógica de idempotencia, los datos remotos ni los deployments de Apps Script.
 - Commits de código: formulario `7483a76f912ac27cd1c6133df7a67aa0b7f55f30`; logger `1d8b0a30f2c4f45a937def2342307f86d65ca113`; Service Worker `8e8994d573d4ba6caa1421f1e3308e583b6837d1`.
 - Respaldos exactos previos: `Olds/Backups/GP-CUT-FUNCTIONAL-AUDIT-04-20261126/`.
+
+
+[2026-11-26] GP-CUT-FUNCTIONAL-AUDIT-04B — alineación del contrato de validación frontend/WRITE
+- `HTML/add_cortes.html`: para «No recomendado», ubicación continúa deshabilitada y opcional; para cortes normales, ubicación ahora es obligatoria en HTML, coincidiendo con WRITE. Los dos inputs de imágenes del paso 2 enumeran los MIME que acepta el cargador. El formulario muestra un aviso específico si el MIME no es compatible.
+- `JS/Services/write.js`: `ubicacionCorte1` solo es obligatoria cuando el tipo no es «No recomendado». `validateAddCutImage_()` ahora acepta los 16 MIME ya soportados por `getExtensionFromMimeType()` y `fileToBase64()`, manteniendo Base64 válido y límite máximo de 10 MB.
+- `JS/Frontend/diagnosticLogger.js`: añadidos `IMAGE_UPLOAD_EVENT_UNCONFIRMED`, `INVALID_SERVICE_RESPONSE` y `VIN_ACTOR_REQUIRED`; los códigos explícitos de WRITE quedan cubiertos.
+- `service-worker.js`: caché PWA v85.
+- Pruebas: MIME extraídos del fuente 16/16; corte «No recomendado» con ubicación vacía PASS; corte normal con ubicación vacía rechazado PASS; cobertura de códigos WRITE 11/11; Code Review de los cuatro archivos PASS.
+- Commits: HTML `e223466e5e8f7b34fc56f20715f38d4c8d634295`; WRITE `5eee9b07be8f1feae100ca97f50fcefa98731bcd` y corrección de regex `b75027be0c8db0cf3f3a7a9163d9afc3e9806fac`; logger `0a752ea311758357cc272d34a282240883a8cf14`; Service Worker `d6494de7967281b09049cbd220a1cf84b159ed31` y v85 `dd93b63977d059d7d27cd44006a3a5265d3c69fe`.
+- Pages run `45914970548` SUCCESS. No deployment de Apps Script ni prueba remota de WRITE; la URL de `api-config.js` requiere health GET-only pendiente.
