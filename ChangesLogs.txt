@@ -1973,3 +1973,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Se verificó que la rama base GPSpedia2.2.5 conserva el SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Tras Code Review estático y comparación, se eliminó el respaldo temporal admin.js.backup conforme a NORMAS_DESAROLLO.md. SHA del blob revisado: 163e167b6544a59966c40b3b825e6e5a3ffb72b5.
 - No se modificaron UI, CSS, HTML ni servicios remotos. La persistencia real sigue pendiente de validación autorizada.
+
+
+2026-11-27 | GP-CUT-TESTIGO-NOTA-01 — nota visual del testigo en modal
+- Archivo: HTML/add_cortes.html, función handleStage2Submit() (aprox. líneas 1477–1487). Se eliminó la concatenación del fragmento HTML de testigo en los textareas de ubicación y la sincronización rich-text asociada a esa inyección. Se conserva el checkbox testigoMotor y el envío de activaTestigo1 como booleano.
+- Archivo: JS/Frontend/ui.js, función renderCutContent() (aprox. líneas 4016–4031). Se reemplazó el párrafo genérico por nodos DOM con la miniatura Drive indicada, estilo de imagen height:50px; width:auto; float:right; margin-left:10px;, etiqueta NOTA en rojo y el texto «Este corte activa el testigo del motor». El bloque se inserta después del color de cable y antes de la imagen del corte, solo cuando activaTestigo es verdadero.
+- No se modificaron contratos de servicios, persistencia, CSS ni otros elementos de los formularios.
+- Comparación contra respaldos exactos: solo los dos bloques funcionales descritos cambiaron. Comprobaciones estáticas de flujo y contenido: 11/11 PASS. No se ejecutaron pruebas de navegador, Apps Script/Drive/Sheets, POST ni deployment; Beta continúa cerrada.
