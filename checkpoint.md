@@ -479,3 +479,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Documentación: `README.md` actualizado para reflejar `HTML/add_cortes.html` y `HTML/users.html`; sin cambios adicionales en la descripción de arquitectura.
 
 - Cierre GP-CUT-DEEP-AUDIT-03: Code Review estático aprobado; respaldos temporales retirados después de la comparación exacta (commits `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`). Pendiente únicamente validación móvil/IndexedDB y confirmación de qué deployment usa el dispositivo.
+
+
+## Continuidad 2026-11-26 — GP-CUT-FUNCTIONAL-AUDIT-04
+
+- Rama: `GPSpedia2.2.5_work`; cambios de código: formulario `7483a76f912ac27cd1c6133df7a67aa0b7f55f30`, logger `1d8b0a30f2c4f45a937def2342307f86d65ca113`, Service Worker v83 `8e8994d573d4ba6caa1421f1e3308e583b6837d1`.
+- Auditoría F-11 a F-20 registrada en `Auditoria.txt`. Correcciones: el formulario muestra el mensaje concreto que antes descartaba; recuperación de operaciones silenciosas dirige `checkOperation` a WRITE; logger admite códigos internos adicionales sin registrar datos sensibles; caché PWA v83.
+- WRITE fue revisado estáticamente y no modificado. La persistencia mantiene su barrera: no se envía WRITE si el snapshot no está confirmado y no se eliminan/sobrescriben operaciones pendientes automáticamente.
+- Fixtures estáticos PASS: formato/unicidad de endpoints, mapa de acciones, fingerprint cliente/servidor para vehículo nuevo y existente, diff contra respaldos, ausencia del override ADMIN en recuperación.
+- Endpoints actuales: los IDs de `API_ENDPOINTS` son distintos de los consultados en el último health remoto disponible. Ese health histórico no valida los endpoints actuales. No se dispone en esta sesión de cliente HTTP/browser para consultar directamente Apps Script.
+- Pages build previo al cierre de esta tarea: run `45913324055` SUCCESS en HEAD previo; PR #128 sigue abierto. El nuevo build de v83 y los commits documentales deben confirmarse.
+- Pendiente: health GET-only a endpoints actuales; verificar despliegue en el dominio/móvil; IndexedDB real, alta controlada y recuperación de operación silenciosa. No se ejecutaron POST, escrituras Sheets/Drive ni cambios de deployments.
