@@ -1514,3 +1514,22 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Revisión estática del diff funcional y parches de implementación contra los respaldos exactos: código limitado a admin.js, ui.js e index.html; SHA originales verificados; sin cambios funcionales ajenos al alcance.
 - [ ] Revisión visual escritorio/móvil en navegador y cierre final. No ejecutar Apps Script remoto, Drive/Sheets, POST ni deployment; Beta permanece cerrada.
 - Los harnesses se ejecutaron en memoria; no se crearon suites ni archivos de prueba.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — reconciliación histórica y asociación de modelos (2026-11-27)
+**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; harnesses aislados PASS; navegador/Apps Script/Beta pendientes. La tarea permanece ABIERTA.**
+- [x] Registrar F-42 a F-47 en Auditoria.txt antes de modificar código.
+- [x] Verificar la allowlist actual: LogosMarca ya estaba incluida como hoja obligatoria, con URL en columna 3 y encabezado ID; el harness integrado confirmó que su ID entra en referencias activas y se clasifica En uso.
+- [x] Añadir preflight paginado mode=reconcile_existing para revisar filas de auditoría existentes antes de limpiar IndexedDB y comenzar un auditId nuevo.
+- [x] Conservar filas de Imagenes_Reemplazadas: no se borran ni se recrean; los registros con referencias activas pasan a en_uso y los no referenciados quedan pendientes de revalidación hasta completar el recorrido Drive.
+- [x] Distinguir en_uso generado automáticamente por referencia activa de en_uso manual, para permitir futuras revalidaciones sin quitar protecciones manuales.
+- [x] Verificar/completar asociación existente usando directorio, nombre, MIME y metadatos; guardar estado, confianza y candidatos; preservar estado manual y cerrar ante errores de referencia/asociación.
+- [x] Reparar url_visualizacion derivada cuando falta y las dos identidades principales coinciden.
+- [x] Ejecutar consolidación final incluso con cero candidatos sin uso, para reconciliar registros históricos después del recorrido completo.
+- [x] Conservar el guardado automático incremental por lote de imágenes detectadas como sin uso.
+- [x] Harnesses: LogosMarca integrado 1/1; preflight activo/no activo/manual 3/3; reparación URL 1/1; idempotencia 0 escrituras repetidas; paginación 3/3; fail-closed referencias no verificables y hoja Cortes ausente 2/2; asociación solo por directorio 1/1; consolidación cero candidatos activa 1/1 y sin referencia 1/1.
+- [x] Parse completo admin.js y ui.js, bloques runAudit/reset parseados y comprobaciones estáticas de orden de reinicio/consolidación/guardado automático.
+- [ ] Probar en navegador real el botón de reinicio, varias páginas de inventario, estados en_uso/no_confirmada, asociaciones visibles y continuidad de auditoría.
+- [ ] Validar con Apps Script, Drive y Google Sheets reales en Beta autorizada; confirmar contenido real de LogosMarca y persistencia/lectura de asociaciones. No ejecutar sin autorización.
+- [ ] Revisión visual escritorio/móvil y Code Review final. No modificar estilos/animaciones de pestañas.
+- Sin POST ni deployment; Beta permanece cerrada. No se crearon suites permanentes ni se borraron filas/archivos remotos.
