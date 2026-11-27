@@ -961,3 +961,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Code Review: PASS; diff único en payload createUser. Parsing inline PASS; verificaciones estáticas de snapshot PASS.
 - Backups exactos creados en Olds/Backups/GP-USERS-CREATE-SESSION-CONTEXT-01-20261127/ para HTML/users.html y registros; se eliminarán tras esta revisión.
 - No se ejecutó navegador, POST AUTH real ni deployment. Validación integrada pendiente. Si updateUser sigue fallando, inspeccionar el error/action específico sin alterar aún su contrato.
+
+
+## Continuidad — GP-USERS-UPDATE-ACTOR-TARGET-01 (2026-11-27)
+
+- Rama de trabajo: GPSpedia2.2.5_work. Base protegida GPSpedia2.2.5 no modificada por esta tarea.
+- Se confirmó en SharedSessionActor.js que el middleware requiere userId asociado al sessionToken. updateUser estaba enviando como userId el ID de la cuenta objetivo, no el actor autenticado.
+- HTML/users.html: updateUser ahora envía userId: submittingSession.userId y targetUserId: userId. resetUserPassword envía también el actor y conserva targetUserId.
+- JS/Services/Auth.js: handleUpdateUser usa targetUserId para seleccionar la cuenta objetivo y conserva fallback a userId; el actor confiable y RBAC no se alteran.
+- Commits funcionales: e20d8860e84959df207deb8bfcbbd95157feeea5 (frontend update), 7bc789a8c88c5e05aa85656360382e7defdde52d (AUTH target), ee01ddd5f4432795b32ab48f4d8c8cee0eb02459 (actor en reset de contraseña). Creación ya corregida en 02537a06538851b4f011c9b764775cf750a8f880.
+- Code Review PASS; diffs exactos limitados a payloads y lectura del target. Parsing de scripts inline y Auth.js PASS. Sin pruebas remotas ni deployment.
+- Pendiente: publicar frontend y AUTH coordinadamente y validar crear/editar con cuentas de prueba autorizadas. GP-USERS-RESET-SESSIONS-ACTOR-01 queda en backlog porque resetUserSessions omite el userId del actor.
