@@ -1257,3 +1257,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - No se ejecutaron escrituras remotas ni despliegues Apps Script; no declarar la operación resuelta en producción.
 
 - [x] Forzar formato de celda texto plano en la columna ID antes de escribir el valor estático. Commit adicional: `f50ed98c2b890ed0b91aff46af3a90ab99c37bc5`.
+
+- [x] Cubrir la primera alta cuando `Cortes` solo contiene encabezados: crear fila 2 y copiar validaciones/formato de la plantilla desplazada. Commit: `5fd150497861893f7762c6616cd61b2e8781451c`.
