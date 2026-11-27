@@ -6263,12 +6263,19 @@ function auditReferenceValue_(result, counts, rawValue, source, rowNumber, field
  else if(count===0){result.orphanReferenceCount++;if(result.details.length<100)result.details.push({source,row:rowNumber,field:fieldName,issue:"orphan_reference",value:raw});else result.detailsTruncated=true;}
  else{result.ambiguousReferenceCount++;if(result.details.length<100)result.details.push({source,row:rowNumber,field:fieldName,issue:"ambiguous_reference",value:raw,matches:count});else result.detailsTruncated=true;}
 }
+function normalizeAdminVehicleIdReference_(value) {
+ const raw=String(value===null||value===undefined?"":value).trim();
+ const prefixed=/^V-(\d{3,16})$/i.exec(raw),legacy=/^([1-9]\d{0,15})$/.exec(raw);
+ const sequence=prefixed?Number(prefixed[1]):legacy?Number(legacy[1]):NaN;
+ if(!Number.isSafeInteger(sequence)||sequence<1)return null;
+ return "V-"+String(sequence).padStart(5,"0");
+}
 function auditVehicleIdReferences_(ss) {
  const base=ss&&ss.getSheetByName("Cortes");if(!base)return{status:"incomplete",reason:"missing_cortes_sheet"};
  const counts=new Map(),last=base.getLastRow();
- if(last>1)base.getRange(2,1,last-1,1).getValues().forEach(r=>{const n=Number(String(r[0]==null?"":r[0]).trim());if(Number.isSafeInteger(n)&&n>0){const k=String(n);counts.set(k,(counts.get(k)||0)+1);}});
+ if(last>1)base.getRange(2,1,last-1,1).getValues().forEach(r=>{const key=normalizeAdminVehicleIdReference_(r[0]);if(key)counts.set(key,(counts.get(key)||0)+1);});
  const out={status:"success",readOnly:true,vehicleRecords:Math.max(0,last-1),referencesScanned:0,matchedReferenceCount:0,orphanReferenceCount:0,ambiguousReferenceCount:0,malformedReferenceCount:0,malformedMetadataRecords:0,feedbackVehicleMismatches:0,sourcesScanned:[],schemaWarnings:[],details:[],detailsTruncated:false};
- const norm=v=>{const n=Number(v);return Number.isSafeInteger(n)&&n>0?String(n):null;};
+ const norm=v=>normalizeAdminVehicleIdReference_(v);
  const scan=(name,col,field)=>{const s=ss.getSheetByName(name);if(!s||s.getLastRow()<2)return;out.sourcesScanned.push(name+"."+field);s.getRange(2,col,s.getLastRow()-1,1).getValues().forEach((r,i)=>auditReferenceValue_(out,counts,r[0],name,i+2,field,norm));};
  scan("Feedbacks",3,"ID_vehiculo");scan("FeedbackLikes",2,"vehicleId");
  ["Idempotencia","Idempotencia_Cortes"].forEach(name=>{const s=ss.getSheetByName(name);if(!s||s.getLastRow()<2)return;const h=s.getRange(1,1,1,Math.max(2,s.getLastColumn())).getValues()[0].map(v=>String(v||"").trim());if(h[0]!=="opId"||h[1]!=="vehicleId"){out.schemaWarnings.push(name+": encabezados incompatibles");return;}scan(name,2,"vehicleId");});
