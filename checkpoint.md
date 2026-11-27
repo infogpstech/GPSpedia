@@ -838,3 +838,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - En handleSaveUnusedImagesInventory, la captura usa includeLocations=false en lotes incrementales y true en consolidación final. La verificación detallada de ubicaciones se conserva donde se actualizan filas históricas y se evita materializar datos de ubicación innecesarios durante cada guardado incremental.
 - Commit admin.js: 72b5ed0dc49b7f947c39fa727bf49ce9cc291692.
 - Respaldo exacto previo a este apunte: ChangesLogs.txt blob 60ea3785005c5aa043018fae9528ac78f9e10002; checkpoint.md blob a9c74b98d00bbaf1d287e6131be03d61615e32f5. Respaldos en REVISION-RECONCILIACION-20261127-02/.
+
+
+### Verificación final y commits posteriores — 2026-11-27
+- Se verificó que la asociación histórica se marca sin_coincidencia cuando hay metadatos suficientes sin candidato, y no_verificada cuando faltan datos; en este último caso se conservan candidatos previos.
+- La URL visual derivada solo se repara cuando está vacía; las URLs válidas no se sobrescriben.
+- Captura de ubicaciones: includeLocations=false durante lotes incrementales y true en consolidación final.
+- PASS adicional: lista vacía validada por validateCompletedDriveAudit_ con expectedUnusedCount=0 y digest coincidente (1/1); asociación sin coincidencia/no verificada y URL visual preservada (3/3).
+- Commits admin.js más recientes: 72b5ed0dc49b7f947c39fa727bf49ce9cc291692; 44dd569822dd1d384916d2ae8c172b3830f5c9b8; 3e16f1150ae42c5289112db93d47cc24c6f9473f. UI: 8eaa0d2c29de198c7d9e81316a13a3b543418514.
+- Respaldos documentales exactos antes de este cierre: ubicados en Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/REVISION-RECONCILIACION-20261127-03/.
+- Pendiente sin cambio: navegador real, IndexedDB real, Apps Script/Drive/Sheets Beta autorizada, revisión visual escritorio/móvil. No deployment ni POST; Beta sigue cerrada.
