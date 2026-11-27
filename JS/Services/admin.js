@@ -2050,8 +2050,9 @@ function doPostInternal_(e) {
             case 'saveUnusedImagesInventory':
                 // Todas las auditorías escriben en la misma hoja Imagenes_Reemplazadas.
                 // La guarda debe ser global para evitar que dos auditId reserven la misma fila.
-                response = withDriveAuditErrorContext_("saveUnusedImagesInventory", "validación y persistencia individual", () =>
-                    withSharedReplacedImagesInventoryGuard_(() =>
+                response = withDriveAuditErrorContext_("saveUnusedImagesInventory",
+                    payload && payload.mode === "organize" ? "organización de archivos" : "validación y persistencia individual",
+                    () => withSharedReplacedImagesInventoryGuard_(() =>
                         payload && payload.mode === "organize"
                             ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
                             : handleSaveUnusedImagesInventory(payload, logMessage, developerContext)));
@@ -15056,7 +15057,8 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                     errorCount++;
                     logMessage && logMessage("Lectura de ID Drive",
                         "No se pudo obtener el ID de un archivo dentro de «" + String(current.path || "Cortes") +
-                        "»: " + String(idError && idError.message || idError), 0, 0, true, true);
+                        "»: " + String(idError && idError.message || idError) +
+                        " [código: " + String(idError && idError.code || "DRIVE_FILE_ID_READ_FAILED") + "]", 0, 0, true, true);
                     continue;
                 }
                 if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) {
