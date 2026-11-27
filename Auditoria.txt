@@ -848,3 +848,10 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Revisión de diff: archivo respaldo exacto temporal; prefijo y sufijo idénticos, función aislada. No se alteraron scanner, clasificación, referencias activas, historial, permisos, auth ni servicios ajenos.
 - Validación: inspección estática del código y del diff. No se ejecutó harness runtime, Apps Script, Drive/Sheets real, navegador ni deployment; por tanto casos de fixture y verificación funcional permanecen pendientes.
 - Riesgo/limitación: parser trata segmentos de carpeta normalizados; la señal de versión/encendido/año es contextualmente interpretada desde nombre y ruta, no confirma esquema real del árbol Drive. Debe validar con fixtures y datos reales autorizados antes de cerrar.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Continuación de verificación
+- Verificación estática automatizada de 12 invariantes en JS/Services/admin.js: PASS. Confirmados MIME imagen, exclusión por referencias activas e IDs históricos, jerarquía marca/modelo, fallback corroborado, contexto de versión/encendido/año, ambigüedad, alta confianza condicionada a jerarquía, asociación limitada a «Sin uso detectado» y persistencia de IDs limitada a la misma clasificación.
+- Inspección del colector collectCatalogImageReferences(): aplica allowlist positiva de hojas Cortes, Tutoriales, Relay y Problemas y Soluciones, y agrega referencias de imágenes flotantes. No recorre hojas operativas para el inventario de uso. collectActiveDriveReferences() mantiene una implementación distinta de escaneo amplio, pero no es el colector invocado por el flujo principal de auditoría de imágenes.
+- Integración: la asociación se calcula para unusedAuditFiles y se adjunta por fileId al resultado; la revalidación del registro individual comprueba referencia activa, estado de protección, historial y auditoría no verificable antes de confirmar.
+- Pruebas de Apps Script/runtime con datos reales aún no ejecutadas. Las 12 comprobaciones son verificaciones estáticas de invariantes del código, no casos unitarios que ejecuten el algoritmo.
