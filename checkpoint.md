@@ -532,3 +532,5 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - El checkpoint previo GP-CUT-ID-FORMAT-REBUILD-05 permanece vigente para los pendientes de despliegue CATALOG/offline y validación del modal/formulario.
 
 - Ajuste final: la celda ID de la fila nueva se configura como texto plano (`@`) antes de escribir `V-00000`; commit `f50ed98c2b890ed0b91aff46af3a90ab99c37bc5`. La sintaxis y las invariantes estáticas se revalidaron después del ajuste.
+
+- Robustez adicional: la primera alta también funciona si `Cortes` solo contiene encabezados; la fila 2 se conserva como plantilla al desplazarla y copiar sus validaciones a la nueva fila 2. Commit `5fd150497861893f7762c6616cd61b2e8781451c`.
