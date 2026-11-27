@@ -157,3 +157,12 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - **Rich-text:** fallback para desactivar formato inline cuando el comando del navegador no lo retira, desenvuelve la etiqueta correspondiente en el fragmento seleccionado y recupera el punto de inserción.
 - **add_cortes:** helper centralizado para mensaje y transición de éxito, con protección por ID de operación para evitar repetición de la notificación/transición por la misma operación.
 - **Registro individual de imágenes:** sigue pendiente. El handler actual `handleSaveUnusedImagesInventory` procesa un lote incremental, pero el recorrido Drive aún no lo invoca por archivo detectado; requiere integración segura tras persistir metadatos de lote y páginas.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-AUDIT-REVIEW-04: verificación de integración incremental
+
+- La revisión del HEAD actual confirma que el frontend `JS/Frontend/ui.js` ya invoca `saveUnusedImagesInventory` con `incremental:true` al procesar cada página de resultados, antes de continuar con el siguiente lote del recorrido; el resultado se valida por ID y estado individual y se persiste localmente.
+- El servicio ADMIN persiste resultados de página y metadatos en Cache antes de responder; también actualiza el estado del servidor con pageCount y metadatos de auditoría para que el validador incremental pueda comprobar candidatos emitidos.
+- La consolidación final separada continúa siendo necesaria para reconciliar registros históricos y ubicaciones. La doble pasada incremental/final es intencional: la primera registra durante el recorrido, la segunda reconcilia el conjunto completo.
+- Se corrigió el estado documental: esta integración no está pendiente en el código actual; el pendiente de esta revisión es validar el ciclo completo en navegador y runtime Apps Script autorizado, incluyendo respuesta parcial/error y reintento idempotente.
+- No se ejecutaron pruebas runtime ni navegador en esta revisión; no se desplegó ni se escribió en Drive/Sheets.
