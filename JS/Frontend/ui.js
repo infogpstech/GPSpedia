@@ -8884,6 +8884,7 @@ export async function openAuditDriveModal(options = {}) {
     const viewListButton = document.getElementById('btn-audit-drive-view-list');
     const auditButton = document.getElementById('btn-admin-audit-drive-images');
     const startButton = document.getElementById('btn-audit-drive-start');
+    const resetScanButton = document.getElementById('btn-audit-drive-reset');
     const resumeButton = document.getElementById('btn-audit-drive-resume');
     const organizeButton = document.getElementById('btn-audit-drive-organize');
     const saveInventoryButton = document.getElementById('btn-audit-drive-save-inventory');
@@ -9063,7 +9064,7 @@ export async function openAuditDriveModal(options = {}) {
         if (status === 'bloqueado') entry.card.classList.add('is-blocked');
         if (status === 'error' || status === 'no_confirmada') entry.card.classList.add('is-error');
         entry.retry.hidden = !['bloqueado', 'error', 'no_confirmada'].includes(status);
-        entry.retry.disabled = !complete || errorCount > 0 || unverifiableReferences > 0 || isRunning || isDriveAuditRunning;
+        entry.retry.disabled = !complete || unverifiableReferences > 0 || isRunning || isDriveAuditRunning;
     };
 
     const updateRetryButtons = () => {
@@ -9071,7 +9072,7 @@ export async function openAuditDriveModal(options = {}) {
             const file = allFiles.find(item => String(item && item.fileId || '') === fileId);
             const status = String(file && file.inventoryStatus || 'pending');
             entry.retry.hidden = !['bloqueado', 'error', 'no_confirmada'].includes(status);
-            entry.retry.disabled = !complete || errorCount > 0 || unverifiableReferences > 0 || isRunning || isDriveAuditRunning;
+            entry.retry.disabled = !complete || unverifiableReferences > 0 || isRunning || isDriveAuditRunning;
         });
     };
 
@@ -9672,12 +9673,13 @@ export async function openAuditDriveModal(options = {}) {
         if (!isCurrentRequest()) return;
         const hasResumableCursor = !complete && !!cursor && !resumeUnavailable;
         if (startButton) startButton.disabled = isRunning || isDriveAuditRunning;
+        if (resetScanButton) resetScanButton.disabled = isRunning || isDriveAuditRunning;
         if (resumeButton) {
             resumeButton.hidden = !hasResumableCursor;
             resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
         }
         if (auditButton) auditButton.disabled = isRunning || isDriveAuditRunning;
-        const canSaveInventory = complete && errorCount === 0 && unverifiableReferences === 0 &&
+        const canSaveInventory = complete && unverifiableReferences === 0 &&
             inventoryStatus !== 'saved' && inventoryStatus !== 'organized' &&
             allFiles.some(file => file.classification === 'Sin uso detectado');
         if (saveInventoryButton) {
@@ -9712,7 +9714,7 @@ export async function openAuditDriveModal(options = {}) {
     retrySingleInventory = async fileId => {
         const target = allFiles.find(file => String(file && file.fileId || '') === String(fileId));
         if (!isCurrentRequest() || !complete || !target || target.classification !== 'Sin uso detectado' ||
-            isRunning || isDriveAuditRunning || errorCount > 0 || unverifiableReferences > 0) return;
+            isRunning || isDriveAuditRunning || unverifiableReferences > 0) return;
         isRunning = true;
         isDriveAuditRunning = true;
         updateInventoryCardState(fileId, 'pending', 'Reintentando escritura y verificación individual en Spreadsheet…');
@@ -9958,6 +9960,12 @@ export async function openAuditDriveModal(options = {}) {
                 if (!response || response.status !== 'success' || !Array.isArray(response.files)) {
                     throw new Error(response && response.message ? response.message : 'Respuesta inválida del servicio de auditoría.');
                 }
+                if (Array.isArray(response.logs)) {
+                    response.logs.filter(entry => entry && (entry.isError === true || entry.isWarning === true))
+                        .forEach(entry => appendAuditConsole(
+                            "ADMIN [" + String(entry.stage || "auditoría") + "]: " + String(entry.message || "Error sin detalle."),
+                            entry.isError === true ? "error" : "warning"));
+                }
                 const responseAuditId = String(response.auditId || '').trim();
                 if (!/^[0-9a-f-]{36}$/i.test(responseAuditId) ||
                     (auditId && auditId !== responseAuditId) ||
@@ -10157,13 +10165,16 @@ export async function openAuditDriveModal(options = {}) {
             const allUnusedRegistered = hasUnusedImages && allFiles
                 .filter(file => file.classification === 'Sin uso detectado')
                 .every(file => String(file.inventoryStatus || '') === 'confirmado');
-            inventoryStatus = scanHasErrors ? 'not_saved' : (hasUnusedImages
+            inventoryStatus = scanHasErrors ? (hasUnusedImages ? 'partial' : 'not_saved') : (hasUnusedImages
                 ? (inventoryOperationId && allUnusedRegistered ? 'saved' : 'partial') : 'saved');
             const unregisteredCount = allFiles.filter(file => file.classification === 'Sin uso detectado' &&
                 String(file.inventoryStatus || '') !== 'confirmado').length;
             inventoryMessage = scanHasErrors
                 ? 'El recorrido terminó con ' + errorCount + ' errores y ' + unverifiableReferences +
-                    ' referencias no interpretables. Los resultados individuales ya confirmados se conservan, pero no se habilitan reintentos ni organización hasta completar una auditoría válida.'
+                    ' referencias no interpretables. Los registros individuales confirmados se conservan. ' +
+                    (unverifiableReferences === 0
+                        ? 'Puedes reintentar las imágenes verificables; la consolidación global y la organización permanecen bloqueadas hasta completar una auditoría sin errores.'
+                        : 'Las referencias no interpretables bloquean los reintentos y la organización; revisa el origen del error y ejecuta una auditoría nueva.')
                 : (hasUnusedImages
                     ? (inventoryStatus === 'saved'
                         ? 'Auditoría completa. Todas las imágenes sin uso tienen una fila individual registrada y verificada en la biblioteca.'
@@ -10205,6 +10216,33 @@ export async function openAuditDriveModal(options = {}) {
 
     if (startButton) startButton.onclick = () => runAudit(false);
     if (resumeButton) resumeButton.onclick = () => runAudit(true);
+    if (resetScanButton) resetScanButton.onclick = async () => {
+        if (!isCurrentRequest() || isRunning || isDriveAuditRunning) return;
+        const accepted = await requestAuditConsoleConfirmation(
+            "¿Reiniciar el escaneo de imágenes? Se eliminará únicamente el progreso local de auditoría de esta cuenta. " +
+            "Los registros confirmados en Imagenes_Reemplazadas y los archivos de Drive no se eliminarán ni modificarán."
+        );
+        if (!accepted || !isCurrentRequest()) return;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        updateControls();
+        let shouldRestart = false;
+        try {
+            const cleared = await offline.clearDriveAuditState(requestContext.userId);
+            if (cleared !== true) throw new Error("IndexedDB no confirmó la limpieza del progreso anterior; no se inició otro escaneo.");
+            appendAuditConsole("Progreso local anterior eliminado. Se generará un auditId nuevo y se iniciará el recorrido desde la carpeta raíz.", "success");
+            shouldRestart = true;
+        } catch (resetError) {
+            const detail = String(resetError && resetError.message || resetError);
+            appendAuditConsole("No se pudo reiniciar el escaneo: " + detail, "error");
+            updateSummary("No se pudo reiniciar el escaneo. " + detail, "error");
+        } finally {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
+        }
+        if (shouldRestart && isCurrentRequest()) await runAudit(false);
+    };
 
     const updateReconciliationApprovalControls_ = () => {
         if (!applyReconciliationButton || !reconciliationResults) return;
