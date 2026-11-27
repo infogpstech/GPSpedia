@@ -1356,3 +1356,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Corregir asociación de testigo y verificar modal estáticamente.
 - [ ] Comparar contra respaldos, revisar diff y documentar validaciones.
 - No ejecutar POST, escrituras remotas ni deployment; Beta cerrada.
+
+### GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — progreso
+- [x] Proyección fuente modificada para compactar slots ocupados, priorizar útiles positivos y preservar orden físico como desempate.
+- [ ] Revisión de integración del modal/indicadores y validación completa de consistencia; no se ha demostrado aún la causa única de duplicación visual.
+- [ ] Code review, limpieza backups, registro y checkpoint.
+- Validación simulada preliminar de orden; Beta cerrada, sin deployment ni escrituras remotas.
