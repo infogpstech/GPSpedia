@@ -1219,3 +1219,12 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - El flujo requiere dos campos separados: userId para el actor autenticado y targetUserId para la cuenta objetivo. La mutación conserva el control RBAC de handleUpdateUser() y el objetivo no se deriva de datos de sesión.
 - Alcance: actualizar únicamente el payload de updateUser en HTML/users.html y la lectura del ID objetivo en handleUpdateUser() en JS/Services/Auth.js. No modificar permisos, roles, controles de sesión, cambios de contraseña ni otras acciones.
 - No se ejecutará AUTH remoto ni deployment; el cambio de fuente requiere validación integrada posterior y actualización coordinada del servicio AUTH antes de uso real.
+
+
+#### F-53 — revisión final (2026-11-27)
+- HTML/users.html: updateUser ahora envía userId desde submittingSession.userId y targetUserId desde el campo de la cuenta seleccionada; resetUserPassword envía el mismo actor autenticado y mantiene targetUserId como destino.
+- JS/Services/Auth.js: handleUpdateUser obtiene la cuenta objetivo desde targetUserId, con fallback a userId para compatibilidad de llamadas existentes. El actor continúa derivándose exclusivamente de __sharedSessionActor y conserva el control RBAC existente.
+- Comparación exacta contra respaldos: HTML/users.html contiene únicamente los dos cambios de payload descritos; JS/Services/Auth.js contiene únicamente el cambio de lectura del ID objetivo.
+- Code Review de los commits e20d8860e84959df207deb8bfcbbd95157feeea5, 7bc789a8c88c5e05aa85656360382e7defdde52d y ee01ddd5f4432795b32ab48f4d8c8cee0eb02459: PASS. Parsing de scripts inline y Auth.js: PASS. Verificaciones estáticas de actor/objetivo y RBAC: PASS.
+- Hallazgo fuera del alcance: resetUserSessions también figura entre las acciones que requieren contexto de sesión en el middleware, pero su payload de HTML/users.html solo envía targetUserId y sessionToken. Se registra como GP-USERS-RESET-SESSIONS-ACTOR-01 para una tarea separada; no se modificó.
+- No se ejecutó navegador, POST AUTH real ni deployment. La corrección de fuente requiere publicar frontend y AUTH coordinadamente antes de validar las mutaciones reales.
