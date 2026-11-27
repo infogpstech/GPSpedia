@@ -8987,6 +8987,24 @@ export async function openAuditDriveModal(options = {}) {
     let savedState = null;
     let isRunning = false;
     let isReconciling = false;
+    let auditPauseRequested = false;
+    let auditRunActive = false;
+    const auditPauseButton = document.createElement('button');
+    auditPauseButton.type = 'button';
+    auditPauseButton.id = 'btn-audit-drive-pause';
+    auditPauseButton.textContent = 'Pausar';
+    auditPauseButton.title = 'Pausar el recorrido después del lote actual y conservar el cursor';
+    auditPauseButton.hidden = true;
+    auditPauseButton.className = resetScanButton ? resetScanButton.className : (startButton ? startButton.className : '');
+    if (resetScanButton && resetScanButton.parentElement) resetScanButton.insertAdjacentElement('afterend', auditPauseButton);
+    else if (startButton && startButton.parentElement) startButton.parentElement.appendChild(auditPauseButton);
+    auditPauseButton.addEventListener('click', () => {
+        if (!isCurrentRequest() || !auditRunActive || auditPauseRequested) return;
+        auditPauseRequested = true;
+        auditPauseButton.textContent = 'Pausando…';
+        auditPauseButton.disabled = true;
+        appendAuditConsole('Pausa solicitada. Se terminará de procesar el lote actual y se conservará el cursor.', 'warning');
+    });
 
     const appendAuditConsole = (message, level = 'info') => {
         if (!isCurrentRequest()) return;
@@ -9700,6 +9718,11 @@ export async function openAuditDriveModal(options = {}) {
         const hasResumableCursor = !complete && !!cursor && !resumeUnavailable;
         if (startButton) startButton.disabled = isRunning || isDriveAuditRunning;
         if (resetScanButton) resetScanButton.disabled = isRunning || isDriveAuditRunning;
+        if (auditPauseButton) {
+            auditPauseButton.hidden = !auditRunActive || !isDriveAuditRunning;
+            auditPauseButton.disabled = !auditRunActive || auditPauseRequested || !isDriveAuditRunning;
+            auditPauseButton.textContent = auditPauseRequested ? 'Pausando…' : 'Pausar';
+        }
         if (resumeButton) {
             resumeButton.hidden = !hasResumableCursor;
             resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
@@ -9917,6 +9940,8 @@ export async function openAuditDriveModal(options = {}) {
         if (!isCurrentRequest() || isRunning || isDriveAuditRunning) return;
         isRunning = true;
         isDriveAuditRunning = true;
+        auditRunActive = true;
+        auditPauseRequested = false;
         updateControls();
         appendAuditConsole(resume ? "Reanudando desde el último lote confirmado." : "Iniciando recorrido de Cortes (escaneo recursivo).", "info");
 
@@ -9972,7 +9997,7 @@ export async function openAuditDriveModal(options = {}) {
             const seenCursorSignatures = new Set();
             if (cursor) seenCursorSignatures.add(getCursorPositionSignature(cursor));
 
-            while (!complete && isCurrentRequest()) {
+            while (!complete && isCurrentRequest() && !auditPauseRequested) {
                 const previousTotal = totalAnalyzed;
                 const previousFolders = foldersVisited;
                 const requestCursor = cursor ? JSON.parse(JSON.stringify(cursor)) : null;
@@ -10133,6 +10158,13 @@ export async function openAuditDriveModal(options = {}) {
                 }
             }
 
+            if (auditPauseRequested && !complete && isCurrentRequest()) {
+                await persistState('partial', { lastError: '' });
+                if (!isCurrentRequest()) return;
+                appendAuditConsole('Auditoría pausada en una frontera de lote. El cursor y resultados parciales se conservaron; puedes reanudar.', 'success');
+                updateSummary('Auditoría pausada. Progreso y cursor conservados; usa Reanudar para continuar.', 'warning');
+                return;
+            }
             if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
                 appendAuditConsole('No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».', 'success');
             }
@@ -10248,6 +10280,8 @@ export async function openAuditDriveModal(options = {}) {
         } finally {
             isRunning = false;
             isDriveAuditRunning = false;
+            auditRunActive = false;
+            auditPauseRequested = false;
             if (isCurrentRequest()) updateControls();
         }
     };
