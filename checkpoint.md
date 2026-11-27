@@ -587,3 +587,15 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Último HEAD de trabajo verificado antes del cierre documental: `30ca3cabfc059d0eea0f8c2b746e5f3417157cfd`; los commits de cierre posteriores actualizan únicamente registros.
 - Rama base `GPSpedia2.2.5`: SHA `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, no modificada.
 - Incidencia GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01: fuente corregida y revisión local cerrada; pendiente deployment/integración autorizada.
+
+
+## Continuidad — GP-ADD-CUT-WIZARD-UX-NAV-01 (implementación parcial, 2026-11-26)
+- HEAD documental/funcional posterior: rama `GPSpedia2.2.5_work`; la base GPSpedia2.2.5 no se modifica.
+- En `HTML/add_cortes.html`: alertas de éxito de corte normalizadas y etapa 3 se muestra tras commit WRITE; limpieza local y verificaciones postcommit no deben bloquear transición. Fallos de submit de corte con mensaje genérico solicitado y detalles a consola. Se eliminaron alertas suplementarias tras verificación de catálogo y recovery redundante.
+- Etapa 3→2 reinicia campos e imágenes localmente; etapa 2→1/1.5 y coincidencias mantiene la lógica previa de preservación.
+- `JS/Frontend/ui.js`: pushState modalOpen cuando ficha de vehículo abre desde vista no-modal; popstate existente cierra ficha. Falta prueba en navegador Android/browser real.
+- Icono explícito PNG existente agregado en `HTML/add_cortes.html` para evitar fallback favicon.ico; falta confirmar Pages en vivo.
+- `document.write`: advertencia de runtime Google Apps Script, sin evidencia de callsite propio; no modificar runtime externo.
+- Auditoría, ChangesLogs y tareas registran alcance y hallazgos. Backup de HTML/ui/main en Olds/Backups aún pendiente de Code Review y eliminación.
+- Validación real de navegador, despliegue, POST y mutaciones remotas no realizadas. No se agregaron tests/workflows; Beta permanece cerrada.
+- Siguiente: revisión estática comparativa contra respaldos; confirmar handler de navegación/back y flujo add-corte→suplementarios→catálogo; cleanup backups tras revisión; documentar y commit.
