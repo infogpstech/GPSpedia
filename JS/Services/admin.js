@@ -5070,7 +5070,8 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
     const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
     const tokens = value => normalize(value).split(" ").filter(Boolean);
-    const containsPhrase = (haystack, phrase) => (" " + normalize(haystack) + " ").includes(" " + normalize(phrase) + " ") && normalize(phrase).length > 0;
+    const containsPhrase = (haystack, phrase) => normalize(phrase) &&
+        (" " + normalize(haystack) + " ").includes(" " + normalize(phrase) + " ");
     const tokenSetKey = value => tokens(value).sort().join(" ");
     const modelsByKey = new Map();
     rows.slice(1).forEach((row, index) => {
@@ -5082,124 +5083,99 @@ function buildCortesImageModelAssociationSuggestions_(metadata, cortesValues, ac
         if (vehicleId && !entry.vehicleIds.includes(vehicleId)) entry.vehicleIds.push(vehicleId);
         const versionText = read(row, "versionesAplicables");
         const rowVersions = versionText.split(/[,;|/]+/).map(value => value.trim()).filter(Boolean);
-        rowVersions.forEach(value => {
-            if (!entry.versions.some(item => normalize(item) === normalize(value))) entry.versions.push(value);
-        });
+        rowVersions.forEach(value => { if (!entry.versions.some(item => normalize(item) === normalize(value))) entry.versions.push(value); });
         const ignitionType = read(row, "tipoEncendido");
         if (ignitionType && !entry.ignitionTypes.some(item => normalize(item) === normalize(ignitionType))) entry.ignitionTypes.push(ignitionType);
         const yearFromText = read(row, "anoDesde"), yearToText = read(row, "anoHasta");
-        const yearFrom = yearFromText ? Number(yearFromText) : NaN;
-        const yearTo = yearToText ? Number(yearToText) : NaN;
-        const yearRange = {
-            from: Number.isInteger(yearFrom) ? yearFrom : null,
-            to: Number.isInteger(yearTo) ? yearTo : null
-        };
-        if (yearRange.from !== null || yearRange.to !== null) {
-            if (!entry.yearRanges.some(item => item.from === yearRange.from && item.to === yearRange.to)) entry.yearRanges.push(yearRange);
-        }
-        entry.records.push({
-            vehicleId, row: index + 2, versions: rowVersions, ignitionType,
-            yearFrom: yearRange.from, yearTo: yearRange.to
-        });
-        entry.rows.push(index + 2);
-        modelsByKey.set(key, entry);
+        const yearFrom = yearFromText ? Number(yearFromText) : NaN, yearTo = yearToText ? Number(yearToText) : NaN;
+        const range = { from: Number.isInteger(yearFrom) ? yearFrom : null, to: Number.isInteger(yearTo) ? yearTo : null };
+        if (range.from !== null || range.to !== null) if (!entry.yearRanges.some(item => item.from === range.from && item.to === range.to)) entry.yearRanges.push(range);
+        entry.records.push({ vehicleId, row: index + 2, versions: rowVersions, ignitionType, yearFrom: range.from, yearTo: range.to });
+        entry.rows.push(index + 2); modelsByKey.set(key, entry);
     });
     aliasRows.forEach(entry => {
         if (!entry || !Array.isArray(entry.aliases)) return;
         const model = modelsByKey.get([entry.category, entry.brand, entry.model].map(normalize).join("|"));
         if (!model) return;
-        entry.aliases.forEach(alias => {
-            const value = String(alias || "").trim();
-            if (value && normalize(value) && !model.aliases.some(item => normalize(item) === normalize(value))) model.aliases.push(value);
-        });
+        entry.aliases.forEach(alias => { const value = String(alias || "").trim();
+            if (value && normalize(value) && !model.aliases.some(item => normalize(item) === normalize(value))) model.aliases.push(value); });
     });
     const suggestions = [];
     files.forEach(file => {
-        const fileId = String(file && file.fileId || "").trim();
-        const mime = String(file && file.mimeType || "").toLowerCase();
+        const fileId = String(file && file.fileId || "").trim(), mime = String(file && file.mimeType || "").toLowerCase();
         if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || !mime.startsWith("image/") || references.has(fileId) || history.has(fileId)) return;
         const fileName = String(file.fileName || ""), folderPath = String(file.folderPath || "");
         const nameWithoutExtension = fileName.replace(/\.[A-Za-z0-9]{2,8}$/, "");
-        const folderSegments = folderPath.split("/").map(normalize).filter(Boolean);
-        const nameTokens = new Set(tokens(nameWithoutExtension)), scored = [];
+        const pathSegments = folderPath.split("/").map(segment=>String(segment||"").trim()).filter(Boolean);
+        const normalizedSegments = pathSegments.map(normalize);
+        const fileContext = folderPath + " " + nameWithoutExtension;
+        const scored = [];
         modelsByKey.forEach(model => {
-            const modelKey = normalize(model.model), modelTokens = tokens(model.model);
-            if (!modelKey || !modelTokens.length) return;
-            const aliasFolder = model.aliases.some(alias => folderSegments.includes(normalize(alias)));
-            const aliasName = model.aliases.some(alias => containsPhrase(nameWithoutExtension, alias));
-            const exactFolder = folderSegments.includes(modelKey), exactName = containsPhrase(nameWithoutExtension, model.model);
-            const reorderedName = modelTokens.length > 1 && modelTokens.every(token => nameTokens.has(token));
-            const reorderedFolder = modelTokens.length > 1 && folderSegments.some(segment => tokenSetKey(segment) === tokenSetKey(model.model));
-            const brandInPath = folderSegments.includes(normalize(model.brand)) || containsPhrase(nameWithoutExtension, model.brand);
-            const categoryInPath = folderSegments.includes(normalize(model.category));
-            const fileContext = folderPath + " " + nameWithoutExtension;
-            const versionMatches = model.versions.filter(version => containsPhrase(fileContext, version));
-            const ignitionMatches = model.ignitionTypes.filter(type => containsPhrase(fileContext, type));
-            const fileYears = Array.from(new Set((fileContext.match(/(?:19|20)\d{2}/g) || []).map(Number)));
-            const yearMatches = model.yearRanges.filter(range => fileYears.some(year =>
-                (range.from === null || year >= range.from) && (range.to === null || year <= range.to)));
-            const matchingRecords = model.records.filter(record => {
-                const versionOk = !versionMatches.length || record.versions.some(value =>
-                    versionMatches.some(match => normalize(match) === normalize(value)));
-                const ignitionOk = !ignitionMatches.length || ignitionMatches.some(match =>
-                    normalize(match) === normalize(record.ignitionType));
-                const yearOk = !yearMatches.length || fileYears.some(year =>
-                    (record.yearFrom === null || year >= record.yearFrom) &&
-                    (record.yearTo === null || year <= record.yearTo));
-                return versionOk && ignitionOk && yearOk;
+            const modelKey=normalize(model.model), brandKey=normalize(model.brand), modelTokens=tokens(model.model);
+            if (!modelKey || !brandKey || !modelTokens.length) return;
+            const brandSegmentIndexes=normalizedSegments.map((v,i)=>v===brandKey?i:-1).filter(i=>i>=0);
+            const modelSegmentIndexes=normalizedSegments.map((v,i)=>v===modelKey || (modelTokens.length>1&&tokenSetKey(v)===tokenSetKey(model.model))?-1:i).filter(i=>i>=0);
+            // Explicit folder structure requires Brand preceding Model. Brand/model may also be corroborated by filename when folders are absent.
+            const brandBeforeModel=brandSegmentIndexes.some(bi=>modelSegmentIndexes.some(mi=>mi>bi));
+            const exactModelFolder=normalizedSegments.includes(modelKey);
+            const reorderedModelFolder=modelTokens.length>1&&normalizedSegments.some(segment=>segment&&tokenSetKey(segment)===tokenSetKey(model.model));
+            const modelFolderMatch=exactModelFolder||reorderedModelFolder;
+            const brandInName=containsPhrase(nameWithoutExtension,model.brand);
+            const brandInPath=brandSegmentIndexes.length>0;
+            const modelInName=containsPhrase(nameWithoutExtension,model.model);
+            const aliasFolder=model.aliases.some(alias=>normalizedSegments.includes(normalize(alias)));
+            const aliasName=model.aliases.some(alias=>containsPhrase(nameWithoutExtension,alias));
+            const filenameModelTokenMatch=modelTokens.length>1&&modelTokens.every(token=>new Set(tokens(nameWithoutExtension)).has(token));
+            const structuredPathMatch=brandBeforeModel&&modelFolderMatch;
+            const filenameFallbackMatch=(brandInPath||brandInName)&& (modelInName||filenameModelTokenMatch||aliasName);
+            const aliasPathMatch=brandInPath&&aliasFolder;
+            if(!structuredPathMatch&&!filenameFallbackMatch&&!aliasPathMatch) return;
+            const versionMatches=model.versions.filter(v=>containsPhrase(fileContext,v));
+            const ignitionMatches=model.ignitionTypes.filter(v=>containsPhrase(fileContext,v));
+            const fileYears=Array.from(new Set((fileContext.match(/(?:19|20)\d{2}/g)||[]).map(Number)));
+            const yearMatches=model.yearRanges.filter(range=>fileYears.some(year=>(range.from===null||year>=range.from)&&(range.to===null||year<=range.to)));
+            const matchingRecords=model.records.filter(record=>{
+                const vOk=!versionMatches.length||record.versions.some(v=>versionMatches.some(m=>normalize(v)===normalize(m)));
+                const iOk=!ignitionMatches.length||ignitionMatches.some(m=>normalize(m)===normalize(record.ignitionType));
+                const yOk=!yearMatches.length||fileYears.some(year=>(record.yearFrom===null||year>=record.yearFrom)&&(record.yearTo===null||year<=record.yearTo));
+                return vOk&&iOk&&yOk;
             });
-            const contextConflict = (versionMatches.length > 0 || ignitionMatches.length > 0 || yearMatches.length > 0) &&
-                matchingRecords.length === 0;
-            const selectedRecords = matchingRecords.length ? matchingRecords : model.records;
-            const selectedVehicleIds = Array.from(new Set(selectedRecords.map(record => record.vehicleId).filter(Boolean)));
-            const selectedRows = Array.from(new Set(selectedRecords.map(record => record.row)));
-            let score = 0;
-            const signals = [];
-            if (exactFolder) { score = Math.max(score, 100); signals.push("folder_model_exact"); }
-            if (exactName) { score = Math.max(score, 90); signals.push("filename_model_exact"); }
-            if (aliasFolder) { score = Math.max(score, 80); signals.push("folder_alias"); }
-            if (aliasName) { score = Math.max(score, 70); signals.push("filename_alias"); }
-            if (reorderedFolder) { score = Math.max(score, 65); signals.push("folder_model_token_alias"); }
-            if (reorderedName) { score = Math.max(score, 60); signals.push("filename_model_token_alias"); }
-            if (!score) return;
-            if (brandInPath) { score += 15; signals.push("brand_context"); }
-            if (categoryInPath) { score += 5; signals.push("category_context"); }
-            if (versionMatches.length) { score += 5; signals.push("version_context"); }
-            if (ignitionMatches.length) { score += 3; signals.push("ignition_type_context"); }
-            if (yearMatches.length) { score += 2; signals.push("year_range_context"); }
-            scored.push({
-                category: model.category, brand: model.brand, model: model.model,
-                vehicleIds: selectedVehicleIds, rows: selectedRows,
-                versions: versionMatches, ignitionTypes: ignitionMatches, yearRanges: yearMatches,
-                contextConflict, score, signals: Array.from(new Set(signals))
-            });
+            const contextConflict=(versionMatches.length||ignitionMatches.length||fileYears.length)&&!matchingRecords.length;
+            const selectedRecords=matchingRecords.length?matchingRecords:model.records;
+            const vehicleIds=Array.from(new Set(selectedRecords.map(r=>r.vehicleId).filter(Boolean)));
+            const selectedRows=Array.from(new Set(selectedRecords.map(r=>r.row)));
+            let score=0; const signals=[];
+            if(structuredPathMatch){score=120;signals.push("hierarchy_brand_model");}
+            if(modelFolderMatch){score=Math.max(score,90);signals.push("folder_model_exact");}
+            if(filenameModelTokenMatch||modelInName){score=Math.max(score,75);signals.push("filename_model_match");}
+            if(aliasPathMatch){score=Math.max(score,85);signals.push("brand_alias_folder");}
+            if(aliasName){score=Math.max(score,65);signals.push("filename_alias");}
+            if(brandInPath){score+=10;signals.push("brand_context_folder");}
+            else if(brandInName){score+=5;signals.push("brand_context_filename");}
+            if(versionMatches.length){score+=5;signals.push("version_context");}
+            if(ignitionMatches.length){score+=3;signals.push("ignition_context");}
+            if(yearMatches.length){score+=2;signals.push("year_range_context");}
+            scored.push({category:model.category,brand:model.brand,model:model.model,vehicleIds,rows:selectedRows,
+                versions:versionMatches,ignitionTypes:ignitionMatches,yearRanges:yearMatches,contextConflict,
+                hierarchyMatched:structuredPathMatch,score,signals:Array.from(new Set(signals))});
         });
-        if (!scored.length) return;
-        scored.sort((left, right) => right.score - left.score || left.category.localeCompare(right.category) ||
-            left.brand.localeCompare(right.brand) || left.model.localeCompare(right.model));
-        const bestScore = scored[0].score, best = scored.filter(item => item.score === bestScore);
-        const ambiguous = best.length > 1 || best.some(candidate =>
-            candidate.contextConflict || candidate.vehicleIds.length !== 1) ||
-            (scored.length > 1 && bestScore - scored[1].score < 15);
-        suggestions.push({
-            fileId, fileName, folderPath, status: ambiguous ? "ambiguous" : "suggested",
-            confidence: bestScore >= 110 ? "high" : (bestScore >= 85 ? "medium" : "low"),
-            candidates: (ambiguous ? scored.filter(item => item.score >= bestScore - 14) : [scored[0]]).slice(0, 5)
-        });
+        if(!scored.length)return;
+        scored.sort((a,b)=>b.score-a.score||a.category.localeCompare(b.category)||a.brand.localeCompare(b.brand)||a.model.localeCompare(b.model));
+        const bestScore=scored[0].score,best=scored.filter(item=>item.score===bestScore);
+        const ambiguous=best.length>1||best.some(c=>c.contextConflict||c.vehicleIds.length!==1)||
+            (scored.length>1&&bestScore-scored[1].score<20);
+        suggestions.push({fileId,fileName,folderPath,status:ambiguous?"ambiguous":"suggested",
+            confidence:bestScore>=125&&best.some(c=>c.hierarchyMatched)?"high":bestScore>=90?"medium":"low",
+            candidates:(ambiguous?scored.filter(item=>item.score>=bestScore-19):[scored[0]]).slice(0,5)});
     });
-    suggestions.sort((left, right) => left.status.localeCompare(right.status) || left.fileName.localeCompare(right.fileName) || left.fileId.localeCompare(right.fileId));
-    const limit = 300;
-    const summary = { total: suggestions.length, suggested: suggestions.filter(item => item.status === "suggested").length,
-        ambiguous: suggestions.filter(item => item.status === "ambiguous").length, truncated: suggestions.length > limit };
-    const digestEntries = suggestions.map(item => [item.fileId, item.status, item.confidence,
-        item.candidates.map(candidate => [
-            candidate.category, candidate.brand, candidate.model, candidate.vehicleIds, candidate.rows,
-            candidate.versions, candidate.ignitionTypes, candidate.yearRanges, candidate.contextConflict,
-            candidate.score, candidate.signals
-        ])]);
-    return { summary, suggestions: suggestions.slice(0, limit), digestEntries };
+    suggestions.sort((a,b)=>a.status.localeCompare(b.status)||a.fileName.localeCompare(b.fileName)||a.fileId.localeCompare(b.fileId));
+    const limit=300,summary={total:suggestions.length,suggested:suggestions.filter(i=>i.status==="suggested").length,
+        ambiguous:suggestions.filter(i=>i.status==="ambiguous").length,truncated:suggestions.length>limit};
+    const digestEntries=suggestions.map(item=>[item.fileId,item.status,item.confidence,item.candidates.map(candidate=>[
+        candidate.category,candidate.brand,candidate.model,candidate.vehicleIds,candidate.rows,candidate.versions,
+        candidate.ignitionTypes,candidate.yearRanges,candidate.contextConflict,candidate.hierarchyMatched,candidate.score,candidate.signals])]);
+    return{summary,suggestions:suggestions.slice(0,limit),digestEntries};
 }
-
 function handlePreviewCortesImageOrganizer_(payload, logMessage, developerContext) {
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("El preview del organizador requiere una sesión Desarrollador verificada.");
