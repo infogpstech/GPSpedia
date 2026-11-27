@@ -2249,7 +2249,7 @@ function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
     }
     const rowIndex = exact[0];
     const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
-    if (String(row[COLS_CORTES.id - 1] || "").trim() !== id) {
+    if (!sameFeedbackVehicleId_(row[COLS_CORTES.id - 1], id)) {
         throw new Error("El vehículo cambió durante la localización; no se registró el like.");
     }
     return { row, rowIndex };
