@@ -657,3 +657,6 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 
 - Ajuste final de representación: antes de escribir el ID en la nueva fila, WRITE aplica formato de celda texto plano (`@`) y luego `setValue(newId)`; la columna no depende de fórmulas ni de formato numérico.
 - Validación posterior al ajuste: compilación V8 PASS; formatter 1/2/99999/100000/100001 devuelve `V-00001`, `V-00002`, `V-99999`, `V-100000`, `V-100001`; invariantes de inserción física, copia de validaciones/formato, formato texto, escritura estática y rollback PASS. Commit adicional: `f50ed98c2b890ed0b91aff46af3a90ab99c37bc5`.
+
+- Ajuste de robustez de primera alta: si `Cortes` solo contiene encabezados, WRITE ahora conserva la fila 2 como plantilla, inserta la fila nueva en la posición 2 y copia formato/validaciones desde la plantilla desplazada a la fila 3. Si ya existen vehículos, inserta después del último registro. Así no se exige que exista previamente un vehículo para poder crear el primero.
+- Validación estática posterior: la rama con registros inserta tras `lastRow`; la rama solo-encabezado expande la hoja si es necesario, inserta en fila 2 y usa fila 3 como plantilla. Commit: `5fd150497861893f7762c6616cd61b2e8781451c`.
