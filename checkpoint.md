@@ -1002,3 +1002,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se documentó el hallazgo en Auditoria.txt y la nueva tarea GP-ADMIN-DRIVE-REGISTRO-ERROR-03 en Tareas_Activas.md. Backups exactos previos creados en Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-03-20261127/.
 - No se modificó código funcional, no se ejecutaron pruebas nuevas, Apps Script/Sheets/Drive remoto, POST ni deployment. Beta permanece cerrada y no se crearán suites ni archivos de prueba.
 - Siguiente paso: completar auditoría de dependencias, conservar firstError/readError/retryError con etapas y diagnóstico sin valores sensibles, validar localmente en memoria y realizar Code Review antes de retirar respaldos. No declarar resuelto el registro de imágenes hasta validación remota autorizada.
+
+
+## Continuidad — GP-ADMIN-DRIVE-REGISTRO-ERROR-03 (implementación 2026-11-27)
+- Rama de trabajo: GPSpedia2.2.5_work. Rama protegida GPSpedia2.2.5 no fue destino de escrituras.
+- Se implementó en JS/Services/admin.js, writeDriveInventoryRowVerified_(), el diagnóstico acumulado de los dos intentos y la lectura de reconciliación. Se conservan firstError, readError y retryError, las etapas de escritura/flush/lectura/comparación y los nombres de columnas discrepantes sin exponer valores de celdas.
+- Si la escritura no puede confirmarse, el archivo no se devuelve como confirmado ni se permite organizarlo. El writer intenta persistir estado requiere_revision y resultado_inventario=error, con detalle acumulado, y devuelve IMAGE_INVENTORY_WRITE_FAILED.
+- Firma y llamadas existentes preservadas; el cambio funcional se limita al cuerpo del writer. Backup exacto: Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-03-IMPLEMENTACION-20261127/admin.js.backup (blob original 7689cf426af57c2d8d10f8a72d943a3c4f65bc61).
+- Code Review/comparación: PASS; solo cambió writeDriveInventoryRowVerified_(). Parsing completo de admin.js PASS. Pruebas en memoria 5/5 PASS: éxito normal, recuperación tras lectura transitoria, discrepancia persistente con columna nombrada y estado requiere_revision, error persistente de lectura y excepción de escritura no estándar.
+- No se ejecutaron Apps Script, navegador, Drive/Sheets reales, POST ni deployment. La causa exacta en la hoja remota sigue sin confirmarse; ejecutar nuevamente la auditoría/inventario en entorno autorizado para obtener el diagnóstico de campo/etapa y validar la persistencia. Beta continúa cerrada.
