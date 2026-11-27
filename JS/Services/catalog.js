@@ -1536,11 +1536,14 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
         vehicle.Video = normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl);
         delete vehicle.videoGuiaDesarmeUrl;
     }
-    const cortes = [
-        { index: 1, util: parseInt(vehicle.utilCorte1, 10) || 0 },
-        { index: 2, util: parseInt(vehicle.utilCorte2, 10) || 0 },
-        { index: 3, util: parseInt(vehicle.utilCorte3, 10) || 0 }
-    ].sort((a, b) => b.util - a.util);
+
+    // Solo se consideran slots ocupados; votos positivos ordenan, empate conserva índice físico.
+    const cortes = [1, 2, 3].filter(index => String(vehicle["tipoCorte" + index] || "").trim())
+        .map(index => ({ index, util: Math.max(0, parseInt(vehicle["utilCorte" + index], 10) || 0) }));
+    const hasUsefulVotes = cortes.some(corte => corte.util > 0);
+    if (hasUsefulVotes) cortes.sort((a, b) => b.util - a.util || a.index - b.index);
+    else cortes.sort((a, b) => a.index - b.index);
+
     const orderedVehicle = { ...vehicle };
     const tempCortes = {};
     for (let i = 1; i <= 3; i++) {
@@ -1550,6 +1553,18 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
             img: vehicle["imgCorte" + i], util: vehicle["utilCorte" + i],
             activaTestigo: vehicle["activaTestigo" + i], colaborador: vehicle["colaboradorCorte" + i]
         };
+    }
+    // Limpia los slots proyectados para no propagar campos de cortes vacíos.
+    for (let newIndex = 1; newIndex <= 3; newIndex++) {
+        orderedVehicle["tipoCorte" + newIndex] = "";
+        orderedVehicle["ubicacionCorte" + newIndex] = "";
+        orderedVehicle["colorCableCorte" + newIndex] = "";
+        orderedVehicle["configRelay" + newIndex] = "";
+        orderedVehicle["imgCorte" + newIndex] = "";
+        orderedVehicle["utilCorte" + newIndex] = 0;
+        orderedVehicle["activaTestigo" + newIndex] = "";
+        orderedVehicle["colaboradorCorte" + newIndex] = "";
+        orderedVehicle["sourceCorteIndex" + newIndex] = null;
     }
     cortes.forEach((corte, i) => {
         const newIndex = i + 1, oldIndex = corte.index;
@@ -1565,7 +1580,6 @@ function mapCatalogVehicleRowForProjection_(row, columnMap, feedbackLikeEventCou
     });
     return orderedVehicle;
 }
-
 function readCatalogContributionProjectionVehicles_(spreadsheetRef, includeSourceEvents = false) {
     const spreadsheet = spreadsheetRef || getSpreadsheet();
     const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
