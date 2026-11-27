@@ -1918,7 +1918,7 @@ function reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId, kn
 function handleUpdateUser(payload) {
     const actor = requireSharedAuthActor_(payload, ["desarrollador", "jefe", "supervisor"], "actualizar usuarios");
     const requesterUserId = actor.userId;
-    const userId = normalizeUserId(payload && payload.userId);
+    const userId = normalizeUserId(payload && (payload.targetUserId || payload.userId));
     const updates = payload && payload.updates;
     if (!userId || !updates || typeof updates !== "object" || Array.isArray(updates)) throw new Error("Datos insuficientes para actualizar el usuario destino.");
     if (updates.Password) {
