@@ -894,3 +894,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pruebas efímeras en memoria: Date equivalente aceptada; Date no equivalente rechazada y diagnosticada; tamano_bytes no equivalente rechazada y diagnosticada (3/3 PASS). Parse completo admin.js PASS (15,539 líneas). Diff exacto contra backup: prefijo/sufijo idénticos, único bloque editado writeDriveInventoryRowVerified_.
 - No se ejecutó Apps Script, Google Drive/Sheets real, navegador, POST ni deployment. Beta permanece cerrada. No se crearon suites ni archivos de prueba.
 - Siguiente paso: Code Review final, validar branch head/base y dejar la tarea pendiente de reproducción remota autorizada. No organizar imágenes que no tengan confirmación de inventario.
+
+
+### Code Review y limpieza — GP-ADMIN-DRIVE-REGISTRO-ERROR-02
+- Code Review estático PASS: delta funcional exclusivo de writeDriveInventoryRowVerified_ en JS/Services/admin.js; no hay cambios fuera de alcance.
+- Verificada la rama base GPSpedia2.2.5 en SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Backup exacto admin.js (blob SHA 163e167b6544a59966c40b3b825e6e5a3ffb72b5) eliminado después de la revisión, conforme a normativa.
+- Commit de limpieza: 9dcd0a3cf458a72309e7e574ff4fc1b169aa1eca.
+- Pendiente real: ejecución autorizada en Apps Script/Google Sheets para observar la lectura y confirmar registro. No hubo POST, Drive/Sheets remoto ni deployment.
