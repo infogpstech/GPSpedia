@@ -1348,3 +1348,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Comparación de diffs y Code Review estático completados; solo cambios solicitados, backups eliminados tras revisión. (No se hizo parsing/runtime browser.)
 - [x] Actualizar ChangesLogs.txt, Auditoria.txt y checkpoint.md; GPSpedia2.2.5 permanece intacta.
 
+
+### GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — Modal de cortes duplicados y orden recomendado
+**Estado: AUDITORÍA FOCAL DOCUMENTADA; implementación pendiente.**
+- [ ] Corregir proyección de cortes ocupados, orden por votos útiles y desempate físico.
+- [ ] Omitir cortes vacíos y preservar la referencia física de todos los campos/indicadores.
+- [ ] Corregir asociación de testigo y verificar modal estáticamente.
+- [ ] Comparar contra respaldos, revisar diff y documentar validaciones.
+- No ejecutar POST, escrituras remotas ni deployment; Beta cerrada.
