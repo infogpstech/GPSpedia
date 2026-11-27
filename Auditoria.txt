@@ -686,3 +686,27 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - La revisión del diff detectó un defecto en `parseReportMetadata`: la variable `vehicleId` se usa para construir `defaultSubject` antes de declararse/normalizarse. La función captura el ReferenceError y devuelve metadata nula, lo que podría ocultar reportes válidos del Inbox.
 - La representación canónica también debe propagarse a los objetos del Inbox: `parseCutSuggestionRecord` y `mapInboxFeedbackRow_` no deben devolver IDs históricos `V-###` cuando el catálogo ya opera con `V-00000`.
 - Se reinicia el procedimiento para corregir el hallazgo: auditoría focalizada de las tres funciones y sus consumidores, respaldo exacto del estado actual de `JS/Services/feedback.js`, corrección limitada y nueva validación/Code Review.
+
+
+[2026-11-26] GP-CUT-ID-CROSS-SERVICE-07 — implementación, pruebas y Code Review
+- CATALOG (`JS/Services/catalog.js`):
+  - La normalización canónica ahora conserva un mínimo de cinco dígitos: `V-00001`, `V-99999`, `V-100000`. Los IDs históricos `V-001` y números heredados se canonicalizan a `V-00001`.
+  - La proyección de filas normaliza `vehicle.id` antes de construir el catálogo; la proyección dirigida ya devuelve el formato canónico solicitado.
+  - El lector de `FeedbackLikes` normaliza los IDs antes de agrupar estados/eventos, por lo que los ceros iniciales no hacen desaparecer los votos y los aliases históricos se agrupan bajo el mismo vehículo.
+- FEEDBACK (`JS/Services/feedback.js`):
+  - Se añadió normalización compartida `normalizeFeedbackVehicleId_` / `sameFeedbackVehicleId_`, con prefijo `V-`, mínimo cinco dígitos, extensión natural y compatibilidad de lectura con `V-###` y números históricos. Mantiene el límite de enteros seguros (máximo 16 dígitos decimales).
+  - Las sugerencias de años, identidad de aplicación, búsqueda de propuestas pendientes, votos verificados, eventos de `AportesVehiculo` y su proyección ahora aceptan y comparan IDs canónicos.
+  - `FeedbackLikes`: validación, localización del vehículo, lectura de útiles del usuario, actualización, conteo, deduplicación y migración comparan IDs canónicos. Un registro previo `V-001` se reconoce como el mismo vehículo que `V-00001`; si hay dos filas para el mismo usuario/vehículo/corte, se detecta la ambigüedad y no se actualiza ninguna.
+  - Reportes, metadata, sugerencias de corte, Inbox y asociaciones PyS comparan aliases históricos de forma canónica y devuelven IDs `V-00000` al frontend.
+- ADMIN (`JS/Services/admin.js`):
+  - `auditVehicleIdReferences_` ya no convierte el ID público a número. Normaliza el prefijo y los ceros iniciales, cuenta referencias por identidad canónica y sigue aceptando registros numéricos históricos. La herramienta ya no clasificará `V-00001` como referencia malformada.
+- Servicios revisados sin cambios necesarios: `write.js` (contador interno del ledger sigue numérico deliberadamente; ID público se trata como texto), `Auth.js`, `Utilities.js`, `CentralConfigurationReader.js`, `InboxConversations.js`, `SharedSessionActor.js`. Frontend revisado: `offline.js` acepta `V-\d{3,16}`; modal/UI y formulario manejan IDs como texto y no imponen longitud fija.
+- Respaldos previos:
+  - `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/JS__Services__catalog.js.backup`
+  - `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/JS__Services__feedback.js.backup`
+  - `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/JS__Services__feedback.js.review1.backup` (antes de corregir hallazgo de Code Review)
+  - `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/JS__Services__admin.js.backup`
+- Pruebas: compilación sintáctica V8 de WRITE, CATALOG, FEEDBACK, ADMIN y Auth: 5/5 PASS. Fixtures de normalización para `V-00001`, `V-99999`, `V-100000`, histórico `V-001`, números y formatos inválidos: PASS. CATALOG leyó estados `V-001` + `V-00001` y calculó 2 útiles, además de reconocer `V-100000`. FEEDBACK encontró/contó útiles usando alias históricos, detectó duplicados lógicos, devolvió IDs canónicos, aceptó propuestas/años y proyectó eventos `AportesVehiculo` con ID histórico. Inbox devolvió metadata y subject con `V-00001`. PyS resolvió `V-001` a `V-00001`. ADMIN audit simuló 9 referencias y obtuvo 9 coincidentes, 0 huérfanas, 0 malformadas y 0 mismatches.
+- Code Review de los diffs frente a respaldos: PASS después de corregir un ReferenceError en `parseReportMetadata` (la variable canonical debía declararse antes de construir el subject). La revisión confirmó cambios limitados a la normalización/consumo de vehicleId y al diagnóstico de referencias.
+- Commits de código: CATALOG `7945e406075461d9af3a2bf209a4493eecb09027`; FEEDBACK `20e5e09313d99858eb11e9fa1b01a9f51f7d7201`, `fb1ff8608b84a49f7b4d137e82cc25bded1224b8`, `4e60ce927a48b44907ff4bb4b93ea091689021aa`, `f3e283157e5746ab8cb5db3da4ca854e2d9f4237`, `412d21236d817fd2586c48519fe80d35465ad80c`; ADMIN `adad4b9313092774f3aa90a1ce4da4f708aff84e`.
+- Límite: no se desplegaron versiones Apps Script ni se ejecutaron operaciones reales en Spreadsheet/Drive. La implementación está en la rama de trabajo; despliegue, health y prueba integrada remota siguen pendientes. No declarar producción validada.
