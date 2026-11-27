@@ -1542,3 +1542,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Optimizar captura de ubicaciones: sin detalle por lote incremental y con detalle en consolidación final.
 - [x] Verificar validateCompletedDriveAudit_ con cero candidatos y digest correcto (1/1 PASS).
 - [x] Verificar sin_coincidencia, no_verificada y conservación de URL visual válida (3/3 PASS).
+
+
+### Revisión GP-ADMIN-DRIVE-AUDIT-REVIEW-04 (2026-11-27)
+- [x] Confirmar en frontend que el registro incremental se invoca por página de resultados y que valida resultados por ID/estado.
+- [x] Confirmar persistencia de página/metadata y pageCount de ADMIN previa a la respuesta que consume el frontend.
+- [x] Actualizar plan, auditoría, ChangesLogs y checkpoint; corregir el pendiente desactualizado.
+- [ ] Verificar navegador, IndexedDB real, error/reintento y runtime Apps Script/Drive/Sheets Beta autorizada. Sin despliegue ni escritura remota no autorizada.
