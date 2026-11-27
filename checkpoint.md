@@ -490,3 +490,13 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Endpoints actuales: los IDs de `API_ENDPOINTS` son distintos de los consultados en el último health remoto disponible. Ese health histórico no valida los endpoints actuales. No se dispone en esta sesión de cliente HTTP/browser para consultar directamente Apps Script.
 - Pages build previo al cierre de esta tarea: run `45913324055` SUCCESS en HEAD previo; PR #128 sigue abierto. El nuevo build de v83 y los commits documentales deben confirmarse.
 - Pendiente: health GET-only a endpoints actuales; verificar despliegue en el dominio/móvil; IndexedDB real, alta controlada y recuperación de operación silenciosa. No se ejecutaron POST, escrituras Sheets/Drive ni cambios de deployments.
+
+
+## Checkpoint GP-CUT-FUNCTIONAL-AUDIT-04 — cierre de código (2026-11-26)
+
+- Rama de trabajo `GPSpedia2.2.5_work`; HEAD de código `dd93b63977d059d7d27cd44006a3a5265d3c69fe`. Rama base `GPSpedia2.2.5` se mantiene en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, intacta. PR #128 sigue OPEN, no mergeado.
+- Cambios: formulario ahora muestra errores específicos; recuperación de `checkOperation` silenciosa usa WRITE; logger cubre los códigos explícitos de WRITE; «No recomendado» puede omitir ubicación; cortes normales requieren ubicación; frontend/WRITE/cargador Drive alineados en 16 MIME; caché PWA v85.
+- Code Review contra respaldos: PASS; diffs limitados a los bloques autorizados. Fixtures de validación: 7/7 PASS; MIME 16/16; códigos WRITE 11/11.
+- Pages build/deploy run `45914970548` SUCCESS en HEAD de trabajo.
+- Límite: el éxito de Pages no despliega el código Apps Script. `JS/Services/write.js` actualizado solo en el repositorio; no se ejecutó health GET-only sobre los IDs actuales de `API_ENDPOINTS` ni se verificó la versión del endpoint remoto. El último health disponible consultó endpoints anteriores. No se ejecutaron POST de alta, IndexedDB real, Sheets ni Drive.
+- Pendiente: despliegue/health del WRITE actual; confirmar el HEAD servido por el dominio/móvil; prueba controlada de vehículo nuevo y existente y recuperación/idempotencia con datos sintéticos y cleanup verificable.
