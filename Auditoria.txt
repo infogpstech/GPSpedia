@@ -1197,3 +1197,11 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - No se ejecuta una mutación AUTH real ni deployment; la validación integrada requiere prueba posterior del usuario en navegador.
 
 **Corrección prevista:** ampliar el payload createUser con `userId: submittingSession.userId` y conservar el token del mismo snapshot.
+
+
+#### F-52 — revisión final (2026-11-27)
+- Cambio aplicado exclusivamente en HTML/users.html, handleUserFormSubmit(): createUser ahora envía userId: submittingSession.userId junto a newUser y sessionToken del mismo snapshot de sesión validado.
+- Comparación exacta contra el respaldo: única diferencia, ampliación del payload de createUser; no se modificaron la rama updateUser ni otros flujos.
+- Code Review del commit 02537a06538851b4f011c9b764775cf750a8f880: PASS. El diff contiene únicamente el payload de createUser.
+- Parsing de los dos bloques script inline: PASS. Verificación estática de actor/token del mismo snapshot, conservación de newUser y payload updateUser sin cambios: PASS.
+- No se ejecutó navegador, mutación AUTH real ni deployment. La creación requiere confirmación integrada del usuario; el comportamiento de edición se mantiene pendiente de prueba separada si continúa fallando.
