@@ -1568,3 +1568,17 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ### GP-ADMIN-DRIVE-REGISTRO-ERROR-01
 - [x] Añadir registro técnico estructurado de errores de lote incremental a consola y consola de auditoría.
 - [ ] Reproducir en navegador real y capturar diagnóstico para determinar y corregir causa raíz; runtime externo pendiente.
+
+
+### GP-ADMIN-DRIVE-REGISTRO-ERROR-02 — discrepancia de lectura posterior (2026-11-27)
+**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; pruebas aisladas PASS; runtime remoto pendiente.**
+- [x] Auditar el writer, el esquema de Imagenes_Reemplazadas y los campos comparados en la lectura posterior.
+- [x] Registrar F-48 en Auditoria.txt antes de editar.
+- [x] Crear respaldo exacto de JS/Services/admin.js y verificar SHA.
+- [x] Normalizar fecha_modificacion_drive si Sheets devuelve Date, en GMT-6; mantener las demás comparaciones estrictas.
+- [x] Diagnosticar discrepancias por nombre de columna sin exponer valores.
+- [x] Harness efímero: fecha equivalente aceptada; fecha distinta y tamano_bytes alterado rechazados con diagnóstico correcto (3/3 PASS).
+- [x] Parse sintáctico completo y comparación contra respaldo; único bloque funcional modificado: writeDriveInventoryRowVerified_.
+- [ ] Reproducir en Apps Script/Sheets autorizado para confirmar el tipo real devuelto por fecha_modificacion_drive y validar que las imágenes se registren correctamente.
+- [ ] Code Review posterior y limpieza del respaldo temporal tras revisión.
+- No se ejecutó navegador, Apps Script/Drive/Sheets remoto, POST ni deployment. Beta permanece cerrada; no crear suites ni archivos de prueba.
