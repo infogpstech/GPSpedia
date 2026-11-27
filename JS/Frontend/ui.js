@@ -14616,8 +14616,8 @@ async function submitSupplementaryModalOperation_(operation,kind,vehicleId,modal
     const events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
     if(!expectedId||!events.some(event=>event&&event.kind===kind&&event.opId===expectedId&&event.eventId))throw new Error("WRITE no confirmó el evento de aporte esperado.");
     const removed=await offline.removeAddCutOperationPendingOperation(operation.ownerId,operation.id,operation.operationHash);
-    const message=removed&&removed.removed===true?successMessage:successMessage+" El guardado fue confirmado; la limpieza local quedó pendiente y se recuperará con el mismo identificador.";
-    await completeVehicleExpansionSave_(result,vehicleId,message,modal);
+    if(!removed||removed.removed!==true)console.warn("[GPSpedia] WRITE confirmó el aporte suplementario; limpieza local pendiente.",{opId:operation.id});
+    await completeVehicleExpansionSave_(result,vehicleId,successMessage,modal);
     return result;
 }
 
