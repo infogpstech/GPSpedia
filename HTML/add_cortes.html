@@ -347,12 +347,7 @@
     <script>
         function showConciseAlert_(message) {
             const detail = String(message || 'No se pudo completar la operación.');
-            try {
-                const logger = window.parent && window.parent.gpsepediaDeveloperLog;
-                if (typeof logger === 'function') logger('[ALTA DE CORTE] ' + detail, 'error');
-            } catch (error) {}
-            // No reemplazar el motivo concreto por un aviso genérico: el formulario
-            // es independiente y el usuario necesita distinguir los bloqueos de guardado.
+            console.error('[ALTA DE CORTE]', detail);
             alert(detail);
         }
     </script>
@@ -726,7 +721,7 @@
                     const removed=await removeAddCutOperationPendingOperation(pendingOp.ownerId,pendingOp.id,pendingOp.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary-recovery.cleanup-unconfirmed',{stage:'recovery',opId:pendingOp.id});
                     try{await verifySupplementaryCatalogWrite_(result,pendingOp.requestData);}catch(error){diagnostics.error('supplementary-recovery.catalog-verification-failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'CatalogVerificationError'});}
                     alert('Aporte recuperado.');window.location.href='../index.html';
-                }catch(error){diagnostics.warn('supplementary-recovery.failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'RecoveryError'});showConciseAlert_('Se detectó un aporte suplementario pendiente. Se conservaron sus datos y sus identificadores para reintentar sin duplicarlo.');}
+                }catch(error){diagnostics.warn('supplementary-recovery.failed',{stage:'recovery',opId:pendingOp.id,errorCode:error&&error.name||'RecoveryError'});}
                 finally{toggleLoading(false);}return;
             }
             if (!navigator.onLine) { diagnostics.info('pending-recovery.offline', { stage: 'recovery', opId: pendingOp.id, status: pendingOp.status, online: false }); return; }
@@ -1148,7 +1143,7 @@
         async function handleStage1Submit(e) {
             e.preventDefault();
             if (isSubmittingStage1) return;
-            if (pendingOperationRecoveryPromise) { alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.'); return; }
+            if (pendingOperationRecoveryPromise) { console.warn('[add-cortes] Reconciliación en curso; submit bloqueado.'); return; }
             const form = e.target;
             const btn = form.querySelector('button[type="submit"]');
             state.vehicleInfo = {
@@ -1780,7 +1775,7 @@
         }
 
         async function handleStage3Submit(e){
-            e.preventDefault();if(isSubmittingStage3)return;if(pendingOperationRecoveryPromise){alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.');return;}
+            e.preventDefault();if(isSubmittingStage3)return;if(pendingOperationRecoveryPromise){console.warn('[add-cortes] Reconciliación en curso; submit suplementario bloqueado.');return;}
             isSubmittingStage3=true;const btn=e.target.querySelector('button[type="submit"]');toggleLoading(true);if(btn)btn.classList.add('btn-loading');
             try{const cable=document.getElementById('cableAlimen').value,cf=document.getElementById('imgCableAlimen'),of=document.getElementById('imgApertura');
                 const imgCable=await fileToBase64(cf&&cf.files?cf.files[0]:null),imgOpening=await fileToBase64(of&&of.files?of.files[0]:null);
