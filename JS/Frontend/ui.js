@@ -4013,7 +4013,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         container.appendChild(contentP);
     }
 
-    if (cutData.activaTestigo && !inEditMode) {
+    if (cutData.activaTestigo === true) {
         const testigoImage = document.createElement('img');
         testigoImage.src = 'https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50';
         testigoImage.setAttribute('style', 'height:50px; width:auto; float:right; margin-left:10px;');
