@@ -1896,3 +1896,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | Ajuste de memoria en inventario GP-ADMIN-DRIVE-UNUSED-IMAGES-03
 - JS/Services/admin.js: collectCatalogImageReferences recibe includeLocations=false durante lotes incrementales y true durante la consolidación final. Se conservan ubicaciones detalladas cuando se reconcilian filas históricas, sin materializar esos arreglos en cada lote automático.
+
+
+2026-11-27 | Ajustes finales GP-ADMIN-DRIVE-UNUSED-IMAGES-03
+- JS/Services/admin.js, línea 14463: includeLocations=!incremental; evita almacenar ubicaciones detalladas en cada lote y las mantiene en consolidación final.
+- JS/Services/admin.js, reconciliación de filas históricas: registra sin_coincidencia cuando existe metadato suficiente pero no hay candidato; no_verificada cuando faltan metadatos; conserva candidatos previos en este último caso.
+- JS/Services/admin.js, preflight: repara url_visualizacion solo cuando está vacía y conserva URLs visuales válidas.
+- Evidencia adicional: validateCompletedDriveAudit_ acepta cero candidatos con digest vacío correcto (1/1); asociación sin coincidencia y metadatos insuficientes diferenciados (2/2); URL visual válida preservada (1/1).
+- Commits admin.js: 72b5ed0dc49b7f947c39fa727bf49ce9cc291692, 44dd569822dd1d384916d2ae8c172b3830f5c9b8, 3e16f1150ae42c5289112db93d47cc24c6f9473f.
