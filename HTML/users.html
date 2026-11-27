@@ -763,7 +763,11 @@ async function handleUserFormSubmit(e) {
                 alert('Usuario actualizado y contraseña restablecida. Todas sus sesiones fueron cerradas.');
             }else alert(updateResult.message || 'Usuario actualizado');
         } else {
-            await postToAction('createUser', { newUser: userData, sessionToken: submittingSession && submittingSession.sessionToken });
+            await postToAction('createUser', {
+                userId: submittingSession.userId,
+                newUser: userData,
+                sessionToken: submittingSession.sessionToken
+            });
             if (!isSubmittingSessionCurrent()) return;
             alert('Usuario creado');
         }
