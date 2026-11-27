@@ -1582,3 +1582,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Reproducir en Apps Script/Sheets autorizado para confirmar el tipo real devuelto por fecha_modificacion_drive y validar que las imágenes se registren correctamente.
 - [ ] Code Review posterior y limpieza del respaldo temporal tras revisión.
 - No se ejecutó navegador, Apps Script/Drive/Sheets remoto, POST ni deployment. Beta permanece cerrada; no crear suites ni archivos de prueba.
+
+#### GP-ADMIN-DRIVE-REGISTRO-ERROR-02 — revisión final (2026-11-27)
+- [x] Code Review estático del único bloque modificado.
+- [x] Verificar rama base protegida sin cambios.
+- [x] Eliminar el respaldo temporal después de Code Review.
+- [ ] Confirmar en Apps Script/Sheets real el tipo devuelto por fecha_modificacion_drive y el registro correcto de imágenes; pendiente de entorno/ejecución Beta autorizada.
+- **Estado:** ciclo local completado; validación remota pendiente. No afirmar cierre funcional hasta comprobar persistencia real.
