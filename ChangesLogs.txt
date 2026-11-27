@@ -1780,3 +1780,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Services/catalog.js`: se conserva una colección `cortesPhysical` antes de aplicar la proyección de eventos AportesVehiculo; `cortes` general mantiene su proyección existente.
 - `JS/Frontend/ui.js`: el modal selecciona la ficha desde `cortesPhysical` en lugar de la colección proyectada.
 - Sin cambios a escritura del ledger ni despliegue.
+
+2026-11-27 — GP-CUT-DETAIL-PYS-STALE-NOTICE-01
+- `JS/Frontend/ui.js`, `renderPosiblesProblemasAccordion`: se retiró el párrafo de aviso de datos PyS posiblemente desactualizados que se mostraba dentro del modal de detalle del corte. No se modificó la lógica de cache ni carga de PyS.
