@@ -1925,3 +1925,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Frontend/rich-text.js`: se agregó una ruta fallback para retirar el formato inline seleccionado cuando `execCommand` no logra desactivarlo; el contenido seleccionado se extrae, se desenvuelven las etiquetas del formato y se restaura el punto de inserción.
 - `JS/Services/admin.js`: los cursores de auditoría de una versión anterior ahora disparan un nuevo recorrido controlado en lugar de lanzar el error terminal. Se conservan los datos del auditId previo; no se reutilizan iteradores de Drive incompatibles.
 - Validación pendiente: ejecución en navegador y Apps Script; el cambio de rich-text necesita probar selecciones parciales/múltiples y la auditoría reiniciada necesita confirmar respuesta de frontend y persistencia.
+
+
+## 2026-11-27 — GP-ADMIN-DRIVE-AUDIT-REVIEW-03
+
+- `HTML/add_cortes.html`: se centralizó el mensaje de éxito y la transición de etapa tras confirmación, protegidos por ID de operación para no repetir la acción para el mismo opId.
+- El plan documenta los cambios aplicados y el pendiente de integración del registro incremental de inventario en el recorrido de Drive.
+- No se ejecutaron pruebas de navegador/Apps Script; cambios pendientes de validar en ejecución.
