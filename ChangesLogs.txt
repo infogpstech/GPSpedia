@@ -1774,3 +1774,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - JS/Frontend/ui.js: orden de cortes por útiles descendentes con desempate por índice físico; los slots vacíos se omiten. No se deduplican cortes físicamente distintos por contenido.
 - Validación: simulaciones efímeras de referencia duplicada, datos idénticos en slots distintos, empate y slot vacío PASS; revisión de diff delimitada al bloque de construcción de cortes del modal.
 - Limitación: no se pudo acceder al registro de Spreadsheet del caso ni validar materialización persistente de eventos AportesVehiculo. No hubo browser, Apps Script, POST, escritura remota ni deployment.
+
+
+### 2026-11-27 — GP-CUT-DETAIL-LEDGER-MODAL-01
+- `JS/Services/catalog.js`: se conserva una colección `cortesPhysical` antes de aplicar la proyección de eventos AportesVehiculo; `cortes` general mantiene su proyección existente.
+- `JS/Frontend/ui.js`: el modal selecciona la ficha desde `cortesPhysical` en lugar de la colección proyectada.
+- Sin cambios a escritura del ledger ni despliegue.
