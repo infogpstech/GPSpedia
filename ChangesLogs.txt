@@ -2008,3 +2008,11 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No se modificaron updateUser, AUTH, api-config.js, roles, permisos ni la lógica de persistencia.
 - Code Review: diff limitado al payload createUser; parsing de scripts inline y verificaciones estáticas PASS.
 - No se ejecutó navegador, POST AUTH real ni deployment.
+
+
+2026-11-27 | GP-USERS-UPDATE-ACTOR-TARGET-01 — separación de actor y cuenta objetivo
+- HTML/users.html, handleUserFormSubmit(): updateUser ahora envía userId del actor autenticado y targetUserId de la cuenta editada. resetUserPassword envía también userId del actor y conserva targetUserId como destino.
+- JS/Services/Auth.js, handleUpdateUser(): obtiene el ID de la cuenta objetivo desde targetUserId, con fallback al campo userId para compatibilidad.
+- No se alteraron permisos, roles ni la validación del actor confiable __sharedSessionActor.
+- Code Review: comparación exacta contra respaldos, parsing de HTML/scripts inline y Auth.js, y verificaciones estáticas PASS.
+- No se ejecutó navegador, POST AUTH real ni deployment.
