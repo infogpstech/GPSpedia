@@ -1786,7 +1786,7 @@
                 const expected=pending.requestData.contributionOpIds||{},events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
                 const eventsConfirmed=['opening','feed'].every(kind=>{const id=String(expected[kind]||'');return !id||events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId);});
                 if(!eventsConfirmed)diagnostics.error('supplementary.write-event-unconfirmed',{stage:'supplementary',opId:pending.id});
-                else{const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});}
+                else{try{const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});}catch(cleanupError){diagnostics.warn('supplementary.pending-cleanup-failed',{stage:'supplementary',opId:pending.id,errorCode:cleanupError&&cleanupError.name||'CleanupError'});}}
                 try{await verifySupplementaryCatalogWrite_(result,request);}
                 catch(error){diagnostics.error('supplementary.catalog-verification-failed',{stage:'supplementary',opId:pending.id,errorCode:error&&error.name||'CatalogVerificationError'});}
                 window.location.href='../index.html';
