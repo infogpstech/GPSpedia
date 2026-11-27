@@ -502,3 +502,16 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Pendiente: despliegue/health del WRITE actual; confirmar el HEAD servido por el dominio/móvil; prueba controlada de vehículo nuevo y existente y recuperación/idempotencia con datos sintéticos y cleanup verificable.
 
 - Code Review finalizado; los 12 respaldos temporales de las iteraciones 04B/04C/04D fueron retirados después de comparar los diffs. Commit de limpieza `df36935c16bf86f7b61c383b4a8af5c71d9e31a9`; no quedan respaldos de esta auditoría.
+
+
+## Checkpoint GP-CUT-ID-FORMAT-REBUILD-05 — IDs V-### (2026-11-26)
+
+- Rama de trabajo: `GPSpedia2.2.5_work`. HEAD de código validado por Pages: `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`. Rama base `GPSpedia2.2.5` se conserva intacta en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; PR #128 sigue abierto.
+- Causa confirmada en código: varias funciones trataban el ID público `V-001` como entero numérico. Esto rompía el high-water mark, el plan de congelación de fórmulas, la validación de corte para vehículo existente, el ledger append-only, el versionado de catálogo y la proyección dirigida CATALOG.
+- Corrección: WRITE mantiene la secuencia interna numérica en `CortesIdReservations`, pero convierte las reservas a IDs persistentes `V-###` (mínimo 3 dígitos, extensión natural a `V-1000`, máximo 16 dígitos sujeto a entero seguro). La lectura de celdas con fórmula usa el valor calculado y el freeze-plan conserva ese valor al retirar la fórmula. Alta nueva escribe el ID estático, sin copiar la fórmula de la fila anterior.
+- Rutas existentes: `addOrUpdateCut` normaliza IDs; `AportesVehiculo` guarda el ID canónico y mantiene idempotencia por `opId`; CATALOG acepta V-### en proyección dirigida; offline acepta V-### en snapshots suplementarios. Modal de detalle `openAddCutForModelModal()` se mantuvo sin cambios y fue revisado contra respaldo; envía `item.id`, conserva el mismo `opId` y verifica la respuesta del backend. `HTML/add_cortes.html` tampoco requirió cambios.
+- Archivos modificados: `JS/Services/write.js`, `JS/Services/catalog.js`, `JS/Frontend/offline.js`, `service-worker.js` (caché v86). Archivos respaldados antes de edición: WRITE, CATALOG, offline.js, ui.js y Service Worker en `Olds/Backups/GP-CUT-ID-FORMAT-REBUILD-05-20261126/`.
+- Code Review contra respaldos: PASS; `ui.js` idéntico al respaldo. Sintaxis V8 de WRITE/CATALOG/offline/Service Worker: PASS. Fixtures de parser/formatter, fórmula/high-water, freeze-plan, validación, append/replay/conflicto, proyección CATALOG y snapshots offline: PASS.
+- GitHub Pages build/deploy run `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`.
+- **Pendiente crítico:** el código Apps Script aún no está desplegado/verificado en los endpoints activos. No se consultó el Spreadsheet productivo ni se ejecutaron escrituras en Sheets/Drive; no se probó IndexedDB real. Antes de cerrar la incidencia: health GET-only a endpoints actuales, desplegar WRITE y CATALOG, probar alta nueva y aporte existente desde formulario y modal con datos aislados, verificar proyección y reintento del mismo `opId`, y confirmar limpieza local. No afirmar resuelto hasta pasar estas pruebas.
+- Próximo paso: continuar con despliegue/health y validación controlada; conservar respaldos hasta finalizar revisión remota y Code Review.
