@@ -10243,14 +10243,15 @@ export async function openAuditDriveModal(options = {}) {
         try {
             appendAuditConsole("Verificando primero los registros existentes del inventario contra las referencias del catálogo y sus asociaciones de modelo. No se eliminarán filas.", "progress");
             let startRow = 2, preflightBatches = 0;
-            let preflightTotals = { checked: 0, active: 0, pending: 0, associationsUpdated: 0, errors: 0, skipped: 0 };
+            let preflightTotals = { checked: 0, active: 0, pending: 0, associationsUpdated: 0, skipped: 0 };
             while (startRow !== null) {
                 const response = await routeActionWithRetry("saveUnusedImagesInventory", {
                     ...getDeveloperSessionPayload(), mode: "reconcile_existing", startRow, limit: 50
                 }, { timeoutMs: 90000, maxAttempts: 3, retryDelayMs: 700, shouldContinue: isCurrentRequest });
                 if (!isCurrentRequest()) return;
                 if (!response || response.status !== "success" || typeof response.complete !== "boolean" ||
-                    !Array.isArray(response.results) || (response.nextStartRow !== null &&
+                    !Array.isArray(response.results) || response.complete !== (response.nextStartRow === null) ||
+                    (response.nextStartRow !== null &&
                     (!Number.isInteger(Number(response.nextStartRow)) || Number(response.nextStartRow) <= startRow))) {
                     throw new Error(response && response.message ? response.message : "ADMIN devolvió un resultado inválido al reconciliar el inventario previo.");
                 }
