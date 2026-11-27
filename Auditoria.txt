@@ -830,3 +830,5 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Alcance: retirar únicamente el aviso visible dentro del acordeón de problemas relacionados en el modal de detalle del vehículo; no cambiar lectura, cache, refresh, asociación ni avisos de otras vistas.
 - Respaldo exacto previo de `JS/Frontend/ui.js` creado en `__task_backups__/GP-CUT-DETAIL-PYS-STALE-NOTICE-01/`.
 - Implementación aplicada; verificación estática de diff pendiente.
+
+- Revisión posterior: comparación exacta contra respaldo confirmó que el único delta en ui.js es la eliminación de ese bloque de 7 líneas; la función, filtrado de problemas y lógica de cache/refresh permanecen intactos. Se retiró el respaldo temporal tras revisión. Sin validación en navegador ni prueba de red.
