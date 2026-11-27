@@ -1603,7 +1603,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
 
         newId = vehicleId;
 
-    } else { // --- Lógica para vehículo NUEVO (CORREGIDO PARA PRESERVAR FÓRMULA DE ID) ---
+    } else { // --- Alta nueva: ID V-### reservado y estático; no hereda fórmula de la fila anterior. ---
         if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
 
         var entities = getExistingEntities(sheet);
