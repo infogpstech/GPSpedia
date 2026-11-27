@@ -1629,3 +1629,13 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Prueba aislada true/false × edición/lectura: 4/4 PASS; comparación exacta: una sola línea modificada.
 - [ ] Validar en navegador el alta desde el botón + y el flujo HTML/add_cortes.html; confirmar que el booleano guardado reaparece y que la miniatura Drive carga.
 - No se modificaron WRITE/CATALOG, formularios, caché, CSS, despliegues ni rama base. No se ejecutaron POST, Apps Script, Sheets o Drive reales; Beta permanece cerrada.
+
+## GP-USERS-CREATE-SESSION-CONTEXT-01 — contexto de sesión al crear usuarios (2026-11-27)
+
+**Estado: CORRECCIÓN DE FUENTE COMPLETADA Y CODE REVIEW PASS; VALIDACIÓN INTEGRADA PENDIENTE.**
+
+- `HTML/users.html`: createUser omitía el userId del actor autenticado aunque ya conservaba sessionToken. AUTH requiere ambos campos para recuperar el actor de sesión.
+- Se agregó userId desde submittingSession.userId y se conservó newUser/sessionToken del mismo snapshot validado.
+- Diff exacto, parsing de scripts inline y verificaciones estáticas PASS. No se ejecutó POST real ni deployment.
+- El flujo updateUser no se modificó; comprobarlo por separado si la edición continúa mostrando un error.
+- Siguiente paso: probar creación de una cuenta de prueba autorizada en el entorno real y reportar el resultado; si edición falla, capturar el error/action actualizado antes de tocar su contrato.
