@@ -180,3 +180,21 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 - `finishConfirmedCutTransition_()` intenta completar la transición antes de mostrar el alert y no marca el opId como transicionado si la rutina falla. La alerta de éxito queda posterior al avance, evitando que un fallo de configuración auxiliar deje la Etapa 2 como destino.
 - Se conserva el opId y el guardado/idempotencia de WRITE. Se registran errores de transición.
 - Revisión estática del bloque: PASS (transición prioritaria y referencias opcionales protegidas). Prueba real de navegador/formulario pendiente; no se ejecutó Apps Script ni deployment.
+
+
+## GP-ADMIN-DRIVE-REGISTRO-ERROR-02 — lectura posterior del inventario (2026-11-27)
+
+### Implementación local
+- Se identificó que writeDriveInventoryRowVerified_ comparaba todos los metadatos por String() y no informaba qué columna fallaba.
+- Se añadió normalización específica de fecha_modificacion_drive cuando el valor leído es Date, formateándolo en GMT-6 como yyyy-MM-dd HH:mm:ss, igual al contrato usado por el escaneo Drive.
+- La comparación ahora produce nombres de columnas discrepantes para identidad, auditoría, operación, resultado, estado, organización, ubicación y metadatos. Los valores no se incluyen en el mensaje.
+- Se conservan la lectura posterior, el reintento, el estado requiere_revision y el bloqueo de organización cuando hay una discrepancia real.
+
+### Evidencia
+- Fecha Date equivalente al texto de auditoría: 1/1 PASS.
+- Fecha distinta por un minuto: 1/1 PASS, rechazada y diagnosticada como fecha_modificacion_drive.
+- tamano_bytes distinto: 1/1 PASS, rechazado y diagnosticado como tamano_bytes.
+- Parse sintáctico admin.js completo: PASS. Diff contra backup: cambios confinados a writeDriveInventoryRowVerified_.
+
+### Pendiente
+- La hipótesis de coerción de fecha debe confirmarse en Apps Script/Google Sheets real; no se dispone de ejecución remota autorizada y Beta permanece cerrada. No se ha declarado corregida la persistencia real ni se ha desplegado.
