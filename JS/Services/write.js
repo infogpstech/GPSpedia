@@ -299,8 +299,7 @@ function doPostInternal_(e) {
 
 
 function nextWriteCatalogSourceVersion_(reference) {
-    const vehicleId = String(reference === null || reference === undefined ? "" : reference).trim();
-    if (!/^[1-9]\d{0,14}$/.test(vehicleId)) throw new Error("No se puede versionar un cambio de catálogo sin un ID de vehículo válido.");
+    const vehicleId = normalizeCortesVehicleId_(reference, "Versionado de catálogo");
     // Marca temporal local; el frontend coordina la invalidación del feed después de confirmar WRITE.
     return Math.max(1, Date.now());
 }
@@ -554,8 +553,8 @@ function parseCortesVehicleIdSequence_(value, context) {
     if (typeof value === "number") {
         sequence = value;
     } else {
-        const prefixed = /^V-(\\d{3,15})$/i.exec(raw);
-        const legacy = /^([1-9]\\d{0,14})$/.exec(raw);
+        const prefixed = /^V-(\d{3,15})$/i.exec(raw);
+        const legacy = /^([1-9]\d{0,14})$/.exec(raw);
         if (prefixed) sequence = Number(prefixed[1]);
         else if (legacy) sequence = Number(legacy[1]);
     }
@@ -1153,8 +1152,7 @@ function validateAddOrUpdateCutPayload_(payload, options) {
     const vehicleIdRaw = payload.vehicleId === undefined || payload.vehicleId === null || payload.vehicleId === "" ? "" : String(payload.vehicleId).trim();
     let vehicleId = null;
     if (vehicleIdRaw) {
-        if (!/^[1-9]\d{0,14}$/.test(vehicleIdRaw) || !Number.isSafeInteger(Number(vehicleIdRaw))) throw new Error("El ID del vehículo debe ser un entero positivo válido.");
-        vehicleId = vehicleIdRaw;
+        vehicleId = normalizeCortesVehicleId_(vehicleIdRaw, "Solicitud addOrUpdateCut");
     }
     if (!isAddCutPlainObject_(payload.cutData)) throw new Error("Los datos del corte son requeridos y deben tener una estructura válida.");
     const cut = payload.cutData;
@@ -2734,10 +2732,11 @@ function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentV
 function appendVehicleContributionEvent_(options) {
     options = options && typeof options === "object" ? options : {};
     const vehicleId = String(options.vehicleId || "").trim();
+    const canonicalVehicleId = normalizeCortesVehicleId_(vehicleId, "Aporte append-only");
     const opId = String(options.opId || "").trim();
     const kind = String(options.kind || "").trim().toLowerCase();
     const payload = options.payload;
-    if (!/^[1-9]\d{0,14}$/.test(vehicleId)) throw new Error("El aporte requiere un vehicleId válido.");
+    
     if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(opId)) throw new Error("El aporte requiere un opId válido.");
     if (!["cut", "opening", "feed", "vehicle", "vehicle_update"].includes(kind)) throw new Error("El tipo de aporte no está permitido.");
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("El payload del aporte debe ser un objeto.");
@@ -2770,7 +2769,7 @@ function appendVehicleContributionEvent_(options) {
     const eventId = "EV-" + String(Utilities.getUuid()).replace(/-/g, "");
     const createdAt = new Date().toISOString();
     const row = [
-        eventId, opId, vehicleId, operationHash, kind, payloadJson,
+        eventId, opId, canonicalVehicleId, operationHash, kind, payloadJson,
         String(options.actorId || ""), String(options.actorName || ""),
         createdAt, String(options.status || "accepted"), String(options.supersedesEventId || "")
     ];
@@ -2786,7 +2785,7 @@ function appendVehicleContributionEvent_(options) {
     }
     const rowIndex = eventMatches[0].getRow();
     const saved = sheet.getRange(rowIndex, 1, 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues()[0];
-    if (String(saved[1]) !== opId || String(saved[2]) !== vehicleId ||
+    if (String(saved[1]) !== opId || !sameCortesVehicleId_(saved[2], canonicalVehicleId) ||
         String(saved[3]).toLowerCase() !== operationHash || String(saved[4]).toLowerCase() !== kind ||
         String(saved[5]) !== payloadJson) {
         const mismatch = new Error("El evento append-only no coincide con el contenido enviado; requiere revisión.");
@@ -2795,7 +2794,7 @@ function appendVehicleContributionEvent_(options) {
     }
 
     const concurrent = findVehicleContributionEventsByOpId_(sheet, opId);
-    if (concurrent.some(entry => String(entry.values[2] || "") !== vehicleId ||
+    if (concurrent.some(entry => !sameCortesVehicleId_(entry.values[2], canonicalVehicleId) ||
         String(entry.values[3] || "").toLowerCase() !== operationHash ||
         String(entry.values[4] || "").toLowerCase() !== kind ||
         String(entry.values[5] || "") !== payloadJson)) {
