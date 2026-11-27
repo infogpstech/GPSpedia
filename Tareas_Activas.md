@@ -1405,3 +1405,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Eliminar backup después de revisión.
 - [ ] Registrar cierre/checkpoint tras validación estática.
 - No se modifica caché, carga/refresh, otras vistas ni APIs.
+
+- [x] Comparar diff con respaldo y revisar funciones afectadas.
+- [x] Eliminar backup después de revisión.
+- [x] Registrar cierre de implementación y revisión estática.
+- **Cierre:** delta exacto de 7 líneas eliminado; sin pruebas navegador/runtime ni validación remota.
