@@ -599,3 +599,6 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Auditoría, ChangesLogs y tareas registran alcance y hallazgos. Backup de HTML/ui/main en Olds/Backups aún pendiente de Code Review y eliminación.
 - Validación real de navegador, despliegue, POST y mutaciones remotas no realizadas. No se agregaron tests/workflows; Beta permanece cerrada.
 - Siguiente: revisión estática comparativa contra respaldos; confirmar handler de navegación/back y flujo add-corte→suplementarios→catálogo; cleanup backups tras revisión; documentar y commit.
+
+- Revisión adicional en etapa 3: si WRITE confirma aporte suplementario con vehicleId concordante, fallos de confirmación secundaria de eventos o cleanup local se registran en consola y no bloquean el redirect al catálogo.
+- Aportes desde modal de detalle: se eliminó la concatenación de alerta de cleanup pendiente al mensaje de éxito; postcommit refresh falla en consola sin alerta global extra. Notificaciones legítimas de éxito/candidato conservadas.
