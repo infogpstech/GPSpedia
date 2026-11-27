@@ -1677,3 +1677,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - AUTH ahora utiliza U- y 3 dígitos como fallback únicamente cuando no hay configuración central ni fórmulas históricas en Users.ID. Si hay fórmulas reconocibles, se sigue derivando el patrón desde ellas.
 - Diff exacto de Auth.js, parsing y harness aislado PASS: U-001/U-002 producen U-003; las protecciones de duplicados y formatos incompatibles siguen activas.
 - No se consultó la fórmula real de A2 ni se ejecutó Sheets/AUTH remoto. Validar la creación de un usuario de prueba autorizado en navegador conectado; no ejecutar deployment sin autorización separada.
+
+
+#### GP-ADMIN-DRIVE-REGISTRO-ERROR-03 — conservar diagnóstico de reintentos (2026-11-27)
+**Estado: HALLAZGO CONFIRMADO; IMPLEMENTACIÓN PENDIENTE.**
+
+- Nueva reproducción reportada después de la corrección GP-ADMIN-DRIVE-REGISTRO-ERROR-02: las imágenes siguen fallando al confirmar la escritura individual en Imagenes_Reemplazadas; el mensaje recibido no identifica columnas.
+- La fuente actual ya compara columnas y construye el detalle «Columnas discrepantes». Sin embargo, writeDriveInventoryRowVerified_() descarta silenciosamente readError en la lectura de reconciliación posterior al primer fallo (catch de readError vacío).
+- Próxima corrección: conservar firstError, readError y retryError con su etapa; diferenciar error de lectura, error de escritura y discrepancia de contenido; no exponer valores sensibles; mantener las verificaciones estrictas, reintento idempotente y bloqueo de organización hasta confirmación.
+- Dependencias auditadas parcialmente: writer, llamada desde handleSaveUnusedImagesInventory, wrapper withDriveAuditErrorContext_, construcción de lastUpdated y propagación a la consola frontend. Completar revisión de dependencias y riesgos antes de editar.
+- No se ejecutaron escrituras remotas ni despliegues. La fase Beta continúa cerrada; no crear suites ni archivos de prueba. Las pruebas locales permitidas deberán ser efímeras/en memoria.
+- GP-ADMIN-DRIVE-REGISTRO-ERROR-02 permanece con validación real pendiente; esta incidencia no declara resuelta la causa original.
