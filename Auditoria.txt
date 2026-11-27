@@ -807,3 +807,12 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Limitación: no se dispone de lectura autorizada/aislada de la Spreadsheet ni de una fila concreta para comprobar los datos del último registro. La duplicación tras borrado manual puede persistir si existe evento aceptado append-only en AportesVehiculo que vuelva a materializar el corte; no es posible atribuir el caso real a ese ledger sin inspección de datos.
 - Plan previo a cambios: (1) guardar respaldos exactos de ui.js y registros; (2) validar referencias físicas únicas al construir lista del modal, descartando una segunda referencia al mismo slot fuente sin deduplicar por contenido; (3) desempatar utilidades por índice físico; (4) simular slots vacíos, referencias repetidas, cortes distintos con contenido idéntico, orden por votos y empate; (5) revisar diff y documentar limitaciones/pendientes de inspección real.
 - Sin POST, escrituras remotas, Apps Script ni despliegues; Beta cerrada.
+
+
+2026-11-26 | GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — implementación y revisión
+- Implementación en JS/Frontend/ui.js: mostrarDetalleModal valida sourceCorteIndex de cada slot proyectado y omite referencias repetidas al mismo slot físico; no deduplica cortes distintos por contenido (pueden coincidir legítimamente). Ordena utilidad descendente y desempata por índice físico.
+- Se conserva lectura de campos e indicador testigo desde índice de proyección; el índice físico se mantiene para render/edit. Slots vacíos se omiten.
+- Simulaciones efímeras PASS: referencia física repetida se renderiza una vez; cortes físicamente distintos con contenido idéntico se mantienen; empate conserva orden físico; slot vacío se omite.
+- Code review de diff contra respaldo exacto: el cambio de código está delimitado al bloque de construcción/orden de cortes de mostrarDetalleModal; no se modificaron CATALOG, mapping, renderCutContent ni otros flujos.
+- Límite: sin Spreadsheet aislada/real disponible, no se pudo identificar el registro más reciente ni comprobar si un event accepted de AportesVehiculo recrea el corte eliminado manualmente. No se atribuye la duplicación real a una causa única.
+- No se ejecutaron Apps Script, POST, escrituras remotas, navegador, deployment ni pruebas Beta. No se agregaron suites/workflows. Backup retirado tras revisión.
