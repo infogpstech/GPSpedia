@@ -1783,3 +1783,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 — GP-CUT-DETAIL-PYS-STALE-NOTICE-01
 - `JS/Frontend/ui.js`, `renderPosiblesProblemasAccordion`: se retiró el párrafo de aviso de datos PyS posiblemente desactualizados que se mostraba dentro del modal de detalle del corte. No se modificó la lógica de cache ni carga de PyS.
+
+- Code review: comparación exacta contra respaldo; delta limitado al bloque del aviso (7 líneas). El resto de `renderPosiblesProblemasAccordion` y las demás referencias a frescura en otras vistas no fueron modificadas. Respaldo temporal eliminado.
