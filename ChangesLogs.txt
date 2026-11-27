@@ -1702,3 +1702,6 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Services/write.js`: liberación del lock del baseline protegida cuando el llamador ya posee el lock.
 - No se modificaron CATALOG, offline, formulario, modal ni contratos de servicios.
 - Commits: `994a4aeff118b7827962219f7c67a872940be866`, `21a2d1c5724111fca3550b3bf7b60d0459c0da49`.
+
+- `JS/Services/write.js`: la celda ID de la fila nueva recibe formato de texto plano (`@`) antes de guardar el identificador estático.
+- Commit adicional: `f50ed98c2b890ed0b91aff46af3a90ab99c37bc5`.
