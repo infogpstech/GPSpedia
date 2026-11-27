@@ -938,7 +938,7 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request, options) {
     }
 }
 
-/** Endpoint autenticado de asignación; el ledger append-only determina la secuencia sin ScriptLock. */
+/** Endpoint autenticado; el ledger append-only conserva reservas estáticas bajo ScriptLock. */
 function handleAllocateVehicleId(payload) {
     assertDeveloperForIdMaintenance(payload);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
@@ -1622,7 +1622,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
 
         newId = vehicleId;
 
-    } else { // --- Alta nueva: ID V-### reservado y estático; no hereda fórmula de la fila anterior. ---
+    } else { // --- Alta nueva: ID V-00000 estático; la secuencia puede crecer más allá de cinco dígitos. ---
         if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
 
         var entities = getExistingEntities(sheet);
@@ -1662,7 +1662,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
         SpreadsheetApp.flush();
 
-        // El ID ya está reservado de forma append-only y no se reutiliza si falla la fila.
+        // El ID queda reservado como valor estático y no se reutiliza si falla la fila.
         sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
         SpreadsheetApp.flush();
         if (!sameCortesVehicleId_(sheet.getRange(rowIndex, COLS_CORTES.id).getValue(), newId)) {
