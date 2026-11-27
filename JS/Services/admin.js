@@ -14274,7 +14274,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
         const row = rows[r];
         if (String(row[column("origen_registro")] || "") !== "auditoria_drive") continue;
         try {
-            const fileId = getReplacedImageRecordIdentity_(row, headers, true);
+            const fileId = getReplacedImageRecordIdentity_(row, headers, false);
             identityByRow.set(r + 1, fileId);
             driveRowCounts.set(fileId, (driveRowCounts.get(fileId) || 0) + 1);
         } catch (identityError) {}
@@ -14367,6 +14367,7 @@ function handleReconcileExistingDriveInventory_(payload, logMessage, developerCo
             pendingRevalidationCount++;
         }
         set("referencias_catalogo_json", JSON.stringify(normalizedLocations));
+        set("url_visualizacion", buildVerifiedDriveVisualizationUrl_(fileId));
         const association = associationByFileId.get(fileId);
         if (association) {
             set("asociacion_estado", association.status);
