@@ -1039,3 +1039,8 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 ## Continuidad — ampliación del extractor de referencias Drive (2026-11-27)
 - Se amplió `extractDriveFileIds()` para variantes thumbnail/thumb, URL googleusercontent y parámetros id/docid/fileid, manteniendo normalización HTML/encoding. Se versionó a `drive-audit-reference-normalization-v3-thumbnail-urls`.
 - Aún no se ejecutaron pruebas aisladas/parsing completo ni validación de referencia real en Sheets/Drive; sin deployment ni cambios a rama protegida.
+
+
+## Continuidad — ampliación extractor thumbnail (2026-11-27)
+- Prueba aislada de siete variantes de referencia (thumbnail query con sz, ruta thumbnail con s, googleusercontent con sufijo tamaño, file/d, docs document/d, docid y fileid): 7/7 PASS. Escape de regex corregido durante la prueba.
+- No se dispone de parser completo ni runtime Sheets/Drive/navegador. No deployment ni mutaciones remotas; Beta sigue cerrada.
