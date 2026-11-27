@@ -712,3 +712,46 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - La única llamada document.write localizada en ui.js genera el documento estático de impresión y no contiene script tags ni URLs externas. La advertencia parser-blocking de HtmlService no se atribuye a esta llamada; se deja sin modificar el runtime externo.
 - Respaldo exacto de HTML/users.html antes del cambio: 45e8bcda8fae52dffa027c4f0b21a83f8dd3a70c.
 - Sin navegador/Network; la desaparición del 404 y la fuente exacta de la advertencia siguen pendientes de confirmación.
+
+
+## Continuidad — GP-ADMIN-DRIVE-UNUSED-IMAGES-03 (2026-11-27)
+
+### Estado Git y normativa
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo: GPSpedia2.2.5_work. Rama protegida GPSpedia2.2.5 no modificada; todas las escrituras se dirigieron explícitamente a la rama de trabajo.
+- Comparación GitHub base GPSpedia2.2.5 → GPSpedia2.2.5_work: status ahead, behind_by 0. No se hizo checkout ni escritura sobre la rama base.
+- NORMAS_DESAROLLO.md, README.md, checkpoint.md, Tareas_Activas.md, Tareas_Beta.md, Auditoria.txt y PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md consultados. contexto_personal.md no existe en esta rama (404).
+- Beta continúa cerrada. Sin POST, Apps Script remoto, Drive/Spreadsheet real, operaciones mutables ni deployment.
+
+### Hallazgos y correcciones aplicadas
+1. **LogosMarca:** collectCatalogImageReferences() incorpora SHEET_NAMES.LOGOS_MARCA como fuente obligatoria. collectLogoSheetImageReferences_() lee la columna 3 (URL según handleAddLogo), reconoce URL/fórmula/rich text/CellImage, valida encabezado ID y registra hoja/fila/columna/marca. Las ubicaciones de LogosMarca se conservan en el snapshot y metadatos. Si falta la hoja o su encabezado ID es inválido, la auditoría falla de forma cerrada y no clasifica archivos.
+2. **Registro incremental automático:** validateDriveAuditInventoryBatch_() ya no bloquea todos los candidatos por state.errorCount global. Un error aislado al leer otro archivo no impide registrar una imagen cuya referencia, ID y metadatos fueron verificados. unverifiableReferenceCount > 0 sigue bloqueando registro. validateCompletedDriveAudit_(), reconciliación y organización mantienen el requisito de auditoría íntegra sin errores.
+3. **UI parcial/reintentos:** las tarjetas y controles permiten reintentar cuando la auditoría terminó con errores aislados pero no hay referencias no interpretables. El estado final se marca partial cuando hay candidatos; se conservan confirmaciones individuales. Organización y consolidación global siguen bloqueadas si la auditoría no es íntegra.
+4. **Reinicio:** nuevo botón «Reiniciar escaneo». Requiere confirmación Developer, limpia IndexedDB de la cuenta actual y ejecuta runAudit(false) para crear auditId nuevo. No borra filas de Imagenes_Reemplazadas ni archivos Drive. Advierte que una solicitud activa en otra pestaña no se cancela automáticamente.
+5. **Diagnóstico:** errores de ID/metadatos y fechas opcionales se envían a logs; errores de asociación, inventario individual y handlers generales incluyen fase/código/detalle. Resultados individuales incluyen errorCode/errorStage.
+6. **FindOrCreate:** se verificaron getOrCreateReplacedImagesSheet() y ensureReplacedImagesInventoryColumns(). La primera crea Imagenes_Reemplazadas y sus encabezados base; la segunda agrega columnas requeridas y valida duplicados/esquema/persistencia. No se duplicó el helper; los esquemas incompatibles se rechazan sin sobrescribir.
+7. **Compatibilidad:** DRIVE_AUDIT_SCAN_VERSION_ = drive-audit-logosmarca-v1 reemplaza la versión en curso de scanner, cursor, latest, validadores, organizer y reconciliation; invalida cursores/snapshots anteriores que omitían LogosMarca. ADMIN_SERVICE_VERSION permanece 2.7.2.
+
+### Archivos y respaldos
+- Modificados: JS/Services/admin.js, JS/Frontend/ui.js, index.html.
+- Respaldos exactos previos: Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/admin.js.backup (blob SHA original 00d57dbe17544048a4d8acb37da150dcdbb8746e), ui.js.backup (396bba54602fc23cbde41122dbc50691af342e7b), index.html.backup (e9fa0e046a29c2870ff140813ef845743a6020f5). Los SHA de backup se comprobaron idénticos a los archivos fuente previos.
+- Registros actualizados: Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md, PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md y este checkpoint.
+
+### Commits principales
+- Auditoría previa: b59bcdd123f10dd4ac82062120dd99fcfe373971.
+- Tarea/backlog: 08e25daaf638fd5af2bc7b305ea62aad8d43af32; cierre de estado: dfd582726a42e7cb2e25a8f6c08a1c859c924bde.
+- Respaldos exactos: 581eb709d27a045ef7ee89577a9ac14a067b9189, 2040d28eb13d4695f4ad1bcd0ce8de23a6c8990b, 1027edaa6aa5f1b002992d530d7fd15083733dec.
+- Código: 69cded25f80dead70bd1c6da9a336debf50a8289, 6ef82da34832cb097d05d183ed1babfbba50709c, 3d620a59c54ea1c6ceb9d6baa504440d71e4204d, 653b473c37965f704fd9392435db295373d2a16b, d2f0a799c98bd789b9917a64fd713b2e05d34a79, 448f08fd05c6be48a553ed3314f02536ff97689a, 77566aa0d3c1c60671955fb45bed782a0124f511, 3f5e23ea2b2a48ff8e42d85c508da71d1a386a7b, 2b5b275813306efe8980578089e04d995c47078a.
+- Documentación: 9829732f5748daa19ac5d51b597c33b65bcf68af, 7370365e44379ae99dff4fe712875dc41a81f6f2, b1b8c0e965c86fdfe1d18aa4c71737facda79c5d.
+- HEAD antes de este checkpoint: b1b8c0e965c86fdfe1d18aa4c71737facda79c5d.
+
+### Verificación realizada
+- PASS estático: allowlist y collector LogosMarca; columna URL; hoja obligatoria; ubicaciones; versión nueva de scan; validador incremental no bloquea por errorCount aislado; referencias no interpretables siguen bloqueando; validación final conserva barreras; errorCode/errorStage; FindOrCreate; reinicio local y botón HTML único.
+- PASS: balance de delimitadores en JS/Services/admin.js y JS/Frontend/ui.js; ID HTML de reinicio único; diff de commits inspeccionado; respaldos exactos verificados.
+- No se ejecutó parser JavaScript completo ni harness runtime. No hay evidencia todavía de la estructura real de LogosMarca ni de su contenido real.
+
+### Siguiente paso obligatorio
+1. Crear/ejecutar harnesses aislados con mocks/fixtures para URL directa, fórmula, rich text y CellImage en LogosMarca; hoja ausente/ID inválido; archivo A con error y archivo B verificable; referencias no interpretables; reintento/idempotencia y lectura posterior de la fila; reinicio de IndexedDB/auditId.
+2. Revisar diff completo contra respaldos y probar UI en navegador escritorio/móvil, manteniendo el diseño actual de las pestañas.
+3. Solo en Beta autorizada, validar que la hoja real LogosMarca tiene ID en A y URL de logo en C, probar registro real controlado y comprobar filas/estados. No desplegar Apps Script hasta autorización explícita.
+4. Mantener GP-ADMIN-DRIVE-UNUSED-IMAGES-03 abierta hasta terminar los puntos anteriores.
