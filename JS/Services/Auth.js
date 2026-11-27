@@ -3321,12 +3321,27 @@ function normalizeUserProfileUpdates_(updates) {
     const keys = Object.keys(updates);
     if (!keys.length) throw new Error('No se recibieron campos para actualizar.');
     keys.forEach(key => {
-        if (key !== 'Nombre_Completo') throw new Error("El campo '" + key + "' no está permitido en la actualización del perfil.");
+        if (key !== 'Nombre_Completo' && key !== 'Correo_Electronico') {
+            throw new Error("El campo '" + key + "' no está permitido en la actualización del perfil.");
+        }
     });
-    if (typeof updates.Nombre_Completo !== 'string') throw new Error('El nombre completo debe ser texto.');
-    const fullName = updates.Nombre_Completo.trim();
-    if (!fullName || fullName.length > 120) throw new Error('El nombre completo debe contener entre 1 y 120 caracteres.');
-    return { Nombre_Completo: fullName };
+    const normalized = {};
+    if (Object.prototype.hasOwnProperty.call(updates, 'Nombre_Completo')) {
+        if (typeof updates.Nombre_Completo !== 'string') throw new Error('El nombre completo debe ser texto.');
+        const fullName = updates.Nombre_Completo.trim();
+        if (!fullName || fullName.length > 120) throw new Error('El nombre completo debe contener entre 1 y 120 caracteres.');
+        normalized.Nombre_Completo = fullName;
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, 'Correo_Electronico')) {
+        if (typeof updates.Correo_Electronico !== 'string') throw new Error('El correo electrónico debe ser texto.');
+        const email = updates.Correo_Electronico.trim();
+        if (email.length > 254) throw new Error('El correo electrónico no puede superar 254 caracteres.');
+        if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+            throw new Error('El correo electrónico no tiene un formato válido.');
+        }
+        normalized.Correo_Electronico = email;
+    }
+    return normalized;
 }
 
 function findUniqueUserRow_(userSheet, userId) {
@@ -3412,6 +3427,31 @@ function writeUserProfileNameNonBlocking_(userSheet, rowIndex, fullName) {
     return true;
 }
 
+function writeUserProfileEmailNonBlocking_(userSheet, rowIndex, email) {
+    const cell = userSheet.getRange(rowIndex, COLS_USERS.Correo_Electronico);
+    let writeError = null;
+    try {
+        cell.setValue(email);
+        SpreadsheetApp.flush();
+    } catch (error) {
+        writeError = error;
+    }
+
+    let persisted;
+    try {
+        const rawPersisted = cell.getValue();
+        persisted = String(rawPersisted === null || rawPersisted === undefined ? "" : rawPersisted);
+    } catch (readError) {
+        throw new Error((writeError && writeError.message ? writeError.message : "No se pudo confirmar el correo electrónico.") +
+            " No fue posible verificar el valor persistido.");
+    }
+    if (persisted !== email) {
+        throw new Error((writeError && writeError.message ? writeError.message + " " : "") +
+            "La actualización del correo no quedó confirmada; consulta el perfil antes de volver a intentarlo.");
+    }
+    return true;
+}
+
 function handleCreateUser(payload) {
     const { newUser, sessionToken } = payload || {};
     if (!newUser || typeof sessionToken !== 'string' || !sessionToken.trim()) {
@@ -3476,7 +3516,12 @@ function handleUpdateProfile(payload) {
     if (!userSheet) throw new Error('Hoja de usuarios no encontrada.');
     const rowIndex = userRowIndex;
     if (!Number.isInteger(rowIndex) || rowIndex < 2) throw new Error('No se pudo confirmar la fila del perfil autenticado.');
-    writeUserProfileNameNonBlocking_(userSheet, rowIndex, updates.Nombre_Completo);
+    if (Object.prototype.hasOwnProperty.call(updates, 'Correo_Electronico')) {
+        writeUserProfileEmailNonBlocking_(userSheet, rowIndex, updates.Correo_Electronico);
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, 'Nombre_Completo')) {
+        writeUserProfileNameNonBlocking_(userSheet, rowIndex, updates.Nombre_Completo);
+    }
     return { status: 'success', message: 'Perfil actualizado correctamente.' };
 }
 
