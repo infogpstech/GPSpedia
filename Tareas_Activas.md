@@ -1178,3 +1178,22 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Actualizar `README.md` para reflejar las rutas reales `HTML/add_cortes.html` y `HTML/users.html`; comparación contra respaldo confirma solo esas dos rutas.
 
 - [x] Code Review completado y respaldos temporales retirados tras comparar cada archivo. Commits de limpieza: `dcbaab71e7bf09392ca9ecb3cd3c738569ae0912`, `dea98bc95a7cffa161df48badc415bd22f165608`, `4e9141413067e05b157b4b76d3997d16b8cca36e`.
+
+
+## GP-CUT-FUNCTIONAL-AUDIT-04 — Auditoría integral y correcciones del formulario (2026-11-26)
+
+- [x] Releer las normas y revisar el formulario completo, disparadores, avisos, validaciones, estado, persistencia y recuperación.
+- [x] Revisar `api-config.js`: endpoint map, validación de URLs, transporte iframe, parsing de respuestas, errores y telemetría.
+- [x] Revisar `write.js`: router POST, actor compartido, checkOperation, validación, fingerprint, reserva de ID, ScriptLock, rollback y ledger append-only.
+- [x] Registrar F-11 a F-20 en `Auditoria.txt` antes de editar.
+- [x] Respaldar los archivos antes de editar en `Olds/Backups/GP-CUT-FUNCTIONAL-AUDIT-04-20261126/`.
+- [x] Corregir `showConciseAlert_()` para mostrar el mensaje real en lugar de descartarlo.
+- [x] Corregir recuperación silenciosa para que `checkOperation` use WRITE.
+- [x] Ampliar allowlist de códigos internos en `diagnosticLogger.js` sin añadir payloads ni secretos.
+- [x] Incrementar caché PWA a v83.
+- [x] Pruebas de contrato: endpoints locales formato/unicidad PASS; mapa checkOperation/addOrUpdateCut a WRITE PASS; canonicalización cliente/servidor en fixtures nuevo/existente PASS; comparación de archivos contra respaldos PASS.
+- [ ] Ejecutar health GET-only sobre los IDs actuales de `API_ENDPOINTS`; el último health disponible probó IDs anteriores.
+- [ ] Confirmar que el dominio/móvil sirve el HEAD de trabajo y ejecutar IndexedDB real y alta controlada para vehículo nuevo y existente.
+- [ ] Probar recuperación de operación silenciosa y reintento sin duplicados con dataset/identidad aislados.
+- Limitación: no se ejecutaron POST de Apps Script, escrituras en Sheets/Drive ni pruebas reales de navegador/IndexedDB. No se recrearon suites eliminadas por solicitud anterior.
+- Commits: `7483a76f912ac27cd1c6133df7a67aa0b7f55f30`, `1d8b0a30f2c4f45a937def2342307f86d65ca113`, `8e8994d573d4ba6caa1421f1e3308e583b6837d1`.
