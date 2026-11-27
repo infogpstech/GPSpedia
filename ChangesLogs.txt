@@ -1854,3 +1854,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Respaldos exactos: Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/{admin.js.backup,ui.js.backup,index.html.backup}; cada blob coincide con el SHA de la fuente previa a edición.
 - Validación: invariantes estáticos PASS; balance de delimitadores JS PASS para admin.js/ui.js; botón reset único en HTML; diff de commits revisado. No se ejecutaron pruebas runtime, navegador, POST, Apps Script remoto, Drive/Spreadsheet ni deployment.
 - Commits de código principales: 69cded25f80dead70bd1c6da9a336debf50a8289; 6ef82da34832cb097d05d183ed1babfbba50709c; 3d620a59c54ea1c6ceb9d6baa504440d71e4204d; d2f0a799c98bd789b9917a64fd713b2e05d34a79; 77566aa0d3c1c60671955fb45bed782a0124f511; 3f5e23ea2b2a48ff8e42d85c508da71d1a386a7b; 2b5b275813306efe8980578089e04d995c47078a.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — trazas de errores y verificación final estática
+- JS/Services/admin.js: helper getDriveAuditErrorTrace_() añade marcos de función al mensaje de errores generales y por archivo; respuesta ADMIN expone details, stage, code y logs. Los errores de ID/metadatos también incluyen trazas cuando Apps Script las proporciona.
+- Verificación estática final: 17/17 invariantes PASS; delimitadores JS balanceados en admin.js/ui.js; ID del botón de reinicio único; respaldos exactos PASS. Simulación lógica de formatos URL de Drive y separación entre registro individual y consolidación global: 19/19 PASS en la revisión anterior.
+- No parser JS completo, runtime, harness Apps Script, navegador, Drive/Spreadsheet real, POST ni deployment. Beta sigue cerrada.
+- Commits de trazas: 4b8f0582a5a6c03870cb7f8ee71152d7cedf3d2a, e3eaa6e6d11e05f3a5bf4b81e1fe97863515c2e6.
