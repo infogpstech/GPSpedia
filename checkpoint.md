@@ -875,3 +875,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - `finishConfirmedCutTransition_()` intenta completar la transición antes de mostrar el alert y no marca el opId como transicionado si la rutina falla. La alerta de éxito queda posterior al avance, evitando que un fallo de configuración auxiliar deje la Etapa 2 como destino.
 - Se conserva el opId y el guardado/idempotencia de WRITE. Se registran errores de transición.
 - Revisión estática del bloque: PASS (transición prioritaria y referencias opcionales protegidas). Prueba real de navegador/formulario pendiente; no se ejecutó Apps Script ni deployment.
+
+
+### GP-ADMIN-DRIVE-REGISTRO-ERROR-01 — diagnóstico del registro incremental (2026-11-27)
+- En el frontend, el catch de registro incremental ahora emite `console.error` con contexto estructurado: subsistema/acción/etapa, auditId, lote/offset, IDs, nombre/mensaje/código y stack del error.
+- El diagnóstico también se agrega al registro técnico de auditoría para que el fallo de lote no se reduzca a la alerta amarilla genérica.
+- Commit `261b7c4`. Revisión estática; aún falta reproducir el error real en navegador conectado a Apps Script/Drive/Sheets para determinar la causa raíz.
