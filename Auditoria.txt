@@ -979,3 +979,12 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Se ejecutó la función real clearDriveAuditState de offline.js con localStorage y transacción IndexedDB simulados. PASS 1/1: elimina estado/latest/meta/page/confirmed de userA, conserva las claves de userB y el inventario persistente, elimina el marcador pendiente y aumenta la generación de 7 a 8.
 - La ejecución sigue siendo simulada: no equivale a Apps Script real ni a IndexedDB de navegador. La validación visual escritorio/móvil continúa pendiente.
 - No se modificó código funcional ni se crearon archivos/suites de prueba. La fase Beta permanece cerrada.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — revisión estática de diff y Code Review
+
+- Comparación GitHub desde el commit de auditoría inicial b59bcdd123f10dd4ac82062120dd99fcfe373971 hasta el HEAD funcional previo c08c82236cc9543dc9cb1a990860663ea79bfc01: cambios funcionales limitados a JS/Services/admin.js (+171/-32), JS/Frontend/ui.js (+45/-6) e index.html (+1). El resto corresponde a auditoría, changelog, plan, tareas y respaldos.
+- Se inspeccionaron los parches de los commits de implementación de GP-ADMIN-DRIVE-UNUSED-IMAGES-03 y se contrastaron los respaldos exactos de admin.js, ui.js e index.html. Los SHA de los tres respaldos coinciden con los SHA originales registrados (admin 00d57dbe17544048a4d8acb37da150dcdbb8746e; ui 396bba54602fc23cbde41122dbc50691af342e7b; index e9fa0e046a29c2870ff140813ef845743a6020f5).
+- La revisión focal confirmó que LogosMarca es obligatoria para clasificar; errores de lectura aislados no detienen el procesamiento individual; las referencias no interpretables bloquean; la consolidación global exige auditoría íntegra; las tarjetas filtran clasificación exacta y los controles de pestañas mantienen selección/transición existentes.
+- No se identificaron cambios funcionales fuera del alcance en los parches inspeccionados. No se editó código durante esta revisión.
+- Límite: el diff de código se revisó estáticamente; no se pudo hacer revisión visual en navegador. Apps Script/Drive/Sheets reales y deployment no se ejecutaron. La tarea permanece abierta hasta la validación visual disponible; Beta sigue cerrada.
