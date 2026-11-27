@@ -1988,3 +1988,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - No se modificaron api-config.js, el mapeo AUTH, los controles RBAC, caché, renderizado, estilos ni acciones de escritura.
 - La auditoría estática de las demás llamadas de gestión detectó contratos distintos; no se cambiaron sin confirmar la firma del servicio AUTH remoto.
 - Parsing del módulo inline PASS; harness aislado de fetchUsers confirmó que getUsers recibe userId y sessionToken. No se ejecutó navegador ni servicio AUTH real; validación integrada pendiente.
+
+2026-11-27 | GP-USERS-SESSION-CONTEXT-01 — Code Review y limpieza
+- Diff de HTML/users.html comparado con el respaldo exacto: única modificación en el payload de getUsers; se agregó userId desde sessionSnapshot.id y se conservó sessionToken desde el mismo snapshot.
+- Code Review estático PASS: no hay cambios en permisos, roles, renderizado, caché, estilos, controles de sesión ni api-config.js.
+- Parsing del módulo inline PASS; harness aislado de fetchUsers comprobó que la solicitud getUsers contiene ambos campos.
+- Los cinco respaldos temporales fueron eliminados tras revisión; blobs originales verificados antes de su eliminación.
+- La validación integrada en navegador/AUTH real queda pendiente; no se ejecutó POST ni se reabrió Beta.
