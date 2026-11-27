@@ -1309,5 +1309,5 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 
 ### Cierre de implementación — GP-CUT-SAME-ROW-08
 - Commits: `8809015aa41e2d55064eedeb056a21588a90fe10` (materialización de aportes y recuperación) y `773312621da5bceb6ad5bad7cdd94ea06286bb49` (reconciliación VIN, reemplazo seguro de snapshot completado y caché v89).
-- HEAD actual: `773312621da5bceb6ad5bad7cdd94ea06286bb49`. PR #128 continúa abierto y mergeable hacia `GPSpedia2.2.5`.
+- Último commit de implementación: `773312621da5bceb6ad5bad7cdd94ea06286bb49`; el cierre documental se registró en commits posteriores. PR #128 continúa abierto y mergeable hacia `GPSpedia2.2.5`.
 - Pendiente exclusivamente: despliegue autorizado de WRITE/CATALOG y validación integrada en Spreadsheet/Drive aislado; comprobar también el navegador/IndexedDB. No declarar producción validada antes de esas pruebas.

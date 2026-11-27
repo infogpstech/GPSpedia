@@ -553,7 +553,7 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 ## Continuidad — GP-CUT-SAME-ROW-08 (2026-11-26)
 
 - Estado: implementación terminada en `GPSpedia2.2.5_work`; validaciones estáticas y simulaciones efímeras PASS. No desplegado ni validado contra Sheets/Drive reales.
-- Rama base protegida `GPSpedia2.2.5`: HEAD comprobado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. Rama de trabajo HEAD: `773312621da5bceb6ad5bad7cdd94ea06286bb49`. PR #128 abierto, mergeable.
+- Rama base protegida `GPSpedia2.2.5`: HEAD comprobado `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones. Último commit de implementación: `773312621da5bceb6ad5bad7cdd94ea06286bb49`. PR #128 abierto, mergeable.
 - Commits de implementación: `8809015aa41e2d55064eedeb056a21588a90fe10`; refinamiento `773312621da5bceb6ad5bad7cdd94ea06286bb49`. Respaldo previo: `d8b3e58005263d6f1e71e3b37449abcf893272c9` en `Olds/Backups/GP-CUT-SAME-ROW-08-20261126/`.
 - WRITE localiza una única fila física por vehicleId mediante `readSupplementaryVehicleSnapshot_()`/`findUniqueCortesVehicleRow_()`. Los aportes existentes no insertan filas en `Cortes`: corte, apertura, alimentación y VIN se materializan en columnas libres de esa fila; las escrituras verifican contenido y no sobrescriben celdas ocupadas. `AportesVehiculo` permanece como historial append-only e idempotente.
 - Corte materializa tipo, ubicación/detalle, color, configuración Relay, testigo, imagen y nombre del colaborador autenticado. VIN se escribe en la columna localizada por encabezado, con validación de duplicados/capacidad y replay. La reconciliación procesa eventos aceptados anteriores antes de asignar nuevos slots.
