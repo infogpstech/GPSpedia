@@ -101,7 +101,7 @@
 
 ### Prioridad P2 — GP-PWA-OFFLINE-ICONS-01: recursos visuales offline
 
-**Estado: PENDIENTE / BAJA.** El arranque offline frío y caliente quedó aprobado; permanece el fallo de carga de la hoja CSS Font Awesome CDN en desconexión fría, que puede dejar iconos sin estilo. Evaluar fallback local compatible sin afectar el arranque ni añadir dependencias innecesarias.
+**Estado: IMPLEMENTACIÓN FUENTE EN RAMA; validación de navegador/dispositivo pendiente.** El arranque offline frío y caliente quedó aprobado históricamente. Se incorporó un fallback CSS/JS local para iconos cuando Font Awesome CDN o sus fuentes no están disponibles; falta validar conectado y en desconexión fría/caliente.
 
 ### Prioridad P2 — GP-REPO-BRANCH-PROTECTION-01: protección de rama base
 
