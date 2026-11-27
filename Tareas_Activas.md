@@ -1410,3 +1410,11 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Eliminar backup después de revisión.
 - [x] Registrar cierre de implementación y revisión estática.
 - **Cierre:** delta exacto de 7 líneas eliminado; sin pruebas navegador/runtime ni validación remota.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Corrección de asociación estructurada
+- [x] Registrar el hallazgo de auditoría previo al código.
+- [x] Corregir asociación para exigir marca/modelo estructurados en directorio como señal principal; filename corroborado por marca/modelo como fallback.
+- [x] Incorporar contextos de versión, encendido y año en selección de registros y ambigüedad.
+- [x] Revisar diff contra backup exacto: prefijo y sufijo del archivo sin cambios; función de asociación delimitada.
+- [ ] Pruebas de ejecución aisladas y validación real de Drive/Sheets pendientes por limitaciones de entorno. No deployment ni mutaciones remotas.
