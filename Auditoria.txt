@@ -1181,3 +1181,19 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Contenido del bloque verificado: URL Drive exacta, estilo height:50px; width:auto; float:right; margin-left:10px;, etiqueta NOTA roja, texto exacto y orden antes de imagen del corte.
 - Safety & Side Effects: no se alteraron formularios, payloads, fingerprint, snapshot, WRITE, CATALOG, columnas de Sheets, CSS, estilos del modo edición ni comportamiento de otras secciones. No se modificó service-worker.js; scripts del mismo origen usan estrategia network-first.
 - Limitación: no se ejecutó navegador ni acceso autenticado a Drive/Sheets; por tanto, el DOM y la condición se validaron estáticamente/aisladamente, pero la carga real del recurso externo debe confirmarse tras publicar/actualizar la aplicación. La URL no se cambió porque fue proporcionada expresamente por el usuario.
+
+
+### F-52 — GP-USERS-CREATE-SESSION-CONTEXT-01 (2026-11-27)
+
+**Incidencia reportada:** al crear una cuenta desde HTML/users.html, AUTH responde `La sesión requiere userId y sessionToken` en la acción `createUser`.
+
+**Auditoría estática previa a cambios:**
+- HTML/users.html, handleUserFormSubmit(): captura submittingSession con userId derivado de currentUser.ID/currentUser.id y sessionToken derivado de currentUser.SessionToken; además verifica que la sesión actual y la almacenada sigan coincidiendo antes y después de la operación.
+- En la rama de creación, la llamada postToAction('createUser') enviaba newUser y sessionToken, pero omitía submittingSession.userId.
+- En JS/Frontend/api-config.js, createUser se enruta a AUTH y routeActionInternal_ serializa el payload sin agregar identidad automáticamente.
+- JS/Services/Auth.js, middleware doPost: createUser está dentro de las acciones que recuperan el actor mediante getCachedSharedSessionActor_(payload.userId, payload.sessionToken); sin userId no puede recuperar el contexto de sesión. handleCreateUser() consume posteriormente el actor confiable y aplica los roles permitidos.
+- La acción updateUser ya envía userId y sessionToken. Su userId corresponde al usuario objetivo y el backend separa el actor confiable (requesterUserId) del objetivo; no se modifica su contrato en esta corrección.
+- Alcance: agregar únicamente userId autenticado a la solicitud createUser, usando submittingSession.userId del snapshot validado. No cambiar el objeto newUser, la cuenta objetivo, roles, permisos, middleware, router ni backend.
+- No se ejecuta una mutación AUTH real ni deployment; la validación integrada requiere prueba posterior del usuario en navegador.
+
+**Corrección prevista:** ampliar el payload createUser con `userId: submittingSession.userId` y conservar el token del mismo snapshot.
