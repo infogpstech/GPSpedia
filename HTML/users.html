@@ -489,7 +489,10 @@ async function fetchUsers(options = {}) {
         }
     }
     try {
-        const result = await postToAction('getUsers', { sessionToken: sessionSnapshot.token });
+        const result = await postToAction('getUsers', {
+            userId: sessionSnapshot.id,
+            sessionToken: sessionSnapshot.token
+        });
         const stillSameSession = currentUser &&
             String(currentUser.ID || currentUser.id || '') === sessionSnapshot.id &&
             String(currentUser.SessionToken || '') === sessionSnapshot.token &&
