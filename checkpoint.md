@@ -881,3 +881,16 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - En el frontend, el catch de registro incremental ahora emite `console.error` con contexto estructurado: subsistema/acción/etapa, auditId, lote/offset, IDs, nombre/mensaje/código y stack del error.
 - El diagnóstico también se agrega al registro técnico de auditoría para que el fallo de lote no se reduzca a la alerta amarilla genérica.
 - Commit `261b7c4`. Revisión estática; aún falta reproducir el error real en navegador conectado a Apps Script/Drive/Sheets para determinar la causa raíz.
+
+
+## Continuidad — GP-ADMIN-DRIVE-REGISTRO-ERROR-02 (2026-11-27)
+
+- Repositorio: infogpstech/GPSpedia. Rama autorizada: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5 sin cambios.
+- Incidencia: ADMIN.saveUnusedImagesInventory fallaba en escritura/lectura de confirmación de Imagenes_Reemplazadas con IMAGE_INVENTORY_WRITE_FAILED y discrepancia genérica.
+- Hallazgo: writeDriveInventoryRowVerified_ comparaba fecha_modificacion_drive como texto aunque Sheets puede devolver un Date. La coerción real sigue sin comprobarse en la hoja remota.
+- Cambio: normalización específica Date→yyyy-MM-dd HH:mm:ss en GMT-6 y diagnóstico por nombre de columna; todas las verificaciones restantes y el bloqueo ante discrepancias se conservan.
+- Backup exacto admin.js: Olds/Backups/GP-ADMIN-DRIVE-REGISTRO-ERROR-02-20261127/admin.js.backup, SHA 163e167b6544a59966c40b3b825e6e5a3ffb72b5.
+- Commit auditoría: f097dd2fe635f7a8c543d929ed8b4f41fe14099f. Commit backup: bf8effa07c3e620bfa75e8757986b77f44c102f8. Commit código: 6d6adf87b8b620c6ba03e520ec46a4b7ab750ec1.
+- Pruebas efímeras en memoria: Date equivalente aceptada; Date no equivalente rechazada y diagnosticada; tamano_bytes no equivalente rechazada y diagnosticada (3/3 PASS). Parse completo admin.js PASS (15,539 líneas). Diff exacto contra backup: prefijo/sufijo idénticos, único bloque editado writeDriveInventoryRowVerified_.
+- No se ejecutó Apps Script, Google Drive/Sheets real, navegador, POST ni deployment. Beta permanece cerrada. No se crearon suites ni archivos de prueba.
+- Siguiente paso: Code Review final, validar branch head/base y dejar la tarea pendiente de reproducción remota autorizada. No organizar imágenes que no tengan confirmación de inventario.
