@@ -6,7 +6,7 @@
 // 1. CONFIGURACIÓN
 export const API_ENDPOINTS = Object.freeze({
     AUTH: "https://script.google.com/macros/s/AKfycbw9Z4NjtjBk8CYRA9OGcjxzR3D5QBxvS9i05k3lE-n2pnvZy9-w98G1vUCwxlDQ27XZZA/exec",
-    CATALOG: "https://script.google.com/macros/s/AKfycbwRVNQIRPPTj_787wBlavVXsYMoNlNJOwBRBKVKC6VFBVp-thjJyuTDYUSgu6sYerdc/exec",
+    CATALOG: "https://script.google.com/macros/s/AKfycbzv5Np8pvP8pAh2KFp2lrn9gMsY6ZQq166ziupnI2cTwFZiavTczJF9UnsiUxsteOeP/exec",
     WRITE: "https://script.google.com/macros/s/AKfycbxvGRxwrVLoviuHGCa5IdSmG_qSuP7a_WddJ3b5GZqUwbDjWzDayRgwVKrmFPkkohKYow/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbyV3Ug6bQyb1ph_h-9bfMxTDfadqgLbDy1qTllqBkMpZzK1RR7OGdjKVuVKhbKLeU1siA/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbz4o70pO45BHIFKCWyM3i3JtfVrYPUVzEEsCwdnn4GzFntcypt9R_7ottZ_yXgLUL5V/exec",
