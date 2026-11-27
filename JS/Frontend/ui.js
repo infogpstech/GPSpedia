@@ -3252,22 +3252,30 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     }
 
     const cortes = [];
+    const seenSourceCutSlots = new Set();
     for (let i = 1; i <= 3; i++) {
-        if (activeItem[`tipoCorte${i}`]) {
-            cortes.push({
-                index: Number(activeItem["sourceCorteIndex" + i]) || i,
-                tipo: activeItem[`tipoCorte${i}`],
-                ubicacion: activeItem[`ubicacionCorte${i}`],
-                colorCable: activeItem[`colorCableCorte${i}`],
-                configRelay: activeItem[`configRelay${i}`],
-                img: activeItem[`imgCorte${i}`],
-                util: parseInt(activeItem[`utilCorte${i}`] || 0),
-                activaTestigo: getActivaTestigoValue(activeItem, i),
-                colaborador: activeItem[`colaboradorCorte${i}`]
-            });
-        }
+        if (!String(activeItem[`tipoCorte${i}`] || "").trim()) continue;
+        const rawSourceIndex = activeItem["sourceCorteIndex" + i];
+        const sourceIndex = Number(rawSourceIndex);
+        const physicalIndex = Number.isInteger(sourceIndex) && sourceIndex >= 1 && sourceIndex <= 3 ? sourceIndex : i;
+        // Una referencia repetida al mismo slot físico no debe renderizarlo dos veces.
+        if (seenSourceCutSlots.has(physicalIndex)) continue;
+        seenSourceCutSlots.add(physicalIndex);
+        cortes.push({
+            index: physicalIndex,
+            projectionIndex: i,
+            tipo: activeItem[`tipoCorte${i}`],
+            ubicacion: activeItem[`ubicacionCorte${i}`],
+            colorCable: activeItem[`colorCableCorte${i}`],
+            configRelay: activeItem[`configRelay${i}`],
+            img: activeItem[`imgCorte${i}`],
+            util: Math.max(0, parseInt(activeItem[`utilCorte${i}`] || 0) || 0),
+            activaTestigo: getActivaTestigoValue(activeItem, i),
+            colaborador: activeItem[`colaboradorCorte${i}`]
+        });
     }
-    cortes.sort((a, b) => b.util - a.util);
+    // Útiles descendentes; empates conservan el orden físico original.
+    cortes.sort((a, b) => b.util - a.util || a.index - b.index);
 
     const recommendedCut = cortes.shift();
     if (recommendedCut) {
