@@ -2027,3 +2027,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | GP-USERS-ID-SEQUENCE-MISMATCH-01 — ID existente incompatible con formato configurado
 - AUTH rechaza createUser porque el valor de ID en Users fila 2 no coincide con el prefijo/secuencia configurados. La resolución se mantiene pendiente de confirmar el valor y fórmula de A2 y la fila de Users en __IdentifierSequenceConfig__. No se relajó la validación ni se modificaron IDs.
+
+
+2026-11-27 | GP-USERS-ID-SEQUENCE-MISMATCH-01
+- Archivo modificado: JS/Services/Auth.js, función getUserIdSequencePattern_(), bloque de fallback sin configuración central ni fórmulas históricas (aprox. línea 3179).
+- Cambio: prefijo predeterminado de IDs de Users de "USR-" a "U-" y relleno de 4 a 3 dígitos. Se conserva la derivación desde fórmulas históricas y el resto de validaciones.
+- Commit: 5e336153ea8bc791ab441d60e4e7ad323a744801.
