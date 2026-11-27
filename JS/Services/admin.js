@@ -58,14 +58,15 @@ function isAdminModalEditField_(fieldName){
  return ADMIN_MODAL_EDIT_FIELDS.has(field)||/^(tipoCorte|configRelay|ubicacionCorte|colorCableCorte)[1-3]$/.test(field);
 }
 function extractDriveFileIds(value) {
-    // Normaliza texto de celdas, HTML y URLs publicadas antes de comparar IDs de Drive.
+    // Normaliza URLs de Drive, HTML, miniaturas y variantes redimensionadas (sz, w, h, s).
+    // Los parámetros de tamaño no identifican otro recurso: se extrae el ID base.
     let source = String(value == null ? "" : value);
     const decodeHtmlEntities = text => String(text || "")
         .replace(/&amp;/gi, "&").replace(/&#0*38;/gi, "&").replace(/&#x0*26;/gi, "&")
         .replace(/&quot;/gi, '"').replace(/&#0*39;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
     source = decodeHtmlEntities(source).replace(/\\\//g, "/");
     let decoded = source;
-    for (let pass = 0; pass < 2; pass++) {
+    for (let pass = 0; pass < 3; pass++) {
         try { decoded = decodeURIComponent(decoded.replace(/\+/g, "%20")); }
         catch (decodeError) { break; }
         decoded = decodeHtmlEntities(decoded).replace(/\\\//g, "/");
@@ -73,8 +74,10 @@ function extractDriveFileIds(value) {
     const candidates = [source, decoded];
     const ids = new Set();
     const patterns = [
-        /[?&]id\s*=\s*["']?([a-zA-Z0-9_-]{20,})/gi,
-        /(?:\/d\/|\/file\/d\/|\/folders\/)([a-zA-Z0-9_-]{20,})/gi
+        /[?&](?:id|docid|fileid)\\s*=\\s*["']?([a-zA-Z0-9_-]{20,})/gi,
+        /(?:\\/d\\/|\\/file\\/d\\/|\\/folders\\/|\\/thumbnail\\/|\\/thumb\\/)([a-zA-Z0-9_-]{20,})/gi,
+        /(?:drive|docs)\\.google\\.com\\/(?:[^"'<>\\s]*?\\/)?(?:d|thumbnail)\\/([a-zA-Z0-9_-]{20,})/gi,
+        /googleusercontent\\.com\\/(?:[^"'<>\\s]*?\\/)?d\\/([a-zA-Z0-9_-]{20,})/gi
     ];
     candidates.forEach(text => {
         patterns.forEach(pattern => {
@@ -1289,7 +1292,7 @@ function clearAdminState(action) {
 /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
 const ADMIN_SERVICE_VERSION = "2.7.2";
 // Cambia cuando se modifica la captura/clasificación de referencias Drive; invalida cursores anteriores.
-const DRIVE_AUDIT_SCAN_VERSION_ = "drive-audit-reference-normalization-v2";
+const DRIVE_AUDIT_SCAN_VERSION_ = "drive-audit-reference-normalization-v3-thumbnail-urls";
 
 
 function gpsepediaTransportJsonpGet_(e, output) {
