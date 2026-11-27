@@ -755,3 +755,9 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Hallazgo estático: allow-list assertSupplementaryInfoPayloadKeys_ excluye __sharedSessionActor, que el wrapper de WRITE incorpora legítimamente después de validar sesión; el handler rechaza el payload antes de persistir. No se encontró evidencia de que el frontend genere el actor o IndexedDB sea causa inmediata.
 - Riesgo: permitir el campo sin conservar wrapper confiable podría aceptar claims manipulables. Corrección restringida a admitir la clave interna inyectada y mantener consumo exclusivo del actor de servidor; el alias de un guion bajo no será fuente de identidad.
 - Alcance: JS/Services/write.js (validación de claves); registros. Implementación tras respaldo exacto y comparación. Beta cerrada: no crear suites/workflows ni ejecutar escrituras remotas/deployment.
+
+
+2026-11-26 | GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01 — revisión posterior
+- Revisión del diff contra backup exacto: única modificación de código fue añadir las claves de actor interno a la allow-list de assertSupplementaryInfoPayloadKeys_.
+- Se verificó estáticamente que getAuthenticatedCollaborator consume solo __sharedSessionActor y conserva checks de identidad/userId, epoch y rol; el alias _sharedSessionActor no se utiliza como identidad. Las rutas de vídeo permanecen rechazadas.
+- Backup eliminado tras Code Review. Validación local estática PASS; sin navegador, Apps Script remoto, Sheets/Drive ni deployment. Beta cerrada, no se crearon suites.
