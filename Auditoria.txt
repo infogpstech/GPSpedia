@@ -785,3 +785,8 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Se auditó `submitSupplementaryModalOperation_` y `completeVehicleExpansionSave_` en JS/Frontend/ui.js. Confirmación WRITE ya era requisito y cleanup local se realizaba en best-effort, pero se concatenaba un mensaje secundario cuando cleanup fallaba; ese texto adicional es informativo y no altera el commit.
 - `completeVehicleExpansionSave_` notificaba error global al no refrescar catálogo después de commit; la confirmación WRITE debe permanecer visible y el fallo de proyección se debe registrar en consola, sin segunda alerta.
 - Se decidió preservar las notificaciones legítimas de éxito del aporte (apertura/alimentación) y candidaturas de revisión, eliminando exclusivamente la alerta de limpieza local y la alerta global de proyección postcommit.
+
+
+2026-11-26 | GP-ADD-CUT-WIZARD-UX-NAV-01 — hallazgo postcommit suplementario
+- En etapa 3, la validación de eventos suplementarios y cleanup local podían lanzar excepción después de respuesta WRITE success/vehicleId, impedir redirect al catálogo y mostrar mensaje de error genérico aunque el backend hubiera confirmado la operación.
+- Ajuste requerido: mantener validación de eventos y cleanup, pero registrarlos en consola si no confirman; tras respuesta WRITE success y concordancia vehicleId, no impedir retorno al catálogo por errores locales/evento secundario.
