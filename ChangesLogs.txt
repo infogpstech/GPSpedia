@@ -1883,3 +1883,12 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Tareas_Activas.md: registrada la revisión estática de diff como completada; revisión visual escritorio/móvil continúa pendiente.
 - PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md y checkpoint.md: actualizados con el resultado y la limitación de navegador.
 - No se modificó código funcional ni se ejecutaron servicios remotos.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — reconciliación histórica y asociaciones
+- JS/Services/admin.js, líneas 14243–14424: añadido handleReconcileExistingDriveInventory_() con paginación, comparación de referencias activas, verificación de asociaciones y escritura confirmada de filas existentes; agregado mode="reconcile_existing" al handler saveUnusedImagesInventory. No elimina registros ni archivos.
+- JS/Services/admin.js, líneas 14425–14800 aprox.: la consolidación lee ubicaciones de referencia, genera asociaciones para archivos nuevos y filas históricas, actualiza registros referenciados a en_uso y deja como no_confirmada las filas ausentes del lote completo; distingue en_uso automático y manual.
+- JS/Services/admin.js, líneas 15264–15270 aprox.: la captura del historial no trata el marcador referencia_activa_catalogo como protección manual permanente.
+- JS/Frontend/ui.js, líneas 10231–10280: el botón de reinicio ejecuta reconciliación previa paginada antes de limpiar el progreso local; el mensaje de confirmación indica que no se borran filas ni archivos.
+- JS/Frontend/ui.js, líneas 10116–10190 aprox.: la consolidación final también se ejecuta cuando la auditoría completa no encuentra imágenes sin uso, para reconciliar registros anteriores.
+- La escritura incremental automática por lote existente se conserva. No se modificaron CSS, HTML ni estilos de pestañas.
