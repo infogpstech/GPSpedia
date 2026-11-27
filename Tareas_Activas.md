@@ -1261,3 +1261,28 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Cubrir la primera alta cuando `Cortes` solo contiene encabezados: crear fila 2 y copiar validaciones/formato de la plantilla desplazada. Commit: `5fd150497861893f7762c6616cd61b2e8781451c`.
 
 - [x] Simular las rutas de inserción con registros existentes, solo encabezados y hoja con una fila inicial; copia de formato/validaciones PASS en los tres escenarios.
+
+
+## GP-CUT-ID-CROSS-SERVICE-07 — compatibilidad de todos los servicios con V-00000 (2026-11-26)
+
+**Estado: CÓDIGO ADAPTADO Y CODE REVIEW COMPLETADO; DESPLIEGUE/VALIDACIÓN REMOTA PENDIENTE.**
+
+- [x] Auditar todos los servicios backend: WRITE, CATALOG, FEEDBACK, ADMIN, Auth, Utilities, CentralConfigurationReader, InboxConversations y SharedSessionActor.
+- [x] Revisar consumidores frontend relevantes: offline, UI/modal, formulario de alta y api-config.
+- [x] Registrar incompatibilidades y respaldar CATALOG, FEEDBACK y ADMIN antes de editar.
+- [x] CATALOG: canonicalizar IDs a cinco dígitos, conservar extensión y normalizar FeedbackLikes.
+- [x] FEEDBACK: adaptar validadores de útiles y años; búsqueda/conteo/migración de FeedbackLikes; aplicaciones y eventos de año; reportes, Inbox, sugerencias de corte y asociaciones PyS.
+- [x] ADMIN: adaptar auditoría de referencias de vehículos para IDs prefijados y legacy.
+- [x] Mantener WRITE: su secuencia interna de reservas permanece numérica; el ID público se genera y guarda como texto por WRITE.
+- [x] Mantener sin cambios los servicios que no consumen ni convierten vehicleId; el frontend ya acepta IDs con prefijo y los trata como texto.
+- [x] Pruebas sintácticas V8: 5/5 servicios PASS.
+- [x] Fixtures: V-00001, V-99999, V-100000, V-001, números históricos, inválidos, útiles/contadores, reintentos/aliases, sugerencias de año, proyección AportesVehiculo, Inbox, PyS y auditoría ADMIN: PASS.
+- [x] Code Review frente a respaldos; corregir el hallazgo de orden de declaración en parseReportMetadata y repetir pruebas.
+- [ ] Desplegar CATALOG, FEEDBACK y ADMIN actualizados en los endpoints Apps Script activos; confirmar health/version.
+- [ ] Completar despliegue/health de WRITE y CATALOG de GP-CUT-ID-SEQUENCE-06.
+- [ ] Prueba integrada controlada: lectura de vehículo V-00001 y V-100000, útiles desde dos cuentas, consulta de útiles propios, sugerencia de año, reportes/Inbox, asociación PyS y auditoría de referencias.
+- [ ] Confirmar que no se crean filas duplicadas en FeedbackLikes al alternar representaciones legacy/canónicas.
+- [ ] Retirar respaldos temporales tras validación remota y Code Review final.
+- Respaldos: `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/`.
+- Commits de código: CATALOG `7945e406075461d9af3a2bf209a4493eecb09027`; FEEDBACK `20e5e09313d99858eb11e9fa1b01a9f51f7d7201`, `fb1ff8608b84a49f7b4d137e82cc25bded1224b8`, `4e60ce927a48b44907ff4bb4b93ea091689021aa`, `f3e283157e5746ab8cb5db3da4ca854e2d9f4237`, `412d21236d817fd2586c48519fe80d35465ad80c`; ADMIN `adad4b9313092774f3aa90a1ce4da4f708aff84e`.
+- No se realizaron escrituras ni despliegues remotos de Apps Script.
