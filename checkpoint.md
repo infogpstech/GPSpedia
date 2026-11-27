@@ -613,3 +613,11 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - `JS/Services/catalog.js`: proyección de cortes ajustada para considerar únicamente tipos registrados, compactar slots, ordenar por útiles positivos (descendente; empate por posición física) y conservar orden físico si no hay útiles positivos; limpia campos de slots vacíos proyectados.
 - Revisión de `JS/Frontend/ui.js` preliminar: modal filtra por tipo registrado, consume slots proyectados y conserva índice físico para acciones. No se modificó UI porque no se ha aislado evidencia suficiente de un defecto adicional de contenido repetido. La asociación testigo requiere validar el contrato de proyección.
 - Pruebas simuladas conceptuales/estáticas; no se ejecutó runtime browser, Apps Script, POST, escrituras remotas ni deployment. Causa única del contenido duplicado aún no confirmada; tarea abierta.
+
+
+## Continuidad — GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 (auditoría ampliada 2026-11-26)
+- HEAD previo a cambios: respaldo commit 5b2ae02070d3c75d94ea20d8235785621cb42213 en rama GPSpedia2.2.5_work; rama base GPSpedia2.2.5 no se modifica.
+- Se revisó proyección CATALOG (mapRowToObject, getCortesColumnMap, mapCatalogVehicleRowForProjection_, projectVehicleContributionEvents_) y modal mostrarDetalleModal/renderCutContent.
+- Plan: validar sourceCorteIndex repetidos en slots consumidos por modal, evitar render doble del mismo slot fuente, desempatar utilidad por índice físico, simular y revisar diff.
+- No se dispone de lectura del registro real en Spreadsheet; el borrado manual puede no retirar eventos append-only accepted de AportesVehiculo. Caso de último registro queda sin confirmación de datos.
+- Backup exacto de ui.js y registros creado en Olds/Backups/GP-CUT-DETAIL-DUPLICATE-PROJECTION-01-20261126/; sin POST, writes remotos ni deployment.
