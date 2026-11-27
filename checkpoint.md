@@ -689,3 +689,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Sin pruebas navegador, runtime Apps Script, concurrencia real, Drive/Sheets ni deployment. Los resultados PASS anteriores son estáticos y no equivalen a validación funcional.
 - HEAD verificado: 83b911c1bd90a7f9e3fe3af556ec9cd4bcdb708e.
 - Siguiente paso: pruebas aisladas de pestañas y guarda; después navegador y Apps Script/Drive/Sheets autorizado, Code Review y cierre.
+
+
+## 2026-11-27 — GP-PWA-OFFLINE-ICONS-01 / revisión estática del detector
+- Se corrigió el escape de los caracteres consultados por document.fonts.load: el código fuente usa ahora las secuencias Unicode PUA correspondientes, no texto literal con doble barra.
+- La hoja CDN permanece prioritaria; el CSS local se activa mediante la clase gp-icons-fallback cuando falta la hoja o alguna fuente.
+- La comprobación es estática. No se ha ejecutado navegador, Service Worker en dispositivo ni sesión offline fría/caliente.

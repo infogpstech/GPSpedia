@@ -1458,3 +1458,9 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Corregir selectores de estado activo con :has() sobre .dev-tools-tab-options.
 - [x] Verificar diff y sintaxis CSS mediante balance de llaves y presencia de selectores para las cuatro pestañas.
 - [ ] Validación visual en navegador pendiente.
+
+
+### GP-PWA-OFFLINE-ICONS-01 — revisión del detector (2026-11-27)
+- [x] Corregir las secuencias Unicode de FontFaceSet.load para consultar caracteres del rango privado de Font Awesome.
+- [x] Revisar estáticamente el detector, las reglas CSS y las referencias de las tres páginas.
+- [ ] Validar conectado y offline frío/caliente en navegador/dispositivo; pendiente.

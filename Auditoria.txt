@@ -902,3 +902,8 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Alcance propuesto: añadir CSS local con símbolos alternativos para las clases de iconos identificadas, un detector local de disponibilidad de Font Awesome que active el fallback solo cuando la fuente no esté cargada, e incluir ambos recursos en las tres páginas y en la precarga core del Service Worker. Mantener CDN como primera opción y no alterar el aspecto cuando la fuente remota funcione.
 - Riesgos: los símbolos alternativos no son réplicas exactas del diseño Font Awesome; deben quedar limitados al modo de fallback. El detector debe cubrir error de stylesheet, carga de fuentes y contenido dinámico. El cambio de cache name debe forzar la actualización de recursos del Service Worker sin borrar cachés ajenas.
 - No se inspeccionó una sesión de navegador offline real ni se descargaron fuentes binarias; no afirmar validación visual ni offline funcional hasta prueba en dispositivo.
+
+
+2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — revisión de detector
+- Code review estático del primer commit identificó que los argumentos de caracteres para FontFaceSet.load tenían doble escape; se corrigieron a secuencias Unicode de un solo escape para que la carga solicite glifos del área privada usada por Font Awesome.
+- Se mantiene el comportamiento de fallback conservador ante fuentes ausentes o error de carga. No se ha ejecutado navegador.
