@@ -1678,3 +1678,5 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Pruebas: MIME extraídos del fuente 16/16; corte «No recomendado» con ubicación vacía PASS; corte normal con ubicación vacía rechazado PASS; cobertura de códigos WRITE 11/11; Code Review de los cuatro archivos PASS.
 - Commits: HTML `e223466e5e8f7b34fc56f20715f38d4c8d634295`; WRITE `5eee9b07be8f1feae100ca97f50fcefa98731bcd` y corrección de regex `b75027be0c8db0cf3f3a7a9163d9afc3e9806fac`; logger `0a752ea311758357cc272d34a282240883a8cf14`; Service Worker `d6494de7967281b09049cbd220a1cf84b159ed31` y v85 `dd93b63977d059d7d27cd44006a3a5265d3c69fe`.
 - Pages run `45914970548` SUCCESS. No deployment de Apps Script ni prueba remota de WRITE; la URL de `api-config.js` requiere health GET-only pendiente.
+
+- Code Review completado y respaldos temporales de las iteraciones 04B/04C/04D retirados después de verificar diferencias exactas. Commit de limpieza: `df36935c16bf86f7b61c383b4a8af5c71d9e31a9`.
