@@ -1876,3 +1876,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Tareas_Activas.md: marcadas como completadas las simulaciones integradas del error aislado por archivo y la limpieza por usuario; revisión visual y cierre siguen pendientes.
 - PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md: ampliada la tabla de evidencia con ambas comprobaciones.
 - No se modificó código funcional, no se crearon pruebas permanentes y no se ejecutaron servicios remotos.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — revisión estática de diff
+- Auditoria.txt: documentada comparación b59bcdd..c08c822, alcance de los tres archivos funcionales y verificación SHA de respaldos.
+- Tareas_Activas.md: registrada la revisión estática de diff como completada; revisión visual escritorio/móvil continúa pendiente.
+- PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md y checkpoint.md: actualizados con el resultado y la limitación de navegador.
+- No se modificó código funcional ni se ejecutaron servicios remotos.
