@@ -14731,6 +14731,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                     }
                     if (activelyReferenced) {
                         reconciledRow[column("estado") - 1] = "en_uso";
+                        reconciledRow[column("ultima_auditoria_id") - 1] = auditId;
+                        reconciledRow[column("ultima_operacion_inventario_id") - 1] = inventoryOperationId;
                         reconciledRow[column("resultado_inventario") - 1] = "referencia_activa_catalogo";
                         const locations = normalizeDriveAuditReferenceLocations_(Array.isArray(activeLocations) ? activeLocations : []);
                         reconciledRow[column("referencias_catalogo_json") - 1] = JSON.stringify(locations);
