@@ -701,7 +701,9 @@ function collectCatalogImageReferences(includeLocations = true) {
     catalogSheets.forEach(spec => {
         const sheet = getSpreadsheet().getSheetByName(spec.name);
         if (!sheet) {
-            if (spec.kind === "cortes") throw new Error("No se encontró la hoja «Cortes» para verificar las referencias de imágenes.");
+            if (spec.kind === "cortes" || spec.kind === "logos") {
+                throw new Error("No se encontró la hoja obligatoria «" + spec.name + "» para verificar referencias de imágenes; no se clasificaron archivos.");
+            }
             metrics.catalog[spec.name] = { skipped: true, reason: "optional_sheet_missing" };
             return;
         }
@@ -2046,10 +2048,11 @@ function doPostInternal_(e) {
             case 'saveUnusedImagesInventory':
                 // Todas las auditorías escriben en la misma hoja Imagenes_Reemplazadas.
                 // La guarda debe ser global para evitar que dos auditId reserven la misma fila.
-                response = withSharedReplacedImagesInventoryGuard_(() =>
-                    payload && payload.mode === "organize"
-                        ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
-                        : handleSaveUnusedImagesInventory(payload, logMessage, developerContext));
+                response = withDriveAuditErrorContext_("saveUnusedImagesInventory", "validación y persistencia individual", () =>
+                    withSharedReplacedImagesInventoryGuard_(() =>
+                        payload && payload.mode === "organize"
+                            ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
+                            : handleSaveUnusedImagesInventory(payload, logMessage, developerContext)));
                 break;
             case 'getCortesImageFolders':
                 response = handleGetCortesImageFolders(payload, logMessage);
@@ -2128,6 +2131,7 @@ function doPostInternal_(e) {
         response = {
             status: "error",
             code: error && error.code || "SERVICE_ERROR",
+            stage: String(error && error.stage || auditStage || "ADMIN"),
             estado: "error",
             message: responseMessage,
             mensaje: responseMessage,
