@@ -635,3 +635,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - `JS/Frontend/ui.js`: se retiró el aviso de datos PyS potencialmente desactualizados dentro de `renderPosiblesProblemasAccordion`, en el modal de detalle de corte.
 - Code review: comparación exacta contra respaldo confirmó únicamente la eliminación del bloque del aviso (7 líneas); no se alteró la lógica cache/refresh, filtrado, asociación ni avisos en otras vistas. Backup retirado tras revisión.
 - Sin prueba navegador/runtime. Commit de código `b58d1435d88fba0a1ba630a698720cd06754432f`.
+
+
+## Continuidad — GP-ADMIN-DRIVE-UNUSED-IMAGES-02 (2026-11-27)
+- Corrección parcial fuente en ADMIN: buildCortesImageModelAssociationSuggestions_ usa jerarquía carpeta Brand/Model como señal principal; nombre/alias de archivo corroborados por marca y modelo como fallback; contextos de versión, encendido y año condicionan registros y ambigüedad.
+- Exclusiones por referencias activas e histórico preservadas; la asociación sigue aplicándose al conjunto clasificado como Sin uso detectado.
+- Diff revisado frente a backup temporal: prefijo y sufijo sin cambio, función delimitada. Pruebas runtime, navegador y Drive/Sheets real pendientes. Sin deployment ni mutaciones remotas.
+- Tarea no cerrada; falta ejecutar pruebas aisladas reproducibles y review final de UI/consumidores.
