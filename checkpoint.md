@@ -705,3 +705,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 ## 2026-11-27 — GP-PWA-OFFLINE-ICONS-01 / ajuste del glifo Brands
 - El punto de prueba de Font Awesome Brands se actualizó a U+F167 (YouTube), en lugar de un código perteneciente a la familia Free.
 - Solo se comprobó el código fuente; el comportamiento real de FontFaceSet y navegador sigue pendiente.
+
+
+## 2026-11-27 — GP-ADD-CUT-WIZARD-UX-NAV-01 / favicon y document.write
+- HTML/users.html ahora declara Images/icon-v3-512x512.png como favicon, igual que las otras páginas principales.
+- La única llamada document.write localizada en ui.js genera el documento estático de impresión y no contiene script tags ni URLs externas. La advertencia parser-blocking de HtmlService no se atribuye a esta llamada; se deja sin modificar el runtime externo.
+- Respaldo exacto de HTML/users.html antes del cambio: 45e8bcda8fae52dffa027c4f0b21a83f8dd3a70c.
+- Sin navegador/Network; la desaparición del 404 y la fuente exacta de la advertencia siguen pendientes de confirmación.

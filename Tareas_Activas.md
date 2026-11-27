@@ -1474,3 +1474,10 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ### GP-PWA-OFFLINE-ICONS-01 — Code Review de fuente Brands (2026-11-27)
 - [x] Usar un glifo perteneciente a Font Awesome Brands para comprobar la disponibilidad de esa familia.
 - [ ] Validar carga real de fuentes y fallback en navegador; pendiente.
+
+
+### GP-ADD-CUT-WIZARD-UX-NAV-01 — favicon y advertencia document.write (2026-11-27)
+- [x] Detectar que HTML/users.html no declaraba favicon, mientras las otras páginas principales sí.
+- [x] Añadir el icono PNG local ya existente en la cabecera de HTML/users.html.
+- [x] Inspeccionar la llamada document.write de ui.js: solo genera HTML/CSS de impresión y no inserta scripts externos; clasificar la advertencia de HtmlService como runtime externo probable.
+- [ ] Verificar ausencia de /favicon.ico 404 y origen de la advertencia en navegador real; pendiente.

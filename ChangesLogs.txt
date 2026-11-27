@@ -1837,3 +1837,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — ajuste de detección Brands
 - icon-fallback.js: el glifo de prueba de Font Awesome Brands se cambió a U+F167 (YouTube), correspondiente a la familia consultada.
+
+
+2026-11-27 | GP-ADD-CUT-WIZARD-UX-NAV-01 — corrección de favicon
+- HTML/users.html, cabecera: se añadió un enlace rel="icon" PNG hacia ../Images/icon-v3-512x512.png, alineado con el icono local utilizado por index.html y HTML/add_cortes.html.
+- La llamada document.write de JS/Frontend/ui.js se clasificó como generación de documento de impresión sin scripts ni URLs externas; no se modificó.
