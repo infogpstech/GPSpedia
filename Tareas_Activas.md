@@ -1362,3 +1362,16 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Revisión de integración del modal/indicadores y validación completa de consistencia; no se ha demostrado aún la causa única de duplicación visual.
 - [ ] Code review, limpieza backups, registro y checkpoint.
 - Validación simulada preliminar de orden; Beta cerrada, sin deployment ni escrituras remotas.
+
+
+### GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — auditoría ampliada y plan de corrección (2026-11-26)
+**Estado: implementación local en curso; caso real de Spreadsheet aún no verificable.**
+- [x] Auditar CATALOG, proyección AportesVehiculo, mapping de columnas, selección activeItem y construcción/render del modal.
+- [x] Registrar hallazgos y plan antes de editar.
+- [x] Crear respaldo exacto previo en Olds/Backups/GP-CUT-DETAIL-DUPLICATE-PROJECTION-01-20261126/.
+- [ ] Validar referencias físicas únicas de slots en el modal y preservar datos completos sin deduplicar cortes por contenido.
+- [ ] Ordenar utilidad descendente con desempate por índice físico.
+- [ ] Simular casos de proyección y revisión de regresiones/diff.
+- [ ] Code Review y eliminar backup temporal tras revisión.
+- [ ] Registrar cambios y checkpoint.
+- No ejecutar POST, escrituras remotas ni deployment; Beta cerrada.
