@@ -765,3 +765,33 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Nuevos commits de documentación: 9e69a8fd7aade8813e5ad00f412d40f92a976199, d4bafbb28cfa63ca87a6af16b7ba2b961ff858d7, c08c82236cc9543dc9cb1a990860663ea79bfc01.
 - HEAD antes de esta actualización del checkpoint: c08c82236cc9543dc9cb1a990860663ea79bfc01.
 - Pendiente: harnesses de mocks/fixtures descritos en el plan, revisión visual escritorio/móvil y Beta autorizada para comprobar la hoja LogosMarca real, registro por archivo e idempotencia. No deployment ni mutaciones remotas.
+
+
+## Continuidad — GP-ADMIN-DRIVE-UNUSED-IMAGES-03 / harnesses aislados (2026-11-27)
+
+### Recuperación y estado Git
+- Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama protegida: GPSpedia2.2.5.
+- Comparación base→trabajo: status ahead, behind_by 0; base_commit y merge_base_commit siguen en d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se escribieron cambios en la rama base.
+- README.md y NORMAS_DESAROLLO.md leídos completos. Tareas_Activas.md, Tareas_Beta.md, Auditoria.txt, ChangesLogs.txt y PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md consultados. contexto_personal.md y Contexto de trabajo.md no existen en esta rama (404); no se creó un sustituto.
+- El checkpoint previo señalaba como siguiente paso los harnesses aislados de GP-ADMIN-DRIVE-UNUSED-IMAGES-03. Beta permanece cerrada; no crear suites/workflows permanentes.
+
+### Pruebas aisladas ejecutadas en memoria
+- Collector real collectLogoSheetImageReferences_: 5/5 PASS para URL directa, fórmula IMAGE(), Rich Text, CellImage y enlace Drive no interpretable.
+- Esquema LogosMarca sin encabezado ID: 1/1 PASS, bloqueo fail-closed.
+- validateDriveAuditInventoryBatch_: 3/3 PASS para error aislado con candidato emitido, bloqueo por referencia no interpretable y rechazo de ID ajeno.
+- Bloque real uniqueFiles.forEach de handleSaveUnusedImagesInventory: 1/1 PASS con archivo A fallido y archivo B confirmado; el error individual no interrumpió el lote. Resultado A=error, B=confirmado, confirmedCount=1, errorCount=1, insertedCount=1.
+- writeDriveInventoryRowVerified_: 2/2 PASS con hoja simulada para escritura/lectura normal y persistencia seguida de excepción; la lectura posterior reconoció la fila sin repetir escritura.
+- clearDriveAuditState real de offline.js: 1/1 PASS con transacción IndexedDB simulada; eliminó state/latest/meta/page/confirmed de userA, conservó estado de userB e inventario persistente, retiró el marcador pendiente e incrementó generación 7→8.
+- UI/CSS: 6/6 comprobaciones estáticas PASS para filtro exacto «Sin uso detectado», ocultamiento de reintentos en otras clasificaciones, selectores de las cuatro pestañas, expansión móvil, movimiento reducido y limpieza antes de runAudit(false).
+- No son pruebas de navegador ni Apps Script productivo. No se ejecutó UI visual, IndexedDB real, Apps Script, Drive/Spreadsheet, POST ni deployment.
+
+### Cambios y respaldos documentales
+- No se modificó código funcional ni se crearon suites/archivos de prueba. Se actualizaron Auditoria.txt, ChangesLogs.txt, Tareas_Activas.md y PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md para registrar evidencia y límites.
+- Respaldos exactos de la primera actualización: Auditoria.txt blob 52f7297183939de1a9bd3f24b2be3b5630186069; ChangesLogs.txt a5377e3bf2ad8285eb25720085628489fe706998; Tareas_Activas.md dc33e8cbf2153fbaced7d8173f470227e11b1e04; checkpoint.md dced09f52acae082f29dc851d9d1c3ecbd0e6cb9; PLAN eade510037a3189fc94762c0a58b25c9690ec72f. Ubicación: Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/REVIEW-MOCKS-20261127/.
+- Respaldos exactos de la segunda actualización: Auditoria.txt 6b2f3a578ea7d17d5cfa809b7e659b85fa7282e7; ChangesLogs.txt df0870bb3671be6292132bc2bd3b60bc4e45f3b8; Tareas_Activas.md c0438b5d33489d6b68d3672f07c5ee83a4c8a0b9; PLAN 6fe1db48e8f09ece1a4fae55b869cb424db18a98. Ubicación: Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/REVIEW-MOCKS-20261127-02/.
+- Commits de documentación más recientes antes de este checkpoint: Auditoria.txt 4bf515d90b6040c8b9bae067686834cc8872aa8f; ChangesLogs.txt 3611e1a4824ae596a70c6df2ca43d034c3f78cb1; Tareas_Activas.md 29c15e83f684998d50437096feddbdc62d1aa328; PLAN 7edd6e7dda930498eb956015f9d34ae4bb61675c.
+
+### Estado y siguiente paso
+- GP-ADMIN-DRIVE-UNUSED-IMAGES-03 sigue ABIERTA. La simulación A/B, el writer y la limpieza por usuario se cubrieron en memoria; queda revisión visual escritorio/móvil y prueba IndexedDB real en navegador.
+- La validación remota y cualquier deployment permanecen excluidos mientras Beta esté cerrada y sin autorización expresa. No se hicieron POST ni mutaciones de Drive/Spreadsheet.
+- Próximo paso: revisión visual del workspace/pestañas/galería en navegador sin alterar estilos existentes; después revisión final del diff funcional contra respaldos. Si no hay navegador disponible, registrar la limitación y no declarar validación visual.
