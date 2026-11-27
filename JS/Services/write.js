@@ -1642,15 +1642,24 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         }
 
         const lastRow = sheet.getLastRow();
-        if (lastRow < 2) throw new Error("La hoja «Cortes» no contiene una fila de datos desde la cual conservar las validaciones de las listas.");
         const lastColumn = sheet.getLastColumn();
-        const templateRowIndex = lastRow;
-        sheet.insertRowAfter(lastRow);
-        rowIndex = lastRow + 1;
+        let templateRowIndex;
+        if (lastRow >= 2) {
+            templateRowIndex = lastRow;
+            sheet.insertRowAfter(lastRow);
+            rowIndex = lastRow + 1;
+        } else {
+            // Si solo existe el encabezado, conservar la fila 2 como plantilla:
+            // se desplaza a la 3 y se inserta la primera fila de datos en la 2.
+            if (sheet.getMaxRows() < 2) sheet.insertRowsAfter(sheet.getMaxRows(), 2 - sheet.getMaxRows());
+            sheet.insertRowAfter(1);
+            rowIndex = 2;
+            templateRowIndex = 3;
+        }
         if (rowMutationState && typeof rowMutationState === "object") rowMutationState.insertedRowIndex = rowIndex;
 
         // Insertar una fila física y copiar exclusivamente formato + validaciones
-        // de la última fila de datos. Los valores y fórmulas de esa fila no se heredan.
+        // de la fila plantilla anterior. Los valores y fórmulas no se heredan.
         const previousRowRange = sheet.getRange(templateRowIndex, 1, 1, lastColumn);
         const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
         previousRowRange.copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
