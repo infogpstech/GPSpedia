@@ -1537,9 +1537,8 @@
                         isNewVehicle: requestData.vehicleId === null, slotIndex: requestData.vehicleId === null ? 1 : checkRes.slotIndex,
                         cutType: requestData.cutData && requestData.cutData.tipoCorte1
                     });
-                    alert(checkRes.candidateReviewPending === true
-                        ? "Corte guardado para revisión."
-                        : "Corte recuperado."); proceedToStage3(checkRes.vehicleId); return;
+                    console.info('[add-cortes] Operación WRITE previamente confirmada; continuando a información adicional.', { opId });
+                    alert("Corte agregado con éxito"); proceedToStage3(checkRes.vehicleId); return;
                 }
                 if (checkRes.pending === true && checkRes.operationHash !== operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
                 const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
@@ -1566,9 +1565,7 @@
                     cutType: requestData.cutData && requestData.cutData.tipoCorte1
                 });
                 await resolveSourceInboxReport_(pendingOp.sourceInboxItemId || sourceInboxItemId, submitSession, result.candidateReviewPending === true);
-                alert(result.candidateReviewPending === true
-                    ? "Corte guardado; reporte pendiente."
-                    : "Corte agregado correctamente."); proceedToStage3(result.vehicleId);
+                alert("Corte agregado con éxito"); proceedToStage3(result.vehicleId);
             } catch (error) {
                 const errorMessageCode = String(error && error.message || '');
                 const diagnosticErrorCode = String(error && error.code ||
@@ -1592,7 +1589,8 @@
                         isNewVehicle: pendingOp.vehicleId === null, slotIndex: confirmedResult.slotIndex,
                         cutType: pendingOp.requestData && pendingOp.requestData.cutData && pendingOp.requestData.cutData.tipoCorte1
                     }); } catch (refreshError) { diagnostics.warn('cut-operation.confirmed-refresh-failed', { stage: 'submit', opId: pendingOp && pendingOp.id }); }
-                    showConciseAlert_('WRITE confirmó el guardado. La limpieza local quedó pendiente y se recuperará con el mismo identificador; no se creará otro registro.');
+                    console.warn('[add-cortes] WRITE confirmó el corte; limpieza/reconciliación local pendiente.', { opId: pendingOp && pendingOp.id, errorCode: diagnosticErrorCode });
+                    alert("Corte agregado con éxito");
                     proceedToStage3(confirmedResult.vehicleId);
                     return;
                 }
@@ -1810,13 +1808,10 @@
                 const expected=pending.requestData.contributionOpIds||{},events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
                 for(const kind of ['opening','feed']){const id=String(expected[kind]||'');if(id&&!events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId))throw Error('SUPPLEMENTARY_WRITE_EVENT_UNCONFIRMED');}
                 const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});
-                try{await verifySupplementaryCatalogWrite_(result,request);alert("Cambios guardados.");}
-                catch(error){diagnostics.error('supplementary.catalog-verification-failed',{stage:'supplementary',opId:pending.id,errorCode:error&&error.name||'CatalogVerificationError'});showConciseAlert_("WRITE confirmó el guardado, pero no se pudo verificar la proyección actualizada. No vuelvas a enviar el formulario; al volver se recargará la ficha.");}
+                try{await verifySupplementaryCatalogWrite_(result,request);}
+                catch(error){diagnostics.error('supplementary.catalog-verification-failed',{stage:'supplementary',opId:pending.id,errorCode:error&&error.name||'CatalogVerificationError'});}
                 window.location.href='../index.html';
-            }catch(error){if(error&&error.name==='FileReadError')showConciseAlert_("No se pudo leer una de las imágenes. Los campos y archivos seleccionados permanecen en el formulario.");
-                else if(error&&error.message==='SUPPLEMENTARY_PENDING_OPERATION_MISMATCH')showConciseAlert_("Existe un aporte suplementario anterior pendiente con contenido distinto. Recupera esa operación antes de enviar otra.");
-                else if(error&&error.message==='SUPPLEMENTARY_PENDING_RECOVERY_REQUIRED')showConciseAlert_("Existe un aporte suplementario pendiente de recuperación. Espera a que se resuelva.");
-                else showConciseAlert_("No se pudo guardar la información suplementaria. Tus datos permanecen en el formulario; puedes intentarlo nuevamente.");
+            }catch(error){diagnostics.error('supplementary.submit-failed',{stage:'supplementary',errorCode:error&&error.name||'SupplementaryError'});showConciseAlert_("No se pudo agregar el corte, intenta más tarde");
             }finally{isSubmittingStage3=false;if(btn)btn.classList.remove('btn-loading');void resumePendingOperationRecovery();toggleLoading(false);}
         }
 
