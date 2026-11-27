@@ -13902,48 +13902,111 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         return Array.from(new Set(mismatches));
     };
     const matches = persisted => getMismatchedColumns(persisted).length === 0;
-    const writeAndVerify = () => {
-        sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
-        SpreadsheetApp.flush();
-        const persisted = readBack();
+    const describeError = (error, fallbackStage) => {
+        const stage = String(error && error.stage || fallbackStage || "etapa desconocida");
+        const message = String(error && error.message || error || "Error sin detalle.").replace(/[\r\n]+/g, " ").slice(0, 700);
+        const columns = Array.isArray(error && error.mismatchedColumns) && error.mismatchedColumns.length
+            ? " Columnas: " + error.mismatchedColumns.join(", ") + "." : "";
+        return stage + ": " + message + columns;
+    };
+    const runWriteAndVerify = attempt => {
+        try {
+            sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
+        } catch (error) {
+            error.stage = error.stage || attempt + " — escritura setValues";
+            throw error;
+        }
+        try {
+            SpreadsheetApp.flush();
+        } catch (error) {
+            error.stage = error.stage || attempt + " — SpreadsheetApp.flush";
+            throw error;
+        }
+        let persisted;
+        try {
+            persisted = readBack();
+        } catch (error) {
+            error.stage = error.stage || attempt + " — lectura posterior";
+            throw error;
+        }
         const mismatches = getMismatchedColumns(persisted);
         if (mismatches.length) {
-            throw new Error("La lectura posterior no coincide con la escritura solicitada. Columnas discrepantes: " +
-                mismatches.join(", ") + ".");
+            const error = new Error("La lectura posterior no coincide con la escritura solicitada.");
+            error.stage = attempt + " — comparación de lectura";
+            error.mismatchedColumns = mismatches;
+            throw error;
         }
         return persisted;
     };
-    try { return writeAndVerify(); }
-    catch (firstError) {
-        try {
-            const persisted = readBack();
-            if (matches(persisted)) return persisted;
-        } catch (readError) {}
-        try { return writeAndVerify(); }
-        catch (retryError) {
-            let reviewError = "";
-            try {
-                const current = readBack();
-                if (extractDriveFileId(current[5]) === fileId) {
-                    current[10] = "requiere_revision";
-                    current[organizationColumn - 1] = "requiere_revision";
-                    current[resultColumn - 1] = "error";
-                    current[detailColumn - 1] = "La escritura parcial no pudo reconciliarse: " +
-                        String(retryError.message || retryError).slice(0, 500);
-                    if (organizationErrorColumn > 0) current[organizationErrorColumn - 1] = "Escritura parcial no reconciliada; requiere revisión manual.";
-                    sheet.getRange(rowNumber, 1, 1, headers.length).setValues([current]);
-                    SpreadsheetApp.flush();
-                    const reviewed = readBack();
-                    if (String(reviewed[10] || "") !== "requiere_revision" ||
-                        String(reviewed[resultColumn - 1] || "") !== "error") {
-                        throw new Error("No se pudo confirmar el estado requiere_revision.");
-                    }
-                }
-            } catch (error) { reviewError = error.message || String(error); }
-            throw new Error("La escritura del inventario no pudo confirmarse; el archivo no será organizado. " +
-                (retryError.message || String(retryError)) + (reviewError ? "; revisión: " + reviewError : ""));
-        }
+
+    let firstError = null;
+    try {
+        return runWriteAndVerify("primer intento");
+    } catch (error) {
+        firstError = error;
     }
+
+    let readError = null;
+    let reconciliationMismatch = [];
+    try {
+        const persisted = readBack();
+        reconciliationMismatch = getMismatchedColumns(persisted);
+        if (!reconciliationMismatch.length) return persisted;
+    } catch (error) {
+        readError = error;
+        readError.stage = readError.stage || "lectura de reconciliación";
+    }
+
+    let retryError = null;
+    try {
+        return runWriteAndVerify("segundo intento");
+    } catch (error) {
+        retryError = error;
+    }
+
+    const diagnostics = [
+        "primer intento: " + describeError(firstError, "escritura/verificación"),
+        readError
+            ? "lectura de reconciliación: " + describeError(readError, "lectura de reconciliación")
+            : "lectura de reconciliación: " + (reconciliationMismatch.length
+                ? "se leyó la fila, pero no coincide. Columnas: " + reconciliationMismatch.join(", ") + "."
+                : "sin confirmación inequívoca."),
+        "segundo intento: " + describeError(retryError, "escritura/verificación")
+    ];
+    const diagnostic = diagnostics.join(" | ").slice(0, 1800);
+    let reviewError = "";
+    try {
+        const current = readBack();
+        if (extractDriveFileId(current[5]) === fileId) {
+            current[10] = "requiere_revision";
+            current[organizationColumn - 1] = "requiere_revision";
+            current[resultColumn - 1] = "error";
+            current[detailColumn - 1] = ("Escritura no confirmada. " + diagnostic).slice(0, 45000);
+            if (organizationErrorColumn > 0) {
+                current[organizationErrorColumn - 1] = "Escritura no confirmada; requiere revisión manual.";
+            }
+            sheet.getRange(rowNumber, 1, 1, headers.length).setValues([current]);
+            SpreadsheetApp.flush();
+            const reviewed = readBack();
+            const reviewMismatches = [];
+            if (extractDriveFileId(reviewed[5]) !== fileId) reviewMismatches.push("archivo_drive_id");
+            if (String(reviewed[10] || "") !== "requiere_revision") reviewMismatches.push("estado");
+            if (String(reviewed[resultColumn - 1] || "") !== "error") reviewMismatches.push("resultado_inventario");
+            if (String(reviewed[detailColumn - 1] || "") !== String(current[detailColumn - 1] || "")) reviewMismatches.push("detalle_resultado_inventario");
+            if (reviewMismatches.length) throw new Error("No se pudo confirmar el estado requiere_revision. Columnas: " + reviewMismatches.join(", ") + ".");
+        } else {
+            reviewError = "No se pudo marcar requiere_revision: la fila leída no corresponde al archivo solicitado.";
+        }
+    } catch (error) {
+        reviewError = describeError(error, "marcado/confirmación requiere_revision");
+    }
+
+    const finalMessage = "La escritura del inventario no pudo confirmarse; el archivo no será organizado. " +
+        diagnostic + (reviewError ? " | marcado requiere_revision: " + reviewError : "");
+    const finalError = new Error(finalMessage.slice(0, 3500));
+    finalError.code = "IMAGE_INVENTORY_WRITE_FAILED";
+    finalError.stage = "escritura, reconciliación y confirmación del inventario";
+    throw finalError;
 }
 
 function validateAuditDriveReferenceSnapshot_(snapshot) {
