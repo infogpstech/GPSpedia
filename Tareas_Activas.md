@@ -1227,7 +1227,7 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Respaldar WRITE, CATALOG, offline.js, ui.js y Service Worker antes de editar; revisar diferencias exactas contra los respaldos.
 - [x] Fixtures de ID, fórmula/high-water, freeze-plan, payload existente, ledger append/replay/conflicto, proyección CATALOG y snapshots offline: PASS.
 - [x] Compilación sintáctica V8 de WRITE, CATALOG, offline.js y Service Worker: PASS.
-- [x] GitHub Pages build/deploy `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`.
+- [x] GitHub Pages build/deploy de código `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`; build posterior a documentación `45918026216` SUCCESS en HEAD `8017e1109092901e21101c18b80b37173901fe49`.
 - [ ] Desplegar y verificar el código actual de WRITE y CATALOG en los endpoints Apps Script configurados; ejecutar health GET-only y confirmar versión activa.
 - [ ] Prueba real controlada en Spreadsheet/Drive con ID `V-###`: registrar vehículo nuevo, agregar corte a vehículo existente desde formulario y modal de detalle, confirmar proyección CATALOG y actualización de UI.
 - [ ] Probar replay del mismo `opId` tras respuesta perdida y confirmar que no crea fila/evento duplicado; comprobar limpieza local real en IndexedDB.
