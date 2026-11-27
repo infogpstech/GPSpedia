@@ -3263,7 +3263,6 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         seenSourceCutSlots.add(physicalIndex);
         cortes.push({
             index: physicalIndex,
-            projectionIndex: i,
             tipo: activeItem[`tipoCorte${i}`],
             ubicacion: activeItem[`ubicacionCorte${i}`],
             colorCable: activeItem[`colorCableCorte${i}`],
