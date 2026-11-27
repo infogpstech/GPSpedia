@@ -14338,6 +14338,11 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 associationResult.suggestions.forEach(suggestion => associationByFileId.set(String(suggestion.fileId), suggestion));
             } else associationBuildError = "No se encontró la hoja Cortes para proponer asociaciones.";
         } catch (associationError) { associationBuildError = String(associationError && associationError.message || associationError); }
+        if (associationBuildError) {
+            logMessage && logMessage("Asociación de imágenes",
+                "No se pudieron generar sugerencias de asociación; el registro individual continuará sin asignar un vehículo. Detalle: " +
+                associationBuildError, 0, 0, true, false);
+        }
 
         let insertedCount = 0, updatedCount = 0, staleCount = 0;
         let confirmedCount = 0, blockedCount = 0, errorCount = 0, loggingErrorCount = 0;
@@ -14413,8 +14418,15 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 try {
                     const createdDate = file.getDateCreated();
                     if (createdDate) createdAt = Utilities.formatDate(createdDate, "GMT-6", "yyyy-MM-dd HH:mm:ss");
-                } catch (dateError) {}
+                } catch (dateError) {
+                    logMessage && logMessage("Fecha de creación Drive",
+                        "No se pudo leer la fecha de creación de " + fileId + ": " +
+                        String(dateError && dateError.message || dateError) +
+                        " [código: " + String(dateError && dateError.code || "DRIVE_FILE_CREATED_AT_UNAVAILABLE") + "]",
+                        0, 0, true, false);
+                }
 
+                imageStage = "preparación de columnas y valores del registro";
                 const row = existing ? previousRow.slice(0, headers.length) : Array(headers.length).fill("");
                 while (row.length < headers.length) row.push("");
                 const setField = (name, value) => { row[column(name) - 1] = value; };
@@ -15047,7 +15059,13 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
                         "»: " + String(idError && idError.message || idError), 0, 0, true, true);
                     continue;
                 }
-                if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { errorCount++; continue; }
+                if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) {
+                    errorCount++;
+                    logMessage && logMessage("Validación de ID Drive",
+                        "Drive devolvió un identificador vacío o con formato inválido dentro de «" +
+                        String(current.path || "Cortes") + "»; el elemento se omitió.", 0, 0, true, true);
+                    continue;
+                }
                 if (seenFileIds.has(fileId)) { duplicateFileCount++; continue; }
                 seenFileIds.add(fileId); pageFileIds.push(fileId); totalDiscovered++;
                 let fileName = "Archivo no verificable", mimeType = "", size = 0, lastUpdated = "", classification = "No verificable";
