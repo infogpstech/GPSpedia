@@ -1171,3 +1171,13 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Alcance: modificar exclusivamente la condición de renderizado en JS/Frontend/ui.js para que el bloque dependa del booleano, no del modo de edición. No modificar WRITE/CATALOG, formularios, payloads, CSS, URL ni estructura DOM del fragmento.
 
 **Respaldo previo:** se creará copia exacta de JS/Frontend/ui.js y de los registros documentales antes de editar. La rama base protegida no se modificará. Validación prevista: prueba aislada de render con inEditMode=true/false y activaTestigo=true/false, comprobando que ambos nodos (imagen y nota) se insertan solo cuando el booleano es true, además de parseo, diff exacto y revisión de flujos de persistencia.
+
+#### F-51 — implementación y Code Review (2026-11-27)
+- Se modificó exclusivamente la condición del bloque visual en JS/Frontend/ui.js: de `if (cutData.activaTestigo && !inEditMode)` a `if (cutData.activaTestigo === true)`. La imagen y la nota ahora se insertan también cuando el detalle se reabre en modo edición después de guardar desde el botón +.
+- La ubicación del bloque no cambió: en modo edición aparece después del contenedor de controles que termina con Color de Cable y antes del contenedor de imagen del corte; en modo lectura aparece después del texto que termina con Color de Cable y antes de la imagen.
+- Se verificó el flujo completo: checkbox → snapshot pendiente → WRITE (validación y persistencia booleana) → CATALOG (proyección y reordenamiento del indicador) → getActivaTestigoValue() → renderCutContent(). No se detectó pérdida del booleano.
+- Prueba de condición aislada: 4/4 combinaciones PASS (true/false × edición/lectura). Con true el bloque se inserta en ambos modos; con false no se inserta.
+- Code Review y comparación exacta: PASS. El archivo actual se reconstruye exactamente desde el respaldo aplicando una sola sustitución de condición; ningún otro byte del archivo cambió.
+- Contenido del bloque verificado: URL Drive exacta, estilo height:50px; width:auto; float:right; margin-left:10px;, etiqueta NOTA roja, texto exacto y orden antes de imagen del corte.
+- Safety & Side Effects: no se alteraron formularios, payloads, fingerprint, snapshot, WRITE, CATALOG, columnas de Sheets, CSS, estilos del modo edición ni comportamiento de otras secciones. No se modificó service-worker.js; scripts del mismo origen usan estrategia network-first.
+- Limitación: no se ejecutó navegador ni acceso autenticado a Drive/Sheets; por tanto, el DOM y la condición se validaron estáticamente/aisladamente, pero la carga real del recurso externo debe confirmarse tras publicar/actualizar la aplicación. La URL no se cambió porque fue proporcionada expresamente por el usuario.
