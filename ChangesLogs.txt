@@ -2001,3 +2001,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Se conserva sin cambios el src de Drive, los estilos de la imagen, la etiqueta NOTA roja, el texto y la posición posterior al color del cable y anterior a la imagen del corte.
 - Causa: completeVehicleExpansionSave_() refresca el detalle con mostrarDetalleModal(vehicle, true), por lo que el modal posterior al alta desde + queda en modo edición; la condición anterior suprimía la imagen y la nota juntas.
 - Comparación exacta contra respaldo: una única línea de condición modificada. Prueba aislada de condición 4/4 PASS. Persistencia y proyección del booleano WRITE/CATALOG verificadas estáticamente; navegador/Drive real no ejecutados.
+
+2026-11-27 | GP-USERS-CREATE-SESSION-CONTEXT-01 — contexto de sesión al crear usuarios
+- Archivo: HTML/users.html, función handleUserFormSubmit(), rama createUser (aprox. líneas 766–771).
+- Se agregó userId: submittingSession.userId al payload de createUser. newUser y sessionToken se conservan; el ID y token proceden del snapshot de sesión validado.
+- No se modificaron updateUser, AUTH, api-config.js, roles, permisos ni la lógica de persistencia.
+- Code Review: diff limitado al payload createUser; parsing de scripts inline y verificaciones estáticas PASS.
+- No se ejecutó navegador, POST AUTH real ni deployment.
