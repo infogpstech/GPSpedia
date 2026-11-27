@@ -553,8 +553,8 @@ function parseCortesVehicleIdSequence_(value, context) {
     if (typeof value === "number") {
         sequence = value;
     } else {
-        const prefixed = /^V-(\d{3,15})$/i.exec(raw);
-        const legacy = /^([1-9]\d{0,14})$/.exec(raw);
+        const prefixed = /^V-(\d{3,16})$/i.exec(raw);
+        const legacy = /^([1-9]\d{0,15})$/.exec(raw);
         if (prefixed) sequence = Number(prefixed[1]);
         else if (legacy) sequence = Number(legacy[1]);
     }
