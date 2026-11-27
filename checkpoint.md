@@ -972,3 +972,14 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commits funcionales: e20d8860e84959df207deb8bfcbbd95157feeea5 (frontend update), 7bc789a8c88c5e05aa85656360382e7defdde52d (AUTH target), ee01ddd5f4432795b32ab48f4d8c8cee0eb02459 (actor en reset de contraseña). Creación ya corregida en 02537a06538851b4f011c9b764775cf750a8f880.
 - Code Review PASS; diffs exactos limitados a payloads y lectura del target. Parsing de scripts inline y Auth.js PASS. Sin pruebas remotas ni deployment.
 - Pendiente: publicar frontend y AUTH coordinadamente y validar crear/editar con cuentas de prueba autorizadas. GP-USERS-RESET-SESSIONS-ACTOR-01 queda en backlog porque resetUserSessions omite el userId del actor.
+
+
+## Continuidad — GP-USERS-PROFILE-EMAIL-01 / GP-USERS-ID-SEQUENCE-MISMATCH-01 (2026-11-27)
+
+- Rama de trabajo: GPSpedia2.2.5_work. Rama base protegida GPSpedia2.2.5 sin modificaciones.
+- HTML/users.html: Mi Perfil muestra Correo_Electronico; el diálogo de edición permite actualizar nombre y correo; el formulario de creación incluye correo opcional. El campo administrativo queda oculto en edición de cuentas existentes.
+- JS/Services/Auth.js: normalizeUserProfileUpdates_ admite Nombre_Completo y Correo_Electronico; valida correo, longitud y tipo. writeUserProfileEmailNonBlocking_ escribe/verifica columna Users.Correo_Electronico. handleUpdateProfile mantiene getAuthUserActor_ y la restricción de perfil propio. createUser ya aceptaba el correo.
+- Code Review PASS: diffs exactos contra backups; scripts inline y Auth.js parsean; normalizador 7/7 escenarios; harness de escritura columna 6; cero IDs HTML duplicados; actor/token preservados. No se ejecutó navegador, POST, Sheets real ni deployment.
+- El correo se guarda sin flujo de verificación de propiedad. Publicar frontend y AUTH coordinadamente y validar después.
+- Error de creación pendiente: ID en Users fila 2 no coincide con patrón backend. No cambiar IDs ni validación hasta recibir valor exacto de A2, fórmula si existe y configuración de __IdentifierSequenceConfig__ (prefijo/padding/fórmula). Hoja no consultada ni modificada.
+- Tareas_Activas.md es el registro operativo disponible; Tareas.txt no existe en esta rama.
