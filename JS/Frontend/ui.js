@@ -4014,10 +4014,20 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
     }
 
     if (cutData.activaTestigo && !inEditMode) {
-        const testigoNotice = document.createElement('p');
-        testigoNotice.style.cssText = "color:#b45309; font-weight:bold; background:rgba(245,158,11,0.10); padding:8px; border-left:3px solid #d97706; border-radius:4px; margin:6px 0;";
-        testigoNotice.textContent = "⚠️ Este corte activa el testigo de motor";
-        container.appendChild(testigoNotice);
+        const testigoImage = document.createElement('img');
+        testigoImage.src = 'https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50';
+        testigoImage.setAttribute('style', 'height:50px; width:auto; float:right; margin-left:10px;');
+        const testigoLabel = document.createElement('b');
+        testigoLabel.setAttribute('style', 'color: red;');
+        testigoLabel.textContent = 'NOTA:';
+        container.append(
+            document.createElement('br'),
+            testigoImage,
+            document.createElement('br'),
+            testigoLabel,
+            document.createTextNode('Este corte activa el testigo del motor '),
+            document.createElement('br')
+        );
     }
 
     if (inEditMode || (cutData.img && !isNoRecomendadoValue(cutData.tipo))) {
