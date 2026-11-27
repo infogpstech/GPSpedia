@@ -1617,3 +1617,15 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Code Review final: diff exacto limitado al payload de getUsers; comparación con backup PASS.
 - [x] Eliminar respaldos temporales después de Code Review.
 - Sin cambios en backend, RBAC, estilos, caché ni mutaciones de usuarios; Beta permanece cerrada.
+
+### GP-CUT-TESTIGO-NOTA-02 — visibilidad en modo edición (2026-11-27)
+**Estado: corrección local implementada; validación visual en navegador pendiente.**
+- [x] Auditar checkbox, snapshot, WRITE, materialización, CATALOG, recuperación y renderizado del detalle.
+- [x] Identificar la causa: el refresco posterior al alta desde + abre el detalle con mostrarDetalleModal(vehicle, true), mientras renderCutContent excluía inEditMode.
+- [x] Registrar F-51 en Auditoria.txt antes de editar.
+- [x] Crear respaldo exacto de JS/Frontend/ui.js.
+- [x] Cambiar únicamente la condición para mostrar el bloque cuando activaTestigo === true en ambos modos.
+- [x] Confirmar orden después del color y antes de imagen del corte, URL/estilos/texto intactos.
+- [x] Prueba aislada true/false × edición/lectura: 4/4 PASS; comparación exacta: una sola línea modificada.
+- [ ] Validar en navegador el alta desde el botón + y el flujo HTML/add_cortes.html; confirmar que el booleano guardado reaparece y que la miniatura Drive carga.
+- No se modificaron WRITE/CATALOG, formularios, caché, CSS, despliegues ni rama base. No se ejecutaron POST, Apps Script, Sheets o Drive reales; Beta permanece cerrada.
