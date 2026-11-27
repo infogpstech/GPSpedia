@@ -58,17 +58,33 @@ function isAdminModalEditField_(fieldName){
  return ADMIN_MODAL_EDIT_FIELDS.has(field)||/^(tipoCorte|configRelay|ubicacionCorte|colorCableCorte)[1-3]$/.test(field);
 }
 function extractDriveFileIds(value) {
-    const text = String(value || "");
+    // Normaliza texto de celdas, HTML y URLs publicadas antes de comparar IDs de Drive.
+    let source = String(value == null ? "" : value);
+    const decodeHtmlEntities = text => String(text || "")
+        .replace(/&amp;/gi, "&").replace(/&#0*38;/gi, "&").replace(/&#x0*26;/gi, "&")
+        .replace(/&quot;/gi, '"').replace(/&#0*39;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
+    source = decodeHtmlEntities(source).replace(/\\\\\//g, "/");
+    let decoded = source;
+    for (let pass = 0; pass < 2; pass++) {
+        try { decoded = decodeURIComponent(decoded.replace(/\+/g, "%20")); }
+        catch (decodeError) { break; }
+        decoded = decodeHtmlEntities(decoded).replace(/\\\\\//g, "/");
+    }
+    const candidates = [source, decoded];
     const ids = new Set();
     const patterns = [
-        /[?&]id=([a-zA-Z0-9_-]{10,})/g,
-        new RegExp("[/]d/([a-zA-Z0-9_-]{10,})", "g")
+        /(?:[?&]|\\b)id\\s*=\\s*["']?([a-zA-Z0-9_-]{20,})/gi,
+        /(?:\\/d\\/|\\/file\\/d\\/|\\/folders\\/)([a-zA-Z0-9_-]{20,})/gi,
+        /(?:src|href|data-src)\\s*=\\s*["'][^"']*?(?:[?&]id=|\\/d\\/)([a-zA-Z0-9_-]{20,})/gi
     ];
-    patterns.forEach(pattern => {
-        let match;
-        while ((match = pattern.exec(text)) !== null) ids.add(match[1]);
+    candidates.forEach(text => {
+        patterns.forEach(pattern => {
+            pattern.lastIndex = 0;
+            let match;
+            while ((match = pattern.exec(text)) !== null) ids.add(match[1]);
+        });
+        if (/^[a-zA-Z0-9_-]{20,}$/.test(text.trim())) ids.add(text.trim());
     });
-    if (/^[a-zA-Z0-9_-]{20,}$/.test(text.trim())) ids.add(text.trim());
     return Array.from(ids);
 }
 
@@ -1275,7 +1291,7 @@ function clearAdminState(action) {
 /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
 const ADMIN_SERVICE_VERSION = "2.7.2";
 // Cambia cuando se modifica la captura/clasificación de referencias Drive; invalida cursores anteriores.
-const DRIVE_AUDIT_SCAN_VERSION_ = "drive-audit-logosmarca-v1";
+const DRIVE_AUDIT_SCAN_VERSION_ = "drive-audit-reference-normalization-v2";
 
 
 function gpsepediaTransportJsonpGet_(e, output) {
@@ -15379,7 +15395,7 @@ function handleAuditDriveImagesInCortesCore_(payload, logMessage, developerConte
         const referenceLocationsById = {};
         references.references.forEach((locations, fileId) => {
             const catalogLocations = normalizeDriveAuditReferenceLocations_(Array.isArray(locations) ? locations : [])
-                .filter(location => location.sheet === SHEET_NAMES.CORTES || location.sheet === SHEET_NAMES.LOGOS_MARCA);
+                .filter(location => [SHEET_NAMES.CORTES, SHEET_NAMES.LOGOS_MARCA, SHEET_NAMES.TUTORIALES, SHEET_NAMES.RELAY, SHEET_NAMES.PYS].includes(location.sheet));
             if (catalogLocations.length) referenceLocationsById[String(fileId)] = catalogLocations;
         });
         referenceSnapshot = { activeDriveIds: Array.from(references.references.keys()), historicalDriveIds: Array.from(historicalDriveIds),
