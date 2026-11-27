@@ -10112,7 +10112,8 @@ export async function openAuditDriveModal(options = {}) {
             }
             const hasUnusedImages = allFiles.some(file => file.classification === 'Sin uso detectado');
             const scanHasErrors = errorCount > 0 || unverifiableReferences > 0;
-            if (complete && hasUnusedImages && !scanHasErrors) {
+            let existingRecordsCheckedCount = 0, existingActiveReferenceCount = 0, existingPendingRevalidationCount = 0;
+            if (complete && !scanHasErrors) {
                 try {
                     const finalUnusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado').map(file => ({ fileId: String(file.fileId) }));
                     const finalInventory = await routeActionWithRetry('saveUnusedImagesInventory', {
@@ -10123,6 +10124,14 @@ export async function openAuditDriveModal(options = {}) {
                     if (!finalInventory || finalInventory.status !== 'success' || finalInventory.auditId !== auditId ||
                         !Array.isArray(finalInventory.results) || !finalInventory.inventoryOperationId) {
                         throw new Error(finalInventory && finalInventory.message ? finalInventory.message : 'ADMIN no confirmó la consolidación final.');
+                    }
+                    existingRecordsCheckedCount = Number(finalInventory.existingRecordsCheckedCount) || 0;
+                    existingActiveReferenceCount = Number(finalInventory.activeReferenceCount) || 0;
+                    existingPendingRevalidationCount = Number(finalInventory.noLongerConfirmedCount) || 0;
+                    if (existingRecordsCheckedCount || existingActiveReferenceCount || existingPendingRevalidationCount) {
+                        appendAuditConsole("Reconciliación final del inventario: " + existingRecordsCheckedCount +
+                            " registros existentes revisados; " + existingActiveReferenceCount + " con referencias activas; " +
+                            existingPendingRevalidationCount + " ya no confirmados como sin uso.", "info");
                     }
                     finalInventory.results.forEach(item => {
                         const fileId = String(item && item.fileId || '');
@@ -10179,7 +10188,10 @@ export async function openAuditDriveModal(options = {}) {
                     ? (inventoryStatus === 'saved'
                         ? 'Auditoría completa. Todas las imágenes sin uso tienen una fila individual registrada y verificada en la biblioteca.'
                         : 'Auditoría completa. ' + unregisteredCount + ' imágenes requieren revisión o reintento individual; las confirmadas se conservan en la biblioteca.')
-                    : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.');
+                    : 'Auditoría completa. No se encontraron imágenes nuevas sin uso. Se revisaron ' +
+                        existingRecordsCheckedCount + ' registros existentes; ' + existingActiveReferenceCount +
+                        ' tienen referencias activas y ' + existingPendingRevalidationCount +
+                        ' quedan pendientes de revalidación. Los registros del inventario se conservaron.');
             await persistState('complete');
             if (!isCurrentRequest()) return;
             updateSummary(inventoryMessage, scanHasErrors ? "warning" : "success");
@@ -10219,8 +10231,8 @@ export async function openAuditDriveModal(options = {}) {
     if (resetScanButton) resetScanButton.onclick = async () => {
         if (!isCurrentRequest() || isRunning || isDriveAuditRunning) return;
         const accepted = await requestAuditConsoleConfirmation(
-            "¿Reiniciar el escaneo de imágenes? Se eliminará únicamente el progreso local de auditoría de esta cuenta. " +
-            "Los registros confirmados en Imagenes_Reemplazadas y los archivos de Drive no se eliminarán ni modificarán. " +
+            "¿Reiniciar el escaneo de imágenes? Antes del nuevo recorrido se compararán los registros existentes de Imagenes_Reemplazadas con las referencias actuales del catálogo, incluida LogosMarca, y se verificarán/completarán sus asociaciones de modelo. " +
+            "No se eliminarán filas del inventario ni archivos de Drive; después se limpiará únicamente el progreso local de esta cuenta. " +
             "Una solicitud que ya esté ejecutándose en otra pestaña no se cancela automáticamente."
         );
         if (!accepted || !isCurrentRequest()) return;
@@ -10229,6 +10241,42 @@ export async function openAuditDriveModal(options = {}) {
         updateControls();
         let shouldRestart = false;
         try {
+            appendAuditConsole("Verificando primero los registros existentes del inventario contra las referencias del catálogo y sus asociaciones de modelo. No se eliminarán filas.", "progress");
+            let startRow = 2, preflightBatches = 0;
+            let preflightTotals = { checked: 0, active: 0, pending: 0, associationsUpdated: 0, errors: 0, skipped: 0 };
+            while (startRow !== null) {
+                const response = await routeActionWithRetry("saveUnusedImagesInventory", {
+                    ...getDeveloperSessionPayload(), mode: "reconcile_existing", startRow, limit: 50
+                }, { timeoutMs: 90000, maxAttempts: 3, retryDelayMs: 700, shouldContinue: isCurrentRequest });
+                if (!isCurrentRequest()) return;
+                if (!response || response.status !== "success" || typeof response.complete !== "boolean" ||
+                    !Array.isArray(response.results) || (response.nextStartRow !== null &&
+                    (!Number.isInteger(Number(response.nextStartRow)) || Number(response.nextStartRow) <= startRow))) {
+                    throw new Error(response && response.message ? response.message : "ADMIN devolvió un resultado inválido al reconciliar el inventario previo.");
+                }
+                if (response.associationBuildError) {
+                    throw new Error("No se pudieron verificar las asociaciones de modelo de los registros existentes: " + response.associationBuildError);
+                }
+                if (Number(response.errorCount || 0) > 0) {
+                    throw new Error("La reconciliación previa tuvo " + Number(response.errorCount) + " errores de escritura; no se inició un nuevo escaneo.");
+                }
+                preflightBatches++;
+                preflightTotals.checked += Number(response.existingRecordsCheckedCount) || 0;
+                preflightTotals.active += Number(response.activeReferenceCount) || 0;
+                preflightTotals.pending += Number(response.pendingRevalidationCount) || 0;
+                preflightTotals.associationsUpdated += Number(response.associationUpdatedCount) || 0;
+                preflightTotals.skipped += Number(response.skippedCount) || 0;
+                appendAuditConsole("Reconciliación previa · lote " + preflightBatches + ": " +
+                    (Number(response.existingRecordsCheckedCount) || 0) + " registros verificados, " +
+                    (Number(response.activeReferenceCount) || 0) + " con referencia activa, " +
+                    (Number(response.pendingRevalidationCount) || 0) + " pendientes de revalidación y " +
+                    (Number(response.associationUpdatedCount) || 0) + " asociaciones actualizadas.", "info");
+                startRow = response.nextStartRow;
+            }
+            appendAuditConsole("Reconciliación previa finalizada: " + preflightTotals.checked + " registros comprobados; " +
+                preflightTotals.active + " referenciados; " + preflightTotals.pending + " pendientes de confirmar en el nuevo recorrido; " +
+                preflightTotals.associationsUpdated + " asociaciones completadas; " + preflightTotals.skipped +
+                " filas ambiguas o no verificables conservadas para revisión. No se borró ningún registro.", "success");
             const cleared = await offline.clearDriveAuditState(requestContext.userId);
             if (cleared !== true) throw new Error("IndexedDB no confirmó la limpieza del progreso anterior; no se inició otro escaneo.");
             appendAuditConsole("Progreso local anterior eliminado. Se generará un auditId nuevo y se iniciará el recorrido desde la carpeta raíz.", "success");
