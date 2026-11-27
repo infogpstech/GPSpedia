@@ -638,9 +638,9 @@ function collectActiveDriveReferences(includeLocations = true) {
 }
 function collectLogoSheetImageReferences_(sheet, includeLocations = true) {
     if (!sheet) throw new Error("No se encontró la hoja «LogosMarca» para verificar referencias de logotipos.");
-    const lastColumn = Number(sheet.getLastColumn()) || 0;
+    const availableColumns = Number(sheet.getMaxColumns && sheet.getMaxColumns()) || Number(sheet.getLastColumn()) || 0;
     const idHeader = String(sheet.getRange(1, 1).getDisplayValue() || "").trim().toLowerCase();
-    if (lastColumn < 3 || idHeader !== "id") {
+    if (availableColumns < 3 || idHeader !== "id") {
         throw new Error("El esquema de «LogosMarca» no permite verificar la URL de la columna 3; se esperaba el encabezado ID y la columna de URL.");
     }
     const references = new Map();
