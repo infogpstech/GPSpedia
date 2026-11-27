@@ -1734,3 +1734,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Validación estática: delimitadores balanceados en los seis archivos modificados, sin nombres de funciones duplicados, 11 invariantes comprobadas y simulaciones efímeras de asignación/replay/no sobrescritura PASS. No se añadieron suites ni workflows.
 - Commits: `8809015aa41e2d55064eedeb056a21588a90fe10`, `773312621da5bceb6ad5bad7cdd94ea06286bb49`.
 - Pendiente: despliegue WRITE/CATALOG y prueba integrada autorizada en Spreadsheet/Drive aislado; navegador/IndexedDB real no verificados. No se ejecutaron POST ni escrituras remotas.
+
+
+### 2026-11-26 — GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01
+- Archivo: `JS/Services/write.js`, función `assertSupplementaryInfoPayloadKeys_`.
+- Modificación: se agregaron `__sharedSessionActor` y `_sharedSessionActor` a la allow-list de propiedades para que la estructura interna de sesión no sea rechazada.
+- La derivación y validación del actor confiable, la persistencia, el ledger, los IDs idempotentes y la materialización de la fila del vehículo no fueron modificados.
+- Validación: comparación con respaldo exacto y revisión estática de la autorización; integración remota/deployment no ejecutados.
