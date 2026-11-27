@@ -1499,3 +1499,17 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Ejecutar pruebas aisladas reproducibles con mocks/fixtures de LogosMarca, registro incremental con error aislado, referencias no interpretables, idempotencia y reinicio.
 - [ ] Ejecutar revisión visual en navegador escritorio/móvil y pruebas autorizadas de Apps Script/Drive/Spreadsheet en Beta.
 - Sin POST, escrituras reales en Sheets/Drive ni deployment; fase Beta permanece cerrada.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — revisión aislada de continuidad (2026-11-27)
+**Estado: implementación fuente parcial; harnesses aislados y revisión estática ampliados. La tarea permanece abierta.**
+- [x] Ejecutar harness efímero de LogosMarca para URL directa, fórmula IMAGE(), Rich Text, CellImage y enlace Drive no interpretable (5/5 PASS).
+- [x] Verificar rechazo de hoja/esquema sin encabezado ID (1/1 PASS).
+- [x] Verificar validador incremental: error aislado no bloquea candidato emitido; referencias no interpretables bloquean; IDs ajenos se rechazan (3/3 PASS).
+- [x] Ejecutar writeDriveInventoryRowVerified_ con hoja simulada: escritura/lectura normal y persistencia seguida de excepción reconocida mediante lectura posterior (2/2 PASS).
+- [x] Comprobar estáticamente filtro de clasificación, reintentos, cuatro pestañas, expansión móvil, movimiento reducido y orden de limpieza antes de reinicio (6/6 PASS).
+- [ ] Ejecutar el flujo completo de inventario con archivo A fallido y archivo B verificable en una simulación aislada del handler; comprobar que B se confirma sin desbloquear consolidación global.
+- [ ] Ejecutar limpieza/reinicio IndexedDB en navegador y verificar aislamiento por usuario, nuevo auditId y conservación del inventario persistente.
+- [ ] Revisar visualmente escritorio/móvil: pestañas, workspace, consola y galería; no alterar apariencia ni animaciones existentes.
+- [ ] Revisión final de diff contra respaldos y cierre documental. No ejecutar Apps Script remoto, Drive/Sheets, POST ni deployment; Beta permanece cerrada.
+- Los harnesses se ejecutaron en memoria; no se crearon suites ni archivos de prueba.
