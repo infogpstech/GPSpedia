@@ -1829,3 +1829,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — ajuste del detector
 - icon-fallback.js: se corrigieron los argumentos de caracteres Unicode usados por document.fonts.load para consultar glifos de Font Awesome Free y Brands.
+
+
+2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — corrección del literal Unicode
+- icon-fallback.js: se redujo a una barra inversa el escape de los puntos de código PUA de Free y Brands, de modo que document.fonts.load reciba el carácter y no la secuencia textual.

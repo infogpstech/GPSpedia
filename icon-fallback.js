@@ -11,9 +11,9 @@
     return;
   }
   Promise.all([
-    document.fonts.load('900 16px "Font Awesome 6 Free"', '\\uf007'),
-    document.fonts.load('400 16px "Font Awesome 6 Free"', '\\uf007'),
-    document.fonts.load('400 16px "Font Awesome 6 Brands"', '\\uf2b9')
+    document.fonts.load('900 16px "Font Awesome 6 Free"', '\uf007'),
+    document.fonts.load('400 16px "Font Awesome 6 Free"', '\uf007'),
+    document.fonts.load('400 16px "Font Awesome 6 Brands"', '\uf2b9')
   ]).then(results => {
     if (results.some(fonts => !fonts || fonts.length === 0)) activateFallback();
   }).catch(activateFallback);

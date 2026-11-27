@@ -1464,3 +1464,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Corregir las secuencias Unicode de FontFaceSet.load para consultar caracteres del rango privado de Font Awesome.
 - [x] Revisar estáticamente el detector, las reglas CSS y las referencias de las tres páginas.
 - [ ] Validar conectado y offline frío/caliente en navegador/dispositivo; pendiente.
+
+
+### GP-PWA-OFFLINE-ICONS-01 — corrección final del literal Unicode (2026-11-27)
+- [x] Confirmar en el contenido fuente que document.fonts.load recibe caracteres PUA con escape JavaScript de una sola barra inversa.
+- [ ] Validar navegador conectado y offline frío/caliente; pendiente.

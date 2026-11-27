@@ -695,3 +695,8 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se corrigió el escape de los caracteres consultados por document.fonts.load: el código fuente usa ahora las secuencias Unicode PUA correspondientes, no texto literal con doble barra.
 - La hoja CDN permanece prioritaria; el CSS local se activa mediante la clase gp-icons-fallback cuando falta la hoja o alguna fuente.
 - La comprobación es estática. No se ha ejecutado navegador, Service Worker en dispositivo ni sesión offline fría/caliente.
+
+
+## 2026-11-27 — GP-PWA-OFFLINE-ICONS-01 / corrección de literal PUA
+- Se verificó el contenido literal de icon-fallback.js y se sustituyó el doble escape restante por un único escape JavaScript para los glifos PUA consultados.
+- La verificación confirma presencia del literal de una barra inversa y ausencia del literal doble; no equivale a prueba de navegador.

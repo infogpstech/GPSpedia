@@ -907,3 +907,7 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — revisión de detector
 - Code review estático del primer commit identificó que los argumentos de caracteres para FontFaceSet.load tenían doble escape; se corrigieron a secuencias Unicode de un solo escape para que la carga solicite glifos del área privada usada por Font Awesome.
 - Se mantiene el comportamiento de fallback conservador ante fuentes ausentes o error de carga. No se ha ejecutado navegador.
+
+
+2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — ajuste de secuencias Unicode
+- La revisión de contenido del archivo publicado detectó que el primer ajuste conservó dos barras inversas. Se corrigió el literal para que document.fonts.load reciba un carácter PUA real de Font Awesome. Esta observación se registra para mantener trazabilidad; no se declara validación de navegador.
