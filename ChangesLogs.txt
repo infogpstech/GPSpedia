@@ -1932,3 +1932,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `HTML/add_cortes.html`: se centralizó el mensaje de éxito y la transición de etapa tras confirmación, protegidos por ID de operación para no repetir la acción para el mismo opId.
 - El plan documenta los cambios aplicados y el pendiente de integración del registro incremental de inventario en el recorrido de Drive.
 - No se ejecutaron pruebas de navegador/Apps Script; cambios pendientes de validar en ejecución.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-AUDIT-REVIEW-04 — Confirmación de registro incremental ya integrado
+- Revisión de JS/Frontend/ui.js: cada respuesta de página de auditoría desencadena saveUnusedImagesInventory con incremental:true para sus imágenes clasificadas Sin uso detectado, valida resultados por ID/estado y persiste el estado local antes de continuar.
+- JS/Services/admin.js: página y metadatos se guardan en Cache y pageCount se actualiza en estado ADMIN antes de responder; el validador incremental verifica que los IDs hayan sido emitidos como candidatos.
+- La consolidación final conserva su propósito de reconciliación histórica; el registro incremental por página no está pendiente de implementación. Se documentó el ajuste de estado y el pendiente real: navegador y Apps Script/Drive/Sheets autorizados.
+- No runtime, browser, Drive/Sheets remoto ni deployment en esta revisión.
