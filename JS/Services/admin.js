@@ -14460,7 +14460,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
         if (!incremental) { auditState.inventoryStatus = "processing"; saveDriveAuditServerState_(auditState); }
 
         let references = null, referenceScanError = "";
-        try { references = collectCatalogImageReferences(true); }
+        try { references = collectCatalogImageReferences(!incremental); }
         catch (error) { referenceScanError = error.message || String(error); }
 
         const rootFolder = getCortesRootFolder();
