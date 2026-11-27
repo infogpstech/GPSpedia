@@ -1662,6 +1662,8 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
         SpreadsheetApp.flush();
 
+        // Forzar texto plano: el ID no debe convertirse en número ni depender de fórmula.
+        sheet.getRange(rowIndex, COLS_CORTES.id).setNumberFormat("@");
         // El ID queda reservado como valor estático y no se reutiliza si falla la fila.
         sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
         SpreadsheetApp.flush();
