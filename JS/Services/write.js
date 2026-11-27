@@ -569,7 +569,7 @@ function formatCortesVehicleId_(sequence, context) {
     if (!Number.isSafeInteger(numeric) || numeric < 1) {
         throw new Error((context || "Asignación de ID") + ": la secuencia debe ser un entero positivo seguro.");
     }
-    return "V-" + String(numeric).padStart(3, "0");
+    return "V-" + String(numeric).padStart(5, "0");
 }
 
 function normalizeCortesVehicleId_(value, context) {
@@ -760,7 +760,7 @@ function ensureCortesIdReservationBaseline_(cortesSheet, ledger, options) {
         }
         return { ledger, baseline: verified, highWaterMark: verifiedHighWater };
     } finally {
-        if (lock.hasLock()) lock.releaseLock();
+        if (lock && lock.hasLock()) lock.releaseLock();
     }
 }
 
@@ -877,21 +877,26 @@ function getLastCortesIdReservation_(sheet) {
     return previousId;
 }
 
-function buildCortesIdReservationFormula_(highWaterMark) {
-    const base = Number(highWaterMark);
-    if (!Number.isSafeInteger(base) || base < 0) throw new Error("El máximo reservado de IDs no es válido.");
-    // Cada fila toma el máximo de las reservas anteriores y del máximo ya verificado.
-    // ROW() hace que dos appendRow concurrentes calculen IDs distintos por orden físico.
-    return "=MAX($C$1:INDEX($C:$C,ROW()-1)," + base + ")+1";
-}
-
-function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
+function reserveCortesVehicleIdForOperation_(cortesSheet, request, options) {
     if (!request || !/^OP-[A-Za-z0-9_-]{1,100}$/.test(String(request.opId || "")) ||
         !/^[a-f0-9]{64}$/.test(String(request.operationHash || ""))) {
         throw new Error("La reserva de ID requiere opId y operationHash SHA-256 válidos.");
     }
+    options = options && typeof options === "object" ? options : {};
+    const lockAlreadyHeld = options.lockAlreadyHeld === true;
+    const lock = lockAlreadyHeld ? null : LockService.getScriptLock();
+    let acquired = lockAlreadyHeld;
+    if (!acquired) {
+        try { acquired = lock.tryLock(0); } catch (lockError) { acquired = false; }
+    }
+    if (!acquired) {
+        const busyError = new Error("WRITE está ocupado asignando un ID de vehículo. Conserva el mismo opId y reintenta.");
+        busyError.code = "WRITE_BUSY";
+        throw busyError;
+    }
+    try {
     const ledger = getCortesIdReservationsSheet_();
-    ensureCortesIdReservationBaseline_(cortesSheet, ledger);
+    ensureCortesIdReservationBaseline_(cortesSheet, ledger, { lockAlreadyHeld: true });
     const lastReservedId = getLastCortesIdReservation_(ledger);
     const existing = findCortesIdReservation_(ledger, request.opId);
     if (existing) {
@@ -905,23 +910,32 @@ function reserveCortesVehicleIdForOperation_(cortesSheet, request) {
         includeReservations: false,
         minimumReservedId: lastReservedId
     });
+    const nextVehicleId = highWaterMark + 1;
+    if (!Number.isSafeInteger(nextVehicleId) || nextVehicleId < 1) {
+        throw new Error("La secuencia de IDs alcanzó el límite de enteros seguros; no se asignó un identificador impreciso.");
+    }
+    // El valor se guarda estático. El ScriptLock protege la lectura del máximo,
+    // el incremento y el append para que dos altas concurrentes no reciban el mismo ID.
     ledger.appendRow([
         request.opId,
         request.operationHash,
-        buildCortesIdReservationFormula_(highWaterMark),
+        nextVehicleId,
         new Date().toISOString()
     ]);
     SpreadsheetApp.flush();
 
     const verified = findCortesIdReservation_(ledger, request.opId);
     const verifiedHighWater = getLastCortesIdReservation_(ledger);
-    if (!verified || verifiedHighWater < verified.vehicleId) {
+    if (!verified || verified.vehicleId !== nextVehicleId || verifiedHighWater < verified.vehicleId) {
         throw new Error("No se pudo verificar la reserva persistente del vehicleId para " + request.opId + ".");
     }
     if (verified.operationHash !== request.operationHash) {
         throw new Error("El opId ya reservó un vehicleId con otro contenido; no se asignó un ID nuevo.");
     }
     return verified.vehicleId;
+    } finally {
+        if (lock && lock.hasLock()) lock.releaseLock();
+    }
 }
 
 /** Endpoint autenticado de asignación; el ledger append-only determina la secuencia sin ScriptLock. */
@@ -1302,11 +1316,12 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
         opRowIndex = opEntryBefore.rowIndex;
         opRowValues = idempotencySheetBefore.getRange(opRowIndex, 1, 1, IDEMPOTENCIA_HEADERS.length).getValues()[0];
     }
+    const rowMutationState = { insertedRowIndex: null };
     try {
         return handleAddOrUpdateCutLockedUnsafe_(validatedPayload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, {
             rowIndex: existingRowIndex,
             rowValues: existingRowValues
-        }, preparedRequest.preallocatedVehicleId);
+        }, preparedRequest.preallocatedVehicleId, rowMutationState);
     } catch (error) {
         if ((lockState && lockState.releasedForDrive) || (lock && !lock.hasLock())) {
             // Tras una carga fuera del lock puede haber otras escrituras válidas en la misma fila.
@@ -1318,6 +1333,10 @@ function handleAddOrUpdateCutLocked(preparedRequest, lock, lockState) {
             if (existingRowIndex && existingRowValues) {
                 sheet.getRange(existingRowIndex, 1, 1, existingRowValues.length).setValues([existingRowValues]);
                 existingRowFormulas.forEach((formula, index) => { if (formula) sheet.getRange(existingRowIndex, index + 1).setFormula(formula); });
+                SpreadsheetApp.flush();
+            } else if (rowMutationState.insertedRowIndex) {
+                sheet.deleteRow(rowMutationState.insertedRowIndex);
+                rowMutationState.insertedRowIndex = null;
                 SpreadsheetApp.flush();
             } else if (sheet.getLastRow() === lastRowBefore + 1) {
                 sheet.deleteRow(lastRowBefore + 1);
@@ -1378,7 +1397,7 @@ function getWriteRecoveryImageRepairNeeds_(vehicleData, cutData, rowObj, slotInd
     };
 }
 
-function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot, preallocatedVehicleId) {
+function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaboratorName, idempotencyEntriesSnapshot, existingVehicleSnapshot, preallocatedVehicleId, rowMutationState) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
     if (!cutData) {
@@ -1619,15 +1638,20 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
                 operationHash: operationHash || computeCutOperationFingerprint_(payload)
             };
             // Compatibilidad legacy: reservar bajo el lock porque el cliente no envía opId estable.
-            newId = formatCortesVehicleId_(reserveCortesVehicleIdForOperation_(sheet, reservationRequest), "Alta de vehículo nuevo");
+            newId = formatCortesVehicleId_(reserveCortesVehicleIdForOperation_(sheet, reservationRequest, { lockAlreadyHeld: !!(lock && lock.hasLock()) }), "Alta de vehículo nuevo");
         }
 
         const lastRow = sheet.getLastRow();
-        rowIndex = lastRow + 1;
+        if (lastRow < 2) throw new Error("La hoja «Cortes» no contiene una fila de datos desde la cual conservar las validaciones de las listas.");
         const lastColumn = sheet.getLastColumn();
+        const templateRowIndex = lastRow;
+        sheet.insertRowAfter(lastRow);
+        rowIndex = lastRow + 1;
+        if (rowMutationState && typeof rowMutationState === "object") rowMutationState.insertedRowIndex = rowIndex;
 
-        // Copiar únicamente formato/validaciones; el ID lo asigna el backend.
-        const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
+        // Insertar una fila física y copiar exclusivamente formato + validaciones
+        // de la última fila de datos. Los valores y fórmulas de esa fila no se heredan.
+        const previousRowRange = sheet.getRange(templateRowIndex, 1, 1, lastColumn);
         const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
         previousRowRange.copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
         previousRowRange.copyTo(newRowRange, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
@@ -1642,7 +1666,7 @@ function handleAddOrUpdateCutLockedUnsafe_(payload, lock, lockState, collaborato
         sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
         SpreadsheetApp.flush();
         if (!sameCortesVehicleId_(sheet.getRange(rowIndex, COLS_CORTES.id).getValue(), newId)) {
-            removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
+            if (removeEmptyPendingCutRow(sheet, rowIndex, lastColumn) && rowMutationState) rowMutationState.insertedRowIndex = null;
             throw new Error("No se pudo verificar el ID estático del nuevo vehículo; no se guardó el corte.");
         }
         if (opId) {
