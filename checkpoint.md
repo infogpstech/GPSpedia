@@ -832,3 +832,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 ### Límites y siguiente paso
 - No se ejecutaron Apps Script, Drive/Sheets reales, POST, navegador, IndexedDB real ni deployment. Beta sigue cerrada.
 - Pendiente: prueba visual y flujo de reinicio en navegador; después, Beta autorizada para comprobar filas y asociaciones reales. No cerrar la tarea hasta validar esos escenarios.
+
+
+### Ajuste final — captura de referencias por modo (2026-11-27)
+- En handleSaveUnusedImagesInventory, la captura usa includeLocations=false en lotes incrementales y true en consolidación final. La verificación detallada de ubicaciones se conserva donde se actualizan filas históricas y se evita materializar datos de ubicación innecesarios durante cada guardado incremental.
+- Commit admin.js: 72b5ed0dc49b7f947c39fa727bf49ce9cc291692.
+- Respaldo exacto previo a este apunte: ChangesLogs.txt blob 60ea3785005c5aa043018fae9528ac78f9e10002; checkpoint.md blob a9c74b98d00bbaf1d287e6131be03d61615e32f5. Respaldos en REVISION-RECONCILIACION-20261127-02/.
