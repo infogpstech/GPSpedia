@@ -721,7 +721,8 @@ async function handleUserFormSubmit(e) {
             const administrativePassword=userData.Password;
             delete userData.Password;
             const updateResult = await postToAction('updateUser', {
-                userId,
+                userId: submittingSession.userId,
+                targetUserId: userId,
                 updates: userData,
                 sessionToken: submittingSession.sessionToken
             });
