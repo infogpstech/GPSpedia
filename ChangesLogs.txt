@@ -2033,3 +2033,9 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Archivo modificado: JS/Services/Auth.js, función getUserIdSequencePattern_(), bloque de fallback sin configuración central ni fórmulas históricas (aprox. línea 3179).
 - Cambio: prefijo predeterminado de IDs de Users de "USR-" a "U-" y relleno de 4 a 3 dígitos. Se conserva la derivación desde fórmulas históricas y el resto de validaciones.
 - Commit: 5e336153ea8bc791ab441d60e4e7ad323a744801.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-REGISTRO-ERROR-03 — documentación de nueva evidencia
+- Auditoria.txt: se añadió el hallazgo de pérdida silenciosa de readError durante la lectura de reconciliación del writer de inventario.
+- Tareas_Activas.md: se registró GP-ADMIN-DRIVE-REGISTRO-ERROR-03 con el alcance de diagnóstico acumulado de firstError/readError/retryError.
+- No se modificó código funcional ni se alteró el contrato de persistencia. No se ejecutaron pruebas remotas ni deployment.
