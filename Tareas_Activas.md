@@ -1563,3 +1563,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - `finishConfirmedCutTransition_()` intenta completar la transición antes de mostrar el alert y no marca el opId como transicionado si la rutina falla. La alerta de éxito queda posterior al avance, evitando que un fallo de configuración auxiliar deje la Etapa 2 como destino.
 - Se conserva el opId y el guardado/idempotencia de WRITE. Se registran errores de transición.
 - Revisión estática del bloque: PASS (transición prioritaria y referencias opcionales protegidas). Prueba real de navegador/formulario pendiente; no se ejecutó Apps Script ni deployment.
+
+
+### GP-ADMIN-DRIVE-REGISTRO-ERROR-01
+- [x] Añadir registro técnico estructurado de errores de lote incremental a consola y consola de auditoría.
+- [ ] Reproducir en navegador real y capturar diagnóstico para determinar y corregir causa raíz; runtime externo pendiente.
