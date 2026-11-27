@@ -1396,3 +1396,12 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Modal consume colección física independiente.
 - [ ] Revisión estática de diffs y simulaciones; validación real diferida.
 - No modificar escritura AportesVehiculo ni desplegar.
+
+### GP-CUT-DETAIL-PYS-STALE-NOTICE-01 — eliminar aviso PyS del modal de corte (2026-11-27)
+- [x] Identificar aviso en renderPosiblesProblemasAccordion.
+- [x] Crear respaldo exacto de ui.js.
+- [x] Retirar únicamente el aviso visual de frescura de PyS en este modal.
+- [ ] Comparar diff con respaldo y revisar funciones afectadas.
+- [ ] Eliminar backup después de revisión.
+- [ ] Registrar cierre/checkpoint tras validación estática.
+- No se modifica caché, carga/refresh, otras vistas ni APIs.
