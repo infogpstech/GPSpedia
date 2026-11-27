@@ -1710,3 +1710,13 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Commit: `5fd150497861893f7762c6616cd61b2e8781451c`.
 
 - Validación estática adicional de `JS/Services/write.js`: inserción después del último vehículo, primera alta con solo encabezados y expansión de una hoja con una sola fila; las tres rutas copian formato y validaciones desde la fila plantilla.
+
+
+[2026-11-26] GP-CUT-ID-CROSS-SERVICE-07 — compatibilidad de IDs V-00000 en servicios
+- `JS/Services/catalog.js`: normalizador canónico con cinco dígitos mínimos y extensión natural; proyecta IDs en formato `V-00000`; agrupa los estados/eventos de `FeedbackLikes` por ID canónico y acepta aliases históricos.
+- `JS/Services/feedback.js`: normalizador compartido para IDs prefijados e históricos; habilita sugerencias y aplicaciones de año, eventos `AportesVehiculo`, útiles por usuario, conteos, Inbox/reportes y asociaciones PyS con IDs de cinco o más dígitos. Los registros históricos `V-###` se comparan por identidad canónica para evitar duplicados.
+- `JS/Services/admin.js`: auditoría de referencias de vehículos reconoce IDs prefijados, ceros iniciales y referencias históricas sin convertir el ID público a Number.
+- Sin cambios: WRITE mantiene el contador de reservas numérico interno; Auth, Utilities, CentralConfigurationReader, InboxConversations, SharedSessionActor y frontend ya aceptaban el contrato textual.
+- Sintaxis V8 5/5; fixtures de CATALOG/FEEDBACK/ADMIN, Inbox, útiles, sugerencias de año, proyección de eventos y PyS: PASS. Code Review contra respaldos: PASS.
+- Commits: CATALOG `7945e406075461d9af3a2bf209a4493eecb09027`; FEEDBACK `20e5e09313d99858eb11e9fa1b01a9f51f7d7201`, `fb1ff8608b84a49f7b4d137e82cc25bded1224b8`, `4e60ce927a48b44907ff4bb4b93ea091689021aa`, `f3e283157e5746ab8cb5db3da4ca854e2d9f4237`, `412d21236d817fd2586c48519fe80d35465ad80c`; ADMIN `adad4b9313092774f3aa90a1ce4da4f708aff84e`.
+- No se desplegaron servicios Apps Script ni se consultaron/escribieron hojas productivas; validación remota pendiente.
