@@ -1842,3 +1842,15 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 2026-11-27 | GP-ADD-CUT-WIZARD-UX-NAV-01 — corrección de favicon
 - HTML/users.html, cabecera: se añadió un enlace rel="icon" PNG hacia ../Images/icon-v3-512x512.png, alineado con el icono local utilizado por index.html y HTML/add_cortes.html.
 - La llamada document.write de JS/Frontend/ui.js se clasificó como generación de documento de impresión sin scripts ni URLs externas; no se modificó.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — corrección de referencias y registro incremental
+- JS/Services/admin.js: se añadió LogosMarca a la allowlist de referencias. La URL de logotipo se lee de la columna 3 (contrato usado por handleAddLogo), con soporte para URL, fórmula, rich text y CellImage; cada referencia incluye hoja/fila/columna/marca. La hoja es obligatoria; si falta o no tiene encabezado ID, la auditoría se detiene sin clasificar.
+- ADMIN: se separó el error aislado de archivo de la integridad de referencias. validateDriveAuditInventoryBatch_ permite registrar candidatos emitidos y verificados por ID aunque otros archivos del recorrido fallen; referencias de catálogo no interpretables siguen bloqueando. La validación de auditoría completa conserva el bloqueo para consolidación, reconciliación y organización.
+- ADMIN: se incorporó DRIVE_AUDIT_SCAN_VERSION_ para invalidar cursores/snapshots de auditorías anteriores que no incluían LogosMarca. ADMIN_SERVICE_VERSION permanece 2.7.2.
+- ADMIN: errores de lectura de ID/metadatos, asociación, fecha de creación y persistencia individual ahora reportan fase/código/detalle; las fallas generales de escaneo/inventario se contextualizan en el handler.
+- JS/Frontend/ui.js e index.html: se habilitaron reintentos individuales con errores aislados, estado parcial honesto, visualización de logs ADMIN y acción «Reiniciar escaneo». El reinicio pide confirmación, limpia progreso IndexedDB de la cuenta actual y arranca con un auditId nuevo; no borra inventario ni archivos. Advierte que solicitudes ya ejecutándose en otra pestaña no se cancelan.
+- FindOrCreate: se reutilizan getOrCreateReplacedImagesSheet() y ensureReplacedImagesInventoryColumns(); crean la hoja/columnas requeridas, validan encabezados duplicados y verifican el esquema persistido. No se duplicó la función.
+- Respaldos exactos: Olds/Backups/GP-ADMIN-DRIVE-UNUSED-IMAGES-03-20261127/{admin.js.backup,ui.js.backup,index.html.backup}; cada blob coincide con el SHA de la fuente previa a edición.
+- Validación: invariantes estáticos PASS; balance de delimitadores JS PASS para admin.js/ui.js; botón reset único en HTML; diff de commits revisado. No se ejecutaron pruebas runtime, navegador, POST, Apps Script remoto, Drive/Spreadsheet ni deployment.
+- Commits de código principales: 69cded25f80dead70bd1c6da9a336debf50a8289; 6ef82da34832cb097d05d183ed1babfbba50709c; 3d620a59c54ea1c6ceb9d6baa504440d71e4204d; d2f0a799c98bd789b9917a64fd713b2e05d34a79; 77566aa0d3c1c60671955fb45bed782a0124f511; 3f5e23ea2b2a48ff8e42d85c508da71d1a386a7b; 2b5b275813306efe8980578089e04d995c47078a.
