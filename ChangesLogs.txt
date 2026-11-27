@@ -2048,3 +2048,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Se preservaron la firma del writer y los call sites; no se modificaron esquema, reglas de elegibilidad, estados de éxito ni organización.
 - Comparación exacta contra backup: solo cambió el bloque writeDriveInventoryRowVerified_(). Parsing completo PASS; pruebas simuladas en memoria 5/5 PASS.
 - No se ejecutaron escrituras reales en Google Sheets/Drive, Apps Script, POST ni deployment. La causa remota exacta y validación integrada permanecen pendientes.
+
+
+2026-11-27 | GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — normalización de referencias y pausa
+- JS/Services/admin.js: extractDriveFileIds() normaliza entidades HTML y URL percent-encoding, reconoce parámetros id y rutas /d/, /file/d/ y /folders/; la versión del escaneo se cambió a drive-audit-reference-normalization-v2. El snapshot de ubicaciones ahora incluye Cortes, LogosMarca, Tutoriales, Relay y PyS.
+- JS/Frontend/ui.js: se añadió control de pausa de la auditoría que termina el lote en curso, persiste el estado parcial y cursor, y permite reanudar. Se evita duplicar el botón al abrir nuevamente el panel.
