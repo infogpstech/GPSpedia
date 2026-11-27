@@ -3343,6 +3343,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     }
 
     modalDetalle.dataset.modalType = 'corte';
+    if (!modalWasVisible && window.history && window.history.pushState && !(window.history.state && window.history.state.modalOpen)) {
+        window.history.pushState({ ...(window.history.state || {}), modalOpen: true }, '', window.location.href);
+    }
     modalDetalle.classList.add("visible");
     if(sameModalViewState)requestAnimationFrame(()=>restoreModalViewState(modalDetalle,sameModalViewState));
     applyPendingModalViewRestore_();
