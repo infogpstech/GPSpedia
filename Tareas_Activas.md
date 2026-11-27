@@ -1481,3 +1481,18 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Añadir el icono PNG local ya existente en la cabecera de HTML/users.html.
 - [x] Inspeccionar la llamada document.write de ui.js: solo genera HTML/CSS de impresión y no inserta scripts externos; clasificar la advertencia de HtmlService como runtime externo probable.
 - [ ] Verificar ausencia de /favicon.ico 404 y origen de la advertencia en navegador real; pendiente.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — corrección de registro automático y LogosMarca (2026-11-27)
+**Estado: AUDITORÍA COMPLETADA; implementación pendiente.**
+- [x] Auditar colector de referencias, registro incremental, esquema de inventario, UI, persistencia local y controles de escaneo.
+- [x] Registrar hallazgos F-36 a F-41 en Auditoria.txt antes de editar.
+- [ ] Incorporar LogosMarca (URL en columna 3) a las referencias activas y ubicaciones verificables.
+- [ ] Permitir persistencia/reintento individual cuando hay errores aislados de archivos, sin permitir consolidación u organización si la auditoría no es íntegra.
+- [ ] Corregir estado visual de registro parcial y habilitar reintentos seguros.
+- [ ] Agregar reinicio explícito del escaneo con limpieza confirmada de IndexedDB y nuevo auditId.
+- [ ] Exponer errores con etapa, archivo, código y detalle; conservar trazabilidad en consola.
+- [ ] Verificar FindOrCreate existente de Imagenes_Reemplazadas y columnas, sin duplicar funciones.
+- [ ] Crear respaldos exactos antes de editar, comparar diffs, ejecutar pruebas aisladas y Code Review.
+- [ ] Actualizar ChangesLogs.txt, Auditoria.txt, Tareas_Activas.md y checkpoint.md.
+- Sin POST, escrituras reales en Sheets/Drive ni deployment; fase Beta permanece cerrada.
