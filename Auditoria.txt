@@ -1124,3 +1124,25 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Comprobaciones estáticas: inyección en textarea ausente; checkbox/payload/fingerprint conservados; formulario del botón + conserva `activaTestigo1` en el objeto pendiente y en la recuperación; condición visual, URL, estilo de imagen, estilo rojo, texto y orden color → nota → imagen verificados (11/11 PASS).
 - Code Review estático: PASS. No se modificaron contratos WRITE/CATALOG, estructura de datos, CSS, imágenes del corte, estilos generales ni la rama base.
 - Límites: no se ejecutó navegador real, Apps Script, Google Sheets/Drive, POST ni deployment. La fase Beta permanece cerrada según `Tareas_Beta.md`; la carga real de la miniatura y ambos flujos de interfaz requieren validación visual autorizada.
+
+
+### F-50 — GP-USERS-SESSION-CONTEXT-01 (2026-11-27)
+
+**Incidencia reportada:** al abrir `HTML/users.html`, la lista de usuarios no carga. Consola: `RouteActionError: La sesión requiere userId y sessionToken`, acción `getUsers`, originada en `fetchUsers()`.
+
+**Auditoría estática previa a cambios:**
+- `HTML/users.html`, `DOMContentLoaded` (líneas 420–456): recupera `gpsepedia_session` desde localStorage, asigna `currentUser` y permite el panel a Desarrollador/Jefe/Supervisor; llama a `fetchUsers()`.
+- `fetchUsers()` (líneas 476–504): construye correctamente `sessionSnapshot.id` desde `currentUser.ID || currentUser.id` y `sessionSnapshot.token` desde `currentUser.SessionToken`; valida que ambos existan. Sin embargo, la llamada `getUsers` (línea 492) envía solo `sessionToken` y omite `userId`.
+- `postToAction()` (líneas 464–474) delega el payload sin transformarlo a `routeAction()`; no agrega automáticamente el ID de sesión.
+- `JS/Frontend/api-config.js` (líneas 140–160 y 306–337): `getUsers` se enruta a AUTH y el cuerpo transmitido conserva el payload recibido; no existe enriquecimiento automático del contexto de sesión en el router.
+- La discrepancia entre el payload construido y el contrato expresado por el error del servidor explica directamente la falla observada: la identidad de sesión ya está disponible en el cliente, pero no se envía.
+- Se inspeccionaron las demás llamadas de gestión de usuarios en `HTML/users.html` (crear, actualizar, eliminar, restablecer sesiones, contraseña y perfil). Sus payloads tienen contratos distintos y algunos reutilizan `userId` para el objetivo; no se alterarán sin confirmar el contrato AUTH para evitar confundir al actor autenticado con la cuenta objetivo.
+- Riesgo/alcance: agregar únicamente el `userId` autenticado al payload de lectura `getUsers`; no cambiar permisos, roles, caché, renderizado, mutaciones ni backend.
+- No se dispone del código del servicio AUTH remoto dentro de este repositorio ni se ha ejecutado una petición real; la respuesta de servidor observada por el usuario es evidencia del requisito faltante, pero la confirmación funcional requiere navegador conectado.
+
+**Respaldos exactos previos:**
+- `HTML/users.html`: `Olds/Backups/GP-USERS-SESSION-CONTEXT-01-20261127/HTML__users.html.backup` (blob original `5a7576f6d8eda5e52c12aea968311e55bf51e177`).
+- `Auditoria.txt`: `Olds/Backups/GP-USERS-SESSION-CONTEXT-01-20261127/Auditoria.txt.backup`.
+- `ChangesLogs.txt`, `Tareas_Activas.md` y `checkpoint.md`: respaldos exactos creados en el mismo directorio antes de modificarlos.
+
+**Corrección prevista:** enviar `userId: sessionSnapshot.id` junto a `sessionToken: sessionSnapshot.token` en `getUsers`, manteniendo el snapshot y la protección de sesión vigente.
