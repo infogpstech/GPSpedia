@@ -574,3 +574,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commit de implementación: `54c18271945fcb68342eba213285d9628c2e845b`; commits documentales posteriores: `7063b3f7ff49bbb4303c9f6e77e19dffb1879e1b` y `d07ceee653eba01ecd1f1901f0fa8cbdda4066c3`.
 - Backup temporal exacto conservado en Olds/Backups durante revisión; será retirado tras la revisión final.
 - Siguiente paso: revisar y limpiar backup temporal, verificar HEAD/base y registrar cierre.
+
+
+### Cierre de revisión — GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01
+- Code review: cambio único de código verificado contra respaldo exacto; allow-list con 17 claves total (incluye las dos formas de actor). Actor confiable se consume exclusivamente mediante `__sharedSessionActor`; el alias de un guion bajo no se usa para identidad. Validación de rol, userId y epoch preservada; flujo de aprobación de vídeo sigue rechazando campos de vídeo.
+- Backup temporal comparado y eliminado conforme a normativa.
+- Estado: corrección local en rama de trabajo, sin deployment; no hay prueba remota ni de navegador. No se reabrió Beta ni se crearon suites.
+- Commit de eliminación de backup: `c3da623f41023fdd8d1755b4bb37bec457b69c27`.
