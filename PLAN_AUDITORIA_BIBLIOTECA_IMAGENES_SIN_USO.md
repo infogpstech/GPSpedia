@@ -198,3 +198,11 @@ Pendiente: simulación integrada de archivo A fallido/archivo B verificable dent
 
 ### Pendiente
 - La hipótesis de coerción de fecha debe confirmarse en Apps Script/Google Sheets real; no se dispone de ejecución remota autorizada y Beta permanece cerrada. No se ha declarado corregida la persistencia real ni se ha desplegado.
+
+
+### Code Review final — GP-ADMIN-DRIVE-REGISTRO-ERROR-02 (2026-11-27)
+- PASS: diff limitado a writeDriveInventoryRowVerified_ en JS/Services/admin.js.
+- PASS: normalización solo para Date en fecha_modificacion_drive; identidad, operación, estado y demás metadatos permanecen estrictos.
+- PASS: reintento, reconciliación posterior y bloqueo de organización se conservan.
+- PASS: backup exacto verificado y eliminado tras revisión.
+- Pendiente: confirmar comportamiento en la hoja real. La corrección no está desplegada y no se ha realizado una escritura remota de prueba.
