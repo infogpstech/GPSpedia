@@ -893,7 +893,7 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Commit auditoría: f097dd2fe635f7a8c543d929ed8b4f41fe14099f. Commit backup: bf8effa07c3e620bfa75e8757986b77f44c102f8. Commit código: 6d6adf87b8b620c6ba03e520ec46a4b7ab750ec1.
 - Pruebas efímeras en memoria: Date equivalente aceptada; Date no equivalente rechazada y diagnosticada; tamano_bytes no equivalente rechazada y diagnosticada (3/3 PASS). Parse completo admin.js PASS (15,539 líneas). Diff exacto contra backup: prefijo/sufijo idénticos, único bloque editado writeDriveInventoryRowVerified_.
 - No se ejecutó Apps Script, Google Drive/Sheets real, navegador, POST ni deployment. Beta permanece cerrada. No se crearon suites ni archivos de prueba.
-- Siguiente paso: Code Review final, validar branch head/base y dejar la tarea pendiente de reproducción remota autorizada. No organizar imágenes que no tengan confirmación de inventario.
+- Siguiente paso: reproducción remota autorizada para confirmar el tipo devuelto por fecha_modificacion_drive y verificar el registro real. Code Review y limpieza del backup ya completados. No organizar imágenes que no tengan confirmación de inventario.
 
 
 ### Code Review y limpieza — GP-ADMIN-DRIVE-REGISTRO-ERROR-02
