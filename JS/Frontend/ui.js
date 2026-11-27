@@ -2542,9 +2542,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const { catalogData, currentUser } = getState();
     // El modal consume la copia física de Cortes, separada del ledger de contribuciones.
     const modalSource = catalogData && Array.isArray(catalogData.cortesPhysical) ? catalogData.cortesPhysical : null;
-    const activeItem = modalSource
-        ? modalSource.find(c => String(c.id) === String(item.id)) || item
-        : item;
+    const physicalModalItem = modalSource && modalSource.find(c => String(c.id) === String(item.id));
+    const activeItem = physicalModalItem || (modalSource
+        ? { ...item, tipoCorte1: '', tipoCorte2: '', tipoCorte3: '', ubicacionCorte1: '', ubicacionCorte2: '', ubicacionCorte3: '', colorCableCorte1: '', colorCableCorte2: '', colorCableCorte3: '', configRelay1: '', configRelay2: '', configRelay3: '', imgCorte1: '', imgCorte2: '', imgCorte3: '' }
+        : item);
     // Preparar listas de edición mientras el usuario consulta el detalle, sin bloquear su apertura.
     if (!dropdownOptions && !dropdownOptionsPromise) precargarDropdownOptions().catch(() => {});
     const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
