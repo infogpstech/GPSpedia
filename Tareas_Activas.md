@@ -1614,5 +1614,6 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Parse sintáctico del módulo y harness aislado: getUsers recibe los dos campos esperados.
 - [ ] Validar en navegador con sesión Desarrollador y respuesta real AUTH; comprobar renderizado de la lista.
 - [ ] Revisar contratos remotos de createUser/resetUserSessions/resetUserPassword antes de cualquier cambio adicional; no inferir el significado de userId cuando puede representar la cuenta objetivo.
-- [ ] Code Review final, comparación exacta contra backup y limpieza de respaldos.
+- [x] Code Review final: diff exacto limitado al payload de getUsers; comparación con backup PASS.
+- [x] Eliminar respaldos temporales después de Code Review.
 - Sin cambios en backend, RBAC, estilos, caché ni mutaciones de usuarios; Beta permanece cerrada.
