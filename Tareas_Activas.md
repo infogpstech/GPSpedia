@@ -1286,3 +1286,22 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Respaldos: `Olds/Backups/GP-CUT-ID-CROSS-SERVICE-07-20261126/`.
 - Commits de código: CATALOG `7945e406075461d9af3a2bf209a4493eecb09027`; FEEDBACK `20e5e09313d99858eb11e9fa1b01a9f51f7d7201`, `fb1ff8608b84a49f7b4d137e82cc25bded1224b8`, `4e60ce927a48b44907ff4bb4b93ea091689021aa`, `f3e283157e5746ab8cb5db3da4ca854e2d9f4237`, `412d21236d817fd2586c48519fe80d35465ad80c`; ADMIN `adad4b9313092774f3aa90a1ce4da4f708aff84e`.
 - No se realizaron escrituras ni despliegues remotos de Apps Script.
+
+
+## GP-CUT-SAME-ROW-08 — aportes sobre la fila existente del vehículo (2026-11-26)
+
+**Estado: AUDITORÍA COMPLETADA; IMPLEMENTACIÓN PENDIENTE.**
+
+- [x] Confirmar rama GPSpedia2.2.5_work y HEAD; verificar que GPSpedia2.2.5 permanece intacta.
+- [x] Leer NORMAS_DESAROLLO.md, README.md, checkpoint.md, Tareas_Activas.md, Tareas_Beta.md y Auditoria.txt. contexto_personal.md no existe en la rama.
+- [x] Auditar flujos de corte, apertura, alimentación, VIN y vídeo; revisar persistencia física en Cortes, ledger AportesVehiculo, proyección CATALOG y recuperación local.
+- [x] Registrar hallazgos F-29 a F-35 en Auditoria.txt.
+- [x] Crear respaldos exactos en Olds/Backups/GP-CUT-SAME-ROW-08-20261126/ (WRITE, CATALOG, ui.js, offline.js, add_cortes.html, Service Worker y registros). Commit: d8b3e58005263d6f1e71e3b37449abcf893272c9.
+- [ ] Materializar corte, apertura, VIN y alimentación en las columnas libres de la fila única del vehículo en Cortes, conservando AportesVehiculo como historial append-only e idempotente.
+- [ ] Para corte, guardar tipo, configuración Relay, detalle/ubicación, color, testigo, imagen y colaborador autenticado en el slot asignado; no sobrescribir datos existentes ni insertar una nueva fila de vehículo.
+- [ ] Adaptar CATALOG para reconocer eventos ya materializados, reconciliar eventos históricos y conservar candidatos/conflictos.
+- [ ] Unificar el modal de apertura/alimentación con la operación durable por cuenta, opId estable y contributionOpIds; mantener la misma fila del vehículo.
+- [ ] Corregir alta/recuperación para que una escritura WRITE confirmada permita avanzar a etapa 3 aunque la limpieza IndexedDB quede pendiente; conservar el snapshot completed para limpieza posterior con el mismo opId.
+- [ ] Verificar el flujo de VIN sobre la columna VIN existente y confirmar que vídeo guía sigue actualizando únicamente la fila destino existente.
+- [ ] Validación estática/local y fixtures efímeros fuera del repositorio; comparación contra respaldos; Code Review y actualización de ChangesLogs.txt/checkpoint.md.
+- [ ] No ejecutar POST de Apps Script, escrituras reales en Sheets/Drive ni despliegues. Tareas_Beta.md mantiene cerrada la fase Beta; no crear nuevas suites ni workflows.
