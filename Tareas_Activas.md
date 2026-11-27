@@ -1311,3 +1311,15 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - Commits: `8809015aa41e2d55064eedeb056a21588a90fe10` (materialización de aportes y recuperación) y `773312621da5bceb6ad5bad7cdd94ea06286bb49` (reconciliación VIN, reemplazo seguro de snapshot completado y caché v89).
 - Último commit de implementación: `773312621da5bceb6ad5bad7cdd94ea06286bb49`; el cierre documental se registró en commits posteriores. PR #128 continúa abierto y mergeable hacia `GPSpedia2.2.5`.
 - Pendiente exclusivamente: despliegue autorizado de WRITE/CATALOG y validación integrada en Spreadsheet/Drive aislado; comprobar también el navegador/IndexedDB. No declarar producción validada antes de esas pruebas.
+
+
+## GP-WRITE-SUPPLEMENTARY-SESSION-KEY-01 — validación de actor compartido en aportes
+
+**Estado: CORRECCIÓN IMPLEMENTADA; validación local de diff y autorización estática aprobada; integración remota no ejecutada.**
+
+- Causa: allow-list de `assertSupplementaryInfoPayloadKeys_` no aceptaba las claves internas del contexto compartido que el dispatcher de WRITE incorpora tras autenticar la sesión.
+- Corrección: admitir `__sharedSessionActor` y `_sharedSessionActor` únicamente como estructura interna en la allow-list. La autenticación y autorización siguen consumiendo exclusivamente `payload.__sharedSessionActor`, generado por `withSharedSessionActor_(e, actor)` después de validar userId/sessionToken contra Users/ActiveSessions; el alias simple no se utiliza para identificar al colaborador.
+- Persistencia: se conserva intacto el handler, el ledger de aportes, la idempotencia, la asignación de slots y la materialización de la fila existente.
+- Code review: comparación contra backup confirmó que el único delta de código es la allow-list de la validación. Sin cambios en frontend, AUTH, ADMIN, ledger o persistencia.
+- Validación: inspección estática del flujo actor confiable/handler y comparación exacta; no se añadieron suites ni pruebas al repositorio (fase Beta cerrada). Apps Script remoto, Sheets/Drive y navegador real no ejecutados.
+- No se realizó deployment.
