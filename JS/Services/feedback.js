@@ -180,10 +180,10 @@ function parseReportMetadata(rawValue, rowVehicleId) {
     try {
         const parsed = JSON.parse(rawValue);
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-        const reportId = String(parsed.reportId || "").trim(), vehicleId = String(parsed.vehicleId || "").trim();
+        const reportId = String(parsed.reportId || "").trim(), rawVehicleId = String(parsed.vehicleId || "").trim();
         const corteIndex = Number(parsed.corteIndex);
-        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) || !vehicleId ||
-            vehicleId !== String(rowVehicleId || "").trim() || !Number.isInteger(corteIndex) ||
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) ||
+            !sameFeedbackVehicleId_(rawVehicleId, rowVehicleId) || !Number.isInteger(corteIndex) ||
             corteIndex < 1 || corteIndex > 3 || typeof parsed.activaTestigoMotor !== "boolean") return null;
         const validCategories = new Set(["incidencia_tecnica","instalacion","acceso","contenido","otro"]);
         const categoryRaw = String(parsed.category || "incidencia_tecnica").trim().toLowerCase();
@@ -191,6 +191,7 @@ function parseReportMetadata(rawValue, rowVehicleId) {
         const defaultSubject = "Reporte técnico de vehículo " + vehicleId + " — Corte #" + String(corteIndex);
         const subjectRaw = String(parsed.subject || "").replace(/\s+/g," ").trim();
         const subject = subjectRaw && subjectRaw.length <= 200 ? subjectRaw : defaultSubject;
+        const vehicleId = normalizeFeedbackVehicleId_(rawVehicleId, "Metadata de reporte");
         const metadata = { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor, category, subject };
         const imageMetadata = normalizeReportImageMetadata_(parsed);
         if (imageMetadata) Object.assign(metadata, imageMetadata);
@@ -1180,7 +1181,7 @@ function handleSuggestYear(payload) {
             const currentRow = folderSyncRequest.sheet.getRange(
                 folderSyncRequest.rowNumber, 1, 1, folderSyncRequest.sheet.getLastColumn()
             ).getValues()[0];
-            if (String(currentRow[COLS_CORTES.id - 1] || "").trim() !== String(folderSyncRequest.vehicleId).trim()) {
+            if (!sameFeedbackVehicleId_(currentRow[COLS_CORTES.id - 1], folderSyncRequest.vehicleId)) {
                 throw new Error("El registro del vehículo cambió después de aplicar la sugerencia; no se movió la imagen.");
             }
             if (String(currentRow[COLS_CORTES.imagenVehiculo - 1] || "") !== folderSyncRequest.expectedImageUrl) {
@@ -2442,10 +2443,10 @@ function findReportByReportId_(sheet, reportId, metadataColumn, imageEventsIndex
         const canonicalImageSha256 = String(canonical.metadata.imageSha256 || "");
         const sameLogicalReport = matches.every(item => {
             return String(item.row[COLS_FEEDBACKS.Usuario - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Usuario - 1] || "") &&
-                String(item.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(canonical.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") &&
+                sameFeedbackVehicleId_(item.row[COLS_FEEDBACKS.ID_vehiculo - 1], canonical.row[COLS_FEEDBACKS.ID_vehiculo - 1]) &&
                 String(item.row[COLS_FEEDBACKS.Problema - 1] || "") === String(canonical.row[COLS_FEEDBACKS.Problema - 1] || "") &&
                 String(item.metadata.userId || "") === String(canonical.metadata.userId || "") &&
-                String(item.metadata.vehicleId || "") === String(canonical.metadata.vehicleId || "") &&
+                sameFeedbackVehicleId_(item.metadata.vehicleId, canonical.metadata.vehicleId) &&
                 Number(item.metadata.corteIndex) === Number(canonical.metadata.corteIndex) &&
                 item.metadata.activaTestigoMotor === canonical.metadata.activaTestigoMotor &&
                 String(item.metadata.category || "") === String(canonical.metadata.category || "") &&
@@ -2950,7 +2951,7 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
             if (parsed && parsed.subType === "suggestion_cut") {
                 const parsedVehicleId = String(parsed.vehicleId || vehicleId || "");
                 const parsedCorteIndex = Number(parsed.corteIndex);
-                if (parsedVehicleId !== String(vehicleId || "") || !Number.isInteger(parsedCorteIndex) || parsedCorteIndex < 1 || parsedCorteIndex > 3) return null;
+                if (!sameFeedbackVehicleId_(parsedVehicleId, vehicleId) || !Number.isInteger(parsedCorteIndex) || parsedCorteIndex < 1 || parsedCorteIndex > 3) return null;
                 return {
                     subType: "suggestion_cut", reportId: String(parsed.reportId || "N/A"),
                     vehicleId: parsedVehicleId, corteIndex: parsedCorteIndex,
@@ -3480,7 +3481,7 @@ function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, use
         try { record = JSON.parse(raw); } catch (error) { return; }
         if (!record || record.subType !== "suggestion_cut") return;
         if (String(record.reportId || "N/A") === id &&
-            String(record.vehicleId || "").trim() === vehicleId &&
+            sameFeedbackVehicleId_(record.vehicleId, vehicleId) &&
             Number(record.corteIndex) === corteIndex &&
             String(record.userId || "") === userId) {
             matches.push({ rowNumber, record });
@@ -3491,7 +3492,7 @@ function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, use
         const equivalent = matches.every(item =>
             String(item.record.requestFingerprint || "") === String(canonical.requestFingerprint || "") &&
             String(item.record.reportId || "") === String(canonical.reportId || "") &&
-            String(item.record.vehicleId || "") === String(canonical.vehicleId || "") &&
+            sameFeedbackVehicleId_(item.record.vehicleId, canonical.vehicleId) &&
             Number(item.record.corteIndex) === Number(canonical.corteIndex) &&
             String(item.record.userId || "") === String(canonical.userId || ""));
         if (!equivalent) throw new Error("La sugerencia asociada al reporte aparece duplicada con contenido contradictorio; requiere revisión.");
@@ -3516,7 +3517,7 @@ function findExistingCutSuggestionForRequest_(sheet, request) {
     if (existingByOperation) {
         const record = existingByOperation.record;
         const sameOperation = String(record.reportId || "") === reportId &&
-            String(record.vehicleId || "").trim() === vehicleId &&
+            sameFeedbackVehicleId_(record.vehicleId, vehicleId) &&
             Number(record.corteIndex) === corteIndex &&
             String(record.userId || "") === userId &&
             String(record.requestFingerprint || "") === requestFingerprint;
@@ -3537,7 +3538,7 @@ function findExistingCutSuggestionForRequest_(sheet, request) {
 
 function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
     const normalizedReportId = String(reportId || "").trim();
-    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedVehicleId = normalizeFeedbackVehicleId_(vehicleId, "Contexto de sugerencia de corte");
     const normalizedCorteIndex = Number(corteIndex);
     if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(normalizedReportId)) {
         throw new Error("Se requiere el identificador real del reporte individual.");
@@ -3556,8 +3557,8 @@ function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
     const metadata = report.metadata || {};
     const rowVehicleId = String(report.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
     if (String(metadata.reportId || "").trim() !== normalizedReportId ||
-        String(metadata.vehicleId || "").trim() !== normalizedVehicleId ||
-        rowVehicleId !== normalizedVehicleId ||
+        !sameFeedbackVehicleId_(metadata.vehicleId, normalizedVehicleId) ||
+        !sameFeedbackVehicleId_(rowVehicleId, normalizedVehicleId) ||
         Number(metadata.corteIndex) !== normalizedCorteIndex) {
         throw new Error("El reporte no corresponde al mismo vehículo y corte indicado en la sugerencia.");
     }
@@ -3567,7 +3568,7 @@ function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
     const rows = cutsSheet.getDataRange().getValues();
     const vehicles = [];
     for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) {
+        if (sameFeedbackVehicleId_(rows[i][COLS_CORTES.id - 1], normalizedVehicleId)) {
             vehicles.push({ row: rows[i], rowIndex: i + 1 });
         }
     }
@@ -5294,7 +5295,7 @@ function normalizePysProblemId_(value) {
 }
 
 function findUniqueCortesVehicleForPys_(value) {
-    const requestedId = normalizePysAssociationId_(value, "vehicleId");
+    const requestedId = normalizeFeedbackVehicleId_(value, "Asociación PyS de vehículo");
     const sheet = getSafeSheet(SHEET_NAMES.CORTES);
     if (!sheet) throw new Error("Hoja Cortes no encontrada.");
     const lastRow = sheet.getLastRow();
@@ -5305,7 +5306,7 @@ function findUniqueCortesVehicleForPys_(value) {
 
     const matches = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues()
         .map((row, index) => ({ id: String(row[0] === null || row[0] === undefined ? "" : row[0]).trim(), rowNumber: index + 2 }))
-        .filter(entry => entry.id === requestedId);
+        .filter(entry => sameFeedbackVehicleId_(entry.id, requestedId));
     if (matches.length !== 1) {
         throw new Error("vehicleId debe corresponder a exactamente un registro de Cortes.");
     }
