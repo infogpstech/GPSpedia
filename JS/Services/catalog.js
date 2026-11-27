@@ -1091,6 +1091,8 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
         const vehicleId = String(vehicle.id).trim();
         const candidates = [];
         const sources = {};
+        const materializedCutSlots = new Set();
+        const materializedFeedSlots = new Set();
         const vehicleEvents=byVehicle.get(vehicleId)||[];
         events.filter(e=>conflictingResolutionTargets.has(String(e.eventId||""))&&String(e.vehicleId)===vehicleId).forEach(e=>candidates.push({eventId:e.eventId,opId:e.opId,kind:e.kind,reason:"resolution_conflict",payload:e.payload}));
         events.filter(event => conflictedOpIds.has(event.opId) && String(event.vehicleId) === vehicleId)
@@ -1107,74 +1109,90 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                     candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "vin_conflict", payload });
                     return;
                 }
-                const slot = [1, 2, 3].find(index =>
-                    !String(vehicle["tipoCorte" + index] || "").trim() &&
-                    !String(vehicle["ubicacionCorte" + index] || "").trim() &&
-                    !String(vehicle["imgCorte" + index] || "").trim()
-                );
+                const slotOccupied = index => ["tipoCorte","ubicacionCorte","colorCableCorte","configRelay","imgCorte","colaboradorCorte"]
+                    .some(prefix => String(vehicle[prefix + index] || "").trim() !== "") || vehicle["activaTestigo" + index] === true;
+                const slotMatches = index => {
+                    const suffix=String(index), actor=String(vehicle["colaboradorCorte"+suffix]||"").trim();
+                    return String(vehicle["tipoCorte"+suffix]||"").trim()===String(payload.tipo||"").trim() &&
+                        String(vehicle["ubicacionCorte"+suffix]||"").trim()===String(payload.ubicacion||"").trim() &&
+                        String(vehicle["colorCableCorte"+suffix]||"").trim()===String(payload.color||"").trim() &&
+                        String(vehicle["configRelay"+suffix]||"").trim()===String(payload.configRelay||"").trim() &&
+                        String(vehicle["imgCorte"+suffix]||"").trim()===String(payload.image||"").trim() &&
+                        Boolean(vehicle["activaTestigo"+suffix]===true) === (payload.activaTestigo===true) &&
+                        (!actor || !String(event.actorName||"").trim() || actor===String(event.actorName).trim());
+                };
+                const matchedSlot=[1,2,3].find(index=>!materializedCutSlots.has(index)&&slotMatches(index));
+                const slot=matchedSlot||[1,2,3].find(index=>!materializedCutSlots.has(index)&&!slotOccupied(index));
                 if (!slot) {
                     candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "cut_capacity_full", payload });
                     return;
                 }
-                vehicle["tipoCorte" + slot] = payload.tipo || "";
-                vehicle["ubicacionCorte" + slot] = payload.ubicacion || "";
-                vehicle["colorCableCorte" + slot] = payload.color || "";
-                vehicle["configRelay" + slot] = payload.configRelay || "";
-                vehicle["imgCorte" + slot] = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
-                vehicle["utilCorte" + slot] = 0;
-                vehicle["activaTestigo" + slot] = payload.activaTestigo === true;
-                vehicle["colaboradorCorte" + slot] = event.actorName || "";
+                materializedCutSlots.add(slot);
+                const suffix=String(slot);
+                vehicle["tipoCorte"+suffix]=payload.tipo||"";
+                vehicle["ubicacionCorte"+suffix]=payload.ubicacion||"";
+                vehicle["colorCableCorte"+suffix]=payload.color||"";
+                vehicle["configRelay"+suffix]=payload.configRelay||"";
+                vehicle["imgCorte"+suffix]=payload.image?normalizeAndValidateImageId(String(payload.image)):null;
+                vehicle["utilCorte"+suffix]=vehicle["utilCorte"+suffix]===undefined?0:vehicle["utilCorte"+suffix];
+                vehicle["activaTestigo"+suffix]=payload.activaTestigo===true;
+                vehicle["colaboradorCorte"+suffix]=String(vehicle["colaboradorCorte"+suffix]||event.actorName||"");
                 const cutSource={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
-                sources["corte"+slot]=cutSource;
-                ["tipoCorte","ubicacionCorte","colorCableCorte","configRelay","imgCorte","activaTestigo","colaboradorCorte"].forEach(prefix=>{sources[prefix+slot]=cutSource;});
-                const metadata = payload.vehicleData && typeof payload.vehicleData === "object" ? payload.vehicleData : {};
-                ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido", "imagenVehiculo"].forEach(field => {
-                    if (metadata[field] === undefined || metadata[field] === null || String(metadata[field]).trim() === "" || String(vehicle[field] || "").trim()) return;
-                    vehicle[field] = field === "imagenVehiculo"
-                        ? normalizeAndValidateImageId(String(metadata[field])) : metadata[field];
-                    sources[field] = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                sources["corte"+suffix]=cutSource;
+                ["tipoCorte","ubicacionCorte","colorCableCorte","configRelay","imgCorte","activaTestigo","colaboradorCorte"].forEach(prefix=>{sources[prefix+suffix]=cutSource;});
+                const metadata=payload.vehicleData&&typeof payload.vehicleData==="object"?payload.vehicleData:{};
+                ["categoria","marca","modelo","versionesAplicables","anoDesde","anoHasta","tipoEncendido","imagenVehiculo"].forEach(field=>{
+                    if(metadata[field]===undefined||metadata[field]===null||String(metadata[field]).trim()===""||String(vehicle[field]||"").trim())return;
+                    vehicle[field]=field==="imagenVehiculo"?normalizeAndValidateImageId(String(metadata[field])):metadata[field];
+                    sources[field]={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
                 });
-                const vinPrefix = String(payload.vinPrefix || "").trim().toUpperCase();
-                if (vinPrefix) {
-                    const existingVins = readVinPrefixes(vehicle.vin);
-                    if (!existingVins.includes(vinPrefix)) {
-                        const versionParts = String(vehicle.versionesAplicables || "").split(/[,/\\\\;]+/).map(value => value.trim()).filter(Boolean);
-                        const maxAllowed = Math.max(1, Math.min(3, versionParts.length || 1));
-                        if (existingVins.length >= maxAllowed) {
-                            candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "vin_capacity_full", payload });
-                            return;
-                        }
-                        existingVins.push(vinPrefix);
-                        vehicle.vin = JSON.stringify(existingVins);
-                        sources.vin = { eventId: event.eventId, opId: event.opId, operationHash: event.operationHash };
+                const vinPrefix=String(payload.vinPrefix||"").trim().toUpperCase();
+                if(vinPrefix){
+                    const existingVins=readVinPrefixes(vehicle.vin);
+                    if(existingVins.includes(vinPrefix)){sources.vin={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};}
+                    else{
+                        const versionParts=String(vehicle.versionesAplicables||"").split(/[,/\\;]+/).map(value=>value.trim()).filter(Boolean);
+                        const maxAllowed=Math.max(1,Math.min(3,versionParts.length||1));
+                        if(existingVins.length>=maxAllowed){candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_capacity_full",payload});return;}
+                        existingVins.push(vinPrefix);vehicle.vin=JSON.stringify(existingVins);
+                        sources.vin={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
                     }
                 }
             } else if (event.kind === "opening") {
-                if (String(vehicle.apertura || "").trim() || String(vehicle.imgApertura || "").trim()) {
-                    candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "opening_already_filled", payload });
+                const expectedText=String(payload.text||"").trim(),expectedImage=String(payload.image||"").trim();
+                const currentText=String(vehicle.apertura||"").trim(),currentImage=String(vehicle.imgApertura||"").trim();
+                if((currentText||currentImage)&&(currentText!==expectedText||currentImage!==expectedImage)){
+                    candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"opening_already_filled",payload});
                     return;
                 }
-                vehicle.apertura = payload.text || "";
-                vehicle.imgApertura = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
+                vehicle.apertura=vehicle.apertura||payload.text||"";
+                vehicle.imgApertura=vehicle.imgApertura|| (payload.image?normalizeAndValidateImageId(String(payload.image)):null);
                 const openingSource={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
                 sources.apertura=openingSource;sources.imgApertura=openingSource;
             } else if (event.kind === "feed") {
-                const slot = [1, 2, 3].find(index => {
-                    const suffix = index === 1 ? "" : String(index);
-                    return !String(vehicle["cableAlimen" + suffix] || "").trim() &&
-                        !String(vehicle["imgCableAlimen" + suffix] || "").trim();
-                });
-                if (!slot) {
-                    candidates.push({ eventId: event.eventId, opId: event.opId, kind: event.kind, reason: "feed_capacity_full", payload });
+                const slotMatches=index=>{
+                    const suffix=index===1?"":String(index);
+                    return String(vehicle["cableAlimen"+suffix]||"").trim()===String(payload.text||"").trim() &&
+                        String(vehicle["imgCableAlimen"+suffix]||"").trim()===String(payload.image||"").trim();
+                };
+                const slotOccupied=index=>{
+                    const suffix=index===1?"":String(index);
+                    return Boolean(String(vehicle["cableAlimen"+suffix]||"").trim()||String(vehicle["imgCableAlimen"+suffix]||"").trim());
+                };
+                const matchedSlot=[1,2,3].find(index=>!materializedFeedSlots.has(index)&&slotMatches(index));
+                const slot=matchedSlot||[1,2,3].find(index=>!materializedFeedSlots.has(index)&&!slotOccupied(index));
+                if(!slot){
+                    candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"feed_capacity_full",payload});
                     return;
                 }
-                const suffix = slot === 1 ? "" : String(slot);
-                vehicle["cableAlimen" + suffix] = payload.text || "";
-                vehicle["imgCableAlimen" + suffix] = payload.image ? normalizeAndValidateImageId(String(payload.image)) : null;
+                materializedFeedSlots.add(slot);
+                const suffix=slot===1?"":String(slot);
+                vehicle["cableAlimen"+suffix]=vehicle["cableAlimen"+suffix]||payload.text||"";
+                vehicle["imgCableAlimen"+suffix]=vehicle["imgCableAlimen"+suffix]||(payload.image?normalizeAndValidateImageId(String(payload.image)):null);
                 const feedSource={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
-                sources["feed"+slot]=feedSource;
-                sources["cableAlimen"+suffix]=feedSource;
-                sources["imgCableAlimen"+suffix]=feedSource;
+                sources["feed"+slot]=feedSource;sources["cableAlimen"+suffix]=feedSource;sources["imgCableAlimen"+suffix]=feedSource;
+
+
             } else if (event.kind === "vehicle") {
                 const allowed = ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido", "imagenVehiculo"];
                 allowed.forEach(field => {
@@ -1207,16 +1225,22 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                     const expectedVersions=String(expected.versionesAplicables||"").trim();
                     const currentVin=JSON.stringify(readVinPrefixes(vehicle.vin));
                     const expectedVin=JSON.stringify(readVinPrefixes(expected.vin));
+                    const nextPrefixes=readVinPrefixes(next.vin);
+                    const nextVinJson=JSON.stringify(nextPrefixes);
+                    if(conflictedVinEventIds.has(String(event.eventId||""))){
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload});return;
+                    }
+                    if(currentVersions===String(next.versionesAplicables||"").trim()&&currentVin===nextVinJson){
+                        const source={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};
+                        sources.versionesAplicables=source;sources.vin=source;return;
+                    }
                     if(currentVersions!==expectedVersions||currentVin!==expectedVin){
                         candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",
                             payload:Object.assign({},payload,{currentValue:{versionesAplicables:vehicle.versionesAplicables,vin:vehicle.vin}})});return;
                     }
-                    const prefixes=readVinPrefixes(next.vin);
+                    const prefixes=nextPrefixes;
                     const parts=String(next.versionesAplicables||"").split(/[,/\\;]+/).map(value=>value.trim()).filter(Boolean);
                     const maxAllowed=Math.max(1,Math.min(3,parts.length||1));
-                    if(conflictedVinEventIds.has(String(event.eventId||""))){
-                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload});return;
-                    }
                     if(prefixes.length>maxAllowed){
                         candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_capacity_full",payload});return;
                     }
@@ -1232,6 +1256,15 @@ function projectVehicleContributionEvents_(vehicles, sourceEvents) {
                         (imageField&&currentValue?normalizeAndValidateImageId(currentValue):currentValue);
                     const comparableExpected=vinField?JSON.stringify(readVinPrefixes(payload.expectedCurrentValue)):
                         (imageField&&expectedValue?normalizeAndValidateImageId(expectedValue):expectedValue);
+                    const comparableNext=vinField?JSON.stringify(readVinPrefixes(payload.value)):
+                        (imageField&&payload.value?normalizeAndValidateImageId(String(payload.value)):String(payload.value==null?"":payload.value));
+                    if(vinField&&conflictedVinEventIds.has(String(event.eventId||""))){
+                        const candidatePayload=Object.assign({},payload,{currentValue:vehicle[field],currentSourceEventId:currentSource&&currentSource.eventId||""});
+                        candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"vin_conflict",payload:candidatePayload});return;
+                    }
+                    if(comparableCurrent===comparableNext){
+                        sources[field]={eventId:event.eventId,opId:event.opId,operationHash:event.operationHash};return;
+                    }
                     if(comparableCurrent!==comparableExpected||(expectedSourceId&&(!currentSource||String(currentSource.eventId)!==expectedSourceId))){
                         const candidatePayload=Object.assign({},payload,{currentValue:vehicle[field],currentSourceEventId:currentSource&&currentSource.eventId||""});
                         candidates.push({eventId:event.eventId,opId:event.opId,kind:event.kind,reason:"field_conflict",payload:candidatePayload});return;

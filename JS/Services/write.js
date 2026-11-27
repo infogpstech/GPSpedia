@@ -346,155 +346,42 @@ function shouldLoadExistingEntitiesForCut_(vehicleData) {
 }
 
 function handleAppendExistingVehicleCut_(preparedRequest) {
-    const payload = preparedRequest.validatedPayload;
-    const vehicleId = String(payload.vehicleId || "").trim();
-    const opId = String(payload.opId || "").trim();
-    const spreadsheet = preparedRequest.spreadsheet;
-    const sheet = preparedRequest.sheet;
-    const contributionLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
-
-    const operationHash = computeCutOperationFingerprint_(payload);
-    if (normalizeIdempotenciaOperationHash_(payload.operationHash, "Aporte append-only de corte") !== operationHash) {
-        throw new Error("La huella enviada no coincide con el contenido del corte.");
-    }
-
-    const snapshot = readSupplementaryVehicleSnapshot_(sheet, vehicleId);
-    const vehicle = snapshot.vehicle;
-    const cut = payload.cutData;
-    const incomingVehicleData = Object.assign({}, payload.vehicleData || {});
-    const entities = shouldLoadExistingEntitiesForCut_(incomingVehicleData) ? getExistingEntities(sheet) : null;
-    if (entities) {
-        if (incomingVehicleData.marca) incomingVehicleData.marca = resolveAndNormalizeEntity(incomingVehicleData.marca, entities.brands, false);
-        if (incomingVehicleData.modelo) incomingVehicleData.modelo = resolveAndNormalizeEntity(incomingVehicleData.modelo, entities.models, false);
-        if (incomingVehicleData.versionesAplicables) incomingVehicleData.versionesAplicables =
-            resolveAndNormalizeEntity(incomingVehicleData.versionesAplicables, entities.versions, true);
-    }
-
-    const vinPrefix = cut.vin ? extractVinPrefix(cut.vin) : "";
-    let acceptedVinPrefix = "";
-    if (vinPrefix) {
-        const vinColumnIndex = getVinColumnIndex(sheet);
-        if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador.");
-        const existingVins = parseVinCollection(snapshot.rowValues[vinColumnIndex - 1]);
-        if (!existingVins.includes(vinPrefix)) {
-            const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId);
-            if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
-            const pendingConflict = findVehicleContributionVinConflict_(spreadsheet, vinPrefix, vehicleId);
-            if (pendingConflict) throw new Error("El VIN ya está reservado por otro aporte pendiente del vehículo " + pendingConflict.vehicleId + ".");
-            const maxAllowed = countEquipmentVersions(incomingVehicleData.versionesAplicables || vehicle.versionesAplicables);
-            addVinToAvailableSlot(existingVins, vinPrefix, maxAllowed);
-            acceptedVinPrefix = vinPrefix;
+    const payload=preparedRequest.validatedPayload,vehicleId=String(payload.vehicleId||"").trim(),opId=String(payload.opId||"").trim();
+    const spreadsheet=preparedRequest.spreadsheet,sheet=preparedRequest.sheet,operationHash=computeCutOperationFingerprint_(payload);
+    if(normalizeIdempotenciaOperationHash_(payload.operationHash,"Aporte append-only de corte")!==operationHash)throw new Error("La huella enviada no coincide con el contenido del corte.");
+    const initialSnapshot=readSupplementaryVehicleSnapshot_(sheet,vehicleId),initialVehicle=initialSnapshot.vehicle,cut=payload.cutData,incomingVehicleData=Object.assign({},payload.vehicleData||{});
+    const entities=shouldLoadExistingEntitiesForCut_(incomingVehicleData)?getExistingEntities(sheet):null;
+    if(entities){if(incomingVehicleData.marca)incomingVehicleData.marca=resolveAndNormalizeEntity(incomingVehicleData.marca,entities.brands,false);if(incomingVehicleData.modelo)incomingVehicleData.modelo=resolveAndNormalizeEntity(incomingVehicleData.modelo,entities.models,false);if(incomingVehicleData.versionesAplicables)incomingVehicleData.versionesAplicables=resolveAndNormalizeEntity(incomingVehicleData.versionesAplicables,entities.versions,true);}
+    const vinPrefix=cut.vin?extractVinPrefix(cut.vin):"";let acceptedVinPrefix="";
+    if(vinPrefix){const vinColumn=getVinColumnIndex(sheet);if(!vinColumn)throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador.");const existing=parseVinCollection(initialSnapshot.rowValues[vinColumn-1]);if(!existing.includes(vinPrefix)){const duplicate=checkVinDuplicateInSheet(sheet,vinPrefix,vehicleId);if(duplicate)throw new Error("VIN ya está registrado para: "+duplicate.modelName);const pending=findVehicleContributionVinConflict_(spreadsheet,vinPrefix,vehicleId);if(pending)throw new Error("El VIN ya está reservado por otro aporte pendiente del vehículo "+pending.vehicleId+".");addVinToAvailableSlot(existing,vinPrefix,countEquipmentVersions(incomingVehicleData.versionesAplicables||initialVehicle.versionesAplicables));acceptedVinPrefix=vinPrefix;}}
+    const metadata={};["categoria","marca","modelo","versionesAplicables","anoDesde","anoHasta","tipoEncendido"].forEach(field=>{const current=String(initialVehicle[field]==null?"":initialVehicle[field]).trim(),incoming=String(incomingVehicleData[field]==null?"":incomingVehicleData[field]).trim();if(!current&&incoming)metadata[field]=incomingVehicleData[field];});
+    if(metadata.anoDesde){const input=String(metadata.anoDesde).trim();if(input.includes("-")){const parts=input.split("-").map(value=>Number(value.trim()));metadata.anoDesde=Math.min(parts[0],parts[1]);metadata.anoHasta=metadata.anoHasta||Math.max(parts[0],parts[1]);}else{metadata.anoDesde=Number(input);metadata.anoHasta=metadata.anoHasta||metadata.anoDesde;}}
+    const folderInfo=mergeVehicleFolderInfo(initialVehicle,incomingVehicleData);let cutImageUrl="",vehicleImageUrl="";
+    if(cut.imgCorte1&&cut.tipoCorte1!=="No recomendado"){const folder=findOrCreateVehicleFolder(folderInfo);cutImageUrl=uploadImageToDrive(cut.imgCorte1,buildCanonicalImageBaseName(folderInfo,"imgCorte1"),folder,buildImageUploadOperationKey(opId,vehicleId,"imgCorte"),{shortLedgerLock:true});if(!cutImageUrl)throw new Error("La carga de la imagen del corte no devolvió una URL válida.");}
+    if(incomingVehicleData.imagenVehiculo&&!checkFileIdValid(initialVehicle.imagenVehiculo)){const folder=findOrCreateVehicleFolder(folderInfo);vehicleImageUrl=uploadImageToDrive(incomingVehicleData.imagenVehiculo,buildCanonicalImageBaseName(folderInfo,"imagenVehiculo"),folder,buildImageUploadOperationKey(opId,vehicleId,"imagenVehiculo"),{shortLedgerLock:true});if(!vehicleImageUrl)throw new Error("La carga de la imagen del vehículo no devolvió una URL válida.");}
+    if(vehicleImageUrl)metadata.imagenVehiculo=vehicleImageUrl;
+    const contributionPayload={tipo:String(cut.tipoCorte1||""),ubicacion:String(cut.ubicacionCorte1||""),color:String(cut.colorCableCorte1||""),configRelay:String(cut.configRelay1||""),activaTestigo:cut.activaTestigo1===true,image:cutImageUrl,vehicleData:metadata,vinPrefix:acceptedVinPrefix};
+    const lock=LockService.getScriptLock();if(!lock.tryLock(0)){const busy=new Error("WRITE_BUSY");busy.code="WRITE_BUSY";throw busy;}
+    let event=null,slotIndex=null,vinConflictAfterAppend=null,candidateReviewPending=false;
+    try{
+        const fresh=readSupplementaryVehicleSnapshot_(sheet,vehicleId);
+        if(acceptedVinPrefix){const duplicate=checkVinDuplicateInSheet(sheet,acceptedVinPrefix,vehicleId);if(duplicate)throw new Error("VIN ya está registrado para: "+duplicate.modelName);}
+        const ledger=getVehicleContributionLedgerSheet_(spreadsheet);
+        event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:ledger,vehicleId,opId,kind:"cut",payload:contributionPayload,operationHash,actorId:preparedRequest.actorId,actorName:preparedRequest.collaboratorName});
+        const rows=readVehicleContributionLedgerRows_(ledger);
+        vinConflictAfterAppend=acceptedVinPrefix?findVehicleContributionVinConflict_(spreadsheet,acceptedVinPrefix,vehicleId,rows):null;
+        if(vinConflictAfterAppend)candidateReviewPending=true;
+        else{
+            const reconciliation=materializeVehicleContributionEventsForVehicle_(spreadsheet,sheet,vehicleId,rows,[event.eventId]);
+            const materialized=reconciliation.resultsByEventId[event.eventId]||{slotIndex:null,candidateReviewPending:true};
+            slotIndex=materialized.slotIndex;candidateReviewPending=materialized.candidateReviewPending===true;
         }
-    }
-
-    const metadata = {};
-    ["categoria", "marca", "modelo", "versionesAplicables", "anoDesde", "anoHasta", "tipoEncendido"].forEach(field => {
-        const current = String(vehicle[field] == null ? "" : vehicle[field]).trim();
-        const incoming = String(incomingVehicleData[field] == null ? "" : incomingVehicleData[field]).trim();
-        if (!current && incoming) metadata[field] = incomingVehicleData[field];
-    });
-    if (metadata.anoDesde) {
-        const yearInput = String(metadata.anoDesde).trim();
-        if (yearInput.includes("-")) {
-            const parts = yearInput.split("-").map(value => Number(value.trim()));
-            metadata.anoDesde = Math.min(parts[0], parts[1]);
-            metadata.anoHasta = metadata.anoHasta || Math.max(parts[0], parts[1]);
-        } else {
-            metadata.anoDesde = Number(yearInput);
-            metadata.anoHasta = metadata.anoHasta || metadata.anoDesde;
-        }
-    }
-
-    const folderInfo = mergeVehicleFolderInfo(vehicle, incomingVehicleData);
-    let cutImageUrl = "";
-    let vehicleImageUrl = "";
-    if (cut.imgCorte1 && cut.tipoCorte1 !== "No recomendado") {
-        const folder = findOrCreateVehicleFolder(folderInfo);
-        cutImageUrl = uploadImageToDrive(
-            cut.imgCorte1,
-            buildCanonicalImageBaseName(folderInfo, "imgCorte1"),
-            folder,
-            buildImageUploadOperationKey(opId, vehicleId, "imgCorte"),
-            { shortLedgerLock: true }
-        );
-        if (!cutImageUrl) throw new Error("La carga de la imagen del corte no devolvió una URL válida.");
-    }
-    if (incomingVehicleData.imagenVehiculo && !checkFileIdValid(vehicle.imagenVehiculo)) {
-        const folder = findOrCreateVehicleFolder(folderInfo);
-        vehicleImageUrl = uploadImageToDrive(
-            incomingVehicleData.imagenVehiculo,
-            buildCanonicalImageBaseName(folderInfo, "imagenVehiculo"),
-            folder,
-            buildImageUploadOperationKey(opId, vehicleId, "imagenVehiculo"),
-            { shortLedgerLock: true }
-        );
-        if (!vehicleImageUrl) throw new Error("La carga de la imagen del vehículo no devolvió una URL válida.");
-    }
-    if (vehicleImageUrl) metadata.imagenVehiculo = vehicleImageUrl;
-
-    const contributionPayload = {
-        tipo: String(cut.tipoCorte1 || ""),
-        ubicacion: String(cut.ubicacionCorte1 || ""),
-        color: String(cut.colorCableCorte1 || ""),
-        configRelay: String(cut.configRelay1 || ""),
-        activaTestigo: cut.activaTestigo1 === true,
-        image: cutImageUrl,
-        vehicleData: metadata,
-        vinPrefix: acceptedVinPrefix
-    };
-    const appendLedgerSheet = getVehicleContributionLedgerSheet_(spreadsheet);
-    const event = appendVehicleContributionEvent_({
-        spreadsheet,
-        ledgerSheet: appendLedgerSheet,
-        vehicleId,
-        opId,
-        kind: "cut",
-        payload: contributionPayload,
-        operationHash,
-        actorId: preparedRequest.actorId,
-        actorName: preparedRequest.collaboratorName
-    });
-
-    [cutImageUrl, vehicleImageUrl].filter(Boolean).forEach(url => {
-        try {
-            if (!markImageUploadLinked(url, { shortLedgerLock: true })) {
-                Logger.log("El aporte quedó registrado, pero la imagen permanece pendiente de reconciliación: " + url);
-            }
-        } catch (ledgerError) {
-            Logger.log("El aporte quedó registrado, pero no se pudo actualizar el journal de imágenes: " +
-                String(ledgerError && ledgerError.message || ledgerError));
-        }
-    });
-
-    // Un solo snapshot post-append alimenta la proyección de slots y la detección de VIN concurrente.
-    const postAppendLedgerRows = readVehicleContributionLedgerRows_(appendLedgerSheet);
-    const slotIndex = getVehicleContributionCutSlotIndex_(spreadsheet, snapshot, event.eventId, postAppendLedgerRows, appendLedgerSheet);
-    const vinConflictAfterAppend = acceptedVinPrefix
-        ? findVehicleContributionVinConflict_(spreadsheet, acceptedVinPrefix, vehicleId, postAppendLedgerRows)
-        : null;
-    const candidateReviewPending = slotIndex === null || Boolean(vinConflictAfterAppend);
-    let message = slotIndex
-        ? "Corte agregado exitosamente."
-        : "El corte se conservó como candidato porque los espacios disponibles están ocupados.";
-    if (vinConflictAfterAppend) {
-        message += " El VIN quedó pendiente de revisión por una colisión concurrente.";
-    }
-    return {
-        status: "success",
-        message,
-        vehicleId,
-        opId,
-        timestamp: Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy"),
-        slotIndex,
-        contributionEventId: event.eventId,
-        operationHash,
-        duplicate: event.duplicate === true,
-        catalogResetRequired: true,
-        candidateReviewPending,
-        vinConflictPending: Boolean(vinConflictAfterAppend)
-    };
+    }finally{lock.releaseLock();}
+    [cutImageUrl,vehicleImageUrl].filter(Boolean).forEach(url=>{try{if(!markImageUploadLinked(url,{shortLedgerLock:true}))Logger.log("El aporte quedó registrado, pero la imagen permanece pendiente de reconciliación: "+url);}catch(error){Logger.log("El aporte quedó registrado, pero no se pudo actualizar el journal de imágenes: "+String(error&&error.message||error));}});
+    let message=slotIndex?"Corte agregado exitosamente.":"El corte se conservó como candidato porque los espacios disponibles están ocupados.";
+    if(vinConflictAfterAppend)message+=" El VIN quedó pendiente de revisión por una colisión concurrente.";
+    return{status:"success",message,vehicleId,opId,timestamp:Utilities.formatDate(new Date(),"GMT-6","dd/MM/yyyy"),slotIndex,contributionEventId:event.eventId,operationHash,duplicate:event.duplicate===true,catalogResetRequired:true,candidateReviewPending,vinConflictPending:Boolean(vinConflictAfterAppend)};
 }
-
 
 function handleAddOrUpdateCut(payload) {
     const preparedRequest = prepareAddOrUpdateCutRequest_(payload);
@@ -1930,79 +1817,50 @@ function prepareSupplementaryImageUploads_(payload, vehicle, plan) {
 }
 
 function handleAddSupplementaryInfo(payload) {
-    const actorName = getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
-    if (!payload || typeof payload !== "object" || !String(payload.vehicleId || "").trim()) {
-        throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID", "El ID del vehículo es requerido para agregar información suplementaria.");
-    }
-
-    const spreadsheet = getSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
-    const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
-    const normalizedPlan = buildSupplementaryInfoPlan_(payload, {});
-    const isOpening = normalizedPlan.apertureRequested === true;
-    const hasFeed = normalizedPlan.slotIndex !== null;
-    const hasLedgerContribution = isOpening || hasFeed;
-
-    // Etapa 3 usa una solicitud durable con IDs independientes por evento.
-    if (payload.contributionOpIds !== undefined) {
+    const actorName=getAuthenticatedCollaborator(payload,SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
+    if(!payload||typeof payload!=="object"||!String(payload.vehicleId||"").trim())throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
+    const spreadsheet=getSpreadsheet(),sheet=spreadsheet.getSheetByName(SHEET_NAMES.CORTES),snapshot=readSupplementaryVehicleSnapshot_(sheet,payload.vehicleId);
+    const normalizedPlan=buildSupplementaryInfoPlan_(payload,{}),isOpening=normalizedPlan.apertureRequested===true,hasFeed=normalizedPlan.slotIndex!==null;
+    const hasLedgerContribution=isOpening||hasFeed;
+    if(payload.contributionOpIds!==undefined){
         const ids=payload.contributionOpIds,requestOpId=String(payload.opId||"").trim();
-        if(!ids||typeof ids!=="object"||Array.isArray(ids)||Object.keys(ids).some(k=>!["opening","feed"].includes(k))||!/^[A-Za-z0-9_-]{1,100}$/.test(requestOpId.replace(/^OP-/,""))||!requestOpId.startsWith("OP-"))
-            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Los identificadores de la operación suplementaria no son válidos.");
+        if(!ids||typeof ids!=="object"||Array.isArray(ids)||Object.keys(ids).some(key=>!["opening","feed"].includes(key))||!/^[A-Za-z0-9_-]{1,100}$/.test(requestOpId.replace(/^OP-/,""))||!requestOpId.startsWith("OP-"))throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Los identificadores de la operación suplementaria no son válidos.");
         const openingOpId=String(ids.opening||"").trim(),feedOpId=String(ids.feed||"").trim(),valid=id=>/^OP-[A-Za-z0-9_-]{1,100}$/.test(id);
-        if((isOpening&&!valid(openingOpId))||(!isOpening&&openingOpId)||(hasFeed&&!valid(feedOpId))||(!hasFeed&&feedOpId))
-            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Cada aporte requiere su identificador idempotente independiente.");
-        const all=[requestOpId,openingOpId,feedOpId].filter(Boolean);if(new Set(all).size!==all.length)
-            throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Los identificadores de solicitud, apertura y alimentación deben ser distintos.");
-        const contributionLedgerSheet=hasLedgerContribution?getVehicleContributionLedgerSheet_(spreadsheet):null;
+        if((isOpening&&!valid(openingOpId))||(!isOpening&&openingOpId)||(hasFeed&&!valid(feedOpId))||(!hasFeed&&feedOpId))throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Cada aporte requiere su identificador idempotente independiente.");
+        const all=[requestOpId,openingOpId,feedOpId].filter(Boolean);if(new Set(all).size!==all.length)throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Los identificadores de solicitud, apertura y alimentación deben ser distintos.");
+        const ledger=hasLedgerContribution?getVehicleContributionLedgerSheet_(spreadsheet):null;
         let prepared=Object.assign({},payload),uploaded=[];
-        if(["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].some(k=>hasSupplementaryValue_(payload[k]))){const result=prepareSupplementaryImageUploads_(prepared,snapshot.vehicle,normalizedPlan);prepared=result.payload;uploaded=result.uploadedUrls;}
-        const appendLedgerSheet = contributionLedgerSheet;
-        const events=[];
-        if(isOpening){const event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:appendLedgerSheet,vehicleId:payload.vehicleId,opId:openingOpId,kind:"opening",payload:{text:String(normalizedPlan.updates.apertura||""),image:String(prepared.imgApertura||"")},actorId:payload.__sharedSessionActor&&payload.__sharedSessionActor.userId||"",actorName});events.push({event,kind:"opening"});}
-        if(hasFeed){const field=["cableAlimen","cableAlimen2","cableAlimen3"].find(k=>hasSupplementaryValue_(normalizedPlan.updates[k]));const event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:appendLedgerSheet,vehicleId:payload.vehicleId,opId:feedOpId,kind:"feed",payload:{text:String(field?normalizedPlan.updates[field]||"":""),image:String(prepared[field==="cableAlimen2"?"imgCableAlimen2":field==="cableAlimen3"?"imgCableAlimen3":"imgCableAlimen"]||"")},actorId:payload.__sharedSessionActor&&payload.__sharedSessionActor.userId||"",actorName});events.push({event,kind:"feed"});}
-        let noteResult=null;if(hasSupplementaryValue_(normalizedPlan.updates.notaImportante))noteResult=handleAddSupplementaryInfoLocked({vehicleId:payload.vehicleId,notaImportante:normalizedPlan.updates.notaImportante,timestamp:payload.timestamp},actorName,sheet);
-        const rows=appendLedgerSheet?readVehicleContributionLedgerRows_(appendLedgerSheet):[];
-        const candidateReviewPending=events.some(e=>getVehicleContributionCandidateStatus_(spreadsheet,snapshot,e.event.eventId,e.kind,appendLedgerSheet,rows));
-        const feed=events.find(e=>e.kind==="feed"),slotIndex=feed?getVehicleContributionFeedSlotIndex_(snapshot,feed.event.eventId,rows):null;
-        uploaded.forEach(url=>{try{if(!markImageUploadLinked(url,{shortLedgerLock:true}))Logger.log("Aporte registrado; carga pendiente de reconciliación: "+String(url));}catch(err){Logger.log("Aporte registrado; ImageUploadLedger pendiente: "+String(err&&err.message||err));}});
-        return {status:"success",message:"Información suplementaria registrada.",vehicleId:String(payload.vehicleId),opId:requestOpId,
-            contributionEvents:events.map(e=>({eventId:e.event.eventId,opId:e.event.opId,kind:e.kind,createdAt:e.event.createdAt,duplicate:e.event.duplicate===true})),
+        if(["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].some(key=>hasSupplementaryValue_(payload[key]))){const result=prepareSupplementaryImageUploads_(prepared,snapshot.vehicle,normalizedPlan);prepared=result.payload;uploaded=result.uploadedUrls;}
+        const lock=LockService.getScriptLock();if(!lock.tryLock(0)){const busy=new Error("WRITE_BUSY");busy.code="WRITE_BUSY";throw busy;}
+        const events=[];let noteResult=null,candidateReviewPending=false,slotIndex=null;
+        try{
+            readSupplementaryVehicleSnapshot_(sheet,payload.vehicleId);
+            if(isOpening){const eventPayload={text:String(normalizedPlan.updates.apertura||""),image:String(prepared.imgApertura||"")};const event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:ledger,vehicleId:payload.vehicleId,opId:openingOpId,kind:"opening",payload:eventPayload,actorId:payload.__sharedSessionActor&&payload.__sharedSessionActor.userId||"",actorName});events.push({event,kind:"opening",payload:eventPayload});}
+            if(hasFeed){const field=["cableAlimen","cableAlimen2","cableAlimen3"].find((key,index)=>hasSupplementaryValue_(normalizedPlan.updates[key])||hasSupplementaryValue_(prepared[["imgCableAlimen","imgCableAlimen2","imgCableAlimen3"][index]]));const imageField=field==="cableAlimen2"?"imgCableAlimen2":field==="cableAlimen3"?"imgCableAlimen3":"imgCableAlimen";const eventPayload={text:String(field?normalizedPlan.updates[field]||"":"").trim(),image:String(field?prepared[imageField]||"":"").trim()};const event=appendVehicleContributionEvent_({spreadsheet,ledgerSheet:ledger,vehicleId:payload.vehicleId,opId:feedOpId,kind:"feed",payload:eventPayload,actorId:payload.__sharedSessionActor&&payload.__sharedSessionActor.userId||"",actorName});events.push({event,kind:"feed",payload:eventPayload});}
+            const rows=ledger?readVehicleContributionLedgerRows_(ledger):[];
+            const reconciliation=ledger?materializeVehicleContributionEventsForVehicle_(spreadsheet,sheet,payload.vehicleId,rows,events.map(entry=>entry.event.eventId)):{resultsByEventId:{}};
+            events.forEach(entry=>{const result=reconciliation.resultsByEventId[entry.event.eventId]||{candidateReviewPending:true};candidateReviewPending=candidateReviewPending||result.candidateReviewPending===true;if(entry.kind==="feed")slotIndex=result.slotIndex;});
+            if(hasSupplementaryValue_(normalizedPlan.updates.notaImportante))noteResult=handleAddSupplementaryInfoLocked({vehicleId:payload.vehicleId,notaImportante:normalizedPlan.updates.notaImportante,timestamp:payload.timestamp},actorName,sheet);
+        }finally{lock.releaseLock();}
+        uploaded.forEach(url=>{try{if(!markImageUploadLinked(url,{shortLedgerLock:true}))Logger.log("Aporte registrado; carga pendiente de reconciliación: "+String(url));}catch(error){Logger.log("Aporte registrado; ImageUploadLedger pendiente: "+String(error&&error.message||error));}});
+        return{status:"success",message:"Información suplementaria registrada.",vehicleId:String(payload.vehicleId),opId:requestOpId,
+            contributionEvents:events.map(entry=>({eventId:entry.event.eventId,opId:entry.event.opId,kind:entry.kind,createdAt:entry.event.createdAt,duplicate:entry.event.duplicate===true})),
             contributionEventId:events.length?events[0].event.eventId:"",operationHash:events.length?events[0].event.operationHash:"",
-            duplicate:events.length>0&&events.every(e=>e.event.duplicate===true),slotIndex,apertureSaved:isOpening,
+            duplicate:events.length>0&&events.every(entry=>entry.event.duplicate===true),slotIndex,apertureSaved:isOpening&&!candidateReviewPending,
             noteSaved:Boolean(noteResult&&noteResult.status==="success"),catalogResetRequired:true,candidateReviewPending};
     }
-
-    // Compatibilidad temporal para solicitudes heredadas de nota o sin opId.
-    let preparedPayload = Object.assign({}, payload);
-    let uploadedUrls = [];
-    const hasImages = ["imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]
-        .some(field => hasSupplementaryValue_(payload[field]));
-    if (hasImages) {
-        const preflightPlan = buildSupplementaryInfoPlan_(preparedPayload, snapshot.vehicle);
-        const prepared = prepareSupplementaryImageUploads_(preparedPayload, snapshot.vehicle, preflightPlan);
-        preparedPayload = prepared.payload;
-        uploadedUrls = prepared.uploadedUrls;
-    }
-
-    const result = handleAddSupplementaryInfoLocked(preparedPayload, actorName, sheet);
-    if (result && result.status === "success") {
-        uploadedUrls.forEach(url => {
-            try {
-                if (!markImageUploadLinked(url, { shortLedgerLock: true })) {
-                    Logger.log("La información suplementaria se guardó, pero la carga permanece pendiente de reconciliación: " + String(url));
-                }
-            } catch (ledgerError) {
-                Logger.log("La información suplementaria se guardó, pero no se pudo actualizar ImageUploadLedger: " + String(ledgerError && ledgerError.message || ledgerError));
-            }
-        });
-        try { result.catalogVersion = nextWriteCatalogSourceVersion_(payload.vehicleId); }
-        catch (versionError) {
-            result.catalogResetRequired = true;
-            Logger.log("La información suplementaria se guardó, pero no se pudo reservar versión de catálogo: " + String(versionError && versionError.message || versionError));
-        }
-    }
+    let preparedPayload=Object.assign({},payload),uploadedUrls=[];
+    const hasImages=["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].some(field=>hasSupplementaryValue_(payload[field]));
+    if(hasImages){const plan=buildSupplementaryInfoPlan_(preparedPayload,snapshot.vehicle),prepared=prepareSupplementaryImageUploads_(preparedPayload,snapshot.vehicle,plan);preparedPayload=prepared.payload;uploadedUrls=prepared.uploadedUrls;}
+    const legacyLock=LockService.getScriptLock();
+    if(!legacyLock.tryLock(0)){const busy=createSupplementaryInfoError_("WRITE_BUSY","Hay otra actualización en curso para la ficha. Vuelve a intentarlo.");busy.code="WRITE_BUSY";throw busy;}
+    let result;
+    try{result=handleAddSupplementaryInfoLocked(preparedPayload,actorName,sheet);}
+    finally{legacyLock.releaseLock();}
+    if(result&&result.status==="success"){uploadedUrls.forEach(url=>{try{if(!markImageUploadLinked(url,{shortLedgerLock:true}))Logger.log("La información suplementaria se guardó, pero la carga permanece pendiente de reconciliación: "+String(url));}catch(error){Logger.log("La información suplementaria se guardó, pero no se pudo actualizar ImageUploadLedger: "+String(error&&error.message||error));}});try{result.catalogVersion=nextWriteCatalogSourceVersion_(payload.vehicleId);}catch(error){result.catalogResetRequired=true;Logger.log("La información suplementaria se guardó, pero no se pudo reservar versión de catálogo: "+String(error&&error.message||error));}}
     return result;
 }
+
 function handleAddSupplementaryInfoLocked(payload, actorName, sheet) {
     const snapshot = readSupplementaryVehicleSnapshot_(sheet, payload.vehicleId);
     const plan = buildSupplementaryInfoPlan_(payload, snapshot.vehicle);
@@ -2583,121 +2441,170 @@ function readVehicleContributionLedgerRows_(sheet) {
     return sheet.getRange(2, 1, lastRow - 1, WRITE_VEHICLE_CONTRIBUTIONS_HEADERS_.length).getValues();
 }
 
+function contributionCutSlotMatches_(row, slot, payload, actorName) {
+    const suffix = String(slot);
+    const fields = [["tipoCorte" + suffix,payload.tipo],["ubicacionCorte" + suffix,payload.ubicacion],
+        ["colorCableCorte" + suffix,payload.color],["configRelay" + suffix,payload.configRelay],["imgCorte" + suffix,payload.image]];
+    if (!fields.every(([field,expected]) => String(row[COLS_CORTES[field]-1] == null ? "" : row[COLS_CORTES[field]-1]).trim() === String(expected == null ? "" : expected).trim())) return false;
+    const testigo = row[COLS_CORTES["activaTestigo"+suffix]-1] === true || String(row[COLS_CORTES["activaTestigo"+suffix]-1]).toLowerCase() === "true";
+    if (testigo !== (payload.activaTestigo === true)) return false;
+    const actor = String(row[COLS_CORTES["colaboradorCorte"+suffix]-1] || "").trim();
+    return !actor || !String(actorName || "").trim() || actor === String(actorName).trim();
+}
+function contributionCutSlotOccupied_(row, slot) {
+    const suffix=String(slot);
+    return ["tipoCorte","ubicacionCorte","colorCableCorte","configRelay","imgCorte","colaboradorCorte"]
+        .some(prefix=>String(row[COLS_CORTES[prefix+suffix]-1]||"").trim()!=="") ||
+        row[COLS_CORTES["activaTestigo"+suffix]-1]===true;
+}
 function getVehicleContributionCutSlotIndex_(spreadsheet, vehicleSnapshot, targetEventId, rowsSnapshot, validatedLedgerSheet) {
-    const ledger = validatedLedgerSheet || getVehicleContributionLedgerSheet_(spreadsheet);
-    const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(ledger);
-    if (!rows.length) return null;
-    const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
-    if (!vehicleId) return null;
-    const baseRow = vehicleSnapshot.rowValues || [];
-    const occupied = [1, 2, 3].map(slot => [
-        COLS_CORTES["tipoCorte" + slot],
-        COLS_CORTES["ubicacionCorte" + slot],
-        COLS_CORTES["imgCorte" + slot]
-    ].some(column => String(baseRow[column - 1] || "").trim()));
-    const byOpId = new Map();
-    const conflicts = new Set();
-    rows.forEach((row, offset) => {
-        const opId = String(row[1] || "");
-        if (!opId) return;
-        const entry = {
-            eventId: String(row[0] || ""),
-            opId,
-            vehicleId: String(row[2] || ""),
-            operationHash: String(row[3] || "").toLowerCase(),
-            kind: String(row[4] || ""),
-            status: String(row[9] || ""),
-            payloadJson: String(row[5] || ""),
-            rowIndex: offset + 2
-        };
-        const previous = byOpId.get(opId);
-        if (previous && (previous.vehicleId !== entry.vehicleId ||
-            previous.operationHash !== entry.operationHash || previous.kind !== entry.kind ||
-            previous.payloadJson !== entry.payloadJson)) {
-            conflicts.add(opId);
-        } else if (!previous) {
-            byOpId.set(opId, entry);
-        }
+    const ledger=validatedLedgerSheet||getVehicleContributionLedgerSheet_(spreadsheet);
+    const rows=Array.isArray(rowsSnapshot)?rowsSnapshot:readVehicleContributionLedgerRows_(ledger);
+    if(!rows.length)return null;
+    const vehicleId=String(vehicleSnapshot&&vehicleSnapshot.vehicle&&vehicleSnapshot.vehicle.id||"").trim();
+    if(!vehicleId)return null;
+    const baseRow=vehicleSnapshot.rowValues||[];
+    const occupied=[1,2,3].map(slot=>contributionCutSlotOccupied_(baseRow,slot));
+    const claimed=new Set(),byOpId=new Map(),conflicts=new Set();
+    rows.forEach((row,index)=>{
+        const opId=String(row[1]||"");if(!opId)return;
+        const entry={eventId:String(row[0]||""),opId,vehicleId:String(row[2]||""),operationHash:String(row[3]||"").toLowerCase(),
+            kind:String(row[4]||""),payloadJson:String(row[5]||""),actorName:String(row[7]||""),status:String(row[9]||""),rowIndex:index+2};
+        const previous=byOpId.get(opId);
+        if(previous&&(previous.vehicleId!==entry.vehicleId||previous.operationHash!==entry.operationHash||previous.kind!==entry.kind||previous.payloadJson!==entry.payloadJson))conflicts.add(opId);
+        else if(!previous)byOpId.set(opId,entry);
     });
-    let targetSlot = null;
-    Array.from(byOpId.values()).sort((a, b) => a.rowIndex - b.rowIndex).forEach(entry => {
-        if (conflicts.has(entry.opId) || entry.vehicleId !== vehicleId ||
-            entry.kind !== "cut" || entry.status !== "accepted") return;
-        const slot = occupied.findIndex(value => value === false);
-        if (slot < 0) return;
-        occupied[slot] = true;
-        if (entry.eventId === String(targetEventId)) targetSlot = slot + 1;
+    let targetSlot=null;
+    Array.from(byOpId.values()).sort((a,b)=>a.rowIndex-b.rowIndex).forEach(entry=>{
+        if(conflicts.has(entry.opId)||entry.vehicleId!==vehicleId||entry.kind!=="cut"||String(entry.status).toLowerCase()!=="accepted")return;
+        let payload={};try{payload=JSON.parse(entry.payloadJson||"{}");}catch(error){return;}
+        const existing=[1,2,3].find(slot=>!claimed.has(slot)&&contributionCutSlotMatches_(baseRow,slot,payload,entry.actorName));
+        if(existing){claimed.add(existing);occupied[existing-1]=true;if(entry.eventId===String(targetEventId))targetSlot=existing;return;}
+        const free=occupied.findIndex((value,index)=>value===false&&!claimed.has(index+1));
+        if(free<0)return;occupied[free]=true;claimed.add(free+1);if(entry.eventId===String(targetEventId))targetSlot=free+1;
     });
     return targetSlot;
 }
-
 function getVehicleContributionFeedSlotIndex_(vehicleSnapshot,targetEventId,rowsSnapshot){
- const vehicleId=String(vehicleSnapshot&&vehicleSnapshot.vehicle&&vehicleSnapshot.vehicle.id||"").trim();
- if(!vehicleId||!Array.isArray(rowsSnapshot)||!rowsSnapshot.length)return null;
- const v=vehicleSnapshot.vehicle||{},occupied=[Boolean(v.cableAlimen||v.imgCableAlimen),Boolean(v.cableAlimen2||v.imgCableAlimen2),Boolean(v.cableAlimen3||v.imgCableAlimen3)],by=new Map(),conflicts=new Set();
- rowsSnapshot.forEach((r,i)=>{const id=String(r[1]||"");if(!id)return;const e={eventId:String(r[0]||""),opId:id,vehicleId:String(r[2]||""),hash:String(r[3]||"").toLowerCase(),kind:String(r[4]||"").toLowerCase(),json:String(r[5]||""),status:String(r[9]||"").toLowerCase(),row:i+2};const old=by.get(id);if(old&&(old.vehicleId!==e.vehicleId||old.hash!==e.hash||old.kind!==e.kind||old.json!==e.json))conflicts.add(id);else if(!old)by.set(id,e);});
- let target=null;Array.from(by.values()).sort((a,b)=>a.row-b.row).forEach(e=>{if(conflicts.has(e.opId)||e.vehicleId!==vehicleId||e.kind!=="feed"||e.status!=="accepted")return;const slot=occupied.findIndex(x=>!x);if(slot<0)return;occupied[slot]=true;if(e.eventId===String(targetEventId))target=slot+1;});return target;
+    const vehicleId=String(vehicleSnapshot&&vehicleSnapshot.vehicle&&vehicleSnapshot.vehicle.id||"").trim();
+    if(!vehicleId||!Array.isArray(rowsSnapshot)||!rowsSnapshot.length)return null;
+    const vehicle=vehicleSnapshot.vehicle||{};
+    const occupied=[1,2,3].map(index=>{const suffix=index===1?"":String(index);return Boolean(String(vehicle["cableAlimen"+suffix]||"").trim()||String(vehicle["imgCableAlimen"+suffix]||"").trim());});
+    const claimed=new Set(),byOpId=new Map(),conflicts=new Set();
+    rowsSnapshot.forEach((row,index)=>{const opId=String(row[1]||"");if(!opId)return;const entry={eventId:String(row[0]||""),opId,vehicleId:String(row[2]||""),hash:String(row[3]||"").toLowerCase(),kind:String(row[4]||"").toLowerCase(),payloadJson:String(row[5]||""),status:String(row[9]||"").toLowerCase(),rowIndex:index+2};const old=byOpId.get(opId);if(old&&(old.vehicleId!==entry.vehicleId||old.hash!==entry.hash||old.kind!==entry.kind||old.payloadJson!==entry.payloadJson))conflicts.add(opId);else if(!old)byOpId.set(opId,entry);});
+    let target=null;
+    Array.from(byOpId.values()).sort((a,b)=>a.rowIndex-b.rowIndex).forEach(entry=>{
+        if(conflicts.has(entry.opId)||entry.vehicleId!==vehicleId||entry.kind!=="feed"||entry.status!=="accepted")return;
+        let payload={};try{payload=JSON.parse(entry.payloadJson||"{}");}catch(error){return;}
+        const existing=[1,2,3].find(slot=>{if(claimed.has(slot))return false;const suffix=slot===1?"":String(slot);return String(vehicle["cableAlimen"+suffix]||"").trim()===String(payload.text||"").trim()&&String(vehicle["imgCableAlimen"+suffix]||"").trim()===String(payload.image||"").trim();});
+        if(existing){claimed.add(existing);occupied[existing-1]=true;if(entry.eventId===String(targetEventId))target=existing;return;}
+        const free=occupied.findIndex((value,index)=>value===false&&!claimed.has(index+1));if(free<0)return;occupied[free]=true;claimed.add(free+1);if(entry.eventId===String(targetEventId))target=free+1;
+    });
+    return target;
 }
 
-function getVehicleContributionCandidateStatus_(spreadsheet, vehicleSnapshot, targetEventId, kind, validatedLedgerSheet, ledgerRowsSnapshot) {
-    const ledger = validatedLedgerSheet || getVehicleContributionLedgerSheet_(spreadsheet);
-    const rows = Array.isArray(ledgerRowsSnapshot) ? ledgerRowsSnapshot : readVehicleContributionLedgerRows_(ledger);
-    if (!rows.length) return true;
-    const vehicleId = String(vehicleSnapshot && vehicleSnapshot.vehicle && vehicleSnapshot.vehicle.id || "").trim();
-    if (!vehicleId) return true;
-    const vehicle = vehicleSnapshot.vehicle || {};
-    let openingOccupied = Boolean(String(vehicle.apertura || "").trim() || String(vehicle.imgApertura || "").trim());
-    const feedOccupied = [
-        Boolean(String(vehicle.cableAlimen || "").trim() || String(vehicle.imgCableAlimen || "").trim()),
-        Boolean(String(vehicle.cableAlimen2 || "").trim() || String(vehicle.imgCableAlimen2 || "").trim()),
-        Boolean(String(vehicle.cableAlimen3 || "").trim() || String(vehicle.imgCableAlimen3 || "").trim())
-    ];
-    const byOpId = new Map();
-    const conflicts = new Set();
-    rows.forEach((row, offset) => {
-        const opId = String(row[1] || "");
-        if (!opId) return;
-        const entry = {
-            eventId: String(row[0] || ""),
-            opId,
-            vehicleId: String(row[2] || ""),
-            operationHash: String(row[3] || "").toLowerCase(),
-            kind: String(row[4] || "").toLowerCase(),
-            payloadJson: String(row[5] || ""),
-            status: String(row[9] || "").toLowerCase(),
-            rowIndex: offset + 2
-        };
-        const previous = byOpId.get(opId);
-        if (previous && (previous.vehicleId !== entry.vehicleId ||
-            previous.operationHash !== entry.operationHash || previous.kind !== entry.kind ||
-            previous.payloadJson !== entry.payloadJson)) {
-            conflicts.add(opId);
-        } else if (!previous) {
-            byOpId.set(opId, entry);
-        }
-    });
-    const events = Array.from(byOpId.values()).sort((a, b) => a.rowIndex - b.rowIndex);
-    for (const entry of events) {
-        if (conflicts.has(entry.opId) || entry.vehicleId !== vehicleId ||
-            entry.kind !== String(kind || "").toLowerCase() || entry.status !== "accepted") continue;
-        if (entry.kind === "opening") {
-            if (openingOccupied) {
-                if (entry.eventId === String(targetEventId)) return true;
-            } else {
-                openingOccupied = true;
-                if (entry.eventId === String(targetEventId)) return false;
-            }
-        } else if (entry.kind === "feed") {
-            const slot = feedOccupied.findIndex(value => value === false);
-            if (slot < 0) {
-                if (entry.eventId === String(targetEventId)) return true;
-            } else {
-                feedOccupied[slot] = true;
-                if (entry.eventId === String(targetEventId)) return false;
-            }
-        }
-    }
+function getVehicleContributionCandidateStatus_(spreadsheet,vehicleSnapshot,targetEventId,kind,validatedLedgerSheet,ledgerRowsSnapshot){
+    const ledger=validatedLedgerSheet||getVehicleContributionLedgerSheet_(spreadsheet),rows=Array.isArray(ledgerRowsSnapshot)?ledgerRowsSnapshot:readVehicleContributionLedgerRows_(ledger);
+    if(!rows.length)return true;
+    const vehicleId=String(vehicleSnapshot&&vehicleSnapshot.vehicle&&vehicleSnapshot.vehicle.id||"").trim();if(!vehicleId)return true;
+    const vehicle=vehicleSnapshot.vehicle||{},normalizedKind=String(kind||"").toLowerCase();
+    if(normalizedKind==="feed")return getVehicleContributionFeedSlotIndex_(vehicleSnapshot,targetEventId,rows)===null;
+    const entries=rows.map((row,index)=>{let payload={};try{payload=JSON.parse(String(row[5]||"{}"));}catch(error){}return{eventId:String(row[0]||""),opId:String(row[1]||""),vehicleId:String(row[2]||""),kind:String(row[4]||"").toLowerCase(),payload,status:String(row[9]||"").toLowerCase(),rowIndex:index+2};})
+        .filter(entry=>entry.opId&&entry.vehicleId===vehicleId&&entry.kind===normalizedKind&&entry.status==="accepted").sort((a,b)=>a.rowIndex-b.rowIndex);
+    let occupied=Boolean(String(vehicle.apertura||"").trim()||String(vehicle.imgApertura||"").trim());
+    for(const entry of entries){if(entry.kind!=="opening")continue;if(entry.eventId===String(targetEventId)){const matches=String(vehicle.apertura||"").trim()===String(entry.payload.text||"").trim()&&String(vehicle.imgApertura||"").trim()===String(entry.payload.image||"").trim();return occupied?!matches:false;}occupied=true;}
     return true;
+}
+function persistContributionRowCellUpdates_(sheet,rowIndex,updates){
+    const pending=[];
+    updates.forEach(update=>{const column=Number(update.column);if(!Number.isInteger(column)||column<1)throw new Error("La columna del aporte no es válida.");const current=sheet.getRange(rowIndex,column).getValue(),expected=update.value;
+        const same=typeof expected==="boolean"?(current===expected||String(current).toLowerCase()===String(expected)):String(current==null?"":current).trim()===String(expected==null?"":expected).trim();
+        if(same)return;const empty=current===null||current===undefined||String(current).trim()==="";
+        if(!empty){const error=new Error("La columna de destino ya contiene información distinta; no se sobrescribió.");error.code="CONTRIBUTION_ROW_SLOT_CONFLICT";throw error;}pending.push({column,value:expected});});
+    pending.forEach(update=>sheet.getRange(rowIndex,update.column).setValue(update.value));if(pending.length)SpreadsheetApp.flush();
+    pending.forEach(update=>{const saved=sheet.getRange(rowIndex,update.column).getValue(),same=typeof update.value==="boolean"?(saved===update.value||String(saved).toLowerCase()===String(update.value)):String(saved==null?"":saved).trim()===String(update.value==null?"":update.value).trim();if(!same){const error=new Error("La lectura posterior no confirmó la columna del aporte.");error.code="CONTRIBUTION_ROW_WRITE_UNCONFIRMED";throw error;}});
+    return true;
+}
+function materializeVehicleContributionEvent_(spreadsheet,sheet,vehicleId,event,ledgerRows){
+    const snapshot=readSupplementaryVehicleSnapshot_(sheet,vehicleId),payload=event&&event.payload&&typeof event.payload==="object"?event.payload:{},kind=String(event&&event.kind||"").toLowerCase();
+    if(kind==="cut"){
+        const slotIndex=getVehicleContributionCutSlotIndex_(spreadsheet,snapshot,event.eventId,ledgerRows);if(!slotIndex)return{slotIndex:null,candidateReviewPending:true};
+        ensureTestigoColumns(sheet);const suffix=String(slotIndex);
+        const updates=[["tipoCorte",payload.tipo],["ubicacionCorte",payload.ubicacion],["colorCableCorte",payload.color],["configRelay",payload.configRelay],["imgCorte",payload.image],["activaTestigo",payload.activaTestigo===true],["colaboradorCorte",event.actorName||""]]
+            .map(([prefix,value])=>({column:COLS_CORTES[prefix+suffix],value:value==null?"":value}));
+        try{persistContributionRowCellUpdates_(sheet,snapshot.rowIndex,updates);}catch(error){if(error&&error.code==="CONTRIBUTION_ROW_SLOT_CONFLICT")return{slotIndex:null,candidateReviewPending:true};throw error;}
+        const metadata=payload.vehicleData&&typeof payload.vehicleData==="object"?payload.vehicleData:{};
+        const metadataUpdates=["categoria","marca","modelo","versionesAplicables","anoDesde","anoHasta","tipoEncendido","imagenVehiculo"].filter(field=>metadata[field]!==undefined&&metadata[field]!==null&&String(metadata[field]).trim()!=="")
+            .map(field=>({column:COLS_CORTES[field],value:metadata[field]})).filter(update=>{const current=sheet.getRange(snapshot.rowIndex,update.column).getValue();return current===null||current===undefined||String(current).trim()==="";});
+        persistContributionRowCellUpdates_(sheet,snapshot.rowIndex,metadataUpdates);
+        let vinPending=false;const vinPrefix=String(payload.vinPrefix||"").trim().toUpperCase();
+        if(vinPrefix){const vinColumn=getVinColumnIndex(sheet);if(!vinColumn)throw new Error("La hoja «Cortes» no contiene una columna VIN.");const currentVins=parseVinCollection(sheet.getRange(snapshot.rowIndex,vinColumn).getValue());
+            if(!currentVins.includes(vinPrefix)){const duplicate=checkVinDuplicateInSheet(sheet,vinPrefix,vehicleId);if(duplicate)vinPending=true;else{const versions=String(metadata.versionesAplicables||snapshot.vehicle.versionesAplicables||"").trim(),maxAllowed=Math.max(1,countEquipmentVersions(versions));try{const next=addVinToAvailableSlot(currentVins,vinPrefix,maxAllowed);sheet.getRange(snapshot.rowIndex,vinColumn).setValue(JSON.stringify(next.collection));SpreadsheetApp.flush();if(JSON.stringify(parseVinCollection(sheet.getRange(snapshot.rowIndex,vinColumn).getValue()))!==JSON.stringify(next.collection)){const error=new Error("No se pudo confirmar la colección VIN del aporte.");error.code="CONTRIBUTION_VIN_WRITE_UNCONFIRMED";throw error;}}catch(error){if(error&&/máximo|posición|espacio|capacidad/i.test(String(error.message||"")))vinPending=true;else throw error;}}}}
+        return{slotIndex,candidateReviewPending:vinPending};
+    }
+    if(kind==="opening"){
+        const current=readSupplementaryVehicleSnapshot_(sheet,vehicleId),text=String(payload.text||"").trim(),image=String(payload.image||"").trim(),oldText=String(current.vehicle.apertura||"").trim(),oldImage=String(current.vehicle.imgApertura||"").trim();
+        if((oldText||oldImage)&&(oldText!==text||oldImage!==image))return{slotIndex:null,candidateReviewPending:true};
+        persistContributionRowCellUpdates_(sheet,current.rowIndex,[{column:COLS_CORTES.apertura,value:payload.text||""},{column:COLS_CORTES.imgApertura,value:payload.image||""}]);
+        return{slotIndex:null,candidateReviewPending:false};
+    }
+    if(kind==="feed"){
+        const current=readSupplementaryVehicleSnapshot_(sheet,vehicleId),slotIndex=getVehicleContributionFeedSlotIndex_(current,event.eventId,ledgerRows);if(!slotIndex)return{slotIndex:null,candidateReviewPending:true};
+        const suffix=slotIndex===1?"":String(slotIndex);
+        try{persistContributionRowCellUpdates_(sheet,current.rowIndex,[{column:COLS_CORTES["cableAlimen"+suffix],value:payload.text||""},{column:COLS_CORTES["imgCableAlimen"+suffix],value:payload.image||""}]);}
+        catch(error){if(error&&error.code==="CONTRIBUTION_ROW_SLOT_CONFLICT")return{slotIndex:null,candidateReviewPending:true};throw error;}
+        return{slotIndex,candidateReviewPending:false};
+    }
+    return{slotIndex:null,candidateReviewPending:false};
+}
+
+function materializeVehicleVinRegistrationEvent_(sheet,vehicleId,event){
+    const snapshot=readSupplementaryVehicleSnapshot_(sheet,vehicleId),payload=event.payload||{},expected=payload.expectedCurrentValue||{},next=payload.value||{},vinColumn=getVinColumnIndex(sheet);
+    if(!vinColumn)throw new Error("La hoja «Cortes» no contiene una columna VIN.");
+    const currentVersions=String(snapshot.vehicle.versionesAplicables||"").trim(),currentVin=parseVinCollection(sheet.getRange(snapshot.rowIndex,vinColumn).getValue());
+    const expectedVersions=String(expected.versionesAplicables||"").trim(),expectedVin=parseVinCollection(expected.vin),nextVersions=String(next.versionesAplicables||"").trim(),nextVin=parseVinCollection(next.vin);
+    const currentJson=JSON.stringify(currentVin),expectedJson=JSON.stringify(expectedVin),nextJson=JSON.stringify(nextVin);
+    if(currentVersions===nextVersions&&currentJson===nextJson)return{candidateReviewPending:false,alreadyMaterialized:true};
+    if(currentVersions!==expectedVersions||currentJson!==expectedJson)return{candidateReviewPending:true};
+    const added=nextVin.filter(prefix=>!expectedVin.includes(prefix));
+    for(const prefix of added){const conflict=findVehicleContributionVinConflict_(getSpreadsheet(),prefix,vehicleId);if(conflict)return{candidateReviewPending:true};}
+    sheet.getRange(snapshot.rowIndex,COLS_CORTES.versionesAplicables).setValue(nextVersions);
+    sheet.getRange(snapshot.rowIndex,vinColumn).setValue(JSON.stringify(nextVin));
+    SpreadsheetApp.flush();
+    if(String(sheet.getRange(snapshot.rowIndex,COLS_CORTES.versionesAplicables).getValue()||"").trim()!==nextVersions||
+        JSON.stringify(parseVinCollection(sheet.getRange(snapshot.rowIndex,vinColumn).getValue()))!==nextJson){
+        const error=new Error("No se pudo confirmar la escritura VIN de un aporte existente.");error.code="CONTRIBUTION_VIN_WRITE_UNCONFIRMED";throw error;
+    }
+    return{candidateReviewPending:false,alreadyMaterialized:false};
+}
+function materializeVehicleContributionEventsForVehicle_(spreadsheet,sheet,vehicleId,ledgerRows,targetEventIds){
+    const rows=Array.isArray(ledgerRows)?ledgerRows:[],targets=new Set((Array.isArray(targetEventIds)?targetEventIds:[]).map(String)),byOpId=new Map(),conflicts=new Set();
+    rows.forEach((row,index)=>{
+        const opId=String(row[1]||"");if(!opId)return;
+        const entry={eventId:String(row[0]||""),opId,vehicleId:String(row[2]||""),operationHash:String(row[3]||"").toLowerCase(),
+            kind:String(row[4]||"").toLowerCase(),payloadJson:String(row[5]||""),actorId:String(row[6]||""),actorName:String(row[7]||""),
+            status:String(row[9]||"").toLowerCase(),supersedesEventId:String(row[10]||""),rowIndex:index+2};
+        const old=byOpId.get(opId);
+        if(old&&(old.vehicleId!==entry.vehicleId||old.operationHash!==entry.operationHash||old.kind!==entry.kind||old.payloadJson!==entry.payloadJson))conflicts.add(opId);
+        else if(!old)byOpId.set(opId,entry);
+    });
+    const results={};
+    Array.from(byOpId.values()).sort((a,b)=>a.rowIndex-b.rowIndex).forEach(entry=>{
+        if(conflicts.has(entry.opId)||entry.vehicleId!==String(vehicleId)||entry.status!=="accepted")return;
+        let payload={};try{payload=JSON.parse(entry.payloadJson||"{}");}catch(error){return;}
+        const event={eventId:entry.eventId,opId:entry.opId,vehicleId:entry.vehicleId,operationHash:entry.operationHash,kind:entry.kind,
+            payload,actorId:entry.actorId,actorName:entry.actorName,status:entry.status,supersedesEventId:entry.supersedesEventId};
+        let result={candidateReviewPending:false};
+        if(["cut","opening","feed"].includes(entry.kind)){
+            if(entry.kind==="cut"&&payload.vinPrefix&&findVehicleContributionVinConflict_(spreadsheet,payload.vinPrefix,vehicleId,rows))result={candidateReviewPending:true};
+            else result=materializeVehicleContributionEvent_(spreadsheet,sheet,vehicleId,event,rows);
+        }else if(entry.kind==="vehicle_update"&&payload.fieldName==="vin_registration"){
+            result=materializeVehicleVinRegistrationEvent_(sheet,vehicleId,event);
+        }
+        results[entry.eventId]=result;
+    });
+    const targetResults=Array.from(targets).map(id=>results[id]).filter(Boolean);
+    return{resultsByEventId:results,candidateReviewPending:targetResults.some(result=>result.candidateReviewPending===true)};
 }
 
 function getVehicleContributionLedgerSheet_(spreadsheetRef) {
@@ -2740,26 +2647,21 @@ function computeVehicleContributionHash_(vehicleId, kind, payload) {
     return digest.map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
 }
 
-function findVehicleContributionVinConflict_(spreadsheetRef, vinPrefix, currentVehicleId, rowsSnapshot) {
-    const prefix = String(vinPrefix || "").trim().toUpperCase();
-    if (!prefix) return null;
-    const sheet = getVehicleContributionLedgerSheet_(spreadsheetRef);
-    const rows = Array.isArray(rowsSnapshot) ? rowsSnapshot : readVehicleContributionLedgerRows_(sheet);
-    if (!rows.length) return null;
-    for (let index = 0; index < rows.length; index++) {
-        const row = rows[index];
-        const vehicleId = String(row[2] || "").trim();
-        if (!vehicleId || vehicleId === String(currentVehicleId || "").trim()) continue;
-        let payload = null;
-        try { payload = JSON.parse(String(row[5] || "{}")); } catch (error) { payload = null; }
-        if (payload && String(payload.vinPrefix || "").trim().toUpperCase() === prefix) {
-            return {
-                vehicleId,
-                opId: String(row[1] || ""),
-                eventId: String(row[0] || ""),
-                rowIndex: index + 2
-            };
-        }
+function findVehicleContributionVinConflict_(spreadsheetRef,vinPrefix,currentVehicleId,rowsSnapshot){
+    const prefix=String(vinPrefix||"").trim().toUpperCase();if(!prefix)return null;
+    const sheet=getVehicleContributionLedgerSheet_(spreadsheetRef),rows=Array.isArray(rowsSnapshot)?rowsSnapshot:readVehicleContributionLedgerRows_(sheet);
+    if(!rows.length)return null;
+    for(let index=0;index<rows.length;index++){
+        const row=rows[index],vehicleId=String(row[2]||"").trim();
+        if(!vehicleId||vehicleId===String(currentVehicleId||"").trim())continue;
+        let payload=null;try{payload=JSON.parse(String(row[5]||"{}"));}catch(error){payload=null;}
+        if(!payload||typeof payload!=="object")continue;
+        const prefixes=[];
+        if(payload.vinPrefix)prefixes.push(String(payload.vinPrefix).trim().toUpperCase());
+        if(payload.fieldName==="vin_registration"&&payload.value&&typeof payload.value==="object")prefixes.push(...parseVinCollection(payload.value.vin));
+        if(payload.fieldName==="vin")prefixes.push(...parseVinCollection(payload.value));
+        if(payload.vin&&Array.isArray(payload.vin))prefixes.push(...parseVinCollection(payload.vin));
+        if(prefixes.includes(prefix))return{vehicleId,opId:String(row[1]||""),eventId:String(row[0]||""),rowIndex:index+2};
     }
     return null;
 }
@@ -4036,8 +3938,6 @@ function findExistingVinRegistrationNoop_(payload) {
 function handleAddVinToVehicle(payload) {
     try {
         const collaboratorName = getAuthenticatedCollaborator(payload || {});
-        const replay = findExistingVinRegistrationNoop_(payload || {});
-        if (replay) return replay;
         return handleAddVinToVehicleLocked(payload || {}, collaboratorName);
     } catch (error) {
         return { status: "error", code: error && error.code || "SERVICE_ERROR",
@@ -4096,6 +3996,9 @@ function handleAddVinToVehicleLocked(payload, collaboratorName) {
     const duplicate = checkVinDuplicateInSheet(sheet, prefix, vehicleId, data);
     if (duplicate) return { status: "duplicate", message: "El VIN ya está registrado para: " + duplicate.modelName,
         vehicleId: duplicate.vehicleId, modelName: duplicate.modelName, vinPrefix: prefix };
+    const pendingVinConflict=findVehicleContributionVinConflict_(getSpreadsheet(),prefix,vehicleId);
+    if(pendingVinConflict)return{status:"duplicate",message:"El VIN ya está reservado por otro aporte del vehículo "+pendingVinConflict.vehicleId+".",
+        vehicleId:pendingVinConflict.vehicleId,vinPrefix:prefix,contributionEventId:pendingVinConflict.eventId};
     const update = addVinToAvailableSlot(existingCollection, prefix, maxAllowed, targetIndex);
     if (update.alreadyPresent) return { status: "success", alreadyPresent: true,
         message: "El VIN ya está registrado para esta versión de equipamiento.", vehicleId,
@@ -4108,11 +4011,24 @@ function handleAddVinToVehicleLocked(payload, collaboratorName) {
     };
     const operationHash = computeVehicleContributionHash_(vehicleId, "vehicle_update", eventPayload);
     const opId = "OP-WRITE-VIN-" + operationHash.slice(0, 40);
-    const event = appendVehicleContributionEvent_({
-        spreadsheet: getSpreadsheet(), vehicleId, opId, kind: "vehicle_update",
-        payload: eventPayload, operationHash, actorId, actorName: collaboratorName
-    });
-    return { status: "success", message: "VIN registrado correctamente.", vehicleId, opId,
-        vinPrefix: prefix, vinCollection: update.collection, versionesAplicables: updatedVersionsStr,
-        contributionEventId: event.eventId, duplicate: event.duplicate === true, catalogResetRequired: true };
+    const lock=LockService.getScriptLock();
+    if(!lock.tryLock(0))throw new Error("WRITE_BUSY");
+    try{
+        const latest=readSupplementaryVehicleSnapshot_(sheet,vehicleId);
+        const latestVersions=String(latest.vehicle.versionesAplicables||"").trim();
+        const latestVin=parseVinCollection(sheet.getRange(latest.rowIndex,vinColumnIndex).getValue());
+        const expectedVin=JSON.stringify(existingCollection),latestVinJson=JSON.stringify(latestVin);
+        const nextVinJson=JSON.stringify(update.collection);
+        if(latestVersions===updatedVersionsStr&&latestVinJson===nextVinJson)return{status:"success",alreadyPresent:true,message:"El VIN ya está registrado para esta versión de equipamiento.",vehicleId,vinPrefix:prefix,vinCollection:update.collection,versionesAplicables:updatedVersionsStr};
+        if(latestVersions!==currentVersionsStr||latestVinJson!==expectedVin)throw new Error("El registro del vehículo cambió durante el aporte VIN. Actualiza la ficha y vuelve a intentarlo; no se sobrescribieron datos.");
+        const event=appendVehicleContributionEvent_({spreadsheet:getSpreadsheet(),vehicleId,opId,kind:"vehicle_update",payload:eventPayload,operationHash,actorId,actorName:collaboratorName});
+        sheet.getRange(latest.rowIndex,COLS_CORTES.versionesAplicables).setValue(updatedVersionsStr);
+        sheet.getRange(latest.rowIndex,vinColumnIndex).setValue(JSON.stringify(update.collection));
+        SpreadsheetApp.flush();
+        const savedVersions=String(sheet.getRange(latest.rowIndex,COLS_CORTES.versionesAplicables).getValue()||"").trim();
+        const savedVin=JSON.stringify(parseVinCollection(sheet.getRange(latest.rowIndex,vinColumnIndex).getValue()));
+        if(savedVersions!==updatedVersionsStr||savedVin!==nextVinJson){const error=new Error("No se pudo confirmar la escritura VIN en la fila del vehículo.");error.code="VIN_ROW_WRITE_UNCONFIRMED";throw error;}
+        return{status:"success",message:"VIN registrado correctamente.",vehicleId,opId,vinPrefix:prefix,vinCollection:update.collection,versionesAplicables:updatedVersionsStr,
+            contributionEventId:event.eventId,duplicate:event.duplicate===true,catalogResetRequired:true};
+    }finally{lock.releaseLock();}
 }

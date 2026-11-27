@@ -871,10 +871,16 @@ export async function saveAddCutOperationPendingOperation(operation) {
             const get = store.get(key);
             get.onsuccess = () => {
                 const previous = get.result;
+                const replaceConfirmedCutSnapshot = Boolean(previous && previous.operation &&
+                    previous.operation.operationType === 'addOrUpdateCut' && previous.operation.status === 'completed' &&
+                    snapshot.operationType === 'addSupplementaryInfo' && snapshot.status === 'processing');
                 if (previous && (!isValidAddCutOperationSnapshot_(previous.operation, owner) ||
-                    String(previous.operation.id || '').trim() !== snapshot.id ||
-                    String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase() ||
-                    (previous.operation.status === 'completed' && snapshot.status !== 'completed'))) {
+                    String(previous.operation.id || '').trim() !== snapshot.id &&
+                        !replaceConfirmedCutSnapshot ||
+                    String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase() &&
+                        !replaceConfirmedCutSnapshot ||
+                    (previous.operation.status === 'completed' && snapshot.status !== 'completed' &&
+                        !replaceConfirmedCutSnapshot))) {
                     result = { saved: false, conflict: true, code: 'PENDING_SNAPSHOT_CONFLICT' };
                     return;
                 }

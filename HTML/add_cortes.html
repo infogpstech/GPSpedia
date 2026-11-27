@@ -614,7 +614,13 @@
         async function getOrCreateSupplementaryOperation_(payload){
             const owner=String(state.userId||"").trim(),vehicle=String(payload&&payload.vehicleId!=null?payload.vehicleId:"").trim();if(!owner||!vehicle)throw Error("SUPPLEMENTARY_OPERATION_OWNER_OR_VEHICLE_MISSING");
             const hash=await computeSupplementaryOperationHash_(payload),pending=await getAddCutOperationPendingOperation(owner);if(!pending||pending.available!==true)throw Error("SUPPLEMENTARY_OPERATION_STORAGE_UNAVAILABLE");
-            if(pending.operation){const old=pending.operation;if(old.operationType!=="addSupplementaryInfo"||old.ownerId!==owner||String(old.vehicleId)!==vehicle||old.operationHash!==hash)throw Error("SUPPLEMENTARY_PENDING_OPERATION_MISMATCH");return old;}
+            let existing=pending.operation;
+            if(existing&&existing.operationType==="addOrUpdateCut"&&existing.status==="completed"){
+                const removed=await removeAddCutOperationPendingOperation(existing.ownerId,existing.id,existing.operationHash);
+                if(!removed||removed.removed!==true)diagnostics.warn("supplementary.previous-confirmed-cut-snapshot-retained",{stage:"stage3",opId:existing.id});
+                existing=null;
+            }
+            if(existing){const old=existing;if(old.operationType!=="addSupplementaryInfo"||old.ownerId!==owner||String(old.vehicleId)!==vehicle||old.operationHash!==hash)throw Error("SUPPLEMENTARY_PENDING_OPERATION_MISMATCH");return old;}
             const id=createSupplementaryOperationId_(),has=x=>typeof x==="string"&&x.trim()!=="",opening=has(payload.apertura)||has(payload.imgApertura),feed=["cableAlimen","cableAlimen2","cableAlimen3","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].some(k=>has(payload[k])),ids={};
             if(opening)ids.opening=createSupplementaryOperationId_();if(feed)ids.feed=createSupplementaryOperationId_();
             const requestData=Object.assign({},payload,{opId:id,contributionOpIds:ids}),snapshot={id,ownerId:owner,operationType:"addSupplementaryInfo",stage:3,status:"processing",operationHash:hash,vehicleId:vehicle,requestData};
@@ -736,8 +742,11 @@
                 if (checkRes.exists === true) {
                     if (checkRes.operationHash !== pendingOp.operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
                     if (pendingOp.vehicleId !== null && String(pendingOp.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
+                    pendingOp.status = 'completed';
+                    const terminal = await saveAddCutOperationPendingOperation(pendingOp);
+                    if (!terminal || terminal.saved !== true) diagnostics.warn('pending-recovery.completed-snapshot-unconfirmed', { stage: 'recovery', opId: pendingOp.id });
                     const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, pendingOp.id, pendingOp.operationHash);
-                    if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
+                    if (!removed || removed.removed !== true) diagnostics.warn('pending-recovery.cleanup-unconfirmed', { stage: 'recovery', opId: pendingOp.id });
                     state.vehicleInfo = pendingOp.vehicleInfo || state.vehicleInfo || {};
                     state.opId = null; state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
                     state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
@@ -769,6 +778,17 @@
                         state.restoredFiles = { imagenVehiculo: restoredVehicleImage, imgCorte1: restoredCutImage };
                         if (restoredVehicleImage) { const p = document.getElementById('imagenVehiculo_preview'); if (p) p.src = restoredVehicleImage; }
                         if (restoredCutImage) { const p = document.getElementById('imgCorte1_preview'); if (p) p.src = restoredCutImage; }
+                        state.isNewVehicleFlow = pendingOp.vehicleId === null;
+                        const newVehicleFields = document.getElementById('new-vehicle-fields');
+                        if (newVehicleFields) newVehicleFields.style.display = state.isNewVehicleFlow ? 'block' : 'none';
+                        const stageTitle = document.getElementById('stage-2-title');
+                        if (stageTitle) {
+                            const match = (state.matches || []).find(item => String(item.id) === String(pendingOp.vehicleId));
+                            const label = match ? match.marca + ' ' + match.modelo : [state.vehicleInfo.marca, state.vehicleInfo.modelo].filter(Boolean).join(' ');
+                            stageTitle.textContent = state.isNewVehicleFlow ? 'Paso 2: Agregar Vehículo y Corte' : 'Paso 2: Agregar Corte a ' + label;
+                        }
+                        const vehicleImageInput = document.getElementById('imagenVehiculo');
+                        if (vehicleImageInput) vehicleImageInput.required = state.isNewVehicleFlow && !(state.savedFiles.imagenVehiculo || restoredVehicleImage);
                         toggleNoRecomendado(); showPhase(2);
                     }
                 }
@@ -995,7 +1015,7 @@
                 }
                 if (imgCorteInput) {
                     imgCorteInput.disabled = false;
-                    imgCorteInput.required = true;
+                    imgCorteInput.required = !(state.savedFiles && state.savedFiles.imgCorte1 || state.restoredFiles && state.restoredFiles.imgCorte1);
                 }
                 if (uploadLabel) {
                     uploadLabel.classList.remove('disabled');
@@ -1376,7 +1396,7 @@
                 state.isNewVehicleFlow = true;
                 title.textContent = 'Paso 2: Agregar Vehículo y Corte';
                 newVehicleFields.style.display = 'block';
-                newVehicleImageInput.required = !state.savedFiles || !state.savedFiles.imagenVehiculo;
+                newVehicleImageInput.required = !(state.savedFiles && state.savedFiles.imagenVehiculo || state.restoredFiles && state.restoredFiles.imagenVehiculo);
             }
             toggleNoRecomendado();
             showPhase(2);
@@ -1392,7 +1412,7 @@
             isSubmittingStage2 = true;
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true); btn.classList.add('btn-loading');
-            let pendingOp = null, snapshotSaved = false, serverConfirmed = false;
+            let pendingOp = null, snapshotSaved = false, serverConfirmed = false, confirmedResult = null;
             try {
                 const vinInput = document.getElementById('vinInput');
                 if (vinInput && vinInput.value.trim()) {
@@ -1501,12 +1521,17 @@
                     if (checkRes.operationHash !== operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
                     if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
                     serverConfirmed = true;
+                    confirmedResult = { vehicleId: checkRes.vehicleId, timestamp: checkRes.timestamp || null,
+                        candidateReviewPending: checkRes.candidateReviewPending === true, slotIndex: checkRes.slotIndex };
                     pendingOp.status = 'completed';
                     const terminalSaved = await saveAddCutOperationPendingOperation(pendingOp);
-                    if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
-                    const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
-                    if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
-                    snapshotSaved = false; state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                    if (!terminalSaved || terminalSaved.saved !== true) diagnostics.warn('cut-operation.completed-snapshot-unconfirmed', { stage: 'submit', opId });
+                    const removed = terminalSaved && terminalSaved.saved === true
+                        ? await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash)
+                        : { removed: false };
+                    if (removed && removed.removed === true) snapshotSaved = false;
+                    else diagnostics.warn('cut-operation.cleanup-unconfirmed', { stage: 'submit', opId });
+                    state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                     state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
                     await refreshSelectedVehicleMatch(checkRes.vehicleId, {
                         isNewVehicle: requestData.vehicleId === null, slotIndex: requestData.vehicleId === null ? 1 : checkRes.slotIndex,
@@ -1527,12 +1552,16 @@
                 }
                 if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(result.vehicleId)) throw new Error('SAVED_VEHICLE_MISMATCH');
                 serverConfirmed = true;
+                confirmedResult = result;
                 pendingOp.status = 'completed';
                 const terminalSaved = await saveAddCutOperationPendingOperation(pendingOp);
-                if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
-                const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
-                if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
-                snapshotSaved = false; state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                if (!terminalSaved || terminalSaved.saved !== true) diagnostics.warn('cut-operation.completed-snapshot-unconfirmed', { stage: 'submit', opId });
+                const removed = terminalSaved && terminalSaved.saved === true
+                    ? await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash)
+                    : { removed: false };
+                if (removed && removed.removed === true) snapshotSaved = false;
+                else diagnostics.warn('cut-operation.cleanup-unconfirmed', { stage: 'submit', opId });
+                state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                 state.selectedVehicleId = result.vehicleId; state.timestamp = result.timestamp || null;
                 await refreshSelectedVehicleMatch(result.vehicleId, {
                     isNewVehicle: requestData.vehicleId === null, slotIndex: result.slotIndex,
@@ -1557,6 +1586,17 @@
                     pendingOp.status = serverConfirmed ? 'completed' : 'failed';
                     const retained = await saveAddCutOperationPendingOperation(pendingOp);
                     if (!retained || retained.saved !== true) diagnostics.warn('cut-operation.snapshot-status-update-failed', { stage: 'submit', opId: pendingOp.id, status: pendingOp.status });
+                }
+                if (serverConfirmed && confirmedResult && confirmedResult.vehicleId) {
+                    state.opId = null; state.opIdRequiresServerCheck = true;
+                    state.selectedVehicleId = confirmedResult.vehicleId; state.timestamp = confirmedResult.timestamp || null;
+                    try { await refreshSelectedVehicleMatch(confirmedResult.vehicleId, {
+                        isNewVehicle: pendingOp.vehicleId === null, slotIndex: confirmedResult.slotIndex,
+                        cutType: pendingOp.requestData && pendingOp.requestData.cutData && pendingOp.requestData.cutData.tipoCorte1
+                    }); } catch (refreshError) { diagnostics.warn('cut-operation.confirmed-refresh-failed', { stage: 'submit', opId: pendingOp && pendingOp.id }); }
+                    showConciseAlert_('WRITE confirmó el guardado. La limpieza local quedó pendiente y se recuperará con el mismo identificador; no se creará otro registro.');
+                    proceedToStage3(confirmedResult.vehicleId);
+                    return;
                 }
                 const networkError = !navigator.onLine || (error && error.message && /fetch|network|timeout/i.test(error.message));
                 if (networkError) showConciseAlert_("Se interrumpió la comunicación. La operación y sus archivos permanecen guardados de forma durable para reintentar la misma solicitud sin duplicarla.");

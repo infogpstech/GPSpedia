@@ -14554,147 +14554,133 @@ async function readSupplementaryImageDataUrl_(file) {
     });
 }
 
+async function restoreSupplementaryModalOperation_(vehicleId,kind,controls){
+    const context=getUiSessionContext_();if(!context)throw new Error("No hay una sesión autenticada válida.");
+    const stored=await offline.getAddCutOperationPendingOperation(context.userId);
+    if(!stored||stored.available!==true)throw new Error("No se pudo verificar el almacenamiento de operaciones pendientes.");
+    if(!stored.operation)return null;
+    const operation=stored.operation;
+    if(operation.operationType==="addOrUpdateCut"&&operation.status==="completed"){
+        const removed=await offline.removeAddCutOperationPendingOperation(operation.ownerId,operation.id,operation.operationHash);
+        if(!removed||removed.removed!==true)console.warn("La operación de corte ya confirmada se reemplazará por el nuevo aporte; la limpieza local anterior no se confirmó.");
+        return null;
+    }
+    const request=operation.requestData||{},ids=request.contributionOpIds||{};
+    const matches=operation.operationType==="addSupplementaryInfo"&&String(operation.vehicleId)===String(vehicleId)&&
+        (kind==="opening"?Boolean(ids.opening)&&!ids.feed:Boolean(ids.feed)&&!ids.opening);
+    if(!matches)throw new Error("Existe otra operación suplementaria pendiente para esta cuenta. Recupérala desde el formulario original antes de iniciar otro aporte.");
+    controls.textarea.value=kind==="opening"?String(request.apertura||""):String(request.cableAlimen||request.cableAlimen2||request.cableAlimen3||"");
+    controls.textarea.readOnly=true;controls.fileInput.disabled=true;
+    controls.submitBtn.innerText="Reintentar guardado pendiente";
+    controls.notice.textContent="Se recuperó una operación pendiente. Se conservaron los datos y la imagen originales; el reintento utilizará los mismos identificadores para evitar duplicados.";
+    controls.notice.style.display="block";
+    return operation;
+}
+function createSupplementaryModalOperationId_(){
+    return "OP-"+createSuggestionOperationId_().replace(/[^A-Za-z0-9]/g,"").toUpperCase();
+}
+async function computeSupplementaryModalOperationHash_(payload,kind){
+    const cryptoApi=window.crypto;
+    if(!cryptoApi||!cryptoApi.subtle||typeof TextEncoder!=="function")throw new Error("El navegador no puede generar una huella segura para el aporte.");
+    const canonical=JSON.stringify(["addSupplementaryInfo:modal:v1",kind,String(payload.vehicleId||""),String(payload.apertura||""),String(payload.imgApertura||""),String(payload.cableAlimen||""),String(payload.imgCableAlimen||"")]);
+    const digest=await cryptoApi.subtle.digest("SHA-256",new TextEncoder().encode(canonical));
+    return Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,"0")).join("");
+}
+async function createSupplementaryModalPendingOperation_(vehicleId,kind,payload){
+    const context=getUiSessionContext_();if(!context)throw new Error("No hay una sesión autenticada válida.");
+    const stored=await offline.getAddCutOperationPendingOperation(context.userId);
+    if(!stored||stored.available!==true)throw new Error("No se pudo verificar el almacenamiento de operaciones pendientes.");
+    if(stored.operation&&stored.operation.operationType==="addOrUpdateCut"&&stored.operation.status==="completed"){
+        const removed=await offline.removeAddCutOperationPendingOperation(stored.operation.ownerId,stored.operation.id,stored.operation.operationHash);
+        if(!removed||removed.removed!==true)console.warn("Se reemplazará el snapshot de un corte ya confirmado porque su limpieza local quedó pendiente.");
+    }else if(stored.operation)throw new Error("Ya existe una operación pendiente. Recupera la operación anterior antes de iniciar otra.");
+    const id=createSupplementaryModalOperationId_(),eventId=createSupplementaryModalOperationId_();
+    const contributionOpIds=kind==="opening"?{opening:eventId}:{feed:eventId};
+    const requestData=Object.assign({},payload,{opId:id,contributionOpIds});
+    const operation={id,ownerId:context.userId,operationType:"addSupplementaryInfo",stage:3,status:"processing",
+        operationHash:await computeSupplementaryModalOperationHash_(payload,kind),vehicleId:String(vehicleId),requestData};
+    const saved=await offline.saveAddCutOperationPendingOperation(operation);
+    if(!saved||saved.saved!==true)throw new Error(saved&&saved.code||"No se pudo conservar la operación para reintentarla sin duplicados.");
+    return operation;
+}
+async function submitSupplementaryModalOperation_(operation,kind,vehicleId,modal,successMessage){
+    const context=getUiSessionContext_();
+    if(!context||context.userId!==String(operation.ownerId))throw new Error("La sesión cambió. Inicia sesión con la cuenta propietaria de la operación.");
+    const request=Object.assign({},operation.requestData,{userId:context.userId,sessionToken:context.sessionToken});
+    const result=await routeAction("addSupplementaryInfo",request);
+    if(!result||result.status!=="success"||String(result.vehicleId||"")!==String(vehicleId))throw new Error(result&&result.message||"WRITE no confirmó el aporte para el vehículo seleccionado.");
+    const expectedId=String(operation.requestData.contributionOpIds&&operation.requestData.contributionOpIds[kind]||"");
+    const events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
+    if(!expectedId||!events.some(event=>event&&event.kind===kind&&event.opId===expectedId&&event.eventId))throw new Error("WRITE no confirmó el evento de aporte esperado.");
+    const removed=await offline.removeAddCutOperationPendingOperation(operation.ownerId,operation.id,operation.operationHash);
+    const message=removed&&removed.removed===true?successMessage:successMessage+" El guardado fue confirmado; la limpieza local quedó pendiente y se recuperará con el mismo identificador.";
+    await completeVehicleExpansionSave_(result,vehicleId,message,modal);
+    return result;
+}
+
 /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
-    const operationId = createSuggestionOperationId_();
-    const existing = document.getElementById("add-apertura-modal");
-    if (existing) existing.remove();
-
-    const modal = document.createElement("div");
-    modal.id = "add-apertura-modal";
-    modal.className = "info-modal visible";
-    modal.style.zIndex = "2200";
-
-    const content = document.createElement("div");
-    content.className = "info-modal-content";
-    content.style.maxWidth = "500px";
-
-    content.innerHTML = `
+    const existing=document.getElementById("add-apertura-modal");if(existing)existing.remove();
+    const modal=document.createElement("div");modal.id="add-apertura-modal";modal.className="info-modal visible";modal.style.zIndex="2200";
+    const content=document.createElement("div");content.className="info-modal-content";content.style.maxWidth="500px";
+    content.innerHTML=`
         <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-door-open"></i> Agregar Apertura de Puertas</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
-
+        <div id="add-apertura-pending-notice" role="status" style="display:none; font-size:0.9em; margin-bottom:10px;"></div>
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div class="form-group">
-                <label>Detalles de la Apertura</label>
-                <div class="rich-editor-toolbar" data-rich-target="add-apertura-detalles"></div>
-                <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Subir Imagen</label>
-                <input type="file" id="add-apertura-img-file" accept="image/*">
-            </div>
-            <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-door-open"></i> Agregar Apertura</button>
-            </div>
-        </form>
-    `;
-
-    mountRichTextToolbars(content);
-
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    content.querySelector(".info-close-btn").onclick = () => modal.remove();
-
-    const form = content.querySelector("#add-apertura-form");
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
-
-        try {
-            const fileInput = content.querySelector("#add-apertura-img-file");
-            const imgBase64 = await readSupplementaryImageDataUrl_(fileInput.files && fileInput.files[0]);
-            const writeResult = await routeAction("addSupplementaryInfo", {
-                ...getDeveloperSessionPayload(),
-                opId: operationId,
-                vehicleId: item.id,
-                apertura: content.querySelector("#add-apertura-detalles").value,
-                imgApertura: imgBase64
-            });
-            await completeVehicleExpansionSave_(writeResult, item.id, writeResult.candidateReviewPending === true ? "La apertura se conservó como candidato para revisión; el dato existente no fue sobrescrito." : "Apertura agregada con éxito.", modal);
-        } catch (err) {
-            console.error(err);
-            showGlobalError(err && err.name === "ImageSizeError"
-                ? "La imagen debe pesar como máximo 10 MB. Reduce su tamaño y vuelve a seleccionarla."
-                : err && err.name === "ImageReadError"
-                    ? "No se pudo leer la imagen seleccionada. Vuelve a seleccionarla e inténtalo nuevamente."
-                    : "Error: " + String(err && err.message || err));
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Apertura";
-        }
+            <div class="form-group"><label>Detalles de la Apertura</label><div class="rich-editor-toolbar" data-rich-target="add-apertura-detalles"></div>
+                <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea></div>
+            <div class="form-group"><label>Subir Imagen</label><input type="file" id="add-apertura-img-file" accept="image/*"></div>
+            <div class="modal-btn-compact-container"><button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-door-open"></i> Agregar Apertura</button></div>
+        </form>`;
+    mountRichTextToolbars(content);modal.appendChild(content);document.body.appendChild(modal);
+    const form=content.querySelector("#add-apertura-form"),textarea=content.querySelector("#add-apertura-detalles"),fileInput=content.querySelector("#add-apertura-img-file");
+    const submitBtn=form.querySelector('button[type="submit"]'),notice=content.querySelector("#add-apertura-pending-notice");
+    let pendingOperation=null,pendingCheckFailed=false,submitting=false;
+    submitBtn.disabled=true;
+    content.querySelector(".info-close-btn").onclick=()=>modal.remove();
+    (async()=>{try{pendingOperation=await restoreSupplementaryModalOperation_(item.id,"opening",{textarea,fileInput,submitBtn,notice});submitBtn.disabled=false;}
+        catch(error){pendingCheckFailed=true;textarea.disabled=true;fileInput.disabled=true;submitBtn.disabled=true;notice.textContent=String(error&&error.message||error);notice.style.display="block";}})();
+    form.onsubmit=async event=>{event.preventDefault();if(submitting||pendingCheckFailed)return;submitting=true;submitBtn.disabled=true;submitBtn.innerText="Guardando...";
+        try{if(!pendingOperation){const image=await readSupplementaryImageDataUrl_(fileInput.files&&fileInput.files[0]);const payload={vehicleId:String(item.id),apertura:textarea.value,imgApertura:image};
+                pendingOperation=await createSupplementaryModalPendingOperation_(item.id,"opening",payload);textarea.readOnly=true;fileInput.disabled=true;}
+            await submitSupplementaryModalOperation_(pendingOperation,"opening",item.id,modal,"Apertura agregada con éxito.");
+        }catch(error){console.error(error);notice.textContent=String(error&&error.message||error);notice.style.display="block";submitBtn.disabled=false;submitBtn.innerText=pendingOperation?"Reintentar guardado pendiente":"Agregar Apertura";}
+        finally{submitting=false;}
     };
 }
 
 /* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
 export function openAddFeedModal(item) {
-    const operationId = createSuggestionOperationId_();
-    const existing = document.getElementById("add-feed-modal");
-    if (existing) existing.remove();
-
-    const modal = document.createElement("div");
-    modal.id = "add-feed-modal";
-    modal.className = "info-modal visible";
-    modal.style.zIndex = "2200";
-
-    const content = document.createElement("div");
-    content.className = "info-modal-content";
-    content.style.maxWidth = "500px";
-
-    content.innerHTML = `
+    const existing=document.getElementById("add-feed-modal");if(existing)existing.remove();
+    const modal=document.createElement("div");modal.id="add-feed-modal";modal.className="info-modal visible";modal.style.zIndex="2200";
+    const content=document.createElement("div");content.className="info-modal-content";content.style.maxWidth="500px";
+    content.innerHTML=`
         <button type="button" class="info-close-btn" aria-label="Cerrar ventana">&times;</button>
         <h2><i class="fa-solid fa-plug"></i> Agregar Cable de Alimentación</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
-
+        <div id="add-feed-pending-notice" role="status" style="display:none; font-size:0.9em; margin-bottom:10px;"></div>
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div class="form-group">
-                <label>Detalles de la Alimentación</label>
-                <div class="rich-editor-toolbar" data-rich-target="add-feed-detalles"></div>
-                <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Subir Imagen</label>
-                <input type="file" id="add-feed-img-file" accept="image/*">
-            </div>
-            <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plug"></i> Agregar Alimentación</button>
-            </div>
-        </form>
-    `;
-
-    mountRichTextToolbars(content);
-
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    content.querySelector(".info-close-btn").onclick = () => modal.remove();
-
-    const form = content.querySelector("#add-feed-form");
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
-
-        try {
-            const fileInput = content.querySelector("#add-feed-img-file");
-            const imgBase64 = await readSupplementaryImageDataUrl_(fileInput.files && fileInput.files[0]);
-            // El servidor asigna el primer par texto/imagen libre usando el registro vigente.
-            const payload = { opId: operationId, vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
-            const writeResult = await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
-            await completeVehicleExpansionSave_(writeResult, item.id, writeResult.candidateReviewPending === true ? "La alimentación se conservó como candidato para revisión; no se sobrescribieron los datos existentes." : "Cable de alimentación agregado con éxito.", modal);
-        } catch (err) {
-            console.error(err);
-            showGlobalError(err && err.name === "ImageSizeError"
-                ? "La imagen debe pesar como máximo 10 MB. Reduce su tamaño y vuelve a seleccionarla."
-                : err && err.name === "ImageReadError"
-                    ? "No se pudo leer la imagen seleccionada. Vuelve a seleccionarla e inténtalo nuevamente."
-                    : "Error: " + String(err && err.message || err));
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Alimentación";
-        }
+            <div class="form-group"><label>Detalles de la Alimentación</label><div class="rich-editor-toolbar" data-rich-target="add-feed-detalles"></div>
+                <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea></div>
+            <div class="form-group"><label>Subir Imagen</label><input type="file" id="add-feed-img-file" accept="image/*"></div>
+            <div class="modal-btn-compact-container"><button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plug"></i> Agregar Alimentación</button></div>
+        </form>`;
+    mountRichTextToolbars(content);modal.appendChild(content);document.body.appendChild(modal);
+    const form=content.querySelector("#add-feed-form"),textarea=content.querySelector("#add-feed-detalles"),fileInput=content.querySelector("#add-feed-img-file");
+    const submitBtn=form.querySelector('button[type="submit"]'),notice=content.querySelector("#add-feed-pending-notice");
+    let pendingOperation=null,pendingCheckFailed=false,submitting=false;
+    submitBtn.disabled=true;
+    content.querySelector(".info-close-btn").onclick=()=>modal.remove();
+    (async()=>{try{pendingOperation=await restoreSupplementaryModalOperation_(item.id,"feed",{textarea,fileInput,submitBtn,notice});submitBtn.disabled=false;}
+        catch(error){pendingCheckFailed=true;textarea.disabled=true;fileInput.disabled=true;submitBtn.disabled=true;notice.textContent=String(error&&error.message||error);notice.style.display="block";}})();
+    form.onsubmit=async event=>{event.preventDefault();if(submitting||pendingCheckFailed)return;submitting=true;submitBtn.disabled=true;submitBtn.innerText="Guardando...";
+        try{if(!pendingOperation){const image=await readSupplementaryImageDataUrl_(fileInput.files&&fileInput.files[0]);const payload={vehicleId:String(item.id),cableAlimen:textarea.value,imgCableAlimen:image};
+                pendingOperation=await createSupplementaryModalPendingOperation_(item.id,"feed",payload);textarea.readOnly=true;fileInput.disabled=true;}
+            await submitSupplementaryModalOperation_(pendingOperation,"feed",item.id,modal,"Cable de alimentación agregado con éxito.");
+        }catch(error){console.error(error);notice.textContent=String(error&&error.message||error);notice.style.display="block";submitBtn.disabled=false;submitBtn.innerText=pendingOperation?"Reintentar guardado pendiente":"Agregar Alimentación";}
+        finally{submitting=false;}
     };
 }
 
