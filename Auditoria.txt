@@ -674,3 +674,9 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - Riesgo adicional: la secuencia WRITE está deliberadamente limitada a enteros seguros de JavaScript; el formato de cinco dígitos se amplía a seis y más, pero no debe afirmarse precisión ilimitada más allá de dicho límite.
 - Archivos que requieren adaptación: `JS/Services/catalog.js` y `JS/Services/feedback.js`. No editar ADMIN, Auth, offline, ui ni add_cortes porque sus contratos actuales ya son compatibles o no procesan el ID numéricamente.
 - Pruebas pendientes tras implementar: normalización canónica `V-00001`, `V-99999`, `V-100000`; lectura de FeedbackLikes con IDs padded y legacy; replay/update de estado de útiles usando ambas representaciones; alta de sugerencia y append de evento de año con ID prefijado; compilación V8 y Code Review contra respaldos.
+
+
+[2026-11-26] GP-CUT-ID-CROSS-SERVICE-07 — hallazgo complementario ADMIN
+- Revisión ampliada de `JS/Services/admin.js`: `auditVehicleIdReferences_` (líneas aproximadas 6266-6279) convierte la columna ID de `Cortes` a Number y normaliza las referencias con Number. El nuevo valor `V-00001` produce NaN, por lo que la herramienta administrativa de integridad marcaría los IDs de vehículo como referencias malformadas y todas sus referencias como huérfanas. Debe cambiarse a una normalización canónica textual `V-00000` que acepte también IDs históricos numéricos y `V-###`, sin convertir el ID público a número.
+- Las búsquedas de fila de ADMIN y sus contratos de Idempotencia aceptan el ID como texto y no aplican validación numérica ni límites de cinco dígitos; para IDs nuevos exactos no requieren modificación. No se identificó otro validador numérico del ID público en ADMIN.
+- Archivo adicional que requiere adaptación: `JS/Services/admin.js`, exclusivamente el normalizador y el escaneo de referencias del diagnóstico de integridad. Respaldo previo a edición queda pendiente de creación en esta misma tarea.
