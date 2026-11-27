@@ -1869,3 +1869,10 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md: añadido el estado de revisión del 2026-11-27 y la cobertura pendiente.
 - checkpoint.md: añadido el punto de continuidad, respaldos y resultados de esta revisión.
 - No se modificaron archivos funcionales ni se ejecutaron operaciones remotas.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-03 — ampliación de cobertura aislada
+- Auditoria.txt: añadido el resultado del bloque real de procesamiento individual (A falla/B confirmado, 1/1) y de clearDriveAuditState con transacción simulada (1/1; aislamiento de usuario e inventario persistente).
+- Tareas_Activas.md: marcadas como completadas las simulaciones integradas del error aislado por archivo y la limpieza por usuario; revisión visual y cierre siguen pendientes.
+- PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md: ampliada la tabla de evidencia con ambas comprobaciones.
+- No se modificó código funcional, no se crearon pruebas permanentes y no se ejecutaron servicios remotos.
