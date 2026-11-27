@@ -1403,6 +1403,16 @@
         }
 
         /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */
+        let lastConfirmedCutTransitionOpId = "";
+        function finishConfirmedCutTransition_(opId, vehicleId) {
+            const confirmedOpId = String(opId || "").trim();
+            if (!confirmedOpId || confirmedOpId === lastConfirmedCutTransitionOpId) return false;
+            lastConfirmedCutTransitionOpId = confirmedOpId;
+            alert("Corte agregado con éxito");
+            proceedToStage3(vehicleId);
+            return true;
+        }
+
         async function handleStage2Submit(e) {
             e.preventDefault();
             if (isSubmittingStage2) return;
@@ -1538,7 +1548,7 @@
                         cutType: requestData.cutData && requestData.cutData.tipoCorte1
                     });
                     console.info('[add-cortes] Operación WRITE previamente confirmada; continuando a información adicional.', { opId });
-                    alert("Corte agregado con éxito"); proceedToStage3(checkRes.vehicleId); return;
+                    finishConfirmedCutTransition_(opId, checkRes.vehicleId); return;
                 }
                 if (checkRes.pending === true && checkRes.operationHash !== operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
                 const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
@@ -1565,7 +1575,7 @@
                     cutType: requestData.cutData && requestData.cutData.tipoCorte1
                 });
                 await resolveSourceInboxReport_(pendingOp.sourceInboxItemId || sourceInboxItemId, submitSession, result.candidateReviewPending === true);
-                alert("Corte agregado con éxito"); proceedToStage3(result.vehicleId);
+                finishConfirmedCutTransition_(opId, result.vehicleId);
             } catch (error) {
                 const errorMessageCode = String(error && error.message || '');
                 const diagnosticErrorCode = String(error && error.code ||
@@ -1590,8 +1600,7 @@
                         cutType: pendingOp.requestData && pendingOp.requestData.cutData && pendingOp.requestData.cutData.tipoCorte1
                     }); } catch (refreshError) { diagnostics.warn('cut-operation.confirmed-refresh-failed', { stage: 'submit', opId: pendingOp && pendingOp.id }); }
                     console.warn('[add-cortes] WRITE confirmó el corte; limpieza/reconciliación local pendiente.', { opId: pendingOp && pendingOp.id, errorCode: diagnosticErrorCode });
-                    alert("Corte agregado con éxito");
-                    proceedToStage3(confirmedResult.vehicleId);
+                    finishConfirmedCutTransition_(pendingOp && pendingOp.id, confirmedResult.vehicleId);
                     return;
                 }
                 showConciseAlert_("No se pudo agregar el corte, intenta más tarde");
