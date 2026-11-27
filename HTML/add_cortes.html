@@ -1784,8 +1784,9 @@
                 const pending=await getOrCreateSupplementaryOperation_(payload),session=getCurrentSessionForOwner(state.userId),request=Object.assign({},pending.requestData,{userId:session.userId,sessionToken:session.sessionToken});
                 const result=await routeAction('addSupplementaryInfo',request);if(!result||result.status!=='success'||String(result.vehicleId||'').trim()!==String(state.selectedVehicleId).trim())throw Error(result&&result.message||'WRITE no confirmó el guardado para el vehículo seleccionado.');
                 const expected=pending.requestData.contributionOpIds||{},events=Array.isArray(result.contributionEvents)?result.contributionEvents:[];
-                for(const kind of ['opening','feed']){const id=String(expected[kind]||'');if(id&&!events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId))throw Error('SUPPLEMENTARY_WRITE_EVENT_UNCONFIRMED');}
-                const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});
+                const eventsConfirmed=['opening','feed'].every(kind=>{const id=String(expected[kind]||'');return !id||events.some(e=>e&&e.kind===kind&&e.opId===id&&e.eventId);});
+                if(!eventsConfirmed)diagnostics.error('supplementary.write-event-unconfirmed',{stage:'supplementary',opId:pending.id});
+                else{const removed=await removeAddCutOperationPendingOperation(pending.ownerId,pending.id,pending.operationHash);if(!removed||removed.removed!==true)diagnostics.warn('supplementary.pending-cleanup-unconfirmed',{stage:'supplementary',opId:pending.id});}
                 try{await verifySupplementaryCatalogWrite_(result,request);}
                 catch(error){diagnostics.error('supplementary.catalog-verification-failed',{stage:'supplementary',opId:pending.id,errorCode:error&&error.name||'CatalogVerificationError'});}
                 window.location.href='../index.html';
