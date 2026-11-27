@@ -779,3 +779,9 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - La segunda solicitud desde etapa 2 es peligrosa para la integridad: la lógica de WRITE admite materialización de slots disponibles en la misma fila, por lo que repetir el alta puede asignar otro slot y parecer una duplicación de corte. La transición a etapa 3 debe ser inmediata después de confirmación de WRITE, sin condicionar a cleanup local ni verificación de proyección.
 - Se documenta como criterio: etapa 3 tras commit confirmado, operación idempotente y cleanup best-effort; una excepción postcommit no puede presentarse como rechazo de alta.
 - El envío de suplementarios verificado termina redirigiendo al catálogo; la verificación de proyección no debe emitir alertas adicionales si WRITE ya confirmó.
+
+
+2026-11-26 | GP-ADD-CUT-WIZARD-UX-NAV-01 — modal detalle, revisión adicional antes de editar
+- Se auditó `submitSupplementaryModalOperation_` y `completeVehicleExpansionSave_` en JS/Frontend/ui.js. Confirmación WRITE ya era requisito y cleanup local se realizaba en best-effort, pero se concatenaba un mensaje secundario cuando cleanup fallaba; ese texto adicional es informativo y no altera el commit.
+- `completeVehicleExpansionSave_` notificaba error global al no refrescar catálogo después de commit; la confirmación WRITE debe permanecer visible y el fallo de proyección se debe registrar en consola, sin segunda alerta.
+- Se decidió preservar las notificaciones legítimas de éxito del aporte (apertura/alimentación) y candidaturas de revisión, eliminando exclusivamente la alerta de limpieza local y la alerta global de proyección postcommit.
