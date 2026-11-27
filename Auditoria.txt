@@ -1347,3 +1347,9 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Se amplió el extractor central para cubrir variantes de URL de thumbnail/miniatura, rutas thumbnail/thumb, googleusercontent y parámetros alternativos de identificador (id/docid/fileid), además de enlaces redimensionados que añaden parámetros sz, s, w o h.
 - La identificación continúa por ID del archivo original; parámetros de tamaño o presentación no se tratan como recursos distintos. Se versionó el escaneo a drive-audit-reference-normalization-v3-thumbnail-urls.
 - Validación de la modificación: revisión de patrón estática; aún falta ejecutar pruebas aisladas y parsing/integración. Sin runtime Sheets/Drive ni deployment.
+
+
+### F-53 — pruebas aisladas y revisión estática (2026-11-27)
+- Pruebas de patrón aisladas: 7/7 PASS para thumbnail?id&sz, ruta /thumbnail/ con parámetro s, googleusercontent /d/ con sufijo de tamaño, file/d, docs.google.com/document/d, parámetro docid y fileid.
+- Se detectó y corregió un problema de escape de regex durante la edición; versión final de los patrones fue probada en estos casos. No equivale a parse completo ni runtime Apps Script.
+- No deployment, ejecución de auditoría real ni escritura/movimiento remoto. La revisión estática sigue siendo limitada.
