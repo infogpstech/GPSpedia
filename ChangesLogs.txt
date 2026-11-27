@@ -1763,3 +1763,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - `JS/Frontend/main.js`: sin modificaciones (comparación byte a byte con backup).
 - Backups temporales de HTML, ui.js y main.js retirados después de revisión.
 - Verificación limitada a comparación estática de diffs y lectura de bloques afectados; no se ejecutó parsing JavaScript, navegador real, Android, Pages, deployment, POST ni escritura remota.
+
+
+### GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — implementación fuente
+- `JS/Services/catalog.js`: `mapCatalogVehicleRowForProjection_` ahora construye el orden de proyección desde slots ocupados, compacta los espacios y limpia slots restantes; ordena por votos útiles cuando existen y desempata por índice físico. Sin pruebas de navegador, Apps Script remoto, POST ni deployment.
