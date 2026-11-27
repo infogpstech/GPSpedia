@@ -1707,3 +1707,15 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [ ] Añadir pausa reanudable en frontera de lote, sin descartar cursor, y preservar reinicio desde cero.
 - [ ] Pruebas aisladas del extractor, parsing, diff contra backups y Code Review.
 - [ ] Validación integrada de hojas reales, runtime Drive/Sheets y navegador autorizados; Beta permanece cerrada.
+
+
+### GP-ADMIN-IMAGE-REFERENCE-FALSE-UNUSED-01 — actualización de implementación (2026-11-27)
+**Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; prueba integrada pendiente.**
+- [x] Normalizar entidades HTML y encoding para extraer IDs de Drive desde URL/HTML.
+- [x] Reconocer URL /d/, /file/d/, query id, variantes publicadas y texto de ID.
+- [x] Incluir ubicaciones detalladas de Cortes, LogosMarca, Tutoriales, Relay y PyS.
+- [x] Versionar scan para evitar reutilizar cursor/snapshot con criterio anterior.
+- [x] Añadir pausa reanudable en frontera de lote; conservar progreso y cursor.
+- [x] Pruebas aisladas de extractor: 8/8 PASS.
+- [x] Comparación estática del diff: cambios funcionales confinados al extractor/snapshot y control de pausa.
+- [ ] Validar sintaxis de archivos completos, navegador y referencias reales en Sheets/Drive; confirmar pausa y reinicio/reanudación integrados. No desplegar ni reabrir Beta.
