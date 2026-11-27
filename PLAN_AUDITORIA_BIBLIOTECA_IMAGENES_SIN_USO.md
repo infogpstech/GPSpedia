@@ -75,3 +75,16 @@
 - Contrato FindOrCreate existente: getOrCreateReplacedImagesSheet() y ensureReplacedImagesInventoryColumns(); no duplicar. Si el esquema base existente es incompatible, detenerse sin sobrescribir.
 - Casos obligatorios para el próximo harness: (1) logo Drive ID en col. 3 => «En uso»; (2) logo por fórmula/hipervínculo/CellImage; (3) LogosMarca ausente o encabezado ID inválido => escaneo detenido sin falsos «Sin uso»; (4) error de metadatos de archivo A y candidato B íntegro => B se registra; (5) unverifiableReferenceCount > 0 => ningún registro nuevo; (6) errorCount > 0 => consolidación/organización siguen bloqueadas; (7) escritura individual duplicada/reintento => idempotencia y lectura de confirmación; (8) reinicio limpia IndexedDB y genera auditId nuevo sin borrar Imagenes_Reemplazadas.
 - Estado al 2026-11-27: implementación fuente y verificación estática parcial PASS; runtime/mocks, navegador y Beta autorizada pendientes. No despliegue.
+
+
+## Revisión aislada adicional — 2026-11-27 (GP-ADMIN-DRIVE-UNUSED-IMAGES-03)
+
+| Comprobación | Resultado | Alcance |
+|---|---:|---|
+| LogosMarca: URL, fórmula, Rich Text, CellImage y enlace no interpretable | 5/5 PASS | Función real aislada con mocks de Range/Sheet |
+| Esquema LogosMarca sin encabezado ID | 1/1 PASS | Rechazo fail-closed |
+| Validador incremental | 3/3 PASS | Error aislado, referencia no interpretable e ID no emitido |
+| Escritura/lectura posterior de inventario | 2/2 PASS | Función real con hoja simulada; incluye persistencia seguida de excepción |
+| UI/CSS | 6/6 PASS | Inspección estática; no equivale a prueba visual |
+
+Pendiente: simulación integrada de archivo A fallido/archivo B verificable dentro del handler, ejecución IndexedDB en navegador, revisión visual escritorio/móvil y revisión final contra respaldos. No se ejecutó Apps Script, Drive/Spreadsheet real, POST ni deployment. No se reabre Beta ni se crean suites permanentes.
