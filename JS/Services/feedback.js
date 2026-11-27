@@ -1224,7 +1224,7 @@ function countVerifiedPositiveYearSuggestionVotes_(rows, vehicleId, year, actorC
         const rowVehicleId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
         const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
         const actorKey = String(row[actorColumn - 1] || "").trim();
-        if (rowVehicleId !== String(vehicleId || "").trim() || rowYear !== Number(year) ||
+        if (!sameFeedbackVehicleId_(rowVehicleId, vehicleId) || rowYear !== Number(year) ||
             !isVerifiedSuggestionActorKey_(actorKey) || firstVoteByActor.has(actorKey)) return;
         firstVoteByActor.set(actorKey, isPositiveYearSuggestionRow(row));
     });
@@ -1233,10 +1233,25 @@ function countVerifiedPositiveYearSuggestionVotes_(rows, vehicleId, year, actorC
     return positiveVotes;
 }
 
+function normalizeFeedbackVehicleId_(value, context) {
+    const raw = String(value === null || value === undefined ? "" : value).trim();
+    const prefixed = /^V-(\d{3,16})$/i.exec(raw);
+    const legacy = /^([1-9]\d{0,15})$/.exec(raw);
+    const sequence = prefixed ? Number(prefixed[1]) : legacy ? Number(legacy[1]) : NaN;
+    if (!Number.isSafeInteger(sequence) || sequence < 1) {
+        throw new Error((context || "FEEDBACK") + ": se requiere un ID V-00000 válido.");
+    }
+    return "V-" + String(sequence).padStart(5, "0");
+}
+function sameFeedbackVehicleId_(left, right) {
+    try { return normalizeFeedbackVehicleId_(left) === normalizeFeedbackVehicleId_(right); }
+    catch (error) { return false; }
+}
+
 function buildFeedbackYearApplicationId_(details) {
     const input = details || {};
     const canonical = JSON.stringify({
-        vehicleId: String(input.vehicleId || "").trim(),
+        vehicleId: normalizeFeedbackVehicleId_(input.vehicleId, "Aplicación de año"),
         year: Number(input.year),
         previousFrom: Number(input.previousFrom),
         previousTo: Number(input.previousTo),
@@ -1247,8 +1262,8 @@ function buildFeedbackYearApplicationId_(details) {
         previousRawTo: input.previousRawTo == null ? "" : String(input.previousRawTo),
         previousSourceToEventId: String(input.previousSourceToEventId || "").trim()
     });
-    if (!/^[1-9]\d{0,14}$/.test(input.vehicleId == null ? "" : String(input.vehicleId).trim()) ||
-        ![input.year, input.previousFrom, input.previousTo, input.targetFrom, input.targetTo].every(value => Number.isFinite(Number(value)))) {
+    if (![input.year, input.previousFrom, input.previousTo, input.targetFrom, input.targetTo]
+        .every(value => Number.isFinite(Number(value)))) {
         throw new Error("No se puede construir una identidad estable para la aplicación de año.");
     }
     const digest = Utilities.computeDigest(
@@ -1377,7 +1392,7 @@ function findPendingFeedbackYearApplication_(vehicleId) {
     const matches = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (String(row[1] || "").trim() !== String(vehicleId) ||
+        if (!sameFeedbackVehicleId_(row[1], vehicleId) ||
             String(row[8] || "").trim() !== "pending") continue;
         const eventState = getFeedbackYearApplicationEventState_(row[0], eventRows);
         if (eventState.completed || eventState.requiresReview) continue;
@@ -1423,8 +1438,8 @@ function findPendingFeedbackYearApplication_(vehicleId) {
 }
 
 function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
-    const id = String(vehicleId || "").trim();
-    if (!id || !Array.isArray(baseRow)) throw new Error("No se pudo preparar la versión del rango de años.");
+    const id = normalizeFeedbackVehicleId_(vehicleId, "Proyección de años");
+    if (!Array.isArray(baseRow)) throw new Error("No se pudo preparar la versión del rango de años.");
     const fields = ["anoDesde", "anoHasta"];
     const positions = { anoDesde: COLS_CORTES.anoDesde - 1, anoHasta: COLS_CORTES.anoHasta - 1 };
     const values = {
@@ -1494,7 +1509,7 @@ function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
         if (!operationIdentities.has(event.opId)) operationIdentities.set(event.opId, identity);
         else if (operationIdentities.get(event.opId) !== identity) conflictedOps.add(event.opId);
     });
-    events.filter(event => event.vehicleId === id && event.status === "accepted")
+    events.filter(event => sameFeedbackVehicleId_(event.vehicleId, id) && event.status === "accepted")
         .sort((a, b) => a.rowIndex - b.rowIndex).forEach(event => {
         if (conflictedOps.has(event.opId)) return;
         const payload = event.payload;
@@ -1531,9 +1546,9 @@ function getFeedbackProjectedVehicleYearSnapshot_(vehicleId, baseRow) {
 
 function appendFeedbackYearVehicleUpdateEvent_(application, vehicleId, fieldName, value, expectedCurrentValue, expectedSourceEventId) {
     const allowedFields = new Set(["anoDesde", "anoHasta"]);
-    const cleanVehicleId = String(vehicleId || "").trim();
+    const cleanVehicleId = normalizeFeedbackVehicleId_(vehicleId, "Evento de aplicación de año");
     const operationId = String(application && application.row && application.row[0] || "").trim();
-    if (!/^[1-9]\d{0,14}$/.test(cleanVehicleId) || !allowedFields.has(fieldName) ||
+    if (!allowedFields.has(fieldName) ||
         !/^YSA-[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
         throw new Error("La aplicación de año no contiene una identidad válida para anexar el evento.");
     }
@@ -1689,7 +1704,7 @@ function yearRangesOverlapInclusive_(startA, endA, startB, endB) {
 
 function handleSuggestYearLocked(payload) {
     const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
-    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedVehicleId = normalizeFeedbackVehicleId_(vehicleId, "Sugerencia de año");
     const normalizedResponse = String(response || "").trim();
     const actorKey = String(suggestionActorKey || "").trim();
 
@@ -1721,7 +1736,7 @@ function handleSuggestYearLocked(payload) {
     const allCortesData = cortesSheet.getDataRange().getValues().slice(1);
     const matchingVehicleIndexes = [];
     allCortesData.forEach((row, index) => {
-        if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) matchingVehicleIndexes.push(index);
+        if (sameFeedbackVehicleId_(row[COLS_CORTES.id - 1], normalizedVehicleId)) matchingVehicleIndexes.push(index);
     });
     if (matchingVehicleIndexes.length === 0) throw new Error("Vehículo no encontrado para registrar la sugerencia.");
     if (matchingVehicleIndexes.length > 1) throw new Error("El vehículo tiene un ID duplicado; no se registró la sugerencia de año.");
@@ -1780,7 +1795,7 @@ function handleSuggestYearLocked(payload) {
 
     const existingData = sheet.getDataRange().getValues().slice(1);
     const matchesActorAndSuggestion = row =>
-        String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === normalizedVehicleId &&
+        sameFeedbackVehicleId_(row[COLS_FEEDBACKS.ID_vehiculo - 1], normalizedVehicleId) &&
         Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year;
     const pendingApplication = findPendingFeedbackYearApplication_(normalizedVehicleId);
     if (pendingApplication) {
@@ -1892,7 +1907,7 @@ function handleSuggestYearLocked(payload) {
     const proposedAnoHasta = Math.max(year, anoHasta);
 
     for (const row of allCortesData) {
-        if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) continue;
+        if (sameFeedbackVehicleId_(row[COLS_CORTES.id - 1], normalizedVehicleId)) continue;
         const otherMarca = normalizeIdentity(row[COLS_CORTES.marca - 1]);
         const otherModelo = normalizeIdentity(row[COLS_CORTES.modelo - 1]);
         const otherCategoria = normalizeIdentity(row[COLS_CORTES.categoria - 1]);
@@ -2057,7 +2072,9 @@ function migrateFeedbackLikesEventRows_(sheet, spreadsheet) {
     const states = new Map();
     legacyRows.slice(1).forEach((row, index) => {
         const actorValue = String(row[0] || "").trim();
-        const vehicleId = String(row[1] || "").trim();
+        const rawVehicleId = String(row[1] || "").trim();
+        const vehicleId = isValidFeedbackLikeVehicleId_(rawVehicleId)
+            ? normalizeFeedbackVehicleId_(rawVehicleId, "FeedbackLikes") : "";
         const cut = Number(row[2]);
         const status = String(row[5] || "").trim();
         if (!actorValue || !isValidFeedbackLikeVehicleId_(vehicleId) ||
@@ -2168,7 +2185,7 @@ function findFeedbackLikeStateRow_(ledger, actorKey, vehicleId, corteId) {
         try { storedActor = normalizeFeedbackLikeActorKey_(row[0]); }
         catch (error) { return; }
         if (storedActor === actorKey &&
-            String(row[1] || "").trim() === vehicleId &&
+            sameFeedbackVehicleId_(row[1], vehicleId) &&
             String(row[2] || "").trim().toLowerCase() === corteId) {
             matches.push({ rowIndex: index + 2, row });
         }
@@ -2181,7 +2198,7 @@ function countFeedbackLikeStates_(ledger, vehicleId, corteIndex) {
     if (!ledger || ledger.getLastRow() < 2) return 0;
     const corteId = "corte" + Number(corteIndex), states = new Map();
     ledger.getRange(2, 1, ledger.getLastRow() - 1, 6).getValues().forEach(row => {
-        if (String(row[1] || "").trim() !== String(vehicleId) ||
+        if (!sameFeedbackVehicleId_(row[1], vehicleId) ||
             String(row[2] || "").trim().toLowerCase() !== corteId) return;
         try { states.set(normalizeFeedbackLikeActorKey_(row[0]), isFeedbackLikeActiveValue_(row[3])); }
         catch (error) {}
@@ -2192,12 +2209,8 @@ function countFeedbackLikeStates_(ledger, vehicleId, corteIndex) {
 }
 
 function isValidFeedbackLikeVehicleId_(value) {
-    const id = String(value === null || value === undefined ? "" : value).trim();
-    const numericPart = id.startsWith("V-") ? id.slice(2) : id;
-    if (!/^[1-9]\d{0,15}$/.test(numericPart)) return false;
-    const numericId = Number(numericPart);
-    if (!Number.isSafeInteger(numericId) || numericId <= 0 || String(numericId) !== numericPart) return false;
-    return id === numericPart || id === "V-" + numericPart;
+    try { normalizeFeedbackVehicleId_(value, "FeedbackLikes"); return true; }
+    catch (error) { return false; }
 }
 
 function getFeedbackLikeEventCount_(ledger, vehicleId, corteIndex) {
@@ -2224,17 +2237,17 @@ function findFeedbackVehicleRowForLike_(sheet, vehicleId) {
     if (!sheet || !id) throw new Error("No se pudo localizar el vehículo para registrar el like.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No se encontró el vehículo.");
-    const matches = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1)
-        .createTextFinder(id).matchCase(true).findAll();
-    const exact = matches.filter(match =>
-        String(sheet.getRange(match.getRow(), COLS_CORTES.id).getValue() || "").trim() === id
-    );
+    const idValues = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues();
+    const exact = [];
+    idValues.forEach((row, index) => {
+        if (sameFeedbackVehicleId_(row && row[0], id)) exact.push(index + 2);
+    });
     if (exact.length !== 1) {
         throw new Error(exact.length
             ? "El vehículo tiene un ID duplicado; no se registró el like."
             : "No se encontró el vehículo.");
     }
-    const rowIndex = exact[0].getRow();
+    const rowIndex = exact[0];
     const row = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
     if (String(row[COLS_CORTES.id - 1] || "").trim() !== id) {
         throw new Error("El vehículo cambió durante la localización; no se registró el like.");
@@ -2260,10 +2273,13 @@ function handleGetMyUsefulCuts(payload) {
         try { storedActor = normalizeFeedbackLikeActorKey_(row[0]); }
         catch (error) { return; }
         if (storedActor !== actorKey || !isFeedbackLikeActiveValue_(row[3])) return;
-        const vehicleId = String(row[1] || "").trim();
+        const rawVehicleId = String(row[1] || "").trim();
+        const vehicleId = isValidFeedbackLikeVehicleId_(rawVehicleId)
+            ? normalizeFeedbackVehicleId_(rawVehicleId, "FeedbackLikes") : "";
         const corteId = String(row[2] || "").trim().toLowerCase();
         const match = corteId.match(/^corte([1-3])$/);
-        if (isValidFeedbackLikeVehicleId_(vehicleId) && match) {
+        if (vehicleId && match && !usefulCortes.some(item =>
+            item.vehicleId === vehicleId && item.corteIndex === Number(match[1]))) {
             usefulCortes.push({ vehicleId, corteIndex: Number(match[1]) });
         }
     });
@@ -2272,16 +2288,17 @@ function handleGetMyUsefulCuts(payload) {
 }
 
 function handleSetCutUseful(payload) {
-    const vehicleId = String(payload && payload.vehicleId || "").trim();
+    const rawVehicleId = String(payload && payload.vehicleId || "").trim();
     const cut = Number(payload && payload.corteIndex);
     const desired = payload && payload.isUseful;
     const actor = payload && payload.__feedbackActor;
     const userId = String(actor && actor.userId || "").trim();
     const userName = String(actor && actor.userName || "").trim();
-    if (!isValidFeedbackLikeVehicleId_(vehicleId) || !userId || !userName ||
+    if (!isValidFeedbackLikeVehicleId_(rawVehicleId) || !userId || !userName ||
         !Number.isInteger(cut) || cut < 1 || cut > 3 || typeof desired !== "boolean") {
         throw new Error("Faltan datos verificados para actualizar el útil.");
     }
+    const vehicleId = normalizeFeedbackVehicleId_(rawVehicleId, "Actualización de útil");
 
     const cuts = getSafeSheet(SHEET_NAMES.CORTES);
     if (!cuts) throw new Error("Hoja Cortes no encontrada.");
@@ -2320,6 +2337,7 @@ function handleSetCutUseful(payload) {
         const now = new Date().toISOString();
         if (existing) {
             const updated = oldRow.slice();
+            updated[1] = vehicleId;
             updated[3] = desired;
             updated[5] = now;
             ledger.getRange(writtenRow, 1, 1, 6).setValues([updated]);
