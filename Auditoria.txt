@@ -870,3 +870,12 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - PASS: reserva/limpieza guard usan espera acotada.
 - PASS: overrides responsive declaran consola 25% y panel de pestañas 75%, ancho completo y shell de comando sin estilos de contenedor.
 - Pruebas funcionales y navegador siguen pendientes; no declarar cierre de tarea ni desplegar.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Auditoría de correcciones de presentación y bloqueo
+- Revisión de rama: HEAD 84f0e3dbe586104a24ce286ba53c9d453136a47f; rama base no modificada.
+- Frontend: appendFiles() filtra por clasificación exacta «Sin uso detectado» antes de construir tarjetas; resúmenes y persistencia operan sobre lotes completos, por lo que no deben filtrarse para no alterar contadores, cursor ni continuidad. El explorador #audit-drive-workspace está dentro de #dev-panel-images y reemplaza la vista general al abrirse.
+- Hallazgo UI: en móvil las etiquetas de pestañas estaban recortadas globalmente y no había expansión exclusiva de la seleccionada. Se añade transición de expansión para la pestaña activa, manteniendo las demás compactas y preservando las reglas de apariencia existentes.
+- ADMIN: ensureAdminLocalGuardBaseline_ usaba tryLock(0), causando fallo inmediato ante contención transitoria. Se modifica únicamente esa reserva a espera acotada de 3000 ms; el lock se libera en finally. No se cambian otros usos de ScriptLock.
+- Respaldos Git blob previos: admin.js 8cc9ecf6c42c4a1eff20dde3e97bf8390402717e; style.css 44e785cb9710d88401fb816caf7e17f5486f0a13.
+- Validación estática posterior y comparación exacta pendientes. No se ejecutó navegador, Apps Script, Drive/Sheets real ni deployment.

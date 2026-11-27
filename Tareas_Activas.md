@@ -1440,3 +1440,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - PASS: reserva/limpieza guard usan espera acotada.
 - PASS: overrides responsive declaran consola 25% y panel de pestañas 75%, ancho completo y shell de comando sin estilos de contenedor.
 - Pruebas funcionales y navegador siguen pendientes; no declarar cierre de tarea ni desplegar.
+
+
+### GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Continuación UI y contención (27-11-2026)
+- [x] Reconfirmar clasificación exacta antes de crear tarjetas del explorador.
+- [x] Confirmar que el explorador está alojado dentro del panel «Imágenes y Drive» y que su vista general se oculta al abrir la auditoría.
+- [x] Cambiar únicamente el bloqueo de inicialización del baseline ADMIN a espera acotada de 3000 ms, conservando liberación en finally.
+- [x] Añadir expansión de la pestaña móvil seleccionada y mantener compactas las demás, conservando animaciones y estados de apariencia existentes.
+- [ ] Ejecutar pruebas automatizadas/aisladas de interacción de pestañas y concurrencia del baseline.
+- [ ] Validar visualmente en navegador y validar Apps Script/Drive/Sheets en entorno autorizado.
+- [ ] Code Review final, comparación contra respaldos y cierre documental.
+- No deployment ni escrituras remotas de Drive/Sheets.

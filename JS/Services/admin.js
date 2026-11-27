@@ -12694,8 +12694,8 @@ function ensureAdminLocalGuardBaseline_(sheet,propertiesProvider,lockService,now
     if(state===ADMIN_LOCAL_GUARD_BASELINE_VERSION_)return {status:"success",imported:0,alreadyComplete:true};
     if(state&&state!==ADMIN_LOCAL_GUARD_BASELINE_PENDING_)throw new Error("La versión del baseline AdminOperationGuards no es reconocida.");
     const lock=lockService.getScriptLock();
-    if(!lock.tryLock(0)){
-        const error=new Error("El baseline de guardas ADMIN está ocupado; no esperó por otra ejecución. Reintenta.");
+    if(!lock.tryLock(3000)){
+        const error=new Error("El baseline de guardas ADMIN está ocupado; esperó hasta 3 segundos por otra ejecución. Reintenta.");
         error.code="ADMIN_LOCAL_GUARD_BUSY";throw error;
     }
     try{

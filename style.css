@@ -7515,3 +7515,62 @@ textarea.rich-text-source[hidden] { display:none !important; }
 #dev-tools-modal .dev-panel-images:has(#audit-drive-workspace:not([hidden])){min-height:0;height:100%;overflow:hidden}
 }
 @media(max-width:520px){#dev-tools-modal .dev-console-shared{flex-basis:25%;height:25%;max-height:25%;padding:4px}#dev-tools-modal .dev-tools-sidebar .dev-tab-link{font-size:.66rem;line-height:1.1}#dev-tools-modal .dev-tools-sidebar .dev-tab-link span{display:inline;min-width:0;overflow-wrap:anywhere}}
+
+
+/* GP-ADMIN-TAB-ACTIONS-UX-02 — expandir solo la pestaña móvil seleccionada. */
+@media (max-width:760px) {
+    #dev-tools-modal .dev-tools-sidebar {
+        display: flex;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+    #dev-tools-modal .dev-tools-sidebar .dev-tab-link {
+        display: inline-flex;
+        flex: 0 0 38px;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        width: 38px;
+        overflow: hidden;
+        white-space: nowrap;
+        transition: flex-grow .2s ease, flex-basis .2s ease, background-color .18s ease,
+            border-color .18s ease, color .18s ease, transform .18s ease;
+    }
+    #dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+    #dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+    #dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+    #dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+        flex: 1 1 auto;
+        justify-content: center;
+        gap: 7px;
+        width: auto;
+        min-width: 38px;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+    #dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"] span,
+    #dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"] span,
+    #dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"] span,
+    #dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] span {
+        position: static;
+        display: inline;
+        flex: 0 1 auto;
+        width: auto;
+        height: auto;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        clip: auto;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        opacity: 1;
+        transition: opacity .16s ease;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #dev-tools-modal .dev-tools-sidebar .dev-tab-link {
+        transition: none !important;
+    }
+}
