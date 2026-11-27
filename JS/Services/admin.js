@@ -63,19 +63,18 @@ function extractDriveFileIds(value) {
     const decodeHtmlEntities = text => String(text || "")
         .replace(/&amp;/gi, "&").replace(/&#0*38;/gi, "&").replace(/&#x0*26;/gi, "&")
         .replace(/&quot;/gi, '"').replace(/&#0*39;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
-    source = decodeHtmlEntities(source).replace(/\\\\\//g, "/");
+    source = decodeHtmlEntities(source).replace(/\\\//g, "/");
     let decoded = source;
     for (let pass = 0; pass < 2; pass++) {
         try { decoded = decodeURIComponent(decoded.replace(/\+/g, "%20")); }
         catch (decodeError) { break; }
-        decoded = decodeHtmlEntities(decoded).replace(/\\\\\//g, "/");
+        decoded = decodeHtmlEntities(decoded).replace(/\\\//g, "/");
     }
     const candidates = [source, decoded];
     const ids = new Set();
     const patterns = [
-        /(?:[?&]|\\b)id\\s*=\\s*["']?([a-zA-Z0-9_-]{20,})/gi,
-        /(?:\\/d\\/|\\/file\\/d\\/|\\/folders\\/)([a-zA-Z0-9_-]{20,})/gi,
-        /(?:src|href|data-src)\\s*=\\s*["'][^"']*?(?:[?&]id=|\\/d\\/)([a-zA-Z0-9_-]{20,})/gi
+        /(?:[?&]|\b)id\s*=\s*["']?([a-zA-Z0-9_-]{20,})/gi,
+        /(?:\/d\/|\/file\/d\/|\/folders\/)([a-zA-Z0-9_-]{20,})/gi
     ];
     candidates.forEach(text => {
         patterns.forEach(pattern => {
@@ -87,7 +86,6 @@ function extractDriveFileIds(value) {
     });
     return Array.from(ids);
 }
-
 function extractDriveFileId(value) {
     return extractDriveFileIds(value)[0] || "";
 }
