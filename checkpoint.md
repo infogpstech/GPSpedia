@@ -700,3 +700,8 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 ## 2026-11-27 — GP-PWA-OFFLINE-ICONS-01 / corrección de literal PUA
 - Se verificó el contenido literal de icon-fallback.js y se sustituyó el doble escape restante por un único escape JavaScript para los glifos PUA consultados.
 - La verificación confirma presencia del literal de una barra inversa y ausencia del literal doble; no equivale a prueba de navegador.
+
+
+## 2026-11-27 — GP-PWA-OFFLINE-ICONS-01 / ajuste del glifo Brands
+- El punto de prueba de Font Awesome Brands se actualizó a U+F167 (YouTube), en lugar de un código perteneciente a la familia Free.
+- Solo se comprobó el código fuente; el comportamiento real de FontFaceSet y navegador sigue pendiente.

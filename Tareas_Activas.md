@@ -1469,3 +1469,8 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 ### GP-PWA-OFFLINE-ICONS-01 — corrección final del literal Unicode (2026-11-27)
 - [x] Confirmar en el contenido fuente que document.fonts.load recibe caracteres PUA con escape JavaScript de una sola barra inversa.
 - [ ] Validar navegador conectado y offline frío/caliente; pendiente.
+
+
+### GP-PWA-OFFLINE-ICONS-01 — Code Review de fuente Brands (2026-11-27)
+- [x] Usar un glifo perteneciente a Font Awesome Brands para comprobar la disponibilidad de esa familia.
+- [ ] Validar carga real de fuentes y fallback en navegador; pendiente.

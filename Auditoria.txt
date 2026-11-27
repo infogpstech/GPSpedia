@@ -911,3 +911,8 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 
 2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — ajuste de secuencias Unicode
 - La revisión de contenido del archivo publicado detectó que el primer ajuste conservó dos barras inversas. Se corrigió el literal para que document.fonts.load reciba un carácter PUA real de Font Awesome. Esta observación se registra para mantener trazabilidad; no se declara validación de navegador.
+
+
+2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — Code Review de fuente Brands
+- La revisión del mapeo Unicode detectó que el punto de prueba de Font Awesome Brands correspondía a un icono Free, no a una marca. Se reemplazó por U+F167 (YouTube Brands), que corresponde a la familia Brands usada por la aplicación.
+- El cambio evita activar el fallback por una consulta de glifo inexistente en la fuente Brands. Validación limitada a correspondencia del código fuente; no se ejecutó navegador.

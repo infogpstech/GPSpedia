@@ -1833,3 +1833,7 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — corrección del literal Unicode
 - icon-fallback.js: se redujo a una barra inversa el escape de los puntos de código PUA de Free y Brands, de modo que document.fonts.load reciba el carácter y no la secuencia textual.
+
+
+2026-11-27 | GP-PWA-OFFLINE-ICONS-01 — ajuste de detección Brands
+- icon-fallback.js: el glifo de prueba de Font Awesome Brands se cambió a U+F167 (YouTube), correspondiente a la familia consultada.
