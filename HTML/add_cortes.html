@@ -1048,7 +1048,9 @@
             const btnBackToStage2 = document.getElementById('btn-back-to-stage2');
             if (btnBackToStage2) {
                 btnBackToStage2.addEventListener('click', () => {
-                    proceedToStage2(state.selectedVehicleId, true);
+                    state.savedFiles = { imagenVehiculo: null, imgCorte1: null };
+                    state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                    proceedToStage2(state.selectedVehicleId, false);
                 });
             }
 
