@@ -1680,3 +1680,16 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 - Pages run `45914970548` SUCCESS. No deployment de Apps Script ni prueba remota de WRITE; la URL de `api-config.js` requiere health GET-only pendiente.
 
 - Code Review completado y respaldos temporales de las iteraciones 04B/04C/04D retirados después de verificar diferencias exactas. Commit de limpieza: `df36935c16bf86f7b61c383b4a8af5c71d9e31a9`.
+
+
+[2026-11-26] GP-CUT-ID-FORMAT-REBUILD-05 — corrección del registro de cortes para IDs V-###
+
+- `JS/Services/write.js`: nuevo parser/formatter canónico de IDs `V-###`; high-water mark y freeze-plan leen el resultado de fórmulas sin convertir el prefijo V a Number; la secuencia del ledger `CortesIdReservations` permanece numérica/append-only; la alta nueva escribe un ID estático con ancho mínimo de tres dígitos y extensión natural (`V-999` → `V-1000`). La validación de corte existente, búsqueda, recuperación idempotente, VIN, aportes append-only y versionado aceptan el ID persistente. Lectura compatible para IDs numéricos históricos.
+- `JS/Services/catalog.js`: la proyección dirigida acepta y compara IDs `V-###`; devuelve el ID canónico solicitado y preserva los valores de otras filas.
+- `JS/Frontend/offline.js`: el validador de snapshots suplementarios acepta IDs `V-###` y conserva compatibilidad con números históricos.
+- `service-worker.js`: caché PWA v85 → v86.
+- `JS/Frontend/ui.js` y `HTML/add_cortes.html`: sin cambios. Se verificó que el modal conserva su clave local, reintento con el mismo `opId`, envío del ID del vehículo, confirmación de WRITE y actualización del detalle; el formulario independiente mantiene su snapshot durable.
+- Respaldos pre-edición en `Olds/Backups/GP-CUT-ID-FORMAT-REBUILD-05-20261126/`: WRITE, CATALOG, offline.js, ui.js y Service Worker. Comparación exacta contra los respaldos: PASS; ui.js sin diferencias.
+- Pruebas: IDs V-001/V-999/V-1000 y 16 dígitos seguros; números legacy; formatos inválidos/no seguros; high-water mock con fórmula V-1000; freeze-plan; validación de payload; append ledger alta/replay/conflicto; proyección CATALOG V/legacy; snapshots offline V/legacy; sintaxis V8 de los cuatro archivos modificados: PASS.
+- GitHub Pages build/deploy run `45917661822` SUCCESS en HEAD `7ee15c2f428c9d903dac8269c8430a0f0ad0ef8e`.
+- Pendiente: deploy/health GET-only de Apps Script WRITE y CATALOG, prueba real aislada de Spreadsheet/Drive, modal de detalle y IndexedDB. No se ejecutaron POST ni escrituras remotas. El código en GitHub no implica que los servicios Apps Script desplegados ya estén actualizados.
