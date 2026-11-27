@@ -1065,3 +1065,8 @@ Límites: los harnesses son simulaciones en memoria; no se ejecutó Apps Script 
 - `finishConfirmedCutTransition_()` intenta completar la transición antes de mostrar el alert y no marca el opId como transicionado si la rutina falla. La alerta de éxito queda posterior al avance, evitando que un fallo de configuración auxiliar deje la Etapa 2 como destino.
 - Se conserva el opId y el guardado/idempotencia de WRITE. Se registran errores de transición.
 - Revisión estática del bloque: PASS (transición prioritaria y referencias opcionales protegidas). Prueba real de navegador/formulario pendiente; no se ejecutó Apps Script ni deployment.
+
+
+### GP-ADMIN-DRIVE-REGISTRO-ERROR-01 — 2026-11-27
+- Añadido contexto estructurado en el catch de lotes del frontend para el registro incremental: auditId, lote, offset, IDs, stack y campos del error. El diagnóstico se emite a consola de desarrollador y al registro de auditoría.
+- Commit `261b7c4`. La causa raíz del aviso amarillo no se considera identificada sin reproducir el error y observar el nuevo diagnóstico; no se ejecutó prueba remota ni despliegue.
