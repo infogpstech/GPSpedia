@@ -854,3 +854,10 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Se revisaron los parches de implementación y los commits finales admin.js 72b5ed0dc49b7f947c39fa727bf49ce9cc291692, 44dd569822dd1d384916d2ae8c172b3830f5c9b8 y 3e16f1150ae42c5289112db93d47cc24c6f9473f, además de los cambios UI 64539fa8614fa2bfc727895f5b935e56797f573b y 8eaa0d2c29de198c7d9e81316a13a3b543418514.
 - No se identificaron cambios funcionales fuera del alcance. Desde el HEAD previo c08c822, los únicos archivos funcionales modificados son JS/Services/admin.js y JS/Frontend/ui.js; no hay cambios en HTML/CSS.
 - Tareas_Activas.md marca Code Review estático como completado. Solo queda la revisión visual y el flujo de navegador/servicios Beta autorizados.
+
+
+2026-11-27 | GP-ADMIN-DRIVE-AUDIT-REVIEW-04 — Confirmación de registro incremental ya integrado
+- Revisión de JS/Frontend/ui.js: cada respuesta de página de auditoría desencadena saveUnusedImagesInventory con incremental:true para sus imágenes clasificadas Sin uso detectado, valida resultados por ID/estado y persiste el estado local antes de continuar.
+- JS/Services/admin.js: página y metadatos se guardan en Cache y pageCount se actualiza en estado ADMIN antes de responder; el validador incremental verifica que los IDs hayan sido emitidos como candidatos.
+- La consolidación final conserva su propósito de reconciliación histórica; el registro incremental por página no está pendiente de implementación. Se documentó el ajuste de estado y el pendiente real: navegador y Apps Script/Drive/Sheets autorizados.
+- No runtime, browser, Drive/Sheets remoto ni deployment en esta revisión.
