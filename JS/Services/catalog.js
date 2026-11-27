@@ -1778,7 +1778,7 @@ function readCatalogVehicleProjection_(vehicleId, spreadsheetRef) {
     if (!targetVehicle) throw new Error("No se pudo leer la fila vigente del vehículo solicitado.");
     targetVehicle.id = requestedId;
     const vehicles = ids.map((row, index) => {
-        const rawId = String(row && row[0] == null ? "" : row[0]).trim();
+        const rawId = row && row[0] !== null && row[0] !== undefined ? String(row[0]).trim() : "";
         if (!rawId) return null;
         if (index === targetIndex) return targetVehicle;
         return { id: rawId, vin: vinRows[index] ? vinRows[index][0] : null };
