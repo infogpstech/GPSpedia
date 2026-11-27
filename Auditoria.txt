@@ -862,3 +862,11 @@ Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; butt
 - ADMIN: reserva de ScriptLock espera hasta 3 segundos; limpieza hasta 1.5 segundos, conservando el mecanismo de guarda y TTL.
 - CSS móvil: workspace vertical; consola ~25%, contenido de pestañas ~75%, ambas áreas a ancho completo; línea de comando sin contenedor visual independiente. Pestañas mantienen estilo/transiciones base, botones en cuadrícula compacta.
 - Revisión estática y simulaciones pendientes; sin runtime Apps Script/Drive/Sheets, navegador ni deployment.
+
+
+## Verificación estática posterior — 2026-11-27
+- PASS: filtro de tarjetas excluye estados distintos de «Sin uso detectado».
+- PASS: la clasificación de tarjeta en la galería se restringe a estado no usado.
+- PASS: reserva/limpieza guard usan espera acotada.
+- PASS: overrides responsive declaran consola 25% y panel de pestañas 75%, ancho completo y shell de comando sin estilos de contenedor.
+- Pruebas funcionales y navegador siguen pendientes; no declarar cierre de tarea ni desplegar.
