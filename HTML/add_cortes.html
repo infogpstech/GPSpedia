@@ -1556,9 +1556,7 @@
                 pendingOp.status = 'completed';
                 const terminalSaved = await saveAddCutOperationPendingOperation(pendingOp);
                 if (!terminalSaved || terminalSaved.saved !== true) diagnostics.warn('cut-operation.completed-snapshot-unconfirmed', { stage: 'submit', opId });
-                const removed = terminalSaved && terminalSaved.saved === true
-                    ? await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash)
-                    : { removed: false };
+                const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
                 if (removed && removed.removed === true) snapshotSaved = false;
                 else diagnostics.warn('cut-operation.cleanup-unconfirmed', { stage: 'submit', opId });
                 state.opId = null; state.opIdRequiresServerCheck = true; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
