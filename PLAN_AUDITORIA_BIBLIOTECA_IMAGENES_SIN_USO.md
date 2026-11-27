@@ -88,3 +88,9 @@
 | UI/CSS | 6/6 PASS | Inspección estática; no equivale a prueba visual |
 
 Pendiente: simulación integrada de archivo A fallido/archivo B verificable dentro del handler, ejecución IndexedDB en navegador, revisión visual escritorio/móvil y revisión final contra respaldos. No se ejecutó Apps Script, Drive/Spreadsheet real, POST ni deployment. No se reabre Beta ni se crean suites permanentes.
+
+
+### Ampliación de cobertura aislada — 2026-11-27
+- PASS 1/1: se ejecutó el bloque real de procesamiento por archivo de handleSaveUnusedImagesInventory con A fallido y B válido; el resultado individual de A no interrumpió la confirmación e inserción de B.
+- PASS 1/1: clearDriveAuditState ejecutado con IndexedDB transaccional simulado; se eliminaron solo las claves de auditoría de la cuenta solicitante, se conservaron claves de otra cuenta y el inventario persistente, y se incrementó la generación local.
+- Pendiente: prueba en navegador real y revisión visual escritorio/móvil. Las simulaciones no acreditan Apps Script/Drive/Spreadsheet productivo. No deployment ni reactivación de Beta.
