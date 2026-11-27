@@ -621,3 +621,12 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 - Plan: validar sourceCorteIndex repetidos en slots consumidos por modal, evitar render doble del mismo slot fuente, desempatar utilidad por índice físico, simular y revisar diff.
 - No se dispone de lectura del registro real en Spreadsheet; el borrado manual puede no retirar eventos append-only accepted de AportesVehiculo. Caso de último registro queda sin confirmación de datos.
 - Backup exacto de ui.js y registros creado en Olds/Backups/GP-CUT-DETAIL-DUPLICATE-PROJECTION-01-20261126/; sin POST, writes remotos ni deployment.
+
+
+## GP-CUT-DETAIL-DUPLICATE-PROJECTION-01 — implementación (2026-11-26)
+- JS/Frontend/ui.js ajustado: la lista modal evita consumir dos veces la misma referencia sourceCorteIndex física; slots vacíos omitidos; empate de utilidad se ordena por slot físico. No deduplica cortes distintos por similitud de contenido.
+- Simulaciones efímeras PASS: sourceIndex duplicado, cortes distintos pero idénticos, empate y slot vacío. Diff contra respaldo exacto revisado; cambio localizado al bloque de lista/orden del modal.
+- Backups temporales retirados después de Code Review.
+- El caso de la última ficha aún no se puede confirmar contra Sheets: un event accepted append-only en AportesVehiculo podría materializarse nuevamente tras borrado manual, pero no se ha consultado la hoja real. No afirmar causa raíz confirmada.
+- Sin browser, Apps Script, POST, writes remotos ni deployment; Beta cerrada.
+- Siguiente paso: consulta de datos en Spreadsheet aislada/autorizada para determinar si persiste un evento de corte duplicado/replay; si es confirmado, auditar y corregir ledger/materialización por ciclo completo.
