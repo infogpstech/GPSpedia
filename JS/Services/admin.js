@@ -14771,9 +14771,11 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
 
         const summary = {
             savedCount: confirmedCount, insertedCount: insertedCount, updatedCount: updatedCount,
-            noLongerConfirmedCount: staleCount, existingRecordsCheckedCount: inventoryRowsByDriveId.size,
+            noLongerConfirmedCount: staleCount,
+            existingRecordsCheckedCount: Array.from(inventoryRowsByDriveId.entries()).filter(([fileId, records]) =>
+                records.length === 1 && !duplicateDriveIds.has(fileId) && !ambiguousDriveIds.has(fileId)).length,
             activeReferenceCount: Array.from(inventoryRowsByDriveId.keys()).filter(fileId => references && references.references.has(fileId)).length,
-            associationUpdatedCount: associationByFileId.size, blockedCount: blockedCount, errorCount: errorCount,
+            associationSuggestionCount: associationByFileId.size, blockedCount: blockedCount, errorCount: errorCount,
             loggingErrorCount: loggingErrorCount,
             staleUpdateSkipped: historyIntegrityUncertain || auditState.unverifiableReferenceCount > 0 ||
                 !!referenceScanError || !!(references && references.unverifiableReferenceCount > 0),
