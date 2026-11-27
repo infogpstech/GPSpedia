@@ -188,10 +188,10 @@ function parseReportMetadata(rawValue, rowVehicleId) {
         const validCategories = new Set(["incidencia_tecnica","instalacion","acceso","contenido","otro"]);
         const categoryRaw = String(parsed.category || "incidencia_tecnica").trim().toLowerCase();
         const category = validCategories.has(categoryRaw) ? categoryRaw : "incidencia_tecnica";
+        const vehicleId = normalizeFeedbackVehicleId_(rawVehicleId, "Metadata de reporte");
         const defaultSubject = "Reporte técnico de vehículo " + vehicleId + " — Corte #" + String(corteIndex);
         const subjectRaw = String(parsed.subject || "").replace(/\s+/g," ").trim();
         const subject = subjectRaw && subjectRaw.length <= 200 ? subjectRaw : defaultSubject;
-        const vehicleId = normalizeFeedbackVehicleId_(rawVehicleId, "Metadata de reporte");
         const metadata = { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor, category, subject };
         const imageMetadata = normalizeReportImageMetadata_(parsed);
         if (imageMetadata) Object.assign(metadata, imageMetadata);
@@ -2952,9 +2952,10 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
                 const parsedVehicleId = String(parsed.vehicleId || vehicleId || "");
                 const parsedCorteIndex = Number(parsed.corteIndex);
                 if (!sameFeedbackVehicleId_(parsedVehicleId, vehicleId) || !Number.isInteger(parsedCorteIndex) || parsedCorteIndex < 1 || parsedCorteIndex > 3) return null;
+                const canonicalVehicleId = normalizeFeedbackVehicleId_(parsedVehicleId, "Sugerencia de corte");
                 return {
                     subType: "suggestion_cut", reportId: String(parsed.reportId || "N/A"),
-                    vehicleId: parsedVehicleId, corteIndex: parsedCorteIndex,
+                    vehicleId: canonicalVehicleId, corteIndex: parsedCorteIndex,
                     userId: String(parsed.userId || ""), userName: String(parsed.userName || userName || ""),
                     createdAt: String(parsed.createdAt || ""), imageUrl: String(parsed.imageUrl || ""),
                     details: String(parsed.details || ""),
@@ -2989,7 +2990,7 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
     };
 }
 function mapInboxFeedbackRow_(row, reportMetadataColumn, imageEventsIndex) {
- const rawContent=row[COLS_FEEDBACKS.Problema-1],rowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
+ const rawContent=row[COLS_FEEDBACKS.Problema-1],rawRowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowVehicleId=isValidFeedbackLikeVehicleId_(rawRowVehicleId)?normalizeFeedbackVehicleId_(rawRowVehicleId,"Inbox"):rawRowVehicleId,rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
  const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;
  if(reportMetadata){const imageMetadata=getFeedbackReportImageMetadata_(reportMetadata.reportId,reportMetadata,imageEventsIndex);if(imageMetadata)Object.assign(reportMetadata,imageMetadata);}
  let videoMeta=null;
