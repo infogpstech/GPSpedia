@@ -2068,3 +2068,8 @@ ADMIN permite registro incremental de resultados «Sin uso detectado» por lote,
 
 2026-11-27 | GP-ADMIN-IMAGE-REFERENCE-THUMBNAIL-URLS-02 — revisión y prueba aislada
 - Se corrigió el escape de expresiones regulares detectado durante la edición. Pruebas aisladas de 7 variantes de URL: 7/7 PASS. Sin parsing completo/runtime integrado ni deployment.
+
+
+## 2026-11-28 — GP-IMAGE-LIBRARY-FILTERS-TRASH-RESTORE-01 (registro de tarea)
+- Se registró en Tareas_Activas.md la solicitud de filtros de biblioteca por estado, categoría y sección, y de acciones de papelera/restauración para imágenes reemplazadas y candidatas a aporte.
+- Se añadió el diagnóstico inicial a Auditoria.txt. No se modificó código funcional ni se realizaron pruebas, mutaciones en Drive o despliegues.
