@@ -1738,3 +1738,14 @@ La proyección ahora lee únicamente A:C y F de FeedbackLikes, conservando actor
 - [x] Pruebas aisladas de 7 formatos URL: PASS.
 - [x] Corrección del escape de regex identificada durante la prueba.
 - [ ] Parsing completo y validación integrada autorizada.
+
+
+## Prioridad P1 — GP-IMAGE-LIBRARY-FILTERS-TRASH-RESTORE-01
+
+- **Estado:** REGISTRADA; auditoría e implementación pendientes.
+- **Solicitud:** ampliar la Biblioteca de imágenes con filtros combinables por estado (sin uso, reemplazadas, no confirmadas y candidatas a aporte), categoría (logos de marca, sedán, SUV y demás categorías existentes) y sección (Tutorial, Relay).
+- **Acciones de administración:** en imágenes reemplazadas y candidatas a aporte, mostrar una barra de acciones que permita enviar imágenes a papelera, consultar la papelera y recuperar elementos.
+- **Seguridad:** auditar permisos, referencias activas, estado de aporte, eliminación reversible y restauración antes de habilitar acciones; las candidatas a aporte y las imágenes referenciadas deben conservar las protecciones existentes.
+- **Criterios de aceptación:** filtros precisos y combinables; estados vacíos y conteos coherentes; selección individual/masiva según permisos; papelera accesible; restauración sin duplicar ni alterar referencias; acciones y errores visibles; no permitir borrado definitivo de recursos protegidos.
+- **Archivos potencialmente involucrados:** JS/Frontend/ui.js, index.html, CSS de la biblioteca, JS/Services/admin.js y contratos/API asociados; determinar el alcance real durante la auditoría.
+- **Validación pendiente:** revisión de UI/UX, backend, permisos, Drive, referencias activas, restauración, regresiones y pruebas locales/integradas. No se afirma validación realizada.
