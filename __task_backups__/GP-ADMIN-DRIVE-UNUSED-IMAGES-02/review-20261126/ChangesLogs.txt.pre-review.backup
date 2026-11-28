@@ -1,0 +1,1543 @@
+# ChangesLogs — registro activo
+
+Normativa: NORMAS_DESAROLLO.md.  
+Repositorio: infogpstech/GPSpedia.  
+Rama de trabajo: GPSpedia2.2.5_work.
+
+## 2026-11-23 — MIG-002: inventario de pantallas y capacidades visibles
+
+- Se añadió INVENTARIO_PANTALLAS_CAPACIDADES.md con el mapa de 17 superficies, controles estáticos y dinámicos, handlers, acciones backend/locales, permisos, estados de ciclo de vida, pruebas relacionadas y límites de cobertura.
+- Se inspeccionaron index.html, HTML/add_cortes.html, HTML/users.html, JS/Frontend/ui.js, JS/Frontend/main.js, auth.js, navigation.js, api-config.js, youtubeUpload.js, módulos de soporte y CSS activo.
+- Se documentaron 335 declaraciones de controles/enlaces/formularios en las superficies HTML y plantillas dinámicas, además de 37 módulos frontend.
+- Se actualizó TAREAS_MIGRACION_ARQUITECTURA.md: MIG-002 COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Se registraron las brechas de cobertura UI indirecta sin afirmar pruebas visuales inexistentes.
+- No se modificó código funcional, endpoints, RBAC, datos, Spreadsheet, Drive ni deployments.
+
+### Adenda MIG-002 — controles dinámicos de ficha
+
+- Se amplió INVENTARIO_PANTALLAS_CAPACIDADES.md para incluir explícitamente los formularios dinámicos de alta de corte, apertura, alimentación y vídeo desde la ficha del vehículo.
+- Se documentó que los botones de coincidencia de add_cortes generan su atributo id a partir de match.id; no tienen un identificador estático común.
+
+
+## 2026-11-23 — MIG-003: inventario de configuración backend
+
+- Se creó INVENTARIO_CONFIGURACION_BACKEND.md.
+- Se inspeccionaron diez módulos backend activos: siete usan ScriptProperties; tres no presentan referencias. No se encontraron usos de UserProperties ni DocumentProperties en los módulos revisados.
+- Se identificaron y clasificaron 26 familias de claves persistentes, incluidos prefijos dinámicos y estados operativos.
+- Se registraron siete endpoints frontend, cinco URLs internas duplicadas en ADMIN, siete referencias al mismo SPREADSHEET_ID y tres al mismo DRIVE_FOLDER_ID.
+- Se documentaron parámetros funcionales, límites, cachés separadas, OAuth de ejecución, ausencia de manifiesto Apps Script versionado y destinos propuestos en Spreadsheet.
+- Se señalaron secretos que deben retirarse o requieren diseño protegido; no se copiaron secretos a hojas.
+- No se modificó código funcional, propiedades reales, endpoints, Spreadsheet, Drive ni deployments.
+- MIG-003 se cerró con validación local estática completa y lectura de propiedades/deployments reales diferida a Beta; MIG-006 debe resolver el bootstrap de Spreadsheet.
+
+### 2026-11-23 — MIG-004: inventario de llamadas entre servicios
+
+- Se creó INVENTARIO_LLAMADAS_SERVICIOS.md con el grafo de llamadas backend→backend, las 13 operaciones Coordinator, seis callsites activos de leases, rutas privadas de caché, contratos/payloads, reemplazos frontend, límites de escritura y pruebas representativas.
+- Se documentaron ADMIN→WRITE, ADMIN→CATALOG y Coordinator→USERS/WRITE/FEEDBACK/ADMIN.
+- Se separaron las integraciones externas Drive, YouTube y URLs de imágenes.
+- Se registraron riesgos de solapamiento de escritura en Users/ActiveSessions, Cortes y Drive, y el secreto compartido ADMIN↔CATALOG.
+- Se agregó JS/Tests/ServiceCallGraphContract.mjs y se registró en JS/Tests/RunServiceTests.mjs.
+- Se cerró MIG-004 en TAREAS_MIGRACION_ARQUITECTURA.md y se añadió la sección 20 a MATRIZ_MIGRACION_SERVICIOS.md.
+- No se retiraron llamadas, endpoints, capacidades, propiedades, secretos ni deployments. No se modificó código funcional.
+
+
+### 2026-11-23 — MIG-005: línea base funcional y de rendimiento
+
+- Se creó LINEA_BASE_MIGRACION_2026-11-23.md con la línea base de CI y la separación explícita entre contratos/simulaciones locales y métricas reales pendientes de Beta.
+- Workflow GPSpedia service regression tests, run 45172298195, commit f20bc9934031adb63947e82e1e26b7a24ef4b0f1: SUCCESS; 306 suites, 3,581 pruebas aprobadas, 0 fallos de suite.
+- Sintaxis: 438 archivos JS/MJS aprobados. Referencias relativas: 348 archivos inspeccionados y resueltos. Contrato ServiceCallGraphContract: 9/9 PASS.
+- Workflow de health read-only run 45172298206: siete endpoints consultados por GET; SUCCESS. No se realizaron escrituras ni despliegues.
+- Se registró la duración aproximada de 30 s del workflow completo como métrica del runner, no como latencia de la aplicación.
+- Arranque/login, catálogo e Inbox reales, snapshot/deltas, multimedia, Drive, cachés, llamadas y lecturas/escrituras Spreadsheet quedan pendientes de medición Beta por falta de navegador, credenciales y recursos aislados autorizados.
+- MIG-005 se cerró como COMPLETADA CON VALIDACIÓN DIFERIDA. No se modificó código funcional, endpoints, propiedades, Spreadsheet, Drive ni deployments.
+
+
+### 2026-11-23 — MIG-006: spike de acceso a Spreadsheet
+
+- Añadidos JS/Tests/MIG006SpreadsheetAccessProbe.js y JS/Tests/MIG006SpreadsheetAccessProbe.mjs; el harness quedó integrado en JS/Tests/RunServiceTests.mjs.
+- Añadido MIG006_SPREADSHEET_ACCESS_SPIKE.md con inventario de accesos, probe Web App, guardas, alternativas, límites y procedimiento Beta.
+- Actualizados NORMAS_DESAROLLO.md §17 y PLAN_NUEVA_ARQUITECTURA_FRONTEND.md para distinguir coordinación funcional del frontend de llamadas técnicas directas permitidas entre servicios, sin secretos compartidos/manuales.
+- Guías históricas COORDINATOR_SETUP.md, DEPLOYMENT_GUIDE.md y SERVICE_ARCHITECTURE_PLAN.md marcadas como no vigentes para configurar secretos.
+- No se modificaron servicios funcionales, IDs actuales, propiedades instaladas, deployments, endpoints, Spreadsheet, Drive ni datos.
+- La prueba local del probe valida guardas y lógica simulada; la ejecución real Web App, varios proyectos, permisos, cuotas y concurrencia quedan pendientes de Beta.
+- MIG-006: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-007.
+
+
+### 2026-11-23 — MIG-007: diseño del esquema central de configuración
+- Se creó ESQUEMA_CONFIGURACION_CENTRAL.md con seis tablas lógicas, columnas, tipos, claves estables, scopes, visibilidad, defaults y validadores.
+- Se definieron schema_version, config_revision y contract_version; publicación de snapshot completo, historial append-only y rollback como nueva revisión.
+- Se documentó la separación public/backend/admin y la limitación de Sheets: no existen ACL de lectura por pestaña; la Spreadsheet debe permanecer privada y la proyección pública filtrarse en servidor.
+- Se trazaron las 26 familias de propiedades, siete endpoints, cinco URLs internas duplicadas y localizadores Spreadsheet/Drive.
+- Se excluyeron secretos compartidos, tokens OAuth, contraseñas y secreto HMAC de recuperación del esquema ordinario.
+- Se propuso política de caché por clase y recuperación fail-closed, sin fallback a URLs locales.
+- Se integró JS/Tests/MIG007ConfigurationSchemaContract.mjs al runner.
+- Se actualizaron INVENTARIO_CONFIGURACION_BACKEND.md, TAREAS_MIGRACION_ARQUITECTURA.md, MATRIZ_MIGRACION_SERVICIOS.md, PLAN_NUEVA_ARQUITECTURA_FRONTEND.md y checkpoint.md.
+- No se crearon hojas ni se migraron valores; no se modificaron servicios, propiedades, endpoints, deployments, Spreadsheet, Drive ni datos.
+
+
+2026-11-23 — MIG-008: lector central y caché de configuración
+- Añadido JS/Services/CentralConfigurationReader.js con lectura por contenedor activo, validación estricta de revisión y proyecciones pública/backend sin URLs interservicio.
+- AUTH incorpora getPublicConfiguration; api-config añade el cargador público y las operaciones de caché frontend.
+- Añadido JS/Frontend/centralConfigurationCache.js con cache-first, single-flight, invalidación y stale-if-error acotado.
+- Corregido ESQUEMA_CONFIGURACION_CENTRAL.md para versionar las filas de Servicios, ConfiguracionParametros y ConfiguracionRecursos con config_revision.
+- Añadidas pruebas MIG008 de lector y caché; actualizados backlog, plan y checkpoint.
+- No se crearon hojas, no se migraron datos, no se tocaron propiedades ni deployments. La validación Web App real queda pendiente de Beta.
+
+
+2026-11-23 — Requisito técnico transversal y MIG-009
+- Se registró en NORMAS_DESAROLLO.md §18 el requisito obligatorio aplicable a MIG-001–MIG-030 y se añadió la referencia explícita en cada tarea del backlog.
+- api-config.js deja de mantener siete URLs estáticas; el router POST, el feed GET y los health checks resuelven endpoints desde la proyección pública central.
+- Se conserva un único localizador bootstrap AUTH para obtener la primera configuración; no se utiliza como fallback de otros servicios.
+- La caché frontend mantiene cache-first/single-flight y refresca al vencer TTL; los endpoints dejan de estar disponibles cuando el registro no permite enrutar.
+- Las pruebas de salud y el probe remoto se adaptaron para utilizar la configuración central; el workflow remoto queda manual para ejecutarse tras el despliegue autorizado de AUTH.
+- Se añadieron pruebas de contrato para las 121 acciones, resolución dinámica, actualización de revisión, servicios deshabilitados y fail-closed.
+- No se modificaron archivos Apps Script, propiedades, deployments, endpoints productivos, Spreadsheet, Drive ni datos. La actualización real de endpoints desde Spreadsheet queda pendiente de Beta.
+
+- Validación final MIG-009: CI SUCCESS (run 45185426367), 312 suites / 3,626 pruebas / 0 fallos; sintaxis 446 archivos; referencias 355 archivos; Pages build/deploy SUCCESS (run 45185424818).
+- Prueba remota de configuración/servicios permanece diferida a Beta por requerir despliegue explícito de getPublicConfiguration; no se modificó Apps Script productivo.
+
+### 2026-11-23 — MIG-010: orquestación frontend y recuperación
+- El flujo de reorganización se coordina desde el frontend: respaldo ADMIN, estabilización de IDs WRITE y ordenamiento ADMIN.
+- Se añadió operationId persistente para el respaldo preventivo; ADMIN verifica el manifiesto, propietario y Spreadsheet de origen y reutiliza la copia existente ante reintentos, sin duplicarla.
+- Las consultas de proyección y candidatos se realizan directamente desde frontend hacia CATALOG; ADMIN deja de contener wrappers y destinos de coordinación para esas operaciones.
+- CATALOG valida la sesión local para getVehicleProjection con los roles Desarrollador, Jefe y Supervisor; getContributionCandidates conserva acceso exclusivo de Desarrollador.
+- Se añadió JS/Tests/MIG010FrontendServiceOrchestration.mjs y se integró en JS/Tests/RunServiceTests.mjs.
+- Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md e INVENTARIO_LLAMADAS_SERVICIOS.md.
+- No se modificaron endpoints instalados, PropertiesService, deployments, Spreadsheet, Drive ni datos.
+
+
+### 2026-11-23 — Cierre MIG-010: orquestación frontend multi-servicio
+- MIG-010 se marca COMPLETADA CON VALIDACIÓN DIFERIDA tras la aprobación de la regresión Node.js 22 en GitHub Actions.
+- CI SUCCESS: run 45209447602; 306 suites, 3,558 pruebas aprobadas y 0 fallos. La suite MIG010FrontendServiceOrchestration obtuvo 58/58 PASS.
+- GitHub Pages build/deploy SUCCESS: run 45209445911.
+- Se actualizó el inventario de llamadas: ADMIN ya no coordina funcionalmente WRITE ni CATALOG para los flujos cubiertos; el frontend realiza las solicitudes y cada servicio valida su propia sesión/rol.
+- Se actualizaron contratos de pruebas heredados que todavía exigían wrappers backend→backend, trasladando la cobertura de altas, reserva idempotente, encabezados VIN/testigo y vinculación de imágenes al servicio propietario WRITE.
+- WRITE reutiliza el snapshot de encabezados VIN/testigo y el índice VIN validado en las comprobaciones de duplicados.
+- La recuperación de reemplazos de imágenes separa estado ADMIN y proyección CATALOG: el frontend combina ambas respuestas sin lectura materializada de Cortes desde ADMIN.
+- Beta real sigue pendiente: no se desplegaron servicios Apps Script ni se modificaron PropertiesService, deployments, endpoints instalados, Spreadsheet, Drive o datos externos.
+- Se actualizaron TAREAS_MIGRACION_ARQUITECTURA.md, INVENTARIO_LLAMADAS_SERVICIOS.md y checkpoint.md. Siguiente tarea: MIG-011.
+
+### 2026-11-23 — MIG-011: verificación de dependencias backend de ADMIN
+- Se contrastaron las fuentes actuales de ADMIN, CATALOG, WRITE y el router frontend contra los cinco criterios de MIG-011.
+- Se confirmó que las rutas de proyección/candidatos van de frontend a CATALOG y las operaciones de asignación/congelación de IDs van de frontend a WRITE; ADMIN no conserva URLs ni wrappers de esos servicios.
+- Las llamadas HTTP restantes de ADMIN son integraciones externas de Drive e imágenes, no llamadas a microservicios GPSpedia; se preservan.
+- Se identificó cobertura existente en MIG010FrontendServiceOrchestration, ServiceCallGraphContract y pruebas de paridad relacionadas. No fue necesario modificar código funcional.
+- Se actualizan backlog, inventario y checkpoint. La regresión Node.js 22 queda pendiente de resultado del workflow posterior a esta publicación; Beta real sigue pendiente.
+
+### 2026-11-23 — Cierre MIG-011: dependencias backend de ADMIN
+- MIG-011 se marca COMPLETADA CON VALIDACIÓN DIFERIDA tras la aprobación de CI Node.js 22, run 45212028964.
+- Regresión completa: 306 suites, 3,558 pruebas aprobadas, 0 fallos; sintaxis verificada por workflow.
+- Pruebas representativas: MIG010FrontendServiceOrchestration 58/58; ServiceCallGraphContract 9/9; proyección CATALOG 3/3; candidatos CATALOG 12/12; inventario de imágenes desde CATALOG 4/4; asignación WRITE 1/1; recuperación frontend→WRITE 1/1; freeze IDs 5/5.
+- GitHub Pages build/deploy SUCCESS, run 45212025471.
+- No se requirieron cambios funcionales adicionales: las dependencias se habían retirado en MIG-010 y MIG-011 formalizó su comprobación. No se modificaron deployments ni recursos externos.
+- La validación real de endpoints, sesiones/RBAC y permisos Apps Script/Spreadsheet/Drive permanece pendiente de Beta.
+- Siguiente tarea: MIG-012 — unificación funcional AUTH/USERS.
+
+
+### 2026-11-23 — MIG-012: unificación funcional AUTH/USERS
+- Se integraron getUsers, createUser y updateProfile en AUTH y se actualizaron sus rutas frontend.
+- Se conservaron contratos, campos, RBAC jerárquico, hash PBKDF2, secuencia de IDs, atomicidad, rollback y perfil propio.
+- createUser usa el ScriptLock local de AUTH, compartido con deleteUser; se retiró la lease cruzada USERS/createUser.
+- Se retiró USERS del mapa de servicios, health check, telemetría, políticas Coordinator y fan-out de caché de actor. AUTH precalienta su propia caché en login; se mantienen WRITE, FEEDBACK y ADMIN como destinos remotos.
+- Se eliminaron JS/Services/users.js y JS/Tests/users.js tras mover sus pruebas a AUTH.
+- Harness funcional aislado: 15/15 PASS. Regresión CI Node.js 22 posterior al commit pendiente; validación real Beta y deshabilitación del deployment/registro remoto heredado USERS quedan pendientes.
+
+
+### 2026-11-23 — Cierre MIG-012: CI y regresión aprobados
+- Se corrigieron las pruebas heredadas que todavía importaban `JS/Services/users.js` o esperaban siete servicios en el router central.
+- La configuración central activa y su caché pública pasan a seis servicios. El lector backend ignora la fila heredada USERS sin exigir su eliminación inmediata del registro externo; el cutover remoto queda sujeto a Beta.
+- GitHub Actions Node.js 22 SUCCESS — run 45222509966: 305 suites, 3,554 pruebas, 0 fallos.
+- RepositoryJavaScriptSyntax: 445 archivos PASS; RepositoryModuleReferences: 347 archivos PASS.
+- GitHub Pages build/deploy SUCCESS — run 45222508791.
+- MIG-012 queda COMPLETADA EN CÓDIGO. La verificación del deployment AUTH y la desactivación del deployment/fila heredada USERS permanecen pendientes de Beta; no se modificaron recursos externos.
+- Siguiente tarea: MIG-013 — sesiones sin Coordinator ni secretos compartidos.
+
+
+### 2026-11-23 — MIG-013: sesiones sin Coordinator ni secretos compartidos
+- Se verificó la autoridad de AUTH sobre login y Users/ActiveSessions, conservando hash PBKDF2, bloqueo temporal y tokens opacos generados en servidor.
+- Los seis servicios protegidos obtienen el actor desde la fuente de identidad con caché local por proyecto; CATALOG mantiene su loader independiente equivalente.
+- Se verificaron cache miss/hit, TTL de seis horas, clave SHA-256, expiración, identidad, usuario eliminado, token revocado y cambio de rol tras invalidación.
+- Las rutas ordinarias de sesión no usan Coordinator, API de sesión remota ni leases SharedMutation; se conservan las coordinaciones no relacionadas con sesión.
+- Se ampliaron pruebas MIG-013 y se documentó la coordinación frontend de invalidación remota como alcance de MIG-014.
+- Harness V8 aislado: MIG013SessionActorLocalLookup 21/21 PASS; SessionActivityCoordination 9/9; SessionActivityLeaseMinimization 6/6; AuthSessionReadOptimization 9/9 (45/45 aserciones dirigidas).
+- Sin cambios a endpoints, propiedades Apps Script, deployments, Spreadsheet, Drive ni datos externos. La validación real de Beta queda pendiente. MIG-013: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+
+### 2026-11-23 — MIG-014: revocación y limpieza de caché desde frontend
+- AUTH devuelve referencias SHA-256 de las claves de caché afectadas sin exponer tokens en la coordinación entre servicios.
+- El frontend coordina en paralelo la invalidación local de AUTH, WRITE, CATALOG, FEEDBACK, ADMIN y UTILITIES; CATALOG recibe solo sus claves específicas.
+- Los caminos de revocación de logout, cambio/reset de contraseña, cambio de rol, reset global y eliminación pasan por el mecanismo común de captura de claves.
+- Se definió reintento acotado (dos intentos), resultado parcial, aviso al usuario y vencimiento máximo de seis horas.
+- CI Node.js 22, run 45231811060: sintaxis PASS; SessionInvalidationFlow 15/15; fan-out MIG-014 PASS; contrato backend/cache 10/10; SessionActorCacheInvalidation 6/6.
+- La regresión global aprobó 1,200 pruebas y reportó cuatro suites fallidas en ADMIN, UTILITIES, AUTH e INTEGRATION. Las suites dirigidas MIG-014 pasaron; los fallos quedan pendientes de análisis separado.
+- No se invocaron deployments Apps Script, Spreadsheet ni Drive reales. Validación de endpoints y permisos entre proyectos pendiente de Beta.
+- MIG-014: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-015 — carga y administración de imágenes.
+
+
+### 2026-11-23 — MIG-015 en progreso: recursos centrales para imágenes
+- ADMIN, WRITE y FEEDBACK dejan de declarar IDs locales de Spreadsheet/Drive; acceden a la Spreadsheet vinculada y resuelven la carpeta Cortes mediante CentralConfigurationReader.js y ConfiguracionRecursos.cortes_root_folder_id.
+- La resolución de carpeta valida estado fresco de configuración, tipo Drive, nombre y padre; no utiliza fallback local.
+- ADMIN deja de guardar el ID de Imagenes_Sin_Uso en ScriptProperties; localiza la carpeta por nombre, detecta duplicados y protege la creación concurrente.
+- Se añadió una suite MIG-015 independiente para validar el contrato de configuración y aislar las pruebas de imágenes de fallos ajenos en otros grupos. CI pendiente.
+- La validación de los proyectos vinculados y recursos Drive reales queda reservada a Beta aislada.
+
+
+### 2026-11-23 — MIG-015: carga y administración de imágenes
+- ADMIN, WRITE y FEEDBACK eliminan IDs locales de Spreadsheet/Drive y usan SpreadsheetApp.getActiveSpreadsheet() más CentralConfigurationReader.js para resolver cortes_root_folder_id desde ConfiguracionRecursos.
+- La carpeta Cortes se valida con configuración vigente, tipo Drive, nombre e identidad del padre. No hay fallback local. ADMIN deja de guardar Imagenes_Sin_Uso en ScriptProperties y la localiza bajo Cortes, con detección de duplicados.
+- Se conserva el límite de 10 MB en ADMIN/WRITE y 3 MB en adjuntos FEEDBACK/PyS, junto con allowlist MIME, comprobación de firma, SHA-256, ledger/journal append-only, idempotencia y reconciliación.
+- Se verificaron variantes 300/800/1600, PNG/transparencia, ObjectURL, IndexedDB/Lightbox, reemplazo, recuperación, inventario, papelera, restauración y eliminación.
+- GitHub Actions Node.js 22, run 45236342364, commit 7ff8315dbb42132903e4f288f4b013c463ec118d: **605/605 comprobaciones dirigidas MIG-015 PASS**.
+- La regresión general reportó 1,909 aprobadas y cuatro suites fallidas (P4 política de roles, UTILITIES, AUTH, INTEGRATION), las mismas familias de fallos ya observadas antes de MIG-015. Se registran como deuda separada.
+- No se invocaron deployments Apps Script ni recursos reales. La validación de Spreadsheet, Drive, permisos y despliegues queda pendiente de Beta aislada.
+- MIG-015: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-016 — carga reanudable y aprobación de vídeos.
+
+
+### 2026-11-23 — MIG-015, ajuste de fixtures de regresión
+- Se actualizaron los fixtures de pruebas de sesión CATALOG para simular CacheService y Utilities sin invocar servicios Google reales.
+- Se alinearon los contratos de prueba de adjuntos FEEDBACK con el journal append-only y las comprobaciones de lectura posterior.
+- Se mantuvo la suite específica MIG-015 separada del resto de la regresión para que sus resultados puedan verificarse independientemente.
+
+
+### 2026-11-23 — MIG-016: carga reanudable y aprobación de vídeos
+- FEEDBACK crea/valida YouTubeUploadReservations con identidad, destino, hash de solicitud, estado y timestamps; no persiste OAuth token ni URL temporal en la hoja.
+- Inicialización idempotente por opVideoId y requestHash. LockService protege reservas; bloquea sesiones paralelas para el mismo destino y evita reutilizar opVideoId con metadatos distintos.
+- URL de sesión solo en CacheService (TTL 6 h) y en IndexedDB para reanudar. CacheService sin URL para reserva inicializada provoca fallo cerrado, no una sesión duplicada. La reserva tiene TTL operativo de 8 días.
+- Renovación validada: exige URL oficial y reserva previa; el frontend solo la solicita después de HTTP 404/410. La transferencia usa bloques de 8 MB, Content-Range, 308/Range y checkpoints.
+- YouTube permanece unlisted, categoría 28, no infantil, embebible y con estadísticas públicas desactivadas. FEEDBACK verifica ID real, URL canónica, propietario y sesión; aprobación/rechazo se registra con eventos append-only y solo aprobación publica en Corte/PyS/Tutorial.
+- 223/223 comprobaciones específicas de vídeo PASS en GitHub Actions Node.js 22 run 45238221817 (commit 8859d00126708795ad7107f674d0d41e8f17056c). Regresión global: 1,912 aprobadas y cuatro suites fallidas fuera del conjunto de vídeo (P4, UTILITIES, AUTH, INTEGRATION).
+- Pages build/deploy del commit funcional 8859d00126708795ad7107f674d0d41e8f17056c: run 45238220816 SUCCESS. Sin llamadas reales a YouTube ni despliegues Apps Script en CI.
+- Beta pendiente: OAuth real, canal YouTube, CacheService/Spreadsheet, 308/410, reanudación móvil/escritorio, RBAC de aprobación/rechazo y publicación real en destinos.
+- MIG-016: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: MIG-017 — Herramientas y operaciones de Drive.
+
+
+### 2026-11-23 — MIG-017: herramientas y operaciones de Drive
+- Se verificó el grupo dedicado MIG017 en GitHub Actions Node.js 22: 666/666 pruebas PASS (57 resúmenes, run 45249354445).
+- La cobertura incluye árbol Cortes, rutas permitidas, ACL/propietario, navegación, movimiento y rollback, backups/restauración, auditoría, métricas y restricciones destructivas.
+- Se corrigieron los contratos de parser/cliente de `move` y se incorporó validación de espacios en argumentos.
+- Validación real de Drive y Apps Script queda diferida a Beta aislada; no se usaron recursos productivos.
+
+### 2026-11-23 — MIG-018: modelos, cortes, VIN y contribuciones
+- Se corrigió el flujo moderno de información suplementaria para reutilizar el ledger ya validado (`appendLedgerSheet`) y evitar referencias fuera de ámbito.
+- Se añadieron pruebas de reutilización del ledger y del flujo moderno; ambas suites: 15/15 y 2/2 PASS.
+- Se corrigieron rutas relativas de pruebas VIN, salidas CLI no normalizadas, ejecución del contrato AT:AV y la expectativa del replay idempotente de VIN.
+- Se integró la cobertura AUG-050 (11/11), navegación, versiones, rangos de años, privacidad VIN, proyección de contribuciones, ledger append-only, concurrencia, recuperación, slots de cortes y asignación de IDs.
+- Grupo MIG018: 594/594 pruebas PASS (51 resúmenes, GitHub Actions run 45249354445).
+- Regresión general en ese run: 2,135 pruebas aprobadas y seis fallos de suites ajenas a MIG-017/MIG-018 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES fixture Spreadsheet, AUTH purga Logs, INTEGRATION BETA-043).
+- No se ejecutaron llamadas reales a Apps Script, Spreadsheet ni Drive; las verificaciones de infraestructura y datos reales quedan pendientes de Beta aislada.
+
+
+### 2026-11-23 — MIG-019: PyS, tutoriales y feedback
+- Grupo MIG019 en GitHub Actions Node.js 22 run 45251355899: 363/363 pruebas PASS en 38 suites únicas, sin fallos del grupo.
+- Se cubrieron integridad de PyS, asociaciones bidireccionales, navegación sin ciclos, imágenes y recuperación, caché, seguridad XSS, sugerencias/reportes, likes, vistas, tutoriales e invalidación/publicación incremental del catálogo.
+- Se corrigieron contratos de prueba desactualizados para el helper compartido de tarjetas PyS y los tokens semánticos CSS del acordeón.
+- La regresión global reportó 2,578 pruebas aprobadas y seis fallos de suites ajenas a MIG019: ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet fixture, AUTH purga Logs e INTEGRATION BETA-043.
+- Pages build/deploy del mismo HEAD, run 45251355846: SUCCESS.
+- No se ejecutaron Apps Script, Spreadsheet, Drive ni recursos productivos. La validación Beta aislada permanece pendiente (AUG-128/AUG-155).
+- Siguiente tarea: MIG-020 — Inbox completo.
+
+### 2026-11-23 — MIG-020: Inbox completo
+- Grupo MIG020, GitHub Actions Node.js 22 run 45253324874: 257/257 pruebas PASS, sin fallos del grupo.
+- Se añadieron a la interfaz las acciones «Marcar no leída» y «Eliminar de mi bandeja», con autorización por participante y conservación del historial compartido.
+- Se reforzó el rollback de lectura, archivo y cierre cuando falla la auditoría.
+- Se serializaron las mutaciones de Inbox con lock breve; consultas sin lock y mutaciones con rechazo rápido cuando está ocupado.
+- Se retiró el handler FEEDBACK sin ruta para leer el journal COORDINATOR; el frontend consulta el feed con configuración central, conforme a NORMAS_DESAROLLO.md §18.
+- Cobertura: conversaciones y RBAC, UI, borradores, categorías/plantillas, búsqueda/paginación, caché, auditoría, XSS, eventos de imágenes y mensajes de operaciones Developer.
+- Regresión general: 2,835 pruebas aprobadas y seis fallos fuera de MIG020 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet fixture, AUTH purga Logs, INTEGRATION BETA-043).
+- Pages build/deploy run 45253324552: SUCCESS.
+- No se ejecutaron servicios Apps Script ni recursos productivos. Beta aislada pendiente (AUG-115/116/119/152/155 y GP-INBOX-04B/04C/04D).
+- Siguiente tarea: MIG-021 — Métricas, estados y monitoreo.
+
+
+### 2026-11-23 — MIG-021: métricas, estados y monitoreo
+- Coordinator conserva los buckets horarios globales en el mismo estado JSON y escritura de lease ya requerida; se eliminó la escritura independiente de métricas.
+- Las adquisiciones exitosas de lease son los únicos eventos que generan incrementos v2. Las validaciones de sesión y lecturas del feed no añaden persistencia; los sondeos de salud permanecen excluidos.
+- Los buckets históricos v1 se leen y suman una sola vez durante su ventana de retención; los nuevos incrementos v2 se almacenan junto con las leases y se retienen 24 horas.
+- Se actualizó el contrato de tráfico ADMIN y el texto de ayuda del panel para distinguir métricas globales, locales e histórico anterior. La adenda Beta de línea base ahora prueba el inventario vigente (seis servicios y COORDINATOR), el esquema v1/v2 y la ausencia de escrituras por feed/sesión.
+- SharedMutationCoordinator aislado: 95/95 PASS. Grupo MIG021 en GitHub Actions Node.js 22, run 45263215575: todas las suites del grupo PASS; el contrato de tráfico ADMIN se amplió a 45/45.
+- La regresión general reportó 3,567 pruebas aprobadas y seis suites fallidas ajenas a MIG021 (ADMIN P4, FEEDBACK reset vídeo, CATALOG feed, UTILITIES Spreadsheet, AUTH purga Logs e INTEGRATION GP-PERF FEEDBACK/Inbox).
+- Pages build/deploy run 45263213731: SUCCESS. El commit `a58e69825736a60308216862e85f86d4482fd4ab` contiene el ajuste de UI, contrato, documentación y lista Beta. No se invocaron servicios Apps Script, Spreadsheet ni Drive reales; validación Beta aislada pendiente.
+- MIG-021: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente tarea: MIG-022 — Administración de Spreadsheet y mantenimiento.
+
+
+2026-11-23 — MIG-022 (avance inicial)
+- Se corrigió el comentario de JS/Services/Utilities.js: migrateTimestamps se serializa mediante ScriptLock local; no adquiere lease remota.
+- Se actualizó JS/Tests/UtilitiesSecurity.js para modelar CacheService/SHA-256 y validar sesión local, RBAC, staging, rollback, concurrencia y ausencia de URL/secreto/endpoint COORDINATOR. Prueba aislada V8: 19/19 PASS.
+- Commits: 2dd13f2a66925e75459fa4e39757421f0d4924d1 y e84587e6f050f7fbe55f59b495044a540fe46f60.
+- MIG-022 permanece EN PROGRESO; CI global y validación de los demás módulos ADMIN pendientes.
+
+ 
+2026-11-23 — Cierre MIG-022
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Se corrigió la documentación de Utilities y se alineó UtilitiesSecurity con la sesión local/ScriptLock local, sin lease remota ni dependencia de URL/secreto/endpoint COORDINATOR.
+- Validaciones específicas: 335/335 PASS; CI confirma Utilities 19/19, ADMIN createSheet/addColumn 9/9, backup/resume 8/8, papelera 41/41, organizador y reconciliación, terminal, auditoría, inventario, alertas y retención. Pruebas aisladas adicionales de backup/restore, migración IDs/fórmulas, logs y Developer UX también aprobaron.
+- La regresión global sigue fallando por cinco contratos/fuentes ajenos a MIG-022 (VehicleModalRolePolicy, test CoordinatorBrowserCatalogReset ausente, feed CATALOG legacy, lease AUTH legacy y FeedbackLockFastFail). Registrados en checkpoint para las tareas correspondientes.
+- Beta Apps Script/Spreadsheet/Drive pendiente; siguiente tarea MIG-023.
+
+ 
+2026-11-23 — Inicio MIG-023
+- Se inició la migración del feed incremental del catálogo desde COORDINATOR hacia CATALOG.
+- Hallazgo: api-config.js enruta publishCatalogReset/getCatalogChanges a COORDINATOR y FEEDBACK usa SharedMutationClient para publicar cambios. El plan MIG-023 moverá la lectura/publicación al servicio CATALOG y dejará la coordinación en frontend.
+- La retirada total de COORDINATOR, incluido su endpoint health, sigue en MIG-025 tras completar MIG-024.
+
+
+2026-11-23 — Avance MIG-023: feed CATALOG y retiro de rutas públicas Coordinator
+- Se implementó el diario local del feed en CATALOG con revisiones, cursor, lock local, idempotencia por requestId, retención de 100 eventos y recuperación por reset.
+- FEEDBACK ahora devuelve metadatos de deltas para Cortes/PyS/Tutoriales; el frontend publica a CATALOG después de confirmar la mutación. CATALOG reconstruye los snapshots desde Spreadsheet y rechaza snapshots enviados por el navegador.
+- Se retiraron las rutas públicas de feed de COORDINATOR; el helper interno de SharedMutation queda para MIG-024 y la retirada de health/telemetría de Coordinator para MIG-025.
+- Se actualizaron contratos automatizados y documentación de arquitectura/Beta.
+- Pruebas locales específicas: CatalogChangeFeed 16/16, FeedbackCatalogPublicationIsolation 14/14 y CatalogBrowserReset 10/10. Regresión completa y Beta real pendientes.
+
+2026-11-23 — Cierre de implementación MIG-023
+- CATALOG es propietario del feed incremental: diario local en ScriptProperties/ScriptLock, revisiones, cursor, retención acotada, idempotencia y recuperación mediante reset.
+- El frontend enruta lectura, reset y deltas a CATALOG. FEEDBACK devuelve referencias de cambios; CATALOG reconstruye los snapshots canónicos y no acepta snapshots del navegador.
+- Los requestId de publicación reutilizan IDs de operación cuando existen y usan nonce único para mutaciones independientes sin ID, evitando colisiones entre ediciones del mismo registro.
+- Se retiraron de COORDINATOR las rutas públicas de lectura y publicación del feed. Sus helpers internos de SharedMutation quedan pendientes de MIG-024; el endpoint health y la telemetría se retiran en MIG-025.
+- Se actualizaron contratos de publicación, routing, pruebas Beta, estrategia de lectura, README, registro de tareas y checkpoint.
+
+
+================================================================================
+2026-11-23 — MIG-024 COMPLETADA LOCALMENTE: RETIRADA DE SHAREDMUTATION
+HEAD: 38e9ec5f6f32710ef9fc6f9f07b24cd7312cc997
+- Se retiró SharedMutationClient.js; se conservaron los helpers locales SharedSessionActor.
+- Las tres operaciones ADMIN sustituyeron leases remotas por guardas locales por recurso, con reserva breve, trabajo fuera de ScriptLock y expiración TTL.
+- Se retiró la coordinación de invalidación de caché desde Coordinator; el frontend contacta directamente a cada servicio.
+- Se actualizaron contratos obsoletos y se añadió AdminLocalOperationGuard.mjs (6/6 PASS).
+- SharedMutationRemovalContract: 6/6 PASS. Regresión CI: 425 suites, 4,826 pruebas PASS y 1 suite conocida fuera de alcance con fallo (FeedbackLockFastFail.mjs). GitHub Pages SUCCESS.
+- Beta real pendiente según Tareas_Beta.md §6.4. No se desplegó Apps Script ni se tocaron datos productivos.
+- Siguiente: MIG-025 — retirar COORDINATOR, preservando antes sus capacidades de health/telemetría y el inventario de funciones exigido por NORMAS §17.
+================================================================================
+
+
+================================================================================
+2026-11-23 — INICIO MIG-025: INVENTARIO DE RETIRADA DE COORDINATOR
+HEAD de partida: acad94c5a44b469424dd9f8ca187c6a354f02b27
+- Inventariadas las funciones de Coordinator: contexto de sesión legado, telemetría global y health/GET/POST.
+- No se identifican consumidores backend activos de sus API de sesión después de MIG-024; la coordinación de invalidación se realiza desde frontend.
+- Consumidores frontend restantes: health de siete servicios, acción getServiceTraffic y panel de métricas globales. La telemetría global solo refleja eventos legacy Coordinator; no equivale al total HTTP.
+- Se mantiene como condición de paridad resolver la continuidad de métricas globales antes de retirar el panel; no se elimina ninguna función de monitorización por conveniencia.
+- Siguiente: inventario completo de endpoints, configuración central, documentación, pruebas y jobs; diseñar sustitutos antes de borrar Coordinator.
+================================================================================
+
+
+================================================================================
+2026-11-23 — MIG-025: RETIRADA DE COORDINATOR
+HEAD de código validado: b51c1df563329889df7765f9c49e1c7570f2e725
+- Se eliminó JS/Services/Coordinator.js y se retiraron sus handlers GET/POST, el routing getServiceTraffic, la identidad de health y su inclusión en el inventario local de telemetría.
+- El registro central y el escaneo de salud conservan únicamente AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. La fila histórica COORDINATOR se ignora en el lector; no se modificaron Spreadsheet ni propiedades externas.
+- La telemetría global legacy no se sustituyó por métricas locales: el agregado anterior registraba eventos instrumentados (principalmente adquisiciones exitosas de leases), no todas las solicitudes HTTP. Se retiró su consulta/gráfico y se conservó una sección visible en el panel Developer que explica su alcance y ausencia de equivalente global actual.
+- Se conservaron las métricas locales por navegador, temporales, no transmitidas ni persistidas. La documentación distingue expresamente su alcance del agregado histórico.
+- Se archivaron las guías antiguas de despliegue/Coordinator; README, SERVICE_HEALTH, Tareas_Beta, lista_beta, matriz de migración y registro de tareas fueron actualizados. La matriz conserva el inventario histórico y añade adenda de retirada.
+- Pruebas dirigidas: CoordinatorRetirementContract 13/13; ServiceHealthContract 19/19; ServiceBrowserTrafficContract 10/10; ServiceTrafficAdminContract 10/10; AdminTrafficSurfaceContract 12/12; DirectTrafficRoutingCoverage 6/6; ServiceMetricsTelemetry 1/1; DeveloperPrivilegeRouting 20/20; PasswordRecovery 10/10; PasswordKdfBenchmark 5/5.
+- GitHub Actions Node.js 22, run 45285424788: 417 suites, 4,667 pruebas aprobadas, 1 fallo conocido fuera del alcance (FeedbackLockFastFail.mjs, expectativa general sobre locks FEEDBACK). Los contratos MIG-025 aprobaron. GitHub Pages run 45285423155: SUCCESS.
+- No se modificaron deployments, proyectos Apps Script, Spreadsheet, Drive, propiedades ni triggers externos. La inspección/limpieza externa se difiere a Beta aislada y requiere autorización.
+- MIG-025: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: MIG-026 — eliminar configuración local de todos los servicios.
+================================================================================
+
+
+================================================================================
+MIG-026 — auditoría de configuración local — 2026-11-23
+- Se contrastó la implementación backend vigente con INVENTARIO_CONFIGURACION_BACKEND.md y las dependencias MIG-006/MIG-008.
+- Se registraron residuos en AUTH, CATALOG, UTILITIES, WRITE, FEEDBACK, ADMIN y SharedSessionActor: IDs locales, ScriptProperties y/o estado operativo legacy.
+- Se detectó un consumidor ADMIN de la carpeta Cortes que aún usa CORTES_IMAGES_ROOT_FOLDER_ID pese a existir accessor central getCortesRootFolder().
+- No se sustituyó openById() por getActiveSpreadsheet() sin prueba Web App real. El intento experimental produjo fallos de fixtures/consumidores y fue revertido; no queda cambio funcional experimental aprobado.
+- Se documentó que ledgers/idempotencia/sesiones/auditorías requieren migraciones específicas, y que el secreto HMAC de recuperación no puede trasladarse a configuración ordinaria.
+- TAREAS_MIGRACION_ARQUITECTURA.md y checkpoint.md actualizados con el estado real, bloqueadores y orden siguiente.
+- No se modificaron deployments, proyectos Apps Script, propiedades instaladas, Spreadsheet, Drive ni datos externos.
+- MIG-026 sigue EN PROGRESO; depende de la evidencia Beta MIG-006/MIG-008 y de migraciones de estado con paridad.
+================================================================================
+
+
+2026-11-23 — MIG-026 (avance: raíz Cortes ADMIN)
+- `handleCreateCortesImageFolder` ahora obtiene la raíz mediante `getCortesRootFolder()`, eliminando la dependencia directa de `CORTES_IMAGES_ROOT_FOLDER_ID`.
+- Se añadió `AdminCentralCortesFolderConfiguration.mjs` con cuatro escenarios y se incorporó al runner de regresión como grupo MIG026.
+- Se amplió la lista Beta para verificar la creación real bajo la raíz configurada y el rechazo de configuración inválida. No se modificó Drive ni se ejecutó deployment.
+
+
+2026-11-23 — Resultado CI MIG-026
+- Run 45290329039: sintaxis PASS y AdminCentralCortesFolderConfiguration 4/4 PASS.
+- Regresión: 4,671 pruebas PASS; falla preexistente FeedbackLockFastFail.mjs, reproducida también en run 45289392165 anterior al commit MIG-026. No atribuible al cambio ADMIN.
+
+
+### 2026-11-23 — MIG-026: reconciliación estática de configuración
+- Se contrastaron los módulos backend vigentes y el lector central contra el inventario MIG-003 después de MIG-024/MIG-025.
+- Se confirmó que AUTH, CATALOG y UTILITIES aún conservan `SPREADSHEET_ID/openById`; WRITE, FEEDBACK, ADMIN y CentralConfigurationReader usan Spreadsheet activa. SharedSessionActor conserva un fallback condicionado a proveedor.
+- Se clasificaron las propiedades activas de AUTH, CATALOG, WRITE, FEEDBACK y ADMIN como estado operativo, ledger, contador o secreto protegido; no deben trasladarse como parámetros genéricos.
+- Se confirmó que FEEDBACK sigue leyendo/escribiendo `GPSpedia_RICH_TEXT_MODE_V1` y que el lector central no incorpora un mecanismo de publicación versionada. Se difiere su retirada hasta implementar y probar una vía autorizada con paridad.
+- El probe MIG006 local/simulado no prueba el comportamiento del deployment Web App real. La validación Beta sigue pendiente.
+- Se actualizaron `INVENTARIO_CONFIGURACION_BACKEND.md` y `TAREAS_MIGRACION_ARQUITECTURA.md`. No se modificó código funcional, Apps Script desplegado, PropertiesService instalado, Spreadsheet, Drive ni datos externos.
+
+
+### 2026-11-24 — MIG-026: publicación central de rich_text_mode y caché global
+- Se implementó publicación versionada en ADMIN con autorización Developer, lock, idempotencia, revisión incremental, historial y lectura de confirmación.
+- FEEDBACK consume la configuración central y admite invalidación de caché; el frontend coordina publicación, lectura e invalidación sin añadir secretos ni URLs interservicio en Apps Script.
+- La caché de navegador requiere revisión y metadatos y expira a los 5 minutos; caché ausente, inválida o vencida aplica modo estricto hasta la lectura central.
+- Se añadieron/ajustaron contratos de publicación, caché global y pruebas Beta; se integró RichTextGlobalPreference en el runner MIG026.
+- Validación CI: sintaxis de módulos modificados PASS; CentralConfigurationPublisherContract 6/6 PASS; RichTextGlobalPreference 10/10 PASS; regresión 4,687 pruebas PASS con un fallo preexistente en GP-PERF FEEDBACK/Inbox (contrato que prohíbe locks en FEEDBACK, contradicho por el código existente). El mismo fallo exacto está presente en run 45291268637, anterior a estos cambios.
+- No se desplegaron proyectos Apps Script ni se accedió/modificó PropertiesService, Spreadsheet, Drive o datos externos. La eliminación física de una propiedad instalada y las verificaciones de deployment quedan para Beta.
+
+
+### 2026-11-24 — MIG-026: reconciliación estática del inventario MIG-003
+- Se verificó el árbol vigente de servicios: 9 módulos activos; users.js, Coordinator.js y SharedMutationClient.js no existen como módulos independientes.
+- Se confirmó que AUTH, WRITE, CATALOG y ADMIN son los cuatro módulos con referencias a ScriptProperties; se identificaron 12 familias vigentes de claves/estado. Las antiguas familias Coordinator/SharedMutation y la preferencia local rich_text_mode ya no aparecen en el código activo revisado.
+- Se actualizó la clasificación de acceso a Spreadsheet: AUTH/CATALOG/Utilities conservan el ID operativo; WRITE/ADMIN/FEEDBACK/CentralConfigurationReader usan Spreadsheet activa; las aperturas por ID de backup/rollback no se clasifican como IDs de base. SharedSessionActor conserva fallback condicional.
+- La inspección es estática: no se leyeron ni borraron propiedades instaladas ni se probaron deployments. MIG-006/MIG-008 siguen siendo dependencias Beta para validar contexto activo.
+
+
+### 2026-11-24 — MIG-026: proveedores explícitos en SharedSessionActor
+- Se retiró el fallback global SPREADSHEET_ID/openById de SharedSessionActor. El helper requiere un proveedor loadSpreadsheet inyectado y valida el contenedor devuelto.
+- AUTH inyecta getAuthUsersSpreadsheet_; ADMIN y WRITE inyectan getSpreadsheet; UTILITIES inyecta su proveedor basado en el ID operativo local.
+- Se actualizaron los contratos/fixtures de AUTH, WRITE, ADMIN, UTILITIES y los tests de enrutamiento, sesión y KDF para reflejar la inyección explícita.
+- CI: sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; PasswordKdfBenchmark 5/5 PASS; regresión 4,688 pruebas PASS con un único fallo preexistente en FeedbackLockFastFail (prohibición estática de LockService en FEEDBACK, reproducida en runs anteriores al cambio). No se modificaron los locks de FEEDBACK.
+- No se desplegaron servicios ni se modificaron hojas, PropertiesService instaladas o datos externos.
+
+
+### 2026-11-24 — MIG-026: confirmación CI del proveedor explícito
+- Run 45298456129, HEAD 0f53fe3f941715b75c8198314efbbb9c54f434ae: sintaxis PASS; MIG013SessionActorLocalLookup 22/22 PASS; regresión 4,688 pruebas aprobadas y una suite fallida.
+- La única suite fallida es FeedbackLockFastFail: su aserción estática prohíbe LockService en FEEDBACK, aunque el código vigente lo contiene. El mismo fallo se reproduce en ejecuciones anteriores a MIG-026 (45291268637 y 45289392165); no se modificó FEEDBACK porque no forma parte de este subtramo.
+- Pages build del mismo HEAD: pendiente de consultar su resultado final.
+
+
+### 2026-11-24 — MIG-026: búsqueda preliminar de interconexión backend
+- Revisión estática de los 9 módulos activos: no se encontraron URLs de Web Apps, constantes de URL de otros servicios ni secretos Coordinator/SharedMutation en backend.
+- Las llamadas UrlFetchApp restantes corresponden a operaciones de imagen, YouTube o APIs Google/Drive; no se identificó coordinación backend→backend entre servicios GPSpedia.
+- Se confirma que el secreto HMAC propio de recuperación de AUTH permanece como elemento de seguridad independiente, no como secreto compartido. La búsqueda global final sigue pendiente.
+
+
+### 2026-11-24 — MIG-026: CATALOG feed a ledger Spreadsheet
+- CATALOG deja de persistir revisión y eventos del feed incremental en ScriptProperties. Se introducen las hojas CatalogChangeState y CatalogChangeEvents con esquema versionado y validación estricta; el runtime no crea hojas automáticamente.
+- Se preservan lock, revisión monotónica, idempotencia por service/operation/requestId, snapshots canónicos, paginación, reset ante cursor obsoleto/corrupto y ventana activa de 100 eventos.
+- Se verifica read-back del evento y del estado. Los registros no contienen userId ni sessionToken.
+- CatalogChangeFeed: 18/18 PASS. CI: 4,690 pruebas aprobadas; una suite preexistente falla en FeedbackLockFastFail por contrato estático de LockService en FEEDBACK, reproducido antes de MIG-026.
+- CATALOG pasa a cero referencias a PropertiesService. El inventario queda en 3 módulos/10 familias restantes (AUTH, WRITE, ADMIN).
+- Las hojas y limpieza de propiedades instaladas se reservan para Beta aislada; no se accedió a Spreadsheet ni PropertiesService desplegado.
+
+
+### 2026-11-24 — MIG-026: reset inicial obligatorio del feed CATALOG
+- Se reforzó getCatalogChanges: un ledger vacío no se interpreta como feed vigente sin cambios; responde resetRequired hasta que exista un evento reset inicial.
+- Se añadió contrato para inicialización: publicar reset como Desarrollador genera revisión 1 y hace que los clientes reconstruyan snapshot antes de continuar con deltas.
+- CatalogChangeFeed: 19/19 PASS. CI run 45299704239: 4,691 pruebas aprobadas; una suite fallida preexistente FeedbackLockFastFail.
+
+
+### 2026-11-24 — MIG-026: CI y Pages confirmados en HEAD de documentación
+- HEAD de rama: b2a919af6342927e9e7155cfeb3e29f3fc0cb860. El código funcional corresponde al commit 96f17733e26c5c96b2235d7c2da35bcccdd6c8a3; las modificaciones posteriores de este corte son registros/documentación.
+- Regresión de servicios run 45300194745: 420 suites, 4,691 pruebas PASS y una suite fallida, FeedbackLockFastFail. El fallo es la aserción preexistente que prohíbe LockService en FEEDBACK; ya se reproduce en runs anteriores a MIG-026.
+- GitHub Pages run 45300194094: build y deploy automáticos completados correctamente. No se desplegaron proyectos Apps Script.
+- Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+
+
+### 2026-11-24 — MIG-026: baseline del contador WRITE en ledger append-only
+- Se migró GPSpedia_CORTES_LAST_ID al ledger CortesIdReservations mediante un marcador determinista e idempotente que conserva el máximo entre Cortes, reservas previas y contador heredado.
+- La inicialización acepta cero sin consumir un ID, usa lock fail-fast solo durante la primera siembra y verifica persistencia mediante flush/read-back.
+- Las reservas normales dejan de consultar ScriptProperties; freezeCortesIds deja de escribir el contador legacy y conserva dry-run/respaldo/conversión de fórmulas.
+- Se añadió WriteCortesIdLedgerBaseline.mjs y se registró en el grupo MIG026 del runner.
+- CI y pruebas Beta reales aún no ejecutadas para este cambio; no se modificaron deployments, hojas ni propiedades instaladas.
+
+
+### 2026-11-24 — MIG-026: cierre del subtramo WRITE high-water
+- HEAD: 60223d2943ec6d7f2ed4e3dd4b24830e32fcb08c; rama base protegida sin cambios.
+- CI run 45304345999: sintaxis PASS; 337 suites; 3,882 pruebas aprobadas. Tres fallos de suite fuera del subtramo: WriteCatalogPublicationIsolation (dos invocaciones del runner) y FeedbackLockFastFail.
+- Suites específicas PASS: WriteCortesIdLedgerBaseline 13/13; WriteVehicleIdAllocationIdempotency 12/12; WriteVehicleIdAllocatorBoundedRead 11/11; WriteFreezeCortesIdsBackupOutsideLock 5/5; WriteAuthorizationMinimization 15/15; WriteIdAllocatorNonBlocking 7/7.
+- GitHub Pages run 45304344734: SUCCESS. No hubo despliegue Apps Script ni acceso a Spreadsheet/Drive/PropertiesService instalados.
+- Se agregó validación Beta diferida del baseline, lectura/escritura real, concurrencia, respuesta perdida, fail-closed y verificación de no relectura de la propiedad heredada.
+- Siguiente subtramo MIG-026: estado AUTH; estudiar tratamiento del secreto HMAC antes de migrar. ADMIN queda después, sin trabajo paralelo.
+
+
+### 2026-11-24 — MIG-026 AUTH: retirada de secreto HMAC de recuperación
+- Auth.js y su fixture ya no leen/crean GPSpedia_PASSWORD_RECOVERY_SECRET_V1. Los códigos pasan a 24 caracteres hexadecimales (96 bits); SHA-256 genera digests en CacheService.
+- Se conserva el contrato de recuperación: TTL 10 min, un solo uso, cinco intentos, tres solicitudes/hora, respuesta genérica e invalidación si MailApp falla.
+- Actualizados index.html y Service Worker v75; PasswordRecovery 10/10 PASS, fixture/paridad PASS y sintaxis PASS.
+- CI 45305099851: 337 suites; 3,882 pruebas aprobadas y 3 fallos ajenos al cambio (WriteCatalogPublicationIsolation duplicada en dos grupos y GP-PERF FEEDBACK/Inbox). Pages 45305099649 SUCCESS.
+- La propiedad HMAC legacy no se borró de proyectos instalados; limpieza física pendiente de Beta después de desplegar y verificar la nueva versión.
+- Próxima tarea: migrar login_request_ a un ledger/estado persistente; después marcadores de revocación AUTH.
+
+
+### 2026-11-24 — MIG-026 AUTH: LoginRequests y locks fail-fast
+- Migrada la idempotencia login_request_ a hoja operativa LoginRequests (10 columnas), baseline idempotente/reanudable y read-back. Las propiedades legacy solo se leen durante la primera siembra; no se escriben ni borran.
+- Se mantiene token estable entre reintentos, recuperación de append ambiguo, revocación por usuario/token, TTL de 24 h y limpieza rotatoria acotada a 25 filas por login.
+- Todas las llamadas waitLock de AUTH se sustituyeron por tryLock(0). Ninguna función AUTH espera hasta 10 s por otra ejecución; contención inmediata y reintentable.
+- Actualizados Auth.js, fixture, LoginRequestLedger.mjs, AuthSessionReadOptimization.mjs y harnesses LastDeveloperProtection, SessionProfileRefresh, PasswordRecovery, PasswordHashMigration y SensitiveLogsTrustedActor.
+- CI run 45308365799: sintaxis PASS; 338 suites; 3,921 pruebas aprobadas; tres fallos ajenos al cambio (WriteCatalogPublicationIsolation en dos grupos y GP-PERF FEEDBACK/Inbox). LoginRequestLedger 39/39; PasswordRecovery 10/10; AUTH operativo/copia 32/32; perfil/revocación 23/23. Pages run 45308365427 SUCCESS.
+- No se desplegó Apps Script ni se modificaron propiedades, hojas o datos instalados. Validación real y limpieza de login_request_ legacy pendientes de Beta.
+- Siguiente tarea: migrar role_revocation_pending_ en AUTH; ADMIN permanece después.
+
+
+### 2026-11-24 — MIG-026 AUTH: migración de role_revocation_pending_
+- Migrado el marcador legacy a Users.SessionToken; baseline versionado y reanudable en LoginRequests fila 2, columna H.
+- El baseline valida JSON, userId, unicidad, estado activo, rol actual y concordancia de marcadores; read-back de cada escritura. No escribe ni elimina propiedades.
+- hasPendingRoleRevocation_ y reconcileRoleRevocationUnderLock_ ya no consultan ScriptProperties. doPost asegura baseline antes del actor protegido; login, validación de sesión, logout y recuperación también lo aseguran.
+- AUTH no contiene waitLock ni tryLock temporizado; todas las adquisiciones ScriptLock son tryLock(0).
+- CI run 45310018557: sintaxis PASS; 339 suites; 3,961 pruebas aprobadas; RoleRevocationLedger 39/39, LoginRequestLedger 40/40, PasswordRecovery 10/10, AUTH operativo/copia 32/32, perfil/revocación 23/23 y PasswordKdfBenchmark 5/5. Tres fallos externos (WriteCatalogPublicationIsolation en dos grupos y GP-PERF FEEDBACK/Inbox). Pages 45310017580 SUCCESS.
+- No se desplegó Apps Script ni se modificaron propiedades instaladas. Validación real y limpieza legacy pendientes de Beta.
+- Siguiente tarea: primera familia de estado ADMIN, una a la vez.
+
+
+### 2026-11-24 — MIG-026 ADMIN: auditoría persistente en AdminOperationAudit
+- Migrada la familia `GPSpedia_ADMIN_AUDIT_V1_<eventId>` a la hoja privada `AdminOperationAudit` (16 columnas); fila 2 reservada para baseline y eventos desde fila 3.
+- Baseline legacy idempotente/reanudable, importación por lote, verificación read-back, rechazo de filas huérfanas/duplicadas/corruptas y sanitización de campos; no escribe ni elimina propiedades legacy.
+- El flujo ordinario ya no consulta ScriptProperties para auditoría. Inicio/cierre usan `tryLock(0)`; no hay `waitLock`; el registro es best-effort y no detiene la operación funcional cuando hay contención o falla de esquema.
+- Retención 180 días, 300 eventos finalizados, 20 pendientes; limpieza por lotes. AdminAuditTrail 27/27 PASS.
+- CI run 45317266195: 495 suites, 5,799 pruebas aprobadas, 0 fallos; sintaxis 457 archivos y referencias 377 archivos PASS. GitHub Pages run 45317265579: SUCCESS.
+- No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas. Preparación de hoja real, concurrencia y limpieza legacy quedan pendientes de Beta (§11).
+- Siguiente familia ADMIN: Safe Apply `GPSpedia_CORTES_ORGANIZER_OP_V1_<sha256(operationId)>`, una tarea a la vez.
+
+
+### 2026-11-24 — MIG-026 ADMIN-05: ledger de reservas de IDs LogosMarca
+- Sustitución del contador operativo LOGOS_MARCA_ID_COUNTER por el ledger LogoIdReservations (baseline en fila 2 y reservas desde fila 3).
+- Baseline reanudable: importa el high-water máximo entre contador legacy y hoja LogosMarca; valida IDs y confirma read-back. La propiedad legacy se conserva solo como fuente de baseline, sin setProperty/deleteProperty.
+- Reservas monotónicas con UUID, read-back y high-water; los IDs reservados no se reutilizan si falla la escritura posterior de la fila de logotipo.
+- El escaneo de IDs se realiza antes del lock; el lock fail-fast protege solo la reserva/escritura de Spreadsheet. Las operaciones Drive permanecen fuera de la sección crítica.
+- Pruebas y runner actualizados; se añadió LogoIdReservationLedger y se amplió la cobertura de no bloqueo. CI pendiente al publicar.
+
+
+### 2026-11-24 — Cierre local MIG-026 ADMIN-05: contador LogosMarca
+- CI final run 45366702261: 499 suites, 5,886 pruebas aprobadas, 0 fallos; sintaxis PASS. Pages run 45366700363 SUCCESS.
+- LogoIdIntegrity 18/18, AdminLogoWriteLockNonBlocking 6/6 y LogoIdReservationLedger 10/10 PASS.
+- La sección crítica usa tryLock(0), sin espera; lectura del catálogo antes del lock y consulta O(1) de la última reserva en el flujo normal. Drive, compensaciones y telemetría fuera del lock.
+- La propiedad legacy solo se lee durante baseline; no se escribe ni elimina. No se desplegó Apps Script ni se modificaron hojas/propiedades instaladas.
+- Resultado: MIG-026 ADMIN-05 COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente paso: búsqueda estática global final de MIG-026.
+
+
+### 2026-11-24 — MIG-026 búsqueda estática global de configuración
+- Inspección de 9 servicios Apps Script, 39 módulos frontend, 3 HTML, manifest, service worker, 3 workflows y 49 documentos activos.
+- Cero URLs de deployments GPSpedia y cero secretos compartidos operativos en servicios. Única bootstrap pública en frontend según MIG-009.
+- PropertiesService restringido a nueve puntos de lectura legacy dentro de baselines; sin setProperty/deleteProperty en servicios activos.
+- Excepción pendiente MIG-006: SPREADSHEET_ID permanece en AUTH, CATALOG y UTILITIES hasta probar el contexto Web App real.
+- Se retiró __sharedMutationToken del allowlist WRITE, se actualizaron documentos obsoletos de Coordinator/SharedMutation y se marcaron listas Beta antiguas como históricas.
+- Se añadió suite MIG026StaticConfigSearch.mjs y auditoría MIG026_BUSQUEDA_ESTATICA_FINAL.md. CI pendiente.
+
+
+### 2026-11-24 — Cierre de búsqueda estática global MIG-026
+- MIG026StaticConfigSearch: 10/10 PASS.
+- CI run 45370448353: 499 suites, 5,889 pruebas aprobadas, 0 fallos; sintaxis PASS. Pages run 45370445917 SUCCESS.
+- Resultado: no quedan URLs de otros servicios ni secretos compartidos en servicios Apps Script. Se mantiene una única bootstrap pública frontend según MIG-009.
+- Pendiente Beta MIG-006: tres SPREADSHEET_ID locales en AUTH/CATALOG/UTILITIES; no se retiraron sin prueba Web App real.
+- MIG-026 queda COMPLETADA EN CÓDIGO Y CI, CON VALIDACIÓN BETA PENDIENTE.
+
+
+2026-11-24 — Privacidad de errores de autenticación y sesión (MIG-026)
+- AUTH clasifica las credenciales incorrectas con el código `INVALID_CREDENTIALS`; los fallos restantes de login se clasifican como `LOGIN_FAILED`.
+- El frontend registra el objeto de error en la consola y solo muestra uno de los dos mensajes permitidos: `Contraseña o usuario incorrecto` o `Error en el inicio de sesión, intente otra vez`.
+- Los motivos técnicos de cierre de sesión se registran en consola y se sustituyen por el mensaje genérico antes de mostrarlos en pantalla.
+- Se sincronizó el fixture de AUTH y se añadió la prueba estática `AuthErrorPrivacy.mjs` al runner.
+- Validación CI pendiente para el commit que contiene estos cambios; sin despliegue ni pruebas Beta.
+
+
+Adenda 2026-11-24 — validación y corrección de privacidad AUTH
+- La primera ejecución de CI identificó dos fallos de contrato en las pruebas (formato de consola y expectativa de logout); se corrigieron las aserciones preservando el orden funcional de logout.
+- La ejecución final CI run 45383504489: 500 suites, 5,896 pruebas aprobadas, 0 fallos; sintaxis PASS; AuthErrorPrivacy 7/7 PASS.
+- Commit funcional final: 334c5b51a1ae7fd3b4a952b5038ffd874ff9431a.
+
+
+### 2026-11-24 — Refuerzo de privacidad AUTH/sesión
+
+- Se sanearon las rutas de sesión local inválida, rol local inválido, cierre desde otra pestaña y fallo de limpieza de caché.
+- `showLoginScreen` aplica una lista permitida para impedir que motivos técnicos lleguen al DOM.
+- Los detalles de invalidación/rol/errores permanecen en la consola del navegador; la UI muestra el mensaje genérico permitido.
+- Se normalizó literalmente el mensaje de credenciales a `contraseña o usuario incorrecto`.
+- Se amplió AuthErrorPrivacy para cubrir los límites de presentación.
+
+
+- Publicación del refuerzo de privacidad en la rama de trabajo: commit de código/pruebas `9d489acaa308d12ff0b5ceff164bed146c14dfa9`; archivos afectados: `JS/Frontend/auth.js`, `JS/Frontend/ui.js` y `JS/Tests/AuthErrorPrivacy.mjs`. Se incorporó el requisito normativo §19 y se actualizaron los registros de continuidad.
+
+
+### 2026-11-24 — MIG-027 suite de paridad funcional
+
+- Se añadió `JS/Tests/MIG027FunctionalParity.mjs` con 8 verificaciones de mapa de acciones, trazabilidad documental, dispatchers/handlers/consumidores, RBAC, sustitución de controles e integración de suites.
+- El mapa vigente se verificó en 123 acciones: AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1 y ADMIN 45.
+- Se integró el grupo 48 MIG027 en `RunServiceTests.mjs`, incorporando pruebas de carga/aprobación YouTube (MIG-016), acciones Spreadsheet (MIG-022) y feed/caché/impresión de catálogo (MIG-023).
+- Comparación de IDs de la pantalla base: los 18 IDs heredados ausentes tienen sustituciones identificadas en las superficies activas; el inventario de pantallas conserva 335 declaraciones de controles.
+- CI run 45388156117: 511 suites, 6,035 pruebas aprobadas, 0 fallos; MIG027FunctionalParity 8/8 PASS; sintaxis PASS.
+- Validación de servicios reales y recursos externos no ejecutada; permanece en MIG-030/Beta.
+
+
+### 2026-11-24 — MIG-028 seguridad, rendimiento y regresión
+
+- Se creó `JS/Tests/MIG028SecurityPerformanceRegression.mjs` (9/9 PASS) y se integró el grupo 49 MIG028 en `JS/Tests/RunServiceTests.mjs`.
+- La suite verifica el router central sin revalidación por acción, caché central single-flight/stale/fail-closed, revocación e invalidación por servicio sin transmitir tokens, actor confiable y RBAC, locks no bloqueantes/idempotencia, tolerancia a fallos de HTTP/red/JSON/servicios, telemetría local y comparación responsable con MIG-005.
+- CI final run 45390513381, commit 8ccc2a761ebec3f03b2ddcb8ddc0390cac25d2ac: SUCCESS; 512 suites, 6,044 pruebas aprobadas, 0 fallos; sintaxis PASS.
+- Comparación de CI: MIG-005 306 suites/3,581 pruebas/~30 s; MIG-028 512 suites/6,044 pruebas/~41 s. Esta duración corresponde al runner y no es latencia de la aplicación.
+- Las métricas de aplicación p50/p95, snapshot/delta, llamadas y operaciones reales Spreadsheet/Drive/YouTube siguen pendientes de Beta conforme a la línea base MIG-005. No se simularon mediciones reales.
+- No se desplegaron servicios Apps Script ni se alteraron propiedades, permisos, hojas, archivos o datos productivos.
+
+
+### 2026-11-24 — MIG-029 guía de despliegue simplificada
+
+- Se creó `Services/DEPLOYMENT_GUIDE.md` con los pasos reales para los seis proyectos Apps Script activos y su matriz de archivos fuente.
+- Se retiraron del procedimiento operativo las referencias a USERS, COORDINATOR, SharedMutation y propiedades/secretos de interconexión. Los documentos históricos siguen archivados y no ejecutables.
+- Se documentó actualización de versión en el deployment existente, publicación de URL nueva mediante revisión íntegra de `Servicios` + `ConfiguracionHistorial` + conmutación controlada de `active_revision`, sin fallback local.
+- Se añadieron rollback por versión y rollback de URL mediante nueva revisión. Cambiar un endpoint no requiere redesplegar los otros servicios ni el frontend.
+- README enlaza la guía vigente. Se añadió `MIG029DeploymentGuideContract.mjs` al runner para validar vigencia, dependencias, registro central y rollback.
+- No se desplegaron proyectos Apps Script ni se modificaron propiedades, permisos, hojas o datos productivos. La ejecución del procedimiento real y su rollback permanecen pendientes de Beta aislada.
+
+
+### 2026-11-24 — MIG-030 preparación de pruebas Beta
+- Se verificó el bloque de sincronización segura al inicio de Tareas_Beta.md: remoto/rama exactos, árbol limpio, fetch + pull --ff-only y HEAD final; sin comandos destructivos.
+- Contrato estático del preflight: 8/8 PASS. Se confirmó la presencia de BETA-01 a BETA-08 y las secciones diferidas MIG-012/013/015/017/018/024/025/026.
+- Se actualizó el estado de preparación en TAREAS_MIGRACION_ARQUITECTURA.md y la continuidad en checkpoint.md.
+- No se ejecutaron pruebas Beta remotas ni se modificaron deployments, propiedades, permisos, Spreadsheet, Drive o datos productivos. Las pruebas reales permanecen pendientes de recursos Beta aislados.
+
+- Prueba adicional del bloque de sincronización en un repositorio Git fixture temporal: fast-forward v1→v2, guardia de árbol sucio y guardia de rama incorrecta, todos PASS. El remoto fue local/aislado; no se hizo fetch/pull del repositorio GitHub ni se invocaron servicios Beta.
+
+- CI Node.js 22 para HEAD cb794f1afe23d84845db046b4202c825691a6420 (run 45395676090): ServiceHealthContract 19/19 PASS en dos invocaciones; regresión 513 suites / 6,051 pruebas / 0 fallos.
+- La sonda remota no se ejecutó: workflow ausente en main y bootstrap de entorno fijo sin selector; aislamiento Beta no verificado. Se mantiene la precaución documentada en Tareas_Beta.md.
+- No se ejecutaron operaciones Apps Script/Spreadsheet/Drive/OAuth ni se modificó producción; Beta real continúa pendiente.
+
+
+### 2026-11-24 — Cierre local MIG-030 y rotación de checkpoint
+
+- El workflow `GPSpedia service regression tests`, run 45396084519, job 138452115396, sobre el commit 142b9057f57909c364a9726fd448f43d6e048cad terminó SUCCESS: Node.js 22, sintaxis PASS, 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- Se confirmó que los contratos de salud y de independencia funcional cubren errores parciales sin detener servicios/operaciones independientes. La evidencia es local/CI y no se presenta como disponibilidad Beta real.
+- MIG-030 se actualizó a COMPLETADA CON VALIDACIÓN DIFERIDA conforme a NORMAS_DESAROLLO.md §§5 y 10. La matriz real BETA-01..08 y MIG-012/013/015/017/018/024/025/026 permanece pendiente en Tareas_Beta.md hasta contar con deployments y recursos sintéticos autorizados.
+- No se invocaron endpoints ni se modificaron deployments, propiedades Apps Script, permisos, Spreadsheet, Drive, OAuth/YouTube ni datos productivos.
+- El checkpoint activo excedía 180,000 caracteres Unicode. Se archivó íntegro como `Olds/Documentacion_Legacy/Checkpoint_Archive/checkpoint_2026-11-24_parte_006.md`; el blob SHA coincide con el original. Se actualizó el manifiesto y se creó un checkpoint activo resumido, sin alterar las partes históricas.
+
+
+### Rectificación de estado MIG-030 — 2026-11-24
+
+- La preparación local y CI de MIG-030 están aprobadas, pero la aceptación global no está satisfecha mientras MIG-026 conserve tres referencias locales `SPREADSHEET_ID/openById` en AUTH, CATALOG y UTILITIES.
+- La eliminación requiere comprobar el acceso Spreadsheet en el contexto real de las Web Apps; no se reemplazará por una simulación ni se retirarán IDs por inferencia.
+- Se rectifica el estado global de MIG-030 a EN PROGRESO. La entrada anterior que la marcó completada con validación diferida queda corregida por esta adenda; no se altera ni elimina el historial.
+- El checkpoint activo y TAREAS_MIGRACION_ARQUITECTURA.md reflejan la dependencia y la siguiente acción. No se modificó código funcional ni se invocaron servicios externos.
+
+- Precisión de MIG-026: se sustituyó la etiqueta de bloqueo por una descripción del trabajo pendiente. Permanecen tres localizadores Spreadsheet locales y su retirada requiere validar primero el contexto real de Web App; no se cambia el comportamiento de acceso sin esa evidencia.
+
+
+### Ajuste de criterio de cierre MIG-030 — 2026-11-24
+
+- Se alineó el estado de MIG-030 con NORMAS_DESAROLLO.md §§5 y 10: COMPLETADA CON VALIDACIÓN DIFERIDA, porque su preparación, contratos y regresión local aprobaron; las pruebas de campo permanecen pendientes sin bloquear el cierre local.
+- MIG-026 sigue EN PROGRESO por una condición distinta: tres servicios conservan SPREADSHEET_ID/openById y no existe aún una solución local segura que elimine esa configuración sin arriesgar la disponibilidad de las funciones.
+- No se sustituye el acceso por getActiveSpreadsheet() sin comprobar el contexto de Web App; un resultado nulo rompería las funciones dependientes. La prueba real se reserva a Beta, mientras continúa el diseño local de una solución no circular.
+
+
+### CI posterior al ajuste de MIG-030 — 2026-11-24
+
+- Run 45397851823, job 138458289189, HEAD 8346fd1a324eb9190bb5f6f63e959c292cd8120a: SUCCESS.
+- Node.js v22.23.5; sintaxis PASS; regresión general 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- MIG026StaticConfigSearch: 10/10 PASS. La prueba confirma la excepción conocida de IDs Spreadsheet locales en AUTH/CATALOG/UTILITIES; no los considera eliminados.
+- El resultado valida código/contratos locales. No se desplegaron Web Apps ni se probó Spreadsheet activa en runtime real.
+
+
+### MIG-026 — acceso Spreadsheet central sin IDs locales — 2026-11-24
+
+- Se eliminó `SPREADSHEET_ID` y todas las aperturas directas por ese ID de AUTH (17 consumidores más su accessor), CATALOG y UTILITIES.
+- AUTH centraliza el acceso en `getAuthUsersSpreadsheet_()`; CATALOG utiliza `getSpreadsheet()`; UTILITIES utiliza `getUtilitiesSpreadsheet_()` y reutiliza un único handle por petición entre carga del actor y ejecución.
+- Los tres resuelven `SpreadsheetApp.getActiveSpreadsheet()` y fallan cerrado si no existe contexto. No se añadieron IDs, URLs, propiedades, secretos, endpoints bootstrap ni fallbacks locales.
+- Fixtures y contratos actualizados. MIG013SessionActorLocalLookup 22/22, CatalogChangeFeed 19/19, UtilitiesSecurity 19/19, PasswordHashMigration 16/16, SensitiveLogsTrustedActor 7/7, SessionActivityLeaseMinimization 6/6 y MIG026StaticConfigSearch 10/10 PASS.
+- CI run 45399766285, job 138464973056, commit a894a402d3dbcae2c922bc815b8efc3e8cba4a1d: SUCCESS; sintaxis PASS; 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- La prueba de contexto activo, identidad/permisos, lectura/escritura, concurrencia y latencia de Web Apps reales queda pendiente de Beta. No se desplegaron Apps Script ni se modificaron propiedades, Spreadsheet o datos instalados.
+
+
+### Verificación técnica integral MIG-001..030 — 2026-11-24
+
+- CI final de regresión: run **45400544234**, job **138467663045**, commit `5bd3da718d3e675dfc31015a294a0adb33300838`: SUCCESS; Node.js v22.23.5; 513 suites, 6,051 pruebas aprobadas y 0 fallos.
+- Integridad estática: RepositoryJavaScriptSyntax 1/1 (463 archivos .js/.mjs); RepositoryModuleReferences 1/1 (384 archivos, referencias resueltas).
+- Paridad y seguridad: MIG027FunctionalParity 8/8; MIG028SecurityPerformanceRegression 9/9; MIG026StaticConfigSearch 10/10; MIG013SessionActorLocalLookup 22/22.
+- Acceso Spreadsheet: CatalogChangeFeed 19/19; UTILITIES 19/19; SensitiveLogsTrustedActor 7/7; PasswordHashMigration 16/16; SessionActivityLeaseMinimization 6/6.
+- Independencia y concurrencia: NonBlockingServiceLocks 27/27; WriteContributionAppendConcurrency 9/9; AdminDriveLockIsolation 9/9.
+- GitHub Pages build/deploy: run **45400543527**, build job **138467670290**, deploy job **138467951389**: SUCCESS. No corresponde a despliegue de Apps Script.
+- Revisión del diff de la iteración desde `2bb7c0f8e27261c1edd8f6278779e978a2fbc30f`: 21 archivos modificados, sin archivos añadidos/eliminados ni cambios fuera de los tres servicios, sus fixtures/contratos y la documentación de MIG-026/verificación. No se detectaron cambios funcionales ajenos.
+- La rama protegida `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; no fue modificada.
+- Se cierra la verificación técnica integral local conforme a NORMAS_DESAROLLO.md §11. Las pruebas Beta reales, contexto Spreadsheet de Web Apps, permisos efectivos, concurrencia entre deployments, métricas p50/p95 y limpieza de propiedades legacy siguen pendientes en `Tareas_Beta.md`; no se presentan como validadas.
+
+
+### Registro de tarea AUG-144 — 2026-11-24
+
+- Se incorpora como pendiente la corrección del encabezado de marca/modelo del modal de detalle de dispositivos.
+- Requisitos registrados: logotipo de 66 px de alto y ancho automático; alineación izquierda; offsets superior e izquierdo de 6 px; nombre del modelo a la derecha con gap de 6 px; alineación inferior de logo y nombre; separación de 6 px respecto a la línea azul inferior.
+- Invariante explícita: los botones de edición, impresión, compartir y cierre deben conservar exactamente sus posiciones actuales. La implementación deberá medir y comparar sus posiciones antes/después en los mismos viewports; si se desplazan, se debe corregir la distribución del encabezado.
+- La tarea no implementa cambios de interfaz todavía. Queda pendiente la inspección del DOM/CSS real, implementación y validación visual/responsive.
+
+
+### Registro de tarea AUG-145 — 2026-11-24
+
+- Se registra la ampliación de `Services/DEPLOYMENT_GUIDE.md` para documentar el despliegue paso a paso de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN, con un orden global justificado por dependencias reales.
+- El alcance incluye matriz de fuentes por proyecto, prerrequisitos, actualización del deployment existente, comprobación de salud y pruebas funcionales por servicio, despliegues selectivos cuando cambien fuentes compartidas/contratos, manejo de fallos parciales, rollback y checklist de evidencia.
+- Se mantienen las reglas de configuración central versionada, ausencia de secretos/URLs de interconexión en código o propiedades Apps Script y separación entre CI, salud GET y validación Beta real.
+- AUG-145 queda PENDIENTE y en cola después de AUG-144. En este registro no se modificó la guía ni se desplegaron servicios Apps Script.
+
+
+### 2026-11-24 — Implementación AUG-144: encabezado del modal de detalle
+
+- Se ajustó el encabezado de marca/modelo en el modal de detalle: logo de 66 px de alto con ancho automático, offsets de 6 px, modelo a la derecha con gap de 6 px y alineación inferior; línea azul separada 6 px.
+- Se conservaron las reglas de los botones de edición, impresión, compartir y cerrar. La fila de acciones mantiene 40 px y anclaje derecho; el cálculo de espacio disponible del modelo ahora descuenta el ancho real del grupo de botones y observa el tamaño intrínseco del logo para activar correctamente el fallback de nombres largos.
+- Archivos funcionales/pruebas: `style.css`, `JS/Frontend/ui.js`, `JS/Tests/CutDetailModalLayout.mjs`, `JS/Tests/ModalHeaderCssCascade.mjs`.
+- CI run `45408996633`, job `138497373654`, commit `1d20ee06ac8c989deabea98a9ddd89d3928aa624`: SUCCESS; Node.js v22.23.5; 513 suites, 6,052 pruebas aprobadas y 0 fallos. `CutDetailModalLayout` 30/30, `ModalHeaderCssCascade` 14/14 y sintaxis de 463 archivos PASS.
+- La comparación visual de posiciones antes/después no se ejecutó en navegador; se registró BETA-09 en `Tareas_Beta.md` para verificar bounding boxes en escritorio/móvil, roles con dos/cuatro botones, proporciones de logo y nombres largos.
+- No se desplegaron servicios Apps Script ni se modificaron deployments, propiedades, permisos, Spreadsheet, Drive, OAuth o datos productivos.
+
+
+### 2026-11-24 — Cierre AUG-145: guía detallada de despliegue Apps Script
+
+- Se amplió `Services/DEPLOYMENT_GUIDE.md` con el orden de despliegue y los procedimientos de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Se justificó la secuencia y se aclaró que, después de AUTH, los servicios son independientes y el frontend coordina sus operaciones.
+- Se documentaron las fuentes por proyecto, propagación de helpers, versionado y actualización de deployments existentes, salud GET, pruebas Beta, fallos parciales, URLs nuevas, bootstrap AUTH, rollback y checklist de evidencia.
+- Se actualizó la referencia de la guía en README y se amplió `MIG029DeploymentGuideContract` a 15 verificaciones: 15/15 PASS.
+- CI run `45412598879`, job `138510122635`, commit `d8160863f3196c50598d1438019ae1b2135f07b7`: SUCCESS; 513 suites, 6,060 pruebas aprobadas, 0 fallos; sintaxis 463 archivos PASS.
+- GitHub Pages build/deploy run `45412598149`: SUCCESS; no corresponde a Apps Script.
+- No se ejecutaron despliegues Apps Script ni cambios de recursos reales. La ejecución del procedimiento queda pendiente de autorización y entorno Beta aislado.
+
+
+### 2026-11-24 — Inicializador manual de configuración central AUTH
+
+- Se añadió `initializeCentralConfigurationSheets()` a `JS/Services/Auth.js` y se mantuvo paridad exacta con `JS/Tests/Auth.js`. La función solo puede ejecutarse manualmente desde el editor del proyecto AUTH; no se agregó a las rutas HTTP ni al flujo de login.
+- La función usa el mismo acceso `getAuthUsersSpreadsheet_()` que AUTH utiliza para sus hojas operativas. No incorpora IDs, URLs, propiedades ni secretos. No usa ScriptLock, para evitar contención con login u otras operaciones; ante una carrera de creación de pestaña, vuelve a consultar y reutiliza la pestaña creada.
+- Se crean únicamente las pestañas que falten entre `ConfiguracionControl`, `ConfiguracionEsquema`, `Servicios`, `ConfiguracionParametros`, `ConfiguracionRecursos` y `ConfiguracionHistorial`. Las pestañas vacías reciben encabezados; las existentes se validan y preservan. Una estructura incompatible produce error sin sobrescribir datos.
+- No se unificaron las tablas en una sola pestaña: el lector central vigente busca cinco pestañas por nombre y el diseño versionado define Historial como tabla append-only independiente. Unificar requeriría rediseñar el lector, el esquema y sus contratos, fuera de esta inicialización.
+- La inicialización escribe únicamente encabezados. No crea filas operativas, no inventa URLs/IDs, no activa `READY` ni publica una revisión; la configuración queda cerrada hasta completar y validar los datos reales.
+- Prueba nueva `CentralConfigurationInitializer.mjs`: 7/7 PASS. CI run `45436552111`, job `138595813855`, commit `062e22eeafa792769ef20ed9e6bdbfbc2778b654`: SUCCESS; 514 suites, 6,067 pruebas aprobadas, 0 fallos; comprobación sintáctica PASS.
+- No se modificó ninguna Spreadsheet real ni se desplegó Apps Script. Quedan para Beta la comprobación del contexto activo de AUTH, la ejecución manual en la Spreadsheet correcta, el llenado/versionado de los valores reales y el despliegue autorizado de la nueva versión de AUTH.
+
+
+### 2026-11-24 — Corrección de vinculación compartida Spreadsheet/Drive (MIG-026)
+
+- Se corrigió el acceso de los seis servicios Apps Script independientes: AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN usan ahora `SpreadsheetApp.openById(GPSpediaSpreadsheetId_)` con el mismo ID de Spreadsheet suministrado por el propietario.
+- AUTH, WRITE, FEEDBACK y ADMIN reciben el ID desde `CentralConfigurationReader.js`; CATALOG y UTILITIES declaran el mismo localizador en sus módulos, pues no incluyen ese helper.
+- WRITE, FEEDBACK y ADMIN utilizan `GPSpediaCortesRootFolderId_` compartido desde `CentralConfigurationReader.js`. Se mantienen las comprobaciones de ID, nombre `Cortes`, papelera y ubicación directa bajo la raíz de Drive.
+- No se añadieron propiedades Apps Script, claves, tokens, secretos, URLs ni endpoints de otros servicios. La excepción temporal para los dos IDs expresamente autorizados se registró en NORMAS_DESAROLLO.md §17.1 y se retirará al eliminar los módulos Apps Script del repositorio.
+- Se actualizaron los fixtures y contratos de AUTH, CATALOG, UTILITIES, MIG-008, MIG-015, MIG-026 y MIG-029; la guía de despliegue, README, Tareas_Beta, inventario y checkpoint.
+- CI run `45444136611`, job `138623108916`, checkout HEAD `0aa586c933296d745fa3509887aeccf7e5d2d84e`: SUCCESS; 514 suites, 6,070 pruebas aprobadas, 0 fallos; sintaxis PASS. MIG015ImageConfigurationContract 16/16, CentralConfigurationInitializer 7/7 y MIG026StaticConfigSearch 10/10 PASS. GitHub Pages run `45444134417`: SUCCESS.
+- No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, permisos, scopes ni propiedades instaladas. Quedan para Beta la verificación de identidad de ejecución, scopes/autorización, lectura/escritura y acceso real a la carpeta raíz.
+
+
+### 2026-11-24 — Publicación de endpoints centrales AUTH y modal Developer
+
+- Se añadió la lectura y actualización protegida de los seis endpoints centrales mediante AUTH: getCentralServiceUrls y updateCentralServiceUrls. Las dos acciones exigen una sesión GPSpedia vigente y el rol Desarrollador comprobado en backend mediante el actor confiable; el rol del navegador no concede permisos.
+- El modal Herramientas de desarrollador → Sistema incorpora seis campos editables, uno por servicio. La interfaz modifica únicamente las URL; AUTH completa o conserva las demás columnas y metadatos, genera la revisión íntegra, valida el snapshot, registra el historial append-only y conmuta active_revision solo después de la confirmación.
+- Se añadió el flujo manual de Apps Script: prepareCentralConfigurationServiceUrlInput() crea las seis filas de borrador; el operador completa únicamente endpoint_url; publishCentralConfigurationFromServiceUrlDraft() valida y genera automáticamente los demás datos. No requiere sesión GPSpedia ni userId/password/sessionToken; sí puede requerir la autorización Google normal para acceder a Spreadsheet.
+- La primera publicación deriva contract_version de las versiones declaradas por los seis componentes, crea el esquema y rich_text_mode=strict, registra el recurso Cortes respaldado por el ID autorizado y deja publication_state=READY únicamente después de validar el snapshot. No se inventan IDs, URLs ni acciones health opcionales.
+- El frontend usa el único CENTRAL_CONFIGURATION_BOOTSTRAP_URL para estas operaciones administrativas incluso antes de que la configuración central esté publicada. No se añaden URLs de otros servicios a código Apps Script, propiedades, secretos compartidos ni llamadas interservicio. AUTH y su fixture JS/Tests/Auth.js conservan paridad byte-identical.
+- Se sincronizaron el conteo del mapa (125 acciones; AUTH 21), inventarios, matriz de migración, guía de despliegue y contratos afectados. Los errores visibles del panel son neutros; el detalle diagnóstico queda en consola y una publicación confirmada no se muestra como fallida si solo falla el refresco de caché.
+- Pruebas CI run 45456746900, job 138668136581, commit funcional 3e8041dc34a338e4088ca547e911221e23595384: SUCCESS; 515 suites, 6,078 pruebas aprobadas, 0 fallos. CentralConfigurationInitializer 7/7, CentralServiceUrlPublisher 7/7, ServiceCallGraphContract 9/9 y MIG029DeploymentGuideContract 16/16 PASS. GitHub Pages run 45456746700: SUCCESS.
+- Se añadió Tareas_Beta.md §19 con el procedimiento para probar la inicialización, primera publicación, edición desde el modal, RBAC, errores, idempotencia y cambio de bootstrap en entorno aislado.
+- No se ejecutaron funciones contra la Spreadsheet real, no se modificaron datos/propiedades/permisos productivos y no se desplegó ningún proyecto Apps Script. La validación operativa queda pendiente de Beta y autorización expresa.
+
+
+### 2026-11-24 — Corrección de alcance: URL AUTH fuera del modal Developer
+
+- Se ajustó el modal Herramientas de desarrollador → Sistema → Endpoints de servicios: solo muestra y permite editar CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
+- La URL AUTH no se expone como campo editable ni se envía en el payload desde el modal. Su actualización se realiza directamente en el frontend mediante el único localizador CENTRAL_CONFIGURATION_BOOTSTRAP_URL.
+- El backend AUTH aplica la misma restricción: rechaza solicitudes del modal que incluyan AUTH o que no contengan exactamente los otros cinco servicios. Para publicar la revisión completa, conserva la URL AUTH ya activa y la combina internamente con las cinco URL recibidas. Así se mantienen los seis registros versionados sin permitir que el modal modifique el bootstrap.
+- La inicialización manual desde Apps Script continúa admitiendo las seis URL para preparar la primera publicación. Esta vía es independiente del modal y no cambia el criterio de actualización de AUTH desde el frontend.
+- Se amplió la prueba de contrato para verificar la ausencia del campo AUTH, el conjunto exacto de cinco claves y la preservación del endpoint AUTH publicado.
+
+
+### 2026-11-24 — Búsqueda global: agrupación jerárquica por modelo y variantes
+
+- Los resultados de Cortes agrupados por categoría, marca y modelo muestran únicamente el nombre del modelo; se retiró el contador de configuraciones de la tarjeta.
+- Al seleccionar un modelo, la navegación identifica opciones reales de versión de equipamiento (Trim Level), tipo de encendido y rango de años. Cuando no existe Trim Level, continúa directamente por tipo de encendido.
+- Las variantes sin dato se conservan como opciones explícitas cuando coexisten con valores informados; no se descartan silenciosamente.
+- Cuando la combinación seleccionada contiene un único registro y un único rango, se abre directamente el modal de detalle. Los registros múltiples que comparten rango siguen visibles y no se selecciona uno arbitrariamente.
+- Se amplió SearchModelGrouping.mjs para cubrir opciones vacías, selección de versión/encendido, apertura directa y conservación de duplicados. CI run `45465653696`, job `138699734920`, HEAD `a1641afc3264d77fc9e2b5e1df349d437320f8e1`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos; SearchModelGrouping 28/28 PASS y sintaxis PASS.
+
+
+### 2026-11-24 — Vinculación autónoma de recursos y confirmación del ledger de login
+
+- Se añadió el ID de Spreadsheet directamente a los seis archivos principales de servicio. AUTH, WRITE, FEEDBACK y ADMIN ya no dependen de que CentralConfigurationReader.js declare el localizador; CATALOG y UTILITIES conservan su declaración directa existente.
+- WRITE, FEEDBACK y ADMIN declaran además el ID compartido de la carpeta raíz Cortes, manteniendo las validaciones existentes de identidad, nombre y jerarquía. No se añadieron URLs, credenciales ni propiedades Apps Script.
+- AUTH normaliza los valores leídos de LoginRequests según el tipo contractual de cada columna. La confirmación acepta equivalencias de Sheets (Date frente a ISO y número frente a texto numérico), conserva la comprobación de read-back y rechaza diferencias reales.
+- Se sincronizó JS/Tests/Auth.js con AUTH y se ampliaron LoginRequestLedger.mjs y MIG026StaticConfigSearch.mjs para cubrir coerciones de celdas y vinculación autónoma por servicio.
+- No se desplegaron proyectos Apps Script ni se modificaron Spreadsheet, Drive, permisos, propiedades o datos externos.
+
+
+### 2026-11-24 — Validación de vinculación de recursos y ledger AUTH
+
+- CI run `45466314443`, commit `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb`: SUCCESS; 515 suites, 6,092 pruebas aprobadas, 0 fallos. `LoginRequestLedger: 47/47 PASS`; `MIG026StaticConfigSearch: 10/10 PASS`; sintaxis PASS.
+- GitHub Pages run `45466312293`: SUCCESS.
+- Commits de la corrección: `a6c7819fe82158109805f87d82cd33c3f257076d` (implementación y contratos) y `6afcb02cdc41a0d8c429f66644ea0ce172be9ceb` (ajuste del escenario de coerción numérica de committedAt).
+- Se verificó que los seis archivos de servicio declaran el ID de Spreadsheet y usan openById; WRITE, FEEDBACK y ADMIN declaran también la carpeta Cortes.
+- Validación remota pendiente de Beta aislada. No se desplegó Apps Script ni se modificaron datos, propiedades, permisos o recursos productivos.
+
+- Confirmación final tras ajustar el contador de aserciones: CI run `45466859277`, HEAD `5e09578efce8fb3b0680809fd39b48f4dbcca6c8`: SUCCESS; 515 suites, 6,099 pruebas aprobadas, 0 fallos; `LoginRequestLedger: 47/47 PASS`, `MIG026StaticConfigSearch: 10/10 PASS`, sintaxis PASS. GitHub Pages run `45466858354`: SUCCESS.
+
+
+### 2026-11-24 — Corrección de arranque del feed CATALOG y proveedor de identidad FEEDBACK
+
+- FEEDBACK ahora inyecta `getSpreadsheet` en `getCachedSharedSessionActor_`, permitiendo resolver Users/ActiveSessions en cache miss sin restaurar el fallback global retirado en MIG-026. Esto cubre las acciones protegidas de dashboard, aportes e Inbox que entran por FEEDBACK.
+- CATALOG incorpora `initializeCatalogChangeFeedSheets()`, función manual de editor Apps Script. Crea únicamente las hojas ausentes o escribe encabezados en hojas vacías; valida previamente las hojas existentes, conserva datos válidos, falla cerrado ante esquemas incompatibles y no se invoca desde GET/POST ni durante consultas ordinarias.
+- Se añadió `CatalogChangeFeedInitialization.mjs` y se reforzó `MIG013SessionActorLocalLookup.mjs` para exigir proveedor explícito en FEEDBACK.
+- Se actualizó el procedimiento Beta para ejecutar la inicialización en Spreadsheet aislada y verificar read-back. No se desplegaron servicios ni se modificaron hojas, propiedades, permisos o datos externos.
+
+### 2026-11-24 — Validación final de corrección CATALOG/FEEDBACK
+
+- CI run `45471714577`, HEAD `6db947ffa7dd50d9d2889e23d307c6160a1a17ce`: SUCCESS; 516 suites, 6,105 pruebas aprobadas, 0 fallos; sintaxis PASS en 466 archivos. `CatalogChangeFeedInitialization` 6/6, `MIG013SessionActorLocalLookup` 22/22, `InboxRoleContract` 22/22 y `SensitiveLogsTrustedActor` 7/7 PASS.
+- GitHub Pages run `45471712477`: SUCCESS.
+- No se desplegaron proyectos Apps Script ni se ejecutó la inicialización de hojas. La operación manual y las pruebas con Spreadsheet/deployments Beta aislados siguen pendientes.
+
+
+### Registro AUG-146 — 2026-11-24 — revisión de modales y panel de desarrollador
+
+- Se registra la revisión del encabezado del modal de detalle: márgenes simétricos del logo, cuadrícula más alta, reducción del espacio bajo la línea azul, campo de edición sin solapamiento y ubicación correcta del estado «Guardando…».
+- Se registra la reorganización del modal de desarrollador en escritorio y móvil: consola compacta, pestañas con iconos y expansión al seleccionar, controles de consola alineados, prompt integrado al campo, eliminación de títulos duplicados y retiro del apartado «Tráfico global coordinado · retirado».
+- Las acciones de limpiar consola, copiar registro, ejecutar comandos y cambiar pestañas deben conservar su funcionamiento; los cambios solicitados para esos controles son visuales.
+- Las explicaciones extensas se mostrarán solo mediante el botón de información. Los mensajes de resultado visibles al usuario serán breves y no expondrán detalles internos en producción.
+- La tarea queda EN PROGRESO. Se ejecutará por bloques con pruebas de regresión; no se autorizan despliegues Apps Script ni cambios en recursos productivos.
+
+
+### 2026-11-24 — AUG-146: implementación de ajustes visuales, mensajes y endpoints
+
+- Encabezado del modal de detalle ajustado para márgenes simétricos del logo, cuadrícula más alta, metadatos más compactos, edición sin solapamientos y estado «Guardando…» sobre el nombre del modelo.
+- Modal de desarrollador reorganizado en escritorio y móvil: consola compacta, pestañas iconográficas con expansión al seleccionar, controles limpiar/copiar alineados y con etiquetas al recibir foco, comando en una sola línea y eliminación visual de títulos repetidos.
+- Retirado el apartado de tráfico global coordinado obsoleto. Las explicaciones extensas quedan en ayudas contextuales ocultas hasta activar el botón de información.
+- Alertas de operaciones de Cortes y páginas auxiliares acortadas; el detalle técnico se conserva mediante el logger de desarrollador autorizado.
+- AUTH ahora valida la versión de contrato compatible y enruta solo con la revisión activa. Las nuevas revisiones mantienen la instantánea completa, pero los metadatos de actualización y el historial identifican únicamente los servicios cuya URL cambió. Se conserva el historial append-only.
+- Pruebas de regresión actualizadas y ampliadas para encabezado, edición, escritorio/móvil, ayudas, mensajes, selección de revisión, versiones y actualización parcial de endpoints.
+- CI run `45486260447`: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos.
+- GitHub Pages run `45486258242`: SUCCESS.
+- HEAD de trabajo: `465194319f7e1c8b21aff181afea3142ef8384a9`. Base protegida sin cambios: `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- Validación visual de navegador y validación remota Beta pendientes. No se desplegaron Apps Script ni se modificaron recursos externos.
+
+
+### Addendum AUG-146 — procedimiento Beta — 2026-11-24
+
+- Se añadió Tareas_Beta.md §20 con la comprobación visual de AUG-146 en escritorio y móvil, ayuda contextual, controles, mensajes y criterios para registrar NO EJECUTADO cuando falte navegador/viewport.
+- La ejecución operativa de endpoints continúa bajo Tareas_Beta.md §19. No se desplegaron Apps Script ni se modificaron recursos externos.
+- Commit del procedimiento Beta: 09d5dc2bf73c21c99d71b16a94eed0b8c46f936b. HEAD de trabajo tras el registro: 09d5dc2bf73c21c99d71b16a94eed0b8c46f936b. Rama base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- CI run 45486734920: SUCCESS; 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages run 45486735045: SUCCESS.
+
+
+### AUG-146 — validación visual Chromium y corrección responsive — 2026-11-24
+
+- Añadida la suite `JS/Tests/Aug146ResponsiveBrowser.mjs`, que abre el frontend real en Chromium con Playwright, sesión/vehículo sintéticos y solicitudes externas aisladas. Cubre modal Developer, cuatro pestañas, ayudas contextuales, consola, terminal, encabezado de detalle, indicador de guardado y modo de edición.
+- Integrada como job `responsive-browser` en `.github/workflows/service-tests.yml`; el job publica 12 capturas sintéticas como artefacto de CI.
+- La prueba detectó desbordamiento de acciones del encabezado en 320 px durante edición. `style.css` ahora envuelve los botones en pantallas de hasta 340 px y reserva altura suficiente antes del título cuando se aplica el diseño debajo del logo.
+- CI run `45494735181`: Playwright 148/148 PASS en 1366×768, 390×844, 360×800 y 320×700; 12 capturas. Regresión general: 516 suites, 6,115 pruebas aprobadas, 0 fallos. GitHub Pages SUCCESS.
+- El harness no invoca Apps Script ni servicios remotos reales. La validación física de campo queda en Tareas_Beta.md §20 y la publicación/lectura real de endpoints en §19.
+
+
+### Verificación final de AUG-146 en HEAD consolidado — 2026-11-24
+
+- HEAD consolidado `de833ce9d2575c276789542bdc45f2dbadcaa59f` incluye también el cambio concurrente de `JS/Frontend/api-config.js` sin alterarlo. La suite completa volvió a ejecutarse sobre este HEAD.
+- CI run `45494991186`: SUCCESS en ambos jobs. Regresión: 516 suites, 6,115 pruebas aprobadas, 0 fallos. Playwright/Chromium: 148/148 PASS, cuatro viewports (1366×768, 390×844, 360×800, 320×700) y 12 capturas.
+- Artefacto de evidencia: `14966794425`. GitHub Pages run `45494990388`: SUCCESS.
+- Rama de trabajo consolidada: `GPSpedia2.2.5_work`. Base protegida: `GPSpedia2.2.5` en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+
+
+### 2026-11-24 — revisión posterior a AUG-146: Developer, dashboard y CATALOG
+
+- Se recuperó la fila horizontal de las cuatro pestañas del panel Developer; la pestaña seleccionada ya no se expande ni desplaza a las demás en móvil.
+- La consola ocupa el 50% del ancho en escritorio y el 100% en móvil. Los botones de información, limpiar y copiar se agrupan a la izquierda y quedan alineados.
+- El dashboard muestra un estado vacío explícito y deja de ocultar fallos de FEEDBACK. La respuesta incluye disponibilidad y conteo de las fuentes ActividadUsuario, InboxAuditLog y Cortes, además del estado de contribuciones.
+- El feed CATALOG distingue la falta de hojas de inicialización de un error de red; conserva la carga por snapshot completo y sustituye la traza recurrente por un aviso informativo de inicialización pendiente.
+- CI run 45498897055: SUCCESS; 517 suites, 6,125 pruebas aprobadas, 0 fallos. Playwright/Chromium: 184/184 PASS, cuatro viewports y 16 capturas sintéticas. Artefacto 14970486726. GitHub Pages run 45498895792: SUCCESS.
+- Pendiente validar FEEDBACK y CATALOG contra Spreadsheet/deployments Beta aislados. No se desplegaron Apps Script ni se modificaron recursos externos o productivos.
+- HEAD funcional probado: 57b3aaa511b9a0ffd279e339dd82b5b38b0b87bf. Base protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+
+
+### 2026-11-24 — Registro de cuatro reportes posteriores a AUG-146 y primera corrección de caché
+
+- Se registraron los reportes de modal Developer, Dashboard sin datos, ausencia de carga de imagen para tarjetas Tutorial y error FEEDBACK `INBOX_AUDIT_SHEET_NAME is not defined` en checkpoint y Hallazgos_Beta. Los SHA de deployments Beta no fueron verificados; los reportes se mantienen diferenciados de reproducción local.
+- Se inicia AUG-147 (una tarea a la vez). El CSS actual ya contiene el layout horizontal y el ancho requerido de consola; se encontró que el Service Worker mantenía la caché v75 aunque `style.css` se modificó en el commit `113ed1d5d3786a6a1ea426a723004a8dd072861d`. Se actualiza el identificador de caché a v76 y el contrato de `JS/Tests/ServiceWorkerCache.js` para forzar una instalación con los recursos actuales.
+- No se modificaron Apps Script desplegados, Spreadsheet, Drive, propiedades, endpoints, permisos ni datos productivos.
+- HEAD de código al preparar la corrección: `1d9a2fb80a2abddf9221b6ff5c7065eadcb2e4dd`. Pruebas de esta corrección: pendientes de CI y Chromium.
+
+
+### 2026-11-24 — Cierre AUG-147
+
+- Service Worker actualizado a `gpsepedia-cache-v76` para que las instalaciones PWA no sigan priorizando CSS antiguo del panel Developer. Se actualizó también el contrato `ServiceWorkerCache.js`.
+- CI detectó una aserción transversal obsoleta en `PasswordRecovery.mjs` que esperaba v75; se alineó a v76 sin cambiar el comportamiento de recuperación.
+- CI final: run `45500716073` SUCCESS, 517 suites / 6,125 pruebas aprobadas / 0 fallos; Chromium responsive SUCCESS en los cuatro viewports; Pages run `45500714866` SUCCESS.
+- HEAD validado `9d88477315700d5b87778ce17a2e96e5f95d2331`. Base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Beta visual/PWA sigue pendiente de verificación de SHA servido. No hubo despliegues Apps Script ni cambios en Spreadsheet, Drive, propiedades, permisos o datos productivos.
+
+
+### 2026-11-24 — Corrección AUG-150: esquema de auditoría Inbox en FEEDBACK
+
+- `JS/Services/feedback.js` declara `INBOX_AUDIT_SHEET_NAME` y `INBOX_AUDIT_HEADERS` en el propio módulo, con el contrato `InboxAuditLog` y ocho columnas.
+- `JS/Tests/InboxAuditTrail.js` obtiene las declaraciones directamente del código del servicio; eliminada la inyección artificial de constantes en el harness. Se mantienen los controles de registro antes de mutar, confirmación de escritura, esquema incompatible y fallo cerrado.
+- CI final run `45501003318`: SUCCESS; 517 suites / 6,125 pruebas aprobadas / 0 fallos. FEEDBACK ledger Inbox 15/15 PASS y MIG020 auditoría Inbox 15/15 PASS. Chromium responsive y Pages run `45501002454`: SUCCESS.
+- HEAD probado `cdcce19101f3f39239f247c8506dd7fbbcd04e65`; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin cambios.
+- Verificación Beta pendiente; no se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos productivos.
+
+
+
+### 2026-11-24 — FEEDBACK: inicialización del historial de actividad
+
+- Se corrigió `logUserActivity()`: mantiene la fórmula de ID cuando existe un patrón backend válido y utiliza un ID estático único `ACT-<UUID>` cuando `ActividadUsuario` aún no tiene patrón de fórmula/configuración o conserva únicamente IDs estáticos.
+- Los errores de esquema, encabezados o patrones incompatibles no activan el fallback y siguen deteniendo la escritura.
+- Se amplió `JS/Tests/ActivityLogAppendAtomic.mjs` para cubrir el primer registro en hoja vacía, continuación con IDs estáticos, conservación del patrón fórmula existente y rechazo de patrones incompatibles.
+- CI run `45502874404`, HEAD `a13dd84379e575d06f0a4e73bc1909cdad346f1d`: SUCCESS; 517 suites, 6,139 pruebas, 0 fallos. `ActivityLogAppendAtomic` 10/10 PASS y `ActivityLogsBoundedRead` 8/8 PASS.
+- Chromium responsive: 184/184 PASS en cuatro viewports; GitHub Pages run `45502874103`: SUCCESS.
+- No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, propiedades, permisos o datos externos.
+
+
+### 2026-11-24 — Tutoriales: carga de imagen de tarjeta
+
+- Se añadió al formulario de alta el selector opcional de imagen JPEG/PNG/WebP con límite de 3 MB y lectura Data URL en frontend.
+- FEEDBACK valida MIME, Base64, tamaño y firma binaria; guarda el archivo en `Cortes/Tutoriales`, verifica carpeta padre y permisos heredados, y escribe en `Tutorial!C:C` únicamente la referencia Drive.
+- El hash de imagen participa en la idempotencia del alta. El mismo `operationId` reutiliza el archivo; un contenido distinto con el mismo ID se rechaza. Los archivos pendientes se pueden recuperar solo después de verificar contenido, hash, MIME, tamaño, nombre, metadata y ubicación.
+- CATALOG normaliza la referencia Drive al ID de imagen que consumen las tarjetas.
+- Pruebas: `TutorialIntegrity` 47/47 PASS; CI run `45504362878`: 517 suites, 6,147 pruebas aprobadas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45504362787`: SUCCESS.
+- Sin despliegue Apps Script ni modificaciones a Spreadsheet, Drive, propiedades, permisos o datos externos. La prueba de integración Beta permanece pendiente.
+
+
+### 2026-11-24 — YouTube: referencia estable para tutoriales históricos
+
+- CATALOG ahora expone `referenceId`: ID físico cuando existe; para filas históricas sin ID genera `legacy-<SHA-256>` usando el título físico original, antes de aplicar renombres append-only.
+- El frontend del detalle envía `item.ID || item.referenceId || item.Tema` a FEEDBACK. No se añadió coordinación directa ni URLs entre servicios Apps Script.
+- FEEDBACK `findTutorialRow_()` resuelve referencias legacy con `findTutorialByIdentity_()` y proyecta las ediciones/renombres. Los IDs canónicos `tut-...` inexistentes siguen fallando de forma estricta, sin fallback a título.
+- Pruebas: `FeedbackTutorialLookupBoundedRead` 9/9 PASS; `TutorialIntegrity` 48/48 PASS; FEEDBACK inicialización YouTube 9/9 PASS.
+- CI run `45505972628`: 517 suites, 6,155 pruebas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45505971953`: SUCCESS.
+- No se realizó subida real a YouTube ni despliegue Apps Script; Beta queda pendiente para confirmar con un tutorial histórico y uno nuevo.
+
+
+### 2026-11-24 — YouTube Tutorial: verificación adicional de IDs canónicos y legacy
+
+- Se amplió `YouTubeApprovalInit.js` para comprobar la inicialización real del flujo con Tutorial histórico (referencia `legacy-<SHA-256>`) y Tutorial nuevo (ID `tut-...`).
+- FEEDBACK precondiciones de subida resumable: 10/10 PASS.
+- CI run `45506352069`: SUCCESS; 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 184/184 PASS; Pages run `45506351422`: SUCCESS.
+- No se ejecutó OAuth ni una subida real a YouTube; la validación externa queda en Beta aislada.
+
+2026-11-24 | Registro de nueva revisión de interfaz
+- Se creó `Tareas_Activas.md` para centralizar tres tareas nuevas y su orden de ejecución, una a la vez.
+- Modal Tutorial: preservar formato HTML enriquecido con sanitización avanzada y corregir el iframe de YouTube mediante URL validada.
+- Dashboard: no duplicar la agregación existente de modelos, cortes, utilidades y colaboradores; completar la tabla mostrando cortes aportados por usuario de forma independiente.
+- Developer: mover la navegación debajo de la línea de comando, expandir etiqueta solo para pestaña activa, duplicar altura de consola, compactar espaciado, mostrar estados de endpoints solo en consola y renombrar el botón a «Actualizar Servicios».
+- BETA-F007 permanece cerrada en código/CI y pendiente solo de la validación Beta descrita en Tareas_Beta.md §24. No se desplegaron Apps Script ni se modificaron recursos externos.
+
+
+### 2026-11-24 — Rectificación de trazabilidad de tareas
+
+- Se rectifica la adenda de checkpoint/Hallazgos que había clasificado AUG-147 a AUG-150 como IDs no oficiales. La revisión del historial del propio repositorio confirma registros de inicio/cierre para AUG-147 (caché v76) y AUG-150 (esquema Inbox); AUG-148 y AUG-149 aparecen como tareas pendientes en checkpoint y Hallazgos, sin cierre funcional en este changelog.
+- El registro operativo actual es `Tareas_Activas.md`, commit `9442da203814be4891de82f93a1730700fb4b31d`. Su primer punto activo es el modal de detalle Tutorial (HTML enriquecido seguro y vídeo YouTube validado). No se asignan IDs nuevos.
+
+
+### 2026-11-24 — Cierre de tarea activa 1: modal de detalle Tutorial
+
+- Se verificó que el modal ya utiliza sanitización avanzada permitida, conserva el formato enriquecido y construye el iframe YouTube mediante DOM a partir de una URL validada; no se modificó código productivo.
+- Se reforzó `Aug146ResponsiveBrowser.mjs` para verificar énfasis, listas, estilos, XSS, protocolos/hosts/credenciales/puertos/parámetros inválidos y variantes YouTube válidas.
+- CI run `45507769616`: 517 suites, 6,156 pruebas, 0 fallos; Chromium responsive 216/216 PASS en cuatro viewports; Pages run `45507768695`: SUCCESS.
+- Se inicia la tarea activa 2: mostrar `cortesAportados` por usuario en el Dashboard, separado de aportes registrados y vehículos con aportes. El backend ya calcula el valor; revisar contrato/render del frontend antes de modificar.
+
+
+### 2026-11-24 — Cierre de tarea activa 2: desglose de aportes del Dashboard
+
+- `normalizeContributionRows()` ahora conserva `cortesAportados` y `aportesRegistrados` como métricas distintas; los aliases suman ambas por separado y los vehículos conservan la deduplicación existente.
+- La tabla muestra Usuario, Cortes aportados, Aportes registrados y Vehículos con aportes. El ranking superior presenta los tres valores; los estados vacío y error usan colspan 4.
+- `ActivityDashboardContributions`: 3/3 PASS. CI run `45508470807`: 517 suites, 6,156 pruebas, 0 fallos. Chromium responsive 216/216 PASS; Pages run `45508470780`: SUCCESS.
+- No se modificó el backend, Spreadsheet ni datos almacenados. Se inicia la tarea activa 3: ajustes responsive y funcionales del modal Developer según `Tareas_Activas.md`.
+
+### 2026-11-24 — Cierre de tarea activa 3: modal Developer
+
+- Se reordenó el panel para mantener consola y línea de comandos antes de las pestañas. Las pestañas inactivas muestran solo iconos; la seleccionada expande su etiqueta en escritorio y móvil.
+- La consola se amplió de 24% a 48% de la altura útil, ocupa el ancho disponible y mantiene su salida desplazable. Se compactaron paddings, márgenes, botones y encabezados sin modificar IDs ni handlers.
+- Endpoints comunica carga, validación, permisos/sesión, resultados por servicio, idempotencia/sin cambios y errores solo en consola Developer. Se eliminó el mensaje bajo el botón, renombrado a **Actualizar Servicios**.
+- Pruebas: `DeveloperPanelUX` 11/11 PASS; `DeveloperOperationMessages` 8/8 PASS. CI run `45509850708`: 517 suites, 6,160 pruebas, 0 fallos; Chromium 236/236 PASS en cuatro viewports; Pages run `45509849705`: SUCCESS.
+- No se modificaron Apps Script, endpoints reales, PropertiesService, OAuth, permisos, Spreadsheet, Drive ni datos.
+
+### 2026-11-24 — Actualización de plan de validación Beta tras cierre de las tareas solicitadas
+
+- Se actualizó `Tareas_Beta.md` §21: consola Developer con altura útil 48% y ancho completo; pestaña seleccionada con etiqueta y no seleccionadas solo icono; endpoints solo en consola y botón **Actualizar Servicios**; desglose independiente de cortes, aportes registrados y vehículos por usuario.
+- Se corrigió la auditoría de duplicados en `Tareas_Activas.md`: las correcciones Dashboard y Developer están cerradas en código/CI, con verificación Beta pendiente.
+- No se desplegó Apps Script ni se modificaron recursos externos. El siguiente paso es validación Beta aislada §§21–25, condicionada a autorización expresa y recursos de prueba.
+
+
+### 2026-11-24 — Registro del plan exclusivo MIG-URL: migración de endpoints al frontend
+
+- Se creó `Migracion_URL_Servicios_Frontend.md` con ocho tareas ordenadas, dependencias y criterios de aceptación. Se registró en `Tareas_Activas.md` y `checkpoint.md` que no debe ejecutarse ninguna tarea ajena a MIG-URL-001..008 mientras el plan siga abierto.
+- Se cerró MIG-URL-001: normativa `NORMAS_DESAROLLO.md` §§17.1 y 18 ahora establece que las URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN se editan manualmente en el objeto único `API_ENDPOINTS` de `JS/Frontend/api-config.js`, siguiendo el mecanismo existente en la rama protegida `GPSpedia2.2.5`; `ACTION_TO_SERVICE_MAP` conserva el enrutamiento.
+- Se aclaró que no se reintroducen LEGACY/USERS ni se revierte el resto del código a la versión antigua. Se prohíbe administración de URLs desde Spreadsheet/AUTH/Developer, bootstrap remoto, tabla paralela y fallback remoto.
+- Próxima y única tarea autorizada: MIG-URL-002, inventario y verificación de las seis URLs vigentes.
+- Sin cambios de código productivo, deployments, endpoints reales, propiedades, permisos ni datos externos.
+
+
+### 2026-11-24 — MIG-URL-002: inventario documental de endpoints
+
+- Se inspeccionaron los archivos fuente y la guía de despliegue. La revisión activa se obtiene de `ConfiguracionControl.active_revision` y las seis URLs de `Servicios.endpoint_url`.
+- Se creó `Inventario_URL_Servicios.md` con fuentes, estado por servicio y criterios de verificación.
+- Los seis valores vigentes no están en Git. Las URLs del `api-config.js` de la rama protegida son históricas y no se han considerado deployments vigentes sin contraste.
+- El conector Google Drive/Sheets no está disponible (deshabilitado por administración). Se requiere un snapshot de solo lectura de la revisión activa para completar la tarea.
+- No se realizaron llamadas remotas ni cambios en deployments, Apps Script, Spreadsheet, permisos o endpoints.
+- MIG-URL-002 queda EN PROGRESO; no iniciar ninguna otra tarea hasta completar su evidencia.
+
+
+### 2026-11-24 — Cierre MIG-URL-002: seis endpoints confirmados
+
+- El usuario proporcionó las seis URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN; se registraron en `Inventario_URL_Servicios.md`.
+- Validación estructural: 6/6 HTTPS, dominio de Google Apps Script, ruta `/exec` y seis identificadores distintos.
+- La Spreadsheet central no pudo consultarse porque el conector Google Drive/Sheets está deshabilitado; se registra procedencia directa del usuario, sin afirmar lectura de revisión activa.
+- No se realizaron llamadas remotas. Verificación de identidad y salud de deployments diferida a MIG-URL-008, en Beta aislada y con autorización.
+- MIG-URL-002 COMPLETADA; MIG-URL-003 pasa a ser la única tarea activa. Sin cambios en Apps Script, deployments, Spreadsheet, permisos ni datos externos.
+
+
+## 2026-11-25 — MIG-URL-002 y MIG-URL-003: URLs confirmadas y resolución local
+
+- El propietario confirmó directamente las seis URLs de AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN. Se copiaron sin modificaciones al único objeto `API_ENDPOINTS` de `JS/Frontend/api-config.js`.
+- Validación estructural: seis claves exactas, seis URLs HTTPS con formato Web App Apps Script y seis IDs de deployment distintos. No se consultaron deployments remotos ni se afirma su disponibilidad/identidad; eso queda diferido a MIG-URL-008.
+- El router de acciones y el health scan usan el resolvedor local y no consultan el registro central para descubrir endpoints. Se conserva `ACTION_TO_SERVICE_MAP` con 125 acciones.
+- Se adaptaron las pruebas heredadas del router, health scan y paridad para el patrón local, manteniendo las verificaciones de handlers y cobertura funcional.
+- Evidencia CI run `45515563540`: 518 suites, 6,170 pruebas aprobadas, 0 fallos; `LocalApiEndpoints` 10/10, `ServiceHealthContract` 19/19 y `MIG009FrontendActionRouter` 5/5.
+- MIG-URL-003 cerrada. Se inicia MIG-URL-004: retirar las acciones/lectores/publicadores centrales dedicados a URLs sin eliminar la configuración central de parámetros no relacionados (incluido `rich_text_mode`).
+- No se modificaron deployments Apps Script, URLs reales, propiedades, permisos, Spreadsheet ni datos externos.
+
+
+## 2026-11-25 — MIG-URL-004..007: retiro de registro central y regresión completa
+
+- Retiradas las acciones AUTH `getCentralServiceUrls` y `updateCentralServiceUrls`, handlers, publicador de URLs y borrador de publicación. Eliminado `CENTRAL_CONFIGURATION_BOOTSTRAP_URL`; la lectura pública de parámetros funcionales usa la URL AUTH local en `API_ENDPOINTS`.
+- `CentralConfigurationReader` ya no lee la hoja `Servicios` ni devuelve endpoints. Se mantiene la lectura de parámetros funcionales y recursos. La caché frontend solo almacena parámetros públicos; no conoce servicios ni URLs.
+- Retirada la tarjeta/editor de endpoints del panel Developer y sus ayudas contextuales. Se conserva el resto de herramientas y el health scan usa directamente `API_ENDPOINTS`. El script remoto `RemoteServiceHealth.mjs` exige confirmación explícita de Beta aislada antes de realizar GET.
+- `initializeCentralConfigurationSheets` ya no crea la hoja `Servicios`; una prueba verifica que si existe como legado se conserva sin leerla ni escribirla. No se borró ninguna hoja, fila ni deployment.
+- Mapa de acciones actualizado: 123 acciones (AUTH 19, CATALOG 9, WRITE 9, FEEDBACK 40, UTILITIES 1, ADMIN 45).
+- CI run `45519738860`, commit `1d25c64a798fb343b15e61658946243314ffbe91`: 519 suites, 6,181 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Sintaxis 469 archivos JS/MJS y referencias relativas de 389 archivos aprobadas.
+- MIG-URL-004, 005, 006 y 007 cerradas. MIG-URL-008 permanece pendiente de autorización y confirmación de Beta aislada. No se ejecutó ninguna petición a los seis deployments reales.
+- GitHub Pages build/deployment se ejecutó automáticamente por el push y finalizó SUCCESS; no se ejecutó ningún despliegue Apps Script.
+
+
+### 2026-11-24 — Registro en cola: mejora de Actividad reciente del Dashboard
+
+- Se registró en `Tareas_Activas.md` una tarea pendiente para reformatear la pestaña Actividad reciente desde el frontend: fecha compacta, nombre legible, acciones en lenguaje claro y vista principal de tres columnas (Fecha, Usuario, Acción), sin scroll horizontal.
+- El detalle contextual del vehículo se abrirá en un acordeón por fila; solo uno podrá estar abierto y se cerrará al seleccionar otra fila o hacer clic fuera.
+- Alcance expresamente limitado a presentación frontend de los datos ya recibidos. No modificar Apps Script, servicios, handlers, contratos, payloads, hojas ni datos.
+- La tarea queda en cola después de MIG-URL-008; no se inició implementación. MIG-URL-008 continúa pendiente de autorización Beta aislada.
+- Durante esta conversación el usuario informó que eliminó manualmente el único registro inválido de like de `FeedbackLikes` y que `handleGetCatalogData` volvió a funcionar. No se hicieron cambios de código ni de datos externos en esta intervención.
+
+
+## 2026-11-25 — Corrección de tamaño del vídeo en el modal de tutoriales (GP-VIDEO-MODAL-01)
+
+- Se identificó que el bloque del reproductor era un elemento flexible dentro de `#detalleCompleto`, que tiene altura máxima y desplazamiento. Al conservar el valor predeterminado de contracción de Flexbox, el vídeo podía reducirse según la cantidad de contenido del tutorial.
+- Se eliminó el límite fijo de 315 px y se fijó el bloque del vídeo como elemento no contraíble (`flex: 0 0 auto`), con ancho completo y proporción 16:9. El iframe ocupa el contenedor sin alterar la relación de aspecto.
+- Archivos modificados: `JS/Frontend/ui.js`, `style.css`. Se añadió la prueba de contrato `JS/Tests/TutorialVideoModalLayout.mjs`.
+- La corrección es exclusivamente frontend; no modifica URLs guardadas, registros de tutoriales, servicios Apps Script ni contratos.
+- Validación visual en navegador y reproducción de cada vídeo real: pendiente de ejecución en el entorno visual/Beta; no se considera aprobada por las pruebas estáticas.
+
+
+## 2026-11-25 — Útiles idempotentes, Dashboard y modales de detalle
+
+- FEEDBACK: el registro de útil ahora se protege con `tryLock(0)` no bloqueante durante la consulta por usuario/vehículo y la inserción; el frontend reintenta silenciosamente ante contención. La identidad se normaliza a una clave estable segura; el handler reconoce eventos existentes en cualquier corte del mismo vehículo y no añade otra fila. La recuperación de un registro pending reutiliza la fila existente. La actividad se registra fuera del lock.
+- CATALOG: la proyección de FeedbackLikes deduplica por identidad y vehículo, no suma repeticiones del mismo usuario aunque aparezcan en distintos cortes y atribuye el útil al primer corte registrado. Los nuevos eventos se validan en FEEDBACK antes de escribirse para respetar el contrato de CATALOG.
+- Frontend: el estado del botón útil se conserva por vehículo y la respuesta idempotente no incluye texto que notifique al usuario que ya había votado.
+- Dashboard: se agrupan filas por nombre visible normalizado aunque tengan IDs históricos distintos; se suman cortes y aportes registrados.
+- Tutoriales: iframe YouTube validado, carga inmediata, ancho 100 % y alto 315 px, siguiendo el tamaño del vídeo guía de desarme del modal de corte; el contenedor no se contrae.
+- Encabezado: títulos de corte/tutorial sin saltos innecesarios; alineación inferior del logo y nombre con la línea azul; nombre del modelo móvil +2 px.
+- Pruebas añadidas/actualizadas: `FeedbackLikeIdempotency.mjs`, suites de likes, `ActivityDashboardContributions.mjs`, `TutorialVideoModalLayout.mjs`, `CutDetailModalLayout.mjs` y `ModalHeaderCssCascade.mjs`. CI pendiente de resultado al registrar esta entrada.
+- Sin cambios a deployments Apps Script, endpoints, propiedades, permisos, Spreadsheet, Drive ni datos externos. Sin llamadas entre servicios Apps Script; el lock solo protege la operación dentro de FEEDBACK.
+- Prioridad de continuidad: 1) útiles/CATALOG, 2) unificación de aportes Dashboard, 3) iframe tutorial, 4) encabezados. Mantener esta secuencia en los próximos trabajos.
+
+
+## 2026-11-25 — Cierre de pruebas locales: útiles, Dashboard y modales
+
+- CI 45535275807: 523 suites, 6,206 pruebas aprobadas, 0 fallos.
+- Navegador AUG-146: 260/260 PASS en cuatro viewports. La prueba confirma título de tutorial en una línea, iframe visible de 315 px, y alineación del logo/modelo con la línea azul.
+- Likes: idempotencia 5/5, reintento silencioso ante contención 2/2 y lock acotado 2/2. FEEDBACK busca por usuario/vehículo sin distinguir corte; CATALOG proyecta una contribución por actor/vehículo.
+- Dashboard: ActivityDashboardContributions 3/3; nombres visibles equivalentes se consolidan aunque IDs históricos difieran.
+- Vídeo: TutorialVideoModalLayout 9/9; iframe ancho completo, alto 315 px, carga inmediata y sin margen interno que recorte el reproductor.
+- Encabezado: CutDetailModalLayout 32/32; el cálculo del ancho del modelo utiliza toda la segunda fila, sin reservar espacio de los botones ubicados en la primera. En pantallas de 320 px, la segunda fila de 32 px conserva el margen y la alineación.
+- Pages run 45535275662: build y deploy automáticos SUCCESS para GPSpedia2.2.5_work. No se publicó Apps Script ni se alteraron hojas, datos, permisos, PropertiesService o endpoints.
+- Próxima continuidad: validación Beta autorizada de útiles FEEDBACK/CATALOG y reproducción real de vídeos YouTube. MIG-URL-008 sigue pendiente de autorización. La tarea separada Actividad reciente permanece en cola.
+
+
+## 2026-11-24 — Actualización de endpoints locales CATALOG y FEEDBACK
+
+- Se reemplazaron exclusivamente las entradas CATALOG y FEEDBACK de `API_ENDPOINTS` en `JS/Frontend/api-config.js` con las URLs proporcionadas por el propietario.
+- Se actualizaron los valores esperados de `JS/Tests/LocalApiEndpoints.mjs` y se añadió una adenda al inventario y a los registros de continuidad.
+- AUTH, WRITE, UTILITIES y ADMIN, el mapa de acciones y el mecanismo de resolución permanecen sin cambios.
+- Validación estructural: seis endpoints HTTPS de Apps Script con ruta `/exec` y seis IDs únicos.
+- No se realizaron llamadas HTTP ni cambios en deployments, Apps Script, Spreadsheet, permisos o datos externos. La identidad y disponibilidad reales quedan pendientes de MIG-URL-008 en Beta aislada y autorizada.
+
+## 2026-11-25 — Registro de GP-TUTORIAL-DETAIL-COMPACT-01 y reordenamiento
+
+- Se registró la corrección visual del modal de tutoriales: título sin truncamiento prematuro (una línea o máximo dos), imagen al 50 %, espacios compactos y divisores azules.
+- Se registró Actividad reciente del Dashboard como siguiente implementación frontend.
+- Las validaciones Beta diferidas se posponen hasta cerrar las implementaciones locales pendientes.
+
+## 2026-11-25 — Inicio de GP-DASH-ACTIVITY-RECENT-01
+
+- Se inició la mejora de Actividad reciente en el frontend: resumen Fecha/Usuario/Acción, etiquetas legibles y acordeón contextual.
+- El vehículo se relaciona con el catálogo local ya cargado; se preservan los datos y el orden entregados por FEEDBACK.
+- No se modifican Apps Script, contratos, payloads, hojas ni registros.
+
+## 2026-11-25 — Cierre GP-TUTORIAL-DETAIL-COMPACT-01 y GP-DASH-ACTIVITY-RECENT-01
+
+- Tutoriales: título en una o dos líneas según el ancho disponible, imagen al 50 %, separación compacta y divisores azules entre segmentos. Prueba TutorialVideoModalLayout 18/18 PASS.
+- Actividad reciente: tabla Fecha/Usuario/Acción, fecha compacta, nombres y acciones legibles, detalle contextual mediante acordeón de apertura única y cierre externo. Datos del vehículo obtenidos del catálogo local.
+- CI 45540225703: 523 suites, 6,215 pruebas aprobadas, 0 fallos; ActivityDashboardStoredXss 6/6 PASS; navegador Chromium 264/264 PASS en cuatro viewports. Pages 45540224992: SUCCESS.
+- Solo se modificaron frontend, HTML, CSS, pruebas y registros. Sin cambios a Apps Script, contratos, payloads, endpoints, datos ni deployments.
+- Las validaciones Beta pendientes se mantienen pospuestas por instrucción del propietario.
+
+
+2026-11-25 — GP-LIKE-FIRST-VOTE-01 (corrección en curso)
+- FEEDBACK: los conteos omiten filas históricas de FeedbackLikes inválidas sin alterar el ledger; el contador se calcula antes del append para evitar informar un falso fallo después de confirmar el voto.
+- CATALOG: una fila inválida de FeedbackLikes ya no interrumpe la proyección de todos los vehículos; se conserva la fila y se emite advertencia técnica sin exponer identidad.
+- Pruebas de regresión: primer voto con filas inválidas, evento de corte fuera de rango, deduplicación segura del mismo actor y proyección CATALOG con datos mixtos.
+- Validación CI pendiente. Sin llamadas remotas, despliegues Apps Script ni cambios de datos externos.
+
+
+2026-11-25 — Cierre GP-LIKE-FIRST-VOTE-01
+- CI 45541840409: service-tests y responsive-browser SUCCESS. Pages 45541840034: build y deploy SUCCESS.
+- La tarea queda COMPLETADA EN CÓDIGO Y CI. La verificación funcional FEEDBACK/CATALOG en Spreadsheet Beta queda pendiente de entorno aislado y autorización expresa.
+
+
+2026-11-25 — Rectificación GP-LIKE-FIRST-VOTE-01: contención de idempotencia
+- Hallazgo: el ScriptLock global de FEEDBACK se adquiere con tryLock(0); si otra ejecución lo mantiene, el voto se rechaza antes de leer/escribir FeedbackLikes. El frontend solo reintenta cinco veces durante una ventana aproximada de un segundo. La sección crítica anterior también incluía localización del vehículo, preparación del ledger y conteo.
+- Corrección en curso: preflight y conteo fuera del lock; dentro quedan búsqueda autoritativa actor+vehículo, recuperación mínima de pendientes y append/flush. El conteo/telemetría posteriores no convierten un append confirmado en error.
+- Se añade prueba de contención simulada y cobertura de primer voto, duplicado y usuario distinto. CI pendiente.
+- La lectura completa de FeedbackLikes en CATALOG sigue siendo un coste de escala separado; la agrupación en memoria no reduce el volumen leído.
+
+
+2026-11-25 — Cierre local GP-LIKE-FIRST-VOTE-01
+- FEEDBACK: se redujo la sección crítica del ScriptLock; localización/preparación y conteo quedaron fuera. La búsqueda idempotente por actor+vehículo y append/flush siguen serializados para evitar filas duplicadas.
+- Se añadió cobertura de lock ocupado, primer voto, voto repetido mismo vehículo en otro corte, usuarios distintos y fallo de conteo después de confirmar append.
+- Se verificó que la pérdida de publicación del delta en CATALOG se convierte en catalogSyncPending y no en rechazo del útil ya confirmado por FEEDBACK.
+- CI 45544697384 SUCCESS: 523 suites, 6,226 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages 45544697351 SUCCESS.
+- Validación FEEDBACK/CATALOG con deployments y Spreadsheet Beta permanece pendiente; no hubo llamadas remotas ni despliegues Apps Script.
+- Observación separada: CATALOG aún lee la hoja FeedbackLikes completa al agrupar eventos; el volumen de lectura sigue siendo un riesgo de escala y se mantiene como pendiente independiente.
+
+
+2026-11-25 — Registro de tareas: copiar solo errores de consola (GP-DEV-LOG-ERRORS-01); resolver esquema AdminOperationGuards en auditoría Drive (GP-ADMIN-DRIVE-AUDIT-SCHEMA-01); modal de auditoría de cortes pasa a modo escaneo con imágenes incrementales y consola de progreso simultánea (GP-ADMIN-DRIVE-SCAN-MODAL-01); reconstrucción prioritaria de recordLike ante error persistente (GP-LIKE-REBUILD-01). Registro documental; implementación pendiente.
+
+
+### Rectificación GP-LIKE-REBUILD-01 — regla funcional por corte (2026-11-25)
+
+- Un usuario puede registrar un útil en cada corte individual del vehículo. Los cortes 1, 2 y 3 son aportes independientes.
+- Repetir el útil en el mismo corte por el mismo usuario debe ser idempotente y silencioso: no insertar otra fila, no mostrar notificación, no emitir mensajes en consola ni advertencias/rechazos visibles.
+- Repetir el útil en un corte diferente del mismo vehículo sí debe registrar el aporte.
+- Solo debe mostrarse el mensaje de error al usuario cuando un útil que aún no está registrado no pueda guardarse por una falla real.
+- El frontend debe mantener estado por clave vehículo+corte y el backend FEEDBACK debe validar unicidad por actor+vehículo+corte bajo concurrencia. CATALOG debe proyectar y contar por corte, preservando votos distintos de un mismo usuario en el mismo vehículo.
+- Se rectifica la regla anterior actor+vehículo global: queda obsoleta y no debe utilizarse como criterio de deduplicación.
+- Estado: EN PROGRESO; implementación y pruebas pendientes. No se ejecutaron deployments ni operaciones con datos Beta.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01: implementación inicial por corte
+- FEEDBACK filtra eventos y estados previos por corte en la búsqueda de idempotencia; los duplicados del mismo corte retornan sin contador ni telemetría. CATALOG cuenta actores únicos por vehículo+corte. Estado frontend también usa clave vehículo+corte.
+- Tests ajustados para registrar aportes en cortes distintos y repetir silenciosamente un mismo corte. Validación y cierre pendientes de revisión/CI.
+- No se desplegaron Apps Script ni se modificaron recursos externos.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01 CERRADA: pruebas aisladas FeedbackLikeIdempotency y FeedbackLikeAppendOnly ejecutadas contra fuentes recuperadas de la rama y ambas PASS. FEEDBACK y CATALOG pasan compilación sintáctica. Se corrigió el fast path duplicado (sin contador), validación de eventos de corte corrupto y proyección actor+corte. CI remoto no confirmado; no es necesario desplegar Apps Script para cierre. Inicia siguiente tarea GP-DEV-LOG-ERRORS-01.
+
+
+2026-11-25 — GP-DEV-LOG-ERRORS-01: el botón copiar se restringió a mensajes explícitamente clasificados `.log-error`, excluye warning/info/texto falso positivo y entradas vacías. Añadida prueba `DeveloperConsoleErrors.mjs`; contrato estático y selección simulada PASS. CI remoto/runner Node no disponible para ejecución directa; pendiente CI. No se modificaron servicios ni recursos externos.
+
+
+2026-11-25 — GP-ADMIN-DRIVE-AUDIT-SCHEMA-01: corregido inicializador `AdminOperationGuards`: crear hoja/esquema si faltan, escribir/confirmar encabezado, recuperación de carrera por relectura, preservar fail-safe ante encabezado incompatible. Tests aislados `AdminLocalOperationGuard` y contrato `AdminOperationGuardsSchema`, más simulaciones de escenarios, PASS. No se modificaron recursos reales ni se habilitaron guardas adicionales. CI remoto pendiente.
+
+
+## 2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01 (implementación)
+
+- Integrada una consola de progreso en el modal existente de Auditoría de Cortes, sin crear un modal adicional. Los mensajes de auditoría se reflejan en Developer y en el panel integrado, con nivel, hora y texto seguro; scroll automático y límite de 250 entradas.
+- Conservada la representación incremental de resultados y se ajustaron límites de altura/scroll para escritorio y móvil.
+- Añadida prueba contractual `JS/Tests/AdminDriveScanModal.mjs` (7 aserciones). No se ejecutó Node local ni se confirmó CI en esta intervención; validación automatizada pendiente.
+- Archivos: `index.html`, `JS/Frontend/ui.js`, `style.css`, `JS/Tests/AdminDriveScanModal.mjs`, `Tareas_Activas.md`.
+- Publicado exclusivamente en `GPSpedia2.2.5_work`; no se invocaron Apps Script, Drive ni Spreadsheet. La rama base permanece sin escritura.
+- Próxima acción: verificar workflow CI y ejecutar/ajustar la suite; inspeccionar resultados y estados persistidos/reanudación en navegador real Beta cuando esté disponible.
+
+
+2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01: panel de progreso integrado y CSS responsive; CI inicial confirmó AdminDriveScanModal 7/7 PASS y navegador responsive ajeno al modal PASS. CI detectó una assertion de compatibilidad textual en AdminDriveAuditGlobalConsole; se restauró el prefijo compatible ampliándolo para aclarar panel simultáneo. Commit fd2c54d12ae11f7770863257ca5039408bb2e055; nueva validación CI en curso. No hubo invocaciones Apps Script/Drive/Spreadsheet.
+
+2026-11-25 — GP-ADMIN-DRIVE-SCAN-MODAL-01: segunda CI confirmó que el contrato histórico AdminDriveAuditGlobalConsole requiere DOM simulado para el nuevo espejo; no es fallo productivo, sino fixture desactualizado. Se adaptó la prueba con mock DOM mínimo, conservando la validación logger global/resultados/reanudación. Commit 4acae1e078c55aa56721c741c551d962fec7557c. CI nuevo pendiente.
+
+
+2026-11-25 — Cierre GP-ADMIN-DRIVE-SCAN-MODAL-01: CI run 45611120099 confirmó `AdminDriveScanModal` 7/7 PASS y `AdminDriveAuditGlobalConsole` 1/1 PASS. La tarea queda cerrada en código y contrato. Fallos globales restantes aislados a suites de FEEDBACK/CATALOG/MIG019, BETA-032 DeveloperConsoleRouting y MIG021; en investigación para las tareas siguientes. Sin despliegues ni recursos externos.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01: confirmado idempotencia por actor+vehículo+corte, dedicated tests 10/10 + 4/4 PASS y syntax PASS. CI detectó contratos legacy de idempotencia global; tests se ajustan a la regla por corte. DeveloperConsoleRouting 5/5 PASS tras actualizar assertion del mensaje copy. CI follow-up pending. Sin despliegues Apps Script.
+
+
+2026-11-25 — GP-DASH-ACTIVITY-RECENT-01: corregido containment del listener de cierre de acordeón; el clic interno al dashboard no colapsa el detalle, el externo lo cierra. Añadida `ActivityDashboardRecentInteraction.mjs` al runner. CI pendiente.
+
+
+2026-11-25 — GP-DASH-ACTIVITY-RECENT-01: contención del listener global corregida y prueba `ActivityDashboardRecentInteraction` 6/6 PASS en CI run 45611875173; responsive-browser PASS. Cierre de tarea. Sin backend ni datos externos.
+
+
+2026-11-25 — GP-CATALOG-LIKE-PROJECTION-READ-01: reduce CATALOG lectura del ledger FeedbackLikes a A:C + F, con deduplicación por actor/corte; añadida prueba simulada compact-read. CI pendiente.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01: CI run 45612250526 SUCCESS, 525 suites/6239 pruebas/0 fallos; responsive-browser SUCCESS. Contract tests per-cut y URLs corregidos. No despliegues Beta.
+
+
+2026-11-25 — GP-CATALOG-LIKE-PROJECTION-READ-01 completada: CATALOG read-scale reducido a A:C + F. Test 6/6 PASS; CI run 45612534877: 526 suites, 6245 tests, 0 fallos; responsive-browser SUCCESS.
+
+
+2026-11-25 — Verificación técnica integral local
+- Se detectó que AdminOperationGuardsSchema.mjs y DeveloperConsoleErrors.mjs no estaban registrados en RunServiceTests.mjs. Se añadieron al runner general y se normalizó su salida a resúmenes verificables por CLI.
+- CI final run 45613697548: 528 suites, 6,263 pruebas PASS, 0 fallos; jobs service-tests y responsive-browser SUCCESS.
+- AUG-146 Chromium: 264/264 PASS en cuatro viewports; RepositoryJavaScriptSyntax 478 archivos PASS; RepositoryModuleReferences 398 archivos PASS; ServiceCallGraphContract 9/9 PASS; MIG028SecurityPerformanceRegression 9/9 PASS.
+- Sin cambios a Apps Script, deployments, endpoints, PropertiesService, Spreadsheet, Drive, permisos ni datos externos. Pages build/deployment automático SUCCESS.
+- MIG-URL-008 permanece pendiente de autorización y confirmación de Beta aislada; no se ejecutaron GET remotos.
+
+
+2026-11-25 — Actualización de endpoints Apps Script
+- JS/Frontend/api-config.js: reemplazados únicamente CATALOG y FEEDBACK por las URLs nuevas proporcionadas por el usuario; AUTH, WRITE, UTILITIES y ADMIN preservados.
+- JS/Tests/LocalApiEndpoints.mjs: fixture contractual actualizado con los mismos valores.
+- CI run 45619392380 SUCCESS: 528 suites, 6,263 pruebas, 0 fallos; LocalApiEndpoints 10/10 PASS; AUG-146 264/264 PASS. GitHub Pages run 45619392374 SUCCESS.
+- Solo cambios de configuración frontend y prueba local. No se invocaron URLs ni hubo deployments Apps Script o cambios en recursos externos. Validación remota diferida a Beta.
+
+
+2026-11-25 — GP-LIKE-REBUILD-01 / contención FEEDBACK
+- `JS/Frontend/api-config.js` amplía el reintento de `recordLike` a 12 intentos con backoff lineal de 150 ms (9.9 s acumulados), solo para `LIKE_LOCK_BUSY`; no reintenta errores ambiguos ni de escritura.
+- Tests `FeedbackLikeClientRetry.mjs`, `FeedbackLikeLockContention.mjs` y `FeedbackLikePreflightOutsideLock.mjs` actualizados.
+- CI run 45624279054 SUCCESS: 528 suites, 6,264 pruebas, 0 fallos; AUG-146 264/264 PASS.
+- El backend conserva `tryLock(0)` y la sección crítica mínima conforme al contrato no bloqueante. El cambio frontend se publica mediante GitHub Pages (workflow pendiente al registrar este cambio). Sin invocaciones ni despliegues Apps Script; el deployment FEEDBACK debe devolver `LIKE_LOCK_BUSY` para activar los reintentos, contrato presente en el fuente de la rama pero no verificado en el deployment remoto.
+
+
+### 2026-11-25 — Actualización del endpoint FEEDBACK
+
+- Se sustituyó únicamente la URL de `API_ENDPOINTS.FEEDBACK` en `JS/Frontend/api-config.js` por el deployment proporcionado expresamente por el propietario.
+- Se actualizó la expectativa correspondiente en `JS/Tests/LocalApiEndpoints.mjs`; AUTH, CATALOG, WRITE, UTILITIES y ADMIN permanecen sin cambios.
+- No se invocó el endpoint ni se desplegó Apps Script. La disponibilidad y compatibilidad del deployment quedan pendientes de validación Beta autorizada.
+
+
+### 2026-11-25 — GP-LIKE-REPLAY-COUNT-01
+
+- Se corrigió el fast-path idempotente de `handleRecordLike`: ahora devuelve también `likeCount` confirmado, sin crear otra fila ni repetir telemetría/actividad. Se ajustó `FeedbackLikeIdempotency.mjs`.
+- Se corrigió `LikeClientCounter.js` para importar `JS/Frontend/likeState.js` (módulo realmente consumido por `ui.js`), se alineó la clave vehículo+corte y se registró en `RunServiceTests.mjs`.
+- Sin cambios a endpoints, IDs de Spreadsheet, datos, permisos ni deployments. Validación CI y Beta pendientes.
+
+
+### Cierre — GP-LIKE-REPLAY-COUNT-01 (2026-11-25)
+
+- FEEDBACK ahora devuelve `likeCount` también en respuestas idempotentes; no inserta eventos duplicados ni repite actividad. Prueba `FeedbackLikeIdempotency` 10/10 PASS.
+- `LikeClientCounter.js` ahora prueba el módulo frontend activo y quedó registrado en `RunServiceTests.mjs`: 6/6 PASS. `FeedbackLikeAppendOnly` 4/4 PASS.
+- CI run `45628974357` SUCCESS: 529 suites, 6,270 pruebas, 0 fallos; responsive-browser SUCCESS. Pages run `45628972138` SUCCESS.
+- No se invocaron servicios Apps Script ni se modificaron datos/hojas externas. La verificación Beta sigue pendiente.
+
+
+### 2026-11-25 — GP-LIKE-TRUSTED-ACTOR-01
+
+- `JS/Services/feedback.js`: `handleRecordLike()` toma la identidad y el nombre exclusivamente de `payload.__feedbackActor`, contexto creado por el middleware de sesión validada. Se elimina la dependencia de que el navegador duplique `userId` y `userName` en el payload de la acción.
+- `JS/Tests/FeedbackLikeIdempotency.mjs`: añadida cobertura para payload sin campos de identidad duplicados y para campos de identidad falsificados que no deben reemplazar al actor verificado.
+- Commits: `54e9931c6ce5231f33fbcac4d1e592c9c13f9417` (código) y `f33fefc5f554b193a21a981622a732c541b50c18` (prueba).
+- CI final `45633091113` SUCCESS: 529 suites, 6,270 pruebas PASS, 0 fallos; `FeedbackLikeIdempotency` 10/10, `LocalApiEndpoints` 10/10 y navegador responsive SUCCESS. Sin cambios a frontend, endpoints, propiedades Apps Script, permisos, deployments, Spreadsheet, Drive ni datos externos. La validación remota FEEDBACK/CATALOG permanece pendiente de Beta.
+
+- CI inicial `45632826674`: sintaxis PASS, `FeedbackLikeIdempotency` 10/10 PASS y `responsive-browser` SUCCESS; el runner falló únicamente en `LocalApiEndpoints` porque su fixture FEEDBACK conservaba la URL anterior. Se actualizó la expectativa al endpoint ya configurado y autorizado en `api-config.js`. Commit `8b20c64b2947dd8827c67a2fb3966492fdf1695e`; CI final `45633091113` SUCCESS: 529 suites, 6,270 pruebas aprobadas, 0 fallos.
+
+
+2026-11-25 — GP-LIKE-VALIDATION-16DIGIT-01: se alinea el validador FEEDBACK de IDs de vehículo con el rango de enteros positivos seguros permitido por el asignador de WRITE; se añaden pruebas de ID máximo seguro y rechazo fuera de rango.
+2026-11-25 — GP-CATALOG-REQUEST-BUDGET-01: se elimina el timeout exterior de 8 s que interrumpía los tres intentos internos del feed; la cancelación del ciclo sigue propagándose y los timeouts por intento permanecen en catalogRequest.js.
+
+
+2026-11-25 — CI run 45637878671: sintaxis, suites focales de likes/catalog y Chromium responsive aprobaron; 2 fallos de regresión provenían de assertion obsoleta que inspeccionaba la regex anterior. Se alinea `FeedbackLikePreflightOutsideLock.mjs` al validador explícito y al rango seguro.
+
+
+2026-11-25 — Cierre GP-LIKE-VALIDATION-16DIGIT-01 y GP-CATALOG-REQUEST-BUDGET-01
+- FEEDBACK valida IDs de vehículo mediante enteros positivos seguros, coherente con el asignador de WRITE; `FeedbackLikeIdempotency` 10/10 y `FeedbackLikePreflightOutsideLock` 8/8 PASS.
+- CATALOG elimina el timeout exterior de 8 s que cancelaba los reintentos; conserva timeout interno de 5 s por intento, dos reintentos y cancelación del padre. `CatalogFeedRetry` 11/11, `CatalogRequestRetry` 8/8, `CatalogStartupIntegrity` 25/25 y `CatalogTransientFeedFallback` 2/2 PASS.
+- CI `45638162735` SUCCESS: 529 suites, 6,272 pruebas, 0 fallos; sintaxis PASS; Playwright 264/264 PASS en cuatro viewports. GitHub Pages `45638162526` SUCCESS.
+- Commits: `311b09e4b1db19699d4325c81cb55d43920f076e`, `62cef81afde6b5ccd6a0dd0146d1d7be995fd0fb` y este cierre documental. Sin llamadas a endpoints ni deployments Apps Script; Beta pendiente de autorización.
+
+2026-11-25 — Rectificación de precisión documental: se actualiza el estado de ambas tareas a cambios aplicados y se aclara que el error del útil no incluía el ID/corte en la consola, por lo que la causa concreta del caso Beta no se da por demostrada hasta reproducirla con datos de prueba. Se registra CI documental `45638460585` y Pages `45638457300`, ambos SUCCESS.
+
+
+2026-11-25 — Corrección GP-LIKE-VEHICLE-ID-PREFIX-01: se identifica que FEEDBACK rechazaba `V-105` porque el validador de útiles solo admitía IDs numéricos; se amplía el contrato para aceptar el formato canónico `V-<n>` manteniendo el rango entero seguro y la comparación exacta en `Cortes`. Se añaden regresiones para `V-105` y `V-0`. Validación y CI pendientes de ejecución.
+
+2026-11-25 — Se alinea `JS/Tests/LocalApiEndpoints.mjs` con la nueva URL FEEDBACK que el propietario ya incorporó en `API_ENDPOINTS`. CI del commit `99cff3d` había fallado únicamente porque el fixture conservaba el deployment anterior; el test responsive del mismo run pasó. No se cambió la URL ni se invocó el deployment.
+
+2026-11-25 — Cierre GP-LIKE-VEHICLE-ID-PREFIX-01: CI run 45642190006 SUCCESS sobre commit be31dea824bf5b6686f5b2be82dd89c9326082a5; 529 suites, 6,272 pruebas PASS, 0 fallos; AUG-146 Playwright 264/264 PASS en cuatro viewports. La corrección de FEEDBACK admite el ID canónico V-105 preservando su identidad exacta. No se invocaron deployments ni se modificaron datos externos.
+
+2026-11-25 — Se registran GP-ADMIN-DRIVE-AUDIT-HEADLESS-01 (ejecución de auditoría Drive desde Developer sin abrir modal y FindOrCreate seguro de hojas/columnas DriveAuditRuns y DriveAuditLatest) y GP-PYS-VEHICLE-ASSOCIATION-CARD-01 (tarjeta de vinculación al final del carrusel PyS, con dimensiones exactas y reutilización del formulario de búsqueda existente). Implementación de la primera tarea iniciada; no se ejecutaron servicios ni recursos externos.
+
+2026-11-25 — Revisión de CI GP-ADMIN-DRIVE-AUDIT-HEADLESS-01: FindOrCreate de DriveAuditRuns/DriveAuditLatest pasó 7/7; la regresión encontró dos fixtures que buscaban la firma antigua de openAuditDriveModal y una assertion que aún esperaba el modal visible. Se ajustan los contratos al modo headless. Se alinea también LocalApiEndpoints.mjs con la nueva URL FEEDBACK que el propietario actualizó en api-config.js; no se modifica ni invoca el endpoint.
+
+2026-11-25 — Cierre GP-ADMIN-DRIVE-AUDIT-HEADLESS-01: el botón Auditar Cortes inicia el escaneo sin mostrar/registrar `audit-drive-modal`; el progreso y resultados se envían a la consola global Developer. ADMIN inicializa `DriveAuditRuns` y `DriveAuditLatest` mediante FindOrCreate, repara encabezados vacíos de forma segura y rechaza columnas con datos sin encabezado o encabezados incompatibles. Prueba específica 7/7 PASS. CI run 45644997410 SUCCESS: 530 suites, 6,279 pruebas, 0 fallos; responsive-browser SUCCESS. Sin invocaciones de ADMIN, Apps Script, Drive o Spreadsheet real.
+
+2026-11-25 — Cierre GP-PYS-VEHICLE-ASSOCIATION-CARD-01: el carrusel de modelos relacionados y la tarjeta final de vinculación se muestran también al abrir el detalle PyS desde un vehículo. Tarjeta con 140 × 120 px y activación por teclado; reutiliza `openSearchVehicleForPysAssociationModal`. La búsqueda de asociación y la de Agregar Problema comparten `filterPysVehicleCatalog_`; los IDs asociados se normalizan antes de pasarlos al formulario. `PysModalNavigation` 13/13 PASS. CI run 45646432576 SUCCESS: 530 suites, 6,285 pruebas, 0 fallos; responsive-browser y Pages SUCCESS. Validación Beta visual/funcional con datos reales pendiente.
+
+
+2026-11-25 — GP-UTIL-TOGGLE-01 y GP-DRIVE-AUDIT-VISUAL-01
+- GP-UTIL: frontend toggle reversible, estado hidratado/local, debounce 1.8 s, cola de sync serializada, contador optimista y reintentos; backend FEEDBACK mantiene append-only e idempotencia por actor/vehículo/corte.
+- Auditoría visual: miniaturas para todas las clasificaciones, enlaces/metadatos de Drive, referencia a fila/vehículo/modelo, miniaturas y candidatos en preview de asociación.
+- Validación CI: 533 suites, 6,311 pruebas PASS; AUG-146 264/264; Pages SUCCESS. Validación Apps Script/Drive/Spreadsheet real queda diferida a Beta aislada.
+
+
+2026-11-25 — MIG-URL-008 (preparación)
+- Preparada checklist Beta aislada en Tareas_Beta.md §25 para salud/identidad de seis servicios, funciones sintéticas, RBAC, failover y evidencia anonimizada. Sin llamadas remotas ni modificaciones de endpoints/deployments/recursos externos.
+
+
+2026-11-25 — GP-ADMIN-AUDIT-REFMAP-01 / GP-UTIL-VISUAL-02
+- ADMIN: protege acceso a ubicaciones de referencia del snapshot IDs-only, eliminando la causa identificada de la excepción `.get` durante el inicio de auditoría.
+- Frontend: reforzado estado visual inmediato del botón útil (clase, color, transform, título y aria-pressed); CSS activo persistente y hover no lo oculta.
+- Pruebas dedicadas añadidas/actualizadas; validación local y CI aún por verificar.
+
+- CI intermedio detectó dos problemas de test (contrato LocalApiEndpoints aún refería al ADMIN anterior, y UsefulButtonState reportaba 5 tests pese a incorporar el sexto). Se alineó el endpoint esperado con la URL confirmada y se corrigió el resumen del test. CI del HEAD actual en ejecución; no marcar aprobación antes del resultado.
+
+2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 (auditoría de arquitectura)
+Se documentó la condición de guardado completo-only y el requisito de registro incremental de resultados por lote. Implementación pendiente; no se declara prueba.
+
+2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 — implementación parcial
+Se añadieron validación incremental ADMIN, registro frontend al recibir lotes y consolidación automática final. Se añadió prueba contractual y simulación del validador; se reforzó la confirmación del conjunto final y el estado UI. CI de una iteración previa (fcc5db4) SUCCESS; cambios posteriores de validación final están pendientes de CI. Sin despliegue ni operaciones sobre Drive/Spreadsheet reales.
+
+2026-11-25 — GP-ADMIN-INVENTARIO-INCREMENTAL-01 — cierre local
+ADMIN permite registro incremental de resultados «Sin uso detectado» por lote, revalidando referencias y Drive; frontend registra automáticamente al recibir cada lote y consolida el inventario al completar la auditoría. La operación incremental es idempotente por digest de lote, preserva guardas y evita reconciliar stale durante batches. CI 45705928487 SUCCESS: syntax, service regression runner y responsive-browser PASS. Beta real pendiente, sin deployments ni operaciones Drive/Spreadsheet.
+
+
+2026-11-25 — Incidencia #130 — corrección de auditoría Drive y proyección de útiles
+- ADMIN: corregido el ReferenceError por referencia a item fuera de ámbito al construir resultados de auditoría; se conserva el arreglo referenceLocations del snapshot.
+- Prueba nueva AdminDriveAuditItemReference.mjs integrada en RunServiceTests.mjs.
+- CATALOG: la proyección de FeedbackLikes ahora reinicia completed al recibir una nueva transición event después de withdrawn, para reflejar reactivación.
+- CatalogLikeProjectionReadScale.mjs ampliada con secuencia de reactivación.
+- Commits: f740da0e98d40082d6753f6fd3670b0ad113e9f2; e1f04981ab99d770b31bdbe4cafefc782b5e173a; e4e0e0218e16cdc5ce89d641d81ad38cdbe26590; fd629d599197d16705f418edda1f94784c5d5976; 22850449c06f3e7d6d620c55c48f154481aef509.
+- Estado de CI aún no verificado al registrar esta entrada. No se ejecutaron deployments Apps Script, Drive ni Spreadsheet reales; Beta pendiente.
+
+
+2026-11-25 — Incidencia #130 — identidad original del corte y rectificación de proyección
+- CATALOG conserva sourceCorteIndex1..3 al ordenar los cortes por útiles.
+- Frontend usa el índice original para las operaciones FEEDBACK y resuelve el slot visual al actualizar el contador optimista/confirmado.
+- Prueba UsefulOriginalCutIndex.mjs integrada en RunServiceTests.mjs; runner JavaScript aislado PASS para proyección, activación, confirmación y retirada del corte físico original.
+- Rectificación: la modificación experimental que restablecía completed=false en CATALOG fue revertida porque completed representa un evento ya materializado en el contador base; restablecerlo duplicaría el conteo. Se ampliaron las pruebas para evento pendiente y materializado.
+- CI/Node runner pendiente de evidencia. No deployments Apps Script ni escrituras externas.
+
+
+2026-11-25 — Incidencia #130 — inventario completo de metadatos y asociación de imágenes
+- Imagenes_Reemplazadas conserva esquema histórico y añade folderId, formato, tamaño bytes, fecha de modificación y referencias JSON; ADMIN valida el snapshot de auditoría frente a Drive y confirma escritura con read-back.
+- Lectura de inventario expone los nuevos campos; biblioteca y resultados de auditoría muestran ID de archivo/carpeta y metadatos.
+- Asociación por nombre/ruta incluye vehicleIds y filas; coincidencias con varios vehículos se marcan ambiguas y requieren revisión manual.
+- Pruebas añadidas/ampliadas AdminIncrementalInventory, AdminReplacedImagesIntegrity, AdminDriveScanModal y AdminDriveAuditAssociation; schema simulado 32 columnas PASS, asociación única/ambigua PASS, parsing de módulos PASS. Node/CI pendiente de evidencia.
+
+
+2026-11-25 — Incidencia #130 — asociación persistente de imágenes a vehículos
+- Inventario Imagenes_Reemplazadas amplía esquema a 35 columnas: 11 históricas y 24 de inventario, metadata y asociación.
+- ADMIN calcula sugerencias por nombre/ruta, persiste estado, confianza y candidatos con IDs de vehículo y filas; ambigüedad queda en revisión manual, sin asociación automática.
+- `handleGetReplacedImages` expone la asociación; UI muestra candidato, confianza, ID(s) y fila(s), y permite filtrar por carpeta/formato/candidatos.
+- `writeDriveInventoryRowVerified_` confirma en read-back los ocho campos nuevos de metadata/asociación.
+- Pruebas añadidas/ampliadas: AdminDriveAuditMetadataPersistence, AdminDriveAuditAssociation, AdminIncrementalInventory, AdminReplacedImagesIntegrity y RunServiceTests. Runner JavaScript aislado PASS para migración 35 columnas y motor de asociación; CI/Node pendiente.
+
+
+2026-11-25 — Incidencia #130 — validación de hidratación de útil
+- UsefulButtonState.mjs comprueba que los botones se deshabilitan hasta cargar el estado del usuario desde FEEDBACK y que el índice original del corte se conserva en la UI. Ocho comprobaciones aisladas PASS; Node/CI pendiente.
+
+
+2026-11-25 — Incidencia #130 — corrección de fixtures y validación
+- Corregidos los fixtures de AdminDriveAuditItemReference, CortesImageModelAssociationSuggestions y LocalApiEndpoints; no se modificó código productivo en esta corrección.
+- Pruebas focales aisladas: 3/3, 9/9, 6/6, 8/8, 4/4, 8/8 y LocalApiEndpoints PASS.
+- CI `45718949366`: 539 suites, 6,385 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS.
+- Próxima validación local: contrato contador/DOM y escenarios de cursor, fallos parciales y reanudación del inventario Drive. Beta real sigue pendiente de autorización.
+
+
+2026-11-25 — Incidencia #130 — protección de integridad ante escaneo Drive con errores
+- ADMIN rechaza inventario incremental/final, latest, preview, reconciliación y organización si el recorrido registra errores de lectura o referencias no interpretables.
+- Frontend deshabilita guardar, organizar, reconciliar y preview; no intenta consolidar inventario final cuando el escaneo no es íntegro y conserva los resultados parciales con aviso.
+- Se corrigió el contrato de `AdminIncrementalInventory.mjs` para reflejar el nuevo estado `not_saved` y la advertencia de resultados parciales.
+- `AdminDriveScanIntegrity.mjs`: 15/15 PASS; `AdminIncrementalInventory.mjs`: 35/35 PASS.
+
+2026-11-25 — Incidencia #130 — contador de útiles
+- `syncUsefulCount_` ahora actualiza solo encabezados de cortes y evita sustituir el icono del botón útil.
+- `UsefulButtonState.mjs`: 9/9 PASS.
+
+2026-11-25 — Validación CI de integridad #130
+- Run `45719961761`, commit `6824868691bf901109f8e62e6517d0f50101fa22`: 540 suites, 6,401 pruebas aprobadas, 0 fallos; `service-tests` y `responsive-browser` SUCCESS.
+- No hubo despliegues Apps Script ni operaciones reales sobre Drive/Spreadsheet.
+
+
+2026-11-25 — Incidencia #130 — referencias Drive y cursor
+- El escáner captura ubicaciones de referencias de `Cortes` en un snapshot serializable `referenceLocationsById`; las páginas de metadatos conservan `referenceLocations` y el inventario puede escribir `referencias_catalogo_json` con datos de vehículo, fila y campo.
+- Se añadió normalización/validación de ubicaciones y pruebas de snapshot, carga, persistencia y read-back.
+- Se elevó `ADMIN_SERVICE_VERSION` a `2.7.2`; auditorías/cursor previos se rechazan para operaciones finales y requieren nueva auditoría.
+- Se añadieron pruebas de cursor/fingerprint, deduplicación global, cache TTL, páginas faltantes/corruptas, replay y orden de persistencia.
+
+2026-11-25 — Incidencia #130 — regresión final
+- ReferenceSnapshot 14/14; ReferenceLocations 6/6; CursorRecovery 23/23; MetadataPersistence 11/11; ScanIntegrity 18/18; IncrementalInventory 35/35; ReplacedImagesIntegrity 64/64; UsefulButtonState 9/9.
+- CI `45721749765`: 542 suites, 6,447 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS.
+- Cambios solo en fuente y pruebas de la rama de trabajo. Sin despliegues Apps Script ni operaciones reales sobre Drive/Spreadsheet.
+
+
+2026-11-25 — Pruebas integradas de útiles y snapshot Drive
+- `UsefulButtonState.mjs` amplía cobertura a 10/10: funciones reales de estado optimista/confirmado, traducción de índice físico a visual, sincronización de encabezados y conservación del icono del botón útil.
+- `AdminReplacedImagesIntegrity.mjs` mantiene 64/64 e incorpora ubicaciones de referencia en el snapshot de prueba para verificar serialización/recuperación.
+- Revisión de diff: únicamente archivos de prueba en esta última iteración.
+- CI `45722568761`: 542 suites, 6,448 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Pages `45722568303` SUCCESS.
+- Sin despliegues Apps Script ni operaciones reales en Drive/Spreadsheet.
+
+
+## 2026-11-25 — Preparación del runner de pruebas Beta
+- Se registraron ocho hallazgos de revisión estática en Hallazgos_Beta.md (BETA-PLAN-F001..008), distinguiéndolos de defectos de runtime aún no comprobados.
+- Workflow de health ahora permite trigger por push restringido a GPSpedia2.2.5_work y configura los gates Beta aislada. El checker usa timeout 8 s, clasifica latencia >=2 s como SLOW y reporta intentos reales. Sigue siendo GET-only.
+- Documentación de contrato actualizada para ADMIN fuente 2.7.2. No se invocaron aún URLs remotas; las pruebas de salud permanecen pendientes de resultado de Actions.
+- Commits de cambios publicados: ac031f5a (hallazgos), 0e017286 (checker), 312c1d78 (workflow), 762308d7 (documentación de versión).
+- Próximo paso: validar parsing del checker, verificar ejecución Actions y ejecutar/interpretar probe remoto; ampliar suite read-only de contratos/feed.
+
+
+## 2026-11-26 — Primer probe Beta remoto
+- Runner health GET-only ejecutado en Actions (runs 45729426765 y 45729430374); 6/6 servicios responden con identidad/JSON/estado válidos.
+- ADMIN se clasifica SLOW (2.431 y 2.701 s) y reporta deployment v2.7.1, frente a fuente 2.7.2; se registra discrepancia para seguimiento, sin despliegue.
+- Cinco servicios PASS; no se ejecutaron operaciones mutables ni probes de dependencias.
+
+
+## 2026-11-26 — Probe read-only del feed CATALOG
+- Añadido `JS/Tests/RemoteCatalogFeedReadOnly.mjs` e integrado al workflow de health.
+- Run 45729926589 SUCCESS. Lecturas cursor 0 y cursor 5/limit 1; contrato, cursors y flags validados, sin escrituras. Latencias 2.374 y 2.381 s; hallazgo F011.
+
+2026-11-26 — GPSpedia Beta: agregado `JS/Tests/RemoteAdminLatency.mjs` y paso read-only en workflow para cinco mediciones ADMIN; documentados resultados y diferencia de versión en Hallazgos_Beta.md/checkpoint.md.
+
+
+## 2026-11-26 — Ajustes del runner y primera ronda Beta read-only
+- `.github/workflows/deployed-service-health.yml`: los probes GET-only independientes continúan tras fallos previos; un paso final consolida outcomes y conserva FAIL global si alguna validación falla.
+- `JS/Tests/RemoteCatalogFeedMatrix.mjs`: se corrigió la interpretación de `resetRequired`; ahora distingue eventos reset incluidos en `changes` de páginas vacías que solicitan reconstrucción.
+- Commits de harness: `5dd0de24bb580b06d713c47d87f7327a12070454`, `a10d2bb242bf6a88120873c753acb3ab5211bace`, `51436be42a373a55b6484bc19e510ee2207f7fb1`, `41673965804ef6e272d56e864aa0f7a51e5a9d80`.
+- Beta GET-only run `45745832696`: contrato 21/21, CATALOG feed/boundaries/matrix PASS, ADMIN latency medida; health global FAIL por ADMIN deployment 2.7.1 vs 2.7.2.
+- CI run `45745832547`: 542 suites, 6,452 pruebas, 0 fallos; Playwright 264/264 en cuatro viewports. Pages run `45745831839` SUCCESS.
+- Sin cambios en fuentes de servicios Apps Script, endpoints, deployments, permisos, PropertiesService, Spreadsheet, Drive u OAuth.
+
+
+## 2026-11-26 — Paginación secuencial remota del feed CATALOG
+- Añadido `JS/Tests/RemoteCatalogFeedPagination.mjs`, GET-only, con avance de cursor página a página, continuidad de revisiones, detección de duplicados, semántica de reset y límite de páginas.
+- Integrado al workflow `.github/workflows/deployed-service-health.yml` con ejecución independiente y resumen agregado.
+- Commit `46ad3a211e2e2d6c0b48a390ec62e8ab7a6399ca`. Run `45746282852`: 5 páginas, 5 eventos, 3 eventos reset, cursor 0→5, sin cambios concurrentes; PASS.
+- Health mantiene FAIL por ADMIN v2.7.1 vs fuente 2.7.2; feed básico, boundaries, matriz y paginación PASS. No hubo escrituras ni despliegues.
+
+
+## 2026-11-26 — endurecimiento del contrato AUTH y resiliencia del runner
+- `JS/Tests/ServiceHealthContract.mjs` ahora rechaza `sessionAuthority`, `sheetName` y `spreadsheetName` en la respuesta de diagnóstico; `JS/Tests/RemoteServiceHealth.mjs` aplica el mismo filtro al probe remoto.
+- Evidencia: AUTH `doGet(debug=true)` expone `sessionAuthority`, contrario a `Services/SERVICE_HEALTH.md`. No se modificó código de servicio ni deployment.
+- `.github/workflows/deployed-service-health.yml` ejecuta probes remotos aunque falle el contrato local y conserva el resultado agregado FAIL.
+- `JS/Tests/RunServiceTests.mjs` ahora captura fallos individuales de suites y continúa ejecutando las demás; el proceso sigue devolviendo error al final si hay fallos.
+- Commits: contrato `1a1625eb64be58d0ad38a1aec22a8a6800dfd621`, workflow `9df7fe091d2854d8c81c2156665e3c01cc33f0bd`, runner `3b77c59fde1ee83d2810e61ba673cdfd3741dc26`.
+- Run `45746770426`: AUTH FAIL por metadato interno, ADMIN FAIL por versión, FEEDBACK SLOW; feed CATALOG y pruebas independientes PASS.
+- Run `45747008507`: 542 suites, 6,410 pruebas aprobadas, 2 fallos de suite (misma aserción AUTH duplicada); Playwright 264/264 PASS.
+- Sin escrituras ni despliegues remotos.
+
+
+## 2026-11-26 — consolidación de resultados del contrato de salud
+- `ServiceHealthContract.mjs` acumula fallos y publica el total de aserciones aunque una falle; resultado actual 20/21 por `AUTH expone sessionAuthority`.
+- `RunServiceTests.mjs` contabiliza las aserciones PASS de suites con salida no cero y continúa las demás suites; el proceso conserva código final de error si hay fallos.
+- Run `45747463436`: AUTH y ADMIN FAIL por metadato interno y versión de deployment; FEEDBACK/CATALOG/WRITE/UTILITIES PASS; todos los probes CATALOG read-only PASS.
+- Run `45747463460`: 542 suites, 6,450 pruebas aprobadas, 2 fallos de suite duplicados por AUTH; Playwright 264/264; Pages run `45747462135` SUCCESS.
+- Sin modificaciones de servicios Apps Script, deployments, endpoints ni datos remotos.
+
+
+## 2026-11-26 — smoke test de la página Beta desplegada
+- Añadido `JS/Tests/BetaDeployedPageSmoke.mjs` y paso en `.github/workflows/service-tests.yml`.
+- Verifica login público de Pages en desktop/móvil y bloquea solicitudes no-GET y llamadas a Apps Script para evitar escrituras.
+- Run `45747844794`: HTTP 200, tres viewports PASS, cero errores JS, cero POST/no-GET y cero llamadas Apps Script. AUG-146 264/264 PASS.
+- Pages run `45747843657`: SUCCESS. No se enviaron credenciales ni se modificaron datos remotos.
+
+
+## 2026-11-26 — cobertura visual de recuperación de contraseña en Pages Beta
+- `JS/Tests/BetaDeployedPageSmoke.mjs` ahora abre/cierra el panel de recuperación y valida campos de usuario/correo, botón de solicitud y estado oculto del formulario de finalización.
+- No envía la solicitud ni introduce credenciales; bloquea métodos no-GET y llamadas Apps Script.
+- Run `45748061081`: AUG-146 264/264 y smoke de Pages PASS; Pages deployment `45748060216` SUCCESS.
+- Flujo de correo/código/cambio de contraseña no ejecutado; sin escrituras remotas.
+
+
+## 2026-11-26 — smoke de recuperación responsive
+- `JS/Tests/BetaDeployedPageSmoke.mjs` valida el panel de recuperación en cuatro viewports (1366x768, 390x844, 360x800, 320x700), además del login.
+- No envía solicitud ni código; bloquea no-GET y Apps Script.
+- Run `45748620437`: smoke PASS, AUG-146 264/264; Pages run `45748620501` SUCCESS.
+
+
+## 2026-11-26 — diagnóstico de PWA offline
+- `JS/Tests/BetaPwaOfflineSmoke.mjs` ahora inspecciona manifest, iconos, Service Worker, grafo recursivo de imports, Cache Storage y errores de navegación offline.
+- Run `45749201690`: manifest/iconos/SW PASS; offline login FAIL. Detectados 12 módulos importados ausentes de `CORE_ASSETS`; solicitudes offline fallidas en módulos JS y recursos externos.
+- No se modificó `service-worker.js` ni código de aplicación. 0 POST/no-GET, 0 llamadas Apps Script, 0 escrituras remotas.
+
+
+## 2026-11-26 — inventario HTTP de recursos PWA
+- `JS/Tests/BetaPwaOfflineSmoke.mjs` ahora consulta todos los recursos de `CORE_ASSETS` y `OPTIONAL_ASSETS` y registra los faltantes antes de validar offline.
+- Commit `cc80ed49f3aacbbc541bd89e11139fe97043deec`; run `45749473444` pendiente en responsive-browser al momento del checkpoint.
+- Sin cambios en `service-worker.js` ni en módulos de aplicación.
+
+
+## 2026-11-26 — verificación estática de rutas PWA
+- Consultado el Git tree recursivo (673 archivos, no truncado): 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS existen; los 12 módulos ausentes de la precarga también existen.
+- Confirma omisión en `CORE_ASSETS`, no pérdida de archivos. Sin cambios en el Service Worker ni recursos de aplicación.
+
+
+## 2026-11-26 — confirmación runtime del precache PWA
+- Run `45749807870`: 36/36 CORE_ASSETS y 4/4 OPTIONAL_ASSETS HTTP 200; manifest y SW PASS; offline login FAIL.
+- Cache Storage contiene los 36 core, no los 12 módulos importados omitidos; fallan 5 módulos JS, Font Awesome CSS y `/thumbnail`.
+- No-GET 0, Apps Script 0, pageErrors 0. No se modificó código de aplicación.
+
+
+## 2026-11-26 — prueba PWA cold/warm
+- `BetaPwaOfflineSmoke.mjs` compara offline inmediato tras instalar el SW con offline después de una recarga online controlada.
+- Run `45750124457`: cold offline FAIL; warm online reload cachea 12 módulos; warm offline PASS y login visible. 36 CORE y 4 OPTIONAL assets HTTP 200.
+- No se modificó Service Worker ni frontend; 0 no-GET y 0 llamadas Apps Script.
+
+
+## 2026-11-26 — BETA-F020: precarga PWA
+- `service-worker.js`: caché v77 y precarga de 13 módulos estáticos del grafo de main.js omitidos en v76 (12 JS y qrcode-generator.mjs).
+- `JS/Tests/BetaPwaOfflineSmoke.mjs`: scanner recursivo de imports ahora reconoce .js y .mjs.
+
+
+## 2026-11-26 — alineación de regresiones PWA con caché versionada
+- JS/Tests/PasswordRecovery.mjs y JS/Tests/ServiceWorkerCache.js: aceptan cualquier versión gpsepedia-cache-vN en vez de fijar v76.
+- ServiceWorkerCache.js: comprueba explícitamente las 13 dependencias agregadas al precache.
+
+
+## 2026-11-26 — corrección de privacidad en diagnóstico AUTH
+- `JS/Services/Auth.js`: se eliminó `sessionAuthority` de la respuesta pública `doGet(debug=true)`.
+- `JS/Tests/Auth.js`: fixture sincronizado con el bloque `doGet` fuente.
+- Sin despliegue Apps Script ni cambios de endpoints/datos.
+
+
+## 2026-11-26 — checkpoint de validación y gobernanza Beta
+- CI `45755702144`: 542 suites, 6,452 pruebas, 0 fallos; ServiceHealthContract 21/21, PasswordRecovery 10/10 y ServiceWorkerCache 12/12.
+- Pages build/deploy `45755701403`: SUCCESS. Browser job de `45755702144` seguía en `Install Chromium`; no se declara validación offline real.
+- Inspección de rama base: API `protected=false`, rulesets `[]`; detalle de branch protection denegado por 403. Sin cambios administrativos ni escrituras en base.
+
+
+## 2026-11-26 — cierre de precarga PWA y estado AUTH
+- Run `45755902520`: Pages build/deploy y browser SUCCESS; PWA offline frío/caliente PASS, 49/49 core y 4/4 opcionales HTTP 200, imports faltantes 0; AUG-146 264/264.
+- Regresión global: 542 suites, 6,452 pruebas, 0 fallos; ServiceHealthContract 21/21; PasswordRecovery 10/10; ServiceWorkerCache 12/12.
+- F020 cerrado. Se registra F022 por CDN Font Awesome y thumbnail Drive fallidos offline, no bloqueantes del login.
+
+
+## 2026-11-26 — health remoto activado ante cambios de fuente Apps Script
+- `.github/workflows/deployed-service-health.yml`: se añadieron las seis fuentes activas (AUTH, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN) al filtro de paths.
+- Cada cambio de fuente en la rama Beta disparará el contrato local y los probes GET-only de los seis deployments; no ejecuta POST ni despliegues.
+
+
+## 2026-11-26 — robustez del workflow health y latencia UTILITIES
+- `.github/workflows/deployed-service-health.yml`: corregido el bloque `if` duplicado del resumen y añadido step de cinco muestras de latencia UTILITIES.
+- `JS/Tests/RemoteAdminLatency.mjs`: acepta SERVICE_KEY ADMIN/UTILITIES, valida identidad/estado/versión y conserva errores por muestra sin ocultarlos.
+
+
+## 2026-11-26 — cierre BETA-F023/F024 y repetición health
+- Run `45756725304`: resumen health corregido; contrato local 21/21; AUTH/ADMIN son los únicos FAIL remotos; otros cuatro servicios PASS.
+- UTILITIES 5 muestras: mediana 778 ms, máximo 1090 ms, sin muestras SLOW; 7,916 ms no se reprodujo.
+- ADMIN 5 muestras: mediana 2241 ms, máximo 5022 ms, 3/5 SLOW; deployment sigue 2.7.1 vs fuente 2.7.2.
+- CATALOG feed, límites, matriz y paginación PASS.
+
+
+## 2026-11-26 — eliminar thumbnail Drive del modal iOS
+- `index.html`: reemplazado el thumbnail remoto de Drive por `Images/icon-v3-512x512.png`, recurso local ya cacheado por PWA.
+- `JS/Tests/OfflineBrandAssets.mjs`: verificación de fallback local y ausencia de Drive en el modal iOS.
+
+
+## 2026-11-26 — fallback de imagen del modal iOS
+- `index.html`: el modal de instalación iOS utiliza el icono local del App Shell en vez del thumbnail de Drive.
+- `OfflineBrandAssets.mjs`: aserción nueva; 5/5 PASS en run `45757156335`.
+
+
+## 2026-11-26 — actualización endpoints AUTH/ADMIN y health Beta
+- El commit `fb96cc841a60cd2852e4578c300332cf4557d26b` actualizó URLs de AUTH/ADMIN en `JS/Frontend/api-config.js`.
+- Health GET-only run `45808869604`: 6/6 servicios PASS; AUTH v2.2.5 (1463 ms), ADMIN v2.7.2 (2698 ms SLOW), CATALOG v2.4.0 (993 ms), FEEDBACK v1.2.2 (1892 ms), UTILITIES v1.5.0 (1323 ms), WRITE v2.3.1 (1617 ms). CATALOG feed/boundaries/matrix/pagination PASS.
+- ADMIN 5 GET: mediana 1861 ms, 1/5 SLOW. UTILITIES 5 GET: mediana 907 ms, 0/5 SLOW.
+- CI service-tests del endpoint commit falló una suite por URLs esperadas obsoletas en `LocalApiEndpoints.mjs` (6443 pruebas aprobadas). Se ajustó el fixture, sin cambiar endpoints, en `dd85ed5705f9d29fc3a3a94d4074124cbc08e35a`; nueva CI pendiente.
+
+
+### 2026-11-26 — Continuidad Beta: regresión posterior a actualización AUTH/ADMIN
+- Run 45809263608, commit cbe5e8a6adecb1359475d711810677650fbe4fba: SUCCESS; 542 suites, 6453 pruebas aprobadas, 0 fallos. La fixture LocalApiEndpoints corregida (dd85ed5) queda validada.
+- responsive-browser PASS; smoke GET-only de login surface y validación manifest PWA/offline navigation PASS.
+- Pages deployment run 45809262461: SUCCESS.
+- La validación confirma CI y superficie desplegada read-only; no acredita login real ni mutaciones de servicios. AUTH/WRITE/FEEDBACK/ADMIN/Drive/OAuth/YouTube funcionales y Android físico siguen diferidos a Beta aislada.
+
+
+### 2026-11-26 — Continuidad CI/browser y registro Beta
+- Se registró en `Tareas_Beta.md` la evidencia del run `45811468299` (542 suites, 6,453 pruebas, 0 fallos) y Pages `45811467538` SUCCESS sobre HEAD `85ffaace4e73b2b0b74f25591f834f85d44dc6a6`.
+- Se documentaron resultados focales de FEEDBACK/CATALOG, UsefulButtonState, cola de útiles y auditoría ADMIN/Drive; TutorialVideoModalLayout 18/18.
+- Se actualizó el estado de continuidad de la incidencia #130 como completada localmente con validación Beta diferida y se conservó el orden de pruebas Beta.
+- No se modificó código funcional, deployments Apps Script ni recursos remotos.
+
+
+## 2026-11-26 — revalidación GET-only posterior a actualización AUTH/ADMIN
+- Se ajustó un comentario de contexto en `.github/workflows/deployed-service-health.yml` para identificar la revalidación manual; comportamiento del workflow sin cambios.
+- Commit de ejecución `18bfd3c04fdd0016c531a24c9a070705725fbc49`: health GET-only `45812643014` SUCCESS, ServiceHealthContract 21/21 y 6/6 servicios con versiones esperadas. ADMIN 2288 ms (SLOW); los otros cinco entre 1045 y 1923 ms.
+- CATALOG feed, boundaries, matrix y pagination PASS. Regresión `45812642942`: 542 suites / 6,453 pruebas / 0 fallos; AUG-146 264/264. Pages `45812641695` SUCCESS.
+- No se ejecutaron POST, escrituras, despliegues Apps Script, cambios Drive/Spreadsheet, OAuth ni YouTube.
+
+
+[2026-11-26] Cierre de validación Beta y limpieza solicitada en GPSpedia2.2.5_work (HEAD previo 7904a45f4f19907a3436948de49f0e767311b519): consolidación de resultados en Tareas_Beta.md y tareas pendientes en Tareas_Activas.md; purga de suites/harnesses de prueba y workflows asociados; limpieza de documentación Markdown conservando únicamente backlogs vigentes y checkpoint.md. Nueva prioridad P0: botón de útil sin reacción, sin registro FEEDBACK y sin actualización del contador del modal. No se modificaron deployments Apps Script, datos remotos ni rama base.
+
+[2026-11-26] Complemento de purga: eliminados también los cuatro archivos de lista histórica de pruebas Beta (lista_beta.txt y sus segmentos) para cumplir la instrucción de no conservar archivos de prueba. Se mantienen los registros de cambios/incidencias que no son suites ni checklists de prueba.
+
+
+[2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01: se corrigió en frontend la espera/hidratación de útiles, los errores silenciosos, el rollback al estado confirmado y la cancelación de pendientes fallidos; se reparó la expresión del contador de acordeón. Archivos: JS/Frontend/ui.js, JS/Frontend/usefulSyncQueue.js. Parse sintáctico y comprobaciones efímeras de lógica PASS; sin archivos de prueba, sin invocaciones remotas ni despliegues Apps Script. Rama base intacta.
+
+[2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01 — revisión de estado de carga: aria-busy se limita a la hidratación realmente en curso; tras un error, el control muestra que puede reintentarse. Sintaxis UI verificada; sin llamadas remotas ni pruebas Beta.
+
+[2026-11-26] GP-UTIL-BUTTON-NO-REACTION-01 — requisito aclarado: errores de útil exclusivamente en consola; eliminados mensajes visibles de error para sesión, hidratación y escritura. Rollback visual y de contador silencioso; botón conserva etiqueta neutral y posibilidad de reintento. Parse sintáctico PASS.
+
+[2026-11-26] GP-UTIL-FEEDBACK-STATE-AND-COUNTER-03: FEEDBACK cambia FeedbackLikes a estado único por actor/vehículo/corte (corteId + isUseful), actualiza la fila existente y sincroniza Cortes.utilCorte1/2/3. Incluye migración conservadora del ledger anterior con copia histórica y compatibilidad de lectura en CATALOG para ambos esquemas. Validación local simulada de dos usuarios, toggles idempotentes, contador y migración PASS; Spreadsheet/deployments reales pendientes de Beta.
+
+[2026-11-26] GP-ADMIN-DRIVE-LIBRARY-AUDIT-02: openReplacedImagesModal ahora recibe options y abre por defecto, evitando showModal indefinido. ADMIN segmenta snapshots por bytes UTF-8 (schema 3) y mantiene lectura/renovación de manifests schema 2 y legado. Simulaciones locales de round-trip multibyte, límites por bloque y compatibilidad histórica PASS; navegador/Drive/ADMIN remoto pendientes de Beta.
+
+[2026-11-26] GP-CORS-APPS-SCRIPT-TRANSPORT-01: se elimina el uso de fetch CORS para Web Apps Apps Script. El frontend consulta health mediante JSONP público limitado a debug=true y envía POST mediante form-urlencoded a iframe con respuesta postMessage; AUTH, CATALOG, WRITE, FEEDBACK, ADMIN y UTILITIES reconstruyen el evento original y conservan handlers/validación. Parsing y simulaciones efímeras PASS. Publicación de los seis deployments y validación real quedan pendientes; no se ejecutaron operaciones remotas ni se modificó la rama base.

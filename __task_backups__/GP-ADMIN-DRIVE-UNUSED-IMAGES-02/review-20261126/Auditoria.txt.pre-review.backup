@@ -1,0 +1,294 @@
+2026-11-25 | GP-UTIL-TOGGLE-01
+- Hallazgo: estado del útil no se hidrataba en la carga, contador y retiro no tenían UI consistente y las interacciones rápidas podían emitir requests redundantes.
+- Corrección: estado local por usuario y vehículo/corte, hidratación FEEDBACK, toggle, debounce, queue serialization, contador optimista y reintentos acotados.
+- Evidencia: CI 45680455995 SUCCESS, 533 suites/6,311 pruebas; UsefulToggle 6/6, UI state 5/5, queue 4/4 y client retry.
+
+2026-11-25 | GP-DRIVE-AUDIT-VISUAL-01
+- Hallazgo: lista de auditoría filtraba clasificaciones y metadatos; faltaba presentar miniatura y relación visible con vehículo/modelo.
+- Corrección: lista visual ampliada, metadatos persistidos, ubicación en Cortes con vehículo ID/categoría/marca/modelo y preview de asociación con miniaturas y estado ambiguo.
+- Evidencia: CI 45680455995 SUCCESS; AdminDriveAuditIndexedDB 13/13, visual contract 6/6, AdminReplacedImagesIntegrity 64/64.
+- Validación real con Drive/Spreadsheet/Apps Script no ejecutada; pendiente Beta aislada.
+
+
+2026-11-25 | GP-ADMIN-AUDIT-REFMAP-01
+- Hallazgo reproducible por inspección de código: el snapshot generado con `collectActiveDriveReferences(false)` no contiene `references` Map, pero la iteración del escáner llamaba `.get(fileId)` sobre esa propiedad ausente. Coincide con el error de inicialización informado. Corrección defensiva: ubicaciones opcionales cuando no hay Map.
+- Validación local/CI pendiente.
+
+2026-11-25 | GP-UTIL-VISUAL-02
+- Se reforzó feedback visual inmediato, aria-pressed y persistencia CSS de botón activo; prueba de contrato visual ampliada.
+- Validación local/CI pendiente.
+
+- CI intermedio detectó dos problemas de test (contrato LocalApiEndpoints aún refería al ADMIN anterior, y UsefulButtonState reportaba 5 tests pese a incorporar el sexto). Se alineó el endpoint esperado con la URL confirmada y se corrigió el resumen del test. CI del HEAD actual en ejecución; no marcar aprobación antes del resultado.
+2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01
+- Hallazgo: handleSaveUnusedImagesInventory() solo admite auditorías completas, valida expectedUnusedCount/digest final y mantiene una operación de inventario global. El frontend acumula lotes, persiste localmente y deja el registro para una acción manual al terminar; por tanto, la biblioteca no recibe imágenes durante el recorrido.
+- Impacto: imágenes clasificadas «Sin uso detectado» no se registran en la biblioteca hasta que termina la auditoría y el usuario ejecuta el guardado manual. Un corte/expiración del recorrido retrasa o impide el registro.
+- Corrección requerida: habilitar registro incremental por lotes a partir de resultados autenticados y persistidos por ADMIN, propietario y auditoría; validar IDs contra el contenido emitido por ADMIN; revalidar referencias activas y el archivo Drive en cada lote; idempotencia por auditoría/lote/archivo; conservar protecciones de historial, ambigüedad y estado manual; no mover/eliminar archivos ni marcar el scan como completo anticipadamente.
+- Criterios de aceptación: registro al recibir cada lote, biblioteca refleja resultados sin botón manual, reintentos seguros, reanudación y reconciliación, operación manual final compatible, tests de contrato/seguridad/idempotencia/resiliencia. No validar servicios reales ni modificar recursos externos en esta fase.
+
+2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01 — revisión adicional
+- Implementación en curso: modo incremental con operación por digest de lote; el flujo final consolida/reconcilia cuando ADMIN confirma estado completo. Frontend registra por lote y consolida al finalizar; no organiza/mueve Drive.
+- Riesgo que sigue bajo revisión: estado de resultado global y operaciones del organizador tras consolidación; reintentos/errores parciales y concurrencia. CI focal aún en ejecución para la última revisión.
+
+2026-11-25 | GP-ADMIN-INVENTARIO-INCREMENTAL-01 — cierre local
+- Corrección: registro automático de imágenes sin uso por lote y consolidación final desde UI; ADMIN valida owner, TTL, estado y allowlist emitida/persistida; revalidación de referencia/Drive e idempotencia por lote; no mover archivos en registro. Reconciliación stale solo en consolidación final.
+- CI 45705928487 SUCCESS: syntax, service regression runner y responsive-browser PASS; test contractual/simulado de owner, allowlist, estados y TTL.
+- Beta real (Drive/Spreadsheet/deployment) pendiente. No hubo cambios en recursos externos.
+
+
+2026-11-25 | Incidencia #130 — error item fuera de ámbito
+- Severidad: alta; la auditoría aborta al construir el primer resultado y devuelve cero resultados conservados.
+- Ubicación: JS/Services/admin.js, handleAuditDriveImagesInCortesCore_, objeto agregado a auditResults.
+- Evidencia: referenceLocations: Array.isArray(item && item.referenceLocations) evalúa item sin declarar en ese ámbito; el objeto ya recibe la variable referenceLocations válida y repite esa propiedad.
+- Impacto: ReferenceError interrumpe el lote antes de persistir/responder resultados; no hay cursor de continuación útil para ese lote.
+- Corrección: quitar propiedad duplicada fuera de ámbito y mantener mapeo de ubicaciones del snapshot. Regresión aislada añadida; CI pendiente.
+
+2026-11-25 | Incidencia #130 — proyección al reactivar útil
+- Severidad: media; secuencia event → withdrawn → event para el mismo actor/vehículo/corte podía proyectar delta incorrecto.
+- Ubicación: JS/Services/catalog.js, readFeedbackLikeEventCounts_.
+- Evidencia: el acumulador dejaba completed=true después de una retirada completada y no lo restablecía al encontrar un nuevo evento activo.
+- Corrección: un nuevo estado event restablece completed=false; regresión de secuencia añadida. CI pendiente.
+
+
+2026-11-25 | Rectificación de análisis — semántica completed en proyección de útiles
+- La hipótesis inicial de que CATALOG debía restablecer completed=false al recibir un nuevo event después de withdrawn fue incorrecta.
+- completed indica que el evento ya fue materializado en el contador base de Cortes. Tras retirar, el ledger aplica -1 sobre ese valor base; al reactivar el mismo evento materializado, debe dejar de aplicar el delta negativo, no sumar un nuevo +1. Restablecer completed causaría doble conteo.
+- El cambio experimental de CATALOG fue revertido; el blob volvió al contenido previo. Commit de reversión: 1ebe3e1ea26a8f3f095b15c98f45935c482fb817.
+- Se conserva la prueba añadida para el caso event → withdrawn → event sin materialización previa; se ampliará cobertura para la secuencia completed → withdrawn → event y el contador base.
+
+
+2026-11-25 | Incidencia #130 — índice original perdido al ordenar cortes
+- Severidad: alta; el índice visual del corte podía ser enviado a FEEDBACK como si fuera el índice físico de la hoja Cortes.
+- Evidencia: CATALOG mapCatalogVehicleRowForProjection_ ordena los tres grupos tipoCorte/utilCorte por número de útiles y reasigna sus campos a slots 1..3, pero no conservaba el índice de origen. UI mostrarDetalleModal vuelve a iterar slots 1..3 y asigna ese índice a cutData.index; FEEDBACK interpreta corteIndex como columna física.
+- Impacto: después de que los cortes se ordenan por popularidad, marcar/retirar útil puede modificar el corte físico equivocado y el contador/title puede no coincidir con el elemento mostrado.
+- Corrección: CATALOG añade sourceCorteIndex1..3 por slot visual; UI conserva ese índice para el evento; likeState y syncUsefulCount_ resuelven el slot de presentación al actualizar conteos optimistas/confirmados.
+- Prueba aislada ejecutada con proyección real y funciones reales de estado: PASS para orden 2,3,1, activar, confirmar y retirar sobre el corte original 2. Suite Node/CI aún pendiente.
+
+
+2026-11-25 | Incidencia #130 — persistencia ampliada de metadatos de imágenes
+- Hallazgo: el inventario existente guardaba nombre, fileId, URL, MIME, ruta/origen y estado, pero no persistía folderId, formato, tamaño, fecha de modificación ni el array de referencias del snapshot.
+- Corrección: esquema Imagenes_Reemplazadas agrega cinco columnas dinámicas sin alterar las once históricas ni las dieciséis columnas dinámicas existentes. `handleSaveUnusedImagesInventory` lee el metadata snapshot por auditId/páginas, revalida fileName/MIME/folderId/folderPath contra Drive y registra folderId, formato, tamaño bytes, fecha modificación y referencias JSON con escritura/read-back verificado.
+- `handleGetReplacedImages` expone los campos nuevos y la biblioteca visual los muestra. Los resultados de auditoría muestran fileId y folderId.
+- Asociación: `buildCortesImageModelAssociationSuggestions_` incluye vehicleIds y row numbers. Modelos que corresponden a varios vehículos se marcan ambiguos; la UI muestra IDs/filas y mantiene revisión manual sin aplicar asociaciones automáticamente.
+- Pruebas añadidas/ampliadas: AdminIncrementalInventory, AdminReplacedImagesIntegrity, AdminDriveScanModal y AdminDriveAuditAssociation. Runner aislado: schema migration 32 columnas PASS; asociación única/ambigua PASS; parser JS PASS. Node/CI pendiente.
+
+
+2026-11-25 | Incidencia #130 — persistencia de asociación por vehículo
+- El preview de asociación ya proponía modelos por nombre/ruta, pero la hoja de inventario no conservaba candidatos ni la confianza después de cerrar el modal.
+- Se agregaron columnas asociacion_estado, asociacion_confianza y asociacion_candidatos_json. Durante el guardado incremental ADMIN calcula sugerencias sobre metadatos del snapshot y la hoja Cortes; persiste vehicleIds, rows, modelo, marca, categoría, score y señales.
+- Si un modelo coincide con varios IDs de vehículo, el estado se marca ambiguous y se mantiene revisión manual; no se asigna automáticamente.
+- La lectura de inventario expone los campos y la UI muestra asociación, confianza, IDs y filas; el filtro admite folderId, formato y candidatos.
+- El verificador read-back compara los ocho campos de metadata/asociación. Esquema simulado 35 columnas PASS; pruebas de persistencia y asociación añadidas. Node/CI pendiente.
+
+
+2026-11-25 | Incidencia #130 — validación del estado visual de útiles
+- Se amplió UsefulButtonState.mjs: el botón queda deshabilitado hasta hidratar el estado de usuario desde FEEDBACK y el frontend conserva el índice físico original del corte al ordenarlo por popularidad.
+- Ejecución aislada de las ocho comprobaciones del test: 8/8 PASS. Node/CI sigue pendiente.
+
+
+2026-11-25 | Incidencia #130 — fallos CI por fixtures desactualizados
+- CI `45718729264` reportó dos fallos: `CortesImageModelAssociationSuggestions.mjs:30` (esperaba sugerencia única pero el fixture no asignaba ID de vehículo; el algoritmo correctamente devolvía ambiguous) y `LocalApiEndpoints.mjs` (esperaba deployments CATALOG/ADMIN anteriores a los valores ya presentes en `API_ENDPOINTS`).
+- Se verificó que no era un defecto del motor de asociación ni de resolución de endpoints. Se corrigieron únicamente los datos esperados de las pruebas. Además, la regresión `AdminDriveAuditItemReference` requería inyectar `fileName` y `classification` al evaluar el objeto extraído; corregido el fixture.
+- Evidencia posterior: CI `45718949366` SUCCESS, 539 suites / 6,385 pruebas / 0 fallos; responsive-browser SUCCESS. Pruebas focales asociadas aprobadas. Sin llamadas a servicios ni cambios de deployments.
+
+
+2026-11-25 | Incidencia #130 — escaneo Drive finalizado con errores podía habilitar inventario
+- Severidad: alta (integridad de inventario y reconciliación).
+- Ubicación: JS/Services/admin.js, getLatestDriveAuditIdForUser_, validateCompletedDriveAudit_, validateDriveAuditInventoryBatch_, handlePreviewCortesImageOrganizer_, handleApplyCortesImageReconciliation_, handleOrganizeUnusedImagesBatch; JS/Frontend/ui.js, controles y consolidación de openAuditDriveModal.
+- Evidencia: el recorrido podía terminar con stack vacío y `status=complete`, aun con `errorCount>0` por fallos de lectura de archivos o IDs no verificables. Las validaciones finales solo exigían status/fecha/digest, no ausencia de errores.
+- Impacto: se podía tratar un inventario parcial como completo y permitir preview, reconciliación u organización con archivos no verificados.
+- Corrección: backend bloquea las operaciones finales/incrementales si hay errores o referencias no interpretables; frontend deshabilita acciones, omite consolidación final y conserva resultados parciales con advertencia. Regresión `AdminDriveScanIntegrity.mjs` 15/15; CI `45719961761` SUCCESS, 540 suites / 6,401 pruebas / 0 fallos.
+
+2026-11-25 | Incidencia #130 — contador de útiles podía reemplazar el icono del botón
+- Severidad: media (interfaz y accesibilidad de acción).
+- Ubicación: JS/Frontend/ui.js, syncUsefulCount_.
+- Evidencia: el selector genérico `[data-useful-vehicle-id][data-useful-cut-index]` incluía tanto encabezados como botones `.util-btn`; el fallback asignaba `textContent` y eliminaba el icono del botón.
+- Corrección: limitar la selección a encabezados `.accordion-btn` y `.detail-section-heading`. Regresión `UsefulButtonState.mjs` 9/9; CI `45719961761` SUCCESS.
+
+
+2026-11-25 | Incidencia #130 — snapshot Drive sin ubicaciones de referencia persistidas
+- Severidad: media-alta (trazabilidad de imágenes y calidad del inventario).
+- Ubicación: JS/Services/admin.js, handleAuditDriveImagesInCortesCore_, validateAuditDriveReferenceSnapshot_, storeDriveAuditSeenPage_, loadDriveAuditFileMetadata_.
+- Evidencia: la captura inicial usaba `collectActiveDriveReferences(false)`; el snapshot guardaba solo IDs. El escáner buscaba un Map no serializado y la página de metadatos descartaba `referenceLocations`. La UI esperaba ubicaciones para mostrar vehículo, fila y campo.
+- Corrección: captura detallada; snapshot JSON `referenceLocationsById` limitado a `Cortes`; normalización/validación de ubicación; persistencia y read-back de referencias en páginas y `referencias_catalogo_json`. Regresiones: ReferenceSnapshot 14/14, ReferenceLocations 6/6, MetadataPersistence 11/11.
+- Compatibilidad: se elevó ADMIN fuente a 2.7.2; estados/cursor 2.7.1 no se usan para continuar ni para operaciones finales. Se requiere auditoría nueva. No hubo despliegue.
+
+2026-11-25 | Incidencia #130 — cobertura de cursor y reanudación
+- Se añadieron pruebas de fingerprint de cursor, rechazo de cursor incompleto/antiguo, deduplicación global de IDs por páginas, renovación/validación de cache, detección de página ausente/corrupta, replay idempotente y orden de persistencia de respuesta/estado.
+- Evidencia: `AdminDriveAuditCursorRecovery` 23/23 y `AdminDriveAuditClientRetry` (reintentos, payload estable, cancelación y timeout).
+
+2026-11-25 | Incidencia #130 — verificación integral de esta iteración
+- CI `45721749765` SUCCESS: 542 suites, 6,447 pruebas aprobadas, 0 fallos; responsive-browser SUCCESS. Commit `bdb201ab0c6c2c76264a7c083bd5625cc6a1172b`.
+
+
+2026-11-25 | Incidencia #130 — verificación integrada final
+- Se amplió `UsefulButtonState` para ejecutar las funciones reales de proyección/estado optimista/confirmado y conectarlas con un DOM simulado. Comprueba índice físico frente a posición visual, título recomendado/alternativo y conservación del icono del botón. Resultado 10/10.
+- Se amplió el fixture del harness `AdminReplacedImagesIntegrity` con `referenceLocationsById` para comprobar el round-trip real del snapshot serializado por manifiesto y bloques de caché. Resultado 64/64.
+- Revisión del diff desde el checkpoint anterior: solo dos archivos de pruebas modificados en esa última fase.
+- CI `45722568761` SUCCESS: 542 suites, 6,448 pruebas, 0 fallos; responsive-browser SUCCESS. Pages `45722568303` SUCCESS.
+- La validación real de Apps Script/Drive/Spreadsheet no se ejecutó; permanece pendiente de despliegue y autorización Beta.
+
+
+2026-11-25 | Revisión runner Beta: ocho hallazgos de inspección estática registrados (BETA-PLAN-F001..008). Ajustes publicados al checker health (timeout 8s, estado SLOW >=2s, intentos exactos) y workflow restringido a GPSpedia2.2.5_work con gates Beta. No se ejecutaron endpoints remotos todavía.
+
+2026-11-26 | Beta health real: Actions runs 45729426765/45729430374 SUCCESS; GET-only 6/6 endpoints disponibles. ADMIN deployment v2.7.1 (fuente 2.7.2) y latencia 2.431/2.701s, SLOW; F009 desfase de versión, F010 latencia alta. Los otros servicios PASS (1.105–1.612ms). Sin escrituras.
+
+2026-11-26 | CATALOG feed read-only real (run 45729926589): cursor 0/limit1 => revision5, minRevision1, changeCount1, hasMore; cursor5 => 0 eventos, hasMore false. Latencias 2374/2381ms. F011 performance observada. Sin mutaciones ni contenido de eventos registrado.
+
+
+2026-11-26 | BETA-F020 — corrección de precache
+- Evidencia previa: 12 módulos JS importados por el grafo de main.js no estaban en CORE_ASSETS; el login fallaba offline frío y funcionaba tras warm-up online.
+- Cambio focalizado: 12 módulos JS y qrcode-generator.mjs agregados a CORE_ASSETS; cache version v76→v77. El scanner de imports ahora incluye .mjs.
+- Criterio de cierre: Actions debe confirmar todos los recursos HTTP 200, cero dependencias estáticas omitidas, login visible inmediatamente offline y regresión responsive sin fallos. No se modifica el backend ni datos remotos.
+
+
+2026-11-26 | BETA-F020 — regresiones de harness por versión de caché
+- CI 45755284614 detectó dos tests con versión fija v76 tras la actualización legítima a v77: PasswordRecovery.mjs y ServiceWorkerCache.js.
+- Se reemplaza el literal por una expresión versionada y se refuerza la suite ServiceWorkerCache con las 13 rutas añadidas. No afecta al comportamiento de producción.
+
+
+2026-11-26 | BETA-F019 — corrección local de diagnóstico AUTH
+- Se retiró `sessionAuthority: Users/ActiveSessions` de `doGet(debug=true)` en `JS/Services/Auth.js` y se sincronizó el fixture `JS/Tests/Auth.js`.
+- La respuesta fuente ahora se limita a identidad, versión y estado. No se desplegó Apps Script ni se alteró el endpoint remoto.
+- Criterio de cierre local: ServiceHealthContract 21/21 y regresión AUTH/paridad PASS. Cierre Beta remoto requiere deployment autorizado y GET health sin metadatos internos.
+
+
+2026-11-26 | BETA-F021 — protección de rama base
+- `GET /branches/GPSpedia2.2.5` devuelve `protected=false`; `GET /rulesets?includes_parents=true` devuelve `[]`.
+- El endpoint de protección detallada devuelve 403 por permisos de integración. No se cambiaron settings ni se escribió en la rama base.
+- Riesgo: ausencia de protección GitHub verificable para la rama que el flujo declara protegida. Requiere acción administrativa del propietario.
+
+
+2026-11-26 | BETA-F020 — cierre por prueba offline frío
+- Run `45755902520` SUCCESS: `missingPrecacheModules=[]`, `missingCoreAssets=[]`, 49 recursos core y 4 opcionales verificados HTTP 200; login visible inmediatamente offline frío y también tras warm-up.
+- AUG-146 264/264, Pages login/recuperación UI PASS, cero solicitudes no-GET, cero llamadas Apps Script y cero pageErrors. Se cierra la causa de dependencias JS omitidas.
+- Hallazgo residual no bloqueante BETA-F022: CDN Font Awesome y thumbnail Drive no disponibles offline; no impiden el login.
+
+2026-11-26 | BETA-F019 — resultado local
+- Run `45755902520`: ServiceHealthContract 21/21; suite global 542/6,452/0. Fuente Auth.js y fixture sin `sessionAuthority`. Deployment remoto aún no actualizado; no se despliega Apps Script.
+
+2026-11-26 | BETA-F021 — comprobación de protección
+- La rama base sigue reportando `protected=false` y no se observan rulesets; requiere administración del repositorio. No se modificó la rama base.
+
+
+2026-11-26 | BETA-F023 — resumen health workflow
+- Run `45756293382`: step de resumen shell falló por doble `if` y `unexpected end of file`; los probes independientes sí se completaron. Bloque corregido en commit `5496c88c`.
+
+2026-11-26 | BETA-F024 — UTILITIES SLOW
+- Run `45756293382`: health UTILITIES v1.5.0 `available`, 7,916 ms. Se incorporó medición repetida de cinco muestras para determinar variabilidad; no se atribuye causa con una sola observación.
+
+
+2026-11-26 | BETA-F023 — cierre
+- Run `45756725304`: resumen final ejecutado sin error shell; el resultado agregado FAIL refleja únicamente AUTH y ADMIN remotos. Defecto del workflow corregido.
+
+2026-11-26 | BETA-F024 — latencia UTILITIES no reproducida
+- Cinco GET: 1090/691/868/778/639 ms; mediana 778, máximo 1090, 0/5 lentas. La muestra aislada 7,916 ms no se reprodujo; se cierra como anomalía transitoria.
+
+2026-11-26 | ADMIN — latencia y deployment
+- Cinco GET: 2241/5022/1465/2358/1631 ms; mediana 2241, máximo 5022, 3/5 >=2 s. Deployment continúa 2.7.1 frente a fuente 2.7.2; no se desplegó.
+
+2026-11-26 | Health Beta — run `45756725304`
+- Contrato local 21/21 PASS. AUTH FAIL por sessionAuthority remoto; ADMIN FAIL por versión. CATALOG/FEEDBACK/UTILITIES/WRITE PASS. CATALOG feed, boundaries, matrix y pagination PASS. Cero mutaciones.
+
+
+2026-11-26 | BETA-F022 — recurso de imagen local
+- `index.html`: imagen del modal iOS ahora usa `Images/icon-v3-512x512.png` ya precargado por SW, en lugar de `/thumbnail` de Drive.
+- `OfflineBrandAssets.mjs` agrega una aserción para impedir que el modal dependa de Drive. Pendiente Actions/browser para confirmar desaparición de la solicitud offline.
+
+
+2026-11-26 | BETA-F022 — verificación posterior del fallback iOS
+- `OfflineBrandAssets.mjs` 5/5 PASS; el modal iOS usa el logo local cacheado.
+- Run `45757156335`: PWA cold/warm PASS, 49/49 core + 4/4 opcionales HTTP 200, login visible offline frío/caliente, 0 pageErrors/no-GET/Apps Script. Cold failedRequests conserva Font Awesome CDN y `/thumbnail`; warm failedRequests vacío.
+- La referencia restante de Drive se localiza en `HTML/add_cortes.html` (testigo motor). F022 sigue como residual visual no bloqueante.
+
+
+2026-11-26 | GP-UTIL-BUTTON-NO-REACTION-01 — hallazgo y corrección
+- Evidencia de código: `JS/Frontend/ui.js`, hidratación `ensureUsefulState_` y handler `.util-btn`: si `getMyUsefulCuts` fallaba sin caché local, el catch solo escribía consola y el control seguía disabled; el handler retornaba silenciosamente si no había contexto o estado listo. El título del acordeón usaba regex doblemente escapado y no retiraba el contador previo. En fallo de envío, la UI mantenía el toggle optimista y la cola no cancelaba el pendiente.
+- Impacto: botón aparentemente inerte cuando la hidratación no concluía; errores de carga sin aviso/reintento claro; contador de acordeón podía acumular textos; posible estado visual falso tras error de escritura.
+- Corrección: hidratación awaitable/compartida, error visible, botón habilitado durante carga con aria-busy, rollback y cancelación de pendiente al fallar, regex de contador corregido. Archivos `JS/Frontend/ui.js`, `JS/Frontend/usefulSyncQueue.js`.
+- Severidad: alta (función de útil inutilizable o incoherente en fallo de hidratación/escritura). Validación local sintáctica y comprobaciones efímeras PASS. No hubo integración remota ni deployment; no afirmar persistencia real confirmada.
+
+
+2026-11-26 | GP-UTIL-BUTTON-NO-REACTION-01 — aclaración UX obligatoria
+- El propietario establece que el usuario nunca debe ver mensajes de error de la reacción útil. Registrar fallos exclusivamente en consola del navegador.
+- Se eliminaron `showGlobalError` de los caminos de hidratación, sesión y sincronización; se eliminó el texto de error del botón. El rollback al estado confirmado es silencioso.
+- No confundir el registro interno en consola con notificación de interfaz. Requisito aplicable a futuros cambios de este flujo.
+
+2026-11-26 | GP-UTIL-FEEDBACK-STATE-AND-COUNTER-03
+- Hallazgo: el ledger append-only FeedbackLikes no representaba una fila canónica por usuario/vehículo/corte y la acción no sincronizaba los campos físicos Cortes.utilCorte1/2/3. CATALOG sumaba eventos sobre el valor físico, pero el dashboard que lee Cortes directamente no recibía el cambio.
+- Impacto: dos usuarios podían tener reacciones persistidas y el contador de cortes continuar en cero; los toggles repetidos creaban filas por interacción y el estado por corte no era explícito.
+- Corrección: nuevo esquema actorKey/vehicleId/corteId/isUseful/createdAt/updatedAt; actualización de la fila del usuario, recuento de estados activos, sincronización y verificación de la celda utilCorteN. Migración conservadora del contrato antiguo, copia histórica de la hoja y rechazo seguro de estados pending/esquema desconocido. CATALOG conserva lectura de ambos esquemas sin doble conteo.
+- Validación: sintaxis de FEEDBACK/CATALOG PASS; simulación dos usuarios/toggle repetido/retiro/reactivación PASS (2 filas y contador físico 2); simulación de migración y preservación de backup PASS. Integración real/Spreadsheet/deployment diferidos a Beta.
+- Severidad: alta — inconsistencia funcional del contador y del dashboard; corrección fuente aplicada.
+
+2026-11-26 | GP-ADMIN-DRIVE-LIBRARY-AUDIT-02
+- Hallazgo A: openReplacedImagesModal() consumía showModal sin declararlo, interrumpiendo la apertura de la biblioteca con ReferenceError.
+- Hallazgo B: storeAuditDriveReferenceSnapshot dividía por caracteres y verificaba bytes UTF-8; cadenas con caracteres multibyte podían exceder el límite de 75,000 bytes por bloque y anular la conservación de resultados.
+- Corrección A: parámetro options por defecto y apertura visible por defecto, conservando la llamada existente sin argumentos.
+- Corrección B: partición por bytes UTF-8 sin separar pares sustitutos, manifiesto schema 3 y compatibilidad de lectura/renovación schema 2/legado.
+- Validación: parsing de ADMIN/UI PASS; prueba simulada de snapshot 189,078 bytes con bloques máximos de 74,999 bytes y reconstrucción exacta; renovación/lectura schema 3, schema 2 y legado PASS. No se ejecutaron Drive, ADMIN remoto ni navegador.
+- Severidad: media — biblioteca inaccesible y auditoría Drive parcial; corrección fuente aplicada, validación Beta diferida.
+
+2026-11-26 | GP-CORS-APPS-SCRIPT-TRANSPORT-01
+- Hallazgo: `api-config.js` realizaba GET health y POST directamente con fetch a Web Apps Apps Script. El navegador bloqueaba la lectura por CORS aunque el servidor devolvía 200; afecta al health scan y acciones ADMIN/Drive, y al mismo transporte de los seis servicios.
+- Corrección fuente: health GET mediante JSONP limitado a `debug=true`; POST mediante form-urlencoded + iframe oculto y respuesta HtmlService/`postMessage` con request ID. Los seis servicios convierten de forma reversible el evento de formulario a `postData.contents` JSON para reutilizar sus handlers actuales.
+- Límites: sin cambios en endpoints, ACTION_TO_SERVICE_MAP, autorización, RBAC, sesiones, coordinación entre servicios o datos externos. No se habilita JSONP para el feed CATALOG.
+- Validación local efímera: sintaxis frontend y seis Apps Script PASS; simulación JSONP cliente/servidor, POST, reconstrucción de body, respuesta iframe, limpieza y health ADMIN PASS. Sin archivos de prueba persistentes.
+- Pendiente: publicar todos los servicios y frontend y validar navegador/health/ADMIN/Drive. No se ejecutó deployment ni operaciones reales. Severidad alta por bloqueo del panel administrativo.
+
+
+2026-11-26 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 — Revisión de requisitos y flujo de registro
+- Requisito confirmado por el propietario: inventario visual individual de cada imagen sin uso en el árbol Cortes; datos individualizados (ID, nombre, tamaño, formato, ubicación/directorio, URL y vehículo/modelo asociado), estado de registro persistente, vista previa por elemento y biblioteca unificada con imágenes históricas.
+- La asociación debe inferirse por filename y árbol estructurado de directorios (marca/modelo/versión/tipo de encendido/años), con incertidumbre explícita cuando no exista evidencia.
+- El uso debe determinarse exclusivamente por hojas de catálogo relevantes: Cortes, Tutoriales, Diagramas de Relay, Problemas y soluciones. Hojas de eventos, registros, Feedback/reacciones y otras hojas operativas no deben contar como referencia de uso.
+- Revisión parcial de código ADMIN: la auditoría por cursor guarda metadata del escaneo en estado servidor y clasifica por referencias/historial; el handler de guardado permite modo incremental, pero el flujo UI señalado previamente acumula lotes y usa almacenamiento local de auditoría, por lo que la persistencia individual y el estado visible requieren revisión/ajuste integral. No se considera cumplimiento demostrado.
+- Falta completar auditoría de normativa, UI, asociación, schema, handlers de biblioteca y scanner. El archivo normativo no pudo recuperarse en esta consulta; no se inició edición funcional ni operación remota.
+- Plan registrado en PLAN_AUDITORIA_BIBLIOTECA_IMAGENES_SIN_USO.md.
+
+2026-11-26 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / GP-ADMIN-TAB-ACTIONS-UX-01
+- Requisitos UX añadidos al plan y backlog en commits c701f1986ac79a7fd0192d73d415e50ae957d668 y e14f462d73f6f81036e3604c9858dc0b6334326b.
+- Requisito de auditoría: «Auditar cortes» debe transformar la sección activa en un explorador tipo Google Drive, sin abrir un modal adicional; resultados progresivos con miniatura, metadatos, estado individual y vehículo. La consola permanece accesible/no bloqueada, recibe todos los mensajes de avance/alerta y comparte el ancho del modal aproximadamente 50/50 con la vista de archivos, también en móvil.
+- Tarea adicional independiente: GP-ADMIN-TAB-ACTIONS-UX-01, reorganizar botones internos de cada pestaña (no la barra de pestañas), con iconos, estilo responsive y expansión del botón seleccionado para revelar su etiqueta.
+- Inspección inicial de index.html/style.css: la consola compartida está estructurada fuera del contenido de pestañas; CSS actual la presenta como bloque apilado y en móvil también apilado, no como panel lateral 50/50. Esto requiere rediseñar el layout compartido sin crear overlays/modales.
+- Inspección inicial de JS/Services/admin.js: el scanner y el inventario incremental ya existen parcialmente; collectActiveDriveReferences() actualmente excluye hojas operativas enumeradas, pero recorre por defecto todas las demás hojas en lugar de aplicar una allowlist explícita de hojas de catálogo. Debe validarse el contrato exacto antes de modificar.
+- Bloqueo de cumplimiento: NORMAS_DESAROLLO.md no está presente en el árbol de GPSpedia2.2.5_work ni en GPSpedia2.2.5; tampoco README.md/contexto_personal.md en la rama de trabajo (README sí existe en base). No se modificó código hasta localizar la fuente normativa vigente y leerla completa.
+- Sin operaciones remotas de Drive/Sheets, sin cambios de permisos/RBAC/auth y sin deployment.
+
+2026-11-26 | GP-ADMIN-DRIVE-UNUSED-IMAGES-02 / GP-ADMIN-TAB-ACTIONS-UX-01 — auditoría técnica ampliada (sin cambios funcionales)
+
+Alcance inspeccionado: NORMAS_DESAROLLO.md completo; index.html; style.css; button-system.css; JS/Frontend/ui.js; JS/Services/admin.js; JS/Services/catalog.js; contratos de hojas y esquemas de ADMIN/CATALOG; plan y backlog activos.
+
+1. Referencias de catálogo y clasificación
+- collectActiveDriveReferences(includeLocations) recorre todas las hojas de la Spreadsheet salvo una lista negativa limitada (Imagenes_Reemplazadas, Logs, ActividadUsuario, ActiveSessions, Users, AdminState e Idempotencia/Idempotencia_Cortes). No aplica una allowlist positiva de catálogo. Por tanto, hojas operativas/eventos no enumeradas —incluida FeedbackLikes y otros ledgers— pueden marcar una imagen como «En uso» si contienen una URL/ID de Drive.
+- Para las hojas distintas de Cortes, el colector examina todas las celdas, valores, fórmulas, rich text y objetos de imagen; esto amplía el riesgo de falsos positivos frente al contrato solicitado de campos de imagen del catálogo.
+- Los nombres físicos confirmados por los contratos de código son: Cortes, Tutorial, Relay y pys. Corresponden a las secciones visibles Cortes, Tutoriales, Diagramas/Configuración Relay y Problemas y Soluciones. ADMIN_RESTORE_REQUIRED_SCHEMA_ define sus encabezados; CATALOG confirma Tutorial/Relay y el contrato PyS (columna Imagen). No debe suponerse que los rótulos visibles son los nombres físicos de las hojas.
+- collectCortesImageReferences lee ocho columnas de imagen específicas de Cortes. Tutorial tiene campo Imagen; Relay, imagen; pys, Imagen. Estos campos permiten construir una allowlist precisa por hoja/columna sin leer hojas de actividad.
+- El escáner filtra las ubicaciones de referencia guardadas para detalle visual a SHEET_NAMES.CORTES, aunque activeDriveIds se construye con referencias del conjunto más amplio. La clasificación puede quedar influida por hojas no catálogo sin que su ubicación aparezca en la tarjeta.
+
+2. Scanner, cursor y persistencia de resultados
+- handleAuditDriveImagesInCortesCore_ valida sesión Desarrollador, raíz Cortes y pertenencia de carpetas; usa cursor firmado por estado de servidor, deduplicación, snapshot de referencias, límites por lote/tiempo y caché de páginas. Persiste estado/cursor en el estado ADMIN y resultados/metadata temporales en CacheService; el escaneo por sí solo no crea una fila individual en Imagenes_Reemplazadas.
+- Cada resultado contiene fileId, nombre, folderId/path, MIME, formato, URL Drive de vista, tamaño, fecha de modificación, clasificación y ubicaciones disponibles. La URL de vista/miniatura no concede acceso público ni modifica ACL; no se debe cambiar permisos para cumplir el campo URL.
+- Las referencias no interpretables bloquean la confirmación del inventario; esto es conservador y evita declarar sin uso cuando el escaneo de referencias está incompleto.
+
+3. Inventario compartido y asociación
+- La hoja compartida es Imagenes_Reemplazadas. ensureReplacedImagesInventoryColumns mantiene las once columnas históricas y añade campos para origen/tipo/MIME/ubicación/URL/Drive ID/formato/tamaño/fecha/referencias/asociación/estado.
+- handleSaveUnusedImagesInventory recorre cada ID por separado dentro del lote, vuelve a validar referencias y metadatos de Drive, evita duplicados por ID de archivo y crea/actualiza la fila correspondiente. writeDriveInventoryRowVerified_ realiza escritura, flush y read-back; reintenta una vez y marca requiere_revision/error si no puede reconciliar la escritura. El backend ya tiene una base de persistencia individual e idempotente; no debe duplicarse ni reemplazarse sin necesidad.
+- El frontend envía lotes incrementales y recibe resultados por archivo (confirmado/bloqueado/error/no_confirmada), pero solo escribe un mensaje agregado cuando todo el lote confirma. Las tarjetas de auditoría no reflejan el estado de persistencia individual ni ofrecen un reintento por elemento. La consolidación final también hace una solicitud agregada; no sustituye la necesidad de reflejar el resultado de cada ID.
+- La asociación existente buildCortesImageModelAssociationSuggestions_ utiliza modelos de Cortes, filename, segmentos de carpeta y alias; conserva candidatos ambiguos. Los criterios actuales puntúan coincidencias de modelo/alias/marca/categoría, pero no incorporan de forma explícita versión, tipo de encendido ni rango de años solicitados. El inventario solo construye estas sugerencias desde filas Cortes; la relación ausente/ambigua debe permanecer explícita, nunca inventarse.
+- La biblioteca existente ya consulta Imagenes_Reemplazadas y presenta cuadrícula/lista, miniaturas, datos de archivo, ubicación, asociación y acciones condicionadas por capacidades. Las operaciones de mover/restaurar/papelera/eliminación tienen confirmación y validaciones en ADMIN; conviene reutilizar este contrato y no crear una segunda biblioteca.
+
+4. UI de auditoría y consola
+- index.html contiene audit-drive-modal separado. El botón Auditar Cortes llama openAuditDriveModal({showModal:false,startImmediately:true}); ui.js mantiene el modal oculto, pero el contenedor audit-drive-results-container y su consola secundaria están dentro de ese modal. Por ello los resultados de auditoría no se muestran en la sección activa del panel Developer.
+- La función appendAuditConsole sí remite los mensajes a la consola global Developer, además de escribir en la consola secundaria oculta. La consola global está fuera de dev-tools-tabs, lo que permite mantenerla compartida.
+- La estructura actual coloca dev-console-shared y dev-tools-tabs como bloques hermanos en columna. Las reglas vigentes de style.css fijan la consola a 100% de ancho y aproximadamente 48% de altura; en móvil mantienen 100% de ancho y altura parcial. No existe reparto horizontal 50/50 entre consola y explorador, ni en escritorio ni en móvil.
+- Para cumplir el requisito, el explorador debe renderizarse dentro del área de contenido de la pestaña Imágenes y Drive, sin overlay/modal nuevo; el contenedor global debe organizar consola y área de pestañas/contenido en dos columnas persistentes, manteniendo ambos utilizables también en viewport móvil.
+
+5. GP-ADMIN-TAB-ACTIONS-UX-01
+- button-system.css define estilos globales de .btn y estados, pero no el patrón compacto/expansión solicitado para acciones internas.
+- style.css contiene AUG-146 para los botones de navegación entre pestañas (Diagnóstico/Base de datos/Imágenes/Sistema); ese patrón no se aplica a los botones de acción dentro de cada panel.
+- Los botones internos ya tienen IDs, handlers y estados existentes en ui.js. La mayoría conserva icono más etiqueta y algunos usan .dev-action-full (ancho completo). La implementación debe limitarse a clases/estructura visual de esos botones, conservar IDs, type, disabled/hidden, aria-label/title y asignaciones onclick; excluir la barra de navegación de pestañas y controles de ayuda.
+
+6. Riesgos y límites
+- El cambio de alcance de referencias puede alterar la clasificación de archivos: debe usarse exclusivamente el conjunto físico Cortes/Tutorial/Relay/pys y sus columnas de imagen contractuales, con tratamiento conservador ante esquemas inesperados o referencias no verificables.
+- Los archivos de código directamente involucrados para una implementación mínima son JS/Services/admin.js, JS/Frontend/ui.js, index.html y style.css. button-system.css fue auditado y no requiere necesariamente modificación.
+- No se ejecutaron llamadas a Drive/Spreadsheet, no se mutaron datos externos, no se cambiaron permisos/RBAC/auth/endpoints/deployments y no se modificó código en esta fase de auditoría.
+- La auditoría de código queda registrada antes de preparar respaldos e iniciar la implementación. Cualquier hallazgo adicional fuera de alcance se registrará como tarea separada.

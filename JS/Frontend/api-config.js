@@ -1,0 +1,1236 @@
+
+// GPSpedia Unified API Module | Version: 2.2.5
+// ============================================================================
+// ÚNICA FUENTE DE VERDAD PARA LA CONFIGURACIÓN Y LÓGICA DE LA API
+// ============================================================================
+
+// 1. CONFIGURACIÓN
+export const API_ENDPOINTS = Object.freeze({
+    AUTH: "https://script.google.com/macros/s/AKfycbzNt41xowfYoyrInJ5kq7bqBeQJ6jQvjIU7AQvGMkd-GWg-jMUP_Kcj-iRUAgp18vYdng/exec",
+    CATALOG: "https://script.google.com/macros/s/AKfycbzv5Np8pvP8pAh2KFp2lrn9gMsY6ZQq166ziupnI2cTwFZiavTczJF9UnsiUxsteOeP/exec",
+    WRITE: "https://script.google.com/macros/s/AKfycbxvGRxwrVLoviuHGCa5IdSmG_qSuP7a_WddJ3b5GZqUwbDjWzDayRgwVKrmFPkkohKYow/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbyV3Ug6bQyb1ph_h-9bfMxTDfadqgLbDy1qTllqBkMpZzK1RR7OGdjKVuVKhbKLeU1siA/exec",
+    UTILITIES: "https://script.google.com/macros/s/AKfycbz4o70pO45BHIFKCWyM3i3JtfVrYPUVzEEsCwdnn4GzFntcypt9R_7ottZ_yXgLUL5V/exec",
+    ADMIN: "https://script.google.com/macros/s/AKfycbz5ugoMqSza_Iqtii_0Z6wKvYK_SjAj9hyRk1lOGoGJOrNAC6x9v89iRiscVCdUg1Dk6g/exec"
+});
+
+const API_ENDPOINT_PATTERN_ = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+
+function resolveApiEndpoint_(serviceKey) {
+    const key = String(serviceKey || "").trim().toUpperCase();
+    if (!Object.prototype.hasOwnProperty.call(API_ENDPOINTS, key)) {
+        throw new Error("Servicio sin endpoint local configurado: " + key);
+    }
+    const endpoint = String(API_ENDPOINTS[key] || "").trim();
+    if (!API_ENDPOINT_PATTERN_.test(endpoint)) {
+        throw new Error("El endpoint local de " + key + " no cumple el formato HTTPS de Apps Script.");
+    }
+    const deploymentIds = Object.values(API_ENDPOINTS).map(value => {
+        const match = String(value || "").match(/\/s\/([^/]+)\/exec$/);
+        return match ? match[1] : "";
+    });
+    if (deploymentIds.some(id => !id) || new Set(deploymentIds).size !== Object.keys(API_ENDPOINTS).length) {
+        throw new Error("La configuración local contiene IDs de deployment vacíos o duplicados.");
+    }
+    return endpoint;
+}
+
+import { runCatalogRequestWithRetry } from './catalogRequest.js';
+import { recordBrowserServiceTraffic } from './serviceTelemetry.js';
+import { createCentralConfigurationCache } from './centralConfigurationCache.js';
+import { invalidateSessionActorCaches } from './sessionCacheInvalidation.js';
+
+const centralConfigurationCache_ = createCentralConfigurationCache();
+
+export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode_cache";
+export const RICH_TEXT_MODE_CACHE_META_KEY = "gpsepedia_rich_text_mode_cache_meta";
+export const RICH_TEXT_MODE_CACHE_TTL_MS = 5 * 60 * 1000;
+export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
+
+function normalizeRichTextMode_(value) {
+    const mode = String(value || "").trim().toLowerCase();
+    return [RICH_TEXT_MODES.STRICT, RICH_TEXT_MODES.ADVANCED].includes(mode) ? mode : null;
+}
+
+export function getRichTextMode() {
+    try {
+        const mode = normalizeRichTextMode_(localStorage.getItem(RICH_TEXT_MODE_KEY));
+        const metadata = JSON.parse(localStorage.getItem(RICH_TEXT_MODE_CACHE_META_KEY) || "null");
+        const fetchedAt = Number(metadata && metadata.fetchedAt);
+        const revision = Number(metadata && metadata.revision);
+        if (!mode || !Number.isSafeInteger(revision) || revision < 1 ||
+            !Number.isFinite(fetchedAt) || fetchedAt <= 0 ||
+            Date.now() - fetchedAt < 0 || Date.now() - fetchedAt > RICH_TEXT_MODE_CACHE_TTL_MS) {
+            return RICH_TEXT_MODES.STRICT;
+        }
+        return mode;
+    } catch (error) {
+        return RICH_TEXT_MODES.STRICT;
+    }
+}
+
+function cacheRichTextMode_(mode, revision) {
+    const normalized = normalizeRichTextMode_(mode);
+    const numericRevision = Number(revision);
+    if (!normalized || !Number.isSafeInteger(numericRevision) || numericRevision < 1) return;
+    try {
+        localStorage.setItem(RICH_TEXT_MODE_KEY, normalized);
+        localStorage.setItem(RICH_TEXT_MODE_CACHE_META_KEY, JSON.stringify({
+            revision: numericRevision,
+            fetchedAt: Date.now()
+        }));
+    } catch (error) {}
+}
+
+function getRichTextSession_(session) {
+    const source = session && typeof session === "object" ? session : {};
+    const userId = String(source.userId || source.ID || source.id || "").trim();
+    const sessionToken = String(source.sessionToken || source.SessionToken || "").trim();
+    if (!userId || !sessionToken) throw new Error("Se requiere una sesión activa para consultar la configuración global.");
+    return { userId, sessionToken };
+}
+
+export async function loadRichTextMode(session) {
+    const sessionPayload = getRichTextSession_(session);
+    // La lectura es idempotente: dos intentos acotados evitan dejar el arranque
+    // esperando indefinidamente si FEEDBACK tarda en responder.
+    const response = await routeActionWithRetry("getRichTextMode", sessionPayload, {
+        timeoutMs: 6000,
+        maxAttempts: 2,
+        retryDelayMs: 250
+    });
+    const mode = normalizeRichTextMode_(response && response.mode);
+    const revision = Number(response && response.revision);
+    if (!response || response.status !== "success" || !mode || !Number.isSafeInteger(revision) || revision < 1) {
+        throw new Error("No se recibió una configuración global de texto válida.");
+    }
+    cacheRichTextMode_(mode, revision);
+    return mode;
+}
+
+export async function setRichTextMode(mode, actorRole, session) {
+    const normalizedRole = String(actorRole || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    const normalizedMode = normalizeRichTextMode_(mode);
+    if (normalizedRole !== "desarrollador") {
+        throw new Error("Solo un Desarrollador puede cambiar el modo de texto enriquecido.");
+    }
+    if (!normalizedMode) throw new Error("Modo de texto enriquecido no válido.");
+    const sessionPayload = getRichTextSession_(session);
+    const requestId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : "rtm_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    const response = await routeAction("setRichTextMode", {
+        ...sessionPayload, mode: normalizedMode, requestId,
+        changeReason: "Cambio del modo global de texto enriquecido desde Developer"
+    });
+    const confirmedMode = normalizeRichTextMode_(response && response.mode);
+    const revision = Number(response && response.revision);
+    if (!response || response.status !== "success" || confirmedMode !== normalizedMode || !Number.isSafeInteger(revision) || revision < 1) {
+        throw new Error("El servidor no confirmó el cambio de formato global.");
+    }
+    try {
+        await routeAction("invalidateRichTextModeCache", sessionPayload);
+    } catch (cacheError) {
+        console.warn("No se pudo invalidar inmediatamente la caché de rich_text_mode:", cacheError);
+    }
+    cacheRichTextMode_(confirmedMode, revision);
+    return confirmedMode;
+}
+
+export const ACTION_TO_SERVICE_MAP = {
+    'getPublicConfiguration': 'AUTH', 'login': 'AUTH', 'requestPasswordRecovery': 'AUTH', 'completePasswordRecovery': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'acceptTerms': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH', 'migrateLegacyPasswords': 'AUTH', 'benchmarkPasswordKdf': 'AUTH',
+    'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG', 'getVehicleProjection': 'CATALOG', 'getContributionCandidates': 'CATALOG',
+    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
+    'publishCatalogReset': 'CATALOG', 'publishCatalogChange': 'CATALOG',
+    'getCatalogChanges': 'CATALOG',
+    'getUsers': 'AUTH', 'createUser': 'AUTH', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'AUTH', 'resetUserSessions': 'AUTH',
+    'recordLike': 'FEEDBACK', 'setCutUseful': 'FEEDBACK', 'getMyUsefulCuts': 'FEEDBACK', 'recordVehicleView': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
+    'getFeedbackItems': 'FEEDBACK', 'getMyProblemReports': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
+    'getInboxRecipients': 'FEEDBACK', 'notifyDevelopersDriveCritical': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'markInboxUnread': 'FEEDBACK', 'deleteInboxConversation': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK', 'closeInboxConversation': 'FEEDBACK',
+    'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
+    'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
+    'migrateTimestamps': 'UTILITIES', 'getRichTextMode': 'FEEDBACK', 'setRichTextMode': 'ADMIN', 'invalidateRichTextModeCache': 'FEEDBACK',
+    'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'migrateVehicleContributionsSchema': 'ADMIN', 'getVehicleContributionCandidates': 'CATALOG', 'resolveVehicleContributionCandidate': 'ADMIN', 'migrateIdentifiers': 'ADMIN', 'rollbackIdentifiers': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
+    'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
+    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'organizePrimaryVehicleImages': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'auditIdentifiers': 'ADMIN', 'freezeIdentifierFormulas': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
+    'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN', 'getAdminImageUploadStatus': 'ADMIN',
+    'getReplacedImages': 'ADMIN',
+    'previewCortesImageReconciliation': 'ADMIN', 'previewCortesImageOrganizer': 'ADMIN', 'getCortesImageOrganizerOperations': 'ADMIN', 'applyCortesImageOrganizer': 'ADMIN', 'rollbackCortesImageOrganizer': 'ADMIN', 'applyCortesImageReconciliation': 'ADMIN', 'migrateReplacedImagesSchema': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'restoreReplacedImageFromTrash': 'ADMIN', 'permanentlyDeleteReplacedImage': 'ADMIN', 'markReplacedImageInUse': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
+    'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
+};
+
+const WRITE_CATALOG_RESET_ACTIONS_ = new Set([
+    "addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"
+]);
+const ADMIN_CATALOG_RESET_ACTIONS_ = new Set([
+    "addLogo", "updateVehicleField", "uploadAdminImage", "recoverReplacedImage",
+    "normalizeImages", "applyCortesImageReconciliation", "restoreDatabase", "reorganizeDatabase",
+    "migrateIdentifiers", "rollbackIdentifiers", "resolveVehicleContributionCandidate"
+]);
+
+
+/**
+ * Rutas directas históricas conservadas por compatibilidad. Las operaciones
+ * de cortes se procesan en WRITE y ya no se aceptan en el router ADMIN.
+ */
+export const SERVICE_COMPATIBILITY_ACTIONS = {
+    CATALOG: ['getSuggestion'],
+    ADMIN: []
+};
+
+/** No hay acciones externas o servicios heredados habilitados. */
+export const EXTERNAL_ACTIONS = {
+};
+
+function createRouteActionError_(message, options = {}) {
+    const source = options && typeof options === "object" ? options : {};
+    const statusValue = Number(source.httpStatus);
+    const httpStatus = Number.isInteger(statusValue) && statusValue >= 100 && statusValue <= 599
+        ? statusValue : null;
+    const error = new Error(String(message || "No se pudo completar la solicitud."));
+    error.name = "RouteActionError";
+    error.kind = String(source.kind || "unknown");
+    error.code = String(source.code || "ROUTE_ACTION_ERROR");
+    error.httpStatus = httpStatus;
+    error.hasHttpResponse = httpStatus !== null;
+    if (error.kind === "http" && httpStatus !== null) error.status = httpStatus;
+    if (source.details !== undefined) error.details = source.details;
+    if (source.cause) error.cause = source.cause;
+    return error;
+}
+
+async function getConfiguredServiceEndpoint_(service) {
+    return resolveApiEndpoint_(service);
+}
+
+
+function createAppsScriptTransportRequestId_() {
+    try {
+        if (typeof crypto !== "undefined" && crypto && typeof crypto.randomUUID === "function") return "gp_" + crypto.randomUUID().replace(/[^A-Za-z0-9_]/g, "");
+        if (typeof crypto !== "undefined" && crypto && typeof crypto.getRandomValues === "function") {
+            const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
+            return "gp_" + Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+        }
+    } catch (error) {}
+    return "gp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 18);
+}
+function requestAppsScriptJsonp_(endpoint, options = {}) {
+    return new Promise((resolve, reject) => {
+        const targetWindow = typeof window !== "undefined" ? window : null, targetDocument = typeof document !== "undefined" ? document : null;
+        if (!targetWindow || !targetDocument || typeof targetDocument.createElement !== "function") {
+            const unavailable = new Error("JSONP no está disponible en este entorno."); unavailable.code = "JSONP_UNAVAILABLE"; reject(unavailable); return;
+        }
+        const signal = options && options.signal ? options.signal : null;
+        if (signal && signal.aborted) { const aborted = new Error("La comprobación de salud fue cancelada."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; reject(aborted); return; }
+        const requestId = createAppsScriptTransportRequestId_(), callbackName = "cb_" + requestId;
+        let registry = targetWindow.__gpsepediaHealthCallbacks;
+        if (!registry || typeof registry !== "object") {
+            registry = Object.create(null);
+            try { targetWindow.__gpsepediaHealthCallbacks = registry; }
+            catch (error) { const unavailable = new Error("No se pudo registrar el callback JSONP."); unavailable.code = "JSONP_UNAVAILABLE"; reject(unavailable); return; }
+        }
+        const script = targetDocument.createElement("script");
+        const parent = targetDocument.head || targetDocument.body || targetDocument.documentElement;
+        if (!parent || typeof parent.appendChild !== "function") { const unavailable = new Error("No existe un contenedor para cargar el estado del servicio."); unavailable.code = "JSONP_UNAVAILABLE"; reject(unavailable); return; }
+        let settled = false, timeoutId = null;
+        function cleanup() {
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            if (signal && typeof signal.removeEventListener === "function") signal.removeEventListener("abort", onAbort);
+            try { delete registry[callbackName]; } catch (error) { registry[callbackName] = undefined; }
+            script.onerror = null; script.onload = null;
+            if (typeof script.remove === "function") script.remove(); else if (script.parentNode) script.parentNode.removeChild(script);
+        }
+        function finish(error, value) { if (settled) return; settled = true; cleanup(); if (error) reject(error); else resolve(value); }
+        function onAbort() { const aborted = new Error("La comprobación de salud fue cancelada."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; finish(aborted); }
+        registry[callbackName] = data => finish(null, data);
+        script.async = true;
+        script.onerror = () => { const failure = new Error("No se pudo cargar el estado del servicio mediante JSONP."); failure.code = "JSONP_NETWORK_ERROR"; finish(failure); };
+        script.onload = () => { if (!settled) { const invalid = new Error("El servicio no devolvió un callback JSONP válido."); invalid.code = "INVALID_JSONP_RESPONSE"; finish(invalid); } };
+        try {
+            const url = new URL(endpoint);
+            url.searchParams.set("debug", "true");
+            url.searchParams.set("callback", "window.__gpsepediaHealthCallbacks." + callbackName);
+            script.src = url.toString();
+            if (signal && typeof signal.addEventListener === "function") signal.addEventListener("abort", onAbort, { once: true });
+            const timeoutMs = Number(options && options.timeoutMs);
+            if (Number.isFinite(timeoutMs) && timeoutMs > 0) timeoutId = setTimeout(() => { const timeout = new Error("Tiempo de espera agotado al consultar el servicio."); timeout.name = "AbortError"; timeout.code = "REQUEST_ABORTED"; finish(timeout); }, Math.max(1, Math.round(timeoutMs)));
+            parent.appendChild(script);
+        } catch (error) { finish(error); }
+    });
+}
+function isAppsScriptTransportOrigin_(origin) {
+    try { const url = new URL(String(origin || "")), host = url.hostname.toLowerCase(); return url.protocol === "https:" && (host === "script.google.com" || host === "googleusercontent.com" || host.endsWith(".googleusercontent.com")); }
+    catch (error) { return false; }
+}
+function requestAppsScriptViaIframe_(endpoint, requestBody, options = {}) {
+    return new Promise((resolve, reject) => {
+        const targetWindow = typeof window !== "undefined" ? window : null, targetDocument = typeof document !== "undefined" ? document : null;
+        if (!targetWindow || !targetDocument || !targetDocument.body || typeof targetDocument.createElement !== "function") {
+            const unavailable = new Error("El transporte de Apps Script no está disponible en este entorno."); unavailable.code = "IFRAME_TRANSPORT_UNAVAILABLE"; reject(unavailable); return;
+        }
+        const signal = options && options.signal ? options.signal : null;
+        if (signal && signal.aborted) { const aborted = new Error("La solicitud fue cancelada."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; reject(aborted); return; }
+        const requestId = createAppsScriptTransportRequestId_(), frame = targetDocument.createElement("iframe"), form = targetDocument.createElement("form"), input = targetDocument.createElement("input");
+        const frameName = "gpsepedia_api_" + requestId;
+        frame.name = frameName; frame.title = "Respuesta del servicio GPSpedia"; frame.setAttribute("aria-hidden", "true"); frame.setAttribute("tabindex", "-1"); frame.style.display = "none";
+        form.method = "POST"; form.enctype = "application/x-www-form-urlencoded"; form.acceptCharset = "UTF-8"; form.target = frameName; form.style.display = "none";
+        input.type = "hidden"; input.name = "__gpsepedia_body"; input.value = String(requestBody == null ? "" : requestBody); form.appendChild(input);
+        const url = new URL(endpoint); url.searchParams.set("__gpsepedia_transport", "iframe"); url.searchParams.set("__gpsepedia_request_id", requestId); form.action = url.toString();
+        let settled = false, timeoutId = null;
+        function cleanup() {
+            if (timeoutId !== null) clearTimeout(timeoutId);
+            targetWindow.removeEventListener("message", onMessage);
+            if (signal && typeof signal.removeEventListener === "function") signal.removeEventListener("abort", onAbort);
+            if (typeof form.remove === "function") form.remove(); else if (form.parentNode) form.parentNode.removeChild(form);
+            if (typeof frame.remove === "function") frame.remove(); else if (frame.parentNode) frame.parentNode.removeChild(frame);
+        }
+        function finish(error, value) { if (settled) return; settled = true; cleanup(); if (error) reject(error); else resolve(value); }
+        function onAbort() { const aborted = new Error("La solicitud fue cancelada o agotó el tiempo de espera."); aborted.name = "AbortError"; aborted.code = "REQUEST_ABORTED"; finish(aborted); }
+        function onMessage(event) {
+            const message = event && event.data;
+            if (!message || message.channel !== "gpsepedia-api-response" || message.requestId !== requestId) return;
+            const sameFrame = event.source === frame.contentWindow;
+            if (!sameFrame && !isAppsScriptTransportOrigin_(event.origin)) return;
+            if (typeof message.body !== "string") { const invalid = new Error("El servicio devolvió una respuesta de transporte inválida."); invalid.code = "INVALID_TRANSPORT_RESPONSE"; finish(invalid); return; }
+            finish(null, message.body);
+        }
+        targetWindow.addEventListener("message", onMessage);
+        if (signal && typeof signal.addEventListener === "function") signal.addEventListener("abort", onAbort, { once: true });
+        const timeoutMs = Number(options && options.timeoutMs), waitMs = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.max(1, Math.round(timeoutMs)) : 120000;
+        timeoutId = setTimeout(() => { const timeout = new Error("Tiempo de espera agotado al esperar la respuesta de Apps Script."); timeout.name = "AbortError"; timeout.code = "REQUEST_ABORTED"; finish(timeout); }, waitMs);
+        try { targetDocument.body.appendChild(frame); targetDocument.body.appendChild(form); form.submit(); }
+        catch (error) { finish(error); }
+    });
+}
+
+// 2. LÓGICA DE RUTEO CENTRAL
+async function routeActionInternal_(action, payload = {}, serviceOverride = null, requestOptions = {}) {
+    const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
+    if (!service) throw new Error(`Acción no definida: ${action}`);
+    const targetUrl = await getConfiguredServiceEndpoint_(service);
+    let httpStatus = null;
+    let text;
+    const requestBody = JSON.stringify({ action, payload });
+    const measureBytes = value => {
+        const text = String(value == null ? "" : value);
+        try {
+            if (typeof TextEncoder === "function") return new TextEncoder().encode(text).length;
+        } catch (error) {}
+        try { return unescape(encodeURIComponent(text)).length; } catch (error) { return null; }
+    };
+    if (typeof requestOptions.onTrafficMetrics === "function") {
+        requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: null });
+    }
+    try {
+        text = await requestAppsScriptViaIframe_(targetUrl, requestBody, {
+            signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
+        });
+    } catch (transportError) {
+        const aborted = Boolean(requestOptions && requestOptions.signal && requestOptions.signal.aborted) ||
+            Boolean(transportError && transportError.name === "AbortError");
+        throw createRouteActionError_(
+            aborted ? "La solicitud fue cancelada o agotó el tiempo de espera." :
+                "No se recibió respuesta del servidor: " + String(transportError && transportError.message || "fallo de conexión."),
+            { kind: aborted ? "abort" : "network", code: aborted ? "REQUEST_ABORTED" : "NETWORK_ERROR", httpStatus: null, cause: transportError }
+        );
+    }
+    if (typeof requestOptions.onTrafficMetrics === "function") {
+        requestOptions.onTrafficMetrics({ requestBytes: measureBytes(requestBody), responseBytes: measureBytes(text) });
+    }
+    let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseError) {
+            throw createRouteActionError_("La respuesta del servidor no tiene un formato JSON válido.", {
+                kind: "invalid_response", code: "INVALID_JSON", httpStatus, cause: parseError
+            });
+        }
+        if (!result || typeof result !== "object" || Array.isArray(result)) {
+            throw createRouteActionError_("La respuesta del servidor no contiene un objeto válido.", {
+                kind: "invalid_response", code: "INVALID_RESPONSE", httpStatus
+            });
+        }
+        if (service === "ADMIN" && ADMIN_CATALOG_RESET_ACTIONS_.has(action) &&
+            result.status === "success" && result.catalogResetRequired === true && result.dryRun !== true) {
+            const publication = await publishCatalogResetAfterMutation_("ADMIN", action, payload, result);
+            if (publication && publication.catalogSyncPending) result.catalogSyncPending = true;
+        }
+        if (service === "FEEDBACK" && result.status === "success" &&
+            result.catalogChange && typeof result.catalogChange === "object") {
+            return await publishCatalogChangeAfterMutation_("FEEDBACK", action, payload, result);
+        }
+        if (service === "FEEDBACK" && result.status === "success" &&
+            result.catalogResetRequired === true && result.dryRun !== true) {
+            return await publishCatalogResetAfterMutation_("FEEDBACK", action, payload, result);
+        }
+        if (result.status === 'error') {
+            const detailMessage = typeof result.details === "string" ? result.details :
+                result.details && typeof result.details.errorMessage === "string" ? result.details.errorMessage : "";
+            const errorMessage = [String(result.message || "El servicio rechazó la operación."), detailMessage]
+                .filter(Boolean).join(": ");
+            const normalizedError = errorMessage.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const confirmedRevocation = /sesion/.test(normalizedError) &&
+                /(revocad[ao]|no existe o no es unica)/.test(normalizedError);
+            if (confirmedRevocation) {
+                const sessionToken = String(payload && (
+                    payload.sessionToken || payload.SessionToken ||
+                    payload.context && (payload.context.sessionToken || payload.context.SessionToken) ||
+                    payload.session && (payload.session.sessionToken || payload.session.SessionToken)
+                ) || "").trim();
+                if (sessionToken && typeof window !== "undefined" &&
+                    typeof CustomEvent === "function" && typeof window.dispatchEvent === "function") {
+                    window.dispatchEvent(new CustomEvent("gpsepedia:session-invalid", {
+                        detail: { sessionToken }
+                    }));
+                }
+                const responseDetails = result.sessionCacheKeys || result.sessionCacheInvalidationPending
+                    ? { details: result.details, sessionCacheKeys: result.sessionCacheKeys || null,
+                        sessionCacheInvalidationPending: Boolean(result.sessionCacheInvalidationPending) }
+                    : result.details;
+                throw createRouteActionError_("Sesión terminada", {
+                    kind: "session", code: "SESSION_INVALID", httpStatus, details: responseDetails
+                });
+            }
+            const responseDetails = result.sessionCacheKeys || result.sessionCacheInvalidationPending
+                ? { details: result.details, sessionCacheKeys: result.sessionCacheKeys || null,
+                    sessionCacheInvalidationPending: Boolean(result.sessionCacheInvalidationPending) }
+                : result.details;
+            throw createRouteActionError_(errorMessage, {
+                kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: responseDetails
+            });
+        }
+        if (service === "FEEDBACK" && result.status === "success" &&
+            result.catalogResetRequired === true && result.dryRun !== true) {
+            return await publishCatalogResetAfterMutation_("FEEDBACK", action, payload, result);
+        }
+        if (service === "WRITE" && WRITE_CATALOG_RESET_ACTIONS_.has(action) &&
+            result.status === "success" && result.alreadyPresent !== true && result.dryRun !== true) {
+            return await publishCatalogResetAfterMutation_("WRITE", action, payload, result);
+        }
+        return result;
+}
+
+
+function createCatalogPublicationNonce_() {
+    try {
+        if (typeof crypto !== "undefined" && crypto && typeof crypto.randomUUID === "function") {
+            return crypto.randomUUID();
+        }
+    } catch (error) {}
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 14);
+}
+
+async function publishCatalogResetAfterMutation_(service, action, payload, result) {
+    const fallbackPayloadId = payload && (payload.vehicleId || payload.fieldName)
+        ? [payload.vehicleId, payload.fieldName, payload.expectedSourceEventId,
+            JSON.stringify(payload.expectedCurrentValue), JSON.stringify(payload.value)].filter(Boolean).join("_")
+        : "";
+    const sourceId = String(payload && (
+        payload.opId || payload.requestId || payload.backupId || payload.migrationId ||
+        payload.eventId || payload.operationId || payload.reconciliationId || payload.planId ||
+        payload.expectedSourceEventId
+    ) || fallbackPayloadId || result && (
+        result.opId || result.operationId || result.catalogVersion || result.logoId ||
+        result.backupId || result.migrationId
+    ) || createCatalogPublicationNonce_()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || createCatalogPublicationNonce_();
+    const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
+    try {
+        const publication = await routeActionInternal_("publishCatalogReset", {
+            userId: String(payload && payload.userId || "").trim(),
+            sessionToken: String(payload && payload.sessionToken || ""),
+            service: service,
+            operation: action,
+            requestId
+        });
+        if (!publication || publication.status !== "success") {
+            throw new Error("CATALOG no confirmó la actualización del feed.");
+        }
+        return result;
+    } catch (error) {
+        const pending = Object.assign({}, result, { catalogSyncPending: true });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
+                detail: { service: service, action: action, reason: "catalog-publication" }
+            }));
+        }
+        return pending;
+    }
+}
+
+
+
+async function publishCatalogChangeAfterMutation_(service, action, payload, result) {
+    const change = result && result.catalogChange;
+    if (!change || typeof change !== "object" || !change.collection || !change.recordId || !change.operation) {
+        return Object.assign({}, result, { catalogSyncPending: true });
+    }
+    const sourceId = String(payload && (
+        payload.opId || payload.requestId || payload.operationId
+    ) || result && (result.opId || result.requestId || result.operationId) ||
+        createCatalogPublicationNonce_()).trim();
+    const safeId = sourceId.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || createCatalogPublicationNonce_();
+    const requestId = ("catalog-" + service + "-" + action + "-" + safeId).slice(0, 128);
+    try {
+        const publication = await routeActionInternal_("publishCatalogChange", {
+            userId: String(payload && payload.userId || "").trim(),
+            sessionToken: String(payload && payload.sessionToken || ""),
+            service,
+            operation: action,
+            requestId,
+            change: {
+                collection: String(change.collection),
+                recordId: String(change.recordId),
+                operation: String(change.operation)
+            }
+        });
+        if (!publication || publication.status !== "success") throw new Error("CATALOG no confirmó el delta canónico.");
+        return result;
+    } catch (error) {
+        const pending = Object.assign({}, result, { catalogSyncPending: true });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
+                detail: { service, action, reason: "catalog-delta-publication" }
+            }));
+        }
+        return pending;
+    }
+}
+
+
+/**
+ * Registra métricas efímeras del navegador actual sin persistir ni transmitir datos.
+ * Cada intento HTTP se contabiliza; los reintentos quedan visibles como intentos separados.
+ */
+function notifySessionCacheInvalidationPending_(outcome, userId) {
+    if (typeof window === "undefined" || typeof CustomEvent !== "function" ||
+        typeof window.dispatchEvent !== "function") return;
+    window.dispatchEvent(new CustomEvent("gpsepedia:session-cache-cleanup-pending", {
+        detail: {
+            userId: String(userId || ""),
+            failedServices: outcome && Array.isArray(outcome.failedServices) ? outcome.failedServices : [],
+            maxCacheTtlSeconds: 21600
+        }
+    }));
+}
+
+function sessionCacheKeysFromError_(error) {
+    const details = error && error.details;
+    return details && typeof details === "object" ? details.sessionCacheKeys : null;
+}
+
+async function refreshCatalogAfterVideoApproval_(action, result) {
+    if (action !== "approveVideo" || !result || result.status !== "success") return result;
+    if (String(result.contentType || "").trim().toLowerCase() === "pys") {
+        const change = result.catalogChange;
+        if (!change || change.collection !== "pys" || change.operation !== "upsert" ||
+            String(change.recordId || "").trim() !== String(result.referenceId || "").trim() ||
+            !change.snapshot || typeof change.snapshot !== "object") {
+            return Object.assign({}, result, { catalogRefreshPending: true,
+                message: "El vídeo fue aprobado, pero no se pudo preparar la actualización de PyS." });
+        }
+        const pysResult = Object.assign({}, result, { pysCatalogChange: change, catalogRefreshStatus: "success" });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:pys-catalog-change", { detail: { change } }));
+        }
+        return pysResult;
+    }
+    let finalResult = result;
+    try {
+        const catalogRefresh = await routeAction("getCatalogData", { forceRefresh: true });
+        if (!catalogRefresh || catalogRefresh.status !== "success") {
+            throw new Error("CATALOG no confirmó la actualización de su caché.");
+        }
+        finalResult = Object.assign({}, finalResult, { catalogRefreshStatus: "success", catalogRefreshData: catalogRefresh.data });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-completed", {
+                detail: { action: "approveVideo", data: catalogRefresh.data }
+            }));
+        }
+    } catch (catalogRefreshError) {
+        finalResult = Object.assign({}, finalResult, {
+            catalogRefreshPending: true,
+            message: [String(finalResult.message || "El vídeo fue aprobado."),
+                "El catálogo no pudo actualizarse automáticamente; vuelve a consultarlo para cargar los cambios."]
+                .filter(Boolean).join(" ")
+        });
+        if (typeof window !== "undefined" && typeof window.dispatchEvent === "function" &&
+            typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent("gpsepedia:catalog-refresh-pending", {
+                detail: { action: "approveVideo" }
+            }));
+        }
+    }
+    return finalResult;
+}
+
+export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
+    const service = serviceOverride || ACTION_TO_SERVICE_MAP[action] || "";
+    const startedAt = Date.now();
+    const trafficMetrics = { requestBytes: null, responseBytes: null };
+    const internalOptions = Object.assign({}, requestOptions, {
+        onTrafficMetrics: metrics => Object.assign(trafficMetrics, metrics || {})
+    });
+    try {
+        const result = await routeActionInternal_(action, payload, serviceOverride, internalOptions);
+        let finalResult = result;
+        if (result && (result.sessionCacheKeys || result.sessionCacheInvalidationPending)) {
+            const cacheKeys = result.sessionCacheKeys;
+            const invalidation = cacheKeys
+                ? await invalidateSessionActorCaches({ sessionCacheKeys: cacheKeys, routeAction, routeActionWithRetry })
+                : { status: "partial", failedServices: ["AUTH", "WRITE", "CATALOG", "FEEDBACK", "ADMIN", "UTILITIES"] };
+            finalResult = Object.assign({}, result);
+            delete finalResult.sessionCacheKeys;
+            delete finalResult.sessionCacheInvalidationPending;
+            finalResult.sessionCacheInvalidation = invalidation;
+            if (invalidation.status !== "success") {
+                finalResult.cleanupPending = true;
+                notifySessionCacheInvalidationPending_(invalidation, cacheKeys && cacheKeys.userId);
+            }
+        }
+        finalResult = await refreshCatalogAfterVideoApproval_(action, finalResult);
+        try {
+            recordBrowserServiceTraffic({
+                service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
+                outcome: "success", requestBytes: trafficMetrics.requestBytes, responseBytes: trafficMetrics.responseBytes
+            });
+        } catch (telemetryError) {}
+        return finalResult;
+    } catch (error) {
+        const cacheKeys = sessionCacheKeysFromError_(error);
+        if (cacheKeys || (error && error.details && error.details.sessionCacheInvalidationPending)) {
+            const invalidation = cacheKeys
+                ? await invalidateSessionActorCaches({ sessionCacheKeys: cacheKeys, routeAction, routeActionWithRetry })
+                : { status: "partial", failedServices: ["AUTH", "WRITE", "CATALOG", "FEEDBACK", "ADMIN", "UTILITIES"] };
+            error.sessionCacheInvalidation = invalidation;
+            error.cleanupPending = invalidation.status !== "success";
+            if (error.cleanupPending) notifySessionCacheInvalidationPending_(invalidation, cacheKeys && cacheKeys.userId);
+        }
+        try {
+            recordBrowserServiceTraffic({
+                service, action, timestamp: Date.now(), durationMs: Date.now() - startedAt,
+                outcome: "error", httpStatus: error && error.httpStatus,
+                requestBytes: trafficMetrics.requestBytes, responseBytes: trafficMetrics.responseBytes
+            });
+        } catch (telemetryError) {}
+        throw error;
+    }
+}
+
+export async function routeActionWithRetry(action, payload = {}, options = {}) {
+    const settings = options && typeof options === "object" ? options : {};
+    const request = typeof settings.routeAction === "function" ? settings.routeAction : routeAction;
+    const Controller = settings.AbortController ||
+        (typeof AbortController === "function" ? AbortController : null);
+    if (typeof request !== "function") throw new Error("La función de solicitud no está disponible.");
+    if (typeof Controller !== "function") throw new Error("AbortController no está disponible; no se puede limitar el tiempo de espera.");
+    const timeoutMs = Math.min(120000, Math.max(1000, Number(settings.timeoutMs) || 45000));
+    const maxAttempts = Math.min(3, Math.max(1, Math.floor(Number(settings.maxAttempts) || 3)));
+    const retryDelayMs = Math.min(5000, Math.max(0, Number(settings.retryDelayMs) || 500));
+    const schedule = typeof settings.setTimeout === "function" ? settings.setTimeout : setTimeout;
+    const cancel = typeof settings.clearTimeout === "function" ? settings.clearTimeout : clearTimeout;
+    const wait = typeof settings.wait === "function"
+        ? settings.wait
+        : delay => new Promise(resolve => schedule(resolve, delay));
+    const shouldContinue = typeof settings.shouldContinue === "function" ? settings.shouldContinue : () => true;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const controller = new Controller();
+        let timeoutId = null;
+        try {
+            timeoutId = schedule(() => controller.abort(), timeoutMs);
+            return await request(action, payload, null, { signal: controller.signal });
+        } catch (error) {
+            const kind = String(error && error.kind || "");
+            const status = Number(error && error.httpStatus);
+            const retryable = kind === "abort" || kind === "network" ||
+                (kind === "http" && ([408, 425, 429].includes(status) || status >= 500));
+            if (!retryable || attempt >= maxAttempts || !shouldContinue()) throw error;
+            await wait(retryDelayMs * attempt);
+            if (!shouldContinue()) throw error;
+        } finally {
+            if (timeoutId !== null) {
+                try { cancel(timeoutId); } catch (timerError) {}
+            }
+        }
+    }
+    throw new Error("La solicitud de auditoría terminó sin respuesta.");
+}
+
+// 3. FUNCIONES DE CONVENIENCIA (HELPERS)
+function createLoginRequestId_() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+    }
+    return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2) + '_' + Math.random().toString(36).slice(2);
+}
+
+function loginRequestStorageKey_(username) {
+    return 'gpsepedia_pending_login_' + encodeURIComponent(String(username || '').trim().toLowerCase());
+}
+
+export async function login(username, password) {
+    const key = loginRequestStorageKey_(username);
+    let requestId = '';
+    try { requestId = sessionStorage.getItem(key) || ''; } catch (error) {}
+    if (!requestId) {
+        requestId = createLoginRequestId_();
+        try { sessionStorage.setItem(key, requestId); } catch (error) {}
+    }
+    try {
+        const result = await routeAction('login', { username, password, requestId });
+        return { ...result, loginRequestId: requestId };
+    } catch (error) {
+        if (String(error && error.message || '').includes('LOGIN_REQUEST_ALREADY_REVOKED')) {
+            try { sessionStorage.removeItem(key); } catch (storageError) {}
+        }
+        throw error;
+    }
+}
+
+export function completeLoginRequest(username, requestId) {
+    if (!requestId) return;
+    const key = loginRequestStorageKey_(username);
+    try {
+        if (sessionStorage.getItem(key) === requestId) sessionStorage.removeItem(key);
+    } catch (error) {}
+}
+
+export async function validateSession(userId, sessionToken, signal = null) {
+    return await routeAction('validateSession', { userId, sessionToken }, null, signal ? { signal } : {});
+}
+
+export async function fetchCatalogData(options = {}) {
+    return runCatalogRequestWithRetry(signal => routeAction('getCatalogData', {}, null, { signal }), options);
+}
+
+export async function getFeedbackItems(sessionPayload = {}, pageOptions = {}) {
+    const pagination = pageOptions && typeof pageOptions === 'object' ? pageOptions : {};
+    return await routeAction('getFeedbackItems', { ...sessionPayload, cursor: pagination.cursor, pageSize: pagination.pageSize });
+}
+
+export async function getInboxRecipients(sessionPayload = {}) {
+    return await routeAction('getInboxRecipients', { ...sessionPayload });
+}
+export async function getInboxConversations(sessionPayload = {}, options = {}) {
+    const source = options && typeof options === 'object' ? options : {};
+    return await routeAction('getInboxConversations', { ...sessionPayload, cursor: source.cursor, pageSize: source.pageSize, folder: source.folder, query: source.query, category: source.category });
+}
+export async function getInboxMessages(conversationId, sessionPayload = {}, options = {}) {
+    const source = options && typeof options === 'object' ? options : {};
+    return await routeAction('getInboxMessages', { ...sessionPayload, conversationId, cursor: source.cursor, pageSize: source.pageSize });
+}
+export async function createInboxConversation(payload = {}) {
+    return await routeAction('createInboxConversation', payload);
+}
+export async function sendInboxMessage(payload = {}) {
+    return await routeAction('sendInboxMessage', payload);
+}
+export async function markInboxRead(conversationId, throughMessageId, sessionPayload = {}) {
+    return await routeAction('markInboxRead', { ...sessionPayload, conversationId, throughMessageId });
+}
+export async function markInboxUnread(conversationId, sessionPayload = {}) {
+    return await routeAction('markInboxUnread', { ...sessionPayload, conversationId });
+}
+export async function deleteInboxConversation(conversationId, sessionPayload = {}) {
+    return await routeAction('deleteInboxConversation', { ...sessionPayload, conversationId });
+}
+export async function archiveInboxConversation(conversationId, archived, sessionPayload = {}) {
+    return await routeAction('archiveInboxConversation', { ...sessionPayload, conversationId, archived });
+}
+export async function closeInboxConversation(conversationId, sessionPayload = {}) {
+    return await routeAction('closeInboxConversation', { ...sessionPayload, conversationId });
+}
+
+export async function replyToFeedback(itemId, itemType, replyText, responderName, sessionPayload = {}) {
+    return await routeAction('replyToFeedback', { itemId, itemType, replyText, responderName, ...sessionPayload });
+}
+
+export async function markAsResolved(itemId, sessionPayload = {}) {
+    return await routeAction('markAsResolved', { itemId, ...sessionPayload });
+}
+
+export async function deleteFeedbackItem(id, type, sessionPayload = {}) {
+    return await routeAction('deleteFeedbackItem', { id, type, ...sessionPayload });
+}
+
+export async function clearActivityLogs(keepLastWeek = false, sessionPayload = {}) {
+    return await routeAction('clearActivityLogs', { keepLastWeek, ...sessionPayload });
+}
+
+export async function clearSensitiveLogs(sessionPayload = {}) {
+    return await routeAction('clearSensitiveLogs', sessionPayload);
+}
+
+export async function getActivityLogs(sessionPayload = {}) {
+    return await routeAction('getActivityLogs', sessionPayload);
+}
+
+export async function recordVehicleView(vehicleId, utilityCounters = {}, sessionPayload = {}) {
+    const normalizedVehicleId = String(vehicleId === null || vehicleId === undefined ? "" : vehicleId).trim();
+    if (!normalizedVehicleId) return { status: "ignored" };
+    const source = utilityCounters && typeof utilityCounters === "object" ? utilityCounters : {};
+    const payload = {};
+    ["utilCorte1", "utilCorte2", "utilCorte3"].forEach(field => {
+        const value = source[field];
+        if (value !== undefined && value !== null && String(value).trim() !== "") payload[field] = value;
+    });
+    return await routeAction("recordVehicleView", { ...sessionPayload, vehicleId: normalizedVehicleId, ...payload });
+}
+
+export async function recordLike(vehicleId, corteIndex, sessionPayload = {}) {
+    const payload = { ...sessionPayload, vehicleId, corteIndex };
+    // LIKE_LOCK_BUSY confirma que el backend no entró en la sección crítica ni escribió.
+    // El reintento acotado solo cubre esa contención explícita; no repite otros errores.
+    for (let attempt = 1; attempt <= 12; attempt++) {
+        try {
+            return await routeAction("recordLike", payload);
+        } catch (error) {
+            if (!error || error.code !== "LIKE_LOCK_BUSY" || attempt === 12) throw error;
+            await new Promise(resolve => setTimeout(resolve, 150 * attempt));
+        }
+    }
+    throw new Error("No se pudo confirmar el registro del útil.");
+}
+
+export async function setCutUseful(vehicleId,corteIndex,isUseful,sessionPayload={}){
+ const payload={...sessionPayload,vehicleId,corteIndex,isUseful:Boolean(isUseful)};
+ for(let attempt=1;attempt<=12;attempt++){try{return await routeAction("setCutUseful",payload);}catch(error){if(!error||!["USEFUL_LOCK_BUSY","LIKE_LOCK_BUSY"].includes(error.code)||attempt===12)throw error;await new Promise(resolve=>setTimeout(resolve,150*attempt));}}
+ throw new Error("No se pudo confirmar el estado del útil.");
+}
+export async function getMyUsefulCuts(sessionPayload={}){return await routeAction("getMyUsefulCuts",sessionPayload);}
+
+export async function reportProblem(vehicleId, problemDescription, reportContext = {}, sessionPayload = {}, imageAttachment = null) {
+    const context = reportContext && typeof reportContext === "object" ? reportContext : {};
+    return await routeAction("reportProblem", {
+        ...sessionPayload, vehicleId, problemText: problemDescription,
+        reportId: context.reportId, corteIndex: context.corteIndex,
+        activaTestigoMotor: context.activaTestigoMotor,
+        imageAttachment: imageAttachment || null
+    });
+}
+
+export async function suggestYear(vehicleId, newYear, responseText, actorPayload = {}) {
+    const actor = actorPayload && typeof actorPayload === "object" ? {
+        userId: actorPayload.userId,
+        sessionToken: actorPayload.sessionToken,
+    } : {};
+    return await routeAction("suggestYear", { ...actor, vehicleId, newYear, response: responseText });
+}
+
+export async function sendContactForm(formData) {
+    return await routeAction('sendContactForm', formData);
+}
+
+export async function suggestCutChange(data, sessionPayload = {}) {
+    const actor = sessionPayload && typeof sessionPayload === "object" ? {
+        userId: sessionPayload.userId,
+        sessionToken: sessionPayload.sessionToken
+    } : {};
+    const suggestion = data && typeof data === "object" ? data : {};
+    return await routeAction("suggestCutChange", { ...suggestion, ...actor });
+}
+
+export async function addTutorial(data) {
+    return await routeAction("addTutorial", data);
+}
+
+export const SERVICE_HEALTH_CONTRACTS = Object.freeze({
+    AUTH: "GPSpedia-Auth",
+    CATALOG: "GPSpedia-Catalog",
+    WRITE: "GPSpedia-Write",
+    FEEDBACK: "GPSpedia-Feedback",
+    UTILITIES: "GPSpedia-Utilities",
+    ADMIN: "GPSpedia-Admin",
+});
+export const SERVICE_HEALTH_TIMEOUT_MS = 8000;
+export const SERVICE_HEALTH_SLOW_THRESHOLD_MS = 2000;
+export const SERVICE_HEALTH_STALE_AFTER_MS = 5 * 60 * 1000;
+const serviceHealthLastKnown = new Map();
+
+export async function checkAllServicesHealth(options = {}) {
+    const settings = options && typeof options === "object" ? options : {};
+    const timeoutMs = Number.isFinite(settings.timeoutMs) && settings.timeoutMs > 0
+        ? Math.min(30000, Math.round(settings.timeoutMs)) : SERVICE_HEALTH_TIMEOUT_MS;
+    const slowThresholdMs = Number.isFinite(settings.slowThresholdMs) && settings.slowThresholdMs >= 0
+        ? settings.slowThresholdMs : SERVICE_HEALTH_SLOW_THRESHOLD_MS;
+    const staleAfterMs = Number.isFinite(settings.staleAfterMs) && settings.staleAfterMs >= 0
+        ? settings.staleAfterMs : SERVICE_HEALTH_STALE_AFTER_MS;
+    const fetchImpl = typeof settings.fetchImpl === "function" ? settings.fetchImpl : null;
+    const jsonpImpl = typeof settings.jsonpImpl === "function" ? settings.jsonpImpl : requestAppsScriptJsonp_;
+    const now = typeof settings.now === "function" ? settings.now : Date.now;
+    const lastKnown = settings.lastKnown instanceof Map ? settings.lastKnown : serviceHealthLastKnown;
+    const results = {};
+
+    function makeResult(status, startTime, checkedAtMs, details = {}) {
+        return Object.assign({
+            status,
+            latency: Math.max(0, checkedAtMs - startTime),
+            code: null,
+            errorCode: null,
+            checkedAt: new Date(checkedAtMs).toISOString(),
+            lastSuccessfulAt: null,
+            lastKnownStatus: null,
+            metadata: null,
+            error: null
+        }, details);
+    }
+
+    function applyStaleFallback(serviceKey, result, checkedAtMs) {
+        if (!["error", "unavailable", "unknown"].includes(result.status)) return result;
+        const previous = lastKnown.get(serviceKey);
+        if (!previous || checkedAtMs - previous.checkedAtMs < staleAfterMs) return result;
+        result.status = "stale";
+        result.metadata = previous.metadata;
+        result.lastSuccessfulAt = previous.checkedAt;
+        result.lastKnownStatus = previous.status;
+        return result;
+    }
+
+    const requestedServiceKeys = Array.isArray(settings.serviceKeys)
+        ? new Set(settings.serviceKeys.filter(key => typeof key === "string")) : null;
+    const serviceKeys = Object.keys(API_ENDPOINTS).filter(serviceKey =>
+        !requestedServiceKeys || requestedServiceKeys.has(serviceKey));
+    await Promise.all(serviceKeys.map(async serviceKey => {
+        const startTime = now();
+        const expectedIdentity = Object.prototype.hasOwnProperty.call(SERVICE_HEALTH_CONTRACTS, serviceKey)
+            ? SERVICE_HEALTH_CONTRACTS[serviceKey] : undefined;
+        let controller = null;
+        let timeoutId = null;
+        let result;
+        let serviceEndpoint = null;
+        try { serviceEndpoint = resolveApiEndpoint_(serviceKey); } catch (configurationError) {}
+
+        try {
+            if (expectedIdentity === undefined || expectedIdentity === null) {
+                result = makeResult("unknown", startTime, now(), {
+                    errorCode: expectedIdentity === null ? "HEALTH_IDENTITY_UNVERIFIED" : "HEALTH_CONTRACT_UNDEFINED",
+                    error: "No existe un contrato de identidad configurado para este servicio; no se consulta."
+                });
+            } else if (!serviceEndpoint) {
+                const checkedAtMs = now();
+                result = makeResult("unavailable", startTime, checkedAtMs, {
+                    errorCode: "LOCAL_ENDPOINT_UNAVAILABLE",
+                    error: "No hay un endpoint local válido configurado para este servicio."
+                });
+            } else if (typeof fetchImpl !== "function" && typeof jsonpImpl !== "function") {
+                const checkedAtMs = now();
+                result = makeResult("error", startTime, checkedAtMs, {
+                    errorCode: "FETCH_UNAVAILABLE",
+                    error: "La API de red no está disponible en este navegador."
+                });
+            } else if (typeof AbortController !== "function") {
+                const checkedAtMs = now();
+                result = makeResult("error", startTime, checkedAtMs, {
+                    errorCode: "ABORT_CONTROLLER_UNAVAILABLE",
+                    error: "No se puede limitar el tiempo de espera de esta comprobación."
+                });
+            } else {
+                controller = new AbortController();
+                timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                const response = typeof fetchImpl === "function"
+                    ? await fetchImpl(serviceEndpoint + "?debug=true", {
+                        method: "GET",
+                        redirect: "follow",
+                        signal: controller.signal
+                    })
+                    : {
+                        status: null,
+                        ok: true,
+                        text: async () => {
+                            const body = await jsonpImpl(serviceEndpoint, { signal: controller.signal, timeoutMs });
+                            return typeof body === "string" ? body : JSON.stringify(body);
+                        }
+                    };
+                const httpStatus = response && Number.isInteger(response.status) ? response.status : null;
+                let checkedAtMs = now();
+                let latency = Math.max(0, checkedAtMs - startTime);
+
+                if (!response || typeof response.text !== "function") {
+                    result = makeResult("unknown", startTime, checkedAtMs, {
+                        latency,
+                        httpStatus,
+                        errorCode: "INVALID_HTTP_RESPONSE",
+                        error: "El endpoint no devolvió una respuesta HTTP reconocible."
+                    });
+                } else if (response.ok !== true) {
+                    const unavailable = httpStatus !== null && httpStatus >= 500;
+                    result = makeResult(unavailable ? "unavailable" : "error", startTime, checkedAtMs, {
+                        latency,
+                        httpStatus,
+                        errorCode: httpStatus === null ? "HTTP_ERROR" : "HTTP_" + httpStatus,
+                        error: httpStatus === null ? "La respuesta HTTP no contiene un código verificable." : "El endpoint respondió HTTP " + httpStatus + "."
+                    });
+                } else {
+                    let body;
+                    try {
+                        body = await response.text();
+                        checkedAtMs = now();
+                        latency = Math.max(0, checkedAtMs - startTime);
+                    } catch (readError) {
+                        checkedAtMs = now();
+                        latency = Math.max(0, checkedAtMs - startTime);
+                        const timedOut = Boolean(controller && controller.signal.aborted);
+                        result = makeResult(timedOut ? "unavailable" : "error", startTime, checkedAtMs, {
+                            latency,
+                            httpStatus,
+                            errorCode: timedOut ? "TIMEOUT" : "RESPONSE_READ_ERROR",
+                            error: timedOut ? "Tiempo de espera agotado (" + timeoutMs + " ms)." : "No se pudo leer el cuerpo de la respuesta HTTP."
+                        });
+                    }
+
+                    if (!result) {
+                        let data;
+                        try {
+                            data = JSON.parse(body);
+                        } catch (parseError) {
+                            data = null;
+                        }
+
+                        if (!data || typeof data !== "object" || Array.isArray(data)) {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "INVALID_HEALTH_JSON",
+                                error: "La respuesta está vacía, no es JSON válido o no contiene un objeto de estado."
+                            });
+                        } else if (data.service !== expectedIdentity) {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "SERVICE_IDENTITY_MISMATCH",
+                                error: "La identidad reportada no coincide con el servicio esperado."
+                            });
+                        } else if (typeof data.status !== "string") {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "HEALTH_STATUS_MISSING",
+                                error: "El contrato no contiene un estado reconocible."
+                            });
+                        } else {
+                            const reportedStatus = data.status.trim().toLowerCase();
+                            let version = null;
+                            if (data.version !== undefined && data.version !== null) {
+                                if (typeof data.version !== "string" || !/^[A-Za-z0-9._+-]{1,40}$/.test(data.version.trim())) {
+                                    result = makeResult("unknown", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        errorCode: "HEALTH_VERSION_INVALID",
+                                        error: "La versión reportada no cumple el contrato."
+                                    });
+                                } else {
+                                    version = data.version.trim();
+                                }
+                            }
+
+                            if (!result) {
+                                const metadata = {
+                                    service: expectedIdentity,
+                                    version,
+                                    reportedStatus
+                                };
+                                if (reportedStatus === "available" || reportedStatus === "online") {
+                                    const status = latency >= slowThresholdMs ? "slow" : "online";
+                                    result = makeResult(status, startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata
+                                    });
+                                    lastKnown.set(serviceKey, {
+                                        status,
+                                        metadata,
+                                        checkedAtMs,
+                                        checkedAt: result.checkedAt
+                                    });
+                                    result.lastSuccessfulAt = result.checkedAt;
+                                } else if (reportedStatus === "unavailable" || reportedStatus === "offline") {
+                                    result = makeResult("unavailable", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "BACKEND_UNAVAILABLE",
+                                        error: "El servicio reportó que no está disponible."
+                                    });
+                                } else if (reportedStatus === "error" || reportedStatus === "failed" || reportedStatus === "degraded") {
+                                    result = makeResult("error", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "BACKEND_ERROR",
+                                        error: "El servicio reportó un estado de error."
+                                    });
+                                } else if (reportedStatus === "stale") {
+                                    result = makeResult("stale", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "BACKEND_STALE",
+                                        error: "El servicio reportó información desactualizada."
+                                    });
+                                } else {
+                                    result = makeResult("unknown", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "HEALTH_STATUS_UNKNOWN",
+                                        error: "El servicio reportó un estado no reconocido."
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            const checkedAtMs = now();
+            const timedOut = Boolean(controller && controller.signal.aborted) ||
+                Boolean(error && (error.name === "AbortError" || error.name === "TimeoutError"));
+            const networkFailure = timedOut || (error && (error.name === "TypeError" || error.kind === "network" ||
+                ["JSONP_UNAVAILABLE", "JSONP_NETWORK_ERROR", "IFRAME_TRANSPORT_UNAVAILABLE"].includes(error.code)));
+            result = makeResult(networkFailure ? "unavailable" : "error", startTime, checkedAtMs, {
+                errorCode: timedOut ? "TIMEOUT" : error && error.code ? String(error.code) : networkFailure ? "NETWORK_ERROR" : "HEALTH_CHECK_ERROR",
+                error: timedOut ? "Tiempo de espera agotado (" + timeoutMs + " ms)." :
+                    networkFailure ? "No se recibió una respuesta de red del servicio." :
+                        "No se pudo completar la comprobación de salud."
+            });
+        } finally {
+            if (timeoutId !== null) clearTimeout(timeoutId);
+        }
+
+        const checkedAtMs = Date.parse(result.checkedAt);
+        results[serviceKey] = applyStaleFallback(serviceKey, result, Number.isFinite(checkedAtMs) ? checkedAtMs : now());
+    }));
+
+    return results;
+}
+export async function checkServiceHealth(serviceKey, options = {}) {
+    const key = String(serviceKey || "").trim().toUpperCase();
+    if (!Object.prototype.hasOwnProperty.call(API_ENDPOINTS, key)) return null;
+    const results = await checkAllServicesHealth({
+        ...(options && typeof options === "object" ? options : {}),
+        serviceKeys: [key]
+    });
+    return results[key] || null;
+}
+
+export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
+    // El rol y el nombre del aprobador se derivan en FEEDBACK desde la sesión validada.
+    return await routeAction("approveVideo", { itemId, ...sessionPayload });
+}
+
+export async function rejectVideo(itemId, rejecterName, reason, userRole, sessionPayload = {}) {
+    // El rol y el nombre del revisor se derivan en FEEDBACK desde la sesión validada.
+    return await routeAction("rejectVideo", { itemId, reason, ...sessionPayload });
+}
+
+
+export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload = {}, options = {}) {
+    const normalizedCursor = Number(cursor), normalizedLimit = Number(limit);
+    if (!Number.isSafeInteger(normalizedCursor) || normalizedCursor < 0) throw new TypeError("El cursor del catálogo no es válido.");
+    if (!Number.isInteger(normalizedLimit) || normalizedLimit < 1 || normalizedLimit > 50) throw new TypeError("El límite del feed debe estar entre 1 y 50.");
+    let outcome = "network_error", httpStatus = null;
+    const startedAt = Date.now();
+    const query = "?catalogFeed=1&cursor=" + encodeURIComponent(normalizedCursor) + "&limit=" + encodeURIComponent(normalizedLimit);
+    try {
+        let response;
+        try {
+            const feedbackEndpoint = await getConfiguredServiceEndpoint_("CATALOG");
+            response = await runCatalogRequestWithRetry(async signal => {
+                const current = await fetch(feedbackEndpoint + query, {
+                    method: "GET", redirect: "follow", signal
+                });
+                const status = Number(current && current.status);
+                if (!current || !Number.isInteger(status) || status < 100 || status > 599) {
+                    const error = new Error("El feed no devolvió una respuesta HTTP válida.");
+                    error.retryable = true;
+                    throw error;
+                }
+                if (!current.ok) {
+                    const error = new Error("El feed del catálogo respondió HTTP " + status + ".");
+                    error.status = status;
+                    throw error;
+                }
+                return current;
+            }, {
+                signal: options && options.signal ? options.signal : undefined,
+                timeoutMs: 5000,
+                retries: 2,
+                baseDelayMs: 200
+            });
+        } catch (error) {
+            const aborted = Boolean(options && options.signal && options.signal.aborted) ||
+                Boolean(error && error.name === "AbortError");
+            httpStatus = Number.isInteger(Number(error && error.status)) ? Number(error.status) : null;
+            outcome = aborted ? "abort" : httpStatus !== null ? "http_error" : "network_error";
+            if (aborted) {
+                throw createRouteActionError_("La consulta del catálogo fue cancelada o agotó el tiempo de espera.", {
+                    kind: "abort", code: "REQUEST_ABORTED", cause: error
+                });
+            }
+            if (httpStatus !== null) {
+                throw createRouteActionError_("El feed del catálogo respondió HTTP " + httpStatus + ".", {
+                    kind: "http", code: "CATALOG_FEED_HTTP_ERROR", httpStatus, cause: error
+                });
+            }
+            throw createRouteActionError_("No se recibió respuesta del feed público del catálogo.", {
+                kind: "network", code: "CATALOG_FEED_NETWORK_ERROR", cause: error
+            });
+        }
+        httpStatus = Number(response && response.status);
+        if (!response || !Number.isInteger(httpStatus) || httpStatus < 100 || httpStatus > 599) {
+            throw createRouteActionError_("El feed no devolvió una respuesta HTTP válida.", {
+                kind: "network", code: "CATALOG_FEED_NO_HTTP_RESPONSE"
+            });
+        }
+        let body;
+        try { body = await response.text(); } catch (error) { throw createRouteActionError_("No se pudo leer la respuesta del feed del catálogo.", { kind: "invalid_response", code: "CATALOG_FEED_READ_ERROR", httpStatus, cause: error }); }
+        let result;
+        try { result = JSON.parse(body); } catch (error) { throw createRouteActionError_("El feed del catálogo no devolvió JSON válido.", { kind: "invalid_response", code: "CATALOG_FEED_INVALID_JSON", httpStatus, cause: error }); }
+        if (!result || typeof result !== "object" || Array.isArray(result) || result.status !== "success") throw createRouteActionError_(result && typeof result.message === "string" ? result.message : "El feed público del catálogo no está disponible.", { kind: "application", code: "CATALOG_FEED_REJECTED", httpStatus });
+        outcome = "success";
+        return result;
+    } finally {
+        try {
+            recordBrowserServiceTraffic({
+                service: "CATALOG",
+                action: "getCatalogChanges",
+                timestamp: Date.now(),
+                durationMs: Date.now() - startedAt,
+                outcome: outcome === "success" ? "success" : "error",
+                httpStatus
+            });
+        } catch (telemetryError) {}
+    }
+}
+
+// La configuración pública restante contiene parámetros funcionales, nunca endpoints.
+async function fetchPublicConfiguration_() {
+ const controller=new AbortController(),timeoutId=setTimeout(()=>controller.abort(),6000);let response;
+ try { response=await fetch(resolveApiEndpoint_("AUTH"),{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({action:"getPublicConfiguration",payload:{}}),redirect:"follow",signal:controller.signal}); }
+ finally { clearTimeout(timeoutId); }
+ if(!response||!response.ok){const status=Number(response&&response.status),error=new Error("No se pudo consultar la configuración pública.");error.kind="http";error.httpStatus=Number.isInteger(status)?status:null;throw error;}
+ const body=await response.text();let result;try{result=JSON.parse(body);}catch(error){throw new Error("AUTH devolvió una configuración pública con formato inválido.");}
+ if(!result||typeof result!=="object"||Array.isArray(result)||result.status!=="success")throw new Error("AUTH no confirmó una configuración pública válida.");
+ return result;
+}
+
+export async function loadCentralConfiguration(options = {}) {
+    return centralConfigurationCache_.load(fetchPublicConfiguration_, options);
+}
+
+export async function refreshCentralConfiguration() {
+    return loadCentralConfiguration({ force: true });
+}
+
+export function invalidateCentralConfigurationCache() {
+    centralConfigurationCache_.invalidate();
+}
+

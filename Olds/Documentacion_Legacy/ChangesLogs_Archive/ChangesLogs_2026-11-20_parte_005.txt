@@ -1,0 +1,853 @@
+undefined
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-DEV-CUT-AUDIT-TOOLBAR-01 (EN VALIDACIÓN)
+- index.html: los cinco controles de auditoría se agrupan en #audit-drive-toolbar con role=toolbar, toggle accesible y etiquetas iconográficas. Se conservan IDs, hidden y disabled.
+- ui.js: el toggle expande/contrae las etiquetas, actualiza aria-expanded/aria-label y enlaza el listener una sola vez; el modal abre en modo compacto.
+- style.css: barra compacta, animación de expansión, ajuste móvil y soporte prefers-reduced-motion.
+- CortesImageReconciliationUI.mjs: prueba de estructura, accesibilidad, preservación de IDs y movimiento reducido.
+================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE ESTILOS GP-DEV-CUT-AUDIT-TOOLBAR-01
+- La primera ejecución CI detectó dos contratos CSS globales: no introducir overflow en la región revisada de barras invisibles y mantener el bloque reduced-motion de Developer como el último bloque de ese tipo.
+- Se sustituyó overflow:hidden por clip-path para ocultar etiquetas en estado compacto y se integró reduced-motion en el bloque existente de Developer. No se alteran reglas de scroll de los modales de detalle.
+================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE PRUEBA GP-DEV-CUT-AUDIT-TOOLBAR-01
+- CI confirmó DeveloperPanelUX 7/7 e InboxUi 80/80. CortesImageReconciliationUI falló por escapes de regex perdidos al generar la prueba; se reemplazan por comprobaciones de cadenas y del último bloque reduced-motion, sin cambios de producción.
+================================================================================
+
+
+================================================================================
+2026-11-17 — CIERRE GP-DEV-CUT-AUDIT-TOOLBAR-01
+- Toolbar iconográfica compacta y expandible aprobada por CI: 133 suites / 1,987 pruebas, 0 fallos. CortesImageReconciliationUI 14/14; DeveloperPanelUX 7/7; InboxUi 80/80; AdminReplacedImagesIntegrity 55/55.
+- GitHub Pages run 44081111776 SUCCESS. No se cambió lógica de ADMIN/Drive, permisos ni confirmaciones.
+- Estado: COMPLETADA CON VALIDACIÓN VISUAL DIFERIDA A BETA. Pendiente revisar en navegador/PWA la expansión, teclado, estados de acciones y movimiento reducido.
+================================================================================
+
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-INBOX-LIST-NAV-01
+- JS/Services/feedback.js: topes máximos de getFeedbackItems y getMyProblemReports reducidos de 100 a 50 elementos por página.
+- JS/Services/InboxConversations.js: tope máximo de getInboxMessages reducido de 100 a 50; el endpoint de conversaciones ya limitaba a 50.
+- JS/Frontend/ui.js: paginador compartido oculto cuando no existe página anterior ni siguiente; aria-label contextual para conversaciones, reportes, aportaciones y mensajes. Se oculta durante la carga de una página sin caché para evitar controles obsoletos.
+- index.html/style.css: paginador oculto inicialmente y regla explícita para respetar hidden frente a display:flex.
+- JS/Tests/InboxUi.mjs y InboxConversations.mjs: contratos para límites de página y navegación condicional.
+================================================================================
+
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-INBOX-THREAD-TOOLBAR-01
+- JS/Frontend/ui.js: encabezado del hilo convertido en toolbar semántica con acciones iconográficas de volver, archivar/restaurar y cerrar caso; control accesible expande/contrae etiquetas y conserva los handlers existentes.
+- JS/Frontend/ui.js: control de mensajes anteriores, cancelar y enviar ahora incluyen iconos y etiquetas; se preservan el cursor histórico, los borradores y la idempotencia de envío.
+- style.css: toolbar compacta, etiquetas animadas, estados focus/expanded, adaptación móvil y soporte de movimiento reducido mediante la regla global existente.
+- JS/Tests/InboxUi.mjs: contratos para acciones, permisos, accesibilidad, participantes/categoría, carga histórica, envío y borradores.
+================================================================================
+
+
+================================================================================
+2026-11-17 — IMPLEMENTACIÓN GP-UX-SESSION-ENDED-01
+- style.css: #login-modal #login-error.login-session-ended cambia text-align de left a center. La regla de errores de acceso no se modifica.
+- JS/Tests/SessionUiRoleInvalidation.js: nuevo contrato para verificar centrado exclusivo del aviso y preservación de role/aria-live.
+- JS/Tests/RunServiceTests.mjs: entrega style.css a la suite SessionUiRoleInvalidation.
+================================================================================
+
+
+================================================================================
+2026-11-17 — CORRECCIÓN LOCAL BETA-003 — SERVICE WORKER
+- service-worker.js: corregido el escape del patrón que identifica recursos estáticos por extensión y actualizado CACHE_NAME de gpsepedia-cache-v67 a gpsepedia-cache-v68.
+- JS/Tests/ServiceWorkerCache.js: añadida regresión para solicitudes fetch same-origin de JSON con destination vacío y fuentes woff2 del CDN permitido; las aserciones de versión esperan v68.
+- Validación local aislada: sintaxis de fragmentos y cuatro escenarios de política Node.js aprobados. La suite completa/Actions y la verificación en navegador/PWA permanecen sin confirmar.
+================================================================================
+
+
+================================================================================
+2026-11-17 — VALIDACIÓN LOCAL BETA-003
+- Node.js --check de los fragmentos modificados: PASS.
+- Harness aislado de política/caché: 4/4 escenarios PASS; Apps Script y POST continúan fuera de la política de caché.
+- No se dispone de evidencia consultable de GitHub Actions para los commits recientes; no se registra CI como aprobada.
+- Pendiente Beta: confirmar recursos servidos, instalación/activación de gpsepedia-cache-v68, retiro de caché anterior y funcionamiento offline en navegador/PWA.
+================================================================================
+
+
+================================================================================
+2026-11-17 — REGISTRO DE VERIFICACIÓN GP-SERVICE-HEALTH-REMOTE-01
+- Se incorporó JS/Tests/RemoteServiceHealth.mjs y el workflow .github/workflows/deployed-service-health.yml para consultar de forma reproducible los siete endpoints con GET ?debug=true usando el inventario del commit objetivo 301c7b3a5840549819b2b6126d548df44af07da2.
+- El comprobador valida HTTP, JSON, identidad, estado, versión y ausencia de campos sensibles; no envía POST ni credenciales y no realiza escrituras.
+- Evidencia remota: Actions run 44090225564 SUCCESS, 7/7 disponibles. ADMIN reportó 2442 ms, por encima del umbral lento.
+- Evidencia de regresión del corte: run 44017363224 SUCCESS, 132 suites / 1965 pruebas / 0 fallos.
+- No se modificaron fuentes de servicios Apps Script, deployments, ScriptProperties ni datos externos.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — PRESENTACIÓN GLOBAL EN DASHBOARD
+- JS/Frontend/ui.js: el detalle por servicio ahora lee los totales globales de Coordinator (1 h, 6 h y 24 h); se retiró el gráfico local y sus suscripciones/refrescos.
+- index.html: se retiró el panel «Actividad de este navegador» y se aclaró el alcance de la métrica global.
+- JS/Frontend/api-config.js: se retiró la captura y exportación de métricas locales de routeAction y del feed de catálogo.
+- Se eliminó JS/Frontend/serviceMetrics.js; se actualizaron ServiceTrafficAdminContract.mjs, ServiceMetricsTelemetry.mjs, RouteActionErrors.mjs y RunServiceTests.mjs para el nuevo contrato.
+- Services/COORDINATOR_SETUP.md actualizado para documentar que el dashboard usa solo Coordinator.
+- No se modificó código de Coordinator ni de los servicios Apps Script. No se alteraron propiedades ni datos remotos.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — CORRECCIONES Y VALIDACIÓN DE CATALOG
+- JS/Services/catalog.js: el contador best-effort ahora libera el ScriptLock solo cuando tryLock(0) fue adquirido; la contención omite la métrica sin llamar releaseLock ni afectar la lectura.
+- JS/Tests/ServiceTrafficAggregation.mjs: nueva regresión de tres casos para suma Coordinator+CATALOG, conservación de otros servicios, estado parcial y datos inválidos; incorporada a JS/Tests/RunServiceTests.mjs.
+- JS/Tests/RemoteServiceHealth.mjs: probes limitados a dos en paralelo y reintentos acotados ante fallos transitorios, conservando las validaciones originales para los siete servicios.
+- index.html: título y ayuda del panel de tráfico global mantienen textos explícitos sobre el alcance parcial y la interpretación de cero eventos.
+- Services/COORDINATOR_SETUP.md y Services/CATALOG_TRAFFIC_DESIGN.md: documentan el agregado combinado, secreto de Script Properties requerido en ADMIN/CATALOG, rutas contadas y limitaciones.
+- Tareas_Pendientes.md: actualizado GP-DEV-TRAFFIC-GLOBAL-02 con implementación, pruebas, evidencias y brechas de rutas directas.
+- Validación GitHub Actions 44099217828: 135 suites / 1998 pruebas / 0 fallos; pruebas específicas CATALOG 8/8, contrato ADMIN 20/20, agregación 3/3, DeveloperPanelCopy 6/6 y coordinador 59/59.
+- Health remoto 44098664894: 7/7 servicios disponibles con GET ?debug=true, sin POST ni escrituras.
+- No se desplegaron proyectos Apps Script ni se configuraron secretos remotos.
+================================================================================
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — CONTADORES DIRECTOS Y VALIDACIÓN FINAL
+- Se amplió la instrumentación best-effort a AUTH validateSession; WRITE checkVehicle/getSuggestion/checkVinDuplicate; FEEDBACK getPysData y suggestYear anónimo. CATALOG conserva cuatro rutas directas. UTILITIES/migrateTimestamps, USERS y ADMIN se contabilizan mediante Coordinator para evitar doble conteo.
+- Contadores directos en ScriptProperties con buckets horarios de 24 h y tryLock(0); si el lock no se adquiere o PropertiesService falla, se omite el evento sin bloquear el handler.
+- ADMIN consulta las cuatro fuentes directas en una operación fetchAll y conserva el agregado Coordinator si una fuente falla; fallback individual por endpoint ante fallo global de fetchAll.
+- Se agregaron JS/Tests/DirectServiceTrafficTelemetry.mjs y JS/Tests/ServiceTrafficBatch.mjs; se amplió JS/Tests/ServiceTrafficAggregation.mjs y ServiceTrafficAdminContract.mjs; se integraron al runner completo.
+- Se corrigió Services/COORDINATOR_SETUP.md: UTILITIES se cuenta por Coordinator y no tiene contador/secret directo.
+- CI 44103742508: 137 suites / 2037 pruebas / 0 fallos. Casos focalizados: CatalogTrafficTelemetry 8/8, ServiceTrafficAdminContract 33/33, ServiceTrafficAggregation 6/6, DirectServiceTrafficTelemetry 18/18 y ServiceTrafficBatch 5/5.
+- Health remoto 44103742755: 7/7; latencias ADMIN 1745 ms, AUTH 1392 ms, CATALOG 935 ms, FEEDBACK 1873 ms, USERS 985 ms, UTILITIES 3057 ms y WRITE 1839 ms.
+- GitHub Pages 44103742319 SUCCESS. No deployment Apps Script ni cambios de Script Properties.
+- Se actualizaron Tareas_Pendientes.md y checkpoint.md con la evidencia y las siguientes tareas.
+================================================================================
+
+================================================================================
+2026-11-17 — GP-DEV-TRAFFIC-GLOBAL-02 — COBERTURA DE FEEDBACK PÚBLICO Y AUDITORÍA DE ROUTING
+- Se detectó que FEEDBACK/getCatalogChanges está declarado en FEEDBACK_PUBLIC_ACTIONS y no obtiene lease Coordinator. Se agregó al contador directo local; getPysData ya se contaba. sendContactForm continúa coordinado; suggestYear anónimo directo y autenticado coordinado.
+- Se amplió DirectServiceTrafficTelemetry para verificar ambas acciones FEEDBACK.
+- Se agregó JS/Tests/DirectTrafficRoutingCoverage.mjs (6/6) y se integró al runner completo. Verifica el mapa de acciones, el ruteo compatibilidad silentRegister→ADMIN y la clasificación de rutas coordinadas/directas.
+- Documentación corregida en Tareas_Pendientes.md, Services/COORDINATOR_SETUP.md y Services/CATALOG_TRAFFIC_DESIGN.md.
+- CI 44106829275 SUCCESS: 138 suites / 2043 pruebas / 0 fallos.
+- Health remoto 44106826657 SUCCESS: 7/7; ADMIN 2147 ms, AUTH 1798 ms, CATALOG 1033 ms, FEEDBACK 1032 ms, USERS 1038 ms, UTILITIES 1426 ms, WRITE 1223 ms.
+- GitHub Pages 44106826874 SUCCESS. No deployment Apps Script ni configuración de secretos remotos.
+================================================================================
+
+================================================================================
+2026-11-17 — CIERRE LOCAL GP-DEV-TRAFFIC-GLOBAL-02
+- Tareas_Pendientes.md: estado cambiado a COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; orden general actualizado y procedimiento Beta preparado con sincronización segura obligatoria, cuatro secretos, despliegue aislado y mediciones.
+- checkpoint.md: actualizado con cobertura final, evidencias CI/health y dependencia operativa Beta.
+- Auditoría.txt: añadido cierre local y hallazgo FEEDBACK/getCatalogChanges.
+- CI final 44107762436: 138 suites / 2043 pruebas / 0 fallos. Health remoto 44107762702: 7/7. No Apps Script deployments ni Script Properties modificadas.
+================================================================================
+
+
+2026-11-17 — BETA-050 — Eliminación de revalidación local por servicio
+- ADMIN, FEEDBACK, WRITE, USERS y UTILITIES consumen exclusivamente el actor confiable de Coordinator en sus helpers de autorización; los fallbacks locales a Users/ActiveSessions fueron retirados.
+- WRITE eliminó esquemas de columnas de autenticación que quedaron sin uso. USERS conserva la búsqueda de fila solo como localización del destino para updateProfile.
+- Se mantiene Coordinator como barrera central de token, epoch, expiración, revocación y RBAC. AUTH mantiene login/restauración explícita, sin prevalidación por acción.
+- CI: 44113573112 SUCCESS — 138 suites / 2,031 pruebas / 0 fallos.
+- Implementación principal: 62d12ceabab119b48d75fba244ac23f2d5656ed2. HEAD de cierre local: 368582c4ed3619862dda2f52a686edbea4434f1f.
+- Validación Beta pendiente; no se desplegaron proyectos Apps Script.
+
+
+2026-11-17 — GP-UX-INBOX-DESKTOP-02 — Ajuste final de compositor y búsqueda
+- Se conservaron el scroll del formulario con acciones Salir/Enviar accesibles y la lista vacía compacta, ya presentes en la implementación actual.
+- Se estabilizó el ancho del botón de búsqueda en 40 px para evitar recortes; el botón de envío de búsqueda también reserva 40 px.
+- Plantilla y Categoría comparten ahora una fila de dos columnas en el menú de opciones; si el rol no puede usar plantillas, Categoría ocupa el ancho completo.
+- Se eliminó CSS obsoleto y se ajustó el espacio de columnas en viewport estrecho.
+- App Shell v69. CI run 44115093952: SUCCESS — 138 suites / 2,031 pruebas / 0 fallos; InboxUi 83/83. Health remoto read-only 44115094092: SUCCESS. GitHub Pages se ejecuta automáticamente; validación visual Beta pendiente.
+- Commit UI principal: fc3c36db21a853b5ff5fe091b9e4593c7b22bec0. App Shell: cd263b6a16e883f490483e0f3f0ed97def2e9987. HEAD funcional y de pruebas: bba4b430166b4783c4b613c06f6532036ba8b0a7.
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — REQUISITO Y PLAN DE OPTIMIZACIÓN
+- Se registra el requisito de priorizar fluidez y baja latencia en toda GPSpedia, retirando validaciones transaccionales, leases, autorizaciones entre servicios y revalidaciones de identidad por acción ordinaria.
+- Se conserva el login con el hash actual y los permisos definidos por rol. Las operaciones de aporte deben registrar directamente el contenido, la fecha del servidor y el colaborador autenticado.
+- Excepciones conservadas: cierre remoto de sesión/limpieza de caché, invalidación de sesiones al eliminar una cuenta y bloqueo temporal por intentos fallidos de login.
+- Se incorpora sección 15 en NORMAS_DESAROLLO.md, tarea GP-PERF-SIMPLIFY-01 en Tareas_Pendientes.md y plan detallado PLAN_SIMPLIFICACION_SEGURIDAD_RENDIMIENTO.md.
+- Orden de ejecución: P0 inventario; P1 escrituras/aportes; P2 cargas de archivos; P3 sesión; P4 optimización global; P5 pruebas locales y mediciones.
+- Este commit registra el requisito y el plan; no contiene cambios funcionales ni afirma mejoras de rendimiento.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P0 — AUDITORÍA COMPLETADA
+- Tarea ejecutada: P0 inventario y mapa de latencia. Estado: COMPLETADA (auditoría estática).
+- Archivos de código inspeccionados: JS/Services/Coordinator.js, SharedMutationClient.js, write.js, admin.js y feedback.js.
+- Hallazgos: cada lease hace HTTP acquire + release; Coordinator revalida sesión en acquire y puede actualizar actividad; ADMIN→WRITE añade validación anidada; WRITE checkOperation contacta Coordinator; ADMIN mantiene locks de hasta 30 s que pueden incluir cargas Drive; FEEDBACK tutorial usa lock local de hasta 15 s.
+- Nuevo informe: AUDITORIA_P0_LATENCIA_VALIDACIONES.md. Plan actualizado: P0 COMPLETADA, P1 EN PROGRESO.
+- No se modificó lógica de servicios. No se ejecutaron Apps Script/Beta ni se midieron latencias reales.
+- Siguiente tarea: GP-PERF-SIMPLIFY-01 / P1.1 — simplificar WRITE/ADMIN cortes y eliminar Coordinator de checkOperation; después P1.2 locks y P1.3 FEEDBACK.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — CAMBIO PARCIAL IMPLEMENTADO
+- Tarea: simplificar consulta de estado de aportes WRITE/checkOperation. Estado: IMPLEMENTACIÓN REALIZADA; VALIDACIÓN PENDIENTE.
+- JS/Services/write.js: checkOperation deja de adquirir lease, llamar a Coordinator y revalidar sesión. Se conserva la consulta del estado por opId y la respuesta compacta.
+- JS/Tests/WriteAuthorizationMinimization.js: actualizado el contrato para exigir ruta directa sin lease.
+- Pendiente: ejecutar pruebas locales; después continuar P1.1b (mutaciones de cortes WRITE/ADMIN y asignación de ID).
+- No se desplegaron servicios Apps Script ni se ejecutaron pruebas Beta/productivas.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — AJUSTE DE CONTRATOS TRAS CI FALLIDO
+- CI 44120322612 falló en CheckOperationSecurity, SessionActivityCoordination y DirectTrafficRoutingCoverage porque aún exigían que checkOperation autenticara y adquiriera lease.
+- La sintaxis de los módulos modificados pasó. Se actualizaron los tres contratos para el nuevo comportamiento de lectura directa sin Coordinator; las mutaciones WRITE restantes siguen sin cambios.
+- Estado: P1.1a pendiente de nueva regresión; P1.1b pendiente.
+- Siguiente: confirmar nuevo CI y cerrar P1.1a solo si las pruebas pasan; después P1.1b.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — CORRECCIÓN LOCALIZADA DE PRUEBA
+- CI 44120776071: 132 suites; 1,917 pruebas aprobadas; 1 fallo en CheckOperationSecurity por una aserción demasiado amplia que prohibía getSpreadsheet, necesario para leer el estado de Cortes.
+- Se corrigió la prueba: permite la lectura del registro y sigue comprobando que no se revalida sesión ni se consulta Users/ActiveSessions/SESSION_CONTEXTS.
+- Estado: nueva regresión pendiente; P1.1a no se declara completada todavía.
+- Siguiente: comprobar CI; después P1.1b.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — CORRECCIÓN DEL EXTRACTOR DE PRUEBA
+- CI 44120994810: sintaxis aprobada; 133 suites, 1,925 pruebas aprobadas; 1 suite fallida por `Función incompleta: doPost` en el extractor del contrato WriteAuthorizationMinimization.
+- La ruta de servicio inspeccionada confirma que checkOperation pasa por despacho directo sin lease. Se cambia únicamente la prueba para inspeccionar el bloque del router por delimitadores concretos, evitando el extractor genérico.
+- Estado: nueva regresión pendiente; P1.1a no se declara completada. Siguiente: ejecutar CI y luego continuar P1.1b (actor/rol confiable y mutaciones de cortes).
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1a — VALIDACIÓN COMPLETADA
+- CI 44123644616 SUCCESS: 138 suites, 2,021 pruebas aprobadas, 0 fallos. P1.1a se cierra: WRITE/checkOperation consulta estado sin lease ni revalidación de sesión.
+
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1b — IMPLEMENTACIÓN Y AJUSTE DE CONTRATOS
+- Commit cf5d7ef6535658733349ac6827778de04ca93a67: rutas de cortes y aportes suplementarios dirigidas a WRITE; ADMIN rechaza rutas heredadas; registro silencioso requiere rol Desarrollador en WRITE; actor de sesión confiable se conserva en caché local por 15 s para evitar lease acquire/release por cada aporte.
+- CI 44125814255 FAIL: sintaxis aprobada; 78 suites, 1,028 pruebas aprobadas y 3 fallidas. Fallos de contratos desactualizados: extractor/expectativas de registro silencioso, expectativa antigua de sessionOptions en WRITE y regex de orden del mapa API. Se corrigen únicamente las pruebas.
+- Revocación remota en una solicitud directa puede reflejarse con un retraso máximo del TTL local de 15 s; revisar y validar el comportamiento de sesión en P3. No se desplegaron Apps Script ni se ejecutó Beta.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.1b — VALIDACIÓN FINAL
+- CI 44126830985 SUCCESS: sintaxis aprobada; 138 suites, 2,024 pruebas aprobadas, 0 fallos.
+- Se confirma el enrutamiento de addOrUpdateCut, addSupplementaryInfo y checkOperation hacia WRITE; ADMIN rechaza las rutas heredadas y ya no las publica en su dispatcher. Registro silencioso exige rol Desarrollador desde el actor confiable.
+- Actor confiable de WRITE cacheado localmente 15 s para evitar Coordinator y leases por cada mutación. Límite de propagación de revocación directa: hasta 15 s.
+- P1.1a y P1.1b cerradas. P1.2 iniciada: separar cargas Drive de locks prolongados. Siguiente P1.2a: addSupplementaryInfo.
+- No se ejecutaron pruebas Beta ni despliegues manuales de Apps Script; no se midieron latencias reales.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — REFACTORIZACIÓN DE INFORMACIÓN SUPLEMENTARIA
+- WRITE/addSupplementaryInfo autentica el actor antes de iniciar la carga; realiza preflight y carga de imágenes a Drive antes del lock final.
+- El lock final se limita a localizar/releer el vehículo, recalcular el plan y persistir las columnas suplementarias. La espera del lock se redujo de 30 s a 5 s.
+- Se añadieron rutas de ledger con secciones críticas breves para reserva y finalización; la creación/verificación del archivo y los cambios de metadatos Drive se ejecutan fuera del lock. Se usa upload_in_progress para evitar duplicar una misma carga concurrente. El vínculo de imágenes al ledger se confirma después de persistir la fila.
+- Se añadió lock corto para resolver/crear la carpeta del vehículo y evitar carpetas equivalentes en concurrencia; se libera antes de la carga.
+- Se actualizaron contratos AddSupplementaryInfoIntegrity y WriteAuthorizationMinimization. Validación CI aún pendiente; no se registran resultados de pruebas en esta entrada.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — AJUSTE DE CONTRATO TRAS CI
+- CI 44130490277: sintaxis aprobada; 131 suites, 1,868 pruebas aprobadas y 1 suite fallida. El único fallo fue una aserción de texto en AddSupplementaryInfoIntegrity que esperaba una cadena con espacios exactos en el log del actor.
+- Se corrige la aserción para comprobar el registro del actor sin acoplarse al espaciado de concatenación. No se modifica el código del servicio por este fallo.
+- Nueva regresión pendiente. P1.2a no se declara completada.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — CORRECCIÓN DE CONTRATO AUG-039
+- CI 44130802404: sintaxis aprobada; 136 suites, 2,003 pruebas aprobadas y 1 suite fallida. El fallo exigía autenticación de addSupplementaryInfo dentro del lock, expectativa heredada incompatible con la implementación que autentica al actor antes de la carga y mantiene bajo lock solo la persistencia final.
+- JS/Tests/WriteAuthorizationContracts.js: se actualiza la regresión para exigir una sola autenticación antes de preparar imágenes y antes de waitLock(5000), y ninguna autenticación dentro del handler bloqueado. No se modifica write.js ni se relaja la autorización.
+- P1.2a continúa EN PROGRESO hasta nueva CI aprobada. Siguiente: validar P1.2a y luego P1.2b.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2a — CIERRE LOCAL
+- CI 44131693251 SUCCESS: sintaxis aprobada; 138 suites, 2,026 pruebas aprobadas y 0 fallos.
+- La regresión AUG-039 verifica autenticación única del actor antes de preflight/carga y antes del lock final; el handler bajo lock no reautentica. Se confirma el contrato de preparación de imágenes Drive fuera del lock de persistencia.
+- P1.2a: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Pruebas reales de Drive/OAuth/concurrencia quedan pendientes del deployment autorizado; no se desplegó Apps Script ni se modificaron datos externos.
+- Siguiente: P1.2b, mover carga Drive de addOrUpdateCut fuera del ScriptLock prolongado, preservando asignación de ID e idempotencia.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 / P1.2b — CARGAS DRIVE DE CORTES FUERA DEL LOCK
+- JS/Services/write.js: la adquisición del ScriptLock de addOrUpdateCut pasa a tryLock(0), fail-fast. Se libera el lock para las cinco rutas de trabajo Drive (resolución/creación de carpeta, carga de imágenes y vínculo del ledger), y se readquiere sin espera; usa shortLedgerLock para el ledger.
+- La selección de slot excluye reservas pendientes de Idempotencia del mismo vehículo. El actor/rol se obtiene una sola vez, incluido el rol Desarrollador para registro silencioso. Si no se puede readquirir el lock o falla una fase posterior, se conserva el opId pendiente para recuperación, evitando rollback de snapshots que pudieran sobrescribir escrituras concurrentes. La ruta sin opId conserva compatibilidad serializada.
+- Pruebas: JS/Tests/WriteDriveOutsideLock.mjs; ajustes a CutPayloadValidation.js y WriteAuthorizationMinimization.js; integración en RunServiceTests.mjs.
+- CI 44135220800 SUCCESS: 139 suites, 2,027 pruebas aprobadas, 0 fallos. Health remoto 44135220571 SUCCESS (solo lectura); GitHub Pages 44135219018 SUCCESS.
+- No se desplegaron proyectos Apps Script ni se modificaron datos externos. Validación real Drive/OAuth y concurrencia queda para Beta. Monitoreo de servicios y dashboard de actividad se mantienen intactos.
+- Siguiente: P1.3, simplificación de FEEDBACK.
+================================================================================
+
+
+================================================================================
+2026-11-17 — P3.1b: decisión de caché de actor y hallazgo de revocación
+- Se documentó la decisión de no precargar el actor desde AUTH a cada proyecto Apps Script: CacheService es aislado por proyecto y la precarga exigiría viajes de red/contratos adicionales durante login.
+- Se conserva TTL de 21,600 s para cache hits sin red; cache miss/expiración todavía consulta Coordinator.
+- Se confirmó que las revocaciones de Coordinator no invalidan las cachés locales de actor de WRITE/FEEDBACK. La ventana de autorización obsoleta puede alcanzar 6 h después de logout remoto, eliminación o cambio de rol. Hallazgo ALTO y evidencia registrados en AUDITORIA_P3_SESION_ACTOR.md.
+- P3.1b completada como evaluación. P3.1 global continúa EN PROGRESO; siguiente P3.1c: invalidación dirigida de caché y pruebas locales. No hubo cambios de código, pruebas ejecutadas, despliegues ni modificaciones de datos externos en esta adenda.
+================================================================================
+
+================================================================================
+2026-11-17 — P3.1c: invalidación dirigida de caché de actor
+- SharedMutationClient.js agrega invalidación de claves de sesión por token en WRITE y FEEDBACK antes de revocar sesiones en Coordinator; se preserva el formato de clave existente y el TTL de 6 h.
+- Auth.js aplica invalidación en logout individual y en revocaciones por usuario, enumerando tokens activos de ActiveSessions. write.js y feedback.js aceptan la acción interna solo con secreto compartido; no se expone al frontend.
+- Se añadieron SessionActorCacheInvalidation.mjs, su registro en RunServiceTests.mjs y adaptaciones de harnesses AUTH/PasswordRecovery. Las operaciones de usuario siguen sin consultar Coordinator por acción.
+- Validación local CI 44149804570 SUCCESS: 144 suites / 2,131 pruebas / 0 fallos. Health read-only 44149804587 SUCCESS; no valida el nuevo código desplegado.
+- No se desplegaron Apps Script ni se modificaron propiedades, hojas, Drive o datos externos. Pendiente Beta: configurar el secreto compartido y URLs en ScriptProperties, desplegar AUTH/WRITE/FEEDBACK y validar revocaciones reales/fallos parciales.
+================================================================================
+================================================================================
+2026-11-17 — P3.1c — corrección de sesiones ilimitadas y reutilización de secreto
+- AUTH ya no impone un máximo de cinco sesiones al enumerar tokens activos. La invalidación se divide en lotes de cinco para WRITE y FEEDBACK; la revocación central se ejecuta una sola vez después de confirmar todos los lotes.
+- La regresión cubre 13 tokens de una cuenta Developer, orden de lotes, confirmaciones por servicio y detención ante fallos parciales.
+- Se reutiliza GPSpedia_COORDINATOR_SECRET, credencial servicio-a-servicio existente; se elimina la nueva propiedad GPSpedia_SESSION_CACHE_INVALIDATION_SECRET. AUTH conserva únicamente la configuración de URLs GPSpedia_WRITE_URL y GPSpedia_FEEDBACK_URL.
+- No se modificaron deployments ni propiedades productivas. Validación CI del HEAD con esta corrección pendiente de confirmación.
+================================================================================
+================================================================================
+2026-11-17 — P3.1c — validación de la corrección de sesiones ilimitadas
+- CI 44151856103 SUCCESS: 144 suites, 2,109 pruebas aprobadas, 0 fallos; sintaxis aprobada. SessionActorCacheLifetime 4/4 y SessionActorCacheInvalidation 1/1.
+- Health remoto 44151856097 SUCCESS: 7/7 servicios disponibles mediante GET de solo lectura; no valida la nueva implementación Apps Script sin desplegar.
+- Se confirma la compatibilidad entre Auth.js y su copia de pruebas JS/Tests/Auth.js, normalizando únicamente el ID de Spreadsheet aislado.
+- P3.1c queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. No se desplegaron servicios ni se modificaron propiedades o datos externos.
+================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — inicio P4
+- Auditoría transversal inicial: AUDITORIA_P4_OPTIMIZACION_PLATAFORMA.md.
+- P4.1 identifica lectura PyS secuencial respecto al cursor/snapshot inicial y un error de aislamiento: un fallo de PyS puede marcar stale el catálogo ya procesado. Se implementará concurrencia y sincronización de cursor condicionada a datos frescos.
+- P4.2 identifica cascada innecesaria en Inbox: abrir nuevo mensaje desde Solicitudes espera conversaciones antes de obtener destinatarios.
+- P4.3 reserva revisión de ScriptLock global durante auditoría y organización Drive de ADMIN.
+- Telemetría, dashboard, salud de servicios y feed incremental se conservan.
+================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — P4.1 y P4.2
+- P4.1: PyS inicia en paralelo al cursor y snapshot inicial del catálogo; se comparte una sola promesa, se aíslan errores y solo se avanza el cursor con datos frescos.
+- P4.2: al abrir nuevo mensaje desde Solicitudes, la carga de conversaciones se ejecuta en segundo plano; destinatarios se solicitan inmediatamente. El sondeo se inicia al finalizar solo si el contexto sigue vigente.
+- P4.3: auditoría detallada confirma que el ScriptLock ADMIN protege reintentos idempotentes y operaciones Drive/Spreadsheet. Se requiere claim/commit atómico breve antes de liberar trabajo externo; no se modificó admin.js.
+- CI 44154032505 SUCCESS: 145 suites, 2,117 pruebas aprobadas, 0 fallos. Health read-only 7/7 y Pages build SUCCESS.
+================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — P4.3a inventario ADMIN
+- handleOrganizeUnusedImagesBatch lee el inventario completo y calcula duplicateIds una vez por lote, fuera del bucle por archivo.
+- Se conserva latestRowsBeforeMove por archivo, la doble revalidación de referencias activas, la comprobación de ubicación, read-back y rollback.
+- En un lote de 20 archivos se evitan hasta 19 lecturas completas iniciales y 19 recalculaciones de duplicados.
+- AdminReplacedImagesIntegrity 55/55 PASS; CI 44154558840 SUCCESS: 145 suites / 2,117 pruebas / 0 fallos; health read-only 7/7.
+- El ScriptLock global no se redujo: P4.3b requiere reserva/commit atómico y pruebas concurrentes.
+================================================================================
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — cierre P4
+- P4.1: PyS paralelo al snapshot inicial; error aislado y cursor solo con datos frescos.
+- P4.2: Inbox compositor no espera la lista de conversaciones; carga en segundo plano con guardas de contexto.
+- P4.3a: inventario y duplicados una vez por lote; verificación final por archivo intacta.
+- P4.3b: CacheService.getAll/putAll por lotes de 100; 205 páginas pasan de 615 llamadas a 9.
+- P4.3c: Coordinator publica lotes CATALOG de hasta 50 con requestId idempotente; 20 cambios pasan de 20 viajes a 1.
+- P4.3d: ScriptLock revisado y conservado por seguridad; los leases Coordinator ya coordinan los conflictos de recursos.
+- CI 44156469990 SUCCESS: 145 suites / 2,123 pruebas / 0 fallos. Health read-only 7/7 y Pages build SUCCESS.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-PERF-SIMPLIFY-01 — P5 verificación local
+- JS/Services/Coordinator.js: se retiró la política AUTH/benchmarkPasswordKdf que ya no tiene consumidor; se conservó la política ADMIN/getServiceTraffic para la lectura interna de métricas.
+- JS/Tests/Auth.js y JS/Tests/users.js: fixtures aislados sincronizados con Auth.js y users.js, conservando el ID de Spreadsheet de prueba.
+- JS/Tests/PasswordKdfBenchmark.mjs: contrato actualizado para actor cacheado y ausencia de lease Coordinator para el benchmark.
+- JS/Tests/DirectTrafficRoutingCoverage.mjs: contrato USERS actualizado para lectura con actor cacheado sin lease sessionActivity.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: distingue la ruta ADMIN con actor cacheado de la lectura SERVICE_TRAFFIC interna; conserva contratos de permisos, metadatos de recursos y bloqueos locales indispensables del inventario, además de publicación CATALOG por lotes.
+================================================================================
+
+
+[2026-11-17] UX — Normalización de encabezados de modales: títulos alineados a la izquierda con espacio reservado para el cierre a la derecha; detalle de corte con acciones en orden Imprimir/Editar/Compartir, divisor azul más cercano al logo/modelo y nombre del modelo ligeramente elevado sin alterar el tamaño del logo ni las sombras; retroceso cierra el detalle de corte; cierre YouTube convertido en botón accesible. Se añadieron roles y nombres ARIA a los diálogos afectados.
+
+
+================================================================================
+2026-11-17 — CIERRE GP-UX-MODAL-HEADERS-02 Y RECONCILIACIÓN DE CONTINUIDAD
+- Se registró el cierre de la implementación de encabezados de modales y navegación Atrás del detalle de corte.
+- Validación GitHub Actions 44170476002 SUCCESS: 145 suites, 2,127 pruebas aprobadas, 0 fallos; job 134347901920. GitHub Pages 44170474862 SUCCESS. Health read-only 44170475959 SUCCESS.
+- Se aclaró la nomenclatura P4.3: inventario por lote (a), CacheService por lotes (b), publicación CATALOG por lotes (c) y revisión/retención del ScriptLock (d). La propuesta inicial claim/commit se difiere hasta disponer de mediciones que justifiquen reabrirla; no se cambió admin.js ni se debilitó el lock.
+- Las notas históricas de P1.2 EN PROGRESO quedan supersedidas por sus cierres P1.2a/P1.2b y P1.3.
+- No quedan tareas de implementación local abiertas en el plan consolidado. Las validaciones visuales, navegador/PWA y servicios externos siguen diferidas a Beta. No se desplegaron Apps Script ni se modificaron datos externos.
+================================================================================
+
+
+================================================================================
+2026-11-17 — GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 / GP-UX-MODAL-HEADER-TIGHTEN-03
+- El compositor Inbox permite seleccionar varios destinatarios. Cada selección se entrega mediante una conversación directa independiente (remitente + un destinatario); no se crea un hilo con lista visible de copiados.
+- El envío múltiple se procesa secuencialmente para respetar el bloqueo breve de escritura existente. Cada conversación usa una clave idempotente propia derivada de la clave del lote; el progreso se guarda en el borrador y un reintento reproduce las operaciones de forma segura sin duplicarlas. Si ya hubo entrega parcial, el contenido se bloquea hasta completar el reintento.
+- Los menús de las barras enriquecidas cierran al pulsar fuera del desplegable en modos completos y básicos.
+- Detalle de corte: Imprimir/Editar/Compartir y Cerrar quedan en una misma fila, alineados al extremo derecho. Se elimina el padding interno del contenedor del logo, se reduce a la mitad el espacio vertical calculado del encabezado/divisor y se eleva ligeramente el modelo sin cambiar fuente, sombras o dimensiones del logo.
+- PyS adopta el encabezado azul común, alineación y cierre accesible.
+- Se añadieron contratos Inbox UI/backend y regresión de encabezados de corte/PyS; pendientes de confirmar en Actions.
+================================================================================
+
+
+================================================================================
+2026-11-17 — AJUSTE DE AISLAMIENTO DE PRUEBAS Inbox PRIVACY
+- La primera regresión del commit 5e9cdd7 detectó que la nueva fixture de privacidad se insertó antes de una aserción histórica que valida el contador total de mensajes (9 frente a 7). La lógica de Inbox no falló; se aisló la prueba nueva al final de la suite para no alterar el fixture compartido de los contratos preexistentes.
+- La prueba ahora verifica participantes individuales y que un destinatario no pueda listar ni abrir la conversación privada del otro. Se conservó intacto el límite/contador de las pruebas históricas.
+- Reejecutar CI integral y Pages tras este ajuste.
+================================================================================
+
+
+================================================================================
+2026-11-17 — AISLAMIENTO DE PRIVACIDAD Inbox FRENTE A DATOS LEGACY
+- La consulta de la bandeja completa durante la prueba nueva inspeccionaba todas las conversaciones visibles del usuario de prueba y expuso un contador inconsistente en una fixture legacy (uuid-00000029). El test no debe depender de reconciliar historiales ajenos para probar privacidad.
+- Se sustituyó esa consulta por intentos cruzados de lectura: U5 no puede abrir el hilo U1→U3 y U3 no puede abrir el hilo U1→U5. Los registros de participantes se verifican directamente y cada conversación contiene un solo destinatario.
+- Sin cambios al handler de producción ni al esquema de datos; volver a ejecutar suite completa.
+================================================================================
+
+
+================================================================================
+2026-11-17 — CORRECCIÓN FIXTURE DE SESIÓN EN TEST PRIVACIDAD Inbox
+- La ejecución anterior falló porque el test usaba U5, cuenta que no tiene sessionToken simulado en el mapa de sesiones de InboxConversations.mjs; la petición era rechazada por autenticación antes de evaluar participantes.
+- Los intentos de lectura cruzada usan ahora U2/token-b y U3/token-c, ambos actores autenticados del fixture. Se mantiene la aserción de que ninguno es participante del hilo privado correspondiente.
+================================================================================
+
+
+================================================================================
+2026-11-17 — ALCANCE DE PRUEBA CSS DE SCROLLBARS
+- La regresión antigua tomaba desde GP-UX-PLATFORM-SCROLLBARS-01 hasta el final de style.css; con los nuevos componentes, ese rango incluía dropdowns ajenos al modal con overflow:auto (en particular el selector multirrecipientes Inbox).
+- Se acotó la inspección al bloque de política global de scrollbars, hasta GP-UX-RICH-EDITOR-SELECTION-02. Se mantiene el contrato de que #modalDetalle y sus descendientes oculten únicamente el indicador de scrollbar y no alteren overflow del modal.
+- No se modificó CSS runtime ni se retiró overflow:auto de menús que necesitan desplazamiento.
+================================================================================
+
+================================================================================
+2026-11-17 — CIERRE GP-UX-INBOX-PRIVATE-MULTI-RECIPIENT-01 / GP-UX-MODAL-HEADER-TIGHTEN-03
+- HEAD de implementación y regresión: 33700c6b15f0b77feebc706e8ac4e298bb62155f.
+- CI 44196032087 SUCCESS: 145 suites; 2,131 pruebas aprobadas; 0 fallos. La suite InboxConversations pasó 63/63 y InboxUi 86/86.
+- Health read-only 44196031955 SUCCESS (sondas GET de solo lectura); GitHub Pages 44196029692 SUCCESS, con despliegue de commit 33700c6b15f0b77feebc706e8ac4e298bb62155f.
+- Inbox multirecipiente: un mensaje se crea como conversaciones directas independientes; cada conversación solo incluye al remitente y al receptor. Se verifica que U2/U3 no pueden abrir hilos privados ajenos; no se usa copia visible ni conversación grupal.
+- Los menús de las barras enriquecidas se cierran al pulsar fuera. PyS comparte título azul y cierre accesible.
+- Detalle de corte: acciones y cierre en una fila alineada a la derecha; padding interno del div del logo a cero; alturas/espaciado vertical compactados; el modelo se eleva sin cambiar fuente ni sombras.
+- Se corrigieron únicamente fixtures/alcance de pruebas durante la estabilización; no se modificaron servicios backend ni datos externos. No se desplegó Apps Script ni se accedió a producción.
+================================================================================
+
+
+================================================================================
+2026-11-17 — INICIO GP-AUTH-ROLE-SESSION-LIMITS-01
+- Requisitos registrados: Desarrollador ilimitado; Jefe 5; Supervisor 3; Técnico 1; Técnico externo 1. El exceso no bloquea login; se revoca la sesión activa más antigua.
+- AUTH y su espejo de pruebas actualizan la matriz de límites, eliminan el tope fijo de cinco sesiones compartidas y seleccionan excedentes por fecha de creación.
+- Se agrega contrato de regresión de política por rol y selección de la sesión más antigua.
+- Implementación local en progreso; validación automatizada pendiente. No se desplegó Apps Script ni se modificaron hojas, propiedades o datos externos.
+================================================================================
+
+
+Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: Coordinator elimina los tres topes internos de cinco sesiones y segmenta el contexto compartido en bloques versionados para evitar el límite de tamaño por propiedad. Se añade prueba aislada con 100 sesiones, autenticación de una sesión del último bloque y limpieza tras revocación global. Pendiente ejecutar CI y revisar el diff completo.
+
+
+Adenda GP-AUTH-ROLE-SESSION-LIMITS-01: la expulsión automática invalida primero cachés WRITE/FEEDBACK y el contexto de Coordinator por cada token excedente; solo después borra el token local. Se preserva la recuperación idempotente ante fallos parciales.
+
+Adenda: el particionado del contexto calcula tamaño UTF-8 de cada bloque (7,000 bytes) para evitar superar el máximo por propiedad con datos Unicode.
+
+
+================================================================================
+2026-11-18 — CIERRE DE IMPLEMENTACIÓN GP-AUTH-ROLE-SESSION-LIMITS-01
+- Matriz aplicada: Desarrollador ilimitado; Jefe 5; Supervisor 3; Técnico 1; Técnico externo 1.
+- Al superar el límite se crea la nueva sesión, se revocan los tokens más antiguos por timestamp, se invalidan cachés de WRITE/FEEDBACK y luego se limpian los registros anteriores.
+- Coordinator elimina topes fijos de cinco y guarda contexto en bloques versionados UTF-8. Prueba aislada cubre 100 sesiones Desarrollador.
+- SessionActivityCoordination 11/11 PASS; sintaxis PASS; health read-only PASS. Regresión global: 119 suites, 1,769 pruebas aprobadas y 1 fallo ajeno (BETA-026 CSS del encabezado móvil).
+- Implementación local cerrada con validación multi-dispositivo diferida a Beta. No se desplegó Apps Script ni se modificaron datos externos.
+================================================================================
+
+================================================================================
+2026-11-17 — AJUSTE GP-UX-CUT-MODAL-HEADER-POSITION-01
+- style.css: se elimina la fila flexible vacía del encabezado de cortes; logo y modelo comparten la fila superior, el logo queda alineado al inicio y el modelo al extremo inferior. Se conservan las dimensiones del logo (120 px escritorio / 60 px móvil), el tamaño/orden/alineación de acciones y los márgenes de divisor y metadatos.
+- JS/Tests/CutDetailModalLayout.mjs: se amplía el contrato para verificar la fila única, la posición superior del logo, el divisor inmediato y la preservación de espaciados existentes.
+================================================================================
+
+================================================================================
+2026-11-18 — AJUSTE GP-UX-CUT-MODAL-HEADER-GRID-02
+- style.css: consolidación del encabezado en cuadrícula 2x2; primera columna max-content ligada al ancho natural del logo, segunda columna flexible; acciones/modelo en filas separadas; divisor y guardado en filas propias. Se limita el scroll horizontal únicamente al modal de cortes.
+- JS/Tests/CutDetailModalLayout.mjs: contrato actualizado para verificar columnas, filas, ancho natural de logo y ausencia de scroll horizontal en el modal de corte.
+================================================================================
+
+
+================================================================================
+2026-11-18 — AJUSTE GP-UX-CUT-MODAL-HEADER-GRID-02
+- style.css: separación vertical de 6 px entre acciones y modelo; padding horizontal de los botones editar/imprimir/compartir reducido ligeramente; divisor azul limitado al ancho disponible con márgenes simétricos de 6 px.
+- Se conserva la cuadrícula 2x2, logo con width:auto y contenedor sin padding vertical, alturas de imagen de 120 px en escritorio y 60 px en móvil, además del orden y alineación de controles.
+- JS/Tests/CutDetailModalLayout.mjs: se actualizan contratos para separación, padding de botones y límites simétricos del divisor. Pruebas automatizadas pendientes de ejecución.
+================================================================================
+
+
+================================================================================
+2026-11-18 — CIERRE LOCAL GP-UX-CUT-MODAL-HEADER-GRID-02 / AJUSTE DE ESPACIADO
+- Se corrigió una aserción heredada del test móvil que todavía exigía la alineación inferior anterior del modelo.
+- CutDetailModalLayout: 27/27 PASS. Regresión global: 145 suites, 2,143 pruebas aprobadas, 0 fallos. Sintaxis de módulos modificados: PASS. Actions run 44229400787 SUCCESS.
+- Health read-only run 44229400782 SUCCESS. Inspección visual en navegador/dispositivos reales pendiente de Beta.
+================================================================================
+
+
+================================================================================
+2026-11-18 — CORRECCIÓN «VISTOS RECIENTEMENTE»
+- JS/Frontend/offline.js: IndexedDB pasa a DB_VERSION 5 e incorpora índice ownerId; la consulta se limita a la cuenta actual y depura los registros excedentes para mantener 20 elementos.
+- JS/Frontend/auth.js: el fallo temporal de almacenamiento deja de interpretarse como historial vacío; se aplican reintentos progresivos en segundo plano, se conserva el estado en memoria y se descartan respuestas de sesiones/propietarios anteriores.
+- JS/Tests/RecentlyViewedCarousel.mjs y JS/Tests/IndexedDBTransactions.js: cobertura de reintentos, aislamiento por cuenta, retención de 20 elementos y distinción entre almacenamiento no disponible e historial vacío. JS/Tests/AdminDriveAuditIndexedDB.mjs actualiza la expectativa de versión de esquema a 5. JS/Tests/ServiceWorkerCache.js, JS/Tests/PasswordRecovery.mjs y JS/Tests/OfflineBrandAssets.mjs actualizan sus expectativas de CACHE_NAME a v70.
+- service-worker.js: CACHE_NAME actualizado a gpsepedia-cache-v70; JS/Tests/ServiceWorkerCache.js alineado con la nueva versión.
+- Validación en SHA 0c3e6fc191d86801793150eb5aac46217ba4845d: RecentlyViewedCarousel 13/13 PASS; IndexedDB 51/51 PASS; regresión 145 suites / 2,153 pruebas / 0 fallos; sintaxis PASS. CI final con CACHE_NAME v70: Actions 44240071252 SUCCESS (145 suites / 2,153 pruebas / 0 fallos; sintaxis PASS). Health GET-only 44240071231 SUCCESS. GitHub Pages pendiente de finalizar para el SHA de código f9b054e1a7a63986d0d63b3be3953ad868d31db6.
+================================================================================
+
+
+[2026-11-18] GP-PWA-RECENT-VIEWS-03
+- offline.js: la limpieza del caché ya no borra globalmente viewedItems; elimina únicamente registros de la cuenta activa mediante ownerId.
+- ui.js: mantiene la actualización optimista y persistencia local; envía en segundo plano un evento remoto mínimo con el ID del vehículo y sesión, sin esperar respuesta.
+- api-config.js, feedback.js y Coordinator.js: agregan la acción autenticada recordVehicleView, con escritura acotada a ACTIVITY y sin devolver historial.
+- service-worker.js: caché PWA actualizado a v71; contratos de pruebas alineados.
+- Se añade cobertura automatizada de separación entre telemetría y carrusel.
+
+
+================================================================================
+2026-11-18 — GP-PWA-RECENT-VIEWS-03 — contadores y limpieza local
+- ui.js/api-config.js: el evento no bloqueante incorpora utilCorte1, utilCorte2 y utilCorte3.
+- feedback.js: valida los tres contadores y los registra en el detalle del evento ACTIVITY; actor y fecha siguen siendo del backend.
+- offline.js: viewedItems forma parte de los almacenes reconstruibles; la limpieza local ejecuta clear() sin solicitudes ni eliminaciones remotas.
+- Se actualizan contratos de telemetría/limpieza y la caché PWA a v72.
+================================================================================
+
+
+2026-11-18 — Aislamiento de vistos entre sesiones
+- auth.js: al iniciar/cambiar sesión, limpia el carrusel en memoria y lo repuebla solo desde IndexedDB con el ownerId actual; elimina la fusión con datos de la sesión previa.
+- RecentlyViewedActivityTelemetry.mjs: añade aserciones contra contaminación de memoria entre cuentas.
+================================================================================
+2026-11-18 — GP-PWA-RECENT-VIEWS-03 — alineación de prueba de limpieza local
+- Se corrigió `JS/Tests/RecentlyViewedCarousel.mjs`: ahora exige que la limpieza de caché incluya `viewedItems`, limpie el estado en memoria y no invoque rutas de actividad remota.
+- Se conserva el aislamiento por propietario en las lecturas de IndexedDB; borrar la caché local elimina los vistos del dispositivo, pero no los registros estadísticos ACTIVITY del servidor.
+- Commit: `dae20bf50f8a40a669ce02ed7668ac8e0e19a086`.
+- Verificación estática de contratos: 9/9 PASS. Ejecución de Node/CI pendiente de evidencia.
+================================================================================
+
+================================================================================
+2026-11-18 — Corrección de contrato PWA y alineación inferior del logo
+- `JS/Tests/RecentlyViewedCarousel.mjs`: se alinea la aserción de telemetría con el payload actual de contadores de utilidad y se añade resumen numérico compatible con el runner.
+- `style.css`: el logo de marca del modal de detalle de corte adopta `object-position:left bottom` en la regla específica de escritorio; se conservan dimensiones y ancho automático. La regla móvil ya utilizaba esa posición.
+- `JS/Tests/CutDetailModalLayout.mjs`: se agrega comprobación explícita de la alineación inferior del logo en escritorio; se mantiene el contrato móvil.
+- Validación CI `44310667618`: 146 suites / 2,154 pruebas / 0 fallos; RecentlyViewedActivityTelemetry 12/12, AdminClientCacheDeletion 9/9, CutDetailModalLayout 27/27 y sintaxis PASS. Pages `44310666058` SUCCESS; health read-only `44310667649` SUCCESS.
+================================================================================
+================================================================================
+2026-11-18 — Corrección efectiva de alineación del encabezado del modal de corte
+- `style.css`: el título del modelo y el campo de edición pasan de `align-self:flex-start` a `align-self:end` en escritorio y móvil. El modelo queda anclado al extremo inferior de la segunda fila, alineado con la base visual del logo que ocupa ambas filas.
+- Se conserva el logo con `width:auto`, `object-fit:contain`, `object-position:left bottom`, 120 px en escritorio y 60 px en móvil; no se modifican las dimensiones, el ancho max-content, las acciones, el gap ni el divisor.
+- `JS/Tests/CutDetailModalLayout.mjs`: se actualizan las aserciones de alineación para escritorio y móvil.
+- CI `44328013474` SUCCESS: 146 suites, 2,154 pruebas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual real pendiente de Beta.
+================================================================================
+
+================================================================================
+2026-11-18 — Rectificación de posición del logo y nombre del modelo
+- style.css: el nombre del modelo y el campo de edición vuelven a align-self:flex-start en escritorio y móvil, restaurando su posición previa al cambio de alineación inferior. El contenedor del logo se mueve a la fila 2, junto al nombre; se alinea arriba con margen superior de 6 px y object-position:left top.
+- Se conservan ancho automático del logo, columna max-content, alturas de 120 px en escritorio y 60 px en móvil, gap, acciones, divisor y restricciones de overflow.
+- JS/Tests/CutDetailModalLayout.mjs: contratos actualizados para la posición compartida del logo y el modelo.
+- CI 44329759542 SUCCESS: 146 suites, 2,154 pruebas aprobadas, 0 fallos; sintaxis PASS. Inspección visual en navegador/dispositivos reales pendiente de Beta.
+================================================================================
+
+================================================================================
+2026-11-18 — Rectificación final: contenedor del logo en dos filas
+- `style.css`: `.detail-modal-title` ocupa las dos filas y se alinea al fondo del espacio combinado mediante `align-self:end`; la imagen sigue alineada arriba dentro del contenedor. El nombre y el campo de edición permanecen en la segunda fila, alineados al inicio.
+- Aplicado en escritorio y móvil; dimensiones, ancho automático, max-content, gap, acciones y divisor conservados.
+- `JS/Tests/CutDetailModalLayout.mjs`: aserciones separan posición del contenedor, imagen y nombre del modelo.
+- CI `44331015148` SUCCESS: 146 suites, 2,154 pruebas, 0 fallos; `CutDetailModalLayout` 27/27; sintaxis PASS. Inspección visual Beta pendiente.
+================================================================================
+
+================================================================================
+2026-11-18 — Corrección del logo en títulos largos y render independiente de Vistos Recientemente
+- style.css: se elimina la reserva artificial de la segunda fila del logo en el estado below-logo. El título completo pasa a la fila 3; divisor e indicador quedan en filas 4 y 5. La altura de las filas del logo no cambia, por lo que el crecimiento se produce debajo.
+- JS/Frontend/ui.js: el carrusel de vistos recibe un ancla estable y se actualiza de forma independiente cuando IndexedDB entrega el historial; ya no se ejecuta `mostrarCategorias()` para reconstruir el catálogo por un cambio en `viewedItems`.
+- service-worker.js: CACHE_NAME actualizado a gpsepedia-cache-v73 para invalidar recursos cache-first.
+- Pruebas: CutDetailModalLayout 28/28; RecentlyViewedCarousel 1/1; ServiceWorkerCache 12/12; OfflineBrandAssets 4/4; regresión 146 suites / 2,155 pruebas / 0 fallos. PasswordRecovery ajusta su contrato de versión de caché.
+- CI `44394961438` SUCCESS; Pages `44394961041` SUCCESS; health read-only `44394961427` SUCCESS.
+- No se modificaron servicios Apps Script, hojas, Drive ni actividad histórica del servidor. Pendiente Beta: inspección visual real y medición de carga simultánea en PWA/dispositivo.
+================================================================================
+
+
+[2026-11-18] Pruebas Beta — despliegues Apps Script y hallazgo de vista previa Inbox
+- Se corrigió `.github/workflows/deployed-service-health.yml`: el SHA de origen ahora es `${{ github.sha }}`, evitando validar endpoints históricos al cambiar api-config.js.
+- `lista_beta_parte2.txt`: se añadieron los hallazgos BETA-INBOX-PREVIEW-HTML-01 (vista previa muestra etiquetas HTML literales; detalle conserva formato) y BETA-SERVICES-HEALTH-01 (comprobación read-only de siete servicios).
+- En HEAD `d01019af19e026aabd1ac69ec63cc2fd29c5aa1c`: health Actions 44418836521 SUCCESS, 7/7 servicios disponibles por GET ?debug=true; regresión Actions 44418836654 SUCCESS, 146 suites / 2,155 pruebas / 0 fallos.
+- No se ejecutaron POST, escrituras de negocio ni cambios de propiedades/hojas. Las pruebas funcionales con sesión y datos Beta permanecen pendientes.
+
+
+================================================================================
+2026-11-18 — REGISTRO BETA BETA-CUT-MODAL-HEADER-LONG-MODEL-01
+- `lista_beta_parte2.txt`: se documenta que un nombre de modelo largo salta correctamente de línea, pero el crecimiento desplaza el logo hacia arriba en lugar de empujar hacia abajo el divisor azul; el logo puede cubrir los botones de edición e impresión y quedar por encima del título en móvil horizontal.
+- Se especifican el comportamiento esperado y los casos de reproducción/regresión para escritorio, móvil vertical/horizontal, nombres cortos/largos, visibilidad de acciones y ausencia de scroll horizontal.
+- `checkpoint.md`: se agrega la continuidad del hallazgo. No se modificó CSS ni código de producción; queda pendiente reproducción, diagnóstico y validación visual Beta.
+================================================================================
+
+
+================================================================================
+2026-11-18 — Hallazgos Beta adicionales ADMIN / telemetría / limpieza
+- `lista_beta_parte2.txt`: añadidos BETA-ADMIN-HEALTH-EVENTS-01, BETA-ADMIN-GLOBAL-TRAFFIC-01, BETA-ADMIN-SERVICE-TELEMETRY-02, BETA-ADMIN-LOGS-CLEAR-FEEDBACK-01, BETA-ADMIN-LOG-RETENTION-UI-01, BETA-AUDIT-CUT-UNUSED-IMAGES-PASS-01.
+- Se documentan el ReferenceError `events is not defined` en el escaneo de salud; la respuesta de telemetría global inválida; la ausencia de información de salud/tráfico para servicios distintos de CATALOG y la falta de tráfico global/móvil.
+- Se registra la ambigüedad del mensaje al limpiar logs/actividad cuando no hay registros, y el selector de retención (7 días / eliminar todos) demasiado grande y fuera del viewport.
+- Se registra como PASS reportado por el usuario la auditoría de imágenes sin uso en la carpeta de cortes.
+- `checkpoint.md` actualizado para continuidad. No se modificó código de producción; los hallazgos funcionales/visuales siguen pendientes de reproducción y corrección.
+================================================================================
+
+
+================================================================================
+2026-11-18 — REGISTRO DOCUMENTAL DE NUEVOS HALLAZGOS Y REQUISITOS BETA
+- lista_beta_parte2.txt: se agregan BETA-CUT-MODAL-IMAGE-CONTAINER-PADDING-01, BETA-INBOX-SHARED-COORDINATOR-AUTH-01, BETA-ADMIN-IMAGE-AUDIT-CONCURRENCY-01, BETA-ADMIN-CUT-IMAGE-AUDIT-COVERAGE-01, BETA-ADMIN-CUT-IMAGE-LIBRARY-INVENTORY-01, BETA-ADMIN-CUT-IMAGE-VEHICLE-MATCH-01 y BETA-ADMIN-CUT-IMAGE-REPLACEMENT-LINK-01.
+- Auditoría.txt: se documentan evidencia reportada, impacto, diagnóstico y criterios esperados; se distingue el reporte del usuario de un defecto reproducido.
+- checkpoint.md: se actualiza continuidad con los siete identificadores y sus requisitos.
+- Alcance: solo documentación. No se modificó código, Spreadsheet, Drive, permisos, Coordinator ni archivos de imágenes. No se ejecutó auditoría funcional ni se comprobó causalidad entre Inbox y la auditoría.
+================================================================================
+
+
+
+================================================================================
+2026-11-18 — REGISTRO DE REQUISITOS BETA: CONSOLA Y ORGANIZACIÓN AUTOMÁTICA
+- lista_beta_parte2.txt: añadidos BETA-ADMIN-CUT-IMAGE-AUDIT-CONSOLE-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-AUDIT-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-STRUCTURE-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-REGISTRATION-CONSISTENCY-01, BETA-ADMIN-CUT-IMAGE-ORGANIZER-NAMING-01 y BETA-ADMIN-CUT-IMAGE-FUNCTION-CODES-01.
+- Auditoría.txt: registrados el flujo de confirmación por consola, la consola centralizada del modal, la auditoría del organizador, la estructura jerárquica, la coherencia de altas, la nomenclatura y los códigos de función.
+- checkpoint.md: actualizado para continuidad.
+- Alcance: documentación solamente. No se inspeccionó ni modificó código, Drive o Spreadsheet; no se movieron/renombraron imágenes ni se ejecutaron pruebas funcionales.
+================================================================================
+
+
+================================================================================
+2026-11-18 — AUDITORÍA ESTÁTICA: CONSOLA Y ORGANIZADOR DE IMÁGENES
+- Se inspeccionaron JS/Frontend/ui.js, index.html y JS/Services/admin.js en el HEAD bed9f15814badc314f664bfc9e627cd9f875ed2f.
+- Auditoría.txt registra evidencia y severidad: confirmación solicitada en terminal global y resultados fragmentados; organizador limitado a imagenVehiculo de Cortes; verificación de referencias limitada a Cortes; alta de logos en Cortes/Logos; nomenclatura sin año final y con sufijos heredados; ruta de fusión de carpetas que puede enviar origen a papelera tras fallos parciales.
+- No se modificó código, no se ejecutaron acciones de Drive/Spreadsheet y no se movieron, renombraron ni eliminaron imágenes.
+- Estado: auditoría estática del organizador completada; consola, rutas, nomenclatura, alta de logos y protección integral de referencias pendientes de implementación y pruebas.
+================================================================================
+
+
+================================================================================
+2026-11-18 — CONSOLA CENTRAL DE AUDITORÍA DE CORTES
+- Se sustituyeron los indicadores separados y la lista de tarjetas del modal por una consola cronológica accesible; registra lotes, rutas de carpetas visitadas, resultados individuales, conteos acumulados, advertencias y errores.
+- ADMIN ahora devuelve las rutas visitadas en cada página de auditoría. La confirmación afirmativa/negativa continúa ejecutándose desde la terminal global del Desarrollador, y su resultado se refleja en la consola del modal.
+- Se reforzó la conciliación de resultados del inventario: acepta no_confirmada, rechaza IDs extra/duplicados y compara los conteos del servidor con los estados individuales antes de habilitar la organización.
+- Archivos: JS/Services/admin.js, JS/Frontend/ui.js, index.html, style.css, JS/Tests/CortesImageReconciliationUI.mjs, JS/Tests/AdminImageScanCoordinatorContract.mjs.
+- La organización de Drive no se ejecutó ni se modificaron archivos, carpetas o Spreadsheet reales.
+================================================================================
+
+
+================================================================================
+2026-11-18 — CIERRE DE CONSOLA Y MITIGACIÓN DE ALTA DE LOGOS
+- Consola de auditoría de Cortes implementada como salida principal del modal; incluye rutas de carpetas visitadas por lote, resultados individuales, clasificación, conteos, advertencias, errores, versión ADMIN y hora del último escaneo. La lista de miniaturas históricas/sin uso se conserva como vista complementaria.
+- La confirmación afirmativa/negativa sigue ejecutándose desde la terminal global del Desarrollador; el modal también registra el resultado.
+- Se corrigió el estado backend no_confirmada y se exige conciliar savedCount, blockedCount, errorCount y noLongerConfirmedCount con los resultados individuales antes de habilitar organización.
+- handleAddLogo ahora usa findOrCreateSubFolder, evitando el helper heredado de fusión de carpetas. La ruta de logos sigue siendo Cortes/Logos; el traslado al primer nivel de la carpeta de marca queda pendiente del nuevo organizador.
+- CI final en HEAD d81894f53e6036a1b3d0e0e86b317ad913ec42ee: 146 suites, 2,157 pruebas aprobadas, 0 fallos. Health read-only SUCCESS. Pages build/deployment SUCCESS.
+- No se ejecutaron operaciones de Drive/Spreadsheet productivos.
+================================================================================
+
+
+================================================================================
+2026-11-19 — CONSTRUCTOR PURO DEL ORGANIZADOR
+- Se incorporó buildCortesImageOrganizerTargets_ para calcular destinos de las ocho imágenes de Cortes y los logos de LogosMarca, sin mutaciones.
+- Se añadieron normalizadores sin acentos/espacios y mapeo conservador de tipoCorte a ign/bomba/btn; los valores desconocidos o ambiguos se bloquean.
+- El constructor usa el mapa real de columnas y bloquea IDs compartidos, años incompletos/invertidos, fórmulas y marcas sin categoría única.
+- Prueba dinámica en AdminImageScanCoordinatorContract: rutas/nombres esperados, extensiones pendientes de inspección, tipos desconocidos, fórmulas, datos incompletos, referencias duplicadas y marcas mult categoría.
+- HEAD de código aa967514d3602f0512a05f9ddf1fafc1c11c0c24: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS. No se desplegó Apps Script ni se modificó Drive/Spreadsheet.
+================================================================================
+
+
+================================================================================
+2026-11-19 — ENDPOINT DRY-RUN DEL ORGANIZADOR
+- ADMIN: nueva acción previewCortesImageOrganizer de solo lectura; exige auditoría completa/vigente de la sesión Desarrollador.
+- Se valida inventario total, rutas registradas, integridad de metadatos, extensión original, referencias activas de todas las hojas, historial, carpetas destino y conflictos de nombre/destino.
+- Respuesta paginada (25; máximo 50) con ready/already_correct/blocked, motivos, rutas/nombres propuestos, digest y canApply:false.
+- Se preserva folderPath en cada página de metadatos de auditoría. Se requiere ejecutar una auditoría nueva después del despliegue para disponer de rutas históricas.
+- Se bloquean colisiones entre destinos propuestos.
+- Contrato corregido para evitar falsos positivos de la búsqueda de llamadas mutadoras.
+- CI HEAD 6e43666b69ff20b7945f5ebe7b7745a7758ce8d0: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Pendiente: conectar la UI del modal/consola con el endpoint y revisar la paginación y resultados reales después del despliegue. No se realizaron escrituras ni movimientos.
+================================================================================
+
+
+================================================================================
+2026-11-19 — UI DEL PREVIEW DEL ORGANIZADOR
+- index.html: botón «Previsualizar organización» y panel independiente para el reporte.
+- ui.js: paginación del endpoint previewCortesImageOrganizer, validación de digest/cursor/total, resumen y detalle por destino; muestra hasta 500 filas y confirma el recorrido de todas las páginas.
+- El botón aparece solo con auditoría completa. La UI exige writePerformed:false y canApply:false; no hay acción de aplicación.
+- CI HEAD bb3f3a1fcf47d328f1ab51a4ab5dc3a93e2e3807: 146 suites, 2,157 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Siguiente paso: desplegar ADMIN, generar una auditoría nueva y comprobar el preview con los datos reales. No se movieron ni renombraron archivos.
+================================================================================
+
+
+================================================================================
+2026-11-18 — Normalización de códigos funcionales del organizador de imágenes
+- JS/Services/admin.js: los campos imgCorte1/2/3 numeran cada imagen según su tipo real: ign1..ign3, bomba1..bomba3 y btn1..btn3. Se elimina el caso especial que dejaba btn sin número.
+- JS/Services/admin.js: imgCableAlimen, imgCableAlimen2 e imgCableAlimen3 pasan a alim1, alim2 y alim3. imgApertura conserva apert; imagenVehiculo conserva su identificador funcional.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: se agregan pruebas de las tres posiciones para cada familia de corte y se verifican las tres alimentaciones y apertura.
+- No se modificaron URLs, filas de Spreadsheet, archivos de Drive, carpetas ni deployments. Validación CI del nuevo commit pendiente.
+================================================================================
+
+
+================================================================================
+2026-11-19 — ADMIN: telemetría global/local de los siete servicios
+- Se registró al inicio de Tareas_Activas.md el plan ordenado de implementación local, con la simplificación de Coordinator/SharedMutation como fase P0 independiente y Beta diferida hasta cerrar todas las tareas.
+- JS/Frontend/ui.js: corregida la referencia a events/lastEvent no declarados; el detalle de cada servicio presenta métricas globales y locales, y dos gráficas separadas (agregado global y tráfico del servicio en el navegador actual). La lista de salud excluye LEGACY.
+- JS/Frontend/serviceTelemetry.js (nuevo) y api-config.js: métricas locales en memoria por servicio, latencia, resultado, acciones recientes y clasificación móvil/tableta/escritorio. No guarda payloads/tokens, no persiste ni añade llamadas de red por acción. getCatalogChanges también queda instrumentado.
+- JS/Services/admin.js: normalización estricta del agregado Coordinator; exige exactamente los siete servicios activos, tres periodos y buckets íntegros. Las fuentes directas inválidas se degradan a parciales sin ocultar el agregado central ni las demás fuentes.
+- JS/Services/users.js: contador directo best-effort para getUsers con tryLock(0), endpoint interno protegido por GPSpedia_USERS_TRAFFIC_SECRET y buckets horarios de 24 h. Se conserva el conteo Coordinator para createUser/updateProfile. JS/Tests/users.js mantiene paridad de fixture.
+- ADMIN agrega cinco fuentes directas (CATALOG, AUTH, WRITE, FEEDBACK y USERS) a las operaciones protegidas de los siete servicios. La configuración del secreto USERS queda documentada para la etapa Beta; no se configuraron secretos en Apps Script.
+- service-worker.js: precache de serviceTelemetry.js y actualización de la caché PWA a v74.
+- Pruebas registradas: ServiceBrowserTrafficContract, ServiceTrafficAggregatorContract, UsersDirectTrafficTelemetry; actualizados ServiceTrafficAggregation, ServiceTrafficBatch, DirectTrafficRoutingCoverage, ServiceTrafficAdminContract, ServiceHealthContract, ServiceMetricsTelemetry, ServiceWorkerCache y RunServiceTests.
+- Validación aislada en el entorno disponible: 24/24 comprobaciones PASS, incluyendo sintaxis de seis módulos, métricas móviles, agregación de siete servicios, fuentes parciales, contador USERS, batch de cinco fuentes y App Shell. La regresión Node completa/CI no está acreditada en esta sesión.
+- No se desplegó Apps Script, no se modificaron ScriptProperties, Drive ni Spreadsheet y no se ejecutaron pruebas Beta.
+================================================================================
+
+
+================================================================================
+2026-11-19 — PLAN DE EJECUCIÓN Y TELEMETRÍA ADMIN
+- Tareas_Activas.md: plan ordenado de implementación local antes de Beta, con siete fases y criterio de no despliegue/no modificación de secretos ni datos externos.
+- BETA-ADMIN-SERVICE-TELEMETRY-02: inventario de siete servicios activos sin LEGACY; detalle de servicio, métricas globales y locales; gráfica global y gráfica del navegador actual; detección móvil/tableta/escritorio.
+- JS/Frontend/serviceTelemetry.js: métricas efímeras por servicio y acción, resultado, latencia y tipo de cliente. No conserva payloads, tokens, usuarios ni datos personales; no transmite ni persiste telemetría.
+- JS/Services/admin.js: normalización estricta del contrato Coordinator, fuentes directas parciales, validación de buckets y descripción de cobertura. La respuesta de una fuente inválida no descarta el agregado global.
+- App Shell PWA: módulo serviceTelemetry precargado y caché v74.
+- Validación local: ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract PASS; ServiceTrafficAggregation 6/6; ServiceTrafficAdminContract PASS; sintaxis de módulos productivos PASS. La regresión integral final queda pendiente.
+================================================================================
+
+================================================================================
+2026-11-19 — CORRECCIÓN DE IDENTIDAD DE SERVICIO EN VALIDACIÓN DE SESIÓN
+- Hallazgo: SharedMutationClient.validateSessionContext enviaba service=AUTH desde cualquier proyecto, pero cada consumidor enviaba su propio GPSpedia_COORDINATOR_SECRET. Con secretos independientes, Coordinator rechazaba la llamada de FEEDBACK y otros servicios al poblar su caché de actor.
+- Coordinator 1.4.1 admite validar contexto para AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES usando el secreto propio del servicio. Registro, sincronización y revocación continúan siendo exclusivos de AUTH.
+- SharedMutationClient acepta el servicio solicitante; AUTH, ADMIN, FEEDBACK, USERS y WRITE pasan su identidad explícita. El valor por defecto AUTH mantiene compatibilidad con clientes antiguos.
+- La telemetría atribuye la validación al servicio real.
+- Pruebas: SharedMutationCoordinator 68/68; contrato estático ServiceTrafficAdminContract PASS; sintaxis de Coordinator, cliente y cinco servicios PASS.
+- No se compartieron secretos entre servicios ni se modificaron ScriptProperties/deployments.
+================================================================================
+
+================================================================================
+2026-11-19 — PREVIEW DE CONVERSACIONES INBOX
+- InboxConversations.js: inboxPlainTextPreview_ elimina etiquetas y bloques script/style, convierte entidades HTML y limita el resumen a 180 caracteres.
+- El resumen se normaliza al guardar y también al leer registros históricos; no se reescribe el cuerpo del mensaje.
+- ui.js conserva el renderizado del mensaje completo mediante sanitizeHtmlContent(..., "advanced").
+- Pruebas InboxConversations 66/66; sintaxis backend PASS.
+- Se actualizó el contrato del dispatcher para verificar que FEEDBACK valida con su identidad propia.
+================================================================================
+
+================================================================================
+2026-11-19 — DISEÑO DE DESACOPLAMIENTO DE SERVICIOS
+- Nuevo documento Services/SERVICE_ARCHITECTURE_PLAN.md: contrato versionado, cliente estable, orquestación central, invalidación remota idempotente/recuperable, migración gradual de configuración y matriz de capacidades obligatorias.
+- Auditoría confirma que SharedMutationClient mezcla transporte con fan-out de invalidación remota hacia WRITE y FEEDBACK. No se cambia el orden actual de invalidación/revocación hasta diseñar recuperación de fallos parciales.
+- Inventario de configuración documentado sin leer ni modificar valores secretos.
+================================================================================
+
+================================================================================
+2026-11-19 — PROTOCOLO INTERNO V1 Y ORQUESTACIÓN CENTRAL DE CACHÉ
+- Coordinator 1.4.2 introduce protocolVersion: 1 para peticiones POST internas. Clientes antiguos que omiten el campo se interpretan como v1; versiones desconocidas se rechazan antes de ejecutar acciones.
+- Coordinator 1.4.3 incorpora invalidateSessionActorCaches, exclusiva de AUTH. La operación contacta WRITE y FEEDBACK con secretos por servicio y URLs centralizadas en el proyecto Coordinator.
+- SharedMutationClient ya no conoce GPSpedia_WRITE_URL/GPSpedia_FEEDBACK_URL ni usa el secreto de AUTH para autenticarse directamente en esos servicios. Envía los tokens al Coordinator por el canal autenticado de AUTH.
+- Coordinator valida ambas configuraciones antes de iniciar, divide lotes de hasta 25 en grupos remotos de cinco y exige confirmación exacta de WRITE y FEEDBACK.
+- Se conserva el orden actual: invalidación remota confirmada antes de revocación central. Los fallos parciales devuelven error; repetir la misma invalidación es idempotente.
+- Configuración pendiente por entorno: GPSpedia_SERVICE_URL_WRITE y GPSpedia_SERVICE_URL_FEEDBACK en Coordinator. No se consultaron ni modificaron propiedades remotas.
+- Pruebas SharedMutationCoordinator: 74/74 PASS; incluye cliente legacy/v1, rechazo de versión no compatible, invalidación en lotes, fallo parcial, reintento, revocación individual y global.
+================================================================================
+
+
+================================================================================
+2026-11-19 — COORDINATOR 1.4.5: PROTOCOLO ESTABLE Y MATRIZ DE DESPLIEGUE
+- Coordinator: la versión interna del servicio se actualiza a 1.4.5 y queda separada explícitamente del protocolo HTTP v1.
+- Los clientes legacy que omiten protocolVersion se interpretan siempre como v1; el Coordinator mantiene una lista explícita de versiones admitidas y rechaza versiones inválidas/desconocidas.
+- SharedMutationClient no se modificó: los consumidores actuales continúan enviando v1. Los cambios internos compatibles de Coordinator no requieren republicar los consumidores.
+- Services/SERVICE_ARCHITECTURE_PLAN.md y Services/COORDINATOR_SETUP.md: matriz de impacto por tipo de cambio y regla de convivencia de versiones; se aclara que una corrección local de SharedMutationClient sí requiere actualizar únicamente los proyectos consumidores afectados.
+- Pruebas: SharedMutationCoordinator 77/77; CoordinatorCapabilityPreservation 6/6; ServiceTrafficAdminContract 33/33; ServiceTrafficAggregation 6/6; ServiceTrafficBatch 5/5; DirectTrafficRoutingCoverage 6/6; ServiceBrowserTrafficContract 9/9; ServiceTrafficAggregatorContract 5/5. Sintaxis de Coordinator, SharedMutationClient, serviceTelemetry y Service Worker PASS.
+- No se desplegó Apps Script, no se modificaron ScriptProperties/secretos, ni se tocaron Drive, Spreadsheet o datos externos.
+================================================================================
+
+
+================================================================================
+2026-11-19 — ADMIN: RESULTADOS DE LIMPIEZA DE LOGS Y CONTROLES COMPACTOS
+- AUTH/handleClearSensitiveLogs: el mensaje distingue eliminación real, revisión sin coincidencias confidenciales y hoja sin registros; conserva scannedCount/deletedCount y el manejo de fallo parcial.
+- FEEDBACK/handleClearActivityLogs: no afirma «Se eliminaron 0»; distingue ausencia de hoja, ausencia de filas, retención sin registros antiguos y eliminación real. Mantiene filas con fecha no clasificable para revisión.
+- index.html: selector de retención con etiquetas breves, accesibles y opciones de 7 días o todos los registros conservando encabezados.
+- style.css: selector en grid con min-width:0 y adaptación móvil; padding de .detail-recommended-cut reducido de 12 px a 8 px sin cambiar encabezado ni acciones.
+- Pruebas: SensitiveLogsTrustedActor 7/7; ActivityLogsClearFeedback 5/5; AdminLogsMaintenanceContract 10/10.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — CORRECCIÓN DE NUMERACIÓN FUNCIONAL DE IMÁGENES
+- JS/Services/admin.js: getCorteFunctionSuffix_ ahora utiliza imageValues y asigna ordinales según los recursos de corte anteriores realmente poblados; un tipo anterior desconocido con imagen impide una asignación ambigua.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: fixture canónica completa y casos de regresión para slot previo vacío y tipo previo ambiguo. Se mantienen las comprobaciones existentes de ign1..3, bomba1..3, btn1..3, alim1..3, apert e imagenVehiculo.
+- No se modificaron archivos de Drive/Spreadsheet ni deployments Apps Script.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — CLASIFICACIÓN CORRECTA DEL INVENTARIO SIN USO
+- JS/Services/admin.js: collectReplacedImageHistoryIds_ distingue registros de reemplazo de registros de inventario Drive sin uso mediante origen_registro, tipo_registro y estado.
+- Las imágenes inventariadas como sin_uso_detectado ya no se marcan automáticamente como historical; pueden ser candidatas si cumplen las verificaciones del destino. Los registros reemplazados, protegidos o en revisión siguen excluidos; los eliminados se omiten.
+- Se reconoce el inventario legado sin columnas dinámicas a partir de tipo_contenido=inventario_sin_uso.
+- JS/Tests/CortesImageReconciliation.mjs: pruebas para inventario sin uso, reemplazos históricos, estados protegidos, eliminados, compatibilidad legacy y asociación candidata.
+- No se aplicaron cambios productivos en Drive/Spreadsheet ni deployments.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — RUTAS DE ALTA ALINEADAS CON EL ORGANIZADOR
+- JS/Services/admin.js: findOrCreateVehicleFolder utiliza normalización canónica de categoría, marca, modelo y versión/encendido; getVehicleYearFolderName devuelve AAAA-AAAA, consistente con el preview del organizador.
+- Se rechazan segmentos obligatorios ausentes y rangos invertidos para evitar altas fuera de la estructura objetivo.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: prueba de ruta completa de alta y rechazo de rango invertido.
+- No se desplegó Apps Script ni se modificaron archivos/celdas productivas.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — VALIDACIÓN ESTRICTA DE AÑOS EN CARPETAS
+- JS/Services/admin.js: getVehicleYearFolderName valida ambos años con cuatro dígitos exactos; devuelve AAAA-AAAA y rechaza datos incompletos, parciales o invertidos.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: casos de año único, rango válido, dato parcial, dato faltante y rango invertido.
+- Validación CI posterior: 152 suites, 2,224 pruebas aprobadas, 0 fallos.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — CIERRE LOCAL FASE 5: INVENTARIO, COBERTURA Y COMPATIBILIDAD LEGACY
+- JS/Services/admin.js: migración de esquema ahora completa origen_registro=auditoria_drive y tipo_registro=sin_uso_detectado para filas legacy con tipo_contenido=inventario_sin_uso, incluso si las columnas dinámicas aún no existían.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: contratos de cobertura de referencias, persistencia verificada del inventario y migración legacy.
+- Regresión integral HEAD 41c844ab: 152 suites, 2,224 pruebas aprobadas, 0 fallos; health y Pages SUCCESS.
+- Fase 5 cerrada localmente; solo queda validación Beta real. No se aplicaron escrituras/movimientos sobre Drive o Spreadsheet.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — ROTACIÓN DOCUMENTAL Y COHERENCIA DEL CONTRATO DE SALUD
+- Tareas_Pendientes.md pasa a ser un índice de Tareas_Pendientes_parte_001.md y Tareas_Pendientes_parte_002.md.
+- lista_beta_parte2.txt pasa a ser un índice de lista_beta_parte2_parte_001.txt y lista_beta_parte2_parte_002.txt; lista_beta.txt actualiza el orden de lectura.
+- Se crea ROTACION_DOCUMENTAL_MANIFIESTO_2026-11-19.md con tamaños, límites, SHA de blobs y verificación de reconstrucción exacta.
+- Services/SERVICE_HEALTH.md actualiza las versiones fuente FEEDBACK 1.2.2 y ADMIN 2.7.1.
+- Tareas_Activas.md registra el cierre local de Fase 6 y la transición a Fase 7.
+================================================================================
+
+ 
+================================================================================
+2026-11-19 — UNIFICACIÓN DEL DESTINO DE LOGOTIPOS
+- JS/Services/admin.js: nuevo buildCanonicalLogoDestination_ compartido por el preview del organizador y handleAddLogo; el alta consume sus segmentos de ruta y nombre base.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: comprueba que el destino de LogosMarca coincide con el constructor canónico y bloquea categorías ambiguas.
+- JS/Tests/LogoIdIntegrity.mjs: actualiza el contrato del alta y el harness para la nueva dependencia compartida.
+================================================================================
+
+
+================================================================================
+2026-11-19 — PREPARACIÓN SEGURA DE LA ENTRADA A BETA
+- lista_beta_parte1.txt: trasladada al inicio la secuencia de sincronización y reforzada para validar el remoto infogpstech/GPSpedia, la rama GPSpedia2.2.5_work y el árbol limpio antes de fetch/pull --ff-only.
+- La secuencia se detiene ante cambios locales, remoto incorrecto, rama distinta o divergencia; muestra el HEAD final y no utiliza reset, clean, force ni comandos destructivos.
+- lista_beta.txt: índice actualizado para indicar que los comandos deben ejecutarse antes de cualquier prueba Beta.
+- Tareas_Activas.md y checkpoint.md: preparación documental registrada como completada. No se desplegó Apps Script ni se accedió a secretos, ScriptProperties, Drive o Spreadsheet.
+================================================================================
+
+
+================================================================================
+2026-11-19 — ADMIN: RETIRO DE LEASES EN OPERACIONES ORDINARIAS (COMPLETADO)
+- JS/Services/admin.js: dispatch con actor cacheado; conserva comprobaciones de rol y auditoría de mutaciones.
+- JS/Services/admin.js: llamadas internas a WRITE transmiten el contexto de sesión; WRITE valida su actor cacheado sin token de lease compartido.
+- JS/Tests/SessionActivityLeaseMinimization.mjs: contrato ampliado para exigir ausencia de leases en ADMIN y autenticación independiente de WRITE.
+- No se desplegó Apps Script ni se ejecutaron operaciones sobre servicios remotos, Drive o Spreadsheet.
+================================================================================
+
+- CI run 44535834471: sintaxis ADMIN aprobada; contratos históricos de token ADMIN→WRITE y leases ADMIN requirieron actualización. Se alinearon pruebas y política Coordinator; nueva ejecución pendiente.
+
+- CI run 44536463315: sintaxis aprobada; se detectaron dos defectos en las pruebas de contrato actualizadas, no en los servicios. Se corrigieron y se repetirá la regresión.
+
+- Cierre verificado: CI run 44539942784 SUCCESS (152 suites, 2,224 pruebas, 0 fallos); health read-only 44539942669 SUCCESS; Pages 44539942102 SUCCESS. HEAD 71894f2e4c391e13b7935738389967f4a8ebe083.
+- ADMIN usa actor cacheado sin leases por acción; mantiene RBAC y auditoría. ADMIN→WRITE usa validación de actor cacheado en WRITE. AUTH→Coordinator invalida caché en WRITE/FEEDBACK/ADMIN. No hubo deployment Apps Script ni operaciones en Drive/Spreadsheet.
+
+- AUTH: `clearSensitiveLogs` ahora valida actor cacheado y rol Desarrollador sin lease ni viaje de autorización a Coordinator. Se actualizó `JS/Tests/Auth.js` como copia aislada. `SensitiveLogsTrustedActor` 7/7 PASS; `SessionActivityCoordination` 11/11 PASS. CI run 44541720461 SUCCESS: 152 suites, 2,224 pruebas, 0 fallos.
+
+- Revisión de leases restante: AUTH/clearSensitiveLogs se simplificó a actor cacheado sin lease; AUTH conserva coordinación para ciclo de sesión, recuperación, revocación y cambios de cuenta. USERS/createUser/updateProfile y UTILITIES/migrateTimestamps mantienen coordinación por conflictos de datos comprobados (AUTH delete/reset/role update y migración manual con rollback); no se retiraron sin alternativa equivalente.
+
+- Estado final registrado: regresión 44542256815 SUCCESS (152 suites, 2,224 pruebas, 0 fallos); health read-only 44542256611 SUCCESS; Pages 44542253541 SUCCESS. No deployment Apps Script ni operaciones en Drive/Spreadsheet.

@@ -1,0 +1,6 @@
+# Índice del comparativo histórico GPSpedia 2.0 vs 1.5
+
+El comparativo original se conserva en `Olds/Documentacion_Legacy/ChangeLog_v2.0_vs_v1.5_legacy_parte_001.txt`. Consultar `Olds/Documentacion_Legacy/README.md` para SHA original y reconstrucción exacta.
+
+
+**Regla:** no borrar, truncar, sobrescribir ni reordenar entradas; agregar cada entrada al final. Verificar antes que el resultado no supere 180,000 caracteres Unicode. Si excede, rotar según `Plan_auditoría/Normas_Gestion_Documental.md`.

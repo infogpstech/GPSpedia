@@ -1,0 +1,558 @@
+
+
+2026-11-19 — RECONCILIACIÓN DE HALLAZGOS BETA CON PRUEBAS LOCALES
+- Se documentó qué reportes tienen ya corrección/contrato automatizado (preview Inbox, cabecera de corte, health/events, telemetría, mensajes/selector de Logs y aislamiento de auditoría) y qué validación real sigue pendiente.
+- Se confirmó que el organizador tiene implementadas localmente las fases de rutas, nomenclatura, referencias, inventario y conciliación; Safe Apply continúa bloqueado hasta preview real revisado y autorización.
+- HEAD base documental: bd47210d1bb8cf30bafe4261dc4d9370613d8ee2. CI regresión 44542583589 SUCCESS; health read-only 44542583925 SUCCESS; Pages 44542583372 SUCCESS.
+
+
+[2026-11-19] GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01
+- JS/Services/admin.js: la carga de imágenes de información suplementaria sale de la sección crítica; el lock pasa a tryLock(0), seguido de relectura y revalidación del plan antes de persistir.
+- JS/Tests/AdminSupplementaryUploadOutsideLock.mjs: contrato anti-regresión para orden de carga/lock, ausencia de espera, revalidación, persistencia y ledger.
+- JS/Tests/RunServiceTests.mjs: nueva prueba incorporada a la regresión integral.
+- Tareas_Activas.md y checkpoint.md: estado y continuidad documentados; CI aún no ejecutada.
+
+
+[2026-11-19] Cierre GP-PERF-ADMIN-SUPPLEMENTARY-UPLOAD-LOCK-01
+- CI run 44549910139 SUCCESS: 153 suites, 2,225 pruebas aprobadas, 0 fallos; sintaxis de módulos modificados aprobada.
+- Health read-only run 44549910083 SUCCESS.
+- Tarea completada localmente; concurrencia real y recuperación de archivos pendientes quedan para Beta autorizada.
+- HEAD: cc7cd93e670d4d7dfd4b46ead8eb60bc830101e0.
+
+
+================================================================================
+2026-11-19 — AUDITORÍA DE DEPENDENCIAS Y LATENCIA
+- Añadido AUDITORIA_DEPENDENCIAS_LATENCIA_2026-11-19.md con el análisis estático de servicios, llamadas cruzadas, locks y matriz de despliegue.
+- Tareas_Activas.md identifica GP-PERF-ADMIN-CUT-LOCK-01 como siguiente implementación prioritaria: separar reserva, I/O externo y persistencia de handleAddOrUpdateCut.
+- checkpoint.md actualiza HEAD real y continuidad; no se modificó código ni se ejecutaron pruebas/deployments.
+================================================================================
+
+2026-11-19 — GP-PERF-ADMIN-CUT-LOCK-01 (paso preparatorio)
+- ADMIN: findNextAvailableCutSlot_ ahora excluye slots reservados por operaciones pending del mismo vehículo en Idempotencia.
+- Se agregó JS/Tests/AdminCutSlotReservation.mjs y se incorporó al runner integral.
+- El handler todavía conserva el lock durante WRITE/Drive; tarea en progreso, sin cierre ni validación CI declarada.
+
+2026-11-19 — WRITE allocator: handleAllocateVehicleId deja de esperar 30 s por el ScriptLock global; devuelve WRITE_BUSY para reintento y libera solo si adquirió el lock. Añadida prueba WriteIdAllocatorNonBlocking.mjs (pendiente CI).
+
+2026-11-19 — CI detectó contrato obsoleto en WriteAuthorizationMinimization (AUG-039) que exigía waitLock en allocateVehicleId. Se actualizó a tryLock(0), conservando verificación de rol dentro del lock y liberación condicional.
+
+2026-11-19 — Compatibilidad del parser estático AUG-039: eliminado comentario dentro de handleAllocateVehicleId; lógica tryLock(0) sin cambios.
+
+2026-11-19 — Ajuste de fixtures AUG-039: el test harness usa assert booleano propio; reemplazado assert.equal por assert(ms===0).
+
+2026-11-19 — Actualizado WriteAuthorizationContracts.js: mock del ScriptLock usa tryLock(0) para el contrato no bloqueante del asignador de IDs.
+
+2026-11-19 — WRITE/Catalog: eliminado ScriptLock local durante la publicación HTTP a Coordinator. Añadida secuencia de origen y protección anti-regresión en Coordinator; publicaciones atrasadas/legacy provocan reset en vez de aplicar snapshot obsoleto. Pendiente CI.
+
+2026-11-19 — Añadida prueba WriteCatalogPublicationIsolation.mjs para verificar secuencia de origen y que la publicación HTTP no toma el ScriptLock; corregida validación numérica del ID de vehículo.
+
+2026-11-19 — Coordinator: las publicaciones legacy WRITE/Cortes convertidas a reset ahora marcan resetRequired=true para conservar el contrato del feed incremental.
+
+2026-11-19 — CatalogChangeFeed: fixture de publicación WRITE/Cortes ahora incluye sourceVersion para representar el contrato versionado actual.
+
+2026-11-19 — CatalogChangeFeed: fixtures WRITE/Cortes con sourceVersion monotónica para probar upsert, evento grande, retención y cursor sin activar fallback legacy.
+
+2026-11-19 — CatalogChangeFeed: actualizado contrato estático del publisher WRITE para firma sourceVersion y ausencia de ScriptLock durante HTTP.
+
+2026-11-19 — CatalogChangeFeed: corregido escape del salto de línea en el extractor estático de publishCortesCatalogChange_.
+
+2026-11-19 — CatalogChangeFeed: actualizada expresión de despacho para exigir response.catalogVersion al publisher WRITE.
+
+2026-11-19 — WRITE: la preparación de carpetas suplementarias usa lease Coordinator DRIVE_FOLDER en vez de ScriptLock global; se añade prueba de aislamiento frente a mutaciones CORTES (pendiente CI).
+
+2026-11-19 — CI 82a35b6 SUCCESS: 157 suites, 2,251 pruebas, 0 fallos; health read-only SUCCESS. AdminCutSlotReservation 5/5, WriteIdAllocatorNonBlocking 5/5, WriteCatalogPublicationIsolation 9/9, WriteSupplementaryFolderLease 4/4, Coordinator 80/80.
+
+2026-11-19 — ADMIN: liberar ScriptLock durante operaciones Drive de registro/recuperación de cortes con revalidación de opId, huella, vehículo, fila y slot; nueva prueba AdminDriveLockIsolation.mjs.
+
+2026-11-19 — ADMIN: liberar ScriptLock en finally solo cuando la ejecución lo posee, preservando el estado pendiente cuando tryLock(0) no consigue readquirirlo.
+
+2026-11-19 — CI ADMIN Drive isolation: 158 suites, 2,260 pruebas, 0 fallos; health read-only SUCCESS. Las cargas/consultas Drive del flujo ADMIN con opId ya se ejecutan fuera del ScriptLock y revalidan la reserva antes de aplicar URLs.
+
+2026-11-19 — ADMIN: mover asignación central de ID a WRITE fuera del ScriptLock local y sustituir espera de 30 s por tryLock(0)/ADMIN_BUSY; prueba AdminVehicleIdOutsideLock.mjs.
+
+2026-11-19 — CI ADMIN ID fuera del lock: 159 suites, 2,264 pruebas, 0 fallos; health read-only SUCCESS. Se verificó que la llamada ADMIN→WRITE ocurre antes de adquirir el ScriptLock y que ADMIN no espera 30 segundos para entrar.
+
+2026-11-19 — ADMIN: auditoría de imágenes Drive aislada con lease IMAGE_AUDIT_STATE (sin locks CORTES/DRIVE); registro persistente best-effort sin ScriptLock y sin bloquear/falsear el resultado de operaciones de negocio.
+
+2026-11-19 — Ajustes post-CI auditoría ADMIN: eliminar referencia residual al lock en finalización y permitir lease específica IMAGE_AUDIT_STATE sin habilitar leases en otras acciones.
+
+2026-11-19 — Pruebas de aislamiento de auditoría: actualizar contratos de coordinación y extracción para permitir únicamente la lease IMAGE_AUDIT_STATE.
+
+2026-11-19 — Tests: actualizar referencias al núcleo del escáner renombrado y corregir delimitador de extracción en SessionActivityCoordination.
+
+2026-11-19 — Tests ADMIN: ajustar contrato de createSheet/addColumn para permitir la lease específica del escáner y seguir prohibiendo leases en el resto de ADMIN.
+
+2026-11-19 — Coordinator: excluir auditDriveImagesInCortes de la lease implícita SESSION_CONTEXTS; la auditoría solo reserva IMAGE_AUDIT_STATE y no bloquea login AUTH.
+
+2026-11-19 — SharedMutationCoordinator: separar escenarios de concurrencia auditoría+WRITE y auditoría+AUTH/login, preservando el conflicto legítimo entre escritura de Cortes y login.
+
+2026-11-19 — CI auditoría ADMIN aislada: 159 suites, 2,265 pruebas, 0 fallos; health read-only y Pages SUCCESS. Lease exclusiva IMAGE_AUDIT_STATE; no bloquea login ni registro WRITE.
+
+2026-11-19 — ADMIN: aislar escaneo/organización de inventario bajo IMAGE_INVENTORY, sin CORTES/DRIVE/SESSION_CONTEXTS; actividad con lease ACTIVITY puntual y sin ScriptLock global.
+
+2026-11-19 — Aislamiento ADMIN inventario/actividad y contratos: CI 44568472342 SUCCESS, 160 suites, 2,273 pruebas aprobadas, 0 fallos; health read-only SUCCESS. Se confirman solo tres leases ADMIN por recursos independientes: IMAGE_AUDIT_STATE, IMAGE_INVENTORY y ACTIVITY.
+
+2026-11-19 — ADMIN: sincronización de carpeta de imagen principal fuera del ScriptLock después de editar metadatos del vehículo; sección crítica breve y adquisición no bloqueante.
+
+2026-11-19 — ADMIN: sincronización de carpeta de imagen principal fuera de ScriptLock. CI 44570179580 SUCCESS: 161 suites, 2,280 pruebas, 0 fallos; health read-only SUCCESS.
+
+2026-11-19 — ADMIN: reemplazo de imágenes in-modal mueve creación/recuperación y confirmación Drive fuera del ScriptLock, con revalidación de URL, fila, metadatos y opId.
+
+2026-11-19 — ADMIN reemplazo in-modal: Drive principal fuera del ScriptLock, con revalidación idempotente. CI 44571281616 SUCCESS: 162 suites, 2,289 pruebas, 0 fallos; health read-only SUCCESS. Recuperación linked y compensación Drive siguen pendientes de aislamiento.
+
+2026-11-19 — ADMIN: recuperación de reemplazos linked verifica archivos y metadata Drive fuera del ScriptLock, con revalidación del ledger y URL.
+
+2026-11-19 — ADMIN recuperación linked de reemplazos fuera del ScriptLock. CI 44572041539 SUCCESS: 163 suites, 2,294 pruebas, 0 fallos; health read-only SUCCESS. Compensación Drive aún pendiente.
+
+
+[2026-11-19] ADMIN: la compensación del reemplazo de imagen reserva el opId como requires_review antes de liberar ScriptLock. La actualización de metadata Drive y su fallback se ejecutan fuera del lock; al readquirir se revalidan vehículo, campo, URL, huella y estado del ledger. Se añade AdminImageUploadCompensationIsolation.mjs al runner. CI pendiente.
+
+[2026-11-19] Ajuste de prueba: el escenario de fallo de readquisición debe comenzar con ScriptLock adquirido, liberarlo durante Drive y simular tryLock(0) fallido; no debe iniciar sin lock, porque el helper ejecuta directamente cuando no es propietario.
+
+[2026-11-19] Ajuste de orden: se conserva la actualización/verificación del historial antes de reservar el ledger; la reserva precede a todo trabajo Drive fuera del lock.
+
+
+[2026-11-19] Cierre local de compensación ADMIN: CI 44592625381 SUCCESS (164 suites, 2,304 pruebas, 0 fallos); AdminImageUploadCompensationIsolation 10/10. Health read-only 44592625568 y GitHub Pages 44592624258 SUCCESS. Diff revisado; deployment y validación real Drive/Spreadsheet diferidos a Beta autorizada. HEAD de implementación cab6da36207b2768b77de7cc52ea5c6554424c58.
+
+
+[2026-11-19] ADMIN: se mueve la vinculación post-commit de imágenes de handleAddOrUpdateCut fuera del ScriptLock. La operación queda completed antes de Drive; al readquirir se revalidan opId, vehículo, slot y huella. Las solicitudes legacy usan clave estable por fileId. Se añade AdminCutImageLinkOutsideLock.mjs; CI pendiente.
+
+[2026-11-19] Ajuste del fixture AdminCutImageLinkOutsideLock: el mock de Spreadsheet expone getSheetByName para que la prueba alcance la revalidación del ledger; sin cambio funcional.
+
+[2026-11-19] Se completa el mock getSheetByName también en el escenario de conflicto de AdminCutImageLinkOutsideLock; sin cambio funcional.
+
+
+[2026-11-19] Cierre de vinculación de imágenes ADMIN fuera del ScriptLock: CI 44593963972 intento 2 SUCCESS (165 suites, 2,316 pruebas, 0 fallos); AdminCutImageLinkOutsideLock 12/12. Health read-only 44593963988 y GitHub Pages 44594081770 SUCCESS. Diff revisado; validación real Apps Script/Drive/Spreadsheet pendiente de Beta autorizada.
+
+
+[2026-11-19] ADMIN: getExistingEntities lee únicamente las columnas marca, modelo y versionesAplicables, con índices relativos para columnas no contiguas; se reduce el volumen leído durante altas. Se añade AdminEntityLookupBoundedRead.mjs; CI pendiente.
+
+
+[2026-11-19] Cierre de lectura acotada de entidades ADMIN: CI 44594845526 SUCCESS (166 suites, 2,323 pruebas, 0 fallos); AdminEntityLookupBoundedRead 7/7. Health read-only 44594846847 y GitHub Pages 44594844590 SUCCESS. Diff revisado; no se desplegó ADMIN ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: findVinDuplicateForAdmin deja de cargar todas las columnas de Cortes y lee únicamente ID/marca/modelo, años y VIN; mantiene exclusión del vehículo actual y detección de duplicados. Se añade AdminVinDuplicateBoundedRead.mjs; CI pendiente.
+
+
+[2026-11-19] Cierre de lectura acotada para duplicados VIN ADMIN: CI 44595220751 SUCCESS (167 suites, 2,331 pruebas, 0 fallos); AdminVinDuplicateBoundedRead 8/8 y AdminEntityLookupBoundedRead 7/7. Health read-only 44595220797 y GitHub Pages 44595218915 SUCCESS. Diff revisado; no se desplegó ADMIN ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: findVinDuplicateForAdmin y preparación/edición de colecciones VIN reutilizan vinColumnIndex ya resuelto; se evita volver a leer encabezados dentro del mismo flujo y se conserva fallback compatible. AdminVinDuplicateBoundedRead ampliada; CI pendiente.
+
+
+[2026-11-19] Ajuste de compatibilidad VIN: prepareAdminVinCollectionEdit_ conserva fallback cuando no recibe vinColumnIndex y reutiliza el índice resuelto para comprobar duplicados; se amplía la regresión. Primer CI detectó esta ruta legacy; corrección pendiente de validar.
+
+
+[2026-11-19] Cierre de reutilización del índice VIN ADMIN: CI 44596161669 SUCCESS (167 suites, 2,334 pruebas, 0 fallos); AdminVinDuplicateBoundedRead 11/11. Health read-only 44596161551 y GitHub Pages 44596160331 SUCCESS. Se conserva fallback para llamadas legacy sin índice; diff revisado.
+
+
+[2026-11-19] ADMIN: findUniqueCortesVehicleRow_ deja de usar getDataRange completo; valida la columna ID, conserva detección de duplicados/corrupción y lee la fila completa solo para la coincidencia única. Se añade AdminUniqueVehicleRowBoundedRead.mjs; CI pendiente.
+
+
+[2026-11-19] Corrección de localización por ID: se eliminaron dos declaraciones globales duplicadas que sobrescribían la implementación acotada y mantenían getDataRange; queda una única función efectiva. La prueba ahora comprueba que no existan declaraciones duplicadas. CI pendiente.
+
+
+[2026-11-19] ADMIN: se elimina la duplicación de findUniqueCortesVehicleRow_ que sobrescribía la versión optimizada; el localizador conserva una única implementación que consulta primero la columna ID y luego la fila coincidente. Se amplía AdminUniqueVehicleRowBoundedRead para detectar declaraciones duplicadas.
+
+
+[2026-11-19] WRITE: se prepara el preflight autenticado/validado antes de adquirir ScriptLock y se acotan las lecturas de listas oficiales a columnas necesarias de Cortes y Relay. Se añaden/ajustan contratos y prueba aislada de no interferencia.
+
+
+[2026-11-19] WRITE: se agrupan los campos consecutivos del corte existente en un único setValues y las columnas 2–16 del vehículo nuevo en un lote; testigo, colaborador, timestamp, VIN y reservas de idempotencia conservan sus escrituras separadas.
+
+
+[2026-11-19] WRITE: la recuperación de opId heredados usa TextFinder sobre el rango de datos en lugar de descargar la hoja Cortes completa; la lectura de encabezados se mantiene separada y la validación final de vehículo/fila permanece.
+
+
+[2026-11-19] WRITE: se eliminaron las declaraciones duplicadas de findUniqueCortesVehicleRow_; queda una única implementación que lee la columna ID y luego la fila coincidente, sin descargar Cortes completa.
+
+
+[2026-11-19] WRITE: findOrCreateIdempotenciaSheet evita initializeIdempotenciaSheet para hojas A:F completas y compatibles; conserva reparación para encabezados faltantes y validación integral explícita en los callsites.
+
+
+[2026-11-19] WRITE: el flujo addOrUpdateCut comparte un snapshot validado de Idempotencia entre recuperación y registro; la verificación posterior se limita al opId afectado y su fila, conservando detección de duplicados y asociación.
+
+
+[2026-11-19] WRITE: getNextCortesVehicleIdLocked lee la columna ID y fórmulas; consulta otras columnas solo para filas candidatas con ID vacío o fórmula, agrupando rangos contiguos.
+
+
+[2026-11-19] WRITE: getExistingEntities ahora lee únicamente las columnas marca/modelo/versiones aplicables y deduplica con Set conservando orden de primera aparición y normalización existente. Se añade WriteEntityLookupBoundedRead.mjs y se registra en RunServiceTests.mjs; CI pendiente.
+
+
+[2026-11-19] Cierre GP-PERF-WRITE-CUT-LOCK-06: CI 44625164726 SUCCESS (176 suites, 2,398 pruebas, 0 fallos; WriteEntityLookupBoundedRead 8/8); health read-only 44625164725 SUCCESS. La lectura de entidades existentes en WRITE queda acotada a columnas 3–5 y deduplicada con Set. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] GP-PERF-ADMIN-CUT-LOCK-01: se amplían las pruebas de coordinación para verificar que la auditoría ADMIN no bloquea Inbox (sendInboxMessage) ni consulta de telemetría (getServiceTraffic), manteniendo exclusión entre auditorías sobre IMAGE_AUDIT_STATE. AdminAuditTrail comprueba que el ping de salud no adquiere ScriptLock ni depende de la auditoría. CI 44626115506 SUCCESS: 176 suites, 2,400 pruebas aprobadas, 0 fallos; AdminAuditTrail 16/16 y Coordinador compartido/concurrencia/leases 83/83. Health read-only 44626115768 y GitHub Pages 44626113303 SUCCESS. Continúan pendientes el mapa verificable de proyectos Apps Script, la ruta legacy de handleAddOrUpdateCut sin opId y la concurrencia real en Beta autorizada. No se desplegaron Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] WRITE — optimización de registro de cortes para vehículo existente: handleAddOrUpdateCutLocked transmite la fila única ya localizada a handleAddOrUpdateCutLockedUnsafe_; se elimina la segunda búsqueda de la columna ID y la segunda lectura completa de fila. Se reutiliza la instantánea cuando el ancho de esquema coincide y se realiza una lectura dirigida de una sola fila si cambia. Se comprueba que el ID de la instantánea corresponde al vehículo solicitado. Prueba nueva WriteCutExistingVehicleSnapshotReuse 4/4; contrato WriteIdempotencySnapshotReuse 9/9. CI 44626945883 SUCCESS: 177 suites, 2,404 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada. No se desplegó WRITE ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN/WRITE: el preflight de addOrUpdateCut calcula y valida la huella SHA-256 del operationHash antes de solicitar un vehicleId al servicio WRITE y antes de adquirir el ScriptLock ADMIN. Las solicitudes con huella inválida se rechazan sin consumir IDs ni entrar en la sección crítica; la búsqueda y revalidación del opId siguen dentro del lock. Se conserva la extracción del opId legacy. Prueba AdminCutPreflightBeforeAllocation 5/5; CI 44627738079 SUCCESS: 178 suites, 2,409 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only 44627738183 SUCCESS. No se desplegaron Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: ampliación del preflight de addOrUpdateCut: además de calcular/validar operationHash antes de WRITE y del ScriptLock, la extracción del prefijo VIN y el cálculo del timestamp administrativo se preparan antes de adquirir el lock. La lectura de encabezados, búsqueda de opId, reservas y escrituras permanecen en la sección crítica. AdminCutPreflightBeforeAllocation 7/7 PASS; CI 44627981794 SUCCESS: 178 suites, 2,411 pruebas aprobadas, 0 fallos; health read-only 44627981620 SUCCESS. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN legacy sin opId: `handleAddOrUpdateCut` ahora crea `OP-LEGACY-<UUID>` y huella interna para las solicitudes antiguas, registra reserva pending de vehículo/slot antes de Drive y ejecuta las cargas con `runAdminDriveWorkOutsideScriptLock_`. Al readquirir `ScriptLock` revalida la reserva antes de persistir. Las respuestas exitosas incluyen `opId` y `operationHash`; errores de reacquisición/Drive entregan datos de reintento. Prueba `AdminLegacyCutReservation` 9/9; CI 44628738510 SUCCESS: 179 suites, 2,420 pruebas aprobadas, 0 fallos; health read-only 44628738518 SUCCESS. La carga de Drive ya no retiene el lock para solicitudes legacy, pero otras operaciones de Sheets del handler aún permanecen dentro de la sección crítica. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos.
+
+[2026-11-19] ADMIN: `handleAddOrUpdateCut` prepara ahora, antes de adquirir `ScriptLock`, la lectura de entidades existentes y la normalización de marca/modelo/versiones para altas nuevas, además del parseo del rango de años. La ruta usa una copia de `vehicleData` y conserva intacto el payload recibido; la reserva de fila/ID, la revalidación y las escrituras permanecen protegidas. Se añadió `AdminCutEntityPreflight.mjs` (7/7 PASS) al runner. CI `44629325732` SUCCESS: 180 suites, 2,427 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only se mantiene pendiente al registrar este cambio. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+[2026-11-19 · verificación posterior] La ejecución de health read-only `44629325982` terminó SUCCESS sobre el HEAD de código `bab825c07db2feb7f24a280b81d37ef8b01ab577`, que contiene la implementación y el runner de `AdminCutEntityPreflight`. La regresión del HEAD documental `2bcc12b8d850691f4ab26b36e7403443c8382d36` también terminó SUCCESS (`44629451857`): 180 suites, 2,427 pruebas aprobadas, 0 fallos. No se realizó despliegue de Apps Script ni se alteraron datos productivos.
+
+[2026-11-19] ADMIN: la búsqueda completa de la fila de un vehículo existente por ID se ejecuta ahora antes de adquirir `ScriptLock`. Bajo lock se valida que la celda ID de la fila candidata todavía corresponda al vehículo solicitado antes de leer y modificar el registro; si la ubicación cambió, se aborta sin escribir. Se añadió `AdminExistingVehicleLookupPreflight.mjs` (7/7 PASS) al runner. CI `44629836237` SUCCESS: 181 suites, 2,434 pruebas aprobadas, 0 fallos; sintaxis JS aprobada. Health read-only `44629836299` SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+[2026-11-19] ADMIN: findOrCreateIdempotenciaSheet devuelve directamente las hojas primaria/fallback con encabezados A:F completos y compatibles, evitando la reinicialización y las lecturas integrales repetidas que esta provocaba. Las hojas con encabezados faltantes siguen pasando por reparación; los estados inseguros continúan fallando de forma cerrada. Se añade AdminIdempotenciaSheetLookupFastPath.mjs (6/6 PASS) al runner. CI 44631635536 SUCCESS: 182 suites, 2,440 pruebas aprobadas, 0 fallos; sintaxis JavaScript aprobada. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: handleAddOrUpdateCut comparte un único snapshot integral validado del ledger Idempotencia con findRowByOpId, recordOpId y las revalidaciones posteriores a Drive. Las comprobaciones dirigidas verifican presencia/ausencia, fila, vehicleId, slot, operationHash y estado; el snapshot se actualiza después de cada escritura confirmada. Se conserva detección integral de duplicados y transición monotónica pending→completed. AdminIdempotencySnapshotReuse 10/10 PASS; CI 44632610105 SUCCESS: 183 suites, 2,450 pruebas, 0 fallos; health read-only 44632610206 SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: ensureTestigoColumns reutiliza una única lectura de encabezados para validar VIN y columnas testigo AT:AV; devuelve vinColumnIndex para que handleAddOrUpdateCut no repita la lectura. Se conserva el rechazo de encabezados duplicados, la validación de columnas con datos sin encabezado y la reparación de esquema dentro del ScriptLock. AdminTestigoHeaderReadReuse 7/7 PASS; CI 44633000972 SUCCESS: 184 suites, 2,457 pruebas, 0 fallos; health read-only 44633000978 SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: ensureTestigoColumns devuelve el snapshot de encabezados validado, con las columnas AT:AV normalizadas en memoria. handleAddOrUpdateCut reutiliza ese snapshot para resolver la columna de operación al recuperar un opId, evitando otra lectura completa de encabezados mientras conserva la exclusión y revalidación del ledger. AdminTestigoHeaderReadReuse 7/7 PASS; CI 44633178723 SUCCESS: 184 suites, 2,457 pruebas, 0 fallos; health read-only 44633178689 SUCCESS. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: en la rama existente de `handleAddOrUpdateCut`, los cinco campos contiguos del corte (tipo, ubicación, color, configuración de relay e imagen) ahora se persisten mediante una sola llamada `setValues()`. Las columnas de testigo y colaborador se mantienen como escrituras separadas porque no son contiguas en el esquema; VIN, timestamp y reservas idempotentes conservan su flujo. Se añade `AdminCutSlotBatchWrites.mjs` al runner. CI `44633759321` SUCCESS y health read-only `44633759352` SUCCESS sobre HEAD `e11056bca8759256871d7e7748a083b5d2b3af2e`. No se desplegó ADMIN ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: en la recuperación idempotente de registros parcialmente completados, se agrupan los campos contiguos de vehículo (categoría a tipo de encendido) y los cuatro campos principales del slot de corte en un máximo de dos llamadas setValues(). Solo se completan celdas vacías; se preservan valores existentes, orden de años, testigo y colaborador en sus columnas separadas, VIN, timestamp, flush y transición idempotente. Se añade AdminRecoveryRepairBatchWrites.mjs al runner con simulación local de la escritura. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: la recuperación idempotente calcula si faltan imágenes antes de iniciar trabajo Drive. Cuando la imagen del vehículo y la del slot ya son válidas, omite el ciclo innecesario de liberar/reacquirir ScriptLock y la consulta posterior de revalidación; cuando falta alguna, conserva la carga Drive y la revalidación idempotente existentes. Se añade AdminRecoveryImageRepairFastPath.mjs al runner. Validación CI pendiente al publicar.
+
+
+[2026-11-19 · cierre] ADMIN fast path de recuperación de imágenes: tras acotar la prueba a la ruta de recuperación idempotente, CI 44635382990 SUCCESS (187 suites, 2476 pruebas aprobadas, 0 fallos; AdminRecoveryImageRepairFastPath 6/6); health read-only 44635382893 SUCCESS. La primera ejecución había fallado únicamente por una aserción de prueba que contaba otra ruta Drive del handler; la prueba fue corregida y la repetición aprobó. Pages 44635380904 seguía QUEUED al registrar este cierre. No se desplegó Apps Script ni se modificaron Sheets/Drive productivos.
+
+
+[2026-11-19] ADMIN: recuperación idempotente reutiliza el snapshot de la fila para vincular imágenes. La revalidación actualiza `verified.rowValues` al escribir URL faltantes; la vinculación posterior consume esos valores en memoria y elimina dos lecturas individuales de Sheets (`getValue()`). Se preservan URL existentes y el flujo Drive/ledger fuera del ScriptLock. Se añade AdminRecoveryImageSnapshotReuse.mjs.
+
+
+[2026-11-19 · cierre] ADMIN recuperación reutiliza snapshot para vincular imágenes: eliminadas dos lecturas individuales getValue() de Cortes. El callback de revalidación actualiza verified.rowValues después de escribir URL reparadas; se preservan las URL existentes. Prueba AdminRecoveryImageSnapshotReuse 7/7 PASS. CI 44636292022 SUCCESS: 188 suites, 2483 pruebas aprobadas, 0 fallos; health read-only 44636291825 SUCCESS. Las dos primeras regresiones fallaron por problemas de delimitación/mocks de la prueba nueva, corregidos antes de la ejecución aprobada. Pages 44636291778 estaba QUEUED al cierre. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: revalidación de vehículo existente reutiliza el snapshot de fila. Se elimina una llamada individual `getValue()` para leer el ID; la lectura integral de fila bajo ScriptLock ahora valida `rowValues[COLS_CORTES.id - 1]` antes de mapear y operar. Se conserva el preflight de búsqueda fuera del lock y la revalidación protegida. Se actualiza AdminExistingVehicleLookupPreflight y se añade AdminExistingVehicleSnapshotRevalidation.
+
+
+[2026-11-19 · corrección de prueba] La primera regresión de AdminExistingVehicleSnapshotRevalidation falló porque el test contaba dos lecturas de fila de toda la rama: la lectura inicial de identidad y una lectura posterior a Drive necesaria para preparar VIN. La prueba se acotó al tramo previo a Drive, donde se elimina el getValue redundante. No se retiró la lectura posterior funcional.
+
+
+[2026-11-19 · cierre] ADMIN revalidación de vehículo existente desde snapshot: se eliminó un getValue() individual del ID, reutilizando la lectura integral de fila bajo ScriptLock para validar rowValues[COLS_CORTES.id - 1]. Se mantuvo la búsqueda de candidato fuera del lock y la lectura posterior a Drive que prepara VIN. Prueba AdminExistingVehicleLookupPreflight 8/8 y AdminExistingVehicleSnapshotRevalidation 7/7 PASS. CI 44636938042 SUCCESS: 189 suites, 2491 pruebas aprobadas, 0 fallos; health read-only 44636938094 SUCCESS. La primera CI falló solo por una aserción de prueba que incluía una lectura posterior a Drive; se acotó y la repetición aprobó. Pages 44636937345 aún estaba en ejecución al cierre. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: el alta de vehículos nuevos agrupa las columnas contiguas del vehículo (2–9) y del primer corte (12–16) en dos llamadas setValues(), en lugar de escrituras individuales. Timestamp, testigo y colaborador permanecen separados. Se conserva la verificación de ID centralizado, reserva idempotente, trabajo Drive fuera del ScriptLock y flush.
+
+
+[2026-11-19 · cierre] ADMIN alta de vehículos nuevos: dos escrituras setValues() sustituyen las escrituras individuales de columnas 2–9 (datos e imagen del vehículo) y 12–16 (datos e imagen del primer corte). Timestamp, testigo y colaborador permanecen separados. Prueba AdminNewVehicleBatchWrites 13/13 PASS. CI 44637971280 SUCCESS: 190 suites, 2504 pruebas aprobadas, 0 fallos; sintaxis aprobada. Health read-only 44637971232 SUCCESS. Pages 44637970083 pendiente al momento del cierre documental. Se preservaron ID centralizado, reserva idempotente, Drive fuera del lock y flush. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19 · cierre] Alta de vehículos nuevos ADMIN: los campos contiguos del vehículo (categoría a imagen, columnas 2–9) y del primer corte (12–16) se guardan con dos setValues() por lote. Timestamp, testigo y colaborador se mantienen separados. Prueba AdminNewVehicleBatchWrites 13/13 PASS. CI 44637971280 SUCCESS: 190 suites, 2,504 pruebas aprobadas, 0 fallos; sintaxis aprobada. Health read-only 44637971232 SUCCESS. Pages 44637970083 SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: al agregar un corte a un vehículo existente, se reutiliza verified.rowValues retornado por findRowByOpId después de Drive para preparar VIN, evitando una segunda lectura integral de la misma fila. Se conservan unicidad, revalidación de rowIndex/vehicleId/slotIndex/operationHash y disponibilidad del slot. Fallback de lectura mantenido para ausencia de opId. Nueva prueba AdminExistingVehiclePostDriveSnapshotReuse.
+
+
+[2026-11-19 · ajuste de prueba] La primera CI de AdminExistingVehiclePostDriveSnapshotReuse falló por una aserción excesiva: prohibía cualquier lectura integral dentro del callback, incluyendo el fallback válido cuando no hay snapshot/opId. La prueba se corrigió para exigir que la lectura permanezca únicamente detrás del operador `verifiedRowValues ||`; el camino normal reutiliza la fila verificada. La implementación no se modificó.
+
+
+[2026-11-19 · segundo ajuste de prueba] El segundo CI volvió a fallar en la aserción del fallback, esta vez porque el patrón regex del propio test tenía barras invertidas duplicadas y buscaba el texto literal `\|\|` en vez del operador `||`. Se corrige el patrón con los escapes apropiados. No se modifica la implementación funcional.
+
+
+[2026-11-19 · cierre] ADMIN alta de corte en vehículo existente: se reutiliza `verified.rowValues` devuelto por `findRowByOpId` tras Drive para preparar VIN y se elimina la segunda lectura integral duplicada. La unicidad del vehicleId, rowIndex, slotIndex, operationHash y disponibilidad del slot siguen verificándose después de Drive. Prueba `AdminExistingVehiclePostDriveSnapshotReuse` 9/9 PASS. CI regresión `44639307547` SUCCESS: 191 suites, 2,513 pruebas aprobadas, 0 fallos. Health read-only `44639307367` SUCCESS. Pages `44639306388` SUCCESS. Las dos ejecuciones fallidas previas se debieron exclusivamente a aserciones de prueba, corregidas sin cambiar la implementación. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: en el alta de vehículo nuevo, la revalidación post-Drive comprueba el ID con `verified.rowValues[COLS_CORTES.id - 1]` devuelto por `findRowByOpId`, eliminando una consulta individual redundante. Se conservan las verificaciones de rowIndex, vehicleId, slotIndex, operationHash y unicidad del ID. Nueva prueba AdminNewVehiclePostDriveIdSnapshotReuse.
+
+
+[2026-11-19 · cierre] Alta de corte en vehículo existente: el callback posterior a Drive reutiliza la fila completa devuelta por findRowByOpId para preparar VIN, evitando una segunda lectura integral de la misma fila. Se mantienen la comprobación de unicidad del vehículo, fila, slot, hash y slot vacío; el fallback se conserva sin opId. Prueba AdminExistingVehiclePostDriveSnapshotReuse 9/9 PASS. CI 44639776262 SUCCESS: 192 suites, 2,520 pruebas aprobadas, 0 fallos. Health read-only 44639776244 SUCCESS; Pages 44639775855 SUCCESS. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-19] ADMIN: el alta de vehículo nuevo limpia ahora la fila completa (incluido el ID heredado) con una sola llamada clearContent(), en lugar de dos llamadas separadas para columnas 2–final e ID. Se conserva el orden de copia de plantilla, limpieza, flush, asignación/confirmación del ID central y reserva idempotente.
+
+
+[2026-11-19 · cierre] ADMIN alta de vehículo nuevo: la limpieza inicial ahora se realiza con una sola llamada `clearContent()` sobre la fila completa (columna 1 a `lastColumn`), manteniendo la copia de formato/validación antes de limpiar y el orden de flush, asignación/confirmación del ID central, reserva pending, Drive y completed. Prueba `AdminNewVehicleSingleRowClear` integrada al runner. CI regresión `44640068663` SUCCESS sobre HEAD `4f99a114e00d178181e30a093dd40f4c50453a07`; health read-only `44640068448` SUCCESS. No hubo despliegue Apps Script ni escrituras en Sheets/Drive productivos.
+
+
+[2026-11-19 · cierre] ADMIN búsqueda de VIN: se combinó la lectura de ID, marca, modelo y años en un solo rango contiguo (columnas 1–7 en el esquema actual), manteniendo la lectura VIN separada y dirigida. Se reducen tres lecturas remotas a dos, sin leer toda la fila ni cambiar la exclusión del vehículo actual o la detección de duplicados. `AdminVinDuplicateBoundedRead` 11/11 PASS; contrato WRITE/ADMIN VIN 12/12 PASS. CI `44640492213` SUCCESS: 193 suites, 2,527 pruebas, 0 fallos; health read-only `44640492202` SUCCESS. Primera CI falló por un comentario `//` incompatible con el extractor estático de pruebas; se cambió a comentario de bloque y la repetición pasó. Sin despliegue Apps Script ni modificaciones de datos productivos.
+
+
+[2026-11-19 · optimización ADMIN] `ensureTestigoColumns`: la validación de datos en las columnas testigo sin encabezado (AT:AV) ahora lee el rango contiguo mínimo que cubre los encabezados faltantes, en una sola llamada en lugar de hasta tres lecturas separadas bajo ScriptLock. Se conservan las comprobaciones y mensajes de error existentes. Prueba `AdminTestigoHeaderReadReuse.mjs` actualizada e integrada; validación estática directa PASS. Commits `0a9d42469774380357a0fa525a4f032e532349b2` y `3412d525e335993919844c211f8bb4c5d5f84ce5`. CI sobre HEAD nuevo pendiente; los runs visibles aún apuntan a `d24e1a74`. Sin despliegue Apps Script ni escrituras productivas.
+
+
+[2026-11-19 · rendimiento ADMIN] En `handleAddOrUpdateCut`, la lectura de la fila de un vehículo existente se limita a las 48 columnas del esquema ADMIN y se amplía solo hasta la columna VIN cuando esta se encuentra más a la derecha. La prueba `AdminExistingVehicleLookupPreflight` comprueba el rango acotado y `AdminExistingVehicleSnapshotRevalidation` verifica la identidad desde ese snapshot. Después de Drive se exige reutilizar el snapshot fresco devuelto por `findRowByOpId`; se elimina el fallback que volvía a leer la fila completa con `getLastColumn()`, fallando cerrado si no existe snapshot verificado. Pruebas: 8/8, 7/7 y 9/9. CI final `44642229762` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; sintaxis aprobada. También queda validada en esa regresión la agrupación de lectura de encabezados testigo AT:AV (`AdminTestigoHeaderReadReuse`). Sin despliegue Apps Script ni modificaciones de datos productivos.
+
+
+[2026-11-20 · rendimiento ADMIN] `ensureTestigoColumns` ahora escribe los tres encabezados contiguos AT:AV mediante un único `setValues()` cuando hay al menos un encabezado faltante/no canónico, en lugar de hasta tres `setValue()`. Se mantienen todas las comprobaciones previas y se omite la escritura cuando los encabezados ya son correctos. `AdminTestigoHeaderReadReuse.mjs` 8/8 PASS. CI `44642434395` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; health read-only `44642434153` SUCCESS. Sin despliegue Apps Script ni modificaciones de datos productivos.
+
+
+[2026-11-20 · rendimiento WRITE] `getNextCortesVehicleIdLocked` combina el encabezado `id` y los valores de la columna ID en una sola lectura contigua desde fila 1, eliminando una llamada remota. La lectura de fórmulas permanece separada; los datos de otras columnas se leen únicamente para filas candidatas sin ID o con fórmula. `getLastColumn()` se consulta solo cuando existen filas de datos. Se conservan detección de duplicados/corrupción, fórmulas heredadas y contador monotónico bajo ScriptLock. `WriteVehicleIdAllocatorBoundedRead` 11/11 PASS. CI `44642666700` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos. Sin despliegue Apps Script ni modificaciones productivas.
+
+
+[2026-11-20 · aislamiento de telemetría] `recordDirectServiceTraffic_` en AUTH, WRITE y FEEDBACK deja de adquirir el ScriptLock global. Los contadores directos se actualizan en ScriptProperties como best-effort; conservan `best_effort_nonblocking` y `mayUndercount: true` para hacer explícito que pueden perder incrementos concurrentes en lugar de interferir con mutaciones. Se actualizó fixture AUTH y pruebas: DirectServiceTrafficTelemetry 21/21, P2FeedbackImageUploadLocks 1/1. CI `44643946013` SUCCESS: 193 suites, 2,528 pruebas aprobadas, 0 fallos; health read-only `44643945928` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · aislamiento de publicaciones FEEDBACK] Las publicaciones incrementales de Cortes, PyS y Tutorial ahora construyen snapshot y reservan `sourceVersion` monotónica bajo ScriptLock FEEDBACK, liberan el lock y después llaman a Coordinator. Coordinator acepta versiones de origen FEEDBACK, convierte eventos atrasados y publicaciones legacy sin versión en reset para impedir snapshots fuera de orden. Si no hay lock o falla el snapshot se publica reset fuera del lock. `CatalogChangeFeed` 33/33; `FeedbackCatalogPublicationIsolation` 5/5. CI `44644542379` SUCCESS: 194 suites, 2,536 pruebas aprobadas, 0 fallos; health read-only `44644541751` SUCCESS. Coordinator debe desplegarse antes que FEEDBACK en Beta; no se desplegó Apps Script ni se modificaron datos productivos.
+
+
+[2026-11-20 · aislamiento WRITE] `handleFreezeCortesIds` ahora verifica autorización y respaldo Drive antes de tomar el ScriptLock; la sección crítica queda limitada al plan/lectura y commit verificado de IDs en Cortes. Usa `tryLock(0)` y devuelve `WRITE_BUSY` si otra escritura está activa. Pruebas `WriteFreezeCortesIdsBackupOutsideLock` 5/5 y `WriteAuthorizationMinimization` 13/13. CI `44645165057` SUCCESS: 195 suites, 2,541 pruebas aprobadas, 0 fallos; health read-only `44645165055` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · aislamiento FEEDBACK PyS] `handleAddProblem` valida el archivo Drive de una operación `UPLOAD_PENDING` antes de adquirir ScriptLock; bajo lock revalida la reserva completa y solo reutiliza el archivo si coinciden opId/hash/problemId/fileId/URL/status. Si la reserva cambió, solicita reintento; si falla la verificación con la misma reserva, marca `RECOVERY_REQUIRED`. Se preservan MIME, tamaño, descripción, carpeta y permisos. Pruebas `FeedbackPysPendingImageVerificationOutsideLock` 5/5 y `P2PysImageUploadOutsideLock` PASS. CI `44645449059` SUCCESS: 196 suites, 2,546 pruebas aprobadas, 0 fallos; health read-only `44645449007` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · aislamiento FEEDBACK PyS] Tras confirmar la fila PyS y el ledger LINKED, `handleAddProblem` libera ScriptLock antes de actualizar metadata Drive de la imagen y antes de registrar ActividadUsuario. Las rutas de recuperación persisten LINKED/RECOVERY_REQUIRED bajo lock y actualizan metadata fuera. Pruebas `FeedbackPysPostCommitOutsideLock` 4/4, `FeedbackPysPendingImageVerificationOutsideLock` 5/5 y `P2PysImageUploadOutsideLock` PASS. CI `44645868436` SUCCESS: 197 suites, 2,550 pruebas aprobadas, 0 fallos; health read-only `44645868341` SUCCESS. La papelera/compensación de archivos no referenciados permanece pendiente de un flujo con estado intermedio y revalidación.
+
+
+[2026-11-20 · aislamiento FEEDBACK PyS] El rollback de imágenes no referenciadas ahora reserva `RECOVERY_REQUIRED` en el ledger bajo lock, libera ScriptLock, ejecuta Drive trash y verifica `isTrashed()` fuera del lock; después readquiere el lock y revalida opId/problemId/fileId/URL/status antes de limpiar a `PENDING`. Si falla compensación o revalidación, conserva `RECOVERY_REQUIRED` y marca metadata fuera del lock. Pruebas `FeedbackPysRollbackOutsideLock` 6/6, `PysImageStorageRecovery` 22/22 y `P2PysImageUploadOutsideLock` PASS. CI `44646143035` SUCCESS: 198 suites, 2,556 pruebas aprobadas, 0 fallos; health read-only `44646143256` SUCCESS.
+
+
+[2026-11-20 · aislamiento FEEDBACK reportes] `handleReportProblem` libera ScriptLock antes de enviar a papelera adjuntos duplicados. En rollback, primero confirma bajo lock que fila/metadata se revirtieron y solo entonces libera y elimina el adjunto; si no se confirma, conserva la imagen para no romper referencias. `FeedbackReportImageCleanupOutsideLock` 5/5. CI `44646463925` SUCCESS: 199 suites, 2,561 pruebas aprobadas, 0 fallos; health read-only `44646464055` SUCCESS.
+
+
+[2026-11-20 · aislamiento FEEDBACK sugerencias] `handleSuggestCutChange` libera ScriptLock antes de enviar a papelera imágenes duplicadas de operaciones/reportes idempotentes. En rollback, elimina el adjunto solo cuando la fila quedó limpiada y verificada; si no se confirma, conserva la imagen para reconciliación. `FeedbackSuggestionImageCleanupOutsideLock` 5/5. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
+
+
+[2026-11-20 · aislamiento FEEDBACK sugerencias] `handleSuggestCutChange` libera ScriptLock antes de enviar a papelera imágenes duplicadas de operaciones/reportes idempotentes. En rollback, elimina el adjunto solo cuando la fila quedó limpiada y verificada; si no se confirma, conserva la imagen para reconciliación. `FeedbackSuggestionImageCleanupOutsideLock` 5/5. CI `44646768057` SUCCESS: 200 suites, 2,566 pruebas aprobadas, 0 fallos; health read-only `44646767980` SUCCESS.
+
+
+[2026-11-20 · aislamiento FEEDBACK sugerencia de año] La aplicación de rango ya no mueve la imagen principal ni escribe ActividadUsuario bajo ScriptLock. Tras liberar, el handler registra actividad y sincroniza carpeta Drive usando una lectura fresca; solo mueve si coinciden ID del vehículo y URL de imagen con el snapshot confirmado. Si cambió, omite movimiento y advierte. `FeedbackYearFolderSyncOutsideLock` 5/5, `SuggestYearVoteThreshold` 6/6. CI `44647298901` SUCCESS: 201 suites, 2,571 pruebas aprobadas, 0 fallos. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · aislamiento FEEDBACK likes] `handleRecordLike` mantiene el incremento y ledger pending/completed bajo ScriptLock, pero difiere `logUserActivity` hasta después de liberar; los replays completed no duplican actividad. `FeedbackLikeActivityOutsideLock` 5/5. CI `44647675553` SUCCESS: 202 suites, 2,576 pruebas aprobadas, 0 fallos; health read-only `44647675689` SUCCESS.
+
+
+[2026-11-20 · rendimiento FEEDBACK IDs] `getNextFormulaBasedId_` lee solo la columna ID en el caso habitual. Si detecta IDs vacíos, consulta únicamente los grupos contiguos de filas candidatas para detectar datos sin ID, manteniendo validaciones de prefijo/sufijo, duplicados, contador backend y lock ya adquirido. `FeedbackFormulaIdAllocatorBoundedRead` 6/6. CI `44647995645` SUCCESS: 203 suites, 2,582 pruebas aprobadas, 0 fallos; health read-only `44647995469` SUCCESS.
+
+
+[2026-11-20 · aislamiento ADMIN catálogo] Las publicaciones de catálogo ADMIN/Cortes individuales y batch ahora reservan `sourceVersion` bajo ScriptLock y hacen UrlFetch al Coordinator después de liberar. Los batches reservan un rango con una escritura y publican en chunks de 50. Coordinator admite ADMIN/Cortes, convierte snapshots legacy sin versión y versiones atrasadas en reset; fallos de lock/snapshot/red recuperan con reset. `AdminCatalogPublicationIsolation` 6/6; contratos de feed y reintento versionado cubiertos. CI `44649098649` SUCCESS; health read-only `44649098541` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN imagen reemplazada] En `handleMoveReplacedImage`, el registro de actividad de administración y el mensaje de logging se ejecutan después de liberar ScriptLock, una vez confirmados el movimiento Drive y la metadata del inventario. Se conserva el movimiento/rollback dentro de la sección crítica y el camino de carpeta idéntica. Prueba `AdminMoveImageActivityOutsideLock` 7/7. CI `44652254166` SUCCESS: 206 suites, 2,603 pruebas aprobadas, 0 fallos; health read-only `44652254131` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN restauración de imagen histórica] La validación Drive del archivo histórico (existencia, MIME, papelera y carpeta Cortes) ahora se ejecuta fuera del ScriptLock mediante el wrapper de trabajo externo. Tras readquirir el lock sin espera, el handler revalida el registro del inventario (tipo/estado/Drive ID/URL/vehículo/campo) antes de leer referencias o modificar Cortes; si cambia o no se readquiere, no escribe. La mutación y rollback de Cortes/historial siguen protegidos. Pruebas AdminRecoverImageDrivePreflightOutsideLock 11/11 y AdminReplacedImagesIntegrity 56/56. CI 44652896571 SUCCESS: 207 suites, 2,614 pruebas aprobadas, 0 fallos; health read-only 44652896675 SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN papelera de imágenes] `handleDeleteReplacedImage` conserva bajo ScriptLock la confirmación de Drive/historial y el rollback; difiere la actividad Coordinator y el mensaje de logging hasta después de liberar. Se mantiene la respuesta idempotente para archivos ya enviados a papelera. Pruebas `AdminDeleteImageActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44653097187` SUCCESS: 208 suites, 2,620 pruebas aprobadas, 0 fallos; health read-only `44653097327` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN restauración desde papelera] `handleRestoreReplacedImageFromTrash` difiere la actividad Coordinator y el mensaje de logging hasta liberar ScriptLock; conserva la restauración Drive, verificación, rollback y replay idempotente existente. Pruebas `AdminRestoreImageActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44653303076` SUCCESS: 209 suites, 2,626 pruebas aprobadas, 0 fallos; health read-only `44653303269` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN eliminación definitiva de imágenes] `handlePermanentlyDeleteReplacedImage` ahora libera ScriptLock tras confirmar el estado `eliminada` y antes de registrar actividad Coordinator/logging, tanto en la reconciliación de archivos ausentes (404) como en la eliminación verificada. Se evita la doble liberación del lock. Pruebas `AdminPermanentDeleteActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44653582395` SUCCESS: 210 suites, 2,632 pruebas aprobadas, 0 fallos; health read-only `44653582292` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN proteger imagen en uso] `handleMarkReplacedImageInUse` verifica Drive/MIME/papelera/carpeta fuera del ScriptLock y revalida tipo/estado/Drive ID antes de cambiar el historial a `en_uso`; actividad Coordinator y logging quedan post-lock. Pruebas `AdminMarkImageInUseDrivePreflightOutsideLock` 10/10 y `AdminReplacedImagesIntegrity` 56/56. CI `44653864364` SUCCESS: 211 suites, 2,642 pruebas aprobadas, 0 fallos; health read-only `44653864334` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN eliminación definitiva] `handlePermanentlyDeleteReplacedImage` realiza el GET inicial Drive API y valida MIME/papelera/carpeta Cortes fuera del ScriptLock; readquiere sin espera, revalida tipo/estado/Drive ID y vuelve a comprobar referencias. La reserva `eliminacion_pendiente`, DELETE y GET final de confirmación siguen bajo lock. El 404 se reconcilia bajo lock y su actividad se registra después. Pruebas `AdminPermanentDeleteDrivePreflightOutsideLock` 9/9, `AdminPermanentDeleteActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44654436417` SUCCESS: 212 suites, 2,651 pruebas aprobadas, 0 fallos; health read-only `44654436415` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN restauración desde papelera] `handleRestoreReplacedImageFromTrash` ejecuta lectura Drive (papelera/MIME/carpeta/ruta) fuera del ScriptLock y revalida tipo/estado/estado previo/Drive ID al readquirir. La restauración efectiva, read-back y rollback siguen bajo lock; se conserva la ruta idempotente y la actividad post-lock. Pruebas `AdminRestoreImageDrivePreflightOutsideLock` 10/10, `AdminRestoreImageActivityOutsideLock` 6/6 y `AdminImageTrashLifecycle` 40/40. CI `44654753039` SUCCESS: 213 suites, 2,661 pruebas aprobadas, 0 fallos; health read-only `44654752914` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN papelera de imágenes] `handleDeleteReplacedImage` verifica DriveApp/MIME/papelera/carpeta fuera del ScriptLock y revalida tipo/estado/Drive ID al readquirir; después vuelve a comprobar referencias y mantiene `setTrashed(true)`, read-back y rollback bajo lock. Actividad Coordinator/logging post-lock; respuesta idempotente preservada. Pruebas `AdminDeleteImageDrivePreflightOutsideLock` 10/10, `AdminImageTrashLifecycle` 40/40 y `AdminReplacedImagesIntegrity` 56/56. CI `44655257521` SUCCESS: 214 suites, 2,671 pruebas aprobadas, 0 fallos; health read-only `44655257749` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN movimiento de imágenes] `handleMoveReplacedImage` valida Drive/MIME/papelera/carpetas/rutas y destino fuera del ScriptLock; al readquirir revalida tipo/estado/Drive ID y metadata de ubicación/organización, además de volver a comprobar referencias. `moveTo`, read-back, escritura de metadata y rollback permanecen bajo lock. Actividad/logging post-lock y camino de carpeta idéntica preservados. Pruebas `AdminMoveImageDrivePreflightOutsideLock` 11/11 y `AdminMoveImageActivityOutsideLock` 7/7. CI `44655643108` SUCCESS: 215 suites, 2,682 pruebas aprobadas, 0 fallos; health read-only `44655643102` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN ciclo de papelera no bloqueante] `handleDeleteReplacedImage` y `handleRestoreReplacedImageFromTrash` usan `tryLock(0)` en vez de esperar 30 segundos. La contención devuelve `ADMIN_BUSY` antes de acceder a Drive o modificar historial; la liberación del lock queda condicionada a adquisición confirmada. Pruebas: `AdminImageTrashLifecycle` 41/41, `AdminDeleteImageActivityOutsideLock` 6/6 y `AdminRestoreImageActivityOutsideLock` 6/6. CI `44661420739` SUCCESS (215 suites, 2,684 pruebas, 0 fallos); health read-only `44661420823` SUCCESS. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · ADMIN conciliación de imágenes Cortes] La verificación del respaldo se divide en dos fases: las comprobaciones de Drive y del contenido de la copia (incluidas ACL privada y manifiesto) se ejecutan fuera del ScriptLock; después de readquirir con tryLock(0), el fingerprint y las dimensiones de la Spreadsheet operativa se verifican bajo lock antes de continuar. Si falla la readquisición o la base cambió, no se inicia el preview ni se escribe. Pruebas aisladas: CortesImageReconciliationApply 18/18 y CortesImageReconciliation 34/34; parsing V8 de admin.js PASS. CI global pendiente tras commit. Sin despliegue Apps Script ni cambios productivos.
+
+
+[2026-11-20 · validación post-commit conciliación Cortes] CI de regresión `44708443965` SUCCESS; health read-only `44708443686` SUCCESS; Pages `44708443338` SUCCESS. Diff limitado a los cinco archivos previstos. Rama base sin cambios.
+
+
+[2026-11-20 · revisión de lease ADMIN papelera] Se evaluó la propuesta de sacar `setTrashed`, restauración y compensación del ScriptLock. Se conserva diferida a medición Beta, conforme a la adenda de backlog del 2026-11-17 y sin evidencia de contención que justifique una nueva reserva. No se añadió lease ni se debilitó el flujo destructivo. AdminImageTrashLifecycle 41/41 PASS; regresión global CI 44708443965 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health 44708443686 SUCCESS; Pages 44708443338 SUCCESS.
+
+[2026-11-20 · AUTH recuperación de contraseña] Se trasladó el logging de éxito de `handleCompletePasswordRecovery` fuera del ScriptLock global, conservando bajo lock las mutaciones de Users/ActiveSessions y la revocación de sesiones. Se añadió aserción de orden wait/release/log a PasswordRecovery.mjs y se sincronizó JS/Tests/Auth.js. No se modificó la política de retención ni la protección de Logs.
+
+
+[2026-11-20 · corrección de harness AUTH] La primera CI reveló que la prueba incluía eventos de lock de la emisión del código; el harness ahora reinicia la traza antes de probar la finalización. Se conservó la aserción wait/release/log. También se normalizaron los escapes de regex en el handler y fixture para preservar el patrón original. CI inicial 44726038448 falló solo en la aserción del test; se vuelve a ejecutar tras esta corrección.
+
+
+[2026-11-20 · validación AUTH logging post-lock] PasswordRecovery.mjs 10/10 PASS; ejecución aislada V8 del handler y parsing/paridad PASS. CI 44726478008 SUCCESS (215 suites, 2,686 pruebas, 0 fallos); health read-only 44726478247 SUCCESS; Pages 44726477077 SUCCESS. La primera ejecución de CI falló únicamente por acumulación de eventos previos en el harness; se aisló el trace y la repetición aprobó.
+
+
+[2026-11-20 · checkpoint de continuidad] Se actualizó el resumen activo para reflejar HEAD, cierre de AUTH post-lock, regresión global y transición a Beta. Se marcaron como completados únicamente el inventario estático del ámbito global de ScriptLock y el mapeo de recursos por servicio; Script IDs y concurrencia real siguen pendientes de Beta. Sin cambios de código ni despliegues.
+
+
+[2026-11-20 · reconciliación de continuidad] Se corrigió el SHA obsoleto del checkpoint (7c4d7c...) por el HEAD real de GPSpedia2.2.5_work (e863c1f...). Se actualizaron referencias a CI 44730842247 (215 suites, 2,686 pruebas, 0 fallos), health 44730842225 y Pages 44730841115, todas SUCCESS sobre ese HEAD. La rama base d9acc68... no se modificó. Se mantienen abiertas las validaciones Beta sin evidencia de ejecución. Sin cambios productivos.
+
+
+[2026-11-20 · comprobación de ruta Beta] Node v22.16.0/npm 10.9.2 disponibles; clasp ausente. Checkout GitHub intentado, falla por DNS sin salida de red; no hay clone local. Google Drive connector está deshabilitado por administración y no hay herramienta/workflow Apps Script de despliegue; health workflow solo GET read-only. CI 44731452326 SUCCESS (215 suites, 2,686 pruebas, 0 fallos), health 44731452344 y Pages 44731450125 SUCCESS sobre ba37dd8. No se desplegó ni se marcó Beta como validada.
+
+
+[2026-11-20 · GP-UX-SEARCH-MODEL-GROUPING-01] Se registra por solicitud del usuario la agrupación de resultados de Cortes por modelo y navegación jerárquica Modelo → versión/equipamiento o tipo de encendido → rango de años → modal, omitiendo dimensiones con una sola opción. Auditoría preimplementación en AUDITORIA_BUSQUEDA_MODELOS_2026-11-20.md. Hallazgos: búsqueda muestra una tarjeta por registro, autoabre una coincidencia normal, la selección de equipamiento omite tipos de encendido y la vista de años no agrupa rangos ni abre el rango único. Se documentan preservación de VIN exacto/ambiguo, resultados de otras secciones e historial de navegación. Sin cambios de código; implementación y pruebas pendientes.
+
+[2026-11-20 · GP-UX-SEARCH-MODEL-GROUPING-01 · implementación]
+Se implementó agrupación de resultados de Cortes por categoría/marca/modelo, preservando la prioridad de la mejor coincidencia y manteniendo Relay/Tutorial/PyS y VIN ambiguos como resultados individuales. Se unificó la resolución opcional de equipamiento y encendido, rangos abiertos/cerrados y apertura directa de rango único inequívoco. La búsqueda textual dejó de autoabrir una ficha; la autoapertura se reserva al VIN inequívoco. Se agregó SearchModelGrouping.mjs al runner. Validación aislada Node v22.16.0: 21/21 PASS (helpers y History API ejecutados; integración UI/navigation/main verificada estáticamente). La regresión integral y la prueba de navegador real quedan pendientes por ausencia de checkout y de estado CI disponible. Sin despliegue Apps Script ni cambios en datos productivos.
+
+[2026-11-20 · GP-PERF-ADMIN-CUT-LOCK-01 · reserva idempotente de vehicleId] ADMIN ahora transmite opId y operationHash al asignador central WRITE para las altas idempotentes; las solicitudes legacy conservan el contrato anterior. WRITE registra la reserva persistente opId/huella/vehicleId en CortesIdReservations, devuelve el mismo ID ante reintentos idénticos, rechaza reutilización de opId con otra huella y respeta IDs reservados al asignar operaciones legacy. Se cubren fallos parciales del contador y respuesta perdida. Pruebas: WriteVehicleIdAllocationIdempotency 9/9, AdminVehicleIdAllocationIdempotency 3/3, VehicleIdAllocationEndToEnd 4/4 y AdminCutPreflightBeforeAllocation 7/7 PASS. CI 44746455621 SUCCESS: 219 suites, 2,723 pruebas, 0 fallos; health read-only 44746455562 SUCCESS; Pages 44746451810 SUCCESS. No se desplegó Apps Script ni se modificaron hojas/Drive productivos. La verificación del ledger en Spreadsheet real queda diferida a Beta autorizada.
+
+
+[2026-11-20 · GP-PERF-ADMIN-CUT-LOCK-01 · recuperación legacy por snapshot] En `JS/Services/admin.js`, la ruta legacy de `findRowByOpId` ahora valida la unicidad del `vehicleId` usando la misma lectura integral de `Cortes` con la que localiza el `opId`; ya no vuelve a consultar la columna ID ni la fila completa, y se elimina la llamada previa separada a `getLastRow()`. Se añadió `JS/Tests/AdminLegacyOpIdSnapshotReuse.mjs` y se registró en `JS/Tests/RunServiceTests.mjs`. Se mantienen las validaciones de ID, duplicados y coincidencia de fila. La prueba y la regresión integral aún no se han ejecutado en este entorno; no hay estado CI visible para los commits de esta modificación. Sin despliegue Apps Script ni cambios en datos productivos.
+
+
+[2026-11-20 · validación focalizada recuperación legacy ADMIN] Se verificó el registro de AdminLegacyOpIdSnapshotReuse.mjs en RunServiceTests.mjs y se ejecutó un harness Node aislado basado en el helper y handler de la fuente vigente: 10/10 PASS. `node --check` pasó sobre el harness y la suite focalizada. El entorno carece de checkout completo, por lo que no se ejecutó RunServiceTests.mjs integral; GitHub Actions aún no reporta ejecuciones para el HEAD comprobado. La tarea permanece EN PROGRESO hasta verificar la regresión integral. Sin despliegue Apps Script ni cambios en datos productivos.
+
+
+[2026-11-20 · cierre validación recuperación legacy ADMIN] `AdminLegacyOpIdSnapshotReuse.mjs` aprobó 10/10 en el runner oficial. CI `44763121682` SUCCESS: 220 suites, 2,733 pruebas, 0 fallos; sintaxis PASS. Health read-only `44763121560` SUCCESS. La reutilización de snapshot queda COMPLETADA CON VALIDACIÓN DIFERIDA A BETA; no se desplegó Apps Script ni se modificaron datos productivos. Próxima subactividad: inspeccionar lecturas restantes de Sheets dentro de `handleAddOrUpdateCut`.
+
+
+[2026-11-20 · ADMIN lectura acotada de IDs] `handleAddOrUpdateCut` ahora solicita exactamente `lastRowForLookup - 1` filas al leer desde la fila 2, evitando transferir una fila vacía adicional. Se conserva la revalidación bajo ScriptLock con snapshot de fila. `AdminExistingVehicleLookupPreflight` 10/10 PASS; CI `44763460378` SUCCESS (220 suites, 2,735 pruebas, 0 fallos); health read-only `44763460429` SUCCESS. Diff limitado a admin.js y su prueba. Sin despliegue ni cambios productivos.
+
+
+[2026-11-20 · ADMIN reutilización del snapshot Idempotencia] La primera búsqueda de opId en `handleAddOrUpdateCut` utiliza el snapshot leído bajo el mismo ScriptLock y evita una consulta dirigida redundante. `findRowByOpId` conserva revalidación por defecto para callbacks post-Drive/reacquisición y reconciliación. Se verificaron los escritores del ledger: `recordOpId` y migración operan bajo ScriptLock; `handleCheckOperation` solo lee. Pruebas `AdminIdempotencySnapshotReuse` 10/10 y `AdminLegacyOpIdSnapshotReuse` 10/10 PASS. CI `44764022976` SUCCESS (220 suites, 2,735 pruebas, 0 fallos); health `44764023135` SUCCESS. El primer CI falló por un extractor de test con firma antigua; corregido y repetido con éxito. Sin despliegue ni cambios productivos.
+
+
+[2026-11-20 · cierre auditoría ADMIN + regresión búsqueda agrupada] Se cerró la auditoría local de lecturas restantes de `handleAddOrUpdateCut`: se conservaron revalidación dirigida y read-back de `recordOpId`, y verificación de opId/vehicleId/slotIndex/hash tras trabajo Drive; no se detectaron lecturas seguras de eliminar. CI `44764022976` SUCCESS: 220 suites, 2,735 pruebas, 0 fallos; SearchModelGrouping 21/21 y pruebas ADMIN focalizadas PASS. Health read-only `44764023135` SUCCESS. `GP-PERF-ADMIN-CUT-LOCK-01` queda COMPLETADA LOCALMENTE CON VALIDACIÓN DIFERIDA A BETA. `GP-UX-SEARCH-MODEL-GROUPING-01` tiene regresión integral aprobada; resta prueba visual en navegador con catálogo representativo. Sin despliegues ni cambios productivos.
+
+
+[2026-11-20 · verificación final HEAD documental] HEAD `3320cfea89a96f31911761b926c82a48d0165e1e` verificado en rama de trabajo; base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` sin cambios. CI `44764442331` SUCCESS (220 suites, 2,735 pruebas, 0 fallos), SearchModelGrouping 21/21 y pruebas ADMIN focalizadas PASS; health read-only `44764442042` SUCCESS. Prueba visual real de búsqueda agrupada queda pendiente de Beta por ausencia de checkout/browser interactivo. Sin despliegue ni cambios productivos.
+
+
+## Continuidad — reconciliación del backlog y preparación de Safe Apply (2026-11-20)
+- HEAD confirmado antes de la actualización documental: `6a6b7441cd41b189e1b894bc0101f95ff83dc5e8`; rama base protegida `d9acc68d889985c2e2f42fe3a02e502efc86ead1` sin cambios. Se actualizaron únicamente registros en `GPSpedia2.2.5_work`.
+- Regresión más reciente del HEAD anterior: CI `44764926538` SUCCESS (220 suites, 2,735 pruebas, 0 fallos); health read-only `44764926532` SUCCESS; Pages `44764925637` SUCCESS.
+- `Tareas_Activas.md` ahora incluye una consolidación vigente sin borrar ni reescribir las entradas históricas: fases 1, 3 y 7 tienen regresión integral aprobada; fase 2 conserva solo configuración/deployments Beta; fase 4 conserva inspección visual Beta; fase 5 tiene constructor/auditoría/preview/UI de solo lectura implementados, pero su auditoría y preview con Drive/Spreadsheet reales siguen pendientes de Beta; fase 6 está completada.
+- Búsqueda agrupada `GP-UX-SEARCH-MODEL-GROUPING-01`: 21/21 focalizada y regresión integral aprobada; solo prueba visual de navegador pendiente. Optimización ADMIN/WRITE y reserva idempotente de vehicleId: código y regresión local completados; pruebas reales de Script IDs, concurrencia y Spreadsheet aislado pendientes.
+- Hallazgo de alcance: el código actual contiene `handlePreviewCortesImageOrganizer_` (solo lectura, `writePerformed:false`, `canApply:false`). Existe `handleApplyCortesImageReconciliation_`, pero es una función distinta para reconciliar referencias vacías y no implementa movimientos/renombrados del organizador. No debe reutilizarse ni confundirse con Safe Apply.
+- Safe Apply permanece SIN IMPLEMENTAR. La tarea depende explícitamente de auditar ADMIN en Beta, generar una auditoría Drive nueva y revisar el preview completo (rutas, nombres, extensiones, referencias, ACL, duplicados y conflictos). No se realizaron movimientos, renombrados, borrados, restauraciones, despliegues ni cambios en Drive/Spreadsheet.
+- Preparación Beta documentada: verificar repo/rama/árbol limpio y sincronizar solo mediante `fetch` + `pull --ff-only` al inicio de `lista_beta_parte1.txt`; Coordinator primero y FEEDBACK después, según `Services/COORDINATOR_SETUP.md`. No se dispone en esta sesión de checkout local, clasp, Script IDs ni mecanismo autorizado de despliegue; por tanto no se inventaron IDs ni se ejecutaron operaciones remotas.
+- Siguiente tarea: habilitar/acceder al entorno Beta autorizado y verificar Script IDs/deployments; ejecutar auditoría y preview de solo lectura. Solo tras aprobar el manifiesto real, diseñar e implementar Safe Apply por lotes idempotentes con verificación, manifiesto y rollback.
+
+
+[2026-11-20 · pruebas del constructor del organizador] Se incorporó `JS/Tests/CortesImageOrganizerTargets.mjs` al runner integral para validar rutas/nombres/códigos y bloqueos del constructor de destinos Cortes/LogosMarca. Ocho escenarios PASS. CI `44768089834` SUCCESS: 221 suites, 2,743 pruebas aprobadas, 0 fallos; health read-only `44768090013` SUCCESS. La primera ejecución falló por un dato de prueba bloqueado por el clasificador; se corrigió el fixture, sin cambiar código productivo. El preview real de Drive/Spreadsheet sigue pendiente de Beta; Safe Apply permanece condicionado a su aprobación. Sin despliegues ni operaciones Drive/Spreadsheet.
+
+
+[2026-11-20 · cierre pruebas del organizador y estado de acceso Beta] HEAD `d2797d02b35b9acade57d392eff2cefc9b277698`; CI `44768324636` SUCCESS: 221 suites, 2,743 pruebas, 0 fallos; `CortesImageOrganizerTargets` 8/8; health `44768324683` SUCCESS. Pages `44768323927` seguía ejecutándose. Se confirmó que Google Drive está deshabilitado por administración y no hay integración Apps Script disponible; no se ejecutaron deployments ni operaciones Drive/Spreadsheet. Safe Apply permanece condicionado a auditoría/preview real aprobado en Beta.
+
+
+[2026-11-20 · cierre de reconciliación y cobertura de preview] Se reconciliaron Tareas_Activas/checkpoint con el estado real; se añadieron pruebas puras para el constructor de destinos del organizador (8/8). HEAD documental previo `f66108109a43acc304e4749c056ca81eb0764423`: CI `44768516802` SUCCESS, 221 suites, 2,743 pruebas, 0 fallos; health `44768516938` y Pages `44768516088` SUCCESS. El acceso Beta no está disponible: Google Drive connector deshabilitado por administración y no se encontró integración Apps Script. Safe Apply permanece sin implementar hasta aprobar preview real. Sin despliegues ni cambios Drive/Spreadsheet.
+
+
+[2026-11-20 · Safe Apply organizador — primitivas de preparación] Se añadieron a `JS/Services/admin.js` funciones puras para congelar manifiestos de aplicación con confirmación/digest/referencias verificadas, clasificar reintentos idempotentes y generar rollback inverso sujeto a verificación del destino. Se agregó `JS/Tests/CortesImageOrganizerApplyPlan.mjs` (14 escenarios) y se registró en `JS/Tests/RunServiceTests.mjs`. No se añadió todavía un ejecutor de mutaciones Drive ni registro durable; no se realizaron operaciones Drive/Spreadsheet ni despliegues.
+
+
+[2026-11-20 · Safe Apply: ejecutor Drive, ledger durable y rollback] Se amplió JS/Services/admin.js con applyCortesImageOrganizer y rollbackCortesImageOrganizer. El ejecutor vuelve a generar el preview, exige confirmación/digest vigente y procesa lotes de hasta 10 archivos; resuelve carpetas, verifica ACL expuestas por DriveApp, detecta colisiones, mueve/renombra y confirma por lectura posterior. Cada operación mantiene un ledger individual verificado en ScriptProperties, con estados de procesamiento, completado, rollback y revisión manual; el lock se limita a las transiciones del ledger y falla rápido ante contención. El rollback ejecutable solo actúa si el archivo conserva el estado exacto de destino y verifica la restauración. Se añadieron CortesImageOrganizerExecutor.mjs (9/9) y su integración al runner; se amplió ACTION_TO_SERVICE_MAP. CI 44784511516 SUCCESS: 223 suites, 2,766 pruebas, 0 fallos; health 44784509991 y Pages 44784509701 SUCCESS. Sin despliegue Apps Script ni operaciones Drive/Spreadsheet reales; el ejecutor se probó con adaptadores simulados. La inspección real de ACL heredadas y la aplicación/rollback en Beta siguen pendientes.
+
+
+[2026-11-20 · Safe Apply: controles de UI] Se añadieron en index.html los botones para aplicar una selección aprobada y revertir el último lote. JS/Frontend/ui.js muestra casillas solo para propuestas ready, limita la selección a 1–10 archivos de una misma página y exige confirmación interactiva antes de llamar applyCortesImageOrganizer. La solicitud envía auditoría, offset, digest y IDs; el backend vuelve a generar el preview antes de aceptar. Se integró rollbackCortesImageOrganizer para el último lote conservado en memoria de la sesión; después de aplicar se invalida la aprobación local y se requiere nueva auditoría/preview. Se añadió CortesImageOrganizerUiContract.mjs (10/10). CI 44785453638 SUCCESS: 224 suites, 2,776 pruebas, 0 fallos; health 44785453971 SUCCESS. Sin despliegue Apps Script ni operaciones Drive/Spreadsheet reales. La recuperación de lotes anteriores a la sesión UI y la política de retención del ledger siguen pendientes localmente; la validación visual y las ACL reales quedan para Beta.
+
+
+[2026-11-20 · Safe Apply: historial durable y retención] Se añadió getCortesImageOrganizerOperations en ADMIN y su ruta ACTION_TO_SERVICE_MAP. La consulta devuelve operaciones recientes paginadas y filtradas por owner; la UI permite seleccionar hasta 10 operaciones complete del historial para rollback, incluidas operaciones de sesiones anteriores. Se añadió retención del ledger: máximo 200 terminales, vencimiento a 180 días y máximo 250 registros totales; processing/needs_review se preservan y la saturación bloquea nuevas operaciones. Pruebas CortesImageOrganizerLedger 6/6 y UI contract 13/13. CI 44786209320 SUCCESS: 225 suites, 2,785 pruebas, 0 fallos; health 44786209315 SUCCESS. Pages 44786207568 estaba en ejecución al registrar. Sin despliegue Apps Script ni acceso/escritura en Drive/Spreadsheet productivos.
+
+
+[2026-11-20 · Safe Apply: reservas atómicas] ADMIN ahora reserva de forma atómica las transiciones del ledger para apply y rollback por operationId. Se separaron lecturas de ledger (sin lock) de transiciones de propiedades (ScriptLock con espera máxima de 250 ms); las llamadas Drive permanecen fuera del lock. Las solicitudes competidoras no ejecutan movimientos duplicados. La contención previa a la reserva se informa como retry sin crear estados falsos; si falla la persistencia final después de un movimiento, se inspecciona Drive y se reconcilia el ledger. Pruebas focalizadas: ApplyPlan 14/14, Executor 17/17, UI 13/13 y Ledger 6/6. CI integral 44791334640 falló en dos contratos de concurrencia de aportes (AdminVehicleIdOutsideLock y AdminSupplementaryUploadOutsideLock), que corresponden a la tarea nueva registrada y no se modificaron aquí. Health read-only 44791334834 SUCCESS. Sin despliegue ni operaciones reales de Drive/Spreadsheet.
+
+
+[2026-11-20 · Vistos recientes y claves de aportes] Se adelantó la hidratación de actividad local antes de showApp para que Vistos recientemente lea IndexedDB/cache en paralelo con el arranque del catálogo, sin llamadas remotas adicionales. Los modales de apertura/alimentación y el stage 3 de add_cortes ahora envían un opId estable para que la clave de imagen no use el fallback legacy. Pruebas: RecentlyViewedCarousel 1/1, SupplementaryImageOperationIdContract 8/8. CI 44793849152 SUCCESS: 227 suites, 2,802 pruebas, 0 fallos; Health 44793849459 SUCCESS. La auditoría confirma que la idempotencia por vehículo/operación no bloquea vehículos distintos; queda por proteger la reserva del mismo vehículo entre usuarios y conservar en Imagenes_Reemplazadas las imágenes que no puedan entrar por límite/conflicto, además de completar el flujo de alta desde Feedback.
+
+2026-11-20 — Integración inicial del diario de cargas en WRITE
+- JS/Services/write.js: el flujo de carga con locks breves anexa eventos reserved y pending; la vinculación anexa linked. ImageUploadLedger continúa manteniendo compatibilidad con ADMIN y conserva el control de estado actual.
+- JS/Tests/ImageUploadEventJournal.mjs: se amplía la cobertura del adaptador de transiciones.
+- Validación CI HEAD cb496602f788c3fe4665cb0a193213a6803d52ab: 231 suites, 2,850 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- No se retiró ScriptLock.waitLock(5000), no se desplegó Apps Script y no se modificaron datos productivos.
+2026-11-20 — Reconciliación ADMIN del journal append-only de imágenes
+- JS/Services/admin.js: lectura y proyección de ImageUploadEvents; detección de tokens en revisión; inclusión de operaciones no presentes en ImageUploadLedger; confirmación mediante nuevas transiciones append-only; compatibilidad histórica conservada.
+- JS/Tests/AdminImageUploadEventReconciliation.mjs: cobertura de lectura, proyección, conflictos y append; JS/Tests/RunServiceTests.mjs registra la suite.
+- Validación CI HEAD 998f267f50cc29442a609ff8be2a88b3fce0c1d7: 232 suites, 2,854 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- Una ejecución inicial falló por un fixture de prueba sin encabezado de hoja; se corrigió el fixture y la repetición pasó. No fue un fallo de lógica productiva.
+- No se desplegó Apps Script ni se modificaron datos productivos. ImageUploadLedger y waitLock(5000) siguen vigentes en WRITE.
+2026-11-20 — WRITE cambia el flujo principal de imágenes a ImageUploadEvents
+- JS/Services/write.js: uploadImageToDriveWithShortLedgerLocks_ ahora usa ImageUploadEvents como fuente primaria; reserva, pending y linked se anexan al journal; el flujo principal de vinculación deja de actualizar ImageUploadLedger y no utiliza withImageUploadLedgerLock_.
+- Se verifica la unicidad de operationKey frente a token/contenido distinto y la proyección temporal de estados. Varios fileId o identidades divergentes quedan requires_review.
+- JS/Tests/ImageUploadEventJournal.mjs, AdminImageUploadEventReconciliation.mjs, WriteDriveOutsideLock.mjs y AddSupplementaryInfoIntegrity.js amplían la cobertura del contrato.
+- CI HEAD ee186b51a4274e6f28623f8fcf859d9397bed055: 232 suites, 2,858 pruebas aprobadas, 0 fallos; health read-only SUCCESS.
+- Queda pendiente Beta/integración real de carreras Drive/Sheets y retirada de la ruta legacy. No se desplegó Apps Script ni se modificaron datos productivos.
+
+2026-11-20 — P0: proyección append-only de VIN y metadatos
+- JS/Services/catalog.js: proyecta vehicleData de aportes de corte solo en campos vacíos y añade vinPrefix a la colección VIN del vehículo correcto.
+- Se detectan colisiones entre VIN base y eventos pendientes de diferentes vehículos; eventos conflictivos quedan como candidatos vin_conflict y no se aplican. Capacidad agotada conserva el corte y expone el VIN como vin_capacity_full.
+- JS/Tests/VehicleContributionProjection.mjs: casos de metadatos, VIN, colisión entre eventos, colisión con VIN existente y capacidad.
+- CI 44813372422: 232 suites, 2,862 pruebas, 0 fallos; health y Pages SUCCESS.
+- Se añadió una prueba de intercalado de append para VIN repetido entre dos vehículos; pendiente CI.
+- P0 sigue EN PROGRESO. No se desplegó Apps Script ni se alteraron datos productivos.
+
+
+2026-11-20 — P0: recuperación y señalización de conflictos tardíos
+- WRITE checkOperation detecta colisiones VIN en operaciones recuperadas y devuelve candidateReviewPending/vinConflictPending.
+- UI refresca catálogo antes de notificar y comunica candidatos asociados al opId aunque el conflicto se haya detectado después de la primera respuesta.
+- Pruebas: WriteContributionAppendConcurrency 7/7; WriteContributionRecovery 9/9; VehicleExpansionDetailRefresh amplía cobertura de conflictos tardíos. CI 44814069582: 232 suites, 2,865 pruebas, 0 fallos; health SUCCESS.
+- Pendiente: vista ADMIN y resolución append-only auditable; integración Beta real de Sheets/Drive. P0 sigue EN PROGRESO.
+
+
+2026-11-20 — P0: cierre de regresión local de concurrencia y recuperación tardía
+- Confirmado harness intercalado de VIN duplicado entre vehículos: ambos eventos se conservan como candidatos y ninguno se proyecta.
+- checkOperation y UI recuperan y comunican candidatos/conflictos tardíos.
+- CI a96a17e1b363b9d342c85e02c41fa4e4d70d30a6: 232 suites, 2,865 pruebas, 0 fallos; health read-only y Pages SUCCESS.
+- Pendiente: revisión/resolución ADMIN append-only, idempotencia de uploads suplementarios, Beta con servicios y datos aislados, fallos parciales Drive/journal y consumidores legacy.
+- Sin despliegue Apps Script ni cambios en datos productivos.
+
+
+2026-11-20 — ADMIN: consulta de candidatos append-only
+- Nueva acción ADMIN getVehicleContributionCandidates, exclusiva de Desarrollador y solo lectura; obtiene la proyección actual de CATALOG con forceRefresh, devuelve candidatos ordenados y limitados.
+- Nueva prueba AdminVehicleContributionCandidates 6/6, integrada en RunServiceTests.
+- CI b75523bdf0039f191daa42801e5b51b5afdb68d1: 233 suites, 2,871 pruebas, 0 fallos; health SUCCESS.
+- Pendiente UI y resolución append-only auditable mediante supersedesEventId. Sin despliegue ni cambios productivos.
+
+
+2026-11-20 — Idempotencia durable de imágenes suplementarias
+- WRITE mantiene una clave estable por opId/vehículo/campo; los reintentos con el mismo contenido reutilizan el recurso ya reservado/proyectado y el contenido diferente para la misma clave se rechaza antes de crear otro archivo.
+- Se conserva ImageUploadEvents como fuente primaria del flujo principal; el evento de aporte se anexa antes de marcar las imágenes linked. Los archivos que no alcanzan el vínculo permanecen recuperables mediante el journal/reconciliación.
+- JS/Tests/AddSupplementaryInfoIntegrity.js amplía la cobertura de autenticación, orden de persistencia, ausencia de locks, idempotencia de operationKey y reutilización de fileId/archivo temporal.
+- CI f7e9730548047f2cb14548c2e263161649a482c7: 233 suites, 2,877 pruebas aprobadas, 0 fallos; health read-only y Pages SUCCESS.
+- La integración real de Drive/Sheets, fallos parciales y respuesta perdida permanece pendiente de Beta aislada. Sin despliegue ni cambios productivos.
+
+ 
+2026-11-20 — Revisión ADMIN de aportes vehiculares
+- Se añadió resolución append-only con supersedesEventId, hash SHA-256, actor confiable, requestId idempotente y exclusión mutua para evitar doble resolución.
+- CATALOG reconoce sustituciones válidas sin editar ni eliminar eventos históricos; resoluciones accepted/retracted actualizan la proyección y conflictos múltiples quedan expuestos para revisión.
+- Se incorporó panel Desarrollador para consultar candidatos, aceptar, corregir payload JSON o descartar; el contenido se renderiza con nodos DOM/textContent.
+- Archivos: JS/Services/admin.js, JS/Services/catalog.js, JS/Frontend/api-config.js, JS/Frontend/ui.js, index.html, JS/Tests/VehicleContributionProjection.mjs y JS/Tests/RunServiceTests.mjs.
+- Validación local y CI pendientes al momento de registrar este cambio.
+
+
+2026-11-20 — ImageUploadEvents y revisión ADMIN append-only
+- WRITE: uploadImageToDrive y markImageUploadLinked usan el journal ImageUploadEvents por defecto; se retiraron helpers/rutas de escritura ImageUploadLedger y la espera waitLock(5000). Las filas históricas permanecen disponibles en ADMIN.
+- ADMIN: nuevas cargas y vínculos usan ImageUploadEvents con reserva, pending, linked, validación de metadatos y recuperación file_missing. El reconciliador legacy abre ImageUploadLedger en solo lectura, valida encabezados/tokens y no migra ni reescribe registros históricos automáticamente.
+- ADMIN de AportesVehiculo: panel de revisión y acciones aceptar/corregir/descartar; resolución append-only con supersedesEventId, actor confiable, SHA-256, idempotencia requestId y protección contra doble resolución. CATALOG soporta correcciones encadenadas y conflictos explícitos.
+- Pruebas CI HEAD 6466a941f9f8329a551e99e166ba647c66cb24f1: 236 suites, 2,922 pruebas, 0 fallos; health read-only y Pages SUCCESS.
+- Pendiente: integración real Beta aislada para concurrencia Drive/Sheets, fallos parciales, respuesta perdida y revisión visual del panel.
+
+
+2026-11-20 — Cierre local de versionado in-modal por campo y actualización de contratos
+- JS/Services/admin.js, JS/Services/catalog.js y JS/Frontend/ui.js: las ediciones del Desarrollador se registran como eventos vehicle_update append-only con actor, hash, expectedCurrentValue y expectedSourceEventId; CATALOG proyecta versiones y conflictos por campo. Incluye colección VIN y resolución administrativa de candidatos sin mutar eventos anteriores.
+- JS/Tests/AdminVehicleFieldVersioning.mjs y AdminVehicleContributionResolution.mjs cubren idempotencia, eventos fuente, correcciones y descarte; se actualizaron AdminVehicleFolderSyncOutsideLock.mjs, MutationLockContention.mjs y AdminImageReplacementCompensation.js para verificar el contrato vigente append-only en vez de patrones legacy.
+- CI 44825733130 SUCCESS: 237 suites, 2,945 pruebas aprobadas, 0 fallos. Health read-only 44825733095 SUCCESS. Pages 44825733187 en ejecución al momento del registro.
+- No se desplegó Apps Script ni se modificaron Sheets/Drive productivos. Validaciones de concurrencia real, Drive/Spreadsheet y UI navegador quedan diferidas a Beta aislada.
+
+
+2026-11-20 — Auditoría de reemplazo de imágenes ADMIN
+- Auditoría.txt: se registró hallazgo de severidad alta en handleUploadAdminImage: la ruta in-modal conserva waitLock(2000), ledger mutable AdminImageUploads y escritura directa activeCell.setValue, sin evento vehicle_update ni versión fuente.
+- checkpoint.md: se dejó continuidad en la migración de uploadAdminImage hacia ImageUploadEvents + AportesVehiculo append-only. No se modificó el handler productivo en esta actividad.
+- No hubo despliegue Apps Script ni cambios en datos productivos.
+
+
+2026-11-20 — Cierre local: reemplazo de imágenes ADMIN mediante eventos append-only
+- JS/Services/admin.js: uploadAdminImage usa ImageUploadEvents para reserva/recuperación y AportesVehiculo para registrar vehicle_update; se eliminó la ruta activa de ScriptLock, AdminImageUploads mutable y escritura directa en Cortes.
+- El reemplazo captura expectedCurrentValue/expectedSourceEventId, valida vehículo único, verifica el archivo Drive y reutiliza operationKey. La URL previa se toma de la versión lógica esperada, no de Cortes materializado, que puede ir detrás de la proyección.
+- La transición linked se anexa después del evento de vehículo; los errores parciales conservan el archivo y el journal para requires_review. El historial de imágenes sustituidas conserva idempotencia por opId.
+- handleGetAdminImageUploadStatus consulta la proyección vigente de CATALOG para recuperar valor y eventId fuente; ui.js actualiza adminModalFieldVersions después de confirmar el reemplazo.
+- Pruebas específicas: AdminImageUploadDriveIsolation 7/7, AdminImageUploadLinkedRecoveryIsolation 6/6, AdminImageUploadCompensationIsolation 8/8, ADMIN compensación de reemplazos in-modal 9/9, MutationLockContention 1/1.
+- CI HEAD 9425527a3fb93ddc9256537ff534cea3872e2d7c SUCCESS: 237 suites, 2,942 pruebas aprobadas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages SUCCESS.
+- Auditoría.txt registra el hallazgo anterior como CORREGIDO LOCALMENTE. Beta AUG-160/AUG-159 y fallos reales Drive/Sheets quedan pendientes en entorno aislado. No se desplegó Apps Script ni se modificaron datos productivos.
+
+
+2026-11-20 — WRITE: retiro de UserLock en aportes a vehículos existentes
+- Se eliminó getWriteContributionLock_ y su selección UserLock/ScriptLock según vehicleId.
+- handleAddOrUpdateCut ahora enruta vehículos existentes con opId al ledger append-only AportesVehiculo sin adquirir lock; los existentes sin opId reciben WRITE_OP_ID_REQUIRED antes de bloquear.
+- El ScriptLock inmediato permanece únicamente en la creación de vehículo nuevo, para reservar el ID numérico secuencial.
+- Verificados consumidores activos: ui.js (reintento modal) y HTML/add_cortes.html transmiten opId. Contratos WriteCutPreflightOutsideLock 1/1, MutationLockContention 1/1, WriteContributionAppendConcurrency 7/7 y WriteIdAllocatorNonBlocking 5/5.
+- CI HEAD e05be7562135e18178eb9eed8f57e6196af664a3 SUCCESS: 237 suites, 2942 pruebas, 0 fallos; node --check PASS. Health read-only SUCCESS; Pages SUCCESS.
+- Se conserva pendiente la auditoría FEEDBACK y Beta de concurrencia real; no se desplegó WRITE ni se modificaron datos productivos.

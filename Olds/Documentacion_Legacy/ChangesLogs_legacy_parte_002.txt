@@ -1,0 +1,2383 @@
+- Archivo modificado: ui.js, función showApp(user).
+- La lectura del rol para mostrar dev-tools-btn utiliza únicamente user.Privilegios, propiedad que Services/Auth.js obtiene de la columna Privilegios de la hoja Users.
+- Se corrigió la expresión regular de normalización Unicode: se eliminó el doble escape que alteraba el texto del rol antes de compararlo con 'desarrollador'.
+- Se conservaron la eliminación de espacios exteriores, la conversión a minúsculas y la restricción de acceso al rol Desarrollador.
+- No se modificaron los controles de edición, Services/Auth.js, la autenticación, los endpoints ni otros elementos del menú.
+================================================================================
+
+
+================================================================================
+REORGANIZACIÓN VISUAL DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+- index.html, líneas 212-408 aprox.: se reorganizó #dev-tools-modal en cinco secciones: Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- Se conservaron los identificadores de los controles existentes; se añadieron cinco selectores radio para navegar entre secciones.
+- style.css, desde línea 2373: estilos de menú lateral, paneles, estados activos, foco de teclado y adaptación responsive.
+- ui.js no fue modificado. No se alteraron acciones, servicios, endpoints, permisos ni lógica administrativa.
+- Verificación estática: 38 IDs originales preservados, sin duplicados; HTML balanceado; CSS con llaves balanceadas.
+- La comprobación visual y funcional en el entorno live queda pendiente.
+================================================================================
+
+
+================================================================================
+AJUSTE RESPONSIVE Y ESTILO DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- index.html, bloque #dev-tools-modal: se añadieron aria-label y title a las cinco opciones de navegación (Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema), conservando IDs, radio buttons, paneles y relaciones for.
+- style.css, bloque final «PANEL DE DESARROLLADOR — ACABADO VISUAL Y NAVEGACIÓN MÓVIL»: se incorporó una presentación translúcida con bordes suaves, sombras grises discretas y estilos refinados para navegación, tarjetas, campos y botones.
+- style.css, reglas responsive de #dev-tools-modal: en pantallas de hasta 760px, la navegación muestra cinco iconos en una cuadrícula sin scroll horizontal y oculta visualmente los nombres sin retirarlos del árbol de accesibilidad.
+- style.css, .dev-console-output: se estableció fondo negro, texto blanco/claro y fuente Roboto con alternativas sans-serif.
+
+VERIFICACIÓN ESTÁTICA
+- index.html coincide con el respaldo salvo por los cinco pares aria-label/title previstos.
+- style.css conserva el contenido del respaldo y agrega únicamente el bloque de estilos de esta tarea.
+- Cinco radio buttons, cinco enlaces y cinco paneles presentes; no se detectaron IDs duplicados.
+- Llaves CSS balanceadas.
+- ui.js no fue modificado.
+- No se ejecutó navegador real; la validación visual en escritorio, móvil y PWA queda pendiente.
+================================================================================
+
+================================================================================
+DOCUMENTACIÓN — ESTUDIO DE FACTIBILIDAD DEL CENTRO DE ADMINISTRACIÓN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+- Archivo modificado: Tareas.txt.
+- Se agregó un bloque de estudio de factibilidad y planificación para el panel de desarrollador.
+- Se documentaron los hallazgos existentes en api-config.js, Services/Auth.js y Services/admin.js.
+- Se registraron requisitos transversales de seguridad, autorización backend, auditoría, límites de Apps Script, procesamiento por lotes, reversibilidad y validación.
+- Se añadieron tareas futuras para: endurecimiento de seguridad; administración de usuarios y permisos; monitor del sistema; registro de actividad y auditoría; integridad de base de datos; respaldos y restauración; administrador de errores; configuración; archivos y recursos de Drive; mantenimiento; versiones y despliegues; y resumen general.
+- Cada tarea incluye factibilidad, capacidades existentes, requisitos, plan de trabajo y criterios de aceptación.
+- Se estableció una hoja de ruta por fases y referencias oficiales de Google Apps Script.
+- No se modificaron index.html, style.css, ui.js, api-config.js ni servicios Apps Script.
+- No se crearon hojas, columnas, propiedades, activadores o carpetas en Google; no se cambiaron permisos ni despliegues.
+- No se implementó ninguna de las funciones planificadas.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN INICIAL — TAREA ADMIN 0: AUTORIZACIÓN BACKEND Y PROTECCIÓN DE CREDENCIALES
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- Services/Auth.js: se retiró el registro del payload completo y el evento que escribía contraseñas; la respuesta debug ya no expone Spreadsheet ID ni nombres de hojas.
+- Services/admin.js: todas las acciones excepto ping requieren sesión válida y privilegio Desarrollador; se unificaron los mensajes de rechazo; la respuesta debug ya no expone IDs ni nombres de hojas; se retiraron stack traces y detalles internos de la respuesta al cliente.
+- Services/feedback.js: se añadió validación backend de sesión/privilegio para Inbox, actividad, edición de PYS/tutoriales, aprobación de vídeos y subida a YouTube; el actor se obtiene de Users; la respuesta debug ya no expone IDs ni nombres de hojas.
+- api-config.js: los helpers de Inbox, actividad y aprobación/rechazo aceptan y transmiten contexto de sesión.
+- ui.js: las acciones del modal ADMIN, updateVehicleField, driveCommand, Inbox y operaciones privilegiadas de FEEDBACK transmiten userId/sessionToken.
+- youtubeUpload.js: se exige sesión para iniciar la carga; se transmite el contexto de sesión y se usa currentUser.ID.
+
+DOCUMENTACIÓN
+- Auditoría.txt: nueva auditoría inicial de ADMIN 0 con clasificación de acciones, hallazgos y limitaciones.
+- Tareas.txt: ADMIN 0 queda en implementación; se registra la autorización del plan ADMIN 0–11.
+- ChangesLogs.txt: registro objetivo de los cambios anteriores.
+
+5064S
+- No se consultó la hoja Logs desplegada; el alcance histórico de la exposición no está determinado.
+- No se modificó el almacenamiento de contraseñas; la migración compatible desde texto claro requiere diseño y pruebas.
+- No se probaron los endpoints Apps Script desplegados ni se actualizaron despliegues.
+- No se realizó merge a GPSpedia2.2.5.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN POST CODE REVIEW — TAREA ADMIN 0
+Fecha: 2026-11-04
+- Services/admin.js: la respuesta de error vuelve a incluir message para mantener compatibilidad con routeAction(); se conserva mensaje y se mantienen excluidos stack traces y detalles internos.
+- Services/feedback.js: getActivityLogs autoriza Desarrollador, Gefe y Supervisor, en concordancia con los roles a los que ui.js muestra el botón Dashboard. clearActivityLogs permanece limitada a Desarrollador.
+- Auditoría.txt: se documentaron las observaciones de Safety & Side Effects, la reauditoría y las correcciones.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ENDPOINTS — ADMIN Y FEEDBACK
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVO MODIFICADO: api-config.js
+- API_ENDPOINTS.ADMIN: se sustituyó la URL del servicio ADMIN por la URL de despliegue proporcionada.
+- API_ENDPOINTS.FEEDBACK: se sustituyó la URL del servicio FEEDBACK por la URL de despliegue proporcionada.
+- No se modificaron ACTION_TO_SERVICE_MAP, routeAction(), helpers ni otros endpoints.
+================================================================================
+
+================================================================================
+DOCUMENTACIÓN — CREACIÓN DE CHECKPOINT Y REGLA DE CONTINUIDAD
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+- Archivo nuevo: checkpoint.md. Se documentó el estado conocido del repositorio, reglas de trabajo, historial de cambios, estado parcial de ADMIN 0, endpoints configurados y siguiente punto de continuación.
+- Archivo modificado: Proceso de desarollo.md. Se incorporó la obligación de crear/actualizar checkpoint.md antes de iniciar la auditoría de cada tarea y de actualizar su estado final como último paso de documentación, inmediatamente antes del único commit.
+- Archivo modificado: Auditoría.txt. Se registró la revisión y el alcance del cambio documental.
+- Archivo modificado: Tareas.txt. Se registró la incorporación de la regla y el checkpoint de continuidad.
+- No se modificó código de la aplicación, lógica funcional, endpoints ni despliegues.
+================================================================================
+
+
+================================================================================
+ADMIN 0 — REMEDIACIÓN DE REGISTROS SENSIBLES EN AUTH
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+- Services/Auth.js, doGet(): la respuesta debug deja de devolver Spreadsheet ID y nombres de hojas; informa únicamente estado disponible.
+- Services/Auth.js, doPost(): el registro de la solicitud conserva la acción, pero deja de serializar request.payload, que contiene la contraseña durante login.
+- Services/Auth.js, handleLogin(): se elimina el registro del nombre de usuario y el evento que escribía la contraseña almacenada y la recibida en claro.
+- No se modificaron Services/users.js, el esquema de Users, la comparación de contraseñas, los tokens ni la lógica de sesiones.
+- No se accedió a la Spreadsheet, no se inspeccionó la hoja Logs y no se actualizaron despliegues Apps Script.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN DE AUTORIZACIÓN Y ALCANCE DE PURGA DE LOGS
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- api-config.js, línea 9: se actualizó API_ENDPOINTS.AUTH con la URL proporcionada.
+- api-config.js, línea 24: se registró clearSensitiveLogs en ACTION_TO_SERVICE_MAP como acción del servicio FEEDBACK.
+- api-config.js, líneas 101–108: clearActivityLogs transmite keepLastWeek, userId y sessionToken; se añadió el helper clearSensitiveLogs.
+- ui.js, línea 8: se importó clearSensitiveLogs.
+- ui.js, bloque btn-admin-clear-activity-logs (desde línea 3681): se obtiene la sesión con getDeveloperSessionPayload() y se envía a las dos operaciones; la confirmación aclara el alcance de cada hoja.
+- Services/feedback.js, línea 80: se añadió la referencia a la hoja Logs.
+- Services/feedback.js, líneas 165 y 254: se protegió la acción con el rol Desarrollador y se conectó al router.
+- Services/feedback.js, desde la línea 1232: se añadió la operación que localiza únicamente registros confidenciales en Logs, elimina filas desde abajo hacia arriba y conserva encabezados y registros no coincidentes.
+- checkpoint.md: se actualizó el estado de continuidad, alcance, validaciones pendientes y siguiente acción.
+- Auditoría.txt: se añadió la auditoría de esta tarea y sus dependencias.
+- Tareas.txt: se registró el resultado de implementación y las validaciones pendientes.
+- ChangesLogs.txt: se documentaron los archivos y bloques modificados.
+
+RESTRICCIONES CONSERVADAS
+- No se modificó la rama base.
+- No se desplegó ningún servicio Apps Script.
+- No se realizó merge.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DEL ENDPOINT FEEDBACK
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- api-config.js, línea 10: se sustituyó el valor de API_ENDPOINTS.FEEDBACK por la nueva URL proporcionada. No se modificaron ACTION_TO_SERVICE_MAP, routeAction(), helpers ni otros endpoints.
+- checkpoint.md: se registraron el estado inicial, el alcance, el resultado, las verificaciones y la validación pendiente del deployment.
+- Auditoría.txt: se documentaron los hallazgos, respaldos y limitaciones de la actualización.
+- Tareas.txt: se registró la actualización de configuración y su validación pendiente.
+
+RESTRICCIONES CONSERVADAS
+- Todos los archivos de la tarea se agrupan en un único commit.
+- No se modificó la rama base, no se realizó merge y no se desplegó Apps Script.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN DE PURGA, ORDEN DE LOGS Y CIERRE REMOTO DE SESIONES
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- Services/Auth.js, logToSheet(), línea 47: reemplaza appendRow() por inserción antes de la fila 2, escritura de las cuatro columnas y bloqueo LockService.
+- Services/users.js, doPost(), línea 76, y handleResetUserSessions(), línea 170: incorpora cierre de todas las sesiones del usuario objetivo, exclusivo de Desarrollador; elimina filas ActiveSessions en orden descendente y limpia Users.SessionToken.
+- api-config.js, ACTION_TO_SERVICE_MAP, línea 22: asigna resetUserSessions a USERS.
+- users.html, renderUserTable(), línea 412, y resetUserSessions(), línea 580: añade «Cerrar sesiones» solo para Desarrollador y excluye la cuenta propia.
+- index.html, controles de purga, línea 340: separa ActividadUsuario y Logs.
+- ui.js, listeners de purga, línea 3675: cada botón ejecuta solo su operación.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: documentación de auditoría, cambios, estado y continuidad.
+
+RESTRICCIONES
+- No se modificó GPSpedia2.2.5.
+- No se realizó merge ni despliegue Apps Script.
+- FEEDBACK no requirió cambios de código; su despliegue actualizado fue confirmado por el usuario.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ENDPOINTS AUTH Y USERS
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- api-config.js: se sustituyeron exclusivamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS por las nuevas URLs proporcionadas.
+- checkpoint.md: se registraron el estado inicial, el alcance, el resultado y las validaciones pendientes.
+- Auditoría.txt: se documentaron los hallazgos, los respaldos Git y las verificaciones.
+- ChangesLogs.txt: se registró esta actualización dentro del historial acumulado.
+- Tareas.txt: se añadió el resultado y los pendientes de validación.
+
+VERIFICACIÓN
+- Cada endpoint anterior aparecía una sola vez antes del cambio.
+- Cada endpoint nuevo aparece una sola vez después del cambio.
+- El mapa de acciones y los demás endpoints permanecen sin cambios.
+- No se verificaron los deployments Apps Script ni se realizaron llamadas funcionales.
+
+CONTROL DE VERSIONES
+Todos los cambios de esta tarea, incluidos los archivos documentales, se agrupan en un único commit. No se crean commits intermedios ni commits exclusivos para documentación.
+No se modificó la rama base, no se realizó merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN DE TRANSMISIÓN DE SESIÓN — INBOX Y DASHBOARD
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- ui.js: llamadas de openDashboard, openInbox y loadAndRenderInbox; acciones approveVideo, rejectVideo, replyToFeedback, markAsResolved y deleteFeedbackItem. Se añade getDeveloperSessionPayload() a cada solicitud protegida.
+- api-config.js: wrappers getFeedbackItems, getActivityLogs, replyToFeedback, markAsResolved, deleteFeedbackItem, approveVideo y rejectVideo aceptan sessionPayload y lo incorporan al payload enviado mediante routeAction().
+- checkpoint.md: se registra el estado inicial, el resultado, las verificaciones y las limitaciones de validación.
+- Auditoría.txt: se documentan el diagnóstico, los permisos backend, los respaldos y las limitaciones.
+- Tareas.txt: se registra el resultado de la corrección y las pruebas pendientes.
+
+CAMBIOS DE SEGURIDAD
+- Services/feedback.js y sus controles assertFeedbackSession/actionPermissions no se modificaron.
+- No se modificaron roles, endpoints, mapa de acciones ni despliegues.
+================================================================================
+
+
+================================================================================
+AUDITORÍA Y DISEÑO — ADMIN 0: MIGRACIÓN DE CONTRASEÑAS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+REGISTRO DOCUMENTAL
+- Se auditó Services/Auth.js, Services/users.js, auth.js, api-config.js y los flujos de contraseña de users.html.
+- Se documentaron las tres rutas de escritura de contraseñas en USERS y la comparación en texto claro de AUTH.
+- Se documentó la diferencia de normalización entre login y cambio de contraseña.
+- Se añadió un diseño de migración versionada compatible con los proyectos AUTH y USERS, incluyendo verificación dual transitoria, escritura de hashes, migración de cuentas inactivas por lotes y despliegue coordinado.
+- Se registró la discrepancia SESSION_LIMITS para el rol Gefe como tarea separada.
+
+CAMBIOS DE CÓDIGO
+- No se modificaron archivos de código ni datos de Google Sheets.
+- No se seleccionó ni implementó una KDF. La compatibilidad y el rendimiento de cualquier implementación siguen pendientes de prueba en Apps Script V8.
+- No se desplegó Apps Script.
+================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — INCIDENCIA backupDatabase / AUTORIZACIÓN DE SESIÓN
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+- Tareas.txt: se añadió la incidencia reportada al ejecutar backupDatabase, el hallazgo de omisión de userId/sessionToken, la acción correctiva pendiente y las restricciones de validación.
+- Auditoría.txt: se añadió el análisis de ACTION_TO_SERVICE_MAP, routeAction(), runAction(), el listener btn-admin-backup-db, doPost() y assertDeveloperSession() en Services/admin.js.
+- No se modificaron archivos de código ni datos de Google Sheets/Drive.
+- No se ejecutó ni desplegó Apps Script; no se realizó merge.
+================================================================================
+
+
+================================================================================
+CAMBIOS — PROPAGACIÓN DE SESIÓN EN ACCIONES ADMIN
+Fecha: 2026-11-05
+
+ARCHIVO MODIFICADO: ui.js
+- saveFieldSilently(), línea 101: se agrega getDeveloperSessionPayload() al payload de updateVehicleField.
+- runAction(), línea 3166: se agrega getDeveloperSessionPayload() al payload de acciones individuales.
+- runAction(), línea 3244: se agrega getDeveloperSessionPayload() al payload de cada solicitud de procesamiento por lotes.
+- executeTerminalCommand(), línea 3441: se agrega getDeveloperSessionPayload() al payload de driveCommand.
+
+ARCHIVOS AUDITADOS SIN MODIFICACIÓN
+- api-config.js: no se modificó routeAction() ni ACTION_TO_SERVICE_MAP.
+- Services/admin.js: no se modificó doPost() ni assertDeveloperSession().
+
+No se modificaron permisos, roles, endpoints ni lógica de respaldo. La validación funcional en live queda pendiente. No se desplegó Apps Script ni se realizó merge.
+================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — POLÍTICA DE NORMALIZACIÓN Y VIABILIDAD KDF (ADMIN 0)
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+- Auditoría.txt: se documentan los cuatro flujos de contraseña, la política de normalización confirmada y los riesgos de compatibilidad/rendimiento entre los proyectos AUTH y USERS.
+- Tareas.txt: se registra la validación pendiente del runtime Apps Script V8 y la preparación de una copia independiente de Spreadsheet.
+- checkpoint.md: se registra el inicio y el cierre de esta fase de viabilidad.
+- No se modificó código fuente ni datos de Google Sheets.
+- No se seleccionó ni implementó una KDF, no se ejecutó Apps Script, no se desplegó ningún servicio y no se realizó merge.
+================================================================================
+
+ 
+================================================================================
+ADMIN 0 — HASH SHA-256 CON SALT Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+Archivo: Services/Auth.js
+- Líneas 47-155: añadidas funciones de normalización, hash SHA-256 con salt, verificación de formato versionado y control de intentos con CacheService/LockService.
+- Líneas 230-349: handleLogin() verifica registros legacy/hash, migra registros legacy al primer login correcto, cuenta credenciales incorrectas y restablece el contador.
+
+Archivo: Services/users.js
+- Líneas 46-84: añadidas funciones compartidas de normalización, generación y verificación de hash.
+- Líneas 269-330: handleCreateUser() valida longitud y almacena hash; libera el bloqueo con finally.
+- Línea 378: handleUpdateUser() almacena hash al actualizar la contraseña administrativamente.
+- Líneas 445-478: handleChangePassword() verifica contraseña legacy/hash y almacena hash para la nueva contraseña.
+
+Archivos de documentación
+- Auditoría.txt, líneas 3264-3314: auditoría de alcance, hallazgos, decisión y limitaciones.
+- Tareas.txt, líneas 3362-3385: sustitución de la tarea de evaluación KDF por la implementación aprobada.
+- checkpoint.md, líneas 526-605: registro inicial y cierre de ADMIN 0.
+- ChangesLogs.txt, líneas 2426-fin del archivo: registro de modificaciones de esta tarea.
+
+No se modificaron hojas de cálculo, datos productivos, endpoints, interfaz de usuario ni deployments. No se realizó merge.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE URL — SERVICIOS AUTH Y USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO MODIFICADO: api-config.js
+- Línea 9: se sustituyó únicamente el URL de API_ENDPOINTS.AUTH por el endpoint proporcionado para AUTH.
+- Línea 12: se sustituyó únicamente el URL de API_ENDPOINTS.USERS por el endpoint proporcionado para USERS.
+
+COMPARACIÓN
+- Se identificaron exactamente dos líneas modificadas.
+- No se modificaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() ni las funciones auxiliares.
+- No se modificaron archivos de interfaz ni servicios Apps Script.
+
+VALIDACIÓN Y ALCANCE
+- Se verificó estáticamente que cada URL anterior aparecía una vez y fue reemplazado por el URL indicado.
+- No se ejecutaron solicitudes HTTP ni pruebas funcionales contra los deployments.
+- No se desplegó Apps Script, no se modificaron datos y no se realizó merge.
+================================================================================
+
+
+================================================================================
+NORMALIZACIÓN DE ENLACE DE RESPALDO EN RESTORE DATABASE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO: ui.js
+- Se añadió normalizeSpreadsheetBackupId() junto al flujo de restauración de base de datos.
+- btn-admin-restore-db acepta ID limpio o enlace Google Sheets con /d/ o ?id= y envía únicamente el ID extraído.
+- Se actualizó el mensaje de validación para indicar que acepta ID o enlace.
+
+ARCHIVO: Services/admin.js
+- handleRestoreDatabase() normaliza payload.backupId mediante extractDriveFileId() antes de llamar a DriveApp y SpreadsheetApp.
+- El registro de inicio utiliza el ID limpio. SPREADSHEET_ID continúa siendo el destino fijo.
+
+No se modificaron restoreDrive, api-config.js, endpoints, hojas de cálculo ni deployments.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE URL — SERVICIO ADMIN
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO MODIFICADO: api-config.js
+- Línea 15: se sustituyó únicamente el URL de API_ENDPOINTS.ADMIN por el endpoint completo proporcionado por el usuario.
+
+COMPARACIÓN
+- La comparación antes/después detectó exactamente una línea modificada: 15.
+- No se modificaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() ni las funciones auxiliares.
+
+VALIDACIÓN Y ALCANCE
+- Se comprobó que el URL nuevo aparece exactamente una vez y que el URL anterior fue sustituido.
+- La revisión estática confirma que las acciones ADMIN continúan enrutándose al servicio ADMIN.
+- No se ejecutaron solicitudes HTTP ni pruebas funcionales contra el deployment.
+- No se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
+================================================================================
+
+
+================================================================================
+VALIDACIÓN LIVE — RESTORE DATABASE CON ENLACE COMPLETO
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+- Tareas.txt: se actualiza la entrada de restoreDatabase porque el usuario confirmó que funciona al ingresar el enlace completo de Google Sheets.
+- checkpoint.md: se actualiza el estado y la continuidad, atribuyendo la confirmación al usuario.
+- Auditoría.txt: se registra el resultado y el alcance de la validación.
+- No se modificó código fuente ni configuración; no se ejecutó otra restauración, no se alteraron datos ni se realizó despliegue adicional.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — HASH DE CONTRASEÑAS Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+- Auditoría.txt: se añadió la revisión de AUTH, USERS y sus dependencias frontend, con riesgos y validaciones pendientes.
+- Tareas.txt: se añadió actualización del estado de ADMIN 0; la validación funcional continúa pendiente.
+- checkpoint.md: se añadió checkpoint inicial y cierre de la auditoría.
+- No se modificaron Services/Auth.js, Services/users.js, api-config.js ni users.html.
+- No se desplegaron servicios, no se ejecutó Apps Script, no se modificaron datos de Sheets ni se hizo merge.
+================================================================================
+
+
+================================================================================
+PREPARACIÓN DE SERVICIOS AISLADOS AUTH Y USERS — ADMIN 0
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS NUEVOS
+- Services/Test/Auth.js: copia de Services/Auth.js. Único cambio respecto al original: línea 9, SPREADSHEET_ID sustituido por el ID de la copia de pruebas (1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k).
+- Services/Test/users.js: copia de Services/users.js. Único cambio respecto al original: línea 9, SPREADSHEET_ID sustituido por el mismo ID de la copia de pruebas.
+- Services/Test/README.md: instrucciones para instalar cada servicio en un proyecto Apps Script independiente y crear deployments de prueba separados.
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se añadió la auditoría de la discrepancia de IDs, el enrutamiento y los riesgos de escritura.
+- Tareas.txt: se registra la preparación de fuentes y los deployments funcionales aún pendientes.
+- checkpoint.md: se registra el inicio y el cierre de esta tarea.
+
+CONFIGURACIÓN QUE PERMANECE SIN CAMBIOS
+- Services/Auth.js, Services/users.js y Services/admin.js.
+- api-config.js y los endpoints actualmente utilizados por la plataforma.
+- No se modificaron hojas, datos ni deployments Apps Script.
+================================================================================
+
+
+================================================================================
+CHANGE LOG — RECHAZAR NOMBRES DE USUARIO DUPLICADOS EN USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: Services/users.js
+- handleCreateUser(): normaliza Nombre_Usuario con trim() y consulta los nombres existentes antes de generar el hash o escribir una fila.
+- La comparación recorta espacios externos y convierte ambos nombres a minúsculas; una coincidencia devuelve status:'error' con el mensaje «Ese nombre de usuario no está disponible».
+- Cuando el nombre está disponible, conserva el nombre ingresado tras trim() y mantiene el flujo de hash, copia de fila y escritura.
+- Se eliminó generateUniqueUsername(), que quedó sin referencias.
+- Se conservan el SPREADSHEET_ID original, LockService, verificación de sesión, permisos, columnas y demás handlers.
+- No se modificaron users.html, api-config.js, AUTH ni otros archivos de código.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ENDPOINT — SERVICIO USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: api-config.js
+- Línea 12: se sustituyó únicamente el valor de API_ENDPOINTS.USERS por la nueva URL de deployment proporcionada por el usuario.
+- Se conservaron API_ENDPOINTS.AUTH, los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y las funciones auxiliares.
+- El archivo conserva 170 líneas; la comparación estática identifica una sola línea modificada.
+- La URL anterior aparece 0 veces y la URL nueva 1 vez en el archivo resultante.
+- No se modificaron consumidores, servicios Apps Script, hojas ni deployments.
+- No se realizaron solicitudes HTTP ni pruebas funcionales del nuevo endpoint.
+================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — PROCEDIMIENTO ÚNICO AUTORIZADO PARA COMMITS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS / CREADOS
+- Proceso de desarollo.md: se añadió al final la sección PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS. Se especifica la secuencia create_blob por archivo, un create_tree, un create_commit y update_ref con force:false y expected_sha.
+- contexto_personal.md: se creó un nuevo documento en la raíz con la misma regla operativa, prohibiciones y condiciones de detención.
+- Auditoría.txt: se documentó la localización de los documentos, el procedimiento confirmado y el alcance.
+- Tareas.txt: se registró la tarea documental y su estado.
+- checkpoint.md: se registran el inicio y cierre de la tarea.
+
+PRESERVACIÓN
+- No se eliminó ni reemplazó contenido de Proceso de desarollo.md; la nueva sección se agregó después de la última regla existente.
+- contexto_personal.md no existía en las ramas consultadas; se creó como archivo nuevo.
+- No se modificaron archivos de código, configuraciones, servicios Apps Script, deployments, datos ni la rama protegida.
+- Todos los archivos de esta tarea se agruparán en un único commit.
+================================================================================
+
+
+================================================================================
+DIAGNÓSTICO ESTÁTICO — ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-05
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se agregó una auditoría complementaria del recorrido de acceso, visibilidad por rol, inicialización de eventos, modal, contrato getReplacedImages, validación de sesión en ADMIN y diferencias entre GPSpedia2.2.5_work y GPSpedia2.2.5.
+- Tareas.txt: se agregó el resultado del diagnóstico estático, sus límites y las comprobaciones pendientes con la sesión real y el despliegue.
+
+RESULTADO OBJETIVO
+- No se modificaron archivos de código, configuraciones ni endpoints.
+- No se modificaron servicios Apps Script ni deployments.
+- No se realizaron solicitudes HTTP a servicios externos ni escrituras en Sheets o Drive.
+- No se alteraron datos ni la rama protegida.
+- El diagnóstico no confirma el rol de la cuenta del usuario ni el commit/deployment servido por la plataforma.
+================================================================================
+
+
+================================================================================
+OPTIMIZACIÓN ESTÁTICA — AUDITORÍA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: Services/admin.js
+- collectActiveDriveReferences(): se añadió el parámetro opcional includeLocations. Su valor predeterminado conserva las ubicaciones detalladas; la auditoría puede solicitar únicamente los IDs para reducir memoria.
+- Se añadieron storeAuditDriveReferenceSnapshot(), loadAuditDriveReferenceSnapshot() y clearAuditDriveReferenceSnapshot() para conservar el snapshot comprimido de IDs activos e históricos en CacheService entre lotes.
+- handleAuditDriveImagesInCortes(): ahora crea el snapshot al inicio y lo reutiliza mediante referenceCacheId en las peticiones de continuación; elimina el nuevo escaneo completo de hojas en cada lote.
+- El estado temporal se almacena en bloques de 75,000 caracteres, con límite codificado de 750,000 caracteres y expiración de 21,600 segundos. Si falta el estado, expira o excede la capacidad, la auditoría se detiene con error explícito.
+- Se redujo el límite de lote de 150 a 25 archivos y de 100 a 20 carpetas.
+- Se retiró la consulta repetitiva de ancestros por archivo y la función isFileInsideCortes(), sin consumidores adicionales en los archivos de servicio. Se mantiene la validación de carpetas del cursor y de cada subcarpeta descubierta.
+- handleDeleteReplacedImage() conserva el uso predeterminado del helper y sus ubicaciones de referencia.
+- Se mantuvieron las reglas de clasificación, la raíz Cortes, los iteradores y el contrato de respuesta.
+- No se modificaron ui.js, api-config.js, endpoints, servicios desplegados, hojas ni archivos de Drive.
+- La sintaxis JavaScript pasó la comprobación estática y la reconstrucción inversa confirmó que no hay cambios ajenos al alcance.
+- La validación funcional en Apps Script y la medición del tiempo real permanecen pendientes.
+================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — ESPECIFICACIÓN INTEGRAL DEL INVENTARIO Y GESTIÓN DE IMÁGENES SIN USO
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES MODIFICADOS
+- Tareas.txt: se añadió una nueva tarea pendiente con requisitos funcionales detallados para descubrimiento completo de imágenes en Cortes, clasificación, vistas de cuadrícula/lista, persistencia, registro en Imagenes_Reemplazadas, URLs públicos, transformación de imágenes de Google, organización en subcarpeta, lightbox, zoom y acciones de descarga/borrado/movimiento/restauración.
+- Auditoría.txt: se documentó el alcance solicitado, la existencia de tareas previas relacionadas y la limitación reportada de 14 archivos, sin atribuir una causa no verificada.
+- checkpoint.md: se registra el estado inicial y el cierre documental de esta tarea.
+
+PRESERVACIÓN Y LÍMITES
+- Se conservaron íntegramente los registros anteriores de Tareas.txt y los demás documentos.
+- No se modificó código funcional, configuración, endpoints ni servicios Apps Script.
+- No se modificaron hojas, registros, permisos, imágenes ni carpetas de Drive.
+- No se desplegó ningún servicio ni se realizó merge.
+- La nueva tarea permanece pendiente de auditoría técnica, implementación y validación funcional.
+================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — AMPLIACIÓN DE REQUISITOS DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Tareas.txt: se añadió una ampliación detallada del rediseño funcional del modal «Opciones de desarrollador», incluyendo consola global, diagnóstico de servicios, gráfica de tráfico, campo compartido para respaldos, limpieza de registros, acciones de firmas, reordenamiento de imágenes y generación de IDs.
+- Auditoría.txt: se registraron los antecedentes documentales, tareas ADMIN relacionadas, dependencias y aspectos técnicos que no fueron inspeccionados en esta fase.
+- checkpoint.md: se registran el inicio y el cierre de la tarea documental.
+
+RESTRICCIONES REGISTRADAS
+- No se modificó código, endpoints, deployments, hojas, registros, fórmulas, IDs, imágenes ni carpetas de Drive.
+- Se mantiene intacta la lógica de guardado y renombramiento de imágenes de add_corte.html y de la edición in-modal del desarrollador.
+- La retirada de fórmulas de ID, la ampliación de capacidad y la reorganización de imágenes quedan pendientes de auditoría técnica; no se ejecutaron cambios productivos.
+- La nueva especificación complementa las tareas ADMIN existentes y no las reemplaza.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — REPETICIÓN DEL INVENTARIO DE 14 ARCHIVOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se agregó la revisión estática del recorrido de Drive, paginación, cursores, snapshot de referencias, frontend, enrutamiento ADMIN y límites para identificar el deployment.
+- Tareas.txt: se agregó el resultado parcial de la auditoría y la siguiente validación funcional requerida.
+- checkpoint.md: se incorporaron el checkpoint inicial y el cierre parcial de la tarea.
+
+ALCANCE Y RESULTADO REGISTRADO
+- No se encontró un límite de 14 archivos en el código auditado; el backend usa lotes de hasta 25 archivos y el frontend continúa hasta complete:true.
+- El snapshot temporal contiene referencias activas/históricas, no el inventario de Drive.
+- La causa raíz no se determinó porque no se ejecutó el deployment ni se consultó Drive. Queda pendiente la validación funcional con métricas por lote y verificación del deployment.
+- No se modificaron archivos de código, endpoints, deployments, hojas, registros, permisos, imágenes ni carpetas de Drive.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN — TIPO MIME DEL SNAPSHOT DE AUDITORÍA DRIVE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: Services/admin.js
+- loadAuditDriveReferenceSnapshot(), línea 2867: se especificó el tipo MIME application/x-gzip al reconstruir el Blob a partir de los bytes decodificados en Base64, antes de pasarlo a Utilities.ungzip().
+- No se modificaron la serialización JSON, compresión gzip, codificación Base64, fragmentación, claves del CacheService, manifiesto, expiración, límites de lote, cursor ni recorrido de carpetas.
+- El archivo conserva 3,059 líneas. La comparación contra el respaldo exacto identificó una sola línea modificada.
+- La sintaxis JavaScript fue comprobada mediante compilación estática en V8 y no reportó errores.
+- No se ejecutó Apps Script, no se desplegó ADMIN ni se consultaron o modificaron datos de Google Sheets/Drive. La validación funcional de varios lotes hasta complete:true permanece pendiente.
+================================================================================
+
+
+================================================================================
+CAMBIO — PERSISTENCIA DEL INVENTARIO DE IMÁGENES SIN USO EN SPREADSHEET
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DE CÓDIGO PREPARADOS
+- Services/admin.js: nueva acción saveUnusedImagesInventory; validación backend; alta/actualización idempotente por ID de Drive; metadatos en columnas nuevas; filtro del origen auditoria_drive para no reclasificar el inventario como histórico.
+- ui.js: envío del inventario únicamente después de complete:true; consulta persistente desde getReplacedImages; distinción de registros de auditoría e historial; restauración deshabilitada para imágenes sin uso y papelera limitada a registros confirmados.
+- index.html: textos del panel y modal actualizados para «Inventario e Historial».
+- api-config.js: nueva acción saveUnusedImagesInventory asignada al endpoint ADMIN.
+- style.css, add_cortes.html y Services/write.js permanecen sin cambios.
+
+RESPALDOS EXACTOS PREVIOS
+- Services/admin.js: fd53b207d27570c9109e48e7f95abab1a440e2d4
+- ui.js: 57f1830ce519f00d2e6bbfad554cee83c52b5a9a
+- index.html: b950bec0d212e3bd2c7d7a4a23f848b9a6d500eb
+- api-config.js: 885b74412784ceb15351396a23bf6120e3ee763a
+
+BLOBS FINALES DE CÓDIGO
+- Services/admin.js: 8878bf38d375e16e609fc91ec609c0c605fbb182
+- ui.js: 224249882edf86c86889dcaa17fc0f203d2c11ad
+- index.html: 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f
+- api-config.js: de3df6cfab8a7768b197b3afd2b9da9227ca8d94
+
+VERIFICACIÓN
+- Sintaxis V8 de los tres archivos JavaScript: correcta.
+- Pruebas aisladas con servicios simulados: inserción inicial, actualización sin duplicados, marcado de registros no confirmados, bloqueo por referencia activa y rechazo de restauración/papelera en estados no permitidos.
+- No se desplegó Apps Script, no se publicaron archivos frontend, no se consultó ni modificó la Spreadsheet real y no se alteraron permisos de Drive.
+- Pendiente validación funcional tras despliegue.
+================================================================================
+
+
+
+================================================================================
+CAMBIO — GESTIÓN AVANZADA DEL INVENTARIO E HISTORIAL DE IMÁGENES DESDE EL MODAL
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: CÓDIGO PREPARADO; SIN PUBLICACIÓN DE FRONTEND NI DEPLOYMENT ADMIN.
+
+ARCHIVOS DE CÓDIGO
+- Services/admin.js: tipo_registro, migración de filas, validación de clasificación, descarga, movimiento, creación/listado de carpetas, papelera segura, rollback de movimiento y bitácora ActividadUsuario.
+- ui.js: vistas lista/cuadrícula, previsualización/lightbox, descarga, movimiento, creación de carpetas, papelera y restauración histórica.
+- index.html: controles del modal, selector de carpeta y lightbox.
+- style.css: estilos responsive de vistas, tarjetas, miniaturas y lightbox.
+- api-config.js: nuevas acciones ADMIN getCortesImageFolders, createCortesImageFolder, moveReplacedImage y getReplacedImageDownloadUrl.
+
+DOCUMENTACIÓN
+- Auditoría.txt: hallazgos, decisiones, seguridad, pruebas y límites.
+- Tareas.txt: cierre de esta subtarea y publicación/validación live pendiente.
+- ChangesLogs.txt: registro de archivos, respaldos y blobs finales.
+- checkpoint.md: estado final antes del commit.
+
+RESPALDOS EXACTOS PREVIOS
+- Services/admin.js: 8878bf38d375e16e609fc91ec609c0c605fbb182
+- ui.js: 224249882edf86c86889dcaa17fc0f203d2c11ad
+- index.html: 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f
+- style.css: 1f459058d5d418ab598917d60fa9c12489aa4de0
+- api-config.js: de3df6cfab8a7768b197b3afd2b9da9227ca8d94
+- Auditoría.txt: 83b9c3a8ac53acd3115d7e00955b7504bcd3e396
+- ChangesLogs.txt: 537246f7573420b379b48d80fee54b5873b2c04f
+- Tareas.txt: 30214a4bf50ad0be74e7748a350b1edbc2d9f851
+- checkpoint.md: 21a3a89e51c784379836eb227b7b6899ba00fb92
+
+BLOBS FINALES DE CÓDIGO
+- Services/admin.js: e798020425950351ed17999e200745b3d54fd21c
+- ui.js: 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9
+- index.html: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+
+VERIFICACIÓN
+- Sintaxis V8 correcta en Services/admin.js, ui.js y api-config.js.
+- IDs HTML únicos; controles del modal presentes; llaves CSS balanceadas.
+- Pruebas aisladas con servicios simulados: clasificación/migración, inventario e historial, mover, descargar, crear/listar carpetas, papelera, bloqueo por referencias activas, bloqueo de destino externo, preservación de ubicación original, bitácora y reversión ante fallo de escritura.
+- No se ejecutó Apps Script, no se actualizó el deployment ADMIN, no se publicó frontend, no se leyó ni modificó Spreadsheet/Drive reales y no se cambiaron permisos.
+- Se agruparán los nueve archivos modificados en exactamente un commit sobre GPSpedia2.2.5_work, sin merge ni cambios en la rama protegida.
+================================================================================
+
+
+================================================================================
+CAMBIO — VALIDACIÓN DE IDENTIDAD DEL COLABORADOR EN REGISTRO DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- Services/write.js: se añadieron referencias a Users/ActiveSessions y getAuthenticatedCollaborator(payload), que valida userId/sessionToken y obtiene Nombre_Completo desde Users. handleAddOrUpdateCut usa esa identidad en recuperación idempotente, alta de corte en vehículo existente y alta de vehículo nuevo.
+- Services/admin.js: assertDeveloperSession devuelve fullName desde Users.Nombre_Completo; el router pasa developerContext a handleAddOrUpdateCut y el handler usa el nombre del perfil autenticado para el registro silencioso.
+- add_cortes.html: el estado de la operación conserva userId/sessionToken en memoria; las consultas checkOperation protegidas y addOrUpdateCut transmiten el contexto de sesión. Se eliminó el nombre del objeto de operación pendiente y del payload de escritura.
+- ui.js: openAddCutModal valida ID/SessionToken y los transmite a addOrUpdateCut; se eliminó el campo colaborador del payload.
+- No se modificaron columnas, esquema de Spreadsheet, endpoints ni deployments.
+================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — ALINEACIÓN DE RAMAS Y REGISTRO DE AUDITORÍA
+Fecha: 2026-11-06 | Rama de trabajo: GPSpedia2.2.5_work | Base del flujo: GPSpedia2.2.5
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Contexto de trabajo.md: sustituida la referencia obsoleta fix/pys-carousel-card-sizing-print-images; se establece GPSpedia2.2.5_work como rama de trabajo y GPSpedia2.2.5 como rama base del flujo. Se documenta que no deben crearse ramas nuevas para esta sesión.
+- contexto_personal.md: añadidas las referencias de rama vigentes y su relación con el procedimiento único Git Database API.
+- Auditoría.txt: añadida la revisión del último commit, la tarea anterior de imágenes, la implementación observada y sus pendientes.
+- Tareas.txt: añadido el estado de auditoría, la discrepancia de cutData y la tarea administrativa pendiente de protección técnica de la rama base.
+- checkpoint.md: añadidos checkpoint inicial y cierre de la actualización documental.
+
+RESPALDOS ORIGINALES (BLOB SHA)
+- Contexto de trabajo.md: dfd9220c3bfad4dd0b574ab7376f2a46ba36016f
+- contexto_personal.md: 0354de5a31116ccd08f7764bee15df27d8baf3c3
+- Auditoría.txt: 8fe372b0d70e5fafd3cb214299d06ca70e0e1ef9
+- Tareas.txt: 4c9dc917acf79c5bc5f86d67e642de5e6276a138
+- ChangesLogs.txt: 61105bb4cf726fae7408bba3476746c466203939
+- checkpoint.md: 2582c5b1e33bef3513ec0d9e04c2c3842616ef32
+
+VERIFICACIONES
+- HEAD de trabajo confirmado antes de escribir: 36196020f618270693e3beeed0d03392b21d0c9e.
+- HEAD de base confirmado antes de escribir: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se modificó código de aplicación, servicios Apps Script, endpoints, hojas, archivos de Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni despliegues.
+- Se conservaron los registros históricos y se añadieron entradas al final de los documentos de trazabilidad.
+================================================================================
+
+
+================================================================================
+CAMBIO — CONSOLIDACIÓN DE FUENTE DE PRUEBAS AUTH/USERS
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO DE CÓDIGO
+- Services/Test/users.js: sincronizado con la versión validada de la rama GPSpedia2.2.5_auth-users-test. Conserva el ID de Spreadsheet de pruebas y rechaza nombres de usuario duplicados después de trim() y sin distinguir mayúsculas/minúsculas, antes de generar el hash o escribir la fila. Se elimina la lógica de generación automática de sufijos.
+
+ESTADO DE LOS SERVICIOS PRODUCTIVOS
+- Services/Auth.js y Services/users.js ya contienen las implementaciones de hash, compatibilidad legacy, migración progresiva, límite de intentos, rutas de escritura hash y rechazo de duplicados. No se modificaron en esta tarea.
+- api-config.js y los endpoints live permanecen intactos.
+
+VERIFICACIÓN Y LÍMITES
+- Comparación estática de los servicios productivos con sus fuentes de prueba: la lógica funcional de AUTH coincide; la lógica funcional de USERS coincide después de normalizar el ID de Spreadsheet.
+- La fuente de prueba de USERS queda alineada con el código validado en la rama hija.
+- Las pruebas de alta, hash, inicio de sesión y rechazo de duplicados constan como confirmadas por el usuario en el historial de la rama hija.
+- No se ejecutó Apps Script, no se desplegaron AUTH/USERS, no se realizaron solicitudes HTTP ni se modificaron hojas reales.
+- La matriz funcional consolidada posterior a los despliegues continúa pendiente.
+================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — PROCEDIMIENTO DE COMMITS GIT DATABASE API
+Fecha: 2026-11-06
+Archivo: Proceso de desarollo.md
+Sección: PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS, apartado 1, paso 3.
+
+Se añadió la estructura requerida para cada elemento de tree_elements (path, mode, type y sha), se especificó type="blob" y el modo habitual 100644 para archivos regulares, y se aclaró que debe crearse un único árbol después de completar todos los blobs, usando como base el árbol del HEAD confirmado.
+================================================================================
+
+
+================================================================================
+CAMBIO — LÍMITES DE SESIONES Y CIERRE ÚNICO DE LA SESIÓN MÁS ANTIGUA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+- Services/Auth.js: límites actualizados a Desarrollador Infinity, Gefe 10, Jefe 3, Supervisor 3, Técnico 2 y Técnico exterior 1; fallback explícito con ??.
+- Services/Auth.js: se reemplaza el cálculo de múltiples eliminaciones por la selección de oldestSession (menor rowIndex) y una sola llamada deleteRow.
+- Services/Auth.js: si deleteRow falla, se registra el error y se interrumpe el login antes de generar o anexar otra sesión.
+- Services/Test/Auth.js: misma lógica; se conserva el ID de Spreadsheet de pruebas.
+- Sin cambios a USERS, endpoints, api-config.js, esquema o IDs.
+================================================================================
+
+
+================================================================================
+CAMBIO — SERIALIZACIÓN DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+- Services/Auth.js: se protege con LockService.getScriptLock() la secuencia de lectura, conteo, eliminación, actualización de token y appendRow() de ActiveSessions.
+- Services/Auth.js: se difiere el registro de resultados y errores hasta después de liberar el bloqueo para evitar reentrada de logToSheet().
+- Services/Test/Auth.js: se replica la misma sección crítica conservando el ID de Spreadsheet de pruebas.
+- Se conserva el comportamiento de límites y selección de la sesión antigua por menor rowIndex.
+- No se modifican endpoints, USERS, frontend, esquema ni deployments.
+================================================================================
+
+
+================================================================================
+CAMBIO — INDICADOR DE TESTIGO Y ALINEACIÓN DEL ALTA DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DE CÓDIGO
+- Services/write.js: se añadió ensureTestigoColumns() para comprobar los encabezados activaTestigo1/2/3 y agregar al final únicamente los ausentes. La comprobación usa ScriptLock. handleAddOrUpdateCut() actualiza los índices dinámicos y guarda el indicador en el slot seleccionado, también en la ruta de recuperación por opId.
+- Services/admin.js: se añadió ensureTestigoColumns() y se invoca desde handleAddOrUpdateCut() aprovechando el ScriptLock ya adquirido por el handler. Se guarda el indicador para altas existentes, nuevas y recuperadas.
+- Services/catalog.js: se añadió getCortesColumnMap() para localizar las columnas nuevas por sus encabezados; handleGetCatalogData() incorpora el indicador y lo desplaza junto con cada corte durante el ordenamiento por votos.
+- ui.js: openAddCutForModelModal() envía las propiedades que esperan WRITE y ADMIN, incluyendo imgCorte1 y activaTestigo1. La construcción del detalle y exportVehiclePrintSheet() leen el campo nuevo y muestran el aviso.
+- add_cortes.html: el envío de addOrUpdateCut incluye el valor de testigoMotor almacenado en la operación pendiente.
+
+DOCUMENTACIÓN
+- Auditoría.txt: se añadió la auditoría del contrato, rutas WRITE/ADMIN, lectura CATALOG, persistencia local y reordenamiento de cortes.
+- Tareas.txt: se registró la implementación estática y las pruebas pendientes del despliegue conjunto.
+- checkpoint.md: se registraron checkpoint inicial y final de esta tarea.
+
+RESPALDOS ORIGINALES (BLOB SHA)
+- ui.js: ff5e0aaead741e4bb85f417a0c7c3bcb615f856b
+- add_cortes.html: ca47133bad51565d9f3a9cdf8e44f5b3bef2bfa8
+- Services/write.js: c5f87b4f3ca383b4f95f6d83625f313a44ec677e
+- Services/admin.js: 5457610252b32e0779eb7a2930534c166d8dc14e
+- Services/catalog.js: 3bb9ddf73b8aebdca9b1b5c331718f5b417213ff
+- Auditoría.txt: 02c6c6e6813fdd58f87d3bc1cce15ab30ca8ea48
+- Tareas.txt: b07989157a4f484e68f4b8b12f8001c3eb37e45f
+- ChangesLogs.txt: ce82a3e790802d8f59546bf8c14f25ece417e9ab
+- checkpoint.md: 3b79faa3319669a44ede3f277c4dd9fd3d270426
+
+DESCRIPCIÓN OBJETIVA
+- Se añadieron tres encabezados dinámicos a los mapas de columnas y se agregaron operaciones de lectura/escritura del indicador.
+- Se modificaron los nombres de propiedades enviados por los formularios para alinearlos con los handlers existentes.
+- Se añadieron rutas de propagación del checkbox del formulario inicial y del modal de detalle.
+- No se modificaron los encabezados ni las posiciones de las columnas preexistentes.
+- No se desplegaron servicios ni se ejecutaron pruebas funcionales externas.
+================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — DIAGNÓSTICO DE ACCESO AL INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó una auditoría complementaria del acceso al panel, visibilidad por rol, navegación de pestañas, listeners, modal, sesión, enrutamiento ADMIN y diferencias con GPSpedia2.2.5.
+- Tareas.txt: se agregó el resultado del diagnóstico estático y la verificación real que continúa pendiente.
+- checkpoint.md: se registraron el checkpoint inicial y el checkpoint final de esta tarea.
+
+RESPALDOS DE LOS DOCUMENTOS ANTES DE EDITAR (BLOB SHA)
+- Auditoría.txt: 73cd5077723c2bc8323cde2c89fe077c704dfd4e
+- Tareas.txt: 24919b29043629a2357f37aa7b709aee39f38be4
+- ChangesLogs.txt: 94976e07688d5fdbed7cfc3e5a0b83c4115b0be9
+- checkpoint.md: e8e949a2cbe53575332294cefdae386eb8c71905
+
+DESCRIPCIÓN OBJETIVA
+- Se añadieron registros al final de los documentos históricos; no se eliminaron ni reemplazaron entradas previas.
+- No se modificaron archivos de aplicación, endpoints, servicios Apps Script, configuraciones, hojas de cálculo ni archivos de Drive.
+- No se ejecutaron pruebas de navegador ni solicitudes HTTP al servicio ADMIN.
+================================================================================
+
+
+================================================================================
+CAMBIO — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DE CÓDIGO
+- offline.js: DB_VERSION aumenta de 3 a 4; se crea el object store adminLocalState sin eliminar stores existentes. Se añade performAdminStateOp(), que espera el cierre de la transacción, y métodos saveDriveAuditState(), getDriveAuditState(), saveReplacedImagesView() y getReplacedImagesView().
+- ui.js: openAuditDriveModal() restaura el último inventario, conserva el progreso tras cada lote, habilita continuar/iniciar nueva auditoría, contrasta los contadores de ADMIN, detecta cursores repetidos sin avance y conserva resultados cuando el cursor temporal expiró. El registro pendiente de imágenes sin uso se reintenta idempotentemente al recuperar una auditoría completa.
+- ui.js: openReplacedImagesModal() recupera y persiste la preferencia de vista lista/cuadrícula.
+- index.html: se añadieron los controles «Iniciar nueva auditoría» y «Continuar auditoría» al modal de auditoría Drive.
+- No se modificaron Services/admin.js, api-config.js, style.css, service-worker.js, endpoints ni los servicios de Apps Script.
+
+RESPALDOS ORIGINALES (BLOB SHA)
+- ui.js: 5b159ebf275fe4328050e570db9511eabc1fb89f
+- offline.js: 207d3cde37448cc20c5523b2e231e09039aee9b3
+- index.html: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+- Services/admin.js: cf2e887fd7ff5399064cbda86d0c3992d7f7b49d
+- Auditoría.txt: b28cf7caffb7f0db271620d18c26578753b68dee
+- Tareas.txt: 9c1a7f13610348bc59a56d240d3e4b1590de86a4
+- ChangesLogs.txt: dffed2460df6edc0d5d6a3190593187fea0cf835
+- checkpoint.md: a3e0eee34f53fea0268c4e67aa07b8374d992d6a
+
+VERIFICACIONES
+- Parseo estático de ui.js/offline.js correcto.
+- IDs añadidos al modal existen exactamente una vez.
+- Simulación IndexedDB confirma que el upgrade conserva los stores previos, guarda y recupera cursor/resultados y persiste la preferencia de vista.
+- Simulación de interfaz confirma auditoría nueva, reanudación, conservación ante expiración de cursor, recuperación de auditoría completa y reintento idempotente del registro de inventario.
+- No se ejecutaron pruebas funcionales en navegador/Apps Script real ni operaciones sobre Spreadsheet/Drive.
+
+DOCUMENTACIÓN
+- Auditoría.txt: se añadió el alcance, hallazgos, respaldos, decisión técnica y límites.
+- Tareas.txt: se registró el cierre estático de la subtarea y la validación funcional posterior.
+- ChangesLogs.txt: se registró el detalle objetivo de archivos y cambios.
+- checkpoint.md: se añadirán checkpoint inicial y final inmediatamente antes del único commit de esta tarea.
+================================================================================
+
+
+================================================================================
+CAMBIO — VISTA DE LISTA COMPACTA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- ui.js: renderList() ahora agrega únicamente title y statusText al bloque informativo cuando currentView es list. La vista grid conserva typeLabel, details, location, dateDetails y statusText.
+- style.css: la información de lista se presenta en fila compacta; el nombre ocupa el espacio flexible y el estado permanece como etiqueta independiente, con ajuste por wrap en pantallas estrechas.
+- Se mantienen icono de archivo, apertura de lightbox, acciones de descarga/movimiento/papelera/restauración y sus condiciones actuales.
+- No se modificaron index.html, offline.js, api-config.js, Services/admin.js, endpoints, permisos, Spreadsheet ni Drive.
+
+RESPALDOS ORIGINALES
+- ui.js: d526203409c4a0ab19b2cbd5d14be3922fef24cb
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- Auditoría.txt: 9ca8cae74f879c129dc50952f2434febd65b6b06
+- Tareas.txt: 0a416fc74a886a249f9a85aa6485315e76c66331
+- ChangesLogs.txt: bcfaa2572d6041bcd2179ae3a106f6d21fe3bd9e
+- checkpoint.md: bea0324510ce001e0b8dfc8e7e0e2c0c2f1d455d
+
+PRUEBAS AISLADAS
+- Parseo JavaScript correcto.
+- Vista lista: solo nombre y estado; sin miniatura ni metadatos; icono y acciones conservados.
+- Vista cuadrícula: miniatura y contenido informativo completo conservados.
+- Verificación inversa de cambios y balance de llaves CSS satisfactorios.
+- Validación real de navegador móvil/escritorio pendiente para la etapa de pruebas funcionales consolidada.
+================================================================================
+
+
+================================================================================
+CAMBIO — TÍTULO Y CONSOLA GLOBAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- index.html: el título de #dev-tools-modal cambia a «Opciones de desarrollador».
+- index.html: el bloque único de consola (salida, copia, terminal y progreso) se mueve fuera de los cinco paneles y queda como elemento persistente común. El encabezado visible es «>_Consola».
+- index.html: se mantienen los IDs existentes y se añaden atributos de accesibilidad al área de registro y al campo de comandos. La descripción del panel Diagnóstico se actualiza para reflejar que la consola ahora es global.
+- style.css: se agregan reglas específicas para el reparto vertical entre navegación/paneles y consola, con ajustes para escritorio, tablet y móvil.
+- ui.js y main.js: sin cambios; se conservan los consumidores y listeners existentes.
+- No se modifican endpoints, permisos, payloads, servicios Apps Script, autenticación ni datos de Drive/Spreadsheet.
+
+RESPALDOS ORIGINALES
+- index.html: 3571826a122bd80e07e41fe497d0ebca598b9f83
+- style.css: 8c3d17041cc8e9505c0e7d6ccf5ebb94b11300c4
+- ui.js: 8500f354704f685b7ef8b051469769f01cd99d52
+- main.js: e03a2293738abf78a1deb6c293ea96c6a8e0479a
+
+ARCHIVOS FINALES
+- index.html: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b
+- style.css: f418138019c1edb8608d816a057e7ee10604c619
+
+PRUEBAS AISLADAS
+- Textos exactos verificados; una sola instancia de cada ID de consola; cinco secciones presentes una sola vez.
+- Consola comprobada fuera del contenedor de paneles; listeners JS siguen apuntando a los mismos IDs.
+- Estructura del modal balanceada; CSS con llaves balanceadas.
+- index.html reconstruido desde el original con las transformaciones previstas; style.css original conservado como prefijo.
+- No se ejecutó navegador real ni se publicó frontend.
+================================================================================
+
+
+================================================================================
+CAMBIO — ROBUSTECER SNAPSHOT TEMPORAL Y VALIDACIÓN DE LOTES DE AUDITORÍA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- Services/admin.js, líneas 3362-3442: storeAuditDriveReferenceSnapshot() asigna nombres y tipos MIME explícitos al Blob JSON y al resultado gzip; registra la etapa de operación ante fallos; incorpora la clave temporal al conjunto de limpieza antes de escribirla y protege la limpieza para no sustituir el error original.
+- Services/admin.js, líneas 3417-3441: loadAuditDriveReferenceSnapshot() asigna nombre y tipo MIME al Blob gzip y fija application/json al Blob descomprimido; identifica la etapa de lectura/decodificación/descompresión y valida la estructura del snapshot antes de devolverla.
+- ui.js, líneas 4434-4444: la respuesta ADMIN debe incluir batchAnalyzed y totalAnalyzed como enteros coincidentes con los resultados; response.complete debe ser booleano.
+- Se mantienen sin cambios los tamaños de lote/cache, TTL, rutas ADMIN, autorización, clasificación de archivos, validaciones de Drive/Spreadsheet, persistencia IndexedDB y preferencia de vista.
+
+RESPALDOS ORIGINALES
+- Services/admin.js: cf2e887fd7ff5399064cbda86d0c3992d7f7b49d
+- ui.js: 8500f354704f685b7ef8b051469769f01cd99d52
+- Auditoría.txt: bba21c162a580afeb84fccbc1b6013ce76c6675e
+- Tareas.txt: b647889f18b273c154e66685424e87f10f04002a
+- ChangesLogs.txt: 12c476f3e8bf0511447766dcbcccb1ce60cf74a7
+- checkpoint.md: 28d7dbfe5a2d74e839b1f4893884ce6aacedf129
+
+ARCHIVOS FINALES
+- Services/admin.js: 9d9809f9cd3741f4147e9f5eaa57f3bad4eb75ff
+- ui.js: 302ee7f74b1509046c214739e6e378f5ee684bc2
+- Auditoría.txt: f1f47080137df9ddbcb27d372fdec0040c4a3c77
+
+VERIFICACIONES AISLADAS
+- Parseo JavaScript de admin.js y ui.js completado sin errores.
+- Simulación de almacenamiento/recuperación del snapshot completada con 2 bloques y TTL de 21,600 segundos.
+- Se comprobó que la recuperación informa estado temporal no disponible cuando falta un bloque.
+- Se simuló un error de tipo MIME durante gzip y se verificó que el mensaje identifica la etapa «compresión gzip».
+- Se verificó que el fallo de escritura limpia las claves temporales registradas.
+- Se verificó el rechazo de batchAnalyzed ausente/incorrecto, totalAnalyzed incorrecto y complete ausente.
+- No se ejecutó Apps Script real, no se accedió a Drive/Spreadsheet y no se desplegó el servicio ADMIN.
+================================================================================
+
+
+================================================================================
+CAMBIO — DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- api-config.js, líneas 37-70: nuevo registro de métricas de solicitudes POST en memoria, ventana 15 min, máximo 600 eventos, snapshot y suscripción; excluye payloads y credenciales.
+- api-config.js, líneas 74-112: routeAction() registra servicio, acción, timestamp, duración, outcome y HTTP status en un bloque finally sin modificar el contrato de petición.
+- api-config.js, líneas 184-232: checkAllServicesHealth() añade timeout independiente de 8 s, lectura del JSON debug y whitelist de metadatos seguros.
+- ui.js, líneas 3100-3300: tarjetas de estado seleccionables, vista de detalle, métricas de sesión, lista de acciones API observadas y gráfico SVG de 15 min/intervalos de 1 min.
+- index.html, líneas 257-270: contenedores de detalle y gráfico.
+- style.css, líneas 3263-3319: estilos responsive para tarjetas, métricas, lista y gráfico.
+- No se modificaron servicios backend, permisos, rutas, payloads ni esquemas de datos.
+
+RESPALDOS
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+- ui.js: 302ee7f74b1509046c214739e6e378f5ee684bc2
+- index.html: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b
+- style.css: f418138019c1edb8608d816a057e7ee10604c619
+
+ARCHIVOS FINALES
+- api-config.js: 1e7f237c6a5467b91dcc05a69ecf650089d83e93
+- ui.js: 3181a4a5109dbd5145a1373986c3fa520d094d3d
+- index.html: 33ac39d5c0ffe27f15a0cb3a3c6dec810f8f8b32
+- style.css: e100e73d7cacddb3b84bfce23966d44ad0c90896
+
+PRUEBAS AISLADAS
+- Parseo JavaScript: api-config.js y ui.js sin errores.
+- routeAction: éxito, error HTTP, error API, fallo de red y respuesta JSON inválida; evento sin payload.
+- Suscripción: notificación al recibir cada métrica.
+- Health scan: respuesta de todos los endpoints, timeout de un servicio aislado, HTTP 503 y status error reportado por backend.
+- Metadatos: spreadsheetId, driveFolderId y cacheKey excluidos.
+- HTML: IDs nuevos únicos; CSS balanceado.
+- No se ejecutaron llamadas reales a Apps Script ni pruebas de navegador.
+
+5072
+- Validar tarjetas, detalle, gráfico y actualización en navegador real.
+- Confirmar conectividad/latencia de servicios en el deployment consolidado.
+- No publicar ni desplegar en esta fase.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — CAMPO COMPARTIDO DE RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- index.html (líneas 273-285 y 293-315): se sustituyó el contenido operativo de la pestaña «Respaldos» por un acceso secundario a «Base de datos»; se añadió dentro de «Base de datos» un panel con un único campo de enlace, indicación contextual, cuatro botones de operación y controles únicos para copiar/abrir el enlace. Se retiraron los campos independientes de ID y restauración.
+- ui.js (líneas 3775-3927): se reemplazaron los listeners de campos separados por la gestión del campo compartido; se añadieron validación de la respuesta de respaldo, normalización separada de enlaces Spreadsheet/carpeta, estado de carga, mensajes de resultado, y acciones de copiar/abrir. Se conservaron las confirmaciones de restauración y el uso de runAction().
+- Services/admin.js (líneas 78-100, 524-601 y 655-737): se añadieron helpers para extraer el ID de carpeta de respaldo, comprobar ubicación directa en la raíz y validar correspondencia de URL. Los handlers de respaldo verifican el recurso generado; los handlers de restauración verifican tipo, identidad, nombre, estado y ubicación antes de modificar el destino.
+- style.css (líneas 3321-3344): se añadieron estilos para el campo compartido y su texto auxiliar.
+- api-config.js: sin modificaciones; se conserva el mapeo de las cuatro acciones a ADMIN.
+- Auditoría.txt: se añadió la revisión post-implementación, Code Review, pruebas aisladas, límites y validaciones pendientes.
+- Tareas.txt: se añadió el cierre estático de la subtarea y la siguiente acción.
+- checkpoint.md: se añadieron checkpoint inicial y final de la subtarea.
+================================================================================
+
+
+================================================================================
+2026-11-06 — LIMPIEZA DE REGISTROS: SELECTORES Y ACCIÓN ÚNICA
+================================================================================
+- index.html (líneas aproximadas 331–361): se sustituyeron las dos tarjetas independientes por una tarjeta con casillas clear-activity-logs-checkbox y clear-sensitive-logs-checkbox, selector clear-logs-option-select y botón único btn-admin-clear-selected-logs. Se añadió clear-selected-logs-status para mostrar el resultado.
+- ui.js (bloque aproximado 4002–4090): se reemplazaron los dos handlers independientes por un único handler. Se agregó validación de selección, confirmación contextual, bloqueo temporal de controles, ejecución secuencial de clearActivityLogs y clearSensitiveLogs solo cuando corresponda y presentación individual de resultados/errores.
+- style.css (bloques aproximados 2611 y 2625–2680): se añadieron reglas limitadas a #dev-tools-modal para las opciones de limpieza y el selector de retención, incluida la adaptación móvil.
+- api-config.js y Services/feedback.js: sin modificaciones.
+================================================================================
+
+
+================================================================================
+2026-11-06 — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+================================================================================
+- index.html, líneas 316–344: se reemplazaron los botones btn-recalculate-vin-signatures y btn-view-vin-signatures por las casillas recalculate-vin-signatures-checkbox y diagnose-vin-signatures-checkbox, un botón btn-admin-run-vin-actions y elementos de estado vin-actions-progress, vin-recalculate-status y vin-diagnostic-status.
+- ui.js, líneas 3929–4057: se sustituyeron los handlers onclick independientes por un único handler asíncrono. Se incorporaron validación de selección, validación de catalogData.cortes, actualización de estados por etapa, cesión de frame antes de los procesos síncronos, persistencia comprobada, diagnóstico con conteos por estado, límite de diez detalles, captura independiente de errores y bloqueo temporal de controles.
+- ui.js, bloque VIN: se sustituyeron las llamadas appendLog() por el helper local log().
+- style.css: sin cambios; se reutilizaron las clases existentes del panel de mantenimiento.
+- VinDifferentialEngine.js, api-config.js y Services/admin.js: sin modificaciones.
+- Respaldos exactos de código antes de editar (blob SHA): index.html 742df240dd7014ab51b1ccab1a6b69dd39dabf09; ui.js 2d39f6828055b1f01a34dae7c6fd3f41993c9cda.
+- Blobs finales de código: index.html 1e189df627a95e44adf40e7f50749397fa051a97; ui.js bf196d4197e12620a76407c27f422d76588b508c.
+================================================================================
+
+
+================================================================================
+2026-11-06 — AUDITORÍA INICIAL DEL GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+================================================================================
+- Se auditaron Services/admin.js, ui.js, api-config.js, index.html y el punto de integración protegido de add_cortes.html.
+- Se generaron respaldos exactos previos a edición: Services/admin.js 2dbd044f4b42a786a623d0c1599335e7d62b62ad; ui.js bf196d4197e12620a76407c27f422d76588b508c; api-config.js 1e7f237c6a5467b91dcc05a69ecf650089d83e93; index.html 1e189df627a95e44adf40e7f50749397fa051a97.
+- Hallazgos y restricciones detallados en Auditoría.txt.
+- No se modificó código de aplicación ni se realizaron operaciones en Drive/Spreadsheet.
+================================================================================
+
+
+
+================================================================================
+2026-11-06 — GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+================================================================================
+- Services/admin.js, líneas aproximadas 160–191: se añadió collectCortesImageReferences(), limitado a las ocho columnas de imagen de la hoja «Cortes», incluyendo valores, fórmulas y enlaces enriquecidos.
+- Services/admin.js, router doPost línea aproximada 502: se añadió getDriveStorage como acción ADMIN y se retiró la ruta reorganizeImagesInDrive.
+- Services/admin.js, línea aproximada 2611: recordReplacedImage() conserva el enlace completo anterior; cuando recibe solo un ID, registra file.getUrl(). No mueve físicamente el archivo reemplazado.
+- Services/admin.js, líneas aproximadas 2653–2687: se añadió handleGetDriveStorage() y se cambió handleGetReplacedImages() para devolver solo registros sin referencias activas y con estados válidos.
+- Services/admin.js, líneas aproximadas 3291–3358: el snapshot de auditoría ahora almacena JSON textual en bloques CacheService, con manifiesto y validación de longitud; se retiró Blob/gzip del snapshot para evitar el error de MIME en ese recorrido.
+- Services/admin.js, líneas aproximadas 3360–3552: el guardado de inventario y la auditoría utilizan referencias de imagen de «Cortes»; los registros cancelados/no confirmados ya no se excluyen como históricos.
+- Services/admin.js, líneas aproximadas 3553–3733: se conserva el recorrido recursivo por lotes y cursores; el handler de reorganización física fue retirado.
+- Services/admin.js, handlers de movimiento, descarga y papelera: se revalidan referencias de la hoja «Cortes» antes de operar.
+- ui.js, línea aproximada 3387: el runner por lotes ya no reconoce reorganizeImagesInDrive.
+- ui.js, líneas aproximadas 4246–4290: se añadió el monitor global con consulta inicial, refresco manual, formateo de bytes y presentación segura de valores no disponibles.
+- ui.js, líneas aproximadas 4304–4600: el gestor filtra los registros para mostrar únicamente imágenes sin uso; se conserva lista/cuadrícula, lightbox, descarga, movimiento, papelera y creación de carpetas.
+- ui.js, líneas aproximadas 4699 en adelante: la lista de auditoría no muestra imágenes en uso ni elementos no verificables; los contadores de auditoría se mantienen.
+- api-config.js, línea aproximada 32: se retiró reorganizeImagesInDrive y se añadió getDriveStorage al mapa ADMIN.
+- index.html, líneas aproximadas 396–408: se añadió el monitor global y se retiró el botón de reorganización física.
+- index.html, líneas aproximadas 476–488: se actualizó el título/descripción del gestor.
+- No se modificaron add_cortes.html, style.css ni los flujos handleAddOrUpdateCut(), uploadImageToDrive() y getOrCreateSubFolder().
+- Respaldos exactos previos a edición: Services/admin.js 2dbd044f4b42a786a623d0c1599335e7d62b62ad; ui.js bf196d4197e12620a76407c27f422d76588b508c; api-config.js 1e7f237c6a5467b91dcc05a69ecf650089d83e93; index.html 1e189df627a95e44adf40e7f50749397fa051a97; Tareas.txt e19e79ef7f1f9511d9331665e2214969a62ca2c7; checkpoint.md ac07b739ac0d7de9a3fa044d2b84df30bc570c26; Auditoría.txt 32fbc8a6974e0ef3c4a49dfbb2c173d6dc08f586; ChangesLogs.txt cadf7eebd103f26b125c02f8c942b5a9df74b86d.
+- No se desplegó Apps Script ni se modificaron archivos reales de Drive/Spreadsheet durante pruebas.
+================================================================================
+
+
+================================================================================
+ADENDA DE REVISIÓN — AJUSTES FINALES DEL MONITOR Y RETIRO DE COMENTARIO OBSOLETO
+================================================================================
+- Services/admin.js: se retiró el comentario de documentación que describía la reorganización física ya eliminada; se conservaron los contadores/helpers compartidos que siguen siendo utilizados por la creación de carpetas.
+- index.html: se aclaró que la cuota de cuenta puede compartirse con otros servicios de Google, diferenciándola del uso específico de Drive.
+- ui.js: el formateo del monitor trata null/undefined como «No disponible» y no los presenta como 0 B o 0.00%.
+================================================================================
+
+
+================================================================================
+CHANGES LOG — CONTRATO DE AGREGADO DE CORTES E IDEMPOTENCIA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+Services/write.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+- Añadido getVinColumnIndex(sheet) para resolver VIN mediante el encabezado real.
+- handleAddOrUpdateCut(): valida la columna VIN antes de escribir y registra opId después de obtener el ID del vehículo nuevo.
+- findRowByOpId(): excluye VIN por encabezado, no por posición.
+- checkVinDuplicateInSheet() y handleAddVinToVehicle(): usan la posición dinámica de VIN y rechazan operaciones si no existe el encabezado.
+
+Services/admin.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+- findRowByOpId(): excluye VIN por encabezado y permite buscar idOperacion1 en la columna 43.
+- handleAddOrUpdateCut(): registra opId en Idempotencia después de obtener el ID del vehículo nuevo.
+
+Services/catalog.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+- getCortesColumnMap(): incorpora vin únicamente cuando existe el encabezado «vin».
+
+Services/feedback.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+
+Auditoría.txt
+- Añadida auditoría del contrato UI/WRITE/ADMIN, esquema productivo e idempotencia, con respaldos, verificaciones y limitaciones.
+
+Tareas.txt
+- Añadida rectificación del supuesto desajuste de payload, estado de implementación y validaciones pendientes.
+
+checkpoint.md
+- Añadidos checkpoint inicial y cierre de la tarea, conservando el historial.
+================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — RECTIFICACIÓN DE REQUERIMIENTO VIN E IDEMPOTENCIA
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+
+Tareas.txt
+- Actualizada 11.1: trasladar idOperacion1..3 a una hoja dedicada de idempotencia; auditar y reutilizar Idempotencia solo si conserva los valores y su relación con el registro.
+- Definida la columna 43 como única columna vin; columnas 44 y 45 quedan reservadas.
+- Actualizada 11.7: todos los VIN de las versiones de equipamiento de una fila se almacenan como colección JSON en una celda. La prohibición de vin2/vin3 impide expansión automática del esquema.
+- Actualizados el resumen VIN, B34 y los pendientes para reflejar que el ajuste de esquema requiere implementación.
+
+README.md
+- Sustituida la descripción anterior de vin índice 43 por el esquema objetivo de migración de idOperacion1..3, uso de la columna 43 y reserva de las columnas 44–45.
+- Aclarado que una única columna almacena la colección JSON de VIN por versiones de equipamiento.
+
+Auditoría.txt
+- Añadidos hallazgos documentales, respaldos por SHA, riesgos y límites de verificación.
+
+checkpoint.md
+- Añadidos checkpoint inicial y cierre de esta tarea documental.
+
+ALCANCE
+- Solo documentación; sin cambios en código, Spreadsheet, deployments ni rama base.
+- La inspección de Idempotencia y la migración de datos quedan pendientes para la tarea de implementación.
+================================================================================
+
+================================================================================
+IMPLEMENTACIÓN — MIGRACIÓN DE idOperacion1..3 Y ENCABEZADO VIN
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+
+- Services/admin.js: acción protegida migrateCortesOperationIds; dry-run por defecto; confirmación explícita; validación y verificación antes de limpiar; función renameVinColumnHeader; soporte VIN JSON en flujo normal y recuperación; fallback Idempotencia_Cortes; reserva 44–45; detección de opId bajo encabezado VIN.
+- Services/write.js: fallback Idempotencia; findRowByOpId usa el resolvedor y conserva recuperación temporal de opId heredados bajo VIN; reserva 44–45; VIN JSON en altas, vehículos existentes y recuperación.
+- add_cortes.html: incluye pendingOp.formData.vin en cutData.
+- api-config.js: enruta migrateCortesOperationIds a ADMIN.
+- Tareas.txt/README.md: documentan encabezado VIN, migración, datos mezclados, reserva y estados.
+- Auditoría.txt/checkpoint.md: registran hallazgos, respaldos, pruebas y límites.
+
+VERIFICACIÓN
+Pruebas aisladas Node.js con mocks completadas para la lógica de migración, conflictos, formato inválido, reserva de columnas y colecciones JSON; no son una ejecución del Apps Script desplegado. No se desplegaron servicios ni se modificó la Spreadsheet productiva.
+================================================================================
+
+- El resolvedor de Idempotencia conserva hojas incompatibles; crea la hoja primaria si no existe y la alternativa tampoco es compatible; aborta si la primaria y la alternativa existentes son incompatibles.
+
+- Casos borde probados: opId heredado bajo encabezado VIN, preservación de VIN real, aborto por datos mezclados y resolución segura de hojas de idempotencia incompatibles.
+
+
+================================================================================
+AUDITORÍA — GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+
+Auditoría.txt
+- Añadido inventario de las rutas de generación, lectura y consumo de IDs en WRITE, ADMIN, CATALOG, FEEDBACK y frontend.
+- Registrados los riesgos de fórmulas dependientes de fila, ordenamiento de Cortes y concurrencia entre endpoints WRITE/ADMIN.
+- Documentadas las limitaciones para verificar el formato visible «V-001», el máximo actual y la capacidad ampliada sin una copia aislada de Spreadsheet.
+- Registrados SHA de respaldos exactos y las verificaciones que no pudieron ejecutarse.
+
+Tareas.txt
+- Añadido el estado de la tarea 7: auditoría estática completada; implementación bloqueada hasta validar una copia aislada y definir la asignación coordinada de IDs.
+
+checkpoint.md
+- Añadidos checkpoint inicial y cierre de auditoría de la tarea 7.
+
+ALCANCE
+- Cambios exclusivamente documentales.
+- Sin modificaciones en código, Spreadsheet, fórmulas, valores, formatos, deployments ni rama base.
+================================================================================
+
+================================================================================
+DOCUMENTACIÓN — INVENTARIO DE ESTRUCTURA DE SPREADSHEET
+Fecha: 2026-11-06
+
+Spreadsheet/GPSpedia_DB_columnas.md (nuevo; 284 líneas)
+- Añadido el inventario de 13 hojas con el número y la letra de cada columna y su encabezado exacto.
+- Se documentan únicamente nombres de hojas y encabezados; no se incluyen valores de registros.
+
+Auditoría.txt (líneas 5535–5571)
+- Añadido el alcance, resultado, controles de exclusión, respaldos y limitaciones de la auditoría documental.
+
+Tareas.txt (líneas 4375–4398)
+- Añadido el registro de la tarea documental y sus verificaciones.
+
+checkpoint.md
+- Añadidos el checkpoint inicial y el cierre de la tarea documental.
+
+ChangesLogs.txt
+- Añadido este registro de los archivos y bloques documentales incorporados.
+
+ALCANCE
+- Solo documentación del repositorio.
+- Sin cambios en código, XLSX, datos de Google Sheets, servicios, deployments o rama base.
+================================================================================
+
+================================================================================
+IMPLEMENTACIÓN — CONTROL DE MIGRACIÓN VIN Y ACTUALIZACIÓN DEL MAPEO
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+index.html (líneas 316–325)
+- Añadido panel de migración VIN con botones separados para simular y confirmar.
+
+ui.js (líneas 3937–4084)
+- Añadido control de respaldo de Spreadsheet verificado en sesión, simulación por defecto, invalidación del plan al cambiar el respaldo y confirmación explícita.
+- Se muestran contadores de migración, columnas de origen, hoja destino y resultado final.
+
+Spreadsheet/GPSpedia_DB_columnas.md (líneas 286–325)
+- Añadido el esquema objetivo de Cortes: AQ = VIN; AR/AS reservadas; AT–AV para activaTestigo1..3 bajo demanda.
+- Añadida la hoja Idempotencia con opId, vehicleId, slotIndex, timestamp y status.
+- Se conserva separado el inventario físico de la copia recibida y el esquema objetivo pendiente de ejecución.
+
+Tareas.txt (líneas 4399–4444)
+- Registrado el control de migración y la matriz de pruebas funcionales pendientes.
+- Registrada como tarea independiente la revisión del manejo de errores de recordOpId().
+
+Auditoría.txt (líneas 5572–5627)
+- Documentados el estado previo, el análisis de la copia, los controles agregados, respaldos, verificaciones y limitaciones.
+
+checkpoint.md (líneas 3799–3886)
+- Añadidos el checkpoint inicial y el cierre de esta tarea, conservando el historial previo.
+
+ALCANCE
+- No se modificaron los servicios ADMIN/WRITE ni api-config.js porque la acción y el enrutamiento ya existían.
+- No se ejecutó la migración ni se modificó ninguna Spreadsheet; no hubo despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-06 — PERSISTENCIA Y RECUPERACIÓN SEGURA DE opId
+================================================================================
+Services/write.js (líneas 216–224, 241, 355–367, 415–436, 461–495, 546–547, 941–1105)
+- Se añadió un bloqueo de script alrededor del handler WRITE y se evitó el bloqueo anidado al preparar columnas de testigo.
+- Se trasladó el registro de operación a una secuencia pending/completed: reserva antes de las escrituras de negocio y confirmación después de flush.
+- En altas nuevas se resuelve el ID de fórmula antes de escribir los datos y se reserva el opId; se agregó retirada condicionada de filas nuevas vacías cuando no se puede confirmar la reserva.
+- La recuperación completa el timestamp pendiente y actualiza el estado a completed.
+- recordOpId() valida argumentos y asociaciones, actualiza estados sin degradarlos, evita agregar filas repetidas y verifica la persistencia por lectura posterior. Los errores se propagan.
+- findRowByOpId() valida registros dedicados y asociaciones; ya no absorbe errores de lectura y mantiene compatibilidad con opId históricos.
+- handleCheckOperation() distingue operaciones pending de completed y no declara completed una reserva pendiente.
+
+Services/admin.js (líneas 1709–1856, 1892–1913, 1938–1973, 2022–2023, 2335–2476, 2804–2821)
+- Se aplicó la misma secuencia pending/completed a los flujos administrativo de vehículo existente y nuevo.
+- Se reutilizó el bloqueo de script ya presente en handleAddOrUpdateCut().
+- Se añadió recuperación del timestamp y actualización del estado después de flush.
+- Se alinearon recordOpId(), findRowByOpId() y handleCheckOperation() con el contrato de WRITE.
+
+Tareas.txt
+- Se registró el estado de implementación estática, la matriz de pruebas funcionales pendiente y los riesgos que requieren tareas separadas.
+
+Auditoría.txt
+- Se añadieron auditoría inicial, respaldos exactos, resultados de verificación, Code Review, Safety & Side Effects y limitaciones.
+
+checkpoint.md
+- Se añadieron checkpoint inicial y final de la tarea, conservando el historial previo.
+
+ALCANCE
+- No se modificaron add_cortes.html, api-config.js, Spreadsheet/GPSpedia_DB_columnas.md, endpoints, deployments, datos reales ni rama base.
+- No se ejecutaron operaciones reales de Apps Script, Spreadsheet o Drive.
+================================================================================
+
+
+================================================================================
+2026-11-06 — ENDURECIMIENTO VIN Y VALIDACIONES ADMINISTRATIVAS
+- WRITE: sesión activa y ScriptLock en addVinToVehicle; detección de duplicados dentro del vehículo/entre vehículos, rechazo de sobrescrituras y verificación de persistencia.
+- WRITE/ADMIN: conservación de posiciones vacías de colecciones JSON y asignación a slots libres.
+- ADMIN: backend valida backupId para simulación y confirmación de migración VIN; respaldo verificado asociado a usuario mediante ScriptCache.
+- ADMIN: restauración de imágenes valida URL/ID, tipo, árbol Cortes, vehículo y campo antes de retirar de papelera; rollback si falla.
+- WRITE/ADMIN: comprobación de identidad/ubicación de la carpeta raíz Cortes.
+- ui.js: envío de sesión para registrar VIN y backupId para migración.
+- Tareas.txt, Auditoría.txt y checkpoint.md actualizados.
+- Sin cambios en Spreadsheet/Drive reales, despliegues, merge ni rama base.
+================================================================================
+
+
+================================================================================
+2026-11-06 — ASIGNADOR CENTRAL Y ESTABILIZACIÓN DE IDs DE CORTES
+================================================================================
+- Services/write.js: añadido getNextCortesVehicleIdLocked(), con ScriptLock del proyecto WRITE, contador persistente en ScriptProperties, lectura de IDs existentes, detección de duplicados/valores inválidos y asignación de enteros seguros.
+- Services/write.js: las altas nuevas dejan de copiar fórmulas de ID; copian la plantilla de fila y escriben un ID numérico estático con verificación de persistencia.
+- Services/write.js: añadidos los endpoints allocateVehicleId y freezeCortesIds. La conversión de fórmulas requiere sesión Desarrollador y respaldo verificado; opera en dry-run por defecto y conserva los valores calculados y formatos de celda al confirmar.
+- Services/admin.js: las altas administrativas consumen IDs mediante el endpoint central de WRITE; se elimina el generador/fórmula local para nuevos vehículos.
+- Services/admin.js: reorganizeDatabase ahora pasa developerContext al respaldo y estabiliza IDs mediante WRITE antes de ordenar Cortes por Marca.
+- api-config.js: añadidos los mapeos allocateVehicleId y freezeCortesIds hacia WRITE.
+- No se modificaron columnas, hojas, valores, fórmulas ni formatos de la Spreadsheet real; no se desplegaron servicios ni se modificó la rama base.
+================================================================================
+
+
+================================================================================
+2026-11-06 — ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO EN DRIVE
+- Services/admin.js: saveUnusedImagesInventory diferencia la persistencia del inventario y la organización por lotes mediante el modo organize.
+- Services/admin.js: getOrCreateUnusedImagesFolder() valida o crea Cortes/Imagenes_Sin_Uso y conserva su ID en ScriptProperties.
+- Services/admin.js: Imagenes_Reemplazadas agrega estado_organizacion, error_organizacion y fecha_organizacion al final de sus metadatos.
+- Services/admin.js: handleOrganizeUnusedImagesBatch() valida referencias, clasificación, MIME, papelera, identidad y ubicación antes de mover; verifica el destino y registra errores/ubicación.
+- Services/admin.js: handleMoveReplacedImage() actualiza el estado de organización de los registros sin uso en movimientos manuales.
+- ui.js: después de guardar el inventario completo, solicita la organización en lotes de hasta 20 y acumula resultados; conserva el progreso en IndexedDB.
+- ui.js: la cuadrícula muestra el estado y el error de organización; la lista conserva nombre y estado.
+- index.html: se actualizó la descripción del gestor para informar la organización automática posterior a la auditoría completa.
+- No se modificaron add_cortes.html, Services/write.js, api-config.js, offline.js ni style.css.
+- No se ejecutaron operaciones reales de Drive/Spreadsheet ni despliegues.
+================================================================================
+
+================================================================================
+2026-11-06 — PRECISIÓN DEL MONITOR GLOBAL DE ALMACENAMIENTO DRIVE
+- Services/admin.js: handleGetDriveStorage() deja de convertir campos null/undefined/vacíos a cero; valida los valores de uso y límite antes de calcular cuota restante y porcentaje.
+- Services/admin.js: separa los estados available, unlimited y unavailable; solo clasifica como ilimitada una respuesta storageQuota válida sin campo limit y con datos de uso verificables.
+- ui.js: muestra «Ilimitada» para el estado confirmado y conserva compatibilidad con el estado anterior unlimited_or_not_reported.
+- No se modificaron index.html, api-config.js, scopes, permisos, datos ni deployments.
+- Pruebas funcionales reales quedan pospuestas para la fase consolidada solicitada.
+================================================================================
+
+
+================================================================================
+2026-11-06 — AUDITORÍA DEL CONTRATO DEL MODAL DE AGREGADO DE CORTES
+- Auditoría.txt: documentada la revisión de openAddCutForModelModal(), el mapeo de cutData con WRITE/ADMIN y el tratamiento de activaTestigo1 e imgCorte1.
+- Tareas.txt: añadida resolución del pendiente histórico; el supuesto desajuste no existe en el HEAD actual. Registrada por separado la falta de opId en el modal (+) como tarea pendiente.
+- checkpoint.md: añadidos checkpoint inicial y final de esta auditoría.
+- No se modificó código porque el contrato actual ya coincide con los consumidores backend.
+- Verificaciones estáticas: 15/15 PASS.
+- No se ejecutaron pruebas funcionales reales, deployments ni operaciones sobre Drive/Spreadsheet.
+================================================================================
+
+
+================================================================================
+2026-11-06 — IMPLEMENTACIÓN DE IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+- ui.js: openAddCutForModelModal() persiste y reutiliza opId/cutData para reintentos, restaura operaciones pendientes y separa el refresco del catálogo del resultado del guardado.
+- offline.js: nuevos helpers de IndexedDB en adminLocalState con escritura atómica por vehículo y eliminación condicionada por opId; DB_VERSION no cambia.
+- Auditoría.txt: documentados hallazgos, diseño, implementación, respaldos y pruebas estáticas.
+- Tareas.txt: actualizada la tarea con implementación estática incorporada y pruebas funcionales pendientes.
+- No se modificaron Services/write.js, Services/admin.js, api-config.js ni el contrato cutData.
+- Parseo sintáctico de ambos archivos y 13 comprobaciones estáticas: PASS.
+- No se ejecutaron pruebas funcionales reales, deployments ni operaciones sobre Drive/Spreadsheet.
+================================================================================
+
+
+================================================================================
+2026-11-06 — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+- Services/write.js (líneas 1084–1210): se añadió validación de encabezados A:E, inicialización de encabezados faltantes, verificación posterior, ampliación de columnas y recuperación de colisión al crear la hoja.
+- Services/write.js: se añadió findOrCreateIdempotenciaSheet(); getIdempotenciaSheet() conserva su interfaz como wrapper.
+- Services/admin.js (líneas 2376–2502): se incorporó el mismo flujo de búsqueda/creación e inicialización.
+- Se mantiene el fallback Idempotencia_Cortes y se evita sobrescribir encabezados no vacíos incompatibles.
+- No se modificaron recordOpId(), findRowByOpId(), el esquema A:E ni las columnas AQ/VIN, AR y AS de Cortes.
+- Parseo sintáctico de ambos servicios: PASS. Pruebas estáticas con mocks: 8/8 PASS. No se ejecutaron pruebas reales de Apps Script ni despliegues.
+================================================================================
+
+
+================================================================================
+2026-11-06 — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTAS DE CARPETAS
+- Services/write.js: añadidos findOrCreateSubFolder()/findOrCreateVehicleFolder(); carga inicial, reparaciones, cortes y carga suplementaria usan Categoría/Marca/Modelo/Versión o TipoEncendido/Rango.
+- Services/admin.js: misma jerarquía para cortes, suplementarias y reemplazos; updateVehicleField sincroniza imagenVehiculo al editar metadatos; nueva acción organizePrimaryVehicleImages por lotes, exclusiva para imagenVehiculo.
+- Services/feedback.js: tras actualizar anoDesde/anoHasta por tres reportes positivos, sincroniza la carpeta de imagenVehiculo y registra advertencia si Drive no permite moverla; se añadió dependencia DriveApp.
+- api-config.js: acción organizePrimaryVehicleImages en ADMIN.
+- index.html: botón separado para organizar imágenes principales.
+- ui.js: soporte por lotes, progreso, resumen y advertencias de sincronización de carpeta.
+- No se modificó handleNormalizeImages(); no se renombraron archivos ni se actualizaron URL/celdas de imagen durante la organización.
+- Referencias compartidas: primera fila para imagenVehiculo; si el ID también aparece en un campo de corte/apertura/alimentación, se omite el movimiento.
+- Auditoría.txt: documentados análisis, diseño, Safety & Side Effects, respaldos, pruebas y limitaciones.
+- Tareas.txt: tarea registrada como implementación estática completada; revisión de trazabilidad de suggestYear permanece pendiente por separado.
+- Pruebas estáticas: parseo de cinco módulos JS PASS; pruebas mock de ruta, findOrCreate, referencias compartidas y procesamiento por lotes PASS; comprobaciones de integración 16/16 PASS.
+- No se ejecutó Apps Script real, no se movieron archivos Drive, no se modificó Spreadsheet real y no se desplegaron servicios.
+================================================================================
+
+
+================================================================================
+2026-11-07 — AUTORIZACIÓN Y TRAZABILIDAD DE suggestYear EN FEEDBACK
+- Services/feedback.js: sesiones registradas verificadas contra ActiveSessions/Users; nombre efectivo desde servidor; aportes anónimos conservados con identidad seudónima.
+- Services/feedback.js: suggestionActorKey aditiva, deduplicación por actor/vehículo/año y conteo de actores positivos distintos; ScriptLock para escritura/conteo/actualización.
+- Services/feedback.js: validación de año, respuesta y vehículo; corrección de «No útil (Viejo)» para no contarla como positiva; limpieza posterior conserva filas históricas sin clave.
+- ui.js: ambos flujos envían ID+SessionToken o identificador anónimo persistente.
+- api-config.js: helper transmite contexto de actor y no userName del cliente.
+- Spreadsheet/GPSpedia_DB_columnas.md: extensión documentada; inventario A:I conservado.
+- Sin despliegue FEEDBACK, publicación frontend ni operaciones productivas. Validación funcional consolidada pendiente.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN — REINTENTOS SEGUROS DE CARGA DE IMÁGENES DRIVE/SPREADSHEET
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN EN APPS SCRIPT 5080.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+
+LÍNEAS AFECTADAS
+- Services/write.js: 420–737 (recuperación/alta de cortes), 783–865 (información suplementaria), 1104–1204 (helpers y carga de imágenes).
+- Services/admin.js: 1928–2249 (recuperación/alta administrativa), 2250–2338 (información suplementaria), 2560–2660 (helpers y carga de imágenes).
+
+CAMBIOS EN WRITE
+- Se añadieron buildImageUploadOperationKey(), buildImageUploadToken(), findExistingImageUpload() y markImageUploadLinked().
+- uploadImageToDrive() valida respuestas HTTP, MIME, Base64 y contenido no vacío; los errores se propagan en lugar de devolver una URL vacía.
+- Los nueve puntos de carga de imagen transmiten una clave estable asociada a operación/vehículo/campo.
+- Las imágenes se crean con nombre temporal y marcador de operación. Un reintento reutiliza el archivo ya creado, verifica MIME y tamaño y evita duplicarlo.
+- Tras SpreadsheetApp.flush(), el archivo se marca como vinculado y recupera su nombre original.
+- handleAddSupplementaryInfo() quedó serializado mediante ScriptLock y ahora confirma el flush y el vínculo de las imágenes antes de responder éxito.
+
+CAMBIOS EN ADMIN
+- Se incorporó la misma lógica determinista de carga y recuperación que en WRITE.
+- Los nueve puntos de carga de addOrUpdateCut() y addSupplementaryInfo() utilizan claves estables.
+- Se marca el archivo vinculado después de confirmar las escrituras de Cortes.
+- handleAddSupplementaryInfo() quedó serializado mediante ScriptLock.
+- handleUploadAdminImage() y su compensación/historial se conservaron sin cambios.
+
+COMPATIBILIDAD Y PROTECCIONES
+- No se agregaron hojas, columnas ni encabezados.
+- Se conserva Idempotencia A:E y el contrato de Cortes.
+- No se modificaron ui.js, api-config.js, offline.js, la hoja productiva, Drive real ni los deployments.
+- El nombre temporal se elimina al vincular la imagen; se restaura el nombre de archivo previsto por el flujo actual.
+
+VERIFICACIONES
+- Parseo JavaScript completo de Services/write.js y Services/admin.js: PASS.
+- Mocks de Drive: reintento antes de guardar URL reutiliza el mismo archivo; reintento después de marcar vinculado recupera el mismo archivo; restauración de nombre original y estado linked: PASS.
+- Validación negativa: Base64 vacío, respuesta HTTP no exitosa y MIME no imagen se rechazan: PASS.
+- Integración: 9/9 llamadores de carga en WRITE y 9/9 en ADMIN reciben clave determinista.
+- No quedan llamadas de carga dentro de estos flujos sin clave.
+- Comparación contra respaldos: cambios limitados a los helpers de carga, sus llamadores, confirmación posterior a flush y bloqueo de información suplementaria.
+
+LIMITACIONES
+- No se ejecutó Apps Script, Drive, Spreadsheet ni navegador reales.
+- No se verificó concurrencia entre los proyectos WRITE y ADMIN, cuyos ScriptLock son independientes. La serialización cubre cada proyecto por separado; una misma operación ejecutada simultáneamente por ambos deployments requeriría coordinación global adicional.
+- handleAddSupplementaryInfo() puede conservar cambios de texto realizados antes de un error posterior de imagen; no se convirtió toda la actualización de texto e imágenes en una transacción única.
+- La compensación de handleUploadAdminImage() no se amplió a reintentos HTTP con respuesta perdida.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUDITORÍA DE COORDINACIÓN ENTRE SERVICIOS
+Fecha: 2026-11-07
+- Auditoría.txt: se añadió una auditoría estática de las rutas de escritura y administración de imágenes de WRITE, ADMIN y FEEDBACK, el enrutamiento de api-config.js y la ausencia de Services/utilities.js en el HEAD auditado.
+- Tareas.txt: se registró la coordinación compartida de mutaciones como tarea de prioridad alta, bloqueada por la fuente UTILITIES y el diseño del protocolo; se registró por separado la idempotencia de uploadAdminImage().
+- checkpoint.md: se añadió el checkpoint inicial y el cierre de auditoría bloqueada.
+- No se modificó código de servicios, frontend, endpoints ni datos de Spreadsheet/Drive. No se ejecutó Apps Script ni se desplegó.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — IDEMPOTENCIA DE REEMPLAZOS DE IMÁGENES IN-MODAL
+Fecha: 2026-11-07
+
+ARCHIVOS Y CAMBIOS VERIFICABLES
+- Services/admin.js, líneas 1790–1895: constantes, esquema y funciones de acceso al ledger AdminImageUploads, búsqueda de operación, guardado de estado, hash SHA-256, metadatos Drive y búsqueda de ID histórico.
+- Services/admin.js, líneas 1896–2226: handleUploadAdminImage() recibe opId; valida identidad del intento y payload; crea/recupera el archivo; registra estados pending/linked/cancelled/requires_review; verifica la escritura de Cortes después de flush; evita sobrescribir una referencia modificada posteriormente y mantiene la compensación.
+- Services/admin.js, líneas 3940–4047: recordReplacedImage() admite operationId opcional y usa REP-<opId> para evitar duplicar la fila del mismo intento. Sin operationId conserva REP-UUID y valida el archivo anterior antes de crear/modificar el historial.
+- ui.js, líneas 71–75: estado en memoria para intentos pendientes del modal.
+- ui.js, líneas 222–317: carga de operaciones pendientes, generación segura de opId, lectura de imagen y envío/reintento con sesión obtenida nuevamente.
+- ui.js, líneas 319–409: convertImageToEditable() persiste primero el intento, bloquea nuevas sustituciones mientras exista uno pendiente y recupera el mismo payload ante error/respuesta incierta.
+- ui.js, líneas 1762–1766: carga el estado de reemplazos pendientes al entrar al modo de edición.
+- offline.js, líneas 189–320: métodos IndexedDB para consultar, guardar y retirar operaciones pendientes, usando adminLocalState existente y sin guardar tokens.
+- Spreadsheet/GPSpedia_DB_columnas.md, líneas 339–372: definición de la hoja técnica AdminImageUploads y sus doce encabezados/estados.
+- Tareas.txt, líneas 4799–4818: estado y limitaciones de la implementación estática.
+- Auditoría.txt, líneas 6784–6837: revisión final, decisiones de esquema, pruebas simuladas y limitaciones.
+
+BLOBS FINALES DE CÓDIGO Y DOCUMENTACIÓN
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- ui.js: 40e3c9a818f2613a73736ebcfa76f85c82050231
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- Spreadsheet/GPSpedia_DB_columnas.md: a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a
+- Tareas.txt: efbc8ea4f146bf878f10f1d9aa9d715015c203de
+- Auditoría.txt: 9aaf513a491fae4c7dbcc5368c45cd94c7da245e
+
+ALCANCE SIN CAMBIOS
+- No se modificaron api-config.js, los permisos de sesión/rol, los encabezados de Cortes, las once columnas históricas de Imagenes_Reemplazadas ni el flujo de guardar/descartar campos del modal.
+- No se ejecutó Apps Script real, no se creó AdminImageUploads en la Spreadsheet productiva, no se operó Drive/Spreadsheet productivos y no se desplegó ADMIN ni frontend.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUDITORÍA Y NUEVAS TAREAS DEL INDICADOR DE TESTIGO EN REPORTES
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se añadió la auditoría estática del flujo Reportar un problema, el contrato reportProblem de api-config.js, handleReportProblem() de FEEDBACK, la discrepancia del selector en Sugerir cambio y la compatibilidad con activaTestigo1..3.
+- Tareas.txt: se registraron dos tareas independientes:
+  1. Añadir el indicador «Este corte activa el testigo del motor» al modal Reportar un problema y persistirlo estructuradamente como observación vinculada al reporte, vehículo y corte, sin modificar automáticamente el catálogo.
+  2. Unificar el contrato de testigo entre el detalle, Sugerir cambio e Inbox, preservando compatibilidad con sugerencias históricas.
+- checkpoint.md: se añadieron checkpoint inicial y final de esta auditoría documental.
+
+ARCHIVOS DE CÓDIGO AUDITADOS — SIN MODIFICACIONES
+- ui.js: 40e3c9a818f2613a73736ebcfa76f85c82050231
+- api-config.js: 74fe2220d46243f14e1c1c5a63aef99435c10323
+- Services/feedback.js: f17da40f3c082634b679289c2883f2c9b91bbe8f
+- Services/write.js: a1359f9d1b2029e51c99c9d213fd6584e1257987
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- add_cortes.html: c5b0abfe0a9f9f217978bce53a6bebe94f782559
+
+LÍNEAS DOCUMENTALES AFECTADAS
+- Auditoría.txt: nueva entrada al final del archivo.
+- Tareas.txt: dos nuevas tareas pendientes al final del archivo.
+- ChangesLogs.txt: nueva entrada de registro al final del archivo.
+- checkpoint.md: checkpoint inicial y checkpoint final añadidos al final del historial.
+
+ALCANCE Y RESULTADO
+- Solo se actualizaron registros documentales. No se modificó JavaScript, HTML, CSS, configuración de endpoints ni esquema de Spreadsheet.
+- No se ejecutaron pruebas funcionales, Apps Script, solicitudes HTTP, operaciones Drive/Spreadsheet ni despliegues.
+- Las pruebas funcionales quedan expresamente reservadas para la fase consolidada, una vez terminadas las implementaciones.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — NUEVO REQUERIMIENTO DE LISTAS Y SALTOS DE LÍNEA EN TEXTO ENRIQUECIDO
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+- Se añadió al final de Tareas.txt una tarea pendiente para ampliar las barras de texto enriquecido asociadas a campos multilínea.
+- El requerimiento contempla listas ordenadas y no ordenadas, selección de marcadores (guion, flecha, verificación, viñeta y otros equivalentes), conservación de la estructura y representación automática de saltos de línea naturales.
+- Se incluyeron requisitos de compatibilidad con contenido histórico, sanitización, auditoría previa de todos los formularios afectados, criterios de aceptación y restricciones de despliegue/datos productivos.
+- No se modificó código ni se ejecutó una auditoría de implementación en esta fase. La auditoría técnica de los editores y del ciclo de renderizado/almacenamiento forma parte obligatoria de la tarea antes de codificar.
+- No se ejecutaron pruebas funcionales, Apps Script ni operaciones sobre Drive/Spreadsheet.
+- checkpoint.md conserva el historial y registra el checkpoint inicial/final de esta actualización documental.
+================================================================================
+
+
+REVISIÓN DE CÓDIGO PRE-COMMIT — 2026-11-07
+- rich-text.js: conversión de listas existentes y selección de párrafos/BR, y corrección de posición del cursor al salir de LI vacío.
+- ui.js: wrappers de detalle, nota y corte cambiados a DIV para alojar contenido HTML sanitizado con párrafos sin anidamiento P inválido.
+- No se ejecutaron pruebas funcionales ni se desplegó.
+
+- rich-text.js: se corrigieron escapes de expresiones regulares de selección de listas; comprobación sintáctica del módulo compartido superada antes del commit.
+
+
+
+
+================================================================================
+IMPLEMENTACIÓN — H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+
+- ui.js, líneas 6724–6829: se añadió el checkbox «Este corte activa el testigo del motor» al modal individual; se genera reportId antes del envío y se transmiten reportId, corteIndex y activaTestigoMotor. Líneas 5545–5724: renderInboxDetail() muestra los metadatos del reporte por separado del texto libre.
+- api-config.js, líneas 164–176: reportProblem() acepta un argumento contextual opcional y transmite reportId, corteIndex y activaTestigoMotor; conserva los cuatro argumentos históricos.
+- Services/feedback.js, líneas 145–210: se añadieron funciones para localizar/crear reportMetadata de forma aditiva, validar encabezados y parsear metadatos vinculados al vehículo. Líneas 970–1041: handleReportProblem() valida el contexto, conserva la compatibilidad histórica y escribe el JSON junto con los campos del reporte antes de una única llamada flush(). Líneas 1079–1148: handleGetFeedbackItems() expone reportMetadata validado en problem_report.
+- Spreadsheet/GPSpedia_DB_columnas.md, líneas 374–391: se documentó el encabezado reportMetadata, el formato JSON, su ubicación dinámica y la compatibilidad histórica.
+- Tareas.txt, líneas 4821–4873: se actualizó el estado de H-TESTIGO-REPORT-01 y se registraron implementación, revisión y limitaciones.
+- Auditoría.txt: se añadieron auditoría de implementación, H-TR-01 a H-TR-07, reinicios y resultado de revisión final.
+- No se modificaron Cortes, activaTestigo1..3, Sugerir cambio, autenticación/autorización ni servicios WRITE/ADMIN/CATALOG.
+- No se ejecutaron pruebas funcionales, navegador, Apps Script, HTTP ni despliegues.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS Y CAMBIOS
+- ui.js, desde línea 1642: normalización y lectura triestado del indicador.
+- ui.js, líneas 2208 y 9246: mapeos de detalle e impresión conservan true/false/null.
+- ui.js, desde línea 6971: selector precargado desde currentCutData.activaTestigo y envío de proposedValues.activaTestigo booleano/null.
+- ui.js, desde línea 5597: Inbox identifica sugerencias y presenta valores propuestos, relación reportId/vehicleId/corteIndex, estado e imagen.
+- Services/feedback.js, desde línea 1081: normalización del indicador, compatibilidad histórica y parser de sugerencias.
+- Services/feedback.js, desde línea 1191: handleGetFeedbackItems() expone suggestionData y deriva estado desde Se resolvio, conservando type='problem_report'.
+- Services/feedback.js, desde línea 1293: handleSuggestCutChange() valida corteIndex 1–3 y almacena JSON versionado en Feedbacks.Problema.
+
+COMPATIBILIDAD Y ALCANCE
+- Lectura histórica de proposedValues.activaCheckEngine («Sí», «No», «No aplica»); nuevas escrituras utilizan activaTestigo.
+- No se agregaron columnas ni se modificó Spreadsheet/GPSpedia_DB_columnas.md.
+- No se modificaron api-config.js, Cortes, activaTestigo1..3, autenticación/autorización, WRITE, ADMIN ni CATALOG.
+- No se implementó aprobación ni aplicación automática al catálogo.
+
+VERIFICACIONES
+- Parseo sintáctico estático de ui.js y Services/feedback.js: PASS.
+- Casos aislados de normalización y lectura histórica/nueva: PASS.
+- Comparación post-edición limitada a los bloques identificados.
+- No se ejecutaron pruebas funcionales reales, navegador, Apps Script, HTTP, Drive/Spreadsheet ni despliegues.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — INICIO DE AUDITORÍA GLOBAL
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S001
+Checkpoint: AUD-CP-0001
+Commit previsto: docs(audit): iniciar auditoria global desde 2026
+
+ARCHIVOS DOCUMENTALES
+- Plan_auditoría/Plan_Auditoria.md: nuevo catálogo de 37 tareas de auditoría, historial preliminar, fases F0–F11, criterios de evaluación y protocolo por iteración.
+- Plan_auditoría/Aug_Tareas.md: nuevo registro de hallazgos preliminares y mecanismo para incorporar tareas derivadas de las auditorías.
+- Auditoría.txt: nueva entrada de checkpoint inicial, línea base Git, fuentes revisadas, resultados y limitaciones.
+- checkpoint.md: nuevo checkpoint inicial AUD-CP-0001 al final del historial.
+- ChangesLogs.txt: registro de los archivos documentales agregados/modificados y sus contenidos.
+
+ALCANCE
+No se modificaron archivos de código, endpoints, servicios, datos productivos, deployments, ramas ni configuraciones administrativas.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-002
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S002
+Checkpoint: AUD-CP-0002
+Commit previsto: audit(auth): revisar RBAC y ciclo de identidad
+
+ARCHIVOS DOCUMENTALES
+- Plan_auditoría/Plan_Auditoria.md: actualización de alcance/estado AUD-T-002 y registro de hallazgos, commits, calidad, evidencia y siguiente iteración.
+- Plan_auditoría/Aug_Tareas.md: incorporación de AUG-005 a AUG-010 derivados de hallazgos.
+- Auditoría.txt: auditoría técnica detallada de RBAC/AUTH/USERS.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0002.
+- ChangesLogs.txt: registro objetivo de cambios documentales.
+
+ALCANCE
+No se modificaron Services/Auth.js, Services/users.js, auth.js, users.html, api-config.js ni copias de prueba. No se desplegó Apps Script, no se ejecutó HTTP/navegador y no se modificaron Sheets/Drive.
+================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — PREPARACIÓN Y CRITERIOS DE AUD-T-023
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S003
+Checkpoint: AUD-CP-0003
+
+ARCHIVOS DOCUMENTALES
+- contexto_personal.md: incorporación del objetivo de la auditoría global, responsabilidades del auditor, detección obligatoria de condiciones de carrera y otros defectos, reglas diagnósticas y alcance de AUD-T-023.
+- checkpoint.md: registro inicial y cierre de la preparación documental de AUD-T-023, con ramas, HEAD, alcance, restricciones y siguiente acción.
+- ChangesLogs.txt: registro de esta actualización documental.
+
+ALCANCE Y LIMITACIONES
+- No se modificaron archivos de código, servicios, pruebas, endpoints, datos, deployments ni configuraciones.
+- No se ejecutaron pruebas funcionales ni operaciones sobre Apps Script, HTTP, Spreadsheet o Drive.
+- La auditoría técnica de AUD-T-023 permanece pendiente; este registro únicamente formaliza su objetivo, alcance y criterios obligatorios.
+================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-023: AUDITORÍA ESTÁTICA DE CREDENCIALES, HASHING Y LOGS
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S004
+Checkpoint: AUD-CP-0004
+HEAD padre: 87d75c38d72e76ed60132d2507661f4e1017a0e8
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: informe AUD-T-023, trazabilidad histórica, hallazgos H-AUD-023-001 a H-AUD-023-008, fortalezas, limitaciones y estado.
+- Plan_auditoría/Plan_Auditoria.md: estado y resultado de AUD-T-023.
+- Plan_auditoría/Aug_Tareas.md: adenda AUG-010 y tareas AUG-011 a AUG-014.
+- Tareas.txt: registro de hallazgos y tareas derivadas.
+- contexto_personal.md: estado de AUD-T-023 y hallazgos principales.
+- checkpoint.md: checkpoint inicial/final AUD-CP-0004.
+
+ALCANCE
+- No se modificaron archivos de código, pruebas, servicios, endpoints, datos, deployments ni configuraciones.
+- No se ejecutaron pruebas funcionales, solicitudes HTTP ni operaciones sobre Apps Script, Spreadsheet o Drive.
+- No se inspeccionó la hoja Logs real.
+- Esta actualización registra resultados de auditoría estática y tareas pendientes.
+================================================================================
+
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-024: ADMINISTRACIÓN DE USUARIOS, PRIVILEGIOS, SESIONES Y CONTROLES DE ACCESO
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S005
+Checkpoint: AUD-CP-0005
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó el informe AUD-T-024, los hallazgos H-AUD-024-001 a H-AUD-024-010, controles positivos, relaciones y limitaciones.
+- Plan_auditoría/Plan_Auditoria.md: se actualizó el estado AUD-T-024 y se incorporó el resultado de la iteración.
+- Plan_auditoría/Aug_Tareas.md: se ampliaron AUG-005 a AUG-008 y se agregaron AUG-016 y AUG-017.
+- Tareas.txt: se agregó el resultado de auditoría y la referencia a tareas existentes/nuevas.
+- contexto_personal.md: se agregó el estado y los hallazgos principales de AUD-T-024.
+- checkpoint.md: se incorporaron checkpoint inicial y cierre AUD-CP-0005.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron fuentes de aplicación, pruebas, servicios, endpoints, configuraciones, datos de Spreadsheet/Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+================================================================================
+
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S006
+Checkpoint: AUD-CP-0006
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó el informe AUD-T-025 y los hallazgos H-AUD-025-001 a H-AUD-025-009.
+- Plan_auditoría/Plan_Auditoria.md: se actualizó el estado AUD-T-025 y se incorporó la iteración 13.
+- Plan_auditoría/Aug_Tareas.md: se amplió AUG-013 y se añadieron AUG-018 a AUG-023.
+- Tareas.txt: se agregó el resultado de auditoría, hallazgos y tareas derivadas.
+- contexto_personal.md: se registró el estado de AUD-T-025 y la siguiente tarea.
+- checkpoint.md: se incorporaron checkpoint inicial y cierre AUD-CP-0006.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html ni otros archivos de aplicación.
+- No se modificaron endpoints, configuraciones, datos de Spreadsheet/Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+================================================================================
+
+ 
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-026: TELEMETRÍA, DIAGNÓSTICO Y HEALTH CHECK DE MICROSERVICIOS
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S007
+Checkpoint: AUD-CP-0007
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó el informe AUD-T-026 y los hallazgos H-AUD-026-001 a H-AUD-026-005, con controles positivos, riesgo histórico condicionado y limitaciones.
+- Plan_auditoría/Plan_Auditoria.md: se actualizó el estado de AUD-T-026 y se incorporó la iteración 14.
+- Plan_auditoría/Aug_Tareas.md: se añadieron AUG-024 y AUG-025.
+- Tareas.txt: se agregó el resultado de la auditoría y las tareas derivadas.
+- contexto_personal.md: se registró el estado de AUD-T-026 y la siguiente unidad.
+- checkpoint.md: se incorporaron checkpoint inicial y cierre AUD-CP-0007.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron api-config.js, ui.js, index.html, style.css, main.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuraciones, fuentes backend, datos de Spreadsheet/Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — NORMALIZACIÓN AUTOMÁTICA DE NOMBRES DE IMÁGENES Y CARPETAS
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+**Services/admin.js**
+- Unificada la construcción de nombres según la nomenclatura oficial: modelo, versiones aplicables, tipo de encendido, año inicial y sufijo del campo de imagen.
+- normalizeImages normaliza los ocho campos de imagen y los segmentos existentes de la jerarquía de carpetas cuando hay una coincidencia canónica única.
+- Se preserva la extensión existente; si no existe, se deriva de MIME de imagen reconocido. Si no puede determinarse, se omite el renombrado.
+- Antes de renombrar/copiar se comprueba que el nombre no esté ocupado por otro ID. Los conflictos se registran y se omiten sin sobrescribir.
+- Las imágenes compartidas se separan solo cuando los usos requieren nombres distintos; la URL se actualiza únicamente para la copia nueva.
+- organizePrimaryVehicleImages también corrige el nombre de imagenVehiculo al moverla a la carpeta canónica. Conserva controles de referencias y agrega rollback de ubicación si falla el renombrado.
+- Las rutas de alta, reparación, carga suplementaria y edición in-modal usan la misma nomenclatura.
+
+**Services/write.js**
+- Las rutas de alta, reparación, corte, imagenVehiculo, apertura y alimentación usan el mismo generador canónico de nombres que ADMIN.
+- El nombre canónico vigente se guarda en la descripción de idempotencia de ambos servicios para que un reintento no restaure una nomenclatura heredada.
+
+**Integridad y alcance**
+- No se modificaron URLs/IDs al renombrar archivos existentes.
+- No se modificó handleAuditDriveImagesInCortes ni collectCortesImageReferences().
+- No se modificaron frontend, mapeo de acciones, endpoints, configuración, datos productivos ni deployments.
+- Los nombres de destino en conflicto se omiten; no se crean sufijos arbitrarios ni se borran archivos.
+- Las imágenes huérfanas sin metadatos identificables quedan fuera de esta normalización semántica.
+
+**Validación**
+- Comprobaciones lógicas aisladas de nomenclatura/extensión: 6/6.
+- Mocks de coincidencia única de carpeta, ambigüedad y conflicto de nombre: resultados esperados.
+- Delimitadores balanceados; collector de referencias y auditoría recursiva idénticos a respaldos.
+- No se ejecutó runtime Apps Script, Drive/Spreadsheet real ni despliegue.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-027: HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: informe AUD-T-027, controles positivos, hallazgos H-AUD-027-001 a H-AUD-027-008, estado de AUD-IMG-01 a AUD-IMG-07 y observaciones transferidas a AUD-T-028/AUD-T-033.
+- Tareas.txt: actualización de la tarea histórica AUD-IMG y registro de AUG-026/AUG-027/AUG-021.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-027 actualizado a auditoría estática E1 completada; siguiente unidad AUD-T-028; iteración 15.
+- Plan_auditoría/Aug_Tareas.md: adenda a AUG-021 y nuevas tareas AUG-026/AUG-027.
+- contexto_personal.md: estado de auditoría y continuidad del proyecto.
+- checkpoint.md: checkpoint inicial y de cierre AUD-CP-0008.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron Services/admin.js, Services/write.js, ui.js, offline.js, api-config.js, index.html, style.css ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+- No hubo merge ni despliegue.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-028: INVENTARIO DE IMÁGENES SIN USO, CLASIFICACIÓN Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: informe AUD-T-028, controles positivos, hallazgos H-AUD-028-001 a H-AUD-028-009, revisión del síntoma de 14 archivos, monitor global y observaciones transferidas a AUD-T-029.
+- Tareas.txt: resultado de AUD-T-028 y registro de AUG-028/AUG-029/AUG-030; adendas a AUG-021/AUG-026/AUG-003.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-028 actualizado a auditoría estática E1 completada; siguiente unidad AUD-T-029; iteración 16.
+- Plan_auditoría/Aug_Tareas.md: adendas y nuevas tareas derivadas de AUD-T-028.
+- contexto_personal.md: estado de auditoría y continuidad.
+- checkpoint.md: checkpoint inicial y de cierre AUD-CP-0009.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+- No hubo merge ni despliegue.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-029
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se agregó el informe E1 de AUD-T-029 y los hallazgos H-AUD-029-001 a H-AUD-029-008.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-029 se actualizó a auditoría estática E1 completada; se registró la iteración 17 y AUD-T-030 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: se ampliaron AUG-028/AUG-030 y se incorporaron AUG-031/AUG-032/AUG-033.
+- Tareas.txt: se agregó el resultado de AUD-T-029 y sus tareas derivadas.
+- contexto_personal.md: se registró el estado y la continuidad de la auditoría.
+- checkpoint.md: se incorporaron los checkpoints inicial y final AUD-CP-0010.
+
+ALCANCE
+- No se modificaron Services/admin.js, ui.js, offline.js, api-config.js, index.html, endpoints, configuraciones, datos productivos, Drive, Spreadsheet ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+- No hubo merge ni despliegue.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-030
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S011
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 y hallazgos H-AUD-030-001 a H-AUD-030-008.
+- Tareas.txt: resultado de AUD-T-030 y tareas derivadas.
+- Plan_auditoría/Plan_Auditoria.md: estado de AUD-T-030 y registro de iteración 18.
+- Plan_auditoría/Aug_Tareas.md: nuevas AUG-034, AUG-035 y AUG-036.
+- contexto_personal.md: continuidad y estado actualizado del proyecto.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0011; actualización final como último paso documental.
+
+ALCANCE
+- Solo se modificó documentación de auditoría y trazabilidad.
+- No se modificaron Services/write.js, Services/admin.js, ui.js, add_cortes.html, api-config.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas funcionales reales, migración VIN ni concurrencia.
+- No hubo merge ni despliegue.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-031
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S012
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 y hallazgos H-AUD-031-001 a H-AUD-031-010.
+- Tareas.txt: resultado de AUD-T-031 y tareas derivadas.
+- Plan_auditoría/Plan_Auditoria.md: estado de AUD-T-031 y registro de iteración 19.
+- Plan_auditoría/Aug_Tareas.md: adenda AUG-034/AUG-035 y nuevas AUG-037/AUG-038.
+- contexto_personal.md: continuidad y estado actualizado del proyecto.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0012; actualización final como último paso documental.
+
+ALCANCE
+- Solo se modificó documentación de auditoría y trazabilidad.
+- No se modificaron Services/write.js, Services/admin.js, ui.js, offline.js, add_cortes.html ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas funcionales reales, cargas, reintentos, compensaciones ni concurrencia.
+- No hubo merge ni despliegue.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-032
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S013
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 de identidad WRITE/ADMIN y hallazgos H-AUD-032-001 a H-AUD-032-003.
+- Tareas.txt: resultado AUD-T-032, nueva AUG-039, adenda AUG-024 y observación transferida a AUD-T-035.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-032 actualizado a E1 completada; se agregó la iteración 18 y AUD-T-033 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: se agregó AUG-039 y una adenda a AUG-024.
+- contexto_personal.md: continuidad de auditoría actualizada.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0013.
+
+ALCANCE Y VALIDACIÓN
+- Solo se modificaron documentos de auditoría y trazabilidad.
+- No se modificaron Services/write.js, Services/admin.js, Services/Auth.js, Services/users.js, ui.js, add_cortes.html, api-config.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas sintácticas, mocks, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia.
+- No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-033
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S014
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 de coordinación WRITE/ADMIN/FEEDBACK/UTILITIES; hallazgos H-AUD-033-001 a H-AUD-033-007.
+- Tareas.txt: resultado AUD-T-033, adenda a la dependencia Utilities, ampliación AUG-034 y tareas AUG-040/AUG-041.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-033 actualizado a E1 completada; se agregó iteración 19 y AUD-T-034 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: resultado de AUG-003, adenda a AUG-034 y nuevas AUG-040/AUG-041.
+- contexto_personal.md: continuidad actualizada.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0014.
+
+ALCANCE Y VALIDACIÓN
+- Solo se modificaron documentos de auditoría y trazabilidad.
+- No se modificaron Services/write.js, Services/admin.js, Services/feedback.js, Services/Utilities.js, api-config.js, ui.js ni otros archivos de aplicación.
+- No se modificaron endpoints, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia.
+- No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-034
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S015
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 de acceso/visibilidad por rol y sesión; hallazgos H-AUD-034-001 a H-AUD-034-004.
+- Tareas.txt: resultado AUD-T-034, adendas a AUG-006/AUG-016/AUG-017 y nueva AUG-042.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-034 actualizado a E1 completada; se agregó iteración 20 y AUD-T-035 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: adendas de sesión/rol y nueva AUG-042.
+- contexto_personal.md: continuidad actualizada.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0015.
+
+ALCANCE Y VALIDACIÓN
+- Solo se modificaron documentos de auditoría y trazabilidad.
+- No se modificaron ui.js, auth.js, main.js, index.html, users.html, Services/Auth.js, Services/admin.js, Services/feedback.js, Services/users.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script ni sesiones/cambios de rol reales.
+- No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-035
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S016
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 de endpoints, dispatchers, contratos FEEDBACK y flujos imagen/vídeo; hallazgos H-AUD-035-001 a H-AUD-035-006.
+- Tareas.txt: resultado AUD-T-035, nuevas AUG-043/AUG-044 y adenda a AUG-040.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-035 actualizado a E1 completada; se agregó iteración 21 y AUD-T-036 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: criterios de aceptación AUG-043/AUG-044 y adenda a AUG-040.
+- contexto_personal.md: continuidad actualizada.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0016.
+
+ALCANCE Y VALIDACIÓN
+- Solo se modificaron documentos de auditoría y trazabilidad.
+- No se modificaron api-config.js, Services/Auth.js, Services/catalog.js, Services/write.js, Services/users.js, Services/feedback.js, Services/Utilities.js, Services/admin.js, ui.js, auth.js, main.js, add_cortes.html, users.html ni youtubeUpload.js.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas sintácticas, navegador, HTTP, Apps Script V8, YouTube, Drive, Spreadsheet real, aprobación/rechazo, reintentos ni concurrencia.
+- No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-036
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S017
+- Auditoría.txt: informe E1 y hallazgos H-AUD-036-001 a 005.
+- Tareas.txt: resultado AUD-T-036 y nuevas AUG-045/AUG-046/AUG-047.
+- Plan_auditoría/Plan_Auditoria.md: estado actualizado e iteración 22; siguiente AUD-T-037.
+- Plan_auditoría/Aug_Tareas.md: criterios de aceptación AUG-045/AUG-046/AUG-047.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints actualizados.
+Solo documentación. Sin cambios de código/assets/endpoints/configuración/Spreadsheet/Drive/deployments. Sin pruebas E2/E3 ni revisión jurídica. Rama base sin cambios; no hubo merge/despliegue.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-037
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S018
+- Auditoría.txt: informe E1 y hallazgos H-AUD-037-001 a 012.
+- Tareas.txt: resultado AUD-T-037 y nuevas tareas AUG-048 a AUG-052.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-037 actualizado e iteración 23 agregada.
+- Plan_auditoría/Aug_Tareas.md: criterios de aceptación AUG-048 a AUG-052.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints.
+Solo documentación. Sin cambios de aplicación, endpoints, configuración, Spreadsheet, Drive, datos productivos o deployments. Sin pruebas E2/E3 ni despliegue/merge. Rama base sin cambios.
+================================================================================
+
+================================================================================
+CONSOLIDACIÓN DOCUMENTAL — AUD-PLAN-2026-001
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S019
+- Plan_auditoría/Consolidacion_Auditoria.md: nuevo índice consolidado de 51 IDs AUG, estado de 37 AUD-T, dependencias y matriz VAL-01 a VAL-15.
+- Plan_auditoría/Plan_Auditoria.md: iteración 24 agregada con cobertura real y siguiente acción.
+- Plan_auditoría/Aug_Tareas.md: nota de control para AUG-015 ausente y encabezados repetidos como adendas.
+- Tareas.txt: resultado documental y límites.
+- Auditoría.txt: OBS-CONS-001 a OBS-CONS-003 para cobertura, hueco AUG y matriz aún no ejecutada.
+- checkpoint.md y contexto_personal.md: continuidad actualizada.
+Solo documentación. Sin cambios de código/assets/endpoints/configuración/Spreadsheet/Drive/datos productivos/deployments. Sin pruebas funcionales ni despliegue. Rama base sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-038
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S020
+- Auditoría.txt: informe E1 y H-AUD-038-001 a 005.
+- Tareas.txt: resultado AUD-T-038, AUG-053/AUG-054 y ampliaciones vinculadas.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-038 e iteración 25.
+- Plan_auditoría/Aug_Tareas.md: adendas AUG-022/AUG-051 y fichas AUG-053/AUG-054.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 38 AUD-T y 53 AUG; matriz VAL-01/VAL-13 ampliada.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0020.
+Solo documentación. Sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas E2/E3, navegador, HTTP, Apps Script, IndexedDB real, cuota, concurrencia ni verificación de deployments. Rama base sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-003
+Fecha 2026-11-07 | Sesión AUD-20261107-S021 | Rama GPSpedia2.2.5_work
+- Auditoría.txt: agregado informe E1 y hallazgos H-AUD-003-001 a 004.
+- Tareas.txt: agregado resultado de AUD-T-003, criterios de AUG-055 a AUG-058 y adenda a AUG-043.
+- Plan_auditoría/Plan_Auditoria.md: actualizada fila AUD-T-003, estado global y siguiente acción; añadida iteración 26.
+- Plan_auditoría/Aug_Tareas.md: actualizado inventario a 57 IDs y añadidas AUG-055 a AUG-058/adenda AUG-043.
+- Plan_auditoría/Consolidacion_Auditoria.md: actualizados conteos AUD-T/AUG, dominios, matriz VAL-08/09/14 y siguiente acción.
+- contexto_personal.md: añadido estado de continuidad AUD-T-003.
+- checkpoint.md: añadido checkpoint inicial/final AUD-CP-0021.
+Solo documentación. Sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas funcionales o de integración.
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-004
+Fecha 2026-11-07 | Sesión AUD-20261107-S022 | Rama GPSpedia2.2.5_work
+- Auditoría.txt: agregado informe E1, H-AUD-004-001 a 003 y ampliación de H-AUD-037-007.
+- Tareas.txt: resultado AUD-T-004, AUG-059/AUG-060 y ampliación de criterios AUG-050.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-004 actualizada e iteración 27 añadida.
+- Plan_auditoría/Aug_Tareas.md: AUG-050 ampliada; AUG-059/AUG-060 nuevas; inventario actualizado a 59 IDs.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura 18 E1/1 parcial/19 pendientes; VAL-08 y VAL-12 ampliadas; siguiente acción AUD-T-005.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0022.
+Solo documentación. Sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas funcionales, migración VIN, HTTP, Apps Script, navegador, concurrencia ni verificación de deployments. Rama base sin cambios.
+================================================================================
+
+2026-11-07 — AUD-T-005 — documentación de auditoría estática E1
+Auditoría.txt: líneas 9238–9327
+Tareas.txt: líneas 5818–5901
+Plan_auditoría/Plan_Auditoria.md: líneas 731–738
+Plan_auditoría/Aug_Tareas.md: líneas 820–892
+Plan_auditoría/Consolidacion_Auditoria.md: líneas 168–176
+contexto_personal.md: líneas 343–350
+checkpoint.md: se añadieron AUD-CP-0023 inicial y final con HEAD/base y referencias de respaldo exacto.
+ChangesLogs.txt: líneas 4094–4103 — se registra este conjunto documental en el único commit de AUD-T-005.
+No se modificaron archivos de aplicación, endpoints, configuración, Spreadsheet, Drive ni deployments.
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-006
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S024
+- Auditoría.txt: agregado informe E1 y H-AUD-006-001 a H-AUD-006-003; ampliación del sink H-AUD-005-001/AUG-064.
+- Tareas.txt: agregado resultado AUD-T-006 y criterios AUG-065 a AUG-067; adenda AUG-064.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-006 actualizado a E1 completada; iteración 29 añadida; siguiente AUD-T-007.
+- Plan_auditoría/Aug_Tareas.md: nuevas AUG-065/AUG-066/AUG-067 y adenda a AUG-064; inventario 66 IDs únicos.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura 20 E1/1 parcial/17 pendientes; matriz VAL-13/VAL-14 ampliada.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0024.
+Solo documentación. Sin cambios de código, assets, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas E2/E3 ni operaciones reales. Rama base sin cambios.
+================================================================================
+
+2026-11-08 — AUD-T-007 — documentación de auditoría estática E1
+Auditoría.txt: líneas 9390–9474
+Tareas.txt: líneas 5960–6026
+Plan_auditoría/Plan_Auditoria.md: líneas 750–758
+Plan_auditoría/Aug_Tareas.md: líneas 937–991
+Plan_auditoría/Consolidacion_Auditoria.md: líneas 191–199
+contexto_personal.md: líneas 363–371
+checkpoint.md: se añadieron CHECKPOINT INICIAL y CHECKPOINT FINAL AUD-CP-0025, con HEAD/base y referencias de respaldo exacto.
+ChangesLogs.txt: líneas 4118–4128 — se registra el conjunto documental de AUD-T-007 en un único commit.
+No se modificaron archivos de aplicación, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-008
+Fecha: 2026-11-08 | Sesión AUD-20261108-S026 | Rama GPSpedia2.2.5_work
+Auditoría.txt: líneas 9479–9568
+Tareas.txt: líneas 6030–6041
+Plan_auditoría/Plan_Auditoria.md: fila AUD-T-008 (línea 59) y líneas 761–787
+Plan_auditoría/Aug_Tareas.md: líneas 995–1028
+Plan_auditoría/Consolidacion_Auditoria.md: cabecera/resumen, índice de dominios, VAL-12 (línea 98), VAL-14 (línea 100), VAL-18 (línea 106) y líneas 205–214
+contexto_personal.md: líneas 374–384
+checkpoint.md: líneas 653–687
+ChangesLogs.txt: líneas 4132–4149 — registro documental de AUD-T-008 en el único commit.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron ui.js, main.js, navigation.js, index.html, style.css, auth.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, Web Share, Clipboard, lector de pantalla, HTTP, Apps Script ni operaciones externas.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-009
+Fecha: 2026-11-08 | Rama GPSpedia2.2.5_work | Sesión AUD-20261108-S027
+- Auditoría.txt: líneas 9569–9633; tres hallazgos H-AUD-009-001 a 003 y controles/limitaciones E1.
+- Tareas.txt: líneas 6042–6052; resultado de AUD-T-009, nueva AUG-074 y adenda a AUG-052.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-009 actualizada en línea 60; iteración 32 en líneas 788–795.
+- Plan_auditoría/Aug_Tareas.md: líneas 1029–1048; AUG-074 y adenda a AUG-052.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera/estado, índice AUG, VAL-14 y líneas 215–223.
+- contexto_personal.md: líneas 385–394; continuidad AUD-T-009.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0027 en líneas 688–765; HEAD/base, árbol, respaldos exactos, límites y siguiente acción.
+- ChangesLogs.txt: líneas 4150–4167; registro del conjunto documental en el commit único.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron service-worker.js, manifest.json, index.html, main.js, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, add_cortes.html, users.html, style.css ni otros archivos de aplicación/assets.
+- No se modificaron endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, Service Worker, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen ni pruebas de red.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-010
+Fecha: 2026-11-08 | Rama GPSpedia2.2.5_work | Sesión AUD-20261108-S028
+- Auditoría.txt: líneas 9636–9724; siete hallazgos H-AUD-010-001 a H-AUD-010-007.
+- Tareas.txt: líneas 6055–6080; resultado AUD-T-010 y referencias AUG-075 a AUG-081.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-010 línea 61; iteración 33 líneas 797–806.
+- Plan_auditoría/Aug_Tareas.md: inventario línea 1048; AUG-075 a AUG-081 líneas 1051–1119.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera/estado/inventario, VAL-19 línea 109 y líneas 228–237.
+- contexto_personal.md: líneas 396–405.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0028 en líneas 768–793 y 795–842.
+- ChangesLogs.txt: líneas 4169–4186; registro de este conjunto documental en el único commit.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron ui.js, api-config.js, Services/feedback.js, Spreadsheet/GPSpedia_DB_columnas.md ni otros archivos de aplicación/esquema.
+- No se modificaron endpoints, configuración, Spreadsheet/Drive, datos productivos ni deployments.
+- No se ejecutaron Apps Script, HTTP, navegador, FileReader real, pruebas XSS, Drive/Spreadsheet, concurrencia ni deployments.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-011
+Fecha: 2026-11-08 | Rama GPSpedia2.2.5_work | Sesión AUD-20261108-S029
+- Auditoría.txt: nueva sección E1 con siete hallazgos H-AUD-011-001 a H-AUD-011-007.
+- Tareas.txt: resultado AUD-T-011, nuevas AUG-082 a AUG-087 y adendas AUG-040/AUG-057.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-011 actualizada y nueva iteración 34.
+- Plan_auditoría/Aug_Tareas.md: adendas a AUG-040/AUG-057 y fichas nuevas AUG-082 a AUG-087; inventario actualizado.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera AUD-CP-0029, estado del catálogo, inventario AUG, VAL-20 y cobertura AUD-T-011.
+- contexto_personal.md: continuidad AUD-T-011 y siguiente unidad AUD-T-012.
+- checkpoint.md: checkpoint inicial/final AUD-CP-0029, respaldos, límites y siguiente acción.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md, style.css ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-012
+Fecha: 2026-11-08 | Sesión AUD-20261108-S030 | Checkpoint AUD-CP-0030
+- Auditoría.txt: nueva sección E1 con H-AUD-012-001 a H-AUD-012-008.
+- Tareas.txt: resultado de AUD-T-012; nuevas AUG-088 a AUG-091; adendas a AUG-043 y AUG-087.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-012 actualizada y nueva iteración 35.
+- Plan_auditoría/Aug_Tareas.md: fichas AUG-088 a AUG-091, adendas e inventario actualizado.
+- Plan_auditoría/Consolidacion_Auditoria.md: nueva cobertura AUD-T-012, VAL-21 y conteos actualizados.
+- contexto_personal.md: continuidad AUD-T-012 y siguiente unidad AUD-T-013.
+- checkpoint.md: checkpoint inicial/final AUD-CP-0030, blobs de respaldo, resultados, límites y siguiente acción.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron ui.js, Services/feedback.js, api-config.js, main.js, navigation.js, Services/catalog.js, index.html ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron E2/E3, Playwright, navegador, HTTP, Apps Script, concurrencia ni permisos en deployment.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-013
+Fecha 2026-11-08 | Sesión AUD-20261108-S031 | Checkpoint AUD-CP-0031
+- Auditoría.txt: H-AUD-013-001 a H-AUD-013-010.
+- Tareas.txt: resultado AUD-T-013, AUG-092 a AUG-094, adendas y VAL-22.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-013 e iteración 36.
+- Plan_auditoría/Aug_Tareas.md: AUG-092 a AUG-094 y adendas AUG-043/AUG-068.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura AUD-T-013 y VAL-22.
+- ChangesLogs.txt, contexto_personal.md y checkpoint.md: continuidad y trazabilidad.
+Solo documentación; sin cambios de aplicación, endpoints, OAuth/Cloud, Drive, Spreadsheet, datos ni deployments. No se ejecutaron pruebas E2/E3, YouTube API/OAuth/XHR, navegador, Apps Script, concurrencia ni reanudación.
+Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-014
+Fecha 2026-11-08 | Sesión AUD-20261108-S032 | Checkpoint AUD-CP-0032
+- Auditoría.txt: H-AUD-014-001 a H-AUD-014-003.
+- Tareas.txt: resultado AUD-T-014, nuevas AUG-095 a AUG-097 y VAL-23.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-014 e iteración 37.
+- Plan_auditoría/Aug_Tareas.md: fichas AUG-095 a AUG-097.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura AUD-T-014 y matriz VAL-23.
+- ChangesLogs.txt, contexto_personal.md y checkpoint.md: continuidad y trazabilidad.
+Solo documentación; no se modificaron código, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-015
+Fecha 2026-11-08 | Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033
+- Auditoría.txt: H-AUD-015-001 a H-AUD-015-004; revalidación H-AUD-037-003 a 006.
+- Tareas.txt: resultado AUD-T-015, AUG-098 a AUG-101 y VAL-24.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-015 e iteración 38.
+- Plan_auditoría/Aug_Tareas.md: adenda AUG-049 y fichas AUG-098 a AUG-101.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura AUD-T-015 y VAL-24.
+- ChangesLogs.txt, contexto_personal.md y checkpoint.md: continuidad y trazabilidad.
+Solo documentación; no se modificaron código, HTML, CSS, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-016
+Fecha 2026-11-08 | Sesión AUD-20261108-S034 | Checkpoint AUD-CP-0034
+- Auditoría estática de Tarea 16/B13/B19; commits históricos 4b136cd0, 28f4ace5 y a9b15e5f.
+- H-AUD-016-001 a H-AUD-016-004; AUG-102 a AUG-105; VAL-25 planificada.
+- Archivos de código revisados: index.html, style.css, main.js, ui.js, users.html y add_cortes.html. No se modificaron.
+- Archivos documentales actualizados: Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Solo documentación; sin cambios de código, HTML/CSS de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-017
+Fecha: 2026-11-08 | Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035
+Archivos modificados:
+- Auditoría.txt: líneas 10230–10367. Añadida auditoría estática AUD-T-017, H-AUD-017-001 a 007 y VAL-26.
+- Tareas.txt: líneas 6360–6371. Añadido resultado de AUD-T-017, estado E1, hallazgos, VAL-26 y siguiente unidad.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-017 actualizada en línea 68; iteración 39 añadida en líneas 874–882 y continuidad hacia AUD-T-018.
+- Plan_auditoría/Aug_Tareas.md: líneas 1441–1491. Añadidas fichas AUG-106 a AUG-112.
+- Plan_auditoría/Consolidacion_Auditoria.md: conteos actualizados; sección AUD-T-017 añadida en líneas 360–371.
+- ChangesLogs.txt: líneas 4275–4288. Añadido este registro documental.
+- contexto_personal.md: líneas 474–481. Añadida continuidad AUD-T-017.
+- checkpoint.md: líneas 1282–1337. Añadidos checkpoint inicial y final AUD-CP-0035 como último blob documental.
+No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-018
+Fecha: 2026-11-08 | Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036
+Archivos modificados:
+- Auditoría.txt: líneas 10368–10537. Añadida auditoría estática AUD-T-018, H-AUD-018-001 a 009 y VAL-27.
+- Tareas.txt: líneas 6372–6383. Añadido resultado de AUD-T-018, estado E1, hallazgos, VAL-27 y siguiente unidad.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-018 actualizada en línea 69; iteración 40 añadida en líneas 883–891 y continuidad hacia AUD-T-019.
+- Plan_auditoría/Aug_Tareas.md: líneas 1492–1556. Añadidas fichas AUG-113 a AUG-121.
+- Plan_auditoría/Consolidacion_Auditoria.md: conteos actualizados; sección AUD-T-018 añadida en líneas 372–384.
+- ChangesLogs.txt: líneas 4289–(fin). Añadido este registro documental.
+- contexto_personal.md: líneas 482–489. Añadida continuidad AUD-T-018.
+- checkpoint.md: líneas 1338–1396. Añadidos checkpoint inicial y final AUD-CP-0036 como último blob documental.
+No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-019
+Fecha: 2026-11-08 | Sesión AUD-20261108-S037 | Checkpoint AUD-CP-0037
+Archivos documentales modificados:
+- Auditoría.txt: líneas 10539–10723. Añadida auditoría estática AUD-T-019, H-AUD-019-001 a 014 y matriz VAL-28.
+- Tareas.txt: líneas 6385–6395. Añadido registro de resultado AUD-T-019, hallazgos, VAL-28 y siguiente unidad.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-019 actualizada en línea 70; iteración 41 añadida en líneas 893–900.
+- Plan_auditoría/Aug_Tareas.md: líneas 1558–1643. Añadidas fichas AUG-122 a AUG-135.
+- Plan_auditoría/Consolidacion_Auditoria.md: conteos actualizados; sección AUD-T-019 añadida en líneas 386–393.
+- contexto_personal.md: líneas 491–497. Añadida continuidad AUD-T-019.
+- ChangesLogs.txt: líneas 4304–(fin). Añadido este registro documental.
+- checkpoint.md: líneas 1398–1464. Añadidos checkpoint inicial y final AUD-CP-0037 como último blob documental.
+No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-020
+Fecha: 2026-11-08 | Sesión AUD-20261108-S038 | Checkpoint AUD-CP-0038
+Archivos documentales modificados:
+- Auditoría.txt: líneas 10725–10808. Añadida E1 AUD-T-020 y hallazgos H-AUD-020-001 a 005; H-005 corregido documentalmente.
+- Tareas.txt: líneas 6397–6409. Añadido registro de resultado AUD-T-020, hallazgos, VAL-29 y siguiente unidad.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-020 actualizada en línea 71; iteración 42 añadida en líneas 901–909.
+- Plan_auditoría/Aug_Tareas.md: líneas 1644–1682. Añadidas AUG-136 a AUG-139 y adendas a AUG-036/AUG-104.
+- Plan_auditoría/Consolidacion_Auditoria.md: conteos vigentes corregidos; sección 12 añadida en líneas 395–405.
+- contexto_personal.md: líneas 498–506. Añadida continuidad AUD-T-020.
+- ChangesLogs.txt: registro de esta tarea añadido al final.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0038 añadidos como último paso documental antes del único commit.
+No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-021
+Fecha: 2026-11-08 | Sesión AUD-20261108-S039 | Checkpoint AUD-CP-0039
+Archivos documentales modificados:
+- Auditoría.txt: líneas 10810–10946. Añadida E1 AUD-T-021 y hallazgos H-AUD-021-001 a 009.
+- Tareas.txt: líneas 6411–6434. Añadido registro AUD-T-021, VAL-30 y resumen AUG-140 a AUG-146.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-021 actualizada en línea 72; iteración 43 añadida en líneas 910–919.
+- Plan_auditoría/Aug_Tareas.md: líneas 1683–1734. Añadidas AUG-140 a AUG-146 y adenda a AUG-096.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 35 E1, 1 parcial y 2 pendientes; sección 13 añadida en líneas 408–418.
+- contexto_personal.md: líneas 507–515. Añadida continuidad AUD-T-021.
+- ChangesLogs.txt: registro de documentación añadido al final.
+- checkpoint.md: checkpoint inicial AUD-CP-0039 y final AUD-CP-0039; el checkpoint final se crea como último blob documental.
+No se modificaron ui.js, rich-text.js, index.html, main.js, style.css, api-config.js, assets, servicios, endpoints, contratos, configuración ni datos productivos. Sin navegador, impresión, PDF, Apps Script, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-022
+Fecha: 2026-11-08 | Sesión AUD-20261108-S040 | Checkpoint AUD-CP-0040
+Archivos documentales:
+- Auditoría.txt: líneas 10948–11044. E1 AUD-T-022 y hallazgos H-AUD-022-001 a 004.
+- Tareas.txt: líneas 6436–6454. Registro AUD-T-022, VAL-31 y AUG-147 a AUG-150.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-022 actualizada en línea 73; iteración 44 en líneas 920–929.
+- Plan_auditoría/Aug_Tareas.md: líneas 1735–1762. AUG-147 a AUG-150.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 36 E1, 1 parcial y 1 pendiente; sección 14 en líneas 421–431.
+- contexto_personal.md: líneas 516–525.
+- ChangesLogs.txt: este registro documental.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0040; final como último blob documental.
+No se modificaron ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js ni Services/Auth.js. Sin navegador, lector de pantalla, logout/revocación funcional, HTTP, Apps Script, Drive, Spreadsheet, Node/lint ni despliegues. Sin merge ni despliegue.
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-001
+Fecha: 2026-11-08 | Sesión AUD-20261108-S041 | Checkpoint AUD-CP-0041
+Archivos documentales modificados:
+- Auditoría.txt: añadida E1 AUD-T-001, hallazgos H-AUD-001-001/002, revalidaciones H-AUD-015-002 y H-AUD-024-001/002, y VAL-32.
+- Tareas.txt: añadido registro AUD-T-001, VAL-32 y referencia a AUG-151/adendas existentes.
+- Plan_auditoría/Plan_Auditoria.md: estado de AUD-T-001 actualizado e iteración 45 añadida.
+- Plan_auditoría/Aug_Tareas.md: nueva AUG-151; adendas a AUG-008/AUG-049; referencia a AUG-099 conservada.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 37 E1, 1 parcial y 0 pendientes; inventario AUG actualizado y sección 15 añadida.
+- contexto_personal.md: continuidad AUD-T-001 añadida.
+- ChangesLogs.txt: este registro.
+- checkpoint.md: checkpoints inicial y final AUD-CP-0041; el final se crea como último blob documental.
+No se modificaron main.js, auth.js, ui.js, state.js, index.html, style.css, api-config.js, Services/admin.js ni Services/Auth.js. Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, pruebas multi-pestaña, concurrencia ni despliegue. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-002
+Fecha: 2026-11-08 | Sesión AUD-20261108-S042 | Checkpoint AUD-CP-0042
+- Auditoría.txt: añadida la E1 estática de AUD-T-002 y revalidación de H-AUD-001 a H-AUD-006; sin hallazgos nuevos.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-002 actualizada a E1 estática completada; se añadió la iteración 46.
+- Plan_auditoría/Aug_Tareas.md: revalidación de AUG-005 a AUG-010; sin tareas nuevas ni duplicadas.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 38 E1 completadas, 0 parciales y 0 pendientes.
+- contexto_personal.md: continuidad actualizada a AUD-T-003.
+- checkpoint.md: checkpoints inicial y final AUD-CP-0042; el final se crea como último blob documental.
+- Tareas.txt no se modifica: la Tarea 2 conserva su estado histórico COMPLETADA y no se agregan tareas de implementación; las seis deudas técnicas ya están registradas en AUG-005 a AUG-010.
+No se modificaron Services/users.js, Services/Auth.js, auth.js, users.html ni api-config.js. Sin navegador, Node/lint, HTTP, Apps Script, Spreadsheet, concurrencia, multi-pestaña ni despliegues. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — CONTINUIDAD AUD-T-004
+Fecha: 2026-11-08 | Sesión AUD-20261108-S044 | Checkpoint AUD-CP-0043
+- Auditoría.txt: añadida revalidación de continuidad de AUD-T-004; H-AUD-004-001 a 003 y H-AUD-037-007/AUG-050 conservados sin duplicación.
+- Plan_auditoría/Plan_Auditoria.md: añadida iteración 47; E1 histórica confirmada sin deriva funcional.
+- Plan_auditoría/Consolidacion_Auditoria.md: corregida la cobertura a 38 E1 completadas, 0 parciales y 0 pendientes.
+- checkpoint.md: continuidad y siguiente unidad actualizadas.
+- Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: no se crean tareas ni se cambian criterios/estados AUG.
+No se modificaron archivos funcionales ni datos productivos. No se ejecutaron pruebas funcionales ni servicios/Drive/Spreadsheet/deployments. Sin merge ni despliegue.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-005 — revalidación de continuidad E1
+Sesión AUD-20261108-S045 | Checkpoint AUD-CP-0044 | HEAD histórico c56c6f7e21a668774db726e2f14139588f1bc5c0 | HEAD actual 548d6b380ad11bf6bd957fd250d4320f50fa00ec.
+- Comparación: 21 commits posteriores; solo cambios documentales. Los once archivos funcionales del alcance no presentan deriva.
+- Auditoría.txt: revalidación añadida; H-AUD-005-001 a 008 conservados.
+- Plan_auditoría/Plan_Auditoria.md: iteración 48 añadida.
+- Plan_auditoría/Consolidacion_Auditoria.md: continuidad y validaciones pendientes registradas.
+- checkpoint.md: CP-0044 inicial/final; actualizado como último archivo documental.
+- Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: no hay nuevas tareas ni cambios de criterios AUG.
+Sin cambios funcionales, pruebas reales, operaciones productivas, despliegues ni merge. Siguiente unidad: AUD-T-006.
+================================================================================
+
+================================================================================
+2026-11-08 — AUD-T-011 — revalidación de continuidad E1
+Sesión AUD-20261108-S051 | Checkpoint AUD-CP-0050 | HEAD histórico bba61f0cd16e5a35d6f709e048ebd31d8709a193 | HEAD actual 2a966d3fe9f56b24125c109f257959bceb8940e0.
+- Auditoría.txt: líneas 11252–11288; añadida revalidación de continuidad, sin nuevos hallazgos.
+- Plan_auditoría/Plan_Auditoria.md: líneas 1038–1057; sección 35 de continuidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: líneas 527–539; sección 24 de cobertura.
+- contexto_personal.md: líneas 547–556; continuidad AUD-T-011 y siguiente unidad.
+- checkpoint.md: checkpoint inicial/final AUD-CP-0050; respaldos, SHA de alcance, verificaciones y límites.
+- ChangesLogs.txt: líneas 4414–4427; registro de este conjunto documental.
+Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-011-001 a 007 y AUG-082 a 087 ya existen; no se crean tareas ni criterios duplicados.
+No se modificaron archivos de aplicación, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni integraciones reales. Sin merge ni despliegue; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+================================================================================
+2026-11-08 — AUD-T-012 — revalidación de continuidad E1
+Sesión AUD-20261108-S052 | Checkpoint AUD-CP-0051 | HEAD histórico 2afdde923d14e4f3dd078d347007b15e5ab09b2b | HEAD actual 453e9f0a8d6ded97e91e7841ea1a39c697939e0d.
+- Plan_auditoría/Plan_Auditoria.md: líneas 1057–1085; sección 36.
+- Plan_auditoría/Consolidacion_Auditoria.md: líneas 539–559; sección 25.
+- contexto_personal.md: líneas 556–567; continuidad AUD-T-012 y siguiente unidad.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0051, respaldos SHA, alcance y límites.
+- ChangesLogs.txt: líneas 4427–4438; registro documental de continuidad.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: la E1 histórica ya contiene H-AUD-012-001 a 008; no hay hallazgos/tareas nuevos. No se modificaron archivos funcionales, servicios, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+================================================================================
+2026-11-08 — AUD-T-013 — revalidación de continuidad E1
+Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD histórico d8a164c2974f4dc472f169442c2b7efb969bf350 | HEAD actual f90be001f1c1bf23e67f144bc5a57d36d4cad58a.
+- Plan_auditoría/Plan_Auditoria.md: nueva sección 37; líneas 1085–1118.
+- Plan_auditoría/Consolidacion_Auditoria.md: nueva sección 26; líneas 559–571.
+- contexto_personal.md: continuidad AUD-T-013; líneas 567–578.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0052, respaldos, alcance, comparación y límites.
+- ChangesLogs.txt: registro documental añadido desde línea 4438.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-013-001 a 010, AUG-092 a 094 y VAL-22 ya están documentados; no hay hallazgos ni tareas nuevas. Sin cambios de aplicación, OAuth scopes, Google Cloud, endpoints, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-014 — revalidación de continuidad E1
+Sesión AUD-20261108-S054 | Checkpoint AUD-CP-0053 | HEAD histórico deefa3a8ceca4aae892c61d0e99fec73c3e44837 | HEAD previo 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11.
+- Plan_auditoría/Plan_Auditoria.md: nueva sección 38; continuidad E1, identidad SHA de los siete archivos funcionales y hallazgos revalidados.
+- Plan_auditoría/Consolidacion_Auditoria.md: nueva sección 27; estado de cobertura, hallazgos y validaciones pendientes.
+- contexto_personal.md: continuidad AUD-T-014 y siguiente unidad AUD-T-015.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0053, comparación, SHA de alcance, riesgos y límites.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-014-001 a 003, AUG-095 a AUG-097 y VAL-23 ya están documentados; no hay hallazgos ni tareas nuevos. No se modificaron archivos funcionales, servicios, contratos, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3. Sin merge ni despliegue; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-015 — revalidación de continuidad E1
+Sesión AUD-20261108-S055 | Checkpoint AUD-CP-0054 | HEAD E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | HEAD previo 503ed0678a718b4c9179b3c28d2373263cb8cc86.
+- Plan_auditoría/Plan_Auditoria.md: continuidad AUD-T-015 y siguiente unidad AUD-T-016.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura y hallazgos revalidados.
+- contexto_personal.md: continuidad AUD-T-015.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0054; comparación, SHA de alcance, límites y pendientes.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-015-001 a 004, AUG-098 a AUG-101 y VAL-24 ya están documentados; no hay hallazgos ni tareas nuevas. Los nueve archivos funcionales del alcance mantienen sus SHA históricos. Sin cambios funcionales, servicios, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-016 — revalidación de continuidad E1
+Sesión AUD-20261108-S056 | Checkpoint AUD-CP-0055 | HEAD E1 2daf88c96d29999cbc734c968ef94355ee5324ca | HEAD previo 39d35bbe4bb0e6497ab444ced3afae62b679724c.
+- Plan_auditoría/Plan_Auditoria.md: continuidad AUD-T-016 y siguiente unidad AUD-T-017.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura y hallazgos revalidados.
+- contexto_personal.md: continuidad AUD-T-016.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0055; comparación, SHA de alcance, límites y pendientes.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-016-001 a 004, AUG-102 a AUG-105 y VAL-25 ya están documentados; no hay hallazgos ni tareas nuevas. Los seis archivos funcionales del alcance mantienen sus SHA históricos. Sin cambios funcionales, servicios, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-017 — revalidación de continuidad E1
+Sesión AUD-20261108-S057 | Checkpoint AUD-CP-0056 | HEAD E1 11d617cbf6401748a017fbe69f89ab63fa08800e | HEAD previo 75ba652774610832dd4de1db86e40d75c4ef9484.
+- Plan_auditoría/Plan_Auditoria.md: continuidad AUD-T-017 y siguiente unidad AUD-T-018.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura y hallazgos revalidados.
+- contexto_personal.md: continuidad AUD-T-017.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0056; comparación, SHA de alcance, límites y pendientes.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-017-001 a 007, AUG-106 a AUG-112 y VAL-26 ya están documentados; no hay hallazgos ni tareas nuevas. Los cuatro archivos funcionales y tres artefactos de esquema del alcance mantienen sus SHA históricos. Sin cambios de aplicación, servicios, endpoints, configuración, assets, Drive, Spreadsheet real, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-018 — revalidación de continuidad E1
+Sesión AUD-20261108-S058 | Checkpoint AUD-CP-0057 | HEAD E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7 | HEAD previo df6a78e1fe29c6f29e864d5542cade12f8c6e7df.
+- Plan_auditoría/Plan_Auditoria.md: continuidad AUD-T-018 y siguiente unidad AUD-T-019.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura y hallazgos revalidados.
+- contexto_personal.md: continuidad AUD-T-018.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0057; comparación, SHA de alcance, límites y pendientes.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-018-001 a 009, AUG-113 a AUG-121 y VAL-27 ya están documentados; no hay hallazgos ni tareas nuevas. Los 13 archivos funcionales del alcance mantienen sus SHA históricos. Sin cambios de aplicación, servicios, endpoints, configuración, assets, Drive, Spreadsheet real, YouTube, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+================================================================================
+2026-11-08 — AUD-T-019 — revalidación de continuidad E1
+Sesión AUD-20261108-S059 | Checkpoint AUD-CP-0058 | HEAD E1 6f0f901179c10833cbeedcb2767a25fcdd085b0d | HEAD previo 7fc728ab34e55674f1826713a3f868d72b9f8830.
+- Plan_auditoría/Plan_Auditoria.md: continuidad AUD-T-019 y siguiente unidad AUD-T-020.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura y hallazgos revalidados.
+- contexto_personal.md: continuidad AUD-T-019.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0058; comparación, SHA de alcance, límites y pendientes.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-019-001 a 014, AUG-122 a AUG-135 y VAL-28 ya están documentados; no hay hallazgos ni tareas nuevas. Los 15 archivos del alcance mantienen sus SHA históricos. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, pruebas, README, Drive, Spreadsheet real, YouTube, datos productivos ni deployments. Sin E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
+
+================================================================================
+2026-11-08 — AUD-T-020 — revalidación de continuidad E1
+Sesión AUD-20261108-S060 | Checkpoint AUD-CP-0059 | HEAD E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | HEAD previo 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1.
+- Plan_auditoría/Plan_Auditoria.md: continuidad AUD-T-020 y siguiente unidad AUD-T-021.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura y hallazgos revalidados.
+- contexto_personal.md: continuidad AUD-T-020.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0059, comparación, SHA de alcance y límites.
