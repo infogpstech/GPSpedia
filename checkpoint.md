@@ -1044,3 +1044,9 @@ Las pruebas funcionales mutables de AUTH/login real, WRITE, FEEDBACK/Inbox, ADMI
 ## Continuidad — ampliación extractor thumbnail (2026-11-27)
 - Prueba aislada de siete variantes de referencia (thumbnail query con sz, ruta thumbnail con s, googleusercontent con sufijo tamaño, file/d, docs document/d, docid y fileid): 7/7 PASS. Escape de regex corregido durante la prueba.
 - No se dispone de parser completo ni runtime Sheets/Drive/navegador. No deployment ni mutaciones remotas; Beta sigue cerrada.
+
+
+## Continuidad — GP-IMAGE-LIBRARY-FILTERS-TRASH-RESTORE-01 (2026-11-28)
+- Nueva tarea registrada en Tareas_Activas.md: filtros por estado/categoría/sección para Biblioteca de imágenes y controles de papelera/restauración en imágenes reemplazadas y candidatas a aporte.
+- Auditoria.txt y ChangesLogs.txt registran únicamente el alta y diagnóstico preliminar.
+- Implementación funcional no iniciada; auditoría completa, respaldos, code review, pruebas y deployment pendientes. No se realizaron cambios a la rama base ni mutaciones Drive.
