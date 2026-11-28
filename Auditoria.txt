@@ -1353,3 +1353,10 @@ Validación prevista: comprobar estáticamente la ausencia de la concatenación 
 - Pruebas de patrón aisladas: 7/7 PASS para thumbnail?id&sz, ruta /thumbnail/ con parámetro s, googleusercontent /d/ con sufijo de tamaño, file/d, docs.google.com/document/d, parámetro docid y fileid.
 - Se detectó y corregió un problema de escape de regex durante la edición; versión final de los patrones fue probada en estos casos. No equivale a parse completo ni runtime Apps Script.
 - No deployment, ejecución de auditoría real ni escritura/movimiento remoto. La revisión estática sigue siendo limitada.
+
+
+## GP-IMAGE-LIBRARY-FILTERS-TRASH-RESTORE-01 — 2026-11-28 (hallazgo inicial)
+- Solicitud registrada: filtros de Biblioteca de imágenes por estado, categoría y sección; barra de acciones para imágenes reemplazadas y candidatas a aporte; envío a papelera, visualización de papelera y recuperación.
+- Alcance y riesgos por auditar: estado/metadata de clasificación, selección por lote, referencias activas en vehículos/tutoriales/relay, permisos administrativos, eliminación reversible, restauración y manejo de fallos parciales.
+- Se identificó por búsqueda del repositorio un contrato/prueba de UX existente con selección, acciones por lote (mover/restaurar/papelera) y protecciones de candidatas; no se verificó su ejecución ni implementación completa en la rama de trabajo para esta solicitud.
+- Auditoría función por función, respaldo de fuentes y código aún pendientes. Este registro no representa aprobación ni validación de la implementación.
